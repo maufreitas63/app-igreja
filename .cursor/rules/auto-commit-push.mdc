@@ -1,0 +1,30 @@
+---
+description: Commit e push automáticos após alterações implementadas
+alwaysApply: true
+---
+
+# Commit e push automáticos
+
+Após implementar alterações neste repositório (`app-igreja`):
+
+1. **Commit** — quando houver mudanças prontas (código, scripts, regras, etc.), crie um commit sem pedir confirmação prévia.
+2. **Push** — em seguida, execute `git push origin main` para publicar e disparar o deploy na Cloudflare.
+
+## Protocolo Git
+
+- Antes do commit: `git status`, `git diff` e `git log` (estilo das mensagens recentes).
+- Mensagem: 1–2 frases em português, focando no *porquê*.
+- Não commitar `.env`, credenciais ou segredos.
+- Não usar `git push --force` em `main`/`master`.
+- Não alterar `git config`.
+- Se o commit falhar por hook, corrigir e criar um **novo** commit (não amend, salvo exceções do protocolo de segurança).
+
+## Quando não commitar/pushar
+
+- Apenas perguntas, revisões ou explicações sem mudanças no repositório.
+- Alterações claramente incompletas ou experimentais que o usuário pediu para não publicar.
+- Working tree limpa (nada a commitar).
+
+## Deploy
+
+O fluxo de produção é `git push origin main` → build Cloudflare Pages (`npm run build:web` → `dist`). Ver `DEPLOY_CLOUDFLARE.md` se necessário.
