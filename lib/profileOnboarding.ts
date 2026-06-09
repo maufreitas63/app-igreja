@@ -1,4 +1,4 @@
-import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
+import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import { supabase } from '@/lib/supabase';
 
 /** Campos que o cadastro inicial não preenche — completados em Dados Cadastrais. */
@@ -89,24 +89,23 @@ export const buildRegisterRoute = (phone: string) => ({
 });
 
 export async function loadProfileByPhone(phone: string) {
-  const variants = buildPhoneDbQueryVariants(phone);
+  const profileId = await resolveProfileIdByPhone(phone);
 
-  if (!variants.length) {
+  if (!profileId) {
     return null;
   }
 
   const { data, error } = await supabase
     .from('profiles')
     .select(PROFILE_LOGIN_SELECT)
-    .in('phone', variants)
-    .limit(1);
+    .eq('id', profileId)
+    .maybeSingle();
 
   if (error) {
     throw error;
   }
 
-  const row = data?.[0];
-  return row ? (row as Record<string, unknown>) : null;
+  return data ? (data as Record<string, unknown>) : null;
 }
 
 /** Login ou retomada de sessão: perfil já cadastrado → card 1 Agenda da Família. */

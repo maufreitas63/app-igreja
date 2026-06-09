@@ -28,11 +28,18 @@ import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const INDEX_PANEL_INSETS = computeResponsiveCardInsets(SCREEN_WIDTH);
+const STATIC_INDEX_PANEL_INSETS = computeResponsiveCardInsets(390);
 
 type DashboardShortcut = {
   id: string;
@@ -95,6 +102,7 @@ const formatDisplayName = (fullName: string) => {
 };
 
 export default function DashboardIndexScreen() {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { events: activeEvents, selectedEvent } = useDashboardSelectedEvent({ enablePolling: false });
@@ -244,18 +252,18 @@ export default function DashboardIndexScreen() {
   const shortcutGroups = useMemo(() => buildShortcutGroups(shortcuts), [shortcuts]);
 
   const indexCardHeight = useMemo(
-    () => computeEventPanelCardHeight(SCREEN_HEIGHT, insets.top, insets.bottom),
-    [insets.bottom, insets.top]
+    () => computeEventPanelCardHeight(screenHeight, insets.top, insets.bottom),
+    [insets.bottom, insets.top, screenHeight]
   );
 
   const indexCardTopPadding = useMemo(
-    () => computePanelCardTopPadding(SCREEN_HEIGHT, insets.top, insets.bottom, indexCardHeight),
-    [indexCardHeight, insets.bottom, insets.top]
+    () => computePanelCardTopPadding(screenHeight, insets.top, insets.bottom, indexCardHeight),
+    [indexCardHeight, insets.bottom, insets.top, screenHeight]
   );
 
   const indexPanelCardSizeStyle = useMemo(
-    () => buildDashboardPanelCardSizeStyle(SCREEN_WIDTH, indexCardHeight),
-    [indexCardHeight]
+    () => buildDashboardPanelCardSizeStyle(screenWidth, indexCardHeight),
+    [indexCardHeight, screenWidth]
   );
 
   const handleOpenShortcut = (shortcut: DashboardShortcut) => {
@@ -551,12 +559,12 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   indexPanelCard: {
-    borderRadius: INDEX_PANEL_INSETS.borderRadius,
+    borderRadius: STATIC_INDEX_PANEL_INSETS.borderRadius,
     borderWidth: 1,
     borderColor: 'rgba(165, 180, 252, 0.55)',
     backgroundColor: 'rgba(15, 23, 42, 0.88)',
     overflow: 'hidden',
-    padding: Math.max(14, INDEX_PANEL_INSETS.padding - 18),
+    padding: Math.max(14, STATIC_INDEX_PANEL_INSETS.padding - 18),
   },
   indexPanel: {
     flex: 1,

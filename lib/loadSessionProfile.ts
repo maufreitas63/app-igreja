@@ -1,5 +1,6 @@
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
+import { phoneDigitsMatch, resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import { supabase } from '@/lib/supabase';
 import { clearStoredProfileId, getStoredProfileId, persistProfileId } from '@/lib/userSession';
 
@@ -69,7 +70,7 @@ const enrichSessionProfileName = async (
     };
   }
 
-  const profileByPhone = await loadProfileRowByPhoneVariants(variants);
+  const profileByPhone = await loadProfileRowByPhone(profile.phone ?? '');
   if (profileByPhone?.full_name?.trim()) {
     return {
       ...profile,
@@ -85,22 +86,24 @@ const enrichSessionProfileName = async (
   return profile;
 };
 
-const loadProfileRowByPhoneVariants = async (phoneVariants: string[]) => {
-  if (!phoneVariants.length) {
+const loadProfileRowByPhone = async (targetPhone: string) => {
+  const profileId = await resolveProfileIdByPhone(targetPhone);
+
+  if (!profileId) {
     return null;
   }
 
   const { data, error } = await supabase
     .from('profiles')
     .select(PROFILE_SELECT)
-    .in('phone', phoneVariants)
-    .limit(1);
+    .eq('id', profileId)
+    .maybeSingle();
 
-  if (error || !data?.length) {
+  if (error || !data) {
     return null;
   }
 
-  return normalizeProfileRow(data[0]);
+  return normalizeProfileRow(data);
 };
 
 export async function loadSessionProfile(targetPhone: string): Promise<SessionProfile | null> {
@@ -116,18 +119,23 @@ export async function loadSessionProfile(targetPhone: string): Promise<SessionPr
       .maybeSingle();
 
     if (!error && data) {
-      const profile = await enrichSessionProfileName(normalizeProfileRow(data), phoneVariants);
-      if (profile.id) {
-        await persistProfileId(profile.id);
+      if (!phoneDigitsMatch(data.phone, targetPhone)) {
+        storedProfileIdWasInvalid = true;
+        await clearStoredProfileId();
+      } else {
+        const profile = await enrichSessionProfileName(normalizeProfileRow(data), phoneVariants);
+        if (profile.id) {
+          await persistProfileId(profile.id);
+        }
+        return profile;
       }
-      return profile;
+    } else {
+      storedProfileIdWasInvalid = true;
+      await clearStoredProfileId();
     }
-
-    storedProfileIdWasInvalid = true;
-    await clearStoredProfileId();
   }
 
-  const profileByPhone = await loadProfileRowByPhoneVariants(phoneVariants);
+  const profileByPhone = await loadProfileRowByPhone(targetPhone);
   if (profileByPhone) {
     const profile = await enrichSessionProfileName(profileByPhone, phoneVariants);
     if (profile.id) {
@@ -151,9 +159,7 @@ export async function loadSessionProfile(targetPhone: string): Promise<SessionPr
 
     if (!memberError && memberRows?.length) {
       const member = memberRows[0];
-      const profileFromMemberPhone = await loadProfileRowByPhoneVariants(
-        buildPhoneDbQueryVariants(member.phone ?? targetPhone)
-      );
+      const profileFromMemberPhone = await loadProfileRowByPhone(member.phone ?? targetPhone);
 
       if (profileFromMemberPhone) {
         if (profileFromMemberPhone.id) {

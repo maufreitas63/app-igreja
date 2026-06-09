@@ -57,7 +57,6 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import {
   Alert,
   AppState,
-  Dimensions,
   FlatList,
   Modal,
   NativeScrollEvent,
@@ -71,12 +70,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width, height: windowHeight } = Dimensions.get('window');
-const DASHBOARD_CARD_INSETS = computeResponsiveCardInsets(width);
+const STATIC_CARD_INSETS = computeResponsiveCardInsets(390);
 
 const DASHBOARD_HEADER_RESERVE = 100;
 /** Botões < / Sair / >, margens e padding inferior extra (além do safe area). */
@@ -458,6 +457,10 @@ const getCurrentLocalIsoDate = () => {
 };
 
 export default function Dashboard() {
+  const { width: pageWidth, height: windowHeight } = useWindowDimensions();
+  const previousPageWidthRef = useRef(pageWidth);
+  const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);
+
   const dashboardListRef = useRef<FlatList<DashboardCard>>(null);
   const pixFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handledDashboardCardRef = useRef<string | null>(null);
@@ -533,21 +536,21 @@ export default function Dashboard() {
   );
   const dashboardPanelCardSizeStyle = useMemo(
     () => ({
-      width: width * 0.9,
+      width: pageWidth * 0.9,
       minHeight: dashboardPanelCardHeight,
       maxHeight: dashboardPanelCardHeight,
       alignSelf: 'center' as const,
     }),
-    [dashboardPanelCardHeight]
+    [dashboardPanelCardHeight, pageWidth]
   );
   const eventPanelCardSizeStyle = useMemo(
     () => ({
-      width: width * 0.9,
+      width: pageWidth * 0.9,
       minHeight: eventPanelCardHeight,
       maxHeight: eventPanelCardHeight,
       alignSelf: 'center' as const,
     }),
-    [eventPanelCardHeight]
+    [eventPanelCardHeight, pageWidth]
   );
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -1207,7 +1210,7 @@ export default function Dashboard() {
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / width);
+    const index = Math.round(event.nativeEvent.contentOffset.x / pageWidth);
     setCurrentIndex(index);
   };
 
@@ -1561,10 +1564,10 @@ export default function Dashboard() {
 
     setCurrentIndex(targetIndex);
     dashboardListRef.current?.scrollToOffset({
-      offset: targetIndex * width,
+      offset: targetIndex * pageWidth,
       animated,
     });
-  }, [data.length]);
+  }, [data.length, pageWidth]);
 
   useEffect(() => {
     currentIndexRef.current = currentIndex;
@@ -1767,10 +1770,10 @@ export default function Dashboard() {
     const nextIndex = Math.max(data.length - 1, 0);
     setCurrentIndex(nextIndex);
     dashboardListRef.current?.scrollToOffset({
-      offset: nextIndex * width,
+      offset: nextIndex * pageWidth,
       animated: false,
     });
-  }, [currentIndex, data.length]);
+  }, [currentIndex, data.length, pageWidth]);
 
   useEffect(() => {
     if (!requestedDashboardCard) {
@@ -1793,10 +1796,25 @@ export default function Dashboard() {
     handledDashboardCardRef.current = requestedDashboardCard;
     setCurrentIndex(targetIndex);
     dashboardListRef.current?.scrollToOffset({
-      offset: targetIndex * width,
+      offset: targetIndex * pageWidth,
       animated: false,
     });
-  }, [data, requestedDashboardCard]);
+  }, [data, pageWidth, requestedDashboardCard]);
+
+  useEffect(() => {
+    if (previousPageWidthRef.current === pageWidth) {
+      return;
+    }
+
+    previousPageWidthRef.current = pageWidth;
+    const index = currentIndexRef.current;
+    requestAnimationFrame(() => {
+      dashboardListRef.current?.scrollToOffset({
+        offset: index * pageWidth,
+        animated: false,
+      });
+    });
+  }, [pageWidth]);
 
   return (
     <LinearGradient colors={MAIN_SCREEN_GRADIENT} style={styles.container}>
@@ -1834,17 +1852,17 @@ export default function Dashboard() {
             scrollEventThrottle={16}
             keyExtractor={(item) => item.id}
             getItemLayout={(_, index) => ({
-              length: width,
-              offset: width * index,
+              length: pageWidth,
+              offset: pageWidth * index,
               index,
             })}
             snapToAlignment="start"
-            snapToInterval={width}
-            snapToOffsets={data.map((_, index) => index * width)}
+            snapToInterval={pageWidth}
+            snapToOffsets={data.map((_, index) => index * pageWidth)}
             decelerationRate="fast"
             disableIntervalMomentum={true}
             renderItem={({ item }) => (
-              <View style={styles.cardWrapper}>
+              <View style={[styles.cardWrapper, carouselPageStyle]}>
                 {item.content === 'event_alt' ? (
                   <View style={[styles.card, styles.eventCard, styles.eventAltCard, eventPanelCardSizeStyle]}>
                     {areEventsLoading || isProfileLoading ? (
@@ -3074,20 +3092,19 @@ const styles = StyleSheet.create({
   listContainer: { flex: 1, minHeight: 0 },
   dashboardFlatList: { flex: 1, minHeight: 0 },
   cardWrapper: {
-    width,
     justifyContent: 'center',
     alignItems: 'center',
     paddingTop: 0,
     paddingBottom: 8,
   },
   card: {
-    width: width * 0.9,
+    width: '90%',
     alignSelf: 'center',
     backgroundColor: 'rgba(30, 41, 59, 0.7)',
     borderWidth: 1,
     borderColor: '#10b981',
-    borderRadius: DASHBOARD_CARD_INSETS.borderRadius,
-    padding: DASHBOARD_CARD_INSETS.padding,
+    borderRadius: STATIC_CARD_INSETS.borderRadius,
+    padding: STATIC_CARD_INSETS.padding,
     alignItems: 'center',
     overflow: 'hidden',
     justifyContent: 'center',

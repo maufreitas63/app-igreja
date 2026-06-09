@@ -159,3 +159,7 @@ Logs completos do build: Cloudflare → **Deployments** → clique no deploy →
 ---
 
 *App IBN · Deploy Cloudflare Pages · atualizado em 22/05/2026*
+
+```powershell
+git push origin main
+```

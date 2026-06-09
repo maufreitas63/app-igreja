@@ -73,7 +73,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
-  Dimensions,
   FlatList,
   Keyboard,
   Platform,
@@ -85,6 +84,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   type ViewStyle,
@@ -106,8 +106,7 @@ const ROOM_CHIP_TEENS_ACTIVE: ViewStyle = {
 const MAINTENANCE_SCREEN_GRADIENT = ['#422006', '#1c1917'] as const;
 const FOOTER_NAV_REPEAT_MS = 500;
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const MAINTENANCE_PANEL_INSETS = computeMaintenancePanelInsets(SCREEN_WIDTH);
+const STATIC_MAINTENANCE_PANEL_INSETS = computeMaintenancePanelInsets(390);
 
 type MaintenanceCarouselCard = {
   id: string;
@@ -257,6 +256,9 @@ const SimNaoToggle = ({ value, onValueChange, disabled }: SimNaoToggleProps) => 
 );
 
 export default function MaintenanceDashboard() {
+  const { width: pageWidth, height: windowHeight } = useWindowDimensions();
+  const previousPageWidthRef = useRef(pageWidth);
+  const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { events, loading, error, refetch } = useMaintenanceEvents();
@@ -595,10 +597,10 @@ export default function MaintenanceDashboard() {
     const nextIndex = Math.max(maintenanceCardCount - 1, 0);
     setCurrentIndex(nextIndex);
     carouselRef.current?.scrollToOffset({
-      offset: nextIndex * SCREEN_WIDTH,
+      offset: nextIndex * pageWidth,
       animated: false,
     });
-  }, [currentIndex, maintenanceCardCount]);
+  }, [currentIndex, maintenanceCardCount, pageWidth]);
 
   const maintenanceShortcuts = useMemo<MaintenanceShortcut[]>(
     () =>
@@ -620,13 +622,13 @@ export default function MaintenanceDashboard() {
   }, [currentIndex, isCreating, maintenanceCarouselCards, showEditor]);
 
   const cardHeight = useMemo(
-    () => computeDashboardCardHeight(SCREEN_HEIGHT, insets.top, insets.bottom),
-    [insets.bottom, insets.top]
+    () => computeDashboardCardHeight(windowHeight, insets.top, insets.bottom),
+    [insets.bottom, insets.top, windowHeight]
   );
 
   const panelCardSizeStyle = useMemo(
-    () => buildDashboardPanelCardSizeStyle(SCREEN_WIDTH, cardHeight),
-    [cardHeight]
+    () => buildDashboardPanelCardSizeStyle(pageWidth, cardHeight),
+    [cardHeight, pageWidth]
   );
 
   const scrollToMaintenanceCard = useCallback((targetIndex: number, animated = false) => {
@@ -636,10 +638,10 @@ export default function MaintenanceDashboard() {
 
     setCurrentIndex(targetIndex);
     carouselRef.current?.scrollToOffset({
-      offset: targetIndex * SCREEN_WIDTH,
+      offset: targetIndex * pageWidth,
       animated,
     });
-  }, [maintenanceCardCount]);
+  }, [maintenanceCardCount, pageWidth]);
 
   useEffect(() => {
     currentIndexRef.current = currentIndex;
@@ -736,7 +738,7 @@ export default function MaintenanceDashboard() {
 
   const renderCarouselItem = useCallback(
     ({ item, index }: { item: MaintenanceCarouselCard; index: number }) => (
-      <View style={[styles.cardWrapper, { width: SCREEN_WIDTH }]}>
+      <View style={[styles.cardWrapper, carouselPageStyle]}>
         <View
           style={[
             styles.panelCard,
@@ -967,6 +969,7 @@ export default function MaintenanceDashboard() {
       isBusy,
       loading,
       maintenanceShortcuts,
+      carouselPageStyle,
       panelCardSizeStyle,
       quorumRegistrySchemaMissing,
       refetch,
@@ -1190,12 +1193,12 @@ export default function MaintenanceDashboard() {
                 scrollEventThrottle={16}
                 keyExtractor={(item) => item.id}
                 getItemLayout={(_, index) => ({
-                  length: SCREEN_WIDTH,
-                  offset: SCREEN_WIDTH * index,
+                  length: pageWidth,
+                  offset: pageWidth * index,
                   index,
                 })}
                 snapToAlignment="start"
-                snapToInterval={SCREEN_WIDTH}
+                snapToInterval={pageWidth}
                 decelerationRate="fast"
                 disableIntervalMomentum
                 renderItem={renderCarouselItem}
@@ -1385,7 +1388,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   panelCard: {
-    borderRadius: MAINTENANCE_PANEL_INSETS.borderRadius,
+    borderRadius: STATIC_MAINTENANCE_PANEL_INSETS.borderRadius,
     borderWidth: 1,
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.default,
     backgroundColor: UI_COLORS.maintenanceSurface,
@@ -1400,39 +1403,39 @@ const styles = StyleSheet.create({
   panelCardQuorumPresence: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.quorum,
     backgroundColor: 'rgba(15, 23, 42, 0.35)',
-    padding: MAINTENANCE_PANEL_INSETS.innerPadding,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardScaleTypes: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.scaleTypes,
-    padding: MAINTENANCE_PANEL_INSETS.innerPadding,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardScaleVolunteers: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.scaleVolunteers,
-    padding: MAINTENANCE_PANEL_INSETS.innerPadding,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardScales: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.scales,
-    padding: MAINTENANCE_PANEL_INSETS.innerPadding,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardPastoralCare: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.pastoral,
-    padding: MAINTENANCE_PANEL_INSETS.innerPadding,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardProfileCadastro: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.profile,
-    padding: MAINTENANCE_PANEL_INSETS.innerPadding,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardFinancials: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.financials,
-    padding: MAINTENANCE_PANEL_INSETS.innerPadding,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardAccessControl: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.accessControl,
-    padding: MAINTENANCE_PANEL_INSETS.innerPadding,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardMenu: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.menu,
-    padding: MAINTENANCE_PANEL_INSETS.menuPadding,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.menuPadding,
   },
   panelCardPlaceholder: {
     flex: 1,
@@ -1440,7 +1443,7 @@ const styles = StyleSheet.create({
   menuPanel: {
     flex: 1,
     minHeight: 0,
-    gap: MAINTENANCE_PANEL_INSETS.gap,
+    gap: STATIC_MAINTENANCE_PANEL_INSETS.gap,
   },
   menuPanelTitle: {
     fontSize: UI_PANEL_TYPO.title.fontSize,
@@ -1509,7 +1512,7 @@ const styles = StyleSheet.create({
   },
   ganttPanel: {
     flex: 1,
-    padding: MAINTENANCE_PANEL_INSETS.menuPadding,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.menuPadding,
     minHeight: 0,
   },
   ganttPanelTitle: {
@@ -1527,7 +1530,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   panelScrollContent: {
-    padding: MAINTENANCE_PANEL_INSETS.scrollPadding,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.scrollPadding,
     gap: UI_SPACING.lg,
     paddingBottom: UI_SPACING.xl,
   },
