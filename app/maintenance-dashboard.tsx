@@ -716,12 +716,12 @@ export default function MaintenanceDashboard() {
 
   const handleCarouselScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+      const index = Math.round(event.nativeEvent.contentOffset.x / pageWidth);
       if (index >= 0 && index < maintenanceCardCount && index !== currentIndex) {
         setCurrentIndex(index);
       }
     },
-    [currentIndex, maintenanceCardCount]
+    [currentIndex, maintenanceCardCount, pageWidth]
   );
 
   const handleGanttEventPress = useCallback(
@@ -1007,17 +1007,18 @@ export default function MaintenanceDashboard() {
           </View>
         </View>
 
-        {showEditor ? (
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={[
-              styles.scrollContent,
-              styles.scrollContentWithFooter,
-              { paddingBottom: 16 },
-            ]}
-            keyboardShouldPersistTaps="always"
-            showsVerticalScrollIndicator={false}
-          >
+        <View style={styles.mainStage}>
+          {showEditor ? (
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={[
+                styles.scrollContent,
+                styles.scrollContentWithFooter,
+                { paddingBottom: 16 },
+              ]}
+              keyboardShouldPersistTaps="always"
+              showsVerticalScrollIndicator={false}
+            >
             <View style={styles.editorSection}>
               <View style={styles.editorCard}>
                 <Text style={styles.fieldLabel}>Nome do evento</Text>
@@ -1172,9 +1173,13 @@ export default function MaintenanceDashboard() {
 
               </View>
             </View>
-          </ScrollView>
-        ) : (
-          <>
+            </ScrollView>
+          ) : null}
+
+          <View
+            style={[styles.carouselStage, showEditor && styles.carouselStageHidden]}
+            pointerEvents={showEditor ? 'none' : 'auto'}
+          >
             <View style={styles.listContainer}>
               <FlatList
                 ref={carouselRef}
@@ -1225,8 +1230,8 @@ export default function MaintenanceDashboard() {
                 accent="amber"
               />
             </View>
-          </>
-        )}
+          </View>
+        </View>
 
         {showEditor ? (
           <View style={[styles.editorFooter, { paddingBottom: insets.bottom + 12 }]}>
@@ -1372,6 +1377,17 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     lineHeight: 14,
+  },
+  mainStage: {
+    flex: 1,
+    minHeight: 0,
+  },
+  carouselStage: {
+    flex: 1,
+    minHeight: 0,
+  },
+  carouselStageHidden: {
+    display: 'none',
   },
   listContainer: {
     flex: 1,
