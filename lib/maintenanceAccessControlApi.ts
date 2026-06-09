@@ -1,3 +1,4 @@
+import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
@@ -407,8 +408,20 @@ export async function saveRoleGrantAdmin(
 export const isSensitiveAccessResourceKey = (resourceKey: string) =>
   resourceKey === 'profiles.cpf' || resourceKey === 'profiles.access_pin';
 
-/** Indica se o recurso de tela pertence ao dashboard principal ou ao de manutenção. */
+/** Indica se a tela pertence ao produto principal (membros) ou à manutenção. */
 export type AccessGrantDashboardScope = 'main' | 'maintenance';
+
+const MAIN_PRODUCT_SCREEN_ROUTE_KEYS = new Set(
+  Object.values(ACCESS_SCREEN).filter((routeKey) => routeKey !== ACCESS_SCREEN.maintenance)
+);
+
+const isMaintenanceScreenKey = (key: string) =>
+  key === ACCESS_SCREEN.maintenance
+  || key.startsWith('maintenance.card.')
+  || key.startsWith('scale_type.');
+
+const isMainProductScreenKey = (key: string) =>
+  key.startsWith('dashboard.card.') || MAIN_PRODUCT_SCREEN_ROUTE_KEYS.has(key);
 
 export const getAccessGrantDashboardScope = (
   resourceType: RoleGrantRecord['resourceType'],
@@ -420,13 +433,39 @@ export const getAccessGrantDashboardScope = (
 
   const key = resourceKey.trim();
 
-  if (key === '/dashboard' || key.startsWith('dashboard.card.')) {
-    return 'main';
-  }
-
-  if (key === '/maintenance-dashboard' || key.startsWith('maintenance.card.') || key.startsWith('scale_type.')) {
+  if (isMaintenanceScreenKey(key)) {
     return 'maintenance';
   }
 
+  if (isMainProductScreenKey(key)) {
+    return 'main';
+  }
+
   return null;
+};
+
+const accessGrantScreenScopeSortRank = (scope: AccessGrantDashboardScope | null) => {
+  if (scope === 'main') {
+    return 0;
+  }
+
+  if (scope === 'maintenance') {
+    return 1;
+  }
+
+  return 2;
+};
+
+/** Ordena telas: produto principal (azul) → manutenção (amarelo) → demais. */
+export const compareRoleGrantScreenScope = (left: RoleGrantRecord, right: RoleGrantRecord) => {
+  const leftScope = getAccessGrantDashboardScope(left.resourceType, left.resourceKey);
+  const rightScope = getAccessGrantDashboardScope(right.resourceType, right.resourceKey);
+  const byScope =
+    accessGrantScreenScopeSortRank(leftScope) - accessGrantScreenScopeSortRank(rightScope);
+
+  if (byScope !== 0) {
+    return byScope;
+  }
+
+  return left.resourceKey.localeCompare(right.resourceKey, 'pt-BR');
 };

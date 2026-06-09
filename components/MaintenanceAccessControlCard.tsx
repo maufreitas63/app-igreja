@@ -1,6 +1,7 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import {
+  compareRoleGrantScreenScope,
   getAccessGrantDashboardScope,
   MAINTENANCE_ACCESS_CONTROL_SQL_HINT,
   isSensitiveAccessResourceKey,
@@ -38,8 +39,8 @@ const RESOURCE_TYPE_OPTIONS = [
   { value: 'column' as const, label: 'Colunas' },
 ];
 
-const FINANCIAL_GRANT_SEARCH_HINT =
-  'Financeiro: Card Financeiro (dashboard.card.financial) no dashboard; Tela Financeiro (/financial) nos relatórios; RD (/expense-report).';
+const SCREEN_GRANT_SCOPE_HINT =
+  'Azul celeste: telas do produto principal. Amarelo cobre: telas de manutenção. A lista agrupa todos os azuis antes dos amarelos.';
 
 export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>('profiles');
@@ -87,15 +88,19 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
   const filteredRoleGrants = useMemo(() => {
     const query = grantSearchQuery.trim().toLowerCase();
 
-    if (!query) {
-      return roleGrants;
+    const rows = query
+      ? roleGrants.filter((grant) => {
+          const haystack = `${grant.label} ${grant.resourceKey}`.toLowerCase();
+          return haystack.includes(query);
+        })
+      : roleGrants;
+
+    if (resourceTypeFilter !== 'screen') {
+      return rows;
     }
 
-    return roleGrants.filter((grant) => {
-      const haystack = `${grant.label} ${grant.resourceKey}`.toLowerCase();
-      return haystack.includes(query);
-    });
-  }, [grantSearchQuery, roleGrants]);
+    return [...rows].sort(compareRoleGrantScreenScope);
+  }, [grantSearchQuery, resourceTypeFilter, roleGrants]);
 
   useEffect(() => {
     setExpandedProfileSection(selectedProfile ? 'roles' : null);
@@ -455,7 +460,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
               cadastrais.
             </Text>
           ) : resourceTypeFilter === 'screen' ? (
-            <Text style={styles.subsectionHint}>{FINANCIAL_GRANT_SEARCH_HINT}</Text>
+            <Text style={styles.subsectionHint}>{SCREEN_GRANT_SCOPE_HINT}</Text>
           ) : null}
 
           <TextInput
@@ -472,11 +477,11 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
             <View style={styles.grantScopeLegend}>
               <View style={styles.grantScopeLegendItem}>
                 <View style={[styles.grantScopeDot, styles.grantScopeDotMain]} />
-                <Text style={styles.grantScopeLegendText}>Dashboard principal</Text>
+                <Text style={styles.grantScopeLegendText}>Produto principal</Text>
               </View>
               <View style={styles.grantScopeLegendItem}>
                 <View style={[styles.grantScopeDot, styles.grantScopeDotMaintenance]} />
-                <Text style={styles.grantScopeLegendText}>Dashboard manutenção</Text>
+                <Text style={styles.grantScopeLegendText}>Manutenção</Text>
               </View>
             </View>
           ) : null}
@@ -508,8 +513,8 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                         ]}
                         accessibilityLabel={
                           dashboardScope === 'main'
-                            ? 'Recurso do dashboard principal'
-                            : 'Recurso do dashboard de manutenção'
+                            ? 'Tela do produto principal'
+                            : 'Tela de manutenção'
                         }
                       />
                     ) : (
