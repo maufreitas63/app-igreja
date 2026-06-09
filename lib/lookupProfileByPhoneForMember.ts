@@ -1,6 +1,7 @@
 import { normalizeFamilyCode } from '@/lib/family';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
+import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import { supabase } from '@/lib/supabase';
 
 export type ProfileMemberLookup = {
@@ -45,7 +46,7 @@ export async function hasAcceptedMemberInFamily(
     const { data, error } = await supabase
       .from('members')
       .select('id')
-      .eq('family_id', target)
+      .ilike('family_id', target)
       .eq('accepted', MEMBER_ACCEPTED_VALUE)
       .in('phone', phoneVariants)
       .limit(1);
@@ -61,7 +62,7 @@ export async function hasAcceptedMemberInFamily(
     const { data, error } = await supabase
       .from('members')
       .select('id')
-      .eq('family_id', target)
+      .ilike('family_id', target)
       .eq('accepted', MEMBER_ACCEPTED_VALUE)
       .ilike('full_name', fullName)
       .limit(1);
@@ -134,8 +135,29 @@ export async function searchProfilesByNameForMember(
 export async function lookupProfileByPhoneForMember(
   phoneInput: string
 ): Promise<ProfileMemberLookup | null> {
+  if (!canSearchProfileByPhone(phoneInput)) {
+    return null;
+  }
+
+  const resolvedProfileId = await resolveProfileIdByPhone(phoneInput);
+
+  if (resolvedProfileId) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(PROFILE_MEMBER_LOOKUP_SELECT)
+      .eq('id', resolvedProfileId)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    return data ? mapProfileMemberLookupRow(data) : null;
+  }
+
   const variants = buildPhoneDbQueryVariants(phoneInput);
-  if (!canSearchProfileByPhone(phoneInput) || !variants.length) {
+
+  if (!variants.length) {
     return null;
   }
 

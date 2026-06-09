@@ -10,11 +10,14 @@ import { formatShortName } from '@/lib/formatShortName';
 import {
   buildProfileInFamilyMessage,
   canSearchProfileByName,
+  canSearchProfileByPhone,
   hasAcceptedMemberInFamily,
+  lookupProfileByPhoneForMember,
   profileBelongsToFamily,
   searchProfilesByNameForMember,
   type ProfileMemberLookup,
 } from '@/lib/lookupProfileByPhoneForMember';
+import { findAcceptedMemberDuplicateInFamily } from '@/lib/familyMemberMatch';
 import { MemberPhotoPicker } from '@/components/MemberPhotoPicker';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { attachSelfieToManagedMemberProfile } from '@/lib/managedMemberSelfie';
@@ -579,6 +582,41 @@ export default function ManageMembers() {
     };
   }, [editingMemberId, name, profileMatchesSessionAccount]);
 
+  useEffect(() => {
+    if (editingMemberId || linkedProfile || name.trim()) {
+      return;
+    }
+
+    const formattedPhone = formatPhone(phone);
+
+    if (!canSearchProfileByPhone(formattedPhone)) {
+      return;
+    }
+
+    let active = true;
+    const timer = setTimeout(() => {
+      void lookupProfileByPhoneForMember(formattedPhone)
+        .then((profile) => {
+          if (!active || !profile) {
+            return;
+          }
+
+          applyProfileToMemberForm(profile);
+          setProfileLookupMessage(
+            `Perfil encontrado pelo telefone: ${profile.full_name?.trim() || 'Sem nome'}.`
+          );
+        })
+        .catch((err: unknown) => {
+          console.error('Erro ao buscar perfil pelo telefone:', err);
+        });
+    }, 350);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [applyProfileToMemberForm, editingMemberId, linkedProfile, name, phone]);
+
   const persistPendingMemberPhoto = useCallback(
     async (
       member: {
@@ -970,25 +1008,48 @@ export default function ManageMembers() {
   }, [editingMemberSnapshot, performDeleteEditingMember]);
 
   const addMember = async () => {
-    if (!name.trim()) {
-      Alert.alert('Atenção', 'O nome é obrigatório.');
-      return;
-    }
-
     if (!parentesco) {
       Alert.alert('Atenção', 'Selecione o grau de parentesco.');
       return;
     }
 
-    const normalizedName = name.trim();
-    const normalizedPhone = phone || null;
+    const formattedPhone = phone.trim() ? formatPhone(phone) : '';
+    let resolvedLinkedProfile = linkedProfile;
+
+    if (
+      formattedPhone &&
+      canSearchProfileByPhone(formattedPhone) &&
+      !resolvedLinkedProfile
+    ) {
+      try {
+        const profileByPhone = await lookupProfileByPhoneForMember(formattedPhone);
+
+        if (profileByPhone) {
+          resolvedLinkedProfile = profileByPhone;
+        }
+      } catch (lookupError) {
+        console.error('Erro ao resolver perfil pelo telefone antes de salvar:', lookupError);
+      }
+    }
+
+    const normalizedName = name.trim() || resolvedLinkedProfile?.full_name?.trim() || '';
+
+    if (!normalizedName) {
+      Alert.alert(
+        'Atenção',
+        'O nome é obrigatório. Digite o nome completo ou informe um telefone com perfil cadastrado.'
+      );
+      return;
+    }
+
+    const normalizedPhone = formattedPhone || null;
 
     if (
       !editingMemberId &&
       profileMatchesSessionAccount({
-        id: linkedProfile?.id ?? '',
-        full_name: linkedProfile?.full_name ?? normalizedName,
-        phone: linkedProfile?.phone ?? normalizedPhone,
+        id: resolvedLinkedProfile?.id ?? '',
+        full_name: resolvedLinkedProfile?.full_name ?? normalizedName,
+        phone: resolvedLinkedProfile?.phone ?? normalizedPhone,
       })
     ) {
       Alert.alert('Não é possível cadastrar', SELF_MEMBER_BLOCK_MESSAGE);
@@ -1022,7 +1083,7 @@ export default function ManageMembers() {
 
         await syncManagedMemberProfileFamilyWithFallback({
           memberId: editingMemberId,
-          profileId: linkedProfile?.id,
+          profileId: resolvedLinkedProfile?.id,
           member: {
             full_name: normalizedName,
             phone: normalizedPhone,
@@ -1047,12 +1108,25 @@ export default function ManageMembers() {
               }
             : null,
           undefined,
-          linkedProfile?.id
+          resolvedLinkedProfile?.id
         );
 
         resetForm();
         await fetchData();
         Alert.alert('Sucesso', 'Membro atualizado!');
+        return;
+      }
+
+      const duplicateMember = await findAcceptedMemberDuplicateInFamily(normalizedFamilyId, {
+        full_name: normalizedName,
+        phone: normalizedPhone,
+      });
+
+      if (duplicateMember) {
+        Alert.alert(
+          'Membro já existe',
+          `${duplicateMember.full_name?.trim() || 'Esta pessoa'} já está cadastrada nesta família.`
+        );
         return;
       }
 
@@ -1062,66 +1136,28 @@ export default function ManageMembers() {
           phone: normalizedPhone,
           birth_date: birthIso,
         },
-        linkedProfile?.id
+        resolvedLinkedProfile?.id
       );
 
-      if (linkedProfile && profileBelongsToFamily(linkedProfile, familyId)) {
-        const alreadyInFamilyGroup = await hasAcceptedMemberInFamily(linkedProfile, familyId);
+      if (resolvedLinkedProfile && profileBelongsToFamily(resolvedLinkedProfile, familyId)) {
+        const alreadyInFamilyGroup = await hasAcceptedMemberInFamily(resolvedLinkedProfile, familyId);
 
         if (alreadyInFamilyGroup) {
-          Alert.alert('Membro já no grupo familiar', buildProfileInFamilyMessage(linkedProfile));
+          Alert.alert(
+            'Membro já no grupo familiar',
+            buildProfileInFamilyMessage(resolvedLinkedProfile)
+          );
           return;
         }
       }
 
       const existingMember = await findMemberForFamilyTransfer(
         {
-          full_name: linkedProfile?.full_name ?? normalizedName,
-          phone: linkedProfile?.phone ?? normalizedPhone,
+          full_name: resolvedLinkedProfile?.full_name ?? normalizedName,
+          phone: resolvedLinkedProfile?.phone ?? normalizedPhone,
         },
         normalizedFamilyId
       );
-
-      const { data: existingAcceptedMembers, error: existingMembersError } = await supabase
-        .from('members')
-        .select('id, full_name, phone, family_id')
-        .ilike('family_id', normalizedFamilyId)
-        .eq('accepted', MEMBER_ACCEPTED_VALUE);
-
-      if (existingMembersError) {
-        throw existingMembersError;
-      }
-
-      const normalizedNewName = normalizeMemberName(normalizedName);
-      const normalizedNewPhone = normalizeMemberPhoneDigits(normalizedPhone);
-      const hasDuplicate =
-        !existingMember &&
-        (existingAcceptedMembers ?? []).some((member) => {
-          const sameName = normalizeMemberName(member.full_name) === normalizedNewName;
-          const samePhone = phoneDigitsMatch(member.phone, normalizedPhone);
-
-          if (samePhone) {
-            return true;
-          }
-
-          if (!sameName) {
-            return false;
-          }
-
-          if (!normalizedNewPhone || !normalizeMemberPhoneDigits(member.phone)) {
-            return true;
-          }
-
-          return false;
-        });
-
-      if (hasDuplicate) {
-        Alert.alert(
-          'Membro já existe',
-          'Já existe um membro aceito com este nome ou telefone nesta família. Verifique se é a mesma pessoa antes de cadastrar novamente.'
-        );
-        return;
-      }
 
       if (existingMember?.id) {
         const existingFamilyId = existingMember.family_id?.trim().toUpperCase() ?? '';
@@ -1165,7 +1201,7 @@ export default function ManageMembers() {
         await acceptMemberIntoFamily({
           memberId: String(existingMember.id),
           targetFamilyId: familyId,
-          profileId: linkedProfile?.id ?? profileIdForAction,
+          profileId: resolvedLinkedProfile?.id ?? profileIdForAction,
           member: {
             full_name: normalizedName,
             phone: normalizedPhone,
@@ -1180,12 +1216,12 @@ export default function ManageMembers() {
             phone: normalizedPhone,
             birth_date: birthIso,
           },
-          linkedProfile?.id ?? profileIdForAction
+          resolvedLinkedProfile?.id ?? profileIdForAction
         );
 
         const photoWarning = await persistPendingMemberPhoto(
           memberProfileInput,
-          linkedProfile?.id ?? profileIdForAction
+          resolvedLinkedProfile?.id ?? profileIdForAction
         );
 
         resetForm();
@@ -1224,12 +1260,12 @@ export default function ManageMembers() {
           phone: normalizedPhone,
           birth_date: birthIso,
         },
-        linkedProfile?.id ?? profileIdForAction
+        resolvedLinkedProfile?.id ?? profileIdForAction
       );
 
       const photoWarning = await persistPendingMemberPhoto(
         memberProfileInput,
-        linkedProfile?.id ?? profileIdForAction
+        resolvedLinkedProfile?.id ?? profileIdForAction
       );
 
       resetForm();
@@ -1294,7 +1330,7 @@ export default function ManageMembers() {
                 {!editingMemberId ? (
                   <Text style={styles.fieldHint}>
                     Digite o nome para buscar em perfis ou digite o nome completo para inserir manualmente um
-                    membro.
+                    membro. Ao informar o telefone, o nome pode ser preenchido automaticamente pelo perfil.
                   </Text>
                 ) : null}
                 <TextInput
@@ -1381,6 +1417,30 @@ export default function ManageMembers() {
                   onBlur={() => {
                     const formatted = formatPhone(phone);
                     setPhone(formatted);
+
+                    if (
+                      editingMemberId ||
+                      linkedProfile ||
+                      name.trim() ||
+                      !canSearchProfileByPhone(formatted)
+                    ) {
+                      return;
+                    }
+
+                    void lookupProfileByPhoneForMember(formatted)
+                      .then((profile) => {
+                        if (!profile) {
+                          return;
+                        }
+
+                        applyProfileToMemberForm(profile);
+                        setProfileLookupMessage(
+                          `Perfil encontrado pelo telefone: ${profile.full_name?.trim() || 'Sem nome'}.`
+                        );
+                      })
+                      .catch((err: unknown) => {
+                        console.error('Erro ao buscar perfil pelo telefone:', err);
+                      });
                   }}
                 />
 

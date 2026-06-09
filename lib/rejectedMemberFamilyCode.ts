@@ -2,6 +2,7 @@ import {
   detachMemberFromFamilyWithNewCode,
   type MemberForFamilyReassign,
 } from '@/lib/detachMemberFromFamily';
+import { findMembersMatchingPhone } from '@/lib/familyMemberMatch';
 import { normalizeFamilyCode } from '@/lib/family';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { upsertProfileForManagedMember } from '@/lib/memberProfiles';
@@ -84,16 +85,10 @@ export async function findMemberForFamilyTransfer(
 ): Promise<MemberForFamilyReassign | null> {
   const phone = profile.phone?.trim() || null;
   const fullName = profile.full_name?.trim() || null;
-  const phoneVariants = phone ? buildPhoneDbQueryVariants(phone) : [];
   const target = normalizeFamilyCode(targetFamilyId);
 
-  if (phoneVariants.length) {
-    const { data } = await supabase
-      .from('members')
-      .select('id, full_name, phone, birth_date, family_id, accepted')
-      .in('phone', phoneVariants);
-
-    const rows = ((data ?? []) as MemberForFamilyReassign[]).slice();
+  if (phone) {
+    const rows = (await findMembersMatchingPhone(phone)).slice();
 
     if (rows.length) {
       rows.sort((left, right) => rankMemberForFamilyTransfer(left, right, target));
