@@ -470,6 +470,7 @@ export default function Dashboard() {
   const currentIndexRef = useRef(0);
   const scrollToParkingCardRef = useRef(false);
   const scrollToScaleRosterRef = useRef(false);
+  const scrollToScalesCardRef = useRef(false);
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
@@ -1697,11 +1698,8 @@ export default function Dashboard() {
     setIsScaleRosterVisible(false);
     setRegisteredScaleVolunteers([]);
     setRegisteredScaleVolunteersError(null);
-    const scalesIdx = data.findIndex((item) => item.content === 'vigilance_scales');
-    if (scalesIdx >= 0) {
-      requestAnimationFrame(() => scrollToDashboardCard(scalesIdx));
-    }
-  }, [data, scrollToDashboardCard]);
+    scrollToScalesCardRef.current = true;
+  }, []);
 
   const handleOpenParkingFromRoster = useCallback(() => {
     scrollToParkingCardRef.current = true;
@@ -1737,6 +1735,20 @@ export default function Dashboard() {
     scrollToScaleRosterRef.current = false;
     scrollToDashboardCard(rosterIdx, false);
   }, [isScaleRosterVisible, isParkingPanelVisible, data, scrollToDashboardCard]);
+
+  useLayoutEffect(() => {
+    if (isScaleRosterVisible || !scrollToScalesCardRef.current) {
+      return;
+    }
+
+    const scalesIdx = data.findIndex((item) => item.content === 'vigilance_scales');
+    if (scalesIdx < 0) {
+      return;
+    }
+
+    scrollToScalesCardRef.current = false;
+    scrollToDashboardCard(scalesIdx, false);
+  }, [isScaleRosterVisible, data, scrollToDashboardCard]);
 
   useEffect(() => {
     const scalesIdx = data.findIndex((item) => item.content === 'vigilance_scales');
