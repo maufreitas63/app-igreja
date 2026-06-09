@@ -10,7 +10,7 @@ import {
   MAINTENANCE_SCROLL_PROPS,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -37,8 +37,12 @@ const RESOURCE_TYPE_OPTIONS = [
   { value: 'column' as const, label: 'Colunas' },
 ];
 
+const FINANCIAL_GRANT_SEARCH_HINT =
+  'Financeiro: Card Financeiro (dashboard.card.financial) no dashboard; Tela Financeiro (/financial) nos relatórios; RD (/expense-report).';
+
 export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>('profiles');
+  const [grantSearchQuery, setGrantSearchQuery] = useState('');
   const [expandedProfileSection, setExpandedProfileSection] = useState<ProfileDetailSection | null>(
     null
   );
@@ -78,6 +82,19 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
   const busy =
     savingRoleCode !== null || savingGrantKey !== null || savingScaleLeadershipId !== null;
   const hasAssignedProfileRoles = profileRoles.some((role) => role.assigned);
+
+  const filteredRoleGrants = useMemo(() => {
+    const query = grantSearchQuery.trim().toLowerCase();
+
+    if (!query) {
+      return roleGrants;
+    }
+
+    return roleGrants.filter((grant) => {
+      const haystack = `${grant.label} ${grant.resourceKey}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [grantSearchQuery, roleGrants]);
 
   useEffect(() => {
     setExpandedProfileSection(selectedProfile ? 'roles' : null);
@@ -436,13 +453,25 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
               Recursos profiles.* definem quais campos cada papel pode ver e editar em Dados
               cadastrais.
             </Text>
+          ) : resourceTypeFilter === 'screen' ? (
+            <Text style={styles.subsectionHint}>{FINANCIAL_GRANT_SEARCH_HINT}</Text>
           ) : null}
+
+          <TextInput
+            style={styles.grantSearchInput}
+            value={grantSearchQuery}
+            onChangeText={setGrantSearchQuery}
+            placeholder="Buscar recurso (ex.: financeiro, dashboard.card)"
+            placeholderTextColor="#64748B"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
 
           {loadingGrants ? (
             <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
           ) : (
             <View style={styles.grantsList}>
-              {roleGrants.map((grant, index) => {
+              {filteredRoleGrants.map((grant, index) => {
                 const sensitive = isSensitiveAccessResourceKey(grant.resourceKey);
                 const isSaving = savingGrantKey === grant.resourceKey;
 
@@ -496,7 +525,15 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                 );
               })}
               {!roleGrants.length ? (
-                <Text style={styles.panelHint}>Nenhum recurso cadastrado para este tipo.</Text>
+                <Text style={styles.panelHint}>
+                  Nenhum recurso cadastrado para este tipo. Execute scripts/financial-module-access.sql
+                  no Supabase se faltar o Card Financeiro.
+                </Text>
+              ) : filteredRoleGrants.length === 0 ? (
+                <Text style={styles.panelHint}>
+                  Nenhum recurso corresponde à busca. Tente &quot;financeiro&quot; ou
+                  &quot;dashboard.card.financial&quot;.
+                </Text>
               ) : null}
             </View>
           )}
@@ -635,6 +672,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     marginTop: 6,
+    marginBottom: 8,
+  },
+  grantSearchInput: {
+    borderWidth: 1,
+    borderColor: 'rgba(129, 140, 248, 0.35)',
+    borderRadius: 10,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    color: '#E2E8F0',
+    fontSize: 13,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     marginBottom: 8,
   },
   input: {

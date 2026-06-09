@@ -6,7 +6,7 @@ import { getStoredProfileId, repairUserSessionReference } from '@/lib/userSessio
 export { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
 
 export const MAINTENANCE_ACCESS_CONTROL_SQL_HINT =
-  'Execute no Supabase: scripts/access-control-admin-rpc.sql e, se faltar Congregado/Visitantes, scripts/access-control-congregado-visitantes-roles.sql';
+  'Execute no Supabase: scripts/access-control-admin-rpc.sql; se faltar Congregado/Visitantes, scripts/access-control-congregado-visitantes-roles.sql; se o Card Financeiro não aparecer em Papéis, scripts/financial-module-access.sql';
 
 export const EXPECTED_ACCESS_ROLE_CODES = ['congregado', 'visitantes'] as const;
 
