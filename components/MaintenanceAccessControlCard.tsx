@@ -1,6 +1,7 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import {
+  getAccessGrantDashboardScope,
   MAINTENANCE_ACCESS_CONTROL_SQL_HINT,
   isSensitiveAccessResourceKey,
 } from '@/lib/maintenanceAccessControlApi';
@@ -467,6 +468,19 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
             autoCorrect={false}
           />
 
+          {resourceTypeFilter === 'screen' ? (
+            <View style={styles.grantScopeLegend}>
+              <View style={styles.grantScopeLegendItem}>
+                <View style={[styles.grantScopeDot, styles.grantScopeDotMain]} />
+                <Text style={styles.grantScopeLegendText}>Dashboard principal</Text>
+              </View>
+              <View style={styles.grantScopeLegendItem}>
+                <View style={[styles.grantScopeDot, styles.grantScopeDotMaintenance]} />
+                <Text style={styles.grantScopeLegendText}>Dashboard manutenção</Text>
+              </View>
+            </View>
+          ) : null}
+
           {loadingGrants ? (
             <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
           ) : (
@@ -474,12 +488,33 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
               {filteredRoleGrants.map((grant, index) => {
                 const sensitive = isSensitiveAccessResourceKey(grant.resourceKey);
                 const isSaving = savingGrantKey === grant.resourceKey;
+                const dashboardScope = getAccessGrantDashboardScope(
+                  grant.resourceType,
+                  grant.resourceKey
+                );
 
                 return (
                   <View
                     key={grant.resourceId}
                     style={[styles.grantRow, index % 2 === 1 && styles.grantRowAlt]}
                   >
+                    {dashboardScope ? (
+                      <View
+                        style={[
+                          styles.grantScopeDot,
+                          dashboardScope === 'main'
+                            ? styles.grantScopeDotMain
+                            : styles.grantScopeDotMaintenance,
+                        ]}
+                        accessibilityLabel={
+                          dashboardScope === 'main'
+                            ? 'Recurso do dashboard principal'
+                            : 'Recurso do dashboard de manutenção'
+                        }
+                      />
+                    ) : (
+                      <View style={styles.grantScopeDotSpacer} />
+                    )}
                     <View style={styles.grantMain}>
                       <Text
                         style={[styles.grantLabel, sensitive && styles.grantLabelSensitive]}
@@ -840,6 +875,42 @@ const styles = StyleSheet.create({
   },
   filterChipTextActive: {
     color: '#E0E7FF',
+  },
+  grantScopeLegend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 8,
+  },
+  grantScopeLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  grantScopeLegendText: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  grantScopeDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    flexShrink: 0,
+  },
+  grantScopeDotMain: {
+    backgroundColor: '#22D3EE',
+    borderWidth: 1,
+    borderColor: '#67E8F9',
+  },
+  grantScopeDotMaintenance: {
+    backgroundColor: '#E8A317',
+    borderWidth: 1,
+    borderColor: '#D97706',
+  },
+  grantScopeDotSpacer: {
+    width: 10,
+    flexShrink: 0,
   },
   grantRow: {
     flexDirection: 'row',

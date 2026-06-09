@@ -406,3 +406,27 @@ export async function saveRoleGrantAdmin(
 
 export const isSensitiveAccessResourceKey = (resourceKey: string) =>
   resourceKey === 'profiles.cpf' || resourceKey === 'profiles.access_pin';
+
+/** Indica se o recurso de tela pertence ao dashboard principal ou ao de manutenção. */
+export type AccessGrantDashboardScope = 'main' | 'maintenance';
+
+export const getAccessGrantDashboardScope = (
+  resourceType: RoleGrantRecord['resourceType'],
+  resourceKey: string
+): AccessGrantDashboardScope | null => {
+  if (resourceType !== 'screen') {
+    return null;
+  }
+
+  const key = resourceKey.trim();
+
+  if (key === '/dashboard' || key.startsWith('dashboard.card.')) {
+    return 'main';
+  }
+
+  if (key === '/maintenance-dashboard' || key.startsWith('maintenance.card.') || key.startsWith('scale_type.')) {
+    return 'maintenance';
+  }
+
+  return null;
+};
