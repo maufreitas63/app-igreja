@@ -40,6 +40,13 @@ const memberDedupKey = (member: Pick<FamilyMember, 'id' | 'full_name' | 'phone'>
 };
 
 const pickPreferredMember = (current: FamilyMember, candidate: FamilyMember) => {
+  const currentAccepted = current.accepted === true;
+  const candidateAccepted = candidate.accepted === true;
+
+  if (candidateAccepted !== currentAccepted) {
+    return candidateAccepted ? candidate : current;
+  }
+
   const currentPhone = normalizePhone(current.phone).length;
   const candidatePhone = normalizePhone(candidate.phone).length;
 
@@ -53,6 +60,17 @@ const pickPreferredMember = (current: FamilyMember, candidate: FamilyMember) => 
 
   if (!current.birth_date && candidate.birth_date) {
     return candidate;
+  }
+
+  if (!candidate.birth_date && current.birth_date) {
+    return current;
+  }
+
+  const currentCreatedAt = Date.parse(current.created_at ?? '');
+  const candidateCreatedAt = Date.parse(candidate.created_at ?? '');
+
+  if (Number.isFinite(candidateCreatedAt) && Number.isFinite(currentCreatedAt)) {
+    return candidateCreatedAt > currentCreatedAt ? candidate : current;
   }
 
   return current;

@@ -1,4 +1,5 @@
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
+import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { supabase } from '@/lib/supabase';
 
 const FALLBACK_FAMILY_PREFIX = 'IBN';
@@ -51,8 +52,6 @@ export async function formatFamilyId(num: number): Promise<string> {
   const prefix = await getFamilyIdPrefix();
   return buildFamilyId(prefix, num);
 }
-
-const cleanPhone = (value: string | null | undefined) => (value ?? '').replace(/\D/g, '');
 
 /** Erro PostgREST quando a coluna `family_id` ainda nao existe em `profiles`. */
 export const isMissingFamilyIdColumnError = (error: unknown) => {
@@ -114,10 +113,13 @@ const resolveProfileFamilyValue = (profile: ProfileFamilyLookup | null | undefin
   profile?.family_id ?? profile?.codigo_membro ?? null;
 
 async function getProfileFamilyByPhone(phone: string) {
+  const phoneVariants = buildPhoneDbQueryVariants(phone);
+
   const primaryResult = await supabase
     .from('profiles')
     .select('family_id, codigo_membro, full_name')
-    .eq('phone', phone)
+    .in('phone', phoneVariants.length ? phoneVariants : [phone])
+    .limit(1)
     .maybeSingle();
 
   if (!primaryResult.error) {
@@ -131,7 +133,8 @@ async function getProfileFamilyByPhone(phone: string) {
   const legacyResult = await supabase
     .from('profiles')
     .select('codigo_membro, full_name')
-    .eq('phone', phone)
+    .in('phone', phoneVariants.length ? phoneVariants : [phone])
+    .limit(1)
     .maybeSingle();
 
   return legacyResult.data;
@@ -166,32 +169,17 @@ async function findMemberByPhone(phone: string | null | undefined) {
     return null;
   }
 
+  const phoneVariants = buildPhoneDbQueryVariants(phone);
+
   const { data: exactMatch } = await supabase
     .from('members')
     .select('family_id, full_name')
-    .eq('phone', phone)
+    .in('phone', phoneVariants.length ? phoneVariants : [phone])
     .eq('accepted', MEMBER_ACCEPTED_VALUE)
     .limit(1)
     .maybeSingle();
 
-  if (exactMatch?.family_id) {
-    return exactMatch;
-  }
-
-  const normalizedPhone = cleanPhone(phone);
-  if (!normalizedPhone) {
-    return null;
-  }
-
-  const { data: normalizedMatch } = await supabase
-    .from('members')
-    .select('family_id, full_name')
-    .eq('phone', normalizedPhone)
-    .eq('accepted', MEMBER_ACCEPTED_VALUE)
-    .limit(1)
-    .maybeSingle();
-
-  return normalizedMatch ?? null;
+  return exactMatch?.family_id ? exactMatch : null;
 }
 
 async function findMemberByName(fullName: string | null | undefined) {

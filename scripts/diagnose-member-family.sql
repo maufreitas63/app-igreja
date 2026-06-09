@@ -1,22 +1,48 @@
--- Diagnóstico: membro não aparece no grupo familiar após transferência.
--- Ajuste o telefone em params (bloco 1) e execute TODO o arquivo no SQL Editor do Supabase.
+-- Diagnóstico: membro não aparece em Membros Cadastrados / audiência.
+-- Ajuste os telefones em params e execute TODO o arquivo no SQL Editor do Supabase.
 
--- 1) Registros em members (define quem aparece no grupo familiar)
+-- 1) Família do gestor (titular que adiciona o membro)
 with params as (
-  select '19988262617'::text as phone_digits
+  select '19996166161'::text as manager_phone
 ),
 normalized as (
   select
-    phone_digits,
+    manager_phone,
     case
-      when phone_digits like '55%' and length(phone_digits) >= 12
-        then substring(phone_digits from 3)
-      else phone_digits
+      when manager_phone like '55%' and length(manager_phone) >= 12
+        then substring(manager_phone from 3)
+      else manager_phone
     end as phone_local
   from params
 )
 select
-  'members' as source,
+  'manager_profile' as source,
+  p.id,
+  p.full_name,
+  p.phone,
+  p.family_id,
+  p.codigo_membro
+from public.profiles p
+cross join normalized n
+where regexp_replace(coalesce(p.phone, ''), '\D', '', 'g') in (n.manager_phone, n.phone_local, '55' || n.phone_local)
+order by p.updated_at desc nulls last;
+
+-- 2) Membro adicionado (deve estar na mesma family_id do gestor, accepted = true)
+with params as (
+  select '19988262617'::text as member_phone
+),
+normalized as (
+  select
+    member_phone,
+    case
+      when member_phone like '55%' and length(member_phone) >= 12
+        then substring(member_phone from 3)
+      else member_phone
+    end as phone_local
+  from params
+)
+select
+  'member_rows' as source,
   m.id,
   m.full_name,
   m.phone,
@@ -26,26 +52,26 @@ select
   m.created_at
 from public.members m
 cross join normalized n
-where regexp_replace(coalesce(m.phone, ''), '\D', '', 'g') in (n.phone_digits, n.phone_local, '55' || n.phone_local)
+where regexp_replace(coalesce(m.phone, ''), '\D', '', 'g') in (n.member_phone, n.phone_local, '55' || n.phone_local)
    or m.phone ilike '%8826-2617%'
 order by m.family_id, m.created_at desc;
 
--- 2) Registros em profiles (cadastro do usuário)
+-- 3) Perfil do membro adicionado
 with params as (
-  select '19988262617'::text as phone_digits
+  select '19988262617'::text as member_phone
 ),
 normalized as (
   select
-    phone_digits,
+    member_phone,
     case
-      when phone_digits like '55%' and length(phone_digits) >= 12
-        then substring(phone_digits from 3)
-      else phone_digits
+      when member_phone like '55%' and length(member_phone) >= 12
+        then substring(member_phone from 3)
+      else member_phone
     end as phone_local
   from params
 )
 select
-  'profiles' as source,
+  'member_profile' as source,
   p.id,
   p.full_name,
   p.phone,
@@ -53,11 +79,11 @@ select
   p.codigo_membro
 from public.profiles p
 cross join normalized n
-where regexp_replace(coalesce(p.phone, ''), '\D', '', 'g') in (n.phone_digits, n.phone_local, '55' || n.phone_local)
+where regexp_replace(coalesce(p.phone, ''), '\D', '', 'g') in (n.member_phone, n.phone_local, '55' || n.phone_local)
    or p.phone ilike '%8826-2617%'
 order by p.updated_at desc nulls last;
 
--- Correção manual (somente se o diagnóstico mostrar family_id errado ou accepted = false):
+-- Correção manual (somente após conferir a family_id do gestor no bloco 1):
 -- update public.members
---    set family_id = 'IBN0001', accepted = true
+--    set family_id = '<FAMILY_ID_DO_GESTOR>', accepted = true
 --  where id = '<uuid-do-membro-correto>';

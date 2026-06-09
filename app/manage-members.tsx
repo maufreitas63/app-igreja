@@ -42,6 +42,7 @@ import {
   resolveFamilyIdForAuthUser,
   resolveFamilyIdForPhone,
 } from '@/lib/family';
+import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -268,19 +269,36 @@ async function loadManageMembersData(phoneParam: string | null): Promise<ManageM
 
   if (phoneParam) {
     currentFamilyId = await resolveFamilyIdForPhone(phoneParam);
-    const phoneVariants = buildPhoneDbQueryVariants(phoneParam);
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, full_name, phone, birth_date')
-      .in('phone', phoneVariants.length ? phoneVariants : [phoneParam])
-      .limit(1)
-      .maybeSingle();
+    const resolvedProfileId = await resolveProfileIdByPhone(phoneParam);
 
-    if (profile) {
-      profileName = profile.full_name ?? '';
-      profilePhone = profile.phone;
-      profileBirth = profile.birth_date;
-      acceptorProfileId = profile.id ?? null;
+    if (resolvedProfileId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, full_name, phone, birth_date')
+        .eq('id', resolvedProfileId)
+        .maybeSingle();
+
+      if (profile) {
+        profileName = profile.full_name ?? '';
+        profilePhone = profile.phone;
+        profileBirth = profile.birth_date;
+        acceptorProfileId = profile.id ?? null;
+      }
+    } else {
+      const phoneVariants = buildPhoneDbQueryVariants(phoneParam);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, full_name, phone, birth_date')
+        .in('phone', phoneVariants.length ? phoneVariants : [phoneParam])
+        .limit(1)
+        .maybeSingle();
+
+      if (profile) {
+        profileName = profile.full_name ?? '';
+        profilePhone = profile.phone;
+        profileBirth = profile.birth_date;
+        acceptorProfileId = profile.id ?? null;
+      }
     }
   } else {
     const { data: { user } } = await supabase.auth.getUser();
@@ -1038,45 +1056,6 @@ export default function ManageMembers() {
         return;
       }
 
-      const { data: existingAcceptedMembers, error: existingMembersError } = await supabase
-        .from('members')
-        .select('id, full_name, phone, family_id')
-        .ilike('family_id', normalizedFamilyId)
-        .eq('accepted', MEMBER_ACCEPTED_VALUE);
-
-      if (existingMembersError) {
-        throw existingMembersError;
-      }
-
-      const normalizedNewName = normalizeMemberName(normalizedName);
-      const normalizedNewPhone = normalizeMemberPhoneDigits(normalizedPhone);
-      const hasDuplicate = (existingAcceptedMembers ?? []).some((member) => {
-        const sameName = normalizeMemberName(member.full_name) === normalizedNewName;
-        const samePhone = phoneDigitsMatch(member.phone, normalizedPhone);
-
-        if (samePhone) {
-          return true;
-        }
-
-        if (!sameName) {
-          return false;
-        }
-
-        if (!normalizedNewPhone || !normalizeMemberPhoneDigits(member.phone)) {
-          return true;
-        }
-
-        return false;
-      });
-
-      if (hasDuplicate) {
-        Alert.alert(
-          'Membro já existe',
-          'Já existe um membro aceito com este nome ou telefone nesta família. Verifique se é a mesma pessoa antes de cadastrar novamente.'
-        );
-        return;
-      }
-
       const profileIdForAction = await resolveProfileIdForMemberAction(
         {
           full_name: normalizedName,
@@ -1095,16 +1074,54 @@ export default function ManageMembers() {
         }
       }
 
-      const existingMember =
-        linkedProfile || profileIdForAction
-          ? await findMemberForFamilyTransfer(
-              {
-                full_name: linkedProfile?.full_name ?? normalizedName,
-                phone: linkedProfile?.phone ?? normalizedPhone,
-              },
-              familyId
-            )
-          : null;
+      const existingMember = await findMemberForFamilyTransfer(
+        {
+          full_name: linkedProfile?.full_name ?? normalizedName,
+          phone: linkedProfile?.phone ?? normalizedPhone,
+        },
+        normalizedFamilyId
+      );
+
+      const { data: existingAcceptedMembers, error: existingMembersError } = await supabase
+        .from('members')
+        .select('id, full_name, phone, family_id')
+        .ilike('family_id', normalizedFamilyId)
+        .eq('accepted', MEMBER_ACCEPTED_VALUE);
+
+      if (existingMembersError) {
+        throw existingMembersError;
+      }
+
+      const normalizedNewName = normalizeMemberName(normalizedName);
+      const normalizedNewPhone = normalizeMemberPhoneDigits(normalizedPhone);
+      const hasDuplicate =
+        !existingMember &&
+        (existingAcceptedMembers ?? []).some((member) => {
+          const sameName = normalizeMemberName(member.full_name) === normalizedNewName;
+          const samePhone = phoneDigitsMatch(member.phone, normalizedPhone);
+
+          if (samePhone) {
+            return true;
+          }
+
+          if (!sameName) {
+            return false;
+          }
+
+          if (!normalizedNewPhone || !normalizeMemberPhoneDigits(member.phone)) {
+            return true;
+          }
+
+          return false;
+        });
+
+      if (hasDuplicate) {
+        Alert.alert(
+          'Membro já existe',
+          'Já existe um membro aceito com este nome ou telefone nesta família. Verifique se é a mesma pessoa antes de cadastrar novamente.'
+        );
+        return;
+      }
 
       if (existingMember?.id) {
         const existingFamilyId = existingMember.family_id?.trim().toUpperCase() ?? '';
