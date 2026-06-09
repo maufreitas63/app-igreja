@@ -25,6 +25,7 @@ import {
   pickSelfieFromWeb,
   resolveSelfiePreviewUrl,
   resolveSelfieStorageFileName,
+  saveProfileSelfieUrl,
   selectSelfiePictureSize,
   uploadSelfieInput,
 } from '@/lib/selfie';
@@ -671,6 +672,7 @@ export default function ManageProfile() {
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [pictureSize, setPictureSize] = useState<string | null>(null);
   const [selfiePreviewUrl, setSelfiePreviewUrl] = useState<string | null>(null);
+  const [selfiePreviewKey, setSelfiePreviewKey] = useState(0);
   const [isSelfieLoading, setIsSelfieLoading] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<ProfileSectionKey, boolean>>(DEFAULT_EXPANDED_SECTIONS);
   const [vehicles, setVehicles] = useState<ProfileVehicle[]>([]);
@@ -1108,7 +1110,8 @@ export default function ManageProfile() {
       try {
         const url = await resolveSelfiePreviewUrl(String(profile.selfie_url));
         if (active) {
-          setSelfiePreviewUrl((current) => (current?.startsWith('data:') ? current : url));
+          setSelfiePreviewUrl(url);
+          setSelfiePreviewKey(Date.now());
         }
       } finally {
         if (active) {
@@ -1576,14 +1579,19 @@ export default function ManageProfile() {
       setSelfiePreviewUrl(photo);
       setIsSelfieLoading(true);
       const fileName = await uploadSelfieInput(photo);
-      await updateSingleField('selfie_url', fileName);
+      const savedSelfieUrl = await saveProfileSelfieUrl(String(profile?.id), fileName);
 
-      if (previousFileName && previousFileName !== fileName) {
+      setProfile((current) =>
+        current ? { ...current, selfie_url: savedSelfieUrl } : current
+      );
+
+      if (previousFileName && previousFileName !== savedSelfieUrl) {
         await deleteSelfieFile(previousFileName);
       }
 
-      const nextPreview = await resolveSelfiePreviewUrl(fileName);
+      const nextPreview = await resolveSelfiePreviewUrl(savedSelfieUrl);
       setSelfiePreviewUrl(nextPreview ?? photo);
+      setSelfiePreviewKey(Date.now());
       Alert.alert('Sucesso', 'Selfie atualizada.');
     } catch (error) {
       setSelfiePreviewUrl(previousPreview ?? null);
@@ -1593,7 +1601,7 @@ export default function ManageProfile() {
       setIsSelfieLoading(false);
       setScreenMode('FORM');
     }
-  }, [profile?.selfie_url, selfiePreviewUrl, updateSingleField]);
+  }, [profile?.id, profile?.selfie_url, selfiePreviewUrl]);
 
   const proceedToSelfieCapture = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -1768,7 +1776,7 @@ export default function ManageProfile() {
                 <ActivityIndicator color="#10b981" />
               ) : selfiePreviewUrl ? (
                 <Image
-                  key={selfiePreviewUrl}
+                  key={`${selfiePreviewKey}:${selfiePreviewUrl}`}
                   source={{ uri: selfiePreviewUrl }}
                   style={styles.selfieImage}
                   contentFit="contain"

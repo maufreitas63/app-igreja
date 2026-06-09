@@ -1,6 +1,7 @@
 import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
+import { getStoredProfileId } from '@/lib/userSession';
 
 const SELFIE_BUCKET = 'Selfies';
 
@@ -87,6 +88,53 @@ export async function uploadSelfieInput(photo: string) {
   }
 
   return fileName;
+}
+
+/** Grava `profiles.selfie_url` sem passar pelo ACL de colunas do formulário cadastral. */
+export async function saveProfileSelfieUrl(profileId: string, fileName: string): Promise<string> {
+  const trimmedProfileId = profileId.trim();
+  const trimmedFileName = fileName.trim();
+
+  if (!trimmedProfileId || !trimmedFileName) {
+    throw new Error('Não foi possível salvar a selfie: perfil ou arquivo inválido.');
+  }
+
+  const actorProfileId = (await getStoredProfileId()) ?? trimmedProfileId;
+
+  const rpcResult = await supabase.rpc('update_profile_field', {
+    p_profile_id: trimmedProfileId,
+    p_field: 'selfie_url',
+    p_value: trimmedFileName,
+    p_actor_profile_id: actorProfileId,
+  });
+
+  if (!rpcResult.error && rpcResult.data) {
+    const record = rpcResult.data as Record<string, unknown>;
+    const savedValue = record.selfie_url;
+
+    if (typeof savedValue === 'string' && savedValue.trim()) {
+      return savedValue.trim();
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ selfie_url: trimmedFileName })
+    .eq('id', trimmedProfileId)
+    .select('selfie_url')
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  const savedValue = data?.selfie_url;
+
+  if (typeof savedValue !== 'string' || !savedValue.trim()) {
+    throw new Error('Selfie enviada, mas o perfil não confirmou a gravação.');
+  }
+
+  return savedValue.trim();
 }
 
 const parsePictureSize = (size: string) => {

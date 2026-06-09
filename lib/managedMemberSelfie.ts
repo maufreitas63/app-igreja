@@ -3,8 +3,7 @@ import {
   upsertProfileForManagedMember,
   type MemberProfileInput,
 } from '@/lib/memberProfiles';
-import { uploadSelfieInput } from '@/lib/selfie';
-import { supabase } from '@/lib/supabase';
+import { saveProfileSelfieUrl, uploadSelfieInput } from '@/lib/selfie';
 
 export async function attachSelfieToManagedMemberProfile(input: {
   member: MemberProfileInput;
@@ -36,12 +35,5 @@ export async function attachSelfieToManagedMemberProfile(input: {
   }
 
   const fileName = await uploadSelfieInput(photo);
-  const { error } = await supabase
-    .from('profiles')
-    .update({ selfie_url: fileName })
-    .eq('id', profileId);
-
-  if (error) {
-    throw error;
-  }
+  await saveProfileSelfieUrl(profileId, fileName);
 }
