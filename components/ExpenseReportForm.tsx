@@ -1,6 +1,7 @@
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import {
   createEmptyExpenseReportDraftItem,
+  getExpenseReportTodayDateInput,
   parseExpenseReportAmountInputLenient,
   sanitizeExpenseAmountInput,
   type ExpenseReportDraftItem,
@@ -142,12 +143,12 @@ export function ExpenseReportForm({ header, submitting, onSubmit }: Props) {
             ) : null}
           </View>
 
-          <Text style={styles.fieldLabel}>Data (DD/MM/AA)</Text>
+          <Text style={styles.fieldLabel}>Data de preenchimento (DD/MM/AA)</Text>
           <TextInput
             style={styles.input}
             value={item.dateInput}
             onChangeText={(value) => updateItem(item.id, { dateInput: value })}
-            placeholder="04/05/26"
+            placeholder={getExpenseReportTodayDateInput()}
             placeholderTextColor="#94A3B8"
             editable={!submitting}
           />

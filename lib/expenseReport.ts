@@ -260,9 +260,19 @@ export const parseExpenseReportAmountInputLenient = (value: string): number => {
   return parseExpenseReportAmountInput(trimmed) ?? 0;
 };
 
+/** Data local de hoje no formato usado no formulário do RD (DD/MM/AA). */
+export const getExpenseReportTodayDateInput = () => {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const year = String(now.getFullYear()).slice(-2);
+
+  return `${day}/${month}/${year}`;
+};
+
 export const createEmptyExpenseReportDraftItem = (): ExpenseReportDraftItem => ({
   id: createUuid(),
-  dateInput: '',
+  dateInput: getExpenseReportTodayDateInput(),
   description: '',
   amountInput: '',
   receiptImage: null,
