@@ -677,6 +677,15 @@ export default function Dashboard() {
     return selectedEvent?.totem_ativo === true ? 'QR Code — Totem' : 'Check In — QR Code';
   }, [selectedEvent?.requer_quorum, selectedEvent?.totem_ativo]);
 
+  const isQrTotemCardPoolBlue = useMemo(
+    () =>
+      selectedEvent?.totem_ativo === true
+      && selectedEvent.requer_quorum !== true
+      && isSelectedEventToday
+      && hasTotemCheckinConfirmed,
+    [hasTotemCheckinConfirmed, isSelectedEventToday, selectedEvent]
+  );
+
   useEffect(() => {
     async function loadData() {
       setIsProfileLoading(true);
@@ -2827,6 +2836,7 @@ export default function Dashboard() {
                     style={[
                       styles.card,
                       dashboardPanelCardSizeStyle,
+                      item.content === 'qr' && isQrTotemCardPoolBlue && styles.cardQrTotemConfirmed,
                       item.content === 'pastoral' && styles.cardPastoralAction,
                     ]}
                     onPress={() => {
@@ -3111,6 +3121,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.5,
     shadowRadius: 15,
+  },
+  cardQrTotemConfirmed: {
+    backgroundColor: 'rgba(6, 182, 212, 0.48)',
+    borderColor: '#22D3EE',
+    shadowColor: '#06B6D4',
+    shadowOpacity: 0.35,
   },
   eventCard: {
     padding: 20,

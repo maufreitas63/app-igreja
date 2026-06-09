@@ -14,6 +14,7 @@ export function useFamilyPreCheckin(
 ) {
   const gateRequired = eventRequiresPreCheckinBeforeQr(event);
   const quorumEvent = isQuorumCheckInEvent(event);
+  const totemEvent = event?.totem_ativo === true;
   const [hasPreCheckin, setHasPreCheckin] = useState(!gateRequired);
   const [hasTotemCheckinConfirmed, setHasTotemCheckinConfirmed] = useState(false);
   const [gateError, setGateError] = useState<string | null>(null);
@@ -53,10 +54,12 @@ export function useFamilyPreCheckin(
         return;
       }
 
-      if (quorumEvent) {
+      if (quorumEvent || totemEvent) {
         const confirmedResult = await fetchFamilyHasTotemCheckinConfirmed(eventId, familyId);
         setHasTotemCheckinConfirmed(confirmedResult.isConfirmed);
-        setGateError(confirmedResult.errorMessage);
+        if (quorumEvent) {
+          setGateError(confirmedResult.errorMessage);
+        }
         return;
       }
 
@@ -72,7 +75,7 @@ export function useFamilyPreCheckin(
     } finally {
       setLoading(false);
     }
-  }, [event, eventId, familyId, gateRequired, quorumEvent]);
+  }, [event, eventId, familyId, gateRequired, quorumEvent, totemEvent]);
 
   useEffect(() => {
     void refetch();
