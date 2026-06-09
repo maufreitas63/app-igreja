@@ -17,11 +17,14 @@ flowchart LR
   E --> F[PWA publicado em HTTPS]
 ```
 
-| Etapa | Quem executa |
-|-------|----------------|
-| Build | Cloudflare (`npm run build:web`) |
-| Publicação | Cloudflare (pasta `dist/`) |
-| Gatilho | Push na branch `main` |
+| Etapa | Quem executa | Tempo típico |
+|-------|----------------|--------------|
+| Push → fila no Cloudflare | Automático | ~30 s |
+| `npm install` + `npm run build:web` | Cloudflare | **3–10 min** |
+| Propagação do deploy | Cloudflare | ~30 s |
+| Navegador buscar HTML novo | Usuário (revalidação) | Imediato após deploy* |
+
+\* O `public/_headers` manda o HTML a **revalidar sempre**; os JS/CSS com hash continuam em cache. Sem hard refresh, alguns navegadores/PWA instalados ainda podem demorar um pouco — veja seção abaixo.
 
 ---
 
@@ -92,11 +95,14 @@ Pronto. O Cloudflare detecta o push e inicia um novo deploy em alguns segundos.
 
 ### 5. Validar no navegador
 
-Após o deploy:
+Após o deploy aparecer **Success** (não basta o `git push` — aguarde o build):
 
-- Use **Ctrl+Shift+R** (hard refresh) para evitar cache antigo do PWA
-- Teste login, dashboard e o atalho que você alterou
-- Se instalou como PWA, feche e reabra o app ou limpe o cache do site
+1. Abra a URL em aba anônima **ou** use **Ctrl+Shift+R** (hard refresh)
+2. Confira no DevTools → **Network** → documento HTML: cabeçalho `cache-control: public, max-age=0, must-revalidate`
+3. Teste login, dashboard e a tela que você alterou
+4. Se o app está **instalado como PWA**: feche todas as janelas, reabra; em último caso, limpe dados do site no navegador
+
+> **Por que parece “demorar”?** O código só entra em produção depois do build no Cloudflare (vários minutos). O push no Git é só o gatilho — não é publicação instantânea.
 
 ---
 
@@ -127,7 +133,8 @@ Requisito de Node: **≥ 20.19.4** (ver `package.json` e `.nvmrc`).
 | Build falha com erro de memória | `NODE_OPTIONS=--max-old-space-size=6144` no Cloudflare |
 | `git` não encontrado no build | Não afeta o deploy atual; build usa `npm run build:web` |
 | Node 18 / erro Metro | `NODE_VERSION=20` nas variáveis do Cloudflare |
-| PWA antigo após deploy | Hard refresh (Ctrl+Shift+R) ou limpar dados do site |
+| PWA antigo após deploy | Aguardar deploy **Success**; hard refresh (Ctrl+Shift+R); PWA: fechar e reabrir. Headers em `public/_headers` evitam cache longo do HTML |
+| Alteração no ar mas tela antiga | Build ainda em andamento na aba **Deployments**, ou cache local — aba anônima para testar |
 | Ícones aparecem como `?` ou quadrado | Fontes em `assets/fonts/` + `public/_headers`; confira no DevTools → Network se os `.ttf` retornam 200 (não 404) |
 | Push rejeitado | `git pull origin main` antes de novo push |
 | Deploy não dispara | Branch do push deve ser `main` (branch de produção no Pages) |
@@ -152,6 +159,7 @@ Logs completos do build: Cloudflare → **Deployments** → clique no deploy →
 |---------|----------|
 | `package.json` | Script `build:web` → `expo export -p web` |
 | `app.json` | Web: `bundler: metro`, `output: static` |
+| `public/_headers` | Cache: HTML revalida sempre; `/_expo/static` e `/assets` com cache longo |
 | `.nvmrc` | Node 20 |
 | `.env.example` | Variáveis opcionais do Expo |
 | `ARQUITETURA_BLUEPRINT_PWA.md` | Arquitetura do PWA |
