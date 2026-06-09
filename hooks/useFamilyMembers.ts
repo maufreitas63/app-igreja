@@ -36,7 +36,7 @@ export const useFamilyMembers = (familyId: string) => {
     const { data, error: fetchError } = await supabase
       .from('members')
       .select('*')
-      .eq('family_id', normalizedFamilyId)
+      .ilike('family_id', normalizedFamilyId)
       .eq('accepted', MEMBER_ACCEPTED_VALUE)
       .order('full_name');
 
@@ -44,7 +44,11 @@ export const useFamilyMembers = (familyId: string) => {
       setError(fetchError);
       setMembers([]);
     } else {
-      const nextMembers = await applyProfileBirthDates((data as FamilyMember[]) ?? []);
+      const normalizedMembers = ((data as FamilyMember[]) ?? []).map((member) => ({
+        ...member,
+        family_id: normalizeFamilyCode(member.family_id),
+      }));
+      const nextMembers = await applyProfileBirthDates(normalizedMembers);
       setMembers(nextMembers);
     }
 

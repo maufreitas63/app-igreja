@@ -1,4 +1,5 @@
 import type { FamilyMember } from '@/hooks/useFamilyMembers';
+import { normalizeFamilyCode } from '@/lib/family';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { resolveActiveSessionMember } from '@/lib/resolveActiveSessionMember';
@@ -112,7 +113,7 @@ export async function ensureSessionFamilyMemberRecord(
   sessionProfile: SessionProfileAudience,
   sessionProfileName?: string | null
 ): Promise<boolean> {
-  const normalizedFamilyId = familyId.trim();
+  const normalizedFamilyId = normalizeFamilyCode(familyId);
 
   if (!normalizedFamilyId || !sessionProfile.id) {
     return false;
@@ -124,7 +125,7 @@ export async function ensureSessionFamilyMemberRecord(
   const { data: familyMembers, error: fetchError } = await supabase
     .from('members')
     .select('id, full_name, phone, birth_date, relationship, family_id, accepted')
-    .eq('family_id', normalizedFamilyId)
+    .ilike('family_id', normalizedFamilyId)
     .eq('accepted', MEMBER_ACCEPTED_VALUE);
 
   if (fetchError) {

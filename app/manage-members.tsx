@@ -15,7 +15,9 @@ import {
   searchProfilesByNameForMember,
   type ProfileMemberLookup,
 } from '@/lib/lookupProfileByPhoneForMember';
+import { MemberPhotoPicker } from '@/components/MemberPhotoPicker';
 import { confirmDialog } from '@/lib/confirmDialog';
+import { attachSelfieToManagedMemberProfile } from '@/lib/managedMemberSelfie';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { dedupeFamilyMembers } from '@/lib/familyAudienceMembers';
 import { detachMemberFromFamilyWithNewCode } from '@/lib/detachMemberFromFamily';
@@ -306,17 +308,20 @@ async function loadManageMembersData(phoneParam: string | null): Promise<ManageM
     const { data } = await supabase
       .from('members')
       .select('*')
-      .eq('family_id', currentFamilyId)
+      .ilike('family_id', currentFamilyId)
       .order('created_at', { ascending: false });
 
-    return data ?? [];
+    return (data ?? []).map((member) => ({
+      ...member,
+      family_id: normalizeFamilyCode(member.family_id),
+    }));
   };
 
   let membersData = await fetchFamilyMembers();
 
   if (profileName) {
     const alreadyIncluded = membersData.some((member) => {
-      if (member.family_id !== currentFamilyId) {
+      if (normalizeFamilyCode(member.family_id) !== currentFamilyId) {
         return false;
       }
 
@@ -333,7 +338,7 @@ async function loadManageMembersData(phoneParam: string | null): Promise<ManageM
       const { data: existingByPhone } = await supabase
         .from('members')
         .select('id')
-        .eq('family_id', currentFamilyId)
+        .ilike('family_id', currentFamilyId)
         .in('phone', phoneVariants.length ? phoneVariants : [profilePhone.trim()])
         .limit(1)
         .maybeSingle();
@@ -415,6 +420,7 @@ export default function ManageMembers() {
   const [profileLookupMessage, setProfileLookupMessage] = useState<string | null>(null);
   const [linkedProfile, setLinkedProfile] = useState<ProfileMemberLookup | null>(null);
   const [medicalFoodAlerts, setMedicalFoodAlerts] = useState('');
+  const [pendingMemberPhoto, setPendingMemberPhoto] = useState<string | null>(null);
 
   const applyLoadedData = useCallback((data: ManageMembersData) => {
     setFamilyId(data.familyId);
@@ -444,6 +450,7 @@ export default function ManageMembers() {
     setNameSearchResults([]);
     setNameSearchLoading(false);
     setMedicalFoodAlerts('');
+    setPendingMemberPhoto(null);
   }, []);
 
   const applyProfileToMemberForm = useCallback((profile: ProfileMemberLookup) => {
@@ -451,6 +458,7 @@ export default function ManageMembers() {
     setName(profile.full_name?.trim() ?? '');
     setPhone(profile.phone ? formatPhone(profile.phone) : '');
     setBirthDate(profile.birth_date ? formatDisplayDate(profile.birth_date) : '');
+    setPendingMemberPhoto(null);
   }, []);
 
   const profileMatchesSessionAccount = useCallback(
@@ -552,6 +560,35 @@ export default function ManageMembers() {
       clearTimeout(timer);
     };
   }, [editingMemberId, name, profileMatchesSessionAccount]);
+
+  const persistPendingMemberPhoto = useCallback(
+    async (
+      member: {
+        full_name: string;
+        phone: string | null;
+        birth_date: string | null;
+      },
+      profileId?: string | null
+    ): Promise<string | null> => {
+      if (!pendingMemberPhoto) {
+        return null;
+      }
+
+      try {
+        await attachSelfieToManagedMemberProfile({
+          member,
+          familyId,
+          profileId,
+          photo: pendingMemberPhoto,
+        });
+        return null;
+      } catch (photoError) {
+        console.error('Erro ao salvar fotografia do membro:', photoError);
+        return ' A fotografia não pôde ser salva no perfil do membro.';
+      }
+    },
+    [familyId, pendingMemberPhoto]
+  );
 
   const resolveProfileIdForMemberAction = useCallback(
     async (
@@ -943,13 +980,19 @@ export default function ManageMembers() {
     setAdding(true);
     try {
       const birthIso = convertDateToISO(birthDate);
+      const normalizedFamilyId = normalizeFamilyCode(familyId);
       const memberPayload = {
         full_name: normalizedName,
         phone: normalizedPhone,
         birth_date: birthIso,
         relationship: parentesco,
-        family_id: familyId,
+        family_id: normalizedFamilyId,
         accepted: MEMBER_ACCEPTED_VALUE,
+      };
+      const memberProfileInput = {
+        full_name: normalizedName,
+        phone: normalizedPhone,
+        birth_date: birthIso,
       };
 
       if (editingMemberId) {
@@ -998,7 +1041,7 @@ export default function ManageMembers() {
       const { data: existingAcceptedMembers, error: existingMembersError } = await supabase
         .from('members')
         .select('id, full_name, phone, family_id')
-        .eq('family_id', familyId)
+        .ilike('family_id', normalizedFamilyId)
         .eq('accepted', MEMBER_ACCEPTED_VALUE);
 
       if (existingMembersError) {
@@ -1123,6 +1166,11 @@ export default function ManageMembers() {
           linkedProfile?.id ?? profileIdForAction
         );
 
+        const photoWarning = await persistPendingMemberPhoto(
+          memberProfileInput,
+          linkedProfile?.id ?? profileIdForAction
+        );
+
         resetForm();
         await fetchData();
 
@@ -1133,9 +1181,10 @@ export default function ManageMembers() {
 
         Alert.alert(
           'Sucesso',
-          addressInherited
+          (addressInherited
             ? `${transferBaseMessage} O endereço completo da sua família foi copiado para o perfil.`
-            : `${transferBaseMessage} O endereço completo da sua família não pôde ser copiado para o perfil.`
+            : `${transferBaseMessage} O endereço completo da sua família não pôde ser copiado para o perfil.`) +
+            (photoWarning ?? '')
         );
         return;
       }
@@ -1161,13 +1210,19 @@ export default function ManageMembers() {
         linkedProfile?.id ?? profileIdForAction
       );
 
+      const photoWarning = await persistPendingMemberPhoto(
+        memberProfileInput,
+        linkedProfile?.id ?? profileIdForAction
+      );
+
       resetForm();
       await fetchData();
       Alert.alert(
         'Sucesso',
-        addressInherited
+        (addressInherited
           ? 'Membro adicionado! O endereço completo da sua família foi copiado para o perfil.'
-          : 'Membro adicionado, mas o endereço completo da sua família não pôde ser copiado para o perfil.'
+          : 'Membro adicionado, mas o endereço completo da sua família não pôde ser copiado para o perfil.') +
+          (photoWarning ?? '')
       );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro ao adicionar membro.';
@@ -1221,7 +1276,8 @@ export default function ManageMembers() {
                 <Text style={styles.fieldLabel}>Nome completo</Text>
                 {!editingMemberId ? (
                   <Text style={styles.fieldHint}>
-                    Digite o nome para buscar em Perfis (profiles). Os resultados aparecem enquanto você digita.
+                    Digite o nome para buscar em perfis ou digite o nome completo para inserir manualmente um
+                    membro.
                   </Text>
                 ) : null}
                 <TextInput
@@ -1337,6 +1393,14 @@ export default function ManageMembers() {
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
+
+                {!editingMemberId && !linkedProfile ? (
+                  <MemberPhotoPicker
+                    photoUri={pendingMemberPhoto}
+                    onPhotoChange={setPendingMemberPhoto}
+                    disabled={adding || deleting}
+                  />
+                ) : null}
 
                 {editingMemberId ? (
                   <>

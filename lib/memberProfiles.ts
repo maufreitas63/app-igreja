@@ -9,8 +9,6 @@ export type MemberProfileInput = {
   medical_food_alerts?: string | null;
 };
 
-const cleanPhone = (value: string | null | undefined) => (value ?? '').replace(/\D/g, '');
-
 const isMissingFamilyIdColumnError = (error: unknown) => {
   if (!error || typeof error !== 'object') {
     return false;
@@ -138,30 +136,13 @@ async function insertProfileWithFallback(payload: ProfileUpsertPayload) {
 export async function findProfileIdForMember(member: MemberProfileInput) {
   const normalizedName = member.full_name.trim();
   const phone = member.phone?.trim() || null;
-  const normalizedPhone = cleanPhone(phone);
+  const phoneVariants = phone ? buildPhoneDbQueryVariants(phone) : [];
 
-  if (phone) {
+  if (phoneVariants.length) {
     const { data, error } = await supabase
       .from('profiles')
       .select('id')
-      .eq('phone', phone)
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
-
-    if (data?.id) {
-      return data.id;
-    }
-  }
-
-  if (normalizedPhone) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('phone', normalizedPhone)
+      .in('phone', phoneVariants)
       .limit(1)
       .maybeSingle();
 
