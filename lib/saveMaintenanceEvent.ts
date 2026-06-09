@@ -1,4 +1,9 @@
-import type { MaintenanceEventPayload } from '@/lib/maintenanceEventForm';
+import {
+  shiftMaintenanceEventDateIso,
+  validateMaintenanceEventForm,
+  type MaintenanceEventFormState,
+  type MaintenanceEventPayload,
+} from '@/lib/maintenanceEventForm';
 import {
   ensureEventsOptionalColumns,
   isMissingRequerQuorumColumnError,
@@ -96,6 +101,65 @@ export const saveMaintenanceEvent = async (
   }
 
   return { ok: true };
+};
+
+export type ReplicateMaintenanceEventResult =
+  | { ok: true; createdCount: number }
+  | { ok: false; message: string; code?: string };
+
+export const replicateMaintenanceEventForDays = async (
+  form: MaintenanceEventFormState,
+  dayCount = 7
+): Promise<ReplicateMaintenanceEventResult> => {
+  const validation = validateMaintenanceEventForm(form);
+
+  if (!validation.ok) {
+    return { ok: false, message: validation.message };
+  }
+
+  if (!validation.payload.event_date) {
+    return { ok: false, message: 'Informe a data do evento antes de replicar.' };
+  }
+
+  await ensureEventsOptionalColumns();
+
+  let createdCount = 0;
+
+  for (let dayOffset = 1; dayOffset <= dayCount; dayOffset += 1) {
+    const shiftedDate = shiftMaintenanceEventDateIso(validation.payload.event_date, dayOffset);
+
+    if (!shiftedDate) {
+      return {
+        ok: false,
+        message: `Não foi possível calcular a data +${dayOffset} dia(s).`,
+      };
+    }
+
+    const payload: MaintenanceEventPayload = {
+      ...validation.payload,
+      event_date: shiftedDate,
+      is_locked: true,
+    };
+
+    const { error } = await saveEventWithOptionalColumnFallback('insert', null, payload);
+
+    if (error) {
+      const partialMessage =
+        createdCount > 0
+          ? `${createdCount} de ${dayCount} eventos criados antes do erro: ${error.message}`
+          : error.message;
+
+      return {
+        ok: false,
+        message: partialMessage,
+        code: error.code,
+      };
+    }
+
+    createdCount += 1;
+  }
+
+  return { ok: true, createdCount };
 };
 
 export type DeleteMaintenanceEventResult =

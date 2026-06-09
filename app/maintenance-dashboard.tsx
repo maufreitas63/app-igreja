@@ -62,8 +62,13 @@ import {
   UI_RADIUS,
   UI_SPACING,
 } from '@/lib/uiTokens';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
-import { deleteMaintenanceEvent, saveMaintenanceEvent } from '@/lib/saveMaintenanceEvent';
+import {
+  deleteMaintenanceEvent,
+  replicateMaintenanceEventForDays,
+  saveMaintenanceEvent,
+} from '@/lib/saveMaintenanceEvent';
 import { useMaintenanceEvents, type MaintenanceEvent } from '@/hooks/useMaintenanceEvents';
 import { useQuorumRegistry } from '@/hooks/useQuorumRegistry';
 import { FontAwesome } from '@expo/vector-icons';
@@ -267,6 +272,7 @@ export default function MaintenanceDashboard() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [form, setForm] = useState<MaintenanceEventFormState>(emptyMaintenanceEventForm);
   const [isSaving, setIsSaving] = useState(false);
+  const [isReplicatingSeven, setIsReplicatingSeven] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteConfirmPending, setDeleteConfirmPending] = useState(false);
   /** ID/nome fixados ao abrir a confirmação — evita apagar outro evento se a seleção mudar. */
@@ -291,7 +297,7 @@ export default function MaintenanceDashboard() {
     !isQuorumRegistryTableAvailable()
   );
 
-  const isBusy = isSaving || isDeleting;
+  const isBusy = isSaving || isDeleting || isReplicatingSeven;
 
   const isCreating = selectedEventId === '__new__';
 
@@ -505,6 +511,74 @@ export default function MaintenanceDashboard() {
       setIsSaving(false);
     }
   }, [closeEditor, form, refetch, selectedEventId]);
+
+  const handleReplicateSevenDays = useCallback(async () => {
+    if (isCreating || !selectedEventId) {
+      return;
+    }
+
+    const validation = validateMaintenanceEventForm(form);
+    if (!validation.ok) {
+      setStatusMessage(validation.message);
+      Toast.show({
+        type: 'error',
+        text1: 'Revise o formulário',
+        text2: validation.message,
+        visibilityTime: 5000,
+      });
+      return;
+    }
+
+    const confirmed = await confirmDialog(
+      'Replicar evento (+7)',
+      'Criar 7 cópias nos próximos dias com os mesmos dados deste formulário? Todas ficarão como rascunho.',
+      'Criar 7',
+      'Cancelar'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    Keyboard.dismiss();
+    setStatusMessage(null);
+    setIsReplicatingSeven(true);
+
+    try {
+      const result = await replicateMaintenanceEventForDays(form, 7);
+
+      if (!result.ok) {
+        const message = getSaveErrorMessage({ message: result.message, code: result.code });
+        setStatusMessage(message);
+        Toast.show({
+          type: 'error',
+          text1: 'Erro ao replicar',
+          text2: message,
+          visibilityTime: 6000,
+        });
+        return;
+      }
+
+      await refetch();
+      Toast.show({
+        type: 'success',
+        text1: 'Eventos replicados',
+        text2: `${result.createdCount} rascunhos criados para os próximos 7 dias.`,
+      });
+    } catch (replicateError) {
+      console.error('Erro ao replicar evento:', replicateError);
+      const message = getSaveErrorMessage(replicateError);
+      setStatusMessage(message);
+      Toast.show({
+        type: 'error',
+        text1: 'Erro ao replicar',
+        text2: message,
+        visibilityTime: 6000,
+      });
+    } finally {
+      setIsReplicatingSeven(false);
+    }
+  }, [form, isCreating, refetch, selectedEventId]);
 
   const performDelete = useCallback(async () => {
     const eventId = deleteTargetId;
@@ -1230,6 +1304,30 @@ export default function MaintenanceDashboard() {
                   />
                 </View>
 
+                {!isCreating ? (
+                  <View style={styles.replicateSevenSection}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.replicateSevenButton,
+                        (pressed || isReplicatingSeven) && styles.actionPressed,
+                      ]}
+                      onPress={() => void handleReplicateSevenDays()}
+                      disabled={isBusy}
+                      accessibilityRole="button"
+                      accessibilityLabel="Replicar evento para os próximos 7 dias como rascunho"
+                    >
+                      {isReplicatingSeven ? (
+                        <ActivityIndicator color="#C7D2FE" size="small" />
+                      ) : (
+                        <Text style={styles.replicateSevenButtonText}>+7</Text>
+                      )}
+                    </Pressable>
+                    <Text style={styles.replicateSevenHint}>
+                      Cria 7 cópias nos dias seguintes com os mesmos parâmetros, sempre em rascunho.
+                    </Text>
+                  </View>
+                ) : null}
+
                 {form.requerQuorum && !isCreating ? (
                   <QuorumCheckinRegistryTable
                     rows={quorumRegistryRows}
@@ -1921,6 +2019,33 @@ const styles = StyleSheet.create({
   publishHint: {
     color: '#94A3B8',
     fontSize: 12,
+  },
+  replicateSevenSection: {
+    gap: 6,
+    marginTop: 4,
+  },
+  replicateSevenButton: {
+    alignSelf: 'flex-start',
+    minWidth: 56,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(129, 140, 248, 0.55)',
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  replicateSevenButtonText: {
+    color: '#E0E7FF',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  replicateSevenHint: {
+    color: '#94A3B8',
+    fontSize: 12,
+    lineHeight: 17,
   },
   editorFooter: {
     paddingHorizontal: 20,

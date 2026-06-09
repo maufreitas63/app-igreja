@@ -257,6 +257,35 @@ export const validateMaintenanceEventForm = (
   return { ok: true, payload };
 };
 
+export const shiftMaintenanceEventDateIso = (
+  isoValue: string | null | undefined,
+  dayOffset: number
+): string | null => {
+  if (!isoValue || dayOffset === 0) {
+    return isoValue ?? null;
+  }
+
+  const parts = parseIsoEventParts(isoValue);
+  if (!parts) {
+    return null;
+  }
+
+  const year = Number.parseInt(parts.year, 10);
+  const month = Number.parseInt(parts.month, 10);
+  const day = Number.parseInt(parts.day, 10);
+  const hour = Number.parseInt(parts.hour, 10);
+  const minute = Number.parseInt(parts.minute, 10);
+
+  if ([year, month, day, hour, minute].some(Number.isNaN)) {
+    return null;
+  }
+
+  const shifted = new Date(year, month - 1, day, hour, minute, 0);
+  shifted.setDate(shifted.getDate() + dayOffset);
+
+  return `${shifted.getFullYear()}-${pad2(shifted.getMonth() + 1)}-${pad2(shifted.getDate())}T${pad2(shifted.getHours())}:${pad2(shifted.getMinutes())}:00`;
+};
+
 export const buildMaintenanceEventPayload = (form: MaintenanceEventFormState) => {
   const name = form.name.trim();
   const eventLocal = form.eventLocal.trim();
