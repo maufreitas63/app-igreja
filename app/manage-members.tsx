@@ -10,6 +10,7 @@ import { formatShortName } from '@/lib/formatShortName';
 import {
   buildProfileInFamilyMessage,
   canSearchProfileByName,
+  hasAcceptedMemberInFamily,
   profileBelongsToFamily,
   searchProfilesByNameForMember,
   type ProfileMemberLookup,
@@ -20,7 +21,7 @@ import { dedupeFamilyMembers } from '@/lib/familyAudienceMembers';
 import { detachMemberFromFamilyWithNewCode } from '@/lib/detachMemberFromFamily';
 import {
   applyNewFamilyCodeForRejectedMember,
-  findMemberForProfileUnfiltered,
+  findMemberForFamilyTransfer,
 } from '@/lib/rejectedMemberFamilyCode';
 import { MaterialIcons } from '@expo/vector-icons';
 import { acceptMemberIntoFamily } from '@/lib/acceptMemberIntoFamily';
@@ -33,7 +34,12 @@ import { syncManagedMemberProfileFamilyWithFallback } from '@/lib/syncManagedMem
 import { applyProfileBirthDates } from '../lib/profileBirthDates';
 import { supabase } from '@/lib/supabase';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
-import { resolveCurrentFamilyId, resolveFamilyIdForAuthUser, resolveFamilyIdForPhone } from '@/lib/family';
+import {
+  normalizeFamilyCode,
+  resolveCurrentFamilyId,
+  resolveFamilyIdForAuthUser,
+  resolveFamilyIdForPhone,
+} from '@/lib/family';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -292,6 +298,8 @@ async function loadManageMembersData(phoneParam: string | null): Promise<ManageM
       }
     }
   }
+
+  currentFamilyId = normalizeFamilyCode(currentFamilyId);
 
   /** Lista todos os membros (incl. accepted false/null) para reconhecimento familiar. */
   const fetchFamilyMembers = async () => {
@@ -1036,16 +1044,23 @@ export default function ManageMembers() {
       );
 
       if (linkedProfile && profileBelongsToFamily(linkedProfile, familyId)) {
-        Alert.alert('Membro já no grupo familiar', buildProfileInFamilyMessage(linkedProfile));
-        return;
+        const alreadyInFamilyGroup = await hasAcceptedMemberInFamily(linkedProfile, familyId);
+
+        if (alreadyInFamilyGroup) {
+          Alert.alert('Membro já no grupo familiar', buildProfileInFamilyMessage(linkedProfile));
+          return;
+        }
       }
 
       const existingMember =
         linkedProfile || profileIdForAction
-          ? await findMemberForProfileUnfiltered({
-              full_name: linkedProfile?.full_name ?? normalizedName,
-              phone: linkedProfile?.phone ?? normalizedPhone,
-            })
+          ? await findMemberForFamilyTransfer(
+              {
+                full_name: linkedProfile?.full_name ?? normalizedName,
+                phone: linkedProfile?.phone ?? normalizedPhone,
+              },
+              familyId
+            )
           : null;
 
       if (existingMember?.id) {

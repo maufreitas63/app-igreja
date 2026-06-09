@@ -41,18 +41,24 @@ function Wait-MetroPort([int] $TargetPort, [int] $TimeoutSeconds) {
 }
 
 function Start-MetroLan {
-  $npx = Get-Command npx -ErrorAction SilentlyContinue
-  if (-not $npx) {
-    Write-Log 'ERROR: npx not found in PATH.'
-    return
+  # Get-Command npx on Windows often resolves to npx.ps1; Start-Process cannot
+  # run .ps1 files and opens them in the default editor instead.
+  $npxCmd = Get-Command npx.cmd -ErrorAction SilentlyContinue
+  if ($npxCmd) {
+    Write-Log "Starting Metro: npx.cmd expo start --host lan --port $Port (timeout ${StartupTimeoutSeconds}s)"
+    Start-Process `
+      -FilePath $npxCmd.Source `
+      -ArgumentList @('expo', 'start', '--host', 'lan', '--port', "$Port") `
+      -WorkingDirectory $ProjectRoot `
+      -WindowStyle Minimized
+  } else {
+    Write-Log "Starting Metro: cmd /c npx expo start --host lan --port $Port (timeout ${StartupTimeoutSeconds}s)"
+    Start-Process `
+      -FilePath 'cmd.exe' `
+      -ArgumentList @('/c', 'npx', 'expo', 'start', '--host', 'lan', '--port', "$Port") `
+      -WorkingDirectory $ProjectRoot `
+      -WindowStyle Minimized
   }
-
-  Write-Log "Starting Metro: npx expo start --host lan --port $Port (timeout ${StartupTimeoutSeconds}s)"
-  Start-Process `
-    -FilePath $npx.Source `
-    -ArgumentList @('expo', 'start', '--host', 'lan', '--port', "$Port") `
-    -WorkingDirectory $ProjectRoot `
-    -WindowStyle Minimized
 
   if (Wait-MetroPort -TargetPort $Port -TimeoutSeconds $StartupTimeoutSeconds) {
     Write-Log "Metro is listening on port $Port."

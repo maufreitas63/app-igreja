@@ -1,3 +1,5 @@
+import { normalizeFamilyCode } from '@/lib/family';
+import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { supabase } from '@/lib/supabase';
 
@@ -21,15 +23,56 @@ export const canSearchProfileByPhone = (phoneInput: string) =>
 export const canSearchProfileByName = (nameInput: string) =>
   nameInput.trim().length >= MIN_NAME_CHARS_TO_SEARCH;
 
-/** Perfil já vinculado ao código familiar atual (family_id ou codigo_membro). */
+/** Perfil com código familiar igual ao da tela (somente metadado em `profiles`). */
 export const profileBelongsToFamily = (
   profile: Pick<ProfileMemberLookup, 'family_id'>,
   familyId: string
 ): boolean => {
-  const target = familyId.trim();
-  const profileFamily = profile.family_id?.trim() ?? '';
+  const target = normalizeFamilyCode(familyId);
+  const profileFamily = normalizeFamilyCode(profile.family_id);
   return Boolean(target && profileFamily && profileFamily === target);
 };
+
+/** Verifica se já existe membro aceito na família (lista e audiência do app). */
+export async function hasAcceptedMemberInFamily(
+  profile: Pick<ProfileMemberLookup, 'full_name' | 'phone'>,
+  familyId: string
+): Promise<boolean> {
+  const target = normalizeFamilyCode(familyId);
+  const phoneVariants = profile.phone?.trim() ? buildPhoneDbQueryVariants(profile.phone) : [];
+
+  if (phoneVariants.length) {
+    const { data, error } = await supabase
+      .from('members')
+      .select('id')
+      .eq('family_id', target)
+      .eq('accepted', MEMBER_ACCEPTED_VALUE)
+      .in('phone', phoneVariants)
+      .limit(1);
+
+    if (!error && data?.length) {
+      return true;
+    }
+  }
+
+  const fullName = profile.full_name?.trim();
+
+  if (fullName) {
+    const { data, error } = await supabase
+      .from('members')
+      .select('id')
+      .eq('family_id', target)
+      .eq('accepted', MEMBER_ACCEPTED_VALUE)
+      .ilike('full_name', fullName)
+      .limit(1);
+
+    if (!error && data?.length) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 export const buildProfileInFamilyMessage = (profile: ProfileMemberLookup) => {
   const name = profile.full_name?.trim() || 'Este usuário';

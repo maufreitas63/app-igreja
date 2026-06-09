@@ -1,3 +1,4 @@
+import { normalizeFamilyCode } from '@/lib/family';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { applyProfileBirthDates } from '../lib/profileBirthDates';
 import { supabase } from '@/lib/supabase';
@@ -30,10 +31,12 @@ export const useFamilyMembers = (familyId: string) => {
     setLoading(true);
     setError(null);
 
+    const normalizedFamilyId = normalizeFamilyCode(familyId);
+
     const { data, error: fetchError } = await supabase
       .from('members')
       .select('*')
-      .eq('family_id', familyId)
+      .eq('family_id', normalizedFamilyId)
       .eq('accepted', MEMBER_ACCEPTED_VALUE)
       .order('full_name');
 

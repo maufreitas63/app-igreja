@@ -5,6 +5,7 @@ import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { useDashboardSelectedEvent, useEventRegistrationsByStatus } from '@/hooks';
 import { useFamilyPreCheckin } from '@/hooks/useFamilyPreCheckin';
 import { getAppParameterValue } from '@/lib/appParameters';
@@ -48,7 +49,6 @@ import {
 import { normalizePhoneForWhatsApp, openMemberWhatsapp } from '@/lib/whatsapp';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Picker } from '@react-native-picker/picker';
 import * as Linking from 'expo-linking';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -2255,24 +2255,12 @@ export default function Dashboard() {
 
                     <View style={styles.birthdaysFilterSection}>
                       <Text style={styles.birthdaysFilterLabel}>Selecionar Mês</Text>
-                      <View style={styles.birthdaysPickerWrapper}>
-                        <Picker
-                          selectedValue={selectedBirthdayMonth}
-                          onValueChange={(value) => setSelectedBirthdayMonth(String(value))}
-                          dropdownIconColor="#F8FAFC"
-                          style={styles.birthdaysPicker}
-                          itemStyle={styles.birthdaysPickerItem}
-                          mode="dropdown"
-                        >
-                          {BIRTHDAY_MONTHS.map((monthOption) => (
-                            <Picker.Item
-                              key={monthOption.value}
-                              label={monthOption.label}
-                              value={monthOption.value}
-                            />
-                          ))}
-                        </Picker>
-                      </View>
+                      <DropdownSelect
+                        options={BIRTHDAY_MONTHS}
+                        selectedValue={selectedBirthdayMonth}
+                        onValueChange={setSelectedBirthdayMonth}
+                        modalTitle="Selecionar mês"
+                      />
                     </View>
 
                     <Text style={styles.birthdaysSummaryText}>
@@ -4502,27 +4490,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     flexShrink: 0,
-  },
-  birthdaysPickerWrapper: {
-    flex: 1,
-    minWidth: 0,
-    height: 36,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
-    overflow: 'hidden',
-    justifyContent: 'center',
-  },
-  birthdaysPicker: {
-    color: '#F8FAFC',
-    width: '100%',
-    height: 36,
-    ...(Platform.OS === 'android' ? { marginTop: -2 } : null),
-  },
-  birthdaysPickerItem: {
-    color: '#F8FAFC',
-    fontSize: 14,
   },
   birthdaysSummaryText: {
     color: '#DBEAFE',

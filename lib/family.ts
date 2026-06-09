@@ -43,6 +43,10 @@ export function buildFamilyId(prefix: string, num: number): string {
 /** Valor default exibido antes de carregar `parm_entidade` (fallback IBN). */
 export const DEFAULT_FAMILY_ID = `${FALLBACK_FAMILY_PREFIX}0001`;
 
+/** Código familiar canônico (ex.: `ibn0001` → `IBN0001`). */
+export const normalizeFamilyCode = (value: string | null | undefined): string =>
+  (value ?? '').trim().toUpperCase();
+
 export async function formatFamilyId(num: number): Promise<string> {
   const prefix = await getFamilyIdPrefix();
   return buildFamilyId(prefix, num);
@@ -260,17 +264,17 @@ export async function resolveFamilyIdForPhone(phone: string | null | undefined) 
 
   const profileFamilyId = resolveProfileFamilyValue(profile);
   if (profileFamilyId) {
-    return profileFamilyId;
+    return normalizeFamilyCode(profileFamilyId);
   }
 
   const memberByPhone = await findMemberByPhone(phone);
   if (memberByPhone?.family_id) {
-    return memberByPhone.family_id;
+    return normalizeFamilyCode(memberByPhone.family_id);
   }
 
   const memberByName = await findMemberByName(profile?.full_name);
   if (memberByName?.family_id) {
-    return memberByName.family_id;
+    return normalizeFamilyCode(memberByName.family_id);
   }
 
   return resolveCurrentFamilyId();
@@ -285,17 +289,17 @@ export async function resolveFamilyIdForAuthUser(authUserId: string | null | und
 
   const profileFamilyId = resolveProfileFamilyValue(profile);
   if (profileFamilyId) {
-    return profileFamilyId;
+    return normalizeFamilyCode(profileFamilyId);
   }
 
   const memberByPhone = await findMemberByPhone(profile?.phone);
   if (memberByPhone?.family_id) {
-    return memberByPhone.family_id;
+    return normalizeFamilyCode(memberByPhone.family_id);
   }
 
   const memberByName = await findMemberByName(profile?.full_name);
   if (memberByName?.family_id) {
-    return memberByName.family_id;
+    return normalizeFamilyCode(memberByName.family_id);
   }
 
   return resolveCurrentFamilyId();

@@ -2,6 +2,7 @@ import {
   detachMemberFromFamilyWithNewCode,
   type MemberForFamilyReassign,
 } from '@/lib/detachMemberFromFamily';
+import { normalizeFamilyCode } from '@/lib/family';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { upsertProfileForManagedMember } from '@/lib/memberProfiles';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
@@ -43,6 +44,74 @@ export async function findMemberForProfileUnfiltered(profile: {
 
     if (data) {
       return data as MemberForFamilyReassign;
+    }
+  }
+
+  return null;
+}
+
+const rankMemberForFamilyTransfer = (
+  left: MemberForFamilyReassign,
+  right: MemberForFamilyReassign,
+  targetFamilyId: string
+) => {
+  const leftFamily = normalizeFamilyCode(left.family_id);
+  const rightFamily = normalizeFamilyCode(right.family_id);
+  const leftFromOtherFamily = leftFamily !== targetFamilyId ? 0 : 1;
+  const rightFromOtherFamily = rightFamily !== targetFamilyId ? 0 : 1;
+
+  if (leftFromOtherFamily !== rightFromOtherFamily) {
+    return leftFromOtherFamily - rightFromOtherFamily;
+  }
+
+  const leftAccepted = left.accepted === true ? 0 : 1;
+  const rightAccepted = right.accepted === true ? 0 : 1;
+
+  if (leftAccepted !== rightAccepted) {
+    return leftAccepted - rightAccepted;
+  }
+
+  return 0;
+};
+
+/** Busca o registro certo em `members` para transferir/aceitar na família de destino. */
+export async function findMemberForFamilyTransfer(
+  profile: {
+    full_name?: string | null;
+    phone?: string | null;
+  },
+  targetFamilyId: string
+): Promise<MemberForFamilyReassign | null> {
+  const phone = profile.phone?.trim() || null;
+  const fullName = profile.full_name?.trim() || null;
+  const phoneVariants = phone ? buildPhoneDbQueryVariants(phone) : [];
+  const target = normalizeFamilyCode(targetFamilyId);
+
+  if (phoneVariants.length) {
+    const { data } = await supabase
+      .from('members')
+      .select('id, full_name, phone, birth_date, family_id, accepted')
+      .in('phone', phoneVariants);
+
+    const rows = ((data ?? []) as MemberForFamilyReassign[]).slice();
+
+    if (rows.length) {
+      rows.sort((left, right) => rankMemberForFamilyTransfer(left, right, target));
+      return rows[0];
+    }
+  }
+
+  if (fullName) {
+    const { data } = await supabase
+      .from('members')
+      .select('id, full_name, phone, birth_date, family_id, accepted')
+      .ilike('full_name', fullName);
+
+    const rows = ((data ?? []) as MemberForFamilyReassign[]).slice();
+
+    if (rows.length) {
+      rows.sort((left, right) => rankMemberForFamilyTransfer(left, right, target));
+      return rows[0];
     }
   }
 
