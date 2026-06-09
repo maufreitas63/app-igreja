@@ -1375,8 +1375,7 @@ export default function ManageMembers() {
                   maxLength={10}
                   placeholderTextColor="#64748b"
                   value={birthDate}
-                  onBlur={() => setBirthDate((currentValue) => formatDate(currentValue))}
-                  onChangeText={setBirthDate}
+                  onChangeText={(value) => setBirthDate(formatDate(value))}
                 />
 
                 <Text style={styles.fieldLabel}>Grau de parentesco</Text>
