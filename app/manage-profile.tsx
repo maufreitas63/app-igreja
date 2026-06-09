@@ -41,6 +41,7 @@ import {
   searchFamiliesByMemberName,
   type FamilySearchByNameResult,
 } from '@/lib/linkProfileFamily';
+import { normalizeFamilyCode } from '@/lib/family';
 import {
   buildDashboardFamilyAgendaRoute,
   buildRegisterRoute,
@@ -804,6 +805,14 @@ export default function ManageProfile() {
     return raw ? String(raw).trim() : '';
   }, [profile?.family_id, profile?.codigo_membro]);
 
+  const isSearchedFamilySameAsCurrent = useMemo(() => {
+    if (!searchedFamilyId || !currentFamilyId) {
+      return false;
+    }
+
+    return normalizeFamilyCode(searchedFamilyId) === normalizeFamilyCode(currentFamilyId);
+  }, [currentFamilyId, searchedFamilyId]);
+
   const {
     members: familyMembers,
     loading: loadingFamilyMembers,
@@ -1099,7 +1108,7 @@ export default function ManageProfile() {
       try {
         const url = await resolveSelfiePreviewUrl(String(profile.selfie_url));
         if (active) {
-          setSelfiePreviewUrl(url);
+          setSelfiePreviewUrl((current) => (current?.startsWith('data:') ? current : url));
         }
       } finally {
         if (active) {
@@ -1384,12 +1393,21 @@ export default function ManageProfile() {
     setIsVehicleEditorVisible(true);
   }, []);
 
-  const handleSelectFamilyNameSearchResult = useCallback((result: FamilySearchByNameResult) => {
-    setSearchedFamilyId(result.familyId);
-    setFamilySearchInput(result.fullName);
-    setFamilyNameSearchResults([]);
-    setSelectedFamilyMemberId(null);
-  }, []);
+  const handleSelectFamilyNameSearchResult = useCallback(
+    (result: FamilySearchByNameResult) => {
+      setSearchedFamilyId(result.familyId);
+      setFamilySearchInput(result.fullName);
+      setFamilyNameSearchResults([]);
+      setSelectedFamilyMemberId(null);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (isSearchedFamilySameAsCurrent) {
+      setSelectedFamilyMemberId(null);
+    }
+  }, [isSearchedFamilySameAsCurrent]);
 
   useEffect(() => {
     const query = familySearchInput.trim();
@@ -1555,6 +1573,7 @@ export default function ManageProfile() {
     );
 
     try {
+      setSelfiePreviewUrl(photo);
       setIsSelfieLoading(true);
       const fileName = await uploadSelfieInput(photo);
       await updateSingleField('selfie_url', fileName);
@@ -1748,7 +1767,13 @@ export default function ManageProfile() {
               {isSelfieLoading ? (
                 <ActivityIndicator color="#10b981" />
               ) : selfiePreviewUrl ? (
-                <Image source={{ uri: selfiePreviewUrl }} style={styles.selfieImage} contentFit="contain" />
+                <Image
+                  key={selfiePreviewUrl}
+                  source={{ uri: selfiePreviewUrl }}
+                  style={styles.selfieImage}
+                  contentFit="contain"
+                  cachePolicy="none"
+                />
               ) : (
                 <View style={styles.selfiePlaceholder}>
                   <MaterialIcons name="account-circle" size={68} color="#64748b" />
@@ -2245,7 +2270,12 @@ export default function ManageProfile() {
                   ) : null}
 
                   <Text style={styles.familyMembersTitle}>Membros da família</Text>
-                  {searchedFamilyId && familyMembers.length > 0 ? (
+                  {isSearchedFamilySameAsCurrent ? (
+                    <Text style={styles.familyMembersHint}>
+                      Esta é a sua família atual. Não é possível solicitar vínculo com membros já
+                      vinculados a você.
+                    </Text>
+                  ) : searchedFamilyId && familyMembers.length > 0 ? (
                     <Text style={styles.familyMembersHint}>
                       Selecione um membro para solicitar o vínculo familiar.
                     </Text>
@@ -2262,13 +2292,25 @@ export default function ManageProfile() {
                   ) : (
                     familyMembers.map((member) => {
                       const isSelected = selectedFamilyMemberId === member.id;
+                      const memberRowDisabled = isSearchedFamilySameAsCurrent;
 
                       return (
                         <TouchableOpacity
                           key={member.id}
-                          style={[styles.familyMemberRow, isSelected && styles.familyMemberRowSelected]}
-                          onPress={() => setSelectedFamilyMemberId(member.id)}
-                          activeOpacity={0.85}
+                          style={[
+                            styles.familyMemberRow,
+                            isSelected && styles.familyMemberRowSelected,
+                            memberRowDisabled && styles.familyMemberRowDisabled,
+                          ]}
+                          onPress={() => {
+                            if (memberRowDisabled) {
+                              return;
+                            }
+
+                            setSelectedFamilyMemberId(member.id);
+                          }}
+                          activeOpacity={memberRowDisabled ? 1 : 0.85}
+                          disabled={memberRowDisabled}
                         >
                           <View style={styles.familyMemberInfo}>
                             <Text style={styles.familyMemberName} numberOfLines={1}>
@@ -2297,11 +2339,19 @@ export default function ManageProfile() {
                   <TouchableOpacity
                     style={[
                       styles.familyManageButton,
-                      (!searchedFamilyId || !selectedFamilyMemberId || requestingFamilyLink) &&
+                      (!searchedFamilyId ||
+                        !selectedFamilyMemberId ||
+                        requestingFamilyLink ||
+                        isSearchedFamilySameAsCurrent) &&
                         styles.disabledButton,
                     ]}
                     onPress={() => void handleRequestFamilyLink()}
-                    disabled={!searchedFamilyId || !selectedFamilyMemberId || requestingFamilyLink}
+                    disabled={
+                      !searchedFamilyId ||
+                      !selectedFamilyMemberId ||
+                      requestingFamilyLink ||
+                      isSearchedFamilySameAsCurrent
+                    }
                     activeOpacity={0.85}
                   >
                     {requestingFamilyLink ? (
@@ -2790,6 +2840,9 @@ const styles = StyleSheet.create({
   familyMemberRowSelected: {
     backgroundColor: 'rgba(16, 185, 129, 0.12)',
     borderBottomColor: 'rgba(16, 185, 129, 0.35)',
+  },
+  familyMemberRowDisabled: {
+    opacity: 0.45,
   },
   familyMemberInfo: {
     flex: 1,

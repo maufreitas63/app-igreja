@@ -21,6 +21,7 @@ import { findAcceptedMemberDuplicateInFamily } from '@/lib/familyMemberMatch';
 import { MemberPhotoPicker } from '@/components/MemberPhotoPicker';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { attachSelfieToManagedMemberProfile } from '@/lib/managedMemberSelfie';
+import { resolveSelfiePreviewUrl } from '@/lib/selfie';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { dedupeFamilyMembers } from '@/lib/familyAudienceMembers';
 import { detachMemberFromFamilyWithNewCode } from '@/lib/detachMemberFromFamily';
@@ -626,7 +627,7 @@ export default function ManageMembers() {
       },
       profileId?: string | null
     ): Promise<string | null> => {
-      if (!pendingMemberPhoto) {
+      if (!pendingMemberPhoto || /^https?:/i.test(pendingMemberPhoto)) {
         return null;
       }
 
@@ -853,13 +854,16 @@ export default function ManageMembers() {
   }, [copyAcceptorAddressToMember, familyId, resolveProfileIdForMemberAction]);
 
   const startEditingMember = useCallback((member: ManagedMember) => {
-    setEditingMemberId(String(member.id));
+    const editingId = String(member.id);
+
+    setEditingMemberId(editingId);
     setEditingMemberSnapshot(member);
     setName(member.full_name ?? '');
     setPhone(member.phone ? formatPhone(member.phone) : '');
     setBirthDate(member.birth_date ? formatDisplayDate(member.birth_date) : '');
     setParentesco(member.relationship ?? '');
     setMedicalFoodAlerts('');
+    setPendingMemberPhoto(null);
     setProfileLookupMessage(null);
     setLinkedProfile(null);
     setNameSearchResults([]);
@@ -881,7 +885,7 @@ export default function ManageMembers() {
 
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, medical_food_alerts')
+          .select('id, medical_food_alerts, selfie_url')
           .eq('id', profileId)
           .maybeSingle();
 
@@ -893,9 +897,14 @@ export default function ManageMembers() {
           setMedicalFoodAlerts(
             typeof data.medical_food_alerts === 'string' ? data.medical_food_alerts.trim() : ''
           );
+
+          if (typeof data.selfie_url === 'string' && data.selfie_url.trim()) {
+            const previewUrl = await resolveSelfiePreviewUrl(data.selfie_url);
+            setPendingMemberPhoto(previewUrl);
+          }
         }
       } catch (loadError) {
-        console.error('Erro ao carregar restrições alimentares do membro:', loadError);
+        console.error('Erro ao carregar dados do perfil do membro:', loadError);
       }
     })();
   }, []);
@@ -1111,9 +1120,19 @@ export default function ManageMembers() {
           resolvedLinkedProfile?.id
         );
 
+        const profileIdForEdit = await resolveProfileIdForMemberAction(
+          memberProfileInput,
+          resolvedLinkedProfile?.id
+        );
+
+        const photoWarning = await persistPendingMemberPhoto(
+          memberProfileInput,
+          resolvedLinkedProfile?.id ?? profileIdForEdit
+        );
+
         resetForm();
         await fetchData();
-        Alert.alert('Sucesso', 'Membro atualizado!');
+        Alert.alert('Sucesso', `Membro atualizado!${photoWarning ?? ''}`);
         return;
       }
 
@@ -1470,7 +1489,7 @@ export default function ManageMembers() {
                   ))}
                 </ScrollView>
 
-                {!editingMemberId && !linkedProfile ? (
+                {(!linkedProfile && !editingMemberId) || editingMemberId ? (
                   <MemberPhotoPicker
                     photoUri={pendingMemberPhoto}
                     onPhotoChange={setPendingMemberPhoto}

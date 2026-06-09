@@ -96,7 +96,13 @@ export function MemberPhotoPicker({
       <View style={styles.row}>
         <View style={styles.frame}>
           {photoUri ? (
-            <Image source={{ uri: photoUri }} style={styles.image} contentFit="cover" />
+            <Image
+              key={photoUri}
+              source={{ uri: photoUri }}
+              style={styles.image}
+              contentFit="cover"
+              cachePolicy="none"
+            />
           ) : (
             <MaterialIcons name="person" size={34} color="#64748B" />
           )}
