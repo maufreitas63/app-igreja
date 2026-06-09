@@ -7,19 +7,13 @@ if (!global.Buffer) {
 
 import { AppShell } from '@/components/AppShell';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { ICON_FONT_SOURCES } from '@/lib/iconFonts';
 import { useFonts } from 'expo-font';
 import Toast from 'react-native-toast-message';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 export default function RootLayout() {
-  const [iconFontsLoaded] = useFonts({
-    ...FontAwesome.font,
-    ...FontAwesome5.font,
-    ...MaterialIcons.font,
-  });
+  const [iconFontsLoaded] = useFonts(ICON_FONT_SOURCES);
 
   if (!iconFontsLoaded) {
     return (
