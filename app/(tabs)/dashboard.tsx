@@ -1735,9 +1735,7 @@ export default function Dashboard() {
     }
 
     scrollToScaleRosterRef.current = false;
-    requestAnimationFrame(() => {
-      scrollToDashboardCard(rosterIdx);
-    });
+    scrollToDashboardCard(rosterIdx, false);
   }, [isScaleRosterVisible, isParkingPanelVisible, data, scrollToDashboardCard]);
 
   useEffect(() => {
