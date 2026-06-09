@@ -29,7 +29,7 @@ import {
   financialReportTableLayoutMaxHeight,
 } from '@/lib/financialReportTableLayout';
 
-const LABEL_COLUMN_WIDTH = 118;
+const LABEL_COLUMN_WIDTH = 128;
 const VALUE_COLUMN_MIN_WIDTH = 108;
 const ICON_SLOT_WIDTH = 24;
 const ICON_COLUMN_WIDTH = ICON_SLOT_WIDTH * 2 + 4;
