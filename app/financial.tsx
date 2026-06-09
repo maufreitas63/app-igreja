@@ -418,39 +418,46 @@ export default function FinancialScreen() {
             ))}
           </View>
 
-          <View style={styles.monthFilterSection}>
-            <Text style={styles.monthFilterLabel}>Selecionar mês</Text>
-            {loadingMonths ? (
-              <ActivityIndicator color="#10b981" style={styles.pickerLoader} />
-            ) : monthDropdownOptions.length ? (
-              <DropdownSelect
-                options={monthDropdownOptions}
-                selectedValue={pickerValue}
-                onValueChange={(value) => {
-                  const match = monthOptions.find(
-                    (month) => formatFinancialMonthKey(month) === value
-                  );
+          <View style={styles.reportsSection}>
+            <Text style={styles.reportsSectionTitle}>Relatórios</Text>
 
-                  if (match) {
-                    setSelectedMonth(match);
-                  }
-                }}
-                modalTitle="Selecionar mês"
-                placeholder="Selecionar mês"
-                style={styles.monthDropdown}
-              />
-            ) : (
-              <Text style={styles.pickerEmptyText}>Nenhum mês disponível.</Text>
-            )}
+            <View style={styles.monthFilterRow}>
+              <Text style={styles.monthFilterLabel}>Mês</Text>
+              {loadingMonths ? (
+                <ActivityIndicator color="#10b981" style={styles.monthFilterLoader} />
+              ) : monthDropdownOptions.length ? (
+                <DropdownSelect
+                  options={monthDropdownOptions}
+                  selectedValue={pickerValue}
+                  onValueChange={(value) => {
+                    const match = monthOptions.find(
+                      (month) => formatFinancialMonthKey(month) === value
+                    );
+
+                    if (match) {
+                      setSelectedMonth(match);
+                    }
+                  }}
+                  modalTitle="Selecionar mês"
+                  placeholder="Selecionar mês"
+                  style={styles.monthDropdown}
+                />
+              ) : (
+                <Text style={styles.monthFilterEmptyText}>Nenhum mês disponível.</Text>
+              )}
+            </View>
+
             {selectedMonthIsPlannedOnly ? (
               <Text style={styles.plannedOnlyHint}>
                 Este mês só tem lançamentos PLANEJADO. O resultado REALIZADO aparece vazio; use a
                 seção Orçamento ou Manutenção para editar o planejado.
               </Text>
             ) : null}
-          </View>
 
-          {sectionsToRender.map((sectionId) => renderFinancialSection(sectionId))}
+            <View style={styles.reportsList}>
+              {sectionsToRender.map((sectionId) => renderFinancialSection(sectionId))}
+            </View>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -543,20 +550,36 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
-  monthFilterSection: {
-    gap: 8,
+  reportsSection: {
+    gap: 10,
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#334155',
     backgroundColor: 'rgba(30, 41, 59, 0.55)',
   },
+  reportsSectionTitle: {
+    color: '#E2E8F0',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  monthFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   monthFilterLabel: {
-    color: '#94A3B8',
+    color: '#10b981',
     fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 0.4,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
+    flexShrink: 0,
+  },
+  reportsList: {
+    gap: 10,
   },
   resultSection: {
     borderRadius: 16,
@@ -632,22 +655,23 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   monthDropdown: {
-    width: '100%',
-    height: 48,
+    flex: 1,
+    minWidth: 0,
   },
-  pickerLoader: {
-    paddingVertical: 10,
+  monthFilterLoader: {
+    flex: 1,
+    paddingVertical: 8,
   },
   plannedOnlyHint: {
     color: '#94A3B8',
     fontSize: 12,
     lineHeight: 18,
   },
-  pickerEmptyText: {
+  monthFilterEmptyText: {
+    flex: 1,
     color: '#94A3B8',
     fontSize: 14,
-    textAlign: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   sectionHintText: {
     color: '#94A3B8',

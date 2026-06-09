@@ -956,6 +956,25 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           expanded={expandedSection === 'rd'}
           onToggle={() => toggleSection('rd')}
         >
+          <View style={styles.rdMonthFilterRow}>
+            <Text style={styles.periodPickerLabel}>Mês</Text>
+            <DropdownSelect
+              options={maintenanceMonthDropdownOptions}
+              selectedValue={formatFinancialMonthKey(selectedMonth)}
+              onValueChange={(value) => {
+                const parsed = parseFinancialMonthKey(value);
+
+                if (parsed) {
+                  setSelectedMonth(parsed);
+                }
+              }}
+              modalTitle="Selecionar mês"
+              placeholder="Selecionar mês"
+              style={styles.rdMonthDropdown}
+              disabled={formBusy || rpcMissing}
+            />
+          </View>
+
           {rdReportsError ? <Text style={styles.warningText}>{rdReportsError}</Text> : null}
           {loadingRdReports ? (
             <CardLoadingState lines={3} compact />
@@ -1308,6 +1327,16 @@ const styles = StyleSheet.create({
   monthDropdown: {
     width: '100%',
     height: 48,
+  },
+  rdMonthFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  rdMonthDropdown: {
+    flex: 1,
+    minWidth: 0,
   },
   versionChipRow: {
     flexDirection: 'row',
