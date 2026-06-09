@@ -1700,11 +1700,13 @@ export default function ManageProfile() {
   const isLgpdPending = profile?.lgpd_accepted === false;
 
   const handleOpenLgpdScreen = useCallback(() => {
+    const phoneForLgpd = phoneParam?.trim() || String(profile?.phone ?? '').trim();
+
     router.push({
       pathname: '/lgpd',
-      params: phoneParam ? { phone: encodeURIComponent(phoneParam) } : {},
+      params: phoneForLgpd ? { phone: encodeURIComponent(phoneForLgpd) } : {},
     });
-  }, [phoneParam, router]);
+  }, [phoneParam, profile?.phone, router]);
 
   if (screenMode === 'CAMERA') {
     return (

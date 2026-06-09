@@ -7,8 +7,6 @@ import {
   Alert,
   Image,
   Keyboard,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   Platform,
   ScrollView,
   StyleSheet,
@@ -36,6 +34,7 @@ import { pickSelfieFromWeb, selectSelfiePictureSize, uploadSelfieInput } from '@
 import { supabase } from '@/lib/supabase';
 import { invalidateProfilesMapSnapshot } from '@/lib/profilesMapCache';
 import { persistProfileId, persistUserSession } from '@/lib/userSession';
+import { useLgpdTermsScrollGate } from '@/hooks/useLgpdTermsScrollGate';
 import { useRejectTotemPhoneFromMemberRoutes } from '@/hooks/useRejectTotemPhoneFromMemberRoutes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -71,7 +70,13 @@ export default function RegisterScreen() {
   const [acceptedLGPD, setAcceptedLGPD] = useState<boolean | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
   const [stage, setStage] = useState<'FORM' | 'CAMERA' | 'CONFIRM'>('FORM');
-  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const {
+    hasScrolledToBottom,
+    resetScrollGate,
+    onTermsViewportLayout,
+    onTermsContentSizeChange,
+    onTermsScroll,
+  } = useLgpdTermsScrollGate();
   const [isLoading, setIsLoading] = useState(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [pictureSize, setPictureSize] = useState<string | null>(null);
@@ -147,7 +152,7 @@ export default function RegisterScreen() {
         if (active) {
           setLgpdTermsText(nextTermsText);
           setEntityName(nextEntityName);
-          setHasScrolledToBottom(false);
+          resetScrollGate();
         }
       } catch (error) {
         console.error('Erro ao carregar termos LGPD:', error);
@@ -157,7 +162,7 @@ export default function RegisterScreen() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [resetScrollGate]);
 
   const cepDigits = normalizeCepDigits(cep);
   const hasRealName = fullName.length > 3 && !isPlaceholderVisitorName(fullName);
@@ -189,13 +194,6 @@ export default function RegisterScreen() {
     }
     setBirthDate(formatted);
     if (cleaned.length === 8) Keyboard.dismiss();
-  };
-
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 20) {
-      setHasScrolledToBottom(true);
-    }
   };
 
   const handleLGPDChoice = (choice: boolean) => {
@@ -397,8 +395,20 @@ export default function RegisterScreen() {
                 />
                 <TextInput style={styles.inputDisabled} value={`Telefone: ${phoneValue}`} editable={false} />
 
-                <View style={styles.lgpdBox}>
-                  <ScrollView scrollEventThrottle={16} onScroll={handleScroll}>
+                <View
+                  style={styles.lgpdBox}
+                  onLayout={(event) => onTermsViewportLayout(event.nativeEvent.layout.height)}
+                >
+                  <ScrollView
+                    scrollEventThrottle={16}
+                    onScroll={onTermsScroll}
+                    onScrollEndDrag={onTermsScroll}
+                    onMomentumScrollEnd={onTermsScroll}
+                    onContentSizeChange={(_, height) => onTermsContentSizeChange(height)}
+                    nestedScrollEnabled
+                    showsVerticalScrollIndicator
+                    keyboardShouldPersistTaps="handled"
+                  >
                     <Text style={styles.lgpdTitle}>Termos de Uso e Privacidade (LGPD)</Text>
                     <Text style={styles.lgpdText}>{lgpdTermsText}</Text>
                   </ScrollView>
@@ -458,7 +468,16 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '800', color: '#FFF', marginBottom: 30, textAlign: 'center' },
   input: { backgroundColor: 'rgba(30, 41, 59, 0.7)', borderWidth: 1, borderColor: '#10b981', padding: 20, borderRadius: 20, color: '#FFF', marginBottom: 15 },
   inputDisabled: { backgroundColor: 'rgba(15, 23, 42, 0.4)', borderWidth: 1, borderColor: '#475569', padding: 20, borderRadius: 20, color: '#FFF', marginBottom: 15 },
-  lgpdBox: { backgroundColor: 'rgba(15, 23, 42, 0.5)', height: 200, padding: 15, borderRadius: 15, marginBottom: 5, borderWidth: 1, borderColor: '#334155' },
+  lgpdBox: {
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    height: 200,
+    padding: 15,
+    borderRadius: 15,
+    marginBottom: 5,
+    borderWidth: 1,
+    borderColor: '#334155',
+    overflow: 'hidden',
+  },
   lgpdTitle: { color: '#10b981', fontWeight: 'bold', fontSize: 16, marginBottom: 8 },
   lgpdText: { color: '#94A3B8', fontSize: 13, lineHeight: 20 },
   hintText: { color: '#64748b', textAlign: 'center', marginBottom: 15, fontSize: 12 },

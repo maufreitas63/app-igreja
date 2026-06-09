@@ -11,15 +11,15 @@ import {
 } from '@/lib/profileOnboarding';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { supabase } from '@/lib/supabase';
+import { useLgpdTermsScrollGate } from '@/hooks/useLgpdTermsScrollGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
+import { getStoredProfileId } from '@/lib/userSession';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   ScrollView,
   StyleSheet,
   Text,
@@ -33,7 +33,7 @@ const normalizePhone = (value: string | null | undefined) => (value ?? '').repla
 
 async function loadProfileId(phoneParam: string | null): Promise<string | null> {
   if (!phoneParam) {
-    return null;
+    return getStoredProfileId();
   }
 
   const attempts = [phoneParam, normalizePhone(phoneParam)].filter(Boolean);
@@ -90,10 +90,15 @@ export default function LgpdScreen() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [saving, setSaving] = useState(false);
   const [acceptedLGPD, setAcceptedLGPD] = useState<boolean | null>(null);
-  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [lgpdTermsText, setLgpdTermsText] = useState(() => buildLgpdTermsText(DEFAULT_LGPD_ENTITY_NAME));
   const [entityName, setEntityName] = useState(DEFAULT_LGPD_ENTITY_NAME);
-  const [termsContentHeight, setTermsContentHeight] = useState(0);
+  const {
+    hasScrolledToBottom,
+    resetScrollGate,
+    onTermsViewportLayout,
+    onTermsContentSizeChange,
+    onTermsScroll,
+  } = useLgpdTermsScrollGate();
 
   const navigateAfterLgpd = useCallback(async () => {
     if (!phoneParam) {
@@ -132,7 +137,7 @@ export default function LgpdScreen() {
 
         setLgpdTermsText(nextTermsText);
         setEntityName(nextEntityName);
-        setHasScrolledToBottom(false);
+        resetScrollGate();
       } catch (error) {
         console.error('Erro ao carregar termos LGPD:', error);
       }
@@ -141,7 +146,7 @@ export default function LgpdScreen() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [resetScrollGate]);
 
   useEffect(() => {
     let active = true;
@@ -178,20 +183,6 @@ export default function LgpdScreen() {
       active = false;
     };
   }, [goBackToManageProfile, phoneParam]);
-
-  useEffect(() => {
-    const visibleTermsHeight = 240 - 30;
-    if (termsContentHeight > 0 && termsContentHeight <= visibleTermsHeight) {
-      setHasScrolledToBottom(true);
-    }
-  }, [termsContentHeight, lgpdTermsText]);
-
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 20) {
-      setHasScrolledToBottom(true);
-    }
-  };
 
   const handleLGPDChoice = (choice: boolean) => {
     if (!hasScrolledToBottom) {
@@ -239,19 +230,26 @@ export default function LgpdScreen() {
   return (
     <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.body}>
           <Text style={styles.title}>Termos de Uso e Privacidade (LGPD)</Text>
 
           {loadingProfile ? (
             <ActivityIndicator color="#10b981" style={styles.loader} />
           ) : (
             <View style={styles.formContainer}>
-              <View style={styles.lgpdBox}>
+              <View
+                style={styles.lgpdBox}
+                onLayout={(event) => onTermsViewportLayout(event.nativeEvent.layout.height)}
+              >
                 <ScrollView
                   scrollEventThrottle={16}
-                  onScroll={handleScroll}
-                  onContentSizeChange={(_, height) => setTermsContentHeight(height)}
+                  onScroll={onTermsScroll}
+                  onScrollEndDrag={onTermsScroll}
+                  onMomentumScrollEnd={onTermsScroll}
+                  onContentSizeChange={(_, height) => onTermsContentSizeChange(height)}
                   nestedScrollEnabled
+                  showsVerticalScrollIndicator
+                  keyboardShouldPersistTaps="handled"
                 >
                   <Text style={styles.lgpdTitle}>Termos de Uso e Privacidade (LGPD)</Text>
                   <Text style={styles.lgpdText}>{lgpdTermsText}</Text>
@@ -309,7 +307,7 @@ export default function LgpdScreen() {
               </TouchableOpacity>
             </View>
           )}
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -317,14 +315,15 @@ export default function LgpdScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll: {
-    padding: 20,
-    flexGrow: 1,
+  body: {
+    flex: 1,
+    paddingHorizontal: 20,
     paddingTop: 24,
     paddingBottom: 40,
   },
   formContainer: {
     flex: 1,
+    gap: 0,
   },
   title: {
     fontSize: 24,
@@ -344,6 +343,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     borderWidth: 1,
     borderColor: '#334155',
+    overflow: 'hidden',
   },
   lgpdTitle: {
     color: '#10b981',
@@ -353,8 +353,8 @@ const styles = StyleSheet.create({
   },
   lgpdText: {
     color: '#94A3B8',
-    fontSize: 21,
-    lineHeight: 32,
+    fontSize: 13,
+    lineHeight: 20,
   },
   hintText: {
     color: '#64748b',
