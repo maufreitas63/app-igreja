@@ -90,6 +90,11 @@ export function MaintenanceScaleVolunteersCard({ isActive = true, panelHeight }:
   };
 
   const listBusy = saving || removingVolunteerId !== null;
+  const hasProfileSearchQuery = profileSearchQuery.trim().length > 0;
+
+  const handleClearProfileSearch = () => {
+    setProfileSearchQuery('');
+  };
 
   if (loading) {
     return (
@@ -142,15 +147,28 @@ export function MaintenanceScaleVolunteersCard({ isActive = true, panelHeight }:
       </ScrollView>
 
       <SectionLabel variant="maintenance">Associar servos</SectionLabel>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Nome completo"
-        placeholderTextColor="#64748B"
-        value={profileSearchQuery}
-        onChangeText={setProfileSearchQuery}
-        autoCapitalize="words"
-        autoCorrect={false}
-      />
+      <View style={styles.searchInputRow}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Nome completo"
+          placeholderTextColor="#64748B"
+          value={profileSearchQuery}
+          onChangeText={setProfileSearchQuery}
+          autoCapitalize="words"
+          autoCorrect={false}
+        />
+        {hasProfileSearchQuery ? (
+          <TouchableOpacity
+            style={styles.clearSearchButton}
+            onPress={handleClearProfileSearch}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Limpar busca de servos"
+          >
+            <FontAwesome name="times-circle" size={20} color="#94A3B8" />
+          </TouchableOpacity>
+        ) : null}
+      </View>
 
       <SectionLabel variant="maintenance" tight>Já associados</SectionLabel>
       <ScrollView style={styles.registeredScroll} nestedScrollEnabled>
@@ -365,7 +383,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  searchInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
   searchInput: {
+    flex: 1,
+    minWidth: 0,
     borderWidth: 1,
     borderColor: '#334155',
     borderRadius: 10,
@@ -374,7 +400,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    marginBottom: 4,
+  },
+  clearSearchButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   resultsScroll: {
     flex: 1,
