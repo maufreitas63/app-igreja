@@ -7,6 +7,7 @@ import {
 import { useMaintenanceAccessControl } from '@/hooks/useMaintenanceAccessControl';
 import {
   computeMaintenanceContentHeight,
+  MAINTENANCE_SCROLL_PROPS,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
 import React, { useEffect, useState } from 'react';
@@ -79,7 +80,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
   const hasAssignedProfileRoles = profileRoles.some((role) => role.assigned);
 
   useEffect(() => {
-    setExpandedProfileSection(null);
+    setExpandedProfileSection(selectedProfile ? 'roles' : null);
   }, [selectedProfile?.id]);
 
   const toggleProfileSection = (section: ProfileDetailSection) => {
@@ -206,7 +207,13 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
       </View>
 
       {activeTab === 'profiles' ? (
-        <View style={styles.section}>
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={styles.tabScrollContent}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          {...MAINTENANCE_SCROLL_PROPS}
+        >
           <SectionLabel variant="maintenance">Buscar perfil</SectionLabel>
           <TextInput
             style={[styles.input, styles.searchInput]}
@@ -285,7 +292,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                 loadingProfileRoles ? (
                   <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
                 ) : (
-                  <ScrollView style={styles.rolesScroll} nestedScrollEnabled>
+                  <View style={styles.rolesList}>
                     {profileRoles.map((role) => {
                       const isSaving = savingRoleCode === role.roleCode;
 
@@ -309,7 +316,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                         </View>
                       );
                     })}
-                  </ScrollView>
+                  </View>
                 )
               ) : null}
 
@@ -333,7 +340,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                   {loadingScaleLeadership ? (
                     <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
                   ) : profileScaleLeadership.length > 0 ? (
-                    <ScrollView style={styles.rolesScroll} nestedScrollEnabled>
+                    <View style={styles.rolesList}>
                       {profileScaleLeadership.map((entry) => {
                         const isSaving = savingScaleLeadershipId === entry.scaleTypeId;
 
@@ -359,7 +366,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                           </View>
                         );
                       })}
-                    </ScrollView>
+                    </View>
                   ) : (
                     <Text style={styles.panelHint}>Nenhum tipo de escala ativo cadastrado.</Text>
                   )}
@@ -369,9 +376,15 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
           ) : (
             <Text style={styles.panelHint}>Busque e selecione um perfil para atribuir papéis.</Text>
           )}
-        </View>
+        </ScrollView>
       ) : (
-        <View style={styles.section}>
+        <ScrollView
+          style={styles.tabScroll}
+          contentContainerStyle={styles.tabScrollContent}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          {...MAINTENANCE_SCROLL_PROPS}
+        >
           <SectionLabel variant="maintenance">Papel</SectionLabel>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.roleChipsScroll}>
             <View style={styles.roleChipsRow}>
@@ -418,10 +431,17 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
             ))}
           </View>
 
+          {resourceTypeFilter === 'column' ? (
+            <Text style={styles.subsectionHint}>
+              Recursos profiles.* definem quais campos cada papel pode ver e editar em Dados
+              cadastrais.
+            </Text>
+          ) : null}
+
           {loadingGrants ? (
             <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
           ) : (
-            <ScrollView style={styles.grantsScroll} nestedScrollEnabled>
+            <View style={styles.grantsList}>
               {roleGrants.map((grant, index) => {
                 const sensitive = isSensitiveAccessResourceKey(grant.resourceKey);
                 const isSaving = savingGrantKey === grant.resourceKey;
@@ -478,9 +498,9 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
               {!roleGrants.length ? (
                 <Text style={styles.panelHint}>Nenhum recurso cadastrado para este tipo.</Text>
               ) : null}
-            </ScrollView>
+            </View>
           )}
-        </View>
+        </ScrollView>
       )}
     </View>
   );
@@ -494,6 +514,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     padding: 12,
     minHeight: 0,
+    gap: 4,
+  },
+  tabScroll: {
+    flex: 1,
+    minHeight: 0,
+  },
+  tabScrollContent: {
+    flexGrow: 1,
+    paddingBottom: 12,
   },
   panelCentered: {
     alignItems: 'center',
@@ -555,9 +584,12 @@ const styles = StyleSheet.create({
   tabButtonTextActive: {
     color: '#E0E7FF',
   },
-  section: {
-    flex: 1,
-    minHeight: 0,
+  rolesList: {
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  grantsList: {
+    marginTop: 4,
   },
   sectionLabel: {
     color: '#94A3B8',
@@ -651,8 +683,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   selectedCard: {
-    flex: 1,
-    minHeight: 0,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#334155',
@@ -682,10 +712,6 @@ const styles = StyleSheet.create({
     color: '#A5B4FC',
     fontSize: 12,
     fontWeight: '700',
-  },
-  rolesScroll: {
-    flex: 1,
-    minHeight: 0,
   },
   roleRow: {
     flexDirection: 'row',
@@ -766,10 +792,6 @@ const styles = StyleSheet.create({
   },
   filterChipTextActive: {
     color: '#E0E7FF',
-  },
-  grantsScroll: {
-    flex: 1,
-    minHeight: 0,
   },
   grantRow: {
     flexDirection: 'row',
