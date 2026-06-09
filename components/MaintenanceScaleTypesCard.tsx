@@ -66,7 +66,8 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
   }, [editingId, editingRow]);
 
   const handleSave = async () => {
-    const result = await saveScaleType(codeInput, nameInput);
+    const vagasPorServico = Number.parseInt(vagasInput, 10) || 1;
+    const result = await saveScaleType(codeInput, nameInput, vagasPorServico, modoCiclo);
 
     if (!result.success) {
       Toast.show({
@@ -113,6 +114,100 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
     }
   };
 
+  const renderScaleTypeForm = (mode: 'create' | 'edit') => (
+    <View style={styles.formCard}>
+      <Text style={styles.formTitle}>{mode === 'edit' ? 'Editar tipo de escala' : 'Novo tipo'}</Text>
+
+      <Text style={styles.fieldLabel}>Código</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="ex.: vigilancia_estacionamento"
+        placeholderTextColor="#64748B"
+        value={codeInput}
+        onChangeText={(text) => setCodeInput(normalizeScaleTypeCode(text))}
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+
+      <Text style={styles.fieldLabel}>Nome</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Nome exibido no app"
+        placeholderTextColor="#64748B"
+        value={nameInput}
+        onChangeText={setNameInput}
+        autoCapitalize="words"
+      />
+
+      <Text style={styles.fieldLabel}>Vagas por domingo</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="1 a 50"
+        placeholderTextColor="#64748B"
+        value={vagasInput}
+        onChangeText={(text) => setVagasInput(text.replace(/[^0-9]/g, ''))}
+        keyboardType="number-pad"
+        maxLength={2}
+      />
+
+      <Text style={styles.fieldLabel}>Modo do ciclo em bloco</Text>
+      <View style={styles.modeRow}>
+        <TouchableOpacity
+          style={[styles.modeChip, modoCiclo === 'individual' && styles.modeChipActive]}
+          onPress={() => setModoCiclo('individual')}
+          disabled={formBusy}
+          activeOpacity={0.85}
+        >
+          <Text
+            style={[styles.modeChipText, modoCiclo === 'individual' && styles.modeChipTextActive]}
+          >
+            Individual
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.modeChip, modoCiclo === 'equipe' && styles.modeChipActive]}
+          onPress={() => setModoCiclo('equipe')}
+          disabled={formBusy}
+          activeOpacity={0.85}
+        >
+          <Text style={[styles.modeChipText, modoCiclo === 'equipe' && styles.modeChipTextActive]}>
+            Equipe
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.fieldHint}>
+        Individual: cada servo em domingo distinto. Equipe: até N servos no mesmo domingo.
+      </Text>
+
+      <View style={styles.formActions}>
+        {mode === 'edit' ? (
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={cancelEdit}
+            disabled={formBusy}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.cancelButtonText}>Cancelar</Text>
+          </TouchableOpacity>
+        ) : null}
+        <TouchableOpacity
+          style={[styles.saveButton, formBusy && styles.saveButtonDisabled]}
+          onPress={() => void handleSave()}
+          disabled={formBusy || rpcMissing}
+          activeOpacity={0.85}
+        >
+          {saving ? (
+            <ActivityIndicator color="#0f172a" size="small" />
+          ) : (
+            <Text style={styles.saveButtonText}>
+              {mode === 'edit' ? 'Salvar alterações' : 'Cadastrar'}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   if (loading) {
     return (
       <View style={[styles.panel, maintenancePanelStyles.panelCentered, { height: contentHeight }]}>
@@ -130,98 +225,17 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
       {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_SCALE_TYPES_SQL_HINT}</Text> : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      <View style={styles.formCard}>
-        <Text style={styles.formTitle}>{editingId ? 'Editar escala' : 'Nova escala'}</Text>
-
-        <Text style={styles.fieldLabel}>Código</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="ex.: vigilancia_estacionamento"
-          placeholderTextColor="#64748B"
-          value={codeInput}
-          onChangeText={(text) => setCodeInput(normalizeScaleTypeCode(text))}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        <Text style={styles.fieldLabel}>Nome</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nome exibido no app"
-          placeholderTextColor="#64748B"
-          value={nameInput}
-          onChangeText={setNameInput}
-          autoCapitalize="words"
-        />
-
-        <Text style={styles.fieldLabel}>Vagas por domingo</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="1 a 50"
-          placeholderTextColor="#64748B"
-          value={vagasInput}
-          onChangeText={(text) => setVagasInput(text.replace(/[^0-9]/g, ''))}
-          keyboardType="number-pad"
-          maxLength={2}
-        />
-
-        <Text style={styles.fieldLabel}>Modo do ciclo em bloco</Text>
-        <View style={styles.modeRow}>
-          <TouchableOpacity
-            style={[styles.modeChip, modoCiclo === 'individual' && styles.modeChipActive]}
-            onPress={() => setModoCiclo('individual')}
-            disabled={formBusy}
-            activeOpacity={0.85}
-          >
-            <Text
-              style={[styles.modeChipText, modoCiclo === 'individual' && styles.modeChipTextActive]}
-            >
-              Individual
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.modeChip, modoCiclo === 'equipe' && styles.modeChipActive]}
-            onPress={() => setModoCiclo('equipe')}
-            disabled={formBusy}
-            activeOpacity={0.85}
-          >
-            <Text style={[styles.modeChipText, modoCiclo === 'equipe' && styles.modeChipTextActive]}>
-              Equipe
-            </Text>
-          </TouchableOpacity>
+      {!editingId ? (
+        <View style={styles.sectionBlock}>
+          <SectionLabel variant="maintenance">Novo tipo de escala</SectionLabel>
+          {renderScaleTypeForm('create')}
         </View>
-        <Text style={styles.fieldHint}>
-          Individual: cada servo em domingo distinto. Equipe: até N servos no mesmo domingo.
-        </Text>
+      ) : null}
 
-        <View style={styles.formActions}>
-          {editingId ? (
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={cancelEdit}
-              disabled={formBusy}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-          ) : null}
-          <TouchableOpacity
-            style={[styles.saveButton, formBusy && styles.saveButtonDisabled]}
-            onPress={() => void handleSave()}
-            disabled={formBusy || rpcMissing}
-            activeOpacity={0.85}
-          >
-            {saving ? (
-              <ActivityIndicator color="#0f172a" size="small" />
-            ) : (
-              <Text style={styles.saveButtonText}>{editingId ? 'Salvar alterações' : 'Cadastrar'}</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <SectionLabel variant="maintenance">Escalas cadastradas</SectionLabel>
-      <ScrollView style={styles.listScroll} nestedScrollEnabled>
+      <View style={[styles.sectionBlock, styles.sectionBlockFlex]}>
+        <SectionLabel variant="maintenance">Escalas cadastradas</SectionLabel>
+        {editingId ? renderScaleTypeForm('edit') : null}
+        <ScrollView style={styles.listScroll} nestedScrollEnabled>
         {scaleTypes.length ? (
           scaleTypes.map((row, index) => {
             const isDeleting = deletingId === row.id;
@@ -272,7 +286,8 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
         ) : (
           <Text style={styles.panelHint}>Nenhum tipo de escala cadastrado ainda.</Text>
         )}
-      </ScrollView>
+        </ScrollView>
+      </View>
     </View>
   );
 }
@@ -297,14 +312,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 6,
   },
-  formCard: {
+  sectionBlock: {
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#334155',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    padding: 10,
+    gap: 6,
+    marginBottom: 8,
+  },
+  sectionBlockFlex: {
+    flex: 1,
+    minHeight: 0,
+    marginBottom: 0,
+  },
+  panelHint: {
+    color: '#94A3B8',
+    fontSize: 12,
+    lineHeight: 17,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  formCard: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(51, 65, 85, 0.85)',
     backgroundColor: 'rgba(15, 23, 42, 0.85)',
     padding: 12,
     gap: 6,
-    marginBottom: 10,
   },
   formTitle: {
     color: '#E2E8F0',
