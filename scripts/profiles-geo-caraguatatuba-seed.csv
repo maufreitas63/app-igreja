@@ -1,0 +1,51 @@
+seq,nome_completo,cpf,email,telefone_raw,nascimento_br,cep,logradouro,numero,bairro,cidade,uf
+1,Ana Paula Ferreira,90010010001,geo01@caraguatatuba.demo,12970010001,14/03/1988,11660-010,Av. Arthur Costa e Silva,120,Centro,Caraguatatuba,SP
+2,Bruno Henrique Silva,90010010002,geo02@caraguatatuba.demo,12970010002,22/07/1992,11660-050,Rua Frei Galvão,45,Centro,Caraguatatuba,SP
+3,Carla Mendes Oliveira,90010010003,geo03@caraguatatuba.demo,12970010003,05/11/1975,11660-100,Rua Antonio Roberto de Oliveira,310,Centro,Caraguatatuba,SP
+4,Daniel Costa Santos,90010010004,geo04@caraguatatuba.demo,12970010004,30/01/2001,11660-150,Rua Maria Vitória Penna Franco,88,Centro,Caraguatatuba,SP
+5,Elena Rodrigues Lima,90010010005,geo05@caraguatatuba.demo,12970010005,18/09/1968,11660-200,Rua José Pereira da Costa,502,Centro,Caraguatatuba,SP
+6,Felipe Augusto Rocha,90010010006,geo06@caraguatatuba.demo,12970010006,12/06/1985,11661-010,Rua das Orquídeas,15,Jardim Britânia,Caraguatatuba,SP
+7,Gabriela Souza Martins,90010010007,geo07@caraguatatuba.demo,12970010007,25/12/1996,11661-100,Rua dos Coqueiros,220,Jardim Britânia,Caraguatatuba,SP
+8,Henrique Alves Pinto,90010010008,geo08@caraguatatuba.demo,12970010008,03/04/1979,11661-200,Rua São João,67,Jardim Britânia,Caraguatatuba,SP
+9,Isabela Campos Nunes,90010010009,geo09@caraguatatuba.demo,12970010009,17/08/2010,11662-010,Av. Marginal,1450,Martim de Sá,Caraguatatuba,SP
+10,João Pedro Barbosa,90010010010,geo10@caraguatatuba.demo,12970010010,09/02/1983,11662-100,Rua das Pitangueiras,33,Martim de Sá,Caraguatatuba,SP
+11,Karina Duarte Freitas,90010010011,geo11@caraguatatuba.demo,12970010011,21/05/1990,11663-010,Rua José Carij,190,Pegorelli,Caraguatatuba,SP
+12,Lucas Mendonça Vieira,90010010012,geo12@caraguatatuba.demo,12970010012,11/10/1972,11663-100,Rua Manoel da Costa,74,Pegorelli,Caraguatatuba,SP
+13,Mariana Teixeira Lopes,90010010013,geo13@caraguatatuba.demo,12970010013,28/07/2005,11664-010,Rua das Baleias,410,Golfinhos,Caraguatatuba,SP
+14,Nicolas Prado Cardoso,90010010014,geo14@caraguatatuba.demo,12970010014,16/01/1994,11664-100,Rua dos Golfinhos,28,Golfinhos,Caraguatatuba,SP
+15,Olivia Ramos Cunha,90010010015,geo15@caraguatatuba.demo,12970010015,02/12/1980,11665-010,Av. Marginal,2100,Indaiá,Caraguatatuba,SP
+16,Paulo Sérgio Moura,90010010016,geo16@caraguatatuba.demo,12970010016,19/06/1965,11665-100,Rua Ieda Rosa da Cruz,156,Indaiá,Caraguatatuba,SP
+17,Quitéria Nascimento,90010010017,geo17@caraguatatuba.demo,12970010017,07/03/1959,11665-200,Rua das Acácias,91,Indaiá,Caraguatatuba,SP
+18,Rafaela Borges Dias,90010010018,geo18@caraguatatuba.demo,12970010018,23/09/1998,11666-010,Rua Manuel Nardy,340,Sumaré,Caraguatatuba,SP
+19,Samuel Gomes Azevedo,90010010019,geo19@caraguatatuba.demo,12970010019,15/04/1987,11666-100,Rua dos Ipês,12,Sumaré,Caraguatatuba,SP
+20,Tatiana Farias Rezende,90010010020,geo20@caraguatatuba.demo,12970010020,31/08/1977,11667-010,Rua do Porto,580,Porto Novo,Caraguatatuba,SP
+21,Ubirajara Lins Neto,90010010021,geo21@caraguatatuba.demo,12970010021,06/11/1991,11667-100,Rua Beira Mar,1024,Porto Novo,Caraguatatuba,SP
+22,Valéria Pacheco Melo,90010010022,geo22@caraguatatuba.demo,12970010022,27/02/1984,11668-010,Rua do Morro,77,Morro do Algodão,Caraguatatuba,SP
+23,Wagner Silveira Torres,90010010023,geo23@caraguatatuba.demo,12970010023,13/07/1970,11669-010,Estrada Rio do Ouro,Km 2,Rio do Ouro,Caraguatatuba,SP
+24,Ximena Andrade Brito,90010010024,geo24@caraguatatuba.demo,12970010024,20/10/2003,11670-010,Rua das Palmeiras,265,Jardim das Palmeiras,Caraguatatuba,SP
+25,Yuri Cavalcanti Paiva,90010010025,geo25@caraguatatuba.demo,12970010025,08/05/1995,11670-100,Rua Santa Clara,44,Jardim das Palmeiras,Caraguatatuba,SP
+26,Zilda Monteiro Faria,90010010026,geo26@caraguatatuba.demo,12970010026,01/01/1962,11671-010,Rua da Capela,18,Capelinha,Caraguatatuba,SP
+27,Adriano César Luna,90010010027,geo27@caraguatatuba.demo,12970010027,24/04/1989,11672-010,Rua Santa Rosa,630,Santa Rosa,Caraguatatuba,SP
+28,Beatriz Honorato Cruz,90010010028,geo28@caraguatatuba.demo,12970010028,10/09/2008,11673-010,Av. Pontal Santa Marina,155,Pontal Santa Marina,Caraguatatuba,SP
+29,César Augusto Viana,90010010029,geo29@caraguatatuba.demo,12970010029,29/06/1976,11674-010,Rua da Barranca,203,Barranca,Caraguatatuba,SP
+30,Débora Santana Rios,90010010030,geo30@caraguatatuba.demo,12970010030,14/02/1993,11675-010,Rua Colorado,89,Colorado,Caraguatatuba,SP
+31,Eduardo Pinheiro Maia,90010010031,geo31@caraguatatuba.demo,12970010031,26/11/1981,11676-010,Rodovia Dr. Manoel Hipólito do Rego,1200,Massaguaçu,Caraguatatuba,SP
+32,Fabiana Lacerda Pires,90010010032,geo32@caraguatatuba.demo,12970010032,04/08/1997,11676-100,Rua da Praia de Massaguaçu,55,Massaguaçu,Caraguatatuba,SP
+33,Gustavo Neri Fonseca,90010010033,geo33@caraguatatuba.demo,12970010033,18/03/1969,11677-010,Estrada da Cocanha,450,Cocanha,Caraguatatuba,SP
+34,Helena Moura Bastos,90010010034,geo34@caraguatatuba.demo,12970010034,22/12/2000,11678-010,Estrada do Travessão,780,Travessão,Caraguatatuba,SP
+35,Igor Veloso Marques,90010010035,geo35@caraguatatuba.demo,12970010035,07/07/1986,11679-010,Rua da Praia,312,Praia das Palmeiras,Caraguatatuba,SP
+36,Juliana Ribeiro Peixoto,90010010036,geo36@caraguatatuba.demo,12970010036,16/05/1974,11680-010,Estrada do Caminho do Mar,95,Caminho do Mar,Caraguatatuba,SP
+37,Kleber Antunes Soares,90010010037,geo37@caraguatatuba.demo,12970010037,30/10/1992,11680-100,Rua Tinga,140,Tinga,Caraguatatuba,SP
+38,Larissa Coelho Braga,90010010038,geo38@caraguatatuba.demo,12970010038,12/01/2006,11660-120,Rua Francisco Loup,56,Centro,Caraguatatuba,SP
+39,Marcelo Dutra Campos,90010010039,geo39@caraguatatuba.demo,12970010039,25/09/1982,11661-150,Rua Prof. João Mendes,401,Jardim Britânia,Caraguatatuba,SP
+40,Natália Espíndola Reis,90010010040,geo40@caraguatatuba.demo,12970010040,03/06/1999,11662-150,Rua Martim de Sá,1180,Martim de Sá,Caraguatatuba,SP
+41,Otávio Guimarães Leal,90010010041,geo41@caraguatatuba.demo,12970010041,19/04/1967,11663-150,Rua Pegorelli,22,Pegorelli,Caraguatatuba,SP
+42,Patrícia Holanda Siqueira,90010010042,geo42@caraguatatuba.demo,12970010042,11/08/1991,11664-150,Rua Oceânica,707,Golfinhos,Caraguatatuba,SP
+43,Renato Ibiapina Torres,90010010043,geo43@caraguatatuba.demo,12970010043,28/02/1978,11665-150,Rua Indaiá Mirim,333,Indaiá,Caraguatatuba,SP
+44,Simone Jardim Xavier,90010010044,geo44@caraguatatuba.demo,12970010044,06/12/1988,11666-150,Rua Sumaré,168,Sumaré,Caraguatatuba,SP
+45,Thiago Keller Zanetti,90010010045,geo45@caraguatatuba.demo,12970010045,21/07/2002,11667-150,Rua Porto Grande,92,Porto Novo,Caraguatatuba,SP
+46,Úrsula Lemos Vargas,90010010046,geo46@caraguatatuba.demo,12970010046,09/03/1955,11668-100,Rua Vista Mar,17,Morro do Algodão,Caraguatatuba,SP
+47,Vitor Macedo Aguiar,90010010047,geo47@caraguatatuba.demo,12970010047,17/11/1996,11669-100,Rua Rio do Ouro,244,Rio do Ouro,Caraguatatuba,SP
+48,Wanessa Nogueira Pessoa,90010010048,geo48@caraguatatuba.demo,12970010048,02/05/1980,11670-150,Alameda das Palmeiras,501,Jardim das Palmeiras,Caraguatatuba,SP
+49,Xavier Oliveira Quintino,90010010049,geo49@caraguatatuba.demo,12970010049,14/10/1973,11671-100,Rua Capelinha,63,Capelinha,Caraguatatuba,SP
+50,Yasmin Pereira Rabelo,90010010050,geo50@caraguatatuba.demo,12970010050,26/06/2012,11672-100,Rua Santa Rosa,890,Santa Rosa,Caraguatatuba,SP

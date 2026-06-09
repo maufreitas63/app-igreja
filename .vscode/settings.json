@@ -1,0 +1,35 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit",
+    "source.sortMembers": "explicit"
+  },
+
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.next/**": true,
+    "**/coverage/**": true,
+    "**/logs/**": true,
+    "**/*.log": true,
+    "**/.expo/**": true,
+    "**/.expo-shared/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.next": true,
+    "**/coverage": true,
+    "**/.git": true,
+    "**/logs": true,
+    "**/*.log": true,
+    "**/.expo": true
+  },
+
+  "typescript.tsserver.maxTsServerMemory": 2048,
+  "git.autorefresh": false,
+  "npm.autoDetect": "off"
+}

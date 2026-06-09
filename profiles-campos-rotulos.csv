@@ -1,0 +1,33 @@
+nome_tecnico,rotulo_formulario
+id,ID
+auth_user_id,ID do Usuario de Autenticacao
+codigo_membro,Codigo do Membro
+role,Perfil
+full_name,Nome Completo
+cpf,CPF
+email,E-mail
+phone,Telefone
+birth_date,Nascimento
+baptism_date,Data de Batismo
+church_function,Funcao na Igreja
+cep,CEP
+address_street,Rua
+address_number,Numero
+address_complement,Complemento
+address_neighborhood,Bairro
+address_city,Cidade
+address_state,Estado
+family_group_id,Grupo Familiar
+selfie_url,URL da Selfie
+lgpd_accepted,LGPD Aceito
+lgpd_accepted_at,Data do Aceite LGPD
+lgpd_status,Status LGPD
+lgpd_status_date,Data do Status LGPD
+is_active,Perfil Ativo
+medical_food_alerts,Alertas Alimentares
+first_visit_date,Data da Primeira Visita
+invited_by,Convidado Por
+follow_up_status,Status de Acompanhamento
+created_at,Criado Em
+updated_at,Atualizado Em
+family_id,Familia

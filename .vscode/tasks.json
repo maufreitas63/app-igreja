@@ -1,0 +1,54 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Expo: iniciar Metro (LAN / 8081)",
+      "type": "npm",
+      "script": "start:lan",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      },
+      "runOptions": {
+        "runOn": "default"
+      }
+    },
+    {
+      "label": "Metro: watchdog (reinicia se 8081 cair)",
+      "type": "npm",
+      "script": "metro:watch",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      }
+    },
+    {
+      "label": "Metro: instalar tarefa automática (ao ligar o PC)",
+      "type": "npm",
+      "script": "metro:watch:install",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "close": true
+      }
+    },
+    {
+      "label": "Metro: remover tarefa automática",
+      "type": "npm",
+      "script": "metro:watch:uninstall",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "close": true
+      }
+    }
+  ]
+}

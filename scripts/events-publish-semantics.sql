@@ -1,0 +1,12 @@
+-- Semântica padronizada no app:
+--   is_locked = false ou null  → publicado (Check In / Agenda)
+--   is_locked = true           → oculto (rascunho / inativo)
+--
+-- Eventos com event_date anterior ao dia atual (America/Sao_Paulo) são
+-- bloqueados automaticamente via scripts/events-auto-lock-past.sql
+--
+-- Se eventos sumiram do Check In após editar na manutenção, confira no Table Editor:
+--   Publicado no app  →  is_locked deve ser false (ou null)
+--
+-- Registros antigos que usavam true como "ativo" (legado invertido) — ajuste manualmente:
+-- UPDATE public.events SET is_locked = false WHERE id = '...';
