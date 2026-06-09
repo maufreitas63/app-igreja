@@ -23,6 +23,7 @@ type DropdownSelectProps = {
   modalTitle?: string;
   placeholder?: string;
   style?: StyleProp<ViewStyle>;
+  disabled?: boolean;
 };
 
 export function DropdownSelect({
@@ -32,6 +33,7 @@ export function DropdownSelect({
   modalTitle = 'Selecionar',
   placeholder = 'Selecionar',
   style,
+  disabled = false,
 }: DropdownSelectProps) {
   const [open, setOpen] = useState(false);
 
@@ -46,12 +48,13 @@ export function DropdownSelect({
   return (
     <>
       <TouchableOpacity
-        style={[styles.trigger, style]}
+        style={[styles.trigger, disabled && styles.triggerDisabled, style]}
         onPress={() => setOpen(true)}
         activeOpacity={0.85}
+        disabled={disabled}
         accessibilityRole="button"
         accessibilityLabel={modalTitle}
-        accessibilityState={{ expanded: open }}
+        accessibilityState={{ expanded: open, disabled }}
       >
         <Text style={styles.triggerText} numberOfLines={1}>
           {selectedLabel}
@@ -119,6 +122,9 @@ const styles = StyleSheet.create({
     borderColor: '#334155',
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     paddingHorizontal: 12,
+  },
+  triggerDisabled: {
+    opacity: 0.55,
   },
   triggerText: {
     flex: 1,

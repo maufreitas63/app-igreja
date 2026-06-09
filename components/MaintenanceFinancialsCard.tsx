@@ -1,5 +1,6 @@
 import { RDConciliationModal } from '@/components/RDConciliationModal';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import {
   FINANCIAL_BULK_CSV_FORMAT_HINT,
   formatFinancialBulkDateLabel,
@@ -40,7 +41,6 @@ import type { FinancialEntry } from '@/lib/financialEntry';
 import { MAINTENANCE_FINANCIALS_SQL_HINT } from '@/hooks/useMaintenanceFinancials';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { Picker } from '@react-native-picker/picker';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -187,6 +187,15 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
       return right.month - left.month;
     });
   }, [yearOptions]);
+
+  const maintenanceMonthDropdownOptions = useMemo(
+    () =>
+      maintenanceMonthOptions.map((monthKey) => ({
+        value: formatFinancialMonthKey(monthKey),
+        label: formatFinancialMonthLabel(monthKey),
+      })),
+    [maintenanceMonthOptions]
+  );
 
   useEffect(() => {
     const currentMonth = getCalendarMonthKey();
@@ -647,29 +656,21 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
       >
         <View style={styles.periodBox}>
           <Text style={styles.periodPickerLabel}>Mês</Text>
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={formatFinancialMonthKey(selectedMonth)}
-              onValueChange={(value) => {
-                const parsed = parseFinancialMonthKey(String(value));
+          <DropdownSelect
+            options={maintenanceMonthDropdownOptions}
+            selectedValue={formatFinancialMonthKey(selectedMonth)}
+            onValueChange={(value) => {
+              const parsed = parseFinancialMonthKey(value);
 
-                if (parsed) {
-                  setSelectedMonth(parsed);
-                }
-              }}
-              dropdownIconColor="#F8FAFC"
-              style={styles.picker}
-              enabled={!formBusy}
-            >
-              {maintenanceMonthOptions.map((monthKey) => (
-                <Picker.Item
-                  key={formatFinancialMonthKey(monthKey)}
-                  label={formatFinancialMonthLabel(monthKey)}
-                  value={formatFinancialMonthKey(monthKey)}
-                />
-              ))}
-            </Picker>
-          </View>
+              if (parsed) {
+                setSelectedMonth(parsed);
+              }
+            }}
+            modalTitle="Selecionar mês"
+            placeholder="Selecionar mês"
+            style={styles.monthDropdown}
+            disabled={formBusy || rpcMissing}
+          />
 
           <Text style={styles.periodPickerLabel}>Versão para carga/limpeza</Text>
           <View style={styles.versionChipRow}>
@@ -1304,14 +1305,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.28)',
-    borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    overflow: 'hidden',
-    minHeight: 72,
-    justifyContent: 'center',
+  monthDropdown: {
+    width: '100%',
+    height: 48,
   },
   versionChipRow: {
     flexDirection: 'row',
@@ -1350,11 +1346,6 @@ const styles = StyleSheet.create({
     color: '#FECACA',
     fontSize: 13,
     fontWeight: '800',
-  },
-  picker: {
-    color: '#F8FAFC',
-    backgroundColor: 'transparent',
-    height: 72,
   },
   rdListRow: {
     flexDirection: 'row',
@@ -1408,10 +1399,6 @@ const styles = StyleSheet.create({
   commentModalInputPlaceholderText: {
     color: '#64748B',
     fontSize: 13,
-  },
-  pickerItem: {
-    color: '#F8FAFC',
-    fontSize: 15,
   },
   bodyScroll: {
     flex: 1,

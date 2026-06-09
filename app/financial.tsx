@@ -7,8 +7,8 @@ import { DASHBOARD_FINANCIAL_CARD_ID, FINANCIAL_HUB_ITEMS } from '@/lib/financia
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { formatFinancialMonthKey, formatFinancialMonthLabel } from '@/lib/financialMonth';
 import { useFinancialsByMonth } from '@/hooks/useFinancialsByMonth';
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { FontAwesome } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -68,6 +68,22 @@ export default function FinancialScreen() {
   const pickerValue = selectedMonth ? formatFinancialMonthKey(selectedMonth) : '';
   const selectedMonthIsPlannedOnly =
     Boolean(pickerValue) && plannedOnlyMonthKeys.has(pickerValue);
+
+  const monthDropdownOptions = useMemo(
+    () =>
+      monthOptions.map((month) => {
+        const value = formatFinancialMonthKey(month);
+        const plannedOnly = plannedOnlyMonthKeys.has(value);
+
+        return {
+          value,
+          label: plannedOnly
+            ? `${formatFinancialMonthLabel(month)} (só planejado)`
+            : formatFinancialMonthLabel(month),
+        };
+      }),
+    [monthOptions, plannedOnlyMonthKeys]
+  );
 
   const handleBackToDashboard = useCallback(() => {
     router.replace({
@@ -404,46 +420,28 @@ export default function FinancialScreen() {
 
           <View style={styles.monthFilterSection}>
             <Text style={styles.monthFilterLabel}>Selecionar mês</Text>
-            <View style={styles.pickerWrapper}>
-              {loadingMonths ? (
-                <ActivityIndicator color="#10b981" style={styles.pickerLoader} />
-              ) : monthOptions.length ? (
-                <Picker
-                  selectedValue={pickerValue}
-                  onValueChange={(value) => {
-                    const match = monthOptions.find(
-                      (month) => formatFinancialMonthKey(month) === String(value)
-                    );
+            {loadingMonths ? (
+              <ActivityIndicator color="#10b981" style={styles.pickerLoader} />
+            ) : monthDropdownOptions.length ? (
+              <DropdownSelect
+                options={monthDropdownOptions}
+                selectedValue={pickerValue}
+                onValueChange={(value) => {
+                  const match = monthOptions.find(
+                    (month) => formatFinancialMonthKey(month) === value
+                  );
 
-                    if (match) {
-                      setSelectedMonth(match);
-                    }
-                  }}
-                  dropdownIconColor="#F8FAFC"
-                  style={styles.picker}
-                  itemStyle={styles.pickerItem}
-                  mode="dropdown"
-                >
-                  {monthOptions.map((month) => {
-                    const value = formatFinancialMonthKey(month);
-                    const plannedOnly = plannedOnlyMonthKeys.has(value);
-                    return (
-                      <Picker.Item
-                        key={value}
-                        label={
-                          plannedOnly
-                            ? `${formatFinancialMonthLabel(month)} (só planejado)`
-                            : formatFinancialMonthLabel(month)
-                        }
-                        value={value}
-                      />
-                    );
-                  })}
-                </Picker>
-              ) : (
-                <Text style={styles.pickerEmptyText}>Nenhum mês disponível.</Text>
-              )}
-            </View>
+                  if (match) {
+                    setSelectedMonth(match);
+                  }
+                }}
+                modalTitle="Selecionar mês"
+                placeholder="Selecionar mês"
+                style={styles.monthDropdown}
+              />
+            ) : (
+              <Text style={styles.pickerEmptyText}>Nenhum mês disponível.</Text>
+            )}
             {selectedMonthIsPlannedOnly ? (
               <Text style={styles.plannedOnlyHint}>
                 Este mês só tem lançamentos PLANEJADO. O resultado REALIZADO aparece vazio; use a
@@ -633,22 +631,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontStyle: 'italic',
   },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-    overflow: 'hidden',
-    minHeight: 48,
-    justifyContent: 'center',
-  },
-  picker: {
-    color: '#F8FAFC',
+  monthDropdown: {
+    width: '100%',
     height: 48,
-  },
-  pickerItem: {
-    color: '#F8FAFC',
-    fontSize: 15,
   },
   pickerLoader: {
     paddingVertical: 10,
