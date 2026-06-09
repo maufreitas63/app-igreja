@@ -18,11 +18,13 @@ import { DASHBOARD_MEMBERS_LIST_CARD_ID } from '@/lib/membersListModule';
 import { MAP_PIN_COLOR, type MapMarker } from '@/lib/profilesMapMarkersTypes';
 import { formatPhoneForDisplay } from '@/lib/totemDevice';
 import { openMemberWhatsapp } from '@/lib/whatsapp';
+import { ClientGeoLeafletMap } from '@/components/geo-map/ClientGeoLeafletMap.web';
 import { useRouter } from 'expo-router';
-import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -51,10 +53,6 @@ const filterMarkersByRole = (markers: MapMarker[], filter: MapPinFilter) => {
 
   return markers;
 };
-
-const GeoLeafletMap = lazy(() =>
-  import('@/components/geo-map/GeoLeafletMap.web').then((mod) => ({ default: mod.GeoLeafletMap }))
-);
 
 export default function MapGeolocalizacaoWebScreen() {
   const router = useRouter();
@@ -331,20 +329,11 @@ export default function MapGeolocalizacaoWebScreen() {
         </View>
       ) : markers.length && isClient ? (
         <View style={styles.mapWrap}>
-          <Suspense
-            fallback={
-              <View style={styles.stateBox}>
-                <ActivityIndicator color="#38bdf8" />
-                <Text style={styles.stateText}>Carregando componentes do mapa...</Text>
-              </View>
-            }
-          >
-            <GeoLeafletMap
-              center={leafletCenter}
-              markers={filteredMarkers}
-              onSelectProfile={(profile) => void handleSelectProfile(profile)}
-            />
-          </Suspense>
+          <ClientGeoLeafletMap
+            center={leafletCenter}
+            markers={filteredMarkers}
+            onSelectProfile={(profile) => void handleSelectProfile(profile)}
+          />
         </View>
       ) : (
         <View style={styles.stateBox}>
@@ -747,8 +736,15 @@ const styles = StyleSheet.create({
   },
   mapWrap: {
     flex: 1,
-    minHeight: 260,
-    display: 'flex',
+    minHeight: Platform.OS === 'web' ? 360 : 260,
+    width: '100%',
+    backgroundColor: '#0f172a',
+    ...(Platform.OS === 'web'
+      ? ({
+          height: '58vh',
+          minHeight: 360,
+        } as const)
+      : null),
   },
   stateBox: {
     flex: 1,

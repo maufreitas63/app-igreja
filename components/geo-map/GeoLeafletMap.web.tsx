@@ -1,4 +1,5 @@
 import { MAP_PIN_COLOR, type MapMarker, type ProfileForMap } from '@/lib/profilesMapMarkersTypes';
+import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import React, { useEffect, useMemo } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
@@ -101,10 +102,12 @@ const mapShellStyle: React.CSSProperties = {
   flex: 1,
   width: '100%',
   height: '100%',
-  minHeight: 260,
+  minHeight: 360,
+  backgroundColor: '#0f172a',
 };
 
 const mapStyle: React.CSSProperties = {
   width: '100%',
   height: '100%',
+  minHeight: 360,
 };
