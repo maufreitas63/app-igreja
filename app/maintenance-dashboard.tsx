@@ -69,7 +69,7 @@ import { useQuorumRegistry } from '@/hooks/useQuorumRegistry';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -589,6 +589,19 @@ export default function MaintenanceDashboard() {
 
   const maintenanceCardCount = maintenanceCarouselCards.length;
 
+  useLayoutEffect(() => {
+    if (showEditor || pageWidth <= 0 || maintenanceCardCount <= 0) {
+      return;
+    }
+
+    const targetIndex = Math.min(Math.max(currentIndexRef.current, 0), maintenanceCardCount - 1);
+
+    carouselRef.current?.scrollToOffset({
+      offset: targetIndex * pageWidth,
+      animated: false,
+    });
+  }, [maintenanceCardCount, pageWidth, showEditor]);
+
   useEffect(() => {
     if (currentIndex < maintenanceCardCount) {
       return;
@@ -756,9 +769,7 @@ export default function MaintenanceDashboard() {
             item.content === 'menu' && styles.panelCardMenu,
           ]}
         >
-          {currentIndex !== index ? (
-            <View style={styles.panelCardPlaceholder} />
-          ) : item.content === 'menu' ? (
+          {item.content === 'menu' ? (
             <View style={styles.menuPanel}>
               <Text style={styles.menuPanelTitle}>Módulos de manutenção</Text>
               <Text style={styles.menuPanelSubtitle}>Selecione o card que deseja abrir</Text>
@@ -1008,17 +1019,75 @@ export default function MaintenanceDashboard() {
         </View>
 
         <View style={styles.mainStage}>
+          <View style={styles.carouselStage}>
+            <View style={styles.listContainer}>
+              <FlatList
+                ref={carouselRef}
+                style={styles.carouselFlatList}
+                data={maintenanceCarouselCards}
+                horizontal
+                pagingEnabled
+                scrollEnabled={false}
+                keyboardShouldPersistTaps="handled"
+                showsHorizontalScrollIndicator={false}
+                initialScrollIndex={Math.min(
+                  Math.max(currentIndex, 0),
+                  Math.max(maintenanceCardCount - 1, 0)
+                )}
+                initialNumToRender={3}
+                maxToRenderPerBatch={3}
+                windowSize={5}
+                removeClippedSubviews={Platform.OS !== 'web'}
+                onScroll={handleCarouselScroll}
+                scrollEventThrottle={16}
+                keyExtractor={(item) => item.id}
+                getItemLayout={(_, index) => ({
+                  length: pageWidth,
+                  offset: pageWidth * index,
+                  index,
+                })}
+                snapToAlignment="start"
+                snapToInterval={pageWidth}
+                decelerationRate="fast"
+                disableIntervalMomentum
+                renderItem={renderCarouselItem}
+              />
+            </View>
+
+            <View style={[styles.footerControls, { paddingBottom: insets.bottom + 10 }]}>
+              <CarouselFooterNav
+                currentIndex={currentIndex}
+                totalCount={maintenanceCardCount}
+                centerLabel={currentIndex === 0 ? 'Menu' : 'Voltar'}
+                centerAccessibilityLabel={
+                  currentIndex === 0 ? 'Menu' : 'Voltar ao card Manutenção'
+                }
+                onCenterPress={currentIndex === 0 ? handleMenu : handleBack}
+                onPreviousPress={handleFooterPreviousPress}
+                onNextPress={handleFooterNextPress}
+                onPreviousPressIn={() => startFooterNavRepeat('prev')}
+                onPreviousPressOut={handleFooterNavPressOut}
+                onNextPressIn={() => startFooterNavRepeat('next')}
+                onNextPressOut={handleFooterNavPressOut}
+                isPreviousDisabled={currentIndex === 0}
+                isNextDisabled={currentIndex === maintenanceCardCount - 1}
+                accent="amber"
+              />
+            </View>
+          </View>
+
           {showEditor ? (
-            <ScrollView
-              style={styles.scroll}
-              contentContainerStyle={[
-                styles.scrollContent,
-                styles.scrollContentWithFooter,
-                { paddingBottom: 16 },
-              ]}
-              keyboardShouldPersistTaps="always"
-              showsVerticalScrollIndicator={false}
-            >
+            <View style={styles.editorOverlay}>
+              <ScrollView
+                style={styles.scroll}
+                contentContainerStyle={[
+                  styles.scrollContent,
+                  styles.scrollContentWithFooter,
+                  { paddingBottom: 16 },
+                ]}
+                keyboardShouldPersistTaps="always"
+                showsVerticalScrollIndicator={false}
+              >
             <View style={styles.editorSection}>
               <View style={styles.editorCard}>
                 <Text style={styles.fieldLabel}>Nome do evento</Text>
@@ -1173,64 +1242,9 @@ export default function MaintenanceDashboard() {
 
               </View>
             </View>
-            </ScrollView>
+              </ScrollView>
+            </View>
           ) : null}
-
-          <View
-            style={[styles.carouselStage, showEditor && styles.carouselStageHidden]}
-            pointerEvents={showEditor ? 'none' : 'auto'}
-          >
-            <View style={styles.listContainer}>
-              <FlatList
-                ref={carouselRef}
-                style={styles.carouselFlatList}
-                data={maintenanceCarouselCards}
-                horizontal
-                pagingEnabled
-                scrollEnabled={false}
-                keyboardShouldPersistTaps="handled"
-                showsHorizontalScrollIndicator={false}
-                initialNumToRender={1}
-                maxToRenderPerBatch={2}
-                windowSize={3}
-                removeClippedSubviews={Platform.OS !== 'web'}
-                onScroll={handleCarouselScroll}
-                scrollEventThrottle={16}
-                keyExtractor={(item) => item.id}
-                getItemLayout={(_, index) => ({
-                  length: pageWidth,
-                  offset: pageWidth * index,
-                  index,
-                })}
-                snapToAlignment="start"
-                snapToInterval={pageWidth}
-                decelerationRate="fast"
-                disableIntervalMomentum
-                renderItem={renderCarouselItem}
-              />
-            </View>
-
-            <View style={[styles.footerControls, { paddingBottom: insets.bottom + 10 }]}>
-              <CarouselFooterNav
-                currentIndex={currentIndex}
-                totalCount={maintenanceCardCount}
-                centerLabel={currentIndex === 0 ? 'Menu' : 'Voltar'}
-                centerAccessibilityLabel={
-                  currentIndex === 0 ? 'Menu' : 'Voltar ao card Manutenção'
-                }
-                onCenterPress={currentIndex === 0 ? handleMenu : handleBack}
-                onPreviousPress={handleFooterPreviousPress}
-                onNextPress={handleFooterNextPress}
-                onPreviousPressIn={() => startFooterNavRepeat('prev')}
-                onPreviousPressOut={handleFooterNavPressOut}
-                onNextPressIn={() => startFooterNavRepeat('next')}
-                onNextPressOut={handleFooterNavPressOut}
-                isPreviousDisabled={currentIndex === 0}
-                isNextDisabled={currentIndex === maintenanceCardCount - 1}
-                accent="amber"
-              />
-            </View>
-          </View>
         </View>
 
         {showEditor ? (
@@ -1381,13 +1395,16 @@ const styles = StyleSheet.create({
   mainStage: {
     flex: 1,
     minHeight: 0,
+    position: 'relative',
   },
   carouselStage: {
     flex: 1,
     minHeight: 0,
   },
-  carouselStageHidden: {
-    display: 'none',
+  editorOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 2,
+    backgroundColor: '#1c1917',
   },
   listContainer: {
     flex: 1,
