@@ -6,10 +6,9 @@ import 'react-native-url-polyfill/auto';
 const supabaseUrl = getSupabaseUrl();
 const supabaseAnonKey = getSupabaseAnonKey();
 
+// Metro SSR (expo export) roda em Node, mas pode expor `window` — use só `process.versions.node`.
 const isNodeSsrRuntime =
-  typeof window === 'undefined' &&
-  typeof process !== 'undefined' &&
-  typeof process.versions?.node === 'string';
+  typeof process !== 'undefined' && typeof process.versions?.node === 'string';
 
 const getRealtimeConfig = () => {
   if (!isNodeSsrRuntime) {
