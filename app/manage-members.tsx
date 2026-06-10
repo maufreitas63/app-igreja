@@ -50,6 +50,7 @@ import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
   Alert,
@@ -95,6 +96,29 @@ const normalizeMemberPhoneDigits = (value: string | null | undefined) =>
 
 const SELF_MEMBER_BLOCK_MESSAGE =
   'Você já faz parte desta família como titular da conta. Não é possível cadastrá-lo novamente como outro integrante.';
+
+const FAMILY_INCONSISTENCY_TOAST_MS = 4500;
+
+const ALREADY_IN_FAMILY_TOAST_MESSAGE =
+  'Este integrante já faz parte desta família. A ação não pode ser efetuada.';
+
+const showFamilyInconsistencyToast = (text2: string, text1 = 'Ação não permitida') => {
+  Toast.show({
+    type: 'error',
+    text1,
+    text2,
+    visibilityTime: FAMILY_INCONSISTENCY_TOAST_MS,
+  });
+};
+
+const showFamilyWarningToast = (text2: string, text1 = 'Atenção') => {
+  Toast.show({
+    type: 'info',
+    text1,
+    text2,
+    visibilityTime: FAMILY_INCONSISTENCY_TOAST_MS,
+  });
+};
 
 const phoneDigitsMatch = (left: string | null | undefined, right: string | null | undefined) => {
   const leftDigits = normalizeMemberPhoneDigits(left);
@@ -511,14 +535,14 @@ export default function ManageMembers() {
 
       if (!isEditingSamePerson && profileMatchesSessionAccount(profile)) {
         setProfileLookupMessage(SELF_MEMBER_BLOCK_MESSAGE);
-        Alert.alert('Não é possível selecionar', SELF_MEMBER_BLOCK_MESSAGE);
+        showFamilyInconsistencyToast(SELF_MEMBER_BLOCK_MESSAGE, 'Não é possível selecionar');
         return;
       }
 
       if (profileBelongsToFamily(profile, familyId) && !isEditingSamePerson) {
         const duplicateMessage = buildProfileInFamilyMessage(profile);
         setProfileLookupMessage(duplicateMessage);
-        Alert.alert('Integrante já no grupo familiar', duplicateMessage);
+        showFamilyInconsistencyToast(ALREADY_IN_FAMILY_TOAST_MESSAGE);
         return;
       }
 
@@ -746,7 +770,10 @@ export default function ManageMembers() {
     const memberId = String(member.id);
 
     if (!memberId || memberId === 'undefined') {
-      Alert.alert('Erro', 'Este integrante não possui identificador válido para atualizar.');
+      showFamilyInconsistencyToast(
+        'Este integrante não possui identificador válido para atualizar.',
+        'Erro'
+      );
       return;
     }
 
@@ -824,9 +851,9 @@ export default function ManageMembers() {
         );
 
         if (!addressInherited) {
-          Alert.alert(
-            'Integrante reconhecido',
-            'O vínculo familiar foi confirmado, mas o endereço completo da sua família não pôde ser copiado para o perfil desta pessoa. Verifique se o integrante possui telefone cadastrado e se o seu perfil tem endereço preenchido.'
+          showFamilyWarningToast(
+            'O vínculo familiar foi confirmado, mas o endereço completo da sua família não pôde ser copiado para o perfil desta pessoa. Verifique se o integrante possui telefone cadastrado e se o seu perfil tem endereço preenchido.',
+            'Integrante reconhecido'
           );
         }
       }
@@ -841,12 +868,12 @@ export default function ManageMembers() {
         err instanceof Error ? err.message : 'Não foi possível atualizar o reconhecimento do integrante.';
 
       if (message.toLowerCase().includes('accepted')) {
-        Alert.alert(
-          'Erro',
-          'A coluna accepted ainda não existe na tabela members. Execute scripts/members-accepted-column.sql no Supabase.'
+        showFamilyInconsistencyToast(
+          'A coluna accepted ainda não existe na tabela members. Execute scripts/members-accepted-column.sql no Supabase.',
+          'Erro'
         );
       } else {
-        Alert.alert('Erro', message);
+        showFamilyInconsistencyToast(message, 'Erro');
       }
     } finally {
       setPendingAcceptedMemberIds((current) => current.filter((id) => id !== memberId));
@@ -945,9 +972,9 @@ export default function ManageMembers() {
     }
 
     if (isAccountLegalRepresentativeMember(editingMemberSnapshot)) {
-      Alert.alert(
-        'Não é possível excluir',
-        'O representante legal da conta não pode ser removido por esta tela.'
+      showFamilyInconsistencyToast(
+        'O representante legal da conta não pode ser removido por esta tela.',
+        'Não é possível excluir'
       );
       return;
     }
@@ -982,7 +1009,7 @@ export default function ManageMembers() {
       const message = rawMessage.toLowerCase().includes('policy') || rawMessage.toLowerCase().includes('permission')
         ? `${rawMessage}\n\nExecute no Supabase: scripts/sync-managed-member-profile-family-rpc.sql`
         : rawMessage;
-      Alert.alert('Erro', message);
+      showFamilyInconsistencyToast(message, 'Erro');
     } finally {
       setDeleting(false);
     }
@@ -1018,7 +1045,7 @@ export default function ManageMembers() {
 
   const addMember = async () => {
     if (!parentesco) {
-      Alert.alert('Atenção', 'Selecione o grau de parentesco.');
+      showFamilyInconsistencyToast('Selecione o grau de parentesco.');
       return;
     }
 
@@ -1044,8 +1071,7 @@ export default function ManageMembers() {
     const normalizedName = name.trim() || resolvedLinkedProfile?.full_name?.trim() || '';
 
     if (!normalizedName) {
-      Alert.alert(
-        'Atenção',
+      showFamilyInconsistencyToast(
         'O nome é obrigatório. Digite o nome completo ou informe um telefone com perfil cadastrado.'
       );
       return;
@@ -1061,7 +1087,7 @@ export default function ManageMembers() {
         phone: resolvedLinkedProfile?.phone ?? normalizedPhone,
       })
     ) {
-      Alert.alert('Não é possível cadastrar', SELF_MEMBER_BLOCK_MESSAGE);
+      showFamilyInconsistencyToast(SELF_MEMBER_BLOCK_MESSAGE, 'Não é possível cadastrar');
       return;
     }
 
@@ -1142,10 +1168,7 @@ export default function ManageMembers() {
       });
 
       if (duplicateMember) {
-        Alert.alert(
-          'Integrante já existe',
-          `${duplicateMember.full_name?.trim() || 'Esta pessoa'} já está cadastrada nesta família.`
-        );
+        showFamilyInconsistencyToast(ALREADY_IN_FAMILY_TOAST_MESSAGE);
         return;
       }
 
@@ -1162,10 +1185,8 @@ export default function ManageMembers() {
         const alreadyInFamilyGroup = await hasAcceptedMemberInFamily(resolvedLinkedProfile, familyId);
 
         if (alreadyInFamilyGroup) {
-          Alert.alert(
-            'Integrante já no grupo familiar',
-            buildProfileInFamilyMessage(resolvedLinkedProfile)
-          );
+          setProfileLookupMessage(buildProfileInFamilyMessage(resolvedLinkedProfile));
+          showFamilyInconsistencyToast(ALREADY_IN_FAMILY_TOAST_MESSAGE);
           return;
         }
       }
@@ -1183,10 +1204,7 @@ export default function ManageMembers() {
         const targetFamilyId = familyId.trim().toUpperCase();
 
         if (existingFamilyId === targetFamilyId && existingMember.accepted === true) {
-          Alert.alert(
-            'Integrante já existe',
-            'Esta pessoa já está cadastrada e aceita nesta família.'
-          );
+          showFamilyInconsistencyToast(ALREADY_IN_FAMILY_TOAST_MESSAGE);
           return;
         }
 
@@ -1298,7 +1316,7 @@ export default function ManageMembers() {
       );
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Erro ao adicionar integrante.';
-      Alert.alert('Erro', message);
+      showFamilyInconsistencyToast(message, 'Erro');
     } finally {
       setAdding(false);
     }
