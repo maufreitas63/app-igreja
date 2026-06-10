@@ -1,4 +1,8 @@
-import { parseBrazilianDateToIso, normalizePhoneDigits } from '@/lib/familyRegistration';
+import {
+  FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS,
+  parseBrazilianDateToIso,
+  normalizePhoneDigits,
+} from '@/lib/familyRegistration';
 import { normalizeCepDigits } from '@/lib/cepUtils';
 import { z } from 'zod';
 
@@ -31,9 +35,14 @@ const requiredCep = z
     message: 'Informe um CEP com 8 dígitos.',
   });
 
+const dependentRelationship = z.enum(FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS, {
+  message: 'Selecione o vínculo familiar.',
+});
+
 const dependentSchema = z.object({
   fullName: requiredName,
   birthDate: requiredBirthDate,
+  relationship: dependentRelationship,
   phone: z
     .string()
     .trim()

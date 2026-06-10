@@ -41,10 +41,22 @@ export function formatPhoneDisplay(value: string): string {
   return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
 }
 
+export const FAMILY_INFORMANT_RELATIONSHIP = 'Representante Legal';
+
+export const FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS = [
+  'Cônjuge',
+  'Filho(a)',
+  'Outros',
+] as const;
+
+export type FamilyDependentRelationship =
+  (typeof FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS)[number];
+
 export type FamilyRegistrationDependent = {
   fullName: string;
   birthDate: string;
   phone: string;
+  relationship: FamilyDependentRelationship;
   foodRestrictions: string;
 };
 
@@ -71,6 +83,15 @@ export type ProfileInsertRow = {
   address_complement: string | null;
   medical_food_alerts: string | null;
   is_active: boolean;
+};
+
+export type MemberInsertRow = {
+  full_name: string;
+  birth_date: string;
+  phone: string | null;
+  relationship: string;
+  family_id: string;
+  accepted: boolean;
 };
 
 function buildAddressPatch(cep: string, addressNumber: string, addressComplement: string) {
@@ -140,26 +161,79 @@ export function buildFamilyProfileRows(
   return rows;
 }
 
+export function buildFamilyMemberRows(
+  values: FamilyRegistrationFormValues,
+  familyId: string
+): MemberInsertRow[] {
+  const informantBirthIso = parseBrazilianDateToIso(values.informant.birthDate);
+  if (!informantBirthIso) {
+    throw new Error('Data de nascimento do informante inválida.');
+  }
+
+  const informantPhone = normalizePhoneDigits(values.informant.phone);
+
+  const rows: MemberInsertRow[] = [
+    {
+      full_name: values.informant.fullName.trim(),
+      birth_date: informantBirthIso,
+      phone: informantPhone || null,
+      relationship: FAMILY_INFORMANT_RELATIONSHIP,
+      family_id: familyId,
+      accepted: false,
+    },
+  ];
+
+  for (const dependent of values.dependents) {
+    const name = dependent.fullName.trim();
+    if (!name) {
+      continue;
+    }
+
+    const birthIso = parseBrazilianDateToIso(dependent.birthDate);
+    if (!birthIso) {
+      throw new Error(`Data de nascimento inválida para o dependente "${name}".`);
+    }
+
+    const phone = normalizePhoneDigits(dependent.phone);
+
+    rows.push({
+      full_name: name,
+      birth_date: birthIso,
+      phone: phone || null,
+      relationship: dependent.relationship,
+      family_id: familyId,
+      accepted: false,
+    });
+  }
+
+  return rows;
+}
+
 export async function submitFamilyRegistration(
   values: FamilyRegistrationFormValues
 ): Promise<{ familyId: string; insertedCount: number }> {
   const familyId = crypto.randomUUID();
-  const rows = buildFamilyProfileRows(values, familyId);
+  const profileRows = buildFamilyProfileRows(values, familyId);
+  const memberRows = buildFamilyMemberRows(values, familyId);
 
-  const results = await Promise.all(
-    rows.map(async (row) => {
+  await Promise.all([
+    ...profileRows.map(async (row) => {
       const { error } = await supabaseBrowser.from('profiles').insert(row);
       if (error) {
         throw error;
       }
-    })
-  );
-
-  void results;
+    }),
+    ...memberRows.map(async (row) => {
+      const { error } = await supabaseBrowser.from('members').insert(row);
+      if (error) {
+        throw error;
+      }
+    }),
+  ]);
 
   return {
     familyId,
-    insertedCount: rows.length,
+    insertedCount: profileRows.length,
   };
 }
 

@@ -11,8 +11,11 @@ import { Input } from '@/components/ui/input';
 import {
   buildFamilyRegistrationShareUrl,
   buildFamilyRegistrationWhatsAppUrl,
+  FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS,
+  FAMILY_INFORMANT_RELATIONSHIP,
   formatPhoneDisplay,
   submitFamilyRegistration,
+  type FamilyDependentRelationship,
   type FamilyRegistrationFormValues,
 } from '@/lib/familyRegistration';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,6 +33,14 @@ const formatDateInput = (value: string) => {
   if (cleaned.length <= 4) return `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
   return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4)}`;
 };
+
+const relationshipButtonClass = (selected: boolean) =>
+  [
+    'rounded-md border px-3 py-2 text-sm font-medium transition-colors',
+    selected
+      ? 'border-emerald-600 bg-emerald-600 text-white'
+      : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-500',
+  ].join(' ');
 
 const formatCepInput = (value: string) => {
   const cleaned = value.replace(/\D/g, '').slice(0, 8);
@@ -166,6 +177,9 @@ export function FamilyRegistrationForm() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
           <section className="space-y-4">
             <h2 className="text-lg font-semibold text-slate-900">Informante principal</h2>
+            <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+              Vínculo familiar: <strong>{FAMILY_INFORMANT_RELATIONSHIP}</strong>
+            </p>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
@@ -281,6 +295,7 @@ export function FamilyRegistrationForm() {
                   append({
                     fullName: '',
                     birthDate: '',
+                    relationship: 'Filho(a)',
                     phone: '',
                     foodRestrictions: '',
                   })
@@ -323,6 +338,31 @@ export function FamilyRegistrationForm() {
                         <FormLabel>Nome completo</FormLabel>
                         <FormControl>
                           <Input placeholder="Nome e sobrenome" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`dependents.${index}.relationship`}
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2">
+                        <FormLabel>Vínculo familiar</FormLabel>
+                        <FormControl>
+                          <div className="flex flex-wrap gap-2">
+                            {FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS.map((option) => (
+                              <button
+                                key={option}
+                                type="button"
+                                className={relationshipButtonClass(field.value === option)}
+                                onClick={() => field.onChange(option as FamilyDependentRelationship)}
+                              >
+                                {option}
+                              </button>
+                            ))}
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
