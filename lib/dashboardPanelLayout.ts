@@ -53,6 +53,19 @@ export const buildDashboardPanelCardSizeStyle = (
 /** Reexporta tokens de padding responsivo dos cards do dashboard e manutenção. */
 export { computeMaintenancePanelInsets, computeResponsiveCardInsets } from '@/lib/uiTokens';
 
+export const resolveDashboardCardIndex = (
+  cards: ReadonlyArray<{ id: string; content: string }>,
+  cardParam?: string | null
+) => {
+  if (!cardParam?.trim()) {
+    return -1;
+  }
+
+  return cards.findIndex(
+    (item) => item.id === cardParam || item.content === cardParam
+  );
+};
+
 /** Tipografia do título «Índice do Aplicativo» (painel superior do card). */
 export const DASHBOARD_PANEL_TITLE_TYPO = {
   fontSize: 17,

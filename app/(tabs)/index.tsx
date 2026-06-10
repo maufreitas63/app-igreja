@@ -275,7 +275,7 @@ export default function DashboardIndexScreen() {
       return;
     }
 
-    router.push({
+    router.replace({
       pathname: '/(tabs)/dashboard',
       params: { dashboardCard: shortcut.dashboardCard },
     });

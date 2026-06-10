@@ -52,6 +52,7 @@ import { resolveDashboardCardAccessResourceKey } from '@/lib/screenAccessResourc
 import {
   computeDashboardPanelInnerPadding,
   DASHBOARD_PANEL_TITLE_TYPO,
+  resolveDashboardCardIndex,
 } from '@/lib/dashboardPanelLayout';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -488,6 +489,7 @@ export default function Dashboard() {
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDashboardCarouselReady, setIsDashboardCarouselReady] = useState(false);
   const [isSalaRegistrationsEnabled, setIsSalaRegistrationsEnabled] = useState(false);
   const birthdaysLoadedRef = useRef(false);
   const membersListLoadedRef = useRef(false);
@@ -1748,13 +1750,13 @@ export default function Dashboard() {
     setIsParkingPanelVisible(false);
     const rosterIdx = data.findIndex((item) => item.content === 'scale_roster');
     if (rosterIdx >= 0 && isScaleRosterVisible) {
-      requestAnimationFrame(() => scrollToDashboardCard(rosterIdx, false));
+      scrollToDashboardCard(rosterIdx, false);
       return;
     }
 
     const scalesIdx = data.findIndex((item) => item.content === 'vigilance_scales');
     if (scalesIdx >= 0) {
-      requestAnimationFrame(() => scrollToDashboardCard(scalesIdx, false));
+      scrollToDashboardCard(scalesIdx, false);
     }
   }, [data, handleResetVehicleLookup, isScaleRosterVisible, scrollToDashboardCard]);
 
@@ -1781,9 +1783,7 @@ export default function Dashboard() {
     }
 
     scrollToParkingCardRef.current = false;
-    requestAnimationFrame(() => {
-      scrollToDashboardCard(parkingIdx, false);
-    });
+    scrollToDashboardCard(parkingIdx, false);
   }, [isParkingPanelVisible, data, scrollToDashboardCard]);
 
   useLayoutEffect(() => {
@@ -1849,31 +1849,35 @@ export default function Dashboard() {
     });
   }, [currentIndex, data.length, pageWidth]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!isDashboardCardAccessReady || data.length === 0) {
+      if (requestedDashboardCard) {
+        setIsDashboardCarouselReady(false);
+      }
+      return;
+    }
+
     if (!requestedDashboardCard) {
       handledDashboardCardRef.current = null;
+      setIsDashboardCarouselReady(true);
       return;
     }
 
-    if (handledDashboardCardRef.current === requestedDashboardCard) {
-      return;
-    }
-
-    const targetIndex = data.findIndex(
-      (item) => item.id === requestedDashboardCard || item.content === requestedDashboardCard
-    );
-
+    const targetIndex = resolveDashboardCardIndex(data, requestedDashboardCard);
     if (targetIndex < 0) {
+      setIsDashboardCarouselReady(true);
       return;
     }
 
-    handledDashboardCardRef.current = requestedDashboardCard;
+    currentIndexRef.current = targetIndex;
     setCurrentIndex(targetIndex);
     dashboardListRef.current?.scrollToOffset({
       offset: targetIndex * pageWidth,
       animated: false,
     });
-  }, [data, pageWidth, requestedDashboardCard]);
+    handledDashboardCardRef.current = requestedDashboardCard;
+    setIsDashboardCarouselReady(true);
+  }, [data, isDashboardCardAccessReady, pageWidth, requestedDashboardCard]);
 
   useEffect(() => {
     if (previousPageWidthRef.current === pageWidth) {
@@ -1919,7 +1923,10 @@ export default function Dashboard() {
         <View style={styles.listContainer}>
           <FlatList
             ref={dashboardListRef}
-            style={[styles.dashboardFlatList, !isDashboardCardAccessReady && styles.dashboardFlatListHidden]}
+            style={[
+              styles.dashboardFlatList,
+              (!isDashboardCardAccessReady || !isDashboardCarouselReady) && styles.dashboardFlatListHidden,
+            ]}
             data={data}
             horizontal
             pagingEnabled
