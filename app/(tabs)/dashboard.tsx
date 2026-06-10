@@ -48,7 +48,19 @@ import {
   signOutAndReturnToLogin,
 } from '@/lib/userSession';
 import { normalizePhoneForWhatsApp, openMemberWhatsapp } from '@/lib/whatsapp';
+import { DASHBOARD_CARD_BLOCKED_MESSAGES } from '@/lib/dashboardCardScreenLinks';
+import {
+  isDashboardCardFullyAllowed,
+  loadDashboardLinkedScreenAccess,
+  type DashboardScreenAccess,
+} from '@/lib/dashboardScreenAccess';
+import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
 import { resolveDashboardCardAccessResourceKey } from '@/lib/screenAccessResourceKeys';
+import {
+  fetchPermittedScaleTypes,
+  SCALE_PERMITTED_RPC_MISSING,
+  sessionCanAccessScaleType,
+} from '@/lib/scaleAccess';
 import {
   computeDashboardPanelInnerPadding,
   DASHBOARD_PANEL_TITLE_TYPO,
@@ -378,7 +390,6 @@ const isParkingWelcomeScale = (scaleName: string, scaleCode: string) => {
     || normalizedCode === 'vigilancia_estacionamento'
     || normalizedCode.includes('vigilancia_estacionamento')
     || (normalizedName.includes('vigilancia') && normalizedName.includes('estacionamento'))
-    || normalizedName.includes('estacionamento')
   );
 };
 
@@ -501,6 +512,7 @@ export default function Dashboard() {
   const [canViewMaintenance, setCanViewMaintenance] = useState(false);
   const [isMaintenanceAccessLoading, setIsMaintenanceAccessLoading] = useState(true);
   const [dashboardCardAccess, setDashboardCardAccess] = useState<DashboardCardViewAccess>({});
+  const [dashboardScreenAccess, setDashboardScreenAccess] = useState<DashboardScreenAccess>({});
   const [aclRpcStatus, setAclRpcStatus] = useState<'unknown' | 'available' | 'missing'>('unknown');
   const [modalVisible, setModalVisible] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -724,6 +736,7 @@ export default function Dashboard() {
       if (!targetPhone) {
         setCanViewMaintenance(false);
         setDashboardCardAccess({});
+        setDashboardScreenAccess({});
         setIsMaintenanceAccessLoading(false);
         setIsProfileLoading(false);
         return;
@@ -745,6 +758,7 @@ export default function Dashboard() {
         setCurrentUserId(null);
         setCanViewMaintenance(false);
         setDashboardCardAccess({});
+        setDashboardScreenAccess({});
         setIsMaintenanceAccessLoading(false);
         setIsProfileLoading(false);
         signOutAndReturnToLogin();
@@ -774,12 +788,14 @@ export default function Dashboard() {
       setAclRpcStatus(aclStatus);
 
       if (loadedProfile?.id) {
-        const [allowed, cardAccess] = await Promise.all([
+        const [allowed, cardAccess, screenAccess] = await Promise.all([
           profileHasAccess(loadedProfile.id, 'screen', ACCESS_SCREEN.maintenance, 'view'),
           loadDashboardCardViewAccess(loadedProfile.id),
+          loadDashboardLinkedScreenAccess(loadedProfile.id),
         ]);
         setCanViewMaintenance(allowed);
         setDashboardCardAccess(cardAccess);
+        setDashboardScreenAccess(screenAccess);
       }
 
       setIsMaintenanceAccessLoading(false);
@@ -851,9 +867,10 @@ export default function Dashboard() {
         const aclStatus = await getAccessControlRpcStatus();
 
         if (sessionProfile.id) {
-          const [allowed, cardAccess] = await Promise.all([
+          const [allowed, cardAccess, screenAccess] = await Promise.all([
             profileHasAccess(sessionProfile.id, 'screen', ACCESS_SCREEN.maintenance, 'view'),
             loadDashboardCardViewAccess(sessionProfile.id),
+            loadDashboardLinkedScreenAccess(sessionProfile.id),
           ]);
 
           if (active) {
@@ -865,10 +882,17 @@ export default function Dashboard() {
 
               return nextSnapshot === currentSnapshot ? current : cardAccess;
             });
+            setDashboardScreenAccess((current) => {
+              const nextSnapshot = JSON.stringify(screenAccess);
+              const currentSnapshot = JSON.stringify(current);
+
+              return nextSnapshot === currentSnapshot ? current : screenAccess;
+            });
           }
         } else if (active) {
           setCanViewMaintenance(false);
           setDashboardCardAccess({});
+          setDashboardScreenAccess({});
         }
       })();
 
@@ -1063,16 +1087,10 @@ export default function Dashboard() {
     setVigilanceScalesError(null);
 
     try {
-      const [{ data: typesData, error: typesError }, { data, error }, { data: profilesData, error: profilesError }] =
-        await Promise.all([
-          supabase.rpc('listar_tipos_escala'),
-          supabase.rpc('listar_escalas'),
-          supabase.from('profiles').select('full_name, phone, family_id, codigo_membro'),
-        ]);
-
-      if (typesError) {
-        throw typesError;
-      }
+      const [{ data, error }, { data: profilesData, error: profilesError }] = await Promise.all([
+        supabase.rpc('listar_escalas'),
+        supabase.from('profiles').select('full_name, phone, family_id, codigo_membro'),
+      ]);
 
       if (error) {
         throw error;
@@ -1084,24 +1102,48 @@ export default function Dashboard() {
 
       const profiles = (profilesData as ProfilePhoneRow[] | null) ?? [];
 
-      const parsedTypes = ((typesData as ScaleTypeRow[] | null) ?? [])
-        .map((entry) => {
-          const entryId = entry.id?.trim();
-          const code = entry.codigo?.trim();
-          const name = entry.nome?.trim();
+      let parsedTypes: ScaleTypeEntry[];
 
-          if (!entryId || !code || !name) {
-            return null;
+      try {
+        const permittedTypes = await fetchPermittedScaleTypes('view');
+        parsedTypes = permittedTypes.map((entry) => ({
+          id: entry.id,
+          code: entry.code,
+          name: entry.name,
+        }));
+      } catch (scaleTypesError) {
+        if (
+          scaleTypesError instanceof Error
+          && scaleTypesError.message === SCALE_PERMITTED_RPC_MISSING
+        ) {
+          const { data: typesData, error: typesError } = await supabase.rpc('listar_tipos_escala');
+
+          if (typesError) {
+            throw typesError;
           }
 
-          return {
-            id: entryId,
-            code,
-            name,
-          } satisfies ScaleTypeEntry;
-        })
-        .filter((entry): entry is ScaleTypeEntry => entry !== null)
-        .sort((left, right) => left.name.localeCompare(right.name, 'pt-BR'));
+          parsedTypes = ((typesData as ScaleTypeRow[] | null) ?? [])
+            .map((entry) => {
+              const entryId = entry.id?.trim();
+              const code = entry.codigo?.trim();
+              const name = entry.nome?.trim();
+
+              if (!entryId || !code || !name) {
+                return null;
+              }
+
+              return {
+                id: entryId,
+                code,
+                name,
+              } satisfies ScaleTypeEntry;
+            })
+            .filter((entry): entry is ScaleTypeEntry => entry !== null)
+            .sort((left, right) => left.name.localeCompare(right.name, 'pt-BR'));
+        } else {
+          throw scaleTypesError;
+        }
+      }
 
       const parsedEntries = ((data as VigilanceScaleRow[] | null) ?? [])
         .map((entry) => {
@@ -1356,19 +1398,31 @@ export default function Dashboard() {
 
   const handleSelectVigilanceScale = useCallback(
     (option: ScaleTypeEntry) => {
-      setSelectedVigilanceScale(option.code);
-      setIsParkingPanelVisible(false);
-      handleResetVehicleLookup();
-      setIsScaleRosterVisible(true);
-      scrollToScaleRosterRef.current = true;
+      void (async () => {
+        const allowed = await sessionCanAccessScaleType(option.code, 'view');
 
-      if (isIntercessionScale(option.name, option.code)) {
-        void loadRegisteredScaleVolunteers(option.id);
-        return;
-      }
+        if (!allowed) {
+          Alert.alert(
+            'Sem permissão',
+            `Você não tem permissão para acessar a escala "${option.name}".`
+          );
+          return;
+        }
 
-      setRegisteredScaleVolunteers([]);
-      setRegisteredScaleVolunteersError(null);
+        setSelectedVigilanceScale(option.code);
+        setIsParkingPanelVisible(false);
+        handleResetVehicleLookup();
+        setIsScaleRosterVisible(true);
+        scrollToScaleRosterRef.current = true;
+
+        if (isIntercessionScale(option.name, option.code)) {
+          void loadRegisteredScaleVolunteers(option.id);
+          return;
+        }
+
+        setRegisteredScaleVolunteers([]);
+        setRegisteredScaleVolunteersError(null);
+      })();
     },
     [handleResetVehicleLookup, loadRegisteredScaleVolunteers]
   );
@@ -1544,9 +1598,9 @@ export default function Dashboard() {
     }
 
     return dashboardCardCandidates.filter((card) =>
-      isDashboardCardContentAllowed(card.content, dashboardCardAccess)
+      isDashboardCardFullyAllowed(card.content, dashboardCardAccess, dashboardScreenAccess)
     );
-  }, [dashboardCardAccess, dashboardCardCandidates, isDashboardCardAccessReady]);
+  }, [dashboardCardAccess, dashboardCardCandidates, dashboardScreenAccess, isDashboardCardAccessReady]);
 
   const buildChildScreenParams = useCallback(
     (extra?: Record<string, string>) => {
@@ -1576,10 +1630,12 @@ export default function Dashboard() {
 
       handledDashboardCardRef.current = null;
       prefetchProfilesMapMarkers();
-      router.push({
-        pathname: '/mapa-geolocalizacao',
-        params: buildChildScreenParams({ focusProfileId: entry.id }),
-      });
+      void navigateWithScreenAccess(
+        router,
+        '/mapa-geolocalizacao',
+        ACCESS_SCREEN.mapGeolocation,
+        buildChildScreenParams({ focusProfileId: entry.id })
+      );
     },
     [buildChildScreenParams, router]
   );
@@ -1587,10 +1643,12 @@ export default function Dashboard() {
   const handleOpenMembersMap = useCallback(() => {
     handledDashboardCardRef.current = null;
     prefetchProfilesMapMarkers();
-    router.push({
-      pathname: '/mapa-geolocalizacao',
-      params: buildChildScreenParams(),
-    });
+    void navigateWithScreenAccess(
+      router,
+      '/mapa-geolocalizacao',
+      ACCESS_SCREEN.mapGeolocation,
+      buildChildScreenParams()
+    );
   }, [buildChildScreenParams, router]);
 
   const activeDashboardScreenTitle = useMemo(() => {
@@ -1791,9 +1849,18 @@ export default function Dashboard() {
   }, []);
 
   const handleOpenParkingFromRoster = useCallback(() => {
+    if (!isDashboardCardContentAllowed('parking_vehicle_v2', dashboardCardAccess)) {
+      Alert.alert(
+        'Sem permissão',
+        DASHBOARD_CARD_BLOCKED_MESSAGES.parking_vehicle_v2
+          ?? 'Você não tem permissão para abrir o painel de estacionamento.'
+      );
+      return;
+    }
+
     scrollToParkingCardRef.current = true;
     setIsParkingPanelVisible(true);
-  }, []);
+  }, [dashboardCardAccess]);
 
   useLayoutEffect(() => {
     if (!isParkingPanelVisible || !scrollToParkingCardRef.current) {
@@ -1802,6 +1869,13 @@ export default function Dashboard() {
 
     const parkingIdx = data.findIndex((item) => item.content === 'parking_vehicle_v2');
     if (parkingIdx < 0) {
+      scrollToParkingCardRef.current = false;
+      setIsParkingPanelVisible(false);
+      Alert.alert(
+        'Painel indisponível',
+        DASHBOARD_CARD_BLOCKED_MESSAGES.parking_vehicle_v2
+          ?? 'O painel de estacionamento não está disponível para o seu perfil.'
+      );
       return;
     }
 
@@ -1888,6 +1962,13 @@ export default function Dashboard() {
 
     const targetIndex = resolveDashboardCardIndex(data, requestedDashboardCard);
     if (targetIndex < 0) {
+      if (handledDashboardCardRef.current !== requestedDashboardCard) {
+        Alert.alert(
+          'Painel indisponível',
+          'Você não tem permissão para abrir este painel ou ele não está disponível no momento.'
+        );
+        handledDashboardCardRef.current = requestedDashboardCard;
+      }
       setIsDashboardCarouselReady(true);
       return;
     }
@@ -2206,12 +2287,14 @@ export default function Dashboard() {
                         style={[styles.groupedManageButton, styles.groupedManageButtonProfile]}
                         activeOpacity={0.85}
                         onPress={() =>
-                          router.push({
-                            pathname: '/manage-profile',
-                            params: buildChildScreenParams(
+                          void navigateWithScreenAccess(
+                            router,
+                            '/manage-profile',
+                            ACCESS_SCREEN.manageProfile,
+                            buildChildScreenParams(
                               userPhone ? { phone: encodeURIComponent(userPhone) } : {}
-                            ),
-                          })
+                            )
+                          )
                         }
                       >
                         <View style={styles.groupedManageButtonContent}>
@@ -2228,12 +2311,14 @@ export default function Dashboard() {
                         style={[styles.groupedManageButton, styles.groupedManageButtonFamily]}
                         activeOpacity={0.85}
                         onPress={() =>
-                          router.push({
-                            pathname: '/manage-members',
-                            params: buildChildScreenParams(
+                          void navigateWithScreenAccess(
+                            router,
+                            '/manage-members',
+                            ACCESS_SCREEN.manageMembers,
+                            buildChildScreenParams(
                               userPhone ? { phone: encodeURIComponent(userPhone) } : {}
-                            ),
-                          })
+                            )
+                          )
                         }
                       >
                         <View style={styles.groupedManageButtonContent}>
@@ -2555,10 +2640,13 @@ export default function Dashboard() {
                       dashboardPanelTopInsetStyle,
                     ]}
                     onPress={() =>
-                      router.navigate({
-                        pathname: '/financial',
-                        params: buildChildScreenParams(),
-                      })
+                      void navigateWithScreenAccess(
+                        router,
+                        '/financial',
+                        ACCESS_SCREEN.financial,
+                        buildChildScreenParams(),
+                        { method: 'navigate' }
+                      )
                     }
                     activeOpacity={0.8}
                   >
@@ -3085,12 +3173,15 @@ export default function Dashboard() {
                     onPress={() => {
                       if (item.content === 'qr') setModalVisible(true);
                       if (item.content === 'pastoral') {
-                        router.navigate({
-                          pathname: '/pastoral',
-                          params: buildChildScreenParams(
+                        void navigateWithScreenAccess(
+                          router,
+                          '/pastoral',
+                          ACCESS_SCREEN.pastoral,
+                          buildChildScreenParams(
                             currentUserId ? { userId: currentUserId } : {}
                           ),
-                        });
+                          { method: 'navigate' }
+                        );
                       }
                     }}
                     activeOpacity={0.8}

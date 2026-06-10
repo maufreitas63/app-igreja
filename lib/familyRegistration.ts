@@ -1,5 +1,17 @@
 import { formatCep, normalizeCepDigits } from '@/lib/cepUtils';
+import {
+  FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS,
+  FAMILY_INFORMANT_RELATIONSHIP,
+  type FamilyDependentRelationship,
+} from '@/lib/familyRelationshipOptions';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
+import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+
+export {
+  FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS,
+  FAMILY_INFORMANT_RELATIONSHIP,
+  type FamilyDependentRelationship,
+};
 
 const BRAZILIAN_DATE_REGEX = /^(\d{2})\/(\d{2})\/(\d{4})$/;
 
@@ -51,17 +63,6 @@ export function formatPhoneForStorage(value: string): string | null {
   return formatPhoneDisplay(digits);
 }
 
-export const FAMILY_INFORMANT_RELATIONSHIP = 'Representante Legal';
-
-export const FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS = [
-  'Cônjuge',
-  'Filho(a)',
-  'Outros',
-] as const;
-
-export type FamilyDependentRelationship =
-  (typeof FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS)[number];
-
 export type FamilyRegistrationDependent = {
   fullName: string;
   birthDate: string;
@@ -83,26 +84,23 @@ export type FamilyRegistrationFormValues = {
   dependents: FamilyRegistrationDependent[];
 };
 
-export type ProfileInsertRow = {
-  full_name: string;
-  birth_date: string;
-  phone: string | null;
-  family_id: string;
-  codigo_membro: string;
-  cep: string | null;
-  address_number: string | null;
-  address_complement: string | null;
-  medical_food_alerts: string | null;
-  is_active: boolean;
-};
-
-export type MemberInsertRow = {
-  full_name: string;
-  birth_date: string;
-  phone: string | null;
-  relationship: string;
-  family_id: string;
-  accepted: boolean;
+type FamilyRegistrationRpcPayload = {
+  informant: {
+    full_name: string;
+    birth_date: string;
+    phone: string | null;
+    cep: string | null;
+    address_number: string | null;
+    address_complement: string | null;
+    medical_food_alerts: string | null;
+  };
+  dependents: Array<{
+    full_name: string;
+    birth_date: string;
+    phone: string | null;
+    relationship: string;
+    medical_food_alerts: string | null;
+  }>;
 };
 
 function buildAddressPatch(cep: string, addressNumber: string, addressComplement: string) {
@@ -114,10 +112,9 @@ function buildAddressPatch(cep: string, addressNumber: string, addressComplement
   };
 }
 
-export function buildFamilyProfileRows(
-  values: FamilyRegistrationFormValues,
-  familyId: string
-): ProfileInsertRow[] {
+function buildFamilyRegistrationRpcPayload(
+  values: FamilyRegistrationFormValues
+): FamilyRegistrationRpcPayload {
   const address = buildAddressPatch(
     values.informant.cep,
     values.informant.addressNumber,
@@ -131,18 +128,7 @@ export function buildFamilyProfileRows(
 
   const informantPhone = formatPhoneForStorage(values.informant.phone);
 
-  const rows: ProfileInsertRow[] = [
-    {
-      full_name: values.informant.fullName.trim(),
-      birth_date: informantBirthIso,
-      phone: informantPhone,
-      family_id: familyId,
-      codigo_membro: familyId,
-      ...address,
-      medical_food_alerts: values.informant.foodRestrictions.trim() || null,
-      is_active: false,
-    },
-  ];
+  const dependents: FamilyRegistrationRpcPayload['dependents'] = [];
 
   for (const dependent of values.dependents) {
     const name = dependent.fullName.trim();
@@ -155,96 +141,65 @@ export function buildFamilyProfileRows(
       throw new Error(`Data de nascimento inválida para o dependente "${name}".`);
     }
 
-    const phone = formatPhoneForStorage(dependent.phone);
+    const phone = dependent.phone ? formatPhoneForStorage(dependent.phone) : null;
 
-    rows.push({
-      full_name: name,
-      birth_date: birthIso,
-      phone,
-      family_id: familyId,
-      codigo_membro: familyId,
-      ...address,
-      medical_food_alerts: dependent.foodRestrictions.trim() || null,
-      is_active: false,
-    });
-  }
-
-  return rows;
-}
-
-export function buildFamilyMemberRows(
-  values: FamilyRegistrationFormValues,
-  familyId: string
-): MemberInsertRow[] {
-  const informantBirthIso = parseBrazilianDateToIso(values.informant.birthDate);
-  if (!informantBirthIso) {
-    throw new Error('Data de nascimento do informante inválida.');
-  }
-
-  const informantPhone = formatPhoneForStorage(values.informant.phone);
-
-  const rows: MemberInsertRow[] = [
-    {
-      full_name: values.informant.fullName.trim(),
-      birth_date: informantBirthIso,
-      phone: informantPhone,
-      relationship: FAMILY_INFORMANT_RELATIONSHIP,
-      family_id: familyId,
-      accepted: false,
-    },
-  ];
-
-  for (const dependent of values.dependents) {
-    const name = dependent.fullName.trim();
-    if (!name) {
-      continue;
-    }
-
-    const birthIso = parseBrazilianDateToIso(dependent.birthDate);
-    if (!birthIso) {
-      throw new Error(`Data de nascimento inválida para o dependente "${name}".`);
-    }
-
-    const phone = formatPhoneForStorage(dependent.phone);
-
-    rows.push({
+    dependents.push({
       full_name: name,
       birth_date: birthIso,
       phone,
       relationship: dependent.relationship,
-      family_id: familyId,
-      accepted: false,
+      medical_food_alerts: dependent.foodRestrictions.trim() || null,
     });
   }
 
-  return rows;
+  return {
+    informant: {
+      full_name: values.informant.fullName.trim(),
+      birth_date: informantBirthIso,
+      phone: informantPhone,
+      ...address,
+      medical_food_alerts: values.informant.foodRestrictions.trim() || null,
+    },
+    dependents,
+  };
 }
+
+const FAMILY_REGISTRATION_RPC_MISSING_MESSAGE =
+  'Cadastro familiar indisponível no servidor. Execute scripts/submit-family-registration-public.sql no Supabase.';
 
 export async function submitFamilyRegistration(
   values: FamilyRegistrationFormValues
 ): Promise<{ familyId: string; insertedCount: number }> {
-  const familyId = crypto.randomUUID();
-  const profileRows = buildFamilyProfileRows(values, familyId);
-  const memberRows = buildFamilyMemberRows(values, familyId);
+  const payload = buildFamilyRegistrationRpcPayload(values);
 
-  await Promise.all([
-    ...profileRows.map(async (row) => {
-      const { error } = await supabaseBrowser.from('profiles').insert(row);
-      if (error) {
-        throw error;
-      }
-    }),
-    ...memberRows.map(async (row) => {
-      const { error } = await supabaseBrowser.from('members').insert(row);
-      if (error) {
-        throw error;
-      }
-    }),
-  ]);
+  const { data, error } = await supabaseBrowser.rpc('submit_family_registration_public', {
+    p_payload: payload,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'submit_family_registration_public')) {
+      throw new Error(FAMILY_REGISTRATION_RPC_MISSING_MESSAGE);
+    }
+
+    throw error;
+  }
+
+  const record = (data ?? {}) as Record<string, unknown>;
+
+  if (record.success !== true) {
+    throw new Error(String(record.message ?? 'Não foi possível gravar o cadastro familiar.'));
+  }
+
+  const familyId = String(record.family_id ?? '').trim();
+  const insertedCount = Number(record.inserted_count ?? 0);
+
+  if (!familyId) {
+    throw new Error('O servidor não retornou o código da família.');
+  }
 
   return {
     familyId,
-    insertedCount: profileRows.length,
+    insertedCount: Number.isFinite(insertedCount) ? insertedCount : 0,
   };
 }
 

@@ -50,6 +50,7 @@ export const buildDashboardFamilyAgendaRoute = (phone: string) => ({
   pathname: '/(tabs)' as const,
   params: {
     phone: encodeURIComponent(phone),
+    dashboardCard: DASHBOARD_FAMILY_AGENDA_CARD_ID,
   },
 });
 

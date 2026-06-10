@@ -167,7 +167,7 @@ export async function ensureSessionFamilyMemberRecord(
       full_name: displayName,
       phone: sessionProfile.phone?.trim() || null,
       birth_date: sessionProfile.birth_date ?? null,
-      relationship: 'Membro',
+      relationship: 'Outros',
       family_id: normalizedFamilyId,
       accepted: MEMBER_ACCEPTED_VALUE,
     },

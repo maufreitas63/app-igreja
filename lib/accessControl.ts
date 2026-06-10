@@ -86,7 +86,24 @@ export const isDashboardCardAlwaysVisible = (content: string) =>
 export const isDashboardCardContentAllowed = (
   content: string,
   accessByContent: DashboardCardViewAccess
-) => isDashboardCardAlwaysVisible(content) || accessByContent[content] === true;
+) => {
+  if (isDashboardCardAlwaysVisible(content)) {
+    return true;
+  }
+
+  if (content === 'parking_vehicle_v2') {
+    return (
+      accessByContent.parking_vehicle_v2 === true
+      || accessByContent.vigilance_scales === true
+    );
+  }
+
+  if (content === 'scale_roster') {
+    return accessByContent.vigilance_scales === true || accessByContent.scale_roster === true;
+  }
+
+  return accessByContent[content] === true;
+};
 
 /** Colunas de `profiles` editáveis em Dados cadastrais (`column:profiles.<campo>`). */
 export const PROFILE_MANAGE_COLUMN_FIELDS = [

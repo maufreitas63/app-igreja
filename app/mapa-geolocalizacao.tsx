@@ -1,4 +1,6 @@
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
+import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
+import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { resolveReturnDashboardCardParam } from '@/lib/dashboardReturnNavigation';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
@@ -11,6 +13,11 @@ export default function MapGeolocalizacaoNativeFallback() {
   const returnToCaller = useReturnToCallerOnLeave({
     returnDashboardCard,
     fallbackDashboardCard: 'members_list',
+  });
+
+  useScreenAccessGuard({
+    resourceKey: ACCESS_SCREEN.mapGeolocation,
+    deniedMessage: 'Você não tem permissão para abrir o mapa de geolocalização.',
   });
 
   return (

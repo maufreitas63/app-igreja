@@ -132,7 +132,7 @@ export function FamilyRegistrationForm() {
         </p>
         {registeredFamilyId ? (
           <p className="mt-2 text-sm text-slate-500">
-            Identificador do grupo familiar: <span className="font-mono">{registeredFamilyId}</span>
+            Código da família: <span className="font-mono">{registeredFamilyId}</span>
           </p>
         ) : null}
         <p className="mt-4 text-sm text-slate-600">{feedbackMessage}</p>

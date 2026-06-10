@@ -1,6 +1,20 @@
-import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
+import {
+  ACCESS_SCREEN,
+  loadDashboardCardViewAccess,
+  sessionHasAccess,
+  type DashboardCardViewAccess,
+} from '@/lib/accessControl';
+import {
+  DASHBOARD_CARD_BLOCKED_MESSAGES,
+  resolveDashboardCardContentFromParam,
+} from '@/lib/dashboardCardScreenLinks';
+import {
+  isDashboardCardFullyAllowed,
+  loadDashboardLinkedScreenAccess,
+  type DashboardScreenAccess,
+} from '@/lib/dashboardScreenAccess';
 import { EXIT_SESSION_UI } from '@/lib/sessionExitUi';
-import { signOutAndReturnToLogin } from '@/lib/userSession';
+import { getStoredUserPhone, signOutAndReturnToLogin } from '@/lib/userSession';
 import {
   APP_PARAMETER,
   isAppParameterNo,
@@ -22,7 +36,6 @@ import {
   resolveIndexShortcutIconColor,
 } from '@/lib/indexShortcutHints';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
-import { getStoredUserPhone } from '@/lib/userSession';
 import { useDashboardSelectedEvent } from '@/hooks/useDashboardSelectedEvent';
 import { useFamilyPreCheckin } from '@/hooks/useFamilyPreCheckin';
 import { FontAwesome } from '@expo/vector-icons';
@@ -111,6 +124,9 @@ export default function DashboardIndexScreen() {
   const [isFooterSettingsPressed, setIsFooterSettingsPressed] = useState(false);
   const [canViewMaintenance, setCanViewMaintenance] = useState(false);
   const [isMaintenanceAccessLoading, setIsMaintenanceAccessLoading] = useState(true);
+  const [dashboardCardAccess, setDashboardCardAccess] = useState<DashboardCardViewAccess>({});
+  const [dashboardScreenAccess, setDashboardScreenAccess] = useState<DashboardScreenAccess>({});
+  const [isDashboardShortcutAccessLoading, setIsDashboardShortcutAccessLoading] = useState(true);
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [headerUserName, setHeaderUserName] = useState('Usuário');
 
@@ -271,7 +287,21 @@ export default function DashboardIndexScreen() {
   );
 
   const handleOpenShortcut = (shortcut: DashboardShortcut) => {
-    if (shortcut.disabled) {
+    if (shortcut.disabled || isDashboardShortcutAccessLoading) {
+      return;
+    }
+
+    const cardContent = resolveDashboardCardContentFromParam(shortcut.dashboardCard);
+
+    if (
+      cardContent
+      && !isDashboardCardFullyAllowed(cardContent, dashboardCardAccess, dashboardScreenAccess)
+    ) {
+      Alert.alert(
+        'Painel indisponível',
+        DASHBOARD_CARD_BLOCKED_MESSAGES[cardContent]
+          ?? 'Você não tem permissão para abrir este painel.'
+      );
       return;
     }
 
@@ -283,14 +313,30 @@ export default function DashboardIndexScreen() {
 
   const loadMaintenanceAccess = useCallback(async () => {
     setIsMaintenanceAccessLoading(true);
+    setIsDashboardShortcutAccessLoading(true);
+
     try {
-      const allowed = await sessionHasAccess('screen', ACCESS_SCREEN.maintenance, 'view');
+      const phone = await getStoredUserPhone();
+      const sessionProfile = phone ? await loadSessionProfile(phone) : null;
+      const profileId = sessionProfile?.id ?? null;
+
+      const [allowed, cardAccess, screenAccess] = await Promise.all([
+        sessionHasAccess('screen', ACCESS_SCREEN.maintenance, 'view'),
+        profileId ? loadDashboardCardViewAccess(profileId) : Promise.resolve({}),
+        profileId ? loadDashboardLinkedScreenAccess(profileId) : Promise.resolve({}),
+      ]);
+
       setCanViewMaintenance(allowed);
+      setDashboardCardAccess(cardAccess);
+      setDashboardScreenAccess(screenAccess);
     } catch (error) {
       console.error('Erro ao verificar acesso à manutenção no índice:', error);
       setCanViewMaintenance(false);
+      setDashboardCardAccess({});
+      setDashboardScreenAccess({});
     } finally {
       setIsMaintenanceAccessLoading(false);
+      setIsDashboardShortcutAccessLoading(false);
     }
   }, []);
 

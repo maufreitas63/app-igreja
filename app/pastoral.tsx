@@ -17,7 +17,7 @@ import { SectionLabel } from '@/components/ui/SectionLabel';
 import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
 import { appAlert } from '@/lib/appAlert';
 import { confirmDialog } from '@/lib/confirmDialog';
-import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { supabase } from '@/lib/supabase';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { FontAwesome } from '@expo/vector-icons';
@@ -473,9 +473,19 @@ export default function PastoralScreen() {
     );
   };
 
-  const handleOpenHistory = () => {
+  const handleOpenHistory = async () => {
     if (!resolvedUserId) {
       void appAlert('Atenção', 'Faça login novamente para ver seus pedidos.');
+      return;
+    }
+
+    const allowed = await sessionHasAccess('screen', ACCESS_SCREEN.pastoralHistory, 'view');
+
+    if (!allowed) {
+      void appAlert(
+        'Sem permissão',
+        'Você não tem permissão para ver seus pedidos pastorais.'
+      );
       return;
     }
 

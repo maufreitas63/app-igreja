@@ -24,6 +24,7 @@ import { attachSelfieToManagedMemberProfile } from '@/lib/managedMemberSelfie';
 import { resolveSelfiePreviewUrl } from '@/lib/selfie';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { dedupeFamilyMembers } from '@/lib/familyAudienceMembers';
+import { FAMILY_RELATIONSHIP_OPTIONS } from '@/lib/familyRelationshipOptions';
 import { detachMemberFromFamilyWithNewCode } from '@/lib/detachMemberFromFamily';
 import {
   applyNewFamilyCodeForRejectedMember,
@@ -67,7 +68,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const OPCOES_PARENTESCO = ['Cônjuge', 'Filho(a)', 'Representante Legal', 'Pai', 'Mãe', 'Outros'];
+const OPCOES_PARENTESCO = [...FAMILY_RELATIONSHIP_OPTIONS];
 
 const formatPhone = (value: string) => {
   const cleaned = value.replace(/\D/g, '');
