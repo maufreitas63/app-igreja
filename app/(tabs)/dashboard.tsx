@@ -2153,18 +2153,34 @@ export default function Dashboard() {
                     )}
                   </View>
                 ) : item.content === 'grouped_manage' ? (
-                  <View style={[styles.stackContainer, dashboardPanelCardSizeStyle]}>
+                  <View style={[styles.groupedManageContainer, dashboardPanelCardSizeStyle]}>
                     <TouchableOpacity
-                      style={[styles.card, styles.miniCard, styles.cardProfileAction]}
+                      style={[styles.groupedManageButton, styles.groupedManageButtonProfile]}
+                      activeOpacity={0.78}
                       onPress={() => router.push({ pathname: '/manage-profile', params: userPhone ? { phone: encodeURIComponent(userPhone) } : {} })}
                     >
-                      <Text style={styles.miniCardTitle}>Dados Cadastrais</Text>
+                      <Text
+                        style={[
+                          styles.groupedManageButtonTitle,
+                          styles.groupedManageButtonTitleProfile,
+                        ]}
+                      >
+                        Dados Cadastrais
+                      </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.card, styles.miniCard, styles.cardManageAction]}
+                      style={[styles.groupedManageButton, styles.groupedManageButtonFamily]}
+                      activeOpacity={0.78}
                       onPress={() => router.push({ pathname: '/manage-members', params: userPhone ? { phone: encodeURIComponent(userPhone) } : {} })}
                     >
-                      <Text style={styles.miniCardTitle}>Gerenciar Família</Text>
+                      <Text
+                        style={[
+                          styles.groupedManageButtonTitle,
+                          styles.groupedManageButtonTitleFamily,
+                        ]}
+                      >
+                        Gerenciar Família
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 ) : item.content === 'members_list' ? (
@@ -3676,25 +3692,45 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginTop: 6,
   },
-  stackContainer: {
-    gap: 12,
+  groupedManageContainer: {
+    gap: 10,
     flex: 1,
     minHeight: 0,
     width: '100%',
     justifyContent: 'center',
+    paddingHorizontal: 8,
   },
-  miniCard: {
+  groupedManageButton: {
     flex: 1,
     width: '100%',
-    padding: 24,
-    borderRadius: 24,
     minHeight: 0,
-    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    borderWidth: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
   },
-  miniCardTitle: { fontSize: 22, fontWeight: '800', color: '#FFF', textAlign: 'center' },
-  cardProfileAction: { backgroundColor: 'rgba(16, 185, 129, 0.3)', borderColor: '#10b981' },
-  cardManageAction: { backgroundColor: 'rgba(6, 182, 212, 0.3)', borderColor: '#06b6d4' },
+  groupedManageButtonProfile: {
+    borderColor: 'rgba(16, 185, 129, 0.28)',
+  },
+  groupedManageButtonFamily: {
+    borderColor: 'rgba(6, 182, 212, 0.28)',
+  },
+  groupedManageButtonTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 0.15,
+    lineHeight: 22,
+  },
+  groupedManageButtonTitleProfile: {
+    color: '#A7F3D0',
+  },
+  groupedManageButtonTitleFamily: {
+    color: '#A5F3FC',
+  },
   cardPastoralAction: { backgroundColor: 'rgba(168, 85, 247, 0.3)', borderColor: '#a855f7' },
   cardFinancialAction: {
     backgroundColor: 'rgba(16, 185, 129, 0.22)',
