@@ -37,6 +37,10 @@ export const maintenancePanelStyles = StyleSheet.create({
     lineHeight: UI_PANEL_TYPO.subtitle.lineHeight,
     color: UI_PANEL_TYPO.subtitle.color,
   },
+  /** Reserva a altura de uma linha de `panelSubtitle` sem exibir texto. */
+  panelSubtitleSpacer: {
+    height: UI_PANEL_TYPO.subtitle.lineHeight,
+  },
   panelHint: {
     color: UI_PANEL_TYPO.subtitle.color,
     fontSize: 13,

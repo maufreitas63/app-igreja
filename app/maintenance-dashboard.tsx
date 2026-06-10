@@ -858,7 +858,7 @@ export default function MaintenanceDashboard() {
           {item.content === 'menu' ? (
             <View style={styles.menuPanel}>
               <Text style={styles.menuPanelTitle}>Módulos de manutenção</Text>
-              <Text style={styles.menuPanelSubtitle}>Selecione o card que deseja abrir</Text>
+              <View style={styles.menuPanelSubtitleSpacer} />
               <ScrollView
                 style={styles.menuShortcutsScroll}
                 contentContainerStyle={styles.menuShortcutsArea}
@@ -937,9 +937,7 @@ export default function MaintenanceDashboard() {
           ) : item.content === 'events_gantt' ? (
             <View style={styles.ganttPanel}>
               <Text style={styles.ganttPanelTitle}>Cronograma de Eventos</Text>
-              <Text style={styles.ganttPanelSubtitle}>
-                Linhas: eventos ativos agendados · alterne por dia ou por mês no cabeçalho
-              </Text>
+              <View style={styles.ganttPanelSubtitleSpacer} />
               <EventsGanttChart
                 events={safeEvents}
                 loading={loading}
@@ -1598,11 +1596,8 @@ const styles = StyleSheet.create({
     lineHeight: UI_PANEL_TYPO.title.lineHeight,
     color: UI_PANEL_TYPO.title.color,
   },
-  menuPanelSubtitle: {
-    fontSize: UI_PANEL_TYPO.subtitle.fontSize,
-    fontWeight: UI_PANEL_TYPO.subtitle.fontWeight,
-    lineHeight: UI_PANEL_TYPO.subtitle.lineHeight,
-    color: UI_PANEL_TYPO.subtitle.color,
+  menuPanelSubtitleSpacer: {
+    height: UI_PANEL_TYPO.subtitle.lineHeight,
     marginBottom: UI_SPACING.xs,
   },
   menuShortcutsScroll: {
@@ -1667,9 +1662,8 @@ const styles = StyleSheet.create({
     fontWeight: UI_PANEL_TYPO.titleMuted.fontWeight,
     color: UI_PANEL_TYPO.titleMuted.color,
   },
-  ganttPanelSubtitle: {
-    fontSize: UI_PANEL_TYPO.subtitle.fontSize,
-    color: UI_PANEL_TYPO.subtitle.color,
+  ganttPanelSubtitleSpacer: {
+    height: UI_PANEL_TYPO.subtitle.lineHeight,
     marginTop: UI_SPACING.xs,
     marginBottom: UI_SPACING.sm,
   },

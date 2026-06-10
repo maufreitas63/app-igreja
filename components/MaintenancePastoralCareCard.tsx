@@ -65,7 +65,7 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
       <Text style={maintenancePanelStyles.panelTitle}>Cuidado Pastoral</Text>
-      <Text style={maintenancePanelStyles.panelSubtitle}>pastoral_requests · profiles.profile_id</Text>
+      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_PASTORAL_CARE_SQL_HINT}</Text> : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}

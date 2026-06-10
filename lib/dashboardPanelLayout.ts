@@ -1,3 +1,5 @@
+import { computeResponsiveCardInsets } from '@/lib/uiTokens';
+
 export const DASHBOARD_HEADER_RESERVE = 100;
 /** Botões ‹ › / Menu (ou Voltar), margens e padding inferior extra (além do safe area). */
 export const DASHBOARD_FOOTER_RESERVE = 98;
@@ -50,6 +52,18 @@ export const buildDashboardPanelCardSizeStyle = (
 
 /** Reexporta tokens de padding responsivo dos cards do dashboard e manutenção. */
 export { computeMaintenancePanelInsets, computeResponsiveCardInsets } from '@/lib/uiTokens';
+
+/** Tipografia do título «Índice do Aplicativo» (painel superior do card). */
+export const DASHBOARD_PANEL_TITLE_TYPO = {
+  fontSize: 17,
+  fontWeight: '800' as const,
+  lineHeight: 22,
+  color: '#F8FAFC',
+};
+
+/** Padding interno superior do painel — alinha o título ao mesmo Y do índice. */
+export const computeDashboardPanelInnerPadding = (screenWidth: number) =>
+  Math.max(14, computeResponsiveCardInsets(screenWidth).padding - 18);
 
 /** Mesmo limite superior do card Agenda da Família (centralizado no corpo do dashboard). */
 export const computePanelCardTopPadding = (

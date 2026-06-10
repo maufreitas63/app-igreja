@@ -31,7 +31,7 @@ import { lookupVehicleByPlaca, type VehicleLookupResult } from '@/lib/profileVeh
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { fetchVolunteersForScaleType } from '@/lib/maintenanceScaleVolunteersApi';
 import { supabase } from '@/lib/supabase';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import {
   ACCESS_SCREEN,
   ACL_UNAVAILABLE_MESSAGE,
@@ -50,6 +50,10 @@ import {
 import { normalizePhoneForWhatsApp, openMemberWhatsapp } from '@/lib/whatsapp';
 import { resolveDashboardCardAccessResourceKey } from '@/lib/screenAccessResourceKeys';
 import { buildProfileMapNavigationAddressLine } from '@/lib/enrichProfileMapAddress';
+import {
+  computeDashboardPanelInnerPadding,
+  DASHBOARD_PANEL_TITLE_TYPO,
+} from '@/lib/dashboardPanelLayout';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
@@ -552,6 +556,16 @@ export default function Dashboard() {
       alignSelf: 'center' as const,
     }),
     [dashboardPanelCardHeight, pageWidth]
+  );
+
+  const dashboardPanelInnerPadding = useMemo(
+    () => computeDashboardPanelInnerPadding(pageWidth),
+    [pageWidth]
+  );
+
+  const dashboardPanelTopInsetStyle = useMemo(
+    () => ({ paddingTop: dashboardPanelInnerPadding }),
+    [dashboardPanelInnerPadding]
   );
   const eventPanelCardSizeStyle = useMemo(
     () => ({
@@ -2248,9 +2262,17 @@ export default function Dashboard() {
                       <Text style={[styles.membersListHeaderCell, styles.membersListHeaderName]}>
                         Nome
                       </Text>
-                      <Text style={styles.membersListHeaderCell}>Família</Text>
-                      <Text style={styles.membersListHeaderCell}>Zap</Text>
-                      <Text style={styles.membersListHeaderCell}>GPS</Text>
+                      <View style={styles.membersListActionsHeader}>
+                        <Text style={[styles.membersListHeaderCell, styles.membersListHeaderAction]}>
+                          Família
+                        </Text>
+                        <Text style={[styles.membersListHeaderCell, styles.membersListHeaderAction]}>
+                          Zap
+                        </Text>
+                        <Text style={[styles.membersListHeaderCell, styles.membersListHeaderAction]}>
+                          GPS
+                        </Text>
+                      </View>
                     </View>
 
                     <View style={styles.membersListBox}>
@@ -2289,45 +2311,47 @@ export default function Dashboard() {
                               <Text style={styles.membersListName} numberOfLines={1}>
                                 {entry.short_name}
                               </Text>
-                              <TouchableOpacity
-                                style={styles.membersListFamilyButton}
-                                onPress={() => setFamilyModalFamilyId(entry.family_id)}
-                                activeOpacity={0.85}
-                              >
-                                <FontAwesome name="users" size={18} color="#fda4af" />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={[
-                                  styles.membersListWhatsappButton,
-                                  !entry.phone && styles.membersListWhatsappButtonDisabled,
-                                ]}
-                                onPress={() => void handleOpenMemberWhatsapp(entry)}
-                                disabled={!entry.phone}
-                                activeOpacity={0.85}
-                              >
-                                <FontAwesome
-                                  name="whatsapp"
-                                  size={20}
-                                  color={entry.phone ? '#25D366' : '#64748B'}
-                                />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={[
-                                  styles.membersListNavigationButton,
-                                  !navigationAddressLine && styles.membersListNavigationButtonDisabled,
-                                ]}
-                                onPress={() => void handleCopyMemberNavigationAddress(entry)}
-                                disabled={!navigationAddressLine}
-                                activeOpacity={0.85}
-                                accessibilityRole="button"
-                                accessibilityLabel={`Copiar endereço de ${entry.short_name} para navegação`}
-                              >
-                                <FontAwesome
-                                  name="map"
-                                  size={16}
-                                  color={navigationAddressLine ? '#38bdf8' : '#64748B'}
-                                />
-                              </TouchableOpacity>
+                              <View style={styles.membersListActionsRow}>
+                                <TouchableOpacity
+                                  style={styles.membersListActionCell}
+                                  onPress={() => setFamilyModalFamilyId(entry.family_id)}
+                                  activeOpacity={0.85}
+                                >
+                                  <FontAwesome name="users" size={18} color="#fda4af" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[
+                                    styles.membersListActionCell,
+                                    !entry.phone && styles.membersListActionCellDisabled,
+                                  ]}
+                                  onPress={() => void handleOpenMemberWhatsapp(entry)}
+                                  disabled={!entry.phone}
+                                  activeOpacity={0.85}
+                                >
+                                  <FontAwesome
+                                    name="whatsapp"
+                                    size={20}
+                                    color={entry.phone ? '#25D366' : '#64748B'}
+                                  />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[
+                                    styles.membersListActionCell,
+                                    !navigationAddressLine && styles.membersListActionCellDisabled,
+                                  ]}
+                                  onPress={() => void handleCopyMemberNavigationAddress(entry)}
+                                  disabled={!navigationAddressLine}
+                                  activeOpacity={0.85}
+                                  accessibilityRole="button"
+                                  accessibilityLabel={`Copiar endereço de ${entry.short_name} para navegação`}
+                                >
+                                  <FontAwesome
+                                    name="map"
+                                    size={16}
+                                    color={navigationAddressLine ? '#38bdf8' : '#64748B'}
+                                  />
+                                </TouchableOpacity>
+                              </View>
                             </View>
                             );
                           })}
@@ -2349,8 +2373,16 @@ export default function Dashboard() {
                     </View>
                   </View>
                 ) : item.content === 'birthdays' ? (
-                  <View style={[styles.card, styles.cardBirthdays, eventPanelCardSizeStyle]}>
-                    <Text style={[styles.cardTitle, styles.cardBirthdaysTitle]}>{item.title}</Text>
+                  <View
+                    style={[
+                      styles.card,
+                      styles.cardBirthdays,
+                      styles.dashboardPanelCardTopLayout,
+                      eventPanelCardSizeStyle,
+                      dashboardPanelTopInsetStyle,
+                    ]}
+                  >
+                    <Text style={styles.dashboardPanelTitle}>{item.title}</Text>
 
                     <View style={styles.birthdaysFilterSection}>
                       <Text style={styles.birthdaysFilterLabel}>Selecionar Mês</Text>
@@ -2432,11 +2464,17 @@ export default function Dashboard() {
                   </View>
                 ) : item.content === 'financial' ? (
                   <TouchableOpacity
-                    style={[styles.card, eventPanelCardSizeStyle, styles.cardFinancialAction]}
+                    style={[
+                      styles.card,
+                      eventPanelCardSizeStyle,
+                      styles.cardFinancialAction,
+                      styles.dashboardPanelCardTopLayout,
+                      dashboardPanelTopInsetStyle,
+                    ]}
                     onPress={() => router.navigate({ pathname: '/financial' })}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.cardTitle}>{item.title}</Text>
+                    <Text style={styles.dashboardPanelTitle}>{item.title}</Text>
                     <View style={styles.cardFinancialBody}>
                       <Text style={styles.cardFinancialSubtitle}>
                         Gestão de entradas, saídas e relatórios da igreja em um só lugar.
@@ -2447,8 +2485,16 @@ export default function Dashboard() {
                     </View>
                   </TouchableOpacity>
                 ) : item.content === 'vigilance_scales' ? (
-                  <View style={[styles.card, styles.cardVigilanceScales, eventPanelCardSizeStyle]}>
-                    <Text style={styles.cardTitle}>{item.title}</Text>
+                  <View
+                    style={[
+                      styles.card,
+                      styles.cardVigilanceScales,
+                      styles.dashboardPanelCardTopLayout,
+                      eventPanelCardSizeStyle,
+                      dashboardPanelTopInsetStyle,
+                    ]}
+                  >
+                    <Text style={styles.dashboardPanelTitle}>{item.title}</Text>
 
                     <View style={styles.vigilanceScaleFilterSection}>
                       <Text style={styles.sectionLabel}>Selecionar Escala</Text>
@@ -2733,8 +2779,16 @@ export default function Dashboard() {
                     </TouchableOpacity>
                   </View>
                 ) : item.content === 'offerings' ? (
-                  <View style={[styles.card, styles.cardOfferings, dashboardPanelCardSizeStyle]}>
-                    <Text style={[styles.cardTitle, styles.cardOfferingsTitle]}>{item.title}</Text>
+                  <View
+                    style={[
+                      styles.card,
+                      styles.cardOfferings,
+                      styles.dashboardPanelCardTopLayout,
+                      dashboardPanelCardSizeStyle,
+                      dashboardPanelTopInsetStyle,
+                    ]}
+                  >
+                    <Text style={styles.dashboardPanelTitle}>{item.title}</Text>
                     <View style={styles.offeringsContent}>
                       <Text style={styles.offeringsSectionTitle}>Dados do recebedor</Text>
                       <View style={styles.offeringsRecipientBox}>
@@ -2915,6 +2969,8 @@ export default function Dashboard() {
                       dashboardPanelCardSizeStyle,
                       item.content === 'qr' && isQrTotemCardPoolBlue && styles.cardQrTotemConfirmed,
                       item.content === 'pastoral' && styles.cardPastoralAction,
+                      item.content === 'pastoral' && styles.dashboardPanelCardTopLayout,
+                      item.content === 'pastoral' && dashboardPanelTopInsetStyle,
                     ]}
                     onPress={() => {
                       if (item.content === 'qr') setModalVisible(true);
@@ -2927,7 +2983,13 @@ export default function Dashboard() {
                     }}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.cardTitle}>{item.title}</Text>
+                    <Text
+                      style={
+                        item.content === 'pastoral' ? styles.dashboardPanelTitle : styles.cardTitle
+                      }
+                    >
+                      {item.title}
+                    </Text>
                     {item.content === 'qr' ? (
                       <>
                         <View style={styles.checkinTitleField}>
@@ -3000,10 +3062,20 @@ export default function Dashboard() {
                           Sua jornada de fé acompanhada de perto: solicitações, orações e aconselhamento ao
                           seu alcance.
                         </Text>
-                        <Text style={styles.cardPastoralFooter}>
-                          Sua necessidade é nossa prioridade. Toque aqui para iniciar um atendimento
-                          personalizado.
+                        <Text style={styles.cardPastoralPriority}>
+                          Sua necessidade é nossa prioridade.
                         </Text>
+                        <View style={styles.cardPastoralCtaRow}>
+                          <MaterialIcons
+                            name="touch-app"
+                            size={34}
+                            color="#E9D5FF"
+                            style={styles.cardPastoralCtaIcon}
+                          />
+                          <Text style={styles.cardPastoralCta}>
+                            Toque aqui para iniciar um atendimento personalizado.
+                          </Text>
+                        </View>
                       </View>
                     ) : (
                       <Text style={styles.placeholderText}>Clique aqui para abrir o formulário</Text>
@@ -3625,7 +3697,20 @@ const styles = StyleSheet.create({
   cardProfileAction: { backgroundColor: 'rgba(16, 185, 129, 0.3)', borderColor: '#10b981' },
   cardManageAction: { backgroundColor: 'rgba(6, 182, 212, 0.3)', borderColor: '#06b6d4' },
   cardPastoralAction: { backgroundColor: 'rgba(168, 85, 247, 0.3)', borderColor: '#a855f7' },
-  cardFinancialAction: { backgroundColor: 'rgba(16, 185, 129, 0.22)', borderColor: '#10b981' },
+  cardFinancialAction: {
+    backgroundColor: 'rgba(16, 185, 129, 0.22)',
+    borderColor: '#10b981',
+  },
+  dashboardPanelCardTopLayout: {
+    justifyContent: 'flex-start',
+    alignItems: 'stretch',
+  },
+  dashboardPanelTitle: {
+    ...DASHBOARD_PANEL_TITLE_TYPO,
+    textAlign: 'center',
+    marginBottom: 4,
+    alignSelf: 'stretch',
+  },
   cardFinancialBody: {
     flex: 1,
     justifyContent: 'center',
@@ -3636,7 +3721,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     textAlign: 'center',
-    marginTop: 12,
+    marginTop: 8,
     paddingHorizontal: 8,
   },
   cardFinancialFooter: {
@@ -3656,10 +3741,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 8,
     fontWeight: '500',
   },
-  cardPastoralFooter: {
+  cardPastoralPriority: {
     color: '#C4B5FD',
     fontSize: 14,
     lineHeight: 21,
@@ -3667,24 +3752,33 @@ const styles = StyleSheet.create({
     marginTop: 24,
     fontWeight: '600',
   },
-  cardOfferings: {
-    alignItems: 'stretch',
-    justifyContent: 'flex-start',
-    padding: 24,
+  cardPastoralCtaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 14,
+    paddingHorizontal: 4,
+    gap: 10,
   },
-  cardOfferingsTitle: {
-    marginTop: -7,
+  cardPastoralCtaIcon: {
+    flexShrink: 0,
+  },
+  cardPastoralCta: {
+    flex: 1,
+    color: '#F5F3FF',
+    fontSize: 17,
+    lineHeight: 24,
+    fontWeight: '700',
+  },
+  cardOfferings: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
   },
   cardBirthdays: {
-    alignItems: 'stretch',
-    justifyContent: 'flex-start',
-    padding: 18,
+    paddingHorizontal: 18,
+    paddingBottom: 18,
     gap: 6,
     backgroundColor: 'rgba(37, 99, 235, 0.14)',
     borderColor: '#60a5fa',
-  },
-  cardBirthdaysTitle: {
-    marginBottom: 8,
   },
   cardMembersList: {
     alignItems: 'stretch',
@@ -3793,9 +3887,9 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(251, 113, 133, 0.35)',
+    gap: 8,
   },
   membersListHeaderCell: {
-    flex: 1,
     color: '#FDA4AF',
     fontSize: 11,
     fontWeight: '800',
@@ -3804,8 +3898,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   membersListHeaderName: {
-    flex: 2,
+    flex: 1,
+    minWidth: 0,
     textAlign: 'left',
+  },
+  membersListActionsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    gap: 2,
+  },
+  membersListHeaderAction: {
+    width: 40,
   },
   membersListBox: {
     flex: 1,
@@ -3839,35 +3943,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(148, 163, 184, 0.12)',
+    gap: 8,
   },
   membersListName: {
-    flex: 2,
+    flex: 1,
+    minWidth: 0,
     color: '#FFF',
     fontSize: 15,
     fontWeight: '600',
   },
-  membersListFamilyButton: {
-    flex: 1,
+  membersListActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    gap: 2,
+  },
+  membersListActionCell: {
+    width: 40,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 4,
   },
-  membersListWhatsappButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4,
-  },
-  membersListWhatsappButtonDisabled: {
-    opacity: 0.55,
-  },
-  membersListNavigationButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4,
-  },
-  membersListNavigationButtonDisabled: {
+  membersListActionCellDisabled: {
     opacity: 0.55,
   },
   membersFamilyBackdrop: {
@@ -3948,9 +4045,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cardVigilanceScales: {
-    alignItems: 'stretch',
-    justifyContent: 'flex-start',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
     gap: 12,
     backgroundColor: 'rgba(20, 184, 166, 0.14)',
     borderColor: '#2dd4bf',

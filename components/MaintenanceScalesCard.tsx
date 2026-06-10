@@ -212,7 +212,7 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
       <Text style={maintenancePanelStyles.panelTitle}>Manutenção de escalas</Text>
-      <Text style={maintenancePanelStyles.panelSubtitle}>tipos_escala · voluntarios_escala · escalas_log</Text>
+      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_SCALES_SQL_HINT}</Text> : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}

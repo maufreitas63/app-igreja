@@ -11,9 +11,10 @@ import { resolveFamilyIdForPhone } from '@/lib/family';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
 import {
   buildDashboardPanelCardSizeStyle,
+  computeDashboardPanelInnerPadding,
   computeEventPanelCardHeight,
   computePanelCardTopPadding,
-  computeResponsiveCardInsets,
+  DASHBOARD_PANEL_TITLE_TYPO,
 } from '@/lib/dashboardPanelLayout';
 import {
   INDEX_SHORTCUT_ICONS,
@@ -38,8 +39,6 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const STATIC_INDEX_PANEL_INSETS = computeResponsiveCardInsets(390);
 
 type DashboardShortcut = {
   id: string;
@@ -266,6 +265,11 @@ export default function DashboardIndexScreen() {
     [indexCardHeight, screenWidth]
   );
 
+  const indexPanelInnerPadding = useMemo(
+    () => computeDashboardPanelInnerPadding(screenWidth),
+    [screenWidth]
+  );
+
   const handleOpenShortcut = (shortcut: DashboardShortcut) => {
     if (shortcut.disabled) {
       return;
@@ -427,7 +431,13 @@ export default function DashboardIndexScreen() {
         </View>
 
         <View style={[styles.indexCardWrapper, { paddingTop: indexCardTopPadding }]}>
-          <View style={[styles.indexPanelCard, indexPanelCardSizeStyle]}>
+          <View
+            style={[
+              styles.indexPanelCard,
+              indexPanelCardSizeStyle,
+              { padding: indexPanelInnerPadding },
+            ]}
+          >
             <View style={styles.indexPanel}>
               <View style={styles.indexPanelHeaderRow}>
                 <Text numberOfLines={1} style={styles.indexPanelTitle}>
@@ -559,12 +569,11 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   indexPanelCard: {
-    borderRadius: STATIC_INDEX_PANEL_INSETS.borderRadius,
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: 'rgba(165, 180, 252, 0.55)',
     backgroundColor: 'rgba(15, 23, 42, 0.88)',
     overflow: 'hidden',
-    padding: Math.max(14, STATIC_INDEX_PANEL_INSETS.padding - 18),
   },
   indexPanel: {
     flex: 1,
@@ -579,10 +588,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   indexPanelTitle: {
-    color: '#F8FAFC',
-    fontSize: 17,
-    fontWeight: '800',
-    lineHeight: 22,
+    ...DASHBOARD_PANEL_TITLE_TYPO,
     flex: 1,
     flexShrink: 1,
     minWidth: 0,

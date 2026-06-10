@@ -284,7 +284,7 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
       <Text style={maintenancePanelStyles.panelTitle}>Tipos de Escala</Text>
-      <Text style={maintenancePanelStyles.panelSubtitle}>Cadastro em tipos_escala</Text>
+      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_SCALE_TYPES_SQL_HINT}</Text> : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
