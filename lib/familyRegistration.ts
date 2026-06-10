@@ -68,6 +68,7 @@ export type FamilyRegistrationFormValues = {
     cep: string;
     addressNumber: string;
     addressComplement: string;
+    foodRestrictions: string;
   };
   dependents: FamilyRegistrationDependent[];
 };
@@ -128,7 +129,7 @@ export function buildFamilyProfileRows(
       family_id: familyId,
       codigo_membro: familyId,
       ...address,
-      medical_food_alerts: null,
+      medical_food_alerts: values.informant.foodRestrictions.trim() || null,
       is_active: false,
     },
   ];

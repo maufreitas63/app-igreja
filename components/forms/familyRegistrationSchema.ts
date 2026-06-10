@@ -62,6 +62,7 @@ export const familyRegistrationSchema = z.object({
     cep: requiredCep,
     addressNumber: z.string().trim().min(1, 'Informe o número do endereço.'),
     addressComplement: z.string().trim().optional().default(''),
+    foodRestrictions: z.string().trim().optional().default(''),
   }),
   dependents: z
     .array(dependentSchema)
@@ -78,6 +79,7 @@ export const familyRegistrationDefaultValues: FamilyRegistrationSchemaValues = {
     cep: '',
     addressNumber: '',
     addressComplement: '',
+    foodRestrictions: '',
   },
   dependents: [],
 };

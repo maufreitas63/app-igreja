@@ -280,6 +280,20 @@ export function FamilyRegistrationForm() {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="informant.foodRestrictions"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Restrições alimentares</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Alergias, intolerâncias (opcional)" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </section>
 
