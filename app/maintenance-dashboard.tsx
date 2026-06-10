@@ -1,13 +1,13 @@
 import {
   emptyMaintenanceEventForm,
   formFromMaintenanceEvent,
-  formatEventDateOnlyMask,
   formatEventTimeInputMask,
   summarizeMaintenanceEvent,
   validateMaintenanceEventForm,
   type MaintenanceEventFormState,
 } from '@/lib/maintenanceEventForm';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
+import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
 import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
 import { EventsGanttChart } from '@/components/EventsGanttChart';
 import { MaintenanceQuorumPresenceCard } from '@/components/MaintenanceQuorumPresenceCard';
@@ -73,7 +73,7 @@ import {
 } from '@/lib/saveMaintenanceEvent';
 import { useMaintenanceEvents, type MaintenanceEvent } from '@/hooks/useMaintenanceEvents';
 import { useQuorumRegistry } from '@/hooks/useQuorumRegistry';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -281,6 +281,7 @@ export default function MaintenanceDashboard() {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteTargetName, setDeleteTargetName] = useState('');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [eventDatePickerVisible, setEventDatePickerVisible] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const carouselRef = useRef<FlatList<MaintenanceCarouselCard>>(null);
   const currentIndexRef = useRef(0);
@@ -1192,19 +1193,24 @@ export default function MaintenanceDashboard() {
 
                 <Text style={styles.fieldLabel}>Data e horário</Text>
                 <View style={styles.dateTimeRow}>
-                  <View style={styles.dateTimeField}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="DD/MM/AA"
-                      placeholderTextColor="#64748B"
-                      value={form.eventDateInput}
-                      keyboardType="numeric"
-                      onChangeText={(text) => {
-                        setStatusMessage(null);
-                        patchForm({ eventDateInput: formatEventDateOnlyMask(text) });
-                      }}
-                    />
-                  </View>
+                  <Pressable
+                    style={styles.dateTimeField}
+                    onPress={() => setEventDatePickerVisible(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Selecionar data do evento"
+                  >
+                    <View style={[styles.input, styles.dateInputTrigger]}>
+                      <Text
+                        style={[
+                          styles.dateInputText,
+                          !form.eventDateInput.trim() && styles.dateInputPlaceholder,
+                        ]}
+                      >
+                        {form.eventDateInput.trim() || 'DD/MM/AA'}
+                      </Text>
+                      <MaterialIcons name="calendar-today" size={18} color="#94A3B8" />
+                    </View>
+                  </Pressable>
                   <View style={styles.dateTimeField}>
                     <TextInput
                       style={styles.input}
@@ -1448,6 +1454,16 @@ export default function MaintenanceDashboard() {
             </View>
           </View>
         ) : null}
+
+        <MonthlyDatePickerModal
+          visible={eventDatePickerVisible}
+          value={form.eventDateInput}
+          onClose={() => setEventDatePickerVisible(false)}
+          onConfirm={(dateInput) => {
+            setStatusMessage(null);
+            patchForm({ eventDateInput: dateInput });
+          }}
+        />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -1898,6 +1914,20 @@ const styles = StyleSheet.create({
   },
   dateTimeField: {
     flex: 1,
+  },
+  dateInputTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  dateInputText: {
+    flex: 1,
+    color: '#F8FAFC',
+    fontSize: 15,
+  },
+  dateInputPlaceholder: {
+    color: '#64748B',
   },
   featureLabelRow: {
     flexDirection: 'row',
