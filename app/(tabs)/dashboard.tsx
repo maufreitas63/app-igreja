@@ -2156,31 +2156,17 @@ export default function Dashboard() {
                   <View style={[styles.groupedManageContainer, dashboardPanelCardSizeStyle]}>
                     <TouchableOpacity
                       style={[styles.groupedManageButton, styles.groupedManageButtonProfile]}
-                      activeOpacity={0.78}
+                      activeOpacity={0.85}
                       onPress={() => router.push({ pathname: '/manage-profile', params: userPhone ? { phone: encodeURIComponent(userPhone) } : {} })}
                     >
-                      <Text
-                        style={[
-                          styles.groupedManageButtonTitle,
-                          styles.groupedManageButtonTitleProfile,
-                        ]}
-                      >
-                        Dados Cadastrais
-                      </Text>
+                      <Text style={styles.groupedManageButtonTitle}>Dados Cadastrais</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.groupedManageButton, styles.groupedManageButtonFamily]}
-                      activeOpacity={0.78}
+                      activeOpacity={0.85}
                       onPress={() => router.push({ pathname: '/manage-members', params: userPhone ? { phone: encodeURIComponent(userPhone) } : {} })}
                     >
-                      <Text
-                        style={[
-                          styles.groupedManageButtonTitle,
-                          styles.groupedManageButtonTitleFamily,
-                        ]}
-                      >
-                        Gerenciar Família
-                      </Text>
+                      <Text style={styles.groupedManageButtonTitle}>Gerenciar Família</Text>
                     </TouchableOpacity>
                   </View>
                 ) : item.content === 'members_list' ? (
@@ -3693,43 +3679,38 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   groupedManageContainer: {
-    gap: 10,
+    gap: 12,
     flex: 1,
     minHeight: 0,
     width: '100%',
     justifyContent: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
   groupedManageButton: {
     flex: 1,
     width: '100%',
     minHeight: 0,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    borderRadius: 14,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
   },
   groupedManageButtonProfile: {
-    borderColor: 'rgba(16, 185, 129, 0.28)',
+    backgroundColor: 'rgba(16, 185, 129, 0.3)',
+    borderColor: '#10b981',
   },
   groupedManageButtonFamily: {
-    borderColor: 'rgba(6, 182, 212, 0.28)',
+    backgroundColor: 'rgba(6, 182, 212, 0.3)',
+    borderColor: '#06b6d4',
   },
   groupedManageButtonTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#F8FAFC',
+    fontSize: 17,
+    fontWeight: '500',
     textAlign: 'center',
-    letterSpacing: 0.15,
     lineHeight: 22,
-  },
-  groupedManageButtonTitleProfile: {
-    color: '#A7F3D0',
-  },
-  groupedManageButtonTitleFamily: {
-    color: '#A5F3FC',
   },
   cardPastoralAction: { backgroundColor: 'rgba(168, 85, 247, 0.3)', borderColor: '#a855f7' },
   cardFinancialAction: {
