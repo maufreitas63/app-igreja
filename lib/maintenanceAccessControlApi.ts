@@ -8,7 +8,7 @@ import { getStoredProfileId, repairUserSessionReference } from '@/lib/userSessio
 export { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
 
 export const MAINTENANCE_ACCESS_CONTROL_SQL_HINT =
-  'Execute no Supabase: scripts/access-control-admin-rpc.sql; se faltar Congregado/Visitantes, scripts/access-control-congregado-visitantes-roles.sql; se faltar Card Financeiro ou Relatórios financeiros em Papéis, scripts/financial-module-access.sql; para ocultar escalas TstMax em Papéis, scripts/access-control-remove-tstmax-scale-resources.sql';
+  'Execute no Supabase: scripts/access-control-admin-rpc.sql; se faltar Congregado/Visitantes, scripts/access-control-congregado-visitantes-roles.sql; se faltar Card Financeiro ou Relatórios financeiros em Papéis, scripts/financial-module-access.sql; se Equipe Pastoral não tiver acesso de Membro, scripts/access-control-pastoral-role-grants.sql; para ocultar escalas TstMax em Papéis, scripts/access-control-remove-tstmax-scale-resources.sql';
 
 export const EXPECTED_ACCESS_ROLE_CODES = ['congregado', 'visitantes'] as const;
 

@@ -58,6 +58,27 @@ on conflict (role_id, resource_id) where (role_id is not null) do update
       can_update = excluded.can_update,
       updated_at = now();
 
+-- Equipe Pastoral herda privilégios financeiros de member (se o papel existir)
+insert into public.access_grants (role_id, resource_id, can_view, can_update)
+select pastoral.id, member_grant.resource_id, member_grant.can_view, member_grant.can_update
+  from public.access_roles pastoral
+  join public.access_roles member_role on member_role.code = 'member'
+  join public.access_grants member_grant on member_grant.role_id = member_role.id
+  join public.access_resources res on res.id = member_grant.resource_id
+ where pastoral.code = 'pastoral'
+   and (
+     (res.resource_type = 'screen' and res.resource_key in (
+       'dashboard.card.financial',
+       '/financial',
+       '/expense-report'
+     ))
+     or (res.resource_type = 'table' and res.resource_key = 'financials')
+   )
+on conflict (role_id, resource_id) where (role_id is not null) do update
+  set can_view = excluded.can_view,
+      can_update = excluded.can_update,
+      updated_at = now();
+
 -- Conferência: deve retornar 3 linhas (card, tela, RD)
 select resource_type, resource_key, label, is_active
   from public.access_resources

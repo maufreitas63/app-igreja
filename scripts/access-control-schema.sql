@@ -312,7 +312,7 @@ values
   ('family_acceptor', 'Responsável familiar', 'Gerencia membros da família', true),
   ('visitantes', 'Visitantes', 'Acesso público mínimo sem perfil/papéis na sessão', true),
   ('events_admin', 'Administrador de eventos', 'Manutenção de eventos e salas', true),
-  ('pastoral', 'Equipe pastoral', 'Pedidos e triagem pastoral', true),
+  ('pastoral', 'Equipe Pastoral', 'Mesmos privilégios de Membro, mais manutenção Cuidado Pastoral', true),
   ('super_admin', 'Super administrador', 'Acesso total configurável', true)
 on conflict (code) do update
   set name = excluded.name,
@@ -347,6 +347,7 @@ values
   ('screen', 'dashboard.card.vigilance_scales', 'Card Escalas', null),
   ('screen', 'dashboard.card.parking_vehicle_v2', 'Card Estacionamento', null),
   ('screen', 'dashboard.card.grouped_manage', 'Card Menu', null),
+  ('screen', 'maintenance.card.pastoral_care', 'Manutenção: Cuidado Pastoral', 'Triagem de pedidos pastorais'),
   ('screen', '*', 'Todas as telas (curinga)', 'Uso restrito a super_admin')
 on conflict (resource_type, resource_key) do update
   set label = excluded.label,
@@ -546,6 +547,35 @@ select r.id, res.id, true, true
 on conflict (role_id, resource_id) where (role_id is not null) do update
   set can_view = true,
       can_update = true,
+      updated_at = now();
+
+-- pastoral (Equipe Pastoral): mesmos privilégios de member + manutenção Cuidado Pastoral
+insert into public.access_grants (role_id, resource_id, can_view, can_update)
+select pastoral.id, member_grant.resource_id, member_grant.can_view, member_grant.can_update
+  from public.access_roles pastoral
+  join public.access_roles member_role on member_role.code = 'member'
+  join public.access_grants member_grant on member_grant.role_id = member_role.id
+ where pastoral.code = 'pastoral'
+on conflict (role_id, resource_id) where (role_id is not null) do update
+  set can_view = excluded.can_view,
+      can_update = excluded.can_update,
+      updated_at = now();
+
+insert into public.access_grants (role_id, resource_id, can_view, can_update)
+select r.id, res.id, g.can_view, g.can_update
+  from public.access_roles r
+ cross join (
+    values
+      ('screen', '/maintenance-dashboard', true, false),
+      ('screen', 'maintenance.card.pastoral_care', true, true)
+  ) as g(resource_type, resource_key, can_view, can_update)
+  join public.access_resources res
+    on res.resource_type = g.resource_type
+   and res.resource_key = g.resource_key
+ where r.code = 'pastoral'
+on conflict (role_id, resource_id) where (role_id is not null) do update
+  set can_view = excluded.can_view,
+      can_update = excluded.can_update,
       updated_at = now();
 
 -- ---------------------------------------------------------------------------
