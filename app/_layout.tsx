@@ -7,6 +7,7 @@ if (!global.Buffer) {
 
 import { AppShell } from '@/components/AppShell';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
+import { appToastConfig } from '@/components/ui/appToastConfig';
 import { ICON_FONT_SOURCES } from '@/lib/iconFonts';
 import { useFonts } from 'expo-font';
 import Toast from 'react-native-toast-message';
@@ -27,7 +28,7 @@ export default function RootLayout() {
     <View style={styles.root}>
       <AppShell />
       <ConfirmDialogHost />
-      <Toast />
+      <Toast config={appToastConfig} />
     </View>
   );
 }
