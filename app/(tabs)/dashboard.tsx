@@ -2159,14 +2159,30 @@ export default function Dashboard() {
                       activeOpacity={0.85}
                       onPress={() => router.push({ pathname: '/manage-profile', params: userPhone ? { phone: encodeURIComponent(userPhone) } : {} })}
                     >
-                      <Text style={styles.groupedManageButtonTitle}>Dados Cadastrais</Text>
+                      <View style={styles.groupedManageButtonContent}>
+                        <MaterialIcons
+                          name="assignment-ind"
+                          size={36}
+                          color="#6EE7B7"
+                          style={styles.groupedManageButtonIcon}
+                        />
+                        <Text style={styles.groupedManageButtonTitle}>Dados Cadastrais</Text>
+                      </View>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.groupedManageButton, styles.groupedManageButtonFamily]}
                       activeOpacity={0.85}
                       onPress={() => router.push({ pathname: '/manage-members', params: userPhone ? { phone: encodeURIComponent(userPhone) } : {} })}
                     >
-                      <Text style={styles.groupedManageButtonTitle}>Gerenciar Família</Text>
+                      <View style={styles.groupedManageButtonContent}>
+                        <MaterialIcons
+                          name="family-restroom"
+                          size={36}
+                          color="#67E8F9"
+                          style={styles.groupedManageButtonIcon}
+                        />
+                        <Text style={styles.groupedManageButtonTitle}>Gerenciar Família</Text>
+                      </View>
                     </TouchableOpacity>
                   </View>
                 ) : item.content === 'members_list' ? (
@@ -3704,6 +3720,14 @@ const styles = StyleSheet.create({
   groupedManageButtonFamily: {
     backgroundColor: 'rgba(6, 182, 212, 0.3)',
     borderColor: '#06b6d4',
+  },
+  groupedManageButtonContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  groupedManageButtonIcon: {
+    opacity: 0.95,
   },
   groupedManageButtonTitle: {
     color: '#F8FAFC',
