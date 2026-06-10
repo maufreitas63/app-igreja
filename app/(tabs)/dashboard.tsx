@@ -2468,7 +2468,7 @@ export default function Dashboard() {
                     <Text style={styles.dashboardPanelTitle}>{item.title}</Text>
                     <View style={styles.cardFinancialBody}>
                       <Text style={styles.cardFinancialSubtitle}>
-                        Gestão de entradas, saídas e relatórios da igreja em um só lugar.
+                        Gestão financeira da igreja, tudo em um só lugar.
                       </Text>
                       <View style={styles.cardFinancialCtaRow}>
                         <MaterialIcons
