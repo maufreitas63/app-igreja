@@ -1,0 +1,29 @@
+---
+description: Commit e deploy automáticos ao concluir alterações solicitadas
+alwaysApply: true
+---
+
+# Commit e deploy ao terminar alterações
+
+Quando o usuário solicitar uma **alteração** (código, layout, config, scripts, docs do projeto) e a implementação estiver concluída:
+
+1. **Não encerre** só informando que falta commit/deploy — execute o fluxo abaixo antes da resposta final.
+2. **Pule** commit/deploy apenas se:
+   - a tarefa foi só pergunta, revisão ou análise (sem mudanças no repositório);
+   - o usuário pediu explicitamente para **não** commitar ou **não** fazer deploy nesta tarefa;
+   - não há arquivos modificados para commitar;
+   - o build falhou e não foi possível corrigir na mesma tarefa.
+
+## Fluxo obrigatório
+
+1. `git status` e `git diff` — conferir o que será publicado; **nunca** incluir `.env`, credenciais ou segredos.
+2. `npm run build:web` — validar o build de produção antes do push.
+3. `git add` dos arquivos relevantes + `git commit` com mensagem curta em português (foco no *porquê*).
+4. `git push origin main` — dispara o deploy no Cloudflare Pages.
+5. Na resposta final, informar **hash do commit** e que o deploy foi disparado; lembrar aguardar **Success** no Cloudflare e usar hard refresh.
+
+## Referência
+
+Deploy: branch `main`, comando remoto `npm run build:web`, saída `dist/`. Ver `DEPLOY_CLOUDFLARE.md`.
+
+Scripts SQL em `scripts/` vão no commit, mas execução no Supabase continua **manual** — mencionar na resposta quando houver SQL novo ou alterado.
