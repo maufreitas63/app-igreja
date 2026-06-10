@@ -55,6 +55,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   AppState,
   FlatList,
@@ -1852,11 +1853,6 @@ export default function Dashboard() {
         ) : null}
 
         <View style={styles.listContainer}>
-          {!isDashboardCardAccessReady ? (
-            <View style={[styles.cardWrapper, carouselPageStyle, styles.dashboardAccessLoader]}>
-              <CardLoadingState lines={4} />
-            </View>
-          ) : null}
           <FlatList
             ref={dashboardListRef}
             style={[styles.dashboardFlatList, !isDashboardCardAccessReady && styles.dashboardFlatListHidden]}
@@ -1884,7 +1880,9 @@ export default function Dashboard() {
                 {item.content === 'event_alt' ? (
                   <View style={[styles.card, styles.eventCard, styles.eventAltCard, eventPanelCardSizeStyle]}>
                     {areEventsLoading || isProfileLoading ? (
-                      <CardLoadingState lines={4} />
+                      <View style={styles.eventAltLoadingState}>
+                        <ActivityIndicator color="#10b981" size="large" />
+                      </View>
                     ) : !activeEvents.length ? (
                       <View style={styles.eventAltEmptyState}>
                         <Text style={styles.placeholderText}>
@@ -3103,10 +3101,12 @@ const styles = StyleSheet.create({
     opacity: 0,
     pointerEvents: 'none',
   },
-  dashboardAccessLoader: {
+  eventAltLoadingState: {
     flex: 1,
+    alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 280,
+    minHeight: 180,
+    paddingVertical: 24,
   },
   cardWrapper: {
     justifyContent: 'center',
