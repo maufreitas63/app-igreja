@@ -94,7 +94,7 @@ const normalizeMemberPhoneDigits = (value: string | null | undefined) =>
   (value ?? '').replace(/\D/g, '');
 
 const SELF_MEMBER_BLOCK_MESSAGE =
-  'Você já faz parte desta família como titular da conta. Não é possível cadastrá-lo novamente como outro membro.';
+  'Você já faz parte desta família como titular da conta. Não é possível cadastrá-lo novamente como outro integrante.';
 
 const phoneDigitsMatch = (left: string | null | undefined, right: string | null | undefined) => {
   const leftDigits = normalizeMemberPhoneDigits(left);
@@ -518,7 +518,7 @@ export default function ManageMembers() {
       if (profileBelongsToFamily(profile, familyId) && !isEditingSamePerson) {
         const duplicateMessage = buildProfileInFamilyMessage(profile);
         setProfileLookupMessage(duplicateMessage);
-        Alert.alert('Membro já no grupo familiar', duplicateMessage);
+        Alert.alert('Integrante já no grupo familiar', duplicateMessage);
         return;
       }
 
@@ -641,7 +641,7 @@ export default function ManageMembers() {
         return null;
       } catch (photoError) {
         console.error('Erro ao salvar fotografia do membro:', photoError);
-        return ' A fotografia não pôde ser salva no perfil do membro.';
+        return ' A fotografia não pôde ser salva no perfil do integrante.';
       }
     },
     [familyId, pendingMemberPhoto]
@@ -746,7 +746,7 @@ export default function ManageMembers() {
     const memberId = String(member.id);
 
     if (!memberId || memberId === 'undefined') {
-      Alert.alert('Erro', 'Este membro não possui identificador válido para atualizar.');
+      Alert.alert('Erro', 'Este integrante não possui identificador válido para atualizar.');
       return;
     }
 
@@ -825,8 +825,8 @@ export default function ManageMembers() {
 
         if (!addressInherited) {
           Alert.alert(
-            'Membro reconhecido',
-            'O vínculo familiar foi confirmado, mas o endereço completo da sua família não pôde ser copiado para o perfil desta pessoa. Verifique se o membro possui telefone cadastrado e se o seu perfil tem endereço preenchido.'
+            'Integrante reconhecido',
+            'O vínculo familiar foi confirmado, mas o endereço completo da sua família não pôde ser copiado para o perfil desta pessoa. Verifique se o integrante possui telefone cadastrado e se o seu perfil tem endereço preenchido.'
           );
         }
       }
@@ -838,7 +838,7 @@ export default function ManageMembers() {
       );
 
       const message =
-        err instanceof Error ? err.message : 'Não foi possível atualizar o reconhecimento do membro.';
+        err instanceof Error ? err.message : 'Não foi possível atualizar o reconhecimento do integrante.';
 
       if (message.toLowerCase().includes('accepted')) {
         Alert.alert(
@@ -975,10 +975,10 @@ export default function ManageMembers() {
       await fetchData();
       Alert.alert(
         'Sucesso',
-        `Membro removido da família. Novo código familiar atribuído: ${newFamilyId}.`
+        `Integrante removido da família. Novo código familiar atribuído: ${newFamilyId}.`
       );
     } catch (err: unknown) {
-      const rawMessage = err instanceof Error ? err.message : 'Não foi possível excluir o membro.';
+      const rawMessage = err instanceof Error ? err.message : 'Não foi possível excluir o integrante.';
       const message = rawMessage.toLowerCase().includes('policy') || rawMessage.toLowerCase().includes('permission')
         ? `${rawMessage}\n\nExecute no Supabase: scripts/sync-managed-member-profile-family-rpc.sql`
         : rawMessage;
@@ -1001,10 +1001,10 @@ export default function ManageMembers() {
       return;
     }
 
-    const memberLabel = editingMemberSnapshot.full_name?.trim() || 'este membro';
+    const memberLabel = editingMemberSnapshot.full_name?.trim() || 'este integrante';
 
     const confirmed = await confirmDialog(
-      'Excluir membro',
+      'Excluir integrante',
       `Remover ${memberLabel} da família? Ele receberá um novo código familiar sequencial e deixará de aparecer nesta lista.`,
       'Excluir',
       'Cancelar',
@@ -1132,7 +1132,7 @@ export default function ManageMembers() {
 
         resetForm();
         await fetchData();
-        Alert.alert('Sucesso', `Membro atualizado!${photoWarning ?? ''}`);
+        Alert.alert('Sucesso', `Integrante atualizado!${photoWarning ?? ''}`);
         return;
       }
 
@@ -1143,7 +1143,7 @@ export default function ManageMembers() {
 
       if (duplicateMember) {
         Alert.alert(
-          'Membro já existe',
+          'Integrante já existe',
           `${duplicateMember.full_name?.trim() || 'Esta pessoa'} já está cadastrada nesta família.`
         );
         return;
@@ -1163,7 +1163,7 @@ export default function ManageMembers() {
 
         if (alreadyInFamilyGroup) {
           Alert.alert(
-            'Membro já no grupo familiar',
+            'Integrante já no grupo familiar',
             buildProfileInFamilyMessage(resolvedLinkedProfile)
           );
           return;
@@ -1184,7 +1184,7 @@ export default function ManageMembers() {
 
         if (existingFamilyId === targetFamilyId && existingMember.accepted === true) {
           Alert.alert(
-            'Membro já existe',
+            'Integrante já existe',
             'Esta pessoa já está cadastrada e aceita nesta família.'
           );
           return;
@@ -1248,8 +1248,8 @@ export default function ManageMembers() {
 
         const transferBaseMessage =
           existingFamilyId && existingFamilyId !== targetFamilyId
-            ? `Membro transferido da família ${existingFamilyId} para ${targetFamilyId}.`
-            : 'Membro adicionado à família!';
+            ? `Integrante transferido da família ${existingFamilyId} para ${targetFamilyId}.`
+            : 'Integrante adicionado à família!';
 
         Alert.alert(
           'Sucesso',
@@ -1269,7 +1269,7 @@ export default function ManageMembers() {
       if (error) throw error;
 
       if (!insertedMember?.id) {
-        throw new Error('Membro criado, mas o identificador não foi retornado.');
+        throw new Error('Integrante criado, mas o identificador não foi retornado.');
       }
 
       const addressInherited = await copyAcceptorAddressToMember(
@@ -1292,12 +1292,12 @@ export default function ManageMembers() {
       Alert.alert(
         'Sucesso',
         (addressInherited
-          ? 'Membro adicionado! O endereço completo da sua família foi copiado para o perfil.'
-          : 'Membro adicionado, mas o endereço completo da sua família não pôde ser copiado para o perfil.') +
+          ? 'Integrante adicionado! O endereço completo da sua família foi copiado para o perfil.'
+          : 'Integrante adicionado, mas o endereço completo da sua família não pôde ser copiado para o perfil.') +
           (photoWarning ?? '')
       );
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erro ao adicionar membro.';
+      const message = err instanceof Error ? err.message : 'Erro ao adicionar integrante.';
       Alert.alert('Erro', message);
     } finally {
       setAdding(false);
@@ -1330,7 +1330,7 @@ export default function ManageMembers() {
               >
                 <View style={styles.memberFormSectionHeaderText}>
                   <Text style={styles.memberFormSectionTitle}>
-                    {editingMemberId ? 'Editar membro' : 'Adicionar membro'}
+                    {editingMemberId ? 'Editar integrante' : 'Adicionar integrante'}
                   </Text>
                   <Text style={styles.memberFormSectionMeta}>
                     {editingMemberId ? 'Alterar dados do familiar' : 'Preencha os dados do familiar'}
@@ -1349,7 +1349,7 @@ export default function ManageMembers() {
                 {!editingMemberId ? (
                   <Text style={styles.fieldHint}>
                     Digite o nome para buscar em perfis ou digite o nome completo para inserir manualmente um
-                    membro. Ao informar o telefone, o nome pode ser preenchido automaticamente pelo perfil.
+                    integrante. Ao informar o telefone, o nome pode ser preenchido automaticamente pelo perfil.
                   </Text>
                 ) : null}
                 <TextInput
@@ -1537,7 +1537,7 @@ export default function ManageMembers() {
                       activeOpacity={0.85}
                     >
                       <Text style={styles.deleteMemberButtonText}>
-                        {deleting ? '...' : 'EXCLUIR MEMBRO'}
+                        {deleting ? '...' : 'EXCLUIR INTEGRANTE'}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.cancelEditButton} onPress={resetForm}>
@@ -1551,7 +1551,7 @@ export default function ManageMembers() {
                     disabled={adding || deleting}
                   >
                     <Text style={styles.addButtonText}>
-                      {adding ? '...' : 'ADICIONAR MEMBRO'}
+                      {adding ? '...' : 'ADICIONAR INTEGRANTE'}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -1559,7 +1559,7 @@ export default function ManageMembers() {
               ) : null}
             </View>
 
-            <Text style={[styles.titleCentered, styles.membersListTitle]}>Membros Cadastrados</Text>
+            <Text style={[styles.titleCentered, styles.membersListTitle]}>Integrantes Cadastrados</Text>
           </>
         }
         renderItem={({ item }) => {
@@ -1626,9 +1626,9 @@ export default function ManageMembers() {
                 }}
                 accessibilityLabel={
                   item.accepted === true
-                    ? `Membro ${item.full_name} reconhecido como pertencente à família`
+                    ? `Integrante ${item.full_name} reconhecido como pertencente à família`
                     : item.accepted === false
-                      ? `Membro ${item.full_name} marcado como não pertencente à família`
+                      ? `Integrante ${item.full_name} marcado como não pertencente à família`
                       : `Marcar ${item.full_name} como pertencente à família`
                 }
               >
