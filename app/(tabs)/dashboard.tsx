@@ -2470,9 +2470,17 @@ export default function Dashboard() {
                       <Text style={styles.cardFinancialSubtitle}>
                         Gestão de entradas, saídas e relatórios da igreja em um só lugar.
                       </Text>
-                      <Text style={styles.cardFinancialFooter}>
-                        Toque para abrir o módulo financeiro.
-                      </Text>
+                      <View style={styles.cardFinancialCtaRow}>
+                        <MaterialIcons
+                          name="touch-app"
+                          size={34}
+                          color="#6EE7B7"
+                          style={styles.cardFinancialCtaIcon}
+                        />
+                        <Text style={styles.cardFinancialCta}>
+                          Toque para abrir o módulo financeiro.
+                        </Text>
+                      </View>
                     </View>
                   </TouchableOpacity>
                 ) : item.content === 'vigilance_scales' ? (
@@ -3715,13 +3723,22 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 8,
   },
-  cardFinancialFooter: {
-    color: '#6EE7B7',
-    fontSize: 13,
-    lineHeight: 19,
-    textAlign: 'center',
+  cardFinancialCtaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 16,
-    fontWeight: '600',
+    paddingHorizontal: 4,
+    gap: 10,
+  },
+  cardFinancialCtaIcon: {
+    flexShrink: 0,
+  },
+  cardFinancialCta: {
+    flex: 1,
+    color: '#ECFDF5',
+    fontSize: 17,
+    lineHeight: 24,
+    fontWeight: '700',
   },
   cardPastoralBody: {
     width: '100%',
