@@ -1,4 +1,7 @@
-import { formatEventDateTimeLabel } from '@/lib/eventDate';
+import { formatEventDateTimeLabel, isEventDateBeforeToday } from '@/lib/eventDate';
+
+/** Offset fixo de America/Sao_Paulo (sem horário de verão). */
+const EVENT_LOCAL_OFFSET = '-03:00';
 
 export type MaintenanceEventFormState = {
   name: string;
@@ -50,7 +53,7 @@ export const formatEventDateOnlyForInput = (isoValue: string | null | undefined)
     return '';
   }
 
-  return `${parts.day}/${parts.month}/${parts.year.slice(-2)}`;
+  return `${parts.day}/${parts.month}/${parts.year}`;
 };
 
 export const formatEventTimeForInput = (isoValue: string | null | undefined) => {
@@ -88,7 +91,7 @@ export const formatEventDateOnlyMask = (value: string) => {
 };
 
 export const formatEventTimeInputMask = (value: string) => {
-  const digits = value.replace(/\D/g, '').slice(0, 4);
+  const digits = value.replace(/[;:\s]/g, '').replace(/\D/g, '').slice(0, 4);
 
   if (digits.length <= 2) {
     return digits;
@@ -160,7 +163,12 @@ export const parseMaintenanceEventDateTimeToIso = (
     return null;
   }
 
-  return `${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}T${pad2(parts.hour)}:${pad2(parts.minute)}:00`;
+  return `${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}T${pad2(parts.hour)}:${pad2(parts.minute)}:00${EVENT_LOCAL_OFFSET}`;
+};
+
+export const isMaintenanceEventFormDateInPast = (form: MaintenanceEventFormState) => {
+  const iso = parseMaintenanceEventDateTimeToIso(form.eventDateInput, form.eventTimeInput);
+  return Boolean(iso && isEventDateBeforeToday(iso));
 };
 
 /** Aceita campo único legado DD/MM/AA ou DD/MM/AA HH:MM */
@@ -225,12 +233,22 @@ export const validateMaintenanceEventForm = (
     return { ok: false, message: 'Informe o nome do evento.' };
   }
 
+  if (form.isPublished && payload.event_date && isEventDateBeforeToday(payload.event_date)) {
+    const dateLabel = form.eventDateInput.trim() || payload.event_date.slice(0, 10);
+    return {
+      ok: false,
+      message:
+        `Não é possível publicar: a data ${dateLabel} é anterior a hoje. `
+        + 'Escolha hoje ou uma data futura, ou desative Publicação para salvar como rascunho.',
+    };
+  }
+
   if (!payload.event_date) {
     const dateDigits = form.eventDateInput.replace(/\D/g, '');
     const timeDigits = form.eventTimeInput.replace(/\D/g, '');
 
     if (dateDigits.length < 6) {
-      return { ok: false, message: 'Informe a data completa (DD/MM/AA).' };
+      return { ok: false, message: 'Informe a data completa (DD/MM/AAAA).' };
     }
 
     if (timeDigits.length > 0 && timeDigits.length < 4) {
@@ -283,7 +301,7 @@ export const shiftMaintenanceEventDateIso = (
   const shifted = new Date(year, month - 1, day, hour, minute, 0);
   shifted.setDate(shifted.getDate() + dayOffset);
 
-  return `${shifted.getFullYear()}-${pad2(shifted.getMonth() + 1)}-${pad2(shifted.getDate())}T${pad2(shifted.getHours())}:${pad2(shifted.getMinutes())}:00`;
+  return `${shifted.getFullYear()}-${pad2(shifted.getMonth() + 1)}-${pad2(shifted.getDate())}T${pad2(shifted.getHours())}:${pad2(shifted.getMinutes())}:00${EVENT_LOCAL_OFFSET}`;
 };
 
 export const buildMaintenanceEventPayload = (form: MaintenanceEventFormState) => {

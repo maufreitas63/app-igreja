@@ -3,6 +3,7 @@ import {
   formFromMaintenanceEvent,
   formatEventTimeInputMask,
   summarizeMaintenanceEvent,
+  isMaintenanceEventFormDateInPast,
   validateMaintenanceEventForm,
   type MaintenanceEventFormState,
 } from '@/lib/maintenanceEventForm';
@@ -303,6 +304,10 @@ export default function MaintenanceDashboard() {
   const isBusy = isSaving || isDeleting || isReplicatingSeven;
 
   const isCreating = selectedEventId === '__new__';
+  const isEventDateInPast = useMemo(
+    () => isMaintenanceEventFormDateInPast(form),
+    [form]
+  );
 
   const editorQuorumEventId =
     selectedEventId !== null && form.requerQuorum && !isCreating ? selectedEventId : undefined;
@@ -1206,7 +1211,7 @@ export default function MaintenanceDashboard() {
                           !form.eventDateInput.trim() && styles.dateInputPlaceholder,
                         ]}
                       >
-                        {form.eventDateInput.trim() || 'DD/MM/AA'}
+                        {form.eventDateInput.trim() || 'DD/MM/AAAA'}
                       </Text>
                       <MaterialIcons name="calendar-today" size={18} color="#94A3B8" />
                     </View>
@@ -1326,6 +1331,12 @@ export default function MaintenanceDashboard() {
                     thumbColor="#F8FAFC"
                   />
                 </View>
+                {isEventDateInPast && form.isPublished ? (
+                  <Text style={styles.publishPastWarning}>
+                    Esta data é anterior a hoje. Só eventos de hoje ou futuros permanecem
+                    publicados — confira o ano no calendário (ex.: 2026, não 2021).
+                  </Text>
+                ) : null}
 
                 {!isCreating ? (
                   <View style={styles.replicateSevenSection}>
@@ -2066,6 +2077,12 @@ const styles = StyleSheet.create({
   publishHint: {
     color: '#94A3B8',
     fontSize: 12,
+  },
+  publishPastWarning: {
+    color: '#FCD34D',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 4,
   },
   replicateSevenSection: {
     gap: 6,

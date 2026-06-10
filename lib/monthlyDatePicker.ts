@@ -88,8 +88,7 @@ export function parseIsoCalendarDate(value: string): CalendarDateParts | null {
 }
 
 export function formatEventDateOnlyFromParts(parts: CalendarDateParts) {
-  const yearSuffix = String(parts.year).slice(-2);
-  return `${pad2(parts.day)}/${pad2(parts.month)}/${yearSuffix}`;
+  return `${pad2(parts.day)}/${pad2(parts.month)}/${parts.year}`;
 }
 
 export function formatPickerSelectedDateLabel(parts: CalendarDateParts) {
