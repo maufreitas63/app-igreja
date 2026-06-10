@@ -3724,7 +3724,7 @@ const styles = StyleSheet.create({
   cardPastoralBody: {
     width: '100%',
     paddingHorizontal: 8,
-    marginTop: 28,
+    marginTop: 48,
   },
   cardPastoralSubtitle: {
     color: '#E9D5FF',
@@ -4417,7 +4417,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 16,
   },
-  offeringsContent: { gap: 14 },
+  offeringsContent: {
+    gap: 14,
+    marginTop: 28,
+  },
   vigilanceScaleFilterSection: {
     flex: 1,
     minHeight: 0,
