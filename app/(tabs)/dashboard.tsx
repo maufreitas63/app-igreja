@@ -2206,6 +2206,9 @@ export default function Dashboard() {
                       <Text style={styles.dashboardPanelTitle}>
                         {membersListAudience === 'visitors' ? 'LISTA DE VISITANTES' : item.title}
                       </Text>
+                    </View>
+
+                    <View style={styles.membersListBody}>
                       <View style={styles.membersListActionButtons}>
                         {membersListAudience === 'members' ? (
                           <TouchableOpacity
@@ -2235,7 +2238,6 @@ export default function Dashboard() {
                           <Text style={styles.membersListMapButtonText}>Mapa Geral</Text>
                         </TouchableOpacity>
                       </View>
-                    </View>
 
                     <Text style={styles.membersListSummaryText}>
                       {normalizeParameterValue(membersListSearchQuery)
@@ -2392,6 +2394,7 @@ export default function Dashboard() {
                             : 'Nenhum membro encontrado.'}
                         </Text>
                       )}
+                    </View>
                     </View>
                   </View>
                 ) : item.content === 'birthdays' ? (
@@ -3853,7 +3856,7 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     justifyContent: 'flex-start',
     padding: 20,
-    gap: 10,
+    gap: 0,
     backgroundColor: 'rgba(244, 63, 94, 0.16)',
     borderColor: '#fb7185',
   },
@@ -3864,8 +3867,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   membersListHeader: {
-    gap: 8,
     alignItems: 'stretch',
+  },
+  membersListBody: {
+    marginTop: 16,
+    gap: 10,
+    flex: 1,
+    minHeight: 0,
   },
   membersListActionButtons: {
     flexDirection: 'row',
