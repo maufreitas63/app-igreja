@@ -22,6 +22,10 @@ import { supabase } from '@/lib/supabase';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import {
+  buildReturnToDashboardHref,
+  resolveReturnDashboardCardParam,
+} from '@/lib/dashboardReturnNavigation';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -143,7 +147,7 @@ const resolveLocalSubcategories = (
 };
 
 export default function PastoralScreen() {
-  const params = useLocalSearchParams<{ userId?: string | string[] }>();
+  const params = useLocalSearchParams<{ userId?: string | string[]; returnDashboardCard?: string | string[] }>();
   const routeUserId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
   const router = useRouter();
 
@@ -442,10 +446,9 @@ export default function PastoralScreen() {
       await submitPastoralRequest(payload);
 
       await appAlert('Sucesso', 'Pedido enviado! Estaremos orando por você.');
-      router.replace({
-        pathname: '/(tabs)/dashboard',
-        params: { dashboardCard: 'pastoral' },
-      });
+      router.replace(
+        buildReturnToDashboardHref(resolveReturnDashboardCardParam(params) ?? 'pastoral')
+      );
     } catch (err) {
       console.error('Erro ao enviar:', err);
       await appAlert('Erro', getSupabaseErrorMessage(err));
@@ -465,10 +468,9 @@ export default function PastoralScreen() {
   };
 
   const handleBackToDashboard = () => {
-    router.replace({
-      pathname: '/(tabs)/dashboard',
-      params: { dashboardCard: 'pastoral' },
-    });
+    router.replace(
+      buildReturnToDashboardHref(resolveReturnDashboardCardParam(params) ?? 'pastoral')
+    );
   };
 
   const handleOpenHistory = () => {

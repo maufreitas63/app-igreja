@@ -3,6 +3,11 @@ import { FinancialMonthlyBudgetComparison } from '@/components/FinancialMonthlyB
 import { FinancialLastTwelveMonths } from '@/components/FinancialLastTwelveMonths';
 import { FinancialMonthlyComparison } from '@/components/FinancialMonthlyComparison';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
+import {
+  buildReturnToDashboardHref,
+  resolveReturnDashboardCardParam,
+  withReturnDashboardCard,
+} from '@/lib/dashboardReturnNavigation';
 import { DASHBOARD_FINANCIAL_CARD_ID, FINANCIAL_HUB_ITEMS } from '@/lib/financialModule';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { formatFinancialMonthKey, formatFinancialMonthLabel } from '@/lib/financialMonth';
@@ -10,7 +15,7 @@ import { useFinancialsByMonth } from '@/hooks/useFinancialsByMonth';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -33,6 +38,8 @@ const FINANCIAL_SECTION_ORDER: FinancialSectionId[] = [
 
 export default function FinancialScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ returnDashboardCard?: string | string[] }>();
+  const returnDashboardCard = resolveReturnDashboardCardParam(params) ?? DASHBOARD_FINANCIAL_CARD_ID;
   const scrollRef = useRef<ScrollView>(null);
 
   useScreenAccessGuard({
@@ -86,11 +93,8 @@ export default function FinancialScreen() {
   );
 
   const handleBackToDashboard = useCallback(() => {
-    router.replace({
-      pathname: '/(tabs)/dashboard',
-      params: { dashboardCard: DASHBOARD_FINANCIAL_CARD_ID },
-    });
-  }, [router]);
+    router.replace(buildReturnToDashboardHref(returnDashboardCard));
+  }, [returnDashboardCard, router]);
 
   const budgetSectionBlocked = useMemo(
     () => !loadingEntries && Boolean(selectedMonth) && budgetPlannedMonthEntries.length === 0,
@@ -403,7 +407,10 @@ export default function FinancialScreen() {
                 style={styles.rdShortcutButton}
                 onPress={() => {
                   if (item.action.type === 'route') {
-                    router.push('/expense-report');
+                    router.push({
+                      pathname: '/expense-report',
+                      params: withReturnDashboardCard(returnDashboardCard),
+                    });
                   }
                 }}
                 activeOpacity={0.85}

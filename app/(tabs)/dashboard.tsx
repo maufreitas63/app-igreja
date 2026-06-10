@@ -54,6 +54,7 @@ import {
   DASHBOARD_PANEL_TITLE_TYPO,
   resolveDashboardCardIndex,
 } from '@/lib/dashboardPanelLayout';
+import { withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
@@ -1467,28 +1468,6 @@ export default function Dashboard() {
     await openMemberWhatsapp(entry.phone);
   };
 
-  const handleOpenMemberOnMap = useCallback(
-    (entry: MemberListEntry) => {
-      if (!entry.cep?.trim()) {
-        Toast.show({
-          type: 'error',
-          text1: 'Mapa indisponível',
-          text2: 'Este membro não possui CEP cadastrado para exibir no mapa.',
-          visibilityTime: 3500,
-        });
-        return;
-      }
-
-      handledDashboardCardRef.current = null;
-      prefetchProfilesMapMarkers();
-      router.push({
-        pathname: '/mapa-geolocalizacao',
-        params: { focusProfileId: entry.id },
-      });
-    },
-    [router]
-  );
-
   const handleOpenBirthdayWhatsapp = async (entry: BirthdayEntry) => {
     const whatsappPhone = normalizePhoneForWhatsApp(entry.phone);
 
@@ -1520,11 +1499,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleOpenMembersMap = useCallback(() => {
-    handledDashboardCardRef.current = null;
-    prefetchProfilesMapMarkers();
-    router.push('/mapa-geolocalizacao');
-  }, [router]);
   const dashboardCardCandidates: DashboardCard[] = useMemo(
     () => [
       { id: '1', title: 'Agenda da Família', content: 'event_alt' },
@@ -1572,6 +1546,51 @@ export default function Dashboard() {
       isDashboardCardContentAllowed(card.content, dashboardCardAccess)
     );
   }, [dashboardCardAccess, dashboardCardCandidates, isDashboardCardAccessReady]);
+
+  const buildChildScreenParams = useCallback(
+    (extra?: Record<string, string>) => {
+      const activeCard = data[currentIndex];
+      const returnDashboardCard = activeCard?.content ?? activeCard?.id;
+
+      if (!returnDashboardCard) {
+        return extra ?? {};
+      }
+
+      return withReturnDashboardCard(returnDashboardCard, extra);
+    },
+    [currentIndex, data]
+  );
+
+  const handleOpenMemberOnMap = useCallback(
+    (entry: MemberListEntry) => {
+      if (!entry.cep?.trim()) {
+        Toast.show({
+          type: 'error',
+          text1: 'Mapa indisponível',
+          text2: 'Este membro não possui CEP cadastrado para exibir no mapa.',
+          visibilityTime: 3500,
+        });
+        return;
+      }
+
+      handledDashboardCardRef.current = null;
+      prefetchProfilesMapMarkers();
+      router.push({
+        pathname: '/mapa-geolocalizacao',
+        params: buildChildScreenParams({ focusProfileId: entry.id }),
+      });
+    },
+    [buildChildScreenParams, router]
+  );
+
+  const handleOpenMembersMap = useCallback(() => {
+    handledDashboardCardRef.current = null;
+    prefetchProfilesMapMarkers();
+    router.push({
+      pathname: '/mapa-geolocalizacao',
+      params: buildChildScreenParams(),
+    });
+  }, [buildChildScreenParams, router]);
 
   const activeDashboardScreenTitle = useMemo(() => {
     const card = data[currentIndex];
@@ -1714,8 +1733,11 @@ export default function Dashboard() {
     }
 
     setIsFooterSettingsPressed(true);
-    router.push('/maintenance-dashboard');
-  }, [canViewMaintenance, isFooterSettingsPressed, router]);
+    router.push({
+      pathname: '/maintenance-dashboard',
+      params: buildChildScreenParams(),
+    });
+  }, [buildChildScreenParams, canViewMaintenance, isFooterSettingsPressed, router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -2160,37 +2182,62 @@ export default function Dashboard() {
                     )}
                   </View>
                 ) : item.content === 'grouped_manage' ? (
-                  <View style={[styles.groupedManageContainer, dashboardPanelCardSizeStyle]}>
-                    <TouchableOpacity
-                      style={[styles.groupedManageButton, styles.groupedManageButtonProfile]}
-                      activeOpacity={0.85}
-                      onPress={() => router.push({ pathname: '/manage-profile', params: userPhone ? { phone: encodeURIComponent(userPhone) } : {} })}
-                    >
-                      <View style={styles.groupedManageButtonContent}>
-                        <MaterialIcons
-                          name="assignment-ind"
-                          size={36}
-                          color="#6EE7B7"
-                          style={styles.groupedManageButtonIcon}
-                        />
-                        <Text style={styles.groupedManageButtonTitle}>Dados Cadastrais</Text>
-                      </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.groupedManageButton, styles.groupedManageButtonFamily]}
-                      activeOpacity={0.85}
-                      onPress={() => router.push({ pathname: '/manage-members', params: userPhone ? { phone: encodeURIComponent(userPhone) } : {} })}
-                    >
-                      <View style={styles.groupedManageButtonContent}>
-                        <MaterialIcons
-                          name="family-restroom"
-                          size={36}
-                          color="#67E8F9"
-                          style={styles.groupedManageButtonIcon}
-                        />
-                        <Text style={styles.groupedManageButtonTitle}>Gerenciar Família</Text>
-                      </View>
-                    </TouchableOpacity>
+                  <View
+                    style={[
+                      styles.card,
+                      styles.cardGroupedManage,
+                      styles.dashboardPanelCardTopLayout,
+                      dashboardPanelCardSizeStyle,
+                      dashboardPanelTopInsetStyle,
+                    ]}
+                  >
+                    <Text style={styles.dashboardPanelTitle}>Gestão de Cadastros</Text>
+                    <View style={styles.groupedManageBody}>
+                      <TouchableOpacity
+                        style={[styles.groupedManageButton, styles.groupedManageButtonProfile]}
+                        activeOpacity={0.85}
+                        onPress={() =>
+                          router.push({
+                            pathname: '/manage-profile',
+                            params: buildChildScreenParams(
+                              userPhone ? { phone: encodeURIComponent(userPhone) } : {}
+                            ),
+                          })
+                        }
+                      >
+                        <View style={styles.groupedManageButtonContent}>
+                          <MaterialIcons
+                            name="assignment-ind"
+                            size={28}
+                            color="#6EE7B7"
+                            style={styles.groupedManageButtonIcon}
+                          />
+                          <Text style={styles.groupedManageButtonTitle}>Dados Cadastrais</Text>
+                        </View>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.groupedManageButton, styles.groupedManageButtonFamily]}
+                        activeOpacity={0.85}
+                        onPress={() =>
+                          router.push({
+                            pathname: '/manage-members',
+                            params: buildChildScreenParams(
+                              userPhone ? { phone: encodeURIComponent(userPhone) } : {}
+                            ),
+                          })
+                        }
+                      >
+                        <View style={styles.groupedManageButtonContent}>
+                          <MaterialIcons
+                            name="family-restroom"
+                            size={28}
+                            color="#67E8F9"
+                            style={styles.groupedManageButtonIcon}
+                          />
+                          <Text style={styles.groupedManageButtonTitle}>Gerenciar Família</Text>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 ) : item.content === 'members_list' ? (
                   <View
@@ -2498,7 +2545,12 @@ export default function Dashboard() {
                       styles.dashboardPanelCardTopLayout,
                       dashboardPanelTopInsetStyle,
                     ]}
-                    onPress={() => router.navigate({ pathname: '/financial' })}
+                    onPress={() =>
+                      router.navigate({
+                        pathname: '/financial',
+                        params: buildChildScreenParams(),
+                      })
+                    }
                     activeOpacity={0.8}
                   >
                     <Text style={styles.dashboardPanelTitle}>{item.title}</Text>
@@ -3012,7 +3064,9 @@ export default function Dashboard() {
                       if (item.content === 'pastoral') {
                         router.navigate({
                           pathname: '/pastoral',
-                          params: currentUserId ? { userId: currentUserId } : {},
+                          params: buildChildScreenParams(
+                            currentUserId ? { userId: currentUserId } : {}
+                          ),
                         });
                       }
                     }}
@@ -3712,20 +3766,23 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginTop: 6,
   },
-  groupedManageContainer: {
-    gap: 12,
-    flex: 1,
-    minHeight: 0,
+  cardGroupedManage: {
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
+    gap: 0,
+    backgroundColor: 'rgba(16, 185, 129, 0.22)',
+    borderColor: '#10b981',
+  },
+  groupedManageBody: {
+    marginTop: 28,
+    gap: 10,
+    alignItems: 'stretch',
     width: '100%',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
   },
   groupedManageButton: {
-    flex: 1,
     width: '100%',
-    minHeight: 0,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
@@ -3742,17 +3799,17 @@ const styles = StyleSheet.create({
   groupedManageButtonContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 6,
   },
   groupedManageButtonIcon: {
     opacity: 0.95,
   },
   groupedManageButtonTitle: {
     color: '#F8FAFC',
-    fontSize: 17,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
   },
   cardPastoralAction: { backgroundColor: 'rgba(168, 85, 247, 0.3)', borderColor: '#a855f7' },
   cardFinancialAction: {

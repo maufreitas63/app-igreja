@@ -47,8 +47,10 @@ import {
   resolveFamilyIdForPhone,
 } from '@/lib/family';
 import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { resolveReturnDashboardCardParam } from '@/lib/dashboardReturnNavigation';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
@@ -66,7 +68,6 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const OPCOES_PARENTESCO = ['Cônjuge', 'Filho(a)', 'Representante Legal', 'Pai', 'Mãe', 'Outros'];
-const DASHBOARD_MENU_CARD_ID = '6';
 
 const formatPhone = (value: string) => {
   const cleaned = value.replace(/\D/g, '');
@@ -432,10 +433,15 @@ async function loadManageMembersData(phoneParam: string | null): Promise<ManageM
 }
 
 export default function ManageMembers() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
   const phoneParam = params.phone ? decodeURIComponent(params.phone as string) : null;
+  const returnDashboardCard = resolveReturnDashboardCardParam(params);
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnDashboardCard,
+    fallbackDashboardCard: 'grouped_manage',
+    extraRouteParams: phoneParam ? { phone: encodeURIComponent(phoneParam) } : undefined,
+  });
   const listRef = useRef<FlatList<ManagedMember>>(null);
 
   useScreenAccessGuard({
@@ -690,16 +696,6 @@ export default function ManageMembers() {
     },
     []
   );
-
-  const handleBackToDashboard = useCallback(() => {
-    router.replace({
-      pathname: '/(tabs)/dashboard',
-      params: {
-        ...(phoneParam ? { phone: encodeURIComponent(phoneParam) } : {}),
-        dashboardCard: DASHBOARD_MENU_CARD_ID,
-      },
-    });
-  }, [phoneParam, router]);
 
   const copyAcceptorAddressToMember = useCallback(
     async (
@@ -1671,7 +1667,7 @@ export default function ManageMembers() {
       />
 
       <View style={[styles.footerContainer, { paddingBottom: insets.bottom + 10 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackToDashboard}>
+        <TouchableOpacity style={styles.backButton} onPress={returnToCaller}>
           <Text style={styles.backButtonText}>Voltar</Text>
         </TouchableOpacity>
       </View>

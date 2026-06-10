@@ -15,13 +15,14 @@ import {
 import { normalizeCepDigits } from '@/lib/geoMapGeocoding';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
-import { DASHBOARD_MEMBERS_LIST_CARD_ID } from '@/lib/membersListModule';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
+import { resolveReturnDashboardCardParam } from '@/lib/dashboardReturnNavigation';
 import { MAP_PIN_COLOR, type MapMarker } from '@/lib/profilesMapMarkersTypes';
 import { formatPhoneForDisplay } from '@/lib/totemDevice';
 import { openMemberWhatsapp } from '@/lib/whatsapp';
 import { ClientGeoLeafletMap } from '@/components/geo-map/ClientGeoLeafletMap.web';
 import * as Clipboard from 'expo-clipboard';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
@@ -58,8 +59,10 @@ const filterMarkersByRole = (markers: MapMarker[], filter: MapPinFilter) => {
 };
 
 export default function MapGeolocalizacaoWebScreen() {
-  const router = useRouter();
-  const params = useLocalSearchParams<{ focusProfileId?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    focusProfileId?: string | string[];
+    returnDashboardCard?: string | string[];
+  }>();
 
   const focusProfileId = useMemo(() => {
     const raw = params.focusProfileId;
@@ -73,12 +76,11 @@ export default function MapGeolocalizacaoWebScreen() {
     deniedMessage: 'Você não tem permissão para abrir o mapa de geolocalização.',
   });
 
-  const handleBackToMembersList = useCallback(() => {
-    router.replace({
-      pathname: '/(tabs)/dashboard',
-      params: { dashboardCard: DASHBOARD_MEMBERS_LIST_CARD_ID },
-    });
-  }, [router]);
+  const returnDashboardCard = resolveReturnDashboardCardParam(params);
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnDashboardCard,
+    fallbackDashboardCard: 'members_list',
+  });
 
   const [selectedProfile, setSelectedProfile] = useState<ProfileForMap | null>(null);
   const [pinFilter, setPinFilter] = useState<MapPinFilter>('all');
@@ -320,7 +322,7 @@ export default function MapGeolocalizacaoWebScreen() {
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mapa de Geolocalização</Text>
-        <TouchableOpacity onPress={handleBackToMembersList} activeOpacity={0.8}>
+        <TouchableOpacity onPress={returnToCaller} activeOpacity={0.8}>
           <Text style={styles.headerBack}>← Voltar</Text>
         </TouchableOpacity>
       </View>

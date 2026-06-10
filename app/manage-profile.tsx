@@ -1,6 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
+import { resolveReturnDashboardCardParam, withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -99,8 +101,6 @@ type ProfileVehicle = {
   modelo: string | null;
   cor: string | null;
 };
-
-const DASHBOARD_MENU_CARD_ID = '6';
 
 const FIELD_ORDER = [
   'id',
@@ -652,6 +652,12 @@ export default function ManageProfile() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
   const phoneParam = params.phone ? decodeURIComponent(params.phone as string) : null;
+  const returnDashboardCard = resolveReturnDashboardCardParam(params);
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnDashboardCard,
+    fallbackDashboardCard: 'grouped_manage',
+    extraRouteParams: phoneParam ? { phone: encodeURIComponent(phoneParam) } : undefined,
+  });
   const isOnboardingFlow = params.onboarding === '1';
   const scrollRef = useRef<ScrollView>(null);
   const onboardingAlertShownRef = useRef(false);
@@ -1125,16 +1131,6 @@ export default function ManageProfile() {
     };
   }, [profile?.selfie_url]);
 
-  const handleBackToDashboard = useCallback(() => {
-    router.replace({
-      pathname: '/(tabs)/dashboard',
-      params: {
-        ...(phoneParam ? { phone: encodeURIComponent(phoneParam) } : {}),
-        dashboardCard: DASHBOARD_MENU_CARD_ID,
-      },
-    });
-  }, [phoneParam, router]);
-
   const resetEditing = useCallback(() => {
     setEditingField(null);
     setEditingValue('');
@@ -1333,7 +1329,11 @@ export default function ManageProfile() {
           await AsyncStorage.setItem('user_phone', formattedPhone);
           router.replace({
             pathname: '/manage-profile',
-            params: { phone: encodeURIComponent(formattedPhone) },
+            params: returnDashboardCard
+              ? withReturnDashboardCard(returnDashboardCard, {
+                  phone: encodeURIComponent(formattedPhone),
+                })
+              : { phone: encodeURIComponent(formattedPhone) },
           });
 
           resetEditing();
@@ -2378,7 +2378,7 @@ export default function ManageProfile() {
       </ScrollView>
 
       <View style={[styles.footerContainer, { paddingBottom: insets.bottom + 10 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackToDashboard}>
+        <TouchableOpacity style={styles.backButton} onPress={returnToCaller}>
           <Text style={styles.backButtonText}>Voltar</Text>
         </TouchableOpacity>
       </View>
