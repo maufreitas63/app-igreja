@@ -7,19 +7,21 @@ import {
   computeDashboardCardHeight,
   computePanelCardTopOffset,
 } from '@/lib/dashboardPanelLayout';
+import { Image } from 'expo-image';
 import type { PropsWithChildren } from 'react';
-import { Image, StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type WatermarkSurfaceProps = PropsWithChildren<{
   style?: StyleProp<ViewStyle>;
+  routeKey?: string;
 }>;
 
 /**
  * Marca d'água única do app (via AppShell).
- * Overlay discreto sobre telas e cards, limitado ao frame do card central (90% da largura).
+ * Overlay sobre telas e cards, limitado ao frame do card central (90% da largura).
  */
-export function WatermarkSurface({ children, style }: WatermarkSurfaceProps) {
+export function WatermarkSurface({ children, style, routeKey = 'root' }: WatermarkSurfaceProps) {
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const cardHeight = computeDashboardCardHeight(windowHeight, insets.top, insets.bottom);
@@ -30,7 +32,7 @@ export function WatermarkSurface({ children, style }: WatermarkSurfaceProps) {
     insets.bottom,
     cardHeight
   );
-  const imageWidth = Math.max(cardSize.width * 1.2, cardHeight * 1.15);
+  const imageWidth = cardSize.width;
 
   const cardFrameStyle = {
     top: cardTop,
@@ -43,24 +45,27 @@ export function WatermarkSurface({ children, style }: WatermarkSurfaceProps) {
     <View style={[styles.surface, style]}>
       <View style={styles.content}>{children}</View>
       <View
+        key={routeKey}
         style={[styles.cardFrame, cardFrameStyle]}
         pointerEvents="none"
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
-        <Image
-          source={APP_WATERMARK_IMAGE}
-          style={[
-            styles.image,
-            {
-              height: cardHeight,
-              width: imageWidth,
-              opacity: APP_WATERMARK_OPACITY,
-            },
-          ]}
-          resizeMode="contain"
-          accessible={false}
-        />
+        <View style={[styles.blendWrap, { opacity: APP_WATERMARK_OPACITY }]}>
+          <Image
+            source={APP_WATERMARK_IMAGE}
+            style={[
+              styles.image,
+              {
+                height: cardHeight,
+                width: imageWidth,
+              },
+            ]}
+            contentFit="contain"
+            transition={0}
+            accessible={false}
+          />
+        </View>
       </View>
     </View>
   );
@@ -79,14 +84,22 @@ const styles = StyleSheet.create({
     zIndex: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'visible',
+    overflow: 'hidden',
     elevation: 0,
   },
   content: {
     flex: 1,
     zIndex: 0,
   },
+  blendWrap: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    mixBlendMode: 'multiply',
+  },
   image: {
-    maxWidth: '140%',
+    width: '100%',
+    height: '100%',
   },
 });

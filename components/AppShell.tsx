@@ -1,6 +1,6 @@
 import { WatermarkSurface } from '@/components/AppWatermark';
 import { TotemDeviceRouteGuard } from '@/components/TotemDeviceRouteGuard';
-import { Slot, usePathname } from 'expo-router';
+import { Slot, usePathname, useSegments } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 const normalizePathname = (pathname: string) => {
@@ -8,15 +8,25 @@ const normalizePathname = (pathname: string) => {
   return trimmed || '/';
 };
 
-/** Só a tela de login/senha na raiz — não confundir com `/(tabs)/index` (índice de etiquetas). */
-const isLoginRoute = (pathname: string) => {
+/** Telas públicas sem marca d'água (login, cadastro, totem). Índice do app fica em `(tabs)`. */
+const isWatermarkExcludedRoute = (pathname: string, segments: string[]) => {
+  if (segments[0] === '(tabs)') {
+    return false;
+  }
+
   const normalized = normalizePathname(pathname);
-  return normalized === '/' || normalized === '/index';
+  return (
+    normalized === '/'
+    || normalized === '/index'
+    || normalized === '/register'
+    || normalized === '/totem-checkin'
+  );
 };
 
 export function AppShell() {
   const pathname = usePathname();
-  const showWatermark = !isLoginRoute(pathname);
+  const segments = useSegments();
+  const showWatermark = !isWatermarkExcludedRoute(pathname, segments);
 
   if (!showWatermark) {
     return (
@@ -28,7 +38,7 @@ export function AppShell() {
   }
 
   return (
-    <WatermarkSurface style={styles.app}>
+    <WatermarkSurface style={styles.app} routeKey={pathname}>
       <TotemDeviceRouteGuard />
       <Slot />
     </WatermarkSurface>

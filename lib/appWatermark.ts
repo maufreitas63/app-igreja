@@ -1,14 +1,12 @@
 /**
  * Marca d'água global do app.
  *
- * Opções avaliadas em logos/:
- * - 1.jpeg / 2.jpeg / 5.jpeg: logo prata/cinza — melhor leitura em fundo escuro (#0f172a).
- * - 4.jpeg: silhueta preta — some demais sobre fundos escuros.
- * - 3.jpeg: fundo preto sólido — cria “caixa” visível no overlay.
- *
- * Escolhido: 1.jpeg (contraste suave, identidade IBNORTE, sem ruído de fundo).
+ * Opções em logos/:
+ * - 4.jpeg: silhueta preta sobre branco — usada com blend multiply para não exibir o fundo.
+ * - 1.jpeg / 2.jpeg / 5.jpeg: fundo branco com artefatos JPEG visíveis no overlay.
+ * - 3.jpeg: fundo preto sólido — cria “caixa” no overlay.
  */
-export const APP_WATERMARK_IMAGE = require('../logos/1.jpeg');
+export const APP_WATERMARK_IMAGE = require('../logos/4.jpeg');
 
-/** Opacidade única global — discreta, sem prejudicar leitura. */
-export const APP_WATERMARK_OPACITY = 0.07;
+/** Opacidade única global — visível sobre fundo escuro, sem prejudicar leitura. */
+export const APP_WATERMARK_OPACITY = 0.18;
