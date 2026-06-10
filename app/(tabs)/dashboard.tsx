@@ -54,6 +54,7 @@ import {
   DASHBOARD_PANEL_TITLE_TYPO,
   resolveDashboardCardIndex,
 } from '@/lib/dashboardPanelLayout';
+import { DASHBOARD_CARD_THEMES } from '@/lib/dashboardCardThemes';
 import { withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -1971,10 +1972,18 @@ export default function Dashboard() {
             renderItem={({ item }) => (
               <View style={[styles.cardWrapper, carouselPageStyle]}>
                 {item.content === 'event_alt' ? (
-                  <View style={[styles.card, styles.eventCard, styles.eventAltCard, eventPanelCardSizeStyle]}>
+                  <View
+                    style={[
+                      styles.card,
+                      styles.cardEventAlt,
+                      styles.eventCard,
+                      styles.eventAltCard,
+                      eventPanelCardSizeStyle,
+                    ]}
+                  >
                     {areEventsLoading || isProfileLoading ? (
                       <View style={styles.eventAltLoadingState}>
-                        <ActivityIndicator color="#10b981" size="large" />
+                        <ActivityIndicator color="#818CF8" size="large" />
                       </View>
                     ) : !activeEvents.length ? (
                       <View style={styles.eventAltEmptyState}>
@@ -2206,12 +2215,12 @@ export default function Dashboard() {
                         }
                       >
                         <View style={styles.groupedManageButtonContent}>
-                          <MaterialIcons
-                            name="assignment-ind"
-                            size={28}
-                            color="#6EE7B7"
-                            style={styles.groupedManageButtonIcon}
-                          />
+                        <MaterialIcons
+                          name="assignment-ind"
+                          size={28}
+                          color="#A5B4FC"
+                          style={styles.groupedManageButtonIcon}
+                        />
                           <Text style={styles.groupedManageButtonTitle}>Dados Cadastrais</Text>
                         </View>
                       </TouchableOpacity>
@@ -2228,12 +2237,12 @@ export default function Dashboard() {
                         }
                       >
                         <View style={styles.groupedManageButtonContent}>
-                          <MaterialIcons
-                            name="family-restroom"
-                            size={28}
-                            color="#67E8F9"
-                            style={styles.groupedManageButtonIcon}
-                          />
+                        <MaterialIcons
+                          name="family-restroom"
+                          size={28}
+                          color="#D8B4FE"
+                          style={styles.groupedManageButtonIcon}
+                        />
                           <Text style={styles.groupedManageButtonTitle}>Gerenciar Família</Text>
                         </View>
                       </TouchableOpacity>
@@ -2908,7 +2917,7 @@ export default function Dashboard() {
                             <MaterialIcons
                               name="touch-app"
                               size={34}
-                              color="#022C22"
+                              color="#451A03"
                               style={styles.offeringsCopyButtonIcon}
                             />
                             <Text style={styles.offeringsCopyButtonText}>Copiar chave PIX</Text>
@@ -2928,7 +2937,14 @@ export default function Dashboard() {
                     </View>
                   </View>
                 ) : item.content === 'kids_teens' ? (
-                  <View style={[styles.card, styles.cardGroupedAudience, dashboardPanelCardSizeStyle]}>
+                  <View
+                    style={[
+                      styles.card,
+                      styles.cardKidsTeens,
+                      styles.cardGroupedAudience,
+                      dashboardPanelCardSizeStyle,
+                    ]}
+                  >
                     <View style={styles.checkinTitleField}>
                       <Text style={styles.checkinTitleValue} numberOfLines={2}>
                         {selectedEvent?.name ?? 'Nenhum evento selecionado'}
@@ -3060,6 +3076,7 @@ export default function Dashboard() {
                     style={[
                       styles.card,
                       dashboardPanelCardSizeStyle,
+                      item.content === 'qr' && styles.cardQr,
                       item.content === 'qr' && isQrTotemCardPoolBlue && styles.cardQrTotemConfirmed,
                       item.content === 'pastoral' && styles.cardPastoralAction,
                       item.content === 'pastoral' && styles.dashboardPanelCardTopLayout,
@@ -3364,9 +3381,9 @@ const styles = StyleSheet.create({
   card: {
     width: '90%',
     alignSelf: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
+    backgroundColor: 'rgba(30, 41, 59, 0.72)',
     borderWidth: 1,
-    borderColor: '#10b981',
+    borderColor: '#475569',
     borderRadius: STATIC_CARD_INSETS.borderRadius,
     padding: STATIC_CARD_INSETS.padding,
     alignItems: 'center',
@@ -3375,14 +3392,32 @@ const styles = StyleSheet.create({
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.45,
     shadowRadius: 15,
+  },
+  cardEventAlt: {
+    backgroundColor: DASHBOARD_CARD_THEMES.event_alt.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.event_alt.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.event_alt.shadowColor,
+    shadowOpacity: 0.32,
+  },
+  cardQr: {
+    backgroundColor: DASHBOARD_CARD_THEMES.qr.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.qr.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.qr.shadowColor,
+    shadowOpacity: 0.3,
   },
   cardQrTotemConfirmed: {
     backgroundColor: 'rgba(6, 182, 212, 0.48)',
     borderColor: '#22D3EE',
     shadowColor: '#06B6D4',
     shadowOpacity: 0.35,
+  },
+  cardKidsTeens: {
+    backgroundColor: DASHBOARD_CARD_THEMES.kids_teens.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.kids_teens.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.kids_teens.shadowColor,
+    shadowOpacity: 0.3,
   },
   eventCard: {
     padding: 20,
@@ -3447,7 +3482,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   eventAltMeta: {
-    color: '#BAE6FD',
+    color: DASHBOARD_CARD_THEMES.event_alt.accentMuted,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 3,
@@ -3776,8 +3811,10 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     justifyContent: 'flex-start',
     gap: 0,
-    backgroundColor: 'rgba(16, 185, 129, 0.22)',
-    borderColor: '#10b981',
+    backgroundColor: DASHBOARD_CARD_THEMES.grouped_manage.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.grouped_manage.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.grouped_manage.shadowColor,
+    shadowOpacity: 0.3,
   },
   groupedManageBody: {
     marginTop: 28,
@@ -3795,12 +3832,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   groupedManageButtonProfile: {
-    backgroundColor: 'rgba(16, 185, 129, 0.3)',
-    borderColor: '#10b981',
+    backgroundColor: 'rgba(99, 102, 241, 0.28)',
+    borderColor: '#818CF8',
   },
   groupedManageButtonFamily: {
-    backgroundColor: 'rgba(6, 182, 212, 0.3)',
-    borderColor: '#06b6d4',
+    backgroundColor: 'rgba(168, 85, 247, 0.24)',
+    borderColor: '#C084FC',
   },
   groupedManageButtonContent: {
     alignItems: 'center',
@@ -3817,10 +3854,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  cardPastoralAction: { backgroundColor: 'rgba(168, 85, 247, 0.3)', borderColor: '#a855f7' },
+  cardPastoralAction: {
+    backgroundColor: DASHBOARD_CARD_THEMES.pastoral.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.pastoral.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.pastoral.shadowColor,
+    shadowOpacity: 0.32,
+  },
   cardFinancialAction: {
-    backgroundColor: 'rgba(16, 185, 129, 0.22)',
-    borderColor: '#10b981',
+    backgroundColor: DASHBOARD_CARD_THEMES.financial.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.financial.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.financial.shadowColor,
+    shadowOpacity: 0.3,
   },
   dashboardPanelCardTopLayout: {
     justifyContent: 'flex-start',
@@ -3838,7 +3882,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   cardFinancialSubtitle: {
-    color: '#D1FAE5',
+    color: DASHBOARD_CARD_THEMES.financial.accent,
     fontSize: 15,
     lineHeight: 22,
     textAlign: 'center',
@@ -3872,7 +3916,7 @@ const styles = StyleSheet.create({
     marginTop: 48,
   },
   cardPastoralSubtitle: {
-    color: '#E9D5FF',
+    color: DASHBOARD_CARD_THEMES.pastoral.accent,
     fontSize: 15,
     lineHeight: 22,
     textAlign: 'center',
@@ -3880,7 +3924,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   cardPastoralPriority: {
-    color: '#C4B5FD',
+    color: DASHBOARD_CARD_THEMES.pastoral.accentMuted,
     fontSize: 14,
     lineHeight: 21,
     textAlign: 'center',
@@ -3907,24 +3951,32 @@ const styles = StyleSheet.create({
   cardOfferings: {
     paddingHorizontal: 24,
     paddingBottom: 24,
+    backgroundColor: DASHBOARD_CARD_THEMES.offerings.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.offerings.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.offerings.shadowColor,
+    shadowOpacity: 0.3,
   },
   cardBirthdays: {
     paddingHorizontal: 18,
     paddingBottom: 18,
     gap: 6,
-    backgroundColor: 'rgba(37, 99, 235, 0.14)',
-    borderColor: '#60a5fa',
+    backgroundColor: DASHBOARD_CARD_THEMES.birthdays.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.birthdays.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.birthdays.shadowColor,
+    shadowOpacity: 0.3,
   },
   cardMembersList: {
     alignItems: 'stretch',
     justifyContent: 'flex-start',
     padding: 20,
     gap: 0,
-    backgroundColor: 'rgba(244, 63, 94, 0.16)',
-    borderColor: '#fb7185',
+    backgroundColor: DASHBOARD_CARD_THEMES.members_list.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.members_list.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.members_list.shadowColor,
+    shadowOpacity: 0.3,
   },
   membersListSummaryText: {
-    color: '#FECDD3',
+    color: DASHBOARD_CARD_THEMES.members_list.accent,
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
@@ -3953,9 +4005,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 12,
-    backgroundColor: 'rgba(59, 130, 246, 0.25)',
+    backgroundColor: 'rgba(99, 102, 241, 0.28)',
     borderWidth: 1,
-    borderColor: '#3b82f6',
+    borderColor: '#818CF8',
   },
   membersListVisitorsButtonText: {
     color: '#FFFFFF',
@@ -3989,9 +4041,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 12,
-    backgroundColor: 'rgba(16, 185, 129, 0.25)',
+    backgroundColor: 'rgba(245, 158, 11, 0.28)',
     borderWidth: 1,
-    borderColor: '#10b981',
+    borderColor: '#FBBF24',
   },
   membersListMapButtonText: {
     color: '#FFFFFF',
@@ -4191,8 +4243,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     gap: 12,
-    backgroundColor: 'rgba(20, 184, 166, 0.14)',
-    borderColor: '#2dd4bf',
+    backgroundColor: DASHBOARD_CARD_THEMES.vigilance_scales.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.vigilance_scales.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.vigilance_scales.shadowColor,
+    shadowOpacity: 0.3,
   },
   cardParkingVehicleV2: {
     alignItems: 'stretch',
@@ -4201,16 +4255,20 @@ const styles = StyleSheet.create({
     gap: 6,
     minHeight: 0,
     overflow: 'hidden',
-    backgroundColor: 'rgba(245, 158, 11, 0.12)',
-    borderColor: '#fbbf24',
+    backgroundColor: DASHBOARD_CARD_THEMES.parking_vehicle_v2.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.parking_vehicle_v2.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.parking_vehicle_v2.shadowColor,
+    shadowOpacity: 0.3,
   },
   cardScaleRoster: {
     alignItems: 'stretch',
     justifyContent: 'flex-start',
     padding: 20,
     gap: 10,
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-    borderColor: '#34d399',
+    backgroundColor: DASHBOARD_CARD_THEMES.scale_roster.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.scale_roster.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.scale_roster.shadowColor,
+    shadowOpacity: 0.3,
   },
   scaleRosterParkingPrompt: {
     flexShrink: 0,
@@ -4266,7 +4324,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   parkingOpenPanelButton: {
-    backgroundColor: '#10b981',
+    backgroundColor: '#F59E0B',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -4342,7 +4400,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#10b981',
+    backgroundColor: '#F59E0B',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -4594,8 +4652,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
   },
   vigilanceScaleRadioRowSelected: {
-    borderColor: '#10b981',
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    borderColor: DASHBOARD_CARD_THEMES.vigilance_scales.borderColor,
+    backgroundColor: 'rgba(249, 115, 22, 0.16)',
   },
   vigilanceScaleRadioOuter: {
     width: 20,
@@ -4607,13 +4665,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   vigilanceScaleRadioOuterSelected: {
-    borderColor: '#10b981',
+    borderColor: DASHBOARD_CARD_THEMES.vigilance_scales.borderColor,
   },
   vigilanceScaleRadioInner: {
     width: 10,
     height: 10,
     borderRadius: 999,
-    backgroundColor: '#10b981',
+    backgroundColor: DASHBOARD_CARD_THEMES.vigilance_scales.borderColor,
   },
   vigilanceScaleRadioLabel: {
     flex: 1,
@@ -4827,14 +4885,14 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   parkingVehicleResultTitle: {
-    color: '#10b981',
+    color: DASHBOARD_CARD_THEMES.parking_vehicle_v2.accentMuted,
     fontSize: 13,
     fontWeight: '800',
     textTransform: 'uppercase',
     marginBottom: 4,
   },
   parkingVehicleResultSubtitle: {
-    color: '#10b981',
+    color: DASHBOARD_CARD_THEMES.parking_vehicle_v2.accentMuted,
     fontSize: 13,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -4859,7 +4917,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   birthdaysFilterLabel: {
-    color: '#10b981',
+    color: DASHBOARD_CARD_THEMES.birthdays.accentMuted,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -4867,7 +4925,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   birthdaysSummaryText: {
-    color: '#DBEAFE',
+    color: DASHBOARD_CARD_THEMES.birthdays.accent,
     fontSize: 12,
     textAlign: 'center',
     marginBottom: 4,
@@ -4988,7 +5046,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   offeringsLabel: {
-    color: '#A7F3D0',
+    color: DASHBOARD_CARD_THEMES.offerings.accent,
     fontSize: 14,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -5015,16 +5073,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: '#10b981',
+    backgroundColor: '#F59E0B',
     borderRadius: 18,
     paddingVertical: 16,
     paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#FBBF24',
   },
   offeringsCopyButtonIcon: {
     flexShrink: 0,
   },
   offeringsCopyButtonText: {
-    color: '#022C22',
+    color: '#451A03',
     fontSize: 16,
     fontWeight: '800',
   },
@@ -5045,11 +5105,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#10b981',
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    borderColor: DASHBOARD_CARD_THEMES.offerings.borderColor,
+    backgroundColor: 'rgba(217, 119, 6, 0.14)',
   },
   offeringsSecondaryButtonText: {
-    color: '#D1FAE5',
+    color: DASHBOARD_CARD_THEMES.offerings.accent,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -5057,8 +5117,8 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#67e8f9',
-    backgroundColor: 'rgba(6, 182, 212, 0.25)',
+    borderColor: DASHBOARD_CARD_THEMES.kids_teens.borderColor,
+    backgroundColor: 'rgba(244, 114, 182, 0.18)',
     paddingVertical: 10,
     paddingHorizontal: 14,
     marginBottom: 14,
