@@ -31,7 +31,8 @@ function ReadOnlyText({
     </Text>
   );
 }
-import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { SocialBrandIcon } from '@/components/SocialBrandIcon';
+import { FontAwesome } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import {
   ACCESS_PIN_LENGTH,
@@ -61,12 +62,6 @@ import {
   normalizePhoneDigits,
   persistTotemDeviceSession,
 } from '@/lib/totemDevice';
-
-/** Cores oficiais / padrão de marca (ícone sólido). */
-const SOCIAL_BRAND_COLORS = {
-  instagram: '#E4405F',
-  youtube: '#FF0000',
-} as const;
 
 export default function IndexScreen() {
   const { [SIGN_OUT_QUERY_PARAM]: signedOutParam } = useLocalSearchParams<{
@@ -728,7 +723,7 @@ export default function IndexScreen() {
           }}
           style={styles.socialButton}
         >
-          <FontAwesome5 name="instagram" brand size={20} color={SOCIAL_BRAND_COLORS.instagram} />
+          <SocialBrandIcon network="instagram" />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -739,7 +734,7 @@ export default function IndexScreen() {
           }}
           style={styles.socialButton}
         >
-          <FontAwesome5 name="youtube" brand size={20} color={SOCIAL_BRAND_COLORS.youtube} />
+          <SocialBrandIcon network="youtube" />
         </TouchableOpacity>
       </View>
     </View>
@@ -1270,10 +1265,6 @@ const styles = StyleSheet.create({
   socialButton: {
     width: 44,
     height: 44,
-    borderRadius: 14,
-    backgroundColor: 'rgba(30, 41, 59, 0.55)',
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),

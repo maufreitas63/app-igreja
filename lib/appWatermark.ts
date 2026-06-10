@@ -9,4 +9,4 @@
 export const APP_WATERMARK_IMAGE = require('../logos/4.jpeg');
 
 /** Opacidade única global — visível sobre fundo escuro, sem prejudicar leitura. */
-export const APP_WATERMARK_OPACITY = 0.12;
+export const APP_WATERMARK_OPACITY = 0.09;

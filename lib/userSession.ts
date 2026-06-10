@@ -228,10 +228,17 @@ const clearUserSessionImmediately = () => {
   void AsyncStorage.multiRemove([USER_PHONE_STORAGE_KEY, USER_PROFILE_ID_STORAGE_KEY]);
 };
 
+const buildWebLoginUrlAfterSignOut = () => {
+  const url = new URL(window.location.href);
+  url.pathname = '/';
+  url.search = `${SIGN_OUT_QUERY_PARAM}=1`;
+  url.hash = '';
+  return url.toString();
+};
+
 const navigateToLoginAfterSignOut = () => {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    const basePath = window.location.pathname.replace(/\/$/, '') || '';
-    window.location.replace(`${basePath}/?${SIGN_OUT_QUERY_PARAM}=1`);
+    window.location.replace(buildWebLoginUrlAfterSignOut());
     return;
   }
 

@@ -437,6 +437,7 @@ export default function TotemCheckinScreen() {
       accessibilityRole="button"
       accessibilityLabel={EXIT_SESSION_UI.accessibilityLabel}
       accessibilityHint={EXIT_SESSION_UI.accessibilityHint}
+      accessibilityState={{ disabled: false, busy: false }}
     >
       <Text style={styles.exitButtonText}>{EXIT_SESSION_UI.button}</Text>
     </TouchableOpacity>
