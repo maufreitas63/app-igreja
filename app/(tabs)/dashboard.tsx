@@ -2199,7 +2199,7 @@ export default function Dashboard() {
                           activeOpacity={0.85}
                         >
                           <FontAwesome name="map" size={18} color="#FFF" />
-                          <Text style={styles.membersListMapButtonText}>Mapa</Text>
+                          <Text style={styles.membersListMapButtonText}>Mapa Geral</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
