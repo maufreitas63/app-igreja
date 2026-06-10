@@ -16,8 +16,7 @@ import {
   type FamilyRegistrationFormValues,
 } from '@/lib/familyRegistration';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as Clipboard from 'expo-clipboard';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import {
   familyRegistrationDefaultValues,
@@ -60,8 +59,6 @@ export function FamilyRegistrationForm() {
   const isSubmitting = form.formState.isSubmitting;
   const canAddDependent = fields.length < 9;
 
-  const shareUrl = useMemo(() => buildFamilyRegistrationShareUrl(), [submitState]);
-
   const onSubmit = async (values: FamilyRegistrationSchemaValues) => {
     setSubmitState('idle');
     setFeedbackMessage('');
@@ -90,18 +87,14 @@ export function FamilyRegistrationForm() {
   };
 
   const handleCopyLink = async () => {
-    const url = shareUrl || buildFamilyRegistrationShareUrl();
+    const url = buildFamilyRegistrationShareUrl();
     if (!url) {
       setCopyHint('URL indisponível neste ambiente.');
       return;
     }
 
     try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-      } else {
-        await Clipboard.setStringAsync(url);
-      }
+      await navigator.clipboard.writeText(url);
       setCopyHint('Link copiado para a área de transferência.');
     } catch {
       setCopyHint('Não foi possível copiar o link.');
@@ -109,7 +102,7 @@ export function FamilyRegistrationForm() {
   };
 
   const handleShareWhatsApp = () => {
-    const url = shareUrl || buildFamilyRegistrationShareUrl();
+    const url = buildFamilyRegistrationShareUrl();
     if (!url) {
       setCopyHint('URL indisponível para compartilhar.');
       return;

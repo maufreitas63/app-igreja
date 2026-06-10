@@ -1,4 +1,7 @@
+import { formatCep, normalizeCepDigits } from '@/lib/cepUtils';
 import { Platform } from 'react-native';
+
+export { formatCep, normalizeCepDigits };
 
 export type LatLng = { lat: number; lng: number };
 
@@ -202,16 +205,6 @@ export const approximateCoordForCep = (
     lng: center.lng + (distanceKm / kmPerDegLng) * Math.sin(angle),
   };
 };
-
-export const normalizeCepDigits = (cep: string | null | undefined) => {
-  const digits = (cep ?? '').replace(/\D/g, '');
-  if (digits.length !== 8) {
-    return null;
-  }
-  return digits;
-};
-
-export const formatCep = (cepDigits: string) => `${cepDigits.slice(0, 5)}-${cepDigits.slice(5)}`;
 
 const deriveCityState = (
   cepDigits: string,

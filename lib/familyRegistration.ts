@@ -1,5 +1,5 @@
-import { formatCep, normalizeCepDigits } from '@/lib/geoMapGeocoding';
-import { supabase } from '@/lib/supabase';
+import { formatCep, normalizeCepDigits } from '@/lib/cepUtils';
+import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
 const BRAZILIAN_DATE_REGEX = /^(\d{2})\/(\d{2})\/(\d{4})$/;
 
@@ -148,7 +148,7 @@ export async function submitFamilyRegistration(
 
   const results = await Promise.all(
     rows.map(async (row) => {
-      const { error } = await supabase.from('profiles').insert(row);
+      const { error } = await supabaseBrowser.from('profiles').insert(row);
       if (error) {
         throw error;
       }
@@ -163,9 +163,11 @@ export async function submitFamilyRegistration(
   };
 }
 
+export const FAMILY_REGISTRATION_PUBLIC_PATH = '/cadastro-familia/';
+
 export function buildFamilyRegistrationShareUrl(): string {
-  if (typeof window !== 'undefined' && window.location?.href) {
-    return window.location.href;
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}${FAMILY_REGISTRATION_PUBLIC_PATH}`;
   }
   return '';
 }

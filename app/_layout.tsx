@@ -1,6 +1,4 @@
 // app/_layout.tsx
-import '../global.css';
-
 import { Buffer } from 'buffer';
 
 if (!global.Buffer) {

@@ -102,6 +102,29 @@ Após o deploy aparecer **Success** (não basta o `git push` — aguarde o build
 3. Teste login, dashboard e a tela que você alterou
 4. Se o app está **instalado como PWA**: feche todas as janelas, reabra; em último caso, limpe dados do site no navegador
 
+### Formulário público de cadastro familiar (fora do app)
+
+O `npm run build:web` gera **dois** artefatos na pasta `dist/`:
+
+| Caminho | Conteúdo |
+|---------|----------|
+| `/` | PWA da igreja (login, dashboard, etc.) |
+| `/cadastro-familia/` | Formulário standalone — **sem** AppShell, tabs nem login |
+
+**Link para enviar aos usuários:**
+
+```
+https://{seu-dominio}/cadastro-familia/
+```
+
+Exemplo: `https://app-igreja.pages.dev/cadastro-familia/`
+
+Desenvolvimento local do formulário (sem Expo):
+
+```powershell
+npm run dev:family-form
+```
+
 > **Por que parece “demorar”?** O código só entra em produção depois do build no Cloudflare (vários minutos). O push no Git é só o gatilho — não é publicação instantânea.
 
 ---
@@ -157,7 +180,8 @@ Logs completos do build: Cloudflare → **Deployments** → clique no deploy →
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| `package.json` | Script `build:web` → `expo export -p web` |
+| `package.json` | `build:web` → `build:family-form` (Vite) + `expo export -p web` |
+| `standalone/cadastro-familia/` | Formulário público independente do PWA |
 | `app.json` | Web: `bundler: metro`, `output: static` |
 | `public/_headers` | Cache: HTML revalida sempre; `/_expo/static` e `/assets` com cache longo |
 | `.nvmrc` | Node 20 |

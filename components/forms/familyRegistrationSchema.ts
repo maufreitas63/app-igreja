@@ -1,5 +1,5 @@
 import { parseBrazilianDateToIso, normalizePhoneDigits } from '@/lib/familyRegistration';
-import { normalizeCepDigits } from '@/lib/geoMapGeocoding';
+import { normalizeCepDigits } from '@/lib/cepUtils';
 import { z } from 'zod';
 
 const requiredName = z
