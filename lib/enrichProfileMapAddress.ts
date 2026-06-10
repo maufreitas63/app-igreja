@@ -1,4 +1,5 @@
 import type { CepGeolocationRow } from '@/lib/cepGeolocationApi';
+import { formatCep } from '@/lib/geoMapGeocoding';
 import type { ProfileForMap } from '@/lib/profilesMapMarkersTypes';
 
 const hasText = (value: string | null | undefined) => Boolean(value?.trim());
@@ -65,4 +66,45 @@ export const buildProfileMapAddressDisplay = (profile: ProfileForMap): ProfileMa
     locationLine,
     hasAddress: Boolean(streetLine || locationLine),
   };
+};
+
+export type ProfileNavigationAddressInput = Pick<
+  ProfileForMap,
+  | 'cep'
+  | 'address_street'
+  | 'address_number'
+  | 'address_neighborhood'
+  | 'address_city'
+  | 'address_state'
+>;
+
+/** Endereço completo em uma linha para colar em Waze, Google Maps, etc. */
+export const buildProfileMapNavigationAddressLine = (
+  profile: ProfileNavigationAddressInput
+): string | null => {
+  const cepDigits = (profile.cep ?? '').replace(/\D/g, '');
+  const formattedCep =
+    cepDigits.length === 8 ? formatCep(cepDigits) : profile.cep?.trim() || null;
+
+  const street = profile.address_street?.trim();
+  const number = profile.address_number?.trim();
+  const neighborhood = profile.address_neighborhood?.trim();
+  const city = profile.address_city?.trim();
+  const state = profile.address_state?.trim();
+
+  const streetPart = street
+    ? `${street}${number ? `, ${number}` : ''}`
+    : number
+      ? `Nº ${number}`
+      : null;
+
+  const parts = [streetPart, neighborhood, city, state, formattedCep].filter(
+    (part): part is string => Boolean(part?.trim())
+  );
+
+  if (!parts.length) {
+    return null;
+  }
+
+  return parts.join(', ');
 };

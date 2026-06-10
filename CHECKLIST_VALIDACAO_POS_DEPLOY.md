@@ -110,6 +110,24 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 
 - [ ] Card **Financeiro** no dashboard com a mesma altura do card **Agenda da Família**
 
+**Pedido:** ao copiar chave PIX em Dízimos e Ofertas, mostrar toast em vez de mensagem fixa na tela.
+
+- [ ] Card **Dízimos e Ofertas** → **Copiar chave PIX** exibe balão (toast) de confirmação
+
+**Pedido:** subir o título “Dízimos e Ofertas” dentro do card.
+
+- [ ] Título **Dízimos e Ofertas** visualmente mais alto no card (sem sobrepor outros elementos)
+
+---
+
+## Super admin — chave técnica ACL
+
+**Pedido:** em perfil super admin, abaixo do nome da tela ativa no cabeçalho, exibir a chave técnica ACL (como em Papéis → Telas).
+
+- [ ] Com perfil **super admin**, no **Dashboard**, ao trocar de card, aparece segunda linha com `dashboard.card.*` ou `scale_type.*` no roster
+- [ ] Com perfil **super admin**, em **Manutenção**, aparece `maintenance.card.*` ou `/maintenance-dashboard` no menu
+- [ ] Perfis que não são super admin **não** veem a linha técnica
+
 ---
 
 ## Financeiro — Relatório de Despesas (RD)
@@ -151,6 +169,15 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 
 - [ ] Mapa abre sem tela branca
 
+**Pedido:** coluna **GPS** na Lista de Membros (após Zap) para copiar endereço completo em uma linha.
+
+- [ ] Cabeçalho da lista: **Nome | Família | Zap | GPS**
+- [ ] Ícone de mapa copia endereço com CEP (ex.: `Rua, 123, Bairro, Cidade, SP, 12345-678`)
+- [ ] Toast: *Cole o conteúdo da área de transferência em seu aplicativo de navegação.*
+- [ ] Ícone desabilitado quando o perfil não tem endereço/CEP suficiente
+- [ ] Mesmo comportamento na lista de **Visitantes**
+- [ ] **SQL em produção:** `scripts/access-control-map-pin-roles.sql` (RPCs com campos de endereço)
+
 **Pedido:** membro adicionado deve aparecer na lista; busca por nome; data com barras; sem duplicata na família.
 
 - [ ] Membro novo aparece na lista após salvar
@@ -160,14 +187,58 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 
 ---
 
+## Mapa de geolocalização
+
+**Pedido:** ao abrir detalhes de um pin, ícone de mapa ao lado do WhatsApp para copiar endereço para navegação.
+
+- [ ] No card de detalhes do pin, ícone de mapa à esquerda do WhatsApp
+- [ ] Toque copia endereço completo em uma linha (com CEP)
+- [ ] Toast: *Cole o conteúdo da área de transferência em seu aplicativo de navegação.*
+- [ ] Ícone desabilitado se não houver endereço/CEP para montar a linha
+
+---
+
+## Coração Aberto
+
+**Pedido:** em **Meus pedidos**, borracha por pedido para excluir só os ainda não iniciados pelo Cuidado Pastoral.
+
+- [ ] Ícone de borracha no topo do formulário continua limpando o rascunho (novo pedido)
+- [ ] Em **Meus pedidos**, cada card tem borracha individual
+- [ ] Pedido com status **Novo** (ou sem Acolher/Apoiar/Acompanhar) pode ser excluído após confirmação
+- [ ] Pedido já iniciado pelo Cuidado Pastoral (Acolher, Apoiar, Acompanhar ou em andamento) → borracha bloqueada e mensagem explicativa
+- [ ] **SQL em produção:** `scripts/pastoral-request-delete-rpc.sql`
+
+---
+
 ## Login e interface
 
 **Pedido:** login sem marca d'água; redes sociais só no passo 1; marca d'água mais discreta; altura alinhada ao dashboard.
 
 - [ ] Tela de login/senha sem marca d'água
 - [ ] Ícones de redes sociais só no passo 1 (telefone/CPF); passo 2 (senha) sem ícones
-- [ ] Demais telas: marca d'água mais transparente
+- [ ] Demais telas: marca d'água mais transparente (~9% de opacidade)
 - [ ] Altura da marca d'água alinhada ao card do dashboard
+- [ ] Marca d'água visível no **Índice** e nas abas do app (exceto login, cadastro e totem)
+
+**Pedido:** carregamento do dashboard sem barras horizontais no centro dos cards.
+
+- [ ] Ao carregar cards do dashboard, aparece indicador discreto (ou área vazia), sem skeleton de barras no meio do card
+
+**Pedido:** ícones oficiais de Instagram e YouTube (formato squircle).
+
+- [ ] Ícones de redes sociais no login/cadastro com formato squircle oficial
+
+**Pedido:** logout do totem igual ao app principal (web volta para login com `signedOut=1`).
+
+- [ ] Encerrar sessão no totem redireciona corretamente para a tela de login
+
+---
+
+## Navegação entre cards
+
+**Pedido:** ir de Estacionamento para Acolhimento (e vice-versa) sem animação lenta do carrossel.
+
+- [ ] Atalhos entre cards relacionados saltam direto, sem rolagem animada entre intermediários
 
 ---
 
@@ -176,6 +247,18 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 | Data | Validador | Observações |
 |------|-----------|-------------|
 | | | |
+
+---
+
+## SQLs pendentes em produção (conferir antes de validar)
+
+| Script | Necessário para |
+|--------|-----------------|
+| `scripts/financial-module-access.sql` | ACL Card Financeiro e Relatórios em Papéis |
+| `scripts/access-control-pastoral-role-grants.sql` | Equipe Pastoral com privilégios de Membro + Cuidado Pastoral |
+| `scripts/access-control-remove-tstmax-scale-resources.sql` | Ocultar escalas TstMax em Papéis |
+| `scripts/access-control-map-pin-roles.sql` | Coluna GPS na Lista de Membros (endereço na RPC) |
+| `scripts/pastoral-request-delete-rpc.sql` | Excluir pedido pastoral em Meus pedidos |
 
 ---
 

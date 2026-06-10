@@ -8,6 +8,7 @@ import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { useDashboardSelectedEvent, useEventRegistrationsByStatus } from '@/hooks';
 import { useFamilyPreCheckin } from '@/hooks/useFamilyPreCheckin';
+import { useIsSuperAdminProfile } from '@/hooks/useIsSuperAdminProfile';
 import { getAppParameterValue } from '@/lib/appParameters';
 import { OFFERINGS_RECIPIENT_ROWS } from '@/lib/offeringsRecipientInfo';
 import {
@@ -47,6 +48,8 @@ import {
   signOutAndReturnToLogin,
 } from '@/lib/userSession';
 import { normalizePhoneForWhatsApp, openMemberWhatsapp } from '@/lib/whatsapp';
+import { resolveDashboardCardAccessResourceKey } from '@/lib/screenAccessResourceKeys';
+import { buildProfileMapNavigationAddressLine } from '@/lib/enrichProfileMapAddress';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
@@ -171,6 +174,12 @@ type MemberListEntry = {
   family_id: string;
   relationship: string | null;
   phone: string | null;
+  cep: string | null;
+  address_street: string | null;
+  address_number: string | null;
+  address_neighborhood: string | null;
+  address_city: string | null;
+  address_state: string | null;
 };
 
 const dedupeMemberListEntries = (entries: MemberListEntry[]) => {
@@ -923,6 +932,12 @@ export default function Dashboard() {
         family_id: entry.family_id,
         relationship: entry.relationship,
         phone: entry.phone,
+        cep: entry.cep,
+        address_street: entry.address_street,
+        address_number: entry.address_number,
+        address_neighborhood: entry.address_neighborhood,
+        address_city: entry.address_city,
+        address_state: entry.address_state,
       })) satisfies MemberListEntry[];
 
       setMemberListEntries(dedupeMemberListEntries(parsedEntries));
@@ -952,6 +967,12 @@ export default function Dashboard() {
         family_id: entry.family_id,
         relationship: entry.relationship,
         phone: entry.phone,
+        cep: entry.cep,
+        address_street: entry.address_street,
+        address_number: entry.address_number,
+        address_neighborhood: entry.address_neighborhood,
+        address_city: entry.address_city,
+        address_state: entry.address_state,
       })) satisfies MemberListEntry[];
 
       setVisitorListEntries(dedupeMemberListEntries(parsedEntries));
@@ -1431,6 +1452,38 @@ export default function Dashboard() {
     await openMemberWhatsapp(entry.phone);
   };
 
+  const handleCopyMemberNavigationAddress = useCallback(async (entry: MemberListEntry) => {
+    const navigationLine = buildProfileMapNavigationAddressLine(entry);
+
+    if (!navigationLine) {
+      Toast.show({
+        type: 'error',
+        text1: 'Endereço indisponível',
+        text2: 'Este membro não possui endereço completo para copiar.',
+        visibilityTime: 3500,
+      });
+      return;
+    }
+
+    try {
+      await Clipboard.setStringAsync(navigationLine);
+      Toast.show({
+        type: 'success',
+        text1: 'Endereço copiado',
+        text2: 'Cole o conteúdo da área de transferência em seu aplicativo de navegação.',
+        visibilityTime: 4000,
+      });
+    } catch (error) {
+      console.error('Erro ao copiar endereço do membro:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Erro ao copiar',
+        text2: 'Não foi possível copiar o endereço.',
+        visibilityTime: 3500,
+      });
+    }
+  }, []);
+
   const handleOpenBirthdayWhatsapp = async (entry: BirthdayEntry) => {
     const whatsappPhone = normalizePhoneForWhatsApp(entry.phone);
 
@@ -1519,6 +1572,20 @@ export default function Dashboard() {
     const card = data[currentIndex];
     return card?.title?.trim() ?? '';
   }, [currentIndex, data]);
+
+  const { isSuperAdmin: isSuperAdminProfile } = useIsSuperAdminProfile(Boolean(profile?.id));
+
+  const activeDashboardScreenTechnicalKey = useMemo(() => {
+    const card = data[currentIndex];
+
+    if (!card) {
+      return null;
+    }
+
+    return resolveDashboardCardAccessResourceKey(card.content, {
+      scaleTypeCode: card.content === 'scale_roster' ? selectedVigilanceScale : null,
+    });
+  }, [currentIndex, data, selectedVigilanceScale]);
 
   useEffect(() => {
     setIsSalaRegistrationsEnabled(data[currentIndex]?.content === 'kids_teens');
@@ -1678,15 +1745,15 @@ export default function Dashboard() {
     setIsParkingPanelVisible(false);
     const rosterIdx = data.findIndex((item) => item.content === 'scale_roster');
     if (rosterIdx >= 0 && isScaleRosterVisible) {
-      requestAnimationFrame(() => scrollToDashboardCard(rosterIdx));
+      requestAnimationFrame(() => scrollToDashboardCard(rosterIdx, false));
       return;
     }
 
     const scalesIdx = data.findIndex((item) => item.content === 'vigilance_scales');
     if (scalesIdx >= 0) {
-      requestAnimationFrame(() => scrollToDashboardCard(scalesIdx));
+      requestAnimationFrame(() => scrollToDashboardCard(scalesIdx, false));
     }
-  }, [data, handleResetVehicleLookup, isScaleRosterVisible]);
+  }, [data, handleResetVehicleLookup, isScaleRosterVisible, scrollToDashboardCard]);
 
   const handleBackFromScaleRoster = useCallback(() => {
     setIsScaleRosterVisible(false);
@@ -1712,7 +1779,7 @@ export default function Dashboard() {
 
     scrollToParkingCardRef.current = false;
     requestAnimationFrame(() => {
-      scrollToDashboardCard(parkingIdx);
+      scrollToDashboardCard(parkingIdx, false);
     });
   }, [isParkingPanelVisible, data, scrollToDashboardCard]);
 
@@ -1831,7 +1898,11 @@ export default function Dashboard() {
               <Text numberOfLines={1} style={styles.userName}>
                 {displayName}
               </Text>
-              <ActiveScreenBadge title={activeDashboardScreenTitle} accent="emerald" />
+              <ActiveScreenBadge
+                title={activeDashboardScreenTitle}
+                accent="emerald"
+                technicalKey={isSuperAdminProfile ? activeDashboardScreenTechnicalKey : null}
+              />
             </View>
           </View>
         </View>
@@ -2179,6 +2250,7 @@ export default function Dashboard() {
                       </Text>
                       <Text style={styles.membersListHeaderCell}>Família</Text>
                       <Text style={styles.membersListHeaderCell}>Zap</Text>
+                      <Text style={styles.membersListHeaderCell}>GPS</Text>
                     </View>
 
                     <View style={styles.membersListBox}>
@@ -2209,7 +2281,10 @@ export default function Dashboard() {
                           nestedScrollEnabled
                           showsVerticalScrollIndicator
                         >
-                          {filteredMemberListEntries.map((entry) => (
+                          {filteredMemberListEntries.map((entry) => {
+                            const navigationAddressLine = buildProfileMapNavigationAddressLine(entry);
+
+                            return (
                             <View key={entry.id} style={styles.membersListRow}>
                               <Text style={styles.membersListName} numberOfLines={1}>
                                 {entry.short_name}
@@ -2236,8 +2311,26 @@ export default function Dashboard() {
                                   color={entry.phone ? '#25D366' : '#64748B'}
                                 />
                               </TouchableOpacity>
+                              <TouchableOpacity
+                                style={[
+                                  styles.membersListNavigationButton,
+                                  !navigationAddressLine && styles.membersListNavigationButtonDisabled,
+                                ]}
+                                onPress={() => void handleCopyMemberNavigationAddress(entry)}
+                                disabled={!navigationAddressLine}
+                                activeOpacity={0.85}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Copiar endereço de ${entry.short_name} para navegação`}
+                              >
+                                <FontAwesome
+                                  name="map"
+                                  size={16}
+                                  color={navigationAddressLine ? '#38bdf8' : '#64748B'}
+                                />
+                              </TouchableOpacity>
                             </View>
-                          ))}
+                            );
+                          })}
                         </ScrollView>
                         ) : (
                           <Text style={styles.groupedAudienceEmptyText}>
@@ -2641,7 +2734,7 @@ export default function Dashboard() {
                   </View>
                 ) : item.content === 'offerings' ? (
                   <View style={[styles.card, styles.cardOfferings, dashboardPanelCardSizeStyle]}>
-                    <Text style={styles.cardTitle}>{item.title}</Text>
+                    <Text style={[styles.cardTitle, styles.cardOfferingsTitle]}>{item.title}</Text>
                     <View style={styles.offeringsContent}>
                       <Text style={styles.offeringsSectionTitle}>Dados do recebedor</Text>
                       <View style={styles.offeringsRecipientBox}>
@@ -3579,6 +3672,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     padding: 24,
   },
+  cardOfferingsTitle: {
+    marginTop: -7,
+  },
   cardBirthdays: {
     alignItems: 'stretch',
     justifyContent: 'flex-start',
@@ -3763,6 +3859,15 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   membersListWhatsappButtonDisabled: {
+    opacity: 0.55,
+  },
+  membersListNavigationButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+  },
+  membersListNavigationButtonDisabled: {
     opacity: 0.55,
   },
   membersFamilyBackdrop: {

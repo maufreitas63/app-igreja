@@ -400,6 +400,25 @@ export const normalizePastoralFollowUpStage = (
   return match ?? null;
 };
 
+const PASTORAL_REQUEST_LOCKED_STATUSES = new Set(['in_progress', 'closed', 'cancelled']);
+
+/** Cuidado Pastoral já iniciou o acompanhamento (Acolher/Apoiar/Acompanhar ou status bloqueado). */
+export const isPastoralRequestCareStarted = (status: string | null | undefined): boolean => {
+  if (normalizePastoralFollowUpStage(status)) {
+    return true;
+  }
+
+  const normalized = status?.trim().toLowerCase() ?? '';
+  return PASTORAL_REQUEST_LOCKED_STATUSES.has(normalized);
+};
+
+/** Pedido ainda pode ser excluído pelo solicitante (antes do Cuidado Pastoral iniciar). */
+export const canDeletePastoralRequest = (status: string | null | undefined): boolean =>
+  !isPastoralRequestCareStarted(status);
+
+export const getPastoralRequestDeleteBlockedMessage = () =>
+  'Este pedido já foi iniciado pelo Cuidado Pastoral e não pode ser excluído.';
+
 /** Índice do estágio atual (-1 = ainda não iniciou acompanhamento, ex.: status `new`). */
 export const getPastoralFollowUpStageIndex = (
   stage: PastoralFollowUpStage | null | undefined
@@ -573,4 +592,48 @@ export async function fetchMyPastoralRequests(profileId: string): Promise<Pastor
   }
 
   return [];
+}
+
+const DELETE_PASTORAL_REQUEST_RPC_HINT =
+  'Execute no Supabase o script scripts/pastoral-request-delete-rpc.sql e tente novamente.';
+
+export async function deleteMyPastoralRequest(
+  requestId: string,
+  profileId: string
+): Promise<void> {
+  const trimmedRequestId = requestId.trim();
+  const trimmedProfileId = profileId.trim();
+
+  if (!trimmedRequestId) {
+    throw new Error('Pedido inválido.');
+  }
+
+  if (!trimmedProfileId) {
+    throw new Error('Perfil não identificado.');
+  }
+
+  const { data, error } = await supabase.rpc('delete_my_pastoral_request', {
+    p_request_id: trimmedRequestId,
+    p_profile_id: trimmedProfileId,
+  });
+
+  if (error?.code === 'PGRST202') {
+    throw new Error(`Exclusão indisponível no servidor. ${DELETE_PASTORAL_REQUEST_RPC_HINT}`);
+  }
+
+  if (error) {
+    throw error;
+  }
+
+  const payload = (data ?? {}) as { success?: boolean; message?: string };
+
+  if (payload.success === true) {
+    return;
+  }
+
+  if (payload.message?.trim()) {
+    throw new Error(payload.message.trim());
+  }
+
+  throw new Error('Não foi possível excluir o pedido.');
 }

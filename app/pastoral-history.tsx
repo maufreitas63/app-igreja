@@ -1,12 +1,17 @@
 import {
+  canDeletePastoralRequest,
+  deleteMyPastoralRequest,
   fetchMyPastoralRequests,
   formatPastoralBeneficiarySummary,
   formatPastoralRequestDate,
   formatPastoralStatusLabel,
+  getPastoralRequestDeleteBlockedMessage,
   getSupabaseErrorMessage,
   resolvePastoralSessionProfile,
   type PastoralRequestHistoryItem,
 } from '@/lib/pastoralRequest';
+import { appAlert } from '@/lib/appAlert';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { FontAwesome } from '@expo/vector-icons';
@@ -39,6 +44,7 @@ export default function PastoralHistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
 
   const loadHistory = useCallback(
     async (options?: { refresh?: boolean }) => {
@@ -103,6 +109,47 @@ export default function PastoralHistoryScreen() {
     });
   };
 
+  const handleDeleteRequest = useCallback(
+    async (item: PastoralRequestHistoryItem) => {
+      if (!profileId) {
+        await appAlert('Erro', 'Faça login novamente para excluir pedidos.');
+        return;
+      }
+
+      if (!canDeletePastoralRequest(item.status)) {
+        await appAlert('Exclusão bloqueada', getPastoralRequestDeleteBlockedMessage());
+        return;
+      }
+
+      const motivoLabel = item.motivo?.trim() || 'este pedido';
+      const confirmed = await confirmDialog(
+        'Excluir pedido',
+        `Deseja excluir o pedido "${motivoLabel}"? Esta ação não pode ser desfeita.`,
+        'Excluir',
+        'Cancelar',
+        { destructive: true }
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      setDeletingRequestId(item.id);
+
+      try {
+        await deleteMyPastoralRequest(item.id, profileId);
+        setRequests((current) => current.filter((entry) => entry.id !== item.id));
+        await appAlert('Pedido excluído', 'O pedido foi removido com sucesso.');
+      } catch (error) {
+        console.error('Erro ao excluir pedido pastoral:', error);
+        await appAlert('Erro', getSupabaseErrorMessage(error));
+      } finally {
+        setDeletingRequestId(null);
+      }
+    },
+    [profileId]
+  );
+
   return (
     <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -156,12 +203,45 @@ export default function PastoralHistoryScreen() {
                 tintColor="#C4B5FD"
               />
             }>
-            {requests.map((item) => (
+            {requests.map((item) => {
+              const canDelete = canDeletePastoralRequest(item.status);
+              const isDeleting = deletingRequestId === item.id;
+
+              return (
               <View key={item.id} style={styles.card}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.cardDate}>{formatPastoralRequestDate(item.created_at)}</Text>
-                  <View style={styles.statusBadge}>
-                    <Text style={styles.statusBadgeText}>{formatPastoralStatusLabel(item.status)}</Text>
+                  <View style={styles.cardHeaderActions}>
+                    <TouchableOpacity
+                      accessibilityLabel={
+                        canDelete
+                          ? 'Excluir pedido pastoral'
+                          : 'Exclusão bloqueada: pedido já iniciado pelo Cuidado Pastoral'
+                      }
+                      accessibilityRole="button"
+                      accessibilityState={{ disabled: !canDelete || isDeleting }}
+                      activeOpacity={0.85}
+                      disabled={isDeleting}
+                      onPress={() => void handleDeleteRequest(item)}
+                      style={[
+                        styles.cardDeleteButton,
+                        (!canDelete || isDeleting) && styles.cardDeleteButtonDisabled,
+                      ]}>
+                      {isDeleting ? (
+                        <ActivityIndicator color="#FCA5A5" size="small" />
+                      ) : (
+                        <FontAwesome
+                          name="eraser"
+                          size={16}
+                          color={canDelete ? '#FCA5A5' : '#64748B'}
+                        />
+                      )}
+                    </TouchableOpacity>
+                    <View style={styles.statusBadge}>
+                      <Text style={styles.statusBadgeText}>
+                        {formatPastoralStatusLabel(item.status)}
+                      </Text>
+                    </View>
                   </View>
                 </View>
 
@@ -190,7 +270,8 @@ export default function PastoralHistoryScreen() {
                   </Text>
                 ) : null}
               </View>
-            ))}
+            );
+            })}
           </ScrollView>
         )}
 
@@ -317,6 +398,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
     marginBottom: 2,
+  },
+  cardHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 0,
+  },
+  cardDeleteButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(248, 113, 113, 0.45)',
+    backgroundColor: 'rgba(127, 29, 29, 0.2)',
+  },
+  cardDeleteButtonDisabled: {
+    borderColor: '#334155',
+    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+    opacity: 0.72,
   },
   cardDate: {
     color: '#94A3B8',

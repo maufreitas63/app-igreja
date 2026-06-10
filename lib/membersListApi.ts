@@ -8,6 +8,12 @@ export type MembersDirectoryEntry = {
   family_id: string;
   relationship: string | null;
   phone: string | null;
+  cep: string | null;
+  address_street: string | null;
+  address_number: string | null;
+  address_neighborhood: string | null;
+  address_city: string | null;
+  address_state: string | null;
 };
 
 const MEMBERS_DIRECTORY_RPC_HINT =
@@ -31,6 +37,15 @@ const mapDirectoryRows = (
 
       const phoneRaw = row.phone;
 
+      const toNullableText = (value: unknown) => {
+        if (value == null) {
+          return null;
+        }
+
+        const trimmed = String(value).trim();
+        return trimmed || null;
+      };
+
       return {
         id: profileId,
         full_name: fullName,
@@ -38,6 +53,12 @@ const mapDirectoryRows = (
         family_id: familyId,
         relationship: null,
         phone: phoneRaw != null ? String(phoneRaw).trim() || null : null,
+        cep: toNullableText(row.cep),
+        address_street: toNullableText(row.address_street ?? row.addressStreet),
+        address_number: toNullableText(row.address_number ?? row.addressNumber),
+        address_neighborhood: toNullableText(row.address_neighborhood ?? row.addressNeighborhood),
+        address_city: toNullableText(row.address_city ?? row.addressCity),
+        address_state: toNullableText(row.address_state ?? row.addressState),
       } satisfies MembersDirectoryEntry;
     })
     .filter((row): row is MembersDirectoryEntry => row !== null);

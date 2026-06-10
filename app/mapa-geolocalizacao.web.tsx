@@ -8,6 +8,7 @@ import { formatShortName } from '@/lib/formatShortName';
 import { fetchCepGeolocationRecordsByDigits } from '@/lib/cepGeolocationApi';
 import {
   buildProfileMapAddressDisplay,
+  buildProfileMapNavigationAddressLine,
   enrichProfileMapAddress,
   profileHasMapAddress,
 } from '@/lib/enrichProfileMapAddress';
@@ -19,8 +20,10 @@ import { MAP_PIN_COLOR, type MapMarker } from '@/lib/profilesMapMarkersTypes';
 import { formatPhoneForDisplay } from '@/lib/totemDevice';
 import { openMemberWhatsapp } from '@/lib/whatsapp';
 import { ClientGeoLeafletMap } from '@/components/geo-map/ClientGeoLeafletMap.web';
+import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
   Modal,
@@ -194,6 +197,11 @@ export default function MapGeolocalizacaoWebScreen() {
     [selectedProfile]
   );
 
+  const selectedNavigationAddressLine = useMemo(
+    () => (selectedProfile ? buildProfileMapNavigationAddressLine(selectedProfile) : null),
+    [selectedProfile]
+  );
+
   const selectedPhoneDisplay = useMemo(() => {
     const phone = selectedProfile?.phone?.trim();
     if (!phone) {
@@ -210,6 +218,42 @@ export default function MapGeolocalizacaoWebScreen() {
 
     void openMemberWhatsapp(selectedProfile.phone);
   }, [selectedProfile?.phone]);
+
+  const handleCopyNavigationAddress = useCallback(async () => {
+    if (!selectedProfile) {
+      return;
+    }
+
+    const navigationLine = buildProfileMapNavigationAddressLine(selectedProfile);
+
+    if (!navigationLine) {
+      Toast.show({
+        type: 'error',
+        text1: 'Endereço indisponível',
+        text2: 'Não há endereço completo para copiar neste pin.',
+        visibilityTime: 3500,
+      });
+      return;
+    }
+
+    try {
+      await Clipboard.setStringAsync(navigationLine);
+      Toast.show({
+        type: 'success',
+        text1: 'Endereço copiado',
+        text2: 'Cole o conteúdo da área de transferência em seu aplicativo de navegação.',
+        visibilityTime: 4000,
+      });
+    } catch (error) {
+      console.error('Erro ao copiar endereço para navegação:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Erro ao copiar',
+        text2: 'Não foi possível copiar o endereço.',
+        visibilityTime: 3500,
+      });
+    }
+  }, [selectedProfile]);
 
   const handleOpenInvalidCepWhatsapp = useCallback((profile: ProfileNotOnMap) => {
     if (!profile.phone) {
@@ -465,23 +509,42 @@ export default function MapGeolocalizacaoWebScreen() {
             <Text style={styles.detailsText}>
               Telefone: {selectedPhoneDisplay ?? '—'}
             </Text>
-            <TouchableOpacity
-              style={[
-                styles.detailsWhatsappButton,
-                !selectedProfile.phone && styles.detailsWhatsappButtonDisabled,
-              ]}
-              onPress={handleOpenSelectedWhatsapp}
-              disabled={!selectedProfile.phone}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-              accessibilityLabel="Abrir WhatsApp do membro"
-            >
-              <FontAwesome
-                name="whatsapp"
-                size={18}
-                color={selectedProfile.phone ? '#25D366' : '#64748B'}
-              />
-            </TouchableOpacity>
+            <View style={styles.detailsActionButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.detailsNavigationButton,
+                  !selectedNavigationAddressLine && styles.detailsNavigationButtonDisabled,
+                ]}
+                onPress={() => void handleCopyNavigationAddress()}
+                disabled={!selectedNavigationAddressLine}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Copiar endereço para aplicativo de navegação"
+              >
+                <FontAwesome
+                  name="map"
+                  size={15}
+                  color={selectedNavigationAddressLine ? '#38bdf8' : '#64748B'}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.detailsWhatsappButton,
+                  !selectedProfile.phone && styles.detailsWhatsappButtonDisabled,
+                ]}
+                onPress={handleOpenSelectedWhatsapp}
+                disabled={!selectedProfile.phone}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Abrir WhatsApp do membro"
+              >
+                <FontAwesome
+                  name="whatsapp"
+                  size={18}
+                  color={selectedProfile.phone ? '#25D366' : '#64748B'}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       ) : null}
@@ -832,6 +895,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
     marginTop: 2,
+  },
+  detailsActionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  detailsNavigationButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+  },
+  detailsNavigationButtonDisabled: {
+    borderColor: 'rgba(148, 163, 184, 0.25)',
   },
   detailsWhatsappButton: {
     width: 32,

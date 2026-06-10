@@ -109,7 +109,13 @@ returns table (
   full_name text,
   phone text,
   family_id text,
-  is_visitantes_only boolean
+  is_visitantes_only boolean,
+  cep text,
+  address_street text,
+  address_number text,
+  address_neighborhood text,
+  address_city text,
+  address_state text
 )
 language sql
 stable
@@ -124,7 +130,13 @@ as $$
       nullif(trim(coalesce(p.family_id, '')), ''),
       nullif(trim(coalesce(p.codigo_membro, '')), '')
     ) as family_id,
-    public.profile_is_visitantes_only(p.id) as is_visitantes_only
+    public.profile_is_visitantes_only(p.id) as is_visitantes_only,
+    nullif(trim(coalesce(p.cep, '')), '') as cep,
+    nullif(trim(coalesce(p.address_street, '')), '') as address_street,
+    nullif(trim(coalesce(p.address_number, '')), '') as address_number,
+    nullif(trim(coalesce(p.address_neighborhood, '')), '') as address_neighborhood,
+    nullif(trim(coalesce(p.address_city, '')), '') as address_city,
+    nullif(trim(coalesce(p.address_state, '')), '') as address_state
   from public.profiles p
   where p.full_name is not null
     and trim(p.full_name) <> ''
@@ -140,7 +152,13 @@ returns table (
   full_name text,
   phone text,
   family_id text,
-  is_visitantes_only boolean
+  is_visitantes_only boolean,
+  cep text,
+  address_street text,
+  address_number text,
+  address_neighborhood text,
+  address_city text,
+  address_state text
 )
 language sql
 stable
@@ -155,7 +173,13 @@ as $$
       nullif(trim(coalesce(p.family_id, '')), ''),
       nullif(trim(coalesce(p.codigo_membro, '')), '')
     ) as family_id,
-    true as is_visitantes_only
+    true as is_visitantes_only,
+    nullif(trim(coalesce(p.cep, '')), '') as cep,
+    nullif(trim(coalesce(p.address_street, '')), '') as address_street,
+    nullif(trim(coalesce(p.address_number, '')), '') as address_number,
+    nullif(trim(coalesce(p.address_neighborhood, '')), '') as address_neighborhood,
+    nullif(trim(coalesce(p.address_city, '')), '') as address_city,
+    nullif(trim(coalesce(p.address_state, '')), '') as address_state
   from public.profiles p
   where p.full_name is not null
     and trim(p.full_name) <> ''

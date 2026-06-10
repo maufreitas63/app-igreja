@@ -21,6 +21,7 @@ import { MaintenanceScalesCard } from '@/components/MaintenanceScalesCard';
 import { MaintenanceSalaMonitorCard } from '@/components/MaintenanceSalaMonitorCard';
 import { QuorumCheckinRegistryTable } from '@/components/QuorumCheckinRegistryTable';
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
+import { resolveMaintenancePanelAccessResourceKey } from '@/lib/screenAccessResourceKeys';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
 import { loadPastoralCarePanelAccess } from '@/lib/pastoralAccess';
 import {
@@ -710,6 +711,15 @@ export default function MaintenanceDashboard() {
     return maintenanceCarouselCards[currentIndex]?.title?.trim() ?? '';
   }, [currentIndex, isCreating, maintenanceCarouselCards, showEditor]);
 
+  const activeMaintenanceScreenTechnicalKey = useMemo(() => {
+    if (showEditor) {
+      return resolveMaintenancePanelAccessResourceKey('events', { inEventEditor: true });
+    }
+
+    const content = maintenanceCarouselCards[currentIndex]?.content;
+    return resolveMaintenancePanelAccessResourceKey(content);
+  }, [currentIndex, maintenanceCarouselCards, showEditor]);
+
   const cardHeight = useMemo(
     () => computeDashboardCardHeight(windowHeight, insets.top, insets.bottom),
     [insets.bottom, insets.top, windowHeight]
@@ -1089,7 +1099,11 @@ export default function MaintenanceDashboard() {
               <Text numberOfLines={1} style={styles.userName}>
                 {headerUserName}
               </Text>
-              <ActiveScreenBadge title={activeMaintenanceScreenTitle} accent="amber" />
+              <ActiveScreenBadge
+                title={activeMaintenanceScreenTitle}
+                accent="amber"
+                technicalKey={canManageAccessControl ? activeMaintenanceScreenTechnicalKey : null}
+              />
             </View>
           </View>
         </View>
