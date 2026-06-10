@@ -27,7 +27,16 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "Igreja Batista Norte",
+      "shortName": "IBNorte",
+      "description": "Aplicativo da Igreja Batista Norte",
+      "lang": "pt-BR",
+      "themeColor": "#0f172a",
+      "backgroundColor": "#020617",
+      "display": "standalone",
+      "startUrl": "/",
+      "orientation": "portrait"
     },
     "plugins": [
       "expo-router",

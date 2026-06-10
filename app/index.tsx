@@ -31,6 +31,7 @@ function ReadOnlyText({
     </Text>
   );
 }
+import { PwaInstallButton } from '@/components/PwaInstallButton';
 import { SocialBrandIcon } from '@/components/SocialBrandIcon';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -715,6 +716,8 @@ export default function IndexScreen() {
   const renderSocialLinks = () => (
     <View style={styles.socialFooter}>
       <View style={styles.socialRow}>
+        <PwaInstallButton />
+
         <TouchableOpacity
           accessibilityLabel="Abrir Instagram da Igreja Batista Norte"
           accessibilityRole="button"
