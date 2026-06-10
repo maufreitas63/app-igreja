@@ -13,7 +13,7 @@ Mapa completo: [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 | [`BLUEPRINT.md`](BLUEPRINT.md) | Telas, fluxos e controles |
 | [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md) | Modelo ACL e inventário |
 
-PDFs gerados em [`pdfs/`](pdfs/).
+PDFs gerados em [`pdfs/`](pdfs/). Manuais: membro [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md) · equipe [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md).
 
 ## Desenvolvimento
 

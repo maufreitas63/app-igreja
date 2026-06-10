@@ -83,4 +83,28 @@ writePackage('PACOTE_4_ANEXO_TECNICO.md', [
   { title: 'Parte 2 — Cards do Dashboard', file: 'DASHBOARD_CARDS.md' },
 ]);
 
+writePackage('PACOTE_5_MANUAL_PAINEL.md', [
+  '# Pacote 5 — Manual do Painel (uso pelo membro)',
+  '',
+  'Documentação **autocontida** para primeiro acesso e uso diário do painel do membro.',
+  '',
+  '**Atualizado em:** 10/06/2026',
+  '',
+  'Conteúdo integrado: login, cadastro, LGPD, navegação, todos os cards do dashboard (sem manutenção), com resultado esperado em cada ação.',
+], [
+  { title: 'Manual completo', file: 'MANUAL_DASHBOARD_MEMBRO.md' },
+]);
+
+writePackage('PACOTE_6_MANUAL_MANUTENCAO.md', [
+  '# Pacote 6 — Manual do Painel de Manutenção (uso pela equipe)',
+  '',
+  'Documentação **autocontida** para quem gerencia o aplicativo: secretaria, líderes, pastoral, financeiro e TI.',
+  '',
+  '**Atualizado em:** 10/06/2026',
+  '',
+  'Conteúdo integrado: acesso via engrenagem, ACL, todos os cards de maintenance-dashboard, com resultado esperado e efeito no app dos membros.',
+], [
+  { title: 'Manual completo', file: 'MANUAL_DASHBOARD_MANUTENCAO.md' },
+]);
+
 console.log('Pacotes gerados com sucesso.');

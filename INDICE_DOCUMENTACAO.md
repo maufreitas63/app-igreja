@@ -17,15 +17,19 @@ Cada **pacote** é um arquivo **autocontido**: o texto integral dos documentos d
 | **2 — Operação** | [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) | [`pdfs/PACOTE_2_OPERACAO.pdf`](pdfs/PACOTE_2_OPERACAO.pdf) | Secretaria, líderes | Manutenção + Missão B4 + Card Agenda |
 | **3 — Governança e TI** | [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md) | [`pdfs/PACOTE_3_GOVERNANCA_TI.pdf`](pdfs/PACOTE_3_GOVERNANCA_TI.pdf) | Super admin, TI | ACL + Camadas de segurança + Blueprint |
 | **4 — Anexo técnico** | [`PACOTE_4_ANEXO_TECNICO.md`](PACOTE_4_ANEXO_TECNICO.md) | [`pdfs/PACOTE_4_ANEXO_TECNICO.pdf`](pdfs/PACOTE_4_ANEXO_TECNICO.pdf) | TI / arquitetura | Arquitetura PWA + Cards |
+| **5 — Manual do Painel** | [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md) | [`pdfs/PACOTE_5_MANUAL_PAINEL.pdf`](pdfs/PACOTE_5_MANUAL_PAINEL.pdf) | Membros e famílias | Primeiro acesso + uso card a card (sem manutenção) |
+| **6 — Manual de Manutenção** | [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md) | [`pdfs/PACOTE_6_MANUAL_MANUTENCAO.pdf`](pdfs/PACOTE_6_MANUAL_MANUTENCAO.pdf) | Equipe / gestores | Engrenagem + todos os cards de manutenção |
 
 ---
 
 ## Ordem de leitura recomendada
 
-1. `PACOTE_1_VISAO_GERAL.md`
-2. `PACOTE_2_OPERACAO.md`
-3. `PACOTE_3_GOVERNANCA_TI.md`
-4. `PACOTE_4_ANEXO_TECNICO.md` *(opcional)*
+1. `PACOTE_5_MANUAL_PAINEL.md` *(membro — primeiro contato e uso diário)*
+2. `PACOTE_1_VISAO_GERAL.md` *(visão ampla + FAQ)*
+3. `PACOTE_6_MANUAL_MANUTENCAO.md` *(equipe — gerir o app)*
+4. `PACOTE_2_OPERACAO.md` *(operação e ecossistema)*
+5. `PACOTE_3_GOVERNANCA_TI.md` *(TI)*
+6. `PACOTE_4_ANEXO_TECNICO.md` *(opcional)*
 
 ---
 
@@ -33,10 +37,12 @@ Cada **pacote** é um arquivo **autocontido**: o texto integral dos documentos d
 
 | Perfil | Pacotes |
 |--------|---------|
-| Pastor / diretoria | Pacote 1 |
-| Secretaria / eventos | Pacotes 1 + 2 |
-| Líder de escala | Pacotes 1 + 2 (Parte 2 — Missão B4) |
-| Super administrador / TI | Pacotes 1 + 2 + 3 (+ 4 se necessário) |
+| Membro / família (uso do app) | **Pacote 5** (+ Pacote 1 para FAQ) |
+| Pastor / diretoria | Pacotes 5 + 1 |
+| Secretaria / eventos | Pacotes **6** + 5 + 2 |
+| Líder de escala | Pacotes **6** + 5 (+ Missão B4 no Pacote 1, se preferir formato missão) |
+| Equipe pastoral / financeiro | Pacote **6** (Partes 7 e 8) |
+| Super administrador / TI | Pacotes 6 + 2 + 3 (+ 4 se necessário) |
 
 ---
 
@@ -63,6 +69,8 @@ npm run build:docs       # ambos em sequência
 | `BLUEPRINT.md` | Pacote 3 |
 | `ARQUITETURA_BLUEPRINT_PWA.md` | Pacote 4 |
 | `DASHBOARD_CARDS.md` | Pacote 4 |
+| `MANUAL_DASHBOARD_MEMBRO.md` | Pacote 5 |
+| `MANUAL_DASHBOARD_MANUTENCAO.md` | Pacote 6 |
 
 ---
 

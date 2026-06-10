@@ -1,6 +1,6 @@
 # Manual de Instrucoes - Card 1 do Dashboard
 
-**Pacote:** [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
+**Pacotes:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md) (membro) · [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) (operação) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
 **Atualizado em:** 10/06/2026
 
