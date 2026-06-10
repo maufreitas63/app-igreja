@@ -41,6 +41,16 @@ export function formatPhoneDisplay(value: string): string {
   return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
 }
 
+/** Formato canônico gravado em `profiles.phone` e `members.phone` — ex.: `(11) 99999-8888`. */
+export function formatPhoneForStorage(value: string): string | null {
+  const digits = normalizePhoneDigits(value);
+  if (digits.length < 10) {
+    return null;
+  }
+
+  return formatPhoneDisplay(digits);
+}
+
 export const FAMILY_INFORMANT_RELATIONSHIP = 'Representante Legal';
 
 export const FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS = [
@@ -119,13 +129,13 @@ export function buildFamilyProfileRows(
     throw new Error('Data de nascimento do informante inválida.');
   }
 
-  const informantPhone = normalizePhoneDigits(values.informant.phone);
+  const informantPhone = formatPhoneForStorage(values.informant.phone);
 
   const rows: ProfileInsertRow[] = [
     {
       full_name: values.informant.fullName.trim(),
       birth_date: informantBirthIso,
-      phone: informantPhone || null,
+      phone: informantPhone,
       family_id: familyId,
       codigo_membro: familyId,
       ...address,
@@ -145,12 +155,12 @@ export function buildFamilyProfileRows(
       throw new Error(`Data de nascimento inválida para o dependente "${name}".`);
     }
 
-    const phone = normalizePhoneDigits(dependent.phone);
+    const phone = formatPhoneForStorage(dependent.phone);
 
     rows.push({
       full_name: name,
       birth_date: birthIso,
-      phone: phone || null,
+      phone,
       family_id: familyId,
       codigo_membro: familyId,
       ...address,
@@ -171,13 +181,13 @@ export function buildFamilyMemberRows(
     throw new Error('Data de nascimento do informante inválida.');
   }
 
-  const informantPhone = normalizePhoneDigits(values.informant.phone);
+  const informantPhone = formatPhoneForStorage(values.informant.phone);
 
   const rows: MemberInsertRow[] = [
     {
       full_name: values.informant.fullName.trim(),
       birth_date: informantBirthIso,
-      phone: informantPhone || null,
+      phone: informantPhone,
       relationship: FAMILY_INFORMANT_RELATIONSHIP,
       family_id: familyId,
       accepted: false,
@@ -195,12 +205,12 @@ export function buildFamilyMemberRows(
       throw new Error(`Data de nascimento inválida para o dependente "${name}".`);
     }
 
-    const phone = normalizePhoneDigits(dependent.phone);
+    const phone = formatPhoneForStorage(dependent.phone);
 
     rows.push({
       full_name: name,
       birth_date: birthIso,
-      phone: phone || null,
+      phone,
       relationship: dependent.relationship,
       family_id: familyId,
       accepted: false,
