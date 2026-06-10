@@ -21,8 +21,8 @@ import { formatPhoneForDisplay } from '@/lib/totemDevice';
 import { openMemberWhatsapp } from '@/lib/whatsapp';
 import { ClientGeoLeafletMap } from '@/components/geo-map/ClientGeoLeafletMap.web';
 import * as Clipboard from 'expo-clipboard';
-import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
@@ -59,6 +59,14 @@ const filterMarkersByRole = (markers: MapMarker[], filter: MapPinFilter) => {
 
 export default function MapGeolocalizacaoWebScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ focusProfileId?: string | string[] }>();
+
+  const focusProfileId = useMemo(() => {
+    const raw = params.focusProfileId;
+    const value = Array.isArray(raw) ? raw[0] : raw;
+
+    return value?.trim() || null;
+  }, [params.focusProfileId]);
 
   useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.mapGeolocation,
@@ -76,6 +84,7 @@ export default function MapGeolocalizacaoWebScreen() {
   const [pinFilter, setPinFilter] = useState<MapPinFilter>('all');
   const [invalidCepsModalVisible, setInvalidCepsModalVisible] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const focusAppliedRef = useRef<string | null>(null);
 
   const {
     loading,
@@ -191,6 +200,38 @@ export default function MapGeolocalizacaoWebScreen() {
       // Mantém o perfil original com CEP, mesmo sem endereço detalhado.
     }
   }, []);
+
+  useEffect(() => {
+    if (loading || !focusProfileId || !markers.length) {
+      return;
+    }
+
+    if (focusAppliedRef.current === focusProfileId) {
+      return;
+    }
+
+    focusAppliedRef.current = focusProfileId;
+
+    const marker = markers.find((entry) => entry.profile.id === focusProfileId);
+
+    if (!marker) {
+      const notOnMap = profilesNotOnMap.find((profile) => profile.id === focusProfileId);
+      const shortName = notOnMap ? formatShortName(notOnMap.full_name) : 'Este membro';
+
+      Toast.show({
+        type: 'info',
+        text1: 'Pin indisponível no mapa',
+        text2: notOnMap
+          ? `${shortName} não possui CEP geocodificado. Confira «Sem CEP» ou atualize o cadastro.`
+          : 'O perfil não foi encontrado entre os pins do mapa.',
+        visibilityTime: 4500,
+      });
+      return;
+    }
+
+    setPinFilter('all');
+    void handleSelectProfile(marker.profile);
+  }, [focusProfileId, handleSelectProfile, loading, markers, profilesNotOnMap]);
 
   const selectedAddress = useMemo(
     () => (selectedProfile ? buildProfileMapAddressDisplay(selectedProfile) : null),
@@ -324,6 +365,18 @@ export default function MapGeolocalizacaoWebScreen() {
             <View style={[styles.legendDot, { backgroundColor: MAP_PIN_COLOR.visitante }]} />
             <Text style={styles.legendText}>Visitante ({visitantePinCount})</Text>
           </View>
+          {focusProfileId ? (
+            <View style={styles.legendItem}>
+              <View
+                style={[
+                  styles.legendDot,
+                  styles.legendDotHighlighted,
+                  { backgroundColor: MAP_PIN_COLOR.highlighted },
+                ]}
+              />
+              <Text style={styles.legendText}>Selecionado</Text>
+            </View>
+          ) : null}
         </View>
         {fromCache ? (
           <Text style={styles.cacheHint}>
@@ -376,6 +429,7 @@ export default function MapGeolocalizacaoWebScreen() {
           <ClientGeoLeafletMap
             center={leafletCenter}
             markers={filteredMarkers}
+            highlightedProfileId={focusProfileId}
             onSelectProfile={(profile) => void handleSelectProfile(profile)}
           />
         </View>
@@ -638,6 +692,11 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 2,
     borderColor: '#0f172a',
+  },
+  legendDotHighlighted: {
+    width: 12,
+    height: 12,
+    borderColor: '#ffffff',
   },
   legendText: {
     color: '#CBD5E1',

@@ -7,32 +7,48 @@ import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 type GeoLeafletMapProps = {
   center: [number, number];
   markers: MapMarker[];
+  highlightedProfileId?: string | null;
   onSelectProfile: (profile: ProfileForMap) => void;
 };
 
 const pinIconCache = new Map<string, L.DivIcon>();
 
-const createPinIcon = (color: string) => {
-  const cached = pinIconCache.get(color);
+const createPinIcon = (color: string, size: number, emphasized = false) => {
+  const cacheKey = `${color}-${size}-${emphasized ? '1' : '0'}`;
+  const cached = pinIconCache.get(cacheKey);
 
   if (cached) {
     return cached;
   }
 
+  const borderWidth = emphasized ? 3 : 2;
+  const shadow = emphasized
+    ? `0 0 0 2px #0f172a, 0 0 10px ${color}`
+    : '0 0 0 1px rgba(255,255,255,0.35)';
+
   const icon = L.divIcon({
     className: 'geo-pin-icon',
-    iconSize: [12, 12],
-    iconAnchor: [6, 6],
-    html: `<div style="width:12px;height:12px;border-radius:999px;background:${color};border:2px solid #0f172a;box-shadow:0 0 0 1px rgba(255,255,255,0.35);"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    html: `<div style="width:${size}px;height:${size}px;border-radius:999px;background:${color};border:${borderWidth}px solid ${emphasized ? '#ffffff' : '#0f172a'};box-shadow:${shadow};"></div>`,
   });
 
-  pinIconCache.set(color, icon);
+  pinIconCache.set(cacheKey, icon);
 
   return icon;
 };
 
-const pinIconForProfile = (profile: ProfileForMap) =>
-  createPinIcon(profile.isVisitantesOnly ? MAP_PIN_COLOR.visitante : MAP_PIN_COLOR.member);
+const pinIconForMarker = (profile: ProfileForMap, highlightedProfileId: string | null) => {
+  if (highlightedProfileId && profile.id === highlightedProfileId) {
+    return createPinIcon(MAP_PIN_COLOR.highlighted, 18, true);
+  }
+
+  return createPinIcon(
+    profile.isVisitantesOnly ? MAP_PIN_COLOR.visitante : MAP_PIN_COLOR.member,
+    12,
+    false
+  );
+};
 
 const FitAllMarkersBounds = ({ markers }: { markers: MapMarker[] }) => {
   const map = useMap();
@@ -64,7 +80,12 @@ const FitAllMarkersBounds = ({ markers }: { markers: MapMarker[] }) => {
   return null;
 };
 
-export function GeoLeafletMap({ center, markers, onSelectProfile }: GeoLeafletMapProps) {
+export function GeoLeafletMap({
+  center,
+  markers,
+  highlightedProfileId = null,
+  onSelectProfile,
+}: GeoLeafletMapProps) {
   const leafletCenter = useMemo<[number, number]>(() => center, [center[0], center[1]]);
 
   return (
@@ -87,7 +108,8 @@ export function GeoLeafletMap({ center, markers, onSelectProfile }: GeoLeafletMa
           <Marker
             key={profile.id}
             position={[coord.lat, coord.lng]}
-            icon={pinIconForProfile(profile)}
+            icon={pinIconForMarker(profile, highlightedProfileId)}
+            zIndexOffset={profile.id === highlightedProfileId ? 1000 : 0}
             eventHandlers={{
               click: () => onSelectProfile(profile),
             }}

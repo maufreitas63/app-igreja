@@ -49,7 +49,6 @@ import {
 } from '@/lib/userSession';
 import { normalizePhoneForWhatsApp, openMemberWhatsapp } from '@/lib/whatsapp';
 import { resolveDashboardCardAccessResourceKey } from '@/lib/screenAccessResourceKeys';
-import { buildProfileMapNavigationAddressLine } from '@/lib/enrichProfileMapAddress';
 import {
   computeDashboardPanelInnerPadding,
   DASHBOARD_PANEL_TITLE_TYPO,
@@ -1466,37 +1465,27 @@ export default function Dashboard() {
     await openMemberWhatsapp(entry.phone);
   };
 
-  const handleCopyMemberNavigationAddress = useCallback(async (entry: MemberListEntry) => {
-    const navigationLine = buildProfileMapNavigationAddressLine(entry);
+  const handleOpenMemberOnMap = useCallback(
+    (entry: MemberListEntry) => {
+      if (!entry.cep?.trim()) {
+        Toast.show({
+          type: 'error',
+          text1: 'Mapa indisponível',
+          text2: 'Este membro não possui CEP cadastrado para exibir no mapa.',
+          visibilityTime: 3500,
+        });
+        return;
+      }
 
-    if (!navigationLine) {
-      Toast.show({
-        type: 'error',
-        text1: 'Endereço indisponível',
-        text2: 'Este membro não possui endereço completo para copiar.',
-        visibilityTime: 3500,
+      handledDashboardCardRef.current = null;
+      prefetchProfilesMapMarkers();
+      router.push({
+        pathname: '/mapa-geolocalizacao',
+        params: { focusProfileId: entry.id },
       });
-      return;
-    }
-
-    try {
-      await Clipboard.setStringAsync(navigationLine);
-      Toast.show({
-        type: 'success',
-        text1: 'Endereço copiado',
-        text2: 'Cole o conteúdo da área de transferência em seu aplicativo de navegação.',
-        visibilityTime: 4000,
-      });
-    } catch (error) {
-      console.error('Erro ao copiar endereço do membro:', error);
-      Toast.show({
-        type: 'error',
-        text1: 'Erro ao copiar',
-        text2: 'Não foi possível copiar o endereço.',
-        visibilityTime: 3500,
-      });
-    }
-  }, []);
+    },
+    [router]
+  );
 
   const handleOpenBirthdayWhatsapp = async (entry: BirthdayEntry) => {
     const whatsappPhone = normalizePhoneForWhatsApp(entry.phone);
@@ -2304,7 +2293,7 @@ export default function Dashboard() {
                           showsVerticalScrollIndicator
                         >
                           {filteredMemberListEntries.map((entry) => {
-                            const navigationAddressLine = buildProfileMapNavigationAddressLine(entry);
+                            const canOpenMemberOnMap = Boolean(entry.cep?.trim());
 
                             return (
                             <View key={entry.id} style={styles.membersListRow}>
@@ -2337,18 +2326,18 @@ export default function Dashboard() {
                                 <TouchableOpacity
                                   style={[
                                     styles.membersListActionCell,
-                                    !navigationAddressLine && styles.membersListActionCellDisabled,
+                                    !canOpenMemberOnMap && styles.membersListActionCellDisabled,
                                   ]}
-                                  onPress={() => void handleCopyMemberNavigationAddress(entry)}
-                                  disabled={!navigationAddressLine}
+                                  onPress={() => handleOpenMemberOnMap(entry)}
+                                  disabled={!canOpenMemberOnMap}
                                   activeOpacity={0.85}
                                   accessibilityRole="button"
-                                  accessibilityLabel={`Copiar endereço de ${entry.short_name} para navegação`}
+                                  accessibilityLabel={`Abrir mapa com localização de ${entry.short_name}`}
                                 >
                                   <FontAwesome
                                     name="map"
                                     size={16}
-                                    color={navigationAddressLine ? '#38bdf8' : '#64748B'}
+                                    color={canOpenMemberOnMap ? '#38bdf8' : '#64748B'}
                                   />
                                 </TouchableOpacity>
                               </View>

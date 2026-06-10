@@ -25,4 +25,6 @@ export type MapMarker = {
 export const MAP_PIN_COLOR = {
   member: '#ef4444',
   visitante: '#3b82f6',
+  /** Pin em destaque ao abrir o mapa a partir da Lista de Membros. */
+  highlighted: '#22d3ee',
 } as const;

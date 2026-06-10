@@ -5,6 +5,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 type ClientGeoLeafletMapProps = {
   center: [number, number];
   markers: MapMarker[];
+  highlightedProfileId?: string | null;
   onSelectProfile: (profile: ProfileForMap) => void;
 };
 
@@ -38,6 +39,7 @@ class GeoMapErrorBoundary extends Component<{ children: ReactNode }, GeoMapError
 export function ClientGeoLeafletMap({
   center,
   markers,
+  highlightedProfileId = null,
   onSelectProfile,
 }: ClientGeoLeafletMapProps) {
   const [MapComponent, setMapComponent] = useState<GeoLeafletMapComponent | null>(null);
@@ -91,7 +93,12 @@ export function ClientGeoLeafletMap({
 
   return (
     <GeoMapErrorBoundary>
-      <MapComponent center={center} markers={markers} onSelectProfile={onSelectProfile} />
+      <MapComponent
+        center={center}
+        markers={markers}
+        highlightedProfileId={highlightedProfileId}
+        onSelectProfile={onSelectProfile}
+      />
     </GeoMapErrorBoundary>
   );
 }
