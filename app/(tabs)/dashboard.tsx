@@ -3726,19 +3726,23 @@ const styles = StyleSheet.create({
   cardFinancialCtaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
-    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginTop: 32,
+    paddingHorizontal: 8,
     gap: 10,
+    maxWidth: '100%',
   },
   cardFinancialCtaIcon: {
     flexShrink: 0,
   },
   cardFinancialCta: {
-    flex: 1,
+    flexShrink: 1,
     color: '#ECFDF5',
     fontSize: 17,
     lineHeight: 24,
     fontWeight: '700',
+    textAlign: 'center',
   },
   cardPastoralBody: {
     width: '100%',
