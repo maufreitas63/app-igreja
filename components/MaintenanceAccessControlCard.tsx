@@ -1,5 +1,6 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
+import { FINANCIAL_ACCESS_SCREEN_RESOURCE_KEYS } from '@/lib/accessControl';
 import {
   compareRoleGrantScreenScope,
   getAccessGrantDashboardScope,
@@ -12,6 +13,7 @@ import {
   MAINTENANCE_SCROLL_PROPS,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
+import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -84,6 +86,22 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
   const busy =
     savingRoleCode !== null || savingGrantKey !== null || savingScaleLeadershipId !== null;
   const hasAssignedProfileRoles = profileRoles.some((role) => role.assigned);
+
+  const hasGrantSearchQuery = grantSearchQuery.trim().length > 0;
+
+  const handleClearGrantSearch = () => {
+    setGrantSearchQuery('');
+  };
+
+  const missingFinancialScreenResources = useMemo(() => {
+    if (resourceTypeFilter !== 'screen' || loadingGrants) {
+      return false;
+    }
+
+    const registeredKeys = new Set(roleGrants.map((grant) => grant.resourceKey));
+
+    return FINANCIAL_ACCESS_SCREEN_RESOURCE_KEYS.some((key) => !registeredKeys.has(key));
+  }, [loadingGrants, resourceTypeFilter, roleGrants]);
 
   const filteredRoleGrants = useMemo(() => {
     const query = grantSearchQuery.trim().toLowerCase();
@@ -325,17 +343,13 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                             <Text style={styles.roleName}>{role.roleName}</Text>
                             <Text style={styles.roleCode}>{role.roleCode}</Text>
                           </View>
-                          {isSaving ? (
-                            <ActivityIndicator color="#818CF8" size="small" />
-                          ) : (
-                            <Switch
-                              value={role.assigned}
-                              onValueChange={(next) => void handleToggleRole(role.roleCode, next)}
-                              disabled={busy || rpcMissing}
-                              trackColor={{ false: '#334155', true: '#4F46E5' }}
-                              thumbColor="#F8FAFC"
-                            />
-                          )}
+                          <Switch
+                            value={role.assigned}
+                            onValueChange={(next) => void handleToggleRole(role.roleCode, next)}
+                            disabled={busy || rpcMissing || isSaving}
+                            trackColor={{ false: '#334155', true: '#4F46E5' }}
+                            thumbColor="#F8FAFC"
+                          />
                         </View>
                       );
                     })}
@@ -373,19 +387,15 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                               <Text style={styles.roleName}>{entry.scaleTypeName}</Text>
                               <Text style={styles.roleCode}>{entry.scaleTypeCode}</Text>
                             </View>
-                            {isSaving ? (
-                              <ActivityIndicator color="#818CF8" size="small" />
-                            ) : (
-                              <Switch
-                                value={entry.assigned}
-                                onValueChange={(next) =>
-                                  void handleToggleScaleLeadership(entry.scaleTypeId, next)
-                                }
-                                disabled={busy || rpcMissing}
-                                trackColor={{ false: '#334155', true: '#4F46E5' }}
-                                thumbColor="#F8FAFC"
-                              />
-                            )}
+                            <Switch
+                              value={entry.assigned}
+                              onValueChange={(next) =>
+                                void handleToggleScaleLeadership(entry.scaleTypeId, next)
+                              }
+                              disabled={busy || rpcMissing || isSaving}
+                              trackColor={{ false: '#334155', true: '#4F46E5' }}
+                              thumbColor="#F8FAFC"
+                            />
                           </View>
                         );
                       })}
@@ -463,15 +473,35 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
             <Text style={styles.subsectionHint}>{SCREEN_GRANT_SCOPE_HINT}</Text>
           ) : null}
 
-          <TextInput
-            style={styles.grantSearchInput}
-            value={grantSearchQuery}
-            onChangeText={setGrantSearchQuery}
-            placeholder="Buscar recurso (ex.: financeiro, dashboard.card)"
-            placeholderTextColor="#64748B"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+          <View style={styles.grantSearchRow}>
+            <TextInput
+              style={styles.grantSearchInput}
+              value={grantSearchQuery}
+              onChangeText={setGrantSearchQuery}
+              placeholder="Buscar recurso (ex.: relatórios financeiros, /financial)"
+              placeholderTextColor="#64748B"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {hasGrantSearchQuery ? (
+              <TouchableOpacity
+                style={styles.clearGrantSearchButton}
+                onPress={handleClearGrantSearch}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Limpar busca de recursos"
+              >
+                <FontAwesome name="times-circle" size={20} color="#94A3B8" />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+
+          {missingFinancialScreenResources ? (
+            <Text style={styles.financialResourcesHint}>
+              Recursos financeiros ausentes no Supabase. Execute scripts/financial-module-access.sql no
+              SQL Editor (inclui a RPC garantir_recursos_financeiro_admin). Depois recarregue esta aba.
+            </Text>
+          ) : null}
 
           {resourceTypeFilter === 'screen' ? (
             <View style={styles.grantScopeLegend}>
@@ -486,7 +516,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
             </View>
           ) : null}
 
-          {loadingGrants ? (
+          {loadingGrants && filteredRoleGrants.length === 0 ? (
             <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
           ) : (
             <View style={styles.grantsList}>
@@ -534,31 +564,23 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                     <View style={styles.grantToggles}>
                       <View style={styles.toggleCell}>
                         <Text style={styles.toggleLabel}>Ver</Text>
-                        {isSaving ? (
-                          <ActivityIndicator color="#818CF8" size="small" />
-                        ) : (
-                          <Switch
-                            value={grant.canView}
-                            onValueChange={(next) => void handleToggleGrant(grant, 'canView', next)}
-                            disabled={busy || rpcMissing}
-                            trackColor={{ false: '#334155', true: '#4F46E5' }}
-                            thumbColor="#F8FAFC"
-                          />
-                        )}
+                        <Switch
+                          value={grant.canView}
+                          onValueChange={(next) => void handleToggleGrant(grant, 'canView', next)}
+                          disabled={busy || rpcMissing || isSaving}
+                          trackColor={{ false: '#334155', true: '#4F46E5' }}
+                          thumbColor="#F8FAFC"
+                        />
                       </View>
                       <View style={styles.toggleCell}>
                         <Text style={styles.toggleLabel}>Editar</Text>
-                        {isSaving ? (
-                          <ActivityIndicator color="#818CF8" size="small" />
-                        ) : (
-                          <Switch
-                            value={grant.canUpdate}
-                            onValueChange={(next) => void handleToggleGrant(grant, 'canUpdate', next)}
-                            disabled={busy || rpcMissing || !grant.canView}
-                            trackColor={{ false: '#334155', true: '#4F46E5' }}
-                            thumbColor="#F8FAFC"
-                          />
-                        )}
+                        <Switch
+                          value={grant.canUpdate}
+                          onValueChange={(next) => void handleToggleGrant(grant, 'canUpdate', next)}
+                          disabled={busy || rpcMissing || isSaving || !grant.canView}
+                          trackColor={{ false: '#334155', true: '#4F46E5' }}
+                          thumbColor="#F8FAFC"
+                        />
                       </View>
                     </View>
                   </View>
@@ -567,12 +589,12 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
               {!roleGrants.length ? (
                 <Text style={styles.panelHint}>
                   Nenhum recurso cadastrado para este tipo. Execute scripts/financial-module-access.sql
-                  no Supabase se faltar o Card Financeiro.
+                  no Supabase se faltar Card Financeiro ou Relatórios financeiros.
                 </Text>
               ) : filteredRoleGrants.length === 0 ? (
                 <Text style={styles.panelHint}>
-                  Nenhum recurso corresponde à busca. Tente &quot;financeiro&quot; ou
-                  &quot;dashboard.card.financial&quot;.
+                  Nenhum recurso corresponde à busca. Tente &quot;relatórios financeiros&quot;,
+                  &quot;/financial&quot; ou &quot;dashboard.card.financial&quot;.
                 </Text>
               ) : null}
             </View>
@@ -714,7 +736,22 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 8,
   },
+  financialResourcesHint: {
+    color: '#FCD34D',
+    fontSize: 12,
+    lineHeight: 17,
+    marginBottom: 8,
+    paddingHorizontal: 2,
+  },
+  grantSearchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
   grantSearchInput: {
+    flex: 1,
+    minWidth: 0,
     borderWidth: 1,
     borderColor: 'rgba(129, 140, 248, 0.35)',
     borderRadius: 10,
@@ -723,7 +760,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    marginBottom: 8,
+  },
+  clearGrantSearchButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   input: {
     borderWidth: 1,

@@ -327,10 +327,37 @@ export default function DashboardIndexScreen() {
 
   const renderShortcutButton = (shortcut: DashboardShortcut, options?: { isChild?: boolean }) => {
     const isChild = options?.isChild === true;
+    const isSalasShortcut = shortcut.id === 'salas';
     const parentLabel =
       shortcut.parentId === 'agenda' ? DASHBOARD_SHORTCUTS_BASE.find((item) => item.id === 'agenda')?.label : null;
     const iconName = INDEX_SHORTCUT_ICONS[shortcut.id as keyof typeof INDEX_SHORTCUT_ICONS];
     const iconColor = resolveIndexShortcutIconColor(shortcut.id, shortcut.disabled);
+    const hintText = shortcut.disabled && shortcut.disabledHint ? shortcut.disabledHint : null;
+
+    const renderShortcutHint = () => {
+      if (isSalasShortcut) {
+        return (
+          <View style={styles.menuShortcutHintSlot}>
+            <Text
+              style={[styles.menuShortcutHintText, !hintText && styles.menuShortcutHintHidden]}
+              numberOfLines={2}
+            >
+              {hintText ?? ' '}
+            </Text>
+          </View>
+        );
+      }
+
+      if (!hintText) {
+        return null;
+      }
+
+      return (
+        <Text style={styles.menuShortcutHintText} numberOfLines={2}>
+          {hintText}
+        </Text>
+      );
+    };
 
     return (
       <TouchableOpacity
@@ -367,16 +394,13 @@ export default function DashboardIndexScreen() {
                   styles.menuShortcutButtonText,
                   styles.menuShortcutChildButtonText,
                   shortcut.disabled && styles.menuShortcutButtonTextDisabled,
+                  isSalasShortcut && styles.menuShortcutSalasLabelSlot,
                 ]}
                 numberOfLines={2}
               >
                 {shortcut.label}
               </Text>
-              {shortcut.disabled && shortcut.disabledHint ? (
-                <Text style={styles.menuShortcutHintText} numberOfLines={2}>
-                  {shortcut.disabledHint}
-                </Text>
-              ) : null}
+              {renderShortcutHint()}
             </View>
           </View>
         ) : (
@@ -399,11 +423,7 @@ export default function DashboardIndexScreen() {
               >
                 {shortcut.label}
               </Text>
-              {shortcut.disabled && shortcut.disabledHint ? (
-                <Text style={styles.menuShortcutHintText} numberOfLines={2}>
-                  {shortcut.disabledHint}
-                </Text>
-              ) : null}
+              {renderShortcutHint()}
             </View>
           </View>
         )}
@@ -664,11 +684,21 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: 2,
   },
+  menuShortcutSalasLabelSlot: {
+    minHeight: 36,
+  },
+  menuShortcutHintSlot: {
+    minHeight: 28,
+    justifyContent: 'flex-start',
+  },
   menuShortcutHintText: {
     color: '#94A3B8',
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '500',
+  },
+  menuShortcutHintHidden: {
+    opacity: 0,
   },
   menuShortcutButtonText: {
     color: '#E2E8F0',

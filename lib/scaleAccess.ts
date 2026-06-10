@@ -1,5 +1,6 @@
 import { profileHasAccess, sessionHasAccess, type AccessAction } from '@/lib/accessControl';
 import { normalizeScaleTypeCode } from '@/lib/maintenanceScaleTypesApi';
+import { isTstMaxScaleTypeCode } from '@/lib/tstMaxScaleFilter';
 import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import { supabase } from '@/lib/supabase';
 
@@ -131,6 +132,10 @@ const parseLeadershipRows = (data: unknown): ProfileScaleLeadershipAssignment[] 
       const scaleTypeName = String(record.tipo_nome ?? record.scaleTypeName ?? '').trim();
 
       if (!scaleTypeId || !scaleTypeCode || !scaleTypeName) {
+        return null;
+      }
+
+      if (isTstMaxScaleTypeCode(scaleTypeCode)) {
         return null;
       }
 

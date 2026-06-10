@@ -340,6 +340,10 @@ begin
    and g.role_id = v_role_id
  where res.resource_type = v_resource_type
    and res.is_active = true
+   and not (
+     res.resource_type = 'screen'
+     and res.resource_key like 'scale_type.tstmax%'
+   )
  order by res.resource_key asc;
 end;
 $$;

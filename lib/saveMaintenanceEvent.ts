@@ -109,7 +109,7 @@ export type ReplicateMaintenanceEventResult =
 
 export const replicateMaintenanceEventForDays = async (
   form: MaintenanceEventFormState,
-  dayCount = 7
+  dayOffset = 7
 ): Promise<ReplicateMaintenanceEventResult> => {
   const validation = validateMaintenanceEventForm(form);
 
@@ -121,45 +121,38 @@ export const replicateMaintenanceEventForDays = async (
     return { ok: false, message: 'Informe a data do evento antes de replicar.' };
   }
 
-  await ensureEventsOptionalColumns();
-
-  let createdCount = 0;
-
-  for (let dayOffset = 1; dayOffset <= dayCount; dayOffset += 1) {
-    const shiftedDate = shiftMaintenanceEventDateIso(validation.payload.event_date, dayOffset);
-
-    if (!shiftedDate) {
-      return {
-        ok: false,
-        message: `Não foi possível calcular a data +${dayOffset} dia(s).`,
-      };
-    }
-
-    const payload: MaintenanceEventPayload = {
-      ...validation.payload,
-      event_date: shiftedDate,
-      is_locked: true,
-    };
-
-    const { error } = await saveEventWithOptionalColumnFallback('insert', null, payload);
-
-    if (error) {
-      const partialMessage =
-        createdCount > 0
-          ? `${createdCount} de ${dayCount} eventos criados antes do erro: ${error.message}`
-          : error.message;
-
-      return {
-        ok: false,
-        message: partialMessage,
-        code: error.code,
-      };
-    }
-
-    createdCount += 1;
+  if (dayOffset < 1) {
+    return { ok: false, message: 'O deslocamento em dias deve ser pelo menos 1.' };
   }
 
-  return { ok: true, createdCount };
+  await ensureEventsOptionalColumns();
+
+  const shiftedDate = shiftMaintenanceEventDateIso(validation.payload.event_date, dayOffset);
+
+  if (!shiftedDate) {
+    return {
+      ok: false,
+      message: `Não foi possível calcular a data +${dayOffset} dia(s).`,
+    };
+  }
+
+  const payload: MaintenanceEventPayload = {
+    ...validation.payload,
+    event_date: shiftedDate,
+    is_locked: true,
+  };
+
+  const { error } = await saveEventWithOptionalColumnFallback('insert', null, payload);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+      code: error.code,
+    };
+  }
+
+  return { ok: true, createdCount: 1 };
 };
 
 export type DeleteMaintenanceEventResult =

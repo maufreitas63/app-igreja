@@ -1512,23 +1512,17 @@ export default function Dashboard() {
     ]
   );
 
-  const hasDashboardCardAccessMap = Object.keys(dashboardCardAccess).length > 0;
+  const isDashboardCardAccessReady = !isMaintenanceAccessLoading && Boolean(profile?.id);
 
-  const data: DashboardCard[] = useMemo(
-    () =>
-      dashboardCardCandidates.filter((card) => {
-        if (!profile?.id) {
-          return false;
-        }
+  const data: DashboardCard[] = useMemo(() => {
+    if (!isDashboardCardAccessReady) {
+      return [];
+    }
 
-        if (!hasDashboardCardAccessMap) {
-          return true;
-        }
-
-        return isDashboardCardContentAllowed(card.content, dashboardCardAccess);
-      }),
-    [dashboardCardAccess, dashboardCardCandidates, hasDashboardCardAccessMap, profile?.id]
-  );
+    return dashboardCardCandidates.filter((card) =>
+      isDashboardCardContentAllowed(card.content, dashboardCardAccess)
+    );
+  }, [dashboardCardAccess, dashboardCardCandidates, isDashboardCardAccessReady]);
 
   const activeDashboardScreenTitle = useMemo(() => {
     const card = data[currentIndex];
@@ -1858,9 +1852,14 @@ export default function Dashboard() {
         ) : null}
 
         <View style={styles.listContainer}>
+          {!isDashboardCardAccessReady ? (
+            <View style={[styles.cardWrapper, carouselPageStyle, styles.dashboardAccessLoader]}>
+              <CardLoadingState lines={4} />
+            </View>
+          ) : null}
           <FlatList
             ref={dashboardListRef}
-            style={styles.dashboardFlatList}
+            style={[styles.dashboardFlatList, !isDashboardCardAccessReady && styles.dashboardFlatListHidden]}
             data={data}
             horizontal
             pagingEnabled
@@ -3099,6 +3098,16 @@ const styles = StyleSheet.create({
   },
   listContainer: { flex: 1, minHeight: 0 },
   dashboardFlatList: { flex: 1, minHeight: 0 },
+  dashboardFlatListHidden: {
+    position: 'absolute',
+    opacity: 0,
+    pointerEvents: 'none',
+  },
+  dashboardAccessLoader: {
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 280,
+  },
   cardWrapper: {
     justifyContent: 'center',
     alignItems: 'center',

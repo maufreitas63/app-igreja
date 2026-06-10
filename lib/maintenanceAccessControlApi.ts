@@ -1,5 +1,6 @@
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
+import { isTstMaxScaleTypeResourceKey } from '@/lib/tstMaxScaleFilter';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
 import { getStoredProfileId, repairUserSessionReference } from '@/lib/userSession';
@@ -7,7 +8,7 @@ import { getStoredProfileId, repairUserSessionReference } from '@/lib/userSessio
 export { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
 
 export const MAINTENANCE_ACCESS_CONTROL_SQL_HINT =
-  'Execute no Supabase: scripts/access-control-admin-rpc.sql; se faltar Congregado/Visitantes, scripts/access-control-congregado-visitantes-roles.sql; se o Card Financeiro não aparecer em Papéis, scripts/financial-module-access.sql';
+  'Execute no Supabase: scripts/access-control-admin-rpc.sql; se faltar Congregado/Visitantes, scripts/access-control-congregado-visitantes-roles.sql; se faltar Card Financeiro ou Relatórios financeiros em Papéis, scripts/financial-module-access.sql; para ocultar escalas TstMax em Papéis, scripts/access-control-remove-tstmax-scale-resources.sql';
 
 export const EXPECTED_ACCESS_ROLE_CODES = ['congregado', 'visitantes'] as const;
 
@@ -218,6 +219,10 @@ const parseGrantRows = (data: unknown): RoleGrantRecord[] => {
         return null;
       }
 
+      if (isTstMaxScaleTypeResourceKey(resourceKey)) {
+        return null;
+      }
+
       return {
         resourceId,
         resourceType,
@@ -350,6 +355,26 @@ export async function revokeProfileRole(targetProfileId: string, roleCode: strin
   }
 
   return parseMutationResult(data);
+}
+
+export async function ensureFinancialAccessResourcesAdmin() {
+  const actorProfileId = await resolveActorProfileId();
+
+  if (!actorProfileId) {
+    return;
+  }
+
+  const { error } = await supabase.rpc('garantir_recursos_financeiro_admin', {
+    p_actor_profile_id: actorProfileId,
+  });
+
+  if (error) {
+    const message = (error.message ?? '').toLowerCase();
+
+    if (!isSupabaseRpcMissing(message, 'garantir_recursos_financeiro_admin')) {
+      console.warn('garantir_recursos_financeiro_admin:', error);
+    }
+  }
 }
 
 export async function listRoleGrantsAdmin(roleCode: string, resourceType: AccessResourceTypeFilter) {

@@ -39,6 +39,13 @@ export const ACCESS_DASHBOARD_CARD = {
 } as const;
 
 /** `content` do carrossel → `resource_key` em `access_resources`. */
+/** Recursos ACL do módulo financeiro (membros) — devem existir em `access_resources`. */
+export const FINANCIAL_ACCESS_SCREEN_RESOURCE_KEYS = [
+  ACCESS_DASHBOARD_CARD.financial,
+  ACCESS_SCREEN.financial,
+  ACCESS_SCREEN.expenseReport,
+] as const;
+
 export const DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   event_alt: ACCESS_DASHBOARD_CARD.eventAlt,
   qr: ACCESS_DASHBOARD_CARD.qr,

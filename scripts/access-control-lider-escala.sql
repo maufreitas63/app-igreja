@@ -76,6 +76,21 @@ begin
 
   v_key := public.scale_type_resource_key(v_codigo);
 
+  if v_codigo like 'tstmax%' then
+    delete from public.access_grants g
+     using public.access_resources res
+     where g.resource_id = res.id
+       and res.resource_type = 'screen'
+       and res.resource_key = v_key;
+
+    update public.access_resources
+       set is_active = false
+     where resource_type = 'screen'
+       and resource_key = v_key;
+
+    return;
+  end if;
+
   insert into public.access_resources (resource_type, resource_key, label, description)
   values (
     'screen',

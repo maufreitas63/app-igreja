@@ -17,7 +17,7 @@ type WatermarkSurfaceProps = PropsWithChildren<{
 
 /**
  * Marca d'água única do app (via AppShell).
- * Limitada ao frame do card central (90% da largura), não à área total do dashboard.
+ * Overlay discreto sobre telas e cards, limitado ao frame do card central (90% da largura).
  */
 export function WatermarkSurface({ children, style }: WatermarkSurfaceProps) {
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
@@ -32,18 +32,18 @@ export function WatermarkSurface({ children, style }: WatermarkSurfaceProps) {
   );
   const imageWidth = Math.max(cardSize.width * 1.2, cardHeight * 1.15);
 
+  const cardFrameStyle = {
+    top: cardTop,
+    left: (windowWidth - cardSize.width) / 2,
+    width: cardSize.width,
+    height: cardHeight,
+  };
+
   return (
     <View style={[styles.surface, style]}>
+      <View style={styles.content}>{children}</View>
       <View
-        style={[
-          styles.cardFrame,
-          {
-            top: cardTop,
-            left: (windowWidth - cardSize.width) / 2,
-            width: cardSize.width,
-            height: cardHeight,
-          },
-        ]}
+        style={[styles.cardFrame, cardFrameStyle]}
         pointerEvents="none"
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
@@ -62,7 +62,6 @@ export function WatermarkSurface({ children, style }: WatermarkSurfaceProps) {
           accessible={false}
         />
       </View>
-      <View style={styles.content}>{children}</View>
     </View>
   );
 }
@@ -72,19 +71,20 @@ export const AppWatermark = WatermarkSurface;
 
 const styles = StyleSheet.create({
   surface: {
+    flex: 1,
     position: 'relative',
-    overflow: 'hidden',
   },
   cardFrame: {
     position: 'absolute',
-    zIndex: 0,
+    zIndex: 50,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'visible',
+    elevation: 0,
   },
   content: {
     flex: 1,
-    zIndex: 1,
+    zIndex: 0,
   },
   image: {
     maxWidth: '140%',

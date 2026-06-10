@@ -333,7 +333,7 @@ values
   ('screen', '/manage-members', 'Gerenciar família', null),
   ('screen', '/pastoral', 'Coração Aberto', null),
   ('screen', '/pastoral-history', 'Meus pedidos pastorais', null),
-  ('screen', '/financial', 'Tela Financeiro (relatórios)', null),
+  ('screen', '/financial', 'Relatórios financeiros (/financial)', 'Resultado do mês, comparativos e orçamento'),
   ('screen', '/expense-report', 'Relatório de Despesas (RD)', null),
   ('screen', '/lgpd', 'LGPD', null),
   ('screen', 'dashboard.card.event_alt', 'Card Agenda da Família', null),

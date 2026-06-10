@@ -1,5 +1,4 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
-import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceScaleTypes } from '@/hooks/useMaintenanceScaleTypes';
 import {
   computeMaintenanceContentHeight,
@@ -8,7 +7,7 @@ import {
 import { MAINTENANCE_SCALE_TYPES_SQL_HINT } from '@/hooks/useMaintenanceScaleTypes';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -24,6 +23,60 @@ type Props = {
   isActive?: boolean;
   panelHeight: number;
 };
+
+type ScaleTypesSectionKey = 'create' | 'registered';
+
+type CollapsibleSectionProps = {
+  title: string;
+  subtitle: string;
+  expanded: boolean;
+  onToggle: () => void;
+  fill?: boolean;
+  children: React.ReactNode;
+};
+
+function CollapsibleSection({
+  title,
+  subtitle,
+  expanded,
+  onToggle,
+  fill = false,
+  children,
+}: CollapsibleSectionProps) {
+  return (
+    <View style={[styles.collapseSection, fill && expanded && styles.collapseSectionFill]}>
+      <TouchableOpacity
+        style={styles.collapseHeader}
+        onPress={onToggle}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+      >
+        <View style={styles.collapseHeaderTextWrap}>
+          <View style={styles.collapseHeaderTitleRow}>
+            <Text style={styles.collapseHeaderTitle} numberOfLines={1}>
+              {title}
+            </Text>
+            <FontAwesome
+              name={expanded ? 'chevron-up' : 'chevron-down'}
+              size={14}
+              color="#A5B4FC"
+              style={styles.collapseChevron}
+            />
+          </View>
+          {subtitle ? (
+            <Text style={styles.collapseHeaderSubtitle} numberOfLines={2}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+      </TouchableOpacity>
+      {expanded ? (
+        <View style={[styles.collapseBody, fill && styles.collapseBodyFill]}>{children}</View>
+      ) : null}
+    </View>
+  );
+}
 
 export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Props) {
   const {
@@ -46,9 +99,20 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
   const [nameInput, setNameInput] = useState('');
   const [vagasInput, setVagasInput] = useState('1');
   const [modoCiclo, setModoCiclo] = useState<'individual' | 'equipe'>('individual');
+  const [expandedSection, setExpandedSection] = useState<ScaleTypesSectionKey | null>(null);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const formBusy = saving || deletingId !== null;
+
+  const toggleSection = useCallback((section: ScaleTypesSectionKey) => {
+    setExpandedSection((current) => (current === section ? null : section));
+  }, []);
+
+  useEffect(() => {
+    if (editingId) {
+      setExpandedSection('registered');
+    }
+  }, [editingId]);
 
   useEffect(() => {
     if (editingRow) {
@@ -226,67 +290,86 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       {!editingId ? (
-        <View style={styles.sectionBlock}>
-          <SectionLabel variant="maintenance">Novo tipo de escala</SectionLabel>
+        <CollapsibleSection
+          title="Novo tipo de escala"
+          subtitle="Cadastrar código, nome, vagas e modo do ciclo"
+          expanded={expandedSection === 'create'}
+          onToggle={() => toggleSection('create')}
+        >
           {renderScaleTypeForm('create')}
-        </View>
+        </CollapsibleSection>
       ) : null}
 
-      <View style={[styles.sectionBlock, styles.sectionBlockFlex]}>
-        <SectionLabel variant="maintenance">Escalas cadastradas</SectionLabel>
-        {editingId ? renderScaleTypeForm('edit') : null}
-        <ScrollView style={styles.listScroll} nestedScrollEnabled>
-        {scaleTypes.length ? (
-          scaleTypes.map((row, index) => {
-            const isDeleting = deletingId === row.id;
-            const isEditing = editingId === row.id;
+      <View style={styles.registeredSectionWrap}>
+        <CollapsibleSection
+          title="Escalas cadastradas"
+          subtitle={
+            scaleTypes.length
+              ? `${scaleTypes.length} tipo(s) cadastrado(s)`
+              : 'Nenhum tipo cadastrado ainda'
+          }
+          expanded={expandedSection === 'registered'}
+          onToggle={() => toggleSection('registered')}
+          fill={expandedSection === 'registered'}
+        >
+          {editingId ? renderScaleTypeForm('edit') : null}
+          <ScrollView style={styles.listScroll} nestedScrollEnabled>
+            {scaleTypes.length ? (
+              scaleTypes.map((row, index) => {
+                const isDeleting = deletingId === row.id;
+                const isEditing = editingId === row.id;
 
-            return (
-              <View
-                key={row.id}
-                style={[styles.listRow, index % 2 === 1 && styles.listRowAlt, isEditing && styles.listRowEditing]}
-              >
-                <View style={styles.listMain}>
-                  <Text style={styles.listName} numberOfLines={2}>
-                    {row.name}
-                  </Text>
-                  <Text style={styles.listCode} numberOfLines={1}>
-                    {row.code} · {row.vagasPorServico} vaga(s) ·{' '}
-                    {row.modoCiclo === 'equipe' ? 'equipe' : 'individual'}
-                  </Text>
-                  {!row.isActive ? (
-                    <Text style={styles.inactiveBadge}>Inativa</Text>
-                  ) : null}
-                </View>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => startEdit(row)}
-                  disabled={formBusy || rpcMissing}
-                  activeOpacity={0.85}
-                  accessibilityLabel={`Editar ${row.name}`}
-                >
-                  <FontAwesome name="pencil" size={16} color="#A5B4FC" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={() => void handleDelete(row.id, row.name)}
-                  disabled={formBusy || rpcMissing}
-                  activeOpacity={0.85}
-                  accessibilityLabel={`Excluir ${row.name}`}
-                >
-                  {isDeleting ? (
-                    <ActivityIndicator color="#FCA5A5" size="small" />
-                  ) : (
-                    <FontAwesome name="trash-o" size={17} color="#FCA5A5" />
-                  )}
-                </TouchableOpacity>
-              </View>
-            );
-          })
-        ) : (
-          <Text style={styles.panelHint}>Nenhum tipo de escala cadastrado ainda.</Text>
-        )}
-        </ScrollView>
+                return (
+                  <View
+                    key={row.id}
+                    style={[
+                      styles.listRow,
+                      index % 2 === 1 && styles.listRowAlt,
+                      isEditing && styles.listRowEditing,
+                    ]}
+                  >
+                    <View style={styles.listMain}>
+                      <Text style={styles.listName} numberOfLines={2}>
+                        {row.name}
+                      </Text>
+                      <Text style={styles.listCode} numberOfLines={1}>
+                        {row.code} · {row.vagasPorServico} vaga(s) ·{' '}
+                        {row.modoCiclo === 'equipe' ? 'equipe' : 'individual'}
+                      </Text>
+                      {!row.isActive ? (
+                        <Text style={styles.inactiveBadge}>Inativa</Text>
+                      ) : null}
+                    </View>
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      onPress={() => startEdit(row)}
+                      disabled={formBusy || rpcMissing}
+                      activeOpacity={0.85}
+                      accessibilityLabel={`Editar ${row.name}`}
+                    >
+                      <FontAwesome name="pencil" size={16} color="#A5B4FC" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      onPress={() => void handleDelete(row.id, row.name)}
+                      disabled={formBusy || rpcMissing}
+                      activeOpacity={0.85}
+                      accessibilityLabel={`Excluir ${row.name}`}
+                    >
+                      {isDeleting ? (
+                        <ActivityIndicator color="#FCA5A5" size="small" />
+                      ) : (
+                        <FontAwesome name="trash-o" size={17} color="#FCA5A5" />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                );
+              })
+            ) : (
+              <Text style={styles.panelHint}>Nenhum tipo de escala cadastrado ainda.</Text>
+            )}
+          </ScrollView>
+        </CollapsibleSection>
       </View>
     </View>
   );
@@ -312,19 +395,63 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 6,
   },
-  sectionBlock: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-    padding: 10,
-    gap: 6,
-    marginBottom: 8,
+  registeredSectionWrap: {
+    flex: 1,
+    minHeight: 0,
   },
-  sectionBlockFlex: {
+  collapseSection: {
+    borderWidth: 1,
+    borderColor: 'rgba(129, 140, 248, 0.28)',
+    borderRadius: 12,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  collapseSectionFill: {
     flex: 1,
     minHeight: 0,
     marginBottom: 0,
+  },
+  collapseHeader: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    minHeight: 44,
+  },
+  collapseHeaderTextWrap: {
+    flex: 1,
+    gap: 4,
+    minWidth: 0,
+  },
+  collapseHeaderTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 18,
+  },
+  collapseHeaderTitle: {
+    flex: 1,
+    color: '#E0E7FF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  collapseHeaderSubtitle: {
+    color: '#94A3B8',
+    fontSize: 11,
+    lineHeight: 14,
+  },
+  collapseChevron: {
+    flexShrink: 0,
+  },
+  collapseBody: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(129, 140, 248, 0.18)',
+    paddingHorizontal: 8,
+    paddingBottom: 8,
+    gap: 6,
+  },
+  collapseBodyFill: {
+    flex: 1,
+    minHeight: 0,
   },
   panelHint: {
     color: '#94A3B8',

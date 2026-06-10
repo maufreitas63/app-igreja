@@ -3,6 +3,7 @@ import {
   checkSessionIsSuperAdmin,
   listAccessRolesAdmin,
   listProfileRoleAssignments,
+  ensureFinancialAccessResourcesAdmin,
   listRoleGrantsAdmin,
   MAINTENANCE_ACCESS_CONTROL_RPC_MISSING,
   EXPECTED_ACCESS_ROLE_CODES,
@@ -201,6 +202,10 @@ export function useMaintenanceAccessControl(enabled: boolean) {
     setError(null);
 
     try {
+      if (resourceTypeFilter === 'screen') {
+        await ensureFinancialAccessResourcesAdmin();
+      }
+
       const rows = await listRoleGrantsAdmin(selectedRoleCode, resourceTypeFilter);
       setRoleGrants(rows);
     } catch (err) {
@@ -225,20 +230,28 @@ export function useMaintenanceAccessControl(enabled: boolean) {
       setSavingRoleCode(roleCode);
       setError(null);
 
+      const previousRoles = profileRoles;
+
+      setProfileRoles((current) =>
+        current.map((row) =>
+          row.roleCode === roleCode ? { ...row, assigned: nextAssigned } : row
+        )
+      );
+
       try {
         const result = nextAssigned
           ? await assignProfileRole(selectedProfile.id, roleCode)
           : await revokeProfileRole(selectedProfile.id, roleCode);
 
         if (!result.success) {
+          setProfileRoles(previousRoles);
           setError(result.message);
           return result;
         }
 
-        const rows = await listProfileRoleAssignments(selectedProfile.id);
-        setProfileRoles(rows);
         return result;
       } catch (err) {
+        setProfileRoles(previousRoles);
         console.error('Erro ao alterar papel do perfil:', err);
         handleRpcError(err, 'Não foi possível alterar o papel.');
         return { success: false as const, message: error ?? 'Não foi possível alterar o papel.' };
@@ -246,7 +259,7 @@ export function useMaintenanceAccessControl(enabled: boolean) {
         setSavingRoleCode(null);
       }
     },
-    [error, handleRpcError, selectedProfile]
+    [error, handleRpcError, profileRoles, selectedProfile]
   );
 
   const toggleScaleLeadership = useCallback(
@@ -258,6 +271,14 @@ export function useMaintenanceAccessControl(enabled: boolean) {
       setSavingScaleLeadershipId(scaleTypeId);
       setError(null);
 
+      const previousLeadership = profileScaleLeadership;
+
+      setProfileScaleLeadership((current) =>
+        current.map((row) =>
+          row.scaleTypeId === scaleTypeId ? { ...row, assigned: nextAssigned } : row
+        )
+      );
+
       try {
         const result = await saveProfileScaleLeadershipAdmin(
           selectedProfile.id,
@@ -266,13 +287,14 @@ export function useMaintenanceAccessControl(enabled: boolean) {
         );
 
         if (!result.success) {
+          setProfileScaleLeadership(previousLeadership);
           setError(result.message);
           return result;
         }
 
-        await reloadProfileScaleLeadership(selectedProfile.id);
         return result;
       } catch (err) {
+        setProfileScaleLeadership(previousLeadership);
         console.error('Erro ao alterar liderança de escala:', err);
         handleRpcError(err, 'Não foi possível alterar a liderança de escala.');
         return { success: false as const, message: error ?? 'Não foi possível alterar a liderança de escala.' };
@@ -280,7 +302,7 @@ export function useMaintenanceAccessControl(enabled: boolean) {
         setSavingScaleLeadershipId(null);
       }
     },
-    [error, handleRpcError, reloadProfileScaleLeadership, selectedProfile]
+    [error, handleRpcError, profileScaleLeadership, selectedProfile]
   );
 
   const updateRoleGrant = useCallback(
@@ -290,9 +312,24 @@ export function useMaintenanceAccessControl(enabled: boolean) {
     ) => {
       const nextView = patch.canView ?? grant.canView;
       const nextUpdate = patch.canUpdate ?? grant.canUpdate;
+      const previousView = grant.canView;
+      const previousUpdate = grant.canUpdate;
 
       setSavingGrantKey(grant.resourceKey);
       setError(null);
+
+      setRoleGrants((current) =>
+        current.map((row) =>
+          row.resourceKey === grant.resourceKey
+            ? {
+                ...row,
+                canView: nextView,
+                canUpdate: nextUpdate,
+                grantId: nextView || nextUpdate ? row.grantId ?? 'local' : null,
+              }
+            : row
+        )
+      );
 
       try {
         const result = await saveRoleGrantAdmin(
@@ -304,25 +341,36 @@ export function useMaintenanceAccessControl(enabled: boolean) {
         );
 
         if (!result.success) {
+          setRoleGrants((current) =>
+            current.map((row) =>
+              row.resourceKey === grant.resourceKey
+                ? {
+                    ...row,
+                    canView: previousView,
+                    canUpdate: previousUpdate,
+                    grantId: previousView || previousUpdate ? row.grantId : null,
+                  }
+                : row
+            )
+          );
           setError(result.message);
           return result;
         }
 
+        return result;
+      } catch (err) {
         setRoleGrants((current) =>
           current.map((row) =>
             row.resourceKey === grant.resourceKey
               ? {
                   ...row,
-                  canView: nextView,
-                  canUpdate: nextUpdate,
-                  grantId: nextView || nextUpdate ? row.grantId ?? 'local' : null,
+                  canView: previousView,
+                  canUpdate: previousUpdate,
+                  grantId: previousView || previousUpdate ? row.grantId : null,
                 }
               : row
           )
         );
-
-        return result;
-      } catch (err) {
         console.error('Erro ao salvar grant:', err);
         handleRpcError(err, 'Não foi possível salvar a permissão.');
         return { success: false as const, message: error ?? 'Não foi possível salvar a permissão.' };

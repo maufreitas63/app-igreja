@@ -400,8 +400,6 @@ export default function MaintenanceDashboard() {
           return;
         }
 
-        setAccessState('allowed');
-
         try {
           const isSuperAdmin = await checkSessionIsSuperAdmin();
           if (active) {
@@ -436,6 +434,10 @@ export default function MaintenanceDashboard() {
             setScalePanelAccess({});
             setCanAccessPastoralCare(false);
           }
+        }
+
+        if (active) {
+          setAccessState('allowed');
         }
 
         const phone = await getStoredUserPhone();
@@ -531,8 +533,8 @@ export default function MaintenanceDashboard() {
 
     const confirmed = await confirmDialog(
       'Replicar evento (+7)',
-      'Criar 7 cópias nos próximos dias com os mesmos dados deste formulário? Todas ficarão como rascunho.',
-      'Criar 7',
+      'Criar 1 cópia para daqui a 7 dias com os mesmos dados deste formulário? A cópia ficará como rascunho.',
+      'Criar cópia',
       'Cancelar'
     );
 
@@ -562,8 +564,8 @@ export default function MaintenanceDashboard() {
       await refetch();
       Toast.show({
         type: 'success',
-        text1: 'Eventos replicados',
-        text2: `${result.createdCount} rascunhos criados para os próximos 7 dias.`,
+        text1: 'Evento replicado',
+        text2: '1 rascunho criado para daqui a 7 dias.',
       });
     } catch (replicateError) {
       console.error('Erro ao replicar evento:', replicateError);
@@ -1314,7 +1316,7 @@ export default function MaintenanceDashboard() {
                       onPress={() => void handleReplicateSevenDays()}
                       disabled={isBusy}
                       accessibilityRole="button"
-                      accessibilityLabel="Replicar evento para os próximos 7 dias como rascunho"
+                      accessibilityLabel="Duplicar evento para daqui a 7 dias como rascunho"
                     >
                       {isReplicatingSeven ? (
                         <ActivityIndicator color="#C7D2FE" size="small" />
@@ -1323,7 +1325,7 @@ export default function MaintenanceDashboard() {
                       )}
                     </Pressable>
                     <Text style={styles.replicateSevenHint}>
-                      Cria 7 cópias nos dias seguintes com os mesmos parâmetros, sempre em rascunho.
+                      Cria 1 cópia para daqui a 7 dias com os mesmos parâmetros, sempre em rascunho.
                     </Text>
                   </View>
                 ) : null}
