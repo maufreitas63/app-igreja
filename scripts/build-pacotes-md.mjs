@@ -31,7 +31,7 @@ writePackage('PACOTE_1_VISAO_GERAL.md', [
   '',
   'Documentação **autocontida** para diretoria, membros, famílias e voluntários.',
   '',
-  '**Atualizado em:** 09/06/2026',
+  '**Atualizado em:** 10/06/2026',
   '',
   'Conteúdo integrado: Funcionalidades · Manual de Treinamento · FAQ',
 ], [
@@ -45,7 +45,7 @@ writePackage('PACOTE_2_OPERACAO.md', [
   '',
   'Documentação **autocontida** para secretaria, eventos, salas Kids/Teens e líderes de escala.',
   '',
-  '**Atualizado em:** 09/06/2026',
+  '**Atualizado em:** 10/06/2026',
   '',
   'Conteúdo integrado: Manutenção como ecossistema · Missão B4 (escalas) · Card Agenda · FAQ Totem/Manutenção',
 ], [
@@ -60,7 +60,7 @@ writePackage('PACOTE_3_GOVERNANCA_TI.md', [
   '',
   'Documentação **autocontida** para super administrador, TI e desenvolvedor.',
   '',
-  '**Atualizado em:** 09/06/2026',
+  '**Atualizado em:** 10/06/2026',
   '',
   'Conteúdo integrado: Manual operacional ACL · Modelo de controle de acesso · Camadas de segurança · Blueprint completo',
 ], [
@@ -75,7 +75,7 @@ writePackage('PACOTE_4_ANEXO_TECNICO.md', [
   '',
   'Documentação **autocontida** de arquitetura e referências técnicas.',
   '',
-  '**Atualizado em:** 09/06/2026',
+  '**Atualizado em:** 10/06/2026',
   '',
   'Conteúdo integrado: Arquitetura Blueprint PWA · Cards do Dashboard',
 ], [

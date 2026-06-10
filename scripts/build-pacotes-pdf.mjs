@@ -26,6 +26,8 @@ const files = [
   'DASHBOARD_CARDS.md',
   'TSTMAX_SEED.md',
   'README.md',
+  'CHECKLIST_VALIDACAO_POS_DEPLOY.md',
+  'DEPLOY_CLOUDFLARE.md',
 ];
 
 const pdfCss = `

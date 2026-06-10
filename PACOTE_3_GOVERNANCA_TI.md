@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para super administrador, TI e desenvolvedor.
 
-**Atualizado em:** 09/06/2026
+**Atualizado em:** 10/06/2026
 
 Conteúdo integrado: Manual operacional ACL · Modelo de controle de acesso · Camadas de segurança · Blueprint completo
 
@@ -20,7 +20,7 @@ Documentação técnica de referência: [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.m
 
 **Pacote:** [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 09/06/2026
+**Atualizado em:** 10/06/2026
 
 ---
 
@@ -949,7 +949,7 @@ Ajuste conforme a política da igreja.
 
 Documento de referência do modelo de **defesa em profundidade** do **app-igreja** (Igreja Batista Norte).
 
-**Atualizado em:** 09/06/2026
+**Atualizado em:** 10/06/2026
 
 **Documentação relacionada:** [`BLUEPRINT.md`](BLUEPRINT.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md) · [`MANUAL_CONTROLE_ACESSO.md`](MANUAL_CONTROLE_ACESSO.md) · [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md)
 
@@ -1285,7 +1285,7 @@ O modelo não depende de uma única barreira: um bypass no cliente ainda encontr
 
 ---
 
-*App IBN · Igreja Batista Norte · Especificação de segurança v2026-06-09*
+*App IBN · Igreja Batista Norte · Especificação de segurança v2026-06-10*
 
 
 ---
@@ -1300,7 +1300,7 @@ Documento de referência da solução implementada: telas, controles, fluxos de 
 
 **Índice da documentação:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · Pacote técnico: [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md) · Anexo: [`PACOTE_4_ANEXO_TECNICO.md`](PACOTE_4_ANEXO_TECNICO.md)
 
-**Atualizado em:** 09/06/2026
+**Atualizado em:** 10/06/2026
 
 ---
 

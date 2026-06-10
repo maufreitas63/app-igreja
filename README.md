@@ -19,8 +19,10 @@ PDFs gerados em [`pdfs/`](pdfs/).
 
 ```bash
 npm install
-npm run web          # PWA em http://localhost:8081
-npm run build:docs   # Regenera pacotes .md e PDFs
+npm run web              # PWA em http://localhost:8081
+npm run build:web        # Export estático para deploy (dist/)
+npm run generate:icons   # Regenera ícones a partir da marca d'água
+npm run build:docs       # Regenera pacotes .md e PDFs em pdfs/
 ```
 
 ## Stack

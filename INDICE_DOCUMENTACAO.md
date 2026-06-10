@@ -4,7 +4,7 @@ Documentação completa do **app-igreja** (Igreja Batista Norte) para entrega ao
 
 Cada **pacote** é um arquivo **autocontido**: o texto integral dos documentos de referência está transcrito dentro do pacote (não é necessário abrir outros arquivos para ler o conteúdo).
 
-**Atualizado em:** 09/06/2026
+**Atualizado em:** 10/06/2026
 
 ---
 
@@ -66,6 +66,16 @@ npm run build:docs       # ambos em sequência
 
 ---
 
+## Operação e validação (equipe / TI)
+
+| Documento | Markdown | PDF |
+|-----------|----------|-----|
+| Checklist pós-deploy | [`CHECKLIST_VALIDACAO_POS_DEPLOY.md`](CHECKLIST_VALIDACAO_POS_DEPLOY.md) | [`pdfs/CHECKLIST_VALIDACAO_POS_DEPLOY.pdf`](pdfs/CHECKLIST_VALIDACAO_POS_DEPLOY.pdf) |
+| Deploy Cloudflare | [`DEPLOY_CLOUDFLARE.md`](DEPLOY_CLOUDFLARE.md) | [`pdfs/DEPLOY_CLOUDFLARE.pdf`](pdfs/DEPLOY_CLOUDFLARE.pdf) |
+| README do repositório | [`README.md`](README.md) | [`pdfs/README.pdf`](pdfs/README.pdf) |
+
+---
+
 ## Fora da entrega ao cliente
 
 | Arquivo | Motivo |
@@ -76,4 +86,4 @@ npm run build:docs       # ambos em sequência
 
 ---
 
-*App IBN · Igreja Batista Norte · Documentação v2026-06-09*
+*App IBN · Igreja Batista Norte · Documentação v2026-06-10*

@@ -37,6 +37,37 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 - [ ] Evento com totem ativo, no dia de hoje: após confirmar check-in, card **QR Code — Totem** fica azul piscina
 - [ ] No dia seguinte (ou fora do dia do evento), o destaque não aparece
 
+**Pedido:** ao sair de telas abertas pelo dashboard, voltar ao card que originou a navegação.
+
+- [ ] **Lista de Membros** → **Mapa Geral** → **Voltar** retorna ao card Lista de Membros
+- [ ] **Gestão de Cadastros** → **Dados Cadastrais** ou **Gerenciar Família** → **Voltar** retorna ao card Gestão de Cadastros
+- [ ] **Coração Aberto**, **Financeiro** e demais atalhos com `returnDashboardCard` restauram o card correto
+
+**Pedido:** paletas de cores distintas por card do carrossel.
+
+- [ ] Cada card do dashboard tem fundo/borda/acento visualmente diferenciados
+
+**Pedido:** card Gestão de Cadastros com título e botões reposicionados.
+
+- [ ] Título do card 6 exibe **Gestão de Cadastros** (não “Dados Cadastrais” como título do card)
+- [ ] Botões **Dados Cadastrais** e **Gerenciar Família** menores e mais abaixo no card
+
+**Pedido:** botões Visitantes e Mapa Geral na mesma linha no card Lista de Membros.
+
+- [ ] **Visitantes** (ou **Membros**) e **Mapa Geral** ocupam metade da largura cada, na mesma linha
+
+**Pedido:** ícone touch-app no botão Copiar chave PIX.
+
+- [ ] Card **Dízimos e Ofertas** → botão **Copiar chave PIX** exibe ícone *touch-app*
+
+**Pedido:** toasts longos sem truncar em uma linha.
+
+- [ ] Mensagens de erro/aviso longas aparecem em até 3–6 linhas, legíveis no PWA
+
+**Pedido:** ícone do app com a arte da marca d'água.
+
+- [ ] Favicon e ícone instalável do PWA usam o logo da marca d'água (não o ícone padrão Expo)
+
 ---
 
 ## Manutenção — eventos
@@ -262,4 +293,4 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 
 ---
 
-*Atualizado em 22/05/2026*
+*Atualizado em 10/06/2026*

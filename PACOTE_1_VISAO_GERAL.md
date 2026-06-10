@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para diretoria, membros, famílias e voluntários.
 
-**Atualizado em:** 09/06/2026
+**Atualizado em:** 10/06/2026
 
 Conteúdo integrado: Funcionalidades · Manual de Treinamento · FAQ
 
@@ -20,7 +20,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`BLUEPRINT.md`](BLUEPRINT.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md)
 
-**Atualizado em:** 09/06/2026
+**Atualizado em:** 10/06/2026
 
 ---
 
@@ -84,6 +84,9 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 - Tela de **Menu/atalhos** legada integrada ao índice; **ícones coloridos** por módulo
 - Acesso à **manutenção** via ícone engrenagem *(staff)* — índice com ícones coloridos e tokens visuais compartilhados
 - Cards filtrados por **permissão de perfil** (ACL)
+- **Paletas visuais distintas** por tipo de card (`lib/dashboardCardThemes.ts`)
+- **Retorno ao card de origem** — telas abertas a partir do dashboard (perfil, família, mapa, pastoral, financeiro) voltam ao card que as chamou via parâmetro `returnDashboardCard`
+- Toasts com **mensagens longas em múltiplas linhas** (`components/ui/appToastConfig.tsx`)
 
 ### Cards do dashboard (membro)
 
@@ -92,14 +95,14 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **Agenda da Família** | Seleção de evento, vagas, inscrição/audiência (pré-check-in), checkbox em massa |
 | **Check-in / QR Code** | Etiqueta da família, QR para totem, badges Kids/Teens, modal de seleção manual |
 | **SALA(S)** | Monitoramento read-only de entrada Kids/Teens — **somente membros da própria família** |
-| **Dízimos e Ofertas** | Sempre visível no carrossel; dados do recebedor, chave PIX, copiar PIX, atualizar chave |
+| **Dízimos e Ofertas** | Sempre visível no carrossel; dados do recebedor, chave PIX, **Copiar chave PIX** com ícone *touch-app*, atualizar chave |
 | **Coração Aberto** | Atalho para pedido pastoral |
-| **Lista de Membros** | Busca, tabela nome/família, WhatsApp, modal de membros da família |
+| **Lista de Membros** | Botões **Visitantes** e **Mapa Geral** na mesma linha; alternância membros/visitantes; busca; tabela nome/família; WhatsApp; modal de membros da família |
 | **Aniversariantes** | Filtro por mês, lista com WhatsApp |
 | **Financeiro** | Atalho para relatórios (somente leitura) |
 | **Escalas** | Lista de tipos de escala, escala por data, WhatsApp dos servos |
 | **Estacionamento** | Identificação de veículo por placa, WhatsApp do proprietário |
-| **Dados Cadastrais** | Atalhos para perfil e gerenciar família |
+| **Gestão de Cadastros** (`grouped_manage`) | Título do card; atalhos **Dados Cadastrais** e **Gerenciar Família** com ícones |
 
 ---
 
@@ -297,6 +300,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 - INSERT direto em `escalas_log` bloqueado no cliente
 - Sessão local com reparo automático de referência de perfil
 - PWA exportável (`npm run build:web` → `dist/`)
+- Ícones do app (favicon, splash, Android) gerados pela arte da marca d'água (`npm run generate:icons`)
 - Purga de caches legados do mapa
 - Política de geocodificação documentada (servidor-primário)
 
@@ -736,7 +740,7 @@ Respostas às dúvidas mais comuns sobre o aplicativo da **Igreja Batista Norte*
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`FUNCIONALIDADES.md`](FUNCIONALIDADES.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`BLUEPRINT.md`](BLUEPRINT.md)
 
-**Atualizado em:** 09/06/2026
+**Atualizado em:** 10/06/2026
 
 ---
 

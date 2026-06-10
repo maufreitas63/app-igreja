@@ -2,7 +2,7 @@
 
 Documento de referência do modelo de **defesa em profundidade** do **app-igreja** (Igreja Batista Norte).
 
-**Atualizado em:** 09/06/2026
+**Atualizado em:** 10/06/2026
 
 **Documentação relacionada:** [`BLUEPRINT.md`](BLUEPRINT.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md) · [`MANUAL_CONTROLE_ACESSO.md`](MANUAL_CONTROLE_ACESSO.md) · [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md)
 
@@ -338,4 +338,4 @@ O modelo não depende de uma única barreira: um bypass no cliente ainda encontr
 
 ---
 
-*App IBN · Igreja Batista Norte · Especificação de segurança v2026-06-09*
+*App IBN · Igreja Batista Norte · Especificação de segurança v2026-06-10*

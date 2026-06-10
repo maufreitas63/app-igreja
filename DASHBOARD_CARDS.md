@@ -10,7 +10,7 @@ Lista dos cards do carrossel horizontal em `app/(tabs)/dashboard.tsx`.
 
 
 
-**Atualizado em:** 09/06/2026
+**Atualizado em:** 10/06/2026
 
 
 
@@ -39,6 +39,10 @@ Tela inicial após o login com **etiquetas** (atalhos) para cada módulo do Pain
 - O cabeçalho mostra o título do card ativo (`ActiveScreenBadge`).
 
 - Cards visíveis dependem de **ACL** (`dashboard.card.*`) e de flags de evento/escala/estacionamento.
+
+- Cada card usa **paleta visual própria** (fundo, borda, sombra e acentos) definida em `lib/dashboardCardThemes.ts`.
+
+- Telas filhas abertas a partir do dashboard propagam `returnDashboardCard`; ao voltar, o carrossel restaura o card de origem sem passar por cards intermediários.
 
 
 
@@ -72,7 +76,7 @@ Tela inicial após o login com **etiquetas** (atalhos) para cada módulo do Pain
 
 | 9 | Estacionamento | 11 | `parking_vehicle_v2` | Painel de estacionamento ativo |
 
-| 6 | Dados Cadastrais | 12 | `grouped_manage` | Sempre (com ACL) |
+| 6 | Gestão de Cadastros | 12 | `grouped_manage` | Sempre (com ACL) — título na UI; atalhos Dados Cadastrais e Gerenciar Família |
 
 
 
@@ -110,7 +114,7 @@ Tela inicial após o login com **etiquetas** (atalhos) para cada módulo do Pain
 
 | 11 | 9 | Estacionamento *(condicional)* |
 
-| 12 | 6 | Dados Cadastrais |
+| 12 | 6 | Gestão de Cadastros |
 
 
 
@@ -142,7 +146,7 @@ Quando Check In, Estacionamento e Servos em escala estão ocultos:
 
 | 8 | 8 | Escalas |
 
-| 9 | 6 | Dados Cadastrais |
+| 9 | 6 | Gestão de Cadastros |
 
 
 
@@ -179,5 +183,27 @@ Outras telas podem abrir um card via `dashboardCard`:
 
 
 Constante usada para o menu: `DASHBOARD_MENU_CARD_ID = '6'`.
+
+---
+
+## Card Lista de Membros (`members_list`)
+
+- Botões **Visitantes** (ou **Membros**, conforme a lista ativa) e **Mapa Geral** dividem a mesma linha (`flex: 1` cada).
+- **Mapa Geral** abre `/mapa-geolocalizacao` preservando `returnDashboardCard`.
+- Título alterna entre *LISTA DE MEMBROS* e *LISTA DE VISITANTES*.
+
+---
+
+## Card Gestão de Cadastros (`grouped_manage`)
+
+- Título exibido: **Gestão de Cadastros** (identificador interno do card permanece `grouped_manage`).
+- Botões com ícones: **Dados Cadastrais** → `/manage-profile`; **Gerenciar Família** → `/manage-members`.
+- Ambos propagam `returnDashboardCard` para retorno ao card 6.
+
+---
+
+## Card Dízimos e Ofertas (`offerings`)
+
+- Botão **Copiar chave PIX** usa ícone Material *touch-app* para reforçar a ação de toque no PWA.
 
 

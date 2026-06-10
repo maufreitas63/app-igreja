@@ -4,7 +4,7 @@ Proposta de atuação do **administrador** no módulo de manutenção (`maintena
 
 **Pacote:** [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 09/06/2026
+**Atualizado em:** 10/06/2026
 
 ---
 

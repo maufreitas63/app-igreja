@@ -2,7 +2,7 @@
 
 **Pacote:** [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 10/06/2026
 
 ## Objetivo
 
