@@ -3724,6 +3724,7 @@ const styles = StyleSheet.create({
   cardPastoralBody: {
     width: '100%',
     paddingHorizontal: 8,
+    marginTop: 28,
   },
   cardPastoralSubtitle: {
     color: '#E9D5FF',
