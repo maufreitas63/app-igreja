@@ -1595,6 +1595,8 @@ const styles = StyleSheet.create({
     fontWeight: UI_PANEL_TYPO.title.fontWeight,
     lineHeight: UI_PANEL_TYPO.title.lineHeight,
     color: UI_PANEL_TYPO.title.color,
+    textAlign: 'center',
+    alignSelf: 'stretch',
   },
   menuPanelSubtitleSpacer: {
     height: UI_PANEL_TYPO.subtitle.lineHeight,
@@ -1661,6 +1663,8 @@ const styles = StyleSheet.create({
     fontSize: UI_PANEL_TYPO.titleMuted.fontSize,
     fontWeight: UI_PANEL_TYPO.titleMuted.fontWeight,
     color: UI_PANEL_TYPO.titleMuted.color,
+    textAlign: 'center',
+    alignSelf: 'stretch',
   },
   ganttPanelSubtitleSpacer: {
     height: UI_PANEL_TYPO.subtitle.lineHeight,

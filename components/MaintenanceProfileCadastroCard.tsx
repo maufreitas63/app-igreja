@@ -108,9 +108,7 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
       <Text style={maintenancePanelStyles.panelTitle}>Cadastro de Usuário</Text>
-      <Text style={maintenancePanelStyles.panelSubtitle}>
-        Super admin · Salvar CEP consulta ViaCEP e grava rua, bairro, cidade e estado em profiles.
-      </Text>
+      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       {statusMessage ? <Text style={styles.successText}>{statusMessage}</Text> : null}

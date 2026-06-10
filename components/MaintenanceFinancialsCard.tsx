@@ -641,9 +641,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
       <Text style={maintenancePanelStyles.panelTitle}>Informações Financeiras</Text>
-      <Text style={maintenancePanelStyles.panelSubtitle}>
-        Carga, limpeza e lançamentos por mês de referência
-      </Text>
+      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_FINANCIALS_SQL_HINT}</Text> : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}

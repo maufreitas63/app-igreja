@@ -215,7 +215,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
       <Text style={maintenancePanelStyles.panelTitle}>Controle de Acesso</Text>
-      <Text style={maintenancePanelStyles.panelSubtitle}>Papéis de perfis e grants por papel</Text>
+      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_ACCESS_CONTROL_SQL_HINT}</Text> : null}
       {!rpcMissing && missingExpectedRoles.length > 0 ? (

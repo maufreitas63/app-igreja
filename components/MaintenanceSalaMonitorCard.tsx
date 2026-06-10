@@ -174,6 +174,14 @@ export const MaintenanceSalaMonitorCard = ({
         panelHeight ? { height: panelHeight } : null,
       ]}
     >
+      {embedded ? (
+        <View style={styles.embeddedCardHeader}>
+          <Text style={maintenancePanelStyles.panelTitle}>Sala(s) - Check In</Text>
+          <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+        </View>
+      ) : null}
+
+      <View style={[styles.contentBody, embedded && styles.contentBodyEmbedded]}>
       <View style={styles.eventHero}>
         <Text style={styles.eventHeroLabel}>Evento ativo (card 1 — Agenda)</Text>
         {selectedEvent ? (
@@ -238,8 +246,6 @@ export const MaintenanceSalaMonitorCard = ({
           </Text>
         )}
       </View>
-
-      <Text style={maintenancePanelStyles.panelTitle}>Sala(s)</Text>
 
       {isLoading ? (
         <CardLoadingState lines={4} />
@@ -388,6 +394,7 @@ export const MaintenanceSalaMonitorCard = ({
           )}
         </View>
       )}
+      </View>
     </View>
   );
 };
@@ -399,7 +406,22 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   rootEmbedded: {
-    padding: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    paddingTop: 8,
+    gap: 6,
+  },
+  embeddedCardHeader: {
+    alignSelf: 'stretch',
+    marginBottom: 2,
+  },
+  contentBody: {
+    flex: 1,
+    minHeight: 0,
+    gap: 10,
+  },
+  contentBodyEmbedded: {
+    marginTop: 4,
   },
   eventHero: {
     borderRadius: 18,
