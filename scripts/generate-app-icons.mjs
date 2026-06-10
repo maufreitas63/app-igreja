@@ -7,6 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 const sourcePath = path.join(rootDir, 'logos', '4.jpeg');
 const outputDir = path.join(rootDir, 'assets', 'images');
+const pwaOutputDir = path.join(rootDir, 'public', 'pwa');
 
 const ICON_SIZE = 1024;
 const ICON_PADDING_RATIO = 0.1;
@@ -36,6 +37,7 @@ const buildSquareIcon = async (size, paddingRatio = ICON_PADDING_RATIO) => {
 };
 
 await mkdir(outputDir, { recursive: true });
+await mkdir(pwaOutputDir, { recursive: true });
 
 const iconBuffer = await buildSquareIcon(ICON_SIZE);
 
@@ -57,4 +59,7 @@ await sharp({
 
 await sharp(iconBuffer).greyscale().png().toFile(path.join(outputDir, 'android-icon-monochrome.png'));
 
-console.log('Ícones gerados a partir de logos/4.jpeg (marca d\'água) em assets/images/');
+await sharp(iconBuffer).resize(192, 192).toFile(path.join(pwaOutputDir, 'icon-192.png'));
+await sharp(iconBuffer).resize(512, 512).toFile(path.join(pwaOutputDir, 'icon-512.png'));
+
+console.log('Ícones gerados a partir de logos/4.jpeg (marca d\'água) em assets/images/ e public/pwa/');

@@ -1,23 +1,30 @@
 import {
   canOfferPwaInstallUi,
   getPwaInstallInstructions,
-  isIosWeb,
   isPwaInstalled,
   type BeforeInstallPromptEvent,
 } from '@/lib/pwaInstall';
+import { registerPwaServiceWorker } from '@/lib/pwaServiceWorker';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
+
+export type PwaInstallInstructions = {
+  title: string;
+  message: string;
+};
 
 export function usePwaInstall() {
   const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(() => canOfferPwaInstallUi());
-  const [hasNativePrompt, setHasNativePrompt] = useState(false);
+  const [instructions, setInstructions] = useState<PwaInstallInstructions | null>(null);
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') {
       setIsVisible(false);
       return;
     }
+
+    registerPwaServiceWorker();
 
     const refreshVisibility = () => {
       setIsVisible(canOfferPwaInstallUi());
@@ -26,14 +33,13 @@ export function usePwaInstall() {
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       deferredPromptRef.current = event as BeforeInstallPromptEvent;
-      setHasNativePrompt(true);
       refreshVisibility();
     };
 
     const onAppInstalled = () => {
       deferredPromptRef.current = null;
-      setHasNativePrompt(false);
       setIsVisible(false);
+      setInstructions(null);
     };
 
     window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
@@ -45,6 +51,10 @@ export function usePwaInstall() {
       window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
       window.removeEventListener('appinstalled', onAppInstalled);
     };
+  }, []);
+
+  const dismissInstructions = useCallback(() => {
+    setInstructions(null);
   }, []);
 
   const install = useCallback(async () => {
@@ -59,27 +69,25 @@ export function usePwaInstall() {
         const choice = await deferredPrompt.userChoice;
 
         deferredPromptRef.current = null;
-        setHasNativePrompt(false);
 
         if (choice.outcome === 'accepted') {
           setIsVisible(false);
+          setInstructions(null);
+          return;
         }
       } catch (error) {
         console.error('Erro ao abrir prompt de instalação do PWA:', error);
-        const instructions = getPwaInstallInstructions();
-        Alert.alert(instructions.title, instructions.message);
       }
-      return;
     }
 
-    const instructions = getPwaInstallInstructions();
-    Alert.alert(instructions.title, instructions.message);
+    setInstructions(getPwaInstallInstructions());
   }, []);
 
   return {
     install,
     isVisible,
-    hasNativePrompt: hasNativePrompt || isIosWeb(),
+    instructions,
+    dismissInstructions,
     isInstalled: isPwaInstalled(),
   };
 }
