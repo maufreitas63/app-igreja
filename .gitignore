@@ -8,6 +8,7 @@ node_modules/
 .expo-tmp-export/
 dist/
 web-build/
+public/cadastro-familia/
 expo-env.d.ts
 
 # Native
