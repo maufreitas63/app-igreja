@@ -2186,9 +2186,17 @@ export default function Dashboard() {
                     </TouchableOpacity>
                   </View>
                 ) : item.content === 'members_list' ? (
-                  <View style={[styles.card, styles.cardMembersList, eventPanelCardSizeStyle]}>
+                  <View
+                    style={[
+                      styles.card,
+                      styles.cardMembersList,
+                      styles.dashboardPanelCardTopLayout,
+                      dashboardPanelCardSizeStyle,
+                      dashboardPanelTopInsetStyle,
+                    ]}
+                  >
                     <View style={styles.membersListHeader}>
-                      <Text style={styles.membersListTitle}>
+                      <Text style={styles.dashboardPanelTitle}>
                         {membersListAudience === 'visitors' ? 'LISTA DE VISITANTES' : item.title}
                       </Text>
                       <View style={styles.membersListActionButtons}>
@@ -3851,12 +3859,6 @@ const styles = StyleSheet.create({
   membersListHeader: {
     gap: 8,
     alignItems: 'stretch',
-  },
-  membersListTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FFF',
-    textAlign: 'center',
   },
   membersListActionButtons: {
     flexDirection: 'row',
