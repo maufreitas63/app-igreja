@@ -2905,6 +2905,12 @@ export default function Dashboard() {
                             <Text style={styles.offeringsKeyValue}>{pixKey}</Text>
                           </View>
                           <TouchableOpacity style={styles.offeringsCopyButton} onPress={handleCopyPixKey}>
+                            <MaterialIcons
+                              name="touch-app"
+                              size={34}
+                              color="#022C22"
+                              style={styles.offeringsCopyButtonIcon}
+                            />
                             <Text style={styles.offeringsCopyButtonText}>Copiar chave PIX</Text>
                           </TouchableOpacity>
                           <Text style={styles.offeringsHelpText}>
@@ -5005,11 +5011,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   offeringsCopyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
     backgroundColor: '#10b981',
     borderRadius: 18,
     paddingVertical: 16,
     paddingHorizontal: 16,
-    alignItems: 'center',
+  },
+  offeringsCopyButtonIcon: {
+    flexShrink: 0,
   },
   offeringsCopyButtonText: {
     color: '#022C22',
