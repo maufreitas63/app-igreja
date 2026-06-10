@@ -2373,6 +2373,7 @@ export default function Dashboard() {
                   >
                     <Text style={styles.dashboardPanelTitle}>{item.title}</Text>
 
+                    <View style={styles.birthdaysBody}>
                     <View style={styles.birthdaysFilterSection}>
                       <Text style={styles.birthdaysFilterLabel}>Selecionar Mês</Text>
                       <DropdownSelect
@@ -2449,6 +2450,7 @@ export default function Dashboard() {
                           {selectedBirthdayMonthLabel.toLowerCase()}.
                         </Text>
                       )}
+                    </View>
                     </View>
                   </View>
                 ) : item.content === 'financial' ? (
@@ -4696,6 +4698,12 @@ const styles = StyleSheet.create({
     color: '#E2E8F0',
     fontSize: 14,
     lineHeight: 20,
+  },
+  birthdaysBody: {
+    flex: 1,
+    minHeight: 0,
+    gap: 6,
+    marginTop: 28,
   },
   birthdaysFilterSection: {
     flexDirection: 'row',
