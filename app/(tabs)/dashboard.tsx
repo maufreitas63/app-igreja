@@ -2267,14 +2267,17 @@ export default function Dashboard() {
                     <View style={styles.membersListBody}>
                       <View style={styles.membersListActionButtons}>
                         {membersListAudience === 'members' ? (
-                          <TouchableOpacity
-                            style={styles.membersListVisitorsButton}
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.membersListVisitorsButton,
+                              styles.membersListVisitorsButtonWeb3D,
+                              pressed && styles.membersListVisitorsButtonWeb3DPressed,
+                            ]}
                             onPress={handleShowVisitorsList}
-                            activeOpacity={0.85}
                           >
                             <FontAwesome name="user-o" size={16} color="#FFF" />
                             <Text style={styles.membersListVisitorsButtonText}>Visitantes</Text>
-                          </TouchableOpacity>
+                          </Pressable>
                         ) : (
                           <TouchableOpacity
                             style={styles.membersListMembersButton}
@@ -2285,14 +2288,17 @@ export default function Dashboard() {
                             <Text style={styles.membersListMembersButtonText}>Membros</Text>
                           </TouchableOpacity>
                         )}
-                        <TouchableOpacity
-                          style={styles.membersListMapButton}
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.membersListMapButton,
+                            styles.membersListMapButtonWeb3D,
+                            pressed && styles.membersListMapButtonWeb3DPressed,
+                          ]}
                           onPress={handleOpenMembersMap}
-                          activeOpacity={0.85}
                         >
                           <FontAwesome name="map" size={18} color="#FFF" />
                           <Text style={styles.membersListMapButtonText}>Mapa Geral</Text>
-                        </TouchableOpacity>
+                        </Pressable>
                       </View>
 
                     <Text style={styles.membersListSummaryText}>
@@ -4009,6 +4015,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#818CF8',
   },
+  membersListVisitorsButtonWeb3D: Platform.select({
+    web: {
+      boxShadow: '0px 6px 0px #312e81',
+      borderBottomWidth: 0,
+      transition: 'all 0.1s ease',
+      cursor: 'pointer',
+    },
+    default: {},
+  }),
+  membersListVisitorsButtonWeb3DPressed: Platform.select({
+    web: {
+      boxShadow: 'none',
+      transform: [{ translateY: 6 }],
+    },
+    default: {},
+  }),
   membersListVisitorsButtonText: {
     color: '#FFFFFF',
     fontSize: 13,
@@ -4045,6 +4067,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FBBF24',
   },
+  membersListMapButtonWeb3D: Platform.select({
+    web: {
+      boxShadow: '0px 6px 0px #92400e',
+      borderBottomWidth: 0,
+      transition: 'all 0.1s ease',
+      cursor: 'pointer',
+    },
+    default: {},
+  }),
+  membersListMapButtonWeb3DPressed: Platform.select({
+    web: {
+      boxShadow: 'none',
+      transform: [{ translateY: 6 }],
+    },
+    default: {},
+  }),
   membersListMapButtonText: {
     color: '#FFFFFF',
     fontSize: 13,
