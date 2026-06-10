@@ -2180,8 +2180,8 @@ export default function Dashboard() {
                   </View>
                 ) : item.content === 'members_list' ? (
                   <View style={[styles.card, styles.cardMembersList, eventPanelCardSizeStyle]}>
-                    <View style={styles.membersListTitleRow}>
-                      <Text style={styles.cardTitle}>
+                    <View style={styles.membersListHeader}>
+                      <Text style={styles.membersListTitle}>
                         {membersListAudience === 'visitors' ? 'LISTA DE VISITANTES' : item.title}
                       </Text>
                       <View style={styles.membersListActionButtons}>
@@ -3794,16 +3794,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  membersListTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 10,
+  membersListHeader: {
+    gap: 8,
+    alignItems: 'stretch',
+  },
+  membersListTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFF',
+    textAlign: 'center',
   },
   membersListActionButtons: {
-    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
   },
   membersListVisitorsButton: {
