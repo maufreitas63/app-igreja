@@ -8,7 +8,7 @@ import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { useDashboardSelectedEvent, useEventRegistrationsByStatus } from '@/hooks';
 import { useFamilyPreCheckin } from '@/hooks/useFamilyPreCheckin';
-import { useIsSuperAdminProfile } from '@/hooks/useIsSuperAdminProfile';
+import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import { getAppParameterValue } from '@/lib/appParameters';
 import { OFFERINGS_RECIPIENT_ROWS } from '@/lib/offeringsRecipientInfo';
 import {
@@ -1576,7 +1576,7 @@ export default function Dashboard() {
     return card?.title?.trim() ?? '';
   }, [currentIndex, data]);
 
-  const { isSuperAdmin: isSuperAdminProfile } = useIsSuperAdminProfile(Boolean(profile?.id));
+  const { showTechnicalKeys } = useShowAclTechnicalKeys(Boolean(profile?.id));
 
   const activeDashboardScreenTechnicalKey = useMemo(() => {
     const card = data[currentIndex];
@@ -1904,7 +1904,7 @@ export default function Dashboard() {
               <ActiveScreenBadge
                 title={activeDashboardScreenTitle}
                 accent="emerald"
-                technicalKey={isSuperAdminProfile ? activeDashboardScreenTechnicalKey : null}
+                technicalKey={showTechnicalKeys ? activeDashboardScreenTechnicalKey : null}
               />
             </View>
           </View>

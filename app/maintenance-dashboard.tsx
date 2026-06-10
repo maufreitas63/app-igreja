@@ -22,6 +22,7 @@ import { MaintenanceSalaMonitorCard } from '@/components/MaintenanceSalaMonitorC
 import { QuorumCheckinRegistryTable } from '@/components/QuorumCheckinRegistryTable';
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { resolveMaintenancePanelAccessResourceKey } from '@/lib/screenAccessResourceKeys';
+import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
 import { loadPastoralCarePanelAccess } from '@/lib/pastoralAccess';
 import {
@@ -711,6 +712,8 @@ export default function MaintenanceDashboard() {
     return maintenanceCarouselCards[currentIndex]?.title?.trim() ?? '';
   }, [currentIndex, isCreating, maintenanceCarouselCards, showEditor]);
 
+  const { showTechnicalKeys } = useShowAclTechnicalKeys(accessState === 'allowed');
+
   const activeMaintenanceScreenTechnicalKey = useMemo(() => {
     if (showEditor) {
       return resolveMaintenancePanelAccessResourceKey('events', { inEventEditor: true });
@@ -1100,7 +1103,7 @@ export default function MaintenanceDashboard() {
               <ActiveScreenBadge
                 title={activeMaintenanceScreenTitle}
                 accent="amber"
-                technicalKey={canManageAccessControl ? activeMaintenanceScreenTechnicalKey : null}
+                technicalKey={showTechnicalKeys ? activeMaintenanceScreenTechnicalKey : null}
               />
             </View>
           </View>

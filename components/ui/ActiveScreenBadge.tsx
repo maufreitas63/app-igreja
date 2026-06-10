@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 type ActiveScreenBadgeProps = {
   title: string;
   accent?: UiAccent;
-  /** Chave ACL (`resource_key`) exibida só para super admin. */
+  /** Chave ACL (`resource_key`) exibida só para super admin com `Exibir_nomes_tecnicos = sim`. */
   technicalKey?: string | null;
 };
 

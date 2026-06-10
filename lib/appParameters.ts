@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase';
 
+export const EXIBIR_NOMES_TECNICOS_PARAMETER = 'Exibir_nomes_tecnicos';
+
 const PARAMETER_CACHE_TTL_MS = 5 * 60 * 1000;
 
 type CacheEntry = {
@@ -75,4 +77,13 @@ export async function getAppParameterValue(parameter: string) {
 
   inflightRequests.set(normalizedParameter, request);
   return request;
+}
+
+export function isAppParameterSim(value: string | null | undefined) {
+  return (value ?? '').trim().toLocaleLowerCase() === 'sim';
+}
+
+export async function isExibirNomesTecnicosEnabled() {
+  const value = await getAppParameterValue(EXIBIR_NOMES_TECNICOS_PARAMETER);
+  return isAppParameterSim(value);
 }
