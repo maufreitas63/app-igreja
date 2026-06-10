@@ -15,6 +15,7 @@
     "web": "expo start --web --port 8081",
     "web:8083": "expo start --web --port 8083",
     "build:web": "expo export -p web",
+    "generate:icons": "node scripts/generate-app-icons.mjs",
     "build:docs:md": "node scripts/build-pacotes-md.mjs",
     "build:docs:pdf": "node scripts/build-pacotes-pdf.mjs",
     "build:docs": "node scripts/build-pacotes-md.mjs && node scripts/build-pacotes-pdf.mjs",
@@ -82,6 +83,7 @@
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
     "md-to-pdf": "^5.2.5",
+    "sharp": "^0.34.5",
     "typescript": "~5.9.2"
   },
   "private": true
