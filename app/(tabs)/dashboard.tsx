@@ -74,6 +74,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import Toast from 'react-native-toast-message';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const STATIC_CARD_INSETS = computeResponsiveCardInsets(390);
@@ -463,7 +464,6 @@ export default function Dashboard() {
   const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);
 
   const dashboardListRef = useRef<FlatList<DashboardCard>>(null);
-  const pixFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handledDashboardCardRef = useRef<string | null>(null);
   const previousDashboardCardIndexRef = useRef(0);
   const footerNavRepeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -491,7 +491,6 @@ export default function Dashboard() {
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [pixKey, setPixKey] = useState<string | null>(null);
   const [isPixKeyLoading, setIsPixKeyLoading] = useState(true);
-  const [pixFeedbackMessage, setPixFeedbackMessage] = useState<string | null>(null);
   const [qrCodeAtivoEnabled, setQrCodeAtivoEnabled] = useState(true);
   const [checkInManualMode, setCheckInManualMode] = useState(false);
   const [selectedGroupedRoom, setSelectedGroupedRoom] = useState<'KIDS' | 'TEENS' | null>(null);
@@ -1187,14 +1186,6 @@ export default function Dashboard() {
     };
   }, [loadVigilanceScales]);
 
-  useEffect(() => {
-    return () => {
-      if (pixFeedbackTimeoutRef.current) {
-        clearTimeout(pixFeedbackTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const handleExit = () => {
     router.replace('/(tabs)');
   };
@@ -1207,13 +1198,12 @@ export default function Dashboard() {
 
     try {
       await Clipboard.setStringAsync(pixKey);
-      setPixFeedbackMessage('Chave PIX copiada para a área de transferência.');
-      if (pixFeedbackTimeoutRef.current) {
-        clearTimeout(pixFeedbackTimeoutRef.current);
-      }
-      pixFeedbackTimeoutRef.current = setTimeout(() => {
-        setPixFeedbackMessage(null);
-      }, 3000);
+      Toast.show({
+        type: 'success',
+        text1: 'Chave PIX copiada',
+        text2: 'Cole no aplicativo do seu banco para concluir a transferência.',
+        visibilityTime: 3500,
+      });
     } catch (error) {
       console.error('Erro ao copiar chave PIX:', error);
       Alert.alert('Erro ao copiar', 'Não foi possível copiar a chave PIX.');
@@ -2686,9 +2676,6 @@ export default function Dashboard() {
                           <Text style={styles.offeringsHelpText}>
                             Toque no botão para copiar a chave e colar no aplicativo do seu banco.
                           </Text>
-                          {pixFeedbackMessage ? (
-                            <Text style={styles.offeringsSuccessText}>{pixFeedbackMessage}</Text>
-                          ) : null}
                         </>
                       ) : (
                         <>
@@ -4686,12 +4673,6 @@ const styles = StyleSheet.create({
     color: '#CBD5E1',
     fontSize: 14,
     lineHeight: 20,
-    textAlign: 'center',
-  },
-  offeringsSuccessText: {
-    color: '#86EFAC',
-    fontSize: 14,
-    fontWeight: '700',
     textAlign: 'center',
   },
   offeringsErrorText: {
