@@ -59,7 +59,6 @@ import { withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
@@ -3189,12 +3188,6 @@ export default function Dashboard() {
                             Toque aqui para iniciar um atendimento personalizado.
                           </Text>
                         </View>
-                        <Image
-                          source={require('@/assets/images/pastoral-prayer-heart.png')}
-                          style={styles.cardPastoralIllustration}
-                          contentFit="contain"
-                          accessibilityLabel="Ilustração de mãos em oração sobre um coração"
-                        />
                       </View>
                     ) : (
                       <Text style={styles.placeholderText}>Clique aqui para abrir o formulário</Text>
@@ -3954,13 +3947,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 24,
     fontWeight: '700',
-  },
-  cardPastoralIllustration: {
-    alignSelf: 'center',
-    width: '68%',
-    maxWidth: 200,
-    aspectRatio: 1,
-    marginTop: 14,
   },
   cardOfferings: {
     paddingHorizontal: 24,
