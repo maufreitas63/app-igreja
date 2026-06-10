@@ -16,7 +16,7 @@
     "web:8083": "expo start --web --port 8083",
     "build:family-form": "vite build --config standalone/cadastro-familia/vite.config.ts",
     "dev:family-form": "vite --config standalone/cadastro-familia/vite.config.ts",
-    "build:web": "npm run build:family-form && expo export -p web",
+    "build:web": "expo export -p web && npm run build:family-form",
     "generate:icons": "node scripts/generate-app-icons.mjs",
     "build:docs:md": "node scripts/build-pacotes-md.mjs",
     "build:docs:pdf": "node scripts/build-pacotes-pdf.mjs",

@@ -7,6 +7,20 @@
     <meta name="robots" content="index,follow" />
     <title>Cadastro de Família — IBN</title>
     <link rel="icon" href="/favicon.ico" />
+    <script>
+      (function () {
+        if (globalThis.__EXPO_ROUTER_HYDRATE__) {
+          window.location.replace(window.location.origin + '/cadastro-familia/');
+        }
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            regs.forEach(function (reg) {
+              reg.unregister();
+            });
+          });
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

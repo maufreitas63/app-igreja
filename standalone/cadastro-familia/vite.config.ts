@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
       'process.env.NODE_ENV': JSON.stringify(mode),
     },
     build: {
-      outDir: path.join(repoRoot, 'public', 'cadastro-familia'),
+      outDir: path.join(repoRoot, 'dist', 'cadastro-familia'),
       emptyOutDir: true,
     },
   };
