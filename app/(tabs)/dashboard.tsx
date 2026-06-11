@@ -64,6 +64,8 @@ import {
 import {
   buildDashboardDeepLinkKey,
   computeDashboardPanelInnerPadding,
+  computeEventPanelCardHeight,
+  computePanelCardTopPadding,
   DASHBOARD_PANEL_TITLE_TYPO,
   resolveCarouselIndexByContent,
   resolveDashboardCardIndex,
@@ -102,46 +104,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const STATIC_CARD_INSETS = computeResponsiveCardInsets(390);
 
-const DASHBOARD_HEADER_RESERVE = 100;
-/** Botões < / Sair / >, margens e padding inferior extra (além do safe area). */
-const DASHBOARD_FOOTER_RESERVE = 98;
 const FOOTER_NAV_REPEAT_MS = 500;
-
-/** Altura dos cards sem sobrepor o header nem os botões inferiores (<, Sair, >). */
-const computeDashboardCardHeight = (
-  screenHeight: number,
-  topInset: number,
-  bottomInset: number
-) => {
-  const available =
-    screenHeight
-    - topInset
-    - bottomInset
-    - DASHBOARD_HEADER_RESERVE
-    - DASHBOARD_FOOTER_RESERVE
-    - 20;
-
-  return Math.max(280, Math.min(available, Math.round(screenHeight * 0.72)));
-};
-
-/** Card Agenda da Família: um pouco mais alto que o padrão (audiência visível sem ocupar a tela inteira). */
-const computeEventPanelCardHeight = (
-  screenHeight: number,
-  topInset: number,
-  bottomInset: number
-) => {
-  const available =
-    screenHeight
-    - topInset
-    - bottomInset
-    - DASHBOARD_HEADER_RESERVE
-    - DASHBOARD_FOOTER_RESERVE
-    - 14;
-
-  const base = computeDashboardCardHeight(screenHeight, topInset, bottomInset);
-
-  return Math.max(base + 28, Math.min(available, Math.round(screenHeight * 0.78)));
-};
 
 type DashboardProfile = {
   id?: string;
@@ -560,12 +523,8 @@ export default function Dashboard() {
 
   const insets = useSafeAreaInsets();
   const dashboardPanelCardHeight = useMemo(
-    () => computeDashboardCardHeight(windowHeight, insets.top, insets.bottom),
-    [insets.top, insets.bottom]
-  );
-  const eventPanelCardHeight = useMemo(
     () => computeEventPanelCardHeight(windowHeight, insets.top, insets.bottom),
-    [insets.top, insets.bottom]
+    [insets.bottom, insets.top, windowHeight]
   );
   const dashboardPanelCardSizeStyle = useMemo(
     () => ({
@@ -576,6 +535,18 @@ export default function Dashboard() {
     }),
     [dashboardPanelCardHeight, pageWidth]
   );
+  const dashboardCardWrapperStyle = useMemo(
+    () => ({
+      ...styles.cardWrapper,
+      paddingTop: computePanelCardTopPadding(
+        windowHeight,
+        insets.top,
+        insets.bottom,
+        dashboardPanelCardHeight
+      ),
+    }),
+    [dashboardPanelCardHeight, insets.bottom, insets.top, windowHeight]
+  );
 
   const dashboardPanelInnerPadding = useMemo(
     () => computeDashboardPanelInnerPadding(pageWidth),
@@ -585,15 +556,6 @@ export default function Dashboard() {
   const dashboardPanelTopInsetStyle = useMemo(
     () => ({ paddingTop: dashboardPanelInnerPadding }),
     [dashboardPanelInnerPadding]
-  );
-  const eventPanelCardSizeStyle = useMemo(
-    () => ({
-      width: pageWidth * 0.9,
-      minHeight: eventPanelCardHeight,
-      maxHeight: eventPanelCardHeight,
-      alignSelf: 'center' as const,
-    }),
-    [eventPanelCardHeight, pageWidth]
   );
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -2188,7 +2150,7 @@ export default function Dashboard() {
             decelerationRate="fast"
             disableIntervalMomentum={true}
             renderItem={({ item }) => (
-              <View style={[styles.cardWrapper, carouselPageStyle]}>
+              <View style={[dashboardCardWrapperStyle, carouselPageStyle]}>
                 {item.content === 'event_alt' ? (
                   <View
                     style={[
@@ -2196,7 +2158,7 @@ export default function Dashboard() {
                       styles.cardEventAlt,
                       styles.eventCard,
                       styles.eventAltCard,
-                      eventPanelCardSizeStyle,
+                      dashboardPanelCardSizeStyle,
                     ]}
                   >
                     {areEventsLoading || isProfileLoading ? (
@@ -2681,7 +2643,7 @@ export default function Dashboard() {
                       styles.card,
                       styles.cardBirthdays,
                       styles.dashboardPanelCardTopLayout,
-                      eventPanelCardSizeStyle,
+                      dashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
@@ -2771,7 +2733,7 @@ export default function Dashboard() {
                   <TouchableOpacity
                     style={[
                       styles.card,
-                      eventPanelCardSizeStyle,
+                      dashboardPanelCardSizeStyle,
                       styles.cardFinancialAction,
                       styles.dashboardPanelCardTopLayout,
                       dashboardPanelTopInsetStyle,
@@ -2811,7 +2773,7 @@ export default function Dashboard() {
                       styles.card,
                       styles.cardVigilanceScales,
                       styles.dashboardPanelCardTopLayout,
-                      eventPanelCardSizeStyle,
+                      dashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
@@ -2882,7 +2844,7 @@ export default function Dashboard() {
                     </View>
                   </View>
                 ) : item.content === 'parking_vehicle_v2' ? (
-                  <View style={[styles.card, styles.cardParkingVehicleV2, eventPanelCardSizeStyle]}>
+                  <View style={[styles.card, styles.cardParkingVehicleV2, dashboardPanelCardSizeStyle]}>
                     <Text style={[styles.cardTitle, styles.cardParkingVehicleV2Title]}>
                       {selectedVigilanceScaleLabel}
                     </Text>
@@ -2913,7 +2875,14 @@ export default function Dashboard() {
                     </TouchableOpacity>
                   </View>
                 ) : item.content === 'scale_roster' ? (
-                  <View style={[styles.card, styles.cardScaleRoster, dashboardPanelCardSizeStyle]}>
+                  <View
+                    style={[
+                      styles.card,
+                      styles.cardScaleRoster,
+                      styles.dashboardPanelCardTopLayout,
+                      dashboardPanelCardSizeStyle,
+                    ]}
+                  >
                     <Text style={styles.cardTitle}>{selectedVigilanceScaleLabel}</Text>
 
                     {isSelectedScaleParking ? (
@@ -3167,6 +3136,7 @@ export default function Dashboard() {
                       styles.card,
                       styles.cardKidsTeens,
                       styles.cardGroupedAudience,
+                      styles.dashboardPanelCardTopLayout,
                       dashboardPanelCardSizeStyle,
                     ]}
                   >
@@ -3601,9 +3571,8 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   cardWrapper: {
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    paddingTop: 0,
     paddingBottom: 8,
   },
   card: {
