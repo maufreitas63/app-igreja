@@ -8,6 +8,144 @@ import { supabase } from '@/lib/supabase';
 export const FINANCIAL_DOCS_BUCKET = 'financial-docs';
 export const FINANCIAL_RECEIPT_SIGNED_URL_TTL_SECONDS = 60;
 
+export const FINANCIAL_RECEIPT_DEFAULT_FOLDER_HINT =
+  'C:\\Users\\maufr\\Documents\\zipteste\\';
+
+export type FinancialReceiptFolderImage = {
+  name: string;
+  dataUrl: string;
+};
+
+const IMAGE_FILE_PATTERN = /\.(jpe?g|png|webp|gif|bmp)$/i;
+
+const isImageFileName = (name: string) => IMAGE_FILE_PATTERN.test(name.trim());
+
+const fileToDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error('Não foi possível processar a imagem selecionada.'));
+    };
+
+    reader.onerror = () => {
+      reject(reader.error ?? new Error('Não foi possível carregar a imagem selecionada.'));
+    };
+
+    reader.readAsDataURL(file);
+  });
+
+const sortFolderImages = (images: FinancialReceiptFolderImage[]) =>
+  [...images].sort((left, right) => left.name.localeCompare(right.name, 'pt-BR', { sensitivity: 'base' }));
+
+const pickFinancialReceiptImagesFromDirectoryPicker = async (): Promise<
+  FinancialReceiptFolderImage[]
+> => {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') {
+    return [];
+  }
+
+  const directoryPicker = (
+    window as Window & {
+      showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>;
+    }
+  ).showDirectoryPicker;
+
+  if (!directoryPicker) {
+    return [];
+  }
+
+  try {
+    const directoryHandle = await directoryPicker();
+    const images: FinancialReceiptFolderImage[] = [];
+
+    for await (const entry of directoryHandle.values()) {
+      if (entry.kind !== 'file' || !isImageFileName(entry.name)) {
+        continue;
+      }
+
+      const file = await entry.getFile();
+      const dataUrl = await fileToDataUrl(file);
+      images.push({ name: entry.name, dataUrl });
+    }
+
+    return sortFolderImages(images);
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      return [];
+    }
+
+    throw err;
+  }
+};
+
+const pickFinancialReceiptImagesFromWebDirectoryInput = async (): Promise<
+  FinancialReceiptFolderImage[]
+> => {
+  if (Platform.OS !== 'web' || typeof document === 'undefined') {
+    return [];
+  }
+
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.setAttribute('webkitdirectory', 'true');
+
+    input.onchange = () => {
+      void (async () => {
+        try {
+          const files = Array.from(input.files ?? []).filter((file) => isImageFileName(file.name));
+
+          if (!files.length) {
+            resolve([]);
+            return;
+          }
+
+          const images = await Promise.all(
+            files.map(async (file) => ({
+              name: file.name,
+              dataUrl: await fileToDataUrl(file),
+            }))
+          );
+
+          resolve(sortFolderImages(images));
+        } catch (err) {
+          reject(err);
+        }
+      })();
+    };
+
+    input.click();
+  });
+};
+
+export async function pickFinancialReceiptImagesFromFolder(): Promise<FinancialReceiptFolderImage[]> {
+  if (Platform.OS !== 'web') {
+    const imageUri = await pickFinancialReceiptFromGallery();
+
+    if (!imageUri) {
+      return [];
+    }
+
+    return [{ name: 'imagem', dataUrl: imageUri }];
+  }
+
+  const directoryImages = await pickFinancialReceiptImagesFromDirectoryPicker();
+
+  if (directoryImages.length > 0) {
+    return directoryImages;
+  }
+
+  return pickFinancialReceiptImagesFromWebDirectoryInput();
+}
+
 const parseImageInput = async (imageInput: string) => {
   let base64: string | null = null;
   let contentType = 'image/jpeg';

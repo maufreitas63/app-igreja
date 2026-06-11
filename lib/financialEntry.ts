@@ -384,6 +384,47 @@ export const findReceiptForBulletinRow = (
   return null;
 };
 
+const compareMaintenanceFinancialEntryText = (left: string, right: string) =>
+  left.localeCompare(right, 'pt-BR', { sensitivity: 'base' });
+
+/** Ordem da listagem na manutenção: transação → data → conta → movimento → ministério. */
+export const compareMaintenanceFinancialEntries = (
+  left: FinancialEntry,
+  right: FinancialEntry
+) => {
+  const byTransaction = compareMaintenanceFinancialEntryText(
+    left.transaction_kind,
+    right.transaction_kind
+  );
+
+  if (byTransaction !== 0) {
+    return byTransaction;
+  }
+
+  const byDate = left.transaction_date.localeCompare(right.transaction_date);
+
+  if (byDate !== 0) {
+    return byDate;
+  }
+
+  const byAccount = compareMaintenanceFinancialEntryText(left.account, right.account);
+
+  if (byAccount !== 0) {
+    return byAccount;
+  }
+
+  const byMovement = compareMaintenanceFinancialEntryText(left.movement, right.movement);
+
+  if (byMovement !== 0) {
+    return byMovement;
+  }
+
+  return compareMaintenanceFinancialEntryText(left.ministry, right.ministry);
+};
+
+export const sortMaintenanceFinancialEntries = (entries: FinancialEntry[]) =>
+  [...entries].sort(compareMaintenanceFinancialEntries);
+
 export const normalizeFinancialEntryRow = (row: Record<string, unknown>): FinancialEntry | null => {
   const id = String(row.id ?? '').trim();
 

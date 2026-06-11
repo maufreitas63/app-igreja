@@ -19,6 +19,7 @@ import {
   isFinancialPlanejado,
   isFinancialRealizado,
   signedFinancialAmount,
+  sortMaintenanceFinancialEntries,
   type FinancialEntry,
 } from '@/lib/financialEntry';
 import {
@@ -97,7 +98,7 @@ export function useMaintenanceFinancials(enabled: boolean) {
 
     try {
       const rows = await fetchMaintenanceFinancialEntries(FINANCIAL_PERIOD_MODE, referenceIsoDate);
-      setEntries(rows);
+      setEntries(sortMaintenanceFinancialEntries(rows));
     } catch (err) {
       console.error('Erro ao listar lançamentos financeiros:', err);
       setEntries([]);

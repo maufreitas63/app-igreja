@@ -80,7 +80,12 @@ as $$
   cross join bounds b
   where f.transaction_date >= b.start_date
     and f.transaction_date < b.end_date_exclusive
-  order by f.transaction_date desc, f.account asc, f.created_at desc;
+  order by
+    f.transaction_kind asc,
+    f.transaction_date asc,
+    f.account asc,
+    f.movement asc,
+    f.ministry asc;
 $$;
 
 create or replace function public.cadastrar_lancamento_financeiro(

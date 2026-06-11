@@ -12,7 +12,11 @@ import {
 } from '@/lib/financialReceipt';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
-import { normalizeFinancialEntryRow, type FinancialEntry } from '@/lib/financialEntry';
+import {
+  normalizeFinancialEntryRow,
+  sortMaintenanceFinancialEntries,
+  type FinancialEntry,
+} from '@/lib/financialEntry';
 import type { FinancialMonthKey } from '@/lib/financialMonth';
 import { getFinancialMonthDateRange } from '@/lib/financialMonth';
 
@@ -84,9 +88,11 @@ export const parseFinancialRows = (data: unknown): FinancialEntry[] => {
     return [];
   }
 
-  return data
-    .map((row) => normalizeFinancialEntryRow(row as Record<string, unknown>))
-    .filter((row): row is FinancialEntry => row !== null);
+  return sortMaintenanceFinancialEntries(
+    data
+      .map((row) => normalizeFinancialEntryRow(row as Record<string, unknown>))
+      .filter((row): row is FinancialEntry => row !== null)
+  );
 };
 
 const handleRpcError = (error: { message?: string }, functionName: string) => {
@@ -133,8 +139,11 @@ async function listMaintenanceFinancialEntriesDirect(
     .from('financials')
     .select(FINANCIAL_SELECT)
     .gte('transaction_date', bounds.startDate)
-    .order('transaction_date', { ascending: false })
-    .order('account', { ascending: true });
+    .order('transaction_kind', { ascending: true })
+    .order('transaction_date', { ascending: true })
+    .order('account', { ascending: true })
+    .order('movement', { ascending: true })
+    .order('ministry', { ascending: true });
 
   if (periodMode === 'day') {
     query = query.eq('transaction_date', bounds.startDate);
