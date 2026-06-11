@@ -91,11 +91,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
         <Text style={styles.hintText}>Nenhum perfil elegível encontrado.</Text>
       ) : null}
 
-      {!loading && allProfiles.length > 0 && profiles.length === 0 ? (
-        <Text style={styles.hintText}>Nenhum perfil corresponde aos filtros.</Text>
-      ) : null}
-
-      {!loading && profiles.length > 0 ? (
+      {!loading && allProfiles.length > 0 ? (
         <View style={styles.tableSection}>
           <View style={styles.tableHeader}>
             <Text style={[styles.headerCell, styles.nameColumn]}>Nome curto</Text>
@@ -126,44 +122,48 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
             nestedScrollEnabled
             keyboardShouldPersistTaps="handled"
           >
-          {profiles.map((profile) => {
-            const isSaving = savingProfileId === profile.id;
+            {profiles.length === 0 ? (
+              <Text style={styles.emptyFilterText}>Nenhum perfil corresponde aos filtros.</Text>
+            ) : (
+              profiles.map((profile) => {
+                const isSaving = savingProfileId === profile.id;
 
-            return (
-              <View key={profile.id} style={styles.tableRow}>
-                <View style={styles.nameColumn}>
-                  <Text style={styles.shortName} numberOfLines={2}>
-                    {formatShortName(profile.fullName)}
-                  </Text>
-                  {isSaving ? <ActivityIndicator color={ACCENT} size="small" /> : null}
-                </View>
+                return (
+                  <View key={profile.id} style={styles.tableRow}>
+                    <View style={styles.nameColumn}>
+                      <Text style={styles.shortName} numberOfLines={2}>
+                        {formatShortName(profile.fullName)}
+                      </Text>
+                      {isSaving ? <ActivityIndicator color={ACCENT} size="small" /> : null}
+                    </View>
 
-                {PASTORAL_BASIC_ROLE_OPTIONS.map((option) => {
-                  const selected = profile.currentRoleCode === option.code;
+                    {PASTORAL_BASIC_ROLE_OPTIONS.map((option) => {
+                      const selected = profile.currentRoleCode === option.code;
 
-                  return (
-                    <TouchableOpacity
-                      key={`${profile.id}-${option.code}`}
-                      style={[
-                        styles.roleChip,
-                        selected && styles.roleChipSelected,
-                        isSaving && styles.roleChipDisabled,
-                      ]}
-                      onPress={() => void handleSelectRole(profile.id, option.code)}
-                      disabled={isSaving || selected}
-                      activeOpacity={0.85}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected, disabled: isSaving || selected }}
-                    >
-                      <View style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
-                        {selected ? <View style={styles.radioInner} /> : null}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            );
-          })}
+                      return (
+                        <TouchableOpacity
+                          key={`${profile.id}-${option.code}`}
+                          style={[
+                            styles.roleChip,
+                            selected && styles.roleChipSelected,
+                            isSaving && styles.roleChipDisabled,
+                          ]}
+                          onPress={() => void handleSelectRole(profile.id, option.code)}
+                          disabled={isSaving || selected}
+                          activeOpacity={0.85}
+                          accessibilityRole="radio"
+                          accessibilityState={{ selected, disabled: isSaving || selected }}
+                        >
+                          <View style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
+                            {selected ? <View style={styles.radioInner} /> : null}
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                );
+              })
+            )}
           </ScrollView>
         </View>
       ) : null}
@@ -222,11 +222,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingBottom: 6,
+    paddingTop: 2,
+    paddingBottom: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(148, 163, 184, 0.35)',
     backgroundColor: 'rgba(15, 23, 42, 0.96)',
     zIndex: 2,
+  },
+  emptyFilterText: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontStyle: 'italic',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
   },
   headerCell: {
     color: '#CBD5E1',
