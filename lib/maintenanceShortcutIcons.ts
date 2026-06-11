@@ -8,6 +8,7 @@ export type MaintenancePanelContent =
   | 'scales'
   | 'pastoral_care'
   | 'profile_cadastro'
+  | 'family_reception'
   | 'financials'
   | 'access_control';
 
@@ -22,6 +23,7 @@ export type MaintenanceShortcutIconName =
   | 'heart'
   | 'line-chart'
   | 'id-card'
+  | 'home'
   | 'shield';
 
 /** Ícone FontAwesome por módulo de manutenção. */
@@ -39,6 +41,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   pastoral_care: 'heart',
   financials: 'line-chart',
   profile_cadastro: 'id-card',
+  family_reception: 'home',
   access_control: 'shield',
 };
 
@@ -54,6 +57,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   pastoral_care: '#F472B6',
   financials: '#34D399',
   profile_cadastro: '#A78BFA',
+  family_reception: '#34D399',
   access_control: '#818CF8',
 };
 

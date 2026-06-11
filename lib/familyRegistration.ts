@@ -165,11 +165,19 @@ function buildFamilyRegistrationRpcPayload(
 }
 
 const FAMILY_REGISTRATION_RPC_MISSING_MESSAGE =
-  'Cadastro familiar indisponível no servidor. Execute scripts/submit-family-registration-public.sql no Supabase.';
+  'Cadastro familiar indisponível no servidor. Execute scripts/recepcao-cadastro-familiar.sql no Supabase.';
+
+export type FamilyRegistrationSubmitResult = {
+  submissionId: string;
+  memberCount: number;
+  detectedFamilyId: string | null;
+  hasFamilyConflict: boolean;
+  message: string;
+};
 
 export async function submitFamilyRegistration(
   values: FamilyRegistrationFormValues
-): Promise<{ familyId: string; insertedCount: number }> {
+): Promise<FamilyRegistrationSubmitResult> {
   const payload = buildFamilyRegistrationRpcPayload(values);
 
   const { data, error } = await supabaseBrowser.rpc('submit_family_registration_public', {
@@ -190,16 +198,24 @@ export async function submitFamilyRegistration(
     throw new Error(String(record.message ?? 'Não foi possível gravar o cadastro familiar.'));
   }
 
-  const familyId = String(record.family_id ?? '').trim();
-  const insertedCount = Number(record.inserted_count ?? 0);
+  const submissionId = String(record.submission_id ?? '').trim();
+  const memberCount = Number(record.member_count ?? 0);
 
-  if (!familyId) {
-    throw new Error('O servidor não retornou o código da família.');
+  if (!submissionId) {
+    throw new Error('O servidor não retornou o protocolo do cadastro.');
   }
 
   return {
-    familyId,
-    insertedCount: Number.isFinite(insertedCount) ? insertedCount : 0,
+    submissionId,
+    memberCount: Number.isFinite(memberCount) ? memberCount : 0,
+    detectedFamilyId: record.detected_family_id
+      ? String(record.detected_family_id).trim()
+      : null,
+    hasFamilyConflict: record.has_family_conflict === true,
+    message: String(
+      record.message
+        ?? 'Cadastro recebido e aguardando análise da equipe antes de gravar nas tabelas finais.'
+    ),
   };
 }
 

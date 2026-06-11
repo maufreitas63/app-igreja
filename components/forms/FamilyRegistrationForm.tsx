@@ -53,7 +53,8 @@ type SubmitState = 'idle' | 'success' | 'error';
 export function FamilyRegistrationForm() {
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const [feedbackMessage, setFeedbackMessage] = useState('');
-  const [registeredFamilyId, setRegisteredFamilyId] = useState<string | null>(null);
+  const [registeredSubmissionId, setRegisteredSubmissionId] = useState<string | null>(null);
+  const [detectedFamilyId, setDetectedFamilyId] = useState<string | null>(null);
   const [copyHint, setCopyHint] = useState('');
 
   const form = useForm<FamilyRegistrationSchemaValues>({
@@ -81,11 +82,10 @@ export function FamilyRegistrationForm() {
       };
 
       const result = await submitFamilyRegistration(payload);
-      setRegisteredFamilyId(result.familyId);
+      setRegisteredSubmissionId(result.submissionId);
+      setDetectedFamilyId(result.detectedFamilyId);
       setSubmitState('success');
-      setFeedbackMessage(
-        `Cadastro recebido com sucesso! ${result.insertedCount} perfil(is) gravado(s) no grupo familiar.`
-      );
+      setFeedbackMessage(result.message);
       form.reset(familyRegistrationDefaultValues);
     } catch (error) {
       setSubmitState('error');
@@ -128,11 +128,19 @@ export function FamilyRegistrationForm() {
       <div className="mx-auto w-full max-w-2xl rounded-xl border bg-white p-8 shadow-sm">
         <h2 className="text-2xl font-semibold text-slate-900">Obrigado pelo cadastro!</h2>
         <p className="mt-3 text-slate-600">
-          Agradecemos por registrar sua família. Nossa equipe dará continuidade ao acolhimento.
+          Seu cadastro foi recebido e será analisado pela equipe antes de ser gravado nas tabelas
+          finais da igreja.
         </p>
-        {registeredFamilyId ? (
+        {registeredSubmissionId ? (
           <p className="mt-2 text-sm text-slate-500">
-            Código da família: <span className="font-mono">{registeredFamilyId}</span>
+            Protocolo:{' '}
+            <span className="font-mono">{registeredSubmissionId.slice(0, 8).toUpperCase()}</span>
+          </p>
+        ) : null}
+        {detectedFamilyId ? (
+          <p className="mt-2 text-sm text-slate-500">
+            Código familiar já existente detectado:{' '}
+            <span className="font-mono">{detectedFamilyId}</span>
           </p>
         ) : null}
         <p className="mt-4 text-sm text-slate-600">{feedbackMessage}</p>
@@ -154,7 +162,8 @@ export function FamilyRegistrationForm() {
           className="mt-6"
           onClick={() => {
             setSubmitState('idle');
-            setRegisteredFamilyId(null);
+            setRegisteredSubmissionId(null);
+            setDetectedFamilyId(null);
             setCopyHint('');
           }}
         >

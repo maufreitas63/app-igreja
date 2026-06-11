@@ -17,6 +17,7 @@ import { MaintenanceScaleVolunteersCard } from '@/components/MaintenanceScaleVol
 import { MaintenanceAccessControlCard } from '@/components/MaintenanceAccessControlCard';
 import { MaintenanceFinancialsCard } from '@/components/MaintenanceFinancialsCard';
 import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCareCard';
+import { MaintenanceFamilyReceptionCard } from '@/components/MaintenanceFamilyReceptionCard';
 import { MaintenanceProfileCadastroCard } from '@/components/MaintenanceProfileCadastroCard';
 import { MaintenanceScalesCard } from '@/components/MaintenanceScalesCard';
 import { MaintenanceSalaMonitorCard } from '@/components/MaintenanceSalaMonitorCard';
@@ -130,6 +131,7 @@ type MaintenanceCarouselCard = {
     | 'scales'
     | 'pastoral_care'
     | 'profile_cadastro'
+    | 'family_reception'
     | 'financials'
     | 'access_control';
 };
@@ -162,6 +164,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '9', title: 'Informações Financeiras', content: 'financials' },
   { id: '4', title: 'Lista de Presença', content: 'quorum_presence' },
   { id: '11', title: 'Cadastro de Usuário', content: 'profile_cadastro' },
+  { id: '12', title: 'Recepção Familiar', content: 'family_reception' },
   { id: '10', title: 'Controle de Acesso', content: 'access_control' },
 ];
 
@@ -658,7 +661,7 @@ export default function MaintenanceDashboard() {
         return canAccessPastoralCare;
       }
 
-      if (card.content === 'profile_cadastro') {
+      if (card.content === 'profile_cadastro' || card.content === 'family_reception') {
         return canManageAccessControl;
       }
 
@@ -859,6 +862,7 @@ export default function MaintenanceDashboard() {
             item.content === 'scales' && styles.panelCardScales,
             item.content === 'pastoral_care' && styles.panelCardPastoralCare,
             item.content === 'profile_cadastro' && styles.panelCardProfileCadastro,
+            item.content === 'family_reception' && styles.panelCardFamilyReception,
             item.content === 'financials' && styles.panelCardFinancials,
             item.content === 'access_control' && styles.panelCardAccessControl,
             item.content === 'menu' && styles.panelCardMenu,
@@ -937,6 +941,8 @@ export default function MaintenanceDashboard() {
             <MaintenancePastoralCareCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'profile_cadastro' ? (
             <MaintenanceProfileCadastroCard isActive={currentIndex === index} panelHeight={cardHeight} />
+          ) : item.content === 'family_reception' ? (
+            <MaintenanceFamilyReceptionCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'financials' ? (
             <MaintenanceFinancialsCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'access_control' ? (
@@ -1598,6 +1604,10 @@ const styles = StyleSheet.create({
   },
   panelCardProfileCadastro: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.profile,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
+  },
+  panelCardFamilyReception: {
+    borderColor: '#34D399',
     padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardFinancials: {
