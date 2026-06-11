@@ -96,7 +96,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
       ) : null}
 
       {!loading && profiles.length > 0 ? (
-        <ScrollView style={styles.tableScroll} contentContainerStyle={styles.tableContent}>
+        <View style={styles.tableSection}>
           <View style={styles.tableHeader}>
             <Text style={[styles.headerCell, styles.nameColumn]}>Nome curto</Text>
             {PASTORAL_BASIC_ROLE_OPTIONS.map((option) => {
@@ -120,6 +120,12 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
             })}
           </View>
 
+          <ScrollView
+            style={styles.tableScroll}
+            contentContainerStyle={styles.tableContent}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+          >
           {profiles.map((profile) => {
             const isSaving = savingProfileId === profile.id;
 
@@ -158,7 +164,8 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
               </View>
             );
           })}
-        </ScrollView>
+          </ScrollView>
+        </View>
       ) : null}
     </View>
   );
@@ -200,6 +207,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
   },
+  tableSection: {
+    flex: 1,
+    minHeight: 0,
+  },
   tableScroll: {
     flex: 1,
   },
@@ -214,6 +225,8 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(148, 163, 184, 0.35)',
+    backgroundColor: 'rgba(15, 23, 42, 0.96)',
+    zIndex: 2,
   },
   headerCell: {
     color: '#CBD5E1',
