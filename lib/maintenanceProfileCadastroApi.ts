@@ -4,6 +4,13 @@ import {
   type SyncProfileAddressInput,
 } from '@/lib/syncProfileAddressFromCep';
 import { supabase } from '@/lib/supabase';
+import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
+import { getStoredProfileId } from '@/lib/userSession';
+
+export const DELETE_PROFILE_COMPLETE_SQL_HINT =
+  'Execute no Supabase: scripts/delete-profile-complete-rpc.sql';
+
+export const DELETE_PROFILE_COMPLETE_RPC_MISSING = 'DELETE_PROFILE_COMPLETE_RPC_MISSING';
 
 export type ProfileCadastroPickerOption = {
   id: string;
@@ -91,4 +98,45 @@ export async function syncProfileAddressFromCep(
   }
 
   return null;
+}
+
+export type DeleteProfileCompleteResult = {
+  success: boolean;
+  message: string;
+};
+
+export async function deleteProfileComplete(
+  profileId: string
+): Promise<DeleteProfileCompleteResult> {
+  const actorProfileId = await getStoredProfileId();
+
+  if (!actorProfileId) {
+    return { success: false, message: 'Sessão inválida. Saia e entre novamente no aplicativo.' };
+  }
+
+  const { data, error } = await supabase.rpc('excluir_usuario_completo', {
+    p_target_profile_id: profileId,
+    p_actor_profile_id: actorProfileId,
+  });
+
+  if (error) {
+    const message = (error.message ?? '').toLowerCase();
+
+    if (isSupabaseRpcMissing(message, 'excluir_usuario_completo')) {
+      return {
+        success: false,
+        message: DELETE_PROFILE_COMPLETE_SQL_HINT,
+      };
+    }
+
+    throw error;
+  }
+
+  const parsed =
+    data && typeof data === 'object' ? (data as Record<string, unknown>) : { success: false };
+
+  return {
+    success: parsed.success === true,
+    message: String(parsed.message ?? 'Não foi possível excluir o usuário.'),
+  };
 }

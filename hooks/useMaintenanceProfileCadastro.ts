@@ -1,4 +1,5 @@
 import {
+  deleteProfileComplete,
   fetchProfileCadastro,
   searchProfilesForCadastroPicker,
   syncProfileAddressFromCep,
@@ -26,6 +27,7 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
   const [addressNumberDraft, setAddressNumberDraft] = useState('');
   const [addressComplementDraft, setAddressComplementDraft] = useState('');
   const [savingCep, setSavingCep] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [cepPreview, setCepPreview] = useState<CepPreview | null>(null);
@@ -250,6 +252,45 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
     }
   }, [addressComplementDraft, addressNumberDraft, cepDraft, selectedProfileId]);
 
+  const deleteSelectedUser = useCallback(async () => {
+    if (!selectedProfileId) {
+      return { success: false as const, message: 'Selecione um usuário.' };
+    }
+
+    setDeletingUser(true);
+    setError(null);
+    setStatusMessage(null);
+
+    try {
+      const result = await deleteProfileComplete(selectedProfileId);
+
+      if (!result.success) {
+        setError(result.message);
+        return result;
+      }
+
+      setSearchResults((current) => current.filter((row) => row.id !== selectedProfileId));
+      setSelectedProfileId(null);
+      setProfile(null);
+      setCepDraft('');
+      setAddressNumberDraft('');
+      setAddressComplementDraft('');
+      setCepPreview(null);
+      setStatusMessage(result.message);
+
+      return result;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Não foi possível excluir o usuário.';
+
+      setError(message);
+
+      return { success: false as const, message };
+    } finally {
+      setDeletingUser(false);
+    }
+  }, [selectedProfileId]);
+
   return {
     searchQuery,
     setSearchQuery,
@@ -268,12 +309,14 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
     addressComplementDraft,
     setAddressComplementDraft,
     savingCep,
+    deletingUser,
     cepPreview,
     loadingCepPreview,
     error,
     statusMessage,
     selectProfile,
     saveCepAndAddress,
+    deleteSelectedUser,
     reloadProfile: () => {
       if (selectedProfileId) {
         void loadProfile(selectedProfileId);

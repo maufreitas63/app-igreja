@@ -5,6 +5,7 @@ import {
   computeMaintenanceContentHeight,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { formatShortName } from '@/lib/formatShortName';
 import { useMaintenanceProfileCadastro } from '@/hooks/useMaintenanceProfileCadastro';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
@@ -71,12 +72,14 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
     addressComplementDraft,
     setAddressComplementDraft,
     savingCep,
+    deletingUser,
     cepPreview,
     loadingCepPreview,
     error,
     statusMessage,
     selectProfile,
     saveCepAndAddress,
+    deleteSelectedUser,
   } = useMaintenanceProfileCadastro(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
@@ -102,6 +105,34 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
       text1: 'Cadastro de usuário',
       text2: result.message,
       visibilityTime: 3500,
+    });
+  };
+
+  const handleDeleteUser = async () => {
+    if (!profile) {
+      return;
+    }
+
+    const displayName = selectedPickerOption?.fullName ?? profile.full_name ?? 'este usuário';
+    const confirmed = await confirmDialog(
+      'Excluir usuário',
+      `Deseja excluir permanentemente ${displayName}? Esta ação remove o perfil e todas as referências dele no sistema (membros, inscrições, RD, pedidos pastorais, veículos, etc.) e não pode ser desfeita.`,
+      'Excluir',
+      'Cancelar',
+      { destructive: true }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const result = await deleteSelectedUser();
+
+    Toast.show({
+      type: result.success ? 'success' : 'error',
+      text1: 'Cadastro de usuário',
+      text2: result.message,
+      visibilityTime: result.success ? 3500 : 5000,
     });
   };
 
@@ -273,6 +304,24 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
               </Text>
             </View>
           ))}
+
+          <TouchableOpacity
+            style={[styles.deleteUserButton, (deletingUser || savingCep) && styles.deleteUserButtonDisabled]}
+            onPress={() => void handleDeleteUser()}
+            disabled={deletingUser || savingCep}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Excluir usuário selecionado"
+          >
+            {deletingUser ? (
+              <ActivityIndicator color="#FECACA" size="small" />
+            ) : (
+              <>
+                <FontAwesome name="trash-o" size={14} color="#FECACA" />
+                <Text style={styles.deleteUserButtonText}>Excluir usuário</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </ScrollView>
       ) : selectedProfileId ? (
         <Text style={styles.hintText}>Perfil não carregado.</Text>
@@ -481,5 +530,25 @@ const styles = StyleSheet.create({
   successText: {
     color: '#86EFAC',
     fontSize: 12,
+  },
+  deleteUserButton: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(248, 113, 113, 0.55)',
+    backgroundColor: 'rgba(127, 29, 29, 0.35)',
+    paddingVertical: 12,
+  },
+  deleteUserButtonDisabled: {
+    opacity: 0.65,
+  },
+  deleteUserButtonText: {
+    color: '#FECACA',
+    fontWeight: '800',
+    fontSize: 13,
   },
 });
