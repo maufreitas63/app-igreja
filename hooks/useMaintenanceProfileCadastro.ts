@@ -85,27 +85,44 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
     }
   }, []);
 
+  const clearSelectedUserView = useCallback(() => {
+    setSelectedProfileId(null);
+    setProfile(null);
+    setCepDraft('');
+    setAddressNumberDraft('');
+    setAddressComplementDraft('');
+    setCepPreview(null);
+    setLoadingCepPreview(false);
+    setLoadingProfile(false);
+    setStatusMessage(null);
+    setError(null);
+  }, []);
+
+  const clearSearchQuery = useCallback(() => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setSearching(false);
+  }, []);
+
   const selectProfile = useCallback(
     async (profileId: string | null) => {
       setSelectedProfileId(profileId);
       setStatusMessage(null);
 
       if (!profileId) {
-        setProfile(null);
-        setCepDraft('');
-        setAddressNumberDraft('');
-        setAddressComplementDraft('');
+        clearSelectedUserView();
         return;
       }
 
       await loadProfile(profileId);
     },
-    [loadProfile]
+    [clearSelectedUserView, loadProfile]
   );
 
   useEffect(() => {
     if (!enabled) {
       setSearchResults([]);
+      clearSelectedUserView();
       return;
     }
 
@@ -145,7 +162,7 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
       active = false;
       clearTimeout(timer);
     };
-  }, [enabled, searchQuery]);
+  }, [clearSelectedUserView, enabled, searchQuery]);
 
   const handleCepDraftChange = useCallback((value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 8);
@@ -270,12 +287,8 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
       }
 
       setSearchResults((current) => current.filter((row) => row.id !== selectedProfileId));
-      setSelectedProfileId(null);
-      setProfile(null);
-      setCepDraft('');
-      setAddressNumberDraft('');
-      setAddressComplementDraft('');
-      setCepPreview(null);
+      clearSearchQuery();
+      clearSelectedUserView();
       setStatusMessage(result.message);
 
       return result;
@@ -289,11 +302,13 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
     } finally {
       setDeletingUser(false);
     }
-  }, [selectedProfileId]);
+  }, [clearSearchQuery, clearSelectedUserView, selectedProfileId]);
 
   return {
     searchQuery,
     setSearchQuery,
+    clearSearchQuery,
+    clearSelectedUserView,
     searchResults,
     searching,
     selectedProfileId,

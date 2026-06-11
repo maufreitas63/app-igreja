@@ -80,6 +80,7 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
     selectProfile,
     saveCepAndAddress,
     deleteSelectedUser,
+    clearSearchQuery,
   } = useMaintenanceProfileCadastro(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
@@ -145,27 +146,29 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
       {statusMessage ? <Text style={styles.successText}>{statusMessage}</Text> : null}
 
       <SectionLabel variant="maintenance">Buscar usuário</SectionLabel>
-      <View style={styles.searchInputWrap}>
+      <View style={styles.searchRow}>
         <TextInput
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholder="Nome (mín. 2 letras)"
           placeholderTextColor="#64748B"
-          style={[styles.searchInput, searchQuery.length > 0 && styles.searchInputWithClear]}
+          style={styles.searchInput}
           autoCapitalize="words"
           autoCorrect={false}
         />
-        {searchQuery.length > 0 ? (
-          <TouchableOpacity
-            style={styles.searchClearButton}
-            onPress={() => setSearchQuery('')}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Limpar busca de usuário"
-          >
-            <MaterialIcons name="close" size={18} color="#94A3B8" />
-          </TouchableOpacity>
-        ) : null}
+        <TouchableOpacity
+          style={[
+            styles.searchClearButton,
+            searchQuery.length === 0 && styles.searchClearButtonDisabled,
+          ]}
+          onPress={clearSearchQuery}
+          disabled={searchQuery.length === 0 || deletingUser || savingCep}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Limpar busca de usuário"
+        >
+          <MaterialIcons name="close" size={20} color="#94A3B8" />
+        </TouchableOpacity>
       </View>
 
       {searching ? <CardLoadingState lines={2} compact /> : null}
@@ -353,10 +356,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginTop: 4,
   },
-  searchInputWrap: {
-    position: 'relative',
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   searchInput: {
+    flex: 1,
+    minWidth: 0,
     borderWidth: 1,
     borderColor: 'rgba(167, 139, 250, 0.45)',
     borderRadius: 10,
@@ -365,17 +372,19 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     backgroundColor: 'rgba(15, 23, 42, 0.65)',
   },
-  searchInputWithClear: {
-    paddingRight: 40,
-  },
   searchClearButton: {
-    position: 'absolute',
-    right: 4,
-    top: 0,
-    bottom: 0,
-    width: 32,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(167, 139, 250, 0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
+  },
+  searchClearButtonDisabled: {
+    opacity: 0.45,
   },
   inlineLoader: {
     marginVertical: 4,
