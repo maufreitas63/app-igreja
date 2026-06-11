@@ -1,6 +1,6 @@
 import {
-  shiftMaintenanceEventDateIso,
-  validateMaintenanceEventForm,
+  buildMaintenanceEventReplicationPayload,
+  formFromMaintenanceEvent,
   type MaintenanceEventFormState,
   type MaintenanceEventPayload,
 } from '@/lib/maintenanceEventForm';
@@ -111,38 +111,15 @@ export const replicateMaintenanceEventForDays = async (
   form: MaintenanceEventFormState,
   dayOffset = 7
 ): Promise<ReplicateMaintenanceEventResult> => {
-  const validation = validateMaintenanceEventForm(form);
+  const validation = buildMaintenanceEventReplicationPayload(form, dayOffset);
 
   if (!validation.ok) {
     return { ok: false, message: validation.message };
   }
 
-  if (!validation.payload.event_date) {
-    return { ok: false, message: 'Informe a data do evento antes de replicar.' };
-  }
-
-  if (dayOffset < 1) {
-    return { ok: false, message: 'O deslocamento em dias deve ser pelo menos 1.' };
-  }
-
   await ensureEventsOptionalColumns();
 
-  const shiftedDate = shiftMaintenanceEventDateIso(validation.payload.event_date, dayOffset);
-
-  if (!shiftedDate) {
-    return {
-      ok: false,
-      message: `Não foi possível calcular a data +${dayOffset} dia(s).`,
-    };
-  }
-
-  const payload: MaintenanceEventPayload = {
-    ...validation.payload,
-    event_date: shiftedDate,
-    is_locked: true,
-  };
-
-  const { error } = await saveEventWithOptionalColumnFallback('insert', null, payload);
+  const { error } = await saveEventWithOptionalColumnFallback('insert', null, validation.payload);
 
   if (error) {
     return {
@@ -154,6 +131,12 @@ export const replicateMaintenanceEventForDays = async (
 
   return { ok: true, createdCount: 1 };
 };
+
+export const replicateMaintenanceEventFromRecord = async (
+  event: Parameters<typeof formFromMaintenanceEvent>[0],
+  dayOffset = 7
+): Promise<ReplicateMaintenanceEventResult> =>
+  replicateMaintenanceEventForDays(formFromMaintenanceEvent(event), dayOffset);
 
 export type DeleteMaintenanceEventResult =
   | { ok: true; deletedId: string }

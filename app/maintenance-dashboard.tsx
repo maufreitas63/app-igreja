@@ -77,7 +77,7 @@ import { confirmDialog } from '@/lib/confirmDialog';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
 import {
   deleteMaintenanceEvent,
-  replicateMaintenanceEventForDays,
+  replicateMaintenanceEventFromRecord,
   saveMaintenanceEvent,
 } from '@/lib/saveMaintenanceEvent';
 import { useMaintenanceEvents, type MaintenanceEvent } from '@/hooks/useMaintenanceEvents';
@@ -553,13 +553,13 @@ export default function MaintenanceDashboard() {
       return;
     }
 
-    const validation = validateMaintenanceEventForm(form);
-    if (!validation.ok) {
-      setStatusMessage(validation.message);
+    const sourceEvent = safeEvents.find((event) => event.id === selectedEventId);
+
+    if (!sourceEvent) {
       Toast.show({
         type: 'error',
-        text1: 'Revise o formulário',
-        text2: validation.message,
+        text1: 'Replicar evento',
+        text2: 'Evento não encontrado. Atualize a lista e tente novamente.',
         visibilityTime: 5000,
       });
       return;
@@ -567,7 +567,7 @@ export default function MaintenanceDashboard() {
 
     const confirmed = await confirmDialog(
       'Replicar evento (+7)',
-      'Criar 1 cópia para daqui a 7 dias com os mesmos dados deste formulário? A cópia ficará como rascunho.',
+      'Criar 1 cópia para daqui a 7 dias com o mesmo horário, local, capacidade, salas e recursos? Apenas a data muda e a cópia ficará como rascunho.',
       'Criar cópia',
       'Cancelar'
     );
@@ -581,7 +581,7 @@ export default function MaintenanceDashboard() {
     setIsReplicatingSeven(true);
 
     try {
-      const result = await replicateMaintenanceEventForDays(form, 7);
+      const result = await replicateMaintenanceEventFromRecord(sourceEvent, 7);
 
       if (!result.ok) {
         const message = getSaveErrorMessage({ message: result.message, code: result.code });
@@ -614,7 +614,7 @@ export default function MaintenanceDashboard() {
     } finally {
       setIsReplicatingSeven(false);
     }
-  }, [form, isCreating, refetch, selectedEventId]);
+  }, [isCreating, refetch, safeEvents, selectedEventId]);
 
   const performDelete = useCallback(async () => {
     const eventId = deleteTargetId;
@@ -1492,7 +1492,8 @@ export default function MaintenanceDashboard() {
                       )}
                     </Pressable>
                     <Text style={styles.replicateSevenHint}>
-                      Cria 1 cópia para daqui a 7 dias com os mesmos parâmetros, sempre em rascunho.
+                      Cria 1 cópia para daqui a 7 dias com o mesmo horário, local, capacidade, salas e
+                      recursos. Apenas a data muda; a cópia fica como rascunho.
                     </Text>
                   </View>
                 ) : null}

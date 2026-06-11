@@ -275,6 +275,75 @@ export const validateMaintenanceEventForm = (
   return { ok: true, payload };
 };
 
+export const buildMaintenanceEventReplicationPayload = (
+  form: MaintenanceEventFormState,
+  dayOffset: number
+): MaintenanceEventValidationResult => {
+  const payload = buildMaintenanceEventPayload(form);
+
+  if (!payload.name) {
+    return { ok: false, message: 'Informe o nome do evento.' };
+  }
+
+  if (!payload.event_date) {
+    const dateDigits = form.eventDateInput.replace(/\D/g, '');
+    const timeDigits = form.eventTimeInput.replace(/\D/g, '');
+
+    if (dateDigits.length < 6) {
+      return { ok: false, message: 'Informe a data completa (DD/MM/AAAA).' };
+    }
+
+    if (timeDigits.length > 0 && timeDigits.length < 4) {
+      return { ok: false, message: 'Informe o horário completo (HH:MM).' };
+    }
+
+    return {
+      ok: false,
+      message: 'Data ou horário inválidos. Ex.: data 27/05/2026 e horário 10:00.',
+    };
+  }
+
+  if (payload.max_capacity === null) {
+    return {
+      ok: false,
+      message: 'Informe a capacidade (vagas). Ex.: 200 — o campo é obrigatório no banco.',
+    };
+  }
+
+  if (Number.isNaN(payload.max_capacity) || payload.max_capacity < 0) {
+    return { ok: false, message: 'Informe um número válido de vagas.' };
+  }
+
+  if (dayOffset < 1) {
+    return { ok: false, message: 'O deslocamento em dias deve ser pelo menos 1.' };
+  }
+
+  const shiftedDate = shiftMaintenanceEventDateIso(payload.event_date, dayOffset);
+
+  if (!shiftedDate) {
+    return {
+      ok: false,
+      message: `Não foi possível calcular a data +${dayOffset} dia(s).`,
+    };
+  }
+
+  return {
+    ok: true,
+    payload: {
+      name: payload.name,
+      event_date: shiftedDate,
+      event_local: payload.event_local,
+      max_capacity: payload.max_capacity,
+      kids_room: payload.kids_room,
+      teens_room: payload.teens_room,
+      parm_ofertas: payload.parm_ofertas,
+      totem_ativo: payload.totem_ativo,
+      requer_quorum: payload.requer_quorum,
+      is_locked: true,
+    },
+  };
+};
+
 export const shiftMaintenanceEventDateIso = (
   isoValue: string | null | undefined,
   dayOffset: number
