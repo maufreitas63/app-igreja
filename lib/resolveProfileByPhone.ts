@@ -68,12 +68,37 @@ const preferPrivilegedProfileId = async (profileIds: string[]): Promise<string |
   return profileIds[0];
 };
 
+const resolveProfileIdByPhoneRpc = async (phone: string): Promise<string | null> => {
+  const digits = phone.replace(/\D/g, '');
+
+  if (!digits) {
+    return null;
+  }
+
+  const { data, error } = await supabase.rpc('find_profile_id_by_phone', {
+    p_phone: digits,
+  });
+
+  if (error || data == null) {
+    return null;
+  }
+
+  const profileId = String(data).trim();
+  return profileId || null;
+};
+
 /** Escolhe o perfil correto quando há duplicatas de telefone (prioriza super_admin). */
 export async function resolveProfileIdByPhone(phone: string): Promise<string | null> {
   const trimmed = phone.trim();
 
   if (!trimmed) {
     return null;
+  }
+
+  const rpcProfileId = await resolveProfileIdByPhoneRpc(trimmed);
+
+  if (rpcProfileId) {
+    return rpcProfileId;
   }
 
   const variants = buildPhoneDbQueryVariants(trimmed);
