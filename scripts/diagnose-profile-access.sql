@@ -23,6 +23,7 @@ select
   p.updated_at,
   public.is_super_admin_profile(p.id) as is_super_admin,
   public.profile_has_access(p.id, 'screen', '/maintenance-dashboard', 'view') as can_maintenance,
+  public.profile_has_access(p.id, 'screen', 'maintenance.card.access_control', 'view') as can_access_control,
   public.profile_has_access(p.id, 'screen', 'dashboard.card.members_list', 'view') as can_members_list,
   public.profile_has_access(p.id, 'screen', 'dashboard.card.financial', 'view') as can_financial,
   coalesce(

@@ -3,7 +3,13 @@ import { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
 import { isTstMaxScaleTypeResourceKey } from '@/lib/tstMaxScaleFilter';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
-import { getStoredProfileId, repairUserSessionReference } from '@/lib/userSession';
+import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
+import {
+  getStoredProfileId,
+  getStoredUserPhone,
+  persistProfileId,
+  repairUserSessionReference,
+} from '@/lib/userSession';
 
 export { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
 
@@ -82,10 +88,26 @@ const throwRpcMissing = () => {
 };
 
 export async function resolveActorProfileId() {
+  const phone = await getStoredUserPhone();
+
+  if (phone?.trim()) {
+    const preferredProfileId = await resolveProfileIdByPhone(phone);
+
+    if (preferredProfileId) {
+      const storedProfileId = await getStoredProfileId();
+
+      if (storedProfileId !== preferredProfileId) {
+        await persistProfileId(preferredProfileId);
+      }
+
+      return preferredProfileId;
+    }
+  }
+
   let profileId = await getStoredProfileId();
 
   if (!profileId) {
-    profileId = await repairUserSessionReference();
+    profileId = await repairUserSessionReference(phone);
   }
 
   return profileId;

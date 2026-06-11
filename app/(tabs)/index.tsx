@@ -13,7 +13,7 @@ import {
   loadDashboardLinkedScreenAccess,
   type DashboardScreenAccess,
 } from '@/lib/dashboardScreenAccess';
-import { EXIT_SESSION_UI } from '@/lib/sessionExitUi';
+import { getExitSessionUi } from '@/lib/sessionExitUi';
 import { getStoredUserPhone, signOutAndReturnToLogin } from '@/lib/userSession';
 import {
   APP_PARAMETER,
@@ -114,6 +114,7 @@ const formatDisplayName = (fullName: string) => {
 };
 
 export default function DashboardIndexScreen() {
+  const exitSessionUi = getExitSessionUi();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -523,12 +524,12 @@ export default function DashboardIndexScreen() {
             onPress={handleExitApp}
             activeOpacity={0.9}
             accessibilityRole="button"
-            accessibilityLabel={EXIT_SESSION_UI.accessibilityLabel}
-            accessibilityHint={EXIT_SESSION_UI.accessibilityHint}
+            accessibilityLabel={exitSessionUi.accessibilityLabel}
+            accessibilityHint={exitSessionUi.accessibilityHint}
             accessibilityState={{ disabled: false, busy: false }}
           >
             <Text style={styles.exitButtonText}>
-              {EXIT_SESSION_UI.button}
+              {exitSessionUi.button}
             </Text>
           </TouchableOpacity>
           {!isMaintenanceAccessLoading && canViewMaintenance ? (

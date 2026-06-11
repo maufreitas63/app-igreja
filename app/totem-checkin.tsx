@@ -9,7 +9,7 @@ import {
 import { isEventCalendarToday } from '@/lib/checkInVisibility';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { isEventPublished, isEventVisibleForCheckIn } from '@/lib/eventVisibility';
-import { EXIT_SESSION_UI } from '@/lib/sessionExitUi';
+import { getExitSessionUi } from '@/lib/sessionExitUi';
 import { signOutAndReturnToLogin } from '@/lib/userSession';
 import { lockPastEvents } from '@/lib/lockPastEvents';
 import { supabase } from '@/lib/supabase';
@@ -72,6 +72,7 @@ const isWebTotem = Platform.OS === 'web';
 const cameraViewAvailable = typeof CameraView === 'function';
 
 export default function TotemCheckinScreen() {
+  const exitSessionUi = getExitSessionUi();
   const [permission, requestPermission, refreshCameraPermission] = useCameraPermissions();
   const { lookupTotemCheckin, confirmTotemCheckin, loading } = useCheckin();
 
@@ -435,11 +436,11 @@ export default function TotemCheckinScreen() {
       onPress={handleExitSession}
       activeOpacity={0.9}
       accessibilityRole="button"
-      accessibilityLabel={EXIT_SESSION_UI.accessibilityLabel}
-      accessibilityHint={EXIT_SESSION_UI.accessibilityHint}
+      accessibilityLabel={exitSessionUi.accessibilityLabel}
+      accessibilityHint={exitSessionUi.accessibilityHint}
       accessibilityState={{ disabled: false, busy: false }}
     >
-      <Text style={styles.exitButtonText}>{EXIT_SESSION_UI.button}</Text>
+      <Text style={styles.exitButtonText}>{exitSessionUi.button}</Text>
     </TouchableOpacity>
   );
 

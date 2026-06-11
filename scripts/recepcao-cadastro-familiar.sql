@@ -168,6 +168,9 @@ declare
   v_submission_id uuid;
   v_informant jsonb;
   v_dependent jsonb;
+  v_informant_name text;
+  v_informant_birth date;
+  v_dependent_name text;
   v_name text;
   v_birth date;
   v_phone text;
@@ -196,14 +199,14 @@ begin
     return jsonb_build_object('success', false, 'message', 'Informe os dados do representante legal.');
   end if;
 
-  v_name := nullif(trim(coalesce(v_informant ->> 'full_name', '')), '');
+  v_informant_name := nullif(trim(coalesce(v_informant ->> 'full_name', '')), '');
 
-  if v_name is null then
+  if v_informant_name is null then
     return jsonb_build_object('success', false, 'message', 'Informe o nome do representante legal.');
   end if;
 
   begin
-    v_birth := nullif(trim(coalesce(v_informant ->> 'birth_date', '')), '')::date;
+    v_informant_birth := nullif(trim(coalesce(v_informant ->> 'birth_date', '')), '')::date;
   exception
     when others then
       return jsonb_build_object('success', false, 'message', 'Data de nascimento do representante legal inválida.');
@@ -219,9 +222,9 @@ begin
     select value
       from jsonb_array_elements(coalesce(p_payload -> 'dependents', '[]'::jsonb))
   loop
-    v_name := nullif(trim(coalesce(v_dependent ->> 'full_name', '')), '');
+    v_dependent_name := nullif(trim(coalesce(v_dependent ->> 'full_name', '')), '');
 
-    if v_name is null then
+    if v_dependent_name is null then
       continue;
     end if;
 
@@ -232,7 +235,7 @@ begin
         return jsonb_build_object(
           'success', false,
           'message',
-          format('Data de nascimento inválida para o dependente "%s".', v_name)
+          format('Data de nascimento inválida para o dependente "%s".', v_dependent_name)
         );
     end;
 
@@ -242,7 +245,7 @@ begin
       return jsonb_build_object(
         'success', false,
         'message',
-        format('Vínculo familiar inválido para o dependente "%s".', v_name)
+        format('Vínculo familiar inválido para o dependente "%s".', v_dependent_name)
       );
     end if;
 
@@ -264,7 +267,7 @@ begin
     r.matched_member_id,
     r.detected_family_id
   into v_matched_profile_id, v_matched_member_id, v_person_family_id
-  from public.resolve_family_id_for_recepcao_person(v_phone, v_name) r;
+  from public.resolve_family_id_for_recepcao_person(v_phone, v_informant_name) r;
 
   insert into public.recepcao_cadastro_familiar (
     submission_id,
@@ -283,8 +286,8 @@ begin
   ) values (
     v_submission_id,
     true,
-    v_name,
-    v_birth,
+    v_informant_name,
+    v_informant_birth,
     v_phone,
     'Representante Legal',
     v_cep,

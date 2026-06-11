@@ -1,4 +1,5 @@
 import { loadProfileByPhone } from '@/lib/profileOnboarding';
+import { isPwaInstalled } from '@/lib/pwaInstall';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -15,6 +16,10 @@ export const USER_PROFILE_ID_STORAGE_KEY = 'user_profile_id';
 /** Query na rota `/` para impedir restauração automática após logout. */
 
 export const SIGN_OUT_QUERY_PARAM = 'signedOut';
+
+/** Rota exibida no PWA instalado quando `window.close()` não é permitido (ex.: iOS). */
+
+export const PWA_SIGNED_OUT_ROUTE = '/sessao-encerrada';
 
 
 
@@ -257,11 +262,39 @@ const navigateToLoginAfterSignOut = () => {
   }
 };
 
+const buildPwaSignedOutUrl = () => {
+  const url = new URL(window.location.href);
+  url.pathname = PWA_SIGNED_OUT_ROUTE;
+  url.search = '';
+  url.hash = '';
+  return url.toString();
+};
+
+/** Tenta fechar o PWA instalado; se o navegador bloquear, mostra tela neutra (sem login). */
+const exitInstalledPwaAfterSignOut = () => {
+  try {
+    window.close();
+  } catch {
+    // Alguns navegadores bloqueiam close() — seguimos para o fallback abaixo.
+  }
+
+  window.setTimeout(() => {
+    window.location.replace(buildPwaSignedOutUrl());
+  }, 250);
+};
+
 /**
- * Encerra a sessão e volta à tela de login (`app/index`) sem esperar I/O assíncrono.
+ * Encerra a sessão sem esperar I/O assíncrono.
+ * No PWA instalado, tenta fechar o app; no navegador, volta à tela de login.
  */
 export function signOutAndReturnToLogin(): void {
   clearUserSessionImmediately();
+
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && isPwaInstalled()) {
+    exitInstalledPwaAfterSignOut();
+    return;
+  }
+
   navigateToLoginAfterSignOut();
 }
 

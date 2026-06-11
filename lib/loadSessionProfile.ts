@@ -123,6 +123,29 @@ export async function loadSessionProfile(targetPhone: string): Promise<SessionPr
         storedProfileIdWasInvalid = true;
         await clearStoredProfileId();
       } else {
+        const preferredProfileId = await resolveProfileIdByPhone(targetPhone);
+
+        if (preferredProfileId && preferredProfileId !== data.id) {
+          const { data: preferredData, error: preferredError } = await supabase
+            .from('profiles')
+            .select(PROFILE_SELECT)
+            .eq('id', preferredProfileId)
+            .maybeSingle();
+
+          if (!preferredError && preferredData) {
+            const profile = await enrichSessionProfileName(
+              normalizeProfileRow(preferredData),
+              phoneVariants
+            );
+
+            if (profile.id) {
+              await persistProfileId(profile.id);
+            }
+
+            return profile;
+          }
+        }
+
         const profile = await enrichSessionProfileName(normalizeProfileRow(data), phoneVariants);
         if (profile.id) {
           await persistProfileId(profile.id);
