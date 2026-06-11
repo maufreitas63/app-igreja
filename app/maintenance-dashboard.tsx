@@ -17,6 +17,7 @@ import { MaintenanceScaleVolunteersCard } from '@/components/MaintenanceScaleVol
 import { MaintenanceAccessControlCard } from '@/components/MaintenanceAccessControlCard';
 import { MaintenanceFinancialsCard } from '@/components/MaintenanceFinancialsCard';
 import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCareCard';
+import { MaintenancePastoralRoleChangeCard } from '@/components/MaintenancePastoralRoleChangeCard';
 import { MaintenanceFamilyReceptionCard } from '@/components/MaintenanceFamilyReceptionCard';
 import { MaintenanceProfileCadastroCard } from '@/components/MaintenanceProfileCadastroCard';
 import { MaintenanceScalesCard } from '@/components/MaintenanceScalesCard';
@@ -27,6 +28,7 @@ import { resolveMaintenancePanelAccessResourceKey } from '@/lib/screenAccessReso
 import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
 import { loadPastoralCarePanelAccess } from '@/lib/pastoralAccess';
+import { sessionCanAccessPastoralRoleChangePanel } from '@/lib/pastoralRoleChangeApi';
 import {
   loadMaintenanceScalePanelAccess,
   type MaintenanceScalePanelContent,
@@ -130,6 +132,7 @@ type MaintenanceCarouselCard = {
     | 'scale_volunteers'
     | 'scales'
     | 'pastoral_care'
+    | 'mudanca_papeis'
     | 'profile_cadastro'
     | 'family_reception'
     | 'financials'
@@ -161,6 +164,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '6', title: 'Servos em Disponibilidade', content: 'scale_volunteers' },
   { id: '7', title: 'Programação de Escalas', content: 'scales' },
   { id: '8', title: 'Cuidado Pastoral', content: 'pastoral_care' },
+  { id: '13', title: 'Mudança de Papéis', content: 'mudanca_papeis' },
   { id: '9', title: 'Informações Financeiras', content: 'financials' },
   { id: '4', title: 'Lista de Presença', content: 'quorum_presence' },
   { id: '11', title: 'Cadastro de Usuário', content: 'profile_cadastro' },
@@ -298,6 +302,7 @@ export default function MaintenanceDashboard() {
     Partial<Record<MaintenanceScalePanelContent, boolean>>
   >({});
   const [canAccessPastoralCare, setCanAccessPastoralCare] = useState(false);
+  const [canAccessPastoralRoleChange, setCanAccessPastoralRoleChange] = useState(false);
   const [totemSchemaReady, setTotemSchemaReady] = useState(isTotemAtivoColumnAvailable());
   const [quorumSchemaReady, setQuorumSchemaReady] = useState(isRequerQuorumColumnAvailable());
   const [quorumRegistrySchemaMissing, setQuorumRegistrySchemaMissing] = useState(
@@ -430,20 +435,24 @@ export default function MaintenanceDashboard() {
           }
 
           if (active && profileId) {
-            const [panelAccess, pastoralCareAccess] = await Promise.all([
+            const [panelAccess, pastoralCareAccess, pastoralRoleChangeAccess] = await Promise.all([
               loadMaintenanceScalePanelAccess(profileId),
               loadPastoralCarePanelAccess(profileId),
+              sessionCanAccessPastoralRoleChangePanel(),
             ]);
             setScalePanelAccess(panelAccess);
             setCanAccessPastoralCare(pastoralCareAccess);
+            setCanAccessPastoralRoleChange(pastoralRoleChangeAccess);
           } else if (active) {
             setScalePanelAccess({});
             setCanAccessPastoralCare(false);
+            setCanAccessPastoralRoleChange(false);
           }
         } catch {
           if (active) {
             setScalePanelAccess({});
             setCanAccessPastoralCare(false);
+            setCanAccessPastoralRoleChange(false);
           }
         }
 
@@ -661,13 +670,17 @@ export default function MaintenanceDashboard() {
         return canAccessPastoralCare;
       }
 
+      if (card.content === 'mudanca_papeis') {
+        return canAccessPastoralRoleChange || canManageAccessControl;
+      }
+
       if (card.content === 'profile_cadastro' || card.content === 'family_reception') {
         return canManageAccessControl;
       }
 
       return true;
     });
-  }, [canAccessPastoralCare, canManageAccessControl, scalePanelAccess]);
+  }, [canAccessPastoralCare, canAccessPastoralRoleChange, canManageAccessControl, scalePanelAccess]);
 
   const maintenanceCarouselCards = useMemo<MaintenanceCarouselCard[]>(
     () => [{ id: 'menu', title: 'Manutenção', content: 'menu' }, ...maintenancePanelCards],
@@ -861,6 +874,7 @@ export default function MaintenanceDashboard() {
             item.content === 'scale_volunteers' && styles.panelCardScaleVolunteers,
             item.content === 'scales' && styles.panelCardScales,
             item.content === 'pastoral_care' && styles.panelCardPastoralCare,
+            item.content === 'mudanca_papeis' && styles.panelCardPastoralRoleChange,
             item.content === 'profile_cadastro' && styles.panelCardProfileCadastro,
             item.content === 'family_reception' && styles.panelCardFamilyReception,
             item.content === 'financials' && styles.panelCardFinancials,
@@ -939,6 +953,8 @@ export default function MaintenanceDashboard() {
             <MaintenanceScalesCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'pastoral_care' ? (
             <MaintenancePastoralCareCard isActive={currentIndex === index} panelHeight={cardHeight} />
+          ) : item.content === 'mudanca_papeis' ? (
+            <MaintenancePastoralRoleChangeCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'profile_cadastro' ? (
             <MaintenanceProfileCadastroCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'family_reception' ? (
@@ -1600,6 +1616,10 @@ const styles = StyleSheet.create({
   },
   panelCardPastoralCare: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.pastoral,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
+  },
+  panelCardPastoralRoleChange: {
+    borderColor: '#FB7185',
     padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardProfileCadastro: {

@@ -7,6 +7,7 @@ export type MaintenancePanelContent =
   | 'scale_volunteers'
   | 'scales'
   | 'pastoral_care'
+  | 'mudanca_papeis'
   | 'profile_cadastro'
   | 'family_reception'
   | 'financials'
@@ -21,6 +22,7 @@ export type MaintenanceShortcutIconName =
   | 'users'
   | 'clipboard'
   | 'heart'
+  | 'exchange'
   | 'line-chart'
   | 'id-card'
   | 'home'
@@ -39,6 +41,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   scale_volunteers: 'users',
   scales: 'clipboard',
   pastoral_care: 'heart',
+  mudanca_papeis: 'exchange',
   financials: 'line-chart',
   profile_cadastro: 'id-card',
   family_reception: 'home',
@@ -55,6 +58,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   scale_volunteers: '#2DD4BF',
   scales: '#34D399',
   pastoral_care: '#F472B6',
+  mudanca_papeis: '#FB7185',
   financials: '#34D399',
   profile_cadastro: '#A78BFA',
   family_reception: '#34D399',
