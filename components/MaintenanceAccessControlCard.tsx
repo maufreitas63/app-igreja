@@ -1,5 +1,7 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SectionLabel } from '@/components/ui/SectionLabel';
+import { formatShortName } from '@/lib/formatShortName';
 import { FINANCIAL_ACCESS_SCREEN_RESOURCE_KEYS } from '@/lib/accessControl';
 import {
   ACCESS_CONTROL_PANEL_RESOURCE,
@@ -54,9 +56,8 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
   const {
     isSuperAdmin,
     roles,
-    profileSearchQuery,
-    setProfileSearchQuery,
-    profileSearchResults,
+    allProfiles,
+    loadingProfiles,
     selectedProfile,
     profileRoles,
     profileScaleLeadership,
@@ -68,7 +69,6 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
     setResourceTypeFilter,
     roleGrants,
     loading,
-    searchingProfiles,
     loadingProfileRoles,
     loadingGrants,
     savingRoleCode,
@@ -76,7 +76,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
     error,
     missingExpectedRoles,
     rpcMissing,
-    selectProfile,
+    selectProfileById,
     clearSelectedProfile,
     toggleProfileRole,
     toggleScaleLeadership,
@@ -111,6 +111,20 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
 
     return !roleGrants.some((grant) => grant.resourceKey === ACCESS_CONTROL_PANEL_RESOURCE);
   }, [loadingGrants, resourceTypeFilter, roleGrants]);
+
+  const profileDropdownOptions = useMemo(
+    () =>
+      allProfiles.map((profile) => {
+        const meta = [profile.phone, profile.memberCode].filter(Boolean).join(' · ');
+        const shortName = formatShortName(profile.fullName);
+
+        return {
+          value: profile.id,
+          label: meta ? `${shortName} · ${meta}` : shortName,
+        };
+      }),
+    [allProfiles]
+  );
 
   const filteredRoleGrants = useMemo(() => {
     const query = grantSearchQuery.trim().toLowerCase();
@@ -264,46 +278,33 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
           keyboardShouldPersistTaps="handled"
           {...MAINTENANCE_SCROLL_PROPS}
         >
-          <SectionLabel variant="maintenance">Buscar perfil</SectionLabel>
-          <TextInput
-            style={[styles.input, styles.searchInput]}
-            placeholder="Nome, telefone ou código (mín. 2 letras)"
-            placeholderTextColor="#64748B"
-            value={profileSearchQuery}
-            onChangeText={setProfileSearchQuery}
-            autoCapitalize="words"
-            autoCorrect={false}
-            returnKeyType="search"
-            editable={!rpcMissing}
-          />
+          <SectionLabel variant="maintenance">Selecionar perfil</SectionLabel>
+          {loadingProfiles ? (
+            <CardLoadingState lines={2} compact />
+          ) : allProfiles.length > 0 ? (
+            <DropdownSelect
+              options={profileDropdownOptions}
+              selectedValue={selectedProfile?.id ?? ''}
+              onValueChange={(value) => {
+                if (!value) {
+                  clearSelectedProfile();
+                  return;
+                }
 
-          {searchingProfiles ? <CardLoadingState lines={2} compact /> : null}
-
-          {profileSearchQuery.trim().length >= 2 && !searchingProfiles ? (
-            profileSearchResults.length > 0 ? (
-              <ScrollView style={styles.resultsScroll} nestedScrollEnabled keyboardShouldPersistTaps="handled">
-                {profileSearchResults.map((profile) => (
-                  <TouchableOpacity
-                    key={profile.id}
-                    style={styles.resultRow}
-                    onPress={() => void selectProfile(profile)}
-                    activeOpacity={0.85}
-                  >
-                    <Text style={styles.resultName} numberOfLines={1}>
-                      {profile.fullName}
-                    </Text>
-                    <Text style={styles.resultMeta} numberOfLines={1}>
-                      {[profile.phone, profile.memberCode].filter(Boolean).join(' · ')}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            ) : (
-              <Text style={styles.searchHintText}>Nenhum perfil encontrado.</Text>
-            )
+                void selectProfileById(value);
+              }}
+              modalTitle="Selecionar perfil"
+              placeholder="Selecionar usuário"
+              style={styles.profileDropdown}
+              disabled={rpcMissing || busy}
+            />
           ) : (
-            <Text style={styles.searchHintText}>Digite pelo menos 2 letras para buscar.</Text>
+            <Text style={styles.searchHintText}>Nenhum perfil encontrado.</Text>
           )}
+
+          {!loadingProfiles && allProfiles.length > 0 ? (
+            <Text style={styles.searchHintText}>{allProfiles.length} usuários cadastrados</Text>
+          ) : null}
 
           {selectedProfile ? (
             <View style={styles.selectedCard}>
@@ -797,6 +798,10 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     marginBottom: 4,
+  },
+  profileDropdown: {
+    width: '100%',
+    minHeight: 48,
   },
   inlineLoader: {
     alignSelf: 'flex-start',

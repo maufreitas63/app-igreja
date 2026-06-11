@@ -118,6 +118,46 @@ begin
 end;
 $$;
 
+drop function if exists public.listar_perfis_access_admin(uuid, integer);
+
+create or replace function public.listar_perfis_access_admin(
+  p_actor_profile_id uuid,
+  p_limit integer default 5000
+)
+returns table (
+  id uuid,
+  full_name text,
+  phone text,
+  codigo_membro text
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_limit integer;
+begin
+  perform public.assert_access_admin(p_actor_profile_id);
+
+  v_limit := greatest(1, least(coalesce(p_limit, 5000), 5000));
+
+  return query
+  select
+    p.id,
+    coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as full_name,
+    coalesce(p.phone, '') as phone,
+    coalesce(p.codigo_membro, '') as codigo_membro
+  from public.profiles p
+  where coalesce(
+      nullif(trim(p.full_name), ''),
+      nullif(trim(p.phone), ''),
+      nullif(trim(p.codigo_membro), '')
+    ) is not null
+  order by p.full_name asc
+  limit v_limit;
+end;
+$$;
+
 drop function if exists public.listar_papeis_perfil_access_admin(uuid, uuid);
 
 create or replace function public.listar_papeis_perfil_access_admin(
@@ -524,6 +564,7 @@ on conflict (role_id, resource_id) where (role_id is not null) do update
 grant execute on function public.is_super_admin_profile(uuid) to anon, authenticated;
 grant execute on function public.listar_access_roles_admin(uuid) to anon, authenticated;
 grant execute on function public.buscar_perfis_access_admin(uuid, text, integer) to anon, authenticated;
+grant execute on function public.listar_perfis_access_admin(uuid, integer) to anon, authenticated;
 grant execute on function public.listar_papeis_perfil_access_admin(uuid, uuid) to anon, authenticated;
 grant execute on function public.atribuir_papel_perfil_access_admin(uuid, uuid, text) to anon, authenticated;
 grant execute on function public.revogar_papel_perfil_access_admin(uuid, uuid, text) to anon, authenticated;

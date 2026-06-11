@@ -350,6 +350,20 @@ export async function searchProfilesForAccessAdmin(query: string, limit = 20) {
   );
 }
 
+export async function listProfilesForAccessAdmin(limit = 5000) {
+  const actorProfileId = await resolveActorProfileId();
+
+  if (!actorProfileId) {
+    throw new Error('Sessão inválida. Saia e entre novamente.');
+  }
+
+  return callAdminRpc(
+    'listar_perfis_access_admin',
+    { p_actor_profile_id: actorProfileId, p_limit: limit },
+    parseProfileSearchRows
+  );
+}
+
 export async function listProfileRoleAssignments(targetProfileId: string) {
   const actorProfileId = await resolveActorProfileId();
 

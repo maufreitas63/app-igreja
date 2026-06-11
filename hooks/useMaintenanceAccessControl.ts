@@ -5,13 +5,13 @@ import {
   listAccessRolesAdmin,
   listProfileRoleAssignments,
   ensureFinancialAccessResourcesAdmin,
+  listProfilesForAccessAdmin,
   listRoleGrantsAdmin,
   MAINTENANCE_ACCESS_CONTROL_RPC_MISSING,
   EXPECTED_ACCESS_ROLE_CODES,
   MAINTENANCE_ACCESS_CONTROL_SQL_HINT,
   revokeProfileRole,
   saveRoleGrantAdmin,
-  searchProfilesForAccessAdmin,
   type AccessProfileSearchResult,
   type AccessResourceTypeFilter,
   type AccessRoleRecord,
@@ -31,8 +31,7 @@ export { MAINTENANCE_ACCESS_CONTROL_SQL_HINT };
 export function useMaintenanceAccessControl(enabled: boolean) {
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
   const [roles, setRoles] = useState<AccessRoleRecord[]>([]);
-  const [profileSearchQuery, setProfileSearchQuery] = useState('');
-  const [profileSearchResults, setProfileSearchResults] = useState<AccessProfileSearchResult[]>([]);
+  const [allProfiles, setAllProfiles] = useState<AccessProfileSearchResult[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<AccessProfileSearchResult | null>(null);
   const [profileRoles, setProfileRoles] = useState<ProfileRoleAssignment[]>([]);
   const [profileScaleLeadership, setProfileScaleLeadership] = useState<ProfileScaleLeadershipAssignment[]>([]);
@@ -40,7 +39,7 @@ export function useMaintenanceAccessControl(enabled: boolean) {
   const [resourceTypeFilter, setResourceTypeFilter] = useState<AccessResourceTypeFilter>('screen');
   const [roleGrants, setRoleGrants] = useState<RoleGrantRecord[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchingProfiles, setSearchingProfiles] = useState(false);
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
   const [loadingProfileRoles, setLoadingProfileRoles] = useState(false);
   const [loadingScaleLeadership, setLoadingScaleLeadership] = useState(false);
   const [savingScaleLeadershipId, setSavingScaleLeadershipId] = useState<string | null>(null);
@@ -109,54 +108,33 @@ export function useMaintenanceAccessControl(enabled: boolean) {
     void loadBootstrap();
   }, [loadBootstrap]);
 
-  useEffect(() => {
+  const loadAllProfiles = useCallback(async () => {
     if (!enabled || !isSuperAdmin || rpcMissing) {
       if (!enabled || !isSuperAdmin) {
-        setProfileSearchResults([]);
-        setSearchingProfiles(false);
+        setAllProfiles([]);
+        setLoadingProfiles(false);
       }
       return;
     }
 
-    const query = profileSearchQuery.trim();
+    setLoadingProfiles(true);
+    setError(null);
 
-    if (query.length < 2) {
-      setProfileSearchResults([]);
-      setSearchingProfiles(false);
-      return;
+    try {
+      const rows = await listProfilesForAccessAdmin();
+      setAllProfiles(rows);
+    } catch (err) {
+      console.error('Erro ao listar perfis:', err);
+      setAllProfiles([]);
+      handleRpcError(err, 'Não foi possível carregar a lista de perfis.');
+    } finally {
+      setLoadingProfiles(false);
     }
+  }, [enabled, handleRpcError, isSuperAdmin, rpcMissing]);
 
-    let active = true;
-    const timer = setTimeout(() => {
-      setSearchingProfiles(true);
-      setError(null);
-
-      void searchProfilesForAccessAdmin(query)
-        .then((rows) => {
-          if (active) {
-            setProfileSearchResults(rows);
-          }
-        })
-        .catch((err) => {
-          console.error('Erro ao buscar perfis:', err);
-
-          if (active) {
-            setProfileSearchResults([]);
-            handleRpcError(err, 'Não foi possível buscar perfis.');
-          }
-        })
-        .finally(() => {
-          if (active) {
-            setSearchingProfiles(false);
-          }
-        });
-    }, 300);
-
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [enabled, handleRpcError, isSuperAdmin, profileSearchQuery, rpcMissing]);
+  useEffect(() => {
+    void loadAllProfiles();
+  }, [loadAllProfiles]);
 
   const reloadProfileScaleLeadership = useCallback(async (profileId: string) => {
     setLoadingScaleLeadership(true);
@@ -174,7 +152,6 @@ export function useMaintenanceAccessControl(enabled: boolean) {
 
   const selectProfile = useCallback(async (profile: AccessProfileSearchResult) => {
     setSelectedProfile(profile);
-    setProfileSearchResults([]);
     setLoadingProfileRoles(true);
     setError(null);
 
@@ -192,6 +169,27 @@ export function useMaintenanceAccessControl(enabled: boolean) {
       setLoadingProfileRoles(false);
     }
   }, [handleRpcError, reloadProfileScaleLeadership]);
+
+  const selectProfileById = useCallback(
+    async (profileId: string) => {
+      if (!profileId) {
+        setSelectedProfile(null);
+        setProfileRoles([]);
+        setProfileScaleLeadership([]);
+        return;
+      }
+
+      const profile = allProfiles.find((row) => row.id === profileId);
+
+      if (!profile) {
+        setError('Perfil não encontrado na lista.');
+        return;
+      }
+
+      await selectProfile(profile);
+    },
+    [allProfiles, selectProfile]
+  );
 
   const reloadRoleGrants = useCallback(async () => {
     if (!enabled || !isSuperAdmin || !selectedRoleCode) {
@@ -393,9 +391,8 @@ export function useMaintenanceAccessControl(enabled: boolean) {
     isSuperAdmin,
     roles,
     missingExpectedRoles,
-    profileSearchQuery,
-    setProfileSearchQuery,
-    profileSearchResults,
+    allProfiles,
+    loadingProfiles,
     selectedProfile,
     profileRoles,
     profileScaleLeadership,
@@ -407,7 +404,6 @@ export function useMaintenanceAccessControl(enabled: boolean) {
     setResourceTypeFilter,
     roleGrants,
     loading,
-    searchingProfiles,
     loadingProfileRoles,
     loadingGrants,
     savingRoleCode,
@@ -415,6 +411,7 @@ export function useMaintenanceAccessControl(enabled: boolean) {
     error,
     rpcMissing,
     selectProfile,
+    selectProfileById,
     clearSelectedProfile: () => {
       setSelectedProfile(null);
       setProfileRoles([]);
