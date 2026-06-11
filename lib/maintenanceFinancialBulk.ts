@@ -23,13 +23,24 @@ export type FinancialBulkParseResult = {
   loadMonthLabel: string;
 };
 
-/** Layout da tesouraria: valor na 7ª coluna; comentário opcional na 8ª. */
+/** Layout da tesouraria: comentário opcional na 7ª coluna; valor sempre na última. */
 export const FINANCIAL_BULK_CSV_FORMAT_HINT =
-  'CSV (;) — DATA;CONTA;MINISTÉRIO;TRANSAÇÃO;MOVIMENTO;VERSÃO;VALOR;COMENTÁRIOS (opcional). Data DD/MM/AA ou DD/MM/AAAA; valor com ponto (.) se houver decimais. Ex.: 04/05/2026;AP.MPAGO;PROJETOS;ENTRE CONTAS;ORDINÁRIO;REALIZADO;1348;observação do lançamento';
+  'CSV (;) — DATA;CONTA;MINISTÉRIO;TRANSAÇÃO;MOVIMENTO;VERSÃO;COMENTÁRIOS (opcional);VALOR. Data DD/MM/AA ou DD/MM/AAAA; valor com ponto (.) se houver decimais. Ex.: 04/05/2026;AP.MPAGO;PROJETOS;ENTRE CONTAS;ORDINÁRIO;REALIZADO;observação do lançamento;1348';
 
-type BulkColumnLayout = 'valor_last' | 'valor_third';
+type BulkColumnLayout = 'standard' | 'legacy_comments_last' | 'valor_third';
 
 const isDateHeaderLine = (value: string) => /^(data|date)$/i.test(value.trim());
+
+/** Linha vazia exportada do Excel (data zerada + colunas em branco). */
+const isExcelPlaceholderBulkRow = (parts: string[]) => {
+  const dateRaw = parts[0]?.trim() ?? '';
+
+  if (!/^0{1,2}\/0{1,2}\/1900$/.test(dateRaw)) {
+    return false;
+  }
+
+  return parts.slice(1).every((part) => !part.trim());
+};
 
 const isCommentHeaderLine = (value: string) =>
   /^(comentarios?|comments?|observacoes?|observação)$/i.test(value.trim());
@@ -110,30 +121,77 @@ export const parseFinancialBulkAmount = (value: string) => {
 };
 
 const detectColumnLayout = (parts: string[]): BulkColumnLayout => {
-  const thirdIsAmount = parseFinancialBulkAmount(parts[2]) !== null;
-  const lastIsAmount = parseFinancialBulkAmount(parts[6]) !== null;
+  if (parts.length >= 8) {
+    const seventhIsAmount = parseFinancialBulkAmount(parts[6]) !== null;
+    const eighthIsAmount = parseFinancialBulkAmount(parts[7]) !== null;
 
-  if (lastIsAmount && !thirdIsAmount) {
-    return 'valor_last';
+    if (eighthIsAmount && !seventhIsAmount) {
+      return 'standard';
+    }
+
+    if (seventhIsAmount && !eighthIsAmount) {
+      return 'legacy_comments_last';
+    }
   }
 
-  if (thirdIsAmount && !lastIsAmount) {
-    return 'valor_third';
+  if (parts.length === 7) {
+    if (parseFinancialBulkAmount(parts[6]) !== null) {
+      return 'standard';
+    }
+
+    if (parseFinancialBulkAmount(parts[2]) !== null) {
+      return 'valor_third';
+    }
   }
 
-  return 'valor_last';
+  return 'standard';
 };
 
 const mapCsvParts = (parts: string[], layout: BulkColumnLayout) => {
   if (layout === 'valor_third') {
     const [dateRaw, account, amountRaw, ministry, transactionKind, movement, budgetVersion] = parts;
 
-    return { dateRaw, account, amountRaw, ministry, transactionKind, movement, budgetVersion };
+    return {
+      dateRaw,
+      account,
+      amountRaw,
+      ministry,
+      transactionKind,
+      movement,
+      budgetVersion,
+      comments: parts[7],
+    };
   }
 
-  const [dateRaw, account, ministry, transactionKind, movement, budgetVersion, amountRaw] = parts;
+  if (layout === 'legacy_comments_last') {
+    const [dateRaw, account, ministry, transactionKind, movement, budgetVersion, amountRaw] = parts;
 
-  return { dateRaw, account, amountRaw, ministry, transactionKind, movement, budgetVersion };
+    return {
+      dateRaw,
+      account,
+      amountRaw,
+      ministry,
+      transactionKind,
+      movement,
+      budgetVersion,
+      comments: parts[7],
+    };
+  }
+
+  const [dateRaw, account, ministry, transactionKind, movement, budgetVersion] = parts;
+  const amountRaw = parts[parts.length - 1];
+  const comments = parts.length >= 8 ? parts[6] : undefined;
+
+  return {
+    dateRaw,
+    account,
+    amountRaw,
+    ministry,
+    transactionKind,
+    movement,
+    budgetVersion,
+    comments,
+  };
 };
 
 export const isFinancialDateInLoadMonth = (transactionDateIso: string, loadMonth: FinancialMonthKey) => {
@@ -171,11 +229,15 @@ export const parseFinancialBulkCsv = (
 
     const parts = line.split(';').map((part) => part.trim());
 
+    if (isExcelPlaceholderBulkRow(parts)) {
+      continue;
+    }
+
     if (parts.length < 7) {
       errors.push({
         line: lineNumber,
         message:
-          'Informe ao menos 7 colunas: DATA;CONTA;MINISTÉRIO;TRANSAÇÃO;MOVIMENTO;VERSÃO;VALOR (8ª COMENTÁRIOS opcional).',
+          'Informe ao menos 7 colunas: DATA;CONTA;MINISTÉRIO;TRANSAÇÃO;MOVIMENTO;VERSÃO;VALOR (COMENTÁRIOS opcional na 7ª quando houver 8 colunas).',
       });
       continue;
     }
@@ -183,7 +245,7 @@ export const parseFinancialBulkCsv = (
     if (parts.length > 8) {
       errors.push({
         line: lineNumber,
-        message: 'Use no máximo 8 colunas (COMENTÁRIOS é a última, opcional).',
+        message: 'Use no máximo 8 colunas (COMENTÁRIOS na 7ª e VALOR na 8ª).',
       });
       continue;
     }
