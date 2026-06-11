@@ -4,11 +4,13 @@ import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import {
   buildExpenseReportWhatsappMessage,
+  deleteExpenseReport,
   EXPENSE_REPORT_SQL_HINT,
   fetchExpenseReportDetail,
   fetchMyExpenseReports,
   loadExpenseReportHeader,
   resolveTreasurerWhatsappUrl,
+  splitExpenseReportDescriptions,
   submitExpenseReport,
   type ExpenseReportDetail,
   type ExpenseReportHeader,
@@ -45,6 +47,7 @@ export default function ExpenseReportScreen() {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
   const [whatsappBusy, setWhatsappBusy] = useState(false);
   const [header, setHeader] = useState<ExpenseReportHeader | null>(null);
   const [reports, setReports] = useState<ExpenseReportSummary[]>([]);
@@ -166,6 +169,64 @@ export default function ExpenseReportScreen() {
     }
   };
 
+  const handleDeleteReport = (report: ExpenseReportSummary) => {
+    Alert.alert(
+      'Excluir relatório',
+      `Deseja excluir o ${report.report_number}? Esta ação não pode ser desfeita.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              setDeletingReportId(report.id);
+
+              try {
+                const result = await deleteExpenseReport(report.id);
+
+                if (!result.success) {
+                  Toast.show({
+                    type: 'error',
+                    text1: 'RD',
+                    text2: result.message,
+                  });
+                  return;
+                }
+
+                setReports((current) => current.filter((entry) => entry.id !== report.id));
+
+                if (selectedReport?.id === report.id) {
+                  setSelectedReport(null);
+                  setMode('list');
+                }
+
+                Toast.show({
+                  type: 'success',
+                  text1: 'RD',
+                  text2: result.message,
+                });
+              } catch (err) {
+                Toast.show({
+                  type: 'error',
+                  text1: 'RD',
+                  text2:
+                    err instanceof Error && err.message.includes('EXPENSE_REPORT_RPC_MISSING')
+                      ? EXPENSE_REPORT_SQL_HINT
+                      : err instanceof Error
+                        ? err.message
+                        : 'Não foi possível excluir o relatório.',
+                });
+              } finally {
+                setDeletingReportId(null);
+              }
+            })();
+          },
+        },
+      ]
+    );
+  };
+
   const openReport = async (reportId: string) => {
     setLoading(true);
 
@@ -249,27 +310,66 @@ export default function ExpenseReportScreen() {
                 {reports.length === 0 ? (
                   <Text style={styles.emptyText}>Você ainda não enviou nenhum relatório.</Text>
                 ) : (
-                  reports.map((report) => (
-                    <TouchableOpacity
-                      key={report.id}
-                      style={styles.reportCard}
-                      onPress={() => void openReport(report.id)}
-                      activeOpacity={0.85}
-                    >
-                      <View style={styles.reportCardHeader}>
-                        <Text style={styles.reportNumber}>{report.report_number}</Text>
-                        <Text style={styles.reportStatus}>
-                          {report.status === 'reconciled' ? 'Conciliado' : 'Pendente'}
-                        </Text>
+                  reports.map((report) => {
+                    const descriptions = splitExpenseReportDescriptions(report.item_descriptions);
+
+                    return (
+                      <View key={report.id} style={styles.reportCard}>
+                        <TouchableOpacity
+                          onPress={() => void openReport(report.id)}
+                          activeOpacity={0.85}
+                        >
+                          <View style={styles.reportCardHeader}>
+                            <Text style={styles.reportNumber}>{report.report_number}</Text>
+                            <Text
+                              style={[
+                                styles.reportStatus,
+                                report.status === 'pending' && styles.reportStatusPending,
+                              ]}
+                            >
+                              {report.status === 'reconciled' ? 'Conciliado' : 'Pendente'}
+                            </Text>
+                          </View>
+                          <Text style={styles.reportMeta}>
+                            {report.total_amount.toLocaleString('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            })}
+                          </Text>
+                          {descriptions.length > 0 ? (
+                            <View style={styles.reportDescriptions}>
+                              {descriptions.map((description) => (
+                                <Text
+                                  key={`${report.id}-${description}`}
+                                  style={styles.reportDescriptionLine}
+                                  numberOfLines={2}
+                                >
+                                  {description}
+                                </Text>
+                              ))}
+                            </View>
+                          ) : null}
+                        </TouchableOpacity>
+
+                        {report.status === 'pending' ? (
+                          <TouchableOpacity
+                            style={[
+                              styles.deleteReportButton,
+                              deletingReportId === report.id && styles.deleteReportButtonDisabled,
+                            ]}
+                            onPress={() => handleDeleteReport(report)}
+                            disabled={deletingReportId === report.id}
+                            activeOpacity={0.85}
+                          >
+                            <FontAwesome name="trash-o" size={14} color="#FFFFFF" />
+                            <Text style={styles.deleteReportButtonText}>
+                              {deletingReportId === report.id ? 'Excluindo...' : 'Excluir RD'}
+                            </Text>
+                          </TouchableOpacity>
+                        ) : null}
                       </View>
-                      <Text style={styles.reportMeta}>
-                        {report.total_amount.toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                      </Text>
-                    </TouchableOpacity>
-                  ))
+                    );
+                  })
                 )}
               </View>
             ) : null}
@@ -414,6 +514,36 @@ const styles = StyleSheet.create({
   },
   reportMeta: {
     color: '#334155',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  reportStatusPending: {
+    color: '#B45309',
+  },
+  reportDescriptions: {
+    marginTop: 6,
+    gap: 2,
+  },
+  reportDescriptionLine: {
+    color: '#64748B',
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  deleteReportButton: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 10,
+    backgroundColor: '#DC2626',
+    paddingVertical: 10,
+  },
+  deleteReportButtonDisabled: {
+    opacity: 0.6,
+  },
+  deleteReportButtonText: {
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
   },

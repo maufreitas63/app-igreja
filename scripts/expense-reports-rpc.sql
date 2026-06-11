@@ -8,6 +8,7 @@ drop function if exists public.listar_relatorios_despesas_pendentes();
 drop function if exists public.conciliar_relatorio_despesas(uuid, uuid);
 drop function if exists public.listar_relatorios_despesas_periodo(date);
 drop function if exists public.desconciliar_relatorio_despesas(uuid);
+drop function if exists public.excluir_relatorio_despesas(uuid);
 
 create or replace function public.next_expense_report_number()
 returns text
@@ -154,7 +155,8 @@ returns table (
   total_amount numeric,
   pix_key text,
   status text,
-  financial_id uuid
+  financial_id uuid,
+  item_descriptions text
 )
 language sql
 security definer
@@ -167,7 +169,15 @@ as $$
     er.total_amount,
     er.pix_key,
     er.status,
-    er.financial_id
+    er.financial_id,
+    coalesce(
+      (
+        select string_agg(ei.description, ' · ' order by ei.date asc, ei.created_at asc)
+          from public.expense_items ei
+         where ei.report_id = er.id
+      ),
+      ''
+    ) as item_descriptions
   from public.expense_reports er
   where er.user_id = public.current_session_profile_id()
   order by er.created_at desc;
@@ -433,5 +443,53 @@ $$;
 
 grant execute on function public.listar_relatorios_despesas_periodo(date) to anon, authenticated;
 grant execute on function public.desconciliar_relatorio_despesas(uuid) to anon, authenticated;
+
+create or replace function public.excluir_relatorio_despesas(p_report_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_report public.expense_reports%rowtype;
+begin
+  if p_report_id is null then
+    return jsonb_build_object('success', false, 'message', 'Relatório não informado.');
+  end if;
+
+  select *
+    into v_report
+    from public.expense_reports er
+   where er.id = p_report_id;
+
+  if not found then
+    return jsonb_build_object('success', false, 'message', 'Relatório não encontrado.');
+  end if;
+
+  if not public.session_owns_expense_report(v_report.user_id) then
+    return jsonb_build_object('success', false, 'message', 'Sem permissão para excluir este relatório.');
+  end if;
+
+  if v_report.status <> 'pending' then
+    return jsonb_build_object(
+      'success', false,
+      'message', 'Somente relatórios pendentes podem ser excluídos.'
+    );
+  end if;
+
+  delete from public.expense_reports er
+   where er.id = p_report_id
+     and er.user_id = public.current_session_profile_id()
+     and er.status = 'pending';
+
+  return jsonb_build_object(
+    'success', true,
+    'message', 'Relatório de despesas excluído.',
+    'report_id', p_report_id
+  );
+end;
+$$;
+
+grant execute on function public.excluir_relatorio_despesas(uuid) to anon, authenticated;
 
 notify pgrst, 'reload schema';

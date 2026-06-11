@@ -1,7 +1,10 @@
 import { createUuid } from '@/lib/createUuid';
 import { getAppParameterValue } from '@/lib/appParameters';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
-import { uploadExpenseReportReceiptImage } from '@/lib/financialReceipt';
+import {
+  deleteFinancialReceiptFile,
+  uploadExpenseReportReceiptImage,
+} from '@/lib/financialReceipt';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
 import { getStoredUserPhone } from '@/lib/userSession';
@@ -30,6 +33,7 @@ export type ExpenseReportSummary = {
   pix_key: string;
   status: ExpenseReportStatus;
   financial_id?: string | null;
+  item_descriptions: string;
 };
 
 export type ExpenseReportDetail = ExpenseReportSummary & {
@@ -82,6 +86,7 @@ const parseExpenseReportSummary = (row: Record<string, unknown>): ExpenseReportS
   status: parseExpenseReportStatus(row.status),
   financial_id:
     typeof row.financial_id === 'string' && row.financial_id.trim() ? row.financial_id.trim() : null,
+  item_descriptions: String(row.item_descriptions ?? '').trim(),
 });
 
 const parseExpenseReportItems = (items: unknown): ExpenseReportItem[] => {
@@ -454,6 +459,62 @@ export async function submitExpenseReport(input: {
   }
 }
 
+export const splitExpenseReportDescriptions = (value: string) =>
+  value
+    .split(' · ')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+export async function deleteExpenseReport(
+  reportId: string
+): Promise<{ success: boolean; message: string }> {
+  const detail = await fetchExpenseReportDetail(reportId);
+
+  if (!detail) {
+    return { success: false, message: 'Relatório não encontrado.' };
+  }
+
+  if (detail.status !== 'pending') {
+    return { success: false, message: 'Somente relatórios pendentes podem ser excluídos.' };
+  }
+
+  const { data, error } = await supabase.rpc('excluir_relatorio_despesas', {
+    p_report_id: reportId,
+  });
+
+  if (error) {
+    handleRpcError(error, 'excluir_relatorio_despesas');
+  }
+
+  const parsed = (data ?? {}) as Record<string, unknown>;
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: String(parsed.message ?? 'Não foi possível excluir o relatório.'),
+    };
+  }
+
+  await Promise.all(
+    detail.items.map(async (item) => {
+      if (!item.receipt_url) {
+        return;
+      }
+
+      try {
+        await deleteFinancialReceiptFile(item.receipt_url);
+      } catch (receiptError) {
+        console.warn('Não foi possível remover comprovante do RD:', receiptError);
+      }
+    })
+  );
+
+  return {
+    success: true,
+    message: String(parsed.message ?? 'Relatório de despesas excluído.'),
+  };
+}
+
 export async function fetchMyExpenseReports(): Promise<ExpenseReportSummary[]> {
   const { data, error } = await supabase.rpc('listar_meus_relatorios_despesas');
 
@@ -490,11 +551,13 @@ export async function fetchExpenseReportDetail(
   }
 
   const report = payload.report as Record<string, unknown>;
+  const items = parseExpenseReportItems(payload.items);
 
   return {
     ...parseExpenseReportSummary(report),
+    item_descriptions: items.map((item) => item.description).join(' · '),
     user_id: String(report.user_id ?? ''),
-    items: parseExpenseReportItems(payload.items),
+    items,
   };
 }
 
