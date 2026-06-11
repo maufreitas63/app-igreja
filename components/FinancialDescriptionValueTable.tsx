@@ -4,8 +4,9 @@ import {
 } from '@/lib/financialBulletinComparison';
 import { formatBulletinAmount } from '@/lib/financialBulletin';
 import {
-  findCommentForBulletinRow,
+  findCommentDetailsForBulletinRow,
   findReceiptForBulletinRow,
+  type FinancialBulletinCommentDetail,
   type FinancialEntry,
 } from '@/lib/financialEntry';
 import { createFinancialReceiptSignedUrl } from '@/lib/financialReceipt';
@@ -35,6 +36,12 @@ const ICON_SLOT_WIDTH = 24;
 const ICON_COLUMN_WIDTH = ICON_SLOT_WIDTH * 2 + 4;
 const COMMENT_ICON_COLOR = '#2563EB';
 const RECEIPT_ICON_COLOR = '#059669';
+
+const formatCommentDetailAmount = (value: number) =>
+  new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(Number.isFinite(value) ? value : 0);
 
 export type FinancialDescriptionValueTableProps = {
   rows: BulletinComparisonRow[];
@@ -214,12 +221,12 @@ const ReceiptImageModal = ({
   );
 };
 
-const CommentBubbleModal = ({
-  comment,
+const CommentDetailsModal = ({
+  details,
   visible,
   onClose,
 }: {
-  comment: string;
+  details: FinancialBulletinCommentDetail[];
   visible: boolean;
   onClose: () => void;
 }) => (
@@ -227,8 +234,44 @@ const CommentBubbleModal = ({
     <Pressable style={styles.bubbleBackdrop} onPress={onClose}>
       <Pressable style={styles.bubbleCard} onPress={(event) => event.stopPropagation()}>
         <View style={styles.bubbleArrow} />
-        <Text style={styles.bubbleTitle}>Observação</Text>
-        <Text style={styles.bubbleBody}>{comment}</Text>
+        <Text style={styles.bubbleTitle}>Observações</Text>
+        <View style={styles.commentDetailsHeaderRow}>
+          <Text style={[styles.commentDetailsHeaderCell, styles.commentDetailsCommentHeader]}>
+            Observação
+          </Text>
+          <View style={styles.commentDetailsAmountColumn}>
+            <Text style={[styles.commentDetailsHeaderCell, styles.commentDetailsAmountHeader]}>
+              Valor
+            </Text>
+          </View>
+        </View>
+        <ScrollView
+          style={styles.commentDetailsScroll}
+          contentContainerStyle={styles.commentDetailsScrollContent}
+          nestedScrollEnabled
+        >
+          {details.map((detail, index) => (
+            <View
+              key={`${detail.comment}-${detail.amount}-${index}`}
+              style={styles.commentDetailsDataRow}
+            >
+              <Text style={[styles.commentDetailsBodyCell, styles.commentDetailsCommentCell]}>
+                {detail.comment}
+              </Text>
+              <View style={styles.commentDetailsAmountColumn}>
+                <Text
+                  style={[
+                    styles.commentDetailsBodyCell,
+                    styles.commentDetailsAmountCell,
+                    detail.amount < 0 ? styles.valueNegative : styles.valuePositive,
+                  ]}
+                >
+                  {formatCommentDetailAmount(detail.amount)}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
         <TouchableOpacity style={styles.bubbleCloseButton} onPress={onClose} activeOpacity={0.85}>
           <Text style={styles.bubbleCloseButtonText}>Fechar</Text>
         </TouchableOpacity>
@@ -245,22 +288,24 @@ export function FinancialDescriptionValueTable({
   showCommentIcons = false,
   maxBodyHeight = FINANCIAL_REPORT_TABLE_BODY_MAX_HEIGHT,
 }: FinancialDescriptionValueTableProps) {
-  const [openComment, setOpenComment] = useState<string | null>(null);
+  const [openCommentDetails, setOpenCommentDetails] = useState<FinancialBulletinCommentDetail[] | null>(
+    null
+  );
   const [openReceiptUrl, setOpenReceiptUrl] = useState<string | null>(null);
   const tableLayoutHeight = financialReportTableLayoutMaxHeight(maxBodyHeight);
 
-  const commentByRowKey = useMemo(() => {
+  const commentDetailsByRowKey = useMemo(() => {
     if (!showCommentIcons) {
-      return new Map<string, string>();
+      return new Map<string, FinancialBulletinCommentDetail[]>();
     }
 
-    const map = new Map<string, string>();
+    const map = new Map<string, FinancialBulletinCommentDetail[]>();
 
     for (const row of rows) {
-      const text = findCommentForBulletinRow(row, entries)?.trim() || '';
+      const details = findCommentDetailsForBulletinRow(row, entries);
 
-      if (text) {
-        map.set(row.key, text);
+      if (details.length > 0) {
+        map.set(row.key, details);
       }
     }
 
@@ -331,9 +376,9 @@ export function FinancialDescriptionValueTable({
               row.level === 'flow' ||
               row.level === 'total' ||
               row.level === 'balance';
-            const commentText = commentByRowKey.get(row.key) ?? '';
+            const commentDetails = commentDetailsByRowKey.get(row.key) ?? [];
             const receiptUrl = receiptByRowKey.get(row.key) ?? '';
-            const showCommentIcon = commentText.length > 0;
+            const showCommentIcon = commentDetails.length > 0;
             const showReceiptIcon = receiptUrl.length > 0;
 
             return (
@@ -350,7 +395,7 @@ export function FinancialDescriptionValueTable({
                   <View style={styles.iconBodyCell}>
                     <View style={styles.iconSlot}>
                       {showCommentIcon ? (
-                        <CommentIndicator onPress={() => setOpenComment(commentText)} />
+                        <CommentIndicator onPress={() => setOpenCommentDetails(commentDetails)} />
                       ) : null}
                     </View>
                     <View style={styles.iconSlot}>
@@ -384,10 +429,10 @@ export function FinancialDescriptionValueTable({
         </ScrollView>
       )}
 
-      <CommentBubbleModal
-        comment={openComment ?? ''}
-        visible={Boolean(openComment)}
-        onClose={() => setOpenComment(null)}
+      <CommentDetailsModal
+        details={openCommentDetails ?? []}
+        visible={Boolean(openCommentDetails?.length)}
+        onClose={() => setOpenCommentDetails(null)}
       />
 
       <ReceiptImageModal
@@ -628,11 +673,61 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
   },
-  bubbleBody: {
+  commentDetailsHeaderRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#DBEAFE',
+    paddingBottom: 6,
+    gap: 10,
+  },
+  commentDetailsHeaderCell: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  commentDetailsCommentHeader: {
+    flex: 1,
+    textAlign: 'left',
+  },
+  commentDetailsAmountColumn: {
+    width: 112,
+    flexShrink: 0,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-start',
+  },
+  commentDetailsAmountHeader: {
+    width: '100%',
+    textAlign: 'right',
+  },
+  commentDetailsScroll: {
+    maxHeight: 220,
+  },
+  commentDetailsScrollContent: {
+    gap: 8,
+    paddingTop: 4,
+  },
+  commentDetailsDataRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  commentDetailsBodyCell: {
     color: '#334155',
     fontSize: 14,
     lineHeight: 20,
+  },
+  commentDetailsCommentCell: {
+    flex: 1,
     textAlign: 'left',
+  },
+  commentDetailsAmountCell: {
+    width: '100%',
+    textAlign: 'right',
+    fontWeight: '700',
   },
   bubbleCloseButton: {
     alignSelf: 'center',

@@ -139,6 +139,11 @@ export const pickFinancialEntryComment = (row: Record<string, unknown>) => {
   return null;
 };
 
+export type FinancialBulletinCommentDetail = {
+  comment: string;
+  amount: number;
+};
+
 export const mergeFinancialComments = (
   existing: string | undefined,
   next: string | null | undefined
@@ -268,66 +273,66 @@ export const entryBelongsToBulletinRow = (
   return matchesFinancialTransactionFlow(entry, flowKind);
 };
 
+const collectBulletinRowCommentDetails = (
+  entries: FinancialEntry[],
+  matchesEntry: (entry: FinancialEntry) => boolean
+): FinancialBulletinCommentDetail[] => {
+  const details: FinancialBulletinCommentDetail[] = [];
+
+  for (const entry of entries) {
+    if (!matchesEntry(entry)) {
+      continue;
+    }
+
+    const comment = getFinancialEntryComment(entry);
+
+    if (!comment) {
+      continue;
+    }
+
+    details.push({
+      comment,
+      amount: signedFinancialAmount(entry),
+    });
+  }
+
+  return details;
+};
+
 /**
- * Comentário para linha agregada no boletim: só quando há um único texto
- * entre os lançamentos com o mesmo rótulo no mesmo fluxo.
+ * Comentário resumido para linha agregada no boletim (primeira observação encontrada).
  */
 export const resolveAggregatedLineComment = (
   entries: FinancialEntry[],
   label: string
 ): string | null => {
-  const texts = new Set<string>();
+  const details = collectBulletinRowCommentDetails(entries, (entry) => buildFinancialLineLabel(entry) === label);
 
-  for (const entry of entries) {
-    if (buildFinancialLineLabel(entry) !== label) {
-      continue;
-    }
-
-    const comment = getFinancialEntryComment(entry);
-
-    if (comment) {
-      texts.add(comment);
-    }
-  }
-
-  if (texts.size === 1) {
-    return [...texts][0];
-  }
-
-  return null;
+  return details[0]?.comment ?? null;
 };
 
-/** Observação do lançamento que originou esta linha (sem misturar outros fluxos/ministérios). */
-export const findCommentForBulletinRow = (
+/** Observações e valores dos lançamentos consolidados na mesma linha do boletim. */
+export const findCommentDetailsForBulletinRow = (
   row: FinancialRowCommentLookup,
   entries: FinancialEntry[]
-): string | null => {
+): FinancialBulletinCommentDetail[] => {
   if (row.level !== 'line') {
-    return null;
+    return [];
   }
 
   const rowLabel = row.label.trim();
   const rowKey = row.key ?? '';
-  const texts = new Set<string>();
 
-  for (const entry of entries) {
-    if (!entryBelongsToBulletinRow(entry, rowKey, rowLabel)) {
-      continue;
-    }
-
-    const comment = getFinancialEntryComment(entry);
-
-    if (comment) {
-      texts.add(comment);
-    }
-  }
-
-  if (texts.size === 1) {
-    return [...texts][0];
-  }
-
-  return null;
+  return collectBulletinRowCommentDetails(entries, (entry) =>
+    entryBelongsToBulletinRow(entry, rowKey, rowLabel)
+  );
 };
+
+/** Observação resumida do lançamento que originou esta linha. */
+export const findCommentForBulletinRow = (
+  row: FinancialRowCommentLookup,
+  entries: FinancialEntry[]
+): string | null => findCommentDetailsForBulletinRow(row, entries)[0]?.comment ?? null;
 
 /** Comprovante do lançamento que originou esta linha (um único arquivo por linha agregada). */
 export const findReceiptForBulletinRow = (
