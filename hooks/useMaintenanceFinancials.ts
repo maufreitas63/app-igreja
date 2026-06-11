@@ -8,8 +8,10 @@ import {
   MAINTENANCE_FINANCIALS_SQL_HINT,
   removeMaintenanceFinancialReceipt,
   toFinancialMonthReferenceDate,
+  updateMaintenanceFinancialEntry,
   updateMaintenanceFinancialEntryComment,
 } from '@/lib/maintenanceFinancialApi';
+import type { FinancialEntryEditDraft } from '@/lib/maintenanceFinancialEntryForm';
 import { parseFinancialBulkCsv } from '@/lib/maintenanceFinancialBulk';
 import {
   filterPlannedFinancialEntries,
@@ -44,6 +46,7 @@ export function useMaintenanceFinancials(enabled: boolean) {
   const [importing, setImporting] = useState(false);
   const [emptyingMonth, setEmptyingMonth] = useState(false);
   const [savingCommentEntryId, setSavingCommentEntryId] = useState<string | null>(null);
+  const [savingEntryId, setSavingEntryId] = useState<string | null>(null);
   const [uploadingReceiptEntryId, setUploadingReceiptEntryId] = useState<string | null>(null);
   const [deletingReceiptEntryId, setDeletingReceiptEntryId] = useState<string | null>(null);
   const [canUpdateFinancials, setCanUpdateFinancials] = useState<boolean | null>(null);
@@ -258,6 +261,56 @@ export function useMaintenanceFinancials(enabled: boolean) {
     }
   }, [bulkBudgetVersion, referenceIsoDate, reload]);
 
+  const saveEntryFields = useCallback(
+    async (entryId: string, draft: FinancialEntryEditDraft) => {
+      setSavingEntryId(entryId);
+      setError(null);
+
+      try {
+        const result = await updateMaintenanceFinancialEntry(entryId, {
+          transactionDateIso: draft.transactionDateIso,
+          account: draft.account,
+          amount: draft.amount,
+          ministry: draft.ministry,
+          transactionKind: draft.transactionKind,
+          movement: draft.movement,
+          budgetVersion: draft.budgetVersion,
+        });
+
+        if (!result.success) {
+          return {
+            success: false as const,
+            message: result.message ?? 'Não foi possível atualizar o lançamento.',
+          };
+        }
+
+        await reload();
+
+        return {
+          success: true as const,
+          message: result.message ?? 'Lançamento atualizado.',
+        };
+      } catch (err) {
+        console.error('Erro ao atualizar lançamento financeiro:', err);
+
+        const rpcHint = resolveMaintenanceRpcError(
+          err,
+          MAINTENANCE_FINANCIALS_RPC_MISSING,
+          MAINTENANCE_FINANCIALS_SQL_HINT
+        );
+
+        if (rpcHint) {
+          return { success: false as const, message: rpcHint };
+        }
+
+        return { success: false as const, message: 'Não foi possível atualizar o lançamento.' };
+      } finally {
+        setSavingEntryId(null);
+      }
+    },
+    [reload, resolveMaintenanceRpcError]
+  );
+
   const saveEntryComment = useCallback(
     async (entryId: string, comments: string | null) => {
       setSavingCommentEntryId(entryId);
@@ -436,6 +489,7 @@ export function useMaintenanceFinancials(enabled: boolean) {
     importing,
     emptyingMonth,
     savingCommentEntryId,
+    savingEntryId,
     uploadingReceiptEntryId,
     deletingReceiptEntryId,
     canUpdateFinancials,
@@ -446,6 +500,7 @@ export function useMaintenanceFinancials(enabled: boolean) {
     importBulk,
     emptyMonth,
     saveEntryComment,
+    saveEntryFields,
     attachReceipt,
     deleteReceipt,
   };

@@ -8,6 +8,7 @@ drop function if exists public.excluir_lancamento_financeiro(uuid);
 drop function if exists public.excluir_lancamentos_financeiros_periodo(text, date);
 drop function if exists public.atualizar_comentario_lancamento_financeiro(uuid, text);
 drop function if exists public.atualizar_comprovante_lancamento_financeiro(uuid, text);
+drop function if exists public.atualizar_lancamento_financeiro(uuid, date, text, numeric, text, text, text, text);
 
 alter table public.financials
   add column if not exists receipt_url text;
@@ -374,6 +375,97 @@ begin
 end;
 $$;
 
+create or replace function public.atualizar_lancamento_financeiro(
+  p_id uuid,
+  p_transaction_date date,
+  p_account text,
+  p_amount numeric,
+  p_ministry text,
+  p_transaction_kind text,
+  p_movement text,
+  p_budget_version text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_updated integer;
+  v_account text;
+  v_ministry text;
+  v_transaction_kind text;
+  v_movement text;
+  v_budget_version text;
+begin
+  if p_id is null then
+    return jsonb_build_object('success', false, 'message', 'Lançamento não informado.');
+  end if;
+
+  if not public.session_has_resource_access('table', 'financials', 'update') then
+    return jsonb_build_object('success', false, 'message', 'Sem permissão para alterar lançamentos financeiros.');
+  end if;
+
+  if p_transaction_date is null then
+    return jsonb_build_object('success', false, 'message', 'Informe a data do lançamento.');
+  end if;
+
+  v_account := trim(coalesce(p_account, ''));
+  v_ministry := trim(coalesce(p_ministry, ''));
+  v_transaction_kind := trim(coalesce(p_transaction_kind, ''));
+  v_movement := trim(coalesce(p_movement, ''));
+  v_budget_version := trim(coalesce(p_budget_version, ''));
+
+  if v_account = '' then
+    return jsonb_build_object('success', false, 'message', 'Informe a conta.');
+  end if;
+
+  if v_ministry = '' then
+    return jsonb_build_object('success', false, 'message', 'Informe o ministério.');
+  end if;
+
+  if v_transaction_kind = '' then
+    return jsonb_build_object('success', false, 'message', 'Informe o tipo de transação.');
+  end if;
+
+  if v_movement = '' then
+    return jsonb_build_object('success', false, 'message', 'Informe o movimento.');
+  end if;
+
+  if v_budget_version = '' then
+    return jsonb_build_object('success', false, 'message', 'Informe a versão (planejado/realizado).');
+  end if;
+
+  if p_amount is null then
+    return jsonb_build_object('success', false, 'message', 'Informe o valor.');
+  end if;
+
+  update public.financials f
+  set
+    transaction_date = p_transaction_date,
+    account = v_account,
+    amount = p_amount,
+    ministry = v_ministry,
+    transaction_kind = v_transaction_kind,
+    movement = v_movement,
+    budget_version = v_budget_version,
+    updated_at = now()
+  where f.id = p_id;
+
+  get diagnostics v_updated = row_count;
+
+  if v_updated = 0 then
+    return jsonb_build_object('success', false, 'message', 'Nenhum lançamento foi atualizado.');
+  end if;
+
+  return jsonb_build_object(
+    'success', true,
+    'message', 'Lançamento atualizado.',
+    'id', p_id
+  );
+end;
+$$;
+
 create or replace function public.atualizar_comentario_lancamento_financeiro(
   p_id uuid,
   p_comments text
@@ -475,6 +567,7 @@ begin
 end;
 $$;
 
+grant execute on function public.atualizar_lancamento_financeiro(uuid, date, text, numeric, text, text, text, text) to anon, authenticated;
 grant execute on function public.atualizar_comentario_lancamento_financeiro(uuid, text) to anon, authenticated;
 grant execute on function public.atualizar_comprovante_lancamento_financeiro(uuid, text) to anon, authenticated;
 

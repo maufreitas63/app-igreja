@@ -70,16 +70,17 @@ export function RDConciliationModal({ visible, financialId, onClose, onReconcile
     try {
       const result = await reconcileExpenseReport(reportId, financialId);
 
-      Toast.show({
-        type: result.success ? 'success' : 'error',
-        text1: 'Conciliação RD',
-        text2: result.message,
-      });
-
-      if (result.success) {
-        onReconciled?.(reportId);
-        onClose();
+      if (!result.success) {
+        Toast.show({
+          type: 'error',
+          text1: 'Conciliação RD',
+          text2: result.message,
+        });
+        return;
       }
+
+      onReconciled?.(reportId);
+      onClose();
     } catch (err) {
       Toast.show({
         type: 'error',

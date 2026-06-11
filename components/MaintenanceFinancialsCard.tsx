@@ -1,3 +1,4 @@
+import { FinancialEntryEditModal } from '@/components/FinancialEntryEditModal';
 import { RDConciliationModal } from '@/components/RDConciliationModal';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
@@ -15,6 +16,8 @@ import {
   parseFinancialMonthKey,
   type FinancialMonthKey,
 } from '@/lib/financialMonth';
+import { showAppToast } from '@/lib/appToast';
+import type { FinancialEntryEditDraft } from '@/lib/maintenanceFinancialEntryForm';
 import { confirmDialog } from '@/lib/confirmDialog';
 import {
   createFinancialReceiptSignedUrl,
@@ -131,7 +134,9 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     importBulk,
     emptyMonth,
     saveEntryComment,
+    saveEntryFields,
     savingCommentEntryId,
+    savingEntryId,
     attachReceipt,
     deleteReceipt,
     uploadingReceiptEntryId,
@@ -144,15 +149,17 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   } = useMaintenanceFinancials(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
-  const formBusy = importing || emptyingMonth;
+  const formBusy = importing || emptyingMonth || savingEntryId !== null;
 
   const [csvText, setCsvText] = useState('');
   const [replacePeriod, setReplacePeriod] = useState(true);
   const [commentEditorEntry, setCommentEditorEntry] = useState<FinancialEntry | null>(null);
+  const [entryEditEntry, setEntryEditEntry] = useState<FinancialEntry | null>(null);
   const [commentDraft, setCommentDraft] = useState('');
   const [commentInputActive, setCommentInputActive] = useState(false);
   const commentInputRef = useRef<TextInput>(null);
   const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null);
+  const [pendingReceiptImage, setPendingReceiptImage] = useState<string | null>(null);
   const [loadingReceiptPreview, setLoadingReceiptPreview] = useState(false);
   const [showReceiptAttachOptions, setShowReceiptAttachOptions] = useState(false);
   const [rdConciliationOpen, setRdConciliationOpen] = useState(false);
@@ -274,6 +281,9 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   const receiptBusy =
     uploadingReceiptEntryId !== null || deletingReceiptEntryId !== null;
   const editorReceiptUrl = activeEditorEntry?.receipt_url?.trim() || null;
+  const editorReceiptPreviewUri = pendingReceiptImage ?? receiptPreviewUrl;
+  const hasEditorReceiptPreview = Boolean(pendingReceiptImage || editorReceiptUrl);
+  const canSaveCommentEditor = Boolean(pendingReceiptImage || commentDraft.trim());
 
   const bulkPreview = useMemo(() => {
     if (!csvText.trim()) {
@@ -369,10 +379,33 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     }
   }, []);
 
+  const openEntryEditor = (entry: FinancialEntry) => {
+    setEntryEditEntry(entry);
+  };
+
+  const closeEntryEditor = () => {
+    setEntryEditEntry(null);
+  };
+
+  const handleSaveEntryFields = async (entryId: string, draft: FinancialEntryEditDraft) => {
+    const result = await saveEntryFields(entryId, draft);
+
+    showAppToast({
+      type: result.success ? 'success' : 'error',
+      text1: 'Financeiro',
+      text2: result.message,
+    });
+
+    if (result.success) {
+      closeEntryEditor();
+    }
+  };
+
   const openCommentEditor = (entry: FinancialEntry) => {
     setCommentEditorEntry(entry);
-    setCommentDraft('');
+    setCommentDraft(getFinancialEntryComment(entry) ?? '');
     setCommentInputActive(false);
+    setPendingReceiptImage(null);
     void loadReceiptPreview(entry.receipt_url);
   };
 
@@ -388,6 +421,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     setCommentDraft('');
     setCommentInputActive(false);
     setReceiptPreviewUrl(null);
+    setPendingReceiptImage(null);
     setLoadingReceiptPreview(false);
     setShowReceiptAttachOptions(false);
     setRdConciliationOpen(false);
@@ -417,20 +451,14 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
         return;
       }
 
-      const result = await attachReceipt(activeEditorEntry.id, imageInput);
-
+      setPendingReceiptImage(imageInput);
+      setShowReceiptAttachOptions(false);
       Toast.show({
-        type: result.success ? 'success' : 'error',
+        type: 'info',
         text1: 'Comprovante',
-        text2: result.message,
-        visibilityTime: result.success ? 2500 : 4500,
+        text2: 'Imagem selecionada. Toque em Salvar para gravar o comprovante.',
+        visibilityTime: 3000,
       });
-
-      if (result.success && 'receipt_url' in result) {
-        syncEditorEntry(activeEditorEntry.id, { receipt_url: result.receipt_url ?? null });
-        setShowReceiptAttachOptions(false);
-        await loadReceiptPreview(result.receipt_url ?? null);
-      }
     } catch (err) {
       Toast.show({
         type: 'error',
@@ -453,20 +481,14 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
         return;
       }
 
-      const result = await attachReceipt(activeEditorEntry.id, imageInput);
-
+      setPendingReceiptImage(imageInput);
+      setShowReceiptAttachOptions(false);
       Toast.show({
-        type: result.success ? 'success' : 'error',
+        type: 'info',
         text1: 'Comprovante',
-        text2: result.message,
-        visibilityTime: result.success ? 2500 : 4500,
+        text2: 'Imagem selecionada. Toque em Salvar para gravar o comprovante.',
+        visibilityTime: 3000,
       });
-
-      if (result.success && 'receipt_url' in result) {
-        syncEditorEntry(activeEditorEntry.id, { receipt_url: result.receipt_url ?? null });
-        setShowReceiptAttachOptions(false);
-        await loadReceiptPreview(result.receipt_url ?? null);
-      }
     } catch (err) {
       Toast.show({
         type: 'error',
@@ -478,6 +500,21 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   };
 
   const handleViewReceipt = async () => {
+    if (pendingReceiptImage) {
+      try {
+        await Linking.openURL(pendingReceiptImage);
+      } catch (err) {
+        Toast.show({
+          type: 'error',
+          text1: 'Comprovante',
+          text2: err instanceof Error ? err.message : 'Não foi possível visualizar o comprovante.',
+          visibilityTime: 4500,
+        });
+      }
+
+      return;
+    }
+
     if (!editorReceiptUrl) {
       return;
     }
@@ -501,6 +538,11 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   };
 
   const handleDeleteReceipt = async () => {
+    if (pendingReceiptImage) {
+      setPendingReceiptImage(null);
+      return;
+    }
+
     if (!activeEditorEntry?.receipt_url) {
       return;
     }
@@ -533,22 +575,85 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   };
 
   const handleSaveComment = async () => {
-    if (!commentEditorEntry) {
+    if (!commentEditorEntry || !activeEditorEntry) {
       return;
     }
 
-    const result = await saveEntryComment(commentEditorEntry.id, commentDraft);
+    let receiptSaved = false;
+
+    if (pendingReceiptImage) {
+      const receiptResult = await attachReceipt(commentEditorEntry.id, pendingReceiptImage);
+
+      if (!receiptResult.success) {
+        Toast.show({
+          type: 'error',
+          text1: 'Comprovante',
+          text2: receiptResult.message,
+          visibilityTime: 4500,
+        });
+        return;
+      }
+
+      if ('receipt_url' in receiptResult) {
+        syncEditorEntry(commentEditorEntry.id, { receipt_url: receiptResult.receipt_url ?? null });
+        setPendingReceiptImage(null);
+        await loadReceiptPreview(receiptResult.receipt_url ?? null);
+      }
+
+      receiptSaved = true;
+    }
+
+    const normalizedComment = commentDraft.trim() || null;
+    const existingComment = getFinancialEntryComment(activeEditorEntry);
+    const commentChanged = normalizedComment !== (existingComment?.trim() || null);
+
+    if (commentChanged) {
+      const result = await saveEntryComment(commentEditorEntry.id, normalizedComment);
+
+      if (!result.success) {
+        showAppToast({
+          type: 'error',
+          text1: 'Financeiro',
+          text2: result.message,
+        });
+        return;
+      }
+
+      const successMessage = receiptSaved
+        ? 'Comprovante e comentário salvos.'
+        : result.message;
+
+      closeCommentEditor();
+      showAppToast(
+        {
+          type: 'success',
+          text1: 'Financeiro',
+          text2: successMessage,
+        },
+        { afterMs: 180 }
+      );
+      return;
+    }
+
+    if (receiptSaved) {
+      closeCommentEditor();
+      showAppToast(
+        {
+          type: 'success',
+          text1: 'Financeiro',
+          text2: 'Comprovante salvo.',
+        },
+        { afterMs: 180 }
+      );
+      return;
+    }
 
     Toast.show({
-      type: result.success ? 'success' : 'error',
+      type: 'info',
       text1: 'Financeiro',
-      text2: result.message,
-      visibilityTime: result.success ? 2500 : 4500,
+      text2: 'Nada para salvar.',
+      visibilityTime: 2500,
     });
-
-    if (result.success) {
-      closeCommentEditor();
-    }
   };
 
   const handleDeleteComment = async () => {
@@ -873,6 +978,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             const entryComment = getFinancialEntryComment(entry);
             const hasReceipt = Boolean(entry.receipt_url?.trim());
             const isSavingThisComment = savingCommentEntryId === entry.id;
+            const isSavingThisEntry = savingEntryId === entry.id;
 
             return (
               <View
@@ -905,41 +1011,62 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                     {formatFinancialBrl(signed)}
                   </Text>
                 </View>
-                <TouchableOpacity
-                  style={[
-                    styles.commentButton,
-                    entryComment ? styles.commentButtonFilled : styles.commentButtonEmpty,
-                  ]}
-                  onPress={() => openCommentEditor(entry)}
-                  disabled={formBusy || rpcMissing || isSavingThisComment}
-                  activeOpacity={0.85}
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    entryComment
-                      ? `Editar comentário de ${entry.account}`
-                      : `Adicionar comentário em ${entry.account}`
-                  }
-                >
-                  {isSavingThisComment ? (
-                    <ActivityIndicator color="#D1FAE5" size="small" />
-                  ) : (
-                    <>
-                      <FontAwesome
-                        name={entryComment ? 'comment' : 'comment-o'}
-                        size={14}
-                        color={entryComment ? '#6EE7B7' : '#94A3B8'}
-                      />
-                      <Text
-                        style={[
-                          styles.commentButtonLabel,
-                          entryComment && styles.commentButtonLabelFilled,
-                        ]}
-                      >
-                        {entryComment ? 'Editar' : 'Adicionar'}
-                      </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                <View style={styles.listActions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.commentButton,
+                      entryComment ? styles.commentButtonFilled : styles.commentButtonEmpty,
+                    ]}
+                    onPress={() => openCommentEditor(entry)}
+                    disabled={formBusy || rpcMissing || isSavingThisComment}
+                    activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      entryComment
+                        ? `Editar comentário de ${entry.account}`
+                        : `Adicionar comentário em ${entry.account}`
+                    }
+                  >
+                    {isSavingThisComment ? (
+                      <ActivityIndicator color="#D1FAE5" size="small" />
+                    ) : (
+                      <>
+                        <FontAwesome
+                          name={entryComment ? 'comment' : 'comment-o'}
+                          size={14}
+                          color={entryComment ? '#6EE7B7' : '#94A3B8'}
+                        />
+                        <Text
+                          style={[
+                            styles.commentButtonLabel,
+                            entryComment && styles.commentButtonLabelFilled,
+                          ]}
+                        >
+                          {entryComment ? 'Editar' : 'Adicionar'}
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                  {canUpdateFinancials === true ? (
+                    <TouchableOpacity
+                      style={styles.editEntryButton}
+                      onPress={() => openEntryEditor(entry)}
+                      disabled={formBusy || rpcMissing || isSavingThisEntry}
+                      activeOpacity={0.85}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Editar registro de ${entry.account}`}
+                    >
+                      {isSavingThisEntry ? (
+                        <ActivityIndicator color="#BFDBFE" size="small" />
+                      ) : (
+                        <>
+                          <FontAwesome name="pencil" size={14} color="#BFDBFE" />
+                          <Text style={styles.editEntryButtonLabel}>Editar registro</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
               </View>
             );
           })
@@ -1036,7 +1163,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               </Text>
             ) : null}
             <Text style={styles.commentModalFieldLabel}>Comentário / observação</Text>
-            {commentInputActive ? (
+            {commentInputActive || commentDraft ? (
               <TextInput
                 ref={commentInputRef}
                 style={styles.commentModalInput}
@@ -1065,18 +1192,20 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               <Text style={styles.receiptPermissionHint}>
                 Sem permissão para anexar ou alterar comprovantes.
               </Text>
-            ) : editorReceiptUrl ? (
+            ) : hasEditorReceiptPreview ? (
               <View style={styles.receiptAttachedBox}>
-                {loadingReceiptPreview ? (
+                {loadingReceiptPreview && !pendingReceiptImage ? (
                   <ActivityIndicator color="#6EE7B7" size="small" style={styles.receiptPreviewLoader} />
-                ) : receiptPreviewUrl ? (
+                ) : editorReceiptPreviewUri ? (
                   <Image
-                    source={{ uri: receiptPreviewUrl }}
+                    source={{ uri: editorReceiptPreviewUri }}
                     style={styles.receiptPreviewImage}
                     resizeMode="cover"
                   />
                 ) : (
-                  <Text style={styles.receiptAttachedText}>Comprovante anexado</Text>
+                  <Text style={styles.receiptAttachedText}>
+                    {pendingReceiptImage ? 'Comprovante selecionado (aguardando Salvar)' : 'Comprovante anexado'}
+                  </Text>
                 )}
                 <View style={styles.receiptActionRow}>
                   <TouchableOpacity
@@ -1207,7 +1336,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                     (savingCommentEntryId !== null || receiptBusy) && styles.saveButtonDisabled,
                   ]}
                   onPress={() => void handleSaveComment()}
-                  disabled={savingCommentEntryId !== null || receiptBusy || !commentDraft.trim()}
+                  disabled={savingCommentEntryId !== null || receiptBusy || !canSaveCommentEditor}
                   activeOpacity={0.85}
                 >
                   {savingCommentEntryId ? (
@@ -1223,17 +1352,28 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
         </Pressable>
       </Modal>
 
+      <FinancialEntryEditModal
+        visible={entryEditEntry !== null}
+        entry={entryEditEntry}
+        saving={savingEntryId !== null}
+        onClose={closeEntryEditor}
+        onSave={(entryId, draft) => void handleSaveEntryFields(entryId, draft)}
+      />
+
       <RDConciliationModal
         visible={rdConciliationOpen}
         financialId={activeEditorEntry?.id ?? null}
         onClose={() => setRdConciliationOpen(false)}
         onReconciled={() => {
-          Toast.show({
-            type: 'success',
-            text1: 'Financeiro',
-            text2: 'RD vinculado ao lançamento.',
-            visibilityTime: 3000,
-          });
+          void loadRdReports();
+          showAppToast(
+            {
+              type: 'success',
+              text1: 'Financeiro',
+              text2: 'RD vinculado ao lançamento.',
+            },
+            { afterMs: 220 }
+          );
         }}
       />
     </View>
@@ -1593,6 +1733,12 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontStyle: 'italic',
   },
+  listActions: {
+    gap: 6,
+    alignItems: 'stretch',
+    minWidth: 96,
+    marginTop: 2,
+  },
   commentButton: {
     minWidth: 72,
     borderRadius: 10,
@@ -1602,7 +1748,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
-    marginTop: 2,
+  },
+  editEntryButton: {
+    minWidth: 72,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.45)',
+    backgroundColor: 'rgba(30, 58, 138, 0.28)',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  editEntryButtonLabel: {
+    color: '#BFDBFE',
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.2,
+    textAlign: 'center',
   },
   commentButtonEmpty: {
     borderColor: 'rgba(148, 163, 184, 0.35)',

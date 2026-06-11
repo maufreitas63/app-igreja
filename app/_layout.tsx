@@ -11,7 +11,7 @@ import { appToastConfig } from '@/components/ui/appToastConfig';
 import { ICON_FONT_SOURCES } from '@/lib/iconFonts';
 import { useFonts } from 'expo-font';
 import Toast from 'react-native-toast-message';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
 export default function RootLayout() {
   const [iconFontsLoaded] = useFonts(ICON_FONT_SOURCES);
@@ -28,7 +28,9 @@ export default function RootLayout() {
     <View style={styles.root}>
       <AppShell />
       <ConfirmDialogHost />
-      <Toast config={appToastConfig} />
+      <View style={styles.toastHost} pointerEvents="box-none">
+        <Toast config={appToastConfig} topOffset={Platform.OS === 'web' ? 12 : 48} />
+      </View>
     </View>
   );
 }
@@ -43,4 +45,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0f172a',
   },
+  toastHost: Platform.select({
+    web: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 999999,
+    },
+    default: {},
+  }),
 });

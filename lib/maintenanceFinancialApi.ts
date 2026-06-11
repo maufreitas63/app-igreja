@@ -178,6 +178,62 @@ export type MaintenanceFinancialDraft = {
 
 export const parseMaintenanceFinancialAmount = (value: string) => parseFinancialBulkAmount(value);
 
+export type MaintenanceFinancialEntryUpdate = MaintenanceFinancialDraft;
+
+export async function updateMaintenanceFinancialEntry(
+  id: string,
+  draft: MaintenanceFinancialEntryUpdate
+) {
+  const access = await assertMaintenanceFinancialUpdateAccess();
+
+  if (!access.success) {
+    return access;
+  }
+
+  const { data, error } = await supabase.rpc('atualizar_lancamento_financeiro', {
+    p_id: id,
+    p_transaction_date: draft.transactionDateIso,
+    p_account: draft.account.trim(),
+    p_amount: draft.amount,
+    p_ministry: draft.ministry.trim(),
+    p_transaction_kind: draft.transactionKind.trim(),
+    p_movement: draft.movement.trim(),
+    p_budget_version: draft.budgetVersion.trim(),
+  });
+
+  if (error) {
+    const message = (error.message ?? '').toLowerCase();
+
+    if (isSupabaseRpcMissing(message, 'atualizar_lancamento_financeiro')) {
+      const { error: directError } = await supabase
+        .from('financials')
+        .update({
+          transaction_date: draft.transactionDateIso,
+          account: draft.account.trim(),
+          amount: draft.amount,
+          ministry: draft.ministry.trim(),
+          transaction_kind: draft.transactionKind.trim(),
+          movement: draft.movement.trim(),
+          budget_version: draft.budgetVersion.trim(),
+        })
+        .eq('id', id);
+
+      if (directError) {
+        throw directError;
+      }
+
+      return {
+        success: true,
+        message: 'Lançamento atualizado.',
+      };
+    }
+
+    handleRpcError(error, 'atualizar_lancamento_financeiro');
+  }
+
+  return parseRegisterScaleRpc(data);
+}
+
 export async function createMaintenanceFinancialEntry(draft: MaintenanceFinancialDraft) {
   const { data, error } = await supabase.rpc('cadastrar_lancamento_financeiro', {
     p_transaction_date: draft.transactionDateIso,

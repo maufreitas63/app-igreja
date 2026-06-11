@@ -136,7 +136,51 @@ export async function pickFinancialReceiptFromGallery(): Promise<string | null> 
   return result.assets[0].uri;
 }
 
+const readClipboardImageOnWeb = async (): Promise<string | null> => {
+  if (Platform.OS !== 'web' || typeof navigator === 'undefined' || !navigator.clipboard?.read) {
+    return null;
+  }
+
+  try {
+    const items = await navigator.clipboard.read();
+
+    for (const item of items) {
+      for (const type of item.types) {
+        if (!type.startsWith('image/')) {
+          continue;
+        }
+
+        const blob = await item.getType(type);
+
+        return await new Promise<string | null>((resolve, reject) => {
+          const reader = new FileReader();
+
+          reader.onload = () => {
+            resolve(typeof reader.result === 'string' ? reader.result : null);
+          };
+
+          reader.onerror = () => {
+            reject(reader.error ?? new Error('Não foi possível ler a imagem da área de transferência.'));
+          };
+
+          reader.readAsDataURL(blob);
+        });
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
 export async function pasteFinancialReceiptFromClipboard(): Promise<string | null> {
+  const webClipboardImage = await readClipboardImageOnWeb();
+
+  if (webClipboardImage) {
+    return webClipboardImage;
+  }
+
   const clipboardImage = await Clipboard.getImageAsync({
     format: 'jpeg',
     jpegQuality: 0.9,
