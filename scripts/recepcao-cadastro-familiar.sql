@@ -81,6 +81,44 @@ grant select on public.recepcao_cadastro_familiar to anon, authenticated;
 -- Helpers de correspondência
 -- ---------------------------------------------------------------------------
 
+-- Na recepção, NUNCA vincular só pelo telefone: famílias costumam compartilhar o mesmo celular.
+-- Exige nome igual (case-insensitive); se houver telefone informado, ele também deve coincidir.
+create or replace function public.find_profile_id_for_recepcao_match(
+  p_phone text,
+  p_full_name text
+)
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with normalized as (
+    select
+      nullif(trim(coalesce(p_full_name, '')), '') as full_name,
+      nullif(trim(coalesce(p_phone, '')), '') as phone
+  )
+  select p.id
+  from public.profiles p
+  cross join normalized n
+  where n.full_name is not null
+    and lower(trim(coalesce(p.full_name, ''))) = lower(n.full_name)
+    and (
+      n.phone is null
+      or p.phone = n.phone
+      or public.normalize_phone_for_sync(p.phone) = public.normalize_phone_for_sync(n.phone)
+    )
+  order by
+    case
+      when n.phone is not null and p.phone = n.phone then 0
+      when n.phone is not null
+        and public.normalize_phone_for_sync(p.phone) = public.normalize_phone_for_sync(n.phone) then 1
+      else 2
+    end,
+    p.id
+  limit 1;
+$$;
+
 create or replace function public.find_member_id_for_recepcao_match(
   p_phone text,
   p_full_name text
@@ -91,25 +129,27 @@ stable
 security definer
 set search_path = public
 as $$
+  with normalized as (
+    select
+      nullif(trim(coalesce(p_full_name, '')), '') as full_name,
+      nullif(trim(coalesce(p_phone, '')), '') as phone
+  )
   select m.id
   from public.members m
-  where (
-      p_phone is not null
-      and (
-        m.phone = p_phone
-        or public.normalize_phone_for_sync(m.phone) = public.normalize_phone_for_sync(p_phone)
-      )
-    )
-    or (
-      nullif(trim(coalesce(p_full_name, '')), '') is not null
-      and lower(trim(coalesce(m.full_name, ''))) = lower(trim(p_full_name))
+  cross join normalized n
+  where n.full_name is not null
+    and lower(trim(coalesce(m.full_name, ''))) = lower(n.full_name)
+    and (
+      n.phone is null
+      or m.phone = n.phone
+      or public.normalize_phone_for_sync(m.phone) = public.normalize_phone_for_sync(n.phone)
     )
   order by
     case when m.accepted is true then 0 else 1 end,
     case
-      when p_phone is not null and m.phone = p_phone then 0
-      when p_phone is not null
-        and public.normalize_phone_for_sync(m.phone) = public.normalize_phone_for_sync(p_phone) then 1
+      when n.phone is not null and m.phone = n.phone then 0
+      when n.phone is not null
+        and public.normalize_phone_for_sync(m.phone) = public.normalize_phone_for_sync(n.phone) then 1
       else 2
     end,
     m.created_at desc nulls last,
@@ -133,7 +173,7 @@ declare
   v_profile_family text;
   v_member_family text;
 begin
-  matched_profile_id := public.find_profile_id_for_member_sync(p_phone, p_full_name);
+  matched_profile_id := public.find_profile_id_for_recepcao_match(p_phone, p_full_name);
   matched_member_id := public.find_member_id_for_recepcao_match(p_phone, p_full_name);
 
   if matched_profile_id is not null then
@@ -171,7 +211,6 @@ declare
   v_informant_name text;
   v_informant_birth date;
   v_dependent_name text;
-  v_name text;
   v_birth date;
   v_phone text;
   v_relationship text;
@@ -305,13 +344,23 @@ begin
     select value
       from jsonb_array_elements(coalesce(p_payload -> 'dependents', '[]'::jsonb))
   loop
-    v_name := nullif(trim(coalesce(v_dependent ->> 'full_name', '')), '');
+    v_dependent_name := nullif(trim(coalesce(v_dependent ->> 'full_name', '')), '');
 
-    if v_name is null then
+    if v_dependent_name is null then
       continue;
     end if;
 
-    v_birth := nullif(trim(coalesce(v_dependent ->> 'birth_date', '')), '')::date;
+    begin
+      v_birth := nullif(trim(coalesce(v_dependent ->> 'birth_date', '')), '')::date;
+    exception
+      when others then
+        return jsonb_build_object(
+          'success', false,
+          'message',
+          format('Data de nascimento inválida para o dependente "%s".', v_dependent_name)
+        );
+    end;
+
     v_relationship := nullif(trim(coalesce(v_dependent ->> 'relationship', '')), '');
     v_phone := nullif(trim(coalesce(v_dependent ->> 'phone', '')), '');
     v_food_alerts := nullif(trim(coalesce(v_dependent ->> 'medical_food_alerts', '')), '');
@@ -321,7 +370,7 @@ begin
       r.matched_member_id,
       r.detected_family_id
     into v_matched_profile_id, v_matched_member_id, v_person_family_id
-    from public.resolve_family_id_for_recepcao_person(v_phone, v_name) r;
+    from public.resolve_family_id_for_recepcao_person(v_phone, v_dependent_name) r;
 
     insert into public.recepcao_cadastro_familiar (
       submission_id,
@@ -340,7 +389,7 @@ begin
     ) values (
       v_submission_id,
       false,
-      v_name,
+      v_dependent_name,
       v_birth,
       v_phone,
       v_relationship,
@@ -482,6 +531,10 @@ declare
   v_processed_members int := 0;
   v_skipped_conflicts int := 0;
   v_messages text[] := array[]::text[];
+  v_apply_profile_id uuid;
+  v_apply_member_id uuid;
+  v_existing_profile_name text;
+  v_existing_member_name text;
 begin
   for v_submission in
     select l.*
@@ -516,7 +569,34 @@ begin
          and r.status = 'pending'
        order by r.is_informant desc, r.created_at
     loop
-      if v_member.matched_profile_id is not null then
+      v_apply_profile_id := v_member.matched_profile_id;
+      v_apply_member_id := v_member.matched_member_id;
+
+      if v_apply_profile_id is not null then
+        select nullif(trim(coalesce(p.full_name, '')), '')
+          into v_existing_profile_name
+          from public.profiles p
+         where p.id = v_apply_profile_id;
+
+        if v_existing_profile_name is null
+           or lower(v_existing_profile_name) <> lower(trim(v_member.full_name)) then
+          v_apply_profile_id := null;
+        end if;
+      end if;
+
+      if v_apply_member_id is not null then
+        select nullif(trim(coalesce(m.full_name, '')), '')
+          into v_existing_member_name
+          from public.members m
+         where m.id = v_apply_member_id;
+
+        if v_existing_member_name is null
+           or lower(v_existing_member_name) <> lower(trim(v_member.full_name)) then
+          v_apply_member_id := null;
+        end if;
+      end if;
+
+      if v_apply_profile_id is not null then
         update public.profiles p
            set full_name = v_member.full_name,
                birth_date = v_member.birth_date,
@@ -528,7 +608,7 @@ begin
                address_complement = coalesce(v_member.address_complement, p.address_complement),
                medical_food_alerts = coalesce(v_member.medical_food_alerts, p.medical_food_alerts),
                is_active = false
-         where p.id = v_member.matched_profile_id;
+         where p.id = v_apply_profile_id;
       else
         insert into public.profiles (
           full_name,
@@ -555,14 +635,14 @@ begin
         );
       end if;
 
-      if v_member.matched_member_id is not null then
+      if v_apply_member_id is not null then
         update public.members m
            set full_name = v_member.full_name,
                birth_date = v_member.birth_date,
                phone = coalesce(v_member.phone, m.phone),
                relationship = v_member.relationship,
                family_id = v_family_id
-         where m.id = v_member.matched_member_id;
+         where m.id = v_apply_member_id;
       else
         insert into public.members (
           full_name,
@@ -657,6 +737,9 @@ begin
 end;
 $$;
 
+grant execute on function public.find_profile_id_for_recepcao_match(text, text) to anon, authenticated;
+grant execute on function public.find_member_id_for_recepcao_match(text, text) to authenticated;
+grant execute on function public.resolve_family_id_for_recepcao_person(text, text) to anon, authenticated;
 grant execute on function public.submit_family_registration_public(jsonb) to anon, authenticated;
 grant execute on function public.list_recepcao_cadastro_familiar_pending(integer) to authenticated;
 grant execute on function public.process_recepcao_cadastro_familiar_batch(uuid[], uuid) to authenticated;
