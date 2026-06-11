@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para primeiro acesso e uso diário do painel do membro.
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 Conteúdo integrado: login, cadastro, LGPD, navegação, todos os cards do dashboard (sem manutenção), com resultado esperado em cada ação.
 
@@ -24,7 +24,7 @@ Manual **autocontido** para quem usa o aplicativo pela primeira vez ou no dia a 
 
 **Pacote:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 ---
 
@@ -118,6 +118,12 @@ Rosto centralizado, boa luz, sem óculos escuros — facilita identificação no
 
 - *Role os termos…* → leia o LGPD até o fim antes de aceitar.
 - Câmera bloqueada → liberar permissão nas configurações do celular/navegador.
+
+### Texto integral — Termos de Uso e Privacidade (LGPD)
+
+Texto exibido na caixa rolável da tela **Cadastro** (e na tela **Termos de Uso e Privacidade**). O nome da entidade vem do parâmetro `Nome_Entidade` no sistema; quando não configurado, usa-se **Igreja Batista Norte (IBN)**.
+
+> A Igreja Batista Norte (IBN) respeita a privacidade de seus membros e visitantes, comprometendo-se a coletar e tratar os dados estritamente necessários para gestão administrativa, controle de segurança, atividades eclesiásticas e para a divulgação de eventos e ações da igreja em mídias sociais e outros veículos oficiais de comunicação, sempre em estrita observância à Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).
 
 ---
 

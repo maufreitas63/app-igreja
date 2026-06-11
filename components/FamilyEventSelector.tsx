@@ -88,13 +88,14 @@ export const FamilyEventSelector = ({
         horizontal
         style={styles.scroll}
         contentContainerStyle={styles.row}
-        showsHorizontalScrollIndicator={false}
+        showsHorizontalScrollIndicator
         nestedScrollEnabled
         directionalLockEnabled
         keyboardShouldPersistTaps="handled"
         onLayout={(event) => {
           viewportWidthRef.current = event.nativeEvent.layout.width;
         }}
+        {...(Platform.OS === 'web' ? { className: 'family-event-selector-scroll' } : {})}
       >
         {events.map((event) => {
           const isSelected = event.id === selectedEventId;
@@ -142,11 +143,17 @@ export const FamilyEventSelector = ({
 const styles = StyleSheet.create({
   wrapper: {
     width: '100%',
-    overflow: 'hidden',
+    ...(Platform.OS === 'web' ? { paddingBottom: 2 } : { overflow: 'hidden' }),
   },
   scroll: {
     width: '100%',
     flexGrow: 0,
+    ...(Platform.OS === 'web'
+      ? {
+          overflowX: 'scroll',
+          scrollbarWidth: 'thin',
+        }
+      : null),
   },
   row: {
     flexDirection: 'row',

@@ -2,7 +2,7 @@
 
 Documentação **autocontida** de arquitetura e referências técnicas.
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 Conteúdo integrado: Arquitetura Blueprint PWA · Cards do Dashboard
 
@@ -16,7 +16,7 @@ Conteúdo integrado: Arquitetura Blueprint PWA · Cards do Dashboard
 
 **Pacote:** [`PACOTE_4_ANEXO_TECNICO.md`](PACOTE_4_ANEXO_TECNICO.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 ## 1) Visão Geral
 
@@ -358,7 +358,7 @@ Lista dos cards do carrossel horizontal em `app/(tabs)/dashboard.tsx`.
 
 
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 
 

@@ -718,27 +718,31 @@ export default function IndexScreen() {
       <View style={styles.socialRow}>
         <PwaInstallButton />
 
-        <TouchableOpacity
-          accessibilityLabel="Abrir Instagram da Igreja Batista Norte"
-          accessibilityRole="button"
-          onPress={() => {
-            void handleOpenSocial('https://www.instagram.com/igrejabatistanorte');
-          }}
-          style={styles.socialButton}
-        >
-          <SocialBrandIcon network="instagram" />
-        </TouchableOpacity>
+        <View style={styles.socialLinksCenter}>
+          <TouchableOpacity
+            accessibilityLabel="Abrir Instagram da Igreja Batista Norte"
+            accessibilityRole="button"
+            onPress={() => {
+              void handleOpenSocial('https://www.instagram.com/igrejabatistanorte');
+            }}
+            style={styles.socialButton}
+          >
+            <SocialBrandIcon network="instagram" />
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          accessibilityLabel="Abrir YouTube da Igreja Batista Norte"
-          accessibilityRole="button"
-          onPress={() => {
-            void handleOpenSocial('https://www.youtube.com/@ibnorte');
-          }}
-          style={styles.socialButton}
-        >
-          <SocialBrandIcon network="youtube" />
-        </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityLabel="Abrir YouTube da Igreja Batista Norte"
+            accessibilityRole="button"
+            onPress={() => {
+              void handleOpenSocial('https://www.youtube.com/@ibnorte');
+            }}
+            style={styles.socialButton}
+          >
+            <SocialBrandIcon network="youtube" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.socialRowSpacer} />
       </View>
     </View>
   );
@@ -1257,13 +1261,23 @@ const styles = StyleSheet.create({
   },
   socialFooter: {
     marginTop: 24,
-    alignItems: 'center',
+    width: '100%',
   },
   socialRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
+  },
+  socialLinksCenter: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
+  },
+  socialRowSpacer: {
+    width: 44,
+    height: 44,
   },
   socialButton: {
     width: 44,

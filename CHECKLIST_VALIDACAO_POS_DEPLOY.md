@@ -187,6 +187,27 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 
 - [ ] Seção de RDs com seletor de mês próprio
 
+**Pedido:** ao vincular RD no lançamento, exibir descrições das despesas.
+
+- [ ] **Adicionar** em lançamento → **Vincular RD** → cada RD pendente mostra descrição dos itens
+
+---
+
+## Controle de Acesso — aba Perfis
+
+**Pedido:** dropdown com todos os usuários (substituir busca por texto).
+
+- [ ] Aba **Perfis** exibe **Selecionar perfil** com lista completa de usuários
+
+---
+
+## Cadastro de Usuário — exclusão
+
+**Pedido:** botão para excluir usuário e referências no Supabase.
+
+- [ ] **Excluir usuário** remove perfil após confirmação (requer `scripts/delete-profile-complete-rpc.sql`)
+- [ ] Não permite excluir a própria sessão nem o único `super_admin`
+
 ---
 
 ## Perfil, selfie e família
@@ -293,4 +314,4 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 
 ---
 
-*Atualizado em 10/06/2026*
+*Atualizado em 22/05/2026*

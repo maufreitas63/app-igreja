@@ -11,3 +11,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+.family-event-selector-scroll {
+  overflow-x: auto !important;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 rgba(15, 23, 42, 0.5);
+}
+
+.family-event-selector-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.family-event-selector-scroll::-webkit-scrollbar-track {
+  margin: 0 2px;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 4px;
+}
+
+.family-event-selector-scroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
+}
+
+.family-event-selector-scroll::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}

@@ -10,7 +10,7 @@ Lista dos cards do carrossel horizontal em `app/(tabs)/dashboard.tsx`.
 
 
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 
 

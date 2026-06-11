@@ -2,7 +2,7 @@
 
 Documento de referência do modelo de **defesa em profundidade** do **app-igreja** (Igreja Batista Norte).
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 **Documentação relacionada:** [`BLUEPRINT.md`](BLUEPRINT.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md) · [`MANUAL_CONTROLE_ACESSO.md`](MANUAL_CONTROLE_ACESSO.md) · [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md)
 

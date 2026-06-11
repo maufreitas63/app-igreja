@@ -2,7 +2,7 @@
 
 Script: [`scripts/tstmax-massive-seed.sql`](scripts/tstmax-massive-seed.sql)
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 ---
 

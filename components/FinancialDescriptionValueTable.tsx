@@ -9,7 +9,7 @@ import {
   type FinancialEntry,
 } from '@/lib/financialEntry';
 import { createFinancialReceiptSignedUrl } from '@/lib/financialReceipt';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -125,7 +125,7 @@ const ReceiptIndicator = ({ onPress }: { onPress: () => void }) => (
     hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
   >
     <View style={styles.receiptIconBadge}>
-      <FontAwesome name="image" size={15} color={RECEIPT_ICON_COLOR} />
+      <FontAwesome5 name="receipt" size={13} color={RECEIPT_ICON_COLOR} solid />
     </View>
   </TouchableOpacity>
 );

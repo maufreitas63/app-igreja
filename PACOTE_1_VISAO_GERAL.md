@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para diretoria, membros, famílias e voluntários.
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 Conteúdo integrado: Funcionalidades · Manual de Treinamento · FAQ
 
@@ -20,7 +20,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`BLUEPRINT.md`](BLUEPRINT.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md)
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 ---
 
@@ -233,8 +233,8 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **Programação de Escalas** | Registro manual + **Escala em bloco** (preview transacional) |
 | **Cuidado Pastoral** | Gestão de pedidos |
 | **Informações Financeiras** | Carga, manutenção de lançamentos e relatórios RD do mês |
-| **Controle de Acesso** | Papéis, grants, permissões por perfil *(super_admin)* |
-| **Cadastro de Usuário** | Busca e edição de perfis *(super_admin)* |
+| **Controle de Acesso** | Papéis, grants; seleção de perfil por dropdown *(super_admin)* |
+| **Cadastro de Usuário** | Busca, correção de CEP/endereço e exclusão completa de perfil *(super_admin)* |
 
 ---
 
@@ -740,7 +740,7 @@ Respostas às dúvidas mais comuns sobre o aplicativo da **Igreja Batista Norte*
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`FUNCIONALIDADES.md`](FUNCIONALIDADES.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`BLUEPRINT.md`](BLUEPRINT.md)
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 ---
 

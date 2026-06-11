@@ -10,7 +10,7 @@ Manual **autocontido** para quem **gerencia** o aplicativo: secretaria, líderes
 
 **Pacote:** [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · **Membros:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md)
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 ---
 
@@ -378,14 +378,15 @@ Receber e **acompanhar pedidos** enviados pelo card **Coração Aberto** dos mem
 
 ### Passo a passo
 
-1. Em **Quem enviou o pedido**, escolha o solicitante no seletor.
-2. Se houver vários pedidos, use o **chip de data/hora**.
-3. Leia **Motivo**, **Situação**, **Descrição**, **Pedido para**, **Encaminhado para**.
-4. Em **Acompanhamento**, avance **um estágio por vez**:
+1. Em **Quem enviou o pedido**, use o **dropdown** para filtrar por solicitante (ou *Todos*).
+2. A lista abaixo resume os pedidos **por usuário** (contagem de pedidos).
+3. Se houver vários pedidos da mesma pessoa, use o **chip de data/hora**.
+4. Leia **Motivo**, **Situação**, **Descrição**, **Pedido para**, **Encaminhado para**.
+5. Em **Acompanhamento**, avance **um estágio por vez**:
    - **Acolher** (primeiro)
    - **Apoiar** (após Acolher)
    - **Acompanhar** (após Apoiar)
-5. Use **WhatsApp** se houver telefone no perfil.
+6. Use **WhatsApp** se houver telefone no perfil.
 
 ### Resultado esperado
 
@@ -439,15 +440,27 @@ Importar movimentação, comentar lançamentos, anexar comprovantes e conciliar 
 - Linha mostra *Comentário: …* e *Comprovante anexado*.
 - Toast **Comprovante** ou **Financeiro** confirmando.
 
-### Passo a passo — conciliar RD
+### Passo a passo — vincular RD a um lançamento
 
-1. Em **Relatórios de Despesas · {mês}**, localize RD **Pendente**.
-2. Vincule ao lançamento (quando disponível na UI).
-3. Status passa a **Conciliado**.
+1. Em **Lançamentos · {mês}**, toque **Adicionar** ou **Editar** no lançamento desejado.
+2. No modal, toque **Vincular RD**.
+3. Na lista de RDs pendentes, confira número, valor, membro, telefone, data, quantidade de itens e **descrição de cada despesa**.
+4. Toque **Vincular a este lançamento** no RD correto.
 
 ### Resultado esperado
 
-- Toast *RD vinculado ao lançamento*; membro que enviou RD vê andamento no fluxo de reembolso.
+- Modal **Vincular RD** mostra uma linha por descrição de item do relatório.
+- Toast *RD vinculado ao lançamento*; na seção **Relatórios de Despesas · {mês}** o status passa a **Conciliado**.
+- Membro que enviou o RD vê andamento no fluxo de reembolso.
+
+### Passo a passo — desconciliar RD
+
+1. Em **Relatórios de Despesas · {mês}**, localize RD **Conciliado**.
+2. Toque **Remover vínculo** e confirme.
+
+### Resultado esperado
+
+- RD volta para **Pendente** e pode ser vinculado novamente.
 
 ### Passo a passo — esvaziar mês (destrutivo)
 
@@ -497,7 +510,7 @@ Gerar o **documento formal** de presença para assembleias com **Requer Quorum =
 # Parte 10 — Cadastro de Usuário *(super_admin)*
 
 ### Objetivo
-Localizar perfil de membro e **corrigir CEP/endereço** quando a secretaria precisa ajustar cadastro.
+Localizar perfil de membro, **corrigir CEP/endereço** e, quando necessário, **excluir o usuário** e todas as referências dele no sistema.
 
 ### Caminho
 **Cadastro de Usuário** — visível apenas para **super_admin**.
@@ -509,12 +522,21 @@ Localizar perfil de membro e **corrigir CEP/endereço** quando a secretaria prec
 3. Leia **Dados pessoais** (somente leitura): nome, telefone, e-mail, CPF, nascimento.
 4. Edite **CEP**, **Número**, **Complemento** — a prévia **Endereço que será gravado** atualiza via CEP.
 5. **Salvar CEP e endereço**.
+6. Para remover alguém do sistema: role até **Excluir usuário** → confirme no diálogo (ação **irreversível**).
 
 ### Resultado esperado
 
 - Toast **Cadastro de usuário** — *Endereço atualizado com sucesso.*
 - Mensagem verde: *CEP e endereço gravados em profiles…*
 - Mapa e endereço do membro refletem a alteração.
+- Após exclusão: toast de confirmação; perfil some da busca; remove dados em `profiles`, `members`, inscrições, RD, pedidos pastorais, veículos e demais referências (RPC `excluir_usuario_completo`).
+
+### Se der erro
+
+- *Apenas super administradores podem excluir usuários* — perfil da sessão não é `super_admin`.
+- *Não é possível excluir o próprio usuário da sessão* — use outra conta admin.
+- *Não é possível excluir o único super administrador*.
+- RPC ausente — execute `scripts/delete-profile-complete-rpc.sql` no Supabase.
 
 ### Dica
 Não é cadastro completo de novo usuário — para primeiro acesso do membro, use o fluxo WhatsApp + Cadastro (Pacote 5).
@@ -531,8 +553,8 @@ Definir **quem vê e edita** cada tela, card e coluna — incluindo manutenção
 
 ### Aba Perfis — passo a passo
 
-1. **Buscar perfil** por nome, telefone ou código (mín. 2 caracteres).
-2. Toque no perfil.
+1. Em **Selecionar perfil**, abra o **dropdown** e escolha o usuário na lista completa (nome · telefone/código).
+2. Aguarde carregar **Papéis do perfil** e **Liderança por tipo de escala**.
 3. Em **Papéis do perfil**, marque/desmarque papéis (ex.: membro, lider, pastoral).
 4. Em **Liderança por tipo de escala**, ative tipos que o perfil pode gerenciar *(requer papel lider)*.
 5. Aguarde toast **Papéis do perfil** ou **Liderança de escala**.

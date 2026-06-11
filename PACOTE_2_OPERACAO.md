@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para secretaria, eventos, salas Kids/Teens e líderes de escala.
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 Conteúdo integrado: Manutenção como ecossistema · Missão B4 (escalas) · Card Agenda · FAQ Totem/Manutenção
 
@@ -18,7 +18,7 @@ Proposta de atuação do **administrador** no módulo de manutenção (`maintena
 
 **Pacotes:** [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md) (passo a passo) · [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) (ecossistema) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 ---
 
@@ -297,7 +297,7 @@ Use **modo equipe** para vigilância, recepção ou estacionamento (vários no m
 
 **Pacotes:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md) (membro) · [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) (operação) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 ## Objetivo
 

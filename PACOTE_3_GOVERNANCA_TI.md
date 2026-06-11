@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para super administrador, TI e desenvolvedor.
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 Conteúdo integrado: Manual operacional ACL · Modelo de controle de acesso · Camadas de segurança · Blueprint completo
 
@@ -20,7 +20,7 @@ Documentação técnica de referência: [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.m
 
 **Pacote:** [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 ---
 
@@ -209,10 +209,9 @@ select p.id, ar.id
 **Passo a passo:**
 
 1. Abra **Manutenção → Controle de Acesso → aba Perfis**.
-2. Em **Buscar perfil**, digite nome, telefone ou código do membro (mínimo 2 caracteres).
-3. Toque em **Buscar** e selecione o perfil na lista.
-4. Na lista de papéis, use o **switch** para ligar ou desligar cada papel.
-5. Confirme o toast de sucesso.
+2. Em **Selecionar perfil**, abra o **dropdown** e escolha o usuário na lista completa (todos os perfis cadastrados).
+3. Na lista de papéis, use o **switch** para ligar ou desligar cada papel.
+4. Confirme o toast de sucesso.
 
 **Efeito:** alteração imediata em `profile_access_roles`.
 
@@ -366,7 +365,7 @@ Use com moderação: grants por perfil são mais difíceis de auditar que grants
 
 Use para quem participa do app mas **não** é membro pleno nem responsável familiar.
 
-1. Controle de Acesso → **Perfis** → buscar pessoa.
+1. Controle de Acesso → **Perfis** → selecionar pessoa no dropdown.
 2. Ligar **`congregado`**; desligar **`member`** se não for membro pleno.
 3. Ajustar grants em **Papéis → Congregado** (Telas / Colunas) conforme a política da igreja.
 4. Pedir **Sair → entrar** no app.
@@ -395,7 +394,7 @@ on conflict do nothing;
 
 ### 6.3 Nomear responsável pela equipe de eventos
 
-1. **App:** Controle de Acesso → Perfis → buscar pessoa → ligar **`events_admin`**.
+1. **App:** Controle de Acesso → Perfis → selecionar pessoa no dropdown → ligar **`events_admin`**.
 2. **Verificar** grants do papel `events_admin` (aba Papéis → Telas: `/maintenance-dashboard`; Tabelas: `events`, `event_registrations`).
 3. Pedir à pessoa: **Sair → entrar**.
 4. Confirmar: engrenagem de manutenção visível; consegue abrir Programação de Eventos.
@@ -426,7 +425,7 @@ select public.profile_has_access(
 
 ### 6.6 Promover novo super administrador
 
-1. Controle de Acesso → Perfis → buscar pessoa → ligar **`super_admin`**.
+1. Controle de Acesso → Perfis → selecionar pessoa no dropdown → ligar **`super_admin`**.
 2. **Não** remover o `super_admin` antigo até o novo confirmar acesso.
 3. Novo admin: Sair → entrar → abrir Manutenção → Controle de Acesso.
 
@@ -486,7 +485,7 @@ select p.id, p.full_name, p.phone
 | 1 | `member` | Abrir dashboard | Cards conforme grants do `member` |
 | 2 | `member` | Dados cadastrais | Campos básicos editáveis; sem seção PIN |
 | 3 | `member` | Abrir Manutenção | Negado (sem engrenagem / sem acesso) |
-| 4 | `super_admin` | Controle de Acesso | Card visível; busca e switches funcionam |
+| 4 | `super_admin` | Controle de Acesso | Card visível; dropdown de perfis e switches funcionam |
 | 5 | `events_admin` | Manutenção → Eventos | Consegue criar/editar evento |
 | 6 | Qualquer | Após mudança de papel | Sair → entrar → comportamento atualizado |
 
@@ -949,7 +948,7 @@ Ajuste conforme a política da igreja.
 
 Documento de referência do modelo de **defesa em profundidade** do **app-igreja** (Igreja Batista Norte).
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 **Documentação relacionada:** [`BLUEPRINT.md`](BLUEPRINT.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md) · [`MANUAL_CONTROLE_ACESSO.md`](MANUAL_CONTROLE_ACESSO.md) · [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md)
 
@@ -1300,7 +1299,7 @@ Documento de referência da solução implementada: telas, controles, fluxos de 
 
 **Índice da documentação:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · Pacote técnico: [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md) · Anexo: [`PACOTE_4_ANEXO_TECNICO.md`](PACOTE_4_ANEXO_TECNICO.md)
 
-**Atualizado em:** 10/06/2026
+**Atualizado em:** 22/05/2026
 
 ---
 
