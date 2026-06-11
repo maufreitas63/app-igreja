@@ -18,7 +18,7 @@ createRoot(rootElement).render(
         </p>
         <h1 className="mt-2 text-2xl font-bold text-slate-900">Igreja Batista Norte</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Página independente do aplicativo da igreja — não é necessário login nem instalar o app.
+          Ministério de Acolhimento
         </p>
       </header>
       <FamilyRegistrationForm />
