@@ -230,7 +230,7 @@ export function buildFamilyRegistrationShareUrl(): string {
 
 export function buildFamilyRegistrationWhatsAppUrl(pageUrl: string): string {
   const message = [
-    'Olá! Convido você e sua família a preencherem o cadastro da nossa igreja.',
+    'Olá! O Ministério de Acolhimento da Igreja Batista Norte - IBN convida você e sua família a preencherem o cadastro da nossa igreja.',
     'É rápido e ajuda a organizar nossa comunidade.',
     '',
     `Acesse o formulário: ${pageUrl}`,
