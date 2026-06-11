@@ -20,7 +20,10 @@ import {
   resolveQrCheckInCardVisible,
 } from '@/lib/checkInVisibility';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
+import { compareFamilyMembersByRelationship } from '@/lib/familyRelationshipOptions';
 import { resolveFamilyIdForPhone } from '@/lib/family';
+import { formatShortName } from '@/lib/formatShortName';
+import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import {
   fetchMembersDirectoryFromProfiles,
   fetchVisitorsDirectoryFromProfiles,
@@ -501,6 +504,8 @@ export default function Dashboard() {
   const [membersListSearchQuery, setMembersListSearchQuery] = useState('');
   const visitorsListLoadedRef = useRef(false);
   const [familyModalFamilyId, setFamilyModalFamilyId] = useState<string | null>(null);
+  const [familyModalMembers, setFamilyModalMembers] = useState<MemberListEntry[]>([]);
+  const [isFamilyModalLoading, setIsFamilyModalLoading] = useState(false);
   const [selectedBirthdayMonth, setSelectedBirthdayMonth] = useState(getCurrentBirthdayMonth);
   const [scaleTypes, setScaleTypes] = useState<ScaleTypeEntry[]>([]);
   const [vigilanceScaleEntries, setVigilanceScaleEntries] = useState<VigilanceScaleEntry[]>([]);
@@ -1473,15 +1478,77 @@ export default function Dashboard() {
     });
   }, [activeMemberListEntries, membersListSearchQuery]);
 
-  const familyModalMembers = useMemo(() => {
+  useEffect(() => {
     if (!familyModalFamilyId) {
-      return [];
+      setFamilyModalMembers([]);
+      setIsFamilyModalLoading(false);
+      return;
     }
 
-    return activeMemberListEntries
-      .filter((entry) => entry.family_id === familyModalFamilyId)
-      .sort((left, right) => left.full_name.localeCompare(right.full_name, 'pt-BR'));
-  }, [familyModalFamilyId, activeMemberListEntries]);
+    let cancelled = false;
+    setIsFamilyModalLoading(true);
+
+    void (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('members')
+          .select('id, full_name, phone, relationship, family_id')
+          .ilike('family_id', familyModalFamilyId)
+          .eq('accepted', MEMBER_ACCEPTED_VALUE);
+
+        if (error) {
+          throw error;
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        const parsed = (data ?? [])
+          .map((row) => {
+            const fullName = String(row.full_name ?? '').trim();
+            const familyId = String(row.family_id ?? '').trim();
+
+            if (!fullName || !familyId) {
+              return null;
+            }
+
+            return {
+              id: String(row.id),
+              full_name: fullName,
+              short_name: formatShortName(fullName),
+              family_id: familyId,
+              relationship: row.relationship ? String(row.relationship).trim() || null : null,
+              phone: row.phone ? String(row.phone).trim() || null : null,
+              cep: null,
+              address_street: null,
+              address_number: null,
+              address_neighborhood: null,
+              address_city: null,
+              address_state: null,
+            } satisfies MemberListEntry;
+          })
+          .filter((row): row is MemberListEntry => row !== null)
+          .sort(compareFamilyMembersByRelationship);
+
+        setFamilyModalMembers(parsed);
+      } catch (error) {
+        console.error('Erro ao carregar membros da família:', error);
+
+        if (!cancelled) {
+          setFamilyModalMembers([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsFamilyModalLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [familyModalFamilyId]);
 
   const handleOpenVigilanceVolunteerWhatsapp = async (phone: string | null) => {
     const whatsappPhone = normalizePhoneForWhatsApp(phone);
@@ -2578,7 +2645,7 @@ export default function Dashboard() {
                               <View style={styles.membersListActionsRow}>
                                 <TouchableOpacity
                                   style={styles.membersListActionCell}
-                                  onPress={() => setFamilyModalFamilyId(entry.family_id)}
+                                  onPress={() => setFamilyModalFamilyId(entry.family_id.trim())}
                                   activeOpacity={0.85}
                                 >
                                   <FontAwesome name="users" size={18} color="#fda4af" />
@@ -3461,6 +3528,13 @@ export default function Dashboard() {
                 nestedScrollEnabled
                 showsVerticalScrollIndicator
               >
+                {isFamilyModalLoading ? (
+                  <CardLoadingState lines={3} compact />
+                ) : familyModalMembers.length === 0 ? (
+                  <Text style={styles.groupedAudienceEmptyText}>
+                    Nenhum membro reconhecido nesta família.
+                  </Text>
+                ) : null}
                 {familyModalMembers.map((member) => (
                   <View key={member.id} style={styles.membersFamilyModalRow}>
                     <View style={styles.membersFamilyModalRowContent}>
