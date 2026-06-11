@@ -66,6 +66,12 @@ export const resolveDashboardCardIndex = (
   );
 };
 
+/** Índice do painel de manutenção pelo `content` ou `id` do card. */
+export const resolveMaintenancePanelIndex = (
+  cards: ReadonlyArray<{ id: string; content: string }>,
+  panelParam?: string | null
+) => resolveDashboardCardIndex(cards, panelParam);
+
 /** Tipografia do título «Índice do Aplicativo» (painel superior do card). */
 export const DASHBOARD_PANEL_TITLE_TYPO = {
   fontSize: 17,

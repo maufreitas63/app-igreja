@@ -56,6 +56,7 @@ import {
 import {
   buildDashboardPanelCardSizeStyle,
   computeDashboardCardHeight,
+  resolveMaintenancePanelIndex,
 } from '@/lib/dashboardPanelLayout';
 import {
   MAINTENANCE_SHORTCUT_ICON_ACTIVE_COLOR,
@@ -146,7 +147,6 @@ type MaintenanceShortcut = {
   id: string;
   label: string;
   content: MaintenancePanelContent;
-  targetIndex: number;
 };
 
 const formatDisplayName = (fullName: string) => {
@@ -733,14 +733,15 @@ export default function MaintenanceDashboard() {
 
   const maintenanceShortcuts = useMemo<MaintenanceShortcut[]>(
     () =>
-      maintenancePanelCards.map((card, panelIndex) => ({
+      maintenancePanelCards.map((card) => ({
         id: card.id,
         label: card.title,
-        content: card.content,
-        targetIndex: panelIndex + 1,
+        content: card.content as MaintenancePanelContent,
       })),
     [maintenancePanelCards]
   );
+
+  const activeMaintenancePanelContent = maintenanceCarouselCards[currentIndex]?.content ?? null;
 
   const activeMaintenanceScreenTitle = useMemo(() => {
     if (showEditor) {
@@ -772,20 +773,71 @@ export default function MaintenanceDashboard() {
   );
 
   const scrollToMaintenanceCard = useCallback((targetIndex: number, animated = false) => {
-    if (targetIndex < 0 || targetIndex >= maintenanceCardCount) {
+    if (targetIndex < 0 || targetIndex >= maintenanceCardCount || pageWidth <= 0) {
       return;
     }
 
+    currentIndexRef.current = targetIndex;
     setCurrentIndex(targetIndex);
-    carouselRef.current?.scrollToOffset({
-      offset: targetIndex * pageWidth,
-      animated,
+
+    const list = carouselRef.current;
+    if (!list) {
+      return;
+    }
+
+    list.scrollToIndex({ index: targetIndex, animated, viewPosition: 0 });
+    requestAnimationFrame(() => {
+      list.scrollToOffset({
+        offset: targetIndex * pageWidth,
+        animated: false,
+      });
     });
   }, [maintenanceCardCount, pageWidth]);
+
+  const scrollToMaintenancePanel = useCallback(
+    (panelContent: MaintenancePanelContent) => {
+      const targetIndex = resolveMaintenancePanelIndex(maintenanceCarouselCards, panelContent);
+      scrollToMaintenanceCard(targetIndex, false);
+    },
+    [maintenanceCarouselCards, scrollToMaintenanceCard]
+  );
+
+  const handleCarouselScrollToIndexFailed = useCallback(
+    (info: { index: number }) => {
+      if (info.index < 0 || info.index >= maintenanceCardCount || pageWidth <= 0) {
+        return;
+      }
+
+      carouselRef.current?.scrollToOffset({
+        offset: info.index * pageWidth,
+        animated: false,
+      });
+      requestAnimationFrame(() => {
+        carouselRef.current?.scrollToIndex({
+          index: info.index,
+          animated: false,
+          viewPosition: 0,
+        });
+      });
+    },
+    [maintenanceCardCount, pageWidth]
+  );
 
   useEffect(() => {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
+
+  useEffect(() => {
+    if (previousPageWidthRef.current === pageWidth) {
+      return;
+    }
+
+    previousPageWidthRef.current = pageWidth;
+    const index = currentIndexRef.current;
+    requestAnimationFrame(() => {
+      scrollToMaintenanceCard(index, false);
+    });
+  }, [pageWidth, scrollToMaintenanceCard]);
 
   const stopFooterNavRepeat = useCallback(() => {
     if (footerNavRepeatIntervalRef.current) {
@@ -909,7 +961,7 @@ export default function MaintenanceDashboard() {
                 keyboardShouldPersistTaps="handled"
               >
                 {maintenanceShortcuts.map((shortcut) => {
-                  const isActiveShortcut = currentIndex === shortcut.targetIndex;
+                  const isActiveShortcut = activeMaintenancePanelContent === shortcut.content;
                   const iconName = MAINTENANCE_SHORTCUT_ICONS[shortcut.content];
                   const iconColor = isActiveShortcut
                     ? MAINTENANCE_SHORTCUT_ICON_ACTIVE_COLOR
@@ -922,7 +974,7 @@ export default function MaintenanceDashboard() {
                         styles.menuShortcutButton,
                         isActiveShortcut && styles.menuShortcutButtonActive,
                       ]}
-                      onPress={() => scrollToMaintenanceCard(shortcut.targetIndex)}
+                      onPress={() => scrollToMaintenancePanel(shortcut.content)}
                       activeOpacity={0.9}
                       hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
                       accessibilityRole="button"
@@ -1110,12 +1162,13 @@ export default function MaintenanceDashboard() {
       handleGanttEventPress,
       isBusy,
       loading,
+      activeMaintenancePanelContent,
       maintenanceShortcuts,
       carouselPageStyle,
       panelCardSizeStyle,
       quorumRegistrySchemaMissing,
       refetch,
-      scrollToMaintenanceCard,
+      scrollToMaintenancePanel,
       startEditEvent,
       startNewEvent,
     ]
@@ -1160,20 +1213,18 @@ export default function MaintenanceDashboard() {
                 ref={carouselRef}
                 style={styles.carouselFlatList}
                 data={maintenanceCarouselCards}
+                extraData={currentIndex}
                 horizontal
                 pagingEnabled
                 scrollEnabled={false}
                 keyboardShouldPersistTaps="handled"
                 showsHorizontalScrollIndicator={false}
-                initialScrollIndex={Math.min(
-                  Math.max(currentIndex, 0),
-                  Math.max(maintenanceCardCount - 1, 0)
-                )}
-                initialNumToRender={3}
-                maxToRenderPerBatch={3}
-                windowSize={5}
+                initialNumToRender={maintenanceCardCount}
+                maxToRenderPerBatch={maintenanceCardCount}
+                windowSize={Math.max(5, maintenanceCardCount)}
                 removeClippedSubviews={Platform.OS !== 'web'}
                 onScroll={handleCarouselScroll}
+                onScrollToIndexFailed={handleCarouselScrollToIndexFailed}
                 scrollEventThrottle={16}
                 keyExtractor={(item) => item.id}
                 getItemLayout={(_, index) => ({
@@ -1183,6 +1234,7 @@ export default function MaintenanceDashboard() {
                 })}
                 snapToAlignment="start"
                 snapToInterval={pageWidth}
+                snapToOffsets={maintenanceCarouselCards.map((_, index) => index * pageWidth)}
                 decelerationRate="fast"
                 disableIntervalMomentum
                 renderItem={renderCarouselItem}
