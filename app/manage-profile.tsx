@@ -692,6 +692,7 @@ export default function ManageProfile() {
     cor: '',
   });
   const [savingVehicle, setSavingVehicle] = useState(false);
+  const [deletingVehicleId, setDeletingVehicleId] = useState<string | null>(null);
   // const [familySearchInput, setFamilySearchInput] = useState('');
   // const [familyNameSearchResults, setFamilyNameSearchResults] = useState<FamilySearchByNameResult[]>([]);
   // const [searchedFamilyId, setSearchedFamilyId] = useState('');
@@ -1569,6 +1570,58 @@ export default function ManageProfile() {
     }
   }, [editingVehicle, loadVehicles, profile?.phone, resetVehicleEditing, vehicleForm]);
 
+  const handleDeleteVehicle = useCallback(
+    (vehicle: ProfileVehicle) => {
+      Alert.alert(
+        'Excluir veículo',
+        `Deseja remover o veículo de placa ${vehicle.placa}?`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Excluir',
+            style: 'destructive',
+            onPress: () => {
+              void (async () => {
+                if (!profile?.phone) {
+                  Alert.alert('Erro', 'Perfil sem telefone vinculado.');
+                  return;
+                }
+
+                try {
+                  setDeletingVehicleId(vehicle.id);
+
+                  const { error } = await supabase
+                    .from('profile_vehicles')
+                    .delete()
+                    .eq('id', vehicle.id)
+                    .eq('phone', String(profile.phone));
+
+                  if (error) {
+                    throw error;
+                  }
+
+                  if (editingVehicle?.id === vehicle.id) {
+                    resetVehicleEditing();
+                  }
+
+                  await loadVehicles(String(profile.phone));
+                  Alert.alert('Sucesso', 'Veículo excluído.');
+                } catch (error) {
+                  const message =
+                    error instanceof Error ? error.message : 'Não foi possível excluir o veículo.';
+                  Alert.alert('Erro', message);
+                } finally {
+                  setDeletingVehicleId(null);
+                }
+              })();
+            },
+          },
+        ]
+      );
+    },
+    [editingVehicle?.id, loadVehicles, profile?.phone, resetVehicleEditing]
+  );
+
   const handleSelfieSelected = useCallback(async (photo: string) => {
     const previousPreview = selfiePreviewUrl;
     const previousFileName = resolveSelfieStorageFileName(
@@ -2182,12 +2235,30 @@ export default function ManageProfile() {
                               </Text>
                             </View>
                           </View>
-                          <View style={styles.actionsRow}>
+                          <View style={styles.vehicleActionsColumn}>
                             <TouchableOpacity
-                              style={styles.editButton}
+                              style={[
+                                styles.editButton,
+                                (deletingVehicleId === vehicle.id || savingVehicle) && styles.disabledButton,
+                              ]}
                               onPress={() => startEditingVehicle(vehicle)}
+                              disabled={deletingVehicleId === vehicle.id || savingVehicle}
                             >
                               <MaterialIcons name="edit" size={18} color="#FFF" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[
+                                styles.deleteVehicleButton,
+                                (deletingVehicleId === vehicle.id || savingVehicle) && styles.disabledButton,
+                              ]}
+                              onPress={() => handleDeleteVehicle(vehicle)}
+                              disabled={deletingVehicleId === vehicle.id || savingVehicle}
+                            >
+                              {deletingVehicleId === vehicle.id ? (
+                                <ActivityIndicator color="#FFF" size="small" />
+                              ) : (
+                                <MaterialIcons name="delete" size={18} color="#FFF" />
+                              )}
                             </TouchableOpacity>
                           </View>
                         </View>
@@ -2669,6 +2740,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#0EA5E9',
+  },
+  vehicleActionsColumn: {
+    marginLeft: 12,
+    alignItems: 'center',
+    gap: 8,
+  },
+  deleteVehicleButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#DC2626',
   },
   vehicleEditor: {
     marginTop: 16,
