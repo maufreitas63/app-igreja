@@ -5,6 +5,48 @@
 
 drop function if exists public.excluir_usuario_completo(uuid, uuid);
 
+-- Compara telefones com variantes BR (com/sem DDI 55), alinhado a find_profile_id_by_phone.
+create or replace function public.phones_match_for_sync(p_phone_a text, p_phone_b text)
+returns boolean
+language sql
+immutable
+security definer
+set search_path = public
+as $$
+  with normalized as (
+    select
+      public.normalize_profile_phone(p_phone_a) as a_digits,
+      public.normalize_profile_phone(p_phone_b) as b_digits
+  ),
+  variants as (
+    select
+      a_digits,
+      b_digits,
+      case
+        when a_digits like '55%' and length(a_digits) >= 12 then substring(a_digits from 3)
+        else a_digits
+      end as a_local,
+      case
+        when b_digits like '55%' and length(b_digits) >= 12 then substring(b_digits from 3)
+        else b_digits
+      end as b_local
+    from normalized
+  )
+  select
+    a_digits is not null
+    and b_digits is not null
+    and (
+      a_digits = b_digits
+      or a_digits = b_local
+      or a_local = b_digits
+      or a_local = b_local
+      or a_digits = '55' || b_local
+      or b_digits = '55' || a_local
+      or trim(coalesce(p_phone_a, '')) = trim(coalesce(p_phone_b, ''))
+    )
+  from variants;
+$$;
+
 create or replace function public.excluir_usuario_completo(
   p_target_profile_id uuid,
   p_actor_profile_id uuid default null
@@ -97,7 +139,20 @@ begin
   end if;
 
   delete from public.members m
-   where public.find_profile_id_for_member_sync(m.phone, m.full_name) = p_target_profile_id;
+   where public.find_profile_id_for_member_sync(m.phone, m.full_name) = p_target_profile_id
+      or (
+        nullif(trim(coalesce(v_profile.full_name, '')), '') is not null
+        and lower(trim(coalesce(m.full_name, ''))) = lower(trim(v_profile.full_name))
+        and (
+          nullif(public.normalize_phone_for_sync(m.phone), '') is null
+          or nullif(v_phone_digits, '') is null
+          or public.phones_match_for_sync(m.phone, v_profile.phone)
+        )
+      )
+      or (
+        nullif(v_phone_digits, '') is not null
+        and public.phones_match_for_sync(m.phone, v_profile.phone)
+      );
   get diagnostics v_deleted_members = row_count;
 
   if v_phone_digits is not null and v_phone_digits <> '' then
