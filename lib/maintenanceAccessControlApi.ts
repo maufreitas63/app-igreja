@@ -2,7 +2,7 @@ import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
 import { isTstMaxScaleTypeResourceKey } from '@/lib/tstMaxScaleFilter';
 import { supabase } from '@/lib/supabase';
-import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
+import { coerceRpcBoolean, isSupabaseRpcMissing } from '@/lib/supabaseRpc';
 import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import {
   getStoredProfileId,
@@ -113,13 +113,7 @@ export async function resolveActorProfileId() {
   return profileId;
 }
 
-export async function checkSessionIsSuperAdmin() {
-  const profileId = await resolveActorProfileId();
-
-  if (!profileId) {
-    return false;
-  }
-
+const readIsSuperAdminProfile = async (profileId: string) => {
   const { data, error } = await supabase.rpc('is_super_admin_profile', {
     p_profile_id: profileId,
   });
@@ -134,7 +128,35 @@ export async function checkSessionIsSuperAdmin() {
     throw error;
   }
 
-  return data === true;
+  return coerceRpcBoolean(data);
+};
+
+export async function checkSessionIsSuperAdmin() {
+  const phone = await getStoredUserPhone();
+
+  if (phone?.trim()) {
+    await repairUserSessionReference(phone);
+  }
+
+  let profileId = await resolveActorProfileId();
+
+  if (!profileId) {
+    return false;
+  }
+
+  let isSuperAdmin = await readIsSuperAdminProfile(profileId);
+
+  if (!isSuperAdmin && phone?.trim()) {
+    const loginProfileId = await resolveProfileIdByPhone(phone);
+
+    if (loginProfileId && loginProfileId !== profileId) {
+      await persistProfileId(loginProfileId);
+      profileId = loginProfileId;
+      isSuperAdmin = await readIsSuperAdminProfile(profileId);
+    }
+  }
+
+  return isSuperAdmin;
 }
 
 const parseRoleRows = (data: unknown): AccessRoleRecord[] => {
