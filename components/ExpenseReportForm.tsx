@@ -4,6 +4,7 @@ import {
   getExpenseReportTodayDateInput,
   parseExpenseReportAmountInputLenient,
   sanitizeExpenseAmountInput,
+  sanitizeExpenseReportDateInput,
   type ExpenseReportDraftItem,
   type ExpenseReportHeader,
 } from '@/lib/expenseReport';
@@ -27,9 +28,10 @@ type Props = {
   header: ExpenseReportHeader;
   submitting: boolean;
   onSubmit: (input: { pixKey: string; items: ExpenseReportDraftItem[] }) => void;
+  onCancel: () => void;
 };
 
-export function ExpenseReportForm({ header, submitting, onSubmit }: Props) {
+export function ExpenseReportForm({ header, submitting, onSubmit, onCancel }: Props) {
   const [pixKey, setPixKey] = useState(header.pixKey);
   const [items, setItems] = useState<ExpenseReportDraftItem[]>([createEmptyExpenseReportDraftItem()]);
   const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
@@ -143,13 +145,18 @@ export function ExpenseReportForm({ header, submitting, onSubmit }: Props) {
             ) : null}
           </View>
 
-          <Text style={styles.fieldLabel}>Data de preenchimento (DD/MM/AA)</Text>
+          <Text style={styles.fieldLabel}>Data de preenchimento (DD/MM/AAAA)</Text>
           <TextInput
             style={styles.input}
             value={item.dateInput}
-            onChangeText={(value) => updateItem(item.id, { dateInput: value })}
+            onChangeText={(value) =>
+              updateItem(item.id, { dateInput: sanitizeExpenseReportDateInput(value) })
+            }
             placeholder={getExpenseReportTodayDateInput()}
             placeholderTextColor="#94A3B8"
+            keyboardType="numeric"
+            inputMode="numeric"
+            maxLength={10}
             editable={!submitting}
           />
 
@@ -215,6 +222,15 @@ export function ExpenseReportForm({ header, submitting, onSubmit }: Props) {
           {totalAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
         </Text>
       </View>
+
+      <TouchableOpacity
+        style={[styles.cancelButton, submitting && styles.submitButtonDisabled]}
+        onPress={onCancel}
+        disabled={submitting}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.cancelButtonText}>Cancelar relatório</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
@@ -356,6 +372,21 @@ const styles = StyleSheet.create({
     color: '#065F46',
     fontSize: 16,
     fontWeight: '800',
+  },
+  cancelButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 14,
+    minHeight: 48,
+  },
+  cancelButtonText: {
+    color: '#475569',
+    fontSize: 15,
+    fontWeight: '700',
   },
   submitButton: {
     alignItems: 'center',

@@ -265,14 +265,28 @@ export const parseExpenseReportAmountInputLenient = (value: string): number => {
   return parseExpenseReportAmountInput(trimmed) ?? 0;
 };
 
-/** Data local de hoje no formato usado no formulário do RD (DD/MM/AA). */
+/** Data local de hoje no formato usado no formulário do RD (DD/MM/AAAA). */
 export const getExpenseReportTodayDateInput = () => {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, '0');
   const month = String(now.getMonth() + 1).padStart(2, '0');
-  const year = String(now.getFullYear()).slice(-2);
+  const year = String(now.getFullYear());
 
   return `${day}/${month}/${year}`;
+};
+
+export const sanitizeExpenseReportDateInput = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+
+  if (digits.length <= 2) {
+    return digits;
+  }
+
+  if (digits.length <= 4) {
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  }
+
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 };
 
 export const createEmptyExpenseReportDraftItem = (): ExpenseReportDraftItem => ({
@@ -330,7 +344,7 @@ export const validateExpenseReportDraft = (input: {
     const line = index + 1;
 
     if (!parseExpenseReportDateInput(item.dateInput)) {
-      return `Linha ${line}: informe uma data válida (DD/MM/AA).`;
+      return `Linha ${line}: informe uma data válida (DD/MM/AAAA).`;
     }
 
     if (!item.description.trim()) {

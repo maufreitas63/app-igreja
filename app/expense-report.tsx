@@ -100,6 +100,21 @@ export default function ExpenseReportScreen() {
     [reports]
   );
 
+  const handleCancelCreate = () => {
+    Alert.alert(
+      'Cancelar relatório',
+      'Deseja descartar este relatório de despesas sem salvar?',
+      [
+        { text: 'Continuar editando', style: 'cancel' },
+        {
+          text: 'Cancelar relatório',
+          style: 'destructive',
+          onPress: () => setMode('list'),
+        },
+      ]
+    );
+  };
+
   const handleFinalize = async (input: Parameters<typeof submitExpenseReport>[0]) => {
     setSubmitting(true);
 
@@ -375,7 +390,12 @@ export default function ExpenseReportScreen() {
             ) : null}
 
             {!loading && !error && mode === 'create' && header ? (
-              <ExpenseReportForm header={header} submitting={submitting} onSubmit={handleFinalize} />
+              <ExpenseReportForm
+                header={header}
+                submitting={submitting}
+                onSubmit={handleFinalize}
+                onCancel={handleCancelCreate}
+              />
             ) : null}
 
             {!loading && !error && mode === 'view' && selectedReport ? (
