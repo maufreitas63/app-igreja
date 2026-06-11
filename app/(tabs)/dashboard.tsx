@@ -8,6 +8,7 @@ import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { useDashboardSelectedEvent, useEventRegistrationsByStatus } from '@/hooks';
 import { useFamilyPreCheckin } from '@/hooks/useFamilyPreCheckin';
+import { useFamilyReceptionSuperAdminNotifier } from '@/hooks/useFamilyReceptionSuperAdminNotifier';
 import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import { getAppParameterValue } from '@/lib/appParameters';
 import { OFFERINGS_RECIPIENT_ROWS } from '@/lib/offeringsRecipientInfo';
@@ -44,6 +45,7 @@ import {
   profileHasAccess,
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
+import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
 import {
   getStoredUserPhone,
   persistProfileId,
@@ -480,6 +482,7 @@ export default function Dashboard() {
   const vigilanceScalesLoadedRef = useRef(false);
   const [isFooterSettingsPressed, setIsFooterSettingsPressed] = useState(false);
   const [canViewMaintenance, setCanViewMaintenance] = useState(false);
+  const [canMonitorFamilyReception, setCanMonitorFamilyReception] = useState(false);
   const [isMaintenanceAccessLoading, setIsMaintenanceAccessLoading] = useState(true);
   const [dashboardCardAccess, setDashboardCardAccess] = useState<DashboardCardViewAccess>({});
   const [dashboardScreenAccess, setDashboardScreenAccess] = useState<DashboardScreenAccess>({});
@@ -564,6 +567,8 @@ export default function Dashboard() {
   );
   const params = useLocalSearchParams();
   const router = useRouter();
+
+  useFamilyReceptionSuperAdminNotifier(canMonitorFamilyReception);
   const requestedDashboardCard = Array.isArray(params.dashboardCard)
     ? params.dashboardCard[0]
     : params.dashboardCard;
@@ -717,6 +722,7 @@ export default function Dashboard() {
       }
       if (!targetPhone) {
         setCanViewMaintenance(false);
+        setCanMonitorFamilyReception(false);
         setDashboardCardAccess({});
         setDashboardScreenAccess({});
         setIsMaintenanceAccessLoading(false);
@@ -739,6 +745,7 @@ export default function Dashboard() {
         setProfile(null);
         setCurrentUserId(null);
         setCanViewMaintenance(false);
+        setCanMonitorFamilyReception(false);
         setDashboardCardAccess({});
         setDashboardScreenAccess({});
         setIsMaintenanceAccessLoading(false);
@@ -763,6 +770,7 @@ export default function Dashboard() {
         await persistProfileId(loadedProfile.id);
       } else {
         setCanViewMaintenance(false);
+        setCanMonitorFamilyReception(false);
         setDashboardCardAccess({});
       }
 
@@ -770,12 +778,21 @@ export default function Dashboard() {
       setAclRpcStatus(aclStatus);
 
       if (loadedProfile?.id) {
-        const [allowed, cardAccess, screenAccess] = await Promise.all([
-          profileHasAccess(loadedProfile.id, 'screen', ACCESS_SCREEN.maintenance, 'view'),
-          loadDashboardCardViewAccess(loadedProfile.id),
-          loadDashboardLinkedScreenAccess(loadedProfile.id),
-        ]);
+        const [allowed, cardAccess, screenAccess, isSuperAdmin, canAccessProfileCadastro] =
+          await Promise.all([
+            profileHasAccess(loadedProfile.id, 'screen', ACCESS_SCREEN.maintenance, 'view'),
+            loadDashboardCardViewAccess(loadedProfile.id),
+            loadDashboardLinkedScreenAccess(loadedProfile.id),
+            checkSessionIsSuperAdmin(),
+            profileHasAccess(
+              loadedProfile.id,
+              'screen',
+              'maintenance.card.profile_cadastro',
+              'view'
+            ),
+          ]);
         setCanViewMaintenance(allowed);
+        setCanMonitorFamilyReception(isSuperAdmin || canAccessProfileCadastro);
         setDashboardCardAccess(cardAccess);
         setDashboardScreenAccess(screenAccess);
       }

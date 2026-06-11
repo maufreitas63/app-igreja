@@ -142,6 +142,19 @@ export const pickFinancialEntryComment = (row: Record<string, unknown>) => {
 export type FinancialBulletinCommentDetail = {
   comment: string;
   amount: number;
+  transactionDateLabel: string;
+};
+
+/** Rótulo curto da data do lançamento (DD/MM). */
+export const formatFinancialEntryDayMonthLabel = (isoDate: string) => {
+  const match = isoDate.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+  if (!match) {
+    return '—';
+  }
+
+  const [, , month, day] = match;
+  return `${day}/${month}`;
 };
 
 export const mergeFinancialComments = (
@@ -293,6 +306,7 @@ const collectBulletinRowCommentDetails = (
     details.push({
       comment,
       amount: signedFinancialAmount(entry),
+      transactionDateLabel: formatFinancialEntryDayMonthLabel(entry.transaction_date),
     });
   }
 

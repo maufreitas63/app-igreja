@@ -1082,6 +1082,44 @@ begin
 end;
 $$;
 
+-- Telefone WhatsApp do super_admin para avisos de novos lotes na recepção.
+create or replace function public.get_super_admin_whatsapp_phone()
+returns text
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_phone text;
+begin
+  if not (
+    public.session_has_resource_access('screen', 'maintenance.card.profile_cadastro', 'view')
+    or exists (
+      select 1
+        from public.profile_access_roles par
+        join public.access_roles ar on ar.id = par.role_id
+       where par.profile_id = public.current_session_profile_id()
+         and ar.code = 'super_admin'
+    )
+  ) then
+    return null;
+  end if;
+
+  select nullif(trim(coalesce(p.phone, '')), '')
+    into v_phone
+    from public.profiles p
+    join public.profile_access_roles par on par.profile_id = p.id
+    join public.access_roles ar on ar.id = par.role_id
+   where ar.code = 'super_admin'
+     and nullif(trim(coalesce(p.phone, '')), '') is not null
+   order by p.created_at
+   limit 1;
+
+  return v_phone;
+end;
+$$;
+
 grant execute on function public.find_profile_id_for_recepcao_match(text, text) to anon, authenticated;
 grant execute on function public.find_member_id_for_recepcao_match(text, text) to authenticated;
 grant execute on function public.count_distinct_family_ids_by_phones_in_profiles(text[]) to anon, authenticated;
@@ -1093,3 +1131,4 @@ grant execute on function public.submit_family_registration_public(jsonb) to ano
 grant execute on function public.list_recepcao_cadastro_familiar_pending(integer) to authenticated;
 grant execute on function public.process_recepcao_cadastro_familiar_batch(uuid[], uuid) to authenticated;
 grant execute on function public.reject_recepcao_cadastro_familiar_batch(uuid[], text) to authenticated;
+grant execute on function public.get_super_admin_whatsapp_phone() to authenticated;

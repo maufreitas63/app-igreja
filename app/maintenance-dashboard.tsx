@@ -80,6 +80,7 @@ import {
   replicateMaintenanceEventFromRecord,
   saveMaintenanceEvent,
 } from '@/lib/saveMaintenanceEvent';
+import { useFamilyReceptionSuperAdminNotifier } from '@/hooks/useFamilyReceptionSuperAdminNotifier';
 import { useMaintenanceEvents, type MaintenanceEvent } from '@/hooks/useMaintenanceEvents';
 import { useQuorumRegistry } from '@/hooks/useQuorumRegistry';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
@@ -311,10 +312,15 @@ export default function MaintenanceDashboard() {
   >({});
   const [canAccessPastoralCare, setCanAccessPastoralCare] = useState(false);
   const [canAccessPastoralRoleChange, setCanAccessPastoralRoleChange] = useState(false);
+  const [canMonitorFamilyReception, setCanMonitorFamilyReception] = useState(false);
   const [totemSchemaReady, setTotemSchemaReady] = useState(isTotemAtivoColumnAvailable());
   const [quorumSchemaReady, setQuorumSchemaReady] = useState(isRequerQuorumColumnAvailable());
   const [quorumRegistrySchemaMissing, setQuorumRegistrySchemaMissing] = useState(
     !isQuorumRegistryTableAvailable()
+  );
+
+  useFamilyReceptionSuperAdminNotifier(
+    accessState === 'allowed' && canMonitorFamilyReception
   );
 
   const isBusy = isSaving || isDeleting || isReplicatingSeven;
@@ -425,19 +431,23 @@ export default function MaintenanceDashboard() {
         }
 
         try {
-          const [isSuperAdmin, canOpenAccessControlCard] = await Promise.all([
-            checkSessionIsSuperAdmin(),
-            sessionCanAccessAccessControlPanel(),
-          ]);
+          const [isSuperAdmin, canOpenAccessControlCard, canAccessProfileCadastro] =
+            await Promise.all([
+              checkSessionIsSuperAdmin(),
+              sessionCanAccessAccessControlPanel(),
+              sessionHasAccess('screen', 'maintenance.card.profile_cadastro', 'view'),
+            ]);
 
           if (active) {
             setCanManageAccessControl(isSuperAdmin);
             setCanAccessAccessControlCard(canOpenAccessControlCard);
+            setCanMonitorFamilyReception(isSuperAdmin || canAccessProfileCadastro);
           }
         } catch {
           if (active) {
             setCanManageAccessControl(false);
             setCanAccessAccessControlCard(false);
+            setCanMonitorFamilyReception(false);
           }
         }
 

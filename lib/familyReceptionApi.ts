@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 export const FAMILY_RECEPTION_SQL_HINT =
-  'Execute no Supabase: scripts/recepcao-cadastro-familiar.sql (após register-member-atomic.sql).';
+  'Execute no Supabase: scripts/recepcao-cadastro-familiar.sql (após register-member-atomic.sql; inclui aviso WhatsApp ao super_admin).';
 
 export type FamilyReceptionMember = {
   id: string;

@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
   Image,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -236,6 +237,7 @@ const CommentDetailsModal = ({
         <View style={styles.bubbleArrow} />
         <Text style={styles.bubbleTitle}>Observações</Text>
         <View style={styles.commentDetailsHeaderRow}>
+          <Text style={[styles.commentDetailsHeaderCell, styles.commentDetailsDateHeader]}>Data</Text>
           <Text style={[styles.commentDetailsHeaderCell, styles.commentDetailsCommentHeader]}>
             Observação
           </Text>
@@ -252,12 +254,17 @@ const CommentDetailsModal = ({
         >
           {details.map((detail, index) => (
             <View
-              key={`${detail.comment}-${detail.amount}-${index}`}
+              key={`${detail.transactionDateLabel}-${detail.comment}-${detail.amount}-${index}`}
               style={styles.commentDetailsDataRow}
             >
-              <Text style={[styles.commentDetailsBodyCell, styles.commentDetailsCommentCell]}>
-                {detail.comment}
+              <Text style={[styles.commentDetailsBodyCell, styles.commentDetailsDateCell]}>
+                {detail.transactionDateLabel}
               </Text>
+              <View style={styles.commentDetailsCommentColumn}>
+                <Text style={[styles.commentDetailsBodyCell, styles.commentDetailsCommentCell]}>
+                  {detail.comment}
+                </Text>
+              </View>
               <View style={styles.commentDetailsAmountColumn}>
                 <Text
                   style={[
@@ -637,7 +644,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   bubbleCard: {
-    maxWidth: 360,
+    maxWidth: 420,
     width: '100%',
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
@@ -686,12 +693,18 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textTransform: 'uppercase',
   },
+  commentDetailsDateHeader: {
+    width: 44,
+    flexShrink: 0,
+    textAlign: 'center',
+  },
   commentDetailsCommentHeader: {
     flex: 1,
+    minWidth: 0,
     textAlign: 'left',
   },
   commentDetailsAmountColumn: {
-    width: 112,
+    width: 104,
     flexShrink: 0,
     alignItems: 'flex-end',
     justifyContent: 'flex-start',
@@ -710,7 +723,7 @@ const styles = StyleSheet.create({
   commentDetailsDataRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
+    gap: 8,
     paddingVertical: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
@@ -720,9 +733,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  commentDetailsCommentCell: {
+  commentDetailsDateCell: {
+    width: 44,
+    flexShrink: 0,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  commentDetailsCommentColumn: {
     flex: 1,
+    minWidth: 0,
+  },
+  commentDetailsCommentCell: {
+    flexShrink: 1,
     textAlign: 'left',
+    ...(Platform.OS === 'web'
+      ? ({
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word',
+        } as const)
+      : null),
   },
   commentDetailsAmountCell: {
     width: '100%',
