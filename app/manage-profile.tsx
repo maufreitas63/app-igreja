@@ -31,20 +31,20 @@ import {
   selectSelfiePictureSize,
   uploadSelfieInput,
 } from '@/lib/selfie';
-import { useFamilyMembers } from '@/hooks/useFamilyMembers';
+// import { useFamilyMembers } from '@/hooks/useFamilyMembers';
 import {
   invalidateProfilesMapSnapshot,
   PROFILE_GEO_FIELDS,
 } from '@/lib/profilesMapCache';
 import { syncProfileAddressFromCep } from '@/lib/syncProfileAddressFromCep';
-import { formatShortName } from '@/lib/formatShortName';
-import {
-  canSearchFamilyByMemberName,
-  linkProfileToFamilyById,
-  searchFamiliesByMemberName,
-  type FamilySearchByNameResult,
-} from '@/lib/linkProfileFamily';
-import { normalizeFamilyCode } from '@/lib/family';
+// import { formatShortName } from '@/lib/formatShortName';
+// import {
+//   canSearchFamilyByMemberName,
+//   linkProfileToFamilyById,
+//   searchFamiliesByMemberName,
+//   type FamilySearchByNameResult,
+// } from '@/lib/linkProfileFamily';
+// import { normalizeFamilyCode } from '@/lib/family';
 import {
   buildDashboardFamilyAgendaRoute,
   buildRegisterRoute,
@@ -77,7 +77,7 @@ type ProfileRecord = {
 };
 
 type FieldKind = 'text' | 'phone' | 'date' | 'boolean' | 'url';
-type ProfileSectionKey = 'personal' | 'contact' | 'privacy' | 'technical' | 'vehicles' | 'family_link';
+type ProfileSectionKey = 'personal' | 'contact' | 'privacy' | 'technical' | 'vehicles'; // | 'family_link';
 
 type ProfileFieldRow = {
   key: string;
@@ -158,7 +158,7 @@ const SECTION_TITLES: Record<ProfileSectionKey, string> = {
   privacy: 'Privacidade / Status',
   technical: 'Endereço',
   vehicles: 'Veículos cadastrados',
-  family_link: 'Vincular a Familia',
+  // family_link: 'Vincular a Familia',
 };
 
 /** Ordem de exibição das seções de dados do perfil (sem privacidade/status). */
@@ -192,7 +192,7 @@ const DEFAULT_EXPANDED_SECTIONS: Record<ProfileSectionKey, boolean> = {
   privacy: false,
   technical: false,
   vehicles: false,
-  family_link: false,
+  // family_link: false,
 };
 
 const ONBOARDING_EXPANDED_SECTIONS: Record<ProfileSectionKey, boolean> = {
@@ -201,7 +201,7 @@ const ONBOARDING_EXPANDED_SECTIONS: Record<ProfileSectionKey, boolean> = {
   privacy: false,
   technical: true,
   vehicles: false,
-  family_link: false,
+  // family_link: false,
 };
 
 const normalizePhone = (value: string | null | undefined) => (value ?? '').replace(/\D/g, '');
@@ -506,7 +506,7 @@ const buildSections = (fields: ProfileFieldRow[]): ProfileSection[] => {
     privacy: [],
     technical: [],
     vehicles: [],
-    family_link: [],
+    // family_link: [],
   };
 
   for (const field of fields) {
@@ -692,12 +692,12 @@ export default function ManageProfile() {
     cor: '',
   });
   const [savingVehicle, setSavingVehicle] = useState(false);
-  const [familySearchInput, setFamilySearchInput] = useState('');
-  const [familyNameSearchResults, setFamilyNameSearchResults] = useState<FamilySearchByNameResult[]>([]);
-  const [searchedFamilyId, setSearchedFamilyId] = useState('');
-  const [selectedFamilyMemberId, setSelectedFamilyMemberId] = useState<string | null>(null);
-  const [searchingFamily, setSearchingFamily] = useState(false);
-  const [requestingFamilyLink, setRequestingFamilyLink] = useState(false);
+  // const [familySearchInput, setFamilySearchInput] = useState('');
+  // const [familyNameSearchResults, setFamilyNameSearchResults] = useState<FamilySearchByNameResult[]>([]);
+  // const [searchedFamilyId, setSearchedFamilyId] = useState('');
+  // const [selectedFamilyMemberId, setSelectedFamilyMemberId] = useState<string | null>(null);
+  // const [searchingFamily, setSearchingFamily] = useState(false);
+  // const [requestingFamilyLink, setRequestingFamilyLink] = useState(false);
   const [currentAccessPin, setCurrentAccessPin] = useState('');
   const [newAccessPin, setNewAccessPin] = useState('');
   const [confirmAccessPin, setConfirmAccessPin] = useState('');
@@ -808,24 +808,24 @@ export default function ManageProfile() {
     [scheduleAccessPinScrollLock]
   );
 
-  const currentFamilyId = useMemo(() => {
-    const raw = profile?.family_id ?? profile?.codigo_membro;
-    return raw ? String(raw).trim() : '';
-  }, [profile?.family_id, profile?.codigo_membro]);
+  // const currentFamilyId = useMemo(() => {
+  //   const raw = profile?.family_id ?? profile?.codigo_membro;
+  //   return raw ? String(raw).trim() : '';
+  // }, [profile?.family_id, profile?.codigo_membro]);
 
-  const isSearchedFamilySameAsCurrent = useMemo(() => {
-    if (!searchedFamilyId || !currentFamilyId) {
-      return false;
-    }
+  // const isSearchedFamilySameAsCurrent = useMemo(() => {
+  //   if (!searchedFamilyId || !currentFamilyId) {
+  //     return false;
+  //   }
 
-    return normalizeFamilyCode(searchedFamilyId) === normalizeFamilyCode(currentFamilyId);
-  }, [currentFamilyId, searchedFamilyId]);
+  //   return normalizeFamilyCode(searchedFamilyId) === normalizeFamilyCode(currentFamilyId);
+  // }, [currentFamilyId, searchedFamilyId]);
 
-  const {
-    members: familyMembers,
-    loading: loadingFamilyMembers,
-    refetch: refetchFamilyMembers,
-  } = useFamilyMembers(searchedFamilyId);
+  // const {
+  //   members: familyMembers,
+  //   loading: loadingFamilyMembers,
+  //   refetch: refetchFamilyMembers,
+  // } = useFamilyMembers(searchedFamilyId);
 
   const profileFields = useMemo(() => {
     const rows = buildFieldRows(profile);
@@ -1089,18 +1089,18 @@ export default function ManageProfile() {
     });
   }, [profile?.id, profile?.phone, isOnboardingFlow, loadVehicles]);
 
-  useEffect(() => {
-    setFamilySearchInput('');
-    setSearchedFamilyId('');
-    setSelectedFamilyMemberId(null);
-    setFamilyNameSearchResults([]);
-  }, [currentFamilyId]);
+  // useEffect(() => {
+  //   setFamilySearchInput('');
+  //   setSearchedFamilyId('');
+  //   setSelectedFamilyMemberId(null);
+  //   setFamilyNameSearchResults([]);
+  // }, [currentFamilyId]);
 
-  useEffect(() => {
-    if (expandedSections.family_link && searchedFamilyId) {
-      void refetchFamilyMembers();
-    }
-  }, [expandedSections.family_link, refetchFamilyMembers, searchedFamilyId]);
+  // useEffect(() => {
+  //   if (expandedSections.family_link && searchedFamilyId) {
+  //     void refetchFamilyMembers();
+  //   }
+  // }, [expandedSections.family_link, refetchFamilyMembers, searchedFamilyId]);
 
   useEffect(() => {
     let active = true;
@@ -1396,128 +1396,128 @@ export default function ManageProfile() {
     setIsVehicleEditorVisible(true);
   }, []);
 
-  const handleSelectFamilyNameSearchResult = useCallback(
-    (result: FamilySearchByNameResult) => {
-      setSearchedFamilyId(result.familyId);
-      setFamilySearchInput(result.fullName);
-      setFamilyNameSearchResults([]);
-      setSelectedFamilyMemberId(null);
-    },
-    []
-  );
+  // const handleSelectFamilyNameSearchResult = useCallback(
+  //   (result: FamilySearchByNameResult) => {
+  //     setSearchedFamilyId(result.familyId);
+  //     setFamilySearchInput(result.fullName);
+  //     setFamilyNameSearchResults([]);
+  //     setSelectedFamilyMemberId(null);
+  //   },
+  //   []
+  // );
 
-  useEffect(() => {
-    if (isSearchedFamilySameAsCurrent) {
-      setSelectedFamilyMemberId(null);
-    }
-  }, [isSearchedFamilySameAsCurrent]);
+  // useEffect(() => {
+  //   if (isSearchedFamilySameAsCurrent) {
+  //     setSelectedFamilyMemberId(null);
+  //   }
+  // }, [isSearchedFamilySameAsCurrent]);
 
-  useEffect(() => {
-    const query = familySearchInput.trim();
+  // useEffect(() => {
+  //   const query = familySearchInput.trim();
 
-    if (!canSearchFamilyByMemberName(query) || searchedFamilyId) {
-      setFamilyNameSearchResults([]);
-      setSearchingFamily(false);
-      return;
-    }
+  //   if (!canSearchFamilyByMemberName(query) || searchedFamilyId) {
+  //     setFamilyNameSearchResults([]);
+  //     setSearchingFamily(false);
+  //     return;
+  //   }
 
-    let active = true;
-    const timer = setTimeout(() => {
-      setSearchingFamily(true);
+  //   let active = true;
+  //   const timer = setTimeout(() => {
+  //     setSearchingFamily(true);
 
-      void searchFamiliesByMemberName(query)
-        .then((results) => {
-          if (active) {
-            setFamilyNameSearchResults(results);
-          }
-        })
-        .catch((error: unknown) => {
-          console.error('Erro ao buscar família por nome:', error);
+  //     void searchFamiliesByMemberName(query)
+  //       .then((results) => {
+  //         if (active) {
+  //           setFamilyNameSearchResults(results);
+  //         }
+  //       })
+  //       .catch((error: unknown) => {
+  //         console.error('Erro ao buscar família por nome:', error);
 
-          if (active) {
-            setFamilyNameSearchResults([]);
-          }
-        })
-        .finally(() => {
-          if (active) {
-            setSearchingFamily(false);
-          }
-        });
-    }, 300);
+  //         if (active) {
+  //           setFamilyNameSearchResults([]);
+  //         }
+  //       })
+  //       .finally(() => {
+  //         if (active) {
+  //           setSearchingFamily(false);
+  //         }
+  //       });
+  //   }, 300);
 
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [familySearchInput, searchedFamilyId]);
+  //   return () => {
+  //     active = false;
+  //     clearTimeout(timer);
+  //   };
+  // }, [familySearchInput, searchedFamilyId]);
 
-  const handleRequestFamilyLink = useCallback(async () => {
-    if (!profile?.id) {
-      Alert.alert('Erro', 'Perfil não encontrado.');
-      return;
-    }
+  // const handleRequestFamilyLink = useCallback(async () => {
+  //   if (!profile?.id) {
+  //     Alert.alert('Erro', 'Perfil não encontrado.');
+  //     return;
+  //   }
 
-    if (!searchedFamilyId) {
-      Alert.alert('Atenção', 'Busque a família antes de solicitar o vínculo.');
-      return;
-    }
+  //   if (!searchedFamilyId) {
+  //     Alert.alert('Atenção', 'Busque a família antes de solicitar o vínculo.');
+  //     return;
+  //   }
 
-    const selectedMember = familyMembers.find((member) => member.id === selectedFamilyMemberId);
+  //   const selectedMember = familyMembers.find((member) => member.id === selectedFamilyMemberId);
 
-    if (!selectedMember) {
-      Alert.alert('Atenção', 'Selecione um membro da família para solicitar o vínculo.');
-      return;
-    }
+  //   if (!selectedMember) {
+  //     Alert.alert('Atenção', 'Selecione um membro da família para solicitar o vínculo.');
+  //     return;
+  //   }
 
-    try {
-      setRequestingFamilyLink(true);
-      const linkedFamilyId = await linkProfileToFamilyById(
-        {
-          id: String(profile.id),
-          full_name: profile.full_name ? String(profile.full_name) : null,
-          phone: profile.phone ? String(profile.phone) : null,
-          birth_date: profile.birth_date ? String(profile.birth_date) : null,
-        },
-        searchedFamilyId
-      );
+  //   try {
+  //     setRequestingFamilyLink(true);
+  //     const linkedFamilyId = await linkProfileToFamilyById(
+  //       {
+  //         id: String(profile.id),
+  //         full_name: profile.full_name ? String(profile.full_name) : null,
+  //         phone: profile.phone ? String(profile.phone) : null,
+  //         birth_date: profile.birth_date ? String(profile.birth_date) : null,
+  //       },
+  //       searchedFamilyId
+  //     );
 
-      try {
-        await updateSingleField('invited_by', selectedMember.full_name);
-      } catch (invitedByError) {
-        console.warn('Não foi possível registrar o membro de referência:', invitedByError);
-      }
+  //     try {
+  //       await updateSingleField('invited_by', selectedMember.full_name);
+  //     } catch (invitedByError) {
+  //       console.warn('Não foi possível registrar o membro de referência:', invitedByError);
+  //     }
 
-      const refreshedProfile = await loadProfile(phoneParam);
-      if (refreshedProfile) {
-        setProfile(refreshedProfile);
-      }
+  //     const refreshedProfile = await loadProfile(phoneParam);
+  //     if (refreshedProfile) {
+  //       setProfile(refreshedProfile);
+  //     }
 
-      setFamilySearchInput(selectedMember.full_name);
-      setSearchedFamilyId(linkedFamilyId);
-      setFamilyNameSearchResults([]);
-      setSelectedFamilyMemberId(selectedMember.id);
-      await refetchFamilyMembers();
-      Alert.alert(
-        'Solicitação enviada',
-        `Vínculo solicitado com a família ${linkedFamilyId} por referência de ${selectedMember.full_name}.`
-      );
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Não foi possível solicitar o vínculo familiar.';
-      Alert.alert('Erro', message);
-    } finally {
-      setRequestingFamilyLink(false);
-    }
-  }, [
-    familyMembers,
-    familySearchInput,
-    phoneParam,
-    profile,
-    refetchFamilyMembers,
-    searchedFamilyId,
-    selectedFamilyMemberId,
-    updateSingleField,
-  ]);
+  //     setFamilySearchInput(selectedMember.full_name);
+  //     setSearchedFamilyId(linkedFamilyId);
+  //     setFamilyNameSearchResults([]);
+  //     setSelectedFamilyMemberId(selectedMember.id);
+  //     await refetchFamilyMembers();
+  //     Alert.alert(
+  //       'Solicitação enviada',
+  //       `Vínculo solicitado com a família ${linkedFamilyId} por referência de ${selectedMember.full_name}.`
+  //     );
+  //   } catch (error) {
+  //     const message =
+  //       error instanceof Error ? error.message : 'Não foi possível solicitar o vínculo familiar.';
+  //     Alert.alert('Erro', message);
+  //   } finally {
+  //     setRequestingFamilyLink(false);
+  //   }
+  // }, [
+  //   familyMembers,
+  //   familySearchInput,
+  //   phoneParam,
+  //   profile,
+  //   refetchFamilyMembers,
+  //   searchedFamilyId,
+  //   selectedFamilyMemberId,
+  //   updateSingleField,
+  // ]);
 
   const handleSaveVehicle = useCallback(async () => {
     if (!profile?.phone) {
@@ -2205,6 +2205,7 @@ export default function ManageProfile() {
               ) : null}
             </View>
 
+            {/* Seção Vincular a Familia — oculta temporariamente
             <View style={styles.sectionCard}>
               <TouchableOpacity
                 style={styles.sectionHeader}
@@ -2373,6 +2374,7 @@ export default function ManageProfile() {
                 </View>
               ) : null}
             </View>
+            */}
           </>
         )}
       </ScrollView>
@@ -2754,148 +2756,148 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  familyLinkSection: {
-    gap: 12,
-    paddingTop: 4,
-  },
-  familyHint: {
-    color: '#94A3B8',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  familyFormRow: {
-    gap: 6,
-  },
-  familyFormLabel: {
-    color: '#94A3B8',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  familyFormInput: {
-    marginBottom: 0,
-  },
-  familyNameSearchLoader: {
-    marginBottom: 8,
-  },
-  familyNameSearchResults: {
-    backgroundColor: '#0f172a',
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 10,
-    marginBottom: 12,
-    maxHeight: 180,
-    overflow: 'hidden',
-  },
-  familyNameSearchResultRow: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
-  },
-  familyNameSearchResultName: {
-    color: '#F8FAFC',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  familyNameSearchResultMeta: {
-    color: '#94A3B8',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  familyNameSearchEmpty: {
-    color: '#94A3B8',
-    fontSize: 12,
-    lineHeight: 17,
-    padding: 12,
-  },
-  familyNameSearchHint: {
-    color: '#94A3B8',
-    fontSize: 12,
-    lineHeight: 17,
-    marginBottom: 12,
-  },
-  familyLinkButton: {
-    backgroundColor: '#10b981',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  familyLinkButtonText: {
-    color: '#0f172a',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  familyMembersTitle: {
-    color: '#E2E8F0',
-    fontSize: 14,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-  familyMembersHint: {
-    color: '#94A3B8',
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  familyMemberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
-  },
-  familyMemberRowSelected: {
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-    borderBottomColor: 'rgba(16, 185, 129, 0.35)',
-  },
-  familyMemberRowDisabled: {
-    opacity: 0.45,
-  },
-  familyMemberInfo: {
-    flex: 1,
-    gap: 2,
-    minWidth: 0,
-  },
-  familyMemberSelector: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#64748B',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  familyMemberSelectorChecked: {
-    borderColor: '#10b981',
-    backgroundColor: '#10b981',
-  },
-  familyMemberName: {
-    color: '#F8FAFC',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  familyMemberMeta: {
-    color: '#94A3B8',
-    fontSize: 12,
-  },
-  familyManageButton: {
-    marginTop: 4,
-    paddingVertical: 10,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#10b981',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  familyManageButtonText: {
-    color: '#6EE7B7',
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  // familyLinkSection: {
+  //   gap: 12,
+  //   paddingTop: 4,
+  // },
+  // familyHint: {
+  //   color: '#94A3B8',
+  //   fontSize: 13,
+  //   lineHeight: 18,
+  // },
+  // familyFormRow: {
+  //   gap: 6,
+  // },
+  // familyFormLabel: {
+  //   color: '#94A3B8',
+  //   fontSize: 12,
+  //   fontWeight: '600',
+  // },
+  // familyFormInput: {
+  //   marginBottom: 0,
+  // },
+  // familyNameSearchLoader: {
+  //   marginBottom: 8,
+  // },
+  // familyNameSearchResults: {
+  //   backgroundColor: '#0f172a',
+  //   borderWidth: 1,
+  //   borderColor: '#334155',
+  //   borderRadius: 10,
+  //   marginBottom: 12,
+  //   maxHeight: 180,
+  //   overflow: 'hidden',
+  // },
+  // familyNameSearchResultRow: {
+  //   paddingHorizontal: 12,
+  //   paddingVertical: 10,
+  //   borderBottomWidth: 1,
+  //   borderBottomColor: '#1e293b',
+  // },
+  // familyNameSearchResultName: {
+  //   color: '#F8FAFC',
+  //   fontSize: 14,
+  //   fontWeight: '700',
+  // },
+  // familyNameSearchResultMeta: {
+  //   color: '#94A3B8',
+  //   fontSize: 12,
+  //   marginTop: 2,
+  // },
+  // familyNameSearchEmpty: {
+  //   color: '#94A3B8',
+  //   fontSize: 12,
+  //   lineHeight: 17,
+  //   padding: 12,
+  // },
+  // familyNameSearchHint: {
+  //   color: '#94A3B8',
+  //   fontSize: 12,
+  //   lineHeight: 17,
+  //   marginBottom: 12,
+  // },
+  // familyLinkButton: {
+  //   backgroundColor: '#10b981',
+  //   borderRadius: 12,
+  //   paddingVertical: 14,
+  //   alignItems: 'center',
+  //   justifyContent: 'center',
+  // },
+  // familyLinkButtonText: {
+  //   color: '#0f172a',
+  //   fontSize: 15,
+  //   fontWeight: '800',
+  // },
+  // familyMembersTitle: {
+  //   color: '#E2E8F0',
+  //   fontSize: 14,
+  //   fontWeight: '700',
+  //   marginTop: 4,
+  // },
+  // familyMembersHint: {
+  //   color: '#94A3B8',
+  //   fontSize: 12,
+  //   lineHeight: 16,
+  // },
+  // familyMemberRow: {
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   gap: 10,
+  //   paddingVertical: 10,
+  //   paddingHorizontal: 8,
+  //   borderRadius: 10,
+  //   borderBottomWidth: 1,
+  //   borderBottomColor: '#1E293B',
+  // },
+  // familyMemberRowSelected: {
+  //   backgroundColor: 'rgba(16, 185, 129, 0.12)',
+  //   borderBottomColor: 'rgba(16, 185, 129, 0.35)',
+  // },
+  // familyMemberRowDisabled: {
+  //   opacity: 0.45,
+  // },
+  // familyMemberInfo: {
+  //   flex: 1,
+  //   gap: 2,
+  //   minWidth: 0,
+  // },
+  // familyMemberSelector: {
+  //   width: 24,
+  //   height: 24,
+  //   borderRadius: 6,
+  //   borderWidth: 2,
+  //   borderColor: '#64748B',
+  //   alignItems: 'center',
+  //   justifyContent: 'center',
+  //   flexShrink: 0,
+  // },
+  // familyMemberSelectorChecked: {
+  //   borderColor: '#10b981',
+  //   backgroundColor: '#10b981',
+  // },
+  // familyMemberName: {
+  //   color: '#F8FAFC',
+  //   fontSize: 15,
+  //   fontWeight: '600',
+  // },
+  // familyMemberMeta: {
+  //   color: '#94A3B8',
+  //   fontSize: 12,
+  // },
+  // familyManageButton: {
+  //   marginTop: 4,
+  //   paddingVertical: 10,
+  //   borderRadius: 999,
+  //   borderWidth: 1,
+  //   borderColor: '#10b981',
+  //   alignItems: 'center',
+  //   justifyContent: 'center',
+  // },
+  // familyManageButtonText: {
+  //   color: '#6EE7B7',
+  //   fontSize: 14,
+  //   fontWeight: '600',
+  // },
   disabledIconButton: {
     opacity: 0.35,
   },
