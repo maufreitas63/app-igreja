@@ -1703,16 +1703,47 @@ export default function Dashboard() {
   }, [currentIndex, data, loadVigilanceScales]);
 
   const scrollToDashboardCard = useCallback((targetIndex: number, animated = true) => {
-    if (targetIndex < 0 || targetIndex >= data.length) {
+    if (targetIndex < 0 || targetIndex >= data.length || pageWidth <= 0) {
       return;
     }
 
+    currentIndexRef.current = targetIndex;
     setCurrentIndex(targetIndex);
-    dashboardListRef.current?.scrollToOffset({
-      offset: targetIndex * pageWidth,
-      animated,
+
+    const list = dashboardListRef.current;
+    if (!list) {
+      return;
+    }
+
+    list.scrollToIndex({ index: targetIndex, animated, viewPosition: 0 });
+    requestAnimationFrame(() => {
+      list.scrollToOffset({
+        offset: targetIndex * pageWidth,
+        animated: false,
+      });
     });
   }, [data.length, pageWidth]);
+
+  const handleDashboardScrollToIndexFailed = useCallback(
+    (info: { index: number }) => {
+      if (info.index < 0 || info.index >= data.length || pageWidth <= 0) {
+        return;
+      }
+
+      dashboardListRef.current?.scrollToOffset({
+        offset: info.index * pageWidth,
+        animated: false,
+      });
+      requestAnimationFrame(() => {
+        dashboardListRef.current?.scrollToIndex({
+          index: info.index,
+          animated: false,
+          viewPosition: 0,
+        });
+      });
+    },
+    [data.length, pageWidth]
+  );
 
   useEffect(() => {
     currentIndexRef.current = currentIndex;
@@ -1862,7 +1893,7 @@ export default function Dashboard() {
     setIsParkingPanelVisible(true);
   }, [dashboardCardAccess]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!isParkingPanelVisible || !scrollToParkingCardRef.current) {
       return;
     }
@@ -1880,10 +1911,15 @@ export default function Dashboard() {
     }
 
     scrollToParkingCardRef.current = false;
-    scrollToDashboardCard(parkingIdx, false);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollToDashboardCard(parkingIdx, false);
+      });
+    });
   }, [isParkingPanelVisible, data, scrollToDashboardCard]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!isScaleRosterVisible || !scrollToScaleRosterRef.current || isParkingPanelVisible) {
       return;
     }
@@ -1894,7 +1930,12 @@ export default function Dashboard() {
     }
 
     scrollToScaleRosterRef.current = false;
-    scrollToDashboardCard(rosterIdx, false);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollToDashboardCard(rosterIdx, false);
+      });
+    });
   }, [isScaleRosterVisible, isParkingPanelVisible, data, scrollToDashboardCard]);
 
   useLayoutEffect(() => {
@@ -1956,6 +1997,12 @@ export default function Dashboard() {
 
     if (!requestedDashboardCard) {
       handledDashboardCardRef.current = null;
+      setIsDashboardCarouselReady(true);
+      return;
+    }
+
+    // Deep link já aplicado: não voltar ao card quando o carrossel ganha painéis dinâmicos (ex.: scale_roster).
+    if (handledDashboardCardRef.current === requestedDashboardCard) {
       setIsDashboardCarouselReady(true);
       return;
     }
@@ -2032,12 +2079,23 @@ export default function Dashboard() {
               (!isDashboardCardAccessReady || !isDashboardCarouselReady) && styles.dashboardFlatListHidden,
             ]}
             data={data}
+            extraData={{
+              currentIndex,
+              isScaleRosterVisible,
+              isParkingPanelVisible,
+              selectedVigilanceScale,
+            }}
             horizontal
             pagingEnabled
             scrollEnabled={false}
             keyboardShouldPersistTaps="handled"
             showsHorizontalScrollIndicator={false}
+            initialNumToRender={data.length}
+            maxToRenderPerBatch={data.length}
+            windowSize={Math.max(5, data.length)}
+            removeClippedSubviews={Platform.OS !== 'web'}
             onScroll={handleScroll}
+            onScrollToIndexFailed={handleDashboardScrollToIndexFailed}
             scrollEventThrottle={16}
             keyExtractor={(item) => item.id}
             getItemLayout={(_, index) => ({

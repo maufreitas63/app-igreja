@@ -56,6 +56,7 @@ export function FamilyRegistrationForm() {
   const [registeredSubmissionId, setRegisteredSubmissionId] = useState<string | null>(null);
   const [detectedFamilyId, setDetectedFamilyId] = useState<string | null>(null);
   const [copyHint, setCopyHint] = useState('');
+  const [formClosed, setFormClosed] = useState(false);
 
   const form = useForm<FamilyRegistrationSchemaValues>({
     resolver: zodResolver(familyRegistrationSchema),
@@ -123,6 +124,18 @@ export function FamilyRegistrationForm() {
     window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
+  const handleCloseForm = () => {
+    setFormClosed(true);
+
+    if (typeof window !== 'undefined') {
+      window.close();
+    }
+  };
+
+  if (formClosed) {
+    return null;
+  }
+
   if (submitState === 'success') {
     return (
       <div className="mx-auto w-full max-w-2xl rounded-xl border bg-white p-8 shadow-sm">
@@ -169,6 +182,12 @@ export function FamilyRegistrationForm() {
         >
           Cadastrar outra família
         </Button>
+
+        <div className="mt-8 border-t border-slate-200 pt-6">
+          <Button type="button" variant="outline" className="w-full" onClick={handleCloseForm}>
+            Fechar cadastro
+          </Button>
+        </div>
       </div>
     );
   }
