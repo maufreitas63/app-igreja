@@ -506,13 +506,15 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   leftColumn: {
-    flex: Platform.OS === 'web' ? 1 : undefined,
-    minWidth: Platform.OS === 'web' ? 280 : undefined,
+    ...(Platform.OS === 'web'
+      ? { width: '30%', flexShrink: 0, minWidth: 0 }
+      : { width: '100%' }),
     gap: 6,
   },
   rightColumn: {
-    flex: Platform.OS === 'web' ? 1 : undefined,
-    minWidth: Platform.OS === 'web' ? 280 : undefined,
+    ...(Platform.OS === 'web'
+      ? { width: '70%', flexShrink: 0, minWidth: 0 }
+      : { width: '100%' }),
     gap: 8,
   },
   columnTitle: {

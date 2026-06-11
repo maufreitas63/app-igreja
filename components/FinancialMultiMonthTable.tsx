@@ -1,20 +1,25 @@
 import type { BulletinComparisonRowLevel } from '@/lib/financialBulletinComparison';
 import { formatBulletinAmount } from '@/lib/financialBulletin';
-import type { TwelveMonthMatrix } from '@/lib/financialTwelveMonthMatrix';
+import { formatFinancialMonthLabel } from '@/lib/financialMonth';
+import type { TwelveMonthMatrix, TwelveMonthMatrixRow } from '@/lib/financialTwelveMonthMatrix';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
+  Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
 const LABEL_COLUMN_WIDTH = 132;
 const VALUE_COLUMN_WIDTH = 76;
 const BODY_MAX_HEIGHT = 420;
+const ROW_DETAIL_ICON_COLOR = '#94A3B8';
 
 export type FinancialMultiMonthTableProps = {
   title: string;
@@ -62,6 +67,79 @@ const labelStyleForLevel = (level: BulletinComparisonRowLevel) => {
   return styles.rowLabelBalance;
 };
 
+const TwelveMonthRowDetailBubble = ({
+  row,
+  matrix,
+  visible,
+  onClose,
+}: {
+  row: TwelveMonthMatrixRow | null;
+  matrix: TwelveMonthMatrix;
+  visible: boolean;
+  onClose: () => void;
+}) => {
+  if (!row) {
+    return null;
+  }
+
+  return (
+    <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.bubbleBackdrop} onPress={onClose}>
+        <Pressable style={styles.bubbleCard} onPress={(event) => event.stopPropagation()}>
+          <View style={styles.bubbleArrow} />
+          <View style={styles.bubbleHeaderRow}>
+            <Text style={styles.bubbleTitle} numberOfLines={4}>
+              {row.label}
+            </Text>
+            <TouchableOpacity
+              style={styles.bubbleCloseIconButton}
+              onPress={onClose}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel="Fechar detalhamento mensal"
+            >
+              <FontAwesome name="close" size={16} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.monthDetailHeaderRow}>
+            <Text style={[styles.monthDetailHeaderCell, styles.monthDetailMonthHeader]}>Mês</Text>
+            <Text style={[styles.monthDetailHeaderCell, styles.monthDetailValueHeader]}>Valor</Text>
+          </View>
+
+          <ScrollView
+            style={styles.monthDetailScroll}
+            contentContainerStyle={styles.monthDetailScrollContent}
+            nestedScrollEnabled
+          >
+            {matrix.columns.map((column, index) => {
+              const value = row.values[index] ?? 0;
+              const negative = value < 0;
+
+              return (
+                <View key={`${row.key}-${column.header}`} style={styles.monthDetailDataRow}>
+                  <Text style={[styles.monthDetailMonthCell, styles.monthDetailBodyCell]}>
+                    {formatFinancialMonthLabel(column.month)}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.monthDetailValueCell,
+                      styles.monthDetailBodyCell,
+                      negative ? styles.valueNegative : styles.valuePositive,
+                    ]}
+                  >
+                    {formatBulletinAmount(value)}
+                  </Text>
+                </View>
+              );
+            })}
+          </ScrollView>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+};
+
 export function FinancialMultiMonthTable({
   title,
   periodLabel,
@@ -70,6 +148,7 @@ export function FinancialMultiMonthTable({
   emptyMessage,
   icon = 'table',
 }: FinancialMultiMonthTableProps) {
+  const [selectedRow, setSelectedRow] = useState<TwelveMonthMatrixRow | null>(null);
   const labelsScrollRef = useRef<ScrollView>(null);
   const valuesTableWidth = matrix.columns.length * VALUE_COLUMN_WIDTH;
 
@@ -88,6 +167,13 @@ export function FinancialMultiMonthTable({
 
   return (
     <View style={styles.sheet}>
+      <TwelveMonthRowDetailBubble
+        row={selectedRow}
+        matrix={matrix}
+        visible={selectedRow !== null}
+        onClose={() => setSelectedRow(null)}
+      />
+
       <View style={styles.reportHeader}>
         <FontAwesome name={icon} size={20} color="#0f172a" style={styles.reportIcon} />
         <View style={styles.reportHeaderText}>
@@ -111,11 +197,24 @@ export function FinancialMultiMonthTable({
               contentContainerStyle={styles.labelsBodyContent}
             >
               {matrix.rows.map((row) => (
-                <View key={`${row.key}-label`} style={styles.labelBodyRow}>
-                  <Text style={labelStyleForLevel(row.level)} numberOfLines={4}>
+                <TouchableOpacity
+                  key={`${row.key}-label`}
+                  style={styles.labelBodyRow}
+                  onPress={() => setSelectedRow(row)}
+                  activeOpacity={0.75}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver valores mensais de ${row.label}`}
+                >
+                  <Text style={[labelStyleForLevel(row.level), styles.labelBodyText]} numberOfLines={4}>
                     {row.label}
                   </Text>
-                </View>
+                  <FontAwesome
+                    name="bars"
+                    size={10}
+                    color={ROW_DETAIL_ICON_COLOR}
+                    style={styles.rowDetailIcon}
+                  />
+                </TouchableOpacity>
               ))}
             </ScrollView>
           </View>
@@ -251,9 +350,19 @@ const styles = StyleSheet.create({
     minHeight: 34,
     paddingVertical: 6,
     paddingHorizontal: 8,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
+  },
+  labelBodyText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  rowDetailIcon: {
+    flexShrink: 0,
+    opacity: 0.85,
   },
   valuesPane: {
     flex: 1,
@@ -343,5 +452,117 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     paddingVertical: 20,
+  },
+  bubbleBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  bubbleCard: {
+    maxWidth: 380,
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#93C5FD',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
+    gap: 8,
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  bubbleArrow: {
+    position: 'absolute',
+    top: -8,
+    alignSelf: 'center',
+    width: 14,
+    height: 14,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderColor: '#93C5FD',
+    transform: [{ rotate: '45deg' }],
+    left: '50%',
+    marginLeft: -7,
+  },
+  bubbleHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  bubbleTitle: {
+    flex: 1,
+    color: '#1E3A8A',
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 18,
+  },
+  bubbleCloseIconButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    flexShrink: 0,
+  },
+  monthDetailHeaderRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#DBEAFE',
+    paddingBottom: 6,
+    gap: 12,
+  },
+  monthDetailHeaderCell: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  monthDetailMonthHeader: {
+    flex: 1,
+    minWidth: 0,
+  },
+  monthDetailValueHeader: {
+    width: 108,
+    textAlign: 'right',
+    flexShrink: 0,
+  },
+  monthDetailScroll: {
+    maxHeight: 320,
+  },
+  monthDetailScrollContent: {
+    gap: 0,
+  },
+  monthDetailDataRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  monthDetailBodyCell: {
+    color: '#334155',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  monthDetailMonthCell: {
+    flex: 1,
+    minWidth: 0,
+  },
+  monthDetailValueCell: {
+    width: 108,
+    textAlign: 'right',
+    fontWeight: '700',
+    flexShrink: 0,
   },
 });
