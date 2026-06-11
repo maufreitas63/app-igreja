@@ -14,13 +14,31 @@
 
 -- ---------------------------------------------------------------------------
 -- Coluna cep: precisa caber 00000-000 (9 chars) — use text
--- (remover trigger antes do ALTER TYPE; recriado mais abaixo)
+-- Remover TODOS os triggers em cep antes do ALTER TYPE; recriados mais abaixo.
 -- ---------------------------------------------------------------------------
 
 drop trigger if exists trg_profiles_sync_address_from_cep on public.profiles;
+drop trigger if exists trg_profiles_upsert_cep_geolocation on public.profiles;
 
-alter table public.profiles
-  alter column cep type text using cep::text;
+do $$
+begin
+  if exists (
+    select 1
+      from pg_attribute a
+      join pg_class c on c.oid = a.attrelid
+      join pg_namespace n on n.oid = c.relnamespace
+      join pg_type t on t.oid = a.atttypid
+     where n.nspname = 'public'
+       and c.relname = 'profiles'
+       and a.attname = 'cep'
+       and not a.attisdropped
+       and t.typname <> 'text'
+  ) then
+    alter table public.profiles
+      alter column cep type text using cep::text;
+  end if;
+end;
+$$;
 
 -- ---------------------------------------------------------------------------
 -- Normalização de CEP (8 dígitos + exibição 00000-000)
@@ -382,6 +400,27 @@ before insert or update of cep
 on public.profiles
 for each row
 execute function public.trg_profiles_sync_address_from_cep();
+
+-- Geolocalização por CEP (cep-geolocation-table.sql), se já instalada.
+do $$
+begin
+  if exists (
+    select 1
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.proname = 'trg_profiles_upsert_cep_geolocation'
+  ) then
+    execute $trg$
+      create trigger trg_profiles_upsert_cep_geolocation
+        after insert or update of cep
+        on public.profiles
+        for each row
+        execute function public.trg_profiles_upsert_cep_geolocation()
+    $trg$;
+  end if;
+end;
+$$;
 
 -- ---------------------------------------------------------------------------
 -- Backfill: perfis com CEP válido e endereço incompleto
