@@ -1,7 +1,7 @@
-import { formatCep, normalizeCepDigits } from '@/lib/cepUtils';
+import { formatCep, lookupViaCep, normalizeCepDigits, type ViaCepAddress } from '@/lib/cepUtils';
 import { Platform } from 'react-native';
 
-export { formatCep, normalizeCepDigits };
+export { formatCep, lookupViaCep, normalizeCepDigits };
 
 export type LatLng = { lat: number; lng: number };
 
@@ -14,14 +14,7 @@ export type ProfileGeoInput = {
   address_state?: string | null;
 };
 
-type ViaCepResponse = {
-  erro?: boolean;
-  logradouro?: string;
-  bairro?: string;
-  localidade?: string;
-  uf?: string;
-  complemento?: string;
-};
+type ViaCepResponse = ViaCepAddress;
 
 type PhotonFeature = {
   geometry?: { coordinates?: [number, number] };
@@ -261,24 +254,6 @@ const waitForNominatimSlot = async () => {
     await new Promise((resolve) => setTimeout(resolve, waitMs));
   }
   lastNominatimRequestAt = Date.now();
-};
-
-export const lookupViaCep = async (cepDigits: string): Promise<ViaCepResponse | null> => {
-  try {
-    const response = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = (await response.json()) as ViaCepResponse;
-    if (data.erro) {
-      return null;
-    }
-
-    return data;
-  } catch {
-    return null;
-  }
 };
 
 const normalizePhotonCepDigits = (value: string | null | undefined) => {

@@ -1,6 +1,9 @@
 -- Recepção de cadastro familiar (formulário público) antes de profiles/members.
 -- Execute no SQL Editor do Supabase após register-member-atomic.sql
--- e profiles-sync-address-from-cep.sql (apply_cep_address_to_profile / ViaCEP).
+-- e profiles-sync-address-from-cep.sql (normalize_profile_cep_digits / cep_address_cache).
+--
+-- O formulário resolve ViaCEP no navegador e envia logradouro/bairro/cidade/UF;
+-- o lote grava isso em profiles sem depender da extensão http no Supabase.
 --
 -- Fluxo:
 --   1. submit_family_registration_public → grava em recepcao_* (status pending)
@@ -51,6 +54,12 @@ create table if not exists public.recepcao_cadastro_familiar (
   created_at timestamptz not null default now(),
   processed_at timestamptz null
 );
+
+alter table public.recepcao_cadastro_familiar
+  add column if not exists address_street text null,
+  add column if not exists address_neighborhood text null,
+  add column if not exists address_city text null,
+  add column if not exists address_state text null;
 
 create index if not exists idx_recepcao_cadastro_familiar_submission
   on public.recepcao_cadastro_familiar (submission_id);
@@ -196,6 +205,128 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
+-- Endereço do formulário → profiles (não depende de ViaCEP no servidor)
+-- ---------------------------------------------------------------------------
+
+create or replace function public.apply_recepcao_address_to_profile(
+  p_profile_id uuid,
+  p_cep text,
+  p_address_street text,
+  p_address_neighborhood text,
+  p_address_city text,
+  p_address_state text,
+  p_address_number text,
+  p_address_complement text
+)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_digits text;
+  v_cep_formatted text;
+  v_has_form_address boolean;
+  v_cep_sync_ok boolean := false;
+  v_profile_city text;
+begin
+  if p_profile_id is null then
+    return null;
+  end if;
+
+  v_digits := regexp_replace(coalesce(p_cep, ''), '[^0-9]', '', 'g');
+  if length(v_digits) <> 8 then
+    v_digits := null;
+  end if;
+
+  if v_digits is not null then
+    v_cep_formatted := substring(v_digits, 1, 5) || '-' || substring(v_digits, 6, 3);
+  else
+    v_cep_formatted := nullif(trim(p_cep), '');
+  end if;
+
+  v_has_form_address :=
+    coalesce(
+      nullif(trim(p_address_street), ''),
+      nullif(trim(p_address_neighborhood), ''),
+      nullif(trim(p_address_city), ''),
+      nullif(trim(p_address_state), '')
+    ) is not null;
+
+  if v_digits is not null
+     and nullif(trim(p_address_city), '') is not null
+     and nullif(trim(p_address_state), '') is not null
+     and to_regclass('public.cep_address_cache') is not null then
+    insert into public.cep_address_cache (
+      cep_digits,
+      logradouro,
+      bairro,
+      localidade,
+      uf,
+      complemento,
+      source
+    )
+    values (
+      v_digits,
+      nullif(trim(p_address_street), ''),
+      nullif(trim(p_address_neighborhood), ''),
+      nullif(trim(p_address_city), ''),
+      nullif(trim(p_address_state), ''),
+      nullif(trim(p_address_complement), ''),
+      'recepcao_form'
+    )
+    on conflict (cep_digits) do update
+      set logradouro = coalesce(excluded.logradouro, cep_address_cache.logradouro),
+          bairro = coalesce(excluded.bairro, cep_address_cache.bairro),
+          localidade = coalesce(excluded.localidade, cep_address_cache.localidade),
+          uf = coalesce(excluded.uf, cep_address_cache.uf),
+          complemento = coalesce(excluded.complemento, cep_address_cache.complemento),
+          fetched_at = now();
+  end if;
+
+  perform set_config('app.skip_cep_sync_trigger', 'on', true);
+
+  update public.profiles p
+     set cep = coalesce(v_cep_formatted, p.cep),
+         address_street = coalesce(nullif(trim(p_address_street), ''), p.address_street),
+         address_neighborhood = coalesce(nullif(trim(p_address_neighborhood), ''), p.address_neighborhood),
+         address_city = coalesce(nullif(trim(p_address_city), ''), p.address_city),
+         address_state = coalesce(nullif(trim(p_address_state), ''), p.address_state),
+         address_number = coalesce(nullif(trim(p_address_number), ''), p.address_number),
+         address_complement = coalesce(nullif(trim(p_address_complement), ''), p.address_complement),
+         updated_at = now()
+   where p.id = p_profile_id;
+
+  select nullif(trim(coalesce(p.address_city, '')), '')
+    into v_profile_city
+    from public.profiles p
+   where p.id = p_profile_id;
+
+  if v_profile_city is null
+     and v_digits is not null
+     and exists (
+       select 1
+         from pg_proc pr
+         join pg_namespace n on n.oid = pr.pronamespace
+        where n.nspname = 'public'
+          and pr.proname = 'apply_cep_address_to_profile'
+     ) then
+    v_cep_sync_ok := public.apply_cep_address_to_profile(p_profile_id, true, true);
+  elsif v_has_form_address then
+    v_cep_sync_ok := true;
+  end if;
+
+  if v_digits is null then
+    return 'Gravado em profiles e members.';
+  elsif v_cep_sync_ok or v_has_form_address then
+    return 'Gravado em profiles e members; endereço preenchido pelo formulário/CEP.';
+  else
+    return 'Gravado em profiles e members; CEP informado mas logradouro não foi resolvido (habilite extensão http no Supabase ou revise o CEP).';
+  end if;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
 -- Envio público → recepção
 -- ---------------------------------------------------------------------------
 
@@ -218,6 +349,10 @@ declare
   v_cep text;
   v_address_number text;
   v_address_complement text;
+  v_address_street text;
+  v_address_neighborhood text;
+  v_address_city text;
+  v_address_state text;
   v_food_alerts text;
   v_member_count int := 0;
   v_detected_family_id text;
@@ -256,6 +391,10 @@ begin
   v_cep := nullif(trim(coalesce(v_informant ->> 'cep', '')), '');
   v_address_number := nullif(trim(coalesce(v_informant ->> 'address_number', '')), '');
   v_address_complement := nullif(trim(coalesce(v_informant ->> 'address_complement', '')), '');
+  v_address_street := nullif(trim(coalesce(v_informant ->> 'address_street', '')), '');
+  v_address_neighborhood := nullif(trim(coalesce(v_informant ->> 'address_neighborhood', '')), '');
+  v_address_city := nullif(trim(coalesce(v_informant ->> 'address_city', '')), '');
+  v_address_state := nullif(trim(coalesce(v_informant ->> 'address_state', '')), '');
   v_food_alerts := nullif(trim(coalesce(v_informant ->> 'medical_food_alerts', '')), '');
 
   for v_dependent in
@@ -319,6 +458,10 @@ begin
     cep,
     address_number,
     address_complement,
+    address_street,
+    address_neighborhood,
+    address_city,
+    address_state,
     medical_food_alerts,
     detected_family_id,
     matched_profile_id,
@@ -333,6 +476,10 @@ begin
     v_cep,
     v_address_number,
     v_address_complement,
+    v_address_street,
+    v_address_neighborhood,
+    v_address_city,
+    v_address_state,
     v_food_alerts,
     v_person_family_id,
     v_matched_profile_id,
@@ -383,6 +530,10 @@ begin
       cep,
       address_number,
       address_complement,
+      address_street,
+      address_neighborhood,
+      address_city,
+      address_state,
       medical_food_alerts,
       detected_family_id,
       matched_profile_id,
@@ -397,6 +548,10 @@ begin
       v_cep,
       v_address_number,
       v_address_complement,
+      v_address_street,
+      v_address_neighborhood,
+      v_address_city,
+      v_address_state,
       v_food_alerts,
       v_person_family_id,
       v_matched_profile_id,
@@ -536,6 +691,7 @@ declare
   v_apply_member_id uuid;
   v_existing_profile_name text;
   v_existing_member_name text;
+  v_address_process_message text;
 begin
   for v_submission in
     select l.*
@@ -604,9 +760,6 @@ begin
                phone = coalesce(v_member.phone, p.phone),
                family_id = v_family_id,
                codigo_membro = v_family_id,
-               cep = coalesce(v_member.cep, p.cep),
-               address_number = coalesce(v_member.address_number, p.address_number),
-               address_complement = coalesce(v_member.address_complement, p.address_complement),
                medical_food_alerts = coalesce(v_member.medical_food_alerts, p.medical_food_alerts),
                is_active = false
          where p.id = v_apply_profile_id;
@@ -617,9 +770,6 @@ begin
           phone,
           family_id,
           codigo_membro,
-          cep,
-          address_number,
-          address_complement,
           medical_food_alerts,
           is_active
         ) values (
@@ -628,31 +778,32 @@ begin
           v_member.phone,
           v_family_id,
           v_family_id,
-          v_member.cep,
-          v_member.address_number,
-          v_member.address_complement,
           v_member.medical_food_alerts,
           false
         )
         returning id into v_apply_profile_id;
       end if;
 
-      if v_apply_profile_id is not null
-         and nullif(trim(coalesce(v_member.cep, '')), '') is not null then
-        if exists (
-          select 1
-            from pg_proc p
-            join pg_namespace n on n.oid = p.pronamespace
-           where n.nspname = 'public'
-             and p.proname = 'apply_cep_address_to_profile'
-        ) then
-          perform public.apply_cep_address_to_profile(v_apply_profile_id, true, true);
-        end if;
+      v_address_process_message := null;
 
-        update public.profiles p
-           set address_number = coalesce(v_member.address_number, p.address_number),
-               address_complement = coalesce(v_member.address_complement, p.address_complement)
-         where p.id = v_apply_profile_id;
+      if v_apply_profile_id is not null
+         and (
+           nullif(trim(coalesce(v_member.cep, '')), '') is not null
+           or coalesce(
+                nullif(trim(coalesce(v_member.address_street, '')), ''),
+                nullif(trim(coalesce(v_member.address_city, '')), '')
+              ) is not null
+         ) then
+        v_address_process_message := public.apply_recepcao_address_to_profile(
+          v_apply_profile_id,
+          v_member.cep,
+          v_member.address_street,
+          v_member.address_neighborhood,
+          v_member.address_city,
+          v_member.address_state,
+          v_member.address_number,
+          v_member.address_complement
+        );
       end if;
 
       if v_apply_member_id is not null then
@@ -685,12 +836,10 @@ begin
          set status = 'processed',
              applied_family_id = v_family_id,
              processed_at = now(),
-             process_message = case
-               when nullif(trim(coalesce(v_member.cep, '')), '') is not null then
-                 'Gravado em profiles e members; endereço preenchido pelo CEP.'
-               else
-                 'Gravado em profiles e members.'
-             end
+             process_message = coalesce(
+               v_address_process_message,
+               'Gravado em profiles e members.'
+             )
        where id = v_member.id;
 
       v_processed_members := v_processed_members + 1;

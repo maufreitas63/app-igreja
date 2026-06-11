@@ -1,4 +1,4 @@
-import { formatCep, normalizeCepDigits } from '@/lib/cepUtils';
+import { buildCepAddressPayload } from '@/lib/cepUtils';
 import {
   FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS,
   FAMILY_INFORMANT_RELATIONSHIP,
@@ -92,6 +92,10 @@ type FamilyRegistrationRpcPayload = {
     cep: string | null;
     address_number: string | null;
     address_complement: string | null;
+    address_street: string | null;
+    address_neighborhood: string | null;
+    address_city: string | null;
+    address_state: string | null;
     medical_food_alerts: string | null;
   };
   dependents: Array<{
@@ -103,19 +107,10 @@ type FamilyRegistrationRpcPayload = {
   }>;
 };
 
-function buildAddressPatch(cep: string, addressNumber: string, addressComplement: string) {
-  const cepDigits = normalizeCepDigits(cep);
-  return {
-    cep: cepDigits ? formatCep(cepDigits) : null,
-    address_number: addressNumber.trim() || null,
-    address_complement: addressComplement.trim() || null,
-  };
-}
-
-function buildFamilyRegistrationRpcPayload(
+async function buildFamilyRegistrationRpcPayload(
   values: FamilyRegistrationFormValues
-): FamilyRegistrationRpcPayload {
-  const address = buildAddressPatch(
+): Promise<FamilyRegistrationRpcPayload> {
+  const address = await buildCepAddressPayload(
     values.informant.cep,
     values.informant.addressNumber,
     values.informant.addressComplement
@@ -178,7 +173,7 @@ export type FamilyRegistrationSubmitResult = {
 export async function submitFamilyRegistration(
   values: FamilyRegistrationFormValues
 ): Promise<FamilyRegistrationSubmitResult> {
-  const payload = buildFamilyRegistrationRpcPayload(values);
+  const payload = await buildFamilyRegistrationRpcPayload(values);
 
   const { data, error } = await supabaseBrowser.rpc('submit_family_registration_public', {
     p_payload: payload,
