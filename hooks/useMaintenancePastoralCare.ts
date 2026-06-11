@@ -258,6 +258,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     selectedProfileId,
     selectedSubmitter,
     pickerValue: selectedProfileId ?? EMPTY_PROFILE_VALUE,
+    allSubmittersFilterValue: EMPTY_PROFILE_VALUE,
     requests,
     selectedRequest,
     selectedRequestId,

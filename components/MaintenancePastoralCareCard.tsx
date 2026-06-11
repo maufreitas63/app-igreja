@@ -1,4 +1,5 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenancePastoralCare } from '@/hooks/useMaintenancePastoralCare';
 import {
@@ -9,8 +10,7 @@ import { MAINTENANCE_PASTORAL_CARE_SQL_HINT } from '@/hooks/useMaintenancePastor
 import { PASTORAL_FOLLOW_UP_STAGES } from '@/lib/pastoralRequest';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
@@ -30,7 +30,8 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
   const {
     submitterOptions,
     loadingOptions,
-    pickerValue,
+    selectedProfileId,
+    allSubmittersFilterValue,
     selectedSubmitter,
     selectedRequest,
     selectedRequestId,
@@ -48,9 +49,55 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
     formatRequestDateTimeLabel,
   } = useMaintenancePastoralCare(isActive);
 
+  const [filterProfileId, setFilterProfileId] = useState(allSubmittersFilterValue);
+
   const POOL_BLUE = '#22D3EE';
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
+
+  const filterDropdownOptions = useMemo(
+    () => [
+      { value: allSubmittersFilterValue, label: 'Todos os usuários' },
+      ...submitterOptions.map((submitter) => ({
+        value: submitter.profileId,
+        label:
+          submitter.requestCount > 1
+            ? `${submitter.shortName} (${submitter.requestCount})`
+            : submitter.shortName,
+      })),
+    ],
+    [allSubmittersFilterValue, submitterOptions]
+  );
+
+  const filteredSubmitters = useMemo(() => {
+    if (!filterProfileId) {
+      return submitterOptions;
+    }
+
+    return submitterOptions.filter((submitter) => submitter.profileId === filterProfileId);
+  }, [filterProfileId, submitterOptions]);
+
+  const totalRequestCount = useMemo(
+    () => submitterOptions.reduce((sum, submitter) => sum + submitter.requestCount, 0),
+    [submitterOptions]
+  );
+
+  const handleFilterChange = (value: string) => {
+    setFilterProfileId(value);
+
+    if (!value) {
+      void selectProfileId(null);
+      return;
+    }
+
+    void selectProfileId(value);
+  };
+
+  useEffect(() => {
+    if (!isActive) {
+      setFilterProfileId(allSubmittersFilterValue);
+    }
+  }, [allSubmittersFilterValue, isActive]);
 
   const handleOpenWhatsApp = () => {
     const phone = selectedRequest?.phone;
@@ -70,36 +117,64 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
       {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_PASTORAL_CARE_SQL_HINT}</Text> : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      <Text style={styles.sectionLabel}>Quem enviou o pedido</Text>
       {loadingOptions ? (
         <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
       ) : submitterOptions.length ? (
-        <View style={styles.pickerWrapper}>
-          <Picker
-            selectedValue={pickerValue}
-            onValueChange={(value) => {
-              const profileId = String(value).trim();
-              void selectProfileId(profileId || null);
-            }}
-            dropdownIconColor="#F8FAFC"
-            style={styles.picker}
-            itemStyle={styles.pickerItem}
-            mode="dropdown"
+        <>
+          <SectionLabel label="Filtrar solicitante" />
+          <DropdownSelect
+            options={filterDropdownOptions}
+            selectedValue={filterProfileId}
+            onValueChange={handleFilterChange}
+            modalTitle="Filtrar solicitante"
+            placeholder="Todos os usuários"
+            style={styles.filterDropdown}
+            disabled={rpcMissing}
+          />
+
+          <Text style={styles.hintText}>
+            Selecione quem enviou o pedido pastoral.
+            {totalRequestCount > 0
+              ? ` ${totalRequestCount} pedido${totalRequestCount === 1 ? '' : 's'} no total.`
+              : ''}
+          </Text>
+
+          <ScrollView
+            style={styles.submitterList}
+            contentContainerStyle={styles.submitterListContent}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator
           >
-            <Picker.Item label="Selecione…" value="" color="#64748B" />
-            {submitterOptions.map((submitter) => (
-              <Picker.Item
-                key={submitter.profileId}
-                label={
-                  submitter.requestCount > 1
-                    ? `${submitter.shortName} (${submitter.requestCount})`
-                    : submitter.shortName
-                }
-                value={submitter.profileId}
-              />
-            ))}
-          </Picker>
-        </View>
+            {filteredSubmitters.map((submitter) => {
+              const isSelected = selectedProfileId === submitter.profileId;
+
+              return (
+                <TouchableOpacity
+                  key={submitter.profileId}
+                  style={[styles.submitterRow, isSelected && styles.submitterRowSelected]}
+                  onPress={() => {
+                    setFilterProfileId(submitter.profileId);
+                    void selectProfileId(submitter.profileId);
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.submitterRowMain}>
+                    <Text style={styles.submitterName} numberOfLines={1}>
+                      {submitter.shortName}
+                    </Text>
+                    <Text style={styles.submitterMeta} numberOfLines={1}>
+                      {submitter.requestCount} pedido{submitter.requestCount === 1 ? '' : 's'}
+                      {submitter.phone ? ` · ${submitter.phone}` : ''}
+                    </Text>
+                  </View>
+                  <View style={styles.submitterCountBadge}>
+                    <Text style={styles.submitterCountBadgeText}>{submitter.requestCount}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </>
       ) : (
         <Text style={styles.hintText}>Nenhum pedido pastoral cadastrado ainda.</Text>
       )}
@@ -242,9 +317,7 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
         </ScrollView>
       ) : selectedSubmitter ? (
         <Text style={styles.hintText}>Nenhum pedido encontrado para este perfil.</Text>
-      ) : (
-        <Text style={styles.hintText}>Selecione quem enviou o pedido pastoral.</Text>
-      )}
+      ) : null}
     </View>
   );
 }
@@ -288,23 +361,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 4,
   },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 10,
-    backgroundColor: '#0f172a',
-    overflow: 'hidden',
-    minHeight: 44,
-    justifyContent: 'center',
+  filterDropdown: {
     marginBottom: 8,
-  },
-  picker: {
-    color: '#F8FAFC',
-    height: 44,
-  },
-  pickerItem: {
-    color: '#F8FAFC',
-    fontSize: 14,
+    height: 40,
+    borderColor: '#334155',
+    backgroundColor: '#0f172a',
   },
   inlineLoader: {
     marginVertical: 8,
@@ -313,7 +374,61 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 12,
     lineHeight: 16,
+    marginBottom: 6,
+  },
+  submitterList: {
+    flexGrow: 0,
+    maxHeight: 148,
+    marginBottom: 8,
+  },
+  submitterListContent: {
+    gap: 6,
+  },
+  submitterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#334155',
+    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+    paddingHorizontal: 10,
     paddingVertical: 8,
+  },
+  submitterRowSelected: {
+    borderColor: '#F472B6',
+    backgroundColor: 'rgba(244, 114, 182, 0.14)',
+  },
+  submitterRowMain: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  submitterName: {
+    color: '#F8FAFC',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  submitterMeta: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  submitterCountBadge: {
+    minWidth: 28,
+    height: 28,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#475569',
+    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  submitterCountBadgeText: {
+    color: '#E2E8F0',
+    fontSize: 12,
+    fontWeight: '800',
   },
   detailLoader: {
     marginTop: 12,
