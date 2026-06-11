@@ -16,6 +16,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHIP_WIDTH = 170;
 const CHIP_GAP = 8;
 const CHIP_STRIDE = CHIP_WIDTH + CHIP_GAP;
+/** ~2 mm entre os chips e a barra de rolagem horizontal. */
+const SCROLLBAR_GAP = 8;
 
 type FamilyEventSelectorProps = {
   events: ActiveEventListItem[];
@@ -143,7 +145,7 @@ export const FamilyEventSelector = ({
 const styles = StyleSheet.create({
   wrapper: {
     width: '100%',
-    ...(Platform.OS === 'web' ? { paddingBottom: 2 } : { overflow: 'hidden' }),
+    ...(Platform.OS === 'web' ? null : { overflow: 'hidden' }),
   },
   scroll: {
     width: '100%',
@@ -160,6 +162,7 @@ const styles = StyleSheet.create({
     flexWrap: 'nowrap',
     alignItems: 'stretch',
     paddingRight: 8,
+    paddingBottom: SCROLLBAR_GAP,
     ...(Platform.OS === 'web'
       ? {
           display: 'flex',
