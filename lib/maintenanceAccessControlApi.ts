@@ -1,4 +1,4 @@
-import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { ACCESS_SCREEN, profileHasAccess, sessionHasAccess } from '@/lib/accessControl';
 import { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
 import { isTstMaxScaleTypeResourceKey } from '@/lib/tstMaxScaleFilter';
 import { supabase } from '@/lib/supabase';
@@ -12,6 +12,8 @@ import {
 } from '@/lib/userSession';
 
 export { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
+
+export const ACCESS_CONTROL_PANEL_RESOURCE = 'maintenance.card.access_control';
 
 export const MAINTENANCE_ACCESS_CONTROL_SQL_HINT =
   'Execute no Supabase: scripts/access-control-admin-rpc.sql; se faltar Congregado/Visitantes, scripts/access-control-congregado-visitantes-roles.sql; se faltar Card Financeiro ou Relatórios financeiros em Papéis, scripts/financial-module-access.sql; se Equipe Pastoral não tiver acesso de Membro, scripts/access-control-pastoral-role-grants.sql; para ocultar escalas TstMax em Papéis, scripts/access-control-remove-tstmax-scale-resources.sql';
@@ -157,6 +159,26 @@ export async function checkSessionIsSuperAdmin() {
   }
 
   return isSuperAdmin;
+}
+
+/** Card `access_control` na manutenção — chave ACL `maintenance.card.access_control`. */
+export async function sessionCanAccessAccessControlPanel() {
+  const [allowedByGrant, isSuperAdmin] = await Promise.all([
+    sessionHasAccess('screen', ACCESS_CONTROL_PANEL_RESOURCE, 'view'),
+    checkSessionIsSuperAdmin(),
+  ]);
+
+  return allowedByGrant || isSuperAdmin;
+}
+
+/** Compatível com checagens que usam o profile_id da sessão diretamente. */
+export async function profileCanAccessAccessControlPanel(profileId: string) {
+  const [allowedByGrant, isSuperAdmin] = await Promise.all([
+    profileHasAccess(profileId, 'screen', ACCESS_CONTROL_PANEL_RESOURCE, 'view'),
+    readIsSuperAdminProfile(profileId),
+  ]);
+
+  return allowedByGrant || isSuperAdmin;
 }
 
 const parseRoleRows = (data: unknown): AccessRoleRecord[] => {

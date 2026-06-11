@@ -451,6 +451,31 @@ on conflict (code) do update
       description = excluded.description,
       is_system = excluded.is_system;
 
+-- Card access_control no carrossel de manutenção (etiqueta → maintenance.card.access_control)
+insert into public.access_resources (resource_type, resource_key, label, description)
+values
+  (
+    'screen',
+    'maintenance.card.access_control',
+    'Controle de Acesso',
+    'Card de manutenção para gerenciar papéis e permissões (super_admin)'
+  )
+on conflict (resource_type, resource_key) do update
+  set label = excluded.label,
+      description = excluded.description;
+
+insert into public.access_grants (role_id, resource_id, can_view, can_update)
+select r.id, res.id, true, true
+  from public.access_roles r
+  join public.access_resources res
+    on res.resource_type = 'screen'
+   and res.resource_key = 'maintenance.card.access_control'
+ where r.code = 'super_admin'
+on conflict (role_id, resource_id) where (role_id is not null) do update
+  set can_view = excluded.can_view,
+      can_update = excluded.can_update,
+      updated_at = now();
+
 grant execute on function public.is_super_admin_profile(uuid) to anon, authenticated;
 grant execute on function public.listar_access_roles_admin(uuid) to anon, authenticated;
 grant execute on function public.buscar_perfis_access_admin(uuid, text, integer) to anon, authenticated;

@@ -26,7 +26,10 @@ import { QuorumCheckinRegistryTable } from '@/components/QuorumCheckinRegistryTa
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { resolveMaintenancePanelAccessResourceKey } from '@/lib/screenAccessResourceKeys';
 import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
-import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
+import {
+  checkSessionIsSuperAdmin,
+  sessionCanAccessAccessControlPanel,
+} from '@/lib/maintenanceAccessControlApi';
 import { loadPastoralCarePanelAccess } from '@/lib/pastoralAccess';
 import { sessionCanAccessPastoralRoleChangePanel } from '@/lib/pastoralRoleChangeApi';
 import {
@@ -298,6 +301,7 @@ export default function MaintenanceDashboard() {
   const [headerUserName, setHeaderUserName] = useState('Usuário');
   const [accessState, setAccessState] = useState<'checking' | 'allowed' | 'denied'>('checking');
   const [canManageAccessControl, setCanManageAccessControl] = useState(false);
+  const [canAccessAccessControlCard, setCanAccessAccessControlCard] = useState(false);
   const [scalePanelAccess, setScalePanelAccess] = useState<
     Partial<Record<MaintenanceScalePanelContent, boolean>>
   >({});
@@ -417,13 +421,19 @@ export default function MaintenanceDashboard() {
         }
 
         try {
-          const isSuperAdmin = await checkSessionIsSuperAdmin();
+          const [isSuperAdmin, canOpenAccessControlCard] = await Promise.all([
+            checkSessionIsSuperAdmin(),
+            sessionCanAccessAccessControlPanel(),
+          ]);
+
           if (active) {
             setCanManageAccessControl(isSuperAdmin);
+            setCanAccessAccessControlCard(canOpenAccessControlCard);
           }
         } catch {
           if (active) {
             setCanManageAccessControl(false);
+            setCanAccessAccessControlCard(false);
           }
         }
 
@@ -653,11 +663,11 @@ export default function MaintenanceDashboard() {
   const showEditor = selectedEventId !== null;
 
   const maintenancePanelCards = useMemo(() => {
-    const baseCards = canManageAccessControl
-      ? MAINTENANCE_PANEL_CARDS
-      : MAINTENANCE_PANEL_CARDS.filter((card) => card.content !== 'access_control');
+    return MAINTENANCE_PANEL_CARDS.filter((card) => {
+      if (card.content === 'access_control') {
+        return canAccessAccessControlCard;
+      }
 
-    return baseCards.filter((card) => {
       if (
         card.content === 'scale_types'
         || card.content === 'scale_volunteers'
@@ -680,7 +690,13 @@ export default function MaintenanceDashboard() {
 
       return true;
     });
-  }, [canAccessPastoralCare, canAccessPastoralRoleChange, canManageAccessControl, scalePanelAccess]);
+  }, [
+    canAccessAccessControlCard,
+    canAccessPastoralCare,
+    canAccessPastoralRoleChange,
+    canManageAccessControl,
+    scalePanelAccess,
+  ]);
 
   const maintenanceCarouselCards = useMemo<MaintenanceCarouselCard[]>(
     () => [{ id: 'menu', title: 'Manutenção', content: 'menu' }, ...maintenancePanelCards],
