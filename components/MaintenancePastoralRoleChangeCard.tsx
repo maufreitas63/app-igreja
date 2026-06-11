@@ -55,7 +55,8 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
       <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       <Text style={styles.helpText}>
-        Busque por nome e defina um único papel básico: Visitante, Congregado ou Membro.
+        Busca cadastros em perfis. O papel exibido reflete a atribuição atual (visitante = sem congregado nem membro).
+        Papéis protegidos (pastoral, líder, admin) não aparecem nesta lista.
       </Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -63,7 +64,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
       <SectionLabel variant="maintenance">Buscar por nome</SectionLabel>
       <TextInput
         style={styles.searchInput}
-        placeholder="Nome, telefone ou código (mín. 2 letras)"
+        placeholder="Nome, telefone, código ou papel (mín. 2 letras)"
         placeholderTextColor="#64748B"
         value={searchQuery}
         onChangeText={setSearchQuery}

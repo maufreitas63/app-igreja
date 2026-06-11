@@ -156,19 +156,45 @@ begin
   return query
   select
     p.id,
-    coalesce(p.full_name, '') as full_name,
+    coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as full_name,
     coalesce(p.phone, '') as phone,
     coalesce(p.codigo_membro, '') as codigo_membro,
     public.resolve_basic_role_code_for_profile(p.id) as current_role_code
   from public.profiles p
-  where coalesce(p.full_name, '') <> ''
+  where not public.profile_has_protected_role_for_pastoral_change(p.id)
     and (
-      p.full_name ilike '%' || v_query || '%'
+      coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), nullif(trim(p.codigo_membro), '')) is not null
+    )
+    and (
+      coalesce(p.full_name, '') ilike '%' || v_query || '%'
       or (
         v_digits <> ''
         and regexp_replace(coalesce(p.phone, ''), '\D', '', 'g') like '%' || v_digits || '%'
       )
       or coalesce(p.codigo_membro, '') ilike '%' || v_query || '%'
+      or exists (
+        select 1
+          from public.profile_access_roles par
+          join public.access_roles ar on ar.id = par.role_id
+         where par.profile_id = p.id
+           and ar.code in ('member', 'congregado')
+           and (
+             ar.code ilike '%' || lower(v_query) || '%'
+             or ar.name ilike '%' || v_query || '%'
+           )
+      )
+      or (
+        lower(v_query) like 'visit%'
+        and public.resolve_basic_role_code_for_profile(p.id) = 'visitante'
+      )
+      or (
+        lower(v_query) in ('membro', 'member')
+        and public.resolve_basic_role_code_for_profile(p.id) = 'member'
+      )
+      or (
+        lower(v_query) like 'congreg%'
+        and public.resolve_basic_role_code_for_profile(p.id) = 'congregado'
+      )
     )
   order by p.full_name asc
   limit v_limit;
@@ -273,8 +299,8 @@ begin
 end;
 $$;
 
-grant execute on function public.profile_has_role_code(uuid, text) to authenticated;
-grant execute on function public.buscar_perfis_mudanca_papel_pastoral(uuid, text, integer) to authenticated;
-grant execute on function public.definir_papel_basico_perfil_pastoral(uuid, uuid, text) to authenticated;
+grant execute on function public.profile_has_role_code(uuid, text) to anon, authenticated;
+grant execute on function public.buscar_perfis_mudanca_papel_pastoral(uuid, text, integer) to anon, authenticated;
+grant execute on function public.definir_papel_basico_perfil_pastoral(uuid, uuid, text) to anon, authenticated;
 
 notify pgrst, 'reload schema';
