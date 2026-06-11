@@ -1,5 +1,6 @@
 -- Recepção de cadastro familiar (formulário público) antes de profiles/members.
--- Execute no SQL Editor do Supabase após register-member-atomic.sql.
+-- Execute no SQL Editor do Supabase após register-member-atomic.sql
+-- e profiles-sync-address-from-cep.sql (apply_cep_address_to_profile / ViaCEP).
 --
 -- Fluxo:
 --   1. submit_family_registration_public → grava em recepcao_* (status pending)
@@ -632,7 +633,26 @@ begin
           v_member.address_complement,
           v_member.medical_food_alerts,
           false
-        );
+        )
+        returning id into v_apply_profile_id;
+      end if;
+
+      if v_apply_profile_id is not null
+         and nullif(trim(coalesce(v_member.cep, '')), '') is not null then
+        if exists (
+          select 1
+            from pg_proc p
+            join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public'
+             and p.proname = 'apply_cep_address_to_profile'
+        ) then
+          perform public.apply_cep_address_to_profile(v_apply_profile_id, true, true);
+        end if;
+
+        update public.profiles p
+           set address_number = coalesce(v_member.address_number, p.address_number),
+               address_complement = coalesce(v_member.address_complement, p.address_complement)
+         where p.id = v_apply_profile_id;
       end if;
 
       if v_apply_member_id is not null then
@@ -665,7 +685,12 @@ begin
          set status = 'processed',
              applied_family_id = v_family_id,
              processed_at = now(),
-             process_message = 'Gravado em profiles e members.'
+             process_message = case
+               when nullif(trim(coalesce(v_member.cep, '')), '') is not null then
+                 'Gravado em profiles e members; endereço preenchido pelo CEP.'
+               else
+                 'Gravado em profiles e members.'
+             end
        where id = v_member.id;
 
       v_processed_members := v_processed_members + 1;
