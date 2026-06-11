@@ -60,6 +60,7 @@ export type ExpenseReportPendingRow = {
   member_name: string;
   member_phone: string;
   items_count: number;
+  item_descriptions: string;
 };
 
 export type ExpenseReportMaintenanceRow = ExpenseReportPendingRow & {
@@ -599,6 +600,7 @@ export async function fetchPendingExpenseReports(): Promise<ExpenseReportPending
       member_name: String(record.member_name ?? '—'),
       member_phone: String(record.member_phone ?? '—'),
       items_count: Number(record.items_count) || 0,
+      item_descriptions: String(record.item_descriptions ?? '').trim(),
     };
   });
 }
@@ -631,6 +633,7 @@ export async function fetchExpenseReportsForMaintenanceMonth(
       member_name: String(record.member_name ?? '—'),
       member_phone: String(record.member_phone ?? '—'),
       items_count: Number(record.items_count) || 0,
+      item_descriptions: String(record.item_descriptions ?? '').trim(),
       status: parseExpenseReportStatus(record.status),
       financial_id:
         typeof record.financial_id === 'string' && record.financial_id.trim()

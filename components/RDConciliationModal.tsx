@@ -4,6 +4,7 @@ import {
   formatExpenseReportAmount,
   formatExpenseReportDateTime,
   reconcileExpenseReport,
+  splitExpenseReportDescriptions,
   type ExpenseReportPendingRow,
 } from '@/lib/expenseReport';
 import { FontAwesome } from '@expo/vector-icons';
@@ -105,7 +106,10 @@ export function RDConciliationModal({ visible, financialId, onClose, onReconcile
             <Text style={styles.emptyText}>Nenhum RD pendente no momento.</Text>
           ) : (
             <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-              {rows.map((row) => (
+              {rows.map((row) => {
+                const descriptions = splitExpenseReportDescriptions(row.item_descriptions);
+
+                return (
                 <View key={row.id} style={styles.rowCard}>
                   <View style={styles.rowHeader}>
                     <Text style={styles.rowNumber}>{row.report_number}</Text>
@@ -117,6 +121,19 @@ export function RDConciliationModal({ visible, financialId, onClose, onReconcile
                   <Text style={styles.rowMeta}>
                     {formatExpenseReportDateTime(row.created_at)} · {row.items_count} item(ns)
                   </Text>
+                  {descriptions.length > 0 ? (
+                    <View style={styles.rowDescriptions}>
+                      {descriptions.map((description) => (
+                        <Text
+                          key={`${row.id}-${description}`}
+                          style={styles.rowDescriptionLine}
+                          numberOfLines={2}
+                        >
+                          {description}
+                        </Text>
+                      ))}
+                    </View>
+                  ) : null}
                   <TouchableOpacity
                     style={styles.linkButton}
                     onPress={() => void handleReconcile(row.id)}
@@ -133,7 +150,8 @@ export function RDConciliationModal({ visible, financialId, onClose, onReconcile
                     )}
                   </TouchableOpacity>
                 </View>
-              ))}
+                );
+              })}
             </ScrollView>
           )}
 
@@ -223,6 +241,15 @@ const styles = StyleSheet.create({
   rowMeta: {
     color: '#94A3B8',
     fontSize: 11,
+  },
+  rowDescriptions: {
+    gap: 2,
+    marginTop: 2,
+  },
+  rowDescriptionLine: {
+    color: '#BFDBFE',
+    fontSize: 11,
+    lineHeight: 15,
   },
   linkButton: {
     marginTop: 4,

@@ -257,7 +257,8 @@ returns table (
   user_id uuid,
   member_name text,
   member_phone text,
-  items_count bigint
+  items_count bigint,
+  item_descriptions text
 )
 language sql
 security definer
@@ -276,7 +277,15 @@ as $$
       select count(*)
         from public.expense_items ei
        where ei.report_id = er.id
-    ) as items_count
+    ) as items_count,
+    coalesce(
+      (
+        select string_agg(ei.description, ' · ' order by ei.date asc, ei.created_at asc)
+          from public.expense_items ei
+         where ei.report_id = er.id
+      ),
+      ''
+    ) as item_descriptions
   from public.expense_reports er
   left join public.profiles p on p.id = er.user_id
   where er.status = 'pending'
@@ -353,7 +362,8 @@ returns table (
   financial_id uuid,
   member_name text,
   member_phone text,
-  items_count bigint
+  items_count bigint,
+  item_descriptions text
 )
 language sql
 security definer
@@ -373,7 +383,15 @@ as $$
       select count(*)
         from public.expense_items ei
        where ei.report_id = er.id
-    ) as items_count
+    ) as items_count,
+    coalesce(
+      (
+        select string_agg(ei.description, ' · ' order by ei.date asc, ei.created_at asc)
+          from public.expense_items ei
+         where ei.report_id = er.id
+      ),
+      ''
+    ) as item_descriptions
   from public.expense_reports er
   left join public.profiles p on p.id = er.user_id
   cross join public.financials_period_bounds('mes', p_referencia) b
