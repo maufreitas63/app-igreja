@@ -558,5 +558,32 @@ export const compareRoleGrantScreenScope = (left: RoleGrantRecord, right: RoleGr
     return byScope;
   }
 
+  const leftIsAccessControlPanel = left.resourceKey === ACCESS_CONTROL_PANEL_RESOURCE;
+  const rightIsAccessControlPanel = right.resourceKey === ACCESS_CONTROL_PANEL_RESOURCE;
+
+  if (leftIsAccessControlPanel !== rightIsAccessControlPanel) {
+    return leftIsAccessControlPanel ? 1 : -1;
+  }
+
   return left.resourceKey.localeCompare(right.resourceKey, 'pt-BR');
 };
+
+export async function ensureAccessControlPanelResourceAdmin() {
+  const actorProfileId = await resolveActorProfileId();
+
+  if (!actorProfileId) {
+    return;
+  }
+
+  const { error } = await supabase.rpc('garantir_recurso_controle_acesso_admin', {
+    p_actor_profile_id: actorProfileId,
+  });
+
+  if (error) {
+    const message = (error.message ?? '').toLowerCase();
+
+    if (!isSupabaseRpcMissing(message, 'garantir_recurso_controle_acesso_admin')) {
+      console.warn('garantir_recurso_controle_acesso_admin:', error);
+    }
+  }
+}

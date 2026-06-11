@@ -344,7 +344,50 @@ begin
      res.resource_type = 'screen'
      and res.resource_key like 'scale_type.tstmax%'
    )
- order by res.resource_key asc;
+ order by
+   case when res.resource_key = 'maintenance.card.access_control' then 1 else 0 end,
+   res.resource_key asc;
+end;
+$$;
+
+drop function if exists public.garantir_recurso_controle_acesso_admin(uuid);
+
+create or replace function public.garantir_recurso_controle_acesso_admin(p_actor_profile_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform public.assert_access_admin(p_actor_profile_id);
+
+  insert into public.access_resources (resource_type, resource_key, label, description, is_active)
+  values
+    (
+      'screen',
+      'maintenance.card.access_control',
+      'Controle de Acesso',
+      'Card de manutenção para gerenciar papéis e permissões (super_admin)',
+      true
+    )
+  on conflict (resource_type, resource_key) do update
+    set label = excluded.label,
+        description = excluded.description,
+        is_active = true;
+
+  insert into public.access_grants (role_id, resource_id, can_view, can_update)
+  select r.id, res.id, true, true
+    from public.access_roles r
+    join public.access_resources res
+      on res.resource_type = 'screen'
+     and res.resource_key = 'maintenance.card.access_control'
+   where r.code = 'super_admin'
+  on conflict (role_id, resource_id) where (role_id is not null) do update
+    set can_view = excluded.can_view,
+        can_update = excluded.can_update,
+        updated_at = now();
+
+  return jsonb_build_object('success', true, 'message', 'Recurso Controle de Acesso sincronizado.');
 end;
 $$;
 
@@ -452,17 +495,19 @@ on conflict (code) do update
       is_system = excluded.is_system;
 
 -- Card access_control no carrossel de manutenção (etiqueta → maintenance.card.access_control)
-insert into public.access_resources (resource_type, resource_key, label, description)
+insert into public.access_resources (resource_type, resource_key, label, description, is_active)
 values
   (
     'screen',
     'maintenance.card.access_control',
     'Controle de Acesso',
-    'Card de manutenção para gerenciar papéis e permissões (super_admin)'
+    'Card de manutenção para gerenciar papéis e permissões (super_admin)',
+    true
   )
 on conflict (resource_type, resource_key) do update
   set label = excluded.label,
-      description = excluded.description;
+      description = excluded.description,
+      is_active = true;
 
 insert into public.access_grants (role_id, resource_id, can_view, can_update)
 select r.id, res.id, true, true
@@ -483,4 +528,5 @@ grant execute on function public.listar_papeis_perfil_access_admin(uuid, uuid) t
 grant execute on function public.atribuir_papel_perfil_access_admin(uuid, uuid, text) to anon, authenticated;
 grant execute on function public.revogar_papel_perfil_access_admin(uuid, uuid, text) to anon, authenticated;
 grant execute on function public.listar_grants_recurso_papel_admin(uuid, text, text) to anon, authenticated;
+grant execute on function public.garantir_recurso_controle_acesso_admin(uuid) to anon, authenticated;
 grant execute on function public.salvar_grant_papel_admin(uuid, text, text, text, boolean, boolean) to anon, authenticated;

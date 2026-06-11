@@ -2,6 +2,7 @@ import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { FINANCIAL_ACCESS_SCREEN_RESOURCE_KEYS } from '@/lib/accessControl';
 import {
+  ACCESS_CONTROL_PANEL_RESOURCE,
   compareRoleGrantScreenScope,
   getAccessGrantDashboardScope,
   MAINTENANCE_ACCESS_CONTROL_SQL_HINT,
@@ -101,6 +102,14 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
     const registeredKeys = new Set(roleGrants.map((grant) => grant.resourceKey));
 
     return FINANCIAL_ACCESS_SCREEN_RESOURCE_KEYS.some((key) => !registeredKeys.has(key));
+  }, [loadingGrants, resourceTypeFilter, roleGrants]);
+
+  const missingAccessControlScreenResource = useMemo(() => {
+    if (resourceTypeFilter !== 'screen' || loadingGrants) {
+      return false;
+    }
+
+    return !roleGrants.some((grant) => grant.resourceKey === ACCESS_CONTROL_PANEL_RESOURCE);
   }, [loadingGrants, resourceTypeFilter, roleGrants]);
 
   const filteredRoleGrants = useMemo(() => {
@@ -500,6 +509,14 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
             <Text style={styles.financialResourcesHint}>
               Recursos financeiros ausentes no Supabase. Execute scripts/financial-module-access.sql no
               SQL Editor (inclui a RPC garantir_recursos_financeiro_admin). Depois recarregue esta aba.
+            </Text>
+          ) : null}
+
+          {missingAccessControlScreenResource ? (
+            <Text style={styles.financialResourcesHint}>
+              Recurso Controle de Acesso ausente em Papéis → Telas. Execute
+              scripts/access-control-admin-rpc.sql no Supabase (RPC garantir_recurso_controle_acesso_admin)
+              e recarregue esta aba.
             </Text>
           ) : null}
 

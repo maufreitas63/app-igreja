@@ -1,6 +1,7 @@
 import {
   assignProfileRole,
   checkSessionIsSuperAdmin,
+  ensureAccessControlPanelResourceAdmin,
   listAccessRolesAdmin,
   listProfileRoleAssignments,
   ensureFinancialAccessResourcesAdmin,
@@ -203,7 +204,10 @@ export function useMaintenanceAccessControl(enabled: boolean) {
 
     try {
       if (resourceTypeFilter === 'screen') {
-        await ensureFinancialAccessResourcesAdmin();
+        await Promise.all([
+          ensureFinancialAccessResourcesAdmin(),
+          ensureAccessControlPanelResourceAdmin(),
+        ]);
       }
 
       const rows = await listRoleGrantsAdmin(selectedRoleCode, resourceTypeFilter);
