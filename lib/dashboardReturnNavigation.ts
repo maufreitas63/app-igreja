@@ -26,7 +26,10 @@ export const buildReturnToDashboardHref = (
   dashboardCard: string,
   extraParams?: Record<string, string | undefined>
 ): Href => {
-  const params: Record<string, string> = { dashboardCard };
+  const params: Record<string, string> = {
+    dashboardCard,
+    dashboardCardNonce: String(Date.now()),
+  };
 
   if (extraParams) {
     for (const [key, value] of Object.entries(extraParams)) {

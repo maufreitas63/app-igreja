@@ -17,6 +17,7 @@
     "build:family-form": "vite build --config standalone/cadastro-familia/vite.config.ts",
     "test:family-address": "node scripts/test-family-registration-address.mjs",
     "test:recepcao-ibn": "node scripts/test-recepcao-ibn-by-phone.mjs",
+    "test:carousel-nav": "node scripts/test-carousel-navigation.mjs",
     "dev:family-form": "vite --config standalone/cadastro-familia/vite.config.ts",
     "build:web": "npm run generate:icons && expo export -p web && npm run build:family-form",
     "generate:icons": "node scripts/generate-app-icons.mjs",

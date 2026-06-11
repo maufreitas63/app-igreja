@@ -56,6 +56,7 @@ import {
 import {
   buildDashboardPanelCardSizeStyle,
   computeDashboardCardHeight,
+  resolveCarouselIndexByContent,
   resolveMaintenancePanelIndex,
 } from '@/lib/dashboardPanelLayout';
 import {
@@ -298,6 +299,9 @@ export default function MaintenanceDashboard() {
   const currentIndexRef = useRef(0);
   const footerNavRepeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const footerNavRepeatActiveRef = useRef(false);
+  const pendingMaintenancePanelRef = useRef<MaintenancePanelContent | null>(null);
+  const activeMaintenanceContentRef = useRef<MaintenancePanelContent>('menu');
+  const previousMaintenanceCardCountRef = useRef(0);
   const [headerUserName, setHeaderUserName] = useState('Usuário');
   const [accessState, setAccessState] = useState<'checking' | 'allowed' | 'denied'>('checking');
   const [canManageAccessControl, setCanManageAccessControl] = useState(false);
@@ -705,32 +709,6 @@ export default function MaintenanceDashboard() {
 
   const maintenanceCardCount = maintenanceCarouselCards.length;
 
-  useLayoutEffect(() => {
-    if (showEditor || pageWidth <= 0 || maintenanceCardCount <= 0) {
-      return;
-    }
-
-    const targetIndex = Math.min(Math.max(currentIndexRef.current, 0), maintenanceCardCount - 1);
-
-    carouselRef.current?.scrollToOffset({
-      offset: targetIndex * pageWidth,
-      animated: false,
-    });
-  }, [maintenanceCardCount, pageWidth, showEditor]);
-
-  useEffect(() => {
-    if (currentIndex < maintenanceCardCount) {
-      return;
-    }
-
-    const nextIndex = Math.max(maintenanceCardCount - 1, 0);
-    setCurrentIndex(nextIndex);
-    carouselRef.current?.scrollToOffset({
-      offset: nextIndex * pageWidth,
-      animated: false,
-    });
-  }, [currentIndex, maintenanceCardCount, pageWidth]);
-
   const maintenanceShortcuts = useMemo<MaintenanceShortcut[]>(
     () =>
       maintenancePanelCards.map((card) => ({
@@ -797,10 +775,77 @@ export default function MaintenanceDashboard() {
   const scrollToMaintenancePanel = useCallback(
     (panelContent: MaintenancePanelContent) => {
       const targetIndex = resolveMaintenancePanelIndex(maintenanceCarouselCards, panelContent);
+
+      if (targetIndex < 0) {
+        pendingMaintenancePanelRef.current = panelContent;
+        return;
+      }
+
+      pendingMaintenancePanelRef.current = null;
       scrollToMaintenanceCard(targetIndex, false);
     },
     [maintenanceCarouselCards, scrollToMaintenanceCard]
   );
+
+  useEffect(() => {
+    if (currentIndex < maintenanceCardCount) {
+      return;
+    }
+
+    const nextIndex = Math.max(maintenanceCardCount - 1, 0);
+    scrollToMaintenanceCard(nextIndex, false);
+  }, [currentIndex, maintenanceCardCount, scrollToMaintenanceCard]);
+
+  useEffect(() => {
+    const content = maintenanceCarouselCards[currentIndex]?.content;
+
+    if (content && content !== 'menu') {
+      activeMaintenanceContentRef.current = content as MaintenancePanelContent;
+    }
+  }, [currentIndex, maintenanceCarouselCards]);
+
+  useEffect(() => {
+    const pending = pendingMaintenancePanelRef.current;
+
+    if (pending) {
+      const targetIndex = resolveMaintenancePanelIndex(maintenanceCarouselCards, pending);
+
+      if (targetIndex >= 0) {
+        pendingMaintenancePanelRef.current = null;
+
+        requestAnimationFrame(() => {
+          scrollToMaintenanceCard(targetIndex, false);
+        });
+      }
+
+      previousMaintenanceCardCountRef.current = maintenanceCardCount;
+      return;
+    }
+
+    if (showEditor || maintenanceCardCount === 0) {
+      previousMaintenanceCardCountRef.current = maintenanceCardCount;
+      return;
+    }
+
+    if (maintenanceCardCount === previousMaintenanceCardCountRef.current) {
+      return;
+    }
+
+    previousMaintenanceCardCountRef.current = maintenanceCardCount;
+
+    const content = activeMaintenanceContentRef.current;
+    const targetIndex = resolveCarouselIndexByContent(maintenanceCarouselCards, content);
+    const resolvedIndex =
+      targetIndex >= 0
+        ? targetIndex
+        : Math.min(Math.max(currentIndexRef.current, 0), maintenanceCardCount - 1);
+
+    if (resolvedIndex !== currentIndexRef.current) {
+      requestAnimationFrame(() => {
+        scrollToMaintenanceCard(resolvedIndex, false);
+      });
+    }
+  }, [maintenanceCardCount, maintenanceCarouselCards, scrollToMaintenanceCard, showEditor]);
 
   const handleCarouselScrollToIndexFailed = useCallback(
     (info: { index: number }) => {

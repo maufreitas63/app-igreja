@@ -62,8 +62,10 @@ import {
   sessionCanAccessScaleType,
 } from '@/lib/scaleAccess';
 import {
+  buildDashboardDeepLinkKey,
   computeDashboardPanelInnerPadding,
   DASHBOARD_PANEL_TITLE_TYPO,
+  resolveCarouselIndexByContent,
   resolveDashboardCardIndex,
 } from '@/lib/dashboardPanelLayout';
 import { DASHBOARD_CARD_THEMES } from '@/lib/dashboardCardThemes';
@@ -498,6 +500,8 @@ export default function Dashboard() {
   const scrollToParkingCardRef = useRef(false);
   const scrollToScaleRosterRef = useRef(false);
   const scrollToScalesCardRef = useRef(false);
+  const activeDashboardContentRef = useRef<DashboardCard['content'] | null>(null);
+  const previousDashboardDataLengthRef = useRef(0);
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
@@ -596,6 +600,13 @@ export default function Dashboard() {
   const requestedDashboardCard = Array.isArray(params.dashboardCard)
     ? params.dashboardCard[0]
     : params.dashboardCard;
+  const requestedDashboardCardNonce = Array.isArray(params.dashboardCardNonce)
+    ? params.dashboardCardNonce[0]
+    : params.dashboardCardNonce;
+  const dashboardDeepLinkKey = buildDashboardDeepLinkKey(
+    requestedDashboardCard,
+    requestedDashboardCardNonce
+  );
 
   const {
     events: activeEvents,
@@ -1938,7 +1949,7 @@ export default function Dashboard() {
     });
   }, [isScaleRosterVisible, isParkingPanelVisible, data, scrollToDashboardCard]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (isScaleRosterVisible || !scrollToScalesCardRef.current) {
       return;
     }
@@ -1949,8 +1960,57 @@ export default function Dashboard() {
     }
 
     scrollToScalesCardRef.current = false;
-    scrollToDashboardCard(scalesIdx, false);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollToDashboardCard(scalesIdx, false);
+      });
+    });
   }, [isScaleRosterVisible, data, scrollToDashboardCard]);
+
+  useEffect(() => {
+    const content = data[currentIndex]?.content ?? null;
+
+    if (content) {
+      activeDashboardContentRef.current = content;
+    }
+  }, [currentIndex, data]);
+
+  useEffect(() => {
+    if (
+      scrollToScaleRosterRef.current
+      || scrollToParkingCardRef.current
+      || scrollToScalesCardRef.current
+    ) {
+      previousDashboardDataLengthRef.current = data.length;
+      return;
+    }
+
+    if (data.length === previousDashboardDataLengthRef.current) {
+      return;
+    }
+
+    previousDashboardDataLengthRef.current = data.length;
+
+    const content = activeDashboardContentRef.current;
+    if (!content) {
+      return;
+    }
+
+    let targetIndex = resolveCarouselIndexByContent(data, content);
+
+    if (targetIndex < 0 && content === 'scale_roster') {
+      targetIndex = resolveCarouselIndexByContent(data, 'vigilance_scales');
+    }
+
+    if (targetIndex < 0 || targetIndex === currentIndexRef.current) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      scrollToDashboardCard(targetIndex, false);
+    });
+  }, [data, scrollToDashboardCard]);
 
   useEffect(() => {
     const scalesIdx = data.findIndex((item) => item.content === 'vigilance_scales');
@@ -1980,12 +2040,8 @@ export default function Dashboard() {
     }
 
     const nextIndex = Math.max(data.length - 1, 0);
-    setCurrentIndex(nextIndex);
-    dashboardListRef.current?.scrollToOffset({
-      offset: nextIndex * pageWidth,
-      animated: false,
-    });
-  }, [currentIndex, data.length, pageWidth]);
+    scrollToDashboardCard(nextIndex, false);
+  }, [currentIndex, data.length, scrollToDashboardCard]);
 
   useLayoutEffect(() => {
     if (!isDashboardCardAccessReady || data.length === 0) {
@@ -2002,33 +2058,28 @@ export default function Dashboard() {
     }
 
     // Deep link já aplicado: não voltar ao card quando o carrossel ganha painéis dinâmicos (ex.: scale_roster).
-    if (handledDashboardCardRef.current === requestedDashboardCard) {
+    if (dashboardDeepLinkKey && handledDashboardCardRef.current === dashboardDeepLinkKey) {
       setIsDashboardCarouselReady(true);
       return;
     }
 
     const targetIndex = resolveDashboardCardIndex(data, requestedDashboardCard);
     if (targetIndex < 0) {
-      if (handledDashboardCardRef.current !== requestedDashboardCard) {
+      if (dashboardDeepLinkKey && handledDashboardCardRef.current !== dashboardDeepLinkKey) {
         Alert.alert(
           'Painel indisponível',
           'Você não tem permissão para abrir este painel ou ele não está disponível no momento.'
         );
-        handledDashboardCardRef.current = requestedDashboardCard;
+        handledDashboardCardRef.current = dashboardDeepLinkKey;
       }
       setIsDashboardCarouselReady(true);
       return;
     }
 
-    currentIndexRef.current = targetIndex;
-    setCurrentIndex(targetIndex);
-    dashboardListRef.current?.scrollToOffset({
-      offset: targetIndex * pageWidth,
-      animated: false,
-    });
-    handledDashboardCardRef.current = requestedDashboardCard;
+    scrollToDashboardCard(targetIndex, false);
+    handledDashboardCardRef.current = dashboardDeepLinkKey;
     setIsDashboardCarouselReady(true);
-  }, [data, isDashboardCardAccessReady, pageWidth, requestedDashboardCard]);
+  }, [dashboardDeepLinkKey, data, isDashboardCardAccessReady, requestedDashboardCard, scrollToDashboardCard]);
 
   useEffect(() => {
     if (previousPageWidthRef.current === pageWidth) {

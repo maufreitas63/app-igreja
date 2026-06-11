@@ -308,7 +308,10 @@ export default function DashboardIndexScreen() {
 
     router.replace({
       pathname: '/(tabs)/dashboard',
-      params: { dashboardCard: shortcut.dashboardCard },
+      params: {
+        dashboardCard: shortcut.dashboardCard,
+        dashboardCardNonce: String(Date.now()),
+      },
     });
   };
 

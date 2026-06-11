@@ -72,6 +72,36 @@ export const resolveMaintenancePanelIndex = (
   panelParam?: string | null
 ) => resolveDashboardCardIndex(cards, panelParam);
 
+export const DASHBOARD_CARD_NAV_NONCE_PARAM = 'dashboardCardNonce';
+
+/** Chave única por navegação (atalho do índice pode reabrir o mesmo card). */
+export const buildDashboardDeepLinkKey = (
+  cardParam?: string | null,
+  navigationNonce?: string | null
+) => {
+  const card = cardParam?.trim();
+
+  if (!card) {
+    return null;
+  }
+
+  const nonce = navigationNonce?.trim();
+  return nonce ? `${card}:${nonce}` : card;
+};
+
+export const resolveCarouselIndexByContent = (
+  cards: ReadonlyArray<{ content: string }>,
+  content?: string | null
+) => {
+  const trimmed = content?.trim();
+
+  if (!trimmed) {
+    return -1;
+  }
+
+  return cards.findIndex((item) => item.content === trimmed);
+};
+
 /** Tipografia do título «Índice do Aplicativo» (painel superior do card). */
 export const DASHBOARD_PANEL_TITLE_TYPO = {
   fontSize: 17,
