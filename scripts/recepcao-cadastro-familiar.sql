@@ -10,8 +10,9 @@
 --   2. Equipe revisa na manutenção
 --   3. process_recepcao_cadastro_familiar_batch → promove para profiles + members
 --
--- Membros já existentes em profiles/members são detectados por telefone/nome;
--- o lote usa o mesmo family_id detectado nas tabelas finais.
+-- Membros já existentes em profiles/members são detectados por nome+telefone;
+-- IBN existente é reutilizado se algum celular do formulário já tiver family_id em profiles.
+-- Celular já cadastrado para outra pessoa não vincula perfil nem grava telefone duplicado.
 
 -- ---------------------------------------------------------------------------
 -- Tabelas
@@ -167,6 +168,106 @@ as $$
   limit 1;
 $$;
 
+-- IBN já atribuído em profiles para algum dos celulares do formulário.
+create or replace function public.count_distinct_family_ids_by_phones_in_profiles(
+  p_phones text[]
+)
+returns integer
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with input_phones as (
+    select distinct public.normalize_phone_for_sync(nullif(trim(phone), '')) as phone_digits
+      from unnest(coalesce(p_phones, array[]::text[])) as phone
+     where nullif(trim(phone), '') is not null
+       and length(public.normalize_phone_for_sync(nullif(trim(phone), ''))) >= 10
+  ),
+  matched as (
+    select distinct nullif(trim(coalesce(p.family_id, p.codigo_membro, '')), '') as family_id
+      from public.profiles p
+      join input_phones ip
+        on public.normalize_phone_for_sync(p.phone) = ip.phone_digits
+     where nullif(trim(coalesce(p.family_id, p.codigo_membro, '')), '') is not null
+  )
+  select count(*)::integer from matched;
+$$;
+
+create or replace function public.find_family_id_by_phones_in_profiles(
+  p_phones text[]
+)
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with input_phones as (
+    select distinct public.normalize_phone_for_sync(nullif(trim(phone), '')) as phone_digits
+      from unnest(coalesce(p_phones, array[]::text[])) as phone
+     where nullif(trim(phone), '') is not null
+       and length(public.normalize_phone_for_sync(nullif(trim(phone), ''))) >= 10
+  ),
+  matched as (
+    select distinct nullif(trim(coalesce(p.family_id, p.codigo_membro, '')), '') as family_id
+      from public.profiles p
+      join input_phones ip
+        on public.normalize_phone_for_sync(p.phone) = ip.phone_digits
+     where nullif(trim(coalesce(p.family_id, p.codigo_membro, '')), '') is not null
+  )
+  select family_id
+    from matched
+   where (select count(*) from matched) = 1
+   limit 1;
+$$;
+
+-- Celular já cadastrado em profiles para outra pessoa (evita vincular/atualizar perfil errado).
+create or replace function public.recepcao_phone_claimed_by_other_profile(
+  p_phone text,
+  p_full_name text
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with normalized as (
+    select
+      nullif(trim(coalesce(p_full_name, '')), '') as full_name,
+      public.normalize_phone_for_sync(nullif(trim(coalesce(p_phone, '')), '')) as phone_digits
+  )
+  select exists (
+    select 1
+      from public.profiles p
+      cross join normalized n
+     where n.phone_digits is not null
+       and length(n.phone_digits) >= 10
+       and public.normalize_phone_for_sync(p.phone) = n.phone_digits
+       and (
+         n.full_name is null
+         or lower(trim(coalesce(p.full_name, ''))) <> lower(n.full_name)
+       )
+  );
+$$;
+
+create or replace function public.recepcao_phone_for_storage(
+  p_phone text,
+  p_full_name text
+)
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select case
+    when public.recepcao_phone_claimed_by_other_profile(p_phone, p_full_name) then null
+    else nullif(trim(coalesce(p_phone, '')), '')
+  end;
+$$;
+
 create or replace function public.resolve_family_id_for_recepcao_person(
   p_phone text,
   p_full_name text,
@@ -182,9 +283,25 @@ as $$
 declare
   v_profile_family text;
   v_member_family text;
+  v_phone_family text;
 begin
   matched_profile_id := public.find_profile_id_for_recepcao_match(p_phone, p_full_name);
   matched_member_id := public.find_member_id_for_recepcao_match(p_phone, p_full_name);
+
+  if public.recepcao_phone_claimed_by_other_profile(p_phone, p_full_name) then
+    matched_profile_id := null;
+    matched_member_id := null;
+  end if;
+
+  select nullif(trim(coalesce(p.family_id, p.codigo_membro, '')), '')
+    into v_phone_family
+    from public.profiles p
+   where nullif(trim(coalesce(p_phone, '')), '') is not null
+     and length(public.normalize_phone_for_sync(p_phone)) >= 10
+     and public.normalize_phone_for_sync(p.phone) = public.normalize_phone_for_sync(p_phone)
+     and nullif(trim(coalesce(p.family_id, p.codigo_membro, '')), '') is not null
+   order by p.updated_at desc nulls last, p.id
+   limit 1;
 
   if matched_profile_id is not null then
     select nullif(trim(coalesce(p.family_id, p.codigo_membro, '')), '')
@@ -200,7 +317,7 @@ begin
      where m.id = matched_member_id;
   end if;
 
-  detected_family_id := coalesce(v_member_family, v_profile_family);
+  detected_family_id := coalesce(v_phone_family, v_member_family, v_profile_family);
 end;
 $$;
 
@@ -360,6 +477,9 @@ declare
   v_matched_profile_id uuid;
   v_matched_member_id uuid;
   v_distinct_family_count int;
+  v_phone_family_distinct_count int;
+  v_form_phones text[] := array[]::text[];
+  v_family_id_from_phones text;
   v_allowed_relationships text[] := array[
     'Cônjuge', 'Filho(a)', 'Representante Legal', 'Pai', 'Mãe', 'Outros'
   ];
@@ -397,6 +517,10 @@ begin
   v_address_state := nullif(trim(coalesce(v_informant ->> 'address_state', '')), '');
   v_food_alerts := nullif(trim(coalesce(v_informant ->> 'medical_food_alerts', '')), '');
 
+  if v_phone is not null then
+    v_form_phones := array_append(v_form_phones, v_phone);
+  end if;
+
   for v_dependent in
     select value
       from jsonb_array_elements(coalesce(p_payload -> 'dependents', '[]'::jsonb))
@@ -405,6 +529,13 @@ begin
 
     if v_dependent_name is null then
       continue;
+    end if;
+
+    if nullif(trim(coalesce(v_dependent ->> 'phone', '')), '') is not null then
+      v_form_phones := array_append(
+        v_form_phones,
+        nullif(trim(coalesce(v_dependent ->> 'phone', '')), '')
+      );
     end if;
 
     begin
@@ -561,6 +692,15 @@ begin
     v_member_count := v_member_count + 1;
   end loop;
 
+  v_family_id_from_phones := public.find_family_id_by_phones_in_profiles(v_form_phones);
+  v_phone_family_distinct_count := public.count_distinct_family_ids_by_phones_in_profiles(v_form_phones);
+
+  if v_family_id_from_phones is not null then
+    update public.recepcao_cadastro_familiar
+       set detected_family_id = v_family_id_from_phones
+     where submission_id = v_submission_id;
+  end if;
+
   select count(distinct nullif(trim(detected_family_id), ''))
     into v_distinct_family_count
     from public.recepcao_cadastro_familiar
@@ -574,11 +714,18 @@ begin
    order by is_informant desc, created_at
    limit 1;
 
+  v_distinct_family_count := greatest(
+    coalesce(v_distinct_family_count, 0),
+    coalesce(v_phone_family_distinct_count, 0)
+  );
+
   update public.recepcao_cadastro_familiar_lote
      set member_count = v_member_count,
-         detected_family_id = v_detected_family_id,
+         detected_family_id = coalesce(v_family_id_from_phones, v_detected_family_id),
          has_family_conflict = v_distinct_family_count > 1
    where id = v_submission_id;
+
+  v_detected_family_id := coalesce(v_family_id_from_phones, v_detected_family_id);
 
   return jsonb_build_object(
     'success', true,
@@ -692,6 +839,8 @@ declare
   v_existing_profile_name text;
   v_existing_member_name text;
   v_address_process_message text;
+  v_submission_phones text[];
+  v_family_id_from_phones text;
 begin
   for v_submission in
     select l.*
@@ -713,7 +862,18 @@ begin
       continue;
     end if;
 
-    v_family_id := nullif(trim(coalesce(v_submission.detected_family_id, '')), '');
+    select coalesce(array_agg(distinct nullif(trim(r.phone), '')), array[]::text[])
+      into v_submission_phones
+      from public.recepcao_cadastro_familiar r
+     where r.submission_id = v_submission.id
+       and nullif(trim(coalesce(r.phone, '')), '') is not null;
+
+    v_family_id_from_phones := public.find_family_id_by_phones_in_profiles(v_submission_phones);
+
+    v_family_id := coalesce(
+      nullif(trim(coalesce(v_submission.detected_family_id, '')), ''),
+      v_family_id_from_phones
+    );
 
     if v_family_id is null then
       v_family_id := public.reserve_next_family_id();
@@ -728,6 +888,11 @@ begin
     loop
       v_apply_profile_id := v_member.matched_profile_id;
       v_apply_member_id := v_member.matched_member_id;
+
+      if public.recepcao_phone_claimed_by_other_profile(v_member.phone, v_member.full_name) then
+        v_apply_profile_id := null;
+        v_apply_member_id := null;
+      end if;
 
       if v_apply_profile_id is not null then
         select nullif(trim(coalesce(p.full_name, '')), '')
@@ -757,7 +922,10 @@ begin
         update public.profiles p
            set full_name = v_member.full_name,
                birth_date = v_member.birth_date,
-               phone = coalesce(v_member.phone, p.phone),
+               phone = coalesce(
+                 public.recepcao_phone_for_storage(v_member.phone, v_member.full_name),
+                 p.phone
+               ),
                family_id = v_family_id,
                codigo_membro = v_family_id,
                medical_food_alerts = coalesce(v_member.medical_food_alerts, p.medical_food_alerts),
@@ -775,7 +943,7 @@ begin
         ) values (
           v_member.full_name,
           v_member.birth_date,
-          v_member.phone,
+          public.recepcao_phone_for_storage(v_member.phone, v_member.full_name),
           v_family_id,
           v_family_id,
           v_member.medical_food_alerts,
@@ -810,7 +978,10 @@ begin
         update public.members m
            set full_name = v_member.full_name,
                birth_date = v_member.birth_date,
-               phone = coalesce(v_member.phone, m.phone),
+               phone = coalesce(
+                 public.recepcao_phone_for_storage(v_member.phone, v_member.full_name),
+                 m.phone
+               ),
                relationship = v_member.relationship,
                family_id = v_family_id
          where m.id = v_apply_member_id;
@@ -825,7 +996,7 @@ begin
         ) values (
           v_member.full_name,
           v_member.birth_date,
-          v_member.phone,
+          public.recepcao_phone_for_storage(v_member.phone, v_member.full_name),
           v_member.relationship,
           v_family_id,
           false
@@ -913,6 +1084,10 @@ $$;
 
 grant execute on function public.find_profile_id_for_recepcao_match(text, text) to anon, authenticated;
 grant execute on function public.find_member_id_for_recepcao_match(text, text) to authenticated;
+grant execute on function public.count_distinct_family_ids_by_phones_in_profiles(text[]) to anon, authenticated;
+grant execute on function public.find_family_id_by_phones_in_profiles(text[]) to anon, authenticated;
+grant execute on function public.recepcao_phone_claimed_by_other_profile(text, text) to anon, authenticated;
+grant execute on function public.recepcao_phone_for_storage(text, text) to authenticated;
 grant execute on function public.resolve_family_id_for_recepcao_person(text, text) to anon, authenticated;
 grant execute on function public.submit_family_registration_public(jsonb) to anon, authenticated;
 grant execute on function public.list_recepcao_cadastro_familiar_pending(integer) to authenticated;
