@@ -117,8 +117,51 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
--- Busca com papel atual
+-- Lista completa (filtro no app) + busca legada por texto
 -- ---------------------------------------------------------------------------
+
+drop function if exists public.listar_perfis_mudanca_papel_pastoral(uuid, integer);
+
+create or replace function public.listar_perfis_mudanca_papel_pastoral(
+  p_actor_profile_id uuid,
+  p_limit integer default 5000
+)
+returns table (
+  id uuid,
+  full_name text,
+  phone text,
+  codigo_membro text,
+  current_role_code text
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_limit integer;
+begin
+  perform public.assert_pastoral_role_change_actor(p_actor_profile_id);
+
+  v_limit := greatest(1, least(coalesce(p_limit, 5000), 5000));
+
+  return query
+  select
+    p.id,
+    coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as full_name,
+    coalesce(p.phone, '') as phone,
+    coalesce(p.codigo_membro, '') as codigo_membro,
+    public.resolve_basic_role_code_for_profile(p.id) as current_role_code
+  from public.profiles p
+  where not public.profile_has_protected_role_for_pastoral_change(p.id)
+    and coalesce(
+      nullif(trim(p.full_name), ''),
+      nullif(trim(p.phone), ''),
+      nullif(trim(p.codigo_membro), '')
+    ) is not null
+  order by p.full_name asc
+  limit v_limit;
+end;
+$$;
 
 drop function if exists public.buscar_perfis_mudanca_papel_pastoral(uuid, text, integer);
 
@@ -300,6 +343,7 @@ end;
 $$;
 
 grant execute on function public.profile_has_role_code(uuid, text) to anon, authenticated;
+grant execute on function public.listar_perfis_mudanca_papel_pastoral(uuid, integer) to anon, authenticated;
 grant execute on function public.buscar_perfis_mudanca_papel_pastoral(uuid, text, integer) to anon, authenticated;
 grant execute on function public.definir_papel_basico_perfil_pastoral(uuid, uuid, text) to anon, authenticated;
 

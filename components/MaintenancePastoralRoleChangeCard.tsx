@@ -29,6 +29,9 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
   const {
     searchQuery,
     setSearchQuery,
+    roleFilter,
+    toggleRoleFilter,
+    allProfiles,
     profiles,
     loading,
     savingProfileId,
@@ -37,6 +40,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
   } = useMaintenancePastoralRoleChange(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
+  const hasActiveFilters = searchQuery.trim().length > 0 || roleFilter !== null;
 
   const handleSelectRole = async (profileId: string, roleCode: (typeof PASTORAL_BASIC_ROLE_OPTIONS)[number]['code']) => {
     const result = await updateProfileRole(profileId, roleCode);
@@ -55,16 +59,16 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
       <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       <Text style={styles.helpText}>
-        Busca cadastros em perfis. O papel exibido reflete a atribuição atual (visitante = sem congregado nem membro).
-        Papéis protegidos (pastoral, líder, admin) não aparecem nesta lista.
+        Lista completa de perfis elegíveis. Use a busca para filtrar por nome, telefone ou código.
+        Toque nos cabeçalhos Visitante, Congregado ou Membro para filtrar pelo papel atual.
       </Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      <SectionLabel variant="maintenance">Buscar por nome</SectionLabel>
+      <SectionLabel variant="maintenance">Filtrar lista</SectionLabel>
       <TextInput
         style={styles.searchInput}
-        placeholder="Nome, telefone, código ou papel (mín. 2 letras)"
+        placeholder="Nome, telefone ou código"
         placeholderTextColor="#64748B"
         value={searchQuery}
         onChangeText={setSearchQuery}
@@ -75,23 +79,45 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
 
       {loading ? <CardLoadingState lines={2} compact /> : null}
 
-      {searchQuery.trim().length < 2 && !loading ? (
-        <Text style={styles.hintText}>Digite pelo menos 2 letras para buscar.</Text>
+      {!loading && allProfiles.length > 0 ? (
+        <Text style={styles.countText}>
+          {hasActiveFilters
+            ? `${profiles.length} de ${allProfiles.length} perfis`
+            : `${allProfiles.length} perfis`}
+        </Text>
       ) : null}
 
-      {searchQuery.trim().length >= 2 && !loading && profiles.length === 0 ? (
-        <Text style={styles.hintText}>Nenhum perfil encontrado.</Text>
+      {!loading && allProfiles.length === 0 ? (
+        <Text style={styles.hintText}>Nenhum perfil elegível encontrado.</Text>
       ) : null}
 
-      {profiles.length > 0 ? (
+      {!loading && allProfiles.length > 0 && profiles.length === 0 ? (
+        <Text style={styles.hintText}>Nenhum perfil corresponde aos filtros.</Text>
+      ) : null}
+
+      {!loading && profiles.length > 0 ? (
         <ScrollView style={styles.tableScroll} contentContainerStyle={styles.tableContent}>
           <View style={styles.tableHeader}>
             <Text style={[styles.headerCell, styles.nameColumn]}>Nome curto</Text>
-            {PASTORAL_BASIC_ROLE_OPTIONS.map((option) => (
-              <Text key={option.code} style={styles.roleHeaderCell}>
-                {option.label}
-              </Text>
-            ))}
+            {PASTORAL_BASIC_ROLE_OPTIONS.map((option) => {
+              const isActiveFilter = roleFilter === option.code;
+
+              return (
+                <TouchableOpacity
+                  key={option.code}
+                  style={[styles.roleHeaderButton, isActiveFilter && styles.roleHeaderButtonActive]}
+                  onPress={() => toggleRoleFilter(option.code)}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isActiveFilter }}
+                  accessibilityLabel={`Filtrar por ${option.label}`}
+                >
+                  <Text style={[styles.roleHeaderCell, isActiveFilter && styles.roleHeaderCellActive]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {profiles.map((profile) => {
@@ -158,6 +184,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontStyle: 'italic',
   },
+  countText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    marginBottom: 8,
+  },
   searchInput: {
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.35)',
@@ -166,7 +197,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     color: '#F8FAFC',
     fontSize: 14,
-    marginBottom: 12,
+    marginBottom: 8,
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
   },
   tableScroll: {
@@ -189,12 +220,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
-  roleHeaderCell: {
+  roleHeaderButton: {
     width: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  roleHeaderButtonActive: {
+    backgroundColor: 'rgba(244, 114, 182, 0.18)',
+  },
+  roleHeaderCell: {
     textAlign: 'center',
     color: '#CBD5E1',
     fontSize: 11,
     fontWeight: '800',
+  },
+  roleHeaderCellActive: {
+    color: ACCENT,
   },
   tableRow: {
     flexDirection: 'row',

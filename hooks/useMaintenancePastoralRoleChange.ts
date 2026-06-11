@@ -1,81 +1,73 @@
 import {
+  listProfilesForPastoralRoleChange,
   PASTORAL_BASIC_ROLE_OPTIONS,
   PASTORAL_ROLE_CHANGE_SQL_HINT,
-  searchProfilesForPastoralRoleChange,
+  profileMatchesPastoralRoleChangeRoleFilter,
+  profileMatchesPastoralRoleChangeSearch,
   setPastoralBasicRoleForProfile,
   type PastoralBasicRoleCode,
   type PastoralRoleChangeProfile,
 } from '@/lib/pastoralRoleChangeApi';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export { PASTORAL_BASIC_ROLE_OPTIONS, PASTORAL_ROLE_CHANGE_SQL_HINT };
 
 export function useMaintenancePastoralRoleChange(isActive: boolean) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [profiles, setProfiles] = useState<PastoralRoleChangeProfile[]>([]);
+  const [roleFilter, setRoleFilter] = useState<PastoralBasicRoleCode | null>(null);
+  const [allProfiles, setAllProfiles] = useState<PastoralRoleChangeProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingProfileId, setSavingProfileId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const loadProfiles = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const rows = await listProfilesForPastoralRoleChange();
+      setAllProfiles(rows);
+    } catch (loadError) {
+      console.error('Erro ao carregar perfis para mudança de papel:', loadError);
+      setAllProfiles([]);
+      setError(
+        loadError instanceof Error ? loadError.message : 'Não foi possível carregar a lista de perfis.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isActive) {
       return;
     }
 
-    const query = searchQuery.trim();
+    void loadProfiles();
+  }, [isActive, loadProfiles]);
 
-    if (query.length < 2) {
-      setProfiles([]);
-      setLoading(false);
-      setError(null);
-      return;
-    }
+  const profiles = useMemo(
+    () =>
+      allProfiles.filter(
+        (profile) =>
+          profileMatchesPastoralRoleChangeSearch(profile, searchQuery)
+          && profileMatchesPastoralRoleChangeRoleFilter(profile, roleFilter)
+      ),
+    [allProfiles, roleFilter, searchQuery]
+  );
 
-    let active = true;
-    setLoading(true);
-    setError(null);
-
-    const timer = setTimeout(() => {
-      void (async () => {
-        try {
-          const rows = await searchProfilesForPastoralRoleChange(query);
-
-          if (active) {
-            setProfiles(rows);
-          }
-        } catch (searchError) {
-          console.error('Erro ao buscar perfis para mudança de papel:', searchError);
-
-          if (active) {
-            setProfiles([]);
-            setError(
-              searchError instanceof Error
-                ? searchError.message
-                : 'Não foi possível buscar perfis.'
-            );
-          }
-        } finally {
-          if (active) {
-            setLoading(false);
-          }
-        }
-      })();
-    }, 300);
-
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [isActive, searchQuery]);
+  const toggleRoleFilter = useCallback((roleCode: PastoralBasicRoleCode) => {
+    setRoleFilter((current) => (current === roleCode ? null : roleCode));
+  }, []);
 
   const updateProfileRole = useCallback(
     async (profileId: string, roleCode: PastoralBasicRoleCode) => {
       setSavingProfileId(profileId);
       setError(null);
 
-      const previousProfiles = profiles;
+      const previousProfiles = allProfiles;
 
-      setProfiles((current) =>
+      setAllProfiles((current) =>
         current.map((profile) =>
           profile.id === profileId ? { ...profile, currentRoleCode: roleCode } : profile
         )
@@ -85,13 +77,13 @@ export function useMaintenancePastoralRoleChange(isActive: boolean) {
         const result = await setPastoralBasicRoleForProfile(profileId, roleCode);
 
         if (!result.success) {
-          setProfiles(previousProfiles);
+          setAllProfiles(previousProfiles);
           setError(result.message);
         }
 
         return result;
       } catch (saveError) {
-        setProfiles(previousProfiles);
+        setAllProfiles(previousProfiles);
         const message =
           saveError instanceof Error ? saveError.message : 'Não foi possível alterar o papel.';
         setError(message);
@@ -100,16 +92,20 @@ export function useMaintenancePastoralRoleChange(isActive: boolean) {
         setSavingProfileId(null);
       }
     },
-    [profiles]
+    [allProfiles]
   );
 
   return {
     searchQuery,
     setSearchQuery,
+    roleFilter,
+    toggleRoleFilter,
+    allProfiles,
     profiles,
     loading,
     savingProfileId,
     error,
+    reloadProfiles: loadProfiles,
     updateProfileRole,
   };
 }

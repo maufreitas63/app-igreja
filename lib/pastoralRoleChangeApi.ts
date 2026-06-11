@@ -86,21 +86,20 @@ export async function sessionCanAccessPastoralRoleChangePanel() {
   return data === true;
 }
 
-export async function searchProfilesForPastoralRoleChange(query: string, limit = 30) {
+export async function listProfilesForPastoralRoleChange(limit = 5000) {
   const actorProfileId = await resolveActorProfileId();
 
   if (!actorProfileId) {
     throw new Error('Sessão inválida. Saia e entre novamente.');
   }
 
-  const { data, error } = await supabase.rpc('buscar_perfis_mudanca_papel_pastoral', {
+  const { data, error } = await supabase.rpc('listar_perfis_mudanca_papel_pastoral', {
     p_actor_profile_id: actorProfileId,
-    p_query: query,
     p_limit: limit,
   });
 
   if (error) {
-    if (isSupabaseRpcMissingError(error, 'buscar_perfis_mudanca_papel_pastoral')) {
+    if (isSupabaseRpcMissingError(error, 'listar_perfis_mudanca_papel_pastoral')) {
       throw new Error(PASTORAL_ROLE_CHANGE_SQL_HINT);
     }
 
@@ -109,6 +108,32 @@ export async function searchProfilesForPastoralRoleChange(query: string, limit =
 
   return parseProfileRows(data);
 }
+
+const normalizeSearchDigits = (value: string) => value.replace(/\D/g, '');
+
+export const profileMatchesPastoralRoleChangeSearch = (
+  profile: PastoralRoleChangeProfile,
+  query: string
+) => {
+  const trimmed = query.trim().toLowerCase();
+
+  if (!trimmed) {
+    return true;
+  }
+
+  const digits = normalizeSearchDigits(trimmed);
+
+  return (
+    profile.fullName.toLowerCase().includes(trimmed)
+    || (digits.length > 0 && normalizeSearchDigits(profile.phone ?? '').includes(digits))
+    || (profile.memberCode?.toLowerCase().includes(trimmed) ?? false)
+  );
+};
+
+export const profileMatchesPastoralRoleChangeRoleFilter = (
+  profile: PastoralRoleChangeProfile,
+  roleFilter: PastoralBasicRoleCode | null
+) => roleFilter === null || profile.currentRoleCode === roleFilter;
 
 export async function setPastoralBasicRoleForProfile(
   targetProfileId: string,
