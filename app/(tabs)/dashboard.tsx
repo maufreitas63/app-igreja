@@ -607,6 +607,10 @@ export default function Dashboard() {
     requestedDashboardCard,
     requestedDashboardCardNonce
   );
+  const isDashboardDeepLinkPending =
+    Boolean(requestedDashboardCard)
+    && Boolean(dashboardDeepLinkKey)
+    && handledDashboardCardRef.current !== dashboardDeepLinkKey;
 
   const {
     events: activeEvents,
@@ -1278,6 +1282,9 @@ export default function Dashboard() {
   }, [loadVigilanceScales]);
 
   const handleExit = () => {
+    handledDashboardCardRef.current = null;
+    previousDashboardDataLengthRef.current = 0;
+    activeDashboardContentRef.current = null;
     router.replace('/(tabs)');
   };
 
@@ -1969,20 +1976,27 @@ export default function Dashboard() {
   }, [isScaleRosterVisible, data, scrollToDashboardCard]);
 
   useEffect(() => {
+    if (isDashboardDeepLinkPending) {
+      return;
+    }
+
     const content = data[currentIndex]?.content ?? null;
 
     if (content) {
       activeDashboardContentRef.current = content;
     }
-  }, [currentIndex, data]);
+  }, [currentIndex, data, isDashboardDeepLinkPending]);
 
   useEffect(() => {
     if (
       scrollToScaleRosterRef.current
       || scrollToParkingCardRef.current
       || scrollToScalesCardRef.current
+      || isDashboardDeepLinkPending
     ) {
-      previousDashboardDataLengthRef.current = data.length;
+      if (!isDashboardDeepLinkPending) {
+        previousDashboardDataLengthRef.current = data.length;
+      }
       return;
     }
 
@@ -1990,7 +2004,14 @@ export default function Dashboard() {
       return;
     }
 
+    const isInitialCarouselHydration =
+      previousDashboardDataLengthRef.current === 0 && data.length > 0;
+
     previousDashboardDataLengthRef.current = data.length;
+
+    if (isInitialCarouselHydration) {
+      return;
+    }
 
     const content = activeDashboardContentRef.current;
     if (!content) {
@@ -2010,7 +2031,7 @@ export default function Dashboard() {
     requestAnimationFrame(() => {
       scrollToDashboardCard(targetIndex, false);
     });
-  }, [data, scrollToDashboardCard]);
+  }, [data, isDashboardDeepLinkPending, scrollToDashboardCard]);
 
   useEffect(() => {
     const scalesIdx = data.findIndex((item) => item.content === 'vigilance_scales');
@@ -2077,6 +2098,13 @@ export default function Dashboard() {
     }
 
     scrollToDashboardCard(targetIndex, false);
+
+    const targetContent = data[targetIndex]?.content ?? null;
+    if (targetContent) {
+      activeDashboardContentRef.current = targetContent;
+    }
+
+    previousDashboardDataLengthRef.current = data.length;
     handledDashboardCardRef.current = dashboardDeepLinkKey;
     setIsDashboardCarouselReady(true);
   }, [dashboardDeepLinkKey, data, isDashboardCardAccessReady, requestedDashboardCard, scrollToDashboardCard]);
