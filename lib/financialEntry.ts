@@ -143,6 +143,7 @@ export type FinancialBulletinCommentDetail = {
   comment: string;
   amount: number;
   transactionDateLabel: string;
+  receiptUrl?: string | null;
 };
 
 /** Rótulo curto da data do lançamento (DD/MM). */
@@ -303,10 +304,13 @@ const collectBulletinRowCommentDetails = (
       continue;
     }
 
+    const receiptUrl = entry.receipt_url?.trim() || null;
+
     details.push({
       comment,
       amount: signedFinancialAmount(entry),
       transactionDateLabel: formatFinancialEntryDayMonthLabel(entry.transaction_date),
+      receiptUrl,
     });
   }
 

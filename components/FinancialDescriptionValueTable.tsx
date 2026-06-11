@@ -230,62 +230,91 @@ const CommentDetailsModal = ({
   details: FinancialBulletinCommentDetail[];
   visible: boolean;
   onClose: () => void;
-}) => (
-  <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
-    <Pressable style={styles.bubbleBackdrop} onPress={onClose}>
-      <Pressable style={styles.bubbleCard} onPress={(event) => event.stopPropagation()}>
-        <View style={styles.bubbleArrow} />
-        <Text style={styles.bubbleTitle}>Observações</Text>
-        <View style={styles.commentDetailsHeaderRow}>
-          <Text style={[styles.commentDetailsHeaderCell, styles.commentDetailsDateHeader]}>Data</Text>
-          <Text style={[styles.commentDetailsHeaderCell, styles.commentDetailsCommentHeader]}>
-            Observação
-          </Text>
-          <View style={styles.commentDetailsAmountColumn}>
-            <Text style={[styles.commentDetailsHeaderCell, styles.commentDetailsAmountHeader]}>
-              Valor
-            </Text>
-          </View>
-        </View>
-        <ScrollView
-          style={styles.commentDetailsScroll}
-          contentContainerStyle={styles.commentDetailsScrollContent}
-          nestedScrollEnabled
-        >
-          {details.map((detail, index) => (
-            <View
-              key={`${detail.transactionDateLabel}-${detail.comment}-${detail.amount}-${index}`}
-              style={styles.commentDetailsDataRow}
-            >
-              <Text style={[styles.commentDetailsBodyCell, styles.commentDetailsDateCell]}>
-                {detail.transactionDateLabel}
+}) => {
+  const [openReceiptUrl, setOpenReceiptUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!visible) {
+      setOpenReceiptUrl(null);
+    }
+  }, [visible]);
+
+  return (
+    <>
+      <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
+        <Pressable style={styles.bubbleBackdrop} onPress={onClose}>
+          <Pressable style={styles.bubbleCard} onPress={(event) => event.stopPropagation()}>
+            <View style={styles.bubbleArrow} />
+            <Text style={styles.bubbleTitle}>Observações</Text>
+            <View style={styles.commentDetailsHeaderRow}>
+              <Text style={[styles.commentDetailsHeaderCell, styles.commentDetailsDateHeader]}>
+                Data
               </Text>
-              <View style={styles.commentDetailsCommentColumn}>
-                <Text style={[styles.commentDetailsBodyCell, styles.commentDetailsCommentCell]}>
-                  {detail.comment}
-                </Text>
-              </View>
+              <Text style={[styles.commentDetailsHeaderCell, styles.commentDetailsCommentHeader]}>
+                Observação
+              </Text>
               <View style={styles.commentDetailsAmountColumn}>
-                <Text
-                  style={[
-                    styles.commentDetailsBodyCell,
-                    styles.commentDetailsAmountCell,
-                    detail.amount < 0 ? styles.valueNegative : styles.valuePositive,
-                  ]}
-                >
-                  {formatCommentDetailAmount(detail.amount)}
+                <Text style={[styles.commentDetailsHeaderCell, styles.commentDetailsAmountHeader]}>
+                  Valor
                 </Text>
               </View>
             </View>
-          ))}
-        </ScrollView>
-        <TouchableOpacity style={styles.bubbleCloseButton} onPress={onClose} activeOpacity={0.85}>
-          <Text style={styles.bubbleCloseButtonText}>Fechar</Text>
-        </TouchableOpacity>
-      </Pressable>
-    </Pressable>
-  </Modal>
-);
+            <ScrollView
+              style={styles.commentDetailsScroll}
+              contentContainerStyle={styles.commentDetailsScrollContent}
+              nestedScrollEnabled
+            >
+              {details.map((detail, index) => {
+                const receiptUrl = detail.receiptUrl?.trim() || '';
+
+                return (
+                  <View
+                    key={`${detail.transactionDateLabel}-${detail.comment}-${detail.amount}-${receiptUrl}-${index}`}
+                    style={styles.commentDetailsDataRow}
+                  >
+                    <Text style={[styles.commentDetailsBodyCell, styles.commentDetailsDateCell]}>
+                      {detail.transactionDateLabel}
+                    </Text>
+                    <View style={styles.commentDetailsCommentColumn}>
+                      <Text style={[styles.commentDetailsBodyCell, styles.commentDetailsCommentCell]}>
+                        {detail.comment}
+                      </Text>
+                    </View>
+                    <View style={styles.commentDetailsAmountColumn}>
+                      <Text
+                        style={[
+                          styles.commentDetailsBodyCell,
+                          styles.commentDetailsAmountCell,
+                          detail.amount < 0 ? styles.valueNegative : styles.valuePositive,
+                        ]}
+                      >
+                        {formatCommentDetailAmount(detail.amount)}
+                      </Text>
+                      {receiptUrl ? (
+                        <View style={styles.commentDetailsReceiptSlot}>
+                          <ReceiptIndicator onPress={() => setOpenReceiptUrl(receiptUrl)} />
+                        </View>
+                      ) : null}
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+            <TouchableOpacity style={styles.bubbleCloseButton} onPress={onClose} activeOpacity={0.85}>
+              <Text style={styles.bubbleCloseButtonText}>Fechar</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <ReceiptImageModal
+        receiptUrl={openReceiptUrl ?? ''}
+        visible={Boolean(openReceiptUrl)}
+        onClose={() => setOpenReceiptUrl(null)}
+      />
+    </>
+  );
+};
 
 export function FinancialDescriptionValueTable({
   rows,
@@ -757,6 +786,10 @@ const styles = StyleSheet.create({
     width: '100%',
     textAlign: 'right',
     fontWeight: '700',
+  },
+  commentDetailsReceiptSlot: {
+    marginTop: 4,
+    alignItems: 'flex-end',
   },
   bubbleCloseButton: {
     alignSelf: 'center',
