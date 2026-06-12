@@ -2,6 +2,7 @@
 -- Substitui o uso de `verify_profile_access_pin` na tela de entrada do app.
 -- Execute no SQL Editor do Supabase (após profiles-access-pin.sql).
 --
+-- Com sessão assinada (fase 2): execute scripts/profile-sessions.sql antes deste arquivo.
 -- Se já existir `verificar_login` com outro tipo de retorno, o DROP abaixo é obrigatório.
 
 drop function if exists public.verificar_login(text, text);
@@ -23,10 +24,11 @@ returns table (
   address_number text,
   address_neighborhood text,
   address_city text,
-  address_state text
+  address_state text,
+  session_token text
 )
 language plpgsql
-stable
+volatile
 security definer
 set search_path = public
 as $$
@@ -60,7 +62,8 @@ begin
     p.address_number,
     p.address_neighborhood,
     p.address_city,
-    p.address_state
+    p.address_state,
+    public.issue_profile_session(p.id) as session_token
   from public.profiles p
   where p.id = v_profile_id
     and p.access_pin is not null

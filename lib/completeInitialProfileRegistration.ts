@@ -12,7 +12,12 @@ export type CompleteInitialProfileRegistrationInput = {
   codigoMembro: string;
 };
 
-const parseRpcProfile = (data: unknown) => {
+export type CompleteInitialProfileRegistrationResult = {
+  profile: Record<string, unknown>;
+  sessionToken: string | null;
+};
+
+const parseRpcResult = (data: unknown): CompleteInitialProfileRegistrationResult | null => {
   let payload: unknown = data;
 
   if (typeof data === 'string') {
@@ -39,12 +44,20 @@ const parseRpcProfile = (data: unknown) => {
     return null;
   }
 
-  return profile as Record<string, unknown>;
+  const sessionToken =
+    typeof record.session_token === 'string' && record.session_token.trim()
+      ? record.session_token.trim()
+      : null;
+
+  return {
+    profile: profile as Record<string, unknown>,
+    sessionToken,
+  };
 };
 
 export async function completeInitialProfileRegistration(
   input: CompleteInitialProfileRegistrationInput
-): Promise<Record<string, unknown>> {
+): Promise<CompleteInitialProfileRegistrationResult> {
   const { data, error } = await supabase.rpc('complete_initial_profile_registration', {
     p_profile_id: input.profileId,
     p_full_name: input.fullName.trim(),
@@ -72,11 +85,11 @@ export async function completeInitialProfileRegistration(
     throw error;
   }
 
-  const profile = parseRpcProfile(data);
+  const result = parseRpcResult(data);
 
-  if (!profile?.id) {
+  if (!result?.profile?.id) {
     throw new Error('Cadastro inicial concluído, mas o perfil retornado é inválido.');
   }
 
-  return profile;
+  return result;
 }

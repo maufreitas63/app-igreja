@@ -1,8 +1,13 @@
 import { supabase } from '@/lib/supabase';
 
 export type VerificarLoginResult =
-  | { ok: true; profile: Record<string, unknown> }
+  | { ok: true; profile: Record<string, unknown>; sessionToken: string | null }
   | { ok: false; reason: 'invalid_credentials' | 'rpc_error' };
+
+const readSessionToken = (row: Record<string, unknown>) => {
+  const raw = row.session_token;
+  return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
+};
 
 /**
  * Valida celular + senha via RPC `verificar_login` (Supabase).
@@ -41,5 +46,11 @@ export async function verificarLogin(
     return { ok: false, reason: 'invalid_credentials' };
   }
 
-  return { ok: true, profile: row as Record<string, unknown> };
+  const profile = row as Record<string, unknown>;
+
+  return {
+    ok: true,
+    profile,
+    sessionToken: readSessionToken(profile),
+  };
 }

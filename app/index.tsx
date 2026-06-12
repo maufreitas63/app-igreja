@@ -175,8 +175,12 @@ export default function IndexScreen() {
   };
 
   const continueWithExistingProfile = useCallback(
-    async (profile: Record<string, unknown>, phoneForSession: string) => {
-      await persistUserSession(profile, phoneForSession);
+    async (
+      profile: Record<string, unknown>,
+      phoneForSession: string,
+      sessionToken?: string | null
+    ) => {
+      await persistUserSession(profile, phoneForSession, sessionToken);
 
       const route = resolveRegisteredUserSessionRoute(profile, phoneForSession);
 
@@ -516,7 +520,11 @@ export default function IndexScreen() {
           return;
         }
 
-        const continued = await continueWithExistingProfile(verification.profile, cleanPhone);
+        const continued = await continueWithExistingProfile(
+          verification.profile,
+          cleanPhone,
+          verification.sessionToken
+        );
 
         if (!continued) {
           Alert.alert('Erro de Acesso', 'Não foi possível continuar com este perfil.');

@@ -299,7 +299,7 @@ export default function RegisterScreen() {
 
       await persistProfileId(profileId);
 
-      const registeredProfile = await completeInitialProfileRegistration({
+      const registration = await completeInitialProfileRegistration({
         profileId,
         fullName,
         birthDateIso: formattedDateForDB,
@@ -311,7 +311,7 @@ export default function RegisterScreen() {
         codigoMembro: familyId,
       });
 
-      await persistUserSession(registeredProfile, phoneValue);
+      await persistUserSession(registration.profile, phoneValue, registration.sessionToken);
       await invalidateProfilesMapSnapshot();
 
       Alert.alert(

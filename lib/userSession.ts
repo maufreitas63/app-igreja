@@ -13,6 +13,9 @@ export const USER_PHONE_STORAGE_KEY = 'user_phone';
 
 export const USER_PROFILE_ID_STORAGE_KEY = 'user_profile_id';
 
+/** Token emitido pelo Supabase no login/cadastro (`profile_sessions`). */
+export const USER_SESSION_TOKEN_STORAGE_KEY = 'user_session_token';
+
 /** Query na rota `/` para impedir restauração automática após logout. */
 
 export const SIGN_OUT_QUERY_PARAM = 'signedOut';
@@ -34,25 +37,31 @@ export const resolveProfileId = (profile: Record<string, unknown> | null | undef
 
 
 export async function persistUserSession(
-
   profile: Record<string, unknown> | null | undefined,
-
-  phoneForSession: string
-
+  phoneForSession: string,
+  sessionToken?: string | null
 ) {
-
   await AsyncStorage.setItem(USER_PHONE_STORAGE_KEY, phoneForSession);
 
-
-
   const profileId = resolveProfileId(profile);
-
   if (profileId) {
-
     await AsyncStorage.setItem(USER_PROFILE_ID_STORAGE_KEY, profileId);
-
   }
 
+  const token = sessionToken?.trim();
+  if (token) {
+    await AsyncStorage.setItem(USER_SESSION_TOKEN_STORAGE_KEY, token);
+  }
+}
+
+export async function persistSessionToken(sessionToken: string | null | undefined) {
+  const token = sessionToken?.trim();
+  if (token) {
+    await AsyncStorage.setItem(USER_SESSION_TOKEN_STORAGE_KEY, token);
+    return;
+  }
+
+  await AsyncStorage.removeItem(USER_SESSION_TOKEN_STORAGE_KEY);
 }
 
 
@@ -81,6 +90,10 @@ export async function getStoredProfileId() {
 
   return AsyncStorage.getItem(USER_PROFILE_ID_STORAGE_KEY);
 
+}
+
+export async function getStoredSessionToken() {
+  return AsyncStorage.getItem(USER_SESSION_TOKEN_STORAGE_KEY);
 }
 
 
@@ -192,9 +205,13 @@ const scrubWebSessionKeys = () => {
 
         key === USER_PROFILE_ID_STORAGE_KEY ||
 
+        key === USER_SESSION_TOKEN_STORAGE_KEY ||
+
         key.includes(USER_PHONE_STORAGE_KEY) ||
 
-        key.includes(USER_PROFILE_ID_STORAGE_KEY))
+        key.includes(USER_PROFILE_ID_STORAGE_KEY) ||
+
+        key.includes(USER_SESSION_TOKEN_STORAGE_KEY))
 
     ) {
 
@@ -216,9 +233,30 @@ const scrubWebSessionKeys = () => {
 
 
 
+/** Revoga o token no servidor (best-effort). */
+export async function revokeStoredProfileSession() {
+  const token = (await getStoredSessionToken())?.trim();
+
+  if (!token) {
+    return;
+  }
+
+  try {
+    const { supabase } = await import('@/lib/supabase');
+    await supabase.rpc('revoke_profile_session', { p_token: token });
+  } catch (error) {
+    console.warn('revoke_profile_session:', error);
+  }
+}
+
 export async function clearUserSession() {
+  await revokeStoredProfileSession();
   scrubWebSessionKeys();
-  await AsyncStorage.multiRemove([USER_PHONE_STORAGE_KEY, USER_PROFILE_ID_STORAGE_KEY]);
+  await AsyncStorage.multiRemove([
+    USER_PHONE_STORAGE_KEY,
+    USER_PROFILE_ID_STORAGE_KEY,
+    USER_SESSION_TOKEN_STORAGE_KEY,
+  ]);
   scrubWebSessionKeys();
 }
 
@@ -230,7 +268,12 @@ const LOGIN_AFTER_SIGN_OUT_ROUTE = {
 /** Limpa chaves de sessão de forma síncrona (web) antes da navegação. */
 const clearUserSessionImmediately = () => {
   scrubWebSessionKeys();
-  void AsyncStorage.multiRemove([USER_PHONE_STORAGE_KEY, USER_PROFILE_ID_STORAGE_KEY]);
+  void revokeStoredProfileSession();
+  void AsyncStorage.multiRemove([
+    USER_PHONE_STORAGE_KEY,
+    USER_PROFILE_ID_STORAGE_KEY,
+    USER_SESSION_TOKEN_STORAGE_KEY,
+  ]);
 };
 
 const buildWebLoginUrlAfterSignOut = () => {
