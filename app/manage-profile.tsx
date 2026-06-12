@@ -1826,23 +1826,21 @@ export default function ManageProfile() {
       >
         <View style={styles.selfieCard}>
           <View style={styles.selfieRow}>
-            <View style={styles.selfieFrame}>
-              {isSelfieLoading ? (
-                <ActivityIndicator color="#10b981" />
-              ) : selfiePreviewUrl ? (
-                <Image
-                  key={`${selfiePreviewKey}:${selfiePreviewUrl}`}
-                  source={{ uri: selfiePreviewUrl }}
-                  style={styles.selfieImage}
-                  contentFit="contain"
-                  cachePolicy="none"
-                />
-              ) : (
-                <View style={styles.selfiePlaceholder}>
-                  <MaterialIcons name="account-circle" size={68} color="#64748b" />
-                </View>
-              )}
-            </View>
+            {selfiePreviewUrl ? (
+              <View style={styles.selfieFrame}>
+                {isSelfieLoading ? (
+                  <ActivityIndicator color="#10b981" />
+                ) : (
+                  <Image
+                    key={`${selfiePreviewKey}:${selfiePreviewUrl}`}
+                    source={{ uri: selfiePreviewUrl }}
+                    style={styles.selfieImage}
+                    contentFit="contain"
+                    cachePolicy="none"
+                  />
+                )}
+              </View>
+            ) : null}
             <View style={styles.selfieAside}>
               <View style={styles.selfieSummary}>
                 <Text style={styles.summaryName}>{displayName}</Text>
@@ -2510,11 +2508,6 @@ const styles = StyleSheet.create({
   selfieImage: {
     width: '100%',
     height: '100%',
-  },
-  selfiePlaceholder: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   selfieAside: {
     flex: 1,

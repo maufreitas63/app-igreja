@@ -12,7 +12,6 @@ import {
   type PastoralBeneficiaryType,
   type PastoralRequestDestination,
 } from '@/lib/pastoralRequest';
-import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
 import { appAlert } from '@/lib/appAlert';
@@ -555,14 +554,6 @@ export default function PastoralScreen() {
           style={styles.screenLayout}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}>
           <View style={styles.headerBar}>
-            <TouchableOpacity
-              accessibilityLabel="Voltar ao painel"
-              accessibilityRole="button"
-              activeOpacity={0.85}
-              onPress={handleBackToDashboard}
-              style={styles.headerBackButton}>
-              <Text style={styles.headerBackText}>{'‹'}</Text>
-            </TouchableOpacity>
             <View style={styles.headerTitles}>
               <Text style={styles.title}>Coração Aberto</Text>
               <Text style={styles.subtitle}>Pedido de cuidado pastoral</Text>
@@ -592,13 +583,17 @@ export default function PastoralScreen() {
               ]}>
               <FontAwesome name="history" size={20} color="#C4B5FD" />
             </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityLabel="Voltar"
+              accessibilityRole="button"
+              activeOpacity={0.85}
+              onPress={handleBackToDashboard}
+              style={styles.headerBackButton}>
+              <Text style={styles.headerBackText}>Voltar</Text>
+            </TouchableOpacity>
           </View>
 
-          {loadingUserId ? (
-            <View style={styles.statusBannerBox}>
-              <CardLoadingState lines={2} compact />
-            </View>
-          ) : !resolvedUserId ? (
+          {!loadingUserId && !resolvedUserId ? (
             <Text style={styles.statusBannerError}>
               Faça login novamente para enviar um pedido.
             </Text>
@@ -620,18 +615,16 @@ export default function PastoralScreen() {
                   onPress={() => setActiveSelector('motivo')}
                   activeOpacity={0.85}
                   disabled={loadingCategories || !categories.length}>
-                  {loadingCategories ? (
-                    <CardLoadingState lines={2} compact />
-                  ) : (
-                    <Text
-                      style={[
-                        styles.selectorFieldValue,
-                        !motivoSelecionadoLabel && styles.selectorFieldPlaceholder,
-                      ]}
-                      numberOfLines={4}>
-                      {motivoSelecionadoLabel ?? 'Selecionar'}
-                    </Text>
-                  )}
+                  <Text
+                    style={[
+                      styles.selectorFieldValue,
+                      !motivoSelecionadoLabel && styles.selectorFieldPlaceholder,
+                    ]}
+                    numberOfLines={4}>
+                    {loadingCategories
+                      ? 'Carregando...'
+                      : motivoSelecionadoLabel ?? 'Selecionar'}
+                  </Text>
                 </TouchableOpacity>
               </View>
 
@@ -650,20 +643,18 @@ export default function PastoralScreen() {
                   }}
                   activeOpacity={0.85}
                   disabled={!motivoSelecionado || loadingSubcategories || !subcategories.length}>
-                  {loadingSubcategories ? (
-                    <CardLoadingState lines={2} compact />
-                  ) : (
-                    <Text
-                      style={[
-                        styles.selectorFieldValue,
-                        !submotivoSelecionadoLabel && styles.selectorFieldPlaceholder,
-                      ]}
-                      numberOfLines={4}>
-                      {!motivoSelecionado
-                        ? 'Aguardando motivo'
+                  <Text
+                    style={[
+                      styles.selectorFieldValue,
+                      !submotivoSelecionadoLabel && styles.selectorFieldPlaceholder,
+                    ]}
+                    numberOfLines={4}>
+                    {!motivoSelecionado
+                      ? 'Aguardando motivo'
+                      : loadingSubcategories
+                        ? 'Carregando...'
                         : submotivoSelecionadoLabel ?? 'Selecionar'}
-                    </Text>
-                  )}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -772,15 +763,6 @@ export default function PastoralScreen() {
           <View style={styles.footerBar}>
             <View style={styles.footerActions}>
               <TouchableOpacity
-                accessibilityLabel="Voltar ao painel"
-                accessibilityRole="button"
-                activeOpacity={0.85}
-                disabled={loading}
-                onPress={handleBackToDashboard}
-                style={[styles.btnFooterBack, loading && styles.btnFooterBackDisabled]}>
-                <Text style={styles.btnFooterBackText}>Voltar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
                 accessibilityLabel="Enviar pedido pastoral"
                 accessibilityRole="button"
                 activeOpacity={0.85}
@@ -816,18 +798,20 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   headerBackButton: {
-    width: 40,
-    height: 40,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#64748b',
+    backgroundColor: 'rgba(51, 65, 85, 0.55)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 4,
+    marginLeft: 6,
   },
   headerBackText: {
     color: '#E2E8F0',
-    fontSize: 28,
-    lineHeight: 30,
-    fontWeight: '300',
+    fontSize: 14,
+    fontWeight: '800',
   },
   headerTitles: {
     flex: 1,
@@ -890,15 +874,14 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   fieldStack: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
     gap: 12,
     marginBottom: 10,
   },
   fieldBlock: {
     width: '100%',
-  },
-  statusBannerBox: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
+    alignSelf: 'stretch',
   },
   label: {
     color: '#10b981',
@@ -1027,27 +1010,8 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     gap: 10,
   },
-  btnFooterBack: {
-    flex: 0.85,
-    minWidth: 96,
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#64748b',
-    backgroundColor: 'rgba(51, 65, 85, 0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnFooterBackDisabled: {
-    opacity: 0.5,
-  },
-  btnFooterBackText: {
-    color: '#E2E8F0',
-    fontSize: 15,
-    fontWeight: '700',
-  },
   btnSubmitFull: {
-    flex: 1.35,
+    flex: 1,
     backgroundColor: '#a855f7',
     paddingVertical: 14,
     borderRadius: 14,

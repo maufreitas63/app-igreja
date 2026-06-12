@@ -211,18 +211,18 @@ export default function PastoralHistoryScreen() {
     <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.headerBar}>
+          <View style={styles.headerTitles}>
+            <Text style={styles.title}>Meus pedidos</Text>
+            <Text style={styles.subtitle}>Histórico do Coração Aberto</Text>
+          </View>
           <TouchableOpacity
             accessibilityLabel="Voltar"
             accessibilityRole="button"
             activeOpacity={0.85}
             onPress={handleBack}
             style={styles.headerBackButton}>
-            <Text style={styles.headerBackText}>{'‹'}</Text>
+            <Text style={styles.headerBackText}>Voltar</Text>
           </TouchableOpacity>
-          <View style={styles.headerTitles}>
-            <Text style={styles.title}>Meus pedidos</Text>
-            <Text style={styles.subtitle}>Histórico do Coração Aberto</Text>
-          </View>
         </View>
 
         {loading ? (
@@ -375,14 +375,6 @@ export default function PastoralHistoryScreen() {
           <View style={styles.footerBar}>
             <View style={styles.footerActions}>
               <TouchableOpacity
-                accessibilityLabel="Voltar para a tela anterior"
-                accessibilityRole="button"
-                style={styles.footerBackButton}
-                onPress={handleBack}
-                activeOpacity={0.85}>
-                <Text style={styles.footerBackButtonText}>Voltar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
                 accessibilityLabel="Novo pedido pastoral"
                 accessibilityRole="button"
                 style={styles.footerButton}
@@ -409,18 +401,20 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   headerBackButton: {
-    width: 40,
-    height: 40,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#64748b',
+    backgroundColor: 'rgba(51, 65, 85, 0.55)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 4,
+    marginLeft: 6,
   },
   headerBackText: {
     color: '#E2E8F0',
-    fontSize: 28,
-    lineHeight: 30,
-    fontWeight: '300',
+    fontSize: 14,
+    fontWeight: '800',
   },
   headerTitles: {
     flex: 1,
@@ -608,20 +602,6 @@ const styles = StyleSheet.create({
   footerActions: {
     flexDirection: 'row',
     gap: 10,
-  },
-  footerBackButton: {
-    flex: 1,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#64748B',
-    backgroundColor: 'rgba(30, 41, 59, 0.75)',
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  footerBackButtonText: {
-    color: '#E2E8F0',
-    fontWeight: '800',
-    fontSize: 15,
   },
   footerButton: {
     flex: 1,
