@@ -22,6 +22,11 @@ export function FinancialMonthlyBankBalance({
     [realizedEntriesThroughMonth]
   );
 
+  const totalBalance = useMemo(
+    () => rows.reduce((sum, row) => sum + row.balance, 0),
+    [rows]
+  );
+
   const monthLabel = formatFinancialMonthLabel(month);
 
   if (!rows.length) {
@@ -79,6 +84,26 @@ export function FinancialMonthlyBankBalance({
             </View>
           );
         })}
+
+        <View style={styles.totalRow}>
+          <View style={styles.accountBodyCell}>
+            <Text style={styles.totalLabel}>Saldo total</Text>
+          </View>
+          <View style={styles.valueBodyCell}>
+            <Text
+              style={[
+                styles.valueCell,
+                styles.totalValue,
+                totalBalance < 0 ? styles.valueNegative : styles.valuePositive,
+              ]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+            >
+              {formatBulletinAmount(totalBalance)}
+            </Text>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -198,6 +223,22 @@ const styles = StyleSheet.create({
   },
   valueNegative: {
     color: '#DC2626',
+  },
+  totalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 40,
+    borderTopWidth: 2,
+    borderTopColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
+  },
+  totalLabel: {
+    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  totalValue: {
+    fontWeight: '800',
   },
   emptyText: {
     color: '#64748B',
