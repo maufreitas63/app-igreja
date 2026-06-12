@@ -16,7 +16,7 @@ import {
 import { supabase } from '@/lib/supabase';
 
 export const MAINTENANCE_PASTORAL_SQL_HINT =
-  'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql e scripts/pastoral-maintenance-rpc.sql.';
+  'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql, scripts/pastoral-maintenance-rpc.sql e scripts/pastoral-request-handler.sql.';
 
 export const MAINTENANCE_PASTORAL_RPC_MISSING = 'MAINTENANCE_PASTORAL_RPC_MISSING';
 
@@ -138,6 +138,9 @@ const mapPastoralRequestRecord = (record: Record<string, unknown>) => {
     status: record.status != null ? String(record.status) : null,
     updated_at: record.updated_at != null ? String(record.updated_at) : null,
     confidential: Boolean(record.confidential),
+    handler_profile_id:
+      record.handler_profile_id != null ? String(record.handler_profile_id).trim() || null : null,
+    handler_name: record.handler_name != null ? String(record.handler_name).trim() || null : null,
   } satisfies PastoralRequestHistoryItem;
 };
 
@@ -227,7 +230,7 @@ async function fetchMaintenancePastoralRequestsDirect(profileId: string) {
   const { data, error } = await supabase
     .from('pastoral_requests')
     .select(
-      'id, created_at, motivo, situacao, description, destination_label, request_for, beneficiary_name, beneficiary_relationship, beneficiary_details, status, confidential, updated_at'
+      'id, created_at, motivo, situacao, description, destination_label, request_for, beneficiary_name, beneficiary_relationship, beneficiary_details, status, confidential, updated_at, handler_profile_id, handler_name'
     )
     .eq('profile_id', profileId)
     .order('created_at', { ascending: false });
@@ -342,5 +345,8 @@ export async function updatePastoralRequestFollowUpStage(
     message: typeof row.message === 'string' ? row.message : undefined,
     status: normalizedStatus ?? stage,
     updatedAt: typeof row.updated_at === 'string' ? row.updated_at : null,
+    handlerProfileId:
+      typeof row.handler_profile_id === 'string' ? row.handler_profile_id.trim() || null : null,
+    handlerName: typeof row.handler_name === 'string' ? row.handler_name.trim() || null : null,
   };
 }

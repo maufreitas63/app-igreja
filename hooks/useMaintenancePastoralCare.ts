@@ -8,6 +8,7 @@ import {
   type PastoralSubmitterOption,
 } from '@/lib/maintenancePastoralApi';
 import {
+  canUpdatePastoralRequestForSession,
   canViewPastoralRequestForSession,
   loadPastoralCareAccessContext,
   type PastoralCareAccessContext,
@@ -25,7 +26,7 @@ import { useMaintenanceRpcMissing } from '@/hooks/useMaintenanceRpcMissing';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export const MAINTENANCE_PASTORAL_CARE_SQL_HINT =
-  'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql e scripts/pastoral-maintenance-rpc.sql.';
+  'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql, scripts/pastoral-maintenance-rpc.sql e scripts/pastoral-request-handler.sql.';
 
 const EMPTY_PROFILE_VALUE = '';
 
@@ -39,6 +40,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
   const [isSavingFollowUpStage, setIsSavingFollowUpStage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessContext, setAccessContext] = useState<PastoralCareAccessContext>({
+    profileId: null,
     hasFullPastoralAccess: false,
     isIntercessionVolunteer: false,
   });
@@ -164,6 +166,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
   const reloadAccessContext = useCallback(async () => {
     if (!enabled) {
       setAccessContext({
+        profileId: null,
         hasFullPastoralAccess: false,
         isIntercessionVolunteer: false,
       });
@@ -176,6 +179,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     } catch (err) {
       console.error('Erro ao carregar permissões do Cuidado Pastoral:', err);
       setAccessContext({
+        profileId: null,
         hasFullPastoralAccess: false,
         isIntercessionVolunteer: false,
       });
@@ -224,6 +228,8 @@ export function useMaintenancePastoralCare(enabled: boolean) {
                   status: nextStatus,
                   followUpStage: normalizePastoralFollowUpStage(nextStatus) ?? stage,
                   updated_at: nextUpdatedAt,
+                  handler_profile_id: result.handlerProfileId ?? row.handler_profile_id ?? null,
+                  handler_name: result.handlerName ?? row.handler_name ?? null,
                 }
               : row
           )
@@ -319,6 +325,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     reloadSubmitters,
     accessContext,
     canViewPastoralRequestForSession,
+    canUpdatePastoralRequestForSession,
     formatRequestDateTimeLabel: formatPastoralRequestDateTimeLabel,
   };
 }

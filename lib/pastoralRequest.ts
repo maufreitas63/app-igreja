@@ -335,6 +335,8 @@ export type PastoralRequestHistoryItem = {
   status: string | null;
   updated_at?: string | null;
   confidential: boolean;
+  handler_profile_id?: string | null;
+  handler_name?: string | null;
 };
 
 const isPastoralBeneficiaryType = (value: string | null | undefined): value is PastoralBeneficiaryType =>

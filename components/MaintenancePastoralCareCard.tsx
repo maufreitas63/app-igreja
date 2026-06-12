@@ -7,7 +7,11 @@ import {
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
 import { MAINTENANCE_PASTORAL_CARE_SQL_HINT } from '@/hooks/useMaintenancePastoralCare';
-import { PASTORAL_DESTINATION_INTERCESSION } from '@/lib/pastoralAccess';
+import {
+  pastoralDestinationIsIntercession,
+  PASTORAL_DESTINATION_INTERCESSION,
+} from '@/lib/pastoralAccess';
+import { formatShortName } from '@/lib/formatShortName';
 import { PASTORAL_FOLLOW_UP_STAGES } from '@/lib/pastoralRequest';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
@@ -49,7 +53,23 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
     isFollowUpStageDone,
     formatRequestDateTimeLabel,
     accessContext,
+    canUpdatePastoralRequestForSession: canUpdateRequest,
   } = useMaintenancePastoralCare(isActive);
+
+  const canUpdateSelectedRequest = selectedRequest
+    ? canUpdateRequest(selectedRequest, accessContext)
+    : false;
+
+  const handlerDisplayName = selectedRequest?.handler_name
+    ? formatShortName(selectedRequest.handler_name)
+    : null;
+
+  const isIntercessionReadOnly =
+    selectedRequest
+    && pastoralDestinationIsIntercession(selectedRequest.destination_label)
+    && !accessContext.hasFullPastoralAccess
+    && Boolean(selectedRequest.handler_profile_id)
+    && !canUpdateSelectedRequest;
 
   const accessHint = accessContext.hasFullPastoralAccess
     ? null
@@ -268,12 +288,25 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
             <Text style={styles.detailLabel}>Pedido para</Text>
             <Text style={styles.detailValue}>{selectedRequest.requestForLabel}</Text>
 
-            <Text style={styles.detailLabel}>Acompanhamento</Text>
+            <View style={styles.stageHeaderRow}>
+              <Text style={styles.stageSectionLabel}>Acompanhamento</Text>
+              {handlerDisplayName ? (
+                <Text style={styles.stageHandlerName} numberOfLines={1}>
+                  {handlerDisplayName}
+                </Text>
+              ) : null}
+            </View>
+            {isIntercessionReadOnly ? (
+              <Text style={styles.stageReadOnlyHint}>
+                Pedido em acompanhamento por {handlerDisplayName ?? 'outra pessoa'} (somente leitura).
+              </Text>
+            ) : null}
             <View style={styles.stageRow}>
               {followUpStages.map((stage) => {
                 const currentStage = selectedRequest.followUpStage;
                 const isDone = isFollowUpStageDone(currentStage, stage);
-                const canAdvance = canAdvanceToFollowUpStage(currentStage, stage);
+                const canAdvance =
+                  canUpdateSelectedRequest && canAdvanceToFollowUpStage(currentStage, stage);
                 const isLocked = !isDone && !canAdvance;
 
                 return (
@@ -281,6 +314,7 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
                     key={stage}
                     style={[
                       styles.stageButton,
+                      stage === 'Acolher' && styles.stageButtonLead,
                       isDone && styles.stageButtonDone,
                       isLocked && styles.stageButtonLocked,
                     ]}
@@ -561,6 +595,37 @@ const styles = StyleSheet.create({
     height: 36,
     flexShrink: 0,
   },
+  stageHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 6,
+    maxWidth: '100%',
+  },
+  stageSectionLabel: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    flexShrink: 0,
+  },
+  stageHandlerName: {
+    flex: 1,
+    minWidth: 0,
+    color: '#F8FAFC',
+    fontSize: 13,
+    fontWeight: '800',
+    textAlign: 'right',
+  },
+  stageReadOnlyHint: {
+    color: '#93C5FD',
+    fontSize: 11,
+    lineHeight: 14,
+    marginTop: 2,
+    marginBottom: 2,
+  },
   stageRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -572,10 +637,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#475569',
     backgroundColor: 'rgba(30, 41, 59, 0.8)',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    minWidth: 92,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    minWidth: 84,
     alignItems: 'center',
+  },
+  stageButtonLead: {
+    minWidth: 78,
   },
   stageButtonDone: {
     borderColor: 'rgba(34, 211, 238, 0.65)',

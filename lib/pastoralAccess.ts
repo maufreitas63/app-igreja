@@ -8,8 +8,14 @@ export const PASTORAL_DESTINATION_INTERCESSION = 'Ministério de Intercessão';
 export const PASTORAL_DESTINATION_SIGILO = 'Sigilo Pastoral';
 
 export type PastoralCareAccessContext = {
+  profileId: string | null;
   hasFullPastoralAccess: boolean;
   isIntercessionVolunteer: boolean;
+};
+
+export type PastoralRequestUpdateAccessInput = {
+  destination_label?: string | null;
+  handler_profile_id?: string | null;
 };
 
 const normalizePastoralDestinationLabel = (value: string | null | undefined) =>
@@ -63,6 +69,35 @@ export const filterPastoralRequestsForSession = <T extends { destination_label?:
   rows: T[],
   context: PastoralCareAccessContext
 ) => rows.filter((row) => canViewPastoralRequestForSession(row.destination_label, context));
+
+export const canUpdatePastoralRequestForSession = (
+  request: PastoralRequestUpdateAccessInput,
+  context: PastoralCareAccessContext
+) => {
+  if (!canViewPastoralRequestForSession(request.destination_label, context)) {
+    return false;
+  }
+
+  if (context.hasFullPastoralAccess) {
+    return true;
+  }
+
+  if (!pastoralDestinationIsIntercession(request.destination_label)) {
+    return false;
+  }
+
+  if (!context.isIntercessionVolunteer) {
+    return false;
+  }
+
+  const handlerId = request.handler_profile_id?.trim() || null;
+
+  if (!handlerId) {
+    return true;
+  }
+
+  return handlerId === context.profileId?.trim();
+};
 
 const parseRpcBoolean = (data: unknown) => {
   if (typeof data === 'boolean') {
@@ -198,6 +233,7 @@ export async function loadPastoralCareAccessContext(
 
   if (!resolvedProfileId) {
     return {
+      profileId: null,
       hasFullPastoralAccess: false,
       isIntercessionVolunteer: false,
     };
@@ -209,6 +245,7 @@ export async function loadPastoralCareAccessContext(
   ]);
 
   return {
+    profileId: resolvedProfileId,
     hasFullPastoralAccess,
     isIntercessionVolunteer,
   };
