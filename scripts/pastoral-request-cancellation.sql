@@ -156,10 +156,10 @@ begin
     );
   end if;
 
-  if not public.session_can_view_pastoral_request(v_request.profile_id, v_request.destination_label) then
+  if not public.is_super_admin_profile(v_session_id) then
     return jsonb_build_object(
       'success', false,
-      'message', 'Sem permissão para cancelar este pedido pastoral.'
+      'message', 'Apenas super administradores podem confirmar o cancelamento de pedidos pastorais.'
     );
   end if;
 

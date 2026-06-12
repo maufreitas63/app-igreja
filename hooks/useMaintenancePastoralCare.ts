@@ -46,6 +46,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     operatorFullName: null,
     hasFullPastoralAccess: false,
     isIntercessionVolunteer: false,
+    isSuperAdmin: false,
   });
   const { rpcMissing, beginMaintenanceRequest, resolveMaintenanceRpcError } = useMaintenanceRpcMissing();
 
@@ -199,6 +200,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
         operatorFullName: null,
         hasFullPastoralAccess: false,
         isIntercessionVolunteer: false,
+        isSuperAdmin: false,
       });
       return;
     }
@@ -213,6 +215,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
         operatorFullName: null,
         hasFullPastoralAccess: false,
         isIntercessionVolunteer: false,
+        isSuperAdmin: false,
       });
     }
   }, [enabled]);

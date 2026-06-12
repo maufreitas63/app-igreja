@@ -103,7 +103,7 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
     : false;
 
   const canCancelSelectedRequest =
-    cancellationRequested && canUpdateSelectedRequest && !isIntercessionReadOnly;
+    cancellationRequested && accessContext.isSuperAdmin && !isIntercessionReadOnly;
 
   const accessHint = accessContext.hasFullPastoralAccess
     ? null

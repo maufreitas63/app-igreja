@@ -1,5 +1,8 @@
 import { profileHasAccess } from '@/lib/accessControl';
-import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
+import {
+  checkSessionIsSuperAdmin,
+  resolveActorProfileId,
+} from '@/lib/maintenanceAccessControlApi';
 import { supabase } from '@/lib/supabase';
 
 export const PASTORAL_CARE_PANEL_RESOURCE = 'maintenance.card.pastoral_care';
@@ -12,6 +15,7 @@ export type PastoralCareAccessContext = {
   operatorFullName: string | null;
   hasFullPastoralAccess: boolean;
   isIntercessionVolunteer: boolean;
+  isSuperAdmin: boolean;
 };
 
 export type PastoralRequestUpdateAccessInput = {
@@ -238,19 +242,23 @@ export async function loadPastoralCareAccessContext(
       operatorFullName: null,
       hasFullPastoralAccess: false,
       isIntercessionVolunteer: false,
+      isSuperAdmin: false,
     };
   }
 
-  const [hasFullPastoralAccess, isIntercessionVolunteer, profileResult] = await Promise.all([
-    checkSessionHasFullPastoralRequestsAccess(),
-    checkProfileIsIntercessionScaleVolunteer(resolvedProfileId),
-    supabase.from('profiles').select('full_name').eq('id', resolvedProfileId).maybeSingle(),
-  ]);
+  const [hasFullPastoralAccess, isIntercessionVolunteer, isSuperAdmin, profileResult] =
+    await Promise.all([
+      checkSessionHasFullPastoralRequestsAccess(),
+      checkProfileIsIntercessionScaleVolunteer(resolvedProfileId),
+      checkSessionIsSuperAdmin(),
+      supabase.from('profiles').select('full_name').eq('id', resolvedProfileId).maybeSingle(),
+    ]);
 
   return {
     profileId: resolvedProfileId,
     operatorFullName: profileResult.data?.full_name?.trim() || null,
     hasFullPastoralAccess,
     isIntercessionVolunteer,
+    isSuperAdmin,
   };
 }
