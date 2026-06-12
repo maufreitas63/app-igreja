@@ -232,7 +232,6 @@ export function useMaintenanceScaleVolunteers(enabled: boolean) {
         setRegisteredVolunteers((current) =>
           current.filter((volunteer) => volunteer.id !== volunteerId)
         );
-        await reloadVolunteers(selectedScaleTypeId);
 
         return { success: true as const, message: result.message ?? 'Servo removido.' };
       } catch (err) {

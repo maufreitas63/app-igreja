@@ -1135,8 +1135,10 @@ export default function ManageProfile() {
   const resetEditing = useCallback(() => {
     setEditingField(null);
     setEditingValue('');
-    setExpandedSections(DEFAULT_EXPANDED_SECTIONS);
-  }, []);
+    setExpandedSections(
+      isOnboardingFlow ? ONBOARDING_EXPANDED_SECTIONS : DEFAULT_EXPANDED_SECTIONS
+    );
+  }, [isOnboardingFlow]);
 
   const resetVehicleEditing = useCallback(() => {
     setEditingVehicle(null);

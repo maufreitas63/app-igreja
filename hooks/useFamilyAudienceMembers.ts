@@ -17,31 +17,33 @@ export function useFamilyAudienceMembers(
 
   const syncAudience = useCallback(async () => {
     if (!familyId.trim() || !sessionProfile?.id) {
-      return;
+      return false;
     }
 
     setSyncingAudience(true);
 
     try {
-      const inserted = await ensureSessionFamilyMemberRecord(
+      return await ensureSessionFamilyMemberRecord(
         familyId,
         sessionProfile,
         sessionProfileName
       );
-
-      if (inserted) {
-        await refetch();
-      }
     } catch (err) {
       console.error('Erro ao sincronizar audiência familiar:', err);
+      return false;
     } finally {
       setSyncingAudience(false);
     }
-  }, [familyId, refetch, sessionProfile, sessionProfileName]);
+  }, [familyId, sessionProfile, sessionProfileName]);
 
   useEffect(() => {
-    void syncAudience();
-  }, [syncAudience]);
+    void (async () => {
+      const inserted = await syncAudience();
+      if (inserted) {
+        await refetch();
+      }
+    })();
+  }, [refetch, syncAudience]);
 
   const audienceMembers = useMemo(() => dedupeFamilyMembers(members), [members]);
 

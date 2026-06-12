@@ -24,7 +24,7 @@ import {
   type PastoralFollowUpStage,
 } from '@/lib/pastoralRequest';
 import { useMaintenanceRpcMissing } from '@/hooks/useMaintenanceRpcMissing';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export const MAINTENANCE_PASTORAL_CARE_SQL_HINT =
   'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql, scripts/pastoral-maintenance-rpc.sql, scripts/pastoral-request-handler.sql e scripts/pastoral-request-cancellation.sql.';
@@ -48,6 +48,9 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     isIntercessionVolunteer: false,
     isSuperAdmin: false,
   });
+  const [accessContextReady, setAccessContextReady] = useState(false);
+  const submitterOptionsRef = useRef(submitterOptions);
+  submitterOptionsRef.current = submitterOptions;
   const { rpcMissing, beginMaintenanceRequest, resolveMaintenanceRpcError } = useMaintenanceRpcMissing();
 
   const selectedSubmitter = useMemo(
@@ -96,17 +99,16 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     setError(null);
 
     try {
-      const option = submitterOptions.find((row) => row.profileId === profileId);
-      const profile =
-        (await fetchPastoralSubmitterProfile(profileId)) ??
-        (option
-          ? {
-              profileId: option.profileId,
-              fullName: option.fullName,
-              shortName: option.shortName,
-              phone: option.phone,
-            }
-          : null);
+      const option = submitterOptionsRef.current.find((row) => row.profileId === profileId);
+      const profileFromOption = option
+        ? {
+            profileId: option.profileId,
+            fullName: option.fullName,
+            shortName: option.shortName,
+            phone: option.phone,
+          }
+        : null;
+      const profile = profileFromOption ?? (await fetchPastoralSubmitterProfile(profileId));
 
       if (!profile) {
         setRequests([]);
@@ -139,10 +141,11 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     } finally {
       setLoadingRequests(false);
     }
-  }, [accessContext, submitterOptions]);
+  }, [accessContext]);
 
   const reloadAccessContext = useCallback(async () => {
     if (!enabled) {
+      setAccessContextReady(false);
       setAccessContext({
         profileId: null,
         operatorFullName: null,
@@ -152,6 +155,8 @@ export function useMaintenancePastoralCare(enabled: boolean) {
       });
       return;
     }
+
+    setAccessContextReady(false);
 
     try {
       const context = await loadPastoralCareAccessContext();
@@ -165,6 +170,8 @@ export function useMaintenancePastoralCare(enabled: boolean) {
         isIntercessionVolunteer: false,
         isSuperAdmin: false,
       });
+    } finally {
+      setAccessContextReady(true);
     }
   }, [enabled]);
 
@@ -322,12 +329,12 @@ export function useMaintenancePastoralCare(enabled: boolean) {
   }, [reloadSubmitters]);
 
   useEffect(() => {
-    if (!enabled || !selectedProfileId) {
+    if (!enabled || !selectedProfileId || !accessContextReady) {
       return;
     }
 
     void loadRequestsForProfile(selectedProfileId);
-  }, [accessContext, enabled, loadRequestsForProfile, selectedProfileId]);
+  }, [accessContext, accessContextReady, enabled, loadRequestsForProfile, selectedProfileId]);
 
   useEffect(() => {
     if (!enabled) {

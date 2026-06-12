@@ -213,6 +213,8 @@ export async function resolvePastoralSessionProfile(
         phone: String(profile.phone ?? storedPhone ?? '').trim(),
       };
     }
+
+    return null;
   }
 
   const storedPhone = await AsyncStorage.getItem('user_phone');

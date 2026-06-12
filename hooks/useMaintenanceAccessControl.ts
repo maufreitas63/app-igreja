@@ -91,9 +91,13 @@ export function useMaintenanceAccessControl(enabled: boolean) {
       const roleRows = await listAccessRolesAdmin();
       setRoles(roleRows);
 
-      if (!roleRows.some((row) => row.code === selectedRoleCode) && roleRows.length > 0) {
-        setSelectedRoleCode(roleRows[0].code);
-      }
+      setSelectedRoleCode((current) => {
+        if (roleRows.some((row) => row.code === current)) {
+          return current;
+        }
+
+        return roleRows[0]?.code ?? current;
+      });
     } catch (err) {
       console.error('Erro ao carregar controle de acesso:', err);
       setIsSuperAdmin(false);
@@ -102,7 +106,7 @@ export function useMaintenanceAccessControl(enabled: boolean) {
     } finally {
       setLoading(false);
     }
-  }, [enabled, handleRpcError, selectedRoleCode]);
+  }, [enabled, handleRpcError]);
 
   useEffect(() => {
     void loadBootstrap();
@@ -256,12 +260,15 @@ export function useMaintenanceAccessControl(enabled: boolean) {
         setProfileRoles(previousRoles);
         console.error('Erro ao alterar papel do perfil:', err);
         handleRpcError(err, 'Não foi possível alterar o papel.');
-        return { success: false as const, message: error ?? 'Não foi possível alterar o papel.' };
+        return {
+          success: false as const,
+          message: err instanceof Error ? err.message : 'Não foi possível alterar o papel.',
+        };
       } finally {
         setSavingRoleCode(null);
       }
     },
-    [error, handleRpcError, profileRoles, selectedProfile]
+    [handleRpcError, profileRoles, selectedProfile]
   );
 
   const toggleScaleLeadership = useCallback(
@@ -299,12 +306,16 @@ export function useMaintenanceAccessControl(enabled: boolean) {
         setProfileScaleLeadership(previousLeadership);
         console.error('Erro ao alterar liderança de escala:', err);
         handleRpcError(err, 'Não foi possível alterar a liderança de escala.');
-        return { success: false as const, message: error ?? 'Não foi possível alterar a liderança de escala.' };
+        return {
+          success: false as const,
+          message:
+            err instanceof Error ? err.message : 'Não foi possível alterar a liderança de escala.',
+        };
       } finally {
         setSavingScaleLeadershipId(null);
       }
     },
-    [error, handleRpcError, profileScaleLeadership, selectedProfile]
+    [handleRpcError, profileScaleLeadership, selectedProfile]
   );
 
   const updateRoleGrant = useCallback(
@@ -375,12 +386,15 @@ export function useMaintenanceAccessControl(enabled: boolean) {
         );
         console.error('Erro ao salvar grant:', err);
         handleRpcError(err, 'Não foi possível salvar a permissão.');
-        return { success: false as const, message: error ?? 'Não foi possível salvar a permissão.' };
+        return {
+          success: false as const,
+          message: err instanceof Error ? err.message : 'Não foi possível salvar a permissão.',
+        };
       } finally {
         setSavingGrantKey(null);
       }
     },
-    [error, handleRpcError, selectedRoleCode]
+    [handleRpcError, selectedRoleCode]
   );
 
   const missingExpectedRoles = EXPECTED_ACCESS_ROLE_CODES.filter(

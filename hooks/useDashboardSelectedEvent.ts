@@ -36,36 +36,26 @@ export const useDashboardSelectedEvent = (options?: UseDashboardSelectedEventOpt
 
   useEffect(() => {
     if (!activeEvents.length) {
-      setSelectedEventIdState((current) => {
-        if (current !== null) {
-          void writeDashboardSelectedEventId(null);
-        }
-        return null;
-      });
+      setSelectedEventIdState(null);
       return;
     }
 
-    setSelectedEventIdState((current) => {
-      const next =
-        current && activeEvents.some((event) => event.id === current)
-          ? current
-          : activeEvents[0].id;
-
-      if (next !== current) {
-        void writeDashboardSelectedEventId(next);
-      }
-
-      return next;
-    });
+    setSelectedEventIdState((current) =>
+      current && activeEvents.some((event) => event.id === current)
+        ? current
+        : activeEvents[0].id
+    );
   }, [activeEvents]);
+
+  useEffect(() => {
+    void writeDashboardSelectedEventId(selectedEventId);
+  }, [selectedEventId]);
 
   const setSelectedEventId = useCallback(
     (value: string | null | ((current: string | null) => string | null)) => {
-      setSelectedEventIdState((current) => {
-        const next = typeof value === 'function' ? value(current) : value;
-        void writeDashboardSelectedEventId(next);
-        return next;
-      });
+      setSelectedEventIdState((current) =>
+        typeof value === 'function' ? value(current) : value
+      );
     },
     []
   );

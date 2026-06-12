@@ -23,7 +23,7 @@ import {
   type FinancialMonthKey,
 } from '@/lib/financialMonth';
 import { supabase } from '@/lib/supabase';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export type { FinancialEntry } from '@/lib/financialEntry';
 
@@ -231,6 +231,8 @@ export function useFinancialsByMonth(): UseFinancialsByMonthResult {
     () => new Set()
   );
   const [selectedMonth, setSelectedMonth] = useState<FinancialMonthKey | null>(null);
+  const selectedMonthRef = useRef<FinancialMonthKey | null>(null);
+  selectedMonthRef.current = selectedMonth;
   const [entries, setEntries] = useState<FinancialEntry[]>([]);
   const [previousBalance, setPreviousBalance] = useState(0);
   const [currentBalance, setCurrentBalance] = useState(0);
@@ -251,7 +253,7 @@ export function useFinancialsByMonth(): UseFinancialsByMonthResult {
   >([]);
   const [yearToDateRealizedBalance, setYearToDateRealizedBalance] = useState(0);
 
-  const loadMonths = useCallback(async () => {
+  const loadMonths = useCallback(async (): Promise<FinancialMonthKey | null> => {
     setLoadingMonths(true);
     setErrorMessage(null);
 
@@ -294,25 +296,27 @@ export function useFinancialsByMonth(): UseFinancialsByMonthResult {
           .filter((monthKey) => !realizedMonthKeys.has(monthKey))
       );
 
+      const currentMonth = selectedMonthRef.current;
+      const nextMonth =
+        currentMonth
+        && isFinancialMonthBeforeCurrentCalendarMonth(currentMonth)
+        && months.some(
+          (month) => formatFinancialMonthKey(month) === formatFinancialMonthKey(currentMonth)
+        )
+          ? currentMonth
+          : resolveDefaultFinancialMonth(months);
+
       setMonthOptions(months);
       setPlannedOnlyMonthKeys(plannedOnlyKeys);
-      setSelectedMonth((current) => {
-        if (
-          current &&
-          isFinancialMonthBeforeCurrentCalendarMonth(current) &&
-          months.some((month) => formatFinancialMonthKey(month) === formatFinancialMonthKey(current))
-        ) {
-          return current;
-        }
-
-        return resolveDefaultFinancialMonth(months);
-      });
+      setSelectedMonth(nextMonth);
+      return nextMonth;
     } catch (error) {
       console.error('Erro ao carregar meses financeiros:', error);
       setErrorMessage('Não foi possível carregar os meses disponíveis.');
       setMonthOptions([]);
       setPlannedOnlyMonthKeys(new Set());
       setSelectedMonth(null);
+      return null;
     } finally {
       setLoadingMonths(false);
     }
@@ -417,9 +421,9 @@ export function useFinancialsByMonth(): UseFinancialsByMonthResult {
   }, []);
 
   const reload = useCallback(async () => {
-    await loadMonths();
-    await loadEntries(selectedMonth);
-  }, [loadEntries, loadMonths, selectedMonth]);
+    const month = await loadMonths();
+    await loadEntries(month);
+  }, [loadEntries, loadMonths]);
 
   useEffect(() => {
     void loadMonths();
