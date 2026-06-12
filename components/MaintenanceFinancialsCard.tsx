@@ -1,5 +1,4 @@
 import { FinancialEntryEditModal } from '@/components/FinancialEntryEditModal';
-import { MaintenanceFinancialReceiptsPanel } from '@/components/MaintenanceFinancialReceiptsPanel';
 import { RDConciliationModal } from '@/components/RDConciliationModal';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
@@ -68,7 +67,7 @@ type Props = {
 
 const ACCENT = '#34D399';
 
-type MaintenanceSectionKey = 'period' | 'bulk' | 'entries' | 'receipts' | 'rd';
+type MaintenanceSectionKey = 'period' | 'bulk' | 'entries' | 'rd';
 
 type CollapsibleSectionProps = {
   title: string;
@@ -1074,24 +1073,6 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
         ) : (
           <Text style={styles.hintText}>Nenhum lançamento neste mês. Importe um CSV em lote.</Text>
         )}
-        </CollapsibleSection>
-
-        <CollapsibleSection
-          title="Comprovantes · carga e visualização"
-          subtitle="Selecione o lançamento, abra a pasta de imagens e grave o comprovante"
-          expanded={expandedSection === 'receipts'}
-          onToggle={() => toggleSection('receipts')}
-        >
-          <MaintenanceFinancialReceiptsPanel
-            enabled={isActive && expandedSection === 'receipts'}
-            yearOptions={yearOptions}
-            defaultMonth={selectedMonth}
-            canUpdateFinancials={canUpdateFinancials}
-            attachReceipt={attachReceipt}
-            uploadingReceiptEntryId={uploadingReceiptEntryId}
-            rpcMissing={rpcMissing}
-            formBusy={formBusy}
-          />
         </CollapsibleSection>
 
         <CollapsibleSection

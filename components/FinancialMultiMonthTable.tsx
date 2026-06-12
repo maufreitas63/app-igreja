@@ -3,9 +3,11 @@ import { formatBulletinAmount } from '@/lib/financialBulletin';
 import { formatFinancialMonthLabel } from '@/lib/financialMonth';
 import type { TwelveMonthMatrix, TwelveMonthMatrixRow } from '@/lib/financialTwelveMonthMatrix';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,6 +19,7 @@ import {
 const LABEL_COLUMN_WIDTH = 132;
 const VALUE_COLUMN_WIDTH = 76;
 const BODY_MAX_HEIGHT = 420;
+const ROW_MIN_HEIGHT = 34;
 const ROW_DETAIL_ICON_COLOR = '#94A3B8';
 
 export type FinancialMultiMonthTableProps = {
@@ -147,7 +150,26 @@ export function FinancialMultiMonthTable({
   icon = 'table',
 }: FinancialMultiMonthTableProps) {
   const [selectedRow, setSelectedRow] = useState<TwelveMonthMatrixRow | null>(null);
-  const tableWidth = LABEL_COLUMN_WIDTH + matrix.columns.length * VALUE_COLUMN_WIDTH;
+  const [rowHeights, setRowHeights] = useState<Record<string, number>>({});
+  const labelsScrollRef = useRef<ScrollView>(null);
+  const valuesTableWidth = matrix.columns.length * VALUE_COLUMN_WIDTH;
+
+  const handleBodyScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    labelsScrollRef.current?.scrollTo({ y: offsetY, animated: false });
+  }, []);
+
+  const syncRowHeight = useCallback((rowKey: string, height: number) => {
+    const nextHeight = Math.max(ROW_MIN_HEIGHT, Math.ceil(height));
+
+    setRowHeights((current) => {
+      if (current[rowKey] === nextHeight) {
+        return current;
+      }
+
+      return { ...current, [rowKey]: nextHeight };
+    });
+  }, []);
 
   if (!matrix.rows.length) {
     return (
@@ -176,18 +198,53 @@ export function FinancialMultiMonthTable({
       </View>
 
       <View style={styles.tableFrame}>
-        <ScrollView
-          horizontal
-          bounces={false}
-          nestedScrollEnabled
-          showsHorizontalScrollIndicator
-          style={styles.tableHorizontalScroll}
-        >
-          <View style={[styles.tableContent, { width: tableWidth }]}>
-            <View style={styles.tableHeaderRow}>
-              <View style={styles.headerLabelCell}>
-                <Text style={styles.headerLabel}>Descrição</Text>
-              </View>
+        <View style={styles.tableLayout}>
+          <View style={styles.labelColumn}>
+            <View style={styles.headerLabelCell}>
+              <Text style={styles.headerLabel}>Descrição</Text>
+            </View>
+            <ScrollView
+              ref={labelsScrollRef}
+              scrollEnabled={false}
+              showsVerticalScrollIndicator={false}
+              style={styles.labelsBodyScroll}
+              contentContainerStyle={styles.labelsBodyContent}
+            >
+              {matrix.rows.map((row) => (
+                <TouchableOpacity
+                  key={`${row.key}-label`}
+                  style={[styles.labelBodyRow, { minHeight: rowHeights[row.key] ?? ROW_MIN_HEIGHT }]}
+                  onPress={() => setSelectedRow(row)}
+                  onLayout={(event) => syncRowHeight(row.key, event.nativeEvent.layout.height)}
+                  activeOpacity={0.75}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver valores mensais de ${row.label}`}
+                >
+                  <Text
+                    style={[labelStyleForLevel(row.level), styles.labelBodyText]}
+                    numberOfLines={4}
+                  >
+                    {row.label}
+                  </Text>
+                  <FontAwesome
+                    name="bars"
+                    size={10}
+                    color={ROW_DETAIL_ICON_COLOR}
+                    style={styles.rowDetailIcon}
+                  />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          <ScrollView
+            horizontal
+            bounces={false}
+            nestedScrollEnabled
+            showsHorizontalScrollIndicator
+            style={styles.valuesPane}
+          >
+            <View style={[styles.valuesTable, { width: valuesTableWidth }]}>
               <View style={styles.valuesHeader}>
                 {matrix.columns.map((column) => (
                   <Text key={column.header} style={styles.headerValue}>
@@ -195,55 +252,43 @@ export function FinancialMultiMonthTable({
                   </Text>
                 ))}
               </View>
-            </View>
 
-            <ScrollView
-              style={styles.bodyScroll}
-              contentContainerStyle={styles.bodyScrollContent}
-              nestedScrollEnabled
-              showsVerticalScrollIndicator
-            >
-              {matrix.rows.map((row) => {
-                const bold =
-                  row.level === 'block' || row.level === 'total' || row.level === 'balance';
+              <ScrollView
+                style={styles.valuesBodyScroll}
+                contentContainerStyle={styles.valuesBodyContent}
+                nestedScrollEnabled
+                onScroll={handleBodyScroll}
+                scrollEventThrottle={16}
+                showsVerticalScrollIndicator
+              >
+                {matrix.rows.map((row) => {
+                  const bold =
+                    row.level === 'block' || row.level === 'total' || row.level === 'balance';
 
-                return (
-                  <View key={row.key} style={styles.dataRow}>
-                    <TouchableOpacity
-                      style={styles.labelBodyRow}
-                      onPress={() => setSelectedRow(row)}
-                      activeOpacity={0.75}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Ver valores mensais de ${row.label}`}
+                  return (
+                    <View
+                      key={`${row.key}-values`}
+                      style={[
+                        styles.valuesBodyRow,
+                        { minHeight: rowHeights[row.key] ?? ROW_MIN_HEIGHT },
+                      ]}
                     >
-                      <Text
-                        style={[labelStyleForLevel(row.level), styles.labelBodyText]}
-                        numberOfLines={4}
-                      >
-                        {row.label}
-                      </Text>
-                      <FontAwesome
-                        name="bars"
-                        size={10}
-                        color={ROW_DETAIL_ICON_COLOR}
-                        style={styles.rowDetailIcon}
-                      />
-                    </TouchableOpacity>
-                    <View style={styles.valuesRow}>
-                      {row.values.map((value, index) => (
-                        <AmountCell
-                          key={`${row.key}-${matrix.columns[index]?.header ?? index}`}
-                          value={value}
-                          bold={bold}
-                        />
-                      ))}
+                      <View style={styles.valuesRow}>
+                        {row.values.map((value, index) => (
+                          <AmountCell
+                            key={`${row.key}-${matrix.columns[index]?.header ?? index}`}
+                            value={value}
+                            bold={bold}
+                          />
+                        ))}
+                      </View>
                     </View>
-                  </View>
-                );
-              })}
-            </ScrollView>
-          </View>
-        </ScrollView>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </ScrollView>
+        </View>
       </View>
     </View>
   );
@@ -292,28 +337,25 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
   },
-  tableHorizontalScroll: {
+  tableLayout: {
+    flexDirection: 'row',
     maxHeight: BODY_MAX_HEIGHT + 40,
   },
-  tableContent: {
-    flexGrow: 1,
-  },
-  tableHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    backgroundColor: '#F1F5F9',
-    borderBottomWidth: 1,
-    borderBottomColor: '#CBD5E1',
+  labelColumn: {
+    width: LABEL_COLUMN_WIDTH,
+    borderRightWidth: 1,
+    borderRightColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    zIndex: 2,
   },
   headerLabelCell: {
-    width: LABEL_COLUMN_WIDTH,
     minHeight: 36,
     paddingVertical: 8,
     paddingHorizontal: 8,
     justifyContent: 'center',
-    borderRightWidth: 1,
-    borderRightColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderBottomWidth: 1,
+    borderBottomColor: '#CBD5E1',
+    backgroundColor: '#F1F5F9',
   },
   headerLabel: {
     color: '#64748B',
@@ -321,30 +363,22 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textTransform: 'uppercase',
   },
-  bodyScroll: {
-    maxHeight: BODY_MAX_HEIGHT,
+  labelsBodyScroll: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  bodyScrollContent: {
+  labelsBodyContent: {
     flexGrow: 1,
   },
-  dataRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    minHeight: 34,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
   labelBodyRow: {
-    width: LABEL_COLUMN_WIDTH,
-    minHeight: 34,
+    minHeight: ROW_MIN_HEIGHT,
     paddingVertical: 6,
     paddingHorizontal: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    borderRightWidth: 1,
-    borderRightColor: '#E2E8F0',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
     backgroundColor: '#F8FAFC',
   },
   labelBodyText: {
@@ -355,13 +389,19 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     opacity: 0.85,
   },
-  valuesHeader: {
+  valuesPane: {
     flex: 1,
+  },
+  valuesTable: {},
+  valuesHeader: {
     flexDirection: 'row',
     minHeight: 36,
     paddingVertical: 8,
     paddingHorizontal: 4,
     alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderBottomWidth: 1,
+    borderBottomColor: '#CBD5E1',
   },
   headerValue: {
     width: VALUE_COLUMN_WIDTH,
@@ -371,10 +411,21 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     textTransform: 'uppercase',
   },
-  valuesRow: {
-    flex: 1,
-    flexDirection: 'row',
+  valuesBodyScroll: {
+    maxHeight: BODY_MAX_HEIGHT,
+  },
+  valuesBodyContent: {
+    flexGrow: 1,
+  },
+  valuesBodyRow: {
+    minHeight: ROW_MIN_HEIGHT,
     paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    justifyContent: 'center',
+  },
+  valuesRow: {
+    flexDirection: 'row',
     paddingHorizontal: 4,
     alignItems: 'center',
   },

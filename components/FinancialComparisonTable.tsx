@@ -4,7 +4,7 @@ import {
 } from '@/lib/financialBulletinComparison';
 import { formatBulletinAmount } from '@/lib/financialBulletin';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -24,6 +24,7 @@ import {
 const LABEL_COLUMN_WIDTH = 132;
 const VALUE_COLUMN_WIDTH = 88;
 const TRIPLE_VALUES_TABLE_WIDTH = VALUE_COLUMN_WIDTH * 3;
+const ROW_MIN_HEIGHT = 34;
 
 export type FinancialComparisonTableProps = {
   title: string;
@@ -146,10 +147,23 @@ export function FinancialComparisonTable({
   const isSingleColumn = displayMode === 'single';
   const valuesTableWidth = isSingleColumn ? VALUE_COLUMN_WIDTH : TRIPLE_VALUES_TABLE_WIDTH;
   const labelsScrollRef = useRef<ScrollView>(null);
+  const [rowHeights, setRowHeights] = useState<Record<string, number>>({});
 
   const handleBodyScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     labelsScrollRef.current?.scrollTo({ y: offsetY, animated: false });
+  }, []);
+
+  const syncRowHeight = useCallback((rowKey: string, height: number) => {
+    const nextHeight = Math.max(ROW_MIN_HEIGHT, Math.ceil(height));
+
+    setRowHeights((current) => {
+      if (current[rowKey] === nextHeight) {
+        return current;
+      }
+
+      return { ...current, [rowKey]: nextHeight };
+    });
   }, []);
 
   if (!rows.length) {
@@ -185,7 +199,11 @@ export function FinancialComparisonTable({
               contentContainerStyle={styles.labelsBodyContent}
             >
               {rows.map((row) => (
-                <View key={`${row.key}-label`} style={styles.labelBodyRow}>
+                <View
+                  key={`${row.key}-label`}
+                  style={[styles.labelBodyRow, { minHeight: rowHeights[row.key] ?? ROW_MIN_HEIGHT }]}
+                  onLayout={(event) => syncRowHeight(row.key, event.nativeEvent.layout.height)}
+                >
                   <Text style={labelStyleForLevel(row.level)} numberOfLines={4}>
                     {row.label}
                   </Text>
@@ -201,11 +219,17 @@ export function FinancialComparisonTable({
             showsHorizontalScrollIndicator
             style={styles.valuesPane}
           >
-            <View style={styles.valuesTable}>
+            <View style={[styles.valuesTable, { width: valuesTableWidth }]}>
               <View style={styles.valuesHeader}>
-                <Text style={styles.headerValue}>{leftColumnHeader}</Text>
-                <Text style={styles.headerValue}>{rightColumnHeader}</Text>
-                <Text style={styles.headerValue}>{variationColumnHeader}</Text>
+                {isSingleColumn ? (
+                  <Text style={styles.headerValue}>{valueColumnHeader}</Text>
+                ) : (
+                  <>
+                    <Text style={styles.headerValue}>{leftColumnHeader}</Text>
+                    <Text style={styles.headerValue}>{rightColumnHeader}</Text>
+                    <Text style={styles.headerValue}>{variationColumnHeader}</Text>
+                  </>
+                )}
               </View>
 
               <ScrollView
@@ -221,8 +245,18 @@ export function FinancialComparisonTable({
                     row.level === 'block' || row.level === 'total' || row.level === 'balance';
 
                   return (
-                    <View key={`${row.key}-values`} style={styles.valuesBodyRow}>
-                      <TripleValuesCells row={row} bold={bold} />
+                    <View
+                      key={`${row.key}-values`}
+                      style={[
+                        styles.valuesBodyRow,
+                        { minHeight: rowHeights[row.key] ?? ROW_MIN_HEIGHT },
+                      ]}
+                    >
+                      {isSingleColumn ? (
+                        <SingleValueCell row={row} bold={bold} />
+                      ) : (
+                        <TripleValuesCells row={row} bold={bold} />
+                      )}
                     </View>
                   );
                 })}
@@ -304,12 +338,13 @@ const styles = StyleSheet.create({
   },
   labelsBodyContent: {},
   labelBodyRow: {
-    minHeight: 34,
+    minHeight: ROW_MIN_HEIGHT,
     paddingVertical: 6,
     paddingHorizontal: 8,
     justifyContent: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
   },
   valuesPane: {
     flex: 1,
@@ -338,7 +373,7 @@ const styles = StyleSheet.create({
   valuesBodyScroll: financialReportTableBodyScrollStyle,
   valuesBodyContent: {},
   valuesBodyRow: {
-    minHeight: 34,
+    minHeight: ROW_MIN_HEIGHT,
     paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
@@ -347,7 +382,7 @@ const styles = StyleSheet.create({
   valuesRow: {
     flexDirection: 'row',
     paddingHorizontal: 4,
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   valueCell: {
     width: VALUE_COLUMN_WIDTH,
