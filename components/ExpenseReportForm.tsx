@@ -3,7 +3,7 @@ import {
   createEmptyExpenseReportDraftItem,
   getExpenseReportTodayDateInput,
   parseExpenseReportAmountInputLenient,
-  sanitizeExpenseAmountInput,
+  sanitizeExpenseAmountCentsInput,
   sanitizeExpenseReportDateInput,
   type ExpenseReportDraftItem,
   type ExpenseReportHeader,
@@ -172,15 +172,15 @@ export function ExpenseReportForm({ header, submitting, onSubmit, onCancel }: Pr
 
           <Text style={styles.fieldLabel}>Valor (R$)</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, styles.amountInput]}
             value={item.amountInput}
             onChangeText={(value) =>
-              updateItem(item.id, { amountInput: sanitizeExpenseAmountInput(value) })
+              updateItem(item.id, { amountInput: sanitizeExpenseAmountCentsInput(value) })
             }
             placeholder="0,00"
             placeholderTextColor="#94A3B8"
-            keyboardType="numeric"
-            inputMode="decimal"
+            keyboardType="number-pad"
+            inputMode="numeric"
             editable={!submitting}
           />
 
@@ -285,6 +285,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     color: '#0F172A',
     fontSize: 14,
+  },
+  amountInput: {
+    textAlign: 'right',
+    fontVariant: ['tabular-nums'],
   },
   itemsHeader: {
     flexDirection: 'row',

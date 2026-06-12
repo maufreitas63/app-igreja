@@ -22,6 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -176,12 +177,20 @@ export default function ExpenseReportScreen() {
       return;
     }
 
+    const previousReports = reports;
     setDeletingReportId(report.id);
+    setReports((current) => current.filter((entry) => entry.id !== report.id));
+
+    if (selectedReport?.id === report.id) {
+      setSelectedReport(null);
+      setMode('list');
+    }
 
     try {
       const result = await deleteExpenseReport(report.id);
 
       if (!result.success) {
+        setReports(previousReports);
         Toast.show({
           type: 'error',
           text1: 'RD',
@@ -190,19 +199,13 @@ export default function ExpenseReportScreen() {
         return;
       }
 
-      setReports((current) => current.filter((entry) => entry.id !== report.id));
-
-      if (selectedReport?.id === report.id) {
-        setSelectedReport(null);
-        setMode('list');
-      }
-
       Toast.show({
         type: 'success',
         text1: 'RD',
         text2: result.message,
       });
     } catch (err) {
+      setReports(previousReports);
       Toast.show({
         type: 'error',
         text1: 'RD',
@@ -343,20 +346,25 @@ export default function ExpenseReportScreen() {
                         </TouchableOpacity>
 
                         {report.status === 'pending' ? (
-                          <TouchableOpacity
-                            style={[
+                          <Pressable
+                            style={({ pressed }) => [
                               styles.deleteReportButton,
                               deletingReportId === report.id && styles.deleteReportButtonDisabled,
+                              pressed && styles.deleteReportButtonPressed,
                             ]}
-                            onPress={() => void handleDeleteReport(report)}
+                            onPress={(event) => {
+                              event?.stopPropagation?.();
+                              void handleDeleteReport(report);
+                            }}
                             disabled={deletingReportId === report.id}
-                            activeOpacity={0.85}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Excluir ${report.report_number}`}
                           >
                             <FontAwesome name="trash-o" size={14} color="#FFFFFF" />
                             <Text style={styles.deleteReportButtonText}>
                               {deletingReportId === report.id ? 'Excluindo...' : 'Excluir RD'}
                             </Text>
-                          </TouchableOpacity>
+                          </Pressable>
                         ) : null}
                       </View>
                     );
@@ -535,6 +543,9 @@ const styles = StyleSheet.create({
   },
   deleteReportButtonDisabled: {
     opacity: 0.6,
+  },
+  deleteReportButtonPressed: {
+    opacity: 0.85,
   },
   deleteReportButtonText: {
     color: '#FFFFFF',

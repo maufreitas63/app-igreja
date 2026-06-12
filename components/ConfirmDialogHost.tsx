@@ -27,6 +27,7 @@ export function ConfirmDialogHost() {
 
   return (
     <Modal transparent visible animationType="fade" onRequestClose={dismiss}>
+      <View style={styles.modalRoot}>
       <Pressable style={styles.backdrop} onPress={dismiss}>
         <Pressable style={styles.card} onPress={(event) => event.stopPropagation()}>
           <Text style={styles.message}>{request.message}</Text>
@@ -56,11 +57,25 @@ export function ConfirmDialogHost() {
           </View>
         </Pressable>
       </Pressable>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  modalRoot: Platform.select({
+    web: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 999998,
+    },
+    default: {
+      flex: 1,
+    },
+  }),
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.72)',

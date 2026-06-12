@@ -186,6 +186,26 @@ export const parseExpenseReportDateInput = (value: string): string | null => {
 
 export const sanitizeExpenseAmountInput = (value: string) => value.replace(/[^\d.,]/g, '');
 
+/** Entrada monetária da direita para a esquerda: "1" → 0,01; "12" → 0,12; "1234" → 12,34. */
+export const sanitizeExpenseAmountCentsInput = (value: string): string => {
+  const digits = value.replace(/\D/g, '').slice(0, 14);
+
+  if (!digits) {
+    return '';
+  }
+
+  const cents = Number(digits);
+
+  if (!Number.isFinite(cents) || cents <= 0) {
+    return '';
+  }
+
+  return (cents / 100).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 const normalizeBrazilianAmountString = (value: string): string | null => {
   const trimmed = sanitizeExpenseAmountInput(value.trim());
 
@@ -249,12 +269,22 @@ export const parseExpenseReportAmountInput = (value: string): number | null => {
   return parsed;
 };
 
-/** Soma parcial enquanto o usuário digita (ex.: "12," ou "12,5"). */
+/** Soma parcial enquanto o usuário digita (inclui entrada por centavos). */
 export const parseExpenseReportAmountInputLenient = (value: string): number => {
   const parsed = parseExpenseReportAmountInput(value);
 
   if (parsed !== null) {
     return parsed;
+  }
+
+  const digits = value.replace(/\D/g, '');
+
+  if (digits) {
+    const cents = Number(digits);
+
+    if (Number.isFinite(cents) && cents > 0) {
+      return cents / 100;
+    }
   }
 
   const trimmed = sanitizeExpenseAmountInput(value.trim()).replace(/[.,]$/, '');
