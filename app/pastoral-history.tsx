@@ -18,6 +18,7 @@ import {
 import { appAlert } from '@/lib/appAlert';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -44,7 +45,7 @@ export default function PastoralHistoryScreen() {
   const routeUserId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
   const router = useRouter();
 
-  useScreenAccessGuard({
+  const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.pastoralHistory,
     deniedMessage: 'Você não tem permissão para ver seus pedidos pastorais.',
   });
@@ -245,6 +246,7 @@ export default function PastoralHistoryScreen() {
   }, [cancellationModalRequest, cancellationReason, profileId]);
 
   return (
+    <ScreenAccessGate status={accessStatus}>
     <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <Modal
@@ -493,6 +495,7 @@ export default function PastoralHistoryScreen() {
         ) : null}
       </SafeAreaView>
     </LinearGradient>
+    </ScreenAccessGate>
   );
 }
 

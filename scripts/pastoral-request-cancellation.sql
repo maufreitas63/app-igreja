@@ -32,12 +32,10 @@ declare
   v_follow_up_idx integer;
   v_reason text;
 begin
+  perform public.assert_session_profile_matches(p_profile_id);
+
   if p_request_id is null then
     return jsonb_build_object('success', false, 'message', 'Pedido não informado.');
-  end if;
-
-  if p_profile_id is null then
-    return jsonb_build_object('success', false, 'message', 'Perfil não informado.');
   end if;
 
   select regexp_replace(coalesce(p.phone, ''), '\D', '', 'g')
@@ -197,9 +195,7 @@ as $$
 declare
   v_profile_phone_digits text;
 begin
-  if p_profile_id is null then
-    raise exception 'Perfil não informado.';
-  end if;
+  perform public.assert_session_profile_matches(p_profile_id);
 
   select regexp_replace(coalesce(p.phone, ''), '\D', '', 'g')
   into v_profile_phone_digits

@@ -1,4 +1,5 @@
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
+import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { resolveReturnDashboardCardParam } from '@/lib/dashboardReturnNavigation';
@@ -15,12 +16,13 @@ export default function MapGeolocalizacaoNativeFallback() {
     fallbackDashboardCard: 'members_list',
   });
 
-  useScreenAccessGuard({
+  const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.mapGeolocation,
     deniedMessage: 'Você não tem permissão para abrir o mapa de geolocalização.',
   });
 
   return (
+    <ScreenAccessGate status={accessStatus}>
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.header}>
         <Text style={styles.title}>Mapa de Geolocalização</Text>
@@ -36,6 +38,7 @@ export default function MapGeolocalizacaoNativeFallback() {
         </Text>
       </View>
     </SafeAreaView>
+    </ScreenAccessGate>
   );
 }
 

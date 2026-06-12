@@ -304,6 +304,11 @@ export default function MaintenanceDashboard() {
   const [canAccessPastoralCare, setCanAccessPastoralCare] = useState(false);
   const [canAccessPastoralRoleChange, setCanAccessPastoralRoleChange] = useState(false);
   const [canMonitorFamilyReception, setCanMonitorFamilyReception] = useState(false);
+  const [canAccessProfileCadastro, setCanAccessProfileCadastro] = useState(false);
+  const [canUpdateMaintenanceEvents, setCanUpdateMaintenanceEvents] = useState(false);
+  const [maintenancePanelAccess, setMaintenancePanelAccess] = useState<Record<string, boolean>>(
+    {}
+  );
   const [totemSchemaReady, setTotemSchemaReady] = useState(isTotemAtivoColumnAvailable());
   const [quorumSchemaReady, setQuorumSchemaReady] = useState(isRequerQuorumColumnAvailable());
   const [quorumRegistrySchemaMissing, setQuorumRegistrySchemaMissing] = useState(
@@ -425,6 +430,9 @@ export default function MaintenanceDashboard() {
         setCanManageAccessControl(snapshot.isSuperAdmin);
         setCanAccessAccessControlCard(snapshot.canOpenAccessControlCard);
         setCanMonitorFamilyReception(snapshot.canMonitorFamilyReception);
+        setCanAccessProfileCadastro(snapshot.canAccessProfileCadastro);
+        setCanUpdateMaintenanceEvents(snapshot.canUpdateMaintenanceEvents);
+        setMaintenancePanelAccess(snapshot.maintenancePanelAccess);
         setScalePanelAccess(snapshot.scalePanelAccess);
         setCanAccessPastoralCare(snapshot.canAccessPastoralCare);
         setCanAccessPastoralRoleChange(snapshot.canAccessPastoralRoleChange);
@@ -639,16 +647,17 @@ export default function MaintenanceDashboard() {
       }
 
       if (card.content === 'profile_cadastro' || card.content === 'family_reception') {
-        return canManageAccessControl;
+        return canAccessProfileCadastro;
       }
 
-      return true;
+      return maintenancePanelAccess[card.content] === true;
     });
   }, [
     canAccessAccessControlCard,
     canAccessPastoralCare,
     canAccessPastoralRoleChange,
-    canManageAccessControl,
+    canAccessProfileCadastro,
+    maintenancePanelAccess,
     scalePanelAccess,
   ]);
 
@@ -1536,7 +1545,7 @@ export default function MaintenanceDashboard() {
                   </Pressable>
                 </View>
               </View>
-            ) : !isCreating ? (
+            ) : !isCreating && canUpdateMaintenanceEvents ? (
               <Pressable
                 style={({ pressed }) => [
                   styles.deleteButton,

@@ -10,6 +10,7 @@ import {
   withReturnDashboardCard,
 } from '@/lib/dashboardReturnNavigation';
 import { DASHBOARD_FINANCIAL_CARD_ID, FINANCIAL_HUB_ITEMS } from '@/lib/financialModule';
+import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { formatFinancialMonthKey, formatFinancialMonthLabel } from '@/lib/financialMonth';
 import { useFinancialsByMonth } from '@/hooks/useFinancialsByMonth';
@@ -44,7 +45,7 @@ export default function FinancialScreen() {
   const returnDashboardCard = resolveReturnDashboardCardParam(params) ?? DASHBOARD_FINANCIAL_CARD_ID;
   const scrollRef = useRef<ScrollView>(null);
 
-  useScreenAccessGuard({
+  const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.financial,
     deniedMessage: 'Você não tem permissão para abrir o módulo financeiro.',
   });
@@ -421,6 +422,7 @@ export default function FinancialScreen() {
   };
 
   return (
+    <ScreenAccessGate status={accessStatus}>
     <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.headerBar}>
@@ -530,6 +532,7 @@ export default function FinancialScreen() {
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
+    </ScreenAccessGate>
   );
 }
 

@@ -1,5 +1,6 @@
 -- Campos do pedido "Coração Aberto" em `public.pastoral_requests`.
 -- Execute no SQL Editor do Supabase (script completo).
+-- Requer: scripts/access-control-security-hardening.sql (assert_session_profile_matches).
 --
 -- O app identifica o membro por `profiles.id` (login com PIN).
 -- `user_id` na tabela original referencia `auth.users` — muitos perfis não têm auth.
@@ -121,11 +122,8 @@ declare
   v_beneficiary_details text;
 begin
   -- p_user_id = profiles.id (enviado pelo app)
+  perform public.assert_session_profile_matches(p_user_id);
   v_profile_id := p_user_id;
-
-  if v_profile_id is null then
-    raise exception 'Perfil não informado.';
-  end if;
 
   select p.auth_user_id
   into v_auth_user_id

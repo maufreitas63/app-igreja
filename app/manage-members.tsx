@@ -40,7 +40,8 @@ import {
 import { syncManagedMemberProfileFamilyWithFallback } from '@/lib/syncManagedMemberProfileFamily';
 import { applyProfileBirthDates } from '../lib/profileBirthDates';
 import { supabase } from '@/lib/supabase';
-import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
+import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import {
   normalizeFamilyCode,
   resolveCurrentFamilyId,
@@ -445,10 +446,15 @@ export default function ManageMembers() {
   });
   const listRef = useRef<FlatList<ManagedMember>>(null);
 
-  useScreenAccessGuard({
+  const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.manageMembers,
     deniedMessage: 'Você não tem permissão para abrir Gerenciar família.',
   });
+  const [canUpdateFamilyMembers, setCanUpdateFamilyMembers] = useState(false);
+
+  useEffect(() => {
+    void sessionHasAccess('table', 'members', 'update').then(setCanUpdateFamilyMembers);
+  }, []);
 
   const [familyId, setFamilyId] = useState('IBN0001');
   const [members, setMembers] = useState<ManagedMember[]>([]);
@@ -1320,6 +1326,7 @@ export default function ManageMembers() {
   };
 
   return (
+    <ScreenAccessGate status={accessStatus}>
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <Text style={styles.titleCentered}>Gerenciar Família</Text>
@@ -1542,6 +1549,7 @@ export default function ManageMembers() {
                         {adding ? '...' : 'SALVAR ALTERAÇÕES'}
                       </Text>
                     </TouchableOpacity>
+                    {canUpdateFamilyMembers ? (
                     <TouchableOpacity
                       style={[
                         styles.deleteMemberButton,
@@ -1555,6 +1563,7 @@ export default function ManageMembers() {
                         {deleting ? '...' : 'EXCLUIR INTEGRANTE'}
                       </Text>
                     </TouchableOpacity>
+                    ) : null}
                     <TouchableOpacity style={styles.cancelEditButton} onPress={resetForm}>
                       <Text style={styles.cancelEditButtonText}>Cancelar edição</Text>
                     </TouchableOpacity>
@@ -1657,9 +1666,11 @@ export default function ManageMembers() {
                   <MaterialIcons name="check-box-outline-blank" size={20} color="#94A3B8" />
                 )}
               </Pressable>
+              {canUpdateFamilyMembers ? (
               <TouchableOpacity style={styles.editButton} onPress={() => startEditingMember(item)}>
                 <MaterialIcons name="edit" size={18} color="#FFF" />
               </TouchableOpacity>
+              ) : null}
             </View>
             </View>
           </View>
@@ -1673,6 +1684,7 @@ export default function ManageMembers() {
         </TouchableOpacity>
       </View>
     </SafeAreaView>
+    </ScreenAccessGate>
   );
 }
 

@@ -16,6 +16,7 @@ import {
   type ExpenseReportSummary,
 } from '@/lib/expenseReport';
 import { confirmDialog } from '@/lib/confirmDialog';
+import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -39,7 +40,7 @@ export default function ExpenseReportScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const reportIdParam = typeof params.id === 'string' ? params.id : undefined;
 
-  useScreenAccessGuard({
+  const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.expenseReport,
     deniedMessage: 'Você não tem permissão para abrir o Relatório de Despesas.',
   });
@@ -250,6 +251,7 @@ export default function ExpenseReportScreen() {
   };
 
   return (
+    <ScreenAccessGate status={accessStatus}>
     <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.headerBar}>
@@ -393,6 +395,7 @@ export default function ExpenseReportScreen() {
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
+    </ScreenAccessGate>
   );
 }
 

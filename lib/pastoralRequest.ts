@@ -471,7 +471,7 @@ export const canDeletePastoralRequest = (status: string | null | undefined): boo
   !isPastoralRequestCareStarted(status);
 
 export const getPastoralRequestDeleteBlockedMessage = () =>
-  'Este pedido está em acompanhamento. Somente a equipe do Cuidado Pastoral pode encerrá-lo.';
+  'Este pedido está em acompanhamento. Solicite cancelamento com justificativa; a confirmação é feita pelo super administrador.';
 
 export const hasPastoralCancellationRequested = (
   item: Pick<PastoralRequestHistoryItem, 'cancellation_requested_at'>

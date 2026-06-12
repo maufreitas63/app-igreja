@@ -12,6 +12,7 @@ import {
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { supabase } from '@/lib/supabase';
 import { useLgpdTermsScrollGate } from '@/hooks/useLgpdTermsScrollGate';
+import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { getStoredProfileId } from '@/lib/userSession';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -80,7 +81,7 @@ export default function LgpdScreen() {
   const phoneParam = params.phone ? decodeURIComponent(params.phone as string) : null;
   useRejectTotemPhoneFromMemberRoutes(phoneParam);
 
-  useScreenAccessGuard({
+  const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.lgpd,
     deniedMessage: 'Você não tem permissão para abrir os termos de privacidade.',
     skipCheck: Boolean(phoneParam),
@@ -228,6 +229,7 @@ export default function LgpdScreen() {
   }, [acceptedLGPD, navigateAfterLgpd, profileId]);
 
   return (
+    <ScreenAccessGate status={accessStatus}>
     <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <View style={styles.body}>
@@ -310,6 +312,7 @@ export default function LgpdScreen() {
         </View>
       </SafeAreaView>
     </LinearGradient>
+    </ScreenAccessGate>
   );
 }
 

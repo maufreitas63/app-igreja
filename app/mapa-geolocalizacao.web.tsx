@@ -13,6 +13,7 @@ import {
   profileHasMapAddress,
 } from '@/lib/enrichProfileMapAddress';
 import { normalizeCepDigits } from '@/lib/geoMapGeocoding';
+import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
@@ -71,7 +72,7 @@ export default function MapGeolocalizacaoWebScreen() {
     return value?.trim() || null;
   }, [params.focusProfileId]);
 
-  useScreenAccessGuard({
+  const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.mapGeolocation,
     deniedMessage: 'Você não tem permissão para abrir o mapa de geolocalização.',
   });
@@ -319,6 +320,7 @@ export default function MapGeolocalizacaoWebScreen() {
   }, []);
 
   return (
+    <ScreenAccessGate status={accessStatus}>
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mapa de Geolocalização</Text>
@@ -605,6 +607,7 @@ export default function MapGeolocalizacaoWebScreen() {
         </View>
       ) : null}
     </SafeAreaView>
+    </ScreenAccessGate>
   );
 }
 

@@ -1,4 +1,5 @@
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
+import { MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY } from '@/lib/screenAccessResourceKeys';
 import { getCachedOrFetch } from '@/lib/asyncResultCache';
 import {
   checkSessionIsSuperAdmin,
@@ -23,6 +24,9 @@ export type MaintenanceDashboardAccessSnapshot = {
   isSuperAdmin: boolean;
   canOpenAccessControlCard: boolean;
   canMonitorFamilyReception: boolean;
+  canAccessProfileCadastro: boolean;
+  canUpdateMaintenanceEvents: boolean;
+  maintenancePanelAccess: Record<string, boolean>;
   scalePanelAccess: Partial<Record<MaintenanceScalePanelContent, boolean>>;
   canAccessPastoralCare: boolean;
   canAccessPastoralRoleChange: boolean;
@@ -34,11 +38,27 @@ const EMPTY_SNAPSHOT: MaintenanceDashboardAccessSnapshot = {
   isSuperAdmin: false,
   canOpenAccessControlCard: false,
   canMonitorFamilyReception: false,
+  canAccessProfileCadastro: false,
+  canUpdateMaintenanceEvents: false,
+  maintenancePanelAccess: {},
   scalePanelAccess: {},
   canAccessPastoralCare: false,
   canAccessPastoralRoleChange: false,
   headerUserName: null,
 };
+
+async function loadMaintenancePanelScreenAccess(): Promise<Record<string, boolean>> {
+  const entries = await Promise.all(
+    Object.entries(MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY)
+      .filter(([content]) => content !== 'menu')
+      .map(async ([content, resourceKey]) => {
+        const allowed = await sessionHasAccess('screen', resourceKey, 'view');
+        return [content, allowed] as const;
+      })
+  );
+
+  return Object.fromEntries(entries);
+}
 
 async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboardAccessSnapshot> {
   const allowed = await sessionHasAccess('screen', ACCESS_SCREEN.maintenance, 'view');
@@ -66,6 +86,8 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
   let scalePanelAccess: Partial<Record<MaintenanceScalePanelContent, boolean>> = {};
   let canAccessPastoralCare = false;
   let canAccessPastoralRoleChange = false;
+  let maintenancePanelAccess: Record<string, boolean> = {};
+  let canUpdateMaintenanceEvents = false;
 
   try {
     let profileId = await getStoredProfileId();
@@ -75,16 +97,26 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
     }
 
     if (profileId) {
-      [scalePanelAccess, canAccessPastoralCare, canAccessPastoralRoleChange] = await Promise.all([
+      [
+        scalePanelAccess,
+        canAccessPastoralCare,
+        canAccessPastoralRoleChange,
+        maintenancePanelAccess,
+        canUpdateMaintenanceEvents,
+      ] = await Promise.all([
         loadMaintenanceScalePanelAccess(profileId),
         loadPastoralCarePanelAccess(profileId),
         sessionCanAccessPastoralRoleChangePanel(),
+        loadMaintenancePanelScreenAccess(),
+        sessionHasAccess('screen', 'maintenance.card.events', 'update'),
       ]);
     }
   } catch {
     scalePanelAccess = {};
     canAccessPastoralCare = false;
     canAccessPastoralRoleChange = false;
+    maintenancePanelAccess = {};
+    canUpdateMaintenanceEvents = false;
   }
 
   let headerUserName: string | null = null;
@@ -109,6 +141,9 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
     isSuperAdmin,
     canOpenAccessControlCard,
     canMonitorFamilyReception: isSuperAdmin || canAccessProfileCadastro,
+    canAccessProfileCadastro: isSuperAdmin || canAccessProfileCadastro,
+    canUpdateMaintenanceEvents,
+    maintenancePanelAccess,
     scalePanelAccess,
     canAccessPastoralCare,
     canAccessPastoralRoleChange,

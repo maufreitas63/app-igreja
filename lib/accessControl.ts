@@ -2,7 +2,11 @@ import { ACL_UNAVAILABLE_MESSAGE, isAclStrictMode } from '@/lib/aclPolicy';
 import { getCachedOrFetch, invalidateAsyncCache } from '@/lib/asyncResultCache';
 import { supabase } from '@/lib/supabase';
 import { coerceRpcBoolean, isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
-import { getStoredProfileId, repairUserSessionReference } from '@/lib/userSession';
+import {
+  getStoredProfileId,
+  getStoredUserPhone,
+  repairUserSessionReference,
+} from '@/lib/userSession';
 
 export { ACL_UNAVAILABLE_MESSAGE, isAclStrictMode } from '@/lib/aclPolicy';
 
@@ -87,20 +91,10 @@ export async function loadDashboardCardViewAccess(
   );
 }
 
-/** Cards do dashboard que permanecem visíveis independentemente de eventos ou ACL. */
-export const DASHBOARD_ALWAYS_VISIBLE_CARD_CONTENTS = new Set(['offerings']);
-
-export const isDashboardCardAlwaysVisible = (content: string) =>
-  DASHBOARD_ALWAYS_VISIBLE_CARD_CONTENTS.has(content);
-
 export const isDashboardCardContentAllowed = (
   content: string,
   accessByContent: DashboardCardViewAccess
 ) => {
-  if (isDashboardCardAlwaysVisible(content)) {
-    return true;
-  }
-
   if (content === 'parking_vehicle_v2') {
     return (
       accessByContent.parking_vehicle_v2 === true
@@ -338,5 +332,15 @@ export async function sessionHasAccess(
     profileId = await repairUserSessionReference();
   }
 
-  return profileHasAccess(profileId ?? null, resourceType, resourceKey, action);
+  if (profileId) {
+    return profileHasAccess(profileId, resourceType, resourceKey, action);
+  }
+
+  const phone = await getStoredUserPhone();
+
+  if (phone?.trim()) {
+    return profileHasAccessByPhone(phone, resourceType, resourceKey, action);
+  }
+
+  return profileHasAccess(null, resourceType, resourceKey, action);
 }

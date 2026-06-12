@@ -1,3 +1,4 @@
+import { isAclStrictMode } from '@/lib/accessControl';
 import { formatShortName } from '@/lib/formatShortName';
 import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import {
@@ -19,6 +20,12 @@ export const MAINTENANCE_PASTORAL_SQL_HINT =
   'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql, scripts/pastoral-maintenance-rpc.sql, scripts/pastoral-request-handler.sql e scripts/pastoral-request-cancellation.sql.';
 
 export const MAINTENANCE_PASTORAL_RPC_MISSING = 'MAINTENANCE_PASTORAL_RPC_MISSING';
+
+const rejectPastoralDirectFallback = () => {
+  if (isAclStrictMode()) {
+    throw new Error(MAINTENANCE_PASTORAL_SQL_HINT);
+  }
+};
 
 export type PastoralSubmitterOption = {
   profileId: string;
@@ -263,6 +270,9 @@ export async function fetchMaintenancePastoralRequestsForProfile(
   accessContext?: PastoralCareAccessContext
 ): Promise<MaintenancePastoralRequestView[]> {
   const rpcRows = await fetchMaintenancePastoralRequestsViaRpc(profileId);
+  if (rpcRows === null) {
+    rejectPastoralDirectFallback();
+  }
   const sourceRows = rpcRows ?? (await fetchMaintenancePastoralRequestsDirect(profileId));
   const rows = accessContext
     ? filterPastoralRequestsForSession(sourceRows, accessContext)
@@ -304,6 +314,7 @@ export async function updatePastoralRequestFollowUpStage(
     const message = (error.message ?? '').toLowerCase();
 
     if (isUpdateStatusRpcMissing(message)) {
+      rejectPastoralDirectFallback();
       return updatePastoralRequestFollowUpStageDirect(requestId, stage);
     }
 
@@ -313,6 +324,7 @@ export async function updatePastoralRequestFollowUpStage(
   const row = parseRpcJsonObject(data);
 
   if (!row) {
+    rejectPastoralDirectFallback();
     return updatePastoralRequestFollowUpStageDirect(requestId, stage);
   }
 

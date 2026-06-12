@@ -5,8 +5,10 @@ import {
   sessionHasAccess,
 } from '@/lib/accessControl';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
+
+export type ScreenAccessStatus = 'checking' | 'allowed' | 'denied' | 'skipped';
 
 type ScreenAccessGuardOptions = {
   resourceKey: string;
@@ -25,16 +27,21 @@ export function useScreenAccessGuard({
   redirectPath = '/(tabs)/dashboard',
   enabled = true,
   skipCheck = false,
-}: ScreenAccessGuardOptions) {
+}: ScreenAccessGuardOptions): ScreenAccessStatus {
   const router = useRouter();
+  const [status, setStatus] = useState<ScreenAccessStatus>(
+    skipCheck || !enabled ? 'skipped' : 'checking'
+  );
 
   useFocusEffect(
     useCallback(() => {
       if (!enabled || skipCheck) {
+        setStatus('skipped');
         return undefined;
       }
 
       let active = true;
+      setStatus('checking');
 
       void (async () => {
         const aclStatus = await getAccessControlRpcStatus();
@@ -44,6 +51,7 @@ export function useScreenAccessGuard({
         }
 
         if (aclStatus === 'missing' && isAclStrictMode()) {
+          setStatus('denied');
           Alert.alert('ACL indisponível', ACL_UNAVAILABLE_MESSAGE, [
             { text: 'OK', onPress: () => router.replace(redirectPath) },
           ]);
@@ -52,13 +60,19 @@ export function useScreenAccessGuard({
 
         const allowed = await sessionHasAccess('screen', resourceKey, 'view');
 
-        if (!active || allowed) {
+        if (!active) {
           return;
         }
 
-        Alert.alert(deniedTitle, deniedMessage, [
-          { text: 'OK', onPress: () => router.replace(redirectPath) },
-        ]);
+        if (!allowed) {
+          setStatus('denied');
+          Alert.alert(deniedTitle, deniedMessage, [
+            { text: 'OK', onPress: () => router.replace(redirectPath) },
+          ]);
+          return;
+        }
+
+        setStatus('allowed');
       })();
 
       return () => {
@@ -66,4 +80,6 @@ export function useScreenAccessGuard({
       };
     }, [deniedMessage, deniedTitle, enabled, redirectPath, resourceKey, router, skipCheck])
   );
+
+  return skipCheck || !enabled ? 'skipped' : status;
 }

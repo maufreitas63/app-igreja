@@ -18,6 +18,7 @@ import { appAlert } from '@/lib/appAlert';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { supabase } from '@/lib/supabase';
+import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -150,7 +151,7 @@ export default function PastoralScreen() {
   const routeUserId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
   const router = useRouter();
 
-  useScreenAccessGuard({
+  const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.pastoral,
     deniedMessage: 'Você não tem permissão para abrir Coração Aberto.',
   });
@@ -504,6 +505,7 @@ export default function PastoralScreen() {
   };
 
   return (
+    <ScreenAccessGate status={accessStatus}>
     <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
       <SafeAreaView style={styles.container}>
         <Modal
@@ -791,6 +793,7 @@ export default function PastoralScreen() {
         </KeyboardAvoidingView>
       </SafeAreaView>
     </LinearGradient>
+    </ScreenAccessGate>
   );
 }
 

@@ -54,10 +54,19 @@ returns table (
   created_at timestamptz,
   updated_at timestamptz
 )
-language sql
+language plpgsql
 security definer
 set search_path = public
 as $$
+begin
+  if not (
+    public.session_has_resource_access('table', 'financials', 'view')
+    or public.session_has_screen_access('maintenance.card.financials', 'view')
+  ) then
+    return;
+  end if;
+
+  return query
   with bounds as (
     select b.start_date, b.end_date_exclusive
     from public.financials_period_bounds(p_periodo, p_referencia) b
@@ -86,6 +95,7 @@ as $$
     f.account asc,
     f.movement asc,
     f.ministry asc;
+end;
 $$;
 
 create or replace function public.cadastrar_lancamento_financeiro(
@@ -110,6 +120,10 @@ declare
   v_movement text;
   v_budget_version text;
 begin
+  if not public.session_has_resource_access('table', 'financials', 'update') then
+    return jsonb_build_object('success', false, 'message', 'Sem permissão para incluir lançamentos financeiros.');
+  end if;
+
   if p_transaction_date is null then
     return jsonb_build_object('success', false, 'message', 'Informe a data do lançamento.');
   end if;
@@ -193,6 +207,10 @@ declare
   v_inserted integer;
   v_deleted integer := 0;
 begin
+  if not public.session_has_resource_access('table', 'financials', 'update') then
+    return jsonb_build_object('success', false, 'message', 'Sem permissão para importar lançamentos financeiros.');
+  end if;
+
   v_periodo := lower(trim(coalesce(p_periodo, '')));
   v_budget_version := upper(trim(coalesce(p_budget_version, '')));
 
@@ -302,6 +320,10 @@ as $$
 declare
   v_deleted integer;
 begin
+  if not public.session_has_resource_access('table', 'financials', 'update') then
+    return jsonb_build_object('success', false, 'message', 'Sem permissão para excluir lançamentos financeiros.');
+  end if;
+
   if p_id is null then
     return jsonb_build_object('success', false, 'message', 'Lançamento não informado.');
   end if;
@@ -337,6 +359,10 @@ declare
   v_periodo text;
   v_budget_version text;
 begin
+  if not public.session_has_resource_access('table', 'financials', 'update') then
+    return jsonb_build_object('success', false, 'message', 'Sem permissão para excluir lançamentos financeiros.');
+  end if;
+
   v_periodo := lower(trim(coalesce(p_periodo, '')));
   v_budget_version := upper(trim(coalesce(p_budget_version, '')));
 

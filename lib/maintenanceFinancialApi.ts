@@ -5,7 +5,7 @@ import {
 } from '@/lib/maintenanceFinancialBulk';
 import { parseMaintenanceEventDateTimeToIso } from '@/lib/maintenanceEventForm';
 import { parseRegisterScaleRpc } from '@/lib/maintenanceScales';
-import { sessionHasAccess } from '@/lib/accessControl';
+import { isAclStrictMode, sessionHasAccess } from '@/lib/accessControl';
 import {
   deleteFinancialReceiptFile,
   uploadFinancialReceiptImage,
@@ -168,6 +168,10 @@ export async function fetchMaintenanceFinancialEntries(
     return await listMaintenanceFinancialEntries(periodMode, referenceIsoDate);
   } catch (err) {
     if (err instanceof Error && err.message === MAINTENANCE_FINANCIALS_RPC_MISSING) {
+      if (isAclStrictMode()) {
+        throw new Error(MAINTENANCE_FINANCIALS_SQL_HINT);
+      }
+
       return listMaintenanceFinancialEntriesDirect(periodMode, referenceIsoDate);
     }
 
