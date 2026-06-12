@@ -425,17 +425,47 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 
 1. Abra o módulo **Financeiro**.
 2. Escolha o **mês** em **Selecionar mês**.
-3. Expanda as seções (uma por vez):
+3. No topo, use o atalho destacado **Relatório de Despesas (RD)** ou role até **Relatórios**.
+4. Expanda as seções (uma por vez):
    - **Resultado do mês**
    - **Comparativo mensal**
    - **Últimos 12 meses**
    - **Planejado × Realizado** (quando houver orçamento)
-4. Opcional: atalho **Relatório de Despesas (RD)** para pedir reembolso.
+   - **Saldo bancário** (saldo por conta e total)
 
 ### Resultado esperado
 
 - Tabelas e totais do mês selecionado — **sem editar** valores (consulta).
 - Mês sem orçamento: aviso *Sem orçamento planejado para este mês* na seção planejado × realizado.
+- **Saldo bancário** mostra contas com movimento (Sicredi, Mercado Pago, etc.) e **Saldo total**.
+
+---
+
+# Parte 8b — Relatório de Despesas (RD)
+
+### Objetivo
+Solicitar **reembolso de despesas** da igreja com comprovantes e chave PIX.
+
+### Caminho
+Painel → **Financeiro** → atalho **Relatório de Despesas (RD)** — ou rota `/expense-report`.
+
+### Passo a passo
+
+1. Toque **Novo RD**.
+2. Confira nome e telefone no cabeçalho; informe **Chave PIX**.
+3. Em cada linha: data, descrição, valor (digite centavos da direita para esquerda — `1` → R$ 0,01) e comprovante (colar ou galeria).
+4. **Submeter e Finalizar** — o relatório é gravado e o WhatsApp do tesoureiro abre automaticamente.
+5. Na lista **Meus relatórios**, abra um RD para ver itens ou **Excluir RD** se ainda estiver **Pendente**.
+
+### Resultado esperado
+
+- Toast confirma submissão; tesoureiro recebe mensagem com número do RD e valor.
+- Status **Pendente** até a tesouraria conciliar na manutenção; depois **Conciliado**.
+
+### Se der erro
+
+- Configure `Tesoureiro_contato` em `app_parameters` se o WhatsApp não abrir.
+- RPC ausente — equipe executa `scripts/expense-reports-schema.sql` e `expense-reports-rpc.sql`.
 
 ---
 

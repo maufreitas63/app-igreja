@@ -93,8 +93,10 @@ Rodapé **‹** · **Menu** ou **Voltar** · **›** + contador **N / M** (âmba
 | 7 | **Cuidado Pastoral** | Acompanhar pedidos do Coração Aberto |
 | 8 | **Informações Financeiras** | CSV, lançamentos, RD |
 | 9 | **Lista de Presença** | Documento de quórum |
-| 10 | **Cadastro de Usuário** | *(super_admin)* |
-| 11 | **Controle de Acesso** | *(super_admin)* |
+| 10 | **Cadastro de Usuário** | Busca, CEP/endereço, exclusão *(super_admin)* |
+| 11 | **Recepção Familiar** | Fila do formulário público `/cadastro-familia/` |
+| 12 | **Controle de Acesso** | Papéis e grants *(super_admin)* |
+| 13 | **Mudança de Papéis** | Visitante / congregado / membro *(pastoral, super_admin)* |
 
 ### Passo a passo
 
@@ -518,11 +520,12 @@ Localizar perfil de membro, **corrigir CEP/endereço** e, quando necessário, **
 ### Passo a passo
 
 1. Em **Buscar usuário**, digite **Nome** (mín. 2 letras).
-2. Toque no resultado.
-3. Leia **Dados pessoais** (somente leitura): nome, telefone, e-mail, CPF, nascimento.
-4. Edite **CEP**, **Número**, **Complemento** — a prévia **Endereço que será gravado** atualiza via CEP.
-5. **Salvar CEP e endereço**.
-6. Para remover alguém do sistema: role até **Excluir usuário** → confirme no diálogo (ação **irreversível**).
+2. Use **X** na busca para limpar o nome e os dados exibidos do usuário selecionado.
+3. Toque no resultado.
+4. Leia **Dados pessoais** (somente leitura): nome, telefone, e-mail, CPF, nascimento.
+5. Edite **CEP**, **Número**, **Complemento** — a prévia **Endereço que será gravado** atualiza via CEP.
+6. **Salvar CEP e endereço**.
+7. Para remover alguém do sistema: role até **Excluir usuário** → confirme no diálogo (ação **irreversível**).
 
 ### Resultado esperado
 
@@ -543,7 +546,38 @@ Não é cadastro completo de novo usuário — para primeiro acesso do membro, u
 
 ---
 
-# Parte 11 — Controle de Acesso *(super_admin)*
+# Parte 11 — Recepção Familiar
+
+### Objetivo
+Processar cadastros enviados pelo formulário público **`/cadastro-familia/`** antes de virarem perfis e membros no sistema.
+
+### Caminho
+**Recepção Familiar** — equipe com permissão `maintenance.card.profile_cadastro` (mesmo recurso do Cadastro de Usuário).
+
+### Passo a passo
+
+1. Abra **Recepção Familiar** na manutenção.
+2. Revise a fila de submissões pendentes (nome, telefone, data, família).
+3. Marque uma ou mais linhas (ou **Selecionar todos**).
+4. **Gravar selecionados** — cria/atualiza `profiles` e `members` quando não há conflito de família.
+5. **Rejeitar selecionados** — descarta submissões inválidas ou duplicadas.
+
+### Resultado esperado
+
+- Toast **Recepção familiar** confirma gravação ou rejeição em lote.
+- Cadastros gravados somem da fila e passam a existir no ecossistema (mapa, família, etc.).
+- Conflito de código familiar exige revisão manual antes de gravar.
+
+### Se der erro
+
+- RPC ausente — execute `scripts/recepcao-cadastro-familiar.sql` no Supabase.
+
+### Dica
+Envie o link `https://{seu-dominio}/cadastro-familia/` para famílias novas; a recepção valida antes do primeiro login.
+
+---
+
+# Parte 12 — Controle de Acesso *(super_admin)*
 
 ### Objetivo
 Definir **quem vê e edita** cada tela, card e coluna — incluindo manutenção e painel do membro.
@@ -587,6 +621,34 @@ Definir **quem vê e edita** cada tela, card e coluna — incluindo manutenção
 ### Dica
 Scripts SQL em `scripts/` complementam recursos novos (financeiro, pastoral, mapa, escalas) — rode em produção após deploy.
 
+Mapa visual dos papéis: `npm run build:access-roles-pdf` → `pdfs/PAPEIS_CONTROLE_ACESSO.pdf`.
+
+---
+
+# Parte 13 — Mudança de Papéis *(pastoral, super_admin)*
+
+### Objetivo
+Alterar o papel básico de um perfil entre **visitante**, **congregado** e **membro** sem abrir a aba Papéis do Controle de Acesso.
+
+### Caminho
+**Mudança de Papéis** — perfis com papel `pastoral` ou `super_admin`.
+
+### Passo a passo
+
+1. Abra **Mudança de Papéis**.
+2. Opcional: filtre por nome, telefone ou código na busca.
+3. Toque nos cabeçalhos **Visitante**, **Congregado** ou **Membro** para filtrar pelo papel atual.
+4. Na linha do perfil, toque no papel desejado para aplicar a mudança.
+
+### Resultado esperado
+
+- Toast **Mudança de Papéis** confirma a atualização.
+- Cards do dashboard e permissões refletem o novo papel após o usuário sair e entrar novamente.
+
+### Se der erro
+
+- RPC ausente — execute `scripts/access-control-pastoral-role-change.sql` no Supabase.
+
 ---
 
 # Rotinas recomendadas (resumo operacional)
@@ -609,7 +671,8 @@ Scripts SQL em `scripts/` complementam recursos novos (financeiro, pastoral, map
 ## Mensal
 
 - **Informações Financeiras** — importar extrato (Parte 8).
-- **Controle de Acesso** — conferir novos voluntários (Parte 11).
+- **Recepção Familiar** — esvaziar fila do formulário público (Parte 11).
+- **Controle de Acesso** — conferir novos voluntários (Parte 12).
 
 ---
 
@@ -624,6 +687,10 @@ Scripts SQL em `scripts/` complementam recursos novos (financeiro, pastoral, map
 | Escalas — tipos/servos | `escalas-tipos-maintenance-rpc.sql`, `escalas-volunteers-rpc.sql` |
 | Mapa / GPS membros | `access-control-map-pin-roles.sql` |
 | Quórum | scripts de quórum citados na UI da Lista de Presença |
+| RD (relatórios de despesas) | `expense-reports-schema.sql`, `expense-reports-rpc.sql` |
+| Recepção familiar | `recepcao-cadastro-familiar.sql` |
+| Mudança de papéis | `access-control-pastoral-role-change.sql` |
+| Excluir perfil completo | `delete-profile-complete-rpc.sql` |
 
 ---
 

@@ -314,6 +314,15 @@ Alguns comentários de lançamentos não carregaram — os valores principais ai
 **Por que não vejo o mês atual?**  
 O seletor do dashboard financeiro oculta o **mês corrente** — foco em meses já encerrados para consulta.
 
+**O que é Saldo bancário?**  
+Seção no final do módulo Financeiro com saldo **REALIZADO** acumulado por conta bancária até o mês escolhido (diferente do saldo do boletim mensal).
+
+**Como peço reembolso de despesas (RD)?**  
+Financeiro → atalho **Relatório de Despesas (RD)** → **Novo RD** → preencha itens e **Submeter e Finalizar**. O tesoureiro é avisado via WhatsApp.
+
+**Posso cancelar um RD enviado?**  
+Somente enquanto estiver **Pendente** — use **Excluir RD** na lista.
+
 ---
 
 ## 11. Escalas e Estacionamento

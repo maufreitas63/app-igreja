@@ -31,7 +31,7 @@ writePackage('PACOTE_1_VISAO_GERAL.md', [
   '',
   'Documentação **autocontida** para diretoria, membros, famílias e voluntários.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 12/06/2026',
   '',
   'Conteúdo integrado: Funcionalidades · Manual de Treinamento · FAQ',
 ], [
@@ -45,7 +45,7 @@ writePackage('PACOTE_2_OPERACAO.md', [
   '',
   'Documentação **autocontida** para secretaria, eventos, salas Kids/Teens e líderes de escala.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 12/06/2026',
   '',
   'Conteúdo integrado: Manutenção como ecossistema · Missão B4 (escalas) · Card Agenda · FAQ Totem/Manutenção',
 ], [
@@ -60,7 +60,7 @@ writePackage('PACOTE_3_GOVERNANCA_TI.md', [
   '',
   'Documentação **autocontida** para super administrador, TI e desenvolvedor.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 12/06/2026',
   '',
   'Conteúdo integrado: Manual operacional ACL · Modelo de controle de acesso · Camadas de segurança · Blueprint completo',
 ], [
@@ -75,7 +75,7 @@ writePackage('PACOTE_4_ANEXO_TECNICO.md', [
   '',
   'Documentação **autocontida** de arquitetura e referências técnicas.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 12/06/2026',
   '',
   'Conteúdo integrado: Arquitetura Blueprint PWA · Cards do Dashboard',
 ], [
@@ -88,7 +88,7 @@ writePackage('PACOTE_5_MANUAL_PAINEL.md', [
   '',
   'Documentação **autocontida** para primeiro acesso e uso diário do painel do membro.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 12/06/2026',
   '',
   'Conteúdo integrado: login, cadastro, LGPD, navegação, todos os cards do dashboard (sem manutenção), com resultado esperado em cada ação.',
 ], [
@@ -100,7 +100,7 @@ writePackage('PACOTE_6_MANUAL_MANUTENCAO.md', [
   '',
   'Documentação **autocontida** para quem gerencia o aplicativo: secretaria, líderes, pastoral, financeiro e TI.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 12/06/2026',
   '',
   'Conteúdo integrado: acesso via engrenagem, ACL, todos os cards de maintenance-dashboard, com resultado esperado e efeito no app dos membros.',
 ], [

@@ -68,7 +68,7 @@ Tela inicial após o login com **etiquetas** (atalhos) para cada módulo do Pain
 
 | 7 | Aniversariantes | 7 | `birthdays` | Sempre (com ACL) |
 
-| 11 | Financeiro | 8 | `financial` | Sempre (com ACL) |
+| 11 | Financeiro | 8 | `financial` | Sempre (com ACL) — hub: `/financial` (relatórios + saldo bancário) e `/expense-report` (RD) |
 
 | 8 | Escalas | 9 | `vigilance_scales` | Sempre (com ACL) |
 
@@ -205,5 +205,14 @@ Constante usada para o menu: `DASHBOARD_MENU_CARD_ID = '6'`.
 ## Card Dízimos e Ofertas (`offerings`)
 
 - Botão **Copiar chave PIX** usa ícone Material *touch-app* para reforçar a ação de toque no PWA.
+
+---
+
+## Card Financeiro (`financial`)
+
+- Recurso ACL: `dashboard.card.financial` (card) + telas `/financial` e `/expense-report`.
+- Toque abre hub com atalho destacado **Relatório de Despesas (RD)** → `/expense-report`.
+- Tela `/financial`: Resultado do mês, Comparativo, Últimos 12 meses, Planejado × Realizado, **Saldo bancário**.
+- Itens Fluxo de caixa, Categorias e Relatórios extras aparecem como **em breve** no hub.
 
 

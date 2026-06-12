@@ -97,10 +97,11 @@ Pronto. O Cloudflare detecta o push e inicia um novo deploy em alguns segundos.
 
 Após o deploy aparecer **Success** (não basta o `git push` — aguarde o build):
 
-1. Abra a URL em aba anônima **ou** use **Ctrl+Shift+R** (hard refresh)
-2. Confira no DevTools → **Network** → documento HTML: cabeçalho `cache-control: public, max-age=0, must-revalidate`
-3. Teste login, dashboard e a tela que você alterou
-4. Se o app está **instalado como PWA**: feche todas as janelas, reabra; em último caso, limpe dados do site no navegador
+1. Abra `https://{seu-dominio}/build-info.json` e confira se `commit` corresponde ao push no GitHub
+2. Abra a URL em aba anônima **ou** use **Ctrl+Shift+R** (hard refresh)
+3. Confira no DevTools → **Network** → documento HTML: cabeçalho `cache-control: public, max-age=0, must-revalidate`
+4. Teste login, dashboard e a tela que você alterou
+5. Se o app está **instalado como PWA**: feche todas as janelas, reabra; em último caso, limpe dados do site no navegador
 
 ### Formulário público de cadastro familiar (fora do app)
 
@@ -118,6 +119,8 @@ https://{seu-dominio}/cadastro-familia/
 ```
 
 Exemplo: `https://app-igreja.pages.dev/cadastro-familia/`
+
+Após o envio, a submissão entra na fila **Recepção Familiar** na manutenção (execute `scripts/recepcao-cadastro-familiar.sql` no Supabase se a fila não carregar).
 
 Desenvolvimento local do formulário (sem Expo):
 
@@ -172,6 +175,7 @@ Logs completos do build: Cloudflare → **Deployments** → clique no deploy →
 - [ ] Commit criado com mensagem clara
 - [ ] `git push origin main` concluído
 - [ ] Deploy **Success** no Cloudflare
+- [ ] `/build-info.json` com commit do push atual
 - [ ] PWA validado no navegador com hard refresh
 
 ---
@@ -180,7 +184,9 @@ Logs completos do build: Cloudflare → **Deployments** → clique no deploy →
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| `package.json` | `build:web` → `build:family-form` (Vite) + `expo export -p web` |
+| `package.json` | `build:web` → `write-build-info.mjs` + `expo export -p web` + `build:family-form` |
+| `scripts/write-build-info.mjs` | Gera `public/build-info.json` (commit + data do build) |
+| `npm run build:access-roles-pdf` | Mapa ACL → `pdfs/PAPEIS_CONTROLE_ACESSO.pdf` |
 | `standalone/cadastro-familia/` | Formulário público independente do PWA |
 | `app.json` | Web: `bundler: metro`, `output: static` |
 | `public/_headers` | Cache: HTML revalida sempre; `/_expo/static` e `/assets` com cache longo |
@@ -190,7 +196,7 @@ Logs completos do build: Cloudflare → **Deployments** → clique no deploy →
 
 ---
 
-*App IBN · Deploy Cloudflare Pages · atualizado em 22/05/2026*
+*App IBN · Deploy Cloudflare Pages · atualizado em 12/06/2026*
 
 ```powershell
 git push origin main

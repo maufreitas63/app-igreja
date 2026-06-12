@@ -132,6 +132,8 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 **Pedido:** seletor de mês em dropdown na tela Financeiro.
 
 - [ ] Seção **Relatórios** com **Mês** em dropdown modal; trocar mês atualiza os relatórios
+- [ ] Seção **Saldo bancário** exibe contas com saldo e linha **Saldo total**
+- [ ] Atalho destacado **Relatório de Despesas (RD)** no topo do módulo Financeiro
 
 **Pedido:** coluna Descrição larga o suficiente para **EXTRAORDINARIO** em uma linha.
 
@@ -166,6 +168,30 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 **Pedido:** data de hoje por padrão em cada linha do RD.
 
 - [ ] Nova linha do RD já vem com a data de hoje; campo continua editável
+- [ ] Valor digitado da direita para esquerda (`1` → R$ 0,01)
+- [ ] **Submeter e Finalizar** grava RD e abre WhatsApp do tesoureiro
+- [ ] **Excluir RD** remove pendente da lista (confirmação na web/PWA)
+
+---
+
+## Deploy — versão publicada
+
+- [ ] `GET /build-info.json` retorna `commit` do deploy atual
+- [ ] `/cadastro-familia/` carrega formulário público em produção
+
+---
+
+## Recepção Familiar
+
+- [ ] Submissão do formulário público aparece em **Recepção Familiar**
+- [ ] **Gravar selecionados** / **Rejeitar selecionados** funcionam em lote
+
+---
+
+## Mudança de Papéis
+
+- [ ] Card visível para pastoral/super_admin
+- [ ] Alterar visitante ↔ congregado ↔ membro reflete após novo login
 
 ---
 
@@ -311,7 +337,11 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 | `scripts/access-control-remove-tstmax-scale-resources.sql` | Ocultar escalas TstMax em Papéis |
 | `scripts/access-control-map-pin-roles.sql` | Coluna GPS na Lista de Membros (endereço na RPC) |
 | `scripts/pastoral-request-delete-rpc.sql` | Excluir pedido pastoral em Meus pedidos |
+| `scripts/expense-reports-schema.sql`, `expense-reports-rpc.sql` | RD (membro + manutenção) |
+| `scripts/recepcao-cadastro-familiar.sql` | Recepção Familiar + formulário público |
+| `scripts/access-control-pastoral-role-change.sql` | Mudança de Papéis |
+| `scripts/delete-profile-complete-rpc.sql` | Excluir usuário no Cadastro de Usuário |
 
 ---
 
-*Atualizado em 22/05/2026*
+*Atualizado em 12/06/2026*

@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para super administrador, TI e desenvolvedor.
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 12/06/2026
 
 Conteúdo integrado: Manual operacional ACL · Modelo de controle de acesso · Camadas de segurança · Blueprint completo
 
@@ -639,8 +639,13 @@ Documento de encerramento da sessão: o que já está pronto, o que falta e qual
 
 | Item | Detalhe |
 |------|---------|
-| **Relatórios de Despesas (RD)** | Tela `/expense-report`; tesouraria na manutenção (`expense-reports-*.sql`); listagem mensal por data do lançamento (conciliados) ou emissão (pendentes) |
+| **Relatórios de Despesas (RD)** | Telas `/expense-report` e hub no `/financial`; WhatsApp ao tesoureiro na submissão; tesouraria na manutenção (`expense-reports-*.sql`) |
+| **Financeiro membro** | Saldo bancário por conta; hub com RD destacado |
 | **Financeiro manutenção** | Carga/esvaziar lote com versão REALIZADO/PLANEJADO; seções colapsáveis; accordion (uma seção aberta) |
+| **Recepção Familiar** | Formulário `/cadastro-familia/` → fila na manutenção (`recepcao-cadastro-familiar.sql`) |
+| **Mudança de Papéis** | Card pastoral/super_admin (`access-control-pastoral-role-change.sql`) |
+| **Cadastro de Usuário** | `maintenance.card.profile_cadastro` — busca, CEP, exclusão completa |
+| **Mapa ACL PDF** | `npm run build:access-roles-pdf` → `PAPEIS_CONTROLE_ACESSO.pdf` |
 | **Índice do aplicativo** | `/(tabs)/index` — atalhos com etiquetas para todos os cards |
 | **Manutenção — card menu** | Primeiro card do carrossel com etiquetas dos módulos |
 | **Marca d'água** | Global via `AppShell`, exceto login; alinhada ao frame do card |
@@ -722,6 +727,8 @@ Use sempre **`profiles.id`** como “usuário” do ACL.
 | `screen:/manage-members` | `app/manage-members.tsx` | Gerenciar família |
 | `screen:/pastoral` | `app/pastoral.tsx` | Coração Aberto (formulário) |
 | `screen:/pastoral-history` | `app/pastoral-history.tsx` | Meus pedidos |
+| `screen:/financial` | `app/financial.tsx` | Relatórios financeiros (leitura) |
+| `screen:/expense-report` | `app/expense-report.tsx` | Relatório de Despesas (RD) |
 | `screen:/lgpd` | `app/lgpd.tsx` | Termos LGPD |
 
 ### Cards do dashboard (`screen:dashboard.card.*`)

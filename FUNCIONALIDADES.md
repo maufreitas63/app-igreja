@@ -6,7 +6,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`BLUEPRINT.md`](BLUEPRINT.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 12/06/2026
 
 ---
 
@@ -85,7 +85,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **Coração Aberto** | Atalho para pedido pastoral |
 | **Lista de Membros** | Botões **Visitantes** e **Mapa Geral** na mesma linha; alternância membros/visitantes; busca; tabela nome/família; WhatsApp; modal de membros da família |
 | **Aniversariantes** | Filtro por mês, lista com WhatsApp |
-| **Financeiro** | Atalho para relatórios (somente leitura) |
+| **Financeiro** | Hub: relatórios (`/financial`) e **Relatório de Despesas (RD)** destacado (`/expense-report`); Fluxo de caixa, Categorias e Relatórios extras em breve |
 | **Escalas** | Lista de tipos de escala, escala por data, WhatsApp dos servos |
 | **Estacionamento** | Identificação de veículo por placa, WhatsApp do proprietário |
 | **Gestão de Cadastros** (`grouped_manage`) | Título do card; atalhos **Dados Cadastrais** e **Gerenciar Família** com ícones |
@@ -150,11 +150,15 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 - **Comparativo mensal** — mês atual vs anterior
 - **Últimos 12 meses** — matriz de valores
 - **Planejado × Realizado** — comparativo de orçamento
+- **Saldo bancário** — saldo final por conta (REALIZADO acumulado até o mês); contas zeradas ocultas; linha **Saldo total**
 - Aviso quando comentários financeiros não carregam
+- Atalho destacado **Relatório de Despesas (RD)** no topo do módulo
 
 ### Relatórios de Despesas (RD)
 
-- Membro envia RD com itens, valor total e chave PIX (`/expense-report`)
+- Membro cria RD com itens, comprovantes (colar/galeria), valor em centavos (digitação da direita para esquerda) e chave PIX (`/expense-report`)
+- Botão **Submeter e Finalizar** grava o relatório e abre WhatsApp ao tesoureiro (`Tesoureiro_contato` em `app_parameters`)
+- Membro lista RDs, abre detalhes e **exclui** relatórios **pendentes**
 - Tesouraria concilia RD pendente a lançamento financeiro na manutenção
 - **Relatórios de Despesas** — lista do mês na manutenção; **Remover vínculo** (desconciliar)
 - Relatório mensal: pendentes pelo mês de emissão; conciliados pelo mês do **lançamento vinculado**
@@ -213,14 +217,16 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **Programação de Eventos** | CRUD, publicação, totem, quórum, Kids/Teens, ofertas, capacidade |
 | **Cronograma (Gantt)** | Visão dia/mês, toque para editar evento |
 | **Sala(s) - Check In** | Marcação interativa de entrada nas salas |
-| **Lista de Presença** | Quórum — leitura e impressão |
 | **Tipos de Escala** | CRUD com **vagas por domingo** e **modo do ciclo** (individual/equipe) |
 | **Servos** | Voluntários e ordem sequencial |
 | **Programação de Escalas** | Registro manual + **Escala em bloco** (preview transacional) |
 | **Cuidado Pastoral** | Gestão de pedidos |
 | **Informações Financeiras** | Carga, manutenção de lançamentos e relatórios RD do mês |
-| **Controle de Acesso** | Papéis, grants; seleção de perfil por dropdown *(super_admin)* |
+| **Lista de Presença** | Quórum — leitura e impressão |
 | **Cadastro de Usuário** | Busca, correção de CEP/endereço e exclusão completa de perfil *(super_admin)* |
+| **Recepção Familiar** | Fila do formulário público `/cadastro-familia/` — gravar ou rejeitar em lote |
+| **Controle de Acesso** | Papéis, grants; seleção de perfil por dropdown *(super_admin)* |
+| **Mudança de Papéis** | Alterar visitante/congregado/membro *(pastoral, super_admin)* |
 
 ---
 
@@ -304,6 +310,8 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 /pastoral              → Coração Aberto
 /pastoral-history      → Meus pedidos
 /financial             → Financeiro (leitura)
+/expense-report        → Relatório de Despesas (RD)
+/cadastro-familia/     → Formulário público de cadastro familiar (sem login)
 /mapa-geolocalizacao   → Mapa (PWA)
 /lgpd                  → Termos LGPD
 /maintenance-dashboard → Manutenção
@@ -316,9 +324,10 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 | Público | Principais funcionalidades |
 |---------|---------------------------|
-| **Membro** | Login, cadastro, perfil, família, eventos, check-in QR, salas (leitura), ofertas, pastoral, aniversariantes, financeiro (leitura), escalas (leitura), mapa |
+| **Membro** | Login, cadastro, perfil, família, eventos, check-in QR, salas (leitura), ofertas, pastoral, aniversariantes, financeiro (leitura), RD (reembolso), escalas (leitura), mapa |
 | **Totem** | Scan QR, confirmação de check-in |
-| **Equipe** | Manutenção: eventos, salas, quórum, escalas, financeiro, pastoral |
+| **Equipe** | Manutenção: eventos, salas, quórum, escalas, financeiro, pastoral, recepção familiar |
+| **Pastoral** | Cuidado pastoral, mudança de papéis básicos |
 | **Super admin** | Controle de acesso, cadastro de usuários |
 
 ---

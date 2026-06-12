@@ -4,7 +4,7 @@ Documentação completa do **app-igreja** (Igreja Batista Norte) para entrega ao
 
 Cada **pacote** é um arquivo **autocontido**: o texto integral dos documentos de referência está transcrito dentro do pacote (não é necessário abrir outros arquivos para ler o conteúdo).
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 12/06/2026
 
 ---
 
@@ -53,7 +53,8 @@ Os pacotes são gerados a partir dos arquivos abaixo. Para atualizar os pacotes 
 ```bash
 npm run build:docs:md    # regera PACOTE_*.md a partir dos fontes
 npm run build:docs:pdf   # gera PDFs em pdfs/
-npm run build:docs       # ambos em sequência
+npm run build:access-roles-pdf  # mapa ACL → pdfs/PAPEIS_CONTROLE_ACESSO.pdf
+npm run build:docs       # md + pdf padrão (sem PAPEIS)
 ```
 
 | Arquivo-fonte | Usado em |
@@ -81,6 +82,7 @@ npm run build:docs       # ambos em sequência
 | Checklist pós-deploy | [`CHECKLIST_VALIDACAO_POS_DEPLOY.md`](CHECKLIST_VALIDACAO_POS_DEPLOY.md) | [`pdfs/CHECKLIST_VALIDACAO_POS_DEPLOY.pdf`](pdfs/CHECKLIST_VALIDACAO_POS_DEPLOY.pdf) |
 | Deploy Cloudflare | [`DEPLOY_CLOUDFLARE.md`](DEPLOY_CLOUDFLARE.md) | [`pdfs/DEPLOY_CLOUDFLARE.pdf`](pdfs/DEPLOY_CLOUDFLARE.pdf) |
 | README do repositório | [`README.md`](README.md) | [`pdfs/README.pdf`](pdfs/README.pdf) |
+| Papéis ACL (mapa visual) | [`PAPEIS_CONTROLE_ACESSO.md`](PAPEIS_CONTROLE_ACESSO.md) | [`pdfs/PAPEIS_CONTROLE_ACESSO.pdf`](pdfs/PAPEIS_CONTROLE_ACESSO.pdf) |
 
 ---
 
@@ -94,4 +96,4 @@ npm run build:docs       # ambos em sequência
 
 ---
 
-*App IBN · Igreja Batista Norte · Documentação v2026-06-10*
+*App IBN · Igreja Batista Norte · Documentação v2026-06-12*

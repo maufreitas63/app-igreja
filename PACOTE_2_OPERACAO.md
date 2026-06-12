@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para secretaria, eventos, salas Kids/Teens e líderes de escala.
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 12/06/2026
 
 Conteúdo integrado: Manutenção como ecossistema · Missão B4 (escalas) · Card Agenda · FAQ Totem/Manutenção
 
@@ -18,7 +18,7 @@ Proposta de atuação do **administrador** no módulo de manutenção (`maintena
 
 **Pacotes:** [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md) (passo a passo) · [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) (ecossistema) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 12/06/2026
 
 ---
 
@@ -31,7 +31,8 @@ O administrador não “mexe no banco” no dia a dia. Ele **alimenta o pulso da
 | **Curador de eventos** | Agenda visível, capacidade, salas, ofertas no evento |
 | **Operador de salas** | Monitoramento Kids/Teens no dia do culto |
 | **Configurador** | Parâmetros (`app_parameters`) que ligam/desligam cards |
-| **Guardião pastoral** | (futuro painel web) triagem de `pastoral_requests` |
+| **Guardião pastoral** | Card **Cuidado Pastoral** na manutenção; **Mudança de Papéis** para visitante/congregado/membro |
+| **Operador de recepção** | Fila **Recepção Familiar** do formulário público `/cadastro-familia/` |
 
 O membro usa o app com PIN; o admin usa as mesmas regras de negócio, com permissão de escrita em `events` e parâmetros.
 
@@ -494,6 +495,15 @@ Fluxo recomendado de uso:
 
 ---
 
+A equipe pastoral **fora do app** (telefone, encontro pessoal, etc.). O app registra e encaminha o pedido.
+
+---
+
+## 15. Termos LGPD
+
+**Por que preciso rolar até o fim dos termos?**  
+Requisito de **consentimento informado** — o sistema só libera o aceite após leitura completa.
+
 **Posso mudar de ideia depois?**  
 O aceite fica em `lgpd_accepted` no perfil. Para revisar, acesse **LGPD** ou **Dados Cadastrais**.
 
@@ -529,12 +539,3 @@ Não. É um **aparelho fixo da igreja** operado na entrada para **escanear** o Q
 **Nenhum evento no totem.**  
 Pode não ser o dia do evento, evento não publicado, sem flag totem/quórum, ou colunas SQL não aplicadas — mensagens na tela orientam.
 
-**Câmera do totem não funciona na web.**  
-Totem web exige **HTTPS** (ou localhost em desenvolvimento). Permita câmera no navegador.
-
-**Devo sair do totem após o culto?**  
-**Sim.** Use **Encerrar sessão** para não deixar o quiosque logado.
-
----
-
-## 18. Manutenção (equipe)

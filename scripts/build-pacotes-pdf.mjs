@@ -32,6 +32,7 @@ const files = [
   'README.md',
   'CHECKLIST_VALIDACAO_POS_DEPLOY.md',
   'DEPLOY_CLOUDFLARE.md',
+  'PAPEIS_CONTROLE_ACESSO.md',
 ];
 
 const pdfCss = `
