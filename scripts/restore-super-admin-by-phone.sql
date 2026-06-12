@@ -23,6 +23,9 @@ select lp.profile_id, sar.role_id
 on conflict (profile_id, role_id) do nothing;
 
 -- Conferência (cole este resultado se ainda não funcionar no app):
+with params as (
+  select '19996166161'::text as phone_digits
+)
 select
   p.id,
   p.full_name,
