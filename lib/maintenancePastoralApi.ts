@@ -191,6 +191,10 @@ const mapPastoralRequestRecord = (record: Record<string, unknown>) => {
       record.cancellation_requested_at != null
         ? String(record.cancellation_requested_at).trim() || null
         : null,
+    cancellation_request_reason:
+      record.cancellation_request_reason != null
+        ? String(record.cancellation_request_reason).trim() || null
+        : null,
   } satisfies PastoralRequestHistoryItem;
 };
 
@@ -280,7 +284,7 @@ async function fetchMaintenancePastoralRequestsDirect(profileId: string) {
   const { data, error } = await supabase
     .from('pastoral_requests')
     .select(
-      'id, created_at, motivo, situacao, description, destination_label, request_for, beneficiary_name, beneficiary_relationship, beneficiary_details, status, confidential, updated_at, handler_profile_id, handler_name, cancellation_requested_at'
+      'id, created_at, motivo, situacao, description, destination_label, request_for, beneficiary_name, beneficiary_relationship, beneficiary_details, status, confidential, updated_at, handler_profile_id, handler_name, cancellation_requested_at, cancellation_request_reason'
     )
     .eq('profile_id', profileId)
     .order('created_at', { ascending: false });

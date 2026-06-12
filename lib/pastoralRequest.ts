@@ -338,7 +338,10 @@ export type PastoralRequestHistoryItem = {
   handler_profile_id?: string | null;
   handler_name?: string | null;
   cancellation_requested_at?: string | null;
+  cancellation_request_reason?: string | null;
 };
+
+export const MIN_PASTORAL_CANCELLATION_REASON_LENGTH = 3;
 
 const isPastoralBeneficiaryType = (value: string | null | undefined): value is PastoralBeneficiaryType =>
   value === 'self' || value === 'family' || value === 'third_party';
@@ -420,7 +423,7 @@ export const canDeletePastoralRequest = (status: string | null | undefined): boo
   !isPastoralRequestCareStarted(status);
 
 export const getPastoralRequestDeleteBlockedMessage = () =>
-  'Este pedido já foi iniciado pelo Cuidado Pastoral e não pode ser excluído.';
+  'Este pedido está em acompanhamento. Somente a equipe do Cuidado Pastoral pode encerrá-lo.';
 
 export const hasPastoralCancellationRequested = (
   item: Pick<PastoralRequestHistoryItem, 'cancellation_requested_at'>
@@ -604,6 +607,10 @@ export async function fetchMyPastoralRequests(profileId: string): Promise<Pastor
           record.cancellation_requested_at != null
             ? String(record.cancellation_requested_at).trim() || null
             : null,
+        cancellation_request_reason:
+          record.cancellation_request_reason != null
+            ? String(record.cancellation_request_reason).trim() || null
+            : null,
       };
     });
   }
@@ -616,8 +623,12 @@ const CANCELLATION_PASTORAL_REQUEST_RPC_HINT =
 
 export async function requestMyPastoralCancellation(
   requestId: string,
-  profileId: string
-): Promise<{ cancellationRequestedAt: string | null }> {
+  profileId: string,
+  reason: string
+): Promise<{
+  cancellationRequestedAt: string | null;
+  cancellationRequestReason: string | null;
+}> {
   const trimmedRequestId = requestId.trim();
   const trimmedProfileId = profileId.trim();
 
@@ -629,9 +640,18 @@ export async function requestMyPastoralCancellation(
     throw new Error('Perfil não identificado.');
   }
 
+  const trimmedReason = reason.trim();
+
+  if (trimmedReason.length < MIN_PASTORAL_CANCELLATION_REASON_LENGTH) {
+    throw new Error(
+      `Informe uma justificativa com pelo menos ${MIN_PASTORAL_CANCELLATION_REASON_LENGTH} caracteres.`
+    );
+  }
+
   const { data, error } = await supabase.rpc('request_my_pastoral_cancellation', {
     p_request_id: trimmedRequestId,
     p_profile_id: trimmedProfileId,
+    p_reason: trimmedReason,
   });
 
   if (error?.code === 'PGRST202') {
@@ -646,6 +666,7 @@ export async function requestMyPastoralCancellation(
     success?: boolean;
     message?: string;
     cancellation_requested_at?: string | null;
+    cancellation_request_reason?: string | null;
   };
 
   if (payload.success === true) {
@@ -653,8 +674,12 @@ export async function requestMyPastoralCancellation(
       payload.cancellation_requested_at != null
         ? String(payload.cancellation_requested_at).trim() || null
         : new Date().toISOString();
+    const cancellationRequestReason =
+      payload.cancellation_request_reason != null
+        ? String(payload.cancellation_request_reason).trim() || trimmedReason
+        : trimmedReason;
 
-    return { cancellationRequestedAt };
+    return { cancellationRequestedAt, cancellationRequestReason };
   }
 
   if (payload.message?.trim()) {

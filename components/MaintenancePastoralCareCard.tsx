@@ -102,6 +102,9 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
     ? hasPastoralCancellationRequested(selectedRequest)
     : false;
 
+  const canCancelSelectedRequest =
+    cancellationRequested && canUpdateSelectedRequest && !isIntercessionReadOnly;
+
   const accessHint = accessContext.hasFullPastoralAccess
     ? null
     : accessContext.isIntercessionVolunteer
@@ -444,6 +447,23 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
               <ActivityIndicator color="#F9A8D4" size="small" style={styles.stageLoader} />
             ) : null}
             {cancellationRequested ? (
+              <View style={styles.cancellationRequestBox}>
+                <Text style={styles.cancellationRequestTitle}>Solicitação de cancelamento</Text>
+                <Text style={styles.cancellationRequestMessage}>
+                  O solicitante pediu o cancelamento de &quot;
+                  {selectedRequest?.motivo?.trim() || 'este pedido'}&quot;.
+                </Text>
+                {selectedRequest?.cancellation_request_reason?.trim() ? (
+                  <>
+                    <Text style={styles.cancellationRequestReasonLabel}>Justificativa</Text>
+                    <Text style={styles.cancellationRequestReasonText}>
+                      {selectedRequest.cancellation_request_reason.trim()}
+                    </Text>
+                  </>
+                ) : null}
+              </View>
+            ) : null}
+            {canCancelSelectedRequest ? (
               <TouchableOpacity
                 style={styles.cancellationButton}
                 onPress={() => {
@@ -453,9 +473,13 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
 
                   void (async () => {
                     const motivoLabel = selectedRequest?.motivo?.trim() || 'este pedido';
+                    const reasonText = selectedRequest?.cancellation_request_reason?.trim();
+                    const dialogMessage = reasonText
+                      ? `O solicitante pediu o cancelamento de "${motivoLabel}".\n\nJustificativa:\n${reasonText}\n\nDeseja excluir este pedido?`
+                      : `O solicitante pediu o cancelamento de "${motivoLabel}".\n\nDeseja excluir este pedido?`;
                     const confirmed = await confirmDialog(
                       'Cancelar pedido',
-                      `O solicitante pediu o cancelamento de "${motivoLabel}". Deseja excluir este pedido?`,
+                      dialogMessage,
                       'Cancelar pedido',
                       'Voltar',
                       { destructive: true }
@@ -479,7 +503,7 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
                 }}
                 disabled={isApprovingCancellation || rpcMissing || !selectedRequestId}
                 activeOpacity={0.85}
-                accessibilityLabel="Cancelar pedido solicitado pelo membro"
+                accessibilityLabel="Cancelar pedido em acompanhamento"
               >
                 {isApprovingCancellation ? (
                   <ActivityIndicator color="#FECACA" size="small" />
@@ -818,6 +842,42 @@ const styles = StyleSheet.create({
   stageLoader: {
     alignSelf: 'flex-start',
     marginTop: 6,
+  },
+  cancellationRequestBox: {
+    marginTop: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.45)',
+    backgroundColor: 'rgba(120, 53, 15, 0.25)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 4,
+  },
+  cancellationRequestTitle: {
+    color: '#FDE68A',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  cancellationRequestMessage: {
+    color: '#FEF3C7',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+  },
+  cancellationRequestReasonLabel: {
+    color: '#FCD34D',
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginTop: 2,
+  },
+  cancellationRequestReasonText: {
+    color: '#FFFBEB',
+    fontSize: 13,
+    lineHeight: 18,
   },
   cancellationButton: {
     alignSelf: 'stretch',

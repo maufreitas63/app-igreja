@@ -6,9 +6,11 @@ import {
   formatPastoralBeneficiarySummary,
   formatPastoralRequestDate,
   formatPastoralStatusLabel,
+  getPastoralRequestDeleteBlockedMessage,
   getSupabaseErrorMessage,
   hasPastoralCancellationRequested,
   isPastoralRequestCareStarted,
+  MIN_PASTORAL_CANCELLATION_REASON_LENGTH,
   requestMyPastoralCancellation,
   resolvePastoralSessionProfile,
   type PastoralRequestHistoryItem,
@@ -23,10 +25,15 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -48,7 +55,10 @@ export default function PastoralHistoryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
-  const [requestingCancellationId, setRequestingCancellationId] = useState<string | null>(null);
+  const [cancellationModalRequest, setCancellationModalRequest] =
+    useState<PastoralRequestHistoryItem | null>(null);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [submittingCancellationId, setSubmittingCancellationId] = useState<string | null>(null);
 
   const loadHistory = useCallback(
     async (options?: { refresh?: boolean }) => {
@@ -121,61 +131,9 @@ export default function PastoralHistoryScreen() {
       }
 
       const motivoLabel = item.motivo?.trim() || 'este pedido';
-      const careStarted = isPastoralRequestCareStarted(item.status);
-      const cancellationRequested = hasPastoralCancellationRequested(item);
-
-      if (careStarted) {
-        if (cancellationRequested) {
-          await appAlert(
-            'Cancelamento solicitado',
-            'O Cuidado Pastoral já foi notificado. Aguarde a confirmação do cancelamento.'
-          );
-          return;
-        }
-
-        const confirmed = await confirmDialog(
-          'Solicitar cancelamento',
-          `Este pedido já está em acompanhamento e não pode ser excluído diretamente. Deseja solicitar o cancelamento de "${motivoLabel}" ao Cuidado Pastoral?`,
-          'Solicitar cancelamento',
-          'Voltar',
-          { destructive: true }
-        );
-
-        if (!confirmed) {
-          return;
-        }
-
-        setRequestingCancellationId(item.id);
-
-        try {
-          const result = await requestMyPastoralCancellation(item.id, profileId);
-          setRequests((current) =>
-            current.map((entry) =>
-              entry.id === item.id
-                ? {
-                    ...entry,
-                    cancellation_requested_at:
-                      result.cancellationRequestedAt ?? new Date().toISOString(),
-                  }
-                : entry
-            )
-          );
-          await appAlert(
-            'Solicitação enviada',
-            'O Cuidado Pastoral foi notificado sobre o pedido de cancelamento.'
-          );
-        } catch (error) {
-          console.error('Erro ao solicitar cancelamento pastoral:', error);
-          await appAlert('Erro', getSupabaseErrorMessage(error));
-        } finally {
-          setRequestingCancellationId(null);
-        }
-
-        return;
-      }
 
       if (!canDeletePastoralRequest(item.status)) {
-        await appAlert('Exclusão bloqueada', 'Este pedido não pode ser excluído agora.');
+        await appAlert('Exclusão bloqueada', getPastoralRequestDeleteBlockedMessage());
         return;
       }
 
@@ -207,9 +165,135 @@ export default function PastoralHistoryScreen() {
     [profileId]
   );
 
+  const handleOpenCancellationModal = useCallback((item: PastoralRequestHistoryItem) => {
+    setCancellationModalRequest(item);
+    setCancellationReason('');
+  }, []);
+
+  const handleCloseCancellationModal = useCallback(() => {
+    if (submittingCancellationId) {
+      return;
+    }
+
+    setCancellationModalRequest(null);
+    setCancellationReason('');
+  }, [submittingCancellationId]);
+
+  const handleSubmitCancellationRequest = useCallback(async () => {
+    if (!profileId || !cancellationModalRequest) {
+      await appAlert('Erro', 'Faça login novamente para solicitar cancelamento.');
+      return;
+    }
+
+    const trimmedReason = cancellationReason.trim();
+
+    if (trimmedReason.length < MIN_PASTORAL_CANCELLATION_REASON_LENGTH) {
+      await appAlert(
+        'Justificativa obrigatória',
+        `Informe uma justificativa com pelo menos ${MIN_PASTORAL_CANCELLATION_REASON_LENGTH} caracteres.`
+      );
+      return;
+    }
+
+    setSubmittingCancellationId(cancellationModalRequest.id);
+
+    try {
+      const result = await requestMyPastoralCancellation(
+        cancellationModalRequest.id,
+        profileId,
+        trimmedReason
+      );
+
+      setRequests((current) =>
+        current.map((entry) =>
+          entry.id === cancellationModalRequest.id
+            ? {
+                ...entry,
+                cancellation_requested_at: result.cancellationRequestedAt,
+                cancellation_request_reason: result.cancellationRequestReason,
+              }
+            : entry
+        )
+      );
+      setCancellationModalRequest(null);
+      setCancellationReason('');
+      await appAlert(
+        'Solicitação enviada',
+        'O Cuidado Pastoral foi notificado. Aguarde a confirmação do cancelamento.'
+      );
+    } catch (error) {
+      console.error('Erro ao solicitar cancelamento pastoral:', error);
+      await appAlert('Erro', getSupabaseErrorMessage(error));
+    } finally {
+      setSubmittingCancellationId(null);
+    }
+  }, [cancellationModalRequest, cancellationReason, profileId]);
+
   return (
     <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <Modal
+          visible={cancellationModalRequest !== null}
+          transparent
+          animationType="fade"
+          onRequestClose={handleCloseCancellationModal}
+        >
+          <Pressable style={styles.cancellationBackdrop} onPress={handleCloseCancellationModal}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              style={styles.cancellationKeyboardWrap}
+            >
+              <Pressable style={styles.cancellationModalCard} onPress={() => undefined}>
+                <Text style={styles.cancellationModalTitle}>Solicitar cancelamento</Text>
+                <Text style={styles.cancellationModalHint}>
+                  Informe o motivo do cancelamento. O Cuidado Pastoral verá esta justificativa
+                  antes de confirmar a exclusão.
+                </Text>
+                <TextInput
+                  accessibilityLabel="Justificativa do cancelamento"
+                  editable={!submittingCancellationId}
+                  multiline
+                  numberOfLines={4}
+                  onChangeText={setCancellationReason}
+                  placeholder="Descreva o motivo do cancelamento..."
+                  placeholderTextColor="#64748B"
+                  style={styles.cancellationReasonInput}
+                  textAlignVertical="top"
+                  value={cancellationReason}
+                />
+                <View style={styles.cancellationModalActions}>
+                  <TouchableOpacity
+                    accessibilityLabel="Fechar solicitação de cancelamento"
+                    accessibilityRole="button"
+                    activeOpacity={0.85}
+                    disabled={Boolean(submittingCancellationId)}
+                    onPress={handleCloseCancellationModal}
+                    style={styles.cancellationSecondaryButton}
+                  >
+                    <Text style={styles.cancellationSecondaryButtonText}>Voltar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    accessibilityLabel="Enviar solicitação de cancelamento"
+                    accessibilityRole="button"
+                    activeOpacity={0.85}
+                    disabled={Boolean(submittingCancellationId)}
+                    onPress={() => void handleSubmitCancellationRequest()}
+                    style={[
+                      styles.cancellationPrimaryButton,
+                      submittingCancellationId && styles.cancellationPrimaryButtonDisabled,
+                    ]}
+                  >
+                    {submittingCancellationId ? (
+                      <ActivityIndicator color="#FFF" size="small" />
+                    ) : (
+                      <Text style={styles.cancellationPrimaryButtonText}>Enviar</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </Pressable>
+            </KeyboardAvoidingView>
+          </Pressable>
+        </Modal>
         <View style={styles.headerBar}>
           <View style={styles.headerTitles}>
             <Text style={styles.title}>Meus pedidos</Text>
@@ -264,8 +348,9 @@ export default function PastoralHistoryScreen() {
               const canDelete = canDeletePastoralRequest(item.status);
               const careStarted = isPastoralRequestCareStarted(item.status);
               const cancellationRequested = hasPastoralCancellationRequested(item);
+              const canRequestCancellation = careStarted && !cancellationRequested;
               const isDeleting = deletingRequestId === item.id;
-              const isRequestingCancellation = requestingCancellationId === item.id;
+              const isSubmittingCancellation = submittingCancellationId === item.id;
               const handlerDisplayName =
                 careStarted && item.handler_name?.trim()
                   ? formatShortName(item.handler_name)
@@ -276,47 +361,25 @@ export default function PastoralHistoryScreen() {
                 <View style={styles.cardHeader}>
                   <Text style={styles.cardDate}>{formatPastoralRequestDate(item.created_at)}</Text>
                   <View style={styles.cardHeaderActions}>
-                    <TouchableOpacity
-                      accessibilityLabel={
-                        canDelete
-                          ? 'Excluir pedido pastoral'
-                          : cancellationRequested
-                            ? 'Cancelamento já solicitado ao Cuidado Pastoral'
-                            : careStarted
-                              ? 'Solicitar cancelamento do pedido pastoral'
-                              : 'Exclusão bloqueada'
-                      }
-                      accessibilityRole="button"
-                      accessibilityState={{
-                        disabled: isDeleting || isRequestingCancellation || (careStarted && cancellationRequested),
-                      }}
-                      activeOpacity={0.85}
-                      disabled={
-                        isDeleting
-                        || isRequestingCancellation
-                        || (careStarted && cancellationRequested)
-                      }
-                      onPress={() => void handleDeleteRequest(item)}
-                      style={[
-                        styles.cardDeleteButton,
-                        (careStarted && !cancellationRequested) && styles.cardDeleteButtonCancellation,
-                        ((careStarted && cancellationRequested) || isDeleting || isRequestingCancellation)
-                          && styles.cardDeleteButtonDisabled,
-                      ]}>
-                      {isDeleting || isRequestingCancellation ? (
-                        <ActivityIndicator color="#FCA5A5" size="small" />
-                      ) : (
-                        <FontAwesome
-                          name="eraser"
-                          size={16}
-                          color={
-                            canDelete || (careStarted && !cancellationRequested)
-                              ? '#FCA5A5'
-                              : '#64748B'
-                          }
-                        />
-                      )}
-                    </TouchableOpacity>
+                    {canDelete ? (
+                      <TouchableOpacity
+                        accessibilityLabel="Excluir pedido pastoral"
+                        accessibilityRole="button"
+                        accessibilityState={{ disabled: isDeleting }}
+                        activeOpacity={0.85}
+                        disabled={isDeleting}
+                        onPress={() => void handleDeleteRequest(item)}
+                        style={[
+                          styles.cardDeleteButton,
+                          isDeleting && styles.cardDeleteButtonDisabled,
+                        ]}>
+                        {isDeleting ? (
+                          <ActivityIndicator color="#FCA5A5" size="small" />
+                        ) : (
+                          <FontAwesome name="eraser" size={16} color="#FCA5A5" />
+                        )}
+                      </TouchableOpacity>
+                    ) : null}
                     <View style={styles.statusBadge}>
                       <Text style={styles.statusBadgeText}>
                         {formatPastoralStatusLabel(item.status)}
@@ -354,16 +417,44 @@ export default function PastoralHistoryScreen() {
                   </View>
                 ) : null}
 
-                {cancellationRequested ? (
-                  <Text style={styles.cancellationPendingText}>
-                    Cancelamento solicitado — aguardando o Cuidado Pastoral.
-                  </Text>
-                ) : null}
-
                 {item.description?.trim() ? (
                   <Text style={styles.cardDescription} numberOfLines={3}>
                     {item.description.trim()}
                   </Text>
+                ) : null}
+
+                {cancellationRequested ? (
+                  <View style={styles.cancellationPendingBox}>
+                    <Text style={styles.cancellationPendingTitle}>Cancelamento solicitado</Text>
+                    {item.cancellation_request_reason?.trim() ? (
+                      <Text style={styles.cancellationPendingReason}>
+                        {item.cancellation_request_reason.trim()}
+                      </Text>
+                    ) : null}
+                    <Text style={styles.cancellationPendingHint}>
+                      Aguarde o Cuidado Pastoral confirmar a exclusão.
+                    </Text>
+                  </View>
+                ) : null}
+
+                {canRequestCancellation ? (
+                  <TouchableOpacity
+                    accessibilityLabel="Solicitar cancelamento do pedido pastoral"
+                    accessibilityRole="button"
+                    activeOpacity={0.85}
+                    disabled={isSubmittingCancellation}
+                    onPress={() => handleOpenCancellationModal(item)}
+                    style={[
+                      styles.requestCancellationButton,
+                      isSubmittingCancellation && styles.requestCancellationButtonDisabled,
+                    ]}
+                  >
+                    {isSubmittingCancellation ? (
+                      <ActivityIndicator color="#FECACA" size="small" />
+                    ) : (
+                      <Text style={styles.requestCancellationButtonText}>Solicitar cancelamento</Text>
+                    )}
+                  </TouchableOpacity>
                 ) : null}
               </View>
             );
@@ -525,17 +616,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30, 41, 59, 0.45)',
     opacity: 0.72,
   },
-  cardDeleteButtonCancellation: {
-    borderColor: 'rgba(248, 113, 113, 0.55)',
-    backgroundColor: 'rgba(127, 29, 29, 0.28)',
-  },
-  cancellationPendingText: {
-    color: '#FCA5A5',
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: '700',
-    marginTop: 4,
-  },
   cardDate: {
     color: '#94A3B8',
     fontSize: 12,
@@ -590,6 +670,131 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     marginTop: 4,
+  },
+  requestCancellationButton: {
+    marginTop: 8,
+    alignSelf: 'stretch',
+    minHeight: 40,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(248, 113, 113, 0.55)',
+    backgroundColor: 'rgba(127, 29, 29, 0.35)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  requestCancellationButtonDisabled: {
+    opacity: 0.7,
+  },
+  requestCancellationButtonText: {
+    color: '#FECACA',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  cancellationPendingBox: {
+    marginTop: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.45)',
+    backgroundColor: 'rgba(120, 53, 15, 0.25)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 4,
+  },
+  cancellationPendingTitle: {
+    color: '#FDE68A',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  cancellationPendingReason: {
+    color: '#FEF3C7',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  cancellationPendingHint: {
+    color: '#FCD34D',
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  cancellationBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(2, 6, 23, 0.72)',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  cancellationKeyboardWrap: {
+    width: '100%',
+  },
+  cancellationModalCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#475569',
+    backgroundColor: '#1E293B',
+    padding: 16,
+    gap: 10,
+  },
+  cancellationModalTitle: {
+    color: '#F8FAFC',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  cancellationModalHint: {
+    color: '#94A3B8',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  cancellationReasonInput: {
+    minHeight: 110,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#475569',
+    backgroundColor: '#0F172A',
+    color: '#F8FAFC',
+    fontSize: 14,
+    lineHeight: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  cancellationModalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  cancellationSecondaryButton: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#64748B',
+    backgroundColor: 'rgba(51, 65, 85, 0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  cancellationSecondaryButtonText: {
+    color: '#E2E8F0',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  cancellationPrimaryButton: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F87171',
+    backgroundColor: 'rgba(127, 29, 29, 0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  cancellationPrimaryButtonDisabled: {
+    opacity: 0.75,
+  },
+  cancellationPrimaryButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '800',
   },
   footerBar: {
     paddingHorizontal: 16,
