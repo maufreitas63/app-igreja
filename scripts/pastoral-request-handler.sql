@@ -12,7 +12,8 @@ alter table public.pastoral_requests
 create index if not exists idx_pastoral_requests_handler_profile_id
   on public.pastoral_requests (handler_profile_id);
 
-drop function if exists public.session_can_update_pastoral_request(uuid, text);
+-- A policy RLS referencia a função antiga; remova-a antes de dropar a função.
+drop policy if exists pastoral_requests_update_acl on public.pastoral_requests;
 
 create or replace function public.session_can_update_pastoral_request_row(
   p_request_id uuid,
@@ -63,7 +64,7 @@ begin
 end;
 $$;
 
-drop policy if exists pastoral_requests_update_acl on public.pastoral_requests;
+drop function if exists public.session_can_update_pastoral_request(uuid, text);
 
 create policy pastoral_requests_update_acl
   on public.pastoral_requests
