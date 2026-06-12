@@ -1,3 +1,4 @@
+import { getCachedOrFetch, invalidateAsyncCache } from '@/lib/asyncResultCache';
 import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
@@ -70,30 +71,39 @@ const parseSubmission = (row: Record<string, unknown>): FamilyReceptionSubmissio
   };
 };
 
-export async function listPendingFamilyReceptionSubmissions(limit = 50) {
-  const { data, error } = await supabase.rpc('list_recepcao_cadastro_familiar_pending', {
-    p_limit: limit,
-  });
+export async function listPendingFamilyReceptionSubmissions(
+  limit = 50,
+  options?: { forceRefresh?: boolean }
+) {
+  return getCachedOrFetch(
+    `family_reception:pending:${limit}`,
+    async () => {
+      const { data, error } = await supabase.rpc('list_recepcao_cadastro_familiar_pending', {
+        p_limit: limit,
+      });
 
-  if (error) {
-    if (isSupabaseRpcMissingError(error, 'list_recepcao_cadastro_familiar_pending')) {
-      throw new Error(FAMILY_RECEPTION_SQL_HINT);
-    }
+      if (error) {
+        if (isSupabaseRpcMissingError(error, 'list_recepcao_cadastro_familiar_pending')) {
+          throw new Error(FAMILY_RECEPTION_SQL_HINT);
+        }
 
-    throw error;
-  }
+        throw error;
+      }
 
-  const record = (data ?? {}) as Record<string, unknown>;
+      const record = (data ?? {}) as Record<string, unknown>;
 
-  if (record.success !== true) {
-    throw new Error(String(record.message ?? 'Não foi possível listar a recepção.'));
-  }
+      if (record.success !== true) {
+        throw new Error(String(record.message ?? 'Não foi possível listar a recepção.'));
+      }
 
-  const submissionsRaw = Array.isArray(record.submissions) ? record.submissions : [];
+      const submissionsRaw = Array.isArray(record.submissions) ? record.submissions : [];
 
-  return submissionsRaw
-    .map((entry) => parseSubmission(entry as Record<string, unknown>))
-    .filter((entry): entry is FamilyReceptionSubmission => entry !== null);
+      return submissionsRaw
+        .map((entry) => parseSubmission(entry as Record<string, unknown>))
+        .filter((entry): entry is FamilyReceptionSubmission => entry !== null);
+    },
+    { ttlMs: 30_000, forceRefresh: options?.forceRefresh }
+  );
 }
 
 export async function processFamilyReceptionBatch(submissionIds?: string[]) {
@@ -117,6 +127,8 @@ export async function processFamilyReceptionBatch(submissionIds?: string[]) {
   if (record.success !== true) {
     throw new Error(String(record.message ?? 'Não foi possível processar a recepção.'));
   }
+
+  invalidateAsyncCache('family_reception:pending');
 
   return {
     processedSubmissions: Number(record.processed_submissions ?? 0),
@@ -147,6 +159,8 @@ export async function rejectFamilyReceptionBatch(submissionIds: string[], reason
   if (record.success !== true) {
     throw new Error(String(record.message ?? 'Não foi possível rejeitar o lote.'));
   }
+
+  invalidateAsyncCache('family_reception:pending');
 
   return {
     rejectedMembers: Number(record.rejected_members ?? 0),

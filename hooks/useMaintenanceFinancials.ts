@@ -285,7 +285,24 @@ export function useMaintenanceFinancials(enabled: boolean) {
           };
         }
 
-        await reload();
+        setEntries((current) =>
+          sortMaintenanceFinancialEntries(
+            current.map((entry) =>
+              entry.id === entryId
+                ? {
+                    ...entry,
+                    transaction_date: draft.transactionDateIso,
+                    account: draft.account.trim(),
+                    amount: draft.amount,
+                    ministry: draft.ministry.trim(),
+                    transaction_kind: draft.transactionKind,
+                    movement: draft.movement,
+                    budget_version: draft.budgetVersion,
+                  }
+                : entry
+            )
+          )
+        );
 
         return {
           success: true as const,
@@ -309,7 +326,7 @@ export function useMaintenanceFinancials(enabled: boolean) {
         setSavingEntryId(null);
       }
     },
-    [reload, resolveMaintenanceRpcError]
+    [resolveMaintenanceRpcError]
   );
 
   const saveEntryComment = useCallback(

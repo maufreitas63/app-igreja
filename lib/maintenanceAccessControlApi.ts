@@ -1,5 +1,12 @@
-import { ACCESS_SCREEN, profileHasAccess, sessionHasAccess } from '@/lib/accessControl';
+import {
+  ACCESS_SCREEN,
+  invalidateAccessControlCache,
+  profileHasAccess,
+  sessionHasAccess,
+} from '@/lib/accessControl';
 import { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
+import { getCachedOrFetch } from '@/lib/asyncResultCache';
+import { mapProfileSearchRows } from '@/lib/profileSearchRow';
 import { isTstMaxScaleTypeResourceKey } from '@/lib/tstMaxScaleFilter';
 import { supabase } from '@/lib/supabase';
 import { coerceRpcBoolean, isSupabaseRpcMissing } from '@/lib/supabaseRpc';
@@ -89,10 +96,27 @@ const throwRpcMissing = () => {
   throw schemaError;
 };
 
-export async function resolveActorProfileId() {
-  const phone = await getStoredUserPhone();
+let cachedActorProfileId: string | null = null;
+let cachedActorProfilePhone: string | null = null;
 
-  if (phone?.trim()) {
+export function invalidateActorSessionCache() {
+  cachedActorProfileId = null;
+  cachedActorProfilePhone = null;
+  invalidateAccessControlCache({ allProfiles: true });
+}
+
+export async function resolveActorProfileId(options?: { forceRefresh?: boolean }) {
+  const phone = (await getStoredUserPhone())?.trim() || null;
+
+  if (
+    !options?.forceRefresh
+    && cachedActorProfileId
+    && cachedActorProfilePhone === phone
+  ) {
+    return cachedActorProfileId;
+  }
+
+  if (phone) {
     const preferredProfileId = await resolveProfileIdByPhone(phone);
 
     if (preferredProfileId) {
@@ -102,6 +126,8 @@ export async function resolveActorProfileId() {
         await persistProfileId(preferredProfileId);
       }
 
+      cachedActorProfileId = preferredProfileId;
+      cachedActorProfilePhone = phone;
       return preferredProfileId;
     }
   }
@@ -112,6 +138,8 @@ export async function resolveActorProfileId() {
     profileId = await repairUserSessionReference(phone);
   }
 
+  cachedActorProfileId = profileId;
+  cachedActorProfilePhone = phone;
   return profileId;
 }
 
@@ -133,32 +161,41 @@ const readIsSuperAdminProfile = async (profileId: string) => {
   return coerceRpcBoolean(data);
 };
 
-export async function checkSessionIsSuperAdmin() {
+export async function checkSessionIsSuperAdmin(options?: { forceRefresh?: boolean }) {
   const phone = await getStoredUserPhone();
 
   if (phone?.trim()) {
     await repairUserSessionReference(phone);
   }
 
-  let profileId = await resolveActorProfileId();
+  let profileId = await resolveActorProfileId({ forceRefresh: options?.forceRefresh });
 
   if (!profileId) {
     return false;
   }
 
-  let isSuperAdmin = await readIsSuperAdminProfile(profileId);
+  return getCachedOrFetch(
+    'session:super_admin',
+    async () => {
+      let activeProfileId = profileId;
+      let isSuperAdmin = await readIsSuperAdminProfile(activeProfileId);
 
-  if (!isSuperAdmin && phone?.trim()) {
-    const loginProfileId = await resolveProfileIdByPhone(phone);
+      if (!isSuperAdmin && phone?.trim()) {
+        const loginProfileId = await resolveProfileIdByPhone(phone);
 
-    if (loginProfileId && loginProfileId !== profileId) {
-      await persistProfileId(loginProfileId);
-      profileId = loginProfileId;
-      isSuperAdmin = await readIsSuperAdminProfile(profileId);
-    }
-  }
+        if (loginProfileId && loginProfileId !== activeProfileId) {
+          await persistProfileId(loginProfileId);
+          activeProfileId = loginProfileId;
+          cachedActorProfileId = loginProfileId;
+          cachedActorProfilePhone = phone.trim();
+          isSuperAdmin = await readIsSuperAdminProfile(activeProfileId);
+        }
+      }
 
-  return isSuperAdmin;
+      return isSuperAdmin;
+    },
+    { scopeId: profileId, forceRefresh: options?.forceRefresh }
+  );
 }
 
 /** Card `access_control` na manutenção — chave ACL `maintenance.card.access_control`. */
@@ -210,30 +247,8 @@ const parseRoleRows = (data: unknown): AccessRoleRecord[] => {
   return sortRowsByRoleCode(rows);
 };
 
-const parseProfileSearchRows = (data: unknown): AccessProfileSearchResult[] => {
-  if (!Array.isArray(data)) {
-    return [];
-  }
-
-  return data
-    .map((row) => {
-      const record = row as Record<string, unknown>;
-      const id = String(record.id ?? '').trim();
-      const fullName = String(record.full_name ?? record.fullName ?? '').trim();
-
-      if (!id || !fullName) {
-        return null;
-      }
-
-      return {
-        id,
-        fullName,
-        phone: record.phone != null ? String(record.phone).trim() || null : null,
-        memberCode: record.codigo_membro != null ? String(record.codigo_membro).trim() || null : null,
-      } satisfies AccessProfileSearchResult;
-    })
-    .filter((row): row is AccessProfileSearchResult => row !== null);
-};
+const parseProfileSearchRows = (data: unknown): AccessProfileSearchResult[] =>
+  mapProfileSearchRows(data);
 
 const parseProfileRoleRows = (data: unknown): ProfileRoleAssignment[] => {
   if (!Array.isArray(data)) {
@@ -408,7 +423,13 @@ export async function assignProfileRole(targetProfileId: string, roleCode: strin
     return { success: false as const, message: error.message || 'Não foi possível atribuir o papel.' };
   }
 
-  return parseMutationResult(data);
+  const result = parseMutationResult(data);
+
+  if (result.success) {
+    invalidateAccessControlCache({ profileId: targetProfileId, allProfiles: true });
+  }
+
+  return result;
 }
 
 export async function revokeProfileRole(targetProfileId: string, roleCode: string) {
@@ -434,7 +455,13 @@ export async function revokeProfileRole(targetProfileId: string, roleCode: strin
     return { success: false as const, message: error.message || 'Não foi possível remover o papel.' };
   }
 
-  return parseMutationResult(data);
+  const result = parseMutationResult(data);
+
+  if (result.success) {
+    invalidateAccessControlCache({ profileId: targetProfileId, allProfiles: true });
+  }
+
+  return result;
 }
 
 export async function ensureFinancialAccessResourcesAdmin() {
@@ -507,7 +534,13 @@ export async function saveRoleGrantAdmin(
     return { success: false as const, message: error.message || 'Não foi possível salvar a permissão.' };
   }
 
-  return parseMutationResult(data);
+  const result = parseMutationResult(data);
+
+  if (result.success) {
+    invalidateAccessControlCache({ allProfiles: true });
+  }
+
+  return result;
 }
 
 export const isSensitiveAccessResourceKey = (resourceKey: string) =>

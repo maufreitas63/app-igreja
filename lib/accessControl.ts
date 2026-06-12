@@ -1,4 +1,5 @@
 import { ACL_UNAVAILABLE_MESSAGE, isAclStrictMode } from '@/lib/aclPolicy';
+import { getCachedOrFetch, invalidateAsyncCache } from '@/lib/asyncResultCache';
 import { supabase } from '@/lib/supabase';
 import { coerceRpcBoolean, isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { getStoredProfileId, repairUserSessionReference } from '@/lib/userSession';
@@ -65,16 +66,25 @@ export type DashboardCardViewAccess = Record<string, boolean>;
 
 /** Consulta `profile_has_access` para cada card do dashboard (view). */
 export async function loadDashboardCardViewAccess(
-  profileId: string
+  profileId: string,
+  options?: { forceRefresh?: boolean }
 ): Promise<DashboardCardViewAccess> {
-  const entries = await Promise.all(
-    Object.entries(DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY).map(async ([content, resourceKey]) => {
-      const allowed = await profileHasAccess(profileId, 'screen', resourceKey, 'view');
-      return [content, allowed] as const;
-    })
-  );
+  return getCachedOrFetch(
+    `dashboard:cards:${profileId}`,
+    async () => {
+      const entries = await Promise.all(
+        Object.entries(DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY).map(async ([content, resourceKey]) => {
+          const allowed = await profileHasAccess(profileId, 'screen', resourceKey, 'view', {
+            skipCache: true,
+          });
+          return [content, allowed] as const;
+        })
+      );
 
-  return Object.fromEntries(entries);
+      return Object.fromEntries(entries);
+    },
+    { scopeId: profileId, forceRefresh: options?.forceRefresh }
+  );
 }
 
 /** Cards do dashboard que permanecem visíveis independentemente de eventos ou ACL. */
@@ -135,35 +145,46 @@ export const isProfileColumnAccessLoaded = (access: ProfileColumnAccess) =>
   Object.keys(access.view).length > 0;
 
 /** Consulta `profile_has_access` para colunas do perfil (view e update). */
-export async function loadProfileColumnAccess(profileId: string): Promise<ProfileColumnAccess> {
-  const viewEntries = await Promise.all(
-    PROFILE_MANAGE_COLUMN_FIELDS.map(async (field) => {
-      const allowed = await profileHasAccess(
-        profileId,
-        'column',
-        profileColumnResourceKey(field),
-        'view'
+export async function loadProfileColumnAccess(
+  profileId: string,
+  options?: { forceRefresh?: boolean }
+): Promise<ProfileColumnAccess> {
+  return getCachedOrFetch(
+    `profile:columns:${profileId}`,
+    async () => {
+      const viewEntries = await Promise.all(
+        PROFILE_MANAGE_COLUMN_FIELDS.map(async (field) => {
+          const allowed = await profileHasAccess(
+            profileId,
+            'column',
+            profileColumnResourceKey(field),
+            'view',
+            { skipCache: true }
+          );
+          return [field, allowed] as const;
+        })
       );
-      return [field, allowed] as const;
-    })
-  );
 
-  const updateEntries = await Promise.all(
-    PROFILE_MANAGE_COLUMN_FIELDS.map(async (field) => {
-      const allowed = await profileHasAccess(
-        profileId,
-        'column',
-        profileColumnResourceKey(field),
-        'update'
+      const updateEntries = await Promise.all(
+        PROFILE_MANAGE_COLUMN_FIELDS.map(async (field) => {
+          const allowed = await profileHasAccess(
+            profileId,
+            'column',
+            profileColumnResourceKey(field),
+            'update',
+            { skipCache: true }
+          );
+          return [field, allowed] as const;
+        })
       );
-      return [field, allowed] as const;
-    })
-  );
 
-  return {
-    view: Object.fromEntries(viewEntries),
-    update: Object.fromEntries(updateEntries),
-  };
+      return {
+        view: Object.fromEntries(viewEntries),
+        update: Object.fromEntries(updateEntries),
+      };
+    },
+    { scopeId: profileId, forceRefresh: options?.forceRefresh }
+  );
 }
 
 export const canViewProfileColumn = (fieldKey: string, access: ProfileColumnAccess) => {
@@ -223,22 +244,44 @@ const coerceAccessResult = (
   return coerceRpcBoolean(data);
 };
 
-export async function profileHasAccess(
-  profileId: string | null | undefined,
+async function fetchProfileHasAccess(
+  profileId: string,
   resourceType: AccessResourceType,
   resourceKey: string,
-  action: AccessAction = 'view'
+  action: AccessAction
 ): Promise<boolean> {
-  const trimmed = profileId?.trim() ?? null;
-
   const { data, error } = await supabase.rpc('profile_has_access', {
-    p_profile_id: trimmed,
+    p_profile_id: profileId,
     p_resource_type: resourceType,
     p_resource_key: resourceKey,
     p_action: action,
   });
 
   return coerceAccessResult(data as boolean | null | undefined, error);
+}
+
+export async function profileHasAccess(
+  profileId: string | null | undefined,
+  resourceType: AccessResourceType,
+  resourceKey: string,
+  action: AccessAction = 'view',
+  options?: { skipCache?: boolean; forceRefresh?: boolean }
+): Promise<boolean> {
+  const trimmed = profileId?.trim() ?? null;
+
+  if (!trimmed) {
+    return false;
+  }
+
+  if (options?.skipCache) {
+    return fetchProfileHasAccess(trimmed, resourceType, resourceKey, action);
+  }
+
+  return getCachedOrFetch(
+    `acl:${trimmed}:${resourceType}:${resourceKey}:${action}`,
+    () => fetchProfileHasAccess(trimmed, resourceType, resourceKey, action),
+    { scopeId: trimmed, forceRefresh: options?.forceRefresh }
+  );
 }
 
 export async function profileHasAccessByPhone(
@@ -262,6 +305,28 @@ export async function profileHasAccessByPhone(
 }
 
 /** Resolve `profile_id` da sessão ou pelo telefone e consulta permissão. */
+/** Limpa caches de ACL após mudanças de papéis ou grants. */
+export function invalidateAccessControlCache(options?: {
+  profileId?: string | null;
+  allProfiles?: boolean;
+}) {
+  invalidateAsyncCache('maintenance:dashboard:access');
+  invalidateAsyncCache('family_reception:pending');
+  invalidateAsyncCache('session:super_admin');
+
+  if (options?.allProfiles || !options?.profileId?.trim()) {
+    invalidateAsyncCache('acl:');
+    invalidateAsyncCache('dashboard:cards:');
+    invalidateAsyncCache('profile:columns:');
+    return;
+  }
+
+  const trimmed = options.profileId.trim();
+  invalidateAsyncCache(`acl:${trimmed}`);
+  invalidateAsyncCache(`dashboard:cards:${trimmed}`);
+  invalidateAsyncCache(`profile:columns:${trimmed}`);
+}
+
 export async function sessionHasAccess(
   resourceType: AccessResourceType,
   resourceKey: string,

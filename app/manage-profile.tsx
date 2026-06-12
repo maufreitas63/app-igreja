@@ -660,6 +660,9 @@ export default function ManageProfile() {
   });
   const isOnboardingFlow = params.onboarding === '1';
   const scrollRef = useRef<ScrollView>(null);
+  const profileRef = useRef<ProfileRecord | null>(null);
+  const lastProfileFetchAtRef = useRef(0);
+  const PROFILE_FOCUS_STALE_MS = 60_000;
   const onboardingAlertShownRef = useRef(false);
   const cameraRef = useRef<CameraView>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
@@ -963,10 +966,11 @@ export default function ManageProfile() {
       setLoadingVehicles(true);
 
       try {
+        const phoneVariants = buildPhoneDbQueryVariants(normalizedPhone);
         const { data, error } = await supabase
           .from('profile_vehicles')
           .select('id, phone, placa, marca, modelo, cor')
-          .eq('phone', normalizedPhone)
+          .in('phone', phoneVariants.length ? phoneVariants : [normalizedPhone])
           .order('placa', { ascending: true });
 
         if (error) {
@@ -984,34 +988,53 @@ export default function ManageProfile() {
     []
   );
 
-  const fetchProfile = useCallback(async () => {
-    setLoading(true);
+  useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
 
-    try {
-      const loadedProfile = await loadProfile(phoneParam);
-      const nextProfile = loadedProfile
-        ? await reconcileRejectedMemberFamilyCode(loadedProfile)
-        : null;
-      setProfile(nextProfile);
-
-      setColumnAccessLoading(true);
-
-      if (nextProfile?.id) {
-        const columnAccess = await loadProfileColumnAccess(String(nextProfile.id));
-        setProfileColumnAccess(columnAccess);
-      } else {
-        setProfileColumnAccess({ view: {}, update: {} });
-      }
-    } finally {
-      setColumnAccessLoading(false);
-      setLoading(false);
-    }
+  useEffect(() => {
+    lastProfileFetchAtRef.current = 0;
+    profileRef.current = null;
   }, [phoneParam]);
 
-  useFocusEffect(
-    useCallback(() => {
-      void fetchProfile();
-    }, [fetchProfile])
+  const fetchProfile = useCallback(
+    async (options?: { force?: boolean }) => {
+      const force = options?.force === true;
+
+      if (
+        !force
+        && profileRef.current
+        && lastProfileFetchAtRef.current > 0
+        && Date.now() - lastProfileFetchAtRef.current < PROFILE_FOCUS_STALE_MS
+      ) {
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const loadedProfile = await loadProfile(phoneParam);
+        const nextProfile = loadedProfile
+          ? await reconcileRejectedMemberFamilyCode(loadedProfile)
+          : null;
+        setProfile(nextProfile);
+        profileRef.current = nextProfile;
+        lastProfileFetchAtRef.current = Date.now();
+
+        setColumnAccessLoading(true);
+
+        if (nextProfile?.id) {
+          const columnAccess = await loadProfileColumnAccess(String(nextProfile.id));
+          setProfileColumnAccess(columnAccess);
+        } else {
+          setProfileColumnAccess({ view: {}, update: {} });
+        }
+      } finally {
+        setColumnAccessLoading(false);
+        setLoading(false);
+      }
+    },
+    [phoneParam]
   );
 
   useFocusEffect(
@@ -1021,21 +1044,26 @@ export default function ManageProfile() {
       void (async () => {
         const allowed = await sessionHasAccess('screen', ACCESS_SCREEN.manageProfile, 'view');
 
-        if (!active || allowed) {
+        if (!active) {
           return;
         }
 
-        Alert.alert(
-          'Acesso negado',
-          'Você não tem permissão para abrir Dados cadastrais.',
-          [{ text: 'OK', onPress: () => router.replace('/(tabs)/dashboard') }]
-        );
+        if (!allowed) {
+          Alert.alert(
+            'Acesso negado',
+            'Você não tem permissão para abrir Dados cadastrais.',
+            [{ text: 'OK', onPress: () => router.replace('/(tabs)/dashboard') }]
+          );
+          return;
+        }
+
+        await fetchProfile();
       })();
 
       return () => {
         active = false;
       };
-    }, [router])
+    }, [fetchProfile, router])
   );
 
   useEffect(() => {

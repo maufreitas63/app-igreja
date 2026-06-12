@@ -202,13 +202,14 @@ export function useMaintenanceScales(enabled: boolean) {
 
     try {
       const [volunteerRows, logs, cycleContext] = await Promise.all([
-        fetchMaintenanceScaleVolunteers(selectedScaleTypeId),
-        fetchMaintenanceScaleLogs(),
+        Promise.resolve(volunteers),
+        allLogs.length > 0 ? Promise.resolve(allLogs) : fetchMaintenanceScaleLogs(),
         fetchScaleCycleContext(selectedScaleTypeId),
       ]);
 
-      setVolunteers(volunteerRows);
-      setAllLogs(logs);
+      if (allLogs.length === 0) {
+        setAllLogs(logs);
+      }
       beginMaintenanceRequest();
 
       const activeRows = volunteerRows.filter((volunteer) => volunteer.isActive);
@@ -266,7 +267,7 @@ export function useMaintenanceScales(enabled: boolean) {
     } finally {
       setBuildingBatch(false);
     }
-  }, [enabled, selectedScaleTypeId]);
+  }, [allLogs, enabled, selectedScaleTypeId, volunteers]);
 
   const cancelBatchPreview = useCallback(() => {
     setBatchPreview(null);

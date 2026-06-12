@@ -26,7 +26,7 @@ import {
   resolveReturnDashboardCardParam,
 } from '@/lib/dashboardReturnNavigation';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -156,6 +156,7 @@ export default function PastoralScreen() {
   });
 
   const [categories, setCategories] = useState<PastoralCategory[]>([]);
+  const categoriesRef = useRef<PastoralCategory[]>([]);
   const [subcategories, setSubcategories] = useState<PastoralSubcategory[]>([]);
   const [selectedMotivo, setSelectedMotivo] = useState('');
   const [selectedSubmotivo, setSelectedSubmotivo] = useState('');
@@ -274,12 +275,16 @@ export default function PastoralScreen() {
     }
   }, []);
 
+  useEffect(() => {
+    categoriesRef.current = categories;
+  }, [categories]);
+
   const loadSubcategories = useCallback(async (categoryId: string) => {
     setLoadingSubcategories(true);
     setSubcategoriesError(null);
 
     const applyLocalSubcategories = () => {
-      const localSubcategories = resolveLocalSubcategories(categoryId, categories);
+      const localSubcategories = resolveLocalSubcategories(categoryId, categoriesRef.current);
 
       setSubcategories(localSubcategories);
 
@@ -319,7 +324,7 @@ export default function PastoralScreen() {
     } finally {
       setLoadingSubcategories(false);
     }
-  }, [categories]);
+  }, []);
 
   useEffect(() => {
     void loadCategories();
@@ -374,9 +379,13 @@ export default function PastoralScreen() {
       return;
     }
 
+    if (loadingCategories) {
+      return;
+    }
+
     setSelectedSubmotivo('');
     void loadSubcategories(selectedMotivo);
-  }, [loadSubcategories, selectedMotivo]);
+  }, [loadSubcategories, loadingCategories, selectedMotivo]);
 
   const handleSubmit = async () => {
     const motivoLabel = motivoSelecionado?.label?.trim() ?? '';

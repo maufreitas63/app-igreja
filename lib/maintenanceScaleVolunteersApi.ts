@@ -4,6 +4,7 @@ import {
   type MaintenanceScaleType,
   type MaintenanceScaleVolunteer,
 } from '@/lib/maintenanceScales';
+import { mapProfileSearchRows } from '@/lib/profileSearchRow';
 import { supabase } from '@/lib/supabase';
 
 export const MAINTENANCE_SCALE_VOLUNTEERS_RPC_MISSING = 'MAINTENANCE_SCALE_VOLUNTEERS_RPC_MISSING';
@@ -52,28 +53,7 @@ export async function searchProfilesForScaleVolunteer(query: string, limit = 25)
     throw error;
   }
 
-  return ((data as Array<{
-    id?: string;
-    full_name?: string | null;
-    phone?: string | null;
-    codigo_membro?: string | null;
-  }> | null) ?? [])
-    .map((row) => {
-      const id = row.id?.trim();
-      const fullName = row.full_name?.trim();
-
-      if (!id || !fullName) {
-        return null;
-      }
-
-      return {
-        id,
-        fullName,
-        phone: row.phone?.trim() || null,
-        memberCode: row.codigo_membro?.trim() || null,
-      } satisfies ProfileForScaleVolunteer;
-    })
-    .filter((row): row is ProfileForScaleVolunteer => row !== null);
+  return mapProfileSearchRows(data) as ProfileForScaleVolunteer[];
 }
 
 const readRpcIntegerField = (row: Record<string, unknown>, key: string) => {

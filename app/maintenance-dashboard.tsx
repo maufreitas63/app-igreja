@@ -23,24 +23,11 @@ import { MaintenanceProfileCadastroCard } from '@/components/MaintenanceProfileC
 import { MaintenanceScalesCard } from '@/components/MaintenanceScalesCard';
 import { MaintenanceSalaMonitorCard } from '@/components/MaintenanceSalaMonitorCard';
 import { QuorumCheckinRegistryTable } from '@/components/QuorumCheckinRegistryTable';
-import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
+import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
 import { resolveMaintenancePanelAccessResourceKey } from '@/lib/screenAccessResourceKeys';
 import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
-import {
-  checkSessionIsSuperAdmin,
-  sessionCanAccessAccessControlPanel,
-} from '@/lib/maintenanceAccessControlApi';
-import { loadPastoralCarePanelAccess } from '@/lib/pastoralAccess';
-import { sessionCanAccessPastoralRoleChangePanel } from '@/lib/pastoralRoleChangeApi';
-import {
-  loadMaintenanceScalePanelAccess,
-  type MaintenanceScalePanelContent,
-} from '@/lib/scaleAccess';
-import {
-  getStoredProfileId,
-  getStoredUserPhone,
-  repairUserSessionReference,
-} from '@/lib/userSession';
+import { type MaintenanceScalePanelContent } from '@/lib/scaleAccess';
 import {
   ensureEventsOptionalColumns,
   isRequerQuorumColumnAvailable,
@@ -74,7 +61,6 @@ import {
   UI_SPACING,
 } from '@/lib/uiTokens';
 import { confirmDialog } from '@/lib/confirmDialog';
-import { loadSessionProfile } from '@/lib/loadSessionProfile';
 import {
   deleteMaintenanceEvent,
   replicateMaintenanceEventFromRecord,
@@ -323,10 +309,7 @@ export default function MaintenanceDashboard() {
   const [quorumRegistrySchemaMissing, setQuorumRegistrySchemaMissing] = useState(
     !isQuorumRegistryTableAvailable()
   );
-
-  useFamilyReceptionSuperAdminNotifier(
-    accessState === 'allowed' && canMonitorFamilyReception
-  );
+  const schemaProbeDoneRef = useRef(false);
 
   const isBusy = isSaving || isDeleting || isReplicatingSeven;
 
@@ -404,28 +387,32 @@ export default function MaintenanceDashboard() {
     useCallback(() => {
       let active = true;
 
-      void ensureEventsOptionalColumns().then(({ totem, quorum }) => {
-        if (active) {
-          setTotemSchemaReady(totem);
-          setQuorumSchemaReady(quorum);
-        }
-      });
+      if (!schemaProbeDoneRef.current) {
+        schemaProbeDoneRef.current = true;
 
-      void ensureEventQuorumRegistry().then((ready) => {
-        if (active) {
-          setQuorumRegistrySchemaMissing(!ready);
-        }
-      });
+        void ensureEventsOptionalColumns().then(({ totem, quorum }) => {
+          if (active) {
+            setTotemSchemaReady(totem);
+            setQuorumSchemaReady(quorum);
+          }
+        });
+
+        void ensureEventQuorumRegistry().then((ready) => {
+          if (active) {
+            setQuorumRegistrySchemaMissing(!ready);
+          }
+        });
+      }
 
       void (async () => {
         setAccessState('checking');
-        const allowed = await sessionHasAccess('screen', ACCESS_SCREEN.maintenance, 'view');
+        const snapshot = await loadMaintenanceDashboardAccess();
 
         if (!active) {
           return;
         }
 
-        if (!allowed) {
+        if (!snapshot.allowed) {
           setAccessState('denied');
           Alert.alert(
             'Sem permissão',
@@ -435,70 +422,18 @@ export default function MaintenanceDashboard() {
           return;
         }
 
-        try {
-          const [isSuperAdmin, canOpenAccessControlCard, canAccessProfileCadastro] =
-            await Promise.all([
-              checkSessionIsSuperAdmin(),
-              sessionCanAccessAccessControlPanel(),
-              sessionHasAccess('screen', 'maintenance.card.profile_cadastro', 'view'),
-            ]);
+        setCanManageAccessControl(snapshot.isSuperAdmin);
+        setCanAccessAccessControlCard(snapshot.canOpenAccessControlCard);
+        setCanMonitorFamilyReception(snapshot.canMonitorFamilyReception);
+        setScalePanelAccess(snapshot.scalePanelAccess);
+        setCanAccessPastoralCare(snapshot.canAccessPastoralCare);
+        setCanAccessPastoralRoleChange(snapshot.canAccessPastoralRoleChange);
 
-          if (active) {
-            setCanManageAccessControl(isSuperAdmin);
-            setCanAccessAccessControlCard(canOpenAccessControlCard);
-            setCanMonitorFamilyReception(isSuperAdmin || canAccessProfileCadastro);
-          }
-        } catch {
-          if (active) {
-            setCanManageAccessControl(false);
-            setCanAccessAccessControlCard(false);
-            setCanMonitorFamilyReception(false);
-          }
+        if (snapshot.headerUserName) {
+          setHeaderUserName(snapshot.headerUserName);
         }
 
-        try {
-          let profileId = await getStoredProfileId();
-
-          if (!profileId) {
-            profileId = await repairUserSessionReference();
-          }
-
-          if (active && profileId) {
-            const [panelAccess, pastoralCareAccess, pastoralRoleChangeAccess] = await Promise.all([
-              loadMaintenanceScalePanelAccess(profileId),
-              loadPastoralCarePanelAccess(profileId),
-              sessionCanAccessPastoralRoleChangePanel(),
-            ]);
-            setScalePanelAccess(panelAccess);
-            setCanAccessPastoralCare(pastoralCareAccess);
-            setCanAccessPastoralRoleChange(pastoralRoleChangeAccess);
-          } else if (active) {
-            setScalePanelAccess({});
-            setCanAccessPastoralCare(false);
-            setCanAccessPastoralRoleChange(false);
-          }
-        } catch {
-          if (active) {
-            setScalePanelAccess({});
-            setCanAccessPastoralCare(false);
-            setCanAccessPastoralRoleChange(false);
-          }
-        }
-
-        if (active) {
-          setAccessState('allowed');
-        }
-
-        const phone = await getStoredUserPhone();
-        if (active && phone) {
-          const sessionProfile = await loadSessionProfile(phone);
-          if (active) {
-            const profileName = sessionProfile?.full_name?.trim();
-            if (profileName) {
-              setHeaderUserName(formatDisplayName(profileName));
-            }
-          }
-        }
+        setAccessState('allowed');
       })();
 
       return () => {
@@ -735,6 +670,12 @@ export default function MaintenanceDashboard() {
   );
 
   const activeMaintenancePanelContent = maintenanceCarouselCards[currentIndex]?.content ?? null;
+
+  useFamilyReceptionSuperAdminNotifier(
+    accessState === 'allowed'
+    && canMonitorFamilyReception
+    && activeMaintenancePanelContent !== 'family_reception'
+  );
 
   const activeMaintenanceScreenTitle = useMemo(() => {
     if (showEditor) {
@@ -989,7 +930,10 @@ export default function MaintenanceDashboard() {
   );
 
   const renderCarouselItem = useCallback(
-    ({ item, index }: { item: MaintenanceCarouselCard; index: number }) => (
+    ({ item, index }: { item: MaintenanceCarouselCard; index: number }) => {
+      const shouldMountPanel = Math.abs(currentIndex - index) <= 1;
+
+      return (
       <View style={[styles.cardWrapper, carouselPageStyle]}>
         <View
           style={[
@@ -1010,7 +954,9 @@ export default function MaintenanceDashboard() {
             item.content === 'menu' && styles.panelCardMenu,
           ]}
         >
-          {item.content === 'menu' ? (
+          {!shouldMountPanel ? (
+            <View style={[styles.panelCardPlaceholder, { minHeight: cardHeight }]} />
+          ) : item.content === 'menu' ? (
             <View style={styles.menuPanel}>
               <Text style={styles.menuPanelTitle}>Módulos de manutenção</Text>
               <View style={styles.menuPanelSubtitleSpacer} />
@@ -1230,7 +1176,8 @@ export default function MaintenanceDashboard() {
           ) : null}
         </View>
       </View>
-    ),
+      );
+    },
     [
       cardHeight,
       currentIndex,
@@ -1298,9 +1245,9 @@ export default function MaintenanceDashboard() {
                 scrollEnabled={false}
                 keyboardShouldPersistTaps="handled"
                 showsHorizontalScrollIndicator={false}
-                initialNumToRender={maintenanceCardCount}
-                maxToRenderPerBatch={maintenanceCardCount}
-                windowSize={Math.max(5, maintenanceCardCount)}
+                initialNumToRender={1}
+                maxToRenderPerBatch={2}
+                windowSize={3}
                 removeClippedSubviews={Platform.OS !== 'web'}
                 onScroll={handleCarouselScroll}
                 onScrollToIndexFailed={handleCarouselScrollToIndexFailed}

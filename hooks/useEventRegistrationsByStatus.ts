@@ -392,7 +392,7 @@ export const useEventRegistrationsByStatus = (
         } satisfies UpdateRoomEntryResult;
       }
 
-      const actorProfileId = await resolveActorProfileId();
+      const actorProfileId = await resolveActorProfileId({ forceRefresh: false });
 
       const { data, error: rpcError } = await supabase.rpc('set_event_registration_room_entry', {
         p_registration_id: registrationId,

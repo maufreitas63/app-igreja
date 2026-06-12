@@ -3,7 +3,7 @@ import { lockPastEvents } from '@/lib/lockPastEvents';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
 
-const EVENT_REFRESH_INTERVAL_MS = 2000;
+const EVENT_REFRESH_INTERVAL_MS = 8000;
 
 export type ActiveEvent = {
   id: string;

@@ -22,7 +22,7 @@ import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -59,10 +59,22 @@ export default function PastoralHistoryScreen() {
     useState<PastoralRequestHistoryItem | null>(null);
   const [cancellationReason, setCancellationReason] = useState('');
   const [submittingCancellationId, setSubmittingCancellationId] = useState<string | null>(null);
+  const lastHistoryFetchAtRef = useRef(0);
+  const HISTORY_FOCUS_STALE_MS = 60_000;
 
   const loadHistory = useCallback(
-    async (options?: { refresh?: boolean }) => {
+    async (options?: { refresh?: boolean; force?: boolean }) => {
       const isRefresh = options?.refresh === true;
+      const force = options?.force === true;
+
+      if (
+        !force
+        && !isRefresh
+        && lastHistoryFetchAtRef.current > 0
+        && Date.now() - lastHistoryFetchAtRef.current < HISTORY_FOCUS_STALE_MS
+      ) {
+        return;
+      }
 
       if (isRefresh) {
         setRefreshing(true);
@@ -86,6 +98,7 @@ export default function PastoralHistoryScreen() {
         setProfileId(activeProfileId);
         const items = await fetchMyPastoralRequests(activeProfileId);
         setRequests(items);
+        lastHistoryFetchAtRef.current = Date.now();
       } catch (error) {
         console.error('Erro ao carregar histórico pastoral:', error);
         setErrorMessage(getSupabaseErrorMessage(error));
@@ -100,7 +113,7 @@ export default function PastoralHistoryScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void loadHistory();
+      void loadHistory({ force: lastHistoryFetchAtRef.current === 0 });
     }, [loadHistory])
   );
 
@@ -154,6 +167,7 @@ export default function PastoralHistoryScreen() {
       try {
         await deleteMyPastoralRequest(item.id, profileId);
         setRequests((current) => current.filter((entry) => entry.id !== item.id));
+        lastHistoryFetchAtRef.current = Date.now();
         await appAlert('Pedido excluído', 'O pedido foi removido com sucesso.');
       } catch (error) {
         console.error('Erro ao excluir pedido pastoral:', error);
@@ -217,6 +231,7 @@ export default function PastoralHistoryScreen() {
       );
       setCancellationModalRequest(null);
       setCancellationReason('');
+      lastHistoryFetchAtRef.current = Date.now();
       await appAlert(
         'Solicitação enviada',
         'O Cuidado Pastoral foi notificado. Aguarde a confirmação do cancelamento.'

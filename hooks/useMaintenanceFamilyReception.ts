@@ -19,7 +19,7 @@ export function useMaintenanceFamilyReception(isActive: boolean) {
     setError(null);
 
     try {
-      const rows = await listPendingFamilyReceptionSubmissions();
+      const rows = await listPendingFamilyReceptionSubmissions(50, { forceRefresh: true });
       setSubmissions(rows);
       setSelectedSubmissionIds((current) =>
         current.filter((id) => rows.some((row) => row.submissionId === id))
