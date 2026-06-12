@@ -101,6 +101,7 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
       : null;
 
   const [filterProfileId, setFilterProfileId] = useState(allSubmittersFilterValue);
+  const [isDetailExpanded, setIsDetailExpanded] = useState(false);
 
   const POOL_BLUE = '#22D3EE';
 
@@ -149,6 +150,10 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
       setFilterProfileId(allSubmittersFilterValue);
     }
   }, [allSubmittersFilterValue, isActive]);
+
+  useEffect(() => {
+    setIsDetailExpanded(false);
+  }, [selectedRequestId]);
 
   const handleOpenWhatsApp = () => {
     const phone = selectedRequest?.phone;
@@ -267,13 +272,35 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
           </ScrollView>
 
           <View style={styles.detailCard}>
-            <View style={styles.contactRow}>
-              <Text style={styles.contactName} numberOfLines={1}>
-                {selectedSubmitter?.shortName ?? selectedRequest.submitterName}
-              </Text>
-              <Text style={styles.contactPhone} numberOfLines={1}>
-                {selectedRequest.phone?.trim() || '—'}
-              </Text>
+            <View style={styles.detailCardHeader}>
+              <TouchableOpacity
+                style={styles.detailCardHeaderMain}
+                onPress={() => setIsDetailExpanded((current) => !current)}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: isDetailExpanded }}
+                accessibilityLabel={
+                  isDetailExpanded
+                    ? 'Recolher detalhes do pedido pastoral'
+                    : 'Expandir detalhes do pedido pastoral'
+                }
+              >
+                <View style={styles.contactRow}>
+                  <Text style={styles.contactName} numberOfLines={1}>
+                    {selectedSubmitter?.shortName ?? selectedRequest.submitterName}
+                  </Text>
+                  <Text style={styles.contactPhone} numberOfLines={1}>
+                    {selectedRequest.phone?.trim() || '—'}
+                  </Text>
+                </View>
+                {!isDetailExpanded ? (
+                  <Text style={styles.detailCollapsedHint} numberOfLines={1}>
+                    {selectedRequest.destination_label?.trim()
+                      || selectedRequest.motivo?.trim()
+                      || 'Toque para ver os detalhes do pedido'}
+                  </Text>
+                ) : null}
+              </TouchableOpacity>
               {selectedRequest.phone ? (
                 <TouchableOpacity
                   style={styles.whatsappButton}
@@ -286,30 +313,48 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
               ) : (
                 <View style={styles.whatsappPlaceholder} />
               )}
+              <TouchableOpacity
+                style={styles.detailExpandButton}
+                onPress={() => setIsDetailExpanded((current) => !current)}
+                activeOpacity={0.85}
+                accessibilityLabel={
+                  isDetailExpanded ? 'Recolher detalhes' : 'Expandir detalhes'
+                }
+              >
+                <FontAwesome
+                  name={isDetailExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={14}
+                  color="#94A3B8"
+                />
+              </TouchableOpacity>
             </View>
 
-            <Text style={styles.detailLabel}>Destino</Text>
-            <Text style={styles.detailValue}>
-              {selectedRequest.destination_label?.trim() || '—'}
-            </Text>
+            {isDetailExpanded ? (
+              <View style={styles.detailCardBody}>
+                <Text style={styles.detailLabel}>Destino</Text>
+                <Text style={styles.detailValue}>
+                  {selectedRequest.destination_label?.trim() || '—'}
+                </Text>
 
-            <Text style={styles.detailLabel}>Motivo</Text>
-            <Text style={styles.detailValueMultiline}>
-              {selectedRequest.motivo?.trim() || '—'}
-            </Text>
+                <Text style={styles.detailLabel}>Motivo</Text>
+                <Text style={styles.detailValueMultiline}>
+                  {selectedRequest.motivo?.trim() || '—'}
+                </Text>
 
-            <Text style={styles.detailLabel}>Situação</Text>
-            <Text style={styles.detailValueMultiline}>
-              {selectedRequest.situacao?.trim() || '—'}
-            </Text>
+                <Text style={styles.detailLabel}>Situação</Text>
+                <Text style={styles.detailValueMultiline}>
+                  {selectedRequest.situacao?.trim() || '—'}
+                </Text>
 
-            <Text style={styles.detailLabel}>Descrição</Text>
-            <Text style={styles.detailValueMultiline}>
-              {selectedRequest.description?.trim() || '—'}
-            </Text>
+                <Text style={styles.detailLabel}>Descrição</Text>
+                <Text style={styles.detailValueMultiline}>
+                  {selectedRequest.description?.trim() || '—'}
+                </Text>
 
-            <Text style={styles.detailLabel}>Pedido para</Text>
-            <Text style={styles.detailValue}>{selectedRequest.requestForLabel}</Text>
+                <Text style={styles.detailLabel}>Pedido para</Text>
+                <Text style={styles.detailValue}>{selectedRequest.requestForLabel}</Text>
+              </View>
+            ) : null}
 
             <View style={styles.stageHeaderRow}>
               <View style={styles.stageSectionLabelWrap}>
@@ -565,6 +610,35 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 4,
   },
+  detailCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  detailCardHeaderMain: {
+    flex: 1,
+    minWidth: 0,
+  },
+  detailCollapsedHint: {
+    color: '#64748B',
+    fontSize: 11,
+    lineHeight: 14,
+    marginTop: 2,
+  },
+  detailExpandButton: {
+    width: 28,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginTop: 2,
+  },
+  detailCardBody: {
+    gap: 4,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(51, 65, 85, 0.65)',
+  },
   detailLabel: {
     color: '#94A3B8',
     fontSize: 10,
@@ -588,7 +662,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 4,
   },
   contactName: {
     flex: 1,

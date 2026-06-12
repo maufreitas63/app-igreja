@@ -266,13 +266,16 @@ export default function PastoralHistoryScreen() {
                 {item.destination_label ? (
                   <View style={styles.metaBlock}>
                     <View style={styles.metaRow}>
-                      <Text style={styles.metaLabel}>Encaminhado:</Text>
+                      <Text style={styles.metaLabel}>Encaminhado para:</Text>
                       <Text style={styles.metaValue}>{item.destination_label}</Text>
                     </View>
                     {handlerDisplayName ? (
-                      <Text style={styles.handlerName} numberOfLines={1}>
-                        {handlerDisplayName}
-                      </Text>
+                      <View style={styles.metaRow}>
+                        <Text style={styles.metaLabel}>Acompanhado por:</Text>
+                        <Text style={styles.metaValue} numberOfLines={1}>
+                          {handlerDisplayName}
+                        </Text>
+                      </View>
                     ) : null}
                   </View>
                 ) : null}
@@ -288,11 +291,26 @@ export default function PastoralHistoryScreen() {
           </ScrollView>
         )}
 
-        {!loading && !errorMessage && requests.length > 0 ? (
+        {!loading && !errorMessage ? (
           <View style={styles.footerBar}>
-            <TouchableOpacity style={styles.footerButton} onPress={handleNewRequest} activeOpacity={0.85}>
-              <Text style={styles.footerButtonText}>Novo pedido</Text>
-            </TouchableOpacity>
+            <View style={styles.footerActions}>
+              <TouchableOpacity
+                accessibilityLabel="Voltar para a tela anterior"
+                accessibilityRole="button"
+                style={styles.footerBackButton}
+                onPress={handleBack}
+                activeOpacity={0.85}>
+                <Text style={styles.footerBackButtonText}>Voltar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityLabel="Novo pedido pastoral"
+                accessibilityRole="button"
+                style={styles.footerButton}
+                onPress={handleNewRequest}
+                activeOpacity={0.85}>
+                <Text style={styles.footerButtonText}>Novo pedido</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ) : null}
       </SafeAreaView>
@@ -472,12 +490,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 4,
   },
-  handlerName: {
-    color: '#F8FAFC',
-    fontSize: 12,
-    fontWeight: '800',
-    paddingLeft: 0,
-  },
   metaLabel: {
     color: '#64748B',
     fontSize: 12,
@@ -502,7 +514,26 @@ const styles = StyleSheet.create({
     borderTopColor: '#334155',
     backgroundColor: 'rgba(2, 6, 23, 0.92)',
   },
+  footerActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  footerBackButton: {
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#64748B',
+    backgroundColor: 'rgba(30, 41, 59, 0.75)',
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  footerBackButtonText: {
+    color: '#E2E8F0',
+    fontWeight: '800',
+    fontSize: 15,
+  },
   footerButton: {
+    flex: 1,
     backgroundColor: 'rgba(168, 85, 247, 0.25)',
     borderWidth: 1,
     borderColor: '#a855f7',
