@@ -32,6 +32,51 @@ $$;
 grant execute on function public.listar_solicitantes_pedido_pastoral() to anon;
 grant execute on function public.listar_solicitantes_pedido_pastoral() to authenticated;
 
+drop function if exists public.listar_pedidos_pastoral_perfil(uuid);
+
+create or replace function public.listar_pedidos_pastoral_perfil(p_profile_id uuid)
+returns table (
+  id uuid,
+  created_at timestamptz,
+  motivo text,
+  situacao text,
+  description text,
+  destination_label text,
+  request_for text,
+  beneficiary_name text,
+  beneficiary_relationship text,
+  beneficiary_details text,
+  status text,
+  confidential boolean,
+  updated_at timestamptz
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    pr.id,
+    pr.created_at,
+    pr.motivo,
+    pr.situacao,
+    pr.description,
+    pr.destination_label,
+    pr.request_for,
+    pr.beneficiary_name,
+    pr.beneficiary_relationship,
+    pr.beneficiary_details,
+    pr.status::text,
+    pr.confidential,
+    pr.updated_at
+  from public.pastoral_requests pr
+  where pr.profile_id = p_profile_id
+    and public.session_can_view_pastoral_request(pr.profile_id, pr.destination_label)
+  order by pr.created_at desc;
+$$;
+
+grant execute on function public.listar_pedidos_pastoral_perfil(uuid) to anon;
+grant execute on function public.listar_pedidos_pastoral_perfil(uuid) to authenticated;
+
 alter table public.pastoral_requests
   add column if not exists updated_at timestamptz not null default now();
 

@@ -7,6 +7,63 @@ export const PASTORAL_CARE_PANEL_RESOURCE = 'maintenance.card.pastoral_care';
 export const PASTORAL_DESTINATION_INTERCESSION = 'Ministério de Intercessão';
 export const PASTORAL_DESTINATION_SIGILO = 'Sigilo Pastoral';
 
+export type PastoralCareAccessContext = {
+  hasFullPastoralAccess: boolean;
+  isIntercessionVolunteer: boolean;
+};
+
+const normalizePastoralDestinationLabel = (value: string | null | undefined) =>
+  (value ?? '')
+    .trim()
+    .toLocaleLowerCase('pt-BR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+export const pastoralDestinationIsSigilo = (label: string | null | undefined) => {
+  const normalized = normalizePastoralDestinationLabel(label);
+
+  return (
+    normalized === 'sigilo pastoral'
+    || (normalized.startsWith('sigilo') && normalized.includes('pastoral'))
+  );
+};
+
+export const pastoralDestinationIsIntercession = (label: string | null | undefined) => {
+  const normalized = normalizePastoralDestinationLabel(label);
+
+  if (pastoralDestinationIsSigilo(label)) {
+    return false;
+  }
+
+  return (
+    normalized === 'ministerio de intercessao'
+    || (normalized.includes('intercess') && normalized.includes('ministerio'))
+    || normalized.includes('ministerio de intercess')
+  );
+};
+
+export const canViewPastoralRequestForSession = (
+  destinationLabel: string | null | undefined,
+  context: PastoralCareAccessContext
+) => {
+  if (context.hasFullPastoralAccess) {
+    return true;
+  }
+
+  if (pastoralDestinationIsSigilo(destinationLabel)) {
+    return false;
+  }
+
+  return (
+    pastoralDestinationIsIntercession(destinationLabel) && context.isIntercessionVolunteer
+  );
+};
+
+export const filterPastoralRequestsForSession = <T extends { destination_label?: string | null }>(
+  rows: T[],
+  context: PastoralCareAccessContext
+) => rows.filter((row) => canViewPastoralRequestForSession(row.destination_label, context));
+
 const parseRpcBoolean = (data: unknown) => {
   if (typeof data === 'boolean') {
     return data;
@@ -84,4 +141,75 @@ export async function loadPastoralCarePanelAccess(profileId?: string | null) {
   } catch {
     return loadPastoralCarePanelAccessFallback(profileId);
   }
+}
+
+export async function checkSessionHasFullPastoralRequestsAccess() {
+  const { data, error } = await supabase.rpc('session_has_full_pastoral_requests_access');
+
+  if (error) {
+    const message = (error.message ?? '').toLowerCase();
+
+    if (
+      message.includes('session_has_full_pastoral_requests_access')
+      && (message.includes('could not find') || message.includes('does not exist'))
+    ) {
+      return loadPastoralCareFullAccessFallback();
+    }
+
+    throw error;
+  }
+
+  return parseRpcBoolean(data) === true;
+}
+
+async function loadPastoralCareFullAccessFallback(profileId?: string | null) {
+  const resolvedProfileId = profileId ?? (await resolveActorProfileId());
+
+  if (!resolvedProfileId) {
+    return false;
+  }
+
+  const { data, error } = await supabase.rpc('is_super_admin_profile', {
+    p_profile_id: resolvedProfileId,
+  });
+
+  if (!error && parseRpcBoolean(data) === true) {
+    return true;
+  }
+
+  const { data: roleRows, error: roleError } = await supabase
+    .from('profile_access_roles')
+    .select('role_id, access_roles!inner(code)')
+    .eq('profile_id', resolvedProfileId);
+
+  if (roleError) {
+    return false;
+  }
+
+  return ((roleRows as Array<{ access_roles?: { code?: string | null } | null }> | null) ?? []).some(
+    (row) => row.access_roles?.code?.trim().toLowerCase() === 'pastoral'
+  );
+}
+
+export async function loadPastoralCareAccessContext(
+  profileId?: string | null
+): Promise<PastoralCareAccessContext> {
+  const resolvedProfileId = profileId ?? (await resolveActorProfileId());
+
+  if (!resolvedProfileId) {
+    return {
+      hasFullPastoralAccess: false,
+      isIntercessionVolunteer: false,
+    };
+  }
+
+  const [hasFullPastoralAccess, isIntercessionVolunteer] = await Promise.all([
+    checkSessionHasFullPastoralRequestsAccess(),
+    checkProfileIsIntercessionScaleVolunteer(resolvedProfileId),
+  ]);
+
+  return {
+    hasFullPastoralAccess,
+    isIntercessionVolunteer,
+  };
 }

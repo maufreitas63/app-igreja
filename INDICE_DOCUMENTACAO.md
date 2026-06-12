@@ -83,6 +83,9 @@ npm run build:docs       # md + pdf padrão (sem PAPEIS)
 | Deploy Cloudflare | [`DEPLOY_CLOUDFLARE.md`](DEPLOY_CLOUDFLARE.md) | [`pdfs/DEPLOY_CLOUDFLARE.pdf`](pdfs/DEPLOY_CLOUDFLARE.pdf) |
 | README do repositório | [`README.md`](README.md) | [`pdfs/README.pdf`](pdfs/README.pdf) |
 | Papéis ACL (mapa visual) | [`PAPEIS_CONTROLE_ACESSO.md`](PAPEIS_CONTROLE_ACESSO.md) | [`pdfs/PAPEIS_CONTROLE_ACESSO.pdf`](pdfs/PAPEIS_CONTROLE_ACESSO.pdf) |
+| Validação por papel (planilha) | — | [`pdfs/CHECKLIST_VALIDACAO_POR_PAPEL.xlsx`](pdfs/CHECKLIST_VALIDACAO_POR_PAPEL.xlsx) |
+
+Regenerar a planilha: `npm run build:validation-checklist-xlsx`
 
 ---
 

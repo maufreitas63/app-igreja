@@ -6,7 +6,7 @@ import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
-import { useDashboardSelectedEvent, useEventRegistrationsByStatus } from '@/hooks';
+import { useDashboardSelectedEvent, useEventRegistrationsByStatus, useRoomMonitorScales } from '@/hooks';
 import { useFamilyPreCheckin } from '@/hooks/useFamilyPreCheckin';
 import { useFamilyReceptionSuperAdminNotifier } from '@/hooks/useFamilyReceptionSuperAdminNotifier';
 import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
@@ -21,6 +21,7 @@ import {
   resolveQrCheckInCardVisible,
 } from '@/lib/checkInVisibility';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
+import { formatRoomMonitorNames } from '@/lib/roomMonitorScales';
 import { compareFamilyMembersByRelationship } from '@/lib/familyRelationshipOptions';
 import { resolveFamilyIdForPhone } from '@/lib/family';
 import { formatShortName } from '@/lib/formatShortName';
@@ -603,6 +604,15 @@ export default function Dashboard() {
   } = useEventRegistrationsByStatus(selectedEventId, {
     enabled: isSalaRegistrationsEnabled,
     familyId,
+  });
+  const {
+    kidsMonitorNames,
+    teensMonitorNames,
+    loading: loadingRoomMonitors,
+  } = useRoomMonitorScales(selectedEvent?.event_date, {
+    enabled: isSalaRegistrationsEnabled,
+    profileFullName: profile?.full_name,
+    profileId: profile?.id,
   });
   const phone = params.phone ? decodeURIComponent(params.phone as string) : null;
   const loadPixKey = useCallback(async () => {
@@ -3230,7 +3240,7 @@ export default function Dashboard() {
                       </Text>
                     </View>
                     <Text style={styles.cardTitle}>{item.title}</Text>
-                    {loadingGroupedRegistrations ? (
+                    {loadingGroupedRegistrations || loadingRoomMonitors ? (
                       <CardLoadingState lines={3} />
                     ) : groupedRegistrationsError ? (
                       <Text style={styles.offeringsErrorText}>
@@ -3296,6 +3306,22 @@ export default function Dashboard() {
                               </TouchableOpacity>
                             );
                           })}
+                        </View>
+
+                        <View style={styles.groupedAudienceMonitorNamesRow}>
+                          {availableGroupedRooms.map((room) => (
+                            <View
+                              key={`${room.key}-monitors`}
+                              style={styles.groupedAudienceMonitorNamesColumn}
+                            >
+                              <Text style={styles.groupedAudienceMonitorNamesLabel}>Monitores</Text>
+                              <Text style={styles.groupedAudienceMonitorNamesText} numberOfLines={2}>
+                                {formatRoomMonitorNames(
+                                  room.key === 'TEENS' ? teensMonitorNames : kidsMonitorNames
+                                )}
+                              </Text>
+                            </View>
+                          ))}
                         </View>
 
                         {selectedGroupedRoomConfig ? (
@@ -4768,6 +4794,29 @@ const styles = StyleSheet.create({
     gap: 10,
     alignItems: 'stretch',
     marginTop: 6,
+  },
+  groupedAudienceMonitorNamesRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  groupedAudienceMonitorNamesColumn: {
+    flex: 1,
+    flexBasis: 0,
+    gap: 2,
+    minWidth: 0,
+  },
+  groupedAudienceMonitorNamesLabel: {
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  groupedAudienceMonitorNamesText: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    lineHeight: 16,
   },
   groupedAudienceSelectorChip: {
     flex: 1,

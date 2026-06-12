@@ -9,6 +9,7 @@ export {
   useEventRegistrationsByStatus,
   type EventRegistrationGroupItem,
 } from './useEventRegistrationsByStatus';
+export { useRoomMonitorScales } from './useRoomMonitorScales';
 export { useFamilyMembers, type FamilyMember } from './useFamilyMembers';
 export { useRegisteredEventMembers } from './useRegisteredEventMembers';
 export {

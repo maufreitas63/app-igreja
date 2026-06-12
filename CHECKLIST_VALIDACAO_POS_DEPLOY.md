@@ -2,6 +2,8 @@
 
 Conferência em produção dos **pedidos** feitos ao app. Marque cada item após testar.
 
+**Planilha Excel por papel:** [`pdfs/CHECKLIST_VALIDACAO_POR_PAPEL.xlsx`](pdfs/CHECKLIST_VALIDACAO_POR_PAPEL.xlsx) — combina este checklist com o mapa ACL para teste prático (uma aba por papel). Regenerar: `npm run build:validation-checklist-xlsx`.
+
 ---
 
 ## Deploy e atualização

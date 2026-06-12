@@ -8,6 +8,11 @@ import {
   type PastoralSubmitterOption,
 } from '@/lib/maintenancePastoralApi';
 import {
+  canViewPastoralRequestForSession,
+  loadPastoralCareAccessContext,
+  type PastoralCareAccessContext,
+} from '@/lib/pastoralAccess';
+import {
   canAdvanceToPastoralFollowUpStage,
   formatPastoralRequestDateTimeLabel,
   getPastoralFollowUpStageBlockedMessage,
@@ -20,7 +25,7 @@ import { useMaintenanceRpcMissing } from '@/hooks/useMaintenanceRpcMissing';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export const MAINTENANCE_PASTORAL_CARE_SQL_HINT =
-  'Execute no Supabase: scripts/pastoral-requests-fields.sql e scripts/pastoral-maintenance-rpc.sql.';
+  'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql e scripts/pastoral-maintenance-rpc.sql.';
 
 const EMPTY_PROFILE_VALUE = '';
 
@@ -33,6 +38,10 @@ export function useMaintenancePastoralCare(enabled: boolean) {
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [isSavingFollowUpStage, setIsSavingFollowUpStage] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accessContext, setAccessContext] = useState<PastoralCareAccessContext>({
+    hasFullPastoralAccess: false,
+    isIntercessionVolunteer: false,
+  });
   const { rpcMissing, beginMaintenanceRequest, resolveMaintenanceRpcError } = useMaintenanceRpcMissing();
 
   const selectedSubmitter = useMemo(
@@ -103,7 +112,8 @@ export function useMaintenancePastoralCare(enabled: boolean) {
       const rows = await fetchMaintenancePastoralRequestsForProfile(
         profileId,
         profile.fullName,
-        profile.phone
+        profile.phone,
+        accessContext
       );
 
       setRequests(rows);
@@ -123,7 +133,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     } finally {
       setLoadingRequests(false);
     }
-  }, [submitterOptions]);
+  }, [accessContext, submitterOptions]);
 
   const refreshRequestsForSelectedProfile = useCallback(async () => {
     if (!selectedProfileId || !selectedSubmitter) {
@@ -134,7 +144,8 @@ export function useMaintenancePastoralCare(enabled: boolean) {
       const rows = await fetchMaintenancePastoralRequestsForProfile(
         selectedProfileId,
         selectedSubmitter.fullName,
-        selectedSubmitter.phone
+        selectedSubmitter.phone,
+        accessContext
       );
 
       setRequests(rows);
@@ -148,7 +159,28 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     } catch (err) {
       console.error('Erro ao atualizar lista de pedidos pastorais:', err);
     }
-  }, [selectedProfileId, selectedSubmitter]);
+  }, [accessContext, selectedProfileId, selectedSubmitter]);
+
+  const reloadAccessContext = useCallback(async () => {
+    if (!enabled) {
+      setAccessContext({
+        hasFullPastoralAccess: false,
+        isIntercessionVolunteer: false,
+      });
+      return;
+    }
+
+    try {
+      const context = await loadPastoralCareAccessContext();
+      setAccessContext(context);
+    } catch (err) {
+      console.error('Erro ao carregar permissões do Cuidado Pastoral:', err);
+      setAccessContext({
+        hasFullPastoralAccess: false,
+        isIntercessionVolunteer: false,
+      });
+    }
+  }, [enabled]);
 
   const setFollowUpStage = useCallback(
     async (requestId: string, stage: PastoralFollowUpStage) => {
@@ -241,8 +273,20 @@ export function useMaintenancePastoralCare(enabled: boolean) {
   );
 
   useEffect(() => {
+    void reloadAccessContext();
+  }, [reloadAccessContext]);
+
+  useEffect(() => {
     void reloadSubmitters();
   }, [reloadSubmitters]);
+
+  useEffect(() => {
+    if (!enabled || !selectedProfileId) {
+      return;
+    }
+
+    void loadRequestsForProfile(selectedProfileId);
+  }, [accessContext, enabled, loadRequestsForProfile, selectedProfileId]);
 
   useEffect(() => {
     if (!enabled) {
@@ -273,6 +317,8 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     canAdvanceToFollowUpStage: canAdvanceToPastoralFollowUpStage,
     isFollowUpStageDone: isPastoralFollowUpStageDone,
     reloadSubmitters,
+    accessContext,
+    canViewPastoralRequestForSession,
     formatRequestDateTimeLabel: formatPastoralRequestDateTimeLabel,
   };
 }

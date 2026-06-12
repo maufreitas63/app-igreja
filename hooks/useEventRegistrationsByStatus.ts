@@ -1,4 +1,5 @@
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
+import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -391,9 +392,12 @@ export const useEventRegistrationsByStatus = (
         } satisfies UpdateRoomEntryResult;
       }
 
+      const actorProfileId = await resolveActorProfileId();
+
       const { data, error: rpcError } = await supabase.rpc('set_event_registration_room_entry', {
         p_registration_id: registrationId,
         p_room_entry_checked: checked,
+        p_actor_profile_id: actorProfileId,
       });
 
       if (rpcError) {

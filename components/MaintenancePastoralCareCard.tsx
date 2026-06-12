@@ -7,6 +7,7 @@ import {
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
 import { MAINTENANCE_PASTORAL_CARE_SQL_HINT } from '@/hooks/useMaintenancePastoralCare';
+import { PASTORAL_DESTINATION_INTERCESSION } from '@/lib/pastoralAccess';
 import { PASTORAL_FOLLOW_UP_STAGES } from '@/lib/pastoralRequest';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
@@ -47,7 +48,14 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
     canAdvanceToFollowUpStage,
     isFollowUpStageDone,
     formatRequestDateTimeLabel,
+    accessContext,
   } = useMaintenancePastoralCare(isActive);
+
+  const accessHint = accessContext.hasFullPastoralAccess
+    ? null
+    : accessContext.isIntercessionVolunteer
+      ? `Você visualiza apenas pedidos encaminhados ao ${PASTORAL_DESTINATION_INTERCESSION}.`
+      : null;
 
   const [filterProfileId, setFilterProfileId] = useState(allSubmittersFilterValue);
 
@@ -115,6 +123,7 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
       <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_PASTORAL_CARE_SQL_HINT}</Text> : null}
+      {accessHint ? <Text style={styles.accessHintText}>{accessHint}</Text> : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       {loadingOptions ? (
@@ -232,6 +241,11 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
               )}
             </View>
 
+            <Text style={styles.detailLabel}>Destino</Text>
+            <Text style={styles.detailValue}>
+              {selectedRequest.destination_label?.trim() || '—'}
+            </Text>
+
             <Text style={styles.detailLabel}>Motivo</Text>
             <Text style={styles.detailValueMultiline}>
               {selectedRequest.motivo?.trim() || '—'}
@@ -344,6 +358,12 @@ const styles = StyleSheet.create({
   },
   warningText: {
     color: '#FBBF24',
+    fontSize: 11,
+    lineHeight: 16,
+    marginBottom: 6,
+  },
+  accessHintText: {
+    color: '#93C5FD',
     fontSize: 11,
     lineHeight: 16,
     marginBottom: 6,

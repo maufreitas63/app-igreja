@@ -1,5 +1,9 @@
 import { formatShortName } from '@/lib/formatShortName';
 import {
+  filterPastoralRequestsForSession,
+  type PastoralCareAccessContext,
+} from '@/lib/pastoralAccess';
+import {
   canAdvanceToPastoralFollowUpStage,
   formatPastoralRequestForLabel,
   getPastoralFollowUpStageBlockedMessage,
@@ -12,7 +16,7 @@ import {
 import { supabase } from '@/lib/supabase';
 
 export const MAINTENANCE_PASTORAL_SQL_HINT =
-  'Execute no Supabase: scripts/pastoral-requests-fields.sql e scripts/pastoral-maintenance-rpc.sql.';
+  'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql e scripts/pastoral-maintenance-rpc.sql.';
 
 export const MAINTENANCE_PASTORAL_RPC_MISSING = 'MAINTENANCE_PASTORAL_RPC_MISSING';
 
@@ -104,6 +108,39 @@ const isListRpcMissing = (message: string) =>
   message.includes('listar_solicitantes_pedido_pastoral')
   && (message.includes('could not find') || message.includes('does not exist') || message.includes('PGRST202'));
 
+const isProfileRequestsRpcMissing = (message: string) =>
+  message.includes('listar_pedidos_pastoral_perfil')
+  && (message.includes('could not find') || message.includes('does not exist') || message.includes('PGRST202'));
+
+const mapPastoralRequestRecord = (record: Record<string, unknown>) => {
+  const requestForRaw = record.request_for;
+
+  return {
+    id: String(record.id),
+    created_at: String(record.created_at),
+    motivo: record.motivo != null ? String(record.motivo) : null,
+    situacao: record.situacao != null ? String(record.situacao) : null,
+    description: record.description != null ? String(record.description) : null,
+    destination_label:
+      record.destination_label != null ? String(record.destination_label) : null,
+    request_for:
+      requestForRaw === 'self' || requestForRaw === 'family' || requestForRaw === 'third_party'
+        ? (requestForRaw as PastoralBeneficiaryType)
+        : null,
+    beneficiary_name:
+      record.beneficiary_name != null ? String(record.beneficiary_name) : null,
+    beneficiary_relationship:
+      record.beneficiary_relationship != null
+        ? String(record.beneficiary_relationship)
+        : null,
+    beneficiary_details:
+      record.beneficiary_details != null ? String(record.beneficiary_details) : null,
+    status: record.status != null ? String(record.status) : null,
+    updated_at: record.updated_at != null ? String(record.updated_at) : null,
+    confidential: Boolean(record.confidential),
+  } satisfies PastoralRequestHistoryItem;
+};
+
 export async function fetchPastoralSubmitterOptions() {
   const { data, error } = await supabase.rpc('listar_solicitantes_pedido_pastoral');
 
@@ -168,11 +205,25 @@ export async function fetchPastoralSubmitterProfile(profileId: string) {
   };
 }
 
-export async function fetchMaintenancePastoralRequestsForProfile(
-  profileId: string,
-  submitterName: string,
-  submitterPhone: string | null
-): Promise<MaintenancePastoralRequestView[]> {
+async function fetchMaintenancePastoralRequestsViaRpc(profileId: string) {
+  const { data, error } = await supabase.rpc('listar_pedidos_pastoral_perfil', {
+    p_profile_id: profileId,
+  });
+
+  if (error) {
+    const message = (error.message ?? '').toLowerCase();
+
+    if (isProfileRequestsRpcMissing(message)) {
+      return null;
+    }
+
+    throw error;
+  }
+
+  return ((data as Array<Record<string, unknown>> | null) ?? []).map(mapPastoralRequestRecord);
+}
+
+async function fetchMaintenancePastoralRequestsDirect(profileId: string) {
   const { data, error } = await supabase
     .from('pastoral_requests')
     .select(
@@ -185,34 +236,20 @@ export async function fetchMaintenancePastoralRequestsForProfile(
     throw error;
   }
 
-  const rows = ((data as Array<Record<string, unknown>> | null) ?? []).map((record) => {
-    const requestForRaw = record.request_for;
+  return ((data as Array<Record<string, unknown>> | null) ?? []).map(mapPastoralRequestRecord);
+}
 
-    return {
-      id: String(record.id),
-      created_at: String(record.created_at),
-      motivo: record.motivo != null ? String(record.motivo) : null,
-      situacao: record.situacao != null ? String(record.situacao) : null,
-      description: record.description != null ? String(record.description) : null,
-      destination_label:
-        record.destination_label != null ? String(record.destination_label) : null,
-      request_for:
-        requestForRaw === 'self' || requestForRaw === 'family' || requestForRaw === 'third_party'
-          ? (requestForRaw as PastoralBeneficiaryType)
-          : null,
-      beneficiary_name:
-        record.beneficiary_name != null ? String(record.beneficiary_name) : null,
-      beneficiary_relationship:
-        record.beneficiary_relationship != null
-          ? String(record.beneficiary_relationship)
-          : null,
-      beneficiary_details:
-        record.beneficiary_details != null ? String(record.beneficiary_details) : null,
-      status: record.status != null ? String(record.status) : null,
-      updated_at: record.updated_at != null ? String(record.updated_at) : null,
-      confidential: Boolean(record.confidential),
-    } satisfies PastoralRequestHistoryItem;
-  });
+export async function fetchMaintenancePastoralRequestsForProfile(
+  profileId: string,
+  submitterName: string,
+  submitterPhone: string | null,
+  accessContext?: PastoralCareAccessContext
+): Promise<MaintenancePastoralRequestView[]> {
+  const rpcRows = await fetchMaintenancePastoralRequestsViaRpc(profileId);
+  const sourceRows = rpcRows ?? (await fetchMaintenancePastoralRequestsDirect(profileId));
+  const rows = accessContext
+    ? filterPastoralRequestsForSession(sourceRows, accessContext)
+    : sourceRows;
 
   return rows.map((row) => ({
     ...row,

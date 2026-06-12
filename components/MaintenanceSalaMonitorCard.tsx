@@ -1,9 +1,12 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { useDashboardSelectedEvent } from '@/hooks/useDashboardSelectedEvent';
+import { useRoomMonitorScales } from '@/hooks/useRoomMonitorScales';
 import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { useEventRegistrationsByStatus } from '@/hooks/useEventRegistrationsByStatus';
 import { readDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
+import { loadSessionProfile } from '@/lib/loadSessionProfile';
+import { formatRoomMonitorNames } from '@/lib/roomMonitorScales';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
@@ -58,6 +61,10 @@ export const MaintenanceSalaMonitorCard = ({
 
   const [selectedGroupedRoom, setSelectedGroupedRoom] = useState<GroupedRoomKey | null>(null);
   const [roomEntryPendingIds, setRoomEntryPendingIds] = useState<string[]>([]);
+  const [operatorProfile, setOperatorProfile] = useState<{
+    id: string | null;
+    fullName: string | null;
+  }>({ id: null, fullName: null });
 
   const {
     kidsRegistrations,
@@ -68,12 +75,31 @@ export const MaintenanceSalaMonitorCard = ({
     setRoomEntryChecked,
   } = useEventRegistrationsByStatus(selectedEventId);
 
+  const {
+    kidsMonitorNames,
+    teensMonitorNames,
+    canCheckInKids,
+    canCheckInTeens,
+    loading: loadingRoomMonitors,
+    refetch: refetchRoomMonitors,
+  } = useRoomMonitorScales(selectedEvent?.event_date, {
+    profileFullName: operatorProfile.fullName,
+    profileId: operatorProfile.id,
+  });
+
   useFocusEffect(
     useCallback(() => {
       void readDashboardSelectedEventId();
       void refetchActiveEvents();
       void refetchGroupedRegistrations();
-    }, [refetchActiveEvents, refetchGroupedRegistrations])
+      void refetchRoomMonitors();
+      void loadSessionProfile().then((sessionProfile) => {
+        setOperatorProfile({
+          id: sessionProfile?.id?.trim() || null,
+          fullName: sessionProfile?.full_name?.trim() || null,
+        });
+      });
+    }, [refetchActiveEvents, refetchGroupedRegistrations, refetchRoomMonitors])
   );
 
   const selectedEventTime = selectedEvent ? formatEventDateTimeLabel(selectedEvent.event_date) : null;
@@ -128,6 +154,9 @@ export const MaintenanceSalaMonitorCard = ({
   const visibleGroupedRegistrations =
     selectedGroupedRoomConfig?.key === 'TEENS' ? safeTeensRegistrations : safeKidsRegistrations;
 
+  const canCheckInSelectedRoom =
+    selectedGroupedRoomConfig?.key === 'TEENS' ? canCheckInTeens : canCheckInKids;
+
   useEffect(() => {
     setSelectedGroupedRoom((current) => {
       if (!availableGroupedRooms.length) {
@@ -149,6 +178,14 @@ export const MaintenanceSalaMonitorCard = ({
   ]);
 
   const handleRoomEntryToggle = async (registrationId: string, checked: boolean) => {
+    if (!canCheckInSelectedRoom) {
+      Alert.alert(
+        'Sem permissão',
+        'Somente monitores escalados para esta sala na data do evento podem registrar o check-in.'
+      );
+      return;
+    }
+
     try {
       setRoomEntryPendingIds((current) => [...current, registrationId]);
       await setRoomEntryChecked(registrationId, checked);
@@ -163,7 +200,7 @@ export const MaintenanceSalaMonitorCard = ({
     }
   };
 
-  const isLoading = loadingEvents || loadingGroupedRegistrations;
+  const isLoading = loadingEvents || loadingGroupedRegistrations || loadingRoomMonitors;
   const hasSalaResources = Boolean(selectedEvent?.kids_room || selectedEvent?.teens_room);
 
   return (
@@ -313,6 +350,26 @@ export const MaintenanceSalaMonitorCard = ({
             })}
           </View>
 
+          <View style={styles.groupedAudienceMonitorNamesRow}>
+            {availableGroupedRooms.map((room) => (
+              <View key={`${room.key}-monitors`} style={styles.groupedAudienceMonitorNamesColumn}>
+                <Text style={styles.groupedAudienceMonitorNamesLabel}>Monitores</Text>
+                <Text style={styles.groupedAudienceMonitorNamesText} numberOfLines={2}>
+                  {formatRoomMonitorNames(
+                    room.key === 'TEENS' ? teensMonitorNames : kidsMonitorNames
+                  )}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {!canCheckInSelectedRoom ? (
+            <Text style={styles.roomMonitorRestrictionText}>
+              Você não está escalado como monitor desta sala na data do evento. O check-in está
+              bloqueado.
+            </Text>
+          ) : null}
+
           {selectedGroupedRoomConfig ? (
             <View style={styles.groupedAudienceSection}>
               <View style={styles.groupedAudienceListBox}>
@@ -337,7 +394,8 @@ export const MaintenanceSalaMonitorCard = ({
                             style={[
                               styles.roomEntryCheckbox,
                               registration.room_entry_checked && styles.roomEntryCheckboxChecked,
-                              roomEntryPendingIds.includes(registration.registration_id) &&
+                              (!canCheckInSelectedRoom
+                                || roomEntryPendingIds.includes(registration.registration_id)) &&
                                 styles.roomEntryCheckboxDisabled,
                             ]}
                             onPress={() =>
@@ -346,7 +404,10 @@ export const MaintenanceSalaMonitorCard = ({
                                 !registration.room_entry_checked
                               )
                             }
-                            disabled={roomEntryPendingIds.includes(registration.registration_id)}
+                            disabled={
+                              !canCheckInSelectedRoom
+                              || roomEntryPendingIds.includes(registration.registration_id)
+                            }
                             activeOpacity={0.85}
                           >
                             {registration.room_entry_checked ? (
@@ -567,6 +628,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     alignItems: 'stretch',
+  },
+  groupedAudienceMonitorNamesRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  groupedAudienceMonitorNamesColumn: {
+    flex: 1,
+    flexBasis: 0,
+    gap: 2,
+    minWidth: 0,
+  },
+  groupedAudienceMonitorNamesLabel: {
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  groupedAudienceMonitorNamesText: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  roomMonitorRestrictionText: {
+    color: '#FDE68A',
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
   },
   groupedAudienceSelectorChip: {
     flex: 1,

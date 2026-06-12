@@ -105,6 +105,22 @@ as $$
     );
 $$;
 
+create or replace function public.normalize_person_name(p_name text)
+returns text
+language sql
+immutable
+as $$
+  select lower(
+    trim(
+      translate(
+        coalesce(p_name, ''),
+        'ÁÀÂÃÄáàâãäÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÕÖóòôõöÚÙÛÜúùûüÇçÑñ',
+        'AAAAAaaaaaEEEEeeeeIIIIiiiiOOOOOoooooUUUUuuuuCcNn'
+      )
+    )
+  );
+$$;
+
 create or replace function public.profile_is_intercession_scale_volunteer(p_profile_id uuid)
 returns boolean
 language sql
@@ -117,7 +133,14 @@ as $$
       from public.profiles p
       join public.voluntarios_escala ve
         on ve.is_ativo = true
-       and lower(trim(ve.nome)) = lower(trim(p.full_name))
+       and (
+         public.normalize_person_name(ve.nome) = public.normalize_person_name(p.full_name)
+         or public.normalize_person_name(ve.nome) = public.normalize_person_name(
+           split_part(trim(p.full_name), ' ', 1)
+           || ' '
+           || reverse(split_part(reverse(trim(p.full_name)), ' ', 1))
+         )
+       )
       join public.tipos_escala te
         on te.id = ve.tipo_escala_id
        and te.is_ativa = true
@@ -381,6 +404,7 @@ begin
 end;
 $$;
 
+grant execute on function public.normalize_person_name(text) to anon, authenticated;
 grant execute on function public.is_intercession_scale_type(text, text) to anon, authenticated;
 grant execute on function public.pastoral_destination_label_is_intercession(text) to anon, authenticated;
 grant execute on function public.pastoral_destination_label_is_sigilo(text) to anon, authenticated;
