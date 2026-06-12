@@ -129,17 +129,21 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
       {loadingOptions ? (
         <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
       ) : submitterOptions.length ? (
-        <>
-          <SectionLabel label="Filtrar solicitante" />
-          <DropdownSelect
-            options={filterDropdownOptions}
-            selectedValue={filterProfileId}
-            onValueChange={handleFilterChange}
-            modalTitle="Filtrar solicitante"
-            placeholder="Todos os usuários"
-            style={styles.filterDropdown}
-            disabled={rpcMissing}
-          />
+        <View style={styles.submitterPickerSection}>
+          <SectionLabel variant="maintenance" tight>
+            Filtrar solicitante
+          </SectionLabel>
+          <View style={styles.filterDropdownWrap}>
+            <DropdownSelect
+              options={filterDropdownOptions}
+              selectedValue={filterProfileId}
+              onValueChange={handleFilterChange}
+              modalTitle="Filtrar solicitante"
+              placeholder="Todos os usuários"
+              style={styles.filterDropdown}
+              disabled={rpcMissing}
+            />
+          </View>
 
           <Text style={styles.hintText}>
             Selecione quem enviou o pedido pastoral.
@@ -183,7 +187,7 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
               );
             })}
           </ScrollView>
-        </>
+        </View>
       ) : (
         <Text style={styles.hintText}>Nenhum pedido pastoral cadastrado ainda.</Text>
       )}
@@ -373,33 +377,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 6,
   },
-  sectionLabel: {
-    color: '#CBD5E1',
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
+  submitterPickerSection: {
+    flexGrow: 0,
+    flexShrink: 0,
+    gap: 4,
+    marginBottom: 6,
+  },
+  filterDropdownWrap: {
+    flexGrow: 0,
+    flexShrink: 0,
+    alignSelf: 'stretch',
   },
   filterDropdown: {
-    marginBottom: 8,
-    height: 40,
+    flex: 0,
+    flexGrow: 0,
+    alignSelf: 'stretch',
+    height: 52,
     borderColor: '#334155',
     backgroundColor: '#0f172a',
+    paddingHorizontal: 10,
   },
   inlineLoader: {
     marginVertical: 8,
   },
   hintText: {
     color: '#94A3B8',
-    fontSize: 12,
-    lineHeight: 16,
-    marginBottom: 6,
+    fontSize: 11,
+    lineHeight: 14,
+    marginBottom: 2,
   },
   submitterList: {
     flexGrow: 0,
-    maxHeight: 148,
-    marginBottom: 8,
+    flexShrink: 0,
+    maxHeight: 110,
   },
   submitterListContent: {
     gap: 6,
@@ -408,12 +418,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    minHeight: 52,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#334155',
     backgroundColor: 'rgba(15, 23, 42, 0.9)',
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   submitterRowSelected: {
     borderColor: '#F472B6',
