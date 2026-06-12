@@ -11,6 +11,8 @@ export type FinancialHubItem = {
   subtitle: string;
   icon: 'exchange' | 'list-alt' | 'tags' | 'bar-chart';
   action: FinancialHubAction;
+  /** Destaque visual no card Financeiro (ação diferenciada do usuário). */
+  highlight?: boolean;
 };
 
 export const FINANCIAL_HUB_ITEMS: FinancialHubItem[] = [
@@ -27,6 +29,7 @@ export const FINANCIAL_HUB_ITEMS: FinancialHubItem[] = [
     subtitle: 'Solicitar reembolso de despesas',
     icon: 'list-alt',
     action: { type: 'route', path: '/expense-report' },
+    highlight: true,
   },
   {
     id: 'categories',

@@ -241,7 +241,7 @@ export function ExpenseReportForm({ header, submitting, onSubmit, onCancel }: Pr
         {submitting ? (
           <ActivityIndicator color="#FFFFFF" size="small" />
         ) : (
-          <Text style={styles.submitButtonText}>Finalizar</Text>
+          <Text style={styles.submitButtonText}>Submeter e Finalizar</Text>
         )}
       </TouchableOpacity>
     </View>

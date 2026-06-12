@@ -449,7 +449,10 @@ export default function FinancialScreen() {
             {FINANCIAL_HUB_ITEMS.filter((item) => item.action.type === 'route').map((item) => (
               <TouchableOpacity
                 key={item.id}
-                style={styles.rdShortcutButton}
+                style={[
+                  styles.rdShortcutButton,
+                  item.highlight && styles.rdShortcutButtonHighlighted,
+                ]}
                 onPress={() => {
                   if (item.action.type === 'route') {
                     router.push({
@@ -462,7 +465,21 @@ export default function FinancialScreen() {
               >
                 <FontAwesome name={item.icon} size={14} color="#D1FAE5" />
                 <View style={styles.rdShortcutTextWrap}>
-                  <Text style={styles.rdShortcutTitle}>{item.title}</Text>
+                  <View
+                    style={[
+                      styles.rdShortcutTitleWrap,
+                      item.highlight && styles.rdShortcutTitleWrapHighlighted,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.rdShortcutTitle,
+                        item.highlight && styles.rdShortcutTitleHighlighted,
+                      ]}
+                    >
+                      {item.title}
+                    </Text>
+                  </View>
                   <Text style={styles.rdShortcutSubtitle}>{item.subtitle}</Text>
                 </View>
                 <FontAwesome name="chevron-right" size={12} color="#94A3B8" />
@@ -582,14 +599,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
   },
+  rdShortcutButtonHighlighted: {
+    borderColor: 'rgba(52, 211, 153, 0.75)',
+    backgroundColor: 'rgba(6, 95, 70, 0.42)',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 4,
+  },
   rdShortcutTextWrap: {
     flex: 1,
-    gap: 2,
+    gap: 4,
+  },
+  rdShortcutTitleWrap: {
+    alignSelf: 'flex-start',
+  },
+  rdShortcutTitleWrapHighlighted: {
+    borderRadius: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.28)',
+    borderWidth: 1,
+    borderColor: 'rgba(110, 231, 183, 0.45)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
   rdShortcutTitle: {
     color: '#ECFDF5',
     fontSize: 14,
     fontWeight: '800',
+  },
+  rdShortcutTitleHighlighted: {
+    color: '#D1FAE5',
   },
   rdShortcutSubtitle: {
     color: '#94A3B8',

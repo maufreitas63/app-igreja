@@ -9,6 +9,7 @@ import {
   fetchExpenseReportDetail,
   fetchMyExpenseReports,
   loadExpenseReportHeader,
+  notifyTreasurerExpenseReportSubmitted,
   resolveTreasurerWhatsappUrl,
   splitExpenseReportDescriptions,
   submitExpenseReport,
@@ -135,11 +136,33 @@ export default function ExpenseReportScreen() {
       setMode('view');
       setReports((current) => [result.report, ...current]);
 
-      Toast.show({
-        type: 'success',
-        text1: 'RD',
-        text2: `${result.report.report_number} criado com sucesso.`,
+      const whatsappResult = await notifyTreasurerExpenseReportSubmitted({
+        memberName: header?.fullName?.trim() || 'Usuário',
+        reportNumber: result.report.report_number,
+        totalAmount: result.report.total_amount,
       });
+
+      if (whatsappResult.missingTreasurerPhone) {
+        Toast.show({
+          type: 'info',
+          text1: 'RD',
+          text2: `${result.report.report_number} criado. Configure Tesoureiro_contato para avisar o tesoureiro.`,
+          visibilityTime: 5000,
+        });
+      } else if (!whatsappResult.opened) {
+        Toast.show({
+          type: 'success',
+          text1: 'RD',
+          text2: `${result.report.report_number} criado. Não foi possível abrir o WhatsApp do tesoureiro.`,
+          visibilityTime: 5000,
+        });
+      } else {
+        Toast.show({
+          type: 'success',
+          text1: 'RD',
+          text2: `${result.report.report_number} submetido. WhatsApp do tesoureiro aberto.`,
+        });
+      }
     } finally {
       setSubmitting(false);
     }

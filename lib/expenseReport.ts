@@ -8,7 +8,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
 import { getStoredUserPhone } from '@/lib/userSession';
-import { buildWaMeUrl } from '@/lib/whatsapp';
+import { buildWaMeUrl, openWhatsAppPhone } from '@/lib/whatsapp';
 
 export const EXPENSE_REPORT_SQL_HINT =
   'Execute no Supabase: scripts/expense-reports-schema.sql e scripts/expense-reports-rpc.sql.';
@@ -360,6 +360,13 @@ export const validateExpenseReportDraft = (input: {
   return null;
 };
 
+export const buildExpenseReportTreasurerSubmitMessage = (input: {
+  memberName: string;
+  reportNumber: string;
+  totalAmount: number;
+}) =>
+  `${input.memberName} submeteu um relatório de despesas ${input.reportNumber} no valor de ${formatExpenseReportAmount(input.totalAmount)} para reembolso e lançamento.`;
+
 export const buildExpenseReportWhatsappMessage = (input: {
   reportNumber: string;
   memberName: string;
@@ -686,4 +693,26 @@ export async function reconcileExpenseReport(
 export async function resolveTreasurerWhatsappUrl(message: string) {
   const treasurerPhone = await getAppParameterValue('Tesoureiro_contato');
   return buildWaMeUrl(treasurerPhone, message);
+}
+
+export async function notifyTreasurerExpenseReportSubmitted(input: {
+  memberName: string;
+  reportNumber: string;
+  totalAmount: number;
+}): Promise<{ opened: boolean; missingTreasurerPhone?: boolean }> {
+  const treasurerPhone = await getAppParameterValue('Tesoureiro_contato');
+
+  if (!treasurerPhone?.trim()) {
+    return { opened: false, missingTreasurerPhone: true };
+  }
+
+  const message = buildExpenseReportTreasurerSubmitMessage(input);
+
+  try {
+    await openWhatsAppPhone(treasurerPhone, message);
+    return { opened: true };
+  } catch (err) {
+    console.error('Erro ao notificar tesoureiro via WhatsApp:', err);
+    return { opened: false };
+  }
 }

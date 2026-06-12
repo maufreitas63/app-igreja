@@ -24,6 +24,7 @@
     "build:docs:md": "node scripts/build-pacotes-md.mjs",
     "build:docs:pdf": "node scripts/build-pacotes-pdf.mjs",
     "build:docs": "node scripts/build-pacotes-md.mjs && node scripts/build-pacotes-pdf.mjs",
+    "build:access-roles-pdf": "node scripts/build-access-roles-pdf.mjs",
     "lint": "expo lint"
   },
   "dependencies": {
