@@ -346,6 +346,52 @@ export const MIN_PASTORAL_CANCELLATION_REASON_LENGTH = 3;
 const isPastoralBeneficiaryType = (value: string | null | undefined): value is PastoralBeneficiaryType =>
   value === 'self' || value === 'family' || value === 'third_party';
 
+const parsePastoralOptionalText = (value: unknown) => {
+  if (value == null) {
+    return null;
+  }
+
+  const text = String(value).trim();
+  return text || null;
+};
+
+/** Normaliza linhas de RPC/tabela para o tipo usado no app. */
+export const mapPastoralRequestFromRecord = (
+  record: Record<string, unknown>
+): PastoralRequestHistoryItem => {
+  const requestForRaw = record.request_for;
+
+  return {
+    id: String(record.id),
+    created_at: String(record.created_at),
+    motivo: record.motivo != null ? String(record.motivo) : null,
+    situacao: record.situacao != null ? String(record.situacao) : null,
+    description: record.description != null ? String(record.description) : null,
+    destination_label:
+      record.destination_label != null ? String(record.destination_label) : null,
+    request_for: isPastoralBeneficiaryType(
+      typeof requestForRaw === 'string' ? requestForRaw : null
+    )
+      ? requestForRaw
+      : null,
+    beneficiary_name:
+      record.beneficiary_name != null ? String(record.beneficiary_name) : null,
+    beneficiary_relationship:
+      record.beneficiary_relationship != null
+        ? String(record.beneficiary_relationship)
+        : null,
+    beneficiary_details:
+      record.beneficiary_details != null ? String(record.beneficiary_details) : null,
+    status: record.status != null ? String(record.status) : null,
+    updated_at: record.updated_at != null ? String(record.updated_at) : null,
+    confidential: Boolean(record.confidential),
+    handler_profile_id: parsePastoralOptionalText(record.handler_profile_id),
+    handler_name: parsePastoralOptionalText(record.handler_name),
+    cancellation_requested_at: parsePastoralOptionalText(record.cancellation_requested_at),
+    cancellation_request_reason: parsePastoralOptionalText(record.cancellation_request_reason),
+  };
+};
+
 export const formatPastoralRequestForLabel = (requestFor: PastoralBeneficiaryType | null) => {
   if (!requestFor) {
     return '—';
@@ -427,7 +473,7 @@ export const getPastoralRequestDeleteBlockedMessage = () =>
 
 export const hasPastoralCancellationRequested = (
   item: Pick<PastoralRequestHistoryItem, 'cancellation_requested_at'>
-) => Boolean(item.cancellation_requested_at?.trim());
+) => parsePastoralOptionalText(item.cancellation_requested_at) != null;
 
 /** Índice do estágio atual (-1 = ainda não iniciou acompanhamento, ex.: status `new`). */
 export const getPastoralFollowUpStageIndex = (
@@ -570,49 +616,7 @@ export async function fetchMyPastoralRequests(profileId: string): Promise<Pastor
   }
 
   if (Array.isArray(data)) {
-    return data.map((row) => {
-      const record = row as Record<string, unknown>;
-      const requestForRaw = record.request_for;
-
-      return {
-        id: String(record.id),
-        created_at: String(record.created_at),
-        motivo: record.motivo != null ? String(record.motivo) : null,
-        situacao: record.situacao != null ? String(record.situacao) : null,
-        description: record.description != null ? String(record.description) : null,
-        destination_label:
-          record.destination_label != null ? String(record.destination_label) : null,
-        request_for: isPastoralBeneficiaryType(
-          typeof requestForRaw === 'string' ? requestForRaw : null
-        )
-          ? requestForRaw
-          : null,
-        beneficiary_name:
-          record.beneficiary_name != null ? String(record.beneficiary_name) : null,
-        beneficiary_relationship:
-          record.beneficiary_relationship != null
-            ? String(record.beneficiary_relationship)
-            : null,
-        beneficiary_details:
-          record.beneficiary_details != null ? String(record.beneficiary_details) : null,
-        status: record.status != null ? String(record.status) : null,
-        confidential: Boolean(record.confidential),
-        handler_profile_id:
-          record.handler_profile_id != null
-            ? String(record.handler_profile_id).trim() || null
-            : null,
-        handler_name:
-          record.handler_name != null ? String(record.handler_name).trim() || null : null,
-        cancellation_requested_at:
-          record.cancellation_requested_at != null
-            ? String(record.cancellation_requested_at).trim() || null
-            : null,
-        cancellation_request_reason:
-          record.cancellation_request_reason != null
-            ? String(record.cancellation_request_reason).trim() || null
-            : null,
-      };
-    });
+    return data.map((row) => mapPastoralRequestFromRecord(row as Record<string, unknown>));
   }
 
   return [];

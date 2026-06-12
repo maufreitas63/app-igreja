@@ -8,6 +8,7 @@ import {
 } from '@/lib/maintenanceCardStyles';
 import { MAINTENANCE_PASTORAL_CARE_SQL_HINT } from '@/hooks/useMaintenancePastoralCare';
 import {
+  canApprovePastoralCancellation,
   pastoralDestinationIsIntercession,
   PASTORAL_DESTINATION_INTERCESSION,
 } from '@/lib/pastoralAccess';
@@ -103,7 +104,9 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
     : false;
 
   const canCancelSelectedRequest =
-    cancellationRequested && accessContext.isSuperAdmin && !isIntercessionReadOnly;
+    cancellationRequested
+    && canApprovePastoralCancellation(accessContext)
+    && !isIntercessionReadOnly;
 
   const accessHint = accessContext.hasFullPastoralAccess
     ? null

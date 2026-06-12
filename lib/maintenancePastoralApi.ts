@@ -11,7 +11,7 @@ import {
   getPastoralFollowUpStageBlockedMessage,
   isPastoralFollowUpStage,
   normalizePastoralFollowUpStage,
-  type PastoralBeneficiaryType,
+  mapPastoralRequestFromRecord,
   type PastoralFollowUpStage,
   type PastoralRequestHistoryItem,
 } from '@/lib/pastoralRequest';
@@ -158,46 +158,6 @@ const isProfileRequestsRpcMissing = (message: string) =>
   message.includes('listar_pedidos_pastoral_perfil')
   && (message.includes('could not find') || message.includes('does not exist') || message.includes('PGRST202'));
 
-const mapPastoralRequestRecord = (record: Record<string, unknown>) => {
-  const requestForRaw = record.request_for;
-
-  return {
-    id: String(record.id),
-    created_at: String(record.created_at),
-    motivo: record.motivo != null ? String(record.motivo) : null,
-    situacao: record.situacao != null ? String(record.situacao) : null,
-    description: record.description != null ? String(record.description) : null,
-    destination_label:
-      record.destination_label != null ? String(record.destination_label) : null,
-    request_for:
-      requestForRaw === 'self' || requestForRaw === 'family' || requestForRaw === 'third_party'
-        ? (requestForRaw as PastoralBeneficiaryType)
-        : null,
-    beneficiary_name:
-      record.beneficiary_name != null ? String(record.beneficiary_name) : null,
-    beneficiary_relationship:
-      record.beneficiary_relationship != null
-        ? String(record.beneficiary_relationship)
-        : null,
-    beneficiary_details:
-      record.beneficiary_details != null ? String(record.beneficiary_details) : null,
-    status: record.status != null ? String(record.status) : null,
-    updated_at: record.updated_at != null ? String(record.updated_at) : null,
-    confidential: Boolean(record.confidential),
-    handler_profile_id:
-      record.handler_profile_id != null ? String(record.handler_profile_id).trim() || null : null,
-    handler_name: record.handler_name != null ? String(record.handler_name).trim() || null : null,
-    cancellation_requested_at:
-      record.cancellation_requested_at != null
-        ? String(record.cancellation_requested_at).trim() || null
-        : null,
-    cancellation_request_reason:
-      record.cancellation_request_reason != null
-        ? String(record.cancellation_request_reason).trim() || null
-        : null,
-  } satisfies PastoralRequestHistoryItem;
-};
-
 export async function fetchPastoralSubmitterOptions() {
   const { data, error } = await supabase.rpc('listar_solicitantes_pedido_pastoral');
 
@@ -277,7 +237,7 @@ async function fetchMaintenancePastoralRequestsViaRpc(profileId: string) {
     throw error;
   }
 
-  return ((data as Array<Record<string, unknown>> | null) ?? []).map(mapPastoralRequestRecord);
+  return ((data as Array<Record<string, unknown>> | null) ?? []).map(mapPastoralRequestFromRecord);
 }
 
 async function fetchMaintenancePastoralRequestsDirect(profileId: string) {
@@ -293,7 +253,7 @@ async function fetchMaintenancePastoralRequestsDirect(profileId: string) {
     throw error;
   }
 
-  return ((data as Array<Record<string, unknown>> | null) ?? []).map(mapPastoralRequestRecord);
+  return ((data as Array<Record<string, unknown>> | null) ?? []).map(mapPastoralRequestFromRecord);
 }
 
 export async function fetchMaintenancePastoralRequestsForProfile(

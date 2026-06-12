@@ -141,58 +141,6 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     }
   }, [accessContext, submitterOptions]);
 
-  const refreshRequestsForSelectedProfile = useCallback(async () => {
-    if (!selectedProfileId || !selectedSubmitter) {
-      return;
-    }
-
-    try {
-      const rows = await fetchMaintenancePastoralRequestsForProfile(
-        selectedProfileId,
-        selectedSubmitter.fullName,
-        selectedSubmitter.phone,
-        accessContext
-      );
-
-      setRequests((current) => {
-        const previousById = new Map(current.map((row) => [row.id, row]));
-
-        return rows.map((row) => {
-          const previous = previousById.get(row.id);
-
-          if (!previous) {
-            return row;
-          }
-
-          const careStarted = Boolean(row.followUpStage);
-          const shouldPreserveHandler =
-            careStarted
-            && !row.handler_name?.trim()
-            && Boolean(previous.handler_name?.trim() || previous.handler_profile_id);
-
-          if (!shouldPreserveHandler) {
-            return row;
-          }
-
-          return {
-            ...row,
-            handler_profile_id: row.handler_profile_id ?? previous.handler_profile_id ?? null,
-            handler_name: row.handler_name ?? previous.handler_name ?? null,
-          };
-        });
-      });
-      setSelectedRequestId((current) => {
-        if (current && rows.some((row) => row.id === current)) {
-          return current;
-        }
-
-        return rows[0]?.id ?? null;
-      });
-    } catch (err) {
-      console.error('Erro ao atualizar lista de pedidos pastorais:', err);
-    }
-  }, [accessContext, selectedProfileId, selectedSubmitter]);
-
   const reloadAccessContext = useCallback(async () => {
     if (!enabled) {
       setAccessContext({
@@ -276,7 +224,6 @@ export function useMaintenancePastoralCare(enabled: boolean) {
               : row
           )
         );
-        await refreshRequestsForSelectedProfile();
 
         return result;
       } catch (err) {
@@ -302,7 +249,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
         setIsSavingFollowUpStage(false);
       }
     },
-    [accessContext.operatorFullName, accessContext.profileId, refreshRequestsForSelectedProfile, requests]
+    [accessContext.operatorFullName, accessContext.profileId, requests]
   );
 
   const approveCancellation = useCallback(
@@ -318,24 +265,15 @@ export function useMaintenancePastoralCare(enabled: boolean) {
           return result;
         }
 
-        setRequests((current) => {
-          const remaining = current.filter((row) => row.id !== requestId);
+        const remaining = requests.filter((row) => row.id !== requestId);
+        const nextSelectedRequestId =
+          selectedRequestId && selectedRequestId !== requestId
+            ? selectedRequestId
+            : remaining[0]?.id ?? null;
 
-          setSelectedRequestId((selected) => {
-            if (selected && selected !== requestId) {
-              return selected;
-            }
-
-            return remaining[0]?.id ?? null;
-          });
-
-          return remaining;
-        });
+        setRequests(remaining);
+        setSelectedRequestId(nextSelectedRequestId);
         await reloadSubmitters();
-
-        if (selectedProfileId) {
-          await loadRequestsForProfile(selectedProfileId);
-        }
 
         return result;
       } catch (err) {
@@ -361,23 +299,19 @@ export function useMaintenancePastoralCare(enabled: boolean) {
         setIsApprovingCancellation(false);
       }
     },
-    [loadRequestsForProfile, reloadSubmitters, resolveMaintenanceRpcError, selectedProfileId]
+    [reloadSubmitters, requests, resolveMaintenanceRpcError, selectedRequestId]
   );
 
-  const selectProfileId = useCallback(
-    async (profileId: string | null) => {
-      if (!profileId) {
-        setSelectedProfileId(null);
-        setRequests([]);
-        setSelectedRequestId(null);
-        return;
-      }
+  const selectProfileId = useCallback((profileId: string | null) => {
+    if (!profileId) {
+      setSelectedProfileId(null);
+      setRequests([]);
+      setSelectedRequestId(null);
+      return;
+    }
 
-      setSelectedProfileId(profileId);
-      await loadRequestsForProfile(profileId);
-    },
-    [loadRequestsForProfile]
-  );
+    setSelectedProfileId(profileId);
+  }, []);
 
   useEffect(() => {
     void reloadAccessContext();

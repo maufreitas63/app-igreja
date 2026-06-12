@@ -75,6 +75,10 @@ export const filterPastoralRequestsForSession = <T extends { destination_label?:
   context: PastoralCareAccessContext
 ) => rows.filter((row) => canViewPastoralRequestForSession(row.destination_label, context));
 
+/** Confirmação de cancelamento pastoral — somente super_admin (espelha approve_pastoral_cancellation). */
+export const canApprovePastoralCancellation = (context: PastoralCareAccessContext) =>
+  context.isSuperAdmin;
+
 export const canUpdatePastoralRequestForSession = (
   request: PastoralRequestUpdateAccessInput,
   context: PastoralCareAccessContext
@@ -234,6 +238,8 @@ async function loadPastoralCareFullAccessFallback(profileId?: string | null) {
 export async function loadPastoralCareAccessContext(
   profileId?: string | null
 ): Promise<PastoralCareAccessContext> {
+  // Alinha profile_id da sessão com o login antes de carregar permissões e dados do operador.
+  const isSuperAdmin = await checkSessionIsSuperAdmin();
   const resolvedProfileId = profileId ?? (await resolveActorProfileId());
 
   if (!resolvedProfileId) {
@@ -242,17 +248,15 @@ export async function loadPastoralCareAccessContext(
       operatorFullName: null,
       hasFullPastoralAccess: false,
       isIntercessionVolunteer: false,
-      isSuperAdmin: false,
+      isSuperAdmin,
     };
   }
 
-  const [hasFullPastoralAccess, isIntercessionVolunteer, isSuperAdmin, profileResult] =
-    await Promise.all([
-      checkSessionHasFullPastoralRequestsAccess(),
-      checkProfileIsIntercessionScaleVolunteer(resolvedProfileId),
-      checkSessionIsSuperAdmin(),
-      supabase.from('profiles').select('full_name').eq('id', resolvedProfileId).maybeSingle(),
-    ]);
+  const [hasFullPastoralAccess, isIntercessionVolunteer, profileResult] = await Promise.all([
+    checkSessionHasFullPastoralRequestsAccess(),
+    checkProfileIsIntercessionScaleVolunteer(resolvedProfileId),
+    supabase.from('profiles').select('full_name').eq('id', resolvedProfileId).maybeSingle(),
+  ]);
 
   return {
     profileId: resolvedProfileId,

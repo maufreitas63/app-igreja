@@ -121,8 +121,6 @@ as $$
 declare
   v_session_id uuid;
   v_request public.pastoral_requests%rowtype;
-  v_status text;
-  v_follow_up_idx integer;
 begin
   if p_request_id is null then
     return jsonb_build_object('success', false, 'message', 'Pedido não informado.');
@@ -145,9 +143,6 @@ begin
   if not found then
     return jsonb_build_object('success', false, 'message', 'Pedido pastoral não encontrado.');
   end if;
-
-  v_status := lower(trim(coalesce(v_request.status::text, '')));
-  v_follow_up_idx := public.pastoral_follow_up_stage_index(v_request.status::text);
 
   if v_request.cancellation_requested_at is null then
     return jsonb_build_object(
