@@ -23,16 +23,12 @@ type Props = {
   report: ExpenseReportDetail;
   memberName: string;
   memberPhone: string;
-  onSendWhatsapp?: () => void;
-  whatsappBusy?: boolean;
 };
 
 export function ExpenseReportViewer({
   report,
   memberName,
   memberPhone,
-  onSendWhatsapp,
-  whatsappBusy = false,
 }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
@@ -101,24 +97,6 @@ export function ExpenseReportViewer({
           )}
         </View>
       ))}
-
-      {onSendWhatsapp && report.status === 'pending' ? (
-        <TouchableOpacity
-          style={[styles.whatsappButton, whatsappBusy && styles.whatsappButtonDisabled]}
-          onPress={onSendWhatsapp}
-          disabled={whatsappBusy}
-          activeOpacity={0.85}
-        >
-          {whatsappBusy ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <>
-              <FontAwesome name="whatsapp" size={16} color="#FFFFFF" />
-              <Text style={styles.whatsappButtonText}>Enviar ao tesoureiro (WhatsApp)</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      ) : null}
 
       <Modal transparent visible={previewVisible} animationType="fade" onRequestClose={() => setPreviewVisible(false)}>
         <Pressable style={styles.previewBackdrop} onPress={() => setPreviewVisible(false)}>
@@ -213,24 +191,6 @@ const styles = StyleSheet.create({
   noReceipt: {
     color: '#94A3B8',
     fontSize: 12,
-  },
-  whatsappButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderRadius: 12,
-    backgroundColor: '#16A34A',
-    paddingVertical: 14,
-    minHeight: 48,
-  },
-  whatsappButtonDisabled: {
-    opacity: 0.7,
-  },
-  whatsappButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
   },
   previewBackdrop: {
     flex: 1,

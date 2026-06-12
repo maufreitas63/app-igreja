@@ -225,7 +225,7 @@ export function ExpenseReportForm({ header, submitting, onSubmit, onCancel }: Pr
 
       <TouchableOpacity
         style={[styles.cancelButton, submitting && styles.submitButtonDisabled]}
-        onPress={onCancel}
+        onPress={() => void onCancel()}
         disabled={submitting}
         activeOpacity={0.85}
       >

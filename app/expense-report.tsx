@@ -3,28 +3,25 @@ import { ExpenseReportViewer } from '@/components/ExpenseReportViewer';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import {
-  buildExpenseReportWhatsappMessage,
   deleteExpenseReport,
   EXPENSE_REPORT_SQL_HINT,
   fetchExpenseReportDetail,
   fetchMyExpenseReports,
   loadExpenseReportHeader,
   notifyTreasurerExpenseReportSubmitted,
-  resolveTreasurerWhatsappUrl,
   splitExpenseReportDescriptions,
   submitExpenseReport,
   type ExpenseReportDetail,
   type ExpenseReportHeader,
   type ExpenseReportSummary,
 } from '@/lib/expenseReport';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
-import * as Linking from 'expo-linking';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -49,7 +46,6 @@ export default function ExpenseReportScreen() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
-  const [whatsappBusy, setWhatsappBusy] = useState(false);
   const [header, setHeader] = useState<ExpenseReportHeader | null>(null);
   const [reports, setReports] = useState<ExpenseReportSummary[]>([]);
   const [selectedReport, setSelectedReport] = useState<ExpenseReportDetail | null>(null);
@@ -101,19 +97,18 @@ export default function ExpenseReportScreen() {
     [reports]
   );
 
-  const handleCancelCreate = () => {
-    Alert.alert(
+  const handleCancelCreate = async () => {
+    const confirmed = await confirmDialog(
       'Cancelar relatório',
       'Deseja descartar este relatório de despesas sem salvar?',
-      [
-        { text: 'Continuar editando', style: 'cancel' },
-        {
-          text: 'Cancelar relatório',
-          style: 'destructive',
-          onPress: () => setMode('list'),
-        },
-      ]
+      'Cancelar relatório',
+      'Continuar editando',
+      { destructive: true }
     );
+
+    if (confirmed) {
+      setMode('list');
+    }
   };
 
   const handleFinalize = async (input: Parameters<typeof submitExpenseReport>[0]) => {
@@ -132,9 +127,9 @@ export default function ExpenseReportScreen() {
         return;
       }
 
-      setSelectedReport(result.report);
-      setMode('view');
       setReports((current) => [result.report, ...current]);
+      setSelectedReport(null);
+      setMode('list');
 
       const whatsappResult = await notifyTreasurerExpenseReportSubmitted({
         memberName: header?.fullName?.trim() || 'Usuário',
@@ -168,101 +163,59 @@ export default function ExpenseReportScreen() {
     }
   };
 
-  const handleSendWhatsapp = async () => {
-    if (!selectedReport || !header) {
+  const handleDeleteReport = async (report: ExpenseReportSummary) => {
+    const confirmed = await confirmDialog(
+      'Excluir relatório',
+      `Deseja excluir o ${report.report_number}? Esta ação não pode ser desfeita.`,
+      'Excluir',
+      'Cancelar',
+      { destructive: true }
+    );
+
+    if (!confirmed) {
       return;
     }
 
-    setWhatsappBusy(true);
+    setDeletingReportId(report.id);
 
     try {
-      const message = buildExpenseReportWhatsappMessage({
-        reportNumber: selectedReport.report_number,
-        memberName: header.fullName,
-        memberPhone: header.phone,
-        pixKey: selectedReport.pix_key,
-        totalAmount: selectedReport.total_amount,
-        items: selectedReport.items,
-      });
+      const result = await deleteExpenseReport(report.id);
 
-      const url = await resolveTreasurerWhatsappUrl(message);
-
-      if (!url) {
-        Alert.alert(
-          'Tesoureiro indisponível',
-          'Configure o parâmetro Tesoureiro_contato em app_parameters no Supabase.'
-        );
+      if (!result.success) {
+        Toast.show({
+          type: 'error',
+          text1: 'RD',
+          text2: result.message,
+        });
         return;
       }
 
-      await Linking.openURL(url);
+      setReports((current) => current.filter((entry) => entry.id !== report.id));
+
+      if (selectedReport?.id === report.id) {
+        setSelectedReport(null);
+        setMode('list');
+      }
+
+      Toast.show({
+        type: 'success',
+        text1: 'RD',
+        text2: result.message,
+      });
     } catch (err) {
       Toast.show({
         type: 'error',
-        text1: 'WhatsApp',
-        text2: err instanceof Error ? err.message : 'Não foi possível abrir o WhatsApp.',
+        text1: 'RD',
+        text2:
+          err instanceof Error && err.message.includes('EXPENSE_REPORT_RPC_MISSING')
+            ? EXPENSE_REPORT_SQL_HINT
+            : err instanceof Error
+              ? err.message
+              : 'Não foi possível excluir o relatório.',
       });
     } finally {
-      setWhatsappBusy(false);
+      setDeletingReportId(null);
     }
-  };
-
-  const handleDeleteReport = (report: ExpenseReportSummary) => {
-    Alert.alert(
-      'Excluir relatório',
-      `Deseja excluir o ${report.report_number}? Esta ação não pode ser desfeita.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: () => {
-            void (async () => {
-              setDeletingReportId(report.id);
-
-              try {
-                const result = await deleteExpenseReport(report.id);
-
-                if (!result.success) {
-                  Toast.show({
-                    type: 'error',
-                    text1: 'RD',
-                    text2: result.message,
-                  });
-                  return;
-                }
-
-                setReports((current) => current.filter((entry) => entry.id !== report.id));
-
-                if (selectedReport?.id === report.id) {
-                  setSelectedReport(null);
-                  setMode('list');
-                }
-
-                Toast.show({
-                  type: 'success',
-                  text1: 'RD',
-                  text2: result.message,
-                });
-              } catch (err) {
-                Toast.show({
-                  type: 'error',
-                  text1: 'RD',
-                  text2:
-                    err instanceof Error && err.message.includes('EXPENSE_REPORT_RPC_MISSING')
-                      ? EXPENSE_REPORT_SQL_HINT
-                      : err instanceof Error
-                        ? err.message
-                        : 'Não foi possível excluir o relatório.',
-                });
-              } finally {
-                setDeletingReportId(null);
-              }
-            })();
-          },
-        },
-      ]
-    );
   };
 
   const openReport = async (reportId: string) => {
@@ -395,7 +348,7 @@ export default function ExpenseReportScreen() {
                               styles.deleteReportButton,
                               deletingReportId === report.id && styles.deleteReportButtonDisabled,
                             ]}
-                            onPress={() => handleDeleteReport(report)}
+                            onPress={() => void handleDeleteReport(report)}
                             disabled={deletingReportId === report.id}
                             activeOpacity={0.85}
                           >
@@ -426,8 +379,6 @@ export default function ExpenseReportScreen() {
                 report={selectedReport}
                 memberName={memberName}
                 memberPhone={memberPhone}
-                onSendWhatsapp={() => void handleSendWhatsapp()}
-                whatsappBusy={whatsappBusy}
               />
             ) : null}
           </View>
