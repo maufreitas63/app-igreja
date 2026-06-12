@@ -57,10 +57,10 @@ export function FinancialMonthlyBankBalance({
           const negative = row.balance < 0;
 
           return (
-            <View key={row.account} style={styles.dataRow}>
+            <View key={row.accountLabel} style={styles.dataRow}>
               <View style={styles.accountBodyCell}>
                 <Text style={styles.accountLabel} numberOfLines={2}>
-                  {row.account}
+                  {row.accountLabel}
                 </Text>
               </View>
               <View style={styles.valueBodyCell}>
