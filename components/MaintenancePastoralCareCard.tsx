@@ -12,7 +12,10 @@ import {
   PASTORAL_DESTINATION_INTERCESSION,
 } from '@/lib/pastoralAccess';
 import { formatShortName } from '@/lib/formatShortName';
-import { PASTORAL_FOLLOW_UP_STAGES } from '@/lib/pastoralRequest';
+import {
+  normalizePastoralFollowUpStage,
+  PASTORAL_FOLLOW_UP_STAGES,
+} from '@/lib/pastoralRequest';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -60,9 +63,29 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
     ? canUpdateRequest(selectedRequest, accessContext)
     : false;
 
-  const handlerDisplayName = selectedRequest?.handler_name
-    ? formatShortName(selectedRequest.handler_name)
-    : null;
+  const isFollowUpStarted = Boolean(
+    selectedRequest?.followUpStage
+    ?? normalizePastoralFollowUpStage(selectedRequest?.status)
+  );
+
+  const handlerDisplayName = useMemo(() => {
+    if (selectedRequest?.handler_name?.trim()) {
+      return formatShortName(selectedRequest.handler_name);
+    }
+
+    if (
+      isFollowUpStarted
+      && accessContext.operatorFullName
+      && (
+        !selectedRequest?.handler_profile_id
+        || selectedRequest.handler_profile_id === accessContext.profileId
+      )
+    ) {
+      return formatShortName(accessContext.operatorFullName);
+    }
+
+    return null;
+  }, [accessContext.operatorFullName, accessContext.profileId, isFollowUpStarted, selectedRequest]);
 
   const isIntercessionReadOnly =
     selectedRequest
@@ -289,8 +312,10 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
             <Text style={styles.detailValue}>{selectedRequest.requestForLabel}</Text>
 
             <View style={styles.stageHeaderRow}>
-              <Text style={styles.stageSectionLabel}>Acompanhamento</Text>
-              {handlerDisplayName ? (
+              <View style={styles.stageSectionLabelWrap}>
+                <Text style={styles.stageSectionLabel}>Acompanhamento</Text>
+              </View>
+              {isFollowUpStarted && handlerDisplayName ? (
                 <Text style={styles.stageHandlerName} numberOfLines={1}>
                   {handlerDisplayName}
                 </Text>
@@ -598,10 +623,13 @@ const styles = StyleSheet.create({
   stageHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
+    gap: 6,
     marginTop: 6,
-    maxWidth: '100%',
+    width: '100%',
+  },
+  stageSectionLabelWrap: {
+    maxWidth: 112,
+    flexShrink: 0,
   },
   stageSectionLabel: {
     color: '#94A3B8',
@@ -609,7 +637,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
-    flexShrink: 0,
   },
   stageHandlerName: {
     flex: 1,

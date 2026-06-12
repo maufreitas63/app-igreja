@@ -9,6 +9,7 @@ export const PASTORAL_DESTINATION_SIGILO = 'Sigilo Pastoral';
 
 export type PastoralCareAccessContext = {
   profileId: string | null;
+  operatorFullName: string | null;
   hasFullPastoralAccess: boolean;
   isIntercessionVolunteer: boolean;
 };
@@ -234,18 +235,21 @@ export async function loadPastoralCareAccessContext(
   if (!resolvedProfileId) {
     return {
       profileId: null,
+      operatorFullName: null,
       hasFullPastoralAccess: false,
       isIntercessionVolunteer: false,
     };
   }
 
-  const [hasFullPastoralAccess, isIntercessionVolunteer] = await Promise.all([
+  const [hasFullPastoralAccess, isIntercessionVolunteer, profileResult] = await Promise.all([
     checkSessionHasFullPastoralRequestsAccess(),
     checkProfileIsIntercessionScaleVolunteer(resolvedProfileId),
+    supabase.from('profiles').select('full_name').eq('id', resolvedProfileId).maybeSingle(),
   ]);
 
   return {
     profileId: resolvedProfileId,
+    operatorFullName: profileResult.data?.full_name?.trim() || null,
     hasFullPastoralAccess,
     isIntercessionVolunteer,
   };

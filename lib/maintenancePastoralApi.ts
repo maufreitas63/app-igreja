@@ -1,8 +1,10 @@
 import { formatShortName } from '@/lib/formatShortName';
+import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import {
   filterPastoralRequestsForSession,
   type PastoralCareAccessContext,
 } from '@/lib/pastoralAccess';
+import { supabase } from '@/lib/supabase';
 import {
   canAdvanceToPastoralFollowUpStage,
   formatPastoralRequestForLabel,
@@ -13,8 +15,6 @@ import {
   type PastoralFollowUpStage,
   type PastoralRequestHistoryItem,
 } from '@/lib/pastoralRequest';
-import { supabase } from '@/lib/supabase';
-
 export const MAINTENANCE_PASTORAL_SQL_HINT =
   'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql, scripts/pastoral-maintenance-rpc.sql e scripts/pastoral-request-handler.sql.';
 
@@ -68,18 +68,62 @@ const parseRpcJsonObject = (data: unknown): Record<string, unknown> | null => {
 const isRpcSuccess = (row: Record<string, unknown>) =>
   row.success === true || row.success === 'true';
 
+const parseOptionalTextField = (value: unknown) => {
+  if (value == null) {
+    return null;
+  }
+
+  const text = String(value).trim();
+  return text || null;
+};
+
+async function resolveActorHandlerFields() {
+  const profileId = await resolveActorProfileId();
+
+  if (!profileId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', profileId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    handler_profile_id: profileId,
+    handler_name: data?.full_name?.trim() || 'Responsável',
+  };
+}
+
 async function updatePastoralRequestFollowUpStageDirect(
   requestId: string,
-  stage: PastoralFollowUpStage
+  stage: PastoralFollowUpStage,
+  options?: { assignHandler?: boolean }
 ) {
+  const updatePayload: Record<string, unknown> = {
+    status: stage,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (stage === 'Acolher' && options?.assignHandler !== false) {
+    const handler = await resolveActorHandlerFields();
+
+    if (handler) {
+      updatePayload.handler_profile_id = handler.handler_profile_id;
+      updatePayload.handler_name = handler.handler_name;
+    }
+  }
+
   const { data, error } = await supabase
     .from('pastoral_requests')
-    .update({
-      status: stage,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq('id', requestId)
-    .select('status, updated_at')
+    .select('status, updated_at, handler_profile_id, handler_name')
     .maybeSingle();
 
   if (error) {
@@ -101,6 +145,8 @@ async function updatePastoralRequestFollowUpStageDirect(
     status: status ?? stage,
     updatedAt:
       data.updated_at != null ? String(data.updated_at) : new Date().toISOString(),
+    handlerProfileId: parseOptionalTextField(data.handler_profile_id),
+    handlerName: parseOptionalTextField(data.handler_name),
   };
 }
 
@@ -281,16 +327,6 @@ export async function updatePastoralRequestFollowUpStage(
     };
   }
 
-  try {
-    const directResult = await updatePastoralRequestFollowUpStageDirect(requestId, stage);
-
-    if (directResult.success) {
-      return directResult;
-    }
-  } catch (directError) {
-    console.warn('Update direto em pastoral_requests falhou, tentando RPC:', directError);
-  }
-
   const { data, error } = await supabase.rpc('atualizar_status_pedido_pastoral', {
     p_request_id: requestId,
     p_status: stage,
@@ -313,16 +349,6 @@ export async function updatePastoralRequestFollowUpStage(
   }
 
   if (!isRpcSuccess(row)) {
-    try {
-      const directFallback = await updatePastoralRequestFollowUpStageDirect(requestId, stage);
-
-      if (directFallback.success) {
-        return directFallback;
-      }
-    } catch {
-      // mantém erro da RPC abaixo
-    }
-
     return {
       success: false as const,
       message:
@@ -333,6 +359,8 @@ export async function updatePastoralRequestFollowUpStage(
         typeof row.status === 'string' ? row.status : null
       ),
       updatedAt: typeof row.updated_at === 'string' ? row.updated_at : null,
+      handlerProfileId: parseOptionalTextField(row.handler_profile_id),
+      handlerName: parseOptionalTextField(row.handler_name),
     };
   }
 
@@ -340,13 +368,34 @@ export async function updatePastoralRequestFollowUpStage(
     typeof row.status === 'string' ? row.status : stage
   );
 
+  let handlerProfileId = parseOptionalTextField(row.handler_profile_id);
+  let handlerName = parseOptionalTextField(row.handler_name);
+
+  if (stage === 'Acolher' && !handlerProfileId) {
+    try {
+      const directHandlerResult = await updatePastoralRequestFollowUpStageDirect(requestId, stage);
+
+      if (directHandlerResult.success) {
+        return directHandlerResult;
+      }
+    } catch (directHandlerError) {
+      console.warn('Não foi possível gravar responsável pelo acolhimento:', directHandlerError);
+    }
+
+    const handler = await resolveActorHandlerFields();
+
+    if (handler) {
+      handlerProfileId = handler.handler_profile_id;
+      handlerName = handler.handler_name;
+    }
+  }
+
   return {
     success: true as const,
     message: typeof row.message === 'string' ? row.message : undefined,
     status: normalizedStatus ?? stage,
     updatedAt: typeof row.updated_at === 'string' ? row.updated_at : null,
-    handlerProfileId:
-      typeof row.handler_profile_id === 'string' ? row.handler_profile_id.trim() || null : null,
-    handlerName: typeof row.handler_name === 'string' ? row.handler_name.trim() || null : null,
+    handlerProfileId,
+    handlerName,
   };
 }

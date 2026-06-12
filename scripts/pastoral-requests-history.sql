@@ -17,7 +17,9 @@ returns table (
   beneficiary_relationship text,
   beneficiary_details text,
   status text,
-  confidential boolean
+  confidential boolean,
+  handler_profile_id uuid,
+  handler_name text
 )
 language plpgsql
 security definer
@@ -52,7 +54,9 @@ begin
     pr.beneficiary_relationship,
     pr.beneficiary_details,
     pr.status::text,
-    coalesce(pr.confidential, false)
+    coalesce(pr.confidential, false),
+    pr.handler_profile_id,
+    nullif(trim(coalesce(pr.handler_name, '')), '') as handler_name
   from public.pastoral_requests pr
   where pr.profile_id = p_profile_id
     or (

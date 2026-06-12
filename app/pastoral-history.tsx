@@ -1,3 +1,4 @@
+import { formatShortName } from '@/lib/formatShortName';
 import {
   canDeletePastoralRequest,
   deleteMyPastoralRequest,
@@ -7,6 +8,7 @@ import {
   formatPastoralStatusLabel,
   getPastoralRequestDeleteBlockedMessage,
   getSupabaseErrorMessage,
+  isPastoralRequestCareStarted,
   resolvePastoralSessionProfile,
   type PastoralRequestHistoryItem,
 } from '@/lib/pastoralRequest';
@@ -206,6 +208,10 @@ export default function PastoralHistoryScreen() {
             {requests.map((item) => {
               const canDelete = canDeletePastoralRequest(item.status);
               const isDeleting = deletingRequestId === item.id;
+              const handlerDisplayName =
+                isPastoralRequestCareStarted(item.status) && item.handler_name?.trim()
+                  ? formatShortName(item.handler_name)
+                  : null;
 
               return (
               <View key={item.id} style={styles.card}>
@@ -258,9 +264,16 @@ export default function PastoralHistoryScreen() {
                 </View>
 
                 {item.destination_label ? (
-                  <View style={styles.metaRow}>
-                    <Text style={styles.metaLabel}>Encaminhado:</Text>
-                    <Text style={styles.metaValue}>{item.destination_label}</Text>
+                  <View style={styles.metaBlock}>
+                    <View style={styles.metaRow}>
+                      <Text style={styles.metaLabel}>Encaminhado:</Text>
+                      <Text style={styles.metaValue}>{item.destination_label}</Text>
+                    </View>
+                    {handlerDisplayName ? (
+                      <Text style={styles.handlerName} numberOfLines={1}>
+                        {handlerDisplayName}
+                      </Text>
+                    ) : null}
                   </View>
                 ) : null}
 
@@ -450,11 +463,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
+  metaBlock: {
+    gap: 2,
+    marginTop: 2,
+  },
   metaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
-    marginTop: 2,
+  },
+  handlerName: {
+    color: '#F8FAFC',
+    fontSize: 12,
+    fontWeight: '800',
+    paddingLeft: 0,
   },
   metaLabel: {
     color: '#64748B',

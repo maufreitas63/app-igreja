@@ -589,6 +589,12 @@ export async function fetchMyPastoralRequests(profileId: string): Promise<Pastor
           record.beneficiary_details != null ? String(record.beneficiary_details) : null,
         status: record.status != null ? String(record.status) : null,
         confidential: Boolean(record.confidential),
+        handler_profile_id:
+          record.handler_profile_id != null
+            ? String(record.handler_profile_id).trim() || null
+            : null,
+        handler_name:
+          record.handler_name != null ? String(record.handler_name).trim() || null : null,
       };
     });
   }

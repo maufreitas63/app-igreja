@@ -41,6 +41,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
   const [error, setError] = useState<string | null>(null);
   const [accessContext, setAccessContext] = useState<PastoralCareAccessContext>({
     profileId: null,
+    operatorFullName: null,
     hasFullPastoralAccess: false,
     isIntercessionVolunteer: false,
   });
@@ -150,7 +151,33 @@ export function useMaintenancePastoralCare(enabled: boolean) {
         accessContext
       );
 
-      setRequests(rows);
+      setRequests((current) => {
+        const previousById = new Map(current.map((row) => [row.id, row]));
+
+        return rows.map((row) => {
+          const previous = previousById.get(row.id);
+
+          if (!previous) {
+            return row;
+          }
+
+          const careStarted = Boolean(row.followUpStage);
+          const shouldPreserveHandler =
+            careStarted
+            && !row.handler_name?.trim()
+            && Boolean(previous.handler_name?.trim() || previous.handler_profile_id);
+
+          if (!shouldPreserveHandler) {
+            return row;
+          }
+
+          return {
+            ...row,
+            handler_profile_id: row.handler_profile_id ?? previous.handler_profile_id ?? null,
+            handler_name: row.handler_name ?? previous.handler_name ?? null,
+          };
+        });
+      });
       setSelectedRequestId((current) => {
         if (current && rows.some((row) => row.id === current)) {
           return current;
@@ -167,6 +194,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     if (!enabled) {
       setAccessContext({
         profileId: null,
+        operatorFullName: null,
         hasFullPastoralAccess: false,
         isIntercessionVolunteer: false,
       });
@@ -180,6 +208,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
       console.error('Erro ao carregar permissões do Cuidado Pastoral:', err);
       setAccessContext({
         profileId: null,
+        operatorFullName: null,
         hasFullPastoralAccess: false,
         isIntercessionVolunteer: false,
       });
@@ -219,6 +248,14 @@ export function useMaintenancePastoralCare(enabled: boolean) {
 
         const nextStatus = result.status ?? stage;
         const nextUpdatedAt = result.updatedAt ?? new Date().toISOString();
+        const nextHandlerProfileId =
+          result.handlerProfileId
+          ?? (stage === 'Acolher' ? accessContext.profileId : null)
+          ?? null;
+        const nextHandlerName =
+          result.handlerName
+          ?? (stage === 'Acolher' ? accessContext.operatorFullName : null)
+          ?? null;
 
         setRequests((current) =>
           current.map((row) =>
@@ -228,8 +265,8 @@ export function useMaintenancePastoralCare(enabled: boolean) {
                   status: nextStatus,
                   followUpStage: normalizePastoralFollowUpStage(nextStatus) ?? stage,
                   updated_at: nextUpdatedAt,
-                  handler_profile_id: result.handlerProfileId ?? row.handler_profile_id ?? null,
-                  handler_name: result.handlerName ?? row.handler_name ?? null,
+                  handler_profile_id: nextHandlerProfileId ?? row.handler_profile_id ?? null,
+                  handler_name: nextHandlerName ?? row.handler_name ?? null,
                 }
               : row
           )
@@ -260,7 +297,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
         setIsSavingFollowUpStage(false);
       }
     },
-    [refreshRequestsForSelectedProfile, requests]
+    [accessContext.operatorFullName, accessContext.profileId, refreshRequestsForSelectedProfile, requests]
   );
 
   const selectProfileId = useCallback(
