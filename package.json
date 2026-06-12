@@ -19,7 +19,7 @@
     "test:recepcao-ibn": "node scripts/test-recepcao-ibn-by-phone.mjs",
     "test:carousel-nav": "node scripts/test-carousel-navigation.mjs",
     "dev:family-form": "vite --config standalone/cadastro-familia/vite.config.ts",
-    "build:web": "npm run generate:icons && expo export -p web && npm run build:family-form",
+    "build:web": "node scripts/write-build-info.mjs && npm run generate:icons && expo export -p web && npm run build:family-form",
     "generate:icons": "node scripts/generate-app-icons.mjs",
     "build:docs:md": "node scripts/build-pacotes-md.mjs",
     "build:docs:pdf": "node scripts/build-pacotes-pdf.mjs",

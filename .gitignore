@@ -9,6 +9,7 @@ node_modules/
 dist/
 web-build/
 public/cadastro-familia/
+public/build-info.json
 expo-env.d.ts
 
 # Native
