@@ -283,6 +283,11 @@ export default function MaintenanceDashboard() {
   const insets = useSafeAreaInsets();
   const { events, loading, error, refetch } = useMaintenanceEvents();
   const safeEvents = events ?? [];
+  const hasQuorumEvent = useMemo(
+    () => safeEvents.some((event) => event.requer_quorum === true),
+    [safeEvents]
+  );
+  const quorumPresenceShortcutEnabled = !loading && hasQuorumEvent;
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [form, setForm] = useState<MaintenanceEventFormState>(emptyMaintenanceEventForm);
@@ -1017,23 +1022,40 @@ export default function MaintenanceDashboard() {
               >
                 {maintenanceShortcuts.map((shortcut) => {
                   const isActiveShortcut = activeMaintenancePanelContent === shortcut.content;
+                  const isShortcutDisabled =
+                    shortcut.content === 'quorum_presence' && !quorumPresenceShortcutEnabled;
                   const iconName = MAINTENANCE_SHORTCUT_ICONS[shortcut.content];
-                  const iconColor = isActiveShortcut
-                    ? MAINTENANCE_SHORTCUT_ICON_ACTIVE_COLOR
-                    : MAINTENANCE_SHORTCUT_ICON_COLORS[shortcut.content];
+                  const iconColor = isShortcutDisabled
+                    ? '#64748B'
+                    : isActiveShortcut
+                      ? MAINTENANCE_SHORTCUT_ICON_ACTIVE_COLOR
+                      : MAINTENANCE_SHORTCUT_ICON_COLORS[shortcut.content];
 
                   return (
                     <TouchableOpacity
                       key={shortcut.id}
                       style={[
                         styles.menuShortcutButton,
-                        isActiveShortcut && styles.menuShortcutButtonActive,
+                        isActiveShortcut && !isShortcutDisabled && styles.menuShortcutButtonActive,
+                        isShortcutDisabled && styles.menuShortcutButtonDisabled,
                       ]}
-                      onPress={() => scrollToMaintenancePanel(shortcut.content)}
-                      activeOpacity={0.9}
+                      onPress={() => {
+                        if (isShortcutDisabled) {
+                          return;
+                        }
+
+                        scrollToMaintenancePanel(shortcut.content);
+                      }}
+                      activeOpacity={isShortcutDisabled ? 1 : 0.9}
+                      disabled={isShortcutDisabled}
                       hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
                       accessibilityRole="button"
-                      accessibilityLabel={`Abrir ${shortcut.label}`}
+                      accessibilityState={{ disabled: isShortcutDisabled }}
+                      accessibilityLabel={
+                        isShortcutDisabled
+                          ? `${shortcut.label} indisponível: nenhum evento com quórum`
+                          : `Abrir ${shortcut.label}`
+                      }
                     >
                       <View style={styles.menuShortcutRow}>
                         <FontAwesome
@@ -1045,7 +1067,8 @@ export default function MaintenanceDashboard() {
                         <Text
                           style={[
                             styles.menuShortcutButtonText,
-                            isActiveShortcut && styles.menuShortcutButtonTextActive,
+                            isActiveShortcut && !isShortcutDisabled && styles.menuShortcutButtonTextActive,
+                            isShortcutDisabled && styles.menuShortcutButtonTextDisabled,
                           ]}
                           numberOfLines={2}
                         >
@@ -1221,6 +1244,7 @@ export default function MaintenanceDashboard() {
       maintenanceShortcuts,
       carouselPageStyle,
       panelCardSizeStyle,
+      quorumPresenceShortcutEnabled,
       quorumRegistrySchemaMissing,
       refetch,
       scrollToMaintenancePanel,
@@ -1814,6 +1838,11 @@ const styles = StyleSheet.create({
     borderColor: '#A5B4FC',
     backgroundColor: 'rgba(99, 102, 241, 0.22)',
   },
+  menuShortcutButtonDisabled: {
+    opacity: 0.45,
+    borderColor: '#334155',
+    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+  },
   menuShortcutRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1837,6 +1866,9 @@ const styles = StyleSheet.create({
   },
   menuShortcutButtonTextActive: {
     color: '#E0E7FF',
+  },
+  menuShortcutButtonTextDisabled: {
+    color: '#64748B',
   },
   ganttPanel: {
     flex: 1,

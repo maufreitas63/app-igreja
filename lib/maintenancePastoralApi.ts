@@ -16,7 +16,7 @@ import {
   type PastoralRequestHistoryItem,
 } from '@/lib/pastoralRequest';
 export const MAINTENANCE_PASTORAL_SQL_HINT =
-  'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql, scripts/pastoral-maintenance-rpc.sql e scripts/pastoral-request-handler.sql.';
+  'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql, scripts/pastoral-maintenance-rpc.sql, scripts/pastoral-request-handler.sql e scripts/pastoral-request-cancellation.sql.';
 
 export const MAINTENANCE_PASTORAL_RPC_MISSING = 'MAINTENANCE_PASTORAL_RPC_MISSING';
 
@@ -187,6 +187,10 @@ const mapPastoralRequestRecord = (record: Record<string, unknown>) => {
     handler_profile_id:
       record.handler_profile_id != null ? String(record.handler_profile_id).trim() || null : null,
     handler_name: record.handler_name != null ? String(record.handler_name).trim() || null : null,
+    cancellation_requested_at:
+      record.cancellation_requested_at != null
+        ? String(record.cancellation_requested_at).trim() || null
+        : null,
   } satisfies PastoralRequestHistoryItem;
 };
 
@@ -276,7 +280,7 @@ async function fetchMaintenancePastoralRequestsDirect(profileId: string) {
   const { data, error } = await supabase
     .from('pastoral_requests')
     .select(
-      'id, created_at, motivo, situacao, description, destination_label, request_for, beneficiary_name, beneficiary_relationship, beneficiary_details, status, confidential, updated_at, handler_profile_id, handler_name'
+      'id, created_at, motivo, situacao, description, destination_label, request_for, beneficiary_name, beneficiary_relationship, beneficiary_details, status, confidential, updated_at, handler_profile_id, handler_name, cancellation_requested_at'
     )
     .eq('profile_id', profileId)
     .order('created_at', { ascending: false });
@@ -397,5 +401,56 @@ export async function updatePastoralRequestFollowUpStage(
     updatedAt: typeof row.updated_at === 'string' ? row.updated_at : null,
     handlerProfileId,
     handlerName,
+  };
+}
+
+const isApproveCancellationRpcMissing = (message: string) =>
+  message.includes('approve_pastoral_cancellation')
+  && (message.includes('could not find') || message.includes('does not exist') || message.includes('PGRST202'));
+
+export async function approvePastoralCancellation(requestId: string) {
+  const trimmedRequestId = requestId.trim();
+
+  if (!trimmedRequestId) {
+    return { success: false as const, message: 'Pedido inválido.' };
+  }
+
+  const { data, error } = await supabase.rpc('approve_pastoral_cancellation', {
+    p_request_id: trimmedRequestId,
+  });
+
+  if (error) {
+    const message = (error.message ?? '').toLowerCase();
+
+    if (isApproveCancellationRpcMissing(message)) {
+      return {
+        success: false as const,
+        message:
+          'Cancelamento indisponível no servidor. Execute scripts/pastoral-request-cancellation.sql no Supabase.',
+      };
+    }
+
+    throw error;
+  }
+
+  const row = parseRpcJsonObject(data);
+
+  if (!row) {
+    return { success: false as const, message: 'Não foi possível cancelar o pedido.' };
+  }
+
+  if (!isRpcSuccess(row)) {
+    return {
+      success: false as const,
+      message:
+        typeof row.message === 'string'
+          ? row.message
+          : 'Não foi possível cancelar o pedido.',
+    };
+  }
+
+  return {
+    success: true as const,
+    message: typeof row.message === 'string' ? row.message : undefined,
   };
 }

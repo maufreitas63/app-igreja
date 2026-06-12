@@ -337,6 +337,7 @@ export type PastoralRequestHistoryItem = {
   confidential: boolean;
   handler_profile_id?: string | null;
   handler_name?: string | null;
+  cancellation_requested_at?: string | null;
 };
 
 const isPastoralBeneficiaryType = (value: string | null | undefined): value is PastoralBeneficiaryType =>
@@ -420,6 +421,10 @@ export const canDeletePastoralRequest = (status: string | null | undefined): boo
 
 export const getPastoralRequestDeleteBlockedMessage = () =>
   'Este pedido já foi iniciado pelo Cuidado Pastoral e não pode ser excluído.';
+
+export const hasPastoralCancellationRequested = (
+  item: Pick<PastoralRequestHistoryItem, 'cancellation_requested_at'>
+) => Boolean(item.cancellation_requested_at?.trim());
 
 /** Índice do estágio atual (-1 = ainda não iniciou acompanhamento, ex.: status `new`). */
 export const getPastoralFollowUpStageIndex = (
@@ -595,11 +600,68 @@ export async function fetchMyPastoralRequests(profileId: string): Promise<Pastor
             : null,
         handler_name:
           record.handler_name != null ? String(record.handler_name).trim() || null : null,
+        cancellation_requested_at:
+          record.cancellation_requested_at != null
+            ? String(record.cancellation_requested_at).trim() || null
+            : null,
       };
     });
   }
 
   return [];
+}
+
+const CANCELLATION_PASTORAL_REQUEST_RPC_HINT =
+  'Execute no Supabase o script scripts/pastoral-request-cancellation.sql e tente novamente.';
+
+export async function requestMyPastoralCancellation(
+  requestId: string,
+  profileId: string
+): Promise<{ cancellationRequestedAt: string | null }> {
+  const trimmedRequestId = requestId.trim();
+  const trimmedProfileId = profileId.trim();
+
+  if (!trimmedRequestId) {
+    throw new Error('Pedido inválido.');
+  }
+
+  if (!trimmedProfileId) {
+    throw new Error('Perfil não identificado.');
+  }
+
+  const { data, error } = await supabase.rpc('request_my_pastoral_cancellation', {
+    p_request_id: trimmedRequestId,
+    p_profile_id: trimmedProfileId,
+  });
+
+  if (error?.code === 'PGRST202') {
+    throw new Error(`Solicitação de cancelamento indisponível no servidor. ${CANCELLATION_PASTORAL_REQUEST_RPC_HINT}`);
+  }
+
+  if (error) {
+    throw error;
+  }
+
+  const payload = (data ?? {}) as {
+    success?: boolean;
+    message?: string;
+    cancellation_requested_at?: string | null;
+  };
+
+  if (payload.success === true) {
+    const cancellationRequestedAt =
+      payload.cancellation_requested_at != null
+        ? String(payload.cancellation_requested_at).trim() || null
+        : new Date().toISOString();
+
+    return { cancellationRequestedAt };
+  }
+
+  if (payload.message?.trim()) {
+    throw new Error(payload.message.trim());
+  }
+
+  throw new Error('Não foi possível solicitar o cancelamento.');
 }
 
 const DELETE_PASTORAL_REQUEST_RPC_HINT =

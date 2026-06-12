@@ -801,7 +801,10 @@ const styles = StyleSheet.create({
   },
   profileDropdown: {
     width: '100%',
-    minHeight: 48,
+    flex: 0,
+    flexGrow: 0,
+    alignSelf: 'stretch',
+    height: 44,
   },
   inlineLoader: {
     alignSelf: 'flex-start',

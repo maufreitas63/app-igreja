@@ -1,4 +1,5 @@
 import {
+  approvePastoralCancellation,
   fetchMaintenancePastoralRequestsForProfile,
   fetchPastoralSubmitterOptions,
   fetchPastoralSubmitterProfile,
@@ -26,7 +27,7 @@ import { useMaintenanceRpcMissing } from '@/hooks/useMaintenanceRpcMissing';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export const MAINTENANCE_PASTORAL_CARE_SQL_HINT =
-  'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql, scripts/pastoral-maintenance-rpc.sql e scripts/pastoral-request-handler.sql.';
+  'Execute no Supabase: scripts/pastoral-requests-fields.sql, scripts/access-control-pastoral-intercessao.sql, scripts/pastoral-maintenance-rpc.sql, scripts/pastoral-request-handler.sql e scripts/pastoral-request-cancellation.sql.';
 
 const EMPTY_PROFILE_VALUE = '';
 
@@ -38,6 +39,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [isSavingFollowUpStage, setIsSavingFollowUpStage] = useState(false);
+  const [isApprovingCancellation, setIsApprovingCancellation] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessContext, setAccessContext] = useState<PastoralCareAccessContext>({
     profileId: null,
@@ -300,6 +302,65 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     [accessContext.operatorFullName, accessContext.profileId, refreshRequestsForSelectedProfile, requests]
   );
 
+  const approveCancellation = useCallback(
+    async (requestId: string) => {
+      setIsApprovingCancellation(true);
+      setError(null);
+
+      try {
+        const result = await approvePastoralCancellation(requestId);
+
+        if (!result.success) {
+          setError(result.message ?? 'Não foi possível cancelar o pedido.');
+          return result;
+        }
+
+        setRequests((current) => {
+          const remaining = current.filter((row) => row.id !== requestId);
+
+          setSelectedRequestId((selected) => {
+            if (selected && selected !== requestId) {
+              return selected;
+            }
+
+            return remaining[0]?.id ?? null;
+          });
+
+          return remaining;
+        });
+        await reloadSubmitters();
+
+        if (selectedProfileId) {
+          await loadRequestsForProfile(selectedProfileId);
+        }
+
+        return result;
+      } catch (err) {
+        console.error('Erro ao cancelar pedido pastoral:', err);
+
+        const rpcHint = resolveMaintenanceRpcError(
+          err,
+          MAINTENANCE_PASTORAL_RPC_MISSING,
+          MAINTENANCE_PASTORAL_CARE_SQL_HINT
+        );
+
+        if (rpcHint) {
+          setError(rpcHint);
+          return { success: false as const, message: rpcHint };
+        }
+
+        const message =
+          err instanceof Error ? err.message : 'Não foi possível cancelar o pedido.';
+
+        setError(message);
+        return { success: false as const, message };
+      } finally {
+        setIsApprovingCancellation(false);
+      }
+    },
+    [loadRequestsForProfile, reloadSubmitters, resolveMaintenanceRpcError, selectedProfileId]
+  );
+
   const selectProfileId = useCallback(
     async (profileId: string | null) => {
       if (!profileId) {
@@ -352,6 +413,8 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     setSelectedRequestId,
     loadingRequests,
     isSavingFollowUpStage,
+    isApprovingCancellation,
+    approveCancellation,
     followUpStages: PASTORAL_FOLLOW_UP_STAGES,
     error,
     rpcMissing,

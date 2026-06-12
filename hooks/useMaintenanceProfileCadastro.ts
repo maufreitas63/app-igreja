@@ -107,6 +107,11 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
 
   const selectProfile = useCallback(
     async (profileId: string | null) => {
+      if (profileId && profileId === selectedProfileId) {
+        clearSelectedUserView();
+        return;
+      }
+
       setSelectedProfileId(profileId);
       setStatusMessage(null);
 
@@ -117,13 +122,17 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
 
       await loadProfile(profileId);
     },
-    [clearSelectedUserView, loadProfile]
+    [clearSelectedUserView, loadProfile, selectedProfileId]
   );
 
   useEffect(() => {
     if (!enabled) {
-      setSearchResults([]);
-      clearSelectedUserView();
+      clearSearchQuery();
+    }
+  }, [clearSearchQuery, enabled]);
+
+  useEffect(() => {
+    if (!enabled) {
       return;
     }
 
@@ -163,7 +172,7 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
       active = false;
       clearTimeout(timer);
     };
-  }, [clearSelectedUserView, enabled, searchQuery]);
+  }, [enabled, searchQuery]);
 
   const handleCepDraftChange = useCallback((value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 8);

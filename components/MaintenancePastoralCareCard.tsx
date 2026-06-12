@@ -12,7 +12,9 @@ import {
   PASTORAL_DESTINATION_INTERCESSION,
 } from '@/lib/pastoralAccess';
 import { formatShortName } from '@/lib/formatShortName';
+import { confirmDialog } from '@/lib/confirmDialog';
 import {
+  hasPastoralCancellationRequested,
   normalizePastoralFollowUpStage,
   PASTORAL_FOLLOW_UP_STAGES,
 } from '@/lib/pastoralRequest';
@@ -47,6 +49,8 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
     requests,
     loadingRequests,
     isSavingFollowUpStage = false,
+    isApprovingCancellation = false,
+    approveCancellation,
     followUpStages = PASTORAL_FOLLOW_UP_STAGES,
     error,
     rpcMissing,
@@ -93,6 +97,10 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
     && !accessContext.hasFullPastoralAccess
     && Boolean(selectedRequest.handler_profile_id)
     && !canUpdateSelectedRequest;
+
+  const cancellationRequested = selectedRequest
+    ? hasPastoralCancellationRequested(selectedRequest)
+    : false;
 
   const accessHint = accessContext.hasFullPastoralAccess
     ? null
@@ -435,6 +443,51 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
             {isSavingFollowUpStage ? (
               <ActivityIndicator color="#F9A8D4" size="small" style={styles.stageLoader} />
             ) : null}
+            {cancellationRequested ? (
+              <TouchableOpacity
+                style={styles.cancellationButton}
+                onPress={() => {
+                  if (!selectedRequestId || isApprovingCancellation || rpcMissing) {
+                    return;
+                  }
+
+                  void (async () => {
+                    const motivoLabel = selectedRequest?.motivo?.trim() || 'este pedido';
+                    const confirmed = await confirmDialog(
+                      'Cancelar pedido',
+                      `O solicitante pediu o cancelamento de "${motivoLabel}". Deseja excluir este pedido?`,
+                      'Cancelar pedido',
+                      'Voltar',
+                      { destructive: true }
+                    );
+
+                    if (!confirmed) {
+                      return;
+                    }
+
+                    const result = await approveCancellation(selectedRequestId);
+
+                    if (!result.success && result.message) {
+                      Toast.show({
+                        type: 'error',
+                        text1: 'Cuidado pastoral',
+                        text2: result.message,
+                        visibilityTime: 4500,
+                      });
+                    }
+                  })();
+                }}
+                disabled={isApprovingCancellation || rpcMissing || !selectedRequestId}
+                activeOpacity={0.85}
+                accessibilityLabel="Cancelar pedido solicitado pelo membro"
+              >
+                {isApprovingCancellation ? (
+                  <ActivityIndicator color="#FECACA" size="small" />
+                ) : (
+                  <Text style={styles.cancellationButtonText}>Cancelar pedido</Text>
+                )}
+              </TouchableOpacity>
+            ) : null}
           </View>
         </ScrollView>
       ) : selectedSubmitter ? (
@@ -765,5 +818,24 @@ const styles = StyleSheet.create({
   stageLoader: {
     alignSelf: 'flex-start',
     marginTop: 6,
+  },
+  cancellationButton: {
+    alignSelf: 'stretch',
+    width: '100%',
+    marginTop: 10,
+    minHeight: 40,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#F87171',
+    backgroundColor: 'rgba(127, 29, 29, 0.55)',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancellationButtonText: {
+    color: '#FECACA',
+    fontSize: 14,
+    fontWeight: '800',
   },
 });

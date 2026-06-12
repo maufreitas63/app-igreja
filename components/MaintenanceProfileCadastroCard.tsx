@@ -190,6 +190,13 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
                   style={[styles.resultRow, isSelected && styles.resultRowSelected]}
                   onPress={() => void selectProfile(option.id)}
                   activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: isSelected }}
+                  accessibilityLabel={
+                    isSelected
+                      ? `Ocultar dados de ${formatShortName(option.fullName)}`
+                      : `Exibir dados de ${formatShortName(option.fullName)}`
+                  }
                 >
                   <Text style={styles.resultName}>{formatShortName(option.fullName)}</Text>
                   <Text style={styles.resultMeta}>

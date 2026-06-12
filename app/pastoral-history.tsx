@@ -6,9 +6,10 @@ import {
   formatPastoralBeneficiarySummary,
   formatPastoralRequestDate,
   formatPastoralStatusLabel,
-  getPastoralRequestDeleteBlockedMessage,
   getSupabaseErrorMessage,
+  hasPastoralCancellationRequested,
   isPastoralRequestCareStarted,
+  requestMyPastoralCancellation,
   resolvePastoralSessionProfile,
   type PastoralRequestHistoryItem,
 } from '@/lib/pastoralRequest';
@@ -47,6 +48,7 @@ export default function PastoralHistoryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
+  const [requestingCancellationId, setRequestingCancellationId] = useState<string | null>(null);
 
   const loadHistory = useCallback(
     async (options?: { refresh?: boolean }) => {
@@ -118,12 +120,65 @@ export default function PastoralHistoryScreen() {
         return;
       }
 
-      if (!canDeletePastoralRequest(item.status)) {
-        await appAlert('Exclusão bloqueada', getPastoralRequestDeleteBlockedMessage());
+      const motivoLabel = item.motivo?.trim() || 'este pedido';
+      const careStarted = isPastoralRequestCareStarted(item.status);
+      const cancellationRequested = hasPastoralCancellationRequested(item);
+
+      if (careStarted) {
+        if (cancellationRequested) {
+          await appAlert(
+            'Cancelamento solicitado',
+            'O Cuidado Pastoral já foi notificado. Aguarde a confirmação do cancelamento.'
+          );
+          return;
+        }
+
+        const confirmed = await confirmDialog(
+          'Solicitar cancelamento',
+          `Este pedido já está em acompanhamento e não pode ser excluído diretamente. Deseja solicitar o cancelamento de "${motivoLabel}" ao Cuidado Pastoral?`,
+          'Solicitar cancelamento',
+          'Voltar',
+          { destructive: true }
+        );
+
+        if (!confirmed) {
+          return;
+        }
+
+        setRequestingCancellationId(item.id);
+
+        try {
+          const result = await requestMyPastoralCancellation(item.id, profileId);
+          setRequests((current) =>
+            current.map((entry) =>
+              entry.id === item.id
+                ? {
+                    ...entry,
+                    cancellation_requested_at:
+                      result.cancellationRequestedAt ?? new Date().toISOString(),
+                  }
+                : entry
+            )
+          );
+          await appAlert(
+            'Solicitação enviada',
+            'O Cuidado Pastoral foi notificado sobre o pedido de cancelamento.'
+          );
+        } catch (error) {
+          console.error('Erro ao solicitar cancelamento pastoral:', error);
+          await appAlert('Erro', getSupabaseErrorMessage(error));
+        } finally {
+          setRequestingCancellationId(null);
+        }
+
         return;
       }
 
-      const motivoLabel = item.motivo?.trim() || 'este pedido';
+      if (!canDeletePastoralRequest(item.status)) {
+        await appAlert('Exclusão bloqueada', 'Este pedido não pode ser excluído agora.');
+        return;
+      }
+
       const confirmed = await confirmDialog(
         'Excluir pedido',
         `Deseja excluir o pedido "${motivoLabel}"? Esta ação não pode ser desfeita.`,
@@ -207,9 +262,12 @@ export default function PastoralHistoryScreen() {
             }>
             {requests.map((item) => {
               const canDelete = canDeletePastoralRequest(item.status);
+              const careStarted = isPastoralRequestCareStarted(item.status);
+              const cancellationRequested = hasPastoralCancellationRequested(item);
               const isDeleting = deletingRequestId === item.id;
+              const isRequestingCancellation = requestingCancellationId === item.id;
               const handlerDisplayName =
-                isPastoralRequestCareStarted(item.status) && item.handler_name?.trim()
+                careStarted && item.handler_name?.trim()
                   ? formatShortName(item.handler_name)
                   : null;
 
@@ -222,24 +280,40 @@ export default function PastoralHistoryScreen() {
                       accessibilityLabel={
                         canDelete
                           ? 'Excluir pedido pastoral'
-                          : 'Exclusão bloqueada: pedido já iniciado pelo Cuidado Pastoral'
+                          : cancellationRequested
+                            ? 'Cancelamento já solicitado ao Cuidado Pastoral'
+                            : careStarted
+                              ? 'Solicitar cancelamento do pedido pastoral'
+                              : 'Exclusão bloqueada'
                       }
                       accessibilityRole="button"
-                      accessibilityState={{ disabled: !canDelete || isDeleting }}
+                      accessibilityState={{
+                        disabled: isDeleting || isRequestingCancellation || (careStarted && cancellationRequested),
+                      }}
                       activeOpacity={0.85}
-                      disabled={isDeleting}
+                      disabled={
+                        isDeleting
+                        || isRequestingCancellation
+                        || (careStarted && cancellationRequested)
+                      }
                       onPress={() => void handleDeleteRequest(item)}
                       style={[
                         styles.cardDeleteButton,
-                        (!canDelete || isDeleting) && styles.cardDeleteButtonDisabled,
+                        (careStarted && !cancellationRequested) && styles.cardDeleteButtonCancellation,
+                        ((careStarted && cancellationRequested) || isDeleting || isRequestingCancellation)
+                          && styles.cardDeleteButtonDisabled,
                       ]}>
-                      {isDeleting ? (
+                      {isDeleting || isRequestingCancellation ? (
                         <ActivityIndicator color="#FCA5A5" size="small" />
                       ) : (
                         <FontAwesome
                           name="eraser"
                           size={16}
-                          color={canDelete ? '#FCA5A5' : '#64748B'}
+                          color={
+                            canDelete || (careStarted && !cancellationRequested)
+                              ? '#FCA5A5'
+                              : '#64748B'
+                          }
                         />
                       )}
                     </TouchableOpacity>
@@ -278,6 +352,12 @@ export default function PastoralHistoryScreen() {
                       </View>
                     ) : null}
                   </View>
+                ) : null}
+
+                {cancellationRequested ? (
+                  <Text style={styles.cancellationPendingText}>
+                    Cancelamento solicitado — aguardando o Cuidado Pastoral.
+                  </Text>
                 ) : null}
 
                 {item.description?.trim() ? (
@@ -450,6 +530,17 @@ const styles = StyleSheet.create({
     borderColor: '#334155',
     backgroundColor: 'rgba(30, 41, 59, 0.45)',
     opacity: 0.72,
+  },
+  cardDeleteButtonCancellation: {
+    borderColor: 'rgba(248, 113, 113, 0.55)',
+    backgroundColor: 'rgba(127, 29, 29, 0.28)',
+  },
+  cancellationPendingText: {
+    color: '#FCA5A5',
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '700',
+    marginTop: 4,
   },
   cardDate: {
     color: '#94A3B8',
