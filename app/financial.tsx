@@ -1,3 +1,4 @@
+import { FinancialMonthlyBankBalance } from '@/components/FinancialMonthlyBankBalance';
 import { FinancialMonthlyBulletin } from '@/components/FinancialMonthlyBulletin';
 import { FinancialMonthlyBudgetComparison } from '@/components/FinancialMonthlyBudgetComparison';
 import { FinancialLastTwelveMonths } from '@/components/FinancialLastTwelveMonths';
@@ -27,13 +28,14 @@ import {
   View,
 } from 'react-native';
 
-type FinancialSectionId = 'result' | 'comparison' | 'twelveMonths' | 'budget';
+type FinancialSectionId = 'result' | 'comparison' | 'twelveMonths' | 'budget' | 'bankBalance';
 
 const FINANCIAL_SECTION_ORDER: FinancialSectionId[] = [
   'result',
   'comparison',
   'twelveMonths',
   'budget',
+  'bankBalance',
 ];
 
 export default function FinancialScreen() {
@@ -294,6 +296,49 @@ export default function FinancialScreen() {
                   <FinancialLastTwelveMonths
                     endMonth={selectedMonth}
                     realizedEntries={realizedEntriesThroughSelectedMonth}
+                  />
+                ) : null}
+              </View>
+            ) : null}
+          </View>
+        );
+
+      case 'bankBalance':
+        return (
+          <View key="bankBalance" style={styles.bankBalanceSection}>
+            <TouchableOpacity
+              accessibilityLabel="Saldo bancário"
+              accessibilityRole="button"
+              accessibilityState={{ expanded: expandedSection === 'bankBalance' }}
+              activeOpacity={0.85}
+              onPress={() => toggleSection('bankBalance')}
+              style={styles.resultSectionHeader}
+            >
+              <View style={styles.resultSectionHeaderText}>
+                <Text style={styles.sectionLabel}>Saldo bancário</Text>
+                {selectedMonth ? (
+                  <Text style={styles.bankBalanceSectionMeta}>
+                    {formatFinancialMonthLabel(selectedMonth)}
+                  </Text>
+                ) : null}
+              </View>
+              <FontAwesome
+                name={expandedSection === 'bankBalance' ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color="#94A3B8"
+              />
+            </TouchableOpacity>
+
+            {expandedSection === 'bankBalance' ? (
+              <View style={styles.resultSectionBody}>
+                {isLoading ? (
+                  <ActivityIndicator color="#10b981" style={styles.bulletinLoader} />
+                ) : null}
+
+                {!isLoading && selectedMonth ? (
+                  <FinancialMonthlyBankBalance
+                    month={selectedMonth}
+                    realizedEntriesThroughMonth={realizedEntriesThroughSelectedMonth}
                   />
                 ) : null}
               </View>
@@ -660,6 +705,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     fontStyle: 'italic',
+  },
+  bankBalanceSection: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+    backgroundColor: 'rgba(120, 53, 15, 0.15)',
+    overflow: 'hidden',
+  },
+  bankBalanceSectionMeta: {
+    color: '#FCD34D',
+    fontSize: 13,
+    fontWeight: '600',
   },
   monthDropdown: {
     flex: 1,

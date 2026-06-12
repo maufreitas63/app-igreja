@@ -1,5 +1,5 @@
 -- Tabela public.financials (lançamentos importados de financeiro.csv)
--- Execute antes de scripts/financials-import-seed.sql
+-- Execute antes de scripts/financials-import.sql (gerado por generate-financials-import.mjs)
 
 create extension if not exists pgcrypto;
 

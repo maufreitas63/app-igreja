@@ -1,8 +1,7 @@
 -- Zera todos os lançamentos em public.financials para recarga completa.
--- Execute no Supabase SQL Editor ANTES de scripts/financials-import-seed.sql
--- ou antes de uma nova carga em lote pelo app.
--- CSV de origem (regenerar seed): csv/financeiro.csv
---   node scripts/generate-financials-import.mjs
+-- Execute no Supabase SQL Editor somente quando quiser ZERAR tudo antes de recarregar.
+-- Para acrescentar sem apagar, gere e execute scripts/financials-import.sql:
+--   node scripts/generate-financials-import.mjs csv/financeiro.csv
 --
 -- Efeitos:
 -- - Remove todos os lançamentos financeiros
