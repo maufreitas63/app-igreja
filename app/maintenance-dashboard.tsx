@@ -169,12 +169,12 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '6', title: 'Servos em Disponibilidade', content: 'scale_volunteers' },
   { id: '7', title: 'Programação de Escalas', content: 'scales' },
   { id: '8', title: 'Cuidado Pastoral', content: 'pastoral_care' },
-  { id: '13', title: 'Mudança de Papéis', content: 'mudanca_papeis' },
   { id: '9', title: 'Informações Financeiras', content: 'financials' },
   { id: '4', title: 'Lista de Presença', content: 'quorum_presence' },
   { id: '11', title: 'Cadastro de Usuário', content: 'profile_cadastro' },
   { id: '12', title: 'Recepção Familiar', content: 'family_reception' },
   { id: '10', title: 'Controle de Acesso', content: 'access_control' },
+  { id: '13', title: 'Mudança de Papéis', content: 'mudanca_papeis' },
 ];
 
 type FeatureToggleProps = {
