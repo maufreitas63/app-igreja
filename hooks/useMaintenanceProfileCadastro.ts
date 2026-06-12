@@ -102,7 +102,8 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
     setSearchQuery('');
     setSearchResults([]);
     setSearching(false);
-  }, []);
+    clearSelectedUserView();
+  }, [clearSelectedUserView]);
 
   const selectProfile = useCallback(
     async (profileId: string | null) => {
@@ -288,7 +289,6 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
 
       setSearchResults((current) => current.filter((row) => row.id !== selectedProfileId));
       clearSearchQuery();
-      clearSelectedUserView();
       setStatusMessage(result.message);
 
       return result;
@@ -302,7 +302,7 @@ export function useMaintenanceProfileCadastro(enabled: boolean) {
     } finally {
       setDeletingUser(false);
     }
-  }, [clearSearchQuery, clearSelectedUserView, selectedProfileId]);
+  }, [clearSearchQuery, selectedProfileId]);
 
   return {
     searchQuery,
