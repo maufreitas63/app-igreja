@@ -156,13 +156,6 @@ begin
     );
   end if;
 
-  if v_request.profile_id = v_session_id then
-    return jsonb_build_object(
-      'success', false,
-      'message', 'O solicitante não pode cancelar o próprio pedido pelo Cuidado Pastoral.'
-    );
-  end if;
-
   if not public.session_can_view_pastoral_request(v_request.profile_id, v_request.destination_label) then
     return jsonb_build_object(
       'success', false,
