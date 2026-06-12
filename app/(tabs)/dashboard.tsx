@@ -4248,7 +4248,7 @@ const styles = StyleSheet.create({
   cardPastoralCtaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 14,
+    marginTop: 40,
     paddingHorizontal: 4,
     gap: 10,
   },
