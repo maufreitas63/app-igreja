@@ -1601,53 +1601,50 @@ export default function ManageProfile() {
   }, [editingVehicle, loadVehicles, profile?.phone, resetVehicleEditing, vehicleForm]);
 
   const handleDeleteVehicle = useCallback(
-    (vehicle: ProfileVehicle) => {
-      Alert.alert(
+    async (vehicle: ProfileVehicle) => {
+      const confirmed = await confirmDialog(
         'Excluir veículo',
         `Deseja remover o veículo de placa ${vehicle.placa}?`,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Excluir',
-            style: 'destructive',
-            onPress: () => {
-              void (async () => {
-                if (!profile?.phone) {
-                  Alert.alert('Erro', 'Perfil sem telefone vinculado.');
-                  return;
-                }
-
-                try {
-                  setDeletingVehicleId(vehicle.id);
-
-                  const { error } = await supabase
-                    .from('profile_vehicles')
-                    .delete()
-                    .eq('id', vehicle.id)
-                    .eq('phone', String(profile.phone));
-
-                  if (error) {
-                    throw error;
-                  }
-
-                  if (editingVehicle?.id === vehicle.id) {
-                    resetVehicleEditing();
-                  }
-
-                  await loadVehicles(String(profile.phone));
-                  Alert.alert('Sucesso', 'Veículo excluído.');
-                } catch (error) {
-                  const message =
-                    error instanceof Error ? error.message : 'Não foi possível excluir o veículo.';
-                  Alert.alert('Erro', message);
-                } finally {
-                  setDeletingVehicleId(null);
-                }
-              })();
-            },
-          },
-        ]
+        'Excluir',
+        'Cancelar',
+        { destructive: true }
       );
+
+      if (!confirmed) {
+        return;
+      }
+
+      if (!profile?.phone) {
+        Alert.alert('Erro', 'Perfil sem telefone vinculado.');
+        return;
+      }
+
+      try {
+        setDeletingVehicleId(vehicle.id);
+
+        const { error } = await supabase
+          .from('profile_vehicles')
+          .delete()
+          .eq('id', vehicle.id)
+          .eq('phone', String(profile.phone));
+
+        if (error) {
+          throw error;
+        }
+
+        if (editingVehicle?.id === vehicle.id) {
+          resetVehicleEditing();
+        }
+
+        await loadVehicles(String(profile.phone));
+        Alert.alert('Sucesso', 'Veículo excluído.');
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Não foi possível excluir o veículo.';
+        Alert.alert('Erro', message);
+      } finally {
+        setDeletingVehicleId(null);
+      }
     },
     [editingVehicle?.id, loadVehicles, profile?.phone, resetVehicleEditing]
   );
@@ -2279,8 +2276,10 @@ export default function ManageProfile() {
                                 styles.deleteVehicleButton,
                                 (deletingVehicleId === vehicle.id || savingVehicle) && styles.disabledButton,
                               ]}
-                              onPress={() => handleDeleteVehicle(vehicle)}
+                              onPress={() => void handleDeleteVehicle(vehicle)}
                               disabled={deletingVehicleId === vehicle.id || savingVehicle}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Excluir veículo ${vehicle.placa}`}
                             >
                               {deletingVehicleId === vehicle.id ? (
                                 <ActivityIndicator color="#FFF" size="small" />

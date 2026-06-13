@@ -410,7 +410,7 @@ export default function MaintenanceDashboard() {
       }
 
       void (async () => {
-        setAccessState('checking');
+        setAccessState((current) => (current === 'allowed' ? current : 'checking'));
         const snapshot = await loadMaintenanceDashboardAccess();
 
         if (!active) {
@@ -657,6 +657,7 @@ export default function MaintenanceDashboard() {
     canAccessPastoralCare,
     canAccessPastoralRoleChange,
     canAccessProfileCadastro,
+    canManageAccessControl,
     maintenancePanelAccess,
     scalePanelAccess,
   ]);
@@ -728,12 +729,12 @@ export default function MaintenanceDashboard() {
       return;
     }
 
-    list.scrollToIndex({ index: targetIndex, animated, viewPosition: 0 });
+    const offset = targetIndex * pageWidth;
+
+    list.scrollToOffset({ offset, animated: false });
     requestAnimationFrame(() => {
-      list.scrollToOffset({
-        offset: targetIndex * pageWidth,
-        animated: false,
-      });
+      list.scrollToIndex({ index: targetIndex, animated, viewPosition: 0 });
+      list.scrollToOffset({ offset, animated: false });
     });
   }, [maintenanceCardCount, pageWidth]);
 
@@ -1254,9 +1255,9 @@ export default function MaintenanceDashboard() {
                 scrollEnabled={false}
                 keyboardShouldPersistTaps="handled"
                 showsHorizontalScrollIndicator={false}
-                initialNumToRender={1}
-                maxToRenderPerBatch={2}
-                windowSize={3}
+                initialNumToRender={3}
+                maxToRenderPerBatch={3}
+                windowSize={5}
                 removeClippedSubviews={Platform.OS !== 'web'}
                 onScroll={handleCarouselScroll}
                 onScrollToIndexFailed={handleCarouselScrollToIndexFailed}

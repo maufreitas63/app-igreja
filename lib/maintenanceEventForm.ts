@@ -1,7 +1,9 @@
-import { formatEventDateTimeLabel, isEventDateBeforeToday } from '@/lib/eventDate';
-
-/** Offset fixo de America/Sao_Paulo (sem horário de verão). */
-const EVENT_LOCAL_OFFSET = '-03:00';
+import {
+  formatEventDateTimeLabel,
+  formatEventWallClockIso,
+  getEventWallClockParts,
+  isEventDateBeforeToday,
+} from '@/lib/eventDate';
 
 export type MaintenanceEventFormState = {
   name: string;
@@ -34,17 +36,18 @@ export const emptyMaintenanceEventForm = (): MaintenanceEventFormState => ({
 const pad2 = (value: number) => String(value).padStart(2, '0');
 
 const parseIsoEventParts = (isoValue: string | null | undefined) => {
-  if (!isoValue) {
+  const wall = getEventWallClockParts(isoValue);
+  if (!wall) {
     return null;
   }
 
-  const match = isoValue.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
-  if (!match) {
-    return null;
-  }
-
-  const [, year, month, day, hour = '00', minute = '00'] = match;
-  return { year, month, day, hour, minute };
+  return {
+    year: String(wall.year),
+    month: pad2(wall.month),
+    day: pad2(wall.day),
+    hour: pad2(wall.hour),
+    minute: pad2(wall.minute),
+  };
 };
 
 export const formatEventDateOnlyForInput = (isoValue: string | null | undefined) => {
@@ -163,7 +166,7 @@ export const parseMaintenanceEventDateTimeToIso = (
     return null;
   }
 
-  return `${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}T${pad2(parts.hour)}:${pad2(parts.minute)}:00${EVENT_LOCAL_OFFSET}`;
+  return formatEventWallClockIso(parts);
 };
 
 export const isMaintenanceEventFormDateInPast = (form: MaintenanceEventFormState) => {
@@ -352,25 +355,21 @@ export const shiftMaintenanceEventDateIso = (
     return isoValue ?? null;
   }
 
-  const parts = parseIsoEventParts(isoValue);
+  const parts = getEventWallClockParts(isoValue);
   if (!parts) {
     return null;
   }
 
-  const year = Number.parseInt(parts.year, 10);
-  const month = Number.parseInt(parts.month, 10);
-  const day = Number.parseInt(parts.day, 10);
-  const hour = Number.parseInt(parts.hour, 10);
-  const minute = Number.parseInt(parts.minute, 10);
+  const shiftedDate = new Date(parts.year, parts.month - 1, parts.day);
+  shiftedDate.setDate(shiftedDate.getDate() + dayOffset);
 
-  if ([year, month, day, hour, minute].some(Number.isNaN)) {
-    return null;
-  }
-
-  const shifted = new Date(year, month - 1, day, hour, minute, 0);
-  shifted.setDate(shifted.getDate() + dayOffset);
-
-  return `${shifted.getFullYear()}-${pad2(shifted.getMonth() + 1)}-${pad2(shifted.getDate())}T${pad2(shifted.getHours())}:${pad2(shifted.getMinutes())}:00${EVENT_LOCAL_OFFSET}`;
+  return formatEventWallClockIso({
+    year: shiftedDate.getFullYear(),
+    month: shiftedDate.getMonth() + 1,
+    day: shiftedDate.getDate(),
+    hour: parts.hour,
+    minute: parts.minute,
+  });
 };
 
 export const buildMaintenanceEventPayload = (form: MaintenanceEventFormState) => {

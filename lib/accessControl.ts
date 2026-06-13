@@ -202,18 +202,24 @@ const isAccessRpcMissing = (error: { code?: string; message?: string } | null) =
 
 /** Verifica se a RPC `profile_has_access` está instalada no Supabase. */
 export async function getAccessControlRpcStatus(): Promise<'available' | 'missing'> {
-  const { error } = await supabase.rpc('profile_has_access', {
-    p_profile_id: null,
-    p_resource_type: 'screen',
-    p_resource_key: ACCESS_SCREEN.dashboard,
-    p_action: 'view',
-  });
+  return getCachedOrFetch(
+    'acl:rpc:profile_has_access',
+    async () => {
+      const { error } = await supabase.rpc('profile_has_access', {
+        p_profile_id: null,
+        p_resource_type: 'screen',
+        p_resource_key: ACCESS_SCREEN.dashboard,
+        p_action: 'view',
+      });
 
-  if (isAccessRpcMissing(error)) {
-    return 'missing';
-  }
+      if (isAccessRpcMissing(error)) {
+        return 'missing';
+      }
 
-  return 'available';
+      return 'available';
+    },
+    { ttlMs: 300_000 }
+  );
 }
 
 /**

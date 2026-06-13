@@ -278,33 +278,37 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
           keyboardShouldPersistTaps="handled"
           {...MAINTENANCE_SCROLL_PROPS}
         >
-          <SectionLabel variant="maintenance">Selecionar perfil</SectionLabel>
-          {loadingProfiles ? (
-            <CardLoadingState lines={2} compact />
-          ) : allProfiles.length > 0 ? (
-            <DropdownSelect
-              options={profileDropdownOptions}
-              selectedValue={selectedProfile?.id ?? ''}
-              onValueChange={(value) => {
-                if (!value) {
-                  clearSelectedProfile();
-                  return;
-                }
+          <View style={styles.profilesPickerSection}>
+            <SectionLabel variant="maintenance" tight>
+              Selecionar perfil
+            </SectionLabel>
+            {loadingProfiles ? (
+              <CardLoadingState lines={2} compact />
+            ) : allProfiles.length > 0 ? (
+              <DropdownSelect
+                options={profileDropdownOptions}
+                selectedValue={selectedProfile?.id ?? ''}
+                onValueChange={(value) => {
+                  if (!value) {
+                    clearSelectedProfile();
+                    return;
+                  }
 
-                void selectProfileById(value);
-              }}
-              modalTitle="Selecionar perfil"
-              placeholder="Selecionar usuário"
-              style={styles.profileDropdown}
-              disabled={rpcMissing || busy}
-            />
-          ) : (
-            <Text style={styles.searchHintText}>Nenhum perfil encontrado.</Text>
-          )}
+                  void selectProfileById(value);
+                }}
+                modalTitle="Selecionar perfil"
+                placeholder="Selecionar usuário"
+                style={styles.profileDropdown}
+                disabled={rpcMissing || busy}
+              />
+            ) : (
+              <Text style={styles.searchHintText}>Nenhum perfil encontrado.</Text>
+            )}
 
-          {!loadingProfiles && allProfiles.length > 0 ? (
-            <Text style={styles.searchHintText}>{allProfiles.length} usuários cadastrados</Text>
-          ) : null}
+            {!loadingProfiles && allProfiles.length > 0 ? (
+              <Text style={styles.searchHintText}>{allProfiles.length} usuários cadastrados</Text>
+            ) : null}
+          </View>
 
           {selectedProfile ? (
             <View style={styles.selectedCard}>
@@ -417,7 +421,9 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
               ) : null}
             </View>
           ) : (
-            <Text style={styles.panelHint}>Busque e selecione um perfil para atribuir papéis.</Text>
+            <Text style={styles.profilesEmptyHint}>
+              Busque e selecione um perfil para atribuir papéis.
+            </Text>
           )}
         </ScrollView>
       ) : (
@@ -428,7 +434,9 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
           keyboardShouldPersistTaps="handled"
           {...MAINTENANCE_SCROLL_PROPS}
         >
-          <SectionLabel variant="maintenance">Papel</SectionLabel>
+          <SectionLabel variant="maintenance" tight>
+            Papel
+          </SectionLabel>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.roleChipsScroll}>
             <View style={styles.roleChipsRow}>
               {roles.map((role) => (
@@ -631,7 +639,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     padding: 12,
     minHeight: 0,
-    gap: 4,
+    gap: 8,
   },
   tabScroll: {
     flex: 1,
@@ -640,6 +648,10 @@ const styles = StyleSheet.create({
   tabScrollContent: {
     flexGrow: 1,
     paddingBottom: 12,
+    gap: 10,
+  },
+  profilesPickerSection: {
+    gap: 8,
   },
   panelCentered: {
     alignItems: 'center',
@@ -765,7 +777,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 8,
   },
   grantSearchInput: {
     flex: 1,
@@ -813,7 +824,12 @@ const styles = StyleSheet.create({
   searchHintText: {
     color: '#64748B',
     fontSize: 12,
-    marginBottom: 8,
+    lineHeight: 16,
+  },
+  profilesEmptyHint: {
+    color: '#94A3B8',
+    fontSize: 12,
+    lineHeight: 17,
   },
   resultsScroll: {
     maxHeight: 120,
@@ -895,7 +911,6 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   roleChipsScroll: {
-    marginBottom: 8,
     maxHeight: 42,
   },
   roleChipsRow: {
@@ -926,7 +941,6 @@ const styles = StyleSheet.create({
   filterRow: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 8,
   },
   filterChip: {
     flex: 1,

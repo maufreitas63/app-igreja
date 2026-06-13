@@ -7,59 +7,113 @@ type ParsedEventDateParts = {
   minute: string;
 };
 
-export const parseEventDateParts = (value: string | null | undefined): ParsedEventDateParts | null => {
-  if (!value) {
-    return null;
-  }
-
-  const normalized = value.trim();
-  const match = normalized.match(
-    /^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/
-  );
-
-  if (match) {
-    const [, year, month, day, hour = '0', minute = '0', second = '0'] = match;
-    const yearNumber = Number.parseInt(year, 10);
-    const monthNumber = Number.parseInt(month, 10);
-    const dayNumber = Number.parseInt(day, 10);
-    const parsedDate = new Date(
-      yearNumber,
-      monthNumber - 1,
-      dayNumber,
-      Number.parseInt(hour, 10),
-      Number.parseInt(minute, 10),
-      Number.parseInt(second, 10)
-    );
-
-    if (!Number.isNaN(parsedDate.getTime())) {
-      return {
-        date: parsedDate,
-        year: yearNumber,
-        month: monthNumber,
-        day: dayNumber,
-        hour,
-        minute,
-      };
-    }
-  }
-
-  const fallback = new Date(normalized);
-  if (Number.isNaN(fallback.getTime())) {
-    return null;
-  }
-
-  return {
-    date: fallback,
-    year: fallback.getFullYear(),
-    month: fallback.getMonth() + 1,
-    day: fallback.getDate(),
-    hour: String(fallback.getHours()).padStart(2, '0'),
-    minute: String(fallback.getMinutes()).padStart(2, '0'),
-  };
+export type EventWallClockParts = {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
 };
 
 /** Mesmo fuso usado em `scripts/events-auto-lock-past.sql`. */
 export const APP_EVENT_TIMEZONE = 'America/Sao_Paulo';
+
+/** Offset fixo de America/Sao_Paulo (sem horário de verão). */
+export const EVENT_LOCAL_OFFSET = '-03:00';
+
+const pad2 = (value: number) => String(value).padStart(2, '0');
+
+const WALL_CLOCK_PARTS_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+  timeZone: APP_EVENT_TIMEZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
+
+const pickIntlPart = (parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes) =>
+  Number.parseInt(parts.find((part) => part.type === type)?.value ?? '', 10);
+
+/**
+ * Interpreta `event_date` como horário de parede da igreja (America/Sao_Paulo).
+ * O valor digitado no formulário (ex.: 20:00) é o que volta para tela e gravação.
+ */
+export function getEventWallClockParts(
+  value: string | null | undefined
+): EventWallClockParts | null {
+  if (!value?.trim()) {
+    return null;
+  }
+
+  const normalized = value.trim();
+  const literal = normalized.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
+  const hasSpOffset = /(?:-03:00|-0300)$/.test(normalized);
+  const isZulu = /Z$/i.test(normalized);
+  const hasOtherOffset = /[+-]\d{2}:\d{2}$/.test(normalized) && !hasSpOffset;
+
+  if (literal && (hasSpOffset || (!isZulu && !hasOtherOffset))) {
+    const year = Number.parseInt(literal[1], 10);
+    const month = Number.parseInt(literal[2], 10);
+    const day = Number.parseInt(literal[3], 10);
+    const hour = Number.parseInt(literal[4] ?? '0', 10);
+    const minute = Number.parseInt(literal[5] ?? '0', 10);
+
+    if ([year, month, day, hour, minute].some(Number.isNaN)) {
+      return null;
+    }
+
+    return { year, month, day, hour, minute };
+  }
+
+  const instant = new Date(normalized);
+  if (Number.isNaN(instant.getTime())) {
+    return null;
+  }
+
+  const formatted = WALL_CLOCK_PARTS_FORMATTER.formatToParts(instant);
+  const year = pickIntlPart(formatted, 'year');
+  const month = pickIntlPart(formatted, 'month');
+  const day = pickIntlPart(formatted, 'day');
+  const hour = pickIntlPart(formatted, 'hour');
+  const minute = pickIntlPart(formatted, 'minute');
+
+  if ([year, month, day, hour, minute].some(Number.isNaN)) {
+    return null;
+  }
+
+  return { year, month, day, hour, minute };
+}
+
+export const formatEventWallClockIso = (parts: EventWallClockParts) =>
+  `${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}T${pad2(parts.hour)}:${pad2(parts.minute)}:00${EVENT_LOCAL_OFFSET}`;
+
+export const parseEventDateParts = (value: string | null | undefined): ParsedEventDateParts | null => {
+  const wall = getEventWallClockParts(value);
+  if (!wall) {
+    return null;
+  }
+
+  const hour = pad2(wall.hour);
+  const minute = pad2(wall.minute);
+  const date = new Date(
+    `${wall.year}-${pad2(wall.month)}-${pad2(wall.day)}T${hour}:${minute}:00${EVENT_LOCAL_OFFSET}`
+  );
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return {
+    date,
+    year: wall.year,
+    month: wall.month,
+    day: wall.day,
+    hour,
+    minute,
+  };
+};
 
 const toCalendarDateInAppTimezone = (instant: Date) =>
   new Intl.DateTimeFormat('en-CA', {

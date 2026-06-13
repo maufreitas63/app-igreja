@@ -8,7 +8,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import {
   canAdvanceToPastoralFollowUpStage,
-  formatPastoralRequestForLabel,
+  formatPastoralBeneficiarySummary,
   getPastoralFollowUpStageBlockedMessage,
   isPastoralFollowUpStage,
   normalizePastoralFollowUpStage,
@@ -282,7 +282,7 @@ export async function fetchMaintenancePastoralRequestsForProfile(
     ...row,
     submitterName,
     phone: submitterPhone ?? null,
-    requestForLabel: formatPastoralRequestForLabel(row.request_for),
+    requestForLabel: formatPastoralBeneficiarySummary(row),
     followUpStage: normalizePastoralFollowUpStage(row.status),
   }));
 }

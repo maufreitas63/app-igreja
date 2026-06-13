@@ -17,6 +17,8 @@ import { confirmDialog } from '@/lib/confirmDialog';
 import {
   hasPastoralCancellationRequested,
   normalizePastoralFollowUpStage,
+  formatPastoralBeneficiarySummary,
+  formatPastoralRequestForLabel,
   PASTORAL_FOLLOW_UP_STAGES,
 } from '@/lib/pastoralRequest';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
@@ -309,9 +311,11 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
                 </View>
                 {!isDetailExpanded ? (
                   <Text style={styles.detailCollapsedHint} numberOfLines={1}>
-                    {selectedRequest.destination_label?.trim()
-                      || selectedRequest.motivo?.trim()
-                      || 'Toque para ver os detalhes do pedido'}
+                    {selectedRequest.request_for && selectedRequest.request_for !== 'self'
+                      ? formatPastoralBeneficiarySummary(selectedRequest)
+                      : selectedRequest.destination_label?.trim()
+                        || selectedRequest.motivo?.trim()
+                        || 'Toque para ver os detalhes do pedido'}
                   </Text>
                 ) : null}
               </TouchableOpacity>
@@ -366,7 +370,34 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
                 </Text>
 
                 <Text style={styles.detailLabel}>Pedido para</Text>
-                <Text style={styles.detailValue}>{selectedRequest.requestForLabel}</Text>
+                <Text style={styles.detailValue}>
+                  {formatPastoralRequestForLabel(selectedRequest.request_for)}
+                </Text>
+
+                {selectedRequest.request_for && selectedRequest.request_for !== 'self' ? (
+                  <>
+                    <Text style={styles.detailLabel}>Nome do necessitado</Text>
+                    <Text style={styles.detailValue}>
+                      {selectedRequest.beneficiary_name?.trim() || '—'}
+                    </Text>
+
+                    {selectedRequest.request_for === 'family' ? (
+                      <>
+                        <Text style={styles.detailLabel}>Grau de parentesco</Text>
+                        <Text style={styles.detailValue}>
+                          {selectedRequest.beneficiary_relationship?.trim() || '—'}
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Text style={styles.detailLabel}>Especifique (terceiros)</Text>
+                        <Text style={styles.detailValueMultiline}>
+                          {selectedRequest.beneficiary_details?.trim() || '—'}
+                        </Text>
+                      </>
+                    )}
+                  </>
+                ) : null}
               </View>
             ) : null}
 

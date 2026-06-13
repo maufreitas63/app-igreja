@@ -663,6 +663,7 @@ const styles = StyleSheet.create({
   monthFilterRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 10,
   },
   monthFilterLabel: {
@@ -672,11 +673,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     flexShrink: 0,
+    marginRight: 'auto',
   },
   reportsList: {
     gap: 10,
   },
   resultSection: {
+    width: '100%',
+    alignSelf: 'flex-end',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
@@ -762,8 +766,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   monthDropdown: {
-    flex: 1,
-    minWidth: 0,
+    width: 200,
+    flex: 0,
+    flexGrow: 0,
+    flexShrink: 0,
+    alignSelf: 'flex-end',
   },
   monthFilterLoader: {
     flex: 1,

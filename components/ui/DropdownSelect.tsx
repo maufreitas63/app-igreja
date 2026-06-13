@@ -110,9 +110,7 @@ export function DropdownSelect({
 
 const styles = StyleSheet.create({
   trigger: {
-    flexGrow: 0,
-    flexShrink: 0,
-    alignSelf: 'stretch',
+    flex: 1,
     minWidth: 0,
     height: 44,
     flexDirection: 'row',
