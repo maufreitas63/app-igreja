@@ -497,22 +497,24 @@ export default function FinancialScreen() {
               {loadingMonths ? (
                 <ActivityIndicator color="#10b981" style={styles.monthFilterLoader} />
               ) : monthDropdownOptions.length ? (
-                <DropdownSelect
-                  options={monthDropdownOptions}
-                  selectedValue={pickerValue}
-                  onValueChange={(value) => {
-                    const match = monthOptions.find(
-                      (month) => formatFinancialMonthKey(month) === value
-                    );
+                <View style={styles.monthDropdownWrap}>
+                  <DropdownSelect
+                    options={monthDropdownOptions}
+                    selectedValue={pickerValue}
+                    onValueChange={(value) => {
+                      const match = monthOptions.find(
+                        (month) => formatFinancialMonthKey(month) === value
+                      );
 
-                    if (match) {
-                      setSelectedMonth(match);
-                    }
-                  }}
-                  modalTitle="Selecionar mês"
-                  placeholder="Selecionar mês"
-                  style={styles.monthDropdown}
-                />
+                      if (match) {
+                        setSelectedMonth(match);
+                      }
+                    }}
+                    modalTitle="Selecionar mês"
+                    placeholder="Selecionar mês"
+                    style={styles.monthDropdown}
+                  />
+                </View>
               ) : (
                 <Text style={styles.monthFilterEmptyText}>Nenhum mês disponível.</Text>
               )}
@@ -765,12 +767,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  monthDropdownWrap: {
+    width: 209,
+    minWidth: 209,
+    maxWidth: 209,
+    alignSelf: 'flex-end',
+    flexShrink: 0,
+  },
   monthDropdown: {
-    width: 200,
+    width: '100%',
+    minWidth: '100%',
     flex: 0,
     flexGrow: 0,
     flexShrink: 0,
-    alignSelf: 'flex-end',
   },
   monthFilterLoader: {
     flex: 1,
