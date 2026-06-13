@@ -17,6 +17,7 @@ const MAINTENANCE_PANEL_CARDS = [
   { id: '12', title: 'Recepção Familiar', content: 'family_reception' },
   { id: '10', title: 'Controle de Acesso', content: 'access_control' },
   { id: '13', title: 'Mudança de Papéis', content: 'mudanca_papeis' },
+  { id: '14', title: 'Acessos de Usuários', content: 'profile_access_insights' },
 ];
 
 const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY = {
@@ -34,6 +35,7 @@ const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY = {
   profile_cadastro: 'maintenance.card.profile_cadastro',
   family_reception: 'maintenance.card.profile_cadastro',
   access_control: 'maintenance.card.access_control',
+  profile_access_insights: 'maintenance.card.profile_access_insights',
 };
 
 function assert(condition, message) {
@@ -88,6 +90,10 @@ function filterPanelCards(access) {
 
     if (card.content === 'mudanca_papeis') {
       return access.canAccessPastoralRoleChange || access.canManageAccessControl;
+    }
+
+    if (card.content === 'profile_access_insights') {
+      return access.canManageAccessControl;
     }
 
     if (card.content === 'profile_cadastro' || card.content === 'family_reception') {
@@ -188,6 +194,34 @@ assert(
   resolveMaintenancePanelIndex(filteredCarousel, 'mudanca_papeis')
     === filteredPanels.findIndex((card) => card.content === 'mudanca_papeis') + 1,
   'Mudança de Papéis no índice correto após filtro'
+);
+
+const superAdminCarousel = buildCarousel(
+  filterPanelCards({
+    ...fullAccess,
+    canManageAccessControl: true,
+  })
+);
+
+const insightsIndex = resolveMaintenancePanelIndex(superAdminCarousel, 'profile_access_insights');
+assert(
+  insightsIndex === superAdminCarousel.length - 1,
+  'Acessos de Usuários deve ser o último card para super_admin'
+);
+assert(
+  badgeForIndex(superAdminCarousel, insightsIndex)?.title === 'Acessos de Usuários',
+  'badge do card Acessos de Usuários'
+);
+
+const nonSuperCarousel = buildCarousel(
+  filterPanelCards({
+    ...fullAccess,
+    canManageAccessControl: false,
+  })
+);
+assert(
+  resolveMaintenancePanelIndex(nonSuperCarousel, 'profile_access_insights') === -1,
+  'Acessos de Usuários oculto sem super_admin'
 );
 
 console.log(`OK — ${MAINTENANCE_PANEL_CARDS.length} painéis e carrossel filtrado validados.`);

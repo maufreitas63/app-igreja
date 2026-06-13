@@ -11,7 +11,8 @@ export type MaintenancePanelContent =
   | 'profile_cadastro'
   | 'family_reception'
   | 'financials'
-  | 'access_control';
+  | 'access_control'
+  | 'profile_access_insights';
 
 export type MaintenanceShortcutIconName =
   | 'calendar'
@@ -26,7 +27,8 @@ export type MaintenanceShortcutIconName =
   | 'line-chart'
   | 'id-card'
   | 'home'
-  | 'shield';
+  | 'shield'
+  | 'history';
 
 /** Ícone FontAwesome por módulo de manutenção. */
 export const MAINTENANCE_SHORTCUT_ICONS: Record<
@@ -46,6 +48,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   profile_cadastro: 'id-card',
   family_reception: 'home',
   access_control: 'shield',
+  profile_access_insights: 'history',
 };
 
 /** Cor do ícone alinhada à borda temática de cada painel. */
@@ -63,6 +66,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   profile_cadastro: '#A78BFA',
   family_reception: '#34D399',
   access_control: '#818CF8',
+  profile_access_insights: '#FCD34D',
 };
 
 export const MAINTENANCE_SHORTCUT_ICON_ACTIVE_COLOR = '#E0E7FF';

@@ -20,6 +20,7 @@ import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCar
 import { MaintenancePastoralRoleChangeCard } from '@/components/MaintenancePastoralRoleChangeCard';
 import { MaintenanceFamilyReceptionCard } from '@/components/MaintenanceFamilyReceptionCard';
 import { MaintenanceProfileCadastroCard } from '@/components/MaintenanceProfileCadastroCard';
+import { MaintenanceProfileAccessInsightsCard } from '@/components/MaintenanceProfileAccessInsightsCard';
 import { MaintenanceScalesCard } from '@/components/MaintenanceScalesCard';
 import { MaintenanceSalaMonitorCard } from '@/components/MaintenanceSalaMonitorCard';
 import { QuorumCheckinRegistryTable } from '@/components/QuorumCheckinRegistryTable';
@@ -128,7 +129,8 @@ type MaintenanceCarouselCard = {
     | 'profile_cadastro'
     | 'family_reception'
     | 'financials'
-    | 'access_control';
+    | 'access_control'
+    | 'profile_access_insights';
 };
 
 type MaintenanceShortcut = {
@@ -161,6 +163,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '12', title: 'Recepção Familiar', content: 'family_reception' },
   { id: '10', title: 'Controle de Acesso', content: 'access_control' },
   { id: '13', title: 'Mudança de Papéis', content: 'mudanca_papeis' },
+  { id: '14', title: 'Acessos de Usuários', content: 'profile_access_insights' },
 ];
 
 type FeatureToggleProps = {
@@ -647,6 +650,10 @@ export default function MaintenanceDashboard() {
         return canAccessPastoralRoleChange || canManageAccessControl;
       }
 
+      if (card.content === 'profile_access_insights') {
+        return canManageAccessControl;
+      }
+
       if (card.content === 'profile_cadastro' || card.content === 'family_reception') {
         return canAccessProfileCadastro;
       }
@@ -976,6 +983,7 @@ export default function MaintenanceDashboard() {
             item.content === 'family_reception' && styles.panelCardFamilyReception,
             item.content === 'financials' && styles.panelCardFinancials,
             item.content === 'access_control' && styles.panelCardAccessControl,
+            item.content === 'profile_access_insights' && styles.panelCardProfileAccessInsights,
             item.content === 'menu' && styles.panelCardMenu,
           ]}
         >
@@ -1080,6 +1088,8 @@ export default function MaintenanceDashboard() {
             <MaintenanceFinancialsCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'access_control' ? (
             <MaintenanceAccessControlCard isActive={currentIndex === index} panelHeight={cardHeight} />
+          ) : item.content === 'profile_access_insights' ? (
+            <MaintenanceProfileAccessInsightsCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'sala_monitor' ? (
             <MaintenanceSalaMonitorCard embedded panelHeight={cardHeight} />
           ) : item.content === 'events_gantt' ? (
@@ -1756,6 +1766,10 @@ const styles = StyleSheet.create({
   },
   panelCardAccessControl: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.accessControl,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
+  },
+  panelCardProfileAccessInsights: {
+    borderColor: 'rgba(250, 204, 21, 0.45)',
     padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardMenu: {
