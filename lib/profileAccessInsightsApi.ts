@@ -42,7 +42,8 @@ const parseRows = (data: unknown): ProfileAccessInsightRow[] => {
         accessCount: Number.isFinite(accessCount) ? Math.max(0, Math.trunc(accessCount)) : 0,
       } satisfies ProfileAccessInsightRow;
     })
-    .filter((row): row is ProfileAccessInsightRow => row !== null);
+    .filter((row): row is ProfileAccessInsightRow => row !== null)
+    .filter((row) => row.accessCount > 0);
 };
 
 export async function listProfileAccessInsightsForSuperAdmin(): Promise<{

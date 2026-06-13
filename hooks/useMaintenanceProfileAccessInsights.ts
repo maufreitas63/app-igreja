@@ -19,7 +19,7 @@ export function useMaintenanceProfileAccessInsights(isActive: boolean) {
 
     try {
       const result = await listProfileAccessInsightsForSuperAdmin();
-      setAllProfiles(result.rows);
+      setAllProfiles(result.rows.filter((profile) => profile.accessCount > 0));
       setRpcMissing(result.rpcMissing);
       setError(result.error);
     } catch (loadError) {
@@ -48,17 +48,11 @@ export function useMaintenanceProfileAccessInsights(isActive: boolean) {
     [allProfiles, searchQuery]
   );
 
-  const profilesWithAccess = useMemo(
-    () => allProfiles.filter((profile) => profile.accessCount > 0).length,
-    [allProfiles]
-  );
-
   return {
     searchQuery,
     setSearchQuery,
     allProfiles,
     profiles,
-    profilesWithAccess,
     loading,
     error,
     rpcMissing,

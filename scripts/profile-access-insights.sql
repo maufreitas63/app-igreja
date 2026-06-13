@@ -114,11 +114,12 @@ begin
     max(e.accessed_at) as last_access_at,
     count(e.id)::bigint as access_count
   from public.profiles p
-  left join public.profile_app_access_events e on e.profile_id = p.id
+  inner join public.profile_app_access_events e on e.profile_id = p.id
   where coalesce(trim(p.full_name), '') <> ''
     and lower(trim(p.full_name)) <> 'visitante'
   group by p.id, p.full_name
-  order by max(e.accessed_at) desc nulls last, p.full_name asc;
+  having count(e.id) > 0
+  order by max(e.accessed_at) desc, p.full_name asc;
 end;
 $$;
 

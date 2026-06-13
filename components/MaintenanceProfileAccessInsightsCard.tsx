@@ -48,7 +48,6 @@ export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHei
     setSearchQuery,
     allProfiles,
     profiles,
-    profilesWithAccess,
     loading,
     error,
     rpcMissing,
@@ -64,8 +63,8 @@ export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHei
       <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       <Text style={styles.helpText}>
-        Painel exclusivo do super administrador. Exibe nome curto, data do último acesso e total
-        histórico de logins na aplicação.
+        Painel exclusivo do super administrador. Lista apenas usuários com pelo menos um login
+        registrado na aplicação.
       </Text>
 
       {rpcMissing ? <Text style={styles.warningText}>{PROFILE_ACCESS_INSIGHTS_SQL_HINT}</Text> : null}
@@ -88,13 +87,13 @@ export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHei
       {!loading && allProfiles.length > 0 ? (
         <Text style={styles.countText}>
           {hasSearch
-            ? `${profiles.length} de ${allProfiles.length} usuários`
-            : `${allProfiles.length} usuários · ${profilesWithAccess} com acesso registrado`}
+            ? `${profiles.length} de ${allProfiles.length} usuários com acesso`
+            : `${allProfiles.length} usuários com acesso registrado`}
         </Text>
       ) : null}
 
       {!loading && !rpcMissing && allProfiles.length === 0 ? (
-        <Text style={styles.hintText}>Nenhum usuário elegível encontrado.</Text>
+        <Text style={styles.hintText}>Nenhum acesso registrado ainda.</Text>
       ) : null}
 
       {!loading && allProfiles.length > 0 ? (
