@@ -62,6 +62,7 @@ import {
 } from '@/lib/dashboardScreenAccess';
 import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
 import { resolveDashboardCardAccessResourceKey } from '@/lib/screenAccessResourceKeys';
+import { recordProfileScreenVisit } from '@/lib/profileScreenVisitTracking';
 import {
   fetchPermittedScaleTypes,
   SCALE_PERMITTED_RPC_MISSING,
@@ -1742,6 +1743,21 @@ export default function Dashboard() {
     return resolveDashboardCardAccessResourceKey(card.content, {
       scaleTypeCode: card.content === 'scale_roster' ? selectedVigilanceScale : null,
     });
+  }, [currentIndex, data, selectedVigilanceScale]);
+
+  useEffect(() => {
+    const card = data[currentIndex];
+
+    if (!card) {
+      return;
+    }
+
+    const screenKey =
+      resolveDashboardCardAccessResourceKey(card.content, {
+        scaleTypeCode: card.content === 'scale_roster' ? selectedVigilanceScale : null,
+      }) ?? `dashboard.card.${card.content}`;
+
+    void recordProfileScreenVisit(screenKey, card.title);
   }, [currentIndex, data, selectedVigilanceScale]);
 
   useEffect(() => {

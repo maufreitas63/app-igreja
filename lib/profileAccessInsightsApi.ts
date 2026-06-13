@@ -12,6 +12,76 @@ export type ProfileAccessInsightRow = {
   accessCount: number;
 };
 
+export type ProfileAccessScreenVisit = {
+  screenKey: string;
+  screenLabel: string;
+  visitedAt: string;
+  visitOrder: number;
+};
+
+export type ProfileAccessSessionBlock = {
+  accessEventId: string;
+  accessedAt: string;
+  screens: ProfileAccessScreenVisit[];
+};
+
+const parseScreenVisitRows = (data: unknown): ProfileAccessSessionBlock[] => {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  const blocks = new Map<string, ProfileAccessSessionBlock>();
+
+  for (const row of data) {
+    const record = row as Record<string, unknown>;
+    const accessEventId = String(record.access_event_id ?? record.accessEventId ?? '').trim();
+    const rawAccessedAt = record.accessed_at ?? record.accessedAt;
+    const accessedAt =
+      rawAccessedAt === null || rawAccessedAt === undefined
+        ? ''
+        : String(rawAccessedAt).trim();
+
+    if (!accessEventId || !accessedAt) {
+      continue;
+    }
+
+    if (!blocks.has(accessEventId)) {
+      blocks.set(accessEventId, {
+        accessEventId,
+        accessedAt,
+        screens: [],
+      });
+    }
+
+    const screenKey = String(record.screen_key ?? record.screenKey ?? '').trim();
+    const screenLabel = String(record.screen_label ?? record.screenLabel ?? screenKey).trim();
+    const rawVisitedAt = record.visited_at ?? record.visitedAt;
+    const visitedAt =
+      rawVisitedAt === null || rawVisitedAt === undefined
+        ? ''
+        : String(rawVisitedAt).trim();
+    const visitOrder = Number(record.visit_order ?? record.visitOrder ?? 0);
+
+    if (!screenKey) {
+      continue;
+    }
+
+    blocks.get(accessEventId)?.screens.push({
+      screenKey,
+      screenLabel: screenLabel || screenKey,
+      visitedAt,
+      visitOrder: Number.isFinite(visitOrder) ? Math.trunc(visitOrder) : 0,
+    });
+  }
+
+  return Array.from(blocks.values())
+    .map((block) => ({
+      ...block,
+      screens: [...block.screens].sort((left, right) => left.visitOrder - right.visitOrder),
+    }))
+    .sort((left, right) => right.accessedAt.localeCompare(left.accessedAt));
+};
+
 const parseRows = (data: unknown): ProfileAccessInsightRow[] => {
   if (!Array.isArray(data)) {
     return [];
@@ -78,6 +148,51 @@ export async function listProfileAccessInsightsForSuperAdmin(): Promise<{
   }
 
   return { rows: parseRows(data), rpcMissing: false, error: null };
+}
+
+export async function listProfileScreenVisitsForSuperAdmin(targetProfileId: string): Promise<{
+  sessions: ProfileAccessSessionBlock[];
+  rpcMissing: boolean;
+  error: string | null;
+}> {
+  const actorProfileId = await resolveActorProfileId();
+
+  if (!actorProfileId) {
+    return {
+      sessions: [],
+      rpcMissing: false,
+      error: 'Sessão inválida. Saia e entre novamente no aplicativo.',
+    };
+  }
+
+  const trimmedTargetProfileId = targetProfileId.trim();
+
+  if (!trimmedTargetProfileId) {
+    return {
+      sessions: [],
+      rpcMissing: false,
+      error: 'Usuário inválido para consultar histórico de telas.',
+    };
+  }
+
+  const { data, error } = await supabase.rpc('list_profile_access_screen_visits_admin', {
+    p_actor_profile_id: actorProfileId,
+    p_target_profile_id: trimmedTargetProfileId,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'list_profile_access_screen_visits_admin')) {
+      return { sessions: [], rpcMissing: true, error: PROFILE_ACCESS_INSIGHTS_SQL_HINT };
+    }
+
+    return {
+      sessions: [],
+      rpcMissing: false,
+      error: error.message || 'Não foi possível carregar o histórico de telas.',
+    };
+  }
+
+  return { sessions: parseScreenVisitRows(data), rpcMissing: false, error: null };
 }
 
 export async function clearProfileAccessInsightsForSuperAdmin(): Promise<{

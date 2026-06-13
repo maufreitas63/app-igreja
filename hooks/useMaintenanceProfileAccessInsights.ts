@@ -54,7 +54,7 @@ export function useMaintenanceProfileAccessInsights(isActive: boolean) {
   const clearHistory = useCallback(async () => {
     const confirmed = await confirmDialog(
       'Limpar histórico',
-      'Deseja apagar todos os registros de acesso em profile_app_access_events? Esta ação não pode ser desfeita.',
+      'Deseja apagar todos os registros de acesso e o histórico de telas visitadas? Esta ação não pode ser desfeita.',
       'Limpar',
       'Cancelar',
       { destructive: true }
@@ -63,6 +63,8 @@ export function useMaintenanceProfileAccessInsights(isActive: boolean) {
     if (!confirmed) {
       return { success: false as const };
     }
+
+    const hadRowsBeforeClear = allProfiles.length > 0;
 
     setClearing(true);
     setError(null);
@@ -76,7 +78,31 @@ export function useMaintenanceProfileAccessInsights(isActive: boolean) {
         return { success: false as const, message: result.error };
       }
 
-      setAllProfiles([]);
+      if (hadRowsBeforeClear && result.deletedCount === 0) {
+        const message =
+          'A limpeza retornou 0 registros apagados. Reexecute scripts/profile-access-insights.sql no Supabase e tente novamente.';
+        setError(message);
+        return { success: false as const, message };
+      }
+
+      const reloadResult = await listProfileAccessInsightsForSuperAdmin();
+
+      if (reloadResult.rpcMissing || reloadResult.error) {
+        setRpcMissing(reloadResult.rpcMissing);
+        setError(reloadResult.error);
+        return { success: false as const, message: reloadResult.error };
+      }
+
+      const remainingRows = reloadResult.rows.filter((profile) => profile.accessCount > 0);
+      setAllProfiles(remainingRows);
+
+      if (remainingRows.length > 0) {
+        const message =
+          'O histórico ainda contém registros após a limpeza. Reexecute scripts/profile-access-insights.sql no Supabase.';
+        setError(message);
+        return { success: false as const, message };
+      }
+
       setSearchQuery('');
       return { success: true as const, deletedCount: result.deletedCount };
     } catch (clearError) {
@@ -89,7 +115,7 @@ export function useMaintenanceProfileAccessInsights(isActive: boolean) {
     } finally {
       setClearing(false);
     }
-  }, []);
+  }, [allProfiles.length]);
 
   return {
     searchQuery,

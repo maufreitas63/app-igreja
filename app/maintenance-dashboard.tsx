@@ -27,6 +27,7 @@ import { QuorumCheckinRegistryTable } from '@/components/QuorumCheckinRegistryTa
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
 import { resolveMaintenancePanelAccessResourceKey } from '@/lib/screenAccessResourceKeys';
+import { recordProfileScreenVisit } from '@/lib/profileScreenVisitTracking';
 import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import { type MaintenanceScalePanelContent } from '@/lib/scaleAccess';
 import {
@@ -713,6 +714,28 @@ export default function MaintenanceDashboard() {
     const content = maintenanceCarouselCards[currentIndex]?.content;
     return resolveMaintenancePanelAccessResourceKey(content);
   }, [currentIndex, maintenanceCarouselCards, showEditor]);
+
+  useEffect(() => {
+    if (showEditor) {
+      const screenKey =
+        resolveMaintenancePanelAccessResourceKey('events', { inEventEditor: true })
+        ?? 'maintenance.card.events';
+
+      void recordProfileScreenVisit(screenKey, isCreating ? 'Novo evento' : 'Editar evento');
+      return;
+    }
+
+    const card = maintenanceCarouselCards[currentIndex];
+
+    if (!card?.content || card.content === 'menu') {
+      return;
+    }
+
+    const screenKey =
+      resolveMaintenancePanelAccessResourceKey(card.content) ?? `maintenance.card.${card.content}`;
+
+    void recordProfileScreenVisit(screenKey, card.title);
+  }, [currentIndex, isCreating, maintenanceCarouselCards, showEditor]);
 
   const cardHeight = useMemo(
     () => computeDashboardCardHeight(windowHeight, insets.top, insets.bottom),

@@ -1,4 +1,5 @@
 import { loadProfileByPhone } from '@/lib/profileOnboarding';
+import { resetProfileScreenVisitTracking } from '@/lib/profileScreenVisitTracking';
 import { isPwaInstalled } from '@/lib/pwaInstall';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -252,6 +253,7 @@ export async function revokeStoredProfileSession() {
 export async function clearUserSession() {
   await revokeStoredProfileSession();
   scrubWebSessionKeys();
+  resetProfileScreenVisitTracking();
   await AsyncStorage.multiRemove([
     USER_PHONE_STORAGE_KEY,
     USER_PROFILE_ID_STORAGE_KEY,
@@ -268,6 +270,7 @@ const LOGIN_AFTER_SIGN_OUT_ROUTE = {
 /** Limpa chaves de sessão de forma síncrona (web) antes da navegação. */
 const clearUserSessionImmediately = () => {
   scrubWebSessionKeys();
+  resetProfileScreenVisitTracking();
   void revokeStoredProfileSession();
   void AsyncStorage.multiRemove([
     USER_PHONE_STORAGE_KEY,

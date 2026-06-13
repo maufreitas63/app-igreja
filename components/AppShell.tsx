@@ -1,5 +1,6 @@
 import { WatermarkSurface } from '@/components/AppWatermark';
 import { TotemDeviceRouteGuard } from '@/components/TotemDeviceRouteGuard';
+import { useProfileScreenVisitTracker } from '@/hooks/useProfileScreenVisitTracker';
 import { Slot, usePathname, useSegments } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -27,6 +28,7 @@ const isWatermarkExcludedRoute = (pathname: string, segments: string[]) => {
 export function AppShell() {
   const pathname = usePathname();
   const segments = useSegments();
+  useProfileScreenVisitTracker();
   const showWatermark = !isWatermarkExcludedRoute(pathname, segments);
 
   if (!showWatermark) {
