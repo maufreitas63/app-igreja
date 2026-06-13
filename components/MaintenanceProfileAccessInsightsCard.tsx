@@ -49,13 +49,16 @@ export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHei
     allProfiles,
     profiles,
     loading,
+    clearing,
     error,
     rpcMissing,
     reloadProfiles,
+    clearHistory,
   } = useMaintenanceProfileAccessInsights(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const hasSearch = searchQuery.trim().length > 0;
+  const isBusy = loading || clearing;
 
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
@@ -132,9 +135,31 @@ export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHei
       ) : null}
 
       {!loading && !rpcMissing ? (
-        <TouchableOpacity style={styles.reloadButton} onPress={() => void reloadProfiles()} activeOpacity={0.85}>
-          <Text style={styles.reloadButtonText}>Atualizar lista</Text>
-        </TouchableOpacity>
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.reloadButton, isBusy && styles.actionButtonDisabled]}
+            onPress={() => void reloadProfiles()}
+            activeOpacity={0.85}
+            disabled={isBusy}
+            accessibilityRole="button"
+            accessibilityLabel="Atualizar lista"
+          >
+            <Text style={styles.reloadButtonText}>Atualizar lista</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButton, styles.clearButton, isBusy && styles.actionButtonDisabled]}
+            onPress={() => void clearHistory()}
+            activeOpacity={0.85}
+            disabled={isBusy}
+            accessibilityRole="button"
+            accessibilityLabel="Limpar histórico de acessos"
+          >
+            <Text style={styles.clearButtonText}>
+              {clearing ? 'Limpando...' : 'Limpar histórico'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       ) : null}
     </View>
   );
@@ -255,18 +280,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   reloadButton: {
-    alignSelf: 'flex-start',
-    marginTop: 8,
-    borderRadius: 10,
-    borderWidth: 1,
     borderColor: 'rgba(250, 204, 21, 0.45)',
     backgroundColor: 'rgba(120, 53, 15, 0.35)',
-    paddingHorizontal: 14,
+  },
+  clearButton: {
+    borderColor: 'rgba(248, 113, 113, 0.45)',
+    backgroundColor: 'rgba(127, 29, 29, 0.35)',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 10,
+    marginTop: 8,
+    alignSelf: 'stretch',
+  },
+  actionButton: {
+    flex: 1,
+    minHeight: 35,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
     paddingVertical: 8,
+  },
+  actionButtonDisabled: {
+    opacity: 0.55,
   },
   reloadButtonText: {
     color: '#FDE68A',
     fontSize: 13,
     fontWeight: '700',
+    textAlign: 'center',
+  },
+  clearButtonText: {
+    color: '#FECACA',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });

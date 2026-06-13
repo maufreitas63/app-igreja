@@ -80,6 +80,55 @@ export async function listProfileAccessInsightsForSuperAdmin(): Promise<{
   return { rows: parseRows(data), rpcMissing: false, error: null };
 }
 
+export async function clearProfileAccessInsightsForSuperAdmin(): Promise<{
+  success: boolean;
+  deletedCount: number;
+  rpcMissing: boolean;
+  error: string | null;
+}> {
+  const actorProfileId = await resolveActorProfileId();
+
+  if (!actorProfileId) {
+    return {
+      success: false,
+      deletedCount: 0,
+      rpcMissing: false,
+      error: 'Sessão inválida. Saia e entre novamente no aplicativo.',
+    };
+  }
+
+  const { data, error } = await supabase.rpc('clear_profile_access_insights_admin', {
+    p_actor_profile_id: actorProfileId,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'clear_profile_access_insights_admin')) {
+      return {
+        success: false,
+        deletedCount: 0,
+        rpcMissing: true,
+        error: PROFILE_ACCESS_INSIGHTS_SQL_HINT,
+      };
+    }
+
+    return {
+      success: false,
+      deletedCount: 0,
+      rpcMissing: false,
+      error: error.message || 'Não foi possível limpar o histórico de acessos.',
+    };
+  }
+
+  const deletedCount = Number(data);
+
+  return {
+    success: true,
+    deletedCount: Number.isFinite(deletedCount) ? Math.max(0, Math.trunc(deletedCount)) : 0,
+    rpcMissing: false,
+    error: null,
+  };
+}
+
 export function profileMatchesAccessInsightSearch(
   profile: ProfileAccessInsightRow,
   query: string

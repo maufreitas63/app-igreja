@@ -124,3 +124,31 @@ end;
 $$;
 
 grant execute on function public.list_profile_access_insights_admin(uuid) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- RPC: limpa todo o histórico (somente super_admin)
+-- ---------------------------------------------------------------------------
+
+drop function if exists public.clear_profile_access_insights_admin(uuid);
+
+create or replace function public.clear_profile_access_insights_admin(
+  p_actor_profile_id uuid
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_deleted bigint;
+begin
+  perform public.assert_access_admin(p_actor_profile_id);
+
+  delete from public.profile_app_access_events;
+
+  get diagnostics v_deleted = row_count;
+  return v_deleted;
+end;
+$$;
+
+grant execute on function public.clear_profile_access_insights_admin(uuid) to anon, authenticated;

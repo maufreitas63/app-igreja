@@ -1,14 +1,17 @@
 import {
+  clearProfileAccessInsightsForSuperAdmin,
   listProfileAccessInsightsForSuperAdmin,
   profileMatchesAccessInsightSearch,
   type ProfileAccessInsightRow,
 } from '@/lib/profileAccessInsightsApi';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export function useMaintenanceProfileAccessInsights(isActive: boolean) {
   const [searchQuery, setSearchQuery] = useState('');
   const [allProfiles, setAllProfiles] = useState<ProfileAccessInsightRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rpcMissing, setRpcMissing] = useState(false);
 
@@ -48,14 +51,56 @@ export function useMaintenanceProfileAccessInsights(isActive: boolean) {
     [allProfiles, searchQuery]
   );
 
+  const clearHistory = useCallback(async () => {
+    const confirmed = await confirmDialog(
+      'Limpar histórico',
+      'Deseja apagar todos os registros de acesso em profile_app_access_events? Esta ação não pode ser desfeita.',
+      'Limpar',
+      'Cancelar',
+      { destructive: true }
+    );
+
+    if (!confirmed) {
+      return { success: false as const };
+    }
+
+    setClearing(true);
+    setError(null);
+
+    try {
+      const result = await clearProfileAccessInsightsForSuperAdmin();
+
+      if (result.rpcMissing || result.error || !result.success) {
+        setRpcMissing(result.rpcMissing);
+        setError(result.error);
+        return { success: false as const, message: result.error };
+      }
+
+      setAllProfiles([]);
+      setSearchQuery('');
+      return { success: true as const, deletedCount: result.deletedCount };
+    } catch (clearError) {
+      const message =
+        clearError instanceof Error
+          ? clearError.message
+          : 'Não foi possível limpar o histórico de acessos.';
+      setError(message);
+      return { success: false as const, message };
+    } finally {
+      setClearing(false);
+    }
+  }, []);
+
   return {
     searchQuery,
     setSearchQuery,
     allProfiles,
     profiles,
     loading,
+    clearing,
     error,
     rpcMissing,
     reloadProfiles: loadProfiles,
+    clearHistory,
   };
 }
