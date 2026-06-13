@@ -241,6 +241,11 @@ begin
 
   v_screen_label := nullif(trim(coalesce(p_screen_label, p_screen_key, '')), '');
 
+  if v_screen_label in ('Dashboard', 'Manutenção')
+     or v_screen_key in ('/dashboard', '/maintenance-dashboard') then
+    return;
+  end if;
+
   v_access_event_id := public.resolve_current_access_event_id(v_profile_id, v_session_id);
 
   if v_access_event_id is null then
@@ -361,7 +366,10 @@ begin
     sv.visited_at,
     sv.visit_order
   from public.profile_app_access_events e
-  left join public.profile_app_access_screen_visits sv on sv.access_event_id = e.id
+  left join public.profile_app_access_screen_visits sv
+    on sv.access_event_id = e.id
+   and sv.screen_label not in ('Dashboard', 'Manutenção')
+   and sv.screen_key not in ('/dashboard', '/maintenance-dashboard')
   where e.profile_id = p_target_profile_id
   order by e.accessed_at desc, sv.visit_order asc nulls last;
 end;
@@ -384,23 +392,25 @@ security definer
 set search_path = public
 as $clear_profile_access_insights_admin$
 declare
-  v_before bigint;
-  v_after bigint;
+  cnt_before bigint;
+  cnt_after bigint;
 begin
   perform public.assert_access_admin(p_actor_profile_id);
 
-  select count(*)::bigint into v_before from public.profile_app_access_events;
+  select count(*)::bigint into cnt_before from public.profile_app_access_events;
 
-  truncate table public.profile_app_access_screen_visits restart identity;
-  truncate table public.profile_app_access_events restart identity;
+  truncate table
+    public.profile_app_access_screen_visits,
+    public.profile_app_access_events
+  restart identity;
 
-  select count(*)::bigint into v_after from public.profile_app_access_events;
+  select count(*)::bigint into cnt_after from public.profile_app_access_events;
 
-  if v_after > 0 then
-    raise exception 'Falha ao limpar profile_app_access_events (% registros restantes).', v_after;
+  if cnt_after > 0 then
+    raise exception 'Falha ao limpar profile_app_access_events (% registros restantes).', cnt_after;
   end if;
 
-  return coalesce(v_before, 0);
+  return coalesce(cnt_before, 0);
 end;
 $clear_profile_access_insights_admin$;
 

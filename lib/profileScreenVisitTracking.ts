@@ -4,8 +4,6 @@ import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { getStoredProfileId } from '@/lib/userSession';
 
 const ROUTE_SCREEN_LABELS: Record<string, string> = {
-  [ACCESS_SCREEN.dashboard]: 'Dashboard',
-  [ACCESS_SCREEN.maintenance]: 'Manutenção',
   [ACCESS_SCREEN.manageProfile]: 'Dados Cadastrais',
   [ACCESS_SCREEN.manageMembers]: 'Lista de Membros',
   [ACCESS_SCREEN.pastoral]: 'Coração Aberto',
@@ -22,7 +20,20 @@ const EXCLUDED_ROUTE_PREFIXES = new Set([
   ACCESS_SCREEN.register,
   '/totem-checkin',
   '/sessao-encerrada',
+  ACCESS_SCREEN.dashboard,
+  ACCESS_SCREEN.maintenance,
 ]);
+
+const EXCLUDED_SCREEN_LABELS = new Set(['Dashboard', 'Manutenção']);
+
+const EXCLUDED_SCREEN_KEYS = new Set([
+  ACCESS_SCREEN.dashboard,
+  ACCESS_SCREEN.maintenance,
+]);
+
+const shouldSkipScreenVisit = (screenKey: string, screenLabel: string) =>
+  EXCLUDED_SCREEN_LABELS.has(screenLabel.trim())
+  || EXCLUDED_SCREEN_KEYS.has(screenKey.trim());
 
 let lastRecordedScreenKey: string | null = null;
 let recordInFlight = false;
@@ -34,14 +45,11 @@ const normalizePathname = (pathname: string) => {
 };
 
 export function resolveRouteScreenVisit(pathname: string, segments: string[]) {
-  if (segments[0] === '(tabs)' && normalizePathname(pathname) === ACCESS_SCREEN.login) {
-    return {
-      screenKey: ACCESS_SCREEN.dashboard,
-      screenLabel: ROUTE_SCREEN_LABELS[ACCESS_SCREEN.dashboard],
-    };
-  }
-
   const normalized = normalizePathname(pathname);
+
+  if (segments[0] === '(tabs)' && normalized === ACCESS_SCREEN.login) {
+    return null;
+  }
 
   if (EXCLUDED_ROUTE_PREFIXES.has(normalized)) {
     return null;
@@ -65,7 +73,7 @@ export async function recordProfileScreenVisit(screenKey: string, screenLabel: s
   const key = screenKey.trim();
   const label = screenLabel.trim() || key;
 
-  if (!key || lastRecordedScreenKey === key || recordInFlight) {
+  if (!key || shouldSkipScreenVisit(key, label) || lastRecordedScreenKey === key || recordInFlight) {
     return;
   }
 
