@@ -289,10 +289,11 @@ export default function MaintenanceDashboard() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const carouselRef = useRef<FlatList<MaintenanceCarouselCard>>(null);
   const currentIndexRef = useRef(0);
+  const carouselScrollSyncLockRef = useRef(false);
   const footerNavRepeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const footerNavRepeatActiveRef = useRef(false);
   const pendingMaintenancePanelRef = useRef<MaintenancePanelContent | null>(null);
-  const activeMaintenanceContentRef = useRef<MaintenancePanelContent>('menu');
+  const activeMaintenanceContentRef = useRef<MaintenanceCarouselCard['content']>('menu');
   const previousMaintenanceCardCountRef = useRef(0);
   const [headerUserName, setHeaderUserName] = useState('Usuário');
   const [accessState, setAccessState] = useState<'checking' | 'allowed' | 'denied'>('checking');
@@ -721,11 +722,13 @@ export default function MaintenanceDashboard() {
       return;
     }
 
+    carouselScrollSyncLockRef.current = true;
     currentIndexRef.current = targetIndex;
     setCurrentIndex(targetIndex);
 
     const list = carouselRef.current;
     if (!list) {
+      carouselScrollSyncLockRef.current = false;
       return;
     }
 
@@ -735,6 +738,9 @@ export default function MaintenanceDashboard() {
     requestAnimationFrame(() => {
       list.scrollToIndex({ index: targetIndex, animated, viewPosition: 0 });
       list.scrollToOffset({ offset, animated: false });
+      requestAnimationFrame(() => {
+        carouselScrollSyncLockRef.current = false;
+      });
     });
   }, [maintenanceCardCount, pageWidth]);
 
@@ -765,8 +771,8 @@ export default function MaintenanceDashboard() {
   useEffect(() => {
     const content = maintenanceCarouselCards[currentIndex]?.content;
 
-    if (content && content !== 'menu') {
-      activeMaintenanceContentRef.current = content as MaintenancePanelContent;
+    if (content) {
+      activeMaintenanceContentRef.current = content;
     }
   }, [currentIndex, maintenanceCarouselCards]);
 
@@ -798,6 +804,10 @@ export default function MaintenanceDashboard() {
     }
 
     previousMaintenanceCardCountRef.current = maintenanceCardCount;
+
+    if (maintenanceCarouselCards[currentIndexRef.current]?.content === 'menu') {
+      return;
+    }
 
     const content = activeMaintenanceContentRef.current;
     const targetIndex = resolveCarouselIndexByContent(maintenanceCarouselCards, content);
@@ -919,12 +929,17 @@ export default function MaintenanceDashboard() {
 
   const handleCarouselScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (carouselScrollSyncLockRef.current) {
+        return;
+      }
+
       const index = Math.round(event.nativeEvent.contentOffset.x / pageWidth);
-      if (index >= 0 && index < maintenanceCardCount && index !== currentIndex) {
+      if (index >= 0 && index < maintenanceCardCount && index !== currentIndexRef.current) {
+        currentIndexRef.current = index;
         setCurrentIndex(index);
       }
     },
-    [currentIndex, maintenanceCardCount, pageWidth]
+    [maintenanceCardCount, pageWidth]
   );
 
   const handleGanttEventPress = useCallback(
