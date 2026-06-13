@@ -1,5 +1,7 @@
 -- Histórico de acessos à aplicação (card exclusivo super_admin na manutenção).
--- Execute no SQL Editor do Supabase APÓS access-control-admin-rpc.sql.
+-- Execute no SQL Editor do Supabase APÓS:
+--   1. access-control-admin-rpc.sql
+--   2. access-control-profile-access-insights.sql (etiqueta ACL no Controle de Acesso)
 -- Recomendado após profile-sessions.sql (backfill a partir de sessões existentes).
 
 -- ---------------------------------------------------------------------------

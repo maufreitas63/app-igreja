@@ -93,7 +93,7 @@ function filterPanelCards(access) {
     }
 
     if (card.content === 'profile_access_insights') {
-      return access.canManageAccessControl;
+      return access.canManageAccessControl || access.maintenancePanelAccess[card.content] === true;
     }
 
     if (card.content === 'profile_cadastro' || card.content === 'family_reception') {
@@ -217,11 +217,82 @@ const nonSuperCarousel = buildCarousel(
   filterPanelCards({
     ...fullAccess,
     canManageAccessControl: false,
+    maintenancePanelAccess: {
+      ...fullAccess.maintenancePanelAccess,
+      profile_access_insights: false,
+    },
   })
 );
 assert(
   resolveMaintenancePanelIndex(nonSuperCarousel, 'profile_access_insights') === -1,
-  'Acessos de Usuários oculto sem super_admin'
+  'Acessos de Usuários oculto sem super_admin nem grant ACL'
+);
+
+const aclOnlyCarousel = buildCarousel(
+  filterPanelCards({
+    ...fullAccess,
+    canManageAccessControl: false,
+    maintenancePanelAccess: {
+      ...fullAccess.maintenancePanelAccess,
+      profile_access_insights: true,
+    },
+  })
+);
+const aclInsightsIndex = resolveMaintenancePanelIndex(aclOnlyCarousel, 'profile_access_insights');
+assert(aclInsightsIndex === aclOnlyCarousel.length - 1, 'grant ACL mantém card como último painel');
+assert(
+  badgeForIndex(aclOnlyCarousel, aclInsightsIndex)?.technicalKey
+    === 'maintenance.card.profile_access_insights',
+  'etiqueta ACL do card Acessos de Usuários'
+);
+
+function simulateShortcutNavigation(carousel, panelContent) {
+  const targetIndex = resolveMaintenancePanelIndex(carousel, panelContent);
+
+  if (targetIndex < 0) {
+    return null;
+  }
+
+  const pageWidth = 412;
+  const offset = targetIndex * pageWidth;
+  const scrollDerivedIndex = Math.round(offset / pageWidth);
+  const badge = badgeForIndex(carousel, scrollDerivedIndex);
+
+  return {
+    targetIndex,
+    scrollDerivedIndex,
+    badgeTitle: badge?.title ?? '',
+    panelTitle: carousel[targetIndex]?.title ?? '',
+    panelContent: carousel[targetIndex]?.content ?? '',
+  };
+}
+
+for (const panelCard of MAINTENANCE_PANEL_CARDS) {
+  const navigation = simulateShortcutNavigation(carousel, panelCard.content);
+
+  assert(navigation, `atalho deve abrir ${panelCard.content}`);
+  assert(
+    navigation.targetIndex === navigation.scrollDerivedIndex,
+    `scroll e índice alinhados para ${panelCard.content}`
+  );
+  assert(
+    navigation.badgeTitle === navigation.panelTitle,
+    `etiqueta alinhada ao painel ${panelCard.content}`
+  );
+  assert(
+    navigation.panelContent === panelCard.content,
+    `conteúdo renderizado correto para ${panelCard.content}`
+  );
+}
+
+const lastPanelNavigation = simulateShortcutNavigation(carousel, 'profile_access_insights');
+assert(
+  lastPanelNavigation?.targetIndex === carousel.length - 1,
+  'atalho do último card leva ao índice final do carrossel'
+);
+assert(
+  lastPanelNavigation?.badgeTitle === 'Acessos de Usuários',
+  'etiqueta do último card após navegação'
 );
 
 console.log(`OK — ${MAINTENANCE_PANEL_CARDS.length} painéis e carrossel filtrado validados.`);

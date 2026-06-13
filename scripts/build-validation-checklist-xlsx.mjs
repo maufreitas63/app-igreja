@@ -118,6 +118,9 @@ function guessAclHint(text) {
   if (lower.includes('mudança de papéis') || lower.includes('mudanca de papeis')) {
     return 'maintenance.card.mudanca_papeis';
   }
+  if (lower.includes('acessos de usuários') || lower.includes('acessos de usuarios')) {
+    return 'maintenance.card.profile_access_insights';
+  }
 
   return '';
 }

@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 export const PROFILE_ACCESS_INSIGHTS_SQL_HINT =
-  'Execute no Supabase: scripts/profile-access-insights.sql (após access-control-admin-rpc.sql; recomendado após profile-sessions.sql).';
+  'Execute no Supabase: scripts/access-control-profile-access-insights.sql e scripts/profile-access-insights.sql.';
 
 export type ProfileAccessInsightRow = {
   id: string;

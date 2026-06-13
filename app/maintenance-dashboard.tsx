@@ -651,7 +651,7 @@ export default function MaintenanceDashboard() {
       }
 
       if (card.content === 'profile_access_insights') {
-        return canManageAccessControl;
+        return canManageAccessControl || maintenancePanelAccess[card.content] === true;
       }
 
       if (card.content === 'profile_cadastro' || card.content === 'family_reception') {
@@ -1274,15 +1274,15 @@ export default function MaintenanceDashboard() {
                 ref={carouselRef}
                 style={styles.carouselFlatList}
                 data={maintenanceCarouselCards}
-                extraData={currentIndex}
+                extraData={{ currentIndex, maintenanceCardCount }}
                 horizontal
                 pagingEnabled
                 scrollEnabled={false}
                 keyboardShouldPersistTaps="handled"
                 showsHorizontalScrollIndicator={false}
-                initialNumToRender={3}
-                maxToRenderPerBatch={3}
-                windowSize={5}
+                initialNumToRender={maintenanceCardCount}
+                maxToRenderPerBatch={Math.min(5, maintenanceCardCount)}
+                windowSize={Math.max(5, maintenanceCardCount)}
                 removeClippedSubviews={Platform.OS !== 'web'}
                 onScroll={handleCarouselScroll}
                 onScrollToIndexFailed={handleCarouselScrollToIndexFailed}
