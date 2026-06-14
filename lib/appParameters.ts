@@ -1,6 +1,8 @@
+import { isAppParameterNo } from '@/lib/checkInVisibility';
 import { supabase } from '@/lib/supabase';
 
 export const EXIBIR_NOMES_TECNICOS_PARAMETER = 'Exibir_nomes_tecnicos';
+export const LGPD_ATIVO_PARAMETER = 'LGPD_Ativo';
 
 const PARAMETER_CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -81,6 +83,48 @@ export async function getAppParameterValue(parameter: string) {
 
 export function isAppParameterSim(value: string | null | undefined) {
   return (value ?? '').trim().toLocaleLowerCase() === 'sim';
+}
+
+export function resolveLgpdAtivoFromParameter(value: string | null | undefined) {
+  if (value == null || !value.trim()) {
+    return true;
+  }
+
+  return !isAppParameterNo(value);
+}
+
+export function isProfileLgpdPending(
+  lgpdAccepted: boolean | null | undefined,
+  lgpdAtivo: boolean
+) {
+  return lgpdAtivo && lgpdAccepted === false;
+}
+
+export async function isLgpdAtivoEnabled() {
+  const value = await getAppParameterValue(LGPD_ATIVO_PARAMETER);
+  return resolveLgpdAtivoFromParameter(value);
+}
+
+export async function saveAppParameterValue(parameter: string, value: string) {
+  const normalizedParameter = parameter.trim();
+  const normalizedValue = value.trim();
+
+  if (!normalizedParameter) {
+    throw new Error('Parâmetro inválido.');
+  }
+
+  const { error } = await supabase
+    .from('app_parameters')
+    .upsert(
+      { parameter: normalizedParameter, value: normalizedValue },
+      { onConflict: 'parameter' }
+    );
+
+  if (error) {
+    throw error;
+  }
+
+  clearAppParameterCache(normalizedParameter);
 }
 
 export async function isExibirNomesTecnicosEnabled() {

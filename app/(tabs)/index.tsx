@@ -36,6 +36,7 @@ import {
   resolveIndexShortcutIconColor,
 } from '@/lib/indexShortcutHints';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
+import { isLgpdAtivoEnabled, isProfileLgpdPending } from '@/lib/appParameters';
 import { useDashboardSelectedEvent } from '@/hooks/useDashboardSelectedEvent';
 import { useFamilyPreCheckin } from '@/hooks/useFamilyPreCheckin';
 import { FontAwesome } from '@expo/vector-icons';
@@ -210,7 +211,10 @@ export default function DashboardIndexScreen() {
           return;
         }
 
-        const sessionProfile = await loadSessionProfile(phone);
+        const [sessionProfile, lgpdModuleActive] = await Promise.all([
+          loadSessionProfile(phone),
+          isLgpdAtivoEnabled(),
+        ]);
         if (!active) {
           return;
         }
@@ -220,7 +224,7 @@ export default function DashboardIndexScreen() {
           setHeaderUserName(formatDisplayName(profileName));
         }
 
-        setIsLgpdPending(sessionProfile?.lgpd_accepted === false);
+        setIsLgpdPending(isProfileLgpdPending(sessionProfile?.lgpd_accepted, lgpdModuleActive));
       })();
 
       return () => {

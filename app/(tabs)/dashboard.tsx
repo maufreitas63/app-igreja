@@ -32,6 +32,7 @@ import {
 } from '@/lib/membersListApi';
 import { prefetchProfilesMapMarkers } from '@/lib/syncProfilesMapMarkers';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
+import { isLgpdAtivoEnabled, isProfileLgpdPending } from '@/lib/appParameters';
 import { lookupVehicleByPlaca, type VehicleLookupResult } from '@/lib/profileVehicleLookup';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { fetchVolunteersForScaleType } from '@/lib/maintenanceScaleVolunteersApi';
@@ -473,6 +474,7 @@ export default function Dashboard() {
   const activeDashboardContentRef = useRef<DashboardCard['content'] | null>(null);
   const previousDashboardDataLengthRef = useRef(0);
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
+  const [lgpdAtivo, setLgpdAtivo] = useState(true);
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -824,10 +826,15 @@ export default function Dashboard() {
           return;
         }
 
-        const sessionProfile = await loadSessionProfile(targetPhone);
+        const [sessionProfile, lgpdModuleActive] = await Promise.all([
+          loadSessionProfile(targetPhone),
+          isLgpdAtivoEnabled(),
+        ]);
         if (!active) {
           return;
         }
+
+        setLgpdAtivo(lgpdModuleActive);
 
         if (!sessionProfile) {
           if (profile?.id) {
@@ -1475,7 +1482,7 @@ export default function Dashboard() {
 
     return 'Usuário';
   }, [memberListEntries, profile?.full_name, userPhone]);
-  const isLgpdPending = profile?.lgpd_accepted === false;
+  const isLgpdPending = isProfileLgpdPending(profile?.lgpd_accepted, lgpdAtivo);
   const handleEventRegistrationChange = async () => {
     await refetchActiveEvents();
     await refetchGroupedRegistrations();

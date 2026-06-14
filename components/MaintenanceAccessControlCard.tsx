@@ -10,6 +10,12 @@ import {
   MAINTENANCE_ACCESS_CONTROL_SQL_HINT,
   isSensitiveAccessResourceKey,
 } from '@/lib/maintenanceAccessControlApi';
+import {
+  getAppParameterValue,
+  LGPD_ATIVO_PARAMETER,
+  resolveLgpdAtivoFromParameter,
+  saveAppParameterValue,
+} from '@/lib/appParameters';
 import { useMaintenanceAccessControl } from '@/hooks/useMaintenanceAccessControl';
 import {
   computeMaintenanceContentHeight,
@@ -47,12 +53,86 @@ const RESOURCE_TYPE_OPTIONS = [
 const SCREEN_GRANT_SCOPE_HINT =
   'Azul celeste: telas do produto principal. Amarelo cobre: telas de manutenção. A lista agrupa todos os azuis antes dos amarelos.';
 
+type AccessControlPanelHeaderProps = {
+  lgpdAtivo: boolean;
+  loadingLgpdAtivo: boolean;
+  savingLgpdAtivo: boolean;
+  canEdit: boolean;
+  onToggleLgpdAtivo: () => void;
+};
+
+function AccessControlPanelHeader({
+  lgpdAtivo,
+  loadingLgpdAtivo,
+  savingLgpdAtivo,
+  canEdit,
+  onToggleLgpdAtivo,
+}: AccessControlPanelHeaderProps) {
+  const isDisabled = !canEdit || loadingLgpdAtivo || savingLgpdAtivo;
+
+  return (
+    <View style={styles.panelHeaderRow}>
+      <Text style={styles.panelTitleCompact} numberOfLines={1}>
+        Controle de Acesso
+      </Text>
+      <TouchableOpacity
+        style={[
+          styles.lgpdRadioToggle,
+          lgpdAtivo ? styles.lgpdRadioToggleActive : styles.lgpdRadioToggleInactive,
+          isDisabled && styles.lgpdRadioToggleDisabled,
+        ]}
+        onPress={() => {
+          if (!isDisabled) {
+            onToggleLgpdAtivo();
+          }
+        }}
+        disabled={isDisabled}
+        activeOpacity={0.85}
+        accessibilityRole="radio"
+        accessibilityState={{ selected: lgpdAtivo, disabled: isDisabled }}
+        accessibilityLabel={lgpdAtivo ? 'LGPD Ativo' : 'LGPD Inativo'}
+      >
+        {savingLgpdAtivo ? (
+          <ActivityIndicator size="small" color="#F8FAFC" />
+        ) : (
+          <>
+            <View
+              style={[
+                styles.lgpdRadioOuter,
+                lgpdAtivo ? styles.lgpdRadioOuterActive : styles.lgpdRadioOuterInactive,
+              ]}
+            >
+              <View
+                style={[
+                  styles.lgpdRadioInner,
+                  lgpdAtivo ? styles.lgpdRadioInnerActive : styles.lgpdRadioInnerInactive,
+                ]}
+              />
+            </View>
+            <Text
+              style={[
+                styles.lgpdRadioLabel,
+                lgpdAtivo ? styles.lgpdRadioLabelActive : styles.lgpdRadioLabelInactive,
+              ]}
+            >
+              {lgpdAtivo ? 'LGPD Ativo' : 'LGPD Inativo'}
+            </Text>
+          </>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: Props) {
   const [activeTab, setActiveTab] = useState<AdminTab>('profiles');
   const [grantSearchQuery, setGrantSearchQuery] = useState('');
   const [expandedProfileSection, setExpandedProfileSection] = useState<ProfileDetailSection | null>(
     null
   );
+  const [lgpdAtivo, setLgpdAtivo] = useState(true);
+  const [loadingLgpdAtivo, setLoadingLgpdAtivo] = useState(false);
+  const [savingLgpdAtivo, setSavingLgpdAtivo] = useState(false);
   const {
     isSuperAdmin,
     roles,
@@ -92,6 +172,71 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
 
   const handleClearGrantSearch = () => {
     setGrantSearchQuery('');
+  };
+
+  useEffect(() => {
+    if (!isActive || isSuperAdmin !== true) {
+      return;
+    }
+
+    let active = true;
+    setLoadingLgpdAtivo(true);
+
+    void (async () => {
+      try {
+        const value = await getAppParameterValue(LGPD_ATIVO_PARAMETER);
+
+        if (active) {
+          setLgpdAtivo(resolveLgpdAtivoFromParameter(value));
+        }
+      } catch (loadError) {
+        console.error('Erro ao carregar LGPD_Ativo:', loadError);
+      } finally {
+        if (active) {
+          setLoadingLgpdAtivo(false);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [isActive, isSuperAdmin]);
+
+  const handleToggleLgpdAtivo = () => {
+    if (isSuperAdmin !== true || rpcMissing || busy || savingLgpdAtivo || loadingLgpdAtivo) {
+      return;
+    }
+
+    const nextValue = !lgpdAtivo;
+    setSavingLgpdAtivo(true);
+
+    void (async () => {
+      try {
+        await saveAppParameterValue(LGPD_ATIVO_PARAMETER, nextValue ? 'sim' : 'nao');
+        setLgpdAtivo(nextValue);
+        Toast.show({
+          type: 'success',
+          text1: nextValue ? 'LGPD ativado' : 'LGPD inativado',
+          text2: nextValue
+            ? 'O fluxo de privacidade volta a valer no aplicativo.'
+            : 'O alerta de LGPD pendente deixa de ser exibido.',
+          visibilityTime: 3500,
+        });
+      } catch (toggleError) {
+        Toast.show({
+          type: 'error',
+          text1: 'Parâmetro LGPD',
+          text2:
+            toggleError instanceof Error
+              ? toggleError.message
+              : 'Não foi possível salvar LGPD_Ativo.',
+          visibilityTime: 4500,
+        });
+      } finally {
+        setSavingLgpdAtivo(false);
+      }
+    })();
   };
 
   const missingFinancialScreenResources = useMemo(() => {
@@ -227,7 +372,13 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
   if (isSuperAdmin === false) {
     return (
       <View style={[styles.panel, maintenancePanelStyles.panelCentered, { height: contentHeight }]}>
-        <Text style={maintenancePanelStyles.panelTitle}>Controle de Acesso</Text>
+        <AccessControlPanelHeader
+          lgpdAtivo={lgpdAtivo}
+          loadingLgpdAtivo={loadingLgpdAtivo}
+          savingLgpdAtivo={savingLgpdAtivo}
+          canEdit={false}
+          onToggleLgpdAtivo={handleToggleLgpdAtivo}
+        />
         <Text style={maintenancePanelStyles.panelHint}>
           Apenas perfis com o papel super_admin podem gerenciar permissões.
         </Text>
@@ -237,7 +388,13 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
 
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Controle de Acesso</Text>
+      <AccessControlPanelHeader
+        lgpdAtivo={lgpdAtivo}
+        loadingLgpdAtivo={loadingLgpdAtivo}
+        savingLgpdAtivo={savingLgpdAtivo}
+        canEdit={isSuperAdmin === true && !rpcMissing && !busy}
+        onToggleLgpdAtivo={handleToggleLgpdAtivo}
+      />
       <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_ACCESS_CONTROL_SQL_HINT}</Text> : null}
@@ -658,6 +815,78 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     paddingHorizontal: 20,
+  },
+  panelHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    alignSelf: 'stretch',
+  },
+  panelTitleCompact: {
+    flexShrink: 1,
+    alignSelf: 'flex-start',
+    color: '#E2E8F0',
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'left',
+  },
+  lgpdRadioToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexShrink: 0,
+    minHeight: 36,
+  },
+  lgpdRadioToggleActive: {
+    backgroundColor: 'rgba(37, 99, 235, 0.28)',
+    borderColor: '#3B82F6',
+  },
+  lgpdRadioToggleInactive: {
+    backgroundColor: 'rgba(220, 38, 38, 0.24)',
+    borderColor: '#EF4444',
+  },
+  lgpdRadioToggleDisabled: {
+    opacity: 0.55,
+  },
+  lgpdRadioOuter: {
+    width: 16,
+    height: 16,
+    borderRadius: 999,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lgpdRadioOuterActive: {
+    borderColor: '#BFDBFE',
+  },
+  lgpdRadioOuterInactive: {
+    borderColor: '#FECACA',
+  },
+  lgpdRadioInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+  },
+  lgpdRadioInnerActive: {
+    backgroundColor: '#60A5FA',
+  },
+  lgpdRadioInnerInactive: {
+    backgroundColor: '#F87171',
+  },
+  lgpdRadioLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  lgpdRadioLabelActive: {
+    color: '#DBEAFE',
+  },
+  lgpdRadioLabelInactive: {
+    color: '#FECACA',
   },
   panelTitle: {
     color: '#E2E8F0',
