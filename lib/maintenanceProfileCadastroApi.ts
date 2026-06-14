@@ -33,6 +33,7 @@ export type ProfileCadastroRecord = {
   address_neighborhood: string | null;
   address_city: string | null;
   address_state: string | null;
+  access_pin: string | null;
 };
 
 export const PROFILE_CADASTRO_FIELD_META: Array<{
@@ -55,7 +56,7 @@ export const PROFILE_CADASTRO_FIELD_META: Array<{
 ];
 
 const PROFILE_CADASTRO_SELECT =
-  'id, full_name, phone, email, cpf, birth_date, cep, address_street, address_number, address_complement, address_neighborhood, address_city, address_state';
+  'id, full_name, phone, email, cpf, birth_date, cep, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, access_pin';
 
 const mapProfileCadastroPickerRow = (row: Record<string, unknown>): ProfileCadastroPickerOption | null => {
   const id = String(row.id ?? '').trim();

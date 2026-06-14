@@ -203,9 +203,6 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
                   <Text style={styles.resultMeta}>
                     {[option.phone, option.memberCode].filter(Boolean).join(' · ') || option.fullName}
                   </Text>
-                  <Text style={styles.resultPin}>
-                    PIN: {formatAccessPinDisplay(option.accessPin)}
-                  </Text>
                 </TouchableOpacity>
               );
             })
@@ -319,6 +316,13 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
             </View>
           ))}
 
+          <View style={styles.fieldRow}>
+            <Text style={styles.fieldLabel}>Senha de acesso (PIN)</Text>
+            <Text style={styles.fieldValue}>
+              {formatAccessPinDisplay(profile.access_pin ?? selectedPickerOption?.accessPin)}
+            </Text>
+          </View>
+
           <TouchableOpacity
             style={[styles.deleteUserButton, (deletingUser || savingCep) && styles.deleteUserButtonDisabled]}
             onPress={() => void handleDeleteUser()}
@@ -425,13 +429,6 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 11,
     marginTop: 2,
-  },
-  resultPin: {
-    color: '#C4B5FD',
-    fontSize: 11,
-    fontWeight: '700',
-    marginTop: 2,
-    letterSpacing: 0.4,
   },
   detailLoader: {
     marginTop: 12,
