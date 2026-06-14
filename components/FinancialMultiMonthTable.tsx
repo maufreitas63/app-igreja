@@ -1,6 +1,6 @@
 import type { BulletinComparisonRowLevel } from '@/lib/financialBulletinComparison';
 import { formatBulletinAmount } from '@/lib/financialBulletin';
-import { formatFinancialMonthLabel } from '@/lib/financialMonth';
+import { compareFinancialMonthKeys, formatFinancialMonthLabel } from '@/lib/financialMonth';
 import type { TwelveMonthMatrix, TwelveMonthMatrixRow } from '@/lib/financialTwelveMonthMatrix';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useRef, useState } from 'react';
@@ -21,6 +21,9 @@ const VALUE_COLUMN_WIDTH = 76;
 const BODY_MAX_HEIGHT = 420;
 const ROW_MIN_HEIGHT = 34;
 const ROW_DETAIL_ICON_COLOR = '#94A3B8';
+/** Altura de uma linha Mês/Valor no balão de detalhe (padding + texto + borda). */
+const MONTH_DETAIL_ROW_HEIGHT = 33;
+const TWELVE_MONTH_DETAIL_HEIGHT = MONTH_DETAIL_ROW_HEIGHT * 12;
 
 export type FinancialMultiMonthTableProps = {
   title: string;
@@ -83,6 +86,15 @@ const TwelveMonthRowDetailBubble = ({
     return null;
   }
 
+  const monthEntries = matrix.columns
+    .map((column, index) => ({
+      column,
+      value: row.values[index] ?? 0,
+    }))
+    .sort((left, right) =>
+      compareFinancialMonthKeys(right.column.month, left.column.month)
+    );
+
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.bubbleBackdrop} onPress={onClose}>
@@ -112,9 +124,10 @@ const TwelveMonthRowDetailBubble = ({
             style={styles.monthDetailScroll}
             contentContainerStyle={styles.monthDetailScrollContent}
             nestedScrollEnabled
+            scrollEnabled={monthEntries.length > 12}
+            showsVerticalScrollIndicator={monthEntries.length > 12}
           >
-            {matrix.columns.map((column, index) => {
-              const value = row.values[index] ?? 0;
+            {monthEntries.map(({ column, value }) => {
               const negative = value < 0;
 
               return (
@@ -488,6 +501,7 @@ const styles = StyleSheet.create({
   bubbleCard: {
     maxWidth: 380,
     width: '100%',
+    maxHeight: '92%',
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     borderWidth: 1,
@@ -562,7 +576,8 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   monthDetailScroll: {
-    maxHeight: 320,
+    height: TWELVE_MONTH_DETAIL_HEIGHT,
+    maxHeight: TWELVE_MONTH_DETAIL_HEIGHT,
   },
   monthDetailScrollContent: {
     gap: 0,

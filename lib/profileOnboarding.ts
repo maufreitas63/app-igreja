@@ -54,6 +54,14 @@ export const buildDashboardFamilyAgendaRoute = (phone: string) => ({
   },
 });
 
+/** Índice do Aplicativo — atalhos (`/(tabs)/index`). */
+export const buildAppIndexRoute = (phone: string) => ({
+  pathname: '/(tabs)' as const,
+  params: {
+    phone: encodeURIComponent(phone),
+  },
+});
+
 export const PROFILE_LOGIN_SELECT =
   'id, phone, full_name, birth_date, lgpd_accepted, cpf, email, cep, address_street, address_number, address_neighborhood, address_city, address_state';
 
@@ -137,17 +145,8 @@ export const resolveRegisteredUserSessionRoute = (
   return resolveRegisteredUserLoginRoute(phoneForSession);
 };
 
-/**
- * Após cadastro inicial (register): incompleto → Dados Cadastrais;
- * completo → Agenda da Família.
- */
+/** Após cadastro inicial (register): sempre Índice do Aplicativo. */
 export const resolvePostLoginRoute = (
-  profile: Record<string, unknown> | null | undefined,
+  _profile: Record<string, unknown> | null | undefined,
   phone: string
-) => {
-  if (isProfileIncompleteForOnboarding(profile)) {
-    return buildManageProfileOnboardingRoute(phone);
-  }
-
-  return buildDashboardFamilyAgendaRoute(phone);
-};
+) => buildAppIndexRoute(phone);

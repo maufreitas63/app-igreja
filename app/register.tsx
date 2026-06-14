@@ -314,12 +314,15 @@ export default function RegisterScreen() {
       await persistUserSession(registration.profile, phoneValue, registration.sessionToken);
       await invalidateProfilesMapSnapshot();
 
-      Alert.alert(
-        'Sucesso',
-        'Cadastro inicial concluído. Complete seus dados cadastrais na próxima tela.'
-      );
+      const postLoginRoute = resolvePostLoginRoute(registration.profile, phoneValue);
+      const lgpdDeclined = registration.profile.lgpd_accepted === false;
+      const successMessage = lgpdDeclined
+        ? 'Cadastro inicial concluído. Você está no Índice do Aplicativo. Regularize os termos LGPD em Dados Cadastrais quando desejar.'
+        : 'Cadastro inicial concluído. Você está no Índice do Aplicativo.';
 
-      router.replace(resolvePostLoginRoute(registeredProfile, phoneValue));
+      router.replace(postLoginRoute);
+
+      Alert.alert('Sucesso', successMessage);
     } catch (err: unknown) {
       Alert.alert('Erro', err instanceof Error ? err.message : 'Não foi possível concluir o cadastro.');
     } finally {
@@ -433,7 +436,11 @@ export default function RegisterScreen() {
                 )}
 
                 {acceptedLGPD === false && (
-                  <TouchableOpacity style={styles.btnSecondary} onPress={handleRegister} disabled={isLoading}>
+                  <TouchableOpacity
+                    style={styles.btnSecondary}
+                    onPress={() => void handleRegister()}
+                    disabled={isLoading}
+                  >
                     {isLoading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnTextSecondary}>Concluir Cadastro</Text>}
                   </TouchableOpacity>
                 )}
@@ -445,7 +452,11 @@ export default function RegisterScreen() {
                 <View style={styles.previewImageFrame}>
                   <Image source={{ uri: photo }} style={styles.previewImage} resizeMode="contain" />
                 </View>
-                <TouchableOpacity style={styles.btnPrimary} onPress={handleRegister} disabled={isLoading}>
+                <TouchableOpacity
+                  style={styles.btnPrimary}
+                  onPress={() => void handleRegister()}
+                  disabled={isLoading}
+                >
                   {isLoading ? <ActivityIndicator color="#020617" /> : <Text style={styles.btnText}>Confirmar Registro</Text>}
                 </TouchableOpacity>
                 <TouchableOpacity style={{marginTop: 15, alignItems: 'center'}} onPress={() => void handleOpenCamera()}>

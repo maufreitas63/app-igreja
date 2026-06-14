@@ -130,6 +130,7 @@ export default function DashboardIndexScreen() {
   const [isDashboardShortcutAccessLoading, setIsDashboardShortcutAccessLoading] = useState(true);
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [headerUserName, setHeaderUserName] = useState('Usuário');
+  const [isLgpdPending, setIsLgpdPending] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -218,6 +219,8 @@ export default function DashboardIndexScreen() {
         if (profileName) {
           setHeaderUserName(formatDisplayName(profileName));
         }
+
+        setIsLgpdPending(sessionProfile?.lgpd_accepted === false);
       })();
 
       return () => {
@@ -469,7 +472,7 @@ export default function DashboardIndexScreen() {
     <LinearGradient colors={['#1e1b4b', '#0f172a']} style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
         <View style={styles.header}>
-          <View style={styles.welcomeBox}>
+          <View style={[styles.welcomeBox, isLgpdPending && styles.welcomeBoxLgpdPending]}>
             <Text style={styles.welcomeText}>Boas-Vindas,</Text>
             <View style={styles.welcomeNameRow}>
               <Text numberOfLines={1} style={styles.userName}>
@@ -579,6 +582,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 4,
+  },
+  welcomeBoxLgpdPending: {
+    backgroundColor: 'rgba(185, 28, 28, 0.72)',
   },
   welcomeText: {
     color: '#94A3B8',
