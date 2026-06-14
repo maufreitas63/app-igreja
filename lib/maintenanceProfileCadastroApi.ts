@@ -1,4 +1,3 @@
-import { searchProfilesForScaleVolunteer } from '@/lib/maintenanceScaleVolunteersApi';
 import {
   syncProfileAddressFromCep as syncProfileAddressFromCepRpc,
   type SyncProfileAddressInput,
@@ -17,6 +16,7 @@ export type ProfileCadastroPickerOption = {
   fullName: string;
   phone: string | null;
   memberCode: string | null;
+  accessPin: string | null;
 };
 
 export type ProfileCadastroRecord = {
@@ -57,8 +57,58 @@ export const PROFILE_CADASTRO_FIELD_META: Array<{
 const PROFILE_CADASTRO_SELECT =
   'id, full_name, phone, email, cpf, birth_date, cep, address_street, address_number, address_complement, address_neighborhood, address_city, address_state';
 
-export async function searchProfilesForCadastroPicker(query: string) {
-  return searchProfilesForScaleVolunteer(query);
+const mapProfileCadastroPickerRow = (row: Record<string, unknown>): ProfileCadastroPickerOption | null => {
+  const id = String(row.id ?? '').trim();
+  const fullName = String(row.full_name ?? '').trim();
+
+  if (!id || !fullName) {
+    return null;
+  }
+
+  const accessPinRaw = row.access_pin;
+
+  return {
+    id,
+    fullName,
+    phone: row.phone != null ? String(row.phone).trim() || null : null,
+    memberCode:
+      row.codigo_membro != null ? String(row.codigo_membro).trim() || null : null,
+    accessPin:
+      accessPinRaw != null && String(accessPinRaw).trim() !== ''
+        ? String(accessPinRaw).trim()
+        : null,
+  };
+};
+
+export async function searchProfilesForCadastroPicker(query: string, limit = 25) {
+  const normalized = query.trim();
+
+  if (normalized.length < 2) {
+    return [];
+  }
+
+  const pattern = `%${normalized.replace(/[%_]/g, '')}%`;
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, phone, codigo_membro, access_pin')
+    .not('full_name', 'is', null)
+    .neq('full_name', '')
+    .ilike('full_name', pattern)
+    .order('full_name', { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    throw error;
+  }
+
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data
+    .map((row) => mapProfileCadastroPickerRow(row as Record<string, unknown>))
+    .filter((row): row is ProfileCadastroPickerOption => row !== null);
 }
 
 export async function fetchProfileCadastro(profileId: string): Promise<ProfileCadastroRecord | null> {

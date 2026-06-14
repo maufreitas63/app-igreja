@@ -12,6 +12,16 @@ export const normalizePhoneForAccessPinRpc = (phone: string) => normalizeDigits(
 
 export const isValidAccessPin = (pin: string) => /^\d{4}$/.test(pin.trim());
 
+export const formatAccessPinDisplay = (pin: string | null | undefined) => {
+  const digits = normalizeDigits(String(pin ?? ''));
+
+  if (!digits) {
+    return '—';
+  }
+
+  return digits.padStart(ACCESS_PIN_LENGTH, '0').slice(-ACCESS_PIN_LENGTH);
+};
+
 const normalizeAppParameterValue = (value: string | null | undefined) =>
   (value ?? '')
     .trim()

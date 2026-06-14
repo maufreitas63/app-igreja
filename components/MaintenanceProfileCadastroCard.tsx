@@ -5,6 +5,7 @@ import {
   computeMaintenanceContentHeight,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
+import { formatAccessPinDisplay } from '@/lib/accessPin';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { formatShortName } from '@/lib/formatShortName';
 import { useMaintenanceProfileCadastro } from '@/hooks/useMaintenanceProfileCadastro';
@@ -201,6 +202,9 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
                   <Text style={styles.resultName}>{formatShortName(option.fullName)}</Text>
                   <Text style={styles.resultMeta}>
                     {[option.phone, option.memberCode].filter(Boolean).join(' · ') || option.fullName}
+                  </Text>
+                  <Text style={styles.resultPin}>
+                    PIN: {formatAccessPinDisplay(option.accessPin)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -421,6 +425,13 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 11,
     marginTop: 2,
+  },
+  resultPin: {
+    color: '#C4B5FD',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 2,
+    letterSpacing: 0.4,
   },
   detailLoader: {
     marginTop: 12,
