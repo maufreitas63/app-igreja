@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para super administrador, TI e desenvolvedor.
 
-**Atualizado em:** 12/06/2026
+**Atualizado em:** 22/05/2026
 
 Conteúdo integrado: Manual operacional ACL · Modelo de controle de acesso · Camadas de segurança · Blueprint completo
 
@@ -645,6 +645,9 @@ Documento de encerramento da sessão: o que já está pronto, o que falta e qual
 | **Recepção Familiar** | Formulário `/cadastro-familia/` → fila na manutenção (`recepcao-cadastro-familiar.sql`) |
 | **Mudança de Papéis** | Card pastoral/super_admin (`access-control-pastoral-role-change.sql`) |
 | **Cadastro de Usuário** | `maintenance.card.profile_cadastro` — busca, CEP, exclusão completa |
+| **Acessos de Usuários** | `maintenance.card.profile_access_insights` — histórico de logins e telas visitadas *(super_admin)* |
+| **Sessão assinada** | `profile_sessions` + header `x-session-token` (prioridade sobre `x-profile-id`) |
+| **Telemetria de uso** | Tabelas `profile_app_access_events` e `profile_app_access_screen_visits`; RPCs admin e `record_profile_app_access_screen_visit` |
 | **Mapa ACL PDF** | `npm run build:access-roles-pdf` → `PAPEIS_CONTROLE_ACESSO.pdf` |
 | **Índice do aplicativo** | `/(tabs)/index` — atalhos com etiquetas para todos os cards |
 | **Manutenção — card menu** | Primeiro card do carrossel com etiquetas dos módulos |
@@ -1114,18 +1117,20 @@ Protege dados em trânsito entre app e Supabase.
 | Controle | Especificação |
 |----------|---------------|
 | **HTTPS** | Todas as requisições ao projeto Supabase |
-| **Header `x-profile-id`** | Injetado em toda requisição por `lib/supabaseSessionFetch.ts` |
+| **Header `x-session-token`** | Prioridade quando emitido no login (`profile_sessions`); anti-spoof de `x-profile-id` |
+| **Header `x-profile-id`** | Fallback legado injetado por `lib/supabaseSessionFetch.ts` quando não há token |
 | **Chave `anon`** | Única chave embutida no app; **`service_role` proibido** no cliente |
 | **Sem PIN em query string** | Autenticação via corpo de RPC, não em URL |
 
 ### 4.1 Sessão no header
 
 ```text
-Requisição HTTP → supabaseSessionFetch → adiciona x-profile-id: <uuid>
-                                         → RLS usa profile_has_access(header, recurso, ação)
+Requisição HTTP → supabaseSessionFetch → adiciona x-session-token (se houver)
+                                         → senão x-profile-id: <uuid>
+                                         → RLS/RPCs usam current_session_profile_id()
 ```
 
-Se `user_profile_id` estiver ausente, `repairUserSessionReference()` tenta reconstruir a partir do telefone antes de operações sensíveis.
+Se `user_profile_id` ou token estiverem ausentes, `repairUserSessionReference()` tenta reconstruir a partir do telefone antes de operações sensíveis.
 
 ---
 

@@ -22,9 +22,10 @@
     "dev:family-form": "vite --config standalone/cadastro-familia/vite.config.ts",
     "build:web": "node scripts/write-build-info.mjs && npm run generate:icons && expo export -p web && npm run build:family-form",
     "generate:icons": "node scripts/generate-app-icons.mjs",
-    "build:docs:md": "node scripts/build-pacotes-md.mjs",
+    "build:docs:md": "node scripts/build-manual-painel-screens.mjs && node scripts/embed-manual-painel-illustrations.mjs && node scripts/build-manual-manutencao-screens.mjs && node scripts/embed-manual-manutencao-illustrations.mjs && node scripts/build-pacotes-md.mjs",
     "build:docs:pdf": "node scripts/build-pacotes-pdf.mjs",
-    "build:docs": "node scripts/build-pacotes-md.mjs && node scripts/build-pacotes-pdf.mjs",
+    "build:docs": "npm run build:web && node scripts/build-manual-painel-screens.mjs && node scripts/embed-manual-painel-illustrations.mjs && node scripts/build-manual-manutencao-screens.mjs && node scripts/embed-manual-manutencao-illustrations.mjs && node scripts/build-pacotes-md.mjs && node scripts/build-pacotes-pdf.mjs",
+    "build:docs:screens": "node scripts/build-manual-painel-screens.mjs && node scripts/build-manual-manutencao-screens.mjs",
     "build:access-roles-pdf": "node scripts/build-access-roles-pdf.mjs",
     "build:validation-checklist-xlsx": "node scripts/build-validation-checklist-xlsx.mjs",
     "lint": "expo lint"

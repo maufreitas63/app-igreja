@@ -1,6 +1,6 @@
 # Mapa visual de papéis — Controle de Acesso
 
-Gerado em: 12/06/2026, 10:57:47
+Gerado em: 13/06/2026, 12:29:23
 Fonte: scripts SQL do repositório
 
 Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
@@ -145,6 +145,20 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 
 ---
 
+## Responsável familiar
+
+- **Código:** `family_acceptor`
+- **Descrição:** Gerencia membros da família
+
+### Telas
+
+| Nome | Chave técnica | Ver | Editar |
+| --- | --- | :---: | :---: |
+| Card Lista de Membros | `dashboard.card.members_list` | **Sim** | — |
+| Gerenciar família | `/manage-members` | **Sim** | — |
+
+---
+
 ## Líder
 
 - **Código:** `lider`
@@ -173,6 +187,10 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | Card SALA(S) | `dashboard.card.kids_teens` | **Sim** | **Sim** |
 | Dashboard | `/dashboard` | **Sim** | **Sim** |
 | Manutenção | `/maintenance-dashboard` | **Sim** | **Sim** |
+| Manutenção — Cronograma de eventos | `maintenance.card.events_gantt` | **Sim** | **Sim** |
+| Manutenção — Lista de presença (quórum) | `maintenance.card.quorum_presence` | **Sim** | **Sim** |
+| Manutenção — Monitor de salas | `maintenance.card.sala_monitor` | **Sim** | **Sim** |
+| Manutenção — Programação de eventos | `maintenance.card.events` | **Sim** | **Sim** |
 
 ---
 

@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para diretoria, membros, famílias e voluntários.
 
-**Atualizado em:** 12/06/2026
+**Atualizado em:** 22/05/2026
 
 Conteúdo integrado: Funcionalidades · Manual de Treinamento · FAQ
 
@@ -241,6 +241,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **Recepção Familiar** | Fila do formulário público `/cadastro-familia/` — gravar ou rejeitar em lote |
 | **Controle de Acesso** | Papéis, grants; seleção de perfil por dropdown *(super_admin)* |
 | **Mudança de Papéis** | Alterar visitante/congregado/membro *(pastoral, super_admin)* |
+| **Acessos de Usuários** | Histórico de logins e telas por sessão; limpeza global *(super_admin)* |
 
 ---
 

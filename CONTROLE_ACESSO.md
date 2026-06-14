@@ -51,6 +51,9 @@ Documento de encerramento da sessão: o que já está pronto, o que falta e qual
 | **Recepção Familiar** | Formulário `/cadastro-familia/` → fila na manutenção (`recepcao-cadastro-familiar.sql`) |
 | **Mudança de Papéis** | Card pastoral/super_admin (`access-control-pastoral-role-change.sql`) |
 | **Cadastro de Usuário** | `maintenance.card.profile_cadastro` — busca, CEP, exclusão completa |
+| **Acessos de Usuários** | `maintenance.card.profile_access_insights` — histórico de logins e telas visitadas *(super_admin)* |
+| **Sessão assinada** | `profile_sessions` + header `x-session-token` (prioridade sobre `x-profile-id`) |
+| **Telemetria de uso** | Tabelas `profile_app_access_events` e `profile_app_access_screen_visits`; RPCs admin e `record_profile_app_access_screen_visit` |
 | **Mapa ACL PDF** | `npm run build:access-roles-pdf` → `PAPEIS_CONTROLE_ACESSO.pdf` |
 | **Índice do aplicativo** | `/(tabs)/index` — atalhos com etiquetas para todos os cards |
 | **Manutenção — card menu** | Primeiro card do carrossel com etiquetas dos módulos |

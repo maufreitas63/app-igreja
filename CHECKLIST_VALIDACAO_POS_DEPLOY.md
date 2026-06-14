@@ -110,6 +110,18 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 
 ---
 
+## Manutenção — Acessos de Usuários
+
+**Pedido:** card exclusivo do super administrador com histórico de logins e telas visitadas por sessão.
+
+- [ ] Card **Acessos de Usuários** aparece por último no carrossel, só para **super_admin**
+- [ ] Tabela lista nome, último acesso e total de logins; filtro por nome funciona
+- [ ] Ícone de histórico abre balão com data/hora do login e telas visitadas (mais recente primeiro)
+- [ ] **Limpar histórico** apaga logins e telas sem erro; toast confirma quantidade removida
+- [ ] Supabase: `access-control-profile-access-insights.sql` + `profile-access-insights.sql` (ou patch); hotfix limpeza: `profile-access-insights-clear-fix.sql`
+
+---
+
 ## Manutenção — escalas
 
 **Pedido:** botão para limpar a busca em **Associar servos**.

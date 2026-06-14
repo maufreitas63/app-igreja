@@ -544,6 +544,11 @@ const main = async () => {
 
   console.log('ok');
   console.log(`PDF: ${outPdfPath}`);
+
+  const docsPdfPath = path.join(projectRoot, 'docs', 'pdf', 'PAPEIS_CONTROLE_ACESSO.pdf');
+  fs.mkdirSync(path.dirname(docsPdfPath), { recursive: true });
+  fs.copyFileSync(outPdfPath, docsPdfPath);
+  console.log(`Copia: ${docsPdfPath}`);
 };
 
 await main();

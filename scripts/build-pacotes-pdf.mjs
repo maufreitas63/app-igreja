@@ -53,7 +53,16 @@ const pdfCss = `
   th { background: #f1f5f9; }
   a { color: #4338ca; }
   blockquote { border-left: 3px solid #94a3b8; margin-left: 0; padding-left: 12px; color: #475569; }
+  img { max-width: 100%; height: auto; display: block; margin: 12px auto; border-radius: 8px; }
+  table + img, img + table { margin-top: 8px; }
 `;
+
+const manualIllustrationFiles = new Set([
+  'PACOTE_5_MANUAL_PAINEL.md',
+  'MANUAL_DASHBOARD_MEMBRO.md',
+  'PACOTE_6_MANUAL_MANUTENCAO.md',
+  'MANUAL_DASHBOARD_MANUTENCAO.md',
+]);
 
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -78,7 +87,9 @@ for (const file of files) {
           margin: { top: '18mm', right: '16mm', bottom: '18mm', left: '16mm' },
           printBackground: true,
         },
-        css: pdfCss,
+        css: manualIllustrationFiles.has(file)
+          ? pdfCss.replace('max-width: 100%', 'max-width: 50%')
+          : pdfCss,
         launch_options: {
           args: ['--no-sandbox', '--disable-setuid-sandbox'],
         },
@@ -98,3 +109,19 @@ for (const file of files) {
 }
 
 console.log(`\nPDFs em: ${outDir}`);
+
+const docsPdfDir = path.join(root, 'docs', 'pdf');
+fs.mkdirSync(docsPdfDir, { recursive: true });
+
+for (const file of files) {
+  const pdfName = file.replace(/\.md$/i, '.pdf');
+  const sourcePath = path.join(outDir, pdfName);
+
+  if (!fs.existsSync(sourcePath)) {
+    continue;
+  }
+
+  fs.copyFileSync(sourcePath, path.join(docsPdfDir, pdfName));
+}
+
+console.log(`Copia em: ${docsPdfDir}`);

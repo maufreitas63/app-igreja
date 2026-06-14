@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para quem gerencia o aplicativo: secretaria, líderes, pastoral, financeiro e TI.
 
-**Atualizado em:** 12/06/2026
+**Atualizado em:** 22/05/2026
 
 Conteúdo integrado: acesso via engrenagem, ACL, todos os cards de maintenance-dashboard, com resultado esperado e efeito no app dos membros.
 
@@ -37,6 +37,7 @@ Manual **autocontido** para quem **gerencia** o aplicativo: secretaria, líderes
 | **Passo a passo** | Ações numeradas |
 | **Resultado esperado** | O que você deve **ver** ou **confirmar** ao concluir — e o efeito no app dos membros |
 | **Dica** | Atalho ou cuidado útil |
+| **Ilustração** | Captura da tela com **marcadores numerados** (①②③…); tabela **Ref.** explica cada ponto *(dados fictícios)* |
 | **Se der erro** | Mensagens comuns e o que fazer |
 
 Itens em **negrito** são botões, títulos ou áreas da interface.
@@ -58,6 +59,17 @@ Abrir o painel de manutenção a partir do app, com sua conta de equipe.
 
 ### Caminho
 **Índice do Aplicativo** → rodapé → ícone **engrenagem** (Configurações) → **Manutenção**.
+
+### Ilustração — Acesso pela engrenagem *(dados fictícios)*
+
+![Acesso pela engrenagem — captura anotada](docs/manual-manutencao/screens/m00-acesso-engrenagem.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Ícone **engrenagem** ao lado de encerrar sessão |
+| ② | Botão **Encerrar sessão** / sair do aplicativo |
+
+
 
 ### Passo a passo
 
@@ -93,6 +105,18 @@ Alternar entre os cards de manutenção e voltar ao Índice ou ao menu interno.
 ### Caminho
 Rodapé **‹** · **Menu** ou **Voltar** · **›** + contador **N / M** (âmbar).
 
+### Ilustração — Menu de módulos *(dados fictícios)*
+
+![Menu de módulos — captura anotada](docs/manual-manutencao/screens/m01-menu-modulos.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Atalhos dos **Módulos de manutenção** |
+| ② | Rodapé **‹ Menu ›** do carrossel âmbar |
+| ③ | Contador **1 / N** — posição no painel |
+
+
+
 ### Ordem dos módulos (quando todos visíveis no seu perfil)
 
 | # | Nome no painel | Função resumida |
@@ -111,6 +135,7 @@ Rodapé **‹** · **Menu** ou **Voltar** · **›** + contador **N / M** (âmba
 | 11 | **Recepção Familiar** | Fila do formulário público `/cadastro-familia/` |
 | 12 | **Controle de Acesso** | Papéis e grants *(super_admin)* |
 | 13 | **Mudança de Papéis** | Visitante / congregado / membro *(pastoral, super_admin)* |
+| 14 | **Acessos de Usuários** | Histórico de logins e telas visitadas *(super_admin)* |
 
 ### Passo a passo
 
@@ -136,19 +161,32 @@ Publicar cultos e eventos para que os **membros** vejam na Agenda, marquem audi�
 ### Caminho
 **Programação de Eventos** → **Novo evento** ou toque em evento da lista.
 
+### Ilustração — Programação de Eventos *(dados fictícios)*
+
+![Programação de Eventos — captura anotada](docs/manual-manutencao/screens/m02-programacao-eventos.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Botão **Novo evento** |
+| ② | Lista **Eventos cadastrados** |
+| ③ | Badge **Publicado** / **Rascunho** |
+
+
+
 ### Passo a passo — criar evento
 
-1. Toque em **Novo evento**.
-2. Preencha:
-   - **Nome do evento**
-   - **Data e horário** (calendário **DD/MM/AAAA** + hora **HH:MM**)
-   - **Local do evento**
-   - **Capacidade (vagas)** *(obrigatório)*
-   - **Salas e recursos**: marque **Kids** e/ou **Teens** se houver IBN Kids/Teens
-   - **Ativação de Totem**: **Sim** / **Não**
-   - **Requer Quorum**: **Sim** / **Não** (assembleia com lista formal de presença)
-   - **Publicação**: ligado = **Publicado**; desligado = **Rascunho**
-3. Toque em **Salvar** (rodapé fixo).
+### Ilustração — Editor de evento *(dados fictícios)*
+
+![Editor de evento — captura anotada](docs/manual-manutencao/screens/m03-editor-evento.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | **Nome do evento** e data/hora |
+| ② | **Capacidade (vagas)** obrigatória |
+| ③ | Chips **Kids** · **Teens** · **Totem** · **Quórum** |
+| ④ | Botão **Salvar** no rodapé do formulário |
+
+
 
 ### Resultado esperado
 
@@ -209,6 +247,17 @@ Visualizar eventos no tempo e abrir a edição rapidamente.
 ### Caminho
 **Cronograma de Eventos**.
 
+### Ilustração — Cronograma de Eventos *(dados fictícios)*
+
+![Cronograma de Eventos — captura anotada](docs/manual-manutencao/screens/m04-cronograma.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Barras do **Cronograma de Eventos** |
+| ② | Toque na barra abre a **edição** do evento |
+
+
+
 ### Passo a passo
 
 1. Alterne **Por dia** ou **Por mês**.
@@ -233,6 +282,17 @@ Registrar a **entrada física** de crianças e adolescentes nas salas — o que 
 
 ### Caminho
 **Sala(s) - Check In** (após selecionar evento na Agenda do membro).
+
+### Ilustração — Sala(s) - Check In *(dados fictícios)*
+
+![Sala(s) - Check In — captura anotada](docs/manual-manutencao/screens/m05-sala-checkin.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Chips **IBN KIDS** / **IBN TEENS** |
+| ② | Botão **Confirmar entrada** por criança/adolescente |
+
+
 
 ### Pré-requisito
 
@@ -275,6 +335,17 @@ Cadastrar **tipos de serviço** (vigilância, estacionamento, intercessão, etc.
 ### Caminho
 **Tipos de Escala** *(requer permissão de card de escala)*.
 
+### Ilustração — Tipos de Escala *(dados fictícios)*
+
+![Tipos de Escala — captura anotada](docs/manual-manutencao/screens/m06-tipos-escala.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seção **Cadastrar tipo** de escala |
+| ② | Lista de **Tipos cadastrados** |
+
+
+
 ### Passo a passo
 
 1. Abra **Novo tipo de escala** (accordion).
@@ -306,6 +377,17 @@ Associar **pessoas** (perfis) a cada tipo de escala, na ordem em que entrarão n
 
 ### Caminho
 **Servos em Disponibilidade** → título interno **Servos das escalas**.
+
+### Ilustração — Servos em Disponibilidade *(dados fictícios)*
+
+![Servos em Disponibilidade — captura anotada](docs/manual-manutencao/screens/m07-servos-disponibilidade.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seletor **Tipo de escala** |
+| ② | Coluna **Disponível** por servo |
+
+
 
 ### Passo a passo
 
@@ -341,6 +423,17 @@ Definir **quem serve em qual domingo** — manualmente ou em bloco — para o me
 
 ### Caminho
 **Programação de Escalas** → título interno **Manutenção de escalas**.
+
+### Ilustração — Programação de Escalas *(dados fictícios)*
+
+![Programação de Escalas — captura anotada](docs/manual-manutencao/screens/m08-programacao-escalas.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | **Escala** e **Data** do serviço |
+| ② | Botão **Salvar programação** |
+
+
 
 ### Passo a passo — escala individual
 
@@ -392,6 +485,18 @@ Receber e **acompanhar pedidos** enviados pelo card **Coração Aberto** dos mem
 ### Caminho
 **Cuidado Pastoral** *(requer permissão `maintenance.card.pastoral_care`)*.
 
+### Ilustração — Cuidado Pastoral *(dados fictícios)*
+
+![Cuidado Pastoral — captura anotada](docs/manual-manutencao/screens/m09-cuidado-pastoral.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seletor **Solicitante** |
+| ② | Detalhe do **pedido** selecionado |
+| ③ | Campo **Estágio** de acompanhamento |
+
+
+
 ### Passo a passo
 
 1. Em **Quem enviou o pedido**, use o **dropdown** para filtrar por solicitante (ou *Todos*).
@@ -428,6 +533,18 @@ Importar movimentação, comentar lançamentos, anexar comprovantes e conciliar 
 
 ### Caminho
 **Informações Financeiras** *(requer permissão financeira de manutenção)*.
+
+### Ilustração — Informações Financeiras *(dados fictícios)*
+
+![Informações Financeiras — captura anotada](docs/manual-manutencao/screens/m10-financeiro-manut.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seção **Período** (mês) |
+| ② | **Importação CSV** do extrato |
+| ③ | **Relatórios RD** pendentes |
+
+
 
 ### Passo a passo — importar CSV do mês
 
@@ -501,6 +618,18 @@ Gerar o **documento formal** de presença para assembleias com **Requer Quorum =
 ### Caminho
 **Lista de Presença** — após configurar quórum no evento (Parte 1).
 
+### Ilustração — Lista de Presença *(dados fictícios)*
+
+![Lista de Presença — captura anotada](docs/manual-manutencao/screens/m11-lista-presenca.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seletor de **evento com quórum** |
+| ② | **Gerar lista de presença** |
+| ③ | Tabela de **status** de check-in |
+
+
+
 ### Passo a passo
 
 1. Em **Programação de Eventos**, crie/edite evento com **Requer Quorum = Sim** e publique.
@@ -530,6 +659,17 @@ Localizar perfil de membro, **corrigir CEP/endereço** e, quando necessário, **
 
 ### Caminho
 **Cadastro de Usuário** — visível apenas para **super_admin**.
+
+### Ilustração — Cadastro de Usuário *(dados fictícios)*
+
+![Cadastro de Usuário — captura anotada](docs/manual-manutencao/screens/m12-cadastro-usuario.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Campo **Buscar** perfil |
+| ② | Dados cadastrais e **CEP/endereço** |
+
+
 
 ### Passo a passo
 
@@ -568,6 +708,17 @@ Processar cadastros enviados pelo formulário público **`/cadastro-familia/`** 
 ### Caminho
 **Recepção Familiar** — equipe com permissão `maintenance.card.profile_cadastro` (mesmo recurso do Cadastro de Usuário).
 
+### Ilustração — Recepção Familiar *(dados fictícios)*
+
+![Recepção Familiar — captura anotada](docs/manual-manutencao/screens/m13-recepcao-familiar.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Itens da **fila** do `/cadastro-familia/` |
+| ② | Status **Aguardando triagem** / análise |
+
+
+
 ### Passo a passo
 
 1. Abra **Recepção Familiar** na manutenção.
@@ -598,6 +749,18 @@ Definir **quem vê e edita** cada tela, card e coluna — incluindo manutenção
 
 ### Caminho
 **Controle de Acesso** — apenas **super_admin**.
+
+### Ilustração — Controle de Acesso *(dados fictícios)*
+
+![Controle de Acesso — captura anotada](docs/manual-manutencao/screens/m14-controle-acesso.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seletor de **Papel** |
+| ② | Lista de **grants** (permissões) |
+| ③ | **Salvar permissões** |
+
+
 
 ### Aba Perfis — passo a passo
 
@@ -647,6 +810,18 @@ Alterar o papel básico de um perfil entre **visitante**, **congregado** e **mem
 ### Caminho
 **Mudança de Papéis** — perfis com papel `pastoral` ou `super_admin`.
 
+### Ilustração — Mudança de Papéis *(dados fictícios)*
+
+![Mudança de Papéis — captura anotada](docs/manual-manutencao/screens/m15-mudanca-papeis.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seletor de **Membro** |
+| ② | Segmentos **Visitante** / **Congregado** / **Membro** |
+| ③ | **Aplicar mudança** |
+
+
+
 ### Passo a passo
 
 1. Abra **Mudança de Papéis**.
@@ -662,6 +837,76 @@ Alterar o papel básico de um perfil entre **visitante**, **congregado** e **mem
 ### Se der erro
 
 - RPC ausente — execute `scripts/access-control-pastoral-role-change.sql` no Supabase.
+
+---
+
+# Parte 14 — Acessos de Usuários *(super_admin)*
+
+### Objetivo
+Consultar **quantos logins** cada usuário fez no app e **quais telas/cards** visitou em cada sessão, para auditoria operacional.
+
+### Caminho
+**Acessos de Usuários** — último card do carrossel; apenas **super_admin** (ou grant explícito em `maintenance.card.profile_access_insights`).
+
+### Ilustração — Acessos de Usuários *(dados fictícios)*
+
+![Acessos de Usuários — captura anotada](docs/manual-manutencao/screens/m16-acessos-usuarios.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Campo **Buscar perfil** |
+| ② | Ícone **histórico** por sessão de login |
+| ③ | Balão com **telas visitadas** na sessão |
+
+
+
+### O que o sistema registra
+
+| Dado | Onde fica | Quando grava |
+|------|-----------|--------------|
+| **Login / sessão** | `profile_app_access_events` | Cada emissão de sessão (`profile_sessions`) |
+| **Telas visitadas** | `profile_app_access_screen_visits` | Rotas, cards do dashboard e painéis da manutenção enquanto logado |
+
+**Não entram no histórico de telas:** rótulos genéricos **Dashboard** e **Manutenção** (os cards específicos do carrossel são registrados no lugar).
+
+### Passo a passo — lista de acessos
+
+1. Abra **Acessos de Usuários**.
+2. Opcional: filtre por nome em **Filtrar lista**.
+3. Leia a tabela: **Nome curto**, **Último acesso**, **Total** (quantidade de logins).
+4. Toque **Atualizar lista** para recarregar do servidor.
+
+### Passo a passo — histórico de telas por login
+
+1. Na linha do usuário, toque o ícone de **histórico** (à direita do total).
+2. No balão, leia blocos do **login mais recente ao mais antigo**:
+   - **Data e hora** do acesso
+   - Lista de **telas visitadas** naquela sessão (ordem de navegação)
+3. Toque **Fechar** ou fora do balão.
+
+### Passo a passo — limpar histórico
+
+1. Toque **Limpar histórico**.
+2. Confirme no diálogo (ação irreversível).
+3. Aguarde toast de sucesso com quantidade removida.
+
+### Resultado esperado
+
+- Lista mostra só usuários com **pelo menos um login** registrado (exceto visitante).
+- Balão agrupa telas por sessão; sessões sem navegação aparecem com *Nenhuma tela registrada neste acesso*.
+- **Limpar histórico** apaga `profile_app_access_events` e `profile_app_access_screen_visits`.
+- Novos logins e navegações voltam a ser gravados após a limpeza.
+
+### Se der erro
+
+| Situação | Ação |
+|----------|------|
+| Aviso amarelo pedindo SQL | Execute no Supabase: `scripts/access-control-profile-access-insights.sql` e `scripts/profile-access-insights.sql` (ou `profile-access-insights-screen-visits-patch.sql`) |
+| Limpeza falha (FK / truncate) | Execute `scripts/profile-access-insights-clear-fix.sql` |
+| Lista vazia após uso | Usuário precisa **entrar de novo** e **navegar** após deploy do app e SQL |
+
+### Dica
+O card fica **por último** no carrossel de manutenção para não atrapalhar a operação diária.
 
 ---
 
@@ -704,6 +949,7 @@ Alterar o papel básico de um perfil entre **visitante**, **congregado** e **mem
 | RD (relatórios de despesas) | `expense-reports-schema.sql`, `expense-reports-rpc.sql` |
 | Recepção familiar | `recepcao-cadastro-familiar.sql` |
 | Mudança de papéis | `access-control-pastoral-role-change.sql` |
+| Histórico de acessos / telas | `access-control-profile-access-insights.sql`, `profile-access-insights.sql` ou `profile-access-insights-screen-visits-patch.sql`; hotfix limpeza: `profile-access-insights-clear-fix.sql` |
 | Excluir perfil completo | `delete-profile-complete-rpc.sql` |
 
 ---

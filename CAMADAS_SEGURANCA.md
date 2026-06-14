@@ -161,18 +161,20 @@ Protege dados em trânsito entre app e Supabase.
 | Controle | Especificação |
 |----------|---------------|
 | **HTTPS** | Todas as requisições ao projeto Supabase |
-| **Header `x-profile-id`** | Injetado em toda requisição por `lib/supabaseSessionFetch.ts` |
+| **Header `x-session-token`** | Prioridade quando emitido no login (`profile_sessions`); anti-spoof de `x-profile-id` |
+| **Header `x-profile-id`** | Fallback legado injetado por `lib/supabaseSessionFetch.ts` quando não há token |
 | **Chave `anon`** | Única chave embutida no app; **`service_role` proibido** no cliente |
 | **Sem PIN em query string** | Autenticação via corpo de RPC, não em URL |
 
 ### 4.1 Sessão no header
 
 ```text
-Requisição HTTP → supabaseSessionFetch → adiciona x-profile-id: <uuid>
-                                         → RLS usa profile_has_access(header, recurso, ação)
+Requisição HTTP → supabaseSessionFetch → adiciona x-session-token (se houver)
+                                         → senão x-profile-id: <uuid>
+                                         → RLS/RPCs usam current_session_profile_id()
 ```
 
-Se `user_profile_id` estiver ausente, `repairUserSessionReference()` tenta reconstruir a partir do telefone antes de operações sensíveis.
+Se `user_profile_id` ou token estiverem ausentes, `repairUserSessionReference()` tenta reconstruir a partir do telefone antes de operações sensíveis.
 
 ---
 

@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para secretaria, eventos, salas Kids/Teens e líderes de escala.
 
-**Atualizado em:** 12/06/2026
+**Atualizado em:** 22/05/2026
 
 Conteúdo integrado: Manutenção como ecossistema · Missão B4 (escalas) · Card Agenda · FAQ Totem/Manutenção
 
@@ -18,7 +18,7 @@ Proposta de atuação do **administrador** no módulo de manutenção (`maintena
 
 **Pacotes:** [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md) (passo a passo) · [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) (ecossistema) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 12/06/2026
+**Atualizado em:** 22/05/2026
 
 ---
 
@@ -32,6 +32,7 @@ O administrador não “mexe no banco” no dia a dia. Ele **alimenta o pulso da
 | **Operador de salas** | Monitoramento Kids/Teens no dia do culto |
 | **Configurador** | Parâmetros (`app_parameters`) que ligam/desligam cards |
 | **Guardião pastoral** | Card **Cuidado Pastoral** na manutenção; **Mudança de Papéis** para visitante/congregado/membro |
+| **Auditoria de uso** | Card **Acessos de Usuários** — logins e telas por sessão *(super_admin)* |
 | **Operador de recepção** | Fila **Recepção Familiar** do formulário público `/cadastro-familia/` |
 
 O membro usa o app com PIN; o admin usa as mesmas regras de negócio, com permissão de escrita em `events` e parâmetros.
