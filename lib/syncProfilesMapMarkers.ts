@@ -186,7 +186,7 @@ const fetchAndBuildSnapshot = async (
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'id, full_name, nome_fantasia, phone, cep, address_street, address_number, address_neighborhood, address_city, address_state'
+      'id, full_name, phone, cep, address_street, address_number, address_neighborhood, address_city, address_state'
     )
     .order('full_name', { ascending: true });
 
@@ -200,7 +200,6 @@ const fetchAndBuildSnapshot = async (
     rawProfiles.map((row) => ({
       id: row.id,
       full_name: row.full_name,
-      nome_fantasia: row.nome_fantasia,
       phone: row.phone,
       cep: row.cep,
       address_street: row.address_street,

@@ -8,7 +8,6 @@ export const PROFILE_ACCESS_INSIGHTS_SQL_HINT =
 export type ProfileAccessInsightRow = {
   id: string;
   fullName: string;
-  nomeFantasia: string | null;
   lastAccessAt: string | null;
   accessCount: number;
 };
@@ -93,7 +92,6 @@ const parseRows = (data: unknown): ProfileAccessInsightRow[] => {
       const record = row as Record<string, unknown>;
       const id = String(record.profile_id ?? record.profileId ?? '').trim();
       const fullName = String(record.full_name ?? record.fullName ?? '').trim();
-      const nomeFantasiaRaw = record.nome_fantasia ?? record.nomeFantasia;
 
       if (!id || !fullName) {
         return null;
@@ -110,10 +108,6 @@ const parseRows = (data: unknown): ProfileAccessInsightRow[] => {
       return {
         id,
         fullName,
-        nomeFantasia:
-          nomeFantasiaRaw != null && String(nomeFantasiaRaw).trim() !== ''
-            ? String(nomeFantasiaRaw).trim()
-            : null,
         lastAccessAt,
         accessCount: Number.isFinite(accessCount) ? Math.max(0, Math.trunc(accessCount)) : 0,
       } satisfies ProfileAccessInsightRow;

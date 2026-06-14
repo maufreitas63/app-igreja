@@ -1,7 +1,7 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SectionLabel } from '@/components/ui/SectionLabel';
-import { formatProfileFullName, formatProfileShortName } from '@/lib/profileDisplayName';
+import { formatShortName } from '@/lib/formatShortName';
 import { FINANCIAL_ACCESS_SCREEN_RESOURCE_KEYS } from '@/lib/accessControl';
 import {
   ACCESS_CONTROL_PANEL_RESOURCE,
@@ -116,7 +116,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
     () =>
       allProfiles.map((profile) => {
         const meta = [profile.phone, profile.memberCode].filter(Boolean).join(' · ');
-        const shortName = formatProfileShortName(profile);
+        const shortName = formatShortName(profile.fullName);
 
         return {
           value: profile.id,

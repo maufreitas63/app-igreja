@@ -4,7 +4,7 @@ import {
   PASTORAL_BASIC_ROLE_OPTIONS,
   useMaintenancePastoralRoleChange,
 } from '@/hooks/useMaintenancePastoralRoleChange';
-import { formatProfileFullName, formatProfileShortName } from '@/lib/profileDisplayName';
+import { formatShortName } from '@/lib/formatShortName';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import React from 'react';
 import Toast from 'react-native-toast-message';
@@ -132,7 +132,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                   <View key={profile.id} style={styles.tableRow}>
                     <View style={styles.nameColumn}>
                       <Text style={styles.shortName} numberOfLines={2}>
-                        {formatProfileShortName(profile)}
+                        {formatShortName(profile.fullName)}
                       </Text>
                       {isSaving ? <ActivityIndicator color={ACCENT} size="small" /> : null}
                     </View>

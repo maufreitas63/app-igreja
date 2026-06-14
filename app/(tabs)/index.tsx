@@ -36,7 +36,6 @@ import {
   resolveIndexShortcutIconColor,
 } from '@/lib/indexShortcutHints';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
-import { formatProfileShortName, loadNomeFantasiaPreference } from '@/lib/profileDisplayName';
 import { useDashboardSelectedEvent } from '@/hooks/useDashboardSelectedEvent';
 import { useFamilyPreCheckin } from '@/hooks/useFamilyPreCheckin';
 import { FontAwesome } from '@expo/vector-icons';
@@ -102,6 +101,16 @@ const buildShortcutGroups = (items: DashboardShortcut[]): DashboardShortcutGroup
   }
 
   return groups;
+};
+
+const formatDisplayName = (fullName: string) => {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+
+  if (parts.length <= 1) {
+    return parts[0] ?? fullName;
+  }
+
+  return `${parts[0]} ${parts[parts.length - 1]}`;
 };
 
 export default function DashboardIndexScreen() {
@@ -205,10 +214,9 @@ export default function DashboardIndexScreen() {
           return;
         }
 
-        await loadNomeFantasiaPreference();
-
-        if (sessionProfile) {
-          setHeaderUserName(formatProfileShortName(sessionProfile));
+        const profileName = sessionProfile?.full_name?.trim();
+        if (profileName) {
+          setHeaderUserName(formatDisplayName(profileName));
         }
       })();
 

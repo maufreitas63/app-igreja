@@ -140,6 +140,16 @@ type MaintenanceShortcut = {
   content: MaintenancePanelContent;
 };
 
+const formatDisplayName = (fullName: string) => {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+
+  if (parts.length <= 1) {
+    return parts[0] ?? fullName;
+  }
+
+  return `${parts[0]} ${parts[parts.length - 1]}`;
+};
+
 const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '1', title: 'Programação de Eventos', content: 'events' },
   { id: '2', title: 'Cronograma de Eventos', content: 'events_gantt' },

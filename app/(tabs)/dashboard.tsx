@@ -24,7 +24,6 @@ import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { formatRoomMonitorNames } from '@/lib/roomMonitorScales';
 import { compareFamilyMembersByRelationship } from '@/lib/familyRelationshipOptions';
 import { resolveFamilyIdForPhone } from '@/lib/family';
-import { formatProfileShortName, formatProfileFullName, loadNomeFantasiaPreference } from '@/lib/profileDisplayName';
 import { formatShortName } from '@/lib/formatShortName';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import {
@@ -117,7 +116,6 @@ const FOOTER_NAV_REPEAT_MS = 500;
 type DashboardProfile = {
   id?: string;
   full_name?: string;
-  nome_fantasia?: string | null;
   codigo_membro?: string;
   lgpd_accepted?: boolean | null;
   birth_date?: string | null;
@@ -153,7 +151,6 @@ type GroupedRoomConfig = {
 
 type BirthdayEntry = {
   full_name: string;
-  display_name: string;
   birth_date: string;
   phone: string | null;
   day: number;
@@ -163,7 +160,6 @@ type BirthdayEntry = {
 type MemberListEntry = {
   id: string;
   full_name: string;
-  nome_fantasia?: string | null;
   short_name: string;
   family_id: string;
   relationship: string | null;
@@ -211,7 +207,6 @@ const dedupeMemberListEntries = (entries: MemberListEntry[]) => {
 
 type ProfilePhoneRow = {
   full_name: string | null;
-  nome_fantasia?: string | null;
   phone: string | null;
   family_id?: string | null;
   codigo_membro?: string | null;
@@ -250,7 +245,15 @@ type VigilanceScaleRow = {
   volunteer_name?: string | null;
 };
 
-const formatDisplayName = formatProfileShortName;
+const formatDisplayName = (fullName: string) => {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+
+  if (parts.length <= 1) {
+    return parts[0] ?? fullName;
+  }
+
+  return `${parts[0]} ${parts[parts.length - 1]}`;
+};
 
 /** Degradê azul ardósia (contrasta com manutenção âmbar/pedra). */
 const MAIN_SCREEN_GRADIENT = ['#1e3a5f', '#0f172a', '#020617'] as const;
@@ -337,7 +340,7 @@ const resolveProfilePhoneForVolunteerName = (
       return false;
     }
 
-    const shortName = normalizeParameterValue(formatProfileShortName(profile));
+    const shortName = normalizeParameterValue(formatDisplayName(profile.full_name));
     return shortName === normalizedName;
   });
 
@@ -765,7 +768,6 @@ export default function Dashboard() {
       const loadedProfile: DashboardProfile = {
         id: sessionProfile.id,
         full_name: sessionProfile.full_name ?? undefined,
-        nome_fantasia: sessionProfile.nome_fantasia ?? null,
         codigo_membro: sessionProfile.codigo_membro ?? sessionProfile.family_id ?? resolvedFamilyId,
         lgpd_accepted: sessionProfile.lgpd_accepted,
         birth_date: sessionProfile.birth_date ?? null,
@@ -923,11 +925,9 @@ export default function Dashboard() {
     setBirthdaysError(null);
 
     try {
-      await loadNomeFantasiaPreference();
-
       const { data, error } = await supabase
         .from('profiles')
-        .select('full_name, nome_fantasia, birth_date, phone')
+        .select('full_name, birth_date, phone')
         .not('birth_date', 'is', null)
         .order('full_name', { ascending: true });
 
@@ -946,10 +946,6 @@ export default function Dashboard() {
 
           return {
             full_name: fullName,
-            display_name: formatProfileFullName({
-              full_name: fullName,
-              nome_fantasia: entry.nome_fantasia,
-            }),
             birth_date: String(entry.birth_date),
             phone: entry.phone ? String(entry.phone) : null,
             day: parts.day,
@@ -983,7 +979,6 @@ export default function Dashboard() {
       const parsedEntries = directoryEntries.map((entry) => ({
         id: entry.id,
         full_name: entry.full_name,
-        nome_fantasia: entry.nome_fantasia,
         short_name: entry.short_name,
         family_id: entry.family_id,
         relationship: entry.relationship,
@@ -1019,7 +1014,6 @@ export default function Dashboard() {
       const parsedEntries = directoryEntries.map((entry) => ({
         id: entry.id,
         full_name: entry.full_name,
-        nome_fantasia: entry.nome_fantasia,
         short_name: entry.short_name,
         family_id: entry.family_id,
         relationship: entry.relationship,
@@ -1462,11 +1456,9 @@ export default function Dashboard() {
     [selectedScaleType]
   );
   const displayName = useMemo(() => {
-    if (profile) {
-      const resolved = formatProfileShortName(profile);
-      if (resolved !== '—') {
-        return resolved;
-      }
+    const profileName = profile?.full_name?.trim();
+    if (profileName) {
+      return formatDisplayName(profileName);
     }
 
     if (userPhone) {
@@ -1476,16 +1468,13 @@ export default function Dashboard() {
         return Boolean(userDigits && entryDigits && entryDigits === userDigits);
       });
 
-      if (memberMatch) {
-        const resolved = formatProfileShortName(memberMatch);
-        if (resolved !== '—') {
-          return resolved;
-        }
+      if (memberMatch?.full_name?.trim()) {
+        return formatDisplayName(memberMatch.full_name);
       }
     }
 
     return 'Usuário';
-  }, [memberListEntries, profile, userPhone]);
+  }, [memberListEntries, profile?.full_name, userPhone]);
   const isLgpdPending = profile?.lgpd_accepted === false;
   const handleEventRegistrationChange = async () => {
     await refetchActiveEvents();
@@ -2821,7 +2810,7 @@ export default function Dashboard() {
                                 </Text>
                               </View>
                               <View style={styles.birthdayContent}>
-                                <Text style={styles.birthdayName}>{entry.display_name}</Text>
+                                <Text style={styles.birthdayName}>{entry.full_name}</Text>
                                 <TouchableOpacity
                                   style={[
                                     styles.birthdayWhatsappButton,

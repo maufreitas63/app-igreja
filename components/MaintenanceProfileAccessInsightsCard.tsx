@@ -1,7 +1,7 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceProfileAccessInsights } from '@/hooks/useMaintenanceProfileAccessInsights';
-import { formatProfileShortName } from '@/lib/profileDisplayName';
+import { formatShortName } from '@/lib/formatShortName';
 import {
   listProfileScreenVisitsForSuperAdmin,
   PROFILE_ACCESS_INSIGHTS_SQL_HINT,
@@ -79,7 +79,7 @@ function ScreenHistoryBalloon({
         <Pressable style={styles.balloonCard} onPress={() => undefined}>
           <View style={styles.balloonPointer} />
           <Text style={styles.balloonTitle}>
-            Telas visitadas — {formatProfileShortName(profile)}
+            Telas visitadas — {formatShortName(profile.fullName)}
           </Text>
           <Text style={styles.balloonSubtitle}>
             Do login mais recente ao mais antigo, com as telas acessadas em cada sessão.
@@ -288,7 +288,7 @@ export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHei
               profiles.map((profile) => (
                 <View key={profile.id} style={styles.tableRow}>
                   <Text style={[styles.shortName, styles.nameColumn]} numberOfLines={2}>
-                    {formatProfileShortName(profile)}
+                    {formatShortName(profile.fullName)}
                   </Text>
                   <Text style={[styles.lastAccess, styles.lastAccessColumn]} numberOfLines={2}>
                     {formatLastAccessLabel(profile.lastAccessAt)}
@@ -302,7 +302,7 @@ export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHei
                       onPress={() => void openScreenHistory(profile)}
                       activeOpacity={0.85}
                       accessibilityRole="button"
-                      accessibilityLabel={`Ver telas visitadas por ${formatProfileShortName(profile)}`}
+                      accessibilityLabel={`Ver telas visitadas por ${formatShortName(profile.fullName)}`}
                     >
                       <FontAwesome name="history" size={16} color={ACCENT} />
                     </TouchableOpacity>

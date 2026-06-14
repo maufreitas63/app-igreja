@@ -3,7 +3,6 @@ import type { LatLng } from '@/lib/geoMapGeocoding';
 export type ProfileForMap = {
   id: string;
   full_name: string | null;
-  nome_fantasia?: string | null;
   phone: string | null;
   cep: string | null;
   address_street: string | null;

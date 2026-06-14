@@ -1,4 +1,4 @@
-import { formatProfileShortName } from '@/lib/profileDisplayName';
+import { formatShortName } from '@/lib/formatShortName';
 import { formatCep, normalizeCepDigits, type LatLng } from '@/lib/geoMapGeocoding';
 import type { MapMarker, ProfileForMap } from '@/lib/profilesMapMarkersTypes';
 import { readProfilesMapSnapshot } from '@/lib/profilesMapCache';
@@ -41,7 +41,7 @@ const buildProfilesNotOnMap = (
   }
 
   return result.sort((left, right) =>
-    formatProfileShortName(left).localeCompare(formatProfileShortName(right), 'pt-BR')
+    formatShortName(left.full_name).localeCompare(formatShortName(right.full_name), 'pt-BR')
   );
 };
 

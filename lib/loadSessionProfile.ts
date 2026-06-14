@@ -4,13 +4,11 @@ import { phoneDigitsMatch, resolveProfileIdByPhone } from '@/lib/resolveProfileB
 import { supabase } from '@/lib/supabase';
 import { clearStoredProfileId, getStoredProfileId, persistProfileId } from '@/lib/userSession';
 
-const PROFILE_SELECT =
-  'id, full_name, nome_fantasia, codigo_membro, lgpd_accepted, phone, family_id, birth_date';
+const PROFILE_SELECT = 'id, full_name, codigo_membro, lgpd_accepted, phone, family_id, birth_date';
 
 export type SessionProfile = {
   id?: string;
   full_name?: string | null;
-  nome_fantasia?: string | null;
   codigo_membro?: string | null;
   lgpd_accepted?: boolean | null;
   phone?: string | null;
@@ -21,7 +19,6 @@ export type SessionProfile = {
 const normalizeProfileRow = (row: {
   id?: string;
   full_name?: string | null;
-  nome_fantasia?: string | null;
   codigo_membro?: string | null;
   lgpd_accepted?: boolean | null;
   phone?: string | null;
@@ -33,7 +30,6 @@ const normalizeProfileRow = (row: {
   return {
     id: row.id,
     full_name: row.full_name,
-    nome_fantasia: row.nome_fantasia,
     codigo_membro: row.codigo_membro ?? familyId,
     family_id: familyId,
     lgpd_accepted: row.lgpd_accepted,

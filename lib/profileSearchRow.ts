@@ -1,7 +1,6 @@
 export type ProfileSearchRow = {
   id: string;
   fullName: string;
-  nomeFantasia: string | null;
   phone: string | null;
   memberCode: string | null;
 };
@@ -14,15 +13,9 @@ export const mapProfileSearchRow = (row: Record<string, unknown>): ProfileSearch
     return null;
   }
 
-  const nomeFantasiaRaw = row.nome_fantasia ?? row.nomeFantasia;
-
   return {
     id,
     fullName,
-    nomeFantasia:
-      nomeFantasiaRaw != null && String(nomeFantasiaRaw).trim() !== ''
-        ? String(nomeFantasiaRaw).trim()
-        : null,
     phone: row.phone != null ? String(row.phone).trim() || null : null,
     memberCode:
       row.codigo_membro != null
