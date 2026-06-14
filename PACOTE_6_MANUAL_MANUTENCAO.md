@@ -93,7 +93,7 @@ Abrir o painel de manutenção a partir do app, com sua conta de equipe.
 | *Redirecionando…* e volta ao painel | Tentativa de abrir manutenção sem permissão |
 
 ### Dica
-O super administrador libera acesso em **Controle de Acesso** (Parte 11) ou via scripts SQL de ACL.
+O super administrador libera acesso em **Controle de Acesso** (Parte 12) ou via scripts SQL de ACL.
 
 ---
 
@@ -756,11 +756,44 @@ Definir **quem vê e edita** cada tela, card e coluna — incluindo manutenção
 
 | Ref. | Elemento indicado na imagem |
 |:----:|------------------------------|
-| ① | Seletor de **Papel** |
-| ② | Lista de **grants** (permissões) |
-| ③ | **Salvar permissões** |
+| ① | Título compacto **Controle de Acesso** |
+| ② | Interruptor **LGPD Ativo / LGPD Inativo** (parâmetro `LGPD_Ativo`) |
+| ③ | Abas **Perfis** e **Papéis** |
+| ④ | Seletor de **Papel** na aba Papéis |
+| ⑤ | Lista de **grants** (telas, tabelas, colunas) |
+| ⑥ | **Salvar permissões** do grant selecionado |
 
 
+### Controle global — módulo LGPD
+
+### Ilustração — LGPD inativado (resultado do clique) *(dados fictícios)*
+
+![LGPD inativado (resultado do clique) — captura anotada](docs/manual-manutencao/screens/m14b-lgpd-modulo-inativo.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Estado **LGPD Inativo** (vermelho) após o clique |
+| ② | Toast **LGPD inativado** — confirma gravação em `app_parameters` |
+| ③ | Mensagem: o alerta de LGPD pendente deixa de ser exibido no painel do membro |
+
+
+No cabeçalho do card, à direita do título compacto **Controle de Acesso**, o interruptor tipo rádio **LGPD Ativo** (azul) / **LGPD Inativo** (vermelho) grava o parâmetro `LGPD_Ativo` em `app_parameters`:
+
+| Valor | Efeito no aplicativo do membro |
+|-------|-------------------------------|
+| **`sim`** | Cadastro com termos LGPD + selfie; login pode redirecionar a `/lgpd`; cabeçalho vermelho se LGPD pendente |
+| **`nao`** | Cadastro só com nome, nascimento e CEP → **Índice**; sem `/lgpd`; sem alerta vermelho de LGPD |
+
+**Passo a passo — alternar LGPD**
+
+1. Abra **Controle de Acesso** (super_admin).
+2. Toque **LGPD Ativo** ou **LGPD Inativo** no cabeçalho.
+3. Aguarde toast **LGPD ativado** ou **LGPD inativado**.
+4. O valor persiste no Supabase via RPC `salvar_app_parameter_admin` (script `scripts/salvar-app-parameter-admin.sql`).
+
+**Resultado esperado do clique**
+
+- Toast confirma gravação; o painel do membro passa a seguir o modo escolhido na próxima sessão (cache de parâmetro ~5 min).
 
 ### Aba Perfis — passo a passo
 

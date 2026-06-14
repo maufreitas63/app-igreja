@@ -6,7 +6,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`BLUEPRINT.md`](BLUEPRINT.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md)
 
-**Atualizado em:** 12/06/2026
+**Atualizado em:** 22/05/2026
 
 ---
 
@@ -17,7 +17,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 - **Modo totem** — login dedicado com senha `9999` e celular `cel_totem`
 - Restauração automática de sessão ao reabrir o app
 - **Logout seguro** — limpa telefone e `profile_id` do aparelho (`Sair do aplicativo` / `Encerrar sessão`)
-- Redirecionamento pós-login conforme estado do perfil (dashboard, cadastro, LGPD, totem)
+- Redirecionamento pós-login conforme estado do perfil e parâmetro **`LGPD_Ativo`** (dashboard, cadastro, LGPD, Índice, totem)
 - Links para **Instagram** e **YouTube** da igreja na tela de login (**somente no passo 1 — celular**; ocultos no passo da senha)
 - Tela de login **sem marca d'água** (demais telas autenticadas exibem marca d'água discreta)
 
@@ -278,7 +278,8 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 - Abertura de **WhatsApp** — aniversariantes, membros, servos de escala, proprietários de veículo, família
 - **PIX** — exibição e cópia da chave de ofertas
-- Parâmetros globais em `app_parameters` (PIX, prefixo família, totem, LGPD, etc.)
+- Parâmetros globais em `app_parameters` (PIX, prefixo família, totem, **`LGPD_Ativo`**, etc.)
+- **`LGPD_Ativo`** (`sim` / `nao`) — alternado no card **Controle de Acesso** (super_admin); liga/desliga termos LGPD, selfie no cadastro, tela `/lgpd` e cabeçalho vermelho de pendência
 - Redes sociais na tela de login
 
 ---

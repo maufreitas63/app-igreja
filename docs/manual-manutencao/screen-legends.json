@@ -170,15 +170,41 @@
   "m14-controle-acesso.png": [
     [
       "①",
-      "Seletor de **Papel**"
+      "Título compacto **Controle de Acesso**"
     ],
     [
       "②",
-      "Lista de **grants** (permissões)"
+      "Interruptor **LGPD Ativo / LGPD Inativo** (parâmetro `LGPD_Ativo`)"
     ],
     [
       "③",
-      "**Salvar permissões**"
+      "Abas **Perfis** e **Papéis**"
+    ],
+    [
+      "④",
+      "Seletor de **Papel** na aba Papéis"
+    ],
+    [
+      "⑤",
+      "Lista de **grants** (telas, tabelas, colunas)"
+    ],
+    [
+      "⑥",
+      "**Salvar permissões** do grant selecionado"
+    ]
+  ],
+  "m14b-lgpd-modulo-inativo.png": [
+    [
+      "①",
+      "Estado **LGPD Inativo** (vermelho) após o clique"
+    ],
+    [
+      "②",
+      "Toast **LGPD inativado** — confirma gravação em `app_parameters`"
+    ],
+    [
+      "③",
+      "Mensagem: o alerta de LGPD pendente deixa de ser exibido no painel do membro"
     ]
   ],
   "m15-mudanca-papeis.png": [

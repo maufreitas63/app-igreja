@@ -28,6 +28,7 @@ const anchors = [
   { after: '### Caminho\n**Cadastro de Usuário**', image: 'm12-cadastro-usuario.png', title: 'Cadastro de Usuário' },
   { after: '### Caminho\n**Recepção Familiar**', image: 'm13-recepcao-familiar.png', title: 'Recepção Familiar' },
   { after: '### Caminho\n**Controle de Acesso**', image: 'm14-controle-acesso.png', title: 'Controle de Acesso' },
+  { after: '### Controle global — módulo LGPD', image: 'm14b-lgpd-modulo-inativo.png', title: 'LGPD inativado (resultado do clique)' },
   { after: '### Caminho\n**Mudança de Papéis**', image: 'm15-mudanca-papeis.png', title: 'Mudança de Papéis' },
   { after: '### Caminho\n**Acessos de Usuários**', image: 'm16-acessos-usuarios.png', title: 'Acessos de Usuários' },
 ];

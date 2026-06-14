@@ -14,7 +14,7 @@ const SUPABASE_ANON_KEY =
 
 const VIEWPORT = { width: 390, height: 844 };
 const DEVICE_SCALE = 1;
-const OUTPUT_SCALE = 0.5;
+const OUTPUT_SCALE = 0.3;
 
 const MEMBER_PHONE_RAW = process.env.MANUAL_SCREEN_MEMBER_PHONE?.trim() || '';
 const MEMBER_PIN_ENV = process.env.MANUAL_SCREEN_MEMBER_PIN?.trim() || '';
@@ -80,6 +80,35 @@ async function fetchMaintCredentials() {
   const actorId =
     process.env.TSTMAX_ACTOR_PROFILE_ID?.trim() || '04b919ba-38b4-4fe5-a371-2e98e9acbc0d';
   return fetchProfileCredentials(actorId, 'manutenção');
+}
+
+async function saveAppParameterAdmin(actorProfileId, parameter, value) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/salvar_app_parameter_admin`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      p_actor_profile_id: actorProfileId,
+      p_parameter: parameter,
+      p_value: value,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.warn(`saveAppParameterAdmin falhou (${parameter}=${value}): ${res.status} ${text}`);
+    return false;
+  }
+
+  const data = await res.json();
+  return data?.success === true;
+}
+
+function getMaintActorProfileId() {
+  return process.env.TSTMAX_ACTOR_PROFILE_ID?.trim() || '04b919ba-38b4-4fe5-a371-2e98e9acbc0d';
 }
 
 /**
@@ -287,6 +316,8 @@ export async function captureAppScreens(jobs, outDir) {
       resolveCallouts,
       loginMember,
       centerOfText,
+      saveAppParameterAdmin,
+      getMaintActorProfileId,
     };
     ctx.saveScreenshot = (pg, outfile, callouts = []) => saveScreenshot(pg, outfile, callouts, ctx);
 

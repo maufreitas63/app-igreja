@@ -88,7 +88,7 @@ for (const file of files) {
           printBackground: true,
         },
         css: manualIllustrationFiles.has(file)
-          ? pdfCss.replace('max-width: 100%', 'max-width: 50%')
+          ? pdfCss.replace('max-width: 100%', 'max-width: 30%')
           : pdfCss,
         launch_options: {
           args: ['--no-sandbox', '--disable-setuid-sandbox'],

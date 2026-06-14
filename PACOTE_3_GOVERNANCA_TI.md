@@ -767,7 +767,7 @@ Tabelas usadas pelo app (Supabase `public`):
 | `table:pastoral_requests` | Pedidos pastorais |
 | `table:pastoral_reason_categories` | Motivos (leitura) |
 | `table:pastoral_reason_subcategories` | Submotivos (leitura) |
-| `table:app_parameters` | Parâmetros globais (PIX, QR, prefixo família) |
+| `table:app_parameters` | Parâmetros globais (PIX, QR, prefixo família, **`LGPD_Ativo`**) — escrita por **super_admin** via RPC `salvar_app_parameter_admin` |
 | `table:families` | Dados de família (`useFamilyData`) |
 | `table:vigilancia_*` | Escalas (import/histórico — conferir nomes no Supabase) |
 

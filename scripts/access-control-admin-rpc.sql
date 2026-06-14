@@ -561,6 +561,70 @@ on conflict (role_id, resource_id) where (role_id is not null) do update
       can_update = excluded.can_update,
       updated_at = now();
 
+-- Gravação de parâmetros globais (ex.: LGPD_Ativo) — ver também salvar-app-parameter-admin.sql
+drop policy if exists app_parameters_insert_super_admin on public.app_parameters;
+drop policy if exists app_parameters_update_super_admin on public.app_parameters;
+
+create policy app_parameters_insert_super_admin
+  on public.app_parameters
+  for insert
+  to anon, authenticated
+  with check (public.is_super_admin_profile(public.current_session_profile_id()));
+
+create policy app_parameters_update_super_admin
+  on public.app_parameters
+  for update
+  to anon, authenticated
+  using (public.is_super_admin_profile(public.current_session_profile_id()))
+  with check (public.is_super_admin_profile(public.current_session_profile_id()));
+
+grant insert, update on public.app_parameters to anon, authenticated;
+
+create or replace function public.salvar_app_parameter_admin(
+  p_actor_profile_id uuid,
+  p_parameter text,
+  p_value text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+set row_security = off
+as $$
+declare
+  v_parameter text;
+  v_value text;
+begin
+  perform public.assert_access_admin(p_actor_profile_id);
+
+  v_parameter := trim(coalesce(p_parameter, ''));
+  v_value := trim(coalesce(p_value, ''));
+
+  if v_parameter = '' then
+    return jsonb_build_object('success', false, 'message', 'Parâmetro inválido.');
+  end if;
+
+  update public.app_parameters
+     set value = v_value
+   where lower(parameter) = lower(v_parameter);
+
+  if not found then
+    insert into public.app_parameters (parameter, value)
+    values (v_parameter, v_value);
+  end if;
+
+  return jsonb_build_object(
+    'success', true,
+    'message', 'Parâmetro salvo.',
+    'parameter', v_parameter,
+    'value', v_value
+  );
+exception
+  when others then
+    return jsonb_build_object('success', false, 'message', sqlerrm);
+end;
+$$;
+
 grant execute on function public.is_super_admin_profile(uuid) to anon, authenticated;
 grant execute on function public.listar_access_roles_admin(uuid) to anon, authenticated;
 grant execute on function public.buscar_perfis_access_admin(uuid, text, integer) to anon, authenticated;
@@ -571,3 +635,4 @@ grant execute on function public.revogar_papel_perfil_access_admin(uuid, uuid, t
 grant execute on function public.listar_grants_recurso_papel_admin(uuid, text, text) to anon, authenticated;
 grant execute on function public.garantir_recurso_controle_acesso_admin(uuid) to anon, authenticated;
 grant execute on function public.salvar_grant_papel_admin(uuid, text, text, text, boolean, boolean) to anon, authenticated;
+grant execute on function public.salvar_app_parameter_admin(uuid, text, text) to anon, authenticated;

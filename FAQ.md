@@ -523,7 +523,9 @@ Somente **`super_admin`** — papéis e grants por perfil.
 | Quem vê meu CPF? | Perfis com permissão ACL de coluna; oculto para membros comuns |
 | Selfie: para que serve? | Identificação no cadastro; armazenada no Storage Supabase |
 | Posso excluir minha conta pelo app? | Não há fluxo automático de exclusão — contate a secretaria |
-| Aceite LGPD é obrigatório? | Fortemente recomendado; recusa é registrada |
+| Aceite LGPD é obrigatório? | Com **`LGPD_Ativo = sim`**, sim — recusa é registrada. Com **`nao`**, o módulo fica desligado (cadastro simplificado) |
+| Por que não vejo termos LGPD no cadastro? | **super_admin** pode ter desligado o módulo (**LGPD Inativo** em Controle de Acesso) |
+| Quem liga/desliga o módulo LGPD? | Apenas **super_admin** no card **Controle de Acesso** (manutenção) |
 
 ---
 

@@ -15,6 +15,7 @@ const legends = JSON.parse(
 const anchors = [
   { after: '### Caminho\nTela **Boas-vindas**', image: '00-login.png', title: 'Boas-vindas' },
   { after: '### Caminho\nTela **Cadastro**', image: '01-cadastro.png', title: 'Cadastro inicial' },
+  { after: '### Caminho (LGPD desligado)\nTela **Cadastro**', image: '01c-cadastro-sem-lgpd.png', title: 'Cadastro simplificado (LGPD inativo)' },
   { after: '### Caminho\n**Dados Cadastrais** → botão **LGPD**', image: '01b-lgpd.png', title: 'Termos LGPD' },
   { after: '### Caminho\n**Índice do Aplicativo**', image: '02-indice-painel.png', title: 'Índice e Painel' },
   { after: '### Caminho\nPainel → card **Agenda da Família**', image: '03-agenda-familia.png', title: 'Agenda da Família' },

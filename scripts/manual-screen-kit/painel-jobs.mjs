@@ -107,6 +107,34 @@ export const painelJobs = [
     },
   },
   {
+    file: '01c-cadastro-sem-lgpd.png',
+    async run(ctx) {
+      const {
+        page,
+        baseUrl,
+        gotoAndSettle,
+        saveScreenshot,
+        resolveCallouts,
+        saveAppParameterAdmin,
+        getMaintActorProfileId,
+      } = ctx;
+      const actorId = getMaintActorProfileId();
+      await saveAppParameterAdmin(actorId, 'LGPD_Ativo', 'nao');
+      await page.goto(`${baseUrl}/?signedOut=1`, { waitUntil: 'networkidle2', timeout: 60000 });
+      await new Promise((r) => setTimeout(r, 1200));
+      const phoneParam = encodeURIComponent('(12) 99999-9999');
+      await gotoAndSettle(page, `${baseUrl}/register?phone=${phoneParam}`);
+      const callouts = await resolveCallouts(page, [
+        { n: 1, text: 'Nome completo', lx: 330, ly: 105 },
+        { n: 2, text: 'Data Nascimento', lx: 55, ly: 158 },
+        { n: 3, text: 'CEP', lx: 330, ly: 228 },
+        { n: 4, text: 'Continuar', lx: 55, ly: 390 },
+      ]);
+      await saveScreenshot(page, path.join(outDir, '01c-cadastro-sem-lgpd.png'), callouts);
+      await saveAppParameterAdmin(actorId, 'LGPD_Ativo', 'sim');
+    },
+  },
+  {
     file: '02-indice-painel.png',
     async run(ctx) {
       await ensureMemberLogin(ctx);

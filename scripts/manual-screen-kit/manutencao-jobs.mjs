@@ -136,9 +136,12 @@ export const manutencaoJobs = [
       { n: 2, text: 'Aguardando', lx: 55, ly: 298 },
     ]],
     ['m14-controle-acesso.png', 'Controle de Acesso', [
-      { n: 1, text: 'Papel', lx: 330, ly: 182 },
-      { n: 2, text: 'dashboard', lx: 55, ly: 278 },
-      { n: 3, text: 'Salvar', lx: 330, ly: 368 },
+      { n: 1, text: 'Controle de Acesso', lx: 55, ly: 118 },
+      { n: 2, text: 'LGPD Ativo', lx: 330, ly: 118 },
+      { n: 3, text: 'Perfis', lx: 55, ly: 158 },
+      { n: 4, text: 'Papel', lx: 330, ly: 195 },
+      { n: 5, text: 'dashboard', lx: 55, ly: 278 },
+      { n: 6, text: 'Salvar', lx: 330, ly: 368 },
     ]],
     ['m15-mudanca-papeis.png', 'Mudança de Papéis', [
       { n: 1, text: 'Membro', lx: 55, ly: 182 },
@@ -164,4 +167,28 @@ export const manutencaoJobs = [
       await saveScreenshot(page, path.join(outDir, file), callouts);
     },
   })),
+  {
+    file: 'm14b-lgpd-modulo-inativo.png',
+    async run(ctx) {
+      const { page, saveScreenshot, resolveCallouts } = ctx;
+      await openMaintenance(ctx);
+      await openMaintenanceModule(page, 'Controle de Acesso');
+      await page.evaluate(() => {
+        const el = document.querySelector('[aria-label="LGPD Ativo"], [aria-label="LGPD Inativo"]');
+        if (el instanceof HTMLElement) el.click();
+      });
+      await new Promise((r) => setTimeout(r, 2800));
+      const callouts = await resolveCallouts(page, [
+        { n: 1, text: 'LGPD Inativo', lx: 330, ly: 118 },
+        { n: 2, text: 'LGPD inativado', lx: 55, ly: 72 },
+        { n: 3, text: 'privacidade', lx: 330, ly: 92 },
+      ]);
+      await saveScreenshot(page, path.join(outDir, 'm14b-lgpd-modulo-inativo.png'), callouts);
+      await page.evaluate(() => {
+        const el = document.querySelector('[aria-label="LGPD Inativo"]');
+        if (el instanceof HTMLElement) el.click();
+      });
+      await new Promise((r) => setTimeout(r, 1500));
+    },
+  },
 ];

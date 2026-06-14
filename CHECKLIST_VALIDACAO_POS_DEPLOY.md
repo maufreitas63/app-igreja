@@ -22,6 +22,13 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 - [ ] **Confirmar** grava e retorna sem erro
 - [ ] No **cadastro de visitante**, o mesmo fluxo de leitura dos termos funciona
 
+### Parâmetro `LGPD_Ativo` (super_admin)
+
+- [ ] Em **Manutenção → Controle de Acesso**, interruptor **LGPD Ativo / Inativo** grava em `app_parameters` (RPC `salvar_app_parameter_admin`)
+- [ ] Com **`sim`**: cadastro exibe termos + selfie; login pode ir a `/lgpd`; cabeçalho vermelho se pendente
+- [ ] Com **`nao`**: cadastro só nome/nascimento/CEP → **Índice**; sem `/lgpd`; sem alerta vermelho
+- [ ] Script Supabase aplicado: `scripts/salvar-app-parameter-admin.sql`
+
 ---
 
 ## Dashboard principal

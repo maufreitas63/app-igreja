@@ -11,9 +11,11 @@ import {
   isSensitiveAccessResourceKey,
 } from '@/lib/maintenanceAccessControlApi';
 import {
+  clearAppParameterCache,
   getAppParameterValue,
   LGPD_ATIVO_PARAMETER,
   resolveLgpdAtivoFromParameter,
+  SALVAR_APP_PARAMETER_ADMIN_SQL_HINT,
   saveAppParameterValue,
 } from '@/lib/appParameters';
 import { useMaintenanceAccessControl } from '@/hooks/useMaintenanceAccessControl';
@@ -215,6 +217,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
       try {
         await saveAppParameterValue(LGPD_ATIVO_PARAMETER, nextValue ? 'sim' : 'nao');
         setLgpdAtivo(nextValue);
+        clearAppParameterCache(LGPD_ATIVO_PARAMETER);
         Toast.show({
           type: 'success',
           text1: nextValue ? 'LGPD ativado' : 'LGPD inativado',
@@ -224,14 +227,15 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
           visibilityTime: 3500,
         });
       } catch (toggleError) {
+        console.error('Erro ao salvar LGPD_Ativo:', toggleError);
         Toast.show({
           type: 'error',
           text1: 'Parâmetro LGPD',
           text2:
             toggleError instanceof Error
               ? toggleError.message
-              : 'Não foi possível salvar LGPD_Ativo.',
-          visibilityTime: 4500,
+              : `Não foi possível salvar LGPD_Ativo. ${SALVAR_APP_PARAMETER_ADMIN_SQL_HINT}`,
+          visibilityTime: 6000,
         });
       } finally {
         setSavingLgpdAtivo(false);

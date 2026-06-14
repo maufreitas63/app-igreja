@@ -30,6 +30,12 @@ const legends = {
     ['②', 'Marcação **Li e aceito** ou **Li e não concordo**'],
     ['③', 'Botão **Confirmar** / **Concluir**'],
   ],
+  '01c-cadastro-sem-lgpd.png': [
+    ['①', '**Nome completo** do membro'],
+    ['②', '**Data de nascimento** `dd/mm/aaaa`'],
+    ['③', '**CEP da residência** (8 dígitos)'],
+    ['④', '**Continuar** — envia ao Índice quando `LGPD_Ativo = nao` (sem termos nem selfie)'],
+  ],
   '02-indice-painel.png': [
     ['①', 'Atalhos do **Índice** abrem o card correspondente'],
     ['②', 'Área do **card ativo** no carrossel do Painel'],

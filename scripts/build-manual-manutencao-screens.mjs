@@ -76,9 +76,17 @@ const legends = {
     ['②', 'Status **Aguardando triagem** / análise'],
   ],
   'm14-controle-acesso.png': [
-    ['①', 'Seletor de **Papel**'],
-    ['②', 'Lista de **grants** (permissões)'],
-    ['③', '**Salvar permissões**'],
+    ['①', 'Título compacto **Controle de Acesso**'],
+    ['②', 'Interruptor **LGPD Ativo / LGPD Inativo** (parâmetro `LGPD_Ativo`)'],
+    ['③', 'Abas **Perfis** e **Papéis**'],
+    ['④', 'Seletor de **Papel** na aba Papéis'],
+    ['⑤', 'Lista de **grants** (telas, tabelas, colunas)'],
+    ['⑥', '**Salvar permissões** do grant selecionado'],
+  ],
+  'm14b-lgpd-modulo-inativo.png': [
+    ['①', 'Estado **LGPD Inativo** (vermelho) após o clique'],
+    ['②', 'Toast **LGPD inativado** — confirma gravação em `app_parameters`'],
+    ['③', 'Mensagem: o alerta de LGPD pendente deixa de ser exibido no painel do membro'],
   ],
   'm15-mudanca-papeis.png': [
     ['①', 'Seletor de **Membro**'],

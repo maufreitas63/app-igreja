@@ -430,7 +430,11 @@ export default function RegisterScreen() {
                 />
                 <TextInput style={styles.inputDisabled} value={`Telefone: ${phoneValue}`} editable={false} />
 
-                {lgpdModuleActive ? (
+                {loadingLgpdSetting ? (
+                  <View style={styles.lgpdBypassSlot}>
+                    <ActivityIndicator color="#10b981" />
+                  </View>
+                ) : lgpdModuleActive ? (
                   <>
                     <View
                       style={styles.lgpdBox}
@@ -480,17 +484,24 @@ export default function RegisterScreen() {
                     )}
                   </>
                 ) : (
-                  <TouchableOpacity
-                    style={[styles.btnPrimary, (!isFormValid || loadingLgpdSetting) && styles.btnDisabled]}
-                    onPress={() => void handleRegister()}
-                    disabled={!isFormValid || isLoading || loadingLgpdSetting}
-                  >
-                    {isLoading || loadingLgpdSetting ? (
-                      <ActivityIndicator color="#020617" />
-                    ) : (
-                      <Text style={styles.btnText}>Concluir Cadastro</Text>
-                    )}
-                  </TouchableOpacity>
+                  <View style={styles.lgpdBypassSlot}>
+                    <TouchableOpacity
+                      style={[
+                        styles.btnPrimaryContinue,
+                        (!isFormValid || loadingLgpdSetting) && styles.btnDisabled,
+                      ]}
+                      onPress={() => void handleRegister()}
+                      disabled={!isFormValid || isLoading || loadingLgpdSetting}
+                      accessibilityRole="button"
+                      accessibilityLabel="Continuar"
+                    >
+                      {isLoading || loadingLgpdSetting ? (
+                        <ActivityIndicator color="#020617" />
+                      ) : (
+                        <Text style={styles.btnText}>Continuar</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 )}
               </>
             )}
@@ -540,6 +551,13 @@ const styles = StyleSheet.create({
   lgpdTitle: { color: '#10b981', fontWeight: 'bold', fontSize: 16, marginBottom: 8 },
   lgpdText: { color: '#94A3B8', fontSize: 13, lineHeight: 20 },
   hintText: { color: '#64748b', textAlign: 'center', marginBottom: 15, fontSize: 12 },
+  lgpdBypassSlot: {
+    minHeight: 260,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 25,
+  },
   rowContainer: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 25 },
   checkboxWrapper: { flexDirection: 'row', alignItems: 'center' },
   checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: '#94A3B8', marginRight: 8 },
@@ -547,6 +565,14 @@ const styles = StyleSheet.create({
   checkboxCheckedRed: { backgroundColor: '#ef4444', borderColor: '#ef4444' },
   checkboxLabel: { color: '#FFF', fontSize: 14 },
   btnPrimary: { backgroundColor: '#10b981', padding: 20, borderRadius: 20, alignItems: 'center', marginTop: 10 },
+  btnPrimaryContinue: {
+    backgroundColor: '#10b981',
+    paddingVertical: 18,
+    paddingHorizontal: 48,
+    borderRadius: 20,
+    alignItems: 'center',
+    minWidth: 220,
+  },
   btnDisabled: { opacity: 0.55 },
   btnSecondary: { backgroundColor: '#475569', padding: 20, borderRadius: 20, alignItems: 'center', marginTop: 10 },
   btnText: { color: '#020617', fontWeight: 'bold', fontSize: 16 },

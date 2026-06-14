@@ -83,7 +83,7 @@ Tela **Boas-vindas** → **1. Seu celular** → **Continuar** → **Receber cód
 
 ### Resultado esperado
 
-- Login aceito → você vai para **Cadastro** (primeira vez), **Termos LGPD** (se pendente) ou **Painel / Agenda da Família**.
+- Login aceito → você vai para **Cadastro** (primeira vez), **Termos LGPD** (se pendente e módulo ativo) ou **Painel / Índice do Aplicativo**.
 - Na tela de boas-vindas, o passo **2 Código** fica ativo após o celular válido.
 
 ### Dica
@@ -103,6 +103,8 @@ Depois do primeiro acesso, troque o código temporário por uma senha pessoal em
 
 ### Objetivo
 Finalizar seu cadastro inicial para usar o painel com segurança.
+
+> **Parâmetro global `LGPD_Ativo`** (manutenção → Controle de Acesso): com valor **`sim`**, o fluxo abaixo vale integralmente. Com **`nao`**, use a seção **0.2b** — cadastro simplificado sem termos, selfie nem tela `/lgpd`.
 
 ### Caminho
 Tela **Cadastro** → preencher dados → ler **Termos LGPD** → **Li e aceito** → **Tirar Selfie Biométrica** → **Confirmar Registro**.
@@ -155,10 +157,47 @@ Texto exibido na caixa rolável da tela **Cadastro** (e na tela **Termos de Uso 
 
 ---
 
+## 0.2b Cadastro simplificado (quando `LGPD_Ativo = nao`)
+
+### Objetivo
+Permitir primeiro acesso **sem** termos LGPD, selfie biométrica nem redirecionamento para `/lgpd` — usado quando a igreja desliga o módulo de privacidade na manutenção.
+
+### Caminho (LGPD desligado)
+Tela **Cadastro** → **Nome completo** · **Data Nascimento** · **CEP** → **Concluir Cadastro** → **Índice do Aplicativo**.
+
+### Ilustração — Cadastro simplificado (LGPD inativo) *(dados fictícios)*
+
+![Cadastro simplificado (LGPD inativo) — captura anotada](docs/manual-painel/screens/01c-cadastro-sem-lgpd.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | **Nome completo** do membro |
+| ② | **Data de nascimento** `dd/mm/aaaa` |
+| ③ | **CEP da residência** (8 dígitos) |
+| ④ | **Concluir Cadastro** — sem termos LGPD nem selfie quando `LGPD_Ativo = nao` |
+
+
+### Passo a passo
+
+1. Confira o **Telefone** (veio do login).
+2. Preencha **Nome completo**, **Data Nascimento** e **CEP da residência**.
+3. Toque **Concluir Cadastro** (não há caixa de termos nem botão de selfie).
+4. O app leva você direto ao **Índice do Aplicativo** — cabeçalho **sem** alerta vermelho de LGPD pendente.
+
+### Resultado esperado
+
+- Perfil criado com `lgpd_accepted = null` (módulo inativo).
+- Login seguinte também vai ao **Índice**, sem passar por `/lgpd`.
+
+### Dica
+Somente **super_admin** altera `LGPD_Ativo` em **Manutenção → Controle de Acesso** (interruptor **LGPD Ativo / Inativo**). Requer script `scripts/salvar-app-parameter-admin.sql` no Supabase.
+
+---
+
 ## 0.3 Aceitar termos LGPD (se ainda pendente)
 
 ### Objetivo
-Regularizar privacidade quando o cabeçalho do painel estiver **vermelho**.
+Regularizar privacidade quando o cabeçalho do painel estiver **vermelho** *(somente com `LGPD_Ativo = sim`)*.
 
 ### Caminho
 **Dados Cadastrais** → botão **LGPD** — ou tela dedicada **Termos de Uso e Privacidade**.
@@ -604,50 +643,10 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 | ② | Tabela de **Receitas** do período |
 | ③ | Tabela de **Despesas** do período |
 
-   - **Comparativo mensal**
 
-### Ilustração — Financeiro — Comparativo mensal *(dados fictícios)*
 
-![Financeiro — Comparativo mensal — captura anotada](docs/manual-painel/screens/10b-fin-comparativo.png)
 
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Comparativo mensal** expandida |
-| ② | Comparação entre dois meses consecutivos |
 
-   - **Últimos 12 meses**
-
-### Ilustração — Financeiro — Últimos 12 meses *(dados fictícios)*
-
-![Financeiro — Últimos 12 meses — captura anotada](docs/manual-painel/screens/10c-fin-12meses.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Últimos 12 meses** expandida |
-| ② | Série **Realizado** acumulada |
-
-   - **Planejado × Realizado** (quando houver orçamento)
-
-### Ilustração — Financeiro — Planejado × Realizado *(dados fictícios)*
-
-![Financeiro — Planejado × Realizado — captura anotada](docs/manual-painel/screens/10d-fin-orcamento.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Planejado × Realizado** expandida |
-| ② | Colunas **Planejado** e **Realizado** |
-
-   - **Saldo bancário** (saldo por conta e total)
-
-### Ilustração — Financeiro — Saldo bancário *(dados fictícios)*
-
-![Financeiro — Saldo bancário — captura anotada](docs/manual-painel/screens/10e-fin-saldo.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Saldo bancário** expandida |
-| ② | Linha **Saldo total** |
-| ③ | Saldo por **conta** bancária |
 
 
 ### Resultado esperado
@@ -694,10 +693,7 @@ Painel → **Financeiro** → atalho **Relatório de Despesas (RD)** — ou rota
 | ③ | Anexo de **comprovante** |
 | ④ | **Submeter e Finalizar** |
 
-2. Confira nome e telefone no cabeçalho; informe **Chave PIX**.
-3. Em cada linha: data, descrição, valor (digite centavos da direita para esquerda — `1` → R$ 0,01) e comprovante (colar ou galeria).
-4. **Submeter e Finalizar** — o relatório é gravado e o WhatsApp do tesoureiro abre automaticamente.
-5. Na lista **Meus relatórios**, abra um RD para ver itens ou **Excluir RD** se ainda estiver **Pendente**.
+
 
 ### Resultado esperado
 
@@ -849,23 +845,8 @@ Painel → **Gestão de Cadastros** → **Dados Cadastrais** ou **Gerenciar Fam�
 | ③ | Seção **Contato** |
 | ④ | Seção **Endereço** |
 
-2. Atualize **selfie**, **dados pessoais**, **contato**, **endereço** (seções recolhíveis).
 
-### Ilustração — Selfie biométrica *(dados fictícios)*
 
-![Selfie biométrica — captura anotada](docs/manual-painel/screens/17-selfie-biometrica.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Botão **Tirar Selfie** / **Atualizar Selfie** |
-| ② | Área de pré-visualização da foto |
-| ③ | Atalho **LGPD** (se pendente) |
-| ④ | Resumo do membro (nome fictício TstMax) |
-
-3. Em **Senha de acesso**, defina sua senha pessoal de 4 dígitos (após primeiro acesso).
-4. Cadastre **veículos** se desejar (placa usada no estacionamento).
-5. Use **Vincular a Família** se a secretaria forneceu um código para unir núcleos.
-6. Toque em **Voltar** — retorna ao card Gestão de Cadastros.
 
 ### Resultado esperado
 
@@ -893,6 +874,7 @@ Adicionar cônjuge, filhos e outros parentes ao **mesmo código de família** pa
 | ② | Botão **Adicionar integrante** |
 | ③ | Lista **Integrantes Cadastrados** |
 | ④ | Campo **Grau de parentesco** |
+
 
 
 ### Passo a passo
