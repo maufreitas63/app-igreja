@@ -6,7 +6,7 @@ import {
   loadAcceptorAddressForFamilyScreen,
   resolveAcceptorAuthUserId,
 } from '@/lib/inheritFamilyAddress';
-import { formatShortName } from '@/lib/formatShortName';
+import { formatProfileFullName, formatProfileShortName } from '@/lib/profileDisplayName';
 import {
   buildProfileInFamilyMessage,
   canSearchProfileByName,
@@ -1410,7 +1410,7 @@ export default function ManageMembers() {
                             activeOpacity={0.85}
                           >
                             <Text style={styles.nameSearchResultName}>
-                              {formatShortName(profile.full_name)}
+                              {formatProfileShortName(profile)}
                             </Text>
                             <Text style={styles.nameSearchResultMeta}>
                               {[profile.phone, profile.family_id].filter(Boolean).join(' · ') ||

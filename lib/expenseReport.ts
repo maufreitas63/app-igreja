@@ -1,6 +1,7 @@
 import { createUuid } from '@/lib/createUuid';
 import { getAppParameterValue } from '@/lib/appParameters';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
+import { formatProfileFullName, loadNomeFantasiaPreference } from '@/lib/profileDisplayName';
 import {
   deleteFinancialReceiptFile,
   uploadExpenseReportReceiptImage,
@@ -342,6 +343,8 @@ export async function loadExpenseReportHeader(): Promise<ExpenseReportHeader | n
     return null;
   }
 
+  await loadNomeFantasiaPreference();
+
   const { data: profileRow } = await supabase
     .from('profiles')
     .select('pix_key')
@@ -350,7 +353,7 @@ export async function loadExpenseReportHeader(): Promise<ExpenseReportHeader | n
 
   return {
     profileId: profile.id,
-    fullName: profile.full_name?.trim() || '—',
+    fullName: formatProfileFullName(profile),
     phone: profile.phone?.trim() || phone,
     pixKey:
       (typeof profileRow?.pix_key === 'string' ? profileRow.pix_key.trim() : '') ||

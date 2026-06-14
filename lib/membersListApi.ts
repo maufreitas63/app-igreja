@@ -1,9 +1,10 @@
-import { formatShortName } from '@/lib/formatShortName';
+import { formatProfileShortName, loadNomeFantasiaPreference } from '@/lib/profileDisplayName';
 import { supabase } from '@/lib/supabase';
 
 export type MembersDirectoryEntry = {
   id: string;
   full_name: string;
+  nome_fantasia: string | null;
   short_name: string;
   family_id: string;
   relationship: string | null;
@@ -29,6 +30,11 @@ const mapDirectoryRows = (
     .map((row) => {
       const profileId = String(row.profile_id ?? row.profileId ?? '').trim();
       const fullName = String(row.full_name ?? row.fullName ?? '').trim();
+      const nomeFantasiaRaw = row.nome_fantasia ?? row.nomeFantasia;
+      const nomeFantasia =
+        nomeFantasiaRaw != null && String(nomeFantasiaRaw).trim() !== ''
+          ? String(nomeFantasiaRaw).trim()
+          : null;
       const familyId = String(row.family_id ?? row.familyId ?? '').trim();
 
       if (!profileId || !fullName || !familyId) {
@@ -49,7 +55,8 @@ const mapDirectoryRows = (
       return {
         id: profileId,
         full_name: fullName,
-        short_name: formatShortName(fullName),
+        nome_fantasia: nomeFantasia,
+        short_name: formatProfileShortName({ full_name: fullName, nome_fantasia: nomeFantasia }),
         family_id: familyId,
         relationship: null,
         phone: phoneRaw != null ? String(phoneRaw).trim() || null : null,
@@ -67,6 +74,8 @@ const fetchDirectoryFromRpc = async (
   rpcName: 'list_profiles_members_directory' | 'list_profiles_visitors_directory',
   missingRpcHint: string
 ): Promise<MembersDirectoryEntry[]> => {
+  await loadNomeFantasiaPreference();
+
   const { data, error } = await supabase.rpc(rpcName);
 
   if (error) {

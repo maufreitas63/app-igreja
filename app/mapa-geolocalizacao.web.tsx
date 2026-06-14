@@ -4,7 +4,7 @@ import {
   type ProfileForMap,
   type ProfileNotOnMap,
 } from '@/hooks/useProfilesMapMarkers';
-import { formatShortName } from '@/lib/formatShortName';
+import { formatProfileFullName, formatProfileShortName } from '@/lib/profileDisplayName';
 import { fetchCepGeolocationRecordsByDigits } from '@/lib/cepGeolocationApi';
 import {
   buildProfileMapAddressDisplay,
@@ -219,7 +219,7 @@ export default function MapGeolocalizacaoWebScreen() {
 
     if (!marker) {
       const notOnMap = profilesNotOnMap.find((profile) => profile.id === focusProfileId);
-      const shortName = notOnMap ? formatShortName(notOnMap.full_name) : 'Este membro';
+      const shortName = notOnMap ? formatProfileShortName(notOnMap) : 'Este membro';
 
       Toast.show({
         type: 'info',
@@ -484,7 +484,7 @@ export default function MapGeolocalizacaoWebScreen() {
                   <View key={profile.id} style={styles.invalidCepsRow}>
                     <View style={styles.invalidCepsRowContent}>
                       <Text style={styles.invalidCepsName}>
-                        {formatShortName(profile.full_name)}
+                        {formatProfileShortName(profile)}
                       </Text>
                       <Text style={styles.invalidCepsMeta}>
                         CEP: {profile.cepDisplay}
@@ -501,7 +501,7 @@ export default function MapGeolocalizacaoWebScreen() {
                       disabled={!profile.phone}
                       activeOpacity={0.85}
                       accessibilityRole="button"
-                      accessibilityLabel={`Abrir WhatsApp de ${formatShortName(profile.full_name)}`}
+                      accessibilityLabel={`Abrir WhatsApp de ${formatProfileShortName(profile)}`}
                     >
                       <FontAwesome
                         name="whatsapp"
@@ -533,7 +533,9 @@ export default function MapGeolocalizacaoWebScreen() {
         >
           <View style={styles.detailsHeader}>
             <View style={styles.detailsHeaderText}>
-              <Text style={styles.detailsTitle}>{selectedProfile.full_name ?? 'Sem nome'}</Text>
+              <Text style={styles.detailsTitle}>
+                {selectedProfile ? formatProfileFullName(selectedProfile) : 'Sem nome'}
+              </Text>
               <Text style={styles.detailsBadge}>
                 {selectedProfile.roleLabel}
               </Text>

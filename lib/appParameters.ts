@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 
 export const EXIBIR_NOMES_TECNICOS_PARAMETER = 'Exibir_nomes_tecnicos';
+export const N_FANTASIA_PARAMETER = 'n_fantasia';
 
 const PARAMETER_CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -85,5 +86,10 @@ export function isAppParameterSim(value: string | null | undefined) {
 
 export async function isExibirNomesTecnicosEnabled() {
   const value = await getAppParameterValue(EXIBIR_NOMES_TECNICOS_PARAMETER);
+  return isAppParameterSim(value);
+}
+
+export async function isNomeFantasiaEnabled() {
+  const value = await getAppParameterValue(N_FANTASIA_PARAMETER);
   return isAppParameterSim(value);
 }

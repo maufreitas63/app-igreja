@@ -38,6 +38,7 @@ import {
 } from '@/lib/profilesMapCache';
 import { syncProfileAddressFromCep } from '@/lib/syncProfileAddressFromCep';
 // import { formatShortName } from '@/lib/formatShortName';
+import { formatProfileFullName, formatProfileShortName } from '@/lib/profileDisplayName';
 // import {
 //   canSearchFamilyByMemberName,
 //   linkProfileToFamilyById,
@@ -105,6 +106,7 @@ type ProfileVehicle = {
 const FIELD_ORDER = [
   'id',
   'full_name',
+  'nome_fantasia',
   'phone',
   'birth_date',
   'family_id',
@@ -123,6 +125,7 @@ const FIELD_LABELS: Record<string, string> = {
   codigo_membro: 'Código do Membro',
   role: 'Perfil',
   full_name: 'Nome Completo',
+  nome_fantasia: 'Nome Fantasia',
   cpf: 'CPF',
   email: 'E-mail',
   phone: 'Telefone',
@@ -1769,8 +1772,8 @@ export default function ManageProfile() {
     : '';
 
   const displayName =
-    profile?.full_name && !isPlaceholderVisitorName(String(profile.full_name))
-      ? String(profile.full_name)
+    profile && !isPlaceholderVisitorName(String(profile.full_name ?? ''))
+      ? formatProfileFullName(profile)
       : 'Perfil sem nome';
   const displayPhone = profile?.phone ? String(profile.phone) : 'Telefone não informado';
   const displayBirth = profile?.birth_date ? formatDisplayDateLike(String(profile.birth_date)) : 'Nascimento não informado';
@@ -2359,7 +2362,7 @@ export default function ManageProfile() {
                             activeOpacity={0.85}
                           >
                             <Text style={styles.familyNameSearchResultName}>
-                              {formatShortName(result.fullName)}
+                              {formatProfileShortName(result)}
                             </Text>
                             <Text style={styles.familyNameSearchResultMeta}>
                               {[result.familyId, result.phone].filter(Boolean).join(' · ')}

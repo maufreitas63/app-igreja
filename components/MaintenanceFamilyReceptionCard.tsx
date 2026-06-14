@@ -2,7 +2,7 @@ import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceFamilyReception } from '@/hooks/useMaintenanceFamilyReception';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
-import { formatShortName } from '@/lib/formatShortName';
+import { formatProfileFullName, formatProfileShortName } from '@/lib/profileDisplayName';
 import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import Toast from 'react-native-toast-message';

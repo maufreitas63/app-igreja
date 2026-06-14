@@ -11,7 +11,7 @@ import {
   loadMaintenanceScalePanelAccess,
   type MaintenanceScalePanelContent,
 } from '@/lib/scaleAccess';
-import { formatShortName } from '@/lib/formatShortName';
+import { formatProfileShortName, loadNomeFantasiaPreference } from '@/lib/profileDisplayName';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
 import {
   getStoredProfileId,
@@ -125,11 +125,11 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
     const phone = await getStoredUserPhone();
 
     if (phone) {
+      await loadNomeFantasiaPreference();
       const sessionProfile = await loadSessionProfile(phone);
-      const profileName = sessionProfile?.full_name?.trim();
 
-      if (profileName) {
-        headerUserName = formatShortName(profileName);
+      if (sessionProfile) {
+        headerUserName = formatProfileShortName(sessionProfile);
       }
     }
   } catch {

@@ -17,6 +17,7 @@ export type ProfileCadastroPickerOption = {
   phone: string | null;
   memberCode: string | null;
   accessPin: string | null;
+  nomeFantasia: string | null;
 };
 
 export type ProfileCadastroRecord = {
@@ -26,6 +27,7 @@ export type ProfileCadastroRecord = {
   email: string | null;
   cpf: string | null;
   birth_date: string | null;
+  nome_fantasia: string | null;
   cep: string | null;
   address_street: string | null;
   address_number: string | null;
@@ -42,6 +44,7 @@ export const PROFILE_CADASTRO_FIELD_META: Array<{
   section: 'pessoal' | 'endereco';
 }> = [
   { key: 'full_name', label: 'Nome completo', section: 'pessoal' },
+  { key: 'nome_fantasia', label: 'Nome fantasia', section: 'pessoal' },
   { key: 'phone', label: 'Telefone', section: 'pessoal' },
   { key: 'email', label: 'E-mail', section: 'pessoal' },
   { key: 'cpf', label: 'CPF', section: 'pessoal' },
@@ -56,7 +59,7 @@ export const PROFILE_CADASTRO_FIELD_META: Array<{
 ];
 
 const PROFILE_CADASTRO_SELECT =
-  'id, full_name, phone, email, cpf, birth_date, cep, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, access_pin';
+  'id, full_name, nome_fantasia, phone, email, cpf, birth_date, cep, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, access_pin';
 
 const mapProfileCadastroPickerRow = (row: Record<string, unknown>): ProfileCadastroPickerOption | null => {
   const id = String(row.id ?? '').trim();
@@ -67,6 +70,7 @@ const mapProfileCadastroPickerRow = (row: Record<string, unknown>): ProfileCadas
   }
 
   const accessPinRaw = row.access_pin;
+  const nomeFantasiaRaw = row.nome_fantasia ?? row.nomeFantasia;
 
   return {
     id,
@@ -77,6 +81,10 @@ const mapProfileCadastroPickerRow = (row: Record<string, unknown>): ProfileCadas
     accessPin:
       accessPinRaw != null && String(accessPinRaw).trim() !== ''
         ? String(accessPinRaw).trim()
+        : null,
+    nomeFantasia:
+      nomeFantasiaRaw != null && String(nomeFantasiaRaw).trim() !== ''
+        ? String(nomeFantasiaRaw).trim()
         : null,
   };
 };
@@ -92,7 +100,7 @@ export async function searchProfilesForCadastroPicker(query: string, limit = 25)
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, full_name, phone, codigo_membro, access_pin')
+    .select('id, full_name, phone, codigo_membro, access_pin, nome_fantasia')
     .not('full_name', 'is', null)
     .neq('full_name', '')
     .ilike('full_name', pattern)

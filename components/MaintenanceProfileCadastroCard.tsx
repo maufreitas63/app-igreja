@@ -7,7 +7,7 @@ import {
 } from '@/lib/maintenanceCardStyles';
 import { formatAccessPinDisplay } from '@/lib/accessPin';
 import { confirmDialog } from '@/lib/confirmDialog';
-import { formatShortName } from '@/lib/formatShortName';
+import { formatProfileFullName, formatProfileShortName } from '@/lib/profileDisplayName';
 import { useMaintenanceProfileCadastro } from '@/hooks/useMaintenanceProfileCadastro';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
@@ -115,7 +115,8 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
       return;
     }
 
-    const displayName = selectedPickerOption?.fullName ?? profile.full_name ?? 'este usuário';
+    const displayName =
+      formatProfileShortName(selectedPickerOption ?? profile) || 'este usuário';
     const confirmed = await confirmDialog(
       'Excluir usuário',
       `Deseja excluir permanentemente ${displayName}? Esta ação remove o perfil e todas as referências dele no sistema (membros, inscrições, RD, pedidos pastorais, veículos, etc.) e não pode ser desfeita.`,
@@ -195,11 +196,11 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
                   accessibilityState={{ expanded: isSelected }}
                   accessibilityLabel={
                     isSelected
-                      ? `Ocultar dados de ${formatShortName(option.fullName)}`
-                      : `Exibir dados de ${formatShortName(option.fullName)}`
+                      ? `Ocultar dados de ${formatProfileShortName(option)}`
+                      : `Exibir dados de ${formatProfileShortName(option)}`
                   }
                 >
-                  <Text style={styles.resultName}>{formatShortName(option.fullName)}</Text>
+                  <Text style={styles.resultName}>{formatProfileShortName(option)}</Text>
                   <Text style={styles.resultMeta}>
                     {[option.phone, option.memberCode].filter(Boolean).join(' · ') || option.fullName}
                   </Text>
@@ -219,7 +220,7 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
       ) : profile ? (
         <ScrollView style={styles.detailScroll} nestedScrollEnabled keyboardShouldPersistTaps="handled">
           <Text style={styles.selectedTitle}>
-            {selectedPickerOption?.fullName ?? profile.full_name ?? 'Usuário selecionado'}
+            {formatProfileFullName(selectedPickerOption ?? profile)}
           </Text>
 
           <Text style={styles.groupTitle}>Dados pessoais</Text>

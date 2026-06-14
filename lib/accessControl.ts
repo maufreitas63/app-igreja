@@ -112,6 +112,7 @@ export const isDashboardCardContentAllowed = (
 /** Colunas de `profiles` editáveis em Dados cadastrais (`column:profiles.<campo>`). */
 export const PROFILE_MANAGE_COLUMN_FIELDS = [
   'full_name',
+  'nome_fantasia',
   'phone',
   'birth_date',
   'email',
