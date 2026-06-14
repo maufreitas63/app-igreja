@@ -1,8 +1,8 @@
 -- Parâmetro global: liga/desliga o módulo LGPD no aplicativo.
--- sim  = LGPD Ativo (alerta vermelho e fluxo de termos habilitados)
--- nao  = LGPD Inativo (sem alerta de pendência no app)
+-- sim  = fluxo completo (termos, aceite/recusa, selfie no cadastro; tela /lgpd no login)
+-- nao  = cadastro só com dados básicos → Índice; login e sessão vão direto ao Índice
 --
--- Alterável também no card Controle de Acesso (manutenção).
+-- Alterável no card Controle de Acesso (manutenção).
 
 insert into public.app_parameters (parameter, value)
 values ('LGPD_Ativo', 'sim')

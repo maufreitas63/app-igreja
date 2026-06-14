@@ -30,6 +30,7 @@ import {
   resolvePostLoginRoute,
 } from '@/lib/profileOnboarding';
 import { formatCep, normalizeCepDigits } from '@/lib/geoMapGeocoding';
+import { isLgpdAtivoEnabled } from '@/lib/appParameters';
 import { pickSelfieFromWeb, selectSelfiePictureSize, uploadSelfieInput } from '@/lib/selfie';
 import { supabase } from '@/lib/supabase';
 import { invalidateProfilesMapSnapshot } from '@/lib/profilesMapCache';
@@ -83,6 +84,8 @@ export default function RegisterScreen() {
   const [lgpdTermsText, setLgpdTermsText] = useState(() => buildLgpdTermsText(DEFAULT_LGPD_ENTITY_NAME));
   const [entityName, setEntityName] = useState(DEFAULT_LGPD_ENTITY_NAME);
   const [existingProfileId, setExistingProfileId] = useState<string | null>(null);
+  const [lgpdModuleActive, setLgpdModuleActive] = useState(true);
+  const [loadingLgpdSetting, setLoadingLgpdSetting] = useState(true);
   const cameraRef = useRef<CameraView>(null);
   const nameInputRef = useRef<TextInput>(null);
   const router = useRouter();
@@ -145,6 +148,34 @@ export default function RegisterScreen() {
 
     void (async () => {
       try {
+        const lgpdAtivo = await isLgpdAtivoEnabled();
+
+        if (active) {
+          setLgpdModuleActive(lgpdAtivo);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar LGPD_Ativo:', error);
+      } finally {
+        if (active) {
+          setLoadingLgpdSetting(false);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!lgpdModuleActive) {
+      return;
+    }
+
+    let active = true;
+
+    void (async () => {
+      try {
         const [nextTermsText, nextEntityName] = await Promise.all([
           loadLgpdTermsText(),
           loadLgpdEntityName(),
@@ -162,7 +193,7 @@ export default function RegisterScreen() {
     return () => {
       active = false;
     };
-  }, [resetScrollGate]);
+  }, [lgpdModuleActive, resetScrollGate]);
 
   const cepDigits = normalizeCepDigits(cep);
   const hasRealName = fullName.length > 3 && !isPlaceholderVisitorName(fullName);
@@ -271,7 +302,7 @@ export default function RegisterScreen() {
       const [day, month, year] = birthDate.split('/');
       const formattedDateForDB = `${year}-${month}-${day}`;
 
-      if (acceptedLGPD === true && photo) {
+      if (lgpdModuleActive && acceptedLGPD === true && photo) {
         fileName = await uploadSelfieInput(photo);
       }
 
@@ -306,7 +337,7 @@ export default function RegisterScreen() {
         phone: phoneValue,
         cep: formattedCep,
         selfieUrl: fileName,
-        lgpdAccepted: acceptedLGPD,
+        lgpdAccepted: lgpdModuleActive ? acceptedLGPD : null,
         familyId,
         codigoMembro: familyId,
       });
@@ -315,10 +346,11 @@ export default function RegisterScreen() {
       await invalidateProfilesMapSnapshot();
 
       const postLoginRoute = resolvePostLoginRoute(registration.profile, phoneValue);
-      const lgpdDeclined = registration.profile.lgpd_accepted === false;
-      const successMessage = lgpdDeclined
-        ? 'Cadastro inicial concluído. Você está no Índice do Aplicativo. Regularize os termos LGPD em Dados Cadastrais quando desejar.'
-        : 'Cadastro inicial concluído. Você está no Índice do Aplicativo.';
+      const successMessage = lgpdModuleActive
+        ? registration.profile.lgpd_accepted === false
+          ? 'Cadastro inicial concluído. Você está no Índice do Aplicativo. Regularize os termos LGPD em Dados Cadastrais quando desejar.'
+          : 'Cadastro inicial concluído. Você está no Índice do Aplicativo.'
+        : 'Cadastro concluído. Você está no Índice do Aplicativo.';
 
       router.replace(postLoginRoute);
 
@@ -398,50 +430,66 @@ export default function RegisterScreen() {
                 />
                 <TextInput style={styles.inputDisabled} value={`Telefone: ${phoneValue}`} editable={false} />
 
-                <View
-                  style={styles.lgpdBox}
-                  onLayout={(event) => onTermsViewportLayout(event.nativeEvent.layout.height)}
-                >
-                  <ScrollView
-                    scrollEventThrottle={16}
-                    onScroll={onTermsScroll}
-                    onScrollEndDrag={onTermsScroll}
-                    onMomentumScrollEnd={onTermsScroll}
-                    onContentSizeChange={(_, height) => onTermsContentSizeChange(height)}
-                    nestedScrollEnabled
-                    showsVerticalScrollIndicator
-                    keyboardShouldPersistTaps="handled"
-                  >
-                    <Text style={styles.lgpdTitle}>Termos de Uso e Privacidade (LGPD)</Text>
-                    <Text style={styles.lgpdText}>{lgpdTermsText}</Text>
-                  </ScrollView>
-                </View>
-                <Text style={styles.hintText}>{hasScrolledToBottom ? '✅ Termos lidos.' : '↓ Role para ler tudo ↓'}</Text>
+                {lgpdModuleActive ? (
+                  <>
+                    <View
+                      style={styles.lgpdBox}
+                      onLayout={(event) => onTermsViewportLayout(event.nativeEvent.layout.height)}
+                    >
+                      <ScrollView
+                        scrollEventThrottle={16}
+                        onScroll={onTermsScroll}
+                        onScrollEndDrag={onTermsScroll}
+                        onMomentumScrollEnd={onTermsScroll}
+                        onContentSizeChange={(_, height) => onTermsContentSizeChange(height)}
+                        nestedScrollEnabled
+                        showsVerticalScrollIndicator
+                        keyboardShouldPersistTaps="handled"
+                      >
+                        <Text style={styles.lgpdTitle}>Termos de Uso e Privacidade (LGPD)</Text>
+                        <Text style={styles.lgpdText}>{lgpdTermsText}</Text>
+                      </ScrollView>
+                    </View>
+                    <Text style={styles.hintText}>{hasScrolledToBottom ? '✅ Termos lidos.' : '↓ Role para ler tudo ↓'}</Text>
 
-                <View style={styles.rowContainer}>
-                  <TouchableOpacity style={styles.checkboxWrapper} onPress={() => handleLGPDChoice(true)} disabled={!isFormValid}>
-                    <View style={[styles.checkbox, acceptedLGPD === true && styles.checkboxCheckedGreen, !isFormValid && {opacity: 0.3}]} />
-                    <Text style={styles.checkboxLabel}>Li e aceito</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.checkboxWrapper} onPress={() => handleLGPDChoice(false)} disabled={!isFormValid}>
-                    <View style={[styles.checkbox, acceptedLGPD === false && styles.checkboxCheckedRed, !isFormValid && {opacity: 0.3}]} />
-                    <Text style={styles.checkboxLabel}>Li e não concordo</Text>
-                  </TouchableOpacity>
-                </View>
+                    <View style={styles.rowContainer}>
+                      <TouchableOpacity style={styles.checkboxWrapper} onPress={() => handleLGPDChoice(true)} disabled={!isFormValid}>
+                        <View style={[styles.checkbox, acceptedLGPD === true && styles.checkboxCheckedGreen, !isFormValid && {opacity: 0.3}]} />
+                        <Text style={styles.checkboxLabel}>Li e aceito</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.checkboxWrapper} onPress={() => handleLGPDChoice(false)} disabled={!isFormValid}>
+                        <View style={[styles.checkbox, acceptedLGPD === false && styles.checkboxCheckedRed, !isFormValid && {opacity: 0.3}]} />
+                        <Text style={styles.checkboxLabel}>Li e não concordo</Text>
+                      </TouchableOpacity>
+                    </View>
 
-                {acceptedLGPD === true && (
-                  <TouchableOpacity style={styles.btnPrimary} onPress={() => void handleOpenCamera()}>
-                    <Text style={styles.btnText}>Tirar Selfie Biométrica</Text>
-                  </TouchableOpacity>
-                )}
+                    {acceptedLGPD === true && (
+                      <TouchableOpacity style={styles.btnPrimary} onPress={() => void handleOpenCamera()}>
+                        <Text style={styles.btnText}>Tirar Selfie Biométrica</Text>
+                      </TouchableOpacity>
+                    )}
 
-                {acceptedLGPD === false && (
+                    {acceptedLGPD === false && (
+                      <TouchableOpacity
+                        style={styles.btnSecondary}
+                        onPress={() => void handleRegister()}
+                        disabled={isLoading || loadingLgpdSetting}
+                      >
+                        {isLoading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnTextSecondary}>Concluir Cadastro</Text>}
+                      </TouchableOpacity>
+                    )}
+                  </>
+                ) : (
                   <TouchableOpacity
-                    style={styles.btnSecondary}
+                    style={[styles.btnPrimary, (!isFormValid || loadingLgpdSetting) && styles.btnDisabled]}
                     onPress={() => void handleRegister()}
-                    disabled={isLoading}
+                    disabled={!isFormValid || isLoading || loadingLgpdSetting}
                   >
-                    {isLoading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnTextSecondary}>Concluir Cadastro</Text>}
+                    {isLoading || loadingLgpdSetting ? (
+                      <ActivityIndicator color="#020617" />
+                    ) : (
+                      <Text style={styles.btnText}>Concluir Cadastro</Text>
+                    )}
                   </TouchableOpacity>
                 )}
               </>
@@ -499,6 +547,7 @@ const styles = StyleSheet.create({
   checkboxCheckedRed: { backgroundColor: '#ef4444', borderColor: '#ef4444' },
   checkboxLabel: { color: '#FFF', fontSize: 14 },
   btnPrimary: { backgroundColor: '#10b981', padding: 20, borderRadius: 20, alignItems: 'center', marginTop: 10 },
+  btnDisabled: { opacity: 0.55 },
   btnSecondary: { backgroundColor: '#475569', padding: 20, borderRadius: 20, alignItems: 'center', marginTop: 10 },
   btnText: { color: '#020617', fontWeight: 'bold', fontSize: 16 },
   btnTextSecondary: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },

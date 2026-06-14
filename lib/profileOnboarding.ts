@@ -123,7 +123,8 @@ export const resolveRegisteredUserLoginRoute = (phone: string) =>
 
 export const resolveRegisteredUserSessionRoute = (
   profile: Record<string, unknown> | null | undefined,
-  phone: string
+  phone: string,
+  lgpdAtivo = true
 ) => {
   if (!profile) {
     return null;
@@ -133,6 +134,10 @@ export const resolveRegisteredUserSessionRoute = (
 
   if (isProfilePendingSelfRegistration(profile)) {
     return buildRegisterRoute(phoneForSession);
+  }
+
+  if (!lgpdAtivo) {
+    return buildAppIndexRoute(phoneForSession);
   }
 
   if (profile.lgpd_accepted !== true) {

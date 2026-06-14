@@ -51,6 +51,7 @@ import { openWhatsAppLikeBirthdays, openWhatsAppLikeBirthdaysWithText } from '@/
 import { isBrazilianMobilePhoneComplete, isBrazilianPhoneComplete } from '@/lib/phoneValidation';
 import { verificarLogin } from '@/lib/verificarLogin';
 import { resolveRegisteredUserSessionRoute } from '@/lib/profileOnboarding';
+import { isLgpdAtivoEnabled } from '@/lib/appParameters';
 import {
   getStoredUserPhone,
   persistUserSession,
@@ -182,7 +183,8 @@ export default function IndexScreen() {
     ) => {
       await persistUserSession(profile, phoneForSession, sessionToken);
 
-      const route = resolveRegisteredUserSessionRoute(profile, phoneForSession);
+      const lgpdAtivo = await isLgpdAtivoEnabled();
+      const route = resolveRegisteredUserSessionRoute(profile, phoneForSession, lgpdAtivo);
 
       if (!route) {
         return false;

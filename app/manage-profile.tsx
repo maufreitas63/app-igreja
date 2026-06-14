@@ -52,6 +52,7 @@ import {
   isProfileIncompleteForOnboarding,
   isProfilePendingSelfRegistration,
 } from '@/lib/profileOnboarding';
+import { isLgpdAtivoEnabled, isProfileLgpdPending } from '@/lib/appParameters';
 import { reconcileRejectedMemberFamilyCode } from '@/lib/rejectedMemberFamilyCode';
 import {
   ACCESS_PIN_LENGTH,
@@ -668,6 +669,7 @@ export default function ManageProfile() {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
+  const [lgpdModuleActive, setLgpdModuleActive] = useState(true);
   const [profileColumnAccess, setProfileColumnAccess] = useState<ProfileColumnAccess>({
     view: {},
     update: {},
@@ -1035,6 +1037,28 @@ export default function ManageProfile() {
       }
     },
     [phoneParam]
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      void (async () => {
+        try {
+          const lgpdAtivo = await isLgpdAtivoEnabled();
+
+          if (active) {
+            setLgpdModuleActive(lgpdAtivo);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar LGPD_Ativo:', error);
+        }
+      })();
+
+      return () => {
+        active = false;
+      };
+    }, [])
   );
 
   useFocusEffect(
@@ -1777,7 +1801,7 @@ export default function ManageProfile() {
   const displayFamily = profile?.family_id || profile?.codigo_membro
     ? String(profile.family_id ?? profile.codigo_membro)
     : 'Família não vinculada';
-  const isLgpdPending = profile?.lgpd_accepted === false;
+  const isLgpdPending = isProfileLgpdPending(profile?.lgpd_accepted, lgpdModuleActive);
 
   const handleOpenLgpdScreen = useCallback(() => {
     const phoneForLgpd = phoneParam?.trim() || String(profile?.phone ?? '').trim();
@@ -1875,7 +1899,7 @@ export default function ManageProfile() {
                 <Text style={styles.summaryMeta}>{displayBirth}</Text>
                 <Text style={styles.summaryBadge}>{displayFamily}</Text>
               </View>
-              {isLgpdPending ? (
+              {lgpdModuleActive && isLgpdPending ? (
                 <TouchableOpacity
                   style={styles.lgpdActionButton}
                   onPress={() => void handleOpenLgpdScreen()}

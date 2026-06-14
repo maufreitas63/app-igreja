@@ -8,7 +8,9 @@ import {
 import {
   loadProfileByPhone,
   resolveRegisteredUserSessionRoute,
+  buildAppIndexRoute,
 } from '@/lib/profileOnboarding';
+import { isLgpdAtivoEnabled } from '@/lib/appParameters';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { supabase } from '@/lib/supabase';
 import { useLgpdTermsScrollGate } from '@/hooks/useLgpdTermsScrollGate';
@@ -102,13 +104,24 @@ export default function LgpdScreen() {
   } = useLgpdTermsScrollGate();
 
   const navigateAfterLgpd = useCallback(async () => {
+    const lgpdAtivo = await isLgpdAtivoEnabled();
+
+    if (!lgpdAtivo) {
+      if (phoneParam) {
+        router.replace(buildAppIndexRoute(phoneParam));
+      } else {
+        router.replace(buildAppIndexRoute(''));
+      }
+      return;
+    }
+
     if (!phoneParam) {
       router.replace({ pathname: '/manage-profile' });
       return;
     }
 
     const profile = await loadProfileByPhone(phoneParam);
-    const route = resolveRegisteredUserSessionRoute(profile, phoneParam);
+    const route = resolveRegisteredUserSessionRoute(profile, phoneParam, lgpdAtivo);
 
     if (route) {
       router.replace(route);
@@ -148,6 +161,32 @@ export default function LgpdScreen() {
       active = false;
     };
   }, [resetScrollGate]);
+
+  useEffect(() => {
+    let active = true;
+
+    void (async () => {
+      try {
+        const lgpdAtivo = await isLgpdAtivoEnabled();
+
+        if (!active || lgpdAtivo) {
+          return;
+        }
+
+        if (phoneParam) {
+          router.replace(buildAppIndexRoute(phoneParam));
+        } else {
+          router.replace(buildAppIndexRoute(''));
+        }
+      } catch (error) {
+        console.error('Erro ao verificar LGPD_Ativo:', error);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [phoneParam, router]);
 
   useEffect(() => {
     let active = true;
