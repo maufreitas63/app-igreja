@@ -1,4 +1,7 @@
-import { getAppParameterValue } from '../lib/appParameters';
+import {
+  loadKidsTeensAgeLimits,
+  resolveKidsTeensStatusFromBirthDate,
+} from '@/lib/kidsTeensStatus';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
 import type { FamilyMember } from './useFamilyMembers';
@@ -26,59 +29,6 @@ const normalizeName = (value: string | null | undefined) =>
 
 const normalizePhone = (value: string | null | undefined) => (value ?? '').replace(/\D/g, '');
 
-const getAgeFromBirthDate = (birthDate: string | null | undefined) => {
-  if (!birthDate) {
-    return null;
-  }
-
-  const match = birthDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!match) {
-    return null;
-  }
-
-  const [, yearText, monthText, dayText] = match;
-  const year = Number.parseInt(yearText, 10);
-  const month = Number.parseInt(monthText, 10);
-  const day = Number.parseInt(dayText, 10);
-
-  if ([year, month, day].some(Number.isNaN)) {
-    return null;
-  }
-
-  const today = new Date();
-  let age = today.getFullYear() - year;
-  const hasHadBirthdayThisYear =
-    today.getMonth() + 1 > month || ((today.getMonth() + 1 === month) && today.getDate() >= day);
-
-  if (!hasHadBirthdayThisYear) {
-    age -= 1;
-  }
-
-  return age;
-};
-
-const resolveStatusFromBirthDate = (
-  birthDate: string | null | undefined,
-  idadeKids: number | null,
-  idadeTeens: number | null
-): RegistrationStatus | undefined => {
-  const age = getAgeFromBirthDate(birthDate);
-
-  if (age === null) {
-    return undefined;
-  }
-
-  if (idadeKids !== null && age <= idadeKids) {
-    return 'KIDS';
-  }
-
-  if (idadeKids !== null && idadeTeens !== null && age > idadeKids && age <= idadeTeens) {
-    return 'TEENS';
-  }
-
-  return undefined;
-};
-
 export const useRegisteredEventMembers = (
   eventId: string | undefined,
   members: FamilyMember[],
@@ -103,27 +53,19 @@ export const useRegisteredEventMembers = (
     setLoading(true);
     setError(null);
 
-    const [registrationsResult, idadeKidsValue, idadeTeensValue] = await Promise.all([
+    const [registrationsResult, limits] = await Promise.all([
       supabase.rpc('get_registered_event_members', {
         p_event_id: eventId,
         p_family_id: familyGroupId ?? members[0]?.family_id ?? null,
       }),
-      getAppParameterValue('idade_kids'),
-      getAppParameterValue('idade_teens'),
+      loadKidsTeensAgeLimits(),
     ]);
 
     const { data: registrations, error: registrationsError } = registrationsResult;
 
-    const idadeKids = idadeKidsValue && /^\d+$/.test(idadeKidsValue.trim())
-      ? Number.parseInt(idadeKidsValue.trim(), 10)
-      : null;
-    const idadeTeens = idadeTeensValue && /^\d+$/.test(idadeTeensValue.trim())
-      ? Number.parseInt(idadeTeensValue.trim(), 10)
-      : null;
-
     const audienceStatusByMemberId = members.reduce<Record<string, RegistrationStatus | undefined>>(
       (acc, member) => {
-        const status = resolveStatusFromBirthDate(member.birth_date, idadeKids, idadeTeens);
+        const status = resolveKidsTeensStatusFromBirthDate(member.birth_date, limits);
 
         if (status) {
           acc[member.id] = status;

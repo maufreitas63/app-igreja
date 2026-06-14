@@ -1,3 +1,5 @@
+import { resolveKidsTeensStatusFromBirthDate } from '@/lib/kidsTeensStatus';
+import { refreshEventRegistrationKidsStatus } from '@/lib/refreshEventRegistrationKidsStatus';
 import { getAppParameterValue } from '@/lib/appParameters';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import {
@@ -217,58 +219,11 @@ const getBirthDateElapsedCode = (birthDate: string | null | undefined) => {
   return `${String(years).padStart(2, '0')}${String(months).padStart(2, '0')}${String(days).padStart(2, '0')}`;
 };
 
-const getAgeFromBirthDate = (birthDate: string | null | undefined) => {
-  if (!birthDate) {
-    return null;
-  }
-
-  const match = birthDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!match) {
-    return null;
-  }
-
-  const [, yearText, monthText, dayText] = match;
-  const year = Number.parseInt(yearText, 10);
-  const month = Number.parseInt(monthText, 10);
-  const day = Number.parseInt(dayText, 10);
-
-  if ([year, month, day].some(Number.isNaN)) {
-    return null;
-  }
-
-  const today = new Date();
-  let age = today.getFullYear() - year;
-  const hasHadBirthdayThisYear =
-    today.getMonth() + 1 > month || ((today.getMonth() + 1 === month) && today.getDate() >= day);
-
-  if (!hasHadBirthdayThisYear) {
-    age -= 1;
-  }
-
-  return age;
-};
-
 const getMemberRoomStatus = (
   birthDate: string | null | undefined,
   idadeKids: number | null,
   idadeTeens: number | null
-) => {
-  const age = getAgeFromBirthDate(birthDate);
-
-  if (age === null) {
-    return null;
-  }
-
-  if (idadeKids !== null && age <= idadeKids) {
-    return 'KIDS' as const;
-  }
-
-  if (idadeKids !== null && idadeTeens !== null && age > idadeKids && age <= idadeTeens) {
-    return 'TEENS' as const;
-  }
-
-  return null;
-};
+) => resolveKidsTeensStatusFromBirthDate(birthDate, { idadeKids, idadeTeens }) ?? null;
 
 type ManageMembersData = {
   familyId: string;
@@ -1154,6 +1109,11 @@ export default function ManageMembers() {
           resolvedLinkedProfile?.id
         );
 
+        await refreshEventRegistrationKidsStatus(
+          resolvedLinkedProfile?.id ?? profileIdForEdit,
+          birthIso
+        );
+
         const photoWarning = await persistPendingMemberPhoto(
           memberProfileInput,
           resolvedLinkedProfile?.id ?? profileIdForEdit
@@ -1264,6 +1224,11 @@ export default function ManageMembers() {
           resolvedLinkedProfile?.id ?? profileIdForAction
         );
 
+        await refreshEventRegistrationKidsStatus(
+          resolvedLinkedProfile?.id ?? profileIdForAction,
+          birthIso
+        );
+
         resetForm();
         await fetchData();
 
@@ -1306,6 +1271,11 @@ export default function ManageMembers() {
       const photoWarning = await persistPendingMemberPhoto(
         memberProfileInput,
         resolvedLinkedProfile?.id ?? profileIdForAction
+      );
+
+      await refreshEventRegistrationKidsStatus(
+        resolvedLinkedProfile?.id ?? profileIdForAction,
+        birthIso
       );
 
       resetForm();

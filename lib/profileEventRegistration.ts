@@ -1,4 +1,7 @@
-import { getAppParameterValue } from '@/lib/appParameters';
+import {
+  loadKidsTeensAgeLimits,
+  resolveKidsTeensStatusFromBirthDate,
+} from '@/lib/kidsTeensStatus';
 import { supabase } from '@/lib/supabase';
 import type { RegistrationStatus } from '@/hooks/useRegisteredEventMembers';
 
@@ -89,59 +92,6 @@ export async function unregisterProfileFromEvent(
   return result;
 };
 
-const getAgeFromBirthDate = (birthDate: string | null | undefined) => {
-  if (!birthDate) {
-    return null;
-  }
-
-  const match = birthDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!match) {
-    return null;
-  }
-
-  const [, yearText, monthText, dayText] = match;
-  const year = Number.parseInt(yearText, 10);
-  const month = Number.parseInt(monthText, 10);
-  const day = Number.parseInt(dayText, 10);
-
-  if ([year, month, day].some(Number.isNaN)) {
-    return null;
-  }
-
-  const today = new Date();
-  let age = today.getFullYear() - year;
-  const hasHadBirthdayThisYear =
-    today.getMonth() + 1 > month || (today.getMonth() + 1 === month && today.getDate() >= day);
-
-  if (!hasHadBirthdayThisYear) {
-    age -= 1;
-  }
-
-  return age;
-};
-
-const resolveStatusFromBirthDate = (
-  birthDate: string | null | undefined,
-  idadeKids: number | null,
-  idadeTeens: number | null
-): RegistrationStatus | undefined => {
-  const age = getAgeFromBirthDate(birthDate);
-
-  if (age === null) {
-    return undefined;
-  }
-
-  if (idadeKids !== null && age <= idadeKids) {
-    return 'KIDS';
-  }
-
-  if (idadeKids !== null && idadeTeens !== null && age > idadeKids && age <= idadeTeens) {
-    return 'TEENS';
-  }
-
-  return undefined;
-};
-
 export async function fetchProfileEventRegistrationStatus(
   eventId: string | undefined,
   profileId: string | undefined,
@@ -154,22 +104,17 @@ export async function fetchProfileEventRegistrationStatus(
     return { isRegistered: false };
   }
 
-  const [registrationResult, idadeKidsValue, idadeTeensValue] = await Promise.all([
+  const [registrationResult, limits] = await Promise.all([
     supabase
       .from('event_registrations')
       .select('id, kids_status')
       .eq('event_id', eventId)
       .eq('profile_id', profileId)
       .maybeSingle(),
-    getAppParameterValue('idade_kids'),
-    getAppParameterValue('idade_teens'),
+    loadKidsTeensAgeLimits(),
   ]);
 
-  const audienceStatus = resolveStatusFromBirthDate(
-    birthDate,
-    idadeKidsValue && /^\d+$/.test(idadeKidsValue.trim()) ? Number.parseInt(idadeKidsValue.trim(), 10) : null,
-    idadeTeensValue && /^\d+$/.test(idadeTeensValue.trim()) ? Number.parseInt(idadeTeensValue.trim(), 10) : null
-  );
+  const audienceStatus = resolveKidsTeensStatusFromBirthDate(birthDate, limits);
 
   if (registrationResult.error) {
     console.warn('fetchProfileEventRegistrationStatus:', registrationResult.error.message);
@@ -181,12 +126,13 @@ export async function fetchProfileEventRegistrationStatus(
   }
 
   const normalizedStatus = registrationResult.data.kids_status?.trim().toUpperCase();
+  const storedStatus =
+    normalizedStatus === 'KIDS' || normalizedStatus === 'TEENS'
+      ? (normalizedStatus as RegistrationStatus)
+      : undefined;
 
   return {
     isRegistered: true,
-    registrationStatus:
-      normalizedStatus === 'KIDS' || normalizedStatus === 'TEENS'
-        ? normalizedStatus
-        : audienceStatus,
+    registrationStatus: audienceStatus ?? storedStatus,
   };
 }

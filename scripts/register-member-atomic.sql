@@ -431,6 +431,55 @@ on public.profiles
 for each row
 execute function public.sync_member_family_from_profile();
 
+create or replace function public.resolve_kids_status_from_birth_date(p_birth_date date)
+returns text
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_age_years integer;
+  v_idade_kids integer;
+  v_idade_teens integer;
+begin
+  if p_birth_date is null then
+    return null;
+  end if;
+
+  select
+    case when trim(ap.value) ~ '^\d+$' then trim(ap.value)::integer else null end
+    into v_idade_kids
+  from public.app_parameters ap
+  where lower(ap.parameter) = 'idade_kids'
+  limit 1;
+
+  select
+    case when trim(ap.value) ~ '^\d+$' then trim(ap.value)::integer else null end
+    into v_idade_teens
+  from public.app_parameters ap
+  where lower(ap.parameter) = 'idade_teens'
+  limit 1;
+
+  v_age_years := extract(year from age(current_date, p_birth_date::date))::integer;
+
+  if v_idade_kids is not null and v_age_years <= v_idade_kids then
+    return 'KIDS';
+  end if;
+
+  if
+    v_idade_kids is not null
+    and v_idade_teens is not null
+    and v_age_years > v_idade_kids
+    and v_age_years <= v_idade_teens
+  then
+    return 'TEENS';
+  end if;
+
+  return null;
+end;
+$$;
+
 create or replace function public.register_member_atomic(
   p_event_id uuid,
   p_member_id uuid,
@@ -445,9 +494,6 @@ declare
   v_member members%rowtype;
   v_profile profiles%rowtype;
   v_existing_registration_id uuid;
-  v_age_years integer;
-  v_idade_kids integer;
-  v_idade_teens integer;
   v_kids_status text;
   v_resolved_family_id text;
 begin
@@ -504,48 +550,19 @@ begin
     update public.profiles
     set
       family_id = v_resolved_family_id,
-      codigo_membro = v_resolved_family_id
+      codigo_membro = v_resolved_family_id,
+      birth_date = coalesce(v_member.birth_date, birth_date)
     where id = v_profile.id
       and (
         family_id is distinct from v_resolved_family_id
         or codigo_membro is distinct from v_resolved_family_id
+        or (v_member.birth_date is not null and birth_date is distinct from v_member.birth_date)
       );
   end if;
 
-  select
-    case
-      when trim(ap.value) ~ '^\d+$' then trim(ap.value)::integer
-      else null
-    end
-    into v_idade_kids
-  from public.app_parameters ap
-  where lower(ap.parameter) = 'idade_kids'
-  limit 1;
-
-  select
-    case
-      when trim(ap.value) ~ '^\d+$' then trim(ap.value)::integer
-      else null
-    end
-    into v_idade_teens
-  from public.app_parameters ap
-  where lower(ap.parameter) = 'idade_teens'
-  limit 1;
-
-  if v_profile.birth_date is not null then
-    v_age_years := extract(year from age(current_date, v_profile.birth_date::date))::integer;
-
-    if v_idade_kids is not null and v_age_years <= v_idade_kids then
-      v_kids_status := 'KIDS';
-    elsif
-      v_idade_kids is not null
-      and v_idade_teens is not null
-      and v_age_years > v_idade_kids
-      and v_age_years <= v_idade_teens
-    then
-      v_kids_status := 'TEENS';
-    end if;
-  end if;
+  v_kids_status := public.resolve_kids_status_from_birth_date(
+    coalesce(v_member.birth_date, v_profile.birth_date)
+  );
 
   select er.id
     into v_existing_registration_id

@@ -135,6 +135,12 @@ export async function applyProfileBirthDates<T extends MemberLike>(members: T[])
   const lookup = await loadProfilesForBirthDateLookup(members);
 
   return members.map((member) => {
+    const memberBirthDate = member.birth_date?.trim();
+
+    if (memberBirthDate) {
+      return member;
+    }
+
     const profileBirthDate = resolveBirthDateFromLookup(member, lookup);
 
     if (profileBirthDate === undefined) {
