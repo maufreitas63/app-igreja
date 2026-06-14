@@ -34,7 +34,7 @@ const legends = {
   ],
   'm04-cronograma.png': [
     ['①', 'Barras do **Cronograma de Eventos**'],
-    ['②', 'Toque na barra abre a **edição** do evento'],
+    ['②', 'Toque na barra abre a **edição** do evento (ex.: **Maurício de Freitas** no cronograma)'],
   ],
   'm05-sala-checkin.png': [
     ['①', 'Chips **IBN KIDS** / **IBN TEENS**'],
@@ -78,10 +78,10 @@ const legends = {
   'm14-controle-acesso.png': [
     ['①', 'Título compacto **Controle de Acesso**'],
     ['②', 'Interruptor **LGPD Ativo / LGPD Inativo** (parâmetro `LGPD_Ativo`)'],
-    ['③', 'Abas **Perfis** e **Papéis**'],
-    ['④', 'Seletor de **Papel** na aba Papéis'],
-    ['⑤', 'Lista de **grants** (telas, tabelas, colunas)'],
-    ['⑥', '**Salvar permissões** do grant selecionado'],
+    ['③', 'Aba **Papéis** — grants por recurso (Telas / Tabelas / Colunas)'],
+    ['④', 'Seletor de **Papel** (chips de papéis cadastrados)'],
+    ['⑤', 'Filtro **Telas** na lista de grants'],
+    ['⑥', 'Interruptor **Ver** — concede visualização do recurso ao papel'],
   ],
   'm14b-lgpd-modulo-inativo.png': [
     ['①', 'Estado **LGPD Inativo** (vermelho) após o clique'],

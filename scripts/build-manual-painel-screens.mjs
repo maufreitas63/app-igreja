@@ -1,5 +1,5 @@
 /**
- * Captura PNG reais do PWA (dist/) para MANUAL_DASHBOARD_MEMBRO.md — dados fictícios TstMax.
+ * Captura PNG reais do PWA (dist/) para MANUAL_DASHBOARD_MEMBRO.md.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -59,7 +59,7 @@ const legends = {
     ['③', '**✓** = entrada confirmada pela equipe da sala'],
   ],
   '06-dizimos-ofertas.png': [
-    ['①', 'Dados do **recebedor** (nome e CNPJ fictícios)'],
+    ['①', 'Dados do **recebedor** (nome e CNPJ da igreja)'],
     ['②', '**Chave PIX** exibida para cópia'],
     ['③', 'Botão **Copiar chave PIX**'],
   ],
@@ -150,7 +150,7 @@ const legends = {
     ['①', 'Botão **Tirar Selfie** / **Atualizar Selfie**'],
     ['②', 'Área de pré-visualização da foto'],
     ['③', 'Atalho **LGPD** (se pendente)'],
-    ['④', 'Resumo do membro (nome fictício TstMax)'],
+    ['④', 'Resumo do membro (**Maurício de Freitas**)'],
   ],
 };
 

@@ -23,7 +23,7 @@ Manual **autocontido** para quem usa o aplicativo pela primeira vez ou no dia a 
 | **Passo a passo** | Ações numeradas |
 | **Resultado esperado** | O que você deve **ver** ou **confirmar** ao concluir |
 | **Dica** | Atalho ou cuidado útil |
-| **Ilustração** | Captura da tela com **marcadores numerados** (①②③…); tabela **Ref.** explica cada ponto *(dados fictícios)* |
+| **Ilustração** | Captura da tela com **marcadores numerados** (①②③…); tabela **Ref.** explica cada ponto |
 | **Se der erro** | Mensagens comuns e o que fazer |
 
 Itens em **negrito** são botões, títulos ou áreas da interface.
@@ -43,7 +43,7 @@ Acessar o app com seu **celular** e **código de 4 dígitos** (senha temporária
 ### Caminho
 Tela **Boas-vindas** → **1. Seu celular** → **Continuar** → **Receber código no WhatsApp** → **2. Código de acesso** → entrar automaticamente ou **Acessar**.
 
-### Ilustração — Boas-vindas *(dados fictícios)*
+### Ilustração — Boas-vindas
 
 ![Boas-vindas — captura anotada](docs/manual-painel/screens/00-login.png)
 
@@ -95,7 +95,7 @@ Finalizar seu cadastro inicial para usar o painel com segurança.
 ### Caminho
 Tela **Cadastro** → preencher dados → ler **Termos LGPD** → **Li e aceito** → **Tirar Selfie Biométrica** → **Confirmar Registro**.
 
-### Ilustração — Cadastro inicial *(dados fictícios)*
+### Ilustração — Cadastro inicial
 
 ![Cadastro inicial — captura anotada](docs/manual-painel/screens/01-cadastro.png)
 
@@ -151,7 +151,7 @@ Permitir primeiro acesso **sem** termos LGPD, selfie biométrica nem redireciona
 ### Caminho (LGPD desligado)
 Tela **Cadastro** → **Nome completo** · **Data Nascimento** · **CEP** → **Continuar** → **Índice do Aplicativo**.
 
-### Ilustração — Cadastro simplificado (LGPD inativo) *(dados fictícios)*
+### Ilustração — Cadastro simplificado (LGPD inativo)
 
 ![Cadastro simplificado (LGPD inativo) — captura anotada](docs/manual-painel/screens/01c-cadastro-sem-lgpd.png)
 
@@ -160,7 +160,8 @@ Tela **Cadastro** → **Nome completo** · **Data Nascimento** · **CEP** → **
 | ① | **Nome completo** do membro |
 | ② | **Data de nascimento** `dd/mm/aaaa` |
 | ③ | **CEP da residência** (8 dígitos) |
-| ④ | **Concluir Cadastro** — sem termos LGPD nem selfie quando `LGPD_Ativo = nao` |
+| ④ | **Continuar** — envia ao Índice quando `LGPD_Ativo = nao` (sem termos nem selfie) |
+
 
 
 ### Passo a passo
@@ -188,7 +189,7 @@ Regularizar privacidade quando o cabeçalho do painel estiver **vermelho** *(som
 ### Caminho
 **Dados Cadastrais** → botão **LGPD** — ou tela dedicada **Termos de Uso e Privacidade**.
 
-### Ilustração — Termos LGPD *(dados fictícios)*
+### Ilustração — Termos LGPD
 
 ![Termos LGPD — captura anotada](docs/manual-painel/screens/01b-lgpd.png)
 
@@ -222,7 +223,7 @@ Saber onde estão os módulos e como alternar entre cards.
 ### Caminho
 **Índice do Aplicativo** (atalhos) ↔ **Painel** (carrossel) — rodapé **‹** · **Menu** · **›**.
 
-### Ilustração — Índice e Painel *(dados fictícios)*
+### Ilustração — Índice e Painel
 
 ![Índice e Painel — captura anotada](docs/manual-painel/screens/02-indice-painel.png)
 
@@ -263,7 +264,7 @@ Escolher o culto/evento, **ver vagas disponíveis** e **inscrever sua família**
 ### Caminho
 Painel → card **Agenda da Família** (ou **Painel de Eventos** no Índice).
 
-### Ilustração — Agenda da Família *(dados fictícios)*
+### Ilustração — Agenda da Família
 
 ![Agenda da Família — captura anotada](docs/manual-painel/screens/03-agenda-familia.png)
 
@@ -331,7 +332,7 @@ Apresentar o **QR Code da família** na entrada ou no totem, no **dia do evento*
 ### Caminho
 Painel → card **QR Code — Check-in Totem** / **Check In — QR Code** (visível conforme evento e audiência).
 
-### Ilustração — QR Check-in *(dados fictícios)*
+### Ilustração — QR Check-in
 
 ![QR Check-in — captura anotada](docs/manual-painel/screens/04-qr-checkin.png)
 
@@ -380,7 +381,7 @@ Painel → card **QR Code — Check-in Totem** / **Check In — QR Code** (visí
 ### Caminho
 Painel → **SALA(S)** (ou atalho **Sala(s)** no Índice, dentro de Painel de Eventos).
 
-### Ilustração — SALA(S) Kids/Teens *(dados fictícios)*
+### Ilustração — SALA(S) Kids/Teens
 
 ![SALA(S) Kids/Teens — captura anotada](docs/manual-painel/screens/05-salas-kids-teens.png)
 
@@ -424,13 +425,13 @@ Ver dados do recebedor e **copiar a chave PIX** para ofertar pelo app do banco.
 ### Caminho
 Painel → **Dízimos e Ofertas**.
 
-### Ilustração — Dízimos e Ofertas *(dados fictícios)*
+### Ilustração — Dízimos e Ofertas
 
 ![Dízimos e Ofertas — captura anotada](docs/manual-painel/screens/06-dizimos-ofertas.png)
 
 | Ref. | Elemento indicado na imagem |
 |:----:|------------------------------|
-| ① | Dados do **recebedor** (nome e CNPJ fictícios) |
+| ① | Dados do **recebedor** (nome e CNPJ da igreja) |
 | ② | **Chave PIX** exibida para cópia |
 | ③ | Botão **Copiar chave PIX** |
 
@@ -461,7 +462,7 @@ Enviar um **pedido pastoral** e **acompanhar o status** até saber que está sen
 ### Caminho
 Painel → **Coração Aberto** → formulário; ícone de histórico → **Meus pedidos**.
 
-### Ilustração — Coração Aberto *(dados fictícios)*
+### Ilustração — Coração Aberto
 
 ![Coração Aberto — captura anotada](docs/manual-painel/screens/07-coracao-aberto.png)
 
@@ -523,7 +524,7 @@ Buscar membros ou visitantes da igreja, contatar por WhatsApp e abrir o **Mapa G
 ### Caminho
 Painel → **Lista de Membros**.
 
-### Ilustração — Lista de Membros *(dados fictícios)*
+### Ilustração — Lista de Membros
 
 ![Lista de Membros — captura anotada](docs/manual-painel/screens/08-lista-membros.png)
 
@@ -566,7 +567,7 @@ Ver quem faz aniversário no mês e parabenizar pelo WhatsApp.
 ### Caminho
 Painel → **Aniversariantes**.
 
-### Ilustração — Aniversariantes *(dados fictícios)*
+### Ilustração — Aniversariantes
 
 ![Aniversariantes — captura anotada](docs/manual-painel/screens/09-aniversariantes.png)
 
@@ -599,7 +600,7 @@ Consultar **relatórios financeiros da igreja** (somente leitura) e solicitar re
 ### Caminho
 Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 
-### Ilustração — Financeiro *(dados fictícios)*
+### Ilustração — Financeiro
 
 ![Financeiro — captura anotada](docs/manual-painel/screens/10-financeiro.png)
 
@@ -619,7 +620,7 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 4. Expanda as seções (uma por vez):
    - **Resultado do mês**
 
-### Ilustração — Financeiro — Resultado do mês *(dados fictícios)*
+### Ilustração — Financeiro — Resultado do mês
 
 ![Financeiro — Resultado do mês — captura anotada](docs/manual-painel/screens/10a-fin-resultado.png)
 
@@ -628,6 +629,51 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 | ① | Seção **Resultado do mês** expandida |
 | ② | Tabela de **Receitas** do período |
 | ③ | Tabela de **Despesas** do período |
+
+   - **Comparativo mensal**
+
+### Ilustração — Financeiro — Comparativo mensal
+
+![Financeiro — Comparativo mensal — captura anotada](docs/manual-painel/screens/10b-fin-comparativo.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seção **Comparativo mensal** expandida |
+| ② | Comparação entre dois meses consecutivos |
+
+   - **Últimos 12 meses**
+
+### Ilustração — Financeiro — Últimos 12 meses
+
+![Financeiro — Últimos 12 meses — captura anotada](docs/manual-painel/screens/10c-fin-12meses.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seção **Últimos 12 meses** expandida |
+| ② | Série **Realizado** acumulada |
+
+   - **Planejado × Realizado**
+
+### Ilustração — Financeiro — Planejado × Realizado
+
+![Financeiro — Planejado × Realizado — captura anotada](docs/manual-painel/screens/10d-fin-orcamento.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seção **Planejado × Realizado** expandida |
+| ② | Colunas **Planejado** e **Realizado** |
+
+   - **Saldo bancário**
+
+### Ilustração — Financeiro — Saldo bancário
+
+![Financeiro — Saldo bancário — captura anotada](docs/manual-painel/screens/10e-fin-saldo.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seção **Saldo bancário** expandida |
+| ② | Linha **Saldo total** |
+| ③ | Saldo por **conta** bancária |
 
 
 
@@ -651,7 +697,7 @@ Solicitar **reembolso de despesas** da igreja com comprovantes e chave PIX.
 ### Caminho
 Painel → **Financeiro** → atalho **Relatório de Despesas (RD)** — ou rota `/expense-report`.
 
-### Ilustração — Relatório de Despesas (RD) *(dados fictícios)*
+### Ilustração — Relatório de Despesas (RD)
 
 ![Relatório de Despesas (RD) — captura anotada](docs/manual-painel/screens/11-relatorio-despesas.png)
 
@@ -668,7 +714,7 @@ Painel → **Financeiro** → atalho **Relatório de Despesas (RD)** — ou rota
 
 1. Toque **Novo RD**.
 
-### Ilustração — Formulário de RD *(dados fictícios)*
+### Ilustração — Formulário de RD
 
 ![Formulário de RD — captura anotada](docs/manual-painel/screens/11b-rd-formulario.png)
 
@@ -701,7 +747,7 @@ Saber **quem está escalado** para servir na igreja (vigilância, acolhimento, i
 ### Caminho
 Painel → **Escalas** → **Selecionar Escala** → lista ou card de detalhe.
 
-### Ilustração — Escalas *(dados fictícios)*
+### Ilustração — Escalas
 
 ![Escalas — captura anotada](docs/manual-painel/screens/12-escalas.png)
 
@@ -741,7 +787,7 @@ Ver detalhe rápido da escala já selecionada no card Escalas.
 ### Caminho
 Aparece automaticamente no carrossel após escolher uma escala com servos cadastrados.
 
-### Ilustração — Servos em escala (detalhe) *(dados fictícios)*
+### Ilustração — Servos em escala (detalhe)
 
 ![Servos em escala (detalhe) — captura anotada](docs/manual-painel/screens/12-escalas.png)
 
@@ -768,7 +814,7 @@ Identificar o **proprietário de um veículo** pela placa (equipe de acolhimento
 ### Caminho
 Escalas → escala de estacionamento → **Identificar veículo** — ou card **Estacionamento** se ativo no seu perfil.
 
-### Ilustração — Estacionamento *(dados fictícios)*
+### Ilustração — Estacionamento
 
 ![Estacionamento — captura anotada](docs/manual-painel/screens/13-estacionamento.png)
 
@@ -801,7 +847,7 @@ Manter **seus dados** e **cadastrar integrantes da sua família** no mesmo círc
 ### Caminho
 Painel → **Gestão de Cadastros** → **Dados Cadastrais** ou **Gerenciar Família**.
 
-### Ilustração — Gestão de Cadastros *(dados fictícios)*
+### Ilustração — Gestão de Cadastros
 
 ![Gestão de Cadastros — captura anotada](docs/manual-painel/screens/14-gestao-cadastros.png)
 
@@ -820,7 +866,7 @@ Painel → **Gestão de Cadastros** → **Dados Cadastrais** ou **Gerenciar Fam�
 
 1. Toque em **Dados Cadastrais**.
 
-### Ilustração — Dados Cadastrais *(dados fictícios)*
+### Ilustração — Dados Cadastrais
 
 ![Dados Cadastrais — captura anotada](docs/manual-painel/screens/15-dados-cadastrais.png)
 
@@ -830,7 +876,6 @@ Painel → **Gestão de Cadastros** → **Dados Cadastrais** ou **Gerenciar Fam�
 | ② | Campo **Nome** e demais dados pessoais |
 | ③ | Seção **Contato** |
 | ④ | Seção **Endereço** |
-
 
 
 
@@ -850,7 +895,7 @@ Adicionar cônjuge, filhos e outros parentes ao **mesmo código de família** pa
 ### Caminho
 **Gestão de Cadastros** → **Gerenciar Família**.
 
-### Ilustração — Gerenciar Família *(dados fictícios)*
+### Ilustração — Gerenciar Família
 
 ![Gerenciar Família — captura anotada](docs/manual-painel/screens/16-gerenciar-familia.png)
 
@@ -889,6 +934,38 @@ O representante legal da família não pode ser excluído — proteção do cada
 
 - Duplicata (mesmo nome/telefone na família) → mensagem impedindo segundo cadastro igual.
 - Sem código de família → solicite à secretaria antes de adicionar integrantes.
+
+---
+
+## 12.3 Selfie biométrica
+
+### Objetivo
+Registrar ou atualizar a foto de rosto usada na identificação do membro.
+
+### Caminho
+**Gestão de Cadastros** → **Dados Cadastrais** → seção de selfie.
+
+### Passo a passo
+
+1. Abra **Dados Cadastrais**.
+2. Atualize **selfie** com **Tirar Selfie** ou **Atualizar Selfie**.
+
+### Ilustração — Selfie biométrica
+
+![Selfie biométrica — captura anotada](docs/manual-painel/screens/17-selfie-biometrica.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Botão **Tirar Selfie** / **Atualizar Selfie** |
+| ② | Área de pré-visualização da foto |
+| ③ | Atalho **LGPD** (se pendente) |
+| ④ | Resumo do membro (**Maurício de Freitas**) |
+
+
+
+### Resultado esperado
+
+- Selfie exibida no perfil; botão **LGPD** visível apenas com módulo ativo e pendência.
 
 ---
 

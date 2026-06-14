@@ -64,6 +64,11 @@ const manualIllustrationFiles = new Set([
   'MANUAL_DASHBOARD_MANUTENCAO.md',
 ]);
 
+const manualIllustrationCss = pdfCss.replace(
+  'img { max-width: 100%; height: auto;',
+  'img { max-width: 30%; height: auto;'
+);
+
 fs.mkdirSync(outDir, { recursive: true });
 
 for (const file of files) {
@@ -87,9 +92,7 @@ for (const file of files) {
           margin: { top: '18mm', right: '16mm', bottom: '18mm', left: '16mm' },
           printBackground: true,
         },
-        css: manualIllustrationFiles.has(file)
-          ? pdfCss.replace('max-width: 100%', 'max-width: 30%')
-          : pdfCss,
+        css: manualIllustrationFiles.has(file) ? manualIllustrationCss : pdfCss,
         launch_options: {
           args: ['--no-sandbox', '--disable-setuid-sandbox'],
         },

@@ -38,7 +38,7 @@ const anchors = [
   { after: '### Caminho\nEscalas → escala de estacionamento', image: '13-estacionamento.png', title: 'Estacionamento' },
   { after: '### Caminho\nPainel → **Gestão de Cadastros**', image: '14-gestao-cadastros.png', title: 'Gestão de Cadastros' },
   { after: '1. Toque em **Dados Cadastrais**.', image: '15-dados-cadastrais.png', title: 'Dados Cadastrais' },
-  { after: '2. Atualize **selfie**', image: '17-selfie-biometrica.png', title: 'Selfie biométrica' },
+  { after: '1. Abra **Dados Cadastrais**.\n2. Atualize **selfie**', image: '17-selfie-biometrica.png', title: 'Selfie biométrica' },
   { after: '**Gestão de Cadastros** → **Gerenciar Família**.', image: '16-gerenciar-familia.png', title: 'Gerenciar Família' },
 ];
 
@@ -50,7 +50,7 @@ function block(image, title) {
 
   return `
 
-### Ilustração — ${title} *(dados fictícios)*
+### Ilustração — ${title}
 
 ![${title} — captura anotada](docs/manual-painel/screens/${image})
 

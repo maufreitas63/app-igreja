@@ -4,7 +4,7 @@ Documentação completa do **app-igreja** (Igreja Batista Norte) para entrega ao
 
 Cada **pacote** é um arquivo **autocontido**: o texto integral dos documentos de referência está transcrito dentro do pacote (não é necessário abrir outros arquivos para ler o conteúdo).
 
-**Atualizado em:** 22/05/2026 · capturas em **30%** do tamanho original · toggle **LGPD_Ativo** documentado
+**Atualizado em:** 22/05/2026 · capturas com **dados reais** · imagens em **30%** no PDF
 
 ---
 

@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -30,7 +30,7 @@ import {
   resolvePostLoginRoute,
 } from '@/lib/profileOnboarding';
 import { formatCep, normalizeCepDigits } from '@/lib/geoMapGeocoding';
-import { isLgpdAtivoEnabled } from '@/lib/appParameters';
+import { isLgpdAtivoEnabled, clearAppParameterCache, LGPD_ATIVO_PARAMETER } from '@/lib/appParameters';
 import { pickSelfieFromWeb, selectSelfiePictureSize, uploadSelfieInput } from '@/lib/selfie';
 import { supabase } from '@/lib/supabase';
 import { invalidateProfilesMapSnapshot } from '@/lib/profilesMapCache';
@@ -38,6 +38,12 @@ import { persistProfileId, persistUserSession } from '@/lib/userSession';
 import { useLgpdTermsScrollGate } from '@/hooks/useLgpdTermsScrollGate';
 import { useRejectTotemPhoneFromMemberRoutes } from '@/hooks/useRejectTotemPhoneFromMemberRoutes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const REGISTER_LGPD_TERMS_HEIGHT = 200;
+const REGISTER_LGPD_TERMS_MARGIN_BOTTOM = 5;
+const REGISTER_LGPD_HINT_MARGIN_BOTTOM = 15;
+const REGISTER_LGPD_CHECKBOX_ROW_HEIGHT = 24;
+const REGISTER_LGPD_ROW_MARGIN_BOTTOM = 25;
 
 const formatCepInput = (value: string) => {
   const cleaned = value.replace(/\D/g, '').slice(0, 8);
@@ -146,12 +152,17 @@ export default function RegisterScreen() {
   useEffect(() => {
     let active = true;
 
-    void (async () => {
+    const loadLgpdSetting = async () => {
+      setLoadingLgpdSetting(true);
       try {
+        clearAppParameterCache(LGPD_ATIVO_PARAMETER);
         const lgpdAtivo = await isLgpdAtivoEnabled();
 
         if (active) {
           setLgpdModuleActive(lgpdAtivo);
+          if (!lgpdAtivo) {
+            setAcceptedLGPD(null);
+          }
         }
       } catch (error) {
         console.error('Erro ao carregar LGPD_Ativo:', error);
@@ -160,12 +171,42 @@ export default function RegisterScreen() {
           setLoadingLgpdSetting(false);
         }
       }
-    })();
+    };
+
+    void loadLgpdSetting();
 
     return () => {
       active = false;
     };
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      let active = true;
+
+      void (async () => {
+        try {
+          clearAppParameterCache(LGPD_ATIVO_PARAMETER);
+          const lgpdAtivo = await isLgpdAtivoEnabled();
+
+          if (!active) {
+            return;
+          }
+
+          setLgpdModuleActive(lgpdAtivo);
+          if (!lgpdAtivo) {
+            setAcceptedLGPD(null);
+          }
+        } catch (error) {
+          console.error('Erro ao recarregar LGPD_Ativo:', error);
+        }
+      })();
+
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
   useEffect(() => {
     if (!lgpdModuleActive) {
@@ -432,7 +473,10 @@ export default function RegisterScreen() {
 
                 {loadingLgpdSetting ? (
                   <View style={styles.lgpdBypassSlot}>
-                    <ActivityIndicator color="#10b981" />
+                    <View style={styles.lgpdBypassTermsSpacer} />
+                    <View style={styles.lgpdBypassButtonRow}>
+                      <ActivityIndicator color="#10b981" />
+                    </View>
                   </View>
                 ) : lgpdModuleActive ? (
                   <>
@@ -485,22 +529,25 @@ export default function RegisterScreen() {
                   </>
                 ) : (
                   <View style={styles.lgpdBypassSlot}>
-                    <TouchableOpacity
-                      style={[
-                        styles.btnPrimaryContinue,
-                        (!isFormValid || loadingLgpdSetting) && styles.btnDisabled,
-                      ]}
-                      onPress={() => void handleRegister()}
-                      disabled={!isFormValid || isLoading || loadingLgpdSetting}
-                      accessibilityRole="button"
-                      accessibilityLabel="Continuar"
-                    >
-                      {isLoading || loadingLgpdSetting ? (
-                        <ActivityIndicator color="#020617" />
-                      ) : (
-                        <Text style={styles.btnText}>Continuar</Text>
-                      )}
-                    </TouchableOpacity>
+                    <View style={styles.lgpdBypassTermsSpacer} />
+                    <View style={styles.lgpdBypassButtonRow}>
+                      <TouchableOpacity
+                        style={[
+                          styles.btnPrimaryContinue,
+                          (!isFormValid || loadingLgpdSetting) && styles.btnDisabled,
+                        ]}
+                        onPress={() => void handleRegister()}
+                        disabled={!isFormValid || isLoading || loadingLgpdSetting}
+                        accessibilityRole="button"
+                        accessibilityLabel="Continuar"
+                      >
+                        {isLoading || loadingLgpdSetting ? (
+                          <ActivityIndicator color="#020617" />
+                        ) : (
+                          <Text style={styles.btnText}>Continuar</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 )}
               </>
@@ -540,7 +587,7 @@ const styles = StyleSheet.create({
   inputDisabled: { backgroundColor: 'rgba(15, 23, 42, 0.4)', borderWidth: 1, borderColor: '#475569', padding: 20, borderRadius: 20, color: '#FFF', marginBottom: 15 },
   lgpdBox: {
     backgroundColor: 'rgba(15, 23, 42, 0.5)',
-    height: 200,
+    height: REGISTER_LGPD_TERMS_HEIGHT,
     padding: 15,
     borderRadius: 15,
     marginBottom: 5,
@@ -552,11 +599,18 @@ const styles = StyleSheet.create({
   lgpdText: { color: '#94A3B8', fontSize: 13, lineHeight: 20 },
   hintText: { color: '#64748b', textAlign: 'center', marginBottom: 15, fontSize: 12 },
   lgpdBypassSlot: {
-    minHeight: 260,
-    justifyContent: 'flex-end',
+    width: '100%',
+    marginBottom: REGISTER_LGPD_ROW_MARGIN_BOTTOM,
+  },
+  lgpdBypassTermsSpacer: {
+    height: REGISTER_LGPD_TERMS_HEIGHT,
+    marginBottom: REGISTER_LGPD_TERMS_MARGIN_BOTTOM + 16 + REGISTER_LGPD_HINT_MARGIN_BOTTOM,
+  },
+  lgpdBypassButtonRow: {
+    minHeight: REGISTER_LGPD_CHECKBOX_ROW_HEIGHT,
+    justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    marginBottom: 25,
   },
   rowContainer: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 25 },
   checkboxWrapper: { flexDirection: 'row', alignItems: 'center' },

@@ -94,7 +94,7 @@ export const manutencaoJobs = [
     ], true],
     ['m04-cronograma.png', 'Cronograma de Eventos', [
       { n: 1, text: 'Cronograma', lx: 330, ly: 205 },
-      { n: 2, text: 'TstMax', lx: 55, ly: 268 },
+      { n: 2, text: 'Maurício de Freitas', lx: 55, ly: 268 },
     ]],
     ['m05-sala-checkin.png', 'Sala(s) - Check In', [
       { n: 1, text: 'KIDS', lx: 55, ly: 182 },
@@ -137,11 +137,11 @@ export const manutencaoJobs = [
     ]],
     ['m14-controle-acesso.png', 'Controle de Acesso', [
       { n: 1, text: 'Controle de Acesso', lx: 55, ly: 118 },
-      { n: 2, text: 'LGPD Ativo', lx: 330, ly: 118 },
-      { n: 3, text: 'Perfis', lx: 55, ly: 158 },
+      { n: 2, ariaLabel: 'LGPD Ativo', lx: 330, ly: 118 },
+      { n: 3, text: 'Papéis', lx: 55, ly: 158 },
       { n: 4, text: 'Papel', lx: 330, ly: 195 },
-      { n: 5, text: 'dashboard', lx: 55, ly: 278 },
-      { n: 6, text: 'Salvar', lx: 330, ly: 368 },
+      { n: 5, text: 'Telas', lx: 55, ly: 278 },
+      { n: 6, text: 'Ver', lx: 330, ly: 368 },
     ]],
     ['m15-mudanca-papeis.png', 'Mudança de Papéis', [
       { n: 1, text: 'Membro', lx: 55, ly: 182 },
@@ -163,6 +163,10 @@ export const manutencaoJobs = [
         await clickByText(page, 'Novo evento');
         await new Promise((r) => setTimeout(r, 2000));
       }
+      if (file === 'm14-controle-acesso.png') {
+        await clickByText(page, 'Papéis');
+        await new Promise((r) => setTimeout(r, 1800));
+      }
       const callouts = await resolveCallouts(page, calloutDefs);
       await saveScreenshot(page, path.join(outDir, file), callouts);
     },
@@ -179,7 +183,7 @@ export const manutencaoJobs = [
       });
       await new Promise((r) => setTimeout(r, 2800));
       const callouts = await resolveCallouts(page, [
-        { n: 1, text: 'LGPD Inativo', lx: 330, ly: 118 },
+        { n: 1, ariaLabel: 'LGPD Inativo', lx: 330, ly: 118 },
         { n: 2, text: 'LGPD inativado', lx: 55, ly: 72 },
         { n: 3, text: 'privacidade', lx: 330, ly: 92 },
       ]);

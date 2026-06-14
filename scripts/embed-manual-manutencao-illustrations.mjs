@@ -39,7 +39,7 @@ function block(image, title) {
 
   return `
 
-### Ilustração — ${title} *(dados fictícios)*
+### Ilustração — ${title}
 
 ![${title} — captura anotada](docs/manual-manutencao/screens/${image})
 
@@ -57,7 +57,7 @@ content = content.replace(/\n### Ilustração —[\s\S]*?(?=\n### |\n# |\n## |\n
 if (!content.includes('| **Ilustração** |')) {
   content = content.replace(
     '| **Dica** | Atalho ou cuidado útil |',
-    '| **Dica** | Atalho ou cuidado útil |\n| **Ilustração** | Captura da tela com **marcadores numerados** (①②③…); tabela **Ref.** explica cada ponto *(dados fictícios)* |'
+    '| **Dica** | Atalho ou cuidado útil |\n| **Ilustração** | Captura da tela com **marcadores numerados** (①②③…); tabela **Ref.** explica cada ponto |'
   );
 }
 

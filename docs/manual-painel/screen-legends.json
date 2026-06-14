@@ -68,7 +68,7 @@
     ],
     [
       "④",
-      "**Concluir Cadastro** — sem termos LGPD nem selfie quando `LGPD_Ativo = nao`"
+      "**Continuar** — envia ao Índice quando `LGPD_Ativo = nao` (sem termos nem selfie)"
     ]
   ],
   "02-indice-painel.png": [
@@ -138,7 +138,7 @@
   "06-dizimos-ofertas.png": [
     [
       "①",
-      "Dados do **recebedor** (nome e CNPJ fictícios)"
+      "Dados do **recebedor** (nome e CNPJ da igreja)"
     ],
     [
       "②",
@@ -400,7 +400,7 @@
     ],
     [
       "④",
-      "Resumo do membro (nome fictício TstMax)"
+      "Resumo do membro (**Maurício de Freitas**)"
     ]
   ]
 }

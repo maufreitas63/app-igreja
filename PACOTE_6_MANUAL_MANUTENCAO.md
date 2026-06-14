@@ -37,7 +37,7 @@ Manual **autocontido** para quem **gerencia** o aplicativo: secretaria, líderes
 | **Passo a passo** | Ações numeradas |
 | **Resultado esperado** | O que você deve **ver** ou **confirmar** ao concluir — e o efeito no app dos membros |
 | **Dica** | Atalho ou cuidado útil |
-| **Ilustração** | Captura da tela com **marcadores numerados** (①②③…); tabela **Ref.** explica cada ponto *(dados fictícios)* |
+| **Ilustração** | Captura da tela com **marcadores numerados** (①②③…); tabela **Ref.** explica cada ponto |
 | **Se der erro** | Mensagens comuns e o que fazer |
 
 Itens em **negrito** são botões, títulos ou áreas da interface.
@@ -60,7 +60,7 @@ Abrir o painel de manutenção a partir do app, com sua conta de equipe.
 ### Caminho
 **Índice do Aplicativo** → rodapé → ícone **engrenagem** (Configurações) → **Manutenção**.
 
-### Ilustração — Acesso pela engrenagem *(dados fictícios)*
+### Ilustração — Acesso pela engrenagem
 
 ![Acesso pela engrenagem — captura anotada](docs/manual-manutencao/screens/m00-acesso-engrenagem.png)
 
@@ -105,7 +105,7 @@ Alternar entre os cards de manutenção e voltar ao Índice ou ao menu interno.
 ### Caminho
 Rodapé **‹** · **Menu** ou **Voltar** · **›** + contador **N / M** (âmbar).
 
-### Ilustração — Menu de módulos *(dados fictícios)*
+### Ilustração — Menu de módulos
 
 ![Menu de módulos — captura anotada](docs/manual-manutencao/screens/m01-menu-modulos.png)
 
@@ -161,7 +161,7 @@ Publicar cultos e eventos para que os **membros** vejam na Agenda, marquem audi�
 ### Caminho
 **Programação de Eventos** → **Novo evento** ou toque em evento da lista.
 
-### Ilustração — Programação de Eventos *(dados fictícios)*
+### Ilustração — Programação de Eventos
 
 ![Programação de Eventos — captura anotada](docs/manual-manutencao/screens/m02-programacao-eventos.png)
 
@@ -175,7 +175,7 @@ Publicar cultos e eventos para que os **membros** vejam na Agenda, marquem audi�
 
 ### Passo a passo — criar evento
 
-### Ilustração — Editor de evento *(dados fictícios)*
+### Ilustração — Editor de evento
 
 ![Editor de evento — captura anotada](docs/manual-manutencao/screens/m03-editor-evento.png)
 
@@ -247,14 +247,14 @@ Visualizar eventos no tempo e abrir a edição rapidamente.
 ### Caminho
 **Cronograma de Eventos**.
 
-### Ilustração — Cronograma de Eventos *(dados fictícios)*
+### Ilustração — Cronograma de Eventos
 
 ![Cronograma de Eventos — captura anotada](docs/manual-manutencao/screens/m04-cronograma.png)
 
 | Ref. | Elemento indicado na imagem |
 |:----:|------------------------------|
 | ① | Barras do **Cronograma de Eventos** |
-| ② | Toque na barra abre a **edição** do evento |
+| ② | Toque na barra abre a **edição** do evento (ex.: **Maurício de Freitas** no cronograma) |
 
 
 
@@ -283,7 +283,7 @@ Registrar a **entrada física** de crianças e adolescentes nas salas — o que 
 ### Caminho
 **Sala(s) - Check In** (após selecionar evento na Agenda do membro).
 
-### Ilustração — Sala(s) - Check In *(dados fictícios)*
+### Ilustração — Sala(s) - Check In
 
 ![Sala(s) - Check In — captura anotada](docs/manual-manutencao/screens/m05-sala-checkin.png)
 
@@ -335,7 +335,7 @@ Cadastrar **tipos de serviço** (vigilância, estacionamento, intercessão, etc.
 ### Caminho
 **Tipos de Escala** *(requer permissão de card de escala)*.
 
-### Ilustração — Tipos de Escala *(dados fictícios)*
+### Ilustração — Tipos de Escala
 
 ![Tipos de Escala — captura anotada](docs/manual-manutencao/screens/m06-tipos-escala.png)
 
@@ -378,7 +378,7 @@ Associar **pessoas** (perfis) a cada tipo de escala, na ordem em que entrarão n
 ### Caminho
 **Servos em Disponibilidade** → título interno **Servos das escalas**.
 
-### Ilustração — Servos em Disponibilidade *(dados fictícios)*
+### Ilustração — Servos em Disponibilidade
 
 ![Servos em Disponibilidade — captura anotada](docs/manual-manutencao/screens/m07-servos-disponibilidade.png)
 
@@ -424,7 +424,7 @@ Definir **quem serve em qual domingo** — manualmente ou em bloco — para o me
 ### Caminho
 **Programação de Escalas** → título interno **Manutenção de escalas**.
 
-### Ilustração — Programação de Escalas *(dados fictícios)*
+### Ilustração — Programação de Escalas
 
 ![Programação de Escalas — captura anotada](docs/manual-manutencao/screens/m08-programacao-escalas.png)
 
@@ -485,7 +485,7 @@ Receber e **acompanhar pedidos** enviados pelo card **Coração Aberto** dos mem
 ### Caminho
 **Cuidado Pastoral** *(requer permissão `maintenance.card.pastoral_care`)*.
 
-### Ilustração — Cuidado Pastoral *(dados fictícios)*
+### Ilustração — Cuidado Pastoral
 
 ![Cuidado Pastoral — captura anotada](docs/manual-manutencao/screens/m09-cuidado-pastoral.png)
 
@@ -534,7 +534,7 @@ Importar movimentação, comentar lançamentos, anexar comprovantes e conciliar 
 ### Caminho
 **Informações Financeiras** *(requer permissão financeira de manutenção)*.
 
-### Ilustração — Informações Financeiras *(dados fictícios)*
+### Ilustração — Informações Financeiras
 
 ![Informações Financeiras — captura anotada](docs/manual-manutencao/screens/m10-financeiro-manut.png)
 
@@ -618,7 +618,7 @@ Gerar o **documento formal** de presença para assembleias com **Requer Quorum =
 ### Caminho
 **Lista de Presença** — após configurar quórum no evento (Parte 1).
 
-### Ilustração — Lista de Presença *(dados fictícios)*
+### Ilustração — Lista de Presença
 
 ![Lista de Presença — captura anotada](docs/manual-manutencao/screens/m11-lista-presenca.png)
 
@@ -660,7 +660,7 @@ Localizar perfil de membro, **corrigir CEP/endereço** e, quando necessário, **
 ### Caminho
 **Cadastro de Usuário** — visível apenas para **super_admin**.
 
-### Ilustração — Cadastro de Usuário *(dados fictícios)*
+### Ilustração — Cadastro de Usuário
 
 ![Cadastro de Usuário — captura anotada](docs/manual-manutencao/screens/m12-cadastro-usuario.png)
 
@@ -708,7 +708,7 @@ Processar cadastros enviados pelo formulário público **`/cadastro-familia/`** 
 ### Caminho
 **Recepção Familiar** — equipe com permissão `maintenance.card.profile_cadastro` (mesmo recurso do Cadastro de Usuário).
 
-### Ilustração — Recepção Familiar *(dados fictícios)*
+### Ilustração — Recepção Familiar
 
 ![Recepção Familiar — captura anotada](docs/manual-manutencao/screens/m13-recepcao-familiar.png)
 
@@ -750,7 +750,7 @@ Definir **quem vê e edita** cada tela, card e coluna — incluindo manutenção
 ### Caminho
 **Controle de Acesso** — apenas **super_admin**.
 
-### Ilustração — Controle de Acesso *(dados fictícios)*
+### Ilustração — Controle de Acesso
 
 ![Controle de Acesso — captura anotada](docs/manual-manutencao/screens/m14-controle-acesso.png)
 
@@ -758,15 +758,16 @@ Definir **quem vê e edita** cada tela, card e coluna — incluindo manutenção
 |:----:|------------------------------|
 | ① | Título compacto **Controle de Acesso** |
 | ② | Interruptor **LGPD Ativo / LGPD Inativo** (parâmetro `LGPD_Ativo`) |
-| ③ | Abas **Perfis** e **Papéis** |
-| ④ | Seletor de **Papel** na aba Papéis |
-| ⑤ | Lista de **grants** (telas, tabelas, colunas) |
-| ⑥ | **Salvar permissões** do grant selecionado |
+| ③ | Aba **Papéis** — grants por recurso (Telas / Tabelas / Colunas) |
+| ④ | Seletor de **Papel** (chips de papéis cadastrados) |
+| ⑤ | Filtro **Telas** na lista de grants |
+| ⑥ | Interruptor **Ver** — concede visualização do recurso ao papel |
+
 
 
 ### Controle global — módulo LGPD
 
-### Ilustração — LGPD inativado (resultado do clique) *(dados fictícios)*
+### Ilustração — LGPD inativado (resultado do clique)
 
 ![LGPD inativado (resultado do clique) — captura anotada](docs/manual-manutencao/screens/m14b-lgpd-modulo-inativo.png)
 
@@ -777,23 +778,6 @@ Definir **quem vê e edita** cada tela, card e coluna — incluindo manutenção
 | ③ | Mensagem: o alerta de LGPD pendente deixa de ser exibido no painel do membro |
 
 
-No cabeçalho do card, à direita do título compacto **Controle de Acesso**, o interruptor tipo rádio **LGPD Ativo** (azul) / **LGPD Inativo** (vermelho) grava o parâmetro `LGPD_Ativo` em `app_parameters`:
-
-| Valor | Efeito no aplicativo do membro |
-|-------|-------------------------------|
-| **`sim`** | Cadastro com termos LGPD + selfie; login pode redirecionar a `/lgpd`; cabeçalho vermelho se LGPD pendente |
-| **`nao`** | Cadastro só com nome, nascimento e CEP → **Índice**; sem `/lgpd`; sem alerta vermelho de LGPD |
-
-**Passo a passo — alternar LGPD**
-
-1. Abra **Controle de Acesso** (super_admin).
-2. Toque **LGPD Ativo** ou **LGPD Inativo** no cabeçalho.
-3. Aguarde toast **LGPD ativado** ou **LGPD inativado**.
-4. O valor persiste no Supabase via RPC `salvar_app_parameter_admin` (script `scripts/salvar-app-parameter-admin.sql`).
-
-**Resultado esperado do clique**
-
-- Toast confirma gravação; o painel do membro passa a seguir o modo escolhido na próxima sessão (cache de parâmetro ~5 min).
 
 ### Aba Perfis — passo a passo
 
@@ -843,7 +827,7 @@ Alterar o papel básico de um perfil entre **visitante**, **congregado** e **mem
 ### Caminho
 **Mudança de Papéis** — perfis com papel `pastoral` ou `super_admin`.
 
-### Ilustração — Mudança de Papéis *(dados fictícios)*
+### Ilustração — Mudança de Papéis
 
 ![Mudança de Papéis — captura anotada](docs/manual-manutencao/screens/m15-mudanca-papeis.png)
 
@@ -881,7 +865,7 @@ Consultar **quantos logins** cada usuário fez no app e **quais telas/cards** vi
 ### Caminho
 **Acessos de Usuários** — último card do carrossel; apenas **super_admin** (ou grant explícito em `maintenance.card.profile_access_insights`).
 
-### Ilustração — Acessos de Usuários *(dados fictícios)*
+### Ilustração — Acessos de Usuários
 
 ![Acessos de Usuários — captura anotada](docs/manual-manutencao/screens/m16-acessos-usuarios.png)
 

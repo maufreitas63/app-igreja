@@ -64,9 +64,9 @@ export const painelJobs = [
       await prepLoginStep2(page, baseUrl, '(12) 99999-9999');
       const callouts = await resolveCallouts(page, [
         { n: 1, text: 'Celular confirmado', lx: 55, ly: 235 },
-        { n: 2, text: 'Continuar', lx: 55, ly: 160 },
+        { n: 2, text: 'Continuar', fx: 195, fy: 545, lx: 55, ly: 160 },
         { n: 3, text: 'Código de acesso', lx: 330, ly: 420 },
-        { n: 4, text: 'Receber código no WhatsApp', lx: 55, ly: 310 },
+        { n: 4, ariaLabel: 'Receber código no WhatsApp', lx: 55, ly: 310 },
       ]);
       await saveScreenshot(page, path.join(outDir, '00-login.png'), callouts);
     },
@@ -74,18 +74,45 @@ export const painelJobs = [
   {
     file: '01-cadastro.png',
     async run(ctx) {
-      await ensureMemberLogin(ctx);
-      const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts, member } = ctx;
-      const phoneParam = encodeURIComponent(member.phone);
+      const {
+        page,
+        baseUrl,
+        gotoAndSettle,
+        saveScreenshot,
+        resolveCallouts,
+        saveAppParameterAdmin,
+        getMaintActorProfileId,
+      } = ctx;
+      const actorId = getMaintActorProfileId();
+      await saveAppParameterAdmin(actorId, 'LGPD_Ativo', 'sim');
+      await page.goto(`${baseUrl}/?signedOut=1`, { waitUntil: 'networkidle2', timeout: 60000 });
+      await new Promise((r) => setTimeout(r, 1200));
+      const phoneParam = encodeURIComponent('(12) 99999-9999');
       await gotoAndSettle(page, `${baseUrl}/register?phone=${phoneParam}`);
-      const onRegister = await page.evaluate(() => document.body.innerText.includes('Cadastro'));
-      if (!onRegister) {
-        await gotoAndSettle(page, `${baseUrl}/manage-profile`);
+      const nameInput = await page.$('input[placeholder="Nome completo"]');
+      if (nameInput) {
+        await nameInput.type('Maria Silva Teste', { delay: 15 });
+        const birthInput = await page.$('input[placeholder*="Data Nascimento"]');
+        if (birthInput) await birthInput.type('01011990', { delay: 15 });
+        const cepInput = await page.$('input[placeholder*="CEP"]');
+        if (cepInput) await cepInput.type('11677042', { delay: 15 });
+        await page.evaluate(() => {
+          const scrollable = [...document.querySelectorAll('div')].find((el) => {
+            const style = window.getComputedStyle(el);
+            return (style.overflowY === 'auto' || style.overflowY === 'scroll')
+              && el.scrollHeight > el.clientHeight + 40
+              && el.textContent?.includes('Termos de Uso');
+          });
+          if (scrollable) scrollable.scrollTop = scrollable.scrollHeight;
+        });
+        await new Promise((r) => setTimeout(r, 600));
+        await clickByExactText(page, 'Li e aceito');
+        await new Promise((r) => setTimeout(r, 800));
       }
       const callouts = await resolveCallouts(page, [
         { n: 1, text: 'Nome completo', lx: 330, ly: 105 },
         { n: 2, text: 'Data Nascimento', lx: 55, ly: 158 },
-        { n: 3, text: 'Termos de Uso e Privacidade', lx: 330, ly: 285 },
+        { n: 3, texts: ['Termos de Uso e Privacidade', 'Termos de Uso'], fx: 195, fy: 300, lx: 330, ly: 285 },
         { n: 4, text: 'Li e aceito', lx: 55, ly: 368 },
         { n: 5, text: 'Tirar Selfie Biométrica', lx: 330, ly: 410 },
       ]);
@@ -124,11 +151,20 @@ export const painelJobs = [
       await new Promise((r) => setTimeout(r, 1200));
       const phoneParam = encodeURIComponent('(12) 99999-9999');
       await gotoAndSettle(page, `${baseUrl}/register?phone=${phoneParam}`);
+      const nameInput = await page.$('input[placeholder="Nome completo"]');
+      if (nameInput) {
+        await nameInput.type('Visitante Sem LGPD', { delay: 15 });
+        const birthInput = await page.$('input[placeholder*="Data Nascimento"]');
+        if (birthInput) await birthInput.type('15051985', { delay: 15 });
+        const cepInput = await page.$('input[placeholder*="CEP"]');
+        if (cepInput) await cepInput.type('11677042', { delay: 15 });
+        await new Promise((r) => setTimeout(r, 500));
+      }
       const callouts = await resolveCallouts(page, [
         { n: 1, text: 'Nome completo', lx: 330, ly: 105 },
         { n: 2, text: 'Data Nascimento', lx: 55, ly: 158 },
-        { n: 3, text: 'CEP', lx: 330, ly: 228 },
-        { n: 4, text: 'Continuar', lx: 55, ly: 390 },
+        { n: 3, text: 'CEP da residência', lx: 330, ly: 228 },
+        { n: 4, ariaLabel: 'Continuar', text: 'Continuar', lx: 55, ly: 390 },
       ]);
       await saveScreenshot(page, path.join(outDir, '01c-cadastro-sem-lgpd.png'), callouts);
       await saveAppParameterAdmin(actorId, 'LGPD_Ativo', 'sim');
@@ -141,9 +177,9 @@ export const painelJobs = [
       const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts, member } = ctx;
       await gotoAndSettle(page, `${baseUrl}/(tabs)`);
       const callouts = await resolveCallouts(page, [
-        { n: 1, text: 'Painel de Eventos', lx: 55, ly: 285 },
-        { n: 2, text: 'Índice do Aplicativo', lx: 330, ly: 365 },
-        { n: 3, text: '1 /', lx: 330, ly: 535 },
+        { n: 1, text: 'Índice do Aplicativo', lx: 55, ly: 285 },
+        { n: 2, text: 'Agenda da Família', lx: 330, ly: 365 },
+        { n: 3, text: ' / ', lx: 330, ly: 535 },
         { n: 4, text: 'Encerrar sessão', lx: 55, ly: 775 },
       ]);
       await saveScreenshot(page, path.join(outDir, '02-indice-painel.png'), callouts);
@@ -152,8 +188,8 @@ export const painelJobs = [
   ...[
     ['03-agenda-familia.png', '1', 'Agenda da Família', [
       { n: 1, text: 'Evento', lx: 330, ly: 185 },
-      { n: 2, text: 'Vagas', lx: 55, ly: 270 },
-      { n: 3, text: 'Trocar', lx: 330, ly: 270 },
+      { n: 2, text: 'Vagas', fx: 300, fy: 270, lx: 55, ly: 270 },
+      { n: 3, text: 'Trocar Evento', lx: 330, ly: 270 },
       { n: 4, text: 'Audiência', lx: 55, ly: 378 },
     ]],
     ['04-qr-checkin.png', 'qr', 'QR', [
@@ -167,9 +203,9 @@ export const painelJobs = [
       { n: 3, text: 'IBN', lx: 55, ly: 250 },
     ]],
     ['06-dizimos-ofertas.png', '3', 'Dízimos', [
-      { n: 1, text: 'Para', lx: 330, ly: 170 },
-      { n: 2, text: 'PIX', lx: 55, ly: 278 },
-      { n: 3, text: 'Copiar', lx: 330, ly: 348 },
+      { n: 1, text: 'Dados do recebedor', lx: 330, ly: 170 },
+      { n: 2, text: 'Chave PIX', lx: 55, ly: 278 },
+      { n: 3, texts: ['Copiar chave PIX', 'Atualizar chave PIX'], lx: 330, ly: 348 },
     ]],
     ['07-coracao-aberto.png', '5', 'Coração', [
       { n: 1, text: 'Motivo', lx: 330, ly: 180 },
@@ -178,9 +214,9 @@ export const painelJobs = [
       { n: 4, text: 'Meus pedidos', lx: 55, ly: 410 },
     ]],
     ['08-lista-membros.png', '10', 'Membros', [
-      { n: 1, text: 'Procurar', lx: 330, ly: 238 },
+      { n: 1, text: 'Procurar membro', lx: 330, ly: 238 },
       { n: 2, text: 'Mapa Geral', lx: 55, ly: 285 },
-      { n: 3, text: 'Família', lx: 330, ly: 348 },
+      { n: 3, ariaLabel: 'Abrir WhatsApp', fx: 320, fy: 360, lx: 330, ly: 348 },
     ]],
     ['09-aniversariantes.png', '7', 'Aniversariantes', [
       { n: 1, text: 'Mês', lx: 330, ly: 172 },
@@ -304,10 +340,10 @@ export const painelJobs = [
       await page.evaluate(() => window.scrollTo(0, 0));
       await new Promise((r) => setTimeout(r, 800));
       const callouts = await resolveCallouts(page, [
-        { n: 1, text: 'Tirar Selfie', lx: 330, ly: 250 },
-        { n: 2, text: 'Atualizar Selfie', lx: 330, ly: 250 },
+        { n: 1, text: 'Atualizar Selfie', lx: 330, ly: 250 },
+        { n: 2, fx: 95, fy: 220, lx: 55, ly: 250 },
         { n: 3, text: 'LGPD', lx: 55, ly: 200 },
-        { n: 4, text: 'Representante', lx: 55, ly: 150 },
+        { n: 4, text: 'Maurício de Freitas', lx: 330, ly: 150 },
       ]);
       await saveScreenshot(page, path.join(outDir, '17-selfie-biometrica.png'), callouts);
     },

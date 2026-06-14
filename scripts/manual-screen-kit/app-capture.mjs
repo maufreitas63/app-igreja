@@ -128,17 +128,25 @@ async function centerOf(page, selector) {
  */
 async function centerOfText(page, text) {
   const point = await page.evaluate((needle) => {
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    while (walker.nextNode()) {
-      const node = walker.currentNode;
-      if (!node.textContent?.includes(needle)) continue;
-      const el = node.parentElement;
-      if (!el) continue;
+    const lower = needle.toLowerCase();
+    let best = null;
+    let bestArea = Infinity;
+
+    const consider = (el) => {
+      if (!(el instanceof Element)) return;
+      const content = el.textContent?.trim() ?? '';
+      if (!content.toLowerCase().includes(lower)) return;
       const r = el.getBoundingClientRect();
-      if (r.width < 2 || r.height < 2) continue;
-      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
-    }
-    return null;
+      if (r.width < 2 || r.height < 2 || r.bottom < 0 || r.top > window.innerHeight) return;
+      const area = r.width * r.height;
+      if (area < bestArea) {
+        bestArea = area;
+        best = { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+      }
+    };
+
+    document.querySelectorAll('input, textarea, button, label, span, div, p, h1, h2, h3').forEach(consider);
+    return best;
   }, text);
 
   return point;
@@ -146,7 +154,52 @@ async function centerOfText(page, text) {
 
 /**
  * @param {import('puppeteer').Page} page
- * @param {{ n: number, selector?: string, text?: string, lx: number, ly: number }[]} callouts
+ * @param {string} label
+ */
+async function centerOfAriaLabel(page, label) {
+  const point = await page.evaluate((needle) => {
+    const lower = needle.toLowerCase();
+    const els = [...document.querySelectorAll('[aria-label]')];
+    const hit = els.find((el) => (el.getAttribute('aria-label') ?? '').toLowerCase().includes(lower));
+    if (!hit) return null;
+    const r = hit.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return null;
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  }, label);
+
+  return point;
+}
+
+/**
+ * @param {import('puppeteer').Page} page
+ * @param {string} text
+ */
+async function centerOfPlaceholder(page, text) {
+  const point = await page.evaluate((needle) => {
+    const lower = needle.toLowerCase();
+    const inputs = [...document.querySelectorAll('input, textarea')];
+    const hit = inputs.find((el) => (el.getAttribute('placeholder') ?? '').toLowerCase().includes(lower));
+    if (!hit) return null;
+    const r = hit.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return null;
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  }, text);
+
+  return point;
+}
+
+/**
+ * @param {import('puppeteer').Page} page
+ * @param {{
+ *   n: number,
+ *   selector?: string,
+ *   text?: string,
+ *   ariaLabel?: string,
+ *   fx?: number,
+ *   fy?: number,
+ *   lx: number,
+ *   ly: number,
+ * }[]} callouts
  */
 async function resolveCallouts(page, callouts) {
   const resolved = [];
@@ -154,8 +207,24 @@ async function resolveCallouts(page, callouts) {
     let point = null;
     if (c.selector) {
       point = await centerOf(page, c.selector);
-    } else if (c.text) {
-      point = await centerOfText(page, c.text);
+    }
+    if (!point && c.ariaLabel) {
+      point = await centerOfAriaLabel(page, c.ariaLabel);
+    }
+    const needles = c.texts ?? (c.text ? [c.text] : []);
+    for (const needle of needles) {
+      if (point) break;
+      point = await centerOfPlaceholder(page, needle);
+      if (!point) point = await centerOfText(page, needle);
+    }
+    if (!point && c.fx != null && c.fy != null) {
+      point = { x: c.fx, y: c.fy };
+    }
+    if (!point) {
+      point = {
+        x: c.lx > 195 ? Math.max(24, c.lx - 90) : Math.min(366, c.lx + 90),
+        y: Math.max(48, c.ly - 42),
+      };
     }
     if (!point) {
       console.warn(`Callout ${c.n}: alvo não encontrado`);
@@ -292,9 +361,10 @@ export async function captureAppScreens(jobs, outDir) {
   const { baseUrl, close } = await startDistServer(8765);
   const maintCreds = await fetchMaintCredentials();
   const memberCreds = await fetchMemberCredentials();
-  const redactionReplacements = await loadRedactionReplacements();
+  const redactionReplacements =
+    process.env.MANUAL_SCREEN_REDACT_PII === '1' ? await loadRedactionReplacements() : [];
   console.log(`Conta membro: ${memberCreds.phone} · Conta manutenção: ${maintCreds.phone}`);
-  console.log(`Redação LGPD: ${redactionReplacements.length} substituições`);
+  console.log(`Redação LGPD: ${redactionReplacements.length} substituições (use MANUAL_SCREEN_REDACT_PII=1 para mascarar)`);
 
   const browser = await puppeteer.launch({
     headless: true,

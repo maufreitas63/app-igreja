@@ -1,4 +1,4 @@
-import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { ACCESS_SCREEN } from '@/lib/accessScreen';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { getStoredProfileId } from '@/lib/userSession';
