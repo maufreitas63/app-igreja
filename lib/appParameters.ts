@@ -28,17 +28,19 @@ async function fetchAppParameterValue(parameter: string): Promise<string | null>
     return typeof rpcData === 'string' && rpcData.trim() ? rpcData : null;
   }
 
-  const { data, error } = await supabase
+  const { data: rows, error } = await supabase
     .from('app_parameters')
-    .select('value')
-    .eq('parameter', parameter)
-    .maybeSingle();
+    .select('parameter, value')
+    .ilike('parameter', parameter);
 
   if (error) {
     throw error;
   }
 
-  return data?.value?.trim() || null;
+  const match = rows?.find((row) => (row.parameter ?? '').trim() === parameter.trim())
+    ?? rows?.find((row) => (row.parameter ?? '').trim().toLowerCase() === parameter.trim().toLowerCase());
+
+  return match?.value?.trim() || null;
 }
 
 export function clearAppParameterCache(parameter?: string) {

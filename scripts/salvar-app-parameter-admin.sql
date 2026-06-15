@@ -48,10 +48,27 @@ begin
   end if;
 
   update public.app_parameters
-     set value = v_value
-   where lower(parameter) = lower(v_parameter);
+     set value = v_value,
+         parameter = v_parameter
+   where lower(trim(parameter)) = lower(v_parameter);
 
-  if not found then
+  delete from public.app_parameters dup
+   where lower(trim(dup.parameter)) = lower(v_parameter)
+     and dup.ctid not in (
+       select ap.ctid
+         from public.app_parameters ap
+        where lower(trim(ap.parameter)) = lower(v_parameter)
+        order by
+          case when ap.parameter = v_parameter then 0 else 1 end,
+          ap.parameter
+        limit 1
+     );
+
+  if not exists (
+    select 1
+      from public.app_parameters ap
+     where lower(trim(ap.parameter)) = lower(v_parameter)
+  ) then
     insert into public.app_parameters (parameter, value)
     values (v_parameter, v_value);
   end if;

@@ -10,7 +10,10 @@ begin
   select ap.value
   into v_value
   from public.app_parameters ap
-  where lower(ap.parameter) = lower(p_parameter)
+  where lower(trim(ap.parameter)) = lower(trim(p_parameter))
+  order by
+    case when ap.parameter = trim(p_parameter) then 0 else 1 end,
+    ap.parameter
   limit 1;
 
   return v_value;
