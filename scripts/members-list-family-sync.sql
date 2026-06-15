@@ -1,8 +1,22 @@
 -- Correção members_list: family_id da lista alinhado a members + modal por código familiar.
 -- Causa: profiles.family_id divergente de members.family_id (recepção); modal buscava código errado;
---        fallback direto em members bloqueado por RLS.
+--        fallback direto em members bloqueado por RLS; access-control-security-hardening.sql (C4)
+--        sobrescrevia estes RPCs com family_id só de profiles e ACL só do mapa.
 --
--- Execute no SQL Editor do Supabase (autossuficiente).
+-- Execute no SQL Editor do Supabase DEPOIS de access-control-security-hardening.sql (autossuficiente).
+-- Reparo de dados existentes: scripts/sync-profiles-family-from-members.sql
+
+create or replace function public.session_has_members_directory_access()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    public.session_has_screen_access('/mapa-geolocalizacao', 'view')
+    or public.session_has_screen_access('dashboard.card.members_list', 'view');
+$$;
 
 create or replace function public.normalize_profile_phone(p_phone text)
 returns text
@@ -225,11 +239,17 @@ returns table (
   address_city text,
   address_state text
 )
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public
 as $$
+begin
+  if not public.session_has_members_directory_access() then
+    return;
+  end if;
+
+  return query
   select
     p.id as profile_id,
     trim(p.full_name) as full_name,
@@ -250,6 +270,7 @@ as $$
     and trim(p.full_name) <> ''
     and not public.profile_is_visitantes_only(p.id)
   order by trim(p.full_name) asc;
+end;
 $$;
 
 drop function if exists public.list_profiles_visitors_directory();
@@ -268,11 +289,17 @@ returns table (
   address_city text,
   address_state text
 )
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public
 as $$
+begin
+  if not public.session_has_members_directory_access() then
+    return;
+  end if;
+
+  return query
   select
     p.id as profile_id,
     trim(p.full_name) as full_name,
@@ -293,6 +320,7 @@ as $$
     and trim(p.full_name) <> ''
     and public.profile_is_visitantes_only(p.id)
   order by trim(p.full_name) asc;
+end;
 $$;
 
 -- Fallback seguro (security definer) quando consulta direta a members é bloqueada por RLS.
@@ -306,11 +334,17 @@ returns table (
   relationship text,
   family_id text
 )
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public
 as $$
+begin
+  if not public.session_has_members_directory_access() then
+    return;
+  end if;
+
+  return query
   select
     m.id as member_id,
     trim(m.full_name) as full_name,
@@ -322,6 +356,7 @@ as $$
   order by
     public.family_relationship_display_rank(m.relationship),
     trim(m.full_name) asc;
+end;
 $$;
 
 -- Modal: busca direta por código familiar (ex.: IBN0103).
@@ -345,11 +380,17 @@ returns table (
   address_city text,
   address_state text
 )
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public
 as $$
+begin
+  if not public.session_has_members_directory_access() then
+    return;
+  end if;
+
+  return query
   with canonical as (
     select upper(nullif(trim(coalesce(p_family_id, '')), '')) as family_id
   ),
@@ -473,6 +514,7 @@ as $$
   order by
     public.family_relationship_display_rank(m.relationship),
     m.full_name asc;
+end;
 $$;
 
 drop function if exists public.list_profiles_family_directory(uuid, boolean);
@@ -497,11 +539,18 @@ returns table (
   address_city text,
   address_state text
 )
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public
 as $$
+declare
+  v_family_id text;
+begin
+  if not public.session_has_members_directory_access() then
+    return;
+  end if;
+
   with seed as (
     select
       p.id as profile_id,
@@ -530,13 +579,17 @@ as $$
       upper(nullif(trim(coalesce(p_displayed_family_id, '')), ''))
     ) as family_id
   )
+  select c.family_id
+    into v_family_id
+    from canonical c;
+
+  return query
   select *
-    from public.list_profiles_family_directory_by_code(
-      (select family_id from canonical),
-      p_visitors_only
-    );
+    from public.list_profiles_family_directory_by_code(v_family_id, p_visitors_only);
+end;
 $$;
 
+grant execute on function public.session_has_members_directory_access() to anon, authenticated;
 grant execute on function public.resolve_member_family_id_for_directory_person(text, text) to anon, authenticated;
 grant execute on function public.resolve_directory_canonical_family_id(text, text, text) to anon, authenticated;
 grant execute on function public.list_members_family_directory(text) to anon, authenticated;

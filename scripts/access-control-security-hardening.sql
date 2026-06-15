@@ -515,8 +515,22 @@ end;
 $$;
 
 -- ===========================================================================
--- C4: Diretórios do mapa
+-- C4: Diretórios do mapa e card Lista de Membros
+-- IMPORTANTE: reaplique scripts/members-list-family-sync.sql DEPOIS deste bloco
+-- para RPCs do modal familiar (list_profiles_family_directory*).
 -- ===========================================================================
+
+create or replace function public.session_has_members_directory_access()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    public.session_has_screen_access('/mapa-geolocalizacao', 'view')
+    or public.session_has_screen_access('dashboard.card.members_list', 'view');
+$$;
 
 create or replace function public.list_profiles_members_directory()
 returns table (
@@ -538,7 +552,7 @@ security definer
 set search_path = public
 as $$
 begin
-  if not public.session_has_screen_access('/mapa-geolocalizacao', 'view') then
+  if not public.session_has_members_directory_access() then
     return;
   end if;
 
@@ -548,8 +562,8 @@ begin
     trim(p.full_name) as full_name,
     nullif(trim(coalesce(p.phone, '')), '') as phone,
     coalesce(
-      nullif(trim(coalesce(p.family_id, '')), ''),
-      nullif(trim(coalesce(p.codigo_membro, '')), '')
+      public.resolve_member_family_id_for_directory_person(p.phone, trim(p.full_name)),
+      public.profile_directory_family_code(p.family_id, p.codigo_membro)
     ) as family_id,
     public.profile_is_visitantes_only(p.id) as is_visitantes_only,
     nullif(trim(coalesce(p.cep, '')), '') as cep,
@@ -586,7 +600,7 @@ security definer
 set search_path = public
 as $$
 begin
-  if not public.session_has_screen_access('/mapa-geolocalizacao', 'view') then
+  if not public.session_has_members_directory_access() then
     return;
   end if;
 
@@ -596,8 +610,8 @@ begin
     trim(p.full_name) as full_name,
     nullif(trim(coalesce(p.phone, '')), '') as phone,
     coalesce(
-      nullif(trim(coalesce(p.family_id, '')), ''),
-      nullif(trim(coalesce(p.codigo_membro, '')), '')
+      public.resolve_member_family_id_for_directory_person(p.phone, trim(p.full_name)),
+      public.profile_directory_family_code(p.family_id, p.codigo_membro)
     ) as family_id,
     true as is_visitantes_only,
     nullif(trim(coalesce(p.cep, '')), '') as cep,

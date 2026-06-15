@@ -1174,7 +1174,8 @@ begin
                  m.phone
                ),
                relationship = v_member.relationship,
-               family_id = v_family_id
+               family_id = v_family_id,
+               accepted = true
          where m.id = v_apply_member_id;
       else
         insert into public.members (
@@ -1190,7 +1191,7 @@ begin
           public.recepcao_phone_for_storage(v_member.phone, v_member.full_name),
           v_member.relationship,
           v_family_id,
-          false
+          true
         )
         returning id into v_apply_member_id;
       end if;

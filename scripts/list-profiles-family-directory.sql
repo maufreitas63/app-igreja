@@ -1,7 +1,6 @@
 -- Diretório familiar para o card members_list (modal "Membros da família").
--- Centraliza o agrupamento profiles + members (código canônico via members aceitos).
--- Execute após access-control-map-pin-roles.sql (list_profiles_members_directory).
--- Autossuficiente: inclui normalize_profile_phone e phones_match_for_sync se ainda não existirem.
+-- SUPERSEDED: use scripts/members-list-family-sync.sql (versão canônica com members + ACL).
+-- Mantido para referência incremental; não execute após members-list-family-sync.sql.
 
 create or replace function public.normalize_profile_phone(p_phone text)
 returns text
