@@ -518,6 +518,7 @@ export default function Dashboard() {
   const [familyModalSeedEntry, setFamilyModalSeedEntry] = useState<MemberListEntry | null>(null);
   const [familyModalFamilyId, setFamilyModalFamilyId] = useState<string | null>(null);
   const [familyModalMembers, setFamilyModalMembers] = useState<MemberListEntry[]>([]);
+  const [familyModalError, setFamilyModalError] = useState<string | null>(null);
   const [isFamilyModalLoading, setIsFamilyModalLoading] = useState(false);
   const [selectedBirthdayMonth, setSelectedBirthdayMonth] = useState(getCurrentBirthdayMonth);
   const [scaleTypes, setScaleTypes] = useState<ScaleTypeEntry[]>([]);
@@ -1523,6 +1524,7 @@ export default function Dashboard() {
     if (!familyModalSeedEntry) {
       setFamilyModalFamilyId(null);
       setFamilyModalMembers([]);
+      setFamilyModalError(null);
       setIsFamilyModalLoading(false);
       return;
     }
@@ -1530,6 +1532,7 @@ export default function Dashboard() {
     let cancelled = false;
     setFamilyModalFamilyId(normalizeFamilyCode(familyModalSeedEntry.family_id) || null);
     setFamilyModalMembers([]);
+    setFamilyModalError(null);
     setIsFamilyModalLoading(true);
 
     void (async () => {
@@ -1545,12 +1548,25 @@ export default function Dashboard() {
 
         setFamilyModalFamilyId(familyId);
         setFamilyModalMembers(members);
+
+        if (!members.length) {
+          setFamilyModalError(
+            familyId
+              ? `Nenhum integrante encontrado para a família ${familyId}. Verifique se scripts/members-list-family-sync.sql foi aplicado no Supabase.`
+              : 'Código familiar não identificado para este integrante.'
+          );
+        }
       } catch (error) {
         console.error('Erro ao carregar membros da família:', error);
 
         if (!cancelled) {
-          setFamilyModalFamilyId(null);
+          setFamilyModalFamilyId(normalizeFamilyCode(familyModalSeedEntry.family_id) || null);
           setFamilyModalMembers([]);
+          setFamilyModalError(
+            error instanceof Error
+              ? error.message
+              : 'Não foi possível carregar os membros da família.'
+          );
         }
       } finally {
         if (!cancelled) {
@@ -2680,6 +2696,7 @@ export default function Dashboard() {
                                       normalizeFamilyCode(entry.family_id) || null
                                     );
                                     setFamilyModalMembers([]);
+                                    setFamilyModalError(null);
                                   }}
                                   activeOpacity={0.85}
                                 >
@@ -3581,6 +3598,8 @@ export default function Dashboard() {
               >
                 {isFamilyModalLoading ? (
                   <CardLoadingState lines={3} compact />
+                ) : familyModalError ? (
+                  <Text style={styles.offeringsErrorText}>{familyModalError}</Text>
                 ) : familyModalMembers.length === 0 ? (
                   <Text style={styles.groupedAudienceEmptyText}>
                     Nenhum membro reconhecido nesta família.

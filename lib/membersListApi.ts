@@ -78,14 +78,18 @@ const toNullableText = (value: unknown) => {
 };
 
 const mapFamilyDirectoryRows = (
-  data: Array<Record<string, unknown>> | null | undefined
+  data: Array<Record<string, unknown>> | null | undefined,
+  fallbackFamilyId = ''
 ): { familyId: string; members: FamilyDirectoryMember[] } => {
+  const normalizedFallbackFamilyId = normalizeFamilyCode(fallbackFamilyId);
   const members = (data ?? [])
     .map((row) => {
       const profileId = row.profile_id != null ? String(row.profile_id).trim() : '';
       const memberId = row.member_id != null ? String(row.member_id).trim() : '';
       const fullName = String(row.full_name ?? row.fullName ?? '').trim();
-      const familyId = String(row.family_id ?? row.familyId ?? '').trim();
+      const familyId = normalizeFamilyCode(
+        String(row.family_id ?? row.familyId ?? normalizedFallbackFamilyId)
+      );
       const id = profileId || memberId;
 
       if (!id || !fullName || !familyId) {
@@ -112,9 +116,15 @@ const mapFamilyDirectoryRows = (
     .filter((row): row is FamilyDirectoryMember => row !== null);
 
   return {
-    familyId: members[0]?.family_id ?? '',
+    familyId: members[0]?.family_id ?? normalizedFallbackFamilyId,
     members,
   };
+};
+
+const trackMissingRpc = (missingRpcs: Set<string>, error: { message?: string } | null, rpcName: string) => {
+  if (isMissingRpcError(error, rpcName)) {
+    missingRpcs.add(rpcName);
+  }
 };
 
 const mapMembersFamilyDirectoryRows = (
@@ -158,13 +168,16 @@ const isMissingRpcError = (error: { message?: string } | null, rpcName: string) 
 };
 
 const fetchFamilyMembersFromMembersRpc = async (
-  familyId: string
+  familyId: string,
+  missingRpcs: Set<string>
 ): Promise<FamilyDirectoryMember[]> => {
   const { data, error } = await supabase.rpc('list_members_family_directory', {
     p_family_id: familyId,
   });
 
   if (error) {
+    trackMissingRpc(missingRpcs, error, 'list_members_family_directory');
+
     if (isMissingRpcError(error, 'list_members_family_directory')) {
       return [];
     }
@@ -177,7 +190,8 @@ const fetchFamilyMembersFromMembersRpc = async (
 
 const fetchFamilyMembersByFamilyCode = async (
   familyId: string,
-  visitorsOnly: boolean
+  visitorsOnly: boolean,
+  missingRpcs: Set<string>
 ): Promise<{ familyId: string; members: FamilyDirectoryMember[] } | null> => {
   const { data, error } = await supabase.rpc('list_profiles_family_directory_by_code', {
     p_family_id: familyId,
@@ -185,6 +199,8 @@ const fetchFamilyMembersByFamilyCode = async (
   });
 
   if (error) {
+    trackMissingRpc(missingRpcs, error, 'list_profiles_family_directory_by_code');
+
     if (isMissingRpcError(error, 'list_profiles_family_directory_by_code')) {
       return null;
     }
@@ -192,13 +208,47 @@ const fetchFamilyMembersByFamilyCode = async (
     throw error;
   }
 
-  const mapped = mapFamilyDirectoryRows(data as Array<Record<string, unknown>> | null);
+  const mapped = mapFamilyDirectoryRows(
+    data as Array<Record<string, unknown>> | null,
+    familyId
+  );
 
   if (!mapped.members.length) {
     return null;
   }
 
   return mapped;
+};
+
+const fetchFamilyMembersByProfile = async (
+  seedEntry: MembersDirectoryEntry,
+  displayedFamilyId: string,
+  visitorsOnly: boolean,
+  missingRpcs: Set<string>
+): Promise<{ familyId: string; members: FamilyDirectoryMember[] }> => {
+  const { data, error } = await supabase.rpc('list_profiles_family_directory', {
+    p_profile_id: seedEntry.id,
+    p_displayed_family_id: displayedFamilyId || null,
+    p_visitors_only: visitorsOnly,
+  });
+
+  if (error) {
+    trackMissingRpc(missingRpcs, error, 'list_profiles_family_directory');
+
+    if (!isMissingRpcError(error, 'list_profiles_family_directory')) {
+      throw error;
+    }
+
+    return {
+      familyId: displayedFamilyId,
+      members: [],
+    };
+  }
+
+  return mapFamilyDirectoryRows(
+    data as Array<Record<string, unknown>> | null,
+    displayedFamilyId
+  );
 };
 
 const fetchDirectoryFromRpc = async (
@@ -237,54 +287,56 @@ export async function fetchFamilyMembersForDirectoryEntry(
 ): Promise<{ familyId: string; members: FamilyDirectoryMember[] }> {
   const displayedFamilyId = normalizeFamilyCode(seedEntry.family_id);
   const visitorsOnly = options.visitorsOnly ?? false;
+  const missingRpcs = new Set<string>();
 
-  if (displayedFamilyId) {
-    try {
-      const byCode = await fetchFamilyMembersByFamilyCode(displayedFamilyId, visitorsOnly);
-
-      if (byCode?.members.length) {
-        return byCode;
-      }
-    } catch (error) {
-      if (!isMissingRpcError(error as { message?: string }, 'list_profiles_family_directory_by_code')) {
-        console.error('Erro ao carregar família por código:', error);
-      }
-    }
+  if (!seedEntry.id?.trim()) {
+    throw new Error('Perfil do integrante não identificado para carregar a família.');
   }
 
-  const { data, error } = await supabase.rpc('list_profiles_family_directory', {
-    p_profile_id: seedEntry.id,
-    p_displayed_family_id: displayedFamilyId || null,
-    p_visitors_only: visitorsOnly,
-  });
+  // 1) Perfil → SQL resolve family_id canônico em members (independente do código exibido na lista).
+  const byProfile = await fetchFamilyMembersByProfile(
+    seedEntry,
+    displayedFamilyId,
+    visitorsOnly,
+    missingRpcs
+  );
 
-  if (!error) {
-    const mapped = mapFamilyDirectoryRows(data as Array<Record<string, unknown>> | null);
-
-    if (mapped.members.length > 0) {
-      return mapped;
-    }
-  } else if (!isMissingRpcError(error, 'list_profiles_family_directory')) {
-    console.error('Erro ao carregar família por perfil:', error);
+  if (byProfile.members.length > 0) {
+    return byProfile;
   }
 
-  if (displayedFamilyId) {
-    const membersFromRpc = await fetchFamilyMembersFromMembersRpc(displayedFamilyId);
+  const resolvedFamilyId = normalizeFamilyCode(byProfile.familyId) || displayedFamilyId;
+  const familyIdsToTry = Array.from(
+    new Set([resolvedFamilyId, displayedFamilyId].filter((value) => Boolean(value)))
+  );
+
+  for (const familyId of familyIdsToTry) {
+    const byCode = await fetchFamilyMembersByFamilyCode(familyId, visitorsOnly, missingRpcs);
+
+    if (byCode?.members.length) {
+      return byCode;
+    }
+
+    const membersFromRpc = await fetchFamilyMembersFromMembersRpc(familyId, missingRpcs);
 
     if (membersFromRpc.length > 0) {
       return {
-        familyId: displayedFamilyId,
+        familyId,
         members: membersFromRpc,
       };
     }
   }
 
-  if (error && isMissingRpcError(error, 'list_profiles_family_directory')) {
+  if (
+    missingRpcs.has('list_profiles_family_directory')
+    && missingRpcs.has('list_profiles_family_directory_by_code')
+    && missingRpcs.has('list_members_family_directory')
+  ) {
     throw new Error(FAMILY_DIRECTORY_RPC_HINT);
   }
 
   return {
-    familyId: displayedFamilyId,
+    familyId: resolvedFamilyId || displayedFamilyId,
     members: [],
   };
 }

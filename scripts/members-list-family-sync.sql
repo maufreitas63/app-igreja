@@ -5,6 +5,83 @@
 --
 -- Execute no SQL Editor do Supabase DEPOIS de access-control-security-hardening.sql (autossuficiente).
 -- Reparo de dados existentes: scripts/sync-profiles-family-from-members.sql
+-- Se der erro role_has_access does not exist: este script recria a função abaixo.
+
+create or replace function public.access_resource_matches(
+  p_grant_key text,
+  p_requested_key text
+)
+returns boolean
+language sql
+immutable
+as $$
+  select
+    p_grant_key = p_requested_key
+    or p_grant_key = '*'
+    or (
+      right(p_grant_key, 2) = '.*'
+      and left(p_requested_key, length(p_grant_key) - 1) = left(p_grant_key, length(p_grant_key) - 2)
+    );
+$$;
+
+create or replace function public.role_has_access(
+  p_role_code text,
+  p_resource_type text,
+  p_resource_key text,
+  p_action text
+)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_type text;
+  v_key text;
+  v_action text;
+  v_acl_enabled boolean;
+  v_allowed boolean;
+begin
+  v_type := lower(trim(coalesce(p_resource_type, '')));
+  v_key := trim(coalesce(p_resource_key, ''));
+  v_action := lower(trim(coalesce(p_action, '')));
+
+  if v_type not in ('screen', 'table', 'column') or v_key = '' then
+    return false;
+  end if;
+
+  if v_action not in ('view', 'update') then
+    return false;
+  end if;
+
+  select exists (select 1 from public.access_grants limit 1)
+    into v_acl_enabled;
+
+  if not v_acl_enabled then
+    return true;
+  end if;
+
+  select exists (
+    select 1
+      from public.access_grants g
+      join public.access_roles ar
+        on ar.id = g.role_id
+       and ar.code = lower(trim(coalesce(p_role_code, '')))
+      join public.access_resources r on r.id = g.resource_id
+     where r.resource_type = v_type
+       and r.is_active = true
+       and public.access_resource_matches(r.resource_key, v_key)
+       and (
+         (v_action = 'view' and g.can_view)
+         or (v_action = 'update' and g.can_update)
+       )
+  )
+    into v_allowed;
+
+  return coalesce(v_allowed, false);
+end;
+$$;
 
 create or replace function public.session_has_members_directory_access()
 returns boolean
@@ -590,6 +667,7 @@ end;
 $$;
 
 grant execute on function public.session_has_members_directory_access() to anon, authenticated;
+grant execute on function public.role_has_access(text, text, text, text) to anon, authenticated;
 grant execute on function public.resolve_member_family_id_for_directory_person(text, text) to anon, authenticated;
 grant execute on function public.resolve_directory_canonical_family_id(text, text, text) to anon, authenticated;
 grant execute on function public.list_members_family_directory(text) to anon, authenticated;
