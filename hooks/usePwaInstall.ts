@@ -4,6 +4,7 @@ import {
   isPwaInstalled,
   type BeforeInstallPromptEvent,
 } from '@/lib/pwaInstall';
+import { getEntityPrefix } from '@/lib/entityPrefix';
 import { registerPwaServiceWorker } from '@/lib/pwaServiceWorker';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
@@ -80,7 +81,8 @@ export function usePwaInstall() {
       }
     }
 
-    setInstructions(getPwaInstallInstructions());
+    const prefix = await getEntityPrefix();
+    setInstructions(getPwaInstallInstructions(prefix));
   }, []);
 
   return {

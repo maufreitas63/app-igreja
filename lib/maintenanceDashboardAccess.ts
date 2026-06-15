@@ -1,4 +1,8 @@
-import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
+import {
+  ACCESS_SCREEN,
+  sessionCanBypassEventPastDateLock as fetchSessionCanBypassEventPastDateLock,
+  sessionHasAccess,
+} from '@/lib/accessControl';
 import { MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY } from '@/lib/screenAccessResourceKeys';
 import { getCachedOrFetch } from '@/lib/asyncResultCache';
 import {
@@ -26,6 +30,7 @@ export type MaintenanceDashboardAccessSnapshot = {
   canMonitorFamilyReception: boolean;
   canAccessProfileCadastro: boolean;
   canUpdateMaintenanceEvents: boolean;
+  canBypassEventPastDateLock: boolean;
   maintenancePanelAccess: Record<string, boolean>;
   scalePanelAccess: Partial<Record<MaintenanceScalePanelContent, boolean>>;
   canAccessPastoralCare: boolean;
@@ -40,6 +45,7 @@ const EMPTY_SNAPSHOT: MaintenanceDashboardAccessSnapshot = {
   canMonitorFamilyReception: false,
   canAccessProfileCadastro: false,
   canUpdateMaintenanceEvents: false,
+  canBypassEventPastDateLock: false,
   maintenancePanelAccess: {},
   scalePanelAccess: {},
   canAccessPastoralCare: false,
@@ -88,6 +94,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
   let canAccessPastoralRoleChange = false;
   let maintenancePanelAccess: Record<string, boolean> = {};
   let canUpdateMaintenanceEvents = false;
+  let canBypassEventPastDateLock = false;
 
   try {
     let profileId = await getStoredProfileId();
@@ -103,12 +110,14 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
         canAccessPastoralRoleChange,
         maintenancePanelAccess,
         canUpdateMaintenanceEvents,
+        canBypassEventPastDateLock,
       ] = await Promise.all([
         loadMaintenanceScalePanelAccess(profileId),
         loadPastoralCarePanelAccess(profileId),
         sessionCanAccessPastoralRoleChangePanel(),
         loadMaintenancePanelScreenAccess(),
         sessionHasAccess('screen', 'maintenance.card.events', 'update'),
+        fetchSessionCanBypassEventPastDateLock(),
       ]);
     }
   } catch {
@@ -117,6 +126,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
     canAccessPastoralRoleChange = false;
     maintenancePanelAccess = {};
     canUpdateMaintenanceEvents = false;
+    canBypassEventPastDateLock = false;
   }
 
   let headerUserName: string | null = null;
@@ -143,6 +153,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
     canMonitorFamilyReception: isSuperAdmin || canAccessProfileCadastro,
     canAccessProfileCadastro: isSuperAdmin || canAccessProfileCadastro,
     canUpdateMaintenanceEvents,
+    canBypassEventPastDateLock,
     maintenancePanelAccess,
     scalePanelAccess,
     canAccessPastoralCare,

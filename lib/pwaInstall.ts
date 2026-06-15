@@ -1,3 +1,4 @@
+import { DEFAULT_ENTITY_PREFIX } from '@/lib/entityPrefix';
 import { Platform } from 'react-native';
 
 export type BeforeInstallPromptEvent = Event & {
@@ -45,13 +46,13 @@ export const isPwaInstalled = () => {
 
 export const canOfferPwaInstallUi = () => isWebPlatform() && !isPwaInstalled();
 
-export const getPwaInstallInstructions = () => {
+export const getPwaInstallInstructions = (entityPrefix = DEFAULT_ENTITY_PREFIX) => {
   if (isIosWeb()) {
     return {
       title: 'Adicionar à Tela de Início',
       message:
         'No Safari, toque em Compartilhar (ícone com seta para cima), role o menu e escolha '
-        + '"Adicionar à Tela de Início". O atalho usará o logotipo da IBN.',
+        + `"Adicionar à Tela de Início". O atalho usará o logotipo da ${entityPrefix}.`,
     };
   }
 
@@ -60,7 +61,7 @@ export const getPwaInstallInstructions = () => {
       title: 'Adicionar à Tela de Início',
       message:
         'No menu do Chrome (⋮), toque em "Instalar app", "Adicionar à tela inicial" '
-        + 'ou "Instalar aplicativo" para criar o atalho com o logotipo da IBN.',
+        + `ou "Instalar aplicativo" para criar o atalho com o logotipo da ${entityPrefix}.`,
     };
   }
 
@@ -68,6 +69,6 @@ export const getPwaInstallInstructions = () => {
     title: 'Instalar o app',
     message:
       'Use a opção "Instalar aplicativo" ou "Adicionar à tela inicial" no menu do navegador '
-      + 'para criar um atalho com o logotipo da IBN.',
+      + `para criar um atalho com o logotipo da ${entityPrefix}.`,
   };
 };

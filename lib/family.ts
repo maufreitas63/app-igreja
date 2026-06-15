@@ -1,48 +1,28 @@
+import {
+  buildFamilyId,
+  clearEntityPrefixCache,
+  DEFAULT_FAMILY_ID,
+  getEntityPrefix,
+} from '@/lib/entityPrefix';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { supabase } from '@/lib/supabase';
 
-const FALLBACK_FAMILY_PREFIX = 'IBN';
-
-let cachedFamilyIdPrefix: string | null = null;
+export { buildFamilyId, DEFAULT_FAMILY_ID } from '@/lib/entityPrefix';
 
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Prefixo alfanumerico de `app_parameters.parm_entidade` (mesma regra do SQL `get_family_id_prefix`). */
+/** Prefixo alfanumerico de `app_parameters.Parm_entidade` (mesma regra do SQL `get_family_id_prefix`). */
 export async function getFamilyIdPrefix(): Promise<string> {
-  if (cachedFamilyIdPrefix) {
-    return cachedFamilyIdPrefix;
-  }
-
-  const { data, error } = await supabase
-    .from('app_parameters')
-    .select('value')
-    .eq('parameter', 'parm_entidade')
-    .maybeSingle();
-
-  if (error || !data?.value) {
-    cachedFamilyIdPrefix = FALLBACK_FAMILY_PREFIX;
-    return cachedFamilyIdPrefix;
-  }
-
-  const cleaned = data.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-  cachedFamilyIdPrefix = cleaned.length > 0 ? cleaned : FALLBACK_FAMILY_PREFIX;
-  return cachedFamilyIdPrefix;
+  return getEntityPrefix();
 }
 
 /** Invalida o cache (troca de entidade / testes). */
 export function clearFamilyIdPrefixCache(): void {
-  cachedFamilyIdPrefix = null;
+  clearEntityPrefixCache();
 }
-
-export function buildFamilyId(prefix: string, num: number): string {
-  return `${prefix}${String(num).padStart(4, '0')}`;
-}
-
-/** Valor default exibido antes de carregar `parm_entidade` (fallback IBN). */
-export const DEFAULT_FAMILY_ID = `${FALLBACK_FAMILY_PREFIX}0001`;
 
 /** Código familiar canônico (ex.: `ibn0001` → `IBN0001`). */
 export const normalizeFamilyCode = (value: string | null | undefined): string =>

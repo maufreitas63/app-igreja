@@ -336,3 +336,19 @@ export async function sessionHasAccess(
 
   return profileHasAccess(null, resourceType, resourceKey, action);
 }
+
+/** Tesoureiro e super_admin podem publicar/editar eventos em datas passadas. */
+export async function sessionCanBypassEventPastDateLock(): Promise<boolean> {
+  const { data, error } = await supabase.rpc('session_can_bypass_event_past_date_lock');
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'session_can_bypass_event_past_date_lock')) {
+      return false;
+    }
+
+    console.error('session_can_bypass_event_past_date_lock:', error);
+    return false;
+  }
+
+  return coerceRpcBoolean(data);
+}

@@ -1,3 +1,4 @@
+import { useEntityPrefix } from '@/context/EntityPrefixContext';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceFamilyReception } from '@/hooks/useMaintenanceFamilyReception';
@@ -33,6 +34,7 @@ const formatSubmissionDate = (value: string) => {
 };
 
 export function MaintenanceFamilyReceptionCard({ isActive = true, panelHeight }: Props) {
+  const { prefix, newFamilyRecordingHint } = useEntityPrefix();
   const {
     submissions,
     loading,
@@ -77,7 +79,7 @@ export function MaintenanceFamilyReceptionCard({ isActive = true, panelHeight }:
 
       <Text style={styles.helpText}>
         Formulários públicos entram aqui antes de profiles/members. Lotes com código familiar
-        detectado nas tabelas finais usam o mesmo IBN; conflitos exigem revisão manual.
+        detectado nas tabelas finais usam o mesmo {prefix}; conflitos exigem revisão manual.
       </Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -155,7 +157,7 @@ export function MaintenanceFamilyReceptionCard({ isActive = true, panelHeight }:
                   Protocolo: {submission.submissionId.slice(0, 8).toUpperCase()}
                 </Text>
                 <Text style={styles.submissionMeta}>
-                  Código detectado: {submission.detectedFamilyId ?? 'novo (IBN na gravação)'}
+                  Código detectado: {submission.detectedFamilyId ?? newFamilyRecordingHint}
                 </Text>
 
                 {submission.members.map((member) => (

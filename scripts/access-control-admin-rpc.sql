@@ -235,7 +235,7 @@ begin
       'success',
       false,
       'message',
-      'O papel visitante é automático: perfis sem papéis já recebem esse acesso.'
+      'O papel visitante é atribuído automaticamente na criação do perfil.'
     );
   end if;
 
@@ -247,6 +247,8 @@ begin
   if v_role_id is null then
     return jsonb_build_object('success', false, 'message', 'Papel não encontrado.');
   end if;
+
+  perform public.remove_profile_visitantes_role(p_target_profile_id);
 
   insert into public.profile_access_roles (profile_id, role_id, granted_by_profile_id)
   values (p_target_profile_id, v_role_id, p_actor_profile_id)
@@ -313,6 +315,8 @@ begin
   delete from public.profile_access_roles par
    where par.profile_id = p_target_profile_id
      and par.role_id = v_role_id;
+
+  perform public.ensure_profile_visitantes_role(p_target_profile_id, p_actor_profile_id);
 
   return jsonb_build_object('success', true, 'message', 'Papel removido.');
 end;

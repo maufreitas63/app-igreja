@@ -1,5 +1,6 @@
 import { WatermarkSurface } from '@/components/AppWatermark';
 import { TotemDeviceRouteGuard } from '@/components/TotemDeviceRouteGuard';
+import { EntityPrefixProvider } from '@/context/EntityPrefixContext';
 import { useProfileScreenVisitTracker } from '@/hooks/useProfileScreenVisitTracker';
 import { Slot, usePathname, useSegments } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
@@ -33,18 +34,22 @@ export function AppShell() {
 
   if (!showWatermark) {
     return (
-      <View style={styles.app}>
-        <TotemDeviceRouteGuard />
-        <Slot />
-      </View>
+      <EntityPrefixProvider>
+        <View style={styles.app}>
+          <TotemDeviceRouteGuard />
+          <Slot />
+        </View>
+      </EntityPrefixProvider>
     );
   }
 
   return (
-    <WatermarkSurface style={styles.app} routeKey={pathname}>
-      <TotemDeviceRouteGuard />
-      <Slot />
-    </WatermarkSurface>
+    <EntityPrefixProvider>
+      <WatermarkSurface style={styles.app} routeKey={pathname}>
+        <TotemDeviceRouteGuard />
+        <Slot />
+      </WatermarkSurface>
+    </EntityPrefixProvider>
   );
 }
 

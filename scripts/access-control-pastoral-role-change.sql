@@ -305,14 +305,16 @@ begin
    using public.access_roles ar
    where par.role_id = ar.id
      and par.profile_id = p_target_profile_id
-     and ar.code in ('member', 'congregado');
+     and ar.code in ('member', 'congregado', 'visitantes');
 
   if v_role_code = 'visitante' then
+    perform public.ensure_profile_visitantes_role(p_target_profile_id, p_actor_profile_id);
+
     return jsonb_build_object(
       'success',
       true,
       'message',
-      'Perfil definido como visitante (sem papéis atribuídos).'
+      'Perfil definido como visitante.'
     );
   end if;
 

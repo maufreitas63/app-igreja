@@ -32,6 +32,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRejectTotemPhoneFromMemberRoutes } from '@/hooks/useRejectTotemPhoneFromMemberRoutes';
 import { useWebDocumentTitle } from '@/hooks/useWebDocumentTitle';
+import { useEntityPrefix } from '@/context/EntityPrefixContext';
 
 const normalizePhone = (value: string | null | undefined) => (value ?? '').replace(/\D/g, '');
 
@@ -103,8 +104,9 @@ export default function LgpdScreen() {
     onTermsContentSizeChange,
     onTermsScroll,
   } = useLgpdTermsScrollGate();
+  const { prefix: entityPrefix } = useEntityPrefix();
 
-  useWebDocumentTitle('Termos LGPD — IBN');
+  useWebDocumentTitle(`Termos LGPD — ${entityPrefix}`);
 
   const navigateAfterLgpd = useCallback(async () => {
     const lgpdAtivo = await isLgpdAtivoEnabled();

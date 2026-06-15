@@ -1,4 +1,5 @@
 import { buildCepAddressPayload } from '@/lib/cepUtils';
+import { getEntityPrefix } from '@/lib/entityPrefix';
 import {
   FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS,
   FAMILY_INFORMANT_RELATIONSHIP,
@@ -223,9 +224,10 @@ export function buildFamilyRegistrationShareUrl(): string {
   return '';
 }
 
-export function buildFamilyRegistrationWhatsAppUrl(pageUrl: string): string {
+export async function buildFamilyRegistrationWhatsAppUrl(pageUrl: string): Promise<string> {
+  const prefix = await getEntityPrefix();
   const message = [
-    'Olá! O Ministério de Acolhimento da Igreja Batista Norte - IBN convida você e sua família a preencherem o cadastro da nossa igreja.',
+    `Olá! O Ministério de Acolhimento da Igreja Batista Norte - ${prefix} convida você e sua família a preencherem o cadastro da nossa igreja.`,
     'É rápido e ajuda a organizar nossa comunidade.',
     '',
     `Acesse o formulário: ${pageUrl}`,

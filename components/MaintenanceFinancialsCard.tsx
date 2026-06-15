@@ -43,6 +43,7 @@ import {
 import type { FinancialEntry } from '@/lib/financialEntry';
 import { MAINTENANCE_FINANCIALS_SQL_HINT } from '@/hooks/useMaintenanceFinancials';
 import { FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -118,6 +119,7 @@ function CollapsibleSection({
 }
 
 export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Props) {
+  const router = useRouter();
   const {
     setSelectedMonth,
     selectedMonth,
@@ -261,6 +263,12 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
       setLoadingRdReports(false);
     }
   }, [selectedMonth]);
+
+  const handleEmitRdForSelectedMonth = useCallback(() => {
+    router.push(
+      `/expense-report?referenciaMes=${encodeURIComponent(formatFinancialMonthKey(selectedMonth))}&from=maintenance`
+    );
+  }, [router, selectedMonth]);
 
   useEffect(() => {
     if (!isActive || expandedSection !== 'rd') {
@@ -1098,6 +1106,17 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               style={styles.rdMonthDropdown}
               disabled={formBusy || rpcMissing}
             />
+            {canUpdateFinancials === true ? (
+              <TouchableOpacity
+                style={styles.emitRdButton}
+                onPress={handleEmitRdForSelectedMonth}
+                disabled={formBusy || rpcMissing}
+                activeOpacity={0.85}
+              >
+                <FontAwesome name="plus" size={14} color="#ECFDF5" />
+                <Text style={styles.emitRdButtonText}>Emitir RD</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
 
           {rdReportsError ? <Text style={styles.warningText}>{rdReportsError}</Text> : null}
@@ -1475,6 +1494,22 @@ const styles = StyleSheet.create({
   rdMonthDropdown: {
     flex: 1,
     minWidth: 0,
+  },
+  emitRdButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.45)',
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  emitRdButtonText: {
+    color: '#ECFDF5',
+    fontSize: 13,
+    fontWeight: '700',
   },
   versionChipRow: {
     flexDirection: 'row',

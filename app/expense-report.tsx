@@ -18,6 +18,8 @@ import {
 import { confirmDialog } from '@/lib/confirmDialog';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
+import { toFinancialMonthReferenceDate } from '@/lib/maintenanceFinancialApi';
+import { formatFinancialMonthLabel, parseFinancialMonthKey } from '@/lib/financialMonth';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -37,8 +39,21 @@ type ScreenMode = 'list' | 'create' | 'view';
 
 export default function ExpenseReportScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ id?: string }>();
+  const params = useLocalSearchParams<{ id?: string; referenciaMes?: string; from?: string }>();
   const reportIdParam = typeof params.id === 'string' ? params.id : undefined;
+  const referenceMonthKey =
+    typeof params.referenciaMes === 'string' ? params.referenciaMes.trim() : '';
+  const fromMaintenance = params.from === 'maintenance';
+  const referenceMonthDate = useMemo(() => {
+    const parsed = referenceMonthKey ? parseFinancialMonthKey(referenceMonthKey) : null;
+
+    return parsed ? toFinancialMonthReferenceDate(parsed) : null;
+  }, [referenceMonthKey]);
+  const referenceMonthLabel = useMemo(() => {
+    const parsed = referenceMonthKey ? parseFinancialMonthKey(referenceMonthKey) : null;
+
+    return parsed ? formatFinancialMonthLabel(parsed) : null;
+  }, [referenceMonthKey]);
 
   const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.expenseReport,
@@ -74,6 +89,8 @@ export default function ExpenseReportScreen() {
           setSelectedReport(detail);
           setMode('view');
         }
+      } else if (fromMaintenance && referenceMonthKey) {
+        setMode('create');
       }
     } catch (err) {
       console.error('Erro ao carregar RD:', err);
@@ -85,7 +102,7 @@ export default function ExpenseReportScreen() {
     } finally {
       setLoading(false);
     }
-  }, [reportIdParam]);
+  }, [fromMaintenance, referenceMonthKey, reportIdParam]);
 
   useEffect(() => {
     void reload();
@@ -117,7 +134,10 @@ export default function ExpenseReportScreen() {
     setSubmitting(true);
 
     try {
-      const result = await submitExpenseReport(input);
+      const result = await submitExpenseReport({
+        ...input,
+        referenceMonth: referenceMonthDate,
+      });
 
       if (!result.success) {
         Toast.show({
@@ -379,6 +399,7 @@ export default function ExpenseReportScreen() {
               <ExpenseReportForm
                 header={header}
                 submitting={submitting}
+                referenceMonthLabel={referenceMonthLabel}
                 onSubmit={handleFinalize}
                 onCancel={handleCancelCreate}
               />

@@ -113,14 +113,14 @@ export function FamilyRegistrationForm() {
     }
   };
 
-  const handleShareWhatsApp = () => {
+  const handleShareWhatsApp = async () => {
     const url = buildFamilyRegistrationShareUrl();
     if (!url) {
       setCopyHint('URL indisponível para compartilhar.');
       return;
     }
 
-    const waUrl = buildFamilyRegistrationWhatsAppUrl(url);
+    const waUrl = await buildFamilyRegistrationWhatsAppUrl(url);
     window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 

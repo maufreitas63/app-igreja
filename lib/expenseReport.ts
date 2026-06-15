@@ -11,7 +11,7 @@ import { getStoredUserPhone } from '@/lib/userSession';
 import { buildWaMeUrl, openWhatsAppPhone } from '@/lib/whatsapp';
 
 export const EXPENSE_REPORT_SQL_HINT =
-  'Execute no Supabase: scripts/expense-reports-schema.sql e scripts/expense-reports-rpc.sql.';
+  'Execute no Supabase: scripts/expense-reports-schema.sql, scripts/expense-reports-rpc.sql e scripts/access-control-tesoureiro-role.sql.';
 
 export const EXPENSE_REPORT_RPC_MISSING = 'EXPENSE_REPORT_RPC_MISSING';
 
@@ -425,6 +425,7 @@ export const buildExpenseReportWhatsappMessage = (input: {
 export async function submitExpenseReport(input: {
   pixKey: string;
   items: ExpenseReportDraftItem[];
+  referenceMonth?: string | null;
 }): Promise<{ success: true; report: ExpenseReportDetail } | { success: false; message: string }> {
   const validationError = validateExpenseReportDraft(input);
 
@@ -467,6 +468,7 @@ export async function submitExpenseReport(input: {
     const { data, error } = await supabase.rpc('criar_relatorio_despesas', {
       p_pix_key: input.pixKey.trim(),
       p_report_id: reportId,
+      p_reference_month: input.referenceMonth?.trim() || null,
       p_items: preparedItems.map((item) => ({
         id: item.id,
         date: item.date,

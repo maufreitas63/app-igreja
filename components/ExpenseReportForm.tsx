@@ -27,11 +27,18 @@ import Toast from 'react-native-toast-message';
 type Props = {
   header: ExpenseReportHeader;
   submitting: boolean;
+  referenceMonthLabel?: string | null;
   onSubmit: (input: { pixKey: string; items: ExpenseReportDraftItem[] }) => void;
   onCancel: () => void;
 };
 
-export function ExpenseReportForm({ header, submitting, onSubmit, onCancel }: Props) {
+export function ExpenseReportForm({
+  header,
+  submitting,
+  referenceMonthLabel,
+  onSubmit,
+  onCancel,
+}: Props) {
   const [pixKey, setPixKey] = useState(header.pixKey);
   const [items, setItems] = useState<ExpenseReportDraftItem[]>([createEmptyExpenseReportDraftItem()]);
   const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
@@ -101,6 +108,11 @@ export function ExpenseReportForm({ header, submitting, onSubmit, onCancel }: Pr
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Novo Relatório de Despesas</Text>
+      {referenceMonthLabel ? (
+        <Text style={styles.referenceMonthHint}>
+          Mês de referência do número RD: {referenceMonthLabel}
+        </Text>
+      ) : null}
 
       <View style={styles.headerCard}>
         <SectionLabel label="Cabeçalho" />
@@ -256,6 +268,11 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     fontSize: 18,
     fontWeight: '800',
+  },
+  referenceMonthHint: {
+    color: '#0369A1',
+    fontSize: 13,
+    lineHeight: 18,
   },
   headerCard: {
     borderWidth: 1,

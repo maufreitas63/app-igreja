@@ -1,6 +1,6 @@
 -- Cadastro inicial (/register): grava nome, nascimento, CEP, selfie e LGPD
--- em perfil visitante pendente e concede papel congregado para Dados cadastrais.
--- Execute no SQL Editor do Supabase após preparar-perfil-acesso-cadastro.sql.
+-- em perfil visitante pendente e promove para congregado (remove visitantes).
+-- Pré-requisitos: preparar-perfil-acesso-cadastro.sql e access-control-visitantes-auto-assign.sql
 
 create or replace function public.profile_pending_self_registration(p_profile_id uuid)
 returns boolean
@@ -111,17 +111,11 @@ begin
        returning p.* into v_profile;
   end;
 
-  if not exists (
-    select 1
-      from public.profile_access_roles par
-     where par.profile_id = p_profile_id
-  )
-  and not (
-    trim(coalesce(v_profile.full_name, '')) ilike 'TstMax%'
-    or coalesce(v_profile.family_id, '') like 'TstMax%'
-    or coalesce(v_profile.codigo_membro, '') like 'TstMax%'
-    or lower(trim(coalesce(v_profile.email, ''))) like '%@tstmax.demo'
-  ) then
+  if not public.profile_is_tstmax_test_profile(p_profile_id)
+     and not public.profile_has_role_code(p_profile_id, 'congregado')
+     and not public.profile_has_role_code(p_profile_id, 'member') then
+    perform public.remove_profile_visitantes_role(p_profile_id);
+
     select ar.id
       into v_role_id
       from public.access_roles ar

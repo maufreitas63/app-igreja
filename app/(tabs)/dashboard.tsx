@@ -1,3 +1,4 @@
+import { useEntityPrefix } from '@/context/EntityPrefixContext';
 import { CheckinModal } from '@/components/CheckinModal';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
@@ -458,6 +459,12 @@ const getCurrentLocalIsoDate = () => {
 };
 
 export default function Dashboard() {
+  const {
+    kidsRoomLabel,
+    teensRoomLabel,
+    kidsRoomBadgeLabel,
+    teensRoomBadgeLabel,
+  } = useEntityPrefix();
   const { width: pageWidth, height: windowHeight } = useWindowDimensions();
   const previousPageWidthRef = useRef(pageWidth);
   const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);
@@ -1322,7 +1329,7 @@ export default function Dashboard() {
   if (selectedEvent?.kids_room) {
     availableGroupedRooms.push({
       key: 'KIDS',
-      label: 'IBN KIDS',
+      label: kidsRoomLabel,
       checkedCount: kidsCheckedCount,
       totalCount: kidsRegistrations.length,
       headerStyle: styles.groupedAudienceHeaderKids,
@@ -1333,7 +1340,7 @@ export default function Dashboard() {
   if (selectedEvent?.teens_room) {
     availableGroupedRooms.push({
       key: 'TEENS',
-      label: 'IBN TEENS',
+      label: teensRoomLabel,
       checkedCount: teensCheckedCount,
       totalCount: teensRegistrations.length,
       headerStyle: styles.groupedAudienceHeaderTeens,
@@ -2325,7 +2332,7 @@ export default function Dashboard() {
                                             style={styles.eventAltRoomBadgeText}
                                             numberOfLines={1}
                                           >
-                                            IBN Kids
+                                            {kidsRoomBadgeLabel}
                                           </Text>
                                         </View>
                                       ) : null}
@@ -2347,7 +2354,7 @@ export default function Dashboard() {
                                             style={styles.eventAltRoomBadgeText}
                                             numberOfLines={1}
                                           >
-                                            IBN Teens
+                                            {teensRoomBadgeLabel}
                                           </Text>
                                         </View>
                                       ) : null}
@@ -3387,8 +3394,8 @@ export default function Dashboard() {
                               ) : (
                                 <Text style={styles.groupedAudienceEmptyText}>
                                   {selectedGroupedRoomConfig.key === 'KIDS'
-                                    ? 'Nenhum membro da sua família inscrito em IBN KIDS.'
-                                    : 'Nenhum membro da sua família inscrito em IBN TEENS.'}
+                                    ? `Nenhum membro da sua família inscrito em ${kidsRoomLabel}.`
+                                    : `Nenhum membro da sua família inscrito em ${teensRoomLabel}.`}
                                 </Text>
                               )}
                             </View>
@@ -3477,7 +3484,7 @@ export default function Dashboard() {
                                     styles.eventRoomIndicatorKids,
                                   ]}
                                 />
-                                <Text style={styles.checkinRoomBadgeText}>IBN Kids</Text>
+                                <Text style={styles.checkinRoomBadgeText}>{kidsRoomBadgeLabel}</Text>
                               </View>
                             ) : null}
                             {selectedEvent?.teens_room ? (
@@ -3493,7 +3500,7 @@ export default function Dashboard() {
                                     styles.eventRoomIndicatorTeens,
                                   ]}
                                 />
-                                <Text style={styles.checkinRoomBadgeText}>IBN Teens</Text>
+                                <Text style={styles.checkinRoomBadgeText}>{teensRoomBadgeLabel}</Text>
                               </View>
                             ) : null}
                           </View>

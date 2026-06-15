@@ -1,6 +1,7 @@
 import { getAppParameterValue } from '@/lib/appParameters';
+import { DEFAULT_ENTITY_PREFIX } from '@/lib/entityPrefix';
 
-export const DEFAULT_LGPD_ENTITY_NAME = 'Igreja Batista Norte (IBN)';
+export const DEFAULT_LGPD_ENTITY_NAME = `Igreja Batista Norte (${DEFAULT_ENTITY_PREFIX})`;
 
 const LGPD_TERMS_SUFFIX =
   'respeita a privacidade de seus membros e visitantes, comprometendo-se a coletar e tratar os dados estritamente necessários para gestão administrativa, controle de segurança, atividades eclesiásticas e para a divulgação de eventos e ações da igreja em mídias sociais e outros veículos oficiais de comunicação, sempre em estrita observância à Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).';

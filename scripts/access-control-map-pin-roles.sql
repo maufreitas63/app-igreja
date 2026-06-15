@@ -1,5 +1,5 @@
 -- Papéis ACL no mapa e na lista de membros.
--- Pin azul: visitante (sem papéis em profile_access_roles — fallback automático).
+-- Pin azul: visitante (papel `visitantes` em profile_access_roles ou fallback sem outros papéis).
 -- Pin vermelho: qualquer perfil com pelo menos um papel atribuído (member, congregado, etc.).
 -- Perfis de teste TstMax são sempre tratados como visitantes.
 --

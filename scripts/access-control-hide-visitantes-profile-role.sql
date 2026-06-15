@@ -1,5 +1,5 @@
--- Visitante é fallback automático (sem papéis em profile_access_roles).
--- O papel visitantes continua no ACL para grants, mas não é atribuível a perfis na UI.
+-- Visitante: papel `visitantes` atribuído automaticamente na criação do perfil.
+-- O papel visitantes continua no ACL para grants, mas não é atribuível manualmente na UI.
 
 create or replace function public.listar_papeis_perfil_access_admin(
   p_actor_profile_id uuid,
@@ -74,7 +74,7 @@ begin
       'success',
       false,
       'message',
-      'O papel visitante é automático: perfis sem papéis já recebem esse acesso.'
+      'O papel visitante é atribuído automaticamente na criação do perfil.'
     );
   end if;
 
@@ -86,6 +86,8 @@ begin
   if v_role_id is null then
     return jsonb_build_object('success', false, 'message', 'Papel não encontrado.');
   end if;
+
+  perform public.remove_profile_visitantes_role(p_target_profile_id);
 
   insert into public.profile_access_roles (profile_id, role_id, granted_by_profile_id)
   values (p_target_profile_id, v_role_id, p_actor_profile_id)

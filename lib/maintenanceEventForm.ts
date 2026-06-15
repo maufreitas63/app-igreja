@@ -227,16 +227,26 @@ export type MaintenanceEventValidationResult =
   | { ok: true; payload: MaintenanceEventPayload }
   | { ok: false; message: string };
 
+export type MaintenanceEventValidationOptions = {
+  bypassPastDateRestriction?: boolean;
+};
+
 export const validateMaintenanceEventForm = (
-  form: MaintenanceEventFormState
+  form: MaintenanceEventFormState,
+  options?: MaintenanceEventValidationOptions
 ): MaintenanceEventValidationResult => {
-  const payload = buildMaintenanceEventPayload(form);
+  const payload = buildMaintenanceEventPayload(form, options);
 
   if (!payload.name) {
     return { ok: false, message: 'Informe o nome do evento.' };
   }
 
-  if (form.isPublished && payload.event_date && isEventDateBeforeToday(payload.event_date)) {
+  if (
+    !options?.bypassPastDateRestriction
+    && form.isPublished
+    && payload.event_date
+    && isEventDateBeforeToday(payload.event_date)
+  ) {
     const dateLabel = form.eventDateInput.trim() || payload.event_date.slice(0, 10);
     return {
       ok: false,
@@ -372,12 +382,22 @@ export const shiftMaintenanceEventDateIso = (
   });
 };
 
-export const buildMaintenanceEventPayload = (form: MaintenanceEventFormState) => {
+export const buildMaintenanceEventPayload = (
+  form: MaintenanceEventFormState,
+  options?: MaintenanceEventValidationOptions
+) => {
   const name = form.name.trim();
   const eventLocal = form.eventLocal.trim();
   const maxCapacityDigits = form.maxCapacity.replace(/\D/g, '');
   const maxCapacity = maxCapacityDigits ? Number.parseInt(maxCapacityDigits, 10) : null;
   const eventDate = parseMaintenanceEventDateTimeToIso(form.eventDateInput, form.eventTimeInput);
+  const isLocked = !form.isPublished;
+  const retroactivePublish = Boolean(
+    options?.bypassPastDateRestriction
+    && !isLocked
+    && eventDate
+    && isEventDateBeforeToday(eventDate)
+  );
 
   return {
     name,
@@ -389,7 +409,8 @@ export const buildMaintenanceEventPayload = (form: MaintenanceEventFormState) =>
     parm_ofertas: form.parmOfertas,
     totem_ativo: form.totemAtivo,
     requer_quorum: form.requerQuorum,
-    is_locked: !form.isPublished,
+    is_locked: isLocked,
+    ...(retroactivePublish ? { retroactive_publish: true } : {}),
   };
 };
 

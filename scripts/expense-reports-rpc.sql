@@ -10,22 +10,48 @@ drop function if exists public.listar_relatorios_despesas_periodo(date);
 drop function if exists public.desconciliar_relatorio_despesas(uuid);
 drop function if exists public.excluir_relatorio_despesas(uuid);
 
-create or replace function public.next_expense_report_number()
+create or replace function public.next_expense_report_number(p_reference_month date default null)
 returns text
 language plpgsql
 as $$
 declare
-  v_seq bigint;
+  v_ref date;
+  v_prefix text;
+  v_next integer;
 begin
-  v_seq := nextval('public.expense_report_number_seq');
-  return 'RD-' || lpad(v_seq::text, 5, '0');
+  v_ref := date_trunc(
+    'month',
+    coalesce(
+      p_reference_month,
+      timezone('America/Sao_Paulo', now())
+    )
+  )::date;
+
+  v_prefix := to_char(v_ref, 'YYMM');
+
+  select coalesce(
+    max(
+      case
+        when er.report_number ~ ('^' || v_prefix || '[0-9]+$')
+        then substring(er.report_number from length(v_prefix) + 1)::integer
+        else null
+      end
+    ),
+    0
+  ) + 1
+    into v_next
+    from public.expense_reports er
+   where er.report_number like v_prefix || '%';
+
+  return v_prefix || lpad(v_next::text, 5, '0');
 end;
 $$;
 
 create or replace function public.criar_relatorio_despesas(
   p_pix_key text,
   p_items jsonb,
-  p_report_id uuid default null
+  p_report_id uuid default null,
+  p_reference_month date default null
 )
 returns jsonb
 language plpgsql
@@ -45,6 +71,9 @@ declare
   v_receipt_url text;
   v_item_id uuid;
   v_inserted integer := 0;
+  v_min_item_date date;
+  v_reference_month date;
+  v_current_month date;
 begin
   v_profile_id := public.current_session_profile_id();
 
@@ -81,10 +110,28 @@ begin
     end if;
 
     v_total := v_total + v_amount;
+    v_min_item_date := case
+      when v_min_item_date is null or v_date < v_min_item_date then v_date
+      else v_min_item_date
+    end;
   end loop;
 
+  v_current_month := date_trunc('month', timezone('America/Sao_Paulo', now()))::date;
+  v_reference_month := date_trunc(
+    'month',
+    coalesce(p_reference_month, v_min_item_date, timezone('America/Sao_Paulo', now()))
+  )::date;
+
+  if v_reference_month <> v_current_month
+     and not public.session_can_manage_expense_reports_treasury() then
+    return jsonb_build_object(
+      'success', false,
+      'message', 'Somente a tesouraria pode emitir RD para meses anteriores ou futuros.'
+    );
+  end if;
+
   v_report_id := coalesce(p_report_id, gen_random_uuid());
-  v_report_number := public.next_expense_report_number();
+  v_report_number := public.next_expense_report_number(v_reference_month);
 
   insert into public.expense_reports (
     id,
@@ -142,7 +189,8 @@ begin
     'id', v_report_id,
     'report_number', v_report_number,
     'total_amount', v_total,
-    'items_count', v_inserted
+    'items_count', v_inserted,
+    'reference_month', to_char(v_reference_month, 'YYYY-MM')
   );
 end;
 $$;
@@ -345,7 +393,7 @@ begin
 end;
 $$;
 
-grant execute on function public.criar_relatorio_despesas(text, jsonb, uuid) to anon, authenticated;
+grant execute on function public.criar_relatorio_despesas(text, jsonb, uuid, date) to anon, authenticated;
 grant execute on function public.listar_meus_relatorios_despesas() to anon, authenticated;
 grant execute on function public.obter_relatorio_despesas(uuid) to anon, authenticated;
 grant execute on function public.listar_relatorios_despesas_pendentes() to anon, authenticated;
@@ -397,7 +445,8 @@ as $$
   cross join public.financials_period_bounds('mes', p_referencia) b
   where public.session_can_manage_expense_reports_treasury()
     and (
-      (
+      left(er.report_number, 4) = to_char(date_trunc('month', p_referencia)::date, 'YYMM')
+      or (
         er.status = 'pending'
         and er.created_at >= b.start_date::timestamptz
         and er.created_at < b.end_date_exclusive::timestamptz

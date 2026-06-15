@@ -46,6 +46,7 @@ import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import {
   normalizeFamilyCode,
+  DEFAULT_FAMILY_ID,
   resolveCurrentFamilyId,
   resolveFamilyIdForAuthUser,
   resolveFamilyIdForPhone,
@@ -411,7 +412,7 @@ export default function ManageMembers() {
     void sessionHasAccess('table', 'members', 'update').then(setCanUpdateFamilyMembers);
   }, []);
 
-  const [familyId, setFamilyId] = useState('IBN0001');
+  const [familyId, setFamilyId] = useState(DEFAULT_FAMILY_ID);
   const [members, setMembers] = useState<ManagedMember[]>([]);
   const [profileName, setProfileName] = useState('');
   const [profilePhone, setProfilePhone] = useState<string | null>(null);

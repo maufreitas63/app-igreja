@@ -1,3 +1,4 @@
+import { useEntityPrefix } from '@/context/EntityPrefixContext';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { useDashboardSelectedEvent } from '@/hooks/useDashboardSelectedEvent';
 import { useRoomMonitorScales } from '@/hooks/useRoomMonitorScales';
@@ -51,6 +52,12 @@ export const MaintenanceSalaMonitorCard = ({
   embedded,
   panelHeight,
 }: MaintenanceSalaMonitorCardProps) => {
+  const {
+    kidsRoomLabel,
+    teensRoomLabel,
+    kidsRoomBadgeLabel,
+    teensRoomBadgeLabel,
+  } = useEntityPrefix();
   const {
     selectedEvent,
     selectedEventId,
@@ -127,7 +134,7 @@ export const MaintenanceSalaMonitorCard = ({
   if (selectedEvent?.kids_room) {
     availableGroupedRooms.push({
       key: 'KIDS',
-      label: 'IBN KIDS',
+      label: kidsRoomLabel,
       checkedCount: kidsCheckedCount,
       totalCount: kidsRegistrations.length,
       headerStyle: styles.groupedAudienceHeaderKids,
@@ -138,7 +145,7 @@ export const MaintenanceSalaMonitorCard = ({
   if (selectedEvent?.teens_room) {
     availableGroupedRooms.push({
       key: 'TEENS',
-      label: 'IBN TEENS',
+      label: teensRoomLabel,
       checkedCount: teensCheckedCount,
       totalCount: safeTeensRegistrations.length,
       headerStyle: styles.groupedAudienceHeaderTeens,
@@ -238,13 +245,13 @@ export const MaintenanceSalaMonitorCard = ({
                   {selectedEvent.kids_room ? (
                     <View style={[styles.eventHeroRoomBadge, styles.eventHeroRoomBadgeKids]}>
                       <View style={[styles.eventRoomDot, styles.eventRoomDotKids]} />
-                      <Text style={styles.eventHeroRoomText}>IBN Kids</Text>
+                      <Text style={styles.eventHeroRoomText}>{kidsRoomBadgeLabel}</Text>
                     </View>
                   ) : null}
                   {selectedEvent.teens_room ? (
                     <View style={[styles.eventHeroRoomBadge, styles.eventHeroRoomBadgeTeens]}>
                       <View style={[styles.eventRoomDot, styles.eventRoomDotTeens]} />
-                      <Text style={styles.eventHeroRoomText}>IBN Teens</Text>
+                      <Text style={styles.eventHeroRoomText}>{teensRoomBadgeLabel}</Text>
                     </View>
                   ) : null}
                 </View>
@@ -444,8 +451,8 @@ export const MaintenanceSalaMonitorCard = ({
                 ) : (
                   <Text style={styles.groupedAudienceEmptyText}>
                     {selectedGroupedRoomConfig.key === 'KIDS'
-                      ? 'Nenhum inscrito em IBN KIDS.'
-                      : 'Nenhum inscrito em IBN TEENS.'}
+                      ? `Nenhum inscrito em ${kidsRoomLabel}.`
+                      : `Nenhum inscrito em ${teensRoomLabel}.`}
                   </Text>
                 )}
               </View>

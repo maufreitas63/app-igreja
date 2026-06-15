@@ -38,6 +38,7 @@ import { persistProfileId, persistUserSession } from '@/lib/userSession';
 import { useLgpdTermsScrollGate } from '@/hooks/useLgpdTermsScrollGate';
 import { useRejectTotemPhoneFromMemberRoutes } from '@/hooks/useRejectTotemPhoneFromMemberRoutes';
 import { useWebDocumentTitle } from '@/hooks/useWebDocumentTitle';
+import { useEntityPrefix } from '@/context/EntityPrefixContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const REGISTER_LGPD_TERMS_HEIGHT = 200;
@@ -104,15 +105,16 @@ export default function RegisterScreen() {
   const nameInputRef = useRef<TextInput>(null);
   const router = useRouter();
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const { prefix: entityPrefix } = useEntityPrefix();
 
   const webDocumentTitle =
     stage === 'CAMERA'
-      ? 'Selfie biométrica — Cadastro · IBN'
+      ? `Selfie biométrica — Cadastro · ${entityPrefix}`
       : stage === 'CONFIRM'
-        ? 'Confirmar cadastro · IBN'
+        ? `Confirmar cadastro · ${entityPrefix}`
         : lgpdModuleActive
-          ? 'Termos LGPD — Cadastro · IBN'
-          : 'Cadastro · IBN';
+          ? `Termos LGPD — Cadastro · ${entityPrefix}`
+          : `Cadastro · ${entityPrefix}`;
   useWebDocumentTitle(webDocumentTitle);
 
   useEffect(() => {

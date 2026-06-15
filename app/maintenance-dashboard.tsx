@@ -311,6 +311,7 @@ export default function MaintenanceDashboard() {
   const [canMonitorFamilyReception, setCanMonitorFamilyReception] = useState(false);
   const [canAccessProfileCadastro, setCanAccessProfileCadastro] = useState(false);
   const [canUpdateMaintenanceEvents, setCanUpdateMaintenanceEvents] = useState(false);
+  const [canBypassEventPastDateLock, setCanBypassEventPastDateLock] = useState(false);
   const [maintenancePanelAccess, setMaintenancePanelAccess] = useState<Record<string, boolean>>(
     {}
   );
@@ -437,6 +438,7 @@ export default function MaintenanceDashboard() {
         setCanMonitorFamilyReception(snapshot.canMonitorFamilyReception);
         setCanAccessProfileCadastro(snapshot.canAccessProfileCadastro);
         setCanUpdateMaintenanceEvents(snapshot.canUpdateMaintenanceEvents);
+        setCanBypassEventPastDateLock(snapshot.canBypassEventPastDateLock);
         setMaintenancePanelAccess(snapshot.maintenancePanelAccess);
         setScalePanelAccess(snapshot.scalePanelAccess);
         setCanAccessPastoralCare(snapshot.canAccessPastoralCare);
@@ -459,7 +461,9 @@ export default function MaintenanceDashboard() {
     Keyboard.dismiss();
     setStatusMessage(null);
 
-    const validation = validateMaintenanceEventForm(form);
+    const validation = validateMaintenanceEventForm(form, {
+      bypassPastDateRestriction: canBypassEventPastDateLock,
+    });
     if (!validation.ok) {
       setStatusMessage(validation.message);
       Toast.show({
@@ -509,7 +513,7 @@ export default function MaintenanceDashboard() {
     } finally {
       setIsSaving(false);
     }
-  }, [closeEditor, form, refetch, selectedEventId]);
+  }, [canBypassEventPastDateLock, closeEditor, form, refetch, selectedEventId]);
 
   const handleReplicateSevenDays = useCallback(async () => {
     if (isCreating || !selectedEventId) {
@@ -1505,10 +1509,16 @@ export default function MaintenanceDashboard() {
                     thumbColor="#F8FAFC"
                   />
                 </View>
-                {isEventDateInPast && form.isPublished ? (
+                {isEventDateInPast && form.isPublished && !canBypassEventPastDateLock ? (
                   <Text style={styles.publishPastWarning}>
                     Esta data é anterior a hoje. Só eventos de hoje ou futuros permanecem
                     publicados — confira o ano no calendário (ex.: 2026, não 2021).
+                  </Text>
+                ) : null}
+                {isEventDateInPast && form.isPublished && canBypassEventPastDateLock ? (
+                  <Text style={styles.publishPastTreasurerHint}>
+                    Data retroativa permitida para Tesoureiro: o evento permanecerá publicado
+                    mesmo em meses anteriores.
                   </Text>
                 ) : null}
 
@@ -2275,6 +2285,12 @@ const styles = StyleSheet.create({
   },
   publishPastWarning: {
     color: '#FCD34D',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  publishPastTreasurerHint: {
+    color: '#86EFAC',
     fontSize: 12,
     lineHeight: 18,
     marginTop: 4,

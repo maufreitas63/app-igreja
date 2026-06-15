@@ -1,5 +1,6 @@
 -- Visitante / celular novo na entrada: cria perfil mínimo em `profiles` e gera PIN de 4 dígitos.
 -- Execute TODO este arquivo no SQL Editor do Supabase (uma vez).
+-- Depois execute scripts/access-control-visitantes-auto-assign.sql (papel visitantes automático).
 -- O app chama `prepare_visitor_access_pin` ou `regenerate_profile_access_pin` (ambos criam o perfil se não existir).
 
 create or replace function public.find_profile_id_by_phone(p_phone text)
@@ -139,6 +140,8 @@ begin
   if v_profile_id is null then
     raise exception 'Não foi possível preparar o perfil para este celular.';
   end if;
+
+  perform public.ensure_profile_visitantes_role(v_profile_id);
 
   return v_profile_id;
 end;

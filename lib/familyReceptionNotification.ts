@@ -2,6 +2,7 @@ import {
   type FamilyReceptionSubmission,
   fetchSuperAdminWhatsAppPhone,
 } from '@/lib/familyReceptionNotificationApi';
+import { getEntityPrefix } from '@/lib/entityPrefix';
 import { openWhatsAppPhone } from '@/lib/whatsapp';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
@@ -63,14 +64,15 @@ const findInformantName = (submission: FamilyReceptionSubmission) => {
 };
 
 export const buildFamilyReceptionApprovalWhatsAppMessage = (
-  submissions: FamilyReceptionSubmission[]
+  submissions: FamilyReceptionSubmission[],
+  entityPrefix: string
 ) => {
   if (submissions.length === 1) {
     const submission = submissions[0];
     const informantName = findInformantName(submission);
 
     return [
-      'Cadastro familiar — IBN',
+      `Cadastro familiar — ${entityPrefix}`,
       '',
       'Um formulário foi submetido para aprovação na recepção do cadastro familiar.',
       `Integrantes: ${submission.memberCount}`,
@@ -94,7 +96,7 @@ export const buildFamilyReceptionApprovalWhatsAppMessage = (
   }
 
   return [
-    'Cadastro familiar — IBN',
+    `Cadastro familiar — ${entityPrefix}`,
     '',
     `${submissions.length} formulário(s) submetido(s) para aprovação na recepção do cadastro familiar.`,
     '',
@@ -135,7 +137,8 @@ export async function notifySuperAdminOfNewFamilyReceptionSubmissions(
     return { notified: false as const, reason: 'missing_phone' as const };
   }
 
-  const message = buildFamilyReceptionApprovalWhatsAppMessage(newSubmissions);
+  const entityPrefix = await getEntityPrefix();
+  const message = buildFamilyReceptionApprovalWhatsAppMessage(newSubmissions, entityPrefix);
 
   try {
     await openWhatsAppPhone(phone, message);

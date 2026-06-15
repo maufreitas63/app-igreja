@@ -1,4 +1,4 @@
-import { buildFamilyId, getFamilyIdPrefix } from '@/lib/family';
+import { buildFamilyId, DEFAULT_FAMILY_ID, getFamilyIdPrefix } from '@/lib/family';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { supabase } from '@/lib/supabase';
@@ -167,7 +167,7 @@ export async function searchFamilyByInput(rawFamilyInput: string) {
   const familyId = await normalizeFamilyLinkInput(rawFamilyInput);
 
   if (!familyId) {
-    throw new Error('Informe um código de família válido (ex.: IBN0001).');
+    throw new Error(`Informe um código de família válido (ex.: ${DEFAULT_FAMILY_ID}).`);
   }
 
   const exists = await familyGroupExists(familyId);
