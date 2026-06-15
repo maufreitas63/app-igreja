@@ -37,13 +37,21 @@ import { invalidateProfilesMapSnapshot } from '@/lib/profilesMapCache';
 import { persistProfileId, persistUserSession } from '@/lib/userSession';
 import { useLgpdTermsScrollGate } from '@/hooks/useLgpdTermsScrollGate';
 import { useRejectTotemPhoneFromMemberRoutes } from '@/hooks/useRejectTotemPhoneFromMemberRoutes';
+import { useWebDocumentTitle } from '@/hooks/useWebDocumentTitle';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const REGISTER_LGPD_TERMS_HEIGHT = 200;
 const REGISTER_LGPD_TERMS_MARGIN_BOTTOM = 5;
+const REGISTER_LGPD_HINT_LINE_HEIGHT = 16;
 const REGISTER_LGPD_HINT_MARGIN_BOTTOM = 15;
 const REGISTER_LGPD_CHECKBOX_ROW_HEIGHT = 24;
 const REGISTER_LGPD_ROW_MARGIN_BOTTOM = 25;
+const REGISTER_LGPD_SECTION_HEIGHT =
+  REGISTER_LGPD_TERMS_HEIGHT +
+  REGISTER_LGPD_TERMS_MARGIN_BOTTOM +
+  REGISTER_LGPD_HINT_LINE_HEIGHT +
+  REGISTER_LGPD_HINT_MARGIN_BOTTOM +
+  REGISTER_LGPD_CHECKBOX_ROW_HEIGHT;
 
 const formatCepInput = (value: string) => {
   const cleaned = value.replace(/\D/g, '').slice(0, 8);
@@ -96,6 +104,16 @@ export default function RegisterScreen() {
   const nameInputRef = useRef<TextInput>(null);
   const router = useRouter();
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+
+  const webDocumentTitle =
+    stage === 'CAMERA'
+      ? 'Selfie biométrica — Cadastro · IBN'
+      : stage === 'CONFIRM'
+        ? 'Confirmar cadastro · IBN'
+        : lgpdModuleActive
+          ? 'Termos LGPD — Cadastro · IBN'
+          : 'Cadastro · IBN';
+  useWebDocumentTitle(webDocumentTitle);
 
   useEffect(() => {
     const timer = setTimeout(() => nameInputRef.current?.focus(), 500);
@@ -239,6 +257,8 @@ export default function RegisterScreen() {
   const cepDigits = normalizeCepDigits(cep);
   const hasRealName = fullName.length > 3 && !isPlaceholderVisitorName(fullName);
   const isFormValid = hasRealName && birthDate.length === 10 && cepDigits !== null;
+  const showLgpdSectionA = !loadingLgpdSetting && lgpdModuleActive;
+  const showLgpdSectionB = !loadingLgpdSetting && !lgpdModuleActive;
 
   const handleNameFocus = () => {
     if (isPlaceholderVisitorName(fullName)) {
@@ -471,15 +491,22 @@ export default function RegisterScreen() {
                 />
                 <TextInput style={styles.inputDisabled} value={`Telefone: ${phoneValue}`} editable={false} />
 
-                {loadingLgpdSetting ? (
-                  <View style={styles.lgpdBypassSlot}>
-                    <View style={styles.lgpdBypassTermsSpacer} />
-                    <View style={styles.lgpdBypassButtonRow}>
+                <View style={styles.registerLgpdSlot}>
+                  {loadingLgpdSetting ? (
+                    <View style={styles.registerLgpdLoading}>
                       <ActivityIndicator color="#10b981" />
                     </View>
-                  </View>
-                ) : lgpdModuleActive ? (
-                  <>
+                  ) : null}
+
+                  {/* Seção (a) — termos, hint e checkboxes (LGPD_Ativo = sim) */}
+                  <View
+                    style={[
+                      styles.registerLgpdSection,
+                      !showLgpdSectionA && styles.registerLgpdSectionHidden,
+                    ]}
+                    accessibilityElementsHidden={!showLgpdSectionA}
+                    importantForAccessibility={showLgpdSectionA ? 'auto' : 'no-hide-descendants'}
+                  >
                     <View
                       style={styles.lgpdBox}
                       onLayout={(event) => onTermsViewportLayout(event.nativeEvent.layout.height)}
@@ -498,50 +525,86 @@ export default function RegisterScreen() {
                         <Text style={styles.lgpdText}>{lgpdTermsText}</Text>
                       </ScrollView>
                     </View>
-                    <Text style={styles.hintText}>{hasScrolledToBottom ? '✅ Termos lidos.' : '↓ Role para ler tudo ↓'}</Text>
-
+                    <Text style={styles.hintText}>
+                      {hasScrolledToBottom ? '✅ Termos lidos.' : '↓ Role para ler tudo ↓'}
+                    </Text>
                     <View style={styles.rowContainer}>
-                      <TouchableOpacity style={styles.checkboxWrapper} onPress={() => handleLGPDChoice(true)} disabled={!isFormValid}>
-                        <View style={[styles.checkbox, acceptedLGPD === true && styles.checkboxCheckedGreen, !isFormValid && {opacity: 0.3}]} />
+                      <TouchableOpacity
+                        style={styles.checkboxWrapper}
+                        onPress={() => handleLGPDChoice(true)}
+                        disabled={!isFormValid}
+                      >
+                        <View
+                          style={[
+                            styles.checkbox,
+                            acceptedLGPD === true && styles.checkboxCheckedGreen,
+                            !isFormValid && { opacity: 0.3 },
+                          ]}
+                        />
                         <Text style={styles.checkboxLabel}>Li e aceito</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.checkboxWrapper} onPress={() => handleLGPDChoice(false)} disabled={!isFormValid}>
-                        <View style={[styles.checkbox, acceptedLGPD === false && styles.checkboxCheckedRed, !isFormValid && {opacity: 0.3}]} />
+                      <TouchableOpacity
+                        style={styles.checkboxWrapper}
+                        onPress={() => handleLGPDChoice(false)}
+                        disabled={!isFormValid}
+                      >
+                        <View
+                          style={[
+                            styles.checkbox,
+                            acceptedLGPD === false && styles.checkboxCheckedRed,
+                            !isFormValid && { opacity: 0.3 },
+                          ]}
+                        />
                         <Text style={styles.checkboxLabel}>Li e não concordo</Text>
                       </TouchableOpacity>
                     </View>
 
                     {acceptedLGPD === true && (
-                      <TouchableOpacity style={styles.btnPrimary} onPress={() => void handleOpenCamera()}>
+                      <TouchableOpacity
+                        style={styles.btnPrimarySectionA}
+                        onPress={() => void handleOpenCamera()}
+                      >
                         <Text style={styles.btnText}>Tirar Selfie Biométrica</Text>
                       </TouchableOpacity>
                     )}
 
                     {acceptedLGPD === false && (
                       <TouchableOpacity
-                        style={styles.btnSecondary}
+                        style={styles.btnSecondarySectionA}
                         onPress={() => void handleRegister()}
-                        disabled={isLoading || loadingLgpdSetting}
+                        disabled={isLoading}
                       >
-                        {isLoading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnTextSecondary}>Concluir Cadastro</Text>}
+                        {isLoading ? (
+                          <ActivityIndicator color="#FFF" />
+                        ) : (
+                          <Text style={styles.btnTextSecondary}>Concluir Cadastro</Text>
+                        )}
                       </TouchableOpacity>
                     )}
-                  </>
-                ) : (
-                  <View style={styles.lgpdBypassSlot}>
-                    <View style={styles.lgpdBypassTermsSpacer} />
-                    <View style={styles.lgpdBypassButtonRow}>
+                  </View>
+
+                  {/* Seção (b) — Continuar (LGPD_Ativo = nao), mesmo slot e dimensões da seção (a) */}
+                  <View
+                    style={[
+                      styles.registerLgpdSection,
+                      !showLgpdSectionB && styles.registerLgpdSectionHidden,
+                    ]}
+                    accessibilityElementsHidden={!showLgpdSectionB}
+                    importantForAccessibility={showLgpdSectionB ? 'auto' : 'no-hide-descendants'}
+                  >
+                    <View style={styles.registerLgpdSectionBTopSpacer} />
+                    <View style={styles.registerLgpdSectionBButtonRow}>
                       <TouchableOpacity
                         style={[
                           styles.btnPrimaryContinue,
-                          (!isFormValid || loadingLgpdSetting) && styles.btnDisabled,
+                          (!isFormValid || isLoading) && styles.btnDisabled,
                         ]}
                         onPress={() => void handleRegister()}
-                        disabled={!isFormValid || isLoading || loadingLgpdSetting}
+                        disabled={!isFormValid || isLoading}
                         accessibilityRole="button"
                         accessibilityLabel="Continuar"
                       >
-                        {isLoading || loadingLgpdSetting ? (
+                        {isLoading ? (
                           <ActivityIndicator color="#020617" />
                         ) : (
                           <Text style={styles.btnText}>Continuar</Text>
@@ -549,7 +612,7 @@ export default function RegisterScreen() {
                       </TouchableOpacity>
                     </View>
                   </View>
-                )}
+                </View>
               </>
             )}
 
@@ -597,28 +660,66 @@ const styles = StyleSheet.create({
   },
   lgpdTitle: { color: '#10b981', fontWeight: 'bold', fontSize: 16, marginBottom: 8 },
   lgpdText: { color: '#94A3B8', fontSize: 13, lineHeight: 20 },
-  hintText: { color: '#64748b', textAlign: 'center', marginBottom: 15, fontSize: 12 },
-  lgpdBypassSlot: {
+  hintText: { color: '#64748b', textAlign: 'center', marginBottom: 15, fontSize: 12, minHeight: REGISTER_LGPD_HINT_LINE_HEIGHT },
+  registerLgpdSlot: {
     width: '100%',
+    minHeight: REGISTER_LGPD_SECTION_HEIGHT,
     marginBottom: REGISTER_LGPD_ROW_MARGIN_BOTTOM,
   },
-  lgpdBypassTermsSpacer: {
-    height: REGISTER_LGPD_TERMS_HEIGHT,
-    marginBottom: REGISTER_LGPD_TERMS_MARGIN_BOTTOM + 16 + REGISTER_LGPD_HINT_MARGIN_BOTTOM,
+  registerLgpdLoading: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
-  lgpdBypassButtonRow: {
+  registerLgpdSection: {
+    width: '100%',
+    minHeight: REGISTER_LGPD_SECTION_HEIGHT,
+  },
+  registerLgpdSectionHidden: {
+    display: 'none',
+  },
+  registerLgpdSectionBTopSpacer: {
+    height:
+      REGISTER_LGPD_TERMS_HEIGHT +
+      REGISTER_LGPD_TERMS_MARGIN_BOTTOM +
+      REGISTER_LGPD_HINT_LINE_HEIGHT +
+      REGISTER_LGPD_HINT_MARGIN_BOTTOM,
+  },
+  registerLgpdSectionBButtonRow: {
     minHeight: REGISTER_LGPD_CHECKBOX_ROW_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
   },
-  rowContainer: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 25 },
+  rowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    minHeight: REGISTER_LGPD_CHECKBOX_ROW_HEIGHT,
+    alignItems: 'center',
+  },
   checkboxWrapper: { flexDirection: 'row', alignItems: 'center' },
   checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: '#94A3B8', marginRight: 8 },
   checkboxCheckedGreen: { backgroundColor: '#10b981', borderColor: '#10b981' },
   checkboxCheckedRed: { backgroundColor: '#ef4444', borderColor: '#ef4444' },
   checkboxLabel: { color: '#FFF', fontSize: 14 },
   btnPrimary: { backgroundColor: '#10b981', padding: 20, borderRadius: 20, alignItems: 'center', marginTop: 10 },
+  btnPrimarySectionA: {
+    backgroundColor: '#10b981',
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    marginTop: 10,
+    width: '100%',
+  },
+  btnSecondarySectionA: {
+    backgroundColor: '#475569',
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    marginTop: 10,
+    width: '100%',
+  },
   btnPrimaryContinue: {
     backgroundColor: '#10b981',
     paddingVertical: 18,
