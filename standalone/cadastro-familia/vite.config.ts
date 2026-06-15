@@ -16,6 +16,14 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': repoRoot,
+        // Evita que Rollup parseie Flow em react-native/index.js (quebra build:family-form).
+        'react-native': 'react-native-web',
+        'react-native-toast-message': path.join(__dirname, 'shims', 'react-native-toast-message.ts'),
+        '@react-native-async-storage/async-storage': path.join(
+          __dirname,
+          'shims',
+          'async-storage.ts'
+        ),
       },
     },
     define: {
