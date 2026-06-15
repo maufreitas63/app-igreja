@@ -128,15 +128,17 @@ as $$
   from public.members m
   where m.accepted is true
     and (
-      p_phone is not null
-      and (
-        m.phone = p_phone
-        or public.normalize_phone_for_sync(m.phone) = public.normalize_phone_for_sync(p_phone)
+      (
+        p_phone is not null
+        and (
+          m.phone = p_phone
+          or public.normalize_phone_for_sync(m.phone) = public.normalize_phone_for_sync(p_phone)
+        )
       )
-    )
-    or (
-      nullif(trim(coalesce(p_full_name, '')), '') is not null
-      and lower(trim(coalesce(m.full_name, ''))) = lower(trim(p_full_name))
+      or (
+        nullif(trim(coalesce(p_full_name, '')), '') is not null
+        and lower(trim(coalesce(m.full_name, ''))) = lower(trim(p_full_name))
+      )
     )
   order by
     case

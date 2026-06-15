@@ -526,6 +526,8 @@ Somente **`super_admin`** — papéis e grants por perfil.
 | Aceite LGPD é obrigatório? | Com **`LGPD_Ativo = sim`**, sim — recusa é registrada. Com **`nao`**, o módulo fica desligado (cadastro simplificado) |
 | Por que não vejo termos LGPD no cadastro? | **super_admin** pode ter desligado o módulo (**LGPD Inativo** em Controle de Acesso) |
 | Quem liga/desliga o módulo LGPD? | Apenas **super_admin** no card **Controle de Acesso** (manutenção) |
+| O que muda quando LGPD está inativo? | Sem selfie obrigatória, sem tela `/lgpd`, sem cabeçalho vermelho; cadastro só com nome, nascimento e CEP |
+| O que é `Parm_entidade`? | Parâmetro em `app_parameters` que define o **prefixo** da entidade na interface (ex.: **IBN** em **IBN KIDS**) |
 
 ---
 

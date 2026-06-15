@@ -4,7 +4,7 @@ Documentação completa do **app-igreja** (Igreja Batista Norte) para entrega ao
 
 Cada **pacote** é um arquivo **autocontido**: o texto integral dos documentos de referência está transcrito dentro do pacote (não é necessário abrir outros arquivos para ler o conteúdo).
 
-**Atualizado em:** 22/05/2026 · capturas com **dados reais** · imagens em **30%** no PDF
+**Atualizado em:** 22/05/2026 · capturas com **dados reais** · imagens em **40%** no PDF (Pacotes 5, 6 e 7)
 
 ---
 
@@ -18,18 +18,20 @@ Cada **pacote** é um arquivo **autocontido**: o texto integral dos documentos d
 | **3 — Governança e TI** | [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md) | [`pdfs/PACOTE_3_GOVERNANCA_TI.pdf`](pdfs/PACOTE_3_GOVERNANCA_TI.pdf) | Super admin, TI | ACL + Camadas de segurança + Blueprint |
 | **4 — Anexo técnico** | [`PACOTE_4_ANEXO_TECNICO.md`](PACOTE_4_ANEXO_TECNICO.md) | [`pdfs/PACOTE_4_ANEXO_TECNICO.pdf`](pdfs/PACOTE_4_ANEXO_TECNICO.pdf) | TI / arquitetura | Arquitetura PWA + Cards |
 | **5 — Manual do Painel** | [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md) | [`pdfs/PACOTE_5_MANUAL_PAINEL.pdf`](pdfs/PACOTE_5_MANUAL_PAINEL.pdf) | Membros e famílias | Primeiro acesso + uso card a card (sem manutenção) |
-| **6 — Manual de Manutenção** | [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md) | [`pdfs/PACOTE_6_MANUAL_MANUTENCAO.pdf`](pdfs/PACOTE_6_MANUAL_MANUTENCAO.pdf) | Equipe / gestores | Engrenagem + todos os cards de manutenção |
+| **6 — Manual de Manutenção** | [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md) | [`pdfs/PACOTE_6_MANUAL_MANUTENCAO.pdf`](pdfs/PACOTE_6_MANUAL_MANUTENCAO.pdf) | Equipe / gestores | Engrenagem + todos os cards de manutenção + LGPD opcional |
+| **7 — Treinamento diário** | [`PACOTE_7_TREINAMENTO_DIARIO.md`](PACOTE_7_TREINAMENTO_DIARIO.md) | [`pdfs/PACOTE_7_TREINAMENTO_DIARIO.pdf`](pdfs/PACOTE_7_TREINAMENTO_DIARIO.pdf) | Membros (onboarding) | 7 dias · baseado no Pacote 5 · Q&A por dia |
 
 ---
 
 ## Ordem de leitura recomendada
 
 1. `PACOTE_5_MANUAL_PAINEL.md` *(membro — primeiro contato e uso diário)*
-2. `PACOTE_1_VISAO_GERAL.md` *(visão ampla + FAQ)*
-3. `PACOTE_6_MANUAL_MANUTENCAO.md` *(equipe — gerir o app)*
-4. `PACOTE_2_OPERACAO.md` *(operação e ecossistema)*
-5. `PACOTE_3_GOVERNANCA_TI.md` *(TI)*
-6. `PACOTE_4_ANEXO_TECNICO.md` *(opcional)*
+2. `PACOTE_7_TREINAMENTO_DIARIO.md` *(membro — treinamento particionado, 7 dias)*
+3. `PACOTE_1_VISAO_GERAL.md` *(visão ampla + FAQ)*
+4. `PACOTE_6_MANUAL_MANUTENCAO.md` *(equipe — gerir o app)*
+5. `PACOTE_2_OPERACAO.md` *(operação e ecossistema)*
+6. `PACOTE_3_GOVERNANCA_TI.md` *(TI)*
+7. `PACOTE_4_ANEXO_TECNICO.md` *(opcional)*
 
 ---
 
@@ -37,7 +39,7 @@ Cada **pacote** é um arquivo **autocontido**: o texto integral dos documentos d
 
 | Perfil | Pacotes |
 |--------|---------|
-| Membro / família (uso do app) | **Pacote 5** (+ Pacote 1 para FAQ) |
+| Membro / família (uso do app) | **Pacote 5** + **Pacote 7** (+ Pacote 1 para FAQ) |
 | Pastor / diretoria | Pacotes 5 + 1 |
 | Secretaria / eventos | Pacotes **6** + 5 + 2 |
 | Líder de escala | Pacotes **6** + 5 (+ Missão B4 no Pacote 1, se preferir formato missão) |
@@ -72,6 +74,7 @@ npm run build:docs       # md + pdf padrão (sem PAPEIS)
 | `DASHBOARD_CARDS.md` | Pacote 4 |
 | `MANUAL_DASHBOARD_MEMBRO.md` | Pacote 5 |
 | `MANUAL_DASHBOARD_MANUTENCAO.md` | Pacote 6 |
+| `MANUAL_TREINAMENTO_DIARIO.md` | Pacote 7 (gerado por `build-pacotes-md.mjs`) |
 
 ---
 

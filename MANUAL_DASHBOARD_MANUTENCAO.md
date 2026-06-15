@@ -518,7 +518,7 @@ Não pule estágios — o sistema só libera o próximo após o anterior.
 Importar movimentação, comentar lançamentos, anexar comprovantes e conciliar **Relatórios de Despesas (RD)**.
 
 ### Caminho
-**Informações Financeiras** *(requer permissão financeira de manutenção)*.
+**Informações Financeiras** *(requer permissão financeira de manutenção — papel **`tesoureiro`**, **`super_admin`** ou grants equivalentes)*.
 
 ### Ilustração — Informações Financeiras
 
@@ -530,6 +530,8 @@ Importar movimentação, comentar lançamentos, anexar comprovantes e conciliar 
 | ② | **Importação CSV** do extrato |
 | ③ | **Relatórios RD** pendentes |
 
+
+> **Papel Tesoureiro** (`access-control-tesoureiro-role.sql`): acesso ao card **Financeiro** no painel do membro, card **Informações Financeiras** na manutenção, conciliação de **RD** (numeração mensal com prefixo **AAMM**, ex.: `250500001`), publicação de **eventos retroativos** e botão **Emitir RD** quando aplicável.
 
 
 ### Passo a passo — importar CSV do mês
@@ -762,6 +764,30 @@ Definir **quem vê e edita** cada tela, card e coluna — incluindo manutenção
 | ① | Estado **LGPD Inativo** (vermelho) após o clique |
 | ② | Toast **LGPD inativado** — confirma gravação em `app_parameters` |
 | ③ | Mensagem: o alerta de LGPD pendente deixa de ser exibido no painel do membro |
+
+
+
+### Passo a passo — interruptor LGPD (reconhecimento opcional)
+
+1. Em **Controle de Acesso**, localize o interruptor **LGPD Ativo / LGPD Inativo** (② na ilustração).
+2. **LGPD Ativo** (`LGPD_Ativo = sim`):
+   - Cadastro inicial exige termos roláveis, selfie biométrica e registro de aceite/recusa.
+   - Membros com pendência veem cabeçalho **vermelho** no painel até regularizar em **Dados Cadastrais → LGPD** ou `/lgpd`.
+   - A igreja **opta por** exigir reconhecimento formal de privacidade.
+3. **LGPD Inativo** (`LGPD_Ativo = nao`):
+   - Cadastro simplificado: nome, nascimento e CEP → **Continuar** direto ao **Índice** (ver Pacote 5, seção **0.2b**).
+   - Sem tela `/lgpd`, sem selfie obrigatória, sem alerta vermelho.
+   - A igreja **opta por não** exigir esse critério no app; o parâmetro fica gravado em `app_parameters`.
+4. Ao alternar, aguarde toast **LGPD ativado** ou **LGPD inativado** (② na ilustração **m14b**).
+
+### Resultado esperado — LGPD
+
+| Estado | Efeito no app do membro (Pacote 5) |
+|--------|-------------------------------------|
+| **Ativo** | Fluxo completo de privacidade (0.2, 0.3) |
+| **Inativo** | Fluxo simplificado (0.2b); membros existentes deixam de ver alerta vermelho |
+
+> Somente **super_admin** altera este parâmetro. Scripts: `salvar-app-parameter-admin.sql`, `app-parameter-lgpd-ativo.sql`.
 
 
 

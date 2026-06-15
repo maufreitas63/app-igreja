@@ -23,11 +23,9 @@ import {
 } from '@/lib/checkInVisibility';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { formatRoomMonitorNames } from '@/lib/roomMonitorScales';
-import { compareFamilyMembersByRelationship } from '@/lib/familyRelationshipOptions';
 import { resolveFamilyIdForPhone } from '@/lib/family';
-import { formatShortName } from '@/lib/formatShortName';
-import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import {
+  fetchFamilyMembersForDirectoryEntry,
   fetchMembersDirectoryFromProfiles,
   fetchVisitorsDirectoryFromProfiles,
 } from '@/lib/membersListApi';
@@ -517,6 +515,7 @@ export default function Dashboard() {
   const [membersListError, setMembersListError] = useState<string | null>(null);
   const [membersListSearchQuery, setMembersListSearchQuery] = useState('');
   const visitorsListLoadedRef = useRef(false);
+  const [familyModalSeedEntry, setFamilyModalSeedEntry] = useState<MemberListEntry | null>(null);
   const [familyModalFamilyId, setFamilyModalFamilyId] = useState<string | null>(null);
   const [familyModalMembers, setFamilyModalMembers] = useState<MemberListEntry[]>([]);
   const [isFamilyModalLoading, setIsFamilyModalLoading] = useState(false);
@@ -1521,7 +1520,8 @@ export default function Dashboard() {
   }, [activeMemberListEntries, membersListSearchQuery]);
 
   useEffect(() => {
-    if (!familyModalFamilyId) {
+    if (!familyModalSeedEntry) {
+      setFamilyModalFamilyId(null);
       setFamilyModalMembers([]);
       setIsFamilyModalLoading(false);
       return;
@@ -1532,52 +1532,22 @@ export default function Dashboard() {
 
     void (async () => {
       try {
-        const { data, error } = await supabase
-          .from('members')
-          .select('id, full_name, phone, relationship, family_id')
-          .ilike('family_id', familyModalFamilyId)
-          .eq('accepted', MEMBER_ACCEPTED_VALUE);
-
-        if (error) {
-          throw error;
-        }
+        const { familyId, members } = await fetchFamilyMembersForDirectoryEntry(
+          familyModalSeedEntry,
+          { visitorsOnly: membersListAudience === 'visitors' }
+        );
 
         if (cancelled) {
           return;
         }
 
-        const parsed = (data ?? [])
-          .map((row) => {
-            const fullName = String(row.full_name ?? '').trim();
-            const familyId = String(row.family_id ?? '').trim();
-
-            if (!fullName || !familyId) {
-              return null;
-            }
-
-            return {
-              id: String(row.id),
-              full_name: fullName,
-              short_name: formatShortName(fullName),
-              family_id: familyId,
-              relationship: row.relationship ? String(row.relationship).trim() || null : null,
-              phone: row.phone ? String(row.phone).trim() || null : null,
-              cep: null,
-              address_street: null,
-              address_number: null,
-              address_neighborhood: null,
-              address_city: null,
-              address_state: null,
-            } satisfies MemberListEntry;
-          })
-          .filter((row): row is MemberListEntry => row !== null)
-          .sort(compareFamilyMembersByRelationship);
-
-        setFamilyModalMembers(parsed);
+        setFamilyModalFamilyId(familyId);
+        setFamilyModalMembers(members);
       } catch (error) {
         console.error('Erro ao carregar membros da família:', error);
 
         if (!cancelled) {
+          setFamilyModalFamilyId(null);
           setFamilyModalMembers([]);
         }
       } finally {
@@ -1590,7 +1560,7 @@ export default function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, [familyModalFamilyId]);
+  }, [familyModalSeedEntry, membersListAudience]);
 
   const handleOpenVigilanceVolunteerWhatsapp = async (phone: string | null) => {
     const whatsappPhone = normalizePhoneForWhatsApp(phone);
@@ -2702,7 +2672,7 @@ export default function Dashboard() {
                               <View style={styles.membersListActionsRow}>
                                 <TouchableOpacity
                                   style={styles.membersListActionCell}
-                                  onPress={() => setFamilyModalFamilyId(entry.family_id.trim())}
+                                  onPress={() => setFamilyModalSeedEntry(entry)}
                                   activeOpacity={0.85}
                                 >
                                   <FontAwesome name="users" size={18} color="#fda4af" />
@@ -3579,14 +3549,14 @@ export default function Dashboard() {
         </View>
 
         <Modal
-          visible={familyModalFamilyId !== null}
+          visible={familyModalSeedEntry !== null}
           transparent
           animationType="fade"
-          onRequestClose={() => setFamilyModalFamilyId(null)}
+          onRequestClose={() => setFamilyModalSeedEntry(null)}
         >
           <Pressable
             style={styles.membersFamilyBackdrop}
-            onPress={() => setFamilyModalFamilyId(null)}
+            onPress={() => setFamilyModalSeedEntry(null)}
           >
             <Pressable style={styles.membersFamilyModalCard} onPress={() => undefined}>
               <Text style={styles.membersFamilyModalTitle}>Membros da família</Text>
@@ -3632,7 +3602,7 @@ export default function Dashboard() {
               </ScrollView>
               <TouchableOpacity
                 style={styles.membersFamilyCloseButton}
-                onPress={() => setFamilyModalFamilyId(null)}
+                onPress={() => setFamilyModalSeedEntry(null)}
                 activeOpacity={0.85}
               >
                 <Text style={styles.membersFamilyCloseButtonText}>Fechar</Text>

@@ -51,6 +51,8 @@ create table if not exists public.recepcao_cadastro_familiar (
   matched_profile_id uuid null references public.profiles (id) on delete set null,
   matched_member_id uuid null references public.members (id) on delete set null,
   applied_family_id text null,
+  applied_profile_id uuid null references public.profiles (id) on delete set null,
+  applied_member_id uuid null references public.members (id) on delete set null,
   process_message text null,
   created_at timestamptz not null default now(),
   processed_at timestamptz null
@@ -60,7 +62,9 @@ alter table public.recepcao_cadastro_familiar
   add column if not exists address_street text null,
   add column if not exists address_neighborhood text null,
   add column if not exists address_city text null,
-  add column if not exists address_state text null;
+  add column if not exists address_state text null,
+  add column if not exists applied_profile_id uuid null references public.profiles (id) on delete set null,
+  add column if not exists applied_member_id uuid null references public.members (id) on delete set null;
 
 create index if not exists idx_recepcao_cadastro_familiar_submission
   on public.recepcao_cadastro_familiar (submission_id);
@@ -321,6 +325,153 @@ begin
 end;
 $$;
 
+-- Um único family_id por lote (submission): prioriza celulares já cadastrados, depois o informante.
+create or replace function public.resolve_recepcao_lote_family_id(p_submission_id uuid)
+returns text
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_phones text[];
+  v_from_phones text;
+  v_informant_family text;
+  v_distinct_detected int;
+  v_single_detected text;
+begin
+  if p_submission_id is null then
+    return null;
+  end if;
+
+  select coalesce(array_agg(distinct nullif(trim(r.phone), '')), array[]::text[])
+    into v_phones
+    from public.recepcao_cadastro_familiar r
+   where r.submission_id = p_submission_id
+     and nullif(trim(coalesce(r.phone, '')), '') is not null;
+
+  v_from_phones := public.find_family_id_by_phones_in_profiles(v_phones);
+
+  if v_from_phones is not null then
+    return v_from_phones;
+  end if;
+
+  select coalesce(
+    nullif(trim(coalesce(r.detected_family_id, '')), ''),
+    (
+      select nullif(trim(coalesce(p.family_id, p.codigo_membro, '')), '')
+        from public.profiles p
+       where p.id = r.matched_profile_id
+    ),
+    (
+      select nullif(trim(coalesce(m.family_id, '')), '')
+        from public.members m
+       where m.id = r.matched_member_id
+    )
+  )
+    into v_informant_family
+    from public.recepcao_cadastro_familiar r
+   where r.submission_id = p_submission_id
+     and r.is_informant is true
+   order by r.created_at
+   limit 1;
+
+  if v_informant_family is not null then
+    return v_informant_family;
+  end if;
+
+  select count(distinct nullif(trim(detected_family_id), ''))
+    into v_distinct_detected
+    from public.recepcao_cadastro_familiar
+   where submission_id = p_submission_id;
+
+  if v_distinct_detected = 1 then
+    select nullif(trim(detected_family_id), '')
+      into v_single_detected
+      from public.recepcao_cadastro_familiar
+     where submission_id = p_submission_id
+       and detected_family_id is not null
+     limit 1;
+
+    return v_single_detected;
+  end if;
+
+  return null;
+end;
+$$;
+
+-- Garante que todos os integrantes do lote compartilhem o mesmo family_id em profiles e members.
+create or replace function public.finalize_recepcao_lote_family_assignments(
+  p_submission_id uuid,
+  p_family_id text
+)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_family_id text;
+  v_updated int := 0;
+  v_row_count int;
+begin
+  v_family_id := nullif(trim(coalesce(p_family_id, '')), '');
+
+  if p_submission_id is null or v_family_id is null then
+    return 0;
+  end if;
+
+  update public.profiles p
+     set family_id = v_family_id,
+         codigo_membro = v_family_id,
+         updated_at = now()
+    from public.recepcao_cadastro_familiar r
+   where r.submission_id = p_submission_id
+     and r.status = 'processed'
+     and (
+       p.id = r.applied_profile_id
+       or (
+         r.applied_profile_id is null
+         and lower(trim(coalesce(p.full_name, ''))) = lower(trim(r.full_name))
+         and p.birth_date is not distinct from r.birth_date
+       )
+     )
+     and (
+       p.family_id is distinct from v_family_id
+       or p.codigo_membro is distinct from v_family_id
+     );
+
+  get diagnostics v_row_count = row_count;
+  v_updated := v_updated + v_row_count;
+
+  update public.members m
+     set family_id = v_family_id
+    from public.recepcao_cadastro_familiar r
+   where r.submission_id = p_submission_id
+     and r.status = 'processed'
+     and (
+       m.id = r.applied_member_id
+       or (
+         r.applied_member_id is null
+         and lower(trim(coalesce(m.full_name, ''))) = lower(trim(r.full_name))
+         and m.birth_date is not distinct from r.birth_date
+       )
+     )
+     and m.family_id is distinct from v_family_id;
+
+  get diagnostics v_row_count = row_count;
+  v_updated := v_updated + v_row_count;
+
+  update public.recepcao_cadastro_familiar
+     set applied_family_id = v_family_id
+   where submission_id = p_submission_id
+     and status = 'processed'
+     and applied_family_id is distinct from v_family_id;
+
+  return v_updated;
+end;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- Endereço do formulário → profiles (não depende de ViaCEP no servidor)
 -- ---------------------------------------------------------------------------
@@ -443,6 +594,29 @@ begin
 end;
 $$;
 
+-- Celular do formulário: exatamente 11 dígitos (DDD + número). Aceita máscara ou prefixo 55.
+create or replace function public.recepcao_mobile_phone_digits(p_phone text)
+returns text
+language sql
+immutable
+as $$
+  select case
+    when length(d) = 13 and left(d, 2) = '55' then substring(d from 3 for 11)
+    else d
+  end
+  from (
+    select regexp_replace(coalesce(p_phone, ''), '\D', '', 'g') as d
+  ) t;
+$$;
+
+create or replace function public.recepcao_is_valid_mobile_phone(p_phone text)
+returns boolean
+language sql
+immutable
+as $$
+  select length(public.recepcao_mobile_phone_digits(p_phone)) = 11;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- Envio público → recepção
 -- ---------------------------------------------------------------------------
@@ -508,6 +682,15 @@ begin
   end;
 
   v_phone := nullif(trim(coalesce(v_informant ->> 'phone', '')), '');
+
+  if v_phone is null or not public.recepcao_is_valid_mobile_phone(v_phone) then
+    return jsonb_build_object(
+      'success', false,
+      'message',
+      'Verifique e corrija o celular do representante legal: informe exatamente 11 dígitos (DDD + número com 9 na frente, ex.: (11) 98765-4321).'
+    );
+  end if;
+
   v_cep := nullif(trim(coalesce(v_informant ->> 'cep', '')), '');
   v_address_number := nullif(trim(coalesce(v_informant ->> 'address_number', '')), '');
   v_address_complement := nullif(trim(coalesce(v_informant ->> 'address_complement', '')), '');
@@ -529,6 +712,18 @@ begin
 
     if v_dependent_name is null then
       continue;
+    end if;
+
+    if nullif(trim(coalesce(v_dependent ->> 'phone', '')), '') is not null
+       and not public.recepcao_is_valid_mobile_phone(v_dependent ->> 'phone') then
+      return jsonb_build_object(
+        'success', false,
+        'message',
+        format(
+          'Verifique e corrija o celular do dependente "%s": informe exatamente 11 dígitos (DDD + número com 9 na frente, ex.: (11) 98765-4321).',
+          v_dependent_name
+        )
+      );
     end if;
 
     if nullif(trim(coalesce(v_dependent ->> 'phone', '')), '') is not null then
@@ -695,10 +890,17 @@ begin
   v_family_id_from_phones := public.find_family_id_by_phones_in_profiles(v_form_phones);
   v_phone_family_distinct_count := public.count_distinct_family_ids_by_phones_in_profiles(v_form_phones);
 
-  if v_family_id_from_phones is not null then
+  v_detected_family_id := public.resolve_recepcao_lote_family_id(v_submission_id);
+
+  if v_detected_family_id is not null then
+    update public.recepcao_cadastro_familiar
+       set detected_family_id = v_detected_family_id
+     where submission_id = v_submission_id;
+  elsif v_family_id_from_phones is not null then
     update public.recepcao_cadastro_familiar
        set detected_family_id = v_family_id_from_phones
      where submission_id = v_submission_id;
+    v_detected_family_id := v_family_id_from_phones;
   end if;
 
   select count(distinct nullif(trim(detected_family_id), ''))
@@ -721,11 +923,11 @@ begin
 
   update public.recepcao_cadastro_familiar_lote
      set member_count = v_member_count,
-         detected_family_id = coalesce(v_family_id_from_phones, v_detected_family_id),
+         detected_family_id = coalesce(v_detected_family_id, v_family_id_from_phones),
          has_family_conflict = v_distinct_family_count > 1
    where id = v_submission_id;
 
-  v_detected_family_id := coalesce(v_family_id_from_phones, v_detected_family_id);
+  v_detected_family_id := coalesce(v_detected_family_id, v_family_id_from_phones);
 
   return jsonb_build_object(
     'success', true,
@@ -839,8 +1041,6 @@ declare
   v_existing_profile_name text;
   v_existing_member_name text;
   v_address_process_message text;
-  v_submission_phones text[];
-  v_family_id_from_phones text;
 begin
   for v_submission in
     select l.*
@@ -862,22 +1062,13 @@ begin
       continue;
     end if;
 
-    select coalesce(array_agg(distinct nullif(trim(r.phone), '')), array[]::text[])
-      into v_submission_phones
-      from public.recepcao_cadastro_familiar r
-     where r.submission_id = v_submission.id
-       and nullif(trim(coalesce(r.phone, '')), '') is not null;
-
-    v_family_id_from_phones := public.find_family_id_by_phones_in_profiles(v_submission_phones);
-
-    v_family_id := coalesce(
-      nullif(trim(coalesce(v_submission.detected_family_id, '')), ''),
-      v_family_id_from_phones
-    );
+    v_family_id := public.resolve_recepcao_lote_family_id(v_submission.id);
 
     if v_family_id is null then
       v_family_id := public.reserve_next_family_id();
     end if;
+
+    perform set_config('app.skip_family_sync_trigger', 'on', true);
 
     for v_member in
       select *
@@ -1000,12 +1191,15 @@ begin
           v_member.relationship,
           v_family_id,
           false
-        );
+        )
+        returning id into v_apply_member_id;
       end if;
 
       update public.recepcao_cadastro_familiar
          set status = 'processed',
              applied_family_id = v_family_id,
+             applied_profile_id = v_apply_profile_id,
+             applied_member_id = v_apply_member_id,
              processed_at = now(),
              process_message = coalesce(
                v_address_process_message,
@@ -1016,9 +1210,13 @@ begin
       v_processed_members := v_processed_members + 1;
     end loop;
 
+    perform set_config('app.skip_family_sync_trigger', 'off', true);
+
+    perform public.finalize_recepcao_lote_family_assignments(v_submission.id, v_family_id);
+
     update public.recepcao_cadastro_familiar_lote
        set status = 'processed',
-           detected_family_id = coalesce(v_submission.detected_family_id, v_family_id),
+           detected_family_id = v_family_id,
            processed_at = now(),
            process_message = format('Processado por lote. family_id=%s', v_family_id)
      where id = v_submission.id;
@@ -1035,6 +1233,7 @@ begin
   );
 exception
   when others then
+    perform set_config('app.skip_family_sync_trigger', 'off', true);
     return jsonb_build_object(
       'success', false,
       'message',
@@ -1120,6 +1319,185 @@ begin
 end;
 $$;
 
+-- ---------------------------------------------------------------------------
+-- Sincronização profile↔member: respeita flag durante gravação em lote da recepção
+-- ---------------------------------------------------------------------------
+
+create or replace function public.sync_profile_family_from_member()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_profile_id uuid;
+  v_family_id text;
+begin
+  if current_setting('app.skip_family_sync_trigger', true) = 'on' then
+    return new;
+  end if;
+
+  if pg_trigger_depth() > 1 then
+    return new;
+  end if;
+
+  v_profile_id := public.find_profile_id_for_member_sync(new.phone, new.full_name);
+  v_family_id := nullif(trim(coalesce(new.family_id, '')), '');
+
+  if v_profile_id is null then
+    return new;
+  end if;
+
+  update public.profiles p
+     set family_id = v_family_id,
+         codigo_membro = v_family_id
+   where p.id = v_profile_id
+     and (
+       p.family_id is distinct from v_family_id
+       or p.codigo_membro is distinct from v_family_id
+     );
+
+  return new;
+end;
+$$;
+
+create or replace function public.sync_member_family_from_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_member_id uuid;
+  v_family_id text;
+begin
+  if current_setting('app.skip_family_sync_trigger', true) = 'on' then
+    return new;
+  end if;
+
+  if pg_trigger_depth() > 1 then
+    return new;
+  end if;
+
+  if
+    tg_op = 'UPDATE'
+    and new.codigo_membro is distinct from old.codigo_membro
+    and new.family_id is not distinct from old.family_id
+  then
+    v_family_id := nullif(trim(coalesce(new.codigo_membro, '')), '');
+  elsif tg_op = 'UPDATE' and new.family_id is distinct from old.family_id then
+    v_family_id := nullif(trim(coalesce(new.family_id, '')), '');
+  else
+    v_family_id := coalesce(
+      nullif(trim(coalesce(new.family_id, '')), ''),
+      nullif(trim(coalesce(new.codigo_membro, '')), '')
+    );
+  end if;
+
+  update public.profiles p
+     set family_id = v_family_id,
+         codigo_membro = v_family_id
+   where p.id = new.id
+     and (
+       p.family_id is distinct from v_family_id
+       or p.codigo_membro is distinct from v_family_id
+     );
+
+  v_member_id := public.find_member_id_for_profile_sync(new.phone, new.full_name);
+
+  if v_member_id is null then
+    return new;
+  end if;
+
+  update public.members m
+     set family_id = v_family_id
+   where m.id = v_member_id
+     and m.family_id is distinct from v_family_id;
+
+  return new;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Reparo: unifica family_id de lotes já processados com integrantes divergentes
+-- ---------------------------------------------------------------------------
+
+create or replace function public.repair_recepcao_processed_family_grouping()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_lote record;
+  v_canonical text;
+  v_repaired_lotes int := 0;
+  v_rows_touched int := 0;
+  v_batch int;
+begin
+  for v_lote in
+    select l.id as submission_id
+      from public.recepcao_cadastro_familiar_lote l
+     where l.status = 'processed'
+     order by l.processed_at nulls last, l.created_at
+  loop
+    v_canonical := public.resolve_recepcao_lote_family_id(v_lote.submission_id);
+
+    if v_canonical is null then
+      select coalesce(
+        nullif(trim(coalesce(r.applied_family_id, '')), ''),
+        nullif(trim(coalesce(p.family_id, p.codigo_membro, '')), '')
+      )
+        into v_canonical
+        from public.recepcao_cadastro_familiar r
+        left join public.profiles p on p.id = r.applied_profile_id
+       where r.submission_id = v_lote.submission_id
+         and r.is_informant is true
+       order by r.processed_at desc nulls last
+       limit 1;
+    end if;
+
+    if v_canonical is null then
+      select nullif(trim(coalesce(r.applied_family_id, '')), '')
+        into v_canonical
+        from public.recepcao_cadastro_familiar r
+       where r.submission_id = v_lote.submission_id
+         and r.applied_family_id is not null
+       order by r.is_informant desc, r.processed_at desc nulls last
+       limit 1;
+    end if;
+
+    continue when v_canonical is null;
+
+    v_batch := public.finalize_recepcao_lote_family_assignments(v_lote.submission_id, v_canonical);
+
+    if v_batch > 0 then
+      v_repaired_lotes := v_repaired_lotes + 1;
+      v_rows_touched := v_rows_touched + v_batch;
+
+      update public.recepcao_cadastro_familiar_lote
+         set process_message = trim(
+           coalesce(process_message, '')
+           || format(' [reparo %s: family_id unificado em %s]', now()::date, v_canonical)
+         ),
+             detected_family_id = v_canonical
+       where id = v_lote.submission_id;
+    end if;
+  end loop;
+
+  return jsonb_build_object(
+    'success', true,
+    'repaired_lotes', v_repaired_lotes,
+    'rows_touched', v_rows_touched
+  );
+end;
+$$;
+
+grant execute on function public.recepcao_mobile_phone_digits(text) to anon, authenticated;
+grant execute on function public.recepcao_is_valid_mobile_phone(text) to anon, authenticated;
+grant execute on function public.resolve_recepcao_lote_family_id(uuid) to anon, authenticated;
+grant execute on function public.finalize_recepcao_lote_family_assignments(uuid, text) to authenticated;
+grant execute on function public.repair_recepcao_processed_family_grouping() to authenticated;
 grant execute on function public.find_profile_id_for_recepcao_match(text, text) to anon, authenticated;
 grant execute on function public.find_member_id_for_recepcao_match(text, text) to authenticated;
 grant execute on function public.count_distinct_family_ids_by_phones_in_profiles(text[]) to anon, authenticated;

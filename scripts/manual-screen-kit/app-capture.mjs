@@ -14,7 +14,7 @@ const SUPABASE_ANON_KEY =
 
 const VIEWPORT = { width: 390, height: 844 };
 const DEVICE_SCALE = 1;
-const OUTPUT_SCALE = 0.3;
+const OUTPUT_SCALE = 0.4;
 
 const MEMBER_PHONE_RAW = process.env.MANUAL_SCREEN_MEMBER_PHONE?.trim() || '';
 const MEMBER_PIN_ENV = process.env.MANUAL_SCREEN_MEMBER_PIN?.trim() || '';

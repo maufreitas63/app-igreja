@@ -25,7 +25,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 ## Cadastro e perfil
 
-- **Cadastro inicial** — nome, nascimento, telefone, selfie, aceite LGPD
+- **Cadastro inicial** — nome, nascimento, telefone, CEP; com **`LGPD_Ativo = sim`**: selfie e aceite LGPD; com **`nao`**: fluxo simplificado (sem termos, selfie nem tela `/lgpd`)
 - **Trava LGPD** — rolagem obrigatória dos termos antes do aceite
 - Upload de **selfie** (câmera nativa ou arquivo na web)
 - Reserva automática de **código de família** (`family_id`)
@@ -241,7 +241,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 ## Controle de acesso (ACL)
 
-- Papéis: `visitantes`, `congregado`, `member`, `family_acceptor`, `lider`, `events_admin`, `pastoral`, `super_admin`
+- Papéis: `visitantes`, `congregado`, `member`, `family_acceptor`, `lider`, `events_admin`, **`tesoureiro`**, `pastoral`, `super_admin`
 - Permissões por **tela**, **card do dashboard**, **tabela** e **coluna**
 - RPC `profile_has_access` com modo estrito (`EXPO_PUBLIC_ACL_STRICT`)
 - Guards de rota em telas sensíveis
@@ -278,8 +278,9 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 - Abertura de **WhatsApp** — aniversariantes, membros, servos de escala, proprietários de veículo, família
 - **PIX** — exibição e cópia da chave de ofertas
-- Parâmetros globais em `app_parameters` (PIX, prefixo família, totem, **`LGPD_Ativo`**, etc.)
-- **`LGPD_Ativo`** (`sim` / `nao`) — alternado no card **Controle de Acesso** (super_admin); liga/desliga termos LGPD, selfie no cadastro, tela `/lgpd` e cabeçalho vermelho de pendência
+- Parâmetros globais em `app_parameters` (PIX, prefixo família, totem, **`LGPD_Ativo`**, **`Parm_entidade`**, etc.)
+- **`Parm_entidade`** — prefixo exibido na interface (cards SALA(S), textos com marca da entidade); valor padrão **IBN** quando não configurado
+- **`LGPD_Ativo`** (`sim` / `nao`) — alternado no card **Controle de Acesso** (super_admin); quando **`sim`**, liga termos LGPD, selfie no cadastro, tela `/lgpd` e cabeçalho vermelho de pendência; quando **`nao`**, a igreja opta por **não exigir** reconhecimento LGPD — cadastro simplificado e sem alerta vermelho
 - Redes sociais na tela de login
 
 ---

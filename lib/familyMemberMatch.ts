@@ -10,6 +10,7 @@ export type FamilyMemberMatchRow = {
   phone: string | null;
   birth_date: string | null;
   family_id: string;
+  relationship?: string | null;
   accepted?: boolean | null;
 };
 
@@ -31,7 +32,7 @@ const memberNamesMatch = (
   return Boolean(normalizedLeft && normalizedRight && normalizedLeft === normalizedRight);
 };
 
-const memberMatchesInput = (
+export const memberMatchesDirectoryEntry = (
   member: Pick<FamilyMemberMatchRow, 'full_name' | 'phone'>,
   input: { full_name: string; phone: string | null }
 ) => {
@@ -41,6 +42,8 @@ const memberMatchesInput = (
 
   return memberNamesMatch(member.full_name, input.full_name);
 };
+
+const memberMatchesInput = memberMatchesDirectoryEntry;
 
 /** Busca membros com telefone equivalente (variantes + fallback por sufixo). */
 export async function findMembersMatchingPhone(

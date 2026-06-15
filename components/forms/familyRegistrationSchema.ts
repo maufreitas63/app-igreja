@@ -1,7 +1,8 @@
 import {
   FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS,
+  FAMILY_REGISTRATION_PHONE_ERROR,
+  isValidBrazilMobilePhone,
   parseBrazilianDateToIso,
-  normalizePhoneDigits,
 } from '@/lib/familyRegistration';
 import { normalizeCepDigits } from '@/lib/cepUtils';
 import { z } from 'zod';
@@ -19,12 +20,21 @@ const requiredBirthDate = z
     message: 'Use o formato dd/mm/aaaa com data válida.',
   });
 
-const requiredPhone = z
+const requiredMobilePhone = z
   .string()
   .trim()
   .min(1, 'Informe o celular.')
-  .refine((value) => normalizePhoneDigits(value).length >= 10, {
-    message: 'Informe um celular válido com DDD.',
+  .refine((value) => isValidBrazilMobilePhone(value), {
+    message: FAMILY_REGISTRATION_PHONE_ERROR,
+  });
+
+const optionalMobilePhone = z
+  .string()
+  .trim()
+  .optional()
+  .default('')
+  .refine((value) => !value || isValidBrazilMobilePhone(value), {
+    message: FAMILY_REGISTRATION_PHONE_ERROR,
   });
 
 const requiredCep = z
@@ -43,14 +53,7 @@ const dependentSchema = z.object({
   fullName: requiredName,
   birthDate: requiredBirthDate,
   relationship: dependentRelationship,
-  phone: z
-    .string()
-    .trim()
-    .optional()
-    .default('')
-    .refine((value) => !value || normalizePhoneDigits(value).length >= 10, {
-      message: 'Informe um celular válido com DDD.',
-    }),
+  phone: optionalMobilePhone,
   foodRestrictions: z.string().trim().optional().default(''),
 });
 
@@ -58,7 +61,7 @@ export const familyRegistrationSchema = z.object({
   informant: z.object({
     fullName: requiredName,
     birthDate: requiredBirthDate,
-    phone: requiredPhone,
+    phone: requiredMobilePhone,
     cep: requiredCep,
     addressNumber: z.string().trim().min(1, 'Informe o número do endereço.'),
     addressComplement: z.string().trim().optional().default(''),

@@ -3,7 +3,21 @@
  * Uso: node scripts/test-recepcao-ibn-by-phone.mjs
  */
 
-const normalizePhone = (value) => (value ?? '').replace(/\D/g, '');
+const BRAZIL_MOBILE_PHONE_DIGIT_COUNT = 11;
+
+function extractBrazilMobilePhoneDigits(value) {
+  let digits = (value ?? '').replace(/\D/g, '');
+  if (digits.length === 13 && digits.startsWith('55')) {
+    digits = digits.slice(2);
+  }
+  return digits.slice(0, BRAZIL_MOBILE_PHONE_DIGIT_COUNT);
+}
+
+function isValidBrazilMobilePhone(value) {
+  return extractBrazilMobilePhoneDigits(value).length === BRAZIL_MOBILE_PHONE_DIGIT_COUNT;
+}
+
+const normalizePhone = (value) => extractBrazilMobilePhoneDigits(value);
 
 function findFamilyIdByPhonesInProfiles(phones, profiles) {
   const digits = [...new Set(phones.map(normalizePhone).filter((d) => d.length >= 10))];
@@ -79,4 +93,9 @@ assert(
   'Titular do celular pode manter o telefone'
 );
 
-console.log('OK — IBN reutilizado por celular e bloqueio de duplicidade validados.');
+assert(isValidBrazilMobilePhone('(11) 98765-4321'), '11 dígitos com máscara deve ser válido');
+assert(!isValidBrazilMobilePhone('(11) 9876-5432'), '10 dígitos deve ser inválido');
+assert(!isValidBrazilMobilePhone('(11) 9876-543'), '9 dígitos deve ser inválido');
+assert(isValidBrazilMobilePhone('5511987654321'), 'prefixo 55 + 11 dígitos deve ser válido');
+
+console.log('OK — IBN reutilizado por celular, bloqueio de duplicidade e validação de 11 dígitos.');

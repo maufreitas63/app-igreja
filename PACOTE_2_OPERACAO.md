@@ -228,6 +228,8 @@ O administrador mantém o ecossistema vivo **cadastrando e ajustando eventos**, 
 
 ---
 
+1. Escolha **Motivo** e **Situação**.
+2. Indique para quem é o pedido e o destino (sigilo ou intercessão).
 3. Escreva seu pedido e toque em **Enviar pedido**.
 
 ---
@@ -286,8 +288,6 @@ O app consulta `get_scale_cycle_context` (ocupação por data, vagas e modo) e m
 Use **modo equipe** para vigilância, recepção ou estacionamento (vários no mesmo culto). Use **modo individual** para intercessão ou funções em que cada servo serve em domingos alternados. O **registro manual** na Programação de Escalas também respeita o limite de vagas — o mesmo servo **não** pode repetir na mesma data.
 
 > **Se a prévia falhar**  
-> - *"sem ordem_sequencial"* — defina a ordem em **Servos em Disponibilidade**.  
-> - *"Calendário saturado"* — há muitas datas futuras já ocupadas; revise escalas existentes ou reduza servos no ciclo.  
 
 ---
 

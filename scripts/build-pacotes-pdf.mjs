@@ -17,6 +17,8 @@ const files = [
   'MANUAL_DASHBOARD_MEMBRO.md',
   'PACOTE_6_MANUAL_MANUTENCAO.md',
   'MANUAL_DASHBOARD_MANUTENCAO.md',
+  'PACOTE_7_TREINAMENTO_DIARIO.md',
+  'MANUAL_TREINAMENTO_DIARIO.md',
   'FUNCIONALIDADES.md',
   'MANUAL_TREINAMENTO.md',
   'FAQ.md',
@@ -62,11 +64,13 @@ const manualIllustrationFiles = new Set([
   'MANUAL_DASHBOARD_MEMBRO.md',
   'PACOTE_6_MANUAL_MANUTENCAO.md',
   'MANUAL_DASHBOARD_MANUTENCAO.md',
+  'PACOTE_7_TREINAMENTO_DIARIO.md',
+  'MANUAL_TREINAMENTO_DIARIO.md',
 ]);
 
 const manualIllustrationCss = pdfCss.replace(
   'img { max-width: 100%; height: auto;',
-  'img { max-width: 30%; height: auto;'
+  'img { max-width: 40%; height: auto;'
 );
 
 fs.mkdirSync(outDir, { recursive: true });

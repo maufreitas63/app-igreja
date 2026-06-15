@@ -72,6 +72,8 @@ Na **primeira entrada**, o texto abaixo do campo de senha explica se o WhatsApp 
 
 # Missão 2 — Primeiro cadastro: dados, LGPD e selfie
 
+> **Reconhecimento LGPD opcional:** a igreja define o parâmetro **`LGPD_Ativo`** em **Manutenção → Controle de Acesso**. Com **`sim`**, siga esta missão integralmente. Com **`nao`**, pule termos e selfie — preencha **Nome**, **Data Nascimento** e **CEP**, toque **Continuar** e vá ao **Índice** (detalhes no [Pacote 5, seção 0.2b](MANUAL_DASHBOARD_MEMBRO.md#02b-cadastro-simplificado-quando-lgpd_ativo--nao)).
+
 ### Objetivo da Missão
 Concluir seu cadastro inicial com nome, data de nascimento, aceite dos termos de privacidade (**LGPD**) e foto (**selfie**).
 

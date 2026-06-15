@@ -289,6 +289,7 @@ N:N entre `profiles` e `access_roles`.
 | `family_acceptor` | Quem aceita familiares | `manage-members`, membros da família | `members` da própria `family_id` |
 | `lider` | Líder de tipo(s) de escala | Painéis de servos/programação + card Escalas | Tipos vinculados em `profile_scale_leadership` |
 | `events_admin` | Equipe de eventos | `maintenance-dashboard`, `events` | CRUD `events` |
+| `tesoureiro` | Tesouraria | Card financeiro, manutenção financeira, RD (AAMM), eventos retroativos | Conciliação RD, importação CSV |
 | `pastoral` | Equipe pastoral | Pedidos (futuro painel) | Triagem `pastoral_requests` |
 | `super_admin` | TI / pastor responsável | `*` | `*` |
 

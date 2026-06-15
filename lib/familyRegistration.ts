@@ -40,8 +40,28 @@ export function parseBrazilianDateToIso(value: string): string | null {
   return `${year}-${pad(month)}-${pad(day)}`;
 }
 
+/** Celular brasileiro: DDD (2) + número (9) = 11 dígitos. */
+export const BRAZIL_MOBILE_PHONE_DIGIT_COUNT = 11;
+
+export const FAMILY_REGISTRATION_PHONE_ERROR =
+  'Verifique e corrija o celular: informe exatamente 11 dígitos (DDD + número com 9 na frente, ex.: (11) 98765-4321).';
+
+export function extractBrazilMobilePhoneDigits(value: string): string {
+  let digits = value.replace(/\D/g, '');
+
+  if (digits.length === 13 && digits.startsWith('55')) {
+    digits = digits.slice(2);
+  }
+
+  return digits.slice(0, BRAZIL_MOBILE_PHONE_DIGIT_COUNT);
+}
+
 export function normalizePhoneDigits(value: string): string {
-  return value.replace(/\D/g, '').slice(0, 11);
+  return extractBrazilMobilePhoneDigits(value);
+}
+
+export function isValidBrazilMobilePhone(value: string): boolean {
+  return extractBrazilMobilePhoneDigits(value).length === BRAZIL_MOBILE_PHONE_DIGIT_COUNT;
 }
 
 export function formatPhoneDisplay(value: string): string {
@@ -56,12 +76,11 @@ export function formatPhoneDisplay(value: string): string {
 
 /** Formato canônico gravado em `profiles.phone` e `members.phone` — ex.: `(11) 99999-8888`. */
 export function formatPhoneForStorage(value: string): string | null {
-  const digits = normalizePhoneDigits(value);
-  if (digits.length < 10) {
+  if (!isValidBrazilMobilePhone(value)) {
     return null;
   }
 
-  return formatPhoneDisplay(digits);
+  return formatPhoneDisplay(extractBrazilMobilePhoneDigits(value));
 }
 
 export type FamilyRegistrationDependent = {
@@ -124,6 +143,10 @@ async function buildFamilyRegistrationRpcPayload(
 
   const informantPhone = formatPhoneForStorage(values.informant.phone);
 
+  if (!informantPhone) {
+    throw new Error(FAMILY_REGISTRATION_PHONE_ERROR);
+  }
+
   const dependents: FamilyRegistrationRpcPayload['dependents'] = [];
 
   for (const dependent of values.dependents) {
@@ -137,7 +160,15 @@ async function buildFamilyRegistrationRpcPayload(
       throw new Error(`Data de nascimento inválida para o dependente "${name}".`);
     }
 
-    const phone = dependent.phone ? formatPhoneForStorage(dependent.phone) : null;
+    const phoneRaw = dependent.phone?.trim() ?? '';
+
+    if (phoneRaw && !isValidBrazilMobilePhone(phoneRaw)) {
+      throw new Error(
+        `Verifique e corrija o celular de "${name}": informe exatamente 11 dígitos (DDD + número com 9 na frente, ex.: (11) 98765-4321).`
+      );
+    }
+
+    const phone = phoneRaw ? formatPhoneForStorage(phoneRaw) : null;
 
     dependents.push({
       full_name: name,

@@ -23,7 +23,7 @@ const anchors = [
   { after: '### Caminho\n**Servos em Disponibilidade**', image: 'm07-servos-disponibilidade.png', title: 'Servos em Disponibilidade' },
   { after: '### Caminho\n**Programação de Escalas**', image: 'm08-programacao-escalas.png', title: 'Programação de Escalas' },
   { after: '### Caminho\n**Cuidado Pastoral**', image: 'm09-cuidado-pastoral.png', title: 'Cuidado Pastoral' },
-  { after: '### Caminho\n**Informações Financeiras**', image: 'm10-financeiro-manut.png', title: 'Informações Financeiras' },
+  { after: '### Caminho\n**Informações Financeiras** *(requer permissão', image: 'm10-financeiro-manut.png', title: 'Informações Financeiras' },
   { after: '### Caminho\n**Lista de Presença**', image: 'm11-lista-presenca.png', title: 'Lista de Presença' },
   { after: '### Caminho\n**Cadastro de Usuário**', image: 'm12-cadastro-usuario.png', title: 'Cadastro de Usuário' },
   { after: '### Caminho\n**Recepção Familiar**', image: 'm13-recepcao-familiar.png', title: 'Recepção Familiar' },

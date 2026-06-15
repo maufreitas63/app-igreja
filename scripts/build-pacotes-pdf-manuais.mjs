@@ -10,6 +10,8 @@ const outDir = path.join(root, 'pdfs');
 const files = [
   'PACOTE_5_MANUAL_PAINEL.md',
   'PACOTE_6_MANUAL_MANUTENCAO.md',
+  'PACOTE_7_TREINAMENTO_DIARIO.md',
+  'MANUAL_TREINAMENTO_DIARIO.md',
 ];
 
 const pdfCss = `
@@ -20,7 +22,7 @@ const pdfCss = `
     color: #1e293b;
     max-width: 100%;
   }
-  img { max-width: 30%; height: auto; display: block; margin: 12px auto; border-radius: 8px; }
+  img { max-width: 40%; height: auto; display: block; margin: 12px auto; border-radius: 8px; }
 `;
 
 fs.mkdirSync(outDir, { recursive: true });

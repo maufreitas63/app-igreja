@@ -40,10 +40,11 @@ Um perfil pode ter **vários papéis** ao mesmo tempo (ex.: `member` + `events_a
 | `family_acceptor` | Responsável familiar | Gerencia família (complementar ao `member`) |
 | `lider` | Líder | Gerencia servos e programação dos tipos de escala atribuídos ao perfil |
 | `events_admin` | Administrador de eventos | Manutenção de eventos e salas |
+| `tesoureiro` | Tesoureiro | Card **Financeiro**, manutenção financeira, eventos retroativos e numeração **RD** (prefixo AAMM) |
 | `pastoral` | Equipe pastoral | Triagem de pedidos pastorais |
 | `super_admin` | Super administrador | Configura o ACL; acesso amplo |
 
-**Ordem no painel (aba Papéis e lista de papéis do perfil):** Visitantes → Congregado → Membro → Responsável familiar → Líder → Administrador de eventos → Equipe pastoral → Super administrador.
+**Ordem no painel (aba Papéis e lista de papéis do perfil):** Visitantes → Congregado → Membro → Responsável familiar → Líder → Administrador de eventos → **Tesoureiro** → Equipe pastoral → Super administrador.
 
 ### 2.4 Líder de escala (`lider`)
 
@@ -61,7 +62,7 @@ Quem tem `maintenance.card.scale_types` (ou `super_admin`) cria/edita tipos; o l
 
 **Regra:** todo perfil ativo deve manter pelo menos o papel **`member`**, salvo exceções administrativas explícitas.
 
-**Fallback Visitantes:** quem **não tem `user_profile_id` na sessão** (antes do login) ou tem perfil **sem nenhum papel** em `profile_access_roles` recebe automaticamente os grants do papel **`visitantes`** — não é necessário atribuir esse papel manualmente na maioria dos casos.
+**Fallback Visitantes:** quem **não tem `user_profile_id` na sessão** (antes do login) ou tem perfil **sem nenhum papel** em `profile_access_roles` recebe automaticamente os grants do papel **`visitantes`**. Com o script `access-control-visitantes-auto-assign.sql`, **novos perfis** também recebem o papel **`visitantes`** na criação — até a secretaria atribuir papéis como **`member`**, não é necessário marcar Visitantes manualmente na maioria dos casos.
 
 ### 2.3 Recursos (`access_resources`)
 
@@ -138,6 +139,11 @@ Scripts **incrementais** (se o seed for antigo ou algo sumir no app):
 | `access-control-congregado-visitantes-roles.sql` | **Congregado e Visitantes não aparecem na UI** — cria ambos os papéis e grants |
 | `access-control-congregado-role.sql` | Só Congregado (legado; prefira o script combinado acima) |
 | `access-control-visitantes-role.sql` | Só Visitantes + funções de fallback (sem perfil/papéis) |
+| `access-control-visitantes-auto-assign.sql` | Atribui **`visitantes`** automaticamente a perfis novos (trigger + backfill) |
+| `access-control-tesoureiro-role.sql` | Papel **Tesoureiro**, RD com prefixo **AAMM**, eventos retroativos |
+| `app-parameter-parm-entidade.sql` | Parâmetro **`Parm_entidade`** — prefixo dinâmico da entidade na interface (ex.: IBN KIDS) |
+| `salvar-app-parameter-admin.sql` | RPC para **super_admin** gravar `app_parameters` (inclui **`LGPD_Ativo`**) |
+| `app-parameter-lgpd-ativo.sql` / `app-parameter-lgpd-ativo-dedupe.sql` | Parâmetro **`LGPD_Ativo`** (`sim` / `nao`) — reconhecimento opcional de LGPD |
 
 ### 3.1 Primeiro super administrador
 

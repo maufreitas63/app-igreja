@@ -4,7 +4,7 @@ Documentação **autocontida** para primeiro acesso e uso diário do painel do m
 
 **Atualizado em:** 22/05/2026
 
-Conteúdo integrado: login, cadastro, LGPD, navegação, todos os cards do dashboard (sem manutenção), com ilustrações anotadas e resultado esperado em cada ação.
+Conteúdo integrado: login, cadastro, LGPD (reconhecimento **opcional** via `LGPD_Ativo`), navegação, todos os cards do dashboard (sem manutenção), com ilustrações anotadas a **40%** no PDF e resultado esperado em cada ação.
 
 ---
 
@@ -151,7 +151,7 @@ Rosto centralizado, boa luz, sem óculos escuros — facilita identificação no
 
 ### Texto integral — Termos de Uso e Privacidade (LGPD)
 
-Texto exibido na caixa rolável da tela **Cadastro** (e na tela **Termos de Uso e Privacidade**). O nome da entidade vem do parâmetro `Nome_Entidade` no sistema; quando não configurado, usa-se **Igreja Batista Norte (IBN)**.
+Texto exibido na caixa rolável da tela **Cadastro** (e na tela **Termos de Uso e Privacidade**). O nome da entidade vem do parâmetro **`Nome_Entidade`**; o prefixo curto (ex.: **IBN** em **IBN KIDS**) vem de **`Parm_entidade`** em `app_parameters`. Quando não configurados, usa-se **Igreja Batista Norte (IBN)**.
 
 > A Igreja Batista Norte (IBN) respeita a privacidade de seus membros e visitantes, comprometendo-se a coletar e tratar os dados estritamente necessários para gestão administrativa, controle de segurança, atividades eclesiásticas e para a divulgação de eventos e ações da igreja em mídias sociais e outros veículos oficiais de comunicação, sempre em estrita observância à Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).
 
@@ -633,6 +633,10 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 3. No topo, use o atalho destacado **Relatório de Despesas (RD)** ou role até **Relatórios**.
 4. Expanda as seções (uma por vez):
    - **Resultado do mês**
+   - **Comparativo mensal**
+   - **Últimos 12 meses**
+   - **Planejado × Realizado**
+   - **Saldo bancário**
 
 ### Ilustração — Financeiro — Resultado do mês
 
@@ -644,8 +648,6 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 | ② | Tabela de **Receitas** do período |
 | ③ | Tabela de **Despesas** do período |
 
-   - **Comparativo mensal**
-
 ### Ilustração — Financeiro — Comparativo mensal
 
 ![Financeiro — Comparativo mensal — captura anotada](docs/manual-painel/screens/10b-fin-comparativo.png)
@@ -654,8 +656,6 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 |:----:|------------------------------|
 | ① | Seção **Comparativo mensal** expandida |
 | ② | Comparação entre dois meses consecutivos |
-
-   - **Últimos 12 meses**
 
 ### Ilustração — Financeiro — Últimos 12 meses
 
@@ -666,8 +666,6 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 | ① | Seção **Últimos 12 meses** expandida |
 | ② | Série **Realizado** acumulada |
 
-   - **Planejado × Realizado**
-
 ### Ilustração — Financeiro — Planejado × Realizado
 
 ![Financeiro — Planejado × Realizado — captura anotada](docs/manual-painel/screens/10d-fin-orcamento.png)
@@ -676,8 +674,6 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 |:----:|------------------------------|
 | ① | Seção **Planejado × Realizado** expandida |
 | ② | Colunas **Planejado** e **Realizado** |
-
-   - **Saldo bancário**
 
 ### Ilustração — Financeiro — Saldo bancário
 

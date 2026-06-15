@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -253,10 +254,15 @@ export function FamilyRegistrationForm() {
                       <Input
                         placeholder="(00) 00000-0000"
                         inputMode="tel"
+                        autoComplete="tel"
+                        maxLength={15}
                         {...field}
                         onChange={(event) => field.onChange(formatPhoneDisplay(event.target.value))}
                       />
                     </FormControl>
+                    <FormDescription>
+                      11 dígitos com DDD (ex.: (11) 98765-4321). Revise antes de enviar.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -435,15 +441,20 @@ export function FamilyRegistrationForm() {
                     name={`dependents.${index}.phone`}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Celular</FormLabel>
+                        <FormLabel>Celular (opcional)</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="(00) 00000-0000"
                             inputMode="tel"
+                            autoComplete="tel"
+                            maxLength={15}
                             {...field}
                             onChange={(event) => field.onChange(formatPhoneDisplay(event.target.value))}
                           />
                         </FormControl>
+                        <FormDescription>
+                          Se informar, use 11 dígitos com DDD. Deixe em branco se não houver celular próprio.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

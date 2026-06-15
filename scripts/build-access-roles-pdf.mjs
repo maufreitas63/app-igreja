@@ -31,6 +31,7 @@ const ROLE_ORDER = [
   'family_acceptor',
   'lider',
   'events_admin',
+  'tesoureiro',
   'pastoral',
   'super_admin',
 ];
