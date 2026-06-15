@@ -23,7 +23,7 @@ import {
 } from '@/lib/checkInVisibility';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { formatRoomMonitorNames } from '@/lib/roomMonitorScales';
-import { resolveFamilyIdForPhone } from '@/lib/family';
+import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import {
   fetchFamilyMembersForDirectoryEntry,
   fetchMembersDirectoryFromProfiles,
@@ -1528,6 +1528,8 @@ export default function Dashboard() {
     }
 
     let cancelled = false;
+    setFamilyModalFamilyId(normalizeFamilyCode(familyModalSeedEntry.family_id) || null);
+    setFamilyModalMembers([]);
     setIsFamilyModalLoading(true);
 
     void (async () => {
@@ -2672,7 +2674,13 @@ export default function Dashboard() {
                               <View style={styles.membersListActionsRow}>
                                 <TouchableOpacity
                                   style={styles.membersListActionCell}
-                                  onPress={() => setFamilyModalSeedEntry(entry)}
+                                  onPress={() => {
+                                    setFamilyModalSeedEntry(entry);
+                                    setFamilyModalFamilyId(
+                                      normalizeFamilyCode(entry.family_id) || null
+                                    );
+                                    setFamilyModalMembers([]);
+                                  }}
                                   activeOpacity={0.85}
                                 >
                                   <FontAwesome name="users" size={18} color="#fda4af" />

@@ -1,3 +1,5 @@
+import { compareFamilyMembersByRelationship } from '@/lib/familyRelationshipOptions';
+import { normalizeFamilyCode } from '@/lib/family';
 import { formatShortName } from '@/lib/formatShortName';
 import { supabase } from '@/lib/supabase';
 
@@ -21,9 +23,6 @@ const MEMBERS_DIRECTORY_RPC_HINT =
 
 const VISITORS_DIRECTORY_RPC_HINT =
   'Execute no Supabase: scripts/access-control-map-pin-roles.sql (list_profiles_visitors_directory)';
-
-const FAMILY_DIRECTORY_RPC_HINT =
-  'Execute no Supabase: scripts/list-profiles-family-directory.sql';
 
 const mapDirectoryRows = (
   data: Array<Record<string, unknown>> | null | undefined
@@ -115,6 +114,55 @@ const mapFamilyDirectoryRows = (
   };
 };
 
+const fetchFamilyMembersFallback = async (
+  seedEntry: MembersDirectoryEntry
+): Promise<FamilyDirectoryMember[]> => {
+  const familyId = normalizeFamilyCode(seedEntry.family_id);
+
+  if (!familyId) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('members')
+    .select('id, full_name, phone, relationship, family_id')
+    .ilike('family_id', familyId);
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data ?? []) as Array<Record<string, unknown>>)
+    .map((row) => {
+      const memberId = String(row.id ?? '').trim();
+      const fullName = String(row.full_name ?? '').trim();
+
+      if (!memberId || !fullName) {
+        return null;
+      }
+
+      const relationshipRaw = row.relationship;
+
+      return {
+        id: memberId,
+        full_name: fullName,
+        short_name: formatShortName(fullName),
+        family_id: familyId,
+        relationship:
+          relationshipRaw != null ? String(relationshipRaw).trim() || null : null,
+        phone: row.phone != null ? String(row.phone).trim() || null : null,
+        cep: null,
+        address_street: null,
+        address_number: null,
+        address_neighborhood: null,
+        address_city: null,
+        address_state: null,
+      } satisfies FamilyDirectoryMember;
+    })
+    .filter((row): row is FamilyDirectoryMember => row !== null)
+    .sort(compareFamilyMembersByRelationship);
+};
+
 const fetchDirectoryFromRpc = async (
   rpcName: 'list_profiles_members_directory' | 'list_profiles_visitors_directory',
   missingRpcHint: string
@@ -149,8 +197,11 @@ export async function fetchFamilyMembersForDirectoryEntry(
   seedEntry: MembersDirectoryEntry,
   options: { visitorsOnly?: boolean } = {}
 ): Promise<{ familyId: string; members: FamilyDirectoryMember[] }> {
+  const displayedFamilyId = normalizeFamilyCode(seedEntry.family_id);
+
   const { data, error } = await supabase.rpc('list_profiles_family_directory', {
     p_profile_id: seedEntry.id,
+    p_displayed_family_id: displayedFamilyId || null,
     p_visitors_only: options.visitorsOnly ?? false,
   });
 
@@ -161,11 +212,27 @@ export async function fetchFamilyMembersForDirectoryEntry(
       message.includes('list_profiles_family_directory')
       && (message.includes('could not find') || message.includes('does not exist'))
     ) {
-      throw new Error(FAMILY_DIRECTORY_RPC_HINT);
+      const fallbackMembers = await fetchFamilyMembersFallback(seedEntry);
+
+      return {
+        familyId: displayedFamilyId,
+        members: fallbackMembers,
+      };
     }
 
     throw error;
   }
 
-  return mapFamilyDirectoryRows(data as Array<Record<string, unknown>> | null);
+  const mapped = mapFamilyDirectoryRows(data as Array<Record<string, unknown>> | null);
+
+  if (mapped.members.length > 0) {
+    return mapped;
+  }
+
+  const fallbackMembers = await fetchFamilyMembersFallback(seedEntry);
+
+  return {
+    familyId: mapped.familyId || displayedFamilyId,
+    members: fallbackMembers,
+  };
 }

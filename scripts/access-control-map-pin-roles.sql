@@ -314,11 +314,21 @@ as $$
       upper(trim(m.family_id)) as family_id,
       count(*)::integer as match_count
     from public.members m
-    where m.accepted is true
-      and nullif(trim(coalesce(m.family_id, '')), '') is not null
+    where nullif(trim(coalesce(m.family_id, '')), '') is not null
       and nullif(trim(coalesce(p_phone, '')), '') is not null
       and public.phones_match_for_sync(m.phone, p_phone)
     group by upper(trim(m.family_id))
+  ),
+  members_with_displayed_family as (
+    select d.family_id
+      from displayed d
+     where d.family_id is not null
+       and exists (
+         select 1
+           from public.members m
+          where upper(trim(m.family_id)) = d.family_id
+       )
+     limit 1
   ),
   preferred as (
     select apm.family_id
@@ -336,6 +346,7 @@ as $$
   )
   select coalesce(
     (select family_id from preferred),
+    (select family_id from members_with_displayed_family),
     (select family_id from majority),
     (select family_id from displayed)
   );
@@ -343,9 +354,11 @@ $$;
 
 -- Diretório familiar (modal members_list). Incremental: scripts/list-profiles-family-directory.sql
 drop function if exists public.list_profiles_family_directory(uuid, boolean);
+drop function if exists public.list_profiles_family_directory(uuid, text, boolean);
 
 create or replace function public.list_profiles_family_directory(
   p_profile_id uuid,
+  p_displayed_family_id text default null,
   p_visitors_only boolean default false
 )
 returns table (
@@ -372,18 +385,26 @@ as $$
       p.id as profile_id,
       trim(p.full_name) as full_name,
       nullif(trim(coalesce(p.phone, '')), '') as phone,
-      public.profile_directory_family_code(p.family_id, p.codigo_membro) as displayed_family_id
+      coalesce(
+        public.profile_directory_family_code(p.family_id, p.codigo_membro),
+        upper(nullif(trim(coalesce(p_displayed_family_id, '')), ''))
+      ) as displayed_family_id
     from public.profiles p
     where p.id = p_profile_id
       and p.full_name is not null
       and trim(p.full_name) <> ''
   ),
   canonical as (
-    select public.resolve_directory_canonical_family_id(
-      s.displayed_family_id,
-      s.phone
+    select coalesce(
+      (
+        select public.resolve_directory_canonical_family_id(
+          s.displayed_family_id,
+          s.phone
+        )
+        from seed s
+      ),
+      upper(nullif(trim(coalesce(p_displayed_family_id, '')), ''))
     ) as family_id
-    from seed s
   ),
   family_members as (
     select
@@ -394,7 +415,6 @@ as $$
     from public.members m
     cross join canonical c
     where c.family_id is not null
-      and m.accepted is true
       and upper(trim(m.family_id)) = c.family_id
   ),
   directory_profiles as (
@@ -521,6 +541,6 @@ grant execute on function public.profile_directory_family_code(text, text) to an
 grant execute on function public.directory_person_matches_member(text, text, text, text) to anon, authenticated;
 grant execute on function public.family_relationship_display_rank(text) to anon, authenticated;
 grant execute on function public.resolve_directory_canonical_family_id(text, text) to anon, authenticated;
-grant execute on function public.list_profiles_family_directory(uuid, boolean) to anon, authenticated;
+grant execute on function public.list_profiles_family_directory(uuid, text, boolean) to anon, authenticated;
 
 notify pgrst, 'reload schema';
