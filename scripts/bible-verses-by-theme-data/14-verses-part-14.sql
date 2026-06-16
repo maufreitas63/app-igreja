@@ -22,7 +22,7 @@ INSERT INTO bible_verses_by_theme (theme_slug, texto, referencia, livro, capitul
   ('vizinho', 'Um faz diferença entre dia e dia, mas outro julga iguais todos os dias. Cada um esteja inteiramente seguro em seu próprio ânimo.', 'Romanos 14:5', 'Romanos', 14, 5, NULL),
   ('vizinho', 'A religião pura e imaculada para com Deus, o Pai, é esta: visitar os órfãos e as viúvas nas suas tribulações e guardar-se da corrupção do mundo.', 'Tiago 1:27', 'Tiago', 1, 27, NULL),
   ('vizinho', 'Quem, pois, tiver bens do mundo e, vendo o seu irmão necessitado, lhe cerrar o seu coração, como estará nele o amor de Deus?', '1 João 3:17', '1 João', 3, 17, NULL),
-  ('vizinho', 'Assim falou o Senhor', 'Zacarias 7:9-10', 'Zacarias', 7, 9, 10),
+  ('vizinho', 'Assim falou o Senhor dos Exércitos, dizendo: Executai juízo verdadeiro, mostrai piedade e misericórdia cada um a seu irmão; e não oprimais a viúva, nem o órfão, nem o estrangeiro, nem o pobre, nem intente o mal cada um contra o seu irmão, no seu coração.', 'Zacarias 7:9-10', 'Zacarias', 7, 9, 10),
   ('vizinho', 'Amados, amemo-nos uns aos outros, porque o amor é de Deus; e qualquer que ama é nascido de Deus e conhece a Deus.', '1 João 4:7', '1 João', 4, 7, NULL),
   ('vizinho', 'E o segundo, semelhante a este, é: Amarás o teu próximo como a ti mesmo.', 'Mateus 22:39', 'Mateus', 22, 39, NULL),
   ('vizinho', 'Porque, se um cair, o outro levanta o seu companheiro; mas ai do que estiver só; pois, caindo, não haverá outro que o levante.', 'Eclesiastes 4:10', 'Eclesiastes', 4, 10, NULL),
@@ -35,7 +35,7 @@ INSERT INTO bible_verses_by_theme (theme_slug, texto, referencia, livro, capitul
   ('vizinho', 'Ninguém jamais viu a Deus; se nós amamos uns aos outros, Deus está em nós, e em nós é perfeito o seu amor.', '1 João 4:12', '1 João', 4, 12, NULL),
   ('vizinho', 'Porventura, não é este o jejum que escolhi: que soltes as ligaduras da impiedade, que desfaças as ataduras do jugo, e que deixes livres os quebrantados, e que despedaces todo o jugo?', 'Isaías 58:6', 'Isaías', 58, 6, NULL),
   ('vizinho', 'Então, Pedro, aproximando-se dele, disse: Senhor, até quantas vezes pecará meu irmão contra mim, e eu lhe perdoarei? Até sete? Jesus lhe disse: Não te digo que até sete, mas até setenta vezes sete.', 'Mateus 18:21-22', 'Mateus', 18, 21, 22),
-  ('vizinho', 'Levanta-te, Senhor', 'Salmo 10:12', 'Salmo', 10, 12, NULL),
+  ('vizinho', 'Levanta-te, Senhor! Ó Deus, levanta a tua mão; não te esqueças dos necessitados!', 'Salmo 10:12', 'Salmo', 10, 12, NULL),
   ('vizinho', 'Não cobiçarás a casa do teu próximo; não cobiçarás a mulher do teu próximo, nem o seu servo, nem a sua serva, nem o seu boi, nem o seu jumento, nem coisa alguma do teu próximo.', 'Êxodo 20:17', 'Êxodo', 20, 17, NULL),
   ('vizinho', 'Defendei o pobre e o órfão; fazei justiça ao aflito e necessitado.', 'Salmo 82:3', 'Salmo', 82, 3, NULL),
   ('vizinho', 'Vede, irmãos, que nunca haja em qualquer de vós um coração mau e infiel, para se apartar do Deus vivo.', 'Hebreus 3:12', 'Hebreus', 3, 12, NULL),
@@ -45,7 +45,7 @@ INSERT INTO bible_verses_by_theme (theme_slug, texto, referencia, livro, capitul
   ('vizinho', 'Também vi eu que todo trabalho e toda destreza em obras trazem ao homem a inveja do seu próximo. Também isso é vaidade e aflição de espírito.', 'Eclesiastes 4:4', 'Eclesiastes', 4, 4, NULL),
   ('vizinho', 'Há só um Legislador e um Juiz, que pode salvar e destruir. Tu, porém, quem és, que julgas a outrem?', 'Tiago 4:12', 'Tiago', 4, 12, NULL),
   ('vizinho', 'Não será assim entre vós; mas todo aquele que quiser, entre vós, fazer-se grande, que seja vosso serviçal; e qualquer que, entre vós, quiser ser o primeiro, que seja vosso servo.', 'Mateus 20:26-27', 'Mateus', 20, 26, 27),
-  ('vizinho', 'Não aborrecerás a teu irmão no teu coração; não deixarás de repreender o teu próximo e nele não sofrerás pecado. Não te vingarás, nem guardarás ira contra os filhos do teu povo; mas amarás o teu próximo como a ti mesmo. Eu sou o Senhor', 'Levítico 19:17-18', 'Levítico', 19, 17, 18),
+  ('vizinho', 'Não aborrecerás a teu irmão no teu coração; não deixarás de repreender o teu próximo e nele não sofrerás pecado. Não te vingarás, nem guardarás ira contra os filhos do teu povo; mas amarás o teu próximo como a ti mesmo. Eu sou o Senhor.', 'Levítico 19:17-18', 'Levítico', 19, 17, 18),
   ('vizinho', 'E que amá-lo de todo o coração, e de todo o entendimento, e de toda a alma, e de todas as forças e amar o próximo como a si mesmo é mais do que todos os holocaustos e sacrifícios.', 'Marcos 12:33', 'Marcos', 12, 33, NULL),
   ('vizinho', 'Pedro, pois, era guardado na prisão; mas a igreja fazia contínua oração por ele a Deus.', 'Atos 12:5', 'Atos', 12, 5, NULL);
 

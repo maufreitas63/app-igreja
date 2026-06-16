@@ -23,3 +23,11 @@ Execute **nesta ordem** no SQL Editor:
 
 Arquivos gerados por `node scripts/split-bible-verses-sql.mjs`.
 Fonte: -- Themes: 161, Verses: 5247
+
+## Aplicação automática (terminal)
+
+1. Crie `.env.local` na raiz com `SUPABASE_DATABASE_URL` (URI do Postgres no Supabase).
+2. `npm install`
+3. `npm run apply:bible-verses`
+
+Opções: `--schema-only`, `--data-only`, `--dry-run`.

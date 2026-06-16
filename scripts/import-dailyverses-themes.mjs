@@ -78,6 +78,33 @@ function scrapeThemesIndex(html) {
   return themes;
 }
 
+function stripVerseHtml(html) {
+  return decodeHtml(
+    html
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\s+/g, ' ')
+  );
+}
+
+/**
+ * Extrai o texto do versículo. O site envolve sílabas de "Senhor" em <span> internos;
+ * regex não-guloso em v2 parava no primeiro </span> (ex.: só "O Senhor").
+ */
+function extractVerseText(block) {
+  const open = block.match(/<span[^>]*class="v2"[^>]*>/);
+  if (!open) return null;
+
+  const afterOpen = block.slice(open.index + open[0].length);
+  const close = /<\/span>\s*<div class="vr">/.exec(afterOpen);
+  if (!close) {
+    const fallback = block.match(/<span[^>]*class="v2"[^>]*>([\s\S]*?)<\/span>/);
+    return fallback ? stripVerseHtml(fallback[1]) : null;
+  }
+
+  return stripVerseHtml(afterOpen.slice(0, close.index));
+}
+
 function scrapeVersesFromThemePage(html, themeSlug, themeName) {
   const verses = [];
   const ulMatch = html.match(/<ul class="verses">([\s\S]*?)<\/ul>/);
@@ -88,18 +115,18 @@ function scrapeVersesFromThemePage(html, themeSlug, themeName) {
   while ((im = itemRe.exec(ulMatch[1])) !== null) {
     if (/\bad_unit\b/.test(im[1])) continue;
     const block = im[2];
-    const textMatch = block.match(/<span[^>]*class="v2"[^>]*>([\s\S]*?)<\/span>/);
     const refMatch = block.match(/<a[^>]*class="vc"[^>]*>([\s\S]*?)<\/a>/);
-    if (!textMatch || !refMatch) continue;
+    if (!refMatch) continue;
 
-    const texto = decodeHtml(
-      textMatch[1]
-        .replace(/<br\s*\/?>/gi, ' ')
-        .replace(/<[^>]+>/g, '')
-        .replace(/\s+/g, ' ')
-    );
+    const texto = extractVerseText(block);
+    if (!texto) continue;
+
     const referencia = decodeHtml(refMatch[1].replace(/<[^>]+>/g, ''));
     const parsed = parseReference(referencia);
+
+    if (parsed.versiculo_fim != null && texto.length < 30) {
+      console.warn(`  [warn] texto curto para intervalo ${referencia}: "${texto}"`);
+    }
 
     verses.push({
       theme_slug: themeSlug,

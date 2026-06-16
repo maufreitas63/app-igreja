@@ -1,0 +1,6 @@
+# Regras do Projeto
+- Sempre utilize TypeScript com tipagem estrita para interações com Supabase.
+- Utilize a versão v2 do SDK do Supabase.
+- Sempre mencione políticas de RLS (Row Level Security) ao alterar tabelas.
+- Código deve ser modular, limpo e focado em performance mobile (PWA).
+- Priorize a legibilidade e evite redundância.
