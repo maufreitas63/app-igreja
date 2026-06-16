@@ -531,8 +531,6 @@ Importar movimentação, comentar lançamentos, anexar comprovantes e conciliar 
 | ③ | **Relatórios RD** pendentes |
 
 
-> **Papel Tesoureiro** (`access-control-tesoureiro-role.sql`): acesso ao card **Financeiro** no painel do membro, card **Informações Financeiras** na manutenção, conciliação de **RD** (numeração mensal com prefixo **AAMM**, ex.: `250500001`), publicação de **eventos retroativos** e botão **Emitir RD** quando aplicável.
-
 
 ### Passo a passo — importar CSV do mês
 

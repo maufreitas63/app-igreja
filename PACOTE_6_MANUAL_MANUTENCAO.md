@@ -4,7 +4,7 @@ Documentação **autocontida** para quem gerencia o aplicativo: secretaria, líd
 
 **Atualizado em:** 22/05/2026
 
-Conteúdo integrado: acesso via engrenagem, ACL (incl. interruptor **LGPD Ativo/Inativo**), papel **Tesoureiro**, todos os cards de maintenance-dashboard, com ilustrações a **40%** no PDF, resultado esperado e efeito no app dos membros.
+Conteúdo integrado: acesso via engrenagem, ACL (incl. interruptor **LGPD Ativo/Inativo**), papel **Tesoureiro**, todos os cards de maintenance-dashboard, com ilustrações em **largura integral (100%)**, resultado esperado e efeito no app dos membros.
 
 ---
 
@@ -544,8 +544,6 @@ Importar movimentação, comentar lançamentos, anexar comprovantes e conciliar 
 | ② | **Importação CSV** do extrato |
 | ③ | **Relatórios RD** pendentes |
 
-
-> **Papel Tesoureiro** (`access-control-tesoureiro-role.sql`): acesso ao card **Financeiro** no painel do membro, card **Informações Financeiras** na manutenção, conciliação de **RD** (numeração mensal com prefixo **AAMM**, ex.: `250500001`), publicação de **eventos retroativos** e botão **Emitir RD** quando aplicável.
 
 
 ### Passo a passo — importar CSV do mês

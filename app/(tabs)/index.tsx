@@ -528,38 +528,40 @@ export default function DashboardIndexScreen() {
           </View>
         </View>
 
-        <View style={styles.footerRow}>
-          <TouchableOpacity
-            style={styles.exitButton}
-            onPress={handleExitApp}
-            activeOpacity={0.9}
-            accessibilityRole="button"
-            accessibilityLabel={exitSessionUi.accessibilityLabel}
-            accessibilityHint={exitSessionUi.accessibilityHint}
-            accessibilityState={{ disabled: false, busy: false }}
-          >
-            <Text style={styles.exitButtonText}>
-              {exitSessionUi.button}
-            </Text>
-          </TouchableOpacity>
-          {!isMaintenanceAccessLoading && canViewMaintenance ? (
+        <View style={[styles.footerRow, { width: indexPanelCardSizeStyle.width }]}>
+          <View style={styles.footerRowTrack}>
             <TouchableOpacity
-              style={[
-                styles.footerSettingsButton,
-                isFooterSettingsPressed && styles.footerSettingsButtonPressed,
-              ]}
-              onPress={handleFooterSettingsPress}
-              activeOpacity={1}
-              accessibilityLabel="Configurações"
-              accessibilityState={{ selected: isFooterSettingsPressed }}
+              style={styles.exitButton}
+              onPress={handleExitApp}
+              activeOpacity={0.9}
+              accessibilityRole="button"
+              accessibilityLabel={exitSessionUi.accessibilityLabel}
+              accessibilityHint={exitSessionUi.accessibilityHint}
+              accessibilityState={{ disabled: false, busy: false }}
             >
-              <FontAwesome
-                name="cog"
-                size={22}
-                color={isFooterSettingsPressed ? '#FECACA' : '#64748B'}
-              />
+              <Text style={styles.exitButtonText}>
+                {exitSessionUi.button}
+              </Text>
             </TouchableOpacity>
-          ) : null}
+            {!isMaintenanceAccessLoading && canViewMaintenance ? (
+              <TouchableOpacity
+                style={[
+                  styles.footerSettingsButton,
+                  isFooterSettingsPressed && styles.footerSettingsButtonPressed,
+                ]}
+                onPress={handleFooterSettingsPress}
+                activeOpacity={1}
+                accessibilityLabel="Configurações"
+                accessibilityState={{ selected: isFooterSettingsPressed }}
+              >
+                <FontAwesome
+                  name="cog"
+                  size={22}
+                  color={isFooterSettingsPressed ? '#FECACA' : '#64748B'}
+                />
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
       </SafeAreaView>
     </LinearGradient>
@@ -771,14 +773,17 @@ const styles = StyleSheet.create({
   },
   footerRow: {
     flexShrink: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+    alignSelf: 'center',
     marginTop: 6,
-    paddingHorizontal: 24,
     paddingBottom: 10,
     zIndex: 2,
+  },
+  footerRowTrack: {
+    width: '100%',
+    height: 48,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   exitButton: {
     flexShrink: 0,
@@ -794,6 +799,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   footerSettingsButton: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
     width: 48,
     height: 48,
     borderRadius: 16,

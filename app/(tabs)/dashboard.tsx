@@ -2640,7 +2640,7 @@ export default function Dashboard() {
                       </Text>
                       <View style={styles.membersListActionsHeader}>
                         <Text style={[styles.membersListHeaderCell, styles.membersListHeaderAction]}>
-                          Família
+                          Base
                         </Text>
                         <Text style={[styles.membersListHeaderCell, styles.membersListHeaderAction]}>
                           Zap

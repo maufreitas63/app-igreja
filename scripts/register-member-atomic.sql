@@ -1,5 +1,9 @@
 -- Atualiza a RPC `register_member_atomic` para gravar
 -- `family_id`, `full_name` e `kids_status` em `public.event_registrations`.
+-- Em eventos com **totem_ativo** ou **requer_quorum**, chama
+-- `sync_checkin_for_registration` (pré-check-in em `public.checkins`) — requisito
+-- para liberar o card **QR Code** no dia do evento após marcar a audiência.
+-- Pré-requisito: `scripts/checkins-totem-flow.sql` aplicado no Supabase.
 -- Também centraliza a sincronização de família entre
 -- `public.members.family_id`, `public.profiles.family_id`
 -- e `public.profiles.codigo_membro`.
@@ -496,6 +500,7 @@ declare
   v_member members%rowtype;
   v_profile profiles%rowtype;
   v_existing_registration_id uuid;
+  v_registration_id uuid;
   v_kids_status text;
   v_resolved_family_id text;
 begin
@@ -581,6 +586,13 @@ begin
       kids_status = v_kids_status
     where id = v_existing_registration_id;
 
+    perform public.sync_checkin_for_registration(
+      p_event_id,
+      v_existing_registration_id,
+      v_resolved_family_id,
+      v_profile.id
+    );
+
     return jsonb_build_object(
       'success', true,
       'message', 'Participante já estava registrado.'
@@ -600,6 +612,14 @@ begin
     v_resolved_family_id,
     v_member.full_name,
     v_kids_status
+  )
+  returning id into v_registration_id;
+
+  perform public.sync_checkin_for_registration(
+    p_event_id,
+    v_registration_id,
+    v_resolved_family_id,
+    v_profile.id
   );
 
   return jsonb_build_object(

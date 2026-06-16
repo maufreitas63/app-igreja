@@ -170,7 +170,7 @@
   "08-lista-membros.png": [
     [
       "①",
-      "Campo **Procurar membro**"
+      "Botão **Visitantes** — alterna para lista de visitantes"
     ],
     [
       "②",
@@ -178,7 +178,73 @@
     ],
     [
       "③",
-      "Linha da tabela com **WhatsApp** e **GPS**"
+      "Campo **Procurar membro** (*Digite o nome...*)"
+    ],
+    [
+      "④",
+      "Ícone **users** na coluna **Família** — abre modal familiar"
+    ],
+    [
+      "⑤",
+      "Ícone **WhatsApp** na coluna **Zap**"
+    ],
+    [
+      "⑥",
+      "Ícone **map** na coluna **GPS**"
+    ]
+  ],
+  "08b-lista-membros-familia.png": [
+    [
+      "①",
+      "Título **Membros da família**"
+    ],
+    [
+      "②",
+      "Subtítulo **Família {código}** (ex.: IBN0103)"
+    ],
+    [
+      "③",
+      "Lista de integrantes com **nome** e **parentesco**"
+    ],
+    [
+      "④",
+      "Ícone **WhatsApp** por integrante (quando há telefone)"
+    ],
+    [
+      "⑤",
+      "Botão **Fechar**"
+    ]
+  ],
+  "08c-lista-visitantes.png": [
+    [
+      "①",
+      "Título **LISTA DE VISITANTES**"
+    ],
+    [
+      "②",
+      "Botão **Membros** — volta à lista de membros"
+    ],
+    [
+      "③",
+      "Campo **Procurar visitante**"
+    ],
+    [
+      "④",
+      "Tabela **Nome · Família · Zap · GPS**"
+    ]
+  ],
+  "08d-mapa-geral.png": [
+    [
+      "①",
+      "Filtros **Todos** · **Com papel** · **Visitantes**"
+    ],
+    [
+      "②",
+      "Mapa com **pins** de endereços"
+    ],
+    [
+      "③",
+      "Botão **Voltar** ao card Lista de Membros"
     ]
   ],
   "09-aniversariantes.png": [

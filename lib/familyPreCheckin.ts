@@ -1,4 +1,4 @@
-import { parseTotemCheckinRpcData } from '@/lib/totemCheckinFlow';
+import { parseTotemCheckinRpcData, ensureTotemCheckinFlow } from '@/lib/totemCheckinFlow';
 import { supabase } from '@/lib/supabase';
 import { normalizeFamilyId } from '@/lib/totemFamilyId';
 
@@ -43,6 +43,12 @@ export async function fetchFamilyHasPreCheckin(
   }
 
   if (event?.totem_ativo === true) {
+    try {
+      await ensureTotemCheckinFlow();
+    } catch (syncError) {
+      console.warn('ensure_totem_checkin_flow (gate):', syncError);
+    }
+
     const { data, error } = await supabase.rpc('lookup_totem_checkin', {
       p_event_id: eventId,
       p_family_id: normalizedFamilyId,
@@ -58,8 +64,28 @@ export async function fetchFamilyHasPreCheckin(
       return { hasPreCheckin: false, errorMessage: null };
     }
 
+    if ((result.pre_checkin_count ?? 0) > 0) {
+      return {
+        hasPreCheckin: true,
+        errorMessage: null,
+      };
+    }
+
+    const { data: registrations, error: registrationsError } = await supabase.rpc(
+      'get_registered_event_members',
+      {
+        p_event_id: eventId,
+        p_family_id: normalizedFamilyId,
+      }
+    );
+
+    if (registrationsError) {
+      console.warn('get_registered_event_members (totem gate fallback):', registrationsError.message);
+      return { hasPreCheckin: false, errorMessage: PRE_CHECKIN_GATE_ERROR };
+    }
+
     return {
-      hasPreCheckin: (result.pre_checkin_count ?? 0) > 0,
+      hasPreCheckin: Array.isArray(registrations) && registrations.length > 0,
       errorMessage: null,
     };
   }

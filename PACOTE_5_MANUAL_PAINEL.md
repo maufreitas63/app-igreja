@@ -4,7 +4,7 @@ Documentação **autocontida** para primeiro acesso e uso diário do painel do m
 
 **Atualizado em:** 22/05/2026
 
-Conteúdo integrado: login, cadastro, LGPD (reconhecimento **opcional** via `LGPD_Ativo`), navegação, todos os cards do dashboard (sem manutenção), com ilustrações anotadas a **40%** no PDF e resultado esperado em cada ação.
+Conteúdo integrado: login, cadastro, LGPD (reconhecimento **opcional** via `LGPD_Ativo`), navegação, todos os cards do dashboard (sem manutenção), com ilustrações anotadas em **largura integral (100%)** e resultado esperado em cada ação.
 
 ---
 
@@ -258,7 +258,8 @@ Saber onde estão os módulos e como alternar entre cards.
 4. Use **‹** e **›** no rodapé para mudar de card (ou deslize, se disponível).
 5. O contador **1 / N** indica sua posição no carrossel.
 6. Toque em **Menu** no centro do rodapé para voltar ao **Índice**.
-7. Para sair: no Índice, **Encerrar sessão** (web) ou **Sair do aplicativo** (celular).
+7. No **Índice**, o rodapé exibe **Encerrar sessão** (web) ou **Sair do aplicativo** (celular) centralizado na largura do card; perfis com permissão de manutenção veem o ícone **Configurações** (engrenagem) alinhado à direita do mesmo rodapé.
+8. Toque em **Encerrar sessão** / **Sair do aplicativo** para sair com segurança.
 
 ### Resultado esperado
 
@@ -533,7 +534,7 @@ Painel → **Coração Aberto** → formulário; ícone de histórico → **Meus
 # Parte 6 — Card Lista de Membros
 
 ### Objetivo
-Buscar membros ou visitantes da igreja, contatar por WhatsApp e abrir o **Mapa Geral**.
+Buscar **membros** ou **visitantes** da igreja, ver integrantes do mesmo núcleo familiar, contatar por WhatsApp, abrir localização individual (GPS) e consultar o **Mapa Geral**.
 
 ### Caminho
 Painel → **Lista de Membros**.
@@ -544,32 +545,140 @@ Painel → **Lista de Membros**.
 
 | Ref. | Elemento indicado na imagem |
 |:----:|------------------------------|
-| ① | Campo **Procurar membro** |
+| ① | Botão **Visitantes** — alterna para lista de visitantes |
 | ② | Botão **Mapa Geral** (PWA/web) |
-| ③ | Linha da tabela com **WhatsApp** e **GPS** |
+| ③ | Campo **Procurar membro** (*Digite o nome...*) |
+| ④ | Ícone **users** na coluna **Família** — abre modal familiar |
+| ⑤ | Ícone **WhatsApp** na coluna **Zap** |
+| ⑥ | Ícone **map** na coluna **GPS** |
 
 
 
-### Passo a passo
+### Estrutura do card
 
-1. Use **Visitantes** para ver visitantes; **Membros** para voltar à lista de membros (botões na mesma linha).
-2. Digite em **Procurar membro** / **Digite o nome...** para filtrar.
-3. Na tabela (**Nome**, **Família**, **Zap**, **GPS**):
-   - Toque no ícone de **família** para ver integrantes do mesmo núcleo.
+| Área | O que mostra / faz |
+|------|---------------------|
+| **Visitantes** | Alterna para **LISTA DE VISITANTES** (mesma linha que **Mapa Geral**) |
+| **Mapa Geral** | Abre tela de geolocalização com todos os pins permitidos ao seu perfil |
+| Resumo | Texto *N membro(s) em ordem alfabética* ou *X de Y* ao filtrar |
+| **Procurar membro** | Campo com placeholder *Digite o nome...* e botão limpar (×) |
+| Cabeçalho da tabela | Colunas **Nome** · **Família** · **Zap** · **GPS** |
+| Coluna **Família** | Ícone **users** (rosa) — abre modal **Membros da família** |
+| Coluna **Zap** | Ícone **WhatsApp** (verde quando há telefone) |
+| Coluna **GPS** | Ícone **map** (azul quando há CEP/endereço) |
+
+### Passo a passo — lista de membros
+
+1. Com o card em modo **Membros**, leia o resumo no topo (*N membro(s) em ordem alfabética*).
+2. Digite em **Procurar membro** para filtrar por nome; use o × para limpar.
+3. Na tabela, para cada linha:
+   - Toque no ícone **users** (**Família**) para abrir o modal familiar.
    - Toque no **WhatsApp** para abrir conversa (se houver telefone).
-4. Toque em **Mapa Geral** para ver geolocalização (PWA/web).
+   - Toque no **GPS** para focar esse membro no mapa (quando houver endereço).
+4. Toque em **Visitantes** para ver a lista de visitantes (título **LISTA DE VISITANTES**, busca **Procurar visitante**).
+5. Toque em **Membros** (quando estiver em visitantes) para voltar à lista de membros.
+6. Toque em **Mapa Geral** para abrir a tela de mapa completa.
 
-### Resultado esperado
+### Resultado esperado — lista principal
 
-- Resumo no topo: *N membro(s) em ordem alfabética* (ou *X de Y* ao buscar).
-- Modal **Membros da família** com lista e botão **Fechar**.
-- **Mapa Geral** abre tela de mapa; **Voltar** retorna a este card.
+- Botões **Visitantes** e **Mapa Geral** visíveis na mesma linha, abaixo do título **Lista de Membros**.
+- Tabela preenchida em ordem alfabética; ícones desabilitados (cinza) quando faltam telefone ou endereço.
 
-### Mapa Geral (PWA)
+### Caminho (visitantes)
+Lista de Membros → toque **Visitantes**.
 
-- Filtros: **Todos**, **Com papel**, **Visitantes**.
-- Toque em um pin → painel com dados; copiar endereço para navegação.
-- **Voltar** → card Lista de Membros.
+### Ilustração — Lista de Visitantes
+
+![Lista de Visitantes — captura anotada](docs/manual-painel/screens/08c-lista-visitantes.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Título **LISTA DE VISITANTES** |
+| ② | Botão **Membros** — volta à lista de membros |
+| ③ | Campo **Procurar visitante** |
+| ④ | Tabela **Nome · Família · Zap · GPS** |
+
+
+
+### Passo a passo — visitantes
+
+1. Toque **Visitantes**.
+2. Confira o título **LISTA DE VISITANTES** e o resumo *N visitante(s)...*.
+3. Use **Procurar visitante** para filtrar.
+4. Toque **Membros** para retornar à lista de membros.
+
+### Resultado esperado (visitantes)
+
+- Mesma estrutura de tabela (**Nome**, **Família**, **Zap**, **GPS**), com dados apenas de visitantes.
+- Botão **Membros** (ícone **users**) substitui **Visitantes** na linha de ações.
+
+### Caminho (modal familiar)
+Lista de Membros → coluna **Família** → ícone **users** na linha desejada.
+
+### Ilustração — Membros da família (modal)
+
+![Membros da família (modal) — captura anotada](docs/manual-painel/screens/08b-lista-membros-familia.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Título **Membros da família** |
+| ② | Subtítulo **Família {código}** (ex.: IBN0103) |
+| ③ | Lista de integrantes com **nome** e **parentesco** |
+| ④ | Ícone **WhatsApp** por integrante (quando há telefone) |
+| ⑤ | Botão **Fechar** |
+
+
+
+### Passo a passo — modal Membros da família
+
+1. Toque o ícone **users** na coluna **Família** de um membro.
+2. Leia o título **Membros da família** e o subtítulo **Família {código}** (ex.: **Família IBN0103**).
+3. Role a lista de integrantes: nome, **parentesco** (quando cadastrado) e **WhatsApp** por linha.
+4. Toque **Fechar** ou fora do cartão para encerrar.
+
+### Resultado esperado (modal familiar)
+
+- Lista todos os integrantes reconhecidos no mesmo `family_id` (fonte canônica: tabela `members`, sincronizada com perfis).
+- Mensagem *Nenhum membro reconhecido nesta família* quando o núcleo está vazio para seu perfil.
+- Erro em vermelho quando falta permissão ACL ou RPC no Supabase — use **Atualizar lista** no card se a lista principal falhar.
+
+### Caminho (mapa)
+Lista de Membros → **Mapa Geral**.
+
+### Ilustração — Mapa Geral
+
+![Mapa Geral — captura anotada](docs/manual-painel/screens/08d-mapa-geral.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Filtros **Todos** · **Com papel** · **Visitantes** |
+| ② | Mapa com **pins** de endereços |
+| ③ | Botão **Voltar** ao card Lista de Membros |
+
+
+
+### Passo a passo — Mapa Geral (PWA)
+
+1. Toque **Mapa Geral**.
+2. Use os filtros **Todos**, **Com papel** e **Visitantes** no topo.
+3. Toque em um **pin** no mapa → painel com nome, telefone e endereço.
+4. Copie o endereço para navegação externa, se necessário.
+5. Toque **Voltar** → retorna ao card **Lista de Membros**.
+
+### Resultado esperado (mapa)
+
+- Pins coloridos por tipo (membro vs visitante).
+- Contadores de quantos endereços estão no mapa conforme o filtro ativo.
+
+### Se der erro
+
+| Situação | O que fazer |
+|----------|-------------|
+| Lista vazia ou erro ao carregar | Toque **Atualizar lista**; confirme permissão do card com a secretaria |
+| Modal familiar vazio | Verifique se a família tem integrantes em `members`; TI deve aplicar `scripts/members-list-family-sync.sql` |
+| **Mapa Geral** não abre | Seu papel pode não ter grant em `screen.map_geolocation` |
+| WhatsApp cinza | Telefone não cadastrado para aquele membro |
+| GPS cinza | CEP/endereço ausente no perfil |
 
 ---
 
@@ -633,10 +742,6 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 3. No topo, use o atalho destacado **Relatório de Despesas (RD)** ou role até **Relatórios**.
 4. Expanda as seções (uma por vez):
    - **Resultado do mês**
-   - **Comparativo mensal**
-   - **Últimos 12 meses**
-   - **Planejado × Realizado**
-   - **Saldo bancário**
 
 ### Ilustração — Financeiro — Resultado do mês
 
@@ -648,6 +753,8 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 | ② | Tabela de **Receitas** do período |
 | ③ | Tabela de **Despesas** do período |
 
+   - **Comparativo mensal**
+
 ### Ilustração — Financeiro — Comparativo mensal
 
 ![Financeiro — Comparativo mensal — captura anotada](docs/manual-painel/screens/10b-fin-comparativo.png)
@@ -656,6 +763,8 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 |:----:|------------------------------|
 | ① | Seção **Comparativo mensal** expandida |
 | ② | Comparação entre dois meses consecutivos |
+
+   - **Últimos 12 meses**
 
 ### Ilustração — Financeiro — Últimos 12 meses
 
@@ -666,6 +775,8 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 | ① | Seção **Últimos 12 meses** expandida |
 | ② | Série **Realizado** acumulada |
 
+   - **Planejado × Realizado**
+
 ### Ilustração — Financeiro — Planejado × Realizado
 
 ![Financeiro — Planejado × Realizado — captura anotada](docs/manual-painel/screens/10d-fin-orcamento.png)
@@ -674,6 +785,8 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 |:----:|------------------------------|
 | ① | Seção **Planejado × Realizado** expandida |
 | ② | Colunas **Planejado** e **Realizado** |
+
+   - **Saldo bancário**
 
 ### Ilustração — Financeiro — Saldo bancário
 
@@ -1008,5 +1121,5 @@ Encerrar a sessão no aparelho (essencial em celular compartilhado).
 
 ---
 
-*App IBN · Igreja Batista Norte · Manual do Painel v2026-06-10*
+*App IBN · Igreja Batista Norte · Manual do Painel v2026-05-22*
 

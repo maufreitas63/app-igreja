@@ -59,20 +59,6 @@ const pdfCss = `
   table + img, img + table { margin-top: 8px; }
 `;
 
-const manualIllustrationFiles = new Set([
-  'PACOTE_5_MANUAL_PAINEL.md',
-  'MANUAL_DASHBOARD_MEMBRO.md',
-  'PACOTE_6_MANUAL_MANUTENCAO.md',
-  'MANUAL_DASHBOARD_MANUTENCAO.md',
-  'PACOTE_7_TREINAMENTO_DIARIO.md',
-  'MANUAL_TREINAMENTO_DIARIO.md',
-]);
-
-const manualIllustrationCss = pdfCss.replace(
-  'img { max-width: 100%; height: auto;',
-  'img { max-width: 40%; height: auto;'
-);
-
 fs.mkdirSync(outDir, { recursive: true });
 
 for (const file of files) {
@@ -96,7 +82,7 @@ for (const file of files) {
           margin: { top: '18mm', right: '16mm', bottom: '18mm', left: '16mm' },
           printBackground: true,
         },
-        css: manualIllustrationFiles.has(file) ? manualIllustrationCss : pdfCss,
+        css: pdfCss,
         launch_options: {
           args: ['--no-sandbox', '--disable-setuid-sandbox'],
         },

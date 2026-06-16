@@ -59,7 +59,7 @@ const TRAINING_DAYS = [
     id: 3,
     title: 'SALA(S) — IBN Kids / IBN Teens e Dízimos e Ofertas',
     start: 376,
-    end: 456,
+    end: 457,
     qa: [
       ['O card SALA(S) mostra quem?', 'Somente **membros da sua família** em monitoramento de entrada nas salas Kids/Teens — leitura apenas, sem editar.'],
       ['Por que não vejo ninguém no SALA(S)?', 'Nenhum familiar foi registrado na sala no momento, ou você não tem permissão para esse card.'],
@@ -71,21 +71,23 @@ const TRAINING_DAYS = [
   {
     id: 4,
     title: 'Coração Aberto e Lista de Membros',
-    start: 457,
-    end: 561,
+    start: 458,
+    end: 670,
     qa: [
       ['Como envio um pedido pastoral?', 'Card **Coração Aberto** → preencha o formulário → envie. Acompanhe em **Meus pedidos**.'],
       ['Quem vê meu pedido pastoral?', 'A **equipe pastoral** na manutenção (Pacote 6, Parte 7) — estágios Acolher, Apoiar, Acompanhar.'],
-      ['Lista de Membros vs Visitantes?', 'Botões **Membros** e **Visitantes** na mesma linha alternam a lista; **Mapa Geral** abre geolocalização.'],
-      ['Como contato alguém pelo WhatsApp?', 'Na lista, toque o ícone WhatsApp ao lado do nome (quando telefone cadastrado).'],
-      ['O que é o modal da família?', 'Toque na linha da família para ver membros vinculados e detalhes.'],
+      ['Lista de Membros vs Visitantes?', 'Botões **Visitantes** e **Membros** na mesma linha alternam a lista; o título muda para **LISTA DE VISITANTES** e o campo de busca para **Procurar visitante**.'],
+      ['Como vejo integrantes da mesma família?', 'Na coluna **Família**, toque o ícone **users** (rosa) → modal **Membros da família** com código (ex.: **Família IBN0103**), nomes, parentesco e WhatsApp.'],
+      ['O modal da família veio vazio — o que fazer?', 'Pode não haver integrantes reconhecidos no núcleo, falta de permissão ACL ou RPCs não aplicados no Supabase — avise a secretaria/TI. A mensagem *Nenhum membro reconhecido nesta família* ou erro em vermelho explica o caso.'],
+      ['Como contato alguém pelo WhatsApp?', 'Na lista ou no modal familiar, toque o ícone **WhatsApp** (verde) ao lado do nome quando houver telefone cadastrado.'],
+      ['Para que serve o Mapa Geral?', 'Abre `/mapa-geolocalizacao` com pins de endereços; filtros **Todos**, **Com papel** e **Visitantes**; toque no pin para ver dados e copiar endereço.'],
     ],
   },
   {
     id: 5,
     title: 'Aniversariantes e Financeiro',
-    start: 562,
-    end: 691,
+    start: 671,
+    end: 808,
     qa: [
       ['Como filtro aniversariantes do mês?', 'Card **Aniversariantes** → escolha o **mês** → lista com datas e atalho WhatsApp.'],
       ['O card Financeiro mostra o quê?', 'Hub de relatórios: **Relatório de Despesas (RD)** em destaque, fluxo de caixa e categorias conforme permissão.'],
@@ -96,8 +98,8 @@ const TRAINING_DAYS = [
   {
     id: 6,
     title: 'Relatório de Despesas (RD), Escalas e Servos',
-    start: 692,
-    end: 808,
+    start: 809,
+    end: 925,
     qa: [
       ['Como envio um RD?', 'Card **Financeiro** → **Relatório de Despesas** → preencha itens → **Submeter e Finalizar**; pode abrir WhatsApp do tesoureiro.'],
       ['Qual o formato do número do RD?', 'Prefixo **AAMM** + sequência mensal (ex.: `250500001`) — configurado para o papel **tesoureiro**.'],
@@ -109,7 +111,7 @@ const TRAINING_DAYS = [
   {
     id: 7,
     title: 'Estacionamento, Gestão de Cadastros e encerramento',
-    start: 809,
+    start: 926,
     end: 0,
     qa: [
       ['Como identifico um veículo no estacionamento?', 'Card **Estacionamento** → digite a **placa** → sistema busca proprietário e abre WhatsApp se cadastrado.'],
@@ -251,7 +253,7 @@ writePackage('PACOTE_5_MANUAL_PAINEL.md', [
   '',
   '**Atualizado em:** 22/05/2026',
   '',
-  'Conteúdo integrado: login, cadastro, LGPD (reconhecimento **opcional** via `LGPD_Ativo`), navegação, todos os cards do dashboard (sem manutenção), com ilustrações anotadas a **40%** no PDF e resultado esperado em cada ação.',
+  'Conteúdo integrado: login, cadastro, LGPD (reconhecimento **opcional** via `LGPD_Ativo`), navegação, todos os cards do dashboard (sem manutenção), com ilustrações anotadas em **largura integral (100%)** e resultado esperado em cada ação.',
 ], [
   { title: 'Manual completo', file: 'MANUAL_DASHBOARD_MEMBRO.md' },
 ]);
@@ -263,7 +265,7 @@ writePackage('PACOTE_6_MANUAL_MANUTENCAO.md', [
   '',
   '**Atualizado em:** 22/05/2026',
   '',
-  'Conteúdo integrado: acesso via engrenagem, ACL (incl. interruptor **LGPD Ativo/Inativo**), papel **Tesoureiro**, todos os cards de maintenance-dashboard, com ilustrações a **40%** no PDF, resultado esperado e efeito no app dos membros.',
+  'Conteúdo integrado: acesso via engrenagem, ACL (incl. interruptor **LGPD Ativo/Inativo**), papel **Tesoureiro**, todos os cards de maintenance-dashboard, com ilustrações em **largura integral (100%)**, resultado esperado e efeito no app dos membros.',
 ], [
   { title: 'Manual completo', file: 'MANUAL_DASHBOARD_MANUTENCAO.md' },
 ]);

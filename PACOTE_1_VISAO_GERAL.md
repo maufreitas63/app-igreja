@@ -97,7 +97,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **SALA(S)** | Monitoramento read-only de entrada Kids/Teens — **somente membros da própria família** |
 | **Dízimos e Ofertas** | Sempre visível no carrossel; dados do recebedor, chave PIX, **Copiar chave PIX** com ícone *touch-app*, atualizar chave |
 | **Coração Aberto** | Atalho para pedido pastoral |
-| **Lista de Membros** | Botões **Visitantes** e **Mapa Geral** na mesma linha; alternância membros/visitantes; busca; tabela nome/família; WhatsApp; modal de membros da família |
+| **Lista de Membros** | Botões **Visitantes** e **Mapa Geral** na mesma linha; alternância membros/visitantes; busca **Procurar membro** / **Procurar visitante**; tabela **Nome** · **Família** · **Zap** · **GPS**; ícone **users** abre modal **Membros da família** (código, parentesco, WhatsApp); **Mapa Geral** com filtros Todos / Com papel / Visitantes |
 | **Aniversariantes** | Filtro por mês, lista com WhatsApp |
 | **Financeiro** | Hub: relatórios (`/financial`) e **Relatório de Despesas (RD)** destacado (`/expense-report`); Fluxo de caixa, Categorias e Relatórios extras em breve |
 | **Escalas** | Lista de tipos de escala, escala por data, WhatsApp dos servos |

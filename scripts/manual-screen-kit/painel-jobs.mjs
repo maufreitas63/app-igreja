@@ -213,11 +213,131 @@ export const painelJobs = [
       { n: 3, text: 'pedido', lx: 330, ly: 338 },
       { n: 4, text: 'Meus pedidos', lx: 55, ly: 410 },
     ]],
-    ['08-lista-membros.png', '10', 'Membros', [
-      { n: 1, text: 'Procurar membro', lx: 330, ly: 238 },
-      { n: 2, text: 'Mapa Geral', lx: 55, ly: 285 },
-      { n: 3, ariaLabel: 'Abrir WhatsApp', fx: 320, fy: 360, lx: 330, ly: 348 },
-    ]],
+  ].map(([file, card, _label, calloutDefs]) => ({
+    file,
+    async run(ctx) {
+      await ensureMemberLogin(ctx);
+      const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts, member } = ctx;
+      await gotoAndSettle(page, `${baseUrl}/dashboard?dashboardCard=${card}`);
+      const callouts = await resolveCallouts(page, calloutDefs);
+      await saveScreenshot(page, path.join(outDir, file), callouts);
+    },
+  })),
+  {
+    file: '08-lista-membros.png',
+    async run(ctx) {
+      await ensureMemberLogin(ctx);
+      const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts } = ctx;
+      await gotoAndSettle(page, `${baseUrl}/dashboard?dashboardCard=10`);
+      await page.waitForFunction(
+        () =>
+          document.body.innerText.includes('Procurar membro')
+          || document.body.innerText.includes('Visitantes'),
+        { timeout: 45000 }
+      );
+      try {
+        await page.waitForFunction(
+          () => document.querySelectorAll('svg[data-icon="whatsapp"]').length >= 2,
+          { timeout: 15000 }
+        );
+      } catch {
+        console.warn('Lista de membros sem linhas com WhatsApp — modal pode não abrir');
+      }
+      await new Promise((r) => setTimeout(r, 1500));
+      const listCallouts = await resolveCallouts(page, [
+        { n: 1, text: 'Visitantes', lx: 55, ly: 238 },
+        { n: 2, text: 'Mapa Geral', lx: 330, ly: 238 },
+        { n: 3, text: 'Procurar membro', lx: 330, ly: 318 },
+        { n: 4, fx: 318, fy: 395, lx: 55, ly: 378 },
+        { n: 5, ariaLabel: 'Abrir WhatsApp', fx: 350, fy: 395, lx: 330, ly: 378 },
+        { n: 6, ariaLabel: 'Abrir mapa com localização', fx: 368, fy: 395, lx: 55, ly: 430 },
+      ]);
+      await saveScreenshot(page, path.join(outDir, '08-lista-membros.png'), listCallouts);
+
+      let modalReady = false;
+      const rowClicks = await page.evaluate(() => {
+        const usersIcons = [...document.querySelectorAll('svg[data-icon="users"]')]
+          .filter((svg) => svg.getBoundingClientRect().top > 320);
+        for (const svg of usersIcons.slice(0, 8)) {
+          const usersBtn = svg.closest('[role="button"]') ?? svg.parentElement?.parentElement;
+          if (usersBtn instanceof HTMLElement) {
+            usersBtn.click();
+            return 1;
+          }
+        }
+        return 0;
+      });
+      if (!rowClicks) {
+        for (const y of [395, 430, 465, 500, 535]) {
+          await page.mouse.click(318, y);
+          await new Promise((r) => setTimeout(r, 600));
+        }
+      }
+      try {
+        await page.waitForFunction(
+          () => document.body.innerText.includes('Membros da família'),
+          { timeout: 12000 }
+        );
+        modalReady = true;
+      } catch {
+        console.warn('Modal familiar não abriu — captura de fallback');
+      }
+      await new Promise((r) => setTimeout(r, modalReady ? 1200 : 400));
+      const modalCallouts = await resolveCallouts(page, [
+        { n: 1, text: 'Membros da família', lx: 330, ly: 120 },
+        { n: 2, text: 'Família', lx: 55, ly: 155 },
+        { n: 3, text: 'parentesco', lx: 330, ly: 240 },
+        { n: 4, ariaLabel: 'Abrir WhatsApp', lx: 55, ly: 300 },
+        { n: 5, text: 'Fechar', lx: 330, ly: 520 },
+      ]);
+      await saveScreenshot(page, path.join(outDir, '08b-lista-membros-familia.png'), modalCallouts);
+    },
+  },
+  {
+    file: '08c-lista-visitantes.png',
+    async run(ctx) {
+      await ensureMemberLogin(ctx);
+      const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts } = ctx;
+      await gotoAndSettle(page, `${baseUrl}/dashboard?dashboardCard=10`);
+      await clickByExactText(page, 'Visitantes');
+      await page.waitForFunction(
+        () =>
+          document.body.innerText.includes('LISTA DE VISITANTES')
+          || document.body.innerText.includes('Procurar visitante'),
+        { timeout: 15000 }
+      );
+      await new Promise((r) => setTimeout(r, 1000));
+      const callouts = await resolveCallouts(page, [
+        { n: 1, text: 'LISTA DE VISITANTES', lx: 330, ly: 120 },
+        { n: 2, text: 'Membros', lx: 55, ly: 238 },
+        { n: 3, text: 'Procurar visitante', lx: 330, ly: 318 },
+        { n: 4, text: 'Nome', lx: 55, ly: 378 },
+      ]);
+      await saveScreenshot(page, path.join(outDir, '08c-lista-visitantes.png'), callouts);
+    },
+  },
+  {
+    file: '08d-mapa-geral.png',
+    async run(ctx) {
+      await ensureMemberLogin(ctx);
+      const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts } = ctx;
+      await gotoAndSettle(page, `${baseUrl}/mapa-geolocalizacao?returnDashboardCard=10`);
+      await page.waitForFunction(
+        () =>
+          document.body.innerText.includes('Todos')
+          || document.body.innerText.includes('Com papel'),
+        { timeout: 25000 }
+      );
+      await new Promise((r) => setTimeout(r, 2000));
+      const callouts = await resolveCallouts(page, [
+        { n: 1, text: 'Todos', lx: 55, ly: 175 },
+        { n: 2, text: 'Visitantes', lx: 330, ly: 175 },
+        { n: 3, text: 'Voltar', lx: 55, ly: 95 },
+      ]);
+      await saveScreenshot(page, path.join(outDir, '08d-mapa-geral.png'), callouts);
+    },
+  },
+  ...[
     ['09-aniversariantes.png', '7', 'Aniversariantes', [
       { n: 1, text: 'Mês', lx: 330, ly: 172 },
       { n: 2, text: 'Aniversariantes', lx: 55, ly: 268 },
