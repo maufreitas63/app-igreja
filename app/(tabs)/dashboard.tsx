@@ -1388,6 +1388,7 @@ export default function Dashboard() {
   const vigilanceEntriesForSelectedScale = upcomingVigilanceScaleEntries.filter(
     (entry) => entry.scale_code === selectedVigilanceScale
   );
+  const nextVigilanceServiceDate = vigilanceEntriesForSelectedScale[0]?.data_servico ?? null;
   const loadRegisteredScaleVolunteers = useCallback(async (scaleTypeId: string) => {
     setIsRegisteredScaleVolunteersLoading(true);
     setRegisteredScaleVolunteersError(null);
@@ -3048,13 +3049,12 @@ export default function Dashboard() {
                             showsVerticalScrollIndicator
                             keyboardShouldPersistTaps="handled"
                           >
-                            {registeredScaleVolunteers.map((entry, index) => (
+                            {registeredScaleVolunteers.map((entry) => (
                               <View
                                 key={entry.id}
                                 style={[
                                   styles.vigilanceScaleRow,
                                   styles.scaleRosterIntercessionRow,
-                                  index === 0 && styles.vigilanceScaleRowFirst,
                                 ]}
                               >
                                 <Text style={styles.vigilanceScaleName} numberOfLines={1}>
@@ -3134,42 +3134,57 @@ export default function Dashboard() {
                             showsVerticalScrollIndicator
                             keyboardShouldPersistTaps="handled"
                           >
-                            {vigilanceEntriesForSelectedScale.map((entry, index) => (
-                              <View
-                                key={`${entry.data_servico}-${entry.voluntario_id}-${index}`}
-                                style={[
-                                  styles.vigilanceScaleRow,
-                                  index === 0 && styles.vigilanceScaleRowFirst,
-                                ]}
-                              >
-                                <Text style={styles.vigilanceScaleName} numberOfLines={1}>
-                                  {formatDisplayName(entry.volunteer_name)}
-                                </Text>
-                                <View style={styles.vigilanceScaleTrailing}>
-                                  <Text style={styles.vigilanceScaleDateText}>
-                                    {formatServiceDateLabel(entry.data_servico)}
-                                  </Text>
-                                  <TouchableOpacity
+                            {vigilanceEntriesForSelectedScale.map((entry, index) => {
+                              const isNextScale = entry.data_servico === nextVigilanceServiceDate;
+
+                              return (
+                                <View
+                                  key={`${entry.data_servico}-${entry.voluntario_id}-${index}`}
+                                  style={[
+                                    styles.vigilanceScaleRow,
+                                    isNextScale && styles.vigilanceScaleRowNext,
+                                  ]}
+                                >
+                                  <Text
                                     style={[
-                                      styles.vigilanceScaleWhatsappButton,
-                                      !entry.volunteer_phone && styles.vigilanceScaleWhatsappButtonDisabled,
+                                      styles.vigilanceScaleName,
+                                      isNextScale && styles.vigilanceScaleNameNext,
                                     ]}
-                                    onPress={() =>
-                                      void handleOpenVigilanceVolunteerWhatsapp(entry.volunteer_phone)
-                                    }
-                                    disabled={!entry.volunteer_phone}
-                                    activeOpacity={0.85}
-                                    accessibilityLabel="Abrir WhatsApp do servo"
+                                    numberOfLines={1}
                                   >
-                                    <FontAwesome
-                                      name="whatsapp"
-                                      size={20}
-                                      color={entry.volunteer_phone ? '#25D366' : '#64748B'}
-                                    />
-                                  </TouchableOpacity>
+                                    {formatDisplayName(entry.volunteer_name)}
+                                  </Text>
+                                  <View style={styles.vigilanceScaleTrailing}>
+                                    <Text
+                                      style={[
+                                        styles.vigilanceScaleDateText,
+                                        isNextScale && styles.vigilanceScaleDateTextNext,
+                                      ]}
+                                    >
+                                      {formatServiceDateLabel(entry.data_servico)}
+                                    </Text>
+                                    <TouchableOpacity
+                                      style={[
+                                        styles.vigilanceScaleWhatsappButton,
+                                        !entry.volunteer_phone && styles.vigilanceScaleWhatsappButtonDisabled,
+                                      ]}
+                                      onPress={() =>
+                                        void handleOpenVigilanceVolunteerWhatsapp(entry.volunteer_phone)
+                                      }
+                                      disabled={!entry.volunteer_phone}
+                                      activeOpacity={0.85}
+                                      accessibilityLabel="Abrir WhatsApp do servo"
+                                    >
+                                      <FontAwesome
+                                        name="whatsapp"
+                                        size={20}
+                                        color={entry.volunteer_phone ? '#25D366' : '#64748B'}
+                                      />
+                                    </TouchableOpacity>
+                                  </View>
                                 </View>
-                              </View>
-                            ))}
+                              );
+                            })}
                           </ScrollView>
                         </View>
                       ) : (
@@ -5113,9 +5128,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(148, 163, 184, 0.24)',
   },
-  vigilanceScaleRowFirst: {
-    backgroundColor: 'rgba(34, 211, 238, 0.32)',
-    borderBottomColor: 'rgba(34, 211, 238, 0.45)',
+  vigilanceScaleRowNext: {
+    backgroundColor: 'rgba(251, 146, 60, 0.36)',
+    borderBottomColor: 'rgba(251, 191, 36, 0.7)',
   },
   vigilanceScaleNameHeader: {
     flex: 1,
@@ -5144,11 +5159,19 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     fontSize: 15,
   },
+  vigilanceScaleNameNext: {
+    color: '#FFF7ED',
+    fontWeight: '800',
+  },
   vigilanceScaleDateText: {
     color: '#CCFBF1',
     fontSize: 13,
     textAlign: 'right',
     flexShrink: 0,
+  },
+  vigilanceScaleDateTextNext: {
+    color: '#FFEDD5',
+    fontWeight: '800',
   },
   vigilanceScaleWhatsappButton: {
     width: 36,

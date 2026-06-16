@@ -184,6 +184,7 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
   };
 
   const actionsBusy = saving || buildingBatch || removingScaleId !== null;
+  const nextHistoryServiceDate = historyForSelectedType[0]?.serviceDate ?? null;
 
   if (loading) {
     return (
@@ -380,16 +381,24 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
         {historyForSelectedType.length ? (
           historyForSelectedType.map((entry, index) => {
             const isRemoving = removingScaleId === entry.id;
+            const isNextScale = entry.serviceDate === nextHistoryServiceDate;
 
             return (
               <View
                 key={entry.id}
-                style={[styles.historyRow, index % 2 === 1 && styles.historyRowAlt]}
+                style={[
+                  styles.historyRow,
+                  index % 2 === 1 && styles.historyRowAlt,
+                  isNextScale && styles.historyRowNext,
+                ]}
               >
-                <Text style={styles.historyDate}>
+                <Text style={[styles.historyDate, isNextScale && styles.historyDateNext]}>
                   {formatScaleServiceDateLabel(entry.serviceDate)}
                 </Text>
-                <Text style={styles.historyName} numberOfLines={2}>
+                <Text
+                  style={[styles.historyName, isNextScale && styles.historyNameNext]}
+                  numberOfLines={2}
+                >
                   {entry.volunteerName}
                 </Text>
                 <TouchableOpacity
@@ -738,6 +747,10 @@ const styles = StyleSheet.create({
   historyRowAlt: {
     backgroundColor: 'rgba(30, 41, 59, 0.35)',
   },
+  historyRowNext: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderBottomColor: 'rgba(110, 231, 183, 0.65)',
+  },
   historyDate: {
     minWidth: 96,
     flexShrink: 0,
@@ -745,12 +758,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
+  historyDateNext: {
+    color: '#D1FAE5',
+  },
   historyName: {
     flex: 1,
     minWidth: 0,
     color: '#F8FAFC',
     fontSize: 14,
     fontWeight: '600',
+  },
+  historyNameNext: {
+    color: '#ECFDF5',
+    fontWeight: '800',
   },
   historyDeleteButton: {
     width: 32,
