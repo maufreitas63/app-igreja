@@ -3,7 +3,7 @@ import {
   formatBibleVerseReference,
   type BibleVerseByTheme,
 } from '@/lib/bibleVerseByTheme';
-import { Image } from 'expo-image';
+import { FontAwesome5 } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -111,14 +111,9 @@ export function IndexBibleVerseButton({ panelWidth }: IndexBibleVerseButtonProps
         accessibilityState={{ disabled: isLoading, busy: isLoading }}
       >
         {isLoading ? (
-          <ActivityIndicator color="#FDE68A" size="small" />
+          <ActivityIndicator color="#FFFFFF" size="small" />
         ) : (
-          <Image
-            source={require('@/assets/open-bible.png')}
-            style={styles.buttonImage}
-            contentFit="contain"
-            accessibilityIgnoresInvertColors
-          />
+          <FontAwesome5 name="book-open" size={24} color="#FFFFFF" solid />
         )}
       </TouchableOpacity>
     </>
@@ -200,15 +195,16 @@ const styles = StyleSheet.create({
     top: 0,
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    backgroundColor: 'rgba(148, 163, 184, 0.12)',
+    borderColor: '#475569',
     zIndex: 5,
   },
   buttonActive: {
-    opacity: 0.82,
-  },
-  buttonImage: {
-    width: BUTTON_SIZE,
-    height: BUTTON_SIZE,
+    backgroundColor: 'rgba(253, 230, 138, 0.16)',
+    borderColor: '#FDE68A',
   },
 });
