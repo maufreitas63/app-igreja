@@ -1,12 +1,14 @@
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
+  View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -22,9 +24,18 @@ type DropdownSelectProps = {
   onValueChange: (value: string) => void;
   modalTitle?: string;
   placeholder?: string;
+  searchPlaceholder?: string;
+  searchable?: boolean;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
 };
+
+const normalizeSearch = (value: string) =>
+  value
+    .trim()
+    .toLocaleLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 
 export function DropdownSelect({
   options,
@@ -32,18 +43,151 @@ export function DropdownSelect({
   onValueChange,
   modalTitle = 'Selecionar',
   placeholder = 'Selecionar',
+  searchPlaceholder,
+  searchable = false,
   style,
   disabled = false,
 }: DropdownSelectProps) {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const blurCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedLabel =
-    options.find((option) => option.value === selectedValue)?.label ?? placeholder;
+    options.find((option) => option.value === selectedValue)?.label ?? '';
+
+  const filteredOptions = useMemo(() => {
+    if (!searchable) {
+      return options;
+    }
+
+    const query = normalizeSearch(searchQuery);
+    if (!query) {
+      return options;
+    }
+
+    return options.filter((option) => normalizeSearch(option.label).includes(query));
+  }, [options, searchQuery, searchable]);
+
+  const clearBlurTimer = () => {
+    if (blurCloseTimerRef.current) {
+      clearTimeout(blurCloseTimerRef.current);
+      blurCloseTimerRef.current = null;
+    }
+  };
+
+  useEffect(() => () => clearBlurTimer(), []);
 
   const handleSelect = (value: string) => {
+    clearBlurTimer();
     onValueChange(value);
+    setSearchQuery('');
     setOpen(false);
   };
+
+  const handleOpenSearch = () => {
+    if (disabled) {
+      return;
+    }
+
+    clearBlurTimer();
+    setOpen(true);
+    setSearchQuery(selectedValue ? selectedLabel : '');
+  };
+
+  const scheduleCloseSearch = () => {
+    clearBlurTimer();
+    blurCloseTimerRef.current = setTimeout(() => {
+      setOpen(false);
+      setSearchQuery('');
+      blurCloseTimerRef.current = null;
+    }, 180);
+  };
+
+  if (searchable) {
+    const inputPlaceholder = searchPlaceholder ?? placeholder;
+    const inputValue = open ? searchQuery : selectedValue ? selectedLabel : '';
+
+    return (
+      <View style={[styles.searchableRoot, style]}>
+        <View style={[styles.searchableTrigger, disabled && styles.triggerDisabled]}>
+          <TextInput
+            style={styles.searchableInput}
+            value={inputValue}
+            onChangeText={(text) => {
+              setSearchQuery(text);
+              setOpen(true);
+            }}
+            onFocus={handleOpenSearch}
+            onBlur={scheduleCloseSearch}
+            placeholder={inputPlaceholder}
+            placeholderTextColor="#64748B"
+            editable={!disabled}
+            autoCapitalize="words"
+            autoCorrect={false}
+            accessibilityLabel={modalTitle}
+          />
+          <TouchableOpacity
+            onPress={() => {
+              if (open) {
+                clearBlurTimer();
+                setOpen(false);
+                setSearchQuery('');
+                return;
+              }
+
+              handleOpenSearch();
+            }}
+            activeOpacity={0.85}
+            disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel={open ? 'Fechar lista' : 'Abrir lista'}
+          >
+            <FontAwesome name={open ? 'chevron-up' : 'chevron-down'} size={12} color="#94A3B8" />
+          </TouchableOpacity>
+        </View>
+
+        {open ? (
+          <View style={styles.searchablePanel}>
+            <ScrollView
+              style={styles.searchableScroll}
+              contentContainerStyle={styles.optionsContent}
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator
+            >
+              {filteredOptions.length ? (
+                filteredOptions.map((option) => {
+                  const isSelected = option.value === selectedValue;
+
+                  return (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[styles.optionButton, isSelected && styles.optionButtonSelected]}
+                      onPress={() => handleSelect(option.value)}
+                      onPressIn={clearBlurTimer}
+                      activeOpacity={0.85}
+                    >
+                      <Text
+                        style={[styles.optionText, isSelected && styles.optionTextSelected]}
+                        numberOfLines={2}
+                      >
+                        {option.label}
+                      </Text>
+                      {isSelected ? (
+                        <FontAwesome name="check" size={14} color="#10b981" />
+                      ) : null}
+                    </TouchableOpacity>
+                  );
+                })
+              ) : (
+                <Text style={styles.emptySearchText}>Nenhum resultado para a busca.</Text>
+              )}
+            </ScrollView>
+          </View>
+        ) : null}
+      </View>
+    );
+  }
 
   return (
     <>
@@ -57,7 +201,7 @@ export function DropdownSelect({
         accessibilityState={{ expanded: open, disabled }}
       >
         <Text style={styles.triggerText} numberOfLines={1}>
-          {selectedLabel}
+          {selectedLabel || placeholder}
         </Text>
         <FontAwesome name="chevron-down" size={12} color="#94A3B8" />
       </TouchableOpacity>
@@ -82,9 +226,7 @@ export function DropdownSelect({
                     onPress={() => handleSelect(option.value)}
                     activeOpacity={0.85}
                   >
-                    <Text
-                      style={[styles.optionText, isSelected && styles.optionTextSelected]}
-                    >
+                    <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
                       {option.label}
                     </Text>
                     {isSelected ? (
@@ -109,6 +251,51 @@ export function DropdownSelect({
 }
 
 const styles = StyleSheet.create({
+  searchableRoot: {
+    width: '100%',
+    position: 'relative',
+    zIndex: 20,
+  },
+  searchableTrigger: {
+    width: '100%',
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    paddingHorizontal: 12,
+  },
+  searchableInput: {
+    flex: 1,
+    minWidth: 0,
+    color: '#F8FAFC',
+    fontSize: 14,
+    fontWeight: '600',
+    paddingVertical: 10,
+  },
+  searchablePanel: {
+    marginTop: 6,
+    maxHeight: 240,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+    backgroundColor: '#0f172a',
+    overflow: 'hidden',
+  },
+  searchableScroll: {
+    maxHeight: 240,
+  },
+  emptySearchText: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+  },
   trigger: {
     flex: 1,
     minWidth: 0,
@@ -160,6 +347,7 @@ const styles = StyleSheet.create({
   },
   optionsContent: {
     gap: 6,
+    padding: 6,
   },
   optionButton: {
     flexDirection: 'row',

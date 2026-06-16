@@ -457,8 +457,10 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
 
                   void selectProfileById(value);
                 }}
-                modalTitle="Selecionar perfil"
+                modalTitle="Selecionar usuário"
                 placeholder="Selecionar usuário"
+                searchPlaceholder="Digite nome, telefone ou código..."
+                searchable
                 style={styles.profileDropdown}
                 disabled={rpcMissing || busy}
               />
