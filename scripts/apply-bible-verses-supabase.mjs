@@ -20,6 +20,7 @@ import pg from 'pg';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const SCHEMA_FILE = join(__dirname, 'bible-verses-by-theme.sql');
+const CLEAR_FILE = join(__dirname, 'bible-verses-by-theme-clear.sql');
 const DATA_DIR = join(__dirname, 'bible-verses-by-theme-data');
 
 const args = new Set(process.argv.slice(2));
@@ -88,6 +89,7 @@ function buildPlan() {
   }
 
   if (!schemaOnly) {
+    files.push({ label: 'clear-data', path: CLEAR_FILE });
     for (const name of listDataSqlFiles()) {
       files.push({ label: name, path: join(DATA_DIR, name) });
     }

@@ -77,8 +77,9 @@ const readme = `# Versículos por tema — execução no Supabase
 Execute **nesta ordem** no SQL Editor:
 
 1. \`../bible-verses-by-theme.sql\` — cria tabelas, view e RPC (só na 1ª vez)
-2. \`00-truncate-themes.sql\` — limpa e insere os 161 temas
-${partFiles.map((f, idx) => `${idx + 3}. \`${f}\``).join('\n')}
+2. \`../bible-verses-by-theme-clear.sql\` — **limpa todos os dados** (temas e versículos)
+3. \`00-truncate-themes.sql\` — insere os 161 temas
+${partFiles.map((f, idx) => `${idx + 4}. \`${f}\``).join('\n')}
 
 **Não** execute \`import-dailyverses-themes.mjs\` no Supabase (é JavaScript).
 
