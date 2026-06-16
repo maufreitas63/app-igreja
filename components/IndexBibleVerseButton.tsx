@@ -1,9 +1,9 @@
-import { OpenBibleIcon } from '@/components/OpenBibleIcon';
 import {
   fetchRandomBibleVerseByTheme,
   formatBibleVerseReference,
   type BibleVerseByTheme,
 } from '@/lib/bibleVerseByTheme';
+import { Image } from 'expo-image';
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -14,6 +14,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
+const BUTTON_SIZE = 48;
 
 type IndexBibleVerseButtonProps = {
   panelWidth: number;
@@ -111,7 +113,12 @@ export function IndexBibleVerseButton({ panelWidth }: IndexBibleVerseButtonProps
         {isLoading ? (
           <ActivityIndicator color="#FDE68A" size="small" />
         ) : (
-          <OpenBibleIcon size={28} />
+          <Image
+            source={require('@/assets/open-bible.png')}
+            style={styles.buttonImage}
+            contentFit="contain"
+            accessibilityIgnoresInvertColors
+          />
         )}
       </TouchableOpacity>
     </>
@@ -191,18 +198,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     top: 0,
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    backgroundColor: 'rgba(148, 163, 184, 0.12)',
-    borderColor: '#475569',
     zIndex: 5,
   },
   buttonActive: {
-    backgroundColor: 'rgba(253, 230, 138, 0.16)',
-    borderColor: '#FDE68A',
+    opacity: 0.82,
+  },
+  buttonImage: {
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
   },
 });
