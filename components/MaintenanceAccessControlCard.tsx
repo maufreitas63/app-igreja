@@ -443,6 +443,9 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
             <SectionLabel variant="maintenance" tight>
               Selecionar perfil
             </SectionLabel>
+            {!loadingProfiles && allProfiles.length > 0 ? (
+              <Text style={styles.searchHintText}>{allProfiles.length} usuários cadastrados</Text>
+            ) : null}
             {loadingProfiles ? (
               <CardLoadingState lines={2} compact />
             ) : allProfiles.length > 0 ? (
@@ -467,10 +470,6 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
             ) : (
               <Text style={styles.searchHintText}>Nenhum perfil encontrado.</Text>
             )}
-
-            {!loadingProfiles && allProfiles.length > 0 ? (
-              <Text style={styles.searchHintText}>{allProfiles.length} usuários cadastrados</Text>
-            ) : null}
           </View>
 
           {selectedProfile ? (
