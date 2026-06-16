@@ -73,10 +73,16 @@ export function IndexBibleVerseButton({ panelWidth }: IndexBibleVerseButtonProps
           pointerEvents="box-none"
           style={[styles.bubbleAnchor, { width: panelWidth }]}
         >
-          <View style={[styles.bubble, { width: panelWidth }]}>
+          <Pressable
+            style={[styles.bubble, { width: panelWidth }]}
+            onPress={handleDismiss}
+            accessibilityRole="button"
+            accessibilityLabel="Versículo bíblico"
+            accessibilityHint="Toque para fechar"
+          >
             {isLoading || !verse ? (
               <View style={styles.bubbleLoading}>
-                <ActivityIndicator color="#A5B4FC" />
+                <ActivityIndicator color="#D97706" />
               </View>
             ) : (
               <>
@@ -88,7 +94,7 @@ export function IndexBibleVerseButton({ panelWidth }: IndexBibleVerseButtonProps
               </>
             )}
             <View style={styles.bubbleTail} />
-          </View>
+          </Pressable>
         </View>
       ) : null}
 
@@ -131,14 +137,14 @@ const styles = StyleSheet.create({
   bubble: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(165, 180, 252, 0.45)',
-    backgroundColor: 'rgba(15, 23, 42, 0.96)',
+    borderColor: 'rgba(251, 191, 36, 0.5)',
+    backgroundColor: '#FFF7ED',
     paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 16,
     gap: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.28,
+    shadowColor: '#92400E',
+    shadowOpacity: 0.18,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
@@ -154,14 +160,14 @@ const styles = StyleSheet.create({
     bottom: -8,
     width: 14,
     height: 14,
-    backgroundColor: 'rgba(15, 23, 42, 0.96)',
+    backgroundColor: '#FFF7ED',
     borderRightWidth: 1,
     borderBottomWidth: 1,
-    borderColor: 'rgba(165, 180, 252, 0.45)',
+    borderColor: 'rgba(251, 191, 36, 0.5)',
     transform: [{ rotate: '45deg' }],
   },
   themeText: {
-    color: '#FDE68A',
+    color: '#B45309',
     fontSize: 20,
     fontWeight: '800',
     lineHeight: 26,
@@ -169,13 +175,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   verseText: {
-    color: '#E2E8F0',
+    color: '#44403C',
     fontSize: 15,
     lineHeight: 22,
     fontWeight: '500',
   },
   referenceText: {
-    color: '#94A3B8',
+    color: '#78716C',
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '600',
