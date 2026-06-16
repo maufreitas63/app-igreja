@@ -1,8 +1,12 @@
 /**
- * Scrape https://dailyverses.net/pt/temas and import verses by theme.
- * Outputs SQL for Supabase (bible_themes + bible_verses_by_theme).
+ * NÃO execute este arquivo no Supabase SQL Editor — é JavaScript (Node.js).
  *
- * Usage: node scripts/import-dailyverses-themes.mjs [--out scripts/bible-verses-by-theme-data.sql]
+ * No Supabase, execute apenas:
+ *   1. scripts/bible-verses-by-theme.sql
+ *   2. scripts/bible-verses-by-theme-data.sql
+ *
+ * Este script roda no terminal para regenerar o .sql de dados:
+ *   node scripts/import-dailyverses-themes.mjs
  */
 
 import { writeFileSync } from 'fs';
@@ -212,6 +216,7 @@ async function main() {
   writeFileSync(OUT_FILE, sql, 'utf8');
   console.log(`\nWrote ${OUT_FILE}`);
   console.log(`Total: ${themes.length} themes, ${allVerses.length} verses`);
+  console.log('Para Supabase em partes: node scripts/split-bible-verses-sql.mjs');
 }
 
 main().catch((e) => {
