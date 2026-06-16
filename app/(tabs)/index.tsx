@@ -23,6 +23,7 @@ import {
 import { getAppParameterValue } from '@/lib/appParameters';
 import { resolveFamilyIdForPhone } from '@/lib/family';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
+import { IndexBibleVerseButton } from '@/components/IndexBibleVerseButton';
 import {
   buildDashboardPanelCardSizeStyle,
   computeDashboardPanelInnerPadding,
@@ -530,6 +531,7 @@ export default function DashboardIndexScreen() {
 
         <View style={[styles.footerRow, { width: indexPanelCardSizeStyle.width }]}>
           <View style={styles.footerRowTrack}>
+            <IndexBibleVerseButton panelWidth={indexPanelCardSizeStyle.width} />
             <TouchableOpacity
               style={styles.exitButton}
               onPress={handleExitApp}
@@ -777,6 +779,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     paddingBottom: 10,
     zIndex: 2,
+    overflow: 'visible',
   },
   footerRowTrack: {
     width: '100%',
@@ -784,6 +787,8 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'visible',
+    zIndex: 4,
   },
   exitButton: {
     flexShrink: 0,
