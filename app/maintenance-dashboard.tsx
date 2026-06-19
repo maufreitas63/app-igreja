@@ -63,6 +63,7 @@ import {
   UI_SPACING,
 } from '@/lib/uiTokens';
 import { confirmDialog } from '@/lib/confirmDialog';
+import { KIDS_ROOM_DISPLAY_LABEL, TEENS_ROOM_DISPLAY_LABEL } from '@/lib/entityPrefix';
 import {
   deleteMaintenanceEvent,
   replicateMaintenanceEventFromRecord,
@@ -1446,14 +1447,14 @@ export default function MaintenanceDashboard() {
                 <View style={styles.featureRow}>
                   <View style={styles.featureRowChips}>
                     <FeatureToggle
-                      label="Kids"
+                      label={KIDS_ROOM_DISPLAY_LABEL}
                       value={form.kidsRoom}
                       onValueChange={(kidsRoom) => patchForm({ kidsRoom })}
                       activeStyle={ROOM_CHIP_KIDS_ACTIVE}
                       roomDot="kids"
                     />
                     <FeatureToggle
-                      label="Teens"
+                      label={TEENS_ROOM_DISPLAY_LABEL}
                       value={form.teensRoom}
                       onValueChange={(teensRoom) => patchForm({ teensRoom })}
                       activeStyle={ROOM_CHIP_TEENS_ACTIVE}

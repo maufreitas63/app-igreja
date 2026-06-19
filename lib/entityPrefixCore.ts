@@ -15,20 +15,26 @@ export function buildFamilyId(prefix: string, num: number): string {
 
 export const DEFAULT_FAMILY_ID = buildFamilyId(DEFAULT_ENTITY_PREFIX, 1);
 
+/** Rótulo exibido nas telas (códigos internos permanecem KIDS / kids_room). */
+export const KIDS_ROOM_DISPLAY_LABEL = 'Infantil';
+
+/** Rótulo exibido nas telas (códigos internos permanecem TEENS / teens_room). */
+export const TEENS_ROOM_DISPLAY_LABEL = 'Jovens';
+
 export function buildKidsRoomLabel(prefix: string): string {
-  return `${prefix} KIDS`;
+  return `${prefix} ${KIDS_ROOM_DISPLAY_LABEL}`;
 }
 
 export function buildTeensRoomLabel(prefix: string): string {
-  return `${prefix} TEENS`;
+  return `${prefix} ${TEENS_ROOM_DISPLAY_LABEL}`;
 }
 
 export function buildKidsRoomBadgeLabel(prefix: string): string {
-  return `${prefix} Kids`;
+  return `${prefix} ${KIDS_ROOM_DISPLAY_LABEL}`;
 }
 
 export function buildTeensRoomBadgeLabel(prefix: string): string {
-  return `${prefix} Teens`;
+  return `${prefix} ${TEENS_ROOM_DISPLAY_LABEL}`;
 }
 
 export function buildNewFamilyRecordingHint(prefix: string): string {

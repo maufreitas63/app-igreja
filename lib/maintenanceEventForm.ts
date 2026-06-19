@@ -4,6 +4,7 @@ import {
   getEventWallClockParts,
   isEventDateBeforeToday,
 } from '@/lib/eventDate';
+import { KIDS_ROOM_DISPLAY_LABEL, TEENS_ROOM_DISPLAY_LABEL } from '@/lib/entityPrefixCore';
 
 export type MaintenanceEventFormState = {
   name: string;
@@ -427,8 +428,8 @@ export const summarizeMaintenanceEvent = (event: {
   is_locked: boolean | null;
 }) => {
   const flags = [
-    event.kids_room ? 'Kids' : null,
-    event.teens_room ? 'Teens' : null,
+    event.kids_room ? KIDS_ROOM_DISPLAY_LABEL : null,
+    event.teens_room ? TEENS_ROOM_DISPLAY_LABEL : null,
     event.totem_ativo ? 'Totem' : null,
     event.requer_quorum ? 'Quórum' : null,
   ].filter(Boolean);

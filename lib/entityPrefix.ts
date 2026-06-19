@@ -8,8 +8,10 @@ import {
   buildTeensRoomLabel,
   DEFAULT_ENTITY_PREFIX,
   DEFAULT_FAMILY_ID,
+  KIDS_ROOM_DISPLAY_LABEL,
   normalizeEntityPrefix,
   PARM_ENTIDADE_PARAMETER,
+  TEENS_ROOM_DISPLAY_LABEL,
 } from '@/lib/entityPrefixCore';
 
 export {
@@ -21,8 +23,10 @@ export {
   buildTeensRoomLabel,
   DEFAULT_ENTITY_PREFIX,
   DEFAULT_FAMILY_ID,
+  KIDS_ROOM_DISPLAY_LABEL,
   normalizeEntityPrefix,
   PARM_ENTIDADE_PARAMETER,
+  TEENS_ROOM_DISPLAY_LABEL,
 };
 
 let cachedEntityPrefix: string | null = null;

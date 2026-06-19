@@ -299,7 +299,7 @@ export const MaintenanceSalaMonitorCard = ({
         <Text style={styles.errorText}>{groupedRegistrationsError.message}</Text>
       ) : !selectedEvent ? null : !hasSalaResources ? (
         <Text style={styles.placeholderText}>
-          O evento selecionado no dashboard não possui salas Kids ou Teens ativas.
+          O evento selecionado no dashboard não possui salas Infantil ou Jovens ativas.
         </Text>
       ) : (
         <View style={styles.groupedAudienceSections}>
