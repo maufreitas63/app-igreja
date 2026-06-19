@@ -1,4 +1,4 @@
-import { useEntityPrefix } from '@/context/EntityPrefixContext';
+import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { CheckinModal } from '@/components/CheckinModal';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
@@ -466,7 +466,7 @@ export default function Dashboard() {
     teensRoomLabel,
     kidsRoomBadgeLabel,
     teensRoomBadgeLabel,
-  } = useEntityPrefix();
+  } = useRoomDisplayLabels();
   const { width: pageWidth, height: windowHeight } = useWindowDimensions();
   const previousPageWidthRef = useRef(pageWidth);
   const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);

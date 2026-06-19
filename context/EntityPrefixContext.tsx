@@ -1,13 +1,10 @@
 import {
-  buildKidsRoomBadgeLabel,
-  buildKidsRoomLabel,
-  buildNewFamilyRecordingHint,
-  buildTeensRoomBadgeLabel,
-  buildTeensRoomLabel,
   buildFamilyId,
+  buildNewFamilyRecordingHint,
   DEFAULT_ENTITY_PREFIX,
   getEntityPrefix,
 } from '@/lib/entityPrefix';
+import { buildRoomDisplayLabels } from '@/lib/roomDisplayLabels';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 export type EntityPrefixContextValue = {
@@ -21,11 +18,7 @@ export type EntityPrefixContextValue = {
 };
 
 const EntityPrefixContext = createContext<EntityPrefixContextValue>({
-  prefix: DEFAULT_ENTITY_PREFIX,
-  kidsRoomLabel: buildKidsRoomLabel(DEFAULT_ENTITY_PREFIX),
-  teensRoomLabel: buildTeensRoomLabel(DEFAULT_ENTITY_PREFIX),
-  kidsRoomBadgeLabel: buildKidsRoomBadgeLabel(DEFAULT_ENTITY_PREFIX),
-  teensRoomBadgeLabel: buildTeensRoomBadgeLabel(DEFAULT_ENTITY_PREFIX),
+  ...buildRoomDisplayLabels(DEFAULT_ENTITY_PREFIX),
   newFamilyRecordingHint: buildNewFamilyRecordingHint(DEFAULT_ENTITY_PREFIX),
   familyIdExample: buildFamilyId(DEFAULT_ENTITY_PREFIX, 1),
 });
@@ -49,11 +42,7 @@ export function EntityPrefixProvider({ children }: { children: React.ReactNode }
 
   const value = useMemo<EntityPrefixContextValue>(
     () => ({
-      prefix,
-      kidsRoomLabel: buildKidsRoomLabel(prefix),
-      teensRoomLabel: buildTeensRoomLabel(prefix),
-      kidsRoomBadgeLabel: buildKidsRoomBadgeLabel(prefix),
-      teensRoomBadgeLabel: buildTeensRoomBadgeLabel(prefix),
+      ...buildRoomDisplayLabels(prefix),
       newFamilyRecordingHint: buildNewFamilyRecordingHint(prefix),
       familyIdExample: buildFamilyId(prefix, 1),
     }),

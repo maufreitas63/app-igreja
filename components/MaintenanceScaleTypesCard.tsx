@@ -5,7 +5,7 @@ import {
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
 import { MAINTENANCE_SCALE_TYPES_SQL_HINT } from '@/hooks/useMaintenanceScaleTypes';
-import { confirmDialog } from '@/lib/confirmDialog';
+import { mapLegacyRoomDisplayLabel } from '@/lib/roomDisplayLabels';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -330,7 +330,7 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
                   >
                     <View style={styles.listMain}>
                       <Text style={styles.listName} numberOfLines={2}>
-                        {row.name}
+                        {mapLegacyRoomDisplayLabel(row.name)}
                       </Text>
                       <Text style={styles.listCode} numberOfLines={1}>
                         {row.code} · {row.vagasPorServico} vaga(s) ·{' '}

@@ -1,4 +1,4 @@
-import { useEntityPrefix } from '@/context/EntityPrefixContext';
+import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { useDashboardSelectedEvent } from '@/hooks/useDashboardSelectedEvent';
 import { useRoomMonitorScales } from '@/hooks/useRoomMonitorScales';
@@ -57,7 +57,7 @@ export const MaintenanceSalaMonitorCard = ({
     teensRoomLabel,
     kidsRoomBadgeLabel,
     teensRoomBadgeLabel,
-  } = useEntityPrefix();
+  } = useRoomDisplayLabels();
   const {
     selectedEvent,
     selectedEventId,
