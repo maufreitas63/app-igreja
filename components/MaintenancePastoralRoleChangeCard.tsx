@@ -10,6 +10,7 @@ import React, { useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -104,6 +105,8 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const hasActiveFilters = searchQuery.trim().length > 0 || roleFilter !== null;
+  const isSavingMembershipDate =
+    memberDateEditor !== null && savingProfileId === memberDateEditor.profileId;
 
   const handleSelectRole = async (profileId: string, roleCode: (typeof PASTORAL_BASIC_ROLE_OPTIONS)[number]['code']) => {
     setMemberDateEditor(null);
@@ -179,6 +182,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
       <Text style={styles.helpText}>
         Lista completa de perfis elegíveis. Use a busca para filtrar por nome, telefone ou código.
         Toque nos cabeçalhos Visitante, Congregado ou Membro para filtrar pelo papel atual.
+        Para incluir/editar a data de membro, toque no círculo da coluna Membro do perfil.
       </Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -245,8 +249,6 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
             ) : (
               profiles.map((profile) => {
                 const isSaving = savingProfileId === profile.id;
-                const isEditingMembershipDate = memberDateEditor?.profileId === profile.id;
-
                 return (
                   <React.Fragment key={profile.id}>
                     <View style={styles.tableRow}>
@@ -295,53 +297,6 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                         );
                       })}
                     </View>
-
-                    {isEditingMembershipDate && memberDateEditor ? (
-                      <View style={styles.memberDateBubble}>
-                        <View style={styles.memberDateBubbleArrow} />
-                        <Text style={styles.memberDateTitle}>Data de membro</Text>
-                        <Text style={styles.memberDateHelp}>
-                          {memberDateEditor.dateInput
-                            ? `Data atual de ${memberDateEditor.profileName}. Edite se necessário.`
-                            : `Informe a data de membro de ${memberDateEditor.profileName}.`}
-                        </Text>
-                        <TextInput
-                          style={styles.memberDateInput}
-                          value={memberDateEditor.dateInput}
-                          onChangeText={handleChangeMemberDateInput}
-                          placeholder="dd/mm/aa"
-                          placeholderTextColor="#64748B"
-                          keyboardType="numeric"
-                          maxLength={8}
-                          returnKeyType="done"
-                        />
-                        {memberDateEditor.error ? (
-                          <Text style={styles.memberDateError}>{memberDateEditor.error}</Text>
-                        ) : null}
-                        <View style={styles.memberDateActions}>
-                          <TouchableOpacity
-                            style={[styles.memberDateButton, styles.memberDateCancelButton]}
-                            onPress={() => setMemberDateEditor(null)}
-                            activeOpacity={0.85}
-                            disabled={isSaving}
-                          >
-                            <Text style={styles.memberDateCancelText}>Cancelar</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[styles.memberDateButton, styles.memberDateSaveButton]}
-                            onPress={() => void handleSaveMemberDate()}
-                            activeOpacity={0.85}
-                            disabled={isSaving}
-                          >
-                            {isSaving ? (
-                              <ActivityIndicator color="#0F172A" size="small" />
-                            ) : (
-                              <Text style={styles.memberDateSaveText}>Salvar</Text>
-                            )}
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ) : null}
                   </React.Fragment>
                 );
               })
@@ -349,6 +304,72 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
           </ScrollView>
         </View>
       ) : null}
+
+      <Modal
+        visible={memberDateEditor !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMemberDateEditor(null)}
+      >
+        <View style={styles.memberDateModalOverlay}>
+          <TouchableOpacity
+            style={styles.memberDateModalBackdrop}
+            activeOpacity={1}
+            onPress={() => {
+              if (!isSavingMembershipDate) {
+                setMemberDateEditor(null);
+              }
+            }}
+          />
+
+          {memberDateEditor ? (
+            <View style={styles.memberDateBubble}>
+              <Text style={styles.memberDateTitle}>Data de membro</Text>
+              <Text style={styles.memberDateHelp}>
+                {memberDateEditor.dateInput
+                  ? `Data atual de ${memberDateEditor.profileName}. Edite se necessário.`
+                  : `Informe a data de membro de ${memberDateEditor.profileName}.`}
+              </Text>
+              <TextInput
+                style={styles.memberDateInput}
+                value={memberDateEditor.dateInput}
+                onChangeText={handleChangeMemberDateInput}
+                placeholder="dd/mm/aa"
+                placeholderTextColor="#64748B"
+                keyboardType="numeric"
+                maxLength={8}
+                returnKeyType="done"
+                autoFocus
+              />
+              {memberDateEditor.error ? (
+                <Text style={styles.memberDateError}>{memberDateEditor.error}</Text>
+              ) : null}
+              <View style={styles.memberDateActions}>
+                <TouchableOpacity
+                  style={[styles.memberDateButton, styles.memberDateCancelButton]}
+                  onPress={() => setMemberDateEditor(null)}
+                  activeOpacity={0.85}
+                  disabled={isSavingMembershipDate}
+                >
+                  <Text style={styles.memberDateCancelText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.memberDateButton, styles.memberDateSaveButton]}
+                  onPress={() => void handleSaveMemberDate()}
+                  activeOpacity={0.85}
+                  disabled={isSavingMembershipDate}
+                >
+                  {isSavingMembershipDate ? (
+                    <ActivityIndicator color="#0F172A" size="small" />
+                  ) : (
+                    <Text style={styles.memberDateSaveText}>Salvar</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : null}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -490,32 +511,25 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: ACCENT,
   },
+  memberDateModalOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(2, 6, 23, 0.58)',
+  },
+  memberDateModalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
   memberDateBubble: {
-    alignSelf: 'flex-end',
-    width: 240,
-    marginTop: -4,
-    marginBottom: 8,
-    marginRight: 4,
+    width: '100%',
+    maxWidth: 320,
     borderWidth: 1,
     borderColor: 'rgba(244, 114, 182, 0.45)',
     borderRadius: 14,
     backgroundColor: 'rgba(15, 23, 42, 0.98)',
-    paddingHorizontal: 12,
-    paddingTop: 12,
-    paddingBottom: 10,
+    padding: 14,
     gap: 8,
-  },
-  memberDateBubbleArrow: {
-    position: 'absolute',
-    top: -7,
-    right: 28,
-    width: 12,
-    height: 12,
-    borderLeftWidth: 1,
-    borderTopWidth: 1,
-    borderColor: 'rgba(244, 114, 182, 0.45)',
-    backgroundColor: 'rgba(15, 23, 42, 0.98)',
-    transform: [{ rotate: '45deg' }],
   },
   memberDateTitle: {
     color: '#FCE7F3',
