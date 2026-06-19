@@ -60,7 +60,10 @@ import {
   loadDashboardLinkedScreenAccess,
   type DashboardScreenAccess,
 } from '@/lib/dashboardScreenAccess';
-import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
+import {
+  DASHBOARD_SCREEN_DENIED_MESSAGES,
+  navigateWithScreenAccess,
+} from '@/lib/dashboardScreenNavigation';
 import { resolveDashboardCardAccessResourceKey } from '@/lib/screenAccessResourceKeys';
 import { recordProfileScreenVisit } from '@/lib/profileScreenVisitTracking';
 import {
@@ -495,6 +498,7 @@ export default function Dashboard() {
   const [isMaintenanceAccessLoading, setIsMaintenanceAccessLoading] = useState(true);
   const [dashboardCardAccess, setDashboardCardAccess] = useState<DashboardCardViewAccess>({});
   const [dashboardScreenAccess, setDashboardScreenAccess] = useState<DashboardScreenAccess>({});
+  const [canAccessMapGeolocation, setCanAccessMapGeolocation] = useState(false);
   const [aclRpcStatus, setAclRpcStatus] = useState<'unknown' | 'available' | 'missing'>('unknown');
   const [modalVisible, setModalVisible] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -745,6 +749,7 @@ export default function Dashboard() {
         setCanMonitorFamilyReception(false);
         setDashboardCardAccess({});
         setDashboardScreenAccess({});
+        setCanAccessMapGeolocation(false);
         setIsMaintenanceAccessLoading(false);
         setIsProfileLoading(false);
         return;
@@ -768,6 +773,7 @@ export default function Dashboard() {
         setCanMonitorFamilyReception(false);
         setDashboardCardAccess({});
         setDashboardScreenAccess({});
+        setCanAccessMapGeolocation(false);
         setIsMaintenanceAccessLoading(false);
         setIsProfileLoading(false);
         signOutAndReturnToLogin();
@@ -792,17 +798,19 @@ export default function Dashboard() {
         setCanViewMaintenance(false);
         setCanMonitorFamilyReception(false);
         setDashboardCardAccess({});
+        setCanAccessMapGeolocation(false);
       }
 
       const aclStatus = await getAccessControlRpcStatus();
       setAclRpcStatus(aclStatus);
 
       if (loadedProfile?.id) {
-        const [allowed, cardAccess, screenAccess, isSuperAdmin, canAccessProfileCadastro] =
+        const [allowed, cardAccess, screenAccess, mapGeolocationAllowed, isSuperAdmin, canAccessProfileCadastro] =
           await Promise.all([
             profileHasAccess(loadedProfile.id, 'screen', ACCESS_SCREEN.maintenance, 'view'),
             loadDashboardCardViewAccess(loadedProfile.id),
             loadDashboardLinkedScreenAccess(loadedProfile.id),
+            profileHasAccess(loadedProfile.id, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
             checkSessionIsSuperAdmin(),
             profileHasAccess(
               loadedProfile.id,
@@ -815,6 +823,7 @@ export default function Dashboard() {
         setCanMonitorFamilyReception(isSuperAdmin || canAccessProfileCadastro);
         setDashboardCardAccess(cardAccess);
         setDashboardScreenAccess(screenAccess);
+        setCanAccessMapGeolocation(mapGeolocationAllowed);
       }
 
       setIsMaintenanceAccessLoading(false);
@@ -891,10 +900,11 @@ export default function Dashboard() {
         const aclStatus = await getAccessControlRpcStatus();
 
         if (sessionProfile.id) {
-          const [allowed, cardAccess, screenAccess] = await Promise.all([
+          const [allowed, cardAccess, screenAccess, mapGeolocationAllowed] = await Promise.all([
             profileHasAccess(sessionProfile.id, 'screen', ACCESS_SCREEN.maintenance, 'view'),
             loadDashboardCardViewAccess(sessionProfile.id),
             loadDashboardLinkedScreenAccess(sessionProfile.id),
+            profileHasAccess(sessionProfile.id, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
           ]);
 
           if (active) {
@@ -912,11 +922,15 @@ export default function Dashboard() {
 
               return nextSnapshot === currentSnapshot ? current : screenAccess;
             });
+            setCanAccessMapGeolocation((current) =>
+              current === mapGeolocationAllowed ? current : mapGeolocationAllowed
+            );
           }
         } else if (active) {
           setCanViewMaintenance(false);
           setDashboardCardAccess({});
           setDashboardScreenAccess({});
+          setCanAccessMapGeolocation(false);
         }
       })();
 
@@ -1693,8 +1707,34 @@ export default function Dashboard() {
     [currentIndex, data]
   );
 
+  const isMapGeolocationEnabled = useMemo(
+    () => canAccessMapGeolocation && Platform.OS === 'web',
+    [canAccessMapGeolocation]
+  );
+
+  const mapGeolocationDisabledMessage = useMemo(() => {
+    if (Platform.OS !== 'web') {
+      return 'O mapa está disponível apenas na versão web (PWA).';
+    }
+
+    return (
+      DASHBOARD_SCREEN_DENIED_MESSAGES[ACCESS_SCREEN.mapGeolocation]
+      ?? 'Você não tem permissão para abrir o mapa de geolocalização.'
+    );
+  }, []);
+
   const handleOpenMemberOnMap = useCallback(
     (entry: MemberListEntry) => {
+      if (!isMapGeolocationEnabled) {
+        Toast.show({
+          type: 'error',
+          text1: 'Mapa indisponível',
+          text2: mapGeolocationDisabledMessage,
+          visibilityTime: 3500,
+        });
+        return;
+      }
+
       if (!entry.cep?.trim()) {
         Toast.show({
           type: 'error',
@@ -1714,10 +1754,20 @@ export default function Dashboard() {
         buildChildScreenParams({ focusProfileId: entry.id })
       );
     },
-    [buildChildScreenParams, router]
+    [buildChildScreenParams, isMapGeolocationEnabled, mapGeolocationDisabledMessage, router]
   );
 
   const handleOpenMembersMap = useCallback(() => {
+    if (!isMapGeolocationEnabled) {
+      Toast.show({
+        type: 'error',
+        text1: 'Mapa indisponível',
+        text2: mapGeolocationDisabledMessage,
+        visibilityTime: 3500,
+      });
+      return;
+    }
+
     handledDashboardCardRef.current = null;
     prefetchProfilesMapMarkers();
     void navigateWithScreenAccess(
@@ -1726,7 +1776,7 @@ export default function Dashboard() {
       ACCESS_SCREEN.mapGeolocation,
       buildChildScreenParams()
     );
-  }, [buildChildScreenParams, router]);
+  }, [buildChildScreenParams, isMapGeolocationEnabled, mapGeolocationDisabledMessage, router]);
 
   const activeDashboardScreenTitle = useMemo(() => {
     const card = data[currentIndex];
@@ -1781,11 +1831,15 @@ export default function Dashboard() {
   }, [currentIndex, data, loadMembersList]);
 
   useEffect(() => {
-    if (data[currentIndex]?.content === 'members_list' && !membersMapPrefetchStartedRef.current) {
+    if (
+      data[currentIndex]?.content === 'members_list'
+      && isMapGeolocationEnabled
+      && !membersMapPrefetchStartedRef.current
+    ) {
       membersMapPrefetchStartedRef.current = true;
       prefetchProfilesMapMarkers();
     }
-  }, [currentIndex, data]);
+  }, [currentIndex, data, isMapGeolocationEnabled]);
 
   useEffect(() => {
     if (data[currentIndex]?.content === 'vigilance_scales' && !vigilanceScalesLoadedRef.current) {
@@ -2582,12 +2636,30 @@ export default function Dashboard() {
                           </TouchableOpacity>
                         )}
                         <TouchableOpacity
-                          style={styles.membersListMapButton}
+                          style={[
+                            styles.membersListMapButton,
+                            !isMapGeolocationEnabled && styles.membersListMapButtonDisabled,
+                          ]}
                           onPress={handleOpenMembersMap}
+                          disabled={!isMapGeolocationEnabled}
                           activeOpacity={0.85}
+                          accessibilityRole="button"
+                          accessibilityLabel="Abrir mapa geral de geolocalização"
+                          accessibilityState={{ disabled: !isMapGeolocationEnabled }}
                         >
-                          <FontAwesome name="map" size={18} color="#FFF" />
-                          <Text style={styles.membersListMapButtonText}>Mapa Geral</Text>
+                          <FontAwesome
+                            name="map"
+                            size={18}
+                            color={isMapGeolocationEnabled ? '#FFF' : '#94A3B8'}
+                          />
+                          <Text
+                            style={[
+                              styles.membersListMapButtonText,
+                              !isMapGeolocationEnabled && styles.membersListMapButtonTextDisabled,
+                            ]}
+                          >
+                            Mapa Geral
+                          </Text>
                         </TouchableOpacity>
                       </View>
 
@@ -2680,7 +2752,8 @@ export default function Dashboard() {
                           showsVerticalScrollIndicator
                         >
                           {filteredMemberListEntries.map((entry) => {
-                            const canOpenMemberOnMap = Boolean(entry.cep?.trim());
+                            const canOpenMemberOnMap =
+                              isMapGeolocationEnabled && Boolean(entry.cep?.trim());
 
                             return (
                             <View key={entry.id} style={styles.membersListRow}>
@@ -4386,10 +4459,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FBBF24',
   },
+  membersListMapButtonDisabled: {
+    opacity: 0.45,
+    backgroundColor: 'rgba(100, 116, 139, 0.2)',
+    borderColor: 'rgba(148, 163, 184, 0.45)',
+  },
   membersListMapButtonText: {
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '800',
+  },
+  membersListMapButtonTextDisabled: {
+    color: '#94A3B8',
   },
   membersListSearchSection: {
     gap: 6,
