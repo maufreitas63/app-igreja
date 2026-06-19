@@ -1,4 +1,5 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
 import { useMaintenanceScales } from '@/hooks/useMaintenanceScales';
 import {
   computeMaintenanceContentHeight,
@@ -6,12 +7,11 @@ import {
 } from '@/lib/maintenanceCardStyles';
 import { confirmDialog } from '@/lib/confirmDialog';
 import {
-  formatScaleServiceDateInputMask,
   formatScaleServiceDateLabel,
   MAINTENANCE_SCALES_SQL_HINT,
   parseScaleServiceDateInput,
 } from '@/lib/maintenanceScales';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import React, { useEffect, useState } from 'react';
 import Toast from 'react-native-toast-message';
@@ -19,10 +19,10 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -59,6 +59,7 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
   const [showNewForm, setShowNewForm] = useState(false);
   const [selectedVolunteerId, setSelectedVolunteerId] = useState('');
   const [serviceDateInput, setServiceDateInput] = useState('');
+  const [serviceDatePickerVisible, setServiceDatePickerVisible] = useState(false);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
@@ -66,6 +67,7 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
     setShowNewForm(false);
     setSelectedVolunteerId('');
     setServiceDateInput('');
+    setServiceDatePickerVisible(false);
   }, [selectedScaleTypeId]);
 
   useEffect(() => {
@@ -352,14 +354,23 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
           )}
 
           <Text style={styles.fieldLabel}>Data do serviço</Text>
-          <TextInput
-            style={styles.dateInput}
-            placeholder="DD/MM/AA"
-            placeholderTextColor="#64748B"
-            value={serviceDateInput}
-            keyboardType="numeric"
-            onChangeText={(text) => setServiceDateInput(formatScaleServiceDateInputMask(text))}
-          />
+          <Pressable
+            onPress={() => setServiceDatePickerVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Selecionar data do serviço"
+          >
+            <View style={[styles.dateInput, styles.dateInputTrigger]}>
+              <Text
+                style={[
+                  styles.dateInputText,
+                  !serviceDateInput.trim() && styles.dateInputPlaceholder,
+                ]}
+              >
+                {serviceDateInput.trim() || 'DD/MM/AAAA'}
+              </Text>
+              <MaterialIcons name="calendar-today" size={18} color="#94A3B8" />
+            </View>
+          </Pressable>
 
           <TouchableOpacity
             style={[styles.saveButton, (saving || !activeVolunteers.length) && styles.saveButtonDisabled]}
@@ -416,6 +427,14 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
           </View>
         )}
       </ScrollView>
+
+      <MonthlyDatePickerModal
+        visible={serviceDatePickerVisible}
+        value={serviceDateInput}
+        title="Data do serviço"
+        onClose={() => setServiceDatePickerVisible(false)}
+        onConfirm={(dateInput) => setServiceDateInput(dateInput)}
+      />
     </View>
   );
 }
@@ -696,10 +715,22 @@ const styles = StyleSheet.create({
     borderColor: '#334155',
     borderRadius: 10,
     backgroundColor: '#0f172a',
-    color: '#F8FAFC',
-    fontSize: 15,
     paddingHorizontal: 12,
     paddingVertical: 10,
+  },
+  dateInputTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  dateInputText: {
+    flex: 1,
+    color: '#F8FAFC',
+    fontSize: 15,
+  },
+  dateInputPlaceholder: {
+    color: '#64748B',
   },
   formLoader: {
     marginVertical: 8,
