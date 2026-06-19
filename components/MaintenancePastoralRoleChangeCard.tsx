@@ -147,9 +147,9 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
       <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       <Text style={styles.helpText}>
-        Lista completa de perfis elegíveis. Use a busca para filtrar por nome, telefone ou código.
-        Toque nos cabeçalhos Visitante, Congregado ou Membro para filtrar pelo papel atual.
-        Perfis classificados como Membro exibem o nome em azul sublinhado — toque nele para ver ou
+        Lista de perfis elegíveis (exceto super admin e equipe pastoral). Use a busca para filtrar
+        por nome, telefone ou código. Toque nos cabeçalhos Visitante, Congregado ou Membro para
+        filtrar pelo papel atual. Membros exibem o nome em azul sublinhado — toque para ver ou
         editar a data de membresia.
       </Text>
 

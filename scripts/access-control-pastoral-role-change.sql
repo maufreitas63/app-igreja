@@ -100,6 +100,9 @@ as $$
   end;
 $$;
 
+-- Oculta/bloqueia apenas papéis administrativos da igreja.
+-- family_acceptor, lider e events_admin são complementares ao member e devem
+-- continuar visíveis para ajuste de visitante / congregado / membro.
 create or replace function public.profile_has_protected_role_for_pastoral_change(p_profile_id uuid)
 returns boolean
 language sql
@@ -112,7 +115,7 @@ as $$
       from public.profile_access_roles par
       join public.access_roles ar on ar.id = par.role_id
      where par.profile_id = p_profile_id
-       and ar.code in ('super_admin', 'pastoral', 'lider', 'events_admin', 'family_acceptor')
+       and ar.code in ('super_admin', 'pastoral')
   );
 $$;
 

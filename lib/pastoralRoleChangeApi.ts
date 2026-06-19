@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 export const PASTORAL_ROLE_CHANGE_SQL_HINT =
-  'Execute no Supabase: scripts/access-control-pastoral-role-change.sql e scripts/access-control-pastoral-membership-date.sql';
+  'Execute no Supabase: scripts/access-control-pastoral-role-change-fix-protected-list.sql (ou access-control-pastoral-role-change.sql completo)';
 
 export const PASTORAL_BASIC_ROLE_OPTIONS = [
   { code: 'visitante', label: 'Visitante' },
