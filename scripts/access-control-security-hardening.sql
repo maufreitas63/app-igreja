@@ -532,6 +532,33 @@ as $$
     or public.session_has_screen_access('dashboard.card.members_list', 'view');
 $$;
 
+create or replace function public.profile_is_members_list_member(p_profile_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    not public.profile_is_visitantes_only(p_profile_id)
+    and not (
+      exists (
+        select 1
+          from public.profile_access_roles par
+          join public.access_roles ar on ar.id = par.role_id
+         where par.profile_id = p_profile_id
+           and ar.code = 'congregado'
+      )
+      and not exists (
+        select 1
+          from public.profile_access_roles par
+          join public.access_roles ar on ar.id = par.role_id
+         where par.profile_id = p_profile_id
+           and ar.code = 'member'
+      )
+    );
+$$;
+
 create or replace function public.list_profiles_members_directory()
 returns table (
   profile_id uuid,
@@ -575,7 +602,7 @@ begin
   from public.profiles p
   where p.full_name is not null
     and trim(p.full_name) <> ''
-    and not public.profile_is_visitantes_only(p.id)
+    and public.profile_is_members_list_member(p.id)
   order by trim(p.full_name) asc;
 end;
 $$;

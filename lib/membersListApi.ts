@@ -19,7 +19,7 @@ export type MembersDirectoryEntry = {
 };
 
 const MEMBERS_DIRECTORY_RPC_HINT =
-  'Execute no Supabase: scripts/members-list-family-sync.sql';
+  'Execute no Supabase: scripts/members-list-family-sync.sql e scripts/members-list-exclude-congregado.sql';
 
 const VISITORS_DIRECTORY_RPC_HINT =
   'Execute no Supabase: scripts/members-list-family-sync.sql (list_profiles_visitors_directory)';

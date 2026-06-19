@@ -299,6 +299,34 @@ as $$
   );
 $$;
 
+-- Membro na lista do dashboard: não visitante e não congregado sem papel member.
+create or replace function public.profile_is_members_list_member(p_profile_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    not public.profile_is_visitantes_only(p_profile_id)
+    and not (
+      exists (
+        select 1
+          from public.profile_access_roles par
+          join public.access_roles ar on ar.id = par.role_id
+         where par.profile_id = p_profile_id
+           and ar.code = 'congregado'
+      )
+      and not exists (
+        select 1
+          from public.profile_access_roles par
+          join public.access_roles ar on ar.id = par.role_id
+         where par.profile_id = p_profile_id
+           and ar.code = 'member'
+      )
+    );
+$$;
+
 -- Lista do card: exibe family_id de members quando houver vínculo por telefone/nome.
 drop function if exists public.list_profiles_members_directory();
 
@@ -345,7 +373,7 @@ begin
   from public.profiles p
   where p.full_name is not null
     and trim(p.full_name) <> ''
-    and not public.profile_is_visitantes_only(p.id)
+    and public.profile_is_members_list_member(p.id)
   order by trim(p.full_name) asc;
 end;
 $$;
@@ -499,7 +527,10 @@ begin
     where c.family_id is not null
       and p.full_name is not null
       and trim(p.full_name) <> ''
-      and public.profile_is_visitantes_only(p.id) = p_visitors_only
+      and (
+        (p_visitors_only and public.profile_is_visitantes_only(p.id))
+        or (not p_visitors_only and public.profile_is_members_list_member(p.id))
+      )
       and (
         public.profile_directory_family_code(p.family_id, p.codigo_membro) = c.family_id
         or exists (
@@ -588,6 +619,11 @@ begin
   where m.full_name is not null
     and trim(m.full_name) <> ''
     and m.family_id is not null
+    and (
+      p_visitors_only
+      or m.profile_id is null
+      or public.profile_is_members_list_member(m.profile_id)
+    )
   order by
     public.family_relationship_display_rank(m.relationship),
     m.full_name asc;
@@ -667,6 +703,7 @@ end;
 $$;
 
 grant execute on function public.session_has_members_directory_access() to anon, authenticated;
+grant execute on function public.profile_is_members_list_member(uuid) to anon, authenticated;
 grant execute on function public.role_has_access(text, text, text, text) to anon, authenticated;
 grant execute on function public.resolve_member_family_id_for_directory_person(text, text) to anon, authenticated;
 grant execute on function public.resolve_directory_canonical_family_id(text, text, text) to anon, authenticated;
