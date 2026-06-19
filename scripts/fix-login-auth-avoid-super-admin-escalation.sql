@@ -1,9 +1,54 @@
--- Login por celular + senha de 4 dígitos (`profiles.access_pin`).
--- Substitui o uso de `verify_profile_access_pin` na tela de entrada do app.
--- Execute no SQL Editor do Supabase (após profiles-access-pin.sql).
+-- Corrige escalonamento indevido para super_admin no login / recuperação de senha.
+-- Causa: find_profile_id_by_phone priorizava super_admin com telefones duplicados;
+-- regenerate_profile_access_pin gravava o PIN no gestor e verificar_login autenticava como gestor.
 --
--- Com sessão assinada (fase 2): execute scripts/profile-sessions.sql antes deste arquivo.
--- Se já existir `verificar_login` com outro tipo de retorno, o DROP abaixo é obrigatório.
+-- Execute no SQL Editor do Supabase (substitui find-profile-prefer-super-admin.sql).
+-- Depois: hard refresh no PWA.
+
+create or replace function public.find_profile_id_by_phone(p_phone text)
+returns uuid
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_digits text;
+  v_local text;
+  v_id uuid;
+begin
+  v_digits := public.normalize_profile_phone(p_phone);
+
+  if v_digits is null then
+    return null;
+  end if;
+
+  if v_digits like '55%' and length(v_digits) >= 12 then
+    v_local := substring(v_digits from 3);
+  else
+    v_local := v_digits;
+  end if;
+
+  select p.id
+    into v_id
+    from public.profiles p
+   where public.normalize_profile_phone(p.phone) = v_digits
+      or public.normalize_profile_phone(p.phone) = v_local
+      or public.normalize_profile_phone(p.phone) = '55' || v_local
+      or p.phone = trim(coalesce(p_phone, ''))
+   order by
+     case
+       when public.is_super_admin_profile(p.id) then 1
+       else 0
+     end,
+     p.updated_at desc nulls last
+   limit 1;
+
+  return v_id;
+end;
+$$;
+
+grant execute on function public.find_profile_id_by_phone(text) to anon, authenticated;
 
 drop function if exists public.verificar_login(text, text);
 
@@ -92,3 +137,5 @@ $$;
 
 grant execute on function public.verificar_login(text, text) to anon;
 grant execute on function public.verificar_login(text, text) to authenticated;
+
+notify pgrst, 'reload schema';

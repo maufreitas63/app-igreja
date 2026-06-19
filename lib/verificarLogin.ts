@@ -1,3 +1,4 @@
+import { phoneDigitsMatch } from '@/lib/resolveProfileByPhone';
 import { supabase } from '@/lib/supabase';
 
 export type VerificarLoginResult =
@@ -47,6 +48,11 @@ export async function verificarLogin(
   }
 
   const profile = row as Record<string, unknown>;
+  const profilePhone = typeof profile.phone === 'string' ? profile.phone : '';
+
+  if (!phoneDigitsMatch(profilePhone, cleanPhone)) {
+    return { ok: false, reason: 'invalid_credentials' };
+  }
 
   return {
     ok: true,

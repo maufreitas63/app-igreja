@@ -33,7 +33,7 @@ const listProfileIdsByPhoneVariants = async (variants: string[]): Promise<string
   return [...new Set(data.map((row) => row.id).filter((id): id is string => Boolean(id)))];
 };
 
-const preferPrivilegedProfileId = async (profileIds: string[]): Promise<string | null> => {
+const preferAuthProfileId = async (profileIds: string[]): Promise<string | null> => {
   if (!profileIds.length) {
     return null;
   }
@@ -42,27 +42,20 @@ const preferPrivilegedProfileId = async (profileIds: string[]): Promise<string |
     return profileIds[0];
   }
 
+  const memberFacingIds: string[] = [];
+
   for (const profileId of profileIds) {
     const { data, error } = await supabase.rpc('is_super_admin_profile', {
       p_profile_id: profileId,
     });
 
-    if (!error && data === true) {
-      return profileId;
+    if (error || data !== true) {
+      memberFacingIds.push(profileId);
     }
   }
 
-  for (const profileId of profileIds) {
-    const { data, error } = await supabase.rpc('profile_has_access', {
-      p_profile_id: profileId,
-      p_resource_type: 'screen',
-      p_resource_key: '/maintenance-dashboard',
-      p_action: 'view',
-    });
-
-    if (!error && data === true) {
-      return profileId;
-    }
+  if (memberFacingIds.length > 0) {
+    return memberFacingIds[0];
   }
 
   return profileIds[0];
@@ -87,7 +80,7 @@ const resolveProfileIdByPhoneRpc = async (phone: string): Promise<string | null>
   return profileId || null;
 };
 
-/** Escolhe o perfil correto quando há duplicatas de telefone (prioriza super_admin). */
+/** Escolhe o perfil de membro quando há duplicatas de telefone (evita super_admin no login). */
 export async function resolveProfileIdByPhone(phone: string): Promise<string | null> {
   const trimmed = phone.trim();
 
@@ -108,5 +101,5 @@ export async function resolveProfileIdByPhone(phone: string): Promise<string | n
     return null;
   }
 
-  return preferPrivilegedProfileId(profileIds);
+  return preferAuthProfileId(profileIds);
 }

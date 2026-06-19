@@ -63,7 +63,18 @@ begin
       or public.normalize_profile_phone(p.phone) = v_local
       or public.normalize_profile_phone(p.phone) = '55' || v_local
       or p.phone = trim(coalesce(p_phone, ''))
-   order by p.updated_at desc nulls last
+   order by
+     case
+       when exists (
+         select 1
+           from public.profile_access_roles par
+           join public.access_roles ar on ar.id = par.role_id
+          where par.profile_id = p.id
+            and ar.code = 'super_admin'
+       ) then 1
+       else 0
+     end,
+     p.updated_at desc nulls last
    limit 1;
 
   return v_id;

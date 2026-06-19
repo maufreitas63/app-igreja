@@ -1,6 +1,7 @@
 -- Restaura super_admin no perfil que o LOGIN realmente usa.
 -- Ajuste o telefone em params e execute no Supabase.
--- Depois: scripts/find-profile-prefer-super-admin.sql (se ainda não rodou).
+-- Não use find-profile-prefer-super-admin.sql (deprecado — risco de escalonamento no login).
+-- Após ajustar papéis, aplique scripts/fix-login-auth-avoid-super-admin-escalation.sql se ainda não rodou.
 
 with params as (
   select '19996166161'::text as phone_digits
