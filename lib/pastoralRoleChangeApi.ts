@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 export const PASTORAL_ROLE_CHANGE_SQL_HINT =
-  'Execute no Supabase: scripts/access-control-pastoral-role-change-fix-protected-list.sql (ou access-control-pastoral-role-change.sql completo)';
+  'Execute no Supabase: scripts/access-control-pastoral-role-change-fix-protected-list.sql';
 
 export const PASTORAL_BASIC_ROLE_OPTIONS = [
   { code: 'visitante', label: 'Visitante' },
@@ -40,7 +40,7 @@ const parseProfileRows = (data: unknown): PastoralRoleChangeProfile[] => {
   return data
     .map((row) => {
       const record = row as Record<string, unknown>;
-      const id = String(record.id ?? '').trim();
+      const id = String(record.id ?? record.profile_id ?? record.profileId ?? '').trim();
       const fullName = String(record.full_name ?? record.fullName ?? '').trim();
 
       if (!id || !fullName) {

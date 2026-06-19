@@ -68,9 +68,20 @@ begin
     return;
   end if;
 
-  if not public.profile_has_role_code(p_actor_profile_id, 'pastoral') then
-    raise exception 'Apenas a Equipe Pastoral pode alterar papéis básicos por esta tela.';
+  if public.profile_has_role_code(p_actor_profile_id, 'pastoral') then
+    return;
   end if;
+
+  if public.profile_has_access(
+    p_actor_profile_id,
+    'screen',
+    'maintenance.card.mudanca_papeis',
+    'view'
+  ) then
+    return;
+  end if;
+
+  raise exception 'Apenas a Equipe Pastoral pode alterar papéis básicos por esta tela.';
 end;
 $$;
 
@@ -157,8 +168,7 @@ begin
     p.membership_date,
     public.resolve_basic_role_code_for_profile(p.id) as current_role_code
   from public.profiles p
-  where not public.profile_has_protected_role_for_pastoral_change(p.id)
-    and coalesce(
+  where coalesce(
       nullif(trim(p.full_name), ''),
       nullif(trim(p.phone), ''),
       nullif(trim(p.codigo_membro), '')
@@ -211,8 +221,7 @@ begin
     p.membership_date,
     public.resolve_basic_role_code_for_profile(p.id) as current_role_code
   from public.profiles p
-  where not public.profile_has_protected_role_for_pastoral_change(p.id)
-    and (
+  where (
       coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), nullif(trim(p.codigo_membro), '')) is not null
     )
     and (

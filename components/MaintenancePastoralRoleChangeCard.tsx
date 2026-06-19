@@ -56,6 +56,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
     error,
     updateProfileRole,
     updateMembershipDate,
+    reloadProfiles,
   } = useMaintenancePastoralRoleChange(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
@@ -178,7 +179,27 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
       ) : null}
 
       {!loading && allProfiles.length === 0 ? (
-        <Text style={styles.hintText}>Nenhum perfil elegível encontrado.</Text>
+        <Text style={styles.hintText}>
+          Nenhum perfil elegível encontrado. Se o card deveria listar membros, execute no Supabase o
+          script access-control-pastoral-role-change-fix-protected-list.sql e toque em Recarregar.
+        </Text>
+      ) : null}
+
+      {!loading && allProfiles.length > 0 && profiles.length === 0 ? (
+        <Text style={styles.hintText}>
+          Nenhum perfil corresponde aos filtros. Limpe a busca ou toque de novo no cabeçalho do
+          papel para remover o filtro.
+        </Text>
+      ) : null}
+
+      {!loading ? (
+        <TouchableOpacity
+          style={styles.reloadButton}
+          onPress={() => void reloadProfiles()}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.reloadButtonText}>Recarregar lista</Text>
+        </TouchableOpacity>
       ) : null}
 
       {!loading && allProfiles.length > 0 ? (
@@ -358,6 +379,20 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 12,
     marginBottom: 8,
+  },
+  reloadButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(244, 114, 182, 0.45)',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  reloadButtonText: {
+    color: ACCENT,
+    fontSize: 12,
+    fontWeight: '800',
   },
   searchInput: {
     borderWidth: 1,
