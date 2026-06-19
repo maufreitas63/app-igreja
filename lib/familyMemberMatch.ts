@@ -99,8 +99,8 @@ export async function findMembersMatchingPhone(
   );
 }
 
-/** Membro aceito já cadastrado na família com mesmo telefone ou nome. */
-export async function findAcceptedMemberDuplicateInFamily(
+/** Integrante já cadastrado na família com mesmo telefone ou nome. */
+export async function findMemberDuplicateInFamily(
   familyId: string,
   input: { full_name: string; phone: string | null },
   excludeMemberId?: string | null
@@ -115,8 +115,7 @@ export async function findAcceptedMemberDuplicateInFamily(
   const { data, error } = await supabase
     .from('members')
     .select('id, full_name, phone, birth_date, family_id, accepted')
-    .ilike('family_id', targetFamilyId)
-    .eq('accepted', MEMBER_ACCEPTED_VALUE);
+    .ilike('family_id', targetFamilyId);
 
   if (error) {
     throw error;
@@ -134,4 +133,19 @@ export async function findAcceptedMemberDuplicateInFamily(
   });
 
   return duplicate ?? null;
+}
+
+/** Membro aceito já cadastrado na família com mesmo telefone ou nome. */
+export async function findAcceptedMemberDuplicateInFamily(
+  familyId: string,
+  input: { full_name: string; phone: string | null },
+  excludeMemberId?: string | null
+): Promise<FamilyMemberMatchRow | null> {
+  const duplicate = await findMemberDuplicateInFamily(familyId, input, excludeMemberId);
+
+  if (!duplicate || duplicate.accepted !== MEMBER_ACCEPTED_VALUE) {
+    return null;
+  }
+
+  return duplicate;
 }

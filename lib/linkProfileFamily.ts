@@ -1,6 +1,6 @@
 import { buildFamilyId, DEFAULT_FAMILY_ID, getFamilyIdPrefix } from '@/lib/family';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
-import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
+import { upsertFamilyMember } from '@/lib/upsertFamilyMember';
 import { supabase } from '@/lib/supabase';
 
 type ProfileForFamilyLink = {
@@ -103,64 +103,14 @@ async function ensureRepresentativeMember(profile: ProfileForFamilyLink, familyI
     return;
   }
 
-  const phoneAttempt = profile.phone?.trim() || null;
-  const phoneVariants = phoneAttempt ? buildPhoneDbQueryVariants(phoneAttempt) : [];
-
-  let existing: { id: string } | null = null;
-
-  if (phoneVariants.length) {
-    const { data: byPhone } = await supabase
-      .from('members')
-      .select('id')
-      .eq('family_id', familyId)
-      .in('phone', phoneVariants)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    existing = byPhone;
-  }
-
-  if (!existing?.id) {
-    const { data: byName } = await supabase
-      .from('members')
-      .select('id')
-      .eq('family_id', familyId)
-      .eq('full_name', fullName)
-      .maybeSingle();
-
-    existing = byName;
-  }
-
-  if (existing?.id) {
-    const { error: updateError } = await supabase
-      .from('members')
-      .update({
-        family_id: familyId,
-        full_name: fullName,
-        phone: profile.phone?.trim() || null,
-        birth_date: profile.birth_date ?? null,
-      })
-      .eq('id', existing.id);
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    return;
-  }
-
-  const { error: insertError } = await supabase.from('members').insert({
+  await upsertFamilyMember({
     full_name: fullName,
     phone: profile.phone?.trim() || null,
     birth_date: profile.birth_date ?? null,
     relationship: 'Representante Legal',
     family_id: familyId,
+    accepted: MEMBER_ACCEPTED_VALUE,
   });
-
-  if (insertError) {
-    throw insertError;
-  }
 }
 
 export async function searchFamilyByInput(rawFamilyInput: string) {

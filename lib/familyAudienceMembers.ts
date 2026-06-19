@@ -3,6 +3,7 @@ import { normalizeFamilyCode } from '@/lib/family';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { resolveActiveSessionMember } from '@/lib/resolveActiveSessionMember';
+import { upsertFamilyMember } from '@/lib/upsertFamilyMember';
 import { supabase } from '@/lib/supabase';
 
 export type SessionProfileAudience = {
@@ -162,21 +163,15 @@ export async function ensureSessionFamilyMemberRecord(
     return false;
   }
 
-  const { error: insertError } = await supabase.from('members').insert([
-    {
-      full_name: displayName,
-      phone: sessionProfile.phone?.trim() || null,
-      birth_date: sessionProfile.birth_date ?? null,
-      relationship: 'Outros',
-      family_id: normalizedFamilyId,
-      accepted: MEMBER_ACCEPTED_VALUE,
-    },
-  ]);
+  const { id: memberId } = await upsertFamilyMember({
+    full_name: displayName,
+    phone: sessionProfile.phone?.trim() || null,
+    birth_date: sessionProfile.birth_date ?? null,
+    relationship: 'Outros',
+    family_id: normalizedFamilyId,
+    accepted: MEMBER_ACCEPTED_VALUE,
+  });
 
-  if (insertError) {
-    throw insertError;
-  }
-
-  return true;
+  return Boolean(memberId);
 }
 

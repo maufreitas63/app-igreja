@@ -20,6 +20,7 @@ import {
   type ProfileMemberLookup,
 } from '@/lib/lookupProfileByPhoneForMember';
 import { findAcceptedMemberDuplicateInFamily } from '@/lib/familyMemberMatch';
+import { upsertFamilyMember } from '@/lib/upsertFamilyMember';
 import { MemberPhotoPicker } from '@/components/MemberPhotoPicker';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { attachSelfieToManagedMemberProfile } from '@/lib/managedMemberSelfie';
@@ -352,19 +353,18 @@ async function loadManageMembersData(phoneParam: string | null): Promise<ManageM
     }
 
     if (!existsInDatabase) {
-      const { error } = await supabase.from('members').insert([
-        {
+      try {
+        await upsertFamilyMember({
           full_name: profileName,
           phone: profilePhone,
           birth_date: profileBirth,
           relationship: 'Representante Legal',
           family_id: currentFamilyId,
           accepted: MEMBER_ACCEPTED_VALUE,
-        },
-      ]);
-
-      if (!error) {
+        });
         membersData = await fetchFamilyMembers();
+      } catch {
+        // Mantém a tela utilizável mesmo se o upsert falhar (ex.: RPC ainda não aplicada).
       }
     }
   }
@@ -1248,20 +1248,11 @@ export default function ManageMembers() {
         return;
       }
 
-      const { data: insertedMember, error } = await supabase
-        .from('members')
-        .insert([memberPayload])
-        .select('id')
-        .maybeSingle();
-      if (error) throw error;
-
-      if (!insertedMember?.id) {
-        throw new Error('Integrante criado, mas o identificador não foi retornado.');
-      }
+      const upsertedMember = await upsertFamilyMember(memberPayload);
 
       const addressInherited = await copyAcceptorAddressToMember(
         {
-          id: String(insertedMember.id),
+          id: upsertedMember.id,
           full_name: normalizedName,
           phone: normalizedPhone,
           birth_date: birthIso,
