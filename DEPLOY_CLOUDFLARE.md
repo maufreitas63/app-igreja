@@ -87,6 +87,8 @@ git push origin main
 
 Pronto. O Cloudflare detecta o push e inicia um novo deploy em alguns segundos.
 
+> **Produção vs Preview:** só pushes na branch **`main`** geram deploy de **Production** (URL principal / domínio customizado). Pushes em outras branches (`melhorias-cursor`, PRs, etc.) geram deploys **Preview** — visíveis no painel, mas **não** substituem o site em produção até merge em `main` ou **Promote to production** manual.
+
 ### 4. Acompanhar o build
 
 1. Cloudflare Dashboard → seu projeto Pages → aba **Deployments**
@@ -97,7 +99,10 @@ Pronto. O Cloudflare detecta o push e inicia um novo deploy em alguns segundos.
 
 Após o deploy aparecer **Success** (não basta o `git push` — aguarde o build):
 
-1. Abra `https://{seu-dominio}/build-info.json` e confira se `commit` corresponde ao push no GitHub
+1. Abra `https://{seu-dominio}/build-info.json` e confira:
+   - `"environment": "production"` e `"branch": "main"` — deploy de produção ativo
+   - Se aparecer `"environment": "preview"`, você está em URL de preview (ou build de branch secundária), **não** em produção
+   - `"commit"` deve corresponder ao push em `main` no GitHub
 2. Abra a URL em aba anônima **ou** use **Ctrl+Shift+R** (hard refresh)
 3. Confira no DevTools → **Network** → documento HTML: cabeçalho `cache-control: public, max-age=0, must-revalidate`
 4. Teste login, dashboard e a tela que você alterou
@@ -161,6 +166,8 @@ Requisito de Node: **≥ 20.19.4** (ver `package.json` e `.nvmrc`).
 | Node 18 / erro Metro | `NODE_VERSION=20` nas variáveis do Cloudflare |
 | PWA antigo após deploy | Aguardar deploy **Success**; hard refresh (Ctrl+Shift+R); PWA: fechar e reabrir. Headers em `public/_headers` evitam cache longo do HTML |
 | Alteração no ar mas tela antiga | Build ainda em andamento na aba **Deployments**, ou cache local — aba anônima para testar |
+| Deploy aparece como **Preview** no Cloudflare | Push foi em branch ≠ `main` — faça merge em `main` + `git push origin main`, ou no painel: **Deployments** → ⋯ no deploy → **Promote to production** |
+| `/build-info.json` mostra `"preview"` | Abra a URL de produção (domínio principal), não o link `*.pages.dev` do commit/branch |
 | Ícones aparecem como `?` ou quadrado | Fontes em `assets/fonts/` + `public/_headers`; confira no DevTools → Network se os `.ttf` retornam 200 (não 404) |
 | Push rejeitado | `git pull origin main` antes de novo push |
 | Deploy não dispara | Branch do push deve ser `main` (branch de produção no Pages) |
@@ -173,10 +180,39 @@ Logs completos do build: Cloudflare → **Deployments** → clique no deploy →
 
 - [ ] Alterações testadas localmente (`npm run web` ou `npm run build:web`)
 - [ ] Commit criado com mensagem clara
-- [ ] `git push origin main` concluído
-- [ ] Deploy **Success** no Cloudflare
-- [ ] `/build-info.json` com commit do push atual
+- [ ] `git push origin main` concluído (**não** apenas branch de feature)
+- [ ] Deploy **Success** no Cloudflare com badge **Production** (não Preview)
+- [ ] `/build-info.json` com `"environment": "production"`, `"branch": "main"` e commit do push atual
 - [ ] PWA validado no navegador com hard refresh
+
+---
+
+## Produção vs Preview (Cloudflare Pages)
+
+| Tipo | Quando ocorre | URL típica | Vai para o público? |
+|------|----------------|------------|---------------------|
+| **Production** | Push em `main` (branch de produção) | Domínio principal (`app-igreja.pages.dev` ou customizado) | **Sim** |
+| **Preview** | Push em outra branch, PR ou deploy manual de branch | `https://{hash}.{projeto}.pages.dev` ou link do deploy | **Não** (só quem tem o link) |
+
+### Publicar alterações em produção imediatamente
+
+1. Garanta que o código está em **`main`**: `git checkout main` → `git merge melhorias-cursor` (se necessário)
+2. `git push origin main`
+3. No Cloudflare → **Deployments** → aguarde o deploy com etiqueta **Production** (verde)
+4. Confira `https://{seu-dominio}/build-info.json` → `"environment": "production"`
+
+### Se o deploy certo está só em Preview
+
+No painel Cloudflare → **Deployments** → localize o deploy desejado → menu **⋯** → **Promote to production**.
+
+Ou faça merge na `main` e push — o próximo build de `main` substitui produção automaticamente.
+
+### Configuração recomendada (uma vez)
+
+**Settings → Builds & deployments:**
+
+- **Production branch:** `main`
+- Preview deployments: opcional para branches de feature; produção **sempre** segue `main`
 
 ---
 
