@@ -1,19 +1,18 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { usePalette } from '@/context/PaletteContext';
-import { DASHBOARD_CARD_THEMES } from '@/lib/dashboardCardThemes';
+import { buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
 import { fetchAllPalettes } from '@/lib/paletasApi';
 import type { Paleta } from '@/lib/paletasTypes';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
-
-const THEME = DASHBOARD_CARD_THEMES.grouped_manage;
 
 function PaletteSwatch({ color }: { color: string }) {
   return <View style={[styles.swatch, { backgroundColor: color }]} />;
 }
 
 export function GroupedManagePaletteFooter() {
-  const { activePalette, activatePalette, isLoading: isActivePaletteLoading } = usePalette();
+  const { activePalette, colors, activatePalette, isLoading: isActivePaletteLoading } = usePalette();
+  const theme = useMemo(() => buildPaletteSurfaceTheme(colors), [colors]);
   const [palettes, setPalettes] = useState<Paleta[]>([]);
   const [isCatalogLoading, setIsCatalogLoading] = useState(true);
   const [isActivating, setIsActivating] = useState(false);
@@ -79,14 +78,14 @@ export function GroupedManagePaletteFooter() {
   );
 
   return (
-    <View style={styles.footer}>
+    <View style={[styles.footer, { borderTopColor: theme.accentMuted }]}>
       <View style={styles.headerRow}>
-        <Text style={styles.label}>Paleta de cores</Text>
-        {isBusy ? <ActivityIndicator color={THEME.accentMuted} size="small" /> : null}
+        <Text style={[styles.label, { color: theme.accentMuted }]}>Paleta de cores</Text>
+        {isBusy ? <ActivityIndicator color={theme.accentMuted} size="small" /> : null}
       </View>
 
       {isCatalogLoading && !palettes.length ? (
-        <ActivityIndicator color={THEME.accentMuted} style={styles.catalogLoader} />
+        <ActivityIndicator color={theme.accentMuted} style={styles.catalogLoader} />
       ) : (
         <>
           <DropdownSelect
@@ -96,6 +95,7 @@ export function GroupedManagePaletteFooter() {
             modalTitle="Selecionar paleta de cores"
             placeholder="Selecionar paleta"
             disabled={isBusy || !options.length}
+            size="comfortable"
             style={styles.dropdown}
           />
 
@@ -117,7 +117,6 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(96, 165, 250, 0.35)',
     gap: 10,
   },
   headerRow: {
@@ -127,7 +126,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   label: {
-    color: THEME.accentMuted,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',

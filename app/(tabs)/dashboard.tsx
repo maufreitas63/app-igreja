@@ -5,6 +5,7 @@ import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { GroupedManagePaletteFooter } from '@/components/GroupedManagePaletteFooter';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
+import { usePalette } from '@/context/PaletteContext';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
@@ -82,6 +83,7 @@ import {
   resolveDashboardCardIndex,
 } from '@/lib/dashboardPanelLayout';
 import { DASHBOARD_CARD_THEMES } from '@/lib/dashboardCardThemes';
+import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
 import { withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -258,9 +260,6 @@ const formatDisplayName = (fullName: string) => {
 
   return `${parts[0]} ${parts[parts.length - 1]}`;
 };
-
-/** Degradê azul ardósia (contrasta com manutenção âmbar/pedra). */
-const MAIN_SCREEN_GRADIENT = ['#1e3a5f', '#0f172a', '#020617'] as const;
 
 const normalizeParameterValue = (value: string | null | undefined) =>
   (value ?? '')
@@ -461,6 +460,20 @@ const getCurrentLocalIsoDate = () => {
 };
 
 export default function Dashboard() {
+  const { colors: paletteColors } = usePalette();
+  const mainScreenGradient = useMemo(
+    () => buildDashboardScreenGradient(paletteColors),
+    [paletteColors]
+  );
+  const groupedManagePaletteStyle = useMemo(() => {
+    const theme = buildPaletteSurfaceTheme(paletteColors);
+
+    return {
+      backgroundColor: theme.backgroundColor,
+      borderColor: theme.borderColor,
+      shadowColor: theme.shadowColor,
+    };
+  }, [paletteColors]);
   const {
     kidsRoomLabel,
     teensRoomLabel,
@@ -2254,7 +2267,7 @@ export default function Dashboard() {
   }, [pageWidth]);
 
   return (
-    <LinearGradient colors={MAIN_SCREEN_GRADIENT} style={styles.container}>
+    <LinearGradient colors={mainScreenGradient} style={styles.container}>
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <StatusBar barStyle="light-content" />
         <View style={styles.header}>
@@ -2542,6 +2555,7 @@ export default function Dashboard() {
                     style={[
                       styles.card,
                       styles.cardGroupedManage,
+                      groupedManagePaletteStyle,
                       styles.dashboardPanelCardTopLayout,
                       dashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
@@ -4227,9 +4241,6 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     justifyContent: 'flex-start',
     gap: 0,
-    backgroundColor: DASHBOARD_CARD_THEMES.grouped_manage.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.grouped_manage.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.grouped_manage.shadowColor,
     shadowOpacity: 0.3,
   },
   groupedManageBody: {

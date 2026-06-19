@@ -24,6 +24,7 @@ import { getAppParameterValue } from '@/lib/appParameters';
 import { resolveFamilyIdForPhone } from '@/lib/family';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
 import { IndexBibleVerseButton } from '@/components/IndexBibleVerseButton';
+import { usePalette } from '@/context/PaletteContext';
 import {
   buildDashboardPanelCardSizeStyle,
   computeDashboardPanelInnerPadding,
@@ -38,6 +39,7 @@ import {
 } from '@/lib/indexShortcutHints';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
 import { isLgpdAtivoEnabled, isProfileLgpdPending } from '@/lib/appParameters';
+import { buildIndexScreenGradient } from '@/lib/paletteTheme';
 import { useDashboardSelectedEvent } from '@/hooks/useDashboardSelectedEvent';
 import { useFamilyPreCheckin } from '@/hooks/useFamilyPreCheckin';
 import { FontAwesome } from '@expo/vector-icons';
@@ -116,6 +118,11 @@ const formatDisplayName = (fullName: string) => {
 };
 
 export default function DashboardIndexScreen() {
+  const { colors: paletteColors } = usePalette();
+  const indexGradient = useMemo(
+    () => buildIndexScreenGradient(paletteColors),
+    [paletteColors]
+  );
   const exitSessionUi = getExitSessionUi();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const router = useRouter();
@@ -474,7 +481,7 @@ export default function DashboardIndexScreen() {
   };
 
   return (
-    <LinearGradient colors={['#1e1b4b', '#0f172a']} style={styles.container}>
+    <LinearGradient colors={indexGradient} style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
         <View style={styles.header}>
           <View style={[styles.welcomeBox, isLgpdPending && styles.welcomeBoxLgpdPending]}>

@@ -1,5 +1,5 @@
 import { DEFAULT_PALETA_PADRAO } from '@/lib/defaultPalettes';
-import { fetchActivePalette, setActivePalette } from '@/lib/paletasApi';
+import { fetchActivePalette, fetchAllPalettes, setActivePalette } from '@/lib/paletasApi';
 import { mapPaletaToColors, type Paleta, type PaletaColors } from '@/lib/paletasTypes';
 import React, {
   createContext,
@@ -57,12 +57,29 @@ export function PaletteProvider({ children }: { children: React.ReactNode }) {
     async (options: { paletaId?: string; nome?: string }) => {
       setError(null);
 
-      const updated = options.paletaId
-        ? await setActivePalette({ paletaId: options.paletaId })
-        : await setActivePalette({ nome: options.nome ?? '' });
+      try {
+        const updated = options.paletaId
+          ? await setActivePalette({ paletaId: options.paletaId })
+          : await setActivePalette({ nome: options.nome ?? '' });
 
-      setActivePaletteState(updated);
-      return updated;
+        setActivePaletteState(updated);
+        return updated;
+      } catch (activationError) {
+        const catalog = await fetchAllPalettes();
+        const fallback = options.paletaId
+          ? catalog.find((palette) => palette.id === options.paletaId)
+          : catalog.find(
+              (palette) =>
+                palette.nome.trim().toLowerCase() === (options.nome ?? '').trim().toLowerCase()
+            );
+
+        if (fallback) {
+          setActivePaletteState({ ...fallback, is_active: true });
+          return fallback;
+        }
+
+        throw activationError;
+      }
     },
     []
   );

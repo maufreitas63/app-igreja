@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
   type StyleProp,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
 
@@ -27,6 +28,8 @@ type DropdownSelectProps = {
   searchPlaceholder?: string;
   searchable?: boolean;
   style?: StyleProp<ViewStyle>;
+  triggerTextStyle?: StyleProp<TextStyle>;
+  size?: 'default' | 'comfortable';
   disabled?: boolean;
 };
 
@@ -46,8 +49,11 @@ export function DropdownSelect({
   searchPlaceholder,
   searchable = false,
   style,
+  triggerTextStyle,
+  size = 'default',
   disabled = false,
 }: DropdownSelectProps) {
+  const isComfortable = size === 'comfortable';
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const blurCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -192,7 +198,12 @@ export function DropdownSelect({
   return (
     <>
       <TouchableOpacity
-        style={[styles.trigger, disabled && styles.triggerDisabled, style]}
+        style={[
+          styles.trigger,
+          isComfortable && styles.triggerComfortable,
+          disabled && styles.triggerDisabled,
+          style,
+        ]}
         onPress={() => setOpen(true)}
         activeOpacity={0.85}
         disabled={disabled}
@@ -200,7 +211,14 @@ export function DropdownSelect({
         accessibilityLabel={modalTitle}
         accessibilityState={{ expanded: open, disabled }}
       >
-        <Text style={styles.triggerText} numberOfLines={1}>
+        <Text
+          style={[
+            styles.triggerText,
+            isComfortable && styles.triggerTextComfortable,
+            triggerTextStyle,
+          ]}
+          numberOfLines={1}
+        >
           {selectedLabel || placeholder}
         </Text>
         <FontAwesome name="chevron-down" size={12} color="#94A3B8" />
@@ -299,7 +317,7 @@ const styles = StyleSheet.create({
   trigger: {
     flex: 1,
     minWidth: 0,
-    height: 44,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -309,6 +327,11 @@ const styles = StyleSheet.create({
     borderColor: '#334155',
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  triggerComfortable: {
+    minHeight: 52,
+    paddingVertical: 14,
   },
   triggerDisabled: {
     opacity: 0.55,
@@ -318,6 +341,11 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     fontSize: 14,
     fontWeight: '600',
+    lineHeight: 20,
+  },
+  triggerTextComfortable: {
+    fontSize: 16,
+    lineHeight: 22,
   },
   backdrop: {
     flex: 1,
