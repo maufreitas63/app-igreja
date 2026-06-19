@@ -3,6 +3,7 @@ import { CheckinModal } from '@/components/CheckinModal';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
+import { GroupedManagePaletteFooter } from '@/components/GroupedManagePaletteFooter';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
@@ -2597,6 +2598,7 @@ export default function Dashboard() {
                         </View>
                       </TouchableOpacity>
                     </View>
+                    <GroupedManagePaletteFooter />
                   </View>
                 ) : item.content === 'members_list' ? (
                   <View
@@ -4232,9 +4234,11 @@ const styles = StyleSheet.create({
   },
   groupedManageBody: {
     marginTop: 28,
+    flex: 1,
     gap: 10,
     alignItems: 'stretch',
     width: '100%',
+    justifyContent: 'center',
   },
   groupedManageButton: {
     width: '100%',
