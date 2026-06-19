@@ -18,6 +18,7 @@ export type PastoralRoleChangeProfile = {
   fullName: string;
   phone: string | null;
   memberCode: string | null;
+  membershipDate: string | null;
   currentRoleCode: PastoralBasicRoleCode;
 };
 
@@ -54,6 +55,11 @@ const parseProfileRows = (data: unknown): PastoralRoleChangeProfile[] => {
           ? String(record.codigo_membro).trim() || null
           : record.memberCode
             ? String(record.memberCode).trim() || null
+            : null,
+        membershipDate: record.membership_date
+          ? String(record.membership_date).trim() || null
+          : record.membershipDate
+            ? String(record.membershipDate).trim() || null
             : null,
         currentRoleCode: parseBasicRoleCode(record.current_role_code ?? record.currentRoleCode),
       } satisfies PastoralRoleChangeProfile;
@@ -137,7 +143,8 @@ export const profileMatchesPastoralRoleChangeRoleFilter = (
 
 export async function setPastoralBasicRoleForProfile(
   targetProfileId: string,
-  roleCode: PastoralBasicRoleCode
+  roleCode: PastoralBasicRoleCode,
+  membershipDateIso?: string | null
 ) {
   const actorProfileId = await resolveActorProfileId();
 
@@ -149,6 +156,7 @@ export async function setPastoralBasicRoleForProfile(
     p_actor_profile_id: actorProfileId,
     p_target_profile_id: targetProfileId,
     p_role_code: roleCode,
+    p_membership_date: membershipDateIso ?? null,
   });
 
   if (error) {
