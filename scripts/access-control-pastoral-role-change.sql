@@ -131,6 +131,7 @@ returns table (
   full_name text,
   phone text,
   codigo_membro text,
+  membership_date date,
   current_role_code text
 )
 language plpgsql
@@ -150,6 +151,7 @@ begin
     coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as full_name,
     coalesce(p.phone, '') as phone,
     coalesce(p.codigo_membro, '') as codigo_membro,
+    p.membership_date,
     public.resolve_basic_role_code_for_profile(p.id) as current_role_code
   from public.profiles p
   where not public.profile_has_protected_role_for_pastoral_change(p.id)
@@ -175,6 +177,7 @@ returns table (
   full_name text,
   phone text,
   codigo_membro text,
+  membership_date date,
   current_role_code text
 )
 language plpgsql
@@ -202,6 +205,7 @@ begin
     coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as full_name,
     coalesce(p.phone, '') as phone,
     coalesce(p.codigo_membro, '') as codigo_membro,
+    p.membership_date,
     public.resolve_basic_role_code_for_profile(p.id) as current_role_code
   from public.profiles p
   where not public.profile_has_protected_role_for_pastoral_change(p.id)
@@ -344,9 +348,73 @@ begin
 end;
 $$;
 
+-- ---------------------------------------------------------------------------
+-- Data de filiação (membership_date) para perfis Membro
+-- ---------------------------------------------------------------------------
+
+drop function if exists public.atualizar_membership_date_perfil_pastoral(uuid, uuid, date);
+
+create or replace function public.atualizar_membership_date_perfil_pastoral(
+  p_actor_profile_id uuid,
+  p_target_profile_id uuid,
+  p_membership_date date
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform public.assert_pastoral_role_change_actor(p_actor_profile_id);
+
+  if p_target_profile_id is null then
+    return jsonb_build_object('success', false, 'message', 'Perfil não informado.');
+  end if;
+
+  if not exists (select 1 from public.profiles p where p.id = p_target_profile_id) then
+    return jsonb_build_object('success', false, 'message', 'Perfil não encontrado.');
+  end if;
+
+  if public.profile_has_protected_role_for_pastoral_change(p_target_profile_id) then
+    return jsonb_build_object(
+      'success',
+      false,
+      'message',
+      'Este perfil possui papel protegido e não pode ser alterado por esta tela.'
+    );
+  end if;
+
+  if public.resolve_basic_role_code_for_profile(p_target_profile_id) <> 'member' then
+    return jsonb_build_object(
+      'success',
+      false,
+      'message',
+      'A data de filiação só pode ser editada para perfis classificados como Membro.'
+    );
+  end if;
+
+  update public.profiles
+     set membership_date = p_membership_date,
+         updated_at = now()
+   where id = p_target_profile_id;
+
+  return jsonb_build_object(
+    'success',
+    true,
+    'message',
+    case
+      when p_membership_date is null then 'Data de filiação removida.'
+      else 'Data de filiação atualizada.'
+    end,
+    'membership_date', p_membership_date
+  );
+end;
+$$;
+
 grant execute on function public.profile_has_role_code(uuid, text) to anon, authenticated;
 grant execute on function public.listar_perfis_mudanca_papel_pastoral(uuid, integer) to anon, authenticated;
 grant execute on function public.buscar_perfis_mudanca_papel_pastoral(uuid, text, integer) to anon, authenticated;
 grant execute on function public.definir_papel_basico_perfil_pastoral(uuid, uuid, text) to anon, authenticated;
+grant execute on function public.atualizar_membership_date_perfil_pastoral(uuid, uuid, date) to anon, authenticated;
 
 notify pgrst, 'reload schema';

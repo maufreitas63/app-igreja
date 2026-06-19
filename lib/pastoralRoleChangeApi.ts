@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 export const PASTORAL_ROLE_CHANGE_SQL_HINT =
-  'Execute no Supabase: scripts/access-control-pastoral-role-change.sql';
+  'Execute no Supabase: scripts/access-control-pastoral-role-change.sql e scripts/access-control-pastoral-membership-date.sql';
 
 export const PASTORAL_BASIC_ROLE_OPTIONS = [
   { code: 'visitante', label: 'Visitante' },
@@ -18,6 +18,7 @@ export type PastoralRoleChangeProfile = {
   fullName: string;
   phone: string | null;
   memberCode: string | null;
+  membershipDate: string | null;
   currentRoleCode: PastoralBasicRoleCode;
 };
 
@@ -54,6 +55,11 @@ const parseProfileRows = (data: unknown): PastoralRoleChangeProfile[] => {
           ? String(record.codigo_membro).trim() || null
           : record.memberCode
             ? String(record.memberCode).trim() || null
+            : null,
+        membershipDate: record.membership_date
+          ? String(record.membership_date).trim() || null
+          : record.membershipDate
+            ? String(record.membershipDate).trim() || null
             : null,
         currentRoleCode: parseBasicRoleCode(record.current_role_code ?? record.currentRoleCode),
       } satisfies PastoralRoleChangeProfile;
@@ -164,5 +170,45 @@ export async function setPastoralBasicRoleForProfile(
   return {
     success: record.success === true,
     message: String(record.message ?? (record.success === true ? 'Papel atualizado.' : 'Não foi possível alterar o papel.')),
+  } as const;
+}
+
+export async function updateProfileMembershipDate(
+  targetProfileId: string,
+  membershipDateIso: string | null
+) {
+  const actorProfileId = await resolveActorProfileId();
+
+  if (!actorProfileId) {
+    return { success: false as const, message: 'Sessão inválida. Saia e entre novamente.' };
+  }
+
+  const { data, error } = await supabase.rpc('atualizar_membership_date_perfil_pastoral', {
+    p_actor_profile_id: actorProfileId,
+    p_target_profile_id: targetProfileId,
+    p_membership_date: membershipDateIso,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'atualizar_membership_date_perfil_pastoral')) {
+      throw new Error(PASTORAL_ROLE_CHANGE_SQL_HINT);
+    }
+
+    return {
+      success: false as const,
+      message: error.message || 'Não foi possível salvar a data de filiação.',
+    };
+  }
+
+  const record = (data ?? {}) as Record<string, unknown>;
+  const savedDate = record.membership_date ? String(record.membership_date) : null;
+
+  return {
+    success: record.success === true,
+    message: String(
+      record.message
+        ?? (record.success === true ? 'Data de filiação atualizada.' : 'Não foi possível salvar a data de filiação.')
+    ),
+    membershipDate: savedDate,
   } as const;
 }

@@ -5,6 +5,7 @@ import {
   profileMatchesPastoralRoleChangeRoleFilter,
   profileMatchesPastoralRoleChangeSearch,
   setPastoralBasicRoleForProfile,
+  updateProfileMembershipDate,
   type PastoralBasicRoleCode,
   type PastoralRoleChangeProfile,
 } from '@/lib/pastoralRoleChangeApi';
@@ -95,6 +96,51 @@ export function useMaintenancePastoralRoleChange(isActive: boolean) {
     [allProfiles]
   );
 
+  const updateMembershipDate = useCallback(
+    async (profileId: string, membershipDateIso: string | null) => {
+      setSavingProfileId(profileId);
+      setError(null);
+
+      const previousProfiles = allProfiles;
+
+      setAllProfiles((current) =>
+        current.map((profile) =>
+          profile.id === profileId ? { ...profile, membershipDate: membershipDateIso } : profile
+        )
+      );
+
+      try {
+        const result = await updateProfileMembershipDate(profileId, membershipDateIso);
+
+        if (!result.success) {
+          setAllProfiles(previousProfiles);
+          setError(result.message);
+        } else if (result.membershipDate !== undefined) {
+          setAllProfiles((current) =>
+            current.map((profile) =>
+              profile.id === profileId
+                ? { ...profile, membershipDate: result.membershipDate ?? null }
+                : profile
+            )
+          );
+        }
+
+        return result;
+      } catch (saveError) {
+        setAllProfiles(previousProfiles);
+        const message =
+          saveError instanceof Error
+            ? saveError.message
+            : 'Não foi possível salvar a data de filiação.';
+        setError(message);
+        return { success: false as const, message };
+      } finally {
+        setSavingProfileId(null);
+      }
+    },
+    [allProfiles]
+  );
+
   return {
     searchQuery,
     setSearchQuery,
@@ -107,5 +153,6 @@ export function useMaintenancePastoralRoleChange(isActive: boolean) {
     error,
     reloadProfiles: loadProfiles,
     updateProfileRole,
+    updateMembershipDate,
   };
 }

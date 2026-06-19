@@ -6,10 +6,17 @@ import {
 } from '@/hooks/useMaintenancePastoralRoleChange';
 import { formatShortName } from '@/lib/formatShortName';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
-import React from 'react';
+import {
+  formatMembershipDateFromIso,
+  formatMembershipDateInput,
+  parseMembershipDateInputToIso,
+} from '@/lib/membershipDateInput';
+import React, { useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
+  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,8 +31,19 @@ type Props = {
 };
 
 const ACCENT = '#F472B6';
+const MEMBER_NAME_COLOR = '#60A5FA';
+
+type MembershipDateEditorState = {
+  profileId: string;
+  profileName: string;
+  dateInput: string;
+  error: string | null;
+};
 
 export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight }: Props) {
+  const [membershipDateEditor, setMembershipDateEditor] = useState<MembershipDateEditorState | null>(
+    null
+  );
   const {
     searchQuery,
     setSearchQuery,
@@ -37,12 +55,23 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
     savingProfileId,
     error,
     updateProfileRole,
+    updateMembershipDate,
   } = useMaintenancePastoralRoleChange(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const hasActiveFilters = searchQuery.trim().length > 0 || roleFilter !== null;
+  const isSavingMembershipDate =
+    membershipDateEditor !== null && savingProfileId === membershipDateEditor.profileId;
 
-  const handleSelectRole = async (profileId: string, roleCode: (typeof PASTORAL_BASIC_ROLE_OPTIONS)[number]['code']) => {
+  const closeMembershipDateEditor = () => {
+    setMembershipDateEditor(null);
+  };
+
+  const handleSelectRole = async (
+    profileId: string,
+    roleCode: (typeof PASTORAL_BASIC_ROLE_OPTIONS)[number]['code']
+  ) => {
+    closeMembershipDateEditor();
     const result = await updateProfileRole(profileId, roleCode);
 
     Toast.show({
@@ -53,6 +82,65 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
     });
   };
 
+  const handleOpenMembershipDateEditor = (profile: (typeof profiles)[number]) => {
+    if (profile.currentRoleCode !== 'member') {
+      return;
+    }
+
+    setMembershipDateEditor({
+      profileId: profile.id,
+      profileName: formatShortName(profile.fullName),
+      dateInput: formatMembershipDateFromIso(profile.membershipDate),
+      error: null,
+    });
+  };
+
+  const handleChangeMembershipDateInput = (value: string) => {
+    setMembershipDateEditor((current) =>
+      current
+        ? {
+            ...current,
+            dateInput: formatMembershipDateInput(value),
+            error: null,
+          }
+        : current
+    );
+  };
+
+  const handleSaveMembershipDate = async () => {
+    if (!membershipDateEditor) {
+      return;
+    }
+
+    const membershipDateIso = parseMembershipDateInputToIso(membershipDateEditor.dateInput);
+
+    if (membershipDateEditor.dateInput.trim() && !membershipDateIso) {
+      setMembershipDateEditor((current) =>
+        current
+          ? {
+              ...current,
+              error: 'Informe uma data válida no formato dd/mm/aa.',
+            }
+          : current
+      );
+      return;
+    }
+
+    const result = await updateMembershipDate(
+      membershipDateEditor.profileId,
+      membershipDateIso
+    );
+
+    Toast.show({
+      type: result.success ? 'success' : 'error',
+      text1: 'Data de filiação',
+      text2: result.message,
+      visibilityTime: 3500,
+    });
+
+    closeMembershipDateEditor();
+  };
+
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
       <Text style={maintenancePanelStyles.panelTitle}>Mudança de Papéis</Text>
@@ -61,6 +149,8 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
       <Text style={styles.helpText}>
         Lista completa de perfis elegíveis. Use a busca para filtrar por nome, telefone ou código.
         Toque nos cabeçalhos Visitante, Congregado ou Membro para filtrar pelo papel atual.
+        Perfis classificados como Membro exibem o nome em azul sublinhado — toque nele para ver ou
+        editar a data de filiação.
       </Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -127,13 +217,27 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
             ) : (
               profiles.map((profile) => {
                 const isSaving = savingProfileId === profile.id;
+                const isMember = profile.currentRoleCode === 'member';
+                const shortName = formatShortName(profile.fullName);
 
                 return (
                   <View key={profile.id} style={styles.tableRow}>
                     <View style={styles.nameColumn}>
-                      <Text style={styles.shortName} numberOfLines={2}>
-                        {formatShortName(profile.fullName)}
-                      </Text>
+                      {isMember ? (
+                        <Pressable
+                          onPress={() => handleOpenMembershipDateEditor(profile)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Ver ou editar data de filiação de ${shortName}`}
+                        >
+                          <Text style={styles.memberNameLink} numberOfLines={2}>
+                            {shortName}
+                          </Text>
+                        </Pressable>
+                      ) : (
+                        <Text style={styles.shortName} numberOfLines={2}>
+                          {shortName}
+                        </Text>
+                      )}
                       {isSaving ? <ActivityIndicator color={ACCENT} size="small" /> : null}
                     </View>
 
@@ -167,6 +271,65 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
           </ScrollView>
         </View>
       ) : null}
+
+      <Modal
+        visible={membershipDateEditor !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={closeMembershipDateEditor}
+      >
+        <View style={styles.membershipDateModalOverlay}>
+          <Pressable
+            style={styles.membershipDateModalBackdrop}
+            onPress={closeMembershipDateEditor}
+          />
+
+          {membershipDateEditor ? (
+            <View style={styles.membershipDateBubble}>
+              <Text style={styles.membershipDateTitle}>Data de filiação</Text>
+              <Text style={styles.membershipDateHelp}>
+                {membershipDateEditor.profileName} — informe ou edite a data no formato dd/mm/aa.
+              </Text>
+              <TextInput
+                style={styles.membershipDateInput}
+                value={membershipDateEditor.dateInput}
+                onChangeText={handleChangeMembershipDateInput}
+                placeholder="dd/mm/aa"
+                placeholderTextColor="#64748B"
+                keyboardType="numeric"
+                maxLength={8}
+                returnKeyType="done"
+                autoFocus
+              />
+              {membershipDateEditor.error ? (
+                <Text style={styles.membershipDateError}>{membershipDateEditor.error}</Text>
+              ) : null}
+              <View style={styles.membershipDateActions}>
+                <TouchableOpacity
+                  style={[styles.membershipDateButton, styles.membershipDateCancelButton]}
+                  onPress={closeMembershipDateEditor}
+                  activeOpacity={0.85}
+                  disabled={isSavingMembershipDate}
+                >
+                  <Text style={styles.membershipDateCancelText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.membershipDateButton, styles.membershipDateSaveButton]}
+                  onPress={() => void handleSaveMembershipDate()}
+                  activeOpacity={0.85}
+                  disabled={isSavingMembershipDate}
+                >
+                  {isSavingMembershipDate ? (
+                    <ActivityIndicator color="#0F172A" size="small" />
+                  ) : (
+                    <Text style={styles.membershipDateSaveText}>Salvar</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : null}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -278,6 +441,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+  memberNameLink: {
+    color: MEMBER_NAME_COLOR,
+    fontSize: 14,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
   roleChip: {
     width: 72,
     alignItems: 'center',
@@ -307,5 +476,82 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: ACCENT,
+  },
+  membershipDateModalOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(2, 6, 23, 0.58)',
+  },
+  membershipDateModalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  membershipDateBubble: {
+    width: '100%',
+    maxWidth: 320,
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.45)',
+    borderRadius: 14,
+    backgroundColor: 'rgba(15, 23, 42, 0.98)',
+    padding: 14,
+    gap: 8,
+  },
+  membershipDateTitle: {
+    color: '#BFDBFE',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  membershipDateHelp: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  membershipDateInput: {
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.45)',
+    borderRadius: 10,
+    backgroundColor: 'rgba(30, 41, 59, 0.85)',
+    color: '#F8FAFC',
+    fontSize: 16,
+    fontWeight: '700',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  membershipDateError: {
+    color: '#FCA5A5',
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  membershipDateActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  membershipDateButton: {
+    minWidth: 76,
+    minHeight: 34,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  membershipDateCancelButton: {
+    borderWidth: 1,
+    borderColor: '#475569',
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+  },
+  membershipDateSaveButton: {
+    backgroundColor: MEMBER_NAME_COLOR,
+  },
+  membershipDateCancelText: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  membershipDateSaveText: {
+    color: '#0F172A',
+    fontSize: 12,
+    fontWeight: '900',
   },
 });
