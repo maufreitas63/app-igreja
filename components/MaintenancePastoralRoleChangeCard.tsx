@@ -133,7 +133,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
 
     Toast.show({
       type: result.success ? 'success' : 'error',
-      text1: 'Data de filiação',
+      text1: 'Data de Membresia',
       text2: result.message,
       visibilityTime: 3500,
     });
@@ -150,7 +150,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
         Lista completa de perfis elegíveis. Use a busca para filtrar por nome, telefone ou código.
         Toque nos cabeçalhos Visitante, Congregado ou Membro para filtrar pelo papel atual.
         Perfis classificados como Membro exibem o nome em azul sublinhado — toque nele para ver ou
-        editar a data de filiação.
+        editar a data de membresia.
       </Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -227,7 +227,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                         <Pressable
                           onPress={() => handleOpenMembershipDateEditor(profile)}
                           accessibilityRole="button"
-                          accessibilityLabel={`Ver ou editar data de filiação de ${shortName}`}
+                          accessibilityLabel={`Ver ou editar data de membresia de ${shortName}`}
                         >
                           <Text style={styles.memberNameLink} numberOfLines={2}>
                             {shortName}
@@ -286,7 +286,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
 
           {membershipDateEditor ? (
             <View style={styles.membershipDateBubble}>
-              <Text style={styles.membershipDateTitle}>Data de filiação</Text>
+              <Text style={styles.membershipDateTitle}>Data de Membresia</Text>
               <Text style={styles.membershipDateHelp}>
                 {membershipDateEditor.profileName} — informe ou edite a data no formato dd/mm/aa.
               </Text>
