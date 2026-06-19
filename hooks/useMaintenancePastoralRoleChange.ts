@@ -61,7 +61,7 @@ export function useMaintenancePastoralRoleChange(isActive: boolean) {
   }, []);
 
   const updateProfileRole = useCallback(
-    async (profileId: string, roleCode: PastoralBasicRoleCode) => {
+    async (profileId: string, roleCode: PastoralBasicRoleCode, membershipDateIso?: string | null) => {
       setSavingProfileId(profileId);
       setError(null);
 
@@ -69,12 +69,21 @@ export function useMaintenancePastoralRoleChange(isActive: boolean) {
 
       setAllProfiles((current) =>
         current.map((profile) =>
-          profile.id === profileId ? { ...profile, currentRoleCode: roleCode } : profile
+          profile.id === profileId
+            ? {
+                ...profile,
+                currentRoleCode: roleCode,
+                membershipDate:
+                  roleCode === 'member' && membershipDateIso !== undefined
+                    ? membershipDateIso
+                    : profile.membershipDate,
+              }
+            : profile
         )
       );
 
       try {
-        const result = await setPastoralBasicRoleForProfile(profileId, roleCode);
+        const result = await setPastoralBasicRoleForProfile(profileId, roleCode, membershipDateIso);
 
         if (!result.success) {
           setAllProfiles(previousProfiles);

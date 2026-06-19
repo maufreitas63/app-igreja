@@ -131,6 +131,7 @@ returns table (
   full_name text,
   phone text,
   codigo_membro text,
+  membership_date date,
   current_role_code text
 )
 language plpgsql
@@ -150,6 +151,7 @@ begin
     coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as full_name,
     coalesce(p.phone, '') as phone,
     coalesce(p.codigo_membro, '') as codigo_membro,
+    p.membership_date,
     public.resolve_basic_role_code_for_profile(p.id) as current_role_code
   from public.profiles p
   where not public.profile_has_protected_role_for_pastoral_change(p.id)
@@ -175,6 +177,7 @@ returns table (
   full_name text,
   phone text,
   codigo_membro text,
+  membership_date date,
   current_role_code text
 )
 language plpgsql
@@ -202,6 +205,7 @@ begin
     coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as full_name,
     coalesce(p.phone, '') as phone,
     coalesce(p.codigo_membro, '') as codigo_membro,
+    p.membership_date,
     public.resolve_basic_role_code_for_profile(p.id) as current_role_code
   from public.profiles p
   where not public.profile_has_protected_role_for_pastoral_change(p.id)
@@ -249,11 +253,13 @@ $$;
 -- ---------------------------------------------------------------------------
 
 drop function if exists public.definir_papel_basico_perfil_pastoral(uuid, uuid, text);
+drop function if exists public.definir_papel_basico_perfil_pastoral(uuid, uuid, text, date);
 
 create or replace function public.definir_papel_basico_perfil_pastoral(
   p_actor_profile_id uuid,
   p_target_profile_id uuid,
-  p_role_code text
+  p_role_code text,
+  p_membership_date date default null
 )
 returns jsonb
 language plpgsql
@@ -298,6 +304,15 @@ begin
   v_current_role := public.resolve_basic_role_code_for_profile(p_target_profile_id);
 
   if v_current_role = v_role_code then
+    if v_role_code = 'member' and p_membership_date is not null then
+      update public.profiles
+         set membership_date = p_membership_date,
+             updated_at = now()
+       where id = p_target_profile_id;
+
+      return jsonb_build_object('success', true, 'message', 'Data de membro atualizada.');
+    end if;
+
     return jsonb_build_object('success', true, 'message', 'Papel já estava definido.');
   end if;
 
@@ -331,6 +346,13 @@ begin
   values (p_target_profile_id, v_role_id, p_actor_profile_id)
   on conflict (profile_id, role_id) do nothing;
 
+  if v_role_code = 'member' and p_membership_date is not null then
+    update public.profiles
+       set membership_date = p_membership_date,
+           updated_at = now()
+     where id = p_target_profile_id;
+  end if;
+
   return jsonb_build_object(
     'success',
     true,
@@ -347,6 +369,6 @@ $$;
 grant execute on function public.profile_has_role_code(uuid, text) to anon, authenticated;
 grant execute on function public.listar_perfis_mudanca_papel_pastoral(uuid, integer) to anon, authenticated;
 grant execute on function public.buscar_perfis_mudanca_papel_pastoral(uuid, text, integer) to anon, authenticated;
-grant execute on function public.definir_papel_basico_perfil_pastoral(uuid, uuid, text) to anon, authenticated;
+grant execute on function public.definir_papel_basico_perfil_pastoral(uuid, uuid, text, date) to anon, authenticated;
 
 notify pgrst, 'reload schema';
