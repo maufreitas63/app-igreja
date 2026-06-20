@@ -9,6 +9,7 @@ import {
   buildEventOrchestrationPathSignature,
   resolveEventOrchestrationTarget,
 } from '@/lib/eventOrchestrationRoutes';
+import { isEventOrchestrationPanelFocused } from '@/lib/eventOrchestrationPanelFocus';
 import { supabase } from '@/lib/supabase';
 import { getStoredUserPhone } from '@/lib/userSession';
 import { useLocalSearchParams, usePathname, useRouter, useSegments } from 'expo-router';
@@ -76,7 +77,8 @@ export function EventOrchestrationListener() {
 
   const shouldListen =
     hasMemberSession === true
-    && shouldListenForEventOrchestration(pathname, segments);
+    && shouldListenForEventOrchestration(pathname, segments)
+    && !isEventOrchestrationPanelFocused();
 
   const shouldListenRef = useRef(shouldListen);
   shouldListenRef.current = shouldListen;
@@ -146,7 +148,7 @@ export function EventOrchestrationListener() {
 
   const runGuidedNavigation = useCallback(
     async (activeRoute: string, updatedAt: string) => {
-      if (!shouldListenRef.current) {
+      if (!shouldListenRef.current || isEventOrchestrationPanelFocused()) {
         return;
       }
 
@@ -226,7 +228,7 @@ export function EventOrchestrationListener() {
   runGuidedNavigationRef.current = runGuidedNavigation;
 
   const dispatchOrchestrationSignal = useCallback((activeRoute: string, updatedAt: string) => {
-    if (!activeRoute || !updatedAt) {
+    if (!activeRoute || !updatedAt || isEventOrchestrationPanelFocused()) {
       return;
     }
 
