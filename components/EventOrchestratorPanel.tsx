@@ -164,15 +164,6 @@ export function EventOrchestratorPanel({
       ) : null}
 
       {!loading && allowed ? <EventAvisosManager isActive={isActive} /> : null}
-
-      {!loading ? (
-        <Pressable
-          style={[styles.refreshButton, { borderColor: `${colors.accent}88` }]}
-          onPress={() => void loadState()}
-        >
-          <Text style={[styles.refreshButtonText, { color: colors.accent }]}>Atualizar status</Text>
-        </Pressable>
-      ) : null}
     </ScrollView>
   );
 }
@@ -234,17 +225,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     marginTop: 3,
-  },
-  refreshButton: {
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginTop: 4,
-  },
-  refreshButtonText: {
-    fontSize: 13,
-    fontWeight: '800',
   },
 });
