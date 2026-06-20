@@ -1272,6 +1272,28 @@ export default function ManageProfile() {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
   }, [columnAccessLoading, profile, profileColumnAccess]);
 
+  const handleEditingValueChange = useCallback(
+    (value: string) => {
+      if (editingFieldRow?.kind === 'date') {
+        setEditingValue(formatDate(value));
+        return;
+      }
+
+      if (editingFieldRow?.kind === 'phone') {
+        setEditingValue(formatPhone(value));
+        return;
+      }
+
+      if (editingFieldRow?.key === 'cep') {
+        setEditingValue(formatCep(value));
+        return;
+      }
+
+      setEditingValue(value);
+    },
+    [editingFieldRow]
+  );
+
   const updateSingleField = useCallback(async (fieldKey: string, value: unknown) => {
     if (!profile?.id) {
       throw new Error('Perfil não encontrado.');
@@ -2069,21 +2091,17 @@ export default function ManageProfile() {
                   ? 'number-pad'
                   : 'default'
               }
+              maxLength={
+                editingFieldRow.kind === 'date'
+                  ? 10
+                  : editingFieldRow.key === 'cep'
+                    ? 9
+                    : editingFieldRow.kind === 'phone'
+                      ? 15
+                      : undefined
+              }
               multiline={editingFieldRow.kind === 'url'}
-              onBlur={() => {
-                if (editingFieldRow.kind === 'phone') {
-                  setEditingValue((current) => formatPhone(current));
-                }
-
-                if (editingFieldRow.kind === 'date') {
-                  setEditingValue((current) => formatDate(current));
-                }
-
-                if (editingFieldRow.key === 'cep') {
-                  setEditingValue((current) => formatCep(current));
-                }
-              }}
-              onChangeText={setEditingValue}
+              onChangeText={handleEditingValueChange}
             />
             <View style={styles.editorActions}>
               <TouchableOpacity
