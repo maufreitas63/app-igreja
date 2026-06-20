@@ -94,25 +94,29 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
 
           {summary ? (
             <View style={styles.summaryGrid}>
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryLabel}>Arrecadação projetada</Text>
-                <Text style={styles.summaryValue}>{formatPredictiveCurrency(summary.totalProjectedRevenue)}</Text>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryCard}>
+                  <Text style={styles.summaryLabel}>Arrecadação projetada</Text>
+                  <Text style={styles.summaryValue}>{formatPredictiveCurrency(summary.totalProjectedRevenue)}</Text>
+                </View>
+                <View style={styles.summaryCard}>
+                  <Text style={styles.summaryLabel}>Média mensal</Text>
+                  <Text style={styles.summaryValue}>{formatPredictiveCurrency(summary.averageMonthlyRevenue)}</Text>
+                </View>
               </View>
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryLabel}>Média mensal</Text>
-                <Text style={styles.summaryValue}>{formatPredictiveCurrency(summary.averageMonthlyRevenue)}</Text>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryCard}>
+                  <Text style={styles.summaryLabel}>Membros líquidos</Text>
+                  <Text style={styles.summaryValue}>{summary.totalProjectedNetMembers.toFixed(0)}</Text>
+                </View>
+                <View style={styles.summaryCard}>
+                  <Text style={styles.summaryLabel}>LTV por novo membro/mês</Text>
+                  <Text style={styles.summaryValue}>
+                    {formatPredictiveCurrency(model.revenuePerNewMemberMonthly)}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryLabel}>Membros líquidos</Text>
-                <Text style={styles.summaryValue}>{summary.totalProjectedNetMembers.toFixed(0)}</Text>
-              </View>
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryLabel}>LTV por novo membro/mês</Text>
-                <Text style={styles.summaryValue}>
-                  {formatPredictiveCurrency(model.revenuePerNewMemberMonthly)}
-                </Text>
-              </View>
-              <View style={styles.ltvFooterRow}>
+              <View style={styles.summaryRow}>
                 <View style={styles.summaryCard}>
                   <Text style={styles.summaryLabel}>LTV acumulado ({horizon} meses)</Text>
                   <Text style={styles.summaryValue}>
@@ -266,13 +270,18 @@ const styles = StyleSheet.create({
     color: ACCENT,
   },
   summaryGrid: {
+    width: '100%',
+    gap: 8,
+  },
+  summaryRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'stretch',
+    width: '100%',
     gap: 8,
   },
   summaryCard: {
-    width: '48%',
-    minWidth: 140,
+    flex: 1,
+    minWidth: 0,
     borderWidth: 1,
     borderColor: 'rgba(34, 211, 238, 0.25)',
     borderRadius: 10,
@@ -280,16 +289,9 @@ const styles = StyleSheet.create({
     padding: 10,
     gap: 4,
   },
-  ltvFooterRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    justifyContent: 'space-between',
-    width: '100%',
-    gap: 8,
-  },
   summaryCardRightSlot: {
-    width: '48%',
-    minWidth: 140,
+    flex: 1,
+    minWidth: 0,
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
