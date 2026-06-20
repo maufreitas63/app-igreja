@@ -1,4 +1,5 @@
 import { WatermarkSurface } from '@/components/AppWatermark';
+import { EventOrchestrationListener } from '@/components/EventOrchestrationListener';
 import { TotemDeviceRouteGuard } from '@/components/TotemDeviceRouteGuard';
 import { EntityPrefixProvider } from '@/context/EntityPrefixContext';
 import { PaletteProvider } from '@/context/PaletteContext';
@@ -39,6 +40,7 @@ export function AppShell() {
         <EntityPrefixProvider>
           <View style={styles.app}>
             <TotemDeviceRouteGuard />
+            <EventOrchestrationListener />
             <Slot />
           </View>
         </EntityPrefixProvider>
@@ -51,6 +53,7 @@ export function AppShell() {
       <EntityPrefixProvider>
         <WatermarkSurface style={styles.app} routeKey={pathname}>
           <TotemDeviceRouteGuard />
+          <EventOrchestrationListener />
           <Slot />
         </WatermarkSurface>
       </EntityPrefixProvider>
