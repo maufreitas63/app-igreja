@@ -133,7 +133,11 @@ export function EventOrchestrationListener() {
       await new Promise((resolve) => setTimeout(resolve, GUIDANCE_DELAY_MS));
 
       await fadeScreen(0.38);
-      router.push(target.href);
+      if (target.pathSignature === '/(tabs)') {
+        router.replace(target.href);
+      } else {
+        router.push(target.href);
+      }
       appliedPathSignatureRef.current = target.pathSignature;
       manualNavigationRef.current = false;
 

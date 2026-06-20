@@ -34,8 +34,8 @@ export const EVENT_ORCHESTRATION_TARGETS: Record<
   '/home': {
     code: '/home',
     label: 'Home',
-    href: '/(tabs)/index',
-    pathSignature: '/(tabs)/index',
+    href: '/(tabs)',
+    pathSignature: '/(tabs)',
   },
   '/ofertas': {
     code: '/ofertas',
@@ -85,8 +85,12 @@ export const buildEventOrchestrationPathSignature = (
 ) => {
   const normalizedPath = pathname.replace(/\/+$/, '') || '/';
 
-  if (normalizedPath.endsWith('/index') || normalizedPath === '/(tabs)') {
-    return '/(tabs)/index';
+  if (
+    normalizedPath.endsWith('/index')
+    || normalizedPath === '/(tabs)'
+    || normalizedPath === '/(tabs)/index'
+  ) {
+    return '/(tabs)';
   }
 
   if (!normalizedPath.includes('dashboard')) {
