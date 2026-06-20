@@ -405,7 +405,16 @@ export default function ManageMembers() {
   const [canUpdateFamilyMembers, setCanUpdateFamilyMembers] = useState(false);
 
   useEffect(() => {
-    void sessionHasAccess('table', 'members', 'update').then(setCanUpdateFamilyMembers);
+    void (async () => {
+      const [tableUpdate, screenManageUpdate, screenManageView] = await Promise.all([
+        sessionHasAccess('table', 'members', 'update'),
+        sessionHasAccess('screen', ACCESS_SCREEN.manageMembers, 'update'),
+        sessionHasAccess('screen', ACCESS_SCREEN.manageMembers, 'view'),
+      ]);
+
+      // Membro/representante legal: RLS limita à própria família; o ACL de `member` só tinha view.
+      setCanUpdateFamilyMembers(tableUpdate || screenManageUpdate || screenManageView);
+    })();
   }, []);
 
   const [familyId, setFamilyId] = useState(DEFAULT_FAMILY_ID);
@@ -1626,7 +1635,12 @@ export default function ManageMembers() {
                 )}
               </Pressable>
               {canUpdateFamilyMembers ? (
-              <TouchableOpacity style={styles.editButton} onPress={() => startEditingMember(item)}>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => startEditingMember(item)}
+                accessibilityRole="button"
+                accessibilityLabel={`Editar integrante ${item.full_name}`}
+              >
                 <MaterialIcons name="edit" size={18} color="#FFF" />
               </TouchableOpacity>
               ) : null}
