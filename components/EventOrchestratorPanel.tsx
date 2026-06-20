@@ -98,11 +98,6 @@ export function EventOrchestratorPanel({
       }
 
       setActiveRoute(routeCode);
-      showAppToast({
-        type: 'success',
-        text1: 'Orquestrador',
-        text2: `Rota ativa: ${EVENT_ORCHESTRATION_LEADER_BUTTONS.find((item) => item.code === routeCode)?.label ?? routeCode}`,
-      });
     } catch (saveError) {
       const message =
         saveError instanceof Error ? saveError.message : 'Não foi possível atualizar a rota.';

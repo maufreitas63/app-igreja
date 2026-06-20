@@ -1,5 +1,4 @@
 import { EventOrchestrationGuidanceOverlay } from '@/components/EventOrchestrationGuidanceOverlay';
-import { showAppToast } from '@/lib/appToast';
 import { fetchEventControlState } from '@/lib/eventOrchestrationApi';
 import {
   registerOrchestrationUserGestureListeners,
@@ -190,13 +189,6 @@ export function EventOrchestrationListener() {
       const message = `Estamos te guiando para ${target.label}...`;
       setGuidanceMessage(message);
       setGuidanceVisible(true);
-
-      showAppToast({
-        type: 'info',
-        text1: 'Orquestração',
-        text2: message,
-        visibilityTime: GUIDANCE_DELAY_MS + 800,
-      });
 
       void triggerOrchestrationHapticFeedback();
 
