@@ -1,3 +1,4 @@
+import { EventAvisosManager } from '@/components/EventAvisosManager';
 import { usePalette } from '@/context/PaletteContext';
 import {
   fetchEventControlState,
@@ -6,7 +7,7 @@ import {
 } from '@/lib/eventOrchestrationApi';
 import {
   EVENT_ORCHESTRATION_LEADER_BUTTONS,
-  type EventOrchestrationRouteCode,
+  type EventOrchestrationLeaderRouteCode,
 } from '@/lib/eventOrchestrationRoutes';
 import { showAppToast } from '@/lib/appToast';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -38,8 +39,8 @@ export function EventOrchestratorPanel({
 
   const [loading, setLoading] = useState(true);
   const [allowed, setAllowed] = useState(false);
-  const [activeRoute, setActiveRoute] = useState<EventOrchestrationRouteCode | null>(null);
-  const [savingRoute, setSavingRoute] = useState<EventOrchestrationRouteCode | null>(null);
+  const [activeRoute, setActiveRoute] = useState<EventOrchestrationLeaderRouteCode | null>(null);
+  const [savingRoute, setSavingRoute] = useState<EventOrchestrationLeaderRouteCode | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadState = useCallback(async () => {
@@ -78,7 +79,7 @@ export function EventOrchestratorPanel({
     void loadState();
   }, [loadState]);
 
-  const handleSelectRoute = async (routeCode: EventOrchestrationRouteCode) => {
+  const handleSelectRoute = async (routeCode: EventOrchestrationLeaderRouteCode) => {
     if (!allowed || savingRoute) {
       return;
     }
@@ -164,6 +165,8 @@ export function EventOrchestratorPanel({
           })}
         </View>
       ) : null}
+
+      {!loading && allowed ? <EventAvisosManager isActive={isActive} /> : null}
 
       {!loading ? (
         <Pressable

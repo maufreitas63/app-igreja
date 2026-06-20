@@ -2,33 +2,45 @@ import type { Href } from 'expo-router';
 
 export const EVENT_CONTROL_ID = 1;
 
-export const EVENT_ORCHESTRATION_ROUTE_CODES = [
+/** Rotas exibidas no painel do orquestrador. */
+export const EVENT_ORCHESTRATION_LEADER_ROUTE_CODES = [
   '/home',
-  '/ofertas',
-  '/dizimos',
+  '/ofertas_dizimos',
   '/avisos',
 ] as const;
+
+/** Rotas legadas ainda aceitas no banco (event_control). */
+export const EVENT_ORCHESTRATION_LEGACY_ROUTE_CODES = ['/ofertas', '/dizimos'] as const;
+
+export const EVENT_ORCHESTRATION_ROUTE_CODES = [
+  ...EVENT_ORCHESTRATION_LEADER_ROUTE_CODES,
+  ...EVENT_ORCHESTRATION_LEGACY_ROUTE_CODES,
+] as const;
+
+export type EventOrchestrationLeaderRouteCode =
+  (typeof EVENT_ORCHESTRATION_LEADER_ROUTE_CODES)[number];
 
 export type EventOrchestrationRouteCode = (typeof EVENT_ORCHESTRATION_ROUTE_CODES)[number];
 
 export type EventOrchestrationTarget = {
-  code: EventOrchestrationRouteCode;
+  code: EventOrchestrationLeaderRouteCode;
   label: string;
   href: Href;
   pathSignature: string;
 };
 
-const buildDashboardOfferingsHref = (focus: 'ofertas' | 'dizimos'): Href => ({
+const DASHBOARD_OFFERINGS_HREF: Href = {
   pathname: '/(tabs)/dashboard',
   params: {
     dashboardCard: '3',
     dashboardCardNonce: String(Date.now()),
-    offeringsFocus: focus,
   },
-});
+};
+
+const OFFERINGS_PATH_SIGNATURE = '/(tabs)/dashboard:offerings';
 
 export const EVENT_ORCHESTRATION_TARGETS: Record<
-  EventOrchestrationRouteCode,
+  EventOrchestrationLeaderRouteCode,
   EventOrchestrationTarget
 > = {
   '/home': {
@@ -37,17 +49,11 @@ export const EVENT_ORCHESTRATION_TARGETS: Record<
     href: '/(tabs)',
     pathSignature: '/(tabs)',
   },
-  '/ofertas': {
-    code: '/ofertas',
-    label: 'Ofertas',
-    href: buildDashboardOfferingsHref('ofertas'),
-    pathSignature: '/(tabs)/dashboard:offerings:ofertas',
-  },
-  '/dizimos': {
-    code: '/dizimos',
-    label: 'Dízimos',
-    href: buildDashboardOfferingsHref('dizimos'),
-    pathSignature: '/(tabs)/dashboard:offerings:dizimos',
+  '/ofertas_dizimos': {
+    code: '/ofertas_dizimos',
+    label: 'Ofertas / Dízimos',
+    href: DASHBOARD_OFFERINGS_HREF,
+    pathSignature: OFFERINGS_PATH_SIGNATURE,
   },
   '/avisos': {
     code: '/avisos',
@@ -59,10 +65,29 @@ export const EVENT_ORCHESTRATION_TARGETS: Record<
 
 export const EVENT_ORCHESTRATION_LEADER_BUTTONS = [
   EVENT_ORCHESTRATION_TARGETS['/home'],
-  EVENT_ORCHESTRATION_TARGETS['/ofertas'],
-  EVENT_ORCHESTRATION_TARGETS['/dizimos'],
+  EVENT_ORCHESTRATION_TARGETS['/ofertas_dizimos'],
   EVENT_ORCHESTRATION_TARGETS['/avisos'],
 ] as const;
+
+export const normalizeEventOrchestrationRouteCode = (
+  value: string | null | undefined
+): EventOrchestrationLeaderRouteCode | null => {
+  const normalized = (value ?? '').trim().toLowerCase();
+
+  if (normalized === '/ofertas' || normalized === '/dizimos') {
+    return '/ofertas_dizimos';
+  }
+
+  if (
+    EVENT_ORCHESTRATION_LEADER_ROUTE_CODES.includes(
+      normalized as EventOrchestrationLeaderRouteCode
+    )
+  ) {
+    return normalized as EventOrchestrationLeaderRouteCode;
+  }
+
+  return null;
+};
 
 export const isEventOrchestrationRouteCode = (
   value: string | null | undefined
@@ -70,13 +95,13 @@ export const isEventOrchestrationRouteCode = (
   EVENT_ORCHESTRATION_ROUTE_CODES.includes(value as EventOrchestrationRouteCode);
 
 export const resolveEventOrchestrationTarget = (activeRoute: string | null | undefined) => {
-  const normalized = (activeRoute ?? '').trim().toLowerCase();
+  const normalized = normalizeEventOrchestrationRouteCode(activeRoute);
 
-  if (isEventOrchestrationRouteCode(normalized)) {
-    return EVENT_ORCHESTRATION_TARGETS[normalized];
+  if (!normalized) {
+    return null;
   }
 
-  return null;
+  return EVENT_ORCHESTRATION_TARGETS[normalized];
 };
 
 export const buildEventOrchestrationPathSignature = (
@@ -98,14 +123,9 @@ export const buildEventOrchestrationPathSignature = (
   }
 
   const card = String(params.dashboardCard ?? params.dashboardCardParam ?? '').trim();
-  const focus = String(params.offeringsFocus ?? '').trim().toLowerCase();
 
   if (card === '3' || card === 'offerings') {
-    if (focus === 'ofertas' || focus === 'dizimos') {
-      return `/(tabs)/dashboard:offerings:${focus}`;
-    }
-
-    return '/(tabs)/dashboard:offerings';
+    return OFFERINGS_PATH_SIGNATURE;
   }
 
   return '/(tabs)/dashboard';

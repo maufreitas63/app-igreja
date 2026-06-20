@@ -3,16 +3,16 @@ import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import {
   EVENT_CONTROL_ID,
-  isEventOrchestrationRouteCode,
-  type EventOrchestrationRouteCode,
+  normalizeEventOrchestrationRouteCode,
+  type EventOrchestrationLeaderRouteCode,
 } from '@/lib/eventOrchestrationRoutes';
 
 export const EVENT_ORCHESTRATION_SQL_HINT =
-  'Execute no Supabase: scripts/event-control-orchestration.sql e scripts/access-control-orquestrador-evento-role.sql';
+  'Execute no Supabase: scripts/event-control-orchestration.sql, scripts/access-control-orquestrador-evento-role.sql e scripts/event-avisos-schema.sql';
 
 export type EventControlRow = {
   id: number;
-  activeRoute: EventOrchestrationRouteCode;
+  activeRoute: EventOrchestrationLeaderRouteCode;
   updatedAt: string;
 };
 
@@ -25,13 +25,19 @@ const parseEventControlRow = (record: Record<string, unknown> | null | undefined
   const activeRoute = String(record.active_route ?? record.activeRoute ?? '').trim().toLowerCase();
   const updatedAt = String(record.updated_at ?? record.updatedAt ?? '').trim();
 
-  if (id !== EVENT_CONTROL_ID || !isEventOrchestrationRouteCode(activeRoute) || !updatedAt) {
+  if (id !== EVENT_CONTROL_ID || !updatedAt) {
+    return null;
+  }
+
+  const normalizedRoute = normalizeEventOrchestrationRouteCode(activeRoute);
+
+  if (!normalizedRoute) {
     return null;
   }
 
   return {
     id,
-    activeRoute,
+    activeRoute: normalizedRoute,
     updatedAt,
   };
 };
@@ -78,7 +84,7 @@ export async function sessionCanManageEventControl() {
   return data === true;
 }
 
-export async function updateEventControlRoute(activeRoute: EventOrchestrationRouteCode) {
+export async function updateEventControlRoute(activeRoute: EventOrchestrationLeaderRouteCode) {
   const actorProfileId = await resolveActorProfileId();
 
   if (!actorProfileId) {

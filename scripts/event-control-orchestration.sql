@@ -8,7 +8,7 @@ create table if not exists public.event_control (
   updated_at timestamptz not null default now(),
   constraint event_control_singleton check (id = 1),
   constraint event_control_active_route_check check (
-    active_route in ('/home', '/ofertas', '/dizimos', '/avisos')
+    active_route in ('/home', '/ofertas_dizimos', '/avisos', '/ofertas', '/dizimos')
   )
 );
 
@@ -70,7 +70,11 @@ begin
 
   v_route := lower(trim(coalesce(p_active_route, '')));
 
-  if v_route not in ('/home', '/ofertas', '/dizimos', '/avisos') then
+  if v_route in ('/ofertas', '/dizimos') then
+    v_route := '/ofertas_dizimos';
+  end if;
+
+  if v_route not in ('/home', '/ofertas_dizimos', '/avisos', '/ofertas', '/dizimos') then
     return jsonb_build_object('success', false, 'message', 'Rota inválida para orquestração.');
   end if;
 
