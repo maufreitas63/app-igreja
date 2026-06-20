@@ -49,6 +49,7 @@ import {
 } from '@/lib/accessPin';
 import { openWhatsAppLikeBirthdays, openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
 import { isBrazilianMobilePhoneComplete, isBrazilianPhoneComplete } from '@/lib/phoneValidation';
+import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { verificarLogin } from '@/lib/verificarLogin';
 import { resolveRegisteredUserSessionRoute } from '@/lib/profileOnboarding';
 import { isLgpdAtivoEnabled } from '@/lib/appParameters';
@@ -151,16 +152,7 @@ export default function IndexScreen() {
   }, [focusPinInput, isTotemLoginMode, phone]);
 
   const handlePhoneChange = (text: string) => {
-    let cleaned = text.replace(/\D/g, '');
-    if (cleaned.length > 11) cleaned = cleaned.substring(0, 11);
-
-    let formatted = cleaned;
-    if (cleaned.length > 0) {
-      formatted = `(${cleaned.substring(0, 2)}`;
-      if (cleaned.length > 2) formatted += `) ${cleaned.substring(2, 7)}`;
-      if (cleaned.length > 7) formatted += `-${cleaned.substring(7, 11)}`;
-    }
-    setPhone(formatted);
+    setPhone(formatBrazilPhoneInput(text));
     setLoginStep(1);
     setAccessPin('');
     setPinCodeSent(false);

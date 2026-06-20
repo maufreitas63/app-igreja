@@ -28,13 +28,9 @@ import {
   familyRegistrationSchema,
   type FamilyRegistrationSchemaValues,
 } from './familyRegistrationSchema';
+import { formatBrazilDateInput } from '@/lib/inputMasks';
 
-const formatDateInput = (value: string) => {
-  const cleaned = value.replace(/\D/g, '').slice(0, 8);
-  if (cleaned.length <= 2) return cleaned;
-  if (cleaned.length <= 4) return `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
-  return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4)}`;
-};
+const formatDateInput = formatBrazilDateInput;
 
 const relationshipButtonClass = (selected: boolean) =>
   [

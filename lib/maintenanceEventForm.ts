@@ -5,6 +5,7 @@ import {
   isEventDateBeforeToday,
 } from '@/lib/eventDate';
 import { KIDS_ROOM_DISPLAY_LABEL, TEENS_ROOM_DISPLAY_LABEL } from '@/lib/entityPrefixCore';
+import { formatBrazilDateShortInput, formatBrazilTimeInput } from '@/lib/inputMasks';
 
 export type MaintenanceEventFormState = {
   name: string;
@@ -80,29 +81,10 @@ export const formatEventDateForInput = (isoValue: string | null | undefined) => 
   return time ? `${date} ${time}` : date;
 };
 
-export const formatEventDateOnlyMask = (value: string) => {
-  const digits = value.replace(/\D/g, '').slice(0, 6);
+export const formatEventDateOnlyMask = formatBrazilDateShortInput;
 
-  if (digits.length <= 2) {
-    return digits;
-  }
-
-  if (digits.length <= 4) {
-    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  }
-
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-};
-
-export const formatEventTimeInputMask = (value: string) => {
-  const digits = value.replace(/[;:\s]/g, '').replace(/\D/g, '').slice(0, 4);
-
-  if (digits.length <= 2) {
-    return digits;
-  }
-
-  return `${digits.slice(0, 2)}:${digits.slice(2, 4)}`;
-};
+export const formatEventTimeInputMask = (value: string) =>
+  formatBrazilTimeInput(value.replace(/[;:\s]/g, ''));
 
 const parseDateTimeParts = (
   dayText: string,

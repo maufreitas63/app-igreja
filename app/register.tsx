@@ -31,6 +31,7 @@ import {
   resolvePostLoginRoute,
 } from '@/lib/profileOnboarding';
 import { formatCep, normalizeCepDigits } from '@/lib/geoMapGeocoding';
+import { formatBrazilCepInput, formatBrazilDateInput } from '@/lib/inputMasks';
 import { isLgpdAtivoEnabled, clearAppParameterCache, LGPD_ATIVO_PARAMETER } from '@/lib/appParameters';
 import { pickSelfieFromWeb, selectSelfiePictureSize, uploadSelfieInput } from '@/lib/selfie';
 import { supabase } from '@/lib/supabase';
@@ -55,14 +56,7 @@ const REGISTER_LGPD_SECTION_HEIGHT =
   REGISTER_LGPD_HINT_MARGIN_BOTTOM +
   REGISTER_LGPD_CHECKBOX_ROW_HEIGHT;
 
-const formatCepInput = (value: string) => {
-  const cleaned = value.replace(/\D/g, '').slice(0, 8);
-  if (cleaned.length <= 5) {
-    return cleaned;
-  }
-
-  return `${cleaned.slice(0, 5)}-${cleaned.slice(5)}`;
-};
+const formatCepInput = formatBrazilCepInput;
 
 function readPhoneRouteParam(raw: string | string[] | undefined): string {
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -278,16 +272,12 @@ export default function RegisterScreen() {
   };
 
   const handleDateChange = (text: string) => {
-    let cleaned = text.replace(/\D/g, '');
-    if (cleaned.length > 8) cleaned = cleaned.substring(0, 8);
-    let formatted = cleaned;
-    if (cleaned.length > 0) {
-      formatted = cleaned.substring(0, 2);
-      if (cleaned.length > 2) formatted += '/' + cleaned.substring(2, 4);
-      if (cleaned.length > 4) formatted += '/' + cleaned.substring(4, 8);
-    }
+    const formatted = formatBrazilDateInput(text);
     setBirthDate(formatted);
-    if (cleaned.length === 8) Keyboard.dismiss();
+
+    if (formatted.replace(/\D/g, '').length === 8) {
+      Keyboard.dismiss();
+    }
   };
 
   const handleLGPDChoice = (choice: boolean) => {

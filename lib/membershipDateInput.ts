@@ -1,16 +1,8 @@
+import { formatBrazilDateShortInput } from '@/lib/inputMasks';
+
 /** Máscara dd/mm/aa para data de filiação. */
 export function formatMembershipDateInput(value: string): string {
-  const cleaned = value.replace(/\D/g, '').slice(0, 6);
-
-  if (cleaned.length <= 2) {
-    return cleaned;
-  }
-
-  if (cleaned.length <= 4) {
-    return `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
-  }
-
-  return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4, 6)}`;
+  return formatBrazilDateShortInput(value);
 }
 
 /** Converte ISO (YYYY-MM-DD) para dd/mm/aa. */

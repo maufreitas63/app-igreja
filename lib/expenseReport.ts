@@ -1,10 +1,11 @@
 import { createUuid } from '@/lib/createUuid';
 import { getAppParameterValue } from '@/lib/appParameters';
-import { loadSessionProfile } from '@/lib/loadSessionProfile';
 import {
   deleteFinancialReceiptFile,
   uploadExpenseReportReceiptImage,
 } from '@/lib/financialReceipt';
+import { formatBrazilDateInput } from '@/lib/inputMasks';
+import { loadSessionProfile } from '@/lib/loadSessionProfile';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
 import { getStoredUserPhone } from '@/lib/userSession';
@@ -306,19 +307,7 @@ export const getExpenseReportTodayDateInput = () => {
   return `${day}/${month}/${year}`;
 };
 
-export const sanitizeExpenseReportDateInput = (value: string) => {
-  const digits = value.replace(/\D/g, '').slice(0, 8);
-
-  if (digits.length <= 2) {
-    return digits;
-  }
-
-  if (digits.length <= 4) {
-    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  }
-
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-};
+export const sanitizeExpenseReportDateInput = (value: string) => formatBrazilDateInput(value);
 
 export const createEmptyExpenseReportDraftItem = (): ExpenseReportDraftItem => ({
   id: createUuid(),

@@ -10,6 +10,7 @@ import {
   type FinancialEntryEditFormState,
 } from '@/lib/maintenanceFinancialEntryForm';
 import type { FinancialEntry } from '@/lib/financialEntry';
+import { formatBrazilDateShortInput } from '@/lib/inputMasks';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
@@ -92,9 +93,13 @@ export function FinancialEntryEditModal({ visible, entry, saving, onClose, onSav
                 <TextInput
                   style={styles.input}
                   value={form.transactionDateInput}
-                  onChangeText={(value) => updateField('transactionDateInput', value)}
+                  onChangeText={(value) =>
+                    updateField('transactionDateInput', formatBrazilDateShortInput(value))
+                  }
                   placeholder="04/05/26"
                   placeholderTextColor="#64748B"
+                  keyboardType="number-pad"
+                  maxLength={8}
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!saving}

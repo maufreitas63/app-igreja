@@ -29,6 +29,10 @@ import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { dedupeFamilyMembers } from '@/lib/familyAudienceMembers';
 import { FAMILY_RELATIONSHIP_OPTIONS } from '@/lib/familyRelationshipOptions';
 import { formatFullName, normalizeFullNameKey } from '@/lib/fullName';
+import {
+  formatBrazilDateInput,
+  formatBrazilPhoneInput,
+} from '@/lib/inputMasks';
 import { detachMemberFromFamilyWithNewCode } from '@/lib/detachMemberFromFamily';
 import {
   applyNewFamilyCodeForRejectedMember,
@@ -76,20 +80,8 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const OPCOES_PARENTESCO = [...FAMILY_RELATIONSHIP_OPTIONS];
 
-const formatPhone = (value: string) => {
-  const cleaned = value.replace(/\D/g, '');
-  if (cleaned.length <= 2) return cleaned;
-  if (cleaned.length <= 6) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
-  if (cleaned.length <= 10) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
-  return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
-};
-
-const formatDate = (value: string) => {
-  const cleaned = value.replace(/\D/g, '');
-  if (cleaned.length <= 2) return cleaned;
-  if (cleaned.length <= 4) return `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
-  return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4, 8)}`;
-};
+const formatPhone = formatBrazilPhoneInput;
+const formatDate = formatBrazilDateInput;
 
 const normalizeMemberName = normalizeFullNameKey;
 
@@ -1417,15 +1409,18 @@ export default function ManageMembers() {
                   placeholderTextColor="#64748b"
                   value={phone}
                   onChangeText={(value) => {
-                    setPhone(value);
+                    const formatted = formatPhone(value);
+                    setPhone(formatted);
                     if (linkedProfile) {
                       setLinkedProfile(null);
                       setProfileLookupMessage(null);
                     }
                   }}
                   onBlur={() => {
-                    const formatted = formatPhone(phone);
-                    setPhone(formatted);
+                    const formatted = phone.trim() ? formatPhone(phone) : '';
+                    if (formatted !== phone) {
+                      setPhone(formatted);
+                    }
 
                     if (
                       editingMemberId ||

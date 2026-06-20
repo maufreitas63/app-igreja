@@ -72,6 +72,11 @@ import {
   type ProfileColumnAccess,
 } from '@/lib/accessControl';
 import { clearStoredProfileId, getStoredProfileId, getStoredUserPhone } from '@/lib/userSession';
+import {
+  formatBrazilCepInput,
+  formatBrazilDateInput,
+  formatBrazilPhoneInput,
+} from '@/lib/inputMasks';
 
 type ProfileRecord = {
   id: string;
@@ -208,31 +213,13 @@ const ONBOARDING_EXPANDED_SECTIONS: Record<ProfileSectionKey, boolean> = {
 
 const normalizePhone = (value: string | null | undefined) => (value ?? '').replace(/\D/g, '');
 
-const formatPhone = (value: string) => {
-  const cleaned = value.replace(/\D/g, '');
-  if (cleaned.length <= 2) return cleaned;
-  if (cleaned.length <= 6) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
-  if (cleaned.length <= 10) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
-  return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
-};
+const formatPhone = formatBrazilPhoneInput;
 
-const formatCep = (value: string) => {
-  const cleaned = value.replace(/\D/g, '').slice(0, 8);
-  if (cleaned.length <= 5) {
-    return cleaned;
-  }
+const formatCep = formatBrazilCepInput;
 
-  return `${cleaned.slice(0, 5)}-${cleaned.slice(5)}`;
-};
+const formatDate = formatBrazilDateInput;
 
 const normalizeCep = (value: string) => value.replace(/\D/g, '').slice(0, 8);
-
-const formatDate = (value: string) => {
-  const cleaned = value.replace(/\D/g, '');
-  if (cleaned.length <= 2) return cleaned;
-  if (cleaned.length <= 4) return `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
-  return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4, 8)}`;
-};
 
 const toIsoDate = (value: string) => {
   const cleaned = value.replace(/\D/g, '');
