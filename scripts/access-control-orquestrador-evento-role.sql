@@ -27,6 +27,13 @@ values
     true
   ),
   (
+    'screen',
+    'maintenance.card.event_orchestration',
+    'Manutenção — Orquestração do Evento',
+    'Card na manutenção para conduzir membros em tempo real durante o culto',
+    true
+  ),
+  (
     'table',
     'event_control',
     'Orquestração do evento (event_control)',
@@ -44,6 +51,7 @@ select r.id, res.id, g.can_view, g.can_update
  cross join (
     values
       ('screen', '/admin/orquestrador', true, true),
+      ('screen', 'maintenance.card.event_orchestration', true, true),
       ('table', 'event_control', true, true)
   ) as g(resource_type, resource_key, can_view, can_update)
   join public.access_resources res

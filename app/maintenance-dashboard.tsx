@@ -18,6 +18,7 @@ import { MaintenanceAccessControlCard } from '@/components/MaintenanceAccessCont
 import { MaintenanceFinancialsCard } from '@/components/MaintenanceFinancialsCard';
 import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCareCard';
 import { MaintenancePastoralRoleChangeCard } from '@/components/MaintenancePastoralRoleChangeCard';
+import { MaintenanceEventOrchestrationCard } from '@/components/MaintenanceEventOrchestrationCard';
 import { MaintenanceFamilyReceptionCard } from '@/components/MaintenanceFamilyReceptionCard';
 import { MaintenanceProfileCadastroCard } from '@/components/MaintenanceProfileCadastroCard';
 import { MaintenanceProfileAccessInsightsCard } from '@/components/MaintenanceProfileAccessInsightsCard';
@@ -132,7 +133,8 @@ type MaintenanceCarouselCard = {
     | 'family_reception'
     | 'financials'
     | 'access_control'
-    | 'profile_access_insights';
+    | 'profile_access_insights'
+    | 'event_orchestration';
 };
 
 type MaintenanceShortcut = {
@@ -154,6 +156,7 @@ const formatDisplayName = (fullName: string) => {
 const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '1', title: 'Programação de Eventos', content: 'events' },
   { id: '2', title: 'Cronograma de Eventos', content: 'events_gantt' },
+  { id: '15', title: 'Orquestração do Evento', content: 'event_orchestration' },
   { id: '3', title: 'Sala(s) - Check In', content: 'sala_monitor' },
   { id: '5', title: 'Tipos de Escala', content: 'scale_types' },
   { id: '6', title: 'Servos em Disponibilidade', content: 'scale_volunteers' },
@@ -1012,6 +1015,7 @@ export default function MaintenanceDashboard() {
             item.content === 'financials' && styles.panelCardFinancials,
             item.content === 'access_control' && styles.panelCardAccessControl,
             item.content === 'profile_access_insights' && styles.panelCardProfileAccessInsights,
+            item.content === 'event_orchestration' && styles.panelCardEventOrchestration,
             item.content === 'menu' && styles.panelCardMenu,
           ]}
         >
@@ -1118,6 +1122,8 @@ export default function MaintenanceDashboard() {
             <MaintenanceAccessControlCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'profile_access_insights' ? (
             <MaintenanceProfileAccessInsightsCard isActive={currentIndex === index} panelHeight={cardHeight} />
+          ) : item.content === 'event_orchestration' ? (
+            <MaintenanceEventOrchestrationCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'sala_monitor' ? (
             <MaintenanceSalaMonitorCard embedded panelHeight={cardHeight} />
           ) : item.content === 'events_gantt' ? (
@@ -1804,6 +1810,10 @@ const styles = StyleSheet.create({
   },
   panelCardProfileAccessInsights: {
     borderColor: 'rgba(250, 204, 21, 0.45)',
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
+  },
+  panelCardEventOrchestration: {
+    borderColor: 'rgba(56, 189, 248, 0.55)',
     padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardMenu: {

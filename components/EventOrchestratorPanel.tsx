@@ -1,0 +1,250 @@
+import { usePalette } from '@/context/PaletteContext';
+import {
+  fetchEventControlState,
+  sessionCanManageEventControl,
+  updateEventControlRoute,
+} from '@/lib/eventOrchestrationApi';
+import {
+  EVENT_ORCHESTRATION_LEADER_BUTTONS,
+  type EventOrchestrationRouteCode,
+} from '@/lib/eventOrchestrationRoutes';
+import { showAppToast } from '@/lib/appToast';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+
+type Props = {
+  isActive?: boolean;
+  contentContainerStyle?: StyleProp<ViewStyle>;
+  showTitle?: boolean;
+  compact?: boolean;
+};
+
+export function EventOrchestratorPanel({
+  isActive = true,
+  contentContainerStyle,
+  showTitle = true,
+  compact = false,
+}: Props) {
+  const { colors } = usePalette();
+
+  const [loading, setLoading] = useState(true);
+  const [allowed, setAllowed] = useState(false);
+  const [activeRoute, setActiveRoute] = useState<EventOrchestrationRouteCode | null>(null);
+  const [savingRoute, setSavingRoute] = useState<EventOrchestrationRouteCode | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadState = useCallback(async () => {
+    if (!isActive) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const [canManage, state] = await Promise.all([
+        sessionCanManageEventControl(),
+        fetchEventControlState(),
+      ]);
+
+      setAllowed(canManage);
+      setActiveRoute(state?.activeRoute ?? null);
+
+      if (!canManage) {
+        setError('Apenas perfis com o papel Orquestrador de Evento podem usar o orquestrador.');
+      }
+    } catch (loadError) {
+      setAllowed(false);
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : 'Não foi possível carregar o orquestrador.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [isActive]);
+
+  useEffect(() => {
+    void loadState();
+  }, [loadState]);
+
+  const handleSelectRoute = async (routeCode: EventOrchestrationRouteCode) => {
+    if (!allowed || savingRoute) {
+      return;
+    }
+
+    setSavingRoute(routeCode);
+    setError(null);
+
+    try {
+      const result = await updateEventControlRoute(routeCode);
+
+      if (!result.success) {
+        setError(result.message);
+        showAppToast({ type: 'error', text1: 'Orquestrador', text2: result.message });
+        return;
+      }
+
+      setActiveRoute(routeCode);
+      showAppToast({
+        type: 'success',
+        text1: 'Orquestrador',
+        text2: `Rota ativa: ${EVENT_ORCHESTRATION_LEADER_BUTTONS.find((item) => item.code === routeCode)?.label ?? routeCode}`,
+      });
+    } catch (saveError) {
+      const message =
+        saveError instanceof Error ? saveError.message : 'Não foi possível atualizar a rota.';
+      setError(message);
+      showAppToast({ type: 'error', text1: 'Orquestrador', text2: message });
+    } finally {
+      setSavingRoute(null);
+    }
+  };
+
+  return (
+    <ScrollView
+      contentContainerStyle={[styles.content, compact && styles.contentCompact, contentContainerStyle]}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      {showTitle ? (
+        <>
+          <Text style={[styles.title, compact && styles.titleCompact]}>Orquestrador do Evento</Text>
+          <Text style={styles.subtitle}>
+            Escolha para onde os membros conectados devem ser guiados em tempo real.
+          </Text>
+        </>
+      ) : null}
+
+      {loading ? <ActivityIndicator color={colors.accent} size="large" /> : null}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      {!loading && allowed ? (
+        <View style={styles.buttonsGrid}>
+          {EVENT_ORCHESTRATION_LEADER_BUTTONS.map((option) => {
+            const isActiveRoute = activeRoute === option.code;
+            const isSaving = savingRoute === option.code;
+
+            return (
+              <Pressable
+                key={option.code}
+                style={[
+                  styles.routeButton,
+                  compact && styles.routeButtonCompact,
+                  {
+                    backgroundColor: isActiveRoute ? colors.primary : `${colors.primary}CC`,
+                    borderColor: isActiveRoute ? colors.accent : `${colors.accent}66`,
+                  },
+                ]}
+                onPress={() => void handleSelectRoute(option.code)}
+                disabled={Boolean(savingRoute)}
+              >
+                {isSaving ? (
+                  <ActivityIndicator color="#0F172A" />
+                ) : (
+                  <>
+                    <Text style={[styles.routeButtonLabel, compact && styles.routeButtonLabelCompact]}>
+                      {option.label}
+                    </Text>
+                    {!compact ? <Text style={styles.routeButtonHint}>{option.code}</Text> : null}
+                  </>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+
+      {!loading ? (
+        <Pressable
+          style={[styles.refreshButton, { borderColor: `${colors.accent}88` }]}
+          onPress={() => void loadState()}
+        >
+          <Text style={[styles.refreshButtonText, { color: colors.accent }]}>Atualizar status</Text>
+        </Pressable>
+      ) : null}
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: {
+    gap: 14,
+    paddingBottom: 8,
+  },
+  contentCompact: {
+    gap: 10,
+  },
+  title: {
+    color: '#F8FAFC',
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  titleCompact: {
+    fontSize: 18,
+  },
+  subtitle: {
+    color: '#94A3B8',
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 4,
+  },
+  errorText: {
+    color: '#FCA5A5',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  buttonsGrid: {
+    gap: 10,
+  },
+  routeButton: {
+    minHeight: 72,
+    borderRadius: 16,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  routeButtonCompact: {
+    minHeight: 58,
+    borderRadius: 14,
+    paddingVertical: 10,
+  },
+  routeButtonLabel: {
+    color: '#0F172A',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  routeButtonLabelCompact: {
+    fontSize: 17,
+  },
+  routeButtonHint: {
+    color: 'rgba(15, 23, 42, 0.72)',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 3,
+  },
+  refreshButton: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginTop: 4,
+  },
+  refreshButtonText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+});
