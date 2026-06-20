@@ -10,6 +10,7 @@ import {
   type EventOrchestrationLeaderRouteCode,
 } from '@/lib/eventOrchestrationRoutes';
 import { showAppToast } from '@/lib/appToast';
+import { triggerOrchestrationHapticFeedback } from '@/lib/eventOrchestrationHaptics';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -83,6 +84,8 @@ export function EventOrchestratorPanel({
     if (!allowed || savingRoute) {
       return;
     }
+
+    triggerOrchestrationHapticFeedback();
 
     setSavingRoute(routeCode);
     setError(null);
