@@ -1,6 +1,9 @@
 import { EventOrchestrationGuidanceOverlay } from '@/components/EventOrchestrationGuidanceOverlay';
 import { showAppToast } from '@/lib/appToast';
-import { triggerOrchestrationHapticFeedback } from '@/lib/eventOrchestrationHaptics';
+import {
+  registerOrchestrationUserGestureListeners,
+  triggerOrchestrationHapticFeedback,
+} from '@/lib/eventOrchestrationHaptics';
 import {
   buildEventOrchestrationPathSignature,
   resolveEventOrchestrationTarget,
@@ -53,6 +56,10 @@ export function EventOrchestrationListener() {
     pathname,
     searchParams as Record<string, string | string[] | undefined>
   );
+
+  useEffect(() => {
+    return registerOrchestrationUserGestureListeners();
+  }, []);
 
   useEffect(() => {
     if (transitionInProgressRef.current || !appliedPathSignatureRef.current) {
@@ -131,15 +138,13 @@ export function EventOrchestrationListener() {
         visibilityTime: GUIDANCE_DELAY_MS + 800,
       });
 
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        navigator.vibrate(200);
-      } else {
-        triggerOrchestrationHapticFeedback();
-      }
+      void triggerOrchestrationHapticFeedback();
 
       await new Promise((resolve) => setTimeout(resolve, GUIDANCE_DELAY_MS));
 
       await fadeScreen(0.38);
+
+      void triggerOrchestrationHapticFeedback();
 
       if (target.pathSignature === '/(tabs)') {
         router.replace(target.href);

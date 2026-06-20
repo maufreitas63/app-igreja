@@ -12,6 +12,7 @@ export function EventOrchestrationGuidanceOverlay({ visible, message, onHidden }
   const { colors } = usePalette();
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(12)).current;
+  const scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (!visible) {
@@ -26,6 +27,11 @@ export function EventOrchestrationGuidanceOverlay({ visible, message, onHidden }
           duration: 280,
           useNativeDriver: true,
         }),
+        Animated.timing(scale, {
+          toValue: 1,
+          duration: 280,
+          useNativeDriver: true,
+        }),
       ]).start(({ finished }) => {
         if (finished) {
           onHidden?.();
@@ -33,6 +39,8 @@ export function EventOrchestrationGuidanceOverlay({ visible, message, onHidden }
       });
       return;
     }
+
+    scale.setValue(0.94);
 
     Animated.parallel([
       Animated.timing(opacity, {
@@ -45,8 +53,22 @@ export function EventOrchestrationGuidanceOverlay({ visible, message, onHidden }
         duration: 320,
         useNativeDriver: true,
       }),
+      Animated.sequence([
+        Animated.spring(scale, {
+          toValue: 1.05,
+          friction: 4,
+          tension: 180,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          friction: 6,
+          tension: 160,
+          useNativeDriver: true,
+        }),
+      ]),
     ]).start();
-  }, [onHidden, opacity, translateY, visible]);
+  }, [onHidden, opacity, scale, translateY, visible]);
 
   if (!visible && !message) {
     return null;
@@ -59,7 +81,7 @@ export function EventOrchestrationGuidanceOverlay({ visible, message, onHidden }
           styles.card,
           {
             opacity,
-            transform: [{ translateY }],
+            transform: [{ translateY }, { scale }],
             borderColor: `${colors.accent}88`,
             backgroundColor: `${colors.secondary}F2`,
           },

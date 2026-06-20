@@ -10,7 +10,7 @@ import {
   type EventOrchestrationLeaderRouteCode,
 } from '@/lib/eventOrchestrationRoutes';
 import { showAppToast } from '@/lib/appToast';
-import { triggerOrchestrationHapticFeedback } from '@/lib/eventOrchestrationHaptics';
+import { triggerOrchestrationButtonHaptic } from '@/lib/eventOrchestrationHaptics';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -85,8 +85,6 @@ export function EventOrchestratorPanel({
       return;
     }
 
-    triggerOrchestrationHapticFeedback();
-
     setSavingRoute(routeCode);
     setError(null);
 
@@ -150,8 +148,9 @@ export function EventOrchestratorPanel({
                     borderColor: isActiveRoute ? colors.accent : `${colors.accent}66`,
                   },
                 ]}
-                onPress={() => void handleSelectRoute(option.code)}
-                disabled={Boolean(savingRoute)}
+                    onPress={() => void handleSelectRoute(option.code)}
+                    onPressIn={triggerOrchestrationButtonHaptic}
+                    disabled={Boolean(savingRoute)}
               >
                 {isSaving ? (
                   <ActivityIndicator color="#0F172A" />
