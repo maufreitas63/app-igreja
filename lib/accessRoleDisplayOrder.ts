@@ -9,6 +9,7 @@ export const ACCESS_ROLE_DISPLAY_ORDER = [
   'family_acceptor',
   'lider',
   'events_admin',
+  'orquestrador_evento',
   'tesoureiro',
   'pastoral',
   'super_admin',

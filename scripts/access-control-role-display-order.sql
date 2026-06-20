@@ -13,6 +13,7 @@ as $$
     when 'family_acceptor' then 40
     when 'lider' then 45
     when 'events_admin' then 50
+    when 'orquestrador_evento' then 52
     when 'tesoureiro' then 55
     when 'pastoral' then 60
     when 'super_admin' then 70

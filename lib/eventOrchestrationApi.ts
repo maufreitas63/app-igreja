@@ -8,7 +8,7 @@ import {
 } from '@/lib/eventOrchestrationRoutes';
 
 export const EVENT_ORCHESTRATION_SQL_HINT =
-  'Execute no Supabase: scripts/event-control-orchestration.sql';
+  'Execute no Supabase: scripts/event-control-orchestration.sql e scripts/access-control-orquestrador-evento-role.sql';
 
 export type EventControlRow = {
   id: number;

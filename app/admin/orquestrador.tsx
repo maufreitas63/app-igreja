@@ -48,7 +48,7 @@ export default function EventOrchestratorScreen() {
       setActiveRoute(state?.activeRoute ?? null);
 
       if (!canManage) {
-        setError('Apenas administradores podem usar o orquestrador.');
+        setError('Apenas perfis com o papel Orquestrador de Evento podem usar o orquestrador.');
       }
     } catch (loadError) {
       setAllowed(false);

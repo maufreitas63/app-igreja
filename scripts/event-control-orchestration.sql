@@ -1,5 +1,6 @@
 -- Orquestração em tempo real (event_control) — sinal do líder para rotas do app.
 -- Execute no SQL Editor do Supabase.
+-- Papel dedicado: scripts/access-control-orquestrador-evento-role.sql (após este script).
 
 create table if not exists public.event_control (
   id integer primary key,
@@ -24,9 +25,7 @@ set search_path = public
 as $$
   select
     public.is_super_admin_profile(p_profile_id)
-    or public.profile_has_role_code(p_profile_id, 'admin')
-    or public.profile_has_role_code(p_profile_id, 'pastoral')
-    or public.profile_has_role_code(p_profile_id, 'lider');
+    or public.profile_has_role_code(p_profile_id, 'orquestrador_evento');
 $$;
 
 create or replace function public.profile_can_manage_event_control(p_profile_id uuid)
@@ -65,7 +64,7 @@ begin
       'success',
       false,
       'message',
-      'Apenas administradores podem alterar a orquestração do evento.'
+      'Apenas orquestradores de evento podem alterar a orquestração.'
     );
   end if;
 

@@ -12,4 +12,5 @@ export const ACCESS_SCREEN = {
   expenseReport: '/expense-report',
   mapGeolocation: '/mapa-geolocalizacao',
   lgpd: '/lgpd',
+  eventOrchestrator: '/admin/orquestrador',
 } as const;
