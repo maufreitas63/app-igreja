@@ -97,7 +97,11 @@ export function useMaintenancePastoralRoleChange(isActive: boolean) {
   );
 
   const updateMembershipDate = useCallback(
-    async (profileId: string, membershipDateIso: string | null) => {
+    async (
+      profileId: string,
+      membershipDateIso: string | null,
+      membershipOutIso: string | null
+    ) => {
       setSavingProfileId(profileId);
       setError(null);
 
@@ -105,21 +109,35 @@ export function useMaintenancePastoralRoleChange(isActive: boolean) {
 
       setAllProfiles((current) =>
         current.map((profile) =>
-          profile.id === profileId ? { ...profile, membershipDate: membershipDateIso } : profile
+          profile.id === profileId
+            ? {
+                ...profile,
+                membershipDate: membershipDateIso,
+                membershipOut: membershipOutIso,
+              }
+            : profile
         )
       );
 
       try {
-        const result = await updateProfileMembershipDate(profileId, membershipDateIso);
+        const result = await updateProfileMembershipDate(
+          profileId,
+          membershipDateIso,
+          membershipOutIso
+        );
 
         if (!result.success) {
           setAllProfiles(previousProfiles);
           setError(result.message);
-        } else if (result.membershipDate !== undefined) {
+        } else {
           setAllProfiles((current) =>
             current.map((profile) =>
               profile.id === profileId
-                ? { ...profile, membershipDate: result.membershipDate ?? null }
+                ? {
+                    ...profile,
+                    membershipDate: result.membershipDate ?? null,
+                    membershipOut: result.membershipOut ?? null,
+                  }
                 : profile
             )
           );
@@ -131,7 +149,7 @@ export function useMaintenancePastoralRoleChange(isActive: boolean) {
         const message =
           saveError instanceof Error
             ? saveError.message
-            : 'Não foi possível salvar a data de filiação.';
+            : 'Não foi possível salvar as datas de membresia.';
         setError(message);
         return { success: false as const, message };
       } finally {

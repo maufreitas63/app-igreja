@@ -37,7 +37,9 @@ type MembershipDateEditorState = {
   profileId: string;
   profileName: string;
   dateInput: string;
+  outDateInput: string;
   error: string | null;
+  outError: string | null;
 };
 
 export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight }: Props) {
@@ -92,7 +94,9 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
       profileId: profile.id,
       profileName: formatShortName(profile.fullName),
       dateInput: formatMembershipDateFromIso(profile.membershipDate),
+      outDateInput: formatMembershipDateFromIso(profile.membershipOut),
       error: null,
+      outError: null,
     });
   };
 
@@ -108,19 +112,44 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
     );
   };
 
+  const handleChangeMembershipOutDateInput = (value: string) => {
+    setMembershipDateEditor((current) =>
+      current
+        ? {
+            ...current,
+            outDateInput: formatMembershipDateInput(value),
+            outError: null,
+          }
+        : current
+    );
+  };
+
   const handleSaveMembershipDate = async () => {
     if (!membershipDateEditor) {
       return;
     }
 
     const membershipDateIso = parseMembershipDateInputToIso(membershipDateEditor.dateInput);
+    const membershipOutIso = parseMembershipDateInputToIso(membershipDateEditor.outDateInput);
+
+    let dateError: string | null = null;
+    let outDateError: string | null = null;
 
     if (membershipDateEditor.dateInput.trim() && !membershipDateIso) {
+      dateError = 'Informe uma data válida no formato dd/mm/aa.';
+    }
+
+    if (membershipDateEditor.outDateInput.trim() && !membershipOutIso) {
+      outDateError = 'Informe uma data válida no formato dd/mm/aa.';
+    }
+
+    if (dateError || outDateError) {
       setMembershipDateEditor((current) =>
         current
           ? {
               ...current,
-              error: 'Informe uma data válida no formato dd/mm/aa.',
+              error: dateError,
+              outError: outDateError,
             }
           : current
       );
@@ -129,7 +158,8 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
 
     const result = await updateMembershipDate(
       membershipDateEditor.profileId,
-      membershipDateIso
+      membershipDateIso,
+      membershipOutIso
     );
 
     Toast.show({
@@ -151,7 +181,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
         Lista de perfis elegíveis (exceto super admin e equipe pastoral). Use a busca para filtrar
         por nome, telefone ou código. Toque nos cabeçalhos Visitante, Congregado ou Membro para
         filtrar pelo papel atual. Membros exibem o nome em azul sublinhado — toque para ver ou
-        editar a data de membresia.
+        editar as datas de membresia (entrada e desligamento).
       </Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -309,8 +339,9 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
             <View style={styles.membershipDateBubble}>
               <Text style={styles.membershipDateTitle}>Data de Membresia</Text>
               <Text style={styles.membershipDateHelp}>
-                {membershipDateEditor.profileName} — informe ou edite a data no formato dd/mm/aa.
+                {membershipDateEditor.profileName} — informe ou edite as datas no formato dd/mm/aa.
               </Text>
+              <Text style={styles.membershipDateFieldLabel}>Data de entrada</Text>
               <TextInput
                 style={styles.membershipDateInput}
                 value={membershipDateEditor.dateInput}
@@ -319,11 +350,25 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                 placeholderTextColor="#64748B"
                 keyboardType="numeric"
                 maxLength={8}
-                returnKeyType="done"
+                returnKeyType="next"
                 autoFocus
               />
               {membershipDateEditor.error ? (
                 <Text style={styles.membershipDateError}>{membershipDateEditor.error}</Text>
+              ) : null}
+              <Text style={styles.membershipDateFieldLabel}>Data de desligamento</Text>
+              <TextInput
+                style={styles.membershipDateInput}
+                value={membershipDateEditor.outDateInput}
+                onChangeText={handleChangeMembershipOutDateInput}
+                placeholder="dd/mm/aa"
+                placeholderTextColor="#64748B"
+                keyboardType="numeric"
+                maxLength={8}
+                returnKeyType="done"
+              />
+              {membershipDateEditor.outError ? (
+                <Text style={styles.membershipDateError}>{membershipDateEditor.outError}</Text>
               ) : null}
               <View style={styles.membershipDateActions}>
                 <TouchableOpacity
@@ -541,6 +586,12 @@ const styles = StyleSheet.create({
     color: '#CBD5E1',
     fontSize: 12,
     lineHeight: 16,
+  },
+  membershipDateFieldLabel: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 2,
   },
   membershipDateInput: {
     borderWidth: 1,

@@ -19,6 +19,7 @@ export type PastoralRoleChangeProfile = {
   phone: string | null;
   memberCode: string | null;
   membershipDate: string | null;
+  membershipOut: string | null;
   currentRoleCode: PastoralBasicRoleCode;
 };
 
@@ -60,6 +61,11 @@ const parseProfileRows = (data: unknown): PastoralRoleChangeProfile[] => {
           ? String(record.membership_date).trim() || null
           : record.membershipDate
             ? String(record.membershipDate).trim() || null
+            : null,
+        membershipOut: record.membership_out
+          ? String(record.membership_out).trim() || null
+          : record.membershipOut
+            ? String(record.membershipOut).trim() || null
             : null,
         currentRoleCode: parseBasicRoleCode(record.current_role_code ?? record.currentRoleCode),
       } satisfies PastoralRoleChangeProfile;
@@ -175,7 +181,8 @@ export async function setPastoralBasicRoleForProfile(
 
 export async function updateProfileMembershipDate(
   targetProfileId: string,
-  membershipDateIso: string | null
+  membershipDateIso: string | null,
+  membershipOutIso: string | null
 ) {
   const actorProfileId = await resolveActorProfileId();
 
@@ -187,6 +194,7 @@ export async function updateProfileMembershipDate(
     p_actor_profile_id: actorProfileId,
     p_target_profile_id: targetProfileId,
     p_membership_date: membershipDateIso,
+    p_membership_out: membershipOutIso,
   });
 
   if (error) {
@@ -202,13 +210,15 @@ export async function updateProfileMembershipDate(
 
   const record = (data ?? {}) as Record<string, unknown>;
   const savedDate = record.membership_date ? String(record.membership_date) : null;
+  const savedOutDate = record.membership_out ? String(record.membership_out) : null;
 
   return {
     success: record.success === true,
     message: String(
       record.message
-        ?? (record.success === true ? 'Data de filiação atualizada.' : 'Não foi possível salvar a data de filiação.')
+        ?? (record.success === true ? 'Datas de membresia atualizadas.' : 'Não foi possível salvar as datas de membresia.')
     ),
     membershipDate: savedDate,
+    membershipOut: savedOutDate,
   } as const;
 }
