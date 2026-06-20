@@ -1,5 +1,6 @@
 import { buildCepAddressPayload } from '@/lib/cepUtils';
 import { getEntityPrefixBrowser } from '@/lib/entityPrefixBrowser';
+import { formatFullName } from '@/lib/fullName';
 import {
   FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS,
   FAMILY_INFORMANT_RELATIONSHIP,
@@ -150,7 +151,7 @@ async function buildFamilyRegistrationRpcPayload(
   const dependents: FamilyRegistrationRpcPayload['dependents'] = [];
 
   for (const dependent of values.dependents) {
-    const name = dependent.fullName.trim();
+    const name = formatFullName(dependent.fullName);
     if (!name) {
       continue;
     }
@@ -181,7 +182,7 @@ async function buildFamilyRegistrationRpcPayload(
 
   return {
     informant: {
-      full_name: values.informant.fullName.trim(),
+      full_name: formatFullName(values.informant.fullName),
       birth_date: informantBirthIso,
       phone: informantPhone,
       ...address,

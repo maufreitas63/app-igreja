@@ -1,4 +1,5 @@
 import { getCachedOrFetch, invalidateAsyncCache } from '@/lib/asyncResultCache';
+import { formatFullName } from '@/lib/fullName';
 import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
@@ -29,7 +30,7 @@ export type FamilyReceptionSubmission = {
 
 const parseMember = (row: Record<string, unknown>): FamilyReceptionMember | null => {
   const id = String(row.id ?? '').trim();
-  const fullName = String(row.full_name ?? '').trim();
+  const fullName = formatFullName(String(row.full_name ?? ''));
 
   if (!id || !fullName) {
     return null;

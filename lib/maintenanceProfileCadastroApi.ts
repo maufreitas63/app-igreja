@@ -2,6 +2,7 @@ import {
   syncProfileAddressFromCep as syncProfileAddressFromCepRpc,
   type SyncProfileAddressInput,
 } from '@/lib/syncProfileAddressFromCep';
+import { formatFullName } from '@/lib/fullName';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
 import { getStoredProfileId } from '@/lib/userSession';
@@ -60,7 +61,7 @@ const PROFILE_CADASTRO_SELECT =
 
 const mapProfileCadastroPickerRow = (row: Record<string, unknown>): ProfileCadastroPickerOption | null => {
   const id = String(row.id ?? '').trim();
-  const fullName = String(row.full_name ?? '').trim();
+  const fullName = formatFullName(String(row.full_name ?? ''));
 
   if (!id || !fullName) {
     return null;
@@ -127,7 +128,10 @@ export async function fetchProfileCadastro(profileId: string): Promise<ProfileCa
     return null;
   }
 
-  return data as ProfileCadastroRecord;
+  return {
+    ...(data as ProfileCadastroRecord),
+    full_name: formatFullName(data.full_name),
+  };
 }
 
 export type { SyncProfileAddressInput } from '@/lib/syncProfileAddressFromCep';

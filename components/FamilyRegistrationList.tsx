@@ -8,6 +8,7 @@ import {
   unregisterProfileFromEvent,
 } from '@/lib/profileEventRegistration';
 import { resolveActiveSessionMember } from '@/lib/resolveActiveSessionMember';
+import { formatFullName } from '@/lib/fullName';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -125,8 +126,7 @@ export const FamilyRegistrationList = ({
     }
 
     const displayName =
-      sessionProfile.full_name?.trim()
-      || sessionProfileName?.trim()
+      formatFullName(sessionProfile.full_name ?? sessionProfileName)
       || 'Participante';
 
     return {

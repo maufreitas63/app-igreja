@@ -26,6 +26,7 @@ import {
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { formatRoomMonitorNames } from '@/lib/roomMonitorScales';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
+import { formatFullName } from '@/lib/fullName';
 import {
   fetchFamilyMembersForDirectoryEntry,
   fetchMembersDirectoryFromProfiles,
@@ -980,7 +981,7 @@ export default function Dashboard() {
       const parsedEntries = (data ?? [])
         .map((entry) => {
           const parts = parseBirthdayParts(entry.birth_date);
-          const fullName = entry.full_name?.trim();
+          const fullName = formatFullName(entry.full_name);
 
           if (!parts || !fullName) {
             return null;

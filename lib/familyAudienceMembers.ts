@@ -1,5 +1,6 @@
 import type { FamilyMember } from '@/hooks/useFamilyMembers';
 import { normalizeFamilyCode } from '@/lib/family';
+import { formatFullName, normalizeFullNameKey } from '@/lib/fullName';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { resolveActiveSessionMember } from '@/lib/resolveActiveSessionMember';
@@ -14,14 +15,6 @@ export type SessionProfileAudience = {
   family_id?: string | null;
 };
 
-const normalizeName = (value: string | null | undefined) =>
-  (value ?? '')
-    .trim()
-    .toLocaleLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ');
-
 const normalizePhone = (value: string | null | undefined) => (value ?? '').replace(/\D/g, '');
 
 const memberDedupKey = (member: Pick<FamilyMember, 'id' | 'full_name' | 'phone'>) => {
@@ -31,7 +24,7 @@ const memberDedupKey = (member: Pick<FamilyMember, 'id' | 'full_name' | 'phone'>
     return `phone:${phone}`;
   }
 
-  const name = normalizeName(member.full_name);
+  const name = normalizeFullNameKey(member.full_name);
 
   if (name) {
     return `name:${name}`;
@@ -115,9 +108,9 @@ const memberMatchesSessionProfile = (
     return true;
   }
 
-  const sessionName = normalizeName(sessionProfile.full_name ?? sessionProfileName);
+  const sessionName = normalizeFullNameKey(sessionProfile.full_name ?? sessionProfileName);
 
-  if (sessionName && normalizeName(member.full_name) === sessionName) {
+  if (sessionName && normalizeFullNameKey(member.full_name) === sessionName) {
     return true;
   }
 
@@ -139,7 +132,7 @@ export async function ensureSessionFamilyMemberRecord(
   }
 
   const displayName =
-    sessionProfile.full_name?.trim() || sessionProfileName?.trim() || 'Participante';
+    formatFullName(sessionProfile.full_name ?? sessionProfileName) || 'Participante';
 
   const { data: familyMembers, error: fetchError } = await supabase
     .from('members')

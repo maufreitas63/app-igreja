@@ -28,6 +28,7 @@ import { resolveSelfiePreviewUrl } from '@/lib/selfie';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { dedupeFamilyMembers } from '@/lib/familyAudienceMembers';
 import { FAMILY_RELATIONSHIP_OPTIONS } from '@/lib/familyRelationshipOptions';
+import { formatFullName, normalizeFullNameKey } from '@/lib/fullName';
 import { detachMemberFromFamilyWithNewCode } from '@/lib/detachMemberFromFamily';
 import {
   applyNewFamilyCodeForRejectedMember,
@@ -90,13 +91,7 @@ const formatDate = (value: string) => {
   return `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4, 8)}`;
 };
 
-const normalizeMemberName = (value: string | null | undefined) =>
-  (value ?? '')
-    .trim()
-    .toLocaleLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ');
+const normalizeMemberName = normalizeFullNameKey;
 
 const normalizeMemberPhoneDigits = (value: string | null | undefined) =>
   (value ?? '').replace(/\D/g, '');
@@ -267,7 +262,7 @@ async function loadManageMembersData(phoneParam: string | null): Promise<ManageM
         .maybeSingle();
 
       if (profile) {
-        profileName = profile.full_name ?? '';
+        profileName = formatFullName(profile.full_name);
         profilePhone = profile.phone;
         profileBirth = profile.birth_date;
         acceptorProfileId = profile.id ?? null;
@@ -282,7 +277,7 @@ async function loadManageMembersData(phoneParam: string | null): Promise<ManageM
         .maybeSingle();
 
       if (profile) {
-        profileName = profile.full_name ?? '';
+        profileName = formatFullName(profile.full_name);
         profilePhone = profile.phone;
         profileBirth = profile.birth_date;
         acceptorProfileId = profile.id ?? null;
@@ -299,7 +294,7 @@ async function loadManageMembersData(phoneParam: string | null): Promise<ManageM
         .maybeSingle();
 
       if (profile) {
-        profileName = profile.full_name ?? '';
+        profileName = formatFullName(profile.full_name);
         profilePhone = profile.phone;
         profileBirth = profile.birth_date;
         acceptorProfileId = profile.id ?? null;
@@ -319,6 +314,7 @@ async function loadManageMembersData(phoneParam: string | null): Promise<ManageM
 
     return (data ?? []).map((member) => ({
       ...member,
+      full_name: formatFullName(member.full_name),
       family_id: normalizeFamilyCode(member.family_id),
     }));
   };
@@ -470,7 +466,7 @@ export default function ManageMembers() {
 
   const applyProfileToMemberForm = useCallback((profile: ProfileMemberLookup) => {
     setLinkedProfile(profile);
-    setName(profile.full_name?.trim() ?? '');
+    setName(formatFullName(profile.full_name));
     setPhone(profile.phone ? formatPhone(profile.phone) : '');
     setBirthDate(profile.birth_date ? formatDisplayDate(profile.birth_date) : '');
     setPendingMemberPhoto(null);
@@ -844,7 +840,7 @@ export default function ManageMembers() {
 
     setEditingMemberId(editingId);
     setEditingMemberSnapshot(member);
-    setName(member.full_name ?? '');
+    setName(formatFullName(member.full_name));
     setPhone(member.phone ? formatPhone(member.phone) : '');
     setBirthDate(member.birth_date ? formatDisplayDate(member.birth_date) : '');
     setParentesco(member.relationship ?? '');
@@ -1027,7 +1023,7 @@ export default function ManageMembers() {
       }
     }
 
-    const normalizedName = name.trim() || resolvedLinkedProfile?.full_name?.trim() || '';
+    const normalizedName = formatFullName(name || resolvedLinkedProfile?.full_name || '');
 
     if (!normalizedName) {
       showFamilyInconsistencyToast(
@@ -1350,6 +1346,7 @@ export default function ManageMembers() {
                       setProfileLookupMessage(null);
                     }
                   }}
+                  onBlur={() => setName((current) => formatFullName(current))}
                 />
                 {!editingMemberId && nameSearchLoading ? (
                   <ActivityIndicator color="#10b981" style={styles.nameSearchLoader} />

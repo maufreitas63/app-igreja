@@ -37,6 +37,7 @@ import {
   PROFILE_GEO_FIELDS,
 } from '@/lib/profilesMapCache';
 import { syncProfileAddressFromCep } from '@/lib/syncProfileAddressFromCep';
+import { formatFullName } from '@/lib/fullName';
 // import { formatShortName } from '@/lib/formatShortName';
 // import {
 //   canSearchFamilyByMemberName,
@@ -483,6 +484,8 @@ const buildFieldRows = (profile: ProfileRecord | null): ProfileFieldRow[] => {
       value = formatDisplayDateLike(rawValue as string | null | undefined);
     } else if (kind === 'boolean') {
       value = formatBooleanValue(rawValue as boolean | null | undefined);
+    } else if (key === 'full_name') {
+      value = formatFullName(rawValue == null ? '' : String(rawValue)) || 'Sem valor';
     } else {
       value =
         rawValue === null || rawValue === undefined || rawValue === ''
@@ -1260,6 +1263,8 @@ export default function ManageProfile() {
       setEditingValue(formatBooleanValue(rawValue as boolean | null | undefined));
     } else if (field.key === 'cep') {
       setEditingValue(rawValue ? formatCep(String(rawValue)) : '');
+    } else if (field.key === 'full_name') {
+      setEditingValue(rawValue ? formatFullName(String(rawValue)) : '');
     } else {
       setEditingValue(rawValue ? String(rawValue) : '');
     }
@@ -1403,6 +1408,12 @@ export default function ManageProfile() {
         }
 
         nextValue = formattedPhone;
+      } else if (editingFieldRow.key === 'full_name') {
+        nextValue = formatFullName(editingValue);
+
+        if (!nextValue) {
+          throw new Error('O nome completo não pode ficar vazio.');
+        }
       } else if (editingFieldRow.kind === 'date') {
         nextValue = editingValue.trim() ? toIsoDate(editingValue) : null;
 
@@ -1794,7 +1805,7 @@ export default function ManageProfile() {
 
   const displayName =
     profile?.full_name && !isPlaceholderVisitorName(String(profile.full_name))
-      ? String(profile.full_name)
+      ? formatFullName(String(profile.full_name))
       : 'Perfil sem nome';
   const displayPhone = profile?.phone ? String(profile.phone) : 'Telefone não informado';
   const displayBirth = profile?.birth_date ? formatDisplayDateLike(String(profile.birth_date)) : 'Nascimento não informado';

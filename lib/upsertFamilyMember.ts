@@ -3,6 +3,7 @@ import {
   type FamilyMemberMatchRow,
 } from '@/lib/familyMemberMatch';
 import { normalizeFamilyCode } from '@/lib/family';
+import { formatFullName } from '@/lib/fullName';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { supabase } from '@/lib/supabase';
 
@@ -32,7 +33,7 @@ const isMissingUpsertRpcError = (error: unknown) => {
 
 const buildMemberPayload = (input: UpsertFamilyMemberInput) => {
   const familyId = normalizeFamilyCode(input.family_id);
-  const fullName = input.full_name.trim();
+  const fullName = formatFullName(input.full_name);
 
   return {
     familyId,

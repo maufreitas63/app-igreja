@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { formatFullName } from '@/lib/fullName';
 
 export type CompleteInitialProfileRegistrationInput = {
   profileId: string;
@@ -60,7 +61,7 @@ export async function completeInitialProfileRegistration(
 ): Promise<CompleteInitialProfileRegistrationResult> {
   const { data, error } = await supabase.rpc('complete_initial_profile_registration', {
     p_profile_id: input.profileId,
-    p_full_name: input.fullName.trim(),
+    p_full_name: formatFullName(input.fullName),
     p_birth_date: input.birthDateIso,
     p_phone: input.phone,
     p_cep: input.cep,

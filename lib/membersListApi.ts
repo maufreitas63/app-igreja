@@ -1,5 +1,6 @@
 import { compareFamilyMembersByRelationship } from '@/lib/familyRelationshipOptions';
 import { normalizeFamilyCode } from '@/lib/family';
+import { formatFullName } from '@/lib/fullName';
 import { formatShortName } from '@/lib/formatShortName';
 import { supabase } from '@/lib/supabase';
 
@@ -33,7 +34,7 @@ const mapDirectoryRows = (
   (data ?? [])
     .map((row) => {
       const profileId = String(row.profile_id ?? row.profileId ?? '').trim();
-      const fullName = String(row.full_name ?? row.fullName ?? '').trim();
+      const fullName = formatFullName(String(row.full_name ?? row.fullName ?? ''));
       const familyId = String(row.family_id ?? row.familyId ?? '').trim();
 
       if (!profileId || !fullName || !familyId) {
@@ -86,7 +87,7 @@ const mapFamilyDirectoryRows = (
     .map((row) => {
       const profileId = row.profile_id != null ? String(row.profile_id).trim() : '';
       const memberId = row.member_id != null ? String(row.member_id).trim() : '';
-      const fullName = String(row.full_name ?? row.fullName ?? '').trim();
+      const fullName = formatFullName(String(row.full_name ?? row.fullName ?? ''));
       const familyId = normalizeFamilyCode(
         String(row.family_id ?? row.familyId ?? normalizedFallbackFamilyId)
       );
@@ -134,7 +135,7 @@ const mapMembersFamilyDirectoryRows = (
   (data ?? [])
     .map((row) => {
       const memberId = String(row.member_id ?? row.id ?? '').trim();
-      const fullName = String(row.full_name ?? '').trim();
+      const fullName = formatFullName(String(row.full_name ?? ''));
 
       if (!memberId || !fullName) {
         return null;

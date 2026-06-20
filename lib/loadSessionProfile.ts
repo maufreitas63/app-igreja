@@ -1,6 +1,7 @@
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { phoneDigitsMatch, resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
+import { formatFullName } from '@/lib/fullName';
 import { supabase } from '@/lib/supabase';
 import { clearStoredProfileId, getStoredProfileId, persistProfileId } from '@/lib/userSession';
 
@@ -29,7 +30,7 @@ const normalizeProfileRow = (row: {
 
   return {
     id: row.id,
-    full_name: row.full_name,
+    full_name: formatFullName(row.full_name),
     codigo_membro: row.codigo_membro ?? familyId,
     family_id: familyId,
     lgpd_accepted: row.lgpd_accepted,
@@ -65,7 +66,7 @@ const enrichSessionProfileName = async (
   if (!memberError && memberRows?.[0]?.full_name?.trim()) {
     return {
       ...profile,
-      full_name: memberRows[0].full_name.trim(),
+      full_name: formatFullName(memberRows[0].full_name),
       phone: profile.phone ?? memberRows[0].phone,
     };
   }
@@ -75,7 +76,7 @@ const enrichSessionProfileName = async (
     return {
       ...profile,
       id: profile.id ?? profileByPhone.id,
-      full_name: profileByPhone.full_name.trim(),
+      full_name: formatFullName(profileByPhone.full_name),
       phone: profileByPhone.phone ?? profile.phone,
       codigo_membro: profile.codigo_membro ?? profileByPhone.codigo_membro,
       family_id: profile.family_id ?? profileByPhone.family_id,
@@ -169,7 +170,7 @@ export async function loadSessionProfile(targetPhone: string): Promise<SessionPr
       }
 
       return {
-        full_name: member.full_name,
+        full_name: formatFullName(member.full_name),
         codigo_membro: member.family_id,
         family_id: member.family_id,
         phone: member.phone,

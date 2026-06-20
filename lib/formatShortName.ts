@@ -1,6 +1,8 @@
+import { formatFullName } from '@/lib/fullName';
+
 /** Primeiro nome + último sobrenome (nome curto para listas). */
 export function formatShortName(fullName: string | null | undefined) {
-  const trimmed = (fullName ?? '').trim();
+  const trimmed = formatFullName(fullName);
   if (!trimmed) {
     return '—';
   }

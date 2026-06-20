@@ -6,6 +6,7 @@ import {
 } from '@/lib/cepGeolocationApi';
 import { shouldClientGeocodeCep } from '@/lib/geocodingPolicy';
 import { enrichProfilesMapAddresses } from '@/lib/enrichProfileMapAddress';
+import { formatFullName } from '@/lib/fullName';
 import {
   isCoordPlausibleForProfile,
   isDegenerateMapCoord,
@@ -199,7 +200,7 @@ const fetchAndBuildSnapshot = async (
   const profilesList = attachMapAclToProfiles(
     rawProfiles.map((row) => ({
       id: row.id,
-      full_name: row.full_name,
+      full_name: formatFullName(row.full_name),
       phone: row.phone,
       cep: row.cep,
       address_street: row.address_street,

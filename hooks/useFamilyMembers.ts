@@ -1,4 +1,5 @@
 import { normalizeFamilyCode } from '@/lib/family';
+import { formatFullName } from '@/lib/fullName';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { applyProfileBirthDates } from '../lib/profileBirthDates';
 import { supabase } from '@/lib/supabase';
@@ -46,6 +47,7 @@ export const useFamilyMembers = (familyId: string) => {
     } else {
       const normalizedMembers = ((data as FamilyMember[]) ?? []).map((member) => ({
         ...member,
+        full_name: formatFullName(member.full_name),
         family_id: normalizeFamilyCode(member.family_id),
       }));
       const nextMembers = await applyProfileBirthDates(normalizedMembers);

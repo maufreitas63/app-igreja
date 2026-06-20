@@ -19,6 +19,7 @@ import {
   type FamilyDependentRelationship,
   type FamilyRegistrationFormValues,
 } from '@/lib/familyRegistration';
+import { formatFullName } from '@/lib/fullName';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
@@ -218,7 +219,14 @@ export function FamilyRegistrationForm() {
                   <FormItem className="sm:col-span-2">
                     <FormLabel>Nome completo</FormLabel>
                     <FormControl>
-                      <Input placeholder="Nome e sobrenome" {...field} />
+                      <Input
+                        placeholder="Nome e sobrenome"
+                        {...field}
+                        onBlur={() => {
+                          field.onChange(formatFullName(field.value));
+                          field.onBlur();
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -385,7 +393,14 @@ export function FamilyRegistrationForm() {
                       <FormItem className="sm:col-span-2">
                         <FormLabel>Nome completo</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nome e sobrenome" {...field} />
+                          <Input
+                            placeholder="Nome e sobrenome"
+                            {...field}
+                            onBlur={() => {
+                              field.onChange(formatFullName(field.value));
+                              field.onBlur();
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

@@ -2,6 +2,7 @@ import { normalizeFamilyCode } from '@/lib/family';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
+import { formatFullName } from '@/lib/fullName';
 import { supabase } from '@/lib/supabase';
 
 export type ProfileMemberLookup = {
@@ -76,7 +77,7 @@ export async function hasAcceptedMemberInFamily(
 }
 
 export const buildProfileInFamilyMessage = (profile: ProfileMemberLookup) => {
-  const name = profile.full_name?.trim() || 'Este usuário';
+  const name = formatFullName(profile.full_name) || 'Este usuário';
   return `${name} já faz parte desta família.`;
 };
 
@@ -94,7 +95,7 @@ const mapProfileMemberLookupRow = (row: {
 
   return {
     id: String(row.id),
-    full_name: row.full_name ?? null,
+    full_name: formatFullName(row.full_name),
     phone: row.phone ?? null,
     birth_date: row.birth_date ?? null,
     family_id: (row.family_id ?? row.codigo_membro ?? null) as string | null,

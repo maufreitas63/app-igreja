@@ -1,5 +1,6 @@
 import type { ProfileAddressPatch } from '@/lib/profileAddress';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
+import { formatFullName } from '@/lib/fullName';
 import { supabase } from '@/lib/supabase';
 
 export type MemberProfileInput = {
@@ -33,7 +34,7 @@ const buildProfilePayload = (
   familyId: string,
   inheritedAddress?: ProfileAddressPatch | null
 ): ProfileUpsertPayload => ({
-  full_name: member.full_name.trim(),
+  full_name: formatFullName(member.full_name),
   phone: member.phone?.trim() || null,
   birth_date: member.birth_date,
   is_active: false,
@@ -134,7 +135,7 @@ async function insertProfileWithFallback(payload: ProfileUpsertPayload) {
 }
 
 export async function findProfileIdForMember(member: MemberProfileInput) {
-  const normalizedName = member.full_name.trim();
+  const normalizedName = formatFullName(member.full_name);
   const phone = member.phone?.trim() || null;
   const phoneVariants = phone ? buildPhoneDbQueryVariants(phone) : [];
 
@@ -182,7 +183,7 @@ export async function upsertProfileForManagedMember(
   inheritedAddress?: ProfileAddressPatch | null,
   explicitProfileId?: string | null
 ) {
-  const normalizedName = member.full_name.trim();
+  const normalizedName = formatFullName(member.full_name);
 
   if (!normalizedName) {
     return null;

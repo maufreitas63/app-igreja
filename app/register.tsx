@@ -23,6 +23,7 @@ import {
 } from '@/lib/lgpdTerms';
 import { reserveNextFamilyId } from '@/lib/family';
 import { completeInitialProfileRegistration } from '@/lib/completeInitialProfileRegistration';
+import { formatFullName } from '@/lib/fullName';
 import {
   isPlaceholderVisitorName,
   isProfilePendingSelfRegistration,
@@ -143,7 +144,7 @@ export default function RegisterScreen() {
 
           const savedName = typeof profile.full_name === 'string' ? profile.full_name.trim() : '';
           if (savedName && !isPlaceholderVisitorName(savedName)) {
-            setFullName(savedName);
+            setFullName(formatFullName(savedName));
           }
 
           const savedCep = typeof profile.cep === 'string' ? profile.cep.trim() : '';
@@ -269,8 +270,7 @@ export default function RegisterScreen() {
   };
 
   const handleNameChange = (text: string) => {
-    const formatted = text.replace(/\b\w/g, (char) => char.toUpperCase());
-    setFullName(formatted);
+    setFullName(text);
   };
 
   const handleCepChange = (text: string) => {
@@ -480,6 +480,7 @@ export default function RegisterScreen() {
                   value={fullName}
                   onChangeText={handleNameChange}
                   onFocus={handleNameFocus}
+                  onBlur={() => setFullName((current) => formatFullName(current))}
                 />
                 <TextInput style={styles.input} placeholder="Data Nascimento - dd/mm/aaaa" placeholderTextColor="#94A3B8" value={birthDate} onChangeText={handleDateChange} maxLength={10} keyboardType="numeric" />
                 <TextInput

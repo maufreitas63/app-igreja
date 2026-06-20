@@ -3,6 +3,7 @@ import {
   fetchSuperAdminWhatsAppPhone,
 } from '@/lib/familyReceptionNotificationApi';
 import { getEntityPrefix } from '@/lib/entityPrefix';
+import { formatFullName } from '@/lib/fullName';
 import { openWhatsAppPhone } from '@/lib/whatsapp';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
@@ -60,7 +61,7 @@ const markNotifierSeeded = async () => {
 const findInformantName = (submission: FamilyReceptionSubmission) => {
   const informant = submission.members.find((member) => member.isInformant);
 
-  return informant?.fullName?.trim() || submission.members[0]?.fullName?.trim() || null;
+  return formatFullName(informant?.fullName ?? submission.members[0]?.fullName) || null;
 };
 
 export const buildFamilyReceptionApprovalWhatsAppMessage = (

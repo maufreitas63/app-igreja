@@ -1,4 +1,5 @@
 import { normalizeFamilyCode } from '@/lib/family';
+import { formatFullName, normalizeFullNameKey } from '@/lib/fullName';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { phoneDigitsMatch } from '@/lib/resolveProfileByPhone';
@@ -14,20 +15,12 @@ export type FamilyMemberMatchRow = {
   accepted?: boolean | null;
 };
 
-const normalizeMemberName = (value: string | null | undefined) =>
-  (value ?? '')
-    .trim()
-    .toLocaleLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ');
-
 const memberNamesMatch = (
   left: string | null | undefined,
   right: string | null | undefined
 ) => {
-  const normalizedLeft = normalizeMemberName(left);
-  const normalizedRight = normalizeMemberName(right);
+  const normalizedLeft = normalizeFullNameKey(left);
+  const normalizedRight = normalizeFullNameKey(right);
 
   return Boolean(normalizedLeft && normalizedRight && normalizedLeft === normalizedRight);
 };
@@ -106,7 +99,7 @@ export async function findMemberDuplicateInFamily(
   excludeMemberId?: string | null
 ): Promise<FamilyMemberMatchRow | null> {
   const targetFamilyId = normalizeFamilyCode(familyId);
-  const trimmedName = input.full_name.trim();
+  const trimmedName = formatFullName(input.full_name);
 
   if (!targetFamilyId || !trimmedName) {
     return null;

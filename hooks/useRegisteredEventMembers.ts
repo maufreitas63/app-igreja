@@ -2,6 +2,7 @@ import {
   loadKidsTeensAgeLimits,
   resolveKidsTeensStatusFromBirthDate,
 } from '@/lib/kidsTeensStatus';
+import { normalizeFullNameKey } from '@/lib/fullName';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
 import type { FamilyMember } from './useFamilyMembers';
@@ -21,13 +22,8 @@ type ProfileLookup = {
   phone: string | null;
 };
 
-const normalizeName = (value: string | null | undefined) =>
-  (value ?? '')
-    .trim()
-    .toLocaleLowerCase()
-    .replace(/\s+/g, ' ');
-
 const normalizePhone = (value: string | null | undefined) => (value ?? '').replace(/\D/g, '');
+const normalizeName = normalizeFullNameKey;
 
 export const useRegisteredEventMembers = (
   eventId: string | undefined,

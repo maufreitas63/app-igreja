@@ -1,4 +1,5 @@
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
+import { formatFullName } from '@/lib/fullName';
 import { supabase } from '@/lib/supabase';
 
 export type ProfileVehicleRow = {
@@ -106,7 +107,7 @@ async function resolveOwnerByPhone(vehiclePhone: string): Promise<VehicleOwnerIn
 
   if (exactOwner) {
     return {
-      full_name: exactOwner.full_name ?? null,
+      full_name: formatFullName(exactOwner.full_name) || null,
       phone: exactOwner.phone ?? null,
       email: exactOwner.email ?? null,
     };
@@ -129,7 +130,7 @@ async function resolveOwnerByPhone(vehiclePhone: string): Promise<VehicleOwnerIn
 
     if (matchedProfile) {
       return {
-        full_name: matchedProfile.full_name ?? null,
+        full_name: formatFullName(matchedProfile.full_name) || null,
         phone: matchedProfile.phone ?? null,
         email: matchedProfile.email ?? null,
       };
@@ -151,7 +152,7 @@ async function resolveOwnerByPhone(vehiclePhone: string): Promise<VehicleOwnerIn
 
     if (matchedMember) {
       return {
-        full_name: matchedMember.full_name ?? null,
+        full_name: formatFullName(matchedMember.full_name) || null,
         phone: matchedMember.phone ?? null,
         email: null,
       };

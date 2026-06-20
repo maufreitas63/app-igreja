@@ -1,5 +1,6 @@
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
+import { formatFullName, normalizeFullNameKey } from '@/lib/fullName';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -94,12 +95,7 @@ export type UseEventRegistrationsByStatusOptions = {
   familyId?: string | null;
 };
 
-const normalizePersonName = (value: string | null | undefined) =>
-  (value ?? '')
-    .trim()
-    .toLocaleLowerCase('pt-BR')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+const normalizePersonName = normalizeFullNameKey;
 
 export const useEventRegistrationsByStatus = (
   eventId: string | null | undefined,
@@ -238,7 +234,7 @@ export const useEventRegistrationsByStatus = (
       }
 
       for (const row of (namedFamilyRows as NamedFamilyLookupRow[] | null) ?? []) {
-        const fullName = row.full_name?.trim();
+        const fullName = formatFullName(row.full_name);
         const familyId = row.family_id?.trim();
 
         if (fullName && familyId && !familyIdByFullName.has(fullName)) {
