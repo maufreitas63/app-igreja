@@ -393,3 +393,22 @@ export const formatPredictiveMonthLabel = (month: FinancialMonthKey) =>
   formatFinancialMonthLabel(month);
 
 export const PREDICTIVE_FORECAST_HORIZONS = FORECAST_HORIZONS;
+
+export const PREDICTIVE_LTV_FORMULA_TITLE = 'Fórmula do LTV eclesiástico';
+
+export const buildPredictiveLtvFormulaMessage = (horizonMonths: 12 | 24 | 36) =>
+  [
+    'Base de dados:',
+    '• Receita ordinária realizada (dízimos e ofertas).',
+    '• Membros líquidos = entradas (membership_date) − saídas (membership_out) por mês.',
+    '',
+    'LTV por novo membro/mês:',
+    'Média histórica de (Δ receita no mês seguinte ÷ Δ membros líquidos no mês),',
+    'onde Δ receita = receita do mês seguinte − receita do mês atual.',
+    '',
+    `LTV acumulado (${horizonMonths} meses):`,
+    'LTV por novo membro/mês × horizonte selecionado.',
+    '',
+    'Na previsão mensal, a parcela de crescimento usa:',
+    'membros líquidos médios históricos × LTV por novo membro/mês.',
+  ].join('\n');
