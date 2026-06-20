@@ -7,11 +7,11 @@ import {
   PREDICTIVE_FORECAST_HORIZONS,
   PREDICTIVE_LTV_FORMULA_TITLE,
 } from '@/lib/financialPredictiveModel';
+import { appAlert } from '@/lib/appAlert';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { usePredictiveInsights } from '@/hooks/usePredictiveInsights';
 import React, { useMemo, useState } from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -41,7 +41,7 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
   );
 
   const showLtvFormula = () => {
-    Alert.alert(PREDICTIVE_LTV_FORMULA_TITLE, buildPredictiveLtvFormulaMessage(horizon));
+    void appAlert(PREDICTIVE_LTV_FORMULA_TITLE, buildPredictiveLtvFormulaMessage(horizon), 'Entendi');
   };
 
   return (
@@ -119,7 +119,7 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
                     {formatPredictiveCurrency(model.revenuePerNewMemberHorizon[horizon])}
                   </Text>
                 </View>
-                <View style={styles.ltvFormulaButtonWrap}>
+                <View style={styles.summaryCardRightSlot}>
                   <TouchableOpacity
                     style={styles.ltvFormulaButton}
                     onPress={showLtvFormula}
@@ -127,7 +127,9 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
                     accessibilityRole="button"
                     accessibilityLabel="Ver fórmula de cálculo do LTV"
                   >
-                    <Text style={styles.ltvFormulaButtonText}>Fórmula LTV</Text>
+                    <Text style={styles.ltvFormulaButtonText} numberOfLines={2}>
+                      Fórmula{'\n'}LTV
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -281,18 +283,18 @@ const styles = StyleSheet.create({
   ltvFooterRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
+    justifyContent: 'space-between',
     width: '100%',
     gap: 8,
   },
-  ltvFormulaButtonWrap: {
-    flex: 1,
+  summaryCardRightSlot: {
+    width: '48%',
     minWidth: 140,
-    justifyContent: 'center',
     alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   ltvFormulaButton: {
-    width: '100%',
-    maxWidth: 317,
+    width: 118,
     minHeight: 60,
     borderWidth: 1,
     borderColor: 'rgba(34, 211, 238, 0.45)',
@@ -300,14 +302,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   ltvFormulaButtonText: {
     color: ACCENT,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
     textAlign: 'center',
+    lineHeight: 14,
   },
   summaryLabel: {
     color: '#94A3B8',
