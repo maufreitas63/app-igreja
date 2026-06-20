@@ -84,7 +84,8 @@ export function EventOrchestrationListener() {
 
   const currentPathSignature = buildEventOrchestrationPathSignature(
     pathname,
-    searchParams as Record<string, string | string[] | undefined>
+    searchParams as Record<string, string | string[] | undefined>,
+    segments
   );
 
   const currentPathSignatureRef = useRef(currentPathSignature);
@@ -175,11 +176,13 @@ export function EventOrchestrationListener() {
 
       const pathSignature = buildEventOrchestrationPathSignature(
         pathnameRef.current,
-        searchParamsRef.current as Record<string, string | string[] | undefined>
+        searchParamsRef.current as Record<string, string | string[] | undefined>,
+        segmentsRef.current
       );
 
       if (pathSignature === target.pathSignature) {
         lastProcessedUpdatedAtRef.current = updatedAt;
+        appliedPathSignatureRef.current = target.pathSignature;
         return;
       }
 

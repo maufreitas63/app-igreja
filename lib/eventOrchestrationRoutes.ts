@@ -106,9 +106,18 @@ export const resolveEventOrchestrationTarget = (activeRoute: string | null | und
 
 export const buildEventOrchestrationPathSignature = (
   pathname: string,
-  params: Record<string, string | string[] | undefined>
+  params: Record<string, string | string[] | undefined>,
+  segments: string[] = []
 ) => {
   const normalizedPath = pathname.replace(/\/+$/, '') || '/';
+
+  // Web/PWA: índice autenticado em `(tabs)` pode expor pathname `/` ou `/index`.
+  if (
+    segments[0] === '(tabs)'
+    && (normalizedPath === '/' || normalizedPath === '/index' || normalizedPath === '/(tabs)/index')
+  ) {
+    return '/(tabs)';
+  }
 
   if (
     normalizedPath.endsWith('/index')
