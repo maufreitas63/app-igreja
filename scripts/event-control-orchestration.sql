@@ -128,6 +128,8 @@ create policy event_control_update_admin
 
 grant select on public.event_control to anon, authenticated;
 
+alter table public.event_control replica identity full;
+
 do $$
 begin
   if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
