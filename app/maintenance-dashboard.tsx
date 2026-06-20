@@ -16,6 +16,7 @@ import { MaintenanceScaleTypesCard } from '@/components/MaintenanceScaleTypesCar
 import { MaintenanceScaleVolunteersCard } from '@/components/MaintenanceScaleVolunteersCard';
 import { MaintenanceAccessControlCard } from '@/components/MaintenanceAccessControlCard';
 import { MaintenanceFinancialsCard } from '@/components/MaintenanceFinancialsCard';
+import { MaintenancePredictiveInsightsCard } from '@/components/MaintenancePredictiveInsightsCard';
 import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCareCard';
 import { MaintenancePastoralRoleChangeCard } from '@/components/MaintenancePastoralRoleChangeCard';
 import { MaintenanceEventOrchestrationCard } from '@/components/MaintenanceEventOrchestrationCard';
@@ -132,6 +133,7 @@ type MaintenanceCarouselCard = {
     | 'profile_cadastro'
     | 'family_reception'
     | 'financials'
+    | 'predictive_insights'
     | 'access_control'
     | 'profile_access_insights'
     | 'event_orchestration';
@@ -163,6 +165,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '7', title: 'Programação de Escalas', content: 'scales' },
   { id: '8', title: 'Cuidado Pastoral', content: 'pastoral_care' },
   { id: '9', title: 'Informações Financeiras', content: 'financials' },
+  { id: '16', title: 'Modelo Preditivo', content: 'predictive_insights' },
   { id: '4', title: 'Lista de Presença', content: 'quorum_presence' },
   { id: '11', title: 'Cadastro de Usuário', content: 'profile_cadastro' },
   { id: '12', title: 'Recepção Familiar', content: 'family_reception' },
@@ -1013,6 +1016,7 @@ export default function MaintenanceDashboard() {
             item.content === 'profile_cadastro' && styles.panelCardProfileCadastro,
             item.content === 'family_reception' && styles.panelCardFamilyReception,
             item.content === 'financials' && styles.panelCardFinancials,
+            item.content === 'predictive_insights' && styles.panelCardPredictiveInsights,
             item.content === 'access_control' && styles.panelCardAccessControl,
             item.content === 'profile_access_insights' && styles.panelCardProfileAccessInsights,
             item.content === 'event_orchestration' && styles.panelCardEventOrchestration,
@@ -1118,6 +1122,8 @@ export default function MaintenanceDashboard() {
             <MaintenanceFamilyReceptionCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'financials' ? (
             <MaintenanceFinancialsCard isActive={currentIndex === index} panelHeight={cardHeight} />
+          ) : item.content === 'predictive_insights' ? (
+            <MaintenancePredictiveInsightsCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'access_control' ? (
             <MaintenanceAccessControlCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'profile_access_insights' ? (
@@ -1802,6 +1808,10 @@ const styles = StyleSheet.create({
   },
   panelCardFinancials: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.financials,
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
+  },
+  panelCardPredictiveInsights: {
+    borderColor: 'rgba(34, 211, 238, 0.55)',
     padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardAccessControl: {

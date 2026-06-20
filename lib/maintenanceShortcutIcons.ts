@@ -11,6 +11,7 @@ export type MaintenancePanelContent =
   | 'profile_cadastro'
   | 'family_reception'
   | 'financials'
+  | 'predictive_insights'
   | 'access_control'
   | 'profile_access_insights'
   | 'event_orchestration';
@@ -26,6 +27,7 @@ export type MaintenanceShortcutIconName =
   | 'heart'
   | 'exchange'
   | 'line-chart'
+  | 'area-chart'
   | 'id-card'
   | 'home'
   | 'shield'
@@ -47,6 +49,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   pastoral_care: 'heart',
   mudanca_papeis: 'exchange',
   financials: 'line-chart',
+  predictive_insights: 'area-chart',
   profile_cadastro: 'id-card',
   family_reception: 'home',
   access_control: 'shield',
@@ -66,6 +69,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   pastoral_care: '#F472B6',
   mudanca_papeis: '#FB7185',
   financials: '#34D399',
+  predictive_insights: '#22D3EE',
   profile_cadastro: '#A78BFA',
   family_reception: '#34D399',
   access_control: '#818CF8',
