@@ -284,50 +284,37 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
             ))}
           </View>
 
-          <SectionLabel variant="maintenance">Previsão de membros ({horizon} meses)</SectionLabel>
-          <View style={styles.table}>
-            <View style={styles.tableHeaderRow}>
-              <Text style={[styles.tableCell, styles.tableHeaderCell, styles.monthColumn]}>Mês</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Ent</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Sai</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Líq.</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Ativos</Text>
-            </View>
-            {forecastPoints.map((point) => (
-              <View key={`members-${formatPredictiveMonthLabel(point.month)}`} style={styles.tableRow}>
-                <Text style={[styles.tableCell, styles.monthColumn]}>
-                  {formatPredictiveMonthLabel(point.month)}
-                </Text>
-                <Text style={styles.tableCell}>{point.projectedEntries.toFixed(0)}</Text>
-                <Text style={styles.tableCell}>{point.projectedExits.toFixed(0)}</Text>
-                <Text style={styles.tableCell}>
-                  {point.projectedNetMemberChange >= 0 ? '+' : ''}
-                  {point.projectedNetMemberChange}
-                </Text>
-                <Text style={styles.tableCell}>{point.projectedActiveMembers.toFixed(0)}</Text>
-              </View>
-            ))}
-          </View>
-
           <SectionLabel variant="maintenance">Previsão de receita ({horizon} meses)</SectionLabel>
           <View style={styles.table}>
             <View style={styles.tableHeaderRow}>
               <Text style={[styles.tableCell, styles.tableHeaderCell, styles.monthColumn]}>Mês</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Total</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Sazonal</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Cresc.</Text>
+              <Text style={[styles.tableCell, styles.tableHeaderCell, styles.revenueCompactColumn]}>
+                Total
+              </Text>
+              <Text style={[styles.tableCell, styles.tableHeaderCell, styles.revenueCompactColumn]}>
+                Sazonal
+              </Text>
+              <Text style={[styles.tableCell, styles.tableHeaderCell, styles.revenueCompactColumn]}>
+                Cresc.
+              </Text>
+              <Text style={[styles.tableCell, styles.tableHeaderCell, styles.ativosColumn]}>Ativos</Text>
             </View>
             {forecastPoints.map((point) => (
               <View key={formatPredictiveMonthLabel(point.month)} style={styles.tableRow}>
                 <Text style={[styles.tableCell, styles.monthColumn]}>
                   {formatPredictiveMonthLabel(point.month)}
                 </Text>
-                <Text style={styles.tableCell}>{formatPredictiveCurrency(point.revenue)}</Text>
-                <Text style={styles.tableCell}>
+                <Text style={[styles.tableCell, styles.revenueCompactColumn]}>
+                  {formatPredictiveCurrency(point.revenue)}
+                </Text>
+                <Text style={[styles.tableCell, styles.revenueCompactColumn]}>
                   {formatPredictiveCurrency(point.revenueFromSeasonality)}
                 </Text>
-                <Text style={styles.tableCell}>
+                <Text style={[styles.tableCell, styles.revenueCompactColumn]}>
                   {formatPredictiveCurrency(point.revenueFromGrowth)}
+                </Text>
+                <Text style={[styles.tableCell, styles.ativosColumn]}>
+                  {point.projectedActiveMembers.toFixed(0)}
                 </Text>
               </View>
             ))}
@@ -509,5 +496,14 @@ const styles = StyleSheet.create({
   },
   monthColumn: {
     flex: 1.4,
+  },
+  revenueCompactColumn: {
+    flex: 0.72,
+    paddingHorizontal: 4,
+  },
+  ativosColumn: {
+    flex: 0.55,
+    paddingHorizontal: 6,
+    textAlign: 'right',
   },
 });
