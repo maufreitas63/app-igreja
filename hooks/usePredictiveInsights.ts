@@ -1,5 +1,6 @@
 import {
   buildPredictiveInsightsModel,
+  describePredictiveInsightsModelFailure,
   PREDICTIVE_DEFAULT_BASE_MONTHS,
   type PredictiveInsightsModel,
 } from '@/lib/financialPredictiveModel';
@@ -72,7 +73,10 @@ export function usePredictiveInsights(
     if (!nextModel) {
       setModel(null);
       setError(
-        'Histórico insuficiente para gerar previsões. Cadastre ao menos 6 meses de dízimos/ofertas ordinárias realizadas.'
+        describePredictiveInsightsModelFailure({
+          revenueByMonth: source.revenueByMonth,
+          baseCalculationMonths,
+        })
       );
       return;
     }

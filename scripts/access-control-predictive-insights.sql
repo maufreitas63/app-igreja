@@ -114,12 +114,12 @@ begin
     from public.financials f
    where f.transaction_date <= coalesce(p_end_date, current_date)
      and upper(trim(coalesce(f.budget_version, ''))) like '%REALIZ%'
-     and upper(trim(coalesce(f.transaction_kind, ''))) in ('ENTRADAS', 'ENTRADA')
-     and upper(trim(coalesce(f.movement, ''))) like '%ORDIN%'
-     and upper(trim(coalesce(f.movement, ''))) not like '%EXTRAORDIN%'
+     and upper(translate(trim(coalesce(f.transaction_kind, '')), 'ÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ', 'AAAAEEEIIIOOOOUUUC')) in ('ENTRADAS', 'ENTRADA')
+     and upper(translate(trim(coalesce(f.movement, '')), 'ÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ', 'AAAAEEEIIIOOOOUUUC')) like '%ORDIN%'
+     and upper(translate(trim(coalesce(f.movement, '')), 'ÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ', 'AAAAEEEIIIOOOOUUUC')) not like '%EXTRAORDIN%'
      and (
-       upper(trim(coalesce(f.ministry, ''))) = 'OFERTAS'
-       or upper(trim(coalesce(f.ministry, ''))) like '%DIZIM%'
+       upper(translate(trim(coalesce(f.ministry, '')), 'ÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ', 'AAAAEEEIIIOOOOUUUC')) = 'OFERTAS'
+       or upper(translate(trim(coalesce(f.ministry, '')), 'ÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ', 'AAAAEEEIIIOOOOUUUC')) like '%DIZIM%'
      )
    order by f.transaction_date asc;
 end;

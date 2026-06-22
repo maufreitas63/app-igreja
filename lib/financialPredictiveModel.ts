@@ -54,7 +54,9 @@ const FORECAST_HORIZONS = [12, 24, 36] as const;
 
 export const PREDICTIVE_DEFAULT_BASE_MONTHS = 12;
 
-export const PREDICTIVE_BASE_CALCULATION_MONTHS = [6, 12, 18, 24, 36] as const;
+export const PREDICTIVE_MIN_REGRESSION_MONTHS = 8;
+
+export const PREDICTIVE_BASE_CALCULATION_MONTHS = [8, 12, 18, 24, 36] as const;
 
 export type PredictiveBaseCalculationMonths = (typeof PREDICTIVE_BASE_CALCULATION_MONTHS)[number];
 
@@ -154,7 +156,7 @@ type SeasonalRegression = {
 const fitSeasonalLinearRegression = (
   points: PredictiveHistoricalPoint[]
 ): SeasonalRegression | null => {
-  if (points.length < 8) {
+  if (points.length < PREDICTIVE_MIN_REGRESSION_MONTHS) {
     return null;
   }
 
@@ -229,6 +231,39 @@ const fitSeasonalLinearRegression = (
 const average = (values: number[]) =>
   values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
 
+export const countPositiveRevenueMonths = (revenueByMonth: Map<string, number>) =>
+  [...revenueByMonth.values()].filter((value) => value > 0).length;
+
+export const describePredictiveInsightsModelFailure = (input: {
+  revenueByMonth: Map<string, number>;
+  baseCalculationMonths?: number;
+}): string => {
+  const positiveMonths = countPositiveRevenueMonths(input.revenueByMonth);
+  const baseCalculationMonths = Math.max(
+    PREDICTIVE_MIN_REGRESSION_MONTHS,
+    Math.floor(input.baseCalculationMonths ?? PREDICTIVE_DEFAULT_BASE_MONTHS)
+  );
+  const effectiveWindow = Math.min(positiveMonths, baseCalculationMonths);
+
+  if (positiveMonths === 0) {
+    return [
+      'Nenhum mês com receita ordinária de dízimos/ofertas foi encontrado.',
+      'Critério: REALIZADO, ENTRADAS, ORDINÁRIO, ministério OFERTAS ou Dízimos.',
+      'Se o financeiro já tem histórico, execute scripts/access-control-predictive-insights.sql no Supabase.',
+    ].join(' ');
+  }
+
+  if (positiveMonths < PREDICTIVE_MIN_REGRESSION_MONTHS) {
+    return `Histórico insuficiente: ${positiveMonths} mês(es) com receita ordinária (mínimo ${PREDICTIVE_MIN_REGRESSION_MONTHS}). Cadastre mais meses de dízimos/ofertas realizadas.`;
+  }
+
+  if (effectiveWindow < PREDICTIVE_MIN_REGRESSION_MONTHS) {
+    return `Janela de cálculo curta demais (${effectiveWindow} meses). Selecione ao menos ${PREDICTIVE_MIN_REGRESSION_MONTHS} meses na base preditiva.`;
+  }
+
+  return 'Não foi possível ajustar o modelo sazonal com o histórico disponível. Amplie a base de cálculo ou toque em Recalcular modelo.';
+};
+
 export const buildPredictiveInsightsModel = (input: {
   revenueByMonth: Map<string, number>;
   memberSeries: MemberGrowthMonthPoint[];
@@ -237,7 +272,7 @@ export const buildPredictiveInsightsModel = (input: {
 }): PredictiveInsightsModel | null => {
   const endMonth = input.endMonth ?? getCalendarMonthKey();
   const baseCalculationMonths = Math.max(
-    6,
+    PREDICTIVE_MIN_REGRESSION_MONTHS,
     Math.floor(input.baseCalculationMonths ?? PREDICTIVE_DEFAULT_BASE_MONTHS)
   );
   const memberByKey = new Map(
@@ -272,13 +307,13 @@ export const buildPredictiveInsightsModel = (input: {
 
   const revenueHistory = historicalPoints.filter((point) => point.revenue > 0);
 
-  if (revenueHistory.length < 6) {
+  if (revenueHistory.length < PREDICTIVE_MIN_REGRESSION_MONTHS) {
     return null;
   }
 
   const calculationHistory = revenueHistory.slice(-baseCalculationMonths);
 
-  if (calculationHistory.length < 6) {
+  if (calculationHistory.length < PREDICTIVE_MIN_REGRESSION_MONTHS) {
     return null;
   }
 
