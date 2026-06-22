@@ -162,7 +162,8 @@ Requisito de Node: **≥ 20.19.4** (ver `package.json` e `.nvmrc`).
 | Sintoma | O que verificar |
 |---------|------------------|
 | `Output directory "npm run build:web" not found` / build sem `npm install` | No painel **Settings → Builds**: **Build command** = `npm run build:web` e **Build output directory** = `dist` (não inverta os dois campos). Depois **Retry deployment**. |
-| Build falha com erro de memória | `NODE_OPTIONS=--max-old-space-size=6144` no Cloudflare |
+| `npm error command sh -c node scripts/cloudflare-pages-build.mjs` | Corrigido: removido postinstall. Build command deve ser `npm run build:web`. |
+| Build falha com erro de memória | `NODE_OPTIONS=--max-old-space-size=6144` no Cloudflare (o script também aplica no CI) |
 | `git` não encontrado no build | Não afeta o deploy atual; build usa `npm run build:web` |
 | Node 18 / erro Metro | `NODE_VERSION=20` nas variáveis do Cloudflare |
 | PWA antigo após deploy | Aguardar deploy **Success**; hard refresh (Ctrl+Shift+R); PWA: fechar e reabrir. Headers em `public/_headers` evitam cache longo do HTML |

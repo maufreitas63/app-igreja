@@ -1,5 +1,6 @@
 # Cloudflare Pages — pasta de saída do build (npm run build:web → dist).
-# O comando de build continua no painel: Settings → Builds → Build command = npm run build:web
+# No painel: Settings → Builds → Build command = npm run build:web
+#             Build output directory = dist  (ou deixe vazio se wrangler.toml for lido)
 # Ver DEPLOY_CLOUDFLARE.md
 
 name = "app-igreja"
