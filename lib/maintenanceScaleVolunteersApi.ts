@@ -1,3 +1,4 @@
+import { withActiveMembershipProfileFilter } from '@/lib/activeMemberProfile';
 import {
   parseMaintenanceScaleVolunteerRows,
   parseRegisterScaleRpc,
@@ -40,9 +41,9 @@ export async function searchProfilesForScaleVolunteer(query: string, limit = 25)
 
   const pattern = `%${normalized.replace(/[%_]/g, '')}%`;
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, full_name, phone, codigo_membro')
+  const { data, error } = await withActiveMembershipProfileFilter(
+    supabase.from('profiles').select('id, full_name, phone, codigo_membro')
+  )
     .not('full_name', 'is', null)
     .neq('full_name', '')
     .ilike('full_name', pattern)

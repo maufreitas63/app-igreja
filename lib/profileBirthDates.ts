@@ -1,3 +1,4 @@
+import { withActiveMembershipProfileFilter } from '@/lib/activeMemberProfile';
 import { supabase } from '@/lib/supabase';
 
 type MemberLike = {
@@ -99,10 +100,9 @@ async function loadProfilesForBirthDateLookup(members: MemberLike[]) {
   const profileRows: ProfileBirthRow[] = [];
 
   if (phones.length) {
-    const { data: phoneMatches, error: phoneError } = await supabase
-      .from('profiles')
-      .select('birth_date, full_name, phone')
-      .in('phone', phones);
+    const { data: phoneMatches, error: phoneError } = await withActiveMembershipProfileFilter(
+      supabase.from('profiles').select('birth_date, full_name, phone')
+    ).in('phone', phones);
 
     if (phoneError) {
       console.warn('Não foi possível enriquecer birth_date por telefone:', phoneError.message);
@@ -112,10 +112,9 @@ async function loadProfilesForBirthDateLookup(members: MemberLike[]) {
   }
 
   if (names.length) {
-    const { data: nameMatches, error: nameError } = await supabase
-      .from('profiles')
-      .select('birth_date, full_name, phone')
-      .in('full_name', names);
+    const { data: nameMatches, error: nameError } = await withActiveMembershipProfileFilter(
+      supabase.from('profiles').select('birth_date, full_name, phone')
+    ).in('full_name', names);
 
     if (nameError) {
       console.warn('Não foi possível enriquecer birth_date por nome:', nameError.message);

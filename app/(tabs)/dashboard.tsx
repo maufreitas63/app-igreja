@@ -26,6 +26,7 @@ import {
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { formatRoomMonitorNames } from '@/lib/roomMonitorScales';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
+import { withActiveMembershipProfileFilter } from '@/lib/activeMemberProfile';
 import { formatFullName } from '@/lib/fullName';
 import {
   fetchFamilyMembersForDirectoryEntry,
@@ -968,9 +969,9 @@ export default function Dashboard() {
     setBirthdaysError(null);
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, birth_date, phone')
+      const { data, error } = await withActiveMembershipProfileFilter(
+        supabase.from('profiles').select('full_name, birth_date, phone')
+      )
         .not('birth_date', 'is', null)
         .order('full_name', { ascending: true });
 
@@ -1142,7 +1143,9 @@ export default function Dashboard() {
     try {
       const [{ data, error }, { data: profilesData, error: profilesError }] = await Promise.all([
         supabase.rpc('listar_escalas'),
-        supabase.from('profiles').select('full_name, phone, family_id, codigo_membro'),
+        withActiveMembershipProfileFilter(
+          supabase.from('profiles').select('full_name, phone, family_id, codigo_membro')
+        ),
       ]);
 
       if (error) {
@@ -1424,7 +1427,9 @@ export default function Dashboard() {
     try {
       const [volunteers, { data: profilesData, error: profilesError }] = await Promise.all([
         fetchVolunteersForScaleType(scaleTypeId),
-        supabase.from('profiles').select('full_name, phone, family_id, codigo_membro'),
+        withActiveMembershipProfileFilter(
+          supabase.from('profiles').select('full_name, phone, family_id, codigo_membro')
+        ),
       ]);
 
       if (profilesError) {

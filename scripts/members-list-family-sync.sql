@@ -299,7 +299,22 @@ as $$
   );
 $$;
 
--- Membro na lista do dashboard: não visitante e não congregado sem papel member.
+-- Membro na lista do dashboard: membresia ativa, não visitante e não congregado sem papel member.
+create or replace function public.profile_has_active_membership(p_profile_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+      from public.profiles p
+     where p.id = p_profile_id
+       and p.membership_out is null
+  );
+$$;
+
 create or replace function public.profile_is_members_list_member(p_profile_id uuid)
 returns boolean
 language sql
@@ -308,7 +323,8 @@ security definer
 set search_path = public
 as $$
   select
-    not public.profile_is_visitantes_only(p_profile_id)
+    public.profile_has_active_membership(p_profile_id)
+    and not public.profile_is_visitantes_only(p_profile_id)
     and not (
       exists (
         select 1
@@ -373,6 +389,7 @@ begin
   from public.profiles p
   where p.full_name is not null
     and trim(p.full_name) <> ''
+    and p.membership_out is null
     and public.profile_is_members_list_member(p.id)
   order by trim(p.full_name) asc;
 end;
@@ -423,6 +440,7 @@ begin
   from public.profiles p
   where p.full_name is not null
     and trim(p.full_name) <> ''
+    and p.membership_out is null
     and public.profile_is_visitantes_only(p.id)
   order by trim(p.full_name) asc;
 end;
@@ -458,6 +476,17 @@ begin
     upper(trim(m.family_id)) as family_id
   from public.members m
   where upper(trim(m.family_id)) = upper(nullif(trim(coalesce(p_family_id, '')), ''))
+    and not exists (
+      select 1
+        from public.profiles p
+       where p.membership_out is not null
+         and public.directory_person_matches_member(
+           m.full_name,
+           m.phone,
+           trim(p.full_name),
+           nullif(trim(coalesce(p.phone, '')), '')
+         )
+    )
   order by
     public.family_relationship_display_rank(m.relationship),
     trim(m.full_name) asc;
@@ -509,6 +538,17 @@ begin
     cross join canonical c
     where c.family_id is not null
       and upper(trim(m.family_id)) = c.family_id
+      and not exists (
+        select 1
+          from public.profiles p
+         where p.membership_out is not null
+           and public.directory_person_matches_member(
+             m.full_name,
+             m.phone,
+             trim(p.full_name),
+             nullif(trim(coalesce(p.phone, '')), '')
+           )
+      )
   ),
   directory_profiles as (
     select
@@ -527,6 +567,7 @@ begin
     where c.family_id is not null
       and p.full_name is not null
       and trim(p.full_name) <> ''
+      and p.membership_out is null
       and (
         (p_visitors_only and public.profile_is_visitantes_only(p.id))
         or (not p_visitors_only and public.profile_is_members_list_member(p.id))
@@ -703,6 +744,7 @@ end;
 $$;
 
 grant execute on function public.session_has_members_directory_access() to anon, authenticated;
+grant execute on function public.profile_has_active_membership(uuid) to anon, authenticated;
 grant execute on function public.profile_is_members_list_member(uuid) to anon, authenticated;
 grant execute on function public.role_has_access(text, text, text, text) to anon, authenticated;
 grant execute on function public.resolve_member_family_id_for_directory_person(text, text) to anon, authenticated;

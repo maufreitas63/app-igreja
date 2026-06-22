@@ -21,6 +21,7 @@ const isServerTableCoord = (coord: LatLng | undefined): coord is LatLng => {
 
   return !Number.isNaN(coord.lat) && !Number.isNaN(coord.lng);
 };
+import { withActiveMembershipProfileFilter } from '@/lib/activeMemberProfile';
 import {
   attachMapAclToProfiles,
   fetchProfilesAclSyncFingerprint,
@@ -94,10 +95,12 @@ const isCacheCoordUsable = (
 
 export const fetchProfilesMapSyncFingerprint = async (): Promise<string | null> => {
   const [countResult, latestResult, aclFingerprint, geoFingerprint] = await Promise.all([
-    supabase.from('profiles').select('id', { count: 'exact', head: true }),
-    supabase
-      .from('profiles')
-      .select('updated_at')
+    withActiveMembershipProfileFilter(
+      supabase.from('profiles').select('id', { count: 'exact', head: true })
+    ),
+    withActiveMembershipProfileFilter(
+      supabase.from('profiles').select('updated_at')
+    )
       .order('updated_at', { ascending: false, nullsFirst: false })
       .limit(1)
       .maybeSingle(),
@@ -184,12 +187,13 @@ const fetchAndBuildSnapshot = async (
   googleApiKey: string | undefined,
   options?: { force?: boolean }
 ): Promise<ProfilesMapSnapshot> => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select(
-      'id, full_name, phone, cep, address_street, address_number, address_neighborhood, address_city, address_state'
-    )
-    .order('full_name', { ascending: true });
+  const { data, error } = await withActiveMembershipProfileFilter(
+    supabase
+      .from('profiles')
+      .select(
+        'id, full_name, phone, cep, address_street, address_number, address_neighborhood, address_city, address_state'
+      )
+  ).order('full_name', { ascending: true });
 
   if (error) {
     throw error;
