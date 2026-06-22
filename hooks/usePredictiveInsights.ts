@@ -1,5 +1,6 @@
 import {
   buildPredictiveInsightsModel,
+  PREDICTIVE_DEFAULT_BASE_MONTHS,
   type PredictiveInsightsModel,
 } from '@/lib/financialPredictiveModel';
 import {
@@ -10,7 +11,24 @@ import { useCallback, useEffect, useState } from 'react';
 
 export { PREDICTIVE_INSIGHTS_SQL_HINT };
 
-export function usePredictiveInsights(isActive: boolean) {
+type PredictiveSourceData = Awaited<ReturnType<typeof fetchPredictiveInsightsSourceData>>;
+
+const buildModelFromSource = (
+  source: PredictiveSourceData,
+  baseCalculationMonths: number
+): PredictiveInsightsModel | null =>
+  buildPredictiveInsightsModel({
+    revenueByMonth: source.revenueByMonth,
+    memberSeries: source.memberSeries,
+    endMonth: source.endMonth,
+    baseCalculationMonths,
+  });
+
+export function usePredictiveInsights(
+  isActive: boolean,
+  baseCalculationMonths = PREDICTIVE_DEFAULT_BASE_MONTHS
+) {
+  const [source, setSource] = useState<PredictiveSourceData | null>(null);
   const [model, setModel] = useState<PredictiveInsightsModel | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,24 +38,11 @@ export function usePredictiveInsights(isActive: boolean) {
     setError(null);
 
     try {
-      const source = await fetchPredictiveInsightsSourceData();
-      const nextModel = buildPredictiveInsightsModel({
-        revenueByMonth: source.revenueByMonth,
-        memberSeries: source.memberSeries,
-        endMonth: source.endMonth,
-      });
-
-      if (!nextModel) {
-        setModel(null);
-        setError(
-          'Histórico insuficiente para gerar previsões. Cadastre ao menos 6 meses de dízimos/ofertas ordinárias realizadas.'
-        );
-        return;
-      }
-
-      setModel(nextModel);
+      const nextSource = await fetchPredictiveInsightsSourceData();
+      setSource(nextSource);
     } catch (loadError) {
       console.error('Erro ao carregar modelo preditivo:', loadError);
+      setSource(null);
       setModel(null);
       setError(
         loadError instanceof Error
@@ -56,6 +61,25 @@ export function usePredictiveInsights(isActive: boolean) {
 
     void reload();
   }, [isActive, reload]);
+
+  useEffect(() => {
+    if (!source) {
+      return;
+    }
+
+    const nextModel = buildModelFromSource(source, baseCalculationMonths);
+
+    if (!nextModel) {
+      setModel(null);
+      setError(
+        'Histórico insuficiente para gerar previsões. Cadastre ao menos 6 meses de dízimos/ofertas ordinárias realizadas.'
+      );
+      return;
+    }
+
+    setModel(nextModel);
+    setError(null);
+  }, [source, baseCalculationMonths]);
 
   return {
     model,

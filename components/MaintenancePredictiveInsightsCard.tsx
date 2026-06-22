@@ -4,8 +4,11 @@ import {
   buildPredictiveLtvFormulaMessage,
   formatPredictiveCurrency,
   formatPredictiveMonthLabel,
+  PREDICTIVE_BASE_CALCULATION_MONTHS,
+  PREDICTIVE_DEFAULT_BASE_MONTHS,
   PREDICTIVE_FORECAST_HORIZONS,
   PREDICTIVE_LTV_FORMULA_TITLE,
+  type PredictiveBaseCalculationMonths,
 } from '@/lib/financialPredictiveModel';
 import { appAlert } from '@/lib/appAlert';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
@@ -27,7 +30,10 @@ type Props = {
 const ACCENT = '#22D3EE';
 
 export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight }: Props) {
-  const { model, loading, error, reload } = usePredictiveInsights(isActive);
+  const [baseCalculationMonths, setBaseCalculationMonths] = useState<PredictiveBaseCalculationMonths>(
+    PREDICTIVE_DEFAULT_BASE_MONTHS
+  );
+  const { model, loading, error, reload } = usePredictiveInsights(isActive, baseCalculationMonths);
   const [horizon, setHorizon] = useState<12 | 24 | 36>(12);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
@@ -35,13 +41,21 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
   const summary = model?.horizonSummaries[horizon] ?? null;
   const forecastPoints = model?.forecasts[horizon] ?? [];
 
-  const recentHistorical = useMemo(
-    () => (model ? model.historicalPoints.slice(-6) : []),
-    [model]
-  );
+  const recentHistorical = useMemo(() => {
+    if (!model) {
+      return [];
+    }
+
+    const revenuePoints = model.historicalPoints.filter((point) => point.revenue > 0);
+    return revenuePoints.slice(-model.calculationBaseMonths);
+  }, [model]);
 
   const showLtvFormula = () => {
-    void appAlert(PREDICTIVE_LTV_FORMULA_TITLE, buildPredictiveLtvFormulaMessage(horizon), 'Entendi');
+    void appAlert(
+      PREDICTIVE_LTV_FORMULA_TITLE,
+      buildPredictiveLtvFormulaMessage(horizon, model?.calculationBaseMonths ?? baseCalculationMonths),
+      'Entendi'
+    );
   };
 
   return (
@@ -157,7 +171,38 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
             {model.modelQuality.sampleMonths} meses
           </Text>
 
+          <SectionLabel variant="maintenance">Base de cálculo preditivo</SectionLabel>
+          <Text style={styles.metaText}>
+            Quantidade de meses com receita ordinária usados para sazonalidade, LTV e projeções
+            futuras. Padrão: últimos {PREDICTIVE_DEFAULT_BASE_MONTHS} meses.
+          </Text>
+          <View style={styles.horizonRow}>
+            {PREDICTIVE_BASE_CALCULATION_MONTHS.map((option) => {
+              const selected = baseCalculationMonths === option;
+
+              return (
+                <TouchableOpacity
+                  key={option}
+                  style={[styles.horizonChip, selected && styles.horizonChipSelected]}
+                  onPress={() => setBaseCalculationMonths(option)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={[styles.horizonChipText, selected && styles.horizonChipTextSelected]}>
+                    {option} meses
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
           <SectionLabel variant="maintenance">Histórico recente</SectionLabel>
+          <Text style={styles.metaText}>
+            {model.calculationBaseMonths} meses na base de cálculo
+            {model.calculationBaseMonths < baseCalculationMonths
+              ? ` (apenas ${model.calculationBaseMonths} com receita cadastrada)`
+              : ''}
+            .
+          </Text>
           <View style={styles.table}>
             <View style={styles.tableHeaderRow}>
               <Text style={[styles.tableCell, styles.tableHeaderCell, styles.monthColumn]}>Mês</Text>

@@ -46,10 +46,17 @@ export type PredictiveInsightsModel = {
     growthCorrelation: number;
     sampleMonths: number;
   };
+  calculationBaseMonths: number;
   lastHistoricalMonth: FinancialMonthKey;
 };
 
 const FORECAST_HORIZONS = [12, 24, 36] as const;
+
+export const PREDICTIVE_DEFAULT_BASE_MONTHS = 12;
+
+export const PREDICTIVE_BASE_CALCULATION_MONTHS = [6, 12, 18, 24, 36] as const;
+
+export type PredictiveBaseCalculationMonths = (typeof PREDICTIVE_BASE_CALCULATION_MONTHS)[number];
 
 const monthLabel = (month: number) =>
   [
@@ -226,8 +233,13 @@ export const buildPredictiveInsightsModel = (input: {
   revenueByMonth: Map<string, number>;
   memberSeries: MemberGrowthMonthPoint[];
   endMonth?: FinancialMonthKey;
+  baseCalculationMonths?: number;
 }): PredictiveInsightsModel | null => {
   const endMonth = input.endMonth ?? getCalendarMonthKey();
+  const baseCalculationMonths = Math.max(
+    6,
+    Math.floor(input.baseCalculationMonths ?? PREDICTIVE_DEFAULT_BASE_MONTHS)
+  );
   const memberByKey = new Map(
     input.memberSeries.map((point) => [formatFinancialMonthKey(point.month), point])
   );
@@ -264,17 +276,23 @@ export const buildPredictiveInsightsModel = (input: {
     return null;
   }
 
-  const regression = fitSeasonalLinearRegression(revenueHistory);
+  const calculationHistory = revenueHistory.slice(-baseCalculationMonths);
+
+  if (calculationHistory.length < 6) {
+    return null;
+  }
+
+  const regression = fitSeasonalLinearRegression(calculationHistory);
 
   if (!regression) {
     return null;
   }
 
-  const growthPairs = revenueHistory
+  const growthPairs = calculationHistory
     .slice(0, -1)
     .map((point, index) => ({
       netChange: point.netMemberChange,
-      nextRevenueDelta: revenueHistory[index + 1].revenue - point.revenue,
+      nextRevenueDelta: calculationHistory[index + 1].revenue - point.revenue,
     }))
     .filter((pair) => pair.netChange !== 0 || pair.nextRevenueDelta !== 0);
 
@@ -292,15 +310,15 @@ export const buildPredictiveInsightsModel = (input: {
     growthPairs.map((pair) => pair.nextRevenueDelta)
   );
 
-  const avgNetMemberChange = average(revenueHistory.map((point) => point.netMemberChange));
+  const avgNetMemberChange = average(calculationHistory.map((point) => point.netMemberChange));
   const lastActiveMembers =
-    revenueHistory[revenueHistory.length - 1]?.activeMembersEnd
+    calculationHistory[calculationHistory.length - 1]?.activeMembersEnd
     ?? historicalPoints[historicalPoints.length - 1]?.activeMembersEnd
     ?? 0;
 
-  const baselineMonthIndex = revenueHistory.length - 1;
-  const baselineMonth = revenueHistory[baselineMonthIndex].month;
-  const meanRevenue = average(revenueHistory.map((point) => point.revenue));
+  const baselineMonthIndex = calculationHistory.length - 1;
+  const baselineMonth = calculationHistory[baselineMonthIndex].month;
+  const meanRevenue = average(calculationHistory.map((point) => point.revenue));
 
   const seasonalityHighlights = Array.from({ length: 12 }, (_, index) => {
     const month = index + 1;
@@ -376,8 +394,9 @@ export const buildPredictiveInsightsModel = (input: {
     modelQuality: {
       revenueRSquared: regression.rSquared,
       growthCorrelation,
-      sampleMonths: revenueHistory.length,
+      sampleMonths: calculationHistory.length,
     },
+    calculationBaseMonths: calculationHistory.length,
     lastHistoricalMonth: baselineMonth,
   };
 };
@@ -396,11 +415,15 @@ export const PREDICTIVE_FORECAST_HORIZONS = FORECAST_HORIZONS;
 
 export const PREDICTIVE_LTV_FORMULA_TITLE = 'Fórmula do LTV eclesiástico';
 
-export const buildPredictiveLtvFormulaMessage = (horizonMonths: 12 | 24 | 36) =>
+export const buildPredictiveLtvFormulaMessage = (
+  horizonMonths: 12 | 24 | 36,
+  baseCalculationMonths = PREDICTIVE_DEFAULT_BASE_MONTHS
+) =>
   [
     'Base de dados:',
     '• Receita ordinária realizada (dízimos e ofertas).',
     '• Membros líquidos = entradas (membership_date) − saídas (membership_out) por mês.',
+    `• Janela de cálculo: últimos ${baseCalculationMonths} meses com receita.`,
     '',
     'LTV por novo membro/mês:',
     'Média histórica de (Δ receita no mês seguinte ÷ Δ membros líquidos no mês),',
