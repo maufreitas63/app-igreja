@@ -1,3 +1,4 @@
+import { isProfileVisibleInApp } from '@/lib/activeMemberProfile';
 import { compareFamilyMembersByRelationship } from '@/lib/familyRelationshipOptions';
 import { normalizeFamilyCode } from '@/lib/family';
 import { formatFullName } from '@/lib/fullName';
@@ -120,6 +121,38 @@ const mapFamilyDirectoryRows = (
     familyId: members[0]?.family_id ?? normalizedFallbackFamilyId,
     members,
   };
+};
+
+const filterEntriesWithActiveMembership = async <T extends { id: string }>(
+  entries: T[]
+): Promise<T[]> => {
+  const profileIds = [...new Set(entries.map((entry) => entry.id.trim()).filter(Boolean))];
+
+  if (!profileIds.length) {
+    return entries;
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, membership_out')
+    .in('id', profileIds);
+
+  if (error) {
+    console.warn('Não foi possível filtrar perfis com membership_out:', error.message);
+    return entries;
+  }
+
+  const departedProfileIds = new Set(
+    (data ?? [])
+      .filter((row) => !isProfileVisibleInApp(row.membership_out as string | null | undefined))
+      .map((row) => String(row.id))
+  );
+
+  if (!departedProfileIds.size) {
+    return entries;
+  }
+
+  return entries.filter((entry) => !departedProfileIds.has(entry.id));
 };
 
 const trackMissingRpc = (missingRpcs: Set<string>, error: { message?: string } | null, rpcName: string) => {
@@ -268,7 +301,9 @@ const fetchDirectoryFromRpc = async (
     throw error;
   }
 
-  return mapDirectoryRows(data as Array<Record<string, unknown>> | null);
+  return filterEntriesWithActiveMembership(
+    mapDirectoryRows(data as Array<Record<string, unknown>> | null)
+  );
 };
 
 export async function fetchMembersDirectoryFromProfiles(): Promise<MembersDirectoryEntry[]> {
@@ -303,7 +338,10 @@ export async function fetchFamilyMembersForDirectoryEntry(
   );
 
   if (byProfile.members.length > 0) {
-    return byProfile;
+    return {
+      familyId: byProfile.familyId,
+      members: await filterEntriesWithActiveMembership(byProfile.members),
+    };
   }
 
   const resolvedFamilyId = normalizeFamilyCode(byProfile.familyId) || displayedFamilyId;
@@ -315,7 +353,10 @@ export async function fetchFamilyMembersForDirectoryEntry(
     const byCode = await fetchFamilyMembersByFamilyCode(familyId, visitorsOnly, missingRpcs);
 
     if (byCode?.members.length) {
-      return byCode;
+      return {
+        familyId: byCode.familyId,
+        members: await filterEntriesWithActiveMembership(byCode.members),
+      };
     }
 
     const membersFromRpc = await fetchFamilyMembersFromMembersRpc(familyId, missingRpcs);
@@ -323,7 +364,7 @@ export async function fetchFamilyMembersForDirectoryEntry(
     if (membersFromRpc.length > 0) {
       return {
         familyId,
-        members: membersFromRpc,
+        members: await filterEntriesWithActiveMembership(membersFromRpc),
       };
     }
   }

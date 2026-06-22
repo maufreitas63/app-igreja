@@ -14,6 +14,7 @@
     "reset-project": "node ./scripts/reset-project.js",
     "web": "expo start --web --port 8081",
     "web:8083": "expo start --web --port 8083",
+    "build": "npm run build:web",
     "build:family-form": "vite build --config standalone/cadastro-familia/vite.config.ts",
     "test:family-address": "node scripts/test-family-registration-address.mjs",
     "test:recepcao-ibn": "node scripts/test-recepcao-ibn-by-phone.mjs",
@@ -30,7 +31,8 @@
     "build:docs:screens": "node scripts/build-manual-painel-screens.mjs && node scripts/build-manual-manutencao-screens.mjs",
     "build:access-roles-pdf": "node scripts/build-access-roles-pdf.mjs",
     "build:validation-checklist-xlsx": "node scripts/build-validation-checklist-xlsx.mjs",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "postinstall": "node scripts/cloudflare-pages-build.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
