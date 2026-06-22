@@ -2,13 +2,16 @@ import {
   ensureEventsOptionalColumns,
   getActiveEventSelect,
   isMissingRequerQuorumColumnError,
+  isMissingSomenteMembrosColumnError,
   isMissingTotemColumnError,
   setRequerQuorumColumnAvailable,
+  setSomenteMembrosColumnAvailable,
   setTotemAtivoColumnAvailable,
   withDefaultEventOptionals,
 } from '@/lib/eventsColumnSupport';
 import { isEventVisibleInEventPanel } from '@/lib/eventVisibility';
 import { lockPastEvents } from '@/lib/lockPastEvents';
+import { sessionIsActiveAppMember } from '@/lib/sessionMemberVisibility';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
@@ -27,6 +30,7 @@ export type ActiveEventListItem = {
   teens_room: boolean | null;
   totem_ativo: boolean | null;
   requer_quorum: boolean | null;
+  somente_membros: boolean | null;
   registeredCount: number;
   remainingCapacity: number | null;
   registrationCountError?: boolean;
@@ -52,6 +56,7 @@ const serializeEvents = (items: ActiveEventListItem[]) =>
       kids_room: event.kids_room,
       teens_room: event.teens_room,
       totem_ativo: event.totem_ativo,
+      somente_membros: event.somente_membros,
       registeredCount: event.registeredCount,
       remainingCapacity: event.remainingCapacity,
     }))
@@ -114,6 +119,8 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
         await ensureEventsOptionalColumns();
         await lockPastEvents();
 
+        const isSessionMember = await sessionIsActiveAppMember();
+
         let { data, error: fetchError } = await supabase
           .from('events')
           .select(getActiveEventSelect())
@@ -146,6 +153,19 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
           setRequerQuorumColumnAvailable(true);
         }
 
+        if (fetchError && isMissingSomenteMembrosColumnError(fetchError)) {
+          setSomenteMembrosColumnAvailable(false);
+          const retry = await supabase
+            .from('events')
+            .select(getActiveEventSelect())
+            .or('is_locked.eq.false,is_locked.is.null')
+            .order('event_date', { ascending: true });
+          data = retry.data;
+          fetchError = retry.error;
+        } else if (!fetchError) {
+          setSomenteMembrosColumnAvailable(true);
+        }
+
         if (fetchError) {
           console.error('Erro na consulta Supabase:', fetchError);
           throw new Error(fetchError.message);
@@ -158,7 +178,7 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
 
         const visibleEvents = (data ?? [])
           .map(withDefaultEventOptionals)
-          .filter((event) => isEventVisibleInEventPanel(event));
+          .filter((event) => isEventVisibleInEventPanel(event, isSessionMember));
 
         if (!visibleEvents.length) {
           commitEvents([]);

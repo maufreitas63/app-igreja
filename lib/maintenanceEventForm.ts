@@ -18,6 +18,7 @@ export type MaintenanceEventFormState = {
   parmOfertas: boolean;
   totemAtivo: boolean;
   requerQuorum: boolean;
+  somenteMembros: boolean;
   isPublished: boolean;
 };
 
@@ -32,6 +33,7 @@ export const emptyMaintenanceEventForm = (): MaintenanceEventFormState => ({
   parmOfertas: false,
   totemAtivo: false,
   requerQuorum: false,
+  somenteMembros: false,
   isPublished: true,
 });
 
@@ -186,6 +188,7 @@ export const formFromMaintenanceEvent = (event: {
   teens_room: boolean | null;
   totem_ativo?: boolean | null;
   requer_quorum?: boolean | null;
+  somente_membros?: boolean | null;
   is_locked: boolean | null;
 }): MaintenanceEventFormState => ({
   name: event.name ?? '',
@@ -201,6 +204,7 @@ export const formFromMaintenanceEvent = (event: {
   parmOfertas: event.parm_ofertas === true,
   totemAtivo: event.totem_ativo === true,
   requerQuorum: event.requer_quorum === true,
+  somenteMembros: event.somente_membros === true,
   isPublished: event.is_locked !== true,
 });
 
@@ -335,6 +339,7 @@ export const buildMaintenanceEventReplicationPayload = (
       parm_ofertas: payload.parm_ofertas,
       totem_ativo: payload.totem_ativo,
       requer_quorum: payload.requer_quorum,
+      somente_membros: payload.somente_membros,
       is_locked: true,
     },
   };
@@ -392,6 +397,7 @@ export const buildMaintenanceEventPayload = (
     parm_ofertas: form.parmOfertas,
     totem_ativo: form.totemAtivo,
     requer_quorum: form.requerQuorum,
+    somente_membros: form.somenteMembros,
     is_locked: isLocked,
     ...(retroactivePublish ? { retroactive_publish: true } : {}),
   };
@@ -407,11 +413,13 @@ export const summarizeMaintenanceEvent = (event: {
   teens_room: boolean | null;
   totem_ativo?: boolean | null;
   requer_quorum?: boolean | null;
+  somente_membros?: boolean | null;
   is_locked: boolean | null;
 }) => {
   const flags = [
     event.kids_room ? KIDS_ROOM_DISPLAY_LABEL : null,
     event.teens_room ? TEENS_ROOM_DISPLAY_LABEL : null,
+    event.somente_membros ? 'Somente membros' : null,
     event.totem_ativo ? 'Totem' : null,
     event.requer_quorum ? 'Quórum' : null,
   ].filter(Boolean);

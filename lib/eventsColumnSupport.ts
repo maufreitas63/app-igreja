@@ -7,6 +7,7 @@ const EVENT_SELECT_BASE =
 
 let totemAtivoColumnAvailable: boolean | null = null;
 let requerQuorumColumnAvailable: boolean | null = null;
+let somenteMembrosColumnAvailable: boolean | null = null;
 
 const buildEventSelect = () => {
   const fields = [EVENT_SELECT_BASE];
@@ -17,6 +18,10 @@ const buildEventSelect = () => {
 
   if (requerQuorumColumnAvailable !== false) {
     fields.push('requer_quorum');
+  }
+
+  if (somenteMembrosColumnAvailable !== false) {
+    fields.push('somente_membros');
   }
 
   return fields.join(', ');
@@ -34,14 +39,21 @@ export const setRequerQuorumColumnAvailable = (available: boolean) => {
   requerQuorumColumnAvailable = available;
 };
 
+export const setSomenteMembrosColumnAvailable = (available: boolean) => {
+  somenteMembrosColumnAvailable = available;
+};
+
 export const resetTotemColumnAvailabilityCache = () => {
   totemAtivoColumnAvailable = null;
   requerQuorumColumnAvailable = null;
+  somenteMembrosColumnAvailable = null;
 };
 
 export const isTotemAtivoColumnAvailable = () => totemAtivoColumnAvailable === true;
 
 export const isRequerQuorumColumnAvailable = () => requerQuorumColumnAvailable === true;
+
+export const isSomenteMembrosColumnAvailable = () => somenteMembrosColumnAvailable === true;
 
 const isMissingColumnError = (
   error: Pick<PostgrestError, 'code' | 'message'> | null,
@@ -67,6 +79,10 @@ export const isMissingTotemColumnError = (error: Pick<PostgrestError, 'code' | '
 export const isMissingRequerQuorumColumnError = (
   error: Pick<PostgrestError, 'code' | 'message'> | null
 ) => isMissingColumnError(error, 'requer_quorum');
+
+export const isMissingSomenteMembrosColumnError = (
+  error: Pick<PostgrestError, 'code' | 'message'> | null
+) => isMissingColumnError(error, 'somente_membros');
 
 export const probeTotemAtivoColumn = async () => {
   const { error } = await supabase.from('events').select('totem_ativo').limit(1);
@@ -100,9 +116,26 @@ export const probeRequerQuorumColumn = async () => {
   return true;
 };
 
+export const probeSomenteMembrosColumn = async () => {
+  const { error } = await supabase.from('events').select('somente_membros').limit(1);
+
+  if (isMissingSomenteMembrosColumnError(error)) {
+    setSomenteMembrosColumnAvailable(false);
+    return false;
+  }
+
+  if (error) {
+    throw error;
+  }
+
+  setSomenteMembrosColumnAvailable(true);
+  return true;
+};
+
 export type EventRowWithOptionals = {
   totem_ativo?: boolean | null;
   requer_quorum?: boolean | null;
+  somente_membros?: boolean | null;
   [key: string]: unknown;
 };
 
@@ -113,13 +146,14 @@ export const withDefaultEventOptionals = <T extends EventRowWithOptionals>(row: 
   ...row,
   totem_ativo: row.totem_ativo === true,
   requer_quorum: row.requer_quorum === true,
+  somente_membros: row.somente_membros === true,
 });
 
 export const withDefaultTotemAtivo = withDefaultEventOptionals;
 
 export const stripOptionalFieldsFromEventPayload = <T extends Record<string, unknown>>(
   payload: T,
-  options: { totem?: boolean; quorum?: boolean }
+  options: { totem?: boolean; quorum?: boolean; somenteMembros?: boolean }
 ) => {
   const next = { ...payload };
 
@@ -129,6 +163,10 @@ export const stripOptionalFieldsFromEventPayload = <T extends Record<string, unk
 
   if (options.quorum) {
     delete next.requer_quorum;
+  }
+
+  if (options.somenteMembros) {
+    delete next.somente_membros;
   }
 
   return next;
@@ -144,6 +182,9 @@ export const TOTEM_COLUMN_SQL_HINT =
 
 export const REQUER_QUORUM_COLUMN_SQL_HINT =
   'Execute uma vez no Supabase o script scripts/events-requer-quorum.sql (habilita Requer Quorum).';
+
+export const SOMENTE_MEMBROS_COLUMN_SQL_HINT =
+  'Execute uma vez no Supabase o script scripts/events-somente-membros.sql (habilita Somente Membros).';
 
 export async function ensureEventsTotemAtivoColumn(): Promise<boolean> {
   if (await probeTotemAtivoColumn().catch(() => false)) {
@@ -183,12 +224,32 @@ export async function ensureEventsRequerQuorumColumn(): Promise<boolean> {
   return probeRequerQuorumColumn().catch(() => false);
 }
 
-/** Garante colunas opcionais de eventos (totem_ativo, requer_quorum). */
+export async function ensureEventsSomenteMembrosColumn(): Promise<boolean> {
+  if (await probeSomenteMembrosColumn().catch(() => false)) {
+    return true;
+  }
+
+  const { error } = await supabase.rpc('ensure_events_somente_membros_column');
+
+  if (error) {
+    if (!isSupabaseRpcMissingError(error, 'ensure_events_somente_membros_column')) {
+      console.warn('ensure_events_somente_membros_column:', error.message);
+    }
+    setSomenteMembrosColumnAvailable(false);
+    return false;
+  }
+
+  somenteMembrosColumnAvailable = null;
+  return probeSomenteMembrosColumn().catch(() => false);
+}
+
+/** Garante colunas opcionais de eventos (totem_ativo, requer_quorum, somente_membros). */
 export async function ensureEventsOptionalColumns() {
-  const [totem, quorum] = await Promise.all([
+  const [totem, quorum, somenteMembros] = await Promise.all([
     ensureEventsTotemAtivoColumn(),
     ensureEventsRequerQuorumColumn(),
+    ensureEventsSomenteMembrosColumn(),
   ]);
 
-  return { totem, quorum };
+  return { totem, quorum, somenteMembros };
 }

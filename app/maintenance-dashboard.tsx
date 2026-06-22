@@ -35,8 +35,10 @@ import { type MaintenanceScalePanelContent } from '@/lib/scaleAccess';
 import {
   ensureEventsOptionalColumns,
   isRequerQuorumColumnAvailable,
+  isSomenteMembrosColumnAvailable,
   isTotemAtivoColumnAvailable,
   REQUER_QUORUM_COLUMN_SQL_HINT,
+  SOMENTE_MEMBROS_COLUMN_SQL_HINT,
   TOTEM_COLUMN_SQL_HINT,
 } from '@/lib/eventsColumnSupport';
 import {
@@ -216,6 +218,10 @@ const getSaveErrorMessage = (err: unknown) => {
     return `${message}\n\n${TOTEM_COLUMN_SQL_HINT}`;
   }
 
+  if (message.toLowerCase().includes('somente_membros')) {
+    return `${message}\n\n${SOMENTE_MEMBROS_COLUMN_SQL_HINT}`;
+  }
+
   return message;
 };
 
@@ -272,6 +278,20 @@ const SimNaoToggle = ({ value, onValueChange, disabled }: SimNaoToggleProps) => 
   </View>
 );
 
+type FeatureToggleColumnProps = {
+  label: string;
+  value: boolean;
+  onValueChange: (next: boolean) => void;
+  disabled?: boolean;
+};
+
+const FeatureToggleColumn = ({ label, value, onValueChange, disabled }: FeatureToggleColumnProps) => (
+  <View style={styles.featureToggleColumn}>
+    <Text style={styles.totemFieldLabel}>{label}</Text>
+    <SimNaoToggle value={value} onValueChange={onValueChange} disabled={disabled} />
+  </View>
+);
+
 export default function MaintenanceDashboard() {
   const { width: pageWidth, height: windowHeight } = useWindowDimensions();
   const previousPageWidthRef = useRef(pageWidth);
@@ -324,6 +344,9 @@ export default function MaintenanceDashboard() {
   );
   const [totemSchemaReady, setTotemSchemaReady] = useState(isTotemAtivoColumnAvailable());
   const [quorumSchemaReady, setQuorumSchemaReady] = useState(isRequerQuorumColumnAvailable());
+  const [somenteMembrosSchemaReady, setSomenteMembrosSchemaReady] = useState(
+    isSomenteMembrosColumnAvailable()
+  );
   const [quorumRegistrySchemaMissing, setQuorumRegistrySchemaMissing] = useState(
     !isQuorumRegistryTableAvailable()
   );
@@ -398,6 +421,7 @@ export default function MaintenanceDashboard() {
     if (!loading) {
       setTotemSchemaReady(isTotemAtivoColumnAvailable());
       setQuorumSchemaReady(isRequerQuorumColumnAvailable());
+      setSomenteMembrosSchemaReady(isSomenteMembrosColumnAvailable());
     }
   }, [loading, safeEvents.length]);
 
@@ -408,10 +432,11 @@ export default function MaintenanceDashboard() {
       if (!schemaProbeDoneRef.current) {
         schemaProbeDoneRef.current = true;
 
-        void ensureEventsOptionalColumns().then(({ totem, quorum }) => {
+        void ensureEventsOptionalColumns().then(({ totem, quorum, somenteMembros }) => {
           if (active) {
             setTotemSchemaReady(totem);
             setQuorumSchemaReady(quorum);
+            setSomenteMembrosSchemaReady(somenteMembros);
           }
         });
 
@@ -1441,6 +1466,16 @@ export default function MaintenanceDashboard() {
                   onChangeText={(text) => patchForm({ maxCapacity: text.replace(/\D/g, '') })}
                 />
 
+                {!somenteMembrosSchemaReady && !loading ? (
+                  <View style={styles.totemSqlWarning}>
+                    <Text style={styles.totemSqlWarningText}>
+                      Não foi possível preparar a coluna somente_membros automaticamente. O botão
+                      Somente Membros só será salvo após habilitar a migração no Supabase.
+                    </Text>
+                    <Text style={styles.totemSqlWarningHint}>{SOMENTE_MEMBROS_COLUMN_SQL_HINT}</Text>
+                  </View>
+                ) : null}
+
                 {!totemSchemaReady && !loading ? (
                   <View style={styles.totemSqlWarning}>
                     <Text style={styles.totemSqlWarningText}>
@@ -1451,11 +1486,7 @@ export default function MaintenanceDashboard() {
                   </View>
                 ) : null}
 
-                <View style={styles.featureLabelRow}>
-                  <Text style={styles.fieldLabel}>Salas e recursos</Text>
-                  <Text style={styles.totemFieldLabel}>Ativação de Totem</Text>
-                  <Text style={styles.totemFieldLabel}>Requer Quorum</Text>
-                </View>
+                <Text style={styles.fieldLabel}>Salas e recursos</Text>
                 <View style={styles.featureRow}>
                   <View style={styles.featureRowChips}>
                     <FeatureToggle
@@ -1474,12 +1505,20 @@ export default function MaintenanceDashboard() {
                     />
                   </View>
                   <View style={styles.featureToggleGroup}>
-                    <SimNaoToggle
+                    <FeatureToggleColumn
+                      label="Somente Membros"
+                      value={form.somenteMembros}
+                      onValueChange={(somenteMembros) => patchForm({ somenteMembros })}
+                      disabled={isBusy}
+                    />
+                    <FeatureToggleColumn
+                      label="Ativação de Totem"
                       value={form.totemAtivo}
                       onValueChange={(totemAtivo) => patchForm({ totemAtivo })}
                       disabled={isBusy}
                     />
-                    <SimNaoToggle
+                    <FeatureToggleColumn
+                      label="Requer Quorum"
                       value={form.requerQuorum}
                       onValueChange={(requerQuorum) => patchForm({ requerQuorum })}
                       disabled={isBusy}
@@ -2183,7 +2222,7 @@ const styles = StyleSheet.create({
   },
   featureRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'space-between',
     gap: 10,
   },
@@ -2196,9 +2235,13 @@ const styles = StyleSheet.create({
   },
   featureToggleGroup: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: 8,
     flexShrink: 0,
+  },
+  featureToggleColumn: {
+    alignItems: 'flex-end',
+    gap: 6,
   },
   totemBlock: {
     flexShrink: 0,

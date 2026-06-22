@@ -7,8 +7,10 @@ import {
 import {
   ensureEventsOptionalColumns,
   isMissingRequerQuorumColumnError,
+  isMissingSomenteMembrosColumnError,
   isMissingTotemColumnError,
   isRequerQuorumColumnAvailable,
+  isSomenteMembrosColumnAvailable,
   isTotemAtivoColumnAvailable,
   stripOptionalFieldsFromEventPayload,
   TOTEM_COLUMN_SQL_HINT,
@@ -29,6 +31,9 @@ const persistEvent = async (
     ...payload,
     ...(payload.totem_ativo !== undefined ? { totem_ativo: payload.totem_ativo === true } : {}),
     ...(payload.requer_quorum !== undefined ? { requer_quorum: payload.requer_quorum === true } : {}),
+    ...(payload.somente_membros !== undefined
+      ? { somente_membros: payload.somente_membros === true }
+      : {}),
   };
 
   if (mode === 'insert') {
@@ -56,17 +61,21 @@ const saveEventWithOptionalColumnFallback = async (
   const prepared = stripOptionalFieldsFromEventPayload(payload, {
     totem: !isTotemAtivoColumnAvailable(),
     quorum: !isRequerQuorumColumnAvailable(),
+    somenteMembros: !isSomenteMembrosColumnAvailable(),
   }) as MaintenanceEventPayload;
 
   let result = await persistEvent(mode, selectedEventId, prepared);
 
   if (
     result.error &&
-    (isMissingTotemColumnError(result.error) || isMissingRequerQuorumColumnError(result.error))
+    (isMissingTotemColumnError(result.error) ||
+      isMissingRequerQuorumColumnError(result.error) ||
+      isMissingSomenteMembrosColumnError(result.error))
   ) {
     const withoutOptionals = stripOptionalFieldsFromEventPayload(prepared, {
       totem: true,
       quorum: true,
+      somenteMembros: true,
     }) as MaintenanceEventPayload;
     result = await persistEvent(mode, selectedEventId, withoutOptionals);
   }

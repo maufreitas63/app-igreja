@@ -1,5 +1,7 @@
 import { isEventVisibleForCheckIn } from '@/lib/eventVisibility';
+import { getActiveEventSelect, withDefaultEventOptionals } from '@/lib/eventsColumnSupport';
 import { lockPastEvents } from '@/lib/lockPastEvents';
+import { sessionIsActiveAppMember } from '@/lib/sessionMemberVisibility';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -55,9 +57,11 @@ export const useActiveEvent = () => {
 
       await lockPastEvents();
 
+      const isSessionMember = await sessionIsActiveAppMember();
+
       const { data: rows, error: fetchError } = await supabase
         .from('events')
-        .select('id, name, max_capacity, event_date, is_locked')
+        .select(getActiveEventSelect())
         .or('is_locked.eq.false,is_locked.is.null')
         .order('event_date', { ascending: true });
 
@@ -66,7 +70,10 @@ export const useActiveEvent = () => {
         throw new Error(fetchError.message);
       }
 
-      const data = (rows ?? []).find((row) => isEventVisibleForCheckIn(row)) ?? null;
+      const data =
+        (rows ?? [])
+          .map(withDefaultEventOptionals)
+          .find((row) => isEventVisibleForCheckIn(row, isSessionMember)) ?? null;
 
       if (!data) {
         setEvent(null);

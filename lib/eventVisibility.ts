@@ -30,11 +30,22 @@ const isEventWithinRecentPast = (value: string | null | undefined) => {
   return eventDay >= minDay && eventDay < today;
 };
 
+/** Evento visível para a sessão atual (somente_membros exige membro ativo no app). */
+export const isEventVisibleForSessionMember = (
+  event: { somente_membros?: boolean | null | undefined },
+  isSessionMember: boolean
+) => event.somente_membros !== true || isSessionMember;
+
 /** Visível no card Check In / Agenda: publicado e (sem data, futuro/hoje ou até 14 dias atrás). */
 export const isEventVisibleForCheckIn = (event: {
   event_date: string | null | undefined;
   is_locked: boolean | null | undefined;
-}) => {
+  somente_membros?: boolean | null | undefined;
+}, isSessionMember = true) => {
+  if (!isEventVisibleForSessionMember(event, isSessionMember)) {
+    return false;
+  }
+
   if (!isEventPublished(event.is_locked)) {
     return false;
   }
@@ -50,10 +61,18 @@ export const isEventVisibleForCheckIn = (event: {
  * Painel de Eventos (Agenda da Família): somente publicados (is_locked false/null)
  * com data de hoje ou futura. Passados ficam is_locked=true no banco e não entram aqui.
  */
-export const isEventVisibleInEventPanel = (event: {
-  event_date: string | null | undefined;
-  is_locked: boolean | null | undefined;
-}) => {
+export const isEventVisibleInEventPanel = (
+  event: {
+    event_date: string | null | undefined;
+    is_locked: boolean | null | undefined;
+    somente_membros?: boolean | null | undefined;
+  },
+  isSessionMember = true
+) => {
+  if (!isEventVisibleForSessionMember(event, isSessionMember)) {
+    return false;
+  }
+
   if (!isEventPublished(event.is_locked)) {
     return false;
   }

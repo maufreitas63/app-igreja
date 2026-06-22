@@ -2,8 +2,10 @@ import {
   ensureEventsOptionalColumns,
   getMaintenanceEventSelect,
   isMissingRequerQuorumColumnError,
+  isMissingSomenteMembrosColumnError,
   isMissingTotemColumnError,
   setRequerQuorumColumnAvailable,
+  setSomenteMembrosColumnAvailable,
   setTotemAtivoColumnAvailable,
   withDefaultEventOptionals,
 } from '@/lib/eventsColumnSupport';
@@ -22,6 +24,7 @@ export type MaintenanceEvent = {
   teens_room: boolean | null;
   totem_ativo: boolean | null;
   requer_quorum: boolean | null;
+  somente_membros: boolean | null;
   is_locked: boolean | null;
 };
 
@@ -65,6 +68,18 @@ export const useMaintenanceEvents = () => {
         fetchError = retry.error;
       } else if (!fetchError) {
         setRequerQuorumColumnAvailable(true);
+      }
+
+      if (fetchError && isMissingSomenteMembrosColumnError(fetchError)) {
+        setSomenteMembrosColumnAvailable(false);
+        const retry = await supabase
+          .from('events')
+          .select(getMaintenanceEventSelect())
+          .order('event_date', { ascending: true, nullsFirst: false });
+        data = retry.data;
+        fetchError = retry.error;
+      } else if (!fetchError) {
+        setSomenteMembrosColumnAvailable(true);
       }
 
       if (fetchError) {
