@@ -1,4 +1,6 @@
 -- Importa perfis com histórico de membresia (visitantes / ex-membros) — família IBN0000.
+-- IMPORTANTE: este arquivo NÃO roda no Cloudflare — execute manualmente no SQL Editor do Supabase.
+-- O push para main só publica o PWA; a importação dos perfis é sempre manual aqui.
 -- Execute no SQL Editor do Supabase após:
 --   scripts/normalize-full-name-fields.sql (format_full_name_ptbr)
 --   scripts/access-control-pastoral-membership-date.sql
