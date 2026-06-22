@@ -59,6 +59,12 @@ export async function loadDashboardCardViewAccess(
   profileId: string,
   options?: { forceRefresh?: boolean }
 ): Promise<DashboardCardViewAccess> {
+  if (await sessionIsSuperAdmin(profileId, options)) {
+    return Object.fromEntries(
+      Object.keys(DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY).map((content) => [content, true] as const)
+    );
+  }
+
   return getCachedOrFetch(
     `dashboard:cards:${profileId}`,
     async () => {
@@ -129,6 +135,17 @@ export async function loadProfileColumnAccess(
   profileId: string,
   options?: { forceRefresh?: boolean }
 ): Promise<ProfileColumnAccess> {
+  if (await sessionIsSuperAdmin(profileId, options)) {
+    const allGranted = Object.fromEntries(
+      PROFILE_MANAGE_COLUMN_FIELDS.map((field) => [field, true] as const)
+    );
+
+    return {
+      view: { ...allGranted },
+      update: { ...allGranted },
+    };
+  }
+
   return getCachedOrFetch(
     `profile:columns:${profileId}`,
     async () => {
@@ -185,6 +202,39 @@ export const canUpdateProfileColumn = (fieldKey: string, access: ProfileColumnAc
 
 const isAccessRpcMissing = (error: { code?: string; message?: string } | null) =>
   isSupabaseRpcMissingError(error, 'profile_has_access');
+
+const readSessionIsSuperAdmin = async (): Promise<boolean> => {
+  let profileId = await getStoredProfileId();
+
+  if (!profileId) {
+    profileId = await repairUserSessionReference();
+  }
+
+  if (!profileId) {
+    return false;
+  }
+
+  const { data, error } = await supabase.rpc('is_super_admin_profile', {
+    p_profile_id: profileId,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'is_super_admin_profile')) {
+      return false;
+    }
+
+    console.error('is_super_admin_profile:', error);
+    return false;
+  }
+
+  return coerceRpcBoolean(data);
+};
+
+const sessionIsSuperAdmin = (scopeId?: string | null, options?: { forceRefresh?: boolean }) =>
+  getCachedOrFetch('session:super_admin', readSessionIsSuperAdmin, {
+    scopeId: scopeId ?? 'session',
+    forceRefresh: options?.forceRefresh,
+  });
 
 /** Verifica se a RPC `profile_has_access` está instalada no Supabase. */
 export async function getAccessControlRpcStatus(): Promise<'available' | 'missing'> {
@@ -259,6 +309,10 @@ export async function profileHasAccess(
     return false;
   }
 
+  if (await sessionIsSuperAdmin(trimmed, options)) {
+    return true;
+  }
+
   if (options?.skipCache) {
     return fetchProfileHasAccess(trimmed, resourceType, resourceKey, action);
   }
@@ -325,6 +379,10 @@ export async function sessionHasAccess(
   }
 
   if (profileId) {
+    if (await sessionIsSuperAdmin(profileId)) {
+      return true;
+    }
+
     return profileHasAccess(profileId, resourceType, resourceKey, action);
   }
 

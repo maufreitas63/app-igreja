@@ -229,6 +229,11 @@ begin
     return false;
   end if;
 
+  if p_profile_id is not null
+     and public.is_super_admin_profile(p_profile_id) then
+    return true;
+  end if;
+
   select exists (select 1 from public.access_grants limit 1)
     into v_acl_enabled;
 

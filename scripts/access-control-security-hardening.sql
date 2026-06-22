@@ -199,6 +199,11 @@ begin
 
   v_session := public.current_session_profile_id();
 
+  -- Super admin da sessão: view e update em qualquer recurso (inclui o próprio perfil).
+  if v_session is not null and public.is_super_admin_profile(v_session) then
+    return true;
+  end if;
+
   if p_profile_id is not null
      and v_session is not null
      and p_profile_id <> v_session
