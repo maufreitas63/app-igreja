@@ -8,6 +8,7 @@ import {
   type MaintenanceEventFormState,
 } from '@/lib/maintenanceEventForm';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
+import { EventFavoriteLocationPickerModal } from '@/components/EventFavoriteLocationPickerModal';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
 import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
 import { EventsGanttChart } from '@/components/EventsGanttChart';
@@ -73,6 +74,11 @@ import {
   replicateMaintenanceEventFromRecord,
   saveMaintenanceEvent,
 } from '@/lib/saveMaintenanceEvent';
+import {
+  EVENT_FAVORITE_LOCATIONS_SQL_HINT,
+  useEventFavoriteLocations,
+} from '@/hooks/useEventFavoriteLocations';
+import type { EventFavoriteLocation } from '@/lib/eventFavoriteLocationsApi';
 import { useFamilyReceptionSuperAdminNotifier } from '@/hooks/useFamilyReceptionSuperAdminNotifier';
 import { useMaintenanceEvents, type MaintenanceEvent } from '@/hooks/useMaintenanceEvents';
 import { useQuorumRegistry } from '@/hooks/useQuorumRegistry';
@@ -317,6 +323,7 @@ export default function MaintenanceDashboard() {
   const [deleteTargetName, setDeleteTargetName] = useState('');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [eventDatePickerVisible, setEventDatePickerVisible] = useState(false);
+  const [favoritePickerVisible, setFavoritePickerVisible] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const carouselRef = useRef<FlatList<MaintenanceCarouselCard>>(null);
   const currentIndexRef = useRef(0);
@@ -664,6 +671,26 @@ export default function MaintenanceDashboard() {
   }, [cancelDeleteConfirm, closeEditor, deleteTargetId, deleteTargetName, refetch]);
 
   const showEditor = selectedEventId !== null;
+
+  const {
+    locations: favoriteLocations,
+    loading: favoriteLocationsLoading,
+    schemaMissing: favoriteLocationsSchemaMissing,
+    error: favoriteLocationsError,
+    reload: reloadFavoriteLocations,
+  } = useEventFavoriteLocations(showEditor);
+
+  const applyFavoriteLocation = useCallback(
+    (location: EventFavoriteLocation) => {
+      setStatusMessage(null);
+      patchForm({
+        eventLocal: location.name,
+        maxCapacity: String(location.capacity),
+      });
+      setFavoritePickerVisible(false);
+    },
+    [patchForm]
+  );
 
   const maintenancePanelCards = useMemo(() => {
     return MAINTENANCE_PANEL_CARDS.filter((card) => {
@@ -1447,24 +1474,53 @@ export default function MaintenanceDashboard() {
                   </View>
                 </View>
 
-                <Text style={styles.fieldLabel}>Local do evento</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ex.: Templo principal"
-                  placeholderTextColor="#64748B"
-                  value={form.eventLocal}
-                  onChangeText={(text) => patchForm({ eventLocal: text })}
-                />
+                <View style={styles.localCapacityHeader}>
+                  <Text style={styles.fieldLabel}>Local do evento</Text>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.favoritePickerButton,
+                      pressed && styles.actionPressed,
+                    ]}
+                    onPress={() => {
+                      void reloadFavoriteLocations();
+                      setFavoritePickerVisible(true);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Selecionar local favorito"
+                  >
+                    <MaterialIcons name="place" size={16} color="#C7D2FE" />
+                    <Text style={styles.favoritePickerButtonText}>Favoritos</Text>
+                  </Pressable>
+                </View>
+                <View style={styles.localCapacityRow}>
+                  <TextInput
+                    style={[styles.input, styles.localInput]}
+                    placeholder="Ex.: Templo principal"
+                    placeholderTextColor="#64748B"
+                    value={form.eventLocal}
+                    onChangeText={(text) => patchForm({ eventLocal: text })}
+                  />
+                  <View style={styles.capacityField}>
+                    <Text style={styles.capacityFieldLabel}>Capacidade *</Text>
+                    <TextInput
+                      style={[styles.input, styles.capacityInput]}
+                      placeholder="200"
+                      placeholderTextColor="#64748B"
+                      value={form.maxCapacity}
+                      keyboardType="number-pad"
+                      onChangeText={(text) => patchForm({ maxCapacity: text.replace(/\D/g, '') })}
+                    />
+                  </View>
+                </View>
 
-                <Text style={styles.fieldLabel}>Capacidade (vagas) *</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Obrigatório — ex.: 200"
-                  placeholderTextColor="#64748B"
-                  value={form.maxCapacity}
-                  keyboardType="number-pad"
-                  onChangeText={(text) => patchForm({ maxCapacity: text.replace(/\D/g, '') })}
-                />
+                {favoriteLocationsSchemaMissing && !loading ? (
+                  <View style={styles.totemSqlWarning}>
+                    <Text style={styles.totemSqlWarningText}>
+                      Locais favoritos indisponíveis até criar a tabela no Supabase.
+                    </Text>
+                    <Text style={styles.totemSqlWarningHint}>{EVENT_FAVORITE_LOCATIONS_SQL_HINT}</Text>
+                  </View>
+                ) : null}
 
                 {!somenteMembrosSchemaReady && !loading ? (
                   <View style={styles.totemSqlWarning}>
@@ -1711,6 +1767,16 @@ export default function MaintenanceDashboard() {
             setStatusMessage(null);
             patchForm({ eventDateInput: dateInput });
           }}
+        />
+
+        <EventFavoriteLocationPickerModal
+          visible={favoritePickerVisible}
+          locations={favoriteLocations}
+          loading={favoriteLocationsLoading}
+          schemaMissing={favoriteLocationsSchemaMissing}
+          error={favoriteLocationsError}
+          onClose={() => setFavoritePickerVisible(false)}
+          onSelect={applyFavoriteLocation}
         />
       </SafeAreaView>
     </LinearGradient>
@@ -2183,6 +2249,54 @@ const styles = StyleSheet.create({
     fontSize: 15,
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  localCapacityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  favoritePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(129, 140, 248, 0.45)',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(99, 102, 241, 0.14)',
+  },
+  favoritePickerButtonText: {
+    color: '#C7D2FE',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  localCapacityRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+  },
+  localInput: {
+    flex: 1,
+    minWidth: 0,
+    maxWidth: '68%',
+  },
+  capacityField: {
+    width: 112,
+    flexShrink: 0,
+    gap: 6,
+  },
+  capacityFieldLabel: {
+    color: '#C7D2FE',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  capacityInput: {
+    paddingHorizontal: 10,
+    textAlign: 'center',
   },
   dateTimeRow: {
     flexDirection: 'row',
