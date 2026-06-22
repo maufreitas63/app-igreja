@@ -70,9 +70,13 @@ on conflict (role_id, resource_id) where (role_id is not null) do update
 
 -- ---------------------------------------------------------------------------
 -- View user_roles (mapeia profile_access_roles para integrações externas)
+-- Se existir tabela legada com o mesmo nome, remove antes de criar a view.
 -- ---------------------------------------------------------------------------
 
-create or replace view public.user_roles as
+drop view if exists public.user_roles cascade;
+drop table if exists public.user_roles cascade;
+
+create view public.user_roles as
 select
   par.profile_id as user_id,
   ar.id as role_id,
