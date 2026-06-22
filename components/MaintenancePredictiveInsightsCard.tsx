@@ -2,12 +2,14 @@ import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import {
   buildPredictiveLtvFormulaMessage,
+  buildPredictiveMemberFormulaMessage,
   formatPredictiveCurrency,
   formatPredictiveMonthLabel,
   PREDICTIVE_BASE_CALCULATION_MONTHS,
   PREDICTIVE_DEFAULT_BASE_MONTHS,
   PREDICTIVE_FORECAST_HORIZONS,
   PREDICTIVE_LTV_FORMULA_TITLE,
+  PREDICTIVE_MEMBER_FORMULA_TITLE,
   type PredictiveBaseCalculationMonths,
 } from '@/lib/financialPredictiveModel';
 import { appAlert } from '@/lib/appAlert';
@@ -50,6 +52,14 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
     return revenuePoints.slice(-model.calculationBaseMonths);
   }, [model]);
 
+  const showMemberFormula = () => {
+    void appAlert(
+      PREDICTIVE_MEMBER_FORMULA_TITLE,
+      buildPredictiveMemberFormulaMessage(horizon, model?.calculationBaseMonths ?? baseCalculationMonths),
+      'Entendi'
+    );
+  };
+
   const showLtvFormula = () => {
     void appAlert(
       PREDICTIVE_LTV_FORMULA_TITLE,
@@ -64,9 +74,9 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
       <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       <Text style={styles.helpText}>
-        Previsibilidade de arrecadação ordinária (dízimos e ofertas realizadas) com sazonalidade
-        mensal e LTV eclesiástico: correlação entre novos membros líquidos (entrada − desligamento)
-        e crescimento de receita nos meses seguintes.
+        Previsibilidade de arrecadação ordinária e de crescimento de membros (entradas, saídas,
+        líquido e ativos), com sazonalidade mensal e LTV eclesiástico ligando novos membros à
+        receita futura.
       </Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -110,6 +120,44 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
             <View style={styles.summaryGrid}>
               <View style={styles.summaryRow}>
                 <View style={styles.summaryCard}>
+                  <Text style={styles.summaryLabel}>Membros ativos (fim)</Text>
+                  <Text style={styles.summaryValue}>
+                    {summary.projectedActiveMembersEnd.toFixed(0)}
+                  </Text>
+                </View>
+                <View style={styles.summaryCard}>
+                  <Text style={styles.summaryLabel}>Crescimento de membros</Text>
+                  <Text style={styles.summaryValue}>
+                    {summary.memberGrowthPercent >= 0 ? '+' : ''}
+                    {summary.memberGrowthPercent.toFixed(1)}%
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryCard}>
+                  <Text style={styles.summaryLabel}>Entradas projetadas</Text>
+                  <Text style={styles.summaryValue}>{summary.totalProjectedEntries.toFixed(0)}</Text>
+                </View>
+                <View style={styles.summaryCard}>
+                  <Text style={styles.summaryLabel}>Saídas projetadas</Text>
+                  <Text style={styles.summaryValue}>{summary.totalProjectedExits.toFixed(0)}</Text>
+                </View>
+              </View>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryCard}>
+                  <Text style={styles.summaryLabel}>Membros líquidos</Text>
+                  <Text style={styles.summaryValue}>{summary.totalProjectedNetMembers.toFixed(0)}</Text>
+                </View>
+                <View style={styles.summaryCard}>
+                  <Text style={styles.summaryLabel}>Média líquida/mês</Text>
+                  <Text style={styles.summaryValue}>
+                    {summary.averageMonthlyNetMemberChange >= 0 ? '+' : ''}
+                    {summary.averageMonthlyNetMemberChange.toFixed(1)}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryCard}>
                   <Text style={styles.summaryLabel}>Arrecadação projetada</Text>
                   <Text style={styles.summaryValue}>{formatPredictiveCurrency(summary.totalProjectedRevenue)}</Text>
                 </View>
@@ -120,22 +168,31 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
               </View>
               <View style={styles.summaryRow}>
                 <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>Membros líquidos</Text>
-                  <Text style={styles.summaryValue}>{summary.totalProjectedNetMembers.toFixed(0)}</Text>
-                </View>
-                <View style={styles.summaryCard}>
                   <Text style={styles.summaryLabel}>LTV por novo membro/mês</Text>
                   <Text style={styles.summaryValue}>
                     {formatPredictiveCurrency(model.revenuePerNewMemberMonthly)}
                   </Text>
                 </View>
-              </View>
-              <View style={styles.summaryRow}>
                 <View style={styles.summaryCard}>
                   <Text style={styles.summaryLabel}>LTV acumulado ({horizon} meses)</Text>
                   <Text style={styles.summaryValue}>
                     {formatPredictiveCurrency(model.revenuePerNewMemberHorizon[horizon])}
                   </Text>
+                </View>
+              </View>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryCardRightSlot}>
+                  <TouchableOpacity
+                    style={styles.ltvFormulaButton}
+                    onPress={showMemberFormula}
+                    activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel="Ver fórmula de previsão de membros"
+                  >
+                    <Text style={styles.ltvFormulaButtonText} numberOfLines={2}>
+                      Fórmula{'\n'}membros
+                    </Text>
+                  </TouchableOpacity>
                 </View>
                 <View style={styles.summaryCardRightSlot}>
                   <TouchableOpacity
@@ -166,7 +223,8 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
 
           <SectionLabel variant="maintenance">Qualidade do modelo</SectionLabel>
           <Text style={styles.metaText}>
-            R² receita: {(model.modelQuality.revenueRSquared * 100).toFixed(1)}% · Correlação
+            R² receita: {(model.modelQuality.revenueRSquared * 100).toFixed(1)}% · R² membros
+            líquidos: {(model.modelQuality.memberNetChangeRSquared * 100).toFixed(1)}% · Correlação
             crescimento: {(model.modelQuality.growthCorrelation * 100).toFixed(1)}% · Amostra:{' '}
             {model.modelQuality.sampleMonths} meses
           </Text>
@@ -207,6 +265,8 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
             <View style={styles.tableHeaderRow}>
               <Text style={[styles.tableCell, styles.tableHeaderCell, styles.monthColumn]}>Mês</Text>
               <Text style={[styles.tableCell, styles.tableHeaderCell]}>Receita</Text>
+              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Ent</Text>
+              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Sai</Text>
               <Text style={[styles.tableCell, styles.tableHeaderCell]}>Líq.</Text>
               <Text style={[styles.tableCell, styles.tableHeaderCell]}>Ativos</Text>
             </View>
@@ -216,13 +276,40 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
                   {formatPredictiveMonthLabel(point.month)}
                 </Text>
                 <Text style={styles.tableCell}>{formatPredictiveCurrency(point.revenue)}</Text>
+                <Text style={styles.tableCell}>{point.memberEntries}</Text>
+                <Text style={styles.tableCell}>{point.memberExits}</Text>
                 <Text style={styles.tableCell}>{point.netMemberChange}</Text>
                 <Text style={styles.tableCell}>{point.activeMembersEnd}</Text>
               </View>
             ))}
           </View>
 
-          <SectionLabel variant="maintenance">Previsão ({horizon} meses)</SectionLabel>
+          <SectionLabel variant="maintenance">Previsão de membros ({horizon} meses)</SectionLabel>
+          <View style={styles.table}>
+            <View style={styles.tableHeaderRow}>
+              <Text style={[styles.tableCell, styles.tableHeaderCell, styles.monthColumn]}>Mês</Text>
+              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Ent</Text>
+              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Sai</Text>
+              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Líq.</Text>
+              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Ativos</Text>
+            </View>
+            {forecastPoints.map((point) => (
+              <View key={`members-${formatPredictiveMonthLabel(point.month)}`} style={styles.tableRow}>
+                <Text style={[styles.tableCell, styles.monthColumn]}>
+                  {formatPredictiveMonthLabel(point.month)}
+                </Text>
+                <Text style={styles.tableCell}>{point.projectedEntries.toFixed(0)}</Text>
+                <Text style={styles.tableCell}>{point.projectedExits.toFixed(0)}</Text>
+                <Text style={styles.tableCell}>
+                  {point.projectedNetMemberChange >= 0 ? '+' : ''}
+                  {point.projectedNetMemberChange}
+                </Text>
+                <Text style={styles.tableCell}>{point.projectedActiveMembers.toFixed(0)}</Text>
+              </View>
+            ))}
+          </View>
+
+          <SectionLabel variant="maintenance">Previsão de receita ({horizon} meses)</SectionLabel>
           <View style={styles.table}>
             <View style={styles.tableHeaderRow}>
               <Text style={[styles.tableCell, styles.tableHeaderCell, styles.monthColumn]}>Mês</Text>

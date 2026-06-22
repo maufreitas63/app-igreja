@@ -21,6 +21,8 @@ export type PredictiveForecastPoint = {
   revenue: number;
   revenueFromSeasonality: number;
   revenueFromGrowth: number;
+  projectedEntries: number;
+  projectedExits: number;
   projectedNetMemberChange: number;
   projectedActiveMembers: number;
 };
@@ -30,6 +32,11 @@ export type PredictiveHorizonSummary = {
   totalProjectedRevenue: number;
   averageMonthlyRevenue: number;
   totalProjectedNetMembers: number;
+  totalProjectedEntries: number;
+  totalProjectedExits: number;
+  projectedActiveMembersEnd: number;
+  memberGrowthPercent: number;
+  averageMonthlyNetMemberChange: number;
   growthAttributedRevenue: number;
   seasonalityAttributedRevenue: number;
 };
@@ -44,6 +51,7 @@ export type PredictiveInsightsModel = {
   modelQuality: {
     revenueRSquared: number;
     growthCorrelation: number;
+    memberNetChangeRSquared: number;
     sampleMonths: number;
   };
   calculationBaseMonths: number;
@@ -146,6 +154,132 @@ const pearsonCorrelation = (left: number[], right: number[]) => {
 
   return numerator / denominator;
 };
+
+type ScalarMonthPoint = {
+  timeIndex: number;
+  month: number;
+  value: number;
+};
+
+type ScalarSeasonalRegression = {
+  rSquared: number;
+  predict: (timeIndex: number, month: number) => number;
+};
+
+const buildScalarRegressionPredictions = (
+  points: ScalarMonthPoint[],
+  predict: (timeIndex: number, month: number) => number
+) => points.map((point) => predict(point.timeIndex, point.month));
+
+const computeScalarRSquared = (points: ScalarMonthPoint[], predictions: number[]) => {
+  const meanValue = average(points.map((point) => point.value));
+  const totalVariance = points.reduce(
+    (sum, point) => sum + (point.value - meanValue) ** 2,
+    0
+  );
+  const residualVariance = points.reduce(
+    (sum, point, index) => sum + (point.value - predictions[index]) ** 2,
+    0
+  );
+
+  return totalVariance > 0 ? Math.max(0, 1 - residualVariance / totalVariance) : 0;
+};
+
+const fitScalarTrendRegression = (points: ScalarMonthPoint[]) => {
+  const featureCount = 2;
+  const matrix = Array.from({ length: featureCount }, () => Array(featureCount).fill(0));
+  const vector = Array(featureCount).fill(0);
+
+  for (const point of points) {
+    const features = [1, point.timeIndex];
+
+    for (let left = 0; left < featureCount; left += 1) {
+      vector[left] += features[left] * point.value;
+
+      for (let right = 0; right < featureCount; right += 1) {
+        matrix[left][right] += features[left] * features[right];
+      }
+    }
+  }
+
+  const coefficients = solveLinearSystem(matrix, vector);
+
+  if (!coefficients) {
+    return null;
+  }
+
+  return {
+    predict: (timeIndex: number) => coefficients[0] + coefficients[1] * timeIndex,
+  };
+};
+
+const buildEmpiricalSeasonalFactorsForScalar = (points: ScalarMonthPoint[]) => {
+  const monthlyTotals = new Map<number, { sum: number; count: number }>();
+  const globalMean = average(points.map((point) => point.value));
+
+  for (const point of points) {
+    const bucket = monthlyTotals.get(point.month) ?? { sum: 0, count: 0 };
+    bucket.sum += point.value;
+    bucket.count += 1;
+    monthlyTotals.set(point.month, bucket);
+  }
+
+  return Array.from({ length: 12 }, (_, index) => {
+    const month = index + 1;
+    const bucket = monthlyTotals.get(month);
+
+    if (!bucket || bucket.count === 0) {
+      return 1;
+    }
+
+    const monthMean = bucket.sum / bucket.count;
+
+    if (globalMean === 0) {
+      return monthMean === 0 ? 1 : Math.sign(monthMean);
+    }
+
+    return monthMean / globalMean;
+  });
+};
+
+const fitScalarSeasonalRegression = (points: ScalarMonthPoint[]): ScalarSeasonalRegression | null => {
+  if (points.length < 3) {
+    return null;
+  }
+
+  const trend = fitScalarTrendRegression(points);
+
+  if (!trend) {
+    const meanValue = average(points.map((point) => point.value));
+    const predict = (_timeIndex: number, _month: number) => meanValue;
+    const predictions = buildScalarRegressionPredictions(points, predict);
+
+    return {
+      rSquared: computeScalarRSquared(points, predictions),
+      predict,
+    };
+  }
+
+  const seasonalFactors = buildEmpiricalSeasonalFactorsForScalar(points);
+  const predict = (timeIndex: number, month: number) =>
+    trend.predict(timeIndex) * seasonalFactors[month - 1];
+  const predictions = buildScalarRegressionPredictions(points, predict);
+
+  return {
+    rSquared: computeScalarRSquared(points, predictions),
+    predict,
+  };
+};
+
+const toScalarMonthPoints = (
+  points: PredictiveHistoricalPoint[],
+  selector: (point: PredictiveHistoricalPoint) => number
+): ScalarMonthPoint[] =>
+  points.map((point, index) => ({
+    timeIndex: index,
+    month: point.month.month,
+    value: selector(point),
+  }));
 
 type SeasonalRegression = {
   coefficients: number[];
@@ -448,6 +582,26 @@ export const buildPredictiveInsightsModel = (input: {
   );
 
   const avgNetMemberChange = average(calculationHistory.map((point) => point.netMemberChange));
+  const avgEntries = average(calculationHistory.map((point) => point.memberEntries));
+  const avgExits = average(calculationHistory.map((point) => point.memberExits));
+  const memberNetRegression =
+    fitScalarSeasonalRegression(toScalarMonthPoints(calculationHistory, (point) => point.netMemberChange))
+    ?? {
+      rSquared: 0,
+      predict: (_timeIndex: number, _month: number) => avgNetMemberChange,
+    };
+  const memberEntriesRegression =
+    fitScalarSeasonalRegression(toScalarMonthPoints(calculationHistory, (point) => point.memberEntries))
+    ?? {
+      rSquared: 0,
+      predict: (_timeIndex: number, _month: number) => avgEntries,
+    };
+  const memberExitsRegression =
+    fitScalarSeasonalRegression(toScalarMonthPoints(calculationHistory, (point) => point.memberExits))
+    ?? {
+      rSquared: 0,
+      predict: (_timeIndex: number, _month: number) => avgExits,
+    };
   const lastActiveMembers =
     calculationHistory[calculationHistory.length - 1]?.activeMembersEnd
     ?? historicalPoints[historicalPoints.length - 1]?.activeMembersEnd
@@ -483,12 +637,18 @@ export const buildPredictiveInsightsModel = (input: {
     let growthAttributedRevenue = 0;
     let seasonalityAttributedRevenue = 0;
     let totalProjectedNetMembers = 0;
+    let totalProjectedEntries = 0;
+    let totalProjectedExits = 0;
 
     for (let step = 1; step <= horizonMonths; step += 1) {
       cursorMonth = getNextFinancialMonth(cursorMonth);
       const timeIndex = baselineMonthIndex + step;
       const seasonalRevenue = regression.predict(timeIndex, cursorMonth.month);
-      const projectedNetMemberChange = avgNetMemberChange;
+      const projectedEntries = Math.max(0, memberEntriesRegression.predict(timeIndex, cursorMonth.month));
+      const projectedExits = Math.max(0, memberExitsRegression.predict(timeIndex, cursorMonth.month));
+      const projectedNetMemberChange = Math.round(
+        memberNetRegression.predict(timeIndex, cursorMonth.month)
+      );
       const growthRevenue = revenuePerNewMemberMonthly * projectedNetMemberChange;
       const revenue = Math.max(0, seasonalRevenue + growthRevenue);
 
@@ -497,16 +657,27 @@ export const buildPredictiveInsightsModel = (input: {
       growthAttributedRevenue += Math.max(0, growthRevenue);
       seasonalityAttributedRevenue += Math.max(0, seasonalRevenue);
       totalProjectedNetMembers += projectedNetMemberChange;
+      totalProjectedEntries += projectedEntries;
+      totalProjectedExits += projectedExits;
 
       forecastPoints.push({
         month: cursorMonth,
         revenue,
         revenueFromSeasonality: seasonalRevenue,
         revenueFromGrowth: growthRevenue,
+        projectedEntries,
+        projectedExits,
         projectedNetMemberChange,
         projectedActiveMembers: activeMembers,
       });
     }
+
+    const memberGrowthPercent =
+      lastActiveMembers > 0
+        ? ((activeMembers - lastActiveMembers) / lastActiveMembers) * 100
+        : totalProjectedNetMembers > 0
+          ? 100
+          : 0;
 
     forecasts[horizonMonths] = forecastPoints;
     horizonSummaries[horizonMonths] = {
@@ -514,6 +685,11 @@ export const buildPredictiveInsightsModel = (input: {
       totalProjectedRevenue,
       averageMonthlyRevenue: totalProjectedRevenue / horizonMonths,
       totalProjectedNetMembers,
+      totalProjectedEntries,
+      totalProjectedExits,
+      projectedActiveMembersEnd: activeMembers,
+      memberGrowthPercent,
+      averageMonthlyNetMemberChange: totalProjectedNetMembers / horizonMonths,
       growthAttributedRevenue,
       seasonalityAttributedRevenue,
     };
@@ -531,6 +707,7 @@ export const buildPredictiveInsightsModel = (input: {
     modelQuality: {
       revenueRSquared: regression.rSquared,
       growthCorrelation,
+      memberNetChangeRSquared: memberNetRegression.rSquared,
       sampleMonths: calculationHistory.length,
     },
     calculationBaseMonths: calculationHistory.length,
@@ -552,6 +729,31 @@ export const PREDICTIVE_FORECAST_HORIZONS = FORECAST_HORIZONS;
 
 export const PREDICTIVE_LTV_FORMULA_TITLE = 'Fórmula do LTV eclesiástico';
 
+export const PREDICTIVE_MEMBER_FORMULA_TITLE = 'Fórmula da previsão de membros';
+
+export const buildPredictiveMemberFormulaMessage = (
+  horizonMonths: 12 | 24 | 36,
+  baseCalculationMonths = PREDICTIVE_DEFAULT_BASE_MONTHS
+) =>
+  [
+    'Base de dados:',
+    '• Entradas: perfis com membership_date no mês.',
+    '• Saídas: perfis com membership_out no mês.',
+    '• Membros líquidos = entradas − saídas.',
+    '• Membros ativos = contagem no fim de cada mês.',
+    `• Janela de cálculo: últimos ${baseCalculationMonths} meses com receita ordinária.`,
+    '',
+    'Modelo mensal (entradas, saídas e líquido):',
+    'Regressão linear com tendência + fator sazonal por mês do calendário.',
+    '',
+    `Projeção (${horizonMonths} meses):`,
+    '• Cada mês futuro usa a tendência + sazonalidade estimadas.',
+    '• Membros ativos acumulam o líquido mês a mês.',
+    '• Crescimento % = (ativos no fim − ativos hoje) ÷ ativos hoje.',
+    '',
+    'A receita de crescimento usa o líquido projetado × LTV por novo membro/mês.',
+  ].join('\n');
+
 export const buildPredictiveLtvFormulaMessage = (
   horizonMonths: 12 | 24 | 36,
   baseCalculationMonths = PREDICTIVE_DEFAULT_BASE_MONTHS
@@ -570,5 +772,5 @@ export const buildPredictiveLtvFormulaMessage = (
     'LTV por novo membro/mês × horizonte selecionado.',
     '',
     'Na previsão mensal, a parcela de crescimento usa:',
-    'membros líquidos médios históricos × LTV por novo membro/mês.',
+    'membros líquidos projetados (tendência + sazonalidade) × LTV por novo membro/mês.',
   ].join('\n');
