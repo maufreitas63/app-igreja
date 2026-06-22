@@ -78,7 +78,7 @@ select
   ar.id as role_id,
   ar.code as role_code,
   ar.name as role_name,
-  par.created_at as assigned_at
+  par.granted_at as assigned_at
   from public.profile_access_roles par
   join public.access_roles ar on ar.id = par.role_id;
 
