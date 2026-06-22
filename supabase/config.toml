@@ -1,0 +1,5 @@
+# Supabase local / deploy reference.
+# Deploy: supabase functions deploy ai-chat --project-ref bldbrsuiwctoaxzcrjoc
+
+[functions.ai-chat]
+verify_jwt = false

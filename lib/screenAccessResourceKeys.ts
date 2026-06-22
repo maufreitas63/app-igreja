@@ -22,6 +22,7 @@ export const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   mudanca_papeis: 'maintenance.card.mudanca_papeis',
   financials: 'maintenance.card.financials',
   predictive_insights: 'maintenance.card.predictive_insights',
+  ai_assistant: 'maintenance.card.ai_assistant',
   profile_cadastro: 'maintenance.card.profile_cadastro',
   family_reception: 'maintenance.card.profile_cadastro',
   access_control: 'maintenance.card.access_control',
