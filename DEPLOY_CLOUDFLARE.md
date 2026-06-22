@@ -58,26 +58,6 @@ Variáveis opcionais do app (só se precisar no build/runtime):
 | `EXPO_PUBLIC_GOOGLE_MAPS_GEOCODING_API_KEY` | Geocodificação Google (senão usa ViaCEP + OSM) |
 | `EXPO_PUBLIC_ACL_STRICT` | `true` para negar acesso quando RPC de ACL estiver ausente |
 
-### Assistente IA (runtime — Cloudflare Pages Function `/api/ai-chat`)
-
-**Recomendado (conta da igreja):** o **super admin** cadastra a chave Gemini em **Manutenção → Assistente IA → Chave API**. A chave é criada em [Google AI Studio](https://aistudio.google.com/apikey) com a conta Google **da instituição** (não do desenvolvedor) e fica armazenada no Supabase (`ai_server_config`).
-
-Alternativas opcionais:
-
-| Opção | Uso |
-|-------|-----|
-| Tela **Chave API** no app | Padrão para cada igreja/cliente |
-| `GEMINI_API_KEY` no Cloudflare Production | Só se a implantação preferir variável de ambiente |
-| `scripts/configurar-gemini-api-key.sql` | Gravação manual no SQL Editor |
-
-Opcional no Cloudflare: `SUPABASE_URL` ou `SUPABASE_ANON_KEY` (já há padrão no worker).
-
-> O chat em produção chama **`/api/ai-chat`** na mesma origem do PWA (pasta `functions/` no repositório).
-
-> Execute `scripts/access-control-ai-curator-cloudflare-patch.sql` no Supabase (RPCs de auditoria e chave Gemini).
-
-> O Supabase usa valores padrão em `lib/supabaseConfig.ts`. Para outro projeto/ambiente, defina `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_ANON_KEY` no Cloudflare.
-
 ---
 
 ## Fluxo diário: git push

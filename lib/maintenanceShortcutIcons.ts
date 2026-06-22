@@ -12,7 +12,6 @@ export type MaintenancePanelContent =
   | 'family_reception'
   | 'financials'
   | 'predictive_insights'
-  | 'ai_assistant'
   | 'access_control'
   | 'profile_access_insights'
   | 'event_orchestration';
@@ -29,7 +28,6 @@ export type MaintenanceShortcutIconName =
   | 'exchange'
   | 'line-chart'
   | 'area-chart'
-  | 'comments'
   | 'id-card'
   | 'home'
   | 'shield'
@@ -52,7 +50,6 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   mudanca_papeis: 'exchange',
   financials: 'line-chart',
   predictive_insights: 'area-chart',
-  ai_assistant: 'comments',
   profile_cadastro: 'id-card',
   family_reception: 'home',
   access_control: 'shield',
@@ -73,7 +70,6 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   mudanca_papeis: '#FB7185',
   financials: '#34D399',
   predictive_insights: '#22D3EE',
-  ai_assistant: '#A78BFA',
   profile_cadastro: '#A78BFA',
   family_reception: '#34D399',
   access_control: '#818CF8',
