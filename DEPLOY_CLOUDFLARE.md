@@ -64,7 +64,9 @@ Em **Settings → Environment variables** (ambiente **Production**), configure:
 
 | Variável | Uso | Obrigatória |
 |----------|-----|-------------|
-| `GEMINI_API_KEY` | Chave da API Google Gemini (nunca no PWA) | **Sim** |
+| `GEMINI_API_KEY` | Chave da API Google Gemini (nunca no PWA) | Opção A |
+
+**Opção B (sem Cloudflare):** grave a chave no Supabase com `scripts/configurar-gemini-api-key.sql` (após `access-control-ai-curator-cloudflare-patch.sql`).
 
 Opcional: `SUPABASE_URL` ou `SUPABASE_ANON_KEY` (já há padrão no código do worker).
 

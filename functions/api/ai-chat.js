@@ -27,16 +27,6 @@ const DEFAULT_SUPABASE_URL = 'https://bldbrsuiwctoaxzcrjoc.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsZGJyc3Vpd2N0b2F4emNyam9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTgyMTQsImV4cCI6MjA5NTAzNDIxNH0.q2ME_1_Qatxfc6Aas02H7A6y6dUpk4BsNQyDIeQYVgU';
 
-const requireEnv = (env, key) => {
-  const value = env[key]?.trim();
-
-  if (!value) {
-    throw new Error(`missing_env:${key}`);
-  }
-
-  return value;
-};
-
 const getSupabaseUrl = (env) => env.SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
 
 const getSupabaseAnonKey = (env) =>
@@ -125,6 +115,24 @@ const authenticateAiCurator = async (request, env) => {
   return { ok: true, profileId, roleAtTime };
 };
 
+const resolveGeminiApiKey = async (env, auth) => {
+  const fromEnv = env.GEMINI_API_KEY?.trim();
+
+  if (fromEnv) {
+    return fromEnv;
+  }
+
+  const fromDatabase = await supabaseRpc(env, 'obter_chave_gemini_ia_curador', {
+    p_actor_profile_id: auth.profileId,
+  });
+
+  if (typeof fromDatabase === 'string' && fromDatabase.trim()) {
+    return fromDatabase.trim();
+  }
+
+  return null;
+};
+
 const buildGeminiContents = (question, history) => {
   const contents = history
     .filter((item) => item?.content?.trim())
@@ -200,9 +208,26 @@ const handlePost = async (request, env) => {
   let geminiApiKey;
 
   try {
-    geminiApiKey = requireEnv(env, 'GEMINI_API_KEY');
-  } catch {
-    return jsonResponse({ error: 'Serviço de IA indisponível (GEMINI_API_KEY ausente).' }, 503);
+    geminiApiKey = await resolveGeminiApiKey(env, auth);
+  } catch (error) {
+    console.error('resolveGeminiApiKey', error);
+    const message = String(error?.message ?? error);
+
+    if (message.includes('Chave Gemini não configurada')) {
+      return jsonResponse({ error: message }, 503);
+    }
+
+    return jsonResponse({ error: 'Serviço de IA indisponível.' }, 503);
+  }
+
+  if (!geminiApiKey) {
+    return jsonResponse(
+      {
+        error:
+          'Chave Gemini não configurada. Defina GEMINI_API_KEY no Cloudflare Pages (Production) ou execute scripts/configurar-gemini-api-key.sql no Supabase.',
+      },
+      503
+    );
   }
 
   const history = Array.isArray(body.history) ? body.history : [];
