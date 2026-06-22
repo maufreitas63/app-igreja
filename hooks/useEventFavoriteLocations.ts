@@ -76,6 +76,8 @@ export function useEventFavoriteLocations(enabled = true) {
     },
     [cepColumnMissing, reload]
   );
+
+  const removeLocation = useCallback(
     async (locationId: string) => {
       setDeletingId(locationId);
       setError(null);
