@@ -24,6 +24,8 @@ const jsonResponse = (body, status = 200) =>
   });
 
 const DEFAULT_SUPABASE_URL = 'https://bldbrsuiwctoaxzcrjoc.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsZGJyc3Vpd2N0b2F4emNyam9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTgyMTQsImV4cCI6MjA5NTAzNDIxNH0.q2ME_1_Qatxfc6Aas02H7A6y6dUpk4BsNQyDIeQYVgU';
 
 const requireEnv = (env, key) => {
   const value = env[key]?.trim();
@@ -37,16 +39,21 @@ const requireEnv = (env, key) => {
 
 const getSupabaseUrl = (env) => env.SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
 
+const getSupabaseAnonKey = (env) =>
+  env.SUPABASE_ANON_KEY?.trim() ||
+  env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
+  DEFAULT_SUPABASE_ANON_KEY;
+
 const supabaseRpc = async (env, functionName, payload) => {
   const supabaseUrl = getSupabaseUrl(env);
-  const serviceRoleKey = requireEnv(env, 'SUPABASE_SERVICE_ROLE_KEY');
+  const anonKey = getSupabaseAnonKey(env);
 
   const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
+      apikey: anonKey,
+      Authorization: `Bearer ${anonKey}`,
     },
     body: JSON.stringify(payload),
   });
@@ -163,7 +170,7 @@ const handlePost = async (request, env) => {
       return jsonResponse(
         {
           error:
-            'Serviço de IA não configurado no servidor. Defina SUPABASE_SERVICE_ROLE_KEY e GEMINI_API_KEY no Cloudflare Pages.',
+            'Serviço de IA não configurado no servidor. Defina GEMINI_API_KEY no Cloudflare Pages (Production) e faça um novo deploy.',
         },
         503
       );
@@ -283,14 +290,13 @@ const handlePost = async (request, env) => {
         const auditResponse = fullResponse.trim() || '(resposta vazia)';
 
         try {
-          await supabaseRpc(env, 'insert_ai_audit_log', {
-            p_user_id: auth.profileId,
+          await supabaseRpc(env, 'registrar_auditoria_ia_actor', {
+            p_actor_profile_id: auth.profileId,
             p_question: question,
             p_ai_response: auditResponse,
-            p_role_at_time: auth.roleAtTime,
           });
         } catch (auditError) {
-          console.error('insert_ai_audit_log', auditError);
+          console.error('registrar_auditoria_ia_actor', auditError);
         }
 
         pushEvent({ done: true });

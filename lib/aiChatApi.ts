@@ -8,7 +8,7 @@ const USER_SESSION_TOKEN_STORAGE_KEY = 'user_session_token';
 export const AI_CHAT_SQL_HINT = 'Execute no Supabase: scripts/access-control-ai-curator.sql';
 
 export const AI_CHAT_DEPLOY_HINT =
-  'Configure GEMINI_API_KEY e SUPABASE_SERVICE_ROLE_KEY nas variáveis do Cloudflare Pages e faça um novo deploy. Veja DEPLOY_CLOUDFLARE.md.';
+  'Defina GEMINI_API_KEY nas variáveis do Cloudflare Pages (Production) e faça um novo deploy. Veja DEPLOY_CLOUDFLARE.md.';
 
 const isLocalWebDevHost = (hostname: string) =>
   hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0';

@@ -17,12 +17,13 @@ Atribua o papel **Curador IA** ao perfil desejado em **Manutenção → Controle
 
 | Variável | Descrição |
 |----------|-----------|
-| `GEMINI_API_KEY` | API Google Gemini |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role do projeto Supabase |
+| `GEMINI_API_KEY` | API Google Gemini (**única obrigatória**) |
 
-Opcional: `SUPABASE_URL` (já há padrão no código).
+Opcional: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (há padrão no worker).
 
-Após definir, faça **novo deploy** (push em `main` ou **Retry deployment**).
+Após definir, faça **Retry deployment** ou novo push em `main`.
+
+No Supabase, se ainda não rodou após a última atualização, execute de novo o trecho de `registrar_auditoria_ia_actor` em `scripts/access-control-ai-curator.sql` (ou o arquivo inteiro).
 
 ## 3. (Opcional) Supabase Edge Function
 

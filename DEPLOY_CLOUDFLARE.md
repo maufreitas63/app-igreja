@@ -60,15 +60,19 @@ Variáveis opcionais do app (só se precisar no build/runtime):
 
 ### Assistente IA (runtime — Cloudflare Pages Function `/api/ai-chat`)
 
-Em **Settings → Environment variables** (ambiente **Production**), configure também:
+Em **Settings → Environment variables** (ambiente **Production**), configure:
 
 | Variável | Uso | Obrigatória |
 |----------|-----|-------------|
-| `GEMINI_API_KEY` | Chave da API Google Gemini (nunca no PWA) | Sim |
-| `SUPABASE_SERVICE_ROLE_KEY` | Valida sessão e grava `ai_audit_logs` no servidor | Sim |
-| `SUPABASE_URL` | Opcional; padrão `https://bldbrsuiwctoaxzcrjoc.supabase.co` | Não |
+| `GEMINI_API_KEY` | Chave da API Google Gemini (nunca no PWA) | **Sim** |
 
-> O chat em produção chama **`/api/ai-chat`** na mesma origem do PWA (pasta `functions/` no repositório). Não é necessário deploy separado no Supabase Edge Functions, salvo desenvolvimento local.
+Opcional: `SUPABASE_URL` ou `SUPABASE_ANON_KEY` (já há padrão no código do worker).
+
+> Após adicionar `GEMINI_API_KEY`, faça **Retry deployment** ou novo push em `main`.
+
+> O chat em produção chama **`/api/ai-chat`** na mesma origem do PWA (pasta `functions/` no repositório).
+
+> Execute também `scripts/access-control-ai-curator.sql` no Supabase (RPC `registrar_auditoria_ia_actor`).
 
 > O Supabase usa valores padrão em `lib/supabaseConfig.ts`. Para outro projeto/ambiente, defina `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_ANON_KEY` no Cloudflare.
 
