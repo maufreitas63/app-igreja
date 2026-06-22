@@ -5,6 +5,7 @@ import {
   type EventFavoriteLocation,
   type EventFavoriteLocationInput,
 } from '@/lib/eventFavoriteLocationsApi';
+import { formatEventCapacityLabel, isUnlimitedEventCapacity, UNLIMITED_EVENT_CAPACITY_LABEL } from '@/lib/eventCapacity';
 import { formatBrazilCepInput } from '@/lib/inputMasks';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -341,7 +342,9 @@ export function EventFavoriteLocationPickerModal({
                                 {location.address}
                               </Text>
                             ) : null}
-                            <Text style={styles.optionCapacity}>{location.capacity} vagas</Text>
+                            <Text style={styles.optionCapacity}>
+                              {formatEventCapacityLabel(location.capacity)}
+                            </Text>
                             {!location.is_active ? (
                               <Text style={styles.optionInactiveLabel}>Inativo</Text>
                             ) : null}
@@ -461,12 +464,15 @@ export function EventFavoriteLocationPickerModal({
                   {renderFieldLabel('Capacidade *')}
                   <TextInput
                     style={styles.input}
-                    placeholder="200"
+                    placeholder="200 ou 999"
                     placeholderTextColor="#64748B"
                     value={form.capacity}
                     keyboardType="number-pad"
                     onChangeText={(text) => patchForm({ capacity: text.replace(/\D/g, '') })}
                   />
+                  {isUnlimitedEventCapacity(form.capacity) ? (
+                    <Text style={styles.unlimitedHint}>{UNLIMITED_EVENT_CAPACITY_LABEL}</Text>
+                  ) : null}
                 </View>
                 <View style={styles.coordField}>
                   {renderFieldLabel('Ordem')}
@@ -667,6 +673,12 @@ const styles = StyleSheet.create({
     color: '#A5B4FC',
     fontSize: 12,
     fontWeight: '700',
+  },
+  unlimitedHint: {
+    color: '#86EFAC',
+    fontSize: 11,
+    fontWeight: '700',
+    lineHeight: 14,
   },
   optionInactiveLabel: {
     color: '#F59E0B',

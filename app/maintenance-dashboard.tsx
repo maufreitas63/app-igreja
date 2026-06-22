@@ -75,10 +75,14 @@ import {
   saveMaintenanceEvent,
 } from '@/lib/saveMaintenanceEvent';
 import {
+  isUnlimitedEventCapacity,
+  UNLIMITED_EVENT_CAPACITY_LABEL,
+} from '@/lib/eventCapacity';
+import type { EventFavoriteLocation } from '@/lib/eventFavoriteLocationsApi';
+import {
   EVENT_FAVORITE_LOCATIONS_SQL_HINT,
   useEventFavoriteLocations,
 } from '@/hooks/useEventFavoriteLocations';
-import type { EventFavoriteLocation } from '@/lib/eventFavoriteLocationsApi';
 import { useFamilyReceptionSuperAdminNotifier } from '@/hooks/useFamilyReceptionSuperAdminNotifier';
 import { useMaintenanceEvents, type MaintenanceEvent } from '@/hooks/useMaintenanceEvents';
 import { useQuorumRegistry } from '@/hooks/useQuorumRegistry';
@@ -1519,12 +1523,15 @@ export default function MaintenanceDashboard() {
                     <Text style={styles.capacityFieldLabel}>Capacidade *</Text>
                     <TextInput
                       style={[styles.input, styles.capacityInput]}
-                      placeholder="200"
+                      placeholder="200 ou 999"
                       placeholderTextColor="#64748B"
                       value={form.maxCapacity}
                       keyboardType="number-pad"
                       onChangeText={(text) => patchForm({ maxCapacity: text.replace(/\D/g, '') })}
                     />
+                    {isUnlimitedEventCapacity(form.maxCapacity) ? (
+                      <Text style={styles.capacityUnlimitedHint}>{UNLIMITED_EVENT_CAPACITY_LABEL}</Text>
+                    ) : null}
                   </View>
                 </View>
 
@@ -2329,6 +2336,13 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 10,
     textAlign: 'center',
+  },
+  capacityUnlimitedHint: {
+    color: '#86EFAC',
+    fontSize: 10,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 13,
   },
   dateTimeRow: {
     flexDirection: 'row',

@@ -5,6 +5,7 @@ import {
   isEventDateBeforeToday,
 } from '@/lib/eventDate';
 import { KIDS_ROOM_DISPLAY_LABEL, TEENS_ROOM_DISPLAY_LABEL } from '@/lib/entityPrefixCore';
+import { formatEventCapacityLabel } from '@/lib/eventCapacity';
 import { formatBrazilDateShortInput, formatBrazilTimeInput } from '@/lib/inputMasks';
 
 export type MaintenanceEventFormState = {
@@ -429,8 +430,7 @@ export const summarizeMaintenanceEvent = (event: {
 
   const dateLabel = formatEventDateTimeLabel(event.event_date) || 'Sem data';
   const localLabel = event.event_local?.trim() || 'Sem local';
-  const capacityLabel =
-    typeof event.max_capacity === 'number' ? `${event.max_capacity} vagas` : 'Sem limite';
+  const capacityLabel = formatEventCapacityLabel(event.max_capacity);
 
   return {
     dateLabel,
