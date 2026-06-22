@@ -12,6 +12,7 @@ export type MaintenanceEventFormState = {
   eventDateInput: string;
   eventTimeInput: string;
   eventLocal: string;
+  eventLocalAddress: string;
   maxCapacity: string;
   kidsRoom: boolean;
   teensRoom: boolean;
@@ -27,6 +28,7 @@ export const emptyMaintenanceEventForm = (): MaintenanceEventFormState => ({
   eventDateInput: '',
   eventTimeInput: '',
   eventLocal: '',
+  eventLocalAddress: '',
   maxCapacity: '',
   kidsRoom: false,
   teensRoom: false,
@@ -195,6 +197,7 @@ export const formFromMaintenanceEvent = (event: {
   eventDateInput: formatEventDateOnlyForInput(event.event_date),
   eventTimeInput: formatEventTimeForInput(event.event_date),
   eventLocal: event.event_local ?? '',
+  eventLocalAddress: '',
   maxCapacity:
     typeof event.max_capacity === 'number' && !Number.isNaN(event.max_capacity)
       ? String(event.max_capacity)

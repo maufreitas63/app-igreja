@@ -690,6 +690,7 @@ export default function MaintenanceDashboard() {
       setStatusMessage(null);
       patchForm({
         eventLocal: location.name,
+        eventLocalAddress: location.address,
         maxCapacity: String(location.capacity),
       });
       setFavoritePickerVisible(false);
@@ -1480,7 +1481,10 @@ export default function MaintenanceDashboard() {
                 </View>
 
                 <View style={styles.localCapacityHeader}>
-                  <Text style={styles.fieldLabel}>Local do evento</Text>
+                  <View style={styles.localCapacityLabels}>
+                    <Text style={[styles.fieldLabel, styles.localFieldLabel]}>Local do evento</Text>
+                    <Text style={[styles.fieldLabel, styles.capacityHeaderLabel]}>Capacidade *</Text>
+                  </View>
                   <Pressable
                     style={({ pressed }) => [
                       styles.favoritePickerButton,
@@ -1498,24 +1502,30 @@ export default function MaintenanceDashboard() {
                   </Pressable>
                 </View>
                 <View style={styles.localCapacityRow}>
-                  <TextInput
-                    style={[styles.input, styles.localInput]}
-                    placeholder="Ex.: Templo principal"
-                    placeholderTextColor="#64748B"
-                    value={form.eventLocal}
-                    onChangeText={(text) => patchForm({ eventLocal: text })}
-                  />
-                  <View style={styles.capacityField}>
-                    <Text style={styles.capacityFieldLabel}>Capacidade *</Text>
+                  <View style={styles.localColumn}>
                     <TextInput
-                      style={[styles.input, styles.capacityInput]}
-                      placeholder="200"
+                      style={[styles.input, styles.localInput]}
+                      placeholder="Ex.: Templo principal"
                       placeholderTextColor="#64748B"
-                      value={form.maxCapacity}
-                      keyboardType="number-pad"
-                      onChangeText={(text) => patchForm({ maxCapacity: text.replace(/\D/g, '') })}
+                      value={form.eventLocal}
+                      onChangeText={(text) => patchForm({ eventLocal: text })}
+                    />
+                    <TextInput
+                      style={[styles.input, styles.localAddressInput]}
+                      placeholder="Endereço do local"
+                      placeholderTextColor="#64748B"
+                      value={form.eventLocalAddress}
+                      onChangeText={(text) => patchForm({ eventLocalAddress: text })}
                     />
                   </View>
+                  <TextInput
+                    style={[styles.input, styles.capacityInput]}
+                    placeholder="200"
+                    placeholderTextColor="#64748B"
+                    value={form.maxCapacity}
+                    keyboardType="number-pad"
+                    onChangeText={(text) => patchForm({ maxCapacity: text.replace(/\D/g, '') })}
+                  />
                 </View>
 
                 {favoriteLocationsSchemaMissing && !loading ? (
@@ -2268,6 +2278,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
+    marginBottom: 2,
+  },
+  localCapacityLabels: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minWidth: 0,
+  },
+  localFieldLabel: {
+    flex: 1,
+    minWidth: 0,
+  },
+  capacityHeaderLabel: {
+    width: 112,
+    flexShrink: 0,
+    textAlign: 'center',
   },
   favoritePickerButton: {
     flexDirection: 'row',
@@ -2287,29 +2314,27 @@ const styles = StyleSheet.create({
   },
   localCapacityRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     gap: 10,
   },
-  localInput: {
+  localColumn: {
     flex: 1,
     minWidth: 0,
-    maxWidth: '68%',
+    gap: 8,
   },
-  capacityField: {
-    width: 112,
-    flexShrink: 0,
-    gap: 6,
+  localInput: {
+    width: '100%',
   },
-  capacityFieldLabel: {
-    color: '#C7D2FE',
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  localAddressInput: {
+    width: '100%',
+    minHeight: 44,
   },
   capacityInput: {
+    width: 112,
+    flexShrink: 0,
     paddingHorizontal: 10,
     textAlign: 'center',
+    marginTop: 0,
   },
   dateTimeRow: {
     flexDirection: 'row',
