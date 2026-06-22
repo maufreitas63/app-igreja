@@ -291,7 +291,8 @@ begin
     return jsonb_build_object('success', false, 'message', 'Perfil não encontrado.');
   end if;
 
-  if public.profile_has_protected_role_for_pastoral_change(p_target_profile_id) then
+  if not public.is_super_admin_profile(p_actor_profile_id)
+     and public.profile_has_protected_role_for_pastoral_change(p_target_profile_id) then
     return jsonb_build_object(
       'success',
       false,
@@ -387,7 +388,8 @@ begin
     return jsonb_build_object('success', false, 'message', 'Perfil não encontrado.');
   end if;
 
-  if public.profile_has_protected_role_for_pastoral_change(p_target_profile_id) then
+  if not public.is_super_admin_profile(p_actor_profile_id)
+     and public.profile_has_protected_role_for_pastoral_change(p_target_profile_id) then
     return jsonb_build_object(
       'success',
       false,
