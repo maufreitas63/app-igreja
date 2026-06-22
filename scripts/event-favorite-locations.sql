@@ -4,6 +4,7 @@
 create table if not exists public.event_favorite_locations (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  cep text null,
   address text not null default '',
   latitude double precision null,
   longitude double precision null,
@@ -19,7 +20,9 @@ create table if not exists public.event_favorite_locations (
   constraint event_favorite_locations_latitude_check
     check (latitude is null or (latitude >= -90 and latitude <= 90)),
   constraint event_favorite_locations_longitude_check
-    check (longitude is null or (longitude >= -180 and longitude <= 180))
+    check (longitude is null or (longitude >= -180 and longitude <= 180)),
+  constraint event_favorite_locations_cep_check
+    check (cep is null or cep ~ '^\d{5}-\d{3}$')
 );
 
 create unique index if not exists event_favorite_locations_name_unique_idx

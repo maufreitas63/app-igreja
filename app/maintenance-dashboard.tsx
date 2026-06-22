@@ -675,9 +675,14 @@ export default function MaintenanceDashboard() {
   const {
     locations: favoriteLocations,
     loading: favoriteLocationsLoading,
+    saving: favoriteLocationsSaving,
+    deletingId: favoriteLocationDeletingId,
     schemaMissing: favoriteLocationsSchemaMissing,
+    cepColumnMissing: favoriteLocationsCepColumnMissing,
     error: favoriteLocationsError,
     reload: reloadFavoriteLocations,
+    saveLocation: saveFavoriteLocation,
+    removeLocation: removeFavoriteLocation,
   } = useEventFavoriteLocations(showEditor);
 
   const applyFavoriteLocation = useCallback(
@@ -1773,10 +1778,18 @@ export default function MaintenanceDashboard() {
           visible={favoritePickerVisible}
           locations={favoriteLocations}
           loading={favoriteLocationsLoading}
+          saving={favoriteLocationsSaving}
+          deletingId={favoriteLocationDeletingId}
           schemaMissing={favoriteLocationsSchemaMissing}
+          cepColumnMissing={favoriteLocationsCepColumnMissing}
           error={favoriteLocationsError}
+          canManage={canUpdateMaintenanceEvents}
           onClose={() => setFavoritePickerVisible(false)}
           onSelect={applyFavoriteLocation}
+          onSave={async (input, locationId) => {
+            await saveFavoriteLocation(input, locationId);
+          }}
+          onDelete={removeFavoriteLocation}
         />
       </SafeAreaView>
     </LinearGradient>
