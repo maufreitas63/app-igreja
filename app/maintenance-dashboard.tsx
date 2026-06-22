@@ -1481,10 +1481,7 @@ export default function MaintenanceDashboard() {
                 </View>
 
                 <View style={styles.localCapacityHeader}>
-                  <View style={styles.localCapacityLabels}>
-                    <Text style={[styles.fieldLabel, styles.localFieldLabel]}>Local do evento</Text>
-                    <Text style={[styles.fieldLabel, styles.capacityHeaderLabel]}>Capacidade *</Text>
-                  </View>
+                  <Text style={styles.fieldLabel}>Local do evento</Text>
                   <Pressable
                     style={({ pressed }) => [
                       styles.favoritePickerButton,
@@ -1518,14 +1515,17 @@ export default function MaintenanceDashboard() {
                       onChangeText={(text) => patchForm({ eventLocalAddress: text })}
                     />
                   </View>
-                  <TextInput
-                    style={[styles.input, styles.capacityInput]}
-                    placeholder="200"
-                    placeholderTextColor="#64748B"
-                    value={form.maxCapacity}
-                    keyboardType="number-pad"
-                    onChangeText={(text) => patchForm({ maxCapacity: text.replace(/\D/g, '') })}
-                  />
+                  <View style={styles.capacityColumn}>
+                    <Text style={styles.capacityFieldLabel}>Capacidade *</Text>
+                    <TextInput
+                      style={[styles.input, styles.capacityInput]}
+                      placeholder="200"
+                      placeholderTextColor="#64748B"
+                      value={form.maxCapacity}
+                      keyboardType="number-pad"
+                      onChangeText={(text) => patchForm({ maxCapacity: text.replace(/\D/g, '') })}
+                    />
+                  </View>
                 </View>
 
                 {favoriteLocationsSchemaMissing && !loading ? (
@@ -2280,22 +2280,6 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 2,
   },
-  localCapacityLabels: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    minWidth: 0,
-  },
-  localFieldLabel: {
-    flex: 1,
-    minWidth: 0,
-  },
-  capacityHeaderLabel: {
-    width: 112,
-    flexShrink: 0,
-    textAlign: 'center',
-  },
   favoritePickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2314,7 +2298,7 @@ const styles = StyleSheet.create({
   },
   localCapacityRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
     gap: 10,
   },
   localColumn: {
@@ -2327,14 +2311,24 @@ const styles = StyleSheet.create({
   },
   localAddressInput: {
     width: '100%',
-    minHeight: 44,
   },
-  capacityInput: {
+  capacityColumn: {
     width: 112,
     flexShrink: 0,
+    gap: 6,
+  },
+  capacityFieldLabel: {
+    color: '#C7D2FE',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  capacityInput: {
+    width: '100%',
     paddingHorizontal: 10,
     textAlign: 'center',
-    marginTop: 0,
   },
   dateTimeRow: {
     flexDirection: 'row',
