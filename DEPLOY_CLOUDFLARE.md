@@ -60,21 +60,21 @@ Variáveis opcionais do app (só se precisar no build/runtime):
 
 ### Assistente IA (runtime — Cloudflare Pages Function `/api/ai-chat`)
 
-Em **Settings → Environment variables** (ambiente **Production**), configure:
+**Recomendado (conta da igreja):** o **super admin** cadastra a chave Gemini em **Manutenção → Assistente IA → Chave API**. A chave é criada em [Google AI Studio](https://aistudio.google.com/apikey) com a conta Google **da instituição** (não do desenvolvedor) e fica armazenada no Supabase (`ai_server_config`).
 
-| Variável | Uso | Obrigatória |
-|----------|-----|-------------|
-| `GEMINI_API_KEY` | Chave da API Google Gemini (nunca no PWA) | Opção A |
+Alternativas opcionais:
 
-**Opção B (sem Cloudflare):** grave a chave no Supabase com `scripts/configurar-gemini-api-key.sql` (após `access-control-ai-curator-cloudflare-patch.sql`).
+| Opção | Uso |
+|-------|-----|
+| Tela **Chave API** no app | Padrão para cada igreja/cliente |
+| `GEMINI_API_KEY` no Cloudflare Production | Só se a implantação preferir variável de ambiente |
+| `scripts/configurar-gemini-api-key.sql` | Gravação manual no SQL Editor |
 
-Opcional: `SUPABASE_URL` ou `SUPABASE_ANON_KEY` (já há padrão no código do worker).
-
-> Após adicionar `GEMINI_API_KEY`, faça **Retry deployment** ou novo push em `main`.
+Opcional no Cloudflare: `SUPABASE_URL` ou `SUPABASE_ANON_KEY` (já há padrão no worker).
 
 > O chat em produção chama **`/api/ai-chat`** na mesma origem do PWA (pasta `functions/` no repositório).
 
-> Execute também `scripts/access-control-ai-curator.sql` no Supabase (RPC `registrar_auditoria_ia_actor`).
+> Execute `scripts/access-control-ai-curator-cloudflare-patch.sql` no Supabase (RPCs de auditoria e chave Gemini).
 
 > O Supabase usa valores padrão em `lib/supabaseConfig.ts`. Para outro projeto/ambiente, defina `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_ANON_KEY` no Cloudflare.
 

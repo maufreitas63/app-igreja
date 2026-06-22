@@ -276,6 +276,24 @@ begin
 end;
 $$;
 
+create or replace function public.ia_gemini_esta_configurada_admin(p_actor_profile_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  perform public.assert_ai_audit_logs_admin(p_actor_profile_id);
+
+  return exists (
+    select 1
+      from public.ai_server_config c
+     where c.config_key = 'gemini_api_key'
+       and nullif(trim(coalesce(c.config_value, '')), '') is not null
+  );
+end;
+$$;
+
 create or replace function public.assert_ai_audit_logs_admin(p_actor_profile_id uuid)
 returns void
 language plpgsql
@@ -358,6 +376,7 @@ grant execute on function public.insert_ai_audit_log(uuid, text, text, text) to 
 grant execute on function public.registrar_auditoria_ia_actor(uuid, text, text) to anon, authenticated, service_role;
 grant execute on function public.obter_chave_gemini_ia_curador(uuid) to anon, authenticated, service_role;
 grant execute on function public.salvar_chave_gemini_ia_admin(uuid, text) to anon, authenticated;
+grant execute on function public.ia_gemini_esta_configurada_admin(uuid) to anon, authenticated;
 grant execute on function public.assert_ai_audit_logs_admin(uuid) to anon, authenticated;
 grant execute on function public.listar_ai_audit_logs_admin(uuid, integer) to anon, authenticated;
 grant execute on function public.access_role_display_order(text) to anon, authenticated;

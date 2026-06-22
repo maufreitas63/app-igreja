@@ -3,11 +3,17 @@ import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useAiChat } from '@/hooks/useAiChat';
 import { AI_CHAT_SQL_HINT } from '@/lib/aiChatApi';
 import { fetchAiAuditLogs, type AiAuditLogRow } from '@/lib/aiAuditLogsApi';
+import {
+  fetchGeminiApiKeyConfigured,
+  GEMINI_KEY_SETUP_HINT,
+  saveGeminiApiKeyAdmin,
+} from '@/lib/aiServerConfigApi';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { sessionHasAccess } from '@/lib/accessControl';
 import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +21,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 type Props = {
   isActive?: boolean;
@@ -45,10 +52,15 @@ export function MaintenanceAiAssistantCard({ isActive = true, panelHeight }: Pro
   const { messages, draft, setDraft, streaming, error, sendMessage, clearConversation } = useAiChat();
   const [canUseAssistant, setCanUseAssistant] = useState<boolean | null>(null);
   const [canViewAudit, setCanViewAudit] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'audit'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'audit' | 'config'>('chat');
   const [auditLogs, setAuditLogs] = useState<AiAuditLogRow[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
+  const [geminiKeyDraft, setGeminiKeyDraft] = useState('');
+  const [geminiConfigured, setGeminiConfigured] = useState<boolean | null>(null);
+  const [configLoading, setConfigLoading] = useState(false);
+  const [configSaving, setConfigSaving] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isActive) {
@@ -72,7 +84,7 @@ export function MaintenanceAiAssistantCard({ isActive = true, panelHeight }: Pro
         setCanViewAudit(auditAccess);
 
         if (!assistantAccess && auditAccess) {
-          setActiveTab('audit');
+          setActiveTab('config');
         }
       } catch {
         if (!cancelled) {
@@ -108,6 +120,50 @@ export function MaintenanceAiAssistantCard({ isActive = true, panelHeight }: Pro
     }
   }, []);
 
+  const loadGeminiConfigStatus = useCallback(async () => {
+    setConfigLoading(true);
+    setConfigError(null);
+
+    try {
+      await resolveActorProfileId();
+      const configured = await fetchGeminiApiKeyConfigured();
+      setGeminiConfigured(configured);
+    } catch (loadError) {
+      setGeminiConfigured(false);
+      setConfigError(
+        loadError instanceof Error
+          ? loadError.message
+          : 'Não foi possível verificar a configuração da chave Gemini.'
+      );
+    } finally {
+      setConfigLoading(false);
+    }
+  }, []);
+
+  const handleSaveGeminiKey = useCallback(async () => {
+    setConfigSaving(true);
+    setConfigError(null);
+
+    try {
+      await saveGeminiApiKeyAdmin(geminiKeyDraft);
+      setGeminiKeyDraft('');
+      setGeminiConfigured(true);
+      Toast.show({
+        type: 'success',
+        text1: 'Chave Gemini salva',
+        text2: 'O assistente de IA já pode ser usado pelos curadores.',
+      });
+    } catch (saveError) {
+      setConfigError(
+        saveError instanceof Error
+          ? saveError.message
+          : 'Não foi possível salvar a chave Gemini.'
+      );
+    } finally {
+      setConfigSaving(false);
+    }
+  }, [geminiKeyDraft]);
+
   useEffect(() => {
     if (!isActive || !canViewAudit || activeTab !== 'audit') {
       return;
@@ -115,6 +171,14 @@ export function MaintenanceAiAssistantCard({ isActive = true, panelHeight }: Pro
 
     void loadAuditLogs();
   }, [activeTab, canViewAudit, isActive, loadAuditLogs]);
+
+  useEffect(() => {
+    if (!isActive || !canViewAudit || activeTab !== 'config') {
+      return;
+    }
+
+    void loadGeminiConfigStatus();
+  }, [activeTab, canViewAudit, isActive, loadGeminiConfigStatus]);
 
   if (canUseAssistant === null) {
     return (
@@ -143,16 +207,18 @@ export function MaintenanceAiAssistantCard({ isActive = true, panelHeight }: Pro
       <Text style={maintenancePanelStyles.panelTitle}>Assistente IA</Text>
       <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
-      {canUseAssistant && canViewAudit ? (
+      {canViewAudit ? (
         <View style={styles.tabRow}>
-          <TouchableOpacity
-            style={[styles.tabChip, activeTab === 'chat' && styles.tabChipActive]}
-            onPress={() => setActiveTab('chat')}
-          >
-            <Text style={[styles.tabChipText, activeTab === 'chat' && styles.tabChipTextActive]}>
-              Chat
-            </Text>
-          </TouchableOpacity>
+          {canUseAssistant ? (
+            <TouchableOpacity
+              style={[styles.tabChip, activeTab === 'chat' && styles.tabChipActive]}
+              onPress={() => setActiveTab('chat')}
+            >
+              <Text style={[styles.tabChipText, activeTab === 'chat' && styles.tabChipTextActive]}>
+                Chat
+              </Text>
+            </TouchableOpacity>
+          ) : null}
           <TouchableOpacity
             style={[styles.tabChip, activeTab === 'audit' && styles.tabChipActive]}
             onPress={() => setActiveTab('audit')}
@@ -161,10 +227,84 @@ export function MaintenanceAiAssistantCard({ isActive = true, panelHeight }: Pro
               Auditoria
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabChip, activeTab === 'config' && styles.tabChipActive]}
+            onPress={() => setActiveTab('config')}
+          >
+            <Text style={[styles.tabChipText, activeTab === 'config' && styles.tabChipTextActive]}>
+              Chave API
+            </Text>
+          </TouchableOpacity>
         </View>
       ) : null}
 
-      {activeTab === 'audit' && canViewAudit ? (
+      {activeTab === 'config' && canViewAudit ? (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.configContent}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.helpText}>{GEMINI_KEY_SETUP_HINT}</Text>
+          <Text style={styles.metaText}>
+            A chave fica armazenada no Supabase da igreja (não no código do app) e só é usada pelo
+            servidor ao atender curadores IA. Você pode trocá-la quando quiser.
+          </Text>
+
+          {configLoading ? <CardLoadingState lines={2} /> : null}
+
+          {!configLoading ? (
+            <View style={styles.configStatusRow}>
+              <Text style={styles.configStatusLabel}>Status:</Text>
+              <Text
+                style={[
+                  styles.configStatusValue,
+                  geminiConfigured ? styles.configStatusOk : styles.configStatusMissing,
+                ]}
+              >
+                {geminiConfigured ? 'Chave cadastrada' : 'Chave ainda não cadastrada'}
+              </Text>
+            </View>
+          ) : null}
+
+          {configError ? <Text style={styles.errorText}>{configError}</Text> : null}
+
+          <SectionLabel variant="maintenance">Chave da API Gemini (conta da igreja)</SectionLabel>
+          <TextInput
+            style={styles.input}
+            placeholder="Cole a chave AIza… criada no Google AI Studio"
+            placeholderTextColor="#64748B"
+            value={geminiKeyDraft}
+            onChangeText={setGeminiKeyDraft}
+            editable={!configSaving}
+            autoCapitalize="none"
+            autoCorrect={false}
+            secureTextEntry
+            maxLength={256}
+          />
+
+          <View style={styles.toolbarRow}>
+            <TouchableOpacity
+              style={[styles.sendButton, (configSaving || !geminiKeyDraft.trim()) && styles.sendButtonDisabled]}
+              onPress={() => void handleSaveGeminiKey()}
+              disabled={configSaving || !geminiKeyDraft.trim()}
+            >
+              {configSaving ? (
+                <ActivityIndicator size="small" color={ACCENT} />
+              ) : (
+                <Text style={styles.sendButtonText}>Salvar chave</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => void loadGeminiConfigStatus()}
+              disabled={configLoading || configSaving}
+            >
+              <Text style={styles.secondaryButtonText}>Atualizar status</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      ) : activeTab === 'audit' && canViewAudit ? (
         <>
           <View style={styles.toolbarRow}>
             <TouchableOpacity style={styles.secondaryButton} onPress={() => void loadAuditLogs()}>
@@ -334,6 +474,31 @@ const styles = StyleSheet.create({
   auditContent: {
     gap: 10,
     paddingBottom: 12,
+  },
+  configContent: {
+    gap: 10,
+    paddingBottom: 12,
+  },
+  configStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  configStatusLabel: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  configStatusValue: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  configStatusOk: {
+    color: '#86EFAC',
+  },
+  configStatusMissing: {
+    color: '#FCD34D',
   },
   messageBubble: {
     borderRadius: 10,
