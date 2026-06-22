@@ -58,6 +58,18 @@ Variáveis opcionais do app (só se precisar no build/runtime):
 | `EXPO_PUBLIC_GOOGLE_MAPS_GEOCODING_API_KEY` | Geocodificação Google (senão usa ViaCEP + OSM) |
 | `EXPO_PUBLIC_ACL_STRICT` | `true` para negar acesso quando RPC de ACL estiver ausente |
 
+### Assistente IA (runtime — Cloudflare Pages Function `/api/ai-chat`)
+
+Em **Settings → Environment variables** (ambiente **Production**), configure também:
+
+| Variável | Uso | Obrigatória |
+|----------|-----|-------------|
+| `GEMINI_API_KEY` | Chave da API Google Gemini (nunca no PWA) | Sim |
+| `SUPABASE_SERVICE_ROLE_KEY` | Valida sessão e grava `ai_audit_logs` no servidor | Sim |
+| `SUPABASE_URL` | Opcional; padrão `https://bldbrsuiwctoaxzcrjoc.supabase.co` | Não |
+
+> O chat em produção chama **`/api/ai-chat`** na mesma origem do PWA (pasta `functions/` no repositório). Não é necessário deploy separado no Supabase Edge Functions, salvo desenvolvimento local.
+
 > O Supabase usa valores padrão em `lib/supabaseConfig.ts`. Para outro projeto/ambiente, defina `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_ANON_KEY` no Cloudflare.
 
 ---

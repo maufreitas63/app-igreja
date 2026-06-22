@@ -1,6 +1,6 @@
-# Deploy do módulo de IA (Supabase Edge Function)
+# Deploy do módulo de IA
 
-O chat com Gemini roda em uma **Edge Function** (`ai-chat`), não no PWA. O PWA apenas consome o endpoint com o token de sessão do app.
+O chat com Gemini em **produção** usa a **Cloudflare Pages Function** `functions/api/ai-chat.js` (rota `/api/ai-chat`), publicada automaticamente com o PWA.
 
 ## 1. SQL no Supabase
 
@@ -11,29 +11,34 @@ No **SQL Editor**, execute na ordem:
 
 Atribua o papel **Curador IA** ao perfil desejado em **Manutenção → Controle de Acesso**.
 
-## 2. Secret da API Gemini
+## 2. Variáveis no Cloudflare Pages (produção)
 
-No Supabase Dashboard:
+**Settings → Environment variables → Production:**
 
-**Project Settings → Edge Functions → Secrets**
+| Variável | Descrição |
+|----------|-----------|
+| `GEMINI_API_KEY` | API Google Gemini |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role do projeto Supabase |
 
-| Nome | Valor |
-|------|--------|
-| `GEMINI_API_KEY` | Chave da API Google AI (Gemini) |
+Opcional: `SUPABASE_URL` (já há padrão no código).
 
-`SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` são injetados automaticamente nas Edge Functions.
+Após definir, faça **novo deploy** (push em `main` ou **Retry deployment**).
 
-## 3. Deploy da função
+## 3. (Opcional) Supabase Edge Function
 
-Requisitos: [Supabase CLI](https://supabase.com/docs/guides/cli) autenticada.
+Alternativa para **desenvolvimento local** (`localhost`) ou se preferir hospedar no Supabase:
+
+### Secret Gemini
+
+No Supabase Dashboard: **Edge Functions → Secrets** → `GEMINI_API_KEY`
+
+### Deploy
 
 ```bash
 cd app-igreja
 supabase link --project-ref bldbrsuiwctoaxzcrjoc
 supabase functions deploy ai-chat --no-verify-jwt
 ```
-
-`--no-verify-jwt` é necessário porque o app usa **sessão customizada** (`x-session-token`), não JWT do Supabase Auth.
 
 ## 4. Validar
 
@@ -44,7 +49,7 @@ supabase functions deploy ai-chat --no-verify-jwt
 
 ## 5. PWA (Cloudflare)
 
-O frontend vai no deploy normal (`git push` → `npm run build:web`). Não exponha `GEMINI_API_KEY` no `.env` do PWA.
+O frontend vai no deploy normal (`git push` → `npm run build:web`). **Nunca** exponha `GEMINI_API_KEY` nem `SUPABASE_SERVICE_ROLE_KEY` no cliente.
 
 ## Modelo
 

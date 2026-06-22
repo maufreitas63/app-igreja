@@ -1,10 +1,34 @@
 import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/supabaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const USER_PROFILE_ID_STORAGE_KEY = 'user_profile_id';
 const USER_SESSION_TOKEN_STORAGE_KEY = 'user_session_token';
 
 export const AI_CHAT_SQL_HINT = 'Execute no Supabase: scripts/access-control-ai-curator.sql';
+
+export const AI_CHAT_DEPLOY_HINT =
+  'Configure GEMINI_API_KEY e SUPABASE_SERVICE_ROLE_KEY nas variáveis do Cloudflare Pages e faça um novo deploy. Veja DEPLOY_CLOUDFLARE.md.';
+
+const isLocalWebDevHost = (hostname: string) =>
+  hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0';
+
+/** Produção web: mesma origem (/api/ai-chat). Dev local: Supabase Edge Function. */
+export const resolveAiChatEndpoint = () => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+
+    if (!isLocalWebDevHost(hostname)) {
+      return `${window.location.origin}/api/ai-chat`;
+    }
+  }
+
+  return `${getSupabaseUrl()}/functions/v1/ai-chat`;
+};
+
+const isNetworkFetchError = (error: unknown) =>
+  error instanceof TypeError &&
+  /failed to fetch|network request failed|load failed/i.test(String(error.message ?? error));
 
 export type AiChatHistoryItem = {
   role: 'user' | 'assistant';
@@ -82,12 +106,28 @@ export async function streamAiChatMessage({
   onDone,
 }: StreamAiChatOptions) {
   const headers = await buildAiChatHeaders();
-  const response = await fetch(`${getSupabaseUrl()}/functions/v1/ai-chat`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ question, history }),
-    signal,
-  });
+  const endpoint = resolveAiChatEndpoint();
+
+  let response: Response;
+
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ question, history }),
+      signal,
+    });
+  } catch (error) {
+    if (isNetworkFetchError(error)) {
+      throw new Error(
+        endpoint.includes('/functions/v1/')
+          ? `Não foi possível conectar ao assistente de IA (Supabase Edge Function). ${AI_CHAT_DEPLOY_HINT}`
+          : `Não foi possível conectar ao assistente de IA. ${AI_CHAT_DEPLOY_HINT}`
+      );
+    }
+
+    throw error;
+  }
 
   if (!response.ok) {
     let message = 'nao autorizado para esta funçao';
@@ -96,7 +136,11 @@ export async function streamAiChatMessage({
       const payload = (await response.json()) as { error?: string };
       message = payload.error?.trim() || message;
     } catch {
-      message = `Erro ${response.status} ao consultar o assistente.`;
+      if (response.status === 404) {
+        message = `Endpoint do assistente não encontrado. ${AI_CHAT_DEPLOY_HINT}`;
+      } else {
+        message = `Erro ${response.status} ao consultar o assistente.`;
+      }
     }
 
     throw new Error(message);
