@@ -153,13 +153,82 @@ type SeasonalRegression = {
   predict: (timeIndex: number, month: number) => number;
 };
 
-const fitSeasonalLinearRegression = (
+const buildRegressionPredictions = (
+  points: PredictiveHistoricalPoint[],
+  predict: (timeIndex: number, month: number) => number
+) => points.map((point, index) => predict(index, point.month.month));
+
+const computeRegressionRSquared = (points: PredictiveHistoricalPoint[], predictions: number[]) => {
+  const meanRevenue =
+    points.reduce((sum, point) => sum + point.revenue, 0) / Math.max(points.length, 1);
+  const totalVariance = points.reduce(
+    (sum, point) => sum + (point.revenue - meanRevenue) ** 2,
+    0
+  );
+  const residualVariance = points.reduce(
+    (sum, point, index) => sum + (point.revenue - predictions[index]) ** 2,
+    0
+  );
+
+  return totalVariance > 0 ? Math.max(0, 1 - residualVariance / totalVariance) : 0;
+};
+
+const fitSimpleTrendRegression = (
   points: PredictiveHistoricalPoint[]
-): SeasonalRegression | null => {
-  if (points.length < PREDICTIVE_MIN_REGRESSION_MONTHS) {
+): Pick<SeasonalRegression, 'predict'> | null => {
+  const featureCount = 2;
+  const matrix = Array.from({ length: featureCount }, () => Array(featureCount).fill(0));
+  const vector = Array(featureCount).fill(0);
+
+  for (let index = 0; index < points.length; index += 1) {
+    const features = [1, index];
+
+    for (let left = 0; left < featureCount; left += 1) {
+      vector[left] += features[left] * points[index].revenue;
+
+      for (let right = 0; right < featureCount; right += 1) {
+        matrix[left][right] += features[left] * features[right];
+      }
+    }
+  }
+
+  const coefficients = solveLinearSystem(matrix, vector);
+
+  if (!coefficients) {
     return null;
   }
 
+  return {
+    predict: (timeIndex: number) => Math.max(0, coefficients[0] + coefficients[1] * timeIndex),
+  };
+};
+
+const buildEmpiricalSeasonalFactors = (points: PredictiveHistoricalPoint[]) => {
+  const monthlyTotals = new Map<number, { sum: number; count: number }>();
+  const globalMean = average(points.map((point) => point.revenue));
+
+  for (const point of points) {
+    const bucket = monthlyTotals.get(point.month.month) ?? { sum: 0, count: 0 };
+    bucket.sum += point.revenue;
+    bucket.count += 1;
+    monthlyTotals.set(point.month.month, bucket);
+  }
+
+  return Array.from({ length: 12 }, (_, index) => {
+    const month = index + 1;
+    const bucket = monthlyTotals.get(month);
+
+    if (!bucket || bucket.count === 0 || globalMean <= 0) {
+      return 1;
+    }
+
+    return (bucket.sum / bucket.count) / globalMean;
+  });
+};
+
+const fitFullDummySeasonalRegression = (
+  points: PredictiveHistoricalPoint[]
+): SeasonalRegression | null => {
   const featureCount = 13;
   const matrix = Array.from({ length: featureCount }, () => Array(featureCount).fill(0));
   const vector = Array(featureCount).fill(0);
@@ -187,44 +256,77 @@ const fitSeasonalLinearRegression = (
     return null;
   }
 
-  const predictions = points.map((point, index) => {
-    let value = coefficients[0] + coefficients[1] * index;
+  const predict = (timeIndex: number, month: number) => {
+    let value = coefficients[0] + coefficients[1] * timeIndex;
 
     for (let monthIndex = 2; monthIndex <= 12; monthIndex += 1) {
-      if (point.month.month === monthIndex) {
+      if (month === monthIndex) {
         value += coefficients[monthIndex];
       }
     }
 
-    return value;
-  });
+    return Math.max(0, value);
+  };
 
-  const meanRevenue =
-    points.reduce((sum, point) => sum + point.revenue, 0) / Math.max(points.length, 1);
-  const totalVariance = points.reduce(
-    (sum, point) => sum + (point.revenue - meanRevenue) ** 2,
-    0
-  );
-  const residualVariance = points.reduce(
-    (sum, point, index) => sum + (point.revenue - predictions[index]) ** 2,
-    0
-  );
-  const rSquared = totalVariance > 0 ? Math.max(0, 1 - residualVariance / totalVariance) : 0;
+  const predictions = buildRegressionPredictions(points, predict);
 
   return {
     coefficients,
-    rSquared,
-    predict: (timeIndex: number, month: number) => {
-      let value = coefficients[0] + coefficients[1] * timeIndex;
+    rSquared: computeRegressionRSquared(points, predictions),
+    predict,
+  };
+};
 
-      for (let monthIndex = 2; monthIndex <= 12; monthIndex += 1) {
-        if (month === monthIndex) {
-          value += coefficients[monthIndex];
-        }
-      }
+const fitTrendWithEmpiricalSeasonality = (
+  points: PredictiveHistoricalPoint[]
+): SeasonalRegression | null => {
+  const trend = fitSimpleTrendRegression(points);
 
-      return Math.max(0, value);
-    },
+  if (!trend) {
+    return null;
+  }
+
+  const seasonalFactors = buildEmpiricalSeasonalFactors(points);
+  const predict = (timeIndex: number, month: number) =>
+    Math.max(0, trend.predict(timeIndex) * seasonalFactors[month - 1]);
+  const predictions = buildRegressionPredictions(points, predict);
+
+  return {
+    coefficients: [],
+    rSquared: computeRegressionRSquared(points, predictions),
+    predict,
+  };
+};
+
+const fitSeasonalLinearRegression = (
+  points: PredictiveHistoricalPoint[]
+): SeasonalRegression | null => {
+  if (points.length < PREDICTIVE_MIN_REGRESSION_MONTHS) {
+    return null;
+  }
+
+  if (points.length >= 24) {
+    const fullRegression = fitFullDummySeasonalRegression(points);
+
+    if (fullRegression) {
+      return fullRegression;
+    }
+  }
+
+  const empiricalRegression = fitTrendWithEmpiricalSeasonality(points);
+
+  if (empiricalRegression) {
+    return empiricalRegression;
+  }
+
+  const meanRevenue = average(points.map((point) => point.revenue));
+  const predict = (_timeIndex: number, _month: number) => Math.max(0, meanRevenue);
+  const predictions = buildRegressionPredictions(points, predict);
+
+  return {
+    coefficients: [],
+    rSquared: computeRegressionRSquared(points, predictions),
+    predict,
   };
 };
 
