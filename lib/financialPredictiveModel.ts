@@ -28,7 +28,7 @@ export type PredictiveForecastPoint = {
 };
 
 export type PredictiveHorizonSummary = {
-  horizonMonths: 12 | 24 | 36;
+  horizonMonths: PredictiveForecastHorizonMonths;
   totalProjectedRevenue: number;
   averageMonthlyRevenue: number;
   totalProjectedNetMembers: number;
@@ -43,10 +43,10 @@ export type PredictiveHorizonSummary = {
 
 export type PredictiveInsightsModel = {
   historicalPoints: PredictiveHistoricalPoint[];
-  forecasts: Record<12 | 24 | 36, PredictiveForecastPoint[]>;
-  horizonSummaries: Record<12 | 24 | 36, PredictiveHorizonSummary>;
+  forecasts: Record<PredictiveForecastHorizonMonths, PredictiveForecastPoint[]>;
+  horizonSummaries: Record<PredictiveForecastHorizonMonths, PredictiveHorizonSummary>;
   revenuePerNewMemberMonthly: number;
-  revenuePerNewMemberHorizon: Record<12 | 24 | 36, number>;
+  revenuePerNewMemberHorizon: Record<PredictiveForecastHorizonMonths, number>;
   seasonalityHighlights: { month: number; label: string; factorPercent: number }[];
   modelQuality: {
     revenueRSquared: number;
@@ -58,13 +58,19 @@ export type PredictiveInsightsModel = {
   lastHistoricalMonth: FinancialMonthKey;
 };
 
-const FORECAST_HORIZONS = [12, 24, 36] as const;
+export const PREDICTIVE_FORECAST_MONTHS = 12 as const;
 
-export const PREDICTIVE_DEFAULT_BASE_MONTHS = 12;
+export type PredictiveForecastHorizonMonths = typeof PREDICTIVE_FORECAST_MONTHS;
+
+const FORECAST_HORIZONS = [PREDICTIVE_FORECAST_MONTHS] as const;
+
+export const PREDICTIVE_BASE_MONTHS = 12 as const;
+
+export const PREDICTIVE_DEFAULT_BASE_MONTHS = PREDICTIVE_BASE_MONTHS;
 
 export const PREDICTIVE_MIN_REGRESSION_MONTHS = 8;
 
-export const PREDICTIVE_BASE_CALCULATION_MONTHS = [8, 12, 18, 24, 36] as const;
+export const PREDICTIVE_BASE_CALCULATION_MONTHS = [PREDICTIVE_BASE_MONTHS] as const;
 
 export type PredictiveBaseCalculationMonths = (typeof PREDICTIVE_BASE_CALCULATION_MONTHS)[number];
 
@@ -494,7 +500,7 @@ export const describePredictiveInsightsModelFailure = (input: {
   }
 
   if (effectiveWindow < PREDICTIVE_MIN_REGRESSION_MONTHS) {
-    return `Janela de cálculo curta demais (${effectiveWindow} meses). Selecione ao menos ${PREDICTIVE_MIN_REGRESSION_MONTHS} meses na base preditiva.`;
+    return `Janela de cálculo curta demais (${effectiveWindow} meses). O modelo usa ${PREDICTIVE_BASE_MONTHS} meses passados com receita ordinária; cadastre mais histórico financeiro.`;
   }
 
   return 'Não foi possível ajustar o modelo sazonal com o histórico disponível. Amplie a base de cálculo ou toque em Recalcular modelo.';
@@ -732,8 +738,8 @@ export const PREDICTIVE_LTV_FORMULA_TITLE = 'Fórmula do LTV eclesiástico';
 export const PREDICTIVE_MEMBER_FORMULA_TITLE = 'Fórmula da previsão de membros';
 
 export const buildPredictiveMemberFormulaMessage = (
-  horizonMonths: 12 | 24 | 36,
-  baseCalculationMonths = PREDICTIVE_DEFAULT_BASE_MONTHS
+  horizonMonths: PredictiveForecastHorizonMonths = PREDICTIVE_FORECAST_MONTHS,
+  baseCalculationMonths = PREDICTIVE_BASE_MONTHS
 ) =>
   [
     'Base de dados:',
@@ -741,7 +747,7 @@ export const buildPredictiveMemberFormulaMessage = (
     '• Saídas: perfis com membership_out no mês.',
     '• Membros líquidos = entradas − saídas.',
     '• Membros ativos = contagem no fim de cada mês.',
-    `• Janela de cálculo: últimos ${baseCalculationMonths} meses com receita ordinária.`,
+    `• Janela de cálculo: últimos ${baseCalculationMonths} meses com receita ordinária (padrão ${PREDICTIVE_BASE_MONTHS}).`,
     '',
     'Modelo mensal (entradas, saídas e líquido):',
     'Regressão linear com tendência + fator sazonal por mês do calendário.',
@@ -755,21 +761,21 @@ export const buildPredictiveMemberFormulaMessage = (
   ].join('\n');
 
 export const buildPredictiveLtvFormulaMessage = (
-  horizonMonths: 12 | 24 | 36,
-  baseCalculationMonths = PREDICTIVE_DEFAULT_BASE_MONTHS
+  horizonMonths: PredictiveForecastHorizonMonths = PREDICTIVE_FORECAST_MONTHS,
+  baseCalculationMonths = PREDICTIVE_BASE_MONTHS
 ) =>
   [
     'Base de dados:',
     '• Receita ordinária realizada (dízimos e ofertas).',
     '• Membros líquidos = entradas (membership_date) − saídas (membership_out) por mês.',
-    `• Janela de cálculo: últimos ${baseCalculationMonths} meses com receita.`,
+    `• Janela de cálculo: últimos ${baseCalculationMonths} meses com receita (padrão ${PREDICTIVE_BASE_MONTHS}).`,
     '',
     'LTV por novo membro/mês:',
     'Média histórica de (Δ receita no mês seguinte ÷ Δ membros líquidos no mês),',
     'onde Δ receita = receita do mês seguinte − receita do mês atual.',
     '',
     `LTV acumulado (${horizonMonths} meses):`,
-    'LTV por novo membro/mês × horizonte selecionado.',
+    'LTV por novo membro/mês × horizonte de previsão (12 meses).',
     '',
     'Na previsão mensal, a parcela de crescimento usa:',
     'membros líquidos projetados (tendência + sazonalidade) × LTV por novo membro/mês.',

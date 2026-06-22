@@ -5,17 +5,15 @@ import {
   buildPredictiveMemberFormulaMessage,
   formatPredictiveCurrency,
   formatPredictiveMonthLabel,
-  PREDICTIVE_BASE_CALCULATION_MONTHS,
-  PREDICTIVE_DEFAULT_BASE_MONTHS,
-  PREDICTIVE_FORECAST_HORIZONS,
+  PREDICTIVE_BASE_MONTHS,
+  PREDICTIVE_FORECAST_MONTHS,
   PREDICTIVE_LTV_FORMULA_TITLE,
   PREDICTIVE_MEMBER_FORMULA_TITLE,
-  type PredictiveBaseCalculationMonths,
 } from '@/lib/financialPredictiveModel';
 import { appAlert } from '@/lib/appAlert';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { usePredictiveInsights } from '@/hooks/usePredictiveInsights';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -32,16 +30,12 @@ type Props = {
 const ACCENT = '#22D3EE';
 
 export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight }: Props) {
-  const [baseCalculationMonths, setBaseCalculationMonths] = useState<PredictiveBaseCalculationMonths>(
-    PREDICTIVE_DEFAULT_BASE_MONTHS
-  );
-  const { model, loading, error, reload } = usePredictiveInsights(isActive, baseCalculationMonths);
-  const [horizon, setHorizon] = useState<12 | 24 | 36>(12);
+  const { model, loading, error, reload } = usePredictiveInsights(isActive, PREDICTIVE_BASE_MONTHS);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
-  const summary = model?.horizonSummaries[horizon] ?? null;
-  const forecastPoints = model?.forecasts[horizon] ?? [];
+  const summary = model?.horizonSummaries[PREDICTIVE_FORECAST_MONTHS] ?? null;
+  const forecastPoints = model?.forecasts[PREDICTIVE_FORECAST_MONTHS] ?? [];
 
   const recentHistorical = useMemo(() => {
     if (!model) {
@@ -55,7 +49,10 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
   const showMemberFormula = () => {
     void appAlert(
       PREDICTIVE_MEMBER_FORMULA_TITLE,
-      buildPredictiveMemberFormulaMessage(horizon, model?.calculationBaseMonths ?? baseCalculationMonths),
+      buildPredictiveMemberFormulaMessage(
+        PREDICTIVE_FORECAST_MONTHS,
+        model?.calculationBaseMonths ?? PREDICTIVE_BASE_MONTHS
+      ),
       'Entendi'
     );
   };
@@ -63,7 +60,10 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
   const showLtvFormula = () => {
     void appAlert(
       PREDICTIVE_LTV_FORMULA_TITLE,
-      buildPredictiveLtvFormulaMessage(horizon, model?.calculationBaseMonths ?? baseCalculationMonths),
+      buildPredictiveLtvFormulaMessage(
+        PREDICTIVE_FORECAST_MONTHS,
+        model?.calculationBaseMonths ?? PREDICTIVE_BASE_MONTHS
+      ),
       'Entendi'
     );
   };
@@ -74,9 +74,9 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
       <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
       <Text style={styles.helpText}>
-        Previsibilidade de arrecadação ordinária e de crescimento de membros (entradas, saídas,
-        líquido e ativos), com sazonalidade mensal e LTV eclesiástico ligando novos membros à
-        receita futura.
+        Previsibilidade de arrecadação ordinária e de crescimento de membros com base nos últimos{' '}
+        {PREDICTIVE_BASE_MONTHS} meses e projeção para os próximos {PREDICTIVE_FORECAST_MONTHS} meses,
+        incluindo sazonalidade mensal e LTV eclesiástico.
       </Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -96,26 +96,7 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
           nestedScrollEnabled
           showsVerticalScrollIndicator={false}
         >
-          <SectionLabel variant="maintenance">Horizonte de previsão</SectionLabel>
-          <View style={styles.horizonRow}>
-            {PREDICTIVE_FORECAST_HORIZONS.map((option) => {
-              const selected = horizon === option;
-
-              return (
-                <TouchableOpacity
-                  key={option}
-                  style={[styles.horizonChip, selected && styles.horizonChipSelected]}
-                  onPress={() => setHorizon(option)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={[styles.horizonChipText, selected && styles.horizonChipTextSelected]}>
-                    {option} meses
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
+          <SectionLabel variant="maintenance">Resumo da previsão ({PREDICTIVE_FORECAST_MONTHS} meses)</SectionLabel>
           {summary ? (
             <View style={styles.summaryGrid}>
               <View style={styles.summaryRow}>
@@ -174,9 +155,9 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
                   </Text>
                 </View>
                 <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>LTV acumulado ({horizon} meses)</Text>
+                  <Text style={styles.summaryLabel}>LTV acumulado ({PREDICTIVE_FORECAST_MONTHS} meses)</Text>
                   <Text style={styles.summaryValue}>
-                    {formatPredictiveCurrency(model.revenuePerNewMemberHorizon[horizon])}
+                    {formatPredictiveCurrency(model.revenuePerNewMemberHorizon[PREDICTIVE_FORECAST_MONTHS])}
                   </Text>
                 </View>
               </View>
@@ -231,32 +212,14 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
 
           <SectionLabel variant="maintenance">Base de cálculo preditivo</SectionLabel>
           <Text style={styles.metaText}>
-            Quantidade de meses com receita ordinária usados para sazonalidade, LTV e projeções
-            futuras. Padrão: últimos {PREDICTIVE_DEFAULT_BASE_MONTHS} meses.
+            Últimos {PREDICTIVE_BASE_MONTHS} meses com receita ordinária para sazonalidade, LTV e
+            projeções. Previsão futura: {PREDICTIVE_FORECAST_MONTHS} meses.
           </Text>
-          <View style={styles.horizonRow}>
-            {PREDICTIVE_BASE_CALCULATION_MONTHS.map((option) => {
-              const selected = baseCalculationMonths === option;
-
-              return (
-                <TouchableOpacity
-                  key={option}
-                  style={[styles.horizonChip, selected && styles.horizonChipSelected]}
-                  onPress={() => setBaseCalculationMonths(option)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={[styles.horizonChipText, selected && styles.horizonChipTextSelected]}>
-                    {option} meses
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
 
           <SectionLabel variant="maintenance">Histórico recente</SectionLabel>
           <Text style={styles.metaText}>
             {model.calculationBaseMonths} meses na base de cálculo
-            {model.calculationBaseMonths < baseCalculationMonths
+            {model.calculationBaseMonths < PREDICTIVE_BASE_MONTHS
               ? ` (apenas ${model.calculationBaseMonths} com receita cadastrada)`
               : ''}
             .
@@ -284,7 +247,9 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
             ))}
           </View>
 
-          <SectionLabel variant="maintenance">Previsão de receita ({horizon} meses)</SectionLabel>
+          <SectionLabel variant="maintenance">
+            Previsão de receita ({PREDICTIVE_FORECAST_MONTHS} meses)
+          </SectionLabel>
           <View style={styles.table}>
             <View style={styles.tableHeaderRow}>
               <Text style={[styles.tableCell, styles.tableHeaderCell, styles.monthColumn]}>Mês</Text>
@@ -362,31 +327,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     gap: 8,
     paddingBottom: 16,
-  },
-  horizonRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 4,
-  },
-  horizonChip: {
-    borderWidth: 1,
-    borderColor: 'rgba(34, 211, 238, 0.35)',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  horizonChipSelected: {
-    backgroundColor: 'rgba(34, 211, 238, 0.18)',
-    borderColor: ACCENT,
-  },
-  horizonChipText: {
-    color: '#CBD5E1',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  horizonChipTextSelected: {
-    color: ACCENT,
   },
   summaryGrid: {
     width: '100%',
