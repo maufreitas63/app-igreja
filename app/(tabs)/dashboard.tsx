@@ -12,6 +12,7 @@ import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { useDashboardSelectedEvent, useEventRegistrationsByStatus, useRoomMonitorScales } from '@/hooks';
 import { useFamilyPreCheckin } from '@/hooks/useFamilyPreCheckin';
 import { useGeoCheckinMonitor } from '@/hooks/useGeoCheckinMonitor';
+import { useEventGeofenceCoordinates } from '@/hooks/useEventGeofenceCoordinates';
 import { useFamilyReceptionSuperAdminNotifier } from '@/hooks/useFamilyReceptionSuperAdminNotifier';
 import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import { getAppParameterValue } from '@/lib/appParameters';
@@ -726,6 +727,15 @@ export default function Dashboard() {
     scrollToEventAltCardRef.current = true;
   }, []);
 
+  const {
+    coordinates: eventGeofenceCoordinates,
+    loading: eventGeofenceLoading,
+    error: eventGeofenceError,
+  } = useEventGeofenceCoordinates(
+    selectedEvent?.event_local,
+    geoCheckinAtivoEnabled && isSelectedEventToday
+  );
+
   const eventRegistrationChangeRef = useRef<(() => Promise<void>) | null>(null);
 
   const {
@@ -740,8 +750,8 @@ export default function Dashboard() {
       ? {
           id: selectedEvent.id,
           event_date: selectedEvent.event_date,
-          latitude: selectedEvent.latitude,
-          longitude: selectedEvent.longitude,
+          latitude: eventGeofenceCoordinates?.latitude ?? null,
+          longitude: eventGeofenceCoordinates?.longitude ?? null,
         }
       : null,
     familyId,
@@ -2571,9 +2581,22 @@ export default function Dashboard() {
                           ) : null}
                           {selectedEvent && isSelectedEventToday && geofenceActive ? (
                             <Text style={styles.sectionHint}>
-                              Check-in por proximidade ativo: ao chegar ao local (até 30 m), a presença
-                              será confirmada automaticamente após validar o GPS.
+                              Check-in por proximidade ativo: ao chegar ao local cadastrado nos
+                              favoritos (até 30 m), a presença será confirmada após validar o GPS.
                             </Text>
+                          ) : null}
+                          {geoCheckinAtivoEnabled
+                          && isSelectedEventToday
+                          && selectedEvent?.event_local?.trim()
+                          && !eventGeofenceLoading
+                          && !eventGeofenceCoordinates ? (
+                            <Text style={styles.sectionHintError}>
+                              Local «{selectedEvent.event_local}» sem coordenadas nos locais favoritos.
+                              Cadastre latitude/longitude em Manutenção → Locais favoritos.
+                            </Text>
+                          ) : null}
+                          {eventGeofenceError ? (
+                            <Text style={styles.sectionHintError}>{eventGeofenceError}</Text>
                           ) : null}
                           {geoCheckinErrorMessage ? (
                             <Text style={styles.sectionHintError}>{geoCheckinErrorMessage}</Text>

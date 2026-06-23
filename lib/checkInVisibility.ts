@@ -17,10 +17,7 @@ export const APP_PARAMETER = {
   CHECK_IN_GEOFENCE_ATIVO: 'check_in_geofence_ativo',
 } as const;
 
-export type GeoCheckinVisibilityEvent = CheckInVisibilityEvent & {
-  latitude?: number | null;
-  longitude?: number | null;
-};
+export type GeoCheckinVisibilityEvent = CheckInVisibilityEvent;
 
 /** Check-in automático por proximidade (geofence) no dia do evento. */
 export const isGeoCheckinFeatureEnabled = (value: string | null | undefined) =>
@@ -29,6 +26,7 @@ export const isGeoCheckinFeatureEnabled = (value: string | null | undefined) =>
 export const resolveGeoCheckinMonitorActive = (options: {
   geofenceParameterValue: string | null | undefined;
   event: GeoCheckinVisibilityEvent | null | undefined;
+  geofenceCoordinates?: { latitude: number; longitude: number } | null;
 }) => {
   if (!isGeoCheckinFeatureEnabled(options.geofenceParameterValue)) {
     return false;
@@ -42,8 +40,8 @@ export const resolveGeoCheckinMonitorActive = (options: {
     return false;
   }
 
-  const lat = options.event.latitude;
-  const lng = options.event.longitude;
+  const lat = options.geofenceCoordinates?.latitude;
+  const lng = options.geofenceCoordinates?.longitude;
 
   return (
     typeof lat === 'number'

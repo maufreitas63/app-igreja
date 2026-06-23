@@ -11,7 +11,6 @@ import {
   isMissingTotemColumnError,
   isRequerQuorumColumnAvailable,
   isSomenteMembrosColumnAvailable,
-  isEventGeoColumnAvailable,
   isTotemAtivoColumnAvailable,
   stripOptionalFieldsFromEventPayload,
   TOTEM_COLUMN_SQL_HINT,
@@ -63,7 +62,6 @@ const saveEventWithOptionalColumnFallback = async (
     totem: !isTotemAtivoColumnAvailable(),
     quorum: !isRequerQuorumColumnAvailable(),
     somenteMembros: !isSomenteMembrosColumnAvailable(),
-    geo: !isEventGeoColumnAvailable(),
   }) as MaintenanceEventPayload;
 
   let result = await persistEvent(mode, selectedEventId, prepared);
@@ -78,7 +76,6 @@ const saveEventWithOptionalColumnFallback = async (
       totem: true,
       quorum: true,
       somenteMembros: true,
-      geo: true,
     }) as MaintenanceEventPayload;
     result = await persistEvent(mode, selectedEventId, withoutOptionals);
   }

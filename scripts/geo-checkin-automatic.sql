@@ -1,34 +1,12 @@
 -- Check-in automático por geolocalização (geofence 30 m, RPCs atômicas, RLS).
--- Pré-requisitos: register-member-atomic.sql, checkins-totem-flow.sql, access-control-table-rls.sql
+-- Coordenadas do evento: resolvidas via events.event_local → event_favorite_locations.name
+-- Pré-requisitos: event-favorite-locations.sql, register-member-atomic.sql, checkins-totem-flow.sql,
+--   access-control-table-rls.sql
 -- Execute no SQL Editor do Supabase.
 
 -- ---------------------------------------------------------------------------
--- 1. Coordenadas do evento + auditoria geo em checkins
+-- 1. Auditoria geo em checkins (lat/lng do local vêm de event_favorite_locations)
 -- ---------------------------------------------------------------------------
-
-alter table public.events
-  add column if not exists latitude double precision null,
-  add column if not exists longitude double precision null;
-
-alter table public.events
-  drop constraint if exists events_latitude_check;
-
-alter table public.events
-  add constraint events_latitude_check
-    check (latitude is null or (latitude >= -90 and latitude <= 90));
-
-alter table public.events
-  drop constraint if exists events_longitude_check;
-
-alter table public.events
-  add constraint events_longitude_check
-    check (longitude is null or (longitude >= -180 and longitude <= 180));
-
-comment on column public.events.latitude is
-  'Latitude do local do evento para geofence de check-in automático.';
-
-comment on column public.events.longitude is
-  'Longitude do local do evento para geofence de check-in automático.';
 
 alter table public.checkins
   add column if not exists geo_latitude double precision null,
@@ -36,7 +14,7 @@ alter table public.checkins
   add column if not exists geo_confirmed_at timestamptz null;
 
 -- ---------------------------------------------------------------------------
--- 2. Helpers: distância e autorização familiar
+-- 2. Helpers: distância, coordenadas do evento e autorização familiar
 -- ---------------------------------------------------------------------------
 
 create or replace function public.haversine_distance_meters(
@@ -81,6 +59,35 @@ as $$
     30.0
   );
 $$;
+
+-- Resolve lat/lng do evento pelo nome do local (events.event_local = event_favorite_locations.name).
+create or replace function public.resolve_event_geofence_coordinates(p_event_id uuid)
+returns table (
+  latitude double precision,
+  longitude double precision
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    fl.latitude,
+    fl.longitude
+  from public.events e
+  join public.event_favorite_locations fl
+    on lower(trim(fl.name)) = lower(trim(coalesce(e.event_local, '')))
+   and coalesce(fl.is_active, true) is true
+  where e.id = p_event_id
+    and nullif(trim(coalesce(e.event_local, '')), '') is not null
+    and fl.latitude is not null
+    and fl.longitude is not null
+  order by fl.sort_order asc, fl.name asc
+  limit 1;
+$$;
+
+comment on function public.resolve_event_geofence_coordinates(uuid) is
+  'Geofence: coordenadas do evento a partir do local favorito vinculado por event_local.';
 
 create or replace function public.assert_session_can_manage_family(p_family_group_id text)
 returns void
@@ -139,12 +146,12 @@ begin
     return;
   end if;
 
-  select e.latitude, e.longitude
+  select r.latitude, r.longitude
     into v_event_lat, v_event_lng
-  from public.events e
-  where e.id = p_event_id;
+  from public.resolve_event_geofence_coordinates(p_event_id) r
+  limit 1;
 
-  if not found or v_event_lat is null or v_event_lng is null then
+  if v_event_lat is null or v_event_lng is null then
     return;
   end if;
 
@@ -458,6 +465,7 @@ create policy event_registrations_delete_family
 
 grant execute on function public.haversine_distance_meters(double precision, double precision, double precision, double precision) to anon, authenticated;
 grant execute on function public.geo_checkin_radius_meters() to anon, authenticated;
+grant execute on function public.resolve_event_geofence_coordinates(uuid) to anon, authenticated;
 grant execute on function public.family_has_geo_checkin_at_event(uuid, text) to anon, authenticated;
 grant execute on function public.sync_family_event_registrations_atomic(uuid, text, uuid[], double precision, double precision, boolean) to anon, authenticated;
 grant execute on function public.confirm_geo_family_checkin_atomic(uuid, text, double precision, double precision, boolean) to anon, authenticated;
