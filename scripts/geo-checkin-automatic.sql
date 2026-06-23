@@ -1,7 +1,7 @@
 -- Check-in automático por geolocalização (geofence 30 m, RPCs atômicas, RLS).
 -- Coordenadas do evento: resolvidas via events.event_local → event_favorite_locations.name
 -- Pré-requisitos: event-favorite-locations.sql, events-geofence-ativo.sql, register-member-atomic.sql, checkins-totem-flow.sql,
---   access-control-table-rls.sql
+--   access-control-table-rls.sql, geo-checkin-purge-on-event-update.sql (invalidação ao editar evento)
 -- Execute no SQL Editor do Supabase.
 
 -- ---------------------------------------------------------------------------

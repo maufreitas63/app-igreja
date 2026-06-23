@@ -1,0 +1,40 @@
+import type { MaintenanceEventPayload } from '@/lib/maintenanceEventForm';
+
+export type GeofenceEventSnapshot = {
+  name?: string | null;
+  event_date?: string | null;
+  event_local?: string | null;
+  max_capacity?: number | null;
+  kids_room?: boolean | null;
+  teens_room?: boolean | null;
+  parm_ofertas?: boolean | null;
+  totem_ativo?: boolean | null;
+  requer_quorum?: boolean | null;
+  somente_membros?: boolean | null;
+  geofence_ativo?: boolean | null;
+};
+
+const bool = (value: boolean | null | undefined) => value === true;
+
+export const geofenceEventHasCheckinRelevantChanges = (
+  before: GeofenceEventSnapshot,
+  after: GeofenceEventSnapshot | MaintenanceEventPayload
+) =>
+  (before.name ?? '') !== (after.name ?? '')
+  || (before.event_date ?? null) !== (after.event_date ?? null)
+  || (before.event_local ?? null) !== (after.event_local ?? null)
+  || (before.max_capacity ?? null) !== (after.max_capacity ?? null)
+  || bool(before.kids_room) !== bool(after.kids_room)
+  || bool(before.teens_room) !== bool(after.teens_room)
+  || bool(before.parm_ofertas) !== bool(after.parm_ofertas)
+  || bool(before.totem_ativo) !== bool(after.totem_ativo)
+  || bool(before.requer_quorum) !== bool(after.requer_quorum)
+  || bool(before.somente_membros) !== bool(after.somente_membros)
+  || bool(before.geofence_ativo) !== bool(after.geofence_ativo);
+
+export const shouldInvalidateGeofenceEventCheckins = (
+  before: GeofenceEventSnapshot | null | undefined,
+  after: MaintenanceEventPayload
+) =>
+  Boolean(before?.geofence_ativo === true)
+  && geofenceEventHasCheckinRelevantChanges(before, after);

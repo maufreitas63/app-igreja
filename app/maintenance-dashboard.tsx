@@ -554,10 +554,14 @@ export default function MaintenanceDashboard() {
       await refetch();
       const wasCreating = selectedEventId === '__new__';
       closeEditor();
+      const purgedCount = result.purgedConfirmedCheckins ?? 0;
       Toast.show({
         type: 'success',
         text1: wasCreating ? 'Evento criado' : 'Evento atualizado',
-        text2: 'Alterações gravadas com sucesso.',
+        text2:
+          purgedCount > 0
+            ? `${purgedCount} presença(s) confirmada(s) removida(s) — famílias precisam validar novamente.`
+            : 'Alterações gravadas com sucesso.',
       });
     } catch (saveError) {
       console.error('Erro ao salvar evento:', saveError);

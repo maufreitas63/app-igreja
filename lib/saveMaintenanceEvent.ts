@@ -6,6 +6,7 @@ import {
 } from '@/lib/maintenanceEventForm';
 import {
   ensureEventsOptionalColumns,
+  getMaintenanceEventSelect,
   isMissingGeofenceAtivoColumnError,
   isMissingRequerQuorumColumnError,
   isMissingSomenteMembrosColumnError,
@@ -18,11 +19,12 @@ import {
   TOTEM_COLUMN_SQL_HINT,
   GEOFENCE_ATIVO_COLUMN_SQL_HINT,
 } from '@/lib/eventsColumnSupport';
+import { shouldInvalidateGeofenceEventCheckins } from '@/lib/geofenceEventIntegrity';
 import { supabase } from '@/lib/supabase';
 import type { PostgrestError } from '@supabase/supabase-js';
 
 export type SaveMaintenanceEventResult =
-  | { ok: true }
+  | { ok: true; purgedConfirmedCheckins?: number }
   | { ok: false; message: string; code?: string };
 
 const geofenceColumnMissingError = (): PostgrestError =>
@@ -120,6 +122,36 @@ const saveEventWithOptionalColumnFallback = async (
   return result;
 };
 
+const countConfirmedCheckinsForEvent = async (eventId: string) => {
+  const { count, error } = await supabase
+    .from('checkins')
+    .select('id', { count: 'exact', head: true })
+    .eq('event_id', eventId)
+    .eq('status', 'confirmado');
+
+  if (error) {
+    console.warn('countConfirmedCheckinsForEvent:', error.message);
+    return 0;
+  }
+
+  return count ?? 0;
+};
+
+const loadEventSnapshotForGeofence = async (eventId: string) => {
+  const { data, error } = await supabase
+    .from('events')
+    .select(getMaintenanceEventSelect())
+    .eq('id', eventId)
+    .maybeSingle();
+
+  if (error) {
+    console.warn('loadEventSnapshotForGeofence:', error.message);
+    return null;
+  }
+
+  return data;
+};
+
 export const saveMaintenanceEvent = async (
   selectedEventId: string | null,
   payload: MaintenanceEventPayload
@@ -140,13 +172,27 @@ export const saveMaintenanceEvent = async (
     return { ok: false, message: 'Nenhum evento selecionado para salvar.' };
   }
 
+  const existingEvent = await loadEventSnapshotForGeofence(selectedEventId);
+  const willPurgeConfirmedCheckins = shouldInvalidateGeofenceEventCheckins(
+    existingEvent,
+    payload
+  );
+  const confirmedCheckinsBeforeSave = willPurgeConfirmedCheckins
+    ? await countConfirmedCheckinsForEvent(selectedEventId)
+    : 0;
+
   const { error } = await saveEventWithOptionalColumnFallback('update', selectedEventId, payload);
 
   if (error) {
     return { ok: false, message: error.message, code: error.code };
   }
 
-  return { ok: true };
+  return {
+    ok: true,
+    ...(confirmedCheckinsBeforeSave > 0
+      ? { purgedConfirmedCheckins: confirmedCheckinsBeforeSave }
+      : {}),
+  };
 };
 
 export type ReplicateMaintenanceEventResult =
