@@ -9,29 +9,89 @@ import { Platform } from 'react-native';
 
 export type DeviceGeolocationPermission = 'granted' | 'denied' | 'unavailable';
 
+export const formatDeviceGeolocationPermissionError = (
+  permission: Exclude<DeviceGeolocationPermission, 'granted'>
+) => {
+  if (permission === 'denied') {
+    return Platform.OS === 'web'
+      ? 'Permissão de localização bloqueada no navegador. Clique no cadeado da barra de endereços e permita a localização para este site.'
+      : 'Permissão de localização negada para check-in automático. Habilite nas configurações do aparelho.';
+  }
+
+  return Platform.OS === 'web'
+    ? 'Não foi possível acessar a localização neste navegador. Use HTTPS, permita a localização e verifique se o serviço está ativo no sistema.'
+    : 'Serviço de localização indisponível no dispositivo.';
+};
+
+const queryWebGeolocationPermissionState = async (): Promise<PermissionState | null> => {
+  if (typeof navigator === 'undefined' || !navigator.permissions?.query) {
+    return null;
+  }
+
+  try {
+    const status = await navigator.permissions.query({ name: 'geolocation' });
+    return status.state;
+  } catch {
+    return null;
+  }
+};
+
+const probeWebGeolocationAccess = async (): Promise<DeviceGeolocationPermission> => {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    return 'unavailable';
+  }
+
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      () => resolve('granted'),
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          resolve('denied');
+          return;
+        }
+
+        resolve('granted');
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 20_000,
+        maximumAge: 120_000,
+      }
+    );
+  });
+};
+
 export const requestDeviceGeolocationPermission = async (): Promise<DeviceGeolocationPermission> => {
   if (Platform.OS === 'web') {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       return 'unavailable';
     }
 
-    return new Promise((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        () => resolve('granted'),
-        (error) => {
-          if (error.code === error.PERMISSION_DENIED) {
-            resolve('denied');
-            return;
-          }
+    if (!window.isSecureContext) {
+      return 'unavailable';
+    }
 
-          resolve('unavailable');
-        },
-        { enableHighAccuracy: true, timeout: 12_000, maximumAge: 0 }
-      );
-    });
+    const permissionState = await queryWebGeolocationPermissionState();
+
+    if (permissionState === 'granted') {
+      return 'granted';
+    }
+
+    if (permissionState === 'denied') {
+      return 'denied';
+    }
+
+    return probeWebGeolocationAccess();
   }
 
   const Location = await import('expo-location');
+
+  const servicesEnabled = await Location.hasServicesEnabledAsync();
+
+  if (!servicesEnabled) {
+    return 'unavailable';
+  }
+
   const current = await Location.getForegroundPermissionsAsync();
 
   if (current.status === Location.PermissionStatus.GRANTED) {
@@ -51,13 +111,13 @@ export const requestDeviceGeolocationPermission = async (): Promise<DeviceGeoloc
   return 'unavailable';
 };
 
-export const readDeviceGeolocationOnce = async (): Promise<GeoCoordinates | null> => {
-  if (Platform.OS === 'web') {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      return null;
-    }
+const readWebGeolocationOnce = async (): Promise<GeoCoordinates | null> => {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    return null;
+  }
 
-    return new Promise((resolve) => {
+  const attempt = (enableHighAccuracy: boolean) =>
+    new Promise<GeoCoordinates | null>((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           resolve({
@@ -67,21 +127,55 @@ export const readDeviceGeolocationOnce = async (): Promise<GeoCoordinates | null
           });
         },
         () => resolve(null),
-        { enableHighAccuracy: true, timeout: 12_000, maximumAge: 0 }
+        {
+          enableHighAccuracy,
+          timeout: enableHighAccuracy ? 15_000 : 20_000,
+          maximumAge: enableHighAccuracy ? 0 : 120_000,
+        }
       );
     });
+
+  const lowAccuracy = await attempt(false);
+
+  if (lowAccuracy) {
+    return lowAccuracy;
   }
 
-  const Location = await import('expo-location');
-  const position = await Location.getCurrentPositionAsync({
-    accuracy: Location.Accuracy.High,
-  });
+  return attempt(true);
+};
 
-  return {
-    latitude: position.coords.latitude,
-    longitude: position.coords.longitude,
-    accuracy: position.coords.accuracy,
-  };
+export const readDeviceGeolocationOnce = async (): Promise<GeoCoordinates | null> => {
+  if (Platform.OS === 'web') {
+    return readWebGeolocationOnce();
+  }
+
+  try {
+    const Location = await import('expo-location');
+    const position = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+
+    return {
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+      accuracy: position.coords.accuracy,
+    };
+  } catch {
+    try {
+      const Location = await import('expo-location');
+      const position = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      return {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+      };
+    } catch {
+      return null;
+    }
+  }
 };
 
 export type GeoWatchOptions = {
@@ -105,25 +199,45 @@ export const startGeofenceValidationWatch = (options: GeoWatchOptions) => {
   const validator = createGeoReadingValidator();
   let cancelled = false;
   let timerId: ReturnType<typeof setInterval> | null = null;
+  let consecutiveReadFailures = 0;
 
   const tick = async () => {
     if (cancelled) {
       return;
     }
 
-    const reading = await readDeviceGeolocationOnce();
+    try {
+      const reading = await readDeviceGeolocationOnce();
 
-    if (!reading) {
-      options.onError?.('Não foi possível obter a localização do dispositivo.');
-      return;
-    }
+      if (!reading) {
+        consecutiveReadFailures += 1;
 
-    const state = validator.pushReading(reading, eventCoords);
-    options.onProgress?.(state.consecutiveInsideCount, REQUIRED_CONSECUTIVE_GPS_READINGS);
+        if (consecutiveReadFailures >= 3) {
+          options.onError?.(
+            Platform.OS === 'web'
+              ? 'Não foi possível obter sua localização. Verifique a permissão do site e se o Windows/macOS permite localização para o navegador.'
+              : 'Não foi possível obter a localização do dispositivo. Verifique o GPS e tente novamente.'
+          );
+        }
 
-    if (validator.isValidated()) {
-      options.onValidated(reading);
-      stop();
+        return;
+      }
+
+      consecutiveReadFailures = 0;
+
+      const state = validator.pushReading(reading, eventCoords);
+      options.onProgress?.(state.consecutiveInsideCount, REQUIRED_CONSECUTIVE_GPS_READINGS);
+
+      if (validator.isValidated()) {
+        options.onValidated(reading);
+        stop();
+      }
+    } catch {
+      consecutiveReadFailures += 1;
+
+      if (consecutiveReadFailures >= 3) {
+        options.onError?.('Falha ao ler a localização do dispositivo.');
+      }
     }
   };
 

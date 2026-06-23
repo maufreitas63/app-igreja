@@ -17,6 +17,7 @@ import {
   syncFamilyEventRegistrationsAtomic,
 } from '@/lib/geoCheckinApi';
 import {
+  formatDeviceGeolocationPermissionError,
   requestDeviceGeolocationPermission,
   startGeofenceValidationWatch,
 } from '@/lib/deviceGeolocation';
@@ -262,7 +263,7 @@ export const useGeoCheckinMonitor = ({
       }
 
       if (permission !== 'granted') {
-        setErrorMessage('Permissão de localização negada para check-in automático.');
+        setErrorMessage(formatDeviceGeolocationPermissionError(permission));
         setStatus('error');
         return;
       }
@@ -295,7 +296,11 @@ export const useGeoCheckinMonitor = ({
         },
         onError: (message) => {
           if (!cancelled) {
+            stopWatchRef.current?.();
+            stopWatchRef.current = null;
+            triggeredRef.current = false;
             setErrorMessage(message);
+            setStatus('error');
           }
         },
       });

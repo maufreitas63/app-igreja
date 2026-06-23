@@ -798,6 +798,7 @@ export default function Dashboard() {
 
   const {
     status: geoCheckinStatus,
+    gpsProgress: geoCheckinGpsProgress,
     lastCoordinates: geoDeviceCoordinates,
     geofenceActive,
     inGeofenceWindow,
@@ -2699,6 +2700,7 @@ export default function Dashboard() {
                               deviceCoordinates={geoDeviceCoordinates}
                               skipGeofenceOnSave={skipGeofenceOnAudienceSave}
                               geoCheckinStatus={geoCheckinStatus}
+                              geoCheckinGpsProgress={geoCheckinGpsProgress}
                               sessionProfile={familyRegistrationSessionProfile}
                             />
                           ) : (

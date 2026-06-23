@@ -48,6 +48,8 @@ type Props = {
   skipGeofenceOnSave?: boolean;
   /** Estado visual do check-in automático por proximidade. */
   geoCheckinStatus?: GeoCheckinUiStatus;
+  /** Progresso das leituras GPS consecutivas dentro do raio. */
+  geoCheckinGpsProgress?: { current: number; required: number };
 };
 
 export const FamilyRegistrationList = ({
@@ -65,6 +67,7 @@ export const FamilyRegistrationList = ({
   deviceCoordinates = null,
   skipGeofenceOnSave = false,
   geoCheckinStatus = 'idle',
+  geoCheckinGpsProgress = { current: 0, required: 3 },
 }: Props) => {
   const hasFamilyId = Boolean(familyId?.trim());
   const { members, loading, error } = useFamilyAudienceMembers(
@@ -385,11 +388,17 @@ export const FamilyRegistrationList = ({
 
   const geoStatusLabel = useMemo(() => {
     if (geoCheckinStatus === 'detecting') {
-      return 'Check-in detectado (validando GPS...)';
+      const { current, required } = geoCheckinGpsProgress;
+
+      if (current > 0) {
+        return `Verificando proximidade (${current}/${required} leituras GPS no local)...`;
+      }
+
+      return 'Aguardando GPS no local do evento (até 30 m)...';
     }
 
     if (geoCheckinStatus === 'syncing') {
-      return 'Check-in detectado (Sincronizando...)';
+      return 'Proximidade confirmada (sincronizando check-in...)';
     }
 
     if (geoCheckinStatus === 'confirmed') {
@@ -397,7 +406,7 @@ export const FamilyRegistrationList = ({
     }
 
     return null;
-  }, [geoCheckinStatus]);
+  }, [geoCheckinGpsProgress, geoCheckinStatus]);
 
   if (!hasFamilyId && !sessionProfile?.id) {
     return (
