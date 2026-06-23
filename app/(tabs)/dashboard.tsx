@@ -2634,22 +2634,9 @@ export default function Dashboard() {
                               )}
                             </>
                           ) : null}
-                          {selectedEvent &&
-                          isSelectedEventToday &&
-                          selectedEventUsesAutomaticCheckIn &&
-                          !preCheckinGateRequired ? (
-                            <Text style={styles.sectionHint}>
-                              Check-in: marque os familiares abaixo para registrar sua presença.
-                            </Text>
-                          ) : null}
                           {selectedEvent && selectedEventRequiresQrCheckIn && !isSelectedEventToday ? (
                             <Text style={styles.sectionHint}>
                               O card com QR Code de check-in ficará disponível no dia do evento.
-                            </Text>
-                          ) : null}
-                          {selectedEvent && inGeofenceWindow && geofenceActive ? (
-                            <Text style={styles.sectionHint}>
-                              Check-in ativo: ao chegar a 30m do local, sua presença será validada via GPS.
                             </Text>
                           ) : null}
                           {geoCheckinAtivoEnabled
