@@ -9,6 +9,7 @@ import {
 import { resolveActiveSessionMember } from '@/lib/resolveActiveSessionMember';
 import { formatFullName } from '@/lib/fullName';
 import type { GeoCoordinates } from '@/lib/checkinGeofence';
+import { formatGeoDistanceMeters } from '@/lib/checkinGeofence';
 import {
   enqueueGeoCheckinOperation,
   isDeviceOnline,
@@ -50,6 +51,10 @@ type Props = {
   geoCheckinStatus?: GeoCheckinUiStatus;
   /** Progresso das leituras GPS consecutivas dentro do raio. */
   geoCheckinGpsProgress?: { current: number; required: number };
+  /** Distância atual até o local do evento (metros). */
+  geoCheckinDistanceMeters?: number | null;
+  /** Raio configurado do geofence (metros). */
+  geoCheckinRadiusMeters?: number;
 };
 
 export const FamilyRegistrationList = ({
@@ -68,6 +73,8 @@ export const FamilyRegistrationList = ({
   skipGeofenceOnSave = false,
   geoCheckinStatus = 'idle',
   geoCheckinGpsProgress = { current: 0, required: 3 },
+  geoCheckinDistanceMeters = null,
+  geoCheckinRadiusMeters = 30,
 }: Props) => {
   const hasFamilyId = Boolean(familyId?.trim());
   const { members, loading, error } = useFamilyAudienceMembers(
@@ -389,12 +396,18 @@ export const FamilyRegistrationList = ({
   const geoStatusLabel = useMemo(() => {
     if (geoCheckinStatus === 'detecting') {
       const { current, required } = geoCheckinGpsProgress;
+      const radiusLabel = Math.round(geoCheckinRadiusMeters);
+      const distanceLabel = formatGeoDistanceMeters(geoCheckinDistanceMeters);
 
       if (current > 0) {
-        return `Verificando proximidade (${current}/${required} leituras GPS no local)...`;
+        return `Dentro do raio — confirmando proximidade (${current}/${required} leituras)...`;
       }
 
-      return 'Aguardando GPS no local do evento (até 30 m)...';
+      if (distanceLabel) {
+        return `GPS ativo: você está a ~${distanceLabel} do local (raio ${radiusLabel} m). Aproxime-se para o check-in.`;
+      }
+
+      return `Obtendo GPS para verificar proximidade ao local (raio ${radiusLabel} m)...`;
     }
 
     if (geoCheckinStatus === 'syncing') {
@@ -406,7 +419,7 @@ export const FamilyRegistrationList = ({
     }
 
     return null;
-  }, [geoCheckinGpsProgress, geoCheckinStatus]);
+  }, [geoCheckinDistanceMeters, geoCheckinGpsProgress, geoCheckinRadiusMeters, geoCheckinStatus]);
 
   if (!hasFamilyId && !sessionProfile?.id) {
     return (

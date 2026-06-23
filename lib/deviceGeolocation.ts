@@ -1,4 +1,5 @@
 import {
+  GEOFENCE_RADIUS_METERS,
   GPS_READING_INTERVAL_MS,
   type GeoCoordinates,
   createGeoReadingValidator,
@@ -129,19 +130,19 @@ const readWebGeolocationOnce = async (): Promise<GeoCoordinates | null> => {
         () => resolve(null),
         {
           enableHighAccuracy,
-          timeout: enableHighAccuracy ? 15_000 : 20_000,
-          maximumAge: enableHighAccuracy ? 0 : 120_000,
+          timeout: enableHighAccuracy ? 20_000 : 25_000,
+          maximumAge: 0,
         }
       );
     });
 
-  const lowAccuracy = await attempt(false);
+  const highAccuracy = await attempt(true);
 
-  if (lowAccuracy) {
-    return lowAccuracy;
+  if (highAccuracy) {
+    return highAccuracy;
   }
 
-  return attempt(true);
+  return attempt(false);
 };
 
 export const readDeviceGeolocationOnce = async (): Promise<GeoCoordinates | null> => {
@@ -152,7 +153,7 @@ export const readDeviceGeolocationOnce = async (): Promise<GeoCoordinates | null
   try {
     const Location = await import('expo-location');
     const position = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
+      accuracy: Location.Accuracy.High,
     });
 
     return {
@@ -164,7 +165,7 @@ export const readDeviceGeolocationOnce = async (): Promise<GeoCoordinates | null
     try {
       const Location = await import('expo-location');
       const position = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.Balanced,
       });
 
       return {
@@ -180,8 +181,10 @@ export const readDeviceGeolocationOnce = async (): Promise<GeoCoordinates | null
 
 export type GeoWatchOptions = {
   event: { latitude?: number | null; longitude?: number | null };
+  radiusMeters?: number;
   onValidated: (coords: GeoCoordinates) => void;
   onProgress?: (consecutiveInside: number, required: number) => void;
+  onProximity?: (distanceMeters: number | null, accuracyMeters: number | null) => void;
   onError?: (message: string) => void;
   intervalMs?: number;
 };
@@ -195,65 +198,132 @@ export const startGeofenceValidationWatch = (options: GeoWatchOptions) => {
     latitude: options.event.latitude as number,
     longitude: options.event.longitude as number,
   };
+  const radiusMeters = options.radiusMeters ?? GEOFENCE_RADIUS_METERS;
 
   const validator = createGeoReadingValidator();
   let cancelled = false;
-  let timerId: ReturnType<typeof setInterval> | null = null;
   let consecutiveReadFailures = 0;
+  let lastTickAt = 0;
+  const minTickGapMs = options.intervalMs ?? GPS_READING_INTERVAL_MS;
 
-  const tick = async () => {
+  const handleReading = (reading: GeoCoordinates | null) => {
     if (cancelled) {
       return;
     }
 
-    try {
-      const reading = await readDeviceGeolocationOnce();
+    const now = Date.now();
 
-      if (!reading) {
-        consecutiveReadFailures += 1;
+    if (now - lastTickAt < minTickGapMs) {
+      return;
+    }
 
-        if (consecutiveReadFailures >= 3) {
-          options.onError?.(
-            Platform.OS === 'web'
-              ? 'Não foi possível obter sua localização. Verifique a permissão do site e se o Windows/macOS permite localização para o navegador.'
-              : 'Não foi possível obter a localização do dispositivo. Verifique o GPS e tente novamente.'
-          );
-        }
+    lastTickAt = now;
 
-        return;
-      }
-
-      consecutiveReadFailures = 0;
-
-      const state = validator.pushReading(reading, eventCoords);
-      options.onProgress?.(state.consecutiveInsideCount, REQUIRED_CONSECUTIVE_GPS_READINGS);
-
-      if (validator.isValidated()) {
-        options.onValidated(reading);
-        stop();
-      }
-    } catch {
+    if (!reading) {
       consecutiveReadFailures += 1;
 
       if (consecutiveReadFailures >= 3) {
-        options.onError?.('Falha ao ler a localização do dispositivo.');
+        options.onError?.(
+          Platform.OS === 'web'
+            ? 'Não foi possível obter sua localização. Verifique a permissão do site e se o Windows/macOS permite localização para o navegador.'
+            : 'Não foi possível obter a localização do dispositivo. Verifique o GPS e tente novamente.'
+        );
       }
+
+      return;
+    }
+
+    consecutiveReadFailures = 0;
+
+    const state = validator.pushReading(reading, eventCoords, radiusMeters);
+    options.onProximity?.(state.distanceMeters, reading.accuracy ?? null);
+    options.onProgress?.(state.consecutiveInsideCount, REQUIRED_CONSECUTIVE_GPS_READINGS);
+
+    if (validator.isValidated()) {
+      options.onValidated(reading);
+      stop();
     }
   };
+
+  let webWatchId: number | null = null;
+  let nativeSubscription: { remove: () => void } | null = null;
+  let pollTimerId: ReturnType<typeof setInterval> | null = null;
 
   const stop = () => {
     cancelled = true;
 
-    if (timerId) {
-      clearInterval(timerId);
-      timerId = null;
+    if (webWatchId !== null && typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.clearWatch(webWatchId);
+      webWatchId = null;
+    }
+
+    nativeSubscription?.remove();
+    nativeSubscription = null;
+
+    if (pollTimerId) {
+      clearInterval(pollTimerId);
+      pollTimerId = null;
     }
   };
 
-  void tick();
-  timerId = setInterval(() => {
-    void tick();
-  }, options.intervalMs ?? GPS_READING_INTERVAL_MS);
+  if (Platform.OS === 'web') {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      options.onError?.('Geolocalização não suportada neste navegador.');
+      return stop;
+    }
+
+    webWatchId = navigator.geolocation.watchPosition(
+      (position) => {
+        handleReading({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        });
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          options.onError?.(formatDeviceGeolocationPermissionError('denied'));
+          stop();
+          return;
+        }
+
+        handleReading(null);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 25_000,
+      }
+    );
+
+    return stop;
+  }
+
+  void (async () => {
+    try {
+      const Location = await import('expo-location');
+      nativeSubscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          distanceInterval: 5,
+          timeInterval: minTickGapMs,
+        },
+        (position) => {
+          handleReading({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          });
+        }
+      );
+    } catch {
+      pollTimerId = setInterval(() => {
+        void readDeviceGeolocationOnce().then(handleReading);
+      }, minTickGapMs);
+
+      void readDeviceGeolocationOnce().then(handleReading);
+    }
+  })();
 
   return stop;
 };

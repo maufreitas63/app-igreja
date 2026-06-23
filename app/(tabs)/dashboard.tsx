@@ -31,6 +31,7 @@ import {
   formatGeofenceWindowStartLabel,
   parseGeofenceHoursBeforeParameter,
 } from '@/lib/geoCheckinWindow';
+import { parseGeofenceRadiusMeters } from '@/lib/checkinGeofence';
 import { formatRoomMonitorNames } from '@/lib/roomMonitorScales';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import { withActiveMembershipProfileFilter } from '@/lib/activeMemberProfile';
@@ -532,6 +533,7 @@ export default function Dashboard() {
   const [qrCodeAtivoEnabled, setQrCodeAtivoEnabled] = useState(true);
   const [checkInManualMode, setCheckInManualMode] = useState(false);
   const [geoCheckinTempoValue, setGeoCheckinTempoValue] = useState<string | null>(null);
+  const [geoCheckinRaioValue, setGeoCheckinRaioValue] = useState<string | null>(null);
   const [selectedGroupedRoom, setSelectedGroupedRoom] = useState<'KIDS' | 'TEENS' | null>(null);
   const [birthdayEntries, setBirthdayEntries] = useState<BirthdayEntry[]>([]);
   const [isBirthdaysLoading, setIsBirthdaysLoading] = useState(true);
@@ -669,20 +671,23 @@ export default function Dashboard() {
   }, []);
   const loadCheckInCardParameters = useCallback(async () => {
     try {
-      const [qrCodeValue, checkInAutomaticoValue, geoCheckinTempo] =
+      const [qrCodeValue, checkInAutomaticoValue, geoCheckinTempo, geoCheckinRaio] =
         await Promise.all([
         getAppParameterValue(APP_PARAMETER.QR_CODE_ATIVO),
         getAppParameterValue(APP_PARAMETER.CHECK_IN_AUTOMATICO),
         getAppParameterValue(APP_PARAMETER.CHECK_IN_GEOFENCE_TEMPO),
+        getAppParameterValue(APP_PARAMETER.CHECK_IN_GEOFENCE_RAIO_METROS),
       ]);
       setQrCodeAtivoEnabled(!isAppParameterNo(qrCodeValue));
       setCheckInManualMode(isAppParameterNo(checkInAutomaticoValue));
       setGeoCheckinTempoValue(geoCheckinTempo?.trim() || null);
+      setGeoCheckinRaioValue(geoCheckinRaio?.trim() || null);
     } catch (error) {
       console.error('Erro ao carregar parâmetros de check-in:', error);
       setQrCodeAtivoEnabled(true);
       setCheckInManualMode(false);
       setGeoCheckinTempoValue(null);
+      setGeoCheckinRaioValue(null);
     }
   }, []);
 
@@ -724,6 +729,11 @@ export default function Dashboard() {
   const geoCheckinHoursBefore = useMemo(
     () => parseGeofenceHoursBeforeParameter(geoCheckinTempoValue),
     [geoCheckinTempoValue]
+  );
+
+  const geoCheckinRadiusMeters = useMemo(
+    () => parseGeofenceRadiusMeters(geoCheckinRaioValue),
+    [geoCheckinRaioValue]
   );
 
   const geoCheckinAtivoEnabled = selectedEvent?.geofence_ativo === true;
@@ -800,12 +810,14 @@ export default function Dashboard() {
     status: geoCheckinStatus,
     gpsProgress: geoCheckinGpsProgress,
     lastCoordinates: geoDeviceCoordinates,
+    lastDistanceMeters: geoCheckinDistanceMeters,
     geofenceActive,
     inGeofenceWindow,
     errorMessage: geoCheckinErrorMessage,
   } = useGeoCheckinMonitor({
     enabled: geoCheckinAtivoEnabled,
     geofenceHoursBefore: geoCheckinHoursBefore,
+    geofenceRadiusMeters: geoCheckinRadiusMeters,
     event: geoCheckinEvent,
     familyId,
     hasFamilyPreCheckin: hasPreCheckin,
@@ -2701,6 +2713,8 @@ export default function Dashboard() {
                               skipGeofenceOnSave={skipGeofenceOnAudienceSave}
                               geoCheckinStatus={geoCheckinStatus}
                               geoCheckinGpsProgress={geoCheckinGpsProgress}
+                              geoCheckinDistanceMeters={geoCheckinDistanceMeters}
+                              geoCheckinRadiusMeters={geoCheckinRadiusMeters}
                               sessionProfile={familyRegistrationSessionProfile}
                             />
                           ) : (

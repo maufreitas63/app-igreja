@@ -35,6 +35,7 @@ export type GeoCheckinEvent = {
 export type UseGeoCheckinMonitorOptions = {
   enabled: boolean;
   geofenceHoursBefore: number;
+  geofenceRadiusMeters?: number;
   event: GeoCheckinEvent | null | undefined;
   familyId: string | undefined;
   hasFamilyPreCheckin: boolean;
@@ -97,6 +98,7 @@ const processQueueItem = async (item: GeoCheckinQueueItem): Promise<boolean> => 
 export const useGeoCheckinMonitor = ({
   enabled,
   geofenceHoursBefore,
+  geofenceRadiusMeters,
   event,
   familyId,
   hasFamilyPreCheckin,
@@ -108,6 +110,8 @@ export const useGeoCheckinMonitor = ({
   const [gpsProgress, setGpsProgress] = useState({ current: 0, required: 3 });
   const [lastCoordinates, setLastCoordinates] = useState<GeoCoordinates | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [lastDistanceMeters, setLastDistanceMeters] = useState<number | null>(null);
+  const [lastGpsAccuracyMeters, setLastGpsAccuracyMeters] = useState<number | null>(null);
   const stopWatchRef = useRef<(() => void) | null>(null);
   const triggeredRef = useRef(false);
   const precheckinPromptShownRef = useRef(false);
@@ -271,6 +275,8 @@ export const useGeoCheckinMonitor = ({
       setStatus('detecting');
       setGpsProgress({ current: 0, required: 3 });
       setErrorMessage(null);
+      setLastDistanceMeters(null);
+      setLastGpsAccuracyMeters(null);
 
       stopWatchRef.current = startGeofenceValidationWatch({
         event: {
@@ -279,9 +285,16 @@ export const useGeoCheckinMonitor = ({
           latitude: eventLatitude,
           longitude: eventLongitude,
         },
+        radiusMeters: geofenceRadiusMeters,
         onProgress: (current, required) => {
           if (!cancelled) {
             setGpsProgress({ current, required });
+          }
+        },
+        onProximity: (distanceMeters, accuracyMeters) => {
+          if (!cancelled) {
+            setLastDistanceMeters(distanceMeters);
+            setLastGpsAccuracyMeters(accuracyMeters);
           }
         },
         onValidated: (coords) => {
@@ -318,6 +331,7 @@ export const useGeoCheckinMonitor = ({
     eventLongitude,
     familyId,
     geofenceActive,
+    geofenceRadiusMeters,
     runConfirmFlow,
   ]);
 
@@ -342,6 +356,8 @@ export const useGeoCheckinMonitor = ({
     status,
     gpsProgress,
     lastCoordinates,
+    lastDistanceMeters,
+    lastGpsAccuracyMeters,
     errorMessage,
     geofenceActive,
     inGeofenceWindow,

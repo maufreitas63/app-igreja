@@ -21,6 +21,7 @@ export const APP_PARAMETER = {
   QR_CODE_ATIVO: 'QRCode_Ativo',
   CHECK_IN_AUTOMATICO: 'check_In_Automatico',
   CHECK_IN_GEOFENCE_TEMPO: 'check_in_geofence_tempo',
+  CHECK_IN_GEOFENCE_RAIO_METROS: 'check_in_geofence_raio_metros',
 } as const;
 
 export type GeoCheckinVisibilityEvent = CheckInVisibilityEvent & {

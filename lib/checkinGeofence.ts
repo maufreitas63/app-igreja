@@ -7,6 +7,9 @@ export const REQUIRED_CONSECUTIVE_GPS_READINGS = 3;
 /** Intervalo mínimo entre leituras GPS (ms). */
 export const GPS_READING_INTERVAL_MS = 2000;
 
+/** Margem máxima de imprecisão do GPS somada ao raio (metros). */
+export const MAX_GEOFENCE_ACCURACY_BUFFER_METERS = 50;
+
 export type GeoCoordinates = {
   latitude: number;
   longitude: number;
@@ -42,18 +45,70 @@ export const isInsideGeofence = (
     event.longitude
   ) <= radiusMeters;
 
+export const distanceToGeofenceMeters = (
+  device: GeoCoordinates,
+  event: GeoCoordinates
+) =>
+  haversineDistanceMeters(
+    device.latitude,
+    device.longitude,
+    event.latitude,
+    event.longitude
+  );
+
+export const isInsideGeofenceWithAccuracy = (
+  device: GeoCoordinates,
+  event: GeoCoordinates,
+  radiusMeters = GEOFENCE_RADIUS_METERS
+) => {
+  const distance = distanceToGeofenceMeters(device, event);
+  const accuracyBuffer = Math.min(
+    Math.max(device.accuracy ?? 0, 0),
+    MAX_GEOFENCE_ACCURACY_BUFFER_METERS
+  );
+
+  return distance <= radiusMeters + accuracyBuffer;
+};
+
+export const parseGeofenceRadiusMeters = (value: string | null | undefined) => {
+  const trimmed = (value ?? '').trim();
+
+  if (!/^\d+(\.\d+)?$/.test(trimmed)) {
+    return GEOFENCE_RADIUS_METERS;
+  }
+
+  const parsed = Number.parseFloat(trimmed);
+
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : GEOFENCE_RADIUS_METERS;
+};
+
+export const formatGeoDistanceMeters = (distanceMeters: number | null | undefined) => {
+  if (distanceMeters === null || distanceMeters === undefined || !Number.isFinite(distanceMeters)) {
+    return null;
+  }
+
+  if (distanceMeters < 1000) {
+    return `${Math.round(distanceMeters)} m`;
+  }
+
+  return `${(distanceMeters / 1000).toFixed(1)} km`;
+};
+
 export type GeoReadingValidatorState = {
   consecutiveInsideCount: number;
   lastReading: GeoCoordinates | null;
+  distanceMeters: number | null;
 };
 
 export const createGeoReadingValidator = () => {
   let consecutiveInsideCount = 0;
   let lastReading: GeoCoordinates | null = null;
+  let distanceMeters: number | null = null;
 
   const reset = () => {
     consecutiveInsideCount = 0;
     lastReading = null;
+    distanceMeters = null;
   };
 
   const pushReading = (
@@ -62,14 +117,15 @@ export const createGeoReadingValidator = () => {
     radiusMeters = GEOFENCE_RADIUS_METERS
   ): GeoReadingValidatorState => {
     lastReading = device;
+    distanceMeters = distanceToGeofenceMeters(device, event);
 
-    if (isInsideGeofence(device, event, radiusMeters)) {
+    if (isInsideGeofenceWithAccuracy(device, event, radiusMeters)) {
       consecutiveInsideCount += 1;
     } else {
       consecutiveInsideCount = 0;
     }
 
-    return { consecutiveInsideCount, lastReading };
+    return { consecutiveInsideCount, lastReading, distanceMeters };
   };
 
   const isValidated = () => consecutiveInsideCount >= REQUIRED_CONSECUTIVE_GPS_READINGS;
@@ -77,6 +133,7 @@ export const createGeoReadingValidator = () => {
   const getState = (): GeoReadingValidatorState => ({
     consecutiveInsideCount,
     lastReading,
+    distanceMeters,
   });
 
   return { pushReading, reset, isValidated, getState };
