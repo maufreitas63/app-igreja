@@ -5,7 +5,7 @@ import {
   ensureSessionFamilyMemberRecord,
   type SessionProfileAudience,
 } from '@/lib/familyAudienceMembers';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export function useFamilyAudienceMembers(
   familyId: string,
@@ -14,9 +14,14 @@ export function useFamilyAudienceMembers(
 ) {
   const { members, loading, error, refetch } = useFamilyMembers(familyId);
   const [syncingAudience, setSyncingAudience] = useState(false);
+  const sessionProfileId = sessionProfile?.id ?? '';
+  const sessionProfilePhone = sessionProfile?.phone ?? null;
+  const sessionProfileFullName = sessionProfile?.full_name ?? null;
+  const sessionProfileBirthDate = sessionProfile?.birth_date ?? null;
+  const audienceSyncKeyRef = useRef('');
 
   const syncAudience = useCallback(async () => {
-    if (!familyId.trim() || !sessionProfile?.id) {
+    if (!familyId.trim() || !sessionProfileId) {
       return false;
     }
 
@@ -25,7 +30,13 @@ export function useFamilyAudienceMembers(
     try {
       return await ensureSessionFamilyMemberRecord(
         familyId,
-        sessionProfile,
+        {
+          id: sessionProfileId,
+          phone: sessionProfilePhone,
+          full_name: sessionProfileFullName,
+          birth_date: sessionProfileBirthDate,
+          family_id: sessionProfile?.family_id ?? null,
+        },
         sessionProfileName
       );
     } catch (err) {
@@ -34,16 +45,38 @@ export function useFamilyAudienceMembers(
     } finally {
       setSyncingAudience(false);
     }
-  }, [familyId, sessionProfile, sessionProfileName]);
+  }, [
+    familyId,
+    sessionProfile?.family_id,
+    sessionProfileBirthDate,
+    sessionProfileFullName,
+    sessionProfileId,
+    sessionProfilePhone,
+    sessionProfileName,
+  ]);
 
   useEffect(() => {
+    if (!familyId.trim() || !sessionProfileId) {
+      audienceSyncKeyRef.current = '';
+      return;
+    }
+
+    const syncKey = `${familyId}:${sessionProfileId}`;
+
+    if (audienceSyncKeyRef.current === syncKey) {
+      return;
+    }
+
+    audienceSyncKeyRef.current = syncKey;
+
     void (async () => {
       const inserted = await syncAudience();
+
       if (inserted) {
         await refetch();
       }
     })();
-  }, [refetch, syncAudience]);
+  }, [familyId, refetch, sessionProfileId, syncAudience]);
 
   const audienceMembers = useMemo(() => dedupeFamilyMembers(members), [members]);
 

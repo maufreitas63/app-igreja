@@ -114,7 +114,13 @@ export const useGeoCheckinMonitor = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const stopWatchRef = useRef<(() => void) | null>(null);
   const triggeredRef = useRef(false);
+  const precheckinPromptShownRef = useRef(false);
   const [windowTick, setWindowTick] = useState(0);
+
+  const eventId = event?.id ?? '';
+  const eventDate = event?.event_date ?? '';
+  const eventLatitude = event?.latitude ?? null;
+  const eventLongitude = event?.longitude ?? null;
 
   useEffect(() => {
     if (!enabled || !event?.event_date?.trim()) {
@@ -136,10 +142,24 @@ export const useGeoCheckinMonitor = ({
   const geofenceActive =
     enabled
     && isGeofenceFeatureEnabled(geofenceParameterValue)
-    && Boolean(event?.id && familyId)
+    && Boolean(eventId && familyId)
     && inGeofenceWindow
-    && eventHasGeofenceCoordinates(event ?? {})
+    && eventHasGeofenceCoordinates({
+      latitude: eventLatitude,
+      longitude: eventLongitude,
+    })
     && !hasFamilyGeoCheckinConfirmed;
+
+  useEffect(() => {
+    if (hasFamilyPreCheckin) {
+      precheckinPromptShownRef.current = false;
+    }
+  }, [hasFamilyPreCheckin]);
+
+  useEffect(() => {
+    triggeredRef.current = false;
+    precheckinPromptShownRef.current = false;
+  }, [eventId, familyId]);
 
   const runConfirmFlow = useCallback(
     async (coords: GeoCoordinates) => {
@@ -153,7 +173,12 @@ export const useGeoCheckinMonitor = ({
 
       if (!hasFamilyPreCheckin) {
         setStatus('idle');
-        onRequiresPrecheckin?.();
+
+        if (!precheckinPromptShownRef.current) {
+          precheckinPromptShownRef.current = true;
+          onRequiresPrecheckin?.();
+        }
+
         return;
       }
 
@@ -179,7 +204,12 @@ export const useGeoCheckinMonitor = ({
 
         if (result.requires_precheckin) {
           setStatus('idle');
-          onRequiresPrecheckin?.();
+
+          if (!precheckinPromptShownRef.current) {
+            precheckinPromptShownRef.current = true;
+            onRequiresPrecheckin?.();
+          }
+
           return;
         }
 
@@ -218,15 +248,13 @@ export const useGeoCheckinMonitor = ({
   }, [event?.id, onConfirmed]);
 
   useEffect(() => {
-    triggeredRef.current = false;
-    setStatus('idle');
-    setGpsProgress({ current: 0, required: 3 });
-    setErrorMessage(null);
+    if (!geofenceActive || triggeredRef.current || precheckinPromptShownRef.current) {
+      if (!geofenceActive) {
+        stopWatchRef.current?.();
+        stopWatchRef.current = null;
+        setStatus((current) => (current === 'detecting' ? 'idle' : current));
+      }
 
-    stopWatchRef.current?.();
-    stopWatchRef.current = null;
-
-    if (!geofenceActive) {
       return;
     }
 
@@ -246,9 +274,16 @@ export const useGeoCheckinMonitor = ({
       }
 
       setStatus('detecting');
+      setGpsProgress({ current: 0, required: 3 });
+      setErrorMessage(null);
 
       stopWatchRef.current = startGeofenceValidationWatch({
-        event: event ?? {},
+        event: {
+          id: eventId,
+          event_date: eventDate,
+          latitude: eventLatitude,
+          longitude: eventLongitude,
+        },
         onProgress: (current, required) => {
           if (!cancelled) {
             setGpsProgress({ current, required });
@@ -260,6 +295,8 @@ export const useGeoCheckinMonitor = ({
           }
 
           triggeredRef.current = true;
+          stopWatchRef.current?.();
+          stopWatchRef.current = null;
           void runConfirmFlow(coords);
         },
         onError: (message) => {
@@ -275,7 +312,15 @@ export const useGeoCheckinMonitor = ({
       stopWatchRef.current?.();
       stopWatchRef.current = null;
     };
-  }, [event, familyId, geofenceActive, geofenceHoursBefore, runConfirmFlow]);
+  }, [
+    eventDate,
+    eventId,
+    eventLatitude,
+    eventLongitude,
+    familyId,
+    geofenceActive,
+    runConfirmFlow,
+  ]);
 
   useEffect(() => {
     if (status !== 'syncing' || !isDeviceOnline()) {

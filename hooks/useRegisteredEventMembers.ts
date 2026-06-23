@@ -4,7 +4,7 @@ import {
 } from '@/lib/kidsTeensStatus';
 import { normalizeFullNameKey } from '@/lib/fullName';
 import { supabase } from '@/lib/supabase';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FamilyMember } from './useFamilyMembers';
 
 export type RegistrationStatus = 'KIDS' | 'TEENS';
@@ -36,6 +36,11 @@ export const useRegisteredEventMembers = (
   >({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+
+  const memberIdsKey = useMemo(
+    () => members.map((member) => member.id).sort().join(','),
+    [members]
+  );
 
   const refetch = useCallback(async () => {
     if (!eventId || !members.length) {
@@ -189,7 +194,7 @@ export const useRegisteredEventMembers = (
     setRegisteredMemberIds(nextRegisteredMemberIds);
     setRegisteredMemberStatusById(audienceStatusByMemberId);
     setLoading(false);
-  }, [eventId, familyGroupId, members]);
+  }, [eventId, familyGroupId, memberIdsKey, members]);
 
   useEffect(() => {
     refetch();

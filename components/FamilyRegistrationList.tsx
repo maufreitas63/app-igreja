@@ -257,7 +257,7 @@ export const FamilyRegistrationList = ({
         familyId,
         memberIds,
         coordinates: deviceCoordinates,
-        skipGeofence: skipGeofenceOnSave,
+        skipGeofence: true,
       };
 
       if (!isDeviceOnline()) {
@@ -268,7 +268,7 @@ export const FamilyRegistrationList = ({
           memberIds,
           latitude: deviceCoordinates?.latitude ?? 0,
           longitude: deviceCoordinates?.longitude ?? 0,
-          skipGeofence: skipGeofenceOnSave,
+          skipGeofence: true,
         });
         return;
       }

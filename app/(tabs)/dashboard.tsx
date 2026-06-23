@@ -758,6 +758,46 @@ export default function Dashboard() {
 
   const eventRegistrationChangeRef = useRef<(() => Promise<void>) | null>(null);
 
+  const geoCheckinEvent = useMemo(
+    () =>
+      selectedEvent
+        ? {
+            id: selectedEvent.id,
+            event_date: selectedEvent.event_date,
+            latitude: eventGeofenceCoordinates?.latitude ?? null,
+            longitude: eventGeofenceCoordinates?.longitude ?? null,
+          }
+        : null,
+    [
+      eventGeofenceCoordinates?.latitude,
+      eventGeofenceCoordinates?.longitude,
+      selectedEvent?.event_date,
+      selectedEvent?.id,
+    ]
+  );
+
+  const familyRegistrationSessionProfile = useMemo(
+    () =>
+      profile?.id
+        ? {
+            id: profile.id,
+            full_name: profile.full_name ?? null,
+            phone: profile.phone ?? userPhone,
+            birth_date: profile.birth_date ?? null,
+            family_id: familyId ?? profile.codigo_membro ?? null,
+          }
+        : null,
+    [
+      familyId,
+      profile?.birth_date,
+      profile?.codigo_membro,
+      profile?.full_name,
+      profile?.id,
+      profile?.phone,
+      userPhone,
+    ]
+  );
+
   const {
     status: geoCheckinStatus,
     lastCoordinates: geoDeviceCoordinates,
@@ -768,14 +808,7 @@ export default function Dashboard() {
     enabled: geoCheckinAtivoEnabled,
     geofenceParameterValue: geoCheckinAtivoEnabled ? 'sim' : 'nao',
     geofenceHoursBefore: geoCheckinHoursBefore,
-    event: selectedEvent
-      ? {
-          id: selectedEvent.id,
-          event_date: selectedEvent.event_date,
-          latitude: eventGeofenceCoordinates?.latitude ?? null,
-          longitude: eventGeofenceCoordinates?.longitude ?? null,
-        }
-      : null,
+    event: geoCheckinEvent,
     familyId,
     hasFamilyPreCheckin: hasPreCheckin,
     hasFamilyGeoCheckinConfirmed: hasTotemCheckinConfirmed,
@@ -2654,7 +2687,7 @@ export default function Dashboard() {
                               com QR Code.
                             </Text>
                           ) : null}
-                          {profile?.id ? (
+                          {familyRegistrationSessionProfile ? (
                             <FamilyRegistrationList
                               familyId={familyId ?? ''}
                               eventId={selectedEvent?.id}
@@ -2669,13 +2702,7 @@ export default function Dashboard() {
                               deviceCoordinates={geoDeviceCoordinates}
                               skipGeofenceOnSave={skipGeofenceOnAudienceSave}
                               geoCheckinStatus={geoCheckinStatus}
-                              sessionProfile={{
-                                id: profile.id,
-                                full_name: profile.full_name ?? null,
-                                phone: profile.phone ?? userPhone,
-                                birth_date: profile.birth_date ?? null,
-                                family_id: familyId ?? profile.codigo_membro ?? null,
-                              }}
+                              sessionProfile={familyRegistrationSessionProfile}
                             />
                           ) : (
                             <Text style={styles.placeholderText}>
