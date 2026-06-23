@@ -21,10 +21,11 @@ import {
 } from '@/lib/eventsColumnSupport';
 import { shouldInvalidateGeofenceEventCheckins } from '@/lib/geofenceEventIntegrity';
 import { supabase } from '@/lib/supabase';
+import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import type { PostgrestError } from '@supabase/supabase-js';
 
 export type SaveMaintenanceEventResult =
-  | { ok: true; purgedConfirmedCheckins?: number }
+  | { ok: true; purgedCheckins?: number; purgeWarning?: string }
   | { ok: false; message: string; code?: string };
 
 const geofenceColumnMissingError = (): PostgrestError =>
@@ -122,19 +123,51 @@ const saveEventWithOptionalColumnFallback = async (
   return result;
 };
 
-const countConfirmedCheckinsForEvent = async (eventId: string) => {
+const countEventCheckins = async (eventId: string) => {
   const { count, error } = await supabase
     .from('checkins')
     .select('id', { count: 'exact', head: true })
-    .eq('event_id', eventId)
-    .eq('status', 'confirmado');
+    .eq('event_id', eventId);
 
   if (error) {
-    console.warn('countConfirmedCheckinsForEvent:', error.message);
+    console.warn('countEventCheckins:', error.message);
     return 0;
   }
 
   return count ?? 0;
+};
+
+const purgeEventCheckins = async (eventId: string) => {
+  const { data, error } = await supabase.rpc('purge_event_checkins_for_geofence_event', {
+    p_event_id: eventId,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'purge_event_checkins_for_geofence_event')) {
+      const legacy = await supabase.rpc('purge_confirmed_checkins_for_geofence_event', {
+        p_event_id: eventId,
+      });
+
+      if (!legacy.error) {
+        return {
+          deleted: typeof legacy.data === 'number' ? legacy.data : 0,
+          warning: null as string | null,
+        };
+      }
+    }
+
+    return {
+      deleted: 0,
+      warning:
+        'Evento salvo, mas não foi possível limpar os check-ins automaticamente. '
+        + 'Execute scripts/geo-checkin-purge-on-event-update.sql no Supabase.',
+    };
+  }
+
+  return {
+    deleted: typeof data === 'number' ? data : 0,
+    warning: null as string | null,
+  };
 };
 
 const loadEventSnapshotForGeofence = async (eventId: string) => {
@@ -173,12 +206,9 @@ export const saveMaintenanceEvent = async (
   }
 
   const existingEvent = await loadEventSnapshotForGeofence(selectedEventId);
-  const willPurgeConfirmedCheckins = shouldInvalidateGeofenceEventCheckins(
-    existingEvent,
-    payload
-  );
-  const confirmedCheckinsBeforeSave = willPurgeConfirmedCheckins
-    ? await countConfirmedCheckinsForEvent(selectedEventId)
+  const shouldPurgeCheckins = shouldInvalidateGeofenceEventCheckins(existingEvent, payload);
+  const checkinsBeforeSave = shouldPurgeCheckins
+    ? await countEventCheckins(selectedEventId)
     : 0;
 
   const { error } = await saveEventWithOptionalColumnFallback('update', selectedEventId, payload);
@@ -187,11 +217,29 @@ export const saveMaintenanceEvent = async (
     return { ok: false, message: error.message, code: error.code };
   }
 
+  let purgedCheckins = 0;
+  let purgeWarning: string | undefined;
+
+  if (shouldPurgeCheckins) {
+    const purgeResult = await purgeEventCheckins(selectedEventId);
+    purgedCheckins = purgeResult.deleted > 0 ? purgeResult.deleted : checkinsBeforeSave;
+    purgeWarning = purgeResult.warning ?? undefined;
+
+    if (purgeResult.deleted === 0 && checkinsBeforeSave > 0 && !purgeWarning) {
+      const remaining = await countEventCheckins(selectedEventId);
+
+      if (remaining > 0) {
+        purgeWarning =
+          'Evento salvo, mas ainda há check-ins antigos no banco. '
+          + 'Execute scripts/geo-checkin-purge-on-event-update.sql no Supabase.';
+      }
+    }
+  }
+
   return {
     ok: true,
-    ...(confirmedCheckinsBeforeSave > 0
-      ? { purgedConfirmedCheckins: confirmedCheckinsBeforeSave }
-      : {}),
+    ...(purgedCheckins > 0 ? { purgedCheckins } : {}),
+    ...(purgeWarning ? { purgeWarning } : {}),
   };
 };
 

@@ -1,4 +1,4 @@
--- Invalida check-ins confirmados quando um evento com geofence é alterado
+-- Invalida check-ins do evento quando há alteração em evento com check-in automático
 -- ou quando coordenadas/nome de local favorito vinculado mudam.
 -- Execute no SQL Editor do Supabase (idempotente).
 --
@@ -31,10 +31,10 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------------
--- 2. Remove presenças confirmadas do evento (check-in automático / totem / geo)
+-- 2. Remove todos os check-ins do evento (pre_checkin e confirmado)
 -- ---------------------------------------------------------------------------
 
-create or replace function public.purge_confirmed_checkins_for_geofence_event(p_event_id uuid)
+create or replace function public.purge_event_checkins_for_geofence_event(p_event_id uuid)
 returns integer
 language plpgsql
 security definer
@@ -44,13 +44,25 @@ declare
   v_deleted integer;
 begin
   delete from public.checkins c
-  where c.event_id = p_event_id
-    and c.status = 'confirmado';
+  where c.event_id = p_event_id;
 
   get diagnostics v_deleted = row_count;
   return coalesce(v_deleted, 0);
 end;
 $$;
+
+-- Compatibilidade com versão anterior do script
+create or replace function public.purge_confirmed_checkins_for_geofence_event(p_event_id uuid)
+returns integer
+language sql
+security definer
+set search_path = public
+as $$
+  select public.purge_event_checkins_for_geofence_event(p_event_id);
+$$;
+
+grant execute on function public.purge_event_checkins_for_geofence_event(uuid)
+  to anon, authenticated, service_role;
 
 grant execute on function public.purge_confirmed_checkins_for_geofence_event(uuid)
   to anon, authenticated, service_role;
@@ -62,7 +74,8 @@ security definer
 set search_path = public
 as $$
 begin
-  if coalesce(OLD.geofence_ativo, false) is not true then
+  if coalesce(OLD.geofence_ativo, false) is not true
+     and coalesce(NEW.geofence_ativo, false) is not true then
     return NEW;
   end if;
 
@@ -70,7 +83,7 @@ begin
     return NEW;
   end if;
 
-  perform public.purge_confirmed_checkins_for_geofence_event(OLD.id);
+  perform public.purge_event_checkins_for_geofence_event(OLD.id);
   return NEW;
 end;
 $$;
@@ -115,19 +128,18 @@ begin
   end if;
 
   delete from public.checkins c
-  where c.status = 'confirmado'
-    and c.event_id in (
-      select e.id
-      from public.events e
-      where coalesce(e.geofence_ativo, false) = true
-        and (
-          lower(trim(coalesce(e.event_local, ''))) = lower(trim(coalesce(OLD.name, '')))
-          or (
-            TG_OP = 'UPDATE'
-            and lower(trim(coalesce(e.event_local, ''))) = lower(trim(coalesce(NEW.name, '')))
-          )
+  where c.event_id in (
+    select e.id
+    from public.events e
+    where coalesce(e.geofence_ativo, false) = true
+      and (
+        lower(trim(coalesce(e.event_local, ''))) = lower(trim(coalesce(OLD.name, '')))
+        or (
+          TG_OP = 'UPDATE'
+          and lower(trim(coalesce(e.event_local, ''))) = lower(trim(coalesce(NEW.name, '')))
         )
-    );
+      )
+  );
 
   return coalesce(NEW, OLD);
 end;

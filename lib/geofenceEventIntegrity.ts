@@ -16,12 +16,30 @@ export type GeofenceEventSnapshot = {
 
 const bool = (value: boolean | null | undefined) => value === true;
 
+const sameEventDate = (
+  before: string | null | undefined,
+  after: string | null | undefined
+) => {
+  if ((before ?? null) === (after ?? null)) {
+    return true;
+  }
+
+  if (!before || !after) {
+    return false;
+  }
+
+  const beforeMs = Date.parse(before);
+  const afterMs = Date.parse(after);
+
+  return Number.isFinite(beforeMs) && Number.isFinite(afterMs) && beforeMs === afterMs;
+};
+
 export const geofenceEventHasCheckinRelevantChanges = (
   before: GeofenceEventSnapshot,
   after: GeofenceEventSnapshot | MaintenanceEventPayload
 ) =>
   (before.name ?? '') !== (after.name ?? '')
-  || (before.event_date ?? null) !== (after.event_date ?? null)
+  || !sameEventDate(before.event_date, after.event_date)
   || (before.event_local ?? null) !== (after.event_local ?? null)
   || (before.max_capacity ?? null) !== (after.max_capacity ?? null)
   || bool(before.kids_room) !== bool(after.kids_room)
@@ -35,6 +53,9 @@ export const geofenceEventHasCheckinRelevantChanges = (
 export const shouldInvalidateGeofenceEventCheckins = (
   before: GeofenceEventSnapshot | null | undefined,
   after: MaintenanceEventPayload
-) =>
-  Boolean(before?.geofence_ativo === true)
-  && geofenceEventHasCheckinRelevantChanges(before, after);
+) => {
+  const snapshot = before ?? {};
+  const geofenceEnabled = snapshot.geofence_ativo === true || after.geofence_ativo === true;
+
+  return geofenceEnabled && geofenceEventHasCheckinRelevantChanges(snapshot, after);
+};
