@@ -14,6 +14,8 @@ export type MaintenanceEventFormState = {
   eventTimeInput: string;
   eventLocal: string;
   eventLocalAddress: string;
+  eventLatitude: string;
+  eventLongitude: string;
   maxCapacity: string;
   kidsRoom: boolean;
   teensRoom: boolean;
@@ -30,6 +32,8 @@ export const emptyMaintenanceEventForm = (): MaintenanceEventFormState => ({
   eventTimeInput: '',
   eventLocal: '',
   eventLocalAddress: '',
+  eventLatitude: '',
+  eventLongitude: '',
   maxCapacity: '',
   kidsRoom: false,
   teensRoom: false,
@@ -185,6 +189,8 @@ export const formFromMaintenanceEvent = (event: {
   name: string;
   event_date: string | null;
   event_local: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   max_capacity: number | null;
   parm_ofertas: boolean | null;
   kids_room: boolean | null;
@@ -199,6 +205,14 @@ export const formFromMaintenanceEvent = (event: {
   eventTimeInput: formatEventTimeForInput(event.event_date),
   eventLocal: event.event_local ?? '',
   eventLocalAddress: '',
+  eventLatitude:
+    typeof event.latitude === 'number' && Number.isFinite(event.latitude)
+      ? String(event.latitude)
+      : '',
+  eventLongitude:
+    typeof event.longitude === 'number' && Number.isFinite(event.longitude)
+      ? String(event.longitude)
+      : '',
   maxCapacity:
     typeof event.max_capacity === 'number' && !Number.isNaN(event.max_capacity)
       ? String(event.max_capacity)
@@ -384,6 +398,10 @@ export const buildMaintenanceEventPayload = (
   const maxCapacity = maxCapacityDigits ? Number.parseInt(maxCapacityDigits, 10) : null;
   const eventDate = parseMaintenanceEventDateTimeToIso(form.eventDateInput, form.eventTimeInput);
   const isLocked = !form.isPublished;
+  const latitudeRaw = form.eventLatitude.trim().replace(',', '.');
+  const longitudeRaw = form.eventLongitude.trim().replace(',', '.');
+  const latitude = latitudeRaw ? Number.parseFloat(latitudeRaw) : null;
+  const longitude = longitudeRaw ? Number.parseFloat(longitudeRaw) : null;
   const retroactivePublish = Boolean(
     options?.bypassPastDateRestriction
     && !isLocked
@@ -395,6 +413,8 @@ export const buildMaintenanceEventPayload = (
     name,
     event_date: eventDate,
     event_local: eventLocal || null,
+    latitude: Number.isFinite(latitude ?? NaN) ? latitude : null,
+    longitude: Number.isFinite(longitude ?? NaN) ? longitude : null,
     max_capacity: maxCapacity,
     kids_room: form.kidsRoom,
     teens_room: form.teensRoom,

@@ -3,8 +3,10 @@ import {
   getActiveEventSelect,
   isMissingRequerQuorumColumnError,
   isMissingSomenteMembrosColumnError,
+  isMissingEventGeoColumnError,
   isMissingTotemColumnError,
   setRequerQuorumColumnAvailable,
+  setEventGeoColumnAvailable,
   setSomenteMembrosColumnAvailable,
   setTotemAtivoColumnAvailable,
   withDefaultEventOptionals,
@@ -24,6 +26,8 @@ export type ActiveEventListItem = {
   name: string;
   event_date: string | null;
   event_local: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   max_capacity: number | null;
   parm_ofertas: boolean | null;
   kids_room: boolean | null;
@@ -164,6 +168,19 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
           fetchError = retry.error;
         } else if (!fetchError) {
           setSomenteMembrosColumnAvailable(true);
+        }
+
+        if (fetchError && isMissingEventGeoColumnError(fetchError)) {
+          setEventGeoColumnAvailable(false);
+          const retry = await supabase
+            .from('events')
+            .select(getActiveEventSelect())
+            .or('is_locked.eq.false,is_locked.is.null')
+            .order('event_date', { ascending: true });
+          data = retry.data;
+          fetchError = retry.error;
+        } else if (!fetchError) {
+          setEventGeoColumnAvailable(true);
         }
 
         if (fetchError) {

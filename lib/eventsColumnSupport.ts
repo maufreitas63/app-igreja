@@ -8,6 +8,7 @@ const EVENT_SELECT_BASE =
 let totemAtivoColumnAvailable: boolean | null = null;
 let requerQuorumColumnAvailable: boolean | null = null;
 let somenteMembrosColumnAvailable: boolean | null = null;
+let eventGeoColumnAvailable: boolean | null = null;
 
 const buildEventSelect = () => {
   const fields = [EVENT_SELECT_BASE];
@@ -22,6 +23,10 @@ const buildEventSelect = () => {
 
   if (somenteMembrosColumnAvailable !== false) {
     fields.push('somente_membros');
+  }
+
+  if (eventGeoColumnAvailable !== false) {
+    fields.push('latitude', 'longitude');
   }
 
   return fields.join(', ');
@@ -47,6 +52,7 @@ export const resetTotemColumnAvailabilityCache = () => {
   totemAtivoColumnAvailable = null;
   requerQuorumColumnAvailable = null;
   somenteMembrosColumnAvailable = null;
+  eventGeoColumnAvailable = null;
 };
 
 export const isTotemAtivoColumnAvailable = () => totemAtivoColumnAvailable === true;
@@ -54,6 +60,8 @@ export const isTotemAtivoColumnAvailable = () => totemAtivoColumnAvailable === t
 export const isRequerQuorumColumnAvailable = () => requerQuorumColumnAvailable === true;
 
 export const isSomenteMembrosColumnAvailable = () => somenteMembrosColumnAvailable === true;
+
+export const isEventGeoColumnAvailable = () => eventGeoColumnAvailable === true;
 
 const isMissingColumnError = (
   error: Pick<PostgrestError, 'code' | 'message'> | null,
@@ -83,6 +91,11 @@ export const isMissingRequerQuorumColumnError = (
 export const isMissingSomenteMembrosColumnError = (
   error: Pick<PostgrestError, 'code' | 'message'> | null
 ) => isMissingColumnError(error, 'somente_membros');
+
+export const isMissingEventGeoColumnError = (
+  error: Pick<PostgrestError, 'code' | 'message'> | null
+) =>
+  isMissingColumnError(error, 'latitude') || isMissingColumnError(error, 'longitude');
 
 export const probeTotemAtivoColumn = async () => {
   const { error } = await supabase.from('events').select('totem_ativo').limit(1);
@@ -132,10 +145,32 @@ export const probeSomenteMembrosColumn = async () => {
   return true;
 };
 
+export const setEventGeoColumnAvailable = (available: boolean) => {
+  eventGeoColumnAvailable = available;
+};
+
+export const probeEventGeoColumn = async () => {
+  const { error } = await supabase.from('events').select('latitude, longitude').limit(1);
+
+  if (isMissingEventGeoColumnError(error)) {
+    setEventGeoColumnAvailable(false);
+    return false;
+  }
+
+  if (error) {
+    throw error;
+  }
+
+  setEventGeoColumnAvailable(true);
+  return true;
+};
+
 export type EventRowWithOptionals = {
   totem_ativo?: boolean | null;
   requer_quorum?: boolean | null;
   somente_membros?: boolean | null;
+  latitude?: number | null;
+  longitude?: number | null;
   [key: string]: unknown;
 };
 
@@ -153,7 +188,7 @@ export const withDefaultTotemAtivo = withDefaultEventOptionals;
 
 export const stripOptionalFieldsFromEventPayload = <T extends Record<string, unknown>>(
   payload: T,
-  options: { totem?: boolean; quorum?: boolean; somenteMembros?: boolean }
+  options: { totem?: boolean; quorum?: boolean; somenteMembros?: boolean; geo?: boolean }
 ) => {
   const next = { ...payload };
 
@@ -167,6 +202,11 @@ export const stripOptionalFieldsFromEventPayload = <T extends Record<string, unk
 
   if (options.somenteMembros) {
     delete next.somente_membros;
+  }
+
+  if (options.geo) {
+    delete next.latitude;
+    delete next.longitude;
   }
 
   return next;
@@ -185,6 +225,9 @@ export const REQUER_QUORUM_COLUMN_SQL_HINT =
 
 export const SOMENTE_MEMBROS_COLUMN_SQL_HINT =
   'Execute uma vez no Supabase o script scripts/events-somente-membros.sql (habilita Somente Membros).';
+
+export const EVENT_GEO_COLUMN_SQL_HINT =
+  'Execute uma vez no Supabase o script scripts/geo-checkin-automatic.sql (habilita latitude/longitude em eventos).';
 
 export async function ensureEventsTotemAtivoColumn(): Promise<boolean> {
   if (await probeTotemAtivoColumn().catch(() => false)) {
@@ -243,13 +286,14 @@ export async function ensureEventsSomenteMembrosColumn(): Promise<boolean> {
   return probeSomenteMembrosColumn().catch(() => false);
 }
 
-/** Garante colunas opcionais de eventos (totem_ativo, requer_quorum, somente_membros). */
+/** Garante colunas opcionais de eventos (totem_ativo, requer_quorum, somente_membros, geo). */
 export async function ensureEventsOptionalColumns() {
-  const [totem, quorum, somenteMembros] = await Promise.all([
+  const [totem, quorum, somenteMembros, geo] = await Promise.all([
     ensureEventsTotemAtivoColumn(),
     ensureEventsRequerQuorumColumn(),
     ensureEventsSomenteMembrosColumn(),
+    probeEventGeoColumn().catch(() => false),
   ]);
 
-  return { totem, quorum, somenteMembros };
+  return { totem, quorum, somenteMembros, geo };
 }

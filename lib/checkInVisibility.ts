@@ -14,7 +14,44 @@ export const isAppParameterNo = (value: string | null | undefined) =>
 export const APP_PARAMETER = {
   QR_CODE_ATIVO: 'QRCode_Ativo',
   CHECK_IN_AUTOMATICO: 'check_In_Automatico',
+  CHECK_IN_GEOFENCE_ATIVO: 'check_in_geofence_ativo',
 } as const;
+
+export type GeoCheckinVisibilityEvent = CheckInVisibilityEvent & {
+  latitude?: number | null;
+  longitude?: number | null;
+};
+
+/** Check-in automático por proximidade (geofence) no dia do evento. */
+export const isGeoCheckinFeatureEnabled = (value: string | null | undefined) =>
+  normalizeAppParameterValue(value) === 'sim';
+
+export const resolveGeoCheckinMonitorActive = (options: {
+  geofenceParameterValue: string | null | undefined;
+  event: GeoCheckinVisibilityEvent | null | undefined;
+}) => {
+  if (!isGeoCheckinFeatureEnabled(options.geofenceParameterValue)) {
+    return false;
+  }
+
+  if (!options.event?.event_date?.trim()) {
+    return false;
+  }
+
+  if (!isEventCalendarToday(options.event.event_date)) {
+    return false;
+  }
+
+  const lat = options.event.latitude;
+  const lng = options.event.longitude;
+
+  return (
+    typeof lat === 'number'
+    && Number.isFinite(lat)
+    && typeof lng === 'number'
+    && Number.isFinite(lng)
+  );
+};
 
 export type CheckInVisibilityEvent = {
   event_date: string | null | undefined;

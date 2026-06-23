@@ -695,6 +695,10 @@ export default function MaintenanceDashboard() {
       patchForm({
         eventLocal: location.name,
         eventLocalAddress: location.address,
+        eventLatitude:
+          typeof location.latitude === 'number' ? String(location.latitude) : '',
+        eventLongitude:
+          typeof location.longitude === 'number' ? String(location.longitude) : '',
         maxCapacity: String(location.capacity),
       });
       setFavoritePickerVisible(false);

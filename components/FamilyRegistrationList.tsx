@@ -1,6 +1,5 @@
 import { useRegisteredEventMembers, type RegistrationStatus } from '@/hooks/useRegisteredEventMembers';
-import { useRegisterMember } from '@/hooks/useRegisterMember';
-import { useUnregisterMember } from '@/hooks/useUnregisterMember';
+import { useSyncFamilyEventRegistrations } from '@/hooks/useSyncFamilyEventRegistrations';
 import { useFamilyAudienceMembers } from '@/hooks/useFamilyAudienceMembers';
 import {
   fetchProfileEventRegistrationStatus,
@@ -9,6 +8,12 @@ import {
 } from '@/lib/profileEventRegistration';
 import { resolveActiveSessionMember } from '@/lib/resolveActiveSessionMember';
 import { formatFullName } from '@/lib/fullName';
+import type { GeoCoordinates } from '@/lib/checkinGeofence';
+import {
+  enqueueGeoCheckinOperation,
+  isDeviceOnline,
+} from '@/lib/checkinOfflineQueue';
+import type { GeoCheckinUiStatus } from '@/hooks/useGeoCheckinMonitor';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -37,6 +42,12 @@ type Props = {
   sessionProfileName?: string | null;
   /** Perfil da sessão — habilita inscrição individual quando não há família/membros. */
   sessionProfile?: SessionProfileRegistration | null;
+  /** Coordenadas atuais do dispositivo (geofence). */
+  deviceCoordinates?: GeoCoordinates | null;
+  /** Tolerância de geofence ao editar audiência com check-in já válido. */
+  skipGeofenceOnSave?: boolean;
+  /** Estado visual do check-in automático por proximidade. */
+  geoCheckinStatus?: GeoCheckinUiStatus;
 };
 
 export const FamilyRegistrationList = ({
@@ -51,6 +62,9 @@ export const FamilyRegistrationList = ({
   sessionPhone = null,
   sessionProfileName = null,
   sessionProfile = null,
+  deviceCoordinates = null,
+  skipGeofenceOnSave = false,
+  geoCheckinStatus = 'idle',
 }: Props) => {
   const hasFamilyId = Boolean(familyId?.trim());
   const { members, loading, error } = useFamilyAudienceMembers(
@@ -58,8 +72,8 @@ export const FamilyRegistrationList = ({
     sessionProfile,
     sessionProfileName
   );
-  const { registerMember, loading: registering } = useRegisterMember();
-  const { unregisterMember, loading: unregistering } = useUnregisterMember();
+  const { syncFamilyRegistrations, confirmGeoCheckin, loading: syncingRegistrations } =
+    useSyncFamilyEventRegistrations();
   const {
     registeredMemberIds,
     registeredMemberStatusById,
@@ -200,11 +214,86 @@ export const FamilyRegistrationList = ({
   };
 
   const isBusy =
-    registering ||
-    unregistering ||
+    syncingRegistrations ||
     loadingRegisteredMembers ||
     soloStatusLoading ||
     soloToggleLoading;
+
+  const resolveTargetMemberIds = useCallback(
+    (toggleMemberId?: string) => {
+      const ids = new Set<string>();
+
+      for (const member of visibleMembers) {
+        const isRegistered =
+          registeredMemberIds.includes(member.id) && !pendingUnregisterIds.includes(member.id);
+        const isPendingRegister = pendingRegisterIds.includes(member.id);
+
+        if (isRegistered || isPendingRegister) {
+          ids.add(member.id);
+        }
+      }
+
+      if (toggleMemberId) {
+        if (ids.has(toggleMemberId)) {
+          ids.delete(toggleMemberId);
+        } else {
+          ids.add(toggleMemberId);
+        }
+      }
+
+      return Array.from(ids);
+    },
+    [pendingRegisterIds, pendingUnregisterIds, registeredMemberIds, visibleMembers]
+  );
+
+  const persistFamilyRegistrations = useCallback(
+    async (memberIds: string[]) => {
+      if (!eventId || !hasFamilyId) {
+        return;
+      }
+
+      const payload = {
+        eventId,
+        familyId,
+        memberIds,
+        coordinates: deviceCoordinates,
+        skipGeofence: skipGeofenceOnSave,
+      };
+
+      if (!isDeviceOnline()) {
+        await enqueueGeoCheckinOperation({
+          type: 'sync_registrations',
+          eventId,
+          familyId,
+          memberIds,
+          latitude: deviceCoordinates?.latitude ?? 0,
+          longitude: deviceCoordinates?.longitude ?? 0,
+          skipGeofence: skipGeofenceOnSave,
+        });
+        return;
+      }
+
+      await syncFamilyRegistrations(payload);
+
+      if (skipGeofenceOnSave && memberIds.length > 0) {
+        await confirmGeoCheckin({
+          eventId,
+          familyId,
+          coordinates: deviceCoordinates,
+          skipGeofence: true,
+        });
+      }
+    },
+    [
+      confirmGeoCheckin,
+      deviceCoordinates,
+      eventId,
+      familyId,
+      hasFamilyId,
+      skipGeofenceOnSave,
+      syncFamilyRegistrations,
+    ]
+  );
 
   const allRegistered = members.length > 0 && members.every((member) => registeredMemberIds.includes(member.id));
   const allPending = pendingRegisterIds.length === members.length || pendingUnregisterIds.length === members.length;
@@ -219,34 +308,29 @@ export const FamilyRegistrationList = ({
       return;
     }
 
+    const isCurrentlyRegistered =
+      registeredMemberIds.includes(memberId) && !pendingUnregisterIds.includes(memberId);
+    const nextMemberIds = resolveTargetMemberIds(memberId);
+
     try {
-      if (registeredMemberIds.includes(memberId)) {
+      if (isCurrentlyRegistered) {
         if (quorumMode && quorumTotemCheckinConfirmed) {
           return;
         }
 
         setPendingUnregisterIds([memberId]);
-        await unregisterMember({
-          eventId,
-          memberId: member.id,
-          familyId: member.family_id,
-        });
       } else {
         setPendingRegisterIds([memberId]);
-        await registerMember({
-          eventId,
-          memberId: member.id,
-          familyId: member.family_id,
-        });
       }
 
+      await persistFamilyRegistrations(nextMemberIds);
       await refetchRegisteredMembers();
       await onRegistrationChange?.();
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
-          : registeredMemberIds.includes(memberId)
+          : isCurrentlyRegistered
             ? 'Nao foi possivel remover o participante do evento.'
             : 'Nao foi possivel registrar o participante no evento.';
       Alert.alert('Erro', message);
@@ -269,27 +353,20 @@ export const FamilyRegistrationList = ({
       return;
     }
 
+    const nextMemberIds = allRegistered
+      ? resolveTargetMemberIds().filter((id) => !targetMembers.some((member) => member.id === id))
+      : Array.from(
+          new Set([...resolveTargetMemberIds(), ...targetMembers.map((member) => member.id)])
+        );
+
     try {
       if (allRegistered) {
         setPendingUnregisterIds(targetMembers.map((member) => member.id));
-        for (const member of targetMembers) {
-          await unregisterMember({
-            eventId,
-            memberId: member.id,
-            familyId: member.family_id,
-          });
-        }
       } else {
         setPendingRegisterIds(targetMembers.map((member) => member.id));
-        for (const member of targetMembers) {
-          await registerMember({
-            eventId,
-            memberId: member.id,
-            familyId: member.family_id,
-          });
-        }
       }
 
+      await persistFamilyRegistrations(nextMemberIds);
       await refetchRegisteredMembers();
       await onRegistrationChange?.();
     } catch (err) {
@@ -305,6 +382,22 @@ export const FamilyRegistrationList = ({
       setPendingUnregisterIds([]);
     }
   };
+
+  const geoStatusLabel = useMemo(() => {
+    if (geoCheckinStatus === 'detecting') {
+      return 'Check-in detectado (validando GPS...)';
+    }
+
+    if (geoCheckinStatus === 'syncing') {
+      return 'Check-in detectado (Sincronizando...)';
+    }
+
+    if (geoCheckinStatus === 'confirmed') {
+      return 'Check-in Confirmado';
+    }
+
+    return null;
+  }, [geoCheckinStatus]);
 
   if (!hasFamilyId && !sessionProfile?.id) {
     return (
@@ -398,6 +491,17 @@ export const FamilyRegistrationList = ({
 
   return (
     <View style={styles.wrapper}>
+      {geoStatusLabel ? (
+        <View
+          style={[
+            styles.geoStatusBanner,
+            geoCheckinStatus === 'confirmed' && styles.geoStatusBannerConfirmed,
+            geoCheckinStatus === 'syncing' && styles.geoStatusBannerSyncing,
+          ]}
+        >
+          <Text style={styles.geoStatusBannerText}>{geoStatusLabel}</Text>
+        </View>
+      ) : null}
       {registeredMembersError ? (
         <Text style={styles.helperErrorText}>Nao foi possivel verificar as inscricoes ja existentes.</Text>
       ) : null}
@@ -575,6 +679,29 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     marginBottom: 8,
+  },
+  geoStatusBanner: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#38BDF8',
+    backgroundColor: 'rgba(14, 116, 144, 0.22)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
+  },
+  geoStatusBannerSyncing: {
+    borderColor: '#FBBF24',
+    backgroundColor: 'rgba(120, 53, 15, 0.28)',
+  },
+  geoStatusBannerConfirmed: {
+    borderColor: '#10B981',
+    backgroundColor: 'rgba(6, 78, 59, 0.28)',
+  },
+  geoStatusBannerText: {
+    color: '#E2E8F0',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   soloHint: {
     color: '#94A3B8',

@@ -11,6 +11,7 @@ import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { useDashboardSelectedEvent, useEventRegistrationsByStatus, useRoomMonitorScales } from '@/hooks';
 import { useFamilyPreCheckin } from '@/hooks/useFamilyPreCheckin';
+import { useGeoCheckinMonitor } from '@/hooks/useGeoCheckinMonitor';
 import { useFamilyReceptionSuperAdminNotifier } from '@/hooks/useFamilyReceptionSuperAdminNotifier';
 import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import { getAppParameterValue } from '@/lib/appParameters';
@@ -495,6 +496,7 @@ export default function Dashboard() {
   const scrollToParkingCardRef = useRef(false);
   const scrollToScaleRosterRef = useRef(false);
   const scrollToScalesCardRef = useRef(false);
+  const scrollToEventAltCardRef = useRef(false);
   const activeDashboardContentRef = useRef<DashboardCard['content'] | null>(null);
   const previousDashboardDataLengthRef = useRef(0);
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
@@ -523,6 +525,7 @@ export default function Dashboard() {
   const [isPixKeyLoading, setIsPixKeyLoading] = useState(true);
   const [qrCodeAtivoEnabled, setQrCodeAtivoEnabled] = useState(true);
   const [checkInManualMode, setCheckInManualMode] = useState(false);
+  const [geoCheckinAtivoEnabled, setGeoCheckinAtivoEnabled] = useState(false);
   const [selectedGroupedRoom, setSelectedGroupedRoom] = useState<'KIDS' | 'TEENS' | null>(null);
   const [birthdayEntries, setBirthdayEntries] = useState<BirthdayEntry[]>([]);
   const [isBirthdaysLoading, setIsBirthdaysLoading] = useState(true);
@@ -660,16 +663,19 @@ export default function Dashboard() {
   }, []);
   const loadCheckInCardParameters = useCallback(async () => {
     try {
-      const [qrCodeValue, checkInAutomaticoValue] = await Promise.all([
+      const [qrCodeValue, checkInAutomaticoValue, geoCheckinValue] = await Promise.all([
         getAppParameterValue(APP_PARAMETER.QR_CODE_ATIVO),
         getAppParameterValue(APP_PARAMETER.CHECK_IN_AUTOMATICO),
+        getAppParameterValue(APP_PARAMETER.CHECK_IN_GEOFENCE_ATIVO),
       ]);
       setQrCodeAtivoEnabled(!isAppParameterNo(qrCodeValue));
       setCheckInManualMode(isAppParameterNo(checkInAutomaticoValue));
+      setGeoCheckinAtivoEnabled(!isAppParameterNo(geoCheckinValue));
     } catch (error) {
       console.error('Erro ao carregar parâmetros de check-in:', error);
       setQrCodeAtivoEnabled(true);
       setCheckInManualMode(false);
+      setGeoCheckinAtivoEnabled(false);
     }
   }, []);
 
@@ -715,6 +721,39 @@ export default function Dashboard() {
     gateError: preCheckinGateError,
     refetch: refetchPreCheckin,
   } = useFamilyPreCheckin(selectedEvent?.id, familyId, selectedEvent);
+
+  const focusEventAudienceCard = useCallback(() => {
+    scrollToEventAltCardRef.current = true;
+  }, []);
+
+  const eventRegistrationChangeRef = useRef<(() => Promise<void>) | null>(null);
+
+  const {
+    status: geoCheckinStatus,
+    lastCoordinates: geoDeviceCoordinates,
+    geofenceActive,
+    errorMessage: geoCheckinErrorMessage,
+  } = useGeoCheckinMonitor({
+    enabled: geoCheckinAtivoEnabled,
+    geofenceParameterValue: geoCheckinAtivoEnabled ? 'sim' : 'nao',
+    event: selectedEvent
+      ? {
+          id: selectedEvent.id,
+          event_date: selectedEvent.event_date,
+          latitude: selectedEvent.latitude,
+          longitude: selectedEvent.longitude,
+        }
+      : null,
+    familyId,
+    hasFamilyPreCheckin: hasPreCheckin,
+    hasFamilyGeoCheckinConfirmed: hasTotemCheckinConfirmed,
+    onRequiresPrecheckin: focusEventAudienceCard,
+    onConfirmed: async () => {
+      await eventRegistrationChangeRef.current?.();
+    },
+  });
+
+  const skipGeofenceOnAudienceSave = hasPreCheckin || hasTotemCheckinConfirmed;
 
   const isQrCheckInCardVisible = useMemo(
     () =>
@@ -1529,6 +1568,7 @@ export default function Dashboard() {
     await refetchGroupedRegistrations();
     await refetchPreCheckin();
   };
+  eventRegistrationChangeRef.current = handleEventRegistrationChange;
   const activeMemberListEntries = useMemo(
     () => (membersListAudience === 'visitors' ? visitorListEntries : memberListEntries),
     [memberListEntries, membersListAudience, visitorListEntries]
@@ -2105,6 +2145,26 @@ export default function Dashboard() {
   }, [isScaleRosterVisible, isParkingPanelVisible, data, scrollToDashboardCard]);
 
   useEffect(() => {
+    if (!scrollToEventAltCardRef.current) {
+      return;
+    }
+
+    const eventAltIdx = data.findIndex((item) => item.content === 'event_alt');
+    if (eventAltIdx < 0) {
+      scrollToEventAltCardRef.current = false;
+      return;
+    }
+
+    scrollToEventAltCardRef.current = false;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollToDashboardCard(eventAltIdx, true);
+      });
+    });
+  }, [data, scrollToDashboardCard, geoCheckinStatus]);
+
+  useEffect(() => {
     if (isScaleRosterVisible || !scrollToScalesCardRef.current) {
       return;
     }
@@ -2509,6 +2569,15 @@ export default function Dashboard() {
                               O card com QR Code de check-in ficará disponível no dia do evento.
                             </Text>
                           ) : null}
+                          {selectedEvent && isSelectedEventToday && geofenceActive ? (
+                            <Text style={styles.sectionHint}>
+                              Check-in por proximidade ativo: ao chegar ao local (até 30 m), a presença
+                              será confirmada automaticamente após validar o GPS.
+                            </Text>
+                          ) : null}
+                          {geoCheckinErrorMessage ? (
+                            <Text style={styles.sectionHintError}>{geoCheckinErrorMessage}</Text>
+                          ) : null}
                           {selectedEvent?.requer_quorum !== true &&
                           isSelectedEventToday &&
                           selectedEventRequiresQrCheckIn &&
@@ -2539,6 +2608,9 @@ export default function Dashboard() {
                               quorumTotemCheckinConfirmed={hasTotemCheckinConfirmed}
                               sessionPhone={userPhone}
                               sessionProfileName={profile?.full_name ?? null}
+                              deviceCoordinates={geoDeviceCoordinates}
+                              skipGeofenceOnSave={skipGeofenceOnAudienceSave}
+                              geoCheckinStatus={geoCheckinStatus}
                               sessionProfile={{
                                 id: profile.id,
                                 full_name: profile.full_name ?? null,
