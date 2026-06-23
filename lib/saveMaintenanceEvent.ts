@@ -16,6 +16,7 @@ import {
   isTotemAtivoColumnAvailable,
   stripOptionalFieldsFromEventPayload,
   TOTEM_COLUMN_SQL_HINT,
+  GEOFENCE_ATIVO_COLUMN_SQL_HINT,
 } from '@/lib/eventsColumnSupport';
 import { supabase } from '@/lib/supabase';
 import type { PostgrestError } from '@supabase/supabase-js';
@@ -23,6 +24,24 @@ import type { PostgrestError } from '@supabase/supabase-js';
 export type SaveMaintenanceEventResult =
   | { ok: true }
   | { ok: false; message: string; code?: string };
+
+const geofenceColumnMissingError = (): PostgrestError =>
+  ({
+    message: GEOFENCE_ATIVO_COLUMN_SQL_HINT,
+    code: 'GEOFENCE_COLUMN_MISSING',
+  }) as PostgrestError;
+
+const assertGeofenceAtivoCanPersist = (payload: MaintenanceEventPayload) => {
+  if (payload.geofence_ativo !== true) {
+    return null;
+  }
+
+  if (isGeofenceAtivoColumnAvailable()) {
+    return null;
+  }
+
+  return geofenceColumnMissingError();
+};
 
 const persistEvent = async (
   mode: 'insert' | 'update',
@@ -70,6 +89,12 @@ const saveEventWithOptionalColumnFallback = async (
     geofenceAtivo: !isGeofenceAtivoColumnAvailable(),
   }) as MaintenanceEventPayload;
 
+  const geofencePersistError = assertGeofenceAtivoCanPersist(payload);
+
+  if (geofencePersistError) {
+    return { data: null, error: geofencePersistError };
+  }
+
   let result = await persistEvent(mode, selectedEventId, prepared);
 
   if (
@@ -79,6 +104,10 @@ const saveEventWithOptionalColumnFallback = async (
       isMissingSomenteMembrosColumnError(result.error) ||
       isMissingGeofenceAtivoColumnError(result.error))
   ) {
+    if (payload.geofence_ativo === true) {
+      return { data: null, error: geofenceColumnMissingError() };
+    }
+
     const withoutOptionals = stripOptionalFieldsFromEventPayload(prepared, {
       totem: true,
       quorum: true,

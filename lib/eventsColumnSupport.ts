@@ -300,7 +300,15 @@ export async function ensureEventsGeofenceAtivoColumn(): Promise<boolean> {
   }
 
   geofenceAtivoColumnAvailable = null;
-  return probeGeofenceAtivoColumn().catch(() => false);
+  const probed = await probeGeofenceAtivoColumn().catch(() => false);
+
+  if (probed) {
+    return true;
+  }
+
+  // RPC criou a coluna, mas o cache do PostgREST pode demorar a atualizar.
+  setGeofenceAtivoColumnAvailable(true);
+  return true;
 }
 
 /** Garante colunas opcionais de eventos (totem_ativo, requer_quorum, somente_membros, geofence_ativo). */

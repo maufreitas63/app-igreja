@@ -235,7 +235,11 @@ const getSaveErrorMessage = (err: unknown) => {
   }
 
   if (message.toLowerCase().includes('geofence_ativo')) {
-    return `${message}\n\n${GEOFENCE_ATIVO_COLUMN_SQL_HINT}`;
+    return `Check-in automático não foi salvo no banco.\n\n${GEOFENCE_ATIVO_COLUMN_SQL_HINT}`;
+  }
+
+  if (code === 'GEOFENCE_COLUMN_MISSING') {
+    return `Check-in automático não foi salvo no banco.\n\n${GEOFENCE_ATIVO_COLUMN_SQL_HINT}`;
   }
 
   return message;
@@ -530,6 +534,9 @@ export default function MaintenanceDashboard() {
     setIsSaving(true);
 
     try {
+      const columnSupport = await ensureEventsOptionalColumns();
+      setGeofenceSchemaReady(columnSupport.geofenceAtivo);
+
       const result = await saveMaintenanceEvent(selectedEventId, validation.payload);
 
       if (!result.ok) {
@@ -1464,7 +1471,7 @@ export default function MaintenanceDashboard() {
                     label="Check-in automático"
                     value={form.geofenceAtivo}
                     onValueChange={(geofenceAtivo) => patchForm({ geofenceAtivo })}
-                    disabled={isBusy}
+                    disabled={isBusy || !geofenceSchemaReady}
                   />
                 </View>
 
