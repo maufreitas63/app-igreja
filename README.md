@@ -8,6 +8,7 @@ Mapa completo: [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
 | Documento | Conteúdo |
 |-----------|----------|
+| [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) | Manual de entrega (cliente + manutenção) · PDF em [`pdfs/MANUAL_ENTREGA.pdf`](pdfs/MANUAL_ENTREGA.pdf) |
 | [`CAMADAS_SEGURANCA.md`](CAMADAS_SEGURANCA.md) | Especificação das 4 camadas de segurança |
 | [`FUNCIONALIDADES.md`](FUNCIONALIDADES.md) | Lista de funcionalidades por área |
 | [`BLUEPRINT.md`](BLUEPRINT.md) | Telas, fluxos e controles |
@@ -23,6 +24,7 @@ npm run web              # PWA em http://localhost:8081
 npm run build:web        # Export estático para deploy (dist/)
 npm run generate:icons   # Regenera ícones a partir da marca d'água
 npm run build:docs       # Regenera pacotes .md e PDFs em pdfs/
+npm run build:manual-entrega-pdf  # Manual de entrega (MD → pdfs/MANUAL_ENTREGA.pdf)
 npm run build:access-roles-pdf  # Mapa visual dos papéis ACL
 ```
 
