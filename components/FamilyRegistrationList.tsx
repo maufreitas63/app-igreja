@@ -9,12 +9,12 @@ import {
 import { resolveActiveSessionMember } from '@/lib/resolveActiveSessionMember';
 import { formatFullName } from '@/lib/fullName';
 import type { GeoCoordinates } from '@/lib/checkinGeofence';
-import { formatGeoDistanceMeters } from '@/lib/checkinGeofence';
 import {
   enqueueGeoCheckinOperation,
   isDeviceOnline,
 } from '@/lib/checkinOfflineQueue';
 import type { GeoCheckinUiStatus } from '@/hooks/useGeoCheckinMonitor';
+import { GeoCheckinStatusBanner } from '@/components/GeoCheckinStatusBanner';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -393,34 +393,6 @@ export const FamilyRegistrationList = ({
     }
   };
 
-  const geoStatusLabel = useMemo(() => {
-    if (geoCheckinStatus === 'detecting') {
-      const { current, required } = geoCheckinGpsProgress;
-      const radiusLabel = Math.round(geoCheckinRadiusMeters);
-      const distanceLabel = formatGeoDistanceMeters(geoCheckinDistanceMeters);
-
-      if (current > 0) {
-        return `Dentro do raio — confirmando proximidade (${current}/${required} leituras)...`;
-      }
-
-      if (distanceLabel) {
-        return `GPS ativo: você está a ~${distanceLabel} do local (raio ${radiusLabel} m). Aproxime-se para o check-in.`;
-      }
-
-      return `Obtendo GPS para verificar proximidade ao local (raio ${radiusLabel} m)...`;
-    }
-
-    if (geoCheckinStatus === 'syncing') {
-      return 'Proximidade confirmada (sincronizando check-in...)';
-    }
-
-    if (geoCheckinStatus === 'confirmed') {
-      return 'Check-in Confirmado';
-    }
-
-    return null;
-  }, [geoCheckinDistanceMeters, geoCheckinGpsProgress, geoCheckinRadiusMeters, geoCheckinStatus]);
-
   if (!hasFamilyId && !sessionProfile?.id) {
     return (
       <View style={styles.centered}>
@@ -513,17 +485,12 @@ export const FamilyRegistrationList = ({
 
   return (
     <View style={styles.wrapper}>
-      {geoStatusLabel ? (
-        <View
-          style={[
-            styles.geoStatusBanner,
-            geoCheckinStatus === 'confirmed' && styles.geoStatusBannerConfirmed,
-            geoCheckinStatus === 'syncing' && styles.geoStatusBannerSyncing,
-          ]}
-        >
-          <Text style={styles.geoStatusBannerText}>{geoStatusLabel}</Text>
-        </View>
-      ) : null}
+      <GeoCheckinStatusBanner
+        status={geoCheckinStatus}
+        gpsProgress={geoCheckinGpsProgress}
+        distanceMeters={geoCheckinDistanceMeters}
+        radiusMeters={geoCheckinRadiusMeters}
+      />
       {registeredMembersError ? (
         <Text style={styles.helperErrorText}>Nao foi possivel verificar as inscricoes ja existentes.</Text>
       ) : null}
@@ -701,29 +668,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     marginBottom: 8,
-  },
-  geoStatusBanner: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#38BDF8',
-    backgroundColor: 'rgba(14, 116, 144, 0.22)',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
-  },
-  geoStatusBannerSyncing: {
-    borderColor: '#FBBF24',
-    backgroundColor: 'rgba(120, 53, 15, 0.28)',
-  },
-  geoStatusBannerConfirmed: {
-    borderColor: '#10B981',
-    backgroundColor: 'rgba(6, 78, 59, 0.28)',
-  },
-  geoStatusBannerText: {
-    color: '#E2E8F0',
-    fontSize: 13,
-    fontWeight: '700',
-    textAlign: 'center',
   },
   soloHint: {
     color: '#94A3B8',

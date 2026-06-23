@@ -504,6 +504,7 @@ export default function Dashboard() {
   const scrollToScaleRosterRef = useRef(false);
   const scrollToScalesCardRef = useRef(false);
   const scrollToEventAltCardRef = useRef(false);
+  const [eventAltScrollNonce, setEventAltScrollNonce] = useState(0);
   const activeDashboardContentRef = useRef<DashboardCard['content'] | null>(null);
   const previousDashboardDataLengthRef = useRef(0);
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
@@ -753,6 +754,7 @@ export default function Dashboard() {
 
   const focusEventAudienceCard = useCallback(() => {
     scrollToEventAltCardRef.current = true;
+    setEventAltScrollNonce((value) => value + 1);
   }, []);
 
   const {
@@ -765,6 +767,10 @@ export default function Dashboard() {
   );
 
   const eventRegistrationChangeRef = useRef<(() => Promise<void>) | null>(null);
+
+  const handleGeoCheckinConfirmed = useCallback(async () => {
+    await eventRegistrationChangeRef.current?.();
+  }, []);
 
   const geoCheckinEvent = useMemo(
     () =>
@@ -823,9 +829,7 @@ export default function Dashboard() {
     hasFamilyPreCheckin: hasPreCheckin,
     hasFamilyGeoCheckinConfirmed: hasTotemCheckinConfirmed,
     onRequiresPrecheckin: focusEventAudienceCard,
-    onConfirmed: async () => {
-      await eventRegistrationChangeRef.current?.();
-    },
+    onConfirmed: handleGeoCheckinConfirmed,
   });
 
   const skipGeofenceOnAudienceSave = hasPreCheckin || hasTotemCheckinConfirmed;
@@ -2237,7 +2241,7 @@ export default function Dashboard() {
         scrollToDashboardCard(eventAltIdx, true);
       });
     });
-  }, [data, scrollToDashboardCard, geoCheckinStatus]);
+  }, [data, scrollToDashboardCard, eventAltScrollNonce]);
 
   useEffect(() => {
     if (isScaleRosterVisible || !scrollToScalesCardRef.current) {

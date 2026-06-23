@@ -62,6 +62,8 @@ const notifyGeoCheckinConfirmed = (participantNames: string[] | undefined) => {
   Alert.alert('Check-in registrado!', `Familiares presentes: ${namesLabel}`, [{ text: 'OK' }]);
 };
 
+const PROXIMITY_UI_THROTTLE_MS = 3000;
+
 const processQueueItem = async (item: GeoCheckinQueueItem): Promise<boolean> => {
   if (item.type === 'confirm') {
     const result = await confirmGeoFamilyCheckinAtomic({
@@ -115,10 +117,21 @@ export const useGeoCheckinMonitor = ({
   const stopWatchRef = useRef<(() => void) | null>(null);
   const triggeredRef = useRef(false);
   const precheckinPromptShownRef = useRef(false);
+  const onConfirmedRef = useRef(onConfirmed);
+  const onRequiresPrecheckinRef = useRef(onRequiresPrecheckin);
+  const proximityUiRef = useRef({
+    lastEmitAt: 0,
+    distanceMeters: null as number | null,
+    accuracyMeters: null as number | null,
+    progressCurrent: 0,
+    progressRequired: 3,
+  });
   const [windowTick, setWindowTick] = useState(0);
 
+  onConfirmedRef.current = onConfirmed;
+  onRequiresPrecheckinRef.current = onRequiresPrecheckin;
+
   const eventId = event?.id ?? '';
-  const eventDate = event?.event_date ?? '';
   const eventLatitude = event?.latitude ?? null;
   const eventLongitude = event?.longitude ?? null;
 
@@ -175,7 +188,7 @@ export const useGeoCheckinMonitor = ({
 
         if (!precheckinPromptShownRef.current) {
           precheckinPromptShownRef.current = true;
-          onRequiresPrecheckin?.();
+          onRequiresPrecheckinRef.current?.();
         }
 
         return;
@@ -206,7 +219,7 @@ export const useGeoCheckinMonitor = ({
 
           if (!precheckinPromptShownRef.current) {
             precheckinPromptShownRef.current = true;
-            onRequiresPrecheckin?.();
+            onRequiresPrecheckinRef.current?.();
           }
 
           return;
@@ -218,7 +231,7 @@ export const useGeoCheckinMonitor = ({
 
         setStatus('confirmed');
         notifyGeoCheckinConfirmed(result.participant_names);
-        await onConfirmed?.();
+        await onConfirmedRef.current?.();
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Não foi possível confirmar o check-in.';
@@ -226,8 +239,25 @@ export const useGeoCheckinMonitor = ({
         setStatus('error');
       }
     },
-    [event?.id, familyId, hasFamilyPreCheckin, onConfirmed, onRequiresPrecheckin]
+    [event?.id, familyId, hasFamilyPreCheckin]
   );
+
+  const runConfirmFlowRef = useRef(runConfirmFlow);
+  runConfirmFlowRef.current = runConfirmFlow;
+
+  const flushProximityUi = useCallback((force = false) => {
+    const snapshot = proximityUiRef.current;
+    const now = Date.now();
+
+    if (!force && snapshot.lastEmitAt > 0 && now - snapshot.lastEmitAt < PROXIMITY_UI_THROTTLE_MS) {
+      return;
+    }
+
+    snapshot.lastEmitAt = now;
+    setLastDistanceMeters(snapshot.distanceMeters);
+    setLastGpsAccuracyMeters(snapshot.accuracyMeters);
+    setGpsProgress({ current: snapshot.progressCurrent, required: snapshot.progressRequired });
+  }, []);
 
   useEffect(() => {
     const detachOnline = attachGeoCheckinOnlineSync(async (item) => {
@@ -235,7 +265,7 @@ export const useGeoCheckinMonitor = ({
 
       if (ok && event?.id && item.eventId === event.id) {
         setStatus('confirmed');
-        await onConfirmed?.();
+        await onConfirmedRef.current?.();
       }
 
       return ok;
@@ -244,7 +274,7 @@ export const useGeoCheckinMonitor = ({
     void drainGeoCheckinQueue(processQueueItem);
 
     return detachOnline;
-  }, [event?.id, onConfirmed]);
+  }, [event?.id]);
 
   useEffect(() => {
     if (!geofenceActive || triggeredRef.current || precheckinPromptShownRef.current) {
@@ -273,29 +303,41 @@ export const useGeoCheckinMonitor = ({
       }
 
       setStatus('detecting');
-      setGpsProgress({ current: 0, required: 3 });
       setErrorMessage(null);
+      proximityUiRef.current = {
+        lastEmitAt: 0,
+        distanceMeters: null,
+        accuracyMeters: null,
+        progressCurrent: 0,
+        progressRequired: 3,
+      };
+      setGpsProgress({ current: 0, required: 3 });
       setLastDistanceMeters(null);
       setLastGpsAccuracyMeters(null);
 
       stopWatchRef.current = startGeofenceValidationWatch({
         event: {
-          id: eventId,
-          event_date: eventDate,
           latitude: eventLatitude,
           longitude: eventLongitude,
         },
         radiusMeters: geofenceRadiusMeters,
         onProgress: (current, required) => {
-          if (!cancelled) {
-            setGpsProgress({ current, required });
+          if (cancelled) {
+            return;
           }
+
+          proximityUiRef.current.progressCurrent = current;
+          proximityUiRef.current.progressRequired = required;
+          flushProximityUi();
         },
         onProximity: (distanceMeters, accuracyMeters) => {
-          if (!cancelled) {
-            setLastDistanceMeters(distanceMeters);
-            setLastGpsAccuracyMeters(accuracyMeters);
+          if (cancelled) {
+            return;
           }
+
+          proximityUiRef.current.distanceMeters = distanceMeters;
+          proximityUiRef.current.accuracyMeters = accuracyMeters;
+          flushProximityUi();
         },
         onValidated: (coords) => {
           if (cancelled || triggeredRef.current) {
@@ -305,7 +347,8 @@ export const useGeoCheckinMonitor = ({
           triggeredRef.current = true;
           stopWatchRef.current?.();
           stopWatchRef.current = null;
-          void runConfirmFlow(coords);
+          flushProximityUi(true);
+          void runConfirmFlowRef.current(coords);
         },
         onError: (message) => {
           if (!cancelled) {
@@ -325,14 +368,11 @@ export const useGeoCheckinMonitor = ({
       stopWatchRef.current = null;
     };
   }, [
-    eventDate,
-    eventId,
     eventLatitude,
     eventLongitude,
-    familyId,
+    flushProximityUi,
     geofenceActive,
     geofenceRadiusMeters,
-    runConfirmFlow,
   ]);
 
   useEffect(() => {
@@ -345,12 +385,12 @@ export const useGeoCheckinMonitor = ({
 
       if (ok) {
         setStatus('confirmed');
-        await onConfirmed?.();
+        await onConfirmedRef.current?.();
       }
 
       return ok;
     });
-  }, [status, onConfirmed]);
+  }, [status]);
 
   return {
     status,
