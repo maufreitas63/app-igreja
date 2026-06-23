@@ -2639,8 +2639,7 @@ export default function Dashboard() {
                           selectedEventUsesAutomaticCheckIn &&
                           !preCheckinGateRequired ? (
                             <Text style={styles.sectionHint}>
-                              Check-in automático: marque a audiência abaixo para registrar a presença da
-                              família neste evento.
+                              Check-in: marque os familiares abaixo para registrar sua presença.
                             </Text>
                           ) : null}
                           {selectedEvent && selectedEventRequiresQrCheckIn && !isSelectedEventToday ? (
@@ -2650,8 +2649,7 @@ export default function Dashboard() {
                           ) : null}
                           {selectedEvent && inGeofenceWindow && geofenceActive ? (
                             <Text style={styles.sectionHint}>
-                              Check-in por proximidade ativo: ao chegar ao local cadastrado nos
-                              favoritos (até 30 m), a presença será confirmada após validar o GPS.
+                              Check-in ativo: ao chegar a 30m do local, sua presença será validada via GPS.
                             </Text>
                           ) : null}
                           {geoCheckinAtivoEnabled
