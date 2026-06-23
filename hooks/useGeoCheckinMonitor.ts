@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Alert, Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -20,7 +20,7 @@ import {
   requestDeviceGeolocationPermission,
   startGeofenceValidationWatch,
 } from '@/lib/deviceGeolocation';
-import { isEventCalendarToday, normalizeAppParameterValue } from '@/lib/checkInVisibility';
+import { isEventWithinGeofenceCheckinWindow, normalizeAppParameterValue } from '@/lib/checkInVisibility';
 
 export type GeoCheckinUiStatus = 'idle' | 'detecting' | 'syncing' | 'confirmed' | 'error';
 
@@ -34,6 +34,7 @@ export type GeoCheckinEvent = {
 export type UseGeoCheckinMonitorOptions = {
   enabled: boolean;
   geofenceParameterValue: string | null | undefined;
+  geofenceHoursBefore: number;
   event: GeoCheckinEvent | null | undefined;
   familyId: string | undefined;
   hasFamilyPreCheckin: boolean;
@@ -99,6 +100,7 @@ const processQueueItem = async (item: GeoCheckinQueueItem): Promise<boolean> => 
 export const useGeoCheckinMonitor = ({
   enabled,
   geofenceParameterValue,
+  geofenceHoursBefore,
   event,
   familyId,
   hasFamilyPreCheckin,
@@ -112,12 +114,30 @@ export const useGeoCheckinMonitor = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const stopWatchRef = useRef<(() => void) | null>(null);
   const triggeredRef = useRef(false);
+  const [windowTick, setWindowTick] = useState(0);
+
+  useEffect(() => {
+    if (!enabled || !event?.event_date?.trim()) {
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      setWindowTick((value) => value + 1);
+    }, 30_000);
+
+    return () => clearInterval(intervalId);
+  }, [enabled, event?.event_date]);
+
+  const inGeofenceWindow = useMemo(
+    () => isEventWithinGeofenceCheckinWindow(event?.event_date, geofenceHoursBefore),
+    [event?.event_date, geofenceHoursBefore, windowTick]
+  );
 
   const geofenceActive =
     enabled
     && isGeofenceFeatureEnabled(geofenceParameterValue)
     && Boolean(event?.id && familyId)
-    && isEventCalendarToday(event?.event_date)
+    && inGeofenceWindow
     && eventHasGeofenceCoordinates(event ?? {})
     && !hasFamilyGeoCheckinConfirmed;
 
@@ -255,7 +275,7 @@ export const useGeoCheckinMonitor = ({
       stopWatchRef.current?.();
       stopWatchRef.current = null;
     };
-  }, [event, familyId, geofenceActive, runConfirmFlow]);
+  }, [event, familyId, geofenceActive, geofenceHoursBefore, runConfirmFlow]);
 
   useEffect(() => {
     if (status !== 'syncing' || !isDeviceOnline()) {
@@ -280,6 +300,7 @@ export const useGeoCheckinMonitor = ({
     lastCoordinates,
     errorMessage,
     geofenceActive,
+    inGeofenceWindow,
     isSyncing: status === 'syncing',
     isDetected: status === 'detecting' || status === 'syncing',
     isConfirmed: status === 'confirmed',

@@ -1,4 +1,10 @@
 import { getEventCalendarDate, getTodayCalendarDateInAppTimezone } from '@/lib/eventDate';
+import {
+  isEventWithinGeofenceCheckinWindow,
+  parseGeofenceHoursBeforeParameter,
+} from '@/lib/geoCheckinWindow';
+
+export { parseGeofenceHoursBeforeParameter, isEventWithinGeofenceCheckinWindow } from '@/lib/geoCheckinWindow';
 
 /** Normaliza valor de parâmetro (minúsculas, sem acentos). */
 export const normalizeAppParameterValue = (value: string | null | undefined) =>
@@ -15,6 +21,7 @@ export const APP_PARAMETER = {
   QR_CODE_ATIVO: 'QRCode_Ativo',
   CHECK_IN_AUTOMATICO: 'check_In_Automatico',
   CHECK_IN_GEOFENCE_ATIVO: 'check_in_geofence_ativo',
+  CHECK_IN_GEOFENCE_TEMPO: 'check_in_geofence_tempo',
 } as const;
 
 export type GeoCheckinVisibilityEvent = CheckInVisibilityEvent;
@@ -25,6 +32,7 @@ export const isGeoCheckinFeatureEnabled = (value: string | null | undefined) =>
 
 export const resolveGeoCheckinMonitorActive = (options: {
   geofenceParameterValue: string | null | undefined;
+  geofenceHoursBefore: number;
   event: GeoCheckinVisibilityEvent | null | undefined;
   geofenceCoordinates?: { latitude: number; longitude: number } | null;
 }) => {
@@ -36,7 +44,7 @@ export const resolveGeoCheckinMonitorActive = (options: {
     return false;
   }
 
-  if (!isEventCalendarToday(options.event.event_date)) {
+  if (!isEventWithinGeofenceCheckinWindow(options.event.event_date, options.geofenceHoursBefore)) {
     return false;
   }
 

@@ -26,6 +26,11 @@ import {
   resolveQrCheckInCardVisible,
 } from '@/lib/checkInVisibility';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
+import {
+  formatGeofenceHoursBeforeLabel,
+  formatGeofenceWindowStartLabel,
+  parseGeofenceHoursBeforeParameter,
+} from '@/lib/geoCheckinWindow';
 import { formatRoomMonitorNames } from '@/lib/roomMonitorScales';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import { withActiveMembershipProfileFilter } from '@/lib/activeMemberProfile';
@@ -527,6 +532,7 @@ export default function Dashboard() {
   const [qrCodeAtivoEnabled, setQrCodeAtivoEnabled] = useState(true);
   const [checkInManualMode, setCheckInManualMode] = useState(false);
   const [geoCheckinAtivoEnabled, setGeoCheckinAtivoEnabled] = useState(false);
+  const [geoCheckinTempoValue, setGeoCheckinTempoValue] = useState<string | null>(null);
   const [selectedGroupedRoom, setSelectedGroupedRoom] = useState<'KIDS' | 'TEENS' | null>(null);
   const [birthdayEntries, setBirthdayEntries] = useState<BirthdayEntry[]>([]);
   const [isBirthdaysLoading, setIsBirthdaysLoading] = useState(true);
@@ -664,19 +670,23 @@ export default function Dashboard() {
   }, []);
   const loadCheckInCardParameters = useCallback(async () => {
     try {
-      const [qrCodeValue, checkInAutomaticoValue, geoCheckinValue] = await Promise.all([
+      const [qrCodeValue, checkInAutomaticoValue, geoCheckinValue, geoCheckinTempo] =
+        await Promise.all([
         getAppParameterValue(APP_PARAMETER.QR_CODE_ATIVO),
         getAppParameterValue(APP_PARAMETER.CHECK_IN_AUTOMATICO),
         getAppParameterValue(APP_PARAMETER.CHECK_IN_GEOFENCE_ATIVO),
+        getAppParameterValue(APP_PARAMETER.CHECK_IN_GEOFENCE_TEMPO),
       ]);
       setQrCodeAtivoEnabled(!isAppParameterNo(qrCodeValue));
       setCheckInManualMode(isAppParameterNo(checkInAutomaticoValue));
       setGeoCheckinAtivoEnabled(!isAppParameterNo(geoCheckinValue));
+      setGeoCheckinTempoValue(geoCheckinTempo?.trim() || null);
     } catch (error) {
       console.error('Erro ao carregar parâmetros de check-in:', error);
       setQrCodeAtivoEnabled(true);
       setCheckInManualMode(false);
       setGeoCheckinAtivoEnabled(false);
+      setGeoCheckinTempoValue(null);
     }
   }, []);
 
@@ -715,6 +725,16 @@ export default function Dashboard() {
     [selectedEvent?.event_date]
   );
 
+  const geoCheckinHoursBefore = useMemo(
+    () => parseGeofenceHoursBeforeParameter(geoCheckinTempoValue),
+    [geoCheckinTempoValue]
+  );
+
+  const geoCheckinWindowStartLabel = useMemo(
+    () => formatGeofenceWindowStartLabel(selectedEvent?.event_date, geoCheckinHoursBefore),
+    [geoCheckinHoursBefore, selectedEvent?.event_date]
+  );
+
   const {
     hasPreCheckin,
     hasTotemCheckinConfirmed,
@@ -733,7 +753,7 @@ export default function Dashboard() {
     error: eventGeofenceError,
   } = useEventGeofenceCoordinates(
     selectedEvent?.event_local,
-    geoCheckinAtivoEnabled && isSelectedEventToday
+    geoCheckinAtivoEnabled && Boolean(selectedEvent?.event_local?.trim())
   );
 
   const eventRegistrationChangeRef = useRef<(() => Promise<void>) | null>(null);
@@ -742,10 +762,12 @@ export default function Dashboard() {
     status: geoCheckinStatus,
     lastCoordinates: geoDeviceCoordinates,
     geofenceActive,
+    inGeofenceWindow,
     errorMessage: geoCheckinErrorMessage,
   } = useGeoCheckinMonitor({
     enabled: geoCheckinAtivoEnabled,
     geofenceParameterValue: geoCheckinAtivoEnabled ? 'sim' : 'nao',
+    geofenceHoursBefore: geoCheckinHoursBefore,
     event: selectedEvent
       ? {
           id: selectedEvent.id,
@@ -2579,14 +2601,27 @@ export default function Dashboard() {
                               O card com QR Code de check-in ficará disponível no dia do evento.
                             </Text>
                           ) : null}
-                          {selectedEvent && isSelectedEventToday && geofenceActive ? (
+                          {selectedEvent && inGeofenceWindow && geofenceActive ? (
                             <Text style={styles.sectionHint}>
                               Check-in por proximidade ativo: ao chegar ao local cadastrado nos
                               favoritos (até 30 m), a presença será confirmada após validar o GPS.
                             </Text>
                           ) : null}
                           {geoCheckinAtivoEnabled
-                          && isSelectedEventToday
+                          && selectedEvent?.event_date
+                          && !inGeofenceWindow
+                          && !hasTotemCheckinConfirmed ? (
+                            <Text style={styles.sectionHint}>
+                              Check-in por proximidade inicia{' '}
+                              {formatGeofenceHoursBeforeLabel(geoCheckinHoursBefore)}
+                              {geoCheckinWindowStartLabel
+                                ? ` (${geoCheckinWindowStartLabel})`
+                                : ''}
+                              .
+                            </Text>
+                          ) : null}
+                          {geoCheckinAtivoEnabled
+                          && inGeofenceWindow
                           && selectedEvent?.event_local?.trim()
                           && !eventGeofenceLoading
                           && !eventGeofenceCoordinates ? (
