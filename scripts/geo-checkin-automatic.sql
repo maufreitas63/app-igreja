@@ -1,6 +1,6 @@
 -- Check-in automático por geolocalização (geofence 30 m, RPCs atômicas, RLS).
 -- Coordenadas do evento: resolvidas via events.event_local → event_favorite_locations.name
--- Pré-requisitos: event-favorite-locations.sql, register-member-atomic.sql, checkins-totem-flow.sql,
+-- Pré-requisitos: event-favorite-locations.sql, events-geofence-ativo.sql, register-member-atomic.sql, checkins-totem-flow.sql,
 --   access-control-table-rls.sql
 -- Execute no SQL Editor do Supabase.
 
@@ -356,6 +356,31 @@ $$;
 -- 4. RPC atômica: confirmar check-in geo da família
 -- ---------------------------------------------------------------------------
 
+create or replace function public.assert_event_geofence_checkin_enabled(p_event_id uuid)
+returns void
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_enabled boolean;
+begin
+  select coalesce(e.geofence_ativo, false)
+    into v_enabled
+  from public.events e
+  where e.id = p_event_id;
+
+  if not found then
+    raise exception 'Evento não encontrado.';
+  end if;
+
+  if not v_enabled then
+    raise exception 'Check-in por proximidade não está habilitado para este evento.';
+  end if;
+end;
+$$;
+
 create or replace function public.confirm_geo_family_checkin_atomic(
   p_event_id uuid,
   p_family_group_id text,
@@ -375,6 +400,10 @@ declare
   v_updated_count integer := 0;
 begin
   perform public.assert_session_can_manage_family(p_family_group_id);
+
+  if not coalesce(p_skip_geofence, false) then
+    perform public.assert_event_geofence_checkin_enabled(p_event_id);
+  end if;
 
   v_has_existing_checkin := public.family_has_geo_checkin_at_event(p_event_id, p_family_group_id);
 

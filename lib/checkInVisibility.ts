@@ -20,23 +20,24 @@ export const isAppParameterNo = (value: string | null | undefined) =>
 export const APP_PARAMETER = {
   QR_CODE_ATIVO: 'QRCode_Ativo',
   CHECK_IN_AUTOMATICO: 'check_In_Automatico',
-  CHECK_IN_GEOFENCE_ATIVO: 'check_in_geofence_ativo',
   CHECK_IN_GEOFENCE_TEMPO: 'check_in_geofence_tempo',
 } as const;
 
-export type GeoCheckinVisibilityEvent = CheckInVisibilityEvent;
+export type GeoCheckinVisibilityEvent = CheckInVisibilityEvent & {
+  geofence_ativo?: boolean | null;
+};
 
-/** Check-in automático por proximidade (geofence) no dia do evento. */
-export const isGeoCheckinFeatureEnabled = (value: string | null | undefined) =>
-  normalizeAppParameterValue(value) === 'sim';
+/** Check-in automático por proximidade habilitado no evento. */
+export const isEventGeoCheckinEnabled = (event: GeoCheckinVisibilityEvent | null | undefined) =>
+  event?.geofence_ativo === true;
 
 export const resolveGeoCheckinMonitorActive = (options: {
-  geofenceParameterValue: string | null | undefined;
+  geofenceEnabled: boolean;
   geofenceHoursBefore: number;
   event: GeoCheckinVisibilityEvent | null | undefined;
   geofenceCoordinates?: { latitude: number; longitude: number } | null;
 }) => {
-  if (!isGeoCheckinFeatureEnabled(options.geofenceParameterValue)) {
+  if (!options.geofenceEnabled) {
     return false;
   }
 

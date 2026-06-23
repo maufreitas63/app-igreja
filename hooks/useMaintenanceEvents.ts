@@ -1,9 +1,11 @@
 import {
   ensureEventsOptionalColumns,
   getMaintenanceEventSelect,
+  isMissingGeofenceAtivoColumnError,
   isMissingRequerQuorumColumnError,
   isMissingSomenteMembrosColumnError,
   isMissingTotemColumnError,
+  setGeofenceAtivoColumnAvailable,
   setRequerQuorumColumnAvailable,
   setSomenteMembrosColumnAvailable,
   setTotemAtivoColumnAvailable,
@@ -25,6 +27,7 @@ export type MaintenanceEvent = {
   totem_ativo: boolean | null;
   requer_quorum: boolean | null;
   somente_membros: boolean | null;
+  geofence_ativo: boolean | null;
   is_locked: boolean | null;
 };
 
@@ -80,6 +83,18 @@ export const useMaintenanceEvents = () => {
         fetchError = retry.error;
       } else if (!fetchError) {
         setSomenteMembrosColumnAvailable(true);
+      }
+
+      if (fetchError && isMissingGeofenceAtivoColumnError(fetchError)) {
+        setGeofenceAtivoColumnAvailable(false);
+        const retry = await supabase
+          .from('events')
+          .select(getMaintenanceEventSelect())
+          .order('event_date', { ascending: true, nullsFirst: false });
+        data = retry.data;
+        fetchError = retry.error;
+      } else if (!fetchError) {
+        setGeofenceAtivoColumnAvailable(true);
       }
 
       if (fetchError) {

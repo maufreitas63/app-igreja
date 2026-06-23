@@ -20,7 +20,7 @@ import {
   requestDeviceGeolocationPermission,
   startGeofenceValidationWatch,
 } from '@/lib/deviceGeolocation';
-import { isEventWithinGeofenceCheckinWindow, normalizeAppParameterValue } from '@/lib/checkInVisibility';
+import { isEventWithinGeofenceCheckinWindow } from '@/lib/checkInVisibility';
 
 export type GeoCheckinUiStatus = 'idle' | 'detecting' | 'syncing' | 'confirmed' | 'error';
 
@@ -33,7 +33,6 @@ export type GeoCheckinEvent = {
 
 export type UseGeoCheckinMonitorOptions = {
   enabled: boolean;
-  geofenceParameterValue: string | null | undefined;
   geofenceHoursBefore: number;
   event: GeoCheckinEvent | null | undefined;
   familyId: string | undefined;
@@ -42,9 +41,6 @@ export type UseGeoCheckinMonitorOptions = {
   onRequiresPrecheckin?: () => void;
   onConfirmed?: () => void | Promise<void>;
 };
-
-const isGeofenceFeatureEnabled = (value: string | null | undefined) =>
-  normalizeAppParameterValue(value) === 'sim';
 
 const notifyGeoCheckinConfirmed = (participantNames: string[] | undefined) => {
   const namesLabel = formatGeoCheckinParticipantNames(participantNames);
@@ -99,7 +95,6 @@ const processQueueItem = async (item: GeoCheckinQueueItem): Promise<boolean> => 
 
 export const useGeoCheckinMonitor = ({
   enabled,
-  geofenceParameterValue,
   geofenceHoursBefore,
   event,
   familyId,
@@ -141,7 +136,6 @@ export const useGeoCheckinMonitor = ({
 
   const geofenceActive =
     enabled
-    && isGeofenceFeatureEnabled(geofenceParameterValue)
     && Boolean(eventId && familyId)
     && inGeofenceWindow
     && eventHasGeofenceCoordinates({

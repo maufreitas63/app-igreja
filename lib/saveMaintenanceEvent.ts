@@ -6,9 +6,11 @@ import {
 } from '@/lib/maintenanceEventForm';
 import {
   ensureEventsOptionalColumns,
+  isMissingGeofenceAtivoColumnError,
   isMissingRequerQuorumColumnError,
   isMissingSomenteMembrosColumnError,
   isMissingTotemColumnError,
+  isGeofenceAtivoColumnAvailable,
   isRequerQuorumColumnAvailable,
   isSomenteMembrosColumnAvailable,
   isTotemAtivoColumnAvailable,
@@ -33,6 +35,9 @@ const persistEvent = async (
     ...(payload.requer_quorum !== undefined ? { requer_quorum: payload.requer_quorum === true } : {}),
     ...(payload.somente_membros !== undefined
       ? { somente_membros: payload.somente_membros === true }
+      : {}),
+    ...(payload.geofence_ativo !== undefined
+      ? { geofence_ativo: payload.geofence_ativo === true }
       : {}),
   };
 
@@ -62,6 +67,7 @@ const saveEventWithOptionalColumnFallback = async (
     totem: !isTotemAtivoColumnAvailable(),
     quorum: !isRequerQuorumColumnAvailable(),
     somenteMembros: !isSomenteMembrosColumnAvailable(),
+    geofenceAtivo: !isGeofenceAtivoColumnAvailable(),
   }) as MaintenanceEventPayload;
 
   let result = await persistEvent(mode, selectedEventId, prepared);
@@ -70,12 +76,14 @@ const saveEventWithOptionalColumnFallback = async (
     result.error &&
     (isMissingTotemColumnError(result.error) ||
       isMissingRequerQuorumColumnError(result.error) ||
-      isMissingSomenteMembrosColumnError(result.error))
+      isMissingSomenteMembrosColumnError(result.error) ||
+      isMissingGeofenceAtivoColumnError(result.error))
   ) {
     const withoutOptionals = stripOptionalFieldsFromEventPayload(prepared, {
       totem: true,
       quorum: true,
       somenteMembros: true,
+      geofenceAtivo: true,
     }) as MaintenanceEventPayload;
     result = await persistEvent(mode, selectedEventId, withoutOptionals);
   }

@@ -35,6 +35,8 @@ import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import { type MaintenanceScalePanelContent } from '@/lib/scaleAccess';
 import {
   ensureEventsOptionalColumns,
+  GEOFENCE_ATIVO_COLUMN_SQL_HINT,
+  isGeofenceAtivoColumnAvailable,
   isRequerQuorumColumnAvailable,
   isSomenteMembrosColumnAvailable,
   isTotemAtivoColumnAvailable,
@@ -232,6 +234,10 @@ const getSaveErrorMessage = (err: unknown) => {
     return `${message}\n\n${SOMENTE_MEMBROS_COLUMN_SQL_HINT}`;
   }
 
+  if (message.toLowerCase().includes('geofence_ativo')) {
+    return `${message}\n\n${GEOFENCE_ATIVO_COLUMN_SQL_HINT}`;
+  }
+
   return message;
 };
 
@@ -358,6 +364,7 @@ export default function MaintenanceDashboard() {
   const [somenteMembrosSchemaReady, setSomenteMembrosSchemaReady] = useState(
     isSomenteMembrosColumnAvailable()
   );
+  const [geofenceSchemaReady, setGeofenceSchemaReady] = useState(isGeofenceAtivoColumnAvailable());
   const [quorumRegistrySchemaMissing, setQuorumRegistrySchemaMissing] = useState(
     !isQuorumRegistryTableAvailable()
   );
@@ -433,6 +440,7 @@ export default function MaintenanceDashboard() {
       setTotemSchemaReady(isTotemAtivoColumnAvailable());
       setQuorumSchemaReady(isRequerQuorumColumnAvailable());
       setSomenteMembrosSchemaReady(isSomenteMembrosColumnAvailable());
+      setGeofenceSchemaReady(isGeofenceAtivoColumnAvailable());
     }
   }, [loading, safeEvents.length]);
 
@@ -443,11 +451,12 @@ export default function MaintenanceDashboard() {
       if (!schemaProbeDoneRef.current) {
         schemaProbeDoneRef.current = true;
 
-        void ensureEventsOptionalColumns().then(({ totem, quorum, somenteMembros }) => {
+        void ensureEventsOptionalColumns().then(({ totem, quorum, somenteMembros, geofenceAtivo }) => {
           if (active) {
             setTotemSchemaReady(totem);
             setQuorumSchemaReady(quorum);
             setSomenteMembrosSchemaReady(somenteMembros);
+            setGeofenceSchemaReady(geofenceAtivo);
           }
         });
 
@@ -1440,14 +1449,24 @@ export default function MaintenanceDashboard() {
               >
             <View style={styles.editorSection}>
               <View style={styles.editorCard}>
-                <Text style={styles.fieldLabel}>Nome do evento</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ex.: Culto de domingo"
-                  placeholderTextColor="#64748B"
-                  value={form.name}
-                  onChangeText={(text) => patchForm({ name: text })}
-                />
+                <View style={styles.nameGeofenceRow}>
+                  <View style={styles.nameInputColumn}>
+                    <Text style={styles.fieldLabel}>Nome do evento</Text>
+                    <TextInput
+                      style={[styles.input, styles.nameInput]}
+                      placeholder="Ex.: Culto de domingo"
+                      placeholderTextColor="#64748B"
+                      value={form.name}
+                      onChangeText={(text) => patchForm({ name: text })}
+                    />
+                  </View>
+                  <FeatureToggleColumn
+                    label="Check-in automático"
+                    value={form.geofenceAtivo}
+                    onValueChange={(geofenceAtivo) => patchForm({ geofenceAtivo })}
+                    disabled={isBusy}
+                  />
+                </View>
 
                 <Text style={styles.fieldLabel}>Data e horário</Text>
                 <View style={styles.dateTimeRow}>
@@ -1551,6 +1570,16 @@ export default function MaintenanceDashboard() {
                       Somente Membros só será salvo após habilitar a migração no Supabase.
                     </Text>
                     <Text style={styles.totemSqlWarningHint}>{SOMENTE_MEMBROS_COLUMN_SQL_HINT}</Text>
+                  </View>
+                ) : null}
+
+                {!geofenceSchemaReady && !loading ? (
+                  <View style={styles.totemSqlWarning}>
+                    <Text style={styles.totemSqlWarningText}>
+                      Não foi possível preparar a coluna geofence_ativo automaticamente. O botão
+                      Check-in automático só será salvo após habilitar a migração no Supabase.
+                    </Text>
+                    <Text style={styles.totemSqlWarningHint}>{GEOFENCE_ATIVO_COLUMN_SQL_HINT}</Text>
                   </View>
                 ) : null}
 
@@ -2370,6 +2399,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 10,
+  },
+  nameGeofenceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+  },
+  nameInputColumn: {
+    flex: 1,
+    minWidth: 0,
+  },
+  nameInput: {
+    width: '100%',
   },
   totemFieldLabel: {
     color: '#C7D2FE',

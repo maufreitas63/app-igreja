@@ -1,9 +1,11 @@
 import {
   ensureEventsOptionalColumns,
   getActiveEventSelect,
+  isMissingGeofenceAtivoColumnError,
   isMissingRequerQuorumColumnError,
   isMissingSomenteMembrosColumnError,
   isMissingTotemColumnError,
+  setGeofenceAtivoColumnAvailable,
   setRequerQuorumColumnAvailable,
   setSomenteMembrosColumnAvailable,
   setTotemAtivoColumnAvailable,
@@ -31,6 +33,7 @@ export type ActiveEventListItem = {
   totem_ativo: boolean | null;
   requer_quorum: boolean | null;
   somente_membros: boolean | null;
+  geofence_ativo: boolean | null;
   registeredCount: number;
   remainingCapacity: number | null;
   registrationCountError?: boolean;
@@ -57,6 +60,7 @@ const serializeEvents = (items: ActiveEventListItem[]) =>
       teens_room: event.teens_room,
       totem_ativo: event.totem_ativo,
       somente_membros: event.somente_membros,
+      geofence_ativo: event.geofence_ativo,
       registeredCount: event.registeredCount,
       remainingCapacity: event.remainingCapacity,
     }))
@@ -164,6 +168,19 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
           fetchError = retry.error;
         } else if (!fetchError) {
           setSomenteMembrosColumnAvailable(true);
+        }
+
+        if (fetchError && isMissingGeofenceAtivoColumnError(fetchError)) {
+          setGeofenceAtivoColumnAvailable(false);
+          const retry = await supabase
+            .from('events')
+            .select(getActiveEventSelect())
+            .or('is_locked.eq.false,is_locked.is.null')
+            .order('event_date', { ascending: true });
+          data = retry.data;
+          fetchError = retry.error;
+        } else if (!fetchError) {
+          setGeofenceAtivoColumnAvailable(true);
         }
 
         if (fetchError) {

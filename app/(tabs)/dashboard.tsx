@@ -531,7 +531,6 @@ export default function Dashboard() {
   const [isPixKeyLoading, setIsPixKeyLoading] = useState(true);
   const [qrCodeAtivoEnabled, setQrCodeAtivoEnabled] = useState(true);
   const [checkInManualMode, setCheckInManualMode] = useState(false);
-  const [geoCheckinAtivoEnabled, setGeoCheckinAtivoEnabled] = useState(false);
   const [geoCheckinTempoValue, setGeoCheckinTempoValue] = useState<string | null>(null);
   const [selectedGroupedRoom, setSelectedGroupedRoom] = useState<'KIDS' | 'TEENS' | null>(null);
   const [birthdayEntries, setBirthdayEntries] = useState<BirthdayEntry[]>([]);
@@ -670,22 +669,19 @@ export default function Dashboard() {
   }, []);
   const loadCheckInCardParameters = useCallback(async () => {
     try {
-      const [qrCodeValue, checkInAutomaticoValue, geoCheckinValue, geoCheckinTempo] =
+      const [qrCodeValue, checkInAutomaticoValue, geoCheckinTempo] =
         await Promise.all([
         getAppParameterValue(APP_PARAMETER.QR_CODE_ATIVO),
         getAppParameterValue(APP_PARAMETER.CHECK_IN_AUTOMATICO),
-        getAppParameterValue(APP_PARAMETER.CHECK_IN_GEOFENCE_ATIVO),
         getAppParameterValue(APP_PARAMETER.CHECK_IN_GEOFENCE_TEMPO),
       ]);
       setQrCodeAtivoEnabled(!isAppParameterNo(qrCodeValue));
       setCheckInManualMode(isAppParameterNo(checkInAutomaticoValue));
-      setGeoCheckinAtivoEnabled(!isAppParameterNo(geoCheckinValue));
       setGeoCheckinTempoValue(geoCheckinTempo?.trim() || null);
     } catch (error) {
       console.error('Erro ao carregar parâmetros de check-in:', error);
       setQrCodeAtivoEnabled(true);
       setCheckInManualMode(false);
-      setGeoCheckinAtivoEnabled(false);
       setGeoCheckinTempoValue(null);
     }
   }, []);
@@ -729,6 +725,8 @@ export default function Dashboard() {
     () => parseGeofenceHoursBeforeParameter(geoCheckinTempoValue),
     [geoCheckinTempoValue]
   );
+
+  const geoCheckinAtivoEnabled = selectedEvent?.geofence_ativo === true;
 
   const geoCheckinWindowStartLabel = useMemo(
     () => formatGeofenceWindowStartLabel(selectedEvent?.event_date, geoCheckinHoursBefore),
@@ -806,7 +804,6 @@ export default function Dashboard() {
     errorMessage: geoCheckinErrorMessage,
   } = useGeoCheckinMonitor({
     enabled: geoCheckinAtivoEnabled,
-    geofenceParameterValue: geoCheckinAtivoEnabled ? 'sim' : 'nao',
     geofenceHoursBefore: geoCheckinHoursBefore,
     event: geoCheckinEvent,
     familyId,

@@ -21,6 +21,7 @@ export type MaintenanceEventFormState = {
   totemAtivo: boolean;
   requerQuorum: boolean;
   somenteMembros: boolean;
+  geofenceAtivo: boolean;
   isPublished: boolean;
 };
 
@@ -37,6 +38,7 @@ export const emptyMaintenanceEventForm = (): MaintenanceEventFormState => ({
   totemAtivo: false,
   requerQuorum: false,
   somenteMembros: false,
+  geofenceAtivo: false,
   isPublished: true,
 });
 
@@ -192,6 +194,7 @@ export const formFromMaintenanceEvent = (event: {
   totem_ativo?: boolean | null;
   requer_quorum?: boolean | null;
   somente_membros?: boolean | null;
+  geofence_ativo?: boolean | null;
   is_locked: boolean | null;
 }): MaintenanceEventFormState => ({
   name: event.name ?? '',
@@ -209,6 +212,7 @@ export const formFromMaintenanceEvent = (event: {
   totemAtivo: event.totem_ativo === true,
   requerQuorum: event.requer_quorum === true,
   somenteMembros: event.somente_membros === true,
+  geofenceAtivo: event.geofence_ativo === true,
   isPublished: event.is_locked !== true,
 });
 
@@ -344,6 +348,7 @@ export const buildMaintenanceEventReplicationPayload = (
       totem_ativo: payload.totem_ativo,
       requer_quorum: payload.requer_quorum,
       somente_membros: payload.somente_membros,
+      geofence_ativo: payload.geofence_ativo,
       is_locked: true,
     },
   };
@@ -402,6 +407,7 @@ export const buildMaintenanceEventPayload = (
     totem_ativo: form.totemAtivo,
     requer_quorum: form.requerQuorum,
     somente_membros: form.somenteMembros,
+    geofence_ativo: form.geofenceAtivo,
     is_locked: isLocked,
     ...(retroactivePublish ? { retroactive_publish: true } : {}),
   };
@@ -418,12 +424,14 @@ export const summarizeMaintenanceEvent = (event: {
   totem_ativo?: boolean | null;
   requer_quorum?: boolean | null;
   somente_membros?: boolean | null;
+  geofence_ativo?: boolean | null;
   is_locked: boolean | null;
 }) => {
   const flags = [
     event.kids_room ? KIDS_ROOM_DISPLAY_LABEL : null,
     event.teens_room ? TEENS_ROOM_DISPLAY_LABEL : null,
     event.somente_membros ? 'Somente membros' : null,
+    event.geofence_ativo ? 'Check-in automático' : null,
     event.totem_ativo ? 'Totem' : null,
     event.requer_quorum ? 'Quórum' : null,
   ].filter(Boolean);
