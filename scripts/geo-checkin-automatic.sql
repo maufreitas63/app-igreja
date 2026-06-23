@@ -17,6 +17,18 @@ alter table public.checkins
 -- 2. Helpers: distância, coordenadas do evento e autorização familiar
 -- ---------------------------------------------------------------------------
 
+create or replace function public.normalize_location_key(p_value text)
+returns text
+language sql
+immutable
+as $$
+  select lower(trim(translate(
+    coalesce(p_value, ''),
+    'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ',
+    'aaaaaeeeeiiiiooooouuuucnaaaaaeeeeiiiiooooouuuucn'
+  )));
+$$;
+
 create or replace function public.haversine_distance_meters(
   p_lat1 double precision,
   p_lon1 double precision,
@@ -100,8 +112,12 @@ begin
   from public.events e
   where e.id = p_event_id;
 
-  if not found or v_event_date is null then
-    return;
+  if not found then
+    raise exception 'Evento não encontrado.';
+  end if;
+
+  if v_event_date is null then
+    raise exception 'Evento sem data para validar janela de check-in por proximidade.';
   end if;
 
   v_hours_before := public.geo_checkin_hours_before();
@@ -135,7 +151,7 @@ as $$
     fl.longitude
   from public.events e
   join public.event_favorite_locations fl
-    on lower(trim(fl.name)) = lower(trim(coalesce(e.event_local, '')))
+    on public.normalize_location_key(fl.name) = public.normalize_location_key(e.event_local)
    and coalesce(fl.is_active, true) is true
   where e.id = p_event_id
     and nullif(trim(coalesce(e.event_local, '')), '') is not null
@@ -213,7 +229,7 @@ begin
   limit 1;
 
   if v_event_lat is null or v_event_lng is null then
-    return;
+    raise exception 'Local do evento sem coordenadas para check-in por proximidade.';
   end if;
 
   if p_latitude is null or p_longitude is null then

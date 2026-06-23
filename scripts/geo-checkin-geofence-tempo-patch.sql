@@ -41,8 +41,12 @@ begin
   from public.events e
   where e.id = p_event_id;
 
-  if not found or v_event_date is null then
-    return;
+  if not found then
+    raise exception 'Evento não encontrado.';
+  end if;
+
+  if v_event_date is null then
+    raise exception 'Evento sem data para validar janela de check-in por proximidade.';
   end if;
 
   v_hours_before := public.geo_checkin_hours_before();
@@ -90,7 +94,7 @@ begin
   limit 1;
 
   if v_event_lat is null or v_event_lng is null then
-    return;
+    raise exception 'Local do evento sem coordenadas para check-in por proximidade.';
   end if;
 
   if p_latitude is null or p_longitude is null then

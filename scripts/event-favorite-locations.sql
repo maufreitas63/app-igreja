@@ -53,6 +53,25 @@ execute function public.touch_event_favorite_locations_updated_at();
 
 alter table public.event_favorite_locations enable row level security;
 
+create or replace function public.session_can_manage_event_favorite_locations()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select case
+    when exists (
+      select 1
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public'
+        and p.proname = 'session_has_resource_access'
+    ) then public.session_has_resource_access('table', 'events', 'update')
+    else true
+  end;
+$$;
+
 drop policy if exists event_favorite_locations_select_policy on public.event_favorite_locations;
 create policy event_favorite_locations_select_policy
   on public.event_favorite_locations
@@ -65,22 +84,22 @@ create policy event_favorite_locations_insert_policy
   on public.event_favorite_locations
   for insert
   to anon, authenticated
-  with check (true);
+  with check (public.session_can_manage_event_favorite_locations());
 
 drop policy if exists event_favorite_locations_update_policy on public.event_favorite_locations;
 create policy event_favorite_locations_update_policy
   on public.event_favorite_locations
   for update
   to anon, authenticated
-  using (true)
-  with check (true);
+  using (public.session_can_manage_event_favorite_locations())
+  with check (public.session_can_manage_event_favorite_locations());
 
 drop policy if exists event_favorite_locations_delete_policy on public.event_favorite_locations;
 create policy event_favorite_locations_delete_policy
   on public.event_favorite_locations
   for delete
   to anon, authenticated
-  using (true);
+  using (public.session_can_manage_event_favorite_locations());
 
 grant select, insert, update, delete on public.event_favorite_locations to anon, authenticated;
 

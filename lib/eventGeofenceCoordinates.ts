@@ -1,17 +1,25 @@
 import type { EventFavoriteLocation } from '@/lib/eventFavoriteLocationsApi';
 import type { GeoCoordinates } from '@/lib/checkinGeofence';
+import { normalizeLocationKey } from '@/lib/locationKey';
 
-const normalizeLocationKey = (value: string | null | undefined) =>
-  (value ?? '')
-    .trim()
-    .toLocaleLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+const hasValidCoordinates = (location: Pick<EventFavoriteLocation, 'latitude' | 'longitude'>) => {
+  const lat = location.latitude;
+  const lng = location.longitude;
+
+  return (
+    typeof lat === 'number'
+    && Number.isFinite(lat)
+    && typeof lng === 'number'
+    && Number.isFinite(lng)
+  );
+};
 
 /** Vincula `events.event_local` ao registro em `event_favorite_locations.name`. */
 export const resolveEventGeofenceCoordinates = (
   eventLocal: string | null | undefined,
-  locations: ReadonlyArray<Pick<EventFavoriteLocation, 'name' | 'latitude' | 'longitude' | 'is_active'>>
+  locations: ReadonlyArray<
+    Pick<EventFavoriteLocation, 'name' | 'latitude' | 'longitude' | 'is_active' | 'sort_order'>
+  >
 ): GeoCoordinates | null => {
   const key = normalizeLocationKey(eventLocal);
 
@@ -19,25 +27,19 @@ export const resolveEventGeofenceCoordinates = (
     return null;
   }
 
-  const match = locations.find((location) => {
-    if (location.is_active === false) {
-      return false;
-    }
+  const match = [...locations]
+    .filter((location) => {
+      if (location.is_active === false) {
+        return false;
+      }
 
-    if (normalizeLocationKey(location.name) !== key) {
-      return false;
-    }
+      if (normalizeLocationKey(location.name) !== key) {
+        return false;
+      }
 
-    const lat = location.latitude;
-    const lng = location.longitude;
-
-    return (
-      typeof lat === 'number'
-      && Number.isFinite(lat)
-      && typeof lng === 'number'
-      && Number.isFinite(lng)
-    );
-  });
+      return hasValidCoordinates(location);
+    })
+    .sort((left, right) => left.sort_order - right.sort_order || left.name.localeCompare(right.name))[0];
 
   if (!match || match.latitude === null || match.longitude === null) {
     return null;

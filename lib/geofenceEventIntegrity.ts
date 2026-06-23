@@ -1,5 +1,8 @@
 import type { MaintenanceEventPayload } from '@/lib/maintenanceEventForm';
 
+// Contrato espelhado em scripts/geo-checkin-purge-on-event-update.sql
+// (geofence_event_has_checkin_relevant_changes). Manter campos em sincronia.
+
 export type GeofenceEventSnapshot = {
   name?: string | null;
   event_date?: string | null;

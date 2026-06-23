@@ -21,7 +21,6 @@ import {
 } from '@/lib/eventsColumnSupport';
 import { shouldInvalidateGeofenceEventCheckins } from '@/lib/geofenceEventIntegrity';
 import { supabase } from '@/lib/supabase';
-import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import type { PostgrestError } from '@supabase/supabase-js';
 
 export type SaveMaintenanceEventResult =
@@ -137,39 +136,6 @@ const countEventCheckins = async (eventId: string) => {
   return count ?? 0;
 };
 
-const purgeEventCheckins = async (eventId: string) => {
-  const { data, error } = await supabase.rpc('purge_event_checkins_for_geofence_event', {
-    p_event_id: eventId,
-  });
-
-  if (error) {
-    if (isSupabaseRpcMissingError(error, 'purge_event_checkins_for_geofence_event')) {
-      const legacy = await supabase.rpc('purge_confirmed_checkins_for_geofence_event', {
-        p_event_id: eventId,
-      });
-
-      if (!legacy.error) {
-        return {
-          deleted: typeof legacy.data === 'number' ? legacy.data : 0,
-          warning: null as string | null,
-        };
-      }
-    }
-
-    return {
-      deleted: 0,
-      warning:
-        'Evento salvo, mas não foi possível limpar os check-ins automaticamente. '
-        + 'Execute scripts/geo-checkin-purge-on-event-update.sql no Supabase.',
-    };
-  }
-
-  return {
-    deleted: typeof data === 'number' ? data : 0,
-    warning: null as string | null,
-  };
-};
-
 const loadEventSnapshotForGeofence = async (eventId: string) => {
   const { data, error } = await supabase
     .from('events')
@@ -220,19 +186,15 @@ export const saveMaintenanceEvent = async (
   let purgedCheckins = 0;
   let purgeWarning: string | undefined;
 
-  if (shouldPurgeCheckins) {
-    const purgeResult = await purgeEventCheckins(selectedEventId);
-    purgedCheckins = purgeResult.deleted > 0 ? purgeResult.deleted : checkinsBeforeSave;
-    purgeWarning = purgeResult.warning ?? undefined;
+  if (shouldPurgeCheckins && checkinsBeforeSave > 0) {
+    const remaining = await countEventCheckins(selectedEventId);
 
-    if (purgeResult.deleted === 0 && checkinsBeforeSave > 0 && !purgeWarning) {
-      const remaining = await countEventCheckins(selectedEventId);
-
-      if (remaining > 0) {
-        purgeWarning =
-          'Evento salvo, mas ainda há check-ins antigos no banco. '
-          + 'Execute scripts/geo-checkin-purge-on-event-update.sql no Supabase.';
-      }
+    if (remaining > 0) {
+      purgeWarning =
+        'Evento salvo, mas ainda há check-ins antigos no banco. '
+        + 'Execute scripts/geo-checkin-purge-on-event-update.sql no Supabase.';
+    } else {
+      purgedCheckins = checkinsBeforeSave;
     }
   }
 
