@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para capacitação **dia a dia**, derivada do Pacote 5.
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 Conteúdo integrado: **7 treinamentos diários** com índice temático, todas as imagens e referências do manual do membro (sem misturar informações entre dias) e **Perguntas e Respostas** ao final de cada dia.
 
@@ -23,7 +23,7 @@ Treinamento **particionado por dia**, baseado integralmente no [Pacote 5 — Man
 
 **Pacote:** [`PACOTE_7_TREINAMENTO_DIARIO.md`](PACOTE_7_TREINAMENTO_DIARIO.md) · **Índice geral:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 ---
 
@@ -412,11 +412,49 @@ Painel → card **QR Code — Check-in Totem** / **Check In — QR Code** (visí
 | O que é pré-check-in (audiência)? | Confirmação de interesse **antes** do dia do evento; libera o card **Check-in / QR Code** quando o evento exige esse fluxo. |
 | Onde fica o QR da minha família? | Card **Check-in / QR Code** — etiqueta com código da família e QR para leitura no totem (② na ilustração). |
 | Posso fazer check-in manual? | Sim — use a seleção manual de membros no card QR quando a igreja habilitar esse fluxo. |
+| O que é check-in por proximidade? | Com **geofence ativo**, o app confirma presença automaticamente ao chegar ao templo (GPS + audiência prévia). |
 | Badges Kids/Teens no QR? | Indicam faixa etária do membro para salas **IBN Kids** / **IBN Teens** (prefixo **`Parm_entidade`** na interface). |
 | Não vejo eventos na agenda? | Pode não haver eventos publicados, ou seu perfil não tem permissão — fale com a secretaria. |
 
 # Dia 3 — SALA(S) — IBN Kids / IBN Teens e Dízimos e Ofertas
 
+
+# Parte 2b — Check-in por proximidade (geofence)
+
+### Objetivo
+Confirmar presença **automaticamente** ao chegar ao templo, sem passar pelo totem.
+
+### Pré-requisitos
+
+1. Evento com **check-in por proximidade** habilitado pela equipe.
+2. **Audiência** marcada na Agenda (Parte 1).
+3. Local do evento com **coordenadas** cadastradas nos locais favoritos da igreja.
+4. Permissão de **localização** concedida ao navegador/PWA.
+5. Estar dentro da **janela de tempo** (desde N horas antes do culto até o fim do dia do evento).
+
+### Passo a passo
+
+1. No dia do culto, abra o dashboard com o evento selecionado.
+2. Aceite a permissão de GPS quando solicitado.
+3. Aproxime-se do templo — o app exibe progresso de detecção (leituras GPS estáveis).
+4. Ao confirmar, aparece toast **Check-in confirmado** com os nomes dos participantes.
+
+### Resultado esperado
+
+- Banner de status indica *detectando*, *sincronizando* ou *confirmado*.
+- Não é necessário abrir o card QR se o geofence concluir com sucesso.
+- Sem internet no momento: o app enfileira e sincroniza quando a rede voltar.
+
+### Se der erro
+
+| Situação | O que fazer |
+|----------|-------------|
+| *Local sem coordenadas* | Equipe deve cadastrar lat/lng no local favorito |
+| GPS negado | Libere localização nas configurações do navegador |
+| Fora do raio | Aproxime-se do templo ou use QR no totem |
+| Sem audiência | Marque participantes na Agenda primeiro |
+
+---
 
 # Parte 3 — Card SALA(S) — IBN Kids / IBN Teens
 
@@ -462,6 +500,21 @@ Este card é **somente leitura** para o membro. A entrada física na sala é con
 
 ---
 
+
+---
+
+## Perguntas e respostas — Dia 3
+
+| Pergunta | Resposta |
+|----------|----------|
+| O card SALA(S) mostra quem? | Somente **membros da sua família** em monitoramento de entrada nas salas Kids/Teens — leitura apenas, sem editar. |
+| Por que não vejo ninguém no SALA(S)? | Nenhum familiar foi registrado na sala no momento, ou você não tem permissão para esse card. |
+| Como copio a chave PIX? | Card **Dízimos e Ofertas** → toque **Copiar chave PIX** (ícone *touch-app*) — a chave vem de `app_parameters`. |
+| Posso atualizar a chave PIX? | Membros veem a chave configurada pela igreja; alteração é feita na **manutenção** (equipe autorizada). |
+| O nome IBN KIDS vem de onde? | Do parâmetro **`Parm_entidade`** — prefixo dinâmico da entidade nos textos e cards. |
+
+# Dia 4 — Coração Aberto e Lista de Membros
+
 # Parte 4 — Card Dízimos e Ofertas
 
 ### Objetivo
@@ -498,21 +551,6 @@ Painel → **Dízimos e Ofertas**.
 - **Chave PIX indisponível** → toque em **Atualizar chave PIX** ou avise a secretaria.
 
 ---
-
-
----
-
-## Perguntas e respostas — Dia 3
-
-| Pergunta | Resposta |
-|----------|----------|
-| O card SALA(S) mostra quem? | Somente **membros da sua família** em monitoramento de entrada nas salas Kids/Teens — leitura apenas, sem editar. |
-| Por que não vejo ninguém no SALA(S)? | Nenhum familiar foi registrado na sala no momento, ou você não tem permissão para esse card. |
-| Como copio a chave PIX? | Card **Dízimos e Ofertas** → toque **Copiar chave PIX** (ícone *touch-app*) — a chave vem de `app_parameters`. |
-| Posso atualizar a chave PIX? | Membros veem a chave configurada pela igreja; alteração é feita na **manutenção** (equipe autorizada). |
-| O nome IBN KIDS vem de onde? | Do parâmetro **`Parm_entidade`** — prefixo dinâmico da entidade nos textos e cards. |
-
-# Dia 4 — Coração Aberto e Lista de Membros
 
 # Parte 5 — Card Coração Aberto
 
@@ -690,6 +728,23 @@ Lista de Membros → coluna **Família** → ícone **users** na linha desejada.
 ### Caminho (mapa)
 Lista de Membros → **Mapa Geral**.
 
+
+---
+
+## Perguntas e respostas — Dia 4
+
+| Pergunta | Resposta |
+|----------|----------|
+| Como envio um pedido pastoral? | Card **Coração Aberto** → preencha o formulário → envie. Acompanhe em **Meus pedidos**. |
+| Quem vê meu pedido pastoral? | A **equipe pastoral** na manutenção (Pacote 6, Parte 7) — estágios Acolher, Apoiar, Acompanhar. |
+| Lista de Membros vs Visitantes? | Botões **Visitantes** e **Membros** na mesma linha alternam a lista; o título muda para **LISTA DE VISITANTES** e o campo de busca para **Procurar visitante**. |
+| Como vejo integrantes da mesma família? | Na coluna **Família**, toque o ícone **users** (rosa) → modal **Membros da família** com código (ex.: **Família IBN0103**), nomes, parentesco e WhatsApp. |
+| O modal da família veio vazio — o que fazer? | Pode não haver integrantes reconhecidos no núcleo, falta de permissão ACL ou RPCs não aplicados no Supabase — avise a secretaria/TI. A mensagem *Nenhum membro reconhecido nesta família* ou erro em vermelho explica o caso. |
+| Como contato alguém pelo WhatsApp? | Na lista ou no modal familiar, toque o ícone **WhatsApp** (verde) ao lado do nome quando houver telefone cadastrado. |
+| Para que serve o Mapa Geral? | Abre `/mapa-geolocalizacao` com pins de endereços; filtros **Todos**, **Com papel** e **Visitantes**; toque no pin para ver dados e copiar endereço. |
+
+# Dia 5 — Aniversariantes e Financeiro
+
 ### Ilustração — Mapa Geral
 
 ![Mapa Geral — captura anotada](docs/manual-painel/screens/08d-mapa-geral.png)
@@ -726,23 +781,6 @@ Lista de Membros → **Mapa Geral**.
 | GPS cinza | CEP/endereço ausente no perfil |
 
 ---
-
-
----
-
-## Perguntas e respostas — Dia 4
-
-| Pergunta | Resposta |
-|----------|----------|
-| Como envio um pedido pastoral? | Card **Coração Aberto** → preencha o formulário → envie. Acompanhe em **Meus pedidos**. |
-| Quem vê meu pedido pastoral? | A **equipe pastoral** na manutenção (Pacote 6, Parte 7) — estágios Acolher, Apoiar, Acompanhar. |
-| Lista de Membros vs Visitantes? | Botões **Visitantes** e **Membros** na mesma linha alternam a lista; o título muda para **LISTA DE VISITANTES** e o campo de busca para **Procurar visitante**. |
-| Como vejo integrantes da mesma família? | Na coluna **Família**, toque o ícone **users** (rosa) → modal **Membros da família** com código (ex.: **Família IBN0103**), nomes, parentesco e WhatsApp. |
-| O modal da família veio vazio — o que fazer? | Pode não haver integrantes reconhecidos no núcleo, falta de permissão ACL ou RPCs não aplicados no Supabase — avise a secretaria/TI. A mensagem *Nenhum membro reconhecido nesta família* ou erro em vermelho explica o caso. |
-| Como contato alguém pelo WhatsApp? | Na lista ou no modal familiar, toque o ícone **WhatsApp** (verde) ao lado do nome quando houver telefone cadastrado. |
-| Para que serve o Mapa Geral? | Abre `/mapa-geolocalizacao` com pins de endereços; filtros **Todos**, **Com papel** e **Visitantes**; toque no pin para ver dados e copiar endereço. |
-
-# Dia 5 — Aniversariantes e Financeiro
 
 # Parte 7 — Card Aniversariantes
 
@@ -845,6 +883,20 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 
 | Ref. | Elemento indicado na imagem |
 |:----:|------------------------------|
+
+---
+
+## Perguntas e respostas — Dia 5
+
+| Pergunta | Resposta |
+|----------|----------|
+| Como filtro aniversariantes do mês? | Card **Aniversariantes** → escolha o **mês** → lista com datas e atalho WhatsApp. |
+| O card Financeiro mostra o quê? | Hub de relatórios: **Relatório de Despesas (RD)** em destaque, fluxo de caixa e categorias conforme permissão. |
+| Quem acessa o Financeiro? | Perfis com grant no card (ex.: **`member`**, **`tesoureiro`**) — definido pelo ACL da igreja. |
+| Posso ver lançamentos de outros meses? | Conforme telas `/financial` — navegue períodos disponíveis para seu papel. |
+
+# Dia 6 — Relatório de Despesas (RD), Escalas e Servos
+
 | ① | Seção **Planejado × Realizado** expandida |
 | ② | Colunas **Planejado** e **Realizado** |
 
@@ -881,20 +933,6 @@ Solicitar **reembolso de despesas** da igreja com comprovantes e chave PIX.
 
 ### Caminho
 Painel → **Financeiro** → atalho **Relatório de Despesas (RD)** — ou rota `/expense-report`.
-
-
----
-
-## Perguntas e respostas — Dia 5
-
-| Pergunta | Resposta |
-|----------|----------|
-| Como filtro aniversariantes do mês? | Card **Aniversariantes** → escolha o **mês** → lista com datas e atalho WhatsApp. |
-| O card Financeiro mostra o quê? | Hub de relatórios: **Relatório de Despesas (RD)** em destaque, fluxo de caixa e categorias conforme permissão. |
-| Quem acessa o Financeiro? | Perfis com grant no card (ex.: **`member`**, **`tesoureiro`**) — definido pelo ACL da igreja. |
-| Posso ver lançamentos de outros meses? | Conforme telas `/financial` — navegue períodos disponíveis para seu papel. |
-
-# Dia 6 — Relatório de Despesas (RD), Escalas e Servos
 
 ### Ilustração — Relatório de Despesas (RD)
 
@@ -976,6 +1014,21 @@ Painel → **Escalas** → **Selecionar Escala** → lista ou card de detalhe.
 ### Dica
 Se você mesmo é servo, sua escala também aparece aqui — útil para confirmar o dia de serviço.
 
+
+---
+
+## Perguntas e respostas — Dia 6
+
+| Pergunta | Resposta |
+|----------|----------|
+| Como envio um RD? | Card **Financeiro** → **Relatório de Despesas** → preencha itens → **Submeter e Finalizar**; pode abrir WhatsApp do tesoureiro. |
+| Qual o formato do número do RD? | Prefixo **AAMM** + sequência mensal (ex.: `250500001`) — configurado para o papel **tesoureiro**. |
+| Onde vejo minhas escalas? | Card **Escalas** → tipos de escala → datas e servos com WhatsApp. |
+| Card Servos em escala? | Visível quando seu perfil participa de escalas — lista de colegas na mesma data/tipo. |
+| RD ficou pendente? | Aguarde conciliação na **manutenção → Informações Financeiras** (tesoureiro/super_admin). |
+
+# Dia 7 — Estacionamento, Gestão de Cadastros e encerramento
+
 ---
 
 # Parte 10 — Card Servos em escala *(quando visível)*
@@ -1012,21 +1065,6 @@ Identificar o **proprietário de um veículo** pela placa (equipe de acolhimento
 
 ### Caminho
 Escalas → escala de estacionamento → **Identificar veículo** — ou card **Estacionamento** se ativo no seu perfil.
-
-
----
-
-## Perguntas e respostas — Dia 6
-
-| Pergunta | Resposta |
-|----------|----------|
-| Como envio um RD? | Card **Financeiro** → **Relatório de Despesas** → preencha itens → **Submeter e Finalizar**; pode abrir WhatsApp do tesoureiro. |
-| Qual o formato do número do RD? | Prefixo **AAMM** + sequência mensal (ex.: `250500001`) — configurado para o papel **tesoureiro**. |
-| Onde vejo minhas escalas? | Card **Escalas** → tipos de escala → datas e servos com WhatsApp. |
-| Card Servos em escala? | Visível quando seu perfil participa de escalas — lista de colegas na mesma data/tipo. |
-| RD ficou pendente? | Aguarde conciliação na **manutenção → Informações Financeiras** (tesoureiro/super_admin). |
-
-# Dia 7 — Estacionamento, Gestão de Cadastros e encerramento
 
 ### Ilustração — Estacionamento
 
@@ -1212,7 +1250,7 @@ Encerrar a sessão no aparelho (essencial em celular compartilhado).
 
 ---
 
-*App IBN · Igreja Batista Norte · Manual do Painel v2026-05-22*
+*App IBN · Igreja Batista Norte · Manual do Painel v2026-06-23*
 
 
 ---

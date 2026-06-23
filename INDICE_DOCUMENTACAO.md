@@ -4,7 +4,18 @@ Documentação completa do **app-igreja** (Igreja Batista Norte) para entrega ao
 
 Cada **pacote** é um arquivo **autocontido**: o texto integral dos documentos de referência está transcrito dentro do pacote (não é necessário abrir outros arquivos para ler o conteúdo).
 
-**Atualizado em:** 22/05/2026 · capturas com **dados reais** · ilustrações anotadas em **largura integral (100%)** nos PDFs (Pacotes 5, 6 e 7) · **LGPD opcional** (`LGPD_Ativo` sim/não) documentado em todo o fluxo de cadastro e manutenção
+**Atualizado em:** 23/06/2026 · capturas com **dados reais** · ilustrações anotadas em **largura integral (100%)** nos PDFs (Pacotes 5, 6 e 7) · **LGPD opcional** (`LGPD_Ativo` sim/não) · **check-in geofence** e **manual de entrega** documentados
+
+---
+
+## Manual de entrega (referência principal)
+
+| Documento | Markdown | PDF | Público |
+|-----------|----------|-----|---------|
+| **Manual de Entrega** | [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) | [`pdfs/MANUAL_ENTREGA.pdf`](pdfs/MANUAL_ENTREGA.pdf) | Cliente + equipe de manutenção |
+| **Descritivo técnico** | [`DESCRITIVO_APLICACAO.md`](DESCRITIVO_APLICACAO.md) | [`pdfs/DESCRITIVO_APLICACAO.pdf`](pdfs/DESCRITIVO_APLICACAO.pdf) | TI / arquitetura |
+
+Regenerar: `npm run build:manual-entrega-pdf` · `node scripts/build-descritivo-aplicacao-pdf.mjs`
 
 ---
 
@@ -55,6 +66,8 @@ Os pacotes são gerados a partir dos arquivos abaixo. Para atualizar os pacotes 
 ```bash
 npm run build:docs:md    # regera PACOTE_*.md a partir dos fontes
 npm run build:docs:pdf   # gera PDFs em pdfs/
+npm run build:manual-entrega-pdf  # MANUAL_ENTREGA.md → pdfs/MANUAL_ENTREGA.pdf
+node scripts/build-descritivo-aplicacao-pdf.mjs  # DESCRITIVO_APLICACAO.pdf
 npm run build:access-roles-pdf  # mapa ACL → pdfs/PAPEIS_CONTROLE_ACESSO.pdf
 npm run build:docs       # md + pdf padrão (sem PAPEIS)
 ```
@@ -74,6 +87,8 @@ npm run build:docs       # md + pdf padrão (sem PAPEIS)
 | `DASHBOARD_CARDS.md` | Pacote 4 |
 | `MANUAL_DASHBOARD_MEMBRO.md` | Pacote 5 |
 | `MANUAL_DASHBOARD_MANUTENCAO.md` | Pacote 6 |
+| `MANUAL_ENTREGA.md` | Manual de entrega (autocontido) |
+| `DESCRITIVO_APLICACAO.md` | Descritivo técnico completo |
 | `MANUAL_TREINAMENTO_DIARIO.md` | Pacote 7 (gerado por `build-pacotes-md.mjs`) |
 
 ---
@@ -102,4 +117,8 @@ Regenerar a planilha: `npm run build:validation-checklist-xlsx`
 
 ---
 
-*App IBN · Igreja Batista Norte · Documentação v2026-05-22*
+| `MANUAL_TREINAMENTO_DIARIO.md` | Pacote 7 (gerado por `build-pacotes-md.mjs`) |
+
+---
+
+*App IBN · Igreja Batista Norte · Documentação v2026-06-23*

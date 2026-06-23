@@ -1,6 +1,6 @@
 # Mapa visual de papéis — Controle de Acesso
 
-Gerado em: 13/06/2026, 12:29:23
+Gerado em: 23/06/2026, 14:49:36
 Fonte: scripts SQL do repositório
 
 Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
@@ -169,7 +169,7 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
 | Card Escalas | `dashboard.card.vigilance_scales` | **Sim** | — |
-| Manutenção | `/maintenance-dashboard` | **Sim** | — |
+| Manutenção do sistema | `/maintenance-dashboard` | **Sim** | — |
 | Manutenção: Programação de Escalas | `maintenance.card.scales` | **Sim** | **Sim** |
 | Manutenção: Servos em Disponibilidade | `maintenance.card.scale_volunteers` | **Sim** | **Sim** |
 
@@ -186,11 +186,39 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | --- | --- | :---: | :---: |
 | Card SALA(S) | `dashboard.card.kids_teens` | **Sim** | **Sim** |
 | Dashboard | `/dashboard` | **Sim** | **Sim** |
-| Manutenção | `/maintenance-dashboard` | **Sim** | **Sim** |
 | Manutenção — Cronograma de eventos | `maintenance.card.events_gantt` | **Sim** | **Sim** |
 | Manutenção — Lista de presença (quórum) | `maintenance.card.quorum_presence` | **Sim** | **Sim** |
 | Manutenção — Monitor de salas | `maintenance.card.sala_monitor` | **Sim** | **Sim** |
 | Manutenção — Programação de eventos | `maintenance.card.events` | **Sim** | **Sim** |
+| Manutenção do sistema | `/maintenance-dashboard` | **Sim** | **Sim** |
+
+---
+
+## Tesoureiro
+
+- **Código:** `tesoureiro`
+- **Descrição:** Tesouraria: card financeiro, manutenção financeira, eventos de meses anteriores e RD por mês de referência
+
+### Telas
+
+| Nome | Chave técnica | Ver | Editar |
+| --- | --- | :---: | :---: |
+| Card Financeiro (dashboard) | `dashboard.card.financial` | **Sim** | — |
+| Manutenção — Cronograma de eventos | `maintenance.card.events_gantt` | **Sim** | **Sim** |
+| Manutenção — Informações financeiras | `maintenance.card.financials` | **Sim** | **Sim** |
+| Manutenção — Programação de eventos | `maintenance.card.events` | **Sim** | **Sim** |
+| Manutenção do sistema | `/maintenance-dashboard` | **Sim** | — |
+| Relatório de Despesas (RD) | `/expense-report` | **Sim** | **Sim** |
+| Relatórios financeiros (/financial) | `/financial` | **Sim** | — |
+
+### Tabelas
+
+| Nome | Chave técnica | Ver | Editar |
+| --- | --- | :---: | :---: |
+| Eventos | `events` | **Sim** | **Sim** |
+| Inscrições em eventos | `event_registrations` | **Sim** | **Sim** |
+| Lançamentos financeiros | `financials` | **Sim** | **Sim** |
+| Relatórios de Despesas | `expense_reports` | **Sim** | **Sim** |
 
 ---
 
@@ -219,7 +247,7 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | Dashboard | `/dashboard` | **Sim** | — |
 | Gerenciar família | `/manage-members` | **Sim** | — |
 | LGPD | `/lgpd` | **Sim** | **Sim** |
-| Manutenção | `/maintenance-dashboard` | **Sim** | — |
+| Manutenção do sistema | `/maintenance-dashboard` | **Sim** | — |
 | Manutenção: Cuidado Pastoral | `maintenance.card.pastoral_care` | **Sim** | **Sim** |
 | Meus pedidos pastorais | `/pastoral-history` | **Sim** | — |
 | Relatório de Despesas (RD) | `/expense-report` | **Sim** | — |
@@ -275,5 +303,25 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
 | Todas as colunas (curinga) | `*` | **Sim** | **Sim** |
+
+---
+
+## Orquestrador de Evento
+
+- **Código:** `orquestrador_evento`
+- **Descrição:** Conduz o culto em tempo real: altera a rota ativa no orquestrador e guia os membros conectados
+
+### Telas
+
+| Nome | Chave técnica | Ver | Editar |
+| --- | --- | :---: | :---: |
+| Manutenção — Orquestração do Evento | `maintenance.card.event_orchestration` | **Sim** | **Sim** |
+| Orquestrador do evento (/admin/orquestrador) | `/admin/orquestrador` | **Sim** | **Sim** |
+
+### Tabelas
+
+| Nome | Chave técnica | Ver | Editar |
+| --- | --- | :---: | :---: |
+| Orquestração do evento (event_control) | `event_control` | **Sim** | **Sim** |
 
 ---

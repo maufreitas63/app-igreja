@@ -4,7 +4,7 @@ Respostas às dúvidas mais comuns sobre o aplicativo da **Igreja Batista Norte*
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`FUNCIONALIDADES.md`](FUNCIONALIDADES.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`BLUEPRINT.md`](BLUEPRINT.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 ---
 
@@ -196,10 +196,16 @@ Volte à **Agenda da Família** e marque a audiência dos participantes antes de
 Normal — evita check-in duplicado. Sua presença já está registrada.
 
 **Posso fazer check-in sem totem?**  
-Depende da configuração do evento (manual, automático). Em eventos com totem/quórum, o QR no totem é o passo de confirmação.
+Sim, quando o evento tem **check-in por proximidade (geofence)** ativo: marque audiência, permita GPS no navegador/app e aproxime-se do templo na janela configurada. O app confirma automaticamente após estabilizar a localização. Caso contrário, use QR no totem ou check-in manual conforme a configuração do evento.
+
+**O que é check-in por proximidade (geofence)?**  
+Com **geofence ativo** no evento e **coordenadas cadastradas** no local favorito vinculado ao `event_local`, o app monitora sua posição e registra presença quando você está dentro do raio (padrão 30 m, configurável). Exige pré-check-in (audiência) e permissão de localização.
+
+**Alterei data ou local do evento e o check-in sumiu.**  
+Esperado: mudanças relevantes (data, local, capacidade, flags totem/quórum/geofence, etc.) **invalidam check-ins** para que famílias validem novamente. A equipe vê toast na manutenção ao salvar.
 
 **Toquei no card QR e abriu uma lista de membros.**  
-É o **CheckinModal** — seleção manual auxiliar. A confirmação oficial no culto é pelo **totem** + pré-check-in na Agenda.
+É o **CheckinModal** — seleção manual auxiliar. A confirmação oficial no culto é pelo **totem**, **geofence** ou fluxo manual conforme o evento.
 
 **Não tenho código de família / QR vazio.**  
 Vincule ou confira seu código em **Dados Cadastrais** ou com a secretaria.

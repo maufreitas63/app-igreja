@@ -94,6 +94,15 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 - [ ] Em evento **já cadastrado**, botão **+7** abaixo de Publicado/Rascunho
 - [ ] Confirmar cria **1 rascunho** para **+7 dias**; o evento original não muda
 
+**Pedido:** check-in por proximidade (geofence) com invalidação ao editar evento.
+
+- [ ] Em **Programação de Eventos**, interruptor **Check-in por proximidade** grava `geofence_ativo`
+- [ ] Local favorito com **latitude/longitude** vinculado ao `event_local` do evento
+- [ ] No dia do evento, membro com audiência e GPS liberado recebe confirmação automática ao chegar ao templo
+- [ ] Ao editar data/local/flags relevantes, check-ins anteriores são removidos (toast *N check-in(s) removido(s)* ou aviso de script pendente)
+- [ ] Scripts Supabase aplicados: `events-geofence-ativo.sql`, `event-favorite-locations.sql`, `geo-checkin-automatic.sql`, `geo-checkin-purge-on-event-update.sql`
+- [ ] Parâmetros `check_in_geofence_raio_metros` e `check_in_geofence_tempo` em `app_parameters`
+
 ---
 
 ## Manutenção — controle de acesso
@@ -365,4 +374,4 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 
 ---
 
-*Atualizado em 12/06/2026*
+*Atualizado em 23/06/2026*

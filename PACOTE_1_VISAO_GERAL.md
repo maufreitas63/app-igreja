@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para diretoria, membros, famílias e voluntários.
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 Conteúdo integrado: Funcionalidades · Manual de Treinamento · FAQ
 
@@ -18,9 +18,9 @@ Lista completa das funcionalidades do **app-igreja** (Igreja Batista Norte), org
 
 Itens marcados com *(staff)* exigem permissão de manutenção ou papel administrativo.
 
-**Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`BLUEPRINT.md`](BLUEPRINT.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md)
+**Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`BLUEPRINT.md`](BLUEPRINT.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 ---
 
@@ -110,8 +110,11 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 - Listagem de eventos publicados com data, local e capacidade
 - **Inscrição na audiência** (pré-check-in) por membro da família
-- Suporte a fluxos: **check-in automático**, **totem**, **manual**, **quórum**
-- Gate de pré-check-in antes de liberar card QR
+- Suporte a fluxos: **check-in automático por proximidade (geofence GPS)**, **totem**, **manual**, **quórum**
+- **Check-in geofence** — quando `geofence_ativo` no evento e local favorito com coordenadas: o app detecta proximidade ao templo (raio e janela configuráveis em `app_parameters`) e confirma presença automaticamente após leituras GPS estáveis; fila offline para sincronização sem rede
+- **Locais favoritos** — cadastro de locais com nome, endereço, CEP e coordenadas; vinculados ao campo `event_local` do evento para resolver geofence
+- **Invalidação de check-ins** — alterações relevantes no evento ou no local favorito (nome, coordenadas, status ativo) disparam purge automático via trigger no Supabase; toast na manutenção informa famílias afetadas
+- Gate de pré-check-in antes de liberar card QR ou geofence
 - **QR Code** da família para leitura no totem
 - Card QR visível **somente no dia do evento** (regra configurável)
 - **Quórum** — um membro por sessão; trava após confirmação no totem
@@ -120,6 +123,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 - Proteção contra **duplo check-in** e reprocessamento (cooldown, fila local)
 - Status: pré-check-in, confirmado, já confirmado, processando
 - Badges **IBN KIDS** / **IBN TEENS** por evento
+- Parâmetros: `check_in_geofence_raio_metros`, `check_in_geofence_tempo` (horas antes do evento)
 
 ---
 
@@ -228,7 +232,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 | Módulo | Funcionalidades |
 |--------|-----------------|
-| **Programação de Eventos** | CRUD, publicação, totem, quórum, Kids/Teens, ofertas, capacidade |
+| **Programação de Eventos** | CRUD, publicação, totem, quórum, geofence, locais favoritos, Kids/Teens, ofertas, capacidade |
 | **Cronograma (Gantt)** | Visão dia/mês, toque para editar evento |
 | **Sala(s) - Check In** | Marcação interativa de entrada nas salas |
 | **Tipos de Escala** | CRUD com **vagas por domingo** e **modo do ciclo** (individual/equipe) |
@@ -754,7 +758,7 @@ Respostas às dúvidas mais comuns sobre o aplicativo da **Igreja Batista Norte*
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`FUNCIONALIDADES.md`](FUNCIONALIDADES.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`BLUEPRINT.md`](BLUEPRINT.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 ---
 
@@ -946,10 +950,16 @@ Volte à **Agenda da Família** e marque a audiência dos participantes antes de
 Normal — evita check-in duplicado. Sua presença já está registrada.
 
 **Posso fazer check-in sem totem?**  
-Depende da configuração do evento (manual, automático). Em eventos com totem/quórum, o QR no totem é o passo de confirmação.
+Sim, quando o evento tem **check-in por proximidade (geofence)** ativo: marque audiência, permita GPS no navegador/app e aproxime-se do templo na janela configurada. O app confirma automaticamente após estabilizar a localização. Caso contrário, use QR no totem ou check-in manual conforme a configuração do evento.
+
+**O que é check-in por proximidade (geofence)?**  
+Com **geofence ativo** no evento e **coordenadas cadastradas** no local favorito vinculado ao `event_local`, o app monitora sua posição e registra presença quando você está dentro do raio (padrão 30 m, configurável). Exige pré-check-in (audiência) e permissão de localização.
+
+**Alterei data ou local do evento e o check-in sumiu.**  
+Esperado: mudanças relevantes (data, local, capacidade, flags totem/quórum/geofence, etc.) **invalidam check-ins** para que famílias validem novamente. A equipe vê toast na manutenção ao salvar.
 
 **Toquei no card QR e abriu uma lista de membros.**  
-É o **CheckinModal** — seleção manual auxiliar. A confirmação oficial no culto é pelo **totem** + pré-check-in na Agenda.
+É o **CheckinModal** — seleção manual auxiliar. A confirmação oficial no culto é pelo **totem**, **geofence** ou fluxo manual conforme o evento.
 
 **Não tenho código de família / QR vazio.**  
 Vincule ou confira seu código em **Dados Cadastrais** ou com a secretaria.

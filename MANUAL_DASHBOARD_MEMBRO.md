@@ -10,7 +10,7 @@ Manual **autocontido** para quem usa o aplicativo pela primeira vez ou no dia a 
 
 **Pacote:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 ---
 
@@ -371,6 +371,43 @@ Painel → card **QR Code — Check-in Totem** / **Check In — QR Code** (visí
 | Card QR não aparece no Índice | Marque audiência; confirme que é o dia do evento |
 | *Pré-check-in não encontrado* (totem) | Volte à Agenda e marque os participantes |
 | Sem etiqueta de família | Complete vínculo familiar em **Gestão de Cadastros** |
+
+---
+
+# Parte 2b — Check-in por proximidade (geofence)
+
+### Objetivo
+Confirmar presença **automaticamente** ao chegar ao templo, sem passar pelo totem.
+
+### Pré-requisitos
+
+1. Evento com **check-in por proximidade** habilitado pela equipe.
+2. **Audiência** marcada na Agenda (Parte 1).
+3. Local do evento com **coordenadas** cadastradas nos locais favoritos da igreja.
+4. Permissão de **localização** concedida ao navegador/PWA.
+5. Estar dentro da **janela de tempo** (desde N horas antes do culto até o fim do dia do evento).
+
+### Passo a passo
+
+1. No dia do culto, abra o dashboard com o evento selecionado.
+2. Aceite a permissão de GPS quando solicitado.
+3. Aproxime-se do templo — o app exibe progresso de detecção (leituras GPS estáveis).
+4. Ao confirmar, aparece toast **Check-in confirmado** com os nomes dos participantes.
+
+### Resultado esperado
+
+- Banner de status indica *detectando*, *sincronizando* ou *confirmado*.
+- Não é necessário abrir o card QR se o geofence concluir com sucesso.
+- Sem internet no momento: o app enfileira e sincroniza quando a rede voltar.
+
+### Se der erro
+
+| Situação | O que fazer |
+|----------|-------------|
+| *Local sem coordenadas* | Equipe deve cadastrar lat/lng no local favorito |
+| GPS negado | Libere localização nas configurações do navegador |
+| Fora do raio | Aproxime-se do templo ou use QR no totem |
+| Sem audiência | Marque participantes na Agenda primeiro |
 
 ---
 
@@ -1107,4 +1144,4 @@ Encerrar a sessão no aparelho (essencial em celular compartilhado).
 
 ---
 
-*App IBN · Igreja Batista Norte · Manual do Painel v2026-05-22*
+*App IBN · Igreja Batista Norte · Manual do Painel v2026-06-23*

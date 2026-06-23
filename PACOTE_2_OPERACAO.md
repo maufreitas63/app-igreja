@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para secretaria, eventos, salas Kids/Teens e líderes de escala.
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 Conteúdo integrado: Manutenção como ecossistema · Missão B4 (escalas) · Card Agenda · FAQ Totem/Manutenção
 
@@ -18,7 +18,7 @@ Proposta de atuação do **administrador** no módulo de manutenção (`maintena
 
 **Pacotes:** [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md) (passo a passo) · [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) (ecossistema) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 ---
 
@@ -47,6 +47,7 @@ flowchart LR
     D[Dashboard cards]
     P[Coração Aberto]
     Q[Check-in / QR]
+    G[Geofence GPS]
     S[Sala Kids Teens]
   end
 
@@ -299,7 +300,7 @@ Use **modo equipe** para vigilância, recepção ou estacionamento (vários no m
 
 **Pacotes:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md) (membro) · [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) (operação) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 ## Objetivo
 
@@ -496,6 +497,12 @@ Fluxo recomendado de uso:
 
 ---
 
+**Meus pedidos** (`/pastoral-history`) — histórico com status.
+
+**Lista vazia em Meus pedidos.**  
+Você ainda não enviou pedidos ou a sessão não identificou seu perfil — faça login novamente.
+
+**Quem responde ao pedido?**  
 A equipe pastoral **fora do app** (telefone, encontro pessoal, etc.). O app registra e encaminha o pedido.
 
 ---
@@ -533,10 +540,4 @@ Saia e **entre de novo** para recarregar permissões do servidor.
 
 **O totem é para membros usarem no culto?**  
 Não. É um **aparelho fixo da igreja** operado na entrada para **escanear** o QR das famílias.
-
-**Senha do totem.**  
-**9999** (configuração padrão do modo totem).
-
-**Nenhum evento no totem.**  
-Pode não ser o dia do evento, evento não publicado, sem flag totem/quórum, ou colunas SQL não aplicadas — mensagens na tela orientam.
 

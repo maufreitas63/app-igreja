@@ -6,7 +6,7 @@ Documentação técnica de referência: [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.m
 
 **Pacote:** [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 ---
 

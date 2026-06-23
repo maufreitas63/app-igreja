@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para super administrador, TI e desenvolvedor.
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 Conteúdo integrado: Manual operacional ACL · Modelo de controle de acesso · Camadas de segurança · Blueprint completo
 
@@ -20,7 +20,7 @@ Documentação técnica de referência: [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.m
 
 **Pacote:** [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 ---
 
@@ -965,7 +965,7 @@ Ajuste conforme a política da igreja.
 
 Documento de referência do modelo de **defesa em profundidade** do **app-igreja** (Igreja Batista Norte).
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 **Documentação relacionada:** [`BLUEPRINT.md`](BLUEPRINT.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md) · [`MANUAL_CONTROLE_ACESSO.md`](MANUAL_CONTROLE_ACESSO.md) · [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md)
 
@@ -1303,7 +1303,7 @@ O modelo não depende de uma única barreira: um bypass no cliente ainda encontr
 
 ---
 
-*App IBN · Igreja Batista Norte · Especificação de segurança v2026-06-10*
+*App IBN · Igreja Batista Norte · Especificação de segurança v2026-06-23*
 
 
 ---
@@ -1318,7 +1318,7 @@ Documento de referência da solução implementada: telas, controles, fluxos de 
 
 **Índice da documentação:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · Pacote técnico: [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md) · Anexo: [`PACOTE_4_ANEXO_TECNICO.md`](PACOTE_4_ANEXO_TECNICO.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 ---
 
@@ -1586,7 +1586,8 @@ Recursos protegidos:
 - Quórum: só membro da sessão ativa
 - Quórum + totem confirmado: audiência travada
 - Quórum pendente: marque audiência para liberar QR
-- Check-in automático / QR só no dia do evento
+- Check-in automático (geofence) / QR só no dia do evento
+- Geofence: banner `GeoCheckinStatusBanner` — detectando, sincronizando, confirmado
 - Erro de gate pré-check-in (`preCheckinGateError`)
 
 **Quem inicia / termina o pré-check-in:**
@@ -1615,6 +1616,26 @@ Recursos protegidos:
 - **Membro** mostra QR na tela do **totem** (outro aparelho, `/totem-checkin`).
 - **Totem** escaneia → `lookup_totem_checkin` → `confirm_totem_checkin`.
 - **Sistema** atualiza `checkins.status` para `confirmado`.
+
+---
+
+#### Card 2b — Check-in geofence (automático por proximidade)
+
+**Serve para:** confirmar presença via GPS quando `events.geofence_ativo = true`.
+
+| Elemento | Função |
+|----------|--------|
+| **`useGeoCheckinMonitor`** | Watch GPS, 3 leituras dentro do raio, dispara RPC |
+| **`GeoCheckinStatusBanner`** | Feedback visual no dashboard |
+| **`confirm_geo_family_checkin_atomic`** | RPC atômica no Supabase |
+| **Coordenadas** | `event_local` → `event_favorite_locations` (normalize_location_key) |
+| **Janela** | `check_in_geofence_tempo` horas antes + fim do dia (America/Sao_Paulo) |
+| **Raio** | `check_in_geofence_raio_metros` (padrão 30 m) + buffer de precisão GPS |
+| **Offline** | `checkinOfflineQueue.ts` enfileira e drena ao reconectar |
+
+**Visibilidade:** geofence ativo + coordenadas resolvidas + janela temporal + audiência + sem check-in confirmado.
+
+**Invalidação:** trigger `events_purge_geofence_checkins_on_update` e `event_favorite_locations_purge_geofence_checkins` removem check-ins quando evento ou local favorito muda.
 
 ---
 

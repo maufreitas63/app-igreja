@@ -51,6 +51,7 @@ const TRAINING_DAYS = [
       ['O que é pré-check-in (audiência)?', 'Confirmação de interesse **antes** do dia do evento; libera o card **Check-in / QR Code** quando o evento exige esse fluxo.'],
       ['Onde fica o QR da minha família?', 'Card **Check-in / QR Code** — etiqueta com código da família e QR para leitura no totem (② na ilustração).'],
       ['Posso fazer check-in manual?', 'Sim — use a seleção manual de membros no card QR quando a igreja habilitar esse fluxo.'],
+      ['O que é check-in por proximidade?', 'Com **geofence ativo**, o app confirma presença automaticamente ao chegar ao templo (GPS + audiência prévia).'],
       ['Badges Kids/Teens no QR?', 'Indicam faixa etária do membro para salas **IBN Kids** / **IBN Teens** (prefixo **`Parm_entidade`** na interface).'],
       ['Não vejo eventos na agenda?', 'Pode não haver eventos publicados, ou seu perfil não tem permissão — fale com a secretaria.'],
     ],
@@ -153,7 +154,7 @@ function buildTrainingDailyManual() {
     '',
     '**Pacote:** [`PACOTE_7_TREINAMENTO_DIARIO.md`](PACOTE_7_TREINAMENTO_DIARIO.md) · **Índice geral:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)',
     '',
-    '**Atualizado em:** 22/05/2026',
+    '**Atualizado em:** 23/06/2026',
     '',
     '---',
     '',
@@ -194,7 +195,7 @@ writePackage('PACOTE_1_VISAO_GERAL.md', [
   '',
   'Documentação **autocontida** para diretoria, membros, famílias e voluntários.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 23/06/2026',
   '',
   'Conteúdo integrado: Funcionalidades · Manual de Treinamento · FAQ',
 ], [
@@ -208,7 +209,7 @@ writePackage('PACOTE_2_OPERACAO.md', [
   '',
   'Documentação **autocontida** para secretaria, eventos, salas Kids/Teens e líderes de escala.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 23/06/2026',
   '',
   'Conteúdo integrado: Manutenção como ecossistema · Missão B4 (escalas) · Card Agenda · FAQ Totem/Manutenção',
 ], [
@@ -223,7 +224,7 @@ writePackage('PACOTE_3_GOVERNANCA_TI.md', [
   '',
   'Documentação **autocontida** para super administrador, TI e desenvolvedor.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 23/06/2026',
   '',
   'Conteúdo integrado: Manual operacional ACL · Modelo de controle de acesso · Camadas de segurança · Blueprint completo',
 ], [
@@ -238,7 +239,7 @@ writePackage('PACOTE_4_ANEXO_TECNICO.md', [
   '',
   'Documentação **autocontida** de arquitetura e referências técnicas.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 23/06/2026',
   '',
   'Conteúdo integrado: Arquitetura Blueprint PWA · Cards do Dashboard',
 ], [
@@ -251,7 +252,7 @@ writePackage('PACOTE_5_MANUAL_PAINEL.md', [
   '',
   'Documentação **autocontida** para primeiro acesso e uso diário do painel do membro.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 23/06/2026',
   '',
   'Conteúdo integrado: login, cadastro, LGPD (reconhecimento **opcional** via `LGPD_Ativo`), navegação, todos os cards do dashboard (sem manutenção), com ilustrações anotadas em **largura integral (100%)** e resultado esperado em cada ação.',
 ], [
@@ -263,7 +264,7 @@ writePackage('PACOTE_6_MANUAL_MANUTENCAO.md', [
   '',
   'Documentação **autocontida** para quem gerencia o aplicativo: secretaria, líderes, pastoral, financeiro e TI.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 23/06/2026',
   '',
   'Conteúdo integrado: acesso via engrenagem, ACL (incl. interruptor **LGPD Ativo/Inativo**), papel **Tesoureiro**, todos os cards de maintenance-dashboard, com ilustrações em **largura integral (100%)**, resultado esperado e efeito no app dos membros.',
 ], [
@@ -275,7 +276,7 @@ writePackage('PACOTE_7_TREINAMENTO_DIARIO.md', [
   '',
   'Documentação **autocontida** para capacitação **dia a dia**, derivada do Pacote 5.',
   '',
-  '**Atualizado em:** 22/05/2026',
+  '**Atualizado em:** 23/06/2026',
   '',
   'Conteúdo integrado: **7 treinamentos diários** com índice temático, todas as imagens e referências do manual do membro (sem misturar informações entre dias) e **Perguntas e Respostas** ao final de cada dia.',
 ], [

@@ -10,7 +10,7 @@ Manual **autocontido** para quem **gerencia** o aplicativo: secretaria, líderes
 
 **Pacote:** [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · **Membros:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md)
 
-**Atualizado em:** 22/05/2026
+**Atualizado em:** 23/06/2026
 
 ---
 
@@ -169,7 +169,7 @@ Publicar cultos e eventos para que os **membros** vejam na Agenda, marquem audi�
 |:----:|------------------------------|
 | ① | **Nome do evento** e data/hora |
 | ② | **Capacidade (vagas)** obrigatória |
-| ③ | Chips **Kids** · **Teens** · **Totem** · **Quórum** |
+| ③ | Chips **Kids** · **Teens** · **Totem** · **Quórum** · **Geofence** |
 | ④ | Botão **Salvar** no rodapé do formulário |
 
 
@@ -180,7 +180,20 @@ Publicar cultos e eventos para que os **membros** vejam na Agenda, marquem audi�
 - Na lista: badge **Publicado** (verde) ou **Rascunho** (laranja).
 - **Publicado** → membros veem o evento no card **Agenda da Família** e podem marcar audiência.
 - **Rascunho** → oculto para membros até publicar.
-- Metadados na lista: data, local, vagas, selos **Kids** · **Teens** · **Totem** · **Quórum**.
+- Metadados na lista: data, local, vagas, selos **Kids** · **Teens** · **Totem** · **Quórum** · **Geofence**.
+
+### Passo a passo — check-in por proximidade (geofence)
+
+1. Cadastre **locais favoritos** com nome, endereço e **latitude/longitude** (picker de locais no editor de evento).
+2. Ao criar/editar evento, selecione o **local** correspondente ao favorito e ative **Check-in por proximidade (geofence)**.
+3. Publique o evento. No dia, membros com audiência marcada e GPS liberado recebem confirmação automática ao chegar ao templo.
+4. Parâmetros globais em `app_parameters`: `check_in_geofence_raio_metros` (padrão 30) e `check_in_geofence_tempo` (horas antes do início).
+
+### Resultado esperado — geofence
+
+- Membros veem banner de status de proximidade no dashboard (detectando / confirmado).
+- Ao salvar alteração relevante no evento com geofence ativo, toast pode informar *N check-in(s) removido(s)* — famílias precisam validar novamente.
+- Scripts Supabase: `events-geofence-ativo.sql`, `event-favorite-locations.sql`, `geo-checkin-automatic.sql`, `geo-checkin-purge-on-event-update.sql`.
 
 ### Passo a passo — replicar evento (+7 dias)
 
@@ -219,6 +232,7 @@ Publicar cultos e eventos para que os **membros** vejam na Agenda, marquem audi�
 | *Informe a capacidade (vagas)* | Vagas obrigatórias |
 | *Não é possível publicar: a data … é anterior a hoje* | Evento no passado com publicação ligada |
 | **Erro ao salvar** | Permissão RLS, vínculos com inscrições |
+| Toast *check-ins antigos no banco* | Execute `scripts/geo-checkin-purge-on-event-update.sql` no Supabase |
 
 ### Dica
 No dia do culto, confira **data, local, vagas e salas** antes dos membros abrirem o app — evita confusão no card SALA(S) do membro.
@@ -1010,4 +1024,4 @@ Card **Manutenção** → **Menu** → Índice → **Encerrar sessão**; ou use 
 
 ---
 
-*App IBN · Igreja Batista Norte · Manual de Manutenção v2026-06-10*
+*App IBN · Igreja Batista Norte · Manual de Manutenção v2026-06-23*
