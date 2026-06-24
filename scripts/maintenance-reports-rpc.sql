@@ -1,6 +1,5 @@
 -- RPCs do catálogo de relatórios de manutenção.
 -- Pré-requisitos: scripts/maintenance-reports-access.sql
---                 scripts/access-control-pastoral-congregado-membership.sql (datas efetivas)
 -- Execute no SQL Editor do Supabase.
 
 create or replace function public._maintenance_report_payload(
@@ -44,6 +43,111 @@ begin
   return date_trunc('month', current_date)::date;
 end;
 $$;
+
+-- Datas efetivas de membresia (herança familiar para congregados) — usado pelo relatório de membros.
+create or replace function public._maintenance_is_family_guardian_relationship(p_relationship text)
+returns boolean
+language sql
+immutable
+as $$
+  select lower(trim(translate(
+    coalesce(p_relationship, ''),
+    'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ',
+    'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN'
+  ))) in ('representante legal', 'pai', 'mae');
+$$;
+
+create or replace function public._maintenance_resolve_profile_guardian_profile_id(p_profile_id uuid)
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with target as (
+    select
+      p.id,
+      upper(nullif(trim(coalesce(p.family_id, '')), '')) as family_id
+    from public.profiles p
+    where p.id = p_profile_id
+  )
+  select gp.id
+  from target t
+  join public.members m
+    on upper(trim(coalesce(m.family_id, ''))) = t.family_id
+  join public.profiles gp
+    on public.directory_person_matches_member(m.full_name, m.phone, gp.full_name, gp.phone)
+  where t.family_id is not null
+    and public._maintenance_is_family_guardian_relationship(m.relationship)
+    and gp.id <> t.id
+  order by case lower(trim(translate(
+      coalesce(m.relationship, ''),
+      'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ',
+      'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN'
+    )))
+      when 'representante legal' then 0
+      when 'pai' then 1
+      when 'mae' then 2
+      else 99
+    end,
+    gp.full_name asc
+  limit 1;
+$$;
+
+create or replace function public.resolve_effective_membership_dates_for_profile(p_profile_id uuid)
+returns table (
+  membership_date date,
+  membership_out date,
+  membership_inherited boolean,
+  inherited_from_profile_id uuid,
+  inherited_from_name text
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_role text;
+  v_own_date date;
+  v_own_out date;
+  v_guardian_id uuid;
+begin
+  select
+    public.resolve_basic_role_code_for_profile(p.id),
+    p.membership_date,
+    p.membership_out
+  into v_role, v_own_date, v_own_out
+  from public.profiles p
+  where p.id = p_profile_id;
+
+  if coalesce(v_role, '') <> 'congregado' then
+    return query
+    select v_own_date, v_own_out, false, null::uuid, null::text;
+    return;
+  end if;
+
+  v_guardian_id := public._maintenance_resolve_profile_guardian_profile_id(p_profile_id);
+
+  if v_guardian_id is null then
+    return query
+    select v_own_date, v_own_out, false, null::uuid, null::text;
+    return;
+  end if;
+
+  return query
+  select
+    gp.membership_date,
+    gp.membership_out,
+    true,
+    gp.id,
+    coalesce(nullif(trim(gp.full_name), ''), '(responsável)')
+  from public.profiles gp
+  where gp.id = v_guardian_id;
+end;
+$$;
+
+grant execute on function public.resolve_effective_membership_dates_for_profile(uuid) to anon, authenticated;
 
 create or replace function public._report_members_active_inactive(p_params jsonb)
 returns jsonb
@@ -892,24 +996,32 @@ begin
     left join public.profile_vehicles pv
       on public.format_phone_like_profiles(pv.phone) = public.format_phone_like_profiles(p.phone)
     group by f.family_id, f.inscritos
+  ),
+  estimated as (
+    select
+      family_id,
+      inscritos,
+      veiculos_cadastrados,
+      greatest(veiculos_cadastrados, case when inscritos > 0 then 1 else 0 end) as estimativa_veiculos
+    from vehicles
   )
   select
     coalesce(jsonb_agg(
       jsonb_build_object(
-        'familia', v.family_id,
-        'inscritos', v.inscritos,
-        'veiculos_cadastrados', v.veiculos_cadastrados,
-        'estimativa_veiculos', greatest(v.veiculos_cadastrados, case when v.inscritos > 0 then 1 else 0 end)
+        'familia', e.family_id,
+        'inscritos', e.inscritos,
+        'veiculos_cadastrados', e.veiculos_cadastrados,
+        'estimativa_veiculos', e.estimativa_veiculos
       )
-      order by v.estimativa_veiculos desc, v.family_id
+      order by e.estimativa_veiculos desc, e.family_id
     ), '[]'::jsonb),
     jsonb_build_object(
       'event_id', v_event_id,
       'familias_inscritas', (select count(*) from families),
-      'estimativa_total_veiculos', (select coalesce(sum(greatest(veiculos_cadastrados, case when inscritos > 0 then 1 else 0 end)), 0) from vehicles)
+      'estimativa_total_veiculos', (select coalesce(sum(estimativa_veiculos), 0) from estimated)
     )
   into v_rows, v_summary
-  from vehicles v;
+  from estimated e;
 
   return public._maintenance_report_payload(
     'parking_estimate',
@@ -944,30 +1056,14 @@ begin
   case v_code
     when 'members_active_inactive' then
       return public._report_members_active_inactive(coalesce(p_params, '{}'::jsonb));
-    when 'financial_flow' then
-      return public._report_financial_flow(coalesce(p_params, '{}'::jsonb));
-    when 'territory_indicators' then
-      return public._report_territory_indicators(coalesce(p_params, '{}'::jsonb));
-    when 'attendance_retention' then
-      return public._report_attendance_retention(coalesce(p_params, '{}'::jsonb));
     when 'pastoral_needs' then
       return public._report_pastoral_needs(coalesce(p_params, '{}'::jsonb));
-    when 'volunteer_engagement' then
-      return public._report_volunteer_engagement(coalesce(p_params, '{}'::jsonb));
-    when 'digital_adoption' then
-      return public._report_digital_adoption(coalesce(p_params, '{}'::jsonb));
     when 'demographic_age_brackets' then
       return public._report_demographic_age_brackets(coalesce(p_params, '{}'::jsonb));
-    when 'demographic_family_size' then
-      return public._report_demographic_family_size(coalesce(p_params, '{}'::jsonb));
     when 'health_alerts' then
       return public._report_health_alerts(coalesce(p_params, '{}'::jsonb));
-    when 'checkin_adoption' then
-      return public._report_checkin_adoption(coalesce(p_params, '{}'::jsonb));
     when 'quorum_official' then
       return public._report_quorum_official(coalesce(p_params, '{}'::jsonb));
-    when 'treasury_sla' then
-      return public._report_treasury_sla(coalesce(p_params, '{}'::jsonb));
     when 'parking_estimate' then
       return public._report_parking_estimate(coalesce(p_params, '{}'::jsonb));
     else
