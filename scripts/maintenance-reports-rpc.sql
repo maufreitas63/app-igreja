@@ -509,7 +509,7 @@ begin
 end;
 $$;
 
-create or replace function public._report_demographic_family(p_params jsonb)
+create or replace function public._report_demographic_age_brackets(p_params jsonb)
 returns jsonb
 language plpgsql
 security definer
@@ -521,7 +521,6 @@ declare
 begin
   with ages as (
     select
-      coalesce(nullif(trim(p.family_id), ''), '(sem família)') as familia,
       case
         when p.birth_date is null then 'Sem data'
         when age(current_date, p.birth_date) < interval '13 years' then '0-12 anos'
@@ -530,7 +529,50 @@ begin
         when age(current_date, p.birth_date) < interval '45 years' then '30-44 anos'
         when age(current_date, p.birth_date) < interval '60 years' then '45-59 anos'
         else '60+ anos'
-      end as faixa_etaria
+      end as faixa
+    from public.profiles p
+    where coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), '')) is not null
+  )
+  select
+    coalesce(jsonb_agg(
+      jsonb_build_object(
+        'faixa', a.faixa,
+        'quantidade', a.quantidade
+      )
+      order by a.quantidade desc, a.faixa asc
+    ), '[]'::jsonb),
+    jsonb_build_object(
+      'perfis_analisados', (select count(*) from ages)
+    )
+  into v_rows, v_summary
+  from (
+    select faixa, count(*)::int as quantidade
+    from ages
+    group by faixa
+  ) a;
+
+  return public._maintenance_report_payload(
+    'demographic_age_brackets',
+    array['faixa', 'quantidade'],
+    v_rows,
+    v_summary
+  );
+end;
+$$;
+
+create or replace function public._report_demographic_family_size(p_params jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_rows jsonb;
+  v_summary jsonb;
+begin
+  with profiles_base as (
+    select
+      coalesce(nullif(trim(p.family_id), ''), '(sem família)') as familia
     from public.profiles p
     where coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), '')) is not null
   ),
@@ -538,52 +580,33 @@ begin
     select
       familia,
       count(*)::int as integrantes
-    from ages
+    from profiles_base
     group by familia
   )
   select
-    coalesce((
-      select jsonb_agg(
-        jsonb_build_object(
-          'tipo', 'faixa_etaria',
-          'faixa', a.faixa_etaria,
-          'quantidade', a.quantidade
-        )
-        order by a.quantidade desc
+    coalesce(jsonb_agg(
+      jsonb_build_object(
+        'familia', f.familia,
+        'integrantes', f.integrantes,
+        'classificacao', case
+          when f.integrantes = 1 then 'Individual'
+          when f.integrantes between 2 and 3 then 'Família pequena'
+          else 'Família grande'
+        end
       )
-      from (
-        select faixa_etaria, count(*)::int as quantidade
-        from ages
-        group by faixa_etaria
-      ) a
-    ), '[]'::jsonb)
-    ||
-    coalesce((
-      select jsonb_agg(
-        jsonb_build_object(
-          'tipo', 'tamanho_familia',
-          'familia', f.familia,
-          'integrantes', f.integrantes,
-          'classificacao', case
-            when f.integrantes = 1 then 'Individual'
-            when f.integrantes between 2 and 3 then 'Família pequena'
-            else 'Família grande'
-          end
-        )
-        order by f.integrantes desc
-      )
-      from family_sizes f
+      order by f.integrantes desc, f.familia asc
     ), '[]'::jsonb),
     jsonb_build_object(
-      'perfis_analisados', (select count(*) from ages),
+      'perfis_analisados', (select count(*) from profiles_base),
       'familias_distintas', (select count(*) from family_sizes),
       'media_integrantes', round((select avg(integrantes)::numeric from family_sizes), 2)
     )
-  into v_rows, v_summary;
+  into v_rows, v_summary
+  from family_sizes f;
 
   return public._maintenance_report_payload(
-    'demographic_family',
-    array['tipo', 'faixa', 'quantidade', 'familia', 'integrantes', 'classificacao'],
+    'demographic_family_size',
+    array['familia', 'integrantes', 'classificacao'],
     v_rows,
     v_summary
   );
@@ -919,8 +942,10 @@ begin
       return public._report_volunteer_engagement(coalesce(p_params, '{}'::jsonb));
     when 'digital_adoption' then
       return public._report_digital_adoption(coalesce(p_params, '{}'::jsonb));
-    when 'demographic_family' then
-      return public._report_demographic_family(coalesce(p_params, '{}'::jsonb));
+    when 'demographic_age_brackets' then
+      return public._report_demographic_age_brackets(coalesce(p_params, '{}'::jsonb));
+    when 'demographic_family_size' then
+      return public._report_demographic_family_size(coalesce(p_params, '{}'::jsonb));
     when 'health_alerts' then
       return public._report_health_alerts(coalesce(p_params, '{}'::jsonb));
     when 'checkin_adoption' then

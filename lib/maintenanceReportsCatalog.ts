@@ -158,10 +158,18 @@ export const MAINTENANCE_REPORT_DEFINITIONS: MaintenanceReportDefinition[] = [
     ],
   },
   {
-    code: 'demographic_family',
-    title: 'Demográfico e Estrutura Familiar',
+    code: 'demographic_age_brackets',
+    title: 'Faixa Etária',
     description:
-      'Distribui faixas etárias e tamanho médio das famílias para planejar salas infantis, jovens e pequenos grupos.',
+      'Distribui perfis por faixa etária (0-12, 13-17, 18-29, 30-44, 45-59, 60+) para planejar salas infantis, jovens e ministérios por idade.',
+    dataSources: 'profiles',
+    configFields: [],
+  },
+  {
+    code: 'demographic_family_size',
+    title: 'Tamanho da Família',
+    description:
+      'Lista famílias com quantidade de integrantes e classificação (individual, pequena ou grande) para estruturar pequenos grupos e acompanhamento familiar.',
     dataSources: 'profiles, members',
     configFields: [],
   },
