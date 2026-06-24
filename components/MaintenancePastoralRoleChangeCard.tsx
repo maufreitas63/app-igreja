@@ -12,6 +12,10 @@ import {
   formatMembershipDateInput,
   parseMembershipDateInputToIso,
 } from '@/lib/membershipDateInput';
+import {
+  profileHasEditableMembershipDates,
+  profileHasMembershipDateLink,
+} from '@/lib/pastoralRoleChangeApi';
 import React, { useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
@@ -40,6 +44,8 @@ type MembershipDateEditorState = {
   profileName: string;
   dateInput: string;
   outDateInput: string;
+  readOnly: boolean;
+  inheritedFromName: string | null;
   error: string | null;
   outError: string | null;
 };
@@ -68,23 +74,25 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
   const isSavingMembershipDate =
     membershipDateEditor !== null && savingProfileId === membershipDateEditor.profileId;
 
-  const memberCountBreakdown = useMemo(() => {
-    if (roleFilter !== 'member') {
+  const membershipCountBreakdown = useMemo(() => {
+    if (roleFilter !== 'member' && roleFilter !== 'congregado') {
       return null;
     }
 
-    let activeMembers = 0;
-    let dischargedMembers = 0;
+    let activeCount = 0;
+    let dischargedCount = 0;
 
     for (const profile of profiles) {
       if (isProfileVisibleInApp(profile.membershipOut)) {
-        activeMembers += 1;
+        activeCount += 1;
       } else {
-        dischargedMembers += 1;
+        dischargedCount += 1;
       }
     }
 
-    return { activeMembers, dischargedMembers };
+    const roleLabel = roleFilter === 'member' ? 'Membros' : 'Congregados';
+
+    return { roleLabel, activeCount, dischargedCount };
   }, [profiles, roleFilter]);
 
   const closeMembershipDateEditor = () => {
@@ -107,15 +115,21 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
   };
 
   const handleOpenMembershipDateEditor = (profile: (typeof profiles)[number]) => {
-    if (profile.currentRoleCode !== 'member') {
+    if (!profileHasMembershipDateLink(profile)) {
       return;
     }
+
+    const editable = profileHasEditableMembershipDates(profile);
+    const dateSource = editable ? profile.ownMembershipDate : profile.membershipDate;
+    const outDateSource = editable ? profile.ownMembershipOut : profile.membershipOut;
 
     setMembershipDateEditor({
       profileId: profile.id,
       profileName: formatShortName(profile.fullName),
-      dateInput: formatMembershipDateFromIso(profile.membershipDate),
-      outDateInput: formatMembershipDateFromIso(profile.membershipOut),
+      dateInput: formatMembershipDateFromIso(dateSource),
+      outDateInput: formatMembershipDateFromIso(outDateSource),
+      readOnly: !editable,
+      inheritedFromName: profile.membershipInherited ? profile.inheritedFromName : null,
       error: null,
       outError: null,
     });
@@ -146,7 +160,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
   };
 
   const handleSaveMembershipDate = async () => {
-    if (!membershipDateEditor) {
+    if (!membershipDateEditor || membershipDateEditor.readOnly) {
       return;
     }
 
@@ -201,9 +215,10 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
       <Text style={styles.helpText}>
         Lista de perfis elegíveis (exceto super admin e equipe pastoral). Use a busca para filtrar
         por nome, telefone ou código. Toque nos cabeçalhos Visitante, Congregado ou Membro para
-        filtrar pelo papel atual. Membros exibem o nome em azul sublinhado — toque para ver ou
-        editar as datas de membresia (entrada e desligamento). Nome em vermelho indica que a
-        pessoa não faz mais parte do corpo de membros (data de desligamento preenchida).
+        filtrar pelo papel atual. Membros e congregados exibem o nome em azul sublinhado — toque para
+        ver ou editar as datas de membresia (entrada e desligamento). Congregados em família herdam as
+        datas do responsável legal, pai ou mãe. Nome em vermelho indica desligamento (data de saída
+        preenchida).
       </Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -227,8 +242,8 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
           {hasActiveFilters
             ? `${profiles.length} de ${allProfiles.length} perfis`
             : `${allProfiles.length} perfis`}
-          {memberCountBreakdown
-            ? ` — sendo ${memberCountBreakdown.activeMembers} Membros Ativos e ${memberCountBreakdown.dischargedMembers} Desligados`
+          {membershipCountBreakdown
+            ? ` — sendo ${membershipCountBreakdown.activeCount} ${membershipCountBreakdown.roleLabel} Ativos e ${membershipCountBreakdown.dischargedCount} Desligados`
             : ''}
         </Text>
       ) : null}
@@ -293,14 +308,14 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
             ) : (
               profiles.map((profile) => {
                 const isSaving = savingProfileId === profile.id;
-                const isMember = profile.currentRoleCode === 'member';
+                const hasMembershipLink = profileHasMembershipDateLink(profile);
                 const shortName = formatShortName(profile.fullName);
                 const hasMembershipOut = !isProfileVisibleInApp(profile.membershipOut);
 
                 return (
                   <View key={profile.id} style={styles.tableRow}>
                     <View style={styles.nameColumn}>
-                      {isMember ? (
+                      {hasMembershipLink ? (
                         <Pressable
                           onPress={() => handleOpenMembershipDateEditor(profile)}
                           accessibilityRole="button"
@@ -371,7 +386,10 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
             <View style={styles.membershipDateBubble}>
               <Text style={styles.membershipDateTitle}>Data de Membresia</Text>
               <Text style={styles.membershipDateHelp}>
-                {membershipDateEditor.profileName} — informe ou edite as datas no formato dd/mm/aa.
+                {membershipDateEditor.profileName}
+                {membershipDateEditor.readOnly && membershipDateEditor.inheritedFromName
+                  ? ` — datas herdadas de ${membershipDateEditor.inheritedFromName}.`
+                  : ' — informe ou edite as datas no formato dd/mm/aa.'}
               </Text>
               <Text style={styles.membershipDateFieldLabel}>Data de entrada</Text>
               <TextInput
@@ -383,7 +401,8 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                 keyboardType="numeric"
                 maxLength={8}
                 returnKeyType="next"
-                autoFocus
+                autoFocus={!membershipDateEditor.readOnly}
+                editable={!membershipDateEditor.readOnly}
               />
               {membershipDateEditor.error ? (
                 <Text style={styles.membershipDateError}>{membershipDateEditor.error}</Text>
@@ -398,6 +417,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                 keyboardType="numeric"
                 maxLength={8}
                 returnKeyType="done"
+                editable={!membershipDateEditor.readOnly}
               />
               {membershipDateEditor.outError ? (
                 <Text style={styles.membershipDateError}>{membershipDateEditor.outError}</Text>
@@ -409,20 +429,24 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                   activeOpacity={0.85}
                   disabled={isSavingMembershipDate}
                 >
-                  <Text style={styles.membershipDateCancelText}>Cancelar</Text>
+                  <Text style={styles.membershipDateCancelText}>
+                    {membershipDateEditor.readOnly ? 'Fechar' : 'Cancelar'}
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.membershipDateButton, styles.membershipDateSaveButton]}
-                  onPress={() => void handleSaveMembershipDate()}
-                  activeOpacity={0.85}
-                  disabled={isSavingMembershipDate}
-                >
-                  {isSavingMembershipDate ? (
-                    <ActivityIndicator color="#0F172A" size="small" />
-                  ) : (
-                    <Text style={styles.membershipDateSaveText}>Salvar</Text>
-                  )}
-                </TouchableOpacity>
+                {!membershipDateEditor.readOnly ? (
+                  <TouchableOpacity
+                    style={[styles.membershipDateButton, styles.membershipDateSaveButton]}
+                    onPress={() => void handleSaveMembershipDate()}
+                    activeOpacity={0.85}
+                    disabled={isSavingMembershipDate}
+                  >
+                    {isSavingMembershipDate ? (
+                      <ActivityIndicator color="#0F172A" size="small" />
+                    ) : (
+                      <Text style={styles.membershipDateSaveText}>Salvar</Text>
+                    )}
+                  </TouchableOpacity>
+                ) : null}
               </View>
             </View>
           ) : null}

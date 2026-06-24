@@ -112,6 +112,8 @@ export function useMaintenancePastoralRoleChange(isActive: boolean) {
           profile.id === profileId
             ? {
                 ...profile,
+                ownMembershipDate: membershipDateIso,
+                ownMembershipOut: membershipOutIso,
                 membershipDate: membershipDateIso,
                 membershipOut: membershipOutIso,
               }
@@ -135,12 +137,15 @@ export function useMaintenancePastoralRoleChange(isActive: boolean) {
               profile.id === profileId
                 ? {
                     ...profile,
+                    ownMembershipDate: result.membershipDate ?? null,
+                    ownMembershipOut: result.membershipOut ?? null,
                     membershipDate: result.membershipDate ?? null,
                     membershipOut: result.membershipOut ?? null,
                   }
                 : profile
             )
           );
+          await loadProfiles();
         }
 
         return result;
@@ -156,7 +161,7 @@ export function useMaintenancePastoralRoleChange(isActive: boolean) {
         setSavingProfileId(null);
       }
     },
-    [allProfiles]
+    [allProfiles, loadProfiles]
   );
 
   return {

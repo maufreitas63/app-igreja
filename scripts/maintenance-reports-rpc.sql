@@ -1,5 +1,6 @@
 -- RPCs do catálogo de relatórios de manutenção.
 -- Pré-requisitos: scripts/maintenance-reports-access.sql
+--                 scripts/access-control-pastoral-congregado-membership.sql (datas efetivas)
 -- Execute no SQL Editor do Supabase.
 
 create or replace function public._maintenance_report_payload(
@@ -65,6 +66,7 @@ begin
       coalesce(nullif(trim(p.full_name), ''), '(sem nome)') as full_name,
       public.resolve_basic_role_code_for_profile(p.id) as role_code,
       greatest(0, (current_date - p.created_at::date)) as congregation_days,
+      eff.membership_out as effective_membership_out,
       (
         exists (
           select 1
@@ -78,8 +80,28 @@ begin
            where c.profile_id = p.id
              and coalesce(c.timestamp_confirmacao, c.created_at) >= v_cutoff
         )
-      ) as is_active
+      ) as has_recent_activity,
+      case
+        when public.resolve_basic_role_code_for_profile(p.id) in ('member', 'congregado') then
+          coalesce(eff.membership_out::text, '') = ''
+        else
+          (
+            exists (
+              select 1
+                from public.profile_app_access_events e
+               where e.profile_id = p.id
+                 and e.accessed_at >= v_cutoff
+            )
+            or exists (
+              select 1
+                from public.checkins c
+               where c.profile_id = p.id
+                 and coalesce(c.timestamp_confirmacao, c.created_at) >= v_cutoff
+            )
+          )
+      end as is_active
     from public.profiles p
+    cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
     where coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), '')) is not null
   )
   select
@@ -95,7 +117,7 @@ begin
     jsonb_build_object(
       'visitantes', count(*) filter (where role_code = 'visitante'),
       'congregados', count(*) filter (where role_code = 'congregado'),
-      'membros', count(*) filter (where role_code = 'member'),
+      'membros', count(*) filter (where role_code = 'member' and coalesce(effective_membership_out::text, '') = ''),
       'ativos', count(*) filter (where is_active),
       'inativos', count(*) filter (where not is_active),
       'janela_meses', v_months

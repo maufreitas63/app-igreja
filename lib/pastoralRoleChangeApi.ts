@@ -20,6 +20,11 @@ export type PastoralRoleChangeProfile = {
   memberCode: string | null;
   membershipDate: string | null;
   membershipOut: string | null;
+  ownMembershipDate: string | null;
+  ownMembershipOut: string | null;
+  familyId: string | null;
+  membershipInherited: boolean;
+  inheritedFromName: string | null;
   currentRoleCode: PastoralBasicRoleCode;
 };
 
@@ -67,10 +72,37 @@ const parseProfileRows = (data: unknown): PastoralRoleChangeProfile[] => {
           : record.membershipOut
             ? String(record.membershipOut).trim() || null
             : null,
+        ownMembershipDate: record.own_membership_date
+          ? String(record.own_membership_date).trim() || null
+          : record.ownMembershipDate
+            ? String(record.ownMembershipDate).trim() || null
+            : null,
+        ownMembershipOut: record.own_membership_out
+          ? String(record.own_membership_out).trim() || null
+          : record.ownMembershipOut
+            ? String(record.ownMembershipOut).trim() || null
+            : null,
+        familyId: record.family_id
+          ? String(record.family_id).trim() || null
+          : record.familyId
+            ? String(record.familyId).trim() || null
+            : null,
+        membershipInherited:
+          record.membership_inherited === true || record.membershipInherited === true,
+        inheritedFromName: record.inherited_from_name
+          ? String(record.inherited_from_name).trim() || null
+          : record.inheritedFromName
+            ? String(record.inheritedFromName).trim() || null
+            : null,
         currentRoleCode: parseBasicRoleCode(record.current_role_code ?? record.currentRoleCode),
       } satisfies PastoralRoleChangeProfile;
     })
-    .filter((row): row is PastoralRoleChangeProfile => row !== null);
+    .filter((row): row is PastoralRoleChangeProfile => row !== null)
+    .map((profile) => ({
+      ...profile,
+      ownMembershipDate: profile.ownMembershipDate ?? profile.membershipDate,
+      ownMembershipOut: profile.ownMembershipOut ?? profile.membershipOut,
+    }));
 };
 
 export async function sessionCanAccessPastoralRoleChangePanel() {
@@ -146,6 +178,13 @@ export const profileMatchesPastoralRoleChangeRoleFilter = (
   profile: PastoralRoleChangeProfile,
   roleFilter: PastoralBasicRoleCode | null
 ) => roleFilter === null || profile.currentRoleCode === roleFilter;
+
+export const profileHasEditableMembershipDates = (profile: PastoralRoleChangeProfile) =>
+  profile.currentRoleCode === 'member'
+  || (profile.currentRoleCode === 'congregado' && !profile.membershipInherited);
+
+export const profileHasMembershipDateLink = (profile: PastoralRoleChangeProfile) =>
+  profile.currentRoleCode === 'member' || profile.currentRoleCode === 'congregado';
 
 export async function setPastoralBasicRoleForProfile(
   targetProfileId: string,
