@@ -1,4 +1,4 @@
-export type MaintenanceReportConfigFieldType = 'number' | 'month' | 'select' | 'text';
+export type MaintenanceReportConfigFieldType = 'number' | 'month' | 'select' | 'event';
 
 export type MaintenanceReportConfigField = {
   key: string;
@@ -9,6 +9,8 @@ export type MaintenanceReportConfigField = {
   options?: { value: string; label: string }[];
   min?: number;
   max?: number;
+  /** Permite valor vazio (ex.: evento opcional no relatório de saúde). */
+  optional?: boolean;
 };
 
 export type MaintenanceReportDefinition = {
@@ -172,10 +174,10 @@ export const MAINTENANCE_REPORT_DEFINITIONS: MaintenanceReportDefinition[] = [
     configFields: [
       {
         key: 'event_id',
-        label: 'ID do evento (opcional — vazio = próximo culto com inscrições)',
-        type: 'text',
+        label: 'Evento',
+        type: 'event',
         defaultValue: '',
-        placeholder: 'uuid do evento',
+        optional: true,
       },
     ],
     restricted: true,
@@ -229,10 +231,10 @@ export const MAINTENANCE_REPORT_DEFINITIONS: MaintenanceReportDefinition[] = [
     configFields: [
       {
         key: 'event_id',
-        label: 'ID do evento',
-        type: 'text',
+        label: 'Evento',
+        type: 'event',
         defaultValue: '',
-        placeholder: 'uuid do evento',
+        optional: false,
       },
     ],
   },

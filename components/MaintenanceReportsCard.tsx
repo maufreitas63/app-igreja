@@ -1,14 +1,26 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
+import type { MaintenanceEvent } from '@/hooks/useMaintenanceEvents';
 import { useMaintenanceReports } from '@/hooks/useMaintenanceReports';
 import { MAINTENANCE_REPORTS_SQL_HINT } from '@/lib/maintenanceReportsApi';
+import {
+  formatMaintenanceEventOptionLabel,
+  formatReportCellValue,
+  formatReportColumnLabel,
+  formatReportDateTime,
+  formatReportSummaryLabel,
+  formatReportSummaryValue,
+  getReportColumnAlign,
+  getReportColumnWidth,
+  resolveVisibleReportColumns,
+} from '@/lib/maintenanceReportFormatting';
 import {
   type MaintenanceReportConfigField,
   type MaintenanceReportDefinition,
 } from '@/lib/maintenanceReportsCatalog';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { FontAwesome } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -22,46 +34,128 @@ import {
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  events?: MaintenanceEvent[];
+  loadingEvents?: boolean;
 };
 
 const ACCENT = '#C084FC';
-
-const formatSummaryValue = (value: unknown) => {
-  if (value === null || value === undefined) {
-    return '—';
-  }
-
-  if (typeof value === 'number') {
-    return Number.isInteger(value) ? String(value) : value.toFixed(2);
-  }
-
-  if (typeof value === 'boolean') {
-    return value ? 'Sim' : 'Não';
-  }
-
-  return String(value);
-};
-
-const formatCellValue = (value: unknown) => {
-  if (value === null || value === undefined || value === '') {
-    return '—';
-  }
-
-  if (typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-
-  return String(value);
-};
 
 type ConfigFieldProps = {
   field: MaintenanceReportConfigField;
   value: string;
   disabled: boolean;
+  events: MaintenanceEvent[];
+  loadingEvents: boolean;
   onChange: (value: string) => void;
 };
 
-function ConfigField({ field, value, disabled, onChange }: ConfigFieldProps) {
+function EventDropdown({
+  field,
+  value,
+  disabled,
+  events,
+  loadingEvents,
+  onChange,
+}: ConfigFieldProps) {
+  const [open, setOpen] = useState(false);
+
+  const sortedEvents = useMemo(
+    () =>
+      [...events].sort((left, right) => {
+        const leftTime = left.event_date ? new Date(left.event_date).getTime() : 0;
+        const rightTime = right.event_date ? new Date(right.event_date).getTime() : 0;
+        return rightTime - leftTime;
+      }),
+    [events]
+  );
+
+  const selectedEvent = sortedEvents.find((event) => event.id === value) ?? null;
+  const selectedLabel = selectedEvent
+    ? formatMaintenanceEventOptionLabel(selectedEvent.name, selectedEvent.event_date)
+    : field.optional
+      ? 'Automático (próximo culto com inscrições)'
+      : 'Selecione um evento';
+
+  return (
+    <View style={styles.configField}>
+      <Text style={styles.configLabel}>{field.label}</Text>
+      <TouchableOpacity
+        style={[styles.dropdownTrigger, disabled && styles.dropdownTriggerDisabled]}
+        onPress={() => setOpen((current) => !current)}
+        disabled={disabled || loadingEvents}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+      >
+        <Text style={styles.dropdownTriggerText} numberOfLines={2}>
+          {loadingEvents ? 'Carregando eventos…' : selectedLabel}
+        </Text>
+        <FontAwesome name={open ? 'chevron-up' : 'chevron-down'} size={12} color="#94A3B8" />
+      </TouchableOpacity>
+
+      {open ? (
+        <View style={styles.dropdownList}>
+          <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" style={styles.dropdownScroll}>
+            {field.optional ? (
+              <TouchableOpacity
+                style={[styles.dropdownOption, !value && styles.dropdownOptionSelected]}
+                onPress={() => {
+                  onChange('');
+                  setOpen(false);
+                }}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[styles.dropdownOptionText, !value && styles.dropdownOptionTextSelected]}
+                >
+                  Automático (próximo culto com inscrições)
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+
+            {sortedEvents.length === 0 ? (
+              <Text style={styles.dropdownEmptyText}>Nenhum evento cadastrado.</Text>
+            ) : (
+              sortedEvents.map((event) => {
+                const selected = value === event.id;
+
+                return (
+                  <TouchableOpacity
+                    key={event.id}
+                    style={[styles.dropdownOption, selected && styles.dropdownOptionSelected]}
+                    onPress={() => {
+                      onChange(event.id);
+                      setOpen(false);
+                    }}
+                    activeOpacity={0.85}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownOptionText,
+                        selected && styles.dropdownOptionTextSelected,
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {formatMaintenanceEventOptionLabel(event.name, event.event_date)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })
+            )}
+          </ScrollView>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function ConfigField(props: ConfigFieldProps) {
+  const { field, value, disabled, onChange } = props;
+
+  if (field.type === 'event') {
+    return <EventDropdown {...props} />;
+  }
+
   if (field.type === 'select' && field.options?.length) {
     return (
       <View style={styles.configField}>
@@ -107,6 +201,86 @@ function ConfigField({ field, value, disabled, onChange }: ConfigFieldProps) {
   );
 }
 
+type ReportResultsTableProps = {
+  result: NonNullable<ReturnType<typeof useMaintenanceReports>['resultsByCode'][string]>;
+};
+
+function ReportResultsTable({ result }: ReportResultsTableProps) {
+  const visibleColumns = useMemo(
+    () => resolveVisibleReportColumns(result.rows, result.columns),
+    [result.columns, result.rows]
+  );
+
+  if (visibleColumns.length === 0) {
+    return null;
+  }
+
+  return (
+    <View style={styles.resultsBox}>
+      <Text style={styles.resultsTitle}>
+        {result.rows.length.toLocaleString('pt-BR')} registro(s)
+        {result.generatedAt
+          ? ` — gerado em ${formatReportDateTime(result.generatedAt)}`
+          : ''}
+      </Text>
+
+      <ScrollView horizontal nestedScrollEnabled showsHorizontalScrollIndicator>
+        <View style={styles.tableContainer}>
+          <View style={styles.tableHeaderRow}>
+            {visibleColumns.map((column) => {
+              const align = getReportColumnAlign(column);
+
+              return (
+                <Text
+                  key={column}
+                  style={[
+                    styles.tableHeaderCell,
+                    { width: getReportColumnWidth(column) },
+                    align === 'right' && styles.cellAlignRight,
+                    align === 'center' && styles.cellAlignCenter,
+                  ]}
+                >
+                  {formatReportColumnLabel(column)}
+                </Text>
+              );
+            })}
+          </View>
+
+          {result.rows.slice(0, 100).map((row, rowIndex) => (
+            <View
+              key={`row-${rowIndex}`}
+              style={[styles.tableDataRow, rowIndex % 2 === 1 && styles.tableDataRowAlt]}
+            >
+              {visibleColumns.map((column) => {
+                const align = getReportColumnAlign(column);
+
+                return (
+                  <Text
+                    key={`${rowIndex}-${column}`}
+                    style={[
+                      styles.tableDataCell,
+                      { width: getReportColumnWidth(column) },
+                      align === 'right' && styles.cellAlignRight,
+                      align === 'center' && styles.cellAlignCenter,
+                    ]}
+                    numberOfLines={3}
+                  >
+                    {formatReportCellValue(column, row[column])}
+                  </Text>
+                );
+              })}
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+
+      {result.rows.length > 100 ? (
+        <Text style={styles.hintText}>Exibindo os primeiros 100 registros.</Text>
+      ) : null}
+    </View>
+  );
+}
+
 type ReportSectionProps = {
   definition: MaintenanceReportDefinition;
   index: number;
@@ -114,6 +288,8 @@ type ReportSectionProps = {
   params: Record<string, string>;
   loading: boolean;
   error: string | null;
+  events: MaintenanceEvent[];
+  loadingEvents: boolean;
   result: ReturnType<typeof useMaintenanceReports>['resultsByCode'][string] | undefined;
   onToggle: () => void;
   onParamChange: (key: string, value: string) => void;
@@ -128,12 +304,16 @@ function ReportSection({
   params,
   loading,
   error,
+  events,
+  loadingEvents,
   result,
   onToggle,
   onParamChange,
   onReset,
   onRun,
 }: ReportSectionProps) {
+  const summaryEntries = result?.summary ? Object.entries(result.summary) : [];
+
   return (
     <View style={styles.reportCard}>
       <TouchableOpacity
@@ -171,6 +351,8 @@ function ReportSection({
               field={field}
               value={params[field.key] ?? field.defaultValue}
               disabled={loading}
+              events={events}
+              loadingEvents={loadingEvents}
               onChange={(value) => onParamChange(field.key, value)}
             />
           ))}
@@ -204,58 +386,21 @@ function ReportSection({
             </Text>
           ) : null}
 
-          {result?.summary && Object.keys(result.summary).length > 0 ? (
+          {summaryEntries.length > 0 ? (
             <View style={styles.summaryBox}>
               <Text style={styles.summaryTitle}>Resumo</Text>
-              {Object.entries(result.summary).map(([key, value]) => (
-                <Text key={key} style={styles.summaryLine}>
-                  {key}: {formatSummaryValue(value)}
-                </Text>
-              ))}
-            </View>
-          ) : null}
-
-          {result && result.rows.length > 0 ? (
-            <View style={styles.resultsBox}>
-              <Text style={styles.resultsTitle}>
-                {result.rows.length} registro(s)
-                {result.generatedAt
-                  ? ` — gerado em ${new Date(result.generatedAt).toLocaleString('pt-BR')}`
-                  : ''}
-              </Text>
-              <ScrollView horizontal nestedScrollEnabled showsHorizontalScrollIndicator={false}>
-                <View>
-                  <View style={styles.tableHeaderRow}>
-                    {(result.columns.length > 0
-                      ? result.columns
-                      : Object.keys(result.rows[0] ?? {})
-                    ).map((column) => (
-                      <Text key={column} style={styles.tableHeaderCell}>
-                        {column}
-                      </Text>
-                    ))}
+              <View style={styles.summaryGrid}>
+                {summaryEntries.map(([key, value]) => (
+                  <View key={key} style={styles.summaryCard}>
+                    <Text style={styles.summaryCardLabel}>{formatReportSummaryLabel(key)}</Text>
+                    <Text style={styles.summaryCardValue}>{formatReportSummaryValue(key, value)}</Text>
                   </View>
-                  {result.rows.slice(0, 100).map((row, rowIndex) => {
-                    const columns =
-                      result.columns.length > 0 ? result.columns : Object.keys(row);
-
-                    return (
-                      <View key={`${definition.code}-${rowIndex}`} style={styles.tableDataRow}>
-                        {columns.map((column) => (
-                          <Text key={`${rowIndex}-${column}`} style={styles.tableDataCell}>
-                            {formatCellValue(row[column])}
-                          </Text>
-                        ))}
-                      </View>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-              {result.rows.length > 100 ? (
-                <Text style={styles.hintText}>Exibindo os primeiros 100 registros.</Text>
-              ) : null}
+                ))}
+              </View>
             </View>
           ) : null}
+
+          {result && result.rows.length > 0 ? <ReportResultsTable result={result} /> : null}
 
           {result && result.rows.length === 0 && !error ? (
             <Text style={styles.hintText}>Nenhum registro encontrado para os filtros informados.</Text>
@@ -266,7 +411,11 @@ function ReportSection({
   );
 }
 
-export function MaintenanceReportsCard({ panelHeight }: Props) {
+export function MaintenanceReportsCard({
+  panelHeight,
+  events = [],
+  loadingEvents = false,
+}: Props) {
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const {
     definitions,
@@ -289,7 +438,6 @@ export function MaintenanceReportsCard({ panelHeight }: Props) {
       <Text style={styles.helpText}>
         Catálogo analítico da igreja: membros, finanças, território, eventos, pastoral, voluntários,
         adoção digital e operações. Expanda cada relatório, ajuste os parâmetros e toque em Gerar.
-        Os scripts SQL devem ser aplicados manualmente no Supabase antes do primeiro uso.
       </Text>
 
       <ScrollView
@@ -310,6 +458,8 @@ export function MaintenanceReportsCard({ panelHeight }: Props) {
             params={paramsByCode[definition.code] ?? {}}
             loading={loadingCode === definition.code}
             error={errorsByCode[definition.code] ?? null}
+            events={events}
+            loadingEvents={loadingEvents}
             result={resultsByCode[definition.code]}
             onToggle={() => toggleExpanded(definition.code)}
             onParamChange={(key, value) => updateParam(definition.code, key, value)}
@@ -417,6 +567,64 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
+  dropdownTrigger: {
+    minHeight: 40,
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.35)',
+    borderRadius: 10,
+    backgroundColor: 'rgba(30, 41, 59, 0.85)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  dropdownTriggerDisabled: {
+    opacity: 0.7,
+  },
+  dropdownTriggerText: {
+    flex: 1,
+    color: '#F8FAFC',
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  dropdownList: {
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.25)',
+    borderRadius: 10,
+    backgroundColor: 'rgba(15, 23, 42, 0.96)',
+    maxHeight: 220,
+    overflow: 'hidden',
+  },
+  dropdownScroll: {
+    maxHeight: 220,
+  },
+  dropdownOption: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(148, 163, 184, 0.12)',
+  },
+  dropdownOptionSelected: {
+    backgroundColor: 'rgba(192, 132, 252, 0.16)',
+  },
+  dropdownOptionText: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  dropdownOptionTextSelected: {
+    color: '#F3E8FF',
+    fontWeight: '700',
+  },
+  dropdownEmptyText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontStyle: 'italic',
+    padding: 10,
+  },
   selectRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -493,17 +701,41 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: 'rgba(30, 41, 59, 0.65)',
     padding: 10,
-    gap: 4,
+    gap: 8,
   },
   summaryTitle: {
     color: '#E9D5FF',
     fontSize: 12,
     fontWeight: '800',
   },
-  summaryLine: {
-    color: '#CBD5E1',
-    fontSize: 12,
-    lineHeight: 16,
+  summaryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  summaryCard: {
+    minWidth: 132,
+    flexGrow: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.18)',
+    borderRadius: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 2,
+  },
+  summaryCardLabel: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  summaryCardValue: {
+    color: '#F8FAFC',
+    fontSize: 14,
+    fontWeight: '800',
+    lineHeight: 18,
   },
   resultsBox: {
     gap: 6,
@@ -513,15 +745,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
+  tableContainer: {
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.2)',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
   tableHeaderRow: {
     flexDirection: 'row',
+    backgroundColor: 'rgba(30, 41, 59, 0.95)',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(148, 163, 184, 0.35)',
   },
   tableHeaderCell: {
-    minWidth: 120,
-    maxWidth: 180,
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 8,
     color: '#CBD5E1',
     fontSize: 11,
@@ -529,16 +766,24 @@ const styles = StyleSheet.create({
   },
   tableDataRow: {
     flexDirection: 'row',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(148, 163, 184, 0.12)',
+    borderBottomColor: 'rgba(148, 163, 184, 0.1)',
+  },
+  tableDataRowAlt: {
+    backgroundColor: 'rgba(30, 41, 59, 0.35)',
   },
   tableDataCell: {
-    minWidth: 120,
-    maxWidth: 180,
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: 8,
     color: '#F8FAFC',
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  cellAlignRight: {
+    textAlign: 'right',
+  },
+  cellAlignCenter: {
+    textAlign: 'center',
   },
 });

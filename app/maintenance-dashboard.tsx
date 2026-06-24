@@ -1214,7 +1214,12 @@ export default function MaintenanceDashboard() {
           ) : item.content === 'predictive_insights' ? (
             <MaintenancePredictiveInsightsCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'relatorios' ? (
-            <MaintenanceReportsCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <MaintenanceReportsCard
+              isActive={currentIndex === index}
+              panelHeight={cardHeight}
+              events={safeEvents}
+              loadingEvents={loading}
+            />
           ) : item.content === 'access_control' ? (
             <MaintenanceAccessControlCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'profile_access_insights' ? (
