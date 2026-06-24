@@ -251,7 +251,7 @@ begin
   with event_absence as (
     select
       e.id as event_id,
-      e.title as evento,
+      e.name as evento,
       e.event_date,
       count(er.id)::int as inscritos,
       count(c.id) filter (where c.status = 'confirmado')::int as confirmados,
@@ -260,7 +260,7 @@ begin
     join public.event_registrations er on er.event_id = e.id
     left join public.checkins c on c.event_registration_id = er.id
     where e.event_date >= v_cutoff
-    group by e.id, e.title, e.event_date
+    group by e.id, e.name, e.event_date
   ),
   retention as (
     select
@@ -596,7 +596,7 @@ begin
     select
       coalesce(nullif(trim(p.full_name), ''), '(sem nome)') as nome,
       coalesce(nullif(trim(p.medical_food_alerts), ''), 'Sem alerta') as alertas,
-      e.title as evento
+      e.name as evento
     from public.event_registrations er
     join public.profiles p on p.id = er.profile_id
     join public.events e on e.id = er.event_id
@@ -698,7 +698,7 @@ declare
 begin
   with base as (
     select
-      e.title as evento,
+      e.name as evento,
       e.event_date,
       coalesce(nullif(trim(p.full_name), ''), '(sem nome)') as nome,
       c.status,
