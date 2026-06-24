@@ -539,7 +539,16 @@ begin
         'faixa', a.faixa,
         'quantidade', a.quantidade
       )
-      order by a.quantidade desc, a.faixa asc
+      order by case a.faixa
+        when '60+ anos' then 1
+        when '45-59 anos' then 2
+        when '30-44 anos' then 3
+        when '18-29 anos' then 4
+        when '13-17 anos' then 5
+        when '0-12 anos' then 6
+        when 'Sem data' then 7
+        else 99
+      end asc
     ), '[]'::jsonb),
     jsonb_build_object(
       'perfis_analisados', (select count(*) from ages)

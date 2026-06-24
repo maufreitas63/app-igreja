@@ -161,7 +161,7 @@ export const MAINTENANCE_REPORT_DEFINITIONS: MaintenanceReportDefinition[] = [
     code: 'demographic_age_brackets',
     title: 'Faixa Etária',
     description:
-      'Distribui perfis por faixa etária (0-12, 13-17, 18-29, 30-44, 45-59, 60+) para planejar salas infantis, jovens e ministérios por idade.',
+      'Distribui perfis por faixa etária (60+, 45-59, 30-44, 18-29, 13-17, 0-12) em ordem decrescente de idade para planejar salas infantis, jovens e ministérios.',
     dataSources: 'profiles',
     configFields: [],
   },
