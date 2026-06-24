@@ -12,7 +12,7 @@ import {
   formatMembershipDateInput,
   parseMembershipDateInputToIso,
 } from '@/lib/membershipDateInput';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
@@ -67,6 +67,25 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
   const hasActiveFilters = searchQuery.trim().length > 0 || roleFilter !== null;
   const isSavingMembershipDate =
     membershipDateEditor !== null && savingProfileId === membershipDateEditor.profileId;
+
+  const memberCountBreakdown = useMemo(() => {
+    if (roleFilter !== 'member') {
+      return null;
+    }
+
+    let activeMembers = 0;
+    let dischargedMembers = 0;
+
+    for (const profile of profiles) {
+      if (isProfileVisibleInApp(profile.membershipOut)) {
+        activeMembers += 1;
+      } else {
+        dischargedMembers += 1;
+      }
+    }
+
+    return { activeMembers, dischargedMembers };
+  }, [profiles, roleFilter]);
 
   const closeMembershipDateEditor = () => {
     setMembershipDateEditor(null);
@@ -208,6 +227,9 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
           {hasActiveFilters
             ? `${profiles.length} de ${allProfiles.length} perfis`
             : `${allProfiles.length} perfis`}
+          {memberCountBreakdown
+            ? ` — sendo ${memberCountBreakdown.activeMembers} Membros Ativos e ${memberCountBreakdown.dischargedMembers} Desligados`
+            : ''}
         </Text>
       ) : null}
 
