@@ -519,8 +519,9 @@ declare
   v_rows jsonb;
   v_summary jsonb;
 begin
-  with ages as (
+  with profile_ages as (
     select
+      coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as nome,
       case
         when p.birth_date is null then 'Sem data'
         when age(current_date, p.birth_date) < interval '13 years' then '0-12 anos'
@@ -536,10 +537,11 @@ begin
   select
     coalesce(jsonb_agg(
       jsonb_build_object(
-        'faixa', a.faixa,
-        'quantidade', a.quantidade
+        'faixa', g.faixa,
+        'quantidade', g.quantidade,
+        'integrantes', g.integrantes
       )
-      order by case a.faixa
+      order by case g.faixa
         when '60+ anos' then 1
         when '45-59 anos' then 2
         when '30-44 anos' then 3
@@ -551,14 +553,17 @@ begin
       end asc
     ), '[]'::jsonb),
     jsonb_build_object(
-      'perfis_analisados', (select count(*) from ages)
+      'perfis_analisados', (select count(*) from profile_ages)
     )
   into v_rows, v_summary
   from (
-    select faixa, count(*)::int as quantidade
-    from ages
+    select
+      faixa,
+      count(*)::int as quantidade,
+      coalesce(jsonb_agg(nome order by nome), '[]'::jsonb) as integrantes
+    from profile_ages
     group by faixa
-  ) a;
+  ) g;
 
   return public._maintenance_report_payload(
     'demographic_age_brackets',

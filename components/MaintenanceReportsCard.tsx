@@ -23,6 +23,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -40,6 +42,22 @@ type Props = {
 };
 
 const ACCENT = '#C084FC';
+const AGE_BRACKET_LINK_COLOR = '#60A5FA';
+
+type AgeBracketMembersModalState = {
+  faixa: string;
+  integrantes: string[];
+};
+
+const parseAgeBracketMembers = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => String(entry ?? '').trim())
+    .filter((entry) => entry.length > 0);
+};
 
 type ConfigFieldProps = {
   field: MaintenanceReportConfigField;
@@ -207,16 +225,23 @@ type ReportResultsTableProps = {
 };
 
 function ReportResultsTable({ result }: ReportResultsTableProps) {
+  const [ageBracketModal, setAgeBracketModal] = useState<AgeBracketMembersModalState | null>(null);
   const visibleColumns = useMemo(
     () => resolveVisibleReportColumns(result.rows, result.columns),
     [result.columns, result.rows]
   );
+  const isAgeBracketReport = result.reportCode === 'demographic_age_brackets';
 
   if (visibleColumns.length === 0) {
     return null;
   }
 
+  const closeAgeBracketModal = () => {
+    setAgeBracketModal(null);
+  };
+
   return (
+    <>
     <View style={styles.resultsBox}>
       <Text style={styles.resultsTitle}>
         {result.rows.length.toLocaleString('pt-BR')} registro(s)
@@ -254,6 +279,37 @@ function ReportResultsTable({ result }: ReportResultsTableProps) {
             >
               {visibleColumns.map((column) => {
                 const align = getReportColumnAlign(column);
+                const cellValue = row[column];
+                const isClickableAgeBracket =
+                  isAgeBracketReport && column === 'faixa' && typeof cellValue === 'string';
+
+                if (isClickableAgeBracket) {
+                  const integrantes = parseAgeBracketMembers(row.integrantes);
+
+                  return (
+                    <Pressable
+                      key={`${rowIndex}-${column}`}
+                      style={[
+                        styles.tableDataCellPressable,
+                        { width: getReportColumnWidth(column) },
+                        align === 'right' && styles.cellAlignRight,
+                        align === 'center' && styles.cellAlignCenter,
+                      ]}
+                      onPress={() =>
+                        setAgeBracketModal({
+                          faixa: cellValue,
+                          integrantes,
+                        })
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={`Ver integrantes da faixa ${cellValue}`}
+                    >
+                      <Text style={styles.ageBracketLink} numberOfLines={3}>
+                        {formatReportCellValue(column, cellValue)}
+                      </Text>
+                    </Pressable>
+                  );
+                }
 
                 return (
                   <Text
@@ -266,7 +322,7 @@ function ReportResultsTable({ result }: ReportResultsTableProps) {
                     ]}
                     numberOfLines={3}
                   >
-                    {formatReportCellValue(column, row[column])}
+                    {formatReportCellValue(column, cellValue)}
                   </Text>
                 );
               })}
@@ -279,6 +335,52 @@ function ReportResultsTable({ result }: ReportResultsTableProps) {
         <Text style={styles.hintText}>Exibindo os primeiros 100 registros.</Text>
       ) : null}
     </View>
+
+    <Modal
+      visible={ageBracketModal !== null}
+      transparent
+      animationType="fade"
+      onRequestClose={closeAgeBracketModal}
+    >
+      <View style={styles.ageBracketModalOverlay}>
+        <Pressable style={styles.ageBracketModalBackdrop} onPress={closeAgeBracketModal} />
+
+        {ageBracketModal ? (
+          <View style={styles.ageBracketBubble}>
+            <Text style={styles.ageBracketModalTitle}>{ageBracketModal.faixa}</Text>
+            <Text style={styles.ageBracketModalHelp}>
+              {ageBracketModal.integrantes.length.toLocaleString('pt-BR')} integrante(s) nesta faixa
+              etária.
+            </Text>
+
+            <ScrollView
+              style={styles.ageBracketMembersScroll}
+              contentContainerStyle={styles.ageBracketMembersContent}
+              nestedScrollEnabled
+            >
+              {ageBracketModal.integrantes.length === 0 ? (
+                <Text style={styles.hintText}>Nenhum integrante listado para esta faixa.</Text>
+              ) : (
+                ageBracketModal.integrantes.map((nome, index) => (
+                  <Text key={`${nome}-${index}`} style={styles.ageBracketMemberName}>
+                    {nome}
+                  </Text>
+                ))
+              )}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.ageBracketCloseButton}
+              onPress={closeAgeBracketModal}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.ageBracketCloseButtonText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+      </View>
+    </Modal>
+    </>
   );
 }
 
@@ -791,6 +893,76 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     fontSize: 12,
     lineHeight: 16,
+  },
+  tableDataCellPressable: {
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+  },
+  ageBracketLink: {
+    color: AGE_BRACKET_LINK_COLOR,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
+  ageBracketModalOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(2, 6, 23, 0.58)',
+  },
+  ageBracketModalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  ageBracketBubble: {
+    width: '100%',
+    maxWidth: 360,
+    maxHeight: '78%',
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.45)',
+    borderRadius: 14,
+    backgroundColor: 'rgba(15, 23, 42, 0.98)',
+    padding: 14,
+    gap: 8,
+  },
+  ageBracketModalTitle: {
+    color: '#BFDBFE',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  ageBracketModalHelp: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  ageBracketMembersScroll: {
+    maxHeight: 320,
+  },
+  ageBracketMembersContent: {
+    gap: 6,
+    paddingBottom: 4,
+  },
+  ageBracketMemberName: {
+    color: '#F8FAFC',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  ageBracketCloseButton: {
+    alignSelf: 'flex-end',
+    minWidth: 76,
+    minHeight: 34,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    backgroundColor: AGE_BRACKET_LINK_COLOR,
+  },
+  ageBracketCloseButtonText: {
+    color: '#0F172A',
+    fontSize: 12,
+    fontWeight: '900',
   },
   cellAlignRight: {
     textAlign: 'right',
