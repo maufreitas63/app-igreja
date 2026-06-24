@@ -6,7 +6,8 @@ values (
   'screen',
   'maintenance.card.relatorios',
   'Manutenção — Relatórios',
-  'Catálogo analítico: membros, finanças, território, eventos, pastoral, voluntários e adoção digital.'
+  'Catálogo analítico: membros, finanças, território, eventos, pastoral, voluntários e adoção digital.',
+  true
 )
 on conflict (resource_type, resource_key) do update
   set label = excluded.label,
