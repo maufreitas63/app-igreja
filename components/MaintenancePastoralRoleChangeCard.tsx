@@ -4,6 +4,7 @@ import {
   PASTORAL_BASIC_ROLE_OPTIONS,
   useMaintenancePastoralRoleChange,
 } from '@/hooks/useMaintenancePastoralRoleChange';
+import { isProfileVisibleInApp } from '@/lib/activeMemberProfile';
 import { formatShortName } from '@/lib/formatShortName';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import {
@@ -32,6 +33,7 @@ type Props = {
 
 const ACCENT = '#F472B6';
 const MEMBER_NAME_COLOR = '#60A5FA';
+const MEMBER_NAME_INACTIVE_COLOR = '#F87171';
 
 type MembershipDateEditorState = {
   profileId: string;
@@ -181,7 +183,8 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
         Lista de perfis elegíveis (exceto super admin e equipe pastoral). Use a busca para filtrar
         por nome, telefone ou código. Toque nos cabeçalhos Visitante, Congregado ou Membro para
         filtrar pelo papel atual. Membros exibem o nome em azul sublinhado — toque para ver ou
-        editar as datas de membresia (entrada e desligamento).
+        editar as datas de membresia (entrada e desligamento). Nome em vermelho indica que a
+        pessoa não faz mais parte do corpo de membros (data de desligamento preenchida).
       </Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -270,6 +273,7 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                 const isSaving = savingProfileId === profile.id;
                 const isMember = profile.currentRoleCode === 'member';
                 const shortName = formatShortName(profile.fullName);
+                const hasMembershipOut = !isProfileVisibleInApp(profile.membershipOut);
 
                 return (
                   <View key={profile.id} style={styles.tableRow}>
@@ -280,7 +284,13 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                           accessibilityRole="button"
                           accessibilityLabel={`Ver ou editar data de membresia de ${shortName}`}
                         >
-                          <Text style={styles.memberNameLink} numberOfLines={2}>
+                          <Text
+                            style={[
+                              styles.memberNameLink,
+                              hasMembershipOut && styles.memberNameInactive,
+                            ]}
+                            numberOfLines={2}
+                          >
                             {shortName}
                           </Text>
                         </Pressable>
@@ -526,6 +536,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     textDecorationLine: 'underline',
+  },
+  memberNameInactive: {
+    color: MEMBER_NAME_INACTIVE_COLOR,
   },
   roleChip: {
     width: 72,
