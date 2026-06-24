@@ -36,6 +36,7 @@ type Props = {
   panelHeight: number;
   events?: MaintenanceEvent[];
   loadingEvents?: boolean;
+  isSuperAdmin?: boolean;
 };
 
 const ACCENT = '#C084FC';
@@ -290,6 +291,7 @@ type ReportSectionProps = {
   error: string | null;
   events: MaintenanceEvent[];
   loadingEvents: boolean;
+  isSuperAdmin: boolean;
   result: ReturnType<typeof useMaintenanceReports>['resultsByCode'][string] | undefined;
   onToggle: () => void;
   onParamChange: (key: string, value: string) => void;
@@ -306,6 +308,7 @@ function ReportSection({
   error,
   events,
   loadingEvents,
+  isSuperAdmin,
   result,
   onToggle,
   onParamChange,
@@ -337,8 +340,12 @@ function ReportSection({
       {expanded ? (
         <View style={styles.reportBody}>
           {definition.restricted ? (
-            <Text style={styles.restrictedBadge}>
-              Dado sensível (LGPD) — acesso restrito a liderança autorizada.
+            <Text
+              style={[styles.restrictedBadge, isSuperAdmin && styles.restrictedBadgeAllowed]}
+            >
+              {isSuperAdmin
+                ? 'Dado sensível (LGPD). Acesso liberado como super administrador.'
+                : 'Dado sensível (LGPD) — acesso restrito a liderança pastoral ou administrador.'}
             </Text>
           ) : null}
 
@@ -415,6 +422,7 @@ export function MaintenanceReportsCard({
   panelHeight,
   events = [],
   loadingEvents = false,
+  isSuperAdmin = false,
 }: Props) {
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const {
@@ -460,6 +468,7 @@ export function MaintenanceReportsCard({
             error={errorsByCode[definition.code] ?? null}
             events={events}
             loadingEvents={loadingEvents}
+            isSuperAdmin={isSuperAdmin}
             result={resultsByCode[definition.code]}
             onToggle={() => toggleExpanded(definition.code)}
             onParamChange={(key, value) => updateParam(definition.code, key, value)}
@@ -537,6 +546,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     lineHeight: 15,
+  },
+  restrictedBadgeAllowed: {
+    color: '#86EFAC',
   },
   reportDescription: {
     color: '#CBD5E1',

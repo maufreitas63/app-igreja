@@ -63,12 +63,14 @@ as $$
 begin
   perform public.assert_maintenance_reports_actor(p_actor_profile_id);
 
-  if public.is_super_admin_profile(p_actor_profile_id) then
+  if coalesce(public.is_super_admin_profile(p_actor_profile_id), false)
+     or coalesce(public.is_super_admin_profile(public.current_session_profile_id()), false) then
     return;
   end if;
 
   if public.profile_has_access(p_actor_profile_id, 'screen', 'maintenance.card.pastoral_care', 'view')
-     or public.profile_has_access(p_actor_profile_id, 'screen', 'maintenance.card.profile_cadastro', 'view') then
+     or public.profile_has_access(p_actor_profile_id, 'screen', 'maintenance.card.profile_cadastro', 'view')
+     or public.profile_has_access(p_actor_profile_id, 'screen', 'maintenance.card.access_control', 'view') then
     return;
   end if;
 

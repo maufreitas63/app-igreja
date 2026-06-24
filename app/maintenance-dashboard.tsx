@@ -1219,6 +1219,7 @@ export default function MaintenanceDashboard() {
               panelHeight={cardHeight}
               events={safeEvents}
               loadingEvents={loading}
+              isSuperAdmin={canManageAccessControl}
             />
           ) : item.content === 'access_control' ? (
             <MaintenanceAccessControlCard isActive={currentIndex === index} panelHeight={cardHeight} />
