@@ -1,13 +1,8 @@
 import { PwaInstallButton } from '@/components/PwaInstallButton';
-import {
-  ACCESS_PIN_LENGTH,
-  isValidAccessPin,
-} from '@/lib/accessPin';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import {
   passwordRecoveryIdentify,
   passwordRecoveryOpenWhatsAppFromDispatch,
-  passwordRecoveryResetAccessPin,
   passwordRecoveryVerifyChallengeAndDispatch,
 } from '@/lib/passwordRecovery';
 import { isBrazilianMobilePhoneComplete } from '@/lib/phoneValidation';
@@ -15,7 +10,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -29,7 +24,17 @@ import {
   View,
 } from 'react-native';
 
-type RecoveryStep = 'phone' | 'challenge' | 'token';
+type RecoveryStep = 'phone' | 'challenge';
+
+const buildLoginRouteAfterRecovery = (phoneValue: string) => {
+  const digits = phoneValue.replace(/\D/g, '');
+
+  if (!isBrazilianMobilePhoneComplete(phoneValue) || !digits) {
+    return '/?recovered=1';
+  }
+
+  return `/?phone=${encodeURIComponent(digits)}&recovered=1`;
+};
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -41,23 +46,9 @@ export default function ForgotPasswordScreen() {
   const [phone, setPhone] = useState(initialPhone);
   const [securityQuestion, setSecurityQuestion] = useState('');
   const [securityAnswer, setSecurityAnswer] = useState('');
-  const [challengePassed, setChallengePassed] = useState(false);
-  const [tokenCode, setTokenCode] = useState('');
-  const [newPin, setNewPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
   const [loading, setLoading] = useState(false);
-  const [tokenDispatched, setTokenDispatched] = useState(false);
-  const [dispatchFeedback, setDispatchFeedback] = useState<string | null>(null);
   const [challengeError, setChallengeError] = useState<string | null>(null);
   const [phoneStepError, setPhoneStepError] = useState<string | null>(null);
-
-  const pinMismatch = useMemo(
-    () =>
-      isValidAccessPin(newPin)
-      && isValidAccessPin(confirmPin)
-      && newPin !== confirmPin,
-    [confirmPin, newPin]
-  );
 
   const handleIdentify = useCallback(async () => {
     if (!isBrazilianMobilePhoneComplete(phone)) {
@@ -78,11 +69,6 @@ export default function ForgotPasswordScreen() {
 
       setSecurityQuestion(result.securityQuestion);
       setSecurityAnswer('');
-      setChallengePassed(false);
-      setTokenDispatched(false);
-      setTokenCode('');
-      setNewPin('');
-      setConfirmPin('');
       setStep('challenge');
     } finally {
       setLoading(false);
@@ -97,7 +83,6 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     setChallengeError(null);
-    setDispatchFeedback(null);
 
     try {
       const result = await passwordRecoveryVerifyChallengeAndDispatch(phone, securityAnswer);
@@ -112,7 +97,6 @@ export default function ForgotPasswordScreen() {
 
         if (result.blocked) {
           setSecurityAnswer('');
-          setChallengePassed(false);
           setStep('phone');
         }
 
@@ -127,76 +111,27 @@ export default function ForgotPasswordScreen() {
         console.error('Erro ao copiar mensagem de recuperação:', clipboardError);
       }
 
-      setChallengePassed(true);
-      setTokenDispatched(true);
-      setStep('token');
-      setDispatchFeedback(
-        whatsapp.ok
-          ? whatsapp.whatsappOpened
-            ? 'Senha atualizada. O WhatsApp foi aberto com os 4 dígitos — use-os na entrada do app.'
-            : 'Senha atualizada. O código do WhatsApp já é sua senha de entrada — use os 4 dígitos na tela inicial.'
-          : whatsapp.message
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [phone, securityAnswer]);
-
-  const handleResetPin = useCallback(async () => {
-    if (!challengePassed || !tokenDispatched) {
-      Alert.alert(
-        'Etapa pendente',
-        'Valide a pergunta de segurança e receba o código no WhatsApp antes de redefinir a senha.'
-      );
-      return;
-    }
-
-    if (!isValidAccessPin(tokenCode)) {
-      Alert.alert('Atenção', 'Informe o código de 4 dígitos recebido no WhatsApp.');
-      return;
-    }
-
-    if (!isValidAccessPin(newPin)) {
-      Alert.alert('Atenção', 'A nova senha deve ter 4 dígitos.');
-      return;
-    }
-
-    if (pinMismatch) {
-      Alert.alert('Atenção', 'A confirmação da nova senha não confere.');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const result = await passwordRecoveryResetAccessPin(phone, tokenCode, newPin);
-
-      if (!result.ok) {
-        Alert.alert('Não foi possível redefinir', result.message);
+      if (!whatsapp.ok) {
+        Alert.alert(
+          'Senha atualizada',
+          'O código do WhatsApp já é sua senha de entrada. Digite os 4 dígitos na tela de login.',
+          [{ text: 'Continuar', onPress: () => router.replace(buildLoginRouteAfterRecovery(phone)) }]
+        );
         return;
       }
 
-      Alert.alert('Senha redefinida', 'Use a nova senha de 4 dígitos na tela de entrada.', [
-        {
-          text: 'Ir para entrada',
-          onPress: () => router.replace('/'),
-        },
-      ]);
+      router.replace(buildLoginRouteAfterRecovery(phone));
     } finally {
       setLoading(false);
     }
-  }, [challengePassed, newPin, phone, pinMismatch, router, tokenCode, tokenDispatched]);
+  }, [phone, router, securityAnswer]);
 
   const getTitle = () => {
     if (step === 'phone') {
       return 'Recuperar senha';
     }
 
-    if (step === 'challenge') {
-      return 'Pergunta de segurança';
-    }
-
-    return 'Senha redefinida';
+    return 'Pergunta de segurança';
   };
 
   const getSubtitle = () => {
@@ -204,11 +139,7 @@ export default function ForgotPasswordScreen() {
       return 'Informe o celular cadastrado. É necessário ter pergunta de segurança salva em Dados Cadastrais.';
     }
 
-    if (step === 'challenge') {
-      return 'Responda à pergunta cadastrada em Dados Cadastrais.';
-    }
-
-    return 'O código do WhatsApp já é sua nova senha de entrada. Opcional: escolha outros 4 dígitos abaixo.';
+    return 'Responda à pergunta cadastrada em Dados Cadastrais.';
   };
 
   return (
@@ -305,101 +236,6 @@ export default function ForgotPasswordScreen() {
                   <ActivityIndicator color="#020617" />
                 ) : (
                   <Text style={styles.btnText}>Validar resposta e enviar código</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          ) : null}
-
-          {step === 'token' ? (
-            <View style={styles.block}>
-              {dispatchFeedback ? (
-                <Text style={styles.successText}>{dispatchFeedback}</Text>
-              ) : null}
-
-              <TouchableOpacity
-                style={[styles.btnPrimary, loading && styles.btnDisabled]}
-                onPress={() =>
-                  router.replace(
-                    isBrazilianMobilePhoneComplete(phone)
-                      ? `/?phone=${encodeURIComponent(phone.replace(/\D/g, ''))}`
-                      : '/'
-                  )
-                }
-                disabled={loading || !challengePassed || !tokenDispatched}
-              >
-                <Text style={styles.btnText}>Ir para entrada</Text>
-              </TouchableOpacity>
-
-              <Text style={styles.optionalSectionLabel}>Opcional — trocar por outra senha</Text>
-
-              <Text style={styles.label}>Código do WhatsApp</Text>
-              <TextInput
-                style={[styles.input, styles.editableInput, styles.pinInput]}
-                value={tokenCode}
-                onChangeText={(text) => setTokenCode(text.replace(/\D/g, '').slice(0, ACCESS_PIN_LENGTH))}
-                placeholder="0000"
-                placeholderTextColor="#64748B"
-                keyboardType="number-pad"
-                maxLength={ACCESS_PIN_LENGTH}
-                editable={challengePassed && tokenDispatched && !loading}
-                textAlign="center"
-                autoComplete="off"
-                textContentType="none"
-              />
-
-              <Text style={styles.label}>Nova senha (4 dígitos)</Text>
-              <TextInput
-                style={[styles.input, styles.editableInput, styles.pinInput]}
-                value={newPin}
-                onChangeText={(text) => setNewPin(text.replace(/\D/g, '').slice(0, ACCESS_PIN_LENGTH))}
-                placeholder="0000"
-                placeholderTextColor="#64748B"
-                keyboardType="number-pad"
-                maxLength={ACCESS_PIN_LENGTH}
-                editable={challengePassed && tokenDispatched && !loading}
-                textAlign="center"
-                autoComplete="off"
-                textContentType="none"
-              />
-
-              <Text style={styles.label}>Confirmar nova senha</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  styles.editableInput,
-                  styles.pinInput,
-                  pinMismatch && styles.inputError,
-                ]}
-                value={confirmPin}
-                onChangeText={(text) =>
-                  setConfirmPin(text.replace(/\D/g, '').slice(0, ACCESS_PIN_LENGTH))
-                }
-                placeholder="0000"
-                placeholderTextColor="#64748B"
-                keyboardType="number-pad"
-                maxLength={ACCESS_PIN_LENGTH}
-                editable={challengePassed && tokenDispatched && !loading}
-                textAlign="center"
-                autoComplete="off"
-                textContentType="none"
-              />
-
-              {pinMismatch ? (
-                <Text style={styles.errorText}>A confirmação da nova senha não confere.</Text>
-              ) : null}
-
-              <TouchableOpacity
-                style={[
-                  styles.btnPrimary,
-                  (loading || !challengePassed || !tokenDispatched || pinMismatch) && styles.btnDisabled,
-                ]}
-                onPress={() => void handleResetPin()}
-                disabled={loading || !challengePassed || !tokenDispatched || pinMismatch}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#020617" />
-                ) : (
-                  <Text style={styles.btnText}>Salvar outra senha</Text>
                 )}
               </TouchableOpacity>
             </View>

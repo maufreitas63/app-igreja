@@ -67,11 +67,22 @@ import {
 } from '@/lib/totemDevice';
 
 export default function IndexScreen() {
-  const { [SIGN_OUT_QUERY_PARAM]: signedOutParam } = useLocalSearchParams<{
-    [SIGN_OUT_QUERY_PARAM]?: string | string[];
-  }>();
+  const { [SIGN_OUT_QUERY_PARAM]: signedOutParam, phone: phoneParam, recovered: recoveredParam } =
+    useLocalSearchParams<{
+      [SIGN_OUT_QUERY_PARAM]?: string | string[];
+      phone?: string | string[];
+      recovered?: string | string[];
+    }>();
   const skipSessionRestore =
     signedOutParam === '1' || (Array.isArray(signedOutParam) && signedOutParam.includes('1'));
+  const recoveryPhoneParam =
+    typeof phoneParam === 'string'
+      ? phoneParam
+      : Array.isArray(phoneParam)
+        ? phoneParam[0] ?? ''
+        : '';
+  const isPasswordRecovered =
+    recoveredParam === '1' || (Array.isArray(recoveredParam) && recoveredParam.includes('1'));
   const [phone, setPhone] = useState('');
   const [accessPin, setAccessPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -88,6 +99,7 @@ export default function IndexScreen() {
   const [loginStep, setLoginStep] = useState<1 | 2>(1);
   const [pinCodeSent, setPinCodeSent] = useState(false);
   const [showForgotPasswordHelp, setShowForgotPasswordHelp] = useState(false);
+  const [passwordRecoveredBanner, setPasswordRecoveredBanner] = useState(false);
   const isTotemLoginMode = Boolean(
     celTotemPhone && normalizePhoneDigits(phone) === celTotemPhone
   );
@@ -133,6 +145,7 @@ export default function IndexScreen() {
     setAccessPin('');
     setPinCodeSent(false);
     setShowForgotPasswordHelp(false);
+    setPasswordRecoveredBanner(false);
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
     preparedPinDraftRef.current = null;
@@ -157,6 +170,7 @@ export default function IndexScreen() {
     setAccessPin('');
     setPinCodeSent(false);
     setShowForgotPasswordHelp(false);
+    setPasswordRecoveredBanner(false);
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
     preparedPinDraftRef.current = null;
@@ -187,6 +201,28 @@ export default function IndexScreen() {
     },
     [router]
   );
+
+  useEffect(() => {
+    if (!recoveryPhoneParam || isRestoringSession) {
+      return;
+    }
+
+    const formattedPhone = formatBrazilPhoneInput(recoveryPhoneParam);
+
+    if (!isBrazilianMobilePhoneComplete(formattedPhone)) {
+      return;
+    }
+
+    setPhone(formattedPhone);
+    setLoginStep(2);
+    setAccessPin('');
+    setPinCodeSent(false);
+    setShowForgotPasswordHelp(false);
+    setPinDeliveryUnlocked(true);
+    setHasStoredAccessPin(true);
+    setPasswordRecoveredBanner(isPasswordRecovered);
+    focusPinInput();
+  }, [focusPinInput, isPasswordRecovered, isRestoringSession, recoveryPhoneParam]);
 
   useEffect(() => {
     if (isTotemLoginMode || !isBrazilianPhoneComplete(phone)) {
@@ -629,6 +665,10 @@ export default function IndexScreen() {
       return 'Estamos verificando seu cadastro...';
     }
 
+    if (passwordRecoveredBanner) {
+      return 'Senha redefinida. Digite os 4 dígitos recebidos no WhatsApp.';
+    }
+
     if (showForgotPasswordHelp) {
       return 'Esqueceu a senha? Responda à pergunta de segurança e receba um código no WhatsApp.';
     }
@@ -645,6 +685,10 @@ export default function IndexScreen() {
   const getMemberPinHint = () => {
     if (isCheckingStoredPin || isPinDeliverySettingsLoading) {
       return 'Aguarde um instante...';
+    }
+
+    if (passwordRecoveredBanner) {
+      return 'O código do WhatsApp já é sua senha de entrada.';
     }
 
     if (showForgotPasswordHelp) {
@@ -893,6 +937,14 @@ export default function IndexScreen() {
                 <View pointerEvents="none" style={styles.pinSentBanner}>
                   <ReadOnlyText style={styles.pinSentBannerText}>
                     Código enviado! Confira o WhatsApp e digite os 4 dígitos abaixo.
+                  </ReadOnlyText>
+                </View>
+              ) : null}
+
+              {!isTotemLoginMode && passwordRecoveredBanner ? (
+                <View pointerEvents="none" style={styles.pinSentBanner}>
+                  <ReadOnlyText style={styles.pinSentBannerText}>
+                    Senha redefinida. Use os 4 dígitos recebidos no WhatsApp.
                   </ReadOnlyText>
                 </View>
               ) : null}
