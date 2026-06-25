@@ -510,7 +510,10 @@ export default function IndexScreen() {
           }
 
           setShowForgotPasswordHelp(true);
-          Alert.alert('Senha incorreta', 'Toque em "Esqueci minha senha" e receba um novo código pelo WhatsApp.');
+          Alert.alert(
+            'Senha incorreta',
+            'Toque em "Esqueci minha senha" para recuperar com a pergunta de segurança e código no WhatsApp.'
+          );
           return;
         }
 
@@ -627,7 +630,7 @@ export default function IndexScreen() {
     }
 
     if (showForgotPasswordHelp) {
-      return 'Esqueceu a senha? Receba um novo código pelo WhatsApp.';
+      return 'Esqueceu a senha? Responda à pergunta de segurança e receba um código no WhatsApp.';
     }
 
     if (isLikelyFirstAccess) {
@@ -832,6 +835,24 @@ export default function IndexScreen() {
               </TouchableOpacity>
 
               {!isTotemLoginMode ? (
+                <TouchableOpacity
+                  accessibilityLabel="Recuperar senha esquecida"
+                  accessibilityRole="button"
+                  activeOpacity={0.85}
+                  onPress={() =>
+                    router.push(
+                      isBrazilianMobilePhoneComplete(phone)
+                        ? `/forgot-password?phone=${encodeURIComponent(phone.replace(/\D/g, ''))}`
+                        : '/forgot-password'
+                    )
+                  }
+                  style={styles.forgotPasswordBox}
+                >
+                  <Text style={styles.forgotPasswordBoxText}>Esqueci minha senha</Text>
+                </TouchableOpacity>
+              ) : null}
+
+              {!isTotemLoginMode ? (
                 <ReadOnlyText style={styles.helpText}>
                   É sua primeira vez? O Ministério de Acolhimento da Igreja pode ajudar.
                 </ReadOnlyText>
@@ -924,7 +945,11 @@ export default function IndexScreen() {
                     accessibilityLabel="Esqueci minha senha"
                     accessibilityRole="button"
                     activeOpacity={0.85}
-                    onPress={handleWhatsappPress}
+                    onPress={() =>
+                      router.push(
+                        `/forgot-password?phone=${encodeURIComponent(phone.replace(/\D/g, ''))}`
+                      )
+                    }
                     style={styles.forgotPasswordBox}
                   >
                     <Text style={styles.forgotPasswordBoxText}>Esqueci minha senha</Text>

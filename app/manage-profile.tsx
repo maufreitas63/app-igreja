@@ -1,4 +1,4 @@
-import { MaterialIcons } from '@expo/vector-icons';
+import { ProfileSecurityQuestionSection } from '@/components/ProfileSecurityQuestionSection';
 import { Image } from 'expo-image';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
@@ -699,6 +699,7 @@ export default function ManageProfile() {
   const [confirmAccessPin, setConfirmAccessPin] = useState('');
   const [savingAccessPin, setSavingAccessPin] = useState(false);
   const [accessPinSectionExpanded, setAccessPinSectionExpanded] = useState(false);
+  const [securityQuestionSectionExpanded, setSecurityQuestionSectionExpanded] = useState(false);
   const [showCurrentAccessPin, setShowCurrentAccessPin] = useState(false);
   const [showNewAccessPin, setShowNewAccessPin] = useState(false);
   const [showConfirmAccessPin, setShowConfirmAccessPin] = useState(false);
@@ -2061,6 +2062,11 @@ export default function ManageProfile() {
             ) : null}
           </View>
         ) : null}
+
+        <ProfileSecurityQuestionSection
+          expanded={securityQuestionSectionExpanded}
+          onToggle={() => setSecurityQuestionSectionExpanded((open) => !open)}
+        />
 
         {editingFieldRow ? (
           <View style={styles.editorCard}>
