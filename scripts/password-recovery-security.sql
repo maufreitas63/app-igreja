@@ -3,6 +3,7 @@
 -- Execute no SQL Editor do Supabase após profiles-access-pin.sql e access-control-security-hardening.sql.
 
 create extension if not exists pgcrypto with schema extensions;
+create extension if not exists unaccent with schema extensions;
 
 alter table public.profiles
   add column if not exists security_question text;
@@ -38,6 +39,28 @@ create index if not exists password_recovery_tokens_phone_idx
 alter table public.password_recovery_state enable row level security;
 alter table public.password_recovery_tokens enable row level security;
 
+create or replace function public.normalize_security_answer_legacy(p_answer text)
+returns text
+language sql
+immutable
+as $$
+  select lower(
+    trim(
+      regexp_replace(
+        regexp_replace(
+          coalesce(p_answer, ''),
+          E'[\\u200b\\u200c\\u200d\\ufeff]',
+          '',
+          'g'
+        ),
+        '\s+',
+        ' ',
+        'g'
+      )
+    )
+  );
+$$;
+
 create or replace function public.normalize_security_answer(p_answer text)
 returns text
 language sql
@@ -46,10 +69,11 @@ as $$
   select lower(
     trim(
       regexp_replace(
-        translate(
-          coalesce(p_answer, ''),
-          'ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇáàâãäéèêëíìîïóòôõöúùûüç',
-          'AAAAAEEEEIIIIOOOOOUUUUCaaaaaeeeeiiiiooooouuuuc'
+        regexp_replace(
+          extensions.unaccent(coalesce(p_answer, '')),
+          E'[\\u200b\\u200c\\u200d\\ufeff]',
+          '',
+          'g'
         ),
         '\s+',
         ' ',
@@ -57,6 +81,51 @@ as $$
       )
     )
   );
+$$;
+
+create or replace function public.security_answer_hash_is_bcrypt(p_hash text)
+returns boolean
+language sql
+immutable
+as $$
+  select coalesce(p_hash, '') ~ '^\$2[aby]\$';
+$$;
+
+create or replace function public.security_answer_matches(p_answer text, p_hash text)
+returns boolean
+language plpgsql
+stable
+set search_path = public, extensions
+as $$
+declare
+  v_hash text;
+  v_norm text;
+  v_norm_legacy text;
+begin
+  v_hash := nullif(trim(coalesce(p_hash, '')), '');
+
+  if v_hash is null then
+    return false;
+  end if;
+
+  v_norm := public.normalize_security_answer(p_answer);
+  v_norm_legacy := public.normalize_security_answer_legacy(p_answer);
+
+  if v_norm = '' and v_norm_legacy = '' then
+    return false;
+  end if;
+
+  if public.security_answer_hash_is_bcrypt(v_hash) then
+    return crypt(v_norm, v_hash) = v_hash
+        or crypt(v_norm_legacy, v_hash) = v_hash;
+  end if;
+
+  -- Cadastro manual com texto puro em security_answer_hash (sem bcrypt).
+  return v_norm = public.normalize_security_answer(v_hash)
+      or v_norm = public.normalize_security_answer_legacy(v_hash)
+      or v_norm_legacy = public.normalize_security_answer(v_hash)
+      or v_norm_legacy = public.normalize_security_answer_legacy(v_hash);
+end;
 $$;
 
 create or replace function public.password_recovery_phone_key(p_phone text)
@@ -251,7 +320,7 @@ begin
 
   v_state := public.password_recovery_upsert_state(v_profile_id, p_phone);
 
-  if crypt(v_normalized_answer, v_hash) = v_hash then
+  if public.security_answer_matches(p_answer, v_hash) then
     update public.password_recovery_state s
        set failed_challenge_attempts = 0,
            blocked_until = null,
@@ -484,7 +553,7 @@ begin
 
   v_state := public.password_recovery_upsert_state(v_profile_id, p_phone);
 
-  if crypt(v_normalized_answer, v_hash) <> v_hash then
+  if not public.security_answer_matches(p_answer, v_hash) then
     v_attempts := coalesce(v_state.failed_challenge_attempts, 0) + 1;
 
     if v_attempts >= 3 then
