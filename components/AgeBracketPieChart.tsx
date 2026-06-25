@@ -7,15 +7,21 @@ export type AgeBracketSlice = {
   value: number;
 };
 
-const SLICE_COLORS = [
-  '#6366F1',
-  '#8B5CF6',
-  '#A855F7',
-  '#C084FC',
-  '#60A5FA',
-  '#34D399',
-  '#94A3B8',
-] as const;
+/** Cor fixa por faixa — paleta viva e bem contrastada entre faixas adjacentes. */
+const AGE_BRACKET_COLORS: Record<string, string> = {
+  '60+ anos': '#EF4444',
+  '45-59 anos': '#F97316',
+  '30-44 anos': '#EAB308',
+  '18-29 anos': '#22C55E',
+  '13-17 anos': '#06B6D4',
+  '0-12 anos': '#3B82F6',
+  'Sem data': '#A855F7',
+};
+
+const FALLBACK_SLICE_COLORS = ['#EC4899', '#84CC16', '#14B8A6', '#F43F5E', '#8B5CF6'] as const;
+
+const colorForBracket = (label: string, index: number) =>
+  AGE_BRACKET_COLORS[label] ?? FALLBACK_SLICE_COLORS[index % FALLBACK_SLICE_COLORS.length];
 
 const SIZE = 132;
 const CENTER = SIZE / 2;
@@ -81,7 +87,7 @@ export function AgeBracketPieChart({ slices }: Props) {
 
       return {
         ...slice,
-        color: SLICE_COLORS[index % SLICE_COLORS.length],
+        color: colorForBracket(slice.label, index),
         percent: (slice.value / total) * 100,
         path: describeSlice(startAngle, endAngle),
       };
@@ -98,7 +104,7 @@ export function AgeBracketPieChart({ slices }: Props) {
       <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
         <G>
           {chartSlices.map((slice) => (
-            <Path key={slice.label} d={slice.path} fill={slice.color} stroke="#0F172A" strokeWidth={1} />
+            <Path key={slice.label} d={slice.path} fill={slice.color} stroke="#0B1220" strokeWidth={1.25} />
           ))}
         </G>
       </Svg>
@@ -146,9 +152,11 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   legendSwatch: {
-    width: 8,
-    height: 8,
+    width: 9,
+    height: 9,
     borderRadius: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.65)',
   },
   legendLabel: {
     flex: 1,
