@@ -1,4 +1,5 @@
 import { ProfileSecurityQuestionSection } from '@/components/ProfileSecurityQuestionSection';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
