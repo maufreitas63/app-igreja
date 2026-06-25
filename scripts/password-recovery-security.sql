@@ -542,11 +542,7 @@ begin
          updated_at = now()
    where s.phone_normalized = v_phone;
 
-  select ap.value
-    into v_psw_user
-    from public.app_parameters ap
-   where ap.key = 'psw_user'
-   limit 1;
+  v_psw_user := public.get_app_parameter_value('psw_user');
 
   v_send_to_user := lower(trim(coalesce(v_psw_user, ''))) in ('sim', 's', 'yes', 'y', '1', 'true', 'verdadeiro');
 
@@ -556,11 +552,7 @@ begin
       'Seu código de recuperação de senha é: ' || v_token
       || '. Válido por 5 minutos. Informe-o no app para definir uma nova senha.';
   else
-    select ap.value
-      into v_manager_digits
-      from public.app_parameters ap
-     where ap.key = 'psw_mngr'
-     limit 1;
+    v_manager_digits := public.get_app_parameter_value('psw_mngr');
 
     v_recipient_digits := nullif(regexp_replace(coalesce(v_manager_digits, ''), '\D', '', 'g'), '');
 
@@ -722,11 +714,7 @@ begin
          updated_at = now()
    where s.phone_normalized = v_phone;
 
-  select ap.value
-    into v_psw_user
-    from public.app_parameters ap
-   where ap.key = 'psw_user'
-   limit 1;
+  v_psw_user := public.get_app_parameter_value('psw_user');
 
   v_send_to_user := lower(trim(coalesce(v_psw_user, ''))) in ('sim', 's', 'yes', 'y', '1', 'true', 'verdadeiro');
 
@@ -736,11 +724,7 @@ begin
       'Seu código de recuperação de senha é: ' || v_token
       || '. Válido por 5 minutos. Informe-o no app para definir uma nova senha.';
   else
-    select ap.value
-      into v_manager_digits
-      from public.app_parameters ap
-     where ap.key = 'psw_mngr'
-     limit 1;
+    v_manager_digits := public.get_app_parameter_value('psw_mngr');
 
     v_recipient_digits := nullif(regexp_replace(coalesce(v_manager_digits, ''), '\D', '', 'g'), '');
 
