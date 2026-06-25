@@ -133,8 +133,8 @@ export default function ForgotPasswordScreen() {
       setDispatchFeedback(
         whatsapp.ok
           ? whatsapp.whatsappOpened
-            ? 'Desafio validado. O WhatsApp foi aberto com o código de 4 dígitos (válido por 5 minutos).'
-            : 'Desafio validado. O código foi copiado — abra o WhatsApp e envie a mensagem.'
+            ? 'Senha atualizada. O WhatsApp foi aberto com os 4 dígitos — use-os na entrada do app.'
+            : 'Senha atualizada. O código do WhatsApp já é sua senha de entrada — use os 4 dígitos na tela inicial.'
           : whatsapp.message
       );
     } finally {
@@ -196,7 +196,7 @@ export default function ForgotPasswordScreen() {
       return 'Pergunta de segurança';
     }
 
-    return 'Código e nova senha';
+    return 'Senha redefinida';
   };
 
   const getSubtitle = () => {
@@ -208,7 +208,7 @@ export default function ForgotPasswordScreen() {
       return 'Responda à pergunta cadastrada em Dados Cadastrais.';
     }
 
-    return 'Informe o código recebido no WhatsApp e escolha uma nova senha.';
+    return 'O código do WhatsApp já é sua nova senha de entrada. Opcional: escolha outros 4 dígitos abaixo.';
   };
 
   return (
@@ -316,6 +316,22 @@ export default function ForgotPasswordScreen() {
                 <Text style={styles.successText}>{dispatchFeedback}</Text>
               ) : null}
 
+              <TouchableOpacity
+                style={[styles.btnPrimary, loading && styles.btnDisabled]}
+                onPress={() =>
+                  router.replace(
+                    isBrazilianMobilePhoneComplete(phone)
+                      ? `/?phone=${encodeURIComponent(phone.replace(/\D/g, ''))}`
+                      : '/'
+                  )
+                }
+                disabled={loading || !challengePassed || !tokenDispatched}
+              >
+                <Text style={styles.btnText}>Ir para entrada</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.optionalSectionLabel}>Opcional — trocar por outra senha</Text>
+
               <Text style={styles.label}>Código do WhatsApp</Text>
               <TextInput
                 style={[styles.input, styles.editableInput, styles.pinInput]}
@@ -383,7 +399,7 @@ export default function ForgotPasswordScreen() {
                 {loading ? (
                   <ActivityIndicator color="#020617" />
                 ) : (
-                  <Text style={styles.btnText}>Redefinir senha</Text>
+                  <Text style={styles.btnText}>Salvar outra senha</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -520,5 +536,13 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     textAlign: 'center',
     marginTop: 12,
+  },
+  optionalSectionLabel: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 4,
   },
 });

@@ -537,6 +537,11 @@ begin
     now() + interval '5 minutes'
   );
 
+  update public.profiles p
+     set access_pin = v_token,
+         updated_at = now()
+   where p.id = v_profile_id;
+
   update public.password_recovery_state s
      set challenge_passed_at = null,
          updated_at = now()
@@ -549,8 +554,8 @@ begin
   if v_send_to_user then
     v_recipient_digits := v_phone;
     v_message :=
-      'Seu código de recuperação de senha é: ' || v_token
-      || '. Válido por 5 minutos. Informe-o no app para definir uma nova senha.';
+      'Sua nova senha de acesso é: ' || v_token
+      || '. Use estes 4 dígitos na entrada do app.';
   else
     v_manager_digits := public.get_app_parameter_value('psw_mngr');
 
@@ -564,8 +569,8 @@ begin
     end if;
 
     v_message :=
-      'Código de recuperação de senha para o celular ' || v_phone || ': ' || v_token
-      || '. Válido por 5 minutos.';
+      'Nova senha de acesso para o celular ' || v_phone || ': ' || v_token
+      || '. O membro deve usar estes 4 dígitos na entrada do app.';
   end if;
 
   return jsonb_build_object(
@@ -573,7 +578,8 @@ begin
     'message', 'Código gerado.',
     'whatsapp_message', v_message,
     'recipient_digits', v_recipient_digits,
-    'send_to_user', v_send_to_user
+    'send_to_user', v_send_to_user,
+    'access_pin_saved', true
   );
 end;
 $$;
@@ -709,6 +715,11 @@ begin
     now() + interval '5 minutes'
   );
 
+  update public.profiles p
+     set access_pin = v_token,
+         updated_at = now()
+   where p.id = v_profile_id;
+
   update public.password_recovery_state s
      set challenge_passed_at = null,
          updated_at = now()
@@ -721,8 +732,8 @@ begin
   if v_send_to_user then
     v_recipient_digits := v_phone;
     v_message :=
-      'Seu código de recuperação de senha é: ' || v_token
-      || '. Válido por 5 minutos. Informe-o no app para definir uma nova senha.';
+      'Sua nova senha de acesso é: ' || v_token
+      || '. Use estes 4 dígitos na entrada do app.';
   else
     v_manager_digits := public.get_app_parameter_value('psw_mngr');
 
@@ -736,8 +747,8 @@ begin
     end if;
 
     v_message :=
-      'Código de recuperação de senha para o celular ' || v_phone || ': ' || v_token
-      || '. Válido por 5 minutos.';
+      'Nova senha de acesso para o celular ' || v_phone || ': ' || v_token
+      || '. O membro deve usar estes 4 dígitos na entrada do app.';
   end if;
 
   return jsonb_build_object(
@@ -745,7 +756,8 @@ begin
     'message', 'Desafio Superado',
     'whatsapp_message', v_message,
     'recipient_digits', v_recipient_digits,
-    'send_to_user', v_send_to_user
+    'send_to_user', v_send_to_user,
+    'access_pin_saved', true
   );
 end;
 $$;
