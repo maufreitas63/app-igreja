@@ -104,10 +104,10 @@ export function ProfileSecurityQuestionSection({
             onChangeText={setAnswer}
             placeholder="Resposta secreta"
             placeholderTextColor="#64748b"
-            secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
-            textContentType="password"
+            autoComplete="off"
+            textContentType="none"
           />
 
           <Text style={styles.hint}>
