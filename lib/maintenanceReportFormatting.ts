@@ -47,6 +47,22 @@ const COLUMN_LABELS: Record<string, string> = {
   dias_ate_conciliacao: 'Dias até conciliação',
   veiculos_cadastrados: 'Veículos cadastrados',
   estimativa_veiculos: 'Estimativa de veículos',
+  data_hora: 'Data/hora',
+  tipo_evento: 'Evento',
+  solicitante: 'Solicitante',
+  telefone: 'Telefone',
+  tipo_solicitacao: 'Tipo',
+  status_solicitacao: 'Status',
+  canal: 'Canal',
+  autor: 'Autor',
+  papel_autor: 'Papel',
+  mensagem: 'Mensagem',
+  acao_desenvolvedor: 'Ação do desenvolvedor',
+  orientacoes: 'Orientações',
+  previsao_conclusao: 'Previsão',
+  anexos: 'Anexos',
+  whatsapp_autorizado: 'WhatsApp autorizado',
+  notificar_app: 'Notificar no app',
 };
 
 const SUMMARY_LABELS: Record<string, string> = {
@@ -88,6 +104,11 @@ const SUMMARY_LABELS: Record<string, string> = {
   pendentes: 'Pendentes',
   familias_inscritas: 'Famílias inscritas',
   estimativa_total_veiculos: 'Estimativa total de veículos',
+  total_eventos: 'Total de eventos',
+  total_solicitacoes: 'Total de solicitações',
+  aberturas: 'Aberturas',
+  interacoes: 'Interações',
+  comunicacoes: 'Comunicações',
 };
 
 const CURRENCY_COLUMNS = new Set(['total']);
@@ -106,6 +127,7 @@ const INTEGER_COLUMNS = new Set([
   'integrantes',
   'veiculos_cadastrados',
   'estimativa_veiculos',
+  'anexos',
 ]);
 const DECIMAL_COLUMNS = new Set([
   'latitude_media',
@@ -114,7 +136,7 @@ const DECIMAL_COLUMNS = new Set([
   'dias_ate_conciliacao',
 ]);
 const DATE_COLUMNS = new Set(['data', 'data_evento']);
-const DATETIME_COLUMNS = new Set(['criado_em', 'atualizado_em', 'hora_checkin']);
+const DATETIME_COLUMNS = new Set(['criado_em', 'atualizado_em', 'hora_checkin', 'data_hora']);
 
 const COLUMN_WIDTHS: Record<string, number> = {
   nome: 168,
@@ -132,6 +154,11 @@ const COLUMN_WIDTHS: Record<string, number> = {
   rotulo: 160,
   rota: 140,
   rd: 108,
+  mensagem: 240,
+  orientacoes: 200,
+  acao_desenvolvedor: 180,
+  solicitante: 140,
+  tipo_evento: 108,
 };
 
 const RIGHT_ALIGN_COLUMNS = new Set([

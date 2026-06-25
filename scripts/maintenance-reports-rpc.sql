@@ -1067,6 +1067,249 @@ begin
 end;
 $$;
 
+create or replace function public._report_support_suggestions(p_params jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_rows jsonb;
+  v_summary jsonb;
+  v_table_exists boolean;
+begin
+  select exists (
+    select 1
+      from information_schema.tables
+     where table_schema = 'public'
+       and table_name = 'maintenance_support_requests'
+  )
+    into v_table_exists;
+
+  if not v_table_exists then
+    return jsonb_build_object(
+      'success', false,
+      'report_code', 'support_suggestions',
+      'message', 'Execute no Supabase: scripts/maintenance-support-suggestions.sql'
+    );
+  end if;
+
+  with base_requests as (
+    select
+      r.id,
+      r.requester_name,
+      r.requester_phone,
+      r.record_type,
+      r.description,
+      r.status,
+      r.developer_action,
+      r.developer_guidance,
+      r.estimated_completion_date,
+      r.whatsapp_authorized,
+      r.notify_in_app,
+      r.created_at,
+      (
+        select count(*)::int
+          from public.maintenance_support_attachments a
+         where a.request_id = r.id
+           and a.is_active = true
+      ) as anexos_qtd
+    from public.maintenance_support_requests r
+  ),
+  timeline as (
+    select
+      br.created_at as data_hora,
+      'Abertura'::text as tipo_evento,
+      br.requester_name as solicitante,
+      br.requester_phone as telefone,
+      case br.record_type::text
+        when 'suggestion' then 'Sugestão'
+        when 'question' then 'Dúvida'
+        when 'comment' then 'Comentário'
+        when 'incident' then 'Problema/Incidente'
+        else br.record_type::text
+      end as tipo_solicitacao,
+      case br.status::text
+        when 'received' then 'Recebida'
+        when 'in_review' then 'Em análise'
+        when 'in_development' then 'Em desenvolvimento'
+        when 'awaiting_validation' then 'Aguardando validação'
+        when 'completed' then 'Concluída'
+        when 'not_applicable' then 'Não aplicável'
+        else br.status::text
+      end as status_solicitacao,
+      'App'::text as canal,
+      br.requester_name as autor,
+      'Usuário'::text as papel_autor,
+      br.description as mensagem,
+      br.developer_action as acao_desenvolvedor,
+      br.developer_guidance as orientacoes,
+      to_char(br.estimated_completion_date, 'DD/MM/YYYY') as previsao_conclusao,
+      br.anexos_qtd as anexos,
+      br.whatsapp_authorized as whatsapp_autorizado,
+      br.notify_in_app as notificar_app
+    from base_requests br
+
+    union all
+
+    select
+      i.created_at,
+      case i.channel::text
+        when 'status' then 'Tratamento'
+        when 'attachment' then 'Anexo'
+        else 'Interação'
+      end,
+      br.requester_name,
+      br.requester_phone,
+      case br.record_type::text
+        when 'suggestion' then 'Sugestão'
+        when 'question' then 'Dúvida'
+        when 'comment' then 'Comentário'
+        when 'incident' then 'Problema/Incidente'
+        else br.record_type::text
+      end,
+      case br.status::text
+        when 'received' then 'Recebida'
+        when 'in_review' then 'Em análise'
+        when 'in_development' then 'Em desenvolvimento'
+        when 'awaiting_validation' then 'Aguardando validação'
+        when 'completed' then 'Concluída'
+        when 'not_applicable' then 'Não aplicável'
+        else br.status::text
+      end,
+      case i.channel::text
+        when 'app' then 'App'
+        when 'whatsapp' then 'WhatsApp'
+        when 'status' then 'Status'
+        when 'attachment' then 'Anexo'
+        else i.channel::text
+      end,
+      i.actor_name,
+      case i.actor_role::text
+        when 'user' then 'Usuário'
+        when 'developer' then 'Desenvolvedor'
+        when 'system' then 'Sistema'
+        else i.actor_role::text
+      end,
+      i.message,
+      br.developer_action,
+      br.developer_guidance,
+      to_char(br.estimated_completion_date, 'DD/MM/YYYY'),
+      br.anexos_qtd,
+      br.whatsapp_authorized,
+      br.notify_in_app
+    from public.maintenance_support_interactions i
+    join base_requests br on br.id = i.request_id
+
+    union all
+
+    select
+      c.sent_at,
+      'Comunicação',
+      br.requester_name,
+      br.requester_phone,
+      case br.record_type::text
+        when 'suggestion' then 'Sugestão'
+        when 'question' then 'Dúvida'
+        when 'comment' then 'Comentário'
+        when 'incident' then 'Problema/Incidente'
+        else br.record_type::text
+      end,
+      case br.status::text
+        when 'received' then 'Recebida'
+        when 'in_review' then 'Em análise'
+        when 'in_development' then 'Em desenvolvimento'
+        when 'awaiting_validation' then 'Aguardando validação'
+        when 'completed' then 'Concluída'
+        when 'not_applicable' then 'Não aplicável'
+        else br.status::text
+      end,
+      case c.channel::text
+        when 'in_app' then 'Notificação no app'
+        when 'whatsapp' then 'WhatsApp'
+        else c.channel::text
+      end,
+      coalesce(nullif(trim(p.full_name), ''), 'Desenvolvedor'),
+      'Desenvolvedor',
+      trim(
+        both E'\n'
+        from concat_ws(
+          E'\n\n',
+          nullif(trim(coalesce(c.subject, '')), ''),
+          nullif(trim(c.message), '')
+        )
+      ),
+      br.developer_action,
+      br.developer_guidance,
+      to_char(br.estimated_completion_date, 'DD/MM/YYYY'),
+      br.anexos_qtd,
+      br.whatsapp_authorized,
+      br.notify_in_app
+    from public.maintenance_support_communications c
+    join base_requests br on br.id = c.request_id
+    left join public.profiles p on p.id = c.sent_by_profile_id
+  )
+  select
+    coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'data_hora', t.data_hora,
+          'tipo_evento', t.tipo_evento,
+          'solicitante', t.solicitante,
+          'telefone', t.telefone,
+          'tipo_solicitacao', t.tipo_solicitacao,
+          'status_solicitacao', t.status_solicitacao,
+          'canal', t.canal,
+          'autor', t.autor,
+          'papel_autor', t.papel_autor,
+          'mensagem', t.mensagem,
+          'acao_desenvolvedor', t.acao_desenvolvedor,
+          'orientacoes', t.orientacoes,
+          'previsao_conclusao', t.previsao_conclusao,
+          'anexos', t.anexos,
+          'whatsapp_autorizado', t.whatsapp_autorizado,
+          'notificar_app', t.notificar_app
+        )
+        order by t.data_hora asc, t.tipo_evento asc
+      ),
+      '[]'::jsonb
+    ),
+    jsonb_build_object(
+      'total_eventos', (select count(*) from timeline),
+      'total_solicitacoes', (select count(*) from base_requests),
+      'aberturas', (select count(*) from timeline where tipo_evento = 'Abertura'),
+      'interacoes', (select count(*) from timeline where tipo_evento in ('Interação', 'Tratamento', 'Anexo')),
+      'comunicacoes', (select count(*) from timeline where tipo_evento = 'Comunicação')
+    )
+  into v_rows, v_summary
+  from timeline t;
+
+  return public._maintenance_report_payload(
+    'support_suggestions',
+    array[
+      'data_hora',
+      'tipo_evento',
+      'solicitante',
+      'telefone',
+      'tipo_solicitacao',
+      'status_solicitacao',
+      'canal',
+      'autor',
+      'papel_autor',
+      'mensagem',
+      'acao_desenvolvedor',
+      'orientacoes',
+      'previsao_conclusao',
+      'anexos',
+      'whatsapp_autorizado',
+      'notificar_app'
+    ],
+    v_rows,
+    v_summary
+  );
+end;
+$$;
+
 drop function if exists public.gerar_relatorio_manutencao(uuid, text, jsonb);
 
 create or replace function public.gerar_relatorio_manutencao(
@@ -1101,6 +1344,8 @@ begin
       return public._report_quorum_official(coalesce(p_params, '{}'::jsonb));
     when 'parking_estimate' then
       return public._report_parking_estimate(coalesce(p_params, '{}'::jsonb));
+    when 'support_suggestions' then
+      return public._report_support_suggestions(coalesce(p_params, '{}'::jsonb));
     else
       return jsonb_build_object(
         'success', false,
