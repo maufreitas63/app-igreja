@@ -79,6 +79,7 @@ const SUMMARY_LABELS: Record<string, string> = {
   familias_distintas: 'Famílias distintas',
   media_integrantes: 'Média de integrantes',
   event_id: 'Evento',
+  evento: 'Evento',
   criancas_com_alerta: 'Crianças com alerta',
   total_confirmados: 'Total confirmados',
   eventos_quorum_encerrados: 'Eventos de quórum encerrados',

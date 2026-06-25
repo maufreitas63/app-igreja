@@ -384,6 +384,75 @@ function ReportResultsTable({ result }: ReportResultsTableProps) {
   );
 }
 
+type ReportSummaryProps = {
+  reportCode: string;
+  summary: Record<string, unknown>;
+  params: Record<string, string>;
+  events: MaintenanceEvent[];
+};
+
+function ReportSummary({ reportCode, summary, params, events }: ReportSummaryProps) {
+  if (reportCode === 'parking_estimate') {
+    const eventLabel =
+      typeof summary.evento === 'string' && summary.evento.trim()
+        ? summary.evento.trim()
+        : (() => {
+            const selected = events.find((event) => event.id === params.event_id);
+            return selected
+              ? formatMaintenanceEventOptionLabel(selected.name, selected.event_date)
+              : null;
+          })();
+
+    return (
+      <View style={styles.summaryBox}>
+        <Text style={styles.summaryTitle}>Resumo</Text>
+        {eventLabel ? (
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryCardLabel}>Evento</Text>
+            <Text style={styles.summaryCardValue} numberOfLines={2}>
+              {eventLabel}
+            </Text>
+          </View>
+        ) : null}
+        <View style={styles.summaryRowInline}>
+          <View style={[styles.summaryCard, styles.summaryCardInline]}>
+            <Text style={styles.summaryCardLabel}>
+              {formatReportSummaryLabel('familias_inscritas')}
+            </Text>
+            <Text style={styles.summaryCardValue}>
+              {formatReportSummaryValue('familias_inscritas', summary.familias_inscritas)}
+            </Text>
+          </View>
+          <View style={[styles.summaryCard, styles.summaryCardNarrow]}>
+            <Text style={styles.summaryCardLabel}>
+              {formatReportSummaryLabel('estimativa_total_veiculos')}
+            </Text>
+            <Text style={styles.summaryCardValue}>
+              {formatReportSummaryValue('estimativa_total_veiculos', summary.estimativa_total_veiculos)}
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  const summaryEntries = Object.entries(summary).filter(([key]) => key !== 'event_id');
+
+  return (
+    <View style={styles.summaryBox}>
+      <Text style={styles.summaryTitle}>Resumo</Text>
+      <View style={styles.summaryGrid}>
+        {summaryEntries.map(([key, value]) => (
+          <View key={key} style={styles.summaryCard}>
+            <Text style={styles.summaryCardLabel}>{formatReportSummaryLabel(key)}</Text>
+            <Text style={styles.summaryCardValue}>{formatReportSummaryValue(key, value)}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 type ReportSectionProps = {
   definition: MaintenanceReportDefinition;
   index: number;
@@ -417,8 +486,6 @@ function ReportSection({
   onReset,
   onRun,
 }: ReportSectionProps) {
-  const summaryEntries = result?.summary ? Object.entries(result.summary) : [];
-
   return (
     <View style={styles.reportCard}>
       <TouchableOpacity
@@ -495,18 +562,13 @@ function ReportSection({
             </Text>
           ) : null}
 
-          {summaryEntries.length > 0 ? (
-            <View style={styles.summaryBox}>
-              <Text style={styles.summaryTitle}>Resumo</Text>
-              <View style={styles.summaryGrid}>
-                {summaryEntries.map(([key, value]) => (
-                  <View key={key} style={styles.summaryCard}>
-                    <Text style={styles.summaryCardLabel}>{formatReportSummaryLabel(key)}</Text>
-                    <Text style={styles.summaryCardValue}>{formatReportSummaryValue(key, value)}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+          {result?.summary && Object.keys(result.summary).length > 0 ? (
+            <ReportSummary
+              reportCode={definition.code}
+              summary={result.summary}
+              params={params}
+              events={events}
+            />
           ) : null}
 
           {result && result.rows.length > 0 ? <ReportResultsTable result={result} /> : null}
@@ -826,6 +888,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  summaryRowInline: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 8,
+  },
+  summaryCardInline: {
+    flex: 1,
+    minWidth: 0,
+    flexGrow: 1,
+  },
+  summaryCardNarrow: {
+    flexGrow: 0,
+    flexShrink: 0,
+    width: 168,
+    maxWidth: '42%',
   },
   summaryCard: {
     minWidth: 132,

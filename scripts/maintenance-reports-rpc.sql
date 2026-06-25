@@ -1026,7 +1026,16 @@ begin
       order by e.estimativa_veiculos desc, e.family_id
     ), '[]'::jsonb),
     jsonb_build_object(
-      'event_id', v_event_id,
+      'evento', (
+        select
+          coalesce(nullif(trim(e.name), ''), 'Evento sem nome')
+          || case
+            when e.event_date is not null then ' — ' || to_char(e.event_date::date, 'DD/MM/YYYY')
+            else ''
+          end
+        from public.events e
+        where e.id = v_event_id
+      ),
       'familias_inscritas', (select count(*) from families),
       'estimativa_total_veiculos', (select coalesce(sum(estimativa_veiculos), 0) from estimated)
     )
