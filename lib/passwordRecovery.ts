@@ -420,14 +420,10 @@ export async function loadProfileSecurityQuestion(): Promise<ProfileSecurityQues
 }
 
 export async function saveProfileSecurityQuestion(
-  phone: string,
-  currentPin: string,
   question: string,
   answer: string
 ): Promise<{ ok: true; securityQuestion: string } | { ok: false; message: string }> {
   const { data, error } = await supabase.rpc('set_profile_security_question', {
-    p_phone: normalizePhoneForAccessPinRpc(phone),
-    p_current_pin: currentPin.trim(),
     p_question: question.trim(),
     p_answer: answer,
   });

@@ -825,7 +825,49 @@ begin
 end;
 $$;
 
-drop function if exists public.set_profile_security_question(text, text);
+create or replace function public.set_profile_security_question(
+  p_question text,
+  p_answer text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_profile_id uuid;
+  v_question text;
+  v_answer text;
+begin
+  v_profile_id := public.current_session_profile_id();
+
+  if v_profile_id is null then
+    raise exception 'Sessão não encontrada. Entre novamente no app.';
+  end if;
+
+  v_question := trim(coalesce(p_question, ''));
+  v_answer := public.normalize_security_answer(p_answer);
+
+  if char_length(v_question) < 5 then
+    raise exception 'Informe uma pergunta de segurança com pelo menos 5 caracteres.';
+  end if;
+
+  if char_length(v_answer) < 2 then
+    raise exception 'Informe uma resposta de segurança com pelo menos 2 caracteres.';
+  end if;
+
+  update public.profiles p
+     set security_question = v_question,
+         security_answer_hash = crypt(v_answer, gen_salt('bf', 10)),
+         updated_at = now()
+   where p.id = v_profile_id;
+
+  return jsonb_build_object(
+    'ok', true,
+    'security_question', v_question
+  );
+end;
+$$;
 
 create or replace function public.get_profile_security_question()
 returns jsonb
@@ -863,4 +905,5 @@ grant execute on function public.password_recovery_verify_challenge_and_dispatch
 grant execute on function public.password_recovery_dispatch_token(text) to anon, authenticated;
 grant execute on function public.password_recovery_reset_access_pin(text, text, text) to anon, authenticated;
 grant execute on function public.set_profile_security_question(text, text, text, text) to anon, authenticated;
+grant execute on function public.set_profile_security_question(text, text) to authenticated;
 grant execute on function public.get_profile_security_question() to anon, authenticated;
