@@ -1,3 +1,4 @@
+import { AgeBracketPieChart, parseAgeBracketChartSlices } from '@/components/AgeBracketPieChart';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import type { MaintenanceEvent } from '@/hooks/useMaintenanceEvents';
@@ -233,6 +234,10 @@ function ReportResultsTable({ result }: ReportResultsTableProps) {
     [result.columns, result.rows]
   );
   const isAgeBracketReport = result.reportCode === 'demographic_age_brackets';
+  const ageBracketChartSlices = useMemo(
+    () => (isAgeBracketReport ? parseAgeBracketChartSlices(result.rows) : []),
+    [isAgeBracketReport, result.rows]
+  );
 
   if (visibleColumns.length === 0) {
     return null;
@@ -252,86 +257,94 @@ function ReportResultsTable({ result }: ReportResultsTableProps) {
           : ''}
       </Text>
 
-      <ScrollView horizontal nestedScrollEnabled showsHorizontalScrollIndicator>
-        <View style={styles.tableContainer}>
-          <View style={styles.tableHeaderRow}>
-            {visibleColumns.map((column) => {
-              const align = getReportColumnAlign(column);
-
-              return (
-                <Text
-                  key={column}
-                  style={[
-                    styles.tableHeaderCell,
-                    { width: getReportColumnWidth(column) },
-                    align === 'right' && styles.cellAlignRight,
-                    align === 'center' && styles.cellAlignCenter,
-                  ]}
-                >
-                  {formatReportColumnLabel(column)}
-                </Text>
-              );
-            })}
-          </View>
-
-          {result.rows.slice(0, 100).map((row, rowIndex) => (
-            <View
-              key={`row-${rowIndex}`}
-              style={[styles.tableDataRow, rowIndex % 2 === 1 && styles.tableDataRowAlt]}
-            >
-              {visibleColumns.map((column) => {
-                const align = getReportColumnAlign(column);
-                const cellValue = row[column];
-                const isClickableAgeBracket =
-                  isAgeBracketReport && column === 'faixa' && typeof cellValue === 'string';
-
-                if (isClickableAgeBracket) {
-                  const integrantes = parseAgeBracketMembers(row.integrantes);
+      <View style={isAgeBracketReport ? styles.ageBracketResultsRow : undefined}>
+        <View style={isAgeBracketReport ? styles.ageBracketTableSection : undefined}>
+          <ScrollView horizontal nestedScrollEnabled showsHorizontalScrollIndicator>
+            <View style={styles.tableContainer}>
+              <View style={styles.tableHeaderRow}>
+                {visibleColumns.map((column) => {
+                  const align = getReportColumnAlign(column);
 
                   return (
-                    <Pressable
-                      key={`${rowIndex}-${column}`}
+                    <Text
+                      key={column}
                       style={[
-                        styles.tableDataCellPressable,
+                        styles.tableHeaderCell,
                         { width: getReportColumnWidth(column) },
                         align === 'right' && styles.cellAlignRight,
                         align === 'center' && styles.cellAlignCenter,
                       ]}
-                      onPress={() =>
-                        setAgeBracketModal({
-                          faixa: cellValue,
-                          integrantes,
-                        })
-                      }
-                      accessibilityRole="button"
-                      accessibilityLabel={`Ver integrantes da faixa ${cellValue}`}
                     >
-                      <Text style={styles.ageBracketLink} numberOfLines={3}>
+                      {formatReportColumnLabel(column)}
+                    </Text>
+                  );
+                })}
+              </View>
+
+              {result.rows.slice(0, 100).map((row, rowIndex) => (
+                <View
+                  key={`row-${rowIndex}`}
+                  style={[styles.tableDataRow, rowIndex % 2 === 1 && styles.tableDataRowAlt]}
+                >
+                  {visibleColumns.map((column) => {
+                    const align = getReportColumnAlign(column);
+                    const cellValue = row[column];
+                    const isClickableAgeBracket =
+                      isAgeBracketReport && column === 'faixa' && typeof cellValue === 'string';
+
+                    if (isClickableAgeBracket) {
+                      const integrantes = parseAgeBracketMembers(row.integrantes);
+
+                      return (
+                        <Pressable
+                          key={`${rowIndex}-${column}`}
+                          style={[
+                            styles.tableDataCellPressable,
+                            { width: getReportColumnWidth(column) },
+                            align === 'right' && styles.cellAlignRight,
+                            align === 'center' && styles.cellAlignCenter,
+                          ]}
+                          onPress={() =>
+                            setAgeBracketModal({
+                              faixa: cellValue,
+                              integrantes,
+                            })
+                          }
+                          accessibilityRole="button"
+                          accessibilityLabel={`Ver integrantes da faixa ${cellValue}`}
+                        >
+                          <Text style={styles.ageBracketLink} numberOfLines={3}>
+                            {formatReportCellValue(column, cellValue)}
+                          </Text>
+                        </Pressable>
+                      );
+                    }
+
+                    return (
+                      <Text
+                        key={`${rowIndex}-${column}`}
+                        style={[
+                          styles.tableDataCell,
+                          { width: getReportColumnWidth(column) },
+                          align === 'right' && styles.cellAlignRight,
+                          align === 'center' && styles.cellAlignCenter,
+                        ]}
+                        numberOfLines={3}
+                      >
                         {formatReportCellValue(column, cellValue)}
                       </Text>
-                    </Pressable>
-                  );
-                }
-
-                return (
-                  <Text
-                    key={`${rowIndex}-${column}`}
-                    style={[
-                      styles.tableDataCell,
-                      { width: getReportColumnWidth(column) },
-                      align === 'right' && styles.cellAlignRight,
-                      align === 'center' && styles.cellAlignCenter,
-                    ]}
-                    numberOfLines={3}
-                  >
-                    {formatReportCellValue(column, cellValue)}
-                  </Text>
-                );
-              })}
+                    );
+                  })}
+                </View>
+              ))}
             </View>
-          ))}
+          </ScrollView>
         </View>
-      </ScrollView>
+
+        {isAgeBracketReport && ageBracketChartSlices.length > 0 ? (
+          <AgeBracketPieChart slices={ageBracketChartSlices} />
+        ) : null}
+      </View>
 
       {result.rows.length > 100 ? (
         <Text style={styles.hintText}>Exibindo os primeiros 100 registros.</Text>
@@ -930,6 +943,15 @@ const styles = StyleSheet.create({
   },
   resultsBox: {
     gap: 6,
+  },
+  ageBracketResultsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  ageBracketTableSection: {
+    flex: 1,
+    minWidth: 0,
   },
   resultsTitle: {
     color: '#94A3B8',
