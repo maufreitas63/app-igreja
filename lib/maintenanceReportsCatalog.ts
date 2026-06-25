@@ -62,7 +62,7 @@ export const MAINTENANCE_REPORT_DEFINITIONS: MaintenanceReportDefinition[] = [
     code: 'demographic_age_brackets',
     title: 'Faixa Etária',
     description:
-      'Distribui perfis por faixa etária (60+, 45-59, 30-44, 18-29, 13-17, 0-12) em ordem decrescente de idade. Toque na faixa para ver os integrantes.',
+      'Distribui perfis ativos por faixa etária (60+, 45-59, 30-44, 18-29, 13-17, 0-12) em ordem decrescente de idade. Exclui desligados (membership_out efetiva). Toque na faixa para ver os integrantes.',
     dataSources: 'profiles',
     configFields: [],
   },

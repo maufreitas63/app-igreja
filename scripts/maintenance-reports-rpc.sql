@@ -646,7 +646,14 @@ begin
         else '60+ anos'
       end as faixa
     from public.profiles p
+    cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
     where coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), '')) is not null
+      and case
+        when public.resolve_basic_role_code_for_profile(p.id) in ('member', 'congregado') then
+          coalesce(eff.membership_out::text, '') = ''
+        else
+          coalesce(p.membership_out::text, '') = ''
+      end
   )
   select
     coalesce(jsonb_agg(
