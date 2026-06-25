@@ -1,4 +1,4 @@
--- Diagnóstico: pergunta de segurança e formato do hash (não consome tentativas de recuperação).
+-- Diagnóstico: pergunta de segurança, hash e bloqueio de recuperação.
 -- Substitua o celular abaixo e execute no SQL Editor do Supabase.
 
 with params as (
@@ -6,7 +6,7 @@ with params as (
 ),
 resolved as (
   select
-    public.find_profile_id_by_phone(p.phone_input) as profile_id,
+    public.find_profile_id_for_password_recovery(p.phone_input) as profile_id,
     public.normalize_profile_phone(p.phone_input) as phone_normalized
   from params p
 )
@@ -21,16 +21,23 @@ select
   case
     when p.security_answer_hash is null then 'sem resposta cadastrada'
     when public.security_answer_hash_is_bcrypt(p.security_answer_hash) then 'bcrypt (cadastro pelo app)'
-    else 'texto puro — recadastre em Dados Cadastrais ou teste a resposta abaixo'
+    else 'texto puro — recadastre em Dados Cadastrais'
   end as hash_status,
-  s.failed_challenge_attempts,
-  s.blocked_until
+  coalesce(s.failed_challenge_attempts, 0) as failed_challenge_attempts,
+  s.blocked_until,
+  case
+    when s.blocked_until is not null and s.blocked_until > now() then
+      'BLOQUEADO até '
+      || to_char(s.blocked_until at time zone 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI')
+      || ' (Brasília) — execute scripts/password-recovery-unblock-phone.sql para liberar'
+    else 'liberado para tentar'
+  end as recovery_status
 from resolved r
 left join public.profiles p on p.id = r.profile_id
 left join public.password_recovery_state s on s.phone_normalized = r.phone_normalized;
 
--- Teste local de uma resposta (substitua phone e resposta):
+-- Teste se uma resposta confere (substitua a resposta):
 -- select public.security_answer_matches(
 --   'sua resposta aqui',
---   (select security_answer_hash from public.profiles where id = public.find_profile_id_by_phone('19996166161'))
+--   (select security_answer_hash from public.profiles where id = public.find_profile_id_for_password_recovery('19996166161'))
 -- ) as matches;

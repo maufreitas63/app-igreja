@@ -260,6 +260,7 @@ declare
   v_phone text;
   v_question text;
   v_hash text;
+  v_blocked_until timestamptz;
 begin
   v_phone := public.password_recovery_phone_key(p_phone);
 
@@ -268,10 +269,22 @@ begin
   end if;
 
   if public.password_recovery_is_blocked(p_phone) then
+    select s.blocked_until
+      into v_blocked_until
+      from public.password_recovery_state s
+     where s.phone_normalized = v_phone;
+
     return jsonb_build_object(
       'ok', false,
-      'message', 'Recuperação temporariamente indisponível. Tente novamente em até 30 minutos.',
-      'blocked', true
+      'message',
+      'Recuperação bloqueada após 3 respostas incorretas. Tente novamente após '
+        || coalesce(
+          to_char(v_blocked_until at time zone 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI'),
+          '30 minutos'
+        )
+        || ' (horário de Brasília).',
+      'blocked', true,
+      'blocked_until', v_blocked_until
     );
   end if;
 
