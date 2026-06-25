@@ -30,6 +30,7 @@ export type MaintenanceDashboardAccessSnapshot = {
   canMonitorFamilyReception: boolean;
   canAccessProfileCadastro: boolean;
   canUpdateMaintenanceEvents: boolean;
+  canManageSupportRequests: boolean;
   canBypassEventPastDateLock: boolean;
   maintenancePanelAccess: Record<string, boolean>;
   scalePanelAccess: Partial<Record<MaintenanceScalePanelContent, boolean>>;
@@ -45,6 +46,7 @@ const EMPTY_SNAPSHOT: MaintenanceDashboardAccessSnapshot = {
   canMonitorFamilyReception: false,
   canAccessProfileCadastro: false,
   canUpdateMaintenanceEvents: false,
+  canManageSupportRequests: false,
   canBypassEventPastDateLock: false,
   maintenancePanelAccess: {},
   scalePanelAccess: {},
@@ -94,6 +96,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
   let canAccessPastoralRoleChange = false;
   let maintenancePanelAccess: Record<string, boolean> = {};
   let canUpdateMaintenanceEvents = false;
+  let canManageSupportRequests = false;
   let canBypassEventPastDateLock = false;
 
   try {
@@ -110,6 +113,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
         canAccessPastoralRoleChange,
         maintenancePanelAccess,
         canUpdateMaintenanceEvents,
+        canManageSupportRequests,
         canBypassEventPastDateLock,
       ] = await Promise.all([
         loadMaintenanceScalePanelAccess(profileId),
@@ -117,6 +121,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
         sessionCanAccessPastoralRoleChangePanel(),
         loadMaintenancePanelScreenAccess(),
         sessionHasAccess('screen', 'maintenance.card.events', 'update'),
+        sessionHasAccess('screen', 'maintenance.card.suggestions_improvements', 'update'),
         fetchSessionCanBypassEventPastDateLock(),
       ]);
     }
@@ -126,6 +131,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
     canAccessPastoralRoleChange = false;
     maintenancePanelAccess = {};
     canUpdateMaintenanceEvents = false;
+    canManageSupportRequests = false;
     canBypassEventPastDateLock = false;
   }
 
@@ -153,6 +159,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
     canMonitorFamilyReception: isSuperAdmin || canAccessProfileCadastro,
     canAccessProfileCadastro: isSuperAdmin || canAccessProfileCadastro,
     canUpdateMaintenanceEvents,
+    canManageSupportRequests: isSuperAdmin || canManageSupportRequests,
     canBypassEventPastDateLock,
     maintenancePanelAccess,
     scalePanelAccess,

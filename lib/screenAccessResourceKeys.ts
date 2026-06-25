@@ -28,6 +28,7 @@ export const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   access_control: 'maintenance.card.access_control',
   profile_access_insights: 'maintenance.card.profile_access_insights',
   event_orchestration: 'maintenance.card.event_orchestration',
+  suggestions_improvements: 'maintenance.card.suggestions_improvements',
 };
 
 export function resolveDashboardCardAccessResourceKey(

@@ -68,6 +68,14 @@ const config: ExpoConfig = {
         recordAudioAndroid: false,
       },
     ],
+    [
+      'expo-image-picker',
+      {
+        photosPermission:
+          'Permita o acesso à galeria para anexar imagens às sugestões e melhorias.',
+        microphonePermission: false,
+      },
+    ],
     'expo-font',
   ],
   experiments: {

@@ -19,6 +19,7 @@ import { MaintenanceAccessControlCard } from '@/components/MaintenanceAccessCont
 import { MaintenanceFinancialsCard } from '@/components/MaintenanceFinancialsCard';
 import { MaintenancePredictiveInsightsCard } from '@/components/MaintenancePredictiveInsightsCard';
 import { MaintenanceReportsCard } from '@/components/MaintenanceReportsCard';
+import { MaintenanceSupportSuggestionsCard } from '@/components/MaintenanceSupportSuggestionsCard';
 import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCareCard';
 import { MaintenancePastoralRoleChangeCard } from '@/components/MaintenancePastoralRoleChangeCard';
 import { MaintenanceEventOrchestrationCard } from '@/components/MaintenanceEventOrchestrationCard';
@@ -150,6 +151,7 @@ type MaintenanceCarouselCard = {
     | 'financials'
     | 'predictive_insights'
     | 'relatorios'
+    | 'suggestions_improvements'
     | 'access_control'
     | 'profile_access_insights'
     | 'event_orchestration';
@@ -183,6 +185,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '9', title: 'Informações Financeiras', content: 'financials' },
   { id: '16', title: 'Modelo Preditivo', content: 'predictive_insights' },
   { id: '17', title: 'Relatórios', content: 'relatorios' },
+  { id: '18', title: 'Sugestões e Melhorias', content: 'suggestions_improvements' },
   { id: '4', title: 'Lista de Presença', content: 'quorum_presence' },
   { id: '11', title: 'Cadastro de Usuário', content: 'profile_cadastro' },
   { id: '12', title: 'Recepção Familiar', content: 'family_reception' },
@@ -362,6 +365,7 @@ export default function MaintenanceDashboard() {
   const [canMonitorFamilyReception, setCanMonitorFamilyReception] = useState(false);
   const [canAccessProfileCadastro, setCanAccessProfileCadastro] = useState(false);
   const [canUpdateMaintenanceEvents, setCanUpdateMaintenanceEvents] = useState(false);
+  const [canManageSupportRequests, setCanManageSupportRequests] = useState(false);
   const [canBypassEventPastDateLock, setCanBypassEventPastDateLock] = useState(false);
   const [maintenancePanelAccess, setMaintenancePanelAccess] = useState<Record<string, boolean>>(
     {}
@@ -497,6 +501,7 @@ export default function MaintenanceDashboard() {
         setCanMonitorFamilyReception(snapshot.canMonitorFamilyReception);
         setCanAccessProfileCadastro(snapshot.canAccessProfileCadastro);
         setCanUpdateMaintenanceEvents(snapshot.canUpdateMaintenanceEvents);
+        setCanManageSupportRequests(snapshot.canManageSupportRequests);
         setCanBypassEventPastDateLock(snapshot.canBypassEventPastDateLock);
         setMaintenancePanelAccess(snapshot.maintenancePanelAccess);
         setScalePanelAccess(snapshot.scalePanelAccess);
@@ -1106,6 +1111,7 @@ export default function MaintenanceDashboard() {
             item.content === 'financials' && styles.panelCardFinancials,
             item.content === 'predictive_insights' && styles.panelCardPredictiveInsights,
             item.content === 'relatorios' && styles.panelCardRelatorios,
+            item.content === 'suggestions_improvements' && styles.panelCardSuggestions,
             item.content === 'access_control' && styles.panelCardAccessControl,
             item.content === 'profile_access_insights' && styles.panelCardProfileAccessInsights,
             item.content === 'event_orchestration' && styles.panelCardEventOrchestration,
@@ -1220,6 +1226,12 @@ export default function MaintenanceDashboard() {
               events={safeEvents}
               loadingEvents={loading}
               isSuperAdmin={canManageAccessControl}
+            />
+          ) : item.content === 'suggestions_improvements' ? (
+            <MaintenanceSupportSuggestionsCard
+              isActive={currentIndex === index}
+              panelHeight={cardHeight}
+              canManageResponses={canManageSupportRequests}
             />
           ) : item.content === 'access_control' ? (
             <MaintenanceAccessControlCard isActive={currentIndex === index} panelHeight={cardHeight} />
@@ -1369,6 +1381,7 @@ export default function MaintenanceDashboard() {
       scrollToMaintenancePanel,
       startEditEvent,
       startNewEvent,
+      canManageSupportRequests,
     ]
   );
 
@@ -2006,6 +2019,10 @@ const styles = StyleSheet.create({
   },
   panelCardRelatorios: {
     borderColor: 'rgba(192, 132, 252, 0.55)',
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
+  },
+  panelCardSuggestions: {
+    borderColor: 'rgba(56, 189, 248, 0.55)',
     padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardAccessControl: {
