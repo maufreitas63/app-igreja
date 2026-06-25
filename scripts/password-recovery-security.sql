@@ -508,6 +508,8 @@ end;
 $$;
 
 create or replace function public.set_profile_security_question(
+  p_phone text,
+  p_current_pin text,
   p_question text,
   p_answer text
 )
@@ -520,11 +522,28 @@ declare
   v_profile_id uuid;
   v_question text;
   v_answer text;
+  v_current_pin text;
+  v_stored_pin text;
 begin
-  v_profile_id := public.current_session_profile_id();
+  v_current_pin := nullif(trim(coalesce(p_current_pin, '')), '');
+
+  if v_current_pin is null or v_current_pin !~ '^[0-9]{4}$' then
+    raise exception 'Informe a senha atual com 4 dígitos.';
+  end if;
+
+  v_profile_id := public.find_profile_id_by_phone(p_phone);
 
   if v_profile_id is null then
-    raise exception 'Sessão inválida.';
+    raise exception 'Perfil não encontrado para este celular.';
+  end if;
+
+  select p.access_pin
+    into v_stored_pin
+    from public.profiles p
+   where p.id = v_profile_id;
+
+  if v_stored_pin is null or v_stored_pin <> v_current_pin then
+    raise exception 'Senha atual incorreta.';
   end if;
 
   v_question := trim(coalesce(p_question, ''));
@@ -550,6 +569,8 @@ begin
   );
 end;
 $$;
+
+drop function if exists public.set_profile_security_question(text, text);
 
 create or replace function public.get_profile_security_question()
 returns jsonb
@@ -585,5 +606,5 @@ grant execute on function public.password_recovery_identify(text) to anon, authe
 grant execute on function public.password_recovery_verify_challenge(text, text) to anon, authenticated;
 grant execute on function public.password_recovery_dispatch_token(text) to anon, authenticated;
 grant execute on function public.password_recovery_reset_access_pin(text, text, text) to anon, authenticated;
-grant execute on function public.set_profile_security_question(text, text) to anon, authenticated;
+grant execute on function public.set_profile_security_question(text, text, text, text) to anon, authenticated;
 grant execute on function public.get_profile_security_question() to anon, authenticated;

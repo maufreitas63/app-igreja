@@ -269,15 +269,23 @@ export async function loadProfileSecurityQuestion(): Promise<ProfileSecurityQues
 }
 
 export async function saveProfileSecurityQuestion(
+  phone: string,
+  currentPin: string,
   question: string,
   answer: string
 ): Promise<{ ok: true; securityQuestion: string } | { ok: false; message: string }> {
   const { data, error } = await supabase.rpc('set_profile_security_question', {
+    p_phone: phone,
+    p_current_pin: currentPin.trim(),
     p_question: question.trim(),
     p_answer: answer,
   });
 
   if (error) {
+    if (isSupabaseRpcMissingError(error, 'set_profile_security_question')) {
+      return { ok: false, message: PASSWORD_RECOVERY_SQL_HINT };
+    }
+
     return { ok: false, message: formatRpcError(error) };
   }
 

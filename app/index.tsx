@@ -101,8 +101,8 @@ export default function IndexScreen() {
     loginStep === 2 && !isTotemLoginMode && isBrazilianPhoneComplete(phone) && hasStoredAccessPin === null;
   const showWhatsappAbovePin =
     !isTotemLoginMode && needsWhatsappBeforePin && !isCheckingStoredPin && !showForgotPasswordHelp;
-  const showWhatsappBelowPin =
-    !isTotemLoginMode && showForgotPasswordHelp && !isCheckingStoredPin;
+  const showForgotPasswordLink =
+    !isTotemLoginMode && (showForgotPasswordHelp || (loginStep === 2 && hasStoredAccessPin === true));
   const canAttemptMemberPinLogin =
     isTotemLoginMode || (isBrazilianPhoneComplete(phone) && !needsWhatsappBeforePin);
   const isPinInputEditable =
@@ -648,7 +648,7 @@ export default function IndexScreen() {
     }
 
     if (showForgotPasswordHelp) {
-      return 'Receba um novo código pelo WhatsApp e tente novamente.';
+      return 'Use "Esqueci minha senha" para responder à pergunta de segurança antes do código no WhatsApp.';
     }
 
     if (needsWhatsappBeforePin) {
@@ -940,7 +940,7 @@ export default function IndexScreen() {
                     ? 'Este aparelho não usa cadastro de membro.'
                     : getMemberPinHint()}
                 </ReadOnlyText>
-                {!isTotemLoginMode && showForgotPasswordHelp ? (
+                {!isTotemLoginMode && showForgotPasswordLink ? (
                   <TouchableOpacity
                     accessibilityLabel="Esqueci minha senha"
                     accessibilityRole="button"
@@ -955,7 +955,6 @@ export default function IndexScreen() {
                     <Text style={styles.forgotPasswordBoxText}>Esqueci minha senha</Text>
                   </TouchableOpacity>
                 ) : null}
-                {showWhatsappBelowPin ? renderWhatsappButton(12) : null}
                 {!isTotemLoginMode && isLoading ? (
                   <ActivityIndicator color="#10b981" style={styles.loginLoader} />
                 ) : null}

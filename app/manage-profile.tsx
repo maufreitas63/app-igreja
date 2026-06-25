@@ -2067,6 +2067,10 @@ export default function ManageProfile() {
         <ProfileSecurityQuestionSection
           expanded={securityQuestionSectionExpanded}
           onToggle={() => setSecurityQuestionSectionExpanded((open) => !open)}
+          profilePhone={profilePhoneForAccessPin}
+          initialSecurityQuestion={
+            typeof profile?.security_question === 'string' ? profile.security_question : null
+          }
         />
 
         {editingFieldRow ? (
