@@ -189,20 +189,46 @@ as $$
   );
 $$;
 
+create or replace function public.password_recovery_is_lockout_exempt(p_profile_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select p_profile_id is not null
+     and public.is_super_admin_profile(p_profile_id);
+$$;
+
 create or replace function public.password_recovery_is_blocked(p_phone text)
 returns boolean
 language plpgsql
-stable
 security definer
 set search_path = public, extensions
 as $$
 declare
   v_phone text;
+  v_profile_id uuid;
   v_blocked_until timestamptz;
 begin
   v_phone := public.password_recovery_phone_key(p_phone);
 
   if v_phone is null then
+    return false;
+  end if;
+
+  v_profile_id := coalesce(
+    public.find_profile_id_for_password_recovery(p_phone),
+    public.find_profile_id_by_phone(p_phone)
+  );
+
+  if public.password_recovery_is_lockout_exempt(v_profile_id) then
+    update public.password_recovery_state s
+       set failed_challenge_attempts = 0,
+           blocked_until = null,
+           updated_at = now()
+     where s.phone_normalized = v_phone;
+
     return false;
   end if;
 
@@ -395,6 +421,13 @@ begin
     return jsonb_build_object(
       'ok', true,
       'message', 'Desafio Superado'
+    );
+  end if;
+
+  if public.password_recovery_is_lockout_exempt(v_profile_id) then
+    return jsonb_build_object(
+      'ok', false,
+      'message', 'Resposta incorreta.'
     );
   end if;
 
@@ -618,6 +651,13 @@ begin
   v_state := public.password_recovery_upsert_state(v_profile_id, p_phone);
 
   if not public.security_answer_matches(p_answer, v_hash) then
+    if public.password_recovery_is_lockout_exempt(v_profile_id) then
+      return jsonb_build_object(
+        'ok', false,
+        'message', 'Resposta incorreta.'
+      );
+    end if;
+
     v_attempts := coalesce(v_state.failed_challenge_attempts, 0) + 1;
 
     if v_attempts >= 3 then

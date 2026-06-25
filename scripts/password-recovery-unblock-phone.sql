@@ -1,4 +1,5 @@
 -- Desbloqueia recuperação de senha após 3 tentativas incorretas na pergunta de segurança.
+-- Super admins são isentos automaticamente (password-recovery-security.sql).
 -- Substitua o celular e execute no SQL Editor do Supabase.
 
 with params as (

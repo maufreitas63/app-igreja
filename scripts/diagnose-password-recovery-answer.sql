@@ -25,7 +25,10 @@ select
   end as hash_status,
   coalesce(s.failed_challenge_attempts, 0) as failed_challenge_attempts,
   s.blocked_until,
+  public.password_recovery_is_lockout_exempt(r.profile_id) as lockout_exempt_super_admin,
   case
+    when public.password_recovery_is_lockout_exempt(r.profile_id) then
+      'super admin — sem bloqueio por tentativas'
     when s.blocked_until is not null and s.blocked_until > now() then
       'BLOQUEADO até '
       || to_char(s.blocked_until at time zone 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI')
