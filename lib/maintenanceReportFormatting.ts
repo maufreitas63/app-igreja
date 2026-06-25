@@ -396,3 +396,66 @@ export const formatMaintenanceEventOptionLabel = (name: string, eventDate: strin
 
   return dateLabel === '—' ? trimmedName : `${trimmedName} — ${dateLabel}`;
 };
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export const isMaintenanceEventUuid = (value: unknown) =>
+  UUID_PATTERN.test(String(value ?? '').trim());
+
+type EventLookup = { id: string; name: string; event_date: string | null };
+
+export const resolveMaintenanceEventLabel = (
+  value: unknown,
+  events: readonly EventLookup[]
+): string | null => {
+  const raw = String(value ?? '').trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  if (!isMaintenanceEventUuid(raw)) {
+    return raw;
+  }
+
+  const event = events.find((entry) => entry.id === raw);
+
+  if (!event) {
+    return null;
+  }
+
+  return formatMaintenanceEventOptionLabel(event.name, event.event_date);
+};
+
+/** Normaliza resumo: nunca expõe UUID de evento — usa nome/data ou omite event_id. */
+export const resolveReportSummaryEntries = (
+  summary: Record<string, unknown>,
+  events: readonly EventLookup[],
+  params: Record<string, string>
+) => {
+  const resolved = new Map<string, unknown>();
+
+  for (const [key, value] of Object.entries(summary)) {
+    if (key === 'event_id') {
+      const label =
+        resolveMaintenanceEventLabel(value, events)
+        ?? resolveMaintenanceEventLabel(params.event_id, events);
+
+      if (label) {
+        resolved.set('evento', label);
+      }
+
+      continue;
+    }
+
+    if (key === 'evento') {
+      resolved.set('evento', resolveMaintenanceEventLabel(value, events) ?? value);
+      continue;
+    }
+
+    resolved.set(key, value);
+  }
+
+  return Array.from(resolved.entries());
+};

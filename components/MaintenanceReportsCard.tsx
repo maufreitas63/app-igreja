@@ -12,6 +12,8 @@ import {
   formatReportSummaryValue,
   getReportColumnAlign,
   getReportColumnWidth,
+  resolveMaintenanceEventLabel,
+  resolveReportSummaryEntries,
   resolveVisibleReportColumns,
 } from '@/lib/maintenanceReportFormatting';
 import {
@@ -392,16 +394,15 @@ type ReportSummaryProps = {
 };
 
 function ReportSummary({ reportCode, summary, params, events }: ReportSummaryProps) {
+  const resolvedEntries = useMemo(
+    () => resolveReportSummaryEntries(summary, events, params),
+    [events, params, summary]
+  );
+
   if (reportCode === 'parking_estimate') {
     const eventLabel =
-      typeof summary.evento === 'string' && summary.evento.trim()
-        ? summary.evento.trim()
-        : (() => {
-            const selected = events.find((event) => event.id === params.event_id);
-            return selected
-              ? formatMaintenanceEventOptionLabel(selected.name, selected.event_date)
-              : null;
-          })();
+      resolveMaintenanceEventLabel(summary.evento, events)
+      ?? resolveMaintenanceEventLabel(params.event_id, events);
 
     return (
       <View style={styles.summaryBox}>
@@ -436,13 +437,11 @@ function ReportSummary({ reportCode, summary, params, events }: ReportSummaryPro
     );
   }
 
-  const summaryEntries = Object.entries(summary).filter(([key]) => key !== 'event_id');
-
   return (
     <View style={styles.summaryBox}>
       <Text style={styles.summaryTitle}>Resumo</Text>
       <View style={styles.summaryGrid}>
-        {summaryEntries.map(([key, value]) => (
+        {resolvedEntries.map(([key, value]) => (
           <View key={key} style={styles.summaryCard}>
             <Text style={styles.summaryCardLabel}>{formatReportSummaryLabel(key)}</Text>
             <Text style={styles.summaryCardValue}>{formatReportSummaryValue(key, value)}</Text>

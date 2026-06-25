@@ -793,7 +793,16 @@ begin
       order by b.nome
     ), '[]'::jsonb),
     jsonb_build_object(
-      'event_id', v_event_id,
+      'evento', (
+        select
+          coalesce(nullif(trim(e.name), ''), 'Evento sem nome')
+          || case
+            when e.event_date is not null then ' — ' || to_char(e.event_date::date, 'DD/MM/YYYY')
+            else ''
+          end
+        from public.events e
+        where e.id = v_event_id
+      ),
       'criancas_com_alerta', (select count(*) from base)
     )
   into v_rows, v_summary
