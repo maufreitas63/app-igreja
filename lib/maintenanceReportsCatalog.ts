@@ -28,7 +28,7 @@ export const MAINTENANCE_REPORT_DEFINITIONS: MaintenanceReportDefinition[] = [
     code: 'members_active_inactive',
     title: 'Membros Ativos, Inativos, Congregados e Tempo de Congregação',
     description:
-      'Classifica perfis por papel (visitante, congregado, membro), tempo de congregação desde created_at e status ativo/inativo. Membros e congregados usam membership_out (efetiva, com herança familiar); visitantes usam atividade recente.',
+      'Classifica perfis por papel (visitante, congregado, membro), tempo de congregação desde created_at e status ativo/inativo. Membros e congregados usam membership_out efetiva (herança familiar). No resumo, Membros/Congregados contam só ativos; desligados aparecem separados.',
     dataSources: 'profiles, profile_access_roles, access_roles, profile_app_access_events, checkins',
     configFields: [
       {

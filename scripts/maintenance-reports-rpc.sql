@@ -220,8 +220,18 @@ begin
     ), '[]'::jsonb),
     jsonb_build_object(
       'visitantes', count(*) filter (where role_code = 'visitante'),
-      'congregados', count(*) filter (where role_code = 'congregado'),
-      'membros', count(*) filter (where role_code = 'member' and coalesce(effective_membership_out::text, '') = ''),
+      'membros', count(*) filter (
+        where role_code = 'member' and coalesce(effective_membership_out::text, '') = ''
+      ),
+      'membros_desligados', count(*) filter (
+        where role_code = 'member' and coalesce(effective_membership_out::text, '') <> ''
+      ),
+      'congregados', count(*) filter (
+        where role_code = 'congregado' and coalesce(effective_membership_out::text, '') = ''
+      ),
+      'congregados_desligados', count(*) filter (
+        where role_code = 'congregado' and coalesce(effective_membership_out::text, '') <> ''
+      ),
       'ativos', count(*) filter (where is_active),
       'inativos', count(*) filter (where not is_active),
       'janela_meses', v_months

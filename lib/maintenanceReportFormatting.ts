@@ -51,9 +51,11 @@ const COLUMN_LABELS: Record<string, string> = {
 
 const SUMMARY_LABELS: Record<string, string> = {
   visitantes: 'Visitantes',
-  congregados: 'Congregados',
-  membros: 'Membros',
-  ativos: 'Ativos',
+  congregados: 'Congregados ativos',
+  congregados_desligados: 'Congregados desligados',
+  membros: 'Membros ativos',
+  membros_desligados: 'Membros desligados',
+  ativos: 'Ativos (total)',
   inativos: 'Inativos',
   janela_meses: 'Janela (meses)',
   mes_referencia: 'Mês de referência',
