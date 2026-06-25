@@ -2070,6 +2070,12 @@ export default function ManageProfile() {
           initialSecurityQuestion={
             typeof profile?.security_question === 'string' ? profile.security_question : null
           }
+          onSaved={(securityQuestion) => {
+            setProfile((current) =>
+              current ? { ...current, security_question: securityQuestion } : current
+            );
+            void fetchProfile({ force: true });
+          }}
         />
 
         {editingFieldRow ? (

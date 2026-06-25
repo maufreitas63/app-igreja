@@ -49,6 +49,7 @@ export default function ForgotPasswordScreen() {
   const [tokenDispatched, setTokenDispatched] = useState(false);
   const [dispatchFeedback, setDispatchFeedback] = useState<string | null>(null);
   const [challengeError, setChallengeError] = useState<string | null>(null);
+  const [phoneStepError, setPhoneStepError] = useState<string | null>(null);
 
   const pinMismatch = useMemo(
     () =>
@@ -65,12 +66,13 @@ export default function ForgotPasswordScreen() {
     }
 
     setLoading(true);
+    setPhoneStepError(null);
 
     try {
       const result = await passwordRecoveryIdentify(phone);
 
       if (!result.ok) {
-        Alert.alert('Recuperação de senha', result.message);
+        setPhoneStepError(result.message);
         return;
       }
 
@@ -199,7 +201,7 @@ export default function ForgotPasswordScreen() {
 
   const getSubtitle = () => {
     if (step === 'phone') {
-      return 'Informe o celular cadastrado para iniciar a recuperação.';
+      return 'Informe o celular cadastrado. É necessário ter pergunta de segurança salva em Dados Cadastrais.';
     }
 
     if (step === 'challenge') {
@@ -237,12 +239,16 @@ export default function ForgotPasswordScreen() {
               <TextInput
                 style={[styles.input, styles.editableInput]}
                 value={phone}
-                onChangeText={(text) => setPhone(formatBrazilPhoneInput(text))}
+                onChangeText={(text) => {
+                  setPhone(formatBrazilPhoneInput(text));
+                  setPhoneStepError(null);
+                }}
                 placeholder="(00) 00000-0000"
                 placeholderTextColor="#64748B"
                 keyboardType="phone-pad"
                 autoComplete="tel"
               />
+              {phoneStepError ? <Text style={styles.errorText}>{phoneStepError}</Text> : null}
               <TouchableOpacity
                 style={[styles.btnPrimary, loading && styles.btnDisabled]}
                 onPress={() => void handleIdentify()}
@@ -279,10 +285,10 @@ export default function ForgotPasswordScreen() {
                 }}
                 placeholder="Resposta secreta"
                 placeholderTextColor="#64748B"
-                secureTextEntry
                 autoCapitalize="none"
                 autoCorrect={false}
-                textContentType="password"
+                autoComplete="off"
+                textContentType="none"
                 editable={!loading}
                 onSubmitEditing={() => void handleVerifyChallenge()}
                 returnKeyType="done"

@@ -136,6 +136,48 @@ as $$
   select public.normalize_profile_phone(p_phone);
 $$;
 
+create or replace function public.find_profile_id_for_password_recovery(p_phone text)
+returns uuid
+language plpgsql
+stable
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_digits text;
+  v_local text;
+  v_id uuid;
+begin
+  v_digits := public.normalize_profile_phone(p_phone);
+
+  if v_digits is null then
+    return null;
+  end if;
+
+  if v_digits like '55%' and length(v_digits) >= 12 then
+    v_local := substring(v_digits from 3);
+  else
+    v_local := v_digits;
+  end if;
+
+  select p.id
+    into v_id
+    from public.profiles p
+   where (
+      public.normalize_profile_phone(p.phone) = v_digits
+      or public.normalize_profile_phone(p.phone) = v_local
+      or public.normalize_profile_phone(p.phone) = '55' || v_local
+      or p.phone = trim(coalesce(p_phone, ''))
+   )
+   and nullif(trim(p.security_question), '') is not null
+   and nullif(trim(p.security_answer_hash), '') is not null
+   order by p.updated_at desc nulls last
+   limit 1;
+
+  return v_id;
+end;
+$$;
+
 create or replace function public.password_recovery_generic_error()
 returns jsonb
 language sql
@@ -233,9 +275,18 @@ begin
     );
   end if;
 
-  v_profile_id := public.find_profile_id_by_phone(p_phone);
+  v_profile_id := public.find_profile_id_for_password_recovery(p_phone);
 
   if v_profile_id is null then
+    if public.find_profile_id_by_phone(p_phone) is not null then
+      return jsonb_build_object(
+        'ok', false,
+        'message',
+        'Pergunta de segurança não cadastrada. Salve pergunta e resposta em Dados Cadastrais antes de recuperar a senha.',
+        'needs_security_setup', true
+      );
+    end if;
+
     return public.password_recovery_generic_error();
   end if;
 
@@ -294,7 +345,7 @@ begin
     );
   end if;
 
-  v_profile_id := public.find_profile_id_by_phone(p_phone);
+  v_profile_id := public.find_profile_id_for_password_recovery(p_phone);
 
   if v_profile_id is null then
     return public.password_recovery_generic_error();
@@ -398,7 +449,7 @@ begin
     );
   end if;
 
-  v_profile_id := public.find_profile_id_by_phone(p_phone);
+  v_profile_id := public.find_profile_id_for_password_recovery(p_phone);
 
   if v_profile_id is null then
     return public.password_recovery_generic_error();
@@ -407,10 +458,10 @@ begin
   select s.*
     into v_state
     from public.password_recovery_state s
-   where s.phone_normalized = v_phone
-     and s.profile_id = v_profile_id;
+   where s.phone_normalized = v_phone;
 
   if v_state.phone_normalized is null
+     or v_state.profile_id is distinct from v_profile_id
      or v_state.challenge_passed_at is null
      or v_state.challenge_passed_at < now() - interval '10 minutes' then
     return jsonb_build_object(
@@ -527,7 +578,7 @@ begin
     );
   end if;
 
-  v_profile_id := public.find_profile_id_by_phone(p_phone);
+  v_profile_id := public.find_profile_id_for_password_recovery(p_phone);
 
   if v_profile_id is null then
     return public.password_recovery_generic_error();
@@ -709,17 +760,10 @@ begin
     );
   end if;
 
-  v_profile_id := public.find_profile_id_by_phone(p_phone);
-
-  if v_profile_id is null then
-    return public.password_recovery_generic_error();
-  end if;
-
   select t.*
     into v_token_row
     from public.password_recovery_tokens t
    where t.phone_normalized = v_phone
-     and t.profile_id = v_profile_id
      and t.used_at is null
      and t.expires_at > now()
    order by t.created_at desc
@@ -731,6 +775,8 @@ begin
       'message', 'Código inválido ou expirado. Solicite um novo código.'
     );
   end if;
+
+  v_profile_id := v_token_row.profile_id;
 
   if crypt(v_token, v_token_row.token_hash) <> v_token_row.token_hash then
     return jsonb_build_object(
@@ -825,7 +871,7 @@ begin
 end;
 $$;
 
-create or replace function public.set_profile_security_question(
+create or replace function public.save_my_profile_security_question(
   p_question text,
   p_answer text
 )
@@ -869,6 +915,18 @@ begin
 end;
 $$;
 
+create or replace function public.set_profile_security_question(
+  p_question text,
+  p_answer text
+)
+returns jsonb
+language sql
+security definer
+set search_path = public, extensions
+as $$
+  select public.save_my_profile_security_question(p_question, p_answer);
+$$;
+
 create or replace function public.get_profile_security_question()
 returns jsonb
 language plpgsql
@@ -899,6 +957,7 @@ begin
 end;
 $$;
 
+grant execute on function public.find_profile_id_for_password_recovery(text) to anon, authenticated;
 grant execute on function public.password_recovery_identify(text) to anon, authenticated;
 grant execute on function public.password_recovery_verify_challenge(text, text) to anon, authenticated;
 grant execute on function public.password_recovery_verify_challenge_and_dispatch(text, text) to anon, authenticated;
@@ -906,4 +965,5 @@ grant execute on function public.password_recovery_dispatch_token(text) to anon,
 grant execute on function public.password_recovery_reset_access_pin(text, text, text) to anon, authenticated;
 grant execute on function public.set_profile_security_question(text, text, text, text) to anon, authenticated;
 grant execute on function public.set_profile_security_question(text, text) to authenticated;
+grant execute on function public.save_my_profile_security_question(text, text) to authenticated;
 grant execute on function public.get_profile_security_question() to anon, authenticated;

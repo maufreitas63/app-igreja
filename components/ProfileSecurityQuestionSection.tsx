@@ -1,4 +1,7 @@
-import { saveProfileSecurityQuestion } from '@/lib/passwordRecovery';
+import {
+  loadProfileSecurityQuestion,
+  saveProfileSecurityQuestion,
+} from '@/lib/passwordRecovery';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -15,14 +18,17 @@ type Props = {
   expanded: boolean;
   onToggle: () => void;
   initialSecurityQuestion?: string | null;
+  onSaved?: (securityQuestion: string) => void;
 };
 
 export function ProfileSecurityQuestionSection({
   expanded,
   onToggle,
   initialSecurityQuestion,
+  onSaved,
 }: Props) {
   const [saving, setSaving] = useState(false);
+  const [loadingQuestion, setLoadingQuestion] = useState(false);
   const [configured, setConfigured] = useState(false);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
@@ -32,6 +38,42 @@ export function ProfileSecurityQuestionSection({
     setConfigured(trimmed.length > 0);
     setQuestion(trimmed);
   }, [initialSecurityQuestion]);
+
+  useEffect(() => {
+    if (!expanded) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const syncFromServer = async () => {
+      setLoadingQuestion(true);
+
+      try {
+        const result = await loadProfileSecurityQuestion();
+
+        if (cancelled || !result.ok) {
+          return;
+        }
+
+        const trimmed = result.securityQuestion.trim();
+        setConfigured(result.configured && trimmed.length > 0);
+        if (trimmed) {
+          setQuestion(trimmed);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingQuestion(false);
+        }
+      }
+    };
+
+    void syncFromServer();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [expanded]);
 
   const handleSave = useCallback(async () => {
     if (!question.trim()) {
@@ -57,6 +99,7 @@ export function ProfileSecurityQuestionSection({
       setConfigured(true);
       setQuestion(result.securityQuestion);
       setAnswer('');
+      onSaved?.(result.securityQuestion);
       Alert.alert(
         'Pergunta salva',
         'Use esta pergunta e resposta na recuperação de senha, se esquecer o PIN.'
@@ -64,7 +107,7 @@ export function ProfileSecurityQuestionSection({
     } finally {
       setSaving(false);
     }
-  }, [answer, question]);
+  }, [answer, onSaved, question]);
 
   return (
     <View style={styles.sectionCard}>
@@ -86,6 +129,10 @@ export function ProfileSecurityQuestionSection({
 
       {expanded ? (
         <View style={styles.body}>
+          {loadingQuestion ? (
+            <ActivityIndicator color="#10b981" style={styles.loadingQuestion} />
+          ) : null}
+
           <Text style={styles.label}>Pergunta</Text>
           <TextInput
             style={styles.input}
@@ -159,6 +206,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 16,
     gap: 8,
+  },
+  loadingQuestion: {
+    alignSelf: 'flex-start',
+    marginBottom: 4,
   },
   label: {
     color: '#CBD5E1',

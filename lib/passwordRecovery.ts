@@ -44,6 +44,7 @@ const PASSWORD_RECOVERY_RPCS = [
   'password_recovery_dispatch_token',
   'password_recovery_reset_access_pin',
   'set_profile_security_question',
+  'save_my_profile_security_question',
 ] as const;
 
 const formatRpcError = (error: unknown) => {
@@ -64,7 +65,7 @@ const isRecoveryPayloadOk = (payload: Record<string, unknown> | null) =>
 
 export type PasswordRecoveryIdentifyResult =
   | { ok: true; securityQuestion: string }
-  | { ok: false; message: string; blocked?: boolean };
+  | { ok: false; message: string; blocked?: boolean; needsSecuritySetup?: boolean };
 
 export async function passwordRecoveryIdentify(
   phone: string
@@ -85,6 +86,7 @@ export async function passwordRecoveryIdentify(
       message:
         typeof payload?.message === 'string' ? payload.message : 'Dados não localizados',
       blocked: payload?.blocked === true,
+      needsSecuritySetup: payload?.needs_security_setup === true,
     };
   }
 
@@ -423,13 +425,16 @@ export async function saveProfileSecurityQuestion(
   question: string,
   answer: string
 ): Promise<{ ok: true; securityQuestion: string } | { ok: false; message: string }> {
-  const { data, error } = await supabase.rpc('set_profile_security_question', {
+  const { data, error } = await supabase.rpc('save_my_profile_security_question', {
     p_question: question.trim(),
     p_answer: answer,
   });
 
   if (error) {
-    if (isSupabaseRpcMissingError(error, 'set_profile_security_question')) {
+    if (
+      isSupabaseRpcMissingError(error, 'save_my_profile_security_question')
+      || isSupabaseRpcMissingError(error, 'set_profile_security_question')
+    ) {
       return { ok: false, message: PASSWORD_RECOVERY_SQL_HINT };
     }
 
