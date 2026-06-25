@@ -1108,74 +1108,45 @@ begin
       r.whatsapp_authorized,
       r.notify_in_app,
       r.created_at,
-      (
-        select count(*)::int
-          from public.maintenance_support_attachments a
-         where a.request_id = r.id
-           and a.is_active = true
-      ) as anexos_qtd
+      r.updated_at,
+      r.responded_at
     from public.maintenance_support_requests r
   ),
-  timeline as (
+  attachment_summary as (
     select
+      a.request_id,
+      count(*)::int as anexos_qtd,
+      coalesce(
+        jsonb_agg(
+          coalesce(nullif(trim(a.file_name), ''), 'imagem')
+          order by a.sort_order, a.created_at
+        ),
+        '[]'::jsonb
+      ) as anexos_nomes
+    from public.maintenance_support_attachments a
+    where a.is_active = true
+    group by a.request_id
+  ),
+  all_events as (
+    select
+      br.id as request_id,
       br.created_at as data_hora,
-      'Abertura'::text as tipo_evento,
-      br.requester_name as solicitante,
-      br.requester_phone as telefone,
-      case br.record_type::text
-        when 'suggestion' then 'Sugestão'
-        when 'question' then 'Dúvida'
-        when 'comment' then 'Comentário'
-        when 'incident' then 'Problema/Incidente'
-        else br.record_type::text
-      end as tipo_solicitacao,
-      case br.status::text
-        when 'received' then 'Recebida'
-        when 'in_review' then 'Em análise'
-        when 'in_development' then 'Em desenvolvimento'
-        when 'awaiting_validation' then 'Aguardando validação'
-        when 'completed' then 'Concluída'
-        when 'not_applicable' then 'Não aplicável'
-        else br.status::text
-      end as status_solicitacao,
+      'Abertura'::text as tipo,
       'App'::text as canal,
       br.requester_name as autor,
-      'Usuário'::text as papel_autor,
-      br.description as mensagem,
-      br.developer_action as acao_desenvolvedor,
-      br.developer_guidance as orientacoes,
-      to_char(br.estimated_completion_date, 'DD/MM/YYYY') as previsao_conclusao,
-      br.anexos_qtd as anexos,
-      br.whatsapp_authorized as whatsapp_autorizado,
-      br.notify_in_app as notificar_app
+      'Usuário'::text as papel,
+      br.description as mensagem
     from base_requests br
 
     union all
 
     select
+      br.id,
       i.created_at,
       case i.channel::text
         when 'status' then 'Tratamento'
         when 'attachment' then 'Anexo'
         else 'Interação'
-      end,
-      br.requester_name,
-      br.requester_phone,
-      case br.record_type::text
-        when 'suggestion' then 'Sugestão'
-        when 'question' then 'Dúvida'
-        when 'comment' then 'Comentário'
-        when 'incident' then 'Problema/Incidente'
-        else br.record_type::text
-      end,
-      case br.status::text
-        when 'received' then 'Recebida'
-        when 'in_review' then 'Em análise'
-        when 'in_development' then 'Em desenvolvimento'
-        when 'awaiting_validation' then 'Aguardando validação'
-        when 'completed' then 'Concluída'
-        when 'not_applicable' then 'Não aplicável'
-        else br.status::text
       end,
       case i.channel::text
         when 'app' then 'App'
@@ -1191,39 +1162,16 @@ begin
         when 'system' then 'Sistema'
         else i.actor_role::text
       end,
-      i.message,
-      br.developer_action,
-      br.developer_guidance,
-      to_char(br.estimated_completion_date, 'DD/MM/YYYY'),
-      br.anexos_qtd,
-      br.whatsapp_authorized,
-      br.notify_in_app
+      i.message
     from public.maintenance_support_interactions i
     join base_requests br on br.id = i.request_id
 
     union all
 
     select
+      br.id,
       c.sent_at,
       'Comunicação',
-      br.requester_name,
-      br.requester_phone,
-      case br.record_type::text
-        when 'suggestion' then 'Sugestão'
-        when 'question' then 'Dúvida'
-        when 'comment' then 'Comentário'
-        when 'incident' then 'Problema/Incidente'
-        else br.record_type::text
-      end,
-      case br.status::text
-        when 'received' then 'Recebida'
-        when 'in_review' then 'Em análise'
-        when 'in_development' then 'Em desenvolvimento'
-        when 'awaiting_validation' then 'Aguardando validação'
-        when 'completed' then 'Concluída'
-        when 'not_applicable' then 'Não aplicável'
-        else br.status::text
-      end,
       case c.channel::text
         when 'in_app' then 'Notificação no app'
         when 'whatsapp' then 'WhatsApp'
@@ -1238,71 +1186,120 @@ begin
           nullif(trim(coalesce(c.subject, '')), ''),
           nullif(trim(c.message), '')
         )
-      ),
-      br.developer_action,
-      br.developer_guidance,
-      to_char(br.estimated_completion_date, 'DD/MM/YYYY'),
-      br.anexos_qtd,
-      br.whatsapp_authorized,
-      br.notify_in_app
+      )
     from public.maintenance_support_communications c
     join base_requests br on br.id = c.request_id
     left join public.profiles p on p.id = c.sent_by_profile_id
+  ),
+  historico_by_request as (
+    select
+      e.request_id,
+      coalesce(
+        jsonb_agg(
+          jsonb_build_object(
+            'data_hora', e.data_hora,
+            'tipo', e.tipo,
+            'canal', e.canal,
+            'autor', e.autor,
+            'papel', e.papel,
+            'mensagem', e.mensagem
+          )
+          order by e.data_hora asc, e.tipo asc
+        ),
+        '[]'::jsonb
+      ) as historico
+    from all_events e
+    group by e.request_id
+  ),
+  requests_enriched as (
+    select
+      br.requester_name as solicitante,
+      coalesce(nullif(trim(br.requester_phone), ''), '') as telefone,
+      case br.record_type::text
+        when 'suggestion' then 'Sugestão'
+        when 'question' then 'Dúvida'
+        when 'comment' then 'Comentário'
+        when 'incident' then 'Problema/Incidente'
+        else br.record_type::text
+      end as tipo,
+      case br.status::text
+        when 'received' then 'Recebida'
+        when 'in_review' then 'Em análise'
+        when 'in_development' then 'Em desenvolvimento'
+        when 'awaiting_validation' then 'Aguardando validação'
+        when 'completed' then 'Concluída'
+        when 'not_applicable' then 'Não aplicável'
+        else br.status::text
+      end as status,
+      br.created_at as abertura_em,
+      br.updated_at as atualizado_em,
+      br.responded_at as respondido_em,
+      br.description as descricao,
+      br.developer_action as acao_desenvolvedor,
+      br.developer_guidance as orientacoes,
+      to_char(br.estimated_completion_date, 'DD/MM/YYYY') as previsao_conclusao,
+      coalesce(asum.anexos_qtd, 0) as anexos,
+      coalesce(asum.anexos_nomes, '[]'::jsonb) as anexos_nomes,
+      br.whatsapp_authorized as whatsapp_autorizado,
+      br.notify_in_app as notificar_app,
+      coalesce(h.historico, '[]'::jsonb) as historico
+    from base_requests br
+    left join attachment_summary asum on asum.request_id = br.id
+    left join historico_by_request h on h.request_id = br.id
   )
   select
     coalesce(
       jsonb_agg(
         jsonb_build_object(
-          'data_hora', t.data_hora,
-          'tipo_evento', t.tipo_evento,
-          'solicitante', t.solicitante,
-          'telefone', t.telefone,
-          'tipo_solicitacao', t.tipo_solicitacao,
-          'status_solicitacao', t.status_solicitacao,
-          'canal', t.canal,
-          'autor', t.autor,
-          'papel_autor', t.papel_autor,
-          'mensagem', t.mensagem,
-          'acao_desenvolvedor', t.acao_desenvolvedor,
-          'orientacoes', t.orientacoes,
-          'previsao_conclusao', t.previsao_conclusao,
-          'anexos', t.anexos,
-          'whatsapp_autorizado', t.whatsapp_autorizado,
-          'notificar_app', t.notificar_app
+          'solicitante', re.solicitante,
+          'telefone', re.telefone,
+          'tipo', re.tipo,
+          'status', re.status,
+          'abertura_em', re.abertura_em,
+          'atualizado_em', re.atualizado_em,
+          'respondido_em', re.respondido_em,
+          'descricao', re.descricao,
+          'acao_desenvolvedor', re.acao_desenvolvedor,
+          'orientacoes', re.orientacoes,
+          'previsao_conclusao', re.previsao_conclusao,
+          'anexos', re.anexos,
+          'anexos_nomes', re.anexos_nomes,
+          'whatsapp_autorizado', re.whatsapp_autorizado,
+          'notificar_app', re.notificar_app,
+          'historico', re.historico
         )
-        order by t.data_hora asc, t.tipo_evento asc
+        order by re.abertura_em asc
       ),
       '[]'::jsonb
     ),
     jsonb_build_object(
-      'total_eventos', (select count(*) from timeline),
       'total_solicitacoes', (select count(*) from base_requests),
-      'aberturas', (select count(*) from timeline where tipo_evento = 'Abertura'),
-      'interacoes', (select count(*) from timeline where tipo_evento in ('Interação', 'Tratamento', 'Anexo')),
-      'comunicacoes', (select count(*) from timeline where tipo_evento = 'Comunicação')
+      'interacoes', (select count(*) from public.maintenance_support_interactions),
+      'comunicacoes', (select count(*) from public.maintenance_support_communications),
+      'eventos_historico', (select count(*) from all_events)
     )
   into v_rows, v_summary
-  from timeline t;
+  from requests_enriched re;
 
   return public._maintenance_report_payload(
     'support_suggestions',
     array[
-      'data_hora',
-      'tipo_evento',
       'solicitante',
       'telefone',
-      'tipo_solicitacao',
-      'status_solicitacao',
-      'canal',
-      'autor',
-      'papel_autor',
-      'mensagem',
+      'tipo',
+      'status',
+      'abertura_em',
+      'atualizado_em',
+      'respondido_em',
+      'descricao',
       'acao_desenvolvedor',
       'orientacoes',
       'previsao_conclusao',
       'anexos',
+      'anexos_nomes',
       'whatsapp_autorizado',
-      'notificar_app'
+      'notificar_app',
+      'historico'
     ],
     v_rows,
     v_summary

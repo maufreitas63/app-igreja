@@ -48,11 +48,16 @@ const COLUMN_LABELS: Record<string, string> = {
   veiculos_cadastrados: 'Veículos cadastrados',
   estimativa_veiculos: 'Estimativa de veículos',
   data_hora: 'Data/hora',
-  tipo_evento: 'Evento',
+  tipo_evento: 'Tipo de evento',
   solicitante: 'Solicitante',
   telefone: 'Telefone',
   tipo_solicitacao: 'Tipo',
   status_solicitacao: 'Status',
+  abertura_em: 'Abertura',
+  respondido_em: 'Resposta',
+  descricao: 'Descrição',
+  anexos_nomes: 'Nomes dos anexos',
+  historico: 'Histórico',
   canal: 'Canal',
   autor: 'Autor',
   papel_autor: 'Papel',
@@ -105,10 +110,10 @@ const SUMMARY_LABELS: Record<string, string> = {
   familias_inscritas: 'Famílias inscritas',
   estimativa_total_veiculos: 'Estimativa total de veículos',
   total_eventos: 'Total de eventos',
-  total_solicitacoes: 'Total de solicitações',
   aberturas: 'Aberturas',
   interacoes: 'Interações',
   comunicacoes: 'Comunicações',
+  eventos_historico: 'Eventos no histórico',
 };
 
 const CURRENCY_COLUMNS = new Set(['total']);
@@ -136,7 +141,14 @@ const DECIMAL_COLUMNS = new Set([
   'dias_ate_conciliacao',
 ]);
 const DATE_COLUMNS = new Set(['data', 'data_evento']);
-const DATETIME_COLUMNS = new Set(['criado_em', 'atualizado_em', 'hora_checkin', 'data_hora']);
+const DATETIME_COLUMNS = new Set([
+  'criado_em',
+  'atualizado_em',
+  'hora_checkin',
+  'data_hora',
+  'abertura_em',
+  'respondido_em',
+]);
 
 const COLUMN_WIDTHS: Record<string, number> = {
   nome: 168,

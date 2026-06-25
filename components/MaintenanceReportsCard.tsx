@@ -1,4 +1,5 @@
 import { AgeBracketPieChart, parseAgeBracketChartSlices } from '@/components/AgeBracketPieChart';
+import { SupportSuggestionsReportView } from '@/components/SupportSuggestionsReportView';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import type { MaintenanceEvent } from '@/hooks/useMaintenanceEvents';
@@ -228,6 +229,14 @@ type ReportResultsTableProps = {
 };
 
 function ReportResultsTable({ result }: ReportResultsTableProps) {
+  if (result.reportCode === 'support_suggestions') {
+    return <SupportSuggestionsReportView result={result} />;
+  }
+
+  return <GenericReportResultsTable result={result} />;
+}
+
+function GenericReportResultsTable({ result }: ReportResultsTableProps) {
   const [ageBracketModal, setAgeBracketModal] = useState<AgeBracketMembersModalState | null>(null);
   const visibleColumns = useMemo(
     () => resolveVisibleReportColumns(result.rows, result.columns),

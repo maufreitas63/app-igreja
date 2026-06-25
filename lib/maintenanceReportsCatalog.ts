@@ -111,7 +111,7 @@ export const MAINTENANCE_REPORT_DEFINITIONS: MaintenanceReportDefinition[] = [
     code: 'support_suggestions',
     title: 'Sugestões e Melhorias',
     description:
-      'Linha do tempo cronológica de todas as solicitações: abertura, interações, comunicações e tratamento, com dados do solicitante e do desenvolvedor.',
+      'Uma ficha por solicitação (tipo, solicitante, descrição, tratamento e anexos), com histórico cronológico interno de abertura, interações e comunicações.',
     dataSources:
       'maintenance_support_requests, maintenance_support_interactions, maintenance_support_communications, maintenance_support_attachments',
     configFields: [],
