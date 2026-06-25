@@ -1,4 +1,5 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { formatBrazilDateInput } from '@/lib/inputMasks';
 import { useMaintenanceSupport } from '@/hooks/useMaintenanceSupport';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import {
@@ -60,7 +61,7 @@ type TimelineEntry =
     };
 
 const ACCENT = '#38BDF8';
-const DATE_INPUT_PLACEHOLDER = 'AAAA-MM-DD ou DD/MM/AAAA';
+const DATE_INPUT_PLACEHOLDER = 'dd/mm/aaaa';
 
 const statusTone: Record<MaintenanceSupportStatus, { bg: string; border: string; text: string }> = {
   received: { bg: 'rgba(148, 163, 184, 0.16)', border: '#64748B', text: '#CBD5E1' },
@@ -103,15 +104,23 @@ const formatDate = (value: string | null | undefined) => {
   return value;
 };
 
+const formatEstimatedDateInput = (value: string | null | undefined) => {
+  if (!value?.trim()) {
+    return '';
+  }
+
+  const isoMatch = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+  }
+
+  return formatBrazilDateInput(value);
+};
+
 const normalizeDateInput = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) {
     return null;
-  }
-
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    return trimmed;
   }
 
   const brMatch = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -119,7 +128,12 @@ const normalizeDateInput = (value: string) => {
     return `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}`;
   }
 
-  throw new Error('Informe a previsão no formato AAAA-MM-DD ou DD/MM/AAAA.');
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    return trimmed;
+  }
+
+  throw new Error('Informe a previsão no formato dd/mm/aaaa.');
 };
 
 const buildDefaultCommunicationMessage = (request: MaintenanceSupportRequest) => {
@@ -247,7 +261,7 @@ export function MaintenanceSupportSuggestionsCard({
     setTreatmentStatus(selectedRequest.status);
     setDeveloperAction(selectedRequest.developer_action ?? '');
     setDeveloperGuidance(selectedRequest.developer_guidance ?? '');
-    setEstimatedDate(selectedRequest.estimated_completion_date ?? '');
+    setEstimatedDate(formatEstimatedDateInput(selectedRequest.estimated_completion_date));
     setUserUpdateDescription(selectedRequest.description);
     setUserUpdateMessage('');
     setUserUpdateImages([]);
@@ -759,10 +773,11 @@ export function MaintenanceSupportSuggestionsCard({
             <TextInput
               style={styles.input}
               value={estimatedDate}
-              onChangeText={setEstimatedDate}
+              onChangeText={(value) => setEstimatedDate(formatBrazilDateInput(value))}
               placeholder={DATE_INPUT_PLACEHOLDER}
               placeholderTextColor="#64748B"
               autoCapitalize="none"
+              keyboardType="number-pad"
             />
 
             <Text style={styles.label}>Orientações detalhadas ao usuário</Text>
