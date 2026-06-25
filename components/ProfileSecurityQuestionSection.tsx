@@ -117,15 +117,16 @@ export function ProfileSecurityQuestionSection({
 
           <Text style={styles.label}>Senha atual (4 dígitos)</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, styles.pinInput]}
             value={currentPin}
             onChangeText={(text) => setCurrentPin(text.replace(/\D/g, '').slice(0, ACCESS_PIN_LENGTH))}
-            placeholder="****"
+            placeholder="0000"
             placeholderTextColor="#64748b"
             keyboardType="number-pad"
             maxLength={ACCESS_PIN_LENGTH}
-            secureTextEntry
             textAlign="center"
+            autoComplete="off"
+            textContentType="none"
           />
 
           <Text style={styles.label}>Pergunta</Text>
@@ -242,5 +243,10 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontWeight: '700',
     fontSize: 15,
+  },
+  pinInput: {
+    letterSpacing: 8,
+    fontSize: 20,
+    fontWeight: '700',
   },
 });

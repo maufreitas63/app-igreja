@@ -319,9 +319,10 @@ export default function ForgotPasswordScreen() {
                 placeholderTextColor="#64748B"
                 keyboardType="number-pad"
                 maxLength={ACCESS_PIN_LENGTH}
-                secureTextEntry
                 editable={challengePassed && tokenDispatched && !loading}
                 textAlign="center"
+                autoComplete="off"
+                textContentType="none"
               />
 
               <Text style={styles.label}>Nova senha (4 dígitos)</Text>
@@ -329,13 +330,14 @@ export default function ForgotPasswordScreen() {
                 style={[styles.input, styles.editableInput, styles.pinInput]}
                 value={newPin}
                 onChangeText={(text) => setNewPin(text.replace(/\D/g, '').slice(0, ACCESS_PIN_LENGTH))}
-                placeholder="****"
+                placeholder="0000"
                 placeholderTextColor="#64748B"
                 keyboardType="number-pad"
                 maxLength={ACCESS_PIN_LENGTH}
-                secureTextEntry
                 editable={challengePassed && tokenDispatched && !loading}
                 textAlign="center"
+                autoComplete="off"
+                textContentType="none"
               />
 
               <Text style={styles.label}>Confirmar nova senha</Text>
@@ -350,13 +352,14 @@ export default function ForgotPasswordScreen() {
                 onChangeText={(text) =>
                   setConfirmPin(text.replace(/\D/g, '').slice(0, ACCESS_PIN_LENGTH))
                 }
-                placeholder="****"
+                placeholder="0000"
                 placeholderTextColor="#64748B"
                 keyboardType="number-pad"
                 maxLength={ACCESS_PIN_LENGTH}
-                secureTextEntry
                 editable={challengePassed && tokenDispatched && !loading}
                 textAlign="center"
+                autoComplete="off"
+                textContentType="none"
               />
 
               {pinMismatch ? (
