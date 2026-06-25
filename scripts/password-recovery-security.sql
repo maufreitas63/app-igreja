@@ -2,7 +2,7 @@
 -- Ordem: identificar celular → desafio (hash) → disparo do token → redefinir access_pin.
 -- Execute no SQL Editor do Supabase após profiles-access-pin.sql e access-control-security-hardening.sql.
 
-create extension if not exists pgcrypto;
+create extension if not exists pgcrypto with schema extensions;
 
 alter table public.profiles
   add column if not exists security_question text;
@@ -83,7 +83,7 @@ returns boolean
 language plpgsql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_phone text;
@@ -111,7 +111,7 @@ create or replace function public.password_recovery_upsert_state(
 returns public.password_recovery_state
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_phone text;
@@ -142,7 +142,7 @@ create or replace function public.password_recovery_identify(p_phone text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_profile_id uuid;
@@ -201,7 +201,7 @@ create or replace function public.password_recovery_verify_challenge(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_profile_id uuid;
@@ -301,7 +301,7 @@ create or replace function public.password_recovery_dispatch_token(p_phone text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_profile_id uuid;
@@ -427,7 +427,7 @@ create or replace function public.password_recovery_verify_challenge_and_dispatc
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_profile_id uuid;
@@ -601,7 +601,7 @@ create or replace function public.password_recovery_reset_access_pin(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_profile_id uuid;
@@ -702,7 +702,7 @@ create or replace function public.set_profile_security_question(
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_profile_id uuid;
@@ -763,7 +763,7 @@ returns jsonb
 language plpgsql
 stable
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_profile_id uuid;
