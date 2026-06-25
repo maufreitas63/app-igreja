@@ -584,7 +584,7 @@ export async function updateMaintenanceSupportTreatment(input: {
   const developerAction = input.developerAction.trim() || null;
   const developerGuidance = input.developerGuidance.trim() || null;
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('maintenance_support_requests')
     .update({
       status: input.status,
@@ -593,9 +593,16 @@ export async function updateMaintenanceSupportTreatment(input: {
       estimated_completion_date: input.estimatedCompletionDate,
       responded_at: new Date().toISOString(),
     })
-    .eq('id', input.requestId);
+    .eq('id', input.requestId)
+    .select('id');
 
   if (error) throwSchemaHintIfMissing(error);
+
+  if (!data?.length) {
+    throw new Error(
+      'Não foi possível salvar o tratamento. Confirme que você é super_admin e que scripts/maintenance-support-suggestions.sql foi aplicado no Supabase.'
+    );
+  }
 
   await insertInteraction({
     requestId: input.requestId,

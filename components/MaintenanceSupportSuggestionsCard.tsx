@@ -653,7 +653,7 @@ export function MaintenanceSupportSuggestionsCard({
             <FontAwesome name="chevron-left" size={13} color="#BAE6FD" />
             <Text style={styles.backButtonText}>Lista</Text>
           </TouchableOpacity>
-          <RequestStatusBadge status={selectedRequest.status} />
+          <RequestStatusBadge status={isSuperAdmin ? treatmentStatus : selectedRequest.status} />
         </View>
 
         <View style={styles.detailCard}>
@@ -750,13 +750,41 @@ export function MaintenanceSupportSuggestionsCard({
           <View style={styles.developerCard}>
             <Text style={styles.sectionTitle}>Tratamento pelo desenvolvedor</Text>
             <Text style={styles.label}>Status da solicitação</Text>
-            <DropdownSelect
-              options={MAINTENANCE_SUPPORT_STATUS_OPTIONS}
-              selectedValue={treatmentStatus}
-              onValueChange={(value) => setTreatmentStatus(value as MaintenanceSupportStatus)}
-              modalTitle="Status da solicitação"
-              style={styles.dropdown}
-            />
+            <Text style={styles.helperText}>
+              Toque em um status abaixo e depois em Salvar tratamento para aplicar a alteração.
+            </Text>
+            <View style={styles.statusChipRow}>
+              {MAINTENANCE_SUPPORT_STATUS_OPTIONS.map((option) => {
+                const value = option.value as MaintenanceSupportStatus;
+                const selected = treatmentStatus === value;
+                const tone = statusTone[value];
+
+                return (
+                  <Pressable
+                    key={option.value}
+                    style={[
+                      styles.statusChip,
+                      {
+                        backgroundColor: selected ? tone.bg : 'rgba(15, 23, 42, 0.55)',
+                        borderColor: selected ? tone.border : '#475569',
+                      },
+                    ]}
+                    onPress={() => setTreatmentStatus(value)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                  >
+                    <Text
+                      style={[
+                        styles.statusChipText,
+                        { color: selected ? tone.text : '#CBD5E1' },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
 
             <Text style={styles.label}>Ação tomada ou planejada</Text>
             <TextInput
@@ -1250,6 +1278,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(20, 83, 45, 0.14)',
     padding: 12,
     gap: 9,
+  },
+  helperText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  statusChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  statusChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  statusChipText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
   sectionTitle: {
     color: '#E0F2FE',
