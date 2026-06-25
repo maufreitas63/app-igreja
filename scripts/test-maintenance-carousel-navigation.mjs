@@ -6,7 +6,7 @@
 const MAINTENANCE_PANEL_CARDS = [
   { id: '1', title: 'Programação de Eventos', content: 'events' },
   { id: '2', title: 'Cronograma de Eventos', content: 'events_gantt' },
-  { id: '3', title: 'Sala(s) - Check In', content: 'sala_monitor' },
+  { id: '3', title: 'Sala(s) - Check In', content: 'sala_servidor' },
   { id: '5', title: 'Tipos de Escala', content: 'scale_types' },
   { id: '6', title: 'Servos em Disponibilidade', content: 'scale_volunteers' },
   { id: '7', title: 'Programação de Escalas', content: 'scales' },
@@ -24,7 +24,7 @@ const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY = {
   menu: '/maintenance-dashboard',
   events: 'maintenance.card.events',
   events_gantt: 'maintenance.card.events_gantt',
-  sala_monitor: 'maintenance.card.sala_monitor',
+  sala_servidor: 'maintenance.card.sala_servidor',
   quorum_presence: 'maintenance.card.quorum_presence',
   scale_types: 'maintenance.card.scale_types',
   scale_volunteers: 'maintenance.card.scale_volunteers',
@@ -159,7 +159,7 @@ const partialAccess = {
   maintenancePanelAccess: {
     ...fullAccess.maintenancePanelAccess,
     events_gantt: false,
-    sala_monitor: false,
+    sala_servidor: false,
     financials: false,
   },
   scalePanelAccess: {

@@ -1,13 +1,13 @@
 import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { useDashboardSelectedEvent } from '@/hooks/useDashboardSelectedEvent';
-import { useRoomMonitorScales } from '@/hooks/useRoomMonitorScales';
+import { useRoomServidorScales } from '@/hooks/useRoomServidorScales';
 import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { useEventRegistrationsByStatus } from '@/hooks/useEventRegistrationsByStatus';
 import { readDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
-import { formatRoomMonitorNames } from '@/lib/roomMonitorScales';
+import { formatRoomServidorNames } from '@/lib/roomServidorScales';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
@@ -33,7 +33,7 @@ type GroupedRoomConfig = {
   dotStyle: object;
 };
 
-type MaintenanceSalaMonitorCardProps = {
+type MaintenanceSalaServidorCardProps = {
   embedded?: boolean;
   panelHeight?: number;
 };
@@ -48,10 +48,10 @@ const formatDisplayName = (fullName: string) => {
   return `${parts[0]} ${parts[parts.length - 1]}`;
 };
 
-export const MaintenanceSalaMonitorCard = ({
+export const MaintenanceSalaServidorCard = ({
   embedded,
   panelHeight,
-}: MaintenanceSalaMonitorCardProps) => {
+}: MaintenanceSalaServidorCardProps) => {
   const {
     kidsRoomLabel,
     teensRoomLabel,
@@ -83,13 +83,13 @@ export const MaintenanceSalaMonitorCard = ({
   } = useEventRegistrationsByStatus(selectedEventId);
 
   const {
-    kidsMonitorNames,
-    teensMonitorNames,
+    kidsServidorNames,
+    teensServidorNames,
     canCheckInKids,
     canCheckInTeens,
-    loading: loadingRoomMonitors,
-    refetch: refetchRoomMonitors,
-  } = useRoomMonitorScales(selectedEvent?.event_date, {
+    loading: loadingRoomServidores,
+    refetch: refetchRoomServidores,
+  } = useRoomServidorScales(selectedEvent?.event_date, {
     profileFullName: operatorProfile.fullName,
     profileId: operatorProfile.id,
   });
@@ -99,14 +99,14 @@ export const MaintenanceSalaMonitorCard = ({
       void readDashboardSelectedEventId();
       void refetchActiveEvents();
       void refetchGroupedRegistrations();
-      void refetchRoomMonitors();
+      void refetchRoomServidores();
       void loadSessionProfile().then((sessionProfile) => {
         setOperatorProfile({
           id: sessionProfile?.id?.trim() || null,
           fullName: sessionProfile?.full_name?.trim() || null,
         });
       });
-    }, [refetchActiveEvents, refetchGroupedRegistrations, refetchRoomMonitors])
+    }, [refetchActiveEvents, refetchGroupedRegistrations, refetchRoomServidores])
   );
 
   const selectedEventTime = selectedEvent ? formatEventDateTimeLabel(selectedEvent.event_date) : null;
@@ -188,7 +188,7 @@ export const MaintenanceSalaMonitorCard = ({
     if (!canCheckInSelectedRoom) {
       Alert.alert(
         'Sem permissão',
-        'Somente monitores escalados para esta sala na data do evento podem registrar o check-in.'
+        'Somente Servidores escalados para esta sala na data do evento podem registrar o check-in.'
       );
       return;
     }
@@ -207,7 +207,7 @@ export const MaintenanceSalaMonitorCard = ({
     }
   };
 
-  const isLoading = loadingEvents || loadingGroupedRegistrations || loadingRoomMonitors;
+  const isLoading = loadingEvents || loadingGroupedRegistrations || loadingRoomServidores;
   const hasSalaResources = Boolean(selectedEvent?.kids_room || selectedEvent?.teens_room);
 
   return (
@@ -357,13 +357,13 @@ export const MaintenanceSalaMonitorCard = ({
             })}
           </View>
 
-          <View style={styles.groupedAudienceMonitorNamesRow}>
+          <View style={styles.groupedAudienceServidorNamesRow}>
             {availableGroupedRooms.map((room) => (
-              <View key={`${room.key}-monitors`} style={styles.groupedAudienceMonitorNamesColumn}>
-                <Text style={styles.groupedAudienceMonitorNamesLabel}>Monitores</Text>
-                <Text style={styles.groupedAudienceMonitorNamesText} numberOfLines={2}>
-                  {formatRoomMonitorNames(
-                    room.key === 'TEENS' ? teensMonitorNames : kidsMonitorNames
+              <View key={`${room.key}-servidores`} style={styles.groupedAudienceServidorNamesColumn}>
+                <Text style={styles.groupedAudienceServidorNamesLabel}>Servidores</Text>
+                <Text style={styles.groupedAudienceServidorNamesText} numberOfLines={2}>
+                  {formatRoomServidorNames(
+                    room.key === 'TEENS' ? teensServidorNames : kidsServidorNames
                   )}
                 </Text>
               </View>
@@ -371,8 +371,8 @@ export const MaintenanceSalaMonitorCard = ({
           </View>
 
           {!canCheckInSelectedRoom ? (
-            <Text style={styles.roomMonitorRestrictionText}>
-              Você não está escalado como monitor desta sala na data do evento. O check-in está
+            <Text style={styles.roomServidorRestrictionText}>
+              Você não está escalado como servidor desta sala na data do evento. O check-in está
               bloqueado.
             </Text>
           ) : null}
@@ -636,30 +636,30 @@ const styles = StyleSheet.create({
     gap: 10,
     alignItems: 'stretch',
   },
-  groupedAudienceMonitorNamesRow: {
+  groupedAudienceServidorNamesRow: {
     flexDirection: 'row',
     gap: 10,
     alignItems: 'flex-start',
   },
-  groupedAudienceMonitorNamesColumn: {
+  groupedAudienceServidorNamesColumn: {
     flex: 1,
     flexBasis: 0,
     gap: 2,
     minWidth: 0,
   },
-  groupedAudienceMonitorNamesLabel: {
+  groupedAudienceServidorNamesLabel: {
     color: '#64748B',
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  groupedAudienceMonitorNamesText: {
+  groupedAudienceServidorNamesText: {
     color: '#CBD5E1',
     fontSize: 12,
     lineHeight: 16,
   },
-  roomMonitorRestrictionText: {
+  roomServidorRestrictionText: {
     color: '#FDE68A',
     fontSize: 12,
     lineHeight: 18,

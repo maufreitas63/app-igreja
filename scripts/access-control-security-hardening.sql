@@ -271,7 +271,7 @@ insert into public.access_resources (resource_type, resource_key, label, descrip
 values
   ('screen', 'maintenance.card.events', 'Manutenção — Programação de eventos', null),
   ('screen', 'maintenance.card.events_gantt', 'Manutenção — Cronograma de eventos', null),
-  ('screen', 'maintenance.card.sala_monitor', 'Manutenção — Monitor de salas', null),
+  ('screen', 'maintenance.card.sala_servidor', 'Manutenção — Servidor de salas', null),
   ('screen', 'maintenance.card.quorum_presence', 'Manutenção — Lista de presença (quórum)', null),
   ('screen', 'maintenance.card.financials', 'Manutenção — Informações financeiras', null),
   ('screen', 'maintenance.card.profile_cadastro', 'Manutenção — Cadastro / Recepção familiar', null)
@@ -288,7 +288,7 @@ select r.id, res.id, true, true
    and res.resource_key in (
      'maintenance.card.events',
      'maintenance.card.events_gantt',
-     'maintenance.card.sala_monitor',
+     'maintenance.card.sala_servidor',
      'maintenance.card.quorum_presence'
    )
 on conflict (role_id, resource_id) where (role_id is not null) do update

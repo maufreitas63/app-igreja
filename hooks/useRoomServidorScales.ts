@@ -1,28 +1,28 @@
 import {
   canProfileCheckInRoom,
-  checkSessionIsRoomMonitorSuperAdmin,
-  fetchRoomMonitorAssignmentsForDate,
-  groupRoomMonitorNames,
-  type RoomMonitorAssignment,
-  type RoomMonitorRoom,
-} from '@/lib/roomMonitorScales';
+  checkSessionIsRoomServidorSuperAdmin,
+  fetchRoomServidorAssignmentsForDate,
+  groupRoomServidorNames,
+  type RoomServidorAssignment,
+  type RoomServidorRoom,
+} from '@/lib/roomServidorScales';
 import { useCallback, useEffect, useState } from 'react';
 
-export type UseRoomMonitorScalesOptions = {
+export type UseRoomServidorScalesOptions = {
   enabled?: boolean;
   profileFullName?: string | null;
   profileId?: string | null;
 };
 
-export const useRoomMonitorScales = (
+export const useRoomServidorScales = (
   eventDate: string | null | undefined,
-  options?: UseRoomMonitorScalesOptions
+  options?: UseRoomServidorScalesOptions
 ) => {
   const enabled = options?.enabled !== false;
   const profileFullName = options?.profileFullName ?? null;
   const profileId = options?.profileId ?? null;
 
-  const [assignments, setAssignments] = useState<RoomMonitorAssignment[]>([]);
+  const [assignments, setAssignments] = useState<RoomServidorAssignment[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -41,8 +41,8 @@ export const useRoomMonitorScales = (
 
     try {
       const [nextAssignments, superAdmin] = await Promise.all([
-        fetchRoomMonitorAssignmentsForDate(eventDate),
-        checkSessionIsRoomMonitorSuperAdmin(profileId),
+        fetchRoomServidorAssignmentsForDate(eventDate),
+        checkSessionIsRoomServidorSuperAdmin(profileId),
       ]);
 
       setAssignments(nextAssignments);
@@ -50,7 +50,7 @@ export const useRoomMonitorScales = (
     } catch (fetchError) {
       setAssignments([]);
       setIsSuperAdmin(false);
-      setError(fetchError instanceof Error ? fetchError : new Error('Erro ao carregar monitores.'));
+      setError(fetchError instanceof Error ? fetchError : new Error('Erro ao carregar servidores.'));
     } finally {
       setLoading(false);
     }
@@ -60,10 +60,10 @@ export const useRoomMonitorScales = (
     void refetch();
   }, [refetch]);
 
-  const groupedNames = groupRoomMonitorNames(assignments);
+  const groupedNames = groupRoomServidorNames(assignments);
 
   const canCheckInRoom = useCallback(
-    (room: RoomMonitorRoom) => {
+    (room: RoomServidorRoom) => {
       if (isSuperAdmin) {
         return true;
       }
@@ -75,8 +75,8 @@ export const useRoomMonitorScales = (
 
   return {
     assignments,
-    kidsMonitorNames: groupedNames.kids,
-    teensMonitorNames: groupedNames.teens,
+    kidsServidorNames: groupedNames.kids,
+    teensServidorNames: groupedNames.teens,
     canCheckInKids: canCheckInRoom('KIDS'),
     canCheckInTeens: canCheckInRoom('TEENS'),
     isSuperAdmin,

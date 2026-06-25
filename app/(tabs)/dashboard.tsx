@@ -9,7 +9,7 @@ import { usePalette } from '@/context/PaletteContext';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
-import { useDashboardSelectedEvent, useEventRegistrationsByStatus, useRoomMonitorScales } from '@/hooks';
+import { useDashboardSelectedEvent, useEventRegistrationsByStatus, useRoomServidorScales } from '@/hooks';
 import { useFamilyPreCheckin } from '@/hooks/useFamilyPreCheckin';
 import { useGeoCheckinMonitor } from '@/hooks/useGeoCheckinMonitor';
 import { useEventGeofenceCoordinates } from '@/hooks/useEventGeofenceCoordinates';
@@ -32,7 +32,7 @@ import {
   parseGeofenceHoursBeforeParameter,
 } from '@/lib/geoCheckinWindow';
 import { parseGeofenceRadiusMeters } from '@/lib/checkinGeofence';
-import { formatRoomMonitorNames } from '@/lib/roomMonitorScales';
+import { formatRoomServidorNames } from '@/lib/roomServidorScales';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import { withActiveMembershipProfileFilter } from '@/lib/activeMemberProfile';
 import { formatFullName } from '@/lib/fullName';
@@ -648,10 +648,10 @@ export default function Dashboard() {
     familyId,
   });
   const {
-    kidsMonitorNames,
-    teensMonitorNames,
-    loading: loadingRoomMonitors,
-  } = useRoomMonitorScales(selectedEvent?.event_date, {
+    kidsServidorNames,
+    teensServidorNames,
+    loading: loadingRoomServidores,
+  } = useRoomServidorScales(selectedEvent?.event_date, {
     enabled: isSalaRegistrationsEnabled,
     profileFullName: profile?.full_name,
     profileId: profile?.id,
@@ -3519,7 +3519,7 @@ export default function Dashboard() {
                       </Text>
                     </View>
                     <Text style={styles.cardTitle}>{item.title}</Text>
-                    {loadingGroupedRegistrations || loadingRoomMonitors ? (
+                    {loadingGroupedRegistrations || loadingRoomServidores ? (
                       <CardLoadingState lines={3} />
                     ) : groupedRegistrationsError ? (
                       <Text style={styles.offeringsErrorText}>
@@ -3587,16 +3587,16 @@ export default function Dashboard() {
                           })}
                         </View>
 
-                        <View style={styles.groupedAudienceMonitorNamesRow}>
+                        <View style={styles.groupedAudienceServidorNamesRow}>
                           {availableGroupedRooms.map((room) => (
                             <View
-                              key={`${room.key}-monitors`}
-                              style={styles.groupedAudienceMonitorNamesColumn}
+                              key={`${room.key}-servidores`}
+                              style={styles.groupedAudienceServidorNamesColumn}
                             >
-                              <Text style={styles.groupedAudienceMonitorNamesLabel}>Monitores</Text>
-                              <Text style={styles.groupedAudienceMonitorNamesText} numberOfLines={2}>
-                                {formatRoomMonitorNames(
-                                  room.key === 'TEENS' ? teensMonitorNames : kidsMonitorNames
+                              <Text style={styles.groupedAudienceServidorNamesLabel}>Servidores</Text>
+                              <Text style={styles.groupedAudienceServidorNamesText} numberOfLines={2}>
+                                {formatRoomServidorNames(
+                                  room.key === 'TEENS' ? teensServidorNames : kidsServidorNames
                                 )}
                               </Text>
                             </View>
@@ -3626,9 +3626,9 @@ export default function Dashboard() {
                                       ]}
                                     >
                                       <View style={styles.groupedAudienceRowContent}>
-                                        <View style={styles.monitorReadOnlyCheckSlot}>
+                                        <View style={styles.servidorReadOnlyCheckSlot}>
                                           {registration.room_entry_checked ? (
-                                            <Text style={styles.monitorReadOnlyCheckMark}>✓</Text>
+                                            <Text style={styles.servidorReadOnlyCheckMark}>✓</Text>
                                           ) : null}
                                         </View>
                                         <View style={styles.groupedAudienceNameWrap}>
@@ -5083,25 +5083,25 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     marginTop: 6,
   },
-  groupedAudienceMonitorNamesRow: {
+  groupedAudienceServidorNamesRow: {
     flexDirection: 'row',
     gap: 10,
     alignItems: 'flex-start',
   },
-  groupedAudienceMonitorNamesColumn: {
+  groupedAudienceServidorNamesColumn: {
     flex: 1,
     flexBasis: 0,
     gap: 2,
     minWidth: 0,
   },
-  groupedAudienceMonitorNamesLabel: {
+  groupedAudienceServidorNamesLabel: {
     color: '#64748B',
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  groupedAudienceMonitorNamesText: {
+  groupedAudienceServidorNamesText: {
     color: '#CBD5E1',
     fontSize: 12,
     lineHeight: 16,
@@ -5822,13 +5822,13 @@ const styles = StyleSheet.create({
   },
   placeholderText: { color: '#94A3B8', fontSize: 16, textAlign: 'center' },
   footerControls: { flexShrink: 0, paddingHorizontal: 32, marginTop: 6 },
-  monitorReadOnlyCheckMark: {
+  servidorReadOnlyCheckMark: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '900',
     flexShrink: 0,
   },
-  monitorReadOnlyCheckSlot: {
+  servidorReadOnlyCheckSlot: {
     width: 22,
     height: 22,
     alignItems: 'center',

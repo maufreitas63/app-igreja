@@ -1,5 +1,6 @@
--- Check-in Kids/Teens: somente monitores escalados na data do evento.
+-- Check-in Kids/Teens: somente servidores escalados na data do evento.
 -- Execute no SQL Editor do Supabase após vigilancia-escalas.sql e get-app-parameter-value.sql.
+-- Substitui scripts/room-monitor-checkin-rpc.sql (mantém aliases legados no final).
 
 create or replace function public.normalize_person_name(p_name text)
 returns text
@@ -25,7 +26,7 @@ as $$
   select regexp_replace(public.normalize_person_name(p_value), '[^a-z0-9]+', '', 'g');
 $$;
 
-create or replace function public.is_kids_room_monitor_scale(
+create or replace function public.is_kids_room_servidor_scale(
   p_codigo text,
   p_nome text,
   p_configured_code text default null
@@ -40,7 +41,10 @@ as $$
       and public.normalize_scale_token(p_codigo) = public.normalize_scale_token(p_configured_code)
     )
     or (
-      public.normalize_person_name(p_nome) like '%monitor%'
+      (
+        public.normalize_person_name(p_nome) like '%servidor%'
+        or public.normalize_person_name(p_nome) like '%monitor%'
+      )
       and public.normalize_person_name(p_nome) like '%kids%'
     )
     or (
@@ -49,13 +53,15 @@ as $$
     )
     or public.normalize_person_name(p_nome) like '%ibn kids%'
     or public.normalize_person_name(p_nome) like '%ibnkids%'
+    or public.normalize_person_name(p_codigo) like '%servidor_kids%'
     or public.normalize_person_name(p_codigo) like '%monitor_kids%'
     or public.normalize_person_name(p_codigo) like '%sala_kids%'
     or public.normalize_person_name(p_codigo) like '%ibn_kids%'
+    or public.normalize_person_name(p_codigo) = 'servidor_ibn_kids'
     or public.normalize_person_name(p_codigo) = 'monitor_ibn_kids';
 $$;
 
-create or replace function public.is_teens_room_monitor_scale(
+create or replace function public.is_teens_room_servidor_scale(
   p_codigo text,
   p_nome text,
   p_configured_code text default null
@@ -70,7 +76,10 @@ as $$
       and public.normalize_scale_token(p_codigo) = public.normalize_scale_token(p_configured_code)
     )
     or (
-      public.normalize_person_name(p_nome) like '%monitor%'
+      (
+        public.normalize_person_name(p_nome) like '%servidor%'
+        or public.normalize_person_name(p_nome) like '%monitor%'
+      )
       and public.normalize_person_name(p_nome) like '%teens%'
     )
     or (
@@ -79,13 +88,15 @@ as $$
     )
     or public.normalize_person_name(p_nome) like '%ibn teens%'
     or public.normalize_person_name(p_nome) like '%ibnteens%'
+    or public.normalize_person_name(p_codigo) like '%servidor_teens%'
     or public.normalize_person_name(p_codigo) like '%monitor_teens%'
     or public.normalize_person_name(p_codigo) like '%sala_teens%'
     or public.normalize_person_name(p_codigo) like '%ibn_teens%'
+    or public.normalize_person_name(p_codigo) = 'servidor_ibn_teens'
     or public.normalize_person_name(p_codigo) = 'monitor_ibn_teens';
 $$;
 
-create or replace function public.profile_is_room_monitor_on_date(
+create or replace function public.profile_is_room_servidor_on_date(
   p_profile_id uuid,
   p_room text,
   p_service_date date
@@ -119,8 +130,14 @@ begin
     return false;
   end if;
 
-  v_kids_code := public.get_app_parameter_value('escala_codigo_monitor_kids');
-  v_teens_code := public.get_app_parameter_value('escala_codigo_monitor_teens');
+  v_kids_code := coalesce(
+    nullif(trim(public.get_app_parameter_value('escala_codigo_servidor_kids')), ''),
+    nullif(trim(public.get_app_parameter_value('escala_codigo_monitor_kids')), '')
+  );
+  v_teens_code := coalesce(
+    nullif(trim(public.get_app_parameter_value('escala_codigo_servidor_teens')), ''),
+    nullif(trim(public.get_app_parameter_value('escala_codigo_monitor_teens')), '')
+  );
 
   return exists (
     select 1
@@ -132,11 +149,11 @@ begin
        and (
          (
            upper(trim(coalesce(p_room, ''))) = 'KIDS'
-           and public.is_kids_room_monitor_scale(te.codigo, te.nome, v_kids_code)
+           and public.is_kids_room_servidor_scale(te.codigo, te.nome, v_kids_code)
          )
          or (
            upper(trim(coalesce(p_room, ''))) = 'TEENS'
-           and public.is_teens_room_monitor_scale(te.codigo, te.nome, v_teens_code)
+           and public.is_teens_room_servidor_scale(te.codigo, te.nome, v_teens_code)
          )
        )
        and (
@@ -197,11 +214,11 @@ begin
     );
   end if;
 
-  if not public.profile_is_room_monitor_on_date(p_actor_profile_id, v_kids_status, v_service_date) then
+  if not public.profile_is_room_servidor_on_date(p_actor_profile_id, v_kids_status, v_service_date) then
     return jsonb_build_object(
       'success', false,
       'message',
-      'Somente monitores escalados para esta sala na data do evento podem registrar o check-in.'
+      'Somente servidores escalados para esta sala na data do evento podem registrar o check-in.'
     );
   end if;
 
@@ -229,9 +246,53 @@ exception
 end;
 $$;
 
+-- Aliases legados (instalações que ainda referenciam *monitor*).
+create or replace function public.is_kids_room_monitor_scale(
+  p_codigo text,
+  p_nome text,
+  p_configured_code text default null
+)
+returns boolean
+language sql
+immutable
+as $$
+  select public.is_kids_room_servidor_scale(p_codigo, p_nome, p_configured_code);
+$$;
+
+create or replace function public.is_teens_room_monitor_scale(
+  p_codigo text,
+  p_nome text,
+  p_configured_code text default null
+)
+returns boolean
+language sql
+immutable
+as $$
+  select public.is_teens_room_servidor_scale(p_codigo, p_nome, p_configured_code);
+$$;
+
+create or replace function public.profile_is_room_monitor_on_date(
+  p_profile_id uuid,
+  p_room text,
+  p_service_date date
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select public.profile_is_room_servidor_on_date(p_profile_id, p_room, p_service_date);
+$$;
+
 grant execute on function public.normalize_person_name(text) to anon, authenticated;
 grant execute on function public.normalize_scale_token(text) to anon, authenticated;
+grant execute on function public.is_kids_room_servidor_scale(text, text, text) to anon, authenticated;
+grant execute on function public.is_teens_room_servidor_scale(text, text, text) to anon, authenticated;
+grant execute on function public.profile_is_room_servidor_on_date(uuid, text, date) to anon, authenticated;
 grant execute on function public.is_kids_room_monitor_scale(text, text, text) to anon, authenticated;
 grant execute on function public.is_teens_room_monitor_scale(text, text, text) to anon, authenticated;
 grant execute on function public.profile_is_room_monitor_on_date(uuid, text, date) to anon, authenticated;
 grant execute on function public.set_event_registration_room_entry(uuid, boolean, uuid) to anon, authenticated;
+
+notify pgrst, 'reload schema';

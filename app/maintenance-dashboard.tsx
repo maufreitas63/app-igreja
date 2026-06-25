@@ -27,7 +27,7 @@ import { MaintenanceFamilyReceptionCard } from '@/components/MaintenanceFamilyRe
 import { MaintenanceProfileCadastroCard } from '@/components/MaintenanceProfileCadastroCard';
 import { MaintenanceProfileAccessInsightsCard } from '@/components/MaintenanceProfileAccessInsightsCard';
 import { MaintenanceScalesCard } from '@/components/MaintenanceScalesCard';
-import { MaintenanceSalaMonitorCard } from '@/components/MaintenanceSalaMonitorCard';
+import { MaintenanceSalaServidorCard } from '@/components/MaintenanceSalaServidorCard';
 import { QuorumCheckinRegistryTable } from '@/components/QuorumCheckinRegistryTable';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
@@ -139,7 +139,7 @@ type MaintenanceCarouselCard = {
     | 'menu'
     | 'events'
     | 'events_gantt'
-    | 'sala_monitor'
+    | 'sala_servidor'
     | 'quorum_presence'
     | 'scale_types'
     | 'scale_volunteers'
@@ -177,7 +177,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '1', title: 'Programação de Eventos', content: 'events' },
   { id: '2', title: 'Cronograma de Eventos', content: 'events_gantt' },
   { id: '15', title: 'Orquestração do Evento', content: 'event_orchestration' },
-  { id: '3', title: 'Sala(s) - Check In', content: 'sala_monitor' },
+  { id: '3', title: 'Sala(s) - Check In', content: 'sala_servidor' },
   { id: '5', title: 'Tipos de Escala', content: 'scale_types' },
   { id: '6', title: 'Servos em Disponibilidade', content: 'scale_volunteers' },
   { id: '7', title: 'Programação de Escalas', content: 'scales' },
@@ -1096,7 +1096,7 @@ export default function MaintenanceDashboard() {
           style={[
             styles.panelCard,
             panelCardSizeStyle,
-            item.content === 'sala_monitor' && styles.panelCardSala,
+            item.content === 'sala_servidor' && styles.panelCardSala,
             item.content === 'events_gantt' && styles.panelCardGantt,
             item.content === 'quorum_presence' && styles.panelCardQuorumPresence,
             item.content === 'scale_types' && styles.panelCardScaleTypes,
@@ -1237,8 +1237,8 @@ export default function MaintenanceDashboard() {
             <MaintenanceProfileAccessInsightsCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'event_orchestration' ? (
             <MaintenanceEventOrchestrationCard isActive={currentIndex === index} panelHeight={cardHeight} />
-          ) : item.content === 'sala_monitor' ? (
-            <MaintenanceSalaMonitorCard embedded panelHeight={cardHeight} />
+          ) : item.content === 'sala_servidor' ? (
+            <MaintenanceSalaServidorCard embedded panelHeight={cardHeight} />
           ) : item.content === 'events_gantt' ? (
             <View style={styles.ganttPanel}>
               <Text style={styles.ganttPanelTitle}>Cronograma de Eventos</Text>

@@ -4,15 +4,21 @@ import { formatShortName } from '@/lib/formatShortName';
 import { fetchMaintenanceScaleLogs } from '@/lib/maintenanceScalesApi';
 import { supabase } from '@/lib/supabase';
 
-export const ROOM_MONITOR_SCALE_PARAMETER = {
+export const ROOM_SERVIDOR_SCALE_PARAMETER = {
+  kids: 'escala_codigo_servidor_kids',
+  teens: 'escala_codigo_servidor_teens',
+} as const;
+
+/** Chaves legadas em `app_parameters` (compatibilidade). */
+const LEGACY_ROOM_SERVIDOR_SCALE_PARAMETER = {
   kids: 'escala_codigo_monitor_kids',
   teens: 'escala_codigo_monitor_teens',
 } as const;
 
-export type RoomMonitorRoom = 'KIDS' | 'TEENS';
+export type RoomServidorRoom = 'KIDS' | 'TEENS';
 
-export type RoomMonitorAssignment = {
-  room: RoomMonitorRoom;
+export type RoomServidorAssignment = {
+  room: RoomServidorRoom;
   volunteerName: string;
 };
 
@@ -25,6 +31,9 @@ const normalizePersonName = (value: string | null | undefined) =>
 
 const normalizeScaleToken = (value: string | null | undefined) =>
   normalizePersonName(value).replace(/[^a-z0-9]+/g, '');
+
+const includesRoomRoleToken = (normalizedName: string) =>
+  normalizedName.includes('servidor') || normalizedName.includes('monitor');
 
 export const personNamesMatch = (
   profileOrVolunteerName: string | null | undefined,
@@ -61,7 +70,7 @@ const matchesConfiguredScaleCode = (
   return normalizedScale === normalizedConfigured;
 };
 
-export const isKidsRoomMonitorScale = (
+export const isKidsRoomServidorScale = (
   scaleName: string,
   scaleCode: string,
   configuredKidsCode?: string | null
@@ -74,22 +83,24 @@ export const isKidsRoomMonitorScale = (
   const normalizedCode = normalizePersonName(scaleCode);
 
   return (
-    (normalizedName.includes('monitor') && normalizedName.includes('kids'))
+    (includesRoomRoleToken(normalizedName) && normalizedName.includes('kids'))
     || (normalizedName.includes('sala') && normalizedName.includes('kids'))
-    || (normalizedName.includes('monitor') && normalizedName.includes('infantil'))
+    || (includesRoomRoleToken(normalizedName) && normalizedName.includes('infantil'))
     || (normalizedName.includes('sala') && normalizedName.includes('infantil'))
     || normalizedName.includes('ibn kids')
     || normalizedName.includes('ibnkids')
     || normalizedName.includes('ibn infantil')
     || normalizedName.includes('ibninfantil')
+    || normalizedCode.includes('servidor_kids')
     || normalizedCode.includes('monitor_kids')
     || normalizedCode.includes('sala_kids')
     || normalizedCode.includes('ibn_kids')
+    || normalizedCode === 'servidor_ibn_kids'
     || normalizedCode === 'monitor_ibn_kids'
   );
 };
 
-export const isTeensRoomMonitorScale = (
+export const isTeensRoomServidorScale = (
   scaleName: string,
   scaleCode: string,
   configuredTeensCode?: string | null
@@ -102,32 +113,34 @@ export const isTeensRoomMonitorScale = (
   const normalizedCode = normalizePersonName(scaleCode);
 
   return (
-    (normalizedName.includes('monitor') && normalizedName.includes('teens'))
+    (includesRoomRoleToken(normalizedName) && normalizedName.includes('teens'))
     || (normalizedName.includes('sala') && normalizedName.includes('teens'))
-    || (normalizedName.includes('monitor') && normalizedName.includes('jovens'))
+    || (includesRoomRoleToken(normalizedName) && normalizedName.includes('jovens'))
     || (normalizedName.includes('sala') && normalizedName.includes('jovens'))
     || normalizedName.includes('ibn teens')
     || normalizedName.includes('ibnteens')
     || normalizedName.includes('ibn jovens')
     || normalizedName.includes('ibnjovens')
+    || normalizedCode.includes('servidor_teens')
     || normalizedCode.includes('monitor_teens')
     || normalizedCode.includes('sala_teens')
     || normalizedCode.includes('ibn_teens')
+    || normalizedCode === 'servidor_ibn_teens'
     || normalizedCode === 'monitor_ibn_teens'
   );
 };
 
-const isRoomMonitorScale = (
-  room: RoomMonitorRoom,
+const isRoomServidorScale = (
+  room: RoomServidorRoom,
   scaleName: string,
   scaleCode: string,
   configuredCodes: { kids: string | null; teens: string | null }
 ) =>
   room === 'KIDS'
-    ? isKidsRoomMonitorScale(scaleName, scaleCode, configuredCodes.kids)
-    : isTeensRoomMonitorScale(scaleName, scaleCode, configuredCodes.teens);
+    ? isKidsRoomServidorScale(scaleName, scaleCode, configuredCodes.kids)
+    : isTeensRoomServidorScale(scaleName, scaleCode, configuredCodes.teens);
 
-export const formatRoomMonitorNames = (names: string[]) => {
+export const formatRoomServidorNames = (names: string[]) => {
   const unique = Array.from(
     new Set(
       names
@@ -137,27 +150,42 @@ export const formatRoomMonitorNames = (names: string[]) => {
   );
 
   if (!unique.length) {
-    return 'Nenhum monitor escalado';
+    return 'Nenhum servidor escalado';
   }
 
   return unique.join(', ');
 };
 
-export async function loadRoomMonitorScaleCodes() {
+async function readScaleParameter(primaryKey: string, legacyKey: string) {
+  const primary = (await getAppParameterValue(primaryKey))?.trim();
+  if (primary) {
+    return primary;
+  }
+
+  return (await getAppParameterValue(legacyKey))?.trim() || null;
+}
+
+export async function loadRoomServidorScaleCodes() {
   const [kidsCode, teensCode] = await Promise.all([
-    getAppParameterValue(ROOM_MONITOR_SCALE_PARAMETER.kids),
-    getAppParameterValue(ROOM_MONITOR_SCALE_PARAMETER.teens),
+    readScaleParameter(
+      ROOM_SERVIDOR_SCALE_PARAMETER.kids,
+      LEGACY_ROOM_SERVIDOR_SCALE_PARAMETER.kids
+    ),
+    readScaleParameter(
+      ROOM_SERVIDOR_SCALE_PARAMETER.teens,
+      LEGACY_ROOM_SERVIDOR_SCALE_PARAMETER.teens
+    ),
   ]);
 
   return {
-    kids: kidsCode?.trim() || null,
-    teens: teensCode?.trim() || null,
+    kids: kidsCode,
+    teens: teensCode,
   };
 }
 
-export async function fetchRoomMonitorAssignmentsForDate(
+export async function fetchRoomServidorAssignmentsForDate(
   serviceDate: string | null | undefined
-): Promise<RoomMonitorAssignment[]> {
+): Promise<RoomServidorAssignment[]> {
   const normalizedDate = getEventCalendarDate(serviceDate);
 
   if (!normalizedDate) {
@@ -165,17 +193,17 @@ export async function fetchRoomMonitorAssignmentsForDate(
   }
 
   const [configuredCodes, scaleLogs] = await Promise.all([
-    loadRoomMonitorScaleCodes(),
+    loadRoomServidorScaleCodes(),
     fetchMaintenanceScaleLogs(),
   ]);
 
   return scaleLogs
     .filter((entry) => entry.serviceDate === normalizedDate)
     .flatMap((entry) => {
-      const assignments: RoomMonitorAssignment[] = [];
+      const assignments: RoomServidorAssignment[] = [];
 
       if (
-        isRoomMonitorScale(
+        isRoomServidorScale(
           'KIDS',
           entry.scaleTypeName,
           entry.scaleTypeCode,
@@ -186,7 +214,7 @@ export async function fetchRoomMonitorAssignmentsForDate(
       }
 
       if (
-        isRoomMonitorScale(
+        isRoomServidorScale(
           'TEENS',
           entry.scaleTypeName,
           entry.scaleTypeCode,
@@ -200,7 +228,7 @@ export async function fetchRoomMonitorAssignmentsForDate(
     });
 }
 
-export const groupRoomMonitorNames = (assignments: RoomMonitorAssignment[]) => ({
+export const groupRoomServidorNames = (assignments: RoomServidorAssignment[]) => ({
   kids: assignments
     .filter((entry) => entry.room === 'KIDS')
     .map((entry) => entry.volunteerName),
@@ -211,14 +239,14 @@ export const groupRoomMonitorNames = (assignments: RoomMonitorAssignment[]) => (
 
 export const canProfileCheckInRoom = (
   profileName: string | null | undefined,
-  room: RoomMonitorRoom,
-  assignments: RoomMonitorAssignment[]
+  room: RoomServidorRoom,
+  assignments: RoomServidorAssignment[]
 ) =>
   assignments
     .filter((entry) => entry.room === room)
     .some((entry) => personNamesMatch(profileName, entry.volunteerName));
 
-export async function checkSessionIsRoomMonitorSuperAdmin(profileId: string | null | undefined) {
+export async function checkSessionIsRoomServidorSuperAdmin(profileId: string | null | undefined) {
   if (!profileId?.trim()) {
     return false;
   }

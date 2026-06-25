@@ -13,7 +13,7 @@ export const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   menu: ACCESS_SCREEN.maintenance,
   events: 'maintenance.card.events',
   events_gantt: 'maintenance.card.events_gantt',
-  sala_monitor: 'maintenance.card.sala_monitor',
+  sala_servidor: 'maintenance.card.sala_servidor',
   quorum_presence: 'maintenance.card.quorum_presence',
   scale_types: MAINTENANCE_SCALE_PANEL_CONTENT_TO_KEY.scale_types,
   scale_volunteers: MAINTENANCE_SCALE_PANEL_CONTENT_TO_KEY.scale_volunteers,

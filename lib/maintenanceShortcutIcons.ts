@@ -1,7 +1,7 @@
 export type MaintenancePanelContent =
   | 'events'
   | 'events_gantt'
-  | 'sala_monitor'
+  | 'sala_servidor'
   | 'quorum_presence'
   | 'scale_types'
   | 'scale_volunteers'
@@ -45,7 +45,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
 > = {
   events: 'calendar',
   events_gantt: 'bars',
-  sala_monitor: 'building',
+  sala_servidor: 'building',
   quorum_presence: 'check-square-o',
   scale_types: 'tags',
   scale_volunteers: 'users',
@@ -67,7 +67,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
 export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, string> = {
   events: '#FBBF24',
   events_gantt: '#A5B4FC',
-  sala_monitor: '#67E8F9',
+  sala_servidor: '#67E8F9',
   quorum_presence: '#60A5FA',
   scale_types: '#A5B4FC',
   scale_volunteers: '#2DD4BF',
