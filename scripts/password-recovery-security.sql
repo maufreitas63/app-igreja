@@ -43,7 +43,20 @@ returns text
 language sql
 immutable
 as $$
-  select lower(trim(regexp_replace(coalesce(p_answer, ''), '\s+', ' ', 'g')));
+  select lower(
+    trim(
+      regexp_replace(
+        translate(
+          coalesce(p_answer, ''),
+          'ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇáàâãäéèêëíìîïóòôõöúùûüç',
+          'AAAAAEEEEIIIIOOOOOUUUUCaaaaaeeeeiiiiooooouuuuc'
+        ),
+        '\s+',
+        ' ',
+        'g'
+      )
+    )
+  );
 $$;
 
 create or replace function public.password_recovery_phone_key(p_phone text)
@@ -118,7 +131,7 @@ begin
   on conflict (phone_normalized) do update
     set profile_id = excluded.profile_id,
         updated_at = now()
-  returning s.*
+  returning *
     into v_row;
 
   return v_row;
@@ -407,6 +420,179 @@ begin
 end;
 $$;
 
+create or replace function public.password_recovery_verify_challenge_and_dispatch(
+  p_phone text,
+  p_answer text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_profile_id uuid;
+  v_phone text;
+  v_hash text;
+  v_normalized_answer text;
+  v_attempts integer;
+  v_state public.password_recovery_state;
+  v_token text;
+  v_token_hash text;
+  v_psw_user text;
+  v_send_to_user boolean;
+  v_recipient_digits text;
+  v_manager_digits text;
+  v_message text;
+begin
+  v_phone := public.password_recovery_phone_key(p_phone);
+
+  if v_phone is null or length(v_phone) < 10 then
+    return public.password_recovery_generic_error();
+  end if;
+
+  if public.password_recovery_is_blocked(p_phone) then
+    return jsonb_build_object(
+      'ok', false,
+      'message', 'Recuperação bloqueada por 30 minutos após tentativas incorretas.',
+      'blocked', true
+    );
+  end if;
+
+  v_profile_id := public.find_profile_id_by_phone(p_phone);
+
+  if v_profile_id is null then
+    return public.password_recovery_generic_error();
+  end if;
+
+  select nullif(trim(p.security_answer_hash), '')
+    into v_hash
+    from public.profiles p
+   where p.id = v_profile_id;
+
+  if v_hash is null then
+    return public.password_recovery_generic_error();
+  end if;
+
+  v_normalized_answer := public.normalize_security_answer(p_answer);
+
+  if v_normalized_answer = '' then
+    return jsonb_build_object(
+      'ok', false,
+      'message', 'Informe a resposta da pergunta de segurança.'
+    );
+  end if;
+
+  v_state := public.password_recovery_upsert_state(v_profile_id, p_phone);
+
+  if crypt(v_normalized_answer, v_hash) <> v_hash then
+    v_attempts := coalesce(v_state.failed_challenge_attempts, 0) + 1;
+
+    if v_attempts >= 3 then
+      update public.password_recovery_state s
+         set failed_challenge_attempts = v_attempts,
+             blocked_until = now() + interval '30 minutes',
+             challenge_passed_at = null,
+             updated_at = now()
+       where s.phone_normalized = v_phone;
+
+      return jsonb_build_object(
+        'ok', false,
+        'message', 'Recuperação bloqueada por 30 minutos após 3 tentativas incorretas.',
+        'blocked', true,
+        'attempts_remaining', 0
+      );
+    end if;
+
+    update public.password_recovery_state s
+       set failed_challenge_attempts = v_attempts,
+           challenge_passed_at = null,
+           updated_at = now()
+     where s.phone_normalized = v_phone;
+
+    return jsonb_build_object(
+      'ok', false,
+      'message', 'Resposta incorreta.',
+      'attempts_remaining', greatest(0, 3 - v_attempts)
+    );
+  end if;
+
+  update public.password_recovery_state s
+     set failed_challenge_attempts = 0,
+         blocked_until = null,
+         challenge_passed_at = now(),
+         updated_at = now()
+   where s.phone_normalized = v_phone;
+
+  v_token := lpad((floor(random() * 10000))::int::text, 4, '0');
+  v_token_hash := crypt(v_token, gen_salt('bf', 8));
+
+  update public.password_recovery_tokens t
+     set used_at = now()
+   where t.phone_normalized = v_phone
+     and t.used_at is null;
+
+  insert into public.password_recovery_tokens (
+    profile_id,
+    phone_normalized,
+    token_hash,
+    expires_at
+  )
+  values (
+    v_profile_id,
+    v_phone,
+    v_token_hash,
+    now() + interval '5 minutes'
+  );
+
+  update public.password_recovery_state s
+     set challenge_passed_at = null,
+         updated_at = now()
+   where s.phone_normalized = v_phone;
+
+  select ap.value
+    into v_psw_user
+    from public.app_parameters ap
+   where ap.key = 'psw_user'
+   limit 1;
+
+  v_send_to_user := lower(trim(coalesce(v_psw_user, ''))) in ('sim', 's', 'yes', 'y', '1', 'true', 'verdadeiro');
+
+  if v_send_to_user then
+    v_recipient_digits := v_phone;
+    v_message :=
+      'Seu código de recuperação de senha é: ' || v_token
+      || '. Válido por 5 minutos. Informe-o no app para definir uma nova senha.';
+  else
+    select ap.value
+      into v_manager_digits
+      from public.app_parameters ap
+     where ap.key = 'psw_mngr'
+     limit 1;
+
+    v_recipient_digits := nullif(regexp_replace(coalesce(v_manager_digits, ''), '\D', '', 'g'), '');
+
+    if v_recipient_digits is null then
+      return jsonb_build_object(
+        'ok', false,
+        'message', 'Destino do WhatsApp não configurado (psw_mngr).'
+      );
+    end if;
+
+    v_message :=
+      'Código de recuperação de senha para o celular ' || v_phone || ': ' || v_token
+      || '. Válido por 5 minutos.';
+  end if;
+
+  return jsonb_build_object(
+    'ok', true,
+    'message', 'Desafio Superado',
+    'whatsapp_message', v_message,
+    'recipient_digits', v_recipient_digits,
+    'send_to_user', v_send_to_user
+  );
+end;
+$$;
+
 create or replace function public.password_recovery_reset_access_pin(
   p_phone text,
   p_token text,
@@ -604,6 +790,7 @@ $$;
 
 grant execute on function public.password_recovery_identify(text) to anon, authenticated;
 grant execute on function public.password_recovery_verify_challenge(text, text) to anon, authenticated;
+grant execute on function public.password_recovery_verify_challenge_and_dispatch(text, text) to anon, authenticated;
 grant execute on function public.password_recovery_dispatch_token(text) to anon, authenticated;
 grant execute on function public.password_recovery_reset_access_pin(text, text, text) to anon, authenticated;
 grant execute on function public.set_profile_security_question(text, text, text, text) to anon, authenticated;

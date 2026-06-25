@@ -5,11 +5,10 @@ import {
 } from '@/lib/accessPin';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import {
-  passwordRecoveryDispatchToken,
   passwordRecoveryIdentify,
-  passwordRecoveryOpenWhatsApp,
+  passwordRecoveryOpenWhatsAppFromDispatch,
   passwordRecoveryResetAccessPin,
-  passwordRecoveryVerifyChallenge,
+  passwordRecoveryVerifyChallengeAndDispatch,
 } from '@/lib/passwordRecovery';
 import { isBrazilianMobilePhoneComplete } from '@/lib/phoneValidation';
 import { FontAwesome } from '@expo/vector-icons';
@@ -48,6 +47,8 @@ export default function ForgotPasswordScreen() {
   const [confirmPin, setConfirmPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [tokenDispatched, setTokenDispatched] = useState(false);
+  const [dispatchFeedback, setDispatchFeedback] = useState<string | null>(null);
+  const [challengeError, setChallengeError] = useState<string | null>(null);
 
   const pinMismatch = useMemo(
     () =>
@@ -88,24 +89,24 @@ export default function ForgotPasswordScreen() {
 
   const handleVerifyChallenge = useCallback(async () => {
     if (!securityAnswer.trim()) {
-      Alert.alert('Atenção', 'Informe a resposta da pergunta de segurança.');
+      setChallengeError('Informe a resposta da pergunta de segurança.');
       return;
     }
 
     setLoading(true);
+    setChallengeError(null);
+    setDispatchFeedback(null);
 
     try {
-      const result = await passwordRecoveryVerifyChallenge(phone, securityAnswer);
+      const result = await passwordRecoveryVerifyChallengeAndDispatch(phone, securityAnswer);
 
       if (!result.ok) {
-        if (typeof result.attemptsRemaining === 'number' && result.attemptsRemaining > 0) {
-          Alert.alert(
-            'Resposta incorreta',
-            `${result.message}\n\nTentativas restantes: ${result.attemptsRemaining}.`
-          );
-        } else {
-          Alert.alert('Recuperação de senha', result.message);
-        }
+        const attemptsSuffix =
+          typeof result.attemptsRemaining === 'number' && result.attemptsRemaining > 0
+            ? ` Tentativas restantes: ${result.attemptsRemaining}.`
+            : '';
+
+        setChallengeError(`${result.message}${attemptsSuffix}`);
 
         if (result.blocked) {
           setSecurityAnswer('');
@@ -116,56 +117,28 @@ export default function ForgotPasswordScreen() {
         return;
       }
 
-      setChallengePassed(true);
-      setTokenDispatched(false);
-      Alert.alert('Desafio Superado', 'Agora você pode solicitar o código no WhatsApp.');
-    } finally {
-      setLoading(false);
-    }
-  }, [phone, securityAnswer]);
-
-  const handleDispatchToken = useCallback(async () => {
-    if (!challengePassed) {
-      Alert.alert('Etapa pendente', 'Valide a pergunta de segurança antes de solicitar o código.');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const dispatch = await passwordRecoveryDispatchToken(phone);
-
-      if (!dispatch.ok) {
-        Alert.alert('Recuperação de senha', dispatch.message);
-        return;
-      }
-
-      const whatsapp = await passwordRecoveryOpenWhatsApp(phone, dispatch);
-
-      if (!whatsapp.ok) {
-        Alert.alert('WhatsApp', whatsapp.message);
-        return;
-      }
+      const whatsapp = passwordRecoveryOpenWhatsAppFromDispatch(phone, result);
 
       try {
-        await Clipboard.setStringAsync(dispatch.whatsappMessage);
+        await Clipboard.setStringAsync(result.whatsappMessage);
       } catch (clipboardError) {
         console.error('Erro ao copiar mensagem de recuperação:', clipboardError);
       }
 
+      setChallengePassed(true);
       setTokenDispatched(true);
       setStep('token');
-
-      Alert.alert(
-        'Código enviado',
-        whatsapp.whatsappOpened
-          ? 'Confira o WhatsApp e informe o código de 4 dígitos abaixo.'
-          : 'Abra o WhatsApp manualmente, confira o código e informe-o abaixo.'
+      setDispatchFeedback(
+        whatsapp.ok
+          ? whatsapp.whatsappOpened
+            ? 'Desafio validado. O WhatsApp foi aberto com o código de 4 dígitos (válido por 5 minutos).'
+            : 'Desafio validado. O código foi copiado — abra o WhatsApp e envie a mensagem.'
+          : whatsapp.message
       );
     } finally {
       setLoading(false);
     }
-  }, [challengePassed, phone]);
+  }, [phone, securityAnswer]);
 
   const handleResetPin = useCallback(async () => {
     if (!challengePassed || !tokenDispatched) {
@@ -300,56 +273,41 @@ export default function ForgotPasswordScreen() {
               <TextInput
                 style={[styles.input, styles.editableInput]}
                 value={securityAnswer}
-                onChangeText={setSecurityAnswer}
+                onChangeText={(text) => {
+                  setSecurityAnswer(text);
+                  setChallengeError(null);
+                }}
                 placeholder="Resposta secreta"
                 placeholderTextColor="#64748B"
                 secureTextEntry
                 autoCapitalize="none"
                 autoCorrect={false}
                 textContentType="password"
+                editable={!loading}
+                onSubmitEditing={() => void handleVerifyChallenge()}
+                returnKeyType="done"
               />
+
+              {challengeError ? <Text style={styles.errorText}>{challengeError}</Text> : null}
 
               <TouchableOpacity
                 style={[styles.btnPrimary, loading && styles.btnDisabled]}
                 onPress={() => void handleVerifyChallenge()}
-                disabled={loading || challengePassed}
+                disabled={loading}
               >
                 {loading ? (
                   <ActivityIndicator color="#020617" />
                 ) : (
-                  <Text style={styles.btnText}>
-                    {challengePassed ? 'Desafio Superado' : 'Validar resposta'}
-                  </Text>
+                  <Text style={styles.btnText}>Validar resposta e enviar código</Text>
                 )}
               </TouchableOpacity>
-
-              {challengePassed ? (
-                <>
-                  <Text style={styles.successText}>
-                    Desafio Superado. Solicite o código de 4 dígitos no WhatsApp para continuar.
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.btnSecondary, loading && styles.btnDisabled]}
-                    onPress={() => void handleDispatchToken()}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <ActivityIndicator color="#10b981" />
-                    ) : (
-                      <Text style={styles.btnSecondaryText}>Receber código no WhatsApp</Text>
-                    )}
-                  </TouchableOpacity>
-                </>
-              ) : null}
             </View>
           ) : null}
 
           {step === 'token' ? (
             <View style={styles.block}>
-              {!challengePassed || !tokenDispatched ? (
-                <Text style={styles.warningText}>
-                  Conclua a validação da pergunta de segurança para liberar esta etapa.
-                </Text>
+              {dispatchFeedback ? (
+                <Text style={styles.successText}>{dispatchFeedback}</Text>
               ) : null}
 
               <Text style={styles.label}>Código do WhatsApp</Text>

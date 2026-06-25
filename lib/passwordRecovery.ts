@@ -4,8 +4,12 @@ import {
   normalizePhoneForAccessPinRpc,
 } from '@/lib/accessPin';
 import { supabase } from '@/lib/supabase';
-import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
-import { normalizePhoneForWhatsApp, openWhatsAppPhone } from '@/lib/whatsapp';
+import { coerceRpcBoolean, isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+import {
+  normalizePhoneForWhatsApp,
+  openWhatsAppLikeBirthdays,
+  openWhatsAppLikeBirthdaysWithText,
+} from '@/lib/whatsapp';
 
 const PASSWORD_RECOVERY_SQL_HINT =
   'Execute no Supabase: scripts/password-recovery-security.sql';
@@ -33,18 +37,30 @@ const parseRpcObject = (data: unknown): Record<string, unknown> | null => {
   return payload as Record<string, unknown>;
 };
 
-const formatRpcError = (error: unknown) => {
-  if (isSupabaseRpcMissingError(error, 'password_recovery_identify')) {
-    return PASSWORD_RECOVERY_SQL_HINT;
-  }
+const PASSWORD_RECOVERY_RPCS = [
+  'password_recovery_identify',
+  'password_recovery_verify_challenge',
+  'password_recovery_verify_challenge_and_dispatch',
+  'password_recovery_dispatch_token',
+  'password_recovery_reset_access_pin',
+  'set_profile_security_question',
+] as const;
 
+const formatRpcError = (error: unknown) => {
   const message =
     error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
       ? error.message
       : 'Não foi possível concluir a operação.';
 
+  if (PASSWORD_RECOVERY_RPCS.some((rpc) => isSupabaseRpcMissingError({ message }, rpc))) {
+    return PASSWORD_RECOVERY_SQL_HINT;
+  }
+
   return message;
 };
+
+const isRecoveryPayloadOk = (payload: Record<string, unknown> | null) =>
+  coerceRpcBoolean(payload?.ok);
 
 export type PasswordRecoveryIdentifyResult =
   | { ok: true; securityQuestion: string }
@@ -63,7 +79,7 @@ export async function passwordRecoveryIdentify(
 
   const payload = parseRpcObject(data);
 
-  if (!payload || payload.ok !== true) {
+  if (!isRecoveryPayloadOk(payload)) {
     return {
       ok: false,
       message:
@@ -101,19 +117,152 @@ export async function passwordRecoveryVerifyChallenge(
 
   const payload = parseRpcObject(data);
 
-  if (payload?.ok === true && payload.message === 'Desafio Superado') {
-    return { ok: true, message: 'Desafio Superado' };
+  if (!isRecoveryPayloadOk(payload)) {
+    return {
+      ok: false,
+      message: typeof payload?.message === 'string' ? payload.message : 'Resposta incorreta.',
+      blocked: payload?.blocked === true,
+      attemptsRemaining:
+        typeof payload?.attempts_remaining === 'number'
+          ? payload.attempts_remaining
+          : undefined,
+    };
+  }
+
+  return { ok: true, message: 'Desafio Superado' };
+}
+
+export type PasswordRecoveryVerifyAndDispatchResult =
+  | {
+      ok: true;
+      message: 'Desafio Superado';
+      whatsappMessage: string;
+      recipientDigits: string;
+      sendToUser: boolean;
+    }
+  | { ok: false; message: string; blocked?: boolean; attemptsRemaining?: number };
+
+const parseDispatchPayload = (
+  payload: Record<string, unknown> | null
+): PasswordRecoveryVerifyAndDispatchResult | null => {
+  if (!isRecoveryPayloadOk(payload)) {
+    return null;
+  }
+
+  const whatsappMessage =
+    typeof payload?.whatsapp_message === 'string' ? payload.whatsapp_message : '';
+  const recipientDigits =
+    typeof payload?.recipient_digits === 'string' ? payload.recipient_digits : '';
+
+  if (!whatsappMessage || !recipientDigits) {
+    return null;
+  }
+
+  return {
+    ok: true,
+    message: 'Desafio Superado',
+    whatsappMessage,
+    recipientDigits,
+    sendToUser: payload?.send_to_user === true,
+  };
+};
+
+export async function passwordRecoveryVerifyChallengeAndDispatch(
+  phone: string,
+  answer: string
+): Promise<PasswordRecoveryVerifyAndDispatchResult> {
+  const normalizedPhone = normalizePhoneForAccessPinRpc(phone);
+  const settings = await loadAccessPinDeliverySettings();
+  const recipientDigits =
+    getAccessPinWhatsappRecipientDigits(settings, normalizedPhone)
+    ?? settings.managerDigits
+    ?? '';
+
+  if (!settings.sendToUser && recipientDigits) {
+    openWhatsAppLikeBirthdays(recipientDigits);
+  }
+
+  const { data, error } = await supabase.rpc('password_recovery_verify_challenge_and_dispatch', {
+    p_phone: normalizedPhone,
+    p_answer: answer,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'password_recovery_verify_challenge_and_dispatch')) {
+      const verified = await passwordRecoveryVerifyChallenge(phone, answer);
+
+      if (!verified.ok) {
+        return verified;
+      }
+
+      const dispatch = await passwordRecoveryDispatchToken(phone);
+
+      if (!dispatch.ok) {
+        return dispatch;
+      }
+
+      return {
+        ok: true,
+        message: 'Desafio Superado',
+        whatsappMessage: dispatch.whatsappMessage,
+        recipientDigits: dispatch.recipientDigits,
+        sendToUser: dispatch.sendToUser,
+      };
+    }
+
+    return { ok: false, message: formatRpcError(error) };
+  }
+
+  const payload = parseRpcObject(data);
+  const parsed = parseDispatchPayload(payload);
+
+  if (parsed) {
+    return parsed;
   }
 
   return {
     ok: false,
-    message: typeof payload?.message === 'string' ? payload.message : 'Resposta incorreta.',
+    message:
+      typeof payload?.message === 'string'
+        ? payload.message
+        : 'Não foi possível validar a resposta e gerar o código.',
     blocked: payload?.blocked === true,
     attemptsRemaining:
       typeof payload?.attempts_remaining === 'number'
         ? payload.attempts_remaining
         : undefined,
   };
+}
+
+export function passwordRecoveryOpenWhatsAppFromDispatch(
+  phone: string,
+  dispatch: {
+    whatsappMessage: string;
+    recipientDigits: string;
+    sendToUser: boolean;
+  }
+): PasswordRecoveryOpenWhatsAppResult {
+  const screenDigits = normalizePhoneForAccessPinRpc(phone);
+  const recipientDigits = dispatch.sendToUser
+    ? screenDigits
+    : dispatch.recipientDigits;
+
+  const whatsappPhone = normalizePhoneForWhatsApp(recipientDigits);
+
+  if (!whatsappPhone) {
+    return {
+      ok: false,
+      message: dispatch.sendToUser
+        ? 'Celular inválido para envio do código.'
+        : 'Cadastre psw_mngr em app_parameters para envio pelo gestor.',
+    };
+  }
+
+  const opened = Boolean(
+    openWhatsAppLikeBirthdaysWithText(recipientDigits, dispatch.whatsappMessage)
+  );
+
+  return { ok: true, whatsappOpened: opened };
 }
 
 export type PasswordRecoveryDispatchTokenResult =
@@ -138,7 +287,7 @@ export async function passwordRecoveryDispatchToken(
 
   const payload = parseRpcObject(data);
 
-  if (payload?.ok !== true) {
+  if (!isRecoveryPayloadOk(payload)) {
     return {
       ok: false,
       message:
@@ -194,8 +343,10 @@ export async function passwordRecoveryOpenWhatsApp(
   }
 
   try {
-    await openWhatsAppPhone(whatsappPhone, dispatch.whatsappMessage);
-    return { ok: true, whatsappOpened: true };
+    const opened = Boolean(
+      openWhatsAppLikeBirthdaysWithText(recipientDigits, dispatch.whatsappMessage)
+    );
+    return { ok: true, whatsappOpened: opened };
   } catch (error) {
     console.error('passwordRecoveryOpenWhatsApp:', error);
     return { ok: true, whatsappOpened: false };
