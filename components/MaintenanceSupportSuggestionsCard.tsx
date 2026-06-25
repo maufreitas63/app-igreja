@@ -38,7 +38,7 @@ import Toast from 'react-native-toast-message';
 type Props = {
   isActive?: boolean;
   panelHeight: number;
-  canManageResponses?: boolean;
+  isSuperAdmin?: boolean;
 };
 
 type TimelineEntry =
@@ -201,7 +201,7 @@ const RequestStatusBadge = ({ status }: { status: MaintenanceSupportStatus }) =>
 export function MaintenanceSupportSuggestionsCard({
   isActive = true,
   panelHeight,
-  canManageResponses = false,
+  isSuperAdmin = false,
 }: Props) {
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const { requests, loading, refreshing, schemaMissing, schemaHint, error, reload } =
@@ -732,7 +732,7 @@ export function MaintenanceSupportSuggestionsCard({
           </TouchableOpacity>
         </View>
 
-        {canManageResponses ? (
+        {isSuperAdmin ? (
           <View style={styles.developerCard}>
             <Text style={styles.sectionTitle}>Tratamento pelo desenvolvedor</Text>
             <Text style={styles.label}>Status da solicitação</Text>

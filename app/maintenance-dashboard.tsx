@@ -365,7 +365,6 @@ export default function MaintenanceDashboard() {
   const [canMonitorFamilyReception, setCanMonitorFamilyReception] = useState(false);
   const [canAccessProfileCadastro, setCanAccessProfileCadastro] = useState(false);
   const [canUpdateMaintenanceEvents, setCanUpdateMaintenanceEvents] = useState(false);
-  const [canManageSupportRequests, setCanManageSupportRequests] = useState(false);
   const [canBypassEventPastDateLock, setCanBypassEventPastDateLock] = useState(false);
   const [maintenancePanelAccess, setMaintenancePanelAccess] = useState<Record<string, boolean>>(
     {}
@@ -501,7 +500,6 @@ export default function MaintenanceDashboard() {
         setCanMonitorFamilyReception(snapshot.canMonitorFamilyReception);
         setCanAccessProfileCadastro(snapshot.canAccessProfileCadastro);
         setCanUpdateMaintenanceEvents(snapshot.canUpdateMaintenanceEvents);
-        setCanManageSupportRequests(snapshot.canManageSupportRequests);
         setCanBypassEventPastDateLock(snapshot.canBypassEventPastDateLock);
         setMaintenancePanelAccess(snapshot.maintenancePanelAccess);
         setScalePanelAccess(snapshot.scalePanelAccess);
@@ -1231,7 +1229,7 @@ export default function MaintenanceDashboard() {
             <MaintenanceSupportSuggestionsCard
               isActive={currentIndex === index}
               panelHeight={cardHeight}
-              canManageResponses={canManageSupportRequests}
+              isSuperAdmin={canManageAccessControl}
             />
           ) : item.content === 'access_control' ? (
             <MaintenanceAccessControlCard isActive={currentIndex === index} panelHeight={cardHeight} />
@@ -1381,7 +1379,7 @@ export default function MaintenanceDashboard() {
       scrollToMaintenancePanel,
       startEditEvent,
       startNewEvent,
-      canManageSupportRequests,
+      canManageAccessControl,
     ]
   );
 
