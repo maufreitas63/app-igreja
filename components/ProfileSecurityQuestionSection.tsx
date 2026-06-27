@@ -117,7 +117,7 @@ export function ProfileSecurityQuestionSection({
           <Text style={styles.sectionMeta}>
             {configured
               ? 'Cadastrada para recuperação de senha'
-              : 'Necessária para recuperar a senha pelo celular'}
+              : 'Necessária para recuperar a senha por e-mail'}
           </Text>
         </View>
         <MaterialIcons

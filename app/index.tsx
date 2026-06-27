@@ -548,7 +548,7 @@ export default function IndexScreen() {
           setShowForgotPasswordHelp(true);
           Alert.alert(
             'Senha incorreta',
-            'Toque em "Esqueci minha senha" para recuperar com a pergunta de segurança e código no WhatsApp.'
+            'Toque em "Esqueci minha senha" para validar sua pergunta de segurança e receber a nova senha por e-mail.'
           );
           return;
         }
@@ -666,11 +666,11 @@ export default function IndexScreen() {
     }
 
     if (passwordRecoveredBanner) {
-      return 'Senha redefinida. Digite os 4 dígitos recebidos no WhatsApp.';
+      return 'Senha redefinida. Digite os 4 dígitos enviados para o seu e-mail.';
     }
 
     if (showForgotPasswordHelp) {
-      return 'Esqueceu a senha? Responda à pergunta de segurança e receba um código no WhatsApp.';
+      return 'Esqueceu a senha? Valide a pergunta de segurança e receba a nova senha por e-mail.';
     }
 
     if (isLikelyFirstAccess) {
@@ -688,11 +688,11 @@ export default function IndexScreen() {
     }
 
     if (passwordRecoveredBanner) {
-      return 'O código do WhatsApp já é sua senha de entrada.';
+      return 'O código enviado por e-mail já é sua senha de entrada.';
     }
 
     if (showForgotPasswordHelp) {
-      return 'Use "Esqueci minha senha" para responder à pergunta de segurança antes do código no WhatsApp.';
+      return 'Use "Esqueci minha senha" para validar a pergunta de segurança e receber o código por e-mail.';
     }
 
     if (needsWhatsappBeforePin) {
@@ -944,7 +944,7 @@ export default function IndexScreen() {
               {!isTotemLoginMode && passwordRecoveredBanner ? (
                 <View pointerEvents="none" style={styles.pinSentBanner}>
                   <ReadOnlyText style={styles.pinSentBannerText}>
-                    Senha redefinida. Use os 4 dígitos recebidos no WhatsApp.
+                    Senha redefinida. Use os 4 dígitos enviados para o seu e-mail.
                   </ReadOnlyText>
                 </View>
               ) : null}

@@ -1,16 +1,15 @@
 import { PwaInstallButton } from '@/components/PwaInstallButton';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import {
-  passwordRecoveryIdentify,
-  passwordRecoveryOpenWhatsAppFromDispatch,
-  passwordRecoveryVerifyChallengeAndDispatch,
+  passwordRecoveryGetState,
+  passwordRecoverySetEmail,
+  passwordRecoveryVerifyAndSendPin,
 } from '@/lib/passwordRecovery';
 import { isBrazilianMobilePhoneComplete } from '@/lib/phoneValidation';
 import { FontAwesome } from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -24,7 +23,7 @@ import {
   View,
 } from 'react-native';
 
-type RecoveryStep = 'phone' | 'challenge';
+type RecoveryStep = 'loading' | 'email' | 'security';
 
 const buildLoginRouteAfterRecovery = (phoneValue: string) => {
   const digits = phoneValue.replace(/\D/g, '');
@@ -42,50 +41,112 @@ export default function ForgotPasswordScreen() {
   const initialPhone =
     typeof params.phone === 'string' ? formatBrazilPhoneInput(params.phone) : '';
 
-  const [step, setStep] = useState<RecoveryStep>('phone');
-  const [phone, setPhone] = useState(initialPhone);
+  const [step, setStep] = useState<RecoveryStep>('loading');
+  const [phone] = useState(initialPhone);
+  const [needsEmail, setNeedsEmail] = useState(false);
+  const [emailMasked, setEmailMasked] = useState('');
+  const [hasSecurityQuestion, setHasSecurityQuestion] = useState(false);
   const [securityQuestion, setSecurityQuestion] = useState('');
+  const [email, setEmail] = useState('');
+  const [emailConfirm, setEmailConfirm] = useState('');
+  const [newQuestion, setNewQuestion] = useState('');
   const [securityAnswer, setSecurityAnswer] = useState('');
   const [loading, setLoading] = useState(false);
-  const [challengeError, setChallengeError] = useState<string | null>(null);
-  const [phoneStepError, setPhoneStepError] = useState<string | null>(null);
+  const [stepError, setStepError] = useState<string | null>(null);
 
-  const handleIdentify = useCallback(async () => {
+  const loadState = useCallback(async () => {
     if (!isBrazilianMobilePhoneComplete(phone)) {
-      Alert.alert('Atenção', 'Informe o celular completo com 11 dígitos.');
+      router.replace('/');
+      return;
+    }
+
+    setStep('loading');
+    setStepError(null);
+
+    const result = await passwordRecoveryGetState(phone);
+
+    if (!result.ok) {
+      Alert.alert('Recuperação de senha', result.message, [
+        { text: 'Voltar', onPress: () => router.replace('/') },
+      ]);
+      return;
+    }
+
+    setNeedsEmail(result.needsEmail);
+    setEmailMasked(result.emailMasked);
+    setHasSecurityQuestion(result.hasSecurityQuestion);
+    setSecurityQuestion(result.securityQuestion);
+    setNewQuestion(result.hasSecurityQuestion ? '' : result.securityQuestion);
+    setStep('email');
+  }, [phone, router]);
+
+  useEffect(() => {
+    void loadState();
+  }, [loadState]);
+
+  const goToSecurityStep = useCallback(() => {
+    setStepError(null);
+    setStep('security');
+  }, []);
+
+  const handleSaveEmail = useCallback(async () => {
+    if (!email.trim() || !emailConfirm.trim()) {
+      setStepError('Informe o e-mail e a confirmação.');
       return;
     }
 
     setLoading(true);
-    setPhoneStepError(null);
+    setStepError(null);
 
     try {
-      const result = await passwordRecoveryIdentify(phone);
+      const result = await passwordRecoverySetEmail(phone, email, emailConfirm);
 
       if (!result.ok) {
-        setPhoneStepError(result.message);
+        setStepError(result.message);
         return;
       }
 
-      setSecurityQuestion(result.securityQuestion);
-      setSecurityAnswer('');
-      setStep('challenge');
+      setNeedsEmail(false);
+      setEmailMasked(result.emailMasked);
+      setEmail('');
+      setEmailConfirm('');
+      goToSecurityStep();
     } finally {
       setLoading(false);
     }
-  }, [phone]);
+  }, [email, emailConfirm, goToSecurityStep, phone]);
 
-  const handleVerifyChallenge = useCallback(async () => {
-    if (!securityAnswer.trim()) {
-      setChallengeError('Informe a resposta da pergunta de segurança.');
-      return;
+  const handleConfirmExistingEmail = useCallback(() => {
+    goToSecurityStep();
+  }, [goToSecurityStep]);
+
+  const handleVerifyAndSendPin = useCallback(async () => {
+    if (hasSecurityQuestion) {
+      if (!securityAnswer.trim()) {
+        setStepError('Informe a resposta da pergunta de segurança.');
+        return;
+      }
+    } else {
+      if (!newQuestion.trim()) {
+        setStepError('Informe a pergunta de segurança.');
+        return;
+      }
+
+      if (!securityAnswer.trim()) {
+        setStepError('Informe a resposta da pergunta de segurança.');
+        return;
+      }
     }
 
     setLoading(true);
-    setChallengeError(null);
+    setStepError(null);
 
     try {
-      const result = await passwordRecoveryVerifyChallengeAndDispatch(phone, securityAnswer);
+      const result = await passwordRecoveryVerifyAndSendPin(
+        phone,
+        securityAnswer,
+        hasSecurityQuestion ? undefined : newQuestion
+      );
 
       if (!result.ok) {
         const attemptsSuffix =
@@ -93,53 +154,54 @@ export default function ForgotPasswordScreen() {
             ? ` Tentativas restantes: ${result.attemptsRemaining}.`
             : '';
 
-        setChallengeError(`${result.message}${attemptsSuffix}`);
+        setStepError(`${result.message}${attemptsSuffix}`);
 
         if (result.blocked) {
-          setSecurityAnswer('');
-          setStep('phone');
+          Alert.alert('Recuperação bloqueada', result.message, [
+            { text: 'Voltar', onPress: () => router.replace('/') },
+          ]);
         }
 
         return;
       }
 
-      const whatsapp = passwordRecoveryOpenWhatsAppFromDispatch(phone, result);
-
-      try {
-        await Clipboard.setStringAsync(result.whatsappMessage);
-      } catch (clipboardError) {
-        console.error('Erro ao copiar mensagem de recuperação:', clipboardError);
-      }
-
-      if (!whatsapp.ok) {
-        Alert.alert(
-          'Senha atualizada',
-          'O código do WhatsApp já é sua senha de entrada. Digite os 4 dígitos na tela de login.',
-          [{ text: 'Continuar', onPress: () => router.replace(buildLoginRouteAfterRecovery(phone)) }]
-        );
-        return;
-      }
-
-      router.replace(buildLoginRouteAfterRecovery(phone));
+      Alert.alert('Senha enviada', result.message, [
+        {
+          text: 'Ir para entrada',
+          onPress: () => router.replace(buildLoginRouteAfterRecovery(phone)),
+        },
+      ]);
     } finally {
       setLoading(false);
     }
-  }, [phone, router, securityAnswer]);
+  }, [hasSecurityQuestion, newQuestion, phone, router, securityAnswer]);
 
   const getTitle = () => {
-    if (step === 'phone') {
-      return 'Recuperar senha';
+    if (step === 'email') {
+      return needsEmail ? 'Cadastrar e-mail' : 'Confirmar e-mail';
     }
 
-    return 'Pergunta de segurança';
+    if (step === 'security') {
+      return hasSecurityQuestion ? 'Pergunta de segurança' : 'Cadastrar pergunta de segurança';
+    }
+
+    return 'Recuperar senha';
   };
 
   const getSubtitle = () => {
-    if (step === 'phone') {
-      return 'Informe o celular cadastrado. É necessário ter pergunta de segurança salva em Dados Cadastrais.';
+    if (step === 'loading') {
+      return 'Carregando dados do perfil...';
     }
 
-    return 'Responda à pergunta cadastrada em Dados Cadastrais.';
+    if (step === 'email') {
+      return needsEmail
+        ? 'Informe e confirme seu e-mail para receber a nova senha.'
+        : 'Confirme o e-mail cadastrado para continuar.';
+    }
+
+    return hasSecurityQuestion
+      ? 'Responda à pergunta de segurança. Enviaremos a nova senha por e-mail.'
+      : 'Cadastre pergunta e resposta. Enviaremos a nova senha por e-mail.';
   };
 
   return (
@@ -164,55 +226,139 @@ export default function ForgotPasswordScreen() {
           <Text style={styles.title}>{getTitle()}</Text>
           <Text style={styles.subtitle}>{getSubtitle()}</Text>
 
-          {step === 'phone' ? (
-            <View style={styles.block}>
-              <Text style={styles.label}>Celular</Text>
-              <TextInput
-                style={[styles.input, styles.editableInput]}
-                value={phone}
-                onChangeText={(text) => {
-                  setPhone(formatBrazilPhoneInput(text));
-                  setPhoneStepError(null);
-                }}
-                placeholder="(00) 00000-0000"
-                placeholderTextColor="#64748B"
-                keyboardType="phone-pad"
-                autoComplete="tel"
-              />
-              {phoneStepError ? <Text style={styles.errorText}>{phoneStepError}</Text> : null}
-              <TouchableOpacity
-                style={[styles.btnPrimary, loading && styles.btnDisabled]}
-                onPress={() => void handleIdentify()}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#020617" />
-                ) : (
-                  <Text style={styles.btnText}>Continuar</Text>
-                )}
-              </TouchableOpacity>
+          {step === 'loading' ? (
+            <View style={styles.loadingBlock}>
+              <ActivityIndicator color="#10b981" size="large" />
             </View>
           ) : null}
 
-          {step === 'challenge' ? (
+          {step !== 'loading' ? (
             <View style={styles.block}>
               <Text style={styles.label}>Celular</Text>
               <View style={[styles.input, styles.readOnlyPanel]}>
                 <Text style={styles.readOnlyText}>{phone}</Text>
               </View>
+            </View>
+          ) : null}
 
-              <Text style={styles.label}>Pergunta de segurança</Text>
-              <View style={[styles.input, styles.readOnlyPanel]}>
-                <Text style={styles.readOnlyText}>{securityQuestion}</Text>
-              </View>
+          {step === 'email' ? (
+            <View style={styles.block}>
+              {needsEmail ? (
+                <>
+                  <Text style={styles.label}>E-mail</Text>
+                  <TextInput
+                    style={[styles.input, styles.editableInput]}
+                    value={email}
+                    onChangeText={(text) => {
+                      setEmail(text);
+                      setStepError(null);
+                    }}
+                    placeholder="seu@email.com"
+                    placeholderTextColor="#64748B"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="email"
+                    textContentType="emailAddress"
+                    editable={!loading}
+                  />
 
-              <Text style={styles.label}>Sua resposta</Text>
+                  <Text style={styles.label}>Confirmar e-mail</Text>
+                  <TextInput
+                    style={[styles.input, styles.editableInput]}
+                    value={emailConfirm}
+                    onChangeText={(text) => {
+                      setEmailConfirm(text);
+                      setStepError(null);
+                    }}
+                    placeholder="seu@email.com"
+                    placeholderTextColor="#64748B"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="email"
+                    textContentType="emailAddress"
+                    editable={!loading}
+                  />
+                </>
+              ) : (
+                <>
+                  <Text style={styles.label}>E-mail cadastrado</Text>
+                  <View style={[styles.input, styles.readOnlyPanel]}>
+                    <Text style={styles.readOnlyText}>{emailMasked || '—'}</Text>
+                  </View>
+                  <Text style={styles.hint}>
+                    A nova senha será enviada para este endereço. O código não aparece na tela.
+                  </Text>
+                </>
+              )}
+
+              {stepError ? <Text style={styles.errorText}>{stepError}</Text> : null}
+
+              <TouchableOpacity
+                style={[styles.btnPrimary, loading && styles.btnDisabled]}
+                onPress={() =>
+                  void (needsEmail ? handleSaveEmail() : handleConfirmExistingEmail())
+                }
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#020617" />
+                ) : (
+                  <Text style={styles.btnText}>
+                    {needsEmail ? 'Salvar e-mail e continuar' : 'Confirmar e continuar'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          ) : null}
+
+          {step === 'security' ? (
+            <View style={styles.block}>
+              {emailMasked ? (
+                <>
+                  <Text style={styles.label}>E-mail para envio</Text>
+                  <View style={[styles.input, styles.readOnlyPanel]}>
+                    <Text style={styles.readOnlyText}>{emailMasked}</Text>
+                  </View>
+                </>
+              ) : null}
+
+              {hasSecurityQuestion ? (
+                <>
+                  <Text style={styles.label}>Pergunta de segurança</Text>
+                  <View style={[styles.input, styles.readOnlyPanel]}>
+                    <Text style={styles.readOnlyText}>{securityQuestion}</Text>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.label}>Pergunta de segurança</Text>
+                  <TextInput
+                    style={[styles.input, styles.editableInput]}
+                    value={newQuestion}
+                    onChangeText={(text) => {
+                      setNewQuestion(text);
+                      setStepError(null);
+                    }}
+                    placeholder="Ex.: Qual o nome do seu primeiro animal de estimação?"
+                    placeholderTextColor="#64748B"
+                    multiline
+                    textAlignVertical="top"
+                    editable={!loading}
+                  />
+                </>
+              )}
+
+              <Text style={styles.label}>
+                {hasSecurityQuestion ? 'Sua resposta' : 'Resposta da pergunta'}
+              </Text>
               <TextInput
                 style={[styles.input, styles.editableInput]}
                 value={securityAnswer}
                 onChangeText={(text) => {
                   setSecurityAnswer(text);
-                  setChallengeError(null);
+                  setStepError(null);
                 }}
                 placeholder="Resposta secreta"
                 placeholderTextColor="#64748B"
@@ -221,25 +367,26 @@ export default function ForgotPasswordScreen() {
                 autoComplete="off"
                 textContentType="none"
                 editable={!loading}
-                onSubmitEditing={() => void handleVerifyChallenge()}
+                onSubmitEditing={() => void handleVerifyAndSendPin()}
                 returnKeyType="done"
               />
 
-              {challengeError ? <Text style={styles.errorText}>{challengeError}</Text> : null}
+              {stepError ? <Text style={styles.errorText}>{stepError}</Text> : null}
 
               <TouchableOpacity
                 style={[styles.btnPrimary, loading && styles.btnDisabled]}
-                onPress={() => void handleVerifyChallenge()}
+                onPress={() => void handleVerifyAndSendPin()}
                 disabled={loading}
               >
                 {loading ? (
                   <ActivityIndicator color="#020617" />
                 ) : (
-                  <Text style={styles.btnText}>Validar resposta e enviar código</Text>
+                  <Text style={styles.btnText}>Validar e enviar senha por e-mail</Text>
                 )}
               </TouchableOpacity>
             </View>
           ) : null}
+
           <PwaInstallButton />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -254,6 +401,10 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 40,
     paddingBottom: 40,
+  },
+  loadingBlock: {
+    alignItems: 'center',
+    paddingVertical: 32,
   },
   backButton: {
     flexDirection: 'row',
@@ -288,6 +439,11 @@ const styles = StyleSheet.create({
     color: '#10b981',
     fontWeight: '600',
   },
+  hint: {
+    color: '#94A3B8',
+    fontSize: 13,
+    lineHeight: 18,
+  },
   input: {
     padding: 20,
     borderRadius: 20,
@@ -299,9 +455,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#10b981',
   },
-  inputError: {
-    borderColor: '#f87171',
-  },
   readOnlyPanel: {
     backgroundColor: 'rgba(30, 41, 59, 0.75)',
     borderWidth: 1,
@@ -311,12 +464,6 @@ const styles = StyleSheet.create({
     color: '#E2E8F0',
     fontSize: 16,
     lineHeight: 22,
-  },
-  pinInput: {
-    letterSpacing: 8,
-    fontSize: 22,
-    fontWeight: '700',
-    paddingVertical: 16,
   },
   btnPrimary: {
     marginTop: 8,
@@ -333,52 +480,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
   },
-  btnSecondary: {
-    marginTop: 4,
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-    borderWidth: 1,
-    borderColor: '#10b981',
-    paddingVertical: 16,
-    borderRadius: 999,
-    alignItems: 'center',
-  },
-  btnSecondaryText: {
-    color: '#10b981',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  successText: {
-    color: '#86EFAC',
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  warningText: {
-    color: '#FDE68A',
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
   errorText: {
     color: '#FCA5A5',
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',
-  },
-  helpText: {
-    color: '#64748B',
-    fontSize: 11,
-    lineHeight: 16,
-    textAlign: 'center',
-    marginTop: 12,
-  },
-  optionalSectionLabel: {
-    color: '#94A3B8',
-    fontSize: 13,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 4,
   },
 });
