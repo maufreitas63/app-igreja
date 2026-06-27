@@ -6,9 +6,7 @@
 --   recovery_email_from     → ex.: "Igreja <noreply@seudominio.com>"
 --
 -- Envio via extensão http do Supabase (Database → Extensions → http).
--- IMPORTANTE: habilite a extensão "http" no painel ANTES de rodar este script.
--- A função de envio usa SQL dinâmico para não falhar com "type http_request does not exist"
--- quando a extensão ainda não foi instalada.
+-- No Supabase o tipo http_request costuma ficar no schema "http" (não "extensions").
 
 create or replace function public.normalize_profile_email(p_email text)
 returns text
@@ -46,7 +44,7 @@ create or replace function public.send_password_recovery_pin_email(
 returns void
 language plpgsql
 security definer
-set search_path = extensions, public, pg_temp
+set search_path = http, extensions, public, pg_temp
 as $$
 declare
   v_api_key text;
@@ -77,7 +75,12 @@ begin
     from pg_catalog.pg_type t
     join pg_catalog.pg_namespace n on n.oid = t.typnamespace
    where t.typname = 'http_request'
-   order by case when n.nspname = 'extensions' then 0 when n.nspname = 'public' then 1 else 2 end
+   order by case
+     when n.nspname = 'http' then 0
+     when n.nspname = 'extensions' then 1
+     when n.nspname = 'public' then 2
+     else 3
+   end
    limit 1;
 
   if v_http_schema is null then
