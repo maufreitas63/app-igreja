@@ -1,12 +1,31 @@
 -- Recuperação de senha por e-mail + pergunta de segurança (sem WhatsApp).
 -- Execute no Supabase APÓS scripts/password-recovery-security.sql
 --
--- Configure em app_parameters:
---   recovery_email_api_key  → chave Resend (re_...)
---   recovery_email_from     → ex.: "Igreja <noreply@seudominio.com>"
+-- Provedor de e-mail (app_parameters.recovery_email_provider):
+--   gmail  → Gmail SMTP via Edge Function (sem domínio próprio)
+--   resend → API Resend (requer domínio verificado para enviar a qualquer destinatário)
 --
--- Envio via extensão http do Supabase (Database → Extensions → http).
--- No Supabase o tipo http_request costuma ficar no schema "http" (não "extensions").
+-- === Gmail (recomendado sem domínio) ===
+-- 1. Google Account → Segurança → Verificação em 2 etapas → Senhas de app
+-- 2. Deploy da Edge Function (uma vez):
+--      supabase login
+--      supabase link --project-ref SEU_PROJECT_REF
+--      supabase secrets set RECOVERY_EMAIL_FUNCTION_SECRET=uma-chave-longa-aleatoria
+--      supabase functions deploy send-password-recovery-email --no-verify-jwt
+-- 3. app_parameters:
+--      recovery_email_provider          = gmail
+--      recovery_email_function_url      = https://SEU_REF.supabase.co/functions/v1/send-password-recovery-email
+--      recovery_email_function_secret   = (mesmo valor do secret acima)
+--      recovery_email_smtp_user         = ibnmassagua@gmail.com
+--      recovery_email_smtp_password     = senha de app do Google (16 caracteres)
+--      recovery_email_from              = Igreja IBN <ibnmassagua@gmail.com>
+--
+-- === Resend (produção com domínio) ===
+--      recovery_email_provider          = resend
+--      recovery_email_api_key           = re_...
+--      recovery_email_from              = Igreja <noreply@seudominio.com.br>
+--
+-- Extensão http do Supabase (Database → Extensions → http) deve estar ativa.
 
 create or replace function public.normalize_profile_email(p_email text)
 returns text
@@ -37,7 +56,106 @@ as $$
   end;
 $$;
 
-create or replace function public.send_password_recovery_pin_email(
+create or replace function public.password_recovery_pin_email_text(p_pin text)
+returns text
+language sql
+immutable
+as $$
+  select
+    'Olá,' || E'\n\n'
+    || 'Sua nova senha de acesso (4 dígitos) é: ' || p_pin || E'\n\n'
+    || 'Use-a na tela de entrada do app.' || E'\n\n'
+    || 'Se você não solicitou esta alteração, ignore este e-mail.';
+$$;
+
+create or replace function public.password_recovery_resolve_http_schema()
+returns text
+language sql
+stable
+security definer
+set search_path = pg_catalog
+as $$
+  select n.nspname
+    from pg_catalog.pg_type t
+    join pg_catalog.pg_namespace n on n.oid = t.typnamespace
+   where t.typname = 'http_request'
+   order by case
+     when n.nspname = 'http' then 0
+     when n.nspname = 'extensions' then 1
+     when n.nspname = 'public' then 2
+     else 3
+   end
+   limit 1;
+$$;
+
+create or replace function public.password_recovery_http_post(
+  p_url text,
+  p_headers jsonb,
+  p_body text,
+  out p_status integer,
+  out p_content text
+)
+language plpgsql
+security definer
+set search_path = http, extensions, public, pg_temp
+as $$
+declare
+  v_http_schema text;
+  v_sql text;
+  v_header record;
+  v_header_sql text := '';
+  v_i integer := 0;
+begin
+  v_http_schema := public.password_recovery_resolve_http_schema();
+
+  if v_http_schema is null then
+    raise exception
+      'Extensão http não instalada. No Supabase: Database → Extensions → habilite ''http''.';
+  end if;
+
+  for v_header in
+    select e.key, e.value
+      from jsonb_each_text(coalesce(p_headers, '{}'::jsonb)) as e(key, value)
+  loop
+    v_i := v_i + 1;
+    v_header_sql := v_header_sql || format(
+      E',\n          %I.http_header(%L, %L)',
+      v_http_schema,
+      v_header.key,
+      v_header.value
+    );
+  end loop;
+
+  if v_i = 0 then
+    raise exception 'password_recovery_http_post exige ao menos um header HTTP.';
+  end if;
+
+  v_header_sql := substring(v_header_sql from 2);
+
+  v_sql := format(
+    $sql$
+    select r.status, r.content::text
+      from %1$I.http((
+        'POST',
+        %2$L,
+        array[
+          %3$s
+        ],
+        'application/json',
+        %4$L
+      )::%1$I.http_request) as r(status, content_type, headers, content)
+    $sql$,
+    v_http_schema,
+    p_url,
+    v_header_sql,
+    p_body
+  );
+
+  execute v_sql into p_status, p_content;
+end;
+$$;
+
+create or replace function public.send_password_recovery_pin_email_via_resend(
   p_to_email text,
   p_pin text
 )
@@ -53,72 +171,34 @@ declare
   v_status integer;
   v_content text;
   v_recipient text;
-  v_http_schema text;
-  v_sql text;
 begin
   v_recipient := public.normalize_profile_email(p_to_email);
-
-  if v_recipient is null or not public.is_valid_profile_email(v_recipient) then
-    raise exception 'E-mail inválido para envio.';
-  end if;
 
   v_api_key := nullif(trim(public.get_app_parameter_value('recovery_email_api_key')), '');
   v_from := nullif(trim(public.get_app_parameter_value('recovery_email_from')), '');
 
   if v_api_key is null or v_from is null then
     raise exception
-      'Envio de e-mail não configurado. Cadastre recovery_email_api_key e recovery_email_from em app_parameters.';
-  end if;
-
-  select n.nspname
-    into v_http_schema
-    from pg_catalog.pg_type t
-    join pg_catalog.pg_namespace n on n.oid = t.typnamespace
-   where t.typname = 'http_request'
-   order by case
-     when n.nspname = 'http' then 0
-     when n.nspname = 'extensions' then 1
-     when n.nspname = 'public' then 2
-     else 3
-   end
-   limit 1;
-
-  if v_http_schema is null then
-    raise exception
-      'Extensão http não instalada. No Supabase: Database → Extensions → habilite ''http'' e reaplique scripts/password-recovery-email-flow.sql';
+      'Resend não configurado. Cadastre recovery_email_api_key e recovery_email_from em app_parameters.';
   end if;
 
   v_body := json_build_object(
     'from', v_from,
     'to', json_build_array(v_recipient),
     'subject', 'Sua nova senha de acesso',
-    'text',
-      'Olá,' || E'\n\n'
-      || 'Sua nova senha de acesso (4 dígitos) é: ' || p_pin || E'\n\n'
-      || 'Use-a na tela de entrada do app.' || E'\n\n'
-      || 'Se você não solicitou esta alteração, ignore este e-mail.'
+    'text', public.password_recovery_pin_email_text(p_pin)
   )::text;
 
-  v_sql := format(
-    $sql$
-    select r.status, r.content::text
-      from %1$I.http((
-        'POST',
-        'https://api.resend.com/emails',
-        array[
-          %1$I.http_header('authorization', %2$L),
-          %1$I.http_header('content-type', 'application/json')
-        ],
-        'application/json',
-        %3$L
-      )::%1$I.http_request) as r(status, content_type, headers, content)
-    $sql$,
-    v_http_schema,
-    'Bearer ' || v_api_key,
-    v_body
-  );
-
-  execute v_sql into v_status, v_content;
+  select p.p_status, p.p_content
+    into v_status, v_content
+    from public.password_recovery_http_post(
+      'https://api.resend.com/emails',
+      jsonb_build_object(
+        'authorization', 'Bearer ' || v_api_key,
+        'content-type', 'application/json'
+      ),
+      v_body
+    ) as p;
 
   if coalesce(v_status, 0) not between 200 and 299 then
     raise exception
@@ -126,6 +206,147 @@ begin
       coalesce(v_status, 0),
       coalesce(nullif(trim(v_content), ''), 'Verifique recovery_email_api_key e recovery_email_from no Resend.');
   end if;
+end;
+$$;
+
+create or replace function public.send_password_recovery_pin_email_via_gmail(
+  p_to_email text,
+  p_pin text
+)
+returns void
+language plpgsql
+security definer
+set search_path = http, extensions, public, pg_temp
+as $$
+declare
+  v_smtp_user text;
+  v_smtp_password text;
+  v_from text;
+  v_function_url text;
+  v_function_secret text;
+  v_body text;
+  v_status integer;
+  v_content text;
+  v_recipient text;
+  v_payload jsonb;
+begin
+  v_recipient := public.normalize_profile_email(p_to_email);
+
+  v_smtp_user := nullif(trim(public.get_app_parameter_value('recovery_email_smtp_user')), '');
+  v_smtp_password := nullif(trim(public.get_app_parameter_value('recovery_email_smtp_password')), '');
+  v_from := nullif(trim(public.get_app_parameter_value('recovery_email_from')), '');
+  v_function_url := nullif(trim(public.get_app_parameter_value('recovery_email_function_url')), '');
+  v_function_secret := nullif(trim(public.get_app_parameter_value('recovery_email_function_secret')), '');
+
+  if v_smtp_user is null
+     or v_smtp_password is null
+     or v_from is null
+     or v_function_url is null
+     or v_function_secret is null then
+    raise exception
+      'Gmail não configurado. Cadastre recovery_email_smtp_user, recovery_email_smtp_password, recovery_email_from, recovery_email_function_url e recovery_email_function_secret em app_parameters.';
+  end if;
+
+  v_body := json_build_object(
+    'secret', v_function_secret,
+    'smtp_user', v_smtp_user,
+    'smtp_password', v_smtp_password,
+    'from', v_from,
+    'to', v_recipient,
+    'subject', 'Sua nova senha de acesso',
+    'text', public.password_recovery_pin_email_text(p_pin)
+  )::text;
+
+  select p.p_status, p.p_content
+    into v_status, v_content
+    from public.password_recovery_http_post(
+      v_function_url,
+      jsonb_build_object('content-type', 'application/json'),
+      v_body
+    ) as p;
+
+  if coalesce(v_status, 0) not between 200 and 299 then
+    raise exception
+      'Não foi possível acionar o envio Gmail (HTTP %). %',
+      coalesce(v_status, 0),
+      coalesce(nullif(trim(v_content), ''), 'Verifique a Edge Function send-password-recovery-email e os parâmetros Gmail.');
+  end if;
+
+  begin
+    v_payload := v_content::jsonb;
+  exception
+    when others then
+      raise exception
+        'Resposta inválida da Edge Function Gmail: %',
+        coalesce(nullif(trim(v_content), ''), 'sem conteúdo');
+  end;
+
+  if coalesce(v_payload->>'ok', '') <> 'true' then
+    raise exception
+      'Não foi possível enviar o e-mail de recuperação via Gmail. %',
+      coalesce(nullif(trim(v_payload->>'message'), ''), v_content);
+  end if;
+end;
+$$;
+
+create or replace function public.send_password_recovery_pin_email(
+  p_to_email text,
+  p_pin text
+)
+returns void
+language plpgsql
+security definer
+set search_path = http, extensions, public, pg_temp
+as $$
+declare
+  v_recipient text;
+  v_provider text;
+  v_has_gmail boolean;
+  v_has_resend boolean;
+begin
+  v_recipient := public.normalize_profile_email(p_to_email);
+
+  if v_recipient is null or not public.is_valid_profile_email(v_recipient) then
+    raise exception 'E-mail inválido para envio.';
+  end if;
+
+  v_provider := lower(nullif(trim(public.get_app_parameter_value('recovery_email_provider')), ''));
+
+  v_has_gmail :=
+    nullif(trim(public.get_app_parameter_value('recovery_email_smtp_user')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_smtp_password')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_from')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_function_url')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_function_secret')), '') is not null;
+
+  v_has_resend :=
+    nullif(trim(public.get_app_parameter_value('recovery_email_api_key')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_from')), '') is not null;
+
+  if v_provider is null then
+    if v_has_gmail then
+      v_provider := 'gmail';
+    elsif v_has_resend then
+      v_provider := 'resend';
+    else
+      raise exception
+        'Envio de e-mail não configurado. Defina recovery_email_provider=gmail ou resend e os parâmetros correspondentes em app_parameters.';
+    end if;
+  end if;
+
+  if v_provider = 'gmail' then
+    perform public.send_password_recovery_pin_email_via_gmail(p_to_email, p_pin);
+    return;
+  end if;
+
+  if v_provider = 'resend' then
+    perform public.send_password_recovery_pin_email_via_resend(p_to_email, p_pin);
+    return;
+  end if;
+
+  raise exception
+    'recovery_email_provider inválido: %. Use gmail ou resend.',
+    v_provider;
 end;
 $$;
 
