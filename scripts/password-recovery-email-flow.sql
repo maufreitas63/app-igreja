@@ -6,6 +6,9 @@
 --   recovery_email_from     → ex.: "Igreja <noreply@seudominio.com>"
 --
 -- Extensão HTTP do Supabase (Database → Extensions → http) deve estar ativa.
+-- Se der erro de tipo http_request, habilite a extensão no painel e reaplique este script.
+
+create extension if not exists http with schema extensions;
 
 create or replace function public.normalize_profile_email(p_email text)
 returns text
@@ -43,7 +46,7 @@ create or replace function public.send_password_recovery_pin_email(
 returns void
 language plpgsql
 security definer
-set search_path = public, extensions
+set search_path = extensions, public, pg_temp
 as $$
 declare
   v_api_key text;
@@ -78,41 +81,26 @@ begin
       || 'Se você não solicitou esta alteração, ignore este e-mail.'
   )::text;
 
-  begin
-    select r.status, r.content::text
-      into v_status, v_content
-      from extensions.http(
-        (
-          'POST',
-          'https://api.resend.com/emails',
-          array[
-            extensions.http_header('authorization', 'Bearer ' || v_api_key),
-            extensions.http_header('content-type', 'application/json')
-          ],
-          'application/json',
-          v_body
-        )::extensions.http_request
-      ) as r(status, content_type, headers, content);
-  exception
-    when undefined_function then
-      select r.status, r.content::text
-        into v_status, v_content
-        from http(
-          (
-            'POST',
-            'https://api.resend.com/emails',
-            array[
-              http_header('authorization', 'Bearer ' || v_api_key),
-              http_header('content-type', 'application/json')
-            ],
-            'application/json',
-            v_body
-          )::http_request
-        ) as r(status, content_type, headers, content);
-  end;
+  select r.status, r.content::text
+    into v_status, v_content
+    from http(
+      (
+        'POST',
+        'https://api.resend.com/emails',
+        array[
+          http_header('authorization', 'Bearer ' || v_api_key),
+          http_header('content-type', 'application/json')
+        ],
+        'application/json',
+        v_body
+      )::http_request
+    ) as r(status, content_type, headers, content);
 
   if coalesce(v_status, 0) not between 200 and 299 then
-    raise exception 'Não foi possível enviar o e-mail de recuperação. Tente novamente.';
+    raise exception
+      'Não foi possível enviar o e-mail de recuperação (HTTP %). %',
+      coalesce(v_status, 0),
+      coalesce(nullif(trim(v_content), ''), 'Verifique recovery_email_api_key, recovery_email_from e a extensão http.');
   end if;
 end;
 $$;
