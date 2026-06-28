@@ -48,6 +48,7 @@ import { formatFullName } from '@/lib/fullName';
 // } from '@/lib/linkProfileFamily';
 // import { normalizeFamilyCode } from '@/lib/family';
 import {
+  buildAppIndexRoute,
   buildDashboardFamilyAgendaRoute,
   buildRegisterRoute,
   isPlaceholderVisitorName,
@@ -534,6 +535,7 @@ type AccessPinFieldProps = {
   visible: boolean;
   onToggleVisible: () => void;
   editable: boolean;
+  allowVisibilityToggle?: boolean;
   hasError?: boolean;
   onFocus?: () => void;
   onSubmitEditing?: () => void;
@@ -549,12 +551,15 @@ function AccessPinField({
   visible,
   onToggleVisible,
   editable,
+  allowVisibilityToggle = false,
   hasError = false,
   onFocus,
   onSubmitEditing,
   blurOnSubmit,
   returnKeyType,
 }: AccessPinFieldProps) {
+  const canToggleVisibility = editable || allowVisibilityToggle;
+
   return (
     <View style={accessPinFieldStyles.fieldBlock}>
       <Text style={accessPinFieldStyles.label}>{label}</Text>
@@ -580,7 +585,7 @@ function AccessPinField({
         <TouchableOpacity
           style={accessPinFieldStyles.visibilityButton}
           onPress={onToggleVisible}
-          disabled={!editable}
+          disabled={!canToggleVisibility}
           accessibilityRole="button"
           accessibilityLabel={visible ? 'Ocultar senha' : 'Mostrar senha'}
           hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
@@ -651,11 +656,16 @@ export default function ManageProfile() {
     extraRouteParams: phoneParam ? { phone: encodeURIComponent(phoneParam) } : undefined,
   });
   const isOnboardingFlow = params.onboarding === '1';
+  const isRecoveryAccessPinFlow = params.changeAccessPinAfterRecovery === '1';
+  const recoveryPinParam = params.recoveryPin
+    ? decodeURIComponent(String(params.recoveryPin))
+    : '';
   const scrollRef = useRef<ScrollView>(null);
   const profileRef = useRef<ProfileRecord | null>(null);
   const lastProfileFetchAtRef = useRef(0);
   const PROFILE_FOCUS_STALE_MS = 60_000;
   const onboardingAlertShownRef = useRef(false);
+  const recoveryAccessPinInitializedRef = useRef(false);
   const cameraRef = useRef<CameraView>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
@@ -725,6 +735,10 @@ export default function ManageProfile() {
   }, []);
 
   const toggleAccessPinSection = useCallback(() => {
+    if (isRecoveryAccessPinFlow) {
+      return;
+    }
+
     setAccessPinSectionExpanded((open) => {
       if (open) {
         currentAccessPinRef.current?.blur();
@@ -734,7 +748,7 @@ export default function ManageProfile() {
 
       return !open;
     });
-  }, []);
+  }, [isRecoveryAccessPinFlow]);
 
   useEffect(() => {
     if (!accessPinSectionExpanded) {
@@ -915,6 +929,11 @@ export default function ManageProfile() {
       return;
     }
 
+    if (accessPinConfirmMismatch) {
+      Alert.alert('Senhas diferentes', 'A nova senha e a confirmação não coincidem. Corrija e tente novamente.');
+      return;
+    }
+
     if (accessPinValidationMessage) {
       return;
     }
@@ -933,20 +952,42 @@ export default function ManageProfile() {
         return;
       }
 
+      if (isRecoveryAccessPinFlow) {
+        const phoneForIndex = profilePhoneForAccessPin.trim();
+        resetAccessPinForm();
+        router.replace(buildAppIndexRoute(phoneForIndex));
+        return;
+      }
+
       resetAccessPinForm();
       Alert.alert('Senha atualizada', 'Use a nova senha de 4 dígitos na próxima entrada.');
     } finally {
       setSavingAccessPin(false);
     }
   }, [
+    accessPinConfirmMismatch,
     accessPinValidationMessage,
     canUpdateAccessPin,
     confirmAccessPin,
     currentAccessPin,
+    isRecoveryAccessPinFlow,
     newAccessPin,
     profilePhoneForAccessPin,
     resetAccessPinForm,
+    router,
   ]);
+
+  const handleLeaveScreen = useCallback(() => {
+    if (isRecoveryAccessPinFlow) {
+      Alert.alert(
+        'Defina sua nova senha',
+        'Escolha uma senha de 4 dígitos, confirme nos dois campos e toque em Salvar nova senha para continuar.'
+      );
+      return;
+    }
+
+    returnToCaller();
+  }, [isRecoveryAccessPinFlow, returnToCaller]);
 
   const loadVehicles = useCallback(
     async (phone: string | null | undefined) => {
@@ -1120,6 +1161,42 @@ export default function ManageProfile() {
       'Preencha os dados faltantes nas seções abaixo (contato, CPF, e-mail e endereço) para concluir seu cadastro.'
     );
   }, [isOnboardingFlow, loading, phoneParam, profile, router]);
+
+  useEffect(() => {
+    if (!isRecoveryAccessPinFlow || loading || !profile || recoveryAccessPinInitializedRef.current) {
+      return;
+    }
+
+    const normalizedRecoveryPin = recoveryPinParam.replace(/\D/g, '').slice(0, ACCESS_PIN_LENGTH);
+
+    if (!isValidAccessPin(normalizedRecoveryPin)) {
+      Alert.alert(
+        'Recuperação de senha',
+        'Não foi possível identificar a senha enviada por e-mail. Faça login novamente.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              if (phoneParam) {
+                router.replace({
+                  pathname: '/',
+                  params: { phone: encodeURIComponent(phoneParam), recovered: '1' },
+                });
+              } else {
+                router.replace('/');
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    recoveryAccessPinInitializedRef.current = true;
+    setAccessPinSectionExpanded(true);
+    setCurrentAccessPin(normalizedRecoveryPin);
+    setShowCurrentAccessPin(true);
+  }, [isRecoveryAccessPinFlow, loading, phoneParam, profile, recoveryPinParam, router]);
 
   useEffect(() => {
     setExpandedSections(isOnboardingFlow ? ONBOARDING_EXPANDED_SECTIONS : DEFAULT_EXPANDED_SECTIONS);
@@ -1888,6 +1965,12 @@ export default function ManageProfile() {
             Complete as informações faltantes para finalizar seu cadastro.
           </Text>
         ) : null}
+        {isRecoveryAccessPinFlow ? (
+          <Text style={styles.onboardingHint}>
+            Escolha uma nova senha de 4 dígitos. A senha enviada por e-mail aparece abaixo apenas
+            para conferência.
+          </Text>
+        ) : null}
       </View>
 
       <ScrollView
@@ -1953,36 +2036,53 @@ export default function ManageProfile() {
             <TouchableOpacity
               style={styles.sectionHeader}
               onPress={toggleAccessPinSection}
-              activeOpacity={0.85}
+              activeOpacity={isRecoveryAccessPinFlow ? 1 : 0.85}
+              disabled={isRecoveryAccessPinFlow}
             >
               <View>
                 <Text style={styles.sectionTitle}>Senha de acesso</Text>
-                <Text style={styles.sectionMeta}>Alterar senha de 4 dígitos</Text>
+                <Text style={styles.sectionMeta}>
+                  {isRecoveryAccessPinFlow
+                    ? 'Defina sua nova senha de acesso'
+                    : 'Alterar senha de 4 dígitos'}
+                </Text>
               </View>
-              <MaterialIcons
-                name={accessPinSectionExpanded ? 'expand-less' : 'expand-more'}
-                size={22}
-                color="#CBD5E1"
-              />
+              {!isRecoveryAccessPinFlow ? (
+                <MaterialIcons
+                  name={accessPinSectionExpanded ? 'expand-less' : 'expand-more'}
+                  size={22}
+                  color="#CBD5E1"
+                />
+              ) : null}
             </TouchableOpacity>
 
             {accessPinSectionExpanded ? (
               <View style={styles.accessPinSectionBody}>
                 <Text style={styles.accessPinHint} numberOfLines={3}>
-                  Defina uma senha de 4 dígitos para entrar no app. Use a senha que recebeu no
-                  WhatsApp como senha atual.
+                  {isRecoveryAccessPinFlow
+                    ? 'Confira a senha recebida por e-mail e informe abaixo a nova senha que preferir usar.'
+                    : 'Defina uma senha de 4 dígitos para entrar no app. Informe a senha atual para alterá-la.'}
                 </Text>
 
                 <AccessPinField
-                  label="Senha atual"
-                  value={currentAccessPin}
-                  onChangeText={(text) =>
-                    handleAccessPinFieldChange(text, setCurrentAccessPin, newAccessPinRef)
+                  label={
+                    isRecoveryAccessPinFlow
+                      ? 'Senha recebida por e-mail (somente leitura)'
+                      : 'Senha atual'
                   }
+                  value={currentAccessPin}
+                  onChangeText={(text) => {
+                    if (isRecoveryAccessPinFlow) {
+                      return;
+                    }
+
+                    handleAccessPinFieldChange(text, setCurrentAccessPin, newAccessPinRef);
+                  }}
                   inputRef={currentAccessPinRef}
                   visible={showCurrentAccessPin}
                   onToggleVisible={() => setShowCurrentAccessPin((open) => !open)}
-                  editable={canUpdateAccessPin && !savingAccessPin}
+                  editable={canUpdateAccessPin && !savingAccessPin && !isRecoveryAccessPinFlow}
+                  allowVisibilityToggle={isRecoveryAccessPinFlow}
                   onFocus={lockAccessPinScrollPosition}
                   onSubmitEditing={() => {
                     newAccessPinRef.current?.focus();
@@ -2534,7 +2634,7 @@ export default function ManageProfile() {
       </ScrollView>
 
       <View style={[styles.footerContainer, { paddingBottom: insets.bottom + 10 }]}>
-        <TouchableOpacity style={styles.backButton} onPress={returnToCaller}>
+        <TouchableOpacity style={styles.backButton} onPress={handleLeaveScreen}>
           <Text style={styles.backButtonText}>Voltar</Text>
         </TouchableOpacity>
       </View>

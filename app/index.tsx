@@ -51,7 +51,10 @@ import { openWhatsAppLikeBirthdays, openWhatsAppLikeBirthdaysWithText } from '@/
 import { isBrazilianMobilePhoneComplete, isBrazilianPhoneComplete } from '@/lib/phoneValidation';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { verificarLogin } from '@/lib/verificarLogin';
-import { resolveRegisteredUserSessionRoute } from '@/lib/profileOnboarding';
+import {
+  buildManageProfileChangeAccessPinAfterRecoveryRoute,
+  resolveRegisteredUserSessionRoute,
+} from '@/lib/profileOnboarding';
 import { isLgpdAtivoEnabled } from '@/lib/appParameters';
 import {
   getStoredUserPhone,
@@ -195,9 +198,24 @@ export default function IndexScreen() {
     async (
       profile: Record<string, unknown>,
       phoneForSession: string,
-      sessionToken?: string | null
+      sessionToken?: string | null,
+      options?: { afterPasswordRecovery?: boolean; recoveryPin?: string }
     ) => {
       await persistUserSession(profile, phoneForSession, sessionToken);
+
+      if (
+        options?.afterPasswordRecovery
+        && options.recoveryPin
+        && isValidAccessPin(options.recoveryPin)
+      ) {
+        router.replace(
+          buildManageProfileChangeAccessPinAfterRecoveryRoute(
+            phoneForSession,
+            options.recoveryPin
+          )
+        );
+        return true;
+      }
 
       const lgpdAtivo = await isLgpdAtivoEnabled();
       const route = resolveRegisteredUserSessionRoute(profile, phoneForSession, lgpdAtivo);
@@ -567,7 +585,10 @@ export default function IndexScreen() {
         const continued = await continueWithExistingProfile(
           verification.profile,
           cleanPhone,
-          verification.sessionToken
+          verification.sessionToken,
+          isPasswordRecovered
+            ? { afterPasswordRecovery: true, recoveryPin: pin.trim() }
+            : undefined
         );
 
         if (!continued) {
@@ -582,7 +603,14 @@ export default function IndexScreen() {
         isVerifyingPinRef.current = false;
       }
     },
-    [canAttemptMemberPinLogin, continueWithExistingProfile, isTotemLoginMode, phone, router]
+    [
+      canAttemptMemberPinLogin,
+      continueWithExistingProfile,
+      isPasswordRecovered,
+      isTotemLoginMode,
+      phone,
+      router,
+    ]
   );
 
   useEffect(() => {

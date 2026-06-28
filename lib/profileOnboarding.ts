@@ -46,6 +46,19 @@ export const buildManageProfileOnboardingRoute = (phone: string) => ({
   },
 });
 
+/** Após login com PIN enviado por e-mail — troca obrigatória em Dados Cadastrais. */
+export const buildManageProfileChangeAccessPinAfterRecoveryRoute = (
+  phone: string,
+  recoveryPin: string
+) => ({
+  pathname: '/manage-profile' as const,
+  params: {
+    phone: encodeURIComponent(phone),
+    changeAccessPinAfterRecovery: '1',
+    recoveryPin: encodeURIComponent(recoveryPin.trim()),
+  },
+});
+
 export const buildDashboardFamilyAgendaRoute = (phone: string) => ({
   pathname: '/(tabs)' as const,
   params: {
