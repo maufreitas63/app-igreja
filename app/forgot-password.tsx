@@ -25,14 +25,28 @@ import {
 
 type RecoveryStep = 'loading' | 'email' | 'security';
 
-const buildLoginRouteAfterRecovery = (phoneValue: string) => {
+const buildLoginRouteAfterRecovery = (phoneValue: string, emailMasked?: string) => {
   const digits = phoneValue.replace(/\D/g, '');
 
   if (!isBrazilianMobilePhoneComplete(phoneValue) || !digits) {
-    return '/?recovered=1';
+    const params = new URLSearchParams({ recovered: '1' });
+    const masked = emailMasked?.trim();
+    if (masked) {
+      params.set('email', masked);
+    }
+    return `/?${params.toString()}`;
   }
 
-  return `/?phone=${encodeURIComponent(digits)}&recovered=1`;
+  const params = new URLSearchParams({
+    phone: digits,
+    recovered: '1',
+  });
+  const masked = emailMasked?.trim();
+  if (masked) {
+    params.set('email', masked);
+  }
+
+  return `/?${params.toString()}`;
 };
 
 export default function ForgotPasswordScreen() {
@@ -165,12 +179,7 @@ export default function ForgotPasswordScreen() {
         return;
       }
 
-      Alert.alert('Senha enviada', result.message, [
-        {
-          text: 'Ir para entrada',
-          onPress: () => router.replace(buildLoginRouteAfterRecovery(phone)),
-        },
-      ]);
+      router.replace(buildLoginRouteAfterRecovery(phone, result.emailMasked));
     } finally {
       setLoading(false);
     }

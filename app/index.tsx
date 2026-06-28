@@ -67,11 +67,12 @@ import {
 } from '@/lib/totemDevice';
 
 export default function IndexScreen() {
-  const { [SIGN_OUT_QUERY_PARAM]: signedOutParam, phone: phoneParam, recovered: recoveredParam } =
+  const { [SIGN_OUT_QUERY_PARAM]: signedOutParam, phone: phoneParam, recovered: recoveredParam, email: emailParam } =
     useLocalSearchParams<{
       [SIGN_OUT_QUERY_PARAM]?: string | string[];
       phone?: string | string[];
       recovered?: string | string[];
+      email?: string | string[];
     }>();
   const skipSessionRestore =
     signedOutParam === '1' || (Array.isArray(signedOutParam) && signedOutParam.includes('1'));
@@ -83,6 +84,12 @@ export default function IndexScreen() {
         : '';
   const isPasswordRecovered =
     recoveredParam === '1' || (Array.isArray(recoveredParam) && recoveredParam.includes('1'));
+  const recoveryEmailMaskedParam =
+    typeof emailParam === 'string'
+      ? emailParam
+      : Array.isArray(emailParam)
+        ? emailParam[0] ?? ''
+        : '';
   const [phone, setPhone] = useState('');
   const [accessPin, setAccessPin] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -100,6 +107,7 @@ export default function IndexScreen() {
   const [pinCodeSent, setPinCodeSent] = useState(false);
   const [showForgotPasswordHelp, setShowForgotPasswordHelp] = useState(false);
   const [passwordRecoveredBanner, setPasswordRecoveredBanner] = useState(false);
+  const [recoveryEmailMasked, setRecoveryEmailMasked] = useState('');
   const isTotemLoginMode = Boolean(
     celTotemPhone && normalizePhoneDigits(phone) === celTotemPhone
   );
@@ -146,6 +154,7 @@ export default function IndexScreen() {
     setPinCodeSent(false);
     setShowForgotPasswordHelp(false);
     setPasswordRecoveredBanner(false);
+    setRecoveryEmailMasked('');
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
     preparedPinDraftRef.current = null;
@@ -171,6 +180,7 @@ export default function IndexScreen() {
     setPinCodeSent(false);
     setShowForgotPasswordHelp(false);
     setPasswordRecoveredBanner(false);
+    setRecoveryEmailMasked('');
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
     preparedPinDraftRef.current = null;
@@ -221,8 +231,9 @@ export default function IndexScreen() {
     setPinDeliveryUnlocked(true);
     setHasStoredAccessPin(true);
     setPasswordRecoveredBanner(isPasswordRecovered);
+    setRecoveryEmailMasked(recoveryEmailMaskedParam.trim());
     focusPinInput();
-  }, [focusPinInput, isPasswordRecovered, isRestoringSession, recoveryPhoneParam]);
+  }, [focusPinInput, isPasswordRecovered, isRestoringSession, recoveryEmailMaskedParam, recoveryPhoneParam]);
 
   useEffect(() => {
     if (isTotemLoginMode || !isBrazilianPhoneComplete(phone)) {
@@ -666,7 +677,9 @@ export default function IndexScreen() {
     }
 
     if (passwordRecoveredBanner) {
-      return 'Senha redefinida. Digite os 4 dígitos enviados para o seu e-mail.';
+      return recoveryEmailMasked
+        ? `Verifique o e-mail ${recoveryEmailMasked} e digite a nova senha de 4 dígitos.`
+        : 'Verifique seu e-mail e digite a nova senha de 4 dígitos.';
     }
 
     if (showForgotPasswordHelp) {
@@ -688,7 +701,9 @@ export default function IndexScreen() {
     }
 
     if (passwordRecoveredBanner) {
-      return 'O código enviado por e-mail já é sua senha de entrada.';
+      return recoveryEmailMasked
+        ? `Enviamos a nova senha para ${recoveryEmailMasked}. Confira também a pasta de spam.`
+        : 'Enviamos a nova senha por e-mail. Confira também a pasta de spam.';
     }
 
     if (showForgotPasswordHelp) {
@@ -944,7 +959,9 @@ export default function IndexScreen() {
               {!isTotemLoginMode && passwordRecoveredBanner ? (
                 <View pointerEvents="none" style={styles.pinSentBanner}>
                   <ReadOnlyText style={styles.pinSentBannerText}>
-                    Senha redefinida. Use os 4 dígitos enviados para o seu e-mail.
+                    {recoveryEmailMasked
+                      ? `Nova senha enviada para ${recoveryEmailMasked}. Verifique seu e-mail e digite os 4 dígitos abaixo.`
+                      : 'Nova senha enviada por e-mail. Verifique sua caixa de entrada e digite os 4 dígitos abaixo.'}
                   </ReadOnlyText>
                 </View>
               ) : null}
