@@ -709,7 +709,9 @@ export default function ManageProfile() {
   const [newAccessPin, setNewAccessPin] = useState('');
   const [confirmAccessPin, setConfirmAccessPin] = useState('');
   const [savingAccessPin, setSavingAccessPin] = useState(false);
-  const [accessPinSectionExpanded, setAccessPinSectionExpanded] = useState(false);
+  const [accessPinSectionExpanded, setAccessPinSectionExpanded] = useState(
+    () => isRecoveryAccessPinFlow
+  );
   const [securityQuestionSectionExpanded, setSecurityQuestionSectionExpanded] = useState(false);
   const [showCurrentAccessPin, setShowCurrentAccessPin] = useState(false);
   const [showNewAccessPin, setShowNewAccessPin] = useState(false);
@@ -857,6 +859,9 @@ export default function ManageProfile() {
   const profileSections = useMemo(() => buildSections(profileFields), [profileFields]);
   const canViewAccessPinSection = canViewProfileColumn('access_pin', profileColumnAccess);
   const canUpdateAccessPin = canUpdateProfileColumn('access_pin', profileColumnAccess);
+  const showAccessPinSection =
+    Boolean(profile) && (canViewAccessPinSection || isRecoveryAccessPinFlow);
+  const canUseAccessPinForm = canUpdateAccessPin || isRecoveryAccessPinFlow;
   const editingFieldRow = useMemo(
     () => profileFields.find((field) => field.key === editingField) ?? null,
     [editingField, profileFields]
@@ -908,8 +913,108 @@ export default function ManageProfile() {
     setShowConfirmAccessPin(false);
   }, []);
 
+  const renderAccessPinFormFields = () => (
+    <>
+      <AccessPinField
+        label={
+          isRecoveryAccessPinFlow
+            ? 'Senha recebida por e-mail (somente leitura)'
+            : 'Senha atual'
+        }
+        value={currentAccessPin}
+        onChangeText={(text) => {
+          if (isRecoveryAccessPinFlow) {
+            return;
+          }
+
+          handleAccessPinFieldChange(text, setCurrentAccessPin, newAccessPinRef);
+        }}
+        inputRef={currentAccessPinRef}
+        visible={showCurrentAccessPin}
+        onToggleVisible={() => setShowCurrentAccessPin((open) => !open)}
+        editable={canUseAccessPinForm && !savingAccessPin && !isRecoveryAccessPinFlow}
+        allowVisibilityToggle={isRecoveryAccessPinFlow}
+        onFocus={lockAccessPinScrollPosition}
+        onSubmitEditing={() => {
+          newAccessPinRef.current?.focus();
+          scheduleAccessPinScrollLock();
+        }}
+        blurOnSubmit={false}
+        returnKeyType="next"
+      />
+
+      <AccessPinField
+        label="Nova senha"
+        value={newAccessPin}
+        onChangeText={(text) =>
+          handleAccessPinFieldChange(text, setNewAccessPin, confirmAccessPinRef)
+        }
+        inputRef={newAccessPinRef}
+        visible={showNewAccessPin}
+        onToggleVisible={() => setShowNewAccessPin((open) => !open)}
+        editable={canUseAccessPinForm && !savingAccessPin}
+        hasError={accessPinConfirmMismatch || accessPinSameAsCurrent}
+        onFocus={lockAccessPinScrollPosition}
+        onSubmitEditing={() => {
+          confirmAccessPinRef.current?.focus();
+          scheduleAccessPinScrollLock();
+        }}
+        blurOnSubmit={false}
+        returnKeyType="next"
+      />
+
+      <AccessPinField
+        label="Confirmar nova senha"
+        value={confirmAccessPin}
+        onChangeText={(text) =>
+          handleAccessPinFieldChange(text, setConfirmAccessPin, undefined, focusSaveAccessPinButton)
+        }
+        inputRef={confirmAccessPinRef}
+        visible={showConfirmAccessPin}
+        onToggleVisible={() => setShowConfirmAccessPin((open) => !open)}
+        editable={canUseAccessPinForm && !savingAccessPin}
+        hasError={accessPinConfirmMismatch}
+        onFocus={lockAccessPinScrollPosition}
+        onSubmitEditing={focusSaveAccessPinButton}
+        returnKeyType="done"
+      />
+
+      <View style={styles.accessPinErrorSlot}>
+        <Text
+          style={[
+            styles.accessPinErrorText,
+            !accessPinValidationMessage && styles.accessPinErrorTextPlaceholder,
+          ]}
+          numberOfLines={2}
+        >
+          {accessPinValidationMessage ?? ' '}
+        </Text>
+      </View>
+
+      <TouchableOpacity
+        ref={saveAccessPinRef}
+        focusable={canUseAccessPinForm && !savingAccessPin}
+        style={[
+          styles.accessPinSaveButton,
+          (savingAccessPin || accessPinValidationMessage || !canUseAccessPinForm)
+            && styles.disabledButton,
+        ]}
+        onPress={() => void handleSaveAccessPin()}
+        disabled={
+          !canUseAccessPinForm || savingAccessPin || Boolean(accessPinValidationMessage)
+        }
+      >
+        {savingAccessPin ? (
+          <ActivityIndicator color="#FFF" />
+        ) : (
+          <Text style={styles.saveButtonText}>Salvar nova senha</Text>
+        )}
+      </TouchableOpacity>
+    </>
+  );
+
   const handleSaveAccessPin = useCallback(async () => {
-    if (!canUpdateAccessPin) {
+    if (!canUseAccessPinForm) {
       Alert.alert('Campo protegido', 'Você não tem permissão para alterar a senha de acesso.');
       return;
     }
@@ -967,7 +1072,7 @@ export default function ManageProfile() {
   }, [
     accessPinConfirmMismatch,
     accessPinValidationMessage,
-    canUpdateAccessPin,
+    canUseAccessPinForm,
     confirmAccessPin,
     currentAccessPin,
     isRecoveryAccessPinFlow,
@@ -1980,6 +2085,27 @@ export default function ManageProfile() {
         automaticallyAdjustKeyboardInsets={!accessPinSectionExpanded}
         showsVerticalScrollIndicator={false}
       >
+        {showAccessPinSection && isRecoveryAccessPinFlow ? (
+          <View
+            style={[styles.sectionCard, styles.recoveryAccessPinCard]}
+            onLayout={(event) => {
+              accessPinSectionScrollYRef.current = event.nativeEvent.layout.y;
+            }}
+          >
+            <View style={styles.recoveryAccessPinHeader}>
+              <Text style={styles.recoveryAccessPinBadge}>Nova senha de acesso</Text>
+              <Text style={styles.recoveryAccessPinTitle}>Defina sua senha pessoal</Text>
+              <Text style={styles.recoveryAccessPinSubtitle}>
+                Confira a senha enviada por e-mail e escolha uma nova senha de 4 dígitos para usar
+                nas próximas entradas.
+              </Text>
+            </View>
+
+            <View style={styles.accessPinSectionBody}>{renderAccessPinFormFields()}</View>
+          </View>
+        ) : null}
+
+        {!isRecoveryAccessPinFlow ? (
         <View style={styles.selfieCard}>
           <View style={styles.selfieRow}>
             {selfiePreviewUrl ? (
@@ -2025,8 +2151,9 @@ export default function ManageProfile() {
             </Text>
           </TouchableOpacity>
         </View>
+        ) : null}
 
-        {profile && canViewAccessPinSection ? (
+        {showAccessPinSection && !isRecoveryAccessPinFlow ? (
           <View
             style={styles.sectionCard}
             onLayout={(event) => {
@@ -2036,129 +2163,27 @@ export default function ManageProfile() {
             <TouchableOpacity
               style={styles.sectionHeader}
               onPress={toggleAccessPinSection}
-              activeOpacity={isRecoveryAccessPinFlow ? 1 : 0.85}
-              disabled={isRecoveryAccessPinFlow}
+              activeOpacity={0.85}
             >
               <View>
                 <Text style={styles.sectionTitle}>Senha de acesso</Text>
-                <Text style={styles.sectionMeta}>
-                  {isRecoveryAccessPinFlow
-                    ? 'Defina sua nova senha de acesso'
-                    : 'Alterar senha de 4 dígitos'}
-                </Text>
+                <Text style={styles.sectionMeta}>Alterar senha de 4 dígitos</Text>
               </View>
-              {!isRecoveryAccessPinFlow ? (
-                <MaterialIcons
-                  name={accessPinSectionExpanded ? 'expand-less' : 'expand-more'}
-                  size={22}
-                  color="#CBD5E1"
-                />
-              ) : null}
+              <MaterialIcons
+                name={accessPinSectionExpanded ? 'expand-less' : 'expand-more'}
+                size={22}
+                color="#CBD5E1"
+              />
             </TouchableOpacity>
 
             {accessPinSectionExpanded ? (
               <View style={styles.accessPinSectionBody}>
                 <Text style={styles.accessPinHint} numberOfLines={3}>
-                  {isRecoveryAccessPinFlow
-                    ? 'Confira a senha recebida por e-mail e informe abaixo a nova senha que preferir usar.'
-                    : 'Defina uma senha de 4 dígitos para entrar no app. Informe a senha atual para alterá-la.'}
+                  Defina uma senha de 4 dígitos para entrar no app. Informe a senha atual para
+                  alterá-la.
                 </Text>
 
-                <AccessPinField
-                  label={
-                    isRecoveryAccessPinFlow
-                      ? 'Senha recebida por e-mail (somente leitura)'
-                      : 'Senha atual'
-                  }
-                  value={currentAccessPin}
-                  onChangeText={(text) => {
-                    if (isRecoveryAccessPinFlow) {
-                      return;
-                    }
-
-                    handleAccessPinFieldChange(text, setCurrentAccessPin, newAccessPinRef);
-                  }}
-                  inputRef={currentAccessPinRef}
-                  visible={showCurrentAccessPin}
-                  onToggleVisible={() => setShowCurrentAccessPin((open) => !open)}
-                  editable={canUpdateAccessPin && !savingAccessPin && !isRecoveryAccessPinFlow}
-                  allowVisibilityToggle={isRecoveryAccessPinFlow}
-                  onFocus={lockAccessPinScrollPosition}
-                  onSubmitEditing={() => {
-                    newAccessPinRef.current?.focus();
-                    scheduleAccessPinScrollLock();
-                  }}
-                  blurOnSubmit={false}
-                  returnKeyType="next"
-                />
-
-                <AccessPinField
-                  label="Nova senha"
-                  value={newAccessPin}
-                  onChangeText={(text) =>
-                    handleAccessPinFieldChange(text, setNewAccessPin, confirmAccessPinRef)
-                  }
-                  inputRef={newAccessPinRef}
-                  visible={showNewAccessPin}
-                  onToggleVisible={() => setShowNewAccessPin((open) => !open)}
-                  editable={canUpdateAccessPin && !savingAccessPin}
-                  hasError={accessPinConfirmMismatch || accessPinSameAsCurrent}
-                  onFocus={lockAccessPinScrollPosition}
-                  onSubmitEditing={() => {
-                    confirmAccessPinRef.current?.focus();
-                    scheduleAccessPinScrollLock();
-                  }}
-                  blurOnSubmit={false}
-                  returnKeyType="next"
-                />
-
-                <AccessPinField
-                  label="Confirmar nova senha"
-                  value={confirmAccessPin}
-                  onChangeText={(text) =>
-                    handleAccessPinFieldChange(text, setConfirmAccessPin, undefined, focusSaveAccessPinButton)
-                  }
-                  inputRef={confirmAccessPinRef}
-                  visible={showConfirmAccessPin}
-                  onToggleVisible={() => setShowConfirmAccessPin((open) => !open)}
-                  editable={canUpdateAccessPin && !savingAccessPin}
-                  hasError={accessPinConfirmMismatch}
-                  onFocus={lockAccessPinScrollPosition}
-                  onSubmitEditing={focusSaveAccessPinButton}
-                  returnKeyType="done"
-                />
-
-                <View style={styles.accessPinErrorSlot}>
-                  <Text
-                    style={[
-                      styles.accessPinErrorText,
-                      !accessPinValidationMessage && styles.accessPinErrorTextPlaceholder,
-                    ]}
-                    numberOfLines={2}
-                  >
-                    {accessPinValidationMessage ?? ' '}
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  ref={saveAccessPinRef}
-                  focusable={canUpdateAccessPin && !savingAccessPin}
-                  style={[
-                    styles.accessPinSaveButton,
-                    (savingAccessPin || accessPinValidationMessage || !canUpdateAccessPin)
-                      && styles.disabledButton,
-                  ]}
-                  onPress={() => void handleSaveAccessPin()}
-                  disabled={
-                    !canUpdateAccessPin || savingAccessPin || Boolean(accessPinValidationMessage)
-                  }
-                >
-                  {savingAccessPin ? (
-                    <ActivityIndicator color="#FFF" />
-                  ) : (
-                    <Text style={styles.saveButtonText}>Salvar nova senha</Text>
-                  )}
-                </TouchableOpacity>
+                {renderAccessPinFormFields()}
               </View>
             ) : null}
           </View>
@@ -2753,6 +2778,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingBottom: 15,
     minHeight: ACCESS_PIN_SECTION_BODY_MIN_HEIGHT,
+  },
+  recoveryAccessPinCard: {
+    borderColor: '#10b981',
+    borderWidth: 2,
+    marginBottom: 4,
+  },
+  recoveryAccessPinHeader: {
+    paddingHorizontal: 15,
+    paddingTop: 15,
+    paddingBottom: 4,
+    gap: 8,
+  },
+  recoveryAccessPinBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+    color: '#6EE7B7',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    overflow: 'hidden',
+  },
+  recoveryAccessPinTitle: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  recoveryAccessPinSubtitle: {
+    color: '#94A3B8',
+    fontSize: 14,
+    lineHeight: 20,
   },
   accessPinHint: {
     color: '#94A3B8',
