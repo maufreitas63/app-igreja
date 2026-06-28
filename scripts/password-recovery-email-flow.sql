@@ -561,7 +561,8 @@ begin
   v_email_masked := public.mask_profile_email(v_email);
   v_state := public.password_recovery_upsert_state(v_profile_id, p_phone);
 
-  if v_hash is null then
+  -- Cadastro quando falta pergunta OU hash (ex.: hash órfão sem pergunta).
+  if v_question is null or v_hash is null then
     v_new_question := trim(coalesce(p_question, ''));
 
     if char_length(v_new_question) < 5 then
@@ -585,6 +586,13 @@ begin
            security_answer_hash = crypt(v_new_answer, gen_salt('bf', 10)),
            updated_at = now()
      where p.id = v_profile_id;
+
+    if not found then
+      return jsonb_build_object(
+        'ok', false,
+        'message', 'Não foi possível salvar a pergunta de segurança no perfil.'
+      );
+    end if;
   else
     if public.normalize_security_answer(p_answer) = '' then
       return jsonb_build_object(
