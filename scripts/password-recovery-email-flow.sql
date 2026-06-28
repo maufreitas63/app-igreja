@@ -20,10 +20,11 @@
 --      recovery_email_smtp_password     = senha de app do Google (16 caracteres)
 --      recovery_email_from              = Igreja IBN <ibnmassagua@gmail.com>
 --
--- === Resend (produção com domínio) ===
+-- === Resend (produção com domínio ibnorte.api.br) ===
 --      recovery_email_provider          = resend
 --      recovery_email_api_key           = re_...
---      recovery_email_from              = Igreja <noreply@seudominio.com.br>
+--      recovery_email_from              = Igreja IBN Norte <nao-responda@ibnorte.api.br>
+--      Ver scripts/password-recovery-email-ibnorte-resend-setup.sql
 --
 -- Extensão http do Supabase (Database → Extensions → http) deve estar ativa.
 
