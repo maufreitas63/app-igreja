@@ -41,14 +41,7 @@ export function useScreenAccessGuard({
       }
 
       let active = true;
-
-      setStatus((current) => {
-        if (current === 'allowed' || current === 'skipped' || current === 'denied') {
-          return current;
-        }
-
-        return 'checking';
-      });
+      setStatus('checking');
 
       void (async () => {
         const aclStatus = await getAccessControlRpcStatus();

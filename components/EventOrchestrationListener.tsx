@@ -13,48 +13,17 @@ import { AppState, Platform } from 'react-native';
 
 const ORCHESTRATION_POLL_MS = 3_000;
 
-/** Telas públicas — sem escuta de orquestração. */
-const ORCHESTRATION_PUBLIC_PATHS = new Set([
-  '/',
-  '/index',
-  '/register',
-  '/forgot-password',
-  '/totem-checkin',
-  '/sessao-encerrada',
-]);
-
-const normalizePathname = (pathname: string) => pathname.replace(/\/+$/, '') || '/';
-
-const isTruthyRouteParam = (value: string | string[] | undefined) =>
-  value === '1' || (Array.isArray(value) && value.includes('1'));
-
 export const shouldListenForEventOrchestration = (
-  pathname: string,
+  _pathname: string,
   segments: string[],
-  searchParams?: Record<string, string | string[] | undefined>
+  _searchParams?: Record<string, string | string[] | undefined>
 ) => {
   if (segments[0] === 'admin') {
     return false;
   }
 
-  if (segments[0] === '(tabs)') {
-    return true;
-  }
-
-  const normalized = normalizePathname(pathname);
-
-  if (ORCHESTRATION_PUBLIC_PATHS.has(normalized)) {
-    return false;
-  }
-
-  if (
-    normalized === '/manage-profile'
-    && isTruthyRouteParam(searchParams?.changeAccessPinAfterRecovery)
-  ) {
-    return false;
-  }
-
-  return normalized !== '/admin/orquestrador';
+  // Orquestração só atua no índice/dashboard — não interrompe telas filhas (perfil, pastoral, etc.).
+  return segments[0] === '(tabs)';
 };
 
 export function EventOrchestrationListener() {

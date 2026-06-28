@@ -60,10 +60,11 @@ export const buildManageProfileChangeAccessPinAfterRecoveryRoute = (
 });
 
 export const buildDashboardFamilyAgendaRoute = (phone: string) => ({
-  pathname: '/(tabs)' as const,
+  pathname: '/(tabs)/dashboard' as const,
   params: {
     phone: encodeURIComponent(phone),
     dashboardCard: DASHBOARD_FAMILY_AGENDA_CARD_ID,
+    dashboardCardNonce: String(Date.now()),
   },
 });
 

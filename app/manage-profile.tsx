@@ -1204,6 +1204,11 @@ export default function ManageProfile() {
       let active = true;
 
       void (async () => {
+        if (isRecoveryAccessPinFlow) {
+          await fetchProfile();
+          return;
+        }
+
         const allowed = await sessionHasAccess('screen', ACCESS_SCREEN.manageProfile, 'view');
 
         if (!active) {
@@ -1225,11 +1230,15 @@ export default function ManageProfile() {
       return () => {
         active = false;
       };
-    }, [fetchProfile, router])
+    }, [fetchProfile, isRecoveryAccessPinFlow, router])
   );
 
   useEffect(() => {
     if (loading || !profile) {
+      return;
+    }
+
+    if (isRecoveryAccessPinFlow) {
       return;
     }
 
