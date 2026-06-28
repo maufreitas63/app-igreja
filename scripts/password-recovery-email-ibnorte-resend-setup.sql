@@ -21,7 +21,7 @@
 --      Type / Name / Content conforme o painel do Resend
 --      Proxy: DNS only (nuvem CINZA) em todos os registros de e-mail
 --    Nomes comuns no Cloudflare (Name = só a parte antes do domínio):
---      TXT  resend._domainkey   → valor DKIM longo do Resend
+--      TXT  resend._domainkey   → COPIE O VALOR EXATO da tabela do Resend (começa com p=MIGfMA0GCS...)
 --      TXT  send                 → v=spf1 include:amazonses.com ~all
 --      MX   send                 → feedback-smtp.sa-east-1.amazonses.com (priority 10)
 --      TXT  _dmarc               → v=DMARC1; p=none;  (opcional)
