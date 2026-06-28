@@ -21,10 +21,10 @@
 --      recovery_email_from              = Igreja IBN <ibnmassagua@gmail.com>
 --
 -- === Resend (produção com domínio ibnorte.api.br) ===
+--      recovery_email_from              → remetente fixo (ex.: nao-responda@ibnorte.api.br)
+--      destinatário                     → profiles.email do membro (informado ou já cadastrado)
 --      recovery_email_provider          = resend
 --      recovery_email_api_key           = re_...
---      recovery_email_from              = Igreja IBN Norte <nao-responda@ibnorte.api.br>
---      Ver scripts/password-recovery-email-ibnorte-resend-setup.sql
 --
 -- Extensão http do Supabase (Database → Extensions → http) deve estar ativa.
 

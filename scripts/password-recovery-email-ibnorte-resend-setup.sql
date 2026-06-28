@@ -1,5 +1,11 @@
 -- Recuperação de senha — envio via Resend com domínio ibnorte.api.br
--- Remetente: nao-responda@ibnorte.api.br
+--
+-- FLUXO DE E-MAIL (já implementado no app + SQL):
+--   DE (remetente fixo):  recovery_email_from → nao-responda@ibnorte.api.br
+--   PARA (destinatário):  profiles.email do membro (cadastrado ou informado na recuperação)
+--
+-- O usuário NÃO recebe no nao-responda@; esse endereço só ENVIA o PIN.
+-- Cada membro recebe no e-mail pessoal gravado em profiles.email.
 --
 -- NÃO é necessário criar caixa de e-mail no Cloudflare para ENVIAR.
 -- O Resend envia em nome do domínio após verificar os registros DNS.
