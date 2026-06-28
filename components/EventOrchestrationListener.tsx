@@ -9,8 +9,8 @@ import {
   resolveEventOrchestrationTarget,
 } from '@/lib/eventOrchestrationRoutes';
 import { isEventOrchestrationPanelFocused } from '@/lib/eventOrchestrationPanelFocus';
+import { hasStoredMemberSessionToken } from '@/lib/memberSession';
 import { supabase } from '@/lib/supabase';
-import { getStoredUserPhone } from '@/lib/userSession';
 import { useLocalSearchParams, usePathname, useRouter, useSegments } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, AppState, Platform, StyleSheet } from 'react-native';
@@ -24,13 +24,21 @@ const ORCHESTRATION_PUBLIC_PATHS = new Set([
   '/',
   '/index',
   '/register',
+  '/forgot-password',
   '/totem-checkin',
   '/sessao-encerrada',
 ]);
 
 const normalizePathname = (pathname: string) => pathname.replace(/\/+$/, '') || '/';
 
-export const shouldListenForEventOrchestration = (pathname: string, segments: string[]) => {
+const isTruthyRouteParam = (value: string | string[] | undefined) =>
+  value === '1' || (Array.isArray(value) && value.includes('1'));
+
+export const shouldListenForEventOrchestration = (
+  pathname: string,
+  segments: string[],
+  searchParams?: Record<string, string | string[] | undefined>
+) => {
   if (segments[0] === 'admin') {
     return false;
   }
@@ -42,6 +50,13 @@ export const shouldListenForEventOrchestration = (pathname: string, segments: st
   const normalized = normalizePathname(pathname);
 
   if (ORCHESTRATION_PUBLIC_PATHS.has(normalized)) {
+    return false;
+  }
+
+  if (
+    normalized === '/manage-profile'
+    && isTruthyRouteParam(searchParams?.changeAccessPinAfterRecovery)
+  ) {
     return false;
   }
 
@@ -76,7 +91,11 @@ export function EventOrchestrationListener() {
 
   const shouldListen =
     hasMemberSession === true
-    && shouldListenForEventOrchestration(pathname, segments)
+    && shouldListenForEventOrchestration(
+      pathname,
+      segments,
+      searchParams as Record<string, string | string[] | undefined>
+    )
     && !isEventOrchestrationPanelFocused();
 
   const shouldListenRef = useRef(shouldListen);
@@ -99,9 +118,9 @@ export function EventOrchestrationListener() {
     let cancelled = false;
 
     const resolveSession = async () => {
-      const phone = await getStoredUserPhone();
+      const hasSession = await hasStoredMemberSessionToken();
       if (!cancelled) {
-        setHasMemberSession(Boolean(phone?.trim()));
+        setHasMemberSession(hasSession);
       }
     };
 

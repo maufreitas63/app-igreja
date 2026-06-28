@@ -6,10 +6,11 @@ import {
   passwordRecoveryVerifyAndSendPin,
 } from '@/lib/passwordRecovery';
 import { isBrazilianMobilePhoneComplete } from '@/lib/phoneValidation';
+import { clearUserSession } from '@/lib/userSession';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -67,6 +68,16 @@ export default function ForgotPasswordScreen() {
   const [securityAnswer, setSecurityAnswer] = useState('');
   const [loading, setLoading] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
+  const recoverySessionClearedRef = useRef(false);
+
+  useEffect(() => {
+    if (recoverySessionClearedRef.current) {
+      return;
+    }
+
+    recoverySessionClearedRef.current = true;
+    void clearUserSession();
+  }, []);
 
   const loadState = useCallback(async () => {
     if (!isBrazilianMobilePhoneComplete(phone)) {
