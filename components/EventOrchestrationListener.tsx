@@ -1,9 +1,5 @@
-import { EventOrchestrationGuidanceOverlay } from '@/components/EventOrchestrationGuidanceOverlay';
 import { fetchEventControlState } from '@/lib/eventOrchestrationApi';
-import {
-  registerOrchestrationUserGestureListeners,
-  triggerOrchestrationHapticFeedback,
-} from '@/lib/eventOrchestrationHaptics';
+import { registerOrchestrationUserGestureListeners } from '@/lib/eventOrchestrationHaptics';
 import {
   buildEventOrchestrationPathSignature,
   resolveEventOrchestrationTarget,
@@ -13,10 +9,8 @@ import { hasStoredMemberSessionToken } from '@/lib/memberSession';
 import { supabase } from '@/lib/supabase';
 import { useLocalSearchParams, usePathname, useRouter, useSegments } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, AppState, Platform, StyleSheet } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
-const GUIDANCE_DELAY_MS = 1500;
-const SCREEN_FADE_MS = 320;
 const ORCHESTRATION_POLL_MS = 3_000;
 
 /** Telas públicas — sem escuta de orquestração. */
@@ -68,11 +62,7 @@ export function EventOrchestrationListener() {
   const pathname = usePathname();
   const segments = useSegments();
   const searchParams = useLocalSearchParams();
-  const screenOpacity = useRef(new Animated.Value(0)).current;
 
-  const [guidanceVisible, setGuidanceVisible] = useState(false);
-  const [guidanceMessage, setGuidanceMessage] = useState('');
-  const [scrimVisible, setScrimVisible] = useState(false);
   const [hasMemberSession, setHasMemberSession] = useState<boolean | null>(null);
 
   const lastProcessedUpdatedAtRef = useRef<string | null>(null);
@@ -141,32 +131,8 @@ export function EventOrchestrationListener() {
     }
   }, [currentPathSignature]);
 
-  const fadeScreen = useCallback(
-    (toValue: number) =>
-      new Promise<void>((resolve) => {
-        if (toValue > 0) {
-          setScrimVisible(true);
-        }
-
-        Animated.timing(screenOpacity, {
-          toValue,
-          duration: SCREEN_FADE_MS,
-          useNativeDriver: true,
-        }).start(({ finished }) => {
-          if (toValue === 0) {
-            setScrimVisible(false);
-          }
-
-          if (finished) {
-            resolve();
-          }
-        });
-      }),
-    [screenOpacity]
-  );
-
-  const runGuidedNavigation = useCallback(
-    async (activeRoute: string, updatedAt: string) => {
+  const runSilentNavigation = useCallback(
+    (activeRoute: string, updatedAt: string) => {
       if (!shouldListenRef.current || isEventOrchestrationPanelFocused()) {
         return;
       }
@@ -208,18 +174,6 @@ export function EventOrchestrationListener() {
       transitionInProgressRef.current = true;
       lastProcessedUpdatedAtRef.current = updatedAt;
 
-      const message = `Estamos te guiando para ${target.label}...`;
-      setGuidanceMessage(message);
-      setGuidanceVisible(true);
-
-      void triggerOrchestrationHapticFeedback();
-
-      await new Promise((resolve) => setTimeout(resolve, GUIDANCE_DELAY_MS));
-
-      await fadeScreen(0.38);
-
-      void triggerOrchestrationHapticFeedback();
-
       if (target.pathSignature === '/(tabs)') {
         router.replace(target.href);
       } else {
@@ -228,25 +182,20 @@ export function EventOrchestrationListener() {
 
       appliedPathSignatureRef.current = target.pathSignature;
       manualNavigationRef.current = false;
-
-      await new Promise((resolve) => setTimeout(resolve, 80));
-      await fadeScreen(0);
-
-      setGuidanceVisible(false);
       transitionInProgressRef.current = false;
     },
-    [fadeScreen, router]
+    [router]
   );
 
-  const runGuidedNavigationRef = useRef(runGuidedNavigation);
-  runGuidedNavigationRef.current = runGuidedNavigation;
+  const runSilentNavigationRef = useRef(runSilentNavigation);
+  runSilentNavigationRef.current = runSilentNavigation;
 
   const dispatchOrchestrationSignal = useCallback((activeRoute: string, updatedAt: string) => {
     if (!activeRoute || !updatedAt || isEventOrchestrationPanelFocused()) {
       return;
     }
 
-    void runGuidedNavigationRef.current(activeRoute, updatedAt);
+    runSilentNavigationRef.current(activeRoute, updatedAt);
   }, []);
 
   const syncEventControlFromServer = useCallback(async () => {
@@ -336,28 +285,5 @@ export function EventOrchestrationListener() {
     };
   }, [dispatchOrchestrationSignal, hasMemberSession, syncEventControlFromServer]);
 
-  if (!shouldListen) {
-    return null;
-  }
-
-  return (
-    <>
-      {scrimVisible ? (
-        <Animated.View style={[styles.screenFade, { opacity: screenOpacity }]} pointerEvents="none" />
-      ) : null}
-      <EventOrchestrationGuidanceOverlay
-        visible={guidanceVisible}
-        message={guidanceMessage}
-        onHidden={() => setGuidanceMessage('')}
-      />
-    </>
-  );
+  return null;
 }
-
-const styles = StyleSheet.create({
-  screenFade: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#020617',
-    zIndex: 9997,
-  },
-});

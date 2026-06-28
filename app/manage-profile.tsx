@@ -918,7 +918,7 @@ export default function ManageProfile() {
       <AccessPinField
         label={
           isRecoveryAccessPinFlow
-            ? 'Senha recebida por e-mail (somente leitura)'
+            ? 'Senha atual (enviada por e-mail)'
             : 'Senha atual'
         }
         value={currentAccessPin}
@@ -2072,8 +2072,8 @@ export default function ManageProfile() {
         ) : null}
         {isRecoveryAccessPinFlow ? (
           <Text style={styles.onboardingHint}>
-            Escolha uma nova senha de 4 dígitos. A senha enviada por e-mail aparece abaixo apenas
-            para conferência.
+            Abra a seção Senha de acesso abaixo, confira a senha enviada por e-mail e defina a nova
+            senha de 4 dígitos.
           </Text>
         ) : null}
       </View>
@@ -2085,27 +2085,6 @@ export default function ManageProfile() {
         automaticallyAdjustKeyboardInsets={!accessPinSectionExpanded}
         showsVerticalScrollIndicator={false}
       >
-        {showAccessPinSection && isRecoveryAccessPinFlow ? (
-          <View
-            style={[styles.sectionCard, styles.recoveryAccessPinCard]}
-            onLayout={(event) => {
-              accessPinSectionScrollYRef.current = event.nativeEvent.layout.y;
-            }}
-          >
-            <View style={styles.recoveryAccessPinHeader}>
-              <Text style={styles.recoveryAccessPinBadge}>Nova senha de acesso</Text>
-              <Text style={styles.recoveryAccessPinTitle}>Defina sua senha pessoal</Text>
-              <Text style={styles.recoveryAccessPinSubtitle}>
-                Confira a senha enviada por e-mail e escolha uma nova senha de 4 dígitos para usar
-                nas próximas entradas.
-              </Text>
-            </View>
-
-            <View style={styles.accessPinSectionBody}>{renderAccessPinFormFields()}</View>
-          </View>
-        ) : null}
-
-        {!isRecoveryAccessPinFlow ? (
         <View style={styles.selfieCard}>
           <View style={styles.selfieRow}>
             {selfiePreviewUrl ? (
@@ -2151,11 +2130,13 @@ export default function ManageProfile() {
             </Text>
           </TouchableOpacity>
         </View>
-        ) : null}
 
-        {showAccessPinSection && !isRecoveryAccessPinFlow ? (
+        {showAccessPinSection ? (
           <View
-            style={styles.sectionCard}
+            style={[
+              styles.sectionCard,
+              isRecoveryAccessPinFlow && styles.recoveryAccessPinSectionCard,
+            ]}
             onLayout={(event) => {
               accessPinSectionScrollYRef.current = event.nativeEvent.layout.y;
             }}
@@ -2163,24 +2144,32 @@ export default function ManageProfile() {
             <TouchableOpacity
               style={styles.sectionHeader}
               onPress={toggleAccessPinSection}
-              activeOpacity={0.85}
+              activeOpacity={isRecoveryAccessPinFlow ? 1 : 0.85}
+              disabled={isRecoveryAccessPinFlow}
             >
               <View>
                 <Text style={styles.sectionTitle}>Senha de acesso</Text>
-                <Text style={styles.sectionMeta}>Alterar senha de 4 dígitos</Text>
+                <Text style={styles.sectionMeta}>
+                  {isRecoveryAccessPinFlow
+                    ? 'Informe sua nova senha de 4 dígitos'
+                    : 'Alterar senha de 4 dígitos'}
+                </Text>
               </View>
-              <MaterialIcons
-                name={accessPinSectionExpanded ? 'expand-less' : 'expand-more'}
-                size={22}
-                color="#CBD5E1"
-              />
+              {!isRecoveryAccessPinFlow ? (
+                <MaterialIcons
+                  name={accessPinSectionExpanded ? 'expand-less' : 'expand-more'}
+                  size={22}
+                  color="#CBD5E1"
+                />
+              ) : null}
             </TouchableOpacity>
 
             {accessPinSectionExpanded ? (
               <View style={styles.accessPinSectionBody}>
-                <Text style={styles.accessPinHint} numberOfLines={3}>
-                  Defina uma senha de 4 dígitos para entrar no app. Informe a senha atual para
-                  alterá-la.
+                <Text style={styles.accessPinHint} numberOfLines={4}>
+                  {isRecoveryAccessPinFlow
+                    ? 'A senha enviada por e-mail aparece abaixo para conferência (somente leitura). Informe a nova senha e confirme nos dois campos.'
+                    : 'Defina uma senha de 4 dígitos para entrar no app. Informe a senha atual para alterá-la.'}
                 </Text>
 
                 {renderAccessPinFormFields()}
@@ -2779,38 +2768,9 @@ const styles = StyleSheet.create({
     paddingBottom: 15,
     minHeight: ACCESS_PIN_SECTION_BODY_MIN_HEIGHT,
   },
-  recoveryAccessPinCard: {
+  recoveryAccessPinSectionCard: {
     borderColor: '#10b981',
     borderWidth: 2,
-    marginBottom: 4,
-  },
-  recoveryAccessPinHeader: {
-    paddingHorizontal: 15,
-    paddingTop: 15,
-    paddingBottom: 4,
-    gap: 8,
-  },
-  recoveryAccessPinBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: 'rgba(16, 185, 129, 0.18)',
-    color: '#6EE7B7',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    overflow: 'hidden',
-  },
-  recoveryAccessPinTitle: {
-    color: '#FFF',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  recoveryAccessPinSubtitle: {
-    color: '#94A3B8',
-    fontSize: 14,
-    lineHeight: 20,
   },
   accessPinHint: {
     color: '#94A3B8',
