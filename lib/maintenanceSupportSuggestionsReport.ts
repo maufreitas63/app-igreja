@@ -14,6 +14,7 @@ export type SupportSuggestionReportRow = {
   solicitante: string;
   telefone: string;
   tipo: string;
+  tema: string;
   status: string;
   abertura_em: string;
   atualizado_em: string;
@@ -70,6 +71,7 @@ export const parseSupportSuggestionReportRow = (
   solicitante: String(row.solicitante ?? ''),
   telefone: String(row.telefone ?? ''),
   tipo: String(row.tipo ?? ''),
+  tema: String(row.tema ?? ''),
   status: String(row.status ?? ''),
   abertura_em: String(row.abertura_em ?? ''),
   atualizado_em: String(row.atualizado_em ?? ''),

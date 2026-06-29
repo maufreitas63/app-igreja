@@ -243,6 +243,11 @@ const renderRequest = (
     lineHeight: 4.2,
   });
 
+  if (row.tema?.trim()) {
+    writeSectionLabel(ctx, 'Tema');
+    writeWrapped(ctx, row.tema.trim(), { fontSize: 10, lineHeight: 4.6 });
+  }
+
   writeSectionLabel(ctx, 'Descrição detalhada');
   writeWrapped(ctx, row.descricao || '—', { fontSize: 10, lineHeight: 4.6 });
 

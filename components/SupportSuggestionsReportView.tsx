@@ -30,6 +30,9 @@ function SupportSuggestionCard({ row }: { row: SupportSuggestionReportRow }) {
             {row.solicitante}
             {row.telefone ? ` · ${row.telefone}` : ''}
           </Text>
+          {row.tema ? (
+            <Text style={styles.requestTheme}>{row.tema}</Text>
+          ) : null}
           <Text style={styles.requestMeta}>
             Aberta em {formatSupportSuggestionDateTime(row.abertura_em)}
           </Text>
@@ -197,6 +200,12 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 11,
     lineHeight: 15,
+  },
+  requestTheme: {
+    color: '#C4B5FD',
+    fontSize: 11,
+    lineHeight: 15,
+    fontWeight: '700',
   },
   statusBadge: {
     borderWidth: 1,

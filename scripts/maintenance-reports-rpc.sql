@@ -1109,8 +1109,10 @@ begin
       r.notify_in_app,
       r.created_at,
       r.updated_at,
-      r.responded_at
+      r.responded_at,
+      coalesce(nullif(trim(t.titulo), ''), '') as tema
     from public.maintenance_support_requests r
+    left join public.maintenance_support_themes t on t.id = r.tema_id
   ),
   attachment_summary as (
     select
@@ -1222,6 +1224,7 @@ begin
         when 'incident' then 'Problema/Incidente'
         else br.record_type::text
       end as tipo,
+      br.tema,
       case br.status::text
         when 'received' then 'Recebida'
         when 'in_review' then 'Em análise'
@@ -1254,6 +1257,7 @@ begin
           'solicitante', re.solicitante,
           'telefone', re.telefone,
           'tipo', re.tipo,
+          'tema', re.tema,
           'status', re.status,
           'abertura_em', re.abertura_em,
           'atualizado_em', re.atualizado_em,
@@ -1287,6 +1291,7 @@ begin
       'solicitante',
       'telefone',
       'tipo',
+      'tema',
       'status',
       'abertura_em',
       'atualizado_em',

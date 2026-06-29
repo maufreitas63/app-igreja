@@ -11,6 +11,9 @@ import { Platform } from 'react-native';
 export const MAINTENANCE_SUPPORT_SQL_HINT =
   'Execute no Supabase: scripts/maintenance-support-suggestions.sql para habilitar Sugestões e Melhorias.';
 
+export const MAINTENANCE_SUPPORT_THEMES_SQL_HINT =
+  'Execute no Supabase: scripts/maintenance-support-themes.sql para habilitar os temas das solicitações.';
+
 export const MAINTENANCE_SUPPORT_THIRD_PARTY_INSERT_SQL_HINT =
   'Execute no Supabase: scripts/maintenance-support-third-party-insert.sql para permitir sugestão em nome de terceiros.';
 
@@ -98,12 +101,20 @@ export type MaintenanceSupportCommunication = {
   sent_at: string;
 };
 
+export type MaintenanceSupportTheme = {
+  id: string;
+  titulo: string;
+  sortOrder: number;
+};
+
 export type MaintenanceSupportRequest = {
   id: string;
   requester_profile_id: string | null;
   requester_name: string;
   requester_phone: string | null;
   record_type: MaintenanceSupportRecordType;
+  tema_id: string | null;
+  tema: string | null;
   description: string;
   status: MaintenanceSupportStatus;
   developer_action: string | null;
@@ -137,7 +148,7 @@ type MaintenanceSupportRequestRow = Omit<
 >;
 
 const REQUEST_COLUMNS =
-  'id, requester_profile_id, requester_name, requester_phone, record_type, description, status, developer_action, developer_guidance, estimated_completion_date, responded_at, whatsapp_authorized, notify_in_app, created_at, updated_at';
+  'id, requester_profile_id, requester_name, requester_phone, record_type, tema_id, description, status, developer_action, developer_guidance, estimated_completion_date, responded_at, whatsapp_authorized, notify_in_app, created_at, updated_at';
 
 const ATTACHMENT_COLUMNS =
   'id, request_id, storage_path, file_name, mime_type, sort_order, uploaded_by_profile_id, created_at';
@@ -165,6 +176,35 @@ const isMissingMaintenanceSupportSchemaError = (
     || message.includes('maintenance_support_interactions')
     || message.includes('maintenance_support_communications')
   );
+};
+
+const isMissingMaintenanceSupportThemesError = (
+  error: { code?: string; message?: string } | null | undefined
+) => {
+  if (!error) {
+    return false;
+  }
+
+  const message = (error.message ?? '').toLowerCase();
+
+  return (
+    error.code === '42703'
+    || message.includes('tema_id')
+    || message.includes('maintenance_support_themes')
+  );
+};
+
+const parseMaintenanceSupportRequestRow = (
+  row: Record<string, unknown>,
+  themeTitleById: Map<string, string>
+): MaintenanceSupportRequestRow => {
+  const temaId = row.tema_id ? String(row.tema_id) : null;
+
+  return {
+    ...(row as MaintenanceSupportRequestRow),
+    tema_id: temaId,
+    tema: temaId ? themeTitleById.get(temaId) ?? null : null,
+  };
 };
 
 const isRlsPolicyViolation = (error: { code?: string; message?: string } | null | undefined) => {
@@ -361,6 +401,38 @@ export async function resolveMaintenanceSupportActor(): Promise<MaintenanceSuppo
   return { profileId, name, phone };
 }
 
+export async function fetchMaintenanceSupportThemes(): Promise<MaintenanceSupportTheme[]> {
+  const { data, error } = await supabase
+    .from('maintenance_support_themes')
+    .select('id, titulo, sort_order')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
+    .order('titulo', { ascending: true });
+
+  if (error) {
+    if (isMissingMaintenanceSupportThemesError(error)) {
+      throw new Error(MAINTENANCE_SUPPORT_THEMES_SQL_HINT);
+    }
+
+    throw error;
+  }
+
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map((row) => ({
+    id: String(row.id ?? ''),
+    titulo: String(row.titulo ?? '').trim(),
+    sortOrder: Number(row.sort_order) || 0,
+  }));
+}
+
+const buildThemeTitleMap = async () => {
+  const themes = await fetchMaintenanceSupportThemes();
+  return new Map(themes.map((theme) => [theme.id, theme.titulo]));
+};
+
 export async function fetchMaintenanceSupportRequests(limit = 80): Promise<{
   rows: MaintenanceSupportRequest[];
   schemaMissing: boolean;
@@ -376,10 +448,31 @@ export async function fetchMaintenanceSupportRequests(limit = 80): Promise<{
       return { rows: [], schemaMissing: true };
     }
 
+    if (isMissingMaintenanceSupportThemesError(error)) {
+      throw new Error(MAINTENANCE_SUPPORT_THEMES_SQL_HINT);
+    }
+
     throw error;
   }
 
-  const requestRows = (data ?? []) as MaintenanceSupportRequestRow[];
+  let themeTitleById = new Map<string, string>();
+
+  try {
+    themeTitleById = await buildThemeTitleMap();
+  } catch (themeError) {
+    if (
+      themeError instanceof Error
+      && themeError.message === MAINTENANCE_SUPPORT_THEMES_SQL_HINT
+    ) {
+      themeTitleById = new Map();
+    } else {
+      throw themeError;
+    }
+  }
+
+  const requestRows = (data ?? []).map((row) =>
+    parseMaintenanceSupportRequestRow(row as Record<string, unknown>, themeTitleById)
+  );
   const requestIds = requestRows.map((row) => row.id);
 
   if (!requestIds.length) {
@@ -520,6 +613,7 @@ export async function createMaintenanceSupportRequest(input: {
   notifyInApp: boolean;
   images: MaintenanceSupportLocalImage[];
   requester?: MaintenanceSupportRequester;
+  temaId?: string | null;
 }) {
   const actor = await resolveMaintenanceSupportActor();
   const description = input.description.trim();
@@ -531,6 +625,7 @@ export async function createMaintenanceSupportRequest(input: {
   const requesterProfileId = input.requester?.profileId ?? actor.profileId;
   const requesterName = input.requester?.name?.trim() || actor.name;
   const requesterPhone = input.requester?.phone ?? actor.phone;
+  const temaId = input.temaId?.trim() || null;
 
   const { data, error } = await supabase
     .from('maintenance_support_requests')
@@ -539,6 +634,7 @@ export async function createMaintenanceSupportRequest(input: {
       requester_name: requesterName,
       requester_phone: requesterPhone,
       record_type: input.recordType,
+      tema_id: temaId,
       description,
       whatsapp_authorized: input.whatsappAuthorized,
       notify_in_app: input.notifyInApp,
@@ -563,8 +659,21 @@ export async function createMaintenanceSupportRequest(input: {
 
   const attachments = await uploadMaintenanceSupportAttachments(request.id, input.images, actor);
 
+  let tema: string | null = null;
+
+  if (temaId) {
+    try {
+      const themeTitleById = await buildThemeTitleMap();
+      tema = themeTitleById.get(temaId) ?? null;
+    } catch {
+      tema = null;
+    }
+  }
+
   return {
     ...request,
+    tema_id: temaId,
+    tema,
     attachments,
     interactions: [],
     communications: [],
@@ -612,10 +721,12 @@ export async function updateMaintenanceSupportTreatment(input: {
   developerAction: string;
   developerGuidance: string;
   estimatedCompletionDate: string | null;
+  temaId?: string | null;
 }) {
   const actor = await resolveMaintenanceSupportActor();
   const developerAction = input.developerAction.trim() || null;
   const developerGuidance = input.developerGuidance.trim() || null;
+  const temaId = input.temaId?.trim() || null;
 
   const { data, error } = await supabase
     .from('maintenance_support_requests')
@@ -624,6 +735,7 @@ export async function updateMaintenanceSupportTreatment(input: {
       developer_action: developerAction,
       developer_guidance: developerGuidance,
       estimated_completion_date: input.estimatedCompletionDate,
+      tema_id: temaId,
       responded_at: new Date().toISOString(),
     })
     .eq('id', input.requestId)

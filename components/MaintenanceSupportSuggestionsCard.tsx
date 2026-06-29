@@ -11,6 +11,7 @@ import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/m
 import {
   addMaintenanceSupportUserUpdate,
   createMaintenanceSupportRequest,
+  fetchMaintenanceSupportThemes,
   MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS,
   MAINTENANCE_SUPPORT_RECORD_TYPE_OPTIONS,
   MAINTENANCE_SUPPORT_STATUS_LABELS,
@@ -25,6 +26,7 @@ import {
   type MaintenanceSupportRecordType,
   type MaintenanceSupportRequest,
   type MaintenanceSupportStatus,
+  type MaintenanceSupportTheme,
 } from '@/lib/maintenanceSupportApi';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -305,6 +307,7 @@ export function MaintenanceSupportSuggestionsCard({
 
   const [newRecordType, setNewRecordType] =
     useState<MaintenanceSupportRecordType>('suggestion');
+  const [newThemeId, setNewThemeId] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newWhatsappAuthorized, setNewWhatsappAuthorized] = useState(false);
   const [newNotifyInApp, setNewNotifyInApp] = useState(true);
@@ -320,10 +323,15 @@ export function MaintenanceSupportSuggestionsCard({
 
   const [treatmentStatus, setTreatmentStatus] =
     useState<MaintenanceSupportStatus>('received');
+  const [treatmentThemeId, setTreatmentThemeId] = useState('');
   const [developerAction, setDeveloperAction] = useState('');
   const [developerGuidance, setDeveloperGuidance] = useState('');
   const [estimatedDate, setEstimatedDate] = useState('');
   const [communicationMessage, setCommunicationMessage] = useState('');
+
+  const [themes, setThemes] = useState<MaintenanceSupportTheme[]>([]);
+  const [loadingThemes, setLoadingThemes] = useState(false);
+  const [themesError, setThemesError] = useState<string | null>(null);
 
   const selectedRequest = useMemo(
     () => requests.find((request) => request.id === selectedRequestId) ?? null,
@@ -351,6 +359,55 @@ export function MaintenanceSupportSuggestionsCard({
     ],
     [memberProfiles]
   );
+
+  const themeDropdownOptions = useMemo(
+    () => [
+      { value: '', label: 'Selecione o tema...' },
+      ...themes.map((theme) => ({
+        value: theme.id,
+        label: theme.titulo,
+      })),
+    ],
+    [themes]
+  );
+
+  useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      setLoadingThemes(true);
+      setThemesError(null);
+
+      try {
+        const rows = await fetchMaintenanceSupportThemes();
+        if (!cancelled) {
+          setThemes(rows);
+        }
+      } catch (loadError) {
+        console.error('Erro ao carregar temas de suporte:', loadError);
+        if (!cancelled) {
+          setThemes([]);
+          setThemesError(
+            loadError instanceof Error
+              ? loadError.message
+              : 'Não foi possível carregar os temas.'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingThemes(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isActive]);
 
   useEffect(() => {
     if (!isSuperAdmin || !isActive || mode !== 'new') {
@@ -421,6 +478,7 @@ export function MaintenanceSupportSuggestionsCard({
 
     hydratedRequestIdRef.current = selectedRequestId;
     setTreatmentStatus(selectedRequest.status);
+    setTreatmentThemeId(selectedRequest.tema_id ?? '');
     setDeveloperAction(selectedRequest.developer_action ?? '');
     setDeveloperGuidance(selectedRequest.developer_guidance ?? '');
     setEstimatedDate(formatEstimatedDateInput(selectedRequest.estimated_completion_date));
@@ -463,6 +521,7 @@ export function MaintenanceSupportSuggestionsCard({
 
   const resetNewForm = useCallback(() => {
     setNewRecordType('suggestion');
+    setNewThemeId('');
     setNewDescription('');
     setNewWhatsappAuthorized(false);
     setNewNotifyInApp(true);
@@ -502,6 +561,7 @@ export function MaintenanceSupportSuggestionsCard({
         whatsappAuthorized: newWhatsappAuthorized,
         notifyInApp: newNotifyInApp,
         images: newImages,
+        temaId: newThemeId || null,
         requester: selectedNewRequester
           ? {
               profileId: selectedNewRequester.id,
@@ -532,6 +592,7 @@ export function MaintenanceSupportSuggestionsCard({
     newImages,
     newNotifyInApp,
     newRecordType,
+    newThemeId,
     newWhatsappAuthorized,
     reload,
     resetNewForm,
@@ -590,6 +651,7 @@ export function MaintenanceSupportSuggestionsCard({
         developerAction,
         developerGuidance,
         estimatedCompletionDate: normalizedDate,
+        temaId: treatmentThemeId || null,
       });
 
       await reload({ silent: true });
@@ -619,6 +681,7 @@ export function MaintenanceSupportSuggestionsCard({
     reload,
     selectedRequest,
     treatmentStatus,
+    treatmentThemeId,
     userUpdateDescription,
   ]);
 
@@ -736,6 +799,25 @@ export function MaintenanceSupportSuggestionsCard({
         modalTitle="Tipo de registro"
         style={styles.dropdown}
       />
+
+      <Text style={styles.label}>Tema</Text>
+      {loadingThemes ? (
+        <ActivityIndicator color={ACCENT} style={styles.inlineLoader} />
+      ) : themesError ? (
+        <Text style={styles.errorTextInline}>{themesError}</Text>
+      ) : (
+        <DropdownSelect
+          options={themeDropdownOptions}
+          selectedValue={newThemeId}
+          onValueChange={setNewThemeId}
+          modalTitle="Selecionar tema"
+          placeholder="Buscar tema..."
+          searchPlaceholder="Digite para filtrar..."
+          searchable
+          style={styles.dropdown}
+          disabled={saving || themes.length === 0}
+        />
+      )}
 
       <Text style={styles.label}>Descrição detalhada</Text>
       <TextInput
@@ -861,6 +943,11 @@ export function MaintenanceSupportSuggestionsCard({
                   <Text style={styles.requestMeta} numberOfLines={1}>
                     {request.requester_name} · {formatDateTime(request.created_at)}
                   </Text>
+                  {request.tema ? (
+                    <Text style={styles.requestTheme} numberOfLines={2}>
+                      {request.tema}
+                    </Text>
+                  ) : null}
                 </View>
                 <RequestStatusBadge status={request.status} />
               </View>
@@ -926,6 +1013,9 @@ export function MaintenanceSupportSuggestionsCard({
           <Text style={styles.detailMeta}>
             Resposta: {formatDateTime(selectedRequest.responded_at)}
           </Text>
+          {selectedRequest.tema ? (
+            <Text style={styles.detailTheme}>Tema: {selectedRequest.tema}</Text>
+          ) : null}
           <Text style={styles.detailDescription}>{selectedRequest.description}</Text>
           <View style={styles.authorizationRow}>
             <Text style={styles.authorizationText}>
@@ -1009,6 +1099,24 @@ export function MaintenanceSupportSuggestionsCard({
         {isSuperAdmin ? (
           <View style={styles.developerCard}>
             <Text style={styles.sectionTitle}>Tratamento pelo desenvolvedor</Text>
+            <Text style={styles.label}>Tema</Text>
+            {loadingThemes ? (
+              <ActivityIndicator color={ACCENT} style={styles.inlineLoader} />
+            ) : themesError ? (
+              <Text style={styles.errorTextInline}>{themesError}</Text>
+            ) : (
+              <DropdownSelect
+                options={themeDropdownOptions}
+                selectedValue={treatmentThemeId}
+                onValueChange={setTreatmentThemeId}
+                modalTitle="Selecionar tema"
+                placeholder="Buscar tema..."
+                searchPlaceholder="Digite para filtrar..."
+                searchable
+                style={styles.dropdown}
+                disabled={saving || themes.length === 0}
+              />
+            )}
             <Text style={styles.label}>Status da solicitação</Text>
             <Text style={styles.helperText}>
               Toque em um status abaixo e depois em Salvar tratamento para aplicar a alteração.
@@ -1270,6 +1378,11 @@ const styles = StyleSheet.create({
   requestMeta: {
     color: '#94A3B8',
     fontSize: 11,
+  },
+  requestTheme: {
+    color: '#7DD3FC',
+    fontSize: 11,
+    lineHeight: 15,
   },
   requestDescription: {
     color: '#CBD5E1',
@@ -1552,6 +1665,12 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 11,
     lineHeight: 16,
+  },
+  detailTheme: {
+    color: '#7DD3FC',
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '700',
   },
   detailDescription: {
     color: '#E2E8F0',

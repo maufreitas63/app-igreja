@@ -41,6 +41,13 @@ values
     'Tabela — Comunicações de suporte',
     'Histórico de notificações no app e WhatsApp.',
     true
+  ),
+  (
+    'table',
+    'maintenance_support_themes',
+    'Tabela — Temas de suporte',
+    'Temas classificatórios das solicitações em Sugestões e Melhorias.',
+    true
   )
 on conflict (resource_type, resource_key) do update
   set label = excluded.label,
@@ -68,7 +75,8 @@ select r.id, res.id, true, r.code = 'super_admin'
       'maintenance_support_requests',
       'maintenance_support_attachments',
       'maintenance_support_interactions',
-      'maintenance_support_communications'
+      'maintenance_support_communications',
+      'maintenance_support_themes'
    )
  where r.code in ('super_admin', 'events_admin', 'pastoral', 'tesoureiro')
 on conflict (role_id, resource_id) where (role_id is not null) do update
@@ -127,12 +135,38 @@ begin
   end if;
 end $$;
 
+create table if not exists public.maintenance_support_themes (
+  id uuid primary key default gen_random_uuid(),
+  titulo text not null,
+  sort_order integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  constraint maintenance_support_themes_titulo_check
+    check (char_length(trim(titulo)) > 0),
+  constraint maintenance_support_themes_titulo_unique unique (titulo)
+);
+
+create index if not exists maintenance_support_themes_sort_idx
+  on public.maintenance_support_themes (is_active, sort_order, titulo);
+
+insert into public.maintenance_support_themes (titulo, sort_order)
+values
+  ('Modelo SaaS e Limites de Customização', 1),
+  ('Evolução do Produto e Roadmap', 2),
+  ('Gestão de Feedback e Centralização de Sugestões', 3),
+  ('Governança e Transparência do Processo', 4),
+  ('Participação da Instituição e Modelo de Validação', 5)
+on conflict (titulo) do update
+  set sort_order = excluded.sort_order,
+      is_active = true;
+
 create table if not exists public.maintenance_support_requests (
   id uuid primary key default gen_random_uuid(),
   requester_profile_id uuid null references public.profiles (id) on delete set null,
   requester_name text not null,
   requester_phone text null,
   record_type public.maintenance_support_record_type not null,
+  tema_id uuid null references public.maintenance_support_themes (id) on delete set null,
   description text not null,
   status public.maintenance_support_status not null default 'received',
   developer_action text null,
@@ -151,6 +185,9 @@ create table if not exists public.maintenance_support_requests (
 
 create index if not exists maintenance_support_requests_requester_idx
   on public.maintenance_support_requests (requester_profile_id, created_at desc);
+
+create index if not exists maintenance_support_requests_tema_idx
+  on public.maintenance_support_requests (tema_id, updated_at desc);
 
 create index if not exists maintenance_support_requests_status_idx
   on public.maintenance_support_requests (status, updated_at desc);
@@ -335,6 +372,7 @@ alter table public.maintenance_support_requests enable row level security;
 alter table public.maintenance_support_attachments enable row level security;
 alter table public.maintenance_support_interactions enable row level security;
 alter table public.maintenance_support_communications enable row level security;
+alter table public.maintenance_support_themes enable row level security;
 
 drop policy if exists maintenance_support_requests_select on public.maintenance_support_requests;
 create policy maintenance_support_requests_select
@@ -424,10 +462,25 @@ create policy maintenance_support_communications_insert
   to anon, authenticated
   with check (public.can_manage_maintenance_support());
 
+drop policy if exists maintenance_support_themes_select on public.maintenance_support_themes;
+create policy maintenance_support_themes_select
+  on public.maintenance_support_themes
+  for select
+  to anon, authenticated
+  using (
+    is_active = true
+    and (
+      public.can_manage_maintenance_support()
+      or public.session_has_screen_access('maintenance.card.suggestions_improvements', 'view')
+      or public.current_session_profile_id() is not null
+    )
+  );
+
 grant select, insert, update on public.maintenance_support_requests to anon, authenticated;
 grant select, insert, update on public.maintenance_support_attachments to anon, authenticated;
 grant select, insert on public.maintenance_support_interactions to anon, authenticated;
 grant select, insert on public.maintenance_support_communications to anon, authenticated;
+grant select on public.maintenance_support_themes to anon, authenticated;
 grant execute on function public.can_manage_maintenance_support() to anon, authenticated;
 grant execute on function public.can_view_maintenance_support_request(uuid) to anon, authenticated;
 grant execute on function public.maintenance_support_request_id_from_storage_path(text) to anon, authenticated;
