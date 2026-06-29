@@ -487,12 +487,19 @@ export async function uploadMaintenanceSupportAttachments(
   return appendSignedUrls(uploadedRows);
 }
 
+export type MaintenanceSupportRequester = {
+  profileId: string;
+  name: string;
+  phone: string | null;
+};
+
 export async function createMaintenanceSupportRequest(input: {
   recordType: MaintenanceSupportRecordType;
   description: string;
   whatsappAuthorized: boolean;
   notifyInApp: boolean;
   images: MaintenanceSupportLocalImage[];
+  requester?: MaintenanceSupportRequester;
 }) {
   const actor = await resolveMaintenanceSupportActor();
   const description = input.description.trim();
@@ -501,12 +508,16 @@ export async function createMaintenanceSupportRequest(input: {
     throw new Error('Informe a descrição detalhada da solicitação.');
   }
 
+  const requesterProfileId = input.requester?.profileId ?? actor.profileId;
+  const requesterName = input.requester?.name?.trim() || actor.name;
+  const requesterPhone = input.requester?.phone ?? actor.phone;
+
   const { data, error } = await supabase
     .from('maintenance_support_requests')
     .insert({
-      requester_profile_id: actor.profileId,
-      requester_name: actor.name,
-      requester_phone: actor.phone,
+      requester_profile_id: requesterProfileId,
+      requester_name: requesterName,
+      requester_phone: requesterPhone,
       record_type: input.recordType,
       description,
       whatsapp_authorized: input.whatsappAuthorized,
@@ -523,9 +534,11 @@ export async function createMaintenanceSupportRequest(input: {
   await insertInteraction({
     requestId: request.id,
     actor,
-    actorRole: 'user',
+    actorRole: input.requester ? 'developer' : 'user',
     channel: 'app',
-    message: 'Solicitação aberta pelo usuário.',
+    message: input.requester
+      ? `Solicitação registrada pelo super administrador em nome de ${requesterName}.`
+      : 'Solicitação aberta pelo usuário.',
   });
 
   const attachments = await uploadMaintenanceSupportAttachments(request.id, input.images, actor);

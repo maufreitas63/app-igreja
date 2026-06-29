@@ -1,5 +1,11 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { formatPhoneDisplay } from '@/lib/familyRegistration';
+import { formatShortName } from '@/lib/formatShortName';
 import { formatBrazilDateInput } from '@/lib/inputMasks';
+import {
+  listProfilesForAccessAdmin,
+  type AccessProfileSearchResult,
+} from '@/lib/maintenanceAccessControlApi';
 import { useMaintenanceSupport } from '@/hooks/useMaintenanceSupport';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import {
@@ -303,6 +309,10 @@ export function MaintenanceSupportSuggestionsCard({
   const [newWhatsappAuthorized, setNewWhatsappAuthorized] = useState(false);
   const [newNotifyInApp, setNewNotifyInApp] = useState(true);
   const [newImages, setNewImages] = useState<MaintenanceSupportLocalImage[]>([]);
+  const [newRequesterProfileId, setNewRequesterProfileId] = useState('');
+  const [memberProfiles, setMemberProfiles] = useState<AccessProfileSearchResult[]>([]);
+  const [loadingMemberProfiles, setLoadingMemberProfiles] = useState(false);
+  const [memberProfilesError, setMemberProfilesError] = useState<string | null>(null);
 
   const [userUpdateDescription, setUserUpdateDescription] = useState('');
   const [userUpdateMessage, setUserUpdateMessage] = useState('');
@@ -319,6 +329,66 @@ export function MaintenanceSupportSuggestionsCard({
     () => requests.find((request) => request.id === selectedRequestId) ?? null,
     [requests, selectedRequestId]
   );
+
+  const selectedNewRequester = useMemo(
+    () => memberProfiles.find((profile) => profile.id === newRequesterProfileId) ?? null,
+    [memberProfiles, newRequesterProfileId]
+  );
+
+  const memberDropdownOptions = useMemo(
+    () => [
+      { value: '', label: 'Eu mesmo (registrar em meu nome)' },
+      ...memberProfiles.map((profile) => {
+        const phoneLabel = profile.phone
+          ? formatPhoneDisplay(profile.phone)
+          : 'sem celular cadastrado';
+
+        return {
+          value: profile.id,
+          label: `${formatShortName(profile.fullName)} · ${phoneLabel}`,
+        };
+      }),
+    ],
+    [memberProfiles]
+  );
+
+  useEffect(() => {
+    if (!isSuperAdmin || !isActive || mode !== 'new') {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      setLoadingMemberProfiles(true);
+      setMemberProfilesError(null);
+
+      try {
+        const rows = await listProfilesForAccessAdmin();
+        if (!cancelled) {
+          setMemberProfiles(rows);
+        }
+      } catch (loadError) {
+        console.error('Erro ao carregar membros para sugestão de terceiros:', loadError);
+        if (!cancelled) {
+          setMemberProfiles([]);
+          setMemberProfilesError(
+            loadError instanceof Error
+              ? loadError.message
+              : 'Não foi possível carregar a lista de membros.'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingMemberProfiles(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isActive, isSuperAdmin, mode]);
 
   const timeline = useMemo(
     () => (selectedRequest ? buildTimeline(selectedRequest) : []),
@@ -397,6 +467,7 @@ export function MaintenanceSupportSuggestionsCard({
     setNewWhatsappAuthorized(false);
     setNewNotifyInApp(true);
     setNewImages([]);
+    setNewRequesterProfileId('');
   }, []);
 
   const appendPickedImages = useCallback(
@@ -431,6 +502,13 @@ export function MaintenanceSupportSuggestionsCard({
         whatsappAuthorized: newWhatsappAuthorized,
         notifyInApp: newNotifyInApp,
         images: newImages,
+        requester: selectedNewRequester
+          ? {
+              profileId: selectedNewRequester.id,
+              name: selectedNewRequester.fullName,
+              phone: selectedNewRequester.phone,
+            }
+          : undefined,
       });
 
       resetNewForm();
@@ -457,6 +535,7 @@ export function MaintenanceSupportSuggestionsCard({
     newWhatsappAuthorized,
     reload,
     resetNewForm,
+    selectedNewRequester,
   ]);
 
   const handleSaveUserUpdate = useCallback(async () => {
@@ -610,6 +689,44 @@ export function MaintenanceSupportSuggestionsCard({
         </TouchableOpacity>
         <Text style={styles.formTitle}>Nova sugestão</Text>
       </View>
+
+      {isSuperAdmin ? (
+        <View style={styles.requesterSection}>
+          <Text style={styles.label}>Solicitante</Text>
+          <Text style={styles.fieldHint}>
+            Como super administrador, você pode registrar a sugestão em nome de um membro da igreja.
+          </Text>
+          {loadingMemberProfiles ? (
+            <ActivityIndicator color={ACCENT} style={styles.inlineLoader} />
+          ) : memberProfilesError ? (
+            <Text style={styles.errorTextInline}>{memberProfilesError}</Text>
+          ) : (
+            <DropdownSelect
+              options={memberDropdownOptions}
+              selectedValue={newRequesterProfileId}
+              onValueChange={setNewRequesterProfileId}
+              modalTitle="Selecionar membro"
+              placeholder="Buscar membro por nome ou celular..."
+              searchPlaceholder="Digite nome ou celular..."
+              searchable
+              style={styles.dropdown}
+              disabled={saving || memberProfiles.length === 0}
+            />
+          )}
+          {selectedNewRequester ? (
+            <View style={styles.selectedRequesterCard}>
+              <Text style={styles.selectedRequesterTitle}>Registrando para</Text>
+              <Text style={styles.selectedRequesterName}>{selectedNewRequester.fullName}</Text>
+              <Text style={styles.selectedRequesterMeta}>
+                Celular:{' '}
+                {selectedNewRequester.phone
+                  ? formatPhoneDisplay(selectedNewRequester.phone)
+                  : 'não cadastrado'}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
 
       <Text style={styles.label}>Tipo de registro</Text>
       <DropdownSelect
@@ -1250,6 +1367,48 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
+  },
+  fieldHint: {
+    color: '#94A3B8',
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  requesterSection: {
+    gap: 6,
+  },
+  inlineLoader: {
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+  },
+  errorTextInline: {
+    color: '#FCA5A5',
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  selectedRequesterCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    backgroundColor: 'rgba(14, 165, 233, 0.10)',
+    padding: 10,
+    gap: 2,
+  },
+  selectedRequesterTitle: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  selectedRequesterName: {
+    color: '#E0F2FE',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  selectedRequesterMeta: {
+    color: '#BAE6FD',
+    fontSize: 12,
+    lineHeight: 16,
   },
   dropdown: {
     flex: 0,
