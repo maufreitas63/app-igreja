@@ -22,7 +22,7 @@ import {
 } from '@/lib/maintenanceSupportApi';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -253,11 +253,23 @@ export function MaintenanceSupportSuggestionsCard({
     [selectedRequest]
   );
 
+  const hydratedRequestIdRef = useRef<string | null>(null);
+
   useEffect(() => {
+    if (!selectedRequestId) {
+      hydratedRequestIdRef.current = null;
+      return;
+    }
+
     if (!selectedRequest) {
       return;
     }
 
+    if (hydratedRequestIdRef.current === selectedRequestId) {
+      return;
+    }
+
+    hydratedRequestIdRef.current = selectedRequestId;
     setTreatmentStatus(selectedRequest.status);
     setDeveloperAction(selectedRequest.developer_action ?? '');
     setDeveloperGuidance(selectedRequest.developer_guidance ?? '');
@@ -266,7 +278,7 @@ export function MaintenanceSupportSuggestionsCard({
     setUserUpdateMessage('');
     setUserUpdateImages([]);
     setCommunicationMessage(buildDefaultCommunicationMessage(selectedRequest));
-  }, [selectedRequest]);
+  }, [selectedRequest, selectedRequestId]);
 
   const resetNewForm = useCallback(() => {
     setNewRecordType('suggestion');
@@ -595,6 +607,7 @@ export function MaintenanceSupportSuggestionsCard({
               key={request.id}
               style={styles.requestCard}
               onPress={() => {
+                hydratedRequestIdRef.current = null;
                 setSelectedRequestId(request.id);
                 setMode('detail');
               }}
@@ -649,7 +662,14 @@ export function MaintenanceSupportSuggestionsCard({
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.backButton} onPress={() => setMode('list')} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => {
+              hydratedRequestIdRef.current = null;
+              setMode('list');
+            }}
+            activeOpacity={0.85}
+          >
             <FontAwesome name="chevron-left" size={13} color="#BAE6FD" />
             <Text style={styles.backButtonText}>Lista</Text>
           </TouchableOpacity>
