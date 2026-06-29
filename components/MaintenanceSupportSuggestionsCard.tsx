@@ -62,6 +62,7 @@ type TimelineEntry =
 
 const ACCENT = '#38BDF8';
 const DATE_INPUT_PLACEHOLDER = 'dd/mm/aaaa';
+const OPENING_INTERACTION_MESSAGE = 'Solicitação aberta pelo usuário.';
 
 const statusTone: Record<MaintenanceSupportStatus, { bg: string; border: string; text: string }> = {
   received: { bg: 'rgba(148, 163, 184, 0.16)', border: '#64748B', text: '#CBD5E1' },
@@ -96,12 +97,99 @@ const formatDate = (value: string | null | undefined) => {
     return '—';
   }
 
-  const [year, month, day] = value.split('-');
+  const trimmed = value.trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  const datePart = trimmed.split('T')[0];
+  const [year, month, day] = datePart.split('-');
   if (year && month && day) {
     return `${day}/${month}/${year}`;
   }
 
-  return value;
+  return trimmed;
+};
+
+const resolveEstimatedDateLabel = (value: string | null | undefined) => {
+  if (!value?.trim()) {
+    return null;
+  }
+
+  return formatDate(value);
+};
+
+type CommunicationMessageOverrides = {
+  description?: string;
+  developerAction?: string;
+  developerGuidance?: string;
+  estimatedCompletionDate?: string;
+  status?: MaintenanceSupportStatus;
+  pendingUserUpdateMessage?: string;
+};
+
+const buildDefaultCommunicationMessage = (
+  request: MaintenanceSupportRequest,
+  overrides?: CommunicationMessageOverrides
+) => {
+  const description = (overrides?.description ?? request.description).trim();
+  const developerAction = (overrides?.developerAction ?? request.developer_action ?? '').trim();
+  const developerGuidance = (
+    overrides?.developerGuidance ?? request.developer_guidance ?? ''
+  ).trim();
+  const status = overrides?.status ?? request.status;
+  const estimatedDateLabel = resolveEstimatedDateLabel(
+    overrides?.estimatedCompletionDate ?? request.estimated_completion_date
+  );
+
+  const lines: string[] = [
+    `Olá, ${request.requester_name}. Atualização da sua solicitação em Sugestões e Melhorias.`,
+    `Status: ${MAINTENANCE_SUPPORT_STATUS_LABELS[status]}.`,
+  ];
+
+  if (description) {
+    lines.push('', `Sugestão (${formatDate(request.created_at)}):`, description);
+  }
+
+  const userUpdates = request.interactions.filter(
+    (interaction) =>
+      interaction.actor_role === 'user'
+      && interaction.channel === 'app'
+      && interaction.message.trim()
+      && interaction.message.trim() !== OPENING_INTERACTION_MESSAGE
+  );
+
+  userUpdates.forEach((interaction) => {
+    lines.push(
+      '',
+      `Atualização do usuário (${formatDate(interaction.created_at)}):`,
+      interaction.message.trim()
+    );
+  });
+
+  const pendingUserUpdate = overrides?.pendingUserUpdateMessage?.trim();
+  if (pendingUserUpdate) {
+    lines.push('', `Atualização do usuário (${formatDate(new Date().toISOString())}):`, pendingUserUpdate);
+  }
+
+  if (developerAction) {
+    const actionDate = request.responded_at ?? request.updated_at;
+    lines.push(
+      '',
+      `Ação tomada ou planejada (${formatDate(actionDate)}):`,
+      developerAction
+    );
+  }
+
+  if (estimatedDateLabel && estimatedDateLabel !== '—') {
+    lines.push('', `Previsão de implementação/conclusão: ${estimatedDateLabel}`);
+  }
+
+  if (developerGuidance) {
+    lines.push('', 'Orientações detalhadas ao usuário:', developerGuidance);
+  }
+
+  return lines.join('\n');
 };
 
 const formatEstimatedDateInput = (value: string | null | undefined) => {
@@ -134,22 +222,6 @@ const normalizeDateInput = (value: string) => {
   }
 
   throw new Error('Informe a previsão no formato dd/mm/aaaa.');
-};
-
-const buildDefaultCommunicationMessage = (request: MaintenanceSupportRequest) => {
-  const lines = [
-    `Olá, ${request.requester_name}. Atualização da sua solicitação em Sugestões e Melhorias.`,
-    `Status: ${MAINTENANCE_SUPPORT_STATUS_LABELS[request.status]}.`,
-    request.estimated_completion_date
-      ? `Previsão: ${formatDate(request.estimated_completion_date)}.`
-      : null,
-    request.developer_action?.trim() ? `Ação: ${request.developer_action.trim()}` : null,
-    request.developer_guidance?.trim()
-      ? `Orientações: ${request.developer_guidance.trim()}`
-      : null,
-  ];
-
-  return lines.filter(Boolean).join('\n\n');
 };
 
 const buildTimeline = (request: MaintenanceSupportRequest): TimelineEntry[] => {
@@ -254,6 +326,14 @@ export function MaintenanceSupportSuggestionsCard({
   );
 
   const hydratedRequestIdRef = useRef<string | null>(null);
+  const communicationMessageTouchedRef = useRef(false);
+
+  const applyCommunicationMessage = useCallback(
+    (request: MaintenanceSupportRequest, overrides?: CommunicationMessageOverrides) => {
+      setCommunicationMessage(buildDefaultCommunicationMessage(request, overrides));
+    },
+    []
+  );
 
   useEffect(() => {
     if (!selectedRequestId) {
@@ -277,8 +357,39 @@ export function MaintenanceSupportSuggestionsCard({
     setUserUpdateDescription(selectedRequest.description);
     setUserUpdateMessage('');
     setUserUpdateImages([]);
-    setCommunicationMessage(buildDefaultCommunicationMessage(selectedRequest));
-  }, [selectedRequest, selectedRequestId]);
+    communicationMessageTouchedRef.current = false;
+    applyCommunicationMessage(selectedRequest, {
+      description: selectedRequest.description,
+      developerAction: selectedRequest.developer_action ?? '',
+      developerGuidance: selectedRequest.developer_guidance ?? '',
+      estimatedCompletionDate: selectedRequest.estimated_completion_date ?? '',
+      status: selectedRequest.status,
+    });
+  }, [applyCommunicationMessage, selectedRequest, selectedRequestId]);
+
+  useEffect(() => {
+    if (!selectedRequest || communicationMessageTouchedRef.current) {
+      return;
+    }
+
+    applyCommunicationMessage(selectedRequest, {
+      description: userUpdateDescription,
+      developerAction,
+      developerGuidance,
+      estimatedCompletionDate: estimatedDate,
+      status: treatmentStatus,
+      pendingUserUpdateMessage: userUpdateMessage,
+    });
+  }, [
+    applyCommunicationMessage,
+    developerAction,
+    developerGuidance,
+    estimatedDate,
+    selectedRequest,
+    treatmentStatus,
+    userUpdateDescription,
+    userUpdateMessage,
+  ]);
 
   const resetNewForm = useCallback(() => {
     setNewRecordType('suggestion');
@@ -403,6 +514,16 @@ export function MaintenanceSupportSuggestionsCard({
       });
 
       await reload({ silent: true });
+      communicationMessageTouchedRef.current = false;
+      if (selectedRequest) {
+        applyCommunicationMessage(selectedRequest, {
+          description: userUpdateDescription,
+          developerAction,
+          developerGuidance,
+          estimatedCompletionDate: estimatedDate,
+          status: treatmentStatus,
+        });
+      }
       Toast.show({ type: 'success', text1: 'Tratamento salvo' });
     } catch (treatmentError) {
       const message =
@@ -415,9 +536,11 @@ export function MaintenanceSupportSuggestionsCard({
     developerAction,
     developerGuidance,
     estimatedDate,
+    applyCommunicationMessage,
     reload,
     selectedRequest,
     treatmentStatus,
+    userUpdateDescription,
   ]);
 
   const handleRegisterInAppCommunication = useCallback(async () => {
@@ -852,7 +975,10 @@ export function MaintenanceSupportSuggestionsCard({
             <TextInput
               style={[styles.input, styles.textArea]}
               value={communicationMessage}
-              onChangeText={setCommunicationMessage}
+              onChangeText={(value) => {
+                communicationMessageTouchedRef.current = true;
+                setCommunicationMessage(value);
+              }}
               placeholder="Mensagem de atualização para o usuário."
               placeholderTextColor="#64748B"
               multiline
