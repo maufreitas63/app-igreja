@@ -1,4 +1,5 @@
 import { AgeBracketPieChart, parseAgeBracketChartSlices } from '@/components/AgeBracketPieChart';
+import { SupportSuggestionsReportPdfModal } from '@/components/SupportSuggestionsReportPdfModal';
 import { SupportSuggestionsReportView } from '@/components/SupportSuggestionsReportView';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
@@ -22,9 +23,11 @@ import {
   type MaintenanceReportConfigField,
   type MaintenanceReportDefinition,
 } from '@/lib/maintenanceReportsCatalog';
+import { buildSupportSuggestionsReportPdfObjectUrl } from '@/lib/supportSuggestionsReportPdf';
+import type { MaintenanceReportResult } from '@/lib/maintenanceReportsApi';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -488,7 +491,7 @@ type ReportSectionProps = {
   onToggle: () => void;
   onParamChange: (key: string, value: string) => void;
   onReset: () => void;
-  onRun: () => void;
+  onRun: () => Promise<MaintenanceReportResult | null>;
 };
 
 function ReportSection({
@@ -565,7 +568,7 @@ function ReportSection({
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.runButton, loading && styles.runButtonDisabled]}
-              onPress={onRun}
+              onPress={() => void onRun()}
               disabled={loading}
               activeOpacity={0.85}
             >
@@ -622,6 +625,47 @@ export function MaintenanceReportsCard({
     errorsByCode,
     runReport,
   } = useMaintenanceReports();
+  const [pdfPreview, setPdfPreview] = useState<{ url: string; count: number } | null>(null);
+
+  const closePdfPreview = useCallback(() => {
+    setPdfPreview((current) => {
+      if (current?.url) {
+        URL.revokeObjectURL(current.url);
+      }
+      return null;
+    });
+  }, []);
+
+  const handleRunReport = useCallback(
+    async (definition: MaintenanceReportDefinition) => {
+      const result = await runReport(definition);
+
+      if (
+        definition.code === 'support_suggestions'
+        && result?.success
+        && result.rows.length > 0
+      ) {
+        try {
+          const url = await buildSupportSuggestionsReportPdfObjectUrl(result);
+          setPdfPreview((current) => {
+            if (current?.url) {
+              URL.revokeObjectURL(current.url);
+            }
+
+            return {
+              url,
+              count: result.rows.length,
+            };
+          });
+        } catch (pdfError) {
+          console.error('Erro ao gerar PDF de sugestões:', pdfError);
+        }
+      }
+
+      return result;
+    },
+    [runReport]
+  );
 
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
@@ -658,12 +702,19 @@ export function MaintenanceReportsCard({
             onToggle={() => toggleExpanded(definition.code)}
             onParamChange={(key, value) => updateParam(definition.code, key, value)}
             onReset={() => resetParams(definition)}
-            onRun={() => void runReport(definition)}
+            onRun={() => handleRunReport(definition)}
           />
         ))}
 
         {loadingCode ? <CardLoadingState lines={2} compact /> : null}
       </ScrollView>
+
+      <SupportSuggestionsReportPdfModal
+        visible={pdfPreview !== null}
+        pdfUrl={pdfPreview?.url ?? null}
+        requestCount={pdfPreview?.count ?? 0}
+        onClose={closePdfPreview}
+      />
     </View>
   );
 }
