@@ -11,6 +11,9 @@ import { Platform } from 'react-native';
 export const MAINTENANCE_SUPPORT_SQL_HINT =
   'Execute no Supabase: scripts/maintenance-support-suggestions.sql para habilitar Sugestões e Melhorias.';
 
+export const MAINTENANCE_SUPPORT_THIRD_PARTY_INSERT_SQL_HINT =
+  'Execute no Supabase: scripts/maintenance-support-third-party-insert.sql para permitir sugestão em nome de terceiros.';
+
 export const MAINTENANCE_SUPPORT_BUCKET = 'maintenance-support';
 const ATTACHMENT_SIGNED_URL_TTL_SECONDS = 60 * 60;
 
@@ -164,9 +167,26 @@ const isMissingMaintenanceSupportSchemaError = (
   );
 };
 
-const throwSchemaHintIfMissing = (error: { code?: string; message?: string }) => {
+const isRlsPolicyViolation = (error: { code?: string; message?: string } | null | undefined) => {
+  if (!error) {
+    return false;
+  }
+
+  const message = (error.message ?? '').toLowerCase();
+
+  return error.code === '42501' || message.includes('row-level security');
+};
+
+const throwSchemaHintIfMissing = (
+  error: { code?: string; message?: string },
+  options?: { thirdPartyRequest?: boolean }
+) => {
   if (isMissingMaintenanceSupportSchemaError(error)) {
     throw new Error(MAINTENANCE_SUPPORT_SQL_HINT);
+  }
+
+  if (options?.thirdPartyRequest && isRlsPolicyViolation(error)) {
+    throw new Error(MAINTENANCE_SUPPORT_THIRD_PARTY_INSERT_SQL_HINT);
   }
 
   throw error;
@@ -527,7 +547,7 @@ export async function createMaintenanceSupportRequest(input: {
     .select(REQUEST_COLUMNS)
     .single();
 
-  if (error) throwSchemaHintIfMissing(error);
+  if (error) throwSchemaHintIfMissing(error, { thirdPartyRequest: Boolean(input.requester) });
 
   const request = data as MaintenanceSupportRequestRow;
 

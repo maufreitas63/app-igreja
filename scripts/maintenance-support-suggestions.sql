@@ -354,7 +354,10 @@ create policy maintenance_support_requests_insert
   to anon, authenticated
   with check (
     public.current_session_profile_id() is not null
-    and requester_profile_id = public.current_session_profile_id()
+    and (
+      requester_profile_id = public.current_session_profile_id()
+      or public.can_manage_maintenance_support()
+    )
   );
 
 drop policy if exists maintenance_support_requests_update on public.maintenance_support_requests;
