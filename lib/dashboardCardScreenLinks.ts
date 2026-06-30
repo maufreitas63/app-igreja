@@ -15,6 +15,7 @@ export const DASHBOARD_CARD_PARAM_TO_CONTENT: Record<string, string> = {
   '10': 'members_list',
   '11': 'financial',
   '12': 'scale_roster',
+  '13': 'administrativo',
   event_alt: 'event_alt',
   kids_teens: 'kids_teens',
   offerings: 'offerings',
@@ -26,6 +27,7 @@ export const DASHBOARD_CARD_PARAM_TO_CONTENT: Record<string, string> = {
   parking_vehicle_v2: 'parking_vehicle_v2',
   grouped_manage: 'grouped_manage',
   scale_roster: 'scale_roster',
+  administrativo: 'administrativo',
 };
 
 /** Cards do dashboard que abrem telas filhas — exigem permissão da rota além do card. */

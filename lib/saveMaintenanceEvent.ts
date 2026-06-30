@@ -206,8 +206,65 @@ export const saveMaintenanceEvent = async (
 };
 
 export type ReplicateMaintenanceEventResult =
-  | { ok: true; createdCount: number }
+  | { ok: true; createdCount: number; newEventId?: string | null }
   | { ok: false; message: string; code?: string };
+
+const REPLICATE_EVENT_RPC_HINT =
+  'Execute no Supabase: scripts/replicate-event-structure.sql para replicar eventos sem copiar inscrições.';
+
+const parseReplicateRpcResult = (
+  data: unknown
+): { success: boolean; newEventId?: string | null; message?: string } => {
+  if (!data || typeof data !== 'object') {
+    return { success: false, message: 'Resposta inválida ao replicar evento.' };
+  }
+
+  const record = data as Record<string, unknown>;
+
+  return {
+    success: record.success === true,
+    newEventId: record.new_event_id ? String(record.new_event_id) : null,
+    message: typeof record.message === 'string' ? record.message : undefined,
+  };
+};
+
+const replicateMaintenanceEventViaRpc = async (
+  sourceEventId: string,
+  dayOffset: number
+): Promise<ReplicateMaintenanceEventResult | null> => {
+  const { data, error } = await supabase.rpc('replicate_maintenance_event_atomic', {
+    p_source_event_id: sourceEventId,
+    p_day_offset: dayOffset,
+  });
+
+  if (error) {
+    const message = (error.message ?? '').toLowerCase();
+
+    if (
+      message.includes('replicate_maintenance_event_atomic')
+      && (message.includes('could not find') || message.includes('does not exist'))
+    ) {
+      return null;
+    }
+
+    return { ok: false, message: error.message, code: error.code };
+  }
+
+  const parsed = parseReplicateRpcResult(data);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.message ?? REPLICATE_EVENT_RPC_HINT,
+    };
+  }
+
+  return {
+    ok: true,
+    createdCount: 1,
+    newEventId: parsed.newEventId ?? null,
+  };
+};
 
 export const replicateMaintenanceEventForDays = async (
   form: MaintenanceEventFormState,
@@ -237,8 +294,19 @@ export const replicateMaintenanceEventForDays = async (
 export const replicateMaintenanceEventFromRecord = async (
   event: Parameters<typeof formFromMaintenanceEvent>[0],
   dayOffset = 7
-): Promise<ReplicateMaintenanceEventResult> =>
-  replicateMaintenanceEventForDays(formFromMaintenanceEvent(event), dayOffset);
+): Promise<ReplicateMaintenanceEventResult> => {
+  const sourceEventId = event.id?.trim();
+
+  if (sourceEventId) {
+    const rpcResult = await replicateMaintenanceEventViaRpc(sourceEventId, dayOffset);
+
+    if (rpcResult) {
+      return rpcResult;
+    }
+  }
+
+  return replicateMaintenanceEventForDays(formFromMaintenanceEvent(event), dayOffset);
+};
 
 export type DeleteMaintenanceEventResult =
   | { ok: true; deletedId: string }

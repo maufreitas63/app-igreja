@@ -19,6 +19,7 @@ import {
   saveAppParameterValue,
 } from '@/lib/appParameters';
 import { useMaintenanceAccessControl } from '@/hooks/useMaintenanceAccessControl';
+import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import {
   computeMaintenanceContentHeight,
   MAINTENANCE_SCROLL_PROPS,
@@ -127,6 +128,7 @@ function AccessControlPanelHeader({
 }
 
 export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: Props) {
+  const { showTechnicalKeys } = useShowAclTechnicalKeys(isActive);
   const [activeTab, setActiveTab] = useState<AdminTab>('profiles');
   const [grantSearchQuery, setGrantSearchQuery] = useState('');
   const [expandedProfileSection, setExpandedProfileSection] = useState<ProfileDetailSection | null>(
@@ -745,9 +747,11 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                       >
                         {grant.label}
                       </Text>
-                      <Text style={styles.grantKey} numberOfLines={1}>
-                        {grant.resourceKey}
-                      </Text>
+                      {showTechnicalKeys ? (
+                        <Text style={styles.grantKey} numberOfLines={1}>
+                          {grant.resourceKey}
+                        </Text>
+                      ) : null}
                     </View>
                     <View style={styles.grantToggles}>
                       <View style={styles.toggleCell}>

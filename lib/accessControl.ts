@@ -27,6 +27,7 @@ export const ACCESS_DASHBOARD_CARD = {
   vigilanceScales: 'dashboard.card.vigilance_scales',
   parking: 'dashboard.card.parking_vehicle_v2',
   groupedManage: 'dashboard.card.grouped_manage',
+  administrativo: 'dashboard.card.administrativo',
 } as const;
 
 /** `content` do carrossel → `resource_key` em `access_resources`. */
@@ -50,6 +51,7 @@ export const DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   scale_roster: ACCESS_DASHBOARD_CARD.vigilanceScales,
   parking_vehicle_v2: ACCESS_DASHBOARD_CARD.parking,
   grouped_manage: ACCESS_DASHBOARD_CARD.groupedManage,
+  administrativo: ACCESS_DASHBOARD_CARD.administrativo,
 };
 
 export type DashboardCardViewAccess = Record<string, boolean>;

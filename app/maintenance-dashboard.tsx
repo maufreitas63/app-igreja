@@ -635,6 +635,9 @@ export default function MaintenanceDashboard() {
       }
 
       await refetch();
+      if (result.newEventId) {
+        setSelectedEventId(result.newEventId);
+      }
       Toast.show({
         type: 'success',
         text1: 'Evento replicado',

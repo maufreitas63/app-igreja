@@ -216,7 +216,15 @@ begin
         'dias_congregacao', a.congregation_days,
         'status', case when a.is_active then 'Ativo' else 'Inativo' end
       )
-      order by a.full_name
+      order by
+        case when a.is_active then 0 else 1 end,
+        case a.role_code
+          when 'member' then 1
+          when 'congregado' then 2
+          when 'visitante' then 3
+          else 4
+        end,
+        a.full_name
     ), '[]'::jsonb),
     jsonb_build_object(
       'visitantes', count(*) filter (where role_code = 'visitante'),
@@ -630,9 +638,14 @@ security definer
 set search_path = public
 as $$
 declare
+  v_months integer;
+  v_cutoff timestamptz;
   v_rows jsonb;
   v_summary jsonb;
 begin
+  v_months := greatest(1, least(coalesce((p_params->>'inactive_months')::int, 3), 24));
+  v_cutoff := now() - make_interval(months => v_months);
+
   with profile_ages as (
     select
       coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as nome,
@@ -648,12 +661,22 @@ begin
     from public.profiles p
     cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
     where coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), '')) is not null
-      and case
-        when public.resolve_basic_role_code_for_profile(p.id) in ('member', 'congregado') then
-          coalesce(eff.membership_out::text, '') = ''
-        else
-          coalesce(p.membership_out::text, '') = ''
-      end
+      and public.resolve_basic_role_code_for_profile(p.id) in ('member', 'congregado')
+      and coalesce(eff.membership_out::text, '') = ''
+      and (
+        exists (
+          select 1
+            from public.profile_app_access_events e
+           where e.profile_id = p.id
+             and e.accessed_at >= v_cutoff
+        )
+        or exists (
+          select 1
+            from public.checkins c
+           where c.profile_id = p.id
+             and coalesce(c.timestamp_confirmacao, c.created_at) >= v_cutoff
+        )
+      )
   )
   select
     coalesce(jsonb_agg(
@@ -674,7 +697,8 @@ begin
       end asc
     ), '[]'::jsonb),
     jsonb_build_object(
-      'perfis_analisados', (select count(*) from profile_ages)
+      'perfis_analisados', (select count(*) from profile_ages),
+      'janela_meses', v_months
     )
   into v_rows, v_summary
   from (
@@ -1312,6 +1336,102 @@ begin
 end;
 $$;
 
+create or replace function public._report_event_registrations(p_params jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_rows jsonb;
+  v_summary jsonb;
+begin
+  with registrants as (
+    select
+      er.event_id,
+      coalesce(nullif(trim(er.family_id), ''), '(sem família)') as familia,
+      public.resolve_basic_role_code_for_profile(er.profile_id) as papel_code,
+      coalesce(nullif(trim(er.full_name), ''), '(sem nome)') as nome
+    from public.event_registrations er
+  ),
+  registrants_enriched as (
+    select
+      r.event_id,
+      r.familia,
+      case r.papel_code
+        when 'member' then 'Membro'
+        when 'congregado' then 'Congregado'
+        when 'visitante' then 'Visitante'
+        else coalesce(r.papel_code, '—')
+      end as papel,
+      r.nome,
+      case r.papel_code
+        when 'member' then 1
+        when 'congregado' then 2
+        when 'visitante' then 3
+        else 4
+      end as papel_ordem
+    from registrants r
+  ),
+  registrants_by_event as (
+    select
+      re.event_id,
+      coalesce(
+        jsonb_agg(
+          jsonb_build_object(
+            'familia', re.familia,
+            'papel', re.papel,
+            'nome', re.nome
+          )
+          order by re.familia asc, re.papel_ordem asc, re.nome asc
+        ),
+        '[]'::jsonb
+      ) as participantes
+    from registrants_enriched re
+    group by re.event_id
+  ),
+  events_enriched as (
+    select
+      e.id as event_id,
+      coalesce(nullif(trim(e.name), ''), '(sem nome)') as evento,
+      e.event_date as data,
+      count(er.id)::int as inscritos,
+      coalesce(rb.participantes, '[]'::jsonb) as participantes
+    from public.events e
+    join public.event_registrations er on er.event_id = e.id
+    left join registrants_by_event rb on rb.event_id = e.id
+    group by e.id, e.name, e.event_date, rb.participantes
+  )
+  select
+    coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'event_id', ee.event_id,
+          'evento', ee.evento,
+          'data', ee.data,
+          'inscritos', ee.inscritos,
+          'participantes', ee.participantes
+        )
+        order by ee.data desc, ee.evento asc
+      ),
+      '[]'::jsonb
+    ),
+    jsonb_build_object(
+      'total_eventos', (select count(*) from events_enriched),
+      'total_inscricoes', (select coalesce(sum(inscritos), 0) from events_enriched)
+    )
+  into v_rows, v_summary
+  from events_enriched ee;
+
+  return public._maintenance_report_payload(
+    'event_registrations',
+    array['evento', 'data', 'inscritos'],
+    v_rows,
+    v_summary
+  );
+end;
+$$;
+
 drop function if exists public.gerar_relatorio_manutencao(uuid, text, jsonb);
 
 create or replace function public.gerar_relatorio_manutencao(
@@ -1348,6 +1468,8 @@ begin
       return public._report_parking_estimate(coalesce(p_params, '{}'::jsonb));
     when 'support_suggestions' then
       return public._report_support_suggestions(coalesce(p_params, '{}'::jsonb));
+    when 'event_registrations' then
+      return public._report_event_registrations(coalesce(p_params, '{}'::jsonb));
     else
       return jsonb_build_object(
         'success', false,

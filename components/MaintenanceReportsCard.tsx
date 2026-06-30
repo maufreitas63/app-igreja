@@ -56,6 +56,18 @@ type AgeBracketMembersModalState = {
   integrantes: string[];
 };
 
+type EventRegistrationParticipant = {
+  familia: string;
+  papel: string;
+  nome: string;
+};
+
+type EventRegistrationsModalState = {
+  evento: string;
+  data: string;
+  participantes: EventRegistrationParticipant[];
+};
+
 const parseAgeBracketMembers = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
     return [];
@@ -64,6 +76,31 @@ const parseAgeBracketMembers = (value: unknown): string[] => {
   return value
     .map((entry) => String(entry ?? '').trim())
     .filter((entry) => entry.length > 0);
+};
+
+const parseEventRegistrationParticipants = (value: unknown): EventRegistrationParticipant[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') {
+        return null;
+      }
+
+      const record = entry as Record<string, unknown>;
+
+      return {
+        familia: String(record.familia ?? '').trim(),
+        papel: String(record.papel ?? '').trim(),
+        nome: String(record.nome ?? '').trim(),
+      };
+    })
+    .filter(
+      (entry): entry is EventRegistrationParticipant =>
+        Boolean(entry?.nome)
+    );
 };
 
 type ConfigFieldProps = {
@@ -241,11 +278,15 @@ function ReportResultsTable({ result }: ReportResultsTableProps) {
 
 function GenericReportResultsTable({ result }: ReportResultsTableProps) {
   const [ageBracketModal, setAgeBracketModal] = useState<AgeBracketMembersModalState | null>(null);
+  const [eventRegistrationsModal, setEventRegistrationsModal] =
+    useState<EventRegistrationsModalState | null>(null);
   const visibleColumns = useMemo(
     () => resolveVisibleReportColumns(result.rows, result.columns),
     [result.columns, result.rows]
   );
   const isAgeBracketReport = result.reportCode === 'demographic_age_brackets';
+  const isEventRegistrationsReport = result.reportCode === 'event_registrations';
+  const isMembersStatusReport = result.reportCode === 'members_active_inactive';
   const ageBracketChartSlices = useMemo(
     () => (isAgeBracketReport ? parseAgeBracketChartSlices(result.rows) : []),
     [isAgeBracketReport, result.rows]
@@ -259,14 +300,15 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
     setAgeBracketModal(null);
   };
 
+  const closeEventRegistrationsModal = () => {
+    setEventRegistrationsModal(null);
+  };
+
   return (
     <>
     <View style={styles.resultsBox}>
       <Text style={styles.resultsTitle}>
         {result.rows.length.toLocaleString('pt-BR')} registro(s)
-        {result.generatedAt
-          ? ` — gerado em ${formatReportDateTime(result.generatedAt)}`
-          : ''}
       </Text>
 
       <View style={isAgeBracketReport ? styles.ageBracketResultsRow : undefined}>
@@ -303,6 +345,14 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                     const cellValue = row[column];
                     const isClickableAgeBracket =
                       isAgeBracketReport && column === 'faixa' && typeof cellValue === 'string';
+                    const isClickableEvent =
+                      isEventRegistrationsReport
+                      && column === 'evento'
+                      && typeof cellValue === 'string';
+                    const isInactiveMemberName =
+                      isMembersStatusReport
+                      && column === 'nome'
+                      && String(row.status ?? '').toLowerCase() === 'inativo';
 
                     if (isClickableAgeBracket) {
                       const integrantes = parseAgeBracketMembers(row.integrantes);
@@ -332,6 +382,35 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                       );
                     }
 
+                    if (isClickableEvent) {
+                      const participantes = parseEventRegistrationParticipants(row.participantes);
+
+                      return (
+                        <Pressable
+                          key={`${rowIndex}-${column}`}
+                          style={[
+                            styles.tableDataCellPressable,
+                            { width: getReportColumnWidth(column) },
+                            align === 'right' && styles.cellAlignRight,
+                            align === 'center' && styles.cellAlignCenter,
+                          ]}
+                          onPress={() =>
+                            setEventRegistrationsModal({
+                              evento: cellValue,
+                              data: formatReportDateTime(row.data),
+                              participantes,
+                            })
+                          }
+                          accessibilityRole="button"
+                          accessibilityLabel={`Ver inscritos do evento ${cellValue}`}
+                        >
+                          <Text style={styles.ageBracketLink} numberOfLines={3}>
+                            {formatReportCellValue(column, cellValue)}
+                          </Text>
+                        </Pressable>
+                      );
+                    }
+
                     return (
                       <Text
                         key={`${rowIndex}-${column}`}
@@ -340,6 +419,7 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                           { width: getReportColumnWidth(column) },
                           align === 'right' && styles.cellAlignRight,
                           align === 'center' && styles.cellAlignCenter,
+                          isInactiveMemberName && styles.inactiveMemberName,
                         ]}
                         numberOfLines={3}
                       >
@@ -399,6 +479,57 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
             <TouchableOpacity
               style={styles.ageBracketCloseButton}
               onPress={closeAgeBracketModal}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.ageBracketCloseButtonText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+      </View>
+    </Modal>
+
+    <Modal
+      visible={eventRegistrationsModal !== null}
+      transparent
+      animationType="fade"
+      onRequestClose={closeEventRegistrationsModal}
+    >
+      <View style={styles.ageBracketModalOverlay}>
+        <Pressable
+          style={styles.ageBracketModalBackdrop}
+          onPress={closeEventRegistrationsModal}
+        />
+
+        {eventRegistrationsModal ? (
+          <View style={styles.ageBracketBubble}>
+            <Text style={styles.ageBracketModalTitle}>{eventRegistrationsModal.evento}</Text>
+            <Text style={styles.ageBracketModalHelp}>
+              {eventRegistrationsModal.data} ·{' '}
+              {eventRegistrationsModal.participantes.length.toLocaleString('pt-BR')} inscrito(s)
+            </Text>
+
+            <ScrollView
+              style={styles.ageBracketMembersScroll}
+              contentContainerStyle={styles.ageBracketMembersContent}
+              nestedScrollEnabled
+            >
+              {eventRegistrationsModal.participantes.length === 0 ? (
+                <Text style={styles.hintText}>Nenhum inscrito listado para este evento.</Text>
+              ) : (
+                eventRegistrationsModal.participantes.map((participant, index) => (
+                  <View key={`${participant.nome}-${index}`} style={styles.eventRegistrationRow}>
+                    <Text style={styles.ageBracketMemberName}>{participant.nome}</Text>
+                    <Text style={styles.eventRegistrationMeta}>
+                      {participant.familia} · {participant.papel}
+                    </Text>
+                  </View>
+                ))
+              )}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.ageBracketCloseButton}
+              onPress={closeEventRegistrationsModal}
               activeOpacity={0.85}
             >
               <Text style={styles.ageBracketCloseButtonText}>Fechar</Text>
@@ -543,7 +674,6 @@ function ReportSection({
           ) : null}
 
           <Text style={styles.reportDescription}>{definition.description}</Text>
-          <Text style={styles.reportSources}>Fontes: {definition.dataSources}</Text>
 
           {definition.configFields.map((field) => (
             <ConfigField
@@ -1107,6 +1237,21 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     fontSize: 13,
     lineHeight: 18,
+  },
+  inactiveMemberName: {
+    color: '#F87171',
+    fontWeight: '700',
+  },
+  eventRegistrationRow: {
+    gap: 2,
+    paddingVertical: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(148, 163, 184, 0.35)',
+  },
+  eventRegistrationMeta: {
+    color: '#94A3B8',
+    fontSize: 11,
+    lineHeight: 15,
   },
   ageBracketCloseButton: {
     alignSelf: 'flex-end',

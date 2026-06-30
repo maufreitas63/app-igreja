@@ -1,5 +1,6 @@
 import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { CheckinModal } from '@/components/CheckinModal';
+import { AdministrativoCard } from '@/components/AdministrativoCard';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
@@ -35,6 +36,7 @@ import { parseGeofenceRadiusMeters } from '@/lib/checkinGeofence';
 import { formatRoomServidorNames } from '@/lib/roomServidorScales';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import { withActiveMembershipProfileFilter } from '@/lib/activeMemberProfile';
+import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { formatFullName } from '@/lib/fullName';
 import {
   fetchFamilyMembersForDirectoryEntry,
@@ -153,7 +155,8 @@ type DashboardCard = {
     | 'vigilance_scales'
     | 'parking_vehicle_v2'
     | 'scale_roster'
-    | 'grouped_manage';
+    | 'grouped_manage'
+    | 'administrativo';
 };
 
 type GroupedRoomConfig = {
@@ -508,6 +511,7 @@ export default function Dashboard() {
   const activeDashboardContentRef = useRef<DashboardCard['content'] | null>(null);
   const previousDashboardDataLengthRef = useRef(0);
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
+  const [hasActiveMembership, setHasActiveMembership] = useState(false);
   const [lgpdAtivo, setLgpdAtivo] = useState(true);
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
@@ -939,7 +943,7 @@ export default function Dashboard() {
       setAclRpcStatus(aclStatus);
 
       if (loadedProfile?.id) {
-        const [allowed, cardAccess, screenAccess, mapGeolocationAllowed, isSuperAdmin, canAccessProfileCadastro] =
+        const [allowed, cardAccess, screenAccess, mapGeolocationAllowed, isSuperAdmin, canAccessProfileCadastro, activeMembership] =
           await Promise.all([
             profileHasAccess(loadedProfile.id, 'screen', ACCESS_SCREEN.maintenance, 'view'),
             loadDashboardCardViewAccess(loadedProfile.id),
@@ -952,12 +956,16 @@ export default function Dashboard() {
               'maintenance.card.profile_cadastro',
               'view'
             ),
+            fetchProfileHasActiveMembership(loadedProfile.id),
           ]);
         setCanViewMaintenance(allowed);
         setCanMonitorFamilyReception(isSuperAdmin || canAccessProfileCadastro);
         setDashboardCardAccess(cardAccess);
         setDashboardScreenAccess(screenAccess);
         setCanAccessMapGeolocation(mapGeolocationAllowed);
+        setHasActiveMembership(activeMembership);
+      } else {
+        setHasActiveMembership(false);
       }
 
       setIsMaintenanceAccessLoading(false);
@@ -1810,8 +1818,12 @@ export default function Dashboard() {
         ? [{ id: '9', title: 'Estacionamento', content: 'parking_vehicle_v2' as const }]
         : []),
       { id: '6', title: 'Dados Cadastrais', content: 'grouped_manage' },
+      ...(hasActiveMembership
+        ? [{ id: '13', title: 'Administrativo', content: 'administrativo' as const }]
+        : []),
     ],
     [
+      hasActiveMembership,
       isParkingPanelVisible,
       isQrCheckInCardVisible,
       isScaleRosterVisible,
@@ -2778,6 +2790,18 @@ export default function Dashboard() {
                       </TouchableOpacity>
                     </View>
                     <GroupedManagePaletteFooter />
+                  </View>
+                ) : item.content === 'administrativo' ? (
+                  <View
+                    style={[
+                      styles.card,
+                      styles.cardAdministrativo,
+                      styles.dashboardPanelCardTopLayout,
+                      dashboardPanelCardSizeStyle,
+                      dashboardPanelTopInsetStyle,
+                    ]}
+                  >
+                    <AdministrativoCard panelHeight={dashboardPanelCardHeight} />
                   </View>
                 ) : item.content === 'members_list' ? (
                   <View
@@ -4403,6 +4427,12 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   cardGroupedManage: {
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
+    gap: 0,
+    shadowOpacity: 0.3,
+  },
+  cardAdministrativo: {
     alignItems: 'stretch',
     justifyContent: 'flex-start',
     gap: 0,

@@ -38,6 +38,7 @@ import {
   resolveIndexShortcutIconColor,
 } from '@/lib/indexShortcutHints';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
+import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { isLgpdAtivoEnabled, isProfileLgpdPending } from '@/lib/appParameters';
 import { buildIndexScreenGradient } from '@/lib/paletteTheme';
 import { useDashboardSelectedEvent } from '@/hooks/useDashboardSelectedEvent';
@@ -77,6 +78,7 @@ const DASHBOARD_SHORTCUTS_BASE: DashboardShortcut[] = [
   { id: 'financeiro', label: 'Financeiro', dashboardCard: '11' },
   { id: 'escalas', label: 'Escalas', dashboardCard: '8' },
   { id: 'menu', label: 'Dados Cadastrais', dashboardCard: '6' },
+  { id: 'administrativo', label: 'Administrativo', dashboardCard: '13' },
 ];
 
 type DashboardShortcutGroup = {
@@ -140,6 +142,7 @@ export default function DashboardIndexScreen() {
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [headerUserName, setHeaderUserName] = useState('Usuário');
   const [isLgpdPending, setIsLgpdPending] = useState(false);
+  const [hasActiveMembership, setHasActiveMembership] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -219,9 +222,12 @@ export default function DashboardIndexScreen() {
           return;
         }
 
-        const [sessionProfile, lgpdModuleActive] = await Promise.all([
-          loadSessionProfile(phone),
+        const sessionProfile = await loadSessionProfile(phone);
+        const [lgpdModuleActive, activeMembership] = await Promise.all([
           isLgpdAtivoEnabled(),
+          sessionProfile?.id
+            ? fetchProfileHasActiveMembership(sessionProfile.id)
+            : Promise.resolve(false),
         ]);
         if (!active) {
           return;
@@ -233,6 +239,11 @@ export default function DashboardIndexScreen() {
         }
 
         setIsLgpdPending(isProfileLgpdPending(sessionProfile?.lgpd_accepted, lgpdModuleActive));
+        if (sessionProfile?.id) {
+          setHasActiveMembership(activeMembership);
+        } else {
+          setHasActiveMembership(false);
+        }
       })();
 
       return () => {
@@ -262,7 +273,9 @@ export default function DashboardIndexScreen() {
 
   const shortcuts = useMemo(
     () =>
-      DASHBOARD_SHORTCUTS_BASE.map((shortcut) => {
+      DASHBOARD_SHORTCUTS_BASE.filter(
+        (shortcut) => shortcut.id !== 'administrativo' || hasActiveMembership
+      ).map((shortcut) => {
         const disabledHint = resolveIndexShortcutDisabledHint(shortcut.id, shortcutHintContext);
         const disabled =
           shortcut.id === 'qr-totem'
@@ -277,7 +290,7 @@ export default function DashboardIndexScreen() {
           disabledHint: disabled ? disabledHint : null,
         };
       }),
-    [hasAvailableEvents, isQrCheckInShortcutVisible, shortcutHintContext]
+    [hasActiveMembership, hasAvailableEvents, isQrCheckInShortcutVisible, shortcutHintContext]
   );
 
   const shortcutGroups = useMemo(() => buildShortcutGroups(shortcuts), [shortcuts]);

@@ -62,9 +62,18 @@ export const MAINTENANCE_REPORT_DEFINITIONS: MaintenanceReportDefinition[] = [
     code: 'demographic_age_brackets',
     title: 'Faixa Etária',
     description:
-      'Distribui perfis ativos por faixa etária (60+, 45-59, 30-44, 18-29, 13-17, 0-12) em ordem decrescente de idade. Exclui desligados (membership_out efetiva). Toque na faixa para ver os integrantes.',
-    dataSources: 'profiles',
-    configFields: [],
+      'Distribui membros e congregados ativos por faixa etária (60+, 45-59, 30-44, 18-29, 13-17, 0-12). Considera atividade recente no app ou check-in. Toque na faixa para ver os integrantes.',
+    dataSources: 'profiles, profile_app_access_events, checkins',
+    configFields: [
+      {
+        key: 'inactive_months',
+        label: 'Meses sem atividade para considerar inativo',
+        type: 'number',
+        defaultValue: '3',
+        min: 1,
+        max: 24,
+      },
+    ],
   },
   {
     code: 'health_alerts',
@@ -114,6 +123,14 @@ export const MAINTENANCE_REPORT_DEFINITIONS: MaintenanceReportDefinition[] = [
       'Uma ficha por solicitação (tipo, solicitante, descrição, tratamento e anexos), com histórico cronológico interno de abertura, interações e comunicações.',
     dataSources:
       'maintenance_support_requests, maintenance_support_interactions, maintenance_support_communications, maintenance_support_attachments',
+    configFields: [],
+  },
+  {
+    code: 'event_registrations',
+    title: 'Inscritos por Evento',
+    description:
+      'Lista eventos com inscrições e total de participantes. Toque no evento para ver a relação detalhada ordenada por família, papel e nome.',
+    dataSources: 'events, event_registrations, profiles',
     configFields: [],
   },
 ];

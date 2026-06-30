@@ -92,4 +92,11 @@ export const DASHBOARD_CARD_THEMES = {
     accent: '#BFDBFE',
     accentMuted: '#93C5FD',
   },
+  administrativo: {
+    backgroundColor: 'rgba(30, 64, 175, 0.24)',
+    borderColor: '#60A5FA',
+    shadowColor: '#1D4ED8',
+    accent: '#DBEAFE',
+    accentMuted: '#93C5FD',
+  },
 } as const satisfies Record<string, DashboardCardTheme>;
