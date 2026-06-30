@@ -62,18 +62,9 @@ export const MAINTENANCE_REPORT_DEFINITIONS: MaintenanceReportDefinition[] = [
     code: 'demographic_age_brackets',
     title: 'Faixa Etária',
     description:
-      'Distribui membros e congregados ativos por faixa etária (60+, 45-59, 30-44, 18-29, 13-17, 0-12). Considera atividade recente no app ou check-in. Toque na faixa para ver os integrantes.',
-    dataSources: 'profiles, profile_app_access_events, checkins',
-    configFields: [
-      {
-        key: 'inactive_months',
-        label: 'Meses sem atividade para considerar inativo',
-        type: 'number',
-        defaultValue: '3',
-        min: 1,
-        max: 24,
-      },
-    ],
+      'Distribui membros e congregados com membresia ativa (sem desligamento) por faixa etária. Toque na faixa para ver os integrantes.',
+    dataSources: 'profiles',
+    configFields: [],
   },
   {
     code: 'health_alerts',

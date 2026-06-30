@@ -42,6 +42,10 @@ import {
 } from '@/lib/maintenanceCardStyles';
 import type { FinancialEntry } from '@/lib/financialEntry';
 import { MAINTENANCE_FINANCIALS_SQL_HINT } from '@/hooks/useMaintenanceFinancials';
+import {
+  ASSEMBLY_MINUTES_SQL_HINT,
+  pickAndUploadAssemblyMinute,
+} from '@/lib/assemblyMinutesApi';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
@@ -68,7 +72,7 @@ type Props = {
 
 const ACCENT = '#34D399';
 
-type MaintenanceSectionKey = 'period' | 'bulk' | 'entries' | 'rd';
+type MaintenanceSectionKey = 'period' | 'bulk' | 'entries' | 'rd' | 'assembly_minutes';
 
 type CollapsibleSectionProps = {
   title: string;
@@ -170,6 +174,8 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   const [loadingRdReports, setLoadingRdReports] = useState(false);
   const [rdReportsError, setRdReportsError] = useState<string | null>(null);
   const [unreconcilingReportId, setUnreconcilingReportId] = useState<string | null>(null);
+  const [assemblyMinuteTitle, setAssemblyMinuteTitle] = useState('');
+  const [uploadingAssemblyMinute, setUploadingAssemblyMinute] = useState(false);
 
   const toggleSection = useCallback((section: MaintenanceSectionKey) => {
     setExpandedSection((current) => (current === section ? null : section));
@@ -751,6 +757,36 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     });
   };
 
+  const handleUploadAssemblyMinute = async () => {
+    setUploadingAssemblyMinute(true);
+
+    try {
+      const uploaded = await pickAndUploadAssemblyMinute(assemblyMinuteTitle);
+
+      if (!uploaded) {
+        return;
+      }
+
+      setAssemblyMinuteTitle('');
+      Toast.show({
+        type: 'success',
+        text1: 'Ata publicada',
+        text2: 'O PDF já pode ser consultado no card Administrativo.',
+      });
+    } catch (uploadError) {
+      const message =
+        uploadError instanceof Error ? uploadError.message : 'Não foi possível enviar o PDF.';
+      Toast.show({
+        type: 'error',
+        text1: 'Ata de assembleia',
+        text2: message.includes('assembly-minutes') ? ASSEMBLY_MINUTES_SQL_HINT : message,
+        visibilityTime: 6000,
+      });
+    } finally {
+      setUploadingAssemblyMinute(false);
+    }
+  };
+
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
       <Text style={maintenancePanelStyles.panelTitle}>Informações Financeiras</Text>
@@ -970,6 +1006,50 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             )}
           </TouchableOpacity>
         </View>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title="Atas de assembleias"
+          subtitle="Publicar PDF para o card Administrativo"
+          expanded={expandedSection === 'assembly_minutes'}
+          onToggle={() => toggleSection('assembly_minutes')}
+        >
+          <View style={styles.formCard}>
+            <Text style={styles.formatHint}>
+              Envie o PDF da ata. O arquivo ficará disponível em Dashboard → Administrativo →
+              Atas de Assembleias.
+            </Text>
+
+            <Text style={styles.periodPickerLabel}>Título da ata</Text>
+            <TextInput
+              style={styles.assemblyTitleInput}
+              value={assemblyMinuteTitle}
+              onChangeText={setAssemblyMinuteTitle}
+              placeholder="Ex.: Assembleia Geral Ordinária — mar/2026"
+              placeholderTextColor="#64748B"
+              editable={!uploadingAssemblyMinute && !rpcMissing}
+            />
+
+            <TouchableOpacity
+              style={[
+                styles.uploadAssemblyButton,
+                (uploadingAssemblyMinute || rpcMissing || canUpdateFinancials !== true) &&
+                  styles.saveButtonDisabled,
+              ]}
+              onPress={() => void handleUploadAssemblyMinute()}
+              disabled={uploadingAssemblyMinute || rpcMissing || canUpdateFinancials !== true}
+              activeOpacity={0.85}
+            >
+              {uploadingAssemblyMinute ? (
+                <ActivityIndicator color="#0F172A" size="small" />
+              ) : (
+                <>
+                  <FontAwesome name="file-pdf-o" size={16} color="#0F172A" />
+                  <Text style={styles.uploadAssemblyButtonText}>Enviar PDF da ata</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
         </CollapsibleSection>
 
         <CollapsibleSection
@@ -2077,5 +2157,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
     marginBottom: 8,
+  },
+  assemblyTitleInput: {
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.28)',
+    borderRadius: 12,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    color: '#ECFDF5',
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 10,
+  },
+  uploadAssemblyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 12,
+    backgroundColor: '#6EE7B7',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  uploadAssemblyButtonText: {
+    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '800',
   },
 });

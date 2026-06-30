@@ -2801,7 +2801,10 @@ export default function Dashboard() {
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
-                    <AdministrativoCard panelHeight={dashboardPanelCardHeight} />
+                    <AdministrativoCard
+                      panelHeight={dashboardPanelCardHeight}
+                      isActive={data[currentIndex]?.content === 'administrativo'}
+                    />
                   </View>
                 ) : item.content === 'members_list' ? (
                   <View

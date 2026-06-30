@@ -638,14 +638,9 @@ security definer
 set search_path = public
 as $$
 declare
-  v_months integer;
-  v_cutoff timestamptz;
   v_rows jsonb;
   v_summary jsonb;
 begin
-  v_months := greatest(1, least(coalesce((p_params->>'inactive_months')::int, 3), 24));
-  v_cutoff := now() - make_interval(months => v_months);
-
   with profile_ages as (
     select
       coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as nome,
@@ -663,20 +658,6 @@ begin
     where coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), '')) is not null
       and public.resolve_basic_role_code_for_profile(p.id) in ('member', 'congregado')
       and coalesce(eff.membership_out::text, '') = ''
-      and (
-        exists (
-          select 1
-            from public.profile_app_access_events e
-           where e.profile_id = p.id
-             and e.accessed_at >= v_cutoff
-        )
-        or exists (
-          select 1
-            from public.checkins c
-           where c.profile_id = p.id
-             and coalesce(c.timestamp_confirmacao, c.created_at) >= v_cutoff
-        )
-      )
   )
   select
     coalesce(jsonb_agg(
@@ -697,8 +678,7 @@ begin
       end asc
     ), '[]'::jsonb),
     jsonb_build_object(
-      'perfis_analisados', (select count(*) from profile_ages),
-      'janela_meses', v_months
+      'perfis_analisados', (select count(*) from profile_ages)
     )
   into v_rows, v_summary
   from (
