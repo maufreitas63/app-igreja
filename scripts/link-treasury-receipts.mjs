@@ -13,8 +13,8 @@
  *   node scripts/link-treasury-receipts.mjs --force
  *   node scripts/link-treasury-receipts.mjs --receipts-dir "D:\Outra\Pasta"
  *
- * Variáveis em .env / .env.local:
- *   EXPO_PUBLIC_SUPABASE_URL (ou SUPABASE_URL)
+ * Variáveis em .env / .env.local (app-igreja ou pasta ecossistema pai):
+ *   EXPO_PUBLIC_SUPABASE_URL, SUPABASE_URL ou NEXT_PUBLIC_SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY (obrigatório para upload e update)
  *
  * Relatório: scripts/link-treasury-receipts-report.json (e .txt legível)
@@ -30,6 +30,8 @@ const projectRoot = path.join(__dirname, '..');
 const DEFAULT_RECEIPTS_DIR = 'C:\\IBN Tesouraria\\Comprovantes\\JPG';
 const FINANCIAL_DOCS_BUCKET = 'financial-docs';
 const PAGE_SIZE = 1000;
+
+const DEFAULT_SUPABASE_URL = 'https://bldbrsuiwctoaxzcrjoc.supabase.co';
 
 const loadEnvFile = (filePath) => {
   if (!fs.existsSync(filePath)) {
@@ -64,6 +66,40 @@ const loadEnvFile = (filePath) => {
 
 loadEnvFile(path.join(projectRoot, '.env'));
 loadEnvFile(path.join(projectRoot, '.env.local'));
+loadEnvFile(path.join(projectRoot, '..', '.env'));
+loadEnvFile(path.join(projectRoot, '..', '.env.local'));
+
+const resolveSupabaseUrl = () =>
+  process.env.EXPO_PUBLIC_SUPABASE_URL?.trim() ||
+  process.env.SUPABASE_URL?.trim() ||
+  DEFAULT_SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() ||
+  null;
+
+const resolveSupabaseServiceRoleKey = () => process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || null;
+
+const formatErrorMessage = (error) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (error && typeof error === 'object') {
+    const record = error;
+    const parts = [record.message, record.details, record.hint, record.code].filter(Boolean);
+
+    if (parts.length) {
+      return parts.join(' — ');
+    }
+
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return String(error);
+    }
+  }
+
+  return String(error);
+};
 
 const parseArgs = () => {
   const args = process.argv.slice(2);
@@ -356,12 +392,12 @@ const writeFailureReport = (message, details = {}) => {
 const main = async () => {
   const options = parseArgs();
 
-  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = resolveSupabaseUrl();
+  const supabaseKey = resolveSupabaseServiceRoleKey();
 
   if (!supabaseUrl || !supabaseKey) {
     writeFailureReport(
-      'Defina EXPO_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY em .env.local (service role é obrigatória).',
+      'Defina SUPABASE_SERVICE_ROLE_KEY e a URL do Supabase em .env.local (app-igreja ou ecossistema). Aceita EXPO_PUBLIC_SUPABASE_URL, SUPABASE_URL ou NEXT_PUBLIC_SUPABASE_URL.',
       options
     );
     process.exit(1);
@@ -373,7 +409,7 @@ const main = async () => {
     receiptIndex = buildReceiptFilenameIndex(options.receiptsDir);
   } catch (error) {
     writeFailureReport(
-      error instanceof Error ? error.message : String(error),
+      error instanceof Error ? error.message : formatErrorMessage(error),
       options
     );
     process.exit(1);
@@ -381,12 +417,20 @@ const main = async () => {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  console.log(`Supabase: ${supabaseUrl}`);
   console.log(`Diretório de JPG: ${options.receiptsDir}`);
   console.log(`Arquivos JPG indexados: ${receiptIndex.size}`);
   console.log(options.dryRun ? 'Modo simulação (--dry-run)' : 'Modo execução');
   console.log('');
 
-  const entries = await fetchAllRealizadoEntries(supabase);
+  let entries;
+
+  try {
+    entries = await fetchAllRealizadoEntries(supabase);
+  } catch (error) {
+    writeFailureReport(formatErrorMessage(error), options);
+    process.exit(1);
+  }
 
   const report = {
     runAt: new Date().toISOString(),
@@ -503,7 +547,7 @@ const main = async () => {
 
 main().catch((error) => {
   try {
-    writeFailureReport(error instanceof Error ? error.message : String(error));
+    writeFailureReport(formatErrorMessage(error));
   } catch {
     console.error(error);
   }
