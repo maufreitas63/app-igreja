@@ -397,20 +397,6 @@ export const findReceiptInfoForBulletinRow = (
   };
 };
 
-export const countReceiptsInCommentDetails = (details: FinancialBulletinCommentDetail[]) => {
-  const receipts = new Set<string>();
-
-  for (const detail of details) {
-    const receiptUrl = detail.receiptUrl?.trim();
-
-    if (receiptUrl) {
-      receipts.add(receiptUrl);
-    }
-  }
-
-  return receipts.size;
-};
-
 /** Comprovante do lançamento que originou esta linha (primeiro arquivo quando há vários). */
 export const findReceiptForBulletinRow = (
   row: FinancialRowCommentLookup,

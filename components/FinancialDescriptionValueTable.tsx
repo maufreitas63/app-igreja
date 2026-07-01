@@ -4,7 +4,6 @@ import {
 } from '@/lib/financialBulletinComparison';
 import { formatBulletinAmount } from '@/lib/financialBulletin';
 import {
-  countReceiptsInCommentDetails,
   findCommentDetailsForBulletinRow,
   findReceiptInfoForBulletinRow,
   type FinancialBulletinCommentDetail,
@@ -145,8 +144,11 @@ const ReceiptIndicator = ({
   >
     <View style={styles.receiptIconSlot}>
       <View style={styles.receiptIconBadge}>
-        <FontAwesome5 name="receipt" size={13} color={RECEIPT_ICON_COLOR} solid />
-        {multipleAttachments ? <Text style={styles.receiptMultipleBadge}>+</Text> : null}
+        {multipleAttachments ? (
+          <Text style={styles.receiptMultipleOnly}>+</Text>
+        ) : (
+          <FontAwesome5 name="receipt" size={13} color={RECEIPT_ICON_COLOR} solid />
+        )}
       </View>
     </View>
   </TouchableOpacity>
@@ -246,8 +248,6 @@ const CommentDetailsModal = ({
   onClose: () => void;
 }) => {
   const [openReceiptUrl, setOpenReceiptUrl] = useState<string | null>(null);
-  const receiptCount = countReceiptsInCommentDetails(details);
-  const hasMultipleReceipts = receiptCount > 1;
 
   useEffect(() => {
     if (!visible) {
@@ -308,10 +308,7 @@ const CommentDetailsModal = ({
                       </Text>
                       {receiptUrl ? (
                         <View style={styles.commentDetailsReceiptSlot}>
-                          <ReceiptIndicator
-                            onPress={() => setOpenReceiptUrl(receiptUrl)}
-                            multipleAttachments={hasMultipleReceipts}
-                          />
+                          <ReceiptIndicator onPress={() => setOpenReceiptUrl(receiptUrl)} />
                         </View>
                       ) : null}
                     </View>
@@ -639,14 +636,11 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     position: 'relative',
   },
-  receiptMultipleBadge: {
-    position: 'absolute',
-    right: -4,
-    top: -3,
+  receiptMultipleOnly: {
     color: RECEIPT_ICON_COLOR,
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '900',
-    lineHeight: 12,
+    lineHeight: 18,
   },
   valueCell: {
     textAlign: 'right',
