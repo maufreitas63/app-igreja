@@ -1,12 +1,15 @@
 /**
  * Vincula comprovantes JPG locais aos lançamentos REALIZADO no Supabase.
  *
+ * ⚠️ NÃO execute no SQL Editor do Supabase — este arquivo é JavaScript (Node.js).
+ *    Rode no terminal/PowerShell, na pasta do projeto app-igreja.
+ *
  * Padrão de arquivo: aaaammdd + espaço + valor (nnnn,nn) + .jpg
  * Exemplo: 20260526 3825,00.jpg
  *
- * Uso:
- *   node scripts/link-treasury-receipts.mjs
+ * Uso (PowerShell, na raiz app-igreja):
  *   node scripts/link-treasury-receipts.mjs --dry-run
+ *   node scripts/link-treasury-receipts.mjs
  *   node scripts/link-treasury-receipts.mjs --force
  *   node scripts/link-treasury-receipts.mjs --receipts-dir "D:\Outra\Pasta"
  *
@@ -318,6 +321,38 @@ const writeReportFiles = (report) => {
   return { jsonPath, txtPath };
 };
 
+const writeFailureReport = (message, details = {}) => {
+  const report = {
+    runAt: new Date().toISOString(),
+    status: 'failed_before_processing',
+    message,
+    ...details,
+  };
+
+  const { jsonPath, txtPath } = writeReportFiles({
+    runAt: report.runAt,
+    dryRun: details.dryRun ?? false,
+    force: details.force ?? false,
+    receiptsDir: details.receiptsDir ?? DEFAULT_RECEIPTS_DIR,
+    summary: {
+      totalRealizado: 0,
+      skippedAlreadyLinked: 0,
+      fileNotFound: 0,
+      invalidFilename: 0,
+      linked: 0,
+      errors: 1,
+    },
+    linked: [],
+    skipped: [],
+    notFound: [],
+    errors: [{ label: 'Execução interrompida', error: message }],
+  });
+
+  console.error(message);
+  console.error(`Relatório parcial JSON: ${jsonPath}`);
+  console.error(`Relatório parcial TXT:  ${txtPath}`);
+};
+
 const main = async () => {
   const options = parseArgs();
 
@@ -325,12 +360,26 @@ const main = async () => {
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error('Defina EXPO_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY em .env.local');
+    writeFailureReport(
+      'Defina EXPO_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY em .env.local (service role é obrigatória).',
+      options
+    );
+    process.exit(1);
+  }
+
+  let receiptIndex;
+
+  try {
+    receiptIndex = buildReceiptFilenameIndex(options.receiptsDir);
+  } catch (error) {
+    writeFailureReport(
+      error instanceof Error ? error.message : String(error),
+      options
+    );
     process.exit(1);
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
-  const receiptIndex = buildReceiptFilenameIndex(options.receiptsDir);
 
   console.log(`Diretório de JPG: ${options.receiptsDir}`);
   console.log(`Arquivos JPG indexados: ${receiptIndex.size}`);
@@ -453,6 +502,10 @@ const main = async () => {
 };
 
 main().catch((error) => {
-  console.error(error);
+  try {
+    writeFailureReport(error instanceof Error ? error.message : String(error));
+  } catch {
+    console.error(error);
+  }
   process.exit(1);
 });
