@@ -353,12 +353,17 @@ export const findCommentForBulletinRow = (
 ): string | null => findCommentDetailsForBulletinRow(row, entries)[0]?.comment ?? null;
 
 /** Comprovante do lançamento que originou esta linha (um único arquivo por linha agregada). */
-export const findReceiptForBulletinRow = (
+export type FinancialBulletinReceiptInfo = {
+  receiptUrl: string | null;
+  receiptCount: number;
+};
+
+const collectReceiptUrlsForBulletinRow = (
   row: FinancialRowCommentLookup,
   entries: FinancialEntry[]
-): string | null => {
+) => {
   if (row.level !== 'line') {
-    return null;
+    return [] as string[];
   }
 
   const rowLabel = row.label.trim();
@@ -377,12 +382,40 @@ export const findReceiptForBulletinRow = (
     }
   }
 
-  if (receipts.size === 1) {
-    return [...receipts][0];
+  return [...receipts];
+};
+
+export const findReceiptInfoForBulletinRow = (
+  row: FinancialRowCommentLookup,
+  entries: FinancialEntry[]
+): FinancialBulletinReceiptInfo => {
+  const receiptUrls = collectReceiptUrlsForBulletinRow(row, entries);
+
+  return {
+    receiptUrl: receiptUrls[0] ?? null,
+    receiptCount: receiptUrls.length,
+  };
+};
+
+export const countReceiptsInCommentDetails = (details: FinancialBulletinCommentDetail[]) => {
+  const receipts = new Set<string>();
+
+  for (const detail of details) {
+    const receiptUrl = detail.receiptUrl?.trim();
+
+    if (receiptUrl) {
+      receipts.add(receiptUrl);
+    }
   }
 
-  return null;
+  return receipts.size;
 };
+
+/** Comprovante do lançamento que originou esta linha (primeiro arquivo quando há vários). */
+export const findReceiptForBulletinRow = (
+  row: FinancialRowCommentLookup,
+  entries: FinancialEntry[]
+): string | null => findReceiptInfoForBulletinRow(row, entries).receiptUrl;
 
 const compareMaintenanceFinancialEntryText = (left: string, right: string) =>
   left.localeCompare(right, 'pt-BR', { sensitivity: 'base' });

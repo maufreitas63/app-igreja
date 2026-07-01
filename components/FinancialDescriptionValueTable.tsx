@@ -4,8 +4,9 @@ import {
 } from '@/lib/financialBulletinComparison';
 import { formatBulletinAmount } from '@/lib/financialBulletin';
 import {
+  countReceiptsInCommentDetails,
   findCommentDetailsForBulletinRow,
-  findReceiptForBulletinRow,
+  findReceiptInfoForBulletinRow,
   type FinancialBulletinCommentDetail,
   type FinancialEntry,
 } from '@/lib/financialEntry';
@@ -123,17 +124,30 @@ const CommentIndicator = ({ onPress }: { onPress: () => void }) => (
   </TouchableOpacity>
 );
 
-const ReceiptIndicator = ({ onPress }: { onPress: () => void }) => (
+const ReceiptIndicator = ({
+  onPress,
+  multipleAttachments = false,
+}: {
+  onPress: () => void;
+  multipleAttachments?: boolean;
+}) => (
   <TouchableOpacity
     onPress={onPress}
     activeOpacity={0.75}
     accessibilityRole="button"
-    accessibilityLabel="Ver comprovante do lançamento"
+    accessibilityLabel={
+      multipleAttachments
+        ? 'Ver comprovante do lançamento. Há mais de um anexo.'
+        : 'Ver comprovante do lançamento'
+    }
     style={styles.iconButton}
     hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
   >
-    <View style={styles.receiptIconBadge}>
-      <FontAwesome5 name="receipt" size={13} color={RECEIPT_ICON_COLOR} solid />
+    <View style={styles.receiptIconSlot}>
+      <View style={styles.receiptIconBadge}>
+        <FontAwesome5 name="receipt" size={13} color={RECEIPT_ICON_COLOR} solid />
+        {multipleAttachments ? <Text style={styles.receiptMultipleBadge}>+</Text> : null}
+      </View>
     </View>
   </TouchableOpacity>
 );
@@ -232,6 +246,8 @@ const CommentDetailsModal = ({
   onClose: () => void;
 }) => {
   const [openReceiptUrl, setOpenReceiptUrl] = useState<string | null>(null);
+  const receiptCount = countReceiptsInCommentDetails(details);
+  const hasMultipleReceipts = receiptCount > 1;
 
   useEffect(() => {
     if (!visible) {
@@ -292,7 +308,10 @@ const CommentDetailsModal = ({
                       </Text>
                       {receiptUrl ? (
                         <View style={styles.commentDetailsReceiptSlot}>
-                          <ReceiptIndicator onPress={() => setOpenReceiptUrl(receiptUrl)} />
+                          <ReceiptIndicator
+                            onPress={() => setOpenReceiptUrl(receiptUrl)}
+                            multipleAttachments={hasMultipleReceipts}
+                          />
                         </View>
                       ) : null}
                     </View>
@@ -350,16 +369,16 @@ export function FinancialDescriptionValueTable({
 
   const receiptByRowKey = useMemo(() => {
     if (!showCommentIcons) {
-      return new Map<string, string>();
+      return new Map<string, ReturnType<typeof findReceiptInfoForBulletinRow>>();
     }
 
-    const map = new Map<string, string>();
+    const map = new Map<string, ReturnType<typeof findReceiptInfoForBulletinRow>>();
 
     for (const row of rows) {
-      const receiptUrl = findReceiptForBulletinRow(row, entries)?.trim() || '';
+      const receiptInfo = findReceiptInfoForBulletinRow(row, entries);
 
-      if (receiptUrl) {
-        map.set(row.key, receiptUrl);
+      if (receiptInfo.receiptCount > 0) {
+        map.set(row.key, receiptInfo);
       }
     }
 
@@ -413,9 +432,11 @@ export function FinancialDescriptionValueTable({
               row.level === 'total' ||
               row.level === 'balance';
             const commentDetails = commentDetailsByRowKey.get(row.key) ?? [];
-            const receiptUrl = receiptByRowKey.get(row.key) ?? '';
+            const receiptInfo = receiptByRowKey.get(row.key);
+            const receiptUrl = receiptInfo?.receiptUrl?.trim() ?? '';
             const showCommentIcon = commentDetails.length > 0;
-            const showReceiptIcon = receiptUrl.length > 0;
+            const showReceiptIcon = Boolean(receiptUrl);
+            const hasMultipleReceipts = (receiptInfo?.receiptCount ?? 0) > 1;
 
             return (
               <View key={row.key} style={styles.dataRow}>
@@ -436,7 +457,10 @@ export function FinancialDescriptionValueTable({
                     </View>
                     <View style={styles.iconSlot}>
                       {showReceiptIcon ? (
-                        <ReceiptIndicator onPress={() => setOpenReceiptUrl(receiptUrl)} />
+                        <ReceiptIndicator
+                          onPress={() => setOpenReceiptUrl(receiptUrl)}
+                          multipleAttachments={hasMultipleReceipts}
+                        />
                       ) : null}
                     </View>
                   </View>
@@ -601,6 +625,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF',
     borderRadius: 11,
   },
+  receiptIconSlot: {
+    width: ICON_SLOT_WIDTH,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
   receiptIconBadge: {
     width: 22,
     height: 22,
@@ -608,6 +637,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#ECFDF5',
     borderRadius: 11,
+    position: 'relative',
+  },
+  receiptMultipleBadge: {
+    position: 'absolute',
+    right: -4,
+    top: -3,
+    color: RECEIPT_ICON_COLOR,
+    fontSize: 12,
+    fontWeight: '900',
+    lineHeight: 12,
   },
   valueCell: {
     textAlign: 'right',
