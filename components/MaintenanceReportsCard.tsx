@@ -18,12 +18,14 @@ import {
   resolveMaintenanceEventLabel,
   resolveReportSummaryEntries,
   resolveVisibleReportColumns,
+  shouldWrapReportCell,
 } from '@/lib/maintenanceReportFormatting';
 import {
   type MaintenanceReportConfigField,
   type MaintenanceReportDefinition,
 } from '@/lib/maintenanceReportsCatalog';
 import { buildSupportSuggestionsReportPdfObjectUrl } from '@/lib/supportSuggestionsReportPdf';
+import { SUPPORT_SUGGESTIONS_REPORT_PDF_FILENAME } from '@/lib/maintenanceSupportSuggestionsReport';
 import type { MaintenanceReportResult } from '@/lib/maintenanceReportsApi';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { FontAwesome } from '@expo/vector-icons';
@@ -287,6 +289,7 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
   const isAgeBracketReport = result.reportCode === 'demographic_age_brackets';
   const isEventRegistrationsReport = result.reportCode === 'event_registrations';
   const isMembersStatusReport = result.reportCode === 'members_active_inactive';
+  const reportCode = result.reportCode;
   const ageBracketChartSlices = useMemo(
     () => (isAgeBracketReport ? parseAgeBracketChartSlices(result.rows) : []),
     [isAgeBracketReport, result.rows]
@@ -318,13 +321,16 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
               <View style={styles.tableHeaderRow}>
                 {visibleColumns.map((column) => {
                   const align = getReportColumnAlign(column);
+                  const columnWidth = getReportColumnWidth(column, reportCode);
+                  const wrapEventName = shouldWrapReportCell(column, reportCode);
 
                   return (
                     <Text
                       key={column}
                       style={[
                         styles.tableHeaderCell,
-                        { width: getReportColumnWidth(column) },
+                        { width: columnWidth },
+                        isEventRegistrationsReport && styles.tableHeaderCellCompact,
                         align === 'right' && styles.cellAlignRight,
                         align === 'center' && styles.cellAlignCenter,
                       ]}
@@ -342,6 +348,8 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                 >
                   {visibleColumns.map((column) => {
                     const align = getReportColumnAlign(column);
+                    const columnWidth = getReportColumnWidth(column, reportCode);
+                    const wrapEventName = shouldWrapReportCell(column, reportCode);
                     const cellValue = row[column];
                     const isClickableAgeBracket =
                       isAgeBracketReport && column === 'faixa' && typeof cellValue === 'string';
@@ -362,7 +370,8 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                           key={`${rowIndex}-${column}`}
                           style={[
                             styles.tableDataCellPressable,
-                            { width: getReportColumnWidth(column) },
+                            { width: columnWidth },
+                            isEventRegistrationsReport && styles.tableDataCellCompact,
                             align === 'right' && styles.cellAlignRight,
                             align === 'center' && styles.cellAlignCenter,
                           ]}
@@ -390,7 +399,8 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                           key={`${rowIndex}-${column}`}
                           style={[
                             styles.tableDataCellPressable,
-                            { width: getReportColumnWidth(column) },
+                            { width: columnWidth },
+                            isEventRegistrationsReport && styles.tableDataCellCompact,
                             align === 'right' && styles.cellAlignRight,
                             align === 'center' && styles.cellAlignCenter,
                           ]}
@@ -404,7 +414,9 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                           accessibilityRole="button"
                           accessibilityLabel={`Ver inscritos do evento ${cellValue}`}
                         >
-                          <Text style={styles.ageBracketLink} numberOfLines={3}>
+                          <Text
+                            style={[styles.ageBracketLink, wrapEventName && styles.tableCellWrap]}
+                          >
                             {formatReportCellValue(column, cellValue)}
                           </Text>
                         </Pressable>
@@ -416,12 +428,14 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                         key={`${rowIndex}-${column}`}
                         style={[
                           styles.tableDataCell,
-                          { width: getReportColumnWidth(column) },
+                          { width: columnWidth },
+                          isEventRegistrationsReport && styles.tableDataCellCompact,
+                          wrapEventName && styles.tableCellWrap,
                           align === 'right' && styles.cellAlignRight,
                           align === 'center' && styles.cellAlignCenter,
                           isInactiveMemberName && styles.inactiveMemberName,
                         ]}
-                        numberOfLines={3}
+                        numberOfLines={wrapEventName ? undefined : 3}
                       >
                         {formatReportCellValue(column, cellValue)}
                       </Text>
@@ -623,6 +637,8 @@ type ReportSectionProps = {
   onParamChange: (key: string, value: string) => void;
   onReset: () => void;
   onRun: () => Promise<MaintenanceReportResult | null>;
+  onOpenPdf?: () => void;
+  pdfLoading?: boolean;
 };
 
 function ReportSection({
@@ -640,6 +656,8 @@ function ReportSection({
   onParamChange,
   onReset,
   onRun,
+  onOpenPdf,
+  pdfLoading = false,
 }: ReportSectionProps) {
   return (
     <View style={styles.reportCard}>
@@ -699,7 +717,7 @@ function ReportSection({
             <TouchableOpacity
               style={[styles.runButton, loading && styles.runButtonDisabled]}
               onPress={() => void onRun()}
-              disabled={loading}
+              disabled={loading || pdfLoading}
               activeOpacity={0.85}
             >
               {loading ? (
@@ -708,6 +726,20 @@ function ReportSection({
                 <Text style={styles.runButtonText}>Gerar relatório</Text>
               )}
             </TouchableOpacity>
+            {definition.code === 'support_suggestions' && result && result.rows.length > 0 ? (
+              <TouchableOpacity
+                style={[styles.pdfButton, pdfLoading && styles.runButtonDisabled]}
+                onPress={() => onOpenPdf?.()}
+                disabled={loading || pdfLoading}
+                activeOpacity={0.85}
+              >
+                {pdfLoading ? (
+                  <ActivityIndicator color="#F3E8FF" size="small" />
+                ) : (
+                  <Text style={styles.pdfButtonText}>Abrir PDF</Text>
+                )}
+              </TouchableOpacity>
+            ) : null}
           </View>
 
           {error ? (
@@ -756,6 +788,7 @@ export function MaintenanceReportsCard({
     runReport,
   } = useMaintenanceReports();
   const [pdfPreview, setPdfPreview] = useState<{ url: string; count: number } | null>(null);
+  const [pdfLoadingCode, setPdfLoadingCode] = useState<string | null>(null);
 
   const closePdfPreview = useCallback(() => {
     setPdfPreview((current) => {
@@ -767,34 +800,54 @@ export function MaintenanceReportsCard({
   }, []);
 
   const handleRunReport = useCallback(
+    async (definition: MaintenanceReportDefinition) => runReport(definition),
+    [runReport]
+  );
+
+  const downloadSupportSuggestionsPdf = useCallback((pdfUrl: string) => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const anchor = document.createElement('a');
+    anchor.href = pdfUrl;
+    anchor.download = SUPPORT_SUGGESTIONS_REPORT_PDF_FILENAME;
+    anchor.rel = 'noopener';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  }, []);
+
+  const handleOpenSupportSuggestionsPdf = useCallback(
     async (definition: MaintenanceReportDefinition) => {
-      const result = await runReport(definition);
+      const result = resultsByCode[definition.code];
 
-      if (
-        definition.code === 'support_suggestions'
-        && result?.success
-        && result.rows.length > 0
-      ) {
-        try {
-          const url = await buildSupportSuggestionsReportPdfObjectUrl(result);
-          setPdfPreview((current) => {
-            if (current?.url) {
-              URL.revokeObjectURL(current.url);
-            }
-
-            return {
-              url,
-              count: result.rows.length,
-            };
-          });
-        } catch (pdfError) {
-          console.error('Erro ao gerar PDF de sugestões:', pdfError);
-        }
+      if (!result?.success || result.rows.length === 0) {
+        return;
       }
 
-      return result;
+      setPdfLoadingCode(definition.code);
+
+      try {
+        const url = await buildSupportSuggestionsReportPdfObjectUrl(result);
+        downloadSupportSuggestionsPdf(url);
+        setPdfPreview((current) => {
+          if (current?.url) {
+            URL.revokeObjectURL(current.url);
+          }
+
+          return {
+            url,
+            count: result.rows.length,
+          };
+        });
+      } catch (pdfError) {
+        console.error('Erro ao gerar PDF de sugestões:', pdfError);
+      } finally {
+        setPdfLoadingCode(null);
+      }
     },
-    [runReport]
+    [downloadSupportSuggestionsPdf, resultsByCode]
   );
 
   return (
@@ -833,6 +886,8 @@ export function MaintenanceReportsCard({
             onParamChange={(key, value) => updateParam(definition.code, key, value)}
             onReset={() => resetParams(definition)}
             onRun={() => handleRunReport(definition)}
+            onOpenPdf={() => void handleOpenSupportSuggestionsPdf(definition)}
+            pdfLoading={pdfLoadingCode === definition.code}
           />
         ))}
 
@@ -1062,6 +1117,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '900',
   },
+  pdfButton: {
+    minWidth: 110,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(192, 132, 252, 0.55)',
+    backgroundColor: 'rgba(192, 132, 252, 0.14)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  pdfButtonText: {
+    color: '#F3E8FF',
+    fontSize: 12,
+    fontWeight: '900',
+  },
   errorText: {
     color: '#FCA5A5',
     fontSize: 12,
@@ -1156,9 +1227,13 @@ const styles = StyleSheet.create({
   },
   tableHeaderRow: {
     flexDirection: 'row',
+    gap: 6,
     backgroundColor: 'rgba(30, 41, 59, 0.95)',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(148, 163, 184, 0.35)',
+  },
+  tableHeaderCellCompact: {
+    paddingHorizontal: 6,
   },
   tableHeaderCell: {
     paddingVertical: 8,
@@ -1169,6 +1244,7 @@ const styles = StyleSheet.create({
   },
   tableDataRow: {
     flexDirection: 'row',
+    gap: 6,
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(148, 163, 184, 0.1)',
@@ -1182,6 +1258,13 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     fontSize: 12,
     lineHeight: 16,
+  },
+  tableDataCellCompact: {
+    paddingHorizontal: 6,
+  },
+  tableCellWrap: {
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   tableDataCellPressable: {
     paddingVertical: 8,

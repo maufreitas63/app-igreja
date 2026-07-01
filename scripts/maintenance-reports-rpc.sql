@@ -641,23 +641,32 @@ declare
   v_rows jsonb;
   v_summary jsonb;
 begin
-  with profile_ages as (
+  with eligible as (
     select
+      p.id,
       coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as nome,
-      case
-        when p.birth_date is null then 'Sem data'
-        when age(current_date, p.birth_date) < interval '13 years' then '0-12 anos'
-        when age(current_date, p.birth_date) < interval '18 years' then '13-17 anos'
-        when age(current_date, p.birth_date) < interval '30 years' then '18-29 anos'
-        when age(current_date, p.birth_date) < interval '45 years' then '30-44 anos'
-        when age(current_date, p.birth_date) < interval '60 years' then '45-59 anos'
-        else '60+ anos'
-      end as faixa
+      p.birth_date,
+      public.resolve_basic_role_code_for_profile(p.id) as role_code
     from public.profiles p
     cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
     where coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), '')) is not null
       and public.resolve_basic_role_code_for_profile(p.id) in ('member', 'congregado')
       and coalesce(eff.membership_out::text, '') = ''
+  ),
+  profile_ages as (
+    select
+      e.nome,
+      e.role_code,
+      case
+        when e.birth_date is null then 'Sem data'
+        when age(current_date, e.birth_date) < interval '13 years' then '0-12 anos'
+        when age(current_date, e.birth_date) < interval '18 years' then '13-17 anos'
+        when age(current_date, e.birth_date) < interval '30 years' then '18-29 anos'
+        when age(current_date, e.birth_date) < interval '45 years' then '30-44 anos'
+        when age(current_date, e.birth_date) < interval '60 years' then '45-59 anos'
+        else '60+ anos'
+      end as faixa
+    from eligible e
   )
   select
     coalesce(jsonb_agg(
@@ -678,7 +687,9 @@ begin
       end asc
     ), '[]'::jsonb),
     jsonb_build_object(
-      'perfis_analisados', (select count(*) from profile_ages)
+      'membros_ativos', (select count(*)::int from profile_ages where role_code = 'member'),
+      'congregados_ativos', (select count(*)::int from profile_ages where role_code = 'congregado'),
+      'perfis_analisados', (select count(*)::int from profile_ages)
     )
   into v_rows, v_summary
   from (

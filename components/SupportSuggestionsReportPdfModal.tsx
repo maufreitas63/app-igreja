@@ -1,4 +1,4 @@
-import { FontAwesome } from '@expo/vector-icons';
+import { SUPPORT_SUGGESTIONS_REPORT_PDF_FILENAME } from '@/lib/maintenanceSupportSuggestionsReport';
 import React from 'react';
 import {
   Modal,
@@ -32,7 +32,7 @@ const downloadPdf = (pdfUrl: string) => {
 
   const anchor = document.createElement('a');
   anchor.href = pdfUrl;
-  anchor.download = `relatorio-sugestoes-melhorias-${new Date().toISOString().slice(0, 10)}.pdf`;
+  anchor.download = SUPPORT_SUGGESTIONS_REPORT_PDF_FILENAME;
   anchor.rel = 'noopener';
   document.body.appendChild(anchor);
   anchor.click();

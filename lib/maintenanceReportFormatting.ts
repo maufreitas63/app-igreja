@@ -97,6 +97,8 @@ const SUMMARY_LABELS: Record<string, string> = {
   sessoes: 'Sessões',
   inscricoes_eventos: 'Inscrições em eventos',
   perfis_analisados: 'Perfis analisados',
+  membros_ativos: 'Membros ativos',
+  congregados_ativos: 'Congregados ativos',
   familias_distintas: 'Famílias distintas',
   media_integrantes: 'Média de integrantes',
   event_id: 'Evento',
@@ -251,7 +253,22 @@ export const getReportColumnAlign = (column: string): ReportColumnAlign => {
   return 'left';
 };
 
-export const getReportColumnWidth = (column: string) => COLUMN_WIDTHS[column] ?? 124;
+const EVENT_REGISTRATIONS_COLUMN_WIDTHS: Record<string, number> = {
+  evento: 124,
+  data: 72,
+  inscritos: 64,
+};
+
+export const getReportColumnWidth = (column: string, reportCode?: string) => {
+  if (reportCode === 'event_registrations' && column in EVENT_REGISTRATIONS_COLUMN_WIDTHS) {
+    return EVENT_REGISTRATIONS_COLUMN_WIDTHS[column];
+  }
+
+  return COLUMN_WIDTHS[column] ?? 124;
+};
+
+export const shouldWrapReportCell = (column: string, reportCode?: string) =>
+  reportCode === 'event_registrations' && column === 'evento';
 
 export const formatReportDate = (value: unknown) => {
   const date = parseDateValue(value);

@@ -1,6 +1,8 @@
 import type { MaintenanceReportRow } from '@/lib/maintenanceReportsApi';
 import { formatReportDateTime } from '@/lib/maintenanceReportFormatting';
 
+export const SUPPORT_SUGGESTIONS_REPORT_PDF_FILENAME = 'Sugestões e Melhorias.pdf';
+
 export type SupportSuggestionHistoricoEntry = {
   data_hora: string;
   tipo: string;

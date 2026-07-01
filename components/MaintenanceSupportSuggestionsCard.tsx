@@ -1269,18 +1269,20 @@ export function MaintenanceSupportSuggestionsCard({
       {schemaMissing ? <Text style={styles.warningText}>{schemaHint}</Text> : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      {loading ? (
-        <View style={styles.centerBox}>
-          <ActivityIndicator color={ACCENT} />
-          <Text style={styles.loadingText}>Carregando solicitações...</Text>
-        </View>
-      ) : mode === 'new' ? (
-        renderNewRequestForm()
-      ) : mode === 'detail' ? (
-        renderDetail()
-      ) : (
-        renderList()
-      )}
+      <View style={styles.contentArea}>
+        {loading ? (
+          <View style={styles.centerBox}>
+            <ActivityIndicator color={ACCENT} />
+            <Text style={styles.loadingText}>Carregando solicitações...</Text>
+          </View>
+        ) : mode === 'new' ? (
+          renderNewRequestForm()
+        ) : mode === 'detail' ? (
+          renderDetail()
+        ) : (
+          renderList()
+        )}
+      </View>
     </View>
   );
 }
@@ -1290,6 +1292,10 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     gap: 8,
+  },
+  contentArea: {
+    flex: 1,
+    minHeight: 0,
   },
   subtitle: {
     color: '#94A3B8',
@@ -1364,6 +1370,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 8,
+    flexWrap: 'wrap',
   },
   requestMain: {
     flex: 1,
@@ -1450,9 +1457,10 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 10,
+    flexWrap: 'wrap',
   },
   backButton: {
     flexDirection: 'row',
@@ -1470,9 +1478,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   formTitle: {
+    flex: 1,
+    minWidth: 0,
     color: '#E0F2FE',
     fontSize: 14,
     fontWeight: '800',
+    textAlign: 'right',
   },
   label: {
     color: '#BAE6FD',
@@ -1712,12 +1723,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    alignItems: 'flex-start',
   },
   statusChip: {
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 7,
+    maxWidth: '100%',
   },
   statusChipText: {
     fontSize: 11,
@@ -1760,6 +1773,7 @@ const styles = StyleSheet.create({
   },
   communicationButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   whatsappButton: {
@@ -1801,8 +1815,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 8,
+    flexWrap: 'wrap',
   },
   timelineTitle: {
+    flex: 1,
+    minWidth: 0,
     color: '#E2E8F0',
     fontSize: 12,
     fontWeight: '900',
@@ -1810,6 +1827,7 @@ const styles = StyleSheet.create({
   timelineDate: {
     color: '#64748B',
     fontSize: 10,
+    flexShrink: 0,
   },
   timelineMeta: {
     color: '#7DD3FC',

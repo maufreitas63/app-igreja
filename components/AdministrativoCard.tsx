@@ -32,7 +32,7 @@ type Props = {
 };
 
 const TABS: { id: TabId; label: string; icon: keyof typeof MaterialIcons.glyphMap }[] = [
-  { id: 'atas', label: 'Atas de Assembleias', icon: 'description' },
+  { id: 'atas', label: 'Atos Constitutivos', icon: 'description' },
   { id: 'outros', label: 'Outros', icon: 'folder-open' },
 ];
 
@@ -70,6 +70,10 @@ export function AdministrativoCard({ panelHeight, isActive = true }: Props) {
   const [suggestions, setSuggestions] = useState<MaintenanceSupportRequest[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
+  const [completedActionModal, setCompletedActionModal] = useState<{
+    title: string;
+    action: string;
+  } | null>(null);
 
   const loadMinutes = useCallback(async () => {
     setLoadingMinutes(true);
@@ -185,7 +189,7 @@ export function AdministrativoCard({ panelHeight, isActive = true }: Props) {
         {activeTab === 'atas' ? (
           <>
             <FontAwesome name="file-text-o" size={28} color="#60A5FA" />
-            <Text style={styles.bodyTitle}>Atas de Assembleias</Text>
+            <Text style={styles.bodyTitle}>Atos Constitutivos</Text>
             <Text style={styles.bodyHint}>
               Consulte os PDFs publicados pelo financeiro. Toque no botão abaixo para abrir a lista.
             </Text>
@@ -194,7 +198,7 @@ export function AdministrativoCard({ panelHeight, isActive = true }: Props) {
               onPress={handleOpenAtasModal}
               activeOpacity={0.85}
             >
-              <Text style={styles.primaryButtonText}>Ver atas publicadas</Text>
+              <Text style={styles.primaryButtonText}>Ver documentos publicados</Text>
             </TouchableOpacity>
           </>
         ) : (
@@ -216,27 +220,60 @@ export function AdministrativoCard({ panelHeight, isActive = true }: Props) {
             ) : suggestions.length === 0 ? (
               <Text style={styles.emptyText}>Nenhuma solicitação registrada.</Text>
             ) : (
-              suggestions.map((request) => (
-                <View key={request.id} style={styles.suggestionCard}>
-                  <View style={styles.suggestionHeader}>
-                    <Text style={styles.suggestionType}>
-                      {MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS[request.record_type]}
+              suggestions.map((request) => {
+                const isCompleted = request.status === 'completed';
+                const CardWrapper = isCompleted ? TouchableOpacity : View;
+
+                return (
+                  <CardWrapper
+                    key={request.id}
+                    style={[
+                      styles.suggestionCard,
+                      isCompleted && styles.suggestionCardCompleted,
+                    ]}
+                    {...(isCompleted
+                      ? {
+                          onPress: () =>
+                            setCompletedActionModal({
+                              title: MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS[request.record_type],
+                              action:
+                                request.developer_action?.trim()
+                                || 'Nenhuma ação registrada pelo desenvolvedor.',
+                            }),
+                          activeOpacity: 0.85,
+                        }
+                      : {})}
+                  >
+                    <View style={styles.suggestionHeader}>
+                      <Text style={styles.suggestionType}>
+                        {MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS[request.record_type]}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.suggestionStatus,
+                          isCompleted && styles.suggestionStatusCompleted,
+                        ]}
+                      >
+                        {MAINTENANCE_SUPPORT_STATUS_LABELS[request.status]}
+                      </Text>
+                    </View>
+                    <Text style={styles.suggestionMeta}>
+                      {request.requester_name} · {formatDateTime(request.created_at)}
                     </Text>
-                    <Text style={styles.suggestionStatus}>
-                      {MAINTENANCE_SUPPORT_STATUS_LABELS[request.status]}
+                    {request.tema ? (
+                      <Text style={styles.suggestionTheme}>{request.tema}</Text>
+                    ) : null}
+                    <Text style={styles.suggestionDescription} numberOfLines={4}>
+                      {request.description}
                     </Text>
-                  </View>
-                  <Text style={styles.suggestionMeta}>
-                    {request.requester_name} · {formatDateTime(request.created_at)}
-                  </Text>
-                  {request.tema ? (
-                    <Text style={styles.suggestionTheme}>{request.tema}</Text>
-                  ) : null}
-                  <Text style={styles.suggestionDescription} numberOfLines={4}>
-                    {request.description}
-                  </Text>
-                </View>
-              ))
+                    {isCompleted ? (
+                      <Text style={styles.suggestionCompletedHint}>
+                        Toque para ver a ação tomada
+                      </Text>
+                    ) : null}
+                  </CardWrapper>
+                );
+              })
             )}
           </ScrollView>
         )}
@@ -255,7 +292,7 @@ export function AdministrativoCard({ panelHeight, isActive = true }: Props) {
           />
 
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Atas de Assembleias</Text>
+            <Text style={styles.modalTitle}>Atos Constitutivos</Text>
             <Text style={styles.modalHelp}>
               Selecione um arquivo para visualizar o PDF na tela.
             </Text>
@@ -317,6 +354,43 @@ export function AdministrativoCard({ panelHeight, isActive = true }: Props) {
         pdfUrl={pdfPreview?.url ?? null}
         onClose={() => setPdfPreview(null)}
       />
+
+      <Modal
+        visible={completedActionModal !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCompletedActionModal(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setCompletedActionModal(null)}
+          />
+
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Ação Tomada</Text>
+            {completedActionModal?.title ? (
+              <Text style={styles.modalHelp}>{completedActionModal.title}</Text>
+            ) : null}
+            <ScrollView
+              style={styles.actionTakenScroll}
+              contentContainerStyle={styles.actionTakenContent}
+              nestedScrollEnabled
+            >
+              <Text style={styles.actionTakenText}>
+                {completedActionModal?.action ?? '—'}
+              </Text>
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setCompletedActionModal(null)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.modalCloseButtonText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -415,6 +489,10 @@ const styles = StyleSheet.create({
     padding: 10,
     gap: 4,
   },
+  suggestionCardCompleted: {
+    borderColor: 'rgba(34, 197, 94, 0.55)',
+    backgroundColor: 'rgba(20, 83, 45, 0.42)',
+  },
   suggestionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -431,6 +509,15 @@ const styles = StyleSheet.create({
     color: '#93C5FD',
     fontSize: 10,
     fontWeight: '700',
+  },
+  suggestionStatusCompleted: {
+    color: '#BBF7D0',
+  },
+  suggestionCompletedHint: {
+    color: '#86EFAC',
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 2,
   },
   suggestionMeta: {
     color: '#94A3B8',
@@ -540,5 +627,16 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     fontSize: 12,
     fontWeight: '800',
+  },
+  actionTakenScroll: {
+    maxHeight: 280,
+  },
+  actionTakenContent: {
+    paddingVertical: 4,
+  },
+  actionTakenText: {
+    color: '#E2E8F0',
+    fontSize: 13,
+    lineHeight: 19,
   },
 });
