@@ -641,6 +641,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '900',
     lineHeight: 18,
+    textAlign: 'center',
+    width: '100%',
   },
   valueCell: {
     textAlign: 'right',

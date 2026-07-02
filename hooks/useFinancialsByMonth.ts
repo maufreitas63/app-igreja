@@ -139,6 +139,9 @@ const fetchCommentsByEntryIds = async (ids: string[]) => {
   return supabase.from('financials').select('id, Comments').in('id', ids);
 };
 
+const fetchReceiptsByEntryIds = async (ids: string[]) =>
+  supabase.from('financials').select('id, receipt_url').in('id', ids);
+
 const FINANCIAL_COMMENTS_WARNING =
   'Alguns comentários financeiros não foram carregados. Os valores permanecem visíveis.';
 
@@ -150,19 +153,32 @@ const mergeEntryCommentsFromSupabase = async (
   }
 
   const ids = entries.map((entry) => entry.id);
-  const { data, error } = await fetchCommentsByEntryIds(ids);
+  const [commentsResult, receiptsResult] = await Promise.all([
+    fetchCommentsByEntryIds(ids),
+    fetchReceiptsByEntryIds(ids),
+  ]);
+  const { data, error } = commentsResult;
 
   if (error) {
     if (isMissingFinancialCommentsColumn(error)) {
-      return { entries, commentsWarning: null };
+      return {
+        entries: mergeReceiptUrlsIntoEntries(entries, receiptsResult.data),
+        commentsWarning: null,
+      };
     }
 
     console.warn('Não foi possível carregar comments dos lançamentos:', error.message);
-    return { entries, commentsWarning: FINANCIAL_COMMENTS_WARNING };
+    return {
+      entries: mergeReceiptUrlsIntoEntries(entries, receiptsResult.data),
+      commentsWarning: FINANCIAL_COMMENTS_WARNING,
+    };
   }
 
   if (!data?.length) {
-    return { entries, commentsWarning: null };
+    return {
+      entries: mergeReceiptUrlsIntoEntries(entries, receiptsResult.data),
+      commentsWarning: null,
+    };
   }
 
   const commentsById = new Map<string, string>();
@@ -177,24 +193,64 @@ const mergeEntryCommentsFromSupabase = async (
   }
 
   if (!commentsById.size) {
-    return { entries, commentsWarning: null };
+    return {
+      entries: mergeReceiptUrlsIntoEntries(entries, receiptsResult.data),
+      commentsWarning: null,
+    };
   }
 
   return {
-    entries: entries.map((entry) => {
-      const extra = commentsById.get(entry.id);
+    entries: mergeReceiptUrlsIntoEntries(
+      entries.map((entry) => {
+        const extra = commentsById.get(entry.id);
 
-      if (!extra) {
-        return entry;
-      }
+        if (!extra) {
+          return entry;
+        }
 
-      const merged =
-        mergeFinancialComments(getFinancialEntryComment(entry) ?? undefined, extra) ?? extra;
+        const merged =
+          mergeFinancialComments(getFinancialEntryComment(entry) ?? undefined, extra) ?? extra;
 
-      return { ...entry, comments: merged };
-    }),
+        return { ...entry, comments: merged };
+      }),
+      receiptsResult.data
+    ),
     commentsWarning: null,
   };
+};
+
+const mergeReceiptUrlsIntoEntries = (
+  entries: FinancialEntry[],
+  receiptRows: { id?: string; receipt_url?: string | null }[] | null | undefined
+) => {
+  if (!receiptRows?.length) {
+    return entries;
+  }
+
+  const receiptById = new Map<string, string>();
+
+  for (const row of receiptRows) {
+    const id = String(row.id ?? '').trim();
+    const receiptUrl = typeof row.receipt_url === 'string' ? row.receipt_url.trim() : '';
+
+    if (id && receiptUrl) {
+      receiptById.set(id, receiptUrl);
+    }
+  }
+
+  if (!receiptById.size) {
+    return entries;
+  }
+
+  return entries.map((entry) => {
+    const receiptUrl = entry.receipt_url?.trim() || receiptById.get(entry.id);
+
+    if (!receiptUrl || receiptUrl === entry.receipt_url) {
+      return entry;
+    }
+
+    return { ...entry, receipt_url: receiptUrl };
+  });
 };
 
 type UseFinancialsByMonthResult = {

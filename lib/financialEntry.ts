@@ -370,7 +370,7 @@ const collectReceiptUrlsForBulletinRow = (
 
   const rowLabel = row.label.trim();
   const rowKey = row.key ?? '';
-  const receipts = new Set<string>();
+  const receiptUrls: string[] = [];
 
   for (const entry of entries) {
     if (!entryBelongsToBulletinRow(entry, rowKey, rowLabel)) {
@@ -380,11 +380,11 @@ const collectReceiptUrlsForBulletinRow = (
     const receiptUrl = entry.receipt_url?.trim();
 
     if (receiptUrl) {
-      receipts.add(receiptUrl);
+      receiptUrls.push(receiptUrl);
     }
   }
 
-  return [...receipts];
+  return receiptUrls;
 };
 
 export const findReceiptInfoForBulletinRow = (
@@ -392,9 +392,10 @@ export const findReceiptInfoForBulletinRow = (
   entries: FinancialEntry[]
 ): FinancialBulletinReceiptInfo => {
   const receiptUrls = collectReceiptUrlsForBulletinRow(row, entries);
+  const uniqueReceiptUrls = [...new Set(receiptUrls)];
 
   return {
-    receiptUrl: receiptUrls[0] ?? null,
+    receiptUrl: uniqueReceiptUrls[0] ?? null,
     receiptCount: receiptUrls.length,
   };
 };
