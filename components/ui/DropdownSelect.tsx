@@ -113,6 +113,18 @@ export function DropdownSelect({
   if (searchable) {
     const inputPlaceholder = searchPlaceholder ?? placeholder;
     const inputValue = open ? searchQuery : selectedValue ? selectedLabel : '';
+    const hasInputValue = inputValue.trim().length > 0;
+
+    const handleClearInput = () => {
+      clearBlurTimer();
+      setSearchQuery('');
+
+      if (selectedValue) {
+        onValueChange('');
+      }
+
+      setOpen(true);
+    };
 
     return (
       <View style={[styles.searchableRoot, style]}>
@@ -133,6 +145,20 @@ export function DropdownSelect({
             autoCorrect={false}
             accessibilityLabel={modalTitle}
           />
+          {hasInputValue ? (
+            <TouchableOpacity
+              style={styles.searchableClearButton}
+              onPress={handleClearInput}
+              onPressIn={clearBlurTimer}
+              activeOpacity={0.85}
+              disabled={disabled}
+              accessibilityRole="button"
+              accessibilityLabel="Limpar usuário selecionado"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <FontAwesome name="times-circle" size={18} color="#94A3B8" />
+            </TouchableOpacity>
+          ) : null}
           <TouchableOpacity
             onPress={() => {
               if (open) {
@@ -296,6 +322,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     paddingVertical: 10,
+  },
+  searchableClearButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
   },
   searchablePanel: {
     marginTop: 6,
