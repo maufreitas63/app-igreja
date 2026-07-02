@@ -1,4 +1,5 @@
 import {
+  checkOperatorIsSuperAdmin,
   isDashboardCardContentAllowed,
   profileHasAccess,
   type DashboardCardViewAccess,
@@ -9,9 +10,14 @@ export type DashboardScreenAccess = Record<string, boolean>;
 
 /** Consulta ACL das telas filhas vinculadas a cards do dashboard. */
 export async function loadDashboardLinkedScreenAccess(
-  profileId: string
+  profileId: string,
+  options?: { forceRefresh?: boolean }
 ): Promise<DashboardScreenAccess> {
   const screenKeys = [...new Set(Object.values(DASHBOARD_CARD_LINKED_SCREEN))];
+
+  if (await checkOperatorIsSuperAdmin(options)) {
+    return Object.fromEntries(screenKeys.map((resourceKey) => [resourceKey, true] as const));
+  }
 
   const entries = await Promise.all(
     screenKeys.map(async (resourceKey) => {

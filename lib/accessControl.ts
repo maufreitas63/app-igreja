@@ -2,8 +2,10 @@ import { ACL_UNAVAILABLE_MESSAGE, isAclStrictMode } from '@/lib/aclPolicy';
 import { getCachedOrFetch, invalidateAsyncCache } from '@/lib/asyncResultCache';
 import { supabase } from '@/lib/supabase';
 import { coerceRpcBoolean, isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import {
   getStoredUserPhone,
+  persistProfileId,
   repairUserSessionReference,
 } from '@/lib/userSession';
 import { getGhostEffectiveProfileId, isGhostModeActive } from '@/lib/ghostMode';
@@ -235,14 +237,37 @@ const readOperatorIsSuperAdmin = async (options?: { forceRefresh?: boolean }) =>
     return false;
   }
 
-  const realProfileId = await resolveRealSessionProfileId(options);
+  const phone = (await getStoredUserPhone())?.trim() || null;
 
-  if (!realProfileId) {
+  if (phone) {
+    await repairUserSessionReference(phone);
+  }
+
+  let profileId = await resolveRealSessionProfileId(options);
+
+  if (!profileId) {
     return false;
   }
 
-  return readSessionIsSuperAdmin(realProfileId);
+  let isSuperAdmin = await readSessionIsSuperAdmin(profileId);
+
+  if (!isSuperAdmin && phone) {
+    const loginProfileId = await resolveProfileIdByPhone(phone);
+
+    if (loginProfileId && loginProfileId !== profileId) {
+      await persistProfileId(loginProfileId);
+      profileId = loginProfileId;
+      isSuperAdmin = await readSessionIsSuperAdmin(loginProfileId);
+    }
+  }
+
+  return isSuperAdmin;
 };
+
+/** API pública para bypass de ACL do operador real (fora do Modo Ghost). */
+export async function checkOperatorIsSuperAdmin(options?: { forceRefresh?: boolean }) {
+  return readOperatorIsSuperAdmin(options);
+}
 
 const readSessionIsSuperAdmin = async (profileId?: string | null): Promise<boolean> => {
   let resolvedId = profileId?.trim() ?? (await resolveRealSessionProfileId());

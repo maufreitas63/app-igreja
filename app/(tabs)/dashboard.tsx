@@ -55,12 +55,15 @@ import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import {
   ACCESS_SCREEN,
   ACL_UNAVAILABLE_MESSAGE,
+  checkOperatorIsSuperAdmin,
+  DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY,
   getAccessControlRpcStatus,
   isDashboardCardContentAllowed,
   loadDashboardCardViewAccess,
   profileHasAccess,
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
+import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
 import { useGhostMode } from '@/context/GhostModeContext';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import {
@@ -70,7 +73,7 @@ import {
   signOutAndReturnToLogin,
 } from '@/lib/userSession';
 import { normalizePhoneForWhatsApp, openMemberWhatsapp } from '@/lib/whatsapp';
-import { DASHBOARD_CARD_BLOCKED_MESSAGES } from '@/lib/dashboardCardScreenLinks';
+import { DASHBOARD_CARD_BLOCKED_MESSAGES, DASHBOARD_CARD_LINKED_SCREEN } from '@/lib/dashboardCardScreenLinks';
 import {
   isDashboardCardFullyAllowed,
   loadDashboardLinkedScreenAccess,
@@ -879,105 +882,129 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadData() {
       setIsProfileLoading(true);
-      let targetPhone = phone;
-      if (!targetPhone) {
-        targetPhone = await getStoredUserPhone();
-      } else {
-        await AsyncStorage.setItem('user_phone', targetPhone);
-      }
-      if (!targetPhone) {
-        setCanViewMaintenance(false);
-        setCanMonitorFamilyReception(false);
-        setDashboardCardAccess({});
-        setDashboardScreenAccess({});
-        setCanAccessMapGeolocation(false);
-        setIsMaintenanceAccessLoading(false);
-        setIsProfileLoading(false);
-        return;
-      }
-      setUserPhone(targetPhone);
       setIsMaintenanceAccessLoading(true);
 
-      let sessionProfile = await loadEffectiveSessionProfile(targetPhone);
+      try {
+        let targetPhone = phone;
+        if (!targetPhone) {
+          targetPhone = await getStoredUserPhone();
+        } else {
+          await AsyncStorage.setItem('user_phone', targetPhone);
+        }
+        if (!targetPhone) {
+          setCanViewMaintenance(false);
+          setCanMonitorFamilyReception(false);
+          setDashboardCardAccess({});
+          setDashboardScreenAccess({});
+          setCanAccessMapGeolocation(false);
+          return;
+        }
+        setUserPhone(targetPhone);
 
-      if (!sessionProfile?.id && !isGhostModeActive()) {
-        await repairUserSessionReference(targetPhone);
-        sessionProfile = await loadEffectiveSessionProfile(targetPhone);
-      }
+        let sessionProfile = await loadEffectiveSessionProfile(targetPhone);
 
-      const resolvedFamilyId =
-        sessionProfile?.family_id
-        ?? sessionProfile?.codigo_membro
-        ?? (await resolveFamilyIdForPhone(sessionProfile?.phone ?? targetPhone));
-      setFamilyId(resolvedFamilyId);
+        if (!sessionProfile?.id && !isGhostModeActive()) {
+          await repairUserSessionReference(targetPhone);
+          sessionProfile = await loadEffectiveSessionProfile(targetPhone);
+        }
 
-      if (!sessionProfile) {
-        setProfile(null);
-        setCurrentUserId(null);
+        const resolvedFamilyId =
+          sessionProfile?.family_id
+          ?? sessionProfile?.codigo_membro
+          ?? (await resolveFamilyIdForPhone(sessionProfile?.phone ?? targetPhone));
+        setFamilyId(resolvedFamilyId);
+
+        if (!sessionProfile) {
+          setProfile(null);
+          setCurrentUserId(null);
+          setCanViewMaintenance(false);
+          setCanMonitorFamilyReception(false);
+          setDashboardCardAccess({});
+          setDashboardScreenAccess({});
+          setCanAccessMapGeolocation(false);
+          signOutAndReturnToLogin();
+          return;
+        }
+
+        const loadedProfile: DashboardProfile = {
+          id: sessionProfile.id,
+          full_name: sessionProfile.full_name ?? undefined,
+          codigo_membro: sessionProfile.codigo_membro ?? sessionProfile.family_id ?? resolvedFamilyId,
+          lgpd_accepted: sessionProfile.lgpd_accepted,
+          birth_date: sessionProfile.birth_date ?? null,
+          phone: sessionProfile.phone ?? targetPhone,
+        };
+
+        setProfile(loadedProfile);
+        setCurrentUserId(loadedProfile.id ?? null);
+
+        if (loadedProfile.id && !isGhostModeActive()) {
+          await persistProfileId(loadedProfile.id);
+        } else if (!loadedProfile.id) {
+          setCanViewMaintenance(false);
+          setCanMonitorFamilyReception(false);
+          setDashboardCardAccess({});
+          setCanAccessMapGeolocation(false);
+        }
+
+        const aclStatus = await getAccessControlRpcStatus();
+        setAclRpcStatus(aclStatus);
+
+        if (loadedProfile?.id) {
+          const accessProfileId = (await resolveEffectiveProfileId()) ?? loadedProfile.id;
+          const [allowed, cardAccess, screenAccess, mapGeolocationAllowed, isSuperAdmin, canAccessProfileCadastro, activeMembership] =
+            await Promise.all([
+              profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.maintenance, 'view'),
+              loadDashboardCardViewAccess(accessProfileId, { forceRefresh: true }),
+              loadDashboardLinkedScreenAccess(accessProfileId, { forceRefresh: true }),
+              profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
+              checkSessionIsSuperAdmin({ forceRefresh: true }),
+              profileHasAccess(
+                accessProfileId,
+                'screen',
+                'maintenance.card.profile_cadastro',
+                'view'
+              ),
+              fetchProfileHasActiveMembership(accessProfileId),
+            ]);
+
+          let resolvedCardAccess = cardAccess;
+          let resolvedScreenAccess = screenAccess;
+          const hasAnyCard = Object.values(cardAccess).some((allowedCard) => allowedCard === true);
+          const operatorIsSuperAdmin = await checkOperatorIsSuperAdmin({ forceRefresh: true });
+
+          if (!hasAnyCard && operatorIsSuperAdmin) {
+            resolvedCardAccess = Object.fromEntries(
+              Object.keys(DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY).map((content) => [content, true] as const)
+            );
+            resolvedScreenAccess = Object.fromEntries(
+              [...new Set(Object.values(DASHBOARD_CARD_LINKED_SCREEN))].map(
+                (resourceKey) => [resourceKey, true] as const
+              )
+            );
+          }
+
+          setCanViewMaintenance(allowed || operatorIsSuperAdmin);
+          setCanMonitorFamilyReception(isSuperAdmin || canAccessProfileCadastro || operatorIsSuperAdmin);
+          setDashboardCardAccess(resolvedCardAccess);
+          setDashboardScreenAccess(resolvedScreenAccess);
+          setCanAccessMapGeolocation(mapGeolocationAllowed || operatorIsSuperAdmin);
+          setHasActiveMembership(activeMembership);
+        } else {
+          setHasActiveMembership(false);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dashboard:', error);
         setCanViewMaintenance(false);
         setCanMonitorFamilyReception(false);
         setDashboardCardAccess({});
         setDashboardScreenAccess({});
         setCanAccessMapGeolocation(false);
+        setHasActiveMembership(false);
+      } finally {
         setIsMaintenanceAccessLoading(false);
         setIsProfileLoading(false);
-        signOutAndReturnToLogin();
-        return;
       }
-
-      const loadedProfile: DashboardProfile = {
-        id: sessionProfile.id,
-        full_name: sessionProfile.full_name ?? undefined,
-        codigo_membro: sessionProfile.codigo_membro ?? sessionProfile.family_id ?? resolvedFamilyId,
-        lgpd_accepted: sessionProfile.lgpd_accepted,
-        birth_date: sessionProfile.birth_date ?? null,
-        phone: sessionProfile.phone ?? targetPhone,
-      };
-
-      setProfile(loadedProfile);
-      setCurrentUserId(loadedProfile.id ?? null);
-
-      if (loadedProfile.id && !isGhostModeActive()) {
-        await persistProfileId(loadedProfile.id);
-      } else if (!loadedProfile.id) {
-        setCanViewMaintenance(false);
-        setCanMonitorFamilyReception(false);
-        setDashboardCardAccess({});
-        setCanAccessMapGeolocation(false);
-      }
-
-      const aclStatus = await getAccessControlRpcStatus();
-      setAclRpcStatus(aclStatus);
-
-      if (loadedProfile?.id) {
-        const accessProfileId = (await resolveEffectiveProfileId()) ?? loadedProfile.id;
-        const [allowed, cardAccess, screenAccess, mapGeolocationAllowed, isSuperAdmin, canAccessProfileCadastro, activeMembership] =
-          await Promise.all([
-            profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.maintenance, 'view'),
-            loadDashboardCardViewAccess(accessProfileId),
-            loadDashboardLinkedScreenAccess(accessProfileId),
-            profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
-            checkSessionIsSuperAdmin(),
-            profileHasAccess(
-              accessProfileId,
-              'screen',
-              'maintenance.card.profile_cadastro',
-              'view'
-            ),
-            fetchProfileHasActiveMembership(accessProfileId),
-          ]);
-        setCanViewMaintenance(allowed);
-        setCanMonitorFamilyReception(isSuperAdmin || canAccessProfileCadastro);
-        setDashboardCardAccess(cardAccess);
-        setDashboardScreenAccess(screenAccess);
-        setCanAccessMapGeolocation(mapGeolocationAllowed);
-        setHasActiveMembership(activeMembership);
-      } else {
-        setHasActiveMembership(false);
-      }
-
-      setIsMaintenanceAccessLoading(false);
-      setIsProfileLoading(false);
     }
     loadData();
   }, [phone, ghostModeActive, ghostModeState?.targetProfileId]);
@@ -2375,10 +2402,15 @@ export default function Dashboard() {
   }, [currentIndex, data.length, scrollToDashboardCard]);
 
   useLayoutEffect(() => {
-    if (!isDashboardCardAccessReady || data.length === 0) {
+    if (!isDashboardCardAccessReady) {
       if (requestedDashboardCard) {
         setIsDashboardCarouselReady(false);
       }
+      return;
+    }
+
+    if (data.length === 0) {
+      setIsDashboardCarouselReady(true);
       return;
     }
 
@@ -2461,6 +2493,19 @@ export default function Dashboard() {
         ) : null}
 
         <View style={styles.listContainer}>
+          {isDashboardCardAccessReady && data.length === 0 ? (
+            <View style={styles.dashboardEmptyState}>
+              <Text style={styles.dashboardEmptyTitle}>Nenhum painel disponível</Text>
+              <Text style={styles.dashboardEmptyText}>
+                {ghostModeActive
+                  ? 'O usuário simulado não tem permissão para ver painéis do dashboard. Encerre o Modo Ghost para voltar à sua sessão.'
+                  : aclRpcStatus === 'missing'
+                    ? ACL_UNAVAILABLE_MESSAGE
+                    : 'Suas permissões atuais não incluem painéis do dashboard. Se você é administrador, saia e entre novamente ou fale com o suporte.'}
+              </Text>
+            </View>
+          ) : null}
+
           <FlatList
             ref={dashboardListRef}
             style={[
@@ -3999,6 +4044,26 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
   listContainer: { flex: 1, minHeight: 0 },
+  dashboardEmptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+    paddingBottom: 24,
+  },
+  dashboardEmptyTitle: {
+    color: '#E2E8F0',
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  dashboardEmptyText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
   dashboardFlatList: { flex: 1, minHeight: 0 },
   dashboardFlatListHidden: {
     position: 'absolute',
