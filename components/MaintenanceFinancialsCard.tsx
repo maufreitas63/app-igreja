@@ -50,7 +50,7 @@ import {
   ASSEMBLY_MINUTES_SQL_HINT,
   pickAndUploadAssemblyMinute,
 } from '@/lib/assemblyMinutesApi';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -161,6 +161,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     processingReceiptBatch,
     receiptBatchReport,
     processReceiptBatch,
+    reload,
   } = useMaintenanceFinancials(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
@@ -1204,6 +1205,8 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             const signed = signedFinancialAmount(entry);
             const entryComment = getFinancialEntryComment(entry);
             const hasReceipt = Boolean(entry.receipt_url?.trim());
+            const linkedExpenseReportId = entry.expense_report_id?.trim() || null;
+            const linkedExpenseReportNumber = entry.expense_report_number?.trim() || null;
             const isSavingThisComment = savingCommentEntryId === entry.id;
             const isSavingThisEntry = savingEntryId === entry.id;
 
@@ -1229,6 +1232,24 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                   <Text style={hasReceipt ? styles.listReceiptAttached : styles.listReceiptEmpty}>
                     {hasReceipt ? 'Comprovante anexado' : 'Sem comprovante'}
                   </Text>
+                  {linkedExpenseReportId ? (
+                    <TouchableOpacity
+                      style={styles.listExpenseReportLink}
+                      onPress={() =>
+                        router.push(
+                          `/expense-report?id=${encodeURIComponent(linkedExpenseReportId)}`
+                        )
+                      }
+                      activeOpacity={0.85}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Ver RD ${linkedExpenseReportNumber ?? ''}`.trim()}
+                    >
+                      <FontAwesome5 name="file-alt" size={12} color="#059669" solid />
+                      <Text style={styles.listExpenseReportLinkText}>
+                        RD {linkedExpenseReportNumber ?? 'vinculado'}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
                   <Text
                     style={[
                       styles.listAmount,
@@ -1535,15 +1556,35 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             )}
 
             {canUpdateFinancials === true ? (
-              <TouchableOpacity
-                style={styles.linkRdButton}
-                onPress={() => setRdConciliationOpen(true)}
-                disabled={savingCommentEntryId !== null || receiptBusy || !activeEditorEntry}
-                activeOpacity={0.85}
-              >
-                <FontAwesome name="link" size={14} color="#D1FAE5" />
-                <Text style={styles.linkRdButtonText}>Vincular RD</Text>
-              </TouchableOpacity>
+              activeEditorEntry?.expense_report_id ? (
+                <TouchableOpacity
+                  style={styles.linkRdButton}
+                  onPress={() => {
+                    const reportId = activeEditorEntry.expense_report_id?.trim();
+
+                    if (reportId) {
+                      router.push(`/expense-report?id=${encodeURIComponent(reportId)}`);
+                    }
+                  }}
+                  disabled={!activeEditorEntry?.expense_report_id}
+                  activeOpacity={0.85}
+                >
+                  <FontAwesome5 name="file-alt" size={14} color="#D1FAE5" solid />
+                  <Text style={styles.linkRdButtonText}>
+                    Ver RD {activeEditorEntry.expense_report_number ?? ''}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.linkRdButton}
+                  onPress={() => setRdConciliationOpen(true)}
+                  disabled={savingCommentEntryId !== null || receiptBusy || !activeEditorEntry}
+                  activeOpacity={0.85}
+                >
+                  <FontAwesome name="link" size={14} color="#D1FAE5" />
+                  <Text style={styles.linkRdButtonText}>Vincular RD</Text>
+                </TouchableOpacity>
+              )
             ) : null}
 
             <View style={styles.commentModalActions}>
@@ -1604,6 +1645,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
         onClose={() => setRdConciliationOpen(false)}
         onReconciled={() => {
           void loadRdReports();
+          void reload();
           showAppToast(
             {
               type: 'success',
@@ -1986,6 +2028,18 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 10,
     fontStyle: 'italic',
+  },
+  listExpenseReportLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+  listExpenseReportLinkText: {
+    color: '#059669',
+    fontSize: 11,
+    fontWeight: '700',
   },
   listActions: {
     gap: 6,

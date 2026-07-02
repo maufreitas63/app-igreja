@@ -18,8 +18,13 @@ import {
 import { confirmDialog } from '@/lib/confirmDialog';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
+import { sessionHasAccess } from '@/lib/accessControl';
 import { toFinancialMonthReferenceDate } from '@/lib/maintenanceFinancialApi';
-import { formatFinancialMonthLabel, parseFinancialMonthKey } from '@/lib/financialMonth';
+import {
+  formatFinancialMonthKey,
+  getCalendarMonthKey,
+  parseFinancialMonthKey,
+} from '@/lib/financialMonth';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -49,10 +54,12 @@ export default function ExpenseReportScreen() {
 
     return parsed ? toFinancialMonthReferenceDate(parsed) : null;
   }, [referenceMonthKey]);
-  const referenceMonthLabel = useMemo(() => {
-    const parsed = referenceMonthKey ? parseFinancialMonthKey(referenceMonthKey) : null;
+  const initialReferenceMonth = useMemo(() => {
+    if (referenceMonthKey) {
+      return parseFinancialMonthKey(referenceMonthKey);
+    }
 
-    return parsed ? formatFinancialMonthLabel(parsed) : null;
+    return getCalendarMonthKey();
   }, [referenceMonthKey]);
 
   const accessStatus = useScreenAccessGuard({
@@ -68,6 +75,7 @@ export default function ExpenseReportScreen() {
   const [selectedReport, setSelectedReport] = useState<ExpenseReportDetail | null>(null);
   const [mode, setMode] = useState<ScreenMode>('list');
   const [error, setError] = useState<string | null>(null);
+  const [allowAnyReferenceMonth, setAllowAnyReferenceMonth] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -108,6 +116,22 @@ export default function ExpenseReportScreen() {
     void reload();
   }, [reload]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const canManageFinancials = await sessionHasAccess('table', 'financials', 'update');
+
+      if (!cancelled) {
+        setAllowAnyReferenceMonth(fromMaintenance || canManageFinancials);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fromMaintenance]);
+
   const memberName = header?.fullName ?? '—';
   const memberPhone = header?.phone ?? '—';
 
@@ -130,13 +154,24 @@ export default function ExpenseReportScreen() {
     }
   };
 
-  const handleFinalize = async (input: Parameters<typeof submitExpenseReport>[0]) => {
+  const handleFinalize = async (input: {
+    pixKey: string;
+    items: Parameters<typeof submitExpenseReport>[0]['items'];
+    referenceMonthKey: string;
+  }) => {
     setSubmitting(true);
 
     try {
+      const parsedReferenceMonth = parseFinancialMonthKey(input.referenceMonthKey);
+      const referenceMonth =
+        parsedReferenceMonth != null
+          ? toFinancialMonthReferenceDate(parsedReferenceMonth)
+          : referenceMonthDate;
+
       const result = await submitExpenseReport({
-        ...input,
-        referenceMonth: referenceMonthDate,
+        pixKey: input.pixKey,
+        items: input.items,
+        referenceMonth,
       });
 
       if (!result.success) {
@@ -399,7 +434,8 @@ export default function ExpenseReportScreen() {
               <ExpenseReportForm
                 header={header}
                 submitting={submitting}
-                referenceMonthLabel={referenceMonthLabel}
+                initialReferenceMonth={initialReferenceMonth}
+                allowAnyReferenceMonth={allowAnyReferenceMonth}
                 onSubmit={handleFinalize}
                 onCancel={handleCancelCreate}
               />

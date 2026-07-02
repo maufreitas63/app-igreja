@@ -57,6 +57,8 @@ returns table (
   comments text,
   receipt_url text,
   referencia text,
+  expense_report_id uuid,
+  expense_report_number text,
   source_row integer,
   created_at timestamptz,
   updated_at timestamptz
@@ -90,10 +92,15 @@ begin
     f.comments,
     f.receipt_url,
     f.referencia,
+    er.id as expense_report_id,
+    er.report_number as expense_report_number,
     f.source_row,
     f.created_at,
     f.updated_at
   from public.financials f
+  left join public.expense_reports er
+    on er.financial_id = f.id
+   and er.status = 'reconciled'
   cross join bounds b
   where f.transaction_date >= b.start_date
     and f.transaction_date < b.end_date_exclusive

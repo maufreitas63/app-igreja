@@ -14,6 +14,9 @@ export type FinancialEntry = {
   receipt_url?: string | null;
   /** Nome do JPG de comprovante: aaaammdd nnnn,nn.jpg */
   referencia?: string | null;
+  /** RD conciliado com este lançamento. */
+  expense_report_id?: string | null;
+  expense_report_number?: string | null;
 };
 
 const normalizeToken = (value: string) =>
@@ -360,6 +363,12 @@ export type FinancialBulletinReceiptInfo = {
   receiptCount: number;
 };
 
+export type FinancialBulletinExpenseReportInfo = {
+  reportId: string | null;
+  reportNumber: string | null;
+  reportCount: number;
+};
+
 const collectReceiptUrlsForBulletinRow = (
   row: FinancialRowCommentLookup,
   entries: FinancialEntry[]
@@ -397,6 +406,51 @@ export const findReceiptInfoForBulletinRow = (
   return {
     receiptUrl: uniqueReceiptUrls[0] ?? null,
     receiptCount: receiptUrls.length,
+  };
+};
+
+const collectExpenseReportsForBulletinRow = (
+  row: FinancialRowCommentLookup,
+  entries: FinancialEntry[]
+) => {
+  if (row.level !== 'line') {
+    return [] as { id: string; number: string }[];
+  }
+
+  const rowLabel = row.label.trim();
+  const rowKey = row.key ?? '';
+  const reports: { id: string; number: string }[] = [];
+
+  for (const entry of entries) {
+    if (!entryBelongsToBulletinRow(entry, rowKey, rowLabel)) {
+      continue;
+    }
+
+    const reportId = entry.expense_report_id?.trim();
+    const reportNumber = entry.expense_report_number?.trim();
+
+    if (reportId) {
+      reports.push({
+        id: reportId,
+        number: reportNumber || reportId,
+      });
+    }
+  }
+
+  return reports;
+};
+
+export const findExpenseReportInfoForBulletinRow = (
+  row: FinancialRowCommentLookup,
+  entries: FinancialEntry[]
+): FinancialBulletinExpenseReportInfo => {
+  const reports = collectExpenseReportsForBulletinRow(row, entries);
+  const uniqueReports = [...new Map(reports.map((report) => [report.id, report])).values()];
+
+  return {
+    reportId: uniqueReports[0]?.id ?? null,
+    reportNumber: uniqueReports[0]?.number ?? null,
+    reportCount: reports.length,
   };
 };
 
@@ -471,6 +525,14 @@ export const normalizeFinancialEntryRow = (row: Record<string, unknown>): Financ
     referencia:
       typeof row.referencia === 'string' && row.referencia.trim()
         ? row.referencia.trim()
+        : null,
+    expense_report_id:
+      typeof row.expense_report_id === 'string' && row.expense_report_id.trim()
+        ? row.expense_report_id.trim()
+        : null,
+    expense_report_number:
+      typeof row.expense_report_number === 'string' && row.expense_report_number.trim()
+        ? row.expense_report_number.trim()
         : null,
   };
 };

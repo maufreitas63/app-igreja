@@ -12,6 +12,10 @@ import {
   type FinancialEntry,
 } from '@/lib/financialEntry';
 import {
+  fetchExpenseReportLinksForFinancialIds,
+  mergeExpenseReportLinksIntoFinancialEntries,
+} from '@/lib/expenseReport';
+import {
   filterSelectableFinancialMonths,
   formatFinancialMonthKey,
   getFinancialMonthDateRange,
@@ -153,30 +157,40 @@ const mergeEntryCommentsFromSupabase = async (
   }
 
   const ids = entries.map((entry) => entry.id);
-  const [commentsResult, receiptsResult] = await Promise.all([
+  const [commentsResult, receiptsResult, expenseReportLinks] = await Promise.all([
     fetchCommentsByEntryIds(ids),
     fetchReceiptsByEntryIds(ids),
+    fetchExpenseReportLinksForFinancialIds(ids),
   ]);
   const { data, error } = commentsResult;
 
   if (error) {
     if (isMissingFinancialCommentsColumn(error)) {
       return {
-        entries: mergeReceiptUrlsIntoEntries(entries, receiptsResult.data),
+        entries: mergeExpenseReportLinksIntoFinancialEntries(
+          mergeReceiptUrlsIntoEntries(entries, receiptsResult.data),
+          expenseReportLinks
+        ),
         commentsWarning: null,
       };
     }
 
     console.warn('Não foi possível carregar comments dos lançamentos:', error.message);
     return {
-      entries: mergeReceiptUrlsIntoEntries(entries, receiptsResult.data),
+      entries: mergeExpenseReportLinksIntoFinancialEntries(
+        mergeReceiptUrlsIntoEntries(entries, receiptsResult.data),
+        expenseReportLinks
+      ),
       commentsWarning: FINANCIAL_COMMENTS_WARNING,
     };
   }
 
   if (!data?.length) {
     return {
-      entries: mergeReceiptUrlsIntoEntries(entries, receiptsResult.data),
+      entries: mergeExpenseReportLinksIntoFinancialEntries(
+        mergeReceiptUrlsIntoEntries(entries, receiptsResult.data),
+        expenseReportLinks
+      ),
       commentsWarning: null,
     };
   }
@@ -194,26 +208,32 @@ const mergeEntryCommentsFromSupabase = async (
 
   if (!commentsById.size) {
     return {
-      entries: mergeReceiptUrlsIntoEntries(entries, receiptsResult.data),
+      entries: mergeExpenseReportLinksIntoFinancialEntries(
+        mergeReceiptUrlsIntoEntries(entries, receiptsResult.data),
+        expenseReportLinks
+      ),
       commentsWarning: null,
     };
   }
 
   return {
-    entries: mergeReceiptUrlsIntoEntries(
-      entries.map((entry) => {
-        const extra = commentsById.get(entry.id);
+    entries: mergeExpenseReportLinksIntoFinancialEntries(
+      mergeReceiptUrlsIntoEntries(
+        entries.map((entry) => {
+          const extra = commentsById.get(entry.id);
 
-        if (!extra) {
-          return entry;
-        }
+          if (!extra) {
+            return entry;
+          }
 
-        const merged =
-          mergeFinancialComments(getFinancialEntryComment(entry) ?? undefined, extra) ?? extra;
+          const merged =
+            mergeFinancialComments(getFinancialEntryComment(entry) ?? undefined, extra) ?? extra;
 
-        return { ...entry, comments: merged };
-      }),
-      receiptsResult.data
+          return { ...entry, comments: merged };
+        }),
+        receiptsResult.data
+      ),
+      expenseReportLinks
     ),
     commentsWarning: null,
   };

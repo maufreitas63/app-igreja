@@ -1,3 +1,4 @@
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import {
   createEmptyExpenseReportDraftItem,
@@ -9,11 +10,19 @@ import {
   type ExpenseReportHeader,
 } from '@/lib/expenseReport';
 import {
+  buildFinancialMaintenanceMonthOptions,
+  formatFinancialMonthKey,
+  formatFinancialMonthLabel,
+  getCalendarMonthKey,
+  parseFinancialMonthKey,
+  type FinancialMonthKey,
+} from '@/lib/financialMonth';
+import {
   pasteFinancialReceiptFromClipboard,
   pickFinancialReceiptFromGallery,
 } from '@/lib/financialReceipt';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -27,21 +36,53 @@ import Toast from 'react-native-toast-message';
 type Props = {
   header: ExpenseReportHeader;
   submitting: boolean;
-  referenceMonthLabel?: string | null;
-  onSubmit: (input: { pixKey: string; items: ExpenseReportDraftItem[] }) => void;
+  initialReferenceMonth?: FinancialMonthKey | null;
+  allowAnyReferenceMonth?: boolean;
+  onSubmit: (input: {
+    pixKey: string;
+    items: ExpenseReportDraftItem[];
+    referenceMonthKey: string;
+  }) => void;
   onCancel: () => void;
 };
 
 export function ExpenseReportForm({
   header,
   submitting,
-  referenceMonthLabel,
+  initialReferenceMonth,
+  allowAnyReferenceMonth = false,
   onSubmit,
   onCancel,
 }: Props) {
   const [pixKey, setPixKey] = useState(header.pixKey);
   const [items, setItems] = useState<ExpenseReportDraftItem[]>([createEmptyExpenseReportDraftItem()]);
   const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
+  const [referenceMonth, setReferenceMonth] = useState<FinancialMonthKey>(
+    () => initialReferenceMonth ?? getCalendarMonthKey()
+  );
+
+  const referenceMonthOptions = useMemo(() => {
+    if (allowAnyReferenceMonth) {
+      return buildFinancialMaintenanceMonthOptions();
+    }
+
+    return [getCalendarMonthKey()];
+  }, [allowAnyReferenceMonth]);
+
+  const referenceMonthDropdownOptions = useMemo(
+    () =>
+      referenceMonthOptions.map((monthKey) => ({
+        value: formatFinancialMonthKey(monthKey),
+        label: formatFinancialMonthLabel(monthKey),
+      })),
+    [referenceMonthOptions]
+  );
+
+  useEffect(() => {
+    if (initialReferenceMonth) {
+      setReferenceMonth(initialReferenceMonth);
+    }
+  }, [initialReferenceMonth]);
 
   const totalAmount = useMemo(
     () =>
@@ -108,11 +149,6 @@ export function ExpenseReportForm({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Novo Relatório de Despesas</Text>
-      {referenceMonthLabel ? (
-        <Text style={styles.referenceMonthHint}>
-          Mês de referência do número RD: {referenceMonthLabel}
-        </Text>
-      ) : null}
 
       <View style={styles.headerCard}>
         <SectionLabel label="Cabeçalho" />
@@ -131,15 +167,35 @@ export function ExpenseReportForm({
 
       <View style={styles.itemsHeader}>
         <SectionLabel label="Despesas" />
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={addItem}
-          disabled={submitting}
-          activeOpacity={0.85}
-        >
-          <FontAwesome name="plus" size={12} color="#0F172A" />
-          <Text style={styles.addButtonText}>Adicionar linha</Text>
-        </TouchableOpacity>
+        <View style={styles.itemsHeaderActions}>
+          <View style={styles.referenceMonthPicker}>
+            <Text style={styles.referenceMonthLabel}>Competência</Text>
+            <DropdownSelect
+              options={referenceMonthDropdownOptions}
+              selectedValue={formatFinancialMonthKey(referenceMonth)}
+              onValueChange={(value) => {
+                const parsed = parseFinancialMonthKey(value);
+
+                if (parsed) {
+                  setReferenceMonth(parsed);
+                }
+              }}
+              modalTitle="Competência do RD"
+              placeholder="Mês/Ano"
+              style={styles.referenceMonthDropdown}
+              disabled={submitting || !allowAnyReferenceMonth}
+            />
+          </View>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={addItem}
+            disabled={submitting}
+            activeOpacity={0.85}
+          >
+            <FontAwesome name="plus" size={12} color="#0F172A" />
+            <Text style={styles.addButtonText}>Adicionar linha</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {items.map((item, index) => (
@@ -246,7 +302,13 @@ export function ExpenseReportForm({
 
       <TouchableOpacity
         style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
-        onPress={() => onSubmit({ pixKey, items })}
+        onPress={() =>
+          onSubmit({
+            pixKey,
+            items,
+            referenceMonthKey: formatFinancialMonthKey(referenceMonth),
+          })
+        }
         disabled={submitting}
         activeOpacity={0.85}
       >
@@ -268,11 +330,6 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     fontSize: 18,
     fontWeight: '800',
-  },
-  referenceMonthHint: {
-    color: '#0369A1',
-    fontSize: 13,
-    lineHeight: 18,
   },
   headerCard: {
     borderWidth: 1,
@@ -309,9 +366,29 @@ const styles = StyleSheet.create({
   },
   itemsHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'space-between',
     gap: 8,
+  },
+  itemsHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+    flexShrink: 1,
+  },
+  referenceMonthPicker: {
+    gap: 4,
+    minWidth: 132,
+    maxWidth: 168,
+  },
+  referenceMonthLabel: {
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  referenceMonthDropdown: {
+    minHeight: 36,
   },
   addButton: {
     flexDirection: 'row',

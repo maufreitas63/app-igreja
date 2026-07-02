@@ -508,6 +508,36 @@ begin
 end;
 $$;
 
+drop function if exists public.listar_relatorios_despesas_vinculo_lancamentos(uuid[]);
+
+create or replace function public.listar_relatorios_despesas_vinculo_lancamentos(p_financial_ids uuid[])
+returns table (
+  financial_id uuid,
+  report_id uuid,
+  report_number text
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    er.financial_id,
+    er.id as report_id,
+    er.report_number
+  from public.expense_reports er
+  where er.financial_id = any(p_financial_ids)
+    and er.status = 'reconciled'
+    and er.financial_id is not null
+    and (
+      public.session_can_manage_expense_reports_treasury()
+      or er.user_id = public.current_session_profile_id()
+      or public.session_has_resource_access('table', 'financials', 'view')
+      or public.session_has_screen_access('maintenance.card.financials', 'view')
+    );
+$$;
+
+grant execute on function public.listar_relatorios_despesas_vinculo_lancamentos(uuid[]) to anon, authenticated;
+
 grant execute on function public.listar_relatorios_despesas_periodo(date) to anon, authenticated;
 grant execute on function public.desconciliar_relatorio_despesas(uuid) to anon, authenticated;
 

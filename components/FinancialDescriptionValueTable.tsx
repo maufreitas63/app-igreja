@@ -5,12 +5,14 @@ import {
 import { formatBulletinAmount } from '@/lib/financialBulletin';
 import {
   findCommentDetailsForBulletinRow,
+  findExpenseReportInfoForBulletinRow,
   findReceiptInfoForBulletinRow,
   type FinancialBulletinCommentDetail,
   type FinancialEntry,
 } from '@/lib/financialEntry';
 import { createFinancialReceiptSignedUrl } from '@/lib/financialReceipt';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -34,7 +36,7 @@ import {
 const LABEL_COLUMN_WIDTH = 128;
 const VALUE_COLUMN_MIN_WIDTH = 108;
 const ICON_SLOT_WIDTH = 24;
-const ICON_COLUMN_WIDTH = ICON_SLOT_WIDTH * 2 + 4;
+const ICON_COLUMN_WIDTH = ICON_SLOT_WIDTH * 3 + 8;
 const COMMENT_ICON_COLOR = '#2563EB';
 const RECEIPT_ICON_COLOR = '#059669';
 
@@ -149,6 +151,31 @@ const ReceiptIndicator = ({
         ) : (
           <FontAwesome5 name="receipt" size={13} color={RECEIPT_ICON_COLOR} solid />
         )}
+      </View>
+    </View>
+  </TouchableOpacity>
+);
+
+const ExpenseReportIndicator = ({
+  onPress,
+  reportNumber,
+}: {
+  onPress: () => void;
+  reportNumber?: string | null;
+}) => (
+  <TouchableOpacity
+    onPress={onPress}
+    activeOpacity={0.75}
+    accessibilityRole="button"
+    accessibilityLabel={
+      reportNumber ? `Ver relatório de despesas ${reportNumber}` : 'Ver relatório de despesas'
+    }
+    style={styles.iconButton}
+    hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+  >
+    <View style={styles.receiptIconSlot}>
+      <View style={styles.receiptIconBadge}>
+        <FontAwesome5 name="file-alt" size={13} color={RECEIPT_ICON_COLOR} solid />
       </View>
     </View>
   </TouchableOpacity>
@@ -340,6 +367,7 @@ export function FinancialDescriptionValueTable({
   showCommentIcons = false,
   maxBodyHeight = FINANCIAL_REPORT_TABLE_BODY_MAX_HEIGHT,
 }: FinancialDescriptionValueTableProps) {
+  const router = useRouter();
   const [openCommentDetails, setOpenCommentDetails] = useState<FinancialBulletinCommentDetail[] | null>(
     null
   );
@@ -376,6 +404,24 @@ export function FinancialDescriptionValueTable({
 
       if (receiptInfo.receiptCount > 0) {
         map.set(row.key, receiptInfo);
+      }
+    }
+
+    return map;
+  }, [entries, rows, showCommentIcons]);
+
+  const expenseReportByRowKey = useMemo(() => {
+    if (!showCommentIcons) {
+      return new Map<string, ReturnType<typeof findExpenseReportInfoForBulletinRow>>();
+    }
+
+    const map = new Map<string, ReturnType<typeof findExpenseReportInfoForBulletinRow>>();
+
+    for (const row of rows) {
+      const expenseReportInfo = findExpenseReportInfoForBulletinRow(row, entries);
+
+      if (expenseReportInfo.reportCount > 0) {
+        map.set(row.key, expenseReportInfo);
       }
     }
 
@@ -430,9 +476,11 @@ export function FinancialDescriptionValueTable({
               row.level === 'balance';
             const commentDetails = commentDetailsByRowKey.get(row.key) ?? [];
             const receiptInfo = receiptByRowKey.get(row.key);
+            const expenseReportInfo = expenseReportByRowKey.get(row.key);
             const receiptUrl = receiptInfo?.receiptUrl?.trim() ?? '';
             const showCommentIcon = commentDetails.length > 0;
             const showReceiptIcon = Boolean(receiptUrl);
+            const showExpenseReportIcon = Boolean(expenseReportInfo?.reportId);
             const hasMultipleReceipts = (receiptInfo?.receiptCount ?? 0) > 1;
 
             return (
@@ -457,6 +505,18 @@ export function FinancialDescriptionValueTable({
                         <ReceiptIndicator
                           onPress={() => setOpenReceiptUrl(receiptUrl)}
                           multipleAttachments={hasMultipleReceipts}
+                        />
+                      ) : null}
+                    </View>
+                    <View style={styles.iconSlot}>
+                      {showExpenseReportIcon && expenseReportInfo?.reportId ? (
+                        <ExpenseReportIndicator
+                          reportNumber={expenseReportInfo.reportNumber}
+                          onPress={() =>
+                            router.push(
+                              `/expense-report?id=${encodeURIComponent(expenseReportInfo.reportId!)}`
+                            )
+                          }
                         />
                       ) : null}
                     </View>

@@ -1,4 +1,5 @@
 import { createUuid } from '@/lib/createUuid';
+import type { FinancialEntry } from '@/lib/financialEntry';
 import { getAppParameterValue } from '@/lib/appParameters';
 import {
   deleteFinancialReceiptFile,
@@ -710,6 +711,88 @@ export async function reconcileExpenseReport(
     message: String(parsed.message ?? 'Não foi possível vincular o relatório.'),
   };
 }
+
+export type ExpenseReportFinancialLink = {
+  financialId: string;
+  reportId: string;
+  reportNumber: string;
+};
+
+export async function fetchExpenseReportLinksForFinancialIds(
+  financialIds: string[]
+): Promise<ExpenseReportFinancialLink[]> {
+  const uniqueIds = [...new Set(financialIds.map((id) => id.trim()).filter(Boolean))];
+
+  if (!uniqueIds.length) {
+    return [];
+  }
+
+  const { data, error } = await supabase.rpc('listar_relatorios_despesas_vinculo_lancamentos', {
+    p_financial_ids: uniqueIds,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissing((error.message ?? '').toLowerCase(), 'listar_relatorios_despesas_vinculo_lancamentos')) {
+      return [];
+    }
+
+    handleRpcError(error, 'listar_relatorios_despesas_vinculo_lancamentos');
+  }
+
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data
+    .map((row) => {
+      if (!row || typeof row !== 'object') {
+        return null;
+      }
+
+      const record = row as Record<string, unknown>;
+      const financialId = String(record.financial_id ?? '').trim();
+      const reportId = String(record.report_id ?? '').trim();
+      const reportNumber = String(record.report_number ?? '').trim();
+
+      if (!financialId || !reportId) {
+        return null;
+      }
+
+      return {
+        financialId,
+        reportId,
+        reportNumber: reportNumber || reportId,
+      };
+    })
+    .filter((link): link is ExpenseReportFinancialLink => link !== null);
+}
+
+export const mergeExpenseReportLinksIntoFinancialEntries = (
+  entries: FinancialEntry[],
+  links: ExpenseReportFinancialLink[]
+): FinancialEntry[] => {
+  if (!links.length) {
+    return entries;
+  }
+
+  const linksByFinancialId = new Map(
+    links.map((link) => [link.financialId, link] as const)
+  );
+
+  return entries.map((entry) => {
+    const link = linksByFinancialId.get(entry.id);
+
+    if (!link) {
+      return entry;
+    }
+
+    return {
+      ...entry,
+      expense_report_id: link.reportId,
+      expense_report_number: link.reportNumber,
+    };
+  });
+};
 
 export async function resolveTreasurerWhatsappUrl(message: string) {
   const treasurerPhone = await getAppParameterValue('Tesoureiro_contato');
