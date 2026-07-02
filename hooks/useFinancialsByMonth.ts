@@ -12,6 +12,10 @@ import {
   type FinancialEntry,
 } from '@/lib/financialEntry';
 import {
+  getFinancialEntryReceiptUrls,
+  mergeFinancialReceiptUrlsIntoEntries,
+} from '@/lib/financialReceiptUrls';
+import {
   fetchExpenseReportLinksForFinancialIds,
   mergeExpenseReportLinksIntoFinancialEntries,
 } from '@/lib/expenseReport';
@@ -34,8 +38,8 @@ export type { FinancialEntry } from '@/lib/financialEntry';
 const FINANCIAL_SELECT_BASE =
   'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version';
 
-const FINANCIAL_SELECT_WITH_COMMENTS = `${FINANCIAL_SELECT_BASE}, comments, receipt_url`;
-const FINANCIAL_SELECT_WITH_COMMENTS_PASCAL = `${FINANCIAL_SELECT_BASE}, Comments, receipt_url`;
+const FINANCIAL_SELECT_WITH_COMMENTS = `${FINANCIAL_SELECT_BASE}, comments, receipt_url, receipt_urls`;
+const FINANCIAL_SELECT_WITH_COMMENTS_PASCAL = `${FINANCIAL_SELECT_BASE}, Comments, receipt_url, receipt_urls`;
 const FINANCIAL_SELECT_WITH_COMMENTS_ONLY = `${FINANCIAL_SELECT_BASE}, comments`;
 const FINANCIAL_SELECT_WITH_COMMENTS_PASCAL_ONLY = `${FINANCIAL_SELECT_BASE}, Comments`;
 
@@ -51,6 +55,22 @@ const isMissingFinancialCommentsColumn = (error: { code?: string; message?: stri
   const message = (error.message ?? '').toLowerCase();
   return (
     (message.includes('comments') || message.includes('"comments"')) &&
+    (message.includes('column') || message.includes('does not exist') || message.includes('could not find'))
+  );
+};
+
+const isMissingFinancialReceiptUrlsColumn = (error: { code?: string; message?: string } | null) => {
+  if (!error) {
+    return false;
+  }
+
+  if (error.code === '42703' || error.code === 'PGRST204') {
+    return true;
+  }
+
+  const message = (error.message ?? '').toLowerCase();
+  return (
+    message.includes('receipt_urls') &&
     (message.includes('column') || message.includes('does not exist') || message.includes('could not find'))
   );
 };
@@ -143,8 +163,18 @@ const fetchCommentsByEntryIds = async (ids: string[]) => {
   return supabase.from('financials').select('id, Comments').in('id', ids);
 };
 
-const fetchReceiptsByEntryIds = async (ids: string[]) =>
-  supabase.from('financials').select('id, receipt_url').in('id', ids);
+const fetchReceiptsByEntryIds = async (ids: string[]) => {
+  const withUrls = await supabase
+    .from('financials')
+    .select('id, receipt_url, receipt_urls')
+    .in('id', ids);
+
+  if (!withUrls.error || !isMissingFinancialReceiptUrlsColumn(withUrls.error)) {
+    return withUrls;
+  }
+
+  return supabase.from('financials').select('id, receipt_url').in('id', ids);
+};
 
 const FINANCIAL_COMMENTS_WARNING =
   'Alguns comentários financeiros não foram carregados. Os valores permanecem visíveis.';
@@ -241,37 +271,8 @@ const mergeEntryCommentsFromSupabase = async (
 
 const mergeReceiptUrlsIntoEntries = (
   entries: FinancialEntry[],
-  receiptRows: { id?: string; receipt_url?: string | null }[] | null | undefined
-) => {
-  if (!receiptRows?.length) {
-    return entries;
-  }
-
-  const receiptById = new Map<string, string>();
-
-  for (const row of receiptRows) {
-    const id = String(row.id ?? '').trim();
-    const receiptUrl = typeof row.receipt_url === 'string' ? row.receipt_url.trim() : '';
-
-    if (id && receiptUrl) {
-      receiptById.set(id, receiptUrl);
-    }
-  }
-
-  if (!receiptById.size) {
-    return entries;
-  }
-
-  return entries.map((entry) => {
-    const receiptUrl = entry.receipt_url?.trim() || receiptById.get(entry.id);
-
-    if (!receiptUrl || receiptUrl === entry.receipt_url) {
-      return entry;
-    }
-
-    return { ...entry, receipt_url: receiptUrl };
-  });
-};
+  receiptRows: { id?: string; receipt_url?: string | null; receipt_urls?: unknown }[] | null | undefined
+) => mergeFinancialReceiptUrlsIntoEntries(entries, receiptRows);
 
 type UseFinancialsByMonthResult = {
   loadingMonths: boolean;

@@ -182,20 +182,44 @@ const ExpenseReportIndicator = ({
 );
 
 const ReceiptImageModal = ({
-  receiptUrl,
+  receiptUrls,
   visible,
   onClose,
+  initialIndex = 0,
 }: {
-  receiptUrl: string;
+  receiptUrls: string[];
   visible: boolean;
   onClose: () => void;
+  initialIndex?: number;
 }) => {
+  const urls = useMemo(
+    () => receiptUrls.map((url) => url.trim()).filter(Boolean),
+    [receiptUrls]
+  );
+  const [index, setIndex] = useState(initialIndex);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const currentReceiptUrl = urls[index] ?? '';
+  const hasMultiple = urls.length > 1;
+  const canGoPrevious = index > 0;
+  const canGoNext = index < urls.length - 1;
+
   useEffect(() => {
-    if (!visible || !receiptUrl) {
+    if (!visible) {
+      setIndex(0);
+      setSignedUrl(null);
+      setLoadError(null);
+      setLoading(false);
+      return;
+    }
+
+    setIndex(Math.min(Math.max(initialIndex, 0), Math.max(urls.length - 1, 0)));
+  }, [initialIndex, urls.length, visible]);
+
+  useEffect(() => {
+    if (!visible || !currentReceiptUrl) {
       setSignedUrl(null);
       setLoadError(null);
       setLoading(false);
@@ -207,7 +231,7 @@ const ReceiptImageModal = ({
     setLoadError(null);
     setSignedUrl(null);
 
-    void createFinancialReceiptSignedUrl(receiptUrl)
+    void createFinancialReceiptSignedUrl(currentReceiptUrl)
       .then((url) => {
         if (cancelled) {
           return;
@@ -238,13 +262,15 @@ const ReceiptImageModal = ({
     return () => {
       cancelled = true;
     };
-  }, [receiptUrl, visible]);
+  }, [currentReceiptUrl, visible]);
 
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.bubbleBackdrop} onPress={onClose}>
         <Pressable style={styles.receiptModalCard} onPress={(event) => event.stopPropagation()}>
-          <Text style={styles.receiptModalTitle}>Comprovante</Text>
+          <Text style={styles.receiptModalTitle}>
+            Comprovante{hasMultiple ? ` ${index + 1}/${urls.length}` : ''}
+          </Text>
           {loading ? (
             <ActivityIndicator color="#059669" size="large" style={styles.receiptModalLoader} />
           ) : loadError ? (
@@ -256,9 +282,55 @@ const ReceiptImageModal = ({
               resizeMode="contain"
             />
           ) : null}
-          <TouchableOpacity style={styles.bubbleCloseButton} onPress={onClose} activeOpacity={0.85}>
-            <Text style={styles.bubbleCloseButtonText}>Fechar</Text>
-          </TouchableOpacity>
+          <View style={styles.receiptModalActions}>
+            {hasMultiple ? (
+              <TouchableOpacity
+                style={[
+                  styles.receiptModalNavButton,
+                  !canGoPrevious && styles.receiptModalNavButtonDisabled,
+                ]}
+                onPress={() => setIndex((current) => Math.max(current - 1, 0))}
+                disabled={!canGoPrevious}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.receiptModalNavButtonText,
+                    !canGoPrevious && styles.receiptModalNavButtonTextDisabled,
+                  ]}
+                >
+                  Anterior
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.receiptModalNavSpacer} />
+            )}
+            <TouchableOpacity style={styles.bubbleCloseButton} onPress={onClose} activeOpacity={0.85}>
+              <Text style={styles.bubbleCloseButtonText}>Fechar</Text>
+            </TouchableOpacity>
+            {hasMultiple ? (
+              <TouchableOpacity
+                style={[
+                  styles.receiptModalNavButton,
+                  !canGoNext && styles.receiptModalNavButtonDisabled,
+                ]}
+                onPress={() => setIndex((current) => Math.min(current + 1, urls.length - 1))}
+                disabled={!canGoNext}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.receiptModalNavButtonText,
+                    !canGoNext && styles.receiptModalNavButtonTextDisabled,
+                  ]}
+                >
+                  Próximo
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.receiptModalNavSpacer} />
+            )}
+          </View>
         </Pressable>
       </Pressable>
     </Modal>
@@ -274,11 +346,11 @@ const CommentDetailsModal = ({
   visible: boolean;
   onClose: () => void;
 }) => {
-  const [openReceiptUrl, setOpenReceiptUrl] = useState<string | null>(null);
+  const [openReceiptUrls, setOpenReceiptUrls] = useState<string[] | null>(null);
 
   useEffect(() => {
     if (!visible) {
-      setOpenReceiptUrl(null);
+      setOpenReceiptUrls(null);
     }
   }, [visible]);
 
@@ -308,11 +380,15 @@ const CommentDetailsModal = ({
               nestedScrollEnabled
             >
               {details.map((detail, index) => {
-                const receiptUrl = detail.receiptUrl?.trim() || '';
+                const receiptUrls = detail.receiptUrls?.length
+                  ? detail.receiptUrls
+                  : detail.receiptUrl?.trim()
+                    ? [detail.receiptUrl.trim()]
+                    : [];
 
                 return (
                   <View
-                    key={`${detail.transactionDateLabel}-${detail.comment}-${detail.amount}-${receiptUrl}-${index}`}
+                    key={`${detail.transactionDateLabel}-${detail.comment}-${detail.amount}-${receiptUrls.join('|')}-${index}`}
                     style={styles.commentDetailsDataRow}
                   >
                     <Text style={[styles.commentDetailsBodyCell, styles.commentDetailsDateCell]}>
@@ -333,9 +409,12 @@ const CommentDetailsModal = ({
                       >
                         {formatCommentDetailAmount(detail.amount)}
                       </Text>
-                      {receiptUrl ? (
+                      {receiptUrls.length ? (
                         <View style={styles.commentDetailsReceiptSlot}>
-                          <ReceiptIndicator onPress={() => setOpenReceiptUrl(receiptUrl)} />
+                          <ReceiptIndicator
+                            onPress={() => setOpenReceiptUrls(receiptUrls)}
+                            multipleAttachments={receiptUrls.length > 1}
+                          />
                         </View>
                       ) : null}
                     </View>
@@ -351,9 +430,9 @@ const CommentDetailsModal = ({
       </Modal>
 
       <ReceiptImageModal
-        receiptUrl={openReceiptUrl ?? ''}
-        visible={Boolean(openReceiptUrl)}
-        onClose={() => setOpenReceiptUrl(null)}
+        receiptUrls={openReceiptUrls ?? []}
+        visible={Boolean(openReceiptUrls?.length)}
+        onClose={() => setOpenReceiptUrls(null)}
       />
     </>
   );
@@ -371,7 +450,7 @@ export function FinancialDescriptionValueTable({
   const [openCommentDetails, setOpenCommentDetails] = useState<FinancialBulletinCommentDetail[] | null>(
     null
   );
-  const [openReceiptUrl, setOpenReceiptUrl] = useState<string | null>(null);
+  const [openReceiptUrls, setOpenReceiptUrls] = useState<string[] | null>(null);
   const tableLayoutHeight = financialReportTableLayoutMaxHeight(maxBodyHeight);
 
   const commentDetailsByRowKey = useMemo(() => {
@@ -477,11 +556,12 @@ export function FinancialDescriptionValueTable({
             const commentDetails = commentDetailsByRowKey.get(row.key) ?? [];
             const receiptInfo = receiptByRowKey.get(row.key);
             const expenseReportInfo = expenseReportByRowKey.get(row.key);
-            const receiptUrl = receiptInfo?.receiptUrl?.trim() ?? '';
+            const receiptUrls = receiptInfo?.receiptUrls ?? [];
+            const receiptUrl = receiptUrls[0]?.trim() ?? '';
             const showCommentIcon = commentDetails.length > 0;
-            const showReceiptIcon = Boolean(receiptUrl);
+            const showReceiptIcon = receiptUrls.length > 0;
             const showExpenseReportIcon = Boolean(expenseReportInfo?.reportId);
-            const hasMultipleReceipts = (receiptInfo?.receiptCount ?? 0) > 1;
+            const hasMultipleReceipts = receiptUrls.length > 1;
 
             return (
               <View key={row.key} style={styles.dataRow}>
@@ -503,7 +583,7 @@ export function FinancialDescriptionValueTable({
                     <View style={styles.iconSlot}>
                       {showReceiptIcon ? (
                         <ReceiptIndicator
-                          onPress={() => setOpenReceiptUrl(receiptUrl)}
+                          onPress={() => setOpenReceiptUrls(receiptUrls)}
                           multipleAttachments={hasMultipleReceipts}
                         />
                       ) : null}
@@ -553,9 +633,9 @@ export function FinancialDescriptionValueTable({
       />
 
       <ReceiptImageModal
-        receiptUrl={openReceiptUrl ?? ''}
-        visible={Boolean(openReceiptUrl)}
-        onClose={() => setOpenReceiptUrl(null)}
+        receiptUrls={openReceiptUrls ?? []}
+        visible={Boolean(openReceiptUrls?.length)}
+        onClose={() => setOpenReceiptUrls(null)}
       />
     </>
   );
@@ -939,5 +1019,36 @@ const styles = StyleSheet.create({
     height: 280,
     borderRadius: 10,
     backgroundColor: '#F8FAFC',
+  },
+  receiptModalActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 4,
+  },
+  receiptModalNavButton: {
+    minWidth: 84,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    alignItems: 'center',
+  },
+  receiptModalNavButtonDisabled: {
+    opacity: 0.45,
+  },
+  receiptModalNavButtonText: {
+    color: '#065F46',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  receiptModalNavButtonTextDisabled: {
+    color: '#94A3B8',
+  },
+  receiptModalNavSpacer: {
+    minWidth: 84,
   },
 });

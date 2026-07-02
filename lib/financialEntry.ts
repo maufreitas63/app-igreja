@@ -1,3 +1,9 @@
+import {
+  getFinancialEntryReceiptUrls,
+  normalizeFinancialReceiptUrls,
+  parseFinancialReceiptUrlsFromRow,
+} from '@/lib/financialReceiptUrls';
+
 export const FINANCIAL_BUDGET_VERSION_REALIZED = 'REALIZADO';
 export const FINANCIAL_BUDGET_VERSION_PLANNED = 'PLANEJADO';
 
@@ -12,6 +18,8 @@ export type FinancialEntry = {
   budget_version: string;
   comments?: string | null;
   receipt_url?: string | null;
+  /** Até 3 comprovantes por lançamento. */
+  receipt_urls?: string[] | null;
   /** Nome do JPG de comprovante: aaaammdd nnnn,nn.jpg */
   referencia?: string | null;
   /** RD conciliado com este lançamento. */
@@ -149,6 +157,7 @@ export type FinancialBulletinCommentDetail = {
   amount: number;
   transactionDateLabel: string;
   receiptUrl?: string | null;
+  receiptUrls?: string[];
 };
 
 /** Rótulo curto da data do lançamento (DD/MM). */
@@ -309,13 +318,14 @@ const collectBulletinRowCommentDetails = (
       continue;
     }
 
-    const receiptUrl = entry.receipt_url?.trim() || null;
+    const receiptUrls = getFinancialEntryReceiptUrls(entry);
 
     details.push({
       comment,
       amount: signedFinancialAmount(entry),
       transactionDateLabel: formatFinancialEntryDayMonthLabel(entry.transaction_date),
-      receiptUrl,
+      receiptUrl: receiptUrls[0] ?? null,
+      receiptUrls,
     });
   }
 
@@ -360,6 +370,7 @@ export const findCommentForBulletinRow = (
 /** Comprovante do lançamento que originou esta linha (um único arquivo por linha agregada). */
 export type FinancialBulletinReceiptInfo = {
   receiptUrl: string | null;
+  receiptUrls: string[];
   receiptCount: number;
 };
 
@@ -381,14 +392,12 @@ const collectReceiptUrlsForBulletinRow = (
   const rowKey = row.key ?? '';
   const receiptUrls: string[] = [];
 
-  for (const entry of entries) {
+    for (const entry of entries) {
     if (!entryBelongsToBulletinRow(entry, rowKey, rowLabel)) {
       continue;
     }
 
-    const receiptUrl = entry.receipt_url?.trim();
-
-    if (receiptUrl) {
+    for (const receiptUrl of getFinancialEntryReceiptUrls(entry)) {
       receiptUrls.push(receiptUrl);
     }
   }
@@ -405,7 +414,8 @@ export const findReceiptInfoForBulletinRow = (
 
   return {
     receiptUrl: uniqueReceiptUrls[0] ?? null,
-    receiptCount: receiptUrls.length,
+    receiptUrls: uniqueReceiptUrls,
+    receiptCount: uniqueReceiptUrls.length,
   };
 };
 
@@ -508,6 +518,8 @@ export const normalizeFinancialEntryRow = (row: Record<string, unknown>): Financ
     return null;
   }
 
+  const receiptUrls = parseFinancialReceiptUrlsFromRow(row);
+
   return {
     id,
     transaction_date: String(row.transaction_date ?? ''),
@@ -518,10 +530,8 @@ export const normalizeFinancialEntryRow = (row: Record<string, unknown>): Financ
     movement: String(row.movement ?? '').trim(),
     budget_version: String(row.budget_version ?? '').trim(),
     comments: pickFinancialEntryComment(row),
-    receipt_url:
-      typeof row.receipt_url === 'string' && row.receipt_url.trim()
-        ? row.receipt_url.trim()
-        : null,
+    receipt_urls: receiptUrls,
+    receipt_url: receiptUrls[0] ?? null,
     referencia:
       typeof row.referencia === 'string' && row.referencia.trim()
         ? row.referencia.trim()

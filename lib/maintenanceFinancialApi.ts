@@ -17,6 +17,11 @@ import {
   sortMaintenanceFinancialEntries,
   type FinancialEntry,
 } from '@/lib/financialEntry';
+import {
+  FINANCIAL_MAX_RECEIPTS_PER_ENTRY,
+  getFinancialEntryReceiptUrls,
+  normalizeFinancialReceiptUrls,
+} from '@/lib/financialReceiptUrls';
 import type { FinancialMonthKey } from '@/lib/financialMonth';
 import { getFinancialMonthDateRange } from '@/lib/financialMonth';
 
@@ -38,10 +43,10 @@ export const MAINTENANCE_FINANCIAL_MOVEMENTS = ['ORDINÁRIO', 'EXTRAORDINÁRIO']
 export const MAINTENANCE_FINANCIAL_BUDGET_VERSIONS = ['REALIZADO', 'PLANEJADO'] as const;
 
 const FINANCIAL_SELECT =
-  'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version, comments, receipt_url, referencia';
+  'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version, comments, receipt_url, receipt_urls, referencia';
 
 const FINANCIAL_SELECT_WITHOUT_REFERENCIA =
-  'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version, comments, receipt_url';
+  'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version, comments, receipt_url, receipt_urls';
 
 const isMissingReferenciaColumn = (message: string) =>
   message.toLowerCase().includes('referencia');
@@ -371,18 +376,28 @@ export async function updateMaintenanceFinancialEntryComment(id: string, comment
   return parseRegisterScaleRpc(data);
 }
 
-export async function updateMaintenanceFinancialEntryReceipt(id: string, receiptUrl: string | null) {
+export async function updateMaintenanceFinancialEntryReceipts(
+  id: string,
+  receiptUrls: string[]
+) {
   const access = await assertMaintenanceFinancialUpdateAccess();
 
   if (!access.success) {
     return access;
   }
 
-  const normalizedReceiptUrl = receiptUrl?.trim() || null;
+  const normalizedReceiptUrls = normalizeFinancialReceiptUrls(receiptUrls);
+
+  if (normalizedReceiptUrls.length > FINANCIAL_MAX_RECEIPTS_PER_ENTRY) {
+    return {
+      success: false as const,
+      message: `Cada lançamento aceita no máximo ${FINANCIAL_MAX_RECEIPTS_PER_ENTRY} comprovantes.`,
+    };
+  }
 
   const { data, error } = await supabase.rpc('atualizar_comprovante_lancamento_financeiro', {
     p_id: id,
-    p_receipt_url: normalizedReceiptUrl,
+    p_receipt_urls: normalizedReceiptUrls,
   });
 
   if (error) {
@@ -391,7 +406,10 @@ export async function updateMaintenanceFinancialEntryReceipt(id: string, receipt
     if (isSupabaseRpcMissing(message, 'atualizar_comprovante_lancamento_financeiro')) {
       const { error: directError } = await supabase
         .from('financials')
-        .update({ receipt_url: normalizedReceiptUrl })
+        .update({
+          receipt_urls: normalizedReceiptUrls,
+          receipt_url: normalizedReceiptUrls[0] ?? null,
+        })
         .eq('id', id);
 
       if (directError) {
@@ -400,8 +418,9 @@ export async function updateMaintenanceFinancialEntryReceipt(id: string, receipt
 
       return {
         success: true,
-        message: normalizedReceiptUrl ? 'Comprovante anexado.' : 'Comprovante removido.',
-        receipt_url: normalizedReceiptUrl,
+        message: normalizedReceiptUrls.length ? 'Comprovantes atualizados.' : 'Comprovante removido.',
+        receipt_urls: normalizedReceiptUrls,
+        receipt_url: normalizedReceiptUrls[0] ?? null,
       };
     }
 
@@ -409,17 +428,27 @@ export async function updateMaintenanceFinancialEntryReceipt(id: string, receipt
   }
 
   const parsed = parseRegisterScaleRpc(data);
+  const parsedRecord = (data ?? {}) as Record<string, unknown>;
+  const nextReceiptUrls = normalizeFinancialReceiptUrls(parsedRecord.receipt_urls);
 
   return {
     ...parsed,
-    receipt_url: normalizedReceiptUrl,
+    receipt_urls: nextReceiptUrls,
+    receipt_url: nextReceiptUrls[0] ?? null,
   };
+}
+
+export async function updateMaintenanceFinancialEntryReceipt(id: string, receiptUrl: string | null) {
+  return updateMaintenanceFinancialEntryReceipts(
+    id,
+    receiptUrl?.trim() ? [receiptUrl.trim()] : []
+  );
 }
 
 export async function attachMaintenanceFinancialReceipt(
   entryId: string,
   imageInput: string,
-  previousReceiptUrl?: string | null
+  existingReceiptUrls: string[] = []
 ) {
   const access = await assertMaintenanceFinancialUpdateAccess();
 
@@ -427,12 +456,21 @@ export async function attachMaintenanceFinancialReceipt(
     return access;
   }
 
+  const currentUrls = normalizeFinancialReceiptUrls(existingReceiptUrls);
+
+  if (currentUrls.length >= FINANCIAL_MAX_RECEIPTS_PER_ENTRY) {
+    return {
+      success: false as const,
+      message: `Cada lançamento aceita no máximo ${FINANCIAL_MAX_RECEIPTS_PER_ENTRY} comprovantes.`,
+    };
+  }
+
   let uploadedPath: string | null = null;
 
   try {
     uploadedPath = await uploadFinancialReceiptImage(entryId, imageInput);
-
-    const result = await updateMaintenanceFinancialEntryReceipt(entryId, uploadedPath);
+    const nextUrls = [...currentUrls, uploadedPath];
+    const result = await updateMaintenanceFinancialEntryReceipts(entryId, nextUrls);
 
     if (!result.success) {
       if (uploadedPath) {
@@ -445,14 +483,11 @@ export async function attachMaintenanceFinancialReceipt(
       };
     }
 
-    if (previousReceiptUrl?.trim()) {
-      await deleteFinancialReceiptFile(previousReceiptUrl).catch(() => undefined);
-    }
-
     return {
       success: true as const,
       message: result.message ?? 'Comprovante anexado.',
-      receipt_url: uploadedPath,
+      receipt_urls: nextUrls,
+      receipt_url: nextUrls[0] ?? null,
     };
   } catch (err) {
     if (uploadedPath) {
@@ -465,7 +500,8 @@ export async function attachMaintenanceFinancialReceipt(
 
 export async function removeMaintenanceFinancialReceipt(
   entryId: string,
-  receiptUrl: string | null | undefined
+  receiptUrl: string | null | undefined,
+  existingReceiptUrls: string[] = []
 ) {
   const access = await assertMaintenanceFinancialUpdateAccess();
 
@@ -473,7 +509,11 @@ export async function removeMaintenanceFinancialReceipt(
     return access;
   }
 
-  const result = await updateMaintenanceFinancialEntryReceipt(entryId, null);
+  const currentUrls = normalizeFinancialReceiptUrls(existingReceiptUrls);
+  const targetUrl = receiptUrl?.trim() || null;
+  const nextUrls = targetUrl ? currentUrls.filter((url) => url !== targetUrl) : [];
+
+  const result = await updateMaintenanceFinancialEntryReceipts(entryId, nextUrls);
 
   if (!result.success) {
     return {
@@ -482,14 +522,15 @@ export async function removeMaintenanceFinancialReceipt(
     };
   }
 
-  if (receiptUrl?.trim()) {
-    await deleteFinancialReceiptFile(receiptUrl);
+  if (targetUrl) {
+    await deleteFinancialReceiptFile(targetUrl);
   }
 
   return {
     success: true as const,
     message: result.message ?? 'Comprovante removido.',
-    receipt_url: null,
+    receipt_urls: nextUrls,
+    receipt_url: nextUrls[0] ?? null,
   };
 }
 

@@ -4,6 +4,10 @@ import {
 } from '@/lib/maintenanceFinancialApi';
 import type { FinancialEntry } from '@/lib/financialEntry';
 import { isFinancialRealizado } from '@/lib/financialEntry';
+import {
+  FINANCIAL_MAX_RECEIPTS_PER_ENTRY,
+  getFinancialEntryReceiptUrls,
+} from '@/lib/financialReceiptUrls';
 import { buildFinancialReferencia } from '@/lib/treasuryReceiptBatchPath';
 import type { TreasuryReceiptFolderAccess } from '@/lib/treasuryReceiptFolderAccess';
 
@@ -38,6 +42,11 @@ const buildEntryLabel = (entry: FinancialEntry) => {
   return `${entry.transaction_date} · ${entry.transaction_kind} · ${account} · ${ministry}`;
 };
 
+const entryReceiptCount = (entry: FinancialEntry) => getFinancialEntryReceiptUrls(entry).length;
+
+const entryHasRoomForReceipt = (entry: FinancialEntry) =>
+  entryReceiptCount(entry) < FINANCIAL_MAX_RECEIPTS_PER_ENTRY;
+
 const buildReferenciaLookup = (entries: FinancialEntry[]) => {
   const lookup = new Map<string, FinancialEntry[]>();
 
@@ -63,9 +72,9 @@ const buildReferenciaLookup = (entries: FinancialEntry[]) => {
 };
 
 const pickEntryForReferencia = (entries: FinancialEntry[]) => {
-  const withoutReceipt = entries.find((entry) => !entry.receipt_url?.trim());
+  const withRoom = entries.find((entry) => entryHasRoomForReceipt(entry));
 
-  return withoutReceipt ?? entries[0] ?? null;
+  return withRoom ?? entries[0] ?? null;
 };
 
 export async function processTreasuryReceiptBatchFromFolder(
@@ -110,8 +119,9 @@ export async function processTreasuryReceiptBatchFromFolder(
     }
 
     const label = buildEntryLabel(entry);
+    const existingReceiptUrls = getFinancialEntryReceiptUrls(entry);
 
-    if (entry.receipt_url?.trim()) {
+    if (!entryHasRoomForReceipt(entry)) {
       matchedEntryIds.add(entry.id);
 
       try {
@@ -131,7 +141,7 @@ export async function processTreasuryReceiptBatchFromFolder(
           error:
             error instanceof Error
               ? error.message
-              : 'Comprovante já anexado, mas não foi possível renomear o arquivo local.',
+              : 'Comprovantes já completos, mas não foi possível renomear o arquivo local.',
         });
       }
 
@@ -140,7 +150,11 @@ export async function processTreasuryReceiptBatchFromFolder(
 
     try {
       const dataUrl = await file.readDataUrl();
-      const result = await attachMaintenanceFinancialReceipt(entry.id, dataUrl);
+      const result = await attachMaintenanceFinancialReceipt(
+        entry.id,
+        dataUrl,
+        existingReceiptUrls
+      );
 
       if (!result.success) {
         report.success = false;
@@ -188,7 +202,7 @@ export async function processTreasuryReceiptBatchFromFolder(
 
   for (const [referencia, bucket] of referenciaLookup.entries()) {
     const hasPendingEntry = bucket.some(
-      (entry) => !entry.receipt_url?.trim() && !matchedEntryIds.has(entry.id)
+      (entry) => entryHasRoomForReceipt(entry) && !matchedEntryIds.has(entry.id)
     );
 
     if (!hasPendingEntry) {
@@ -196,7 +210,7 @@ export async function processTreasuryReceiptBatchFromFolder(
     }
 
     for (const entry of bucket) {
-      if (entry.receipt_url?.trim() || matchedEntryIds.has(entry.id)) {
+      if (!entryHasRoomForReceipt(entry) || matchedEntryIds.has(entry.id)) {
         continue;
       }
 

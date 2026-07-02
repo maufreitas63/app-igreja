@@ -8,13 +8,87 @@ drop function if exists public.excluir_lancamento_financeiro(uuid);
 drop function if exists public.excluir_lancamentos_financeiros_periodo(text, date);
 drop function if exists public.atualizar_comentario_lancamento_financeiro(uuid, text);
 drop function if exists public.atualizar_comprovante_lancamento_financeiro(uuid, text);
+drop function if exists public.atualizar_comprovante_lancamento_financeiro(uuid, jsonb);
 drop function if exists public.atualizar_lancamento_financeiro(uuid, date, text, numeric, text, text, text, text);
 
 alter table public.financials
   add column if not exists receipt_url text;
 
 comment on column public.financials.receipt_url is
-  'Caminho do comprovante no bucket privado financial-docs (ex.: receipts/{id}/{timestamp}.jpg).';
+  'Caminho do comprovante principal (primeiro da lista receipt_urls) no bucket privado financial-docs.';
+
+alter table public.financials
+  add column if not exists receipt_urls jsonb not null default '[]'::jsonb;
+
+comment on column public.financials.receipt_urls is
+  'Lista de caminhos de comprovantes (máx. 3) no bucket financial-docs.';
+
+update public.financials f
+set receipt_urls = jsonb_build_array(trim(f.receipt_url))
+where coalesce(trim(f.receipt_url), '') <> ''
+  and (
+    f.receipt_urls is null
+    or f.receipt_urls = '[]'::jsonb
+    or jsonb_array_length(f.receipt_urls) = 0
+  );
+
+create or replace function public.normalize_financial_receipt_urls(p_receipt_urls jsonb)
+returns jsonb
+language plpgsql
+immutable
+as $$
+declare
+  v_item jsonb;
+  v_url text;
+  v_result jsonb := '[]'::jsonb;
+  v_seen text[] := array[]::text[];
+begin
+  if p_receipt_urls is null or jsonb_typeof(p_receipt_urls) <> 'array' then
+    return '[]'::jsonb;
+  end if;
+
+  for v_item in select value from jsonb_array_elements(p_receipt_urls)
+  loop
+    v_url := nullif(trim(both from coalesce(v_item #>> '{}', '')), '');
+
+    if v_url is null or v_url = any(v_seen) then
+      continue;
+    end if;
+
+    v_seen := array_append(v_seen, v_url);
+    v_result := v_result || jsonb_build_array(to_jsonb(v_url));
+
+    if jsonb_array_length(v_result) >= 3 then
+      exit;
+    end if;
+  end loop;
+
+  return v_result;
+end;
+$$;
+
+create or replace function public.financials_sync_receipt_url_columns()
+returns trigger
+language plpgsql
+as $$
+begin
+  if jsonb_array_length(public.normalize_financial_receipt_urls(coalesce(NEW.receipt_urls, '[]'::jsonb))) = 0
+     and coalesce(trim(NEW.receipt_url), '') <> '' then
+    NEW.receipt_urls := jsonb_build_array(trim(NEW.receipt_url));
+  end if;
+
+  NEW.receipt_urls := public.normalize_financial_receipt_urls(NEW.receipt_urls);
+  NEW.receipt_url := nullif(trim(coalesce(NEW.receipt_urls->>0, '')), '');
+
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_financials_sync_receipt_url_columns on public.financials;
+create trigger trg_financials_sync_receipt_url_columns
+before insert or update of receipt_url, receipt_urls on public.financials
+for each row
+execute function public.financials_sync_receipt_url_columns();
 
 alter table public.financials
   add column if not exists referencia text;
@@ -56,6 +130,7 @@ returns table (
   budget_version text,
   comments text,
   receipt_url text,
+  receipt_urls jsonb,
   referencia text,
   expense_report_id uuid,
   expense_report_number text,
@@ -91,6 +166,7 @@ begin
     f.budget_version,
     f.comments,
     f.receipt_url,
+    f.receipt_urls,
     f.referencia,
     er.id as expense_report_id,
     er.report_number as expense_report_number,
@@ -567,7 +643,7 @@ grant execute on function public.excluir_lancamento_financeiro(uuid) to anon, au
 grant execute on function public.excluir_lancamentos_financeiros_periodo(text, date, text) to anon, authenticated;
 create or replace function public.atualizar_comprovante_lancamento_financeiro(
   p_id uuid,
-  p_receipt_url text
+  p_receipt_urls jsonb
 )
 returns jsonb
 language plpgsql
@@ -576,7 +652,7 @@ set search_path = public
 as $$
 declare
   v_updated integer;
-  v_receipt_url text;
+  v_receipt_urls jsonb;
 begin
   if p_id is null then
     return jsonb_build_object('success', false, 'message', 'Lançamento não informado.');
@@ -586,11 +662,16 @@ begin
     return jsonb_build_object('success', false, 'message', 'Sem permissão para alterar lançamentos financeiros.');
   end if;
 
-  v_receipt_url := nullif(trim(coalesce(p_receipt_url, '')), '');
+  v_receipt_urls := public.normalize_financial_receipt_urls(coalesce(p_receipt_urls, '[]'::jsonb));
+
+  if jsonb_array_length(v_receipt_urls) > 3 then
+    return jsonb_build_object('success', false, 'message', 'Cada lançamento aceita no máximo 3 comprovantes.');
+  end if;
 
   update public.financials f
   set
-    receipt_url = v_receipt_url,
+    receipt_urls = v_receipt_urls,
+    receipt_url = nullif(trim(coalesce(v_receipt_urls->>0, '')), ''),
     updated_at = now()
   where f.id = p_id;
 
@@ -604,17 +685,38 @@ begin
     'success', true,
     'message',
     case
-      when v_receipt_url is null then 'Comprovante removido.'
-      else 'Comprovante anexado.'
+      when jsonb_array_length(v_receipt_urls) = 0 then 'Comprovante removido.'
+      when jsonb_array_length(v_receipt_urls) = 1 then 'Comprovante anexado.'
+      else 'Comprovantes atualizados.'
     end,
     'id', p_id,
-    'receipt_url', v_receipt_url
+    'receipt_url', nullif(trim(coalesce(v_receipt_urls->>0, '')), ''),
+    'receipt_urls', v_receipt_urls
   );
 end;
 $$;
 
+create or replace function public.atualizar_comprovante_lancamento_financeiro(
+  p_id uuid,
+  p_receipt_url text
+)
+returns jsonb
+language sql
+security definer
+set search_path = public
+as $$
+  select public.atualizar_comprovante_lancamento_financeiro(
+    p_id,
+    case
+      when nullif(trim(coalesce(p_receipt_url, '')), '') is null then '[]'::jsonb
+      else jsonb_build_array(trim(p_receipt_url))
+    end
+  );
+$$;
+
 grant execute on function public.atualizar_lancamento_financeiro(uuid, date, text, numeric, text, text, text, text) to anon, authenticated;
 grant execute on function public.atualizar_comentario_lancamento_financeiro(uuid, text) to anon, authenticated;
+grant execute on function public.atualizar_comprovante_lancamento_financeiro(uuid, jsonb) to anon, authenticated;
 grant execute on function public.atualizar_comprovante_lancamento_financeiro(uuid, text) to anon, authenticated;
 
 -- Storage: comprovantes no bucket privado financial-docs

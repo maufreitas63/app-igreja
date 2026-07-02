@@ -9,6 +9,11 @@ import {
 import { formatFinancialBrl } from '@/lib/financialMonth';
 import { getFinancialEntryComment, signedFinancialAmount } from '@/lib/financialEntry';
 import {
+  FINANCIAL_MAX_RECEIPTS_PER_ENTRY,
+  getFinancialEntryReceiptUrls,
+  normalizeFinancialReceiptUrls,
+} from '@/lib/financialReceiptUrls';
+import {
   compareFinancialMonthKeys,
   formatFinancialMonthKey,
   formatFinancialMonthLabel,
@@ -178,6 +183,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   const [pendingReceiptImage, setPendingReceiptImage] = useState<string | null>(null);
   const [loadingReceiptPreview, setLoadingReceiptPreview] = useState(false);
   const [showReceiptAttachOptions, setShowReceiptAttachOptions] = useState(false);
+  const [receiptPreviewIndex, setReceiptPreviewIndex] = useState(0);
   const [rdConciliationOpen, setRdConciliationOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<MaintenanceSectionKey | null>(null);
   const [rdReports, setRdReports] = useState<ExpenseReportMaintenanceRow[]>([]);
@@ -304,9 +310,16 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
 
   const receiptBusy =
     uploadingReceiptEntryId !== null || deletingReceiptEntryId !== null;
-  const editorReceiptUrl = activeEditorEntry?.receipt_url?.trim() || null;
+  const editorReceiptUrls = useMemo(
+    () => (activeEditorEntry ? getFinancialEntryReceiptUrls(activeEditorEntry) : []),
+    [activeEditorEntry]
+  );
+  const currentStoredReceiptUrl = editorReceiptUrls[receiptPreviewIndex] ?? null;
   const editorReceiptPreviewUri = pendingReceiptImage ?? receiptPreviewUrl;
-  const hasEditorReceiptPreview = Boolean(pendingReceiptImage || editorReceiptUrl);
+  const hasStoredReceipts = editorReceiptUrls.length > 0;
+  const hasEditorReceiptPreview = Boolean(pendingReceiptImage || hasStoredReceipts);
+  const canAttachMoreReceipts =
+    editorReceiptUrls.length < FINANCIAL_MAX_RECEIPTS_PER_ENTRY && !pendingReceiptImage;
   const canSaveCommentEditor = Boolean(pendingReceiptImage || commentDraft.trim());
 
   const bulkPreview = useMemo(() => {
@@ -430,7 +443,9 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     setCommentDraft(getFinancialEntryComment(entry) ?? '');
     setCommentInputActive(false);
     setPendingReceiptImage(null);
-    void loadReceiptPreview(entry.receipt_url);
+    setReceiptPreviewIndex(0);
+    const receiptUrls = getFinancialEntryReceiptUrls(entry);
+    void loadReceiptPreview(receiptUrls[0] ?? null);
   };
 
   const activateCommentInput = () => {
@@ -449,6 +464,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     setLoadingReceiptPreview(false);
     setShowReceiptAttachOptions(false);
     setRdConciliationOpen(false);
+    setReceiptPreviewIndex(0);
   };
 
   const syncEditorEntry = (entryId: string, patch: Partial<FinancialEntry>) => {
@@ -457,8 +473,46 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     );
   };
 
+  useEffect(() => {
+    if (!commentEditorEntry || pendingReceiptImage) {
+      return;
+    }
+
+    const urls = getFinancialEntryReceiptUrls(activeEditorEntry ?? commentEditorEntry);
+
+    if (!urls.length) {
+      setReceiptPreviewUrl(null);
+      return;
+    }
+
+    const safeIndex = Math.min(receiptPreviewIndex, urls.length - 1);
+
+    if (safeIndex !== receiptPreviewIndex) {
+      setReceiptPreviewIndex(safeIndex);
+      return;
+    }
+
+    void loadReceiptPreview(urls[safeIndex] ?? null);
+  }, [
+    activeEditorEntry,
+    commentEditorEntry,
+    loadReceiptPreview,
+    pendingReceiptImage,
+    receiptPreviewIndex,
+  ]);
+
   const handleAttachReceiptFromClipboard = async () => {
     if (!activeEditorEntry) {
+      return;
+    }
+
+    if (!canAttachMoreReceipts) {
+      Toast.show({
+        type: 'info',
+        text1: 'Comprovante',
+        text2: `Cada lançamento aceita no máximo ${FINANCIAL_MAX_RECEIPTS_PER_ENTRY} comprovantes.`,
+        visibilityTime: 3500,
+      });
       return;
     }
 
@@ -495,6 +549,16 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
 
   const handleAttachReceiptFromGallery = async () => {
     if (!activeEditorEntry) {
+      return;
+    }
+
+    if (!canAttachMoreReceipts) {
+      Toast.show({
+        type: 'info',
+        text1: 'Comprovante',
+        text2: `Cada lançamento aceita no máximo ${FINANCIAL_MAX_RECEIPTS_PER_ENTRY} comprovantes.`,
+        visibilityTime: 3500,
+      });
       return;
     }
 
@@ -539,12 +603,13 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
       return;
     }
 
-    if (!editorReceiptUrl) {
+    if (!currentStoredReceiptUrl) {
       return;
     }
 
     try {
-      const signedUrl = receiptPreviewUrl ?? (await createFinancialReceiptSignedUrl(editorReceiptUrl));
+      const signedUrl =
+        receiptPreviewUrl ?? (await createFinancialReceiptSignedUrl(currentStoredReceiptUrl));
 
       if (!signedUrl) {
         throw new Error('Não foi possível abrir o comprovante.');
@@ -567,13 +632,15 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
       return;
     }
 
-    if (!activeEditorEntry?.receipt_url) {
+    if (!activeEditorEntry || !currentStoredReceiptUrl) {
       return;
     }
 
     const confirmed = await confirmDialog(
       'Excluir comprovante',
-      'Deseja remover o comprovante deste lançamento?',
+      editorReceiptUrls.length > 1
+        ? `Deseja remover o comprovante ${receiptPreviewIndex + 1} de ${editorReceiptUrls.length}?`
+        : 'Deseja remover o comprovante deste lançamento?',
       'Excluir',
       'Cancelar',
       { destructive: true }
@@ -583,7 +650,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
       return;
     }
 
-    const result = await deleteReceipt(activeEditorEntry.id, activeEditorEntry.receipt_url);
+    const result = await deleteReceipt(activeEditorEntry.id, currentStoredReceiptUrl);
 
     Toast.show({
       type: result.success ? 'success' : 'error',
@@ -593,7 +660,12 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     });
 
     if (result.success) {
-      syncEditorEntry(activeEditorEntry.id, { receipt_url: null });
+      const nextUrls = editorReceiptUrls.filter((url) => url !== currentStoredReceiptUrl);
+      syncEditorEntry(activeEditorEntry.id, {
+        receipt_urls: nextUrls,
+        receipt_url: nextUrls[0] ?? null,
+      });
+      setReceiptPreviewIndex((current) => Math.max(0, Math.min(current, nextUrls.length - 1)));
       setReceiptPreviewUrl(null);
     }
   };
@@ -618,10 +690,24 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
         return;
       }
 
-      if ('receipt_url' in receiptResult) {
-        syncEditorEntry(commentEditorEntry.id, { receipt_url: receiptResult.receipt_url ?? null });
+      if ('receipt_urls' in receiptResult) {
+        const nextUrls = normalizeFinancialReceiptUrls(receiptResult.receipt_urls);
+        syncEditorEntry(commentEditorEntry.id, {
+          receipt_urls: nextUrls,
+          receipt_url: nextUrls[0] ?? null,
+        });
         setPendingReceiptImage(null);
-        await loadReceiptPreview(receiptResult.receipt_url ?? null);
+        setReceiptPreviewIndex(nextUrls.length - 1);
+        await loadReceiptPreview(nextUrls[nextUrls.length - 1] ?? null);
+      } else if ('receipt_url' in receiptResult) {
+        const nextUrls = receiptResult.receipt_url ? [receiptResult.receipt_url] : [];
+        syncEditorEntry(commentEditorEntry.id, {
+          receipt_urls: nextUrls,
+          receipt_url: nextUrls[0] ?? null,
+        });
+        setPendingReceiptImage(null);
+        setReceiptPreviewIndex(0);
+        await loadReceiptPreview(nextUrls[0] ?? null);
       }
 
       receiptSaved = true;
@@ -1204,7 +1290,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           entries.map((entry, index) => {
             const signed = signedFinancialAmount(entry);
             const entryComment = getFinancialEntryComment(entry);
-            const hasReceipt = Boolean(entry.receipt_url?.trim());
+            const hasReceipt = getFinancialEntryReceiptUrls(entry).length > 0;
             const linkedExpenseReportId = entry.expense_report_id?.trim() || null;
             const linkedExpenseReportNumber = entry.expense_report_number?.trim() || null;
             const isSavingThisComment = savingCommentEntryId === entry.id;
@@ -1446,7 +1532,14 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               </Pressable>
             )}
 
-            <Text style={styles.commentModalFieldLabel}>Comprovante</Text>
+            <Text style={styles.commentModalFieldLabel}>
+              Comprovante
+              {hasStoredReceipts && !pendingReceiptImage
+                ? ` ${receiptPreviewIndex + 1}/${editorReceiptUrls.length}`
+                : pendingReceiptImage
+                  ? ` ${editorReceiptUrls.length + 1}/${FINANCIAL_MAX_RECEIPTS_PER_ENTRY}`
+                  : ''}
+            </Text>
             {canUpdateFinancials === false ? (
               <Text style={styles.receiptPermissionHint}>
                 Sem permissão para anexar ou alterar comprovantes.
@@ -1463,9 +1556,42 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                   />
                 ) : (
                   <Text style={styles.receiptAttachedText}>
-                    {pendingReceiptImage ? 'Comprovante selecionado (aguardando Salvar)' : 'Comprovante anexado'}
+                    {pendingReceiptImage
+                      ? 'Comprovante selecionado (aguardando Salvar)'
+                      : `Comprovante ${receiptPreviewIndex + 1} anexado`}
                   </Text>
                 )}
+                {hasStoredReceipts && !pendingReceiptImage && editorReceiptUrls.length > 1 ? (
+                  <View style={styles.receiptEditorNavRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.receiptEditorNavButton,
+                        receiptPreviewIndex <= 0 && styles.receiptEditorNavButtonDisabled,
+                      ]}
+                      onPress={() => setReceiptPreviewIndex((current) => Math.max(current - 1, 0))}
+                      disabled={receiptPreviewIndex <= 0 || receiptBusy}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={styles.receiptEditorNavButtonText}>Anterior</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.receiptEditorNavButton,
+                        receiptPreviewIndex >= editorReceiptUrls.length - 1 &&
+                          styles.receiptEditorNavButtonDisabled,
+                      ]}
+                      onPress={() =>
+                        setReceiptPreviewIndex((current) =>
+                          Math.min(current + 1, editorReceiptUrls.length - 1)
+                        )
+                      }
+                      disabled={receiptPreviewIndex >= editorReceiptUrls.length - 1 || receiptBusy}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={styles.receiptEditorNavButtonText}>Próximo</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
                 <View style={styles.receiptActionRow}>
                   <TouchableOpacity
                     style={styles.receiptActionButton}
@@ -1493,11 +1619,22 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                   </TouchableOpacity>
                 </View>
               </View>
-            ) : canUpdateFinancials === true ? (
-              <View style={styles.receiptAttachBox}>
+            ) : null}
+
+            {canUpdateFinancials === true && canAttachMoreReceipts ? (
+              <View
+                style={[
+                  styles.receiptAttachBox,
+                  hasEditorReceiptPreview ? styles.receiptAttachBoxStacked : null,
+                ]}
+              >
                 {showReceiptAttachOptions ? (
                   <>
-                    <Text style={styles.receiptAttachHint}>Como deseja anexar o comprovante?</Text>
+                    <Text style={styles.receiptAttachHint}>
+                      {hasStoredReceipts
+                        ? 'Como deseja anexar o próximo comprovante?'
+                        : 'Como deseja anexar o comprovante?'}
+                    </Text>
                     <View style={styles.receiptAttachRow}>
                       <TouchableOpacity
                         style={styles.receiptAttachButton}
@@ -1547,13 +1684,17 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                     activeOpacity={0.85}
                   >
                     <FontAwesome name="paperclip" size={14} color="#D1FAE5" />
-                    <Text style={styles.receiptAttachPrimaryButtonText}>Anexar Comprovante</Text>
+                    <Text style={styles.receiptAttachPrimaryButtonText}>
+                      {hasStoredReceipts ? 'Adicionar outro comprovante' : 'Anexar Comprovante'}
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
-            ) : (
+            ) : canUpdateFinancials !== true &&
+              canUpdateFinancials !== false &&
+              !hasEditorReceiptPreview ? (
               <ActivityIndicator color="#6EE7B7" size="small" style={styles.receiptPreviewLoader} />
-            )}
+            ) : null}
 
             {canUpdateFinancials === true ? (
               activeEditorEntry?.expense_report_id ? (
@@ -2227,6 +2368,9 @@ const styles = StyleSheet.create({
     padding: 10,
     gap: 8,
   },
+  receiptAttachBoxStacked: {
+    marginTop: 8,
+  },
   receiptAttachHint: {
     color: '#94A3B8',
     fontSize: 11,
@@ -2304,6 +2448,28 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 10,
     backgroundColor: 'rgba(15, 23, 42, 0.8)',
+  },
+  receiptEditorNavRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  receiptEditorNavButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    paddingVertical: 8,
+  },
+  receiptEditorNavButtonDisabled: {
+    opacity: 0.45,
+  },
+  receiptEditorNavButtonText: {
+    color: '#D1FAE5',
+    fontSize: 12,
+    fontWeight: '700',
   },
   receiptActionRow: {
     flexDirection: 'row',

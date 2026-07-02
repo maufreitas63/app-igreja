@@ -16,6 +16,8 @@ import { parseFinancialBulkCsv } from '@/lib/maintenanceFinancialBulk';
 import {
   filterPlannedFinancialEntries,
   filterRealizedFinancialEntries,
+  FINANCIAL_BUDGET_VERSION_PLANNED,
+  FINANCIAL_BUDGET_VERSION_REALIZED,
   isFinancialPlanejado,
   isFinancialRealizado,
   signedFinancialAmount,
@@ -29,9 +31,10 @@ import {
   type FinancialMonthKey,
 } from '@/lib/financialMonth';
 import {
-  FINANCIAL_BUDGET_VERSION_PLANNED,
-  FINANCIAL_BUDGET_VERSION_REALIZED,
-} from '@/lib/financialEntry';
+  FINANCIAL_MAX_RECEIPTS_PER_ENTRY,
+  getFinancialEntryReceiptUrls,
+  normalizeFinancialReceiptUrls,
+} from '@/lib/financialReceiptUrls';
 import { MAINTENANCE_FINANCIAL_BUDGET_VERSIONS } from '@/lib/maintenanceFinancialApi';
 import { useMaintenanceRpcMissing } from '@/hooks/useMaintenanceRpcMissing';
 import {
@@ -397,18 +400,26 @@ export function useMaintenanceFinancials(enabled: boolean) {
     [resolveMaintenanceRpcError]
   );
 
-  const updateEntryReceiptUrl = useCallback((entryId: string, receiptUrl: string | null) => {
+  const updateEntryReceiptUrls = useCallback((entryId: string, receiptUrls: string[]) => {
+    const normalized = normalizeFinancialReceiptUrls(receiptUrls);
+
     setEntries((current) =>
       current.map((entry) =>
-        entry.id === entryId ? { ...entry, receipt_url: receiptUrl } : entry
+        entry.id === entryId
+          ? {
+              ...entry,
+              receipt_urls: normalized,
+              receipt_url: normalized[0] ?? null,
+            }
+          : entry
       )
     );
   }, []);
 
   const attachReceipt = useCallback(
     async (entryId: string, imageInput: string) => {
-      const previousReceiptUrl =
-        entries.find((entry) => entry.id === entryId)?.receipt_url ?? null;
+      const entry = entries.find((item) => item.id === entryId);
+      const previousReceiptUrls = entry ? getFinancialEntryReceiptUrls(entry) : [];
 
       setUploadingReceiptEntryId(entryId);
       setError(null);
@@ -417,7 +428,7 @@ export function useMaintenanceFinancials(enabled: boolean) {
         const result = await attachMaintenanceFinancialReceipt(
           entryId,
           imageInput,
-          previousReceiptUrl
+          previousReceiptUrls
         );
 
         if (!result.success) {
@@ -427,13 +438,16 @@ export function useMaintenanceFinancials(enabled: boolean) {
           };
         }
 
-        const nextReceiptUrl = result.receipt_url ?? null;
-        updateEntryReceiptUrl(entryId, nextReceiptUrl);
+        const nextReceiptUrls = normalizeFinancialReceiptUrls(
+          'receipt_urls' in result ? result.receipt_urls : []
+        );
+        updateEntryReceiptUrls(entryId, nextReceiptUrls);
 
         return {
           success: true as const,
           message: result.message ?? 'Comprovante anexado.',
-          receipt_url: nextReceiptUrl,
+          receipt_urls: nextReceiptUrls,
+          receipt_url: nextReceiptUrls[0] ?? null,
         };
       } catch (err) {
         console.error('Erro ao anexar comprovante financeiro:', err);
@@ -457,7 +471,7 @@ export function useMaintenanceFinancials(enabled: boolean) {
         setUploadingReceiptEntryId(null);
       }
     },
-    [entries, resolveMaintenanceRpcError, updateEntryReceiptUrl]
+    [entries, resolveMaintenanceRpcError, updateEntryReceiptUrls]
   );
 
   const deleteReceipt = useCallback(
@@ -466,7 +480,13 @@ export function useMaintenanceFinancials(enabled: boolean) {
       setError(null);
 
       try {
-        const result = await removeMaintenanceFinancialReceipt(entryId, receiptUrl);
+        const entry = entries.find((item) => item.id === entryId);
+        const existingReceiptUrls = entry ? getFinancialEntryReceiptUrls(entry) : [];
+        const result = await removeMaintenanceFinancialReceipt(
+          entryId,
+          receiptUrl,
+          existingReceiptUrls
+        );
 
         if (!result.success) {
           return {
@@ -475,7 +495,10 @@ export function useMaintenanceFinancials(enabled: boolean) {
           };
         }
 
-        updateEntryReceiptUrl(entryId, null);
+        const nextReceiptUrls = normalizeFinancialReceiptUrls(
+          'receipt_urls' in result ? result.receipt_urls : []
+        );
+        updateEntryReceiptUrls(entryId, nextReceiptUrls);
 
         return {
           success: true as const,
@@ -503,7 +526,7 @@ export function useMaintenanceFinancials(enabled: boolean) {
         setDeletingReceiptEntryId(null);
       }
     },
-    [resolveMaintenanceRpcError, updateEntryReceiptUrl]
+    [entries, resolveMaintenanceRpcError, updateEntryReceiptUrls]
   );
 
   const processReceiptBatch = useCallback(
