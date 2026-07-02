@@ -5,6 +5,8 @@ import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+const CONTENT_HORIZONTAL_INSET = 16;
+
 export function GhostModeBanner() {
   const { isActive, state, endGhostMode } = useGhostMode();
   const insets = useSafeAreaInsets();
@@ -20,15 +22,16 @@ export function GhostModeBanner() {
       style={[
         styles.container,
         Platform.OS === 'web' ? styles.containerWeb : null,
-        { paddingTop: Math.max(insets.top, Platform.OS === 'web' ? 8 : 0) },
+        { paddingTop: Math.max(insets.top, Platform.OS === 'web' ? 6 : 0) },
       ]}
       pointerEvents="box-none"
     >
       <View style={styles.inner}>
-        <View style={styles.labelRow}>
-          <FontAwesome name="user-secret" size={14} color="#FDE68A" />
-          <Text style={styles.label} numberOfLines={2}>
-            MODO GHOST ATIVO: Visualizando como {label}
+        <FontAwesome name="user-secret" size={13} color="#FDE68A" style={styles.icon} />
+        <View style={styles.textBlock}>
+          <Text style={styles.labelTitle}>Modo Ghost ativo:</Text>
+          <Text style={styles.labelSubtitle} numberOfLines={2}>
+            Visualizando como {label}
           </Text>
         </View>
         <Pressable
@@ -51,47 +54,62 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 99990,
-    paddingHorizontal: 12,
-    paddingBottom: 8,
+    paddingHorizontal: CONTENT_HORIZONTAL_INSET,
+    paddingBottom: 4,
+    alignItems: 'flex-end',
   },
   containerWeb: {
     position: 'fixed' as unknown as 'absolute',
   },
   inner: {
+    width: '50%',
+    maxWidth: 300,
+    minWidth: 168,
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    alignItems: 'flex-start',
+    gap: 8,
     backgroundColor: 'rgba(127, 29, 29, 0.94)',
     borderColor: 'rgba(252, 211, 77, 0.55)',
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
   },
-  labelRow: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  icon: {
+    marginTop: 1,
   },
-  label: {
+  textBlock: {
     flex: 1,
+    minWidth: 0,
+  },
+  labelTitle: {
+    color: '#FDE68A',
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    lineHeight: 13,
+  },
+  labelSubtitle: {
     color: '#FEF3C7',
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '600',
+    lineHeight: 14,
+    marginTop: 1,
   },
   exitButton: {
-    borderRadius: 8,
+    borderRadius: 6,
     backgroundColor: '#FCD34D',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    marginTop: 1,
   },
   exitButtonPressed: {
     opacity: 0.85,
   },
   exitButtonText: {
     color: '#1c1917',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
   },
 });
