@@ -7,6 +7,7 @@ import { isFinancialRealizado } from '@/lib/financialEntry';
 import {
   FINANCIAL_MAX_RECEIPTS_PER_ENTRY,
   getFinancialEntryReceiptUrls,
+  normalizeFinancialReceiptUrls,
 } from '@/lib/financialReceiptUrls';
 import { buildFinancialReferencia } from '@/lib/treasuryReceiptBatchPath';
 import type { TreasuryReceiptFolderAccess } from '@/lib/treasuryReceiptFolderAccess';
@@ -15,6 +16,7 @@ export type TreasuryReceiptBatchLinkItem = {
   fileName: string;
   entryId?: string;
   label?: string;
+  position?: number;
   error?: string;
   renamed?: boolean;
   renameError?: string;
@@ -42,11 +44,6 @@ const buildEntryLabel = (entry: FinancialEntry) => {
   return `${entry.transaction_date} · ${entry.transaction_kind} · ${account} · ${ministry}`;
 };
 
-const entryReceiptCount = (entry: FinancialEntry) => getFinancialEntryReceiptUrls(entry).length;
-
-const entryHasRoomForReceipt = (entry: FinancialEntry) =>
-  entryReceiptCount(entry) < FINANCIAL_MAX_RECEIPTS_PER_ENTRY;
-
 const buildReferenciaLookup = (entries: FinancialEntry[]) => {
   const lookup = new Map<string, FinancialEntry[]>();
 
@@ -71,17 +68,18 @@ const buildReferenciaLookup = (entries: FinancialEntry[]) => {
   return lookup;
 };
 
-const pickEntryForReferencia = (entries: FinancialEntry[]) => {
-  const withRoom = entries.find((entry) => entryHasRoomForReceipt(entry));
+const pickEntryForReferencia = (entries: FinancialEntry[]) => entries[0] ?? null;
 
-  return withRoom ?? entries[0] ?? null;
-};
+const slotIsOccupied = (urls: string[], position: number) => position - 1 < urls.length;
 
 export async function processTreasuryReceiptBatchFromFolder(
   folderAccess: TreasuryReceiptFolderAccess
 ): Promise<TreasuryReceiptBatchLinkReport> {
   const entries = await fetchRealizadoFinancialEntriesForReceiptBatch();
   const referenciaLookup = buildReferenciaLookup(entries);
+  const receiptUrlsByEntryId = new Map<string, string[]>(
+    entries.map((entry) => [entry.id, getFinancialEntryReceiptUrls(entry)])
+  );
   const matchedEntryIds = new Set<string>();
   const normalizedFileNames = folderAccess.files.filter((file) => file.originalFileName).length;
 
@@ -103,25 +101,35 @@ export async function processTreasuryReceiptBatchFromFolder(
     renameUnsupported: !folderAccess.canRenameAfterUpload,
   };
 
-  for (const file of folderAccess.files) {
-    const candidates = referenciaLookup.get(file.fileName);
+  const sortedFiles = [...folderAccess.files].sort((left, right) => {
+    const referenciaOrder = left.referencia.localeCompare(right.referencia, 'pt-BR');
+
+    if (referenciaOrder !== 0) {
+      return referenciaOrder;
+    }
+
+    return left.position - right.position;
+  });
+
+  for (const file of sortedFiles) {
+    const candidates = referenciaLookup.get(file.referencia);
 
     if (!candidates?.length) {
-      report.unmatchedFiles.push({ fileName: file.fileName });
+      report.unmatchedFiles.push({ fileName: file.fileName, position: file.position });
       continue;
     }
 
     const entry = pickEntryForReferencia(candidates);
 
     if (!entry) {
-      report.unmatchedFiles.push({ fileName: file.fileName });
+      report.unmatchedFiles.push({ fileName: file.fileName, position: file.position });
       continue;
     }
 
     const label = buildEntryLabel(entry);
-    const existingReceiptUrls = getFinancialEntryReceiptUrls(entry);
+    const existingReceiptUrls = receiptUrlsByEntryId.get(entry.id) ?? [];
 
-    if (!entryHasRoomForReceipt(entry)) {
+    if (slotIsOccupied(existingReceiptUrls, file.position)) {
       matchedEntryIds.add(entry.id);
 
       try {
@@ -130,6 +138,7 @@ export async function processTreasuryReceiptBatchFromFolder(
           fileName: file.fileName,
           entryId: entry.id,
           label,
+          position: file.position,
           renamed: true,
         });
       } catch (error) {
@@ -138,13 +147,27 @@ export async function processTreasuryReceiptBatchFromFolder(
           fileName: file.fileName,
           entryId: entry.id,
           label,
+          position: file.position,
           error:
             error instanceof Error
               ? error.message
-              : 'Comprovantes já completos, mas não foi possível renomear o arquivo local.',
+              : `Posição ${file.position} já possui comprovante, mas não foi possível renomear o arquivo local.`,
         });
       }
 
+      continue;
+    }
+
+    if (existingReceiptUrls.length >= FINANCIAL_MAX_RECEIPTS_PER_ENTRY) {
+      matchedEntryIds.add(entry.id);
+      report.errors.push({
+        fileName: file.fileName,
+        entryId: entry.id,
+        label,
+        position: file.position,
+        error: `Lançamento já possui ${FINANCIAL_MAX_RECEIPTS_PER_ENTRY} comprovantes.`,
+      });
+      report.success = false;
       continue;
     }
 
@@ -153,7 +176,8 @@ export async function processTreasuryReceiptBatchFromFolder(
       const result = await attachMaintenanceFinancialReceipt(
         entry.id,
         dataUrl,
-        existingReceiptUrls
+        existingReceiptUrls,
+        file.position
       );
 
       if (!result.success) {
@@ -162,10 +186,16 @@ export async function processTreasuryReceiptBatchFromFolder(
           fileName: file.fileName,
           entryId: entry.id,
           label,
+          position: file.position,
           error: result.message ?? 'Falha ao anexar comprovante.',
         });
         continue;
       }
+
+      const nextUrls = normalizeFinancialReceiptUrls(
+        'receipt_urls' in result ? result.receipt_urls : existingReceiptUrls
+      );
+      receiptUrlsByEntryId.set(entry.id, nextUrls);
 
       let renamed = false;
       let renameError: string | undefined;
@@ -186,6 +216,7 @@ export async function processTreasuryReceiptBatchFromFolder(
         fileName: file.fileName,
         entryId: entry.id,
         label,
+        position: file.position,
         renamed,
         renameError,
       });
@@ -195,27 +226,22 @@ export async function processTreasuryReceiptBatchFromFolder(
         fileName: file.fileName,
         entryId: entry.id,
         label,
+        position: file.position,
         error: error instanceof Error ? error.message : 'Erro ao processar comprovante.',
       });
     }
   }
 
-  for (const [referencia, bucket] of referenciaLookup.entries()) {
-    const hasPendingEntry = bucket.some(
-      (entry) => entryHasRoomForReceipt(entry) && !matchedEntryIds.has(entry.id)
-    );
-
-    if (!hasPendingEntry) {
-      continue;
-    }
-
+  for (const [, bucket] of referenciaLookup.entries()) {
     for (const entry of bucket) {
-      if (!entryHasRoomForReceipt(entry) || matchedEntryIds.has(entry.id)) {
+      const urls = receiptUrlsByEntryId.get(entry.id) ?? [];
+
+      if (urls.length > 0 || matchedEntryIds.has(entry.id)) {
         continue;
       }
 
       report.unmatchedEntries.push({
-        fileName: referencia,
+        fileName: entry.referencia?.trim() || buildFinancialReferencia(entry.transaction_date, entry.amount) || '—',
         entryId: entry.id,
         label: buildEntryLabel(entry),
       });

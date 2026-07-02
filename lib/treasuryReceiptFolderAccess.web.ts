@@ -1,7 +1,8 @@
 import {
   buildUpdatedTreasuryReceiptFileName,
   isTreasuryReceiptFileName,
-  normalizeTreasuryReceiptFileName,
+  parseTreasuryReceiptFileName,
+  resolveTreasuryReceiptLinkPosition,
 } from '@/lib/treasuryReceiptBatchPath';
 import type {
   TreasuryReceiptFolderAccess,
@@ -48,29 +49,34 @@ const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleL
 
     const fileHandle = handle as FileSystemFileHandleLike;
     const canRename = typeof fileHandle.move === 'function';
-    const canonical = normalizeTreasuryReceiptFileName(fileName);
+    const parsed = parseTreasuryReceiptFileName(fileName);
 
-    if (!canonical) {
+    if (!parsed) {
       continue;
     }
 
+    const { referencia, canonicalFileName, position } = parsed;
+    const linkPosition = resolveTreasuryReceiptLinkPosition(position);
+
     let effectiveName = fileName;
 
-    if (canonical !== fileName) {
+    if (canonicalFileName !== fileName) {
       if (!canRename) {
         throw new Error(
-          `Não foi possível renomear "${fileName}" para "${canonical}". Conceda permissão de escrita na pasta.`
+          `Não foi possível renomear "${fileName}" para "${canonicalFileName}". Conceda permissão de escrita na pasta.`
         );
       }
 
-      await fileHandle.move(canonical);
-      effectiveName = canonical;
+      await fileHandle.move(canonicalFileName);
+      effectiveName = canonicalFileName;
     } else {
-      effectiveName = canonical;
+      effectiveName = canonicalFileName;
     }
 
     files.push({
       fileName: effectiveName,
+      referencia,
+      position: linkPosition,
       originalFileName: fileName !== effectiveName ? fileName : undefined,
       readDataUrl: async () => readFileAsDataUrl(await fileHandle.getFile()),
       markProcessed: async () => {
@@ -83,7 +89,15 @@ const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleL
     });
   }
 
-  files.sort((left, right) => left.fileName.localeCompare(right.fileName, 'pt-BR'));
+  files.sort((left, right) => {
+    const referenciaOrder = left.referencia.localeCompare(right.referencia, 'pt-BR');
+
+    if (referenciaOrder !== 0) {
+      return referenciaOrder;
+    }
+
+    return left.position - right.position;
+  });
 
   return files;
 };

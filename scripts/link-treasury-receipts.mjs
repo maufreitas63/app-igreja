@@ -4,8 +4,9 @@
  * ⚠️ NÃO execute no SQL Editor do Supabase — este arquivo é JavaScript (Node.js).
  *    Rode no terminal/PowerShell, na pasta do projeto app-igreja.
  *
- * Padrão de arquivo: aaaammdd + espaço + valor (nnnn,nn) + .jpg
- * Exemplo: 20260526 3825,00.jpg
+ * Padrões de arquivo:
+ * - Único: aaaammdd + espaço + valor (nnnn,nn) + .jpg — ex.: 20260526 3825,00.jpg
+ * - Múltiplo: aaaammdd + espaço + valor + espaço + posição (1 dígito) + .jpg — ex.: 20260608 1500,00 2.jpg
  * Aceita também aaaa.mm.dd e valores com sinal +/- antes do montante.
  *
  * Uso (PowerShell, na raiz app-igreja):
@@ -26,8 +27,11 @@ import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import {
   buildFinancialReferencia,
+  getEntryReceiptUrls,
   isTreasuryReceiptFileName,
-  normalizeTreasuryReceiptFileName,
+  parseTreasuryReceiptFileName,
+  placeFinancialReceiptAtPosition,
+  resolveTreasuryReceiptLinkPosition,
 } from '../lib/treasuryReceiptBatchPath.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -174,8 +178,10 @@ const resolveStoragePath = (receiptUrl) => {
   return normalized.replace(new RegExp(`^${FINANCIAL_DOCS_BUCKET}/`, 'i'), '');
 };
 
+const FINANCIAL_MAX_RECEIPTS_PER_ENTRY = 3;
+
 const buildReceiptFilenameIndex = (receiptsDir, { dryRun = false } = {}) => {
-  const index = new Map();
+  const files = [];
   const normalizedNames = [];
 
   if (!fs.existsSync(receiptsDir)) {
@@ -193,16 +199,20 @@ const buildReceiptFilenameIndex = (receiptsDir, { dryRun = false } = {}) => {
       continue;
     }
 
-    const canonical = normalizeTreasuryReceiptFileName(fileName);
+    const parsed = parseTreasuryReceiptFileName(fileName);
 
-    if (!canonical) {
+    if (!parsed) {
       continue;
     }
 
-    let effectivePath = fullPath;
+    const { referencia, canonicalFileName, position } = parsed;
+    const linkPosition = resolveTreasuryReceiptLinkPosition(position);
 
-    if (canonical !== fileName) {
-      const canonicalPath = path.join(receiptsDir, canonical);
+    let effectivePath = fullPath;
+    let effectiveName = fileName;
+
+    if (canonicalFileName !== fileName) {
+      const canonicalPath = path.join(receiptsDir, canonicalFileName);
 
       if (
         !dryRun &&
@@ -210,7 +220,7 @@ const buildReceiptFilenameIndex = (receiptsDir, { dryRun = false } = {}) => {
         path.resolve(canonicalPath) !== path.resolve(fullPath)
       ) {
         console.warn(
-          `Conflito ao normalizar "${fileName}": já existe "${canonical}" na pasta.`
+          `Conflito ao normalizar "${fileName}": já existe "${canonicalFileName}" na pasta.`
         );
         continue;
       }
@@ -218,15 +228,35 @@ const buildReceiptFilenameIndex = (receiptsDir, { dryRun = false } = {}) => {
       if (!dryRun) {
         fs.renameSync(fullPath, canonicalPath);
         effectivePath = canonicalPath;
+        effectiveName = canonicalFileName;
+      } else {
+        effectiveName = canonicalFileName;
       }
 
-      normalizedNames.push({ from: fileName, to: canonical });
+      normalizedNames.push({ from: fileName, to: canonicalFileName });
+    } else {
+      effectiveName = canonicalFileName;
     }
 
-    index.set(canonical, effectivePath);
+    files.push({
+      referencia,
+      position: linkPosition,
+      fileName: effectiveName,
+      localPath: effectivePath,
+    });
   }
 
-  return { index, normalizedNames };
+  files.sort((left, right) => {
+    const referenciaOrder = left.referencia.localeCompare(right.referencia, 'pt-BR');
+
+    if (referenciaOrder !== 0) {
+      return referenciaOrder;
+    }
+
+    return left.position - right.position;
+  });
+
+  return { files, normalizedNames };
 };
 
 const fetchAllRealizadoEntries = async (supabase) => {
@@ -237,7 +267,7 @@ const fetchAllRealizadoEntries = async (supabase) => {
     const { data, error } = await supabase
       .from('financials')
       .select(
-        'id, transaction_date, amount, account, ministry, transaction_kind, movement, budget_version, receipt_url, referencia'
+        'id, transaction_date, amount, account, ministry, transaction_kind, movement, budget_version, receipt_url, receipt_urls, referencia'
       )
       .ilike('budget_version', 'realizado')
       .order('transaction_date', { ascending: true })
@@ -278,9 +308,20 @@ const deleteStorageObject = async (supabase, receiptUrl) => {
   }
 };
 
-const uploadAndLinkReceipt = async (supabase, entry, localFilePath, previousReceiptUrl) => {
+const uploadAndLinkReceipt = async (
+  supabase,
+  entry,
+  localFilePath,
+  existingReceiptUrls,
+  position
+) => {
   const storagePath = buildStoragePath(entry.id);
   const fileBuffer = fs.readFileSync(localFilePath);
+  const placed = placeFinancialReceiptAtPosition(existingReceiptUrls, position, storagePath);
+
+  if (placed.error) {
+    throw new Error(placed.error);
+  }
 
   const { error: uploadError } = await supabase.storage
     .from(FINANCIAL_DOCS_BUCKET)
@@ -293,10 +334,13 @@ const uploadAndLinkReceipt = async (supabase, entry, localFilePath, previousRece
     throw new Error(`Upload falhou: ${uploadError.message}`);
   }
 
+  const nextReceiptUrls = placed.urls;
+
   const { error: updateError } = await supabase
     .from('financials')
     .update({
-      receipt_url: storagePath,
+      receipt_urls: nextReceiptUrls,
+      receipt_url: nextReceiptUrls[0] ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', entry.id);
@@ -306,12 +350,32 @@ const uploadAndLinkReceipt = async (supabase, entry, localFilePath, previousRece
     throw new Error(`Update falhou: ${updateError.message}`);
   }
 
-  if (previousReceiptUrl?.trim()) {
-    await deleteStorageObject(supabase, previousReceiptUrl);
+  if (placed.replacedUrl?.trim()) {
+    await deleteStorageObject(supabase, placed.replacedUrl);
   }
 
-  return storagePath;
+  return { storagePath, receiptUrls: nextReceiptUrls };
 };
+
+const buildReferenciaLookup = (entries) => {
+  const lookup = new Map();
+
+  for (const entry of entries) {
+    const referencia = resolveReceiptFilename(entry);
+
+    if (!referencia) {
+      continue;
+    }
+
+    const bucket = lookup.get(referencia) ?? [];
+    bucket.push(entry);
+    lookup.set(referencia, bucket);
+  }
+
+  return lookup;
+};
+
+const slotIsOccupied = (urls, position) => position - 1 < urls.length;
 
 const formatEntryLabel = (entry) => {
   const referencia = resolveReceiptFilename(entry);
@@ -465,12 +529,12 @@ const main = async () => {
     process.exit(1);
   }
 
-  let receiptIndex;
+  let receiptFiles;
   let normalizedReceiptNames = [];
 
   try {
     const built = buildReceiptFilenameIndex(options.receiptsDir, { dryRun: options.dryRun });
-    receiptIndex = built.index;
+    receiptFiles = built.files;
     normalizedReceiptNames = built.normalizedNames;
   } catch (error) {
     writeFailureReport(
@@ -484,7 +548,7 @@ const main = async () => {
 
   console.log(`Supabase: ${supabaseUrl}`);
   console.log(`Diretório de JPG: ${options.receiptsDir}`);
-  console.log(`Arquivos JPG indexados: ${receiptIndex.size}`);
+  console.log(`Arquivos JPG indexados: ${receiptFiles.length}`);
   if (normalizedReceiptNames.length) {
     console.log(`Nomes normalizados para referencia: ${normalizedReceiptNames.length}`);
   }
@@ -523,67 +587,69 @@ const main = async () => {
     errors: [],
   };
 
-  for (const entry of entries) {
-    const label = formatEntryLabel(entry);
-    const expectedFilename = resolveReceiptFilename(entry);
+  const referenciaLookup = buildReferenciaLookup(entries);
+  const receiptUrlsByEntryId = new Map(
+    entries.map((entry) => [entry.id, getEntryReceiptUrls(entry)])
+  );
+  const matchedEntryIds = new Set();
 
-    if (!expectedFilename) {
-      report.summary.invalidFilename += 1;
-      report.errors.push({
-        entryId: entry.id,
-        label,
-        error: 'Data de transação inválida para montar o nome do arquivo.',
+  for (const file of receiptFiles) {
+    const candidates = referenciaLookup.get(file.referencia);
+
+    if (!candidates?.length) {
+      report.summary.fileNotFound += 1;
+      report.notFound.push({
+        label: file.fileName,
+        expectedFilename: file.referencia,
+        position: file.position,
       });
       continue;
     }
 
-    if (entry.receipt_url?.trim() && !options.force) {
-      const localFile = receiptIndex.get(expectedFilename);
+    const entry = candidates[0];
+    const label = formatEntryLabel(entry);
+    const existingReceiptUrls = receiptUrlsByEntryId.get(entry.id) ?? [];
 
-      if (!localFile) {
-        report.summary.skippedAlreadyLinked += 1;
-        report.skipped.push({
-          entryId: entry.id,
-          label,
-          expectedFilename,
-          receiptUrl: entry.receipt_url,
-        });
-        continue;
-      }
-
+    if (!options.force && slotIsOccupied(existingReceiptUrls, file.position)) {
       if (options.dryRun) {
         report.summary.renamedOnly = (report.summary.renamedOnly ?? 0) + 1;
         (report.renamedOnly ??= []).push({
           entryId: entry.id,
           label,
-          expectedFilename,
-          localFile,
+          expectedFilename: file.fileName,
+          referencia: file.referencia,
+          position: file.position,
+          localFile: file.localPath,
           dryRun: true,
         });
-        console.log(`[simulação rename] ${label} ← ${expectedFilename}`);
+        console.log(`[simulação rename] ${label} ← ${file.fileName} (posição ${file.position})`);
         continue;
       }
 
       try {
-        const processedLocalFile = markLocalReceiptProcessed(localFile);
+        const processedLocalFile = markLocalReceiptProcessed(file.localPath);
         report.summary.renamedOnly = (report.summary.renamedOnly ?? 0) + 1;
         (report.renamedOnly ??= []).push({
           entryId: entry.id,
           label,
-          expectedFilename,
+          expectedFilename: file.fileName,
+          referencia: file.referencia,
+          position: file.position,
           localFile: processedLocalFile,
         });
+        matchedEntryIds.add(entry.id);
         console.log(
-          `[OK rename] ${label} ← ${expectedFilename} → ${path.basename(processedLocalFile)}`
+          `[OK rename] ${label} ← ${file.fileName} (posição ${file.position}) → ${path.basename(processedLocalFile)}`
         );
       } catch (renameError) {
         report.summary.errors += 1;
         report.errors.push({
           entryId: entry.id,
           label,
-          expectedFilename,
-          localFile,
-          error: `Comprovante já anexado, mas falha ao renomear: ${
+          expectedFilename: file.fileName,
+          position: file.position,
+          localFile: file.localPath,
+          error: `Posição ${file.position} já possui comprovante, mas falha ao renomear: ${
             renameError instanceof Error ? renameError.message : String(renameError)
           }`,
         });
@@ -593,14 +659,14 @@ const main = async () => {
       continue;
     }
 
-    const localFile = receiptIndex.get(expectedFilename);
-
-    if (!localFile) {
-      report.summary.fileNotFound += 1;
-      report.notFound.push({
+    if (existingReceiptUrls.length >= FINANCIAL_MAX_RECEIPTS_PER_ENTRY && !options.force) {
+      report.summary.errors += 1;
+      report.errors.push({
         entryId: entry.id,
         label,
-        expectedFilename,
+        expectedFilename: file.fileName,
+        position: file.position,
+        error: `Lançamento já possui ${FINANCIAL_MAX_RECEIPTS_PER_ENTRY} comprovantes.`,
       });
       continue;
     }
@@ -610,34 +676,40 @@ const main = async () => {
       report.linked.push({
         entryId: entry.id,
         label,
-        expectedFilename,
-        localFile,
+        expectedFilename: file.fileName,
+        referencia: file.referencia,
+        position: file.position,
+        localFile: file.localPath,
         storagePath: null,
         dryRun: true,
       });
-      console.log(`[simulação] ${label} ← ${expectedFilename}`);
+      console.log(`[simulação] ${label} ← ${file.fileName} (posição ${file.position})`);
       continue;
     }
 
     try {
-      const storagePath = await uploadAndLinkReceipt(
+      const { storagePath, receiptUrls } = await uploadAndLinkReceipt(
         supabase,
         entry,
-        localFile,
-        options.force ? entry.receipt_url : null
+        file.localPath,
+        existingReceiptUrls,
+        file.position
       );
 
-      let processedLocalFile = localFile;
+      receiptUrlsByEntryId.set(entry.id, receiptUrls);
+
+      let processedLocalFile = file.localPath;
 
       try {
-        processedLocalFile = markLocalReceiptProcessed(localFile);
+        processedLocalFile = markLocalReceiptProcessed(file.localPath);
       } catch (renameError) {
         report.summary.errors += 1;
         report.errors.push({
           entryId: entry.id,
           label,
-          expectedFilename,
-          localFile,
+          expectedFilename: file.fileName,
+          position: file.position,
+          localFile: file.localPath,
           error: `Comprovante anexado, mas falha ao renomear: ${
             renameError instanceof Error ? renameError.message : String(renameError)
           }`,
@@ -650,22 +722,45 @@ const main = async () => {
       report.linked.push({
         entryId: entry.id,
         label,
-        expectedFilename,
+        expectedFilename: file.fileName,
+        referencia: file.referencia,
+        position: file.position,
         localFile: processedLocalFile,
         storagePath,
       });
+      matchedEntryIds.add(entry.id);
 
-      console.log(`[OK] ${label} ← ${expectedFilename} → ${path.basename(processedLocalFile)}`);
+      console.log(
+        `[OK] ${label} ← ${file.fileName} (posição ${file.position}) → ${path.basename(processedLocalFile)}`
+      );
     } catch (error) {
       report.summary.errors += 1;
       report.errors.push({
         entryId: entry.id,
         label,
-        expectedFilename,
-        localFile,
+        expectedFilename: file.fileName,
+        position: file.position,
+        localFile: file.localPath,
         error: error instanceof Error ? error.message : String(error),
       });
       console.error(`[ERRO] ${label}: ${error instanceof Error ? error.message : error}`);
+    }
+  }
+
+  for (const [, bucket] of referenciaLookup.entries()) {
+    for (const entry of bucket) {
+      const urls = receiptUrlsByEntryId.get(entry.id) ?? [];
+
+      if (urls.length > 0 || matchedEntryIds.has(entry.id)) {
+        continue;
+      }
+
+      report.summary.fileNotFound += 1;
+      report.notFound.push({
+        entryId: entry.id,
+        label: formatEntryLabel(entry),
+        expectedFilename: resolveReceiptFilename(entry),
+      });
     }
   }
 

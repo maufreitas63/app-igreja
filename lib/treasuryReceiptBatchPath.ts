@@ -70,12 +70,52 @@ const parseTreasuryReceiptAmountToken = (token: string) => {
   return formatTreasuryReceiptAmount(value);
 };
 
+/** Converte o trecho sem extensão (e sem sufixo de posição) para aaaammdd nnnn,nn */
+const parseTreasuryReceiptStemToReferenciaBase = (stem: string): string | null => {
+  const dottedDateMatch = stem.match(/^(\d{4})[.\-/](\d{2})[.\-/](\d{2})\s+([+-]?\s*[\d.,]+)$/);
+
+  if (dottedDateMatch) {
+    const [, year, month, day, amountToken] = dottedDateMatch;
+    const amount = parseTreasuryReceiptAmountToken(amountToken);
+
+    if (!amount) {
+      return null;
+    }
+
+    return `${year}${month}${day} ${amount}`;
+  }
+
+  const compactDateMatch = stem.match(/^(\d{4})(\d{2})(\d{2})\s+([+-]?\s*[\d.,]+)$/);
+
+  if (compactDateMatch) {
+    const [, year, month, day, amountToken] = compactDateMatch;
+    const amount = parseTreasuryReceiptAmountToken(amountToken);
+
+    if (!amount) {
+      return null;
+    }
+
+    return `${year}${month}${day} ${amount}`;
+  }
+
+  return null;
+};
+
+export type ParsedTreasuryReceiptFileName = {
+  /** Chave de busca do lançamento: aaaammdd nnnn,nn.jpg */
+  referencia: string;
+  /** Nome canônico do arquivo após normalização. */
+  canonicalFileName: string;
+  /** Posição 1–3 quando o nome termina com espaço + dígito; null no padrão único. */
+  position: number | null;
+};
+
 /**
- * Converte nome de JPG para o padrão referencia: aaaammdd nnnn,nn.jpg
- * - Data aaaa.mm.dd → aaaammdd
- * - Remove sinal +/- antes do valor
+ * Interpreta nomes JPG de comprovantes.
+ * - Único: aaaammdd nnnn,nn.jpg
+ * - Múltiplo: aaaammdd nnnn,nn n.jpg (espaço obrigatório antes do dígito de posição)
  */
-export const normalizeTreasuryReceiptFileName = (fileName: string): string | null => {
+export const parseTreasuryReceiptFileName = (fileName: string): ParsedTreasuryReceiptFileName | null => {
   if (typeof fileName !== 'string' || !fileName.trim()) {
     return null;
   }
@@ -90,38 +130,48 @@ export const normalizeTreasuryReceiptFileName = (fileName: string): string | nul
     return null;
   }
 
-  const withoutExt = name.replace(/\.jpg$/i, '').trim();
+  let stem = name.replace(/\.jpg$/i, '').trim();
+  let position: number | null = null;
 
-  const dottedDateMatch = withoutExt.match(
-    /^(\d{4})[.\-/](\d{2})[.\-/](\d{2})\s+([+-]?\s*[\d.,]+)$/
-  );
+  const positionMatch = stem.match(/ (\d)$/);
 
-  if (dottedDateMatch) {
-    const [, year, month, day, amountToken] = dottedDateMatch;
-    const amount = parseTreasuryReceiptAmountToken(amountToken);
+  if (positionMatch) {
+    const digit = Number(positionMatch[1]);
 
-    if (!amount) {
-      return null;
+    if (Number.isInteger(digit) && digit >= 1 && digit <= 3) {
+      position = digit;
+      stem = stem.slice(0, -positionMatch[0].length).trim();
     }
-
-    return `${year}${month}${day} ${amount}.jpg`;
   }
 
-  const compactDateMatch = withoutExt.match(/^(\d{4})(\d{2})(\d{2})\s+([+-]?\s*[\d.,]+)$/);
+  const referenciaBase = parseTreasuryReceiptStemToReferenciaBase(stem);
 
-  if (compactDateMatch) {
-    const [, year, month, day, amountToken] = compactDateMatch;
-    const amount = parseTreasuryReceiptAmountToken(amountToken);
-
-    if (!amount) {
-      return null;
-    }
-
-    return `${year}${month}${day} ${amount}.jpg`;
+  if (!referenciaBase) {
+    return null;
   }
 
-  return null;
+  const referencia = `${referenciaBase}.jpg`;
+  const canonicalFileName =
+    position !== null ? `${referenciaBase} ${position}.jpg` : `${referenciaBase}.jpg`;
+
+  return {
+    referencia,
+    canonicalFileName,
+    position,
+  };
 };
+
+/** Posição efetiva para vinculação: padrão único usa a posição 1. */
+export const resolveTreasuryReceiptLinkPosition = (position: number | null | undefined) =>
+  position ?? 1;
+
+/**
+ * Converte nome de JPG para o padrão canônico (referencia ou referencia + posição).
+ * - Data aaaa.mm.dd → aaaammdd
+ * - Remove sinal +/- antes do valor
+ */
+export const normalizeTreasuryReceiptFileName = (fileName: string): string | null =>
+  parseTreasuryReceiptFileName(fileName)?.canonicalFileName ?? null;
 
 export const isTreasuryReceiptFileName = (fileName: string) => {
   if (typeof fileName !== 'string' || !fileName.trim()) {

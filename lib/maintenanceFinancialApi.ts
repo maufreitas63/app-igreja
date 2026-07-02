@@ -21,6 +21,7 @@ import {
   FINANCIAL_MAX_RECEIPTS_PER_ENTRY,
   getFinancialEntryReceiptUrls,
   normalizeFinancialReceiptUrls,
+  placeFinancialReceiptAtPosition,
 } from '@/lib/financialReceiptUrls';
 import type { FinancialMonthKey } from '@/lib/financialMonth';
 import { getFinancialMonthDateRange } from '@/lib/financialMonth';
@@ -448,7 +449,8 @@ export async function updateMaintenanceFinancialEntryReceipt(id: string, receipt
 export async function attachMaintenanceFinancialReceipt(
   entryId: string,
   imageInput: string,
-  existingReceiptUrls: string[] = []
+  existingReceiptUrls: string[] = [],
+  position?: number
 ) {
   const access = await assertMaintenanceFinancialUpdateAccess();
 
@@ -457,8 +459,16 @@ export async function attachMaintenanceFinancialReceipt(
   }
 
   const currentUrls = normalizeFinancialReceiptUrls(existingReceiptUrls);
+  const targetPosition = position ?? currentUrls.length + 1;
 
-  if (currentUrls.length >= FINANCIAL_MAX_RECEIPTS_PER_ENTRY) {
+  if (targetPosition > FINANCIAL_MAX_RECEIPTS_PER_ENTRY) {
+    return {
+      success: false as const,
+      message: `Cada lançamento aceita no máximo ${FINANCIAL_MAX_RECEIPTS_PER_ENTRY} comprovantes.`,
+    };
+  }
+
+  if (!position && currentUrls.length >= FINANCIAL_MAX_RECEIPTS_PER_ENTRY) {
     return {
       success: false as const,
       message: `Cada lançamento aceita no máximo ${FINANCIAL_MAX_RECEIPTS_PER_ENTRY} comprovantes.`,
@@ -469,7 +479,18 @@ export async function attachMaintenanceFinancialReceipt(
 
   try {
     uploadedPath = await uploadFinancialReceiptImage(entryId, imageInput);
-    const nextUrls = [...currentUrls, uploadedPath];
+    const placed = placeFinancialReceiptAtPosition(currentUrls, targetPosition, uploadedPath);
+
+    if (placed.error) {
+      await deleteFinancialReceiptFile(uploadedPath).catch(() => undefined);
+
+      return {
+        success: false as const,
+        message: placed.error,
+      };
+    }
+
+    const nextUrls = placed.urls;
     const result = await updateMaintenanceFinancialEntryReceipts(entryId, nextUrls);
 
     if (!result.success) {
@@ -481,6 +502,10 @@ export async function attachMaintenanceFinancialReceipt(
         success: false as const,
         message: result.message ?? 'Não foi possível vincular o comprovante ao lançamento.',
       };
+    }
+
+    if (placed.replacedUrl && placed.replacedUrl !== uploadedPath) {
+      await deleteFinancialReceiptFile(placed.replacedUrl).catch(() => undefined);
     }
 
     return {

@@ -39,6 +39,51 @@ export const normalizeFinancialReceiptUrls = (urls: unknown): string[] => {
   return result;
 };
 
+export type PlaceFinancialReceiptAtPositionResult = {
+  urls: string[];
+  replacedUrl: string | null;
+  error?: string;
+};
+
+/** Insere ou substitui comprovante na posição 1–3 (ordem densa no array). */
+export const placeFinancialReceiptAtPosition = (
+  currentUrls: string[],
+  position: number,
+  newUrl: string
+): PlaceFinancialReceiptAtPositionResult => {
+  if (position < 1 || position > FINANCIAL_MAX_RECEIPTS_PER_ENTRY) {
+    return {
+      urls: normalizeFinancialReceiptUrls(currentUrls),
+      replacedUrl: null,
+      error: `Posição de comprovante inválida: ${position}.`,
+    };
+  }
+
+  const next = normalizeFinancialReceiptUrls(currentUrls);
+  const index = position - 1;
+
+  if (index > next.length) {
+    return {
+      urls: next,
+      replacedUrl: null,
+      error: `Não é possível anexar na posição ${position} sem os comprovantes anteriores.`,
+    };
+  }
+
+  const replacedUrl = index < next.length ? next[index] ?? null : null;
+
+  if (index === next.length) {
+    next.push(newUrl);
+  } else {
+    next[index] = newUrl;
+  }
+
+  return {
+    urls: normalizeFinancialReceiptUrls(next),
+    replacedUrl,
+  };
+};
+
 export const getFinancialEntryReceiptUrls = (entry: Pick<FinancialEntry, 'receipt_url' | 'receipt_urls'>) => {
   const fromArray = normalizeFinancialReceiptUrls(entry.receipt_urls);
 
