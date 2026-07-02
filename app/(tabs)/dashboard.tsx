@@ -64,6 +64,7 @@ import {
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
+import { useGhostMode } from '@/context/GhostModeContext';
 import { MAP_PIN_DETAIL_DENIED_MESSAGE } from '@/hooks/useMapPinDetailAccess';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import {
