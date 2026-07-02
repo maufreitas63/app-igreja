@@ -141,10 +141,13 @@ export function MaintenanceGhostModeCard({ isActive = false, panelHeight }: Prop
         <>
           <SectionLabel>Usuário ativo</SectionLabel>
           <DropdownSelect
-            value={selectedProfileId}
             options={profileOptions}
-            onChange={setSelectedProfileId}
+            selectedValue={selectedProfileId ?? ''}
+            onValueChange={(value) => setSelectedProfileId(value || null)}
+            modalTitle="Selecionar usuário"
             placeholder="Selecione um usuário..."
+            searchPlaceholder="Digite nome ou telefone..."
+            searchable
             disabled={starting || profileOptions.length === 0}
           />
 
