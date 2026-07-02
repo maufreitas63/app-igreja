@@ -22,6 +22,7 @@ export type TreasuryReceiptBatchLinkReport = {
   folderFileCount: number;
   entriesWithReferencia: number;
   linked: TreasuryReceiptBatchLinkItem[];
+  renamedOnly: TreasuryReceiptBatchLinkItem[];
   skippedAlreadyLinked: TreasuryReceiptBatchLinkItem[];
   unmatchedFiles: TreasuryReceiptBatchLinkItem[];
   unmatchedEntries: TreasuryReceiptBatchLinkItem[];
@@ -82,6 +83,7 @@ export async function processTreasuryReceiptBatchFromFolder(
       0
     ),
     linked: [],
+    renamedOnly: [],
     skippedAlreadyLinked: [],
     unmatchedFiles: [],
     unmatchedEntries: [],
@@ -107,11 +109,29 @@ export async function processTreasuryReceiptBatchFromFolder(
     const label = buildEntryLabel(entry);
 
     if (entry.receipt_url?.trim()) {
-      report.skippedAlreadyLinked.push({
-        fileName: file.fileName,
-        entryId: entry.id,
-        label,
-      });
+      matchedEntryIds.add(entry.id);
+
+      try {
+        await file.markProcessed();
+        report.renamedOnly.push({
+          fileName: file.fileName,
+          entryId: entry.id,
+          label,
+          renamed: true,
+        });
+      } catch (error) {
+        report.success = false;
+        report.errors.push({
+          fileName: file.fileName,
+          entryId: entry.id,
+          label,
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Comprovante já anexado, mas não foi possível renomear o arquivo local.',
+        });
+      }
+
       continue;
     }
 
@@ -186,16 +206,44 @@ export async function processTreasuryReceiptBatchFromFolder(
   }
 
   const linkedCount = report.linked.length;
+  const renamedOnlyCount = report.renamedOnly.length;
 
-  if (linkedCount === 0 && report.errors.length === 0 && report.skippedAlreadyLinked.length === 0) {
+  if (
+    linkedCount === 0 &&
+    renamedOnlyCount === 0 &&
+    report.errors.length === 0 &&
+    report.skippedAlreadyLinked.length === 0
+  ) {
     report.message = 'Nenhum comprovante novo foi vinculado.';
   } else {
-    report.message = `${linkedCount} comprovante(s) vinculado(s) com sucesso.`;
+    const parts: string[] = [];
+
+    if (linkedCount > 0) {
+      parts.push(`${linkedCount} vinculado(s)`);
+    }
+
+    if (renamedOnlyCount > 0) {
+      parts.push(`${renamedOnlyCount} renomeado(s) (já anexados)`);
+    }
+
+    report.message =
+      parts.length > 0 ? `${parts.join(' · ')} com sucesso.` : 'Processamento concluído.';
   }
 
   if (report.errors.length > 0) {
     report.success = false;
-    report.message = `${linkedCount} vinculado(s) · ${report.errors.length} erro(s).`;
+    const parts: string[] = [];
+
+    if (linkedCount > 0) {
+      parts.push(`${linkedCount} vinculado(s)`);
+    }
+
+    if (renamedOnlyCount > 0) {
+      parts.push(`${renamedOnlyCount} renomeado(s)`);
+    }
+
+    parts.push(`${report.errors.length} erro(s)`);
+    report.message = parts.join(' · ');
   }
 
   return report;

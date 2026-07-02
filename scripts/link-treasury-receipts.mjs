@@ -327,7 +327,8 @@ const writeReportFiles = (report) => {
     '',
     'Resumo',
     `  Lançamentos REALIZADO analisados: ${report.summary.totalRealizado}`,
-    `  Já possuíam comprovante (ignorados): ${report.summary.skippedAlreadyLinked}`,
+    `  Já possuíam comprovante (sem JPG local): ${report.summary.skippedAlreadyLinked}`,
+    `  JPG local renomeado (já anexados): ${report.summary.renamedOnly ?? 0}`,
     `  Arquivo JPG não encontrado: ${report.summary.fileNotFound}`,
     `  Nome de arquivo inválido (data): ${report.summary.invalidFilename}`,
     `  Vinculados com sucesso: ${report.summary.linked}`,
@@ -350,6 +351,18 @@ const writeReportFiles = (report) => {
     }
   } else {
     lines.push('Nenhum item foi associado nesta execução.', '');
+  }
+
+  if (report.renamedOnly?.length) {
+    lines.push('JPG renomeados (comprovante já anexado)', '─'.repeat(72));
+
+    for (const item of report.renamedOnly) {
+      lines.push(
+        `[rename] ${item.label}`,
+        `     Arquivo: ${item.expectedFilename} → ${path.basename(item.localFile)}`,
+        ''
+      );
+    }
   }
 
   if (report.notFound.length) {
@@ -397,12 +410,14 @@ const writeFailureReport = (message, details = {}) => {
     summary: {
       totalRealizado: 0,
       skippedAlreadyLinked: 0,
+      renamedOnly: 0,
       fileNotFound: 0,
       invalidFilename: 0,
       linked: 0,
       errors: 1,
     },
     linked: [],
+    renamedOnly: [],
     skipped: [],
     notFound: [],
     errors: [{ label: 'Execução interrompida', error: message }],
@@ -464,12 +479,14 @@ const main = async () => {
     summary: {
       totalRealizado: entries.length,
       skippedAlreadyLinked: 0,
+      renamedOnly: 0,
       fileNotFound: 0,
       invalidFilename: 0,
       linked: 0,
       errors: 0,
     },
     linked: [],
+    renamedOnly: [],
     skipped: [],
     notFound: [],
     errors: [],
@@ -490,13 +507,58 @@ const main = async () => {
     }
 
     if (entry.receipt_url?.trim() && !options.force) {
-      report.summary.skippedAlreadyLinked += 1;
-      report.skipped.push({
-        entryId: entry.id,
-        label,
-        expectedFilename,
-        receiptUrl: entry.receipt_url,
-      });
+      const localFile = receiptIndex.get(expectedFilename);
+
+      if (!localFile) {
+        report.summary.skippedAlreadyLinked += 1;
+        report.skipped.push({
+          entryId: entry.id,
+          label,
+          expectedFilename,
+          receiptUrl: entry.receipt_url,
+        });
+        continue;
+      }
+
+      if (options.dryRun) {
+        report.summary.renamedOnly = (report.summary.renamedOnly ?? 0) + 1;
+        (report.renamedOnly ??= []).push({
+          entryId: entry.id,
+          label,
+          expectedFilename,
+          localFile,
+          dryRun: true,
+        });
+        console.log(`[simulação rename] ${label} ← ${expectedFilename}`);
+        continue;
+      }
+
+      try {
+        const processedLocalFile = markLocalReceiptProcessed(localFile);
+        report.summary.renamedOnly = (report.summary.renamedOnly ?? 0) + 1;
+        (report.renamedOnly ??= []).push({
+          entryId: entry.id,
+          label,
+          expectedFilename,
+          localFile: processedLocalFile,
+        });
+        console.log(
+          `[OK rename] ${label} ← ${expectedFilename} → ${path.basename(processedLocalFile)}`
+        );
+      } catch (renameError) {
+        report.summary.errors += 1;
+        report.errors.push({
+          entryId: entry.id,
+          label,
+          expectedFilename,
+          localFile,
+          error: `Comprovante já anexado, mas falha ao renomear: ${
+            renameError instanceof Error ? renameError.message : String(renameError)
+          }`,
+        });
+        console.error(`[ERRO rename] ${label}: ${renameError instanceof Error ? renameError.message : renameError}`);
+      }
+
       continue;
     }
 

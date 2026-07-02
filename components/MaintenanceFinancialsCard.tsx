@@ -1049,7 +1049,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           title="Comprovantes em lote"
           subtitle={
             receiptBatchReport
-              ? `${receiptBatchReport.linked.length} vinculado(s) · ${receiptBatchReport.skippedAlreadyLinked.length} já anexado(s)`
+              ? `${receiptBatchReport.linked.length} vinculado(s) · ${receiptBatchReport.renamedOnly.length} renomeado(s)`
               : 'Vincular JPG locais pelo campo referencia'
           }
           expanded={expandedSection === 'receipt_batch'}
@@ -1105,8 +1105,8 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                   {receiptBatchReport.entriesWithReferencia}
                 </Text>
                 <Text style={styles.receiptBatchReportLine}>
-                  Vinculados: {receiptBatchReport.linked.length} · Já anexados:{' '}
-                  {receiptBatchReport.skippedAlreadyLinked.length} · Sem correspondência:{' '}
+                  Vinculados: {receiptBatchReport.linked.length} · Renomeados (já anexados):{' '}
+                  {receiptBatchReport.renamedOnly.length} · Sem correspondência:{' '}
                   {receiptBatchReport.unmatchedFiles.length + receiptBatchReport.unmatchedEntries.length}
                   {receiptBatchReport.errors.length
                     ? ` · Erros: ${receiptBatchReport.errors.length}`
@@ -1117,6 +1117,15 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                   <Text key={`${item.entryId}-${item.fileName}`} style={styles.receiptBatchReportOk}>
                     [OK] {item.fileName}
                     {item.renamed ? ' → updated_' : item.renameError ? ' (sem rename)' : ''}
+                  </Text>
+                ))}
+
+                {receiptBatchReport.renamedOnly.slice(0, 6).map((item) => (
+                  <Text
+                    key={`renamed-${item.entryId}-${item.fileName}`}
+                    style={styles.receiptBatchReportOk}
+                  >
+                    [rename] {item.fileName} → updated_ (já anexado)
                   </Text>
                 ))}
 
