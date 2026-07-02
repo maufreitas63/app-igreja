@@ -7,6 +7,10 @@ import {
   repairUserSessionReference,
 } from '@/lib/userSession';
 import { getGhostEffectiveProfileId, isGhostModeActive } from '@/lib/ghostMode';
+import {
+  fetchEffectiveProfileColumnAccess,
+  shouldUseEffectiveProfileRpc,
+} from '@/lib/effectiveProfileRpc';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { ACCESS_SCREEN } from '@/lib/accessScreen';
 
@@ -138,6 +142,14 @@ export async function loadProfileColumnAccess(
   profileId: string,
   options?: { forceRefresh?: boolean }
 ): Promise<ProfileColumnAccess> {
+  if (shouldUseEffectiveProfileRpc()) {
+    const sessionAccess = await fetchEffectiveProfileColumnAccess();
+
+    if (sessionAccess) {
+      return sessionAccess;
+    }
+  }
+
   if (await sessionIsSuperAdmin(profileId, options)) {
     const allGranted = Object.fromEntries(
       PROFILE_MANAGE_COLUMN_FIELDS.map((field) => [field, true] as const)

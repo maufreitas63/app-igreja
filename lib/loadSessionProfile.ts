@@ -1,3 +1,4 @@
+import { fetchEffectiveSessionProfileRow } from '@/lib/effectiveProfileRpc';
 import { getGhostEffectiveProfileId, isGhostModeActive } from '@/lib/ghostMode';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
@@ -121,6 +122,22 @@ export async function loadSessionProfileById(
 
   if (!trimmed) {
     return null;
+  }
+
+  if (isGhostModeActive() && getGhostEffectiveProfileId() === trimmed) {
+    const row = await fetchEffectiveSessionProfileRow();
+
+    if (row) {
+      return normalizeProfileRow({
+        id: String(row.id ?? trimmed),
+        full_name: row.full_name as string | null | undefined,
+        codigo_membro: row.codigo_membro as string | null | undefined,
+        lgpd_accepted: row.lgpd_accepted as boolean | null | undefined,
+        phone: row.phone as string | null | undefined,
+        family_id: row.family_id as string | null | undefined,
+        birth_date: row.birth_date as string | null | undefined,
+      });
+    }
   }
 
   const { data, error } = await supabase

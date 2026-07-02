@@ -74,7 +74,8 @@ import {
   sessionHasAccess,
   type ProfileColumnAccess,
 } from '@/lib/accessControl';
-import { getGhostEffectiveProfileId } from '@/lib/ghostMode';
+import { getGhostEffectiveProfileId, isGhostModeActive } from '@/lib/ghostMode';
+import { fetchEffectiveSessionProfileRow } from '@/lib/effectiveProfileRpc';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { clearStoredProfileId, getStoredProfileId, getStoredUserPhone } from '@/lib/userSession';
 import {
@@ -382,6 +383,30 @@ function pickBestProfileRow(rows: ProfileRecord[]): ProfileRecord | null {
 }
 
 async function loadProfile(phoneParam: string | null): Promise<ProfileRecord | null> {
+  if (isGhostModeActive()) {
+    const row = await fetchEffectiveSessionProfileRow();
+
+    if (row) {
+      return row as ProfileRecord;
+    }
+
+    const ghostProfileId = getGhostEffectiveProfileId();
+
+    if (ghostProfileId) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', ghostProfileId)
+        .maybeSingle();
+
+      if (!error && data) {
+        return data as ProfileRecord;
+      }
+    }
+
+    return null;
+  }
+
   const ghostProfileId = getGhostEffectiveProfileId();
 
   if (ghostProfileId) {
@@ -1164,6 +1189,7 @@ export default function ManageProfile() {
         && profileRef.current
         && lastProfileFetchAtRef.current > 0
         && Date.now() - lastProfileFetchAtRef.current < PROFILE_FOCUS_STALE_MS
+        && (!ghostModeActive || profileRef.current.id === ghostModeState?.targetProfileId)
       ) {
         return;
       }
@@ -1192,7 +1218,7 @@ export default function ManageProfile() {
         setLoading(false);
       }
     },
-    [phoneParam, ghostModeActive, ghostModeState?.targetProfileId]
+    [ghostModeActive, ghostModeState?.targetProfileId, phoneParam]
   );
 
   useFocusEffect(
@@ -1234,6 +1260,8 @@ export default function ManageProfile() {
         }
 
         if (!allowed) {
+          setLoading(false);
+          setColumnAccessLoading(false);
           Alert.alert(
             'Acesso negado',
             'Você não tem permissão para abrir Dados cadastrais.',
@@ -1242,7 +1270,7 @@ export default function ManageProfile() {
           return;
         }
 
-        await fetchProfile();
+        await fetchProfile({ force: ghostModeActive });
       })();
 
       return () => {
@@ -2269,12 +2297,18 @@ export default function ManageProfile() {
         {loading ? (
           <Text style={styles.emptyText}>Carregando perfil...</Text>
         ) : !profile ? (
-          <Text style={styles.emptyText}>Perfil não encontrado.</Text>
+          <Text style={styles.emptyText}>
+            {ghostModeActive
+              ? 'Perfil simulado não encontrado. Reexecute scripts/access-control-ghost-mode.sql no Supabase e recarregue o app.'
+              : 'Perfil não encontrado.'}
+          </Text>
         ) : columnAccessLoading ? (
           <Text style={styles.emptyText}>Carregando permissões dos campos...</Text>
         ) : profileSections.length === 0 ? (
           <Text style={styles.emptyText}>
-            Você não tem permissão para visualizar campos deste perfil.
+            {ghostModeActive
+              ? 'Nenhum campo visível para este usuário simulado com as permissões atuais.'
+              : 'Você não tem permissão para visualizar campos deste perfil.'}
           </Text>
         ) : (
           <>

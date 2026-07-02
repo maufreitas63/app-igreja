@@ -2760,7 +2760,13 @@ export default function Dashboard() {
                             '/manage-profile',
                             ACCESS_SCREEN.manageProfile,
                             buildChildScreenParams(
-                              userPhone ? { phone: encodeURIComponent(userPhone) } : {}
+                              (ghostModeActive ? profile?.phone : userPhone)
+                                ? {
+                                    phone: encodeURIComponent(
+                                      String(ghostModeActive ? profile?.phone : userPhone)
+                                    ),
+                                  }
+                                : {}
                             )
                           )
                         }

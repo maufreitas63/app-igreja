@@ -566,6 +566,91 @@ begin
 end;
 $$;
 
+-- Perfil e ACL de colunas pela sessão efetiva (Modo Ghost ou real).
+create or replace function public.obter_perfil_sessao_efetiva()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_profile_id uuid;
+begin
+  v_profile_id := public.current_session_profile_id();
+
+  if v_profile_id is null then
+    return null;
+  end if;
+
+  return (
+    select to_jsonb(p.*)
+      from public.profiles p
+     where p.id = v_profile_id
+  );
+end;
+$$;
+
+create or replace function public.listar_acesso_colunas_perfil_sessao()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_profile_id uuid;
+  v_view jsonb := '{}'::jsonb;
+  v_update jsonb := '{}'::jsonb;
+  v_field text;
+  v_fields text[] := array[
+    'full_name',
+    'phone',
+    'birth_date',
+    'email',
+    'cpf',
+    'cep',
+    'address_street',
+    'address_number',
+    'address_complement',
+    'address_neighborhood',
+    'address_city',
+    'address_state',
+    'medical_food_alerts',
+    'lgpd_accepted',
+    'access_pin'
+  ];
+begin
+  v_profile_id := public.current_session_profile_id();
+
+  if v_profile_id is null then
+    return jsonb_build_object('view', '{}'::jsonb, 'update', '{}'::jsonb);
+  end if;
+
+  if public.is_super_admin_profile(v_profile_id) then
+    foreach v_field in array v_fields loop
+      v_view := v_view || jsonb_build_object(v_field, true);
+      v_update := v_update || jsonb_build_object(v_field, true);
+    end loop;
+
+    return jsonb_build_object('view', v_view, 'update', v_update);
+  end if;
+
+  foreach v_field in array v_fields loop
+    v_view := v_view || jsonb_build_object(
+      v_field,
+      public.profile_has_access(v_profile_id, 'column', 'profiles.' || v_field, 'view')
+    );
+    v_update := v_update || jsonb_build_object(
+      v_field,
+      public.profile_has_access(v_profile_id, 'column', 'profiles.' || v_field, 'update')
+    );
+  end loop;
+
+  return jsonb_build_object('view', v_view, 'update', v_update);
+end;
+$$;
+
 grant execute on function public.current_real_session_profile_id() to anon, authenticated;
 grant execute on function public.current_ghost_profile_id_from_header() to anon, authenticated;
 grant execute on function public.profile_has_super_admin_role(uuid) to anon, authenticated;
@@ -576,5 +661,7 @@ grant execute on function public.assert_actor_matches_real_session(uuid) to anon
 grant execute on function public.listar_perfis_ghost_mode(uuid, integer) to anon, authenticated;
 grant execute on function public.registrar_evento_ghost_mode(uuid, text, uuid, jsonb) to anon, authenticated;
 grant execute on function public.obter_previa_perfil_ghost_mode(uuid, uuid) to anon, authenticated;
+grant execute on function public.obter_perfil_sessao_efetiva() to anon, authenticated;
+grant execute on function public.listar_acesso_colunas_perfil_sessao() to anon, authenticated;
 
 notify pgrst, 'reload schema';
