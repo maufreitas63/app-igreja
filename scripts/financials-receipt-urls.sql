@@ -164,8 +164,10 @@ $$;
 grant execute on function public.atualizar_comprovante_lancamento_financeiro(uuid, jsonb) to anon, authenticated;
 grant execute on function public.atualizar_comprovante_lancamento_financeiro(uuid, text) to anon, authenticated;
 
--- Atualiza listagem para expor receipt_urls (se a função já existir com RD).
-create or replace function public.listar_lancamentos_financeiros_periodo(
+-- Recria listagem: PostgreSQL não permite alterar o tipo de retorno (OUT) com CREATE OR REPLACE.
+drop function if exists public.listar_lancamentos_financeiros_periodo(text, date);
+
+create function public.listar_lancamentos_financeiros_periodo(
   p_periodo text,
   p_referencia date
 )
