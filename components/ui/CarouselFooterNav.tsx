@@ -43,11 +43,25 @@ export function CarouselFooterNav({
 }: CarouselFooterNavProps) {
   const accentStyle = UI_ACCENT_STYLES[accent];
   const pageLabel = totalCount > 0 ? `${currentIndex + 1} / ${totalCount}` : '';
+  const hasTrailingAccessory = Boolean(trailingAccessory);
+  const compactFooter = hideSideNavigation;
 
   return (
     <View style={styles.wrapper}>
-      <View style={styles.navRow}>
-        <View style={[styles.mainGroup, hideSideNavigation && styles.mainGroupWithoutSideNav]}>
+      <View
+        style={[
+          styles.navRow,
+          compactFooter && styles.navRowCompact,
+          compactFooter && hasTrailingAccessory && styles.navRowCompactWithTrailing,
+        ]}
+      >
+        <View
+          style={[
+            styles.mainGroup,
+            compactFooter && styles.mainGroupCompact,
+            compactFooter && hasTrailingAccessory && styles.mainGroupCompactWithTrailing,
+          ]}
+        >
           {!hideSideNavigation ? (
             <TouchableOpacity
               style={[
@@ -73,7 +87,7 @@ export function CarouselFooterNav({
             style={[
               styles.navButton,
               styles.navButtonCenter,
-              hideSideNavigation && styles.navButtonCenterExpanded,
+              compactFooter && styles.navButtonCenterCompact,
               centerButtonStyle,
               { backgroundColor: accentStyle.exitBg, borderColor: accentStyle.exitBorder },
             ]}
@@ -107,7 +121,9 @@ export function CarouselFooterNav({
           ) : null}
         </View>
 
-        {trailingAccessory}
+        {hasTrailingAccessory ? (
+          <View style={styles.trailingAccessorySlot}>{trailingAccessory}</View>
+        ) : null}
       </View>
 
       {pageLabel ? (
@@ -128,6 +144,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  navRowCompact: {
+    width: '100%',
+  },
+  navRowCompactWithTrailing: {
+    position: 'relative',
+  },
   mainGroup: {
     flex: 1,
     flexDirection: 'row',
@@ -135,9 +157,13 @@ const styles = StyleSheet.create({
     gap: 8,
     minWidth: 0,
   },
-  mainGroupWithoutSideNav: {
-    flexGrow: 0,
-    flexShrink: 1,
+  mainGroupCompact: {
+    flexGrow: 1,
+    flexShrink: 0,
+    width: '100%',
+  },
+  mainGroupCompactWithTrailing: {
+    paddingRight: 56,
   },
   navButton: {
     borderRadius: 16,
@@ -159,9 +185,17 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     paddingHorizontal: 8,
   },
-  navButtonCenterExpanded: {
-    flexGrow: 0,
-    flexShrink: 0,
+  navButtonCenterCompact: {
+    flex: 1,
+    width: '100%',
+    alignSelf: 'stretch',
+  },
+  trailingAccessorySlot: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 48,
+    height: 48,
   },
   navButtonDisabled: {
     opacity: 0.4,

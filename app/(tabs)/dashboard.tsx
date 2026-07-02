@@ -3922,12 +3922,6 @@ export default function Dashboard() {
               onPreviousPress={handleFooterPreviousPress}
               onNextPress={handleFooterNextPress}
               hideSideNavigation
-              centerButtonStyle={{
-                width:
-                  !isMaintenanceAccessLoading && canViewMaintenance
-                    ? dashboardCardWidth - 56
-                    : dashboardCardWidth,
-              }}
               accent="emerald"
               trailingAccessory={
                 !isMaintenanceAccessLoading && canViewMaintenance ? (
