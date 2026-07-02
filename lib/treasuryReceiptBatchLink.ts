@@ -4,6 +4,7 @@ import {
 } from '@/lib/maintenanceFinancialApi';
 import type { FinancialEntry } from '@/lib/financialEntry';
 import { isFinancialRealizado } from '@/lib/financialEntry';
+import { buildFinancialReferencia } from '@/lib/treasuryReceiptBatchPath';
 import type { TreasuryReceiptFolderAccess } from '@/lib/treasuryReceiptFolderAccess';
 
 export type TreasuryReceiptBatchLinkItem = {
@@ -43,7 +44,9 @@ const buildReferenciaLookup = (entries: FinancialEntry[]) => {
       continue;
     }
 
-    const referencia = entry.referencia?.trim();
+    const referencia =
+      entry.referencia?.trim() ||
+      buildFinancialReferencia(entry.transaction_date, entry.amount);
 
     if (!referencia) {
       continue;

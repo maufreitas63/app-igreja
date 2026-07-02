@@ -40,6 +40,12 @@ export const MAINTENANCE_FINANCIAL_BUDGET_VERSIONS = ['REALIZADO', 'PLANEJADO'] 
 const FINANCIAL_SELECT =
   'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version, comments, receipt_url, referencia';
 
+const FINANCIAL_SELECT_WITHOUT_REFERENCIA =
+  'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version, comments, receipt_url';
+
+const isMissingReferenciaColumn = (message: string) =>
+  message.toLowerCase().includes('referencia');
+
 export async function assertMaintenanceFinancialUpdateAccess() {
   const allowed = await sessionHasAccess('table', 'financials', 'update');
 
@@ -184,17 +190,27 @@ const REALIZADO_RECEIPT_BATCH_PAGE_SIZE = 1000;
 export async function fetchRealizadoFinancialEntriesForReceiptBatch() {
   const rows: FinancialEntry[] = [];
   let from = 0;
+  let selectColumns = FINANCIAL_SELECT;
+  let referenciaColumnAvailable = true;
 
   while (true) {
     const { data, error } = await supabase
       .from('financials')
-      .select(FINANCIAL_SELECT)
+      .select(selectColumns)
       .ilike('budget_version', 'realizado')
       .order('transaction_date', { ascending: true })
       .order('id', { ascending: true })
       .range(from, from + REALIZADO_RECEIPT_BATCH_PAGE_SIZE - 1);
 
     if (error) {
+      const message = error.message ?? '';
+
+      if (from === 0 && referenciaColumnAvailable && isMissingReferenciaColumn(message)) {
+        selectColumns = FINANCIAL_SELECT_WITHOUT_REFERENCIA;
+        referenciaColumnAvailable = false;
+        continue;
+      }
+
       throw error;
     }
 

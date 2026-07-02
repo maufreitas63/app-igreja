@@ -14,7 +14,7 @@ type FileSystemFileHandleLike = {
 };
 
 type FileSystemDirectoryHandleLike = {
-  values: () => AsyncIterable<[string, FileSystemFileHandleLike | { kind: 'directory' }]>;
+  entries: () => AsyncIterable<[string, FileSystemFileHandleLike | { kind: 'directory' }]>;
 };
 
 const readFileAsDataUrl = (file: File) =>
@@ -40,7 +40,7 @@ const readFileAsDataUrl = (file: File) =>
 const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleLike) => {
   const files: TreasuryReceiptFolderFile[] = [];
 
-  for await (const [fileName, handle] of directoryHandle.values()) {
+  for await (const [fileName, handle] of directoryHandle.entries()) {
     if (handle.kind !== 'file' || !isTreasuryReceiptFileName(fileName)) {
       continue;
     }
@@ -76,9 +76,19 @@ export async function pickTreasuryReceiptFolderFiles(): Promise<TreasuryReceiptF
     );
   }
 
-  const directoryHandle = (await window.showDirectoryPicker({
-    mode: 'readwrite',
-  })) as FileSystemDirectoryHandleLike;
+  let directoryHandle: FileSystemDirectoryHandleLike;
+
+  try {
+    directoryHandle = (await window.showDirectoryPicker({
+      mode: 'readwrite',
+    })) as FileSystemDirectoryHandleLike;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return null;
+    }
+
+    throw error;
+  }
 
   const files = await collectDirectoryFiles(directoryHandle);
 

@@ -521,8 +521,9 @@ export function useMaintenanceFinancials(enabled: boolean) {
 
         if (!folderAccess) {
           return {
-            success: false as const,
+            success: true as const,
             message: 'Seleção de pasta cancelada.',
+            cancelled: true as const,
           };
         }
 
@@ -538,8 +539,19 @@ export function useMaintenanceFinancials(enabled: boolean) {
       } catch (err) {
         console.error('Erro ao processar comprovantes em lote:', err);
 
-        const message =
-          err instanceof Error ? err.message : 'Não foi possível processar os comprovantes.';
+        const rawMessage =
+          err instanceof Error
+            ? err.message
+            : typeof err === 'object' &&
+                err &&
+                'message' in err &&
+                typeof (err as { message?: unknown }).message === 'string'
+              ? String((err as { message: string }).message)
+              : 'Não foi possível processar os comprovantes.';
+
+        const message = rawMessage.includes('referencia')
+          ? `${rawMessage} Execute scripts/financials-referencia.sql no Supabase.`
+          : rawMessage;
 
         return {
           success: false as const,

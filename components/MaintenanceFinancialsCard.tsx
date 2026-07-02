@@ -782,6 +782,10 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
 
     const result = await processReceiptBatch(folderPath);
 
+    if ('cancelled' in result && result.cancelled) {
+      return;
+    }
+
     Toast.show({
       type: result.success ? 'success' : 'error',
       text1: 'Comprovantes',
