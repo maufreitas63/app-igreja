@@ -719,6 +719,157 @@ grant execute on function public.atualizar_comentario_lancamento_financeiro(uuid
 grant execute on function public.atualizar_comprovante_lancamento_financeiro(uuid, jsonb) to anon, authenticated;
 grant execute on function public.atualizar_comprovante_lancamento_financeiro(uuid, text) to anon, authenticated;
 
+-- Índice para localizar lançamentos por referencia na carga em lote.
+create index if not exists financials_referencia_realizado_idx
+  on public.financials (referencia)
+  where budget_version ilike 'realizado';
+
+drop function if exists public.anexar_comprovante_lancamento_financeiro(uuid, text, integer, boolean);
+
+create or replace function public.anexar_comprovante_lancamento_financeiro(
+  p_id uuid,
+  p_receipt_path text,
+  p_position integer default null,
+  p_force boolean default false
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row public.financials%rowtype;
+  v_urls jsonb;
+  v_path text;
+  v_pos integer;
+  v_len integer;
+  v_idx integer;
+  v_replaced text;
+  v_arr text[] := array[]::text[];
+begin
+  if p_id is null then
+    return jsonb_build_object('success', false, 'message', 'Lançamento não informado.');
+  end if;
+
+  v_path := nullif(trim(coalesce(p_receipt_path, '')), '');
+
+  if v_path is null then
+    return jsonb_build_object('success', false, 'message', 'Caminho do comprovante não informado.');
+  end if;
+
+  if not public.session_has_resource_access('table', 'financials', 'update') then
+    return jsonb_build_object('success', false, 'message', 'Sem permissão para alterar lançamentos financeiros.');
+  end if;
+
+  select *
+  into v_row
+  from public.financials f
+  where f.id = p_id
+  for update;
+
+  if not found then
+    return jsonb_build_object('success', false, 'message', 'Lançamento não encontrado.');
+  end if;
+
+  v_urls := public.normalize_financial_receipt_urls(coalesce(v_row.receipt_urls, '[]'::jsonb));
+  v_len := jsonb_array_length(v_urls);
+  v_pos := coalesce(nullif(p_position, 0), v_len + 1);
+
+  if v_pos < 1 or v_pos > 3 then
+    return jsonb_build_object('success', false, 'message', 'Posição de comprovante inválida.');
+  end if;
+
+  if v_pos > v_len + 1 then
+    return jsonb_build_object(
+      'success',
+      false,
+      'message',
+      format('Não é possível anexar na posição %s sem os comprovantes anteriores.', v_pos)
+    );
+  end if;
+
+  if v_len > 0 then
+    select coalesce(array_agg(value), array[]::text[])
+    into v_arr
+    from jsonb_array_elements_text(v_urls) as value;
+  end if;
+
+  v_idx := v_pos;
+
+  if v_idx = coalesce(array_length(v_arr, 1), 0) + 1 then
+    if v_len >= 3 and not coalesce(p_force, false) then
+      return jsonb_build_object(
+        'success',
+        false,
+        'message',
+        'Cada lançamento aceita no máximo 3 comprovantes.',
+        'code',
+        'max_receipts'
+      );
+    end if;
+
+    v_arr := array_append(v_arr, v_path);
+  elsif v_idx <= coalesce(array_length(v_arr, 1), 0) then
+    v_replaced := v_arr[v_idx];
+
+    if v_replaced is not null and not coalesce(p_force, false) then
+      return jsonb_build_object(
+        'success',
+        false,
+        'message',
+        format('Posição %s já possui comprovante.', v_pos),
+        'code',
+        'slot_occupied',
+        'receipt_urls',
+        v_urls,
+        'replaced_url',
+        v_replaced
+      );
+    end if;
+
+    v_arr[v_idx] := v_path;
+  else
+    return jsonb_build_object(
+      'success',
+      false,
+      'message',
+      format('Não é possível anexar na posição %s sem os comprovantes anteriores.', v_pos)
+    );
+  end if;
+
+  select coalesce(jsonb_agg(to_jsonb(url)), '[]'::jsonb)
+  into v_urls
+  from unnest(v_arr) as url
+  where nullif(trim(url), '') is not null;
+
+  v_urls := public.normalize_financial_receipt_urls(v_urls);
+
+  update public.financials f
+  set
+    receipt_urls = v_urls,
+    receipt_url = nullif(trim(coalesce(v_urls->>0, '')), ''),
+    updated_at = now()
+  where f.id = p_id;
+
+  return jsonb_build_object(
+    'success', true,
+    'message',
+    case
+      when jsonb_array_length(v_urls) = 1 then 'Comprovante anexado.'
+      else 'Comprovantes atualizados.'
+    end,
+    'id', p_id,
+    'receipt_url', nullif(trim(coalesce(v_urls->>0, '')), ''),
+    'receipt_urls', v_urls,
+    'replaced_url', nullif(trim(coalesce(v_replaced, '')), ''),
+    'position', v_pos
+  );
+end;
+$$;
+
+grant execute on function public.anexar_comprovante_lancamento_financeiro(uuid, text, integer, boolean)
+  to anon, authenticated;
+
 -- Storage: comprovantes no bucket privado financial-docs
 -- Pré-requisito: bucket `financial-docs` criado como privado no painel Supabase.
 

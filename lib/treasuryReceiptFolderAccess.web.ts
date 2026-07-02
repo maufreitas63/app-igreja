@@ -58,33 +58,27 @@ const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleL
     const { referencia, canonicalFileName, position } = parsed;
     const linkPosition = resolveTreasuryReceiptLinkPosition(position);
 
-    let effectiveName = fileName;
-
-    if (canonicalFileName !== fileName) {
-      if (!canRename) {
-        throw new Error(
-          `Não foi possível renomear "${fileName}" para "${canonicalFileName}". Conceda permissão de escrita na pasta.`
-        );
-      }
-
-      await fileHandle.move(canonicalFileName);
-      effectiveName = canonicalFileName;
-    } else {
-      effectiveName = canonicalFileName;
-    }
-
     files.push({
-      fileName: effectiveName,
+      fileName,
+      canonicalFileName,
       referencia,
       position: linkPosition,
-      originalFileName: fileName !== effectiveName ? fileName : undefined,
+      originalFileName: fileName !== canonicalFileName ? fileName : undefined,
       readDataUrl: async () => readFileAsDataUrl(await fileHandle.getFile()),
       markProcessed: async () => {
         if (!canRename) {
           throw new Error('O navegador não permitiu renomear arquivos nesta pasta.');
         }
 
-        await fileHandle.move!(buildUpdatedTreasuryReceiptFileName(effectiveName));
+        const processedName = buildUpdatedTreasuryReceiptFileName(canonicalFileName);
+        const currentName = fileName;
+
+        if (currentName !== canonicalFileName) {
+          await fileHandle.move!(canonicalFileName);
+        }
+
+        const handleAfterCanonical = fileHandle;
+        await handleAfterCanonical.move!(processedName);
       },
     });
   }

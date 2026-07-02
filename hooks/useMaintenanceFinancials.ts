@@ -530,7 +530,10 @@ export function useMaintenanceFinancials(enabled: boolean) {
   );
 
   const processReceiptBatch = useCallback(
-    async (folderPath: string) => {
+    async (
+      folderPath: string,
+      options: { dryRun?: boolean; force?: boolean } = {}
+    ) => {
       const normalizedPath = folderPath.trim() || DEFAULT_TREASURY_RECEIPTS_DIR;
 
       saveTreasuryReceiptsDir(normalizedPath);
@@ -550,9 +553,12 @@ export function useMaintenanceFinancials(enabled: boolean) {
           };
         }
 
-        const report = await processTreasuryReceiptBatchFromFolder(folderAccess);
+        const report = await processTreasuryReceiptBatchFromFolder(folderAccess, options);
         setReceiptBatchReport(report);
-        await reload();
+
+        if (!options.dryRun && report.success) {
+          await reload();
+        }
 
         return {
           success: report.success,

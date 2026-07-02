@@ -1,15 +1,24 @@
 import {
   attachMaintenanceFinancialReceipt,
   fetchRealizadoFinancialEntriesForReceiptBatch,
+  type FinancialReceiptUrlsSchemaStatus,
+  checkFinancialReceiptUrlsSchema,
 } from '@/lib/maintenanceFinancialApi';
 import type { FinancialEntry } from '@/lib/financialEntry';
-import { isFinancialRealizado } from '@/lib/financialEntry';
 import {
   FINANCIAL_MAX_RECEIPTS_PER_ENTRY,
   getFinancialEntryReceiptUrls,
   normalizeFinancialReceiptUrls,
 } from '@/lib/financialReceiptUrls';
-import { buildFinancialReferencia } from '@/lib/treasuryReceiptBatchPath';
+import {
+  buildReferenciaLookup,
+  entryHasRoomForReceipt,
+  extractReceiptBatchDateRange,
+  pickUniqueEntryForReferencia,
+  runTreasuryReceiptBatchPreflight,
+  slotIsOccupied,
+  type TreasuryReceiptBatchPreflightIssue,
+} from '@/lib/treasuryReceiptBatchPreflight';
 import type { TreasuryReceiptFolderAccess } from '@/lib/treasuryReceiptFolderAccess';
 
 export type TreasuryReceiptBatchLinkItem = {
@@ -20,11 +29,15 @@ export type TreasuryReceiptBatchLinkItem = {
   error?: string;
   renamed?: boolean;
   renameError?: string;
+  dryRun?: boolean;
 };
 
 export type TreasuryReceiptBatchLinkReport = {
   success: boolean;
   message: string;
+  dryRun: boolean;
+  force: boolean;
+  schemaStatus: FinancialReceiptUrlsSchemaStatus;
   folderFileCount: number;
   entriesWithReferencia: number;
   normalizedFileNames: number;
@@ -33,8 +46,15 @@ export type TreasuryReceiptBatchLinkReport = {
   skippedAlreadyLinked: TreasuryReceiptBatchLinkItem[];
   unmatchedFiles: TreasuryReceiptBatchLinkItem[];
   unmatchedEntries: TreasuryReceiptBatchLinkItem[];
+  ambiguousReferencias: { referencia: string; entryCount: number }[];
+  preflightIssues: TreasuryReceiptBatchPreflightIssue[];
   errors: TreasuryReceiptBatchLinkItem[];
   renameUnsupported: boolean;
+};
+
+export type TreasuryReceiptBatchProcessOptions = {
+  dryRun?: boolean;
+  force?: boolean;
 };
 
 const buildEntryLabel = (entry: FinancialEntry) => {
@@ -44,38 +64,101 @@ const buildEntryLabel = (entry: FinancialEntry) => {
   return `${entry.transaction_date} · ${entry.transaction_kind} · ${account} · ${ministry}`;
 };
 
-const buildReferenciaLookup = (entries: FinancialEntry[]) => {
-  const lookup = new Map<string, FinancialEntry[]>();
+const buildEmptyReport = (
+  options: TreasuryReceiptBatchProcessOptions,
+  schemaStatus: FinancialReceiptUrlsSchemaStatus
+): TreasuryReceiptBatchLinkReport => ({
+  success: false,
+  message: 'Processamento não iniciado.',
+  dryRun: Boolean(options.dryRun),
+  force: Boolean(options.force),
+  schemaStatus,
+  folderFileCount: 0,
+  entriesWithReferencia: 0,
+  normalizedFileNames: 0,
+  linked: [],
+  renamedOnly: [],
+  skippedAlreadyLinked: [],
+  unmatchedFiles: [],
+  unmatchedEntries: [],
+  ambiguousReferencias: [],
+  preflightIssues: [],
+  errors: [],
+  renameUnsupported: false,
+});
 
-  for (const entry of entries) {
-    if (!isFinancialRealizado(entry.budget_version)) {
-      continue;
-    }
+const finalizeReportMessage = (report: TreasuryReceiptBatchLinkReport) => {
+  const linkedCount = report.linked.length;
+  const renamedOnlyCount = report.renamedOnly.length;
+  const warningCount = report.linked.filter((item) => item.renameError).length;
 
-    const referencia =
-      entry.referencia?.trim() ||
-      buildFinancialReferencia(entry.transaction_date, entry.amount);
-
-    if (!referencia) {
-      continue;
-    }
-
-    const bucket = lookup.get(referencia) ?? [];
-    bucket.push(entry);
-    lookup.set(referencia, bucket);
+  if (report.preflightIssues.length) {
+    report.success = false;
+    report.message = `Pré-voo falhou: ${report.preflightIssues.length} problema(s) encontrado(s).`;
+    return;
   }
 
-  return lookup;
+  if (
+    linkedCount === 0 &&
+    renamedOnlyCount === 0 &&
+    report.errors.length === 0 &&
+    report.skippedAlreadyLinked.length === 0
+  ) {
+    report.message = report.dryRun
+      ? 'Simulação concluída: nenhum comprovante novo seria vinculado.'
+      : 'Nenhum comprovante novo foi vinculado.';
+    report.success = report.errors.length === 0;
+    return;
+  }
+
+  const parts: string[] = [];
+
+  if (report.dryRun) {
+    parts.push('Simulação');
+  }
+
+  if (linkedCount > 0) {
+    parts.push(`${linkedCount} ${report.dryRun ? 'simulado(s)' : 'vinculado(s)'}`);
+  }
+
+  if (renamedOnlyCount > 0) {
+    parts.push(`${renamedOnlyCount} ${report.dryRun ? 'a renomear' : 'renomeado(s)'} (já anexados)`);
+  }
+
+  if (report.errors.length > 0) {
+    parts.push(`${report.errors.length} erro(s)`);
+  }
+
+  if (warningCount > 0) {
+    parts.push(`${warningCount} aviso(s) de rename`);
+  }
+
+  report.message = parts.length ? `${parts.join(' · ')}.` : 'Processamento concluído.';
+  report.success = report.errors.length === 0 && warningCount === 0;
 };
 
-const pickEntryForReferencia = (entries: FinancialEntry[]) => entries[0] ?? null;
-
-const slotIsOccupied = (urls: string[], position: number) => position - 1 < urls.length;
-
 export async function processTreasuryReceiptBatchFromFolder(
-  folderAccess: TreasuryReceiptFolderAccess
+  folderAccess: TreasuryReceiptFolderAccess,
+  options: TreasuryReceiptBatchProcessOptions = {}
 ): Promise<TreasuryReceiptBatchLinkReport> {
-  const entries = await fetchRealizadoFinancialEntriesForReceiptBatch();
+  const dryRun = Boolean(options.dryRun);
+  const force = Boolean(options.force);
+  const schemaStatus = await checkFinancialReceiptUrlsSchema();
+
+  if (!schemaStatus.available) {
+    return {
+      ...buildEmptyReport(options, schemaStatus),
+      message: schemaStatus.message,
+    };
+  }
+
+  const allEntries = await fetchRealizadoFinancialEntriesForReceiptBatch();
+  const rawFileNames = folderAccess.files.map((file) => file.fileName);
+  const preflight = runTreasuryReceiptBatchPreflight(rawFileNames, allEntries);
+  const dateRange = preflight.dateRange ?? extractReceiptBatchDateRange(preflight.files);
+  const entries = dateRange
+    ? await fetchRealizadoFinancialEntriesForReceiptBatch(dateRange)
+    : allEntries;
   const referenciaLookup = buildReferenciaLookup(entries);
   const receiptUrlsByEntryId = new Map<string, string[]>(
     entries.map((entry) => [entry.id, getFinancialEntryReceiptUrls(entry)])
@@ -86,6 +169,9 @@ export async function processTreasuryReceiptBatchFromFolder(
   const report: TreasuryReceiptBatchLinkReport = {
     success: true,
     message: 'Processamento concluído.',
+    dryRun,
+    force,
+    schemaStatus,
     folderFileCount: folderAccess.files.length,
     entriesWithReferencia: [...referenciaLookup.values()].reduce(
       (count, bucket) => count + bucket.length,
@@ -97,40 +183,57 @@ export async function processTreasuryReceiptBatchFromFolder(
     skippedAlreadyLinked: [],
     unmatchedFiles: [],
     unmatchedEntries: [],
+    ambiguousReferencias: preflight.ambiguousReferencias.map((item) => ({
+      referencia: item.referencia,
+      entryCount: item.entries.length,
+    })),
+    preflightIssues: preflight.issues,
     errors: [],
     renameUnsupported: !folderAccess.canRenameAfterUpload,
   };
 
-  const sortedFiles = [...folderAccess.files].sort((left, right) => {
-    const referenciaOrder = left.referencia.localeCompare(right.referencia, 'pt-BR');
+  if (!preflight.valid) {
+    finalizeReportMessage(report);
+    return report;
+  }
 
-    if (referenciaOrder !== 0) {
-      return referenciaOrder;
-    }
+  const filesByName = new Map(folderAccess.files.map((file) => [file.fileName, file]));
 
-    return left.position - right.position;
-  });
+  for (const fileInput of preflight.files) {
+    const file = filesByName.get(fileInput.fileName);
 
-  for (const file of sortedFiles) {
-    const candidates = referenciaLookup.get(file.referencia);
-
-    if (!candidates?.length) {
-      report.unmatchedFiles.push({ fileName: file.fileName, position: file.position });
+    if (!file) {
       continue;
     }
 
-    const entry = pickEntryForReferencia(candidates);
+    const match = pickUniqueEntryForReferencia(referenciaLookup, file.referencia);
 
-    if (!entry) {
-      report.unmatchedFiles.push({ fileName: file.fileName, position: file.position });
+    if (!match.entry) {
+      report.unmatchedFiles.push({
+        fileName: file.fileName,
+        position: file.position,
+      });
       continue;
     }
 
+    const entry = match.entry;
     const label = buildEntryLabel(entry);
     const existingReceiptUrls = receiptUrlsByEntryId.get(entry.id) ?? [];
+    const occupied = slotIsOccupied(existingReceiptUrls, file.position);
 
-    if (slotIsOccupied(existingReceiptUrls, file.position)) {
+    if (occupied && !force) {
       matchedEntryIds.add(entry.id);
+
+      if (dryRun) {
+        report.renamedOnly.push({
+          fileName: file.fileName,
+          entryId: entry.id,
+          label,
+          position: file.position,
+          dryRun: true,
+        });
+        continue;
+      }
 
       try {
         await file.markProcessed();
@@ -142,7 +245,6 @@ export async function processTreasuryReceiptBatchFromFolder(
           renamed: true,
         });
       } catch (error) {
-        report.success = false;
         report.errors.push({
           fileName: file.fileName,
           entryId: entry.id,
@@ -158,7 +260,7 @@ export async function processTreasuryReceiptBatchFromFolder(
       continue;
     }
 
-    if (existingReceiptUrls.length >= FINANCIAL_MAX_RECEIPTS_PER_ENTRY) {
+    if (!entryHasRoomForReceipt(existingReceiptUrls, force, file.position)) {
       matchedEntryIds.add(entry.id);
       report.errors.push({
         fileName: file.fileName,
@@ -167,7 +269,18 @@ export async function processTreasuryReceiptBatchFromFolder(
         position: file.position,
         error: `Lançamento já possui ${FINANCIAL_MAX_RECEIPTS_PER_ENTRY} comprovantes.`,
       });
-      report.success = false;
+      continue;
+    }
+
+    if (dryRun) {
+      matchedEntryIds.add(entry.id);
+      report.linked.push({
+        fileName: file.fileName,
+        entryId: entry.id,
+        label,
+        position: file.position,
+        dryRun: true,
+      });
       continue;
     }
 
@@ -177,11 +290,11 @@ export async function processTreasuryReceiptBatchFromFolder(
         entry.id,
         dataUrl,
         existingReceiptUrls,
-        file.position
+        file.position,
+        force
       );
 
       if (!result.success) {
-        report.success = false;
         report.errors.push({
           fileName: file.fileName,
           entryId: entry.id,
@@ -209,6 +322,13 @@ export async function processTreasuryReceiptBatchFromFolder(
           error instanceof Error
             ? error.message
             : 'Comprovante anexado, mas não foi possível renomear o arquivo local.';
+        report.errors.push({
+          fileName: file.fileName,
+          entryId: entry.id,
+          label,
+          position: file.position,
+          error: renameError,
+        });
       }
 
       matchedEntryIds.add(entry.id);
@@ -221,7 +341,6 @@ export async function processTreasuryReceiptBatchFromFolder(
         renameError,
       });
     } catch (error) {
-      report.success = false;
       report.errors.push({
         fileName: file.fileName,
         entryId: entry.id,
@@ -241,53 +360,14 @@ export async function processTreasuryReceiptBatchFromFolder(
       }
 
       report.unmatchedEntries.push({
-        fileName: entry.referencia?.trim() || buildFinancialReferencia(entry.transaction_date, entry.amount) || '—',
+        fileName: entry.referencia?.trim() || '—',
         entryId: entry.id,
         label: buildEntryLabel(entry),
       });
     }
   }
 
-  const linkedCount = report.linked.length;
-  const renamedOnlyCount = report.renamedOnly.length;
-
-  if (
-    linkedCount === 0 &&
-    renamedOnlyCount === 0 &&
-    report.errors.length === 0 &&
-    report.skippedAlreadyLinked.length === 0
-  ) {
-    report.message = 'Nenhum comprovante novo foi vinculado.';
-  } else {
-    const parts: string[] = [];
-
-    if (linkedCount > 0) {
-      parts.push(`${linkedCount} vinculado(s)`);
-    }
-
-    if (renamedOnlyCount > 0) {
-      parts.push(`${renamedOnlyCount} renomeado(s) (já anexados)`);
-    }
-
-    report.message =
-      parts.length > 0 ? `${parts.join(' · ')} com sucesso.` : 'Processamento concluído.';
-  }
-
-  if (report.errors.length > 0) {
-    report.success = false;
-    const parts: string[] = [];
-
-    if (linkedCount > 0) {
-      parts.push(`${linkedCount} vinculado(s)`);
-    }
-
-    if (renamedOnlyCount > 0) {
-      parts.push(`${renamedOnlyCount} renomeado(s)`);
-    }
-
-    parts.push(`${report.errors.length} erro(s)`);
-    report.message = parts.join(' · ');
-  }
+  finalizeReportMessage(report);
 
   return report;
 }

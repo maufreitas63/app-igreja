@@ -2,6 +2,8 @@ import { Platform } from 'react-native';
 
 export type TreasuryReceiptFolderFile = {
   fileName: string;
+  /** Nome canônico alvo (.jpg) usado no rename após vincular. */
+  canonicalFileName: string;
   /** Chave referencia para localizar o lançamento: aaaammdd nnnn,nn.jpg */
   referencia: string;
   /** Posição 1–3 do anexo (padrão único = 1). */

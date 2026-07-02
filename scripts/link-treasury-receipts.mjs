@@ -33,6 +33,15 @@ import {
   placeFinancialReceiptAtPosition,
   resolveTreasuryReceiptLinkPosition,
 } from '../lib/treasuryReceiptBatchPath.mjs';
+import {
+  buildReferenciaLookup,
+  entryHasRoomForReceipt,
+  extractReceiptBatchDateRange,
+  filterEntriesByReceiptDateRange,
+  pickUniqueEntryForReferencia,
+  runTreasuryReceiptBatchPreflight,
+  slotIsOccupied,
+} from '../lib/treasuryReceiptBatchPreflight.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..');
@@ -179,10 +188,33 @@ const resolveStoragePath = (receiptUrl) => {
 };
 
 const FINANCIAL_MAX_RECEIPTS_PER_ENTRY = 3;
+const UPLOAD_CONCURRENCY = 3;
 
-const buildReceiptFilenameIndex = (receiptsDir, { dryRun = false } = {}) => {
+const renameLocalToCanonical = (receiptsDir, localPath, canonicalFileName) => {
+  const currentName = path.basename(localPath);
+
+  if (currentName === canonicalFileName) {
+    return localPath;
+  }
+
+  const canonicalPath = path.join(receiptsDir, canonicalFileName);
+
+  if (
+    fs.existsSync(canonicalPath) &&
+    path.resolve(canonicalPath) !== path.resolve(localPath)
+  ) {
+    throw new Error(
+      `Conflito ao normalizar "${currentName}": já existe "${canonicalFileName}" na pasta.`
+    );
+  }
+
+  fs.renameSync(localPath, canonicalPath);
+
+  return canonicalPath;
+};
+
+const buildReceiptFilenameIndex = (receiptsDir) => {
   const files = [];
-  const normalizedNames = [];
 
   if (!fs.existsSync(receiptsDir)) {
     throw new Error(`Diretório de comprovantes não encontrado: ${receiptsDir}`);
@@ -208,41 +240,13 @@ const buildReceiptFilenameIndex = (receiptsDir, { dryRun = false } = {}) => {
     const { referencia, canonicalFileName, position } = parsed;
     const linkPosition = resolveTreasuryReceiptLinkPosition(position);
 
-    let effectivePath = fullPath;
-    let effectiveName = fileName;
-
-    if (canonicalFileName !== fileName) {
-      const canonicalPath = path.join(receiptsDir, canonicalFileName);
-
-      if (
-        !dryRun &&
-        fs.existsSync(canonicalPath) &&
-        path.resolve(canonicalPath) !== path.resolve(fullPath)
-      ) {
-        console.warn(
-          `Conflito ao normalizar "${fileName}": já existe "${canonicalFileName}" na pasta.`
-        );
-        continue;
-      }
-
-      if (!dryRun) {
-        fs.renameSync(fullPath, canonicalPath);
-        effectivePath = canonicalPath;
-        effectiveName = canonicalFileName;
-      } else {
-        effectiveName = canonicalFileName;
-      }
-
-      normalizedNames.push({ from: fileName, to: canonicalFileName });
-    } else {
-      effectiveName = canonicalFileName;
-    }
-
     files.push({
       referencia,
       position: linkPosition,
-      fileName: effectiveName,
-      localPath: effectivePath,
+      fileName,
+      canonicalFileName,
+      localPath: fullPath,
+      needsCanonicalRename: canonicalFileName !== fileName,
     });
   }
 
@@ -256,7 +260,7 @@ const buildReceiptFilenameIndex = (receiptsDir, { dryRun = false } = {}) => {
     return left.position - right.position;
   });
 
-  return { files, normalizedNames };
+  return files;
 };
 
 const fetchAllRealizadoEntries = async (supabase) => {
@@ -308,20 +312,28 @@ const deleteStorageObject = async (supabase, receiptUrl) => {
   }
 };
 
-const uploadAndLinkReceipt = async (
+const isRpcMissing = (error, functionName) => {
+  const message = formatErrorMessage(error).toLowerCase();
+  const fn = functionName.toLowerCase();
+
+  return (
+    message.includes('could not find the function') ||
+    (message.includes('function') && message.includes(fn)) ||
+    (message.includes('schema cache') && message.includes(fn))
+  );
+};
+
+const attachReceiptAtomic = async (
   supabase,
   entry,
   localFilePath,
   existingReceiptUrls,
-  position
+  position,
+  force,
+  rpcAvailable
 ) => {
   const storagePath = buildStoragePath(entry.id);
   const fileBuffer = fs.readFileSync(localFilePath);
-  const placed = placeFinancialReceiptAtPosition(existingReceiptUrls, position, storagePath);
-
-  if (placed.error) {
-    throw new Error(placed.error);
-  }
 
   const { error: uploadError } = await supabase.storage
     .from(FINANCIAL_DOCS_BUCKET)
@@ -332,6 +344,51 @@ const uploadAndLinkReceipt = async (
 
   if (uploadError) {
     throw new Error(`Upload falhou: ${uploadError.message}`);
+  }
+
+  if (rpcAvailable) {
+    const { data, error } = await supabase.rpc('anexar_comprovante_lancamento_financeiro', {
+      p_id: entry.id,
+      p_receipt_path: storagePath,
+      p_position: position,
+      p_force: force,
+    });
+
+    if (!error && data && typeof data === 'object') {
+      const parsed = data;
+
+      if (parsed.success === true) {
+        const receiptUrls = getEntryReceiptUrls({ receipt_urls: parsed.receipt_urls });
+        const replacedUrl =
+          typeof parsed.replaced_url === 'string' ? parsed.replaced_url.trim() : '';
+
+        if (replacedUrl && replacedUrl !== storagePath) {
+          await deleteStorageObject(supabase, replacedUrl);
+        }
+
+        return { storagePath, receiptUrls };
+      }
+
+      await supabase.storage.from(FINANCIAL_DOCS_BUCKET).remove([storagePath]);
+
+      throw new Error(
+        typeof parsed.message === 'string'
+          ? parsed.message
+          : 'Não foi possível vincular o comprovante ao lançamento.'
+      );
+    }
+
+    if (error && !isRpcMissing(error, 'anexar_comprovante_lancamento_financeiro')) {
+      await supabase.storage.from(FINANCIAL_DOCS_BUCKET).remove([storagePath]);
+      throw new Error(formatErrorMessage(error));
+    }
+  }
+
+  const placed = placeFinancialReceiptAtPosition(existingReceiptUrls, position, storagePath);
+
+  if (placed.error) {
+    await supabase.storage.from(FINANCIAL_DOCS_BUCKET).remove([storagePath]);
+    throw new Error(placed.error);
   }
 
   const nextReceiptUrls = placed.urls;
@@ -357,25 +414,60 @@ const uploadAndLinkReceipt = async (
   return { storagePath, receiptUrls: nextReceiptUrls };
 };
 
-const buildReferenciaLookup = (entries) => {
-  const lookup = new Map();
+const checkReceiptUrlsSchema = async (supabase) => {
+  const { error } = await supabase.from('financials').select('receipt_urls').limit(1);
 
-  for (const entry of entries) {
-    const referencia = resolveReceiptFilename(entry);
-
-    if (!referencia) {
-      continue;
-    }
-
-    const bucket = lookup.get(referencia) ?? [];
-    bucket.push(entry);
-    lookup.set(referencia, bucket);
+  if (!error) {
+    return { available: true, message: 'Coluna receipt_urls disponível.' };
   }
 
-  return lookup;
+  const message = formatErrorMessage(error);
+
+  if (message.toLowerCase().includes('receipt_urls')) {
+    return {
+      available: false,
+      message:
+        'Coluna financials.receipt_urls ausente. Execute scripts/financials-receipt-urls.sql no Supabase e recarregue o schema.',
+    };
+  }
+
+  throw new Error(message);
 };
 
-const slotIsOccupied = (urls, position) => position - 1 < urls.length;
+const runWithConcurrency = async (items, concurrency, worker) => {
+  if (!items.length) {
+    return [];
+  }
+
+  const results = new Array(items.length);
+  let nextIndex = 0;
+
+  const runners = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await worker(items[currentIndex], currentIndex);
+    }
+  });
+
+  await Promise.all(runners);
+
+  return results;
+};
+
+const markLocalFilesProcessed = (receiptsDir, file, dryRun) => {
+  if (dryRun) {
+    return file.localPath;
+  }
+
+  let effectivePath = file.localPath;
+
+  if (file.needsCanonicalRename) {
+    effectivePath = renameLocalToCanonical(receiptsDir, effectivePath, file.canonicalFileName);
+  }
+
+  return markLocalReceiptProcessed(effectivePath);
+};
 
 const formatEntryLabel = (entry) => {
   const referencia = resolveReceiptFilename(entry);
@@ -408,6 +500,26 @@ const writeReportFiles = (report) => {
     `  Erros: ${report.summary.errors}`,
     '',
   ];
+
+  if (report.preflightIssues?.length) {
+    lines.push('Problemas de pré-voo', '─'.repeat(72));
+
+    for (const issue of report.preflightIssues.slice(0, 200)) {
+      lines.push(`[pré-voo] ${issue.fileName}: ${issue.message}`);
+    }
+
+    lines.push('');
+  }
+
+  if (report.ambiguousReferencias?.length) {
+    lines.push('Referências ambíguas', '─'.repeat(72));
+
+    for (const item of report.ambiguousReferencias.slice(0, 200)) {
+      lines.push(`[ambiguidade] ${item.referencia} · ${item.entryCount} lançamento(s)`);
+    }
+
+    lines.push('');
+  }
 
   if (report.normalizedReceiptNames?.length) {
     lines.push('Nomes de arquivo normalizados', '─'.repeat(72));
@@ -530,12 +642,9 @@ const main = async () => {
   }
 
   let receiptFiles;
-  let normalizedReceiptNames = [];
 
   try {
-    const built = buildReceiptFilenameIndex(options.receiptsDir, { dryRun: options.dryRun });
-    receiptFiles = built.files;
-    normalizedReceiptNames = built.normalizedNames;
+    receiptFiles = buildReceiptFilenameIndex(options.receiptsDir);
   } catch (error) {
     writeFailureReport(
       error instanceof Error ? error.message : formatErrorMessage(error),
@@ -546,23 +655,60 @@ const main = async () => {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  console.log(`Supabase: ${supabaseUrl}`);
-  console.log(`Diretório de JPG: ${options.receiptsDir}`);
-  console.log(`Arquivos JPG indexados: ${receiptFiles.length}`);
-  if (normalizedReceiptNames.length) {
-    console.log(`Nomes normalizados para referencia: ${normalizedReceiptNames.length}`);
-  }
-  console.log(options.dryRun ? 'Modo simulação (--dry-run)' : 'Modo execução');
-  console.log('');
-
-  let entries;
+  let schemaStatus;
 
   try {
-    entries = await fetchAllRealizadoEntries(supabase);
+    schemaStatus = await checkReceiptUrlsSchema(supabase);
   } catch (error) {
     writeFailureReport(formatErrorMessage(error), options);
     process.exit(1);
   }
+
+  if (!schemaStatus.available) {
+    writeFailureReport(schemaStatus.message, options);
+    process.exit(1);
+  }
+
+  console.log(`Supabase: ${supabaseUrl}`);
+  console.log(`Diretório de JPG: ${options.receiptsDir}`);
+  console.log(`Arquivos JPG indexados: ${receiptFiles.length}`);
+  console.log(options.dryRun ? 'Modo simulação (--dry-run)' : 'Modo execução');
+  if (options.force) {
+    console.log('Substituir posições ocupadas: sim (--force)');
+  }
+  console.log('');
+
+  let allEntries;
+
+  try {
+    allEntries = await fetchAllRealizadoEntries(supabase);
+  } catch (error) {
+    writeFailureReport(formatErrorMessage(error), options);
+    process.exit(1);
+  }
+
+  const rawFileNames = receiptFiles.map((file) => file.fileName);
+  const preflight = runTreasuryReceiptBatchPreflight(rawFileNames, allEntries);
+  const dateRange = preflight.dateRange ?? extractReceiptBatchDateRange(preflight.files);
+  const entries = filterEntriesByReceiptDateRange(allEntries, dateRange);
+
+  const rpcProbe = await supabase.rpc('anexar_comprovante_lancamento_financeiro', {
+    p_id: '00000000-0000-0000-0000-000000000000',
+    p_receipt_path: 'receipts/probe.jpg',
+    p_position: 1,
+    p_force: false,
+  });
+  const rpcAvailable = !isRpcMissing(rpcProbe.error, 'anexar_comprovante_lancamento_financeiro');
+
+  if (!rpcAvailable) {
+    console.warn(
+      'Aviso: RPC anexar_comprovante_lancamento_financeiro indisponível — usando merge client-side (menos seguro em concorrência).'
+    );
+  }
+
+  const normalizedReceiptNames = receiptFiles
+    .filter((file) => file.needsCanonicalRename)
+    .map((file) => ({ from: file.fileName, to: file.canonicalFileName }));
 
   const report = {
     runAt: new Date().toISOString(),
@@ -570,6 +716,11 @@ const main = async () => {
     force: options.force,
     receiptsDir: options.receiptsDir,
     normalizedReceiptNames,
+    preflightIssues: preflight.issues,
+    ambiguousReferencias: preflight.ambiguousReferencias.map((item) => ({
+      referencia: item.referencia,
+      entryCount: item.entries.length,
+    })),
     summary: {
       totalRealizado: entries.length,
       skippedAlreadyLinked: 0,
@@ -579,6 +730,7 @@ const main = async () => {
       invalidFilename: 0,
       linked: 0,
       errors: 0,
+      preflightBlocked: preflight.valid ? 0 : preflight.issues.length,
     },
     linked: [],
     renamedOnly: [],
@@ -587,16 +739,37 @@ const main = async () => {
     errors: [],
   };
 
+  if (!preflight.valid) {
+    console.error(`Pré-voo falhou: ${preflight.issues.length} problema(s).`);
+
+    for (const issue of preflight.issues.slice(0, 20)) {
+      console.error(`  [pré-voo] ${issue.fileName}: ${issue.message}`);
+    }
+
+    const { jsonPath, txtPath } = writeReportFiles(report);
+    console.error(`Relatório JSON: ${jsonPath}`);
+    console.error(`Relatório TXT:  ${txtPath}`);
+    process.exit(1);
+  }
+
   const referenciaLookup = buildReferenciaLookup(entries);
   const receiptUrlsByEntryId = new Map(
     entries.map((entry) => [entry.id, getEntryReceiptUrls(entry)])
   );
   const matchedEntryIds = new Set();
+  const filesByName = new Map(receiptFiles.map((file) => [file.fileName, file]));
+  const entryBuckets = new Map();
 
-  for (const file of receiptFiles) {
-    const candidates = referenciaLookup.get(file.referencia);
+  for (const fileInput of preflight.files) {
+    const file = filesByName.get(fileInput.fileName);
 
-    if (!candidates?.length) {
+    if (!file) {
+      continue;
+    }
+
+    const match = pickUniqueEntryForReferencia(referenciaLookup, file.referencia);
+
+    if (!match.entry) {
       report.summary.fileNotFound += 1;
       report.notFound.push({
         label: file.fileName,
@@ -606,11 +779,17 @@ const main = async () => {
       continue;
     }
 
-    const entry = candidates[0];
+    const bucket = entryBuckets.get(match.entry.id) ?? [];
+    bucket.push({ file, entry: match.entry });
+    entryBuckets.set(match.entry.id, bucket);
+  }
+
+  const processFileForEntry = async ({ file, entry }) => {
     const label = formatEntryLabel(entry);
     const existingReceiptUrls = receiptUrlsByEntryId.get(entry.id) ?? [];
+    const occupied = slotIsOccupied(existingReceiptUrls, file.position);
 
-    if (!options.force && slotIsOccupied(existingReceiptUrls, file.position)) {
+    if (occupied && !options.force) {
       if (options.dryRun) {
         report.summary.renamedOnly = (report.summary.renamedOnly ?? 0) + 1;
         (report.renamedOnly ??= []).push({
@@ -623,11 +802,11 @@ const main = async () => {
           dryRun: true,
         });
         console.log(`[simulação rename] ${label} ← ${file.fileName} (posição ${file.position})`);
-        continue;
+        return;
       }
 
       try {
-        const processedLocalFile = markLocalReceiptProcessed(file.localPath);
+        const processedLocalFile = markLocalFilesProcessed(options.receiptsDir, file, false);
         report.summary.renamedOnly = (report.summary.renamedOnly ?? 0) + 1;
         (report.renamedOnly ??= []).push({
           entryId: entry.id,
@@ -653,13 +832,15 @@ const main = async () => {
             renameError instanceof Error ? renameError.message : String(renameError)
           }`,
         });
-        console.error(`[ERRO rename] ${label}: ${renameError instanceof Error ? renameError.message : renameError}`);
+        console.error(
+          `[ERRO rename] ${label}: ${renameError instanceof Error ? renameError.message : renameError}`
+        );
       }
 
-      continue;
+      return;
     }
 
-    if (existingReceiptUrls.length >= FINANCIAL_MAX_RECEIPTS_PER_ENTRY && !options.force) {
+    if (!entryHasRoomForReceipt(existingReceiptUrls, options.force, file.position)) {
       report.summary.errors += 1;
       report.errors.push({
         entryId: entry.id,
@@ -668,7 +849,7 @@ const main = async () => {
         position: file.position,
         error: `Lançamento já possui ${FINANCIAL_MAX_RECEIPTS_PER_ENTRY} comprovantes.`,
       });
-      continue;
+      return;
     }
 
     if (options.dryRun) {
@@ -684,16 +865,18 @@ const main = async () => {
         dryRun: true,
       });
       console.log(`[simulação] ${label} ← ${file.fileName} (posição ${file.position})`);
-      continue;
+      return;
     }
 
     try {
-      const { storagePath, receiptUrls } = await uploadAndLinkReceipt(
+      const { storagePath, receiptUrls } = await attachReceiptAtomic(
         supabase,
         entry,
         file.localPath,
         existingReceiptUrls,
-        file.position
+        file.position,
+        options.force,
+        rpcAvailable
       );
 
       receiptUrlsByEntryId.set(entry.id, receiptUrls);
@@ -701,7 +884,7 @@ const main = async () => {
       let processedLocalFile = file.localPath;
 
       try {
-        processedLocalFile = markLocalReceiptProcessed(file.localPath);
+        processedLocalFile = markLocalFilesProcessed(options.receiptsDir, file, false);
       } catch (renameError) {
         report.summary.errors += 1;
         report.errors.push({
@@ -715,7 +898,7 @@ const main = async () => {
           }`,
         });
         console.warn(`[AVISO] ${label}: comprovante anexado, rename falhou`);
-        continue;
+        return;
       }
 
       report.summary.linked += 1;
@@ -745,7 +928,13 @@ const main = async () => {
       });
       console.error(`[ERRO] ${label}: ${error instanceof Error ? error.message : error}`);
     }
-  }
+  };
+
+  await runWithConcurrency([...entryBuckets.values()], UPLOAD_CONCURRENCY, async (bucket) => {
+    for (const item of bucket) {
+      await processFileForEntry(item);
+    }
+  });
 
   for (const [, bucket] of referenciaLookup.entries()) {
     for (const entry of bucket) {

@@ -192,6 +192,8 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   const [unreconcilingReportId, setUnreconcilingReportId] = useState<string | null>(null);
   const [assemblyMinuteTitle, setAssemblyMinuteTitle] = useState('');
   const [uploadingAssemblyMinute, setUploadingAssemblyMinute] = useState(false);
+  const [receiptBatchDryRun, setReceiptBatchDryRun] = useState(false);
+  const [receiptBatchForce, setReceiptBatchForce] = useState(false);
 
   const toggleSection = useCallback((section: MaintenanceSectionKey) => {
     setExpandedSection((current) => (current === section ? null : section));
@@ -854,12 +856,16 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   };
 
   const handleProcessReceiptBatch = async () => {
-    const folderPath = receiptsDir.trim() || DEFAULT_TREASURY_RECEIPTS_DIR;
+    const modeLabel = receiptBatchDryRun
+      ? 'Simular (dry-run)'
+      : receiptBatchForce
+        ? 'Processar substituindo posições ocupadas'
+        : 'Processar';
 
     const confirmed = await confirmDialog(
-      'Processar comprovantes',
-      `Vincular JPG da pasta informada aos lançamentos REALIZADO pelo campo referencia.\n\nPasta de referência:\n${folderPath}\n\nO navegador solicitará acesso à pasta local (Chrome/Edge no desktop). Arquivos processados serão renomeados com o prefixo updated_.`,
-      'Processar',
+      receiptBatchDryRun ? 'Simular comprovantes' : 'Processar comprovantes',
+      `${receiptBatchDryRun ? 'Simulação' : 'Vinculação'} de JPG/JPEG aos lançamentos REALIZADO pelo campo referencia.\n\nO navegador abrirá o seletor de pasta (Chrome/Edge no desktop). A pasta exibida abaixo é apenas referência visual — selecione a pasta correta no diálogo.\n\nReferência: ${receiptsDir.trim() || DEFAULT_TREASURY_RECEIPTS_DIR}${receiptBatchForce ? '\n\nSubstituir: comprovantes existentes na mesma posição serão trocados.' : ''}${receiptBatchDryRun ? '\n\nNenhum arquivo será enviado nem renomeado.' : '\n\nArquivos vinculados serão renomeados com updated_ após sucesso.'}`,
+      modeLabel,
       'Cancelar'
     );
 
@@ -867,7 +873,10 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
       return;
     }
 
-    const result = await processReceiptBatch(folderPath);
+    const result = await processReceiptBatch(receiptsDir.trim() || DEFAULT_TREASURY_RECEIPTS_DIR, {
+      dryRun: receiptBatchDryRun,
+      force: receiptBatchForce,
+    });
 
     if ('cancelled' in result && result.cancelled) {
       return;
@@ -1144,11 +1153,9 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
         >
           <View style={styles.formCard}>
             <Text style={styles.formatHint}>
-              Informe o caminho da pasta com os JPG/JPEG (ex.: {DEFAULT_TREASURY_RECEIPTS_DIR}). Padrões
-              aceitos: 20260526 3825,00.jpg ou .jpeg (único) e 20260608 1500,00 2.jpg (múltiplos
-              anexos — espaço obrigatório antes do dígito de posição). Arquivos .jpeg são
-              normalizados para .jpg. Nomes como 2026.05.26 -3825,00.jpg são convertidos para o
-              padrão referencia. Arquivos processados recebem o prefixo updated_.
+              Selecione a pasta local no navegador (Chrome/Edge). O caminho abaixo é apenas referência
+              visual. Padrões: 20260526 3825,00.jpg/.jpeg e 20260608 1500,00 2.jpg (múltiplos anexos).
+              Referências ambíguas (mesma data+valor em mais de um lançamento) são bloqueadas no pré-voo.
             </Text>
 
             {!isTreasuryReceiptFolderAccessSupported() ? (
@@ -1157,7 +1164,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               </Text>
             ) : null}
 
-            <Text style={styles.periodPickerLabel}>Pasta dos comprovantes (JPG)</Text>
+            <Text style={styles.periodPickerLabel}>Pasta de referência (visual)</Text>
             <TextInput
               style={styles.receiptsDirInput}
               value={receiptsDir}
@@ -1168,6 +1175,39 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               autoCorrect={false}
               editable={!processingReceiptBatch && !rpcMissing && canUpdateFinancials === true}
             />
+
+            <View style={styles.importModeRow}>
+              <TouchableOpacity
+                style={[styles.importModeChip, receiptBatchDryRun && styles.importModeChipActive]}
+                onPress={() => setReceiptBatchDryRun((current) => !current)}
+                disabled={processingReceiptBatch || rpcMissing || canUpdateFinancials !== true}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.importModeChipText,
+                    receiptBatchDryRun && styles.importModeChipTextActive,
+                  ]}
+                >
+                  Simular (dry-run)
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.importModeChip, receiptBatchForce && styles.importModeChipActive]}
+                onPress={() => setReceiptBatchForce((current) => !current)}
+                disabled={processingReceiptBatch || rpcMissing || canUpdateFinancials !== true}
+                activeOpacity={0.85}
+              >
+                <Text
+                  style={[
+                    styles.importModeChipText,
+                    receiptBatchForce && styles.importModeChipTextActive,
+                  ]}
+                >
+                  Substituir ocupadas
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               style={[
@@ -1198,10 +1238,25 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                   Vinculados: {receiptBatchReport.linked.length} · Renomeados (já anexados):{' '}
                   {receiptBatchReport.renamedOnly.length} · Sem correspondência:{' '}
                   {receiptBatchReport.unmatchedFiles.length + receiptBatchReport.unmatchedEntries.length}
+                  {receiptBatchReport.preflightIssues.length
+                    ? ` · Pré-voo: ${receiptBatchReport.preflightIssues.length}`
+                    : ''}
                   {receiptBatchReport.errors.length
                     ? ` · Erros: ${receiptBatchReport.errors.length}`
                     : ''}
                 </Text>
+
+                {receiptBatchReport.preflightIssues.slice(0, 4).map((issue) => (
+                  <Text key={`preflight-${issue.fileName}-${issue.code}`} style={styles.errorLineText}>
+                    [pré-voo] {issue.fileName}: {issue.message}
+                  </Text>
+                ))}
+
+                {receiptBatchReport.ambiguousReferencias.slice(0, 4).map((item) => (
+                  <Text key={`ambiguous-${item.referencia}`} style={styles.errorLineText}>
+                    [ambiguidade] {item.referencia} · {item.entryCount} lançamentos
+                  </Text>
+                ))}
 
                 {receiptBatchReport.linked.slice(0, 6).map((item) => (
                   <Text key={`${item.entryId}-${item.fileName}`} style={styles.receiptBatchReportOk}>

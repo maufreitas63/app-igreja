@@ -238,7 +238,35 @@ export async function fetchMaintenanceFinancialEntries(
 
 const REALIZADO_RECEIPT_BATCH_PAGE_SIZE = 1000;
 
-export async function fetchRealizadoFinancialEntriesForReceiptBatch() {
+export type FinancialReceiptUrlsSchemaStatus = {
+  available: boolean;
+  message: string;
+};
+
+export async function checkFinancialReceiptUrlsSchema(): Promise<FinancialReceiptUrlsSchemaStatus> {
+  const { error } = await supabase.from('financials').select('receipt_urls').limit(1);
+
+  if (!error) {
+    return { available: true, message: 'Coluna receipt_urls disponível.' };
+  }
+
+  if (isMissingReceiptUrlsColumn(error.message ?? '')) {
+    return {
+      available: false,
+      message:
+        'Execute scripts/financials-receipt-urls.sql no Supabase para habilitar múltiplos comprovantes por lançamento.',
+    };
+  }
+
+  return {
+    available: false,
+    message: error.message ?? 'Não foi possível verificar o schema de comprovantes.',
+  };
+};
+
+export async function fetchRealizadoFinancialEntriesForReceiptBatch(
+  dateRange?: { minIso: string; maxIso: string } | null
+) {
   const rows: FinancialEntry[] = [];
   let from = 0;
   const selectCandidates = [
@@ -252,13 +280,19 @@ export async function fetchRealizadoFinancialEntriesForReceiptBatch() {
   while (true) {
     const selectColumns = selectCandidates[selectIndex] ?? FINANCIAL_SELECT_WITHOUT_REFERENCIA_AND_RECEIPT_URLS;
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('financials')
       .select(selectColumns)
       .ilike('budget_version', 'realizado')
       .order('transaction_date', { ascending: true })
       .order('id', { ascending: true })
       .range(from, from + REALIZADO_RECEIPT_BATCH_PAGE_SIZE - 1);
+
+    if (dateRange?.minIso && dateRange?.maxIso) {
+      query = query.gte('transaction_date', dateRange.minIso).lte('transaction_date', dateRange.maxIso);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       const message = error.message ?? '';
@@ -530,7 +564,8 @@ export async function attachMaintenanceFinancialReceipt(
   entryId: string,
   imageInput: string,
   existingReceiptUrls: string[] = [],
-  position?: number
+  position?: number,
+  force = false
 ) {
   const access = await assertMaintenanceFinancialUpdateAccess();
 
@@ -548,7 +583,7 @@ export async function attachMaintenanceFinancialReceipt(
     };
   }
 
-  if (!position && currentUrls.length >= FINANCIAL_MAX_RECEIPTS_PER_ENTRY) {
+  if (!position && !force && currentUrls.length >= FINANCIAL_MAX_RECEIPTS_PER_ENTRY) {
     return {
       success: false as const,
       message: `Cada lançamento aceita no máximo ${FINANCIAL_MAX_RECEIPTS_PER_ENTRY} comprovantes.`,
@@ -559,6 +594,61 @@ export async function attachMaintenanceFinancialReceipt(
 
   try {
     uploadedPath = await uploadFinancialReceiptImage(entryId, imageInput);
+
+    const { data, error } = await supabase.rpc('anexar_comprovante_lancamento_financeiro', {
+      p_id: entryId,
+      p_receipt_path: uploadedPath,
+      p_position: position ?? null,
+      p_force: force,
+    });
+
+    if (!error && data && typeof data === 'object') {
+      const parsed = data as Record<string, unknown>;
+      const rpcSuccess = parsed.success === true;
+
+      if (rpcSuccess) {
+        const nextReceiptUrls = normalizeFinancialReceiptUrls(parsed.receipt_urls);
+        const replacedUrl =
+          typeof parsed.replaced_url === 'string' ? parsed.replaced_url.trim() : '';
+
+        if (replacedUrl && replacedUrl !== uploadedPath) {
+          await deleteFinancialReceiptFile(replacedUrl).catch(() => undefined);
+        }
+
+        return {
+          success: true as const,
+          message:
+            typeof parsed.message === 'string' ? parsed.message : 'Comprovante anexado.',
+          receipt_urls: nextReceiptUrls,
+          receipt_url: nextReceiptUrls[0] ?? null,
+        };
+      }
+
+      if (uploadedPath) {
+        await deleteFinancialReceiptFile(uploadedPath).catch(() => undefined);
+      }
+
+      return {
+        success: false as const,
+        message:
+          typeof parsed.message === 'string'
+            ? parsed.message
+            : 'Não foi possível vincular o comprovante ao lançamento.',
+      };
+    }
+
+    const rpcMessage = (error?.message ?? '').toLowerCase();
+
+    if (!isSupabaseRpcMissing(rpcMessage, 'anexar_comprovante_lancamento_financeiro')) {
+      if (uploadedPath) {
+        await deleteFinancialReceiptFile(uploadedPath).catch(() => undefined);
+      }
+
+      if (error) {
+        throw error;
+      }
+    }
+
     const placed = placeFinancialReceiptAtPosition(currentUrls, targetPosition, uploadedPath);
 
     if (placed.error) {
@@ -574,9 +664,7 @@ export async function attachMaintenanceFinancialReceipt(
     const result = await updateMaintenanceFinancialEntryReceipts(entryId, nextUrls);
 
     if (!result.success) {
-      if (uploadedPath) {
-        await deleteFinancialReceiptFile(uploadedPath).catch(() => undefined);
-      }
+      await deleteFinancialReceiptFile(uploadedPath).catch(() => undefined);
 
       return {
         success: false as const,
