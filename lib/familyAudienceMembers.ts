@@ -1,7 +1,9 @@
 import type { FamilyMember } from '@/hooks/useFamilyMembers';
+import { compareFamilyMembersByRelationship } from '@/lib/familyRelationshipOptions';
 import { normalizeFamilyCode } from '@/lib/family';
 import { formatFullName, normalizeFullNameKey } from '@/lib/fullName';
-import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
+import { isFamilyAudienceMember, MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
+import { applyProfileBirthDates } from '@/lib/profileBirthDates';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { resolveActiveSessionMember } from '@/lib/resolveActiveSessionMember';
 import { upsertFamilyMember } from '@/lib/upsertFamilyMember';
@@ -86,9 +88,60 @@ export function dedupeFamilyMembers(members: FamilyMember[]): FamilyMember[] {
     merged.set(key, pickPreferredMember(existing, member));
   }
 
-  return Array.from(merged.values()).sort((left, right) =>
-    left.full_name.localeCompare(right.full_name, 'pt-BR')
-  );
+  return Array.from(merged.values()).sort(compareFamilyMembersByRelationship);
+}
+
+const mapAudienceMemberRows = (rows: FamilyMember[]) =>
+  rows
+    .filter((member) => isFamilyAudienceMember(member.accepted))
+    .map((member) => ({
+      ...member,
+      full_name: formatFullName(member.full_name),
+      family_id: normalizeFamilyCode(member.family_id),
+    }));
+
+/** Lista integrantes da família para audiência (inclui dependentes com accepted null ou true). */
+export async function fetchFamilyAudienceMembers(familyId: string): Promise<FamilyMember[]> {
+  const normalizedFamilyId = normalizeFamilyCode(familyId);
+
+  if (!normalizedFamilyId) {
+    return [];
+  }
+
+  const { data: rpcData, error: rpcError } = await supabase.rpc('list_members_family_directory', {
+    p_family_id: normalizedFamilyId,
+  });
+
+  if (!rpcError && Array.isArray(rpcData) && rpcData.length) {
+    const memberIds = rpcData
+      .map((row) => String((row as { member_id?: string }).member_id ?? '').trim())
+      .filter(Boolean);
+
+    if (memberIds.length) {
+      const { data: detailRows, error: detailError } = await supabase
+        .from('members')
+        .select('*')
+        .in('id', memberIds);
+
+      if (!detailError && detailRows?.length) {
+        const normalized = mapAudienceMemberRows(detailRows as FamilyMember[]);
+        return applyProfileBirthDates(normalized);
+      }
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('members')
+    .select('*')
+    .ilike('family_id', normalizedFamilyId)
+    .order('full_name');
+
+  if (error) {
+    throw error;
+  }
+
+  const normalized = mapAudienceMemberRows((data as FamilyMember[]) ?? []);
+  return applyProfileBirthDates(normalized);
 }
 
 const memberMatchesSessionProfile = (
@@ -137,14 +190,13 @@ export async function ensureSessionFamilyMemberRecord(
   const { data: familyMembers, error: fetchError } = await supabase
     .from('members')
     .select('id, full_name, phone, birth_date, relationship, family_id, accepted')
-    .ilike('family_id', normalizedFamilyId)
-    .eq('accepted', MEMBER_ACCEPTED_VALUE);
+    .ilike('family_id', normalizedFamilyId);
 
   if (fetchError) {
     throw fetchError;
   }
 
-  const members = (familyMembers as FamilyMember[] | null) ?? [];
+  const members = mapAudienceMemberRows((familyMembers as FamilyMember[] | null) ?? []);
 
   if (
     resolveActiveSessionMember(members, {

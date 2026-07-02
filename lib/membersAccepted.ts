@@ -1,9 +1,10 @@
 /**
- * Regra de negócio: consultas à tabela `members` consideram apenas membros
- * reconhecidos (`accepted = true`), exceto em Gerenciar Família (manage-members),
- * onde todos os registros são listados para aprovação.
+ * Regra de negócio: consultas gerais à tabela `members` consideram apenas membros
+ * reconhecidos (`accepted = true`), exceto:
+ * - Gerenciar Família (manage-members): todos os registros para aprovação;
+ * - Audiência do evento: integrantes da família com `accepted` true ou null (pendente).
  */
 export const MEMBER_ACCEPTED_VALUE = true;
 
-/** Use em cadeias Supabase: `.eq('accepted', MEMBER_ACCEPTED_VALUE)` */
-export const isMemberAccepted = (accepted: boolean | null | undefined) => accepted === true;
+/** Integrante visível na audiência do evento (não foi rejeitado pela família). */
+export const isFamilyAudienceMember = (accepted: boolean | null | undefined) => accepted !== false;

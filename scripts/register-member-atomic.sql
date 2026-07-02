@@ -508,7 +508,7 @@ begin
     into v_member
   from public.members
   where id = p_member_id
-    and accepted is true;
+    and accepted is distinct from false;
 
   if not found then
     return jsonb_build_object(
@@ -654,7 +654,7 @@ begin
     into v_member
   from public.members
   where id = p_member_id
-    and accepted is true;
+    and accepted is distinct from false;
 
   if not found then
     return jsonb_build_object(

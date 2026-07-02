@@ -1,8 +1,8 @@
 import type { FamilyMember } from '@/hooks/useFamilyMembers';
-import { useFamilyMembers } from '@/hooks/useFamilyMembers';
 import {
   dedupeFamilyMembers,
   ensureSessionFamilyMemberRecord,
+  fetchFamilyAudienceMembers,
   type SessionProfileAudience,
 } from '@/lib/familyAudienceMembers';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -12,13 +12,39 @@ export function useFamilyAudienceMembers(
   sessionProfile?: SessionProfileAudience | null,
   sessionProfileName?: string | null
 ) {
-  const { members, loading, error, refetch } = useFamilyMembers(familyId);
+  const [members, setMembers] = useState<FamilyMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [syncingAudience, setSyncingAudience] = useState(false);
   const sessionProfileId = sessionProfile?.id ?? '';
   const sessionProfilePhone = sessionProfile?.phone ?? null;
   const sessionProfileFullName = sessionProfile?.full_name ?? null;
   const sessionProfileBirthDate = sessionProfile?.birth_date ?? null;
   const audienceSyncKeyRef = useRef('');
+
+  const refetch = useCallback(async () => {
+    if (!familyId.trim()) {
+      setMembers([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const nextMembers = await fetchFamilyAudienceMembers(familyId);
+      setMembers(nextMembers);
+    } catch (err) {
+      const normalized =
+        err instanceof Error ? err : new Error('Não foi possível carregar a audiência familiar.');
+      setError(normalized);
+      setMembers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [familyId]);
 
   const syncAudience = useCallback(async () => {
     if (!familyId.trim() || !sessionProfileId) {
@@ -54,6 +80,10 @@ export function useFamilyAudienceMembers(
     sessionProfilePhone,
     sessionProfileName,
   ]);
+
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
 
   useEffect(() => {
     if (!familyId.trim() || !sessionProfileId) {
