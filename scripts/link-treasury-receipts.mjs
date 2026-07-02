@@ -160,6 +160,17 @@ const buildReceiptSearchFilename = (entry) => {
   return `${datePart} ${formatReceiptSearchAmount(entry.amount)}.jpg`;
 };
 
+/** Usa public.financials.referencia quando disponível; senão recalcula localmente. */
+const resolveReceiptFilename = (entry) => {
+  const fromDb = entry.referencia?.trim();
+
+  if (fromDb) {
+    return fromDb;
+  }
+
+  return buildReceiptSearchFilename(entry);
+};
+
 const buildStoragePath = (financialId) => `receipts/${financialId}/${Date.now()}.jpg`;
 
 const resolveStoragePath = (receiptUrl) => {
@@ -204,7 +215,7 @@ const fetchAllRealizadoEntries = async (supabase) => {
     const { data, error } = await supabase
       .from('financials')
       .select(
-        'id, transaction_date, amount, account, ministry, transaction_kind, movement, budget_version, receipt_url'
+        'id, transaction_date, amount, account, ministry, transaction_kind, movement, budget_version, receipt_url, referencia'
       )
       .ilike('budget_version', 'realizado')
       .order('transaction_date', { ascending: true })
@@ -453,7 +464,7 @@ const main = async () => {
 
   for (const entry of entries) {
     const label = formatEntryLabel(entry);
-    const expectedFilename = buildReceiptSearchFilename(entry);
+    const expectedFilename = resolveReceiptFilename(entry);
 
     if (!expectedFilename) {
       report.summary.invalidFilename += 1;

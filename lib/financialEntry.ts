@@ -12,6 +12,8 @@ export type FinancialEntry = {
   budget_version: string;
   comments?: string | null;
   receipt_url?: string | null;
+  /** Nome do JPG de comprovante: aaaammdd nnnn,nn.jpg */
+  referencia?: string | null;
 };
 
 const normalizeToken = (value: string) =>
@@ -464,6 +466,10 @@ export const normalizeFinancialEntryRow = (row: Record<string, unknown>): Financ
     receipt_url:
       typeof row.receipt_url === 'string' && row.receipt_url.trim()
         ? row.receipt_url.trim()
+        : null,
+    referencia:
+      typeof row.referencia === 'string' && row.referencia.trim()
+        ? row.referencia.trim()
         : null,
   };
 };

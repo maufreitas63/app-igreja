@@ -21,7 +21,7 @@ import type { FinancialMonthKey } from '@/lib/financialMonth';
 import { getFinancialMonthDateRange } from '@/lib/financialMonth';
 
 export const MAINTENANCE_FINANCIALS_SQL_HINT =
-  'Execute no Supabase: scripts/financials-schema.sql e scripts/financials-maintenance-rpc.sql (carga em lote, comentários e comprovantes).';
+  'Execute no Supabase: scripts/financials-schema.sql, scripts/financials-maintenance-rpc.sql e scripts/financials-referencia.sql (carga em lote, comentários, comprovantes e referência JPG).';
 
 export const MAINTENANCE_FINANCIALS_RPC_MISSING = 'MAINTENANCE_FINANCIALS_RPC_MISSING';
 
@@ -38,7 +38,7 @@ export const MAINTENANCE_FINANCIAL_MOVEMENTS = ['ORDINÁRIO', 'EXTRAORDINÁRIO']
 export const MAINTENANCE_FINANCIAL_BUDGET_VERSIONS = ['REALIZADO', 'PLANEJADO'] as const;
 
 const FINANCIAL_SELECT =
-  'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version, comments, receipt_url';
+  'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version, comments, receipt_url, referencia';
 
 export async function assertMaintenanceFinancialUpdateAccess() {
   const allowed = await sessionHasAccess('table', 'financials', 'update');

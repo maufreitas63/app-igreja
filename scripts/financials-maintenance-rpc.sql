@@ -16,6 +16,12 @@ alter table public.financials
 comment on column public.financials.receipt_url is
   'Caminho do comprovante no bucket privado financial-docs (ex.: receipts/{id}/{timestamp}.jpg).';
 
+alter table public.financials
+  add column if not exists referencia text;
+
+comment on column public.financials.referencia is
+  'Nome do arquivo JPG de comprovante: aaaammdd nnnn,nn.jpg (derivado de transaction_date e amount).';
+
 create or replace function public.financials_period_bounds(
   p_periodo text,
   p_referencia date
@@ -50,6 +56,7 @@ returns table (
   budget_version text,
   comments text,
   receipt_url text,
+  referencia text,
   source_row integer,
   created_at timestamptz,
   updated_at timestamptz
@@ -82,6 +89,7 @@ begin
     f.budget_version,
     f.comments,
     f.receipt_url,
+    f.referencia,
     f.source_row,
     f.created_at,
     f.updated_at
