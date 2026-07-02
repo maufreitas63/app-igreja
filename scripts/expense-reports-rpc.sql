@@ -257,6 +257,11 @@ begin
   if not (
     public.session_owns_expense_report(v_report.user_id)
     or public.session_can_manage_expense_reports_treasury()
+    or (
+      v_report.status = 'reconciled'
+      and v_report.financial_id is not null
+      and public.session_has_screen_access('/financial', 'view')
+    )
   ) then
     return jsonb_build_object('success', false, 'message', 'Sem permissão para visualizar este relatório.');
   end if;
@@ -533,6 +538,7 @@ as $$
       or er.user_id = public.current_session_profile_id()
       or public.session_has_resource_access('table', 'financials', 'view')
       or public.session_has_screen_access('maintenance.card.financials', 'view')
+      or public.session_has_screen_access('/financial', 'view')
     );
 $$;
 

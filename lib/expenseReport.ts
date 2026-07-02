@@ -718,32 +718,12 @@ export type ExpenseReportFinancialLink = {
   reportNumber: string;
 };
 
-export async function fetchExpenseReportLinksForFinancialIds(
-  financialIds: string[]
-): Promise<ExpenseReportFinancialLink[]> {
-  const uniqueIds = [...new Set(financialIds.map((id) => id.trim()).filter(Boolean))];
-
-  if (!uniqueIds.length) {
+const parseExpenseReportFinancialLinkRows = (rows: unknown): ExpenseReportFinancialLink[] => {
+  if (!Array.isArray(rows)) {
     return [];
   }
 
-  const { data, error } = await supabase.rpc('listar_relatorios_despesas_vinculo_lancamentos', {
-    p_financial_ids: uniqueIds,
-  });
-
-  if (error) {
-    if (isSupabaseRpcMissing((error.message ?? '').toLowerCase(), 'listar_relatorios_despesas_vinculo_lancamentos')) {
-      return [];
-    }
-
-    handleRpcError(error, 'listar_relatorios_despesas_vinculo_lancamentos');
-  }
-
-  if (!Array.isArray(data)) {
-    return [];
-  }
-
-  return data
+  return rows
     .map((row) => {
       if (!row || typeof row !== 'object') {
         return null;
@@ -751,7 +731,7 @@ export async function fetchExpenseReportLinksForFinancialIds(
 
       const record = row as Record<string, unknown>;
       const financialId = String(record.financial_id ?? '').trim();
-      const reportId = String(record.report_id ?? '').trim();
+      const reportId = String(record.report_id ?? record.id ?? '').trim();
       const reportNumber = String(record.report_number ?? '').trim();
 
       if (!financialId || !reportId) {
@@ -765,6 +745,96 @@ export async function fetchExpenseReportLinksForFinancialIds(
       };
     })
     .filter((link): link is ExpenseReportFinancialLink => link !== null);
+};
+
+const mergeExpenseReportFinancialLinks = (
+  ...linkGroups: ExpenseReportFinancialLink[][]
+): ExpenseReportFinancialLink[] => {
+  const merged = new Map<string, ExpenseReportFinancialLink>();
+
+  for (const links of linkGroups) {
+    for (const link of links) {
+      merged.set(link.financialId, link);
+    }
+  }
+
+  return [...merged.values()];
+};
+
+const chunkFinancialIds = (financialIds: string[], chunkSize = 100) => {
+  const chunks: string[][] = [];
+
+  for (let index = 0; index < financialIds.length; index += chunkSize) {
+    chunks.push(financialIds.slice(index, index + chunkSize));
+  }
+
+  return chunks;
+};
+
+async function fetchExpenseReportLinksViaRpc(
+  financialIds: string[]
+): Promise<ExpenseReportFinancialLink[]> {
+  const { data, error } = await supabase.rpc('listar_relatorios_despesas_vinculo_lancamentos', {
+    p_financial_ids: financialIds,
+  });
+
+  if (error) {
+    if (
+      isSupabaseRpcMissing(
+        (error.message ?? '').toLowerCase(),
+        'listar_relatorios_despesas_vinculo_lancamentos'
+      )
+    ) {
+      return [];
+    }
+
+    console.warn('RPC listar_relatorios_despesas_vinculo_lancamentos:', error.message);
+    return [];
+  }
+
+  return parseExpenseReportFinancialLinkRows(data);
+}
+
+async function fetchExpenseReportLinksDirect(
+  financialIds: string[]
+): Promise<ExpenseReportFinancialLink[]> {
+  const chunks = chunkFinancialIds(financialIds);
+  const links: ExpenseReportFinancialLink[] = [];
+
+  for (const chunk of chunks) {
+    const { data, error } = await supabase
+      .from('expense_reports')
+      .select('id, report_number, financial_id')
+      .in('financial_id', chunk)
+      .eq('status', 'reconciled')
+      .not('financial_id', 'is', null);
+
+    if (error) {
+      console.warn('Consulta direta de vínculos RD:', error.message);
+      continue;
+    }
+
+    links.push(...parseExpenseReportFinancialLinkRows(data));
+  }
+
+  return links;
+}
+
+export async function fetchExpenseReportLinksForFinancialIds(
+  financialIds: string[]
+): Promise<ExpenseReportFinancialLink[]> {
+  const uniqueIds = [...new Set(financialIds.map((id) => id.trim()).filter(Boolean))];
+
+  if (!uniqueIds.length) {
+    return [];
+  }
+
+  const [rpcLinks, directLinks] = await Promise.all([
+    fetchExpenseReportLinksViaRpc(uniqueIds),
+    fetchExpenseReportLinksDirect(uniqueIds),
+  ]);
+
+  return mergeExpenseReportFinancialLinks(rpcLinks, directLinks);
 }
 
 export const mergeExpenseReportLinksIntoFinancialEntries = (

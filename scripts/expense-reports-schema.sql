@@ -116,6 +116,11 @@ create policy expense_reports_select_acl
   using (
     public.session_owns_expense_report(user_id)
     or public.session_can_manage_expense_reports_treasury()
+    or (
+      status = 'reconciled'
+      and financial_id is not null
+      and public.session_has_screen_access('/financial', 'view')
+    )
   );
 
 drop policy if exists expense_reports_insert_acl on public.expense_reports;
