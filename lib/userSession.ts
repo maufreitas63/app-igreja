@@ -1,4 +1,5 @@
 import { loadProfileByPhone } from '@/lib/profileOnboarding';
+import { clearGhostModeState } from '@/lib/ghostMode';
 import { resetProfileScreenVisitTracking } from '@/lib/profileScreenVisitTracking';
 import { isPwaInstalled } from '@/lib/pwaInstall';
 
@@ -251,6 +252,7 @@ export async function revokeStoredProfileSession() {
 }
 
 export async function clearUserSession() {
+  clearGhostModeState();
   await revokeStoredProfileSession();
   scrubWebSessionKeys();
   resetProfileScreenVisitTracking();
@@ -269,6 +271,7 @@ const LOGIN_AFTER_SIGN_OUT_ROUTE = {
 
 /** Limpa chaves de sessão de forma síncrona (web) antes da navegação. */
 const clearUserSessionImmediately = () => {
+  clearGhostModeState();
   scrubWebSessionKeys();
   resetProfileScreenVisitTracking();
   void revokeStoredProfileSession();

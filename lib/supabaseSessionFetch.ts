@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getGhostEffectiveProfileId } from '@/lib/ghostMode';
 
 /** Mesmas chaves de `lib/userSession.ts` — evita import circular com supabase. */
 const USER_PROFILE_ID_STORAGE_KEY = 'user_profile_id';
@@ -16,6 +17,12 @@ export const supabaseSessionFetch: typeof fetch = async (input, init) => {
     if (profileId) {
       headers.set('x-profile-id', profileId);
     }
+  }
+
+  const ghostProfileId = getGhostEffectiveProfileId();
+
+  if (ghostProfileId) {
+    headers.set('x-ghost-profile-id', ghostProfileId);
   }
 
   return fetch(input, { ...init, headers });

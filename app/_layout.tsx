@@ -7,6 +7,8 @@ if (!global.Buffer) {
 
 import { AppShell } from '@/components/AppShell';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
+import { GhostModeBanner } from '@/components/GhostModeBanner';
+import { GhostModeProvider } from '@/context/GhostModeContext';
 import { appToastConfig } from '@/components/ui/appToastConfig';
 import { ICON_FONT_SOURCES } from '@/lib/iconFonts';
 import { useFonts } from 'expo-font';
@@ -25,13 +27,16 @@ export default function RootLayout() {
   }
 
   return (
-    <View style={styles.root}>
-      <AppShell />
-      <ConfirmDialogHost />
-      <View style={styles.toastHost} pointerEvents="box-none">
-        <Toast config={appToastConfig} topOffset={Platform.OS === 'web' ? 12 : 48} />
+    <GhostModeProvider>
+      <View style={styles.root}>
+        <AppShell />
+        <GhostModeBanner />
+        <ConfirmDialogHost />
+        <View style={styles.toastHost} pointerEvents="box-none">
+          <Toast config={appToastConfig} topOffset={Platform.OS === 'web' ? 12 : 48} />
+        </View>
       </View>
-    </View>
+    </GhostModeProvider>
   );
 }
 

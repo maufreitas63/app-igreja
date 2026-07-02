@@ -26,6 +26,7 @@ import { MaintenanceEventOrchestrationCard } from '@/components/MaintenanceEvent
 import { MaintenanceFamilyReceptionCard } from '@/components/MaintenanceFamilyReceptionCard';
 import { MaintenanceProfileCadastroCard } from '@/components/MaintenanceProfileCadastroCard';
 import { MaintenanceProfileAccessInsightsCard } from '@/components/MaintenanceProfileAccessInsightsCard';
+import { MaintenanceGhostModeCard } from '@/components/MaintenanceGhostModeCard';
 import { MaintenanceScalesCard } from '@/components/MaintenanceScalesCard';
 import { MaintenanceSalaServidorCard } from '@/components/MaintenanceSalaServidorCard';
 import { QuorumCheckinRegistryTable } from '@/components/QuorumCheckinRegistryTable';
@@ -154,6 +155,7 @@ type MaintenanceCarouselCard = {
     | 'suggestions_improvements'
     | 'access_control'
     | 'profile_access_insights'
+    | 'auditor'
     | 'event_orchestration';
 };
 
@@ -192,6 +194,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '10', title: 'Controle de Acesso', content: 'access_control' },
   { id: '13', title: 'Mudança de Papéis', content: 'mudanca_papeis' },
   { id: '14', title: 'Acessos de Usuários', content: 'profile_access_insights' },
+  { id: '19', title: 'Modo Ghost (Auditor)', content: 'auditor' },
 ];
 
 type FeatureToggleProps = {
@@ -366,6 +369,7 @@ export default function MaintenanceDashboard() {
   const [canAccessProfileCadastro, setCanAccessProfileCadastro] = useState(false);
   const [canUpdateMaintenanceEvents, setCanUpdateMaintenanceEvents] = useState(false);
   const [canBypassEventPastDateLock, setCanBypassEventPastDateLock] = useState(false);
+  const [canOperateGhostMode, setCanOperateGhostMode] = useState(false);
   const [maintenancePanelAccess, setMaintenancePanelAccess] = useState<Record<string, boolean>>(
     {}
   );
@@ -505,6 +509,7 @@ export default function MaintenanceDashboard() {
         setScalePanelAccess(snapshot.scalePanelAccess);
         setCanAccessPastoralCare(snapshot.canAccessPastoralCare);
         setCanAccessPastoralRoleChange(snapshot.canAccessPastoralRoleChange);
+        setCanOperateGhostMode(snapshot.canOperateGhostMode);
 
         if (snapshot.headerUserName) {
           setHeaderUserName(snapshot.headerUserName);
@@ -760,6 +765,10 @@ export default function MaintenanceDashboard() {
         return canManageAccessControl || maintenancePanelAccess[card.content] === true;
       }
 
+      if (card.content === 'auditor') {
+        return canOperateGhostMode;
+      }
+
       if (card.content === 'profile_cadastro' || card.content === 'family_reception') {
         return canAccessProfileCadastro;
       }
@@ -771,6 +780,7 @@ export default function MaintenanceDashboard() {
     canAccessPastoralCare,
     canAccessPastoralRoleChange,
     canAccessProfileCadastro,
+    canOperateGhostMode,
     canManageAccessControl,
     maintenancePanelAccess,
     scalePanelAccess,
@@ -1115,6 +1125,7 @@ export default function MaintenanceDashboard() {
             item.content === 'suggestions_improvements' && styles.panelCardSuggestions,
             item.content === 'access_control' && styles.panelCardAccessControl,
             item.content === 'profile_access_insights' && styles.panelCardProfileAccessInsights,
+            item.content === 'auditor' && styles.panelCardGhostMode,
             item.content === 'event_orchestration' && styles.panelCardEventOrchestration,
             item.content === 'menu' && styles.panelCardMenu,
           ]}
@@ -1238,6 +1249,8 @@ export default function MaintenanceDashboard() {
             <MaintenanceAccessControlCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'profile_access_insights' ? (
             <MaintenanceProfileAccessInsightsCard isActive={currentIndex === index} panelHeight={cardHeight} />
+          ) : item.content === 'auditor' ? (
+            <MaintenanceGhostModeCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'event_orchestration' ? (
             <MaintenanceEventOrchestrationCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'sala_servidor' ? (
@@ -2032,6 +2045,10 @@ const styles = StyleSheet.create({
   },
   panelCardProfileAccessInsights: {
     borderColor: 'rgba(250, 204, 21, 0.45)',
+    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
+  },
+  panelCardGhostMode: {
+    borderColor: 'rgba(251, 113, 133, 0.55)',
     padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardEventOrchestration: {

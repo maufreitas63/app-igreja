@@ -15,6 +15,7 @@ import {
   loadMaintenanceScalePanelAccess,
   type MaintenanceScalePanelContent,
 } from '@/lib/scaleAccess';
+import { checkSessionCanOperateGhostMode } from '@/lib/ghostModeApi';
 import { formatShortName } from '@/lib/formatShortName';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
 import {
@@ -36,6 +37,7 @@ export type MaintenanceDashboardAccessSnapshot = {
   scalePanelAccess: Partial<Record<MaintenanceScalePanelContent, boolean>>;
   canAccessPastoralCare: boolean;
   canAccessPastoralRoleChange: boolean;
+  canOperateGhostMode: boolean;
   headerUserName: string | null;
 };
 
@@ -52,6 +54,7 @@ const EMPTY_SNAPSHOT: MaintenanceDashboardAccessSnapshot = {
   scalePanelAccess: {},
   canAccessPastoralCare: false,
   canAccessPastoralRoleChange: false,
+  canOperateGhostMode: false,
   headerUserName: null,
 };
 
@@ -98,6 +101,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
   let canUpdateMaintenanceEvents = false;
   let canManageSupportRequests = false;
   let canBypassEventPastDateLock = false;
+  let canOperateGhostMode = false;
 
   try {
     let profileId = await getStoredProfileId();
@@ -115,6 +119,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
         canUpdateMaintenanceEvents,
         canManageSupportRequests,
         canBypassEventPastDateLock,
+        canOperateGhostMode,
       ] = await Promise.all([
         loadMaintenanceScalePanelAccess(profileId),
         loadPastoralCarePanelAccess(profileId),
@@ -123,6 +128,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
         sessionHasAccess('screen', 'maintenance.card.events', 'update'),
         sessionHasAccess('screen', 'maintenance.card.suggestions_improvements', 'update'),
         fetchSessionCanBypassEventPastDateLock(),
+        checkSessionCanOperateGhostMode(),
       ]);
     }
   } catch {
@@ -133,6 +139,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
     canUpdateMaintenanceEvents = false;
     canManageSupportRequests = false;
     canBypassEventPastDateLock = false;
+    canOperateGhostMode = false;
   }
 
   let headerUserName: string | null = null;
@@ -165,6 +172,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
     scalePanelAccess,
     canAccessPastoralCare,
     canAccessPastoralRoleChange,
+    canOperateGhostMode,
     headerUserName,
   };
 }

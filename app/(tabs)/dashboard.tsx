@@ -60,7 +60,8 @@ import {
   profileHasAccess,
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
-import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
+import { useGhostMode } from '@/context/GhostModeContext';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import {
   getStoredUserPhone,
   persistProfileId,
@@ -493,6 +494,7 @@ export default function Dashboard() {
     kidsRoomBadgeLabel,
     teensRoomBadgeLabel,
   } = useRoomDisplayLabels();
+  const { isActive: ghostModeActive, state: ghostModeState } = useGhostMode();
   const { width: pageWidth, height: windowHeight } = useWindowDimensions();
   const previousPageWidthRef = useRef(pageWidth);
   const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);
@@ -943,20 +945,21 @@ export default function Dashboard() {
       setAclRpcStatus(aclStatus);
 
       if (loadedProfile?.id) {
+        const accessProfileId = (await resolveEffectiveProfileId()) ?? loadedProfile.id;
         const [allowed, cardAccess, screenAccess, mapGeolocationAllowed, isSuperAdmin, canAccessProfileCadastro, activeMembership] =
           await Promise.all([
-            profileHasAccess(loadedProfile.id, 'screen', ACCESS_SCREEN.maintenance, 'view'),
-            loadDashboardCardViewAccess(loadedProfile.id),
-            loadDashboardLinkedScreenAccess(loadedProfile.id),
-            profileHasAccess(loadedProfile.id, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
+            profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.maintenance, 'view'),
+            loadDashboardCardViewAccess(accessProfileId),
+            loadDashboardLinkedScreenAccess(accessProfileId),
+            profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
             checkSessionIsSuperAdmin(),
             profileHasAccess(
-              loadedProfile.id,
+              accessProfileId,
               'screen',
               'maintenance.card.profile_cadastro',
               'view'
             ),
-            fetchProfileHasActiveMembership(loadedProfile.id),
+            fetchProfileHasActiveMembership(accessProfileId),
           ]);
         setCanViewMaintenance(allowed);
         setCanMonitorFamilyReception(isSuperAdmin || canAccessProfileCadastro);
@@ -1042,11 +1045,12 @@ export default function Dashboard() {
         const aclStatus = await getAccessControlRpcStatus();
 
         if (sessionProfile.id) {
+          const accessProfileId = (await resolveEffectiveProfileId()) ?? sessionProfile.id;
           const [allowed, cardAccess, screenAccess, mapGeolocationAllowed] = await Promise.all([
-            profileHasAccess(sessionProfile.id, 'screen', ACCESS_SCREEN.maintenance, 'view'),
-            loadDashboardCardViewAccess(sessionProfile.id),
-            loadDashboardLinkedScreenAccess(sessionProfile.id),
-            profileHasAccess(sessionProfile.id, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
+            profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.maintenance, 'view'),
+            loadDashboardCardViewAccess(accessProfileId),
+            loadDashboardLinkedScreenAccess(accessProfileId),
+            profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
           ]);
 
           if (active) {
@@ -1079,7 +1083,7 @@ export default function Dashboard() {
       return () => {
         active = false;
       };
-    }, [familyId, phone])
+    }, [familyId, phone, ghostModeActive, ghostModeState?.targetProfileId])
   );
 
   useEffect(() => {

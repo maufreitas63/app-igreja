@@ -17,6 +17,11 @@ import {
   persistProfileId,
   repairUserSessionReference,
 } from '@/lib/userSession';
+import {
+  invalidateSessionProfileCache,
+  resolveEffectiveProfileId,
+  resolveRealSessionProfileId,
+} from '@/lib/sessionProfile';
 
 export { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
 
@@ -102,45 +107,13 @@ let cachedActorProfilePhone: string | null = null;
 export function invalidateActorSessionCache() {
   cachedActorProfileId = null;
   cachedActorProfilePhone = null;
-  invalidateAccessControlCache({ allProfiles: true });
+  invalidateSessionProfileCache();
 }
 
+export { resolveEffectiveProfileId, resolveRealSessionProfileId } from '@/lib/sessionProfile';
+
 export async function resolveActorProfileId(options?: { forceRefresh?: boolean }) {
-  const phone = (await getStoredUserPhone())?.trim() || null;
-
-  if (
-    !options?.forceRefresh
-    && cachedActorProfileId
-    && cachedActorProfilePhone === phone
-  ) {
-    return cachedActorProfileId;
-  }
-
-  if (phone) {
-    const preferredProfileId = await resolveProfileIdByPhone(phone);
-
-    if (preferredProfileId) {
-      const storedProfileId = await getStoredProfileId();
-
-      if (storedProfileId !== preferredProfileId) {
-        await persistProfileId(preferredProfileId);
-      }
-
-      cachedActorProfileId = preferredProfileId;
-      cachedActorProfilePhone = phone;
-      return preferredProfileId;
-    }
-  }
-
-  let profileId = await getStoredProfileId();
-
-  if (!profileId) {
-    profileId = await repairUserSessionReference(phone);
-  }
-
-  cachedActorProfileId = profileId;
-  cachedActorProfilePhone = phone;
-  return profileId;
+  return resolveEffectiveProfileId(options);
 }
 
 const readIsSuperAdminProfile = async (profileId: string) => {
@@ -168,7 +141,7 @@ export async function checkSessionIsSuperAdmin(options?: { forceRefresh?: boolea
     await repairUserSessionReference(phone);
   }
 
-  let profileId = await resolveActorProfileId({ forceRefresh: options?.forceRefresh });
+  let profileId = await resolveEffectiveProfileId({ forceRefresh: options?.forceRefresh });
 
   if (!profileId) {
     return false;

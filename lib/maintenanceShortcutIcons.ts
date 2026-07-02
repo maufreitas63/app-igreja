@@ -15,6 +15,7 @@ export type MaintenancePanelContent =
   | 'relatorios'
   | 'access_control'
   | 'profile_access_insights'
+  | 'auditor'
   | 'event_orchestration'
   | 'suggestions_improvements';
 
@@ -59,6 +60,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   family_reception: 'home',
   access_control: 'shield',
   profile_access_insights: 'history',
+  auditor: 'user-secret',
   event_orchestration: 'bullhorn',
   suggestions_improvements: 'comments',
 };
@@ -81,6 +83,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   family_reception: '#34D399',
   access_control: '#818CF8',
   profile_access_insights: '#FCD34D',
+  auditor: '#FB7185',
   event_orchestration: '#38BDF8',
   suggestions_improvements: '#38BDF8',
 };

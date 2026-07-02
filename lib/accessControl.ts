@@ -7,6 +7,8 @@ import {
   getStoredUserPhone,
   repairUserSessionReference,
 } from '@/lib/userSession';
+import { isGhostModeActive } from '@/lib/ghostMode';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { ACCESS_SCREEN } from '@/lib/accessScreen';
 
 export { ACL_UNAVAILABLE_MESSAGE, isAclStrictMode } from '@/lib/aclPolicy';
@@ -374,14 +376,10 @@ export async function sessionHasAccess(
   resourceKey: string,
   action: AccessAction = 'view'
 ): Promise<boolean> {
-  let profileId = await getStoredProfileId();
-
-  if (!profileId) {
-    profileId = await repairUserSessionReference();
-  }
+  const profileId = await resolveEffectiveProfileId();
 
   if (profileId) {
-    if (await sessionIsSuperAdmin(profileId)) {
+    if (!isGhostModeActive() && (await sessionIsSuperAdmin(profileId))) {
       return true;
     }
 
