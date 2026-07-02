@@ -323,28 +323,12 @@ $$;
 
 create or replace function public.is_super_admin_profile(p_profile_id uuid)
 returns boolean
-language plpgsql
+language sql
 stable
 security definer
 set search_path = public
 as $$
-declare
-  v_real_session uuid;
-begin
-  if p_profile_id is null then
-    return false;
-  end if;
-
-  v_real_session := public.current_real_session_profile_id();
-
-  if v_real_session is not null and p_profile_id <> v_real_session then
-    if not public.profile_has_super_admin_role(v_real_session) then
-      return false;
-    end if;
-  end if;
-
-  return public.profile_has_super_admin_role(p_profile_id);
-end;
+  select public.profile_has_super_admin_role(p_profile_id);
 $$;
 
 create or replace function public.assert_access_admin(p_actor_profile_id uuid)

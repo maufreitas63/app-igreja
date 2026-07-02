@@ -142,7 +142,9 @@ export async function checkSessionIsSuperAdmin(options?: { forceRefresh?: boolea
     await repairUserSessionReference(phone);
   }
 
-  let profileId = await resolveEffectiveProfileId({ forceRefresh: options?.forceRefresh });
+  const profileId = isGhostModeActive()
+    ? await resolveEffectiveProfileId({ forceRefresh: options?.forceRefresh })
+    : await resolveRealSessionProfileId({ forceRefresh: options?.forceRefresh });
 
   if (!profileId) {
     return false;
@@ -168,7 +170,10 @@ export async function checkSessionIsSuperAdmin(options?: { forceRefresh?: boolea
 
       return isSuperAdmin;
     },
-    { scopeId: profileId, forceRefresh: options?.forceRefresh }
+    {
+      scopeId: isGhostModeActive() ? profileId : 'real-session',
+      forceRefresh: options?.forceRefresh,
+    }
   );
 }
 

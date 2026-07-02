@@ -11,7 +11,7 @@ import {
   fetchEffectiveProfileColumnAccess,
   shouldUseEffectiveProfileRpc,
 } from '@/lib/effectiveProfileRpc';
-import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
+import { resolveEffectiveProfileId, resolveRealSessionProfileId } from '@/lib/sessionProfile';
 import { ACCESS_SCREEN } from '@/lib/accessScreen';
 
 export { ACL_UNAVAILABLE_MESSAGE, isAclStrictMode } from '@/lib/aclPolicy';
@@ -66,7 +66,7 @@ export async function loadDashboardCardViewAccess(
   profileId: string,
   options?: { forceRefresh?: boolean }
 ): Promise<DashboardCardViewAccess> {
-  if (await sessionIsSuperAdmin(profileId, options)) {
+  if (await readOperatorIsSuperAdmin(options) || (await sessionIsSuperAdmin(profileId, options))) {
     return Object.fromEntries(
       Object.keys(DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY).map((content) => [content, true] as const)
     );
@@ -150,6 +150,17 @@ export async function loadProfileColumnAccess(
     }
   }
 
+  if (await readOperatorIsSuperAdmin(options)) {
+    const allGranted = Object.fromEntries(
+      PROFILE_MANAGE_COLUMN_FIELDS.map((field) => [field, true] as const)
+    );
+
+    return {
+      view: { ...allGranted },
+      update: { ...allGranted },
+    };
+  }
+
   if (await sessionIsSuperAdmin(profileId, options)) {
     const allGranted = Object.fromEntries(
       PROFILE_MANAGE_COLUMN_FIELDS.map((field) => [field, true] as const)
@@ -218,8 +229,23 @@ export const canUpdateProfileColumn = (fieldKey: string, access: ProfileColumnAc
 const isAccessRpcMissing = (error: { code?: string; message?: string } | null) =>
   isSupabaseRpcMissingError(error, 'profile_has_access');
 
+/** Super admin do operador real (ignora Modo Ghost). */
+const readOperatorIsSuperAdmin = async (options?: { forceRefresh?: boolean }) => {
+  if (isGhostModeActive()) {
+    return false;
+  }
+
+  const realProfileId = await resolveRealSessionProfileId(options);
+
+  if (!realProfileId) {
+    return false;
+  }
+
+  return readSessionIsSuperAdmin(realProfileId);
+};
+
 const readSessionIsSuperAdmin = async (profileId?: string | null): Promise<boolean> => {
-  let resolvedId = profileId?.trim() ?? (await resolveEffectiveProfileId());
+  let resolvedId = profileId?.trim() ?? (await resolveRealSessionProfileId());
 
   if (!resolvedId) {
     resolvedId = await repairUserSessionReference();
@@ -330,6 +356,10 @@ export async function profileHasAccess(
     return false;
   }
 
+  if (await readOperatorIsSuperAdmin(options)) {
+    return true;
+  }
+
   if (await sessionIsSuperAdmin(trimmed, options)) {
     return true;
   }
@@ -396,7 +426,11 @@ export async function sessionHasAccess(
   const profileId = await resolveEffectiveProfileId();
 
   if (profileId) {
-    if (!isGhostModeActive() && (await sessionIsSuperAdmin(profileId))) {
+    if (await readOperatorIsSuperAdmin()) {
+      return true;
+    }
+
+    if (isGhostModeActive() && (await sessionIsSuperAdmin(profileId))) {
       return true;
     }
 
