@@ -100,6 +100,218 @@ const mapAudienceMemberRows = (rows: FamilyMember[]) =>
       family_id: normalizeFamilyCode(member.family_id),
     }));
 
+const isMissingRpcError = (error: { message?: string } | null, rpcName: string) => {
+  const message = (error?.message ?? '').toLowerCase();
+
+  return (
+    message.includes(rpcName.toLowerCase())
+    && (message.includes('could not find') || message.includes('does not exist'))
+  );
+};
+
+const mergeAudienceMemberSources = (...sources: FamilyMember[][]) => {
+  const merged = new Map<string, FamilyMember>();
+
+  for (const source of sources) {
+    for (const member of source) {
+      const memberId = String(member.id ?? '').trim();
+
+      if (!memberId) {
+        continue;
+      }
+
+      const existing = merged.get(memberId);
+      merged.set(memberId, existing ? pickPreferredMember(existing, member) : member);
+    }
+  }
+
+  return Array.from(merged.values());
+};
+
+const mapAudienceRpcMemberRow = (row: Record<string, unknown>): FamilyMember | null => {
+  const memberId = String(row.member_id ?? row.id ?? '').trim();
+  const fullName = formatFullName(String(row.full_name ?? ''));
+
+  if (!memberId || !fullName) {
+    return null;
+  }
+
+  return {
+    id: memberId,
+    full_name: fullName,
+    phone: row.phone != null ? String(row.phone).trim() || null : null,
+    birth_date: row.birth_date != null ? String(row.birth_date) : null,
+    relationship: row.relationship != null ? String(row.relationship).trim() || null : null,
+    family_id: normalizeFamilyCode(String(row.family_id ?? '')),
+    accepted: typeof row.accepted === 'boolean' ? row.accepted : row.accepted == null ? null : Boolean(row.accepted),
+    created_at: row.created_at != null ? String(row.created_at) : undefined,
+  };
+};
+
+const fetchMembersDirectFromTable = async (familyId: string): Promise<FamilyMember[]> => {
+  const { data, error } = await supabase
+    .from('members')
+    .select('*')
+    .ilike('family_id', familyId)
+    .order('full_name');
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as FamilyMember[]) ?? [];
+};
+
+const fetchMembersByIds = async (memberIds: string[]): Promise<FamilyMember[]> => {
+  if (!memberIds.length) {
+    return [];
+  }
+
+  const { data, error } = await supabase.from('members').select('*').in('id', memberIds);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as FamilyMember[]) ?? [];
+};
+
+const fetchMembersFromDirectoryRpc = async (familyId: string): Promise<FamilyMember[]> => {
+  const { data: rpcData, error: rpcError } = await supabase.rpc('list_members_family_directory', {
+    p_family_id: familyId,
+  });
+
+  if (rpcError) {
+    if (isMissingRpcError(rpcError, 'list_members_family_directory')) {
+      return [];
+    }
+
+    throw rpcError;
+  }
+
+  if (!Array.isArray(rpcData) || !rpcData.length) {
+    return [];
+  }
+
+  const memberIds = rpcData
+    .map((row) => String((row as { member_id?: string }).member_id ?? '').trim())
+    .filter(Boolean);
+
+  if (!memberIds.length) {
+    return [];
+  }
+
+  return fetchMembersByIds(memberIds);
+};
+
+const fetchMembersFromAudienceRpc = async (familyId: string): Promise<FamilyMember[]> => {
+  const { data, error } = await supabase.rpc('list_family_event_audience_members', {
+    p_family_id: familyId,
+  });
+
+  if (error) {
+    if (isMissingRpcError(error, 'list_family_event_audience_members')) {
+      return [];
+    }
+
+    throw error;
+  }
+
+  return (data as Array<Record<string, unknown>> | null ?? [])
+    .map((row) => mapAudienceRpcMemberRow(row))
+    .filter((row): row is FamilyMember => row !== null);
+};
+
+const memberMatchesAudienceProfile = (
+  member: Pick<FamilyMember, 'full_name' | 'phone'>,
+  profile: { full_name?: string | null; phone?: string | null }
+) => {
+  const profilePhoneVariants = buildPhoneDbQueryVariants(profile.phone ?? '');
+  const memberPhone = member.phone?.trim() ?? '';
+  const normalizedMemberPhone = normalizePhone(member.phone);
+
+  if (
+    profilePhoneVariants.some(
+      (variant) => variant === memberPhone || normalizePhone(variant) === normalizedMemberPhone
+    )
+  ) {
+    return true;
+  }
+
+  const profileName = normalizeFullNameKey(profile.full_name);
+
+  return Boolean(profileName && normalizeFullNameKey(member.full_name) === profileName);
+};
+
+const supplementAudienceFromFamilyProfiles = async (
+  familyId: string,
+  members: FamilyMember[]
+): Promise<FamilyMember[]> => {
+  const { data, error } = await supabase.rpc('list_family_profiles_for_event_audience', {
+    p_family_id: familyId,
+  });
+
+  if (error) {
+    if (isMissingRpcError(error, 'list_family_profiles_for_event_audience')) {
+      return members;
+    }
+
+    throw error;
+  }
+
+  const profiles = (data as Array<Record<string, unknown>> | null) ?? [];
+  const supplemented = [...members];
+
+  for (const row of profiles) {
+    const fullName = formatFullName(String(row.full_name ?? ''));
+
+    if (!fullName) {
+      continue;
+    }
+
+    const profile = {
+      full_name: fullName,
+      phone: row.phone != null ? String(row.phone).trim() || null : null,
+      birth_date: row.birth_date != null ? String(row.birth_date) : null,
+    };
+
+    if (members.some((member) => memberMatchesAudienceProfile(member, profile))) {
+      continue;
+    }
+
+    try {
+      const { id: memberId } = await upsertFamilyMember({
+        full_name: fullName,
+        phone: profile.phone,
+        birth_date: profile.birth_date,
+        relationship: 'Outros',
+        family_id: familyId,
+        accepted: MEMBER_ACCEPTED_VALUE,
+      });
+
+      if (!memberId) {
+        continue;
+      }
+
+      const { data: insertedMember, error: fetchError } = await supabase
+        .from('members')
+        .select('*')
+        .eq('id', memberId)
+        .maybeSingle();
+
+      if (fetchError || !insertedMember) {
+        continue;
+      }
+
+      supplemented.push(insertedMember as FamilyMember);
+    } catch {
+      // Mantém a audiência utilizável mesmo se o upsert falhar para um integrante.
+    }
+  }
+
+  return supplemented;
+};
+
 /** Lista integrantes da família para audiência (inclui dependentes com accepted null ou true). */
 export async function fetchFamilyAudienceMembers(familyId: string): Promise<FamilyMember[]> {
   const normalizedFamilyId = normalizeFamilyCode(familyId);
@@ -108,39 +320,16 @@ export async function fetchFamilyAudienceMembers(familyId: string): Promise<Fami
     return [];
   }
 
-  const { data: rpcData, error: rpcError } = await supabase.rpc('list_members_family_directory', {
-    p_family_id: normalizedFamilyId,
-  });
+  const [directRows, audienceRpcRows, directoryRpcRows] = await Promise.all([
+    fetchMembersDirectFromTable(normalizedFamilyId),
+    fetchMembersFromAudienceRpc(normalizedFamilyId),
+    fetchMembersFromDirectoryRpc(normalizedFamilyId),
+  ]);
 
-  if (!rpcError && Array.isArray(rpcData) && rpcData.length) {
-    const memberIds = rpcData
-      .map((row) => String((row as { member_id?: string }).member_id ?? '').trim())
-      .filter(Boolean);
+  const merged = mergeAudienceMemberSources(directRows, audienceRpcRows, directoryRpcRows);
+  const supplemented = await supplementAudienceFromFamilyProfiles(normalizedFamilyId, merged);
+  const normalized = mapAudienceMemberRows(supplemented);
 
-    if (memberIds.length) {
-      const { data: detailRows, error: detailError } = await supabase
-        .from('members')
-        .select('*')
-        .in('id', memberIds);
-
-      if (!detailError && detailRows?.length) {
-        const normalized = mapAudienceMemberRows(detailRows as FamilyMember[]);
-        return applyProfileBirthDates(normalized);
-      }
-    }
-  }
-
-  const { data, error } = await supabase
-    .from('members')
-    .select('*')
-    .ilike('family_id', normalizedFamilyId)
-    .order('full_name');
-
-  if (error) {
-    throw error;
-  }
-
-  const normalized = mapAudienceMemberRows((data as FamilyMember[]) ?? []);
   return applyProfileBirthDates(normalized);
 }
 

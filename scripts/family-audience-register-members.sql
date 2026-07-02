@@ -1,8 +1,6 @@
 -- Audiência do evento: dependentes com accepted null também podem ser inscritos.
--- A alteração está em scripts/register-member-atomic.sql
--- (register_member_atomic / unregister_member_atomic: accepted is distinct from false).
---
--- Execute no Supabase o arquivo completo:
---   scripts/register-member-atomic.sql
+-- Execute no Supabase:
+--   1. scripts/family-event-audience-members.sql (RPCs da audiência)
+--   2. scripts/register-member-atomic.sql (inscrição com accepted is distinct from false)
 
 notify pgrst, 'reload schema';
