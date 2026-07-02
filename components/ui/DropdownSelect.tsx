@@ -29,7 +29,7 @@ type DropdownSelectProps = {
   searchable?: boolean;
   style?: StyleProp<ViewStyle>;
   triggerTextStyle?: StyleProp<TextStyle>;
-  size?: 'default' | 'comfortable';
+  size?: 'default' | 'comfortable' | 'compact';
   disabled?: boolean;
 };
 
@@ -54,6 +54,7 @@ export function DropdownSelect({
   disabled = false,
 }: DropdownSelectProps) {
   const isComfortable = size === 'comfortable';
+  const isCompact = size === 'compact';
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const blurCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -201,6 +202,7 @@ export function DropdownSelect({
         style={[
           styles.trigger,
           isComfortable && styles.triggerComfortable,
+          isCompact && styles.triggerCompact,
           disabled && styles.triggerDisabled,
           style,
         ]}
@@ -215,6 +217,7 @@ export function DropdownSelect({
           style={[
             styles.triggerText,
             isComfortable && styles.triggerTextComfortable,
+            isCompact && styles.triggerTextCompact,
             triggerTextStyle,
           ]}
           numberOfLines={1}
@@ -333,6 +336,16 @@ const styles = StyleSheet.create({
     minHeight: 52,
     paddingVertical: 14,
   },
+  triggerCompact: {
+    flex: 0,
+    flexGrow: 0,
+    alignSelf: 'flex-start',
+    minHeight: 31,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#E2E8F0',
+  },
   triggerDisabled: {
     opacity: 0.55,
   },
@@ -346,6 +359,12 @@ const styles = StyleSheet.create({
   triggerTextComfortable: {
     fontSize: 16,
     lineHeight: 22,
+  },
+  triggerTextCompact: {
+    color: '#0F172A',
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
   },
   backdrop: {
     flex: 1,

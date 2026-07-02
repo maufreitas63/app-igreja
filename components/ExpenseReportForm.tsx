@@ -165,9 +165,9 @@ export function ExpenseReportForm({
         />
       </View>
 
-      <View style={styles.itemsHeader}>
+      <View style={styles.itemsSection}>
         <SectionLabel label="Despesas" />
-        <View style={styles.itemsHeaderActions}>
+        <View style={styles.itemsToolbar}>
           <View style={styles.referenceMonthPicker}>
             <Text style={styles.referenceMonthLabel}>Competência</Text>
             <DropdownSelect
@@ -182,6 +182,7 @@ export function ExpenseReportForm({
               }}
               modalTitle="Competência do RD"
               placeholder="Mês/Ano"
+              size="compact"
               style={styles.referenceMonthDropdown}
               disabled={submitting || !allowAnyReferenceMonth}
             />
@@ -364,22 +365,20 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     fontVariant: ['tabular-nums'],
   },
-  itemsHeader: {
+  itemsSection: {
+    gap: 8,
+  },
+  itemsToolbar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    gap: 8,
-  },
-  itemsHeaderActions: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-    flexShrink: 1,
+    gap: 12,
   },
   referenceMonthPicker: {
+    flex: 1,
     gap: 4,
-    minWidth: 132,
-    maxWidth: 168,
+    alignItems: 'flex-start',
+    minWidth: 0,
   },
   referenceMonthLabel: {
     color: '#64748B',
@@ -388,7 +387,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   referenceMonthDropdown: {
-    minHeight: 36,
+    minWidth: 132,
+    maxWidth: 200,
   },
   addButton: {
     flexDirection: 'row',
@@ -398,6 +398,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
     paddingHorizontal: 12,
     paddingVertical: 8,
+    minHeight: 31,
+    flexShrink: 0,
   },
   addButtonText: {
     color: '#0F172A',
