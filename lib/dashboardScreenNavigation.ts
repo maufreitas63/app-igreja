@@ -14,6 +14,8 @@ export const DASHBOARD_SCREEN_DENIED_MESSAGES: Record<string, string> = {
   '/pastoral-history': 'Você não tem permissão para ver seus pedidos pastorais.',
   '/financial': 'Você não tem permissão para abrir o módulo financeiro.',
   '/mapa-geolocalizacao': 'Você não tem permissão para abrir o mapa de geolocalização.',
+  '/mapa-geolocalizacao/detalhe-pin':
+    'Você pode ver o mapa geral, mas não tem permissão para abrir a localização de outros usuários.',
   '/expense-report': 'Você não tem permissão para abrir o Relatório de Despesas.',
 };
 

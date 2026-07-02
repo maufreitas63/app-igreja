@@ -7,6 +7,7 @@ type ClientGeoLeafletMapProps = {
   markers: MapMarker[];
   highlightedProfileId?: string | null;
   onSelectProfile: (profile: ProfileForMap) => void;
+  pinsInteractive?: boolean;
 };
 
 type GeoLeafletMapComponent = React.ComponentType<ClientGeoLeafletMapProps>;
@@ -41,6 +42,7 @@ export function ClientGeoLeafletMap({
   markers,
   highlightedProfileId = null,
   onSelectProfile,
+  pinsInteractive = true,
 }: ClientGeoLeafletMapProps) {
   const [MapComponent, setMapComponent] = useState<GeoLeafletMapComponent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -98,6 +100,7 @@ export function ClientGeoLeafletMap({
         markers={markers}
         highlightedProfileId={highlightedProfileId}
         onSelectProfile={onSelectProfile}
+        pinsInteractive={pinsInteractive}
       />
     </GeoMapErrorBoundary>
   );

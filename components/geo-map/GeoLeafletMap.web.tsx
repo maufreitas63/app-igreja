@@ -9,6 +9,7 @@ type GeoLeafletMapProps = {
   markers: MapMarker[];
   highlightedProfileId?: string | null;
   onSelectProfile: (profile: ProfileForMap) => void;
+  pinsInteractive?: boolean;
 };
 
 const pinIconCache = new Map<string, L.DivIcon>();
@@ -85,6 +86,7 @@ export function GeoLeafletMap({
   markers,
   highlightedProfileId = null,
   onSelectProfile,
+  pinsInteractive = true,
 }: GeoLeafletMapProps) {
   const leafletCenter = useMemo<[number, number]>(() => center, [center[0], center[1]]);
 
@@ -110,9 +112,14 @@ export function GeoLeafletMap({
             position={[coord.lat, coord.lng]}
             icon={pinIconForMarker(profile, highlightedProfileId)}
             zIndexOffset={profile.id === highlightedProfileId ? 1000 : 0}
-            eventHandlers={{
-              click: () => onSelectProfile(profile),
-            }}
+            interactive={pinsInteractive}
+            eventHandlers={
+              pinsInteractive
+                ? {
+                    click: () => onSelectProfile(profile),
+                  }
+                : undefined
+            }
           />
         ))}
       </MapContainer>

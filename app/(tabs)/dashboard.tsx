@@ -64,7 +64,7 @@ import {
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
-import { useGhostMode } from '@/context/GhostModeContext';
+import { MAP_PIN_DETAIL_DENIED_MESSAGE } from '@/hooks/useMapPinDetailAccess';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import {
   getStoredUserPhone,
@@ -537,6 +537,7 @@ export default function Dashboard() {
   const [dashboardCardAccess, setDashboardCardAccess] = useState<DashboardCardViewAccess>({});
   const [dashboardScreenAccess, setDashboardScreenAccess] = useState<DashboardScreenAccess>({});
   const [canAccessMapGeolocation, setCanAccessMapGeolocation] = useState(false);
+  const [canViewMapPinDetails, setCanViewMapPinDetails] = useState(false);
   const [aclRpcStatus, setAclRpcStatus] = useState<'unknown' | 'available' | 'missing'>('unknown');
   const [modalVisible, setModalVisible] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -899,6 +900,7 @@ export default function Dashboard() {
           setDashboardCardAccess({});
           setDashboardScreenAccess({});
           setCanAccessMapGeolocation(false);
+        setCanViewMapPinDetails(false);
           return;
         }
         setUserPhone(targetPhone);
@@ -924,6 +926,7 @@ export default function Dashboard() {
           setDashboardCardAccess({});
           setDashboardScreenAccess({});
           setCanAccessMapGeolocation(false);
+        setCanViewMapPinDetails(false);
           signOutAndReturnToLogin();
           return;
         }
@@ -947,6 +950,7 @@ export default function Dashboard() {
           setCanMonitorFamilyReception(false);
           setDashboardCardAccess({});
           setCanAccessMapGeolocation(false);
+          setCanViewMapPinDetails(false);
         }
 
         const aclStatus = await getAccessControlRpcStatus();
@@ -954,12 +958,13 @@ export default function Dashboard() {
 
         if (loadedProfile?.id) {
           const accessProfileId = (await resolveEffectiveProfileId()) ?? loadedProfile.id;
-          const [allowed, cardAccess, screenAccess, mapGeolocationAllowed, isSuperAdmin, canAccessProfileCadastro, activeMembership] =
+          const [allowed, cardAccess, screenAccess, mapGeolocationAllowed, mapPinDetailAllowed, isSuperAdmin, canAccessProfileCadastro, activeMembership] =
             await Promise.all([
               profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.maintenance, 'view'),
               loadDashboardCardViewAccess(accessProfileId, { forceRefresh: true }),
               loadDashboardLinkedScreenAccess(accessProfileId, { forceRefresh: true }),
               profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
+              profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocationPinDetail, 'view'),
               checkSessionIsSuperAdmin({ forceRefresh: true }),
               profileHasAccess(
                 accessProfileId,
@@ -991,6 +996,7 @@ export default function Dashboard() {
           setDashboardCardAccess(resolvedCardAccess);
           setDashboardScreenAccess(resolvedScreenAccess);
           setCanAccessMapGeolocation(mapGeolocationAllowed || operatorIsSuperAdmin);
+          setCanViewMapPinDetails(mapPinDetailAllowed || operatorIsSuperAdmin);
           setHasActiveMembership(activeMembership);
         } else {
           setHasActiveMembership(false);
@@ -1002,6 +1008,7 @@ export default function Dashboard() {
         setDashboardCardAccess({});
         setDashboardScreenAccess({});
         setCanAccessMapGeolocation(false);
+        setCanViewMapPinDetails(false);
         setHasActiveMembership(false);
       } finally {
         setIsMaintenanceAccessLoading(false);
@@ -1082,11 +1089,14 @@ export default function Dashboard() {
 
         if (sessionProfile.id) {
           const accessProfileId = (await resolveEffectiveProfileId()) ?? sessionProfile.id;
-          const [allowed, cardAccess, screenAccess, mapGeolocationAllowed] = await Promise.all([
+          const [allowed, cardAccess, screenAccess, mapGeolocationAllowed, mapPinDetailAllowed, operatorIsSuperAdmin] =
+            await Promise.all([
             profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.maintenance, 'view'),
             loadDashboardCardViewAccess(accessProfileId),
             loadDashboardLinkedScreenAccess(accessProfileId),
             profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
+            profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocationPinDetail, 'view'),
+            checkOperatorIsSuperAdmin(),
           ]);
 
           if (active) {
@@ -1104,15 +1114,21 @@ export default function Dashboard() {
 
               return nextSnapshot === currentSnapshot ? current : screenAccess;
             });
-            setCanAccessMapGeolocation((current) =>
-              current === mapGeolocationAllowed ? current : mapGeolocationAllowed
-            );
+            setCanAccessMapGeolocation((current) => {
+              const next = mapGeolocationAllowed || operatorIsSuperAdmin;
+              return current === next ? current : next;
+            });
+            setCanViewMapPinDetails((current) => {
+              const next = mapPinDetailAllowed || operatorIsSuperAdmin;
+              return current === next ? current : next;
+            });
           }
         } else if (active) {
           setCanViewMaintenance(false);
           setDashboardCardAccess({});
           setDashboardScreenAccess({});
           setCanAccessMapGeolocation(false);
+          setCanViewMapPinDetails(false);
         }
       })();
 
@@ -1926,6 +1942,16 @@ export default function Dashboard() {
         return;
       }
 
+      if (!canViewMapPinDetails) {
+        Toast.show({
+          type: 'info',
+          text1: 'Detalhe indisponível',
+          text2: MAP_PIN_DETAIL_DENIED_MESSAGE,
+          visibilityTime: 4000,
+        });
+        return;
+      }
+
       if (!entry.cep?.trim()) {
         Toast.show({
           type: 'error',
@@ -1945,7 +1971,7 @@ export default function Dashboard() {
         buildChildScreenParams({ focusProfileId: entry.id })
       );
     },
-    [buildChildScreenParams, isMapGeolocationEnabled, mapGeolocationDisabledMessage, router]
+    [buildChildScreenParams, canViewMapPinDetails, isMapGeolocationEnabled, mapGeolocationDisabledMessage, router]
   );
 
   const handleOpenMembersMap = useCallback(() => {
@@ -3025,7 +3051,9 @@ export default function Dashboard() {
                         >
                           {filteredMemberListEntries.map((entry) => {
                             const canOpenMemberOnMap =
-                              isMapGeolocationEnabled && Boolean(entry.cep?.trim());
+                              isMapGeolocationEnabled
+                              && canViewMapPinDetails
+                              && Boolean(entry.cep?.trim());
 
                             return (
                             <View key={entry.id} style={styles.membersListRow}>

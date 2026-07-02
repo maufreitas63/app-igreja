@@ -14,6 +14,7 @@ import {
 } from '@/lib/enrichProfileMapAddress';
 import { normalizeCepDigits } from '@/lib/geoMapGeocoding';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
+import { useMapPinDetailAccess, MAP_PIN_DETAIL_DENIED_MESSAGE } from '@/hooks/useMapPinDetailAccess';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
@@ -76,6 +77,7 @@ export default function MapGeolocalizacaoWebScreen() {
     resourceKey: ACCESS_SCREEN.mapGeolocation,
     deniedMessage: 'Você não tem permissão para abrir o mapa de geolocalização.',
   });
+  const { canViewMapPinDetails } = useMapPinDetailAccess();
 
   const returnDashboardCard = resolveReturnDashboardCardParam(params);
   const returnToCaller = useReturnToCallerOnLeave({
@@ -181,6 +183,16 @@ export default function MapGeolocalizacaoWebScreen() {
   }, []);
 
   const handleSelectProfile = useCallback(async (profile: ProfileForMap) => {
+    if (!canViewMapPinDetails) {
+      Toast.show({
+        type: 'info',
+        text1: 'Detalhe indisponível',
+        text2: MAP_PIN_DETAIL_DENIED_MESSAGE,
+        visibilityTime: 4000,
+      });
+      return;
+    }
+
     setSelectedProfile(profile);
 
     if (profileHasMapAddress(profile)) {
@@ -202,7 +214,7 @@ export default function MapGeolocalizacaoWebScreen() {
     } catch {
       // Mantém o perfil original com CEP, mesmo sem endereço detalhado.
     }
-  }, []);
+  }, [canViewMapPinDetails]);
 
   useEffect(() => {
     if (loading || !focusProfileId || !markers.length) {
@@ -214,6 +226,16 @@ export default function MapGeolocalizacaoWebScreen() {
     }
 
     focusAppliedRef.current = focusProfileId;
+
+    if (!canViewMapPinDetails) {
+      Toast.show({
+        type: 'info',
+        text1: 'Detalhe indisponível',
+        text2: MAP_PIN_DETAIL_DENIED_MESSAGE,
+        visibilityTime: 4000,
+      });
+      return;
+    }
 
     const marker = markers.find((entry) => entry.profile.id === focusProfileId);
 
@@ -234,7 +256,7 @@ export default function MapGeolocalizacaoWebScreen() {
 
     setPinFilter('all');
     void handleSelectProfile(marker.profile);
-  }, [focusProfileId, handleSelectProfile, loading, markers, profilesNotOnMap]);
+  }, [canViewMapPinDetails, focusProfileId, handleSelectProfile, loading, markers, profilesNotOnMap]);
 
   const selectedAddress = useMemo(
     () => (selectedProfile ? buildProfileMapAddressDisplay(selectedProfile) : null),
@@ -387,6 +409,12 @@ export default function MapGeolocalizacaoWebScreen() {
             Dados locais em cache — sincroniza quando profiles ou papéis de acesso mudarem.
           </Text>
         ) : null}
+        {!canViewMapPinDetails ? (
+          <Text style={styles.readOnlyHint}>
+            Mapa em modo visualização: você pode ver os pins, mas não abrir a localização de outros
+            usuários.
+          </Text>
+        ) : null}
         {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
         <View style={styles.actionRow}>
           <TouchableOpacity style={styles.reloadButton} onPress={() => void reload()} activeOpacity={0.85}>
@@ -395,16 +423,16 @@ export default function MapGeolocalizacaoWebScreen() {
           <TouchableOpacity
             style={[
               styles.invalidCepsButton,
-              !profilesNotOnMap.length && styles.invalidCepsButtonDisabled,
+              (!profilesNotOnMap.length || !canViewMapPinDetails) && styles.invalidCepsButtonDisabled,
             ]}
             onPress={handleOpenInvalidCepsModal}
-            disabled={!profilesNotOnMap.length}
+            disabled={!profilesNotOnMap.length || !canViewMapPinDetails}
             activeOpacity={0.85}
           >
             <Text
               style={[
                 styles.invalidCepsButtonText,
-                !profilesNotOnMap.length && styles.invalidCepsButtonTextDisabled,
+                (!profilesNotOnMap.length || !canViewMapPinDetails) && styles.invalidCepsButtonTextDisabled,
               ]}
             >
               Sem CEP ({profilesNotOnMap.length})
@@ -434,6 +462,7 @@ export default function MapGeolocalizacaoWebScreen() {
             center={leafletCenter}
             markers={filteredMarkers}
             highlightedProfileId={focusProfileId}
+            pinsInteractive={canViewMapPinDetails}
             onSelectProfile={(profile) => void handleSelectProfile(profile)}
           />
         </View>
@@ -710,6 +739,12 @@ const styles = StyleSheet.create({
   },
   cacheHint: {
     color: '#86EFAC',
+    fontSize: 11,
+    fontWeight: '600',
+    lineHeight: 15,
+  },
+  readOnlyHint: {
+    color: '#FDE68A',
     fontSize: 11,
     fontWeight: '600',
     lineHeight: 15,
