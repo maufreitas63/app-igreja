@@ -4,7 +4,7 @@
 **Sistema:** Aplicativo digital da Igreja Batista Norte  
 **Repositório:** `maufreitas63/app-igreja`  
 **Versão do app:** 1.0.0  
-**Data:** 23 de junho de 2026  
+**Data:** 2 de julho de 2026  
 **Públicos:** Cliente final (valor e usabilidade) · Equipe de manutenção (arquitetura e lógica)
 
 ---
@@ -106,7 +106,7 @@ Cada recurso abaixo descreve **o benefício** para quem usa, não apenas a funci
 
 ### 2.4 Painel principal (Dashboard)
 
-O dashboard é um **carrossel de cards** — deslize horizontalmente ou use as setas no rodapé. Cada card concentra uma área da vida na igreja.
+O dashboard é um **carrossel de cards** — deslize horizontalmente ou use as setas no rodapé. O botão **Menu** ocupa a faixa central; a engrenagem de manutenção, quando visível no Índice, fica **alinhada à direita** do rodapé.
 
 | Card | Benefício para o membro |
 |------|-------------------------|
@@ -115,7 +115,7 @@ O dashboard é um **carrossel de cards** — deslize horizontalmente ou use as s
 | **SALA(S)** | Acompanha entrada dos filhos nas salas Kids/Teens (somente da própria família) |
 | **Dízimos e Ofertas** | Chave PIX e dados do recebedor sempre à mão; copiar com um toque |
 | **Coração Aberto** | Atalho para pedido pastoral ou intercessão |
-| **Lista de Membros** | Diretório com busca, WhatsApp e mapa geral da comunidade |
+| **Lista de Membros** | Diretório com busca, WhatsApp e mapa geral (detalhe de pin restrito por ACL) |
 | **Aniversariantes** | Celebra e contata aniversariantes do mês |
 | **Financeiro** | Hub para relatórios autorizados e relatório de despesas (RD) |
 | **Escalas** | Consulta quando e com quem serve em cada tipo de escala |

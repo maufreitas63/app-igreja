@@ -81,7 +81,7 @@ const TRAINING_DAYS = [
       ['Como vejo integrantes da mesma família?', 'Na coluna **Família**, toque o ícone **users** (rosa) → modal **Membros da família** com código (ex.: **Família IBN0103**), nomes, parentesco e WhatsApp.'],
       ['O modal da família veio vazio — o que fazer?', 'Pode não haver integrantes reconhecidos no núcleo, falta de permissão ACL ou RPCs não aplicados no Supabase — avise a secretaria/TI. A mensagem *Nenhum membro reconhecido nesta família* ou erro em vermelho explica o caso.'],
       ['Como contato alguém pelo WhatsApp?', 'Na lista ou no modal familiar, toque o ícone **WhatsApp** (verde) ao lado do nome quando houver telefone cadastrado.'],
-      ['Para que serve o Mapa Geral?', 'Abre `/mapa-geolocalizacao` com pins de endereços; filtros **Todos**, **Com papel** e **Visitantes**; toque no pin para ver dados e copiar endereço.'],
+      ['Para que serve o Mapa Geral?', 'Abre `/mapa-geolocalizacao` com pins de endereços; filtros **Todos**, **Com papel** e **Visitantes**. Membros veem o mapa; **detalhe ao clicar no pin** (localização de outros) só com permissão pastoral/super_admin.'],
     ],
   },
   {
@@ -154,7 +154,7 @@ function buildTrainingDailyManual() {
     '',
     '**Pacote:** [`PACOTE_7_TREINAMENTO_DIARIO.md`](PACOTE_7_TREINAMENTO_DIARIO.md) · **Índice geral:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)',
     '',
-    '**Atualizado em:** 23/06/2026',
+    '**Atualizado em:** 02/07/2026',
     '',
     '---',
     '',

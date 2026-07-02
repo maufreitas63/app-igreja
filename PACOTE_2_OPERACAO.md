@@ -300,7 +300,7 @@ Use **modo equipe** para vigilância, recepção ou estacionamento (vários no m
 
 **Pacotes:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md) (membro) · [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) (operação) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 02/07/2026
 
 ## Objetivo
 
@@ -372,7 +372,9 @@ A parte inferior do card mostra a audiencia da familia vinculada ao usuario loga
 
 Nesta area:
 
-- cada linha representa um membro da familia;
+- cada linha representa um integrante do nucleo familiar (**membro** ou **congregado**);
+- dependentes com reconhecimento **pendente ou aceito** tambem aparecem (`accepted` diferente de `false`);
+- integrantes **rejeitados** na familia nao entram na lista;
 - o nome do membro aparece sem parentesco;
 - cada item possui um checkbox para registrar ou remover a participacao;
 - quando o membro ja estiver inscrito, o item indica `Registrado para o evento`.
@@ -450,13 +452,12 @@ Sempre que um membro e registrado ou removido:
 
 ## Navegacao no Dashboard
 
-O dashboard nao depende mais de arraste lateral.
+O dashboard usa carrossel horizontal com rodape `CarouselFooterNav`:
 
-Para navegar entre os cards, utilize os botoes inferiores:
-
-- `<` para voltar;
-- `Sair` para encerrar a sessao;
-- `>` para avancar.
+- **`<`** e **`>`** para voltar/avançar entre cards (segurar avanca automaticamente);
+- **`Menu`** no centro — retorna ao **Indice do Aplicativo**;
+- contador **`1 / N`** na mesma faixa;
+- no **Indice**, **Encerrar sessao** / **Sair do aplicativo**; engrenagem de manutencao, quando visivel, alinhada a **direita** do rodape.
 
 ## Integracao com o Card de Check In
 
@@ -497,6 +498,9 @@ Fluxo recomendado de uso:
 
 ---
 
+Sim — selecione beneficiário **família** ou **terceiro** e preencha os dados.
+
+**Onde vejo pedidos enviados?**  
 **Meus pedidos** (`/pastoral-history`) — histórico com status.
 
 **Lista vazia em Meus pedidos.**  
@@ -537,7 +541,4 @@ Saia e **entre de novo** para recarregar permissões do servidor.
 ---
 
 ## 17. Totem de check-in
-
-**O totem é para membros usarem no culto?**  
-Não. É um **aparelho fixo da igreja** operado na entrada para **escanear** o QR das famílias.
 

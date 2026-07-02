@@ -1,7 +1,7 @@
 # Mapa visual de papéis — Controle de Acesso
 
-Gerado em: 23/06/2026, 14:49:36
-Fonte: scripts SQL do repositório
+Gerado em: 02/07/2026, 18:44:05
+Fonte: banco Supabase (ao vivo)
 
 Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 
@@ -10,7 +10,7 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 ## Visitantes
 
 - **Código:** `visitantes`
-- **Descrição:** Acesso público mínimo: login, cadastro e check-in; usado quando não há perfil/papéis na sessão
+- **Descrição:** Acesso público mínimo sem perfil/papéis na sessão
 
 ### Telas
 
@@ -19,8 +19,13 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | Cadastro | `/register` | **Sim** | **Sim** |
 | Card Agenda da Família | `dashboard.card.event_alt` | **Sim** | — |
 | Card Check In | `dashboard.card.qr` | **Sim** | — |
+| Card Coração Aberto | `dashboard.card.pastoral` | **Sim** | **Sim** |
+| Card Dízimos e Ofertas | `dashboard.card.offerings` | **Sim** | — |
+| Coração Aberto | `/pastoral` | **Sim** | **Sim** |
+| Dashboard | `/dashboard` | **Sim** | — |
 | LGPD | `/lgpd` | **Sim** | **Sim** |
 | Login | `/` | **Sim** | — |
+| Meus pedidos pastorais | `/pastoral-history` | **Sim** | **Sim** |
 
 ### Tabelas
 
@@ -43,17 +48,22 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
+| Cadastro | `/register` | **Sim** | **Sim** |
+| Card — Administrativo | `dashboard.card.administrativo` | **Sim** | — |
 | Card Agenda da Família | `dashboard.card.event_alt` | **Sim** | — |
 | Card Aniversariantes | `dashboard.card.birthdays` | **Sim** | — |
 | Card Check In | `dashboard.card.qr` | **Sim** | — |
 | Card Coração Aberto | `dashboard.card.pastoral` | **Sim** | — |
 | Card Dízimos e Ofertas | `dashboard.card.offerings` | **Sim** | — |
+| Card Lista de Membros | `dashboard.card.members_list` | **Sim** | — |
 | Card Menu | `dashboard.card.grouped_manage` | **Sim** | — |
 | Card SALA(S) | `dashboard.card.kids_teens` | **Sim** | — |
 | Coração Aberto | `/pastoral` | **Sim** | **Sim** |
-| Dados cadastrais | `/manage-profile` | **Sim** | **Sim** |
+| Dados cadastrais | `/manage-profile` | **Sim** | — |
 | Dashboard | `/dashboard` | **Sim** | — |
+| Gerenciar família | `/manage-members` | **Sim** | — |
 | LGPD | `/lgpd` | **Sim** | **Sim** |
+| Mapa de geolocalização | `/mapa-geolocalizacao` | **Sim** | — |
 | Meus pedidos pastorais | `/pastoral-history` | **Sim** | — |
 
 ### Tabelas
@@ -62,6 +72,7 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | --- | --- | :---: | :---: |
 | Pedidos pastorais | `pastoral_requests` | **Sim** | **Sim** |
 | Perfis | `profiles` | **Sim** | **Sim** |
+| Tabela — Atas de assembleias | `maintenance_assembly_minutes` | **Sim** | — |
 
 ### Colunas
 
@@ -90,6 +101,8 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
+| Cadastro | `/register` | **Sim** | **Sim** |
+| Card — Administrativo | `dashboard.card.administrativo` | **Sim** | — |
 | Card Agenda da Família | `dashboard.card.event_alt` | **Sim** | — |
 | Card Aniversariantes | `dashboard.card.birthdays` | **Sim** | — |
 | Card Check In | `dashboard.card.qr` | **Sim** | — |
@@ -104,10 +117,12 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | Coração Aberto | `/pastoral` | **Sim** | **Sim** |
 | Dados cadastrais | `/manage-profile` | **Sim** | **Sim** |
 | Dashboard | `/dashboard` | **Sim** | — |
-| Gerenciar família | `/manage-members` | **Sim** | — |
+| Gerenciar família | `/manage-members` | **Sim** | **Sim** |
 | LGPD | `/lgpd` | **Sim** | **Sim** |
+| Login | `/` | **Sim** | **Sim** |
+| Mapa de geolocalização | `/mapa-geolocalizacao` | **Sim** | — |
 | Meus pedidos pastorais | `/pastoral-history` | **Sim** | — |
-| Relatório de Despesas (RD) | `/expense-report` | **Sim** | — |
+| Relatório de Despesas (RD) | `/expense-report` | **Sim** | **Sim** |
 | Relatórios financeiros (/financial) | `/financial` | **Sim** | — |
 
 ### Tabelas
@@ -118,11 +133,14 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | Eventos | `events` | **Sim** | — |
 | Famílias | `families` | **Sim** | — |
 | Inscrições em eventos | `event_registrations` | **Sim** | **Sim** |
-| Membros da família | `members` | **Sim** | — |
+| Lançamentos financeiros | `financials` | **Sim** | — |
+| Membros da família | `members` | **Sim** | **Sim** |
 | Parâmetros do app | `app_parameters` | **Sim** | — |
 | Pedidos pastorais | `pastoral_requests` | **Sim** | **Sim** |
 | Perfis | `profiles` | **Sim** | **Sim** |
+| Relatórios de Despesas | `expense_reports` | **Sim** | **Sim** |
 | Subcategorias pastorais | `pastoral_reason_subcategories` | **Sim** | — |
+| Tabela — Atas de assembleias | `maintenance_assembly_minutes` | **Sim** | — |
 | Veículos do perfil | `profile_vehicles` | **Sim** | **Sim** |
 
 ### Colunas
@@ -139,6 +157,7 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | Estado | `profiles.address_state` | **Sim** | **Sim** |
 | Nascimento | `profiles.birth_date` | **Sim** | **Sim** |
 | Nome completo | `profiles.full_name` | **Sim** | **Sim** |
+| Nome fantasia | `profiles.nome_fantasia` | **Sim** | **Sim** |
 | Número | `profiles.address_number` | **Sim** | **Sim** |
 | Rua | `profiles.address_street` | **Sim** | **Sim** |
 | Telefone | `profiles.phone` | **Sim** | **Sim** |
@@ -154,8 +173,7 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
-| Card Lista de Membros | `dashboard.card.members_list` | **Sim** | — |
-| Gerenciar família | `/manage-members` | **Sim** | — |
+| Dashboard | `/dashboard` | **Sim** | — |
 
 ---
 
@@ -169,6 +187,17 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
 | Card Escalas | `dashboard.card.vigilance_scales` | **Sim** | — |
+| Dashboard | `/dashboard` | **Sim** | — |
+| Escala: Acolhimento Recepção | `scale_type.acolhimento_recepcao` | **Sim** | **Sim** |
+| Escala: Escala de Monitores Sala Kids | `scale_type.sala kids` | **Sim** | **Sim** |
+| Escala: Escala de Monitores Sala Teens | `scale_type.sala teens` | **Sim** | **Sim** |
+| Escala: Escala Ministério  Infantil | `scale_type.sala_kids` | **Sim** | **Sim** |
+| Escala: Escala Ministério de Louvor | `scale_type.louvor` | **Sim** | **Sim** |
+| Escala: Escala Ministério Jovens | `scale_type.sala_teens` | **Sim** | **Sim** |
+| Escala: Ministério De Acolhimento | `scale_type.ministerioacolhimento` | **Sim** | **Sim** |
+| Escala: Ministério De Intercessão | `scale_type.ministintersec` | **Sim** | **Sim** |
+| Manutenção — Cronograma de eventos | `maintenance.card.events_gantt` | **Sim** | **Sim** |
+| Manutenção — Programação de eventos | `maintenance.card.events` | **Sim** | **Sim** |
 | Manutenção do sistema | `/maintenance-dashboard` | **Sim** | — |
 | Manutenção: Programação de Escalas | `maintenance.card.scales` | **Sim** | **Sim** |
 | Manutenção: Servos em Disponibilidade | `maintenance.card.scale_volunteers` | **Sim** | **Sim** |
@@ -186,11 +215,22 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | --- | --- | :---: | :---: |
 | Card SALA(S) | `dashboard.card.kids_teens` | **Sim** | **Sim** |
 | Dashboard | `/dashboard` | **Sim** | **Sim** |
-| Manutenção — Cronograma de eventos | `maintenance.card.events_gantt` | **Sim** | **Sim** |
-| Manutenção — Lista de presença (quórum) | `maintenance.card.quorum_presence` | **Sim** | **Sim** |
-| Manutenção — Monitor de salas | `maintenance.card.sala_monitor` | **Sim** | **Sim** |
-| Manutenção — Programação de eventos | `maintenance.card.events` | **Sim** | **Sim** |
+| Manutenção — Relatórios | `maintenance.card.relatorios` | **Sim** | — |
+| Manutenção — Sugestões e Melhorias | `maintenance.card.suggestions_improvements` | **Sim** | — |
 | Manutenção do sistema | `/maintenance-dashboard` | **Sim** | **Sim** |
+
+### Tabelas
+
+| Nome | Chave técnica | Ver | Editar |
+| --- | --- | :---: | :---: |
+| Eventos | `events` | **Sim** | **Sim** |
+| Inscrições em eventos | `event_registrations` | **Sim** | **Sim** |
+| Tabela — Anexos de suporte | `maintenance_support_attachments` | **Sim** | — |
+| Tabela — Atas de assembleias | `maintenance_assembly_minutes` | **Sim** | **Sim** |
+| Tabela — Comunicações de suporte | `maintenance_support_communications` | **Sim** | — |
+| Tabela — Histórico de suporte | `maintenance_support_interactions` | **Sim** | — |
+| Tabela — Solicitações de suporte | `maintenance_support_requests` | **Sim** | — |
+| Tabela — Temas de suporte | `maintenance_support_themes` | **Sim** | — |
 
 ---
 
@@ -203,13 +243,17 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
-| Card Financeiro (dashboard) | `dashboard.card.financial` | **Sim** | — |
+| Card Financeiro (dashboard) | `dashboard.card.financial` | **Sim** | **Sim** |
+| Dashboard | `/dashboard` | **Sim** | — |
 | Manutenção — Cronograma de eventos | `maintenance.card.events_gantt` | **Sim** | **Sim** |
 | Manutenção — Informações financeiras | `maintenance.card.financials` | **Sim** | **Sim** |
 | Manutenção — Programação de eventos | `maintenance.card.events` | **Sim** | **Sim** |
+| Manutenção — Relatórios | `maintenance.card.relatorios` | **Sim** | — |
+| Manutenção — Sugestões e Melhorias | `maintenance.card.suggestions_improvements` | **Sim** | — |
 | Manutenção do sistema | `/maintenance-dashboard` | **Sim** | — |
+| Manutenção: Modelo Preditivo | `maintenance.card.predictive_insights` | **Sim** | — |
 | Relatório de Despesas (RD) | `/expense-report` | **Sim** | **Sim** |
-| Relatórios financeiros (/financial) | `/financial` | **Sim** | — |
+| Relatórios financeiros (/financial) | `/financial` | **Sim** | **Sim** |
 
 ### Tabelas
 
@@ -219,6 +263,12 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | Inscrições em eventos | `event_registrations` | **Sim** | **Sim** |
 | Lançamentos financeiros | `financials` | **Sim** | **Sim** |
 | Relatórios de Despesas | `expense_reports` | **Sim** | **Sim** |
+| Tabela — Anexos de suporte | `maintenance_support_attachments` | **Sim** | — |
+| Tabela — Atas de assembleias | `maintenance_assembly_minutes` | **Sim** | **Sim** |
+| Tabela — Comunicações de suporte | `maintenance_support_communications` | **Sim** | — |
+| Tabela — Histórico de suporte | `maintenance_support_interactions` | **Sim** | — |
+| Tabela — Solicitações de suporte | `maintenance_support_requests` | **Sim** | — |
+| Tabela — Temas de suporte | `maintenance_support_themes` | **Sim** | — |
 
 ---
 
@@ -231,35 +281,43 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
-| Card Agenda da Família | `dashboard.card.event_alt` | **Sim** | — |
-| Card Aniversariantes | `dashboard.card.birthdays` | **Sim** | — |
 | Card Check In | `dashboard.card.qr` | **Sim** | — |
 | Card Coração Aberto | `dashboard.card.pastoral` | **Sim** | — |
 | Card Dízimos e Ofertas | `dashboard.card.offerings` | **Sim** | — |
 | Card Escalas | `dashboard.card.vigilance_scales` | **Sim** | — |
 | Card Estacionamento | `dashboard.card.parking_vehicle_v2` | **Sim** | — |
-| Card Financeiro (dashboard) | `dashboard.card.financial` | **Sim** | — |
-| Card Lista de Membros | `dashboard.card.members_list` | **Sim** | — |
-| Card Menu | `dashboard.card.grouped_manage` | **Sim** | — |
-| Card SALA(S) | `dashboard.card.kids_teens` | **Sim** | — |
 | Coração Aberto | `/pastoral` | **Sim** | **Sim** |
-| Dados cadastrais | `/manage-profile` | **Sim** | **Sim** |
 | Dashboard | `/dashboard` | **Sim** | — |
-| Gerenciar família | `/manage-members` | **Sim** | — |
-| LGPD | `/lgpd` | **Sim** | **Sim** |
+| Manutenção — Relatórios | `maintenance.card.relatorios` | **Sim** | — |
+| Manutenção — Sugestões e Melhorias | `maintenance.card.suggestions_improvements` | **Sim** | — |
 | Manutenção do sistema | `/maintenance-dashboard` | **Sim** | — |
 | Manutenção: Cuidado Pastoral | `maintenance.card.pastoral_care` | **Sim** | **Sim** |
-| Meus pedidos pastorais | `/pastoral-history` | **Sim** | — |
-| Relatório de Despesas (RD) | `/expense-report` | **Sim** | — |
-| Relatórios financeiros (/financial) | `/financial` | **Sim** | — |
+| Manutenção: Modelo Preditivo | `maintenance.card.predictive_insights` | **Sim** | — |
+| Manutenção: Mudança de Papéis | `maintenance.card.mudanca_papeis` | **Sim** | **Sim** |
+| Meus pedidos pastorais | `/pastoral-history` | **Sim** | **Sim** |
 
 ### Tabelas
 
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
+| Categorias pastorais | `pastoral_reason_categories` | **Sim** | — |
+| Eventos | `events` | **Sim** | — |
+| Famílias | `families` | **Sim** | — |
+| Inscrições em eventos | `event_registrations` | **Sim** | **Sim** |
+| Lançamentos financeiros | `financials` | **Sim** | — |
 | Membros da família | `members` | **Sim** | — |
+| Parâmetros do app | `app_parameters` | **Sim** | — |
 | Pedidos pastorais | `pastoral_requests` | **Sim** | **Sim** |
 | Perfis | `profiles` | **Sim** | **Sim** |
+| Relatórios de Despesas | `expense_reports` | **Sim** | **Sim** |
+| Subcategorias pastorais | `pastoral_reason_subcategories` | **Sim** | — |
+| Tabela — Anexos de suporte | `maintenance_support_attachments` | **Sim** | — |
+| Tabela — Atas de assembleias | `maintenance_assembly_minutes` | **Sim** | — |
+| Tabela — Comunicações de suporte | `maintenance_support_communications` | **Sim** | — |
+| Tabela — Histórico de suporte | `maintenance_support_interactions` | **Sim** | — |
+| Tabela — Solicitações de suporte | `maintenance_support_requests` | **Sim** | — |
+| Tabela — Temas de suporte | `maintenance_support_themes` | **Sim** | — |
+| Veículos do perfil | `profile_vehicles` | **Sim** | **Sim** |
 
 ### Colunas
 
@@ -275,6 +333,7 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 | Estado | `profiles.address_state` | **Sim** | **Sim** |
 | Nascimento | `profiles.birth_date` | **Sim** | **Sim** |
 | Nome completo | `profiles.full_name` | **Sim** | **Sim** |
+| Nome fantasia | `profiles.nome_fantasia` | **Sim** | **Sim** |
 | Número | `profiles.address_number` | **Sim** | **Sim** |
 | Rua | `profiles.address_street` | **Sim** | **Sim** |
 | Telefone | `profiles.phone` | **Sim** | **Sim** |
@@ -290,19 +349,107 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
+| Acessos de Usuários | `maintenance.card.profile_access_insights` | **Sim** | **Sim** |
+| Cadastro | `/register` | **Sim** | **Sim** |
+| Card — Administrativo | `dashboard.card.administrativo` | **Sim** | **Sim** |
+| Card Agenda da Família | `dashboard.card.event_alt` | **Sim** | **Sim** |
+| Card Aniversariantes | `dashboard.card.birthdays` | **Sim** | **Sim** |
+| Card Check In | `dashboard.card.qr` | **Sim** | **Sim** |
+| Card Coração Aberto | `dashboard.card.pastoral` | **Sim** | **Sim** |
+| Card Dízimos e Ofertas | `dashboard.card.offerings` | **Sim** | **Sim** |
+| Card Escalas | `dashboard.card.vigilance_scales` | **Sim** | **Sim** |
+| Card Estacionamento | `dashboard.card.parking_vehicle_v2` | **Sim** | **Sim** |
+| Card Financeiro (dashboard) | `dashboard.card.financial` | **Sim** | **Sim** |
+| Card Lista de Membros | `dashboard.card.members_list` | **Sim** | **Sim** |
+| Card Menu | `dashboard.card.grouped_manage` | **Sim** | **Sim** |
+| Card SALA(S) | `dashboard.card.kids_teens` | **Sim** | **Sim** |
+| Controle de Acesso | `maintenance.card.access_control` | **Sim** | **Sim** |
+| Coração Aberto | `/pastoral` | **Sim** | **Sim** |
+| Dados cadastrais | `/manage-profile` | **Sim** | **Sim** |
+| Dashboard | `/dashboard` | **Sim** | **Sim** |
+| Escala: Acolhimento Estacionamento | `scale_type.acolhimento_estacionamento` | **Sim** | **Sim** |
+| Escala: Acolhimento Recepção | `scale_type.acolhimento_recepcao` | **Sim** | **Sim** |
+| Escala: Escala de Monitores Sala Kids | `scale_type.sala kids` | **Sim** | **Sim** |
+| Escala: Escala de Monitores Sala Teens | `scale_type.sala teens` | **Sim** | **Sim** |
+| Escala: Escala Ministério  Infantil | `scale_type.sala_kids` | **Sim** | **Sim** |
+| Escala: Escala Ministério de Louvor | `scale_type.louvor` | **Sim** | **Sim** |
+| Escala: Escala Ministério Jovens | `scale_type.sala_teens` | **Sim** | **Sim** |
+| Escala: Ministério De Acolhimento | `scale_type.ministerioacolhimento` | **Sim** | **Sim** |
+| Escala: Ministério De Intercessão | `scale_type.ministintersec` | **Sim** | **Sim** |
+| Gerenciar família | `/manage-members` | **Sim** | **Sim** |
+| LGPD | `/lgpd` | **Sim** | **Sim** |
+| Login | `/` | **Sim** | **Sim** |
+| Manutenção — Cronograma de eventos | `maintenance.card.events_gantt` | **Sim** | **Sim** |
+| Manutenção — Informações financeiras | `maintenance.card.financials` | **Sim** | **Sim** |
+| Manutenção — Orquestração do Evento | `maintenance.card.event_orchestration` | **Sim** | **Sim** |
+| Manutenção — Programação de eventos | `maintenance.card.events` | **Sim** | **Sim** |
+| Manutenção — Relatórios | `maintenance.card.relatorios` | **Sim** | **Sim** |
+| Manutenção — Sugestões e Melhorias | `maintenance.card.suggestions_improvements` | **Sim** | **Sim** |
+| Manutenção do sistema | `/maintenance-dashboard` | **Sim** | **Sim** |
+| Manutenção: Cuidado Pastoral | `maintenance.card.pastoral_care` | **Sim** | **Sim** |
+| Manutenção: Modelo Preditivo | `maintenance.card.predictive_insights` | **Sim** | **Sim** |
+| Manutenção: Mudança de Papéis | `maintenance.card.mudanca_papeis` | **Sim** | **Sim** |
+| Manutenção: Programação de Escalas | `maintenance.card.scales` | **Sim** | **Sim** |
+| Manutenção: Servos em Disponibilidade | `maintenance.card.scale_volunteers` | **Sim** | **Sim** |
+| Manutenção: Tipos de Escala | `maintenance.card.scale_types` | **Sim** | **Sim** |
+| Mapa de geolocalização | `/mapa-geolocalizacao` | **Sim** | **Sim** |
+| Meus pedidos pastorais | `/pastoral-history` | **Sim** | **Sim** |
+| Modo Ghost (Auditor) | `maintenance.card.auditor` | **Sim** | **Sim** |
+| Orquestrador do evento (/admin/orquestrador) | `/admin/orquestrador` | **Sim** | **Sim** |
+| Relatório de Despesas (RD) | `/expense-report` | **Sim** | **Sim** |
+| Relatórios financeiros (/financial) | `/financial` | **Sim** | **Sim** |
 | Todas as telas (curinga) | `*` | **Sim** | **Sim** |
 
 ### Tabelas
 
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
+| Categorias pastorais | `pastoral_reason_categories` | **Sim** | **Sim** |
+| Eventos | `events` | **Sim** | **Sim** |
+| Famílias | `families` | **Sim** | **Sim** |
+| Inscrições em eventos | `event_registrations` | **Sim** | **Sim** |
+| Lançamentos financeiros | `financials` | **Sim** | **Sim** |
+| Membros da família | `members` | **Sim** | **Sim** |
+| Parâmetros do app | `app_parameters` | **Sim** | **Sim** |
+| Pedidos pastorais | `pastoral_requests` | **Sim** | **Sim** |
+| Perfis | `profiles` | **Sim** | **Sim** |
+| Registro de escalas | `escalas_log` | **Sim** | **Sim** |
+| Relatórios de Despesas | `expense_reports` | **Sim** | **Sim** |
+| Subcategorias pastorais | `pastoral_reason_subcategories` | **Sim** | **Sim** |
+| Tabela — Anexos de suporte | `maintenance_support_attachments` | **Sim** | **Sim** |
+| Tabela — Atas de assembleias | `maintenance_assembly_minutes` | **Sim** | **Sim** |
+| Tabela — Comunicações de suporte | `maintenance_support_communications` | **Sim** | **Sim** |
+| Tabela — Histórico de suporte | `maintenance_support_interactions` | **Sim** | **Sim** |
+| Tabela — Solicitações de suporte | `maintenance_support_requests` | **Sim** | **Sim** |
+| Tabela — Temas de suporte | `maintenance_support_themes` | **Sim** | **Sim** |
+| Tipos de escala | `tipos_escala` | **Sim** | **Sim** |
 | Todas as tabelas (curinga) | `*` | **Sim** | **Sim** |
+| Veículos do perfil | `profile_vehicles` | **Sim** | **Sim** |
+| Voluntários de escala | `voluntarios_escala` | **Sim** | **Sim** |
 
 ### Colunas
 
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
-| Todas as colunas (curinga) | `*` | **Sim** | **Sim** |
+| Alertas alimentares | `profiles.medical_food_alerts` | **Sim** | **Sim** |
+| Bairro | `profiles.address_neighborhood` | **Sim** | **Sim** |
+| CEP | `profiles.cep` | **Sim** | **Sim** |
+| Cidade | `profiles.address_city` | **Sim** | **Sim** |
+| Código família | `profiles.family_id` | **Sim** | **Sim** |
+| Complemento | `profiles.address_complement` | **Sim** | **Sim** |
+| CPF | `profiles.cpf` | **Sim** | **Sim** |
+| E-mail | `profiles.email` | **Sim** | **Sim** |
+| Estado | `profiles.address_state` | **Sim** | **Sim** |
+| LGPD aceito | `profiles.lgpd_accepted` | **Sim** | **Sim** |
+| Nascimento | `profiles.birth_date` | **Sim** | **Sim** |
+| Nome completo | `profiles.full_name` | **Sim** | **Sim** |
+| Nome fantasia | `profiles.nome_fantasia` | **Sim** | **Sim** |
+| Número | `profiles.address_number` | **Sim** | **Sim** |
+| Papel no sistema | `profiles.role` | **Sim** | **Sim** |
+| Rua | `profiles.address_street` | **Sim** | **Sim** |
+| Senha de acesso (PIN) | `profiles.access_pin` | **Sim** | **Sim** |
+| Telefone | `profiles.phone` | **Sim** | **Sim** |
+| Todas as colunas de profiles (curinga) | `profiles.*` | **Sim** | **Sim** |
 
 ---
 
@@ -315,6 +462,7 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
+| Dashboard | `/dashboard` | **Sim** | — |
 | Manutenção — Orquestração do Evento | `maintenance.card.event_orchestration` | **Sim** | **Sim** |
 | Orquestrador do evento (/admin/orquestrador) | `/admin/orquestrador` | **Sim** | **Sim** |
 
@@ -322,6 +470,7 @@ Legenda: **Ver** = visualizar recurso; **Editar** = alterar recurso.
 
 | Nome | Chave técnica | Ver | Editar |
 | --- | --- | :---: | :---: |
+| Avisos do culto (event_avisos) | `event_avisos` | **Sim** | **Sim** |
 | Orquestração do evento (event_control) | `event_control` | **Sim** | **Sim** |
 
 ---

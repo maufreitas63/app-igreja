@@ -3,7 +3,7 @@
 **Sistema:** Aplicativo digital da Igreja Batista Norte  
 **Repositório:** `maufreitas63/app-igreja`  
 **Versão do app:** 1.0.0  
-**Data deste documento:** 23 de junho de 2026
+**Data deste documento:** 2 de julho de 2026
 
 **Documentação de entrega:** [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) · [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
@@ -220,7 +220,7 @@ Métricas levantadas em **17/06/2026** (excluindo `node_modules`, `dist`, `.expo
 Documentado em `CAMADAS_SEGURANCA.md`:
 
 1. **Dispositivo** — PIN de 4 dígitos validado no servidor; sessão em AsyncStorage; totem isolado do fluxo de membro; permissões de câmera explícitas.
-2. **Cliente** — Guards de tela (`sessionHasAccess`); cards do dashboard filtrados por ACL; colunas sensíveis com ACL de coluna; modo `EXPO_PUBLIC_ACL_STRICT=true` (fail-closed se RPC de ACL ausente); `TotemDeviceRouteGuard`.
+2. **Cliente** — Guards de tela (`sessionHasAccess`); cards do dashboard filtrados por ACL; colunas sensíveis com ACL de coluna; modo `EXPO_PUBLIC_ACL_STRICT=true` (fail-closed se RPC de ACL ausente); `TotemDeviceRouteGuard`; **cache em memória** de ACL e perfil (`lib/asyncResultCache.ts`) para navegação instantânea entre cards.
 3. **Transporte** — HTTPS; header `x-session-token` ou `x-profile-id` em toda requisição; apenas chave **anon** no app (sem `service_role`).
 4. **Servidor** — RLS; RPCs com validação de permissão; grants por papel; escritas sensíveis somente via RPC.
 

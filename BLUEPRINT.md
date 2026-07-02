@@ -263,7 +263,7 @@ Recursos protegidos:
 | **Evento selecionado** | Nome, data/hora, local, badges Kids/Teens |
 | **Vagas** | Inscritos / capacidade |
 | **Trocar Evento** | Chips horizontais (`FamilyEventSelector`) |
-| **Lista de audiência** | Checkboxes por membro (`FamilyRegistrationList`) |
+| **Lista de audiência** | Checkboxes por integrante (`FamilyRegistrationList`) — membros, congregados e dependentes não rejeitados |
 | **Checkbox em massa** | Marca/desmarca todos (exceto quórum bloqueado) |
 
 **Hints inline (sem Alert):**
@@ -523,7 +523,7 @@ Recursos protegidos:
 |----------|--------|
 | **Filtros** | Todos / Com papel / Visitantes |
 | **Atualizar mapa** | Sincroniza snapshot + geocodificação |
-| **Pin clicável** | Painel detalhe + WhatsApp |
+| **Pin clicável** | Detalhe (nome, telefone, endereço) só com ACL `/mapa-geolocalizacao/detalhe-pin` — padrão pastoral/super_admin |
 | **Voltar** | Lista de membros no dashboard |
 
 **Nativo (app mobile):** placeholder informando que mapa é só na PWA.

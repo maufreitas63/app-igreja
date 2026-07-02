@@ -24,7 +24,7 @@ Manual **autocontido** para quem **gerencia** o aplicativo: secretaria, líderes
 
 **Pacote:** [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · **Membros:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md)
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 02/07/2026
 
 ---
 
@@ -183,7 +183,7 @@ Publicar cultos e eventos para que os **membros** vejam na Agenda, marquem audi�
 |:----:|------------------------------|
 | ① | **Nome do evento** e data/hora |
 | ② | **Capacidade (vagas)** obrigatória |
-| ③ | Chips **Kids** · **Teens** · **Totem** · **Quórum** · **Geofence** |
+| ③ | Chips **Kids** · **Teens** · **Totem** · **Quórum** |
 | ④ | Botão **Salvar** no rodapé do formulário |
 
 
@@ -839,6 +839,7 @@ Definir **quem vê e edita** cada tela, card e coluna — incluindo manutenção
 4. Alterne **Ver** e **Editar** por recurso.
    - Telas do **produto principal** = marcador azul.
    - Telas de **manutenção** = marcador âmbar.
+5. **Visão por recurso:** toque no **marcador colorido** ou no **nome do recurso** → cada papel vira uma linha com **Ver** / **Editar**; **Voltar** retorna à visão por papel.
 
 ### Resultado esperado
 

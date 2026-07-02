@@ -9,7 +9,7 @@ Treinamento **particionado por dia**, baseado integralmente no [Pacote 5 — Man
 
 **Pacote:** [`PACOTE_7_TREINAMENTO_DIARIO.md`](PACOTE_7_TREINAMENTO_DIARIO.md) · **Índice geral:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 02/07/2026
 
 ---
 
@@ -242,7 +242,7 @@ Saber onde estão os módulos e como alternar entre cards.
 4. Use **‹** e **›** no rodapé para mudar de card (ou deslize, se disponível).
 5. O contador **1 / N** indica sua posição no carrossel.
 6. Toque em **Menu** no centro do rodapé para voltar ao **Índice**.
-7. No **Índice**, o rodapé exibe **Encerrar sessão** (web) ou **Sair do aplicativo** (celular) centralizado na largura do card; perfis com permissão de manutenção veem o ícone **Configurações** (engrenagem) alinhado à direita do mesmo rodapé.
+7. No **Índice**, o rodapé exibe **Encerrar sessão** (web) ou **Sair do aplicativo** (celular); o botão **Menu** no **Painel** ocupa a largura central entre **‹** e **›**. Perfis com permissão de manutenção veem o ícone **Configurações** (engrenagem) **alinhado à direita** do rodapé, na borda do card.
 8. Toque em **Encerrar sessão** / **Sair do aplicativo** para sair com segurança.
 
 ### Resultado esperado
@@ -299,7 +299,7 @@ Painel → card **Agenda da Família** (ou **Painel de Eventos** no Índice).
 | **Evento Selecionado** | Nome, data, horário, local; selos **IBN Kids** / **IBN Teens** se houver |
 | **Vagas** | Copo visual + número entre parênteses (restantes) + `inscritos/máximo` |
 | **Trocar Evento** | Lista de eventos ativos (hoje e futuros) |
-| **Audiência** | Membros da sua família com checkbox |
+| **Audiência** | Integrantes do núcleo familiar (membros **e congregados**) com checkbox; dependentes com reconhecimento pendente ou aceito (`accepted` ≠ `false`) |
 
 ### Passo a passo — ver vagas e inscrever
 
@@ -727,7 +727,7 @@ Lista de Membros → **Mapa Geral**.
 | Como vejo integrantes da mesma família? | Na coluna **Família**, toque o ícone **users** (rosa) → modal **Membros da família** com código (ex.: **Família IBN0103**), nomes, parentesco e WhatsApp. |
 | O modal da família veio vazio — o que fazer? | Pode não haver integrantes reconhecidos no núcleo, falta de permissão ACL ou RPCs não aplicados no Supabase — avise a secretaria/TI. A mensagem *Nenhum membro reconhecido nesta família* ou erro em vermelho explica o caso. |
 | Como contato alguém pelo WhatsApp? | Na lista ou no modal familiar, toque o ícone **WhatsApp** (verde) ao lado do nome quando houver telefone cadastrado. |
-| Para que serve o Mapa Geral? | Abre `/mapa-geolocalizacao` com pins de endereços; filtros **Todos**, **Com papel** e **Visitantes**; toque no pin para ver dados e copiar endereço. |
+| Para que serve o Mapa Geral? | Abre `/mapa-geolocalizacao` com pins de endereços; filtros **Todos**, **Com papel** e **Visitantes**. Membros veem o mapa; **detalhe ao clicar no pin** (localização de outros) só com permissão pastoral/super_admin. |
 
 # Dia 5 — Aniversariantes e Financeiro
 
@@ -747,14 +747,16 @@ Lista de Membros → **Mapa Geral**.
 
 1. Toque **Mapa Geral**.
 2. Use os filtros **Todos**, **Com papel** e **Visitantes** no topo.
-3. Toque em um **pin** no mapa → painel com nome, telefone e endereço.
-4. Copie o endereço para navegação externa, se necessário.
-5. Toque **Voltar** → retorna ao card **Lista de Membros**.
+3. Toque em um **pin** no mapa:
+   - Com permissão de **detalhe do pin** (`pastoral` / `super_admin`): painel com nome, telefone e endereço; copie o endereço para navegação externa.
+   - Sem essa permissão: o mapa permanece visível, mas o app **não abre a localização de outros usuários** — mensagem orientativa ao tocar no pin.
+4. Toque **Voltar** → retorna ao card **Lista de Membros**.
 
 ### Resultado esperado (mapa)
 
 - Pins coloridos por tipo (membro vs visitante).
 - Contadores de quantos endereços estão no mapa conforme o filtro ativo.
+- Membros e congregados comuns **veem o mapa geral**; **detalhe de pin alheio** só para perfis autorizados pelo ACL.
 
 ### Se der erro
 
@@ -762,7 +764,8 @@ Lista de Membros → **Mapa Geral**.
 |----------|-------------|
 | Lista vazia ou erro ao carregar | Toque **Atualizar lista**; confirme permissão do card com a secretaria |
 | Modal familiar vazio | Verifique se a família tem integrantes em `members`; TI deve aplicar `scripts/members-list-family-sync.sql` |
-| **Mapa Geral** não abre | Seu papel pode não ter grant em `screen.map_geolocation` |
+| **Mapa Geral** não abre | Seu papel pode não ter grant em `screen:/mapa-geolocalizacao` |
+| Toque no pin sem abrir detalhe | Normal para `member`/`congregado` — detalhe exige `screen:/mapa-geolocalizacao/detalhe-pin` |
 | WhatsApp cinza | Telefone não cadastrado para aquele membro |
 | GPS cinza | CEP/endereço ausente no perfil |
 
@@ -839,65 +842,6 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 | ② | Tabela de **Receitas** do período |
 | ③ | Tabela de **Despesas** do período |
 
-   - **Comparativo mensal**
-
-### Ilustração — Financeiro — Comparativo mensal
-
-![Financeiro — Comparativo mensal — captura anotada](docs/manual-painel/screens/10b-fin-comparativo.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Comparativo mensal** expandida |
-| ② | Comparação entre dois meses consecutivos |
-
-   - **Últimos 12 meses**
-
-### Ilustração — Financeiro — Últimos 12 meses
-
-![Financeiro — Últimos 12 meses — captura anotada](docs/manual-painel/screens/10c-fin-12meses.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Últimos 12 meses** expandida |
-| ② | Série **Realizado** acumulada |
-
-   - **Planejado × Realizado**
-
-### Ilustração — Financeiro — Planejado × Realizado
-
-![Financeiro — Planejado × Realizado — captura anotada](docs/manual-painel/screens/10d-fin-orcamento.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-
----
-
-## Perguntas e respostas — Dia 5
-
-| Pergunta | Resposta |
-|----------|----------|
-| Como filtro aniversariantes do mês? | Card **Aniversariantes** → escolha o **mês** → lista com datas e atalho WhatsApp. |
-| O card Financeiro mostra o quê? | Hub de relatórios: **Relatório de Despesas (RD)** em destaque, fluxo de caixa e categorias conforme permissão. |
-| Quem acessa o Financeiro? | Perfis com grant no card (ex.: **`member`**, **`tesoureiro`**) — definido pelo ACL da igreja. |
-| Posso ver lançamentos de outros meses? | Conforme telas `/financial` — navegue períodos disponíveis para seu papel. |
-
-# Dia 6 — Relatório de Despesas (RD), Escalas e Servos
-
-| ① | Seção **Planejado × Realizado** expandida |
-| ② | Colunas **Planejado** e **Realizado** |
-
-   - **Saldo bancário**
-
-### Ilustração — Financeiro — Saldo bancário
-
-![Financeiro — Saldo bancário — captura anotada](docs/manual-painel/screens/10e-fin-saldo.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Saldo bancário** expandida |
-| ② | Linha **Saldo total** |
-| ③ | Saldo por **conta** bancária |
-
 
 
 
@@ -925,6 +869,20 @@ Painel → **Financeiro** → atalho **Relatório de Despesas (RD)** — ou rota
 ![Relatório de Despesas (RD) — captura anotada](docs/manual-painel/screens/11-relatorio-despesas.png)
 
 | Ref. | Elemento indicado na imagem |
+
+---
+
+## Perguntas e respostas — Dia 5
+
+| Pergunta | Resposta |
+|----------|----------|
+| Como filtro aniversariantes do mês? | Card **Aniversariantes** → escolha o **mês** → lista com datas e atalho WhatsApp. |
+| O card Financeiro mostra o quê? | Hub de relatórios: **Relatório de Despesas (RD)** em destaque, fluxo de caixa e categorias conforme permissão. |
+| Quem acessa o Financeiro? | Perfis com grant no card (ex.: **`member`**, **`tesoureiro`**) — definido pelo ACL da igreja. |
+| Posso ver lançamentos de outros meses? | Conforme telas `/financial` — navegue períodos disponíveis para seu papel. |
+
+# Dia 6 — Relatório de Despesas (RD), Escalas e Servos
+
 |:----:|------------------------------|
 | ① | **Chave PIX** do solicitante |
 | ② | Botão **Novo RD** |
@@ -1000,21 +958,6 @@ Painel → **Escalas** → **Selecionar Escala** → lista ou card de detalhe.
 ### Dica
 Se você mesmo é servo, sua escala também aparece aqui — útil para confirmar o dia de serviço.
 
-
----
-
-## Perguntas e respostas — Dia 6
-
-| Pergunta | Resposta |
-|----------|----------|
-| Como envio um RD? | Card **Financeiro** → **Relatório de Despesas** → preencha itens → **Submeter e Finalizar**; pode abrir WhatsApp do tesoureiro. |
-| Qual o formato do número do RD? | Prefixo **AAMM** + sequência mensal (ex.: `250500001`) — configurado para o papel **tesoureiro**. |
-| Onde vejo minhas escalas? | Card **Escalas** → tipos de escala → datas e servos com WhatsApp. |
-| Card Servos em escala? | Visível quando seu perfil participa de escalas — lista de colegas na mesma data/tipo. |
-| RD ficou pendente? | Aguarde conciliação na **manutenção → Informações Financeiras** (tesoureiro/super_admin). |
-
-# Dia 7 — Estacionamento, Gestão de Cadastros e encerramento
-
 ---
 
 # Parte 10 — Card Servos em escala *(quando visível)*
@@ -1057,6 +1000,21 @@ Escalas → escala de estacionamento → **Identificar veículo** — ou card **
 ![Estacionamento — captura anotada](docs/manual-painel/screens/13-estacionamento.png)
 
 | Ref. | Elemento indicado na imagem |
+
+---
+
+## Perguntas e respostas — Dia 6
+
+| Pergunta | Resposta |
+|----------|----------|
+| Como envio um RD? | Card **Financeiro** → **Relatório de Despesas** → preencha itens → **Submeter e Finalizar**; pode abrir WhatsApp do tesoureiro. |
+| Qual o formato do número do RD? | Prefixo **AAMM** + sequência mensal (ex.: `250500001`) — configurado para o papel **tesoureiro**. |
+| Onde vejo minhas escalas? | Card **Escalas** → tipos de escala → datas e servos com WhatsApp. |
+| Card Servos em escala? | Visível quando seu perfil participa de escalas — lista de colegas na mesma data/tipo. |
+| RD ficou pendente? | Aguarde conciliação na **manutenção → Informações Financeiras** (tesoureiro/super_admin). |
+
+# Dia 7 — Estacionamento, Gestão de Cadastros e encerramento
+
 |:----:|------------------------------|
 | ① | Campo **Número da placa** |
 | ② | Botão **Buscar** |

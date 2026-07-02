@@ -58,7 +58,11 @@ Documento de encerramento da sessão: o que já está pronto, o que falta e qual
 | **Índice do aplicativo** | `/(tabs)/index` — atalhos com etiquetas para todos os cards |
 | **Manutenção — card menu** | Primeiro card do carrossel com etiquetas dos módulos |
 | **Marca d'água** | Global via `AppShell`, exceto login; alinhada ao frame do card |
-| **Performance navegação** | Refetch silencioso no foco; menos re-renders ao trocar cards |
+| **Performance navegação** | Cache em memória de ACL, perfil de sessão e audiência familiar; sem refetch completo a cada foco de tela |
+| **Mapa — detalhe de pin** | Recurso `/mapa-geolocalizacao/detalhe-pin` — mapa geral para membros; detalhe alheio só pastoral/super_admin (`access-control-map-pin-detail.sql`) |
+| **Audiência familiar** | União de fontes inclui congregados; dependentes com `accepted` ≠ `false` (`family-event-audience-members.sql`) |
+| **ACL — visão por recurso** | Aba Papéis: toque no marcador colorido do recurso → papéis como linhas com Ver/Editar; botão Voltar |
+| **Rodapé do dashboard** | Botão Menu expandido; engrenagem alinhada à direita do card (`CarouselFooterNav`) |
 
 ### Ainda não feito (próximas sessões)
 - Papel `events_admin` atribuído a pessoas da equipe de eventos (só seed SQL hoje).

@@ -358,7 +358,7 @@ Lista dos cards do carrossel horizontal em `app/(tabs)/dashboard.tsx`.
 
 
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 02/07/2026
 
 
 
@@ -380,7 +380,8 @@ Tela inicial após o login com **etiquetas** (atalhos) para cada módulo do Pain
 
 - Deslize horizontalmente no card **ou** use os botões `‹` / `›` no rodapé (`CarouselFooterNav`).
 
-- O rodapé exibe a posição atual (`1 / N`) e o botão central abre o **Menu** de atalhos.
+- O rodapé exibe a posição atual (`1 / N`) e o botão central **Menu** (largura expandida entre as setas).
+- No **Índice**, **Encerrar sessão** / **Sair** centralizado; ícone **Configurações** (manutenção) com `trailingAccessory` **alinhado à direita** do rodapé.
 
 - Segurar `‹` ou `›` avança card a card automaticamente (500 ms).
 

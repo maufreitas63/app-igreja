@@ -24,7 +24,7 @@ Manual **autocontido** para quem usa o aplicativo pela primeira vez ou no dia a 
 
 **Pacote:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 02/07/2026
 
 ---
 
@@ -258,7 +258,7 @@ Saber onde estão os módulos e como alternar entre cards.
 4. Use **‹** e **›** no rodapé para mudar de card (ou deslize, se disponível).
 5. O contador **1 / N** indica sua posição no carrossel.
 6. Toque em **Menu** no centro do rodapé para voltar ao **Índice**.
-7. No **Índice**, o rodapé exibe **Encerrar sessão** (web) ou **Sair do aplicativo** (celular) centralizado na largura do card; perfis com permissão de manutenção veem o ícone **Configurações** (engrenagem) alinhado à direita do mesmo rodapé.
+7. No **Índice**, o rodapé exibe **Encerrar sessão** (web) ou **Sair do aplicativo** (celular); o botão **Menu** no **Painel** ocupa a largura central entre **‹** e **›**. Perfis com permissão de manutenção veem o ícone **Configurações** (engrenagem) **alinhado à direita** do rodapé, na borda do card.
 8. Toque em **Encerrar sessão** / **Sair do aplicativo** para sair com segurança.
 
 ### Resultado esperado
@@ -299,7 +299,7 @@ Painel → card **Agenda da Família** (ou **Painel de Eventos** no Índice).
 | **Evento Selecionado** | Nome, data, horário, local; selos **IBN Kids** / **IBN Teens** se houver |
 | **Vagas** | Copo visual + número entre parênteses (restantes) + `inscritos/máximo` |
 | **Trocar Evento** | Lista de eventos ativos (hoje e futuros) |
-| **Audiência** | Membros da sua família com checkbox |
+| **Audiência** | Integrantes do núcleo familiar (membros **e congregados**) com checkbox; dependentes com reconhecimento pendente ou aceito (`accepted` ≠ `false`) |
 
 ### Passo a passo — ver vagas e inscrever
 
@@ -698,14 +698,16 @@ Lista de Membros → **Mapa Geral**.
 
 1. Toque **Mapa Geral**.
 2. Use os filtros **Todos**, **Com papel** e **Visitantes** no topo.
-3. Toque em um **pin** no mapa → painel com nome, telefone e endereço.
-4. Copie o endereço para navegação externa, se necessário.
-5. Toque **Voltar** → retorna ao card **Lista de Membros**.
+3. Toque em um **pin** no mapa:
+   - Com permissão de **detalhe do pin** (`pastoral` / `super_admin`): painel com nome, telefone e endereço; copie o endereço para navegação externa.
+   - Sem essa permissão: o mapa permanece visível, mas o app **não abre a localização de outros usuários** — mensagem orientativa ao tocar no pin.
+4. Toque **Voltar** → retorna ao card **Lista de Membros**.
 
 ### Resultado esperado (mapa)
 
 - Pins coloridos por tipo (membro vs visitante).
 - Contadores de quantos endereços estão no mapa conforme o filtro ativo.
+- Membros e congregados comuns **veem o mapa geral**; **detalhe de pin alheio** só para perfis autorizados pelo ACL.
 
 ### Se der erro
 
@@ -713,7 +715,8 @@ Lista de Membros → **Mapa Geral**.
 |----------|-------------|
 | Lista vazia ou erro ao carregar | Toque **Atualizar lista**; confirme permissão do card com a secretaria |
 | Modal familiar vazio | Verifique se a família tem integrantes em `members`; TI deve aplicar `scripts/members-list-family-sync.sql` |
-| **Mapa Geral** não abre | Seu papel pode não ter grant em `screen.map_geolocation` |
+| **Mapa Geral** não abre | Seu papel pode não ter grant em `screen:/mapa-geolocalizacao` |
+| Toque no pin sem abrir detalhe | Normal para `member`/`congregado` — detalhe exige `screen:/mapa-geolocalizacao/detalhe-pin` |
 | WhatsApp cinza | Telefone não cadastrado para aquele membro |
 | GPS cinza | CEP/endereço ausente no perfil |
 
@@ -789,51 +792,6 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 | ① | Seção **Resultado do mês** expandida |
 | ② | Tabela de **Receitas** do período |
 | ③ | Tabela de **Despesas** do período |
-
-   - **Comparativo mensal**
-
-### Ilustração — Financeiro — Comparativo mensal
-
-![Financeiro — Comparativo mensal — captura anotada](docs/manual-painel/screens/10b-fin-comparativo.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Comparativo mensal** expandida |
-| ② | Comparação entre dois meses consecutivos |
-
-   - **Últimos 12 meses**
-
-### Ilustração — Financeiro — Últimos 12 meses
-
-![Financeiro — Últimos 12 meses — captura anotada](docs/manual-painel/screens/10c-fin-12meses.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Últimos 12 meses** expandida |
-| ② | Série **Realizado** acumulada |
-
-   - **Planejado × Realizado**
-
-### Ilustração — Financeiro — Planejado × Realizado
-
-![Financeiro — Planejado × Realizado — captura anotada](docs/manual-painel/screens/10d-fin-orcamento.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Planejado × Realizado** expandida |
-| ② | Colunas **Planejado** e **Realizado** |
-
-   - **Saldo bancário**
-
-### Ilustração — Financeiro — Saldo bancário
-
-![Financeiro — Saldo bancário — captura anotada](docs/manual-painel/screens/10e-fin-saldo.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Saldo bancário** expandida |
-| ② | Linha **Saldo total** |
-| ③ | Saldo por **conta** bancária |
 
 
 

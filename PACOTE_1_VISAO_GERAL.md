@@ -20,7 +20,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`BLUEPRINT.md`](BLUEPRINT.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md)
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 02/07/2026
 
 ---
 
@@ -82,7 +82,8 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 - Banner de **ACL indisponível** (modo estrito)
 - **Índice do Aplicativo** (`/(tabs)/index`) — tela inicial com etiquetas/atalhos para cada card; distribuição uniforme na altura da tela
 - Tela de **Menu/atalhos** legada integrada ao índice; **ícones coloridos** por módulo
-- Acesso à **manutenção** via ícone engrenagem *(staff)* — índice com ícones coloridos e tokens visuais compartilhados
+- Botão central **Menu** ocupa a largura útil do rodapé; ícone **Configurações** (manutenção) alinhado à direita quando visível
+- **Cache de sessão e ACL** — permissões e perfil reutilizados em memória entre cards (`lib/asyncResultCache.ts`), sem refetch completo a cada foco de tela
 - Cards filtrados por **permissão de perfil** (ACL)
 - **Paletas visuais distintas** por tipo de card (`lib/dashboardCardThemes.ts`)
 - **Retorno ao card de origem** — telas abertas a partir do dashboard (perfil, família, mapa, pastoral, financeiro) voltam ao card que as chamou via parâmetro `returnDashboardCard`
@@ -92,7 +93,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 | Card | Funcionalidades |
 |------|-----------------|
-| **Agenda da Família** | Seleção de evento, vagas, inscrição/audiência (pré-check-in), checkbox em massa |
+| **Agenda da Família** | Seleção de evento, vagas, inscrição/audiência (pré-check-in), checkbox em massa — lista **membros, congregados** e dependentes não rejeitados |
 | **Check-in / QR Code** | Etiqueta da família, QR para totem, badges Kids/Teens, modal de seleção manual |
 | **SALA(S)** | Monitoramento read-only de entrada Kids/Teens — **somente membros da própria família** |
 | **Dízimos e Ofertas** | Sempre visível no carrossel; dados do recebedor, chave PIX, **Copiar chave PIX** com ícone *touch-app*, atualizar chave |
@@ -109,7 +110,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 ## Eventos e check-in
 
 - Listagem de eventos publicados com data, local e capacidade
-- **Inscrição na audiência** (pré-check-in) por membro da família
+- **Inscrição na audiência** (pré-check-in) por integrante do núcleo familiar (membros, congregados e dependentes com `accepted` ≠ `false`)
 - Suporte a fluxos: **check-in automático por proximidade (geofence GPS)**, **totem**, **manual**, **quórum**
 - **Check-in geofence** — quando `geofence_ativo` no evento e local favorito com coordenadas: o app detecta proximidade ao templo (raio e janela configuráveis em `app_parameters`) e confirma presença automaticamente após leituras GPS estáveis; fila offline para sincronização sem rede
 - **Locais favoritos** — cadastro de locais com nome, endereço, CEP e coordenadas; vinculados ao campo `event_local` do evento para resolver geofence
@@ -220,7 +221,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 - Filtros: todos, com papel, visitantes
 - Geocodificação servidor-primária + cache local (`geoCepCache.v8`)
 - Snapshot de mapa versionado (`profilesMapSnapshot.v7`)
-- Painel de detalhe do membro (nome, papel, endereço, WhatsApp)
+- **Detalhe do pin** (nome, papel, endereço, WhatsApp) — recurso ACL separado `/mapa-geolocalizacao/detalhe-pin`; padrão só `pastoral` e `super_admin`; demais perfis veem o mapa sem abrir localização alheia
 - Estatísticas: perfis, pins, CEPs inválidos
 - **Atualizar mapa** — sincronização sob demanda
 - ACL de perfil no mapa (visitante vs membro)
@@ -243,7 +244,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **Lista de Presença** | Quórum — leitura e impressão |
 | **Cadastro de Usuário** | Busca, correção de CEP/endereço e exclusão completa de perfil *(super_admin)* |
 | **Recepção Familiar** | Fila do formulário público `/cadastro-familia/` — gravar ou rejeitar em lote |
-| **Controle de Acesso** | Papéis, grants; seleção de perfil por dropdown *(super_admin)* |
+| **Controle de Acesso** | Papéis, grants; visão por papel **ou por recurso** (toque no marcador colorido); seleção de perfil por dropdown *(super_admin)* |
 | **Mudança de Papéis** | Alterar visitante/congregado/membro *(pastoral, super_admin)* |
 | **Acessos de Usuários** | Histórico de logins e telas por sessão; limpeza global *(super_admin)* |
 
@@ -279,6 +280,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | Financeiro | `/financial` |
 | Relatório de despesas | `/expense-report` |
 | Mapa | `/mapa-geolocalizacao` |
+| Detalhe de pin no mapa | `/mapa-geolocalizacao/detalhe-pin` |
 | LGPD | `/lgpd` |
 | Manutenção | `/maintenance-dashboard` |
 
@@ -894,7 +896,7 @@ O servidor de permissões não respondeu corretamente. Em produção estrita, al
 Abre a tela de **atalhos** com lista de módulos e o botão de **sair**.
 
 **Para que serve a engrenagem?**  
-Abre a **Manutenção** — só aparece se você tiver permissão de equipe/administrador.
+Abre a **Manutenção** — só aparece se você tiver permissão de equipe/administrador, **alinhada à direita** do rodapé no Índice.
 
 **O que é a tela de atalhos (Menu)?**  
 Lista rápida: Agenda, Salas, QR Totem, Ofertas, Pastoral, Membros, etc., sem deslizar o carrossel. Cada atalho tem **ícone colorido** por módulo.
@@ -904,7 +906,7 @@ Lista rápida: Agenda, Salas, QR Totem, Ofertas, Pastoral, Membros, etc., sem de
 ## 4. Agenda da Família
 
 **O que é "audiência" ou pré-check-in?**  
-Marcar na lista quem da sua família participará do evento — **antes** de apresentar o QR no totem.
+Marcar na lista quem da sua família participará do evento — **antes** de apresentar o QR no totem. A lista inclui **membros e congregados** do núcleo, e dependentes com reconhecimento pendente ou aceito.
 
 **Como escolho o evento?**  
 No card **Agenda da Família**, use **Trocar Evento** (chips horizontais).
@@ -1017,6 +1019,9 @@ Consulta de membros com busca por nome, código de família e atalho WhatsApp.
 
 **Para que serve o botão Mapa?**  
 Abre o **mapa de geolocalização** (versão web/PWA) com pins por endereço/CEP.
+
+**Posso clicar em qualquer pin e ver o endereço?**  
+Só se seu perfil tiver permissão de **detalhe do pin** (`pastoral` / `super_admin`). Membros e congregados veem o mapa geral, mas **não abrem a localização de outros usuários** ao tocar no pin.
 
 **O mapa não abre ou está vazio no celular nativo.**  
 O mapa completo funciona na **versão web (PWA)**. No app nativo pode aparecer apenas orientação para usar o navegador.
@@ -1363,6 +1368,7 @@ Somente **`super_admin`** — papéis e grants por perfil.
 | Mapa mostra endereço exato? | Aproximação por **CEP** — pins podem ser agrupados |
 | Atualizei CEP e mapa antigo | Toque **Atualizar mapa**; cache local é renovado |
 | Visitante no mapa | Perfil marcado como visitante no ACL |
+| Clique no pin sem detalhe | ACL `screen:/mapa-geolocalizacao/detalhe-pin` — padrão pastoral/super_admin |
 
 ---
 
@@ -1381,7 +1387,7 @@ Somente **`super_admin`** — papéis e grants por perfil.
 
 | Pergunta | Resposta |
 |----------|----------|
-| App lento | Verifique internet; feche abas no navegador (PWA) |
+| App lento | Verifique internet; o app reutiliza cache de ACL e perfil entre cards — se persistir, hard refresh (PWA) |
 | Tela branca / erro | Atualize página; limpe cache do navegador |
 | Versão web vs app nativo | Mapa completo e alguns recursos são **PWA** |
 | Mensagem menciona "execute script SQL" | Configuração incompleta no Supabase — equipe TI |

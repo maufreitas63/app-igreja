@@ -6,7 +6,7 @@ Documentação técnica de referência: [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.m
 
 **Pacote:** [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 02/07/2026
 
 ---
 
@@ -144,6 +144,9 @@ Scripts **incrementais** (se o seed for antigo ou algo sumir no app):
 | `app-parameter-parm-entidade.sql` | Parâmetro **`Parm_entidade`** — prefixo dinâmico da entidade na interface (ex.: IBN KIDS) |
 | `salvar-app-parameter-admin.sql` | RPC para **super_admin** gravar `app_parameters` (inclui **`LGPD_Ativo`**) |
 | `app-parameter-lgpd-ativo.sql` / `app-parameter-lgpd-ativo-dedupe.sql` | Parâmetro **`LGPD_Ativo`** (`sim` / `nao`) — reconhecimento opcional de LGPD |
+| `access-control-map-pin-detail.sql` | Recurso **`/mapa-geolocalizacao/detalhe-pin`** — detalhe de pin só pastoral/super_admin |
+| `family-event-audience-members.sql` | RPC de audiência familiar incluindo congregados e dependentes não rejeitados |
+| `access-control-ghost-mode.sql` | Modo Ghost (auditoria de permissões) — sessão efetiva simulada *(super_admin)* |
 
 ### 3.1 Primeiro super administrador
 
@@ -224,9 +227,10 @@ select p.id, ar.id
 4. Para cada recurso, use:
    - **Ver** — `can_view`
    - **Editar** — `can_update` (só fica ativo se **Ver** estiver ligado)
-5. Colunas sensíveis (`profiles.cpf`, `profiles.access_pin`) aparecem **destacadas em amarelo**.
+5. **Visão por recurso:** toque no **ponto colorido** (escopo azul = produto, âmbar = manutenção) ou no **nome do recurso**. A tela inverte: o recurso fica em destaque e cada **papel** aparece como linha com interruptores **Ver** / **Editar**. Use **Voltar** para retornar à visão por papel.
+6. Colunas sensíveis (`profiles.cpf`, `profiles.access_pin`) aparecem **destacadas em amarelo**.
 
-**Desligar Ver e Editar** remove o grant daquele recurso para o papel.
+**Desligar Ver e Editar** remove o grant daquele recurso para o papel (em qualquer uma das visões).
 
 **Exemplos de política:**
 
@@ -575,4 +579,4 @@ Se a tabela `access_grants` estiver **vazia**, `profile_has_access` retorna **`t
 
 ---
 
-*Última atualização: maio/2026 — alinhado às fases 9a–9f e guards de rota.*
+*Última atualização: julho/2026 — visão por recurso no ACL, detalhe de pin no mapa, audiência com congregados, cache de navegação.*

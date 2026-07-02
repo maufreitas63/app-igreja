@@ -140,7 +140,7 @@ O servidor de permissões não respondeu corretamente. Em produção estrita, al
 Abre a tela de **atalhos** com lista de módulos e o botão de **sair**.
 
 **Para que serve a engrenagem?**  
-Abre a **Manutenção** — só aparece se você tiver permissão de equipe/administrador.
+Abre a **Manutenção** — só aparece se você tiver permissão de equipe/administrador, **alinhada à direita** do rodapé no Índice.
 
 **O que é a tela de atalhos (Menu)?**  
 Lista rápida: Agenda, Salas, QR Totem, Ofertas, Pastoral, Membros, etc., sem deslizar o carrossel. Cada atalho tem **ícone colorido** por módulo.
@@ -150,7 +150,7 @@ Lista rápida: Agenda, Salas, QR Totem, Ofertas, Pastoral, Membros, etc., sem de
 ## 4. Agenda da Família
 
 **O que é "audiência" ou pré-check-in?**  
-Marcar na lista quem da sua família participará do evento — **antes** de apresentar o QR no totem.
+Marcar na lista quem da sua família participará do evento — **antes** de apresentar o QR no totem. A lista inclui **membros e congregados** do núcleo, e dependentes com reconhecimento pendente ou aceito.
 
 **Como escolho o evento?**  
 No card **Agenda da Família**, use **Trocar Evento** (chips horizontais).
@@ -263,6 +263,9 @@ Consulta de membros com busca por nome, código de família e atalho WhatsApp.
 
 **Para que serve o botão Mapa?**  
 Abre o **mapa de geolocalização** (versão web/PWA) com pins por endereço/CEP.
+
+**Posso clicar em qualquer pin e ver o endereço?**  
+Só se seu perfil tiver permissão de **detalhe do pin** (`pastoral` / `super_admin`). Membros e congregados veem o mapa geral, mas **não abrem a localização de outros usuários** ao tocar no pin.
 
 **O mapa não abre ou está vazio no celular nativo.**  
 O mapa completo funciona na **versão web (PWA)**. No app nativo pode aparecer apenas orientação para usar o navegador.
@@ -609,6 +612,7 @@ Somente **`super_admin`** — papéis e grants por perfil.
 | Mapa mostra endereço exato? | Aproximação por **CEP** — pins podem ser agrupados |
 | Atualizei CEP e mapa antigo | Toque **Atualizar mapa**; cache local é renovado |
 | Visitante no mapa | Perfil marcado como visitante no ACL |
+| Clique no pin sem detalhe | ACL `screen:/mapa-geolocalizacao/detalhe-pin` — padrão pastoral/super_admin |
 
 ---
 
@@ -627,7 +631,7 @@ Somente **`super_admin`** — papéis e grants por perfil.
 
 | Pergunta | Resposta |
 |----------|----------|
-| App lento | Verifique internet; feche abas no navegador (PWA) |
+| App lento | Verifique internet; o app reutiliza cache de ACL e perfil entre cards — se persistir, hard refresh (PWA) |
 | Tela branca / erro | Atualize página; limpe cache do navegador |
 | Versão web vs app nativo | Mapa completo e alguns recursos são **PWA** |
 | Mensagem menciona "execute script SQL" | Configuração incompleta no Supabase — equipe TI |
