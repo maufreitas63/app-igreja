@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { resolveReturnDashboardCardParam, withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
+import { useGhostMode } from '@/context/GhostModeContext';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -73,6 +74,8 @@ import {
   sessionHasAccess,
   type ProfileColumnAccess,
 } from '@/lib/accessControl';
+import { getGhostEffectiveProfileId } from '@/lib/ghostMode';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { clearStoredProfileId, getStoredProfileId, getStoredUserPhone } from '@/lib/userSession';
 import {
   formatBrazilCepInput,
@@ -379,6 +382,20 @@ function pickBestProfileRow(rows: ProfileRecord[]): ProfileRecord | null {
 }
 
 async function loadProfile(phoneParam: string | null): Promise<ProfileRecord | null> {
+  const ghostProfileId = getGhostEffectiveProfileId();
+
+  if (ghostProfileId) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', ghostProfileId)
+      .maybeSingle();
+
+    if (!error && data) {
+      return data as ProfileRecord;
+    }
+  }
+
   const phoneCandidates = new Set<string>();
 
   if (phoneParam?.trim()) {
@@ -646,6 +663,7 @@ const accessPinFieldStyles = StyleSheet.create({
 
 export default function ManageProfile() {
   const router = useRouter();
+  const { isActive: ghostModeActive, state: ghostModeState } = useGhostMode();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
   const phoneParam = params.phone ? decodeURIComponent(params.phone as string) : null;
@@ -1135,7 +1153,7 @@ export default function ManageProfile() {
   useEffect(() => {
     lastProfileFetchAtRef.current = 0;
     profileRef.current = null;
-  }, [phoneParam]);
+  }, [ghostModeActive, ghostModeState?.targetProfileId, phoneParam]);
 
   const fetchProfile = useCallback(
     async (options?: { force?: boolean }) => {
@@ -1174,7 +1192,7 @@ export default function ManageProfile() {
         setLoading(false);
       }
     },
-    [phoneParam]
+    [phoneParam, ghostModeActive, ghostModeState?.targetProfileId]
   );
 
   useFocusEffect(
@@ -1230,7 +1248,7 @@ export default function ManageProfile() {
       return () => {
         active = false;
       };
-    }, [fetchProfile, isRecoveryAccessPinFlow, router])
+    }, [fetchProfile, ghostModeActive, ghostModeState?.targetProfileId, isRecoveryAccessPinFlow, router])
   );
 
   useEffect(() => {
@@ -1487,7 +1505,7 @@ export default function ManageProfile() {
       throw new Error('Você não tem permissão para alterar este campo.');
     }
 
-    const actorProfileId = await getStoredProfileId();
+    const actorProfileId = await resolveEffectiveProfileId();
 
     const rpcResult = await supabase.rpc('update_profile_field', {
       p_profile_id: profile.id,

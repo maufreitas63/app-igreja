@@ -16,7 +16,7 @@ import { supabase } from '@/lib/supabase';
 import { useLgpdTermsScrollGate } from '@/hooks/useLgpdTermsScrollGate';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
-import { getStoredProfileId } from '@/lib/userSession';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -38,7 +38,7 @@ const normalizePhone = (value: string | null | undefined) => (value ?? '').repla
 
 async function loadProfileId(phoneParam: string | null): Promise<string | null> {
   if (!phoneParam) {
-    return getStoredProfileId();
+    return resolveEffectiveProfileId();
   }
 
   const attempts = [phoneParam, normalizePhone(phoneParam)].filter(Boolean);

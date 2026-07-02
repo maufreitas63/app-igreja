@@ -3,11 +3,10 @@ import { getCachedOrFetch, invalidateAsyncCache } from '@/lib/asyncResultCache';
 import { supabase } from '@/lib/supabase';
 import { coerceRpcBoolean, isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import {
-  getStoredProfileId,
   getStoredUserPhone,
   repairUserSessionReference,
 } from '@/lib/userSession';
-import { isGhostModeActive } from '@/lib/ghostMode';
+import { getGhostEffectiveProfileId, isGhostModeActive } from '@/lib/ghostMode';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { ACCESS_SCREEN } from '@/lib/accessScreen';
 
@@ -207,19 +206,19 @@ export const canUpdateProfileColumn = (fieldKey: string, access: ProfileColumnAc
 const isAccessRpcMissing = (error: { code?: string; message?: string } | null) =>
   isSupabaseRpcMissingError(error, 'profile_has_access');
 
-const readSessionIsSuperAdmin = async (): Promise<boolean> => {
-  let profileId = await getStoredProfileId();
+const readSessionIsSuperAdmin = async (profileId?: string | null): Promise<boolean> => {
+  let resolvedId = profileId?.trim() ?? (await resolveEffectiveProfileId());
 
-  if (!profileId) {
-    profileId = await repairUserSessionReference();
+  if (!resolvedId) {
+    resolvedId = await repairUserSessionReference();
   }
 
-  if (!profileId) {
+  if (!resolvedId) {
     return false;
   }
 
   const { data, error } = await supabase.rpc('is_super_admin_profile', {
-    p_profile_id: profileId,
+    p_profile_id: resolvedId,
   });
 
   if (error) {
@@ -234,11 +233,17 @@ const readSessionIsSuperAdmin = async (): Promise<boolean> => {
   return coerceRpcBoolean(data);
 };
 
-const sessionIsSuperAdmin = (scopeId?: string | null, options?: { forceRefresh?: boolean }) =>
-  getCachedOrFetch('session:super_admin', readSessionIsSuperAdmin, {
-    scopeId: scopeId ?? 'session',
+const sessionIsSuperAdmin = (scopeId?: string | null, options?: { forceRefresh?: boolean }) => {
+  const cacheScope =
+    scopeId?.trim()
+    ?? (isGhostModeActive() ? getGhostEffectiveProfileId() : null)
+    ?? 'session';
+
+  return getCachedOrFetch('session:super_admin', () => readSessionIsSuperAdmin(scopeId), {
+    scopeId: cacheScope,
     forceRefresh: options?.forceRefresh,
   });
+};
 
 /** Verifica se a RPC `profile_has_access` está instalada no Supabase. */
 export async function getAccessControlRpcStatus(): Promise<'available' | 'missing'> {

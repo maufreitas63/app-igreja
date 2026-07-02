@@ -1,7 +1,7 @@
 import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
-import { getStoredProfileId } from '@/lib/userSession';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 
 const SELFIE_BUCKET = 'Selfies';
 
@@ -99,7 +99,7 @@ export async function saveProfileSelfieUrl(profileId: string, fileName: string):
     throw new Error('Não foi possível salvar a selfie: perfil ou arquivo inválido.');
   }
 
-  const actorProfileId = (await getStoredProfileId()) ?? trimmedProfileId;
+  const actorProfileId = (await resolveEffectiveProfileId()) ?? trimmedProfileId;
 
   const rpcResult = await supabase.rpc('update_profile_field', {
     p_profile_id: trimmedProfileId,

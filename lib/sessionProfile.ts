@@ -22,6 +22,7 @@ export function invalidateSessionProfileCache() {
   invalidateAsyncCache('session:super_admin');
   invalidateAsyncCache('acl:');
   invalidateAsyncCache('dashboard:cards:');
+  invalidateAsyncCache('profile:columns:');
 }
 
 /** Perfil autenticado real (ignora Modo Ghost). */

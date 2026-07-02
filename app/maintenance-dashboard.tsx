@@ -30,6 +30,7 @@ import { MaintenanceGhostModeCard } from '@/components/MaintenanceGhostModeCard'
 import { MaintenanceScalesCard } from '@/components/MaintenanceScalesCard';
 import { MaintenanceSalaServidorCard } from '@/components/MaintenanceSalaServidorCard';
 import { QuorumCheckinRegistryTable } from '@/components/QuorumCheckinRegistryTable';
+import { useGhostMode } from '@/context/GhostModeContext';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
 import { resolveMaintenancePanelAccessResourceKey } from '@/lib/screenAccessResourceKeys';
@@ -326,6 +327,7 @@ export default function MaintenanceDashboard() {
   const previousPageWidthRef = useRef(pageWidth);
   const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);
   const router = useRouter();
+  const { isActive: ghostModeActive, state: ghostModeState } = useGhostMode();
   const insets = useSafeAreaInsets();
   const { events, loading, error, refetch } = useMaintenanceEvents();
   const safeEvents = events ?? [];
@@ -483,7 +485,7 @@ export default function MaintenanceDashboard() {
 
       void (async () => {
         setAccessState((current) => (current === 'allowed' ? current : 'checking'));
-        const snapshot = await loadMaintenanceDashboardAccess();
+        const snapshot = await loadMaintenanceDashboardAccess({ forceRefresh: ghostModeActive });
 
         if (!active) {
           return;
@@ -521,7 +523,7 @@ export default function MaintenanceDashboard() {
       return () => {
         active = false;
       };
-    }, [router])
+    }, [ghostModeActive, ghostModeState?.targetProfileId, router])
   );
 
   const handleSave = useCallback(async () => {

@@ -37,7 +37,9 @@ import {
   resolveIndexShortcutDisabledHint,
   resolveIndexShortcutIconColor,
 } from '@/lib/indexShortcutHints';
-import { loadSessionProfile } from '@/lib/loadSessionProfile';
+import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { useGhostMode } from '@/context/GhostModeContext';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { isLgpdAtivoEnabled, isProfileLgpdPending } from '@/lib/appParameters';
 import { buildIndexScreenGradient } from '@/lib/paletteTheme';
@@ -128,6 +130,7 @@ export default function DashboardIndexScreen() {
   const exitSessionUi = getExitSessionUi();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const router = useRouter();
+  const { isActive: ghostModeActive, state: ghostModeState } = useGhostMode();
   const insets = useSafeAreaInsets();
   const { events: activeEvents, selectedEvent } = useDashboardSelectedEvent({ enablePolling: false });
   const hasAvailableEvents = activeEvents.length > 0;
@@ -152,10 +155,14 @@ export default function DashboardIndexScreen() {
         return;
       }
 
-      const resolved = await resolveFamilyIdForPhone(phone);
+      const sessionProfile = await loadEffectiveSessionProfile(phone);
+      const resolved =
+        sessionProfile?.family_id
+        ?? sessionProfile?.codigo_membro
+        ?? (await resolveFamilyIdForPhone(sessionProfile?.phone ?? phone));
       setFamilyId(resolved);
     })();
-  }, []);
+  }, [ghostModeActive, ghostModeState?.targetProfileId]);
 
   const { hasPreCheckin, hasTotemCheckinConfirmed, refetch: refetchPreCheckin } = useFamilyPreCheckin(
     selectedEvent?.id,
@@ -222,7 +229,7 @@ export default function DashboardIndexScreen() {
           return;
         }
 
-        const sessionProfile = await loadSessionProfile(phone);
+        const sessionProfile = await loadEffectiveSessionProfile(phone);
         const [lgpdModuleActive, activeMembership] = await Promise.all([
           isLgpdAtivoEnabled(),
           sessionProfile?.id
@@ -249,7 +256,7 @@ export default function DashboardIndexScreen() {
       return () => {
         active = false;
       };
-    }, [])
+    }, [ghostModeActive, ghostModeState?.targetProfileId])
   );
 
   const shortcutHintContext = useMemo(
@@ -349,8 +356,8 @@ export default function DashboardIndexScreen() {
 
     try {
       const phone = await getStoredUserPhone();
-      const sessionProfile = phone ? await loadSessionProfile(phone) : null;
-      const profileId = sessionProfile?.id ?? null;
+      const sessionProfile = phone ? await loadEffectiveSessionProfile(phone) : null;
+      const profileId = (await resolveEffectiveProfileId()) ?? sessionProfile?.id ?? null;
 
       const [allowed, cardAccess, screenAccess] = await Promise.all([
         sessionHasAccess('screen', ACCESS_SCREEN.maintenance, 'view'),
@@ -370,7 +377,7 @@ export default function DashboardIndexScreen() {
       setIsMaintenanceAccessLoading(false);
       setIsDashboardShortcutAccessLoading(false);
     }
-  }, []);
+  }, [ghostModeActive, ghostModeState?.targetProfileId]);
 
   useEffect(() => {
     void loadMaintenanceAccess();

@@ -8,7 +8,7 @@ import {
 import { findProfileIdForMember, type MemberProfileInput } from '@/lib/memberProfiles';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { supabase } from '@/lib/supabase';
-import { getStoredProfileId } from '@/lib/userSession';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 
 export type { ProfileAddress } from '@/lib/profileAddress';
 export { PROFILE_ADDRESS_FIELDS, pickProfileAddress, hasAnyProfileAddress } from '@/lib/profileAddress';
@@ -82,7 +82,7 @@ export async function loadAcceptorProfileAddress(options: {
     }
   }
 
-  const storedProfileId = (await getStoredProfileId())?.trim() || null;
+  const storedProfileId = (await resolveEffectiveProfileId())?.trim() || null;
   if (storedProfileId && storedProfileId !== profileId) {
     return loadAcceptorProfileAddress({ profileId: storedProfileId });
   }
@@ -95,7 +95,7 @@ async function saveProfileAddressFieldViaRpc(
   field: (typeof PROFILE_ADDRESS_FIELDS)[number],
   value: string | null
 ) {
-  const actorProfileId = (await getStoredProfileId()) ?? profileId;
+  const actorProfileId = (await resolveEffectiveProfileId()) ?? profileId;
 
   const rpcResult = await supabase.rpc('update_profile_field', {
     p_profile_id: profileId,

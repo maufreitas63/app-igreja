@@ -17,11 +17,12 @@ import {
 } from '@/lib/scaleAccess';
 import { checkSessionCanOperateGhostMode } from '@/lib/ghostModeApi';
 import { formatShortName } from '@/lib/formatShortName';
-import { loadSessionProfile } from '@/lib/loadSessionProfile';
+import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import {
-  getStoredProfileId,
+  resolveEffectiveProfileId,
+} from '@/lib/sessionProfile';
+import {
   getStoredUserPhone,
-  repairUserSessionReference,
 } from '@/lib/userSession';
 
 export type MaintenanceDashboardAccessSnapshot = {
@@ -104,11 +105,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
   let canOperateGhostMode = false;
 
   try {
-    let profileId = await getStoredProfileId();
-
-    if (!profileId) {
-      profileId = await repairUserSessionReference();
-    }
+    let profileId = await resolveEffectiveProfileId();
 
     if (profileId) {
       [
@@ -146,14 +143,11 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
 
   try {
     const phone = await getStoredUserPhone();
+    const sessionProfile = await loadEffectiveSessionProfile(phone);
+    const profileName = sessionProfile?.full_name?.trim();
 
-    if (phone) {
-      const sessionProfile = await loadSessionProfile(phone);
-      const profileName = sessionProfile?.full_name?.trim();
-
-      if (profileName) {
-        headerUserName = formatShortName(profileName);
-      }
+    if (profileName) {
+      headerUserName = formatShortName(profileName);
     }
   } catch {
     headerUserName = null;
@@ -178,11 +172,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
 }
 
 export async function loadMaintenanceDashboardAccess(options?: { forceRefresh?: boolean }) {
-  let profileId = await getStoredProfileId();
-
-  if (!profileId) {
-    profileId = await repairUserSessionReference();
-  }
+  const profileId = await resolveEffectiveProfileId();
 
   return getCachedOrFetch(
     'maintenance:dashboard:access',

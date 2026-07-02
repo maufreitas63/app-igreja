@@ -44,7 +44,8 @@ import {
   fetchVisitorsDirectoryFromProfiles,
 } from '@/lib/membersListApi';
 import { prefetchProfilesMapMarkers } from '@/lib/syncProfilesMapMarkers';
-import { loadSessionProfile } from '@/lib/loadSessionProfile';
+import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { isGhostModeActive } from '@/lib/ghostMode';
 import { isLgpdAtivoEnabled, isProfileLgpdPending } from '@/lib/appParameters';
 import { lookupVehicleByPlaca, type VehicleLookupResult } from '@/lib/profileVehicleLookup';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
@@ -895,16 +896,20 @@ export default function Dashboard() {
         return;
       }
       setUserPhone(targetPhone);
-      const resolvedFamilyId = await resolveFamilyIdForPhone(targetPhone);
-      setFamilyId(resolvedFamilyId);
       setIsMaintenanceAccessLoading(true);
 
-      let sessionProfile = await loadSessionProfile(targetPhone);
+      let sessionProfile = await loadEffectiveSessionProfile(targetPhone);
 
-      if (!sessionProfile?.id) {
+      if (!sessionProfile?.id && !isGhostModeActive()) {
         await repairUserSessionReference(targetPhone);
-        sessionProfile = await loadSessionProfile(targetPhone);
+        sessionProfile = await loadEffectiveSessionProfile(targetPhone);
       }
+
+      const resolvedFamilyId =
+        sessionProfile?.family_id
+        ?? sessionProfile?.codigo_membro
+        ?? (await resolveFamilyIdForPhone(sessionProfile?.phone ?? targetPhone));
+      setFamilyId(resolvedFamilyId);
 
       if (!sessionProfile) {
         setProfile(null);
@@ -932,9 +937,9 @@ export default function Dashboard() {
       setProfile(loadedProfile);
       setCurrentUserId(loadedProfile.id ?? null);
 
-      if (loadedProfile.id) {
+      if (loadedProfile.id && !isGhostModeActive()) {
         await persistProfileId(loadedProfile.id);
-      } else {
+      } else if (!loadedProfile.id) {
         setCanViewMaintenance(false);
         setCanMonitorFamilyReception(false);
         setDashboardCardAccess({});
@@ -975,7 +980,7 @@ export default function Dashboard() {
       setIsProfileLoading(false);
     }
     loadData();
-  }, [phone]);
+  }, [phone, ghostModeActive, ghostModeState?.targetProfileId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -988,7 +993,7 @@ export default function Dashboard() {
         }
 
         const [sessionProfile, lgpdModuleActive] = await Promise.all([
-          loadSessionProfile(targetPhone),
+          loadEffectiveSessionProfile(targetPhone),
           isLgpdAtivoEnabled(),
         ]);
         if (!active) {
@@ -1040,7 +1045,9 @@ export default function Dashboard() {
           setCurrentUserId((current) => current === sessionProfile.id ? current : sessionProfile.id);
         }
 
-        await persistProfileId(sessionProfile.id);
+        if (sessionProfile.id && !isGhostModeActive()) {
+          await persistProfileId(sessionProfile.id);
+        }
 
         const aclStatus = await getAccessControlRpcStatus();
 

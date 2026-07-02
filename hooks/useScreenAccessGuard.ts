@@ -4,8 +4,9 @@ import {
   isAclStrictMode,
   sessionHasAccess,
 } from '@/lib/accessControl';
+import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
 export type ScreenAccessStatus = 'checking' | 'allowed' | 'denied' | 'skipped';
@@ -29,8 +30,19 @@ export function useScreenAccessGuard({
   skipCheck = false,
 }: ScreenAccessGuardOptions): ScreenAccessStatus {
   const router = useRouter();
+  const [ghostTargetId, setGhostTargetId] = useState(
+    () => getGhostModeState()?.targetProfileId ?? null
+  );
   const [status, setStatus] = useState<ScreenAccessStatus>(
     skipCheck || !enabled ? 'skipped' : 'checking'
+  );
+
+  useEffect(
+    () =>
+      subscribeGhostMode(() => {
+        setGhostTargetId(getGhostModeState()?.targetProfileId ?? null);
+      }),
+    []
   );
 
   useFocusEffect(
@@ -78,7 +90,7 @@ export function useScreenAccessGuard({
       return () => {
         active = false;
       };
-    }, [deniedMessage, deniedTitle, enabled, redirectPath, resourceKey, router, skipCheck])
+    }, [deniedMessage, deniedTitle, enabled, ghostTargetId, redirectPath, resourceKey, router, skipCheck])
   );
 
   return skipCheck || !enabled ? 'skipped' : status;

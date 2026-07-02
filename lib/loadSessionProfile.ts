@@ -1,9 +1,15 @@
+import { getGhostEffectiveProfileId, isGhostModeActive } from '@/lib/ghostMode';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { phoneDigitsMatch, resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import { formatFullName } from '@/lib/fullName';
 import { supabase } from '@/lib/supabase';
-import { clearStoredProfileId, getStoredProfileId, persistProfileId } from '@/lib/userSession';
+import {
+  clearStoredProfileId,
+  getStoredProfileId,
+  getStoredUserPhone,
+  persistProfileId,
+} from '@/lib/userSession';
 
 const PROFILE_SELECT = 'id, full_name, codigo_membro, lgpd_accepted, phone, family_id, birth_date';
 
@@ -106,6 +112,55 @@ const loadProfileRowByPhone = async (targetPhone: string) => {
 
   return normalizeProfileRow(data);
 };
+
+export async function loadSessionProfileById(
+  profileId: string,
+  options?: { persist?: boolean }
+): Promise<SessionProfile | null> {
+  const trimmed = profileId?.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select(PROFILE_SELECT)
+    .eq('id', trimmed)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  const phoneVariants = buildPhoneDbQueryVariants(data.phone ?? '');
+  const profile = await enrichSessionProfileName(normalizeProfileRow(data), phoneVariants);
+
+  if (profile.id && options?.persist !== false && !isGhostModeActive()) {
+    await persistProfileId(profile.id);
+  }
+
+  return profile;
+}
+
+/** Perfil da sessão efetiva (alvo do Modo Ghost, se ativo). */
+export async function loadEffectiveSessionProfile(
+  fallbackPhone?: string | null
+): Promise<SessionProfile | null> {
+  const ghostProfileId = getGhostEffectiveProfileId();
+
+  if (ghostProfileId) {
+    return loadSessionProfileById(ghostProfileId, { persist: false });
+  }
+
+  const phone = fallbackPhone?.trim() || (await getStoredUserPhone())?.trim();
+
+  if (!phone) {
+    return null;
+  }
+
+  return loadSessionProfile(phone);
+}
 
 export async function loadSessionProfile(targetPhone: string): Promise<SessionProfile | null> {
   const phoneVariants = buildPhoneDbQueryVariants(targetPhone);

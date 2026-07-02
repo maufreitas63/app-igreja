@@ -1,6 +1,6 @@
 import { formatCep, lookupViaCep, normalizeCepDigits } from '@/lib/geoMapGeocoding';
 import { invalidateProfilesMapSnapshot } from '@/lib/profilesMapCache';
-import { getStoredProfileId } from '@/lib/userSession';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
 
@@ -29,7 +29,7 @@ const buildAddressRpcPayload = (
 });
 
 export async function syncProfileAddressFromCep(profileId: string, input: SyncProfileAddressInput) {
-  const actorProfileId = await getStoredProfileId();
+  const actorProfileId = await resolveEffectiveProfileId();
 
   if (!actorProfileId) {
     throw new Error('Sessão inválida. Saia e entre novamente no aplicativo.');

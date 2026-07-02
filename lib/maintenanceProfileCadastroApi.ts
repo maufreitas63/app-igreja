@@ -5,7 +5,7 @@ import {
 import { formatFullName } from '@/lib/fullName';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
-import { getStoredProfileId } from '@/lib/userSession';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 
 export const DELETE_PROFILE_COMPLETE_SQL_HINT =
   'Execute no Supabase: scripts/delete-profile-complete-rpc.sql';
@@ -163,7 +163,7 @@ export type DeleteProfileCompleteResult = {
 export async function deleteProfileComplete(
   profileId: string
 ): Promise<DeleteProfileCompleteResult> {
-  const actorProfileId = await getStoredProfileId();
+  const actorProfileId = await resolveEffectiveProfileId();
 
   if (!actorProfileId) {
     return { success: false, message: 'Sessão inválida. Saia e entre novamente no aplicativo.' };

@@ -17,6 +17,7 @@ import {
   persistProfileId,
   repairUserSessionReference,
 } from '@/lib/userSession';
+import { isGhostModeActive } from '@/lib/ghostMode';
 import {
   invalidateSessionProfileCache,
   resolveEffectiveProfileId,
@@ -153,7 +154,7 @@ export async function checkSessionIsSuperAdmin(options?: { forceRefresh?: boolea
       let activeProfileId = profileId;
       let isSuperAdmin = await readIsSuperAdminProfile(activeProfileId);
 
-      if (!isSuperAdmin && phone?.trim()) {
+      if (!isSuperAdmin && phone?.trim() && !isGhostModeActive()) {
         const loginProfileId = await resolveProfileIdByPhone(phone);
 
         if (loginProfileId && loginProfileId !== activeProfileId) {

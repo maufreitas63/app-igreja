@@ -6,7 +6,7 @@ import {
   uploadExpenseReportReceiptImage,
 } from '@/lib/financialReceipt';
 import { formatBrazilDateInput } from '@/lib/inputMasks';
-import { loadSessionProfile } from '@/lib/loadSessionProfile';
+import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
 import { getStoredUserPhone } from '@/lib/userSession';
@@ -326,7 +326,7 @@ export async function loadExpenseReportHeader(): Promise<ExpenseReportHeader | n
     return null;
   }
 
-  const profile = await loadSessionProfile(phone);
+  const profile = await loadEffectiveSessionProfile(phone);
 
   if (!profile?.id) {
     return null;
