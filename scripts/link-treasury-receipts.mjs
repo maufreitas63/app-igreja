@@ -6,6 +6,7 @@
  *
  * Padrão de arquivo: aaaammdd + espaço + valor (nnnn,nn) + .jpg
  * Exemplo: 20260526 3825,00.jpg
+ * Aceita também aaaa.mm.dd e valores com sinal +/- antes do montante.
  *
  * Uso (PowerShell, na raiz app-igreja):
  *   node scripts/link-treasury-receipts.mjs --dry-run
@@ -23,6 +24,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
+import {
+  buildFinancialReferencia,
+  isTreasuryReceiptFileName,
+  normalizeTreasuryReceiptFileName,
+} from '../lib/treasuryReceiptBatchPath.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..');
@@ -132,34 +138,6 @@ const parseArgs = () => {
   return options;
 };
 
-/** aaaammdd a partir de YYYY-MM-DD. */
-const formatReceiptSearchDate = (isoDate) => {
-  const match = String(isoDate ?? '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
-
-  if (!match) {
-    return null;
-  }
-
-  const [, year, month, day] = match;
-  return `${year}${month}${day}`;
-};
-
-/** Valor absoluto no formato nnnn,nn (sem separador de milhar). */
-const formatReceiptSearchAmount = (amount) => {
-  const absolute = Math.abs(Number(amount) || 0);
-  return absolute.toFixed(2).replace('.', ',');
-};
-
-const buildReceiptSearchFilename = (entry) => {
-  const datePart = formatReceiptSearchDate(entry.transaction_date);
-
-  if (!datePart) {
-    return null;
-  }
-
-  return `${datePart} ${formatReceiptSearchAmount(entry.amount)}.jpg`;
-};
-
 /** Usa public.financials.referencia quando disponível; senão recalcula localmente. */
 const resolveReceiptFilename = (entry) => {
   const fromDb = entry.referencia?.trim();
@@ -168,7 +146,7 @@ const resolveReceiptFilename = (entry) => {
     return fromDb;
   }
 
-  return buildReceiptSearchFilename(entry);
+  return buildFinancialReferencia(entry.transaction_date, entry.amount);
 };
 
 const buildStoragePath = (financialId) => `receipts/${financialId}/${Date.now()}.jpg`;
@@ -196,15 +174,16 @@ const resolveStoragePath = (receiptUrl) => {
   return normalized.replace(new RegExp(`^${FINANCIAL_DOCS_BUCKET}/`, 'i'), '');
 };
 
-const buildReceiptFilenameIndex = (receiptsDir) => {
+const buildReceiptFilenameIndex = (receiptsDir, { dryRun = false } = {}) => {
   const index = new Map();
+  const normalizedNames = [];
 
   if (!fs.existsSync(receiptsDir)) {
     throw new Error(`Diretório de comprovantes não encontrado: ${receiptsDir}`);
   }
 
   for (const fileName of fs.readdirSync(receiptsDir)) {
-    if (!fileName.toLowerCase().endsWith('.jpg')) {
+    if (!isTreasuryReceiptFileName(fileName)) {
       continue;
     }
 
@@ -214,10 +193,40 @@ const buildReceiptFilenameIndex = (receiptsDir) => {
       continue;
     }
 
-    index.set(fileName, fullPath);
+    const canonical = normalizeTreasuryReceiptFileName(fileName);
+
+    if (!canonical) {
+      continue;
+    }
+
+    let effectivePath = fullPath;
+
+    if (canonical !== fileName) {
+      const canonicalPath = path.join(receiptsDir, canonical);
+
+      if (
+        !dryRun &&
+        fs.existsSync(canonicalPath) &&
+        path.resolve(canonicalPath) !== path.resolve(fullPath)
+      ) {
+        console.warn(
+          `Conflito ao normalizar "${fileName}": já existe "${canonical}" na pasta.`
+        );
+        continue;
+      }
+
+      if (!dryRun) {
+        fs.renameSync(fullPath, canonicalPath);
+        effectivePath = canonicalPath;
+      }
+
+      normalizedNames.push({ from: fileName, to: canonical });
+    }
+
+    index.set(canonical, effectivePath);
   }
 
-  return index;
+  return { index, normalizedNames };
 };
 
 const fetchAllRealizadoEntries = async (supabase) => {
@@ -305,12 +314,11 @@ const uploadAndLinkReceipt = async (supabase, entry, localFilePath, previousRece
 };
 
 const formatEntryLabel = (entry) => {
-  const date = formatReceiptSearchDate(entry.transaction_date) ?? entry.transaction_date;
-  const amount = formatReceiptSearchAmount(entry.amount);
+  const referencia = resolveReceiptFilename(entry);
   const account = entry.account?.trim() || '—';
   const ministry = entry.ministry?.trim() || '—';
 
-  return `${date} · R$ ${amount} · ${entry.transaction_kind} · ${account} · ${ministry}`;
+  return `${referencia ?? entry.transaction_date} · ${entry.transaction_kind} · ${account} · ${ministry}`;
 };
 
 const writeReportFiles = (report) => {
@@ -327,6 +335,7 @@ const writeReportFiles = (report) => {
     '',
     'Resumo',
     `  Lançamentos REALIZADO analisados: ${report.summary.totalRealizado}`,
+    `  JPG com nome normalizado: ${report.summary.normalizedFileNames ?? 0}`,
     `  Já possuíam comprovante (sem JPG local): ${report.summary.skippedAlreadyLinked}`,
     `  JPG local renomeado (já anexados): ${report.summary.renamedOnly ?? 0}`,
     `  Arquivo JPG não encontrado: ${report.summary.fileNotFound}`,
@@ -335,6 +344,20 @@ const writeReportFiles = (report) => {
     `  Erros: ${report.summary.errors}`,
     '',
   ];
+
+  if (report.normalizedReceiptNames?.length) {
+    lines.push('Nomes de arquivo normalizados', '─'.repeat(72));
+
+    for (const item of report.normalizedReceiptNames.slice(0, 200)) {
+      lines.push(`[norm] ${item.from} → ${item.to}`);
+    }
+
+    if (report.normalizedReceiptNames.length > 200) {
+      lines.push(`... e mais ${report.normalizedReceiptNames.length - 200} item(ns).`);
+    }
+
+    lines.push('');
+  }
 
   if (report.linked.length) {
     lines.push('Itens associados com sucesso', '─'.repeat(72));
@@ -443,9 +466,12 @@ const main = async () => {
   }
 
   let receiptIndex;
+  let normalizedReceiptNames = [];
 
   try {
-    receiptIndex = buildReceiptFilenameIndex(options.receiptsDir);
+    const built = buildReceiptFilenameIndex(options.receiptsDir, { dryRun: options.dryRun });
+    receiptIndex = built.index;
+    normalizedReceiptNames = built.normalizedNames;
   } catch (error) {
     writeFailureReport(
       error instanceof Error ? error.message : formatErrorMessage(error),
@@ -459,6 +485,9 @@ const main = async () => {
   console.log(`Supabase: ${supabaseUrl}`);
   console.log(`Diretório de JPG: ${options.receiptsDir}`);
   console.log(`Arquivos JPG indexados: ${receiptIndex.size}`);
+  if (normalizedReceiptNames.length) {
+    console.log(`Nomes normalizados para referencia: ${normalizedReceiptNames.length}`);
+  }
   console.log(options.dryRun ? 'Modo simulação (--dry-run)' : 'Modo execução');
   console.log('');
 
@@ -476,10 +505,12 @@ const main = async () => {
     dryRun: options.dryRun,
     force: options.force,
     receiptsDir: options.receiptsDir,
+    normalizedReceiptNames,
     summary: {
       totalRealizado: entries.length,
       skippedAlreadyLinked: 0,
       renamedOnly: 0,
+      normalizedFileNames: normalizedReceiptNames.length,
       fileNotFound: 0,
       invalidFilename: 0,
       linked: 0,

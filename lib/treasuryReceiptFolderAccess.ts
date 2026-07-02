@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 
 export type TreasuryReceiptFolderFile = {
   fileName: string;
+  originalFileName?: string;
   readDataUrl: () => Promise<string>;
   markProcessed: () => Promise<void>;
 };

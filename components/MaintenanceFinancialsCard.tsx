@@ -1057,9 +1057,10 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
         >
           <View style={styles.formCard}>
             <Text style={styles.formatHint}>
-              Informe o caminho da pasta com os JPG (ex.: {DEFAULT_TREASURY_RECEIPTS_DIR}). O nome
-              do arquivo deve coincidir exatamente com o campo referencia (ex.: 20260526 3825,00.jpg).
-              Ao concluir, cada arquivo processado é renomeado para updated_… na pasta local.
+              Informe o caminho da pasta com os JPG (ex.: {DEFAULT_TREASURY_RECEIPTS_DIR}). Antes da
+              vinculação, nomes como 2026.05.26 -3825,00.jpg são convertidos para 20260526
+              3825,00.jpg (padrão referencia). Depois, arquivos processados recebem o prefixo
+              updated_.
             </Text>
 
             {!isTreasuryReceiptFolderAccessSupported() ? (
@@ -1101,7 +1102,8 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               <View style={styles.receiptBatchReportBox}>
                 <Text style={styles.previewText}>{receiptBatchReport.message}</Text>
                 <Text style={styles.receiptBatchReportLine}>
-                  JPG na pasta: {receiptBatchReport.folderFileCount} · Lançamentos com referencia:{' '}
+                  JPG na pasta: {receiptBatchReport.folderFileCount} · Normalizados:{' '}
+                  {receiptBatchReport.normalizedFileNames} · Lançamentos com referencia:{' '}
                   {receiptBatchReport.entriesWithReferencia}
                 </Text>
                 <Text style={styles.receiptBatchReportLine}>

@@ -21,6 +21,7 @@ export type TreasuryReceiptBatchLinkReport = {
   message: string;
   folderFileCount: number;
   entriesWithReferencia: number;
+  normalizedFileNames: number;
   linked: TreasuryReceiptBatchLinkItem[];
   renamedOnly: TreasuryReceiptBatchLinkItem[];
   skippedAlreadyLinked: TreasuryReceiptBatchLinkItem[];
@@ -73,6 +74,7 @@ export async function processTreasuryReceiptBatchFromFolder(
   const entries = await fetchRealizadoFinancialEntriesForReceiptBatch();
   const referenciaLookup = buildReferenciaLookup(entries);
   const matchedEntryIds = new Set<string>();
+  const normalizedFileNames = folderAccess.files.filter((file) => file.originalFileName).length;
 
   const report: TreasuryReceiptBatchLinkReport = {
     success: true,
@@ -82,6 +84,7 @@ export async function processTreasuryReceiptBatchFromFolder(
       (count, bucket) => count + bucket.length,
       0
     ),
+    normalizedFileNames,
     linked: [],
     renamedOnly: [],
     skippedAlreadyLinked: [],

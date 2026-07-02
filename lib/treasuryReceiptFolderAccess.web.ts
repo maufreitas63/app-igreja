@@ -1,6 +1,7 @@
 import {
   buildUpdatedTreasuryReceiptFileName,
   isTreasuryReceiptFileName,
+  normalizeTreasuryReceiptFileName,
 } from '@/lib/treasuryReceiptBatchPath';
 import type {
   TreasuryReceiptFolderAccess,
@@ -47,16 +48,37 @@ const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleL
 
     const fileHandle = handle as FileSystemFileHandleLike;
     const canRename = typeof fileHandle.move === 'function';
+    const canonical = normalizeTreasuryReceiptFileName(fileName);
+
+    if (!canonical) {
+      continue;
+    }
+
+    let effectiveName = fileName;
+
+    if (canonical !== fileName) {
+      if (!canRename) {
+        throw new Error(
+          `Não foi possível renomear "${fileName}" para "${canonical}". Conceda permissão de escrita na pasta.`
+        );
+      }
+
+      await fileHandle.move(canonical);
+      effectiveName = canonical;
+    } else {
+      effectiveName = canonical;
+    }
 
     files.push({
-      fileName,
+      fileName: effectiveName,
+      originalFileName: fileName !== effectiveName ? fileName : undefined,
       readDataUrl: async () => readFileAsDataUrl(await fileHandle.getFile()),
       markProcessed: async () => {
         if (!canRename) {
           throw new Error('O navegador não permitiu renomear arquivos nesta pasta.');
         }
 
-        await fileHandle.move!(buildUpdatedTreasuryReceiptFileName(fileName));
+        await fileHandle.move!(buildUpdatedTreasuryReceiptFileName(effectiveName));
       },
     });
   }
