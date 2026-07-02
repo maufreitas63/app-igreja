@@ -651,6 +651,195 @@ begin
 end;
 $$;
 
+-- Avalia ACL do perfil alvo sem bypass de super_admin da sessão do operador.
+create or replace function public.evaluate_profile_resource_access(
+  p_profile_id uuid,
+  p_resource_type text,
+  p_resource_key text,
+  p_action text
+)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_type text;
+  v_key text;
+  v_action text;
+  v_acl_enabled boolean;
+  v_allowed boolean;
+  v_has_roles boolean;
+begin
+  if p_profile_id is null then
+    return false;
+  end if;
+
+  v_type := lower(trim(coalesce(p_resource_type, '')));
+  v_key := trim(coalesce(p_resource_key, ''));
+  v_action := lower(trim(coalesce(p_action, '')));
+
+  if v_type not in ('screen', 'table', 'column') or v_key = '' then
+    return false;
+  end if;
+
+  if v_action not in ('view', 'update') then
+    return false;
+  end if;
+
+  if not public.acl_enforcement_enabled() then
+    return true;
+  end if;
+
+  if public.profile_has_super_admin_role(p_profile_id) then
+    return true;
+  end if;
+
+  select exists (select 1 from public.access_grants limit 1)
+    into v_acl_enabled;
+
+  if not v_acl_enabled then
+    return false;
+  end if;
+
+  select exists (
+    select 1
+      from public.access_grants g
+      join public.access_resources r on r.id = g.resource_id
+     where r.resource_type = v_type
+       and r.is_active = true
+       and public.access_resource_matches(r.resource_key, v_key)
+       and (
+         (v_action = 'view' and g.can_view)
+         or (v_action = 'update' and g.can_update)
+       )
+       and (
+         g.profile_id = p_profile_id
+         or g.role_id in (
+           select par.role_id
+             from public.profile_access_roles par
+            where par.profile_id = p_profile_id
+         )
+       )
+  )
+    into v_allowed;
+
+  if coalesce(v_allowed, false) then
+    return true;
+  end if;
+
+  select exists (
+    select 1
+      from public.profile_access_roles par
+     where par.profile_id = p_profile_id
+  )
+    into v_has_roles;
+
+  if not coalesce(v_has_roles, false) then
+    return public.role_has_access('visitantes', v_type, v_key, v_action);
+  end if;
+
+  return false;
+end;
+$$;
+
+drop function if exists public.listar_relatorio_acesso_perfil_ghost_mode(uuid, uuid);
+
+create or replace function public.listar_relatorio_acesso_perfil_ghost_mode(
+  p_operator_profile_id uuid,
+  p_target_profile_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_rows jsonb := '[]'::jsonb;
+  v_resource record;
+  v_can_view boolean;
+  v_can_update boolean;
+  v_total integer := 0;
+  v_view_count integer := 0;
+  v_update_count integer := 0;
+begin
+  perform public.assert_actor_matches_real_session(p_operator_profile_id);
+
+  if not public.can_operate_ghost_mode(p_operator_profile_id) then
+    return jsonb_build_object('success', false, 'message', 'Sem permissão para usar o Modo Ghost.');
+  end if;
+
+  if p_target_profile_id is null then
+    return jsonb_build_object('success', false, 'message', 'Perfil não informado.');
+  end if;
+
+  if not exists (select 1 from public.profiles p where p.id = p_target_profile_id) then
+    return jsonb_build_object('success', false, 'message', 'Perfil não encontrado.');
+  end if;
+
+  for v_resource in
+    select
+      res.resource_type,
+      res.resource_key,
+      coalesce(nullif(trim(res.label), ''), res.resource_key) as label
+    from public.access_resources res
+    where res.is_active = true
+    order by
+      case res.resource_type
+        when 'screen' then 1
+        when 'table' then 2
+        when 'column' then 3
+        else 4
+      end,
+      res.resource_key asc
+  loop
+    v_can_view := public.evaluate_profile_resource_access(
+      p_target_profile_id,
+      v_resource.resource_type,
+      v_resource.resource_key,
+      'view'
+    );
+    v_can_update := public.evaluate_profile_resource_access(
+      p_target_profile_id,
+      v_resource.resource_type,
+      v_resource.resource_key,
+      'update'
+    );
+
+    v_total := v_total + 1;
+
+    if v_can_view then
+      v_view_count := v_view_count + 1;
+    end if;
+
+    if v_can_update then
+      v_update_count := v_update_count + 1;
+    end if;
+
+    v_rows := v_rows || jsonb_build_array(
+      jsonb_build_object(
+        'resource_type', v_resource.resource_type,
+        'resource_key', v_resource.resource_key,
+        'label', v_resource.label,
+        'can_view', v_can_view,
+        'can_update', v_can_update
+      )
+    );
+  end loop;
+
+  return jsonb_build_object(
+    'success', true,
+    'rows', v_rows,
+    'summary', jsonb_build_object(
+      'total', v_total,
+      'can_view_count', v_view_count,
+      'can_update_count', v_update_count
+    )
+  );
+end;
+$$;
+
 grant execute on function public.current_real_session_profile_id() to anon, authenticated;
 grant execute on function public.current_ghost_profile_id_from_header() to anon, authenticated;
 grant execute on function public.profile_has_super_admin_role(uuid) to anon, authenticated;
@@ -663,5 +852,7 @@ grant execute on function public.registrar_evento_ghost_mode(uuid, text, uuid, j
 grant execute on function public.obter_previa_perfil_ghost_mode(uuid, uuid) to anon, authenticated;
 grant execute on function public.obter_perfil_sessao_efetiva() to anon, authenticated;
 grant execute on function public.listar_acesso_colunas_perfil_sessao() to anon, authenticated;
+grant execute on function public.evaluate_profile_resource_access(uuid, text, text, text) to anon, authenticated;
+grant execute on function public.listar_relatorio_acesso_perfil_ghost_mode(uuid, uuid) to anon, authenticated;
 
 notify pgrst, 'reload schema';

@@ -92,6 +92,23 @@ export type GhostModeTargetPreview = {
   implicitVisitante: boolean;
 };
 
+export type GhostModeAccessAuditRow = {
+  resourceType: 'screen' | 'table' | 'column';
+  resourceKey: string;
+  label: string;
+  canView: boolean;
+  canUpdate: boolean;
+};
+
+export type GhostModeAccessAuditReport = {
+  rows: GhostModeAccessAuditRow[];
+  summary: {
+    total: number;
+    canViewCount: number;
+    canUpdateCount: number;
+  };
+};
+
 const readOptionalString = (value: unknown) => {
   if (typeof value !== 'string') {
     return null;
@@ -222,6 +239,113 @@ export async function fetchGhostTargetProfilePreview(
   }
 
   return { success: true, preview };
+}
+
+const parseAccessAuditRow = (row: unknown): GhostModeAccessAuditRow | null => {
+  if (!row || typeof row !== 'object') {
+    return null;
+  }
+
+  const record = row as Record<string, unknown>;
+  const resourceType = readOptionalString(record.resource_type ?? record.resourceType);
+  const resourceKey = readOptionalString(record.resource_key ?? record.resourceKey);
+  const label = readOptionalString(record.label) ?? resourceKey;
+
+  if (
+    !resourceKey
+    || (resourceType !== 'screen' && resourceType !== 'table' && resourceType !== 'column')
+  ) {
+    return null;
+  }
+
+  return {
+    resourceType,
+    resourceKey,
+    label: label ?? resourceKey,
+    canView: record.can_view === true || record.canView === true,
+    canUpdate: record.can_update === true || record.canUpdate === true,
+  };
+};
+
+const parseAccessAuditReport = (data: unknown): GhostModeAccessAuditReport | null => {
+  if (!data || typeof data !== 'object') {
+    return null;
+  }
+
+  const record = data as Record<string, unknown>;
+
+  if (record.success !== true) {
+    return null;
+  }
+
+  const rows = Array.isArray(record.rows)
+    ? record.rows
+        .map((row) => parseAccessAuditRow(row))
+        .filter((row): row is GhostModeAccessAuditRow => row !== null)
+    : [];
+
+  const summaryRecord =
+    record.summary && typeof record.summary === 'object'
+      ? (record.summary as Record<string, unknown>)
+      : {};
+
+  return {
+    rows,
+    summary: {
+      total: Number(summaryRecord.total ?? rows.length) || rows.length,
+      canViewCount: Number(summaryRecord.can_view_count ?? summaryRecord.canViewCount ?? 0) || 0,
+      canUpdateCount: Number(summaryRecord.can_update_count ?? summaryRecord.canUpdateCount ?? 0) || 0,
+    },
+  };
+};
+
+export async function fetchGhostTargetAccessAuditReport(
+  targetProfileId: string
+): Promise<{ success: true; report: GhostModeAccessAuditReport } | { success: false; message: string }> {
+  const operatorProfileId = await resolveRealSessionProfileId();
+
+  if (!operatorProfileId) {
+    return { success: false, message: 'Sessão inválida. Saia e entre novamente.' };
+  }
+
+  const { data, error } = await supabase.rpc('listar_relatorio_acesso_perfil_ghost_mode', {
+    p_operator_profile_id: operatorProfileId,
+    p_target_profile_id: targetProfileId,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissing(error.message ?? '', 'listar_relatorio_acesso_perfil_ghost_mode')) {
+      return {
+        success: false,
+        message: `${GHOST_MODE_SQL_HINT} Inclua a função listar_relatorio_acesso_perfil_ghost_mode.`,
+      };
+    }
+
+    return {
+      success: false,
+      message: error.message ?? 'Não foi possível carregar o relatório de acesso.',
+    };
+  }
+
+  const record = (data ?? {}) as Record<string, unknown>;
+
+  if (record.success !== true) {
+    return {
+      success: false,
+      message:
+        typeof record.message === 'string'
+          ? record.message
+          : 'Não foi possível carregar o relatório de acesso.',
+    };
+  }
+
+  const report = parseAccessAuditReport(data);
+
+  if (!report) {
+    return { success: false, message: 'Resposta inválida ao carregar o relatório de acesso.' };
+  }
+
+  return { success: true, report };
 }
 
 export async function registerGhostModeAuditEvent(

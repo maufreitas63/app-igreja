@@ -5,8 +5,11 @@ import { useGhostMode } from '@/context/GhostModeContext';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { formatShortName } from '@/lib/formatShortName';
 import {
+  fetchGhostTargetAccessAuditReport,
   fetchGhostTargetProfilePreview,
   GHOST_MODE_SQL_HINT,
+  type GhostModeAccessAuditReport,
+  type GhostModeAccessAuditRow,
   type GhostModeProfileOption,
   type GhostModeTargetPreview,
 } from '@/lib/ghostModeApi';
@@ -61,6 +64,178 @@ const PreviewRow = ({ label, value }: { label: string; value: string | null | un
     <Text style={styles.previewValue}>{value?.trim() || '—'}</Text>
   </View>
 );
+
+const RESOURCE_TYPE_LABELS: Record<GhostModeAccessAuditRow['resourceType'], string> = {
+  screen: 'Telas',
+  table: 'Tabelas',
+  column: 'Colunas',
+};
+
+const formatPermissionLabel = (allowed: boolean) => (allowed ? 'Sim' : 'Não');
+
+function GhostModeAccessAuditPanel({
+  loading,
+  error,
+  report,
+}: {
+  loading: boolean;
+  error: string | null;
+  report: GhostModeAccessAuditReport | null;
+}) {
+  const [showOnlyGranted, setShowOnlyGranted] = useState(false);
+  const [expandedTypes, setExpandedTypes] = useState<Record<string, boolean>>({
+    screen: true,
+    table: false,
+    column: false,
+  });
+
+  const groupedRows = useMemo(() => {
+    if (!report) {
+      return [] as Array<{
+        type: GhostModeAccessAuditRow['resourceType'];
+        title: string;
+        rows: GhostModeAccessAuditRow[];
+      }>;
+    }
+
+    const types: GhostModeAccessAuditRow['resourceType'][] = ['screen', 'table', 'column'];
+
+    return types
+      .map((type) => {
+        const rows = report.rows.filter((row) => {
+          if (row.resourceType !== type) {
+            return false;
+          }
+
+          if (!showOnlyGranted) {
+            return true;
+          }
+
+          return row.canView || row.canUpdate;
+        });
+
+        return {
+          type,
+          title: RESOURCE_TYPE_LABELS[type],
+          rows,
+        };
+      })
+      .filter((group) => group.rows.length > 0);
+  }, [report, showOnlyGranted]);
+
+  if (loading) {
+    return (
+      <View style={styles.auditBox}>
+        <Text style={styles.previewSectionTitle}>Relatório de acesso (ACL)</Text>
+        <CardLoadingState lines={5} compact />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.auditBox}>
+        <Text style={styles.previewSectionTitle}>Relatório de acesso (ACL)</Text>
+        <Text style={styles.previewError}>{error}</Text>
+      </View>
+    );
+  }
+
+  if (!report) {
+    return null;
+  }
+
+  return (
+    <View style={styles.auditBox}>
+      <Text style={styles.previewSectionTitle}>Relatório de acesso (ACL)</Text>
+      <Text style={styles.previewSubtitle}>
+        Telas e elementos do aplicativo com permissão de visualizar e alterar para este usuário.
+      </Text>
+      <Text style={styles.auditSummary}>
+        {report.summary.canViewCount} com visualização · {report.summary.canUpdateCount} com alteração
+        {' · '}
+        {report.summary.total} recursos cadastrados
+      </Text>
+
+      <TouchableOpacity
+        style={styles.auditFilterButton}
+        onPress={() => setShowOnlyGranted((current) => !current)}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.auditFilterButtonText}>
+          {showOnlyGranted ? 'Mostrar todos os recursos' : 'Mostrar somente com acesso'}
+        </Text>
+      </TouchableOpacity>
+
+      {groupedRows.length === 0 ? (
+        <Text style={styles.previewMuted}>Nenhum recurso corresponde ao filtro atual.</Text>
+      ) : (
+        groupedRows.map((group) => {
+          const isExpanded = expandedTypes[group.type] ?? false;
+          const grantedCount = group.rows.filter((row) => row.canView || row.canUpdate).length;
+
+          return (
+            <View key={group.type} style={styles.auditGroup}>
+              <TouchableOpacity
+                style={styles.auditGroupHeader}
+                onPress={() =>
+                  setExpandedTypes((current) => ({
+                    ...current,
+                    [group.type]: !isExpanded,
+                  }))
+                }
+                activeOpacity={0.85}
+              >
+                <View style={styles.auditGroupHeaderText}>
+                  <Text style={styles.auditGroupTitle}>{group.title}</Text>
+                  <Text style={styles.auditGroupMeta}>
+                    {grantedCount} com acesso · {group.rows.length} listado(s)
+                  </Text>
+                </View>
+                <Text style={styles.auditGroupToggle}>{isExpanded ? '−' : '+'}</Text>
+              </TouchableOpacity>
+
+              {isExpanded ? (
+                <View style={styles.auditTable}>
+                  <View style={styles.auditTableHeader}>
+                    <Text style={[styles.auditHeaderCell, styles.auditElementCell]}>Tela / elemento</Text>
+                    <Text style={styles.auditHeaderCell}>Ver</Text>
+                    <Text style={styles.auditHeaderCell}>Alterar</Text>
+                  </View>
+
+                  {group.rows.map((row) => (
+                    <View key={`${row.resourceType}:${row.resourceKey}`} style={styles.auditTableRow}>
+                      <View style={styles.auditElementCell}>
+                        <Text style={styles.auditElementLabel}>{row.label}</Text>
+                        <Text style={styles.auditElementKey}>{row.resourceKey}</Text>
+                      </View>
+                      <Text
+                        style={[
+                          styles.auditPermissionCell,
+                          row.canView ? styles.auditPermissionYes : styles.auditPermissionNo,
+                        ]}
+                      >
+                        {formatPermissionLabel(row.canView)}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.auditPermissionCell,
+                          row.canUpdate ? styles.auditPermissionYes : styles.auditPermissionNo,
+                        ]}
+                      >
+                        {formatPermissionLabel(row.canUpdate)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </View>
+          );
+        })
+      )}
+    </View>
+  );
+}
 
 function GhostModeProfilePreviewPanel({
   loading,
@@ -181,6 +356,9 @@ export function MaintenanceGhostModeCard({ isActive = false, panelHeight }: Prop
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [preview, setPreview] = useState<GhostModeTargetPreview | null>(null);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState<string | null>(null);
+  const [auditReport, setAuditReport] = useState<GhostModeAccessAuditReport | null>(null);
 
   const loadProfiles = useCallback(async () => {
     setLoading(true);
@@ -214,6 +392,9 @@ export function MaintenanceGhostModeCard({ isActive = false, panelHeight }: Prop
       setPreview(null);
       setPreviewError(null);
       setPreviewLoading(false);
+      setAuditReport(null);
+      setAuditError(null);
+      setAuditLoading(false);
       return;
     }
 
@@ -221,23 +402,38 @@ export function MaintenanceGhostModeCard({ isActive = false, panelHeight }: Prop
     setPreviewLoading(true);
     setPreviewError(null);
     setPreview(null);
+    setAuditLoading(true);
+    setAuditError(null);
+    setAuditReport(null);
 
     void (async () => {
-      const result = await fetchGhostTargetProfilePreview(selectedProfileId);
+      const [previewResult, auditResult] = await Promise.all([
+        fetchGhostTargetProfilePreview(selectedProfileId),
+        fetchGhostTargetAccessAuditReport(selectedProfileId),
+      ]);
 
       if (!active) {
         return;
       }
 
-      if (!result.success) {
-        setPreviewError(result.message);
+      if (!previewResult.success) {
+        setPreviewError(previewResult.message);
         setPreview(null);
-        setPreviewLoading(false);
-        return;
+      } else {
+        setPreview(previewResult.preview);
+        setPreviewError(null);
       }
 
-      setPreview(result.preview);
+      if (!auditResult.success) {
+        setAuditError(auditResult.message);
+        setAuditReport(null);
+      } else {
+        setAuditReport(auditResult.report);
+        setAuditError(null);
+      }
+
       setPreviewLoading(false);
+      setAuditLoading(false);
     })();
 
     return () => {
@@ -359,11 +555,18 @@ export function MaintenanceGhostModeCard({ isActive = false, panelHeight }: Prop
           </Text>
 
           {selectedProfileId ? (
-            <GhostModeProfilePreviewPanel
-              loading={previewLoading}
-              error={previewError}
-              preview={preview}
-            />
+            <>
+              <GhostModeProfilePreviewPanel
+                loading={previewLoading}
+                error={previewError}
+                preview={preview}
+              />
+              <GhostModeAccessAuditPanel
+                loading={auditLoading}
+                error={auditError}
+                report={auditReport}
+              />
+            </>
           ) : null}
         </>
       ) : null}
@@ -507,5 +710,129 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     fontFamily: 'monospace',
+  },
+  auditBox: {
+    marginTop: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.35)',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    padding: 14,
+    gap: 8,
+  },
+  auditSummary: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '600',
+  },
+  auditFilterButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#475569',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 4,
+  },
+  auditFilterButtonText: {
+    color: '#E2E8F0',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  auditGroup: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#334155',
+    overflow: 'hidden',
+    marginTop: 4,
+  },
+  auditGroupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(30, 41, 59, 0.85)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  auditGroupHeaderText: {
+    flex: 1,
+    gap: 2,
+  },
+  auditGroupTitle: {
+    color: '#F8FAFC',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  auditGroupMeta: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  auditGroupToggle: {
+    color: '#FCD34D',
+    fontSize: 18,
+    fontWeight: '800',
+    width: 18,
+    textAlign: 'center',
+  },
+  auditTable: {
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+  },
+  auditTableHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  auditTableRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(51, 65, 85, 0.65)',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  auditHeaderCell: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    width: 52,
+    textAlign: 'center',
+  },
+  auditElementCell: {
+    flex: 1,
+    minWidth: 0,
+  },
+  auditElementLabel: {
+    color: '#F8FAFC',
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  auditElementKey: {
+    color: '#64748B',
+    fontSize: 10,
+    fontFamily: 'monospace',
+    marginTop: 2,
+  },
+  auditPermissionCell: {
+    width: 52,
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  auditPermissionYes: {
+    color: '#6EE7B7',
+  },
+  auditPermissionNo: {
+    color: '#94A3B8',
   },
 });
