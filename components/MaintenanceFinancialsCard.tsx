@@ -1144,10 +1144,11 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
         >
           <View style={styles.formCard}>
             <Text style={styles.formatHint}>
-              Informe o caminho da pasta com os JPG (ex.: {DEFAULT_TREASURY_RECEIPTS_DIR}). Padrões
-              aceitos: 20260526 3825,00.jpg (único) e 20260608 1500,00 2.jpg (múltiplos anexos —
-              espaço obrigatório antes do dígito de posição). Nomes como 2026.05.26 -3825,00.jpg são
-              convertidos para o padrão referencia. Arquivos processados recebem o prefixo updated_.
+              Informe o caminho da pasta com os JPG/JPEG (ex.: {DEFAULT_TREASURY_RECEIPTS_DIR}). Padrões
+              aceitos: 20260526 3825,00.jpg ou .jpeg (único) e 20260608 1500,00 2.jpg (múltiplos
+              anexos — espaço obrigatório antes do dígito de posição). Arquivos .jpeg são
+              normalizados para .jpg. Nomes como 2026.05.26 -3825,00.jpg são convertidos para o
+              padrão referencia. Arquivos processados recebem o prefixo updated_.
             </Text>
 
             {!isTreasuryReceiptFolderAccessSupported() ? (

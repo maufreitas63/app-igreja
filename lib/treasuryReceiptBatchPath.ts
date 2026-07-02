@@ -27,7 +27,34 @@ export const saveTreasuryReceiptsDir = (value: string) => {
   localStorage.setItem(STORAGE_KEY, trimmed);
 };
 
-/** Formata valor absoluto: nnnn,nn (vírgula decimal, sem separador de milhar). */
+/** Extensão canônica da referencia no banco e após normalização de nomes locais. */
+export const TREASURY_RECEIPT_CANONICAL_EXTENSION = '.jpg';
+
+const hasTreasuryReceiptImageExtension = (fileName: string) => {
+  const lower = fileName.toLowerCase();
+
+  return lower.endsWith('.jpeg') || lower.endsWith('.jpg');
+};
+
+const stripTreasuryReceiptImageExtension = (fileName: string): string | null => {
+  const lower = fileName.toLowerCase();
+
+  if (lower.endsWith('.jpeg')) {
+    return fileName.slice(0, -5);
+  }
+
+  if (lower.endsWith('.jpg')) {
+    return fileName.slice(0, -4);
+  }
+
+  return null;
+};
+
+const buildTreasuryReceiptCanonicalFileName = (referenciaBase: string, position: number | null) =>
+  position !== null
+    ? `${referenciaBase} ${position}${TREASURY_RECEIPT_CANONICAL_EXTENSION}`
+    : `${referenciaBase}${TREASURY_RECEIPT_CANONICAL_EXTENSION}`;
+
 export const formatTreasuryReceiptAmount = (amount: number) =>
   Math.abs(Number(amount) || 0)
     .toFixed(2)
@@ -111,9 +138,10 @@ export type ParsedTreasuryReceiptFileName = {
 };
 
 /**
- * Interpreta nomes JPG de comprovantes.
+ * Interpreta nomes de comprovantes (.jpg ou .jpeg).
  * - Único: aaaammdd nnnn,nn.jpg
  * - Múltiplo: aaaammdd nnnn,nn n.jpg (espaço obrigatório antes do dígito de posição)
+ * Arquivos .jpeg são normalizados para o padrão .jpg da referencia.
  */
 export const parseTreasuryReceiptFileName = (fileName: string): ParsedTreasuryReceiptFileName | null => {
   if (typeof fileName !== 'string' || !fileName.trim()) {
@@ -126,11 +154,17 @@ export const parseTreasuryReceiptFileName = (fileName: string): ParsedTreasuryRe
     name = name.slice('updated_'.length);
   }
 
-  if (!name.toLowerCase().endsWith('.jpg')) {
+  if (!hasTreasuryReceiptImageExtension(name)) {
     return null;
   }
 
-  let stem = name.replace(/\.jpg$/i, '').trim();
+  const stemWithoutExtension = stripTreasuryReceiptImageExtension(name);
+
+  if (stemWithoutExtension === null) {
+    return null;
+  }
+
+  let stem = stemWithoutExtension.trim();
   let position: number | null = null;
 
   const positionMatch = stem.match(/ (\d)$/);
@@ -150,9 +184,8 @@ export const parseTreasuryReceiptFileName = (fileName: string): ParsedTreasuryRe
     return null;
   }
 
-  const referencia = `${referenciaBase}.jpg`;
-  const canonicalFileName =
-    position !== null ? `${referenciaBase} ${position}.jpg` : `${referenciaBase}.jpg`;
+  const referencia = buildTreasuryReceiptCanonicalFileName(referenciaBase, null);
+  const canonicalFileName = buildTreasuryReceiptCanonicalFileName(referenciaBase, position);
 
   return {
     referencia,
@@ -166,7 +199,7 @@ export const resolveTreasuryReceiptLinkPosition = (position: number | null | und
   position ?? 1;
 
 /**
- * Converte nome de JPG para o padrão canônico (referencia ou referencia + posição).
+ * Converte nome de comprovante (.jpg/.jpeg) para o padrão canônico .jpg.
  * - Data aaaa.mm.dd → aaaammdd
  * - Remove sinal +/- antes do valor
  */
@@ -181,7 +214,8 @@ export const isTreasuryReceiptFileName = (fileName: string) => {
   const normalized = fileName.trim();
 
   return (
-    normalized.toLowerCase().endsWith('.jpg') && !normalized.toLowerCase().startsWith('updated_')
+    hasTreasuryReceiptImageExtension(normalized) &&
+    !normalized.toLowerCase().startsWith('updated_')
   );
 };
 

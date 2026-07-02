@@ -4,9 +4,9 @@
  * ⚠️ NÃO execute no SQL Editor do Supabase — este arquivo é JavaScript (Node.js).
  *    Rode no terminal/PowerShell, na pasta do projeto app-igreja.
  *
- * Padrões de arquivo:
- * - Único: aaaammdd + espaço + valor (nnnn,nn) + .jpg — ex.: 20260526 3825,00.jpg
- * - Múltiplo: aaaammdd + espaço + valor + espaço + posição (1 dígito) + .jpg — ex.: 20260608 1500,00 2.jpg
+ * Padrões de arquivo (.jpg ou .jpeg; após normalização viram .jpg):
+ * - Único: aaaammdd + espaço + valor (nnnn,nn) + extensão — ex.: 20260526 3825,00.jpg
+ * - Múltiplo: aaaammdd + espaço + valor + espaço + posição (1 dígito) + extensão — ex.: 20260608 1500,00 2.jpeg
  * Aceita também aaaa.mm.dd e valores com sinal +/- antes do montante.
  *
  * Uso (PowerShell, na raiz app-igreja):
