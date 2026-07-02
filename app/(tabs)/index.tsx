@@ -385,11 +385,10 @@ export default function DashboardIndexScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void loadMaintenanceAccess();
       return () => {
         setIsFooterSettingsPressed(false);
       };
-    }, [loadMaintenanceAccess])
+    }, [])
   );
 
   const handleFooterSettingsPress = useCallback(() => {

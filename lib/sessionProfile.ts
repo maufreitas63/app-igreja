@@ -1,4 +1,5 @@
 import { invalidateAsyncCache } from '@/lib/asyncResultCache';
+import { invalidateSessionProfileLoadCache } from '@/lib/loadSessionProfile';
 import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import {
   getGhostEffectiveProfileId,
@@ -17,11 +18,14 @@ let cachedRealProfilePhone: string | null = null;
 export function invalidateSessionProfileCache() {
   cachedRealProfileId = null;
   cachedRealProfilePhone = null;
+  invalidateSessionProfileLoadCache();
   invalidateAsyncCache('maintenance:dashboard:access');
   invalidateAsyncCache('family_reception:pending');
   invalidateAsyncCache('session:super_admin');
+  invalidateAsyncCache('operator:super_admin');
   invalidateAsyncCache('acl:');
   invalidateAsyncCache('dashboard:cards:');
+  invalidateAsyncCache('dashboard:screens:');
   invalidateAsyncCache('profile:columns:');
 }
 

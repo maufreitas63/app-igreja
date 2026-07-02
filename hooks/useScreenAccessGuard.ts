@@ -53,7 +53,6 @@ export function useScreenAccessGuard({
       }
 
       let active = true;
-      setStatus('checking');
 
       void (async () => {
         const aclStatus = await getAccessControlRpcStatus();

@@ -4,6 +4,7 @@ import { normalizeFamilyCode } from '@/lib/family';
 import { formatFullName, normalizeFullNameKey } from '@/lib/fullName';
 import { isFamilyAudienceMember, MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { applyProfileBirthDates } from '@/lib/profileBirthDates';
+import { getCachedOrFetch, invalidateAsyncCache } from '@/lib/asyncResultCache';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { resolveActiveSessionMember } from '@/lib/resolveActiveSessionMember';
 import { upsertFamilyMember } from '@/lib/upsertFamilyMember';
@@ -109,25 +110,6 @@ const isMissingRpcError = (error: { message?: string } | null, rpcName: string) 
   );
 };
 
-const mergeAudienceMemberSources = (...sources: FamilyMember[][]) => {
-  const merged = new Map<string, FamilyMember>();
-
-  for (const source of sources) {
-    for (const member of source) {
-      const memberId = String(member.id ?? '').trim();
-
-      if (!memberId) {
-        continue;
-      }
-
-      const existing = merged.get(memberId);
-      merged.set(memberId, existing ? pickPreferredMember(existing, member) : member);
-    }
-  }
-
-  return Array.from(merged.values());
-};
-
 const mapAudienceRpcMemberRow = (row: Record<string, unknown>): FamilyMember | null => {
   const memberId = String(row.member_id ?? row.id ?? '').trim();
   const fullName = formatFullName(String(row.full_name ?? ''));
@@ -160,48 +142,6 @@ const fetchMembersDirectFromTable = async (familyId: string): Promise<FamilyMemb
   }
 
   return (data as FamilyMember[]) ?? [];
-};
-
-const fetchMembersByIds = async (memberIds: string[]): Promise<FamilyMember[]> => {
-  if (!memberIds.length) {
-    return [];
-  }
-
-  const { data, error } = await supabase.from('members').select('*').in('id', memberIds);
-
-  if (error) {
-    throw error;
-  }
-
-  return (data as FamilyMember[]) ?? [];
-};
-
-const fetchMembersFromDirectoryRpc = async (familyId: string): Promise<FamilyMember[]> => {
-  const { data: rpcData, error: rpcError } = await supabase.rpc('list_members_family_directory', {
-    p_family_id: familyId,
-  });
-
-  if (rpcError) {
-    if (isMissingRpcError(rpcError, 'list_members_family_directory')) {
-      return [];
-    }
-
-    throw rpcError;
-  }
-
-  if (!Array.isArray(rpcData) || !rpcData.length) {
-    return [];
-  }
-
-  const memberIds = rpcData
-    .map((row) => String((row as { member_id?: string }).member_id ?? '').trim())
-    .filter(Boolean);
-
-  if (!memberIds.length) {
-    return [];
-  }
-
-  return fetchMembersByIds(memberIds);
 };
 
 const fetchMembersFromAudienceRpc = async (familyId: string): Promise<FamilyMember[]> => {
@@ -312,6 +252,51 @@ const supplementAudienceFromFamilyProfiles = async (
   return supplemented;
 };
 
+export function invalidateFamilyAudienceCache(familyId?: string | null) {
+  const normalizedFamilyId = normalizeFamilyCode(familyId);
+
+  if (normalizedFamilyId) {
+    invalidateAsyncCache(`family:audience:${normalizedFamilyId}`);
+    return;
+  }
+
+  invalidateAsyncCache('family:audience:');
+}
+
+const fetchAudienceMembersFast = async (familyId: string): Promise<FamilyMember[]> => {
+  const audienceRpcRows = await fetchMembersFromAudienceRpc(familyId);
+
+  if (audienceRpcRows.length) {
+    return audienceRpcRows;
+  }
+
+  return fetchMembersDirectFromTable(familyId);
+};
+
+/** Sincroniza perfis da família sem registro em members (ex.: congregados). Uso em background. */
+export async function syncFamilyAudienceMemberRecords(
+  familyId: string,
+  currentMembers: FamilyMember[] = []
+): Promise<boolean> {
+  const normalizedFamilyId = normalizeFamilyCode(familyId);
+
+  if (!normalizedFamilyId) {
+    return false;
+  }
+
+  const baseMembers = currentMembers.length
+    ? currentMembers
+    : await fetchAudienceMembersFast(normalizedFamilyId);
+  const supplemented = await supplementAudienceFromFamilyProfiles(normalizedFamilyId, baseMembers);
+  const changed = supplemented.length !== baseMembers.length;
+
+  if (changed) {
+    invalidateFamilyAudienceCache(normalizedFamilyId);
+  }
+
+  return changed;
+}
+
 /** Lista integrantes da família para audiência (inclui dependentes com accepted null ou true). */
 export async function fetchFamilyAudienceMembers(familyId: string): Promise<FamilyMember[]> {
   const normalizedFamilyId = normalizeFamilyCode(familyId);
@@ -320,15 +305,13 @@ export async function fetchFamilyAudienceMembers(familyId: string): Promise<Fami
     return [];
   }
 
-  const [directRows, audienceRpcRows, directoryRpcRows] = await Promise.all([
-    fetchMembersDirectFromTable(normalizedFamilyId),
-    fetchMembersFromAudienceRpc(normalizedFamilyId),
-    fetchMembersFromDirectoryRpc(normalizedFamilyId),
-  ]);
+  const rows = await getCachedOrFetch(
+    `family:audience:${normalizedFamilyId}`,
+    () => fetchAudienceMembersFast(normalizedFamilyId),
+    { scopeId: normalizedFamilyId, ttlMs: 90_000 }
+  );
 
-  const merged = mergeAudienceMemberSources(directRows, audienceRpcRows, directoryRpcRows);
-  const supplemented = await supplementAudienceFromFamilyProfiles(normalizedFamilyId, merged);
-  const normalized = mapAudienceMemberRows(supplemented);
+  const normalized = mapAudienceMemberRows(rows);
 
   return applyProfileBirthDates(normalized);
 }

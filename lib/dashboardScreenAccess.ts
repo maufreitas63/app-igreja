@@ -4,6 +4,7 @@ import {
   profileHasAccess,
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
+import { getCachedOrFetch } from '@/lib/asyncResultCache';
 import { DASHBOARD_CARD_LINKED_SCREEN } from '@/lib/dashboardCardScreenLinks';
 
 export type DashboardScreenAccess = Record<string, boolean>;
@@ -19,14 +20,20 @@ export async function loadDashboardLinkedScreenAccess(
     return Object.fromEntries(screenKeys.map((resourceKey) => [resourceKey, true] as const));
   }
 
-  const entries = await Promise.all(
-    screenKeys.map(async (resourceKey) => {
-      const allowed = await profileHasAccess(profileId, 'screen', resourceKey, 'view');
-      return [resourceKey, allowed] as const;
-    })
-  );
+  return getCachedOrFetch(
+    `dashboard:screens:${profileId}`,
+    async () => {
+      const entries = await Promise.all(
+        screenKeys.map(async (resourceKey) => {
+          const allowed = await profileHasAccess(profileId, 'screen', resourceKey, 'view');
+          return [resourceKey, allowed] as const;
+        })
+      );
 
-  return Object.fromEntries(entries);
+      return Object.fromEntries(entries);
+    },
+    { scopeId: profileId, forceRefresh: options?.forceRefresh }
+  );
 }
 
 /** Card visível no carrossel somente quando card e tela filha (se houver) permitem acesso. */

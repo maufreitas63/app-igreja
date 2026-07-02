@@ -1,4 +1,5 @@
 import { fetchEffectiveSessionProfileRow } from '@/lib/effectiveProfileRpc';
+import { getCachedOrFetch, invalidateAsyncCache } from '@/lib/asyncResultCache';
 import { getGhostEffectiveProfileId, isGhostModeActive } from '@/lib/ghostMode';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
@@ -167,7 +168,11 @@ export async function loadEffectiveSessionProfile(
   const ghostProfileId = getGhostEffectiveProfileId();
 
   if (ghostProfileId) {
-    return loadSessionProfileById(ghostProfileId, { persist: false });
+    return getCachedOrFetch(
+      `session:profile:ghost:${ghostProfileId}`,
+      () => loadSessionProfileById(ghostProfileId, { persist: false }),
+      { scopeId: ghostProfileId, ttlMs: 60_000 }
+    );
   }
 
   const phone = fallbackPhone?.trim() || (await getStoredUserPhone())?.trim();
@@ -176,7 +181,15 @@ export async function loadEffectiveSessionProfile(
     return null;
   }
 
-  return loadSessionProfile(phone);
+  return getCachedOrFetch(
+    `session:profile:phone:${phone}`,
+    () => loadSessionProfile(phone),
+    { scopeId: phone, ttlMs: 60_000 }
+  );
+}
+
+export function invalidateSessionProfileLoadCache() {
+  invalidateAsyncCache('session:profile:');
 }
 
 export async function loadSessionProfile(targetPhone: string): Promise<SessionProfile | null> {

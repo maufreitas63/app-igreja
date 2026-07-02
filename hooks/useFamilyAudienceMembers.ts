@@ -3,6 +3,7 @@ import {
   dedupeFamilyMembers,
   ensureSessionFamilyMemberRecord,
   fetchFamilyAudienceMembers,
+  syncFamilyAudienceMemberRecords,
   type SessionProfileAudience,
 } from '@/lib/familyAudienceMembers';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -21,6 +22,7 @@ export function useFamilyAudienceMembers(
   const sessionProfileFullName = sessionProfile?.full_name ?? null;
   const sessionProfileBirthDate = sessionProfile?.birth_date ?? null;
   const audienceSyncKeyRef = useRef('');
+  const audienceSupplementKeyRef = useRef('');
 
   const refetch = useCallback(async () => {
     if (!familyId.trim()) {
@@ -107,6 +109,27 @@ export function useFamilyAudienceMembers(
       }
     })();
   }, [familyId, refetch, sessionProfileId, syncAudience]);
+
+  useEffect(() => {
+    if (!familyId.trim()) {
+      audienceSupplementKeyRef.current = '';
+      return;
+    }
+
+    if (audienceSupplementKeyRef.current === familyId) {
+      return;
+    }
+
+    audienceSupplementKeyRef.current = familyId;
+
+    void (async () => {
+      const supplemented = await syncFamilyAudienceMemberRecords(familyId);
+
+      if (supplemented) {
+        await refetch();
+      }
+    })();
+  }, [familyId, refetch]);
 
   const audienceMembers = useMemo(() => dedupeFamilyMembers(members), [members]);
 

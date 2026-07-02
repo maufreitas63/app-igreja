@@ -962,11 +962,11 @@ export default function Dashboard() {
           const [allowed, cardAccess, screenAccess, mapGeolocationAllowed, mapPinDetailAllowed, isSuperAdmin, canAccessProfileCadastro, activeMembership] =
             await Promise.all([
               profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.maintenance, 'view'),
-              loadDashboardCardViewAccess(accessProfileId, { forceRefresh: true }),
-              loadDashboardLinkedScreenAccess(accessProfileId, { forceRefresh: true }),
+              loadDashboardCardViewAccess(accessProfileId, { forceRefresh: ghostModeActive }),
+              loadDashboardLinkedScreenAccess(accessProfileId, { forceRefresh: ghostModeActive }),
               profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
               profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocationPinDetail, 'view'),
-              checkSessionIsSuperAdmin({ forceRefresh: true }),
+              checkSessionIsSuperAdmin({ forceRefresh: ghostModeActive }),
               profileHasAccess(
                 accessProfileId,
                 'screen',
@@ -979,7 +979,7 @@ export default function Dashboard() {
           let resolvedCardAccess = cardAccess;
           let resolvedScreenAccess = screenAccess;
           const hasAnyCard = Object.values(cardAccess).some((allowedCard) => allowedCard === true);
-          const operatorIsSuperAdmin = await checkOperatorIsSuperAdmin({ forceRefresh: true });
+          const operatorIsSuperAdmin = await checkOperatorIsSuperAdmin({ forceRefresh: ghostModeActive });
 
           if (!hasAnyCard && operatorIsSuperAdmin) {
             resolvedCardAccess = Object.fromEntries(
@@ -1024,34 +1024,24 @@ export default function Dashboard() {
       let active = true;
 
       void (async () => {
-        const targetPhone = phone ?? (await getStoredUserPhone());
-        if (!targetPhone) {
-          return;
-        }
-
-        const [sessionProfile, lgpdModuleActive] = await Promise.all([
-          loadEffectiveSessionProfile(targetPhone),
+        const [targetPhone, lgpdModuleActive] = await Promise.all([
+          phone ? Promise.resolve(phone) : getStoredUserPhone(),
           isLgpdAtivoEnabled(),
         ]);
+
         if (!active) {
           return;
         }
 
         setLgpdAtivo(lgpdModuleActive);
 
-        if (!sessionProfile) {
-          if (profile?.id) {
-            signOutAndReturnToLogin();
-          }
+        if (!targetPhone) {
           return;
         }
 
-        if (!sessionProfile.id && !profile?.id) {
-          return;
-        }
+        const sessionProfile = await loadEffectiveSessionProfile(targetPhone);
 
-        if (!sessionProfile.id && profile?.id) {
-          signOutAndReturnToLogin();
+        if (!active || !sessionProfile?.id) {
           return;
         }
 
@@ -1064,79 +1054,26 @@ export default function Dashboard() {
           phone: sessionProfile.phone ?? targetPhone,
         };
 
-        if (active) {
-          setProfile((current) => {
-            if (
-              current?.id === refreshedProfile.id
-              && current?.full_name === refreshedProfile.full_name
-              && current?.codigo_membro === refreshedProfile.codigo_membro
-              && current?.lgpd_accepted === refreshedProfile.lgpd_accepted
-              && current?.birth_date === refreshedProfile.birth_date
-              && current?.phone === refreshedProfile.phone
-            ) {
-              return current;
-            }
-
-            return refreshedProfile;
-          });
-          setCurrentUserId((current) => current === sessionProfile.id ? current : sessionProfile.id);
-        }
-
-        if (sessionProfile.id && !isGhostModeActive()) {
-          await persistProfileId(sessionProfile.id);
-        }
-
-        const aclStatus = await getAccessControlRpcStatus();
-
-        if (sessionProfile.id) {
-          const accessProfileId = (await resolveEffectiveProfileId()) ?? sessionProfile.id;
-          const [allowed, cardAccess, screenAccess, mapGeolocationAllowed, mapPinDetailAllowed, operatorIsSuperAdmin] =
-            await Promise.all([
-            profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.maintenance, 'view'),
-            loadDashboardCardViewAccess(accessProfileId),
-            loadDashboardLinkedScreenAccess(accessProfileId),
-            profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
-            profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocationPinDetail, 'view'),
-            checkOperatorIsSuperAdmin(),
-          ]);
-
-          if (active) {
-            setAclRpcStatus((current) => (current === aclStatus ? current : aclStatus));
-            setCanViewMaintenance((current) => (current === allowed ? current : allowed));
-            setDashboardCardAccess((current) => {
-              const nextSnapshot = JSON.stringify(cardAccess);
-              const currentSnapshot = JSON.stringify(current);
-
-              return nextSnapshot === currentSnapshot ? current : cardAccess;
-            });
-            setDashboardScreenAccess((current) => {
-              const nextSnapshot = JSON.stringify(screenAccess);
-              const currentSnapshot = JSON.stringify(current);
-
-              return nextSnapshot === currentSnapshot ? current : screenAccess;
-            });
-            setCanAccessMapGeolocation((current) => {
-              const next = mapGeolocationAllowed || operatorIsSuperAdmin;
-              return current === next ? current : next;
-            });
-            setCanViewMapPinDetails((current) => {
-              const next = mapPinDetailAllowed || operatorIsSuperAdmin;
-              return current === next ? current : next;
-            });
+        setProfile((current) => {
+          if (
+            current?.id === refreshedProfile.id
+            && current?.full_name === refreshedProfile.full_name
+            && current?.codigo_membro === refreshedProfile.codigo_membro
+            && current?.lgpd_accepted === refreshedProfile.lgpd_accepted
+            && current?.birth_date === refreshedProfile.birth_date
+            && current?.phone === refreshedProfile.phone
+          ) {
+            return current;
           }
-        } else if (active) {
-          setCanViewMaintenance(false);
-          setDashboardCardAccess({});
-          setDashboardScreenAccess({});
-          setCanAccessMapGeolocation(false);
-          setCanViewMapPinDetails(false);
-        }
+
+          return refreshedProfile;
+        });
       })();
 
       return () => {
         active = false;
       };
-    }, [familyId, phone, ghostModeActive, ghostModeState?.targetProfileId])
+    }, [familyId, phone])
   );
 
   useEffect(() => {
@@ -1889,7 +1826,9 @@ export default function Dashboard() {
     ]
   );
 
-  const isDashboardCardAccessReady = !isMaintenanceAccessLoading && Boolean(profile?.id);
+  const isDashboardCardAccessReady =
+    Boolean(profile?.id)
+    && (!isMaintenanceAccessLoading || Object.keys(dashboardCardAccess).length > 0);
 
   const data: DashboardCard[] = useMemo(() => {
     if (!isDashboardCardAccessReady) {

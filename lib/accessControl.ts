@@ -79,9 +79,7 @@ export async function loadDashboardCardViewAccess(
     async () => {
       const entries = await Promise.all(
         Object.entries(DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY).map(async ([content, resourceKey]) => {
-          const allowed = await profileHasAccess(profileId, 'screen', resourceKey, 'view', {
-            skipCache: true,
-          });
+          const allowed = await profileHasAccess(profileId, 'screen', resourceKey, 'view');
           return [content, allowed] as const;
         })
       );
@@ -183,8 +181,7 @@ export async function loadProfileColumnAccess(
             profileId,
             'column',
             profileColumnResourceKey(field),
-            'view',
-            { skipCache: true }
+            'view'
           );
           return [field, allowed] as const;
         })
@@ -196,8 +193,7 @@ export async function loadProfileColumnAccess(
             profileId,
             'column',
             profileColumnResourceKey(field),
-            'update',
-            { skipCache: true }
+            'update'
           );
           return [field, allowed] as const;
         })
@@ -232,7 +228,7 @@ const isAccessRpcMissing = (error: { code?: string; message?: string } | null) =
   isSupabaseRpcMissingError(error, 'profile_has_access');
 
 /** Super admin do operador real (ignora Modo Ghost). */
-const readOperatorIsSuperAdmin = async (options?: { forceRefresh?: boolean }) => {
+const readOperatorIsSuperAdminUncached = async () => {
   if (isGhostModeActive()) {
     return false;
   }
@@ -243,7 +239,7 @@ const readOperatorIsSuperAdmin = async (options?: { forceRefresh?: boolean }) =>
     await repairUserSessionReference(phone);
   }
 
-  let profileId = await resolveRealSessionProfileId(options);
+  let profileId = await resolveRealSessionProfileId();
 
   if (!profileId) {
     return false;
@@ -263,6 +259,12 @@ const readOperatorIsSuperAdmin = async (options?: { forceRefresh?: boolean }) =>
 
   return isSuperAdmin;
 };
+
+const readOperatorIsSuperAdmin = (options?: { forceRefresh?: boolean }) =>
+  getCachedOrFetch('operator:super_admin', readOperatorIsSuperAdminUncached, {
+    forceRefresh: options?.forceRefresh,
+    ttlMs: 120_000,
+  });
 
 /** API pública para bypass de ACL do operador real (fora do Modo Ghost). */
 export async function checkOperatorIsSuperAdmin(options?: { forceRefresh?: boolean }) {
@@ -429,10 +431,12 @@ export function invalidateAccessControlCache(options?: {
   invalidateAsyncCache('maintenance:dashboard:access');
   invalidateAsyncCache('family_reception:pending');
   invalidateAsyncCache('session:super_admin');
+  invalidateAsyncCache('operator:super_admin');
 
   if (options?.allProfiles || !options?.profileId?.trim()) {
     invalidateAsyncCache('acl:');
     invalidateAsyncCache('dashboard:cards:');
+    invalidateAsyncCache('dashboard:screens:');
     invalidateAsyncCache('profile:columns:');
     return;
   }
@@ -440,6 +444,7 @@ export function invalidateAccessControlCache(options?: {
   const trimmed = options.profileId.trim();
   invalidateAsyncCache(`acl:${trimmed}`);
   invalidateAsyncCache(`dashboard:cards:${trimmed}`);
+  invalidateAsyncCache(`dashboard:screens:${trimmed}`);
   invalidateAsyncCache(`profile:columns:${trimmed}`);
 }
 

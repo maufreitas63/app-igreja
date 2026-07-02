@@ -5,6 +5,7 @@ type CacheEntry<T> = {
 };
 
 const cache = new Map<string, CacheEntry<unknown>>();
+const inflight = new Map<string, Promise<unknown>>();
 
 export const DEFAULT_ASYNC_CACHE_TTL_MS = 120_000;
 
@@ -23,14 +24,33 @@ export async function getCachedOrFetch<T>(
     }
   }
 
-  const value = await fetcher();
-  cache.set(key, {
-    value,
-    expiresAt: now + ttlMs,
-    scopeId: options?.scopeId ?? null,
-  });
+  if (!options?.forceRefresh) {
+    const pending = inflight.get(key) as Promise<T> | undefined;
 
-  return value;
+    if (pending) {
+      return pending;
+    }
+  }
+
+  const promise = (async () => {
+    const value = await fetcher();
+    cache.set(key, {
+      value,
+      expiresAt: Date.now() + ttlMs,
+      scopeId: options?.scopeId ?? null,
+    });
+    return value;
+  })();
+
+  inflight.set(key, promise);
+
+  try {
+    return await promise;
+  } finally {
+    if (inflight.get(key) === promise) {
+      inflight.delete(key);
+    }
+  }
 }
 
 export function invalidateAsyncCache(keyOrPrefix?: string) {
