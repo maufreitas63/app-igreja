@@ -43,6 +43,10 @@ import {
 import type { FinancialEntry } from '@/lib/financialEntry';
 import { MAINTENANCE_FINANCIALS_SQL_HINT } from '@/hooks/useMaintenanceFinancials';
 import {
+  DEFAULT_TREASURY_RECEIPTS_DIR,
+} from '@/lib/treasuryReceiptBatchPath';
+import { isTreasuryReceiptFolderAccessSupported } from '@/lib/treasuryReceiptFolderAccess';
+import {
   ASSEMBLY_MINUTES_SQL_HINT,
   pickAndUploadAssemblyMinute,
 } from '@/lib/assemblyMinutesApi';
@@ -72,7 +76,7 @@ type Props = {
 
 const ACCENT = '#34D399';
 
-type MaintenanceSectionKey = 'period' | 'bulk' | 'entries' | 'rd' | 'assembly_minutes';
+type MaintenanceSectionKey = 'period' | 'bulk' | 'receipt_batch' | 'entries' | 'rd' | 'assembly_minutes';
 
 type CollapsibleSectionProps = {
   title: string;
@@ -152,10 +156,15 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     setBulkBudgetVersion,
     budgetVersionOptions,
     versionEntryCount,
+    receiptsDir,
+    setReceiptsDir,
+    processingReceiptBatch,
+    receiptBatchReport,
+    processReceiptBatch,
   } = useMaintenanceFinancials(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
-  const formBusy = importing || emptyingMonth || savingEntryId !== null;
+  const formBusy = importing || emptyingMonth || savingEntryId !== null || processingReceiptBatch;
 
   const [csvText, setCsvText] = useState('');
   const [replacePeriod, setReplacePeriod] = useState(true);
@@ -757,6 +766,30 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     });
   };
 
+  const handleProcessReceiptBatch = async () => {
+    const folderPath = receiptsDir.trim() || DEFAULT_TREASURY_RECEIPTS_DIR;
+
+    const confirmed = await confirmDialog(
+      'Processar comprovantes',
+      `Vincular JPG da pasta informada aos lançamentos REALIZADO pelo campo referencia.\n\nPasta de referência:\n${folderPath}\n\nO navegador solicitará acesso à pasta local (Chrome/Edge no desktop). Arquivos processados serão renomeados com o prefixo updated_.`,
+      'Processar',
+      'Cancelar'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const result = await processReceiptBatch(folderPath);
+
+    Toast.show({
+      type: result.success ? 'success' : 'error',
+      text1: 'Comprovantes',
+      text2: result.message,
+      visibilityTime: result.success ? 5000 : 6000,
+    });
+  };
+
   const handleUploadAssemblyMinute = async () => {
     setUploadingAssemblyMinute(true);
 
@@ -1006,6 +1039,97 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             )}
           </TouchableOpacity>
         </View>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title="Comprovantes em lote"
+          subtitle={
+            receiptBatchReport
+              ? `${receiptBatchReport.linked.length} vinculado(s) · ${receiptBatchReport.skippedAlreadyLinked.length} já anexado(s)`
+              : 'Vincular JPG locais pelo campo referencia'
+          }
+          expanded={expandedSection === 'receipt_batch'}
+          onToggle={() => toggleSection('receipt_batch')}
+        >
+          <View style={styles.formCard}>
+            <Text style={styles.formatHint}>
+              Informe o caminho da pasta com os JPG (ex.: {DEFAULT_TREASURY_RECEIPTS_DIR}). O nome
+              do arquivo deve coincidir exatamente com o campo referencia (ex.: 20260526 3825,00.jpg).
+              Ao concluir, cada arquivo processado é renomeado para updated_… na pasta local.
+            </Text>
+
+            {!isTreasuryReceiptFolderAccessSupported() ? (
+              <Text style={styles.warningText}>
+                Use Chrome ou Edge no desktop para permitir leitura e renomeação da pasta local.
+              </Text>
+            ) : null}
+
+            <Text style={styles.periodPickerLabel}>Pasta dos comprovantes (JPG)</Text>
+            <TextInput
+              style={styles.receiptsDirInput}
+              value={receiptsDir}
+              onChangeText={setReceiptsDir}
+              placeholder={DEFAULT_TREASURY_RECEIPTS_DIR}
+              placeholderTextColor="#64748B"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!processingReceiptBatch && !rpcMissing && canUpdateFinancials === true}
+            />
+
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                (processingReceiptBatch || rpcMissing || canUpdateFinancials !== true) &&
+                  styles.saveButtonDisabled,
+              ]}
+              onPress={() => void handleProcessReceiptBatch()}
+              disabled={processingReceiptBatch || rpcMissing || canUpdateFinancials !== true}
+              activeOpacity={0.85}
+            >
+              {processingReceiptBatch ? (
+                <ActivityIndicator color="#0f172a" size="small" />
+              ) : (
+                <Text style={styles.saveButtonText}>Processar</Text>
+              )}
+            </TouchableOpacity>
+
+            {receiptBatchReport ? (
+              <View style={styles.receiptBatchReportBox}>
+                <Text style={styles.previewText}>{receiptBatchReport.message}</Text>
+                <Text style={styles.receiptBatchReportLine}>
+                  JPG na pasta: {receiptBatchReport.folderFileCount} · Lançamentos com referencia:{' '}
+                  {receiptBatchReport.entriesWithReferencia}
+                </Text>
+                <Text style={styles.receiptBatchReportLine}>
+                  Vinculados: {receiptBatchReport.linked.length} · Já anexados:{' '}
+                  {receiptBatchReport.skippedAlreadyLinked.length} · Sem correspondência:{' '}
+                  {receiptBatchReport.unmatchedFiles.length + receiptBatchReport.unmatchedEntries.length}
+                  {receiptBatchReport.errors.length
+                    ? ` · Erros: ${receiptBatchReport.errors.length}`
+                    : ''}
+                </Text>
+
+                {receiptBatchReport.linked.slice(0, 6).map((item) => (
+                  <Text key={`${item.entryId}-${item.fileName}`} style={styles.receiptBatchReportOk}>
+                    [OK] {item.fileName}
+                    {item.renamed ? ' → updated_' : item.renameError ? ' (sem rename)' : ''}
+                  </Text>
+                ))}
+
+                {receiptBatchReport.errors.slice(0, 4).map((item) => (
+                  <Text key={`err-${item.fileName}-${item.entryId ?? 'x'}`} style={styles.errorLineText}>
+                    [!] {item.fileName}: {item.error}
+                  </Text>
+                ))}
+
+                {receiptBatchReport.unmatchedEntries.slice(0, 4).map((item) => (
+                  <Text key={`missing-${item.entryId}`} style={styles.receiptBatchReportMuted}>
+                    [—] Sem JPG: {item.fileName}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
+          </View>
         </CollapsibleSection>
 
         <CollapsibleSection
@@ -2183,5 +2307,38 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     fontSize: 13,
     fontWeight: '800',
+  },
+  receiptsDirInput: {
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.28)',
+    borderRadius: 12,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    color: '#ECFDF5',
+    fontSize: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontFamily: 'monospace',
+  },
+  receiptBatchReportBox: {
+    borderRadius: 10,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.22)',
+    padding: 8,
+    gap: 4,
+  },
+  receiptBatchReportLine: {
+    color: '#94A3B8',
+    fontSize: 11,
+  },
+  receiptBatchReportOk: {
+    color: '#A7F3D0',
+    fontSize: 10,
+    fontFamily: 'monospace',
+  },
+  receiptBatchReportMuted: {
+    color: '#64748B',
+    fontSize: 10,
+    fontFamily: 'monospace',
   },
 });

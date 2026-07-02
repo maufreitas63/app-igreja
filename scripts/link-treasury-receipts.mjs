@@ -173,6 +173,19 @@ const resolveReceiptFilename = (entry) => {
 
 const buildStoragePath = (financialId) => `receipts/${financialId}/${Date.now()}.jpg`;
 
+const markLocalReceiptProcessed = (localFilePath) => {
+  const fileName = path.basename(localFilePath);
+
+  if (fileName.startsWith('updated_')) {
+    return localFilePath;
+  }
+
+  const updatedPath = path.join(path.dirname(localFilePath), `updated_${fileName}`);
+  fs.renameSync(localFilePath, updatedPath);
+
+  return updatedPath;
+};
+
 const resolveStoragePath = (receiptUrl) => {
   const normalized = receiptUrl?.trim();
 
@@ -521,16 +534,35 @@ const main = async () => {
         options.force ? entry.receipt_url : null
       );
 
+      let processedLocalFile = localFile;
+
+      try {
+        processedLocalFile = markLocalReceiptProcessed(localFile);
+      } catch (renameError) {
+        report.summary.errors += 1;
+        report.errors.push({
+          entryId: entry.id,
+          label,
+          expectedFilename,
+          localFile,
+          error: `Comprovante anexado, mas falha ao renomear: ${
+            renameError instanceof Error ? renameError.message : String(renameError)
+          }`,
+        });
+        console.warn(`[AVISO] ${label}: comprovante anexado, rename falhou`);
+        continue;
+      }
+
       report.summary.linked += 1;
       report.linked.push({
         entryId: entry.id,
         label,
         expectedFilename,
-        localFile,
+        localFile: processedLocalFile,
         storagePath,
       });
 
-      console.log(`[OK] ${label} ← ${expectedFilename}`);
+      console.log(`[OK] ${label} ← ${expectedFilename} → ${path.basename(processedLocalFile)}`);
     } catch (error) {
       report.summary.errors += 1;
       report.errors.push({

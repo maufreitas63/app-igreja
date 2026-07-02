@@ -34,6 +34,16 @@ import {
 } from '@/lib/financialEntry';
 import { MAINTENANCE_FINANCIAL_BUDGET_VERSIONS } from '@/lib/maintenanceFinancialApi';
 import { useMaintenanceRpcMissing } from '@/hooks/useMaintenanceRpcMissing';
+import {
+  DEFAULT_TREASURY_RECEIPTS_DIR,
+  loadTreasuryReceiptsDir,
+  saveTreasuryReceiptsDir,
+} from '@/lib/treasuryReceiptBatchPath';
+import {
+  processTreasuryReceiptBatchFromFolder,
+  type TreasuryReceiptBatchLinkReport,
+} from '@/lib/treasuryReceiptBatchLink';
+import { pickTreasuryReceiptFolderFiles } from '@/lib/treasuryReceiptFolderAccess';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export { MAINTENANCE_FINANCIALS_SQL_HINT };
@@ -52,6 +62,11 @@ export function useMaintenanceFinancials(enabled: boolean) {
   const [deletingReceiptEntryId, setDeletingReceiptEntryId] = useState<string | null>(null);
   const [canUpdateFinancials, setCanUpdateFinancials] = useState<boolean | null>(null);
   const [bulkBudgetVersion, setBulkBudgetVersion] = useState(FINANCIAL_BUDGET_VERSION_REALIZED);
+  const [receiptsDir, setReceiptsDir] = useState(DEFAULT_TREASURY_RECEIPTS_DIR);
+  const [processingReceiptBatch, setProcessingReceiptBatch] = useState(false);
+  const [receiptBatchReport, setReceiptBatchReport] = useState<TreasuryReceiptBatchLinkReport | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
   const { rpcMissing, beginMaintenanceRequest, resolveMaintenanceRpcError } = useMaintenanceRpcMissing();
 
@@ -85,6 +100,10 @@ export function useMaintenanceFinancials(enabled: boolean) {
       total: realizedTotal,
     };
   }, [entries]);
+
+  useEffect(() => {
+    setReceiptsDir(loadTreasuryReceiptsDir());
+  }, []);
 
   const reload = useCallback(async () => {
     if (!enabled) {
@@ -487,6 +506,52 @@ export function useMaintenanceFinancials(enabled: boolean) {
     [resolveMaintenanceRpcError, updateEntryReceiptUrl]
   );
 
+  const processReceiptBatch = useCallback(
+    async (folderPath: string) => {
+      const normalizedPath = folderPath.trim() || DEFAULT_TREASURY_RECEIPTS_DIR;
+
+      saveTreasuryReceiptsDir(normalizedPath);
+      setReceiptsDir(normalizedPath);
+      setProcessingReceiptBatch(true);
+      setReceiptBatchReport(null);
+      setError(null);
+
+      try {
+        const folderAccess = await pickTreasuryReceiptFolderFiles();
+
+        if (!folderAccess) {
+          return {
+            success: false as const,
+            message: 'Seleção de pasta cancelada.',
+          };
+        }
+
+        const report = await processTreasuryReceiptBatchFromFolder(folderAccess);
+        setReceiptBatchReport(report);
+        await reload();
+
+        return {
+          success: report.success,
+          message: report.message,
+          report,
+        };
+      } catch (err) {
+        console.error('Erro ao processar comprovantes em lote:', err);
+
+        const message =
+          err instanceof Error ? err.message : 'Não foi possível processar os comprovantes.';
+
+        return {
+          success: false as const,
+          message,
+        };
+      } finally {
+        setProcessingReceiptBatch(false);
+      }
+    },
+    [reload]
+  );
+
   const yearOptions = useMemo(
     () => buildFinancialMaintenanceYearOptions(undefined, { yearsForward: 0 }),
     []
@@ -521,5 +586,10 @@ export function useMaintenanceFinancials(enabled: boolean) {
     saveEntryFields,
     attachReceipt,
     deleteReceipt,
+    receiptsDir,
+    setReceiptsDir,
+    processingReceiptBatch,
+    receiptBatchReport,
+    processReceiptBatch,
   };
 }

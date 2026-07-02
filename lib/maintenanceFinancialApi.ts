@@ -179,6 +179,45 @@ export async function fetchMaintenanceFinancialEntries(
   }
 }
 
+const REALIZADO_RECEIPT_BATCH_PAGE_SIZE = 1000;
+
+export async function fetchRealizadoFinancialEntriesForReceiptBatch() {
+  const rows: FinancialEntry[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('financials')
+      .select(FINANCIAL_SELECT)
+      .ilike('budget_version', 'realizado')
+      .order('transaction_date', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + REALIZADO_RECEIPT_BATCH_PAGE_SIZE - 1);
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data?.length) {
+      break;
+    }
+
+    rows.push(
+      ...data
+        .map((row) => normalizeFinancialEntryRow(row as Record<string, unknown>))
+        .filter((row): row is FinancialEntry => row !== null)
+    );
+
+    if (data.length < REALIZADO_RECEIPT_BATCH_PAGE_SIZE) {
+      break;
+    }
+
+    from += REALIZADO_RECEIPT_BATCH_PAGE_SIZE;
+  }
+
+  return rows;
+}
+
 export type MaintenanceFinancialDraft = {
   transactionDateIso: string;
   account: string;
