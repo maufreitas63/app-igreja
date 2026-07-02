@@ -484,6 +484,88 @@ begin
 end;
 $$;
 
+drop function if exists public.obter_previa_perfil_ghost_mode(uuid, uuid);
+
+create or replace function public.obter_previa_perfil_ghost_mode(
+  p_operator_profile_id uuid,
+  p_target_profile_id uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_profile public.profiles%rowtype;
+  v_roles jsonb;
+  v_assigned_count integer;
+begin
+  perform public.assert_actor_matches_real_session(p_operator_profile_id);
+
+  if not public.can_operate_ghost_mode(p_operator_profile_id) then
+    return jsonb_build_object('success', false, 'message', 'Sem permissão para usar o Modo Ghost.');
+  end if;
+
+  if p_target_profile_id is null then
+    return jsonb_build_object('success', false, 'message', 'Perfil não informado.');
+  end if;
+
+  select p.*
+    into v_profile
+    from public.profiles p
+   where p.id = p_target_profile_id;
+
+  if not found then
+    return jsonb_build_object('success', false, 'message', 'Perfil não encontrado.');
+  end if;
+
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'role_id', ar.id,
+        'role_code', ar.code,
+        'role_name', ar.name
+      )
+      order by public.access_role_display_order(ar.code), ar.name
+    ),
+    '[]'::jsonb
+  )
+  into v_roles
+  from public.profile_access_roles par
+  join public.access_roles ar on ar.id = par.role_id
+  where par.profile_id = p_target_profile_id
+    and ar.code <> 'visitantes';
+
+  v_assigned_count := coalesce(jsonb_array_length(v_roles), 0);
+
+  return jsonb_build_object(
+    'success', true,
+    'profile', jsonb_build_object(
+      'id', v_profile.id,
+      'full_name', nullif(trim(coalesce(v_profile.full_name, '')), ''),
+      'phone', nullif(trim(coalesce(v_profile.phone, '')), ''),
+      'codigo_membro', nullif(trim(coalesce(v_profile.codigo_membro, '')), ''),
+      'family_id', nullif(trim(coalesce(v_profile.family_id, '')), ''),
+      'email', nullif(trim(coalesce(v_profile.email, '')), ''),
+      'cpf', nullif(trim(coalesce(v_profile.cpf, '')), ''),
+      'birth_date', v_profile.birth_date,
+      'membership_out', v_profile.membership_out,
+      'lgpd_accepted', v_profile.lgpd_accepted,
+      'cep', nullif(trim(coalesce(v_profile.cep, '')), ''),
+      'address_street', nullif(trim(coalesce(v_profile.address_street, '')), ''),
+      'address_number', nullif(trim(coalesce(v_profile.address_number, '')), ''),
+      'address_neighborhood', nullif(trim(coalesce(v_profile.address_neighborhood, '')), ''),
+      'address_city', nullif(trim(coalesce(v_profile.address_city, '')), ''),
+      'address_state', nullif(trim(coalesce(v_profile.address_state, '')), ''),
+      'created_at', v_profile.created_at,
+      'updated_at', v_profile.updated_at
+    ),
+    'roles', v_roles,
+    'implicit_visitante', v_assigned_count = 0
+  );
+end;
+$$;
+
 grant execute on function public.current_real_session_profile_id() to anon, authenticated;
 grant execute on function public.current_ghost_profile_id_from_header() to anon, authenticated;
 grant execute on function public.profile_has_super_admin_role(uuid) to anon, authenticated;
@@ -493,5 +575,6 @@ grant execute on function public.is_ghost_mode_active() to anon, authenticated;
 grant execute on function public.assert_actor_matches_real_session(uuid) to anon, authenticated;
 grant execute on function public.listar_perfis_ghost_mode(uuid, integer) to anon, authenticated;
 grant execute on function public.registrar_evento_ghost_mode(uuid, text, uuid, jsonb) to anon, authenticated;
+grant execute on function public.obter_previa_perfil_ghost_mode(uuid, uuid) to anon, authenticated;
 
 notify pgrst, 'reload schema';
