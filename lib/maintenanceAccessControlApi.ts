@@ -94,6 +94,19 @@ export type RoleGrantRecord = {
   grantId: string | null;
 };
 
+export type ResourceRoleGrantRecord = {
+  roleId: string;
+  roleCode: string;
+  roleName: string;
+  resourceId: string;
+  resourceType: 'screen' | 'table' | 'column';
+  resourceKey: string;
+  label: string;
+  canView: boolean;
+  canUpdate: boolean;
+  grantId: string | null;
+};
+
 export type AccessResourceTypeFilter = 'screen' | 'table' | 'column';
 
 const throwRpcMissing = () => {
@@ -479,6 +492,41 @@ export async function listRoleGrantsAdmin(roleCode: string, resourceType: Access
     },
     parseGrantRows
   );
+}
+
+export async function listResourceGrantsAcrossRolesAdmin(
+  roleRows: AccessRoleRecord[],
+  resourceType: AccessResourceTypeFilter,
+  resourceKey: string,
+  fallbackLabel: string
+): Promise<ResourceRoleGrantRecord[]> {
+  const normalizedKey = resourceKey.trim();
+
+  if (!normalizedKey || !roleRows.length) {
+    return [];
+  }
+
+  const entries = await Promise.all(
+    roleRows.map(async (role) => {
+      const grants = await listRoleGrantsAdmin(role.code, resourceType);
+      const grant = grants.find((row) => row.resourceKey === normalizedKey);
+
+      return {
+        roleId: role.id,
+        roleCode: role.code,
+        roleName: role.name,
+        resourceId: grant?.resourceId ?? '',
+        resourceType: grant?.resourceType ?? resourceType,
+        resourceKey: grant?.resourceKey ?? normalizedKey,
+        label: grant?.label ?? fallbackLabel,
+        canView: grant?.canView ?? false,
+        canUpdate: grant?.canUpdate ?? false,
+        grantId: grant?.grantId ?? null,
+      } satisfies ResourceRoleGrantRecord;
+    })
+  );
+
+  return sortRowsByRoleCode(entries);
 }
 
 export async function saveRoleGrantAdmin(

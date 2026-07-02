@@ -7,8 +7,11 @@ import {
   ACCESS_CONTROL_PANEL_RESOURCE,
   compareRoleGrantScreenScope,
   getAccessGrantDashboardScope,
+  listResourceGrantsAcrossRolesAdmin,
   MAINTENANCE_ACCESS_CONTROL_SQL_HINT,
   isSensitiveAccessResourceKey,
+  type ResourceRoleGrantRecord,
+  type RoleGrantRecord,
 } from '@/lib/maintenanceAccessControlApi';
 import {
   clearAppParameterCache,
@@ -54,7 +57,7 @@ const RESOURCE_TYPE_OPTIONS = [
 ];
 
 const SCREEN_GRANT_SCOPE_HINT =
-  'Azul celeste: telas do produto principal. Amarelo cobre: telas de manutenção. A lista agrupa todos os azuis antes dos amarelos.';
+  'Azul celeste: telas do produto principal. Amarelo cobre: telas de manutenção. Toque no ponto colorido ou no nome do recurso para editar permissões por recurso (papéis como linhas).';
 
 type AccessControlPanelHeaderProps = {
   lgpdAtivo: boolean;
@@ -131,6 +134,9 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
   const { showTechnicalKeys } = useShowAclTechnicalKeys(isActive);
   const [activeTab, setActiveTab] = useState<AdminTab>('profiles');
   const [grantSearchQuery, setGrantSearchQuery] = useState('');
+  const [focusedResourceGrant, setFocusedResourceGrant] = useState<RoleGrantRecord | null>(null);
+  const [resourceRoleGrants, setResourceRoleGrants] = useState<ResourceRoleGrantRecord[]>([]);
+  const [loadingResourceRoleGrants, setLoadingResourceRoleGrants] = useState(false);
   const [expandedProfileSection, setExpandedProfileSection] = useState<ProfileDetailSection | null>(
     null
   );
@@ -157,6 +163,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
     loadingGrants,
     savingRoleCode,
     savingGrantKey,
+    savingResourceGrantKey,
     error,
     missingExpectedRoles,
     rpcMissing,
@@ -165,11 +172,16 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
     toggleProfileRole,
     toggleScaleLeadership,
     updateRoleGrant,
+    updateGrantForRole,
+    reloadRoleGrants,
   } = useMaintenanceAccessControl(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const busy =
-    savingRoleCode !== null || savingGrantKey !== null || savingScaleLeadershipId !== null;
+    savingRoleCode !== null
+    || savingGrantKey !== null
+    || savingResourceGrantKey !== null
+    || savingScaleLeadershipId !== null;
   const hasAssignedProfileRoles = profileRoles.some((role) => role.assigned);
 
   const hasGrantSearchQuery = grantSearchQuery.trim().length > 0;
@@ -298,6 +310,56 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
     setExpandedProfileSection(selectedProfile ? 'roles' : null);
   }, [selectedProfile?.id]);
 
+  useEffect(() => {
+    if (!focusedResourceGrant || !isSuperAdmin || rpcMissing) {
+      setResourceRoleGrants([]);
+      setLoadingResourceRoleGrants(false);
+      return;
+    }
+
+    let active = true;
+    setLoadingResourceRoleGrants(true);
+
+    void (async () => {
+      try {
+        const rows = await listResourceGrantsAcrossRolesAdmin(
+          roles,
+          focusedResourceGrant.resourceType,
+          focusedResourceGrant.resourceKey,
+          focusedResourceGrant.label
+        );
+
+        if (active) {
+          setResourceRoleGrants(rows);
+        }
+      } catch (loadError) {
+        console.error('Erro ao carregar permissões por recurso:', loadError);
+
+        if (active) {
+          setResourceRoleGrants([]);
+        }
+      } finally {
+        if (active) {
+          setLoadingResourceRoleGrants(false);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [focusedResourceGrant, isSuperAdmin, roles, rpcMissing]);
+
+  useEffect(() => {
+    if (activeTab !== 'roles') {
+      setFocusedResourceGrant(null);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    setFocusedResourceGrant(null);
+  }, [resourceTypeFilter]);
+
   const toggleProfileSection = (section: ProfileDetailSection) => {
     setExpandedProfileSection((current) => (current === section ? null : section));
   };
@@ -345,7 +407,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
   };
 
   const handleToggleGrant = async (
-    grant: (typeof roleGrants)[number],
+    grant: RoleGrantRecord,
     field: 'canView' | 'canUpdate',
     nextValue: boolean
   ) => {
@@ -363,6 +425,86 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
         text2: result.message,
         visibilityTime: 4500,
       });
+    }
+  };
+
+  const handleOpenResourceFocus = (grant: RoleGrantRecord) => {
+    if (rpcMissing || busy) {
+      return;
+    }
+
+    setFocusedResourceGrant(grant);
+  };
+
+  const handleCloseResourceFocus = () => {
+    setFocusedResourceGrant(null);
+    setResourceRoleGrants([]);
+  };
+
+  const handleToggleResourceRoleGrant = async (
+    entry: ResourceRoleGrantRecord,
+    field: 'canView' | 'canUpdate',
+    nextValue: boolean
+  ) => {
+    const patch =
+      field === 'canView'
+        ? { canView: nextValue, canUpdate: nextValue ? entry.canUpdate : false }
+        : { canUpdate: nextValue, canView: nextValue ? true : entry.canView };
+
+    const nextView = patch.canView ?? entry.canView;
+    const nextUpdate = patch.canUpdate ?? entry.canUpdate;
+    const previousView = entry.canView;
+    const previousUpdate = entry.canUpdate;
+
+    setResourceRoleGrants((current) =>
+      current.map((row) =>
+        row.roleCode === entry.roleCode
+          ? {
+              ...row,
+              canView: nextView,
+              canUpdate: nextUpdate,
+              grantId: nextView || nextUpdate ? row.grantId ?? 'local' : null,
+            }
+          : row
+      )
+    );
+
+    const result = await updateGrantForRole(
+      entry.roleCode,
+      {
+        resourceType: entry.resourceType,
+        resourceKey: entry.resourceKey,
+        canView: entry.canView,
+        canUpdate: entry.canUpdate,
+      },
+      patch
+    );
+
+    if (!result.success) {
+      setResourceRoleGrants((current) =>
+        current.map((row) =>
+          row.roleCode === entry.roleCode
+            ? {
+                ...row,
+                canView: previousView,
+                canUpdate: previousUpdate,
+                grantId: previousView || previousUpdate ? row.grantId : null,
+              }
+            : row
+        )
+      );
+
+      Toast.show({
+        type: 'error',
+        text1: 'Permissões do recurso',
+        text2: result.message,
+        visibilityTime: 4500,
+      });
+      return;
+    }
+
+    if (selectedRoleCode === entry.roleCode) {
+      void reloadRoleGrants();
     }
   };
 
@@ -598,6 +740,109 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
           keyboardShouldPersistTaps="handled"
           {...MAINTENANCE_SCROLL_PROPS}
         >
+          {focusedResourceGrant ? (
+            <>
+              <View style={styles.resourceFocusHeader}>
+                <TouchableOpacity
+                  style={styles.resourceFocusBackButton}
+                  onPress={handleCloseResourceFocus}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel="Voltar para visão por papel"
+                >
+                  <FontAwesome name="arrow-left" size={14} color="#C7D2FE" />
+                  <Text style={styles.resourceFocusBackText}>Voltar</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.resourceFocusCard}>
+                <View style={styles.resourceFocusTitleRow}>
+                  {getAccessGrantDashboardScope(
+                    focusedResourceGrant.resourceType,
+                    focusedResourceGrant.resourceKey
+                  ) ? (
+                    <View
+                      style={[
+                        styles.grantScopeDot,
+                        getAccessGrantDashboardScope(
+                          focusedResourceGrant.resourceType,
+                          focusedResourceGrant.resourceKey
+                        ) === 'main'
+                          ? styles.grantScopeDotMain
+                          : styles.grantScopeDotMaintenance,
+                      ]}
+                    />
+                  ) : null}
+                  <View style={styles.resourceFocusTitleMain}>
+                    <Text style={styles.resourceFocusTitle} numberOfLines={2}>
+                      {focusedResourceGrant.label}
+                    </Text>
+                    {showTechnicalKeys ? (
+                      <Text style={styles.grantKey} numberOfLines={1}>
+                        {focusedResourceGrant.resourceKey}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+                <Text style={styles.resourceFocusHint}>
+                  Selecione quais papéis podem ver e editar este recurso.
+                </Text>
+              </View>
+
+              {loadingResourceRoleGrants ? (
+                <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
+              ) : (
+                <View style={styles.grantsList}>
+                  {resourceRoleGrants.map((entry, index) => {
+                    const isSaving =
+                      savingResourceGrantKey === `${entry.roleCode}:${entry.resourceKey}`;
+
+                    return (
+                      <View
+                        key={entry.roleId}
+                        style={[styles.grantRow, index % 2 === 1 && styles.grantRowAlt]}
+                      >
+                        <View style={styles.grantMain}>
+                          <Text style={styles.roleName}>{entry.roleName}</Text>
+                          <Text style={styles.roleCode}>{entry.roleCode}</Text>
+                        </View>
+                        <View style={styles.grantToggles}>
+                          <View style={styles.toggleCell}>
+                            <Text style={styles.toggleLabel}>Ver</Text>
+                            <Switch
+                              value={entry.canView}
+                              onValueChange={(next) =>
+                                void handleToggleResourceRoleGrant(entry, 'canView', next)
+                              }
+                              disabled={busy || rpcMissing || isSaving}
+                              trackColor={{ false: '#334155', true: '#4F46E5' }}
+                              thumbColor="#F8FAFC"
+                            />
+                          </View>
+                          <View style={styles.toggleCell}>
+                            <Text style={styles.toggleLabel}>Editar</Text>
+                            <Switch
+                              value={entry.canUpdate}
+                              onValueChange={(next) =>
+                                void handleToggleResourceRoleGrant(entry, 'canUpdate', next)
+                              }
+                              disabled={busy || rpcMissing || isSaving || !entry.canView}
+                              trackColor={{ false: '#334155', true: '#4F46E5' }}
+                              thumbColor="#F8FAFC"
+                            />
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })}
+                  {!resourceRoleGrants.length ? (
+                    <Text style={styles.panelHint}>Nenhum papel cadastrado para este recurso.</Text>
+                  ) : null}
+                </View>
+              )}
+            </>
+          ) : (
+            <>
           <SectionLabel variant="maintenance" tight>
             Papel
           </SectionLabel>
@@ -724,23 +969,32 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                     style={[styles.grantRow, index % 2 === 1 && styles.grantRowAlt]}
                   >
                     {dashboardScope ? (
-                      <View
+                      <TouchableOpacity
                         style={[
-                          styles.grantScopeDot,
+                          styles.grantScopeDotButton,
                           dashboardScope === 'main'
                             ? styles.grantScopeDotMain
                             : styles.grantScopeDotMaintenance,
                         ]}
+                        onPress={() => handleOpenResourceFocus(grant)}
+                        activeOpacity={0.85}
+                        accessibilityRole="button"
                         accessibilityLabel={
                           dashboardScope === 'main'
-                            ? 'Tela do produto principal'
-                            : 'Tela de manutenção'
+                            ? 'Abrir permissões por recurso — tela do produto principal'
+                            : 'Abrir permissões por recurso — tela de manutenção'
                         }
                       />
                     ) : (
                       <View style={styles.grantScopeDotSpacer} />
                     )}
-                    <View style={styles.grantMain}>
+                    <TouchableOpacity
+                      style={styles.grantMain}
+                      onPress={() => handleOpenResourceFocus(grant)}
+                      activeOpacity={0.85}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Abrir permissões por recurso — ${grant.label}`}
+                    >
                       <Text
                         style={[styles.grantLabel, sensitive && styles.grantLabelSensitive]}
                         numberOfLines={2}
@@ -752,7 +1006,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                           {grant.resourceKey}
                         </Text>
                       ) : null}
-                    </View>
+                    </TouchableOpacity>
                     <View style={styles.grantToggles}>
                       <View style={styles.toggleCell}>
                         <Text style={styles.toggleLabel}>Ver</Text>
@@ -790,6 +1044,8 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                 </Text>
               ) : null}
             </View>
+          )}
+            </>
           )}
         </ScrollView>
       )}
@@ -1223,6 +1479,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     flexShrink: 0,
   },
+  grantScopeDotButton: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    flexShrink: 0,
+  },
   grantScopeDotMain: {
     backgroundColor: '#22D3EE',
     borderWidth: 1,
@@ -1277,5 +1539,53 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 10,
     fontWeight: '700',
+  },
+  resourceFocusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  resourceFocusBackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#4338CA',
+    backgroundColor: 'rgba(79, 70, 229, 0.18)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  resourceFocusBackText: {
+    color: '#C7D2FE',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  resourceFocusCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    padding: 10,
+    gap: 8,
+  },
+  resourceFocusTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  resourceFocusTitleMain: {
+    flex: 1,
+    minWidth: 0,
+  },
+  resourceFocusTitle: {
+    color: '#F8FAFC',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  resourceFocusHint: {
+    color: '#94A3B8',
+    fontSize: 12,
+    lineHeight: 17,
   },
 });

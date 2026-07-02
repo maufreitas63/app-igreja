@@ -46,6 +46,7 @@ export function useMaintenanceAccessControl(enabled: boolean) {
   const [loadingGrants, setLoadingGrants] = useState(false);
   const [savingRoleCode, setSavingRoleCode] = useState<string | null>(null);
   const [savingGrantKey, setSavingGrantKey] = useState<string | null>(null);
+  const [savingResourceGrantKey, setSavingResourceGrantKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { rpcMissing, beginMaintenanceRequest, resolveMaintenanceRpcError } = useMaintenanceRpcMissing();
 
@@ -397,6 +398,47 @@ export function useMaintenanceAccessControl(enabled: boolean) {
     [handleRpcError, selectedRoleCode]
   );
 
+  const updateGrantForRole = useCallback(
+    async (
+      roleCode: string,
+      grant: Pick<RoleGrantRecord, 'resourceType' | 'resourceKey' | 'canView' | 'canUpdate'>,
+      patch: Partial<Pick<RoleGrantRecord, 'canView' | 'canUpdate'>>
+    ) => {
+      const nextView = patch.canView ?? grant.canView;
+      const nextUpdate = patch.canUpdate ?? grant.canUpdate;
+      const savingKey = `${roleCode}:${grant.resourceKey}`;
+
+      setSavingResourceGrantKey(savingKey);
+      setError(null);
+
+      try {
+        const result = await saveRoleGrantAdmin(
+          roleCode,
+          grant.resourceType,
+          grant.resourceKey,
+          nextView,
+          nextUpdate
+        );
+
+        if (!result.success) {
+          setError(result.message);
+        }
+
+        return result;
+      } catch (err) {
+        console.error('Erro ao salvar grant por recurso:', err);
+        handleRpcError(err, 'Não foi possível salvar a permissão.');
+        return {
+          success: false as const,
+          message: err instanceof Error ? err.message : 'Não foi possível salvar a permissão.',
+        };
+      } finally {
+        setSavingResourceGrantKey(null);
+      }
+    },
+    [handleRpcError]
+  );
+
   const missingExpectedRoles = EXPECTED_ACCESS_ROLE_CODES.filter(
     (code) => !roles.some((role) => role.code === code)
   );
@@ -422,6 +464,7 @@ export function useMaintenanceAccessControl(enabled: boolean) {
     loadingGrants,
     savingRoleCode,
     savingGrantKey,
+    savingResourceGrantKey,
     error,
     rpcMissing,
     selectProfile,
@@ -434,6 +477,7 @@ export function useMaintenanceAccessControl(enabled: boolean) {
     toggleProfileRole,
     toggleScaleLeadership,
     updateRoleGrant,
+    updateGrantForRole,
     reloadRoleGrants,
   };
 }
