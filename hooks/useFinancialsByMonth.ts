@@ -40,6 +40,8 @@ const FINANCIAL_SELECT_BASE =
 
 const FINANCIAL_SELECT_WITH_COMMENTS = `${FINANCIAL_SELECT_BASE}, comments, receipt_url, receipt_urls`;
 const FINANCIAL_SELECT_WITH_COMMENTS_PASCAL = `${FINANCIAL_SELECT_BASE}, Comments, receipt_url, receipt_urls`;
+const FINANCIAL_SELECT_WITH_RECEIPT_URL_ONLY = `${FINANCIAL_SELECT_BASE}, comments, receipt_url`;
+const FINANCIAL_SELECT_WITH_RECEIPT_URL_ONLY_PASCAL = `${FINANCIAL_SELECT_BASE}, Comments, receipt_url`;
 const FINANCIAL_SELECT_WITH_COMMENTS_ONLY = `${FINANCIAL_SELECT_BASE}, comments`;
 const FINANCIAL_SELECT_WITH_COMMENTS_PASCAL_ONLY = `${FINANCIAL_SELECT_BASE}, Comments`;
 
@@ -109,6 +111,21 @@ const fetchFinancialRowsThroughDate = async (endDate: string) => {
     return withLowercase;
   }
 
+  if (isMissingFinancialReceiptUrlsColumn(withLowercase.error)) {
+    const withoutReceiptUrls = await financialRowsQuery(
+      FINANCIAL_SELECT_WITH_RECEIPT_URL_ONLY,
+      endDate
+    );
+
+    if (!withoutReceiptUrls.error) {
+      return withoutReceiptUrls;
+    }
+
+    if (!isMissingFinancialCommentsColumn(withoutReceiptUrls.error)) {
+      return withoutReceiptUrls;
+    }
+  }
+
   if (isMissingFinancialReceiptColumn(withLowercase.error)) {
     const withoutReceipt = await financialRowsQuery(FINANCIAL_SELECT_WITH_COMMENTS_ONLY, endDate);
 
@@ -127,6 +144,21 @@ const fetchFinancialRowsThroughDate = async (endDate: string) => {
 
   if (!withPascal.error) {
     return withPascal;
+  }
+
+  if (isMissingFinancialReceiptUrlsColumn(withPascal.error)) {
+    const withoutReceiptUrls = await financialRowsQuery(
+      FINANCIAL_SELECT_WITH_RECEIPT_URL_ONLY_PASCAL,
+      endDate
+    );
+
+    if (!withoutReceiptUrls.error) {
+      return withoutReceiptUrls;
+    }
+
+    if (!isMissingFinancialCommentsColumn(withoutReceiptUrls.error)) {
+      return withoutReceiptUrls;
+    }
   }
 
   if (isMissingFinancialReceiptColumn(withPascal.error)) {

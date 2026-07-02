@@ -27,7 +27,7 @@ import type { FinancialMonthKey } from '@/lib/financialMonth';
 import { getFinancialMonthDateRange } from '@/lib/financialMonth';
 
 export const MAINTENANCE_FINANCIALS_SQL_HINT =
-  'Execute no Supabase: scripts/financials-schema.sql, scripts/financials-maintenance-rpc.sql e scripts/financials-referencia.sql (carga em lote, comentários, comprovantes e referência JPG).';
+  'Execute no Supabase: scripts/financials-receipt-urls.sql (comprovantes múltiplos), scripts/financials-maintenance-rpc.sql e scripts/financials-referencia.sql.';
 
 export const MAINTENANCE_FINANCIALS_RPC_MISSING = 'MAINTENANCE_FINANCIALS_RPC_MISSING';
 
@@ -46,11 +46,28 @@ export const MAINTENANCE_FINANCIAL_BUDGET_VERSIONS = ['REALIZADO', 'PLANEJADO'] 
 const FINANCIAL_SELECT =
   'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version, comments, receipt_url, receipt_urls, referencia';
 
+const FINANCIAL_SELECT_WITHOUT_RECEIPT_URLS =
+  'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version, comments, receipt_url, referencia';
+
 const FINANCIAL_SELECT_WITHOUT_REFERENCIA =
   'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version, comments, receipt_url, receipt_urls';
 
+const FINANCIAL_SELECT_WITHOUT_REFERENCIA_AND_RECEIPT_URLS =
+  'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version, comments, receipt_url';
+
 const isMissingReferenciaColumn = (message: string) =>
   message.toLowerCase().includes('referencia');
+
+const isMissingReceiptUrlsColumn = (message: string) => {
+  const normalized = message.toLowerCase();
+
+  return (
+    normalized.includes('receipt_urls') &&
+    (normalized.includes('does not exist') ||
+      normalized.includes('could not find') ||
+      normalized.includes('column'))
+  );
+};
 
 export async function assertMaintenanceFinancialUpdateAccess() {
   const allowed = await sessionHasAccess('table', 'financials', 'update');
@@ -147,29 +164,51 @@ async function listMaintenanceFinancialEntriesDirect(
           }
         );
 
-  let query = supabase
-    .from('financials')
-    .select(FINANCIAL_SELECT)
-    .gte('transaction_date', bounds.startDate)
-    .order('transaction_kind', { ascending: true })
-    .order('transaction_date', { ascending: true })
-    .order('account', { ascending: true })
-    .order('movement', { ascending: true })
-    .order('ministry', { ascending: true });
+  const selectCandidates = [
+    FINANCIAL_SELECT,
+    FINANCIAL_SELECT_WITHOUT_RECEIPT_URLS,
+    FINANCIAL_SELECT_WITHOUT_REFERENCIA,
+    FINANCIAL_SELECT_WITHOUT_REFERENCIA_AND_RECEIPT_URLS,
+  ];
 
-  if (periodMode === 'day') {
-    query = query.eq('transaction_date', bounds.startDate);
-  } else {
-    query = query.lte('transaction_date', bounds.endDate);
+  let lastError: { message?: string } | null = null;
+
+  for (const selectColumns of selectCandidates) {
+    let query = supabase
+      .from('financials')
+      .select(selectColumns)
+      .gte('transaction_date', bounds.startDate)
+      .order('transaction_kind', { ascending: true })
+      .order('transaction_date', { ascending: true })
+      .order('account', { ascending: true })
+      .order('movement', { ascending: true })
+      .order('ministry', { ascending: true });
+
+    if (periodMode === 'day') {
+      query = query.eq('transaction_date', bounds.startDate);
+    } else {
+      query = query.lte('transaction_date', bounds.endDate);
+    }
+
+    const { data, error } = await query;
+
+    if (!error) {
+      return parseFinancialRows(data);
+    }
+
+    lastError = error;
+
+    const message = error.message ?? '';
+
+    if (
+      !isMissingReceiptUrlsColumn(message) &&
+      !isMissingReferenciaColumn(message)
+    ) {
+      throw error;
+    }
   }
 
-  const { data, error } = await query;
-
-  if (error) {
-    throw error;
-  }
-
-  return parseFinancialRows(data);
+  throw lastError ?? new Error('Não foi possível listar lançamentos financeiros.');
 }
 
 export async function fetchMaintenanceFinancialEntries(
@@ -179,12 +218,18 @@ export async function fetchMaintenanceFinancialEntries(
   try {
     return await listMaintenanceFinancialEntries(periodMode, referenceIsoDate);
   } catch (err) {
-    if (err instanceof Error && err.message === MAINTENANCE_FINANCIALS_RPC_MISSING) {
-      if (isAclStrictMode()) {
-        throw new Error(MAINTENANCE_FINANCIALS_SQL_HINT);
+    if (err instanceof Error) {
+      if (err.message === MAINTENANCE_FINANCIALS_RPC_MISSING) {
+        if (isAclStrictMode()) {
+          throw new Error(MAINTENANCE_FINANCIALS_SQL_HINT);
+        }
+
+        return listMaintenanceFinancialEntriesDirect(periodMode, referenceIsoDate);
       }
 
-      return listMaintenanceFinancialEntriesDirect(periodMode, referenceIsoDate);
+      if (isMissingReceiptUrlsColumn(err.message)) {
+        return listMaintenanceFinancialEntriesDirect(periodMode, referenceIsoDate);
+      }
     }
 
     throw err;
@@ -196,10 +241,17 @@ const REALIZADO_RECEIPT_BATCH_PAGE_SIZE = 1000;
 export async function fetchRealizadoFinancialEntriesForReceiptBatch() {
   const rows: FinancialEntry[] = [];
   let from = 0;
-  let selectColumns = FINANCIAL_SELECT;
-  let referenciaColumnAvailable = true;
+  const selectCandidates = [
+    FINANCIAL_SELECT,
+    FINANCIAL_SELECT_WITHOUT_RECEIPT_URLS,
+    FINANCIAL_SELECT_WITHOUT_REFERENCIA,
+    FINANCIAL_SELECT_WITHOUT_REFERENCIA_AND_RECEIPT_URLS,
+  ];
+  let selectIndex = 0;
 
   while (true) {
+    const selectColumns = selectCandidates[selectIndex] ?? FINANCIAL_SELECT_WITHOUT_REFERENCIA_AND_RECEIPT_URLS;
+
     const { data, error } = await supabase
       .from('financials')
       .select(selectColumns)
@@ -211,9 +263,12 @@ export async function fetchRealizadoFinancialEntriesForReceiptBatch() {
     if (error) {
       const message = error.message ?? '';
 
-      if (from === 0 && referenciaColumnAvailable && isMissingReferenciaColumn(message)) {
-        selectColumns = FINANCIAL_SELECT_WITHOUT_REFERENCIA;
-        referenciaColumnAvailable = false;
+      if (
+        from === 0 &&
+        selectIndex < selectCandidates.length - 1 &&
+        (isMissingReceiptUrlsColumn(message) || isMissingReferenciaColumn(message))
+      ) {
+        selectIndex += 1;
         continue;
       }
 
@@ -412,6 +467,31 @@ export async function updateMaintenanceFinancialEntryReceipts(
           receipt_url: normalizedReceiptUrls[0] ?? null,
         })
         .eq('id', id);
+
+      if (directError && isMissingReceiptUrlsColumn(directError.message ?? '')) {
+        const { error: legacyError } = await supabase
+          .from('financials')
+          .update({
+            receipt_url: normalizedReceiptUrls[0] ?? null,
+          })
+          .eq('id', id);
+
+        if (legacyError) {
+          throw legacyError;
+        }
+
+        return {
+          success: true,
+          message:
+            normalizedReceiptUrls.length > 1
+              ? 'Execute scripts/financials-receipt-urls.sql no Supabase para suportar múltiplos comprovantes. Apenas o primeiro foi salvo.'
+              : normalizedReceiptUrls.length
+                ? 'Comprovante anexado.'
+                : 'Comprovante removido.',
+          receipt_urls: normalizedReceiptUrls.slice(0, 1),
+          receipt_url: normalizedReceiptUrls[0] ?? null,
+        };
+      }
 
       if (directError) {
         throw directError;
