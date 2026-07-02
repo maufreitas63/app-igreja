@@ -1,6 +1,6 @@
 import { UI_ACCENT_STYLES, UI_TYPO, type UiAccent } from '@/lib/uiTokens';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, type StyleProp, type ViewStyle } from 'react-native';
 
 type CarouselFooterNavProps = {
   currentIndex: number;
@@ -18,6 +18,8 @@ type CarouselFooterNavProps = {
   isNextDisabled?: boolean;
   accent?: UiAccent;
   trailingAccessory?: React.ReactNode;
+  hideSideNavigation?: boolean;
+  centerButtonStyle?: StyleProp<ViewStyle>;
 };
 
 export function CarouselFooterNav({
@@ -36,6 +38,8 @@ export function CarouselFooterNav({
   isNextDisabled = currentIndex >= totalCount - 1,
   accent = 'emerald',
   trailingAccessory,
+  hideSideNavigation = false,
+  centerButtonStyle,
 }: CarouselFooterNavProps) {
   const accentStyle = UI_ACCENT_STYLES[accent];
   const pageLabel = totalCount > 0 ? `${currentIndex + 1} / ${totalCount}` : '';
@@ -43,30 +47,34 @@ export function CarouselFooterNav({
   return (
     <View style={styles.wrapper}>
       <View style={styles.navRow}>
-        <View style={styles.mainGroup}>
-          <TouchableOpacity
-            style={[
-              styles.navButton,
-              styles.navButtonSquare,
-              { backgroundColor: accentStyle.navBg, borderColor: accentStyle.navBorder },
-              isPreviousDisabled && styles.navButtonDisabled,
-            ]}
-            onPress={onPreviousPress}
-            onPressIn={onPreviousPressIn}
-            onPressOut={onPreviousPressOut}
-            disabled={isPreviousDisabled}
-            activeOpacity={0.85}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            accessibilityRole="button"
-            accessibilityLabel="Card anterior"
-          >
-            <Text style={[styles.navSideText, { color: accentStyle.navText }]}>{'‹'}</Text>
-          </TouchableOpacity>
+        <View style={[styles.mainGroup, hideSideNavigation && styles.mainGroupWithoutSideNav]}>
+          {!hideSideNavigation ? (
+            <TouchableOpacity
+              style={[
+                styles.navButton,
+                styles.navButtonSquare,
+                { backgroundColor: accentStyle.navBg, borderColor: accentStyle.navBorder },
+                isPreviousDisabled && styles.navButtonDisabled,
+              ]}
+              onPress={onPreviousPress}
+              onPressIn={onPreviousPressIn}
+              onPressOut={onPreviousPressOut}
+              disabled={isPreviousDisabled}
+              activeOpacity={0.85}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Card anterior"
+            >
+              <Text style={[styles.navSideText, { color: accentStyle.navText }]}>{'‹'}</Text>
+            </TouchableOpacity>
+          ) : null}
 
           <TouchableOpacity
             style={[
               styles.navButton,
               styles.navButtonCenter,
+              hideSideNavigation && styles.navButtonCenterExpanded,
+              centerButtonStyle,
               { backgroundColor: accentStyle.exitBg, borderColor: accentStyle.exitBorder },
             ]}
             onPress={onCenterPress}
@@ -77,24 +85,26 @@ export function CarouselFooterNav({
             <Text style={[styles.navCenterText, { color: accentStyle.exitText }]}>{centerLabel}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.navButton,
-              styles.navButtonSquare,
-              { backgroundColor: accentStyle.navBg, borderColor: accentStyle.navBorder },
-              isNextDisabled && styles.navButtonDisabled,
-            ]}
-            onPress={onNextPress}
-            onPressIn={onNextPressIn}
-            onPressOut={onNextPressOut}
-            disabled={isNextDisabled}
-            activeOpacity={0.85}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            accessibilityRole="button"
-            accessibilityLabel="Próximo card"
-          >
-            <Text style={[styles.navSideText, { color: accentStyle.navText }]}>{'›'}</Text>
-          </TouchableOpacity>
+          {!hideSideNavigation ? (
+            <TouchableOpacity
+              style={[
+                styles.navButton,
+                styles.navButtonSquare,
+                { backgroundColor: accentStyle.navBg, borderColor: accentStyle.navBorder },
+                isNextDisabled && styles.navButtonDisabled,
+              ]}
+              onPress={onNextPress}
+              onPressIn={onNextPressIn}
+              onPressOut={onNextPressOut}
+              disabled={isNextDisabled}
+              activeOpacity={0.85}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Próximo card"
+            >
+              <Text style={[styles.navSideText, { color: accentStyle.navText }]}>{'›'}</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {trailingAccessory}
@@ -125,6 +135,10 @@ const styles = StyleSheet.create({
     gap: 8,
     minWidth: 0,
   },
+  mainGroupWithoutSideNav: {
+    flexGrow: 0,
+    flexShrink: 1,
+  },
   navButton: {
     borderRadius: 16,
     alignItems: 'center',
@@ -144,6 +158,10 @@ const styles = StyleSheet.create({
     height: 48,
     paddingVertical: 0,
     paddingHorizontal: 8,
+  },
+  navButtonCenterExpanded: {
+    flexGrow: 0,
+    flexShrink: 0,
   },
   navButtonDisabled: {
     opacity: 0.4,

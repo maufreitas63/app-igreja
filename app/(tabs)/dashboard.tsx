@@ -502,6 +502,8 @@ export default function Dashboard() {
   const { width: pageWidth, height: windowHeight } = useWindowDimensions();
   const previousPageWidthRef = useRef(pageWidth);
   const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);
+  const dashboardCardWidth = useMemo(() => pageWidth * 0.9, [pageWidth]);
+  const dashboardCardHorizontalInset = useMemo(() => pageWidth * 0.05, [pageWidth]);
 
   const dashboardListRef = useRef<FlatList<DashboardCard>>(null);
   const handledDashboardCardRef = useRef<string | null>(null);
@@ -589,12 +591,12 @@ export default function Dashboard() {
   );
   const dashboardPanelCardSizeStyle = useMemo(
     () => ({
-      width: pageWidth * 0.9,
+      width: dashboardCardWidth,
       minHeight: dashboardPanelCardHeight,
       maxHeight: dashboardPanelCardHeight,
       alignSelf: 'center' as const,
     }),
-    [dashboardPanelCardHeight, pageWidth]
+    [dashboardCardWidth, dashboardPanelCardHeight]
   );
   const dashboardCardWrapperStyle = useMemo(
     () => ({
@@ -3874,7 +3876,15 @@ export default function Dashboard() {
             )}
           />
 
-          <View style={[styles.footerControls, { paddingBottom: insets.bottom + 10 }]}>
+          <View
+            style={[
+              styles.footerControls,
+              {
+                paddingHorizontal: dashboardCardHorizontalInset,
+                paddingBottom: insets.bottom + 10,
+              },
+            ]}
+          >
             <CarouselFooterNav
               currentIndex={currentIndex}
               totalCount={data.length}
@@ -3883,12 +3893,13 @@ export default function Dashboard() {
               onCenterPress={handleExit}
               onPreviousPress={handleFooterPreviousPress}
               onNextPress={handleFooterNextPress}
-              onPreviousPressIn={() => startFooterNavRepeat('prev')}
-              onPreviousPressOut={handleFooterNavPressOut}
-              onNextPressIn={() => startFooterNavRepeat('next')}
-              onNextPressOut={handleFooterNavPressOut}
-              isPreviousDisabled={currentIndex === 0}
-              isNextDisabled={currentIndex === data.length - 1}
+              hideSideNavigation
+              centerButtonStyle={{
+                width:
+                  !isMaintenanceAccessLoading && canViewMaintenance
+                    ? dashboardCardWidth - 56
+                    : dashboardCardWidth,
+              }}
               accent="emerald"
               trailingAccessory={
                 !isMaintenanceAccessLoading && canViewMaintenance ? (
@@ -5936,7 +5947,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   placeholderText: { color: '#94A3B8', fontSize: 16, textAlign: 'center' },
-  footerControls: { flexShrink: 0, paddingHorizontal: 32, marginTop: 6 },
+  footerControls: { flexShrink: 0, marginTop: 6 },
   servidorReadOnlyCheckMark: {
     color: '#FFFFFF',
     fontSize: 16,
