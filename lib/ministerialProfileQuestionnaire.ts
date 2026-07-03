@@ -28,6 +28,70 @@ export const MINISTERIAL_PROFILE_LABELS: Record<MinisterialProfileCode, string> 
   LIDERANCA: 'Liderança',
 };
 
+export type MinisterialProfileResultCopy = {
+  heading: string;
+  body: string;
+};
+
+export const MINISTERIAL_PROFILE_RESULT_COPY: Record<MinisterialProfileCode, MinisterialProfileResultCopy> = {
+  PREGACAO: {
+    heading: 'Perfil PREGAÇÃO (A Voz da Verdade)',
+    body:
+      'Minha convicção é de que o mundo não precisa de novas ideias, mas da Palavra eterna. Sinto um ardor sagrado quando abro as Escrituras, pois entendo que a pregação não é sobre a minha eloquência, mas sobre a autoridade de Deus. Meu ministério é ser um canal onde o texto bíblico é exposto de forma clara e profunda, para que a igreja seja ancorada na sã doutrina e protegida contra os ventos das heresias.',
+  },
+  DISCIPULADO: {
+    heading: 'Perfil DISCIPULADO (O Construtor de Vidas)',
+    body:
+      'Acredito que o evangelho é vivido na estrada, caminhando ao lado de outros. Meu chamado não se encerra no púlpito; ele se manifesta na mesa de café, no estudo bíblico em casa e no acompanhamento paciente de alguém que busca crescer. Enxergo cada membro da igreja como uma semente que precisa ser regada pela Palavra, até que Cristo seja formado neles. Meu ministério é a multiplicação de vidas que refletem a verdade.',
+  },
+  PASTORAL: {
+    heading: 'Perfil PASTORAL (O Coração da Misericórdia)',
+    body:
+      'Aprendi que a teologia mais bonita é aquela que se traduz em consolo no dia da dor. Sinto o chamado para ser a presença tangível de Cristo para quem sofre, chora ou se sente invisível. Onde a maioria vê problemas, vejo pessoas precisando de acolhimento e escuta. Meu ministério é cuidar, curar feridas e garantir que nenhum membro do corpo caminhe sozinho em suas crises, pois o amor de Deus deve ser sentido na prática.',
+  },
+  EVANGELISMO: {
+    heading: 'Perfil EVANGELISMO (O Arauto da Esperança)',
+    body:
+      'Não consigo silenciar sobre o que vi e ouvi. Meu coração bate no compasso da Grande Comissão; sou impulsionado pela urgência de alcançar aqueles que ainda não experimentaram a graça transformadora. Meu ministério é transpor muros, atravessar fronteiras e falar com ousadia para que o perdido encontre o Caminho. Vivo para ver o momento em que a luz do evangelho rompe a escuridão do coração daqueles que não conhecem Jesus.',
+  },
+  LIDERANCA: {
+    heading: 'Perfil LIDERANÇA (O Guardião da Ordem)',
+    body:
+      'Entendo que a igreja é um corpo glorioso que precisa de organização para que a missão flua com excelência. Meu chamado é coordenar os talentos, mediar conflitos, estruturar ministérios e garantir que a autonomia da congregação seja usada para a glória de Deus e não para o caos. Meu ministério é servir através da visão estratégica, preparando o caminho para que cada membro possa servir com propósito, unidade e ordem.',
+  },
+  LOUVOR: {
+    heading: 'Perfil LOUVOR (O Condutor da Adoração)',
+    body:
+      'A música que entoamos é a liturgia do coração; por isso, zelo para que nosso louvor seja bíblico, reverente e profundamente conectado à verdade. Meu chamado é conduzir a congregação a uma experiência autêntica com a majestade de Deus, transformando cada cântico em uma oportunidade de ensino e entrega. Meu ministério é criar um ambiente onde a beleza da santidade seja sentida, levando a igreja a adorar em espírito e em verdade.',
+  },
+};
+
+const isMinisterialProfileCode = (value: string): value is MinisterialProfileCode =>
+  value in MINISTERIAL_PROFILE_RESULT_COPY;
+
+export const resolveMinisterialProfileResultCopy = (
+  perfilCode?: string | null,
+  perfilLabel?: string | null
+): MinisterialProfileResultCopy | null => {
+  const code = String(perfilCode ?? '').trim().toUpperCase();
+
+  if (code && isMinisterialProfileCode(code)) {
+    return MINISTERIAL_PROFILE_RESULT_COPY[code];
+  }
+
+  const label = String(perfilLabel ?? '').trim().toLowerCase();
+
+  const match = (Object.entries(MINISTERIAL_PROFILE_LABELS) as [MinisterialProfileCode, string][]).find(
+    ([, profileLabel]) => profileLabel.toLowerCase() === label
+  );
+
+  if (match) {
+    return MINISTERIAL_PROFILE_RESULT_COPY[match[0]];
+  }
+
+  return null;
+};
+
 export type MinisterialQuestionOption = {
   id: string;
   texto: string;

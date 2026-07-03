@@ -2,6 +2,7 @@ import {
   MINISTERIAL_PROFILE_QUESTIONNAIRE_SQL_HINT,
   MINISTERIAL_QUESTIONS_PER_STEP,
   MINISTERIAL_TOTAL_STEPS,
+  resolveMinisterialProfileResultCopy,
   computeMinisterialProgress,
   fetchMinisterialProfileResult,
   fetchMinisterialQuestionnaire,
@@ -261,6 +262,10 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
 
     if (phase === 'result') {
       const label = submittedLabel ?? existingResult?.perfil_label ?? 'Indefinido';
+      const resultCopy = resolveMinisterialProfileResultCopy(
+        existingResult?.perfil_vencedor,
+        label
+      );
 
       return (
         <ScrollView
@@ -273,10 +278,17 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
           </View>
           <Text style={styles.title}>Seu perfil ministerial</Text>
           <Text style={styles.resultLabel}>{label}</Text>
-          <Text style={styles.subtitle}>
-            Este é o perfil predominante com base nas suas respostas. Use-o como reflexão sobre como você
-            pode servir melhor na congregação.
-          </Text>
+          {resultCopy ? (
+            <View style={styles.resultDescriptionBox}>
+              <Text style={styles.resultDescriptionHeading}>{resultCopy.heading}</Text>
+              <Text style={styles.resultDescriptionBody}>“{resultCopy.body}”</Text>
+            </View>
+          ) : (
+            <Text style={styles.subtitle}>
+              Este é o perfil predominante com base nas suas respostas. Use-o como reflexão sobre como você
+              pode servir melhor na congregação.
+            </Text>
+          )}
           <TouchableOpacity style={styles.primaryButton} onPress={handleRetake} activeOpacity={0.85}>
             <Text style={styles.primaryButtonText}>Refazer questionário</Text>
           </TouchableOpacity>
@@ -625,6 +637,28 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '900',
     textAlign: 'center',
+  },
+  resultDescriptionBox: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+    backgroundColor: 'rgba(30, 41, 59, 0.55)',
+    padding: 14,
+    gap: 10,
+  },
+  resultDescriptionHeading: {
+    color: '#6EE7B7',
+    fontSize: 14,
+    fontWeight: '800',
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  resultDescriptionBody: {
+    color: '#CBD5E1',
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: 'left',
+    fontStyle: 'italic',
   },
   errorText: {
     color: '#FCA5A5',
