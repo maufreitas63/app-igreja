@@ -163,6 +163,8 @@ type DashboardCard = {
     | 'parking_vehicle_v2'
     | 'scale_roster'
     | 'grouped_manage'
+    | 'ministerial_profile'
+    | 'grouped_palette'
     | 'administrativo';
 };
 
@@ -1814,6 +1816,8 @@ export default function Dashboard() {
         ? [{ id: '9', title: 'Estacionamento', content: 'parking_vehicle_v2' as const }]
         : []),
       { id: '6', title: 'Dados Cadastrais', content: 'grouped_manage' },
+      { id: '14', title: 'Perfil Ministerial', content: 'ministerial_profile' },
+      { id: '15', title: 'Paleta de Cores', content: 'grouped_palette' },
       ...(hasActiveMembership
         ? [{ id: '13', title: 'Administrativo', content: 'administrativo' as const }]
         : []),
@@ -2758,7 +2762,6 @@ export default function Dashboard() {
                     style={[
                       styles.card,
                       styles.cardGroupedManage,
-                      groupedManagePaletteStyle,
                       styles.dashboardPanelCardTopLayout,
                       dashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
@@ -2820,6 +2823,20 @@ export default function Dashboard() {
                           <Text style={styles.groupedManageButtonTitle}>Gerenciar Família</Text>
                         </View>
                       </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : item.content === 'ministerial_profile' ? (
+                  <View
+                    style={[
+                      styles.card,
+                      styles.cardMinisterialProfile,
+                      styles.dashboardPanelCardTopLayout,
+                      dashboardPanelCardSizeStyle,
+                      dashboardPanelTopInsetStyle,
+                    ]}
+                  >
+                    <Text style={styles.dashboardPanelTitle}>Perfil Ministerial</Text>
+                    <View style={styles.groupedManageBody}>
                       <TouchableOpacity
                         style={[styles.groupedManageButton, styles.groupedManageButtonMinisterial]}
                         activeOpacity={0.85}
@@ -2834,11 +2851,27 @@ export default function Dashboard() {
                             color="#6EE7B7"
                             style={styles.groupedManageButtonIcon}
                           />
-                          <Text style={styles.groupedManageButtonTitle}>Perfil Ministerial</Text>
+                          <Text style={styles.groupedManageButtonTitle}>Iniciar questionário</Text>
                         </View>
                       </TouchableOpacity>
+                      <Text style={styles.ministerialCardHint}>
+                        50 perguntas em 10 etapas para identificar seu perfil de serviço na igreja.
+                      </Text>
                     </View>
-                    <GroupedManagePaletteFooter />
+                  </View>
+                ) : item.content === 'grouped_palette' ? (
+                  <View
+                    style={[
+                      styles.card,
+                      styles.cardGroupedPalette,
+                      groupedManagePaletteStyle,
+                      styles.dashboardPanelCardTopLayout,
+                      dashboardPanelCardSizeStyle,
+                      dashboardPanelTopInsetStyle,
+                    ]}
+                  >
+                    <Text style={styles.dashboardPanelTitle}>Paleta de Cores</Text>
+                    <GroupedManagePaletteFooter embedded={false} />
                   </View>
                 ) : item.content === 'administrativo' ? (
                   <View
@@ -4513,6 +4546,29 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     gap: 0,
     shadowOpacity: 0.3,
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: '#60A5FA',
+  },
+  cardMinisterialProfile: {
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
+    gap: 0,
+    shadowOpacity: 0.3,
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor: '#34D399',
+  },
+  cardGroupedPalette: {
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
+    gap: 0,
+    shadowOpacity: 0.3,
+  },
+  ministerialCardHint: {
+    color: '#94A3B8',
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+    paddingHorizontal: 8,
   },
   cardAdministrativo: {
     alignItems: 'stretch',

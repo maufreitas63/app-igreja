@@ -9,6 +9,8 @@ export const DASHBOARD_CARD_PARAM_TO_CONTENT: Record<string, string> = {
   '4': 'kids_teens',
   '5': 'pastoral',
   '6': 'grouped_manage',
+  '14': 'ministerial_profile',
+  '15': 'grouped_palette',
   '7': 'birthdays',
   '8': 'vigilance_scales',
   '9': 'parking_vehicle_v2',
@@ -26,6 +28,8 @@ export const DASHBOARD_CARD_PARAM_TO_CONTENT: Record<string, string> = {
   vigilance_scales: 'vigilance_scales',
   parking_vehicle_v2: 'parking_vehicle_v2',
   grouped_manage: 'grouped_manage',
+  ministerial_profile: 'ministerial_profile',
+  grouped_palette: 'grouped_palette',
   scale_roster: 'scale_roster',
   administrativo: 'administrativo',
 };

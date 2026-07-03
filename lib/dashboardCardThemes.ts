@@ -92,6 +92,20 @@ export const DASHBOARD_CARD_THEMES = {
     accent: '#BFDBFE',
     accentMuted: '#93C5FD',
   },
+  ministerial_profile: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor: '#34D399',
+    shadowColor: '#059669',
+    accent: '#A7F3D0',
+    accentMuted: '#6EE7B7',
+  },
+  grouped_palette: {
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: '#60A5FA',
+    shadowColor: '#2563EB',
+    accent: '#BFDBFE',
+    accentMuted: '#93C5FD',
+  },
   administrativo: {
     backgroundColor: 'rgba(30, 64, 175, 0.24)',
     borderColor: '#60A5FA',

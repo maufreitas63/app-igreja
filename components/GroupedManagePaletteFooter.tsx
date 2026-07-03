@@ -10,7 +10,7 @@ function PaletteSwatch({ color }: { color: string }) {
   return <View style={[styles.swatch, { backgroundColor: color }]} />;
 }
 
-export function GroupedManagePaletteFooter() {
+export function GroupedManagePaletteFooter({ embedded = true }: { embedded?: boolean }) {
   const { activePalette, colors, activatePalette, isLoading: isActivePaletteLoading } = usePalette();
   const theme = useMemo(() => buildPaletteSurfaceTheme(colors), [colors]);
   const [palettes, setPalettes] = useState<Paleta[]>([]);
@@ -78,7 +78,13 @@ export function GroupedManagePaletteFooter() {
   );
 
   return (
-    <View style={[styles.footer, { borderTopColor: theme.accentMuted }]}>
+    <View
+      style={[
+        styles.footer,
+        embedded ? styles.footerEmbedded : styles.footerPanel,
+        embedded ? { borderTopColor: theme.accentMuted } : null,
+      ]}
+    >
       <View style={styles.headerRow}>
         <Text style={[styles.label, { color: theme.accentMuted }]}>Paleta de cores</Text>
         {isBusy ? <ActivityIndicator color={theme.accentMuted} size="small" /> : null}
@@ -113,11 +119,18 @@ export function GroupedManagePaletteFooter() {
 
 const styles = StyleSheet.create({
   footer: {
-    marginTop: 'auto',
     width: '100%',
+    gap: 10,
+  },
+  footerEmbedded: {
+    marginTop: 'auto',
     paddingTop: 14,
     borderTopWidth: 1,
-    gap: 10,
+  },
+  footerPanel: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 8,
   },
   headerRow: {
     flexDirection: 'row',

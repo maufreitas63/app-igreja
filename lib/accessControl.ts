@@ -58,6 +58,8 @@ export const DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   scale_roster: ACCESS_DASHBOARD_CARD.vigilanceScales,
   parking_vehicle_v2: ACCESS_DASHBOARD_CARD.parking,
   grouped_manage: ACCESS_DASHBOARD_CARD.groupedManage,
+  ministerial_profile: ACCESS_DASHBOARD_CARD.groupedManage,
+  grouped_palette: ACCESS_DASHBOARD_CARD.groupedManage,
   administrativo: ACCESS_DASHBOARD_CARD.administrativo,
 };
 
@@ -103,6 +105,10 @@ export const isDashboardCardContentAllowed = (
 
   if (content === 'scale_roster') {
     return accessByContent.vigilance_scales === true || accessByContent.scale_roster === true;
+  }
+
+  if (content === 'ministerial_profile' || content === 'grouped_palette') {
+    return accessByContent.grouped_manage === true || accessByContent[content] === true;
   }
 
   return accessByContent[content] === true;
