@@ -78,9 +78,7 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
     }
 
     if (!profileResult.success) {
-      setErrorMessage(profileResult.message);
-      setPhase('error');
-      return;
+      setExistingResult(null);
     }
 
     setPhase('intro');

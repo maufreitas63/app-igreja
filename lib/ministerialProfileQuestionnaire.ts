@@ -4,6 +4,9 @@ import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 export const MINISTERIAL_PROFILE_QUESTIONNAIRE_SQL_HINT =
   'Execute no Supabase: scripts/ministerial-profile-questionnaire.sql e scripts/ministerial-profile-questionnaire-seed.sql';
 
+export const MINISTERIAL_PROFILE_SESSION_SQL_HINT =
+  'Execute no Supabase: scripts/ministerial-profile-questionnaire-session-fix.sql. Depois: Settings → API → Reload schema.';
+
 export const MINISTERIAL_QUESTIONS_TOTAL = 50;
 export const MINISTERIAL_QUESTIONS_PER_STEP = 5;
 export const MINISTERIAL_TOTAL_STEPS = MINISTERIAL_QUESTIONS_TOTAL / MINISTERIAL_QUESTIONS_PER_STEP;
@@ -57,11 +60,25 @@ const parseRpcObject = (data: unknown): Record<string, unknown> | null => {
   return payload as Record<string, unknown>;
 };
 
+const isMinisterialSessionSetupError = (message: string) => {
+  const normalized = message.toLowerCase();
+
+  return (
+    (normalized.includes('assert_session_profile_matches')
+      || normalized.includes('ministerial_require_session_profile'))
+    && (normalized.includes('does not exist') || normalized.includes('could not find'))
+  );
+};
+
 const formatRpcError = (error: unknown, rpcName: string) => {
   const message =
     error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
       ? error.message
       : 'Não foi possível concluir a operação.';
+
+  if (isMinisterialSessionSetupError(message)) {
+    return MINISTERIAL_PROFILE_SESSION_SQL_HINT;
+  }
 
   if (isSupabaseRpcMissingError({ message }, rpcName)) {
     return MINISTERIAL_PROFILE_QUESTIONNAIRE_SQL_HINT;

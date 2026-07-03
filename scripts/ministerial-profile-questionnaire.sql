@@ -3,14 +3,13 @@
 -- Depois: Settings → API → Reload schema.
 -- Seed: execute também scripts/ministerial-profile-questionnaire-seed.sql
 --
--- Este script inclui assert_session_profile_matches caso access-control-security-hardening.sql
--- ainda não tenha sido aplicado.
+-- Validação de sessão própria do questionário (não depende de assert_session_profile_matches).
 
 -- ---------------------------------------------------------------------------
 -- Pré-requisitos (idempotente)
 -- ---------------------------------------------------------------------------
 
-create or replace function public.assert_session_profile_matches(p_profile_id uuid)
+create or replace function public.ministerial_require_session_profile(p_profile_id uuid)
 returns void
 language plpgsql
 security definer
@@ -279,7 +278,7 @@ as $$
 declare
   v_result record;
 begin
-  perform public.assert_session_profile_matches(p_profile_id);
+  perform public.ministerial_require_session_profile(p_profile_id);
 
   select
     r.perfil_vencedor,
@@ -319,7 +318,7 @@ declare
   v_winner text;
   v_seen integer := 0;
 begin
-  perform public.assert_session_profile_matches(p_profile_id);
+  perform public.ministerial_require_session_profile(p_profile_id);
 
   if p_respostas is null or jsonb_typeof(p_respostas) <> 'array' then
     return jsonb_build_object('success', false, 'message', 'Respostas inválidas.');
