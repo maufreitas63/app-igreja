@@ -100,16 +100,30 @@ export async function sessionCanAccessScaleType(
 export async function loadMaintenanceScalePanelAccess(
   profileId: string
 ): Promise<Record<MaintenanceScalePanelContent, boolean>> {
-  const entries = await Promise.all(
-    (Object.entries(MAINTENANCE_SCALE_PANEL_CONTENT_TO_KEY) as [MaintenanceScalePanelContent, string][]).map(
-      async ([content, resourceKey]) => {
-        const allowed = await profileHasAccess(profileId, 'screen', resourceKey, 'view');
-        return [content, allowed] as const;
-      }
-    )
-  );
+  const [grantEntries, viewTypes, updateTypes] = await Promise.all([
+    Promise.all(
+      (Object.entries(MAINTENANCE_SCALE_PANEL_CONTENT_TO_KEY) as [MaintenanceScalePanelContent, string][]).map(
+        async ([content, resourceKey]) => {
+          const allowed = await profileHasAccess(profileId, 'screen', resourceKey, 'view');
+          return [content, allowed] as const;
+        }
+      )
+    ),
+    fetchPermittedScaleTypes('view', profileId).catch(() => [] as PermittedScaleType[]),
+    fetchPermittedScaleTypes('update', profileId).catch(() => [] as PermittedScaleType[]),
+  ]);
 
-  return Object.fromEntries(entries) as Record<MaintenanceScalePanelContent, boolean>;
+  const result = Object.fromEntries(grantEntries) as Record<MaintenanceScalePanelContent, boolean>;
+
+  if (viewTypes.length > 0) {
+    result.scales = true;
+  }
+
+  if (updateTypes.length > 0) {
+    result.scale_volunteers = true;
+  }
+
+  return result;
 }
 
 export type ProfileScaleLeadershipAssignment = {

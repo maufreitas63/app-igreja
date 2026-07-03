@@ -175,32 +175,26 @@ begin
     return true;
   end if;
 
-  if not exists (
-    select 1
-      from public.profile_access_roles par
-      join public.access_roles ar on ar.id = par.role_id
-     where par.profile_id = p_profile_id
-       and ar.code = 'lider'
-  ) then
-    return false;
-  end if;
-
-  if not exists (
+  if exists (
     select 1
       from public.profile_scale_leadership psl
      where psl.profile_id = p_profile_id
        and psl.tipo_escala_id = p_tipo_escala_id
   ) then
-    return false;
+    if v_action = 'view' then
+      return true;
+    end if;
+
+    return exists (
+      select 1
+        from public.profile_access_roles par
+        join public.access_roles ar on ar.id = par.role_id
+       where par.profile_id = p_profile_id
+         and ar.code = 'lider'
+    );
   end if;
 
-  if v_action = 'view' then
-    return public.profile_has_access(p_profile_id, 'screen', 'maintenance.card.scales', 'view')
-        or public.profile_has_access(p_profile_id, 'screen', 'maintenance.card.scale_volunteers', 'view');
-  end if;
-
-  return public.profile_has_access(p_profile_id, 'screen', 'maintenance.card.scales', 'update')
-      or public.profile_has_access(p_profile_id, 'screen', 'maintenance.card.scale_volunteers', 'update');
+  return false;
 end;
 $$;
 
