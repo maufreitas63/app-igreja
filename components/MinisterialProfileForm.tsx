@@ -1,5 +1,6 @@
 import {
   MINISTERIAL_PROFILE_QUESTIONNAIRE_SQL_HINT,
+  MINISTERIAL_QUESTIONS_PER_STEP,
   MINISTERIAL_TOTAL_STEPS,
   computeMinisterialProgress,
   fetchMinisterialProfileResult,
@@ -220,7 +221,11 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
 
     if (phase === 'intro') {
       return (
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.bodyScroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <Text style={styles.title}>Perfil Ministerial</Text>
           <Text style={styles.subtitle}>
             Responda 50 perguntas sobre sua identidade e chamado no serviço cristão. O resultado indicará o
@@ -243,7 +248,11 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
       const label = submittedLabel ?? existingResult?.perfil_label ?? 'Indefinido';
 
       return (
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.bodyScroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.resultBadge}>
             <FontAwesome name="star" size={28} color="#FCD34D" />
           </View>
@@ -261,7 +270,11 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
     }
 
     return (
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.bodyScroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.stepTitle}>
           Etapa {stepIndex + 1} de {MINISTERIAL_TOTAL_STEPS}
         </Text>
@@ -333,7 +346,7 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
             </TouchableOpacity>
           </View>
 
-          {renderBody()}
+          <View style={styles.body}>{renderBody()}</View>
         </View>
       </View>
     </Modal>
@@ -349,7 +362,11 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   container: {
+    flex: 1,
     maxHeight: '92%',
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#334155',
@@ -380,6 +397,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(51, 65, 85, 0.65)',
+  },
+  body: {
+    flex: 1,
+    minHeight: 0,
+  },
+  bodyScroll: {
+    flex: 1,
   },
   scrollContent: {
     padding: 16,
