@@ -77,7 +77,8 @@ Cada recurso abaixo descreve **o benefício** para quem usa, não apenas a funci
 | Recurso | Benefício |
 |---------|-----------|
 | **Login por celular + PIN** | Acesso rápido sem senha longa; o PIN é validado no servidor, não fica exposto no aparelho além da sessão local |
-| **PIN temporário via WhatsApp** | Primeiro acesso simplificado — o membro recebe credencial sem depender de secretaria no momento |
+| **PIN temporário via WhatsApp** | Primeiro acesso — membro recebe credencial inicial sem depender da secretaria no momento |
+| **Recuperação de senha por e-mail** | Esqueci minha senha no passo 2 do login — pergunta de segurança e novo PIN enviado ao e-mail cadastrado |
 | **Sessão persistente** | Ao reabrir o app, o membro continua logado até encerrar sessão |
 | **Encerrar sessão** | Proteção em aparelhos compartilhados |
 | **LGPD configurável** | Quando ativo, garante aceite formal dos termos e selfie; quando inativo, onboarding mais leve |
@@ -210,7 +211,8 @@ flowchart TD
 
 **Passo a passo narrativo:**
 
-1. **Primeiro acesso:** informar celular → receber PIN (WhatsApp) → criar perfil → aceitar LGPD (se ativo).
+1. **Primeiro acesso:** informar celular → passo 2 → receber PIN temporário (**WhatsApp**) → criar perfil → aceitar LGPD (se ativo).
+2. **Esqueci a senha (já cadastrado):** celular → passo 2 → **Esqueci minha senha** → e-mail + pergunta de segurança → novo PIN por **e-mail**.
 2. **Uso cotidiano:** login → índice ou dashboard.
 3. **Antes do culto:** card Agenda → selecionar evento → marcar quem da família participará.
 4. **No culto:** se geofence estiver ativo e o local tiver coordenadas, aproximar-se do templo; caso contrário, apresentar QR no totem.

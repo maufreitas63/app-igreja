@@ -137,22 +137,24 @@ Recursos protegidos:
 
 ### 3.1 Tela de Login (`/` — `app/index.tsx`)
 
-**Esta tela serve para:** autenticar membros (celular + PIN) ou abrir o modo totem em aparelho dedicado; restaurar sessão existente; links para redes sociais.
+**Esta tela serve para:** autenticar membros em **dois passos** (celular → PIN) ou abrir o modo totem em aparelho dedicado; restaurar sessão existente; links para redes sociais.
 
-#### Modo membro (padrão)
+#### Modo membro (padrão) — fluxo em 2 passos
 
-| Elemento | Função |
-|----------|--------|
-| **Logo IBNORTE** | Identidade visual |
-| **Título "Boas-Vindas"** | Cabeçalho |
-| **Subtítulo** | Orienta: celular → WhatsApp → PIN temporário → alterar em Dados Cadastrais |
-| **Campo Celular** | Máscara `(00) 00000-0000`; ao completar 11 dígitos foca o PIN |
-| **Botão X (celular)** | Limpa o número digitado |
-| **Campo Senha de acesso** | 4 dígitos, ocultos; auto-submit ao completar |
-| **Ícone WhatsApp** | Gera e envia PIN temporário (fluxo primeira entrada) |
-| **Texto de hint (PIN)** | Varia conforme `psw_user`/`psw_mngr` em `app_parameters` |
-| **Botão "Entrar"** | Valida e autentica |
-| **Instagram / YouTube** | Abre links externos da igreja |
+| Passo | Elemento | Função |
+|-------|----------|--------|
+| **1** | **Campo Celular** | Máscara `(00) 00000-0000`; botão **Continuar** avança ao passo 2 |
+| **1** | **Botão X (celular)** | Limpa o número digitado |
+| **1** | Texto de ajuda | Orientação para primeira vez (Ministério de Acolhimento) |
+| **2** | **Campo Senha de acesso** | 4 dígitos, ocultos; auto-submit ao completar |
+| **2** | **Ícone WhatsApp** | Gera e envia PIN temporário — **somente primeira entrada** (sem PIN cadastrado) |
+| **2** | **Esqueci minha senha** | Visível **apenas no passo 2** → `/forgot-password` (e-mail + pergunta de segurança; **não** usa WhatsApp) |
+| **2** | Texto de hint (PIN) | Varia conforme `psw_user`/`psw_mngr` em `app_parameters` |
+| **2** | **Botão "Entrar"** / **Acessar** | Valida e autentica |
+| — | **Logo IBNORTE**, **Boas-Vindas** | Identidade visual e cabeçalho |
+| — | **Instagram / YouTube** | Abre links externos da igreja |
+
+**Recuperação de senha** (`/forgot-password`): membro já cadastrado confirma e-mail, responde pergunta de segurança e recebe novo PIN por **e-mail** (RPCs em `scripts/password-recovery-*.sql`).
 
 #### Modo totem (quando celular = `cel_totem`)
 
@@ -182,13 +184,13 @@ Recursos protegidos:
 | **Senha incorreta** | Totem: PIN diferente de 9999 |
 | **Totem não configurado** | `cel_totem` ausente |
 | **Validação indisponível** | RPC `verificar_login` não instalada |
-| **Erro** — Número ou senha inválidos | Credenciais incorretas |
+| **Erro** — Número ou senha inválidos | Credenciais incorretas; no passo 2, oferece **Esqueci minha senha** (e-mail) |
 | **Erro de Acesso** | Falha de rede ou perfil não continuável |
 | **Erro** — link social | Falha ao abrir Instagram/YouTube |
 
 #### Quem inicia / termina
 
-- **Inicia:** usuário digita celular e PIN (ou solicita PIN via WhatsApp).
+- **Inicia:** passo 1 — celular e **Continuar**; passo 2 — PIN (ou PIN via WhatsApp na primeira entrada; ou **Esqueci minha senha** → e-mail).
 - **Termina:** app grava sessão (`persistUserSession`) e redireciona para dashboard, cadastro, LGPD ou totem conforme estado do perfil.
 
 ---

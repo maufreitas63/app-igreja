@@ -74,6 +74,7 @@ Protege o ponto de entrada físico e a sessão local antes de qualquer chamada a
 |----------|---------------|
 | **PIN de 4 dígitos** | Validado no servidor via RPC `verificar_login`; nunca comparado em texto claro no cliente |
 | **Primeira entrada** | PIN temporário via WhatsApp (parâmetros `psw_user` / `psw_mngr`) |
+| **Recuperação de senha** | `/forgot-password` — pergunta de segurança + novo PIN por **e-mail** (botão só no passo 2 do login) |
 | **Sessão persistida** | `user_phone` + `user_profile_id` em `AsyncStorage` |
 | **Logout** | `signOutAndReturnToLogin()` limpa telefone e profile_id |
 | **Parâmetro `?signedOut=1`** | Impede restauração automática após saída explícita |

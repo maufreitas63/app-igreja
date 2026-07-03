@@ -170,7 +170,8 @@ Métricas levantadas em **17/06/2026** (excluindo `node_modules`, `dist`, `.expo
 
 | Rota | Função |
 |------|--------|
-| `/` | Login (telefone + PIN de 4 dígitos) |
+| `/` | Login em 2 passos (celular → PIN); totem dedicado |
+| `/forgot-password` | Recuperação de senha — e-mail + pergunta de segurança |
 | `/register` | Cadastro inicial de perfil |
 | `/(tabs)/index` | Índice de atalhos do membro |
 | `/(tabs)/dashboard` | Dashboard com carrossel de cards |

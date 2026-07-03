@@ -27,7 +27,8 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 ## Autenticação e sessão
 
 - Login por **celular + PIN de 4 dígitos** (validação no Supabase via `verificar_login`)
-- **Primeira entrada** com geração de PIN temporário via **WhatsApp** (configurável: envio ao usuário ou ao gestor)
+- **Primeira entrada** com geração de PIN temporário via **WhatsApp** (configurável: envio ao usuário ou ao gestor) — somente quando ainda não há senha cadastrada
+- **Recuperação de senha** (`/forgot-password`) — pergunta de segurança + envio de **novo PIN por e-mail** (passo 2 do login → **Esqueci minha senha**; não usa WhatsApp)
 - **Modo totem** — login dedicado com senha `9999` e celular `cel_totem`
 - Restauração automática de sessão ao reabrir o app
 - **Logout seguro** — limpa telefone e `profile_id` do aparelho (`Sair do aplicativo` / `Encerrar sessão`)
@@ -430,8 +431,8 @@ O app envia celular e senha para o servidor (**Supabase**), que valida através 
 Na **primeira entrada**, o texto abaixo do campo de senha explica se o WhatsApp abre no **seu celular** ou no **gestor** — isso depende da configuração da igreja (`psw_user` / `psw_mngr`). Leia o hint antes de tocar no ícone.
 
 > **Se algo der errado**  
-> - *"Número ou senha inválidos"* — confira os 4 dígitos; na primeira vez, gere novo código pelo WhatsApp.  
-> - *"Código necessário"* — toque no WhatsApp antes de digitar a senha.  
+> - *"Número ou senha inválidos"* — confira os 4 dígitos; se **esqueceu** a senha pessoal, use **Esqueci minha senha** no passo 2 (e-mail). Na **primeira vez**, gere código pelo **WhatsApp**.  
+> - *"Código necessário"* — toque em **Receber código no WhatsApp** antes de digitar a senha.  
 > - *"Validação indisponível"* — problema técnico no servidor; avise a equipe de TI da igreja.
 
 ---
@@ -735,7 +736,8 @@ Marque mentalmente cada item:
 
 | Situação | O que fazer |
 |----------|-------------|
-| Esqueci minha senha | Gere nova pelo **WhatsApp** na tela de login ou peça à secretaria |
+| Esqueci minha senha (já cadastrado) | **Passo 2** do login → **Esqueci minha senha** → pergunta de segurança → novo PIN por **e-mail** |
+| Primeira entrada | **Receber código no WhatsApp** no passo 2 |
 | QR não aparece | Confirme: audiência marcada? É o dia do evento? Código de família cadastrado? |
 | Card não aparece no Painel | Permissão do perfil — fale com administrador |
 | Erro técnico persistente | Anote a mensagem na tela e contate a equipe de TI da igreja |
@@ -822,7 +824,13 @@ Não na primeira vez. O app exibirá *"Código necessário"* se você tentar dig
 Sim. Ao completar o 4º dígito, a validação pode ocorrer automaticamente. Você também pode tocar em **Entrar**.
 
 **Aparece "Número ou senha inválidos". O que fazer?**  
-Confira os 4 dígitos. Se esqueceu, gere novo código pelo WhatsApp. Se persistir, a secretaria pode verificar seu cadastro no sistema.
+Confira os 4 dígitos. Se **esqueceu** a senha pessoal, use **Esqueci minha senha** no **passo 2** (código) para validar a pergunta de segurança e receber nova senha por **e-mail**. Na **primeira entrada**, use **Receber código no WhatsApp**.
+
+**Esqueci minha senha pessoal (já sou cadastrado).**  
+No **passo 2** do login, toque **Esqueci minha senha** → confirme ou cadastre o **e-mail** → responda a **pergunta de segurança** → o app envia um novo PIN de 4 dígitos por **e-mail** (não usa WhatsApp).
+
+**O botão "Esqueci minha senha" não aparece no passo 1.**  
+Correto: ele só fica visível no **passo 2**, quando você já informou o celular e vai digitar a senha.
 
 **Aparece "Validação indisponível".**  
 Problema no servidor (RPC `verificar_login` não instalada ou indisponível). Avise a equipe técnica da igreja.
@@ -1272,11 +1280,12 @@ Somente **`super_admin`** — papéis e grants por perfil.
 
 | Pergunta | Resposta |
 |----------|----------|
-| Esqueci minha senha | WhatsApp na tela de login (PIN temporário) ou secretaria |
+| Esqueci minha senha (já cadastrado) | **Passo 2** do login → **Esqueci minha senha** → pergunta de segurança → novo PIN por **e-mail** |
+| Primeira entrada (sem senha ainda) | **Passo 2** → **Receber código no WhatsApp** (PIN temporário) |
 | Quantos dígitos tem a senha? | **4** |
 | Posso usar letras na senha? | Não — apenas números |
 | Mesmo celular em dois aparelhos? | Sim, com mesmo login — evite sessões simultâneas em aparelhos compartilhados |
-| Preciso de e-mail para entrar? | Não — login é **celular + PIN** |
+| Preciso de e-mail para entrar? | Não no dia a dia — login é **celular + PIN**; o e-mail entra na **recuperação de senha** |
 
 ---
 

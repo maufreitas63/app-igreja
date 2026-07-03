@@ -66,7 +66,13 @@ Não na primeira vez. O app exibirá *"Código necessário"* se você tentar dig
 Sim. Ao completar o 4º dígito, a validação pode ocorrer automaticamente. Você também pode tocar em **Entrar**.
 
 **Aparece "Número ou senha inválidos". O que fazer?**  
-Confira os 4 dígitos. Se esqueceu, gere novo código pelo WhatsApp. Se persistir, a secretaria pode verificar seu cadastro no sistema.
+Confira os 4 dígitos. Se **esqueceu** a senha pessoal, use **Esqueci minha senha** no **passo 2** (código) para validar a pergunta de segurança e receber nova senha por **e-mail**. Na **primeira entrada**, use **Receber código no WhatsApp**.
+
+**Esqueci minha senha pessoal (já sou cadastrado).**  
+No **passo 2** do login, toque **Esqueci minha senha** → confirme ou cadastre o **e-mail** → responda a **pergunta de segurança** → o app envia um novo PIN de 4 dígitos por **e-mail** (não usa WhatsApp).
+
+**O botão "Esqueci minha senha" não aparece no passo 1.**  
+Correto: ele só fica visível no **passo 2**, quando você já informou o celular e vai digitar a senha.
 
 **Aparece "Validação indisponível".**  
 Problema no servidor (RPC `verificar_login` não instalada ou indisponível). Avise a equipe técnica da igreja.
@@ -516,11 +522,12 @@ Somente **`super_admin`** — papéis e grants por perfil.
 
 | Pergunta | Resposta |
 |----------|----------|
-| Esqueci minha senha | WhatsApp na tela de login (PIN temporário) ou secretaria |
+| Esqueci minha senha (já cadastrado) | **Passo 2** do login → **Esqueci minha senha** → pergunta de segurança → novo PIN por **e-mail** |
+| Primeira entrada (sem senha ainda) | **Passo 2** → **Receber código no WhatsApp** (PIN temporário) |
 | Quantos dígitos tem a senha? | **4** |
 | Posso usar letras na senha? | Não — apenas números |
 | Mesmo celular em dois aparelhos? | Sim, com mesmo login — evite sessões simultâneas em aparelhos compartilhados |
-| Preciso de e-mail para entrar? | Não — login é **celular + PIN** |
+| Preciso de e-mail para entrar? | Não no dia a dia — login é **celular + PIN**; o e-mail entra na **recuperação de senha** |
 
 ---
 

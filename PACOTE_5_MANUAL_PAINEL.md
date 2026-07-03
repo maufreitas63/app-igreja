@@ -93,9 +93,29 @@ Depois do primeiro acesso, troque o código temporário por uma senha pessoal em
 
 | Mensagem | O que fazer |
 |----------|-------------|
-| *Senha incorreta* / *Número ou senha inválidos* | Confira os 4 dígitos; gere novo código pelo WhatsApp |
+| *Senha incorreta* / *Número ou senha inválidos* | Confira os 4 dígitos. Se **esqueceu** a senha, use **Esqueci minha senha** no passo 2 (e-mail + pergunta de segurança). Na **primeira vez**, use **Receber código no WhatsApp** |
 | *Código necessário* | Toque em **Receber código no WhatsApp** antes de digitar |
 | *Digite o celular completo…* | Informe 11 dígitos com DDD |
+
+### Esqueci minha senha (já cadastrado)
+
+Use quando você **já tem cadastro** e não lembra o PIN pessoal — **não** confundir com a primeira entrada (código temporário pelo WhatsApp).
+
+### Caminho
+**Boas-vindas** → passo **1. Seu celular** → **Continuar** → passo **2. Sua senha** → **Esqueci minha senha**.
+
+### Passo a passo
+
+1. Informe o celular e toque **Continuar**.
+2. No passo 2, toque **Esqueci minha senha** (o botão **não** aparece no passo 1).
+3. Confirme ou cadastre o **e-mail** vinculado ao perfil.
+4. Responda a **pergunta de segurança** (ou cadastre pergunta e resposta na primeira recuperação).
+5. Verifique o **e-mail** (incluindo spam) e digite o novo PIN de 4 dígitos no login.
+
+### Resultado esperado
+
+- Banner no login confirmando envio ao e-mail mascarado.
+- Novo PIN válido para entrar; depois troque por senha pessoal em **Dados Cadastrais → Senha de acesso**, se desejar.
 
 ---
 
@@ -792,10 +812,6 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 | ① | Seção **Resultado do mês** expandida |
 | ② | Tabela de **Receitas** do período |
 | ③ | Tabela de **Despesas** do período |
-
-
-
-
 
 
 

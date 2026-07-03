@@ -125,7 +125,7 @@ export default function IndexScreen() {
   const showWhatsappAbovePin =
     !isTotemLoginMode && needsWhatsappBeforePin && !isCheckingStoredPin && !showForgotPasswordHelp;
   const showForgotPasswordLink =
-    !isTotemLoginMode && (showForgotPasswordHelp || (loginStep === 2 && hasStoredAccessPin === true));
+    !isTotemLoginMode && loginStep === 2 && !isCheckingStoredPin;
   const canAttemptMemberPinLogin =
     isTotemLoginMode || (isBrazilianPhoneComplete(phone) && !needsWhatsappBeforePin);
   const isPinInputEditable =
@@ -920,24 +920,6 @@ export default function IndexScreen() {
               >
                 <Text style={styles.btnText}>Continuar</Text>
               </TouchableOpacity>
-
-              {!isTotemLoginMode ? (
-                <TouchableOpacity
-                  accessibilityLabel="Recuperar senha esquecida"
-                  accessibilityRole="button"
-                  activeOpacity={0.85}
-                  onPress={() =>
-                    router.push(
-                      isBrazilianMobilePhoneComplete(phone)
-                        ? `/forgot-password?phone=${encodeURIComponent(phone.replace(/\D/g, ''))}`
-                        : '/forgot-password'
-                    )
-                  }
-                  style={styles.forgotPasswordBox}
-                >
-                  <Text style={styles.forgotPasswordBoxText}>Esqueci minha senha</Text>
-                </TouchableOpacity>
-              ) : null}
 
               {!isTotemLoginMode ? (
                 <ReadOnlyText style={styles.helpText}>

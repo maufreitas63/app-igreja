@@ -39,6 +39,7 @@ const TRAINING_DAYS = [
       ['Quem liga ou desliga o módulo LGPD?', 'Somente **super_admin** em **Manutenção → Controle de Acesso** (interruptor **LGPD Ativo / Inativo**).'],
       ['O que é o Índice do Aplicativo?', 'Tela inicial com **atalhos** para cada card do painel — distribuição uniforme na altura da tela (seção 0.4).'],
       ['Posso trocar a senha temporária?', 'Sim — em **Gestão de Cadastros → Dados Cadastrais → Senha de acesso** após o primeiro login.'],
+      ['Esqueci minha senha pessoal?', 'No **passo 2** do login, toque **Esqueci minha senha** → confirme o e-mail → responda a pergunta de segurança → novo PIN por **e-mail** (não é WhatsApp).'],
     ],
   },
   {

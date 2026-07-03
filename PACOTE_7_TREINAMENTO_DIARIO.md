@@ -91,9 +91,29 @@ Depois do primeiro acesso, troque o código temporário por uma senha pessoal em
 
 | Mensagem | O que fazer |
 |----------|-------------|
-| *Senha incorreta* / *Número ou senha inválidos* | Confira os 4 dígitos; gere novo código pelo WhatsApp |
+| *Senha incorreta* / *Número ou senha inválidos* | Confira os 4 dígitos. Se **esqueceu** a senha, use **Esqueci minha senha** no passo 2 (e-mail + pergunta de segurança). Na **primeira vez**, use **Receber código no WhatsApp** |
 | *Código necessário* | Toque em **Receber código no WhatsApp** antes de digitar |
 | *Digite o celular completo…* | Informe 11 dígitos com DDD |
+
+### Esqueci minha senha (já cadastrado)
+
+Use quando você **já tem cadastro** e não lembra o PIN pessoal — **não** confundir com a primeira entrada (código temporário pelo WhatsApp).
+
+### Caminho
+**Boas-vindas** → passo **1. Seu celular** → **Continuar** → passo **2. Sua senha** → **Esqueci minha senha**.
+
+### Passo a passo
+
+1. Informe o celular e toque **Continuar**.
+2. No passo 2, toque **Esqueci minha senha** (o botão **não** aparece no passo 1).
+3. Confirme ou cadastre o **e-mail** vinculado ao perfil.
+4. Responda a **pergunta de segurança** (ou cadastre pergunta e resposta na primeira recuperação).
+5. Verifique o **e-mail** (incluindo spam) e digite o novo PIN de 4 dígitos no login.
+
+### Resultado esperado
+
+- Banner no login confirmando envio ao e-mail mascarado.
+- Novo PIN válido para entrar; depois troque por senha pessoal em **Dados Cadastrais → Senha de acesso**, se desejar.
 
 ---
 
@@ -248,6 +268,23 @@ Saber onde estão os módulos e como alternar entre cards.
 
 
 
+
+---
+
+## Perguntas e respostas — Dia 1
+
+| Pergunta | Resposta |
+|----------|----------|
+| O que digito na tela Boas-vindas? | Seu **celular** com DDD no formato `(00) 00000-0000`, depois o **código de 4 dígitos** recebido no WhatsApp (①③ na ilustração de login). |
+| Por que não vejo termos LGPD no cadastro? | A igreja pode ter **`LGPD_Ativo = nao`**. Nesse caso use o fluxo **0.2b**: nome, nascimento, CEP e **Continuar** — sem selfie nem caixa de termos. |
+| O cabeçalho vermelho significa o quê? | Com **`LGPD_Ativo = sim`**, há pendência de aceite dos termos. Vá em **Dados Cadastrais → LGPD** ou à tela **Termos de Uso e Privacidade** (seção 0.3). Com LGPD inativo, esse alerta **não aparece**. |
+| Quem liga ou desliga o módulo LGPD? | Somente **super_admin** em **Manutenção → Controle de Acesso** (interruptor **LGPD Ativo / Inativo**). |
+| O que é o Índice do Aplicativo? | Tela inicial com **atalhos** para cada card do painel — distribuição uniforme na altura da tela (seção 0.4). |
+| Posso trocar a senha temporária? | Sim — em **Gestão de Cadastros → Dados Cadastrais → Senha de acesso** após o primeiro login. |
+| Esqueci minha senha pessoal? | No **passo 2** do login, toque **Esqueci minha senha** → confirme o e-mail → responda a pergunta de segurança → novo PIN por **e-mail** (não é WhatsApp). |
+
+# Dia 2 — Agenda da Família e Check-in / QR Code
+
 ### Passo a passo
 
 1. No **Índice**, leia *Selecione a tela que deseja abrir*.
@@ -268,22 +305,6 @@ Saber onde estão os módulos e como alternar entre cards.
 Alguns atalhos ficam **desabilitados** com explicação em cinza — ex.: QR só no dia do evento, Sala(s) sem evento ativo.
 
 ---
-
----
-
-## Perguntas e respostas — Dia 1
-
-| Pergunta | Resposta |
-|----------|----------|
-| O que digito na tela Boas-vindas? | Seu **celular** com DDD no formato `(00) 00000-0000`, depois o **código de 4 dígitos** recebido no WhatsApp (①③ na ilustração de login). |
-| Por que não vejo termos LGPD no cadastro? | A igreja pode ter **`LGPD_Ativo = nao`**. Nesse caso use o fluxo **0.2b**: nome, nascimento, CEP e **Continuar** — sem selfie nem caixa de termos. |
-| O cabeçalho vermelho significa o quê? | Com **`LGPD_Ativo = sim`**, há pendência de aceite dos termos. Vá em **Dados Cadastrais → LGPD** ou à tela **Termos de Uso e Privacidade** (seção 0.3). Com LGPD inativo, esse alerta **não aparece**. |
-| Quem liga ou desliga o módulo LGPD? | Somente **super_admin** em **Manutenção → Controle de Acesso** (interruptor **LGPD Ativo / Inativo**). |
-| O que é o Índice do Aplicativo? | Tela inicial com **atalhos** para cada card do painel — distribuição uniforme na altura da tela (seção 0.4). |
-| Posso trocar a senha temporária? | Sim — em **Gestão de Cadastros → Dados Cadastrais → Senha de acesso** após o primeiro login. |
-
-# Dia 2 — Agenda da Família e Check-in / QR Code
-
 
 # Parte 1 — Card Agenda da Família
 
@@ -381,6 +402,23 @@ Painel → card **QR Code — Check-in Totem** / **Check In — QR Code** (visí
 ### Passo a passo
 
 1. No dia do culto, abra o card de QR no Painel ou pelo atalho **QR Code** no Índice.
+
+---
+
+## Perguntas e respostas — Dia 2
+
+| Pergunta | Resposta |
+|----------|----------|
+| Como inscrevo minha família em um evento? | Card **Agenda da Família** → selecione o evento → marque os membros → confirme inscrição/audiência conforme as vagas exibidas. |
+| O que é pré-check-in (audiência)? | Confirmação de interesse **antes** do dia do evento; libera o card **Check-in / QR Code** quando o evento exige esse fluxo. |
+| Onde fica o QR da minha família? | Card **Check-in / QR Code** — etiqueta com código da família e QR para leitura no totem (② na ilustração). |
+| Posso fazer check-in manual? | Sim — use a seleção manual de membros no card QR quando a igreja habilitar esse fluxo. |
+| O que é check-in por proximidade? | Com **geofence ativo**, o app confirma presença automaticamente ao chegar ao templo (GPS + audiência prévia). |
+| Badges Kids/Teens no QR? | Indicam faixa etária do membro para salas **IBN Kids** / **IBN Teens** (prefixo **`Parm_entidade`** na interface). |
+| Não vejo eventos na agenda? | Pode não haver eventos publicados, ou seu perfil não tem permissão — fale com a secretaria. |
+
+# Dia 3 — SALA(S) — IBN Kids / IBN Teens e Dízimos e Ofertas
+
 2. Confira o **nome do evento** (mesmo contexto da Agenda).
 3. Localize a **Etiqueta** — código da sua família em destaque.
 4. Apresente o **QR Code** (fundo branco) na câmera do **totem** da igreja.
@@ -401,23 +439,6 @@ Painel → card **QR Code — Check-in Totem** / **Check In — QR Code** (visí
 | Sem etiqueta de família | Complete vínculo familiar em **Gestão de Cadastros** |
 
 ---
-
----
-
-## Perguntas e respostas — Dia 2
-
-| Pergunta | Resposta |
-|----------|----------|
-| Como inscrevo minha família em um evento? | Card **Agenda da Família** → selecione o evento → marque os membros → confirme inscrição/audiência conforme as vagas exibidas. |
-| O que é pré-check-in (audiência)? | Confirmação de interesse **antes** do dia do evento; libera o card **Check-in / QR Code** quando o evento exige esse fluxo. |
-| Onde fica o QR da minha família? | Card **Check-in / QR Code** — etiqueta com código da família e QR para leitura no totem (② na ilustração). |
-| Posso fazer check-in manual? | Sim — use a seleção manual de membros no card QR quando a igreja habilitar esse fluxo. |
-| O que é check-in por proximidade? | Com **geofence ativo**, o app confirma presença automaticamente ao chegar ao templo (GPS + audiência prévia). |
-| Badges Kids/Teens no QR? | Indicam faixa etária do membro para salas **IBN Kids** / **IBN Teens** (prefixo **`Parm_entidade`** na interface). |
-| Não vejo eventos na agenda? | Pode não haver eventos publicados, ou seu perfil não tem permissão — fale com a secretaria. |
-
-# Dia 3 — SALA(S) — IBN Kids / IBN Teens e Dízimos e Ofertas
-
 
 # Parte 2b — Check-in por proximidade (geofence)
 
@@ -480,6 +501,21 @@ Painel → **SALA(S)** (ou atalho **Sala(s)** no Índice, dentro de Painel de Ev
 
 1. Selecione o evento na **Agenda da Família** primeiro (mesmo culto em evidência).
 2. Abra o card **SALA(S)**.
+
+---
+
+## Perguntas e respostas — Dia 3
+
+| Pergunta | Resposta |
+|----------|----------|
+| O card SALA(S) mostra quem? | Somente **membros da sua família** em monitoramento de entrada nas salas Kids/Teens — leitura apenas, sem editar. |
+| Por que não vejo ninguém no SALA(S)? | Nenhum familiar foi registrado na sala no momento, ou você não tem permissão para esse card. |
+| Como copio a chave PIX? | Card **Dízimos e Ofertas** → toque **Copiar chave PIX** (ícone *touch-app*) — a chave vem de `app_parameters`. |
+| Posso atualizar a chave PIX? | Membros veem a chave configurada pela igreja; alteração é feita na **manutenção** (equipe autorizada). |
+| O nome IBN KIDS vem de onde? | Do parâmetro **`Parm_entidade`** — prefixo dinâmico da entidade nos textos e cards. |
+
+# Dia 4 — Coração Aberto e Lista de Membros
+
 3. Se o evento tiver as duas salas, alterne os chips **IBN KIDS** e **IBN TEENS**.
 4. Leia a lista de nomes da sua família inscritos naquela sala.
 5. Procure o símbolo **✓** ao lado do nome.
@@ -499,21 +535,6 @@ Este card é **somente leitura** para o membro. A entrada física na sala é con
 - Fale com a equipe da sala se o culto já começou e o ✓ ainda não apareceu.
 
 ---
-
-
----
-
-## Perguntas e respostas — Dia 3
-
-| Pergunta | Resposta |
-|----------|----------|
-| O card SALA(S) mostra quem? | Somente **membros da sua família** em monitoramento de entrada nas salas Kids/Teens — leitura apenas, sem editar. |
-| Por que não vejo ninguém no SALA(S)? | Nenhum familiar foi registrado na sala no momento, ou você não tem permissão para esse card. |
-| Como copio a chave PIX? | Card **Dízimos e Ofertas** → toque **Copiar chave PIX** (ícone *touch-app*) — a chave vem de `app_parameters`. |
-| Posso atualizar a chave PIX? | Membros veem a chave configurada pela igreja; alteração é feita na **manutenção** (equipe autorizada). |
-| O nome IBN KIDS vem de onde? | Do parâmetro **`Parm_entidade`** — prefixo dinâmico da entidade nos textos e cards. |
-
-# Dia 4 — Coração Aberto e Lista de Membros
 
 # Parte 4 — Card Dízimos e Ofertas
 
@@ -708,6 +729,23 @@ Lista de Membros → coluna **Família** → ícone **users** na linha desejada.
 | ② | Subtítulo **Família {código}** (ex.: IBN0103) |
 | ③ | Lista de integrantes com **nome** e **parentesco** |
 | ④ | Ícone **WhatsApp** por integrante (quando há telefone) |
+
+---
+
+## Perguntas e respostas — Dia 4
+
+| Pergunta | Resposta |
+|----------|----------|
+| Como envio um pedido pastoral? | Card **Coração Aberto** → preencha o formulário → envie. Acompanhe em **Meus pedidos**. |
+| Quem vê meu pedido pastoral? | A **equipe pastoral** na manutenção (Pacote 6, Parte 7) — estágios Acolher, Apoiar, Acompanhar. |
+| Lista de Membros vs Visitantes? | Botões **Visitantes** e **Membros** na mesma linha alternam a lista; o título muda para **LISTA DE VISITANTES** e o campo de busca para **Procurar visitante**. |
+| Como vejo integrantes da mesma família? | Na coluna **Família**, toque o ícone **users** (rosa) → modal **Membros da família** com código (ex.: **Família IBN0103**), nomes, parentesco e WhatsApp. |
+| O modal da família veio vazio — o que fazer? | Pode não haver integrantes reconhecidos no núcleo, falta de permissão ACL ou RPCs não aplicados no Supabase — avise a secretaria/TI. A mensagem *Nenhum membro reconhecido nesta família* ou erro em vermelho explica o caso. |
+| Como contato alguém pelo WhatsApp? | Na lista ou no modal familiar, toque o ícone **WhatsApp** (verde) ao lado do nome quando houver telefone cadastrado. |
+| Para que serve o Mapa Geral? | Abre `/mapa-geolocalizacao` com pins de endereços; filtros **Todos**, **Com papel** e **Visitantes**. Membros veem o mapa; **detalhe ao clicar no pin** (localização de outros) só com permissão pastoral/super_admin. |
+
+# Dia 5 — Aniversariantes e Financeiro
+
 | ⑤ | Botão **Fechar** |
 
 
@@ -727,23 +765,6 @@ Lista de Membros → coluna **Família** → ícone **users** na linha desejada.
 
 ### Caminho (mapa)
 Lista de Membros → **Mapa Geral**.
-
-
----
-
-## Perguntas e respostas — Dia 4
-
-| Pergunta | Resposta |
-|----------|----------|
-| Como envio um pedido pastoral? | Card **Coração Aberto** → preencha o formulário → envie. Acompanhe em **Meus pedidos**. |
-| Quem vê meu pedido pastoral? | A **equipe pastoral** na manutenção (Pacote 6, Parte 7) — estágios Acolher, Apoiar, Acompanhar. |
-| Lista de Membros vs Visitantes? | Botões **Visitantes** e **Membros** na mesma linha alternam a lista; o título muda para **LISTA DE VISITANTES** e o campo de busca para **Procurar visitante**. |
-| Como vejo integrantes da mesma família? | Na coluna **Família**, toque o ícone **users** (rosa) → modal **Membros da família** com código (ex.: **Família IBN0103**), nomes, parentesco e WhatsApp. |
-| O modal da família veio vazio — o que fazer? | Pode não haver integrantes reconhecidos no núcleo, falta de permissão ACL ou RPCs não aplicados no Supabase — avise a secretaria/TI. A mensagem *Nenhum membro reconhecido nesta família* ou erro em vermelho explica o caso. |
-| Como contato alguém pelo WhatsApp? | Na lista ou no modal familiar, toque o ícone **WhatsApp** (verde) ao lado do nome quando houver telefone cadastrado. |
-| Para que serve o Mapa Geral? | Abre `/mapa-geolocalizacao` com pins de endereços; filtros **Todos**, **Com papel** e **Visitantes**. Membros veem o mapa; **detalhe ao clicar no pin** (localização de outros) só com permissão pastoral/super_admin. |
-
-# Dia 5 — Aniversariantes e Financeiro
 
 ### Ilustração — Mapa Geral
 
@@ -858,15 +879,25 @@ Painel → **Financeiro** → *Toque para abrir o módulo financeiro.*
 
 
 
-
-
-
-
 ### Resultado esperado
 
 - Tabelas e totais do mês selecionado — **sem editar** valores (consulta).
 - Mês sem orçamento: aviso *Sem orçamento planejado para este mês* na seção planejado × realizado.
 - **Saldo bancário** mostra contas com movimento (Sicredi, Mercado Pago, etc.) e **Saldo total**.
+
+---
+
+## Perguntas e respostas — Dia 5
+
+| Pergunta | Resposta |
+|----------|----------|
+| Como filtro aniversariantes do mês? | Card **Aniversariantes** → escolha o **mês** → lista com datas e atalho WhatsApp. |
+| O card Financeiro mostra o quê? | Hub de relatórios: **Relatório de Despesas (RD)** em destaque, fluxo de caixa e categorias conforme permissão. |
+| Quem acessa o Financeiro? | Perfis com grant no card (ex.: **`member`**, **`tesoureiro`**) — definido pelo ACL da igreja. |
+| Posso ver lançamentos de outros meses? | Conforme telas `/financial` — navegue períodos disponíveis para seu papel. |
+
+# Dia 6 — Relatório de Despesas (RD), Escalas e Servos
+
 
 ---
 
@@ -883,20 +914,6 @@ Painel → **Financeiro** → atalho **Relatório de Despesas (RD)** — ou rota
 ![Relatório de Despesas (RD) — captura anotada](docs/manual-painel/screens/11-relatorio-despesas.png)
 
 | Ref. | Elemento indicado na imagem |
-
----
-
-## Perguntas e respostas — Dia 5
-
-| Pergunta | Resposta |
-|----------|----------|
-| Como filtro aniversariantes do mês? | Card **Aniversariantes** → escolha o **mês** → lista com datas e atalho WhatsApp. |
-| O card Financeiro mostra o quê? | Hub de relatórios: **Relatório de Despesas (RD)** em destaque, fluxo de caixa e categorias conforme permissão. |
-| Quem acessa o Financeiro? | Perfis com grant no card (ex.: **`member`**, **`tesoureiro`**) — definido pelo ACL da igreja. |
-| Posso ver lançamentos de outros meses? | Conforme telas `/financial` — navegue períodos disponíveis para seu papel. |
-
-# Dia 6 — Relatório de Despesas (RD), Escalas e Servos
-
 |:----:|------------------------------|
 | ① | **Chave PIX** do solicitante |
 | ② | Botão **Novo RD** |
@@ -1001,6 +1018,21 @@ Aparece automaticamente no carrossel após escolher uma escala com servos cadast
 
 ---
 
+## Perguntas e respostas — Dia 6
+
+| Pergunta | Resposta |
+|----------|----------|
+| Como envio um RD? | Card **Financeiro** → **Relatório de Despesas** → preencha itens → **Submeter e Finalizar**; pode abrir WhatsApp do tesoureiro. |
+| Qual o formato do número do RD? | Prefixo **AAMM** + sequência mensal (ex.: `250500001`) — configurado para o papel **tesoureiro**. |
+| Onde vejo minhas escalas? | Card **Escalas** → tipos de escala → datas e servos com WhatsApp. |
+| Card Servos em escala? | Visível quando seu perfil participa de escalas — lista de colegas na mesma data/tipo. |
+| RD ficou pendente? | Aguarde conciliação na **manutenção → Informações Financeiras** (tesoureiro/super_admin). |
+
+# Dia 7 — Estacionamento, Gestão de Cadastros e encerramento
+
+
+---
+
 # Parte 11 — Card Estacionamento *(quando visível)*
 
 ### Objetivo
@@ -1014,21 +1046,6 @@ Escalas → escala de estacionamento → **Identificar veículo** — ou card **
 ![Estacionamento — captura anotada](docs/manual-painel/screens/13-estacionamento.png)
 
 | Ref. | Elemento indicado na imagem |
-
----
-
-## Perguntas e respostas — Dia 6
-
-| Pergunta | Resposta |
-|----------|----------|
-| Como envio um RD? | Card **Financeiro** → **Relatório de Despesas** → preencha itens → **Submeter e Finalizar**; pode abrir WhatsApp do tesoureiro. |
-| Qual o formato do número do RD? | Prefixo **AAMM** + sequência mensal (ex.: `250500001`) — configurado para o papel **tesoureiro**. |
-| Onde vejo minhas escalas? | Card **Escalas** → tipos de escala → datas e servos com WhatsApp. |
-| Card Servos em escala? | Visível quando seu perfil participa de escalas — lista de colegas na mesma data/tipo. |
-| RD ficou pendente? | Aguarde conciliação na **manutenção → Informações Financeiras** (tesoureiro/super_admin). |
-
-# Dia 7 — Estacionamento, Gestão de Cadastros e encerramento
-
 |:----:|------------------------------|
 | ① | Campo **Número da placa** |
 | ② | Botão **Buscar** |

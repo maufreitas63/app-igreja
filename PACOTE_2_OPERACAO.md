@@ -498,6 +498,12 @@ Fluxo recomendado de uso:
 
 ---
 
+**Sigilo:** acesso restrito à equipe pastoral. **Intercessão:** pode ser compartilhado com grupo de intercessão (conforme política da igreja).
+
+**Como escolho Motivo e Situação?**  
+Use os **chips** na tela (categorias carregadas do servidor). Em telas estreitas, Motivo e Situação aparecem empilhados.
+
+**Posso pedir para outra pessoa?**  
 Sim — selecione beneficiário **família** ou **terceiro** e preencha os dados.
 
 **Onde vejo pedidos enviados?**  
@@ -536,9 +542,3 @@ Pode encerrar o aplicativo após limpar a sessão — comportamento esperado.
 **Saia** no aparelho antigo; no novo, login com celular + senha.
 
 **Mudaram minhas permissões e um card sumiu.**  
-Saia e **entre de novo** para recarregar permissões do servidor.
-
----
-
-## 17. Totem de check-in
-

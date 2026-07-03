@@ -64,8 +64,8 @@ O app envia celular e senha para o servidor (**Supabase**), que valida através 
 Na **primeira entrada**, o texto abaixo do campo de senha explica se o WhatsApp abre no **seu celular** ou no **gestor** — isso depende da configuração da igreja (`psw_user` / `psw_mngr`). Leia o hint antes de tocar no ícone.
 
 > **Se algo der errado**  
-> - *"Número ou senha inválidos"* — confira os 4 dígitos; na primeira vez, gere novo código pelo WhatsApp.  
-> - *"Código necessário"* — toque no WhatsApp antes de digitar a senha.  
+> - *"Número ou senha inválidos"* — confira os 4 dígitos; se **esqueceu** a senha pessoal, use **Esqueci minha senha** no passo 2 (e-mail). Na **primeira vez**, gere código pelo **WhatsApp**.  
+> - *"Código necessário"* — toque em **Receber código no WhatsApp** antes de digitar a senha.  
 > - *"Validação indisponível"* — problema técnico no servidor; avise a equipe de TI da igreja.
 
 ---
@@ -369,7 +369,8 @@ Marque mentalmente cada item:
 
 | Situação | O que fazer |
 |----------|-------------|
-| Esqueci minha senha | Gere nova pelo **WhatsApp** na tela de login ou peça à secretaria |
+| Esqueci minha senha (já cadastrado) | **Passo 2** do login → **Esqueci minha senha** → pergunta de segurança → novo PIN por **e-mail** |
+| Primeira entrada | **Receber código no WhatsApp** no passo 2 |
 | QR não aparece | Confirme: audiência marcada? É o dia do evento? Código de família cadastrado? |
 | Card não aparece no Painel | Permissão do perfil — fale com administrador |
 | Erro técnico persistente | Anote a mensagem na tela e contate a equipe de TI da igreja |
