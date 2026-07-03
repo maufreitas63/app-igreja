@@ -72,7 +72,7 @@ export function GhostModeProvider({ children }: PropsWithChildren) {
 
       invalidateSessionProfileCache();
       invalidateAccessControlCache({ allProfiles: true });
-      router.replace('/(tabs)/dashboard');
+      router.replace('/(tabs)');
 
       return { success: true, message: `Modo Ghost ativo: ${input.targetFullName}` };
     },
@@ -94,7 +94,7 @@ export function GhostModeProvider({ children }: PropsWithChildren) {
     clearGhostModeState();
     invalidateSessionProfileCache();
     invalidateAccessControlCache({ allProfiles: true });
-    router.replace('/(tabs)/dashboard');
+    router.replace('/(tabs)');
   }, [router]);
 
   const value = useMemo<GhostModeContextValue>(
