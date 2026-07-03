@@ -11,7 +11,7 @@ import {
   type MinisterialQuestion,
 } from '@/lib/ministerialProfileQuestionnaire';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -38,6 +38,13 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
   const [stepIndex, setStepIndex] = useState(0);
   const [existingResult, setExistingResult] = useState<MinisterialProfileResult | null>(null);
   const [submittedLabel, setSubmittedLabel] = useState<string | null>(null);
+  const questionsScrollRef = useRef<ScrollView>(null);
+
+  const scrollQuestionsToTop = useCallback(() => {
+    requestAnimationFrame(() => {
+      questionsScrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+    });
+  }, []);
 
   const resetState = useCallback(() => {
     setPhase('loading');
@@ -92,6 +99,14 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
 
     void loadData();
   }, [loadData, visible]);
+
+  useLayoutEffect(() => {
+    if (phase !== 'questions') {
+      return;
+    }
+
+    scrollQuestionsToTop();
+  }, [phase, scrollQuestionsToTop, stepIndex]);
 
   const stepQuestions = useMemo(
     () => getMinisterialStepQuestions(questions, stepIndex),
@@ -271,6 +286,7 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
 
     return (
       <ScrollView
+        ref={questionsScrollRef}
         style={styles.bodyScroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
