@@ -1,7 +1,35 @@
 -- Questionário de Perfil Ministerial (50 perguntas).
--- Execute no SQL Editor do Supabase APÓS profile-sessions.sql e access-control-security-hardening.sql.
+-- Execute no SQL Editor do Supabase APÓS profile-sessions.sql (sessão com current_session_profile_id).
 -- Depois: Settings → API → Reload schema.
 -- Seed: execute também scripts/ministerial-profile-questionnaire-seed.sql
+--
+-- Este script inclui assert_session_profile_matches caso access-control-security-hardening.sql
+-- ainda não tenha sido aplicado.
+
+-- ---------------------------------------------------------------------------
+-- Pré-requisitos (idempotente)
+-- ---------------------------------------------------------------------------
+
+create or replace function public.assert_session_profile_matches(p_profile_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_profile_id is null then
+    raise exception 'Perfil não informado.';
+  end if;
+
+  if public.current_session_profile_id() is null then
+    raise exception 'Sessão não identificada.';
+  end if;
+
+  if p_profile_id <> public.current_session_profile_id() then
+    raise exception 'Operação permitida apenas para o perfil da sessão atual.';
+  end if;
+end;
+$$;
 
 -- ---------------------------------------------------------------------------
 -- Tabelas
