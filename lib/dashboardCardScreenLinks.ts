@@ -45,7 +45,7 @@ export const DASHBOARD_CARD_BLOCKED_MESSAGES: Partial<Record<string, string>> = 
   financial: 'Você não tem permissão para abrir o módulo financeiro.',
   vigilance_scales: 'Você não tem permissão para abrir Escalas.',
   parking_vehicle_v2: 'Você não tem permissão para abrir o painel de estacionamento.',
-  grouped_manage: 'Você não tem permissão para abrir Dados Cadastrais.',
+  grouped_manage: 'Você não tem permissão para abrir Perfil & Identidade.',
   members_list: 'Você não tem permissão para abrir a Lista de Membros.',
   event_alt: 'Você não tem permissão para abrir a Agenda da Família.',
 };

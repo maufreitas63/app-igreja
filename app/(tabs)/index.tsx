@@ -79,7 +79,7 @@ const DASHBOARD_SHORTCUTS_BASE: DashboardShortcut[] = [
   { id: 'aniversariantes', label: 'Aniversariantes', dashboardCard: '7' },
   { id: 'financeiro', label: 'Financeiro', dashboardCard: '11' },
   { id: 'escalas', label: 'Escalas', dashboardCard: '8' },
-  { id: 'menu', label: 'Dados Cadastrais', dashboardCard: '6' },
+  { id: 'menu', label: 'Perfil & Identidade', dashboardCard: '6' },
   { id: 'administrativo', label: 'Administrativo', dashboardCard: '13' },
 ];
 

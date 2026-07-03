@@ -1813,7 +1813,7 @@ export default function Dashboard() {
       ...(isParkingPanelVisible
         ? [{ id: '9', title: 'Estacionamento', content: 'parking_vehicle_v2' as const }]
         : []),
-      { id: '6', title: 'Dados Cadastrais', content: 'grouped_manage' },
+      { id: '6', title: 'Perfil & Identidade', content: 'grouped_manage' },
       ...(hasActiveMembership
         ? [{ id: '13', title: 'Administrativo', content: 'administrativo' as const }]
         : []),
@@ -2764,7 +2764,7 @@ export default function Dashboard() {
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
-                    <Text style={styles.dashboardPanelTitle}>Gestão de Cadastros</Text>
+                    <Text style={styles.dashboardPanelTitle}>Perfil & Identidade</Text>
                     <View style={styles.groupedManageBody}>
                       <TouchableOpacity
                         style={[styles.groupedManageButton, styles.groupedManageButtonProfile]}
