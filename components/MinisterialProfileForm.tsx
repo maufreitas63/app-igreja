@@ -223,14 +223,14 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>Perfil Ministerial</Text>
           <Text style={styles.subtitle}>
-            Responda 50 perguntas sobre sua identidade e chamado no serviço cristão. O resultado indica o
-            perfil ministerial predominante — sem expor a lógica de pontuação.
+            Responda 50 perguntas sobre sua identidade e chamado no serviço cristão. O resultado indicará o
+            perfil ministerial predominante.
           </Text>
           <View style={styles.infoBox}>
             <Text style={styles.infoTitle}>Como funciona</Text>
             <Text style={styles.infoItem}>• 10 etapas com 5 perguntas cada</Text>
             <Text style={styles.infoItem}>• Barra de progresso durante o preenchimento</Text>
-            <Text style={styles.infoItem}>• Resultado calculado com segurança no servidor</Text>
+            <Text style={styles.infoItem}>• Resultado calculado do perfil ministerial predominante</Text>
           </View>
           <TouchableOpacity style={styles.primaryButton} onPress={handleStart} activeOpacity={0.85}>
             <Text style={styles.primaryButtonText}>Começar questionário</Text>
