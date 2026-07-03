@@ -30,41 +30,6 @@ type Props = {
   panelHeight: number;
 };
 
-const formatPreviewDate = (value: string | null) => {
-  if (!value) {
-    return '—';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-};
-
-const formatPreviewDateTime = (value: string | null) => {
-  if (!value) {
-    return '—';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-};
-
-const PreviewRow = ({ label, value }: { label: string; value: string | null | undefined }) => (
-  <View style={styles.previewRow}>
-    <Text style={styles.previewLabel}>{label}</Text>
-    <Text style={styles.previewValue}>{value?.trim() || '—'}</Text>
-  </View>
-);
-
 const RESOURCE_TYPE_LABELS: Record<GhostModeAccessAuditRow['resourceType'], string> = {
   screen: 'Telas',
   table: 'Tabelas',
@@ -237,7 +202,7 @@ function GhostModeAccessAuditPanel({
   );
 }
 
-function GhostModeProfilePreviewPanel({
+function GhostModeRolesPreviewPanel({
   loading,
   error,
   preview,
@@ -249,7 +214,8 @@ function GhostModeProfilePreviewPanel({
   if (loading) {
     return (
       <View style={styles.previewBox}>
-        <CardLoadingState lines={4} compact />
+        <Text style={styles.previewTitle}>Papéis de acesso</Text>
+        <CardLoadingState lines={3} compact />
       </View>
     );
   }
@@ -257,7 +223,7 @@ function GhostModeProfilePreviewPanel({
   if (error) {
     return (
       <View style={styles.previewBox}>
-        <Text style={styles.previewTitle}>Prévia do usuário selecionado</Text>
+        <Text style={styles.previewTitle}>Papéis de acesso</Text>
         <Text style={styles.previewError}>{error}</Text>
       </View>
     );
@@ -267,57 +233,15 @@ function GhostModeProfilePreviewPanel({
     return null;
   }
 
-  const { profile, roles, implicitVisitante } = preview;
-  const addressParts = [
-    profile.addressStreet,
-    profile.addressNumber,
-    profile.addressNeighborhood,
-    profile.addressCity,
-    profile.addressState,
-  ].filter(Boolean);
+  const { roles, implicitVisitante } = preview;
 
   return (
     <View style={styles.previewBox}>
-      <Text style={styles.previewTitle}>Prévia do usuário selecionado</Text>
+      <Text style={styles.previewTitle}>Papéis de acesso</Text>
       <Text style={styles.previewSubtitle}>
-        Confira identidade, membresia e papéis antes de ativar o Modo Ghost.
+        Papéis atribuídos ao usuário selecionado antes de ativar o Modo Ghost.
       </Text>
 
-      <Text style={styles.previewSectionTitle}>Identificação</Text>
-      <PreviewRow label="Nome completo" value={profile.fullName} />
-      <PreviewRow label="Telefone" value={profile.phone} />
-      <PreviewRow label="Código de membro" value={profile.memberCode} />
-      <PreviewRow label="Família" value={profile.familyId} />
-      <PreviewRow label="CPF" value={profile.cpf} />
-      <PreviewRow label="E-mail" value={profile.email} />
-      <PreviewRow label="Nascimento" value={formatPreviewDate(profile.birthDate)} />
-      <PreviewRow label="ID do perfil" value={profile.id} />
-
-      <Text style={styles.previewSectionTitle}>Membresia e LGPD</Text>
-      <PreviewRow
-        label="Status"
-        value={
-          profile.membershipOut
-            ? `Desligado em ${formatPreviewDate(profile.membershipOut)}`
-            : 'Ativo no aplicativo'
-        }
-      />
-      <PreviewRow
-        label="LGPD aceita"
-        value={
-          profile.lgpdAccepted === true
-            ? 'Sim'
-            : profile.lgpdAccepted === false
-              ? 'Não'
-              : '—'
-        }
-      />
-
-      <Text style={styles.previewSectionTitle}>Endereço</Text>
-      <PreviewRow label="CEP" value={profile.cep} />
-      <PreviewRow label="Endereço" value={addressParts.length ? addressParts.join(', ') : null} />
-
-      <Text style={styles.previewSectionTitle}>Papéis de acesso</Text>
       {implicitVisitante ? (
         <Text style={styles.visitanteHint}>
           Nenhum papel atribuído — o aplicativo trata este perfil como visitante.
@@ -336,10 +260,6 @@ function GhostModeProfilePreviewPanel({
       ) : (
         <Text style={styles.previewMuted}>Sem papéis explícitos na tabela de acesso.</Text>
       )}
-
-      <Text style={styles.previewSectionTitle}>Registro</Text>
-      <PreviewRow label="Criado em" value={formatPreviewDateTime(profile.createdAt)} />
-      <PreviewRow label="Atualizado em" value={formatPreviewDateTime(profile.updatedAt)} />
     </View>
   );
 }
@@ -556,7 +476,7 @@ export function MaintenanceGhostModeCard({ isActive = false, panelHeight }: Prop
 
           {selectedProfileId ? (
             <>
-              <GhostModeProfilePreviewPanel
+              <GhostModeRolesPreviewPanel
                 loading={previewLoading}
                 error={previewError}
                 preview={preview}
@@ -652,23 +572,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginTop: 10,
     marginBottom: 4,
-  },
-  previewRow: {
-    gap: 2,
-    marginBottom: 4,
-  },
-  previewLabel: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  previewValue: {
-    color: '#E2E8F0',
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 18,
   },
   previewError: {
     color: '#FCA5A5',
