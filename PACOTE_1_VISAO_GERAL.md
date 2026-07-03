@@ -20,7 +20,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`BLUEPRINT.md`](BLUEPRINT.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md)
 
-**Atualizado em:** 02/07/2026
+**Atualizado em:** 03/07/2026
 
 ---
 
@@ -44,13 +44,16 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 - **Trava LGPD** — rolagem obrigatória dos termos antes do aceite
 - Upload de **selfie** (câmera nativa ou arquivo na web)
 - Reserva automática de **código de família** (`family_id`)
-- **Dados cadastrais** — edição de perfil com seções recolhíveis
+- Card **Perfil & Identidade** (`grouped_manage`) — atalho no Índice e no carrossel do Painel
+- **Dados cadastrais** — edição de perfil com seções recolhíveis (`/manage-profile`)
 - Campos: nome, nascimento, CPF, e-mail, telefone, endereço completo
 - **Sync de endereço por CEP** (RPC `sync_profile_address_from_cep`)
 - **Alteração de senha de acesso** (PIN atual → novo PIN)
 - **Selfie** — captura, substituição com confirmação
 - **Veículos** — cadastro de placa, marca, modelo e cor
 - **Vincular à família** — busca por código e solicitação de vínculo
+- **Perfil Ministerial** — questionário de **50 perguntas** em **10 etapas** (modal); resultado predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor) com texto descritivo; pontuação e desempate no servidor; tabelas `ministerial_*` e RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial` (scripts `ministerial-profile-questionnaire.sql`, seed e `ministerial-profile-questionnaire-session-fix.sql`); refazer **substitui** respostas e resultado anteriores (sem histórico)
+- **Paleta de cores** — seletor no rodapé do card Perfil & Identidade
 - **Onboarding** — fluxo guiado para completar cadastro pendente
 - **Termos LGPD** — tela dedicada para aceite/recusa com registro no banco
 - Controle de colunas por **ACL** (campos visíveis/editáveis por papel)
@@ -104,7 +107,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **Financeiro** | Hub: relatórios (`/financial`) e **Relatório de Despesas (RD)** destacado (`/expense-report`); Fluxo de caixa, Categorias e Relatórios extras em breve |
 | **Escalas** | Lista de tipos de escala, escala por data, WhatsApp dos servos |
 | **Estacionamento** | Identificação de veículo por placa, WhatsApp do proprietário |
-| **Gestão de Cadastros** (`grouped_manage`) | Título do card; atalhos **Dados Cadastrais** e **Gerenciar Família** com ícones |
+| **Perfil & Identidade** (`grouped_manage`) | Título do card e atalho no Índice; **Dados Cadastrais**, **Gerenciar Família**, **Perfil Ministerial** (questionário de 50 perguntas em 10 etapas) e **Paleta de cores** |
 
 ---
 
@@ -246,7 +249,9 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **Cadastro de Usuário** | Busca, correção de CEP/endereço e exclusão completa de perfil *(super_admin)* |
 | **Recepção Familiar** | Fila do formulário público `/cadastro-familia/` — gravar ou rejeitar em lote |
 | **Controle de Acesso** | Papéis, grants; visão por papel **ou por recurso** (toque no marcador colorido); seleção de perfil por dropdown *(super_admin)* |
-| **Mudança de Papéis** | Alterar visitante/congregado/membro *(pastoral, super_admin)* |
+| **Mudança de Papéis** | Alterar visitante/congregado/membro; contagem de **membros ativos** e **congregados ativos** (`membership_out` efetiva, herança familiar) *(pastoral, super_admin)* |
+| **Relatórios** | Catálogo analítico (7 relatórios): membros ativos/inativos, necessidades pastorais, saúde infantil (LGPD), quórum, estacionamento, sugestões e melhorias, inscritos por evento — **sem** Faixa Etária |
+| **Modo Ghost (Auditor)** | Simula sessão de outro perfil para auditoria de permissões — grant **explícito** em `maintenance.card.auditor` ou `super_admin` (`can_operate_ghost_mode`; script `access-control-ghost-mode.sql`) |
 | **Acessos de Usuários** | Histórico de logins e telas por sessão; limpeza global *(super_admin)* |
 
 ---
@@ -762,7 +767,7 @@ Respostas às dúvidas mais comuns sobre o aplicativo da **Igreja Batista Norte*
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`FUNCIONALIDADES.md`](FUNCIONALIDADES.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`BLUEPRINT.md`](BLUEPRINT.md)
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 03/07/2026
 
 ---
 
@@ -780,7 +785,7 @@ Respostas às dúvidas mais comuns sobre o aplicativo da **Igreja Batista Norte*
 9. [Aniversariantes](#9-aniversariantes)
 10. [Financeiro (membro)](#10-financeiro-membro)
 11. [Escalas e Estacionamento](#11-escalas-e-estacionamento)
-12. [Dados Cadastrais](#12-dados-cadastrais)
+12. [Perfil & Identidade e Dados Cadastrais](#12-perfil--identidade-e-dados-cadastrais)
 13. [Gerenciar Família](#13-gerenciar-família)
 14. [Coração Aberto e Meus Pedidos](#14-coração-aberto-e-meus-pedidos)
 15. [Termos LGPD](#15-termos-lgpd)
@@ -1117,9 +1122,11 @@ Não. Alterações são na **Manutenção → Programação de Escalas** *(staff
 
 ---
 
-## 12. Dados Cadastrais
+## 12. Perfil & Identidade e Dados Cadastrais
 
-**Não consigo ver alguns campos.**  
+O card e o atalho no Índice chamam-se **Perfil & Identidade**. Dentro dele ficam **Dados Cadastrais**, **Gerenciar Família**, **Perfil Ministerial** e a **Paleta de cores**.
+
+**Não consigo ver alguns campos em Dados Cadastrais.**  
 Permissões de **coluna** (ACL) podem ocultar CPF, alertas médicos, etc., conforme seu papel.
 
 **"Campo protegido" ao editar.**  
@@ -1139,6 +1146,12 @@ Seção **Vincular à família**: busque pelo código e solicite vínculo (confo
 
 **Cabeçalho pede "Complete seu cadastro".**  
 Faltam campos obrigatórios do onboarding (CPF, e-mail, endereço, etc.).
+
+**O que é o Perfil Ministerial?**  
+Questionário de **50 perguntas** (10 etapas) que indica o perfil predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor), com texto de reflexão. Acesse em **Perfil & Identidade → Perfil Ministerial**.
+
+**Se eu refizer o questionário, o resultado antigo fica salvo?**  
+Não. Ao **Finalizar** de novo, respostas e resultado anteriores são **substituídos** (não há histórico de tentativas).
 
 **Posso trocar de telefone?**  
 Sim, com fluxo dedicado que atualiza perfil e sessão — use com cuidado para não perder acesso.

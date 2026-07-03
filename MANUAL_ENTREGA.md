@@ -4,7 +4,7 @@
 **Sistema:** Aplicativo digital da Igreja Batista Norte  
 **Repositório:** `maufreitas63/app-igreja`  
 **Versão do app:** 1.0.0  
-**Data:** 2 de julho de 2026  
+**Data:** 3 de julho de 2026  
 **Públicos:** Cliente final (valor e usabilidade) · Equipe de manutenção (arquitetura e lógica)
 
 ---
@@ -121,7 +121,7 @@ O dashboard é um **carrossel de cards** — deslize horizontalmente ou use as s
 | **Financeiro** | Hub para relatórios autorizados e relatório de despesas (RD) |
 | **Escalas** | Consulta quando e com quem serve em cada tipo de escala |
 | **Estacionamento** | Identifica dono do veículo pela placa e abre WhatsApp |
-| **Gestão de Cadastros** | Atalhos para perfil e família |
+| **Perfil & Identidade** | Atalhos para dados cadastrais, família, questionário de perfil ministerial (50 perguntas) e paleta de cores |
 
 **Índice do aplicativo:** tela inicial com atalhos visuais para cada card — útil em telas grandes ou para quem prefere menu em vez de carrossel.
 

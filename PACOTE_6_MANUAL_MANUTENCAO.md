@@ -24,7 +24,7 @@ Manual **autocontido** para quem **gerencia** o aplicativo: secretaria, líderes
 
 **Pacote:** [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · **Membros:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md)
 
-**Atualizado em:** 02/07/2026
+**Atualizado em:** 03/07/2026
 
 ---
 
@@ -1004,7 +1004,11 @@ O card fica **por último** no carrossel de manutenção para não atrapalhar a 
 | Quórum | scripts de quórum citados na UI da Lista de Presença |
 | RD (relatórios de despesas) | `expense-reports-schema.sql`, `expense-reports-rpc.sql` |
 | Recepção familiar | `recepcao-cadastro-familiar.sql` |
-| Mudança de papéis | `access-control-pastoral-role-change.sql` |
+| Mudança de papéis | `access-control-pastoral-role-change.sql`, `access-control-pastoral-congregado-membership.sql` |
+| Modo Ghost (auditor) | `access-control-ghost-mode.sql` — grant explícito em `maintenance.card.auditor` ou `super_admin` |
+| Perfil ministerial (membro) | `ministerial-profile-questionnaire.sql`, `ministerial-profile-questionnaire-seed.sql`, `ministerial-profile-questionnaire-session-fix.sql` |
+| Relatórios de manutenção | `maintenance-reports-access.sql`, `maintenance-reports-rpc.sql` (catálogo na UI: **7** relatórios; Faixa Etária removida) |
+| Recuperação de senha (e-mail) | `password-recovery-security.sql`, `password-recovery-email-flow.sql` |
 | Histórico de acessos / telas | `access-control-profile-access-insights.sql`, `profile-access-insights.sql` ou `profile-access-insights-screen-visits-patch.sql`; hotfix limpeza: `profile-access-insights-clear-fix.sql` |
 | Excluir perfil completo | `delete-profile-complete-rpc.sql` |
 
@@ -1039,5 +1043,5 @@ Card **Manutenção** → **Menu** → Índice → **Encerrar sessão**; ou use 
 
 ---
 
-*App IBN · Igreja Batista Norte · Manual de Manutenção v2026-06-23*
+*App IBN · Igreja Batista Norte · Manual de Manutenção v2026-07-03*
 

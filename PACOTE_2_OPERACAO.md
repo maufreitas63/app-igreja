@@ -498,6 +498,14 @@ Fluxo recomendado de uso:
 
 ---
 
+---
+
+## 14. Coração Aberto e Meus Pedidos
+
+**O que é Coração Aberto?**  
+Canal para pedidos de **cuidado pastoral**, oração ou intercessão.
+
+**Qual a diferença entre Sigilo pastoral e Intercessão?**  
 **Sigilo:** acesso restrito à equipe pastoral. **Intercessão:** pode ser compartilhado com grupo de intercessão (conforme política da igreja).
 
 **Como escolho Motivo e Situação?**  
@@ -534,11 +542,3 @@ Depende da política da igreja; o app registra sua preferência. Alguns recursos
 
 **Qual a diferença entre Menu e Sair?**  
 No **Painel**, **Menu** leva aos atalhos. O **Sair** / **Encerrar sessão** fica na tela de atalhos (rodapé).
-
-**Sair fecha o app no Android?**  
-Pode encerrar o aplicativo após limpar a sessão — comportamento esperado.
-
-**Troquei de celular. O que faço?**  
-**Saia** no aparelho antigo; no novo, login com celular + senha.
-
-**Mudaram minhas permissões e um card sumiu.**  

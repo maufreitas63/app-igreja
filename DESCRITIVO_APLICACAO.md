@@ -3,7 +3,7 @@
 **Sistema:** Aplicativo digital da Igreja Batista Norte  
 **Repositório:** `maufreitas63/app-igreja`  
 **Versão do app:** 1.0.0  
-**Data deste documento:** 2 de julho de 2026
+**Data deste documento:** 3 de julho de 2026
 
 **Documentação de entrega:** [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) · [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
@@ -11,7 +11,7 @@
 
 ## 1. Resumo executivo
 
-O **app-igreja** é uma plataforma **PWA (Progressive Web App)** e **mobile** (Expo/React Native) que centraliza a operação digital da igreja: login de membros, cadastro e LGPD, dashboard com cards operacionais, check-in em eventos (totem com QR Code, **check-in automático por proximidade/geofence**), gestão familiar, módulo pastoral, financeiro, escalas, mapa de geolocalização por CEP, painel de manutenção administrativa e controle de acesso granular (ACL).
+O **app-igreja** é uma plataforma **PWA (Progressive Web App)** e **mobile** (Expo/React Native) que centraliza a operação digital da igreja: login de membros (primeira entrada por WhatsApp; **recuperação de senha por e-mail**), cadastro e LGPD, dashboard com cards operacionais (incluindo **Perfil & Identidade** com questionário de **perfil ministerial**), check-in em eventos (totem com QR Code, **check-in automático por proximidade/geofence**), gestão familiar, módulo pastoral, financeiro, escalas, mapa de geolocalização por CEP, painel de manutenção administrativa (relatórios, **Modo Ghost** com grant explícito) e controle de acesso granular (ACL).
 
 Não há servidor de API próprio: o cliente comunica-se diretamente com o **Supabase** (PostgreSQL, RPCs, RLS, Storage) via HTTPS. O deploy de produção é automático via **Cloudflare Pages** a cada push na branch `main`.
 
@@ -86,6 +86,7 @@ Não há servidor de API próprio: o cliente comunica-se diretamente com o **Sup
 | **Geolocalização** | `cep_geolocation`, endereços sincronizados por CEP |
 | **Parâmetros** | `app_parameters` (LGPD ativo, totem, etc.) |
 | **Versículos** | `bible_themes`, `bible_verses_by_theme`, RPC `get_random_bible_verse` |
+| **Perfil ministerial** | `ministerial_perguntas`, `ministerial_opcoes`, `ministerial_respostas`, `ministerial_resultados`; RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial` |
 | **Recepção familiar** | Fila de cadastros públicos |
 
 ### 3.2 Armazenamento local (dispositivo)
@@ -100,6 +101,9 @@ Não há servidor de API próprio: o cliente comunica-se diretamente com o **Sup
 - **144 arquivos `.sql`** em `scripts/` (incluindo 15 partes de dados bíblicos).
 - Categorias: ACL (~33), perfis/sessão (~35), família/membros (~35), eventos/check-in/geo (~17), financeiro (~10), pastoral (~7), escalas (~8), CEP/geo (~8), versículos bíblicos (~18), diagnóstico, seeds de teste (TSTMAX), entre outros.
 - **Geofence (jun/2026):** `events-geofence-ativo.sql`, `event-favorite-locations.sql`, `geo-checkin-automatic.sql`, `geo-checkin-purge-on-event-update.sql` — RPCs atômicas, `normalize_location_key`, triggers de invalidação, RLS restrito em locais favoritos.
+- **Perfil ministerial (jul/2026):** `ministerial-profile-questionnaire.sql`, `ministerial-profile-questionnaire-seed.sql`, `ministerial-profile-questionnaire-session-fix.sql`.
+- **Modo Ghost (jul/2026):** `access-control-ghost-mode.sql` — `can_operate_ghost_mode` exige grant explícito em `maintenance.card.auditor` ou `super_admin`.
+- **Recuperação de senha por e-mail:** `password-recovery-security.sql`, `password-recovery-email-flow.sql`.
 - **Execução:** manual no SQL Editor do Supabase ou via scripts Node (`apply-bible-verses-supabase.mjs`).
 
 ---

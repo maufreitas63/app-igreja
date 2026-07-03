@@ -160,7 +160,11 @@ Scripts **incrementais** (se o seed for antigo ou algo sumir no app):
 | `app-parameter-lgpd-ativo.sql` / `app-parameter-lgpd-ativo-dedupe.sql` | Parâmetro **`LGPD_Ativo`** (`sim` / `nao`) — reconhecimento opcional de LGPD |
 | `access-control-map-pin-detail.sql` | Recurso **`/mapa-geolocalizacao/detalhe-pin`** — detalhe de pin só pastoral/super_admin |
 | `family-event-audience-members.sql` | RPC de audiência familiar incluindo congregados e dependentes não rejeitados |
-| `access-control-ghost-mode.sql` | Modo Ghost (auditoria de permissões) — sessão efetiva simulada *(super_admin)* |
+| `access-control-ghost-mode.sql` | Modo Ghost (auditoria de permissões) — sessão efetiva simulada; exige grant **explícito** em `maintenance.card.auditor` ou papel `super_admin` (`can_operate_ghost_mode`) |
+| `ministerial-profile-questionnaire.sql` | Questionário de Perfil Ministerial (tabelas + RPCs) |
+| `ministerial-profile-questionnaire-seed.sql` | Seed das 50 perguntas e opções |
+| `ministerial-profile-questionnaire-session-fix.sql` | Patch de validação de sessão do questionário (`ministerial_require_session_profile`) |
+| `maintenance-reports-age-brackets-active-membership-patch.sql` | Patch legado de Faixa Etária (relatório **removido** do catálogo na UI) |
 
 ### 3.1 Primeiro super administrador
 
@@ -1730,12 +1734,16 @@ Recursos protegidos:
 
 ---
 
-#### Card 10 — Dados Cadastrais (`grouped_manage`)
+#### Card 10 — Perfil & Identidade (`grouped_manage`)
+
+Título na UI e no Índice: **Perfil & Identidade** (recurso ACL `dashboard.card.grouped_manage`).
 
 | Elemento | Função |
 |----------|--------|
 | **Dados Cadastrais** | `/manage-profile` |
 | **Gerenciar Família** | `/manage-members` |
+| **Perfil Ministerial** | Modal com questionário (50 perguntas / 10 etapas); RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial`; tabelas `ministerial_perguntas`, `ministerial_opcoes`, `ministerial_respostas`, `ministerial_resultados`; scripts `ministerial-profile-questionnaire.sql`, seed e `ministerial-profile-questionnaire-session-fix.sql` |
+| **Paleta de cores** | Rodapé do card (`GroupedManagePaletteFooter`) |
 
 ---
 

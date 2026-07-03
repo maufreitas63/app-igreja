@@ -4,7 +4,7 @@ Respostas às dúvidas mais comuns sobre o aplicativo da **Igreja Batista Norte*
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`FUNCIONALIDADES.md`](FUNCIONALIDADES.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`BLUEPRINT.md`](BLUEPRINT.md)
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 03/07/2026
 
 ---
 
@@ -22,7 +22,7 @@ Respostas às dúvidas mais comuns sobre o aplicativo da **Igreja Batista Norte*
 9. [Aniversariantes](#9-aniversariantes)
 10. [Financeiro (membro)](#10-financeiro-membro)
 11. [Escalas e Estacionamento](#11-escalas-e-estacionamento)
-12. [Dados Cadastrais](#12-dados-cadastrais)
+12. [Perfil & Identidade e Dados Cadastrais](#12-perfil--identidade-e-dados-cadastrais)
 13. [Gerenciar Família](#13-gerenciar-família)
 14. [Coração Aberto e Meus Pedidos](#14-coração-aberto-e-meus-pedidos)
 15. [Termos LGPD](#15-termos-lgpd)
@@ -359,9 +359,11 @@ Não. Alterações são na **Manutenção → Programação de Escalas** *(staff
 
 ---
 
-## 12. Dados Cadastrais
+## 12. Perfil & Identidade e Dados Cadastrais
 
-**Não consigo ver alguns campos.**  
+O card e o atalho no Índice chamam-se **Perfil & Identidade**. Dentro dele ficam **Dados Cadastrais**, **Gerenciar Família**, **Perfil Ministerial** e a **Paleta de cores**.
+
+**Não consigo ver alguns campos em Dados Cadastrais.**  
 Permissões de **coluna** (ACL) podem ocultar CPF, alertas médicos, etc., conforme seu papel.
 
 **"Campo protegido" ao editar.**  
@@ -381,6 +383,12 @@ Seção **Vincular à família**: busque pelo código e solicite vínculo (confo
 
 **Cabeçalho pede "Complete seu cadastro".**  
 Faltam campos obrigatórios do onboarding (CPF, e-mail, endereço, etc.).
+
+**O que é o Perfil Ministerial?**  
+Questionário de **50 perguntas** (10 etapas) que indica o perfil predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor), com texto de reflexão. Acesse em **Perfil & Identidade → Perfil Ministerial**.
+
+**Se eu refizer o questionário, o resultado antigo fica salvo?**  
+Não. Ao **Finalizar** de novo, respostas e resultado anteriores são **substituídos** (não há histórico de tentativas).
 
 **Posso trocar de telefone?**  
 Sim, com fluxo dedicado que atualiza perfil e sessão — use com cuidado para não perder acesso.

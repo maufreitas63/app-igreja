@@ -77,7 +77,7 @@ Tela inicial após o login com **etiquetas** (atalhos) para cada módulo do Pain
 
 | 9 | Estacionamento | 11 | `parking_vehicle_v2` | Painel de estacionamento ativo |
 
-| 6 | Gestão de Cadastros | 12 | `grouped_manage` | Sempre (com ACL) — título na UI; atalhos Dados Cadastrais e Gerenciar Família |
+| 6 | Perfil & Identidade | 12 | `grouped_manage` | Sempre (com ACL) — título na UI; atalhos Dados Cadastrais, Gerenciar Família, Perfil Ministerial e Paleta de cores |
 
 
 
@@ -115,7 +115,7 @@ Tela inicial após o login com **etiquetas** (atalhos) para cada módulo do Pain
 
 | 11 | 9 | Estacionamento *(condicional)* |
 
-| 12 | 6 | Gestão de Cadastros |
+| 12 | 6 | Perfil & Identidade |
 
 
 
@@ -147,7 +147,7 @@ Quando Check In, Estacionamento e Servos em escala estão ocultos:
 
 | 8 | 8 | Escalas |
 
-| 9 | 6 | Gestão de Cadastros |
+| 9 | 6 | Perfil & Identidade |
 
 
 
@@ -195,11 +195,12 @@ Constante usada para o menu: `DASHBOARD_MENU_CARD_ID = '6'`.
 
 ---
 
-## Card Gestão de Cadastros (`grouped_manage`)
+## Card Perfil & Identidade (`grouped_manage`)
 
-- Título exibido: **Gestão de Cadastros** (identificador interno do card permanece `grouped_manage`).
-- Botões com ícones: **Dados Cadastrais** → `/manage-profile`; **Gerenciar Família** → `/manage-members`.
-- Ambos propagam `returnDashboardCard` para retorno ao card 6.
+- Título exibido: **Perfil & Identidade** (identificador interno do card permanece `grouped_manage`; atalho no Índice do Aplicativo com o mesmo nome).
+- Botões com ícones: **Dados Cadastrais** → `/manage-profile`; **Gerenciar Família** → `/manage-members`; **Perfil Ministerial** → questionário de 50 perguntas (modal; RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial`).
+- Rodapé: seletor de **Paleta de cores** (`GroupedManagePaletteFooter`).
+- Atalhos de tela propagam `returnDashboardCard` para retorno ao card 6.
 
 ---
 

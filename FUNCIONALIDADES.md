@@ -6,7 +6,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`BLUEPRINT.md`](BLUEPRINT.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md)
 
-**Atualizado em:** 02/07/2026
+**Atualizado em:** 03/07/2026
 
 ---
 
@@ -30,13 +30,16 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 - **Trava LGPD** — rolagem obrigatória dos termos antes do aceite
 - Upload de **selfie** (câmera nativa ou arquivo na web)
 - Reserva automática de **código de família** (`family_id`)
-- **Dados cadastrais** — edição de perfil com seções recolhíveis
+- Card **Perfil & Identidade** (`grouped_manage`) — atalho no Índice e no carrossel do Painel
+- **Dados cadastrais** — edição de perfil com seções recolhíveis (`/manage-profile`)
 - Campos: nome, nascimento, CPF, e-mail, telefone, endereço completo
 - **Sync de endereço por CEP** (RPC `sync_profile_address_from_cep`)
 - **Alteração de senha de acesso** (PIN atual → novo PIN)
 - **Selfie** — captura, substituição com confirmação
 - **Veículos** — cadastro de placa, marca, modelo e cor
 - **Vincular à família** — busca por código e solicitação de vínculo
+- **Perfil Ministerial** — questionário de **50 perguntas** em **10 etapas** (modal); resultado predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor) com texto descritivo; pontuação e desempate no servidor; tabelas `ministerial_*` e RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial` (scripts `ministerial-profile-questionnaire.sql`, seed e `ministerial-profile-questionnaire-session-fix.sql`); refazer **substitui** respostas e resultado anteriores (sem histórico)
+- **Paleta de cores** — seletor no rodapé do card Perfil & Identidade
 - **Onboarding** — fluxo guiado para completar cadastro pendente
 - **Termos LGPD** — tela dedicada para aceite/recusa com registro no banco
 - Controle de colunas por **ACL** (campos visíveis/editáveis por papel)
@@ -90,7 +93,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **Financeiro** | Hub: relatórios (`/financial`) e **Relatório de Despesas (RD)** destacado (`/expense-report`); Fluxo de caixa, Categorias e Relatórios extras em breve |
 | **Escalas** | Lista de tipos de escala, escala por data, WhatsApp dos servos |
 | **Estacionamento** | Identificação de veículo por placa, WhatsApp do proprietário |
-| **Gestão de Cadastros** (`grouped_manage`) | Título do card; atalhos **Dados Cadastrais** e **Gerenciar Família** com ícones |
+| **Perfil & Identidade** (`grouped_manage`) | Título do card e atalho no Índice; **Dados Cadastrais**, **Gerenciar Família**, **Perfil Ministerial** (questionário de 50 perguntas em 10 etapas) e **Paleta de cores** |
 
 ---
 
@@ -232,7 +235,9 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **Cadastro de Usuário** | Busca, correção de CEP/endereço e exclusão completa de perfil *(super_admin)* |
 | **Recepção Familiar** | Fila do formulário público `/cadastro-familia/` — gravar ou rejeitar em lote |
 | **Controle de Acesso** | Papéis, grants; visão por papel **ou por recurso** (toque no marcador colorido); seleção de perfil por dropdown *(super_admin)* |
-| **Mudança de Papéis** | Alterar visitante/congregado/membro *(pastoral, super_admin)* |
+| **Mudança de Papéis** | Alterar visitante/congregado/membro; contagem de **membros ativos** e **congregados ativos** (`membership_out` efetiva, herança familiar) *(pastoral, super_admin)* |
+| **Relatórios** | Catálogo analítico (7 relatórios): membros ativos/inativos, necessidades pastorais, saúde infantil (LGPD), quórum, estacionamento, sugestões e melhorias, inscritos por evento — **sem** Faixa Etária |
+| **Modo Ghost (Auditor)** | Simula sessão de outro perfil para auditoria de permissões — grant **explícito** em `maintenance.card.auditor` ou `super_admin` (`can_operate_ghost_mode`; script `access-control-ghost-mode.sql`) |
 | **Acessos de Usuários** | Histórico de logins e telas por sessão; limpeza global *(super_admin)* |
 
 ---

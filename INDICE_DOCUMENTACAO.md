@@ -4,7 +4,7 @@ Documentação completa do **app-igreja** (Igreja Batista Norte) para entrega ao
 
 Cada **pacote** é um arquivo **autocontido**: o texto integral dos documentos de referência está transcrito dentro do pacote (não é necessário abrir outros arquivos para ler o conteúdo).
 
-**Atualizado em:** 02/07/2026 · capturas com **dados reais** · ilustrações anotadas em **largura integral (100%)** nos PDFs (Pacotes 5, 6 e 7) · **LGPD opcional** (`LGPD_Ativo` sim/não) · **check-in geofence** e **manual de entrega** documentados · **mapa com detalhe de pin restrito** · **audiência com congregados** · **ACL visão por recurso** · **cache de navegação**
+**Atualizado em:** 03/07/2026 · capturas com **dados reais** · ilustrações anotadas em **largura integral (100%)** nos PDFs (Pacotes 5, 6 e 7) · **LGPD opcional** (`LGPD_Ativo` sim/não) · **check-in geofence** e **manual de entrega** documentados · **mapa com detalhe de pin restrito** · **audiência com congregados** · **ACL visão por recurso** · **cache de navegação** · **recuperação de senha por e-mail** · **Perfil & Identidade** (questionário ministerial de 50 perguntas) · **Modo Ghost** com grant explícito · catálogo de **Relatórios** sem Faixa Etária
 
 ---
 
@@ -121,4 +121,4 @@ Regenerar a planilha: `npm run build:validation-checklist-xlsx`
 
 ---
 
-*App IBN · Igreja Batista Norte · Documentação v2026-07-02*
+*App IBN · Igreja Batista Norte · Documentação v2026-07-03*

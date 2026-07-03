@@ -407,12 +407,16 @@ Recursos protegidos:
 
 ---
 
-#### Card 10 — Dados Cadastrais (`grouped_manage`)
+#### Card 10 — Perfil & Identidade (`grouped_manage`)
+
+Título na UI e no Índice: **Perfil & Identidade** (recurso ACL `dashboard.card.grouped_manage`).
 
 | Elemento | Função |
 |----------|--------|
 | **Dados Cadastrais** | `/manage-profile` |
 | **Gerenciar Família** | `/manage-members` |
+| **Perfil Ministerial** | Modal com questionário (50 perguntas / 10 etapas); RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial`; tabelas `ministerial_perguntas`, `ministerial_opcoes`, `ministerial_respostas`, `ministerial_resultados`; scripts `ministerial-profile-questionnaire.sql`, seed e `ministerial-profile-questionnaire-session-fix.sql` |
+| **Paleta de cores** | Rodapé do card (`GroupedManagePaletteFooter`) |
 
 ---
 

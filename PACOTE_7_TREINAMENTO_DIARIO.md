@@ -37,7 +37,7 @@ Treinamento **particionado por dia**, baseado integralmente no [Pacote 5 — Man
 | **Dia 4** | Coração Aberto e Lista de Membros | Parte correspondente (linhas 458–670) |
 | **Dia 5** | Aniversariantes e Financeiro | Parte correspondente (linhas 671–808) |
 | **Dia 6** | Relatório de Despesas (RD), Escalas e Servos | Parte correspondente (linhas 809–925) |
-| **Dia 7** | Estacionamento, Gestão de Cadastros e encerramento | Parte correspondente (linhas 926–fim) |
+| **Dia 7** | Estacionamento, Perfil & Identidade e encerramento | Parte correspondente (linhas 926–fim) |
 
 > **LGPD opcional:** nos Dias 1 e 7, quando a igreja mantém **`LGPD_Ativo = nao`**, ignore passos de termos/selfie e siga **cadastro simplificado** (seção 0.2b do Pacote 5).
 
@@ -85,7 +85,7 @@ Tela **Boas-vindas** → **1. Seu celular** → **Continuar** → **Receber cód
 - Na tela de boas-vindas, o passo **2 Código** fica ativo após o celular válido.
 
 ### Dica
-Depois do primeiro acesso, troque o código temporário por uma senha pessoal em **Gestão de Cadastros → Dados Cadastrais → Senha de acesso**.
+Depois do primeiro acesso, troque o código temporário por uma senha pessoal em **Perfil & Identidade → Dados Cadastrais → Senha de acesso**.
 
 ### Se der erro
 
@@ -280,7 +280,7 @@ Saber onde estão os módulos e como alternar entre cards.
 | O cabeçalho vermelho significa o quê? | Com **`LGPD_Ativo = sim`**, há pendência de aceite dos termos. Vá em **Dados Cadastrais → LGPD** ou à tela **Termos de Uso e Privacidade** (seção 0.3). Com LGPD inativo, esse alerta **não aparece**. |
 | Quem liga ou desliga o módulo LGPD? | Somente **super_admin** em **Manutenção → Controle de Acesso** (interruptor **LGPD Ativo / Inativo**). |
 | O que é o Índice do Aplicativo? | Tela inicial com **atalhos** para cada card do painel — distribuição uniforme na altura da tela (seção 0.4). |
-| Posso trocar a senha temporária? | Sim — em **Gestão de Cadastros → Dados Cadastrais → Senha de acesso** após o primeiro login. |
+| Posso trocar a senha temporária? | Sim — em **Perfil & Identidade → Dados Cadastrais → Senha de acesso** após o primeiro login. |
 | Esqueci minha senha pessoal? | No **passo 2** do login, toque **Esqueci minha senha** → confirme o e-mail → responda a pergunta de segurança → novo PIN por **e-mail** (não é WhatsApp). |
 
 # Dia 2 — Agenda da Família e Check-in / QR Code
@@ -436,7 +436,7 @@ Painel → card **QR Code — Check-in Totem** / **Check In — QR Code** (visí
 |----------|-------------|
 | Card QR não aparece no Índice | Marque audiência; confirme que é o dia do evento |
 | *Pré-check-in não encontrado* (totem) | Volte à Agenda e marque os participantes |
-| Sem etiqueta de família | Complete vínculo familiar em **Gestão de Cadastros** |
+| Sem etiqueta de família | Complete vínculo familiar em **Perfil & Identidade** |
 
 ---
 
@@ -1028,7 +1028,7 @@ Aparece automaticamente no carrossel após escolher uma escala com servos cadast
 | Card Servos em escala? | Visível quando seu perfil participa de escalas — lista de colegas na mesma data/tipo. |
 | RD ficou pendente? | Aguarde conciliação na **manutenção → Informações Financeiras** (tesoureiro/super_admin). |
 
-# Dia 7 — Estacionamento, Gestão de Cadastros e encerramento
+# Dia 7 — Estacionamento, Perfil & Identidade e encerramento
 
 
 ---
@@ -1066,24 +1066,24 @@ Escalas → escala de estacionamento → **Identificar veículo** — ou card **
 
 ---
 
-# Parte 12 — Gestão de Cadastros (seu círculo familiar)
+# Parte 12 — Perfil & Identidade (seu círculo familiar e chamado)
 
 ### Objetivo
-Manter **seus dados** e **cadastrar integrantes da sua família** no mesmo círculo (código de família).
+Manter **seus dados**, **cadastrar integrantes da sua família**, responder o **questionário de Perfil Ministerial** e escolher a **paleta de cores** do app.
 
 ### Caminho
-Painel → **Gestão de Cadastros** → **Dados Cadastrais** ou **Gerenciar Família**.
+Painel ou Índice → **Perfil & Identidade** → **Dados Cadastrais**, **Gerenciar Família**, **Perfil Ministerial** ou seletor de **Paleta de cores**.
 
-### Ilustração — Gestão de Cadastros
+### Ilustração — Perfil & Identidade
 
-![Gestão de Cadastros — captura anotada](docs/manual-painel/screens/14-gestao-cadastros.png)
+![Perfil & Identidade — captura anotada](docs/manual-painel/screens/14-gestao-cadastros.png)
 
 | Ref. | Elemento indicado na imagem |
 |:----:|------------------------------|
 | ① | Atalho **Dados Cadastrais** |
 | ② | Atalho **Gerenciar Família** |
-| ③ | Checkbox **✓** de aceite do integrante |
-| ④ | **Adicionar integrante** ao código familiar |
+| ③ | Atalho **Perfil Ministerial** (questionário) |
+| ④ | Seletor de **Paleta de cores** (rodapé do card) |
 
 
 
@@ -1120,7 +1120,7 @@ Painel → **Gestão de Cadastros** → **Dados Cadastrais** ou **Gerenciar Fam�
 Adicionar cônjuge, filhos e outros parentes ao **mesmo código de família** para que participem de audiência, QR, Salas, etc.
 
 ### Caminho
-**Gestão de Cadastros** → **Gerenciar Família**.
+**Perfil & Identidade** → **Gerenciar Família**.
 
 ### Ilustração — Gerenciar Família
 
@@ -1164,13 +1164,41 @@ O representante legal da família não pode ser excluído — proteção do cada
 
 ---
 
-## 12.3 Selfie biométrica
+## 12.3 Perfil Ministerial
+
+### Objetivo
+Responder o questionário de **50 perguntas** (10 etapas de 5) e ver o **perfil ministerial predominante**, com texto de reflexão.
+
+### Caminho
+**Perfil & Identidade** → **Perfil Ministerial**.
+
+### Passo a passo
+
+1. Toque em **Perfil Ministerial**.
+2. Leia a introdução e toque em **Começar questionário**.
+3. Em cada etapa, responda as 5 perguntas e avance com **Próxima etapa** (a tela volta ao topo ao mudar de etapa).
+4. Na última etapa, toque em **Finalizar**.
+5. Leia o resultado (nome do perfil + texto descritivo) e, se desejar, use **Refazer questionário**.
+
+### Resultado esperado
+
+- Perfil predominante entre: **Pregação**, **Discipulado**, **Pastoral**, **Evangelismo**, **Liderança** ou **Louvor**.
+- Texto descritivo do perfil exibido antes do botão **Refazer questionário**.
+- Respostas e resultado gravados no servidor; ao **refazer e finalizar de novo**, o resultado anterior é **substituído** (não há histórico de tentativas).
+
+### Se der erro
+
+- Mensagem pedindo scripts SQL no Supabase — a equipe TI deve executar `ministerial-profile-questionnaire.sql`, o seed e, se necessário, `ministerial-profile-questionnaire-session-fix.sql`.
+
+---
+
+## 12.4 Selfie biométrica
 
 ### Objetivo
 Registrar ou atualizar a foto de rosto usada na identificação do membro.
 
 ### Caminho
-**Gestão de Cadastros** → **Dados Cadastrais** → seção de selfie.
+**Perfil & Identidade** → **Dados Cadastrais** → seção de selfie.
 
 ### Passo a passo
 
@@ -1219,13 +1247,14 @@ Encerrar a sessão no aparelho (essencial em celular compartilhado).
 | Filho aceito na sala | SALA(S) → **✓** ao lado do nome |
 | Pedido pastoral acompanhado | Coração Aberto → **Meus pedidos** → status **Acolher / Apoiar / Acompanhar** |
 | Quem está de escala hoje | Escalas → tipo → data de hoje na lista |
-| Incluir família no meu círculo | Gestão de Cadastros → **Gerenciar Família** → adicionar + checkbox ✓ |
+| Incluir família no meu círculo | Perfil & Identidade → **Gerenciar Família** → adicionar + checkbox ✓ |
+| Descobrir perfil ministerial | Perfil & Identidade → **Perfil Ministerial** → questionário (50 perguntas) |
 | Ofertar via PIX | Dízimos e Ofertas → **Copiar chave PIX** |
 | Check-in no culto | Agenda (audiência) + QR no dia do evento |
 
 ---
 
-*App IBN · Igreja Batista Norte · Manual do Painel v2026-06-23*
+*App IBN · Igreja Batista Norte · Manual do Painel v2026-07-03*
 
 
 ---
@@ -1235,8 +1264,10 @@ Encerrar a sessão no aparelho (essencial em celular compartilhado).
 | Pergunta | Resposta |
 |----------|----------|
 | Como identifico um veículo no estacionamento? | Card **Estacionamento** → digite a **placa** → sistema busca proprietário e abre WhatsApp se cadastrado. |
-| Onde edito meus dados? | **Gestão de Cadastros → Dados Cadastrais** — nome, CPF, endereço, selfie, veículos, senha. |
-| Como gerencio minha família? | **Gestão de Cadastros → Gerenciar Família** — adicionar, reconhecimento familiar, Kids/Teens. |
+| Onde edito meus dados? | **Perfil & Identidade → Dados Cadastrais** — nome, CPF, endereço, selfie, veículos, senha. |
+| Como gerencio minha família? | **Perfil & Identidade → Gerenciar Família** — adicionar, reconhecimento familiar, Kids/Teens. |
+| O que é o Perfil Ministerial? | **Perfil & Identidade → Perfil Ministerial** — questionário de 50 perguntas; o resultado indica o perfil predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor). |
+| Se eu refizer o questionário, o resultado antigo fica? | Não — ao **Finalizar** de novo, respostas e resultado anteriores são **substituídos**. |
 | Como saio com segurança? | Índice → **Encerrar sessão** / **Sair do aplicativo** — limpa telefone e perfil do aparelho. |
 | Perdi um card no painel? | A igreja define permissões por papel — não é defeito do aparelho; fale com a secretaria. |
 | Onde está o manual completo? | [Pacote 5 — Manual do Painel](PACOTE_5_MANUAL_PAINEL.md) e treinamento por missões no [Pacote 1](PACOTE_1_VISAO_GERAL.md). |
