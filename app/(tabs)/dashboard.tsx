@@ -5,6 +5,7 @@ import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentify
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { GroupedManagePaletteFooter } from '@/components/GroupedManagePaletteFooter';
+import { MinisterialProfileForm } from '@/components/MinisterialProfileForm';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
 import { usePalette } from '@/context/PaletteContext';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
@@ -532,6 +533,7 @@ export default function Dashboard() {
   const membersMapPrefetchStartedRef = useRef(false);
   const vigilanceScalesLoadedRef = useRef(false);
   const [isFooterSettingsPressed, setIsFooterSettingsPressed] = useState(false);
+  const [ministerialFormVisible, setMinisterialFormVisible] = useState(false);
   const [canViewMaintenance, setCanViewMaintenance] = useState(false);
   const [canMonitorFamilyReception, setCanMonitorFamilyReception] = useState(false);
   const [isMaintenanceAccessLoading, setIsMaintenanceAccessLoading] = useState(true);
@@ -2818,6 +2820,23 @@ export default function Dashboard() {
                           <Text style={styles.groupedManageButtonTitle}>Gerenciar Família</Text>
                         </View>
                       </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.groupedManageButton, styles.groupedManageButtonMinisterial]}
+                        activeOpacity={0.85}
+                        onPress={() => setMinisterialFormVisible(true)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Abrir questionário de perfil ministerial"
+                      >
+                        <View style={styles.groupedManageButtonContent}>
+                          <MaterialIcons
+                            name="quiz"
+                            size={28}
+                            color="#6EE7B7"
+                            style={styles.groupedManageButtonIcon}
+                          />
+                          <Text style={styles.groupedManageButtonTitle}>Perfil Ministerial</Text>
+                        </View>
+                      </TouchableOpacity>
                     </View>
                     <GroupedManagePaletteFooter />
                   </View>
@@ -3955,6 +3974,11 @@ export default function Dashboard() {
         </Modal>
 
         {currentUserId && <CheckinModal visible={modalVisible} onClose={() => setModalVisible(false)} userId={currentUserId} />}
+        <MinisterialProfileForm
+          visible={ministerialFormVisible}
+          profileId={profile?.id ?? null}
+          onClose={() => setMinisterialFormVisible(false)}
+        />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -4520,6 +4544,10 @@ const styles = StyleSheet.create({
   groupedManageButtonFamily: {
     backgroundColor: 'rgba(168, 85, 247, 0.24)',
     borderColor: '#C084FC',
+  },
+  groupedManageButtonMinisterial: {
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+    borderColor: '#34D399',
   },
   groupedManageButtonContent: {
     alignItems: 'center',
