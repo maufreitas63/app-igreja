@@ -62,7 +62,7 @@ export const MAINTENANCE_REPORT_DEFINITIONS: MaintenanceReportDefinition[] = [
     code: 'demographic_age_brackets',
     title: 'Faixa Etária',
     description:
-      'Distribui membros e congregados com membresia ativa (sem desligamento) por faixa etária. O resumo exibe membros ativos, congregados ativos e o total analisado.',
+      'Distribui membros e congregados ativos (membership_out efetiva vazia, como no card Mudança de Papéis) por faixa etária. O resumo exibe membros ativos, congregados ativos e o total analisado.',
     dataSources: 'profiles',
     configFields: [],
   },

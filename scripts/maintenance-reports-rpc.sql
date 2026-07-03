@@ -1,5 +1,8 @@
 -- RPCs do catálogo de relatórios de manutenção.
--- Pré-requisitos: scripts/maintenance-reports-access.sql
+-- Pré-requisitos:
+--   scripts/maintenance-reports-access.sql
+--   scripts/access-control-pastoral-congregado-membership.sql
+--     (resolve_effective_membership_dates_for_profile — mesma base do card mudanca_papeis)
 -- Execute no SQL Editor do Supabase.
 
 create or replace function public._maintenance_report_payload(
@@ -44,110 +47,37 @@ begin
 end;
 $$;
 
--- Datas efetivas de membresia (herança familiar para congregados) — usado pelo relatório de membros.
-create or replace function public._maintenance_is_family_guardian_relationship(p_relationship text)
-returns boolean
-language sql
-immutable
-as $$
-  select lower(trim(translate(
-    coalesce(p_relationship, ''),
-    'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ',
-    'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN'
-  ))) in ('representante legal', 'pai', 'mae');
-$$;
-
-create or replace function public._maintenance_resolve_profile_guardian_profile_id(p_profile_id uuid)
-returns uuid
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  with target as (
-    select
-      p.id,
-      upper(nullif(trim(coalesce(p.family_id, '')), '')) as family_id
-    from public.profiles p
-    where p.id = p_profile_id
-  )
-  select gp.id
-  from target t
-  join public.members m
-    on upper(trim(coalesce(m.family_id, ''))) = t.family_id
-  join public.profiles gp
-    on public.directory_person_matches_member(m.full_name, m.phone, gp.full_name, gp.phone)
-  where t.family_id is not null
-    and public._maintenance_is_family_guardian_relationship(m.relationship)
-    and gp.id <> t.id
-  order by case lower(trim(translate(
-      coalesce(m.relationship, ''),
-      'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ',
-      'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN'
-    )))
-      when 'representante legal' then 0
-      when 'pai' then 1
-      when 'mae' then 2
-      else 99
-    end,
-    gp.full_name asc
-  limit 1;
-$$;
-
-create or replace function public.resolve_effective_membership_dates_for_profile(p_profile_id uuid)
+-- Base compartilhada: membros e congregados ativos (membership_out efetiva vazia),
+-- alinhada a listar_perfis_mudanca_papel_pastoral + isProfileVisibleInApp no app.
+create or replace function public._maintenance_report_eligible_member_congregado()
 returns table (
-  membership_date date,
-  membership_out date,
-  membership_inherited boolean,
-  inherited_from_profile_id uuid,
-  inherited_from_name text
+  profile_id uuid,
+  nome text,
+  birth_date date,
+  role_code text
 )
-language plpgsql
+language sql
 stable
 security definer
 set search_path = public
 as $$
-declare
-  v_role text;
-  v_own_date date;
-  v_own_out date;
-  v_guardian_id uuid;
-begin
   select
-    public.resolve_basic_role_code_for_profile(p.id),
-    p.membership_date,
-    p.membership_out
-  into v_role, v_own_date, v_own_out
+    p.id as profile_id,
+    coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as nome,
+    p.birth_date,
+    public.resolve_basic_role_code_for_profile(p.id) as role_code
   from public.profiles p
-  where p.id = p_profile_id;
-
-  if coalesce(v_role, '') <> 'congregado' then
-    return query
-    select v_own_date, v_own_out, false, null::uuid, null::text;
-    return;
-  end if;
-
-  v_guardian_id := public._maintenance_resolve_profile_guardian_profile_id(p_profile_id);
-
-  if v_guardian_id is null then
-    return query
-    select v_own_date, v_own_out, false, null::uuid, null::text;
-    return;
-  end if;
-
-  return query
-  select
-    gp.membership_date,
-    gp.membership_out,
-    true,
-    gp.id,
-    coalesce(nullif(trim(gp.full_name), ''), '(responsável)')
-  from public.profiles gp
-  where gp.id = v_guardian_id;
-end;
+  cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
+  where coalesce(
+      nullif(trim(p.full_name), ''),
+      nullif(trim(p.phone), ''),
+      nullif(trim(p.codigo_membro), '')
+    ) is not null
+    and public.resolve_basic_role_code_for_profile(p.id) in ('member', 'congregado')
+    and coalesce(eff.membership_out::text, '') = '';
 $$;
 
-grant execute on function public.resolve_effective_membership_dates_for_profile(uuid) to anon, authenticated;
+grant execute on function public._maintenance_report_eligible_member_congregado() to anon, authenticated;
 
 create or replace function public._report_members_active_inactive(p_params jsonb)
 returns jsonb
@@ -643,15 +573,10 @@ declare
 begin
   with eligible as (
     select
-      p.id,
-      coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as nome,
-      p.birth_date,
-      public.resolve_basic_role_code_for_profile(p.id) as role_code
-    from public.profiles p
-    cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
-    where coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), '')) is not null
-      and public.resolve_basic_role_code_for_profile(p.id) in ('member', 'congregado')
-      and coalesce(eff.membership_out::text, '') = ''
+      e.nome,
+      e.birth_date,
+      e.role_code
+    from public._maintenance_report_eligible_member_congregado() e
   ),
   profile_ages as (
     select
