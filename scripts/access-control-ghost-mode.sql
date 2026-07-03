@@ -170,15 +170,28 @@ stable
 security definer
 set search_path = public
 as $$
+  -- Somente super_admin ou grant explícito em maintenance.card.auditor.
+  -- Não usar profile_has_access: wildcards (ex.: maintenance.card.*) não devem liberar Ghost.
   select
     p_profile_id is not null
     and (
       public.profile_has_super_admin_role(p_profile_id)
-      or public.profile_has_access(
-        p_profile_id,
-        'screen',
-        'maintenance.card.auditor',
-        'view'
+      or exists (
+        select 1
+          from public.access_grants g
+          join public.access_resources r on r.id = g.resource_id
+         where r.resource_type = 'screen'
+           and r.resource_key = 'maintenance.card.auditor'
+           and r.is_active = true
+           and g.can_view = true
+           and (
+             g.profile_id = p_profile_id
+             or g.role_id in (
+               select par.role_id
+                 from public.profile_access_roles par
+                where par.profile_id = p_profile_id
+             )
+           )
       )
     );
 $$;

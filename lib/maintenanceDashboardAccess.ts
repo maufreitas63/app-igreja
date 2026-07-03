@@ -62,7 +62,7 @@ const EMPTY_SNAPSHOT: MaintenanceDashboardAccessSnapshot = {
 async function loadMaintenancePanelScreenAccess(): Promise<Record<string, boolean>> {
   const entries = await Promise.all(
     Object.entries(MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY)
-      .filter(([content]) => content !== 'menu')
+      .filter(([content]) => content !== 'menu' && content !== 'auditor')
       .map(async ([content, resourceKey]) => {
         const allowed = await sessionHasAccess('screen', resourceKey, 'view');
         return [content, allowed] as const;

@@ -24,6 +24,8 @@ select
   public.is_super_admin_profile(p.id) as is_super_admin,
   public.profile_has_access(p.id, 'screen', '/maintenance-dashboard', 'view') as can_maintenance,
   public.profile_has_access(p.id, 'screen', 'maintenance.card.access_control', 'view') as can_access_control,
+  public.can_operate_ghost_mode(p.id) as can_ghost_mode,
+  public.profile_has_access(p.id, 'screen', 'maintenance.card.auditor', 'view') as can_auditor_wildcard,
   public.profile_has_access(p.id, 'screen', 'dashboard.card.members_list', 'view') as can_members_list,
   public.profile_has_access(p.id, 'screen', 'dashboard.card.financial', 'view') as can_financial,
   coalesce(
