@@ -1,10 +1,13 @@
 /**
  * Gateway único de notificação de autenticação (PIN).
  * Canal imutável: apenas e-mail. WhatsApp é bloqueado por hard-code.
+ *
+ * Não importar `@/lib/accessPin` daqui (evita dependência circular com o login).
  */
-import { normalizePhoneForAccessPinRpc } from '@/lib/accessPin';
 import { supabase } from '@/lib/supabase';
 import { coerceRpcBoolean, isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+
+const normalizePhoneForAccessPinRpc = (phone: string) => phone.replace(/\D/g, '');
 
 export const AUTH_NOTIFICATION_CHANNEL = 'email' as const;
 export type AuthNotificationChannel = typeof AUTH_NOTIFICATION_CHANNEL;
