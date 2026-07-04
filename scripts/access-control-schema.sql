@@ -428,8 +428,7 @@ select r.id, res.id, g.can_view, g.can_update
       ('screen', 'dashboard.card.kids_teens', true, false),
       ('screen', 'dashboard.card.offerings', true, false),
       ('screen', 'dashboard.card.pastoral', true, false),
-      ('screen', 'dashboard.card.members_list', true, false),
-      ('screen', 'dashboard.card.birthdays', true, false),
+      -- members_list e birthdays: apenas pastoral (não member)
       ('screen', 'dashboard.card.financial', true, false),
       ('screen', 'dashboard.card.vigilance_scales', true, false),
       ('screen', 'dashboard.card.parking_vehicle_v2', true, false),
@@ -476,7 +475,7 @@ select r.id, res.id, g.can_view, g.can_update
       ('screen', 'dashboard.card.kids_teens', true, false),
       ('screen', 'dashboard.card.offerings', true, false),
       ('screen', 'dashboard.card.pastoral', true, false),
-      ('screen', 'dashboard.card.birthdays', true, false),
+      -- birthdays: apenas pastoral (não congregado)
       ('screen', 'dashboard.card.grouped_manage', true, false),
       ('table', 'profiles', true, true),
       ('table', 'pastoral_requests', true, true),
@@ -572,7 +571,9 @@ select r.id, res.id, g.can_view, g.can_update
  cross join (
     values
       ('screen', '/maintenance-dashboard', true, false),
-      ('screen', 'maintenance.card.pastoral_care', true, true)
+      ('screen', 'maintenance.card.pastoral_care', true, true),
+      ('screen', 'dashboard.card.members_list', true, false),
+      ('screen', 'dashboard.card.birthdays', true, false)
   ) as g(resource_type, resource_key, can_view, can_update)
   join public.access_resources res
     on res.resource_type = g.resource_type

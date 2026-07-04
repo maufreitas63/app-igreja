@@ -19,6 +19,8 @@ type CarouselFooterNavProps = {
   accent?: UiAccent;
   trailingAccessory?: React.ReactNode;
   hideSideNavigation?: boolean;
+  /** Oculta o indicador "1 / N" abaixo da navegação. */
+  hidePageIndicator?: boolean;
   centerButtonStyle?: StyleProp<ViewStyle>;
 };
 
@@ -39,10 +41,12 @@ export function CarouselFooterNav({
   accent = 'emerald',
   trailingAccessory,
   hideSideNavigation = false,
+  hidePageIndicator = false,
   centerButtonStyle,
 }: CarouselFooterNavProps) {
   const accentStyle = UI_ACCENT_STYLES[accent];
-  const pageLabel = totalCount > 0 ? `${currentIndex + 1} / ${totalCount}` : '';
+  const pageLabel =
+    !hidePageIndicator && totalCount > 0 ? `${currentIndex + 1} / ${totalCount}` : '';
   const hasTrailingAccessory = Boolean(trailingAccessory);
   const compactFooter = hideSideNavigation;
 

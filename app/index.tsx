@@ -54,6 +54,7 @@ import {
 import { isLgpdAtivoEnabled } from '@/lib/appParameters';
 import {
   getStoredUserPhone,
+  persistUserPhone,
   persistUserSession,
   SIGN_OUT_QUERY_PARAM,
 } from '@/lib/userSession';
@@ -162,6 +163,9 @@ export default function IndexScreen() {
       Alert.alert('Atenção', 'Digite o celular completo com 11 dígitos.');
       return;
     }
+
+    // Persiste o celular localmente para autofill na próxima abertura.
+    void persistUserPhone(phone);
 
     setLoginStep(2);
 
@@ -305,6 +309,31 @@ export default function IndexScreen() {
       active = false;
     };
   }, [isTotemLoginMode, phoneDigits, phone]);
+
+  // Sempre preenche o celular salvo localmente (mesmo após "Sair do aplicativo").
+  useEffect(() => {
+    let active = true;
+
+    void (async () => {
+      try {
+        const storedPhone = await getStoredUserPhone();
+
+        if (!active || !storedPhone?.trim()) {
+          return;
+        }
+
+        setPhone((current) =>
+          current.trim() ? current : formatBrazilPhoneInput(storedPhone)
+        );
+      } catch (error) {
+        console.error('Erro ao carregar celular salvo:', error);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (skipSessionRestore) {

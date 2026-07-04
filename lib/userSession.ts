@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { router } from 'expo-router';
 
-import { Platform } from 'react-native';
+import { BackHandler, Platform } from 'react-native';
 
 
 
@@ -84,6 +84,17 @@ export async function getStoredUserPhone() {
 
   return AsyncStorage.getItem(USER_PHONE_STORAGE_KEY);
 
+}
+
+/** Grava o celular para autofill no próximo login (não é apagado ao sair). */
+export async function persistUserPhone(phone: string | null | undefined) {
+  const trimmed = phone?.trim();
+
+  if (!trimmed) {
+    return;
+  }
+
+  await AsyncStorage.setItem(USER_PHONE_STORAGE_KEY, trimmed);
 }
 
 
@@ -179,58 +190,43 @@ export async function repairUserSessionReference(phone?: string | null): Promise
 
 
 
-const scrubWebSessionKeys = () => {
-
+/** Remove chaves de sessão na web, preservando o celular para autofill no próximo login. */
+const scrubWebSessionKeys = (options?: { keepPhone?: boolean }) => {
   if (Platform.OS !== 'web' || typeof window === 'undefined') {
-
     return;
-
   }
 
-
-
+  const keepPhone = options?.keepPhone !== false;
   const keysToDrop: string[] = [];
 
-
-
   for (let index = 0; index < window.localStorage.length; index += 1) {
-
     const key = window.localStorage.key(index);
 
-
-
-    if (
-
-      key &&
-
-      (key === USER_PHONE_STORAGE_KEY ||
-
-        key === USER_PROFILE_ID_STORAGE_KEY ||
-
-        key === USER_SESSION_TOKEN_STORAGE_KEY ||
-
-        key.includes(USER_PHONE_STORAGE_KEY) ||
-
-        key.includes(USER_PROFILE_ID_STORAGE_KEY) ||
-
-        key.includes(USER_SESSION_TOKEN_STORAGE_KEY))
-
-    ) {
-
-      keysToDrop.push(key);
-
+    if (!key) {
+      continue;
     }
 
+    const isPhoneKey =
+      key === USER_PHONE_STORAGE_KEY || key.includes(USER_PHONE_STORAGE_KEY);
+
+    if (keepPhone && isPhoneKey) {
+      continue;
+    }
+
+    if (
+      isPhoneKey
+      || key === USER_PROFILE_ID_STORAGE_KEY
+      || key === USER_SESSION_TOKEN_STORAGE_KEY
+      || key.includes(USER_PROFILE_ID_STORAGE_KEY)
+      || key.includes(USER_SESSION_TOKEN_STORAGE_KEY)
+    ) {
+      keysToDrop.push(key);
+    }
   }
 
-
-
   keysToDrop.forEach((key) => {
-
     window.localStorage.removeItem(key);
-
   });
-
 };
 
 
@@ -251,17 +247,18 @@ export async function revokeStoredProfileSession() {
   }
 }
 
-export async function clearUserSession() {
+export async function clearUserSession(options?: { keepPhone?: boolean }) {
+  const keepPhone = options?.keepPhone !== false;
   clearGhostModeState();
   await revokeStoredProfileSession();
-  scrubWebSessionKeys();
+  scrubWebSessionKeys({ keepPhone });
   resetProfileScreenVisitTracking();
-  await AsyncStorage.multiRemove([
-    USER_PHONE_STORAGE_KEY,
-    USER_PROFILE_ID_STORAGE_KEY,
-    USER_SESSION_TOKEN_STORAGE_KEY,
-  ]);
-  scrubWebSessionKeys();
+  await AsyncStorage.multiRemove(
+    keepPhone
+      ? [USER_PROFILE_ID_STORAGE_KEY, USER_SESSION_TOKEN_STORAGE_KEY]
+      : [USER_PHONE_STORAGE_KEY, USER_PROFILE_ID_STORAGE_KEY, USER_SESSION_TOKEN_STORAGE_KEY]
+  );
+  scrubWebSessionKeys({ keepPhone });
 }
 
 const LOGIN_AFTER_SIGN_OUT_ROUTE = {
@@ -269,14 +266,13 @@ const LOGIN_AFTER_SIGN_OUT_ROUTE = {
   params: { [SIGN_OUT_QUERY_PARAM]: '1' },
 };
 
-/** Limpa chaves de sessão de forma síncrona (web) antes da navegação. */
+/** Limpa sessão de forma síncrona antes da navegação, preservando o celular para autofill. */
 const clearUserSessionImmediately = () => {
   clearGhostModeState();
-  scrubWebSessionKeys();
+  scrubWebSessionKeys({ keepPhone: true });
   resetProfileScreenVisitTracking();
   void revokeStoredProfileSession();
   void AsyncStorage.multiRemove([
-    USER_PHONE_STORAGE_KEY,
     USER_PROFILE_ID_STORAGE_KEY,
     USER_SESSION_TOKEN_STORAGE_KEY,
   ]);
@@ -322,6 +318,15 @@ const buildPwaSignedOutUrl = () => {
 /** Tenta fechar o PWA instalado; se o navegador bloquear, mostra tela neutra (sem login). */
 const exitInstalledPwaAfterSignOut = () => {
   try {
+    // Algumas WebViews/PWA Android expõem exitApp.
+    const maybeApp = (window.navigator as Navigator & { app?: { exitApp?: () => void } }).app;
+    maybeApp?.exitApp?.();
+  } catch {
+    // ignore
+  }
+
+  try {
+    window.open('', '_self');
     window.close();
   } catch {
     // Alguns navegadores bloqueiam close() — seguimos para o fallback abaixo.
@@ -329,22 +334,54 @@ const exitInstalledPwaAfterSignOut = () => {
 
   window.setTimeout(() => {
     window.location.replace(buildPwaSignedOutUrl());
-  }, 250);
+  }, 200);
 };
 
 /**
  * Encerra a sessão sem esperar I/O assíncrono.
- * No PWA instalado, tenta fechar o app; no navegador, volta à tela de login.
+ * No app nativo (Android), fecha o processo. No PWA instalado, tenta fechar a janela.
+ * No navegador, volta à tela de login (celular permanece preenchido).
  */
 export function signOutAndReturnToLogin(): void {
   clearUserSessionImmediately();
+
+  if (Platform.OS === 'android') {
+    BackHandler.exitApp();
+    return;
+  }
 
   if (Platform.OS === 'web' && typeof window !== 'undefined' && isPwaInstalled()) {
     exitInstalledPwaAfterSignOut();
     return;
   }
 
+  if (Platform.OS !== 'web') {
+    // iOS não permite fechar o app por API; encerra a sessão e volta ao login.
+    navigateToLoginAfterSignOut();
+    return;
+  }
+
   navigateToLoginAfterSignOut();
+}
+
+/** Confirma saída do app (botão nativo voltar na tela inicial). */
+export async function confirmExitApplication(): Promise<boolean> {
+  const { confirmDialog } = await import('@/lib/confirmDialog');
+  const exitUi = (await import('@/lib/sessionExitUi')).getExitSessionUi();
+
+  const confirmed = await confirmDialog(
+    exitUi.button,
+    'Deseja sair do aplicativo? Sua sessão será encerrada.',
+    'Sair',
+    'Cancelar'
+  );
+
+  if (!confirmed) {
+    return false;
+  }
+
+  signOutAndReturnToLogin();
+  return true;
 }
 
 

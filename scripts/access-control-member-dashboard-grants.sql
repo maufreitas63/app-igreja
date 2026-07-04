@@ -8,8 +8,7 @@ select r.id, res.id, g.can_view, g.can_update
     values
       ('screen', 'dashboard.card.qr', true, false),
       ('screen', 'dashboard.card.offerings', true, false),
-      ('screen', 'dashboard.card.members_list', true, false),
-      ('screen', 'dashboard.card.birthdays', true, false),
+      -- members_list e birthdays: apenas pastoral (ver access-control-members-birthdays-pastoral-only.sql)
       ('screen', 'dashboard.card.vigilance_scales', true, false),
       ('screen', 'dashboard.card.parking_vehicle_v2', true, false)
   ) as g(resource_type, resource_key, can_view, can_update)

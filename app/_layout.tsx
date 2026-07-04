@@ -5,6 +5,7 @@ if (!global.Buffer) {
   global.Buffer = Buffer;
 }
 
+import { AppBackHandler } from '@/components/AppBackHandler';
 import { AppShell } from '@/components/AppShell';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
 import { GhostModeBanner } from '@/components/GhostModeBanner';
@@ -29,6 +30,7 @@ export default function RootLayout() {
   return (
     <GhostModeProvider>
       <View style={styles.root}>
+        <AppBackHandler />
         <AppShell />
         <GhostModeBanner />
         <ConfirmDialogHost />

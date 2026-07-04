@@ -3856,6 +3856,7 @@ export default function Dashboard() {
               onPreviousPress={handleFooterPreviousPress}
               onNextPress={handleFooterNextPress}
               hideSideNavigation
+              hidePageIndicator
               accent="emerald"
               trailingAccessory={
                 !isMaintenanceAccessLoading && canViewMaintenance ? (

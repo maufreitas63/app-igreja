@@ -723,6 +723,8 @@ export default function ManageProfile() {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState('');
   const [saving, setSaving] = useState(false);
+  const [lookingUpCep, setLookingUpCep] = useState(false);
+  const lastCepLookupRef = useRef<string | null>(null);
   const [screenMode, setScreenMode] = useState<'FORM' | 'CAMERA'>('FORM');
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [pictureSize, setPictureSize] = useState<string | null>(null);
@@ -1511,13 +1513,56 @@ export default function ManageProfile() {
       }
 
       if (editingFieldRow?.key === 'cep') {
-        setEditingValue(formatCep(value));
+        const formattedCep = formatCep(value);
+        setEditingValue(formattedCep);
+
+        const digits = normalizeCep(formattedCep);
+
+        // Ao completar 8 dígitos, consulta ViaCEP e grava o endereço automaticamente.
+        if (
+          digits.length === 8
+          && profile?.id
+          && lastCepLookupRef.current !== digits
+          && !lookingUpCep
+          && !saving
+        ) {
+          lastCepLookupRef.current = digits;
+          setLookingUpCep(true);
+
+          void (async () => {
+            try {
+              const updatedProfile = await syncProfileAddressFromCep(profile.id, {
+                cep: formattedCep,
+              });
+
+              if (updatedProfile && typeof updatedProfile === 'object' && 'id' in updatedProfile) {
+                setProfile(updatedProfile as ProfileRecord);
+              }
+
+              Alert.alert(
+                'Endereço preenchido',
+                `CEP ${formattedCep} consultado. Rua, bairro, cidade e UF foram atualizados.`
+              );
+            } catch (error) {
+              lastCepLookupRef.current = null;
+              Alert.alert(
+                'CEP',
+                error instanceof Error
+                  ? error.message
+                  : 'Não foi possível consultar o endereço deste CEP.'
+              );
+            } finally {
+              setLookingUpCep(false);
+            }
+          })();
+        }
+
         return;
       }
 
       setEditingValue(value);
     },
-    [editingFieldRow]
+    [editingFieldRow, lookingUpCep, profile?.id, saving]
   );
 
   const updateSingleField = useCallback(async (fieldKey: string, value: unknown) => {
@@ -2255,7 +2300,7 @@ export default function ManageProfile() {
               placeholder={editingPlaceholder}
               placeholderTextColor="#64748b"
               value={editingValue}
-              editable={!saving}
+              editable={!saving && !lookingUpCep}
               keyboardType={
                 editingFieldRow.kind === 'phone'
                 || editingFieldRow.kind === 'date'
@@ -2275,6 +2320,12 @@ export default function ManageProfile() {
               multiline={editingFieldRow.kind === 'url'}
               onChangeText={handleEditingValueChange}
             />
+            {lookingUpCep ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                <ActivityIndicator color="#34D399" size="small" />
+                <Text style={{ color: '#94A3B8', fontSize: 13 }}>Consultando endereço do CEP…</Text>
+              </View>
+            ) : null}
             <View style={styles.editorActions}>
               <TouchableOpacity
                 style={[styles.saveButton, saving && styles.disabledButton]}
