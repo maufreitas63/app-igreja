@@ -13,7 +13,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 ## Autenticação e sessão
 
 - Login por **celular + PIN de 4 dígitos** (validação no Supabase via `verificar_login`)
-- **Primeira entrada** com geração de PIN temporário via **WhatsApp** (configurável: envio ao usuário ou ao gestor) — somente quando ainda não há senha cadastrada
+- **Primeira entrada** com geração de PIN temporário **exclusivamente por e-mail** (`dispatchAuthAccessPinEmail` / `dispatch_auth_access_pin_email`; gateway `lib/authNotificationService.ts`) — WhatsApp **bloqueado** no fluxo de autenticação
 - **Recuperação de senha** (`/forgot-password`) — pergunta de segurança + envio de **novo PIN por e-mail** (passo 2 do login → **Esqueci minha senha**; não usa WhatsApp)
 - **Modo totem** — login dedicado com senha `9999` e celular `cel_totem`
 - Restauração automática de sessão ao reabrir o app

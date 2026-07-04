@@ -54,10 +54,10 @@ Respostas às dúvidas mais comuns sobre o aplicativo da **Igreja Batista Norte*
 Seu **número de celular** (com DDD) e sua **senha de acesso de 4 dígitos** (PIN).
 
 **É a primeira vez que uso o app. E a senha?**  
-Na primeira entrada você ainda não tem senha definitiva. Toque no ícone do **WhatsApp** ao lado do campo de senha, receba o código temporário e digite os 4 dígitos. Depois altere a senha em **Dados Cadastrais**.
+Na primeira entrada você ainda não tem senha definitiva. No passo 2, toque em **Receber código por e-mail** (informe o e-mail se ainda não estiver cadastrado), receba o código temporário e digite os 4 dígitos. Depois altere a senha em **Dados Cadastrais**.
 
 **Por que o WhatsApp não abre ou dá erro?**  
-O envio depende da configuração da igreja (`psw_user` / `psw_mngr` em `app_parameters`). Pode abrir no seu celular ou no do gestor. Se falhar, confira o número digitado ou peça ajuda à secretaria.
+O PIN de autenticação é enviado **somente por e-mail** (WhatsApp foi desativado nesse fluxo). Se falhar, confira o e-mail (e a pasta de spam) ou peça ajuda à secretaria / equipe TI (`scripts/auth-pin-email-only.sql` e configuração de e-mail em `app_parameters`).
 
 **Posso entrar sem passar pelo WhatsApp?**  
 Não na primeira vez. O app exibirá *"Código necessário"* se você tentar digitar senha sem ter solicitado o PIN temporário.
@@ -66,7 +66,7 @@ Não na primeira vez. O app exibirá *"Código necessário"* se você tentar dig
 Sim. Ao completar o 4º dígito, a validação pode ocorrer automaticamente. Você também pode tocar em **Entrar**.
 
 **Aparece "Número ou senha inválidos". O que fazer?**  
-Confira os 4 dígitos. Se **esqueceu** a senha pessoal, use **Esqueci minha senha** no **passo 2** (código) para validar a pergunta de segurança e receber nova senha por **e-mail**. Na **primeira entrada**, use **Receber código no WhatsApp**.
+Confira os 4 dígitos. Se **esqueceu** a senha pessoal, use **Esqueci minha senha** no **passo 2** (código) para validar a pergunta de segurança e receber nova senha por **e-mail**. Na **primeira entrada**, use **Receber código por e-mail**.
 
 **Esqueci minha senha pessoal (já sou cadastrado).**  
 No **passo 2** do login, toque **Esqueci minha senha** → confirme ou cadastre o **e-mail** → responda a **pergunta de segurança** → o app envia um novo PIN de 4 dígitos por **e-mail** (não usa WhatsApp).

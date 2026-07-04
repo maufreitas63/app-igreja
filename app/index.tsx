@@ -34,20 +34,16 @@ function ReadOnlyText({
 import { PwaInstallButton } from '@/components/PwaInstallButton';
 import { SocialBrandIcon } from '@/components/SocialBrandIcon';
 import { FontAwesome } from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard';
 import {
   ACCESS_PIN_LENGTH,
-  buildAccessPinDeliveryAlertMessage,
-  getAccessPinWhatsappRecipientDigits,
   isValidAccessPin,
-  loadAccessPinDeliverySettings,
-  prepareAccessPinDraft,
   profileHasAccessPin,
-  sendAccessPinViaWhatsApp,
-  type AccessPinDeliverySettings,
-  type PreparedAccessPinDraft,
 } from '@/lib/accessPin';
-import { openWhatsAppLikeBirthdays, openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
+import {
+  AUTH_PIN_EMAIL_SQL_HINT,
+  dispatchAuthAccessPinEmail,
+  getAuthPinDeliveryState,
+} from '@/lib/authNotificationService';
 import { isBrazilianMobilePhoneComplete, isBrazilianPhoneComplete } from '@/lib/phoneValidation';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { verificarLogin } from '@/lib/verificarLogin';
@@ -102,46 +98,40 @@ export default function IndexScreen() {
   const [isTotemConfigLoading, setIsTotemConfigLoading] = useState(() => !skipSessionRestore);
   const [hasStoredAccessPin, setHasStoredAccessPin] = useState<boolean | null>(null);
   const [pinDeliveryUnlocked, setPinDeliveryUnlocked] = useState(false);
-  const [pinDeliverySettings, setPinDeliverySettings] = useState<AccessPinDeliverySettings | null>(
-    null
-  );
-  const [isPinDeliverySettingsLoading, setIsPinDeliverySettingsLoading] = useState(true);
   const [loginStep, setLoginStep] = useState<1 | 2>(1);
   const [pinCodeSent, setPinCodeSent] = useState(false);
   const [showForgotPasswordHelp, setShowForgotPasswordHelp] = useState(false);
   const [passwordRecoveredBanner, setPasswordRecoveredBanner] = useState(false);
   const [recoveryEmailMasked, setRecoveryEmailMasked] = useState('');
+  const [firstAccessNeedsEmail, setFirstAccessNeedsEmail] = useState(false);
+  const [firstAccessEmail, setFirstAccessEmail] = useState('');
+  const [firstAccessEmailConfirm, setFirstAccessEmailConfirm] = useState('');
+  const [firstAccessEmailMasked, setFirstAccessEmailMasked] = useState('');
   const isTotemLoginMode = Boolean(
     celTotemPhone && normalizePhoneDigits(phone) === celTotemPhone
   );
-  const phoneDigits = normalizePhoneDigits(phone);
-  const whatsappRecipientDigits = pinDeliverySettings
-    ? getAccessPinWhatsappRecipientDigits(pinDeliverySettings, phoneDigits)
-    : null;
-  const needsWhatsappBeforePin =
+  const needsEmailBeforePin =
     !isTotemLoginMode && !pinDeliveryUnlocked && hasStoredAccessPin === false;
   const isCheckingStoredPin =
     loginStep === 2 && !isTotemLoginMode && isBrazilianPhoneComplete(phone) && hasStoredAccessPin === null;
-  const showWhatsappAbovePin =
-    !isTotemLoginMode && needsWhatsappBeforePin && !isCheckingStoredPin && !showForgotPasswordHelp;
+  const showEmailPinDelivery =
+    !isTotemLoginMode && needsEmailBeforePin && !isCheckingStoredPin && !showForgotPasswordHelp;
   const showForgotPasswordLink =
-    !isTotemLoginMode && loginStep === 2 && !isCheckingStoredPin;
+    !isTotemLoginMode && loginStep === 2 && !isCheckingStoredPin && !needsEmailBeforePin;
   const canAttemptMemberPinLogin =
-    isTotemLoginMode || (isBrazilianPhoneComplete(phone) && !needsWhatsappBeforePin);
+    isTotemLoginMode || (isBrazilianPhoneComplete(phone) && !needsEmailBeforePin);
   const isPinInputEditable =
     loginStep === 2
     && (isTotemLoginMode
-      || (hasStoredAccessPin !== null && (!needsWhatsappBeforePin || pinDeliveryUnlocked)));
+      || (hasStoredAccessPin !== null && (!needsEmailBeforePin || pinDeliveryUnlocked)));
   const canPressEntrar =
     loginStep === 2
     && isValidAccessPin(accessPin)
     && !isLoading
     && (isTotemLoginMode || canAttemptMemberPinLogin);
-  const isWhatsappButtonDisabled =
-    isSendingPin || isPinDeliverySettingsLoading || !whatsappRecipientDigits;
+  const isEmailPinButtonDisabled = isSendingPin;
   const isVerifyingPinRef = useRef(false);
   const pinInputRef = useRef<TextInput>(null);
-  const preparedPinDraftRef = useRef<PreparedAccessPinDraft | null>(null);
   const router = useRouter();
 
   const focusPinInput = useCallback(() => {
@@ -158,9 +148,12 @@ export default function IndexScreen() {
     setShowForgotPasswordHelp(false);
     setPasswordRecoveredBanner(false);
     setRecoveryEmailMasked('');
+    setFirstAccessNeedsEmail(false);
+    setFirstAccessEmail('');
+    setFirstAccessEmailConfirm('');
+    setFirstAccessEmailMasked('');
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
-    preparedPinDraftRef.current = null;
   }, []);
 
   const advanceToPinStep = useCallback(() => {
@@ -184,9 +177,12 @@ export default function IndexScreen() {
     setShowForgotPasswordHelp(false);
     setPasswordRecoveredBanner(false);
     setRecoveryEmailMasked('');
+    setFirstAccessNeedsEmail(false);
+    setFirstAccessEmail('');
+    setFirstAccessEmailConfirm('');
+    setFirstAccessEmailMasked('');
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
-    preparedPinDraftRef.current = null;
   };
 
   const handlePinChange = (text: string) => {
@@ -256,6 +252,7 @@ export default function IndexScreen() {
   useEffect(() => {
     if (isTotemLoginMode || !isBrazilianPhoneComplete(phone)) {
       setHasStoredAccessPin(null);
+      setFirstAccessNeedsEmail(false);
       return;
     }
 
@@ -263,7 +260,10 @@ export default function IndexScreen() {
 
     void (async () => {
       try {
-        const hasPin = await profileHasAccessPin(phoneDigits);
+        const [hasPin, deliveryState] = await Promise.all([
+          profileHasAccessPin(phoneDigits),
+          getAuthPinDeliveryState(phoneDigits),
+        ]);
 
         if (!active) {
           return;
@@ -272,11 +272,21 @@ export default function IndexScreen() {
         if (hasPin === true) {
           setHasStoredAccessPin(true);
           setPinDeliveryUnlocked(true);
+          setFirstAccessNeedsEmail(false);
           return;
         }
 
         if (hasPin === false) {
           setHasStoredAccessPin(false);
+          setPinDeliveryUnlocked(false);
+
+          if (deliveryState.ok) {
+            setFirstAccessNeedsEmail(deliveryState.needsEmail);
+            setFirstAccessEmailMasked(deliveryState.emailMasked);
+          } else {
+            setFirstAccessNeedsEmail(true);
+          }
+
           return;
         }
 
@@ -294,39 +304,6 @@ export default function IndexScreen() {
       active = false;
     };
   }, [isTotemLoginMode, phoneDigits, phone]);
-
-  useEffect(() => {
-    if (isTotemLoginMode) {
-      return;
-    }
-
-    let active = true;
-    setIsPinDeliverySettingsLoading(true);
-
-    void (async () => {
-      try {
-        const settings = await loadAccessPinDeliverySettings();
-
-        if (active) {
-          setPinDeliverySettings(settings);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar psw_user/psw_mngr:', error);
-
-        if (active) {
-          setPinDeliverySettings(null);
-        }
-      } finally {
-        if (active) {
-          setIsPinDeliverySettingsLoading(false);
-        }
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [isTotemLoginMode]);
 
   useEffect(() => {
     if (skipSessionRestore) {
@@ -371,128 +348,81 @@ export default function IndexScreen() {
     };
   }, [continueWithExistingProfile, router, skipSessionRestore]);
 
-  const handleWhatsappPress = () => {
+  const handleEmailPinPress = () => {
     if (!isBrazilianPhoneComplete(phone)) {
       Alert.alert('Atenção', 'Informe um número de celular válido antes de solicitar o código.');
       return;
     }
 
-    if (!whatsappRecipientDigits) {
-      Alert.alert(
-        'WhatsApp indisponível',
-        pinDeliverySettings?.sendToUser
-          ? 'Confira o celular digitado ou defina psw_user = sim em app_parameters.'
-          : 'Com psw_user = nao, cadastre psw_mngr em app_parameters (ex.: 19996166161, só dígitos).'
-      );
-      return;
+    if (firstAccessNeedsEmail) {
+      const email = firstAccessEmail.trim();
+      const emailConfirm = firstAccessEmailConfirm.trim();
+
+      if (!email || !emailConfirm) {
+        Alert.alert('Atenção', 'Informe e confirme o e-mail para receber o código de acesso.');
+        return;
+      }
+
+      if (email.toLowerCase() !== emailConfirm.toLowerCase()) {
+        Alert.alert('Atenção', 'Os e-mails informados não coincidem.');
+        return;
+      }
     }
-
-    const sendToUser = pinDeliverySettings?.sendToUser ?? false;
-
-    // Gestor (psw_user = nao): abre o MESMO Zap (psw_mngr) para qualquer celular digitado.
-    const whatsappOpenedOnPress = sendToUser
-      ? false
-      : Boolean(openWhatsAppLikeBirthdays(whatsappRecipientDigits));
 
     void (async () => {
       setIsSendingPin(true);
 
       try {
-        const preparedResult = await prepareAccessPinDraft(phone);
+        const result = await dispatchAuthAccessPinEmail({
+          phone,
+          email: firstAccessNeedsEmail ? firstAccessEmail : undefined,
+          emailConfirm: firstAccessNeedsEmail ? firstAccessEmailConfirm : undefined,
+          purpose: 'first_access',
+        });
 
-        if (!preparedResult.ok) {
-          Alert.alert('Erro ao gerar código', preparedResult.message);
+        if (!result.ok) {
+          if (result.needsEmail) {
+            setFirstAccessNeedsEmail(true);
+          }
+
+          Alert.alert(
+            'Não foi possível enviar o código',
+            result.message.includes('AUTH_CHANNEL_BLOCKED')
+              ? 'O envio por WhatsApp foi desativado. Use apenas e-mail.'
+              : result.message.includes('auth-pin-email-only')
+                ? AUTH_PIN_EMAIL_SQL_HINT
+                : result.message
+          );
           return;
         }
 
-        const prepared = preparedResult.draft;
-        preparedPinDraftRef.current = prepared;
+        setFirstAccessNeedsEmail(false);
+        setFirstAccessEmailMasked(result.emailMasked);
+        setPinDeliveryUnlocked(true);
+        setHasStoredAccessPin(true);
+        setPinCodeSent(true);
+        setAccessPin('');
+        focusPinInput();
 
-        let whatsappOpened = whatsappOpenedOnPress;
-
-        if (sendToUser) {
-          whatsappOpened = Boolean(
-            openWhatsAppLikeBirthdaysWithText(whatsappRecipientDigits, prepared.message)
-          );
-
-          if (!whatsappOpened) {
-            Alert.alert(
-              'WhatsApp indisponível',
-              'Não foi possível abrir o Zap para o celular informado.'
-            );
-            return;
-          }
-        }
-
-        await finishAccessPinWhatsappRequest(whatsappOpened, prepared);
+        Alert.alert(
+          'Código enviado por e-mail',
+          result.emailMasked
+            ? `Enviamos o código de 4 dígitos para ${result.emailMasked}. Confira também a pasta de spam.`
+            : 'Enviamos o código de 4 dígitos por e-mail. Confira também a pasta de spam.'
+        );
+      } catch (err: unknown) {
+        console.error('Erro ao enviar código por e-mail:', err);
+        const message = err instanceof Error ? err.message : '';
+        Alert.alert(
+          'Erro',
+          message.includes('AUTH_CHANNEL_BLOCKED')
+            ? 'O envio por WhatsApp foi desativado. Use apenas e-mail.'
+            : AUTH_PIN_EMAIL_SQL_HINT
+        );
       } finally {
         setIsSendingPin(false);
       }
     })();
-  };
-
-  const finishAccessPinWhatsappRequest = async (
-    whatsappOpenedOnPress: boolean,
-    preparedOnPress: PreparedAccessPinDraft
-  ) => {
-    try {
-      const prepared = preparedOnPress;
-
-      const result = await sendAccessPinViaWhatsApp(phone, {
-        skipOpenWhatsApp: true,
-        prepared: prepared ?? undefined,
-      });
-
-      if (!result.ok) {
-        if (result.reason === 'missing_manager_phone') {
-          Alert.alert(
-            'Gestor não configurado',
-            'Com psw_user = "nao", o app envia a senha temporária para o WhatsApp em psw_mngr. Cadastre o celular do gestor em app_parameters (psw_mngr) no Supabase.'
-          );
-          return;
-        }
-
-        if (result.reason === 'profile_not_found') {
-          Alert.alert(
-            'Não foi possível gerar o código',
-            'Execute no Supabase scripts/preparar-perfil-acesso-cadastro.sql ou profiles-access-pin.sql e tente novamente.'
-          );
-          return;
-        }
-
-        Alert.alert(
-          'Celular inválido',
-          'Não foi possível abrir o WhatsApp para o celular informado. Confira o número digitado.'
-        );
-        return;
-      }
-
-      try {
-        await Clipboard.setStringAsync(result.message);
-      } catch (clipboardError) {
-        console.error('Erro ao copiar mensagem do código:', clipboardError);
-      }
-
-      setPinDeliveryUnlocked(true);
-      setHasStoredAccessPin(true);
-      setPinCodeSent(true);
-      setAccessPin('');
-      focusPinInput();
-
-      Alert.alert(
-        'Código gerado',
-        buildAccessPinDeliveryAlertMessage({
-          ...result,
-          whatsappOpened: whatsappOpenedOnPress,
-        })
-      );
-    } catch (err: unknown) {
-      console.error('Erro ao enviar código:', err);
-      Alert.alert(
-        'Erro',
-        'Não foi possível concluir o envio do código. Confira psw_user/psw_mngr em app_parameters e os scripts SQL no Supabase.'
-      );
-    }
   };
 
   const handleOpenSocial = useCallback(async (url: string) => {
@@ -529,7 +459,7 @@ export default function IndexScreen() {
           setAccessPin('');
           Alert.alert(
             'Código necessário',
-            'Na primeira entrada, toque em "Receber código no WhatsApp", confira a mensagem e digite os 4 dígitos aqui.'
+            'Na primeira entrada, toque em "Receber código por e-mail", confira a mensagem e digite os 4 dígitos aqui.'
           );
           return;
         }
@@ -677,7 +607,7 @@ export default function IndexScreen() {
   const isLikelyFirstAccess =
     !isTotemLoginMode
     && loginStep === 2
-    && (needsWhatsappBeforePin || hasStoredAccessPin === false);
+    && (needsEmailBeforePin || hasStoredAccessPin === false);
 
   const getLoginTitle = () => {
     if (isTotemLoginMode && loginStep === 2) {
@@ -715,16 +645,16 @@ export default function IndexScreen() {
     }
 
     if (isLikelyFirstAccess) {
-      return pinDeliverySettings?.sendToUser
-        ? 'Toque no botão abaixo para receber o código no seu WhatsApp.'
-        : 'Toque no botão abaixo — a secretaria envia o código pelo WhatsApp.';
+      return firstAccessNeedsEmail
+        ? 'Informe seu e-mail e toque no botão para receber o código de acesso.'
+        : 'Toque no botão abaixo para receber o código de acesso por e-mail.';
     }
 
     return 'Digite sua senha de 4 dígitos para continuar.';
   };
 
   const getMemberPinHint = () => {
-    if (isCheckingStoredPin || isPinDeliverySettingsLoading) {
+    if (isCheckingStoredPin) {
       return 'Aguarde um instante...';
     }
 
@@ -738,14 +668,16 @@ export default function IndexScreen() {
       return 'Use "Esqueci minha senha" para validar a pergunta de segurança e receber o código por e-mail.';
     }
 
-    if (needsWhatsappBeforePin) {
-      return pinDeliverySettings?.sendToUser
-        ? 'O código chega no seu WhatsApp com 4 números.'
-        : 'A secretaria envia o código com 4 números pelo WhatsApp.';
+    if (needsEmailBeforePin) {
+      return firstAccessNeedsEmail
+        ? 'O código chega no e-mail informado (não usamos WhatsApp para autenticação).'
+        : firstAccessEmailMasked
+          ? `O código será enviado para ${firstAccessEmailMasked}.`
+          : 'O código chega por e-mail com 4 números.';
     }
 
     if (!isPinInputEditable) {
-      return 'Toque no botão acima para receber seu código.';
+      return 'Toque no botão acima para receber seu código por e-mail.';
     }
 
     return 'Digite os 4 números da sua senha.';
@@ -781,28 +713,62 @@ export default function IndexScreen() {
     </View>
   );
 
-  const renderWhatsappButton = (marginBottom = 16) => (
-    <TouchableOpacity
-      accessibilityLabel="Receber código no WhatsApp"
-      accessibilityRole="button"
-      activeOpacity={0.85}
-      disabled={isWhatsappButtonDisabled}
-      onPress={handleWhatsappPress}
-      style={[
-        styles.whatsappPrimaryButton,
-        { marginBottom },
-        isWhatsappButtonDisabled && styles.whatsappPrimaryButtonDisabled,
-      ]}
-    >
-      {isSendingPin || isPinDeliverySettingsLoading ? (
-        <ActivityIndicator color="#064E3B" size="small" />
-      ) : (
+  const renderEmailPinDelivery = (marginBottom = 16) => (
+    <View style={{ marginBottom, width: '100%', gap: 10 }}>
+      {firstAccessNeedsEmail ? (
         <>
-          <FontAwesome name="whatsapp" size={24} color="#064E3B" />
-          <Text style={styles.whatsappPrimaryButtonText}>Receber código no WhatsApp</Text>
+          <View style={styles.inputContainer}>
+            <ReadOnlyText style={styles.label}>E-mail</ReadOnlyText>
+            <TextInput
+              style={[styles.input, styles.editableInput]}
+              placeholder="seu@email.com"
+              placeholderTextColor="#475569"
+              value={firstAccessEmail}
+              onChangeText={setFirstAccessEmail}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              textContentType="emailAddress"
+            />
+          </View>
+          <View style={styles.inputContainer}>
+            <ReadOnlyText style={styles.label}>Confirmar e-mail</ReadOnlyText>
+            <TextInput
+              style={[styles.input, styles.editableInput]}
+              placeholder="repita o e-mail"
+              placeholderTextColor="#475569"
+              value={firstAccessEmailConfirm}
+              onChangeText={setFirstAccessEmailConfirm}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              textContentType="emailAddress"
+            />
+          </View>
         </>
-      )}
-    </TouchableOpacity>
+      ) : null}
+
+      <TouchableOpacity
+        accessibilityLabel="Receber código por e-mail"
+        accessibilityRole="button"
+        activeOpacity={0.85}
+        disabled={isEmailPinButtonDisabled}
+        onPress={handleEmailPinPress}
+        style={[
+          styles.emailPrimaryButton,
+          isEmailPinButtonDisabled && styles.emailPrimaryButtonDisabled,
+        ]}
+      >
+        {isSendingPin ? (
+          <ActivityIndicator color="#064E3B" size="small" />
+        ) : (
+          <>
+            <FontAwesome name="envelope" size={20} color="#064E3B" />
+            <Text style={styles.emailPrimaryButtonText}>Receber código por e-mail</Text>
+          </>
+        )}
+      </TouchableOpacity>
+    </View>
   );
 
   const renderSocialLinks = () => (
@@ -956,12 +922,14 @@ export default function IndexScreen() {
                 </View>
               ) : null}
 
-              {showWhatsappAbovePin ? renderWhatsappButton() : null}
+              {showEmailPinDelivery ? renderEmailPinDelivery() : null}
 
               {!isTotemLoginMode && pinCodeSent ? (
                 <View pointerEvents="none" style={styles.pinSentBanner}>
                   <ReadOnlyText style={styles.pinSentBannerText}>
-                    Código enviado! Confira o WhatsApp e digite os 4 dígitos abaixo.
+                    {firstAccessEmailMasked
+                      ? `Código enviado para ${firstAccessEmailMasked}. Digite os 4 dígitos abaixo.`
+                      : 'Código enviado por e-mail. Digite os 4 dígitos abaixo.'}
                   </ReadOnlyText>
                 </View>
               ) : null}
@@ -1006,7 +974,7 @@ export default function IndexScreen() {
                   />
                 ) : (
                   <View
-                    accessibilityLabel="Senha bloqueada até receber o código no WhatsApp"
+                    accessibilityLabel="Senha bloqueada até receber o código por e-mail"
                     accessibilityRole="text"
                     pointerEvents="none"
                     style={[styles.pinInput, styles.pinInputFullWidth, styles.pinLockedPanel]}
@@ -1265,23 +1233,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  whatsappPrimaryButton: {
+  emailPrimaryButton: {
     width: '100%',
-    marginBottom: 16,
+    marginBottom: 0,
     paddingVertical: 18,
     paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: '#25D366',
+    backgroundColor: '#34D399',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
   },
-  whatsappPrimaryButtonDisabled: {
+  emailPrimaryButtonDisabled: {
     opacity: 0.55,
   },
-  whatsappPrimaryButtonText: {
+  emailPrimaryButtonText: {
     color: '#064E3B',
     fontSize: 16,
     fontWeight: '800',

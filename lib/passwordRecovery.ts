@@ -1,4 +1,8 @@
 import { normalizePhoneForAccessPinRpc } from '@/lib/accessPin';
+import {
+  AUTH_NOTIFICATION_CHANNEL,
+  assertAuthNotificationChannel,
+} from '@/lib/authNotificationService';
 import { supabase } from '@/lib/supabase';
 import { coerceRpcBoolean, isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
@@ -144,6 +148,8 @@ export async function passwordRecoveryVerifyAndSendPin(
   answer: string,
   question?: string
 ): Promise<PasswordRecoverySendPinResult> {
+  assertAuthNotificationChannel(AUTH_NOTIFICATION_CHANNEL);
+
   const normalizedPhone = normalizePhoneForAccessPinRpc(phone);
   const trimmedQuestion = question?.trim() ?? '';
 

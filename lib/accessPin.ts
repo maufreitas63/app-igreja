@@ -1,7 +1,11 @@
+import {
+  AUTH_CHANNEL_BLOCKED_MESSAGE,
+  AUTH_PIN_EMAIL_SQL_HINT,
+  rejectAuthWhatsAppDelivery,
+} from '@/lib/authNotificationService';
 import { getAppParameterValue } from '@/lib/appParameters';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
-import { normalizePhoneForWhatsApp, openWhatsAppPhone } from '@/lib/whatsapp';
 
 export const ACCESS_PIN_LENGTH = 4;
 
@@ -109,36 +113,7 @@ export function getAccessPinWhatsappRecipientDigits(
     : null;
 }
 
-const formatAccessPinRpcError = (error: unknown) => {
-  const message =
-    error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
-      ? error.message
-      : 'Não foi possível gerar o código de acesso.';
-
-  const normalized = message.toLowerCase();
-
-  if (normalized.includes('não encontrado') || normalized.includes('nao encontrado')) {
-    return (
-      'Não foi possível criar o perfil para este celular. '
-      + 'Execute no Supabase scripts/preparar-perfil-acesso-cadastro.sql (ou profiles-access-pin.sql).'
-    );
-  }
-
-  if (
-    normalized.includes('preparar o perfil')
-    || normalized.includes('preparar o cadastro')
-    || normalized.includes('perfil visitante')
-  ) {
-    return (
-      'Não foi possível criar o perfil visitante. Execute no Supabase '
-      + 'scripts/preparar-perfil-acesso-cadastro.sql (arquivo completo).'
-    );
-  }
-
-  return message;
-};
-
-/** Define destino do WhatsApp conforme `psw_user` e `psw_mngr`. */
+/** Define destino legado (psw_user / psw_mngr) — não usado para envio de PIN de autenticação. */
 export async function resolveAccessPinDelivery(screenPhone: string): Promise<AccessPinDeliveryPlan> {
   const pswUser = await getAppParameterValue('psw_user');
   const sendToUser = parsePswUserParameter(pswUser);
@@ -388,29 +363,14 @@ export async function regenerateProfileAccessPin(phone: string) {
   return pin;
 }
 
-export function buildAccessPinWhatsAppMessage(pin: string, screenPhone: string, sendToUser: boolean) {
-  const digits = normalizeDigits(screenPhone);
-
-  if (sendToUser) {
-    return `Olá! Seu código de acesso ao painel é: ${pin}. Use os 4 dígitos na tela de entrada.`;
-  }
-
-  return (
-    `Código de acesso para cadastro — celular (${digits}): ${pin}. `
-    + 'O membro deve entrar no app com esse código e concluir o cadastro inicial.'
-  );
+/** @deprecated Mensagens de PIN por WhatsApp foram removidas do fluxo de autenticação. */
+export function buildAccessPinWhatsAppMessage(
+  _pin: string,
+  _screenPhone: string,
+  _sendToUser: boolean
+): never {
+  rejectAuthWhatsAppDelivery('buildAccessPinWhatsAppMessage');
 }
-
-const isProfileNotFoundForAccessPinError = (error: unknown) => {
-  const message =
-    error && typeof error === 'object' && 'message' in error && typeof error.message === 'string'
-      ? error.message
-      : String(error ?? '');
-
-  const normalized = message.toLowerCase();
-
-  return normalized.includes('não encontrado') || normalized.includes('nao encontrado');
-};
 
 export type SendAccessPinViaWhatsAppResult =
   | {
@@ -422,7 +382,7 @@ export type SendAccessPinViaWhatsAppResult =
       whatsappOpened: boolean;
       message: string;
     }
-  | { ok: false; reason: 'invalid_user_phone' | 'missing_manager_phone' }
+  | { ok: false; reason: 'invalid_user_phone' | 'missing_manager_phone' | 'auth_channel_blocked' }
   | { ok: false; reason: 'profile_not_found'; managerNotified: boolean };
 
 export async function updateProfileAccessPin(
@@ -468,47 +428,18 @@ export type PrepareAccessPinDraftResult =
   | { ok: true; draft: PreparedAccessPinDraft }
   | { ok: false; message: string };
 
-/** Gera PIN + mensagem para o celular da tela (cria perfil mínimo no Supabase se necessário). */
+/**
+ * @deprecated PIN de autenticação não usa mais WhatsApp.
+ * Use `dispatchAuthAccessPinEmail` em `@/lib/authNotificationService`.
+ */
 export async function prepareAccessPinDraft(
-  screenPhone: string
+  _screenPhone: string
 ): Promise<PrepareAccessPinDraftResult> {
-  const screenDigits = normalizeDigits(screenPhone);
-
-  if (screenDigits.length < 10) {
-    return { ok: false, message: 'Informe um celular válido com DDD.' };
-  }
-
-  try {
-    const settings = await loadAccessPinDeliverySettings();
-    const recipientDigits = getAccessPinWhatsappRecipientDigits(settings, screenDigits);
-
-    if (!recipientDigits) {
-      return {
-        ok: false,
-        message: settings.sendToUser
-          ? 'Celular inválido na tela de entrada.'
-          : 'Cadastre psw_mngr em app_parameters (somente dígitos, ex.: 19996166161).',
-      };
-    }
-
-    const pin = await regenerateProfileAccessPin(screenPhone);
-    const message = buildAccessPinWhatsAppMessage(pin, screenPhone, settings.sendToUser);
-
-    return {
-      ok: true,
-      draft: {
-        phoneDigits: screenDigits,
-        pin,
-        message,
-        sendToUser: settings.sendToUser,
-        recipientDigits,
-        recipientLabel: settings.recipientLabel,
-      },
-    };
-  } catch (error) {
-    console.error('Erro ao preparar código de acesso:', error);
-    return { ok: false, message: formatAccessPinRpcError(error) };
-  }
+  console.error(AUTH_CHANNEL_BLOCKED_MESSAGE, { fn: 'prepareAccessPinDraft' });
+  return {
+    ok: false,
+    message: `${AUTH_CHANNEL_BLOCKED_MESSAGE} ${AUTH_PIN_EMAIL_SQL_HINT}`,
+  };
 }
 
 type SendAccessPinOptions = {
@@ -518,97 +449,24 @@ type SendAccessPinOptions = {
   prepared?: PreparedAccessPinDraft;
 };
 
+/**
+ * @deprecated Bloqueado. Autenticação envia PIN apenas por e-mail
+ * (`dispatchAuthAccessPinEmail` em `@/lib/authNotificationService`).
+ */
 export async function sendAccessPinViaWhatsApp(
-  screenPhone: string,
-  options?: SendAccessPinOptions
+  _screenPhone: string,
+  _options?: SendAccessPinOptions
 ): Promise<SendAccessPinViaWhatsAppResult> {
-  const delivery = await resolveAccessPinDelivery(screenPhone);
-
-  if (delivery.sendToUser) {
-    const userDigits = normalizeDigits(screenPhone);
-
-    if (userDigits.length < 10) {
-      return { ok: false, reason: 'invalid_user_phone' };
-    }
-  } else if (!delivery.recipientDigits) {
-    return { ok: false, reason: 'missing_manager_phone' };
-  }
-
-  const whatsappPhone = normalizePhoneForWhatsApp(delivery.recipientDigits);
-
-  if (!whatsappPhone) {
-    return {
-      ok: false,
-      reason: delivery.sendToUser ? 'invalid_user_phone' : 'missing_manager_phone',
-    };
-  }
-
-  let pin: string;
-  let message: string;
-
-  if (
-    options?.prepared
-    && options.prepared.phoneDigits === normalizeDigits(screenPhone)
-  ) {
-    pin = options.prepared.pin;
-    message = options.prepared.message;
-  } else {
-    try {
-      pin = await regenerateProfileAccessPin(screenPhone);
-    } catch (error) {
-      if (isProfileNotFoundForAccessPinError(error)) {
-        return {
-          ok: false,
-          reason: 'profile_not_found',
-          managerNotified: false,
-        };
-      }
-
-      throw error;
-    }
-
-    message = buildAccessPinWhatsAppMessage(pin, screenPhone, delivery.sendToUser);
-  }
-
-  let whatsappOpened = options?.skipOpenWhatsApp ?? false;
-
-  if (!options?.skipOpenWhatsApp) {
-    try {
-      await openWhatsAppPhone(whatsappPhone, message);
-      whatsappOpened = true;
-    } catch (error) {
-      console.error('Erro ao abrir WhatsApp (wa.me):', error);
-    }
-  }
-
-  return {
-    ok: true,
-    pin,
-    message,
-    sendToUser: delivery.sendToUser,
-    target: delivery.target,
-    recipientLabel: delivery.recipientLabel,
-    whatsappOpened,
-  };
+  console.error(AUTH_CHANNEL_BLOCKED_MESSAGE, { fn: 'sendAccessPinViaWhatsApp' });
+  return { ok: false, reason: 'auth_channel_blocked' };
 }
 
-export const buildAccessPinDeliveryAlertMessage = (
-  result: Extract<SendAccessPinViaWhatsAppResult, { ok: true }>
-) => {
-  const pinLine = `Código temporário: ${result.pin}`;
-  const sendHint =
-    'A mensagem com o código deve aparecer no WhatsApp. Confira e toque em Enviar. O texto também foi copiado na área de transferência.';
-  const afterPinHint = result.sendToUser
-    ? 'Digite os 4 dígitos na tela de entrada e altere a senha em Dados Cadastrais.'
-    : 'Repasse o código ao membro para ele entrar no app e concluir o cadastro inicial.';
+/** Garante falha explícita se algum fluxo legado tentar WhatsApp para auth. */
+export function assertAccessPinWhatsAppDisabled() {
+  rejectAuthWhatsAppDelivery('accessPin.assertAccessPinWhatsAppDisabled');
+}
 
-  return (
-    `${pinLine}\n\n`
-    + (result.whatsappOpened
-      ? (result.sendToUser
-          ? 'O WhatsApp foi aberto (como em Aniversariantes). '
-          : `O WhatsApp foi aberto para ${result.recipientLabel}. `)
-      : 'Abra o WhatsApp manualmente se a conversa não tiver aparecido. ')
-    + `${sendHint}\n\n${afterPinHint}`
-  );
-};
+/** @deprecated WhatsApp removido do fluxo de autenticação. */
+export const buildAccessPinDeliveryAlertMessage = (
+  _result?: Extract<SendAccessPinViaWhatsAppResult, { ok: true }>
+) => AUTH_CHANNEL_BLOCKED_MESSAGE;
