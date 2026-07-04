@@ -8,25 +8,34 @@ const normalizePathname = (pathname: string) => {
   return trimmed || '/';
 };
 
-/** Tela inicial autenticada (Índice) ou login público. */
-const isApplicationHomeScreen = (pathname: string, segments: string[]) => {
-  const normalized = normalizePathname(pathname);
-
-  if (normalized === '/' || normalized === '/index' || normalized === '/sessao-encerrada') {
-    return true;
-  }
-
+/** Índice do Aplicativo (tabs). */
+const isAppIndexScreen = (pathname: string, segments: string[]) => {
   if (segments[0] === '(tabs)') {
     return segments.length === 1 || segments[1] === 'index';
   }
 
-  return false;
+  const normalized = normalizePathname(pathname);
+  return normalized === '/(tabs)' || normalized === '/(tabs)/index';
+};
+
+/** Login ou tela pós-saída (sem Índice autenticado). */
+const isPublicEntryScreen = (pathname: string, segments: string[]) => {
+  if (segments[0] === '(tabs)') {
+    return false;
+  }
+
+  const normalized = normalizePathname(pathname);
+  return (
+    normalized === '/'
+    || normalized === '/index'
+    || normalized === '/sessao-encerrada'
+  );
 };
 
 /**
  * Botão nativo "voltar" (Android):
- * - em telas internas, volta na pilha do app;
- * - na tela inicial (Índice ou login), pergunta se deseja sair.
+ * - em qualquer tela autenticada fora do Índice → vai ao Índice;
+ * - no Índice (ou no login) → executa sair do aplicativo (com confirmação).
  */
 export function AppBackHandler() {
   const router = useRouter();
@@ -39,19 +48,12 @@ export function AppBackHandler() {
     }
 
     const onHardwareBackPress = () => {
-      const atHome = isApplicationHomeScreen(pathname, segments);
-
-      if (atHome) {
+      if (isAppIndexScreen(pathname, segments) || isPublicEntryScreen(pathname, segments)) {
         void confirmExitApplication();
         return true;
       }
 
-      if (router.canGoBack()) {
-        router.back();
-        return true;
-      }
-
-      void confirmExitApplication();
+      router.replace('/(tabs)');
       return true;
     };
 
