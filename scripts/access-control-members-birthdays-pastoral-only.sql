@@ -7,9 +7,10 @@ update public.access_grants ag
    set can_view = false,
        can_update = false,
        updated_at = now()
-  from public.access_roles r
-  join public.access_resources res on res.id = ag.resource_id
+  from public.access_roles r,
+       public.access_resources res
  where ag.role_id = r.id
+   and ag.resource_id = res.id
    and r.code = 'member'
    and res.resource_type = 'screen'
    and res.resource_key in ('dashboard.card.members_list', 'dashboard.card.birthdays');
@@ -19,9 +20,10 @@ update public.access_grants ag
    set can_view = false,
        can_update = false,
        updated_at = now()
-  from public.access_roles r
-  join public.access_resources res on res.id = ag.resource_id
+  from public.access_roles r,
+       public.access_resources res
  where ag.role_id = r.id
+   and ag.resource_id = res.id
    and r.code = 'congregado'
    and res.resource_type = 'screen'
    and res.resource_key in ('dashboard.card.members_list', 'dashboard.card.birthdays');
