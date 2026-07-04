@@ -1,5 +1,6 @@
 import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import {
+  normalizeAssemblyMinuteLabel,
   parseAssemblyMinutePdfInput,
   pickAssemblyMinutePdf,
   pickAssemblyMinutePdfs,
@@ -61,6 +62,89 @@ const appendSignedUrl = async (row: Omit<AssemblyMinuteRecord, 'signedUrl'>) => 
   return { ...row, signedUrl: data?.signedUrl ?? null };
 };
 
+/** Código documental no formato IBN.001.2025 (aceita `.`, `_`, `-` ou espaço). */
+const IBN_CODE_RE = /IBN[\s._-]*(\d+)[\s._-]*(\d{4})/i;
+
+export type AssemblyMinuteIbnCode = {
+  sequence: number;
+  year: number;
+};
+
+export function parseAssemblyMinuteIbnCode(
+  value: string | null | undefined
+): AssemblyMinuteIbnCode | null {
+  if (!value?.trim()) {
+    return null;
+  }
+
+  const match = normalizeAssemblyMinuteLabel(value).match(IBN_CODE_RE) ?? value.match(IBN_CODE_RE);
+
+  if (!match) {
+    return null;
+  }
+
+  const sequence = Number(match[1]);
+  const year = Number(match[2]);
+
+  if (!Number.isFinite(sequence) || !Number.isFinite(year)) {
+    return null;
+  }
+
+  return { sequence, year };
+}
+
+const ibnCodeFromMinute = (row: Pick<AssemblyMinuteRecord, 'title' | 'file_name'>) =>
+  parseAssemblyMinuteIbnCode(row.title) ?? parseAssemblyMinuteIbnCode(row.file_name);
+
+/** Ano mais recente primeiro; no mesmo ano, sequência maior primeiro (ex.: IBN.003.2025 antes de IBN.001.2025). */
+export function compareAssemblyMinutesByIbnDesc(
+  a: Pick<AssemblyMinuteRecord, 'title' | 'file_name' | 'created_at'>,
+  b: Pick<AssemblyMinuteRecord, 'title' | 'file_name' | 'created_at'>
+) {
+  const codeA = ibnCodeFromMinute(a);
+  const codeB = ibnCodeFromMinute(b);
+
+  if (codeA && codeB) {
+    if (codeA.year !== codeB.year) {
+      return codeB.year - codeA.year;
+    }
+
+    if (codeA.sequence !== codeB.sequence) {
+      return codeB.sequence - codeA.sequence;
+    }
+  } else if (codeA && !codeB) {
+    return -1;
+  } else if (!codeA && codeB) {
+    return 1;
+  }
+
+  const createdCompare = (b.created_at || '').localeCompare(a.created_at || '');
+
+  if (createdCompare !== 0) {
+    return createdCompare;
+  }
+
+  return normalizeAssemblyMinuteLabel(b.title).localeCompare(
+    normalizeAssemblyMinuteLabel(a.title),
+    'pt-BR',
+    { sensitivity: 'base' }
+  );
+}
+
+export function sortAssemblyMinutesByIbnDesc<T extends Pick<AssemblyMinuteRecord, 'title' | 'file_name' | 'created_at'>>(
+  rows: T[]
+): T[] {
+  return [...rows].sort(compareAssemblyMinutesByIbnDesc);
+}
+
+const prepareAssemblyMinuteRows = (rows: Omit<AssemblyMinuteRecord, 'signedUrl'>[]) =>
+  sortAssemblyMinutesByIbnDesc(
+    rows.map((row) => ({
+      ...row,
+      title: normalizeAssemblyMinuteLabel(row.title),
+    }))
+  );
+
 export async function fetchAssemblyMinutes(): Promise<AssemblyMinuteRecord[]> {
   const { data, error } = await supabase
     .from('maintenance_assembly_minutes')
@@ -75,7 +159,7 @@ export async function fetchAssemblyMinutes(): Promise<AssemblyMinuteRecord[]> {
     throw error;
   }
 
-  const rows = (data ?? []) as Omit<AssemblyMinuteRecord, 'signedUrl'>[];
+  const rows = prepareAssemblyMinuteRows((data ?? []) as Omit<AssemblyMinuteRecord, 'signedUrl'>[]);
 
   return Promise.all(rows.map((row) => appendSignedUrl(row)));
 }
@@ -85,9 +169,9 @@ export async function uploadAssemblyMinute(input: {
   pdf: AssemblyMinutePdfInput;
   storageIndex?: number;
 }) {
-  const title =
-    input.title?.trim()
-    || titleFromAssemblyMinuteFileName(input.pdf.fileName);
+  const title = normalizeAssemblyMinuteLabel(
+    input.title?.trim() || titleFromAssemblyMinuteFileName(input.pdf.fileName)
+  );
 
   if (!title) {
     throw new Error('Não foi possível definir o título da ata a partir do nome do arquivo.');
@@ -181,7 +265,7 @@ export async function pickAndUploadAssemblyMinutes(): Promise<AssemblyMinutesBat
   return { uploaded, failures };
 }
 
-export { titleFromAssemblyMinuteFileName };
+export { normalizeAssemblyMinuteLabel, titleFromAssemblyMinuteFileName };
 
 export async function createAssemblyMinuteSignedUrl(storagePath: string) {
   const { data, error } = await supabase.storage
@@ -197,7 +281,7 @@ export async function createAssemblyMinuteSignedUrl(storagePath: string) {
 
 /** Renomeia o título exibido da ata (não altera o arquivo no Storage). */
 export async function renameAssemblyMinute(id: string, title: string) {
-  const nextTitle = title.trim();
+  const nextTitle = normalizeAssemblyMinuteLabel(title);
 
   if (!nextTitle) {
     throw new Error('Informe o novo título da ata.');

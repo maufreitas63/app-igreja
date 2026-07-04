@@ -3,6 +3,7 @@ import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/m
 import {
   createAssemblyMinuteSignedUrl,
   fetchAssemblyMinutes,
+  normalizeAssemblyMinuteLabel,
   type AssemblyMinuteRecord,
 } from '@/lib/assemblyMinutesApi';
 import {
@@ -323,7 +324,9 @@ export function AdministrativoCard({ panelHeight, isActive = true }: Props) {
                           {minute.title}
                         </Text>
                         <Text style={styles.minuteMeta}>
-                          {formatDateTime(minute.created_at)} · {minute.file_name}
+                          {formatDateTime(minute.created_at)} ·{' '}
+                          {normalizeAssemblyMinuteLabel(minute.file_name.replace(/\.pdf$/i, ''))}
+                          .pdf
                         </Text>
                       </View>
                       {loadingPdfId === minute.id ? (

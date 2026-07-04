@@ -11,11 +11,15 @@ export type AssemblyMinutePdfInput = {
 const sanitizeFileName = (value: string) =>
   value.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_+/g, '_') || 'ata.pdf';
 
-/** Título da ata = nome do arquivo sem extensão `.pdf`. */
+/** Exibe rótulos legíveis: `_` vira espaço e espaços repetidos são colapsados. */
+export const normalizeAssemblyMinuteLabel = (value: string) =>
+  value.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+
+/** Título da ata = nome do arquivo sem extensão `.pdf`, com `_` como espaço. */
 export const titleFromAssemblyMinuteFileName = (fileName: string) => {
   const base = fileName.replace(/\\/g, '/').split('/').pop()?.trim() || fileName.trim();
   const withoutExtension = base.replace(/\.pdf$/i, '').trim();
-  return withoutExtension || base || 'Ata';
+  return normalizeAssemblyMinuteLabel(withoutExtension || base || 'Ata');
 };
 
 export const parseAssemblyMinutePdfInput = async (

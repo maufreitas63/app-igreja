@@ -56,8 +56,10 @@ import {
   ASSEMBLY_MINUTES_SQL_HINT,
   createAssemblyMinuteSignedUrl,
   fetchAssemblyMinutes,
+  normalizeAssemblyMinuteLabel,
   pickAndUploadAssemblyMinutes,
   renameAssemblyMinute,
+  sortAssemblyMinutesByIbnDesc,
   type AssemblyMinuteRecord,
 } from '@/lib/assemblyMinutesApi';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
@@ -1038,7 +1040,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
 
   const handleOpenRenameAssemblyMinute = (minute: AssemblyMinuteRecord) => {
     setRenamingMinute(minute);
-    setRenameTitleDraft(minute.title);
+    setRenameTitleDraft(normalizeAssemblyMinuteLabel(minute.title));
   };
 
   const handleSaveRenameAssemblyMinute = async () => {
@@ -1062,7 +1064,9 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     try {
       const updated = await renameAssemblyMinute(renamingMinute.id, nextTitle);
       setAssemblyMinutes((current) =>
-        current.map((row) => (row.id === updated.id ? { ...row, title: updated.title } : row))
+        sortAssemblyMinutesByIbnDesc(
+          current.map((row) => (row.id === updated.id ? { ...row, title: updated.title } : row))
+        )
       );
       setRenamingMinute(null);
       setRenameTitleDraft('');
@@ -1463,7 +1467,8 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           <View style={styles.formCard}>
             <Text style={styles.formatHint}>
               Selecione um ou vários PDFs de uma vez. O título inicial de cada ata será o nome do
-              arquivo (sem .pdf). Você pode visualizar e renomear os documentos publicados abaixo.
+              arquivo (sem .pdf), com “_” trocado por espaço. A lista fica em ordem descendente pelo
+              código IBN (ex.: IBN.003.2025 antes de IBN.001.2025) e se atualiza a cada novo envio.
             </Text>
 
             <TouchableOpacity
@@ -1516,7 +1521,9 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                         {minute.title}
                       </Text>
                       <Text style={styles.assemblyMinuteMeta}>
-                        {formatAssemblyMinuteDate(minute.created_at)} · {minute.file_name}
+                        {formatAssemblyMinuteDate(minute.created_at)} ·{' '}
+                        {normalizeAssemblyMinuteLabel(minute.file_name.replace(/\.pdf$/i, ''))}
+                        .pdf
                       </Text>
                     </View>
                     <View style={styles.assemblyMinuteActions}>
