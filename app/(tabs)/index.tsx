@@ -37,9 +37,13 @@ import {
 } from '@/lib/dashboardPanelLayout';
 import {
   INDEX_SHORTCUT_ICONS,
-  resolveIndexShortcutDisabledHint,
   resolveIndexShortcutIconColor,
 } from '@/lib/indexShortcutHints';
+import {
+  buildIndexShortcutGroups,
+  filterVisibleIndexShortcuts,
+  type IndexShortcutDefinition,
+} from '@/lib/indexShortcutVisibility';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { useGhostMode } from '@/context/GhostModeContext';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
@@ -53,6 +57,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   ScrollView,
   StyleSheet,
@@ -63,16 +68,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-type DashboardShortcut = {
-  id: string;
-  label: string;
-  dashboardCard: string;
-  parentId?: string;
-  disabled?: boolean;
-  disabledHint?: string | null;
-};
-
-const DASHBOARD_SHORTCUTS_BASE: DashboardShortcut[] = [
+const DASHBOARD_SHORTCUTS_BASE: IndexShortcutDefinition[] = [
   { id: 'agenda', label: 'Painel de Eventos', dashboardCard: '1' },
   { id: 'salas', label: 'Sala(s)', dashboardCard: '4', parentId: 'agenda' },
   { id: 'qr-totem', label: 'QR Code — Check-in Totem', dashboardCard: 'qr', parentId: 'agenda' },
@@ -85,34 +81,6 @@ const DASHBOARD_SHORTCUTS_BASE: DashboardShortcut[] = [
   { id: 'menu', label: 'Perfil & Identidade', dashboardCard: '6' },
   { id: 'administrativo', label: 'Administrativo', dashboardCard: '13' },
 ];
-
-type DashboardShortcutGroup = {
-  parent: DashboardShortcut;
-  children: DashboardShortcut[];
-};
-
-const buildShortcutGroups = (items: DashboardShortcut[]): DashboardShortcutGroup[] => {
-  const groups: DashboardShortcutGroup[] = [];
-
-  for (let index = 0; index < items.length; index += 1) {
-    const parent = items[index];
-    if (parent.parentId) {
-      continue;
-    }
-
-    const children: DashboardShortcut[] = [];
-    let childIndex = index + 1;
-    while (childIndex < items.length && items[childIndex].parentId === parent.id) {
-      children.push(items[childIndex]);
-      childIndex += 1;
-    }
-
-    groups.push({ parent, children });
-    index = childIndex - 1;
-  }
-
-  return groups;
-};
 
 const formatDisplayName = (fullName: string) => {
   const parts = fullName.trim().split(/\s+/).filter(Boolean);
@@ -262,48 +230,25 @@ export default function DashboardIndexScreen() {
     }, [ghostModeActive, ghostModeState?.targetProfileId])
   );
 
-  const shortcutHintContext = useMemo(
-    () => ({
-      selectedEvent,
+  const shortcutGroups = useMemo(() => {
+    const visible = filterVisibleIndexShortcuts(DASHBOARD_SHORTCUTS_BASE, {
+      hasActiveMembership,
+      isQrCheckInShortcutVisible,
       hasAvailableEvents,
-      qrCodeAtivoEnabled,
-      checkInManualMode,
-      hasPreCheckin,
-      hasTotemCheckinConfirmed,
-    }),
-    [
-      checkInManualMode,
-      hasAvailableEvents,
-      hasPreCheckin,
-      hasTotemCheckinConfirmed,
-      qrCodeAtivoEnabled,
-      selectedEvent,
-    ]
-  );
+      dashboardCardAccess,
+      dashboardScreenAccess,
+      accessReady: !isDashboardShortcutAccessLoading,
+    });
 
-  const shortcuts = useMemo(
-    () =>
-      DASHBOARD_SHORTCUTS_BASE.filter(
-        (shortcut) => shortcut.id !== 'administrativo' || hasActiveMembership
-      ).map((shortcut) => {
-        const disabledHint = resolveIndexShortcutDisabledHint(shortcut.id, shortcutHintContext);
-        const disabled =
-          shortcut.id === 'qr-totem'
-            ? !isQrCheckInShortcutVisible
-            : shortcut.id === 'salas'
-              ? !hasAvailableEvents
-              : Boolean(disabledHint);
-
-        return {
-          ...shortcut,
-          disabled,
-          disabledHint: disabled ? disabledHint : null,
-        };
-      }),
-    [hasActiveMembership, hasAvailableEvents, isQrCheckInShortcutVisible, shortcutHintContext]
-  );
-
-  const shortcutGroups = useMemo(() => buildShortcutGroups(shortcuts), [shortcuts]);
+    return buildIndexShortcutGroups(visible);
+  }, [
+    dashboardCardAccess,
+    dashboardScreenAccess,
+    hasActiveMembership,
+    hasAvailableEvents,
+    isDashboardShortcutAccessLoading,
+    isQrCheckInShortcutVisible,
+  ]);
 
   const indexCardHeight = useMemo(
     () => computeEventPanelCardHeight(screenHeight, insets.top, insets.bottom),
@@ -325,8 +270,8 @@ export default function DashboardIndexScreen() {
     [screenWidth]
   );
 
-  const handleOpenShortcut = (shortcut: DashboardShortcut) => {
-    if (shortcut.disabled || isDashboardShortcutAccessLoading) {
+  const handleOpenShortcut = (shortcut: IndexShortcutDefinition) => {
+    if (isDashboardShortcutAccessLoading) {
       return;
     }
 
@@ -431,12 +376,12 @@ export default function DashboardIndexScreen() {
     exitApplication();
   }, []);
 
-  const renderShortcutButton = (shortcut: DashboardShortcut, options?: { isChild?: boolean }) => {
+  const renderShortcutButton = (shortcut: IndexShortcutDefinition, options?: { isChild?: boolean }) => {
     const isChild = options?.isChild === true;
     const parentLabel =
       shortcut.parentId === 'agenda' ? DASHBOARD_SHORTCUTS_BASE.find((item) => item.id === 'agenda')?.label : null;
     const iconName = INDEX_SHORTCUT_ICONS[shortcut.id as keyof typeof INDEX_SHORTCUT_ICONS];
-    const iconColor = resolveIndexShortcutIconColor(shortcut.id, shortcut.disabled);
+    const iconColor = resolveIndexShortcutIconColor(shortcut.id);
 
     return (
       <TouchableOpacity
@@ -444,17 +389,14 @@ export default function DashboardIndexScreen() {
         style={[
           styles.menuShortcutButton,
           isChild && styles.menuShortcutChildButton,
-          shortcut.disabled && styles.menuShortcutButtonDisabled,
         ]}
         onPress={() => handleOpenShortcut(shortcut)}
-        disabled={shortcut.disabled}
         activeOpacity={0.9}
         hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
         accessibilityRole="button"
         accessibilityLabel={
           parentLabel ? `${shortcut.label}, subitem de ${parentLabel}` : shortcut.label
         }
-        accessibilityHint={shortcut.disabledHint ?? undefined}
       >
         {isChild ? (
           <View style={styles.menuShortcutChildRow}>
@@ -469,20 +411,11 @@ export default function DashboardIndexScreen() {
             ) : null}
             <View style={styles.menuShortcutTextBlock}>
               <Text
-                style={[
-                  styles.menuShortcutButtonText,
-                  styles.menuShortcutChildButtonText,
-                  shortcut.disabled && styles.menuShortcutButtonTextDisabled,
-                ]}
+                style={[styles.menuShortcutButtonText, styles.menuShortcutChildButtonText]}
                 numberOfLines={2}
               >
                 {shortcut.label}
               </Text>
-              {shortcut.disabled && shortcut.disabledHint ? (
-                <Text style={styles.menuShortcutHintText} numberOfLines={2}>
-                  {shortcut.disabledHint}
-                </Text>
-              ) : null}
             </View>
           </View>
         ) : (
@@ -496,20 +429,9 @@ export default function DashboardIndexScreen() {
               />
             ) : null}
             <View style={styles.menuShortcutTextBlock}>
-              <Text
-                style={[
-                  styles.menuShortcutButtonText,
-                  shortcut.disabled && styles.menuShortcutButtonTextDisabled,
-                ]}
-                numberOfLines={2}
-              >
+              <Text style={styles.menuShortcutButtonText} numberOfLines={2}>
                 {shortcut.label}
               </Text>
-              {shortcut.disabled && shortcut.disabledHint ? (
-                <Text style={styles.menuShortcutHintText} numberOfLines={2}>
-                  {shortcut.disabledHint}
-                </Text>
-              ) : null}
             </View>
           </View>
         )}
@@ -552,19 +474,29 @@ export default function DashboardIndexScreen() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >
-                {shortcutGroups.map((group) => (
-                  <View key={group.parent.id} style={styles.shortcutGroup}>
-                    {renderShortcutButton(group.parent)}
-                    {group.children.length > 0 ? (
-                      <View style={styles.shortcutSubgroup}>
-                        <View style={styles.shortcutSubgroupRail} />
-                        <View style={styles.shortcutSubgroupList}>
-                          {group.children.map((child) => renderShortcutButton(child, { isChild: true }))}
+                {isDashboardShortcutAccessLoading ? (
+                  <ActivityIndicator color="#6EE7B7" style={styles.shortcutsLoader} />
+                ) : shortcutGroups.length === 0 ? (
+                  <Text style={styles.shortcutsEmptyText}>
+                    Nenhum atalho disponível para o seu perfil no momento.
+                  </Text>
+                ) : (
+                  shortcutGroups.map((group) => (
+                    <View key={group.parent.id} style={styles.shortcutGroup}>
+                      {renderShortcutButton(group.parent)}
+                      {group.children.length > 0 ? (
+                        <View style={styles.shortcutSubgroup}>
+                          <View style={styles.shortcutSubgroupRail} />
+                          <View style={styles.shortcutSubgroupList}>
+                            {group.children.map((child) =>
+                              renderShortcutButton(child, { isChild: true })
+                            )}
+                          </View>
                         </View>
-                      </View>
-                    ) : null}
-                  </View>
-                ))}
+                      ) : null}
+                    </View>
+                  ))
+                )}
               </ScrollView>
             </View>
           </View>
@@ -705,6 +637,17 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     gap: 8,
     paddingVertical: 4,
+  },
+  shortcutsLoader: {
+    paddingVertical: 24,
+  },
+  shortcutsEmptyText: {
+    color: '#94A3B8',
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 8,
   },
   shortcutGroup: {
     gap: 4,

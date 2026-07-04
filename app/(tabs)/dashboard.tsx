@@ -82,6 +82,10 @@ import {
   type DashboardScreenAccess,
 } from '@/lib/dashboardScreenAccess';
 import {
+  loadGroupedManageScreenAccess,
+  type GroupedManageScreenAccess,
+} from '@/lib/groupedManageAccess';
+import {
   DASHBOARD_SCREEN_DENIED_MESSAGES,
   navigateWithScreenAccess,
 } from '@/lib/dashboardScreenNavigation';
@@ -540,6 +544,11 @@ export default function Dashboard() {
   const [isMaintenanceAccessLoading, setIsMaintenanceAccessLoading] = useState(true);
   const [dashboardCardAccess, setDashboardCardAccess] = useState<DashboardCardViewAccess>({});
   const [dashboardScreenAccess, setDashboardScreenAccess] = useState<DashboardScreenAccess>({});
+  const [groupedManageScreenAccess, setGroupedManageScreenAccess] =
+    useState<GroupedManageScreenAccess>({
+      manageProfile: false,
+      manageMembers: false,
+    });
   const [canAccessMapGeolocation, setCanAccessMapGeolocation] = useState(false);
   const [canViewMapPinDetails, setCanViewMapPinDetails] = useState(false);
   const [aclRpcStatus, setAclRpcStatus] = useState<'unknown' | 'available' | 'missing'>('unknown');
@@ -903,6 +912,7 @@ export default function Dashboard() {
           setCanMonitorFamilyReception(false);
           setDashboardCardAccess({});
           setDashboardScreenAccess({});
+          setGroupedManageScreenAccess({ manageProfile: false, manageMembers: false });
           setCanAccessMapGeolocation(false);
         setCanViewMapPinDetails(false);
           return;
@@ -929,6 +939,7 @@ export default function Dashboard() {
           setCanMonitorFamilyReception(false);
           setDashboardCardAccess({});
           setDashboardScreenAccess({});
+          setGroupedManageScreenAccess({ manageProfile: false, manageMembers: false });
           setCanAccessMapGeolocation(false);
         setCanViewMapPinDetails(false);
           signOutAndNavigateToLogin();
@@ -953,6 +964,7 @@ export default function Dashboard() {
           setCanViewMaintenance(false);
           setCanMonitorFamilyReception(false);
           setDashboardCardAccess({});
+          setGroupedManageScreenAccess({ manageProfile: false, manageMembers: false });
           setCanAccessMapGeolocation(false);
           setCanViewMapPinDetails(false);
         }
@@ -962,11 +974,12 @@ export default function Dashboard() {
 
         if (loadedProfile?.id) {
           const accessProfileId = (await resolveEffectiveProfileId()) ?? loadedProfile.id;
-          const [allowed, cardAccess, screenAccess, mapGeolocationAllowed, mapPinDetailAllowed, isSuperAdmin, canAccessProfileCadastro, activeMembership] =
+          const [allowed, cardAccess, screenAccess, groupedManageAccess, mapGeolocationAllowed, mapPinDetailAllowed, isSuperAdmin, canAccessProfileCadastro, activeMembership] =
             await Promise.all([
               profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.maintenance, 'view'),
               loadDashboardCardViewAccess(accessProfileId, { forceRefresh: ghostModeActive }),
               loadDashboardLinkedScreenAccess(accessProfileId, { forceRefresh: ghostModeActive }),
+              loadGroupedManageScreenAccess(accessProfileId, { forceRefresh: ghostModeActive }),
               profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocation, 'view'),
               profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.mapGeolocationPinDetail, 'view'),
               checkSessionIsSuperAdmin({ forceRefresh: ghostModeActive }),
@@ -981,6 +994,7 @@ export default function Dashboard() {
 
           let resolvedCardAccess = cardAccess;
           let resolvedScreenAccess = screenAccess;
+          let resolvedGroupedManageAccess = groupedManageAccess;
           const hasAnyCard = Object.values(cardAccess).some((allowedCard) => allowedCard === true);
           const operatorIsSuperAdmin = await checkOperatorIsSuperAdmin({ forceRefresh: ghostModeActive });
 
@@ -993,12 +1007,14 @@ export default function Dashboard() {
                 (resourceKey) => [resourceKey, true] as const
               )
             );
+            resolvedGroupedManageAccess = { manageProfile: true, manageMembers: true };
           }
 
           setCanViewMaintenance(allowed || operatorIsSuperAdmin);
           setCanMonitorFamilyReception(isSuperAdmin || canAccessProfileCadastro || operatorIsSuperAdmin);
           setDashboardCardAccess(resolvedCardAccess);
           setDashboardScreenAccess(resolvedScreenAccess);
+          setGroupedManageScreenAccess(resolvedGroupedManageAccess);
           setCanAccessMapGeolocation(mapGeolocationAllowed || operatorIsSuperAdmin);
           setCanViewMapPinDetails(mapPinDetailAllowed || operatorIsSuperAdmin);
           setHasActiveMembership(activeMembership);
@@ -1011,6 +1027,7 @@ export default function Dashboard() {
         setCanMonitorFamilyReception(false);
         setDashboardCardAccess({});
         setDashboardScreenAccess({});
+        setGroupedManageScreenAccess({ manageProfile: false, manageMembers: false });
         setCanAccessMapGeolocation(false);
         setCanViewMapPinDetails(false);
         setHasActiveMembership(false);
@@ -2746,60 +2763,64 @@ export default function Dashboard() {
                   >
                     <Text style={styles.dashboardPanelTitle}>Perfil & Identidade</Text>
                     <View style={styles.groupedManageBody}>
-                      <TouchableOpacity
-                        style={[styles.groupedManageButton, styles.groupedManageButtonProfile]}
-                        activeOpacity={0.85}
-                        onPress={() =>
-                          void navigateWithScreenAccess(
-                            router,
-                            '/manage-profile',
-                            ACCESS_SCREEN.manageProfile,
-                            buildChildScreenParams(
-                              (ghostModeActive ? profile?.phone : userPhone)
-                                ? {
-                                    phone: encodeURIComponent(
-                                      String(ghostModeActive ? profile?.phone : userPhone)
-                                    ),
-                                  }
-                                : {}
+                      {groupedManageScreenAccess.manageProfile ? (
+                        <TouchableOpacity
+                          style={[styles.groupedManageButton, styles.groupedManageButtonProfile]}
+                          activeOpacity={0.85}
+                          onPress={() =>
+                            void navigateWithScreenAccess(
+                              router,
+                              '/manage-profile',
+                              ACCESS_SCREEN.manageProfile,
+                              buildChildScreenParams(
+                                (ghostModeActive ? profile?.phone : userPhone)
+                                  ? {
+                                      phone: encodeURIComponent(
+                                        String(ghostModeActive ? profile?.phone : userPhone)
+                                      ),
+                                    }
+                                  : {}
+                              )
                             )
-                          )
-                        }
-                      >
-                        <View style={styles.groupedManageButtonContent}>
-                        <MaterialIcons
-                          name="assignment-ind"
-                          size={28}
-                          color="#A5B4FC"
-                          style={styles.groupedManageButtonIcon}
-                        />
-                          <Text style={styles.groupedManageButtonTitle}>Dados Cadastrais</Text>
-                        </View>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.groupedManageButton, styles.groupedManageButtonFamily]}
-                        activeOpacity={0.85}
-                        onPress={() =>
-                          void navigateWithScreenAccess(
-                            router,
-                            '/manage-members',
-                            ACCESS_SCREEN.manageMembers,
-                            buildChildScreenParams(
-                              userPhone ? { phone: encodeURIComponent(userPhone) } : {}
+                          }
+                        >
+                          <View style={styles.groupedManageButtonContent}>
+                            <MaterialIcons
+                              name="assignment-ind"
+                              size={28}
+                              color="#A5B4FC"
+                              style={styles.groupedManageButtonIcon}
+                            />
+                            <Text style={styles.groupedManageButtonTitle}>Dados Cadastrais</Text>
+                          </View>
+                        </TouchableOpacity>
+                      ) : null}
+                      {groupedManageScreenAccess.manageMembers ? (
+                        <TouchableOpacity
+                          style={[styles.groupedManageButton, styles.groupedManageButtonFamily]}
+                          activeOpacity={0.85}
+                          onPress={() =>
+                            void navigateWithScreenAccess(
+                              router,
+                              '/manage-members',
+                              ACCESS_SCREEN.manageMembers,
+                              buildChildScreenParams(
+                                userPhone ? { phone: encodeURIComponent(userPhone) } : {}
+                              )
                             )
-                          )
-                        }
-                      >
-                        <View style={styles.groupedManageButtonContent}>
-                        <MaterialIcons
-                          name="family-restroom"
-                          size={28}
-                          color="#D8B4FE"
-                          style={styles.groupedManageButtonIcon}
-                        />
-                          <Text style={styles.groupedManageButtonTitle}>Gerenciar Família</Text>
-                        </View>
-                      </TouchableOpacity>
+                          }
+                        >
+                          <View style={styles.groupedManageButtonContent}>
+                            <MaterialIcons
+                              name="family-restroom"
+                              size={28}
+                              color="#D8B4FE"
+                              style={styles.groupedManageButtonIcon}
+                            />
+                            <Text style={styles.groupedManageButtonTitle}>Gerenciar Família</Text>
+                          </View>
+                        </TouchableOpacity>
+                      ) : null}
                       <TouchableOpacity
                         style={[styles.groupedManageButton, styles.groupedManageButtonMinisterial]}
                         activeOpacity={0.85}
@@ -2872,32 +2893,18 @@ export default function Dashboard() {
                             <Text style={styles.membersListMembersButtonText}>Membros</Text>
                           </TouchableOpacity>
                         )}
-                        <TouchableOpacity
-                          style={[
-                            styles.membersListMapButton,
-                            !isMapGeolocationEnabled && styles.membersListMapButtonDisabled,
-                          ]}
-                          onPress={handleOpenMembersMap}
-                          disabled={!isMapGeolocationEnabled}
-                          activeOpacity={0.85}
-                          accessibilityRole="button"
-                          accessibilityLabel="Abrir mapa geral de geolocalização"
-                          accessibilityState={{ disabled: !isMapGeolocationEnabled }}
-                        >
-                          <FontAwesome
-                            name="map"
-                            size={18}
-                            color={isMapGeolocationEnabled ? '#FFF' : '#94A3B8'}
-                          />
-                          <Text
-                            style={[
-                              styles.membersListMapButtonText,
-                              !isMapGeolocationEnabled && styles.membersListMapButtonTextDisabled,
-                            ]}
+                        {isMapGeolocationEnabled ? (
+                          <TouchableOpacity
+                            style={styles.membersListMapButton}
+                            onPress={handleOpenMembersMap}
+                            activeOpacity={0.85}
+                            accessibilityRole="button"
+                            accessibilityLabel="Abrir mapa geral de geolocalização"
                           >
-                            Mapa Geral
-                          </Text>
-                        </TouchableOpacity>
+                            <FontAwesome name="map" size={18} color="#FFF" />
+                            <Text style={styles.membersListMapButtonText}>Mapa Geral</Text>
+                          </TouchableOpacity>
+                        ) : null}
                       </View>
 
                     <Text style={styles.membersListSummaryText}>
