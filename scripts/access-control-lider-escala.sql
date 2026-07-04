@@ -125,6 +125,67 @@ $$;
 
 select public.sync_all_scale_type_access_resources();
 
+create or replace function public.normalize_person_name(p_name text)
+returns text
+language sql
+immutable
+as $$
+  select lower(
+    trim(
+      translate(
+        coalesce(p_name, ''),
+        'ÁÀÂÃÄáàâãäÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÕÖóòôõöÚÙÛÜúùûüÇçÑñ',
+        'AAAAAaaaaaEEEEeeeeIIIIiiiiOOOOOoooooUUUUuuuuCcNn'
+      )
+    )
+  );
+$$;
+
+create or replace function public.profile_voluntario_name_matches_profile(
+  p_voluntario_nome text,
+  p_profile_full_name text
+)
+returns boolean
+language sql
+immutable
+as $$
+  select
+    nullif(trim(p_profile_full_name), '') is not null
+    and nullif(trim(p_voluntario_nome), '') is not null
+    and (
+      public.normalize_person_name(p_voluntario_nome) = public.normalize_person_name(p_profile_full_name)
+      or public.normalize_person_name(p_voluntario_nome) = public.normalize_person_name(
+        split_part(trim(p_profile_full_name), ' ', 1)
+        || ' '
+        || reverse(split_part(reverse(trim(p_profile_full_name)), ' ', 1))
+      )
+    );
+$$;
+
+create or replace function public.profile_is_scale_type_volunteer(
+  p_profile_id uuid,
+  p_tipo_escala_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+      from public.profiles p
+      join public.voluntarios_escala ve
+        on ve.tipo_escala_id = p_tipo_escala_id
+       and ve.is_ativo = true
+       and public.profile_voluntario_name_matches_profile(ve.nome, p.full_name)
+      join public.tipos_escala te
+        on te.id = ve.tipo_escala_id
+       and te.is_ativa = true
+     where p.id = p_profile_id
+  );
+$$;
+
 create or replace function public.profile_has_scale_type_access(
   p_profile_id uuid,
   p_tipo_escala_id uuid,
@@ -192,6 +253,10 @@ begin
        where par.profile_id = p_profile_id
          and ar.code = 'lider'
     );
+  end if;
+
+  if v_action = 'view' and public.profile_is_scale_type_volunteer(p_profile_id, p_tipo_escala_id) then
+    return true;
   end if;
 
   return false;
@@ -971,6 +1036,9 @@ $$;
 -- ---------------------------------------------------------------------------
 
 grant execute on function public.scale_type_resource_key(text) to anon, authenticated;
+grant execute on function public.normalize_person_name(text) to anon, authenticated;
+grant execute on function public.profile_voluntario_name_matches_profile(text, text) to anon, authenticated;
+grant execute on function public.profile_is_scale_type_volunteer(uuid, uuid) to anon, authenticated;
 grant execute on function public.profile_has_scale_type_access(uuid, uuid, text) to anon, authenticated;
 grant execute on function public.listar_tipos_escala_permitidos(uuid, text) to anon, authenticated;
 grant execute on function public.listar_liderancas_escala_admin(uuid, uuid) to anon, authenticated;

@@ -92,6 +92,7 @@ import {
   SCALE_PERMITTED_RPC_MISSING,
   sessionCanAccessScaleType,
 } from '@/lib/scaleAccess';
+import { derivePermittedScaleTypesFromSchedule } from '@/lib/scaleVolunteerProfileMatch';
 import {
   buildDashboardDeepLinkKey,
   computeDashboardPanelInnerPadding,
@@ -1364,6 +1365,10 @@ export default function Dashboard() {
             || left.volunteer_name.localeCompare(right.volunteer_name, 'pt-BR')
         );
 
+      if (parsedTypes.length === 0 && profile?.full_name?.trim()) {
+        parsedTypes = derivePermittedScaleTypesFromSchedule(profile.full_name, parsedEntries);
+      }
+
       setScaleTypes(parsedTypes);
       setVigilanceScaleEntries(parsedEntries);
       if (!preserveSelection) {
@@ -1382,7 +1387,7 @@ export default function Dashboard() {
     } finally {
       setIsVigilanceScalesLoading(false);
     }
-  }, []);
+  }, [profile?.full_name]);
 
   const handleSearchVehicleByPlaca = useCallback(async () => {
     setVehicleLookupLoading(true);
