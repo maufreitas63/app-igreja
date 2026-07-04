@@ -1,13 +1,11 @@
 -- Lista de Membros e Aniversariantes: apenas pastoral (e super_admin via curingas).
--- Remove visibilidade dos papéis member e congregado.
+-- Remove grants dos papéis member e congregado (não dá para zerar can_view/can_update:
+-- constraint access_grants_permission_check exige ao menos um true).
 -- Execute no SQL Editor do Supabase. Depois: Settings → API → Reload schema.
 
--- Revoga member
-update public.access_grants ag
-   set can_view = false,
-       can_update = false,
-       updated_at = now()
-  from public.access_roles r,
+-- Remove grants de member
+delete from public.access_grants ag
+ using public.access_roles r,
        public.access_resources res
  where ag.role_id = r.id
    and ag.resource_id = res.id
@@ -15,12 +13,9 @@ update public.access_grants ag
    and res.resource_type = 'screen'
    and res.resource_key in ('dashboard.card.members_list', 'dashboard.card.birthdays');
 
--- Revoga congregado
-update public.access_grants ag
-   set can_view = false,
-       can_update = false,
-       updated_at = now()
-  from public.access_roles r,
+-- Remove grants de congregado
+delete from public.access_grants ag
+ using public.access_roles r,
        public.access_resources res
  where ag.role_id = r.id
    and ag.resource_id = res.id
@@ -28,7 +23,7 @@ update public.access_grants ag
    and res.resource_type = 'screen'
    and res.resource_key in ('dashboard.card.members_list', 'dashboard.card.birthdays');
 
--- Garante pastoral com view nos dois cards (pastoral herda member; se member perdeu, pastoral precisa grant explícito)
+-- Garante pastoral com view nos dois cards
 insert into public.access_grants (role_id, resource_id, can_view, can_update)
 select r.id, res.id, true, false
   from public.access_roles r
