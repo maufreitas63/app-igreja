@@ -53,7 +53,7 @@ import {
 import { isTreasuryReceiptFolderAccessSupported } from '@/lib/treasuryReceiptFolderAccess';
 import {
   ASSEMBLY_MINUTES_SQL_HINT,
-  pickAndUploadAssemblyMinute,
+  pickAndUploadAssemblyMinutes,
 } from '@/lib/assemblyMinutesApi';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -190,7 +190,6 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   const [loadingRdReports, setLoadingRdReports] = useState(false);
   const [rdReportsError, setRdReportsError] = useState<string | null>(null);
   const [unreconcilingReportId, setUnreconcilingReportId] = useState<string | null>(null);
-  const [assemblyMinuteTitle, setAssemblyMinuteTitle] = useState('');
   const [uploadingAssemblyMinute, setUploadingAssemblyMinute] = useState(false);
   const [receiptBatchDryRun, setReceiptBatchDryRun] = useState(false);
   const [receiptBatchForce, setReceiptBatchForce] = useState(false);
@@ -894,17 +893,45 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     setUploadingAssemblyMinute(true);
 
     try {
-      const uploaded = await pickAndUploadAssemblyMinute(assemblyMinuteTitle);
+      const result = await pickAndUploadAssemblyMinutes();
 
-      if (!uploaded) {
+      if (!result) {
         return;
       }
 
-      setAssemblyMinuteTitle('');
+      const { uploaded, failures } = result;
+
+      if (uploaded.length > 0 && failures.length === 0) {
+        Toast.show({
+          type: 'success',
+          text1: uploaded.length === 1 ? 'Ata publicada' : 'Atas publicadas',
+          text2:
+            uploaded.length === 1
+              ? `"${uploaded[0].title}" já pode ser consultada no card Administrativo.`
+              : `${uploaded.length} PDFs publicados. Títulos = nomes dos arquivos.`,
+          visibilityTime: 4500,
+        });
+        return;
+      }
+
+      if (uploaded.length > 0 && failures.length > 0) {
+        Toast.show({
+          type: 'error',
+          text1: 'Publicação parcial',
+          text2: `${uploaded.length} enviada(s), ${failures.length} falha(s). Ex.: ${failures[0].fileName}`,
+          visibilityTime: 7000,
+        });
+        return;
+      }
+
       Toast.show({
-        type: 'success',
-        text1: 'Ata publicada',
-        text2: 'O PDF já pode ser consultado no card Administrativo.',
+        type: 'error',
+        text1: 'Ata de assembleia',
+        text2:
+          failures[0]?.error.includes('assembly-minutes')
+            ? ASSEMBLY_MINUTES_SQL_HINT
+            : failures[0]?.error || 'Não foi possível enviar os PDFs.',
+        visibilityTime: 6000,
       });
     } catch (uploadError) {
       const message =
@@ -1298,19 +1325,10 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
         >
           <View style={styles.formCard}>
             <Text style={styles.formatHint}>
-              Envie o PDF da ata. O arquivo ficará disponível em Dashboard → Administrativo →
-              Atas de Assembleias.
+              Selecione um ou vários PDFs de uma vez. O título de cada ata será o nome do arquivo
+              (sem a extensão .pdf). Os documentos ficam em Dashboard → Administrativo → Atos
+              Constitutivos.
             </Text>
-
-            <Text style={styles.periodPickerLabel}>Título da ata</Text>
-            <TextInput
-              style={styles.assemblyTitleInput}
-              value={assemblyMinuteTitle}
-              onChangeText={setAssemblyMinuteTitle}
-              placeholder="Ex.: Assembleia Geral Ordinária — mar/2026"
-              placeholderTextColor="#64748B"
-              editable={!uploadingAssemblyMinute && !rpcMissing}
-            />
 
             <TouchableOpacity
               style={[
@@ -2572,17 +2590,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
     marginBottom: 8,
-  },
-  assemblyTitleInput: {
-    borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.28)',
-    borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
-    color: '#ECFDF5',
-    fontSize: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 10,
   },
   uploadAssemblyButton: {
     flexDirection: 'row',

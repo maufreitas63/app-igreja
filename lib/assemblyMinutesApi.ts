@@ -2,6 +2,8 @@ import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import {
   parseAssemblyMinutePdfInput,
   pickAssemblyMinutePdf,
+  pickAssemblyMinutePdfs,
+  titleFromAssemblyMinuteFileName,
   uploadAssemblyMinutePdfBytes,
   type AssemblyMinutePdfInput,
 } from '@/lib/assemblyMinutesPdf';
@@ -41,9 +43,9 @@ const isMissingAssemblyMinutesSchemaError = (
   );
 };
 
-const buildStoragePath = (fileName: string) => {
+const buildStoragePath = (fileName: string, index = 0) => {
   const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
-  return `minutes/${Date.now()}_${safeName}`;
+  return `minutes/${Date.now()}_${index}_${Math.random().toString(36).slice(2, 8)}_${safeName}`;
 };
 
 const appendSignedUrl = async (row: Omit<AssemblyMinuteRecord, 'signedUrl'>) => {
@@ -79,17 +81,20 @@ export async function fetchAssemblyMinutes(): Promise<AssemblyMinuteRecord[]> {
 }
 
 export async function uploadAssemblyMinute(input: {
-  title: string;
+  title?: string;
   pdf: AssemblyMinutePdfInput;
+  storageIndex?: number;
 }) {
-  const title = input.title.trim();
+  const title =
+    input.title?.trim()
+    || titleFromAssemblyMinuteFileName(input.pdf.fileName);
 
   if (!title) {
-    throw new Error('Informe o título da ata.');
+    throw new Error('Não foi possível definir o título da ata a partir do nome do arquivo.');
   }
 
   const actorProfileId = await resolveActorProfileId();
-  const storagePath = buildStoragePath(input.pdf.fileName);
+  const storagePath = buildStoragePath(input.pdf.fileName, input.storageIndex ?? 0);
 
   const { error: uploadError } = await supabase.storage
     .from(ASSEMBLY_MINUTES_BUCKET)
@@ -129,7 +134,7 @@ export async function uploadAssemblyMinute(input: {
   return appendSignedUrl(data as Omit<AssemblyMinuteRecord, 'signedUrl'>);
 }
 
-export async function pickAndUploadAssemblyMinute(title: string) {
+export async function pickAndUploadAssemblyMinute(title?: string) {
   const picked = await pickAssemblyMinutePdf();
 
   if (!picked) {
@@ -138,6 +143,45 @@ export async function pickAndUploadAssemblyMinute(title: string) {
 
   return uploadAssemblyMinute({ title, pdf: picked });
 }
+
+export type AssemblyMinutesBatchUploadResult = {
+  uploaded: AssemblyMinuteRecord[];
+  failures: { fileName: string; error: string }[];
+};
+
+/** Seleciona vários PDFs e publica cada um com título = nome do arquivo (sem .pdf). */
+export async function pickAndUploadAssemblyMinutes(): Promise<AssemblyMinutesBatchUploadResult | null> {
+  const picked = await pickAssemblyMinutePdfs();
+
+  if (!picked?.length) {
+    return null;
+  }
+
+  const uploaded: AssemblyMinuteRecord[] = [];
+  const failures: { fileName: string; error: string }[] = [];
+
+  for (let index = 0; index < picked.length; index += 1) {
+    const pdf = picked[index];
+
+    try {
+      const row = await uploadAssemblyMinute({
+        pdf,
+        storageIndex: index,
+        title: titleFromAssemblyMinuteFileName(pdf.fileName),
+      });
+      uploaded.push(row);
+    } catch (error) {
+      failures.push({
+        fileName: pdf.fileName,
+        error: error instanceof Error ? error.message : 'Falha ao enviar o PDF.',
+      });
+    }
+  }
+
+  return { uploaded, failures };
+}
+
+export { titleFromAssemblyMinuteFileName };
 
 export async function createAssemblyMinuteSignedUrl(storagePath: string) {
   const { data, error } = await supabase.storage
