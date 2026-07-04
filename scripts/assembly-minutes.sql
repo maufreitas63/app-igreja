@@ -93,7 +93,21 @@ create policy maintenance_assembly_minutes_insert
     or public.can_manage_maintenance_support()
   );
 
-grant select, insert on public.maintenance_assembly_minutes to anon, authenticated;
+drop policy if exists maintenance_assembly_minutes_update on public.maintenance_assembly_minutes;
+create policy maintenance_assembly_minutes_update
+  on public.maintenance_assembly_minutes
+  for update
+  to anon, authenticated
+  using (
+    public.session_has_screen_access('maintenance.card.financials', 'update')
+    or public.can_manage_maintenance_support()
+  )
+  with check (
+    public.session_has_screen_access('maintenance.card.financials', 'update')
+    or public.can_manage_maintenance_support()
+  );
+
+grant select, insert, update on public.maintenance_assembly_minutes to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- RLS storage

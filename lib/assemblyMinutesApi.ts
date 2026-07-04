@@ -195,4 +195,38 @@ export async function createAssemblyMinuteSignedUrl(storagePath: string) {
   return data?.signedUrl ?? null;
 }
 
+/** Renomeia o título exibido da ata (não altera o arquivo no Storage). */
+export async function renameAssemblyMinute(id: string, title: string) {
+  const nextTitle = title.trim();
+
+  if (!nextTitle) {
+    throw new Error('Informe o novo título da ata.');
+  }
+
+  const { data, error } = await supabase
+    .from('maintenance_assembly_minutes')
+    .update({ title: nextTitle })
+    .eq('id', id)
+    .select('id, title, storage_path, file_name, mime_type, uploaded_by_profile_id, created_at')
+    .single();
+
+  if (error) {
+    if (isMissingAssemblyMinutesSchemaError(error)) {
+      throw new Error(ASSEMBLY_MINUTES_SQL_HINT);
+    }
+
+    const message = (error.message ?? '').toLowerCase();
+
+    if (message.includes('permission') || message.includes('policy') || error.code === '42501') {
+      throw new Error(
+        'Sem permissão para renomear. Execute scripts/assembly-minutes-rename-policy.sql no Supabase.'
+      );
+    }
+
+    throw error;
+  }
+
+  return appendSignedUrl(data as Omit<AssemblyMinuteRecord, 'signedUrl'>);
+}
+
 export { pickAssemblyMinutePdf, parseAssemblyMinutePdfInput };

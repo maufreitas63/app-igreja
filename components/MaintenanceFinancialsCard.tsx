@@ -51,9 +51,14 @@ import {
   DEFAULT_TREASURY_RECEIPTS_DIR,
 } from '@/lib/treasuryReceiptBatchPath';
 import { isTreasuryReceiptFolderAccessSupported } from '@/lib/treasuryReceiptFolderAccess';
+import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import {
   ASSEMBLY_MINUTES_SQL_HINT,
+  createAssemblyMinuteSignedUrl,
+  fetchAssemblyMinutes,
   pickAndUploadAssemblyMinutes,
+  renameAssemblyMinute,
+  type AssemblyMinuteRecord,
 } from '@/lib/assemblyMinutesApi';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -191,12 +196,48 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   const [rdReportsError, setRdReportsError] = useState<string | null>(null);
   const [unreconcilingReportId, setUnreconcilingReportId] = useState<string | null>(null);
   const [uploadingAssemblyMinute, setUploadingAssemblyMinute] = useState(false);
+  const [assemblyMinutes, setAssemblyMinutes] = useState<AssemblyMinuteRecord[]>([]);
+  const [loadingAssemblyMinutes, setLoadingAssemblyMinutes] = useState(false);
+  const [assemblyMinutesError, setAssemblyMinutesError] = useState<string | null>(null);
+  const [assemblyPdfPreview, setAssemblyPdfPreview] = useState<{
+    title: string;
+    url: string;
+  } | null>(null);
+  const [loadingAssemblyPdfId, setLoadingAssemblyPdfId] = useState<string | null>(null);
+  const [renamingMinute, setRenamingMinute] = useState<AssemblyMinuteRecord | null>(null);
+  const [renameTitleDraft, setRenameTitleDraft] = useState('');
+  const [savingRename, setSavingRename] = useState(false);
   const [receiptBatchDryRun, setReceiptBatchDryRun] = useState(false);
   const [receiptBatchForce, setReceiptBatchForce] = useState(false);
 
   const toggleSection = useCallback((section: MaintenanceSectionKey) => {
     setExpandedSection((current) => (current === section ? null : section));
   }, []);
+
+  const loadAssemblyMinutes = useCallback(async () => {
+    setLoadingAssemblyMinutes(true);
+    setAssemblyMinutesError(null);
+
+    try {
+      const rows = await fetchAssemblyMinutes();
+      setAssemblyMinutes(rows);
+    } catch (loadError) {
+      setAssemblyMinutes([]);
+      setAssemblyMinutesError(
+        loadError instanceof Error ? loadError.message : 'Não foi possível carregar as atas.'
+      );
+    } finally {
+      setLoadingAssemblyMinutes(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isActive || expandedSection !== 'assembly_minutes') {
+      return;
+    }
+
+    void loadAssemblyMinutes();
+  }, [expandedSection, isActive, loadAssemblyMinutes]);
 
   const maintenanceMonthOptions = useMemo(() => {
     const currentMonth = getCalendarMonthKey();
@@ -889,6 +930,26 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
     });
   };
 
+  const formatAssemblyMinuteDate = (value: string | null | undefined) => {
+    if (!value) {
+      return '—';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   const handleUploadAssemblyMinute = async () => {
     setUploadingAssemblyMinute(true);
 
@@ -901,13 +962,17 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
 
       const { uploaded, failures } = result;
 
+      if (uploaded.length > 0) {
+        await loadAssemblyMinutes();
+      }
+
       if (uploaded.length > 0 && failures.length === 0) {
         Toast.show({
           type: 'success',
           text1: uploaded.length === 1 ? 'Ata publicada' : 'Atas publicadas',
           text2:
             uploaded.length === 1
-              ? `"${uploaded[0].title}" já pode ser consultada no card Administrativo.`
+              ? `"${uploaded[0].title}" já pode ser consultada abaixo e no card Administrativo.`
               : `${uploaded.length} PDFs publicados. Títulos = nomes dos arquivos.`,
           visibilityTime: 4500,
         });
@@ -944,6 +1009,78 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
       });
     } finally {
       setUploadingAssemblyMinute(false);
+    }
+  };
+
+  const handleOpenAssemblyMinutePdf = async (minute: AssemblyMinuteRecord) => {
+    setLoadingAssemblyPdfId(minute.id);
+
+    try {
+      const url = minute.signedUrl ?? (await createAssemblyMinuteSignedUrl(minute.storage_path));
+
+      if (!url) {
+        throw new Error('Não foi possível gerar o link de visualização do PDF.');
+      }
+
+      setAssemblyPdfPreview({ title: minute.title, url });
+    } catch (openError) {
+      Toast.show({
+        type: 'error',
+        text1: 'Ata de assembleia',
+        text2:
+          openError instanceof Error ? openError.message : 'Não foi possível abrir o PDF.',
+        visibilityTime: 5000,
+      });
+    } finally {
+      setLoadingAssemblyPdfId(null);
+    }
+  };
+
+  const handleOpenRenameAssemblyMinute = (minute: AssemblyMinuteRecord) => {
+    setRenamingMinute(minute);
+    setRenameTitleDraft(minute.title);
+  };
+
+  const handleSaveRenameAssemblyMinute = async () => {
+    if (!renamingMinute) {
+      return;
+    }
+
+    const nextTitle = renameTitleDraft.trim();
+
+    if (!nextTitle) {
+      Toast.show({
+        type: 'error',
+        text1: 'Renomear ata',
+        text2: 'Informe o novo título.',
+      });
+      return;
+    }
+
+    setSavingRename(true);
+
+    try {
+      const updated = await renameAssemblyMinute(renamingMinute.id, nextTitle);
+      setAssemblyMinutes((current) =>
+        current.map((row) => (row.id === updated.id ? { ...row, title: updated.title } : row))
+      );
+      setRenamingMinute(null);
+      setRenameTitleDraft('');
+      Toast.show({
+        type: 'success',
+        text1: 'Ata renomeada',
+        text2: `Novo título: ${updated.title}`,
+      });
+    } catch (renameError) {
+      Toast.show({
+        type: 'error',
+        text1: 'Renomear ata',
+        text2:
+          renameError instanceof Error ? renameError.message : 'Não foi possível renomear.',
+        visibilityTime: 6000,
+      });
+    } finally {
+      setSavingRename(false);
     }
   };
 
@@ -1319,15 +1456,14 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
 
         <CollapsibleSection
           title="Atas de assembleias"
-          subtitle="Publicar PDF para o card Administrativo"
+          subtitle="Publicar, visualizar e renomear PDFs do card Administrativo"
           expanded={expandedSection === 'assembly_minutes'}
           onToggle={() => toggleSection('assembly_minutes')}
         >
           <View style={styles.formCard}>
             <Text style={styles.formatHint}>
-              Selecione um ou vários PDFs de uma vez. O título de cada ata será o nome do arquivo
-              (sem a extensão .pdf). Os documentos ficam em Dashboard → Administrativo → Atos
-              Constitutivos.
+              Selecione um ou vários PDFs de uma vez. O título inicial de cada ata será o nome do
+              arquivo (sem .pdf). Você pode visualizar e renomear os documentos publicados abaixo.
             </Text>
 
             <TouchableOpacity
@@ -1349,6 +1485,68 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                 </>
               )}
             </TouchableOpacity>
+
+            <View style={styles.assemblyMinutesListHeader}>
+              <Text style={styles.periodPickerLabel}>Documentos publicados</Text>
+              <TouchableOpacity
+                onPress={() => void loadAssemblyMinutes()}
+                disabled={loadingAssemblyMinutes}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.assemblyMinutesRefreshText}>
+                  {loadingAssemblyMinutes ? 'Atualizando…' : 'Atualizar'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {assemblyMinutesError ? (
+              <Text style={styles.errorText}>{assemblyMinutesError}</Text>
+            ) : null}
+
+            {loadingAssemblyMinutes && assemblyMinutes.length === 0 ? (
+              <ActivityIndicator color={ACCENT} style={{ marginVertical: 12 }} />
+            ) : assemblyMinutes.length === 0 ? (
+              <Text style={styles.hintText}>Nenhuma ata publicada ainda.</Text>
+            ) : (
+              <View style={styles.assemblyMinutesList}>
+                {assemblyMinutes.map((minute) => (
+                  <View key={minute.id} style={styles.assemblyMinuteRow}>
+                    <View style={styles.assemblyMinuteMain}>
+                      <Text style={styles.assemblyMinuteTitle} numberOfLines={2}>
+                        {minute.title}
+                      </Text>
+                      <Text style={styles.assemblyMinuteMeta}>
+                        {formatAssemblyMinuteDate(minute.created_at)} · {minute.file_name}
+                      </Text>
+                    </View>
+                    <View style={styles.assemblyMinuteActions}>
+                      <TouchableOpacity
+                        style={styles.assemblyMinuteActionButton}
+                        onPress={() => handleOpenRenameAssemblyMinute(minute)}
+                        disabled={canUpdateFinancials !== true || savingRename}
+                        activeOpacity={0.85}
+                        accessibilityLabel={`Renomear ${minute.title}`}
+                      >
+                        <FontAwesome name="pencil" size={14} color="#A7F3D0" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.assemblyMinuteActionButton}
+                        onPress={() => void handleOpenAssemblyMinutePdf(minute)}
+                        disabled={loadingAssemblyPdfId === minute.id}
+                        activeOpacity={0.85}
+                        accessibilityLabel={`Visualizar ${minute.title}`}
+                      >
+                        {loadingAssemblyPdfId === minute.id ? (
+                          <ActivityIndicator color="#F87171" size="small" />
+                        ) : (
+                          <FontAwesome name="file-pdf-o" size={16} color="#F87171" />
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         </CollapsibleSection>
 
@@ -1871,6 +2069,79 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           );
         }}
       />
+
+      <AssemblyMinutesPdfModal
+        visible={assemblyPdfPreview !== null}
+        title={assemblyPdfPreview?.title ?? 'Ata'}
+        pdfUrl={assemblyPdfPreview?.url ?? null}
+        onClose={() => setAssemblyPdfPreview(null)}
+      />
+
+      <Modal
+        visible={renamingMinute !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          if (!savingRename) {
+            setRenamingMinute(null);
+            setRenameTitleDraft('');
+          }
+        }}
+      >
+        <Pressable
+          style={styles.assemblyRenameOverlay}
+          onPress={() => {
+            if (!savingRename) {
+              setRenamingMinute(null);
+              setRenameTitleDraft('');
+            }
+          }}
+        >
+          <View style={styles.assemblyRenameCard}>
+            <Text style={styles.assemblyRenameTitle}>Renomear ata</Text>
+            <Text style={styles.assemblyRenameHint}>
+              Arquivo: {renamingMinute?.file_name ?? '—'}
+            </Text>
+            <TextInput
+              style={styles.assemblyRenameInput}
+              value={renameTitleDraft}
+              onChangeText={setRenameTitleDraft}
+              placeholder="Novo título da ata"
+              placeholderTextColor="#64748B"
+              editable={!savingRename}
+              autoFocus
+            />
+            <View style={styles.assemblyRenameActions}>
+              <TouchableOpacity
+                style={styles.assemblyRenameCancelButton}
+                onPress={() => {
+                  setRenamingMinute(null);
+                  setRenameTitleDraft('');
+                }}
+                disabled={savingRename}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.assemblyRenameCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.assemblyRenameSaveButton,
+                  savingRename && styles.saveButtonDisabled,
+                ]}
+                onPress={() => void handleSaveRenameAssemblyMinute()}
+                disabled={savingRename}
+                activeOpacity={0.85}
+              >
+                {savingRename ? (
+                  <ActivityIndicator color="#0F172A" size="small" />
+                ) : (
+                  <Text style={styles.assemblyRenameSaveText}>Salvar</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -2590,6 +2861,133 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
     marginBottom: 8,
+  },
+  assemblyMinutesListHeader: {
+    marginTop: 14,
+    marginBottom: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  assemblyMinutesRefreshText: {
+    color: '#6EE7B7',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  assemblyMinutesList: {
+    gap: 8,
+  },
+  assemblyMinuteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.28)',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    padding: 12,
+  },
+  assemblyMinuteMain: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  assemblyMinuteTitle: {
+    color: '#ECFDF5',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  assemblyMinuteMeta: {
+    color: '#94A3B8',
+    fontSize: 11,
+  },
+  assemblyMinuteActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  assemblyMinuteActionButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.28)',
+  },
+  assemblyRenameOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'rgba(2, 6, 23, 0.72)',
+  },
+  assemblyRenameCard: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: '#0F172A',
+    padding: 16,
+    gap: 10,
+  },
+  assemblyRenameTitle: {
+    color: '#ECFDF5',
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  assemblyRenameHint: {
+    color: '#94A3B8',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  assemblyRenameInput: {
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.28)',
+    borderRadius: 12,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    color: '#ECFDF5',
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  assemblyRenameActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginTop: 4,
+  },
+  assemblyRenameCancelButton: {
+    minHeight: 40,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#475569',
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  assemblyRenameCancelText: {
+    color: '#CBD5E1',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  assemblyRenameSaveButton: {
+    minWidth: 96,
+    minHeight: 40,
+    borderRadius: 12,
+    backgroundColor: ACCENT,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  assemblyRenameSaveText: {
+    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '800',
   },
   uploadAssemblyButton: {
     flexDirection: 'row',
