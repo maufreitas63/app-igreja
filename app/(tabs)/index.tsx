@@ -16,7 +16,7 @@ import {
   loadDashboardLinkedScreenAccess,
   type DashboardScreenAccess,
 } from '@/lib/dashboardScreenAccess';
-import { getExitSessionUi } from '@/lib/sessionExitUi';
+import { useExitSessionUi } from '@/hooks/useExitSessionUi';
 import { getStoredUserPhone, exitApplication } from '@/lib/userSession';
 import {
   APP_PARAMETER,
@@ -130,7 +130,7 @@ export default function DashboardIndexScreen() {
     () => buildIndexScreenGradient(paletteColors),
     [paletteColors]
   );
-  const exitSessionUi = getExitSessionUi();
+  const exitSessionUi = useExitSessionUi();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const router = useRouter();
   const { isActive: ghostModeActive, state: ghostModeState } = useGhostMode();

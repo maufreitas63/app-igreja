@@ -23,12 +23,22 @@ const INSTALLED_APP_EXIT_SESSION_UI: ExitSessionUi = {
   errorMessage: 'Não foi possível sair do aplicativo.',
 };
 
+/** Texto do botão de saída no Índice / totem (mesmo rótulo; ação depende do contexto). */
 export function getExitSessionUi(): ExitSessionUi {
-  if (Platform.OS !== 'web' || isPwaInstalled()) {
+  const installedOrNative = Platform.OS !== 'web' || isPwaInstalled();
+
+  if (installedOrNative) {
     return INSTALLED_APP_EXIT_SESSION_UI;
   }
 
-  return BROWSER_EXIT_SESSION_UI;
+  return {
+    ...BROWSER_EXIT_SESSION_UI,
+    button: 'Sair do aplicativo',
+    accessibilityLabel: 'Sair do aplicativo',
+    accessibilityHint:
+      'Encerra a sessão neste navegador e retorna à tela de entrada. '
+      + 'Para fechar a aba, use o gesto ou botão do navegador.',
+  };
 }
 
 /** @deprecated Use `getExitSessionUi()` para respeitar PWA instalado vs navegador. */

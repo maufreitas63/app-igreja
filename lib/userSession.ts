@@ -364,23 +364,9 @@ const trySendAndroidPwaToHome = () => {
   }
 };
 
-/** Tenta fechar o PWA instalado; fallback só quando a janela continua aberta. */
-const exitInstalledPwaAfterSignOut = () => {
-  tryCloseWebWindow();
-
-  if (isAndroidWeb()) {
-    trySendAndroidPwaToHome();
-    return;
-  }
-
-  if (isIosWeb()) {
-    window.setTimeout(() => {
-      if (!isWebWindowStillOpen()) {
-        return;
-      }
-
-      window.location.replace(buildPwaSignedOutUrl());
-    }, 450);
+/** Se o fechamento do PWA falhar, volta ao login (sessão já foi limpa). */
+const scheduleWebExitFallback = () => {
+  if (typeof window === 'undefined') {
     return;
   }
 
@@ -389,16 +375,27 @@ const exitInstalledPwaAfterSignOut = () => {
       return;
     }
 
-    tryCloseWebWindow();
+    navigateToLoginAfterSignOut();
+  }, 650);
+};
 
-    window.setTimeout(() => {
-      if (!isWebWindowStillOpen()) {
-        return;
-      }
+/** Tenta fechar o PWA instalado; se o SO bloquear, cai na tela de login. */
+const exitInstalledPwaAfterSignOut = () => {
+  tryCloseWebWindow();
 
-      window.location.replace(buildPwaSignedOutUrl());
-    }, 250);
-  }, 250);
+  if (isAndroidWeb()) {
+    trySendAndroidPwaToHome();
+    scheduleWebExitFallback();
+    return;
+  }
+
+  if (isIosWeb()) {
+    scheduleWebExitFallback();
+    return;
+  }
+
+  tryCloseWebWindow();
+  scheduleWebExitFallback();
 };
 
 /**

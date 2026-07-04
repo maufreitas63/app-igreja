@@ -9,7 +9,7 @@ import {
 import { isEventCalendarToday } from '@/lib/checkInVisibility';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { isEventPublished, isEventVisibleForCheckIn } from '@/lib/eventVisibility';
-import { getExitSessionUi } from '@/lib/sessionExitUi';
+import { useExitSessionUi } from '@/hooks/useExitSessionUi';
 import { exitApplication } from '@/lib/userSession';
 import { lockPastEvents } from '@/lib/lockPastEvents';
 import { supabase } from '@/lib/supabase';
@@ -72,7 +72,7 @@ const isWebTotem = Platform.OS === 'web';
 const cameraViewAvailable = typeof CameraView === 'function';
 
 export default function TotemCheckinScreen() {
-  const exitSessionUi = getExitSessionUi();
+  const exitSessionUi = useExitSessionUi();
   const [permission, requestPermission, refreshCameraPermission] = useCameraPermissions();
   const { lookupTotemCheckin, confirmTotemCheckin, loading } = useCheckin();
 

@@ -33,15 +33,22 @@ export const isPwaInstalled = () => {
     return false;
   }
 
-  const standaloneQuery =
-    typeof window.matchMedia === 'function'
-    && window.matchMedia('(display-mode: standalone)').matches;
+  const displayModes = ['standalone', 'fullscreen', 'minimal-ui'] as const;
+  const standaloneQuery = displayModes.some(
+    (mode) =>
+      typeof window.matchMedia === 'function'
+      && window.matchMedia(`(display-mode: ${mode})`).matches
+  );
 
   const iosStandalone = Boolean(
     (navigator as Navigator & { standalone?: boolean }).standalone
   );
 
-  return standaloneQuery || iosStandalone;
+  const androidTwa =
+    typeof document !== 'undefined'
+    && document.referrer.startsWith('android-app://');
+
+  return standaloneQuery || iosStandalone || androidTwa;
 };
 
 export const canOfferPwaInstallUi = () => isWebPlatform() && !isPwaInstalled();
