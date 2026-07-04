@@ -545,9 +545,6 @@ export default function DashboardIndexScreen() {
                 <Text numberOfLines={1} style={styles.indexPanelTitle}>
                   Índice do Aplicativo
                 </Text>
-                <Text numberOfLines={2} style={styles.indexPanelSubtitle}>
-                  Selecione a tela que deseja abrir
-                </Text>
               </View>
               <ScrollView
                 style={styles.indexShortcutsScroll}
@@ -691,8 +688,6 @@ const styles = StyleSheet.create({
   indexPanelHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
     marginBottom: 4,
   },
   indexPanelTitle: {
@@ -701,14 +696,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
     textAlign: 'left',
-  },
-  indexPanelSubtitle: {
-    color: '#94A3B8',
-    fontSize: 12,
-    lineHeight: 16,
-    flexShrink: 0,
-    maxWidth: '48%',
-    textAlign: 'right',
   },
   indexShortcutsScroll: {
     flex: 1,

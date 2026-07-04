@@ -5,8 +5,6 @@ import { FinancialLastTwelveMonths } from '@/components/FinancialLastTwelveMonth
 import { FinancialMonthlyComparison } from '@/components/FinancialMonthlyComparison';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import {
-  buildReturnToDashboardHref,
-  pickRouteParam,
   resolveReturnDashboardCardParam,
   withReturnDashboardCard,
 } from '@/lib/dashboardReturnNavigation';
@@ -16,19 +14,20 @@ import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { formatFinancialMonthKey, formatFinancialMonthLabel } from '@/lib/financialMonth';
 import { useFinancialsByMonth } from '@/hooks/useFinancialsByMonth';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type FinancialSectionId = 'result' | 'comparison' | 'twelveMonths' | 'budget' | 'bankBalance';
 
@@ -42,12 +41,11 @@ const FINANCIAL_SECTION_ORDER: FinancialSectionId[] = [
 
 export default function FinancialScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     returnDashboardCard?: string | string[];
-    returnToIndex?: string | string[];
   }>();
   const returnDashboardCard = resolveReturnDashboardCardParam(params) ?? DASHBOARD_FINANCIAL_CARD_ID;
-  const returnToIndex = pickRouteParam(params.returnToIndex) === '1';
   const scrollRef = useRef<ScrollView>(null);
 
   const accessStatus = useScreenAccessGuard({
@@ -100,14 +98,9 @@ export default function FinancialScreen() {
     [monthOptions, plannedOnlyMonthKeys]
   );
 
-  const handleBackToDashboard = useCallback(() => {
-    if (returnToIndex) {
-      router.replace('/(tabs)');
-      return;
-    }
-
-    router.replace(buildReturnToDashboardHref(returnDashboardCard));
-  }, [returnDashboardCard, returnToIndex, router]);
+  const handleMenu = useCallback(() => {
+    router.replace('/(tabs)');
+  }, [router]);
 
   const budgetSectionBlocked = useMemo(
     () => !loadingEntries && Boolean(selectedMonth) && budgetPlannedMonthEntries.length === 0,
@@ -434,17 +427,8 @@ export default function FinancialScreen() {
   return (
     <ScreenAccessGate status={accessStatus}>
     <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.headerBar}>
-          <TouchableOpacity
-            accessibilityLabel="Voltar ao painel"
-            accessibilityRole="button"
-            activeOpacity={0.85}
-            onPress={handleBackToDashboard}
-            style={styles.headerBackButton}
-          >
-            <Text style={styles.headerBackText}>{'‹'}</Text>
-          </TouchableOpacity>
           <View style={styles.headerTitles}>
             <Text style={styles.title}>Financeiro</Text>
             <Text style={styles.subtitle}>Gestão financeira da igreja</Text>
@@ -542,6 +526,21 @@ export default function FinancialScreen() {
             </View>
           </View>
         </ScrollView>
+
+        <View style={[styles.footerControls, { paddingBottom: insets.bottom + 10 }]}>
+          <CarouselFooterNav
+            currentIndex={0}
+            totalCount={1}
+            centerLabel="Menu"
+            centerAccessibilityLabel="Menu"
+            onCenterPress={handleMenu}
+            onPreviousPress={() => undefined}
+            onNextPress={() => undefined}
+            hideSideNavigation
+            hidePageIndicator
+            accent="emerald"
+          />
+        </View>
       </SafeAreaView>
     </LinearGradient>
     </ScreenAccessGate>
@@ -561,26 +560,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 12,
-    gap: 10,
-  },
-  headerBackButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerBackText: {
-    color: '#E2E8F0',
-    fontSize: 28,
-    lineHeight: 30,
-    marginTop: -2,
   },
   headerTitles: {
     flex: 1,
+  },
+  footerControls: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
   title: {
     color: '#F8FAFC',
