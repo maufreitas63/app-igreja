@@ -6,6 +6,7 @@ import { FinancialMonthlyComparison } from '@/components/FinancialMonthlyCompari
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import {
   buildReturnToDashboardHref,
+  pickRouteParam,
   resolveReturnDashboardCardParam,
   withReturnDashboardCard,
 } from '@/lib/dashboardReturnNavigation';
@@ -41,8 +42,12 @@ const FINANCIAL_SECTION_ORDER: FinancialSectionId[] = [
 
 export default function FinancialScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ returnDashboardCard?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    returnDashboardCard?: string | string[];
+    returnToIndex?: string | string[];
+  }>();
   const returnDashboardCard = resolveReturnDashboardCardParam(params) ?? DASHBOARD_FINANCIAL_CARD_ID;
+  const returnToIndex = pickRouteParam(params.returnToIndex) === '1';
   const scrollRef = useRef<ScrollView>(null);
 
   const accessStatus = useScreenAccessGuard({
@@ -96,8 +101,13 @@ export default function FinancialScreen() {
   );
 
   const handleBackToDashboard = useCallback(() => {
+    if (returnToIndex) {
+      router.replace('/(tabs)');
+      return;
+    }
+
     router.replace(buildReturnToDashboardHref(returnDashboardCard));
-  }, [returnDashboardCard, router]);
+  }, [returnDashboardCard, returnToIndex, router]);
 
   const budgetSectionBlocked = useMemo(
     () => !loadingEntries && Boolean(selectedMonth) && budgetPlannedMonthEntries.length === 0,

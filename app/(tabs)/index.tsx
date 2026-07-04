@@ -8,6 +8,9 @@ import {
   DASHBOARD_CARD_BLOCKED_MESSAGES,
   resolveDashboardCardContentFromParam,
 } from '@/lib/dashboardCardScreenLinks';
+import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
+import { withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
+import { DASHBOARD_FINANCIAL_CARD_ID } from '@/lib/financialModule';
 import {
   isDashboardCardFullyAllowed,
   loadDashboardLinkedScreenAccess,
@@ -341,6 +344,21 @@ export default function DashboardIndexScreen() {
       return;
     }
 
+    // Financeiro: abre o módulo completo (RD + relatórios), sem passar pelo card intermediário.
+    if (cardContent === 'financial' || shortcut.dashboardCard === DASHBOARD_FINANCIAL_CARD_ID) {
+      void navigateWithScreenAccess(
+        router,
+        '/financial',
+        ACCESS_SCREEN.financial,
+        {
+          ...withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID),
+          returnToIndex: '1',
+        },
+        { method: 'push' }
+      );
+      return;
+    }
+
     router.replace({
       pathname: '/(tabs)/dashboard',
       params: {
@@ -509,7 +527,7 @@ export default function DashboardIndexScreen() {
               <Text numberOfLines={1} style={styles.userName}>
                 {headerUserName}
               </Text>
-              <ActiveScreenBadge title="Índice do Aplicativo" accent="emerald" />
+              <ActiveScreenBadge title="Índice do Aplicativo" accent="emerald" align="right" />
             </View>
           </View>
         </View>

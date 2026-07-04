@@ -1625,26 +1625,6 @@ export default function Dashboard() {
         : false,
     [selectedScaleType]
   );
-  const displayName = useMemo(() => {
-    const profileName = profile?.full_name?.trim();
-    if (profileName) {
-      return formatDisplayName(profileName);
-    }
-
-    if (userPhone) {
-      const userDigits = cleanPhoneDigits(userPhone);
-      const memberMatch = memberListEntries.find((entry) => {
-        const entryDigits = cleanPhoneDigits(entry.phone);
-        return Boolean(userDigits && entryDigits && entryDigits === userDigits);
-      });
-
-      if (memberMatch?.full_name?.trim()) {
-        return formatDisplayName(memberMatch.full_name);
-      }
-    }
-
-    return 'Usuário';
-  }, [memberListEntries, profile?.full_name, userPhone]);
   const isLgpdPending = isProfileLgpdPending(profile?.lgpd_accepted, lgpdAtivo);
   const handleEventRegistrationChange = async () => {
     await refetchActiveEvents();
@@ -2441,18 +2421,13 @@ export default function Dashboard() {
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <StatusBar barStyle="light-content" />
         <View style={styles.header}>
-          <View style={[styles.welcomeBox, isLgpdPending && styles.welcomeBoxLgpdPending]}>
-            <Text style={styles.welcomeText}>Boas-Vindas,</Text>
-            <View style={styles.welcomeNameRow}>
-              <Text numberOfLines={1} style={styles.userName}>
-                {displayName}
-              </Text>
-              <ActiveScreenBadge
-                title={activeDashboardScreenTitle}
-                accent="emerald"
-                technicalKey={showTechnicalKeys ? activeDashboardScreenTechnicalKey : null}
-              />
-            </View>
+          <View style={[styles.screenBadgeBox, isLgpdPending && styles.screenBadgeBoxLgpdPending]}>
+            <ActiveScreenBadge
+              title={activeDashboardScreenTitle}
+              accent="emerald"
+              align="left"
+              technicalKey={showTechnicalKeys ? activeDashboardScreenTechnicalKey : null}
+            />
           </View>
         </View>
 
@@ -4003,31 +3978,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   header: { paddingHorizontal: 24, paddingTop: 10, paddingBottom: 8 },
-  welcomeBox: {
+  screenBadgeBox: {
     width: '100%',
     borderRadius: 18,
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 4,
+    paddingVertical: 12,
+    alignItems: 'flex-start',
   },
-  welcomeBoxLgpdPending: {
+  screenBadgeBoxLgpdPending: {
     backgroundColor: 'rgba(185, 28, 28, 0.72)',
-  },
-  welcomeText: { color: '#94A3B8', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 },
-  welcomeNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  userName: {
-    color: '#FFF',
-    fontSize: 24,
-    fontWeight: '800',
-    flex: 1,
-    flexShrink: 1,
-    minWidth: 0,
   },
   activeScreenTitle: {
     flexShrink: 0,

@@ -7,12 +7,15 @@ type ActiveScreenBadgeProps = {
   accent?: UiAccent;
   /** Chave ACL (`resource_key`) exibida só para super admin com `Exibir_nomes_tecnicos = sim`. */
   technicalKey?: string | null;
+  /** Alinhamento do título e da chave técnica. */
+  align?: 'left' | 'right';
 };
 
 export function ActiveScreenBadge({
   title,
   accent = 'emerald',
   technicalKey,
+  align = 'left',
 }: ActiveScreenBadgeProps) {
   if (!title.trim()) {
     return null;
@@ -20,12 +23,17 @@ export function ActiveScreenBadge({
 
   const accentStyle = UI_ACCENT_STYLES[accent];
   const trimmedTechnicalKey = technicalKey?.trim() ?? '';
+  const isRight = align === 'right';
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, isRight ? styles.wrapRight : styles.wrapLeft]}>
       <Text
         numberOfLines={2}
-        style={[styles.badge, { color: accentStyle.moduleColor }]}
+        style={[
+          styles.badge,
+          isRight ? styles.textRight : styles.textLeft,
+          { color: accentStyle.moduleColor },
+        ]}
         accessibilityRole="text"
       >
         {title}
@@ -33,7 +41,11 @@ export function ActiveScreenBadge({
       {trimmedTechnicalKey ? (
         <Text
           numberOfLines={2}
-          style={[styles.technicalKey, { color: accentStyle.moduleColor }]}
+          style={[
+            styles.technicalKey,
+            isRight ? styles.textRight : styles.textLeft,
+            { color: accentStyle.moduleColor },
+          ]}
           accessibilityRole="text"
           accessibilityLabel={`Chave ACL: ${trimmedTechnicalKey}`}
         >
@@ -46,6 +58,13 @@ export function ActiveScreenBadge({
 
 const styles = StyleSheet.create({
   wrap: {
+    flexShrink: 1,
+    maxWidth: '100%',
+  },
+  wrapLeft: {
+    alignItems: 'flex-start',
+  },
+  wrapRight: {
     flexShrink: 0,
     maxWidth: '48%',
     alignItems: 'flex-end',
@@ -53,7 +72,6 @@ const styles = StyleSheet.create({
   badge: {
     fontSize: UI_TYPO.activeModule.fontSize,
     fontWeight: UI_TYPO.activeModule.fontWeight,
-    textAlign: 'right',
     letterSpacing: UI_TYPO.activeModule.letterSpacing,
     lineHeight: UI_TYPO.activeModule.lineHeight,
   },
@@ -61,9 +79,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 10,
     fontWeight: '600',
-    textAlign: 'right',
     letterSpacing: 0.2,
     lineHeight: 13,
     opacity: 0.72,
+  },
+  textLeft: {
+    textAlign: 'left',
+  },
+  textRight: {
+    textAlign: 'right',
   },
 });
