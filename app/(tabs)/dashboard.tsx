@@ -72,7 +72,7 @@ import {
   getStoredUserPhone,
   persistProfileId,
   repairUserSessionReference,
-  signOutAndReturnToLogin,
+  signOutAndNavigateToLogin,
 } from '@/lib/userSession';
 import { normalizePhoneForWhatsApp, openMemberWhatsapp } from '@/lib/whatsapp';
 import { DASHBOARD_CARD_BLOCKED_MESSAGES, DASHBOARD_CARD_LINKED_SCREEN } from '@/lib/dashboardCardScreenLinks';
@@ -930,7 +930,7 @@ export default function Dashboard() {
           setDashboardScreenAccess({});
           setCanAccessMapGeolocation(false);
         setCanViewMapPinDetails(false);
-          signOutAndReturnToLogin();
+          signOutAndNavigateToLogin();
           return;
         }
 

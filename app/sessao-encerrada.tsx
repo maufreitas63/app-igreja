@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-/** Tela neutra após logout no PWA instalado quando o navegador não permite `window.close()`. */
+/** Tela neutra após logout no PWA iOS, quando o sistema não permite fechar a janela. */
 export default function SessaoEncerradaScreen() {
   return (
     <View style={styles.container}>

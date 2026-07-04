@@ -17,7 +17,7 @@ import {
   type DashboardScreenAccess,
 } from '@/lib/dashboardScreenAccess';
 import { getExitSessionUi } from '@/lib/sessionExitUi';
-import { getStoredUserPhone, signOutAndReturnToLogin } from '@/lib/userSession';
+import { getStoredUserPhone, exitApplication } from '@/lib/userSession';
 import {
   APP_PARAMETER,
   isAppParameterNo,
@@ -428,7 +428,7 @@ export default function DashboardIndexScreen() {
   }, [canViewMaintenance, isFooterSettingsPressed, router]);
 
   const handleExitApp = useCallback(() => {
-    signOutAndReturnToLogin();
+    exitApplication();
   }, []);
 
   const renderShortcutButton = (shortcut: DashboardShortcut, options?: { isChild?: boolean }) => {
