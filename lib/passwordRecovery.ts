@@ -2,7 +2,7 @@ import { normalizePhoneForAccessPinRpc } from '@/lib/accessPin';
 import {
   AUTH_NOTIFICATION_CHANNEL,
   assertAuthNotificationChannel,
-} from '@/lib/authNotificationService';
+} from '@/lib/authChannelGuard';
 import { supabase } from '@/lib/supabase';
 import { coerceRpcBoolean, isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 

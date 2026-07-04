@@ -2,7 +2,7 @@ import {
   AUTH_CHANNEL_BLOCKED_MESSAGE,
   AUTH_PIN_EMAIL_SQL_HINT,
   rejectAuthWhatsAppDelivery,
-} from '@/lib/authNotificationService';
+} from '@/lib/authChannelGuard';
 import { getAppParameterValue } from '@/lib/appParameters';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
@@ -368,8 +368,9 @@ export function buildAccessPinWhatsAppMessage(
   _pin: string,
   _screenPhone: string,
   _sendToUser: boolean
-): never {
-  rejectAuthWhatsAppDelivery('buildAccessPinWhatsAppMessage');
+) {
+  console.error(AUTH_CHANNEL_BLOCKED_MESSAGE, { fn: 'buildAccessPinWhatsAppMessage' });
+  return AUTH_CHANNEL_BLOCKED_MESSAGE;
 }
 
 export type SendAccessPinViaWhatsAppResult =

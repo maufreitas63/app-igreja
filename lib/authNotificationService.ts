@@ -4,37 +4,27 @@
  *
  * Não importar `@/lib/accessPin` daqui (evita dependência circular com o login).
  */
+import {
+  AUTH_CHANNEL_BLOCKED_MESSAGE,
+  AUTH_NOTIFICATION_CHANNEL,
+  AUTH_PIN_EMAIL_SQL_HINT,
+  AUTH_PREFERRED_CHANNEL,
+  assertAuthNotificationChannel,
+  type AuthNotificationChannel,
+} from '@/lib/authChannelGuard';
 import { supabase } from '@/lib/supabase';
 import { coerceRpcBoolean, isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
+export {
+  AUTH_CHANNEL_BLOCKED_MESSAGE,
+  AUTH_NOTIFICATION_CHANNEL,
+  AUTH_PIN_EMAIL_SQL_HINT,
+  AUTH_PREFERRED_CHANNEL,
+  assertAuthNotificationChannel,
+};
+export type { AuthNotificationChannel };
+
 const normalizePhoneForAccessPinRpc = (phone: string) => phone.replace(/\D/g, '');
-
-export const AUTH_NOTIFICATION_CHANNEL = 'email' as const;
-export type AuthNotificationChannel = typeof AUTH_NOTIFICATION_CHANNEL;
-
-export const AUTH_CHANNEL_BLOCKED_MESSAGE =
-  'AUTH_CHANNEL_BLOCKED: autenticação só pode enviar PIN por e-mail. WhatsApp está desativado neste fluxo.';
-
-export const AUTH_PIN_EMAIL_SQL_HINT =
-  'Execute no Supabase: scripts/auth-pin-email-only.sql (após password-recovery-email-flow.sql e preparar-perfil-acesso-cadastro.sql).';
-
-/** Preferência obrigatória para autenticação — nunca WhatsApp. */
-export const AUTH_PREFERRED_CHANNEL = 'email' as const;
-
-export function assertAuthNotificationChannel(
-  channel: string
-): asserts channel is AuthNotificationChannel {
-  if (channel !== AUTH_NOTIFICATION_CHANNEL) {
-    console.error(AUTH_CHANNEL_BLOCKED_MESSAGE, { channel });
-    throw new Error(AUTH_CHANNEL_BLOCKED_MESSAGE);
-  }
-}
-
-/** Bloqueio explícito de qualquer tentativa de envio de PIN via WhatsApp. */
-export function rejectAuthWhatsAppDelivery(context: string): never {
-  console.error(AUTH_CHANNEL_BLOCKED_MESSAGE, { context });
-  throw new Error(AUTH_CHANNEL_BLOCKED_MESSAGE);
-}
 
 const parseRpcObject = (data: unknown): Record<string, unknown> | null => {
   let payload: unknown = data;
@@ -90,35 +80,39 @@ export type AuthPinDeliveryState =
   | { ok: false; message: string };
 
 export async function getAuthPinDeliveryState(phone: string): Promise<AuthPinDeliveryState> {
-  assertAuthNotificationChannel(AUTH_NOTIFICATION_CHANNEL);
+  try {
+    assertAuthNotificationChannel(AUTH_NOTIFICATION_CHANNEL);
 
-  const { data, error } = await supabase.rpc('auth_pin_get_delivery_state', {
-    p_phone: normalizePhoneForAccessPinRpc(phone),
-  });
+    const { data, error } = await supabase.rpc('auth_pin_get_delivery_state', {
+      p_phone: normalizePhoneForAccessPinRpc(phone),
+    });
 
-  if (error) {
+    if (error) {
+      return { ok: false, message: formatRpcError(error) };
+    }
+
+    const payload = parseRpcObject(data);
+
+    if (!coerceRpcBoolean(payload?.ok)) {
+      return {
+        ok: false,
+        message:
+          typeof payload?.message === 'string'
+            ? payload.message
+            : 'Não foi possível verificar o envio do código.',
+      };
+    }
+
+    return {
+      ok: true,
+      hasPin: payload?.has_pin === true,
+      needsEmail: payload?.needs_email === true,
+      emailMasked: typeof payload?.email_masked === 'string' ? payload.email_masked : '',
+      preferredChannel: AUTH_NOTIFICATION_CHANNEL,
+    };
+  } catch (error) {
     return { ok: false, message: formatRpcError(error) };
   }
-
-  const payload = parseRpcObject(data);
-
-  if (!coerceRpcBoolean(payload?.ok)) {
-    return {
-      ok: false,
-      message:
-        typeof payload?.message === 'string'
-          ? payload.message
-          : 'Não foi possível verificar o envio do código.',
-    };
-  }
-
-  return {
-    ok: true,
-    hasPin: payload?.has_pin === true,
-    needsEmail: payload?.needs_email === true,
-    emailMasked: typeof payload?.email_masked === 'string' ? payload.email_masked : '',
-    preferredChannel: AUTH_NOTIFICATION_CHANNEL,
-  };
 }
 
 export type DispatchAuthPinResult =
@@ -135,44 +129,48 @@ export async function dispatchAuthAccessPinEmail(params: {
   emailConfirm?: string;
   purpose?: 'first_access' | 'password_recovery';
 }): Promise<DispatchAuthPinResult> {
-  assertAuthNotificationChannel(AUTH_NOTIFICATION_CHANNEL);
+  try {
+    assertAuthNotificationChannel(AUTH_NOTIFICATION_CHANNEL);
 
-  const purpose = params.purpose ?? 'first_access';
+    const purpose = params.purpose ?? 'first_access';
 
-  if (purpose !== 'first_access' && purpose !== 'password_recovery') {
-    return { ok: false, message: AUTH_CHANNEL_BLOCKED_MESSAGE };
-  }
+    if (purpose !== 'first_access' && purpose !== 'password_recovery') {
+      return { ok: false, message: AUTH_CHANNEL_BLOCKED_MESSAGE };
+    }
 
-  const { data, error } = await supabase.rpc('dispatch_auth_access_pin_email', {
-    p_phone: normalizePhoneForAccessPinRpc(params.phone),
-    p_email: params.email?.trim() || null,
-    p_email_confirm: params.emailConfirm?.trim() || null,
-  });
+    const { data, error } = await supabase.rpc('dispatch_auth_access_pin_email', {
+      p_phone: normalizePhoneForAccessPinRpc(params.phone),
+      p_email: params.email?.trim() || null,
+      p_email_confirm: params.emailConfirm?.trim() || null,
+    });
 
-  if (error) {
-    return { ok: false, message: formatRpcError(error) };
-  }
+    if (error) {
+      return { ok: false, message: formatRpcError(error) };
+    }
 
-  const payload = parseRpcObject(data);
+    const payload = parseRpcObject(data);
 
-  if (!coerceRpcBoolean(payload?.ok)) {
+    if (!coerceRpcBoolean(payload?.ok)) {
+      return {
+        ok: false,
+        message:
+          typeof payload?.message === 'string'
+            ? payload.message
+            : 'Não foi possível enviar o código por e-mail.',
+        needsEmail: payload?.needs_email === true,
+      };
+    }
+
     return {
-      ok: false,
+      ok: true,
+      channel: AUTH_NOTIFICATION_CHANNEL,
       message:
         typeof payload?.message === 'string'
           ? payload.message
-          : 'Não foi possível enviar o código por e-mail.',
-      needsEmail: payload?.needs_email === true,
+          : 'Código de acesso enviado por e-mail.',
+      emailMasked: typeof payload?.email_masked === 'string' ? payload.email_masked : '',
     };
+  } catch (error) {
+    return { ok: false, message: formatRpcError(error) };
   }
-
-  return {
-    ok: true,
-    channel: AUTH_NOTIFICATION_CHANNEL,
-    message:
-      typeof payload?.message === 'string'
-        ? payload.message
-        : 'Código de acesso enviado por e-mail.',
-    emailMasked: typeof payload?.email_masked === 'string' ? payload.email_masked : '',
-  };
 }

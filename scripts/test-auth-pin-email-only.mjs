@@ -16,6 +16,7 @@ const failures = [];
 
 const accessPin = read('lib/accessPin.ts');
 const authService = read('lib/authNotificationService.ts');
+const authGuard = read('lib/authChannelGuard.ts');
 const loginScreen = read('app/index.tsx');
 const authSql = read('scripts/auth-pin-email-only.sql');
 
@@ -31,10 +32,12 @@ const expectNotIncludes = (label, source, snippet) => {
   }
 };
 
-expectIncludes('authNotificationService', authService, "AUTH_NOTIFICATION_CHANNEL = 'email'");
-expectIncludes('authNotificationService', authService, 'AUTH_CHANNEL_BLOCKED');
+expectIncludes('authChannelGuard', authGuard, "AUTH_NOTIFICATION_CHANNEL = 'email'");
+expectIncludes('authChannelGuard', authGuard, 'AUTH_CHANNEL_BLOCKED');
+expectIncludes('authChannelGuard', authGuard, 'rejectAuthWhatsAppDelivery');
 expectIncludes('authNotificationService', authService, 'dispatchAuthAccessPinEmail');
-expectIncludes('authNotificationService', authService, 'rejectAuthWhatsAppDelivery');
+expectIncludes('authNotificationService', authService, "from '@/lib/authChannelGuard'");
+expectIncludes('login', loginScreen, 'const phoneDigits = normalizePhoneDigits(phone)');
 
 expectIncludes('accessPin', accessPin, "reason: 'auth_channel_blocked'");
 expectIncludes('accessPin', accessPin, 'AUTH_CHANNEL_BLOCKED_MESSAGE');

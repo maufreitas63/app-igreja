@@ -110,6 +110,7 @@ export default function IndexScreen() {
   const isTotemLoginMode = Boolean(
     celTotemPhone && normalizePhoneDigits(phone) === celTotemPhone
   );
+  const phoneDigits = normalizePhoneDigits(phone);
   const needsEmailBeforePin =
     !isTotemLoginMode && !pinDeliveryUnlocked && hasStoredAccessPin === false;
   const isCheckingStoredPin =
