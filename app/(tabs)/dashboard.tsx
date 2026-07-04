@@ -108,7 +108,7 @@ import {
 } from '@/lib/dashboardPanelLayout';
 import { DASHBOARD_CARD_THEMES } from '@/lib/dashboardCardThemes';
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
-import { withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
+import { withReturnDashboardCard, pickRouteParam } from '@/lib/dashboardReturnNavigation';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
@@ -644,6 +644,8 @@ export default function Dashboard() {
   const requestedDashboardCardNonce = Array.isArray(params.dashboardCardNonce)
     ? params.dashboardCardNonce[0]
     : params.dashboardCardNonce;
+  const administrativoInitialTab =
+    pickRouteParam(params.administrativoTab) === 'outros' ? 'outros' : undefined;
   const dashboardDeepLinkKey = buildDashboardDeepLinkKey(
     requestedDashboardCard,
     requestedDashboardCardNonce
@@ -2854,6 +2856,7 @@ export default function Dashboard() {
                     <AdministrativoCard
                       panelHeight={dashboardPanelCardHeight}
                       isActive={data[currentIndex]?.content === 'administrativo'}
+                      initialTab={administrativoInitialTab}
                     />
                   </View>
                 ) : item.content === 'members_list' ? (

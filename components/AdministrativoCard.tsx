@@ -12,7 +12,12 @@ import {
   MAINTENANCE_SUPPORT_STATUS_LABELS,
   type MaintenanceSupportRequest,
 } from '@/lib/maintenanceSupportApi';
+import {
+  DASHBOARD_ADMINISTRATIVO_CARD_ID,
+  SUGGESTIONS_IMPROVEMENTS_SCREEN,
+} from '@/lib/administrativoModule';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -30,6 +35,7 @@ type TabId = 'atas' | 'outros';
 type Props = {
   panelHeight: number;
   isActive?: boolean;
+  initialTab?: TabId;
 };
 
 const TABS: { id: TabId; label: string; icon: keyof typeof MaterialIcons.glyphMap }[] = [
@@ -57,9 +63,10 @@ const formatDateTime = (value: string | null | undefined) => {
   });
 };
 
-export function AdministrativoCard({ panelHeight, isActive = true }: Props) {
+export function AdministrativoCard({ panelHeight, isActive = true, initialTab }: Props) {
+  const router = useRouter();
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
-  const [activeTab, setActiveTab] = useState<TabId>('atas');
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab ?? 'atas');
 
   const [minutes, setMinutes] = useState<AssemblyMinuteRecord[]>([]);
   const [loadingMinutes, setLoadingMinutes] = useState(false);
@@ -121,6 +128,32 @@ export function AdministrativoCard({ panelHeight, isActive = true }: Props) {
       void loadSuggestions();
     }
   }, [activeTab, isActive, loadSuggestions]);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isActive || activeTab !== 'outros') {
+        return;
+      }
+
+      void loadSuggestions();
+    }, [activeTab, isActive, loadSuggestions])
+  );
+
+  const handleRegisterSuggestion = useCallback(() => {
+    router.push({
+      pathname: SUGGESTIONS_IMPROVEMENTS_SCREEN,
+      params: {
+        supportMode: 'new',
+        returnDashboardCard: DASHBOARD_ADMINISTRATIVO_CARD_ID,
+      },
+    });
+  }, [router]);
 
   const handleOpenAtasModal = useCallback(() => {
     setActiveTab('atas');
@@ -209,7 +242,21 @@ export function AdministrativoCard({ panelHeight, isActive = true }: Props) {
             nestedScrollEnabled
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.bodyTitle}>Sugestões e Melhorias</Text>
+            <View style={styles.suggestionsHeaderRow}>
+              <Text style={[styles.bodyTitle, styles.suggestionsHeaderTitle]}>
+                Sugestões e Melhorias
+              </Text>
+              <TouchableOpacity
+                style={styles.registerSuggestionButton}
+                onPress={handleRegisterSuggestion}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Registrar sugestão ou melhoria"
+              >
+                <MaterialIcons name="add-circle-outline" size={16} color="#0F172A" />
+                <Text style={styles.registerSuggestionButtonText}>Registrar</Text>
+              </TouchableOpacity>
+            </View>
             <Text style={styles.bodyHint}>
               Solicitações registradas no relatório de Sugestões e Melhorias.
             </Text>
@@ -479,6 +526,32 @@ const styles = StyleSheet.create({
   suggestionsScroll: {
     flex: 1,
     minHeight: 0,
+  },
+  suggestionsHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  suggestionsHeaderTitle: {
+    flex: 1,
+    minWidth: 0,
+    textAlign: 'left',
+  },
+  registerSuggestionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 999,
+    backgroundColor: '#60A5FA',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexShrink: 0,
+  },
+  registerSuggestionButtonText: {
+    color: '#0F172A',
+    fontSize: 11,
+    fontWeight: '800',
   },
   suggestionsContent: {
     gap: 8,

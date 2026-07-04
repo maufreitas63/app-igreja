@@ -48,6 +48,10 @@ type Props = {
   isActive?: boolean;
   panelHeight: number;
   isSuperAdmin?: boolean;
+  initialMode?: 'list' | 'new' | 'detail';
+  returnOnCreate?: boolean;
+  onNavigateBack?: () => void;
+  onRequestCreated?: () => void;
 };
 
 type TimelineEntry =
@@ -296,12 +300,16 @@ export function MaintenanceSupportSuggestionsCard({
   isActive = true,
   panelHeight,
   isSuperAdmin = false,
+  initialMode = 'list',
+  returnOnCreate = false,
+  onNavigateBack,
+  onRequestCreated,
 }: Props) {
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const { requests, loading, refreshing, schemaMissing, schemaHint, error, reload } =
     useMaintenanceSupport(isActive);
 
-  const [mode, setMode] = useState<'list' | 'new' | 'detail'>('list');
+  const [mode, setMode] = useState<'list' | 'new' | 'detail'>(initialMode);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -370,6 +378,14 @@ export function MaintenanceSupportSuggestionsCard({
     ],
     [themes]
   );
+
+  useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+
+    setMode(initialMode);
+  }, [initialMode, isActive]);
 
   useEffect(() => {
     if (!isActive) {
@@ -572,9 +588,20 @@ export function MaintenanceSupportSuggestionsCard({
       });
 
       resetNewForm();
+      await reload({ silent: true });
+
+      if (returnOnCreate) {
+        Toast.show({
+          type: 'success',
+          text1: 'Solicitação registrada',
+          text2: 'Sua sugestão foi enviada com sucesso.',
+        });
+        onRequestCreated?.();
+        return;
+      }
+
       setSelectedRequestId(created.id);
       setMode('detail');
-      await reload({ silent: true });
       Toast.show({
         type: 'success',
         text1: 'Solicitação registrada',
@@ -594,8 +621,10 @@ export function MaintenanceSupportSuggestionsCard({
     newRecordType,
     newThemeId,
     newWhatsappAuthorized,
+    onRequestCreated,
     reload,
     resetNewForm,
+    returnOnCreate,
     selectedNewRequester,
   ]);
 
@@ -746,7 +775,18 @@ export function MaintenanceSupportSuggestionsCard({
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.backButton} onPress={() => setMode('list')} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => {
+            if (onNavigateBack) {
+              onNavigateBack();
+              return;
+            }
+
+            setMode('list');
+          }}
+          activeOpacity={0.85}
+        >
           <FontAwesome name="chevron-left" size={13} color="#BAE6FD" />
           <Text style={styles.backButtonText}>Voltar</Text>
         </TouchableOpacity>
