@@ -22,6 +22,23 @@ const rowToPaleta = (row: Record<string, unknown>): Paleta => ({
   created_at: String(row.created_at ?? ''),
 });
 
+/** Mescla catálogo local (ex.: Basico) com linhas do Supabase, sem duplicar por nome. */
+const mergePaletteCatalog = (fromDb: Paleta[]): Paleta[] => {
+  const byNome = new Map(fromDb.map((palette) => [palette.nome.trim().toLowerCase(), palette]));
+
+  for (const local of DEFAULT_PALETAS_CATALOG) {
+    const key = local.nome.trim().toLowerCase();
+
+    if (!byNome.has(key)) {
+      byNome.set(key, local);
+    }
+  }
+
+  return Array.from(byNome.values()).sort((left, right) =>
+    left.nome.localeCompare(right.nome, 'pt-BR')
+  );
+};
+
 /** Lista todas as paletas cadastradas (ordem alfabética por nome). */
 export async function fetchAllPalettes(): Promise<Paleta[]> {
   const { data, error } = await supabase
@@ -37,7 +54,7 @@ export async function fetchAllPalettes(): Promise<Paleta[]> {
     throw error;
   }
 
-  return (data ?? []).map((row) => rowToPaleta(row as Record<string, unknown>));
+  return mergePaletteCatalog((data ?? []).map((row) => rowToPaleta(row as Record<string, unknown>)));
 }
 
 /** Retorna a paleta com `is_active = true` ou fallback local (Padrão). */

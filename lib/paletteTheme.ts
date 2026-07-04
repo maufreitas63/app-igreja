@@ -49,15 +49,33 @@ export function darkenHex(hex: string, amount: number): string {
 }
 
 export function buildIndexScreenGradient(colors: PaletaColors): [string, string] {
+  if (colors.isLight) {
+    return [colors.background, colors.secondary || colors.background];
+  }
+
   return [colors.secondary, colors.background];
 }
 
 export function buildDashboardScreenGradient(colors: PaletaColors): [string, string, string] {
+  if (colors.isLight) {
+    return [colors.background, colors.background, colors.secondary || colors.background];
+  }
+
   return [colors.secondary, colors.background, darkenHex(colors.background, 0.35)];
 }
 
 /** Tema de superfície (cards, rodapés) derivado da paleta ativa. */
 export function buildPaletteSurfaceTheme(colors: PaletaColors): DashboardCardTheme {
+  if (colors.isLight) {
+    return {
+      backgroundColor: '#FFFFFF',
+      borderColor: colors.border,
+      shadowColor: colors.primary,
+      accent: colors.text,
+      accentMuted: colors.textMuted,
+    };
+  }
+
   return {
     backgroundColor: hexToRgba(colors.primary, 0.2),
     borderColor: colors.accent,

@@ -64,4 +64,20 @@ export const DEFAULT_PALETAS_CATALOG: Paleta[] = [
     is_active: false,
     created_at: '1970-01-01T00:00:00.000Z',
   },
+  {
+    id: '00000000-0000-4000-8000-000000000007',
+    nome: 'Basico',
+    /** Azul para ações e destaques. */
+    primary_color: '#2563EB',
+    /** Superfícies claras (gradientes). */
+    secondary_color: '#FFFFFF',
+    /** Fundo branco. */
+    bg_color: '#FFFFFF',
+    /** Bordas azuis. */
+    accent_color: '#2563EB',
+    is_active: false,
+    created_at: '1970-01-01T00:00:00.000Z',
+  },
 ];
+
+export const DEFAULT_PALETA_BASICO_ID = '00000000-0000-4000-8000-000000000007';

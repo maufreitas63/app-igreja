@@ -97,6 +97,14 @@ values
     '#1C1917',
     '#FCD34D',
     false
+  ),
+  (
+    'Basico',
+    '#2563EB',
+    '#FFFFFF',
+    '#FFFFFF',
+    '#2563EB',
+    false
   )
 on conflict (nome) do update
   set primary_color = excluded.primary_color,

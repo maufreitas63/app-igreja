@@ -2,7 +2,7 @@ import { WatermarkSurface } from '@/components/AppWatermark';
 import { EventOrchestrationListener } from '@/components/EventOrchestrationListener';
 import { TotemDeviceRouteGuard } from '@/components/TotemDeviceRouteGuard';
 import { EntityPrefixProvider } from '@/context/EntityPrefixContext';
-import { PaletteProvider } from '@/context/PaletteContext';
+import { PaletteProvider, usePalette } from '@/context/PaletteContext';
 import { useProfileScreenVisitTracker } from '@/hooks/useProfileScreenVisitTracker';
 import { Slot, usePathname, useSegments } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
@@ -29,35 +29,41 @@ const isWatermarkExcludedRoute = (pathname: string, segments: string[]) => {
   );
 };
 
-export function AppShell() {
+function AppShellContent() {
   const pathname = usePathname();
   const segments = useSegments();
+  const { colors } = usePalette();
   useProfileScreenVisitTracker();
   const showWatermark = !isWatermarkExcludedRoute(pathname, segments);
+  const appStyle = [styles.app, { backgroundColor: colors.background }];
 
   if (!showWatermark) {
     return (
-      <PaletteProvider>
-        <EntityPrefixProvider>
-          <View style={styles.app}>
-            <TotemDeviceRouteGuard />
-            <EventOrchestrationListener />
-            <Slot />
-          </View>
-        </EntityPrefixProvider>
-      </PaletteProvider>
+      <EntityPrefixProvider>
+        <View style={appStyle}>
+          <TotemDeviceRouteGuard />
+          <EventOrchestrationListener />
+          <Slot />
+        </View>
+      </EntityPrefixProvider>
     );
   }
 
   return (
+    <EntityPrefixProvider>
+      <WatermarkSurface style={appStyle} routeKey={pathname}>
+        <TotemDeviceRouteGuard />
+        <EventOrchestrationListener />
+        <Slot />
+      </WatermarkSurface>
+    </EntityPrefixProvider>
+  );
+}
+
+export function AppShell() {
+  return (
     <PaletteProvider>
-      <EntityPrefixProvider>
-        <WatermarkSurface style={styles.app} routeKey={pathname}>
-          <TotemDeviceRouteGuard />
-          <EventOrchestrationListener />
-          <Slot />
-        </WatermarkSurface>
-      </EntityPrefixProvider>
+      <AppShellContent />
     </PaletteProvider>
   );
 }
