@@ -546,7 +546,8 @@ as $$
 declare
   v_voluntario_nome text;
   v_tipo_nome text;
-  v_existing_voluntario text;
+  v_vagas integer := 1;
+  v_ocupadas integer := 0;
 begin
   if not public.profile_has_scale_type_access(public.current_session_profile_id(), p_tipo_escala_id, 'update') then
     return jsonb_build_object('success', false, 'message', 'Sem permissão para este tipo de escala.');
@@ -568,8 +569,8 @@ begin
     return jsonb_build_object('success', false, 'message', 'A data do serviço deve ser um domingo.');
   end if;
 
-  select te.nome
-    into v_tipo_nome
+  select te.nome, coalesce(te.vagas_por_servico, 1)
+    into v_tipo_nome, v_vagas
     from public.tipos_escala te
    where te.id = p_tipo_escala_id
      and te.is_ativa = true
@@ -595,32 +596,29 @@ begin
     select 1
       from public.escalas_log el
      where el.tipo_escala_id = p_tipo_escala_id
-       and el.data_servico = p_data_servico
-       and el.voluntario_id <> p_voluntario_id
-  ) then
-    select ve.nome
-      into v_existing_voluntario
-      from public.escalas_log el
-      join public.voluntarios_escala ve on ve.id = el.voluntario_id
-     where el.tipo_escala_id = p_tipo_escala_id
-       and el.data_servico = p_data_servico
-     limit 1;
-
-    return jsonb_build_object(
-      'success', false,
-      'message',
-      format('Já existe escala para %s neste domingo (%s).', coalesce(v_existing_voluntario, 'outro servo'), p_data_servico)
-    );
-  end if;
-
-  if exists (
-    select 1
-      from public.escalas_log el
-     where el.tipo_escala_id = p_tipo_escala_id
        and el.voluntario_id = p_voluntario_id
        and el.data_servico = p_data_servico
   ) then
     return jsonb_build_object('success', false, 'message', 'Este servo já está escalado para esta data.');
+  end if;
+
+  select count(*)
+    into v_ocupadas
+    from public.escalas_log el
+   where el.tipo_escala_id = p_tipo_escala_id
+     and el.data_servico = p_data_servico;
+
+  if v_ocupadas >= v_vagas then
+    return jsonb_build_object(
+      'success', false,
+      'message',
+      format(
+        'Domingo %s já possui %s/%s vaga(s) preenchida(s) neste tipo de escala.',
+        p_data_servico,
+        v_ocupadas,
+        v_vagas
+      )
+    );
   end if;
 
   insert into public.escalas_log (tipo_escala_id, voluntario_id, data_servico)
@@ -631,11 +629,13 @@ begin
     'message', 'Escala registrada com sucesso.',
     'voluntario_nome', v_voluntario_nome,
     'tipo_escala_nome', v_tipo_nome,
-    'data_servico', p_data_servico
+    'data_servico', p_data_servico,
+    'vagas_por_servico', v_vagas,
+    'ocupadas_apos_insert', v_ocupadas + 1
   );
 exception
   when unique_violation then
-    return jsonb_build_object('success', false, 'message', 'Já existe escala para este domingo neste tipo de escala.');
+    return jsonb_build_object('success', false, 'message', 'Este servo já está escalado para esta data.');
 end;
 $$;
 

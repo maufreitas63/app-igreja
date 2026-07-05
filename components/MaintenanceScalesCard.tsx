@@ -1,5 +1,6 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
+import { ScaleVolunteerSelect } from '@/components/ScaleVolunteerSelect';
 import { useMaintenanceScales } from '@/hooks/useMaintenanceScales';
 import {
   computeMaintenanceContentHeight,
@@ -12,8 +13,7 @@ import {
   parseScaleServiceDateInput,
 } from '@/lib/maintenanceScales';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
-import { Picker } from '@react-native-picker/picker';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
@@ -75,10 +75,24 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
       return;
     }
 
-    if (!selectedVolunteerId && activeVolunteers.length) {
-      setSelectedVolunteerId(activeVolunteers[0].id);
+    if (!activeVolunteers.length) {
+      setSelectedVolunteerId('');
+      return;
     }
-  }, [activeVolunteers, selectedVolunteerId, showNewForm]);
+
+    setSelectedVolunteerId((current) => {
+      if (current && activeVolunteers.some((volunteer) => volunteer.id === current)) {
+        return current;
+      }
+
+      return activeVolunteers[0].id;
+    });
+  }, [activeVolunteers, showNewForm]);
+
+  const volunteerSelectOptions = useMemo(
+    () => activeVolunteers.map((volunteer) => ({ id: volunteer.id, label: volunteer.name })),
+    [activeVolunteers]
+  );
 
   const handleRegister = async () => {
     const serviceDate = parseScaleServiceDateInput(serviceDateInput);
@@ -100,9 +114,12 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
       return;
     }
 
-    setShowNewForm(false);
-    setServiceDateInput('');
-    Alert.alert('Escala', result.message);
+    Toast.show({
+      type: 'success',
+      text1: 'Escala registrada',
+      text2: result.message,
+      visibilityTime: 2500,
+    });
   };
 
   const handleBatchScale = async () => {
@@ -329,24 +346,11 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
           {loadingVolunteers ? (
             <ActivityIndicator color="#818CF8" style={styles.formLoader} />
           ) : activeVolunteers.length ? (
-            <View style={styles.pickerWrapper}>
-              <Picker
-                selectedValue={selectedVolunteerId || activeVolunteers[0]?.id}
-                onValueChange={(value) => setSelectedVolunteerId(String(value))}
-                dropdownIconColor="#F8FAFC"
-                style={styles.picker}
-                itemStyle={styles.pickerItem}
-                mode="dropdown"
-              >
-                {activeVolunteers.map((volunteer) => (
-                  <Picker.Item
-                    key={volunteer.id}
-                    label={volunteer.name}
-                    value={volunteer.id}
-                  />
-                ))}
-              </Picker>
-            </View>
+            <ScaleVolunteerSelect
+              options={volunteerSelectOptions}
+              value={selectedVolunteerId}
+              onValueChange={setSelectedVolunteerId}
+            />
           ) : (
             <Text style={styles.panelHint}>
               Nenhum servo ativo para este tipo. Cadastre no card Servos.
