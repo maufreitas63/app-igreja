@@ -75,8 +75,9 @@ import {
   signOutAndNavigateToLogin,
 } from '@/lib/userSession';
 import { normalizePhoneForWhatsApp, openMemberWhatsapp } from '@/lib/whatsapp';
-import { DASHBOARD_CARD_BLOCKED_MESSAGES, DASHBOARD_CARD_LINKED_SCREEN } from '@/lib/dashboardCardScreenLinks';
+import { DASHBOARD_CARD_BLOCKED_MESSAGES } from '@/lib/dashboardCardScreenLinks';
 import {
+  getDashboardLinkedScreenKeys,
   isDashboardCardFullyAllowed,
   loadDashboardLinkedScreenAccess,
   type DashboardScreenAccess,
@@ -1005,9 +1006,7 @@ export default function Dashboard() {
               Object.keys(DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY).map((content) => [content, true] as const)
             );
             resolvedScreenAccess = Object.fromEntries(
-              [...new Set(Object.values(DASHBOARD_CARD_LINKED_SCREEN))].map(
-                (resourceKey) => [resourceKey, true] as const
-              )
+              getDashboardLinkedScreenKeys().map((resourceKey) => [resourceKey, true] as const)
             );
             resolvedGroupedManageAccess = { manageProfile: true, manageMembers: true };
           }

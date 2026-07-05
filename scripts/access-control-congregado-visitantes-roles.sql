@@ -73,13 +73,28 @@ select r.id, res.id, g.can_view, g.can_update
       ('screen', '/', true, false),
       ('screen', '/register', true, true),
       ('screen', '/lgpd', true, true),
+      ('screen', '/manage-profile', true, true),
+      ('screen', '/manage-members', true, true),
       ('screen', 'dashboard.card.qr', true, false),
       ('screen', 'dashboard.card.event_alt', true, false),
+      ('screen', 'dashboard.card.grouped_manage', true, false),
       ('table', 'events', true, false),
       ('table', 'event_registrations', true, true),
       ('table', 'app_parameters', true, false),
       ('table', 'pastoral_reason_categories', true, false),
-      ('table', 'pastoral_reason_subcategories', true, false)
+      ('table', 'pastoral_reason_subcategories', true, false),
+      ('table', 'profiles', true, true),
+      ('column', 'profiles.full_name', true, true),
+      ('column', 'profiles.phone', true, true),
+      ('column', 'profiles.birth_date', true, true),
+      ('column', 'profiles.email', true, true),
+      ('column', 'profiles.cep', true, true),
+      ('column', 'profiles.address_street', true, true),
+      ('column', 'profiles.address_number', true, true),
+      ('column', 'profiles.address_complement', true, true),
+      ('column', 'profiles.address_neighborhood', true, true),
+      ('column', 'profiles.address_city', true, true),
+      ('column', 'profiles.address_state', true, true)
   ) as g(resource_type, resource_key, can_view, can_update)
   join public.access_resources res
     on res.resource_type = g.resource_type
