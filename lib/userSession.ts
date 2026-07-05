@@ -1,7 +1,7 @@
 import { loadProfileByPhone } from '@/lib/profileOnboarding';
 import { clearGhostModeState } from '@/lib/ghostMode';
 import { resetProfileScreenVisitTracking } from '@/lib/profileScreenVisitTracking';
-import { isAndroidWeb, isIosWeb, isPwaInstalled } from '@/lib/pwaInstall';
+import { isAndroidWeb } from '@/lib/pwaInstall';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -315,6 +315,22 @@ const buildPwaSignedOutUrl = () => {
   return url.toString();
 };
 
+/** Tela neutra quando o SO não permite fechar o app (nunca volta ao login). */
+const navigateToPwaSignedOutScreen = () => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    window.location.replace(buildPwaSignedOutUrl());
+    return;
+  }
+
+  try {
+    router.dismissAll();
+  } catch {
+    // ignore
+  }
+
+  router.replace(PWA_SIGNED_OUT_ROUTE);
+};
+
 /** Intent Android: envia o usuário à tela inicial do sistema (equivalente a “sair” do PWA). */
 const ANDROID_HOME_INTENT =
   'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end';
@@ -364,7 +380,7 @@ const trySendAndroidPwaToHome = () => {
   }
 };
 
-/** Se o fechamento do PWA falhar, volta ao login (sessão já foi limpa). */
+/** Se o fechamento falhar, exibe tela neutra (sessão já foi limpa; nunca volta ao login). */
 const scheduleWebExitFallback = () => {
   if (typeof window === 'undefined') {
     return;
@@ -375,26 +391,18 @@ const scheduleWebExitFallback = () => {
       return;
     }
 
-    navigateToLoginAfterSignOut();
+    navigateToPwaSignedOutScreen();
   }, 650);
 };
 
-/** Tenta fechar o PWA instalado; se o SO bloquear, cai na tela de login. */
-const exitInstalledPwaAfterSignOut = () => {
+/** Tenta fechar o PWA instalado; se o SO bloquear, cai na tela neutra pós-saída. */
+const exitWebApplication = () => {
   tryCloseWebWindow();
 
   if (isAndroidWeb()) {
     trySendAndroidPwaToHome();
-    scheduleWebExitFallback();
-    return;
   }
 
-  if (isIosWeb()) {
-    scheduleWebExitFallback();
-    return;
-  }
-
-  tryCloseWebWindow();
   scheduleWebExitFallback();
 };
 
@@ -409,7 +417,8 @@ export function signOutAndNavigateToLogin(): void {
 
 /**
  * Encerra a sessão e tenta fechar o aplicativo de forma definitiva.
- * No PWA Android, envia à tela inicial do sistema; no iOS, só é possível exibir aviso pós-saída.
+ * Na web, tenta `window.close()` e intent HOME (Android); se o SO bloquear, vai para `/sessao-encerrada`.
+ * Nunca redireciona à tela de login.
  */
 export function exitApplication(): void {
   clearUserSessionImmediately();
@@ -419,17 +428,12 @@ export function exitApplication(): void {
     return;
   }
 
-  if (Platform.OS === 'web' && typeof window !== 'undefined' && isPwaInstalled()) {
-    exitInstalledPwaAfterSignOut();
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    exitWebApplication();
     return;
   }
 
-  if (Platform.OS !== 'web') {
-    navigateToLoginAfterSignOut();
-    return;
-  }
-
-  navigateToLoginAfterSignOut();
+  navigateToPwaSignedOutScreen();
 }
 
 /**
@@ -437,7 +441,7 @@ export function exitApplication(): void {
  * Preferir `exitApplication()` (botão Sair) ou `signOutAndNavigateToLogin()` (sessão inválida).
  */
 export function signOutAndReturnToLogin(): void {
-  exitApplication();
+  signOutAndNavigateToLogin();
 }
 
 /** Confirma saída do app (botão nativo voltar na tela inicial). */

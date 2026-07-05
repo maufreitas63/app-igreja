@@ -36,8 +36,8 @@ export function getExitSessionUi(): ExitSessionUi {
     button: 'Sair do aplicativo',
     accessibilityLabel: 'Sair do aplicativo',
     accessibilityHint:
-      'Encerra a sessão neste navegador e retorna à tela de entrada. '
-      + 'Para fechar a aba, use o gesto ou botão do navegador.',
+      'Encerra a sessão e tenta fechar o aplicativo. '
+      + 'Se o navegador não permitir fechar, exibe a tela de sessão encerrada.',
   };
 }
 
