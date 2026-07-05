@@ -1594,10 +1594,9 @@ export default function MaintenanceDashboard() {
                     />
                   </View>
                   <View style={styles.capacityColumn}>
-                    <Text style={styles.capacityFieldLabel}>Capacidade *</Text>
                     <TextInput
                       style={[styles.input, styles.capacityInput]}
-                      placeholder="200 ou 999"
+                      placeholder="Capacidade *"
                       placeholderTextColor="#64748B"
                       value={form.maxCapacity}
                       keyboardType="number-pad"

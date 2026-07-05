@@ -202,6 +202,58 @@ export const readDeviceGeolocationOnce = async (): Promise<GeoCoordinates | null
   return readNativeGeolocationOnce();
 };
 
+/** Leitura única com máxima precisão disponível (GPS do aparelho). */
+export const readPreciseDeviceGeolocation = async (): Promise<GeoCoordinates | null> => {
+  if (Platform.OS === 'web') {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      return null;
+    }
+
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+          });
+        },
+        () => resolve(null),
+        {
+          enableHighAccuracy: true,
+          timeout: 30_000,
+          maximumAge: 0,
+        }
+      );
+    });
+  }
+
+  const Location = await import('expo-location');
+  const accuracyLevels = [
+    Location.Accuracy.BestForNavigation,
+    Location.Accuracy.Highest,
+    Location.Accuracy.High,
+  ];
+
+  for (const accuracy of accuracyLevels) {
+    try {
+      const position = await Location.getCurrentPositionAsync({ accuracy });
+
+      return {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+      };
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+};
+
+export const formatGeolocationCoordinate = (value: number) => value.toFixed(7);
+
 export type GeoWatchOptions = {
   event: { latitude?: number | null; longitude?: number | null };
   radiusMeters?: number;

@@ -1,4 +1,10 @@
 import { confirmDialog } from '@/lib/confirmDialog';
+import {
+  formatDeviceGeolocationPermissionError,
+  formatGeolocationCoordinate,
+  readPreciseDeviceGeolocation,
+  requestDeviceGeolocationPermission,
+} from '@/lib/deviceGeolocation';
 import { resolveEventFavoriteLocationFromCep } from '@/lib/eventFavoriteLocationFromCep';
 import {
   EVENT_FAVORITE_LOCATIONS_CEP_SQL_HINT,
@@ -100,6 +106,7 @@ export function EventFavoriteLocationPickerModal({
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formError, setFormError] = useState<string | null>(null);
   const [cepLoading, setCepLoading] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
 
   useEffect(() => {
     if (!visible) {
@@ -108,6 +115,7 @@ export function EventFavoriteLocationPickerModal({
       setForm(emptyForm());
       setFormError(null);
       setCepLoading(false);
+      setGeoLoading(false);
     }
   }, [visible]);
 
@@ -155,6 +163,52 @@ export function EventFavoriteLocationPickerModal({
       );
     } finally {
       setCepLoading(false);
+    }
+  };
+
+  const handleUseCurrentGeolocation = async () => {
+    const hasExistingCoordinates =
+      form.latitude.trim().length > 0 || form.longitude.trim().length > 0;
+
+    const confirmed = await confirmDialog(
+      'Usar localização atual',
+      hasExistingCoordinates
+        ? 'Deseja atualizar latitude e longitude com base na posição atual do aparelho? As coordenadas existentes serão substituídas.'
+        : 'Deseja preencher latitude e longitude com base na posição atual do aparelho?',
+      'Atualizar',
+      'Cancelar'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setGeoLoading(true);
+    setFormError(null);
+
+    try {
+      const permission = await requestDeviceGeolocationPermission();
+
+      if (permission !== 'granted') {
+        setFormError(formatDeviceGeolocationPermissionError(permission));
+        return;
+      }
+
+      const reading = await readPreciseDeviceGeolocation();
+
+      if (!reading) {
+        setFormError(
+          'Não foi possível obter a localização. Verifique se o GPS está ativo e tente novamente em área aberta.'
+        );
+        return;
+      }
+
+      patchForm({
+        latitude: formatGeolocationCoordinate(reading.latitude),
+        longitude: formatGeolocationCoordinate(reading.longitude),
+      });
+    } finally {
+      setGeoLoading(false);
     }
   };
 
@@ -389,14 +443,48 @@ export function EventFavoriteLocationPickerModal({
 
           {!loading && mode === 'form' && canManage ? (
             <ScrollView style={styles.formScroll} contentContainerStyle={styles.formContent}>
-              {renderFieldLabel('Nome *')}
-              <TextInput
-                style={styles.input}
-                placeholder="Ex.: Templo principal"
-                placeholderTextColor="#64748B"
-                value={form.name}
-                onChangeText={(text) => patchForm({ name: text })}
-              />
+              <View style={styles.localCapacityRow}>
+                <View style={styles.localColumn}>
+                  <View style={styles.nameGeoRow}>
+                    <TextInput
+                      style={[styles.input, styles.nameInput]}
+                      placeholder="Ex.: Templo principal"
+                      placeholderTextColor="#64748B"
+                      value={form.name}
+                      onChangeText={(text) => patchForm({ name: text })}
+                    />
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.geoTargetButton,
+                        (pressed || geoLoading) && styles.geoTargetButtonPressed,
+                      ]}
+                      onPress={() => void handleUseCurrentGeolocation()}
+                      disabled={geoLoading}
+                      accessibilityRole="button"
+                      accessibilityLabel="Usar localização atual do aparelho"
+                    >
+                      {geoLoading ? (
+                        <ActivityIndicator color="#C7D2FE" size="small" />
+                      ) : (
+                        <MaterialIcons name="gps-fixed" size={20} color="#C7D2FE" />
+                      )}
+                    </Pressable>
+                  </View>
+                </View>
+                <View style={styles.capacityColumn}>
+                  <TextInput
+                    style={[styles.input, styles.capacityInput]}
+                    placeholder="Capacidade *"
+                    placeholderTextColor="#64748B"
+                    value={form.capacity}
+                    keyboardType="number-pad"
+                    onChangeText={(text) => patchForm({ capacity: text.replace(/\D/g, '') })}
+                  />
+                  {isUnlimitedEventCapacity(form.capacity) ? (
+                    <Text style={styles.unlimitedHint}>{UNLIMITED_EVENT_CAPACITY_LABEL}</Text>
+                  ) : null}
+                </View>
+              </View>
 
               {renderFieldLabel('CEP')}
               <View style={styles.cepRow}>
@@ -460,20 +548,6 @@ export function EventFavoriteLocationPickerModal({
               </View>
 
               <View style={styles.coordRow}>
-                <View style={styles.coordField}>
-                  {renderFieldLabel('Capacidade *')}
-                  <TextInput
-                    style={styles.input}
-                    placeholder="200 ou 999"
-                    placeholderTextColor="#64748B"
-                    value={form.capacity}
-                    keyboardType="number-pad"
-                    onChangeText={(text) => patchForm({ capacity: text.replace(/\D/g, '') })}
-                  />
-                  {isUnlimitedEventCapacity(form.capacity) ? (
-                    <Text style={styles.unlimitedHint}>{UNLIMITED_EVENT_CAPACITY_LABEL}</Text>
-                  ) : null}
-                </View>
                 <View style={styles.coordField}>
                   {renderFieldLabel('Ordem')}
                   <TextInput
@@ -723,6 +797,47 @@ const styles = StyleSheet.create({
     fontSize: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
+  },
+  localCapacityRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+  },
+  localColumn: {
+    flex: 1,
+    minWidth: 0,
+  },
+  nameGeoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  nameInput: {
+    flex: 1,
+    minWidth: 0,
+  },
+  geoTargetButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(129, 140, 248, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(99, 102, 241, 0.14)',
+  },
+  geoTargetButtonPressed: {
+    opacity: 0.85,
+  },
+  capacityColumn: {
+    width: 112,
+    flexShrink: 0,
+    gap: 6,
+  },
+  capacityInput: {
+    width: '100%',
+    paddingHorizontal: 10,
+    textAlign: 'center',
   },
   multilineInput: {
     minHeight: 72,
