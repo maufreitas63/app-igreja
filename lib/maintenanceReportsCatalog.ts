@@ -42,6 +42,14 @@ export const MAINTENANCE_REPORT_DEFINITIONS: MaintenanceReportDefinition[] = [
     ],
   },
   {
+    code: 'active_members_age_matrix',
+    title: 'Membros e Congregados Ativos por Faixa Etária',
+    description:
+      'Matriz de perfis ativos (membership_out efetiva vazia) com faixas Infantil (0–11), Adolescente (12–17), Jovem (18–29), Adulto (30–59) e 60+, separando Membros e Congregados em colunas e incluindo linha de totais.',
+    dataSources: 'profiles, profile_access_roles, access_roles',
+    configFields: [],
+  },
+  {
     code: 'pastoral_needs',
     title: 'Necessidades Pastorais',
     description:

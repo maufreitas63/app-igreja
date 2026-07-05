@@ -635,6 +635,105 @@ begin
 end;
 $$;
 
+create or replace function public._report_active_members_age_matrix(p_params jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_rows jsonb;
+  v_summary jsonb;
+begin
+  with ativos as (
+    select
+      public.resolve_basic_role_code_for_profile(p.id) as role_code,
+      case
+        when p.birth_date is null then 'Sem data de nascimento'
+        when date_part('year', age(current_date, p.birth_date))::int between 0 and 11 then 'Infantil'
+        when date_part('year', age(current_date, p.birth_date))::int between 12 and 17 then 'Adolescente'
+        when date_part('year', age(current_date, p.birth_date))::int between 18 and 29 then 'Jovem'
+        when date_part('year', age(current_date, p.birth_date))::int between 30 and 59 then 'Adulto'
+        when date_part('year', age(current_date, p.birth_date))::int >= 60 then '60+'
+        else 'Sem data de nascimento'
+      end as categoria
+    from public.profiles p
+    cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
+    where coalesce(
+        nullif(trim(p.full_name), ''),
+        nullif(trim(p.phone), ''),
+        nullif(trim(p.codigo_membro), '')
+      ) is not null
+      and coalesce(p.codigo_membro, '') not ilike 'TstMax%'
+      and public.resolve_basic_role_code_for_profile(p.id) in ('member', 'congregado')
+      and coalesce(eff.membership_out::text, '') = ''
+  ),
+  categorias as (
+    select *
+    from (
+      values
+        (1, 'Infantil'),
+        (2, 'Adolescente'),
+        (3, 'Jovem'),
+        (4, 'Adulto'),
+        (5, '60+'),
+        (6, 'Sem data de nascimento')
+    ) as c(ordem, categoria)
+  ),
+  matrix as (
+    select
+      c.categoria,
+      c.ordem,
+      coalesce(count(*) filter (where a.role_code = 'member'), 0)::int as membros,
+      coalesce(count(*) filter (where a.role_code = 'congregado'), 0)::int as congregados
+    from categorias c
+    left join ativos a on a.categoria = c.categoria
+    group by c.categoria, c.ordem
+  ),
+  with_totals as (
+    select
+      m.categoria,
+      m.ordem,
+      m.membros,
+      m.congregados,
+      (m.membros + m.congregados)::int as total
+    from matrix m
+    union all
+    select
+      'Total'::text,
+      99,
+      coalesce(sum(m.membros), 0)::int,
+      coalesce(sum(m.congregados), 0)::int,
+      coalesce(sum(m.membros + m.congregados), 0)::int
+    from matrix m
+  )
+  select
+    coalesce(jsonb_agg(
+      jsonb_build_object(
+        'categoria', w.categoria,
+        'membros', w.membros,
+        'congregados', w.congregados,
+        'total', w.total
+      )
+      order by w.ordem
+    ), '[]'::jsonb),
+    jsonb_build_object(
+      'membros_ativos', coalesce(sum(w.membros) filter (where w.categoria <> 'Total'), 0),
+      'congregados_ativos', coalesce(sum(w.congregados) filter (where w.categoria <> 'Total'), 0),
+      'total_ativos', coalesce(sum(w.total) filter (where w.categoria <> 'Total'), 0)
+    )
+  into v_rows, v_summary
+  from with_totals w;
+
+  return public._maintenance_report_payload(
+    'active_members_age_matrix',
+    array['categoria', 'membros', 'congregados', 'total'],
+    v_rows,
+    v_summary
+  );
+end;
+$$;
+
 create or replace function public._report_demographic_family_size(p_params jsonb)
 returns jsonb
 language plpgsql
@@ -1376,6 +1475,8 @@ begin
       return public._report_pastoral_needs(coalesce(p_params, '{}'::jsonb));
     when 'demographic_age_brackets' then
       return public._report_demographic_age_brackets(coalesce(p_params, '{}'::jsonb));
+    when 'active_members_age_matrix' then
+      return public._report_active_members_age_matrix(coalesce(p_params, '{}'::jsonb));
     when 'health_alerts' then
       return public._report_health_alerts(coalesce(p_params, '{}'::jsonb));
     when 'quorum_official' then

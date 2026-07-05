@@ -341,10 +341,19 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                 })}
               </View>
 
-              {result.rows.slice(0, 100).map((row, rowIndex) => (
+              {result.rows.slice(0, 100).map((row, rowIndex) => {
+                const isAgeMatrixTotalRow =
+                  reportCode === 'active_members_age_matrix'
+                  && String(row.categoria ?? '').trim() === 'Total';
+
+                return (
                 <View
                   key={`row-${rowIndex}`}
-                  style={[styles.tableDataRow, rowIndex % 2 === 1 && styles.tableDataRowAlt]}
+                  style={[
+                    styles.tableDataRow,
+                    rowIndex % 2 === 1 && styles.tableDataRowAlt,
+                    isAgeMatrixTotalRow && styles.tableDataRowTotal,
+                  ]}
                 >
                   {visibleColumns.map((column) => {
                     const align = getReportColumnAlign(column);
@@ -385,7 +394,7 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                           accessibilityLabel={`Ver integrantes da faixa ${cellValue}`}
                         >
                           <Text style={styles.ageBracketLink} numberOfLines={3}>
-                            {formatReportCellValue(column, cellValue)}
+                            {formatReportCellValue(column, cellValue, reportCode)}
                           </Text>
                         </Pressable>
                       );
@@ -417,7 +426,7 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                           <Text
                             style={[styles.ageBracketLink, wrapEventName && styles.tableCellWrap]}
                           >
-                            {formatReportCellValue(column, cellValue)}
+                            {formatReportCellValue(column, cellValue, reportCode)}
                           </Text>
                         </Pressable>
                       );
@@ -437,12 +446,13 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                         ]}
                         numberOfLines={wrapEventName ? undefined : 3}
                       >
-                        {formatReportCellValue(column, cellValue)}
+                        {formatReportCellValue(column, cellValue, reportCode)}
                       </Text>
                     );
                   })}
                 </View>
-              ))}
+              );
+              })}
             </View>
           </ScrollView>
         </View>
@@ -1251,6 +1261,9 @@ const styles = StyleSheet.create({
   },
   tableDataRowAlt: {
     backgroundColor: 'rgba(30, 41, 59, 0.35)',
+  },
+  tableDataRowTotal: {
+    backgroundColor: 'rgba(51, 65, 85, 0.55)',
   },
   tableDataCell: {
     paddingVertical: 8,

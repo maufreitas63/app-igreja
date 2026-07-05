@@ -32,6 +32,8 @@ const COLUMN_LABELS: Record<string, string> = {
   rotulo: 'Rótulo',
   visitas: 'Visitas',
   faixa: 'Faixa etária',
+  membros: 'Membros',
+  congregados: 'Congregados',
   quantidade: 'Quantidade',
   familia: 'Família',
   integrantes: 'Integrantes',
@@ -99,6 +101,7 @@ const SUMMARY_LABELS: Record<string, string> = {
   perfis_analisados: 'Perfis analisados',
   membros_ativos: 'Membros ativos',
   congregados_ativos: 'Congregados ativos',
+  total_ativos: 'Total de ativos',
   familias_distintas: 'Famílias distintas',
   media_integrantes: 'Média de integrantes',
   event_id: 'Evento',
@@ -134,6 +137,8 @@ const INTEGER_COLUMNS = new Set([
   'visitas',
   'quantidade',
   'integrantes',
+  'membros',
+  'congregados',
   'veiculos_cadastrados',
   'estimativa_veiculos',
   'anexos',
@@ -314,7 +319,11 @@ export const formatReportMonthLabel = (value: unknown) => {
   });
 };
 
-export const formatReportCellValue = (column: string, value: unknown) => {
+export const formatReportCellValue = (
+  column: string,
+  value: unknown,
+  reportCode?: string
+) => {
   if (value === null || value === undefined || value === '') {
     return '—';
   }
@@ -335,7 +344,10 @@ export const formatReportCellValue = (column: string, value: unknown) => {
     return String(value).toUpperCase() === 'PLANEJADO' ? 'Planejado' : 'Realizado';
   }
 
-  if (CURRENCY_COLUMNS.has(column)) {
+  const countTotalColumn =
+    reportCode === 'active_members_age_matrix' && column === 'total';
+
+  if (CURRENCY_COLUMNS.has(column) && !countTotalColumn) {
     const numeric = parseNumeric(value);
 
     if (numeric !== null) {
@@ -359,7 +371,7 @@ export const formatReportCellValue = (column: string, value: unknown) => {
     }
   }
 
-  if (INTEGER_COLUMNS.has(column)) {
+  if (INTEGER_COLUMNS.has(column) || countTotalColumn) {
     const numeric = parseNumeric(value);
 
     if (numeric !== null) {
