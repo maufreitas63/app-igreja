@@ -144,6 +144,17 @@ begin
     );
   end if;
 
+  -- Líder (não geral): só tipos com liderança atribuída; não herda view de servo escalado.
+  if exists (
+    select 1
+      from public.profile_access_roles par
+      join public.access_roles ar on ar.id = par.role_id
+     where par.profile_id = p_profile_id
+       and ar.code = 'lider'
+  ) then
+    return false;
+  end if;
+
   if v_action = 'view' and public.profile_is_scale_type_volunteer(p_profile_id, p_tipo_escala_id) then
     return true;
   end if;

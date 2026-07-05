@@ -113,7 +113,7 @@ const parseScaleLogs = (data: unknown) =>
 
 export async function fetchMaintenanceScaleTypes() {
   try {
-    const permitted = await fetchPermittedScaleTypes('view');
+    const permitted = await fetchPermittedScaleTypes('update');
 
     return parseScaleTypes(
       permitted.map((row) => ({
