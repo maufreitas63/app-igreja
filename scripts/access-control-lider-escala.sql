@@ -20,6 +20,18 @@ on conflict (code) do update
       description = excluded.description,
       is_system = excluded.is_system;
 
+insert into public.access_roles (code, name, description, is_system)
+values (
+  'lider_geral',
+  'Líder Geral',
+  'Gerencia servos e programação de todos os tipos de escala ativos, sem vínculo por tipo',
+  true
+)
+on conflict (code) do update
+  set name = excluded.name,
+      description = excluded.description,
+      is_system = excluded.is_system;
+
 insert into public.access_resources (resource_type, resource_key, label, description)
 values
   ('screen', 'maintenance.card.scale_types', 'Manutenção: Tipos de Escala', 'Criar/editar tipos (super_admin ou grant explícito)'),
@@ -186,6 +198,22 @@ as $$
   );
 $$;
 
+create or replace function public.profile_has_lider_geral_scale_role(p_profile_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+      from public.profile_access_roles par
+      join public.access_roles ar on ar.id = par.role_id
+     where par.profile_id = p_profile_id
+       and ar.code = 'lider_geral'
+  );
+$$;
+
 create or replace function public.profile_has_scale_type_access(
   p_profile_id uuid,
   p_tipo_escala_id uuid,
@@ -228,6 +256,10 @@ begin
 
   if v_codigo is null then
     return false;
+  end if;
+
+  if public.profile_has_lider_geral_scale_role(p_profile_id) then
+    return true;
   end if;
 
   v_resource_key := public.scale_type_resource_key(v_codigo);
@@ -328,6 +360,25 @@ select r.id, res.id, g.can_view, g.can_update
     on res.resource_type = 'screen'
    and res.resource_key = g.resource_key
  where r.code = 'lider'
+on conflict (role_id, resource_id) where (role_id is not null) do update
+  set can_view = excluded.can_view,
+      can_update = excluded.can_update,
+      updated_at = now();
+
+insert into public.access_grants (role_id, resource_id, can_view, can_update)
+select r.id, res.id, g.can_view, g.can_update
+  from public.access_roles r
+ cross join (
+    values
+      ('/maintenance-dashboard', true, false),
+      ('maintenance.card.scale_volunteers', true, true),
+      ('maintenance.card.scales', true, true),
+      ('dashboard.card.vigilance_scales', true, false)
+  ) as g(resource_key, can_view, can_update)
+  join public.access_resources res
+    on res.resource_type = 'screen'
+   and res.resource_key = g.resource_key
+ where r.code = 'lider_geral'
 on conflict (role_id, resource_id) where (role_id is not null) do update
   set can_view = excluded.can_view,
       can_update = excluded.can_update,
@@ -1039,6 +1090,7 @@ grant execute on function public.scale_type_resource_key(text) to anon, authenti
 grant execute on function public.normalize_person_name(text) to anon, authenticated;
 grant execute on function public.profile_voluntario_name_matches_profile(text, text) to anon, authenticated;
 grant execute on function public.profile_is_scale_type_volunteer(uuid, uuid) to anon, authenticated;
+grant execute on function public.profile_has_lider_geral_scale_role(uuid) to anon, authenticated;
 grant execute on function public.profile_has_scale_type_access(uuid, uuid, text) to anon, authenticated;
 grant execute on function public.listar_tipos_escala_permitidos(uuid, text) to anon, authenticated;
 grant execute on function public.listar_liderancas_escala_admin(uuid, uuid) to anon, authenticated;

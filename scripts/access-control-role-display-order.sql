@@ -11,6 +11,7 @@ as $$
     when 'congregado' then 20
     when 'member' then 30
     when 'family_acceptor' then 40
+    when 'lider_geral' then 44
     when 'lider' then 45
     when 'events_admin' then 50
     when 'orquestrador_evento' then 52

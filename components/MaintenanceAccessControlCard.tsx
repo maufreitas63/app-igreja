@@ -183,6 +183,18 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
     || savingResourceGrantKey !== null
     || savingScaleLeadershipId !== null;
   const hasAssignedProfileRoles = profileRoles.some((role) => role.assigned);
+  const profileHasLiderGeralRole = profileRoles.some(
+    (role) => role.assigned && role.roleCode === 'lider_geral'
+  );
+  const profileHasLiderRole = profileRoles.some(
+    (role) => role.assigned && role.roleCode === 'lider'
+  );
+
+  const scaleLeadershipHint = profileHasLiderGeralRole
+    ? 'Papel Líder Geral: acesso automático a todas as escalas ativas. Os tipos abaixo são opcionais.'
+    : profileHasLiderRole
+      ? 'Ative os tipos que este perfil pode gerenciar (requer papel Líder).'
+      : 'Ative os tipos após atribuir o papel Líder ou Líder Geral ao perfil.';
 
   const hasGrantSearchQuery = grantSearchQuery.trim().length > 0;
 
@@ -690,9 +702,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
 
               {expandedProfileSection === 'scaleLeadership' ? (
                 <>
-                  <Text style={styles.subsectionHint}>
-                    Ative os tipos que este perfil pode gerenciar (requer papel lider).
-                  </Text>
+                  <Text style={styles.subsectionHint}>{scaleLeadershipHint}</Text>
 
                   {loadingScaleLeadership ? (
                     <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />

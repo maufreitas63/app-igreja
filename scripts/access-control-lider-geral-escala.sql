@@ -1,58 +1,70 @@
--- Servos escalados (voluntarios_escala) passam a ver os tipos de escala no card Escalas.
--- Execute no Supabase após access-control-lider-escala.sql e access-control-pastoral-intercessao.sql
--- (usa normalize_person_name). Depois: Settings → API → Reload schema.
+-- Papel Líder Geral: mesmos privilégios operacionais do Líder, com acesso a TODAS as escalas ativas.
+-- Execute no SQL Editor do Supabase após access-control-lider-escala.sql.
+-- Depois: Settings → API → Reload schema.
 
 -- ---------------------------------------------------------------------------
--- Helpers de vínculo perfil ↔ nome do servo
+-- Papel
 -- ---------------------------------------------------------------------------
 
-create or replace function public.profile_voluntario_name_matches_profile(
-  p_voluntario_nome text,
-  p_profile_full_name text
+insert into public.access_roles (code, name, description, is_system)
+values (
+  'lider_geral',
+  'Líder Geral',
+  'Gerencia servos e programação de todos os tipos de escala ativos, sem vínculo por tipo',
+  true
 )
-returns boolean
+on conflict (code) do update
+  set name = excluded.name,
+      description = excluded.description,
+      is_system = excluded.is_system;
+
+-- Mesmos grants de tela do papel lider.
+insert into public.access_grants (role_id, resource_id, can_view, can_update)
+select r.id, res.id, g.can_view, g.can_update
+  from public.access_roles r
+ cross join (
+    values
+      ('/maintenance-dashboard', true, false),
+      ('maintenance.card.scale_volunteers', true, true),
+      ('maintenance.card.scales', true, true),
+      ('dashboard.card.vigilance_scales', true, false)
+  ) as g(resource_key, can_view, can_update)
+  join public.access_resources res
+    on res.resource_type = 'screen'
+   and res.resource_key = g.resource_key
+ where r.code = 'lider_geral'
+on conflict (role_id, resource_id) where (role_id is not null) do update
+  set can_view = excluded.can_view,
+      can_update = excluded.can_update,
+      updated_at = now();
+
+-- ---------------------------------------------------------------------------
+-- Ordem na UI (acima de Líder)
+-- ---------------------------------------------------------------------------
+
+create or replace function public.access_role_display_order(p_code text)
+returns integer
 language sql
 immutable
 as $$
-  select
-    nullif(trim(p_profile_full_name), '') is not null
-    and nullif(trim(p_voluntario_nome), '') is not null
-    and (
-      public.normalize_person_name(p_voluntario_nome) = public.normalize_person_name(p_profile_full_name)
-      or public.normalize_person_name(p_voluntario_nome) = public.normalize_person_name(
-        split_part(trim(p_profile_full_name), ' ', 1)
-        || ' '
-        || reverse(split_part(reverse(trim(p_profile_full_name)), ' ', 1))
-      )
-    );
-$$;
-
-create or replace function public.profile_is_scale_type_volunteer(
-  p_profile_id uuid,
-  p_tipo_escala_id uuid
-)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1
-      from public.profiles p
-      join public.voluntarios_escala ve
-        on ve.tipo_escala_id = p_tipo_escala_id
-       and ve.is_ativo = true
-       and public.profile_voluntario_name_matches_profile(ve.nome, p.full_name)
-      join public.tipos_escala te
-        on te.id = ve.tipo_escala_id
-       and te.is_ativa = true
-     where p.id = p_profile_id
-  );
+  select case lower(trim(coalesce(p_code, '')))
+    when 'visitantes' then 10
+    when 'congregado' then 20
+    when 'member' then 30
+    when 'family_acceptor' then 40
+    when 'lider_geral' then 44
+    when 'lider' then 45
+    when 'events_admin' then 50
+    when 'orquestrador_evento' then 52
+    when 'tesoureiro' then 55
+    when 'pastoral' then 60
+    when 'super_admin' then 70
+    else 100
+  end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- ACL: view para servos vinculados ao tipo (não só líderes / grants explícitos)
+-- ACL por tipo de escala
 -- ---------------------------------------------------------------------------
 
 create or replace function public.profile_has_lider_geral_scale_role(p_profile_id uuid)
@@ -153,8 +165,7 @@ end;
 $$;
 
 grant execute on function public.profile_has_lider_geral_scale_role(uuid) to anon, authenticated;
-grant execute on function public.profile_voluntario_name_matches_profile(text, text) to anon, authenticated;
-grant execute on function public.profile_is_scale_type_volunteer(uuid, uuid) to anon, authenticated;
+grant execute on function public.access_role_display_order(text) to anon, authenticated;
 grant execute on function public.profile_has_scale_type_access(uuid, uuid, text) to anon, authenticated;
 
 notify pgrst, 'reload schema';

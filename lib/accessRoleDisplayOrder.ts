@@ -7,6 +7,7 @@ export const ACCESS_ROLE_DISPLAY_ORDER = [
   'congregado',
   'member',
   'family_acceptor',
+  'lider_geral',
   'lider',
   'events_admin',
   'orquestrador_evento',
