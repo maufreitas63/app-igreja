@@ -1566,6 +1566,7 @@ export default function Dashboard() {
   const vigilanceEntriesForSelectedScale = upcomingVigilanceScaleEntries.filter(
     (entry) => entry.scale_code === selectedVigilanceScale
   );
+  const nextVigilanceScaleServiceDate = vigilanceEntriesForSelectedScale[0]?.data_servico ?? null;
   const loadRegisteredScaleVolunteers = useCallback(async (scaleTypeId: string) => {
     setIsRegisteredScaleVolunteersLoading(true);
     setRegisteredScaleVolunteersError(null);
@@ -3461,7 +3462,8 @@ export default function Dashboard() {
                                 key={`${entry.data_servico}-${entry.voluntario_id}-${index}`}
                                 style={[
                                   styles.vigilanceScaleRow,
-                                  index === 0 && styles.vigilanceScaleRowFirst,
+                                  entry.data_servico === nextVigilanceScaleServiceDate
+                                    && styles.vigilanceScaleRowFirst,
                                 ]}
                               >
                                 <Text style={styles.vigilanceScaleName} numberOfLines={1}>
