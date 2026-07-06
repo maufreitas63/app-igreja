@@ -1,11 +1,11 @@
 /** Cores do painel Escalas (seletor de tipo de escala). */
 export const VIGILANCE_SCALES_UI = {
   accent: '#3A96DD',
-  surface: 'rgba(232, 232, 232, 0.55)',
+  surface: 'rgba(255, 255, 255, 0.55)',
   surfaceHighlight: 'rgba(255, 255, 255, 0.55)',
   headerSurface: 'rgba(255, 255, 255, 0.55)',
-  border: '#FFFFFF',
-  borderMuted: '#FAFAFA',
+  border: 'rgba(250, 250, 250, 1)',
+  borderMuted: 'rgba(250, 250, 250, 1)',
 } as const;
 
 /** Paletas visuais dos cards do carrossel do dashboard. */
