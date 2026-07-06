@@ -277,6 +277,12 @@ export async function checkOperatorIsSuperAdmin(options?: { forceRefresh?: boole
   return readOperatorIsSuperAdmin(options);
 }
 
+/** Limpa cache de super_admin após login/logout para não bloquear o gate app_ativo. */
+export function invalidateOperatorSuperAdminCache() {
+  invalidateAsyncCache('operator:super_admin');
+  invalidateAsyncCache('session:super_admin');
+}
+
 const readSessionIsSuperAdmin = async (profileId?: string | null): Promise<boolean> => {
   let resolvedId = profileId?.trim() ?? (await resolveRealSessionProfileId());
 

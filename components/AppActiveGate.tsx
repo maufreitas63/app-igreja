@@ -27,7 +27,7 @@ export function AppActiveGate({ children }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const { adminAccess } = useLocalSearchParams<{ adminAccess?: string | string[] }>();
-  const { status, loading, superAdminBypass } = useAppActiveStatus();
+  const { status, loading, rechecking, superAdminBypass } = useAppActiveStatus();
   const [adminLoginUnlocked, setAdminLoginUnlocked] = useState(false);
 
   const adminAccessFromQuery = useMemo(
@@ -47,12 +47,16 @@ export function AppActiveGate({ children }: Props) {
     }
   }, [status?.active]);
 
-  if (loading || !status) {
+  if ((loading && !status) || rechecking) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
+  }
+
+  if (!status) {
+    return <>{children}</>;
   }
 
   if (status.active || superAdminBypass) {

@@ -53,6 +53,11 @@ import {
 } from '@/lib/profileOnboarding';
 import { isLgpdAtivoEnabled } from '@/lib/appParameters';
 import {
+  loadAppActiveStatus,
+  notifyAppActiveSessionEstablished,
+} from '@/lib/appActiveStatus';
+import { checkOperatorIsSuperAdmin } from '@/lib/accessControl';
+import {
   getStoredUserPhone,
   persistUserPhone,
   persistUserSession,
@@ -203,6 +208,7 @@ export default function IndexScreen() {
       options?: { afterPasswordRecovery?: boolean; recoveryPin?: string }
     ) => {
       await persistUserSession(profile, phoneForSession, sessionToken);
+      await notifyAppActiveSessionEstablished();
 
       if (
         options?.afterPasswordRecovery
@@ -222,6 +228,17 @@ export default function IndexScreen() {
       const route = resolveRegisteredUserSessionRoute(profile, phoneForSession, lgpdAtivo);
 
       if (!route) {
+        return false;
+      }
+
+      const appStatus = await loadAppActiveStatus({ forceRefresh: true });
+      const isSuperAdmin = await checkOperatorIsSuperAdmin({ forceRefresh: true });
+
+      if (!appStatus.active && !isSuperAdmin) {
+        Alert.alert(
+          'Aplicativo indisponível',
+          appStatus.message || 'O aplicativo está temporariamente indisponível.'
+        );
         return false;
       }
 

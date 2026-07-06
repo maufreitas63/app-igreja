@@ -95,3 +95,16 @@ export async function loadAppActiveStatus(options?: {
 export function clearAppActiveStatusCache() {
   invalidateAsyncCache(APP_ACTIVE_STATUS_CACHE_KEY);
 }
+
+type AppActiveSessionListener = () => void | Promise<void>;
+
+let appActiveSessionListener: AppActiveSessionListener | null = null;
+
+export function registerAppActiveSessionListener(listener: AppActiveSessionListener | null) {
+  appActiveSessionListener = listener;
+}
+
+/** Revalida bypass de super_admin logo após persistir a sessão no login. */
+export async function notifyAppActiveSessionEstablished() {
+  await appActiveSessionListener?.();
+}
