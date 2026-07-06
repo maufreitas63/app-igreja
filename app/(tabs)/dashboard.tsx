@@ -111,7 +111,8 @@ import { DASHBOARD_CARD_THEMES } from '@/lib/dashboardCardThemes';
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
 import { withReturnDashboardCard, pickRouteParam } from '@/lib/dashboardReturnNavigation';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
-import { MINIMAL_FLAT_PANEL, MINIMAL_PAGE } from '@/lib/minimalPresentation';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_FLAT_PANEL, MINIMAL_DASHBOARD_STYLES, MINIMAL_PAGE } from '@/lib/minimalPresentation';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
@@ -663,6 +664,8 @@ export default function Dashboard() {
   );
 
   const cardBaseStyle = isMinimalPresentation ? MINIMAL_FLAT_PANEL : styles.card;
+  const skipLegacyCard = !isMinimalPresentation;
+  const mds = isMinimalPresentation ? MINIMAL_DASHBOARD_STYLES : null;
 
   useFamilyReceptionSuperAdminNotifier(canMonitorFamilyReception);
   const requestedDashboardCard = Array.isArray(params.dashboardCard)
@@ -2909,14 +2912,14 @@ export default function Dashboard() {
                   <View
                     style={[
                     cardBaseStyle,
-                      styles.cardMembersList,
+                      skipLegacyCard && styles.cardMembersList,
                       styles.dashboardPanelCardTopLayout,
                       effectiveDashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
                     <View style={styles.membersListHeader}>
-                      <Text style={styles.dashboardPanelTitle}>
+                      <Text style={[styles.dashboardPanelTitle, mds?.panelTitle]}>
                         {membersListAudience === 'visitors' ? 'LISTA DE VISITANTES' : item.title}
                       </Text>
                     </View>
@@ -2956,7 +2959,7 @@ export default function Dashboard() {
                         ) : null}
                       </View>
 
-                    <Text style={styles.membersListSummaryText}>
+                    <Text style={[styles.membersListSummaryText, mds?.summaryText]}>
                       {normalizeParameterValue(membersListSearchQuery)
                         ? `${filteredMemberListEntries.length} de ${activeMemberListEntries.length} ${
                             membersListAudience === 'visitors' ? 'visitante' : 'membro'
@@ -2969,14 +2972,14 @@ export default function Dashboard() {
 
                     {!isActiveMembersListLoading && !membersListError ? (
                       <View style={styles.membersListSearchSection}>
-                        <Text style={styles.sectionLabel}>
+                        <Text style={[styles.sectionLabel, mds?.sectionLabel]}>
                           {membersListAudience === 'visitors'
                             ? 'Procurar visitante'
                             : 'Procurar membro'}
                         </Text>
                         <View style={styles.membersListSearchRow}>
                           <TextInput
-                            style={styles.membersListSearchInput}
+                            style={[styles.membersListSearchInput, mds?.searchInput]}
                             placeholder="Digite o nome..."
                             placeholderTextColor="#94a3b8"
                             value={membersListSearchQuery}
@@ -3000,23 +3003,23 @@ export default function Dashboard() {
                     ) : null}
 
                     <View style={styles.membersListHeaderRow}>
-                      <Text style={[styles.membersListHeaderCell, styles.membersListHeaderName]}>
+                      <Text style={[styles.membersListHeaderCell, styles.membersListHeaderName, mds?.headerCell]}>
                         Nome
                       </Text>
                       <View style={styles.membersListActionsHeader}>
-                        <Text style={[styles.membersListHeaderCell, styles.membersListHeaderAction]}>
+                        <Text style={[styles.membersListHeaderCell, styles.membersListHeaderAction, mds?.headerCell]}>
                           Base
                         </Text>
-                        <Text style={[styles.membersListHeaderCell, styles.membersListHeaderAction]}>
+                        <Text style={[styles.membersListHeaderCell, styles.membersListHeaderAction, mds?.headerCell]}>
                           Zap
                         </Text>
-                        <Text style={[styles.membersListHeaderCell, styles.membersListHeaderAction]}>
+                        <Text style={[styles.membersListHeaderCell, styles.membersListHeaderAction, mds?.headerCell]}>
                           GPS
                         </Text>
                       </View>
                     </View>
 
-                    <View style={styles.membersListBox}>
+                    <View style={[styles.membersListBox, mds?.listBox]}>
                       {isActiveMembersListLoading ? (
                         <CardLoadingState lines={4} />
                       ) : membersListError ? (
@@ -3128,17 +3131,17 @@ export default function Dashboard() {
                   <View
                     style={[
                     cardBaseStyle,
-                      styles.cardBirthdays,
+                      skipLegacyCard && styles.cardBirthdays,
                       styles.dashboardPanelCardTopLayout,
                       effectiveDashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
-                    <Text style={styles.dashboardPanelTitle}>{item.title}</Text>
+                    <Text style={[styles.dashboardPanelTitle, mds?.panelTitle]}>{item.title}</Text>
 
                     <View style={styles.birthdaysBody}>
                     <View style={styles.birthdaysFilterSection}>
-                      <Text style={styles.birthdaysFilterLabel}>Selecionar Mês</Text>
+                      <Text style={[styles.birthdaysFilterLabel, mds?.filterLabel]}>Selecionar Mês</Text>
                       <DropdownSelect
                         options={BIRTHDAY_MONTHS}
                         selectedValue={selectedBirthdayMonth}
@@ -3147,13 +3150,13 @@ export default function Dashboard() {
                       />
                     </View>
 
-                    <Text style={styles.birthdaysSummaryText}>
+                    <Text style={[styles.birthdaysSummaryText, mds?.summaryText]}>
                       {birthdaysForSelectedMonth.length} aniversariante
                       {birthdaysForSelectedMonth.length === 1 ? '' : 's'} em{' '}
                       {selectedBirthdayMonthLabel.toLowerCase()}.
                     </Text>
 
-                    <View style={styles.birthdaysListBox}>
+                    <View style={[styles.birthdaysListBox, mds?.listBox]}>
                       {isBirthdaysLoading ? (
                         <CardLoadingState lines={4} />
                       ) : birthdaysError ? (
@@ -3181,13 +3184,13 @@ export default function Dashboard() {
                               key={`${entry.birth_date}-${entry.full_name}-${index}`}
                               style={styles.birthdayRow}
                             >
-                              <View style={styles.birthdayDateBadge}>
-                                <Text style={styles.birthdayDateBadgeText}>
+                              <View style={[styles.birthdayDateBadge, mds?.birthdayBadge]}>
+                                <Text style={[styles.birthdayDateBadgeText, mds?.birthdayBadgeText]}>
                                   {formatBirthdayDayMonth(entry.day, entry.month)}
                                 </Text>
                               </View>
                               <View style={styles.birthdayContent}>
-                                <Text style={styles.birthdayName}>{entry.full_name}</Text>
+                                <Text style={[styles.birthdayName, mds?.nameText]}>{entry.full_name}</Text>
                                 <TouchableOpacity
                                   style={[
                                     styles.birthdayWhatsappButton,
@@ -3208,7 +3211,7 @@ export default function Dashboard() {
                           ))}
                         </ScrollView>
                       ) : (
-                        <Text style={styles.groupedAudienceEmptyText}>
+                        <Text style={[styles.groupedAudienceEmptyText, mds?.emptyText]}>
                           Nenhum aniversariante encontrado em{' '}
                           {selectedBirthdayMonthLabel.toLowerCase()}.
                         </Text>
@@ -3258,16 +3261,16 @@ export default function Dashboard() {
                   <View
                     style={[
                     cardBaseStyle,
-                      styles.cardVigilanceScales,
+                      skipLegacyCard && styles.cardVigilanceScales,
                       styles.dashboardPanelCardTopLayout,
                       effectiveDashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
-                    <Text style={styles.dashboardPanelTitle}>{item.title}</Text>
+                    <Text style={[styles.dashboardPanelTitle, mds?.panelTitle]}>{item.title}</Text>
 
                     <View style={styles.vigilanceScaleFilterSection}>
-                      <Text style={styles.sectionLabel}>Selecionar Escala</Text>
+                      <Text style={[styles.sectionLabel, mds?.sectionLabel]}>Selecionar Escala</Text>
                       {isVigilanceScalesLoading ? (
                         <CardLoadingState lines={3} />
                       ) : vigilanceScalesError ? (
@@ -3298,6 +3301,7 @@ export default function Dashboard() {
                                 key={option.code}
                                 style={[
                                   styles.vigilanceScaleRadioRow,
+                                  mds?.radioRow,
                                   isSelected && styles.vigilanceScaleRadioRowSelected,
                                 ]}
                                 onPress={() => handleSelectVigilanceScale(option)}
@@ -3314,6 +3318,7 @@ export default function Dashboard() {
                                 <Text
                                   style={[
                                     styles.vigilanceScaleRadioLabel,
+                                    mds?.radioLabel,
                                     isSelected && styles.vigilanceScaleRadioLabelSelected,
                                   ]}
                                 >
@@ -3324,7 +3329,7 @@ export default function Dashboard() {
                           })}
                         </ScrollView>
                       ) : (
-                        <Text style={styles.groupedAudienceEmptyText}>
+                        <Text style={[styles.groupedAudienceEmptyText, mds?.emptyText]}>
                           Nenhum tipo de escala cadastrado ainda.
                         </Text>
                       )}

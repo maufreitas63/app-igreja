@@ -1,26 +1,24 @@
 import { useAppDrawer } from '@/context/AppDrawerContext';
-import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { RegistrationCounterLabel } from './RegistrationCounterLabel';
 
 type Props = {
   title?: string;
   header?: React.ReactNode;
 };
 
-/** Menu e identidade fixos no topo esquerdo (css-146c3p1). */
+/** Menu fixo no topo esquerdo; logo fixo no topo direito. */
 export function MinimalTopLeftChrome({ title, header }: Props) {
   const insets = useSafeAreaInsets();
   const { openDrawer } = useAppDrawer();
-  const { expandedEvent } = useMinimalHome();
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + 8 }]}>
-      <View style={styles.row}>
+      <View style={styles.topRow}>
         <Pressable
           accessibilityLabel="Abrir menu"
           accessibilityRole="button"
@@ -29,20 +27,23 @@ export function MinimalTopLeftChrome({ title, header }: Props) {
         >
           <FontAwesome name="bars" size={MINIMAL_ICON.menu} color={MINIMAL_UI.icon} />
         </Pressable>
-        <View style={styles.textColumn}>
-          {header ? (
-            header
-          ) : title ? (
-            <Text style={styles.title}>{title}</Text>
-          ) : null}
+
+        <View style={styles.logoWrap}>
+          <Image
+            source={require('../../images/IBNORTE - LOGO MARCA 9.png')}
+            style={styles.logo}
+            contentFit="contain"
+          />
         </View>
       </View>
-      {expandedEvent ? (
-        <RegistrationCounterLabel
-          registeredCount={expandedEvent.registeredCount}
-          maxCapacity={expandedEvent.max_capacity}
-        />
-      ) : null}
+
+      <View style={styles.leftColumn}>
+        {header ? (
+          header
+        ) : title ? (
+          <Text style={styles.title}>{title}</Text>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -57,21 +58,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingBottom: 8,
     backgroundColor: MINIMAL_UI.background,
-    gap: 6,
+    gap: 4,
   },
-  row: {
+  topRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
+    justifyContent: 'space-between',
+    width: '100%',
   },
   menuButton: {
     padding: 4,
     marginTop: 2,
   },
-  textColumn: {
-    flex: 1,
-    minWidth: 0,
+  logoWrap: {
+    width: MINIMAL_ICON.logo,
+    height: MINIMAL_ICON.logo,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-start',
+  },
+  logo: {
+    width: MINIMAL_ICON.logo,
+    height: MINIMAL_ICON.logo,
+    tintColor: MINIMAL_UI.icon,
+  },
+  leftColumn: {
     alignItems: 'flex-start',
+    paddingLeft: 4,
+    maxWidth: '72%',
   },
   title: {
     ...MINIMAL_TYPO.screenTitle,

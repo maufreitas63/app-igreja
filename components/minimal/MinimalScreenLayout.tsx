@@ -1,9 +1,9 @@
-import { MinimalHomeProvider, useMinimalHome } from '@/context/MinimalHomeContext';
+import { MinimalHomeProvider } from '@/context/MinimalHomeContext';
 import {
   MINIMAL_EXIT_BAR_HEIGHT,
   MINIMAL_TOP_CHROME_BASE,
-  MINIMAL_TOP_CHROME_COUNTER,
   MINIMAL_TOP_CHROME_HEADER,
+  MINIMAL_TOP_CHROME_LOGO,
   MINIMAL_UI,
 } from '@/lib/minimalUiTheme';
 import React, { useMemo } from 'react';
@@ -34,10 +34,9 @@ function MinimalScreenLayoutBody({
   contentContainerStyle,
   scroll = true,
 }: Props) {
-  const { expandedEventId } = useMinimalHome();
-
   const contentPaddingTop = useMemo(() => {
-    let top = MINIMAL_TOP_CHROME_BASE;
+    const topRow = Math.max(MINIMAL_TOP_CHROME_BASE, MINIMAL_TOP_CHROME_LOGO + 8);
+    let top = topRow;
 
     if (header) {
       top += MINIMAL_TOP_CHROME_HEADER;
@@ -45,12 +44,8 @@ function MinimalScreenLayoutBody({
       top += 28;
     }
 
-    if (expandedEventId) {
-      top += MINIMAL_TOP_CHROME_COUNTER;
-    }
-
     return top;
-  }, [expandedEventId, header, title]);
+  }, [header, title]);
 
   const contentPaddingBottom = MINIMAL_EXIT_BAR_HEIGHT + 12;
 

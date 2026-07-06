@@ -12,7 +12,7 @@ export const MINIMAL_UI = {
 } as const;
 
 export const MINIMAL_ICON = {
-  logo: 60,
+  logo: 120,
   menu: 26,
   chevron: 16,
   action: 18,
@@ -24,11 +24,11 @@ export const MINIMAL_EXIT_BAR_HEIGHT = 56;
 /** Altura base do chrome superior (menu + safe area aproximada). */
 export const MINIMAL_TOP_CHROME_BASE = 52;
 
-/** Espaço extra quando há header da igreja no topo esquerdo. */
-export const MINIMAL_TOP_CHROME_HEADER = 88;
+/** Espaço extra quando há saudação no topo esquerdo. */
+export const MINIMAL_TOP_CHROME_HEADER = 36;
 
-/** Espaço extra para o contador Inscritos / Limite. */
-export const MINIMAL_TOP_CHROME_COUNTER = 22;
+/** Logo maior no topo direito. */
+export const MINIMAL_TOP_CHROME_LOGO = MINIMAL_ICON.logo;
 
 /** @deprecated Use MINIMAL_EXIT_BAR_HEIGHT */
 export const MINIMAL_BOTTOM_DOCK_HEIGHT = MINIMAL_EXIT_BAR_HEIGHT;

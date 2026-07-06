@@ -1,3 +1,4 @@
+import { EventRegistrationCupInline } from '@/components/minimal/EventRegistrationCupInline';
 import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
@@ -51,7 +52,7 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
                 color={MINIMAL_UI.icon}
                 style={styles.chevron}
               />
-              <View style={styles.textBlock}>
+              <View style={[styles.textBlock, expanded && styles.textBlockExpanded]}>
                 <Text style={styles.subject} numberOfLines={expanded ? undefined : 2}>
                   {item.subject}
                 </Text>
@@ -62,6 +63,9 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
                 ) : null}
                 {item.meta ? <Text style={styles.meta}>{item.meta}</Text> : null}
               </View>
+              {expanded && item.event ? (
+                <EventRegistrationCupInline event={item.event} />
+              ) : null}
             </Pressable>
             {expanded ? <View style={styles.expanded}>{item.content}</View> : null}
           </View>
@@ -81,20 +85,26 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 4,
-    gap: 10,
+    gap: 8,
   },
   rowPressed: {
     backgroundColor: MINIMAL_UI.rowHover,
   },
   chevron: {
-    marginTop: 4,
+    marginTop: 2,
+    flexShrink: 0,
   },
   textBlock: {
     flex: 1,
     gap: 4,
+    minWidth: 0,
+  },
+  textBlockExpanded: {
+    flex: 1,
+    maxWidth: '68%',
   },
   subject: {
     ...MINIMAL_TYPO.inboxSubject,

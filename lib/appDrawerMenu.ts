@@ -180,7 +180,7 @@ export async function navigateDrawerMenuItem(
     }
 
     router.push({
-      pathname: '/(tabs)/dashboard',
+      pathname: '/panel',
       params: {
         dashboardCard,
         dashboardCardNonce: String(Date.now()),

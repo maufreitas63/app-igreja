@@ -1,5 +1,4 @@
-import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { Image } from 'expo-image';
+import { MINIMAL_TYPO } from '@/lib/minimalUiTheme';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -7,15 +6,10 @@ type Props = {
   userName: string;
 };
 
+/** Saudação exibida abaixo do menu (logo fica à direita no chrome). */
 export function MinimalHomeHeader({ userName }: Props) {
   return (
     <View style={styles.wrap}>
-      <Image
-        source={require('../../images/IBNORTE - LOGO MARCA 9.png')}
-        style={styles.logo}
-        contentFit="contain"
-      />
-      <Text style={styles.church}>Igreja Batista Norte</Text>
       <Text style={styles.greeting}>Olá, {userName}</Text>
     </View>
   );
@@ -24,16 +18,7 @@ export function MinimalHomeHeader({ userName }: Props) {
 const styles = StyleSheet.create({
   wrap: {
     alignItems: 'flex-start',
-    gap: 4,
-  },
-  logo: {
-    width: MINIMAL_ICON.logo,
-    height: MINIMAL_ICON.logo,
-    tintColor: MINIMAL_UI.icon,
-  },
-  church: {
-    ...MINIMAL_TYPO.churchName,
-    textAlign: 'left',
+    paddingTop: 2,
   },
   greeting: {
     ...MINIMAL_TYPO.greeting,

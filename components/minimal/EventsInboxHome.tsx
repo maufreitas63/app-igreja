@@ -106,12 +106,8 @@ export function EventsInboxHome() {
             style={styles.actionButton}
             onPress={() =>
               router.push({
-                pathname: '/(tabs)/dashboard',
-                params: {
-                  dashboardCard: '3',
-                  dashboardCardNonce: String(Date.now()),
-                  presentation: 'minimal',
-                },
+                pathname: '/financial',
+                params: { presentation: 'minimal' },
               })
             }
           >

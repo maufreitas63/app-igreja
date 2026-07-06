@@ -18,14 +18,17 @@ import { appAlert } from '@/lib/appAlert';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { supabase } from '@/lib/supabase';
+import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   buildReturnToDashboardHref,
+  pickRouteParam,
   resolveReturnDashboardCardParam,
 } from '@/lib/dashboardReturnNavigation';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -147,9 +150,14 @@ const resolveLocalSubcategories = (
 };
 
 export default function PastoralScreen() {
-  const params = useLocalSearchParams<{ userId?: string | string[]; returnDashboardCard?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    userId?: string | string[];
+    returnDashboardCard?: string | string[];
+    presentation?: string | string[];
+  }>();
   const routeUserId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
   const router = useRouter();
+  const isMinimalPresentation = pickRouteParam(params.presentation) === 'minimal';
 
   const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.pastoral,
@@ -477,6 +485,11 @@ export default function PastoralScreen() {
   };
 
   const handleBackToDashboard = () => {
+    if (isMinimalPresentation) {
+      router.replace('/(tabs)');
+      return;
+    }
+
     router.replace(
       buildReturnToDashboardHref(resolveReturnDashboardCardParam(params) ?? 'pastoral')
     );
@@ -506,8 +519,23 @@ export default function PastoralScreen() {
 
   return (
     <ScreenAccessGate status={accessStatus}>
+    {isMinimalPresentation ? (
+      <MinimalScreenLayout title="Coração Aberto" scroll={false}>
+        {renderPastoralContent()}
+      </MinimalScreenLayout>
+    ) : (
     <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
       <SafeAreaView style={styles.container}>
+        {renderPastoralContent()}
+      </SafeAreaView>
+    </LinearGradient>
+    )}
+    </ScreenAccessGate>
+  );
+
+  function renderPastoralContent() {
+    return (
+      <>
         <Modal
           visible={activeSelector !== null}
           transparent
@@ -565,10 +593,14 @@ export default function PastoralScreen() {
           style={styles.screenLayout}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}>
           <View style={styles.headerBar}>
+            {!isMinimalPresentation ? (
             <View style={styles.headerTitles}>
               <Text style={styles.title}>Coração Aberto</Text>
               <Text style={styles.subtitle}>Pedido de cuidado pastoral</Text>
             </View>
+            ) : (
+              <View style={styles.headerTitlesMinimal} />
+            )}
             <TouchableOpacity
               accessibilityLabel="Limpar pedido"
               accessibilityRole="button"
@@ -578,9 +610,10 @@ export default function PastoralScreen() {
               onPress={() => void handleClearForm()}
               style={[
                 styles.headerClearButton,
+                isMinimalPresentation && styles.headerClearButtonMinimal,
                 (!hasDraftContent || loading) && styles.headerActionButtonDisabled,
               ]}>
-              <FontAwesome name="eraser" size={18} color="#FCA5A5" />
+              <FontAwesome name="eraser" size={18} color={isMinimalPresentation ? MINIMAL_UI.icon : '#FCA5A5'} />
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityLabel="Ver meus pedidos"
@@ -590,10 +623,12 @@ export default function PastoralScreen() {
               onPress={handleOpenHistory}
               style={[
                 styles.headerHistoryButton,
+                isMinimalPresentation && styles.headerHistoryButtonMinimal,
                 (loadingUserId || !resolvedUserId) && styles.headerActionButtonDisabled,
               ]}>
-              <FontAwesome name="history" size={20} color="#C4B5FD" />
+              <FontAwesome name="history" size={20} color={isMinimalPresentation ? MINIMAL_UI.icon : '#C4B5FD'} />
             </TouchableOpacity>
+            {!isMinimalPresentation ? (
             <TouchableOpacity
               accessibilityLabel="Voltar"
               accessibilityRole="button"
@@ -602,6 +637,7 @@ export default function PastoralScreen() {
               style={styles.headerBackButton}>
               <Text style={styles.headerBackText}>Voltar</Text>
             </TouchableOpacity>
+            ) : null}
           </View>
 
           {!loadingUserId && !resolvedUserId ? (
@@ -791,10 +827,9 @@ export default function PastoralScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
-    </LinearGradient>
-    </ScreenAccessGate>
-  );
+      </>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
@@ -828,6 +863,18 @@ const styles = StyleSheet.create({
   headerTitles: {
     flex: 1,
     minWidth: 0,
+  },
+  headerTitlesMinimal: {
+    flex: 1,
+    minWidth: 0,
+  },
+  headerClearButtonMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+    borderColor: MINIMAL_UI.border,
+  },
+  headerHistoryButtonMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+    borderColor: MINIMAL_UI.border,
   },
   headerClearButton: {
     width: 40,
