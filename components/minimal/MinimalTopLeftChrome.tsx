@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   leftColumn: {
     alignItems: 'flex-start',
     paddingLeft: 4,
-    maxWidth: '72%',
+    maxWidth: '36%',
   },
   title: {
     ...MINIMAL_TYPO.screenTitle,

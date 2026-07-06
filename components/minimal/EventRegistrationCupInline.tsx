@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
-    width: 72,
+    width: 108,
     gap: 4,
   },
   ratio: {

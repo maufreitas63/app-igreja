@@ -1,5 +1,4 @@
 import { EventsInboxHome } from '@/components/minimal/EventsInboxHome';
-import { MinimalHomeHeader } from '@/components/minimal/MinimalHomeHeader';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { useGhostMode } from '@/context/GhostModeContext';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
@@ -47,8 +46,8 @@ export default function DashboardIndexScreen() {
   );
 
   return (
-    <MinimalScreenLayout header={<MinimalHomeHeader userName={headerUserName} />}>
-      <EventsInboxHome />
+    <MinimalScreenLayout>
+      <EventsInboxHome userName={headerUserName} />
     </MinimalScreenLayout>
   );
 }

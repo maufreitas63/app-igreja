@@ -6,12 +6,14 @@ import { useActiveEvents } from '@/hooks/useActiveEvents';
 import { resolveFamilyIdForPhone } from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { getStoredUserPhone } from '@/lib/userSession';
-import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-export function EventsInboxHome() {
-  const router = useRouter();
+type Props = {
+  userName: string;
+};
+
+export function EventsInboxHome({ userName }: Props) {
   const { events, loading, error } = useActiveEvents({ enablePolling: true });
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [sessionPhone, setSessionPhone] = useState<string | null>(null);
@@ -97,48 +99,36 @@ export function EventsInboxHome() {
 
   return (
     <View style={styles.wrap}>
-      <InboxList items={inboxItems} emptyMessage="Nenhum evento disponível no momento." />
+      <Text style={styles.sectionTitle}>Proximos Eventos</Text>
+      <Text style={styles.greetingBand}>Olá, {userName}</Text>
 
-      <View style={styles.euQuero}>
-        <Text style={styles.euQueroLabel}>Eu Quero…</Text>
-        <View style={styles.euQueroActions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() =>
-              router.push({
-                pathname: '/(tabs)/dashboard',
-                params: {
-                  dashboardCard: '3',
-                  dashboardCardNonce: String(Date.now()),
-                },
-              })
-            }
-          >
-            <Text style={styles.actionButtonText}>Contribuir com meu Dízimo ou Oferta</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() =>
-              router.push({
-                pathname: '/(tabs)/dashboard',
-                params: {
-                  dashboardCard: '5',
-                  dashboardCardNonce: String(Date.now()),
-                },
-              })
-            }
-          >
-            <Text style={styles.actionButtonText}>Fazer um pedido de Oração</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <InboxList items={inboxItems} emptyMessage="Nenhum evento disponível no momento." />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: 20,
+    gap: 0,
+    backgroundColor: MINIMAL_UI.background,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: MINIMAL_UI.background,
+  },
+  sectionTitle: {
+    ...MINIMAL_TYPO.screenTitle,
+    color: MINIMAL_UI.onDark,
+    backgroundColor: MINIMAL_UI.blue,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 0,
+    overflow: 'hidden',
+  },
+  greetingBand: {
+    ...MINIMAL_TYPO.greeting,
+    color: MINIMAL_UI.onDark,
+    backgroundColor: MINIMAL_UI.blueDark,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   loader: {
     marginVertical: 32,
@@ -149,31 +139,8 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   inlineHint: {
-    color: MINIMAL_UI.textMuted,
-    fontSize: 13,
-  },
-  euQuero: {
-    marginTop: 8,
-    paddingTop: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: MINIMAL_UI.divider,
-    gap: 10,
-  },
-  euQueroLabel: {
-    ...MINIMAL_TYPO.sectionLabel,
-  },
-  euQueroActions: {
-    gap: 8,
-  },
-  actionButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: MINIMAL_UI.divider,
-  },
-  actionButtonText: {
     color: MINIMAL_UI.text,
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 13,
+    backgroundColor: MINIMAL_UI.background,
   },
 });

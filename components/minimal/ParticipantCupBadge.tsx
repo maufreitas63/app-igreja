@@ -51,8 +51,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cupMd: {
-    width: 36,
-    height: 44,
+    width: 54,
+    height: 66,
     borderRadius: 10,
     borderWidth: 2,
     borderColor: MINIMAL_UI.icon,
@@ -89,6 +89,6 @@ const styles = StyleSheet.create({
   },
   countMd: {
     fontSize: 13,
-    lineHeight: 44,
+    lineHeight: 66,
   },
 });

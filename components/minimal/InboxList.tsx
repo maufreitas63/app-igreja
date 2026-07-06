@@ -1,8 +1,7 @@
 import { EventRegistrationCupInline } from '@/components/minimal/EventRegistrationCupInline';
 import { useMinimalHome } from '@/context/MinimalHomeContext';
-import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
-import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -46,21 +45,15 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
               }}
               style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
             >
-              <FontAwesome
-                name={expanded ? 'chevron-down' : 'chevron-right'}
-                size={MINIMAL_ICON.chevron}
-                color={MINIMAL_UI.icon}
-                style={styles.chevron}
-              />
               <View style={[styles.textBlock, expanded && styles.textBlockExpanded]}>
-                <Text style={styles.subject} numberOfLines={expanded ? undefined : 2}>
-                  {item.subject}
-                </Text>
                 {item.preview ? (
                   <Text style={styles.preview} numberOfLines={expanded ? undefined : 1}>
                     {item.preview}
                   </Text>
                 ) : null}
+                <Text style={styles.subject} numberOfLines={expanded ? undefined : 2}>
+                  {item.subject}
+                </Text>
                 {item.meta ? <Text style={styles.meta}>{item.meta}</Text> : null}
               </View>
               {expanded && item.event ? (
@@ -78,10 +71,14 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
 const styles = StyleSheet.create({
   list: {
     width: '100%',
+    backgroundColor: MINIMAL_UI.background,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: MINIMAL_UI.background,
   },
   rowWrap: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: MINIMAL_UI.divider,
+    borderBottomColor: MINIMAL_UI.background,
+    backgroundColor: MINIMAL_UI.background,
   },
   row: {
     flexDirection: 'row',
@@ -89,42 +86,50 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 4,
     gap: 8,
+    backgroundColor: MINIMAL_UI.background,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: MINIMAL_UI.background,
   },
   rowPressed: {
-    backgroundColor: MINIMAL_UI.rowHover,
-  },
-  chevron: {
-    marginTop: 2,
-    flexShrink: 0,
+    backgroundColor: MINIMAL_UI.background,
   },
   textBlock: {
     flex: 1,
     gap: 4,
     minWidth: 0,
+    backgroundColor: MINIMAL_UI.background,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: MINIMAL_UI.background,
   },
   textBlockExpanded: {
     flex: 1,
-    maxWidth: '68%',
+    maxWidth: '34%',
   },
   subject: {
     ...MINIMAL_TYPO.inboxSubject,
+    color: MINIMAL_UI.blue,
   },
   preview: {
     ...MINIMAL_TYPO.inboxPreview,
+    color: MINIMAL_UI.blue,
   },
   meta: {
     fontSize: 12,
-    color: MINIMAL_UI.textMuted,
+    color: MINIMAL_UI.blue,
+    backgroundColor: MINIMAL_UI.background,
   },
   expanded: {
     paddingHorizontal: 8,
     paddingBottom: 16,
-    backgroundColor: MINIMAL_UI.expandedBg,
+    backgroundColor: MINIMAL_UI.background,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: MINIMAL_UI.background,
   },
   empty: {
-    color: MINIMAL_UI.textMuted,
+    color: MINIMAL_UI.blue,
     fontSize: 14,
     paddingVertical: 24,
     textAlign: 'center',
+    backgroundColor: MINIMAL_UI.background,
   },
 });

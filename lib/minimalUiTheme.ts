@@ -4,17 +4,22 @@ export const MINIMAL_UI = {
   text: '#1E40AF',
   textMuted: '#3B82F6',
   icon: '#00008B',
+  /** Azul escuro — fundo da primeira faixa de texto. */
+  blueDark: '#00008B',
+  /** Azul — fundo da segunda faixa de texto e destaques. */
+  blue: '#1E40AF',
   border: '#BFDBFE',
   divider: '#E2E8F0',
   accent: '#1D4ED8',
   rowHover: '#F8FAFC',
-  expandedBg: '#F1F5F9',
+  expandedBg: '#FFFFFF',
+  onDark: '#FFFFFF',
 } as const;
 
 export const MINIMAL_ICON = {
-  logo: 120,
+  logo: 180,
   menu: 26,
-  chevron: 16,
+  chevron: 24,
   action: 18,
 } as const;
 
