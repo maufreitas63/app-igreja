@@ -76,9 +76,11 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.background,
   },
   rowWrap: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: MINIMAL_UI.background,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.background,
+    marginBottom: -1,
   },
   row: {
     flexDirection: 'row',
@@ -87,11 +89,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     gap: 8,
     backgroundColor: MINIMAL_UI.background,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: MINIMAL_UI.background,
   },
   rowPressed: {
-    backgroundColor: MINIMAL_UI.background,
+    backgroundColor: MINIMAL_UI.rowHover,
   },
   textBlock: {
     flex: 1,
@@ -122,8 +122,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingBottom: 16,
     backgroundColor: MINIMAL_UI.background,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: MINIMAL_UI.background,
+    borderTopWidth: 1,
+    borderTopColor: MINIMAL_UI.border,
   },
   empty: {
     color: MINIMAL_UI.blue,
