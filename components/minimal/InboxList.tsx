@@ -56,14 +56,14 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
               ) : (
                 <>
                   <View style={styles.textBlock}>
+                    <Text style={styles.subject} numberOfLines={2}>
+                      {item.subject}
+                    </Text>
                     {item.preview ? (
                       <Text style={styles.preview} numberOfLines={1}>
                         {item.preview}
                       </Text>
                     ) : null}
-                    <Text style={styles.subject} numberOfLines={2}>
-                      {item.subject}
-                    </Text>
                     {item.meta ? <Text style={styles.meta}>{item.meta}</Text> : null}
                   </View>
                   {item.event ? <EventRegistrationCupInline event={item.event} /> : null}

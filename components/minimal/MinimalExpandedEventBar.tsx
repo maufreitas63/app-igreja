@@ -26,11 +26,11 @@ export function MinimalExpandedEventBar({ menuButton }: Props) {
         <View style={styles.halfInner}>
           {menuButton}
           <View style={styles.textBlock}>
-            <Text style={styles.preview} numberOfLines={1}>
-              {local}
-            </Text>
             <Text style={styles.subject} numberOfLines={2}>
               {expandedEvent.name}
+            </Text>
+            <Text style={styles.preview} numberOfLines={1}>
+              {local}
             </Text>
           </View>
         </View>
