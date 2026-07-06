@@ -110,6 +110,8 @@ import {
 import { DASHBOARD_CARD_THEMES } from '@/lib/dashboardCardThemes';
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
 import { withReturnDashboardCard, pickRouteParam } from '@/lib/dashboardReturnNavigation';
+import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
+import { MINIMAL_FLAT_PANEL, MINIMAL_PAGE } from '@/lib/minimalPresentation';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
@@ -637,6 +639,30 @@ export default function Dashboard() {
   );
   const params = useLocalSearchParams();
   const router = useRouter();
+  const isMinimalPresentation = pickRouteParam(params.presentation) === 'minimal';
+
+  const effectiveCarouselPageStyle = useMemo(
+    () => (isMinimalPresentation ? { width: '100%' as const, flex: 1 } : carouselPageStyle),
+    [carouselPageStyle, isMinimalPresentation]
+  );
+
+  const effectiveDashboardCardWrapperStyle = useMemo(
+    () =>
+      isMinimalPresentation
+        ? { ...MINIMAL_PAGE, paddingTop: 0, paddingBottom: 0 }
+        : dashboardCardWrapperStyle,
+    [dashboardCardWrapperStyle, isMinimalPresentation]
+  );
+
+  const effectiveDashboardPanelCardSizeStyle = useMemo(
+    () =>
+      isMinimalPresentation
+        ? { width: '100%' as const, flex: 1, alignSelf: 'stretch' as const }
+        : dashboardPanelCardSizeStyle,
+    [dashboardPanelCardSizeStyle, isMinimalPresentation]
+  );
+
+  const cardBaseStyle = isMinimalPresentation ? MINIMAL_FLAT_PANEL : styles.card;
 
   useFamilyReceptionSuperAdminNotifier(canMonitorFamilyReception);
   const requestedDashboardCard = Array.isArray(params.dashboardCard)
@@ -1846,6 +1872,20 @@ export default function Dashboard() {
     );
   }, [dashboardCardAccess, dashboardCardCandidates, dashboardScreenAccess, isDashboardCardAccessReady]);
 
+  const carouselData = useMemo(() => {
+    if (!isMinimalPresentation) {
+      return data;
+    }
+
+    const targetIndex = resolveDashboardCardIndex(data, requestedDashboardCard);
+
+    if (targetIndex >= 0) {
+      return [data[targetIndex]!];
+    }
+
+    return data.length ? [data[0]!] : [];
+  }, [data, isMinimalPresentation, requestedDashboardCard]);
+
   const buildChildScreenParams = useCallback(
     (extra?: Record<string, string>) => {
       const activeCard = data[currentIndex];
@@ -2441,9 +2481,12 @@ export default function Dashboard() {
   }, [pageWidth]);
 
   return (
-    <LinearGradient colors={mainScreenGradient} style={styles.container}>
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        <StatusBar barStyle="light-content" />
+    <MinimalRouteShell
+      minimal={isMinimalPresentation}
+      title={activeDashboardScreenTitle}
+      gradientColors={mainScreenGradient}
+    >
+        {!isMinimalPresentation ? (
         <View style={styles.header}>
           <View style={[styles.screenBadgeBox, isLgpdPending && styles.screenBadgeBoxLgpdPending]}>
             <ActiveScreenBadge
@@ -2454,6 +2497,7 @@ export default function Dashboard() {
             />
           </View>
         </View>
+        ) : null}
 
         {aclRpcStatus === 'missing' ? (
           <View style={styles.aclUnavailableBanner}>
@@ -2481,21 +2525,21 @@ export default function Dashboard() {
               styles.dashboardFlatList,
               (!isDashboardCardAccessReady || !isDashboardCarouselReady) && styles.dashboardFlatListHidden,
             ]}
-            data={data}
+            data={carouselData}
             extraData={{
               currentIndex,
               isScaleRosterVisible,
               isParkingPanelVisible,
               selectedVigilanceScale,
             }}
-            horizontal
-            pagingEnabled
+            horizontal={!isMinimalPresentation}
+            pagingEnabled={!isMinimalPresentation}
             scrollEnabled={false}
             keyboardShouldPersistTaps="handled"
             showsHorizontalScrollIndicator={false}
-            initialNumToRender={data.length}
-            maxToRenderPerBatch={data.length}
-            windowSize={Math.max(5, data.length)}
+            initialNumToRender={carouselData.length}
+            maxToRenderPerBatch={carouselData.length}
+            windowSize={Math.max(5, carouselData.length)}
             removeClippedSubviews={Platform.OS !== 'web'}
             onScroll={handleScroll}
             onScrollToIndexFailed={handleDashboardScrollToIndexFailed}
@@ -2507,20 +2551,22 @@ export default function Dashboard() {
               index,
             })}
             snapToAlignment="start"
-            snapToInterval={pageWidth}
-            snapToOffsets={data.map((_, index) => index * pageWidth)}
+            snapToInterval={isMinimalPresentation ? undefined : pageWidth}
+            snapToOffsets={
+              isMinimalPresentation ? undefined : carouselData.map((_, index) => index * pageWidth)
+            }
             decelerationRate="fast"
             disableIntervalMomentum={true}
             renderItem={({ item }) => (
-              <View style={[dashboardCardWrapperStyle, carouselPageStyle]}>
+              <View style={[effectiveDashboardCardWrapperStyle, effectiveCarouselPageStyle]}>
                 {item.content === 'event_alt' ? (
                   <View
                     style={[
-                      styles.card,
+                    cardBaseStyle,
                       styles.cardEventAlt,
                       styles.eventCard,
                       styles.eventAltCard,
-                      dashboardPanelCardSizeStyle,
+                      effectiveDashboardPanelCardSizeStyle,
                     ]}
                   >
                     {areEventsLoading || isProfileLoading ? (
@@ -2755,11 +2801,11 @@ export default function Dashboard() {
                 ) : item.content === 'grouped_manage' ? (
                   <View
                     style={[
-                      styles.card,
+                    cardBaseStyle,
                       styles.cardGroupedManage,
                       groupedManagePaletteStyle,
                       styles.dashboardPanelCardTopLayout,
-                      dashboardPanelCardSizeStyle,
+                      effectiveDashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
@@ -2846,10 +2892,10 @@ export default function Dashboard() {
                 ) : item.content === 'administrativo' ? (
                   <View
                     style={[
-                      styles.card,
+                    cardBaseStyle,
                       styles.cardAdministrativo,
                       styles.dashboardPanelCardTopLayout,
-                      dashboardPanelCardSizeStyle,
+                      effectiveDashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
@@ -2862,10 +2908,10 @@ export default function Dashboard() {
                 ) : item.content === 'members_list' ? (
                   <View
                     style={[
-                      styles.card,
+                    cardBaseStyle,
                       styles.cardMembersList,
                       styles.dashboardPanelCardTopLayout,
-                      dashboardPanelCardSizeStyle,
+                      effectiveDashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
@@ -3081,10 +3127,10 @@ export default function Dashboard() {
                 ) : item.content === 'birthdays' ? (
                   <View
                     style={[
-                      styles.card,
+                    cardBaseStyle,
                       styles.cardBirthdays,
                       styles.dashboardPanelCardTopLayout,
-                      dashboardPanelCardSizeStyle,
+                      effectiveDashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
@@ -3173,8 +3219,8 @@ export default function Dashboard() {
                 ) : item.content === 'financial' ? (
                   <TouchableOpacity
                     style={[
-                      styles.card,
-                      dashboardPanelCardSizeStyle,
+                    cardBaseStyle,
+                      effectiveDashboardPanelCardSizeStyle,
                       styles.cardFinancialAction,
                       styles.dashboardPanelCardTopLayout,
                       dashboardPanelTopInsetStyle,
@@ -3211,10 +3257,10 @@ export default function Dashboard() {
                 ) : item.content === 'vigilance_scales' ? (
                   <View
                     style={[
-                      styles.card,
+                    cardBaseStyle,
                       styles.cardVigilanceScales,
                       styles.dashboardPanelCardTopLayout,
-                      dashboardPanelCardSizeStyle,
+                      effectiveDashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
@@ -3285,7 +3331,7 @@ export default function Dashboard() {
                     </View>
                   </View>
                 ) : item.content === 'parking_vehicle_v2' ? (
-                  <View style={[styles.card, styles.cardParkingVehicleV2, dashboardPanelCardSizeStyle]}>
+                  <View style={[cardBaseStyle, styles.cardParkingVehicleV2, effectiveDashboardPanelCardSizeStyle]}>
                     <Text style={[styles.cardTitle, styles.cardParkingVehicleV2Title]}>
                       {selectedVigilanceScaleLabel}
                     </Text>
@@ -3318,10 +3364,10 @@ export default function Dashboard() {
                 ) : item.content === 'scale_roster' ? (
                   <View
                     style={[
-                      styles.card,
+                    cardBaseStyle,
                       styles.cardScaleRoster,
                       styles.dashboardPanelCardTopLayout,
-                      dashboardPanelCardSizeStyle,
+                      effectiveDashboardPanelCardSizeStyle,
                     ]}
                   >
                     <Text style={styles.cardTitle}>{selectedVigilanceScaleLabel}</Text>
@@ -3513,10 +3559,10 @@ export default function Dashboard() {
                 ) : item.content === 'offerings' ? (
                   <View
                     style={[
-                      styles.card,
+                    cardBaseStyle,
                       styles.cardOfferings,
                       styles.dashboardPanelCardTopLayout,
-                      dashboardPanelCardSizeStyle,
+                      effectiveDashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
@@ -3575,11 +3621,11 @@ export default function Dashboard() {
                 ) : item.content === 'kids_teens' ? (
                   <View
                     style={[
-                      styles.card,
+                    cardBaseStyle,
                       styles.cardKidsTeens,
                       styles.cardGroupedAudience,
                       styles.dashboardPanelCardTopLayout,
-                      dashboardPanelCardSizeStyle,
+                      effectiveDashboardPanelCardSizeStyle,
                     ]}
                   >
                     <View style={styles.checkinTitleField}>
@@ -3727,8 +3773,8 @@ export default function Dashboard() {
                 ) : (
                   <TouchableOpacity
                     style={[
-                      styles.card,
-                      dashboardPanelCardSizeStyle,
+                    cardBaseStyle,
+                      effectiveDashboardPanelCardSizeStyle,
                       item.content === 'qr' && styles.cardQr,
                       item.content === 'qr' && isQrTotemCardPoolBlue && styles.cardQrTotemConfirmed,
                       item.content === 'pastoral' && styles.cardPastoralAction,
@@ -3854,6 +3900,7 @@ export default function Dashboard() {
             )}
           />
 
+          {!isMinimalPresentation ? (
           <View
             style={[
               styles.footerControls,
@@ -3898,6 +3945,7 @@ export default function Dashboard() {
               }
             />
           </View>
+          ) : null}
         </View>
 
         <Modal
@@ -3971,8 +4019,7 @@ export default function Dashboard() {
           profileId={profile?.id ?? null}
           onClose={() => setMinisterialFormVisible(false)}
         />
-      </SafeAreaView>
-    </LinearGradient>
+    </MinimalRouteShell>
   );
 }
 

@@ -11,6 +11,16 @@ export const MINIMAL_UI = {
   expandedBg: '#F1F5F9',
 } as const;
 
+export const MINIMAL_ICON = {
+  logo: 60,
+  menu: 26,
+  chevron: 16,
+  action: 18,
+} as const;
+
+/** Altura reservada para a barra inferior fixa (menu + paleta). */
+export const MINIMAL_BOTTOM_DOCK_HEIGHT = 64;
+
 export const MINIMAL_TYPO = {
   churchName: { fontSize: 12, fontWeight: '600' as const, color: MINIMAL_UI.text },
   greeting: { fontSize: 16, fontWeight: '700' as const, color: MINIMAL_UI.text },

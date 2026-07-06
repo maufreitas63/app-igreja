@@ -1,0 +1,41 @@
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { StatusBar, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { MinimalScreenLayout } from './MinimalScreenLayout';
+
+type Props = {
+  minimal: boolean;
+  title?: string;
+  gradientColors: readonly [string, string, ...string[]];
+  children: React.ReactNode;
+};
+
+/** Envolve telas legadas (gradiente + carrossel) ou modo minimalista (tela limpa + dock). */
+export function MinimalRouteShell({ minimal, title, gradientColors, children }: Props) {
+  if (minimal) {
+    return (
+      <MinimalScreenLayout title={title} scroll={false}>
+        <StatusBar barStyle="dark-content" />
+        {children}
+      </MinimalScreenLayout>
+    );
+  }
+
+  return (
+    <LinearGradient colors={gradientColors} style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <StatusBar barStyle="light-content" />
+        {children}
+      </SafeAreaView>
+    </LinearGradient>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: MINIMAL_UI.background,
+  },
+});

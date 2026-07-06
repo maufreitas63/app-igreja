@@ -59,6 +59,8 @@ import {
   resolveCarouselIndexByContent,
   resolveMaintenancePanelIndex,
 } from '@/lib/dashboardPanelLayout';
+import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
+import { MINIMAL_FLAT_PANEL, MINIMAL_PAGE } from '@/lib/minimalPresentation';
 import { pickRouteParam } from '@/lib/dashboardReturnNavigation';
 import {
   MAINTENANCE_SHORTCUT_ICON_ACTIVE_COLOR,
@@ -796,8 +798,24 @@ export default function MaintenanceDashboard() {
   ]);
 
   const maintenanceCarouselCards = useMemo<MaintenanceCarouselCard[]>(
-    () => [{ id: 'menu', title: 'Manutenção', content: 'menu' }, ...maintenancePanelCards],
-    [maintenancePanelCards]
+    () => {
+      const cards = [{ id: 'menu', title: 'Manutenção', content: 'menu' as const }, ...maintenancePanelCards];
+
+      if (!isMinimalPresentation) {
+        return cards;
+      }
+
+      if (requestedPanel) {
+        const match = maintenancePanelCards.find((card) => card.content === requestedPanel);
+
+        if (match) {
+          return [match];
+        }
+      }
+
+      return maintenancePanelCards.length ? [maintenancePanelCards[0]!] : [];
+    },
+    [isMinimalPresentation, maintenancePanelCards, requestedPanel]
   );
 
   const maintenanceCardCount = maintenanceCarouselCards.length;
@@ -869,6 +887,27 @@ export default function MaintenanceDashboard() {
   const panelCardSizeStyle = useMemo(
     () => buildDashboardPanelCardSizeStyle(pageWidth, cardHeight),
     [cardHeight, pageWidth]
+  );
+
+  const effectiveCarouselPageStyle = useMemo(
+    () => (isMinimalPresentation ? { width: '100%' as const, flex: 1 } : carouselPageStyle),
+    [carouselPageStyle, isMinimalPresentation]
+  );
+
+  const effectiveCardWrapperStyle = useMemo(
+    () =>
+      isMinimalPresentation
+        ? { ...MINIMAL_PAGE, paddingTop: 0, paddingBottom: 0, justifyContent: 'flex-start' as const }
+        : styles.cardWrapper,
+    [isMinimalPresentation]
+  );
+
+  const effectivePanelCardStyle = useMemo(
+    () =>
+      isMinimalPresentation
+        ? { ...MINIMAL_FLAT_PANEL, flex: 1, width: '100%' as const }
+        : null,
+    [isMinimalPresentation]
   );
 
   const scrollToMaintenanceCard = useCallback((targetIndex: number, animated = false) => {
@@ -1121,30 +1160,30 @@ export default function MaintenanceDashboard() {
       const shouldMountPanel = Math.abs(currentIndex - index) <= 1;
 
       return (
-      <View style={[styles.cardWrapper, carouselPageStyle]}>
+      <View style={[effectiveCardWrapperStyle, effectiveCarouselPageStyle]}>
         <View
           style={[
-            styles.panelCard,
-            panelCardSizeStyle,
-            item.content === 'sala_servidor' && styles.panelCardSala,
-            item.content === 'events_gantt' && styles.panelCardGantt,
-            item.content === 'quorum_presence' && styles.panelCardQuorumPresence,
-            item.content === 'scale_types' && styles.panelCardScaleTypes,
-            item.content === 'scale_volunteers' && styles.panelCardScaleVolunteers,
-            item.content === 'scales' && styles.panelCardScales,
-            item.content === 'pastoral_care' && styles.panelCardPastoralCare,
-            item.content === 'mudanca_papeis' && styles.panelCardPastoralRoleChange,
-            item.content === 'profile_cadastro' && styles.panelCardProfileCadastro,
-            item.content === 'family_reception' && styles.panelCardFamilyReception,
-            item.content === 'financials' && styles.panelCardFinancials,
-            item.content === 'predictive_insights' && styles.panelCardPredictiveInsights,
-            item.content === 'relatorios' && styles.panelCardRelatorios,
-            item.content === 'suggestions_improvements' && styles.panelCardSuggestions,
-            item.content === 'access_control' && styles.panelCardAccessControl,
-            item.content === 'profile_access_insights' && styles.panelCardProfileAccessInsights,
-            item.content === 'auditor' && styles.panelCardGhostMode,
-            item.content === 'event_orchestration' && styles.panelCardEventOrchestration,
-            item.content === 'menu' && styles.panelCardMenu,
+            isMinimalPresentation ? effectivePanelCardStyle : styles.panelCard,
+            !isMinimalPresentation && panelCardSizeStyle,
+            !isMinimalPresentation && item.content === 'sala_servidor' && styles.panelCardSala,
+            !isMinimalPresentation && item.content === 'events_gantt' && styles.panelCardGantt,
+            !isMinimalPresentation && item.content === 'quorum_presence' && styles.panelCardQuorumPresence,
+            !isMinimalPresentation && item.content === 'scale_types' && styles.panelCardScaleTypes,
+            !isMinimalPresentation && item.content === 'scale_volunteers' && styles.panelCardScaleVolunteers,
+            !isMinimalPresentation && item.content === 'scales' && styles.panelCardScales,
+            !isMinimalPresentation && item.content === 'pastoral_care' && styles.panelCardPastoralCare,
+            !isMinimalPresentation && item.content === 'mudanca_papeis' && styles.panelCardPastoralRoleChange,
+            !isMinimalPresentation && item.content === 'profile_cadastro' && styles.panelCardProfileCadastro,
+            !isMinimalPresentation && item.content === 'family_reception' && styles.panelCardFamilyReception,
+            !isMinimalPresentation && item.content === 'financials' && styles.panelCardFinancials,
+            !isMinimalPresentation && item.content === 'predictive_insights' && styles.panelCardPredictiveInsights,
+            !isMinimalPresentation && item.content === 'relatorios' && styles.panelCardRelatorios,
+            !isMinimalPresentation && item.content === 'suggestions_improvements' && styles.panelCardSuggestions,
+            !isMinimalPresentation && item.content === 'access_control' && styles.panelCardAccessControl,
+            !isMinimalPresentation && item.content === 'profile_access_insights' && styles.panelCardProfileAccessInsights,
+            !isMinimalPresentation && item.content === 'auditor' && styles.panelCardGhostMode,
+            !isMinimalPresentation && item.content === 'event_orchestration' && styles.panelCardEventOrchestration,
+            !isMinimalPresentation && item.content === 'menu' && styles.panelCardMenu,
           ]}
         >
           {!shouldMountPanel ? (
@@ -1404,7 +1443,10 @@ export default function MaintenanceDashboard() {
       loading,
       activeMaintenancePanelContent,
       maintenanceShortcuts,
-      carouselPageStyle,
+      effectiveCarouselPageStyle,
+      effectiveCardWrapperStyle,
+      effectivePanelCardStyle,
+      isMinimalPresentation,
       panelCardSizeStyle,
       quorumPresenceShortcutEnabled,
       quorumRegistrySchemaMissing,
@@ -1430,8 +1472,12 @@ export default function MaintenanceDashboard() {
   }
 
   return (
-    <LinearGradient colors={MAINTENANCE_SCREEN_GRADIENT} style={styles.container}>
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <MinimalRouteShell
+      minimal={isMinimalPresentation}
+      title={activeMaintenanceScreenTitle}
+      gradientColors={MAINTENANCE_SCREEN_GRADIENT}
+    >
+        {!isMinimalPresentation ? (
         <View style={styles.header}>
           <View style={styles.welcomeBox}>
             <Text style={styles.welcomeText}>Boas-Vindas,</Text>
@@ -1447,6 +1493,7 @@ export default function MaintenanceDashboard() {
             </View>
           </View>
         </View>
+        ) : null}
 
         <View style={styles.mainStage}>
           <View style={styles.carouselStage}>
@@ -1456,8 +1503,8 @@ export default function MaintenanceDashboard() {
                 style={styles.carouselFlatList}
                 data={maintenanceCarouselCards}
                 extraData={{ currentIndex, maintenanceCardCount }}
-                horizontal
-                pagingEnabled
+                horizontal={!isMinimalPresentation}
+                pagingEnabled={!isMinimalPresentation}
                 scrollEnabled={false}
                 keyboardShouldPersistTaps="handled"
                 showsHorizontalScrollIndicator={false}
@@ -1475,14 +1522,19 @@ export default function MaintenanceDashboard() {
                   index,
                 })}
                 snapToAlignment="start"
-                snapToInterval={pageWidth}
-                snapToOffsets={maintenanceCarouselCards.map((_, index) => index * pageWidth)}
+                snapToInterval={isMinimalPresentation ? undefined : pageWidth}
+                snapToOffsets={
+                  isMinimalPresentation
+                    ? undefined
+                    : maintenanceCarouselCards.map((_, index) => index * pageWidth)
+                }
                 decelerationRate="fast"
                 disableIntervalMomentum
                 renderItem={renderCarouselItem}
               />
             </View>
 
+            {!isMinimalPresentation ? (
             <View style={[styles.footerControls, { paddingBottom: insets.bottom + 10 }]}>
               <CarouselFooterNav
                 currentIndex={currentIndex}
@@ -1503,6 +1555,7 @@ export default function MaintenanceDashboard() {
                 accent="amber"
               />
             </View>
+            ) : null}
           </View>
 
           {showEditor ? (
@@ -1906,8 +1959,7 @@ export default function MaintenanceDashboard() {
           }}
           onDelete={removeFavoriteLocation}
         />
-      </SafeAreaView>
-    </LinearGradient>
+    </MinimalRouteShell>
   );
 }
 

@@ -1,17 +1,9 @@
 import type { FamilyMember } from '@/hooks/useFamilyMembers';
 import type { RegistrationStatus } from '@/hooks/useRegisteredEventMembers';
+import { formatFullName } from '@/lib/fullName';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-const formatAudienceName = (fullName: string) => {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-
-  if (parts.length <= 1) {
-    return parts[0] ?? fullName;
-  }
-
-  return `${parts[0]} ${parts[parts.length - 1]}`;
-};
 
 type Props = {
   member: FamilyMember;
@@ -22,6 +14,7 @@ type Props = {
   registrationStatus?: RegistrationStatus;
   showKidsIndicator?: boolean;
   showTeensIndicator?: boolean;
+  minimal?: boolean;
   onToggle: () => void;
 };
 
@@ -34,9 +27,10 @@ export const MemberCheckboxItem = ({
   registrationStatus,
   showKidsIndicator = false,
   showTeensIndicator = false,
+  minimal = false,
   onToggle,
 }: Props) => {
-  const displayName = formatAudienceName(member.full_name);
+  const displayName = formatFullName(member.full_name);
   const shouldShowStatusDot =
     (registrationStatus === 'KIDS' && showKidsIndicator) ||
     (registrationStatus === 'TEENS' && showTeensIndicator);
@@ -46,19 +40,26 @@ export const MemberCheckboxItem = ({
       <TouchableOpacity
         style={[
           styles.checkbox,
+          minimal && styles.checkboxMinimal,
           isChecked && styles.checkboxChecked,
+          isChecked && minimal && styles.checkboxCheckedMinimal,
           disabled && styles.checkboxDisabled,
           isRegistered && styles.checkboxRegistered,
+          isRegistered && minimal && styles.checkboxRegisteredMinimal,
         ]}
         onPress={onToggle}
         disabled={disabled || isLoading}
         activeOpacity={0.8}
       >
-        {isLoading ? <ActivityIndicator size="small" color="#020617" /> : isChecked ? <Text style={styles.checkmark}>✓</Text> : null}
+        {isLoading ? (
+          <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.icon : '#020617'} />
+        ) : isChecked ? (
+          <Text style={[styles.checkmark, minimal && styles.checkmarkMinimal]}>✓</Text>
+        ) : null}
       </TouchableOpacity>
       <View style={styles.info}>
         <View style={styles.nameRow}>
-          <Text style={styles.name}>{displayName}</Text>
+          <Text style={[styles.name, minimal && styles.nameMinimal]}>{displayName}</Text>
           {shouldShowStatusDot ? (
             <View
               style={[
@@ -68,7 +69,11 @@ export const MemberCheckboxItem = ({
             />
           ) : null}
         </View>
-        {isRegistered ? <Text style={styles.registeredText}>Registrado para o evento</Text> : null}
+        {isRegistered ? (
+          <Text style={[styles.registeredText, minimal && styles.registeredTextMinimal]}>
+            Registrado para o evento
+          </Text>
+        ) : null}
       </View>
     </View>
   );
@@ -91,8 +96,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
+  checkboxMinimal: {
+    borderColor: MINIMAL_UI.icon,
+  },
   checkboxChecked: {
     backgroundColor: '#10b981',
+  },
+  checkboxCheckedMinimal: {
+    backgroundColor: MINIMAL_UI.icon,
   },
   checkboxDisabled: {
     opacity: 0.45,
@@ -101,10 +112,17 @@ const styles = StyleSheet.create({
     borderColor: '#34d399',
     backgroundColor: '#34d399',
   },
+  checkboxRegisteredMinimal: {
+    borderColor: MINIMAL_UI.textMuted,
+    backgroundColor: MINIMAL_UI.textMuted,
+  },
   checkmark: {
     color: '#020617',
     fontSize: 14,
     fontWeight: '900',
+  },
+  checkmarkMinimal: {
+    color: MINIMAL_UI.background,
   },
   info: {
     flex: 1,
@@ -119,6 +137,10 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     flex: 1,
+  },
+  nameMinimal: {
+    color: MINIMAL_UI.text,
+    fontWeight: '600',
   },
   statusDot: {
     width: 10,
@@ -137,5 +159,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     fontWeight: '600',
+  },
+  registeredTextMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
 });

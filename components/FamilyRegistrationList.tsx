@@ -8,6 +8,7 @@ import {
 } from '@/lib/profileEventRegistration';
 import { resolveActiveSessionMember } from '@/lib/resolveActiveSessionMember';
 import { formatFullName } from '@/lib/fullName';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { GeoCoordinates } from '@/lib/checkinGeofence';
 import {
   enqueueGeoCheckinOperation,
@@ -55,6 +56,8 @@ type Props = {
   geoCheckinDistanceMeters?: number | null;
   /** Raio configurado do geofence (metros). */
   geoCheckinRadiusMeters?: number;
+  /** Estilo minimalista (texto azul, sem moldura de card). */
+  minimal?: boolean;
 };
 
 export const FamilyRegistrationList = ({
@@ -75,6 +78,7 @@ export const FamilyRegistrationList = ({
   geoCheckinGpsProgress = { current: 0, required: 3 },
   geoCheckinDistanceMeters = null,
   geoCheckinRadiusMeters = 30,
+  minimal = false,
 }: Props) => {
   const hasFamilyId = Boolean(familyId?.trim());
   const { members, loading, error } = useFamilyAudienceMembers(
@@ -494,8 +498,10 @@ export const FamilyRegistrationList = ({
       {registeredMembersError ? (
         <Text style={styles.helperErrorText}>Nao foi possivel verificar as inscricoes ja existentes.</Text>
       ) : null}
-      <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>{title ?? 'Audiência da Família'}</Text>
+      <View style={[styles.headerRow, minimal && styles.headerRowMinimal]}>
+        <Text style={[styles.headerTitle, minimal && styles.headerTitleMinimal]}>
+          {title ?? 'Audiência da Família'}
+        </Text>
         {hasEventOpen && !quorumMode ? (
           <TouchableOpacity
             style={[
@@ -529,7 +535,7 @@ export const FamilyRegistrationList = ({
           />
         ) : null}
       </View>
-      <View style={styles.listFrame}>
+      <View style={[styles.listFrame, minimal && styles.listFrameMinimal]}>
         <View style={styles.listContainer}>
         <FlatList
           data={visibleMembers}
@@ -543,6 +549,7 @@ export const FamilyRegistrationList = ({
             return (
               <MemberCheckboxItem
                 member={item}
+                minimal={minimal}
                 disabled={!hasEventOpen || isBusy || quorumUnregisterLocked}
                 isChecked={
                   pendingRegisterIds.includes(item.id) ||
@@ -594,6 +601,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.22)',
     paddingHorizontal: 4,
   },
+  listFrameMinimal: {
+    borderWidth: 0,
+    borderRadius: 0,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 0,
+  },
+  headerRowMinimal: {
+    marginBottom: 4,
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -608,6 +624,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     flex: 1,
+  },
+  headerTitleMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontSize: 12,
   },
   listContainer: {
     flex: 1,

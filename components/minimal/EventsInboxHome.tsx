@@ -1,5 +1,6 @@
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { InboxList, type InboxListItem } from '@/components/minimal/InboxList';
+import { ParticipantCupBadge } from '@/components/minimal/ParticipantCupBadge';
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
@@ -69,6 +70,13 @@ export function EventsInboxHome() {
         subject: event.name,
         preview: event.event_local?.trim() || 'Sem local informado',
         meta: formatEventDateTimeLabel(event.event_date),
+        trailing: (
+          <ParticipantCupBadge
+            count={event.registeredCount}
+            maxCapacity={event.max_capacity}
+            size="sm"
+          />
+        ),
         content: familyId ? (
           <FamilyRegistrationList
             familyId={familyId}
@@ -77,6 +85,7 @@ export function EventsInboxHome() {
             sessionProfileName={sessionProfileName}
             sessionProfile={sessionProfile}
             title=""
+            minimal
           />
         ) : (
           <Text style={styles.inlineHint}>Carregando dados da família…</Text>
@@ -113,7 +122,7 @@ export function EventsInboxHome() {
               })
             }
           >
-            <Text style={styles.actionButtonText}>Dízimos e Ofertas</Text>
+            <Text style={styles.actionButtonText}>Contribuir com meu Dízimo ou Oferta</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
@@ -124,7 +133,7 @@ export function EventsInboxHome() {
               })
             }
           >
-            <Text style={styles.actionButtonText}>Coração Aberto</Text>
+            <Text style={styles.actionButtonText}>Fazer um pedido de Oração</Text>
           </TouchableOpacity>
         </View>
       </View>

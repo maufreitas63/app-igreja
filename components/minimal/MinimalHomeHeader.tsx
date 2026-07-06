@@ -1,4 +1,4 @@
-import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -29,8 +29,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   logo: {
-    width: 48,
-    height: 48,
+    width: MINIMAL_ICON.logo,
+    height: MINIMAL_ICON.logo,
     tintColor: MINIMAL_UI.icon,
   },
   church: {

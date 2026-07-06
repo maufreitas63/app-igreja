@@ -1,10 +1,9 @@
-import { useAppDrawer } from '@/context/AppDrawerContext';
-import { MINIMAL_UI, MINIMAL_TYPO } from '@/lib/minimalUiTheme';
-import { FontAwesome } from '@expo/vector-icons';
+import { MINIMAL_BOTTOM_DOCK_HEIGHT, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppDrawer } from './AppDrawer';
+import { MinimalBottomDock } from './MinimalBottomDock';
 
 type Props = {
   title?: string;
@@ -13,6 +12,8 @@ type Props = {
   children: React.ReactNode;
   footer?: React.ReactNode;
   contentContainerStyle?: ViewStyle;
+  /** Quando false, o conteúdo ocupa flex:1 sem ScrollView (telas com listas internas). */
+  scroll?: boolean;
 };
 
 export function MinimalScreenLayout({
@@ -22,38 +23,42 @@ export function MinimalScreenLayout({
   children,
   footer,
   contentContainerStyle,
+  scroll = true,
 }: Props) {
-  const { openDrawer } = useAppDrawer();
-
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <AppDrawer />
-      <View style={styles.topBar}>
-        <Pressable
-          accessibilityLabel="Abrir menu"
-          accessibilityRole="button"
-          onPress={openDrawer}
-          style={styles.menuButton}
-        >
-          <FontAwesome name="bars" size={22} color={MINIMAL_UI.icon} />
-        </Pressable>
-        {title ? <Text style={styles.title}>{title}</Text> : <View style={styles.titleSpacer} />}
-      </View>
+
+      {title ? (
+        <View style={styles.titleBar}>
+          <Text style={styles.title}>{title}</Text>
+        </View>
+      ) : null}
 
       {header}
 
       {fixedTop ? <View style={styles.fixedTop}>{fixedTop}</View> : null}
 
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator
-      >
-        {children}
-      </ScrollView>
+      {scroll ? (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: MINIMAL_BOTTOM_DOCK_HEIGHT + 16 },
+            contentContainerStyle,
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator
+        >
+          {children}
+        </ScrollView>
+      ) : (
+        <View style={[styles.flexContent, contentContainerStyle]}>{children}</View>
+      )}
 
-      {footer ? <View style={styles.footer}>{footer}</View> : null}
+      {footer ? <View style={[styles.footer, { bottom: MINIMAL_BOTTOM_DOCK_HEIGHT }]}>{footer}</View> : null}
+
+      <MinimalBottomDock />
     </SafeAreaView>
   );
 }
@@ -63,28 +68,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: MINIMAL_UI.background,
   },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingBottom: 8,
-    gap: 8,
-  },
-  menuButton: {
-    padding: 8,
+  titleBar: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
   title: {
     ...MINIMAL_TYPO.screenTitle,
-    flex: 1,
-  },
-  titleSpacer: {
-    flex: 1,
   },
   fixedTop: {
     paddingHorizontal: 16,
     paddingBottom: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: MINIMAL_UI.divider,
     backgroundColor: MINIMAL_UI.background,
   },
   scroll: {
@@ -92,13 +86,20 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 24,
+  },
+  flexContent: {
+    flex: 1,
+    minHeight: 0,
+    paddingHorizontal: 16,
+    paddingBottom: MINIMAL_BOTTOM_DOCK_HEIGHT + 8,
   },
   footer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: MINIMAL_UI.divider,
     backgroundColor: MINIMAL_UI.background,
+    zIndex: 10,
   },
 });

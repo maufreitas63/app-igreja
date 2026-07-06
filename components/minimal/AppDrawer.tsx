@@ -25,7 +25,6 @@ export function AppDrawer() {
   return (
     <Modal animationType="slide" transparent visible={isOpen} onRequestClose={closeDrawer}>
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={closeDrawer} accessibilityLabel="Fechar menu" />
         <View style={[styles.panel, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 12 }]}>
           <Text style={styles.title}>Menu</Text>
           {loading ? (
@@ -33,23 +32,21 @@ export function AppDrawer() {
           ) : (
             <ScrollView showsVerticalScrollIndicator>
               {items.map((item) => (
-                <React.Fragment key={item.moduleKey}>
-                  {item.dividerBefore ? <View style={styles.divider} /> : null}
-                  <TouchableOpacity
-                    style={styles.item}
-                    onPress={() => {
-                      closeDrawer();
-                      void navigateDrawerMenuItem(router, item.moduleKey);
-                    }}
-                  >
-                    <Text style={styles.itemLetter}>{item.letter})</Text>
-                    <Text style={styles.itemLabel}>{item.label}</Text>
-                  </TouchableOpacity>
-                </React.Fragment>
+                <TouchableOpacity
+                  key={item.moduleKey}
+                  style={styles.item}
+                  onPress={() => {
+                    closeDrawer();
+                    void navigateDrawerMenuItem(router, item.moduleKey);
+                  }}
+                >
+                  <Text style={styles.itemLabel}>{item.label}</Text>
+                </TouchableOpacity>
               ))}
             </ScrollView>
           )}
         </View>
+        <Pressable style={styles.backdrop} onPress={closeDrawer} accessibilityLabel="Fechar menu" />
       </View>
     </Modal>
   );
@@ -60,17 +57,16 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
   },
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-  },
   panel: {
     width: '82%',
     maxWidth: 320,
     backgroundColor: MINIMAL_UI.background,
-    borderLeftWidth: StyleSheet.hairlineWidth,
-    borderLeftColor: MINIMAL_UI.border,
     paddingHorizontal: 16,
+    zIndex: 2,
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
   },
   title: {
     ...MINIMAL_TYPO.screenTitle,
@@ -79,28 +75,11 @@ const styles = StyleSheet.create({
   loader: {
     marginTop: 24,
   },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: MINIMAL_UI.icon,
-    marginVertical: 10,
-    opacity: 0.35,
-  },
   item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: MINIMAL_UI.divider,
-  },
-  itemLetter: {
-    width: 22,
-    color: MINIMAL_UI.icon,
-    fontWeight: '700',
-    fontSize: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
   },
   itemLabel: {
     ...MINIMAL_TYPO.menuItem,
-    flex: 1,
   },
 });
