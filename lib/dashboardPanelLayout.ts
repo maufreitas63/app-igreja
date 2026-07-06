@@ -107,7 +107,7 @@ export const DASHBOARD_PANEL_TITLE_TYPO = {
   fontSize: 17,
   fontWeight: '800' as const,
   lineHeight: 22,
-  color: '#F8FAFC',
+  color: '#3A96DD',
 };
 
 /** Padding interno superior do painel — alinha o título ao mesmo Y do índice. */

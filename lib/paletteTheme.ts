@@ -1,4 +1,5 @@
 import type { DashboardCardTheme } from '@/lib/dashboardCardThemes';
+import { VIGILANCE_LIGHT_CARD_THEME } from '@/lib/dashboardCardThemes';
 import type { PaletaColors } from '@/lib/paletasTypes';
 
 function parseHex(hex: string): { r: number; g: number; b: number } | null {
@@ -64,23 +65,7 @@ export function buildDashboardScreenGradient(colors: PaletaColors): [string, str
   return [colors.secondary, colors.background, darkenHex(colors.background, 0.35)];
 }
 
-/** Tema de superfície (cards, rodapés) derivado da paleta ativa. */
-export function buildPaletteSurfaceTheme(colors: PaletaColors): DashboardCardTheme {
-  if (colors.isLight) {
-    return {
-      backgroundColor: '#FFFFFF',
-      borderColor: colors.border,
-      shadowColor: colors.primary,
-      accent: colors.text,
-      accentMuted: colors.textMuted,
-    };
-  }
-
-  return {
-    backgroundColor: hexToRgba(colors.primary, 0.2),
-    borderColor: colors.accent,
-    shadowColor: colors.primary,
-    accent: colors.accent,
-    accentMuted: hexToRgba(colors.accent, 0.82),
-  };
+/** Tema de superfície (cards, rodapés) — unificado com dashboard_card_vigilance_scales. */
+export function buildPaletteSurfaceTheme(_colors: PaletaColors): DashboardCardTheme {
+  return VIGILANCE_LIGHT_CARD_THEME;
 }

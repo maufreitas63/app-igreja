@@ -77,6 +77,7 @@ import {
   UI_SPACING,
 } from '@/lib/uiTokens';
 import { MAINTENANCE_LIGHT_PANEL_CARD, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { DASHBOARD_CARD_SHELL } from '@/lib/dashboardCardStyles';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { KIDS_ROOM_DISPLAY_LABEL, TEENS_ROOM_DISPLAY_LABEL } from '@/lib/entityPrefix';
 import {
@@ -201,16 +202,6 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '14', title: 'Acessos de Usuários', content: 'profile_access_insights' },
   { id: '19', title: 'Modo Ghost (Auditor)', content: 'auditor' },
 ];
-
-/** Painéis com o tema claro do card Escalas (vigilance_scales). */
-const MAINTENANCE_LIGHT_PANEL_CONTENTS = new Set<MaintenancePanelContent>([
-  'events',
-  'events_gantt',
-  'event_orchestration',
-  'scale_types',
-  'scale_volunteers',
-  'scales',
-]);
 
 type FeatureToggleProps = {
   label: string;
@@ -1176,26 +1167,24 @@ export default function MaintenanceDashboard() {
           style={[
             isMinimalPresentation ? effectivePanelCardStyle : styles.panelCard,
             !isMinimalPresentation && panelCardSizeStyle,
-            !isMinimalPresentation && item.content === 'sala_servidor' && styles.panelCardSala,
-            !isMinimalPresentation && item.content === 'events_gantt' && styles.panelCardGantt,
-            !isMinimalPresentation && item.content === 'quorum_presence' && styles.panelCardQuorumPresence,
-            !isMinimalPresentation && item.content === 'scale_types' && styles.panelCardScaleTypes,
-            !isMinimalPresentation && item.content === 'scale_volunteers' && styles.panelCardScaleVolunteers,
-            !isMinimalPresentation && item.content === 'scales' && styles.panelCardScales,
-            !isMinimalPresentation && item.content === 'pastoral_care' && styles.panelCardPastoralCare,
-            !isMinimalPresentation && item.content === 'mudanca_papeis' && styles.panelCardPastoralRoleChange,
-            !isMinimalPresentation && item.content === 'profile_cadastro' && styles.panelCardProfileCadastro,
-            !isMinimalPresentation && item.content === 'family_reception' && styles.panelCardFamilyReception,
-            !isMinimalPresentation && item.content === 'financials' && styles.panelCardFinancials,
-            !isMinimalPresentation && item.content === 'predictive_insights' && styles.panelCardPredictiveInsights,
-            !isMinimalPresentation && item.content === 'relatorios' && styles.panelCardRelatorios,
-            !isMinimalPresentation && item.content === 'suggestions_improvements' && styles.panelCardSuggestions,
-            !isMinimalPresentation && item.content === 'access_control' && styles.panelCardAccessControl,
-            !isMinimalPresentation && item.content === 'profile_access_insights' && styles.panelCardProfileAccessInsights,
-            !isMinimalPresentation && item.content === 'auditor' && styles.panelCardGhostMode,
-            !isMinimalPresentation && item.content === 'event_orchestration' && styles.panelCardEventOrchestration,
+            !isMinimalPresentation && styles.panelCardLight,
+            !isMinimalPresentation && item.content === 'quorum_presence' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'scale_types' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'scale_volunteers' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'scales' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'pastoral_care' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'mudanca_papeis' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'profile_cadastro' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'family_reception' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'financials' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'predictive_insights' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'relatorios' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'suggestions_improvements' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'access_control' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'profile_access_insights' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'auditor' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'event_orchestration' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'menu' && styles.panelCardMenu,
-            !isMinimalPresentation && MAINTENANCE_LIGHT_PANEL_CONTENTS.has(item.content) && styles.panelCardLight,
           ]}
         >
           {!shouldMountPanel ? (
@@ -2059,80 +2048,10 @@ const styles = StyleSheet.create({
   },
   panelCard: {
     borderRadius: STATIC_MAINTENANCE_PANEL_INSETS.borderRadius,
-    borderWidth: 1,
-    borderColor: UI_MAINTENANCE_PANEL_BORDERS.default,
-    backgroundColor: UI_COLORS.maintenanceSurface,
     overflow: 'hidden',
+    ...DASHBOARD_CARD_SHELL,
   },
-  panelCardSala: {
-    borderColor: UI_MAINTENANCE_PANEL_BORDERS.sala,
-  },
-  panelCardGantt: {
-    borderColor: UI_MAINTENANCE_PANEL_BORDERS.gantt,
-  },
-  panelCardQuorumPresence: {
-    borderColor: UI_MAINTENANCE_PANEL_BORDERS.quorum,
-    backgroundColor: 'rgba(15, 23, 42, 0.35)',
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardScaleTypes: {
-    borderColor: UI_MAINTENANCE_PANEL_BORDERS.scaleTypes,
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardScaleVolunteers: {
-    borderColor: UI_MAINTENANCE_PANEL_BORDERS.scaleVolunteers,
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardScales: {
-    borderColor: UI_MAINTENANCE_PANEL_BORDERS.scales,
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardPastoralCare: {
-    borderColor: UI_MAINTENANCE_PANEL_BORDERS.pastoral,
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardPastoralRoleChange: {
-    borderColor: '#FB7185',
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardProfileCadastro: {
-    borderColor: UI_MAINTENANCE_PANEL_BORDERS.profile,
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardFamilyReception: {
-    borderColor: '#34D399',
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardFinancials: {
-    borderColor: UI_MAINTENANCE_PANEL_BORDERS.financials,
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardPredictiveInsights: {
-    borderColor: 'rgba(34, 211, 238, 0.55)',
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardRelatorios: {
-    borderColor: 'rgba(192, 132, 252, 0.55)',
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardSuggestions: {
-    borderColor: 'rgba(56, 189, 248, 0.55)',
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardAccessControl: {
-    borderColor: UI_MAINTENANCE_PANEL_BORDERS.accessControl,
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardProfileAccessInsights: {
-    borderColor: 'rgba(250, 204, 21, 0.45)',
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardGhostMode: {
-    borderColor: 'rgba(251, 113, 133, 0.55)',
-    padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
-  },
-  panelCardEventOrchestration: {
-    borderColor: 'rgba(56, 189, 248, 0.55)',
+  panelCardInnerPadding: {
     padding: STATIC_MAINTENANCE_PANEL_INSETS.innerPadding,
   },
   panelCardMenu: {
@@ -2141,6 +2060,11 @@ const styles = StyleSheet.create({
   },
   panelCardLight: {
     ...MAINTENANCE_LIGHT_PANEL_CARD,
+    shadowColor: DASHBOARD_CARD_SHELL.shadowColor,
+    shadowOpacity: 0.3,
+    shadowOffset: DASHBOARD_CARD_SHELL.shadowOffset,
+    shadowRadius: DASHBOARD_CARD_SHELL.shadowRadius,
+    elevation: DASHBOARD_CARD_SHELL.elevation,
   },
   panelCardPlaceholder: {
     flex: 1,

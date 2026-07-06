@@ -108,6 +108,7 @@ import {
   resolveDashboardCardIndex,
 } from '@/lib/dashboardPanelLayout';
 import { BIRTHDAYS_UI, DASHBOARD_CARD_THEMES, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_TYPO } from '@/lib/dashboardCardStyles';
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
 import { withReturnDashboardCard, pickRouteParam } from '@/lib/dashboardReturnNavigation';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
@@ -4067,7 +4068,9 @@ const styles = StyleSheet.create({
   screenBadgeBox: {
     width: '100%',
     borderRadius: 18,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: VIGILANCE_SCALES_UI.headerSurface,
+    borderWidth: 1,
+    borderColor: VIGILANCE_SCALES_UI.border,
     paddingHorizontal: 16,
     paddingVertical: 12,
     alignItems: 'flex-start',
@@ -4133,42 +4136,29 @@ const styles = StyleSheet.create({
   card: {
     width: '90%',
     alignSelf: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.72)',
-    borderWidth: 1,
-    borderColor: '#475569',
-    borderRadius: STATIC_CARD_INSETS.borderRadius,
+    ...DASHBOARD_CARD_SHELL,
     padding: STATIC_CARD_INSETS.padding,
     alignItems: 'center',
     overflow: 'hidden',
     justifyContent: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.45,
-    shadowRadius: 15,
+  },
+  cardDashboardShell: {
+    ...DASHBOARD_CARD_SHELL,
+    shadowOpacity: 0.3,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    gap: 12,
   },
   cardEventAlt: {
-    backgroundColor: DASHBOARD_CARD_THEMES.event_alt.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.event_alt.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.event_alt.shadowColor,
-    shadowOpacity: 0.32,
+    shadowOpacity: 0.3,
   },
   cardQr: {
-    backgroundColor: DASHBOARD_CARD_THEMES.qr.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.qr.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.qr.shadowColor,
     shadowOpacity: 0.3,
   },
   cardQrTotemConfirmed: {
-    backgroundColor: 'rgba(6, 182, 212, 0.48)',
-    borderColor: '#22D3EE',
-    shadowColor: '#06B6D4',
     shadowOpacity: 0.35,
   },
   cardKidsTeens: {
-    backgroundColor: DASHBOARD_CARD_THEMES.kids_teens.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.kids_teens.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.kids_teens.shadowColor,
     shadowOpacity: 0.3,
   },
   eventCard: {
@@ -4228,21 +4218,22 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   eventAltName: {
-    color: '#F8FAFC',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 18,
     fontWeight: '800',
     lineHeight: 22,
   },
   eventAltMeta: {
-    color: DASHBOARD_CARD_THEMES.event_alt.accentMuted,
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 3,
   },
   eventAltLocation: {
-    color: '#CBD5E1',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 12,
     marginTop: 2,
+    opacity: 0.88,
   },
   eventAltRoomLegendRow: {
     flexDirection: 'row',
@@ -4565,17 +4556,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     gap: 0,
     shadowOpacity: 0.3,
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-    borderColor: '#60A5FA',
   },
   cardAdministrativo: {
     alignItems: 'stretch',
     justifyContent: 'flex-start',
     gap: 0,
     shadowOpacity: 0.3,
-    backgroundColor: DASHBOARD_CARD_THEMES.administrativo.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.administrativo.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.administrativo.shadowColor,
   },
   groupedManageBody: {
     marginTop: 12,
@@ -4623,15 +4609,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   cardPastoralAction: {
-    backgroundColor: DASHBOARD_CARD_THEMES.pastoral.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.pastoral.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.pastoral.shadowColor,
     shadowOpacity: 0.32,
   },
   cardFinancialAction: {
-    backgroundColor: DASHBOARD_CARD_THEMES.financial.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.financial.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.financial.shadowColor,
     shadowOpacity: 0.3,
   },
   dashboardPanelCardTopLayout: {
@@ -4650,7 +4630,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   cardFinancialSubtitle: {
-    color: DASHBOARD_CARD_THEMES.financial.accent,
+    color: DASHBOARD_CARD_TYPO.body.color,
     fontSize: 15,
     lineHeight: 22,
     textAlign: 'center',
@@ -4672,7 +4652,7 @@ const styles = StyleSheet.create({
   },
   cardFinancialCta: {
     flexShrink: 1,
-    color: '#ECFDF5',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 17,
     lineHeight: 24,
     fontWeight: '700',
@@ -4684,7 +4664,7 @@ const styles = StyleSheet.create({
     marginTop: 48,
   },
   cardPastoralSubtitle: {
-    color: DASHBOARD_CARD_THEMES.pastoral.accent,
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 15,
     lineHeight: 22,
     textAlign: 'center',
@@ -4692,12 +4672,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   cardPastoralPriority: {
-    color: DASHBOARD_CARD_THEMES.pastoral.accentMuted,
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 14,
     lineHeight: 21,
     textAlign: 'center',
     marginTop: 24,
     fontWeight: '600',
+    opacity: 0.88,
   },
   cardPastoralCtaRow: {
     flexDirection: 'row',
@@ -4711,7 +4692,7 @@ const styles = StyleSheet.create({
   },
   cardPastoralCta: {
     flex: 1,
-    color: '#F5F3FF',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 17,
     lineHeight: 24,
     fontWeight: '700',
@@ -4719,18 +4700,12 @@ const styles = StyleSheet.create({
   cardOfferings: {
     paddingHorizontal: 24,
     paddingBottom: 24,
-    backgroundColor: DASHBOARD_CARD_THEMES.offerings.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.offerings.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.offerings.shadowColor,
     shadowOpacity: 0.3,
   },
   cardBirthdays: {
     paddingHorizontal: 18,
     paddingBottom: 18,
     gap: 6,
-    backgroundColor: DASHBOARD_CARD_THEMES.birthdays.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.birthdays.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.birthdays.shadowColor,
     shadowOpacity: 0.3,
   },
   cardMembersList: {
@@ -4738,13 +4713,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     padding: 20,
     gap: 0,
-    backgroundColor: DASHBOARD_CARD_THEMES.members_list.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.members_list.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.members_list.shadowColor,
     shadowOpacity: 0.3,
   },
   membersListSummaryText: {
-    color: DASHBOARD_CARD_THEMES.members_list.accent,
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
@@ -5019,9 +4991,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     gap: 12,
-    backgroundColor: DASHBOARD_CARD_THEMES.vigilance_scales.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.vigilance_scales.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.vigilance_scales.shadowColor,
     shadowOpacity: 0.3,
   },
   cardParkingVehicleV2: {
@@ -5031,9 +5000,6 @@ const styles = StyleSheet.create({
     gap: 6,
     minHeight: 0,
     overflow: 'hidden',
-    backgroundColor: DASHBOARD_CARD_THEMES.parking_vehicle_v2.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.parking_vehicle_v2.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.parking_vehicle_v2.shadowColor,
     shadowOpacity: 0.3,
   },
   cardScaleRoster: {
@@ -5041,9 +5007,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     padding: 20,
     gap: 10,
-    backgroundColor: DASHBOARD_CARD_THEMES.scale_roster.backgroundColor,
-    borderColor: DASHBOARD_CARD_THEMES.scale_roster.borderColor,
-    shadowColor: DASHBOARD_CARD_THEMES.scale_roster.shadowColor,
     shadowOpacity: 0.3,
   },
   scaleRosterParkingPrompt: {
@@ -5245,7 +5208,7 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 10,
   },
-  cardTitle: { fontSize: 22, fontWeight: '800', marginBottom: 16, color: '#FFF', textAlign: 'center' },
+  cardTitle: { ...DASHBOARD_CARD_TYPO.cardTitle, marginBottom: 16 },
   groupedAudienceSections: {
     flex: 1,
     minHeight: 0,
