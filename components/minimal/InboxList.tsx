@@ -1,6 +1,8 @@
+import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export type InboxListItem = {
@@ -8,8 +10,7 @@ export type InboxListItem = {
   subject: string;
   preview?: string;
   meta?: string;
-  /** Conteúdo à direita da linha (ex.: copo com participantes). */
-  trailing?: React.ReactNode;
+  event?: ActiveEventListItem;
   content: React.ReactNode;
 };
 
@@ -19,7 +20,7 @@ type Props = {
 };
 
 export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const { expandedEventId, setExpandedEvent } = useMinimalHome();
 
   if (!items.length) {
     return <Text style={styles.empty}>{emptyMessage}</Text>;
@@ -28,13 +29,20 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
   return (
     <View style={styles.list}>
       {items.map((item) => {
-        const expanded = expandedId === item.id;
+        const expanded = expandedEventId === item.id;
 
         return (
           <View key={item.id} style={styles.rowWrap}>
             <Pressable
               accessibilityRole="button"
-              onPress={() => setExpandedId((current) => (current === item.id ? null : item.id))}
+              onPress={() => {
+                if (expanded) {
+                  setExpandedEvent(null);
+                  return;
+                }
+
+                setExpandedEvent(item.event ?? null);
+              }}
               style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
             >
               <FontAwesome
@@ -54,7 +62,6 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
                 ) : null}
                 {item.meta ? <Text style={styles.meta}>{item.meta}</Text> : null}
               </View>
-              {item.trailing ? <View style={styles.trailing}>{item.trailing}</View> : null}
             </Pressable>
             {expanded ? <View style={styles.expanded}>{item.content}</View> : null}
           </View>
@@ -88,11 +95,6 @@ const styles = StyleSheet.create({
   textBlock: {
     flex: 1,
     gap: 4,
-  },
-  trailing: {
-    flexShrink: 0,
-    alignSelf: 'center',
-    paddingLeft: 4,
   },
   subject: {
     ...MINIMAL_TYPO.inboxSubject,

@@ -21,7 +21,11 @@ import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { getStoredUserPhone } from '@/lib/userSession';
 import { useCallback, useEffect, useState } from 'react';
 
-async function isDrawerModuleVisible(
+export type AppDrawerMenuItemResolved = AppDrawerMenuItem & {
+  enabled: boolean;
+};
+
+async function isDrawerModuleEnabled(
   moduleKey: AppDrawerModuleKey,
   context: {
     dashboardCardAccess: DashboardCardViewAccess;
@@ -79,7 +83,7 @@ async function isDrawerModuleVisible(
 }
 
 export function useAppDrawerMenu() {
-  const [items, setItems] = useState<AppDrawerMenuItem[]>([]);
+  const [items, setItems] = useState<AppDrawerMenuItemResolved[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -112,18 +116,17 @@ export function useAppDrawerMenu() {
         canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
       };
 
-      const visible: AppDrawerMenuItem[] = [];
+      const resolved = await Promise.all(
+        APP_DRAWER_MENU_ITEMS.map(async (item) => ({
+          ...item,
+          enabled: await isDrawerModuleEnabled(item.moduleKey, context),
+        }))
+      );
 
-      for (const item of APP_DRAWER_MENU_ITEMS) {
-        if (await isDrawerModuleVisible(item.moduleKey, context)) {
-          visible.push(item);
-        }
-      }
-
-      setItems(visible);
+      setItems(resolved);
     } catch (error) {
       console.error('Erro ao carregar menu lateral:', error);
-      setItems([APP_DRAWER_MENU_ITEMS[0]]);
+      setItems(APP_DRAWER_MENU_ITEMS.map((item) => ({ ...item, enabled: item.moduleKey === 'events_panel' })));
     } finally {
       setLoading(false);
     }

@@ -18,8 +18,20 @@ export const MINIMAL_ICON = {
   action: 18,
 } as const;
 
-/** Altura reservada para a barra inferior fixa (menu + paleta). */
-export const MINIMAL_BOTTOM_DOCK_HEIGHT = 64;
+/** Altura reservada para a barra inferior fixa (Sair do Aplicativo). */
+export const MINIMAL_EXIT_BAR_HEIGHT = 56;
+
+/** Altura base do chrome superior (menu + safe area aproximada). */
+export const MINIMAL_TOP_CHROME_BASE = 52;
+
+/** Espaço extra quando há header da igreja no topo esquerdo. */
+export const MINIMAL_TOP_CHROME_HEADER = 88;
+
+/** Espaço extra para o contador Inscritos / Limite. */
+export const MINIMAL_TOP_CHROME_COUNTER = 22;
+
+/** @deprecated Use MINIMAL_EXIT_BAR_HEIGHT */
+export const MINIMAL_BOTTOM_DOCK_HEIGHT = MINIMAL_EXIT_BAR_HEIGHT;
 
 export const MINIMAL_TYPO = {
   churchName: { fontSize: 12, fontWeight: '600' as const, color: MINIMAL_UI.text },

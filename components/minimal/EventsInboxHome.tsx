@@ -1,6 +1,5 @@
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { InboxList, type InboxListItem } from '@/components/minimal/InboxList';
-import { ParticipantCupBadge } from '@/components/minimal/ParticipantCupBadge';
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
@@ -70,13 +69,7 @@ export function EventsInboxHome() {
         subject: event.name,
         preview: event.event_local?.trim() || 'Sem local informado',
         meta: formatEventDateTimeLabel(event.event_date),
-        trailing: (
-          <ParticipantCupBadge
-            count={event.registeredCount}
-            maxCapacity={event.max_capacity}
-            size="sm"
-          />
-        ),
+        event,
         content: familyId ? (
           <FamilyRegistrationList
             familyId={familyId}

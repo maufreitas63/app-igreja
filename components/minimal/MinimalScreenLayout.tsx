@@ -1,9 +1,18 @@
-import { MINIMAL_BOTTOM_DOCK_HEIGHT, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { MinimalHomeProvider, useMinimalHome } from '@/context/MinimalHomeContext';
+import {
+  MINIMAL_EXIT_BAR_HEIGHT,
+  MINIMAL_TOP_CHROME_BASE,
+  MINIMAL_TOP_CHROME_COUNTER,
+  MINIMAL_TOP_CHROME_HEADER,
+  MINIMAL_UI,
+} from '@/lib/minimalUiTheme';
+import React, { useMemo } from 'react';
+import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppDrawer } from './AppDrawer';
-import { MinimalBottomDock } from './MinimalBottomDock';
+import { MinimalEventPalettePanel } from './MinimalEventPalettePanel';
+import { MinimalExitBar } from './MinimalExitBar';
+import { MinimalTopLeftChrome } from './MinimalTopLeftChrome';
 
 type Props = {
   title?: string;
@@ -16,7 +25,7 @@ type Props = {
   scroll?: boolean;
 };
 
-export function MinimalScreenLayout({
+function MinimalScreenLayoutBody({
   title,
   header,
   fixedTop,
@@ -25,41 +34,74 @@ export function MinimalScreenLayout({
   contentContainerStyle,
   scroll = true,
 }: Props) {
+  const { expandedEventId } = useMinimalHome();
+
+  const contentPaddingTop = useMemo(() => {
+    let top = MINIMAL_TOP_CHROME_BASE;
+
+    if (header) {
+      top += MINIMAL_TOP_CHROME_HEADER;
+    } else if (title) {
+      top += 28;
+    }
+
+    if (expandedEventId) {
+      top += MINIMAL_TOP_CHROME_COUNTER;
+    }
+
+    return top;
+  }, [expandedEventId, header, title]);
+
+  const contentPaddingBottom = MINIMAL_EXIT_BAR_HEIGHT + 12;
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <AppDrawer />
+      <MinimalTopLeftChrome title={title} header={header} />
 
-      {title ? (
-        <View style={styles.titleBar}>
-          <Text style={styles.title}>{title}</Text>
-        </View>
-      ) : null}
+      <View style={[styles.body, { paddingTop: contentPaddingTop }]}>
+        <MinimalEventPalettePanel />
 
-      {header}
+        {fixedTop ? <View style={styles.fixedTop}>{fixedTop}</View> : null}
 
-      {fixedTop ? <View style={styles.fixedTop}>{fixedTop}</View> : null}
+        {scroll ? (
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: contentPaddingBottom },
+              contentContainerStyle,
+            ]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator
+          >
+            {children}
+          </ScrollView>
+        ) : (
+          <View
+            style={[
+              styles.flexContent,
+              { paddingBottom: contentPaddingBottom },
+              contentContainerStyle,
+            ]}
+          >
+            {children}
+          </View>
+        )}
 
-      {scroll ? (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: MINIMAL_BOTTOM_DOCK_HEIGHT + 16 },
-            contentContainerStyle,
-          ]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator
-        >
-          {children}
-        </ScrollView>
-      ) : (
-        <View style={[styles.flexContent, contentContainerStyle]}>{children}</View>
-      )}
+        {footer ? <View style={[styles.footer, { bottom: MINIMAL_EXIT_BAR_HEIGHT }]}>{footer}</View> : null}
+      </View>
 
-      {footer ? <View style={[styles.footer, { bottom: MINIMAL_BOTTOM_DOCK_HEIGHT }]}>{footer}</View> : null}
-
-      <MinimalBottomDock />
+      <MinimalExitBar />
     </SafeAreaView>
+  );
+}
+
+export function MinimalScreenLayout(props: Props) {
+  return (
+    <MinimalHomeProvider>
+      <MinimalScreenLayoutBody {...props} />
+    </MinimalHomeProvider>
   );
 }
 
@@ -68,13 +110,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: MINIMAL_UI.background,
   },
-  titleBar: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
-  },
-  title: {
-    ...MINIMAL_TYPO.screenTitle,
+  body: {
+    flex: 1,
+    minHeight: 0,
   },
   fixedTop: {
     paddingHorizontal: 16,
@@ -91,7 +129,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     paddingHorizontal: 16,
-    paddingBottom: MINIMAL_BOTTOM_DOCK_HEIGHT + 8,
   },
   footer: {
     position: 'absolute',

@@ -1,11 +1,12 @@
 import { useAppDrawer } from '@/context/AppDrawerContext';
-import { useAppDrawerMenu } from '@/hooks/useAppDrawerMenu';
+import { useAppDrawerMenu, type AppDrawerMenuItemResolved } from '@/hooks/useAppDrawerMenu';
 import { navigateDrawerMenuItem } from '@/lib/appDrawerMenu';
 import { MINIMAL_UI, MINIMAL_TYPO } from '@/lib/minimalUiTheme';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -18,9 +19,28 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function AppDrawer() {
   const { isOpen, closeDrawer } = useAppDrawer();
-  const { items, loading } = useAppDrawerMenu();
+  const { items, loading, refresh } = useAppDrawerMenu();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    if (isOpen) {
+      void refresh();
+    }
+  }, [isOpen, refresh]);
+
+  const handlePress = (item: AppDrawerMenuItemResolved) => {
+    if (!item.enabled) {
+      Alert.alert(
+        'Indisponível',
+        'Você não tem permissão para abrir este módulo no momento.'
+      );
+      return;
+    }
+
+    closeDrawer();
+    void navigateDrawerMenuItem(router, item.moduleKey);
+  };
 
   return (
     <Modal animationType="slide" transparent visible={isOpen} onRequestClose={closeDrawer}>
@@ -30,17 +50,16 @@ export function AppDrawer() {
           {loading ? (
             <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />
           ) : (
-            <ScrollView showsVerticalScrollIndicator>
+            <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator>
               {items.map((item) => (
                 <TouchableOpacity
                   key={item.moduleKey}
-                  style={styles.item}
-                  onPress={() => {
-                    closeDrawer();
-                    void navigateDrawerMenuItem(router, item.moduleKey);
-                  }}
+                  style={[styles.item, !item.enabled && styles.itemDisabled]}
+                  onPress={() => handlePress(item)}
                 >
-                  <Text style={styles.itemLabel}>{item.label}</Text>
+                  <Text style={[styles.itemLabel, !item.enabled && styles.itemLabelDisabled]}>
+                    {item.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -63,6 +82,8 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     paddingHorizontal: 16,
     zIndex: 2,
+    flex: 1,
+    maxHeight: '100%',
   },
   backdrop: {
     flex: 1,
@@ -75,11 +96,23 @@ const styles = StyleSheet.create({
   loader: {
     marginTop: 24,
   },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 16,
+  },
   item: {
     paddingVertical: 14,
     paddingHorizontal: 4,
   },
+  itemDisabled: {
+    opacity: 0.45,
+  },
   itemLabel: {
     ...MINIMAL_TYPO.menuItem,
+  },
+  itemLabelDisabled: {
+    color: MINIMAL_UI.textMuted,
   },
 });

@@ -1,12 +1,12 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
-import { ParticipantCupBadge } from '@/components/minimal/ParticipantCupBadge';
-import { useAppDrawer } from '@/context/AppDrawerContext';
+import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { usePalette } from '@/context/PaletteContext';
-import { useActiveEvents } from '@/hooks/useActiveEvents';
-import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
+import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { fetchAllPalettes } from '@/lib/paletasApi';
 import type { Paleta } from '@/lib/paletasTypes';
-import { FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -16,21 +16,15 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export function MinimalBottomDock() {
-  const insets = useSafeAreaInsets();
-  const { openDrawer } = useAppDrawer();
+/** Painel de paleta (css-g5y9jx) — visível somente com evento expandido. */
+export function MinimalEventPalettePanel() {
+  const { expandedEventId } = useMinimalHome();
+  const router = useRouter();
   const { activePalette, activatePalette, isLoading: isPaletteLoading } = usePalette();
-  const { events } = useActiveEvents({ enablePolling: true });
   const [palettes, setPalettes] = useState<Paleta[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [activating, setActivating] = useState(false);
-
-  const participantCount = useMemo(
-    () => events.reduce((sum, event) => sum + event.registeredCount, 0),
-    [events]
-  );
 
   useEffect(() => {
     let cancelled = false;
@@ -89,18 +83,13 @@ export function MinimalBottomDock() {
     [activatePalette, activePalette.id, activating]
   );
 
-  return (
-    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-      <Pressable
-        accessibilityLabel="Abrir menu"
-        accessibilityRole="button"
-        onPress={openDrawer}
-        style={styles.menuButton}
-      >
-        <FontAwesome name="bars" size={MINIMAL_ICON.menu} color={MINIMAL_UI.icon} />
-      </Pressable>
+  if (!expandedEventId) {
+    return null;
+  }
 
-      <View style={styles.paletteSection}>
+  return (
+    <View style={styles.wrap}>
+      <View style={styles.paletteRow}>
         <Text style={styles.paletteLabel}>Paleta</Text>
         {busy && !options.length ? (
           <ActivityIndicator color={MINIMAL_UI.icon} size="small" />
@@ -119,37 +108,40 @@ export function MinimalBottomDock() {
             />
           </View>
         )}
-        <ParticipantCupBadge count={participantCount} size="sm" style={styles.cup} />
       </View>
+
+      <Pressable
+        accessibilityRole="button"
+        onPress={() =>
+          void navigateWithScreenAccess(
+            router,
+            '/financial',
+            ACCESS_SCREEN.financial,
+            { presentation: 'minimal' },
+            { method: 'push' }
+          )
+        }
+        style={({ pressed }) => [styles.financeiroRow, pressed && styles.financeiroRowPressed]}
+      >
+        <Text style={styles.financeiroText}>Financeiro</Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 12,
-    paddingTop: 10,
+  wrap: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: MINIMAL_UI.divider,
     backgroundColor: MINIMAL_UI.background,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: MINIMAL_UI.divider,
-    zIndex: 20,
   },
-  menuButton: {
-    padding: 8,
-  },
-  paletteSection: {
-    flex: 1,
+  paletteRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    minWidth: 0,
   },
   paletteLabel: {
     ...MINIMAL_TYPO.sectionLabel,
@@ -167,7 +159,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  cup: {
-    flexShrink: 0,
+  financeiroRow: {
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+  },
+  financeiroRowPressed: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  financeiroText: {
+    ...MINIMAL_TYPO.menuItem,
+    fontWeight: '600',
   },
 });

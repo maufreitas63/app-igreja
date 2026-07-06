@@ -23,10 +23,8 @@ export function MinimalHomeHeader({ userName }: Props) {
 
 const styles = StyleSheet.create({
   wrap: {
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 6,
+    alignItems: 'flex-start',
+    gap: 4,
   },
   logo: {
     width: MINIMAL_ICON.logo,
@@ -35,10 +33,10 @@ const styles = StyleSheet.create({
   },
   church: {
     ...MINIMAL_TYPO.churchName,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   greeting: {
     ...MINIMAL_TYPO.greeting,
-    textAlign: 'center',
+    textAlign: 'left',
   },
 });
