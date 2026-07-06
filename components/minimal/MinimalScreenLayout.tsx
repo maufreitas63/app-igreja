@@ -4,6 +4,7 @@ import {
   MINIMAL_TOP_CHROME_BASE,
   MINIMAL_TOP_CHROME_EXPANDED,
   MINIMAL_TOP_CHROME_HEADER,
+  MINIMAL_TOP_IDENTITY_BAR_HEIGHT,
   MINIMAL_UI,
 } from '@/lib/minimalUiTheme';
 import React, { useMemo } from 'react';
@@ -36,7 +37,9 @@ function MinimalScreenLayoutBody({
   const { expandedEventId } = useMinimalHome();
 
   const contentPaddingTop = useMemo(() => {
-    let top = expandedEventId ? MINIMAL_TOP_CHROME_EXPANDED : MINIMAL_TOP_CHROME_BASE;
+    let top =
+      MINIMAL_TOP_IDENTITY_BAR_HEIGHT +
+      (expandedEventId ? MINIMAL_TOP_CHROME_EXPANDED : MINIMAL_TOP_CHROME_BASE);
 
     if (header) {
       top += MINIMAL_TOP_CHROME_HEADER;

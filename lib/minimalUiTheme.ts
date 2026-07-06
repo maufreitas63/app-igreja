@@ -26,6 +26,12 @@ export const MINIMAL_ICON = {
 /** Altura reservada para a barra inferior fixa (Sair do Aplicativo). */
 export const MINIMAL_EXIT_BAR_HEIGHT = 56;
 
+/** Faixa superior: saudação (esquerda) e logo (direita). */
+export const MINIMAL_TOP_IDENTITY_BAR_HEIGHT = 40;
+
+/** Logo compacto na faixa superior direita. */
+export const MINIMAL_TOP_IDENTITY_LOGO_HEIGHT = 36;
+
 /** Altura base do chrome superior (menu + safe area aproximada). */
 export const MINIMAL_TOP_CHROME_BASE = 52;
 
@@ -48,7 +54,7 @@ export const MINIMAL_TYPO = {
   churchName: { fontSize: 12, fontWeight: '600' as const, color: MINIMAL_UI.text },
   greeting: { fontSize: 16, fontWeight: '700' as const, color: MINIMAL_UI.text },
   screenTitle: { fontSize: 18, fontWeight: '700' as const, color: MINIMAL_UI.text },
-  inboxSubject: { fontSize: 15, fontWeight: '600' as const, color: MINIMAL_UI.text },
+  inboxSubject: { fontSize: 15, fontWeight: '700' as const, color: MINIMAL_UI.text },
   inboxPreview: { fontSize: 13, color: MINIMAL_UI.textMuted },
   menuItem: { fontSize: 15, fontWeight: '500' as const, color: MINIMAL_UI.text },
   sectionLabel: { fontSize: 13, fontWeight: '700' as const, color: MINIMAL_UI.textMuted },

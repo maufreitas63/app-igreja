@@ -1,4 +1,5 @@
 import { MinimalExpandedEventBar } from '@/components/minimal/MinimalExpandedEventBar';
+import { MinimalTopIdentityBar } from '@/components/minimal/MinimalTopIdentityBar';
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -31,7 +32,11 @@ export function MinimalTopLeftChrome({ title, header }: Props) {
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + 8 }]}>
-      <MinimalExpandedEventBar menuButton={menuButton} />
+      <MinimalTopIdentityBar />
+
+      <View style={styles.menuChrome}>
+        <MinimalExpandedEventBar menuButton={menuButton} />
+      </View>
 
       {!expandedEventId && (header || title) ? (
         <View style={styles.leftColumn}>
@@ -57,6 +62,9 @@ const styles = StyleSheet.create({
   menuButton: {
     padding: 4,
     marginTop: 2,
+  },
+  menuChrome: {
+    width: '100%',
   },
   leftColumn: {
     alignItems: 'flex-start',

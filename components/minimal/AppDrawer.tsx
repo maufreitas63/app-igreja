@@ -6,7 +6,6 @@ import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -30,17 +29,11 @@ export function AppDrawer() {
   }, [isOpen, refresh]);
 
   const handlePress = (item: AppDrawerMenuItemResolved) => {
-    if (!item.enabled) {
-      Alert.alert(
-        'Indisponível',
-        'Você não tem permissão para abrir este módulo no momento.'
-      );
-      return;
-    }
-
     closeDrawer();
     void navigateDrawerMenuItem(router, item.moduleKey);
   };
+
+  const visibleItems = items.filter((item) => item.enabled);
 
   return (
     <Modal animationType="slide" transparent visible={isOpen} onRequestClose={closeDrawer}>
@@ -51,15 +44,13 @@ export function AppDrawer() {
             <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />
           ) : (
             <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator>
-              {items.map((item) => (
+              {visibleItems.map((item) => (
                 <TouchableOpacity
                   key={item.moduleKey}
-                  style={[styles.item, !item.enabled && styles.itemDisabled]}
+                  style={styles.item}
                   onPress={() => handlePress(item)}
                 >
-                  <Text style={[styles.itemLabel, !item.enabled && styles.itemLabelDisabled]}>
-                    {item.label}
-                  </Text>
+                  <Text style={styles.itemLabel}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -103,16 +94,12 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   item: {
-    paddingVertical: 14,
-    paddingHorizontal: 4,
-  },
-  itemDisabled: {
-    opacity: 0.45,
+    minHeight: 48,
+    justifyContent: 'center',
+    paddingVertical: 12,
   },
   itemLabel: {
     ...MINIMAL_TYPO.menuItem,
-  },
-  itemLabelDisabled: {
-    color: MINIMAL_UI.textMuted,
+    textAlign: 'left',
   },
 });
