@@ -6,7 +6,7 @@ export function confirmDialog(
   message: string,
   confirmLabel = 'Confirmar',
   cancelLabel = 'Não',
-  options?: { destructive?: boolean }
+  options?: { destructive?: boolean; onConfirmed?: () => void }
 ) {
   if (Platform.OS === 'web') {
     const text = message.trim() || title.trim();
@@ -15,6 +15,7 @@ export function confirmDialog(
       confirmLabel,
       cancelLabel,
       destructive: options?.destructive,
+      onConfirmed: options?.onConfirmed,
     });
   }
 
@@ -27,7 +28,10 @@ export function confirmDialog(
         {
           text: confirmLabel,
           style: options?.destructive ? 'destructive' : 'default',
-          onPress: () => resolve(true),
+          onPress: () => {
+            options?.onConfirmed?.();
+            resolve(true);
+          },
         },
       ],
       { cancelable: true, onDismiss: () => resolve(false) }

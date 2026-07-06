@@ -481,14 +481,10 @@ export async function confirmExitApplication(): Promise<boolean> {
     exitUi.button,
     'Deseja sair do aplicativo? Sua sessão será encerrada.',
     'Sair',
-    'Cancelar'
+    'Cancelar',
+    { onConfirmed: exitApplication }
   );
 
-  if (!confirmed) {
-    return false;
-  }
-
-  exitApplication();
-  return true;
+  return confirmed;
 }
 

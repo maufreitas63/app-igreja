@@ -1,6 +1,6 @@
 import { settleConfirmDialog, subscribeConfirmDialogHost, type ConfirmDialogRequest } from '@/lib/confirmDialogHost';
 import React, { useEffect, useState } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export function ConfirmDialogHost() {
   const [request, setRequest] = useState<ConfirmDialogRequest | null>(null);
@@ -29,32 +29,44 @@ export function ConfirmDialogHost() {
     <Modal transparent visible animationType="fade" onRequestClose={dismiss}>
       <View style={styles.modalRoot}>
         <Pressable style={styles.backdrop} onPress={dismiss} accessibilityRole="button" />
-        <View style={styles.cardLayer} pointerEvents="box-none">
+        <View style={styles.cardShell} pointerEvents="box-none">
           <View style={styles.card}>
             <Text style={styles.message}>{request.message}</Text>
             <View style={[styles.actions, request.alertOnly && styles.actionsSingle]}>
               {request.alertOnly ? null : (
-                <Pressable
-                  style={({ pressed }) => [styles.button, styles.cancelButton, pressed && styles.buttonPressed]}
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  style={styles.button}
                   onPress={() => close(false)}
                 >
-                  <Text style={styles.cancelButtonText}>{request.cancelLabel}</Text>
-                </Pressable>
+                  <View style={[styles.buttonInner, styles.cancelButton]}>
+                    <Text style={styles.cancelButtonText} pointerEvents="none">
+                      {request.cancelLabel}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               )}
-              <Pressable
-                style={({ pressed }) => [
-                  styles.button,
-                  request.destructive ? styles.destructiveButton : styles.confirmButton,
-                  pressed && styles.buttonPressed,
-                ]}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                style={styles.button}
                 onPress={() => close(true)}
               >
-                <Text
-                  style={request.destructive ? styles.destructiveButtonText : styles.confirmButtonText}
+                <View
+                  style={[
+                    styles.buttonInner,
+                    request.destructive ? styles.destructiveButton : styles.confirmButton,
+                  ]}
                 >
-                  {request.confirmLabel}
-                </Text>
-              </Pressable>
+                  <Text
+                    style={request.destructive ? styles.destructiveButtonText : styles.confirmButtonText}
+                    pointerEvents="none"
+                  >
+                    {request.confirmLabel}
+                  </Text>
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -80,12 +92,14 @@ const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(15, 23, 42, 0.72)',
+    zIndex: 0,
   },
-  cardLayer: {
-    ...StyleSheet.absoluteFillObject,
+  cardShell: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+    zIndex: 1,
   },
   card: {
     width: '100%',
@@ -113,13 +127,14 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     minHeight: 44,
+  },
+  buttonInner: {
+    flex: 1,
+    minHeight: 44,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 12,
-  },
-  buttonPressed: {
-    opacity: 0.85,
   },
   cancelButton: {
     backgroundColor: 'rgba(51, 65, 85, 0.9)',

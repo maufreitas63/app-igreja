@@ -4,6 +4,7 @@ export type ConfirmDialogRequest = {
   cancelLabel: string;
   destructive?: boolean;
   alertOnly?: boolean;
+  onConfirmed?: () => void;
   resolve: (confirmed: boolean) => void;
 };
 
@@ -28,6 +29,7 @@ export function requestConfirmDialog(options: {
   cancelLabel?: string;
   destructive?: boolean;
   alertOnly?: boolean;
+  onConfirmed?: () => void;
 }): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     if (pending) {
@@ -40,6 +42,7 @@ export function requestConfirmDialog(options: {
       cancelLabel: options.cancelLabel ?? 'Não',
       destructive: options.destructive,
       alertOnly: options.alertOnly,
+      onConfirmed: options.onConfirmed,
       resolve,
     };
 
@@ -52,7 +55,13 @@ export function settleConfirmDialog(confirmed: boolean) {
     return;
   }
 
-  pending.resolve(confirmed);
+  const current = pending;
   pending = null;
   listener?.(null);
+
+  if (confirmed && current.onConfirmed) {
+    current.onConfirmed();
+  }
+
+  current.resolve(confirmed);
 }
