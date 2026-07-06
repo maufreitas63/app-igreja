@@ -5,7 +5,7 @@ import {
   resolveEventOrchestrationTarget,
 } from '@/lib/eventOrchestrationRoutes';
 import { isEventOrchestrationPanelFocused } from '@/lib/eventOrchestrationPanelFocus';
-import { hasStoredMemberSessionToken } from '@/lib/memberSession';
+import { hasStoredMemberSession } from '@/lib/memberSession';
 import { supabase } from '@/lib/supabase';
 import { useLocalSearchParams, usePathname, useRouter, useSegments } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -77,7 +77,7 @@ export function EventOrchestrationListener() {
     let cancelled = false;
 
     const resolveSession = async () => {
-      const hasSession = await hasStoredMemberSessionToken();
+      const hasSession = await hasStoredMemberSession();
       if (!cancelled) {
         setHasMemberSession(hasSession);
       }

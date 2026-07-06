@@ -52,11 +52,7 @@ import {
   resolveRegisteredUserSessionRoute,
 } from '@/lib/profileOnboarding';
 import { isLgpdAtivoEnabled } from '@/lib/appParameters';
-import {
-  loadAppActiveStatus,
-  notifyAppActiveSessionEstablished,
-} from '@/lib/appActiveStatus';
-import { checkOperatorIsSuperAdmin } from '@/lib/accessControl';
+import { notifyAppActiveSessionEstablished } from '@/lib/appActiveStatus';
 import {
   getStoredUserPhone,
   persistUserPhone,
@@ -229,20 +225,6 @@ export default function IndexScreen() {
 
       if (!route) {
         return false;
-      }
-
-      const appStatus = await loadAppActiveStatus({ forceRefresh: true });
-
-      if (!appStatus.active) {
-        const isSuperAdmin = await checkOperatorIsSuperAdmin({ forceRefresh: true });
-
-        if (!isSuperAdmin) {
-          Alert.alert(
-            'Aplicativo indisponível',
-            appStatus.message || 'O aplicativo está temporariamente indisponível.'
-          );
-          return false;
-        }
       }
 
       router.replace(route);

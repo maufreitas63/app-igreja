@@ -38,6 +38,25 @@ export const resolveProfileId = (profile: Record<string, unknown> | null | undef
 
 
 
+async function issueProfileSessionToken(profileId: string): Promise<string | null> {
+  try {
+    const { supabase } = await import('@/lib/supabase');
+    const { data, error } = await supabase.rpc('issue_profile_session', {
+      p_profile_id: profileId,
+    });
+
+    if (error) {
+      console.warn('issue_profile_session:', error);
+      return null;
+    }
+
+    return typeof data === 'string' && data.trim() ? data.trim() : null;
+  } catch (error) {
+    console.warn('issue_profile_session:', error);
+    return null;
+  }
+}
+
 export async function persistUserSession(
   profile: Record<string, unknown> | null | undefined,
   phoneForSession: string,
@@ -50,7 +69,12 @@ export async function persistUserSession(
     await AsyncStorage.setItem(USER_PROFILE_ID_STORAGE_KEY, profileId);
   }
 
-  const token = sessionToken?.trim();
+  let token = sessionToken?.trim() || null;
+
+  if (!token && profileId) {
+    token = await issueProfileSessionToken(profileId);
+  }
+
   if (token) {
     await AsyncStorage.setItem(USER_SESSION_TOKEN_STORAGE_KEY, token);
   }

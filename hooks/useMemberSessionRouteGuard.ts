@@ -1,9 +1,9 @@
-import { hasStoredMemberSessionToken } from '@/lib/memberSession';
+import { hasStoredMemberSession } from '@/lib/memberSession';
 import { SIGN_OUT_QUERY_PARAM } from '@/lib/userSession';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback } from 'react';
 
-/** Bloqueia `(tabs)` sem login recente (token de sessão). */
+/** Bloqueia `(tabs)` sem login recente (telefone + perfil ou token de sessão). */
 export function useMemberSessionRouteGuard() {
   const router = useRouter();
 
@@ -12,7 +12,7 @@ export function useMemberSessionRouteGuard() {
       let active = true;
 
       void (async () => {
-        const hasSession = await hasStoredMemberSessionToken();
+        const hasSession = await hasStoredMemberSession();
 
         if (!active || hasSession) {
           return;

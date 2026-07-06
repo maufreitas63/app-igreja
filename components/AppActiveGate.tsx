@@ -47,7 +47,7 @@ export function AppActiveGate({ children }: Props) {
     }
   }, [status?.active]);
 
-  if (loading && !status) {
+  if (loading && !status && !isLoginRoute(pathname)) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color="#10b981" />

@@ -35,21 +35,64 @@ export function resolveAppInactiveMessage(value: string | null | undefined) {
   return trimmed;
 }
 
+function coerceAppActiveBoolean(value: unknown): boolean | null {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    if (value === 1) {
+      return true;
+    }
+
+    if (value === 0) {
+      return false;
+    }
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLocaleLowerCase();
+
+    if (normalized === 'true' || normalized === 'sim' || normalized === '1') {
+      return true;
+    }
+
+    if (normalized === 'false' || normalized === 'nao' || normalized === '0') {
+      return false;
+    }
+  }
+
+  return null;
+}
+
 function parseAppActiveStatusPayload(data: unknown): AppActiveStatus | null {
-  if (!data || typeof data !== 'object') {
+  const record =
+    typeof data === 'string'
+      ? (() => {
+          try {
+            return JSON.parse(data) as Record<string, unknown>;
+          } catch {
+            return null;
+          }
+        })()
+      : data && typeof data === 'object'
+        ? (data as Record<string, unknown>)
+        : null;
+
+  if (!record) {
     return null;
   }
 
-  const record = data as Record<string, unknown>;
   const activeRaw = record.active ?? record.is_active;
   const messageRaw = record.message ?? record.inactive_message ?? record.app_inativo_msg;
+  const active = coerceAppActiveBoolean(activeRaw);
 
-  if (typeof activeRaw !== 'boolean') {
+  if (active == null) {
     return null;
   }
 
   return {
-    active: activeRaw,
+    active,
     message: resolveAppInactiveMessage(typeof messageRaw === 'string' ? messageRaw : null),
   };
 }
