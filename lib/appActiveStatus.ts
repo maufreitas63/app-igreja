@@ -1,5 +1,5 @@
 import { isAppParameterNo } from '@/lib/checkInVisibility';
-import { getAppParameterValue, isAppParameterSim } from '@/lib/appParameters';
+import { getAppParameterValue } from '@/lib/appParameters';
 import { getCachedOrFetch, invalidateAsyncCache } from '@/lib/asyncResultCache';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
@@ -22,11 +22,7 @@ export function resolveAppActiveFromParameter(value: string | null | undefined) 
     return true;
   }
 
-  if (isAppParameterNo(value)) {
-    return false;
-  }
-
-  return isAppParameterSim(value);
+  return !isAppParameterNo(value);
 }
 
 export function resolveAppInactiveMessage(value: string | null | undefined) {

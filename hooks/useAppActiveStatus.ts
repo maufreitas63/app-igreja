@@ -5,15 +5,12 @@ import {
   registerAppActiveSessionListener,
   type AppActiveStatus,
 } from '@/lib/appActiveStatus';
-import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 
 type UseAppActiveStatusResult = {
   status: AppActiveStatus | null;
   loading: boolean;
-  rechecking: boolean;
   superAdminBypass: boolean;
-  refresh: (options?: { silent?: boolean; forceRefresh?: boolean }) => Promise<void>;
 };
 
 async function resolveSuperAdminBypass(status: AppActiveStatus, forceRefresh: boolean) {
@@ -24,53 +21,44 @@ async function resolveSuperAdminBypass(status: AppActiveStatus, forceRefresh: bo
   return checkOperatorIsSuperAdmin({ forceRefresh });
 }
 
+async function fetchAppActiveGateState(forceRefresh: boolean): Promise<{
+  status: AppActiveStatus;
+  superAdminBypass: boolean;
+}> {
+  if (forceRefresh) {
+    invalidateOperatorSuperAdminCache();
+    clearAppActiveStatusCache();
+  }
+
+  const nextStatus = await loadAppActiveStatus({ forceRefresh });
+  const bypass = await resolveSuperAdminBypass(nextStatus, forceRefresh);
+
+  return { status: nextStatus, superAdminBypass: bypass };
+}
+
 export function useAppActiveStatus(): UseAppActiveStatusResult {
   const [status, setStatus] = useState<AppActiveStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [rechecking, setRechecking] = useState(false);
   const [superAdminBypass, setSuperAdminBypass] = useState(false);
 
-  const refresh = useCallback(async (options?: { silent?: boolean; forceRefresh?: boolean }) => {
-    const silent = options?.silent === true;
-    const forceRefresh = options?.forceRefresh === true;
-
-    if (!silent) {
-      setLoading(true);
-    } else {
-      setRechecking(true);
-    }
-
-    try {
-      if (forceRefresh) {
-        invalidateOperatorSuperAdminCache();
-        clearAppActiveStatusCache();
-      }
-
-      const nextStatus = await loadAppActiveStatus({ forceRefresh });
-      setStatus(nextStatus);
-      setSuperAdminBypass(await resolveSuperAdminBypass(nextStatus, forceRefresh || !silent));
-    } catch (error) {
-      console.error('Erro ao verificar app_ativo:', error);
-      setStatus({ active: true, message: '' });
-      setSuperAdminBypass(false);
-    } finally {
-      if (!silent) {
-        setLoading(false);
-      }
-      setRechecking(false);
-    }
-  }, []);
+  const applyGateState = useCallback(
+    (next: { status: AppActiveStatus; superAdminBypass: boolean }) => {
+      setStatus(next.status);
+      setSuperAdminBypass(next.superAdminBypass);
+    },
+    []
+  );
 
   const refreshAfterSessionEstablished = useCallback(async () => {
-    invalidateOperatorSuperAdminCache();
-    clearAppActiveStatusCache();
-
-    const nextStatus = await loadAppActiveStatus({ forceRefresh: true });
-    setStatus(nextStatus);
-    setSuperAdminBypass(await resolveSuperAdminBypass(nextStatus, true));
-    setLoading(false);
-    setRechecking(false);
-  }, []);
+    try {
+      const next = await fetchAppActiveGateState(true);
+      applyGateState(next);
+    } catch (error) {
+      console.error('Erro ao revalidar app_ativo após login:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [applyGateState]);
 
   useEffect(() => {
     registerAppActiveSessionListener(refreshAfterSessionEstablished);
@@ -81,17 +69,33 @@ export function useAppActiveStatus(): UseAppActiveStatusResult {
   }, [refreshAfterSessionEstablished]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let active = true;
 
-  useFocusEffect(
-    useCallback(() => {
-      void refresh({ silent: true, forceRefresh: true });
-      return undefined;
-    }, [refresh])
-  );
+    void (async () => {
+      try {
+        const next = await fetchAppActiveGateState(false);
+        if (active) {
+          applyGateState(next);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar app_ativo:', error);
+        if (active) {
+          setStatus({ active: true, message: '' });
+          setSuperAdminBypass(false);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    })();
 
-  return { status, loading, rechecking, superAdminBypass, refresh };
+    return () => {
+      active = false;
+    };
+  }, [applyGateState]);
+
+  return { status, loading, superAdminBypass };
 }
 
 export { clearAppActiveStatusCache } from '@/lib/appActiveStatus';

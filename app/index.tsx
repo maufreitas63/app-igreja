@@ -232,14 +232,17 @@ export default function IndexScreen() {
       }
 
       const appStatus = await loadAppActiveStatus({ forceRefresh: true });
-      const isSuperAdmin = await checkOperatorIsSuperAdmin({ forceRefresh: true });
 
-      if (!appStatus.active && !isSuperAdmin) {
-        Alert.alert(
-          'Aplicativo indisponível',
-          appStatus.message || 'O aplicativo está temporariamente indisponível.'
-        );
-        return false;
+      if (!appStatus.active) {
+        const isSuperAdmin = await checkOperatorIsSuperAdmin({ forceRefresh: true });
+
+        if (!isSuperAdmin) {
+          Alert.alert(
+            'Aplicativo indisponível',
+            appStatus.message || 'O aplicativo está temporariamente indisponível.'
+          );
+          return false;
+        }
       }
 
       router.replace(route);
