@@ -17,6 +17,21 @@ export type DashboardCardTheme = {
   accentMuted: string;
 };
 
+/** Tema claro compartilhado (cards Escalas, escalas associadas, aniversários, etc.). */
+export const VIGILANCE_LIGHT_CARD_THEME: DashboardCardTheme = {
+  backgroundColor: VIGILANCE_SCALES_UI.surface,
+  borderColor: VIGILANCE_SCALES_UI.border,
+  shadowColor: '#E8E8E8',
+  accent: VIGILANCE_SCALES_UI.accent,
+  accentMuted: VIGILANCE_SCALES_UI.accent,
+};
+
+/** Superfície clara para painéis do maintenance-dashboard. */
+export const MAINTENANCE_LIGHT_PANEL_CARD = {
+  backgroundColor: VIGILANCE_SCALES_UI.surface,
+  borderColor: VIGILANCE_SCALES_UI.border,
+} as const;
+
 export const DASHBOARD_CARD_THEMES = {
   event_alt: {
     backgroundColor: 'rgba(99, 102, 241, 0.24)',
@@ -53,20 +68,8 @@ export const DASHBOARD_CARD_THEMES = {
     accent: '#E9D5FF',
     accentMuted: '#D8B4FE',
   },
-  members_list: {
-    backgroundColor: 'rgba(225, 29, 72, 0.2)',
-    borderColor: '#FB7185',
-    shadowColor: '#E11D48',
-    accent: '#FECDD3',
-    accentMuted: '#FDA4AF',
-  },
-  birthdays: {
-    backgroundColor: 'rgba(14, 165, 233, 0.2)',
-    borderColor: '#38BDF8',
-    shadowColor: '#0284C7',
-    accent: '#BAE6FD',
-    accentMuted: '#7DD3FC',
-  },
+  members_list: VIGILANCE_LIGHT_CARD_THEME,
+  birthdays: VIGILANCE_LIGHT_CARD_THEME,
   financial: {
     backgroundColor: 'rgba(5, 150, 105, 0.22)',
     borderColor: '#34D399',
@@ -74,27 +77,9 @@ export const DASHBOARD_CARD_THEMES = {
     accent: '#A7F3D0',
     accentMuted: '#6EE7B7',
   },
-  vigilance_scales: {
-    backgroundColor: VIGILANCE_SCALES_UI.surface,
-    borderColor: VIGILANCE_SCALES_UI.border,
-    shadowColor: '#E8E8E8',
-    accent: VIGILANCE_SCALES_UI.accent,
-    accentMuted: VIGILANCE_SCALES_UI.accent,
-  },
-  scale_roster: {
-    backgroundColor: 'rgba(139, 92, 246, 0.22)',
-    borderColor: '#A78BFA',
-    shadowColor: '#7C3AED',
-    accent: '#DDD6FE',
-    accentMuted: '#C4B5FD',
-  },
-  parking_vehicle_v2: {
-    backgroundColor: 'rgba(180, 83, 9, 0.22)',
-    borderColor: '#FCD34D',
-    shadowColor: '#B45309',
-    accent: '#FEF3C7',
-    accentMuted: '#FDE68A',
-  },
+  vigilance_scales: VIGILANCE_LIGHT_CARD_THEME,
+  scale_roster: VIGILANCE_LIGHT_CARD_THEME,
+  parking_vehicle_v2: VIGILANCE_LIGHT_CARD_THEME,
   grouped_manage: {
     backgroundColor: 'rgba(59, 130, 246, 0.2)',
     borderColor: '#60A5FA',
@@ -116,11 +101,5 @@ export const DASHBOARD_CARD_THEMES = {
     accent: '#BFDBFE',
     accentMuted: '#93C5FD',
   },
-  administrativo: {
-    backgroundColor: 'rgba(30, 64, 175, 0.24)',
-    borderColor: '#60A5FA',
-    shadowColor: '#1D4ED8',
-    accent: '#DBEAFE',
-    accentMuted: '#93C5FD',
-  },
+  administrativo: VIGILANCE_LIGHT_CARD_THEME,
 } as const satisfies Record<string, DashboardCardTheme>;

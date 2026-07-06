@@ -4570,6 +4570,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     gap: 0,
     shadowOpacity: 0.3,
+    backgroundColor: DASHBOARD_CARD_THEMES.administrativo.backgroundColor,
+    borderColor: DASHBOARD_CARD_THEMES.administrativo.borderColor,
+    shadowColor: DASHBOARD_CARD_THEMES.administrativo.shadowColor,
   },
   groupedManageBody: {
     marginTop: 12,

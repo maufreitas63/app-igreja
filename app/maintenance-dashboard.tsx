@@ -76,6 +76,7 @@ import {
   UI_RADIUS,
   UI_SPACING,
 } from '@/lib/uiTokens';
+import { MAINTENANCE_LIGHT_PANEL_CARD, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { KIDS_ROOM_DISPLAY_LABEL, TEENS_ROOM_DISPLAY_LABEL } from '@/lib/entityPrefix';
 import {
@@ -200,6 +201,16 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '14', title: 'Acessos de Usuários', content: 'profile_access_insights' },
   { id: '19', title: 'Modo Ghost (Auditor)', content: 'auditor' },
 ];
+
+/** Painéis com o tema claro do card Escalas (vigilance_scales). */
+const MAINTENANCE_LIGHT_PANEL_CONTENTS = new Set<MaintenancePanelContent>([
+  'events',
+  'events_gantt',
+  'event_orchestration',
+  'scale_types',
+  'scale_volunteers',
+  'scales',
+]);
 
 type FeatureToggleProps = {
   label: string;
@@ -1184,6 +1195,7 @@ export default function MaintenanceDashboard() {
             !isMinimalPresentation && item.content === 'auditor' && styles.panelCardGhostMode,
             !isMinimalPresentation && item.content === 'event_orchestration' && styles.panelCardEventOrchestration,
             !isMinimalPresentation && item.content === 'menu' && styles.panelCardMenu,
+            !isMinimalPresentation && MAINTENANCE_LIGHT_PANEL_CONTENTS.has(item.content) && styles.panelCardLight,
           ]}
         >
           {!shouldMountPanel ? (
@@ -1979,9 +1991,9 @@ const styles = StyleSheet.create({
   welcomeBox: {
     width: '100%',
     borderRadius: 18,
-    backgroundColor: 'rgba(41, 37, 36, 0.72)',
+    backgroundColor: VIGILANCE_SCALES_UI.headerSurface,
     borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.22)',
+    borderColor: VIGILANCE_SCALES_UI.border,
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 4,
@@ -2126,6 +2138,9 @@ const styles = StyleSheet.create({
   panelCardMenu: {
     borderColor: UI_MAINTENANCE_PANEL_BORDERS.menu,
     padding: STATIC_MAINTENANCE_PANEL_INSETS.menuPadding,
+  },
+  panelCardLight: {
+    ...MAINTENANCE_LIGHT_PANEL_CARD,
   },
   panelCardPlaceholder: {
     flex: 1,
