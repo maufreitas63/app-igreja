@@ -128,18 +128,7 @@ export async function navigateDrawerMenuItem(
       router,
       '/financial',
       ACCESS_SCREEN.financial,
-      { ...withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID), presentation: 'minimal' },
-      { method: 'push' }
-    );
-    return;
-  }
-
-  if (moduleKey === 'grouped_manage') {
-    await navigateWithScreenAccess(
-      router,
-      '/manage-profile',
-      ACCESS_SCREEN.manageProfile,
-      { presentation: 'minimal' },
+      withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID),
       { method: 'push' }
     );
     return;
@@ -148,7 +137,6 @@ export async function navigateDrawerMenuItem(
   if (moduleKey === 'suggestions_improvements') {
     router.push({
       pathname: '/suggestions-improvements',
-      params: { presentation: 'minimal' },
     });
     return;
   }
@@ -158,7 +146,7 @@ export async function navigateDrawerMenuItem(
   if (maintenancePanel) {
     router.push({
       pathname: '/maintenance-dashboard',
-      params: { panel: maintenancePanel, presentation: 'minimal' },
+      params: { panel: maintenancePanel },
     });
     return;
   }
@@ -173,18 +161,17 @@ export async function navigateDrawerMenuItem(
         router,
         '/financial',
         ACCESS_SCREEN.financial,
-        { ...withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID), presentation: 'minimal' },
+        withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID),
         { method: 'push' }
       );
       return;
     }
 
     router.push({
-      pathname: '/panel',
+      pathname: '/(tabs)/dashboard',
       params: {
         dashboardCard,
         dashboardCardNonce: String(Date.now()),
-        presentation: 'minimal',
       },
     });
   }
