@@ -1,5 +1,6 @@
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { InboxList, type InboxListItem } from '@/components/minimal/InboxList';
+import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
@@ -13,6 +14,7 @@ const SECTION_TITLE_FONT_SIZE = Math.round(MINIMAL_TYPO.screenTitle.fontSize * 1
 
 export function EventsInboxHome() {
   const { events, loading, error } = useActiveEvents({ enablePolling: true });
+  const { expandedEventId } = useMinimalHome();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [sessionPhone, setSessionPhone] = useState<string | null>(null);
   const [sessionProfileName, setSessionProfileName] = useState<string | null>(null);
@@ -99,7 +101,9 @@ export function EventsInboxHome() {
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.sectionTitle}>Proximos Eventos</Text>
+      {!expandedEventId ? (
+        <Text style={styles.sectionTitle}>Proximos Eventos</Text>
+      ) : null}
 
       <InboxList items={inboxItems} emptyMessage="Nenhum evento disponível no momento." />
     </View>

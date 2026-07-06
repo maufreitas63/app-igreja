@@ -26,9 +26,13 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
     return <Text style={styles.empty}>{emptyMessage}</Text>;
   }
 
+  const visibleItems = expandedEventId
+    ? items.filter((item) => item.id === expandedEventId)
+    : items;
+
   return (
     <View style={styles.list}>
-      {items.map((item) => {
+      {visibleItems.map((item) => {
         const expanded = expandedEventId === item.id;
 
         return (
@@ -45,20 +49,26 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
               }}
               style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
             >
-              <View style={[styles.textBlock, expanded && styles.textBlockExpanded]}>
-                {item.preview ? (
-                  <Text style={styles.preview} numberOfLines={expanded ? undefined : 1}>
-                    {item.preview}
-                  </Text>
-                ) : null}
-                <Text style={styles.subject} numberOfLines={expanded ? undefined : 2}>
+              {expanded ? (
+                <Text style={styles.collapseHint} numberOfLines={1}>
                   {item.subject}
                 </Text>
-                {item.meta ? <Text style={styles.meta}>{item.meta}</Text> : null}
-              </View>
-              {expanded && item.event ? (
-                <EventRegistrationCupInline event={item.event} />
-              ) : null}
+              ) : (
+                <>
+                  <View style={styles.textBlock}>
+                    {item.preview ? (
+                      <Text style={styles.preview} numberOfLines={1}>
+                        {item.preview}
+                      </Text>
+                    ) : null}
+                    <Text style={styles.subject} numberOfLines={2}>
+                      {item.subject}
+                    </Text>
+                    {item.meta ? <Text style={styles.meta}>{item.meta}</Text> : null}
+                  </View>
+                  {item.event ? <EventRegistrationCupInline event={item.event} /> : null}
+                </>
+              )}
             </Pressable>
             {expanded ? <View style={styles.expanded}>{item.content}</View> : null}
           </View>
@@ -101,9 +111,11 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: MINIMAL_UI.background,
   },
-  textBlockExpanded: {
+  collapseHint: {
     flex: 1,
-    maxWidth: '34%',
+    ...MINIMAL_TYPO.inboxSubject,
+    color: MINIMAL_UI.blueDark,
+    textAlign: 'center',
   },
   subject: {
     ...MINIMAL_TYPO.inboxSubject,

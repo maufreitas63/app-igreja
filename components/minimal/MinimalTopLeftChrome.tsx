@@ -1,3 +1,4 @@
+import { MinimalExpandedEventBar } from '@/components/minimal/MinimalExpandedEventBar';
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -10,13 +11,15 @@ type Props = {
   header?: React.ReactNode;
 };
 
-/** Menu fixo no topo esquerdo. */
+/** Menu fixo no topo esquerdo + faixa do evento expandido acima. */
 export function MinimalTopLeftChrome({ title, header }: Props) {
   const insets = useSafeAreaInsets();
   const { openDrawer } = useAppDrawer();
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + 8 }]}>
+      <MinimalExpandedEventBar />
+
       <View style={styles.topRow}>
         <Pressable
           accessibilityLabel="Abrir menu"
