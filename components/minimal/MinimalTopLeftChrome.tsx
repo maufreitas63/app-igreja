@@ -1,5 +1,6 @@
 import { MinimalExpandedEventBar } from '@/components/minimal/MinimalExpandedEventBar';
 import { useAppDrawer } from '@/context/AppDrawerContext';
+import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
@@ -11,33 +12,32 @@ type Props = {
   header?: React.ReactNode;
 };
 
-/** Menu fixo no topo esquerdo + faixa do evento expandido acima. */
+/** Menu fixo no topo esquerdo; evento expandido na mesma linha (50/50). */
 export function MinimalTopLeftChrome({ title, header }: Props) {
   const insets = useSafeAreaInsets();
   const { openDrawer } = useAppDrawer();
+  const { expandedEventId } = useMinimalHome();
+
+  const menuButton = (
+    <Pressable
+      accessibilityLabel="Abrir menu"
+      accessibilityRole="button"
+      onPress={openDrawer}
+      style={styles.menuButton}
+    >
+      <FontAwesome name="bars" size={MINIMAL_ICON.menu} color={MINIMAL_UI.icon} />
+    </Pressable>
+  );
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + 8 }]}>
-      <MinimalExpandedEventBar />
+      <MinimalExpandedEventBar menuButton={menuButton} />
 
-      <View style={styles.topRow}>
-        <Pressable
-          accessibilityLabel="Abrir menu"
-          accessibilityRole="button"
-          onPress={openDrawer}
-          style={styles.menuButton}
-        >
-          <FontAwesome name="bars" size={MINIMAL_ICON.menu} color={MINIMAL_UI.icon} />
-        </Pressable>
-      </View>
-
-      <View style={styles.leftColumn}>
-        {header ? (
-          header
-        ) : title ? (
-          <Text style={styles.title}>{title}</Text>
-        ) : null}
-      </View>
+      {!expandedEventId && (header || title) ? (
+        <View style={styles.leftColumn}>
+          {header ? header : title ? <Text style={styles.title}>{title}</Text> : null}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -53,12 +53,6 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     backgroundColor: MINIMAL_UI.background,
     gap: 4,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
-    width: '100%',
   },
   menuButton: {
     padding: 4,

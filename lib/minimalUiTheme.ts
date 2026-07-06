@@ -29,8 +29,11 @@ export const MINIMAL_EXIT_BAR_HEIGHT = 56;
 /** Altura base do chrome superior (menu + safe area aproximada). */
 export const MINIMAL_TOP_CHROME_BASE = 52;
 
-/** Faixa do evento expandido acima do menu (50% esquerda / 50% direita). */
-export const MINIMAL_EXPANDED_EVENT_BAR_HEIGHT = 52;
+/** Chrome superior com evento expandido na mesma linha do menu (50/50). */
+export const MINIMAL_TOP_CHROME_EXPANDED = 56;
+
+/** @deprecated Use MINIMAL_TOP_CHROME_EXPANDED */
+export const MINIMAL_EXPANDED_EVENT_BAR_HEIGHT = MINIMAL_TOP_CHROME_EXPANDED;
 
 /** Espaço extra quando há saudação no topo esquerdo. */
 export const MINIMAL_TOP_CHROME_HEADER = 36;
