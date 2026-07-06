@@ -9,7 +9,6 @@ import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppDrawer } from './AppDrawer';
-import { MinimalEventPalettePanel } from './MinimalEventPalettePanel';
 import { MinimalExitBar } from './MinimalExitBar';
 import { MinimalTopLeftChrome } from './MinimalTopLeftChrome';
 
@@ -58,8 +57,6 @@ function MinimalScreenLayoutBody({
           { paddingTop: contentPaddingTop, paddingBottom: MINIMAL_EXIT_BAR_HEIGHT },
         ]}
       >
-        <MinimalEventPalettePanel />
-
         {fixedTop ? <View style={styles.fixedTop}>{fixedTop}</View> : null}
 
         {scroll ? (
