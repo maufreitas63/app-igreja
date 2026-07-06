@@ -131,9 +131,8 @@ export async function loadProfileByPhone(phone: string) {
   return data ? (data as Record<string, unknown>) : null;
 }
 
-/** Login ou retomada de sessão: perfil já cadastrado → card 1 Agenda da Família. */
-export const resolveRegisteredUserLoginRoute = (phone: string) =>
-  buildDashboardFamilyAgendaRoute(phone);
+/** Login ou retomada de sessão: após PIN → tela Início minimalista. */
+export const resolveRegisteredUserLoginRoute = (phone: string) => buildAppIndexRoute(phone);
 
 export const resolveRegisteredUserSessionRoute = (
   profile: Record<string, unknown> | null | undefined,

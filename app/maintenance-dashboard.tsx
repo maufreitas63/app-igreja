@@ -59,6 +59,7 @@ import {
   resolveCarouselIndexByContent,
   resolveMaintenancePanelIndex,
 } from '@/lib/dashboardPanelLayout';
+import { pickRouteParam } from '@/lib/dashboardReturnNavigation';
 import {
   MAINTENANCE_SHORTCUT_ICON_ACTIVE_COLOR,
   MAINTENANCE_SHORTCUT_ICON_COLORS,
@@ -94,7 +95,7 @@ import { useMaintenanceEvents, type MaintenanceEvent } from '@/hooks/useMaintena
 import { useQuorumRegistry } from '@/hooks/useQuorumRegistry';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -324,6 +325,12 @@ const FeatureToggleColumn = ({ label, value, onValueChange, disabled }: FeatureT
 
 export default function MaintenanceDashboard() {
   const { width: pageWidth, height: windowHeight } = useWindowDimensions();
+  const { panel: panelParam, presentation: presentationParam } = useLocalSearchParams<{
+    panel?: string | string[];
+    presentation?: string | string[];
+  }>();
+  const requestedPanel = pickRouteParam(panelParam);
+  const isMinimalPresentation = pickRouteParam(presentationParam) === 'minimal';
   const previousPageWidthRef = useRef(pageWidth);
   const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);
   const router = useRouter();
@@ -905,6 +912,14 @@ export default function MaintenanceDashboard() {
     },
     [maintenanceCarouselCards, scrollToMaintenanceCard]
   );
+
+  useEffect(() => {
+    if (!requestedPanel || accessState !== 'allowed') {
+      return;
+    }
+
+    scrollToMaintenancePanel(requestedPanel as MaintenancePanelContent);
+  }, [accessState, requestedPanel, scrollToMaintenancePanel]);
 
   useEffect(() => {
     if (currentIndex < maintenanceCardCount) {

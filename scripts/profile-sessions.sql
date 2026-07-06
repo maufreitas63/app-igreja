@@ -6,6 +6,13 @@
 --
 -- O app passa a enviar x-session-token (emitido no login/cadastro inicial).
 -- x-profile-id permanece como fallback legado até o usuário entrar novamente.
+--
+-- OOM (Redis "maxmemory") no SQL Editor?
+--   → Não é erro de sintaxe SQL. O cache Redis do projeto está saturado.
+--   → Dashboard → Settings → General → Restart project; aguarde 2–3 min.
+--   → Execute em partes: profile-sessions-01 … 05 (pasta scripts/).
+--   → Rode o NOTIFY (parte 05) só no final, com o app em baixo tráfego.
+--   → Evite colar o arquivo inteiro de uma vez.
 
 -- ---------------------------------------------------------------------------
 -- Tabela de sessões

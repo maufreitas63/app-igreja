@@ -9,8 +9,11 @@ import {
   withReturnDashboardCard,
 } from '@/lib/dashboardReturnNavigation';
 import { DASHBOARD_FINANCIAL_CARD_ID, FINANCIAL_HUB_ITEMS } from '@/lib/financialModule';
+import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { pickRouteParam } from '@/lib/dashboardReturnNavigation';
 import { formatFinancialMonthKey, formatFinancialMonthLabel } from '@/lib/financialMonth';
 import { useFinancialsByMonth } from '@/hooks/useFinancialsByMonth';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
@@ -44,7 +47,9 @@ export default function FinancialScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     returnDashboardCard?: string | string[];
+    presentation?: string | string[];
   }>();
+  const isMinimalPresentation = pickRouteParam(params.presentation) === 'minimal';
   const returnDashboardCard = resolveReturnDashboardCardParam(params) ?? DASHBOARD_FINANCIAL_CARD_ID;
   const scrollRef = useRef<ScrollView>(null);
 
@@ -423,6 +428,68 @@ export default function FinancialScreen() {
         return null;
     }
   };
+
+  const monthFilter = (
+    <View style={isMinimalPresentation ? styles.minimalMonthRow : styles.monthFilterRow}>
+      <Text style={isMinimalPresentation ? styles.minimalMonthLabel : styles.monthFilterLabel}>
+        Mês de referência
+      </Text>
+      {loadingMonths ? (
+        <ActivityIndicator color={MINIMAL_UI.icon} style={styles.monthFilterLoader} />
+      ) : monthDropdownOptions.length ? (
+        <View style={styles.monthDropdownWrap}>
+          <DropdownSelect
+            options={monthDropdownOptions}
+            selectedValue={pickerValue}
+            onValueChange={(value) => {
+              const match = monthOptions.find((month) => formatFinancialMonthKey(month) === value);
+
+              if (match) {
+                setSelectedMonth(match);
+              }
+            }}
+            modalTitle="Selecionar mês"
+            placeholder="Selecionar mês"
+            style={styles.monthDropdown}
+          />
+        </View>
+      ) : (
+        <Text style={styles.monthFilterEmptyText}>Nenhum mês disponível.</Text>
+      )}
+    </View>
+  );
+
+  const rdFooter = (
+    <TouchableOpacity
+      style={styles.minimalRdButton}
+      onPress={() =>
+        router.push({
+          pathname: '/expense-report',
+          params: withReturnDashboardCard(returnDashboardCard),
+        })
+      }
+      activeOpacity={0.85}
+    >
+      <Text style={styles.minimalRdButtonText}>Criar Relatório de Despesas (RD)</Text>
+    </TouchableOpacity>
+  );
+
+  if (isMinimalPresentation) {
+    return (
+      <ScreenAccessGate status={accessStatus}>
+        <MinimalScreenLayout title="Financeiro" fixedTop={monthFilter} footer={rdFooter}>
+          {selectedMonthIsPlannedOnly ? (
+            <Text style={styles.plannedOnlyHint}>
+              Este mês só tem lançamentos PLANEJADO. O resultado REALIZADO aparece vazio.
+            </Text>
+          ) : null}
+          <View style={styles.reportsList}>
+            {sectionsToRender.map((sectionId) => renderFinancialSection(sectionId))}
+          </View>
+        </MinimalScreenLayout>
+      </ScreenAccessGate>
+    );
+  }
 
   return (
     <ScreenAccessGate status={accessStatus}>
@@ -834,5 +901,22 @@ const styles = StyleSheet.create({
   },
   bulletinLoader: {
     marginVertical: 24,
+  },
+  minimalMonthRow: {
+    gap: 8,
+  },
+  minimalMonthLabel: {
+    color: MINIMAL_UI.text,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  minimalRdButton: {
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  minimalRdButtonText: {
+    color: MINIMAL_UI.text,
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
