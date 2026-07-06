@@ -16,6 +16,7 @@ import {
 } from '@/lib/checkinOfflineQueue';
 import type { GeoCheckinUiStatus } from '@/hooks/useGeoCheckinMonitor';
 import { GeoCheckinStatusBanner } from '@/components/GeoCheckinStatusBanner';
+import { MinimalRoomSelosRow } from '@/components/minimal/MinimalRoomSelosRow';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -499,9 +500,16 @@ export const FamilyRegistrationList = ({
         <Text style={styles.helperErrorText}>Nao foi possivel verificar as inscricoes ja existentes.</Text>
       ) : null}
       <View style={[styles.headerRow, minimal && styles.headerRowMinimal]}>
-        <Text style={[styles.headerTitle, minimal && styles.headerTitleMinimal]}>
-          {title ?? 'Audiência da Família'}
-        </Text>
+        {minimal && (showKidsIndicator || showTeensIndicator) ? (
+          <MinimalRoomSelosRow
+            showKids={showKidsIndicator}
+            showTeens={showTeensIndicator}
+          />
+        ) : (
+          <Text style={[styles.headerTitle, minimal && styles.headerTitleMinimal]}>
+            {title ?? 'Audiência da Família'}
+          </Text>
+        )}
         {hasEventOpen && !quorumMode ? (
           <TouchableOpacity
             style={[

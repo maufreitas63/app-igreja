@@ -79,6 +79,8 @@ export function EventsInboxHome() {
             sessionProfile={sessionProfile}
             title=""
             minimal
+            showKidsIndicator={Boolean(event.kids_room)}
+            showTeensIndicator={Boolean(event.teens_room)}
           />
         ) : (
           <Text style={styles.inlineHint}>Carregando dados da família…</Text>
