@@ -52,7 +52,12 @@ function MinimalScreenLayoutBody({
       <AppDrawer />
       <MinimalTopLeftChrome title={title} header={header} />
 
-      <View style={[styles.body, { paddingTop: contentPaddingTop }]}>
+      <View
+        style={[
+          styles.body,
+          { paddingTop: contentPaddingTop, paddingBottom: MINIMAL_EXIT_BAR_HEIGHT },
+        ]}
+      >
         <MinimalEventPalettePanel />
 
         {fixedTop ? <View style={styles.fixedTop}>{fixedTop}</View> : null}

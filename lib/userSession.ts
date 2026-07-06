@@ -427,7 +427,11 @@ const exitWebApplication = () => {
     trySendAndroidPwaToHome();
   }
 
-  scheduleWebExitFallback();
+  if (isWebWindowStillOpen()) {
+    navigateToPwaSignedOutScreen();
+  } else {
+    scheduleWebExitFallback();
+  }
 };
 
 /**

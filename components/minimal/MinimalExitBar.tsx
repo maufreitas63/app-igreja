@@ -1,25 +1,28 @@
 import { MINIMAL_EXIT_BAR_HEIGHT, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { exitApplication } from '@/lib/userSession';
+import { confirmExitApplication } from '@/lib/userSession';
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function MinimalExitBar() {
   const insets = useSafeAreaInsets();
 
   return (
-    <Pressable
+    <TouchableOpacity
       accessibilityLabel="Sair do Aplicativo"
       accessibilityRole="button"
-      onPress={() => exitApplication()}
-      style={({ pressed }) => [
+      activeOpacity={0.75}
+      onPress={() => {
+        void confirmExitApplication();
+      }}
+      style={[
         styles.bar,
         { paddingBottom: Math.max(insets.bottom, 8) },
-        pressed && styles.barPressed,
+        Platform.OS === 'web' ? styles.barWeb : null,
       ]}
     >
       <Text style={styles.label}>Sair do Aplicativo</Text>
-    </Pressable>
+    </TouchableOpacity>
   );
 }
 
@@ -37,10 +40,11 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: MINIMAL_UI.divider,
-    zIndex: 25,
+    zIndex: 100,
+    elevation: 12,
   },
-  barPressed: {
-    backgroundColor: MINIMAL_UI.rowHover,
+  barWeb: {
+    cursor: 'pointer',
   },
   label: {
     ...MINIMAL_TYPO.menuItem,
