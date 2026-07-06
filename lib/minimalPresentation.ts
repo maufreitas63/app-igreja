@@ -1,5 +1,5 @@
+import { BIRTHDAYS_UI, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 
 /** Remove aparência de card (bordas, sombra, fundo escuro) no modo minimalista. */
@@ -53,14 +53,14 @@ export const MINIMAL_DASHBOARD_STYLES = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
   } satisfies TextStyle,
   nameText: {
-    color: MINIMAL_UI.text,
+    color: BIRTHDAYS_UI.nameText,
   } satisfies TextStyle,
   birthdayBadge: {
-    backgroundColor: MINIMAL_UI.expandedBg,
-    borderColor: MINIMAL_UI.border,
+    backgroundColor: BIRTHDAYS_UI.listBackground,
+    borderColor: BIRTHDAYS_UI.border,
   } satisfies ViewStyle,
   birthdayBadgeText: {
-    color: MINIMAL_UI.text,
+    color: BIRTHDAYS_UI.dateText,
   } satisfies TextStyle,
   outlineButton: {
     backgroundColor: MINIMAL_UI.background,
@@ -96,6 +96,12 @@ export const MINIMAL_DASHBOARD_STYLES = StyleSheet.create({
     color: VIGILANCE_SCALES_UI.accent,
   } satisfies TextStyle,
   filterLabel: {
-    color: MINIMAL_UI.textMuted,
+    color: BIRTHDAYS_UI.accent,
+  } satisfies TextStyle,
+  birthdayMonthDropdown: {
+    color: '#FFFFFF',
+  } satisfies ViewStyle,
+  birthdayMonthDropdownText: {
+    color: BIRTHDAYS_UI.monthDropdownText,
   } satisfies TextStyle,
 });

@@ -17,13 +17,32 @@ export type DashboardCardTheme = {
   accentMuted: string;
 };
 
-/** Tema claro compartilhado (cards Escalas, escalas associadas, aniversários, etc.). */
+/** Tema claro compartilhado (cards Escalas, escalas associadas, etc.). */
 export const VIGILANCE_LIGHT_CARD_THEME: DashboardCardTheme = {
   backgroundColor: VIGILANCE_SCALES_UI.surface,
   borderColor: VIGILANCE_SCALES_UI.border,
   shadowColor: '#E8E8E8',
   accent: VIGILANCE_SCALES_UI.accent,
   accentMuted: VIGILANCE_SCALES_UI.accent,
+};
+
+/** Cores do card Aniversariantes (fundo branco, textos azuis). */
+export const BIRTHDAYS_UI = {
+  accent: '#3A96DD',
+  monthDropdownText: '#4A9EDF',
+  nameText: '#FFFFFF',
+  dateText: '#429BDF',
+  backgroundColor: '#FFFFFF',
+  listBackground: '#FFFFFF',
+  border: VIGILANCE_SCALES_UI.border,
+} as const;
+
+const BIRTHDAYS_CARD_THEME: DashboardCardTheme = {
+  backgroundColor: BIRTHDAYS_UI.backgroundColor,
+  borderColor: BIRTHDAYS_UI.border,
+  shadowColor: '#E8E8E8',
+  accent: BIRTHDAYS_UI.accent,
+  accentMuted: BIRTHDAYS_UI.accent,
 };
 
 /** Superfície clara para painéis do maintenance-dashboard. */
@@ -69,7 +88,7 @@ export const DASHBOARD_CARD_THEMES = {
     accentMuted: '#D8B4FE',
   },
   members_list: VIGILANCE_LIGHT_CARD_THEME,
-  birthdays: VIGILANCE_LIGHT_CARD_THEME,
+  birthdays: BIRTHDAYS_CARD_THEME,
   financial: {
     backgroundColor: 'rgba(5, 150, 105, 0.22)',
     borderColor: '#34D399',

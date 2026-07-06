@@ -29,6 +29,7 @@ type DropdownSelectProps = {
   searchable?: boolean;
   style?: StyleProp<ViewStyle>;
   triggerTextStyle?: StyleProp<TextStyle>;
+  triggerIconColor?: string;
   size?: 'default' | 'comfortable' | 'compact';
   disabled?: boolean;
 };
@@ -50,6 +51,7 @@ export function DropdownSelect({
   searchable = false,
   style,
   triggerTextStyle,
+  triggerIconColor = '#94A3B8',
   size = 'default',
   disabled = false,
 }: DropdownSelectProps) {
@@ -240,17 +242,17 @@ export function DropdownSelect({
         accessibilityState={{ expanded: open, disabled }}
       >
         <Text
-          style={[
+          style={StyleSheet.flatten([
             styles.triggerText,
             isComfortable && styles.triggerTextComfortable,
             isCompact && styles.triggerTextCompact,
             triggerTextStyle,
-          ]}
+          ])}
           numberOfLines={1}
         >
           {selectedLabel || placeholder}
         </Text>
-        <FontAwesome name="chevron-down" size={12} color="#94A3B8" />
+        <FontAwesome name="chevron-down" size={12} color={triggerIconColor} />
       </TouchableOpacity>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>

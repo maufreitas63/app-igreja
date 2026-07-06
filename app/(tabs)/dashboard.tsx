@@ -107,7 +107,7 @@ import {
   resolveCarouselIndexByContent,
   resolveDashboardCardIndex,
 } from '@/lib/dashboardPanelLayout';
-import { DASHBOARD_CARD_THEMES, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { BIRTHDAYS_UI, DASHBOARD_CARD_THEMES, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
 import { withReturnDashboardCard, pickRouteParam } from '@/lib/dashboardReturnNavigation';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
@@ -3156,6 +3156,9 @@ export default function Dashboard() {
                         selectedValue={selectedBirthdayMonth}
                         onValueChange={setSelectedBirthdayMonth}
                         modalTitle="Selecionar mês"
+                        style={[styles.birthdaysMonthDropdown, mds?.birthdayMonthDropdown]}
+                        triggerTextStyle={[styles.birthdaysMonthDropdownText, mds?.birthdayMonthDropdownText]}
+                        triggerIconColor="#FFFFFF"
                       />
                     </View>
 
@@ -4916,7 +4919,7 @@ const styles = StyleSheet.create({
   membersListName: {
     flex: 1,
     minWidth: 0,
-    color: '#FFF',
+    color: '#4A9EDF',
     fontSize: 15,
     fontWeight: '600',
   },
@@ -5724,7 +5727,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   birthdaysFilterLabel: {
-    color: DASHBOARD_CARD_THEMES.birthdays.accentMuted,
+    color: BIRTHDAYS_UI.accent,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -5732,7 +5735,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   birthdaysSummaryText: {
-    color: DASHBOARD_CARD_THEMES.birthdays.accent,
+    color: BIRTHDAYS_UI.accent,
     fontSize: 12,
     textAlign: 'center',
     marginBottom: 4,
@@ -5744,9 +5747,9 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: BIRTHDAYS_UI.border,
     borderRadius: 18,
-    backgroundColor: 'rgba(15, 23, 42, 0.3)',
+    backgroundColor: BIRTHDAYS_UI.listBackground,
     overflow: 'hidden',
   },
   birthdaysListScroll: {
@@ -5769,8 +5772,9 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 12,
     paddingVertical: 7,
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(148, 163, 184, 0.24)',
+    borderBottomColor: BIRTHDAYS_UI.border,
   },
   birthdayContent: {
     flex: 1,
@@ -5782,22 +5786,29 @@ const styles = StyleSheet.create({
     minWidth: 64,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.55)',
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: BIRTHDAYS_UI.border,
+    backgroundColor: BIRTHDAYS_UI.listBackground,
     paddingVertical: 5,
     paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   birthdayDateBadgeText: {
-    color: '#DBEAFE',
+    color: BIRTHDAYS_UI.dateText,
     fontSize: 12,
     fontWeight: '800',
   },
   birthdayName: {
     flex: 1,
-    color: '#F8FAFC',
+    color: BIRTHDAYS_UI.nameText,
     fontSize: 14,
+  },
+  birthdaysMonthDropdown: {
+    color: '#FFFFFF',
+  },
+  birthdaysMonthDropdownText: {
+    color: BIRTHDAYS_UI.monthDropdownText,
+    fontWeight: '700',
   },
   birthdayWhatsappButton: {
     width: 32,
