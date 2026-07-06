@@ -5772,7 +5772,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    backgroundColor: '#FFFFFF',
+    color: '#FFFFFF',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: BIRTHDAYS_UI.border,
   },
