@@ -1,15 +1,18 @@
 import { MINIMAL_EXIT_BAR_HEIGHT, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { getExitSessionUi } from '@/lib/sessionExitUi';
 import { confirmExitApplication } from '@/lib/userSession';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function MinimalExitBar() {
   const insets = useSafeAreaInsets();
+  const exitUi = useMemo(() => getExitSessionUi(), []);
 
   return (
     <TouchableOpacity
-      accessibilityLabel="Sair do Aplicativo"
+      accessibilityHint={exitUi.accessibilityHint}
+      accessibilityLabel={exitUi.accessibilityLabel}
       accessibilityRole="button"
       activeOpacity={0.75}
       onPress={() => {
@@ -21,7 +24,7 @@ export function MinimalExitBar() {
         Platform.OS === 'web' ? styles.barWeb : null,
       ]}
     >
-      <Text style={styles.label}>Sair do Aplicativo</Text>
+      <Text style={styles.label}>{exitUi.button}</Text>
     </TouchableOpacity>
   );
 }

@@ -29,8 +29,9 @@ export default function SessaoEncerradaScreen() {
       <Image source={require('@/assets/images/icon.png')} style={styles.logo} contentFit="contain" />
       <Text style={styles.title}>Sessão encerrada</Text>
       <Text style={styles.message}>
-        Você pode fechar o aplicativo. Para entrar novamente, abra o atalho na tela inicial ou no
-        menu do navegador.
+        Sua sessão foi encerrada. Em aplicativos instalados, o sistema pode manter o app em
+        segundo plano — use o botão Início ou troque de app para sair completamente. Para entrar
+        novamente, abra o atalho na tela inicial.
       </Text>
     </View>
   );

@@ -427,11 +427,8 @@ const exitWebApplication = () => {
     trySendAndroidPwaToHome();
   }
 
-  if (isWebWindowStillOpen()) {
-    navigateToPwaSignedOutScreen();
-  } else {
-    scheduleWebExitFallback();
-  }
+  // Aguarda o SO processar close()/HOME antes de cair na tela neutra.
+  scheduleWebExitFallback();
 };
 
 /**
@@ -472,17 +469,23 @@ export function signOutAndReturnToLogin(): void {
   signOutAndNavigateToLogin();
 }
 
+const resolveConfirmedExitAction = async () => {
+  const { shouldExitApplicationProcess } = await import('@/lib/sessionExitUi');
+  return shouldExitApplicationProcess() ? exitApplication : signOutAndNavigateToLogin;
+};
+
 /** Confirma saída do app (botão nativo voltar na tela inicial). */
 export async function confirmExitApplication(): Promise<boolean> {
   const { confirmDialog } = await import('@/lib/confirmDialog');
   const exitUi = (await import('@/lib/sessionExitUi')).getExitSessionUi();
+  const onConfirmed = await resolveConfirmedExitAction();
 
   const confirmed = await confirmDialog(
     exitUi.button,
-    'Deseja sair do aplicativo? Sua sessão será encerrada.',
+    exitUi.confirmMessage,
     'Sair',
     'Cancelar',
-    { onConfirmed: exitApplication }
+    { onConfirmed }
   );
 
   return confirmed;
