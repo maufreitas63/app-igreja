@@ -9,11 +9,9 @@ import { getStoredUserPhone } from '@/lib/userSession';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-type Props = {
-  userName: string;
-};
+const SECTION_TITLE_FONT_SIZE = Math.round(MINIMAL_TYPO.screenTitle.fontSize * 1.3);
 
-export function EventsInboxHome({ userName }: Props) {
+export function EventsInboxHome() {
   const { events, loading, error } = useActiveEvents({ enablePolling: true });
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [sessionPhone, setSessionPhone] = useState<string | null>(null);
@@ -100,7 +98,6 @@ export function EventsInboxHome({ userName }: Props) {
   return (
     <View style={styles.wrap}>
       <Text style={styles.sectionTitle}>Proximos Eventos</Text>
-      <Text style={styles.greetingBand}>Olá, {userName}</Text>
 
       <InboxList items={inboxItems} emptyMessage="Nenhum evento disponível no momento." />
     </View>
@@ -115,20 +112,13 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.background,
   },
   sectionTitle: {
-    ...MINIMAL_TYPO.screenTitle,
-    color: MINIMAL_UI.onDark,
-    backgroundColor: MINIMAL_UI.blue,
+    fontSize: SECTION_TITLE_FONT_SIZE,
+    fontWeight: MINIMAL_TYPO.screenTitle.fontWeight,
+    color: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
+    textAlign: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 0,
-    overflow: 'hidden',
-  },
-  greetingBand: {
-    ...MINIMAL_TYPO.greeting,
-    color: MINIMAL_UI.onDark,
-    backgroundColor: MINIMAL_UI.blueDark,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
   loader: {
     marginVertical: 32,

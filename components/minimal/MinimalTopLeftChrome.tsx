@@ -1,7 +1,6 @@
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +10,7 @@ type Props = {
   header?: React.ReactNode;
 };
 
-/** Menu fixo no topo esquerdo; logo fixo no topo direito. */
+/** Menu fixo no topo esquerdo. */
 export function MinimalTopLeftChrome({ title, header }: Props) {
   const insets = useSafeAreaInsets();
   const { openDrawer } = useAppDrawer();
@@ -27,14 +26,6 @@ export function MinimalTopLeftChrome({ title, header }: Props) {
         >
           <FontAwesome name="bars" size={MINIMAL_ICON.menu} color={MINIMAL_UI.icon} />
         </Pressable>
-
-        <View style={styles.logoWrap}>
-          <Image
-            source={require('../../images/IBNORTE - LOGO MARCA 9.png')}
-            style={styles.logo}
-            contentFit="contain"
-          />
-        </View>
       </View>
 
       <View style={styles.leftColumn}>
@@ -63,23 +54,12 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     width: '100%',
   },
   menuButton: {
     padding: 4,
     marginTop: 2,
-  },
-  logoWrap: {
-    width: MINIMAL_ICON.logo,
-    height: MINIMAL_ICON.logo,
-    alignItems: 'flex-end',
-    justifyContent: 'flex-start',
-  },
-  logo: {
-    width: MINIMAL_ICON.logo,
-    height: MINIMAL_ICON.logo,
-    tintColor: MINIMAL_UI.icon,
   },
   leftColumn: {
     alignItems: 'flex-start',
