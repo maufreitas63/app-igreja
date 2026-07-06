@@ -59,6 +59,8 @@ type Props = {
   geoCheckinRadiusMeters?: number;
   /** Estilo minimalista (texto azul, sem moldura de card). */
   minimal?: boolean;
+  /** Selos IBN Kids/Teens já exibidos no cabeçalho expandido. */
+  hideRoomSelos?: boolean;
 };
 
 export const FamilyRegistrationList = ({
@@ -80,6 +82,7 @@ export const FamilyRegistrationList = ({
   geoCheckinDistanceMeters = null,
   geoCheckinRadiusMeters = 30,
   minimal = false,
+  hideRoomSelos = false,
 }: Props) => {
   const hasFamilyId = Boolean(familyId?.trim());
   const { members, loading, error } = useFamilyAudienceMembers(
@@ -500,7 +503,7 @@ export const FamilyRegistrationList = ({
         <Text style={styles.helperErrorText}>Nao foi possivel verificar as inscricoes ja existentes.</Text>
       ) : null}
       <View style={[styles.headerRow, minimal && styles.headerRowMinimal]}>
-        {minimal && (showKidsIndicator || showTeensIndicator) ? (
+        {minimal && !hideRoomSelos && (showKidsIndicator || showTeensIndicator) ? (
           <MinimalRoomSelosRow
             showKids={showKidsIndicator}
             showTeens={showTeensIndicator}
@@ -662,12 +665,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptyText: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 16,
     textAlign: 'center',
   },
   helperText: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 13,
     textAlign: 'center',
     marginTop: 12,

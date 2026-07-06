@@ -35,6 +35,7 @@ function MinimalScreenLayoutBody({
   scroll = true,
 }: Props) {
   const { expandedEventId } = useMinimalHome();
+  const useScroll = scroll && !expandedEventId;
 
   const contentPaddingTop = useMemo(() => {
     let top =
@@ -65,7 +66,7 @@ function MinimalScreenLayoutBody({
       >
         {fixedTop ? <View style={styles.fixedTop}>{fixedTop}</View> : null}
 
-        {scroll ? (
+        {useScroll ? (
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={[

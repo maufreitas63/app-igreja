@@ -79,8 +79,9 @@ export function EventsInboxHome() {
             sessionPhone={sessionPhone}
             sessionProfileName={sessionProfileName}
             sessionProfile={sessionProfile}
-            title=""
+            title="Audiência da Família"
             minimal
+            hideRoomSelos
             showKidsIndicator={Boolean(event.kids_room)}
             showTeensIndicator={Boolean(event.teens_room)}
           />
@@ -100,7 +101,7 @@ export function EventsInboxHome() {
   }
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, expandedEventId ? styles.wrapExpanded : null]}>
       {!expandedEventId ? (
         <Text style={styles.sectionTitle}>Proximos Eventos</Text>
       ) : null}
@@ -116,6 +117,10 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: MINIMAL_UI.background,
+  },
+  wrapExpanded: {
+    flex: 1,
+    minHeight: 0,
   },
   sectionTitle: {
     fontSize: SECTION_TITLE_FONT_SIZE,

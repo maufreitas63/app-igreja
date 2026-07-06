@@ -38,25 +38,27 @@ export function MinimalRoomSelosRow({ showKids = false, showTeens = false }: Pro
   );
 }
 
-const SELO_WIDTH = 100;
-
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
-    flexShrink: 0,
+    width: '100%',
   },
   selo: {
-    width: SELO_WIDTH,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 4,
-    paddingHorizontal: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
     backgroundColor: MINIMAL_UI.background,
+    minWidth: 112,
+    maxWidth: '100%',
+    flexGrow: 1,
+    flexShrink: 1,
   },
   seloKids: {
     borderColor: '#FACC15',
