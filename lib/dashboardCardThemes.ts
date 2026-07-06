@@ -29,7 +29,7 @@ export const VIGILANCE_LIGHT_CARD_THEME: DashboardCardTheme = {
 /** Cores do card Aniversariantes (fundo branco, textos azuis). */
 export const BIRTHDAYS_UI = {
   accent: '#3A96DD',
-  monthDropdownText: '#4A9EDF',
+  monthDropdownText: '#3A96DD',
   monthDropdownBackground: 'rgba(255, 255, 255, 0.55)',
   nameText: '#FFFFFF',
   dateText: '#5CA8E3',
