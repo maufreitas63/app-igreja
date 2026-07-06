@@ -28,35 +28,36 @@ export function ConfirmDialogHost() {
   return (
     <Modal transparent visible animationType="fade" onRequestClose={dismiss}>
       <View style={styles.modalRoot}>
-      <Pressable style={styles.backdrop} onPress={dismiss}>
-        <Pressable style={styles.card} onPress={(event) => event.stopPropagation()}>
-          <Text style={styles.message}>{request.message}</Text>
-          <View style={[styles.actions, request.alertOnly && styles.actionsSingle]}>
-            {request.alertOnly ? null : (
+        <Pressable style={styles.backdrop} onPress={dismiss} accessibilityRole="button" />
+        <View style={styles.cardLayer} pointerEvents="box-none">
+          <View style={styles.card}>
+            <Text style={styles.message}>{request.message}</Text>
+            <View style={[styles.actions, request.alertOnly && styles.actionsSingle]}>
+              {request.alertOnly ? null : (
+                <Pressable
+                  style={({ pressed }) => [styles.button, styles.cancelButton, pressed && styles.buttonPressed]}
+                  onPress={() => close(false)}
+                >
+                  <Text style={styles.cancelButtonText}>{request.cancelLabel}</Text>
+                </Pressable>
+              )}
               <Pressable
-                style={({ pressed }) => [styles.button, styles.cancelButton, pressed && styles.buttonPressed]}
-                onPress={() => close(false)}
+                style={({ pressed }) => [
+                  styles.button,
+                  request.destructive ? styles.destructiveButton : styles.confirmButton,
+                  pressed && styles.buttonPressed,
+                ]}
+                onPress={() => close(true)}
               >
-                <Text style={styles.cancelButtonText}>{request.cancelLabel}</Text>
+                <Text
+                  style={request.destructive ? styles.destructiveButtonText : styles.confirmButtonText}
+                >
+                  {request.confirmLabel}
+                </Text>
               </Pressable>
-            )}
-            <Pressable
-              style={({ pressed }) => [
-                styles.button,
-                request.destructive ? styles.destructiveButton : styles.confirmButton,
-                pressed && styles.buttonPressed,
-              ]}
-              onPress={() => close(true)}
-            >
-              <Text
-                style={request.destructive ? styles.destructiveButtonText : styles.confirmButtonText}
-              >
-                {request.confirmLabel}
-              </Text>
-            </Pressable>
+            </View>
           </View>
-        </Pressable>
-      </Pressable>
+        </View>
       </View>
     </Modal>
   );
@@ -77,8 +78,11 @@ const styles = StyleSheet.create({
     },
   }),
   backdrop: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(15, 23, 42, 0.72)',
+  },
+  cardLayer: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
