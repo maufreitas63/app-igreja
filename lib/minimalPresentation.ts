@@ -1,4 +1,5 @@
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 
 /** Remove aparência de card (bordas, sombra, fundo escuro) no modo minimalista. */
@@ -79,6 +80,20 @@ export const MINIMAL_DASHBOARD_STYLES = StyleSheet.create({
   } satisfies ViewStyle,
   radioLabel: {
     color: MINIMAL_UI.text,
+  } satisfies TextStyle,
+  vigilanceScaleSectionLabel: {
+    color: VIGILANCE_SCALES_UI.accent,
+  } satisfies TextStyle,
+  vigilanceScaleRadioRow: {
+    backgroundColor: VIGILANCE_SCALES_UI.surface,
+    borderColor: VIGILANCE_SCALES_UI.borderMuted,
+  } satisfies ViewStyle,
+  vigilanceScaleRadioRowSelected: {
+    backgroundColor: VIGILANCE_SCALES_UI.surfaceHighlight,
+    borderColor: VIGILANCE_SCALES_UI.border,
+  } satisfies ViewStyle,
+  vigilanceScaleRadioLabel: {
+    color: VIGILANCE_SCALES_UI.accent,
   } satisfies TextStyle,
   filterLabel: {
     color: MINIMAL_UI.textMuted,

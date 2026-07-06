@@ -1,3 +1,13 @@
+/** Cores do painel Escalas (seletor de tipo de escala). */
+export const VIGILANCE_SCALES_UI = {
+  accent: '#3A96DD',
+  surface: 'rgba(232, 232, 232, 0.55)',
+  surfaceHighlight: 'rgba(255, 255, 255, 0.55)',
+  headerSurface: 'rgba(255, 255, 255, 0.55)',
+  border: '#FFFFFF',
+  borderMuted: '#FAFAFA',
+} as const;
+
 /** Paletas visuais dos cards do carrossel do dashboard. */
 export type DashboardCardTheme = {
   backgroundColor: string;
@@ -65,11 +75,11 @@ export const DASHBOARD_CARD_THEMES = {
     accentMuted: '#6EE7B7',
   },
   vigilance_scales: {
-    backgroundColor: 'rgba(249, 115, 22, 0.2)',
-    borderColor: '#FB923C',
-    shadowColor: '#EA580C',
-    accent: '#FED7AA',
-    accentMuted: '#FDBA74',
+    backgroundColor: VIGILANCE_SCALES_UI.surface,
+    borderColor: VIGILANCE_SCALES_UI.border,
+    shadowColor: '#E8E8E8',
+    accent: VIGILANCE_SCALES_UI.accent,
+    accentMuted: VIGILANCE_SCALES_UI.accent,
   },
   scale_roster: {
     backgroundColor: 'rgba(139, 92, 246, 0.22)',

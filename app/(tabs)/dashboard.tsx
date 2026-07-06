@@ -107,7 +107,7 @@ import {
   resolveCarouselIndexByContent,
   resolveDashboardCardIndex,
 } from '@/lib/dashboardPanelLayout';
-import { DASHBOARD_CARD_THEMES } from '@/lib/dashboardCardThemes';
+import { DASHBOARD_CARD_THEMES, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
 import { withReturnDashboardCard, pickRouteParam } from '@/lib/dashboardReturnNavigation';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
@@ -1989,6 +1989,8 @@ export default function Dashboard() {
     return card?.title?.trim() ?? '';
   }, [currentIndex, data]);
 
+  const isVigilanceScalesScreen = data[currentIndex]?.content === 'vigilance_scales';
+
   const { showTechnicalKeys } = useShowAclTechnicalKeys(Boolean(profile?.id));
 
   const activeDashboardScreenTechnicalKey = useMemo(() => {
@@ -2491,11 +2493,18 @@ export default function Dashboard() {
     >
         {!isMinimalPresentation ? (
         <View style={styles.header}>
-          <View style={[styles.screenBadgeBox, isLgpdPending && styles.screenBadgeBoxLgpdPending]}>
+          <View
+            style={[
+              styles.screenBadgeBox,
+              isLgpdPending && styles.screenBadgeBoxLgpdPending,
+              isVigilanceScalesScreen && styles.screenBadgeBoxVigilanceScales,
+            ]}
+          >
             <ActiveScreenBadge
               title={activeDashboardScreenTitle}
               accent="emerald"
               align="left"
+              color={isVigilanceScalesScreen ? VIGILANCE_SCALES_UI.accent : undefined}
               technicalKey={showTechnicalKeys ? activeDashboardScreenTechnicalKey : null}
             />
           </View>
@@ -3267,10 +3276,14 @@ export default function Dashboard() {
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
-                    <Text style={[styles.dashboardPanelTitle, mds?.panelTitle]}>{item.title}</Text>
+                    <Text style={[styles.dashboardPanelTitle, styles.vigilanceScalesPanelTitle, mds?.panelTitle]}>
+                      {item.title}
+                    </Text>
 
                     <View style={styles.vigilanceScaleFilterSection}>
-                      <Text style={[styles.sectionLabel, mds?.sectionLabel]}>Selecionar Escala</Text>
+                      <Text style={[styles.vigilanceScaleSectionLabel, mds?.vigilanceScaleSectionLabel]}>
+                        Selecionar Escala
+                      </Text>
                       {isVigilanceScalesLoading ? (
                         <CardLoadingState lines={3} />
                       ) : vigilanceScalesError ? (
@@ -3301,8 +3314,9 @@ export default function Dashboard() {
                                 key={option.code}
                                 style={[
                                   styles.vigilanceScaleRadioRow,
-                                  mds?.radioRow,
+                                  mds?.vigilanceScaleRadioRow,
                                   isSelected && styles.vigilanceScaleRadioRowSelected,
+                                  isSelected && mds?.vigilanceScaleRadioRowSelected,
                                 ]}
                                 onPress={() => handleSelectVigilanceScale(option)}
                                 activeOpacity={0.85}
@@ -3318,7 +3332,7 @@ export default function Dashboard() {
                                 <Text
                                   style={[
                                     styles.vigilanceScaleRadioLabel,
-                                    mds?.radioLabel,
+                                    mds?.vigilanceScaleRadioLabel,
                                     isSelected && styles.vigilanceScaleRadioLabelSelected,
                                   ]}
                                 >
@@ -4057,6 +4071,11 @@ const styles = StyleSheet.create({
   },
   screenBadgeBoxLgpdPending: {
     backgroundColor: 'rgba(185, 28, 28, 0.72)',
+  },
+  screenBadgeBoxVigilanceScales: {
+    backgroundColor: VIGILANCE_SCALES_UI.headerSurface,
+    borderWidth: 1,
+    borderColor: VIGILANCE_SCALES_UI.border,
   },
   activeScreenTitle: {
     flexShrink: 0,
@@ -5407,6 +5426,17 @@ const styles = StyleSheet.create({
     minHeight: 0,
     gap: 8,
   },
+  vigilanceScalesPanelTitle: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
+  vigilanceScaleSectionLabel: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
   vigilanceScaleRadioList: {
     flex: 1,
     minHeight: 0,
@@ -5422,39 +5452,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    borderColor: VIGILANCE_SCALES_UI.borderMuted,
+    backgroundColor: VIGILANCE_SCALES_UI.surface,
   },
   vigilanceScaleRadioRowSelected: {
-    borderColor: DASHBOARD_CARD_THEMES.vigilance_scales.borderColor,
-    backgroundColor: 'rgba(249, 115, 22, 0.16)',
+    borderColor: VIGILANCE_SCALES_UI.border,
+    backgroundColor: VIGILANCE_SCALES_UI.surfaceHighlight,
   },
   vigilanceScaleRadioOuter: {
     width: 20,
     height: 20,
     borderRadius: 999,
     borderWidth: 2,
-    borderColor: '#94A3B8',
+    borderColor: VIGILANCE_SCALES_UI.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
   vigilanceScaleRadioOuterSelected: {
-    borderColor: DASHBOARD_CARD_THEMES.vigilance_scales.borderColor,
+    borderColor: VIGILANCE_SCALES_UI.accent,
   },
   vigilanceScaleRadioInner: {
     width: 10,
     height: 10,
     borderRadius: 999,
-    backgroundColor: DASHBOARD_CARD_THEMES.vigilance_scales.borderColor,
+    backgroundColor: VIGILANCE_SCALES_UI.accent,
   },
   vigilanceScaleRadioLabel: {
     flex: 1,
-    color: '#CBD5E1',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 14,
     fontWeight: '600',
   },
   vigilanceScaleRadioLabelSelected: {
-    color: '#F8FAFC',
+    color: VIGILANCE_SCALES_UI.accent,
   },
   vigilanceScalePickerWrapper: {
     borderRadius: 18,

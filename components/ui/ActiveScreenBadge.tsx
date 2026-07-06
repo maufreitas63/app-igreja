@@ -5,6 +5,8 @@ import { StyleSheet, Text, View } from 'react-native';
 type ActiveScreenBadgeProps = {
   title: string;
   accent?: UiAccent;
+  /** Sobrescreve a cor do título e da chave técnica. */
+  color?: string;
   /** Chave ACL (`resource_key`) exibida só para super admin com `Exibir_nomes_tecnicos = sim`. */
   technicalKey?: string | null;
   /** Alinhamento do título e da chave técnica. */
@@ -14,6 +16,7 @@ type ActiveScreenBadgeProps = {
 export function ActiveScreenBadge({
   title,
   accent = 'emerald',
+  color,
   technicalKey,
   align = 'left',
 }: ActiveScreenBadgeProps) {
@@ -22,6 +25,7 @@ export function ActiveScreenBadge({
   }
 
   const accentStyle = UI_ACCENT_STYLES[accent];
+  const textColor = color ?? accentStyle.moduleColor;
   const trimmedTechnicalKey = technicalKey?.trim() ?? '';
   const isRight = align === 'right';
 
@@ -32,7 +36,7 @@ export function ActiveScreenBadge({
         style={[
           styles.badge,
           isRight ? styles.textRight : styles.textLeft,
-          { color: accentStyle.moduleColor },
+          { color: textColor },
         ]}
         accessibilityRole="text"
       >
@@ -44,7 +48,7 @@ export function ActiveScreenBadge({
           style={[
             styles.technicalKey,
             isRight ? styles.textRight : styles.textLeft,
-            { color: accentStyle.moduleColor },
+            { color: textColor },
           ]}
           accessibilityRole="text"
           accessibilityLabel={`Chave ACL: ${trimmedTechnicalKey}`}
