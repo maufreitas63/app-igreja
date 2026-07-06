@@ -56,7 +56,7 @@ export const MINIMAL_DASHBOARD_STYLES = StyleSheet.create({
     color: BIRTHDAYS_UI.nameText,
   } satisfies TextStyle,
   birthdayBadge: {
-    backgroundColor: BIRTHDAYS_UI.listBackground,
+    backgroundColor: BIRTHDAYS_UI.dateBadgeBackground,
     borderColor: BIRTHDAYS_UI.border,
   } satisfies ViewStyle,
   birthdayBadgeText: {
@@ -100,6 +100,7 @@ export const MINIMAL_DASHBOARD_STYLES = StyleSheet.create({
   } satisfies TextStyle,
   birthdayMonthDropdown: {
     color: '#FFFFFF',
+    backgroundColor: BIRTHDAYS_UI.monthDropdownBackground,
   } satisfies ViewStyle,
   birthdayMonthDropdownText: {
     color: BIRTHDAYS_UI.monthDropdownText,

@@ -3158,7 +3158,7 @@ export default function Dashboard() {
                         modalTitle="Selecionar mês"
                         style={[styles.birthdaysMonthDropdown, mds?.birthdayMonthDropdown]}
                         triggerTextStyle={[styles.birthdaysMonthDropdownText, mds?.birthdayMonthDropdownText]}
-                        triggerIconColor="#FFFFFF"
+                        triggerIconColor={BIRTHDAYS_UI.accent}
                       />
                     </View>
 
@@ -5755,6 +5755,8 @@ const styles = StyleSheet.create({
   birthdaysListScroll: {
     flex: 1,
     minHeight: 0,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   birthdaysListContent: {
     paddingVertical: 0,
@@ -5772,7 +5774,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    color: '#FFFFFF',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: BIRTHDAYS_UI.border,
   },
@@ -5787,7 +5789,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: BIRTHDAYS_UI.border,
-    backgroundColor: BIRTHDAYS_UI.listBackground,
+    backgroundColor: BIRTHDAYS_UI.dateBadgeBackground,
     paddingVertical: 5,
     paddingHorizontal: 8,
     alignItems: 'center',
@@ -5805,6 +5807,7 @@ const styles = StyleSheet.create({
   },
   birthdaysMonthDropdown: {
     color: '#FFFFFF',
+    backgroundColor: BIRTHDAYS_UI.monthDropdownBackground,
   },
   birthdaysMonthDropdownText: {
     color: BIRTHDAYS_UI.monthDropdownText,
