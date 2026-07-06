@@ -234,6 +234,10 @@ begin
     return true;
   end if;
 
+  if not public.is_app_active() then
+    return false;
+  end if;
+
   select exists (select 1 from public.access_grants limit 1)
     into v_acl_enabled;
 

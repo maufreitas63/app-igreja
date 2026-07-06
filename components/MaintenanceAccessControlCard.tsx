@@ -14,6 +14,13 @@ import {
   type RoleGrantRecord,
 } from '@/lib/maintenanceAccessControlApi';
 import {
+  APP_ATIVO_PARAMETER,
+  APP_INATIVO_MSG_PARAMETER,
+  clearAppActiveStatusCache,
+  resolveAppActiveFromParameter,
+  resolveAppInactiveMessage,
+} from '@/lib/appActiveStatus';
+import {
   clearAppParameterCache,
   getAppParameterValue,
   LGPD_ATIVO_PARAMETER,
@@ -130,6 +137,110 @@ function AccessControlPanelHeader({
   );
 }
 
+type AppAtivoParameterControlsProps = {
+  appAtivo: boolean;
+  appInativoMsg: string;
+  loadingAppAtivo: boolean;
+  savingAppAtivo: boolean;
+  savingAppInativoMsg: boolean;
+  canEdit: boolean;
+  onToggleAppAtivo: () => void;
+  onChangeAppInativoMsg: (value: string) => void;
+  onSaveAppInativoMsg: () => void;
+};
+
+function AppAtivoParameterControls({
+  appAtivo,
+  appInativoMsg,
+  loadingAppAtivo,
+  savingAppAtivo,
+  savingAppInativoMsg,
+  canEdit,
+  onToggleAppAtivo,
+  onChangeAppInativoMsg,
+  onSaveAppInativoMsg,
+}: AppAtivoParameterControlsProps) {
+  const toggleDisabled = !canEdit || loadingAppAtivo || savingAppAtivo;
+  const messageDisabled = !canEdit || loadingAppAtivo || savingAppInativoMsg || appAtivo;
+
+  return (
+    <View style={styles.appAtivoSection}>
+      <TouchableOpacity
+        style={[
+          styles.lgpdRadioToggle,
+          appAtivo ? styles.appAtivoToggleActive : styles.appAtivoToggleInactive,
+          toggleDisabled && styles.lgpdRadioToggleDisabled,
+        ]}
+        onPress={() => {
+          if (!toggleDisabled) {
+            onToggleAppAtivo();
+          }
+        }}
+        disabled={toggleDisabled}
+        activeOpacity={0.85}
+        accessibilityRole="radio"
+        accessibilityState={{ selected: appAtivo, disabled: toggleDisabled }}
+        accessibilityLabel={appAtivo ? 'Aplicativo ativo' : 'Aplicativo inativo'}
+      >
+        {savingAppAtivo ? (
+          <ActivityIndicator size="small" color="#F8FAFC" />
+        ) : (
+          <>
+            <View
+              style={[
+                styles.lgpdRadioOuter,
+                appAtivo ? styles.appAtivoRadioOuterActive : styles.appAtivoRadioOuterInactive,
+              ]}
+            >
+              <View
+                style={[
+                  styles.lgpdRadioInner,
+                  appAtivo ? styles.appAtivoRadioInnerActive : styles.appAtivoRadioInnerInactive,
+                ]}
+              />
+            </View>
+            <Text
+              style={[
+                styles.lgpdRadioLabel,
+                appAtivo ? styles.appAtivoLabelActive : styles.appAtivoLabelInactive,
+              ]}
+            >
+              {appAtivo ? 'App Ativo' : 'App Inativo'}
+            </Text>
+          </>
+        )}
+      </TouchableOpacity>
+
+      {!appAtivo ? (
+        <View style={styles.appInativoMsgBlock}>
+          <Text style={styles.appInativoMsgLabel}>Mensagem exibida aos usuários</Text>
+          <TextInput
+            style={styles.appInativoMsgInput}
+            value={appInativoMsg}
+            onChangeText={onChangeAppInativoMsg}
+            editable={!messageDisabled}
+            multiline
+            placeholder="Texto da tela de indisponibilidade"
+            placeholderTextColor="#64748B"
+          />
+          <TouchableOpacity
+            style={[styles.appInativoMsgSaveButton, messageDisabled && styles.appInativoMsgSaveButtonDisabled]}
+            onPress={onSaveAppInativoMsg}
+            disabled={messageDisabled}
+            activeOpacity={0.85}
+          >
+            {savingAppInativoMsg ? (
+              <ActivityIndicator size="small" color="#0f172a" />
+            ) : (
+              <Text style={styles.appInativoMsgSaveButtonText}>Salvar mensagem</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: Props) {
   const { showTechnicalKeys } = useShowAclTechnicalKeys(isActive);
   const [activeTab, setActiveTab] = useState<AdminTab>('profiles');
@@ -143,6 +254,11 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
   const [lgpdAtivo, setLgpdAtivo] = useState(true);
   const [loadingLgpdAtivo, setLoadingLgpdAtivo] = useState(false);
   const [savingLgpdAtivo, setSavingLgpdAtivo] = useState(false);
+  const [appAtivo, setAppAtivo] = useState(true);
+  const [appInativoMsg, setAppInativoMsg] = useState('');
+  const [loadingAppAtivo, setLoadingAppAtivo] = useState(false);
+  const [savingAppAtivo, setSavingAppAtivo] = useState(false);
+  const [savingAppInativoMsg, setSavingAppInativoMsg] = useState(false);
   const {
     isSuperAdmin,
     roles,
@@ -181,7 +297,10 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
     savingRoleCode !== null
     || savingGrantKey !== null
     || savingResourceGrantKey !== null
-    || savingScaleLeadershipId !== null;
+    || savingScaleLeadershipId !== null
+    || savingLgpdAtivo
+    || savingAppAtivo
+    || savingAppInativoMsg;
   const hasAssignedProfileRoles = profileRoles.some((role) => role.assigned);
   const profileHasLiderGeralRole = profileRoles.some(
     (role) => role.assigned && role.roleCode === 'lider_geral'
@@ -209,19 +328,27 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
 
     let active = true;
     setLoadingLgpdAtivo(true);
+    setLoadingAppAtivo(true);
 
     void (async () => {
       try {
-        const value = await getAppParameterValue(LGPD_ATIVO_PARAMETER);
+        const [lgpdValue, appAtivoValue, appInativoMsgValue] = await Promise.all([
+          getAppParameterValue(LGPD_ATIVO_PARAMETER),
+          getAppParameterValue(APP_ATIVO_PARAMETER),
+          getAppParameterValue(APP_INATIVO_MSG_PARAMETER),
+        ]);
 
         if (active) {
-          setLgpdAtivo(resolveLgpdAtivoFromParameter(value));
+          setLgpdAtivo(resolveLgpdAtivoFromParameter(lgpdValue));
+          setAppAtivo(resolveAppActiveFromParameter(appAtivoValue));
+          setAppInativoMsg(resolveAppInactiveMessage(appInativoMsgValue));
         }
       } catch (loadError) {
-        console.error('Erro ao carregar LGPD_Ativo:', loadError);
+        console.error('Erro ao carregar parâmetros globais:', loadError);
       } finally {
         if (active) {
           setLoadingLgpdAtivo(false);
+          setLoadingAppAtivo(false);
         }
       }
     })();
@@ -265,6 +392,100 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
         });
       } finally {
         setSavingLgpdAtivo(false);
+      }
+    })();
+  };
+
+  const handleToggleAppAtivo = () => {
+    if (isSuperAdmin !== true || rpcMissing || busy || savingAppAtivo || loadingAppAtivo) {
+      return;
+    }
+
+    const nextValue = !appAtivo;
+    setSavingAppAtivo(true);
+
+    void (async () => {
+      try {
+        await saveAppParameterValue(APP_ATIVO_PARAMETER, nextValue ? 'sim' : 'nao');
+        setAppAtivo(nextValue);
+        clearAppParameterCache(APP_ATIVO_PARAMETER);
+        clearAppActiveStatusCache();
+        Toast.show({
+          type: 'success',
+          text1: nextValue ? 'Aplicativo ativado' : 'Aplicativo inativado',
+          text2: nextValue
+            ? 'O acesso normal foi restaurado para os usuários.'
+            : 'Usuários verão a mensagem de indisponibilidade (super admin ignora).',
+          visibilityTime: 4000,
+        });
+      } catch (toggleError) {
+        console.error('Erro ao salvar app_ativo:', toggleError);
+        Toast.show({
+          type: 'error',
+          text1: 'Parâmetro app_ativo',
+          text2:
+            toggleError instanceof Error
+              ? toggleError.message
+              : `Não foi possível salvar app_ativo. ${SALVAR_APP_PARAMETER_ADMIN_SQL_HINT}`,
+          visibilityTime: 6000,
+        });
+      } finally {
+        setSavingAppAtivo(false);
+      }
+    })();
+  };
+
+  const handleSaveAppInativoMsg = () => {
+    if (
+      isSuperAdmin !== true
+      || rpcMissing
+      || busy
+      || savingAppInativoMsg
+      || loadingAppAtivo
+      || appAtivo
+    ) {
+      return;
+    }
+
+    const trimmed = appInativoMsg.trim();
+
+    if (!trimmed) {
+      Toast.show({
+        type: 'error',
+        text1: 'Mensagem obrigatória',
+        text2: 'Informe o texto exibido quando o aplicativo estiver inativo.',
+        visibilityTime: 4500,
+      });
+      return;
+    }
+
+    setSavingAppInativoMsg(true);
+
+    void (async () => {
+      try {
+        await saveAppParameterValue(APP_INATIVO_MSG_PARAMETER, trimmed);
+        setAppInativoMsg(trimmed);
+        clearAppParameterCache(APP_INATIVO_MSG_PARAMETER);
+        clearAppActiveStatusCache();
+        Toast.show({
+          type: 'success',
+          text1: 'Mensagem salva',
+          text2: 'O texto de indisponibilidade foi atualizado.',
+          visibilityTime: 3500,
+        });
+      } catch (saveError) {
+        console.error('Erro ao salvar app_inativo_msg:', saveError);
+        Toast.show({
+          type: 'error',
+          text1: 'Parâmetro app_inativo_msg',
+          text2:
+            saveError instanceof Error
+              ? saveError.message
+              : `Não foi possível salvar a mensagem. ${SALVAR_APP_PARAMETER_ADMIN_SQL_HINT}`,
+          visibilityTime: 6000,
+        });
+      } finally {
+        setSavingAppInativoMsg(false);
       }
     })();
   };
@@ -539,6 +760,17 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
           canEdit={false}
           onToggleLgpdAtivo={handleToggleLgpdAtivo}
         />
+        <AppAtivoParameterControls
+          appAtivo={appAtivo}
+          appInativoMsg={appInativoMsg}
+          loadingAppAtivo={loadingAppAtivo}
+          savingAppAtivo={savingAppAtivo}
+          savingAppInativoMsg={savingAppInativoMsg}
+          canEdit={false}
+          onToggleAppAtivo={handleToggleAppAtivo}
+          onChangeAppInativoMsg={setAppInativoMsg}
+          onSaveAppInativoMsg={handleSaveAppInativoMsg}
+        />
         <Text style={maintenancePanelStyles.panelHint}>
           Apenas perfis com o papel super_admin podem gerenciar permissões.
         </Text>
@@ -554,6 +786,17 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
         savingLgpdAtivo={savingLgpdAtivo}
         canEdit={isSuperAdmin === true && !rpcMissing && !busy}
         onToggleLgpdAtivo={handleToggleLgpdAtivo}
+      />
+      <AppAtivoParameterControls
+        appAtivo={appAtivo}
+        appInativoMsg={appInativoMsg}
+        loadingAppAtivo={loadingAppAtivo}
+        savingAppAtivo={savingAppAtivo}
+        savingAppInativoMsg={savingAppInativoMsg}
+        canEdit={isSuperAdmin === true && !rpcMissing && !busy}
+        onToggleAppAtivo={handleToggleAppAtivo}
+        onChangeAppInativoMsg={setAppInativoMsg}
+        onSaveAppInativoMsg={handleSaveAppInativoMsg}
       />
       <View style={maintenancePanelStyles.panelSubtitleSpacer} />
 
@@ -1162,6 +1405,75 @@ const styles = StyleSheet.create({
   },
   lgpdRadioLabelInactive: {
     color: '#FECACA',
+  },
+  appAtivoSection: {
+    gap: 10,
+    marginBottom: 4,
+  },
+  appAtivoToggleActive: {
+    borderColor: '#6EE7B7',
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+  },
+  appAtivoToggleInactive: {
+    borderColor: '#FBBF24',
+    backgroundColor: 'rgba(245, 158, 11, 0.16)',
+  },
+  appAtivoRadioOuterActive: {
+    borderColor: '#6EE7B7',
+  },
+  appAtivoRadioOuterInactive: {
+    borderColor: '#FBBF24',
+  },
+  appAtivoRadioInnerActive: {
+    backgroundColor: '#6EE7B7',
+  },
+  appAtivoRadioInnerInactive: {
+    backgroundColor: '#FBBF24',
+  },
+  appAtivoLabelActive: {
+    color: '#D1FAE5',
+  },
+  appAtivoLabelInactive: {
+    color: '#FDE68A',
+  },
+  appInativoMsgBlock: {
+    gap: 8,
+    paddingHorizontal: 2,
+  },
+  appInativoMsgLabel: {
+    color: '#CBD5E1',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  appInativoMsgInput: {
+    minHeight: 88,
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 10,
+    backgroundColor: '#0f172a',
+    color: '#F8FAFC',
+    fontSize: 14,
+    lineHeight: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    textAlignVertical: 'top',
+  },
+  appInativoMsgSaveButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 8,
+    backgroundColor: '#6EE7B7',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  appInativoMsgSaveButtonDisabled: {
+    opacity: 0.55,
+  },
+  appInativoMsgSaveButtonText: {
+    color: '#0f172a',
+    fontSize: 12,
+    fontWeight: '800',
   },
   panelTitle: {
     color: '#E2E8F0',
