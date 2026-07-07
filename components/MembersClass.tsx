@@ -238,44 +238,8 @@ export function MembersClass({
                   maxLength={15}
                   placeholderTextColor="#64748b"
                   value={phone}
-                  onChangeText={(value) => {
-                    const formatted = formatPhone(value);
-                    setPhone(formatted);
-                    if (linkedProfile) {
-                      setLinkedProfile(null);
-                      setProfileLookupMessage(null);
-                    }
-                  }}
-                  onBlur={() => {
-                    const formatted = phone.trim() ? formatPhone(phone) : '';
-                    if (formatted !== phone) {
-                      setPhone(formatted);
-                    }
-
-                    if (
-                      editingMemberId ||
-                      linkedProfile ||
-                      name.trim() ||
-                      !canSearchProfileByPhone(formatted)
-                    ) {
-                      return;
-                    }
-
-                    void lookupProfileByPhoneForMember(formatted)
-                      .then((profile) => {
-                        if (!profile) {
-                          return;
-                        }
-
-                        applyProfileToMemberForm(profile);
-                        setProfileLookupMessage(
-                          `Perfil encontrado pelo telefone: ${profile.full_name?.trim() || 'Sem nome'}.`
-                        );
-                      })
-                      .catch((err: unknown) => {
-                        console.error('Erro ao buscar perfil pelo telefone:', err);
-                      });
-                  }}
+                  onChangeText={onPhoneChange}
+                  onBlur={onPhoneBlur}
                 />
 
                 <Text style={membersClassStyles.fieldLabel}>Nascimento</Text>

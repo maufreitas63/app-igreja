@@ -75,11 +75,20 @@ export function MembersClassPanel({
   onBack,
 }: MembersClassPanelProps) {
   const insets = useSafeAreaInsets();
+  const isEmbeddedOverlay = embedded && Boolean(onBack);
   const params = useLocalSearchParams();
-  const phoneParam = phoneParamProp ?? (params.phone ? decodeURIComponent(params.phone as string) : null);
-  const returnDashboardCard = returnDashboardCardProp ?? resolveReturnDashboardCardParam(params);
-  const explicitReturnRoute = returnRouteProp ?? resolveReturnRouteParam(params);
-  const returnRoute = explicitReturnRoute ?? (returnDashboardCard ? null : '/perfil');
+  const phoneParam = isEmbeddedOverlay
+    ? phoneParamProp ?? null
+    : phoneParamProp ?? (params.phone ? decodeURIComponent(params.phone as string) : null);
+  const returnDashboardCard = isEmbeddedOverlay
+    ? null
+    : returnDashboardCardProp ?? resolveReturnDashboardCardParam(params);
+  const explicitReturnRoute = isEmbeddedOverlay
+    ? null
+    : returnRouteProp ?? resolveReturnRouteParam(params);
+  const returnRoute = isEmbeddedOverlay
+    ? null
+    : explicitReturnRoute ?? (returnDashboardCard ? null : '/perfil');
   const returnToCaller = useReturnToCallerOnLeave(
     onBack
       ? { returnRoute: null, returnDashboardCard: null }
@@ -103,7 +112,7 @@ export function MembersClassPanel({
     enabled: !embedded,
   });
   const listRef = useRef<FlatList<ManagedMember>>(null);
-
+  const [canUpdateFamilyMembers, setCanUpdateFamilyMembers] = useState(false);
 
   useEffect(() => {
     void (async () => {

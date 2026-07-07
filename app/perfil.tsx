@@ -1,11 +1,11 @@
 import { PerfilClassPanel } from '@/components/PerfilClassPanel';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
-import { useGroupedManageCardAccess } from '@/hooks/useGroupedManageCardAccess';
+import { usePerfilScreenAccess } from '@/hooks/usePerfilScreenAccess';
 import React from 'react';
 
 export default function PerfilScreen() {
-  const accessStatus = useGroupedManageCardAccess();
+  const accessStatus = usePerfilScreenAccess();
 
   return (
     <ScreenAccessGate status={accessStatus}>
