@@ -3084,7 +3084,7 @@ export default function Dashboard() {
                                   }}
                                   activeOpacity={0.85}
                                 >
-                                  <FontAwesome name="users" size={18} color="#fda4af" />
+                                  <FontAwesome name="users" size={18} color="#4ac3f9" />
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                   style={[
@@ -4753,7 +4753,7 @@ const styles = StyleSheet.create({
     borderColor: '#818CF8',
   },
   membersListVisitorsButtonText: {
-    color: '#FFFFFF',
+    color: 'rgba(88, 189, 234, 1)',
     fontSize: 13,
     fontWeight: '800',
   },
@@ -4815,7 +4815,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(251, 113, 133, 0.45)',
     borderRadius: 12,
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
-    color: '#FFF',
+    color: 'rgba(96, 185, 228, 1)',
     fontSize: 15,
     paddingHorizontal: 14,
     paddingVertical: 10,
