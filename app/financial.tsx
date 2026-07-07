@@ -745,8 +745,6 @@ const styles = StyleSheet.create({
   },
   reportsList: {
     gap: 10,
-    borderWidth: 1,
-    borderColor: '#000000',
   },
   resultSection: {
     width: '100%',
