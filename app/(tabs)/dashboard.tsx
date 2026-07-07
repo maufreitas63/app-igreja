@@ -2942,7 +2942,7 @@ export default function Dashboard() {
                             onPress={handleShowVisitorsList}
                             activeOpacity={0.85}
                           >
-                            <FontAwesome name="user-o" size={16} color="#FFF" />
+                            <FontAwesome name="user-o" size={16} color="#4AC3F9" />
                             <Text style={styles.membersListVisitorsButtonText}>Visitantes</Text>
                           </TouchableOpacity>
                         ) : (
@@ -4748,7 +4748,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 12,
-    backgroundColor: 'rgba(99, 102, 241, 0.28)',
+    backgroundColor: 'rgba(255, 255, 255, 0.28)',
     borderWidth: 1,
     borderColor: '#818CF8',
   },
