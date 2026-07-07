@@ -1,6 +1,5 @@
 import {
   APP_DRAWER_MENU_ITEMS,
-  resolveDrawerDashboardCard,
   resolveDrawerMaintenancePanel,
   type AppDrawerMenuItem,
   type AppDrawerModuleKey,
@@ -14,9 +13,7 @@ import {
   loadDashboardCardViewAccess,
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
-import { resolveDashboardCardContentFromParam } from '@/lib/dashboardCardScreenLinks';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
-import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { getStoredUserPhone } from '@/lib/userSession';
 import { useCallback, useEffect, useState } from 'react';
@@ -31,7 +28,6 @@ async function isDrawerModuleEnabled(
     dashboardCardAccess: DashboardCardViewAccess;
     dashboardScreenAccess: DashboardScreenAccess;
     maintenancePanelAccess: Record<string, boolean>;
-    hasActiveMembership: boolean;
     canAccessMaintenance: boolean;
     canOperateGhostMode: boolean;
     canOpenAccessControl: boolean;
@@ -44,26 +40,6 @@ async function isDrawerModuleEnabled(
   if (moduleKey === 'gestao_financeira') {
     return isDashboardCardFullyAllowed(
       'financial',
-      context.dashboardCardAccess,
-      context.dashboardScreenAccess
-    );
-  }
-
-  const dashboardCard = resolveDrawerDashboardCard(moduleKey);
-
-  if (dashboardCard) {
-    if (moduleKey === 'administrativo' && !context.hasActiveMembership) {
-      return false;
-    }
-
-    const content = resolveDashboardCardContentFromParam(dashboardCard);
-
-    if (!content) {
-      return false;
-    }
-
-    return isDashboardCardFullyAllowed(
-      content,
       context.dashboardCardAccess,
       context.dashboardScreenAccess
     );
@@ -102,23 +78,20 @@ export function useAppDrawerMenu() {
       const sessionProfile = phone ? await loadEffectiveSessionProfile(phone) : null;
       const profileId = sessionProfile?.id?.trim() ?? null;
 
-      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership] =
-        await Promise.all([
-          profileId
-            ? loadDashboardCardViewAccess(profileId)
-            : Promise.resolve({} as DashboardCardViewAccess),
-          profileId
-            ? loadDashboardLinkedScreenAccess(profileId)
-            : Promise.resolve({} as DashboardScreenAccess),
-          loadMaintenanceDashboardAccess(),
-          profileId ? fetchProfileHasActiveMembership(profileId) : Promise.resolve(false),
-        ]);
+      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess] = await Promise.all([
+        profileId
+          ? loadDashboardCardViewAccess(profileId)
+          : Promise.resolve({} as DashboardCardViewAccess),
+        profileId
+          ? loadDashboardLinkedScreenAccess(profileId)
+          : Promise.resolve({} as DashboardScreenAccess),
+        loadMaintenanceDashboardAccess(),
+      ]);
 
       const context = {
         dashboardCardAccess,
         dashboardScreenAccess,
         maintenancePanelAccess: maintenanceAccess.maintenancePanelAccess,
-        hasActiveMembership,
         canAccessMaintenance: maintenanceAccess.allowed,
         canOperateGhostMode: maintenanceAccess.canOperateGhostMode,
         canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
