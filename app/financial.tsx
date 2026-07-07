@@ -281,7 +281,7 @@ export default function FinancialScreen() {
               accessibilityState={{ expanded: expandedSection === 'twelveMonths' }}
               activeOpacity={0.85}
               onPress={() => toggleSection('twelveMonths')}
-              style={styles.resultSectionHeader}
+              style={[styles.resultSectionHeader, styles.twelveMonthsSectionHeader]}
             >
               <View style={styles.resultSectionHeaderText}>
                 <Text style={styles.sectionLabel}>Últimos 12 meses</Text>
@@ -324,7 +324,7 @@ export default function FinancialScreen() {
               accessibilityState={{ expanded: expandedSection === 'bankBalance' }}
               activeOpacity={0.85}
               onPress={() => toggleSection('bankBalance')}
-              style={styles.resultSectionHeader}
+              style={[styles.resultSectionHeader, styles.bankBalanceSectionHeader]}
             >
               <View style={styles.resultSectionHeaderText}>
                 <Text style={styles.sectionLabel}>Saldo bancário</Text>
@@ -773,6 +773,13 @@ const styles = StyleSheet.create({
   comparisonMonthSectionHeader: {
     backgroundColor: '#FFFFFF',
     borderWidth: 0,
+  },
+  twelveMonthsSectionHeader: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0,
+  },
+  bankBalanceSectionHeader: {
+    backgroundColor: 'transparent',
   },
   resultSectionHeaderText: {
     flex: 1,
