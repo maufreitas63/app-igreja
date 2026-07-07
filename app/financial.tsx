@@ -232,7 +232,7 @@ export default function FinancialScreen() {
               style={[styles.resultSectionHeader, styles.comparisonMonthSectionHeader]}
             >
               <View style={styles.resultSectionHeaderText}>
-                <Text style={[styles.sectionLabel, styles.comparisonSectionLabel]}>
+                <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
                   Comparativo mensal
                 </Text>
                 {selectedMonth && comparisonPreviousMonth ? (
@@ -284,7 +284,7 @@ export default function FinancialScreen() {
               style={[styles.resultSectionHeader, styles.twelveMonthsSectionHeader]}
             >
               <View style={styles.resultSectionHeaderText}>
-                <Text style={styles.sectionLabel}>Últimos 12 meses</Text>
+                <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>Últimos 12 meses</Text>
                 {selectedMonth ? (
                   <Text style={styles.twelveMonthsSectionMeta}>
                     Realizado · até {formatFinancialMonthLabel(selectedMonth)}
@@ -327,7 +327,7 @@ export default function FinancialScreen() {
               style={[styles.resultSectionHeader, styles.bankBalanceSectionHeader]}
             >
               <View style={styles.resultSectionHeaderText}>
-                <Text style={styles.sectionLabel}>Saldo bancário</Text>
+                <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>Saldo bancário</Text>
                 {selectedMonth ? (
                   <Text style={styles.bankBalanceSectionMeta}>
                     {formatFinancialMonthLabel(selectedMonth)}
@@ -378,7 +378,11 @@ export default function FinancialScreen() {
             >
               <View style={styles.resultSectionHeaderText}>
                 <Text
-                  style={[styles.sectionLabel, budgetSectionBlocked && styles.sectionLabelBlocked]}
+                  style={[
+                    styles.sectionLabel,
+                    styles.resultSectionLabel,
+                    budgetSectionBlocked && styles.sectionLabelBlocked,
+                  ]}
                 >
                   Planejado × Realizado
                 </Text>
@@ -807,9 +811,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(59, 130, 246, 0.35)',
     backgroundColor: 'rgba(30, 58, 138, 0.15)',
     overflow: 'hidden',
-  },
-  comparisonSectionLabel: {
-    color: '#A1CBEF',
   },
   twelveMonthsSection: {
     borderRadius: 16,
