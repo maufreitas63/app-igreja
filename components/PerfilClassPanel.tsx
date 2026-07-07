@@ -1,18 +1,14 @@
 import { MinisterialProfileForm } from '@/components/MinisterialProfileForm';
+import { MembersClassPanel } from '@/components/MembersClassPanel';
 import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ProfileClassPanel } from '@/components/ProfileClassPanel';
-import { ACCESS_SCREEN } from '@/lib/accessControl';
-import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
-import { withReturnRoute } from '@/lib/dashboardReturnNavigation';
 import { loadGroupedManageScreenAccess } from '@/lib/groupedManageAccess';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { getStoredUserPhone } from '@/lib/userSession';
-import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 /** Container com dados e navegação — compõe o PerfilClass stateless. */
 export function PerfilClassPanel() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -20,6 +16,7 @@ export function PerfilClassPanel() {
   const [manageMembers, setManageMembers] = useState(false);
   const [ministerialFormVisible, setMinisterialFormVisible] = useState(false);
   const [profileClassVisible, setProfileClassVisible] = useState(false);
+  const [membersClassVisible, setMembersClassVisible] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -72,17 +69,8 @@ export function PerfilClassPanel() {
   }, []);
 
   const openManageMembers = useCallback(() => {
-    void navigateWithScreenAccess(
-      router,
-      '/manage-members',
-      ACCESS_SCREEN.manageMembers,
-      withReturnRoute(
-        '/perfil',
-        userPhone ? { phone: encodeURIComponent(userPhone) } : {}
-      ),
-      { method: 'push' }
-    );
-  }, [router, userPhone]);
+    setMembersClassVisible(true);
+  }, []);
 
   const openMinisterialProfile = useCallback(() => {
     setMinisterialFormVisible(true);
@@ -118,6 +106,23 @@ export function PerfilClassPanel() {
 
     return items;
   }, [manageMembers, manageProfile, openManageMembers, openManageProfile, openMinisterialProfile]);
+
+  if (membersClassVisible) {
+    return (
+      <>
+        <MembersClassPanel
+          embedded
+          phoneParam={userPhone}
+          onBack={() => setMembersClassVisible(false)}
+        />
+        <MinisterialProfileForm
+          visible={ministerialFormVisible}
+          profileId={profileId}
+          onClose={() => setMinisterialFormVisible(false)}
+        />
+      </>
+    );
+  }
 
   if (profileClassVisible) {
     return (
