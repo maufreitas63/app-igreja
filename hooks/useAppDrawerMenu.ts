@@ -67,6 +67,14 @@ async function isDrawerModuleEnabled(
     );
   }
 
+  if (moduleKey === 'menu_membros') {
+    return isDashboardCardFullyAllowed(
+      'members_list',
+      context.dashboardCardAccess,
+      context.dashboardScreenAccess
+    );
+  }
+
   if (moduleKey === 'gestao_financeira') {
     return isDashboardCardFullyAllowed(
       'financial',
