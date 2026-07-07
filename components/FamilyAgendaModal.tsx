@@ -8,7 +8,6 @@ import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { getStoredUserPhone } from '@/lib/userSession';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -16,7 +15,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = {
   visible: boolean;
@@ -24,8 +22,8 @@ type Props = {
   onClose: () => void;
 };
 
+/** Painel inline da Agenda da Família — entre o topo (saudação) e a barra «Encerrar sessão». */
 export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
-  const insets = useSafeAreaInsets();
   const { events, loading, error, refetch } = useActiveEvents({ enablePolling: visible });
   const {
     kidsRoomBadgeLabel,
@@ -161,106 +159,84 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
       />
     ) : null;
 
-  return (
-    <Modal
-      animationType="fade"
-      transparent
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlay}>
-        <Pressable
-          style={styles.backdrop}
-          onPress={onClose}
-          accessibilityLabel="Fechar agenda da família"
-        />
-        <View
-          style={[
-            styles.sheet,
-            {
-              paddingTop: insets.top + 12,
-              paddingBottom: insets.bottom + 12,
-            },
-          ]}
-        >
-          <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>Agenda da Família</Text>
-            <Pressable
-              onPress={onClose}
-              style={styles.closeButton}
-              accessibilityRole="button"
-              accessibilityLabel="Fechar"
-            >
-              <Text style={styles.closeButtonText}>Fechar</Text>
-            </Pressable>
-          </View>
+  if (!visible) {
+    return null;
+  }
 
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator
-          >
-            <FamilyAgendaView
-              loading={loading || isProfileLoading}
-              events={events}
-              selectedEvent={selectedEvent}
-              eventsError={error}
-              kidsRoomBadgeLabel={kidsRoomBadgeLabel}
-              teensRoomBadgeLabel={teensRoomBadgeLabel}
-              capacityFillColor={capacityFillColor}
-              capacityRatio={capacityRatio}
-              registrationSection={registrationSection}
-              loginRequiredMessage={
-                !familyRegistrationSessionProfile && !loading && !isProfileLoading
-                  ? 'Faça login para se inscrever em eventos.'
-                  : null
-              }
-            />
-          </ScrollView>
-        </View>
+  return (
+    <View style={styles.panel}>
+      <View style={styles.panelHeader}>
+        <Text style={styles.panelTitle}>Agenda da Família</Text>
+        <Pressable
+          onPress={onClose}
+          style={styles.closeButton}
+          accessibilityRole="button"
+          accessibilityLabel="Fechar"
+        >
+          <Text style={styles.closeButtonText}>Fechar</Text>
+        </Pressable>
       </View>
-    </Modal>
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator
+        nestedScrollEnabled
+      >
+        <FamilyAgendaView
+          loading={loading || isProfileLoading}
+          events={events}
+          selectedEvent={selectedEvent}
+          eventsError={error}
+          kidsRoomBadgeLabel={kidsRoomBadgeLabel}
+          teensRoomBadgeLabel={teensRoomBadgeLabel}
+          capacityFillColor={capacityFillColor}
+          capacityRatio={capacityRatio}
+          registrationSection={registrationSection}
+          loginRequiredMessage={
+            !familyRegistrationSessionProfile && !loading && !isProfileLoading
+              ? 'Faça login para se inscrever em eventos.'
+              : null
+          }
+        />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  panel: {
     flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  sheet: {
-    flex: 1,
-    maxHeight: '92%',
+    minHeight: 0,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
     backgroundColor: VIGILANCE_SCALES_UI.surface,
-    borderRadius: 0,
     borderWidth: 0,
     shadowOpacity: 0,
     elevation: 0,
     overflow: 'hidden',
-    zIndex: 2,
   },
-  sheetHeader: {
+  panelHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 4,
-    paddingBottom: 10,
+    paddingBottom: 8,
     backgroundColor: VIGILANCE_SCALES_UI.surface,
+    width: '100%',
   },
-  sheetTitle: {
+  panelTitle: {
     color: VIGILANCE_SCALES_UI.accent,
     fontSize: 17,
     fontWeight: '800',
+    flexShrink: 1,
   },
   closeButton: {
     paddingVertical: 6,
     paddingHorizontal: 10,
+    flexShrink: 0,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
   },
   closeButtonText: {
@@ -270,10 +246,13 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+    width: '100%',
     backgroundColor: VIGILANCE_SCALES_UI.surface,
   },
   scrollContent: {
-    paddingBottom: 16,
+    paddingBottom: 12,
+    width: '100%',
+    maxWidth: '100%',
     backgroundColor: VIGILANCE_SCALES_UI.surface,
   },
 });

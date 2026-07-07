@@ -11,6 +11,7 @@ const SECTION_TITLE_FONT_SIZE = Math.round(MINIMAL_TYPO.screenTitle.fontSize * 1
 export function EventsInboxHome() {
   const { events, loading, error } = useActiveEvents({ enablePolling: true });
   const [modalEventId, setModalEventId] = useState<string | null>(null);
+  const agendaOpen = modalEventId !== null;
 
   const inboxItems: InboxListItem[] = useMemo(
     () =>
@@ -41,15 +42,20 @@ export function EventsInboxHome() {
   }
 
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.sectionTitle}>Proximos Eventos</Text>
-      <InboxList
-        items={inboxItems}
-        emptyMessage="Nenhum evento disponível no momento."
-        onItemPress={handleItemPress}
-      />
+    <View style={styles.root}>
+      {!agendaOpen ? (
+        <View style={styles.inboxSection}>
+          <Text style={styles.sectionTitle}>Proximos Eventos</Text>
+          <InboxList
+            items={inboxItems}
+            emptyMessage="Nenhum evento disponível no momento."
+            onItemPress={handleItemPress}
+          />
+        </View>
+      ) : null}
+
       <FamilyAgendaModal
-        visible={modalEventId !== null}
+        visible={agendaOpen}
         initialEventId={modalEventId}
         onClose={handleCloseModal}
       />
@@ -58,10 +64,17 @@ export function EventsInboxHome() {
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    gap: 0,
-    flexGrow: 0,
+  root: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+    maxWidth: '100%',
     alignSelf: 'stretch',
+    backgroundColor: MINIMAL_UI.background,
+  },
+  inboxSection: {
+    flexGrow: 0,
+    width: '100%',
     backgroundColor: MINIMAL_UI.background,
   },
   sectionTitle: {

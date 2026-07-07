@@ -139,6 +139,8 @@ export function FamilyAgendaView({
 const styles = StyleSheet.create({
   body: {
     width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
     gap: 8,
     backgroundColor: VIGILANCE_SCALES_UI.surface,
   },
@@ -157,6 +159,9 @@ const styles = StyleSheet.create({
     backgroundColor: VIGILANCE_SCALES_UI.surface,
   },
   section: {
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
     backgroundColor: VIGILANCE_SCALES_UI.surfaceHighlight,
     borderWidth: 1,
     borderColor: VIGILANCE_SCALES_UI.border,
@@ -213,7 +218,7 @@ const styles = StyleSheet.create({
   roomLegendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'nowrap',
+    flexWrap: 'wrap',
     gap: 4,
     marginTop: 8,
     width: '100%',
@@ -228,8 +233,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   roomBadgeInline: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
     minWidth: 0,
+    maxWidth: '100%',
     justifyContent: 'center',
   },
   roomBadgeKids: {

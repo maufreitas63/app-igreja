@@ -504,10 +504,12 @@ export const FamilyRegistrationList = ({
       ) : null}
       <View style={[styles.headerRow, minimal && styles.headerRowMinimal]}>
         {minimal && !hideRoomSelos && (showKidsIndicator || showTeensIndicator) ? (
-          <MinimalRoomSelosRow
-            showKids={showKidsIndicator}
-            showTeens={showTeensIndicator}
-          />
+          <View style={styles.headerSelosWrap}>
+            <MinimalRoomSelosRow
+              showKids={showKidsIndicator}
+              showTeens={showTeensIndicator}
+            />
+          </View>
         ) : (
           <Text style={[styles.headerTitle, minimal && styles.headerTitleMinimal]}>
             {title ?? 'Audiência da Família'}
@@ -602,6 +604,9 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     minHeight: 0,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
   },
   listFrame: {
     flex: 1,
@@ -617,9 +622,21 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     backgroundColor: 'transparent',
     paddingHorizontal: 0,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
   },
   headerRowMinimal: {
     marginBottom: 4,
+    flexWrap: 'wrap',
+    width: '100%',
+    alignItems: 'flex-start',
+  },
+  headerSelosWrap: {
+    flex: 1,
+    minWidth: 0,
+    width: '100%',
+    maxWidth: '100%',
   },
   headerRow: {
     flexDirection: 'row',
@@ -645,6 +662,8 @@ const styles = StyleSheet.create({
   listContainer: {
     flex: 1,
     minHeight: 0,
+    width: '100%',
+    maxWidth: '100%',
   },
   listScroll: {
     flex: 1,

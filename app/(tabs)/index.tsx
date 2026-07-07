@@ -4,7 +4,7 @@ import React from 'react';
 
 export default function DashboardIndexScreen() {
   return (
-    <MinimalScreenLayout>
+    <MinimalScreenLayout scroll={false}>
       <MinimalMainPanel />
     </MinimalScreenLayout>
   );

@@ -59,7 +59,9 @@ export const MemberCheckboxItem = ({
       </TouchableOpacity>
       <View style={styles.info}>
         <View style={styles.nameRow}>
-          <Text style={[styles.name, minimal && styles.nameMinimal]}>{displayName}</Text>
+          <Text style={[styles.name, minimal && styles.nameMinimal]} numberOfLines={1}>
+            {displayName}
+          </Text>
           {shouldShowStatusDot ? (
             <View
               style={[
@@ -83,7 +85,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    width: '100%',
+    maxWidth: '100%',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   checkbox: {
     width: 24,
@@ -126,17 +131,19 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
+    minWidth: 0,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: 8,
+    minWidth: 0,
   },
   name: {
     color: '#FFF',
     fontSize: 16,
     flex: 1,
+    minWidth: 0,
   },
   nameMinimal: {
     color: MINIMAL_UI.text,
