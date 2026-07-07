@@ -779,7 +779,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   resultSectionLabel: {
-    color: '#A9D0F0',
+    color: '#3A96DD',
   },
   resultSectionMeta: {
     color: '#6EE7B7',
