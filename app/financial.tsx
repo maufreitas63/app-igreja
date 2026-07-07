@@ -160,7 +160,7 @@ export default function FinancialScreen() {
               accessibilityState={{ expanded: expandedSection === 'result' }}
               activeOpacity={0.85}
               onPress={() => toggleSection('result')}
-              style={styles.resultSectionHeader}
+              style={[styles.resultSectionHeader, styles.resultMonthSectionHeader]}
             >
               <View style={styles.resultSectionHeaderText}>
                 <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>Resultado do mês</Text>
@@ -759,6 +759,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
     padding: 14,
+  },
+  resultMonthSectionHeader: {
+    backgroundColor: '#FFFFFF',
   },
   resultSectionHeaderText: {
     flex: 1,
