@@ -4,7 +4,6 @@ import { AdministrativoCard } from '@/components/AdministrativoCard';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
-import { GroupedManagePaletteFooter } from '@/components/GroupedManagePaletteFooter';
 import { MinisterialProfileForm } from '@/components/MinisterialProfileForm';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
 import { usePalette } from '@/context/PaletteContext';
@@ -2900,7 +2899,6 @@ export default function Dashboard() {
                         </View>
                       </TouchableOpacity>
                     </View>
-                    <GroupedManagePaletteFooter />
                   </View>
                 ) : item.content === 'administrativo' ? (
                   <View
