@@ -87,6 +87,8 @@ const styles = StyleSheet.create({
   },
   title: {
     ...DASHBOARD_CARD_TYPO.panelTitle,
+    fontSize: 23,
+    fontWeight: '700',
     color: VIGILANCE_SCALES_UI.accent,
     textAlign: 'center',
     height: 51,
