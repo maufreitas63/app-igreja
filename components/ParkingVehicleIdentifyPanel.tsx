@@ -113,9 +113,9 @@ export function ParkingVehicleIdentifyPanel({
           accessibilityLabel="Buscar veículo pela placa"
         >
           {loading ? (
-            <ActivityIndicator color="#020617" size="small" />
+            <ActivityIndicator color="#4C9FE0" size="small" />
           ) : (
-            <FontAwesome name="search" size={18} color="#020617" />
+            <FontAwesome name="search" size={18} color="#4C9FE0" />
           )}
         </TouchableOpacity>
       </View>
@@ -144,9 +144,7 @@ export function ParkingVehicleIdentifyPanel({
 const styles = StyleSheet.create({
   sectionBox: {
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.35)',
-    backgroundColor: 'rgba(15, 23, 42, 0.72)',
+    backgroundColor: '#FFFFFF',
     padding: 12,
     gap: 8,
   },
@@ -155,7 +153,7 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   sectionTitle: {
-    color: '#FDE68A',
+    color: '#4C9FE0',
     fontSize: 12,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -175,9 +173,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.35)',
-    backgroundColor: 'rgba(2, 6, 23, 0.65)',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 12,
-    color: '#F8FAFC',
+    color: '#4C9FE0',
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 1,
@@ -186,7 +184,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 12,
-    backgroundColor: '#FBBF24',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
