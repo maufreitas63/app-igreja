@@ -808,21 +808,21 @@ const styles = StyleSheet.create({
   comparisonSection: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.35)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: 'rgba(30, 58, 138, 0.15)',
     overflow: 'hidden',
   },
   twelveMonthsSection: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(20, 184, 166, 0.35)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: 'rgba(19, 78, 74, 0.15)',
     overflow: 'hidden',
   },
   budgetSection: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.35)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: 'rgba(88, 28, 135, 0.15)',
     overflow: 'hidden',
   },
@@ -843,7 +843,7 @@ const styles = StyleSheet.create({
   bankBalanceSection: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.35)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: 'rgba(120, 53, 15, 0.15)',
     overflow: 'hidden',
   },
