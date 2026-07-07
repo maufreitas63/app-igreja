@@ -205,8 +205,6 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
               loading={loading || isProfileLoading}
               events={events}
               selectedEvent={selectedEvent}
-              selectedEventId={selectedEvent?.id ?? selectedEventId}
-              onSelectEvent={setSelectedEventId}
               eventsError={error}
               kidsRoomBadgeLabel={kidsRoomBadgeLabel}
               teensRoomBadgeLabel={teensRoomBadgeLabel}

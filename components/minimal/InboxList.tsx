@@ -1,4 +1,3 @@
-import { EventRegistrationCupInline } from '@/components/minimal/EventRegistrationCupInline';
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
 import React from 'react';
@@ -50,7 +49,6 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.', onItemPress }:
               ) : null}
               {item.meta ? <Text style={styles.meta}>{item.meta}</Text> : null}
             </View>
-            {item.event ? <EventRegistrationCupInline event={item.event} /> : null}
           </View>
         </Pressable>
       ))}

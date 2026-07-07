@@ -1,4 +1,3 @@
-import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { DASHBOARD_CARD_TYPO } from '@/lib/dashboardCardStyles';
@@ -10,8 +9,6 @@ export type FamilyAgendaViewProps = {
   loading?: boolean;
   events: ActiveEventListItem[];
   selectedEvent: ActiveEventListItem | null;
-  selectedEventId: string | null | undefined;
-  onSelectEvent: (eventId: string) => void;
   eventsError?: Error | null;
   kidsRoomBadgeLabel: string;
   teensRoomBadgeLabel: string;
@@ -26,8 +23,6 @@ export function FamilyAgendaView({
   loading = false,
   events,
   selectedEvent,
-  selectedEventId,
-  onSelectEvent,
   eventsError = null,
   kidsRoomBadgeLabel,
   teensRoomBadgeLabel,
@@ -126,20 +121,6 @@ export function FamilyAgendaView({
             )}
           </View>
         </View>
-      </View>
-
-      <View style={[styles.section, styles.selectorSection]}>
-        <Text style={styles.sectionLabel}>Trocar Evento</Text>
-        {eventsError ? (
-          <Text style={styles.placeholderText}>Erro ao carregar evento.</Text>
-        ) : (
-          <FamilyEventSelector
-            events={events}
-            selectedEventId={selectedEventId}
-            onSelectEvent={onSelectEvent}
-            variant="vigilance"
-          />
-        )}
       </View>
 
       <View style={[styles.section, styles.membersSection]}>
@@ -339,12 +320,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginTop: 12,
     opacity: 0.6,
-  },
-  selectorSection: {
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    overflow: 'hidden',
-    width: '100%',
   },
   membersSection: {
     gap: 8,
