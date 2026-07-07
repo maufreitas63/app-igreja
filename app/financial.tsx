@@ -461,10 +461,8 @@ export default function FinancialScreen() {
               styles.monthDropdown,
               isMinimalPresentation && styles.minimalMonthDropdown,
             ]}
-            triggerTextStyle={
-              isMinimalPresentation ? styles.minimalMonthDropdownText : undefined
-            }
-            triggerIconColor={isMinimalPresentation ? '#54A2DD' : undefined}
+            triggerTextStyle={styles.financialMonthDropdownText}
+            triggerIconColor="#54A2DD"
           />
         </View>
       ) : (
@@ -588,6 +586,8 @@ export default function FinancialScreen() {
                     modalTitle="Selecionar mês"
                     placeholder="Selecionar mês"
                     style={styles.monthDropdown}
+                    triggerTextStyle={styles.financialMonthDropdownText}
+                    triggerIconColor="#54A2DD"
                   />
                 </View>
               ) : (
@@ -867,6 +867,7 @@ const styles = StyleSheet.create({
     flex: 0,
     flexGrow: 0,
     flexShrink: 0,
+    color: '#54A2DD',
   },
   monthFilterLoader: {
     flex: 1,
@@ -938,7 +939,7 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.background,
   },
-  minimalMonthDropdownText: {
+  financialMonthDropdownText: {
     color: '#54A2DD',
   },
   minimalRdButton: {
