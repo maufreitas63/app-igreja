@@ -14,7 +14,7 @@ import { DASHBOARD_FINANCIAL_CARD_ID, FINANCIAL_HUB_ITEMS } from '@/lib/financia
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { formatFinancialMonthKey, formatFinancialMonthLabel } from '@/lib/financialMonth';
 import { useFinancialsByMonth } from '@/hooks/useFinancialsByMonth';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
@@ -486,10 +486,17 @@ export default function FinancialScreen() {
     </TouchableOpacity>
   );
 
+  const minimalFixedTop = (
+    <View style={styles.minimalFixedTop}>
+      <Text style={styles.minimalScreenTitle}>Financeiro</Text>
+      {monthFilter}
+    </View>
+  );
+
   if (isMinimalPresentation) {
     return (
       <ScreenAccessGate status={accessStatus}>
-        <MinimalScreenLayout title="Financeiro" fixedTop={monthFilter} footer={rdFooter}>
+        <MinimalScreenLayout fixedTop={minimalFixedTop} footer={rdFooter}>
           {selectedMonthIsPlannedOnly ? (
             <Text style={styles.plannedOnlyHint}>
               Este mês só tem lançamentos PLANEJADO. O resultado REALIZADO aparece vazio.
@@ -927,13 +934,27 @@ const styles = StyleSheet.create({
   bulletinLoader: {
     marginVertical: 24,
   },
-  minimalMonthRow: {
+  minimalFixedTop: {
     gap: 8,
+    width: '100%',
+  },
+  minimalScreenTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    alignSelf: 'stretch',
+  },
+  minimalMonthRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 10,
+    width: '100%',
   },
   minimalMonthLabel: {
-    color: MINIMAL_UI.text,
-    fontSize: 14,
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
     fontWeight: '700',
+    flexShrink: 0,
+    marginRight: 'auto',
   },
   minimalMonthDropdown: {
     borderColor: MINIMAL_UI.border,

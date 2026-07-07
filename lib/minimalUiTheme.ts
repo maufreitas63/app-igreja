@@ -1,6 +1,6 @@
+/** Identidade visual minimalista (fundo branco, textos/ícones azuis). */
 import type { TextStyle } from 'react-native';
 
-/** Identidade visual minimalista (fundo branco, textos/ícones azuis). */
 export const MINIMAL_UI = {
   background: '#FFFFFF',
   text: '#1E40AF',
@@ -62,7 +62,7 @@ export const MINIMAL_TYPO = {
   sectionLabel: { fontSize: 13, fontWeight: '700' as const, color: MINIMAL_UI.textMuted },
 };
 
-/** Título de seção minimalista — ex.: «Proximos Eventos», «Perfil & Identidade». */
+/** Título de seção minimalista — ex.: «Proximos Eventos», «Financeiro». */
 export const MINIMAL_SECTION_TITLE_FONT_SIZE = Math.round(MINIMAL_TYPO.screenTitle.fontSize * 1.3);
 
 export const MINIMAL_SECTION_TITLE: TextStyle = {
