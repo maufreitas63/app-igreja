@@ -789,7 +789,7 @@ const styles = StyleSheet.create({
     color: '#3A96DD',
   },
   resultSectionMeta: {
-    color: '#6EE7B7',
+    color: '#5AA8E3',
     fontSize: 13,
     fontWeight: '600',
   },
