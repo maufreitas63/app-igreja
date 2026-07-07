@@ -767,7 +767,8 @@ const styles = StyleSheet.create({
   resultMonthSectionHeader: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: 'var(--app-text)',
+    borderStyle: 'solid',
     boxSizing: 'content-box',
   },
   comparisonMonthSectionHeader: {
