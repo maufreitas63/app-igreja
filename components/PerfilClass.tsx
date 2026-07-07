@@ -88,7 +88,9 @@ const styles = StyleSheet.create({
   title: {
     ...DASHBOARD_CARD_TYPO.panelTitle,
     color: VIGILANCE_SCALES_UI.accent,
-    textAlign: 'left',
+    textAlign: 'center',
+    height: 51,
+    ...(Platform.OS === 'web' ? { verticalAlign: 'top' as const } : null),
   },
   body: {
     width: '100%',
