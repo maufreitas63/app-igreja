@@ -1,10 +1,8 @@
 import { EventRegistrationCupInline } from '@/components/minimal/EventRegistrationCupInline';
-import { MinimalExpandedEventHeader } from '@/components/minimal/MinimalExpandedEventHeader';
-import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 export type InboxListItem = {
   id: string;
@@ -12,7 +10,6 @@ export type InboxListItem = {
   preview?: string;
   meta?: string;
   event?: ActiveEventListItem;
-  content: React.ReactNode;
 };
 
 type Props = {
@@ -20,56 +17,32 @@ type Props = {
   emptyMessage?: string;
 };
 
+/** Lista informativa de eventos — linhas estáticas, sem abrir detalhes ao toque. */
 export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
-  const { expandedEventId, setExpandedEvent } = useMinimalHome();
-
-  const handleCollapse = () => {
-    setExpandedEvent(null);
-  };
-
   if (!items.length) {
     return <Text style={styles.empty}>{emptyMessage}</Text>;
   }
 
-  const visibleItems = expandedEventId
-    ? items.filter((item) => item.id === expandedEventId)
-    : items;
-
   return (
-    <View style={[styles.list, expandedEventId ? styles.listExpanded : null]}>
-      {visibleItems.map((item) => {
-        const expanded = expandedEventId === item.id;
-
-        return (
-          <View key={item.id} style={[styles.rowWrap, expanded ? styles.rowWrapExpanded : null]}>
-            {expanded && item.event ? (
-              <MinimalExpandedEventHeader event={item.event} onBack={handleCollapse} />
-            ) : (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => {
-                  setExpandedEvent(item.event ?? null);
-                }}
-                style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-              >
-                <View style={styles.textBlock}>
-                  <Text style={styles.subject} numberOfLines={2}>
-                    {item.subject}
-                  </Text>
-                  {item.preview ? (
-                    <Text style={styles.preview} numberOfLines={1}>
-                      {item.preview}
-                    </Text>
-                  ) : null}
-                  {item.meta ? <Text style={styles.meta}>{item.meta}</Text> : null}
-                </View>
-                {item.event ? <EventRegistrationCupInline event={item.event} /> : null}
-              </Pressable>
-            )}
-            {expanded ? <View style={styles.expanded}>{item.content}</View> : null}
+    <View style={styles.list}>
+      {items.map((item) => (
+        <View key={item.id} style={styles.rowWrap}>
+          <View style={styles.row}>
+            <View style={styles.textBlock}>
+              <Text style={styles.subject} numberOfLines={2}>
+                {item.subject}
+              </Text>
+              {item.preview ? (
+                <Text style={styles.preview} numberOfLines={1}>
+                  {item.preview}
+                </Text>
+              ) : null}
+              {item.meta ? <Text style={styles.meta}>{item.meta}</Text> : null}
+            </View>
+            {item.event ? <EventRegistrationCupInline event={item.event} /> : null}
           </View>
-        );
-      })}
+        </View>
+      ))}
     </View>
   );
 }
@@ -81,21 +54,12 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: MINIMAL_UI.background,
   },
-  listExpanded: {
-    flex: 1,
-    minHeight: 0,
-  },
   rowWrap: {
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.background,
     marginBottom: -1,
-  },
-  rowWrapExpanded: {
-    flex: 1,
-    minHeight: 0,
-    borderTopWidth: 0,
   },
   row: {
     flexDirection: 'row',
@@ -104,9 +68,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     gap: 8,
     backgroundColor: MINIMAL_UI.background,
-  },
-  rowPressed: {
-    backgroundColor: MINIMAL_UI.rowHover,
   },
   textBlock: {
     flex: 1,
@@ -128,15 +89,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: MINIMAL_UI.blue,
     backgroundColor: MINIMAL_UI.background,
-  },
-  expanded: {
-    flex: 1,
-    minHeight: 0,
-    paddingHorizontal: 8,
-    paddingBottom: 16,
-    backgroundColor: MINIMAL_UI.background,
-    borderTopWidth: 1,
-    borderTopColor: MINIMAL_UI.border,
   },
   empty: {
     color: MINIMAL_UI.blue,

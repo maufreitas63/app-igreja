@@ -1,68 +1,14 @@
-import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { InboxList, type InboxListItem } from '@/components/minimal/InboxList';
-import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
-import { resolveFamilyIdForPhone } from '@/lib/family';
-import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
-import { getStoredUserPhone } from '@/lib/userSession';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 const SECTION_TITLE_FONT_SIZE = Math.round(MINIMAL_TYPO.screenTitle.fontSize * 1.3);
 
 export function EventsInboxHome() {
   const { events, loading, error } = useActiveEvents({ enablePolling: true });
-  const { expandedEventId } = useMinimalHome();
-  const [familyId, setFamilyId] = useState<string | null>(null);
-  const [sessionPhone, setSessionPhone] = useState<string | null>(null);
-  const [sessionProfileName, setSessionProfileName] = useState<string | null>(null);
-  const [sessionProfile, setSessionProfile] = useState<{
-    id: string;
-    full_name?: string | null;
-    phone?: string | null;
-    birth_date?: string | null;
-    family_id?: string | null;
-  } | null>(null);
-
-  useEffect(() => {
-    let active = true;
-
-    void (async () => {
-      const phone = await getStoredUserPhone();
-
-      if (!phone?.trim() || !active) {
-        return;
-      }
-
-      setSessionPhone(phone);
-      const profile = await loadEffectiveSessionProfile(phone);
-
-      if (!active || !profile) {
-        return;
-      }
-
-      setSessionProfileName(profile.full_name?.trim() ?? null);
-      setSessionProfile({
-        id: String(profile.id),
-        full_name: profile.full_name,
-        phone: profile.phone,
-        birth_date: profile.birth_date as string | null,
-        family_id: profile.family_id as string | null,
-      });
-
-      const resolvedFamilyId = await resolveFamilyIdForPhone(phone);
-
-      if (active) {
-        setFamilyId(resolvedFamilyId);
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const inboxItems: InboxListItem[] = useMemo(
     () =>
@@ -72,24 +18,8 @@ export function EventsInboxHome() {
         preview: event.event_local?.trim() || 'Sem local informado',
         meta: formatEventDateTimeLabel(event.event_date),
         event,
-        content: familyId ? (
-          <FamilyRegistrationList
-            familyId={familyId}
-            eventId={event.id}
-            sessionPhone={sessionPhone}
-            sessionProfileName={sessionProfileName}
-            sessionProfile={sessionProfile}
-            title="Audiência da Família"
-            minimal
-            hideRoomSelos
-            showKidsIndicator={Boolean(event.kids_room)}
-            showTeensIndicator={Boolean(event.teens_room)}
-          />
-        ) : (
-          <Text style={styles.inlineHint}>Carregando dados da família…</Text>
-        ),
       })),
-    [events, familyId, sessionPhone, sessionProfile, sessionProfileName]
+    [events]
   );
 
   if (loading) {
@@ -101,11 +31,8 @@ export function EventsInboxHome() {
   }
 
   return (
-    <View style={[styles.wrap, expandedEventId ? styles.wrapExpanded : null]}>
-      {!expandedEventId ? (
-        <Text style={styles.sectionTitle}>Proximos Eventos</Text>
-      ) : null}
-
+    <View style={styles.wrap}>
+      <Text style={styles.sectionTitle}>Proximos Eventos</Text>
       <InboxList items={inboxItems} emptyMessage="Nenhum evento disponível no momento." />
     </View>
   );
@@ -117,10 +44,6 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: MINIMAL_UI.background,
-  },
-  wrapExpanded: {
-    flex: 1,
-    minHeight: 0,
   },
   sectionTitle: {
     fontSize: SECTION_TITLE_FONT_SIZE,
@@ -138,10 +61,5 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     textAlign: 'center',
     paddingVertical: 24,
-  },
-  inlineHint: {
-    color: MINIMAL_UI.text,
-    fontSize: 13,
-    backgroundColor: MINIMAL_UI.background,
   },
 });
