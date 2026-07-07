@@ -229,7 +229,7 @@ export default function FinancialScreen() {
               accessibilityState={{ expanded: expandedSection === 'comparison' }}
               activeOpacity={0.85}
               onPress={() => toggleSection('comparison')}
-              style={styles.resultSectionHeader}
+              style={[styles.resultSectionHeader, styles.comparisonMonthSectionHeader]}
             >
               <View style={styles.resultSectionHeaderText}>
                 <Text style={[styles.sectionLabel, styles.comparisonSectionLabel]}>
@@ -768,6 +768,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#000000',
+  },
+  comparisonMonthSectionHeader: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(179, 189, 228, 1)',
   },
   resultSectionHeaderText: {
     flex: 1,
