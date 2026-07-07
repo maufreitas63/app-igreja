@@ -144,7 +144,7 @@ export function ParkingVehicleIdentifyPanel({
 const styles = StyleSheet.create({
   sectionBox: {
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.72)',
     padding: 12,
     gap: 8,
   },
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.35)',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
     paddingHorizontal: 12,
     color: '#4C9FE0',
     fontSize: 15,
