@@ -6,7 +6,6 @@ import type { Router } from 'expo-router';
 
 /** Itens do menu reservados para futura associação de rota (sem navegação ativa). */
 export const DRAWER_MENU_PLACEHOLDER_KEYS = [
-  'menu_escalas',
   'menu_aniversariantes',
   'menu_membros',
   'menu_administrativo',
@@ -17,6 +16,8 @@ export type AppDrawerPlaceholderModuleKey = (typeof DRAWER_MENU_PLACEHOLDER_KEYS
 /** Chave interna do módulo (mapeamento a–z da especificação). */
 export type AppDrawerModuleKey =
   | 'events_panel'
+  | 'menu_perfil'
+  | 'menu_escalas'
   | AppDrawerPlaceholderModuleKey
   | 'gestao_financeira'
   | 'Events'
@@ -122,6 +123,14 @@ export async function navigateDrawerMenuItem(
   if (moduleKey === 'menu_perfil') {
     router.push({
       pathname: '/perfil',
+      params: withMinimalPresentation(),
+    });
+    return;
+  }
+
+  if (moduleKey === 'menu_escalas') {
+    router.push({
+      pathname: '/escalas',
       params: withMinimalPresentation(),
     });
     return;

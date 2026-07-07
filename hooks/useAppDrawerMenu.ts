@@ -51,6 +51,14 @@ async function isDrawerModuleEnabled(
     );
   }
 
+  if (moduleKey === 'menu_escalas') {
+    return isDashboardCardFullyAllowed(
+      'vigilance_scales',
+      context.dashboardCardAccess,
+      context.dashboardScreenAccess
+    );
+  }
+
   if (moduleKey === 'gestao_financeira') {
     return isDashboardCardFullyAllowed(
       'financial',
