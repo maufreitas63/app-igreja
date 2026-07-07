@@ -232,7 +232,9 @@ export default function FinancialScreen() {
               style={styles.resultSectionHeader}
             >
               <View style={styles.resultSectionHeaderText}>
-                <Text style={styles.sectionLabel}>Comparativo mensal</Text>
+                <Text style={[styles.sectionLabel, styles.comparisonSectionLabel]}>
+                  Comparativo mensal
+                </Text>
                 {selectedMonth && comparisonPreviousMonth ? (
                   <Text style={styles.resultSectionMeta}>
                     {formatFinancialMonthLabel(comparisonPreviousMonth)} ×{' '}
@@ -743,6 +745,8 @@ const styles = StyleSheet.create({
   },
   reportsList: {
     gap: 10,
+    borderWidth: 1,
+    borderColor: '#000000',
   },
   resultSection: {
     width: '100%',
@@ -762,6 +766,8 @@ const styles = StyleSheet.create({
   },
   resultMonthSectionHeader: {
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#000000',
   },
   resultSectionHeaderText: {
     flex: 1,
@@ -786,6 +792,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(59, 130, 246, 0.35)',
     backgroundColor: 'rgba(30, 58, 138, 0.15)',
     overflow: 'hidden',
+  },
+  comparisonSectionLabel: {
+    color: '#A1CBEF',
   },
   twelveMonthsSection: {
     borderRadius: 16,
