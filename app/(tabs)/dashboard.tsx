@@ -5,6 +5,7 @@ import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentify
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { MinisterialProfileForm } from '@/components/MinisterialProfileForm';
+import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
 import { usePalette } from '@/context/PaletteContext';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
@@ -1903,6 +1904,63 @@ export default function Dashboard() {
     [currentIndex, data]
   );
 
+  const groupedManageActions = useMemo((): PerfilClassAction[] => {
+    const items: PerfilClassAction[] = [];
+
+    if (groupedManageScreenAccess.manageProfile) {
+      items.push({
+        key: 'manage-profile',
+        label: 'Dados Cadastrais',
+        icon: 'assignment-ind',
+        onPress: () =>
+          void navigateWithScreenAccess(
+            router,
+            '/manage-profile',
+            ACCESS_SCREEN.manageProfile,
+            buildChildScreenParams(
+              (ghostModeActive ? profile?.phone : userPhone)
+                ? {
+                    phone: encodeURIComponent(String(ghostModeActive ? profile?.phone : userPhone)),
+                  }
+                : {}
+            )
+          ),
+      });
+    }
+
+    if (groupedManageScreenAccess.manageMembers) {
+      items.push({
+        key: 'manage-members',
+        label: 'Gerenciar Família',
+        icon: 'family-restroom',
+        onPress: () =>
+          void navigateWithScreenAccess(
+            router,
+            '/manage-members',
+            ACCESS_SCREEN.manageMembers,
+            buildChildScreenParams(userPhone ? { phone: encodeURIComponent(userPhone) } : {})
+          ),
+      });
+    }
+
+    items.push({
+      key: 'ministerial-profile',
+      label: 'Perfil Ministerial',
+      icon: 'quiz',
+      onPress: () => setMinisterialFormVisible(true),
+    });
+
+    return items;
+  }, [
+    buildChildScreenParams,
+    ghostModeActive,
+    groupedManageScreenAccess.manageMembers,
+    groupedManageScreenAccess.manageProfile,
+    profile?.phone,
+    router,
+    userPhone,
+  ]);
+
   const isMapGeolocationEnabled = useMemo(
     () => canAccessMapGeolocation && Platform.OS === 'web',
     [canAccessMapGeolocation]
@@ -2821,84 +2879,7 @@ export default function Dashboard() {
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
-                    <Text style={styles.dashboardPanelTitle}>Perfil & Identidade</Text>
-                    <View style={styles.groupedManageBody}>
-                      {groupedManageScreenAccess.manageProfile ? (
-                        <TouchableOpacity
-                          style={[styles.groupedManageButton, styles.groupedManageButtonProfile]}
-                          activeOpacity={0.85}
-                          onPress={() =>
-                            void navigateWithScreenAccess(
-                              router,
-                              '/manage-profile',
-                              ACCESS_SCREEN.manageProfile,
-                              buildChildScreenParams(
-                                (ghostModeActive ? profile?.phone : userPhone)
-                                  ? {
-                                      phone: encodeURIComponent(
-                                        String(ghostModeActive ? profile?.phone : userPhone)
-                                      ),
-                                    }
-                                  : {}
-                              )
-                            )
-                          }
-                        >
-                          <View style={styles.groupedManageButtonContent}>
-                            <MaterialIcons
-                              name="assignment-ind"
-                              size={28}
-                              color="#A5B4FC"
-                              style={styles.groupedManageButtonIcon}
-                            />
-                            <Text style={styles.groupedManageButtonTitle}>Dados Cadastrais</Text>
-                          </View>
-                        </TouchableOpacity>
-                      ) : null}
-                      {groupedManageScreenAccess.manageMembers ? (
-                        <TouchableOpacity
-                          style={[styles.groupedManageButton, styles.groupedManageButtonFamily]}
-                          activeOpacity={0.85}
-                          onPress={() =>
-                            void navigateWithScreenAccess(
-                              router,
-                              '/manage-members',
-                              ACCESS_SCREEN.manageMembers,
-                              buildChildScreenParams(
-                                userPhone ? { phone: encodeURIComponent(userPhone) } : {}
-                              )
-                            )
-                          }
-                        >
-                          <View style={styles.groupedManageButtonContent}>
-                            <MaterialIcons
-                              name="family-restroom"
-                              size={28}
-                              color="#D8B4FE"
-                              style={styles.groupedManageButtonIcon}
-                            />
-                            <Text style={styles.groupedManageButtonTitle}>Gerenciar Família</Text>
-                          </View>
-                        </TouchableOpacity>
-                      ) : null}
-                      <TouchableOpacity
-                        style={[styles.groupedManageButton, styles.groupedManageButtonMinisterial]}
-                        activeOpacity={0.85}
-                        onPress={() => setMinisterialFormVisible(true)}
-                        accessibilityRole="button"
-                        accessibilityLabel="Abrir questionário de perfil ministerial"
-                      >
-                        <View style={styles.groupedManageButtonContent}>
-                          <MaterialIcons
-                            name="quiz"
-                            size={28}
-                            color="#6EE7B7"
-                            style={styles.groupedManageButtonIcon}
-                          />
-                          <Text style={styles.groupedManageButtonTitle}>Perfil Ministerial</Text>
-                        </View>
-                      </TouchableOpacity>
-                    </View>
+                    <PerfilClass actions={groupedManageActions} />
                   </View>
                 ) : item.content === 'administrativo' ? (
                   <View

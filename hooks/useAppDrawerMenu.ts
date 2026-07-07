@@ -43,6 +43,14 @@ async function isDrawerModuleEnabled(
     return true;
   }
 
+  if (moduleKey === 'menu_perfil') {
+    return isDashboardCardFullyAllowed(
+      'grouped_manage',
+      context.dashboardCardAccess,
+      context.dashboardScreenAccess
+    );
+  }
+
   if (moduleKey === 'gestao_financeira') {
     return isDashboardCardFullyAllowed(
       'financial',
