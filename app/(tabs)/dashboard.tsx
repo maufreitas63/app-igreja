@@ -3070,7 +3070,10 @@ export default function Dashboard() {
                               </Text>
                               <View style={styles.membersListActionsRow}>
                                 <TouchableOpacity
-                                  style={styles.membersListActionCell}
+                                  style={[
+                                    styles.membersListActionCell,
+                                    styles.membersListActionCellFamily,
+                                  ]}
                                   onPress={() => {
                                     setFamilyModalSeedEntry(entry);
                                     setFamilyModalFamilyId(
@@ -4885,7 +4888,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(148, 163, 184, 0.12)',
+    borderBottomColor: 'rgba(255, 255, 255, 1)',
     gap: 8,
   },
   membersListName: {
@@ -4906,6 +4909,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 4,
+  },
+  membersListActionCellFamily: {
+    backgroundColor: 'rgba(255, 255, 255, 1)',
   },
   membersListActionCellDisabled: {
     opacity: 0.55,
