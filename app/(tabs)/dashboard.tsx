@@ -4836,7 +4836,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   membersListHeaderCell: {
-    color: '#FDA4AF',
+    color: '#3A96DD',
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
