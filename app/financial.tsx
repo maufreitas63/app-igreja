@@ -163,7 +163,7 @@ export default function FinancialScreen() {
               style={styles.resultSectionHeader}
             >
               <View style={styles.resultSectionHeaderText}>
-                <Text style={styles.sectionLabel}>Resultado do mês</Text>
+                <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>Resultado do mês</Text>
                 {selectedMonth ? (
                   <Text style={styles.resultSectionMeta}>
                     {formatFinancialMonthLabel(selectedMonth)}
@@ -763,6 +763,9 @@ const styles = StyleSheet.create({
   resultSectionHeaderText: {
     flex: 1,
     gap: 4,
+  },
+  resultSectionLabel: {
+    color: '#51A0E0',
   },
   resultSectionMeta: {
     color: '#6EE7B7',
