@@ -14,6 +14,14 @@ const HAIRLINE = StyleSheet.hairlineWidth;
 
 export const membersClassStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: SURFACE },
+  containerEmbedded: {
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+    flex: 1,
+    minHeight: 0,
+    backgroundColor: SURFACE,
+  },
   header: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
   titleCentered: {
     ...MINIMAL_SECTION_TITLE,
@@ -32,6 +40,11 @@ export const membersClassStyles = StyleSheet.create({
   readOnlyText: { color: ACCENT, fontWeight: '700', fontSize: 15 },
   membersList: {
     flex: 1,
+  },
+  membersListEmbedded: {
+    width: '100%',
+    flex: 1,
+    minHeight: 0,
   },
   memberFormSection: {
     backgroundColor: SURFACE,

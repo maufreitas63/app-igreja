@@ -6,6 +6,7 @@ import { loadGroupedManageScreenAccess } from '@/lib/groupedManageAccess';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { getStoredUserPhone } from '@/lib/userSession';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 /** Container com dados e navegação — compõe o PerfilClass stateless. */
 export function PerfilClassPanel() {
@@ -109,7 +110,7 @@ export function PerfilClassPanel() {
 
   if (membersClassVisible) {
     return (
-      <>
+      <View style={styles.embeddedPanel}>
         <MembersClassPanel
           embedded
           phoneParam={userPhone}
@@ -120,13 +121,13 @@ export function PerfilClassPanel() {
           profileId={profileId}
           onClose={() => setMinisterialFormVisible(false)}
         />
-      </>
+      </View>
     );
   }
 
   if (profileClassVisible) {
     return (
-      <>
+      <View style={styles.embeddedPanel}>
         <ProfileClassPanel
           embedded
           phoneParam={userPhone}
@@ -137,7 +138,7 @@ export function PerfilClassPanel() {
           profileId={profileId}
           onClose={() => setMinisterialFormVisible(false)}
         />
-      </>
+      </View>
     );
   }
 
@@ -152,3 +153,12 @@ export function PerfilClassPanel() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  embeddedPanel: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+    alignSelf: 'stretch',
+  },
+});

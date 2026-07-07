@@ -117,12 +117,12 @@ export function MembersClass({
 }: MembersClassProps) {
   const Root = embedded ? View : SafeAreaView;
   const rootProps = embedded
-    ? { style: membersClassStyles.container }
+    ? { style: membersClassStyles.containerEmbedded }
     : { style: membersClassStyles.container, edges: ['top', 'left', 'right'] as const };
 
   return (
     <Root {...rootProps}>
-<View style={membersClassStyles.header}>
+      <View style={membersClassStyles.header}>
         <Text style={membersClassStyles.titleCentered}>Gerenciar Família</Text>
         <View style={membersClassStyles.readOnlyContainer}>
           <Text style={membersClassStyles.readOnlyText}>Família Atual: {familyId}</Text>
@@ -131,10 +131,11 @@ export function MembersClass({
 
       <FlatList
         ref={listRef}
-        style={membersClassStyles.membersList}
+        style={embedded ? membersClassStyles.membersListEmbedded : membersClassStyles.membersList}
         data={members}
         keyExtractor={(item) => String(item.id)}
         keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled={embedded}
         contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
         ListHeaderComponent={
           <>

@@ -9,7 +9,7 @@ export default function PerfilScreen() {
 
   return (
     <ScreenAccessGate status={accessStatus}>
-      <MinimalScreenLayout>
+      <MinimalScreenLayout scroll={false}>
         <PerfilClassPanel />
       </MinimalScreenLayout>
     </ScreenAccessGate>

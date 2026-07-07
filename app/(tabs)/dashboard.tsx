@@ -5,7 +5,7 @@ import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentify
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { MinisterialProfileForm } from '@/components/MinisterialProfileForm';
-import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
+import { PerfilClassPanel } from '@/components/PerfilClassPanel';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
 import { usePalette } from '@/context/PaletteContext';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
@@ -1904,74 +1904,6 @@ export default function Dashboard() {
     [currentIndex, data]
   );
 
-  const buildGroupedManageChildParams = useCallback(
-    (extra?: Record<string, string>) => {
-      if (isMinimalPresentation) {
-        return withReturnRoute('/perfil', extra ?? {});
-      }
-
-      return buildChildScreenParams(extra);
-    },
-    [buildChildScreenParams, isMinimalPresentation]
-  );
-
-  const groupedManageActions = useMemo((): PerfilClassAction[] => {
-    const items: PerfilClassAction[] = [];
-
-    if (groupedManageScreenAccess.manageProfile) {
-      items.push({
-        key: 'manage-profile',
-        label: 'Dados Cadastrais',
-        icon: 'assignment-ind',
-        onPress: () =>
-          void navigateWithScreenAccess(
-            router,
-            '/manage-profile',
-            ACCESS_SCREEN.manageProfile,
-            buildGroupedManageChildParams(
-              (ghostModeActive ? profile?.phone : userPhone)
-                ? {
-                    phone: encodeURIComponent(String(ghostModeActive ? profile?.phone : userPhone)),
-                  }
-                : {}
-            )
-          ),
-      });
-    }
-
-    if (groupedManageScreenAccess.manageMembers) {
-      items.push({
-        key: 'manage-members',
-        label: 'Gerenciar Família',
-        icon: 'family-restroom',
-        onPress: () =>
-          void navigateWithScreenAccess(
-            router,
-            '/manage-members',
-            ACCESS_SCREEN.manageMembers,
-            buildGroupedManageChildParams(userPhone ? { phone: encodeURIComponent(userPhone) } : {})
-          ),
-      });
-    }
-
-    items.push({
-      key: 'ministerial-profile',
-      label: 'Perfil Ministerial',
-      icon: 'quiz',
-      onPress: () => setMinisterialFormVisible(true),
-    });
-
-    return items;
-  }, [
-    buildGroupedManageChildParams,
-    ghostModeActive,
-    groupedManageScreenAccess.manageMembers,
-    groupedManageScreenAccess.manageProfile,
-    profile?.phone,
-    router,
-    userPhone,
-  ]);
-
   const isMapGeolocationEnabled = useMemo(
     () => canAccessMapGeolocation && Platform.OS === 'web',
     [canAccessMapGeolocation]
@@ -2890,7 +2822,9 @@ export default function Dashboard() {
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
-                    <PerfilClass actions={groupedManageActions} />
+                    <View style={styles.cardGroupedManagePanel}>
+                      <PerfilClassPanel />
+                    </View>
                   </View>
                 ) : item.content === 'administrativo' ? (
                   <View
@@ -4549,6 +4483,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     gap: 0,
     shadowOpacity: 0.3,
+  },
+  cardGroupedManagePanel: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+    alignSelf: 'stretch',
   },
   cardAdministrativo: {
     alignItems: 'stretch',

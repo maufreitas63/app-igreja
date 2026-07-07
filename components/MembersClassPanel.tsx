@@ -100,6 +100,7 @@ export function MembersClassPanel({
   const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.manageMembers,
     deniedMessage: 'Você não tem permissão para abrir Gerenciar família.',
+    enabled: !embedded,
   });
   const listRef = useRef<FlatList<ManagedMember>>(null);
 
