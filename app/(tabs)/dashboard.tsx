@@ -4753,7 +4753,7 @@ const styles = StyleSheet.create({
     borderColor: '#818CF8',
   },
   membersListVisitorsButtonText: {
-    color: 'rgba(88, 189, 234, 1)',
+    color: 'rgba(76, 159, 224, 1)',
     fontSize: 13,
     fontWeight: '800',
   },
@@ -4814,7 +4814,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(251, 113, 133, 0.45)',
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: 'rgba(255, 255, 255, 1)',
     color: 'rgba(96, 185, 228, 1)',
     fontSize: 15,
     paddingHorizontal: 14,
