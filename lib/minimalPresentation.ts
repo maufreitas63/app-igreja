@@ -104,5 +104,6 @@ export const MINIMAL_DASHBOARD_STYLES = StyleSheet.create({
   } satisfies ViewStyle,
   birthdayMonthDropdownText: {
     color: BIRTHDAYS_UI.monthDropdownText,
+    textAlign: 'center',
   } satisfies TextStyle,
 });

@@ -1,6 +1,9 @@
 import type { Href } from 'expo-router';
 
 export const RETURN_DASHBOARD_CARD_PARAM = 'returnDashboardCard';
+export const PRESENTATION_PARAM = 'presentation';
+export const MINIMAL_PRESENTATION_VALUE = 'minimal';
+export const LEGACY_PRESENTATION_VALUE = 'legacy';
 
 export const pickRouteParam = (value: string | string[] | undefined): string | null => {
   if (Array.isArray(value)) {
@@ -10,6 +13,17 @@ export const pickRouteParam = (value: string | string[] | undefined): string | n
   return value?.trim() || null;
 };
 
+export const isMinimalPresentationRoute = (
+  presentation: string | string[] | undefined
+) => pickRouteParam(presentation) !== LEGACY_PRESENTATION_VALUE;
+
+export const withMinimalPresentation = (
+  params: Record<string, string> = {}
+): Record<string, string> => ({
+  ...params,
+  [PRESENTATION_PARAM]: MINIMAL_PRESENTATION_VALUE,
+});
+
 export const resolveReturnDashboardCardParam = (
   params: Record<string, string | string[] | undefined>
 ): string | null => pickRouteParam(params[RETURN_DASHBOARD_CARD_PARAM]);
@@ -17,19 +31,20 @@ export const resolveReturnDashboardCardParam = (
 export const withReturnDashboardCard = (
   returnDashboardCard: string,
   params: Record<string, string> = {}
-): Record<string, string> => ({
-  ...params,
-  [RETURN_DASHBOARD_CARD_PARAM]: returnDashboardCard,
-});
+): Record<string, string> =>
+  withMinimalPresentation({
+    ...params,
+    [RETURN_DASHBOARD_CARD_PARAM]: returnDashboardCard,
+  });
 
 export const buildReturnToDashboardHref = (
   dashboardCard: string,
   extraParams?: Record<string, string | undefined>
 ): Href => {
-  const params: Record<string, string> = {
+  const params: Record<string, string> = withMinimalPresentation({
     dashboardCard,
     dashboardCardNonce: String(Date.now()),
-  };
+  });
 
   if (extraParams) {
     for (const [key, value] of Object.entries(extraParams)) {

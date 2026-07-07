@@ -7,13 +7,14 @@ import { ACCESS_SCREEN } from '@/lib/accessControl';
 import {
   resolveReturnDashboardCardParam,
   withReturnDashboardCard,
+  pickRouteParam,
+  isMinimalPresentationRoute,
 } from '@/lib/dashboardReturnNavigation';
 import { DASHBOARD_FINANCIAL_CARD_ID, FINANCIAL_HUB_ITEMS } from '@/lib/financialModule';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { pickRouteParam } from '@/lib/dashboardReturnNavigation';
 import { formatFinancialMonthKey, formatFinancialMonthLabel } from '@/lib/financialMonth';
 import { useFinancialsByMonth } from '@/hooks/useFinancialsByMonth';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
@@ -49,7 +50,7 @@ export default function FinancialScreen() {
     returnDashboardCard?: string | string[];
     presentation?: string | string[];
   }>();
-  const isMinimalPresentation = pickRouteParam(params.presentation) === 'minimal';
+  const isMinimalPresentation = isMinimalPresentationRoute(params.presentation);
   const returnDashboardCard = resolveReturnDashboardCardParam(params) ?? DASHBOARD_FINANCIAL_CARD_ID;
   const scrollRef = useRef<ScrollView>(null);
 

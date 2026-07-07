@@ -6,16 +6,14 @@ import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = {
   title?: string;
   header?: React.ReactNode;
 };
 
-/** Menu fixo no topo esquerdo; evento expandido na mesma linha (50/50). */
+/** Chrome fixo no topo: identidade + menu; o conteúdo da tela fica sempre abaixo. */
 export function MinimalTopLeftChrome({ title, header }: Props) {
-  const insets = useSafeAreaInsets();
   const { openDrawer } = useAppDrawer();
   const { expandedEventId } = useMinimalHome();
 
@@ -31,7 +29,7 @@ export function MinimalTopLeftChrome({ title, header }: Props) {
   );
 
   return (
-    <View style={[styles.wrap, { paddingTop: insets.top + 8 }]}>
+    <View style={styles.wrap}>
       <MinimalTopIdentityBar />
 
       <View style={styles.menuChrome}>
@@ -49,15 +47,15 @@ export function MinimalTopLeftChrome({ title, header }: Props) {
 
 const styles = StyleSheet.create({
   wrap: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 30,
+    flexShrink: 0,
     paddingHorizontal: 12,
+    paddingTop: 8,
     paddingBottom: 8,
     backgroundColor: MINIMAL_UI.background,
     gap: 4,
+    zIndex: 30,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: MINIMAL_UI.divider,
   },
   menuButton: {
     padding: 4,

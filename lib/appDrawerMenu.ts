@@ -2,7 +2,7 @@ import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { resolveDashboardCardContentFromParam } from '@/lib/dashboardCardScreenLinks';
 import { DASHBOARD_FINANCIAL_CARD_ID } from '@/lib/financialModule';
 import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
-import { withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
+import { withMinimalPresentation, withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
 import type { Router } from 'expo-router';
 
 /** Chave interna do módulo (mapeamento a–z da especificação). */
@@ -157,6 +157,7 @@ export async function navigateDrawerMenuItem(
   if (moduleKey === 'suggestions_improvements') {
     router.push({
       pathname: '/suggestions-improvements',
+      params: withMinimalPresentation(),
     });
     return;
   }
@@ -166,7 +167,7 @@ export async function navigateDrawerMenuItem(
   if (maintenancePanel) {
     router.push({
       pathname: '/maintenance-dashboard',
-      params: { panel: maintenancePanel },
+      params: withMinimalPresentation({ panel: maintenancePanel }),
     });
     return;
   }
@@ -189,10 +190,10 @@ export async function navigateDrawerMenuItem(
 
     router.push({
       pathname: '/(tabs)/dashboard',
-      params: {
+      params: withMinimalPresentation({
         dashboardCard,
         dashboardCardNonce: String(Date.now()),
-      },
+      }),
     });
   }
 }

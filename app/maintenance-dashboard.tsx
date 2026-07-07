@@ -61,7 +61,7 @@ import {
 } from '@/lib/dashboardPanelLayout';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
 import { MINIMAL_FLAT_PANEL, MINIMAL_PAGE } from '@/lib/minimalPresentation';
-import { pickRouteParam } from '@/lib/dashboardReturnNavigation';
+import { pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
 import {
   MAINTENANCE_SHORTCUT_ICON_ACTIVE_COLOR,
   MAINTENANCE_SHORTCUT_ICON_COLORS,
@@ -334,7 +334,7 @@ export default function MaintenanceDashboard() {
     presentation?: string | string[];
   }>();
   const requestedPanel = pickRouteParam(panelParam);
-  const isMinimalPresentation = pickRouteParam(presentationParam) === 'minimal';
+  const isMinimalPresentation = isMinimalPresentationRoute(presentationParam);
   const previousPageWidthRef = useRef(pageWidth);
   const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);
   const router = useRouter();

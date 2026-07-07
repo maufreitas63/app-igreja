@@ -110,7 +110,7 @@ import {
 import { BIRTHDAYS_UI, DASHBOARD_CARD_THEMES, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_TYPO } from '@/lib/dashboardCardStyles';
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
-import { withReturnDashboardCard, pickRouteParam } from '@/lib/dashboardReturnNavigation';
+import { withReturnDashboardCard, pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MINIMAL_FLAT_PANEL, MINIMAL_DASHBOARD_STYLES, MINIMAL_PAGE } from '@/lib/minimalPresentation';
@@ -641,7 +641,7 @@ export default function Dashboard() {
   );
   const params = useLocalSearchParams();
   const router = useRouter();
-  const isMinimalPresentation = pickRouteParam(params.presentation) === 'minimal';
+  const isMinimalPresentation = isMinimalPresentationRoute(params.presentation);
 
   const effectiveCarouselPageStyle = useMemo(
     () => (isMinimalPresentation ? { width: '100%' as const, flex: 1 } : carouselPageStyle),
@@ -5781,6 +5781,7 @@ const styles = StyleSheet.create({
   birthdaysMonthDropdownText: {
     color: BIRTHDAYS_UI.monthDropdownText,
     fontWeight: '700',
+    textAlign: 'center',
   },
   birthdayWhatsappButton: {
     width: 32,

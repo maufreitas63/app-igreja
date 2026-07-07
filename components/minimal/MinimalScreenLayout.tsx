@@ -1,13 +1,6 @@
-import { MinimalHomeProvider, useMinimalHome } from '@/context/MinimalHomeContext';
-import {
-  MINIMAL_EXIT_BAR_HEIGHT,
-  MINIMAL_TOP_CHROME_BASE,
-  MINIMAL_TOP_CHROME_EXPANDED,
-  MINIMAL_TOP_CHROME_HEADER,
-  MINIMAL_TOP_IDENTITY_BAR_HEIGHT,
-  MINIMAL_UI,
-} from '@/lib/minimalUiTheme';
-import React, { useMemo } from 'react';
+import { MinimalHomeProvider } from '@/context/MinimalHomeContext';
+import { MINIMAL_EXIT_BAR_HEIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import React from 'react';
 import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppDrawer } from './AppDrawer';
@@ -34,63 +27,46 @@ function MinimalScreenLayoutBody({
   contentContainerStyle,
   scroll = true,
 }: Props) {
-  const { expandedEventId } = useMinimalHome();
-
-  const contentPaddingTop = useMemo(() => {
-    let top =
-      MINIMAL_TOP_IDENTITY_BAR_HEIGHT +
-      (expandedEventId ? MINIMAL_TOP_CHROME_EXPANDED : MINIMAL_TOP_CHROME_BASE);
-
-    if (header) {
-      top += MINIMAL_TOP_CHROME_HEADER;
-    } else if (title) {
-      top += 28;
-    }
-
-    return top;
-  }, [expandedEventId, header, title]);
-
   const contentPaddingBottom = MINIMAL_EXIT_BAR_HEIGHT + 12;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <AppDrawer />
-      <MinimalTopLeftChrome title={title} header={header} />
+      <View style={styles.shell}>
+        <MinimalTopLeftChrome title={title} header={header} />
 
-      <View
-        style={[
-          styles.body,
-          { paddingTop: contentPaddingTop, paddingBottom: MINIMAL_EXIT_BAR_HEIGHT },
-        ]}
-      >
-        {fixedTop ? <View style={styles.fixedTop}>{fixedTop}</View> : null}
+        <View style={[styles.body, { paddingBottom: MINIMAL_EXIT_BAR_HEIGHT }]}>
+          {fixedTop ? <View style={styles.fixedTop}>{fixedTop}</View> : null}
 
-        {scroll ? (
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingBottom: contentPaddingBottom },
-              contentContainerStyle,
-            ]}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator
-          >
-            {children}
-          </ScrollView>
-        ) : (
-          <View
-            style={[
-              styles.flexContent,
-              { paddingBottom: contentPaddingBottom },
-              contentContainerStyle,
-            ]}
-          >
-            {children}
-          </View>
-        )}
+          {scroll ? (
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={[
+                styles.scrollContent,
+                { paddingBottom: contentPaddingBottom },
+                contentContainerStyle,
+              ]}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator
+            >
+              {children}
+            </ScrollView>
+          ) : (
+            <View
+              style={[
+                styles.flexContent,
+                { paddingBottom: contentPaddingBottom },
+                contentContainerStyle,
+              ]}
+            >
+              {children}
+            </View>
+          )}
 
-        {footer ? <View style={[styles.footer, { bottom: MINIMAL_EXIT_BAR_HEIGHT }]}>{footer}</View> : null}
+          {footer ? (
+            <View style={[styles.footer, { bottom: MINIMAL_EXIT_BAR_HEIGHT }]}>{footer}</View>
+          ) : null}
+        </View>
       </View>
 
       <MinimalExitBar />
@@ -110,6 +86,10 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: MINIMAL_UI.background,
+  },
+  shell: {
+    flex: 1,
+    minHeight: 0,
   },
   body: {
     flex: 1,

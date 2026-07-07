@@ -27,6 +27,7 @@ import {
   buildReturnToDashboardHref,
   pickRouteParam,
   resolveReturnDashboardCardParam,
+  isMinimalPresentationRoute,
 } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -157,7 +158,7 @@ export default function PastoralScreen() {
   }>();
   const routeUserId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
   const router = useRouter();
-  const isMinimalPresentation = pickRouteParam(params.presentation) === 'minimal';
+  const isMinimalPresentation = isMinimalPresentationRoute(params.presentation);
 
   const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.pastoral,
