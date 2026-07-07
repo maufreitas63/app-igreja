@@ -60,6 +60,8 @@ export function EventsInboxHome() {
 const styles = StyleSheet.create({
   wrap: {
     gap: 0,
+    flexGrow: 0,
+    alignSelf: 'stretch',
     backgroundColor: MINIMAL_UI.background,
   },
   sectionTitle: {
@@ -69,7 +71,7 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     textAlign: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   loader: {
     marginVertical: 32,

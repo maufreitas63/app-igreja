@@ -1,7 +1,11 @@
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
 import React from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+export const INBOX_EVENT_ROW_HEIGHT = 80;
+export const INBOX_VISIBLE_EVENT_ROWS = 3;
+export const INBOX_LIST_MAX_HEIGHT = INBOX_EVENT_ROW_HEIGHT * INBOX_VISIBLE_EVENT_ROWS;
 
 export type InboxListItem = {
   id: string;
@@ -15,16 +19,31 @@ type Props = {
   items: InboxListItem[];
   emptyMessage?: string;
   onItemPress?: (item: InboxListItem) => void;
+  /** Altura da janela da lista em número de linhas visíveis (padrão: 3). */
+  maxVisibleRows?: number;
 };
 
 /** Lista de eventos — cada linha é um botão minimalista que abre detalhes. */
-export function InboxList({ items, emptyMessage = 'Nenhum item.', onItemPress }: Props) {
+export function InboxList({
+  items,
+  emptyMessage = 'Nenhum item.',
+  onItemPress,
+  maxVisibleRows = INBOX_VISIBLE_EVENT_ROWS,
+}: Props) {
   if (!items.length) {
     return <Text style={styles.empty}>{emptyMessage}</Text>;
   }
 
+  const listMaxHeight = INBOX_EVENT_ROW_HEIGHT * maxVisibleRows;
+
   return (
-    <View style={styles.list}>
+    <ScrollView
+      style={[styles.list, { maxHeight: listMaxHeight }]}
+      contentContainerStyle={styles.listContent}
+      nestedScrollEnabled
+      showsVerticalScrollIndicator
+      keyboardShouldPersistTaps="handled"
+    >
       {items.map((item) => (
         <Pressable
           key={item.id}
@@ -39,7 +58,7 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.', onItemPress }:
         >
           <View style={styles.row}>
             <View style={styles.textBlock}>
-              <Text style={styles.subject} numberOfLines={2}>
+              <Text style={styles.subject} numberOfLines={1}>
                 {item.subject}
               </Text>
               {item.preview ? (
@@ -52,7 +71,7 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.', onItemPress }:
           </View>
         </Pressable>
       ))}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -60,9 +79,14 @@ const styles = StyleSheet.create({
   list: {
     width: '100%',
     backgroundColor: MINIMAL_UI.background,
+    flexGrow: 0,
+  },
+  listContent: {
+    flexGrow: 0,
   },
   eventButton: {
     width: '100%',
+    height: INBOX_EVENT_ROW_HEIGHT,
     backgroundColor: MINIMAL_UI.background,
     borderWidth: 0,
     borderRadius: 0,
@@ -82,17 +106,19 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.rowHover,
   },
   row: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 8,
     paddingHorizontal: 4,
-    gap: 8,
+    gap: 6,
     backgroundColor: 'transparent',
   },
   textBlock: {
     flex: 1,
-    gap: 4,
+    gap: 2,
     minWidth: 0,
+    justifyContent: 'center',
     backgroundColor: 'transparent',
   },
   subject: {
@@ -106,7 +132,8 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   meta: {
-    fontSize: 12,
+    fontSize: 11,
+    lineHeight: 14,
     color: MINIMAL_UI.blue,
     backgroundColor: 'transparent',
     textAlign: 'left',
