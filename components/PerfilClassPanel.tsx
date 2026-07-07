@@ -1,5 +1,4 @@
 import { MinisterialProfileForm } from '@/components/MinisterialProfileForm';
-import { MembersClassPanel } from '@/components/MembersClassPanel';
 import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ProfileClassPanel } from '@/components/ProfileClassPanel';
 import { loadGroupedManageScreenAccess } from '@/lib/groupedManageAccess';
@@ -17,7 +16,6 @@ export function PerfilClassPanel() {
   const [manageMembers, setManageMembers] = useState(false);
   const [ministerialFormVisible, setMinisterialFormVisible] = useState(false);
   const [profileClassVisible, setProfileClassVisible] = useState(false);
-  const [membersClassVisible, setMembersClassVisible] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -69,10 +67,6 @@ export function PerfilClassPanel() {
     setProfileClassVisible(true);
   }, []);
 
-  const openManageMembers = useCallback(() => {
-    setMembersClassVisible(true);
-  }, []);
-
   const openMinisterialProfile = useCallback(() => {
     setMinisterialFormVisible(true);
   }, []);
@@ -94,7 +88,7 @@ export function PerfilClassPanel() {
         key: 'manage-members',
         label: 'Gerenciar Família',
         icon: 'family-restroom',
-        onPress: openManageMembers,
+        onPress: () => {},
       });
     }
 
@@ -106,24 +100,7 @@ export function PerfilClassPanel() {
     });
 
     return items;
-  }, [manageMembers, manageProfile, openManageMembers, openManageProfile, openMinisterialProfile]);
-
-  if (membersClassVisible) {
-    return (
-      <View style={styles.embeddedPanel}>
-        <MembersClassPanel
-          embedded
-          phoneParam={userPhone}
-          onBack={() => setMembersClassVisible(false)}
-        />
-        <MinisterialProfileForm
-          visible={ministerialFormVisible}
-          profileId={profileId}
-          onClose={() => setMinisterialFormVisible(false)}
-        />
-      </View>
-    );
-  }
+  }, [manageMembers, manageProfile, openManageProfile, openMinisterialProfile]);
 
   if (profileClassVisible) {
     return (
