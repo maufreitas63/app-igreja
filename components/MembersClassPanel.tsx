@@ -91,7 +91,7 @@ export function MembersClassPanel({
     : explicitReturnRoute ?? (returnDashboardCard ? null : '/perfil');
   const returnToCaller = useReturnToCallerOnLeave(
     onBack
-      ? { returnRoute: null, returnDashboardCard: null }
+      ? { returnRoute: null, returnDashboardCard: null, managedByParent: true }
       : {
           returnRoute,
           returnDashboardCard,
@@ -110,6 +110,7 @@ export function MembersClassPanel({
     resourceKey: ACCESS_SCREEN.manageMembers,
     deniedMessage: 'Você não tem permissão para abrir Gerenciar família.',
     enabled: !embedded,
+    skipCheck: embedded,
   });
   const listRef = useRef<FlatList<ManagedMember>>(null);
   const [canUpdateFamilyMembers, setCanUpdateFamilyMembers] = useState(false);

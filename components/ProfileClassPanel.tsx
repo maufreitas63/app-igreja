@@ -111,7 +111,7 @@ export function ProfileClassPanel({
   const returnRoute = explicitReturnRoute ?? (returnDashboardCard ? null : '/perfil');
   const returnToCaller = useReturnToCallerOnLeave(
     onBack
-      ? { returnRoute: null, returnDashboardCard: null }
+      ? { returnRoute: null, returnDashboardCard: null, managedByParent: true }
       : {
           returnRoute,
           returnDashboardCard,

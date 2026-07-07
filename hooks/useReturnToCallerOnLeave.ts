@@ -9,6 +9,8 @@ type UseReturnToCallerOnLeaveOptions = {
   returnDashboardCard?: string | null;
   fallbackDashboardCard?: string | null;
   extraRouteParams?: Record<string, string | undefined>;
+  /** Overlay embutido com `onBack` — não intercepta navegação da rota pai. */
+  managedByParent?: boolean;
 };
 
 export function useReturnToCallerOnLeave({
@@ -16,6 +18,7 @@ export function useReturnToCallerOnLeave({
   returnDashboardCard,
   fallbackDashboardCard = null,
   extraRouteParams,
+  managedByParent = false,
 }: UseReturnToCallerOnLeaveOptions) {
   const router = useRouter();
   const navigation = useNavigation();
@@ -57,6 +60,10 @@ export function useReturnToCallerOnLeave({
   }, [extraRouteParams, fallbackDashboardCard, returnDashboardCard, returnRoute, router]);
 
   useEffect(() => {
+    if (managedByParent) {
+      return undefined;
+    }
+
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
       if (allowLeaveRef.current) {
         return;
@@ -67,11 +74,11 @@ export function useReturnToCallerOnLeave({
     });
 
     return unsubscribe;
-  }, [navigation, returnToCaller]);
+  }, [managedByParent, navigation, returnToCaller]);
 
   useEffect(() => {
-    if (Platform.OS !== 'android') {
-      return;
+    if (managedByParent || Platform.OS !== 'android') {
+      return undefined;
     }
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -80,7 +87,7 @@ export function useReturnToCallerOnLeave({
     });
 
     return () => subscription.remove();
-  }, [returnToCaller]);
+  }, [managedByParent, returnToCaller]);
 
   return returnToCaller;
 }

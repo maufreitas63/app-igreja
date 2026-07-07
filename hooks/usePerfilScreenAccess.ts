@@ -7,20 +7,23 @@ import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { getStoredUserPhone } from '@/lib/userSession';
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 
 /** Acesso à rota `/perfil` — sessão válida, sem exigir card do dashboard. */
 export function usePerfilScreenAccess(redirectPath: string = '/(tabs)'): ScreenAccessStatus {
   const router = useRouter();
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
+  const hasAllowedRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
 
       void (async () => {
-        setStatus('checking');
+        if (!hasAllowedRef.current) {
+          setStatus('checking');
+        }
 
         const aclStatus = await getAccessControlRpcStatus();
 
@@ -52,6 +55,7 @@ export function usePerfilScreenAccess(redirectPath: string = '/(tabs)'): ScreenA
           return;
         }
 
+        hasAllowedRef.current = true;
         setStatus('allowed');
       })();
 

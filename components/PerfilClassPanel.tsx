@@ -160,5 +160,6 @@ const styles = StyleSheet.create({
     minHeight: 0,
     width: '100%',
     alignSelf: 'stretch',
+    backgroundColor: '#FFFFFF',
   },
 });
