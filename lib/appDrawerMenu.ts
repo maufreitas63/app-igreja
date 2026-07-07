@@ -1,19 +1,25 @@
 import { ACCESS_SCREEN } from '@/lib/accessControl';
-import { resolveDashboardCardContentFromParam } from '@/lib/dashboardCardScreenLinks';
 import { DASHBOARD_FINANCIAL_CARD_ID } from '@/lib/financialModule';
 import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
 import { withMinimalPresentation, withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
 import type { Router } from 'expo-router';
 
+/** Itens do menu reservados para futura associação de rota (sem navegação ativa). */
+export const DRAWER_MENU_PLACEHOLDER_KEYS = [
+  'menu_perfil',
+  'menu_escalas',
+  'menu_aniversariantes',
+  'menu_membros',
+  'menu_administrativo',
+] as const;
+
+export type AppDrawerPlaceholderModuleKey = (typeof DRAWER_MENU_PLACEHOLDER_KEYS)[number];
+
 /** Chave interna do módulo (mapeamento a–z da especificação). */
 export type AppDrawerModuleKey =
   | 'events_panel'
-  | 'grouped_manage'
+  | AppDrawerPlaceholderModuleKey
   | 'gestao_financeira'
-  | 'Vigilance_Scales'
-  | 'birthdays'
-  | 'members_list'
-  | 'administrativo'
   | 'Events'
   | 'Event_gantt'
   | 'event_orchestration'
@@ -44,12 +50,12 @@ export type AppDrawerMenuItem = {
 
 export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'a', label: 'Início', moduleKey: 'events_panel' },
-  { letter: 'b', label: 'Perfil', moduleKey: 'grouped_manage' },
+  { letter: 'b', label: 'Perfil', moduleKey: 'menu_perfil' },
   { letter: 'c', label: 'Financeiro', moduleKey: 'gestao_financeira' },
-  { letter: 'd', label: 'Escalas', moduleKey: 'Vigilance_Scales' },
-  { letter: 'e', label: 'Aniversariantes', moduleKey: 'birthdays' },
-  { letter: 'f', label: 'Membros', moduleKey: 'members_list' },
-  { letter: 'g', label: 'Administrativo', moduleKey: 'administrativo' },
+  { letter: 'd', label: 'Escalas', moduleKey: 'menu_escalas' },
+  { letter: 'e', label: 'Aniversariantes', moduleKey: 'menu_aniversariantes' },
+  { letter: 'f', label: 'Membros', moduleKey: 'menu_membros' },
+  { letter: 'g', label: 'Administrativo', moduleKey: 'menu_administrativo' },
   {
     letter: 'h',
     label: 'Programação de Eventos',
@@ -76,13 +82,9 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'z', label: 'Modo Ghost', moduleKey: 'auditor' },
 ];
 
-const DASHBOARD_CARD_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> = {
-  Vigilance_Scales: '8',
-  birthdays: '7',
-  members_list: '10',
-  grouped_manage: '6',
-  administrativo: '13',
-};
+export function isDrawerMenuPlaceholder(moduleKey: AppDrawerModuleKey): moduleKey is AppDrawerPlaceholderModuleKey {
+  return (DRAWER_MENU_PLACEHOLDER_KEYS as readonly string[]).includes(moduleKey);
+}
 
 const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> = {
   Events: 'events',
@@ -106,10 +108,6 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   auditor: 'auditor',
 };
 
-export function resolveDrawerDashboardCard(moduleKey: AppDrawerModuleKey) {
-  return DASHBOARD_CARD_BY_MODULE[moduleKey] ?? null;
-}
-
 export function resolveDrawerMaintenancePanel(moduleKey: AppDrawerModuleKey) {
   return MAINTENANCE_PANEL_BY_MODULE[moduleKey] ?? null;
 }
@@ -118,6 +116,10 @@ export async function navigateDrawerMenuItem(
   router: Router,
   moduleKey: AppDrawerModuleKey
 ) {
+  if (isDrawerMenuPlaceholder(moduleKey)) {
+    return;
+  }
+
   if (moduleKey === 'events_panel') {
     router.replace('/(tabs)');
     return;
@@ -148,32 +150,6 @@ export async function navigateDrawerMenuItem(
     router.push({
       pathname: '/maintenance-dashboard',
       params: withMinimalPresentation({ panel: maintenancePanel }),
-    });
-    return;
-  }
-
-  const dashboardCard = resolveDrawerDashboardCard(moduleKey);
-
-  if (dashboardCard) {
-    const cardContent = resolveDashboardCardContentFromParam(dashboardCard);
-
-    if (cardContent === 'financial') {
-      await navigateWithScreenAccess(
-        router,
-        '/financial',
-        ACCESS_SCREEN.financial,
-        withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID),
-        { method: 'push' }
-      );
-      return;
-    }
-
-    router.push({
-      pathname: '/(tabs)/dashboard',
-      params: withMinimalPresentation({
-        dashboardCard,
-        dashboardCardNonce: String(Date.now()),
-      }),
     });
   }
 }

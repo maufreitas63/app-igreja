@@ -1,6 +1,6 @@
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { useAppDrawerMenu, type AppDrawerMenuItemResolved } from '@/hooks/useAppDrawerMenu';
-import { navigateDrawerMenuItem } from '@/lib/appDrawerMenu';
+import { navigateDrawerMenuItem, isDrawerMenuPlaceholder } from '@/lib/appDrawerMenu';
 import { MINIMAL_UI, MINIMAL_TYPO } from '@/lib/minimalUiTheme';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
@@ -29,6 +29,10 @@ export function AppDrawer() {
   }, [isOpen, refresh]);
 
   const handlePress = (item: AppDrawerMenuItemResolved) => {
+    if (item.pendingRoute || isDrawerMenuPlaceholder(item.moduleKey)) {
+      return;
+    }
+
     closeDrawer();
     void navigateDrawerMenuItem(router, item.moduleKey);
   };
@@ -47,10 +51,14 @@ export function AppDrawer() {
               {visibleItems.map((item) => (
                 <TouchableOpacity
                   key={item.moduleKey}
-                  style={styles.item}
+                  style={[styles.item, item.pendingRoute && styles.itemPendingRoute]}
                   onPress={() => handlePress(item)}
+                  disabled={item.pendingRoute}
+                  accessibilityState={{ disabled: item.pendingRoute }}
                 >
-                  <Text style={styles.itemLabel}>{item.label}</Text>
+                  <Text style={[styles.itemLabel, item.pendingRoute && styles.itemLabelPendingRoute]}>
+                    {item.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -101,5 +109,11 @@ const styles = StyleSheet.create({
   itemLabel: {
     ...MINIMAL_TYPO.menuItem,
     textAlign: 'left',
+  },
+  itemPendingRoute: {
+    opacity: 0.72,
+  },
+  itemLabelPendingRoute: {
+    color: MINIMAL_UI.textMuted,
   },
 });
