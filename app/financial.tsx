@@ -374,7 +374,7 @@ export default function FinancialScreen() {
               activeOpacity={budgetSectionBlocked ? 1 : 0.85}
               disabled={budgetSectionBlocked}
               onPress={() => toggleSection('budget')}
-              style={styles.resultSectionHeader}
+              style={[styles.resultSectionHeader, styles.budgetSectionHeader]}
             >
               <View style={styles.resultSectionHeaderText}>
                 <Text
@@ -777,7 +777,12 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   bankBalanceSectionHeader: {
-    backgroundColor: 'transparent',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0,
+  },
+  budgetSectionHeader: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0,
   },
   resultSectionHeaderText: {
     flex: 1,
