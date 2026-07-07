@@ -766,15 +766,13 @@ const styles = StyleSheet.create({
   },
   resultMonthSectionHeader: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'var(--app-text)',
-    borderStyle: 'solid',
+    borderWidth: 0,
+    borderColor: 'rgba(0, 0, 0, 0)',
     boxSizing: 'content-box',
   },
   comparisonMonthSectionHeader: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(179, 189, 228, 1)',
+    borderWidth: 0,
   },
   resultSectionHeaderText: {
     flex: 1,
