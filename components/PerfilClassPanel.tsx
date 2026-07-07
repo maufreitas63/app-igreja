@@ -1,5 +1,6 @@
 import { MinisterialProfileForm } from '@/components/MinisterialProfileForm';
 import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
+import { ProfileClassPanel } from '@/components/ProfileClassPanel';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
 import { withReturnRoute } from '@/lib/dashboardReturnNavigation';
@@ -18,6 +19,7 @@ export function PerfilClassPanel() {
   const [manageProfile, setManageProfile] = useState(false);
   const [manageMembers, setManageMembers] = useState(false);
   const [ministerialFormVisible, setMinisterialFormVisible] = useState(false);
+  const [profileClassVisible, setProfileClassVisible] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -66,17 +68,8 @@ export function PerfilClassPanel() {
   }, []);
 
   const openManageProfile = useCallback(() => {
-    void navigateWithScreenAccess(
-      router,
-      '/manage-profile',
-      ACCESS_SCREEN.manageProfile,
-      withReturnRoute(
-        '/perfil',
-        userPhone ? { phone: encodeURIComponent(userPhone) } : {}
-      ),
-      { method: 'push' }
-    );
-  }, [router, userPhone]);
+    setProfileClassVisible(true);
+  }, []);
 
   const openManageMembers = useCallback(() => {
     void navigateWithScreenAccess(
@@ -125,6 +118,23 @@ export function PerfilClassPanel() {
 
     return items;
   }, [manageMembers, manageProfile, openManageMembers, openManageProfile, openMinisterialProfile]);
+
+  if (profileClassVisible) {
+    return (
+      <>
+        <ProfileClassPanel
+          embedded
+          phoneParam={userPhone}
+          onBack={() => setProfileClassVisible(false)}
+        />
+        <MinisterialProfileForm
+          visible={ministerialFormVisible}
+          profileId={profileId}
+          onClose={() => setMinisterialFormVisible(false)}
+        />
+      </>
+    );
+  }
 
   return (
     <>
