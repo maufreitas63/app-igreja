@@ -1,5 +1,6 @@
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import React, { useCallback, useEffect, useRef } from 'react';
 import {
   Dimensions,
@@ -23,13 +24,17 @@ type FamilyEventSelectorProps = {
   events: ActiveEventListItem[];
   selectedEventId: string | null | undefined;
   onSelectEvent: (eventId: string) => void;
+  /** `vigilance` — chips claros com texto azul (card Escalas). */
+  variant?: 'default' | 'vigilance';
 };
 
 export const FamilyEventSelector = ({
   events,
   selectedEventId,
   onSelectEvent,
+  variant = 'default',
 }: FamilyEventSelectorProps) => {
+  const isVigilance = variant === 'vigilance';
   const scrollRef = useRef<ScrollView>(null);
   const viewportWidthRef = useRef(0);
 
@@ -106,9 +111,14 @@ export const FamilyEventSelector = ({
           return (
             <TouchableOpacity
               key={event.id}
-              style={[styles.chip, isSelected && styles.chipSelected]}
+              style={[
+                styles.chip,
+                isVigilance && styles.chipVigilance,
+                isSelected && (isVigilance ? styles.chipVigilanceSelected : styles.chipSelected),
+              ]}
               onPress={() => handleSelect(event.id)}
               activeOpacity={0.85}
+              accessibilityRole="button"
             >
               {event.kids_room || event.teens_room ? (
                 <View style={styles.chipIndicators}>
@@ -121,14 +131,22 @@ export const FamilyEventSelector = ({
                 </View>
               ) : null}
               <Text
-                style={[styles.chipTitle, isSelected && styles.chipTitleSelected]}
+                style={[
+                  styles.chipTitle,
+                  isVigilance && styles.chipTitleVigilance,
+                  isSelected && (isVigilance ? styles.chipTitleVigilanceSelected : styles.chipTitleSelected),
+                ]}
                 numberOfLines={1}
               >
                 {event.name}
               </Text>
               {eventTime ? (
                 <Text
-                  style={[styles.chipMeta, isSelected && styles.chipMetaSelected]}
+                  style={[
+                    styles.chipMeta,
+                    isVigilance && styles.chipMetaVigilance,
+                    isSelected && (isVigilance ? styles.chipMetaVigilanceSelected : styles.chipMetaSelected),
+                  ]}
                   numberOfLines={1}
                 >
                   {eventTime}
@@ -189,6 +207,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(6, 182, 212, 0.25)',
     borderColor: '#67e8f9',
   },
+  chipVigilance: {
+    backgroundColor: VIGILANCE_SCALES_UI.surface,
+    borderColor: VIGILANCE_SCALES_UI.borderMuted,
+  },
+  chipVigilanceSelected: {
+    backgroundColor: VIGILANCE_SCALES_UI.surfaceHighlight,
+    borderColor: VIGILANCE_SCALES_UI.accent,
+  },
   chipIndicators: {
     position: 'absolute',
     top: 11,
@@ -215,6 +241,12 @@ const styles = StyleSheet.create({
   chipTitleSelected: {
     color: '#ECFEFF',
   },
+  chipTitleVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
+  chipTitleVigilanceSelected: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
   chipMeta: {
     color: '#94A3B8',
     fontSize: 11,
@@ -222,5 +254,13 @@ const styles = StyleSheet.create({
   },
   chipMetaSelected: {
     color: '#BAE6FD',
+  },
+  chipMetaVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+    opacity: 0.85,
+  },
+  chipMetaVigilanceSelected: {
+    color: VIGILANCE_SCALES_UI.accent,
+    opacity: 1,
   },
 });

@@ -1,14 +1,16 @@
+import { FamilyAgendaModal } from '@/components/FamilyAgendaModal';
 import { InboxList, type InboxListItem } from '@/components/minimal/InboxList';
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 const SECTION_TITLE_FONT_SIZE = Math.round(MINIMAL_TYPO.screenTitle.fontSize * 1.3);
 
 export function EventsInboxHome() {
   const { events, loading, error } = useActiveEvents({ enablePolling: true });
+  const [modalEventId, setModalEventId] = useState<string | null>(null);
 
   const inboxItems: InboxListItem[] = useMemo(
     () =>
@@ -22,6 +24,14 @@ export function EventsInboxHome() {
     [events]
   );
 
+  const handleItemPress = (item: InboxListItem) => {
+    setModalEventId(item.id);
+  };
+
+  const handleCloseModal = () => {
+    setModalEventId(null);
+  };
+
   if (loading) {
     return <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />;
   }
@@ -33,7 +43,16 @@ export function EventsInboxHome() {
   return (
     <View style={styles.wrap}>
       <Text style={styles.sectionTitle}>Proximos Eventos</Text>
-      <InboxList items={inboxItems} emptyMessage="Nenhum evento disponível no momento." />
+      <InboxList
+        items={inboxItems}
+        emptyMessage="Nenhum evento disponível no momento."
+        onItemPress={handleItemPress}
+      />
+      <FamilyAgendaModal
+        visible={modalEventId !== null}
+        initialEventId={modalEventId}
+        onClose={handleCloseModal}
+      />
     </View>
   );
 }
@@ -42,8 +61,6 @@ const styles = StyleSheet.create({
   wrap: {
     gap: 0,
     backgroundColor: MINIMAL_UI.background,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: MINIMAL_UI.background,
   },
   sectionTitle: {
     fontSize: SECTION_TITLE_FONT_SIZE,

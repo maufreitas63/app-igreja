@@ -2,7 +2,7 @@ import { EventRegistrationCupInline } from '@/components/minimal/EventRegistrati
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export type InboxListItem = {
   id: string;
@@ -15,10 +15,11 @@ export type InboxListItem = {
 type Props = {
   items: InboxListItem[];
   emptyMessage?: string;
+  onItemPress?: (item: InboxListItem) => void;
 };
 
-/** Lista informativa de eventos — linhas estáticas, sem abrir detalhes ao toque. */
-export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
+/** Lista de eventos — cada linha é um botão minimalista que abre detalhes. */
+export function InboxList({ items, emptyMessage = 'Nenhum item.', onItemPress }: Props) {
   if (!items.length) {
     return <Text style={styles.empty}>{emptyMessage}</Text>;
   }
@@ -26,7 +27,17 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
   return (
     <View style={styles.list}>
       {items.map((item) => (
-        <View key={item.id} style={styles.rowWrap}>
+        <Pressable
+          key={item.id}
+          onPress={() => onItemPress?.(item)}
+          disabled={!onItemPress}
+          accessibilityRole="button"
+          accessibilityLabel={item.subject}
+          style={({ pressed, hovered }) => [
+            styles.eventButton,
+            (pressed || (Platform.OS === 'web' && hovered)) && styles.eventButtonHovered,
+          ]}
+        >
           <View style={styles.row}>
             <View style={styles.textBlock}>
               <Text style={styles.subject} numberOfLines={2}>
@@ -41,7 +52,7 @@ export function InboxList({ items, emptyMessage = 'Nenhum item.' }: Props) {
             </View>
             {item.event ? <EventRegistrationCupInline event={item.event} /> : null}
           </View>
-        </View>
+        </Pressable>
       ))}
     </View>
   );
@@ -51,15 +62,26 @@ const styles = StyleSheet.create({
   list: {
     width: '100%',
     backgroundColor: MINIMAL_UI.background,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: MINIMAL_UI.background,
   },
-  rowWrap: {
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: MINIMAL_UI.border,
+  eventButton: {
+    width: '100%',
     backgroundColor: MINIMAL_UI.background,
-    marginBottom: -1,
+    borderWidth: 0,
+    borderRadius: 0,
+    shadowOpacity: 0,
+    elevation: 0,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    ...(Platform.OS === 'web'
+      ? {
+          cursor: 'pointer',
+          appearance: 'none',
+          WebkitAppearance: 'none',
+        }
+      : null),
+  },
+  eventButtonHovered: {
+    backgroundColor: MINIMAL_UI.rowHover,
   },
   row: {
     flexDirection: 'row',
@@ -67,28 +89,29 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 4,
     gap: 8,
-    backgroundColor: MINIMAL_UI.background,
+    backgroundColor: 'transparent',
   },
   textBlock: {
     flex: 1,
     gap: 4,
     minWidth: 0,
-    backgroundColor: MINIMAL_UI.background,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: MINIMAL_UI.background,
+    backgroundColor: 'transparent',
   },
   subject: {
     ...MINIMAL_TYPO.inboxSubject,
     color: MINIMAL_UI.blue,
+    textAlign: 'left',
   },
   preview: {
     ...MINIMAL_TYPO.inboxPreview,
     color: MINIMAL_UI.blue,
+    textAlign: 'left',
   },
   meta: {
     fontSize: 12,
     color: MINIMAL_UI.blue,
-    backgroundColor: MINIMAL_UI.background,
+    backgroundColor: 'transparent',
+    textAlign: 'left',
   },
   empty: {
     color: MINIMAL_UI.blue,
