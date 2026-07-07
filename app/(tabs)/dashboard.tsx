@@ -4683,7 +4683,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.28)',
     borderWidth: 1,
-    borderColor: '#818CF8',
+    borderColor: '#F8FAFC',
   },
   membersListVisitorsButtonText: {
     color: 'rgba(76, 159, 224, 1)',
@@ -4719,7 +4719,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.28)',
     borderWidth: 1,
-    borderColor: '#FBBF24',
+    borderColor: '#F8FAFC',
   },
   membersListMapButtonDisabled: {
     opacity: 0.45,
@@ -4753,7 +4753,7 @@ const styles = StyleSheet.create({
   membersListSearchInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: 'rgba(74, 195, 249, 0.45)',
+    borderColor: '#F8FAFC',
     borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.55)',
     color: 'rgba(80, 191, 242, 1)',

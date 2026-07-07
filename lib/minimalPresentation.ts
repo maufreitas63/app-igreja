@@ -71,7 +71,7 @@ export const MINIMAL_DASHBOARD_STYLES = StyleSheet.create({
   } satisfies TextStyle,
   searchInput: {
     backgroundColor: MINIMAL_UI.background,
-    borderColor: MINIMAL_UI.border,
+    borderColor: '#F8FAFC',
     color: MINIMAL_UI.text,
   } satisfies TextStyle,
   radioRow: {
