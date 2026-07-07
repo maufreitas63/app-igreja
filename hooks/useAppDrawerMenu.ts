@@ -59,6 +59,14 @@ async function isDrawerModuleEnabled(
     );
   }
 
+  if (moduleKey === 'menu_aniversariantes') {
+    return isDashboardCardFullyAllowed(
+      'birthdays',
+      context.dashboardCardAccess,
+      context.dashboardScreenAccess
+    );
+  }
+
   if (moduleKey === 'gestao_financeira') {
     return isDashboardCardFullyAllowed(
       'financial',
