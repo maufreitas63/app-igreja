@@ -2,16 +2,18 @@ import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
-import { resolveReturnDashboardCardParam } from '@/lib/dashboardReturnNavigation';
+import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function MapGeolocalizacaoNativeFallback() {
-  const params = useLocalSearchParams<{ returnDashboardCard?: string | string[] }>();
+  const params = useLocalSearchParams<{ returnDashboardCard?: string | string[]; returnRoute?: string | string[] }>();
   const returnDashboardCard = resolveReturnDashboardCardParam(params);
+  const returnRoute = resolveReturnRouteParam(params);
   const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute,
     returnDashboardCard,
     fallbackDashboardCard: 'members_list',
   });

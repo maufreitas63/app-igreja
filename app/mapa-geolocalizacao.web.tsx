@@ -18,7 +18,7 @@ import { useMapPinDetailAccess, MAP_PIN_DETAIL_DENIED_MESSAGE } from '@/hooks/us
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
-import { resolveReturnDashboardCardParam } from '@/lib/dashboardReturnNavigation';
+import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
 import { MAP_PIN_COLOR, type MapMarker } from '@/lib/profilesMapMarkersTypes';
 import { formatPhoneForDisplay } from '@/lib/totemDevice';
 import { openMemberWhatsapp } from '@/lib/whatsapp';
@@ -64,6 +64,7 @@ export default function MapGeolocalizacaoWebScreen() {
   const params = useLocalSearchParams<{
     focusProfileId?: string | string[];
     returnDashboardCard?: string | string[];
+    returnRoute?: string | string[];
   }>();
 
   const focusProfileId = useMemo(() => {
@@ -80,7 +81,9 @@ export default function MapGeolocalizacaoWebScreen() {
   const { canViewMapPinDetails } = useMapPinDetailAccess();
 
   const returnDashboardCard = resolveReturnDashboardCardParam(params);
+  const returnRoute = resolveReturnRouteParam(params);
   const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute,
     returnDashboardCard,
     fallbackDashboardCard: 'members_list',
   });

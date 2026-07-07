@@ -3,7 +3,7 @@ import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MAP_PIN_DETAIL_DENIED_MESSAGE, useMapPinDetailAccess } from '@/hooks/useMapPinDetailAccess';
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { DASHBOARD_SCREEN_DENIED_MESSAGES, navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
-import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
+import { withReturnRoute } from '@/lib/dashboardReturnNavigation';
 import { normalizeFamilyCode } from '@/lib/family';
 import {
   loadMembersListsClassMembers,
@@ -249,7 +249,7 @@ export function MembersListsClassPanel() {
       router,
       '/mapa-geolocalizacao',
       ACCESS_SCREEN.mapGeolocation,
-      withMinimalPresentation()
+      withReturnRoute('/membros')
     );
   }, [isMapGeolocationEnabled, mapGeolocationDisabledMessage, router]);
 
@@ -290,7 +290,7 @@ export function MembersListsClassPanel() {
         router,
         '/mapa-geolocalizacao',
         ACCESS_SCREEN.mapGeolocation,
-        withMinimalPresentation({ focusProfileId: entry.id })
+        withReturnRoute('/membros', { focusProfileId: entry.id })
       );
     },
     [canViewMapPinDetails, isMapGeolocationEnabled, mapGeolocationDisabledMessage, router]
