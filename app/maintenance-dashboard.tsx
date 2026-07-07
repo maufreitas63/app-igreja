@@ -892,8 +892,8 @@ export default function MaintenanceDashboard() {
   );
 
   const effectiveCarouselPageStyle = useMemo(
-    () => (isMinimalPresentation ? { width: '100%' as const, flex: 1 } : carouselPageStyle),
-    [carouselPageStyle, isMinimalPresentation]
+    () => (isMinimalPresentation ? { width: pageWidth, flex: 1 } : carouselPageStyle),
+    [carouselPageStyle, isMinimalPresentation, pageWidth]
   );
 
   const effectiveCardWrapperStyle = useMemo(
@@ -1504,7 +1504,7 @@ export default function MaintenanceDashboard() {
                 style={styles.carouselFlatList}
                 data={maintenanceCarouselCards}
                 extraData={{ currentIndex, maintenanceCardCount }}
-                horizontal={!isMinimalPresentation}
+                horizontal
                 pagingEnabled={!isMinimalPresentation}
                 scrollEnabled={false}
                 keyboardShouldPersistTaps="handled"

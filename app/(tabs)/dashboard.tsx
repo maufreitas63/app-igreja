@@ -643,8 +643,8 @@ export default function Dashboard() {
   const isMinimalPresentation = isMinimalPresentationRoute(params.presentation);
 
   const effectiveCarouselPageStyle = useMemo(
-    () => (isMinimalPresentation ? { width: '100%' as const, flex: 1 } : carouselPageStyle),
-    [carouselPageStyle, isMinimalPresentation]
+    () => (isMinimalPresentation ? { width: pageWidth, flex: 1 } : carouselPageStyle),
+    [carouselPageStyle, isMinimalPresentation, pageWidth]
   );
 
   const effectiveDashboardCardWrapperStyle = useMemo(
@@ -2544,7 +2544,7 @@ export default function Dashboard() {
               isParkingPanelVisible,
               selectedVigilanceScale,
             }}
-            horizontal={!isMinimalPresentation}
+            horizontal
             pagingEnabled={!isMinimalPresentation}
             scrollEnabled={false}
             keyboardShouldPersistTaps="handled"
@@ -2980,7 +2980,7 @@ export default function Dashboard() {
 
                     {!isActiveMembersListLoading && !membersListError ? (
                       <View style={styles.membersListSearchSection}>
-                        <Text style={[styles.sectionLabel, mds?.sectionLabel]}>
+                        <Text style={[styles.membersListSectionLabel, mds?.sectionLabel]}>
                           {membersListAudience === 'visitors'
                             ? 'Procurar visitante'
                             : 'Procurar membro'}
@@ -4730,6 +4730,9 @@ const styles = StyleSheet.create({
     gap: 10,
     flex: 1,
     minHeight: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(58, 150, 221, 1)',
   },
   membersListActionButtons: {
     flexDirection: 'row',
@@ -4782,7 +4785,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 12,
-    backgroundColor: 'rgba(245, 158, 11, 0.28)',
+    backgroundColor: 'rgba(255, 255, 255, 0.28)',
     borderWidth: 1,
     borderColor: '#FBBF24',
   },
@@ -4802,6 +4805,14 @@ const styles = StyleSheet.create({
   membersListSearchSection: {
     gap: 6,
   },
+  membersListSectionLabel: {
+    color: 'rgba(96, 197, 243, 1)',
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
   membersListSearchRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -4810,10 +4821,10 @@ const styles = StyleSheet.create({
   membersListSearchInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: 'rgba(251, 113, 133, 0.45)',
+    borderColor: 'rgba(74, 195, 249, 0.45)',
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 1)',
-    color: 'rgba(96, 185, 228, 1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    color: 'rgba(80, 191, 242, 1)',
     fontSize: 15,
     paddingHorizontal: 14,
     paddingVertical: 10,
