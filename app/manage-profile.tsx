@@ -3,7 +3,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
-import { resolveReturnDashboardCardParam, withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
+import { resolveReturnDashboardCardParam, resolveReturnRouteParam, withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
 import { useGhostMode } from '@/context/GhostModeContext';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -693,9 +693,11 @@ export default function ManageProfile() {
   const params = useLocalSearchParams();
   const phoneParam = params.phone ? decodeURIComponent(params.phone as string) : null;
   const returnDashboardCard = resolveReturnDashboardCardParam(params);
+  const explicitReturnRoute = resolveReturnRouteParam(params);
+  const returnRoute = explicitReturnRoute ?? (returnDashboardCard ? null : '/perfil');
   const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute,
     returnDashboardCard,
-    fallbackDashboardCard: 'grouped_manage',
     extraRouteParams: phoneParam ? { phone: encodeURIComponent(phoneParam) } : undefined,
   });
   const isOnboardingFlow = params.onboarding === '1';

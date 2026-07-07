@@ -2,7 +2,7 @@ import { MinisterialProfileForm } from '@/components/MinisterialProfileForm';
 import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
-import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
+import { withReturnRoute } from '@/lib/dashboardReturnNavigation';
 import { loadGroupedManageScreenAccess } from '@/lib/groupedManageAccess';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { getStoredUserPhone } from '@/lib/userSession';
@@ -70,7 +70,8 @@ export function PerfilClassPanel() {
       router,
       '/manage-profile',
       ACCESS_SCREEN.manageProfile,
-      withMinimalPresentation(
+      withReturnRoute(
+        '/perfil',
         userPhone ? { phone: encodeURIComponent(userPhone) } : {}
       ),
       { method: 'push' }
@@ -82,7 +83,8 @@ export function PerfilClassPanel() {
       router,
       '/manage-members',
       ACCESS_SCREEN.manageMembers,
-      withMinimalPresentation(
+      withReturnRoute(
+        '/perfil',
         userPhone ? { phone: encodeURIComponent(userPhone) } : {}
       ),
       { method: 'push' }

@@ -60,7 +60,7 @@ import {
 import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
-import { resolveReturnDashboardCardParam } from '@/lib/dashboardReturnNavigation';
+import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Toast from 'react-native-toast-message';
@@ -383,9 +383,11 @@ export default function ManageMembers() {
   const params = useLocalSearchParams();
   const phoneParam = params.phone ? decodeURIComponent(params.phone as string) : null;
   const returnDashboardCard = resolveReturnDashboardCardParam(params);
+  const explicitReturnRoute = resolveReturnRouteParam(params);
+  const returnRoute = explicitReturnRoute ?? (returnDashboardCard ? null : '/perfil');
   const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute,
     returnDashboardCard,
-    fallbackDashboardCard: 'grouped_manage',
     extraRouteParams: phoneParam ? { phone: encodeURIComponent(phoneParam) } : undefined,
   });
   const listRef = useRef<FlatList<ManagedMember>>(null);

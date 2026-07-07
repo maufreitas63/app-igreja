@@ -1,6 +1,7 @@
 import type { Href } from 'expo-router';
 
 export const RETURN_DASHBOARD_CARD_PARAM = 'returnDashboardCard';
+export const RETURN_ROUTE_PARAM = 'returnRoute';
 export const PRESENTATION_PARAM = 'presentation';
 export const MINIMAL_PRESENTATION_VALUE = 'minimal';
 export const LEGACY_PRESENTATION_VALUE = 'legacy';
@@ -27,6 +28,19 @@ export const withMinimalPresentation = (
 export const resolveReturnDashboardCardParam = (
   params: Record<string, string | string[] | undefined>
 ): string | null => pickRouteParam(params[RETURN_DASHBOARD_CARD_PARAM]);
+
+export const resolveReturnRouteParam = (
+  params: Record<string, string | string[] | undefined>
+): string | null => pickRouteParam(params[RETURN_ROUTE_PARAM]);
+
+export const withReturnRoute = (
+  returnRoute: string,
+  params: Record<string, string> = {}
+): Record<string, string> =>
+  withMinimalPresentation({
+    ...params,
+    [RETURN_ROUTE_PARAM]: returnRoute,
+  });
 
 export const withReturnDashboardCard = (
   returnDashboardCard: string,

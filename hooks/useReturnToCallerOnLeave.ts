@@ -1,15 +1,18 @@
-import { buildReturnToDashboardHref } from '@/lib/dashboardReturnNavigation';
+import { buildReturnToDashboardHref, withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { useNavigation, useRouter } from 'expo-router';
+import type { Href } from 'expo-router';
 import { useCallback, useEffect, useRef } from 'react';
 import { BackHandler, Platform } from 'react-native';
 
 type UseReturnToCallerOnLeaveOptions = {
+  returnRoute?: string | null;
   returnDashboardCard?: string | null;
   fallbackDashboardCard?: string | null;
   extraRouteParams?: Record<string, string | undefined>;
 };
 
 export function useReturnToCallerOnLeave({
+  returnRoute,
   returnDashboardCard,
   fallbackDashboardCard = null,
   extraRouteParams,
@@ -20,6 +23,24 @@ export function useReturnToCallerOnLeave({
 
   const returnToCaller = useCallback(() => {
     allowLeaveRef.current = true;
+
+    if (returnRoute) {
+      const params: Record<string, string> = withMinimalPresentation();
+
+      if (extraRouteParams) {
+        for (const [key, value] of Object.entries(extraRouteParams)) {
+          if (value) {
+            params[key] = value;
+          }
+        }
+      }
+
+      router.replace({
+        pathname: returnRoute,
+        params,
+      } as Href);
+      return;
+    }
 
     const dashboardCard = returnDashboardCard ?? fallbackDashboardCard;
     if (dashboardCard) {
@@ -33,7 +54,7 @@ export function useReturnToCallerOnLeave({
     }
 
     router.replace('/(tabs)');
-  }, [extraRouteParams, fallbackDashboardCard, returnDashboardCard, router]);
+  }, [extraRouteParams, fallbackDashboardCard, returnDashboardCard, returnRoute, router]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {

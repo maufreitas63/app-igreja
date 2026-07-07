@@ -110,7 +110,7 @@ import {
 import { BIRTHDAYS_UI, DASHBOARD_CARD_THEMES, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_TYPO } from '@/lib/dashboardCardStyles';
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
-import { withReturnDashboardCard, pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
+import { withReturnDashboardCard, withReturnRoute, pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MINIMAL_FLAT_PANEL, MINIMAL_DASHBOARD_STYLES, MINIMAL_PAGE } from '@/lib/minimalPresentation';
@@ -1904,6 +1904,17 @@ export default function Dashboard() {
     [currentIndex, data]
   );
 
+  const buildGroupedManageChildParams = useCallback(
+    (extra?: Record<string, string>) => {
+      if (isMinimalPresentation) {
+        return withReturnRoute('/perfil', extra ?? {});
+      }
+
+      return buildChildScreenParams(extra);
+    },
+    [buildChildScreenParams, isMinimalPresentation]
+  );
+
   const groupedManageActions = useMemo((): PerfilClassAction[] => {
     const items: PerfilClassAction[] = [];
 
@@ -1917,7 +1928,7 @@ export default function Dashboard() {
             router,
             '/manage-profile',
             ACCESS_SCREEN.manageProfile,
-            buildChildScreenParams(
+            buildGroupedManageChildParams(
               (ghostModeActive ? profile?.phone : userPhone)
                 ? {
                     phone: encodeURIComponent(String(ghostModeActive ? profile?.phone : userPhone)),
@@ -1938,7 +1949,7 @@ export default function Dashboard() {
             router,
             '/manage-members',
             ACCESS_SCREEN.manageMembers,
-            buildChildScreenParams(userPhone ? { phone: encodeURIComponent(userPhone) } : {})
+            buildGroupedManageChildParams(userPhone ? { phone: encodeURIComponent(userPhone) } : {})
           ),
       });
     }
@@ -1952,7 +1963,7 @@ export default function Dashboard() {
 
     return items;
   }, [
-    buildChildScreenParams,
+    buildGroupedManageChildParams,
     ghostModeActive,
     groupedManageScreenAccess.manageMembers,
     groupedManageScreenAccess.manageProfile,
