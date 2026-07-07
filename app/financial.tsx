@@ -768,6 +768,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#000000',
+    boxSizing: 'content-box',
   },
   comparisonMonthSectionHeader: {
     backgroundColor: '#FFFFFF',
@@ -779,7 +780,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   resultSectionLabel: {
-    color: '#51A0E0',
+    color: '#A9D0F0',
   },
   resultSectionMeta: {
     color: '#6EE7B7',
