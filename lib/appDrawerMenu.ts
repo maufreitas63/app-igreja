@@ -9,6 +9,7 @@ import type { Router } from 'expo-router';
 export type AppDrawerModuleKey =
   | 'events_panel'
   | 'grouped_manage'
+  | 'resultados_financeiros'
   | 'gestao_financeira'
   | 'Vigilance_Scales'
   | 'birthdays'
@@ -45,6 +46,7 @@ export type AppDrawerMenuItem = {
 export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'a', label: 'Início', moduleKey: 'events_panel' },
   { letter: 'b', label: 'Perfil', moduleKey: 'grouped_manage' },
+  { letter: 'b2', label: 'Resultados Financeiros', moduleKey: 'resultados_financeiros' },
   { letter: 'c', label: 'Financeiro', moduleKey: 'gestao_financeira' },
   { letter: 'd', label: 'Escalas', moduleKey: 'Vigilance_Scales' },
   { letter: 'e', label: 'Aniversariantes', moduleKey: 'birthdays' },
@@ -82,6 +84,7 @@ const DASHBOARD_CARD_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> = {
   members_list: '10',
   grouped_manage: '6',
   administrativo: '13',
+  resultados_financeiros: '11',
 };
 
 const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> = {
@@ -119,7 +122,24 @@ export async function navigateDrawerMenuItem(
   moduleKey: AppDrawerModuleKey
 ) {
   if (moduleKey === 'events_panel') {
-    router.replace('/(tabs)');
+    router.replace({
+      pathname: '/(tabs)',
+      params: {
+        mainPanel: 'events',
+        mainPanelNonce: String(Date.now()),
+      },
+    });
+    return;
+  }
+
+  if (moduleKey === 'resultados_financeiros') {
+    router.replace({
+      pathname: '/(tabs)',
+      params: {
+        mainPanel: 'financial',
+        mainPanelNonce: String(Date.now()),
+      },
+    });
     return;
   }
 

@@ -41,6 +41,14 @@ async function isDrawerModuleEnabled(
     return true;
   }
 
+  if (moduleKey === 'gestao_financeira') {
+    return isDashboardCardFullyAllowed(
+      'financial',
+      context.dashboardCardAccess,
+      context.dashboardScreenAccess
+    );
+  }
+
   const dashboardCard = resolveDrawerDashboardCard(moduleKey);
 
   if (dashboardCard) {
