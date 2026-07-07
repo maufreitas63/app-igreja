@@ -104,7 +104,7 @@ export function MemberPhotoPicker({
               cachePolicy="none"
             />
           ) : (
-            <MaterialIcons name="person" size={34} color="#64748B" />
+            <MaterialIcons name="person" size={34} color="#4C9FE0" />
           )}
         </View>
         <TouchableOpacity
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#334155',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#D0FFF0',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderRadius: 10,
-    backgroundColor: '#10b981',
+    backgroundColor: '#cbffee',
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#0f172a',
+    color: '#4c9fe0',
     fontSize: 13,
     fontWeight: '800',
   },
