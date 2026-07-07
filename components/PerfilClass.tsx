@@ -1,4 +1,4 @@
-import { DASHBOARD_CARD_TYPO } from '@/lib/dashboardCardStyles';
+import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
@@ -85,15 +85,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     backgroundColor: PERFIL_CLASS_SURFACE,
   },
-  title: {
-    ...DASHBOARD_CARD_TYPO.panelTitle,
-    fontSize: 23,
-    fontWeight: '700',
-    color: VIGILANCE_SCALES_UI.accent,
-    textAlign: 'center',
-    height: 51,
-    ...(Platform.OS === 'web' ? { verticalAlign: 'top' as const } : null),
-  },
+  title: MINIMAL_SECTION_TITLE,
   body: {
     width: '100%',
     gap: 8,

@@ -1,12 +1,10 @@
 import { FamilyAgendaModal } from '@/components/FamilyAgendaModal';
 import { InboxList, type InboxListItem } from '@/components/minimal/InboxList';
-import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-
-const SECTION_TITLE_FONT_SIZE = Math.round(MINIMAL_TYPO.screenTitle.fontSize * 1.3);
 
 export function EventsInboxHome() {
   const { events, loading, error } = useActiveEvents({ enablePolling: true });
@@ -77,15 +75,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: MINIMAL_UI.background,
   },
-  sectionTitle: {
-    fontSize: SECTION_TITLE_FONT_SIZE,
-    fontWeight: MINIMAL_TYPO.screenTitle.fontWeight,
-    color: MINIMAL_UI.blueDark,
-    backgroundColor: MINIMAL_UI.background,
-    textAlign: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
+  sectionTitle: MINIMAL_SECTION_TITLE,
   loader: {
     marginVertical: 32,
   },
