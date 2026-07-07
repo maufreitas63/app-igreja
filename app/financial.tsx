@@ -286,7 +286,7 @@ export default function FinancialScreen() {
               <View style={styles.resultSectionHeaderText}>
                 <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>Últimos 12 meses</Text>
                 {selectedMonth ? (
-                  <Text style={styles.twelveMonthsSectionMeta}>
+                  <Text style={styles.resultSectionMeta}>
                     Realizado · até {formatFinancialMonthLabel(selectedMonth)}
                   </Text>
                 ) : null}
@@ -329,7 +329,7 @@ export default function FinancialScreen() {
               <View style={styles.resultSectionHeaderText}>
                 <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>Saldo bancário</Text>
                 {selectedMonth ? (
-                  <Text style={styles.bankBalanceSectionMeta}>
+                  <Text style={styles.resultSectionMeta}>
                     {formatFinancialMonthLabel(selectedMonth)}
                   </Text>
                 ) : null}
@@ -391,7 +391,7 @@ export default function FinancialScreen() {
                     Sem orçamento planejado para este mês
                   </Text>
                 ) : selectedMonth ? (
-                  <Text style={styles.budgetSectionMeta}>
+                  <Text style={styles.resultSectionMeta}>
                     {formatFinancialMonthLabel(selectedMonth)}
                   </Text>
                 ) : null}
@@ -819,11 +819,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(19, 78, 74, 0.15)',
     overflow: 'hidden',
   },
-  twelveMonthsSectionMeta: {
-    color: '#5EEAD4',
-    fontSize: 13,
-    fontWeight: '600',
-  },
   budgetSection: {
     borderRadius: 16,
     borderWidth: 1,
@@ -839,11 +834,6 @@ const styles = StyleSheet.create({
   sectionLabelBlocked: {
     color: '#64748B',
   },
-  budgetSectionMeta: {
-    color: '#C4B5FD',
-    fontSize: 13,
-    fontWeight: '600',
-  },
   budgetSectionBlockedText: {
     color: '#94A3B8',
     fontSize: 12,
@@ -856,11 +846,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(245, 158, 11, 0.35)',
     backgroundColor: 'rgba(120, 53, 15, 0.15)',
     overflow: 'hidden',
-  },
-  bankBalanceSectionMeta: {
-    color: '#FCD34D',
-    fontSize: 13,
-    fontWeight: '600',
   },
   monthDropdownWrap: {
     width: 209,
