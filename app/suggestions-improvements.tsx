@@ -8,12 +8,14 @@ import {
 import {
   buildReturnToDashboardHref,
   pickRouteParam,
+  resolveReturnRouteParam,
+  withMinimalPresentation,
 } from '@/lib/dashboardReturnNavigation';
 import { computeDashboardCardHeight } from '@/lib/dashboardPanelLayout';
 import { buildDashboardScreenGradient } from '@/lib/paletteTheme';
 import { usePalette } from '@/context/PaletteContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +25,8 @@ export default function SuggestionsImprovementsScreen() {
   const params = useLocalSearchParams<{
     supportMode?: string;
     returnDashboardCard?: string;
+    returnRoute?: string;
+    presentation?: string;
   }>();
   const { colors: paletteColors } = usePalette();
   const screenGradient = useMemo(
@@ -38,11 +42,20 @@ export default function SuggestionsImprovementsScreen() {
 
   const returnDashboardCard =
     pickRouteParam(params.returnDashboardCard) ?? DASHBOARD_ADMINISTRATIVO_CARD_ID;
+  const returnRoute = resolveReturnRouteParam(params);
   const initialMode = pickRouteParam(params.supportMode) === 'new' ? 'new' : 'list';
 
   const accessStatus = useSuggestionsImprovementsAccess();
 
   const handleReturnToAdministrativo = () => {
+    if (returnRoute === '/administrativo') {
+      router.replace({
+        pathname: '/administrativo',
+        params: withMinimalPresentation({ administrativoTab: 'outros' }),
+      } as Href);
+      return;
+    }
+
     router.replace(
       buildReturnToDashboardHref(returnDashboardCard, {
         administrativoTab: 'outros',
