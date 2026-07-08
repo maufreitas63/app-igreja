@@ -23,6 +23,7 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 const LOGIN_SURFACE = '#FFFFFF';
 const LOGIN_ACCENT = VIGILANCE_SCALES_UI.accent;
 const LOGIN_ICON = '#1B4F8A';
+const LOGIN_INPUT_BORDER = 'rgba(28, 79, 138, 0.35)';
 const LOGIN_SOFT_BORDER = 'rgba(52, 211, 153, 0.35)';
 const LOGIN_SUBMIT_BG = '#3A96DD';
 const LOGIN_SUBMIT_TEXT = '#FFFFFF';
@@ -1172,6 +1173,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     paddingVertical: 16,
     paddingHorizontal: 12,
+    borderColor: LOGIN_INPUT_BORDER,
   },
   pinInputFullWidth: {
     width: '100%',
@@ -1181,7 +1183,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: MINIMAL_UI.rowHover,
     borderWidth: 1,
-    borderColor: LOGIN_SOFT_BORDER,
+    borderColor: LOGIN_INPUT_BORDER,
     borderStyle: 'dashed',
   },
   readOnlyInputText: {
