@@ -193,6 +193,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     opacity: 0.88,
+    textAlign: 'center',
   },
   messageBox: {
     alignItems: 'center',
