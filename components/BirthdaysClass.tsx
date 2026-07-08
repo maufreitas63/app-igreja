@@ -60,7 +60,7 @@ export function BirthdaysClass({
               variant="vigilance"
               style={styles.monthDropdown}
               triggerTextStyle={styles.monthDropdownText}
-              triggerIconColor={VIGILANCE_SCALES_UI.accent}
+              triggerIconColor="#FFFFFF"
             />
           </View>
         </View>
@@ -166,12 +166,11 @@ const styles = StyleSheet.create({
   },
   monthDropdown: {
     width: '100%',
-    borderColor: MINIMAL_UI.border,
-    backgroundColor: BIRTHDAYS_CLASS_SURFACE,
-    color: VIGILANCE_SCALES_UI.accent,
+    borderColor: '#1B4F8A',
+    backgroundColor: VIGILANCE_SCALES_UI.accent,
   },
   monthDropdownText: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: '#FFFFFF',
     fontWeight: '700',
     textAlign: 'center',
   },

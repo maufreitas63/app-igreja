@@ -66,7 +66,7 @@ export function DropdownSelect({
   const isCompact = size === 'compact';
   const isVigilance = variant === 'vigilance';
   const resolvedTriggerIconColor =
-    triggerIconColor ?? (isVigilance ? VIGILANCE_ICON : '#94A3B8');
+    triggerIconColor ?? (isVigilance ? '#FFFFFF' : '#94A3B8');
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const blurCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -157,7 +157,7 @@ export function DropdownSelect({
             onFocus={handleOpenSearch}
             onBlur={scheduleCloseSearch}
             placeholder={inputPlaceholder}
-            placeholderTextColor={isVigilance ? VIGILANCE_SCALES_UI.accent : '#64748B'}
+            placeholderTextColor={isVigilance ? '#FFFFFF' : '#64748B'}
             editable={!disabled}
             autoCapitalize="words"
             autoCorrect={false}
@@ -177,7 +177,7 @@ export function DropdownSelect({
               <FontAwesome
                 name="times-circle"
                 size={18}
-                color={isVigilance ? VIGILANCE_ICON : '#94A3B8'}
+                color={isVigilance ? '#FFFFFF' : '#94A3B8'}
               />
             </TouchableOpacity>
           ) : null}
@@ -200,7 +200,7 @@ export function DropdownSelect({
             <FontAwesome
               name={open ? 'chevron-up' : 'chevron-down'}
               size={12}
-              color={isVigilance ? VIGILANCE_ICON : '#94A3B8'}
+              color={isVigilance ? '#FFFFFF' : '#94A3B8'}
             />
           </TouchableOpacity>
         </View>
@@ -386,8 +386,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   searchableTriggerVigilance: {
-    borderColor: VIGILANCE_SCALES_UI.accent,
-    backgroundColor: VIGILANCE_SURFACE,
+    borderColor: '#1B4F8A',
+    backgroundColor: VIGILANCE_SCALES_UI.accent,
   },
   searchableInput: {
     flex: 1,
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   searchableInputVigilance: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: '#FFFFFF',
   },
   searchableClearButton: {
     alignItems: 'center',
@@ -448,8 +448,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   triggerVigilance: {
-    borderColor: VIGILANCE_SCALES_UI.accent,
-    backgroundColor: VIGILANCE_SURFACE,
+    borderColor: '#1B4F8A',
+    backgroundColor: VIGILANCE_SCALES_UI.accent,
   },
   triggerComfortable: {
     minHeight: 52,
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   triggerTextVigilance: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: '#FFFFFF',
   },
   triggerTextComfortable: {
     fontSize: 16,
