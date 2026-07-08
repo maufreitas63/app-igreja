@@ -1,4 +1,5 @@
 import { EventsInboxHome } from '@/components/minimal/EventsInboxHome';
+import { MinimalEuQueroFooter } from '@/components/minimal/MinimalEuQueroFooter';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -7,6 +8,7 @@ export function MinimalMainPanel() {
   return (
     <View style={styles.panel}>
       <EventsInboxHome />
+      <MinimalEuQueroFooter />
     </View>
   );
 }
@@ -16,5 +18,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     width: '100%',
+    position: 'relative',
   },
 });

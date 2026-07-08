@@ -1,23 +1,22 @@
 import { FamilyAgendaModal } from '@/components/FamilyAgendaModal';
 import { InboxList, type InboxListItem } from '@/components/minimal/InboxList';
-import { ACCESS_SCREEN } from '@/lib/accessControl';
-import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
-import {
-  buildReturnToDashboardHref,
-  withMinimalPresentation,
-} from '@/lib/dashboardReturnNavigation';
-import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { useMinimalHome } from '@/context/MinimalHomeContext';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
-import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 export function EventsInboxHome() {
-  const router = useRouter();
+  const { setHomeAgendaOpen } = useMinimalHome();
   const { events, loading, error } = useActiveEvents({ enablePolling: true });
   const [modalEventId, setModalEventId] = useState<string | null>(null);
   const agendaOpen = modalEventId !== null;
+
+  useEffect(() => {
+    setHomeAgendaOpen(agendaOpen);
+    return () => setHomeAgendaOpen(false);
+  }, [agendaOpen, setHomeAgendaOpen]);
 
   const inboxItems: InboxListItem[] = useMemo(
     () =>
@@ -39,19 +38,6 @@ export function EventsInboxHome() {
     setModalEventId(null);
   };
 
-  const handleOpenOfferings = () => {
-    router.push(buildReturnToDashboardHref('3'));
-  };
-
-  const handleOpenPastoral = () => {
-    void navigateWithScreenAccess(
-      router,
-      '/pastoral',
-      ACCESS_SCREEN.pastoral,
-      withMinimalPresentation()
-    );
-  };
-
   if (loading) {
     return <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />;
   }
@@ -70,28 +56,6 @@ export function EventsInboxHome() {
             emptyMessage="Nenhum evento disponível no momento."
             onItemPress={handleItemPress}
           />
-
-          <View style={styles.euQuero}>
-            <Text style={styles.euQueroLabel}>Eu Quero…</Text>
-            <View style={styles.euQueroActions}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Contribuir com meu Dízimo ou Oferta"
-                onPress={handleOpenOfferings}
-                style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
-              >
-                <Text style={styles.actionButtonText}>Contribuir com meu Dízimo ou Oferta</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Fazer um pedido de Oração"
-                onPress={handleOpenPastoral}
-                style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
-              >
-                <Text style={styles.actionButtonText}>Fazer um pedido de Oração</Text>
-              </Pressable>
-            </View>
-          </View>
         </View>
       ) : null}
 
@@ -126,35 +90,5 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     textAlign: 'center',
     paddingVertical: 24,
-  },
-  euQuero: {
-    marginTop: 8,
-    paddingTop: 16,
-    paddingHorizontal: 4,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: MINIMAL_UI.divider,
-    gap: 10,
-  },
-  euQueroLabel: {
-    ...MINIMAL_TYPO.sectionLabel,
-    textAlign: 'center',
-  },
-  euQueroActions: {
-    gap: 8,
-  },
-  actionButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: MINIMAL_UI.divider,
-  },
-  actionButtonPressed: {
-    backgroundColor: MINIMAL_UI.rowHover,
-  },
-  actionButtonText: {
-    color: MINIMAL_UI.text,
-    fontSize: 15,
-    fontWeight: '600',
-    textAlign: 'center',
   },
 });

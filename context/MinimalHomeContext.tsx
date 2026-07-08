@@ -5,16 +5,21 @@ type MinimalHomeContextValue = {
   expandedEventId: string | null;
   expandedEvent: ActiveEventListItem | null;
   setExpandedEvent: (event: ActiveEventListItem | null) => void;
+  homeAgendaOpen: boolean;
+  setHomeAgendaOpen: (open: boolean) => void;
 };
 
 const MinimalHomeContext = createContext<MinimalHomeContextValue>({
   expandedEventId: null,
   expandedEvent: null,
   setExpandedEvent: () => undefined,
+  homeAgendaOpen: false,
+  setHomeAgendaOpen: () => undefined,
 });
 
 export function MinimalHomeProvider({ children }: { children: React.ReactNode }) {
   const [expandedEvent, setExpandedEventState] = useState<ActiveEventListItem | null>(null);
+  const [homeAgendaOpen, setHomeAgendaOpen] = useState(false);
 
   const setExpandedEvent = useCallback((event: ActiveEventListItem | null) => {
     setExpandedEventState(event);
@@ -25,8 +30,10 @@ export function MinimalHomeProvider({ children }: { children: React.ReactNode })
       expandedEventId: expandedEvent?.id ?? null,
       expandedEvent,
       setExpandedEvent,
+      homeAgendaOpen,
+      setHomeAgendaOpen,
     }),
-    [expandedEvent, setExpandedEvent]
+    [expandedEvent, homeAgendaOpen, setExpandedEvent]
   );
 
   return <MinimalHomeContext.Provider value={value}>{children}</MinimalHomeContext.Provider>;
