@@ -1,9 +1,10 @@
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { useAppDrawerMenu, type AppDrawerMenuItemResolved } from '@/hooks/useAppDrawerMenu';
 import { navigateDrawerMenuItem, isDrawerMenuPlaceholder } from '@/lib/appDrawerMenu';
-import { MINIMAL_UI, MINIMAL_TYPO } from '@/lib/minimalUiTheme';
+import { MINIMAL_ICON, MINIMAL_UI, MINIMAL_TYPO } from '@/lib/minimalUiTheme';
+import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -16,16 +17,20 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MinimalExitBar } from './MinimalExitBar';
+import { AppDrawerSettings } from './AppDrawerSettings';
 
 export function AppDrawer() {
   const { isOpen, closeDrawer } = useAppDrawer();
   const { items, loading, refresh } = useAppDrawerMenu();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       void refresh();
+    } else {
+      setSettingsOpen(false);
     }
   }, [isOpen, refresh]);
 
@@ -44,7 +49,17 @@ export function AppDrawer() {
     <Modal animationType="slide" transparent visible={isOpen} onRequestClose={closeDrawer}>
       <View style={styles.overlay}>
         <View style={[styles.panel, { paddingTop: insets.top + 12 }]}>
-          <Text style={styles.title}>Menu</Text>
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>Menu</Text>
+            <Pressable
+              accessibilityLabel="Abrir configurações"
+              accessibilityRole="button"
+              onPress={() => setSettingsOpen(true)}
+              style={styles.settingsButton}
+            >
+              <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
+            </Pressable>
+          </View>
           {loading ? (
             <View style={styles.loaderWrap}>
               <ActivityIndicator color={MINIMAL_UI.icon} />
@@ -75,6 +90,7 @@ export function AppDrawer() {
         </View>
         <Pressable style={styles.backdrop} onPress={closeDrawer} accessibilityLabel="Fechar menu" />
       </View>
+      <AppDrawerSettings visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </Modal>
   );
 }
@@ -100,7 +116,17 @@ const styles = StyleSheet.create({
   },
   title: {
     ...MINIMAL_TYPO.screenTitle,
+    flex: 1,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
     marginBottom: 12,
+  },
+  settingsButton: {
+    padding: 4,
   },
   loaderWrap: {
     flex: 1,
