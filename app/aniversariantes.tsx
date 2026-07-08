@@ -9,7 +9,7 @@ export default function AniversariantesScreen() {
 
   return (
     <ScreenAccessGate status={accessStatus}>
-      <MinimalScreenLayout scroll={false} title="Aniversariantes">
+      <MinimalScreenLayout scroll={false}>
         <BirthdaysClassPanel />
       </MinimalScreenLayout>
     </ScreenAccessGate>

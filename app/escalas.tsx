@@ -9,7 +9,7 @@ export default function EscalasScreen() {
 
   return (
     <ScreenAccessGate status={accessStatus}>
-      <MinimalScreenLayout scroll={false} title="Escalas">
+      <MinimalScreenLayout scroll={false}>
         <ScalesClassPanel />
       </MinimalScreenLayout>
     </ScreenAccessGate>

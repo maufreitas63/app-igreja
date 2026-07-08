@@ -1,3 +1,4 @@
+import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import {
   formatDisplayName,
@@ -300,9 +301,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 18,
-    fontWeight: '700',
+    ...MINIMAL_SECTION_TITLE,
+    alignSelf: 'stretch',
   },
   pickerSection: {
     flex: 1,

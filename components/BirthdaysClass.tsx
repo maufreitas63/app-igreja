@@ -1,6 +1,6 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   BIRTHDAYS_CLASS_MONTHS,
   type BirthdaysClassEntry,
@@ -136,9 +136,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 18,
-    fontWeight: '700',
+    ...MINIMAL_SECTION_TITLE,
+    alignSelf: 'stretch',
   },
   body: {
     flex: 1,

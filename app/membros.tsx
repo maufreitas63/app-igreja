@@ -9,7 +9,7 @@ export default function MembrosScreen() {
 
   return (
     <ScreenAccessGate status={accessStatus}>
-      <MinimalScreenLayout scroll={false} title="Membros">
+      <MinimalScreenLayout scroll={false}>
         <MembersListsClassPanel />
       </MinimalScreenLayout>
     </ScreenAccessGate>
