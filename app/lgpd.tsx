@@ -16,7 +16,7 @@ import {
   loadLgpdEntityName,
   loadLgpdTermsText,
 } from '@/lib/lgpdTerms';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_UI, MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import {
   buildAppIndexRoute,
   loadProfileByPhone,
@@ -457,9 +457,11 @@ export default function LgpdScreen() {
 
   const renderFormStage = () => (
     <>
-      {!useMinimalTheme ? (
+      {useMinimalTheme ? (
+        <Text style={styles.sectionTitle}>Termos de Uso e Privacidade (LGPD)</Text>
+      ) : (
         <Text style={styles.title}>Termos de Uso e Privacidade (LGPD)</Text>
-      ) : null}
+      )}
 
       {loadingProfile ? (
         <ActivityIndicator color={useMinimalTheme ? VIGILANCE_SCALES_UI.accent : '#10b981'} style={styles.loader} />
@@ -501,9 +503,9 @@ export default function LgpdScreen() {
               showsVerticalScrollIndicator
               keyboardShouldPersistTaps="handled"
             >
-              <Text style={[styles.lgpdTitle, useMinimalTheme && styles.lgpdTitleMinimal]}>
-                Termos de Uso e Privacidade (LGPD)
-              </Text>
+              {!useMinimalTheme ? (
+                <Text style={styles.lgpdTitle}>Termos de Uso e Privacidade (LGPD)</Text>
+              ) : null}
               <Text style={[styles.lgpdText, useMinimalTheme && styles.lgpdTextMinimal]}>{lgpdTermsText}</Text>
             </ScrollView>
           </View>
@@ -579,7 +581,7 @@ export default function LgpdScreen() {
   return (
     <ScreenAccessGate status={accessStatus}>
       {isMinimalPresentation ? (
-        <MinimalScreenLayout title="Privacidade (LGPD)" scroll={false}>
+        <MinimalScreenLayout scroll={false}>
           <View style={styles.minimalRoot}>{renderContent()}</View>
         </MinimalScreenLayout>
       ) : (
@@ -617,6 +619,11 @@ const styles = StyleSheet.create({
     color: '#FFF',
     marginBottom: 24,
     textAlign: 'center',
+  },
+  sectionTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    alignSelf: 'stretch',
+    marginBottom: 8,
   },
   loader: {
     marginTop: 40,
