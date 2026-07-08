@@ -167,14 +167,6 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
     <View style={styles.panel}>
       <View style={styles.panelHeader}>
         <Text style={styles.panelTitle}>Agenda da Família</Text>
-        <Pressable
-          onPress={onClose}
-          style={styles.closeButton}
-          accessibilityRole="button"
-          accessibilityLabel="Fechar"
-        >
-          <Text style={styles.closeButtonText}>Fechar</Text>
-        </Pressable>
       </View>
 
       <ScrollView
@@ -201,6 +193,17 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
           }
         />
       </ScrollView>
+
+      <View style={styles.footerBar}>
+        <Pressable
+          onPress={onClose}
+          style={styles.closeFooterButton}
+          accessibilityRole="button"
+          accessibilityLabel="Fechar"
+        >
+          <Text style={styles.closeFooterButtonText}>Fechar</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -219,9 +222,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   panelHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 4,
     paddingBottom: 8,
     backgroundColor: VIGILANCE_SCALES_UI.surface,
@@ -233,17 +233,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     flexShrink: 1,
   },
-  closeButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    flexShrink: 0,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
-  },
-  closeButtonText: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 14,
-    fontWeight: '700',
-  },
   scroll: {
     flex: 1,
     width: '100%',
@@ -254,5 +243,31 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     backgroundColor: VIGILANCE_SCALES_UI.surface,
+  },
+  footerBar: {
+    flexShrink: 0,
+    paddingTop: 8,
+    paddingBottom: 12,
+    borderTopWidth: 1,
+    borderTopColor: VIGILANCE_SCALES_UI.border,
+    backgroundColor: VIGILANCE_SCALES_UI.surface,
+    width: '100%',
+  },
+  closeFooterButton: {
+    minHeight: 51,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#1B4F8A',
+    backgroundColor: '#3A96DD',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
+  },
+  closeFooterButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
 });
