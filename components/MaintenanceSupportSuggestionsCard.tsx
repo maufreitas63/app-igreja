@@ -1,4 +1,5 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { formatPhoneDisplay } from '@/lib/familyRegistration';
 import { formatShortName } from '@/lib/formatShortName';
 import { formatBrazilDateInput } from '@/lib/inputMasks';
@@ -50,6 +51,7 @@ type Props = {
   isSuperAdmin?: boolean;
   initialMode?: 'list' | 'new' | 'detail';
   returnOnCreate?: boolean;
+  variant?: 'default' | 'vigilance';
   onNavigateBack?: () => void;
   onRequestCreated?: () => void;
 };
@@ -272,29 +274,41 @@ const buildTimeline = (request: MaintenanceSupportRequest): TimelineEntry[] => {
 const LocalImageChip = ({
   image,
   onRemove,
+  chipStyle,
+  previewStyle,
+  removeStyle,
 }: {
   image: MaintenanceSupportLocalImage;
   onRemove: () => void;
+  chipStyle: object;
+  previewStyle: object;
+  removeStyle: object;
 }) => (
-  <View style={styles.localImageChip}>
-    <Image source={{ uri: image.uri }} style={styles.localImagePreview} contentFit="cover" />
-    <TouchableOpacity style={styles.localImageRemove} onPress={onRemove} activeOpacity={0.85}>
+  <View style={chipStyle}>
+    <Image source={{ uri: image.uri }} style={previewStyle} contentFit="cover" />
+    <TouchableOpacity style={removeStyle} onPress={onRemove} activeOpacity={0.85}>
       <FontAwesome name="times" size={12} color="#FECACA" />
     </TouchableOpacity>
   </View>
 );
 
-const RequestStatusBadge = ({ status }: { status: MaintenanceSupportStatus }) => {
-  const tone = statusTone[status];
-
-  return (
-    <View style={[styles.statusBadge, { backgroundColor: tone.bg, borderColor: tone.border }]}>
-      <Text style={[styles.statusBadgeText, { color: tone.text }]}>
-        {MAINTENANCE_SUPPORT_STATUS_LABELS[status]}
-      </Text>
-    </View>
-  );
-};
+const RequestStatusBadge = ({
+  status,
+  tone,
+  badgeStyle,
+  badgeTextStyle,
+}: {
+  status: MaintenanceSupportStatus;
+  tone: { bg: string; border: string; text: string };
+  badgeStyle: object;
+  badgeTextStyle: object;
+}) => (
+  <View style={[badgeStyle, { backgroundColor: tone.bg, borderColor: tone.border }]}>
+    <Text style={[badgeTextStyle, { color: tone.text }]}>
+      {MAINTENANCE_SUPPORT_STATUS_LABELS[status]}
+    </Text>
+  </View>
+);
 
 export function MaintenanceSupportSuggestionsCard({
   isActive = true,
@@ -302,9 +316,18 @@ export function MaintenanceSupportSuggestionsCard({
   isSuperAdmin = false,
   initialMode = 'list',
   returnOnCreate = false,
+  variant = 'default',
   onNavigateBack,
   onRequestCreated,
 }: Props) {
+  const isVigilance = variant === 'vigilance';
+  const themedStyles = useMemo(
+    () => createSupportSuggestionsStyles(isVigilance),
+    [isVigilance]
+  );
+  const accentColor = isVigilance ? VIGILANCE_SCALES_UI.accent : ACCENT;
+  const iconColor = isVigilance ? '#1B4F8A' : '#BAE6FD';
+  const statusToneMap = isVigilance ? statusToneVigilance : statusTone;
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const { requests, loading, refreshing, schemaMissing, schemaHint, error, reload } =
     useMaintenanceSupport(isActive);
@@ -769,14 +792,14 @@ export function MaintenanceSupportSuggestionsCard({
 
   const renderNewRequestForm = () => (
     <ScrollView
-      style={styles.bodyScroll}
-      contentContainerStyle={styles.bodyContent}
+      style={themedStyles.bodyScroll}
+      contentContainerStyle={themedStyles.bodyContent}
       nestedScrollEnabled
       keyboardShouldPersistTaps="handled"
     >
-      <View style={styles.headerRow}>
+      <View style={themedStyles.headerRow}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={themedStyles.backButton}
           onPress={() => {
             if (onNavigateBack) {
               onNavigateBack();
@@ -787,22 +810,22 @@ export function MaintenanceSupportSuggestionsCard({
           }}
           activeOpacity={0.85}
         >
-          <FontAwesome name="chevron-left" size={13} color="#BAE6FD" />
-          <Text style={styles.backButtonText}>Voltar</Text>
+          <FontAwesome name="chevron-left" size={13} color={iconColor} />
+          <Text style={themedStyles.backButtonText}>Voltar</Text>
         </TouchableOpacity>
-        <Text style={styles.formTitle}>Nova sugestão</Text>
+        <Text style={themedStyles.formTitle}>Nova sugestão</Text>
       </View>
 
       {isSuperAdmin ? (
-        <View style={styles.requesterSection}>
-          <Text style={styles.label}>Solicitante</Text>
-          <Text style={styles.fieldHint}>
+        <View style={themedStyles.requesterSection}>
+          <Text style={themedStyles.label}>Solicitante</Text>
+          <Text style={themedStyles.fieldHint}>
             Como super administrador, você pode registrar a sugestão em nome de um membro da igreja.
           </Text>
           {loadingMemberProfiles ? (
-            <ActivityIndicator color={ACCENT} style={styles.inlineLoader} />
+            <ActivityIndicator color={accentColor} style={themedStyles.inlineLoader} />
           ) : memberProfilesError ? (
-            <Text style={styles.errorTextInline}>{memberProfilesError}</Text>
+            <Text style={themedStyles.errorTextInline}>{memberProfilesError}</Text>
           ) : (
             <DropdownSelect
               options={memberDropdownOptions}
@@ -812,15 +835,16 @@ export function MaintenanceSupportSuggestionsCard({
               placeholder="Buscar membro por nome ou celular..."
               searchPlaceholder="Digite nome ou celular..."
               searchable
-              style={styles.dropdown}
+              variant={isVigilance ? 'vigilance' as const : 'default' as const}
+        style={themedStyles.dropdown}
               disabled={saving || memberProfiles.length === 0}
             />
           )}
           {selectedNewRequester ? (
-            <View style={styles.selectedRequesterCard}>
-              <Text style={styles.selectedRequesterTitle}>Registrando para</Text>
-              <Text style={styles.selectedRequesterName}>{selectedNewRequester.fullName}</Text>
-              <Text style={styles.selectedRequesterMeta}>
+            <View style={themedStyles.selectedRequesterCard}>
+              <Text style={themedStyles.selectedRequesterTitle}>Registrando para</Text>
+              <Text style={themedStyles.selectedRequesterName}>{selectedNewRequester.fullName}</Text>
+              <Text style={themedStyles.selectedRequesterMeta}>
                 Celular:{' '}
                 {selectedNewRequester.phone
                   ? formatPhoneDisplay(selectedNewRequester.phone)
@@ -831,20 +855,21 @@ export function MaintenanceSupportSuggestionsCard({
         </View>
       ) : null}
 
-      <Text style={styles.label}>Tipo de registro</Text>
+      <Text style={themedStyles.label}>Tipo de registro</Text>
       <DropdownSelect
         options={MAINTENANCE_SUPPORT_RECORD_TYPE_OPTIONS}
         selectedValue={newRecordType}
         onValueChange={(value) => setNewRecordType(value as MaintenanceSupportRecordType)}
         modalTitle="Tipo de registro"
-        style={styles.dropdown}
+        variant={isVigilance ? 'vigilance' as const : 'default' as const}
+        style={themedStyles.dropdown}
       />
 
-      <Text style={styles.label}>Tema</Text>
+      <Text style={themedStyles.label}>Tema</Text>
       {loadingThemes ? (
-        <ActivityIndicator color={ACCENT} style={styles.inlineLoader} />
+        <ActivityIndicator color={accentColor} style={themedStyles.inlineLoader} />
       ) : themesError ? (
-        <Text style={styles.errorTextInline}>{themesError}</Text>
+        <Text style={themedStyles.errorTextInline}>{themesError}</Text>
       ) : (
         <DropdownSelect
           options={themeDropdownOptions}
@@ -854,26 +879,27 @@ export function MaintenanceSupportSuggestionsCard({
           placeholder="Buscar tema..."
           searchPlaceholder="Digite para filtrar..."
           searchable
-          style={styles.dropdown}
+          variant={isVigilance ? 'vigilance' as const : 'default' as const}
+        style={themedStyles.dropdown}
           disabled={saving || themes.length === 0}
         />
       )}
 
-      <Text style={styles.label}>Descrição detalhada</Text>
+      <Text style={themedStyles.label}>Descrição detalhada</Text>
       <TextInput
-        style={[styles.input, styles.textArea]}
+        style={[themedStyles.input, themedStyles.textArea]}
         value={newDescription}
         onChangeText={setNewDescription}
         placeholder="Explique a sugestão, dúvida, comentário ou incidente com detalhes."
-        placeholderTextColor="#64748B"
+        placeholderTextColor={isVigilance ? VIGILANCE_SCALES_UI.accent : '#64748B'}
         multiline
         textAlignVertical="top"
       />
 
-      <View style={styles.switchCard}>
-        <View style={styles.switchText}>
-          <Text style={styles.switchTitle}>Notificações no aplicativo</Text>
-          <Text style={styles.switchHint}>Registrar atualizações para acompanhamento no histórico.</Text>
+      <View style={themedStyles.switchCard}>
+        <View style={themedStyles.switchText}>
+          <Text style={themedStyles.switchTitle}>Notificações no aplicativo</Text>
+          <Text style={themedStyles.switchHint}>Registrar atualizações para acompanhamento no histórico.</Text>
         </View>
         <Switch
           value={newNotifyInApp}
@@ -883,10 +909,10 @@ export function MaintenanceSupportSuggestionsCard({
         />
       </View>
 
-      <View style={styles.switchCard}>
-        <View style={styles.switchText}>
-          <Text style={styles.switchTitle}>Autorizar WhatsApp</Text>
-          <Text style={styles.switchHint}>Permite receber atualizações da ocorrência por WhatsApp.</Text>
+      <View style={themedStyles.switchCard}>
+        <View style={themedStyles.switchText}>
+          <Text style={themedStyles.switchTitle}>Autorizar WhatsApp</Text>
+          <Text style={themedStyles.switchHint}>Permite receber atualizações da ocorrência por WhatsApp.</Text>
         </View>
         <Switch
           value={newWhatsappAuthorized}
@@ -897,77 +923,80 @@ export function MaintenanceSupportSuggestionsCard({
       </View>
 
       <TouchableOpacity
-        style={styles.secondaryButton}
+        style={themedStyles.secondaryButton}
         onPress={() => void appendPickedImages('new')}
         activeOpacity={0.85}
       >
-        <MaterialIcons name="add-photo-alternate" size={18} color="#BAE6FD" />
-        <Text style={styles.secondaryButtonText}>
+        <MaterialIcons name="add-photo-alternate" size={18} color={iconColor} />
+        <Text style={themedStyles.secondaryButtonText}>
           {newImages.length ? 'Adicionar/substituir imagens' : 'Anexar imagem da galeria'}
         </Text>
       </TouchableOpacity>
 
       {newImages.length ? (
-        <View style={styles.localImagesRow}>
+        <View style={themedStyles.localImagesRow}>
           {newImages.map((image, index) => (
             <LocalImageChip
               key={`${image.uri}-${index}`}
               image={image}
               onRemove={() => setNewImages((current) => current.filter((_, idx) => idx !== index))}
+              chipStyle={themedStyles.localImageChip}
+              previewStyle={themedStyles.localImagePreview}
+              removeStyle={themedStyles.localImageRemove}
             />
           ))}
         </View>
       ) : null}
 
       <TouchableOpacity
-        style={[styles.primaryButton, saving && styles.buttonDisabled]}
+        style={[themedStyles.primaryButton, saving && themedStyles.buttonDisabled]}
         onPress={() => void handleCreateRequest()}
         disabled={saving}
         activeOpacity={0.85}
       >
-        {saving ? <ActivityIndicator color="#0F172A" /> : <Text style={styles.primaryButtonText}>Registrar solicitação</Text>}
+        {saving ? <ActivityIndicator color={isVigilance ? VIGILANCE_SCALES_UI.accent : "#0F172A"} /> : <Text style={themedStyles.primaryButtonText}>Registrar solicitação</Text>}
       </TouchableOpacity>
     </ScrollView>
   );
 
   const renderList = () => (
-    <View style={styles.listBody}>
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryTitle}>Central de relacionamento e suporte</Text>
-        <Text style={styles.summaryText}>
+    <View style={themedStyles.listBody}>
+      <View style={themedStyles.summaryCard}>
+        <Text style={themedStyles.summaryTitle}>Central de relacionamento e suporte</Text>
+        <Text style={themedStyles.summaryText}>
           Registre sugestões, dúvidas, comentários e incidentes com rastreabilidade até a conclusão.
         </Text>
       </View>
 
-      <View style={styles.actionsRow}>
+      <View style={themedStyles.actionsRow}>
         <TouchableOpacity
-          style={styles.primaryButtonCompact}
+          style={themedStyles.primaryButtonCompact}
           onPress={() => setMode('new')}
           activeOpacity={0.85}
         >
-          <FontAwesome name="plus" size={14} color="#0F172A" />
-          <Text style={styles.primaryButtonCompactText}>Nova</Text>
+          <FontAwesome name="plus" size={14} color={isVigilance ? VIGILANCE_SCALES_UI.accent : "#0F172A"} />
+          <Text style={themedStyles.primaryButtonCompactText}>Nova</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.secondaryButtonCompact}
+          style={themedStyles.secondaryButtonCompact}
           onPress={() => void reload({ silent: true })}
           activeOpacity={0.85}
         >
           {refreshing ? (
-            <ActivityIndicator color="#BAE6FD" size="small" />
+            <ActivityIndicator color={iconColor} size="small" />
           ) : (
-            <FontAwesome name="refresh" size={14} color="#BAE6FD" />
+            <FontAwesome name="refresh" size={14} color={iconColor} />
           )}
-          <Text style={styles.secondaryButtonCompactText}>Atualizar</Text>
+          <Text style={themedStyles.secondaryButtonCompactText}>Atualizar</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.requestList} nestedScrollEnabled showsVerticalScrollIndicator>
+      <ScrollView style={themedStyles.requestList} nestedScrollEnabled showsVerticalScrollIndicator>
         {requests.length ? (
           requests.map((request) => (
             <TouchableOpacity
               key={request.id}
-              style={styles.requestCard}
+              style={themedStyles.requestCard}
               onPress={() => {
                 hydratedRequestIdRef.current = null;
                 setSelectedRequestId(request.id);
@@ -975,27 +1004,32 @@ export function MaintenanceSupportSuggestionsCard({
               }}
               activeOpacity={0.9}
             >
-              <View style={styles.requestHeader}>
-                <View style={styles.requestMain}>
-                  <Text style={styles.requestTitle} numberOfLines={2}>
+              <View style={themedStyles.requestHeader}>
+                <View style={themedStyles.requestMain}>
+                  <Text style={themedStyles.requestTitle} numberOfLines={2}>
                     {MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS[request.record_type]}
                   </Text>
-                  <Text style={styles.requestMeta} numberOfLines={1}>
+                  <Text style={themedStyles.requestMeta} numberOfLines={1}>
                     {request.requester_name} · {formatDateTime(request.created_at)}
                   </Text>
                   {request.tema ? (
-                    <Text style={styles.requestTheme} numberOfLines={2}>
+                    <Text style={themedStyles.requestTheme} numberOfLines={2}>
                       {request.tema}
                     </Text>
                   ) : null}
                 </View>
-                <RequestStatusBadge status={request.status} />
+                <RequestStatusBadge
+                  status={request.status}
+                  tone={statusToneMap[request.status]}
+                  badgeStyle={themedStyles.statusBadge}
+                  badgeTextStyle={themedStyles.statusBadgeText}
+                />
               </View>
-              <Text style={styles.requestDescription} numberOfLines={3}>
+              <Text style={themedStyles.requestDescription} numberOfLines={3}>
                 {request.description}
               </Text>
-              <View style={styles.requestFooter}>
-                <Text style={styles.requestFooterText}>
+              <View style={themedStyles.requestFooter}>
+                <Text style={themedStyles.requestFooterText}>
                   {request.attachments.length} anexo(s) · {request.communications.length} comunicação(ões)
                 </Text>
                 <FontAwesome name="chevron-right" size={12} color="#64748B" />
@@ -1003,7 +1037,7 @@ export function MaintenanceSupportSuggestionsCard({
             </TouchableOpacity>
           ))
         ) : (
-          <Text style={styles.emptyText}>Nenhuma solicitação registrada ainda.</Text>
+          <Text style={themedStyles.emptyText}>Nenhuma solicitação registrada ainda.</Text>
         )}
       </ScrollView>
     </View>
@@ -1012,10 +1046,10 @@ export function MaintenanceSupportSuggestionsCard({
   const renderDetail = () => {
     if (!selectedRequest) {
       return (
-        <View style={styles.centerBox}>
-          <Text style={styles.emptyText}>Solicitação não encontrada.</Text>
-          <TouchableOpacity style={styles.secondaryButtonCompact} onPress={() => setMode('list')}>
-            <Text style={styles.secondaryButtonCompactText}>Voltar</Text>
+        <View style={themedStyles.centerBox}>
+          <Text style={themedStyles.emptyText}>Solicitação não encontrada.</Text>
+          <TouchableOpacity style={themedStyles.secondaryButtonCompact} onPress={() => setMode('list')}>
+            <Text style={themedStyles.secondaryButtonCompactText}>Voltar</Text>
           </TouchableOpacity>
         </View>
       );
@@ -1023,64 +1057,69 @@ export function MaintenanceSupportSuggestionsCard({
 
     return (
       <ScrollView
-        style={styles.bodyScroll}
-        contentContainerStyle={styles.bodyContent}
+        style={themedStyles.bodyScroll}
+        contentContainerStyle={themedStyles.bodyContent}
         nestedScrollEnabled
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.headerRow}>
+        <View style={themedStyles.headerRow}>
           <TouchableOpacity
-            style={styles.backButton}
+            style={themedStyles.backButton}
             onPress={() => {
               hydratedRequestIdRef.current = null;
               setMode('list');
             }}
             activeOpacity={0.85}
           >
-            <FontAwesome name="chevron-left" size={13} color="#BAE6FD" />
-            <Text style={styles.backButtonText}>Lista</Text>
+            <FontAwesome name="chevron-left" size={13} color={iconColor} />
+            <Text style={themedStyles.backButtonText}>Lista</Text>
           </TouchableOpacity>
-          <RequestStatusBadge status={isSuperAdmin ? treatmentStatus : selectedRequest.status} />
+          <RequestStatusBadge
+            status={isSuperAdmin ? treatmentStatus : selectedRequest.status}
+            tone={statusToneMap[isSuperAdmin ? treatmentStatus : selectedRequest.status]}
+            badgeStyle={themedStyles.statusBadge}
+            badgeTextStyle={themedStyles.statusBadgeText}
+          />
         </View>
 
-        <View style={styles.detailCard}>
-          <Text style={styles.detailTitle}>
+        <View style={themedStyles.detailCard}>
+          <Text style={themedStyles.detailTitle}>
             {MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS[selectedRequest.record_type]}
           </Text>
-          <Text style={styles.detailMeta}>
+          <Text style={themedStyles.detailMeta}>
             {selectedRequest.requester_name} · aberta em {formatDateTime(selectedRequest.created_at)}
           </Text>
-          <Text style={styles.detailMeta}>
+          <Text style={themedStyles.detailMeta}>
             Resposta: {formatDateTime(selectedRequest.responded_at)}
           </Text>
           {selectedRequest.tema ? (
-            <Text style={styles.detailTheme}>Tema: {selectedRequest.tema}</Text>
+            <Text style={themedStyles.detailTheme}>Tema: {selectedRequest.tema}</Text>
           ) : null}
-          <Text style={styles.detailDescription}>{selectedRequest.description}</Text>
-          <View style={styles.authorizationRow}>
-            <Text style={styles.authorizationText}>
+          <Text style={themedStyles.detailDescription}>{selectedRequest.description}</Text>
+          <View style={themedStyles.authorizationRow}>
+            <Text style={themedStyles.authorizationText}>
               WhatsApp {selectedRequest.whatsapp_authorized ? 'autorizado' : 'não autorizado'}
             </Text>
-            <Text style={styles.authorizationText}>
+            <Text style={themedStyles.authorizationText}>
               Notificação app {selectedRequest.notify_in_app ? 'ativa' : 'inativa'}
             </Text>
           </View>
         </View>
 
         {selectedRequest.attachments.length ? (
-          <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Anexos</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.attachmentRow}>
+          <View style={themedStyles.sectionCard}>
+            <Text style={themedStyles.sectionTitle}>Anexos</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={themedStyles.attachmentRow}>
               {selectedRequest.attachments.map((attachment) => (
-                <View key={attachment.id} style={styles.attachmentItem}>
+                <View key={attachment.id} style={themedStyles.attachmentItem}>
                   {attachment.signedUrl ? (
-                    <Image source={{ uri: attachment.signedUrl }} style={styles.attachmentImage} contentFit="cover" />
+                    <Image source={{ uri: attachment.signedUrl }} style={themedStyles.attachmentImage} contentFit="cover" />
                   ) : (
-                    <View style={styles.attachmentMissing}>
+                    <View style={themedStyles.attachmentMissing}>
                       <FontAwesome name="image" size={20} color="#64748B" />
                     </View>
                   )}
-                  <Text style={styles.attachmentCaption} numberOfLines={1}>
+                  <Text style={themedStyles.attachmentCaption} numberOfLines={1}>
                     {attachment.file_name ?? 'imagem'}
                   </Text>
                 </View>
@@ -1089,32 +1128,32 @@ export function MaintenanceSupportSuggestionsCard({
           </View>
         ) : null}
 
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Atualização do usuário</Text>
+        <View style={themedStyles.sectionCard}>
+          <Text style={themedStyles.sectionTitle}>Atualização do usuário</Text>
           <TextInput
-            style={[styles.input, styles.textAreaSmall]}
+            style={[themedStyles.input, themedStyles.textAreaSmall]}
             value={userUpdateDescription}
             onChangeText={setUserUpdateDescription}
             placeholder="Atualize a descrição se necessário."
-            placeholderTextColor="#64748B"
+            placeholderTextColor={isVigilance ? VIGILANCE_SCALES_UI.accent : '#64748B'}
             multiline
             textAlignVertical="top"
           />
           <TextInput
-            style={[styles.input, styles.textAreaSmall]}
+            style={[themedStyles.input, themedStyles.textAreaSmall]}
             value={userUpdateMessage}
             onChangeText={setUserUpdateMessage}
             placeholder="Registre uma alteração, complemento ou comentário para o histórico."
-            placeholderTextColor="#64748B"
+            placeholderTextColor={isVigilance ? VIGILANCE_SCALES_UI.accent : '#64748B'}
             multiline
             textAlignVertical="top"
           />
-          <TouchableOpacity style={styles.secondaryButton} onPress={() => void appendPickedImages('user')} activeOpacity={0.85}>
-            <MaterialIcons name="add-photo-alternate" size={18} color="#BAE6FD" />
-            <Text style={styles.secondaryButtonText}>Adicionar imagens complementares</Text>
+          <TouchableOpacity style={themedStyles.secondaryButton} onPress={() => void appendPickedImages('user')} activeOpacity={0.85}>
+            <MaterialIcons name="add-photo-alternate" size={18} color={iconColor} />
+            <Text style={themedStyles.secondaryButtonText}>Adicionar imagens complementares</Text>
           </TouchableOpacity>
           {userUpdateImages.length ? (
-            <View style={styles.localImagesRow}>
+            <View style={themedStyles.localImagesRow}>
               {userUpdateImages.map((image, index) => (
                 <LocalImageChip
                   key={`${image.uri}-${index}`}
@@ -1122,28 +1161,31 @@ export function MaintenanceSupportSuggestionsCard({
                   onRemove={() =>
                     setUserUpdateImages((current) => current.filter((_, idx) => idx !== index))
                   }
+                  chipStyle={themedStyles.localImageChip}
+                  previewStyle={themedStyles.localImagePreview}
+                  removeStyle={themedStyles.localImageRemove}
                 />
               ))}
             </View>
           ) : null}
           <TouchableOpacity
-            style={[styles.secondaryButton, saving && styles.buttonDisabled]}
+            style={[themedStyles.secondaryButton, saving && themedStyles.buttonDisabled]}
             onPress={() => void handleSaveUserUpdate()}
             disabled={saving}
             activeOpacity={0.85}
           >
-            <Text style={styles.secondaryButtonText}>Salvar atualização do usuário</Text>
+            <Text style={themedStyles.secondaryButtonText}>Salvar atualização do usuário</Text>
           </TouchableOpacity>
         </View>
 
         {isSuperAdmin ? (
-          <View style={styles.developerCard}>
-            <Text style={styles.sectionTitle}>Tratamento pelo desenvolvedor</Text>
-            <Text style={styles.label}>Tema</Text>
+          <View style={themedStyles.developerCard}>
+            <Text style={themedStyles.sectionTitle}>Tratamento pelo desenvolvedor</Text>
+            <Text style={themedStyles.label}>Tema</Text>
             {loadingThemes ? (
-              <ActivityIndicator color={ACCENT} style={styles.inlineLoader} />
+              <ActivityIndicator color={accentColor} style={themedStyles.inlineLoader} />
             ) : themesError ? (
-              <Text style={styles.errorTextInline}>{themesError}</Text>
+              <Text style={themedStyles.errorTextInline}>{themesError}</Text>
             ) : (
               <DropdownSelect
                 options={themeDropdownOptions}
@@ -1153,25 +1195,26 @@ export function MaintenanceSupportSuggestionsCard({
                 placeholder="Buscar tema..."
                 searchPlaceholder="Digite para filtrar..."
                 searchable
-                style={styles.dropdown}
+                variant={isVigilance ? 'vigilance' as const : 'default' as const}
+        style={themedStyles.dropdown}
                 disabled={saving || themes.length === 0}
               />
             )}
-            <Text style={styles.label}>Status da solicitação</Text>
-            <Text style={styles.helperText}>
+            <Text style={themedStyles.label}>Status da solicitação</Text>
+            <Text style={themedStyles.helperText}>
               Toque em um status abaixo e depois em Salvar tratamento para aplicar a alteração.
             </Text>
-            <View style={styles.statusChipRow}>
+            <View style={themedStyles.statusChipRow}>
               {MAINTENANCE_SUPPORT_STATUS_OPTIONS.map((option) => {
                 const value = option.value as MaintenanceSupportStatus;
                 const selected = treatmentStatus === value;
-                const tone = statusTone[value];
+                const tone = statusToneMap[value];
 
                 return (
                   <Pressable
                     key={option.value}
                     style={[
-                      styles.statusChip,
+                      themedStyles.statusChip,
                       {
                         backgroundColor: selected ? tone.bg : 'rgba(15, 23, 42, 0.55)',
                         borderColor: selected ? tone.border : '#475569',
@@ -1183,7 +1226,7 @@ export function MaintenanceSupportSuggestionsCard({
                   >
                     <Text
                       style={[
-                        styles.statusChipText,
+                        themedStyles.statusChipText,
                         { color: selected ? tone.text : '#CBD5E1' },
                       ]}
                     >
@@ -1194,105 +1237,105 @@ export function MaintenanceSupportSuggestionsCard({
               })}
             </View>
 
-            <Text style={styles.label}>Ação tomada ou planejada</Text>
+            <Text style={themedStyles.label}>Ação tomada ou planejada</Text>
             <TextInput
-              style={[styles.input, styles.textAreaSmall]}
+              style={[themedStyles.input, themedStyles.textAreaSmall]}
               value={developerAction}
               onChangeText={setDeveloperAction}
               placeholder="Descreva a ação tomada ou a ser tomada."
-              placeholderTextColor="#64748B"
+              placeholderTextColor={isVigilance ? VIGILANCE_SCALES_UI.accent : '#64748B'}
               multiline
               textAlignVertical="top"
             />
 
-            <Text style={styles.label}>Previsão de implementação/conclusão</Text>
+            <Text style={themedStyles.label}>Previsão de implementação/conclusão</Text>
             <TextInput
-              style={styles.input}
+              style={themedStyles.input}
               value={estimatedDate}
               onChangeText={(value) => setEstimatedDate(formatBrazilDateInput(value))}
               placeholder={DATE_INPUT_PLACEHOLDER}
-              placeholderTextColor="#64748B"
+              placeholderTextColor={isVigilance ? VIGILANCE_SCALES_UI.accent : '#64748B'}
               autoCapitalize="none"
               keyboardType="number-pad"
             />
 
-            <Text style={styles.label}>Orientações detalhadas ao usuário</Text>
+            <Text style={themedStyles.label}>Orientações detalhadas ao usuário</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[themedStyles.input, themedStyles.textArea]}
               value={developerGuidance}
               onChangeText={setDeveloperGuidance}
               placeholder="Explique a solução, localização da funcionalidade e passo a passo de uso."
-              placeholderTextColor="#64748B"
+              placeholderTextColor={isVigilance ? VIGILANCE_SCALES_UI.accent : '#64748B'}
               multiline
               textAlignVertical="top"
             />
 
             <TouchableOpacity
-              style={[styles.primaryButton, saving && styles.buttonDisabled]}
+              style={[themedStyles.primaryButton, saving && themedStyles.buttonDisabled]}
               onPress={() => void handleSaveTreatment()}
               disabled={saving}
               activeOpacity={0.85}
             >
-              <Text style={styles.primaryButtonText}>Salvar tratamento</Text>
+              <Text style={themedStyles.primaryButtonText}>Salvar tratamento</Text>
             </TouchableOpacity>
 
-            <Text style={styles.label}>Mensagem ao usuário</Text>
+            <Text style={themedStyles.label}>Mensagem ao usuário</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[themedStyles.input, themedStyles.textArea]}
               value={communicationMessage}
               onChangeText={(value) => {
                 communicationMessageTouchedRef.current = true;
                 setCommunicationMessage(value);
               }}
               placeholder="Mensagem de atualização para o usuário."
-              placeholderTextColor="#64748B"
+              placeholderTextColor={isVigilance ? VIGILANCE_SCALES_UI.accent : '#64748B'}
               multiline
               textAlignVertical="top"
             />
-            <View style={styles.communicationButtons}>
+            <View style={themedStyles.communicationButtons}>
               <TouchableOpacity
-                style={styles.secondaryButtonCompact}
+                style={themedStyles.secondaryButtonCompact}
                 onPress={() => void handleRegisterInAppCommunication()}
                 disabled={saving}
                 activeOpacity={0.85}
               >
-                <FontAwesome name="bell" size={14} color="#BAE6FD" />
-                <Text style={styles.secondaryButtonCompactText}>Registrar no app</Text>
+                <FontAwesome name="bell" size={14} color={iconColor} />
+                <Text style={themedStyles.secondaryButtonCompactText}>Registrar no app</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
-                  styles.whatsappButton,
-                  (!selectedRequest.whatsapp_authorized || !selectedRequest.requester_phone) && styles.buttonDisabled,
+                  themedStyles.whatsappButton,
+                  (!selectedRequest.whatsapp_authorized || !selectedRequest.requester_phone) && themedStyles.buttonDisabled,
                 ]}
                 onPress={() => void handleSendWhatsApp()}
                 disabled={saving || !selectedRequest.whatsapp_authorized || !selectedRequest.requester_phone}
                 activeOpacity={0.85}
               >
                 <FontAwesome name="whatsapp" size={15} color="#DCFCE7" />
-                <Text style={styles.whatsappButtonText}>WhatsApp</Text>
+                <Text style={themedStyles.whatsappButtonText}>WhatsApp</Text>
               </TouchableOpacity>
             </View>
           </View>
         ) : null}
 
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Histórico cronológico</Text>
+        <View style={themedStyles.sectionCard}>
+          <Text style={themedStyles.sectionTitle}>Histórico cronológico</Text>
           {timeline.length ? (
             timeline.map((entry) => (
-              <View key={entry.id} style={styles.timelineItem}>
-                <View style={styles.timelineDot} />
-                <View style={styles.timelineBody}>
-                  <View style={styles.timelineHeader}>
-                    <Text style={styles.timelineTitle}>{entry.title}</Text>
-                    <Text style={styles.timelineDate}>{formatDateTime(entry.date)}</Text>
+              <View key={entry.id} style={themedStyles.timelineItem}>
+                <View style={themedStyles.timelineDot} />
+                <View style={themedStyles.timelineBody}>
+                  <View style={themedStyles.timelineHeader}>
+                    <Text style={themedStyles.timelineTitle}>{entry.title}</Text>
+                    <Text style={themedStyles.timelineDate}>{formatDateTime(entry.date)}</Text>
                   </View>
-                  <Text style={styles.timelineMeta}>{entry.meta}</Text>
-                  <Text style={styles.timelineMessage}>{entry.message}</Text>
+                  <Text style={themedStyles.timelineMeta}>{entry.meta}</Text>
+                  <Text style={themedStyles.timelineMessage}>{entry.message}</Text>
                 </View>
               </View>
             ))
           ) : (
-            <Text style={styles.emptyText}>Nenhuma interação registrada.</Text>
+            <Text style={themedStyles.emptyText}>Nenhuma interação registrada.</Text>
           )}
         </View>
       </ScrollView>
@@ -1300,20 +1343,20 @@ export function MaintenanceSupportSuggestionsCard({
   };
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Sugestões e Melhorias</Text>
-      <Text style={styles.subtitle}>
+    <View style={[themedStyles.panel, { height: contentHeight }]}>
+      <Text style={[maintenancePanelStyles.panelTitle, isVigilance && { color: VIGILANCE_SCALES_UI.accent }]}>Sugestões e Melhorias</Text>
+      <Text style={themedStyles.subtitle}>
         Registro, acompanhamento, respostas e comunicações das solicitações dos usuários.
       </Text>
 
-      {schemaMissing ? <Text style={styles.warningText}>{schemaHint}</Text> : null}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {schemaMissing ? <Text style={themedStyles.warningText}>{schemaHint}</Text> : null}
+      {error ? <Text style={themedStyles.errorText}>{error}</Text> : null}
 
-      <View style={styles.contentArea}>
+      <View style={themedStyles.contentArea}>
         {loading ? (
-          <View style={styles.centerBox}>
-            <ActivityIndicator color={ACCENT} />
-            <Text style={styles.loadingText}>Carregando solicitações...</Text>
+          <View style={themedStyles.centerBox}>
+            <ActivityIndicator color={accentColor} />
+            <Text style={themedStyles.loadingText}>Carregando solicitações...</Text>
           </View>
         ) : mode === 'new' ? (
           renderNewRequestForm()
@@ -1327,7 +1370,8 @@ export function MaintenanceSupportSuggestionsCard({
   );
 }
 
-const styles = StyleSheet.create({
+function createSupportSuggestionsStyles(isVigilance: boolean) {
+  const base = StyleSheet.create({
   panel: {
     flex: 1,
     minHeight: 0,
@@ -1880,3 +1924,75 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
 });
+  if (!isVigilance) {
+    return base;
+  }
+
+  const surface = '#FFFFFF';
+  const accent = VIGILANCE_SCALES_UI.accent;
+  const icon = '#1B4F8A';
+
+  return StyleSheet.create({
+    ...base,
+    panel: { ...base.panel, backgroundColor: surface },
+    subtitle: { ...base.subtitle, color: accent, opacity: 0.88 },
+    warningText: { ...base.warningText, color: accent },
+    errorText: { ...base.errorText, color: accent },
+    loadingText: { ...base.loadingText, color: accent },
+    summaryCard: { ...base.summaryCard, borderColor: accent, backgroundColor: '#F0F9FF' },
+    summaryTitle: { ...base.summaryTitle, color: accent },
+    summaryText: { ...base.summaryText, color: accent },
+    requestCard: { ...base.requestCard, borderColor: accent, backgroundColor: surface },
+    requestTitle: { ...base.requestTitle, color: accent },
+    requestMeta: { ...base.requestMeta, color: accent, opacity: 0.82 },
+    requestTheme: { ...base.requestTheme, color: icon },
+    requestDescription: { ...base.requestDescription, color: accent },
+    requestFooterText: { ...base.requestFooterText, color: icon },
+    emptyText: { ...base.emptyText, color: accent, opacity: 0.82 },
+    primaryButtonCompact: { ...base.primaryButtonCompact, backgroundColor: surface, borderWidth: 1, borderColor: accent },
+    primaryButtonCompactText: { ...base.primaryButtonCompactText, color: accent },
+    secondaryButtonCompact: { ...base.secondaryButtonCompact, borderColor: accent, backgroundColor: surface },
+    secondaryButtonCompactText: { ...base.secondaryButtonCompactText, color: accent },
+    backButton: { ...base.backButton, borderColor: accent, backgroundColor: surface },
+    backButtonText: { ...base.backButtonText, color: accent },
+    formTitle: { ...base.formTitle, color: accent },
+    label: { ...base.label, color: accent },
+    fieldHint: { ...base.fieldHint, color: accent, opacity: 0.88 },
+    errorTextInline: { ...base.errorTextInline, color: accent },
+    selectedRequesterCard: { ...base.selectedRequesterCard, borderColor: accent, backgroundColor: '#F0F9FF' },
+    selectedRequesterTitle: { ...base.selectedRequesterTitle, color: accent },
+    selectedRequesterName: { ...base.selectedRequesterName, color: accent },
+    selectedRequesterMeta: { ...base.selectedRequesterMeta, color: accent },
+    input: { ...base.input, borderColor: accent, backgroundColor: surface, color: accent },
+    switchCard: { ...base.switchCard, borderColor: accent, backgroundColor: surface },
+    switchTitle: { ...base.switchTitle, color: accent },
+    switchHint: { ...base.switchHint, color: accent, opacity: 0.82 },
+    secondaryButton: { ...base.secondaryButton, borderColor: accent, backgroundColor: surface },
+    secondaryButtonText: { ...base.secondaryButtonText, color: accent },
+    primaryButton: { ...base.primaryButton, backgroundColor: surface, borderWidth: 1, borderColor: accent },
+    primaryButtonText: { ...base.primaryButtonText, color: accent },
+    localImageChip: { ...base.localImageChip, borderColor: accent },
+    detailCard: { ...base.detailCard, borderColor: accent, backgroundColor: surface },
+    detailTitle: { ...base.detailTitle, color: accent },
+    detailMeta: { ...base.detailMeta, color: accent, opacity: 0.82 },
+    detailTheme: { ...base.detailTheme, color: icon },
+    detailDescription: { ...base.detailDescription, color: accent },
+    authorizationText: { ...base.authorizationText, color: icon },
+    sectionCard: { ...base.sectionCard, borderColor: accent, backgroundColor: surface },
+    developerCard: { ...base.developerCard, borderColor: '#16A34A', backgroundColor: '#F0FDF4' },
+    helperText: { ...base.helperText, color: accent, opacity: 0.88 },
+    sectionTitle: { ...base.sectionTitle, color: accent },
+    attachmentImage: { ...base.attachmentImage, borderColor: accent },
+    attachmentMissing: { ...base.attachmentMissing, borderColor: accent },
+    attachmentCaption: { ...base.attachmentCaption, color: accent },
+    timelineDot: { ...base.timelineDot, backgroundColor: accent },
+    timelineBody: { ...base.timelineBody, borderBottomColor: accent },
+    timelineTitle: { ...base.timelineTitle, color: accent },
+    timelineDate: { ...base.timelineDate, color: accent, opacity: 0.82 },
+    timelineMeta: { ...base.timelineMeta, color: icon },
+    timelineMessage: { ...base.timelineMessage, color: accent },
+  } as typeof base);
+}
+
+const styles = createSupportSuggestionsStyles(false);
+

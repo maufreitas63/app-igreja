@@ -1,5 +1,5 @@
 import { MaintenanceSupportSuggestionsCard } from '@/components/MaintenanceSupportSuggestionsCard';
-import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
+import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useSuggestionsImprovementsAccess } from '@/hooks/useSuggestionsImprovementsAccess';
 import {
@@ -12,13 +12,12 @@ import {
   withMinimalPresentation,
 } from '@/lib/dashboardReturnNavigation';
 import { computeDashboardCardHeight } from '@/lib/dashboardPanelLayout';
-import { buildDashboardScreenGradient } from '@/lib/paletteTheme';
-import { usePalette } from '@/context/PaletteContext';
-import { LinearGradient } from 'expo-linear-gradient';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SuggestionsImprovementsScreen() {
   const router = useRouter();
@@ -28,11 +27,6 @@ export default function SuggestionsImprovementsScreen() {
     returnRoute?: string;
     presentation?: string;
   }>();
-  const { colors: paletteColors } = usePalette();
-  const screenGradient = useMemo(
-    () => buildDashboardScreenGradient(paletteColors),
-    [paletteColors]
-  );
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const panelHeight = useMemo(
@@ -65,65 +59,49 @@ export default function SuggestionsImprovementsScreen() {
 
   return (
     <ScreenAccessGate status={accessStatus}>
-      <LinearGradient colors={screenGradient} style={styles.container}>
-        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-          <View style={styles.header}>
-            <View style={styles.welcomeBox}>
-              <Text style={styles.welcomeText}>Sugestões e Melhorias</Text>
-              <ActiveScreenBadge
-                title="Registrar solicitação"
-                accent="emerald"
-                technicalKey="maintenance.card.suggestions_improvements"
-              />
-            </View>
-          </View>
+      <MinimalScreenLayout scroll={false}>
+        <View style={styles.header}>
+          <Text style={styles.welcomeText}>Sugestões e Melhorias</Text>
+          <Text style={styles.badgeTitle}>Registrar solicitação</Text>
+        </View>
 
-          <View style={styles.cardStage}>
-            <MaintenanceSupportSuggestionsCard
-              isActive
-              panelHeight={panelHeight}
-              initialMode={initialMode}
-              returnOnCreate
-              onNavigateBack={handleReturnToAdministrativo}
-              onRequestCreated={handleReturnToAdministrativo}
-            />
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+        <View style={styles.cardStage}>
+          <MaintenanceSupportSuggestionsCard
+            isActive
+            panelHeight={panelHeight}
+            initialMode={initialMode}
+            returnOnCreate
+            variant="vigilance"
+            onNavigateBack={handleReturnToAdministrativo}
+            onRequestCreated={handleReturnToAdministrativo}
+          />
+        </View>
+      </MinimalScreenLayout>
     </ScreenAccessGate>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
   header: {
     flexShrink: 0,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 6,
-  },
-  welcomeBox: {
-    borderRadius: 16,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 8,
+    gap: 4,
+    paddingBottom: 8,
+    backgroundColor: MINIMAL_UI.background,
   },
   welcomeText: {
-    color: '#E2E8F0',
-    fontSize: 18,
-    fontWeight: '800',
+    ...MINIMAL_SECTION_TITLE,
+    alignSelf: 'stretch',
+  },
+  badgeTitle: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 13,
+    fontWeight: '700',
     textAlign: 'center',
+    opacity: 0.9,
   },
   cardStage: {
     flex: 1,
     minHeight: 0,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    backgroundColor: MINIMAL_UI.background,
   },
 });
