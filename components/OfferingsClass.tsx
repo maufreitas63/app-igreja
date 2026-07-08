@@ -16,6 +16,7 @@ import {
 const OFFERINGS_CLASS_SURFACE = '#FFFFFF';
 const OFFERINGS_COPY_BUTTON_BG = '#3A96DD';
 const OFFERINGS_COPY_BUTTON_TEXT = '#FFFFFF';
+const OFFERINGS_COPY_BUTTON_BORDER = '#1B4F8A';
 
 export type OfferingsClassProps = {
   title?: string;
@@ -178,6 +179,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: OFFERINGS_COPY_BUTTON_BG,
     borderRadius: 10,
+    borderWidth: 2,
+    borderColor: OFFERINGS_COPY_BUTTON_BORDER,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
   },
   copyButtonText: {
