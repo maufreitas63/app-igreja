@@ -10,10 +10,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 type Props = {
   title?: string;
   header?: React.ReactNode;
+  showGreeting?: boolean;
 };
 
 /** Chrome fixo no topo: identidade + menu; o conteúdo da tela fica sempre abaixo. */
-export function MinimalTopLeftChrome({ title, header }: Props) {
+export function MinimalTopLeftChrome({ title, header, showGreeting = false }: Props) {
   const { openDrawer } = useAppDrawer();
   const { expandedEventId } = useMinimalHome();
 
@@ -30,7 +31,7 @@ export function MinimalTopLeftChrome({ title, header }: Props) {
 
   return (
     <View style={styles.wrap}>
-      <MinimalTopIdentityBar />
+      <MinimalTopIdentityBar showGreeting={showGreeting} />
 
       <View style={styles.menuChrome}>
         <MinimalExpandedEventBar menuButton={menuButton} />

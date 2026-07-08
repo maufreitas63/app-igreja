@@ -8,6 +8,8 @@ import { MinimalExitBar } from './MinimalExitBar';
 import { MinimalTopLeftChrome } from './MinimalTopLeftChrome';
 
 type Props = {
+  /** Exibe «Olá, {nome}» — apenas na tela inicial do menu. */
+  showGreeting?: boolean;
   title?: string;
   header?: React.ReactNode;
   fixedTop?: React.ReactNode;
@@ -26,6 +28,7 @@ function MinimalScreenLayoutBody({
   footer,
   contentContainerStyle,
   scroll = true,
+  showGreeting = false,
 }: Props) {
   const contentPaddingBottom = MINIMAL_EXIT_BAR_HEIGHT + 12;
 
@@ -33,7 +36,7 @@ function MinimalScreenLayoutBody({
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <AppDrawer />
       <View style={styles.shell}>
-        <MinimalTopLeftChrome title={title} header={header} />
+        <MinimalTopLeftChrome title={title} header={header} showGreeting={showGreeting} />
 
         <View style={[styles.body, { paddingBottom: MINIMAL_EXIT_BAR_HEIGHT }]}>
           {fixedTop ? <View style={styles.fixedTop}>{fixedTop}</View> : null}

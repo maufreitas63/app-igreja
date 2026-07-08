@@ -24,10 +24,14 @@ function resolveGreetingName(fullName: string | null | undefined): string {
 }
 
 /** Faixa superior isolada: saudação à esquerda e logo à direita. */
-export function MinimalTopIdentityBar() {
+export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?: boolean }) {
   const [greetingName, setGreetingName] = useState('usuário');
 
   useEffect(() => {
+    if (!showGreeting) {
+      return undefined;
+    }
+
     let active = true;
 
     void (async () => {
@@ -49,15 +53,17 @@ export function MinimalTopIdentityBar() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [showGreeting]);
 
   return (
-    <View style={styles.row}>
-      <View style={styles.greetingSlot}>
-        <Text style={styles.greeting} numberOfLines={1}>
-          Olá, {greetingName}
-        </Text>
-      </View>
+    <View style={[styles.row, !showGreeting && styles.rowLogoOnly]}>
+      {showGreeting ? (
+        <View style={styles.greetingSlot}>
+          <Text style={styles.greeting} numberOfLines={1}>
+            Olá, {greetingName}
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.logoSlot}>
         <Image source={LOGO_SOURCE} style={styles.logo} contentFit="contain" accessibilityLabel="Logo IBNORTE" />
@@ -74,6 +80,9 @@ const styles = StyleSheet.create({
     minHeight: MINIMAL_TOP_IDENTITY_BAR_HEIGHT,
     width: '100%',
     backgroundColor: MINIMAL_UI.background,
+  },
+  rowLogoOnly: {
+    justifyContent: 'flex-end',
   },
   greetingSlot: {
     flex: 1,
