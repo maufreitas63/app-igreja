@@ -1017,7 +1017,7 @@ export default function IndexScreen() {
                 {isPinInputEditable ? (
                   <TextInput
                     ref={pinInputRef}
-                    style={[styles.input, styles.editableInput, styles.pinInput, styles.pinInputFullWidth]}
+                    style={[styles.input, styles.pinEditableInput, styles.pinInput, styles.pinInputFullWidth]}
                     placeholder="****"
                     placeholderTextColor={LOGIN_PLACEHOLDER}
                     value={accessPin}
@@ -1166,6 +1166,11 @@ const styles = StyleSheet.create({
     backgroundColor: LOGIN_SURFACE,
     borderWidth: 1,
     borderColor: LOGIN_SOFT_BORDER,
+  },
+  pinEditableInput: {
+    backgroundColor: LOGIN_SURFACE,
+    borderWidth: 1,
+    borderColor: LOGIN_INPUT_BORDER,
   },
   pinInput: {
     letterSpacing: 8,
