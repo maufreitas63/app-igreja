@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-/** Altura reservada acima da barra «Sair» para o bloco Eu quero… */
+/** Altura reservada na home para o bloco Eu quero… fixo no rodapé do painel. */
 export const MINIMAL_EU_QUERO_FOOTER_HEIGHT = 196;
 
 type EuQueroItemProps = {

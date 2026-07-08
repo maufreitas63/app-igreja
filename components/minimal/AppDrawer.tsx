@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MinimalExitBar } from './MinimalExitBar';
 
 export function AppDrawer() {
   const { isOpen, closeDrawer } = useAppDrawer();
@@ -42,12 +43,19 @@ export function AppDrawer() {
   return (
     <Modal animationType="slide" transparent visible={isOpen} onRequestClose={closeDrawer}>
       <View style={styles.overlay}>
-        <View style={[styles.panel, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 12 }]}>
+        <View style={[styles.panel, { paddingTop: insets.top + 12 }]}>
           <Text style={styles.title}>Menu</Text>
           {loading ? (
-            <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />
+            <View style={styles.loaderWrap}>
+              <ActivityIndicator color={MINIMAL_UI.icon} />
+            </View>
           ) : (
-            <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator>
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator
+              keyboardShouldPersistTaps="handled"
+            >
               {visibleItems.map((item) => (
                 <TouchableOpacity
                   key={item.moduleKey}
@@ -63,6 +71,7 @@ export function AppDrawer() {
               ))}
             </ScrollView>
           )}
+          <MinimalExitBar variant="drawer" />
         </View>
         <Pressable style={styles.backdrop} onPress={closeDrawer} accessibilityLabel="Fechar menu" />
       </View>
@@ -83,6 +92,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
     flex: 1,
     maxHeight: '100%',
+    flexDirection: 'column',
   },
   backdrop: {
     flex: 1,
@@ -92,14 +102,16 @@ const styles = StyleSheet.create({
     ...MINIMAL_TYPO.screenTitle,
     marginBottom: 12,
   },
-  loader: {
-    marginTop: 24,
+  loaderWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 16,
+    paddingBottom: 8,
   },
   item: {
     minHeight: 48,

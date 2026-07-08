@@ -1,10 +1,9 @@
 import { MinimalHomeProvider } from '@/context/MinimalHomeContext';
-import { MINIMAL_EXIT_BAR_HEIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppDrawer } from './AppDrawer';
-import { MinimalExitBar } from './MinimalExitBar';
 import { MinimalTopLeftChrome } from './MinimalTopLeftChrome';
 
 type Props = {
@@ -30,7 +29,7 @@ function MinimalScreenLayoutBody({
   scroll = true,
   showGreeting = false,
 }: Props) {
-  const contentPaddingBottom = MINIMAL_EXIT_BAR_HEIGHT + 12;
+  const contentPaddingBottom = 12;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -38,7 +37,7 @@ function MinimalScreenLayoutBody({
       <View style={styles.shell}>
         <MinimalTopLeftChrome title={title} header={header} showGreeting={showGreeting} />
 
-        <View style={[styles.body, { paddingBottom: MINIMAL_EXIT_BAR_HEIGHT }]}>
+        <View style={styles.body}>
           {fixedTop ? <View style={styles.fixedTop}>{fixedTop}</View> : null}
 
           {scroll ? (
@@ -66,13 +65,9 @@ function MinimalScreenLayoutBody({
             </View>
           )}
 
-          {footer ? (
-            <View style={[styles.footer, { bottom: MINIMAL_EXIT_BAR_HEIGHT }]}>{footer}</View>
-          ) : null}
+          {footer ? <View style={styles.footer}>{footer}</View> : null}
         </View>
       </View>
-
-      <MinimalExitBar />
     </SafeAreaView>
   );
 }
@@ -118,6 +113,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
+    bottom: 0,
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: MINIMAL_UI.background,
