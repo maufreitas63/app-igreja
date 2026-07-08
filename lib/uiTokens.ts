@@ -18,20 +18,20 @@ export const UI_COLORS = {
   maintenanceSectionLabel: '#CBD5E1',
 } as const;
 
-/** Bordas temáticas dos painéis de manutenção (carrossel). */
+/** Bordas temáticas dos painéis de manutenção (carrossel) — padrão vigilance. */
 export const UI_MAINTENANCE_PANEL_BORDERS = {
-  default: 'rgba(251, 191, 36, 0.38)',
-  sala: 'rgba(103, 232, 249, 0.45)',
-  gantt: 'rgba(129, 140, 248, 0.45)',
-  quorum: 'rgba(59, 130, 246, 0.45)',
-  scaleTypes: 'rgba(129, 140, 248, 0.45)',
-  scaleVolunteers: 'rgba(45, 212, 191, 0.45)',
-  scales: 'rgba(16, 185, 129, 0.45)',
-  pastoral: 'rgba(244, 114, 182, 0.45)',
-  profile: 'rgba(167, 139, 250, 0.5)',
-  financials: 'rgba(52, 211, 153, 0.45)',
-  accessControl: 'rgba(129, 140, 248, 0.55)',
-  menu: 'rgba(165, 180, 252, 0.55)',
+  default: 'rgba(52, 211, 153, 0.35)',
+  sala: 'rgba(52, 211, 153, 0.35)',
+  gantt: 'rgba(52, 211, 153, 0.35)',
+  quorum: 'rgba(52, 211, 153, 0.35)',
+  scaleTypes: 'rgba(52, 211, 153, 0.35)',
+  scaleVolunteers: 'rgba(52, 211, 153, 0.35)',
+  scales: 'rgba(52, 211, 153, 0.35)',
+  pastoral: 'rgba(52, 211, 153, 0.35)',
+  profile: 'rgba(52, 211, 153, 0.35)',
+  financials: 'rgba(52, 211, 153, 0.35)',
+  accessControl: 'rgba(52, 211, 153, 0.35)',
+  menu: 'rgba(52, 211, 153, 0.35)',
 } as const;
 
 export const UI_SPACING = {
@@ -55,18 +55,18 @@ export const UI_PANEL_TYPO = {
     fontSize: 17,
     fontWeight: '800' as const,
     lineHeight: 22,
-    color: UI_COLORS.textPrimary,
+    color: '#3A96DD',
   },
   titleMuted: {
     fontSize: 16,
     fontWeight: '800' as const,
-    color: '#E2E8F0',
+    color: '#3A96DD',
   },
   subtitle: {
     fontSize: 12,
     fontWeight: '400' as const,
     lineHeight: 16,
-    color: UI_COLORS.textMuted,
+    color: 'rgba(58, 150, 221, 0.82)',
   },
 } as const;
 

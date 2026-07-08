@@ -21,7 +21,7 @@ type Props = {
   panelHeight: number;
 };
 
-const ACCENT = '#34D399';
+const ACCENT = '#3A96DD';
 
 const formatSubmissionDate = (value: string) => {
   const parsed = Date.parse(value);
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   helpText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 10,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(148, 163, 184, 0.12)',
   },
   toolbarButtonText: {
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   emptyText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 14,
     fontStyle: 'italic',
   },
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   submissionTitle: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 14,
     fontWeight: '800',
     flex: 1,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   submissionMeta: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     marginBottom: 2,
   },
@@ -306,12 +306,12 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(148, 163, 184, 0.2)',
   },
   memberName: {
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 13,
     fontWeight: '700',
   },
   memberHint: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     marginTop: 2,
   },

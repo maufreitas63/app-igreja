@@ -86,7 +86,7 @@ type Props = {
   panelHeight: number;
 };
 
-const ACCENT = '#34D399';
+const ACCENT = '#3A96DD';
 
 type MaintenanceSectionKey = 'period' | 'bulk' | 'receipt_batch' | 'entries' | 'rd' | 'assembly_minutes';
 
@@ -2165,7 +2165,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   panelSubtitle: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     marginTop: 2,
     marginBottom: 8,
@@ -2211,7 +2211,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   collapseHeaderSubtitle: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     lineHeight: 14,
   },
@@ -2229,7 +2229,7 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   periodPickerLabel: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -2276,14 +2276,14 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(52, 211, 153, 0.35)',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: '#FFFFFF',
   },
   versionChipActive: {
     borderColor: ACCENT,
     backgroundColor: 'rgba(16, 185, 129, 0.22)',
   },
   versionChipText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -2323,7 +2323,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   rdListMeta: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
   },
   rdUnreconcileButton: {
@@ -2347,13 +2347,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.28)',
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 12,
     paddingVertical: 12,
     justifyContent: 'center',
   },
   commentModalInputPlaceholderText: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
   },
   bodyScroll: {
@@ -2365,7 +2365,7 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   formatHint: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     lineHeight: 14,
   },
@@ -2382,7 +2382,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(52, 211, 153, 0.35)',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: '#FFFFFF',
   },
   toolbarButtonText: {
     color: '#D1FAE5',
@@ -2395,7 +2395,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: '#FFFFFF',
     color: '#FFF',
     fontSize: 12,
     paddingHorizontal: 10,
@@ -2437,7 +2437,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(16, 185, 129, 0.18)',
   },
   importModeChipText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     fontWeight: '700',
     textAlign: 'center',
@@ -2456,7 +2456,7 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   saveButtonText: {
-    color: '#0f172a',
+    color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 14,
   },
@@ -2492,12 +2492,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   listTitle: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 13,
     fontWeight: '700',
   },
   listMeta: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
   },
   listComment: {
@@ -2507,7 +2507,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   listCommentEmpty: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     fontStyle: 'italic',
     marginTop: 2,
@@ -2518,7 +2518,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   listReceiptEmpty: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     fontStyle: 'italic',
   },
@@ -2572,14 +2572,14 @@ const styles = StyleSheet.create({
   },
   commentButtonEmpty: {
     borderColor: 'rgba(148, 163, 184, 0.35)',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: '#FFFFFF',
   },
   commentButtonFilled: {
     borderColor: 'rgba(52, 211, 153, 0.45)',
     backgroundColor: 'rgba(16, 185, 129, 0.12)',
   },
   commentButtonLabel: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -2598,7 +2598,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#FFFFFF',
     maxHeight: '88%',
     width: '100%',
     maxWidth: 420,
@@ -2617,7 +2617,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   commentModalMeta: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
   },
   commentModalFieldLabel: {
@@ -2633,7 +2633,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: '#FFFFFF',
     color: '#FFF',
     fontSize: 13,
     paddingHorizontal: 10,
@@ -2691,7 +2691,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   commentModalCancelText: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 13,
     fontWeight: '700',
   },
@@ -2704,7 +2704,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   commentModalSaveText: {
-    color: '#0f172a',
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '800',
   },
@@ -2716,7 +2716,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.28)',
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: '#FFFFFF',
     padding: 10,
     gap: 8,
   },
@@ -2724,7 +2724,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   receiptAttachHint: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
   },
   receiptAttachRow: {
@@ -2740,7 +2740,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 10,
     paddingHorizontal: 8,
     minHeight: 42,
@@ -2775,7 +2775,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   receiptAttachCancelText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -2783,7 +2783,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.28)',
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: '#FFFFFF',
     padding: 10,
     gap: 8,
   },
@@ -2812,7 +2812,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 8,
   },
   receiptEditorNavButtonDisabled: {
@@ -2836,7 +2836,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 10,
   },
   receiptActionButtonText: {
@@ -2864,7 +2864,7 @@ const styles = StyleSheet.create({
     color: '#FCA5A5',
   },
   hintText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     fontStyle: 'italic',
     marginBottom: 8,
@@ -2892,7 +2892,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.28)',
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: '#FFFFFF',
     padding: 12,
   },
   assemblyMinuteMain: {
@@ -2906,7 +2906,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   assemblyMinuteMeta: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
   },
   assemblyMinuteActions: {
@@ -2948,7 +2948,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   assemblyRenameHint: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     textAlign: 'center',
   },
@@ -2956,7 +2956,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.28)',
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: '#FFFFFF',
     color: '#ECFDF5',
     fontSize: 14,
     paddingHorizontal: 12,
@@ -2972,13 +2972,13 @@ const styles = StyleSheet.create({
     minHeight: 40,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     paddingHorizontal: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   assemblyRenameCancelText: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 13,
     fontWeight: '700',
   },
@@ -3015,7 +3015,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.28)',
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: '#FFFFFF',
     color: '#ECFDF5',
     fontSize: 12,
     paddingHorizontal: 12,
@@ -3024,14 +3024,14 @@ const styles = StyleSheet.create({
   },
   receiptBatchReportBox: {
     borderRadius: 10,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.22)',
     padding: 8,
     gap: 4,
   },
   receiptBatchReportLine: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
   },
   receiptBatchReportOk: {
@@ -3040,7 +3040,7 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   receiptBatchReportMuted: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     fontFamily: 'monospace',
   },

@@ -27,7 +27,7 @@ type Props = {
   panelHeight: number;
 };
 
-const ACCENT = '#22D3EE';
+const ACCENT = '#3A96DD';
 
 export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight }: Props) {
   const { model, loading, error, reload } = usePredictiveInsights(isActive, PREDICTIVE_BASE_MONTHS);
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   helpText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     lineHeight: 17,
     marginBottom: 8,
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(34, 211, 238, 0.25)',
     borderRadius: 10,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: '#FFFFFF',
     padding: 10,
     gap: 4,
   },
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(34, 211, 238, 0.45)',
     borderRadius: 10,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,
@@ -380,13 +380,13 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
   summaryLabel: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
   summaryValue: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 15,
     fontWeight: '800',
   },
@@ -399,12 +399,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   seasonalityText: {
-    color: '#E0F2FE',
+    color: '#3A96DD',
     fontSize: 12,
     lineHeight: 16,
   },
   metaText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     lineHeight: 15,
   },
@@ -425,13 +425,13 @@ const styles = StyleSheet.create({
   },
   tableCell: {
     flex: 1,
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 11,
     paddingHorizontal: 8,
     paddingVertical: 7,
   },
   tableHeaderCell: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontWeight: '800',
   },
   monthColumn: {

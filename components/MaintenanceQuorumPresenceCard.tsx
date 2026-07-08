@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   eventNameHeading: {
-    color: '#0f172a',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '800',
     marginTop: 2,
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   metaLabel: {
     fontWeight: '800',
-    color: '#0f172a',
+    color: '#FFFFFF',
   },
   introText: {
     color: '#334155',
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   listStateText: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
   attendanceCell: {
     paddingVertical: 10,
     paddingHorizontal: 10,
-    color: '#0f172a',
+    color: '#FFFFFF',
     fontSize: 14,
     lineHeight: 18,
   },
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   refreshHint: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     textAlign: 'right',
     marginTop: 4,

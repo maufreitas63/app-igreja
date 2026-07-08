@@ -74,7 +74,7 @@ type TimelineEntry =
       meta: string;
     };
 
-const ACCENT = '#38BDF8';
+const ACCENT = '#3A96DD';
 const DATE_INPUT_PLACEHOLDER = 'dd/mm/aaaa';
 const OPENING_INTERACTION_MESSAGE = 'Solicitação aberta pelo usuário.';
 
@@ -1382,7 +1382,7 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     minHeight: 0,
   },
   subtitle: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     lineHeight: 16,
     textAlign: 'center',
@@ -1406,7 +1406,7 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     gap: 10,
   },
   loadingText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
   },
   listBody: {
@@ -1423,12 +1423,12 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     gap: 4,
   },
   summaryTitle: {
-    color: '#E0F2FE',
+    color: '#3A96DD',
     fontSize: 14,
     fontWeight: '800',
   },
   summaryText: {
-    color: '#BAE6FD',
+    color: '#1B4F8A',
     fontSize: 12,
     lineHeight: 17,
   },
@@ -1444,7 +1444,7 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(51, 65, 85, 0.95)',
-    backgroundColor: 'rgba(15, 23, 42, 0.68)',
+    backgroundColor: '#FFFFFF',
     padding: 12,
     gap: 8,
     marginBottom: 8,
@@ -1462,21 +1462,21 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     gap: 2,
   },
   requestTitle: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 15,
     fontWeight: '800',
   },
   requestMeta: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
   },
   requestTheme: {
-    color: '#7DD3FC',
+    color: '#1B4F8A',
     fontSize: 11,
     lineHeight: 15,
   },
   requestDescription: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 12,
     lineHeight: 17,
   },
@@ -1487,12 +1487,12 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     gap: 8,
   },
   requestFooterText: {
-    color: '#7DD3FC',
+    color: '#1B4F8A',
     fontSize: 11,
     fontWeight: '700',
   },
   emptyText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     lineHeight: 17,
     textAlign: 'center',
@@ -1527,7 +1527,7 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     paddingHorizontal: 10,
   },
   secondaryButtonCompactText: {
-    color: '#BAE6FD',
+    color: '#1B4F8A',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -1557,27 +1557,27 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     paddingVertical: 7,
   },
   backButtonText: {
-    color: '#BAE6FD',
+    color: '#1B4F8A',
     fontSize: 12,
     fontWeight: '800',
   },
   formTitle: {
     flex: 1,
     minWidth: 0,
-    color: '#E0F2FE',
+    color: '#3A96DD',
     fontSize: 14,
     fontWeight: '800',
     textAlign: 'right',
   },
   label: {
-    color: '#BAE6FD',
+    color: '#1B4F8A',
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   fieldHint: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     lineHeight: 15,
   },
@@ -1602,19 +1602,19 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     gap: 2,
   },
   selectedRequesterTitle: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
   selectedRequesterName: {
-    color: '#E0F2FE',
+    color: '#3A96DD',
     fontSize: 13,
     fontWeight: '800',
   },
   selectedRequesterMeta: {
-    color: '#BAE6FD',
+    color: '#1B4F8A',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -1625,9 +1625,9 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
   input: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: 'rgba(15, 23, 42, 0.72)',
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 13,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -1647,8 +1647,8 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     gap: 10,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: '#FFFFFF',
     padding: 12,
   },
   switchText: {
@@ -1657,12 +1657,12 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     gap: 3,
   },
   switchTitle: {
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 13,
     fontWeight: '800',
   },
   switchHint: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     lineHeight: 15,
   },
@@ -1679,7 +1679,7 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     paddingHorizontal: 12,
   },
   secondaryButtonText: {
-    color: '#BAE6FD',
+    color: '#1B4F8A',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -1711,7 +1711,7 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     height: 74,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     overflow: 'hidden',
     position: 'relative',
   },
@@ -1747,28 +1747,28 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.32)',
-    backgroundColor: 'rgba(15, 23, 42, 0.68)',
+    backgroundColor: '#FFFFFF',
     padding: 12,
     gap: 7,
   },
   detailTitle: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 17,
     fontWeight: '900',
   },
   detailMeta: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     lineHeight: 16,
   },
   detailTheme: {
-    color: '#7DD3FC',
+    color: '#1B4F8A',
     fontSize: 12,
     lineHeight: 17,
     fontWeight: '700',
   },
   detailDescription: {
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 13,
     lineHeight: 19,
   },
@@ -1778,15 +1778,15 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     gap: 8,
   },
   authorizationText: {
-    color: '#7DD3FC',
+    color: '#1B4F8A',
     fontSize: 11,
     fontWeight: '800',
   },
   sectionCard: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: '#FFFFFF',
     padding: 12,
     gap: 9,
   },
@@ -1799,7 +1799,7 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     gap: 9,
   },
   helperText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     lineHeight: 16,
   },
@@ -1821,7 +1821,7 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     fontWeight: '800',
   },
   sectionTitle: {
-    color: '#E0F2FE',
+    color: '#3A96DD',
     fontSize: 13,
     fontWeight: '900',
     textTransform: 'uppercase',
@@ -1840,19 +1840,19 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     height: 76,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
   },
   attachmentMissing: {
     width: 100,
     height: 76,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   attachmentCaption: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
   },
   communicationButtons: {
@@ -1891,7 +1891,7 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     flex: 1,
     minWidth: 0,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(51, 65, 85, 0.72)',
+    borderBottomColor: 'rgba(52, 211, 153, 0.35)',
     paddingBottom: 9,
     gap: 3,
   },
@@ -1904,22 +1904,22 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
   timelineTitle: {
     flex: 1,
     minWidth: 0,
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 12,
     fontWeight: '900',
   },
   timelineDate: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     flexShrink: 0,
   },
   timelineMeta: {
-    color: '#7DD3FC',
+    color: '#1B4F8A',
     fontSize: 10,
     fontWeight: '700',
   },
   timelineMessage: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 12,
     lineHeight: 17,
   },

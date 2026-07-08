@@ -1,4 +1,5 @@
-import { UI_PANEL_TYPO, UI_RADIUS, UI_SPACING } from '@/lib/uiTokens';
+import { MAINTENANCE_VIGILANCE_UI } from '@/lib/maintenanceVigilanceTheme';
+import { UI_RADIUS, UI_SPACING } from '@/lib/uiTokens';
 import type { ScrollViewProps } from 'react-native';
 import { StyleSheet } from 'react-native';
 
@@ -8,57 +9,59 @@ export const MAINTENANCE_SCROLL_PROPS = {
   showsHorizontalScrollIndicator: false,
 } satisfies Pick<ScrollViewProps, 'showsVerticalScrollIndicator' | 'showsHorizontalScrollIndicator'>;
 
-/** Estilos compartilhados dos painéis internos do carrossel de manutenção. */
+/** Estilos compartilhados dos painéis internos do carrossel de manutenção (tema vigilance). */
 export const maintenancePanelStyles = StyleSheet.create({
   panel: {
     flex: 1,
     minHeight: 0,
     gap: UI_SPACING.sm,
+    backgroundColor: MAINTENANCE_VIGILANCE_UI.surface,
   },
   panelCentered: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: UI_SPACING.md,
+    backgroundColor: MAINTENANCE_VIGILANCE_UI.surface,
   },
   panelTitle: {
-    fontSize: UI_PANEL_TYPO.title.fontSize,
-    fontWeight: UI_PANEL_TYPO.title.fontWeight,
-    lineHeight: UI_PANEL_TYPO.title.lineHeight,
-    color: UI_PANEL_TYPO.title.color,
+    fontSize: 17,
+    fontWeight: '800',
+    lineHeight: 22,
+    color: MAINTENANCE_VIGILANCE_UI.accent,
     textAlign: 'center',
     alignSelf: 'stretch',
   },
   panelTitleMuted: {
-    fontSize: UI_PANEL_TYPO.titleMuted.fontSize,
-    fontWeight: UI_PANEL_TYPO.titleMuted.fontWeight,
-    color: UI_PANEL_TYPO.titleMuted.color,
+    fontSize: 16,
+    fontWeight: '800',
+    color: MAINTENANCE_VIGILANCE_UI.accent,
     textAlign: 'center',
     alignSelf: 'stretch',
   },
   panelSubtitle: {
-    fontSize: UI_PANEL_TYPO.subtitle.fontSize,
-    fontWeight: UI_PANEL_TYPO.subtitle.fontWeight,
-    lineHeight: UI_PANEL_TYPO.subtitle.lineHeight,
-    color: UI_PANEL_TYPO.subtitle.color,
+    fontSize: 12,
+    fontWeight: '400',
+    lineHeight: 16,
+    color: MAINTENANCE_VIGILANCE_UI.textMuted,
   },
   /** Reserva a altura de uma linha de `panelSubtitle` sem exibir texto. */
   panelSubtitleSpacer: {
-    height: UI_PANEL_TYPO.subtitle.lineHeight,
+    height: 16,
   },
   panelHint: {
-    color: UI_PANEL_TYPO.subtitle.color,
+    color: MAINTENANCE_VIGILANCE_UI.textMuted,
     fontSize: 13,
     textAlign: 'center',
     paddingHorizontal: UI_SPACING.lg,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: MAINTENANCE_VIGILANCE_UI.border,
     borderRadius: UI_RADIUS.sm,
     paddingHorizontal: UI_SPACING.md,
     paddingVertical: UI_SPACING.sm,
-    color: '#F8FAFC',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    color: MAINTENANCE_VIGILANCE_UI.accent,
+    backgroundColor: MAINTENANCE_VIGILANCE_UI.surface,
   },
 });
 

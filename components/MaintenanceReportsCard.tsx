@@ -50,7 +50,7 @@ type Props = {
   isSuperAdmin?: boolean;
 };
 
-const ACCENT = '#C084FC';
+const ACCENT = '#3A96DD';
 const AGE_BRACKET_LINK_COLOR = '#60A5FA';
 
 type AgeBracketMembersModalState = {
@@ -919,7 +919,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   helpText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 10,
@@ -935,7 +935,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(192, 132, 252, 0.28)',
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
   },
   reportHeader: {
@@ -960,7 +960,7 @@ const styles = StyleSheet.create({
   },
   reportTitle: {
     flex: 1,
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 13,
     fontWeight: '800',
     lineHeight: 18,
@@ -982,12 +982,12 @@ const styles = StyleSheet.create({
     color: '#86EFAC',
   },
   reportDescription: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 12,
     lineHeight: 16,
   },
   reportSources: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     fontStyle: 'italic',
     lineHeight: 15,
@@ -996,7 +996,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   configLabel: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -1005,7 +1005,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(192, 132, 252, 0.35)',
     borderRadius: 10,
     backgroundColor: 'rgba(30, 41, 59, 0.85)',
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 14,
     paddingHorizontal: 10,
     paddingVertical: 8,
@@ -1028,7 +1028,7 @@ const styles = StyleSheet.create({
   },
   dropdownTriggerText: {
     flex: 1,
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 13,
     fontWeight: '600',
     lineHeight: 18,
@@ -1054,7 +1054,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(192, 132, 252, 0.16)',
   },
   dropdownOptionText: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -1063,7 +1063,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   dropdownEmptyText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     fontStyle: 'italic',
     padding: 10,
@@ -1075,7 +1075,7 @@ const styles = StyleSheet.create({
   },
   selectChip: {
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -1085,7 +1085,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(192, 132, 252, 0.18)',
   },
   selectChipText: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -1100,13 +1100,13 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   resetButtonText: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -1149,7 +1149,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   hintText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     fontStyle: 'italic',
     lineHeight: 16,
@@ -1194,20 +1194,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.18)',
     borderRadius: 8,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 10,
     paddingVertical: 8,
     gap: 2,
   },
   summaryCardLabel: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
   summaryCardValue: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 14,
     fontWeight: '800',
     lineHeight: 18,
@@ -1225,7 +1225,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   resultsTitle: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -1248,7 +1248,7 @@ const styles = StyleSheet.create({
   tableHeaderCell: {
     paddingVertical: 8,
     paddingHorizontal: 8,
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 11,
     fontWeight: '800',
   },
@@ -1268,7 +1268,7 @@ const styles = StyleSheet.create({
   tableDataCell: {
     paddingVertical: 8,
     paddingHorizontal: 8,
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -1318,7 +1318,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   ageBracketModalHelp: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -1330,7 +1330,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   ageBracketMemberName: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 13,
     lineHeight: 18,
   },
@@ -1345,7 +1345,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(148, 163, 184, 0.35)',
   },
   eventRegistrationMeta: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     lineHeight: 15,
   },

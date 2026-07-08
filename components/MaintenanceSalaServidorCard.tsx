@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   eventHeroLabel: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -517,12 +517,12 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   eventHeroName: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 16,
     fontWeight: '800',
   },
   eventHeroMeta: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 13,
   },
   eventHeroRoomRow: {
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EF4444',
   },
   eventHeroRoomText: {
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -574,8 +574,8 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
     justifyContent: 'flex-end',
   },
@@ -589,19 +589,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   capacityValue: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 10,
     fontWeight: '800',
     textAlign: 'center',
   },
   capacityMeta: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 9,
     fontWeight: '700',
     textAlign: 'center',
   },
   capacityPlaceholder: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 18,
     fontWeight: '700',
   },
@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   placeholderText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
@@ -648,14 +648,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   groupedAudienceServidorNamesLabel: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   groupedAudienceServidorNamesText: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -677,8 +677,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   groupedAudienceSelectorChipInactive: {
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
-    borderColor: '#334155',
+    backgroundColor: '#FFFFFF',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
   },
   groupedAudienceSelectorChipSelected: {
     borderColor: '#67e8f9',
@@ -718,13 +718,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#EF4444',
   },
   groupedAudienceHeaderText: {
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
   groupedAudienceHeaderTextInactive: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
   },
   groupedAudienceCountBadge: {
     minWidth: 54,
@@ -741,18 +741,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(2, 6, 23, 0.55)',
   },
   groupedAudienceCountText: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 12,
     fontWeight: '800',
   },
   groupedAudienceCountTextInactive: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
   },
   groupedAudienceListBox: {
     flex: 1,
     minHeight: 120,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     borderRadius: 18,
     backgroundColor: 'rgba(15, 23, 42, 0.3)',
     overflow: 'hidden',
@@ -785,7 +785,7 @@ const styles = StyleSheet.create({
     paddingLeft: 6,
   },
   groupedAudienceName: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 15,
     textAlign: 'left',
   },
@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   groupedAudienceEmptyText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 14,
     textAlign: 'center',
     paddingHorizontal: 14,

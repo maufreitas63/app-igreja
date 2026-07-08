@@ -27,7 +27,7 @@ type Props = {
   panelHeight: number;
 };
 
-const ACCENT = '#A78BFA';
+const ACCENT = '#3A96DD';
 
 const ADDRESS_READONLY_KEYS = new Set([
   'address_street',
@@ -355,16 +355,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   panelTitle: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 17,
     fontWeight: '800',
   },
   panelSubtitle: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
   },
   sectionLabel: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -384,8 +384,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#F8FAFC',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    color: '#3A96DD',
+    backgroundColor: '#FFFFFF',
   },
   searchClearButton: {
     width: 40,
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(167, 139, 250, 0.45)',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -421,12 +421,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(167, 139, 250, 0.18)',
   },
   resultName: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontWeight: '700',
     fontSize: 14,
   },
   resultMeta: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     marginTop: 2,
   },
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   fieldLabel: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#F8FAFC',
+    color: '#3A96DD',
     backgroundColor: 'rgba(30, 27, 75, 0.55)',
     fontSize: 15,
   },
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   hintText: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
   },
   errorText: {

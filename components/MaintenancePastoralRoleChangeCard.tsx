@@ -35,7 +35,7 @@ type Props = {
   panelHeight: number;
 };
 
-const ACCENT = '#F472B6';
+const ACCENT = '#3A96DD';
 const MEMBER_NAME_COLOR = '#60A5FA';
 const MEMBER_NAME_INACTIVE_COLOR = '#F87171';
 
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   helpText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 10,
@@ -472,12 +472,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   hintText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     fontStyle: 'italic',
   },
   countText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     marginBottom: 8,
   },
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 14,
     marginBottom: 8,
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
@@ -529,14 +529,14 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   emptyFilterText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     fontStyle: 'italic',
     paddingVertical: 12,
     paddingHorizontal: 4,
   },
   headerCell: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
   },
   roleHeaderCell: {
     textAlign: 'center',
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 11,
     fontWeight: '800',
   },
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   shortName: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 14,
     fontWeight: '700',
   },
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#64748B',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -642,12 +642,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   membershipDateHelp: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 12,
     lineHeight: 16,
   },
   membershipDateFieldLabel: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     fontWeight: '700',
     marginTop: 2,
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(96, 165, 250, 0.45)',
     borderRadius: 10,
     backgroundColor: 'rgba(30, 41, 59, 0.85)',
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 16,
     fontWeight: '700',
     paddingHorizontal: 10,
@@ -683,14 +683,14 @@ const styles = StyleSheet.create({
   },
   membershipDateCancelButton: {
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: 'rgba(15, 23, 42, 0.85)',
   },
   membershipDateSaveButton: {
     backgroundColor: MEMBER_NAME_COLOR,
   },
   membershipDateCancelText: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 12,
     fontWeight: '800',
   },

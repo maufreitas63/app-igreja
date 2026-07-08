@@ -27,7 +27,7 @@ type Props = {
   panelHeight: number;
 };
 
-const ACCENT = '#FCD34D';
+const ACCENT = '#3A96DD';
 
 const formatAccessDateTimeLabel = (value: string | null) => {
   if (!value) {
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   helpText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 10,
@@ -379,12 +379,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   hintText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     fontStyle: 'italic',
   },
   countText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     marginBottom: 8,
   },
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 14,
     marginBottom: 8,
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   headerCell: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -464,12 +464,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   shortName: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 14,
     fontWeight: '700',
   },
   lastAccess: {
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -480,7 +480,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   emptyFilterText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     fontStyle: 'italic',
     paddingVertical: 12,
@@ -564,13 +564,13 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '45deg' }],
   },
   balloonTitle: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 16,
     fontWeight: '800',
     marginBottom: 6,
   },
   balloonSubtitle: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     lineHeight: 17,
     marginBottom: 12,
@@ -600,12 +600,12 @@ const styles = StyleSheet.create({
     paddingLeft: 2,
   },
   screenItem: {
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 13,
     lineHeight: 18,
   },
   emptySessionText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     fontStyle: 'italic',
   },
@@ -617,10 +617,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(148, 163, 184, 0.35)',
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: 'rgba(30, 41, 59, 0.8)',
+    backgroundColor: '#FFFFFF',
   },
   balloonCloseButtonText: {
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 13,
     fontWeight: '700',
   },

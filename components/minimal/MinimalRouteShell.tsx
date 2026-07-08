@@ -9,11 +9,18 @@ type Props = {
   minimal: boolean;
   title?: string;
   gradientColors: readonly [string, string, ...string[]];
+  statusBarStyle?: 'light-content' | 'dark-content';
   children: React.ReactNode;
 };
 
 /** Envolve telas legadas (gradiente + carrossel) ou modo minimalista (tela limpa + dock). */
-export function MinimalRouteShell({ minimal, title, gradientColors, children }: Props) {
+export function MinimalRouteShell({
+  minimal,
+  title,
+  gradientColors,
+  statusBarStyle = 'light-content',
+  children,
+}: Props) {
   if (minimal) {
     return (
       <MinimalScreenLayout title={title} scroll={false}>
@@ -26,7 +33,7 @@ export function MinimalRouteShell({ minimal, title, gradientColors, children }: 
   return (
     <LinearGradient colors={gradientColors} style={styles.container}>
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle={statusBarStyle} />
         {children}
       </SafeAreaView>
     </LinearGradient>

@@ -133,8 +133,8 @@ const ROOM_CHIP_TEENS_ACTIVE: ViewStyle = {
   borderColor: 'rgba(239, 68, 68, 0.35)',
 };
 
-/** Fundo distinto do dashboard principal (degradê azul ardósia `#1e3a5f` → `#020617`). */
-const MAINTENANCE_SCREEN_GRADIENT = ['#422006', '#1c1917'] as const;
+/** Fundo claro no padrão vigilance. */
+const MAINTENANCE_SCREEN_GRADIENT = ['#FFFFFF', '#F0F9FF'] as const;
 const FOOTER_NAV_REPEAT_MS = 500;
 
 const STATIC_MAINTENANCE_PANEL_INSETS = computeMaintenancePanelInsets(390);
@@ -1301,6 +1301,7 @@ export default function MaintenanceDashboard() {
               isActive={currentIndex === index}
               panelHeight={cardHeight}
               isSuperAdmin={canManageAccessControl}
+              variant="vigilance"
             />
           ) : item.content === 'access_control' ? (
             <MaintenanceAccessControlCard isActive={currentIndex === index} panelHeight={cardHeight} />
@@ -1463,7 +1464,7 @@ export default function MaintenanceDashboard() {
     return (
       <LinearGradient colors={MAINTENANCE_SCREEN_GRADIENT} style={styles.container}>
         <SafeAreaView style={styles.accessGate} edges={['top', 'left', 'right', 'bottom']}>
-          <ActivityIndicator color="#fbbf24" size="large" />
+          <ActivityIndicator color="#3A96DD" size="large" />
           {accessState === 'denied' ? (
             <Text style={styles.accessGateText}>Redirecionando...</Text>
           ) : null}
@@ -1477,6 +1478,7 @@ export default function MaintenanceDashboard() {
       minimal={isMinimalPresentation}
       title={activeMaintenanceScreenTitle}
       gradientColors={MAINTENANCE_SCREEN_GRADIENT}
+      statusBarStyle="dark-content"
     >
         {!isMinimalPresentation ? (
         <View style={styles.header}>
@@ -1641,7 +1643,7 @@ export default function MaintenanceDashboard() {
                     accessibilityRole="button"
                     accessibilityLabel="Selecionar local favorito"
                   >
-                    <MaterialIcons name="place" size={16} color="#C7D2FE" />
+                    <MaterialIcons name="place" size={16} color="#3A96DD" />
                     <Text style={styles.favoritePickerButtonText}>Favoritos</Text>
                   </Pressable>
                 </View>
@@ -1817,7 +1819,7 @@ export default function MaintenanceDashboard() {
                       accessibilityLabel="Duplicar evento para daqui a 7 dias como rascunho"
                     >
                       {isReplicatingSeven ? (
-                        <ActivityIndicator color="#C7D2FE" size="small" />
+                        <ActivityIndicator color="#3A96DD" size="small" />
                       ) : (
                         <Text style={styles.replicateSevenButtonText}>+7</Text>
                       )}
@@ -1973,7 +1975,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   accessGateText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 14,
   },
   header: { paddingHorizontal: 24, paddingTop: 10, paddingBottom: 8 },
@@ -1988,7 +1990,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   welcomeText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -2000,7 +2002,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   userName: {
-    color: '#FFF',
+    color: '#3A96DD',
     fontSize: 24,
     fontWeight: '800',
     flex: 1,
@@ -2010,7 +2012,7 @@ const styles = StyleSheet.create({
   activeScreenTitle: {
     flexShrink: 0,
     maxWidth: '46%',
-    color: '#fcd34d',
+    color: '#1B4F8A',
     fontSize: 11,
     fontWeight: '800',
     textAlign: 'right',
@@ -2030,7 +2032,7 @@ const styles = StyleSheet.create({
   editorOverlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 2,
-    backgroundColor: '#1c1917',
+    backgroundColor: '#FFFFFF',
   },
   listContainer: {
     flex: 1,
@@ -2102,8 +2104,8 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     borderRadius: UI_RADIUS.sm,
     borderWidth: 1,
-    borderColor: UI_COLORS.borderMuted,
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: '#FFFFFF',
     paddingVertical: UI_SPACING.sm,
     paddingRight: UI_SPACING.md,
     paddingLeft: 0,
@@ -2111,13 +2113,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   menuShortcutButtonActive: {
-    borderColor: '#A5B4FC',
-    backgroundColor: 'rgba(99, 102, 241, 0.22)',
+    borderColor: '#3A96DD',
+    backgroundColor: '#F0F9FF',
   },
   menuShortcutButtonDisabled: {
     opacity: 0.45,
-    borderColor: '#334155',
-    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: '#F8FAFC',
   },
   menuShortcutRow: {
     flexDirection: 'row',
@@ -2132,7 +2134,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   menuShortcutButtonText: {
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 15,
     fontWeight: '700',
     lineHeight: 19,
@@ -2141,10 +2143,10 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   menuShortcutButtonTextActive: {
-    color: '#E0E7FF',
+    color: '#3A96DD',
   },
   menuShortcutButtonTextDisabled: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
   },
   ganttPanel: {
     flex: 1,
@@ -2245,12 +2247,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#A5B4FC',
+    backgroundColor: '#3A96DD',
+    borderWidth: 1,
+    borderColor: '#1B4F8A',
     borderRadius: 14,
     paddingVertical: 14,
   },
   newEventButtonText: {
-    color: '#0f172a',
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '800',
   },
@@ -2258,7 +2262,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sectionTitle: {
-    color: '#C7D2FE',
+    color: '#3A96DD',
     fontSize: 13,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -2278,26 +2282,26 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     borderWidth: 1,
-    borderColor: '#818CF8',
+    borderColor: '#3A96DD',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
   retryButtonText: {
-    color: '#C7D2FE',
+    color: '#3A96DD',
     fontWeight: '700',
   },
   eventCard: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.35)',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: '#FFFFFF',
     padding: 14,
     gap: 6,
   },
   eventCardSelected: {
-    borderColor: '#A5B4FC',
-    backgroundColor: 'rgba(99, 102, 241, 0.22)',
+    borderColor: '#3A96DD',
+    backgroundColor: '#F0F9FF',
   },
   eventCardDisabled: {
     opacity: 0.45,
@@ -2309,7 +2313,7 @@ const styles = StyleSheet.create({
   },
   eventCardName: {
     flex: 1,
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 17,
     fontWeight: '700',
   },
@@ -2325,7 +2329,7 @@ const styles = StyleSheet.create({
   },
   statusBadgeInactive: {
     backgroundColor: 'rgba(148, 163, 184, 0.14)',
-    borderColor: '#64748B',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
   },
   statusBadgeText: {
     fontSize: 11,
@@ -2336,19 +2340,19 @@ const styles = StyleSheet.create({
     color: '#86EFAC',
   },
   statusBadgeTextInactive: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
   },
   eventCardMeta: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontSize: 13,
   },
   eventCardFlags: {
-    color: '#A5B4FC',
+    color: '#1B4F8A',
     fontSize: 12,
     fontWeight: '600',
   },
   emptyText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     textAlign: 'center',
     paddingVertical: 20,
   },
@@ -2359,24 +2363,24 @@ const styles = StyleSheet.create({
   editorCard: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.45)',
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: '#FFFFFF',
     padding: 16,
     gap: 10,
   },
   fieldLabel: {
-    color: '#C7D2FE',
+    color: '#3A96DD',
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   input: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     borderRadius: 12,
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 15,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -2393,14 +2397,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.45)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: 'rgba(99, 102, 241, 0.14)',
+    backgroundColor: '#F0F9FF',
   },
   favoritePickerButtonText: {
-    color: '#C7D2FE',
+    color: '#3A96DD',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -2426,7 +2430,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   capacityFieldLabel: {
-    color: '#C7D2FE',
+    color: '#3A96DD',
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -2460,11 +2464,11 @@ const styles = StyleSheet.create({
   },
   dateInputText: {
     flex: 1,
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 15,
   },
   dateInputPlaceholder: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
   },
   featureLabelRow: {
     flexDirection: 'row',
@@ -2485,7 +2489,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   totemFieldLabel: {
-    color: '#C7D2FE',
+    color: '#3A96DD',
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -2527,9 +2531,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     overflow: 'hidden',
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: '#FFFFFF',
   },
   totemChoiceButton: {
     minWidth: 44,
@@ -2546,12 +2550,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(100, 116, 139, 0.45)',
   },
   totemChoiceText: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     fontWeight: '700',
   },
   totemChoiceTextActive: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontWeight: '800',
   },
   totemSqlWarning: {
@@ -2579,10 +2583,10 @@ const styles = StyleSheet.create({
     gap: 6,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: '#FFFFFF',
   },
   roomDot: {
     width: 10,
@@ -2598,12 +2602,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#ef4444',
   },
   featureChipText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     fontWeight: '700',
   },
   featureChipTextActive: {
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontWeight: '800',
   },
   publishRow: {
@@ -2621,7 +2625,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   publishHint: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
   },
   publishPastWarning: {
@@ -2645,21 +2649,21 @@ const styles = StyleSheet.create({
     minWidth: 56,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.55)',
-    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: '#F0F9FF',
     paddingHorizontal: 16,
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   replicateSevenButtonText: {
-    color: '#E0E7FF',
+    color: '#3A96DD',
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
   replicateSevenHint: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     lineHeight: 17,
   },
@@ -2668,8 +2672,8 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     gap: 10,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(129, 140, 248, 0.35)',
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    borderTopColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: '#FFFFFF',
   },
   statusBanner: {
     borderRadius: 10,
@@ -2729,12 +2733,12 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#64748B',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     paddingVertical: 11,
     alignItems: 'center',
   },
   deleteConfirmNoText: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontWeight: '700',
   },
   deleteConfirmYesButton: {
@@ -2759,18 +2763,20 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     paddingVertical: 14,
     alignItems: 'center',
   },
   cancelButtonText: {
-    color: '#CBD5E1',
+    color: '#3A96DD',
     fontWeight: '700',
   },
   saveButton: {
     flex: 1,
     borderRadius: 12,
-    backgroundColor: '#A5B4FC',
+    backgroundColor: '#3A96DD',
+    borderWidth: 1,
+    borderColor: '#1B4F8A',
     paddingVertical: 14,
     alignItems: 'center',
   },
@@ -2778,7 +2784,7 @@ const styles = StyleSheet.create({
     opacity: 0.88,
   },
   saveButtonText: {
-    color: '#0f172a',
+    color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 15,
   },

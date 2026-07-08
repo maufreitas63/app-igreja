@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   title: {
-    color: '#F8FAFC',
+    color: '#3A96DD',
     fontSize: 22,
     fontWeight: '800',
   },
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   subtitle: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     lineHeight: 19,
     marginBottom: 4,

@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   subtitle: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     marginBottom: 4,
   },
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
   },
   headerCell: {
     paddingVertical: 10,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     maxHeight: 280,
     borderWidth: 1,
     borderTopWidth: 0,
-    borderColor: '#334155',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
     backgroundColor: 'rgba(15, 23, 42, 0.35)',
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1E293B',
   },
   dataRowAlt: {
-    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+    backgroundColor: '#F8FAFC',
   },
   bodyCell: {
     paddingVertical: 10,
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bodyText: {
-    color: '#E2E8F0',
+    color: '#3A96DD',
     fontSize: 12,
     lineHeight: 16,
   },
@@ -249,13 +249,13 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: 'rgba(15, 23, 42, 0.4)',
     gap: 8,
     alignItems: 'center',
   },
   hintText: {
-    color: '#94A3B8',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   refreshHint: {
-    color: '#64748B',
+    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     textAlign: 'right',
   },
