@@ -93,18 +93,18 @@ const styles = StyleSheet.create({
     color: '#F5F3FF',
   },
   chipVigilance: {
-    borderColor: VIGILANCE_SCALES_UI.accent,
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: '#FFFFFF',
   },
   chipVigilanceSelected: {
-    borderColor: VIGILANCE_SCALES_UI.accent,
-    backgroundColor: '#FFFFFF',
+    borderColor: '#1B4F8A',
+    backgroundColor: VIGILANCE_SCALES_UI.accent,
   },
   chipTextVigilance: {
     color: VIGILANCE_SCALES_UI.accent,
   },
   chipTextVigilanceSelected: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: '#FFFFFF',
     fontWeight: '800',
   },
 });
