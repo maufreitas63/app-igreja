@@ -5,6 +5,7 @@ import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentify
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { MinisterialProfileForm } from '@/components/MinisterialProfileForm';
+import { OfferingsClass } from '@/components/OfferingsClass';
 import { PerfilClassPanel } from '@/components/PerfilClassPanel';
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
 import { usePalette } from '@/context/PaletteContext';
@@ -3550,57 +3551,14 @@ export default function Dashboard() {
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
-                    <Text style={styles.dashboardPanelTitle}>{item.title}</Text>
-                    <View style={styles.offeringsContent}>
-                      <Text style={styles.offeringsSectionTitle}>Dados do recebedor</Text>
-                      <View style={styles.offeringsRecipientBox}>
-                        {OFFERINGS_RECIPIENT_ROWS.map((row, index) => (
-                          <View
-                            key={row.label}
-                            style={[
-                              styles.offeringsRecipientRow,
-                              index === OFFERINGS_RECIPIENT_ROWS.length - 1 &&
-                                styles.offeringsRecipientRowLast,
-                            ]}
-                          >
-                            <Text style={styles.offeringsRecipientLabel}>{row.label}</Text>
-                            <Text style={styles.offeringsRecipientValue} numberOfLines={3}>
-                              {row.value}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-
-                      <Text style={styles.offeringsLabel}>Chave PIX</Text>
-                      {isPixKeyLoading ? (
-                        <CardLoadingState lines={2} compact />
-                      ) : pixKey ? (
-                        <>
-                          <View style={styles.offeringsKeyBox}>
-                            <Text style={styles.offeringsKeyValue}>{pixKey}</Text>
-                          </View>
-                          <TouchableOpacity style={styles.offeringsCopyButton} onPress={handleCopyPixKey}>
-                            <MaterialIcons
-                              name="touch-app"
-                              size={34}
-                              color="#451A03"
-                              style={styles.offeringsCopyButtonIcon}
-                            />
-                            <Text style={styles.offeringsCopyButtonText}>Copiar chave PIX</Text>
-                          </TouchableOpacity>
-                          <Text style={styles.offeringsHelpText}>
-                            Toque no botão para copiar a chave e colar no aplicativo do seu banco.
-                          </Text>
-                        </>
-                      ) : (
-                        <>
-                          <Text style={styles.offeringsErrorText}>Chave PIX indisponível.</Text>
-                          <TouchableOpacity style={styles.offeringsSecondaryButton} onPress={loadPixKey}>
-                            <Text style={styles.offeringsSecondaryButtonText}>Atualizar chave PIX</Text>
-                          </TouchableOpacity>
-                        </>
-                      )}
-                    </View>
+                    <OfferingsClass
+                      title={item.title}
+                      recipientRows={OFFERINGS_RECIPIENT_ROWS}
+                      pixKey={pixKey}
+                      pixKeyLoading={isPixKeyLoading}
+                      onCopyPixKey={handleCopyPixKey}
+                      onRetryLoadPixKey={loadPixKey}
+                    />
                   </View>
                 ) : item.content === 'kids_teens' ? (
                   <View

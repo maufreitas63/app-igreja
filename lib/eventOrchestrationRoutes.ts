@@ -1,4 +1,5 @@
 import type { Href } from 'expo-router';
+import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 
 export const EVENT_CONTROL_ID = 1;
 
@@ -29,15 +30,12 @@ export type EventOrchestrationTarget = {
   pathSignature: string;
 };
 
-const DASHBOARD_OFFERINGS_HREF: Href = {
-  pathname: '/(tabs)/dashboard',
-  params: {
-    dashboardCard: '3',
-    dashboardCardNonce: String(Date.now()),
-  },
+const OFFERINGS_HREF: Href = {
+  pathname: '/ofertas',
+  params: withMinimalPresentation(),
 };
 
-const OFFERINGS_PATH_SIGNATURE = '/(tabs)/dashboard:offerings';
+const OFFERINGS_PATH_SIGNATURE = '/ofertas';
 
 export const EVENT_ORCHESTRATION_TARGETS: Record<
   EventOrchestrationLeaderRouteCode,
@@ -52,7 +50,7 @@ export const EVENT_ORCHESTRATION_TARGETS: Record<
   '/ofertas_dizimos': {
     code: '/ofertas_dizimos',
     label: 'Ofertas / Dízimos',
-    href: DASHBOARD_OFFERINGS_HREF,
+    href: OFFERINGS_HREF,
     pathSignature: OFFERINGS_PATH_SIGNATURE,
   },
   '/avisos': {
@@ -125,6 +123,10 @@ export const buildEventOrchestrationPathSignature = (
     || normalizedPath === '/(tabs)/index'
   ) {
     return '/(tabs)';
+  }
+
+  if (normalizedPath === '/ofertas') {
+    return OFFERINGS_PATH_SIGNATURE;
   }
 
   if (!normalizedPath.includes('dashboard')) {

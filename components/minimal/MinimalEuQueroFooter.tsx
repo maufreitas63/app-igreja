@@ -1,10 +1,7 @@
 import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
-import {
-  buildReturnToDashboardHref,
-  withMinimalPresentation,
-} from '@/lib/dashboardReturnNavigation';
+import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -52,7 +49,10 @@ export function MinimalEuQueroFooter() {
   }
 
   const handleOpenOfferings = () => {
-    router.push(buildReturnToDashboardHref('3'));
+    router.push({
+      pathname: '/ofertas',
+      params: withMinimalPresentation(),
+    });
   };
 
   const handleOpenPastoral = () => {
