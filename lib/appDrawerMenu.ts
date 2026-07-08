@@ -53,7 +53,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'c', label: 'Financeiro', moduleKey: 'gestao_financeira' },
   { letter: 'd', label: 'Escalas', moduleKey: 'menu_escalas' },
   { letter: 'e', label: 'Aniversariantes', moduleKey: 'menu_aniversariantes' },
-  { letter: 'f', label: 'Membros', moduleKey: 'menu_membros' },
+  { letter: 'f', label: 'Lista de Membros', moduleKey: 'menu_membros' },
   { letter: 'g', label: 'Administrativo', moduleKey: 'menu_administrativo' },
   {
     letter: 'h',
