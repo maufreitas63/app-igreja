@@ -342,7 +342,7 @@ export default function FinancialScreen() {
             </TouchableOpacity>
 
             {expandedSection === 'bankBalance' ? (
-              <View style={styles.resultSectionBody}>
+              <View style={[styles.resultSectionBody, styles.bankBalanceSectionBody]}>
                 {isLoading ? (
                   <ActivityIndicator color="#10b981" style={styles.bulletinLoader} />
                 ) : null}
@@ -819,6 +819,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingBottom: 14,
   },
+  bankBalanceSectionBody: {
+    backgroundColor: '#FFFFFF',
+  },
   comparisonSection: {
     borderRadius: 16,
     borderWidth: 1,
@@ -856,9 +859,8 @@ const styles = StyleSheet.create({
   },
   bankBalanceSection: {
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.35)',
-    backgroundColor: 'rgba(120, 53, 15, 0.15)',
+    borderWidth: 0,
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
   },
   monthDropdownWrap: {

@@ -112,6 +112,7 @@ export function FinancialMonthlyBankBalance({
 const styles = StyleSheet.create({
   sheet: {
     gap: 12,
+    backgroundColor: '#FFFFFF',
   },
   reportHeader: {
     flexDirection: 'row',
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#CBD5E1',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#FFFFFF',
   },
   accountHeaderCell: {
     flex: 1,
@@ -230,7 +231,7 @@ const styles = StyleSheet.create({
     minHeight: 40,
     borderTopWidth: 2,
     borderTopColor: '#CBD5E1',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   totalLabel: {
     color: '#0F172A',
