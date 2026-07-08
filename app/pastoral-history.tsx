@@ -18,8 +18,15 @@ import {
 import { appAlert } from '@/lib/appAlert';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import {
+  isMinimalPresentationRoute,
+  withMinimalPresentation,
+} from '@/lib/dashboardReturnNavigation';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -40,9 +47,20 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const HISTORY_VIGILANCE_SURFACE = '#FFFFFF';
+const HISTORY_VIGILANCE_ICON = '#1B4F8A';
+const HISTORY_VIGILANCE_SUBMIT_BG = '#3A96DD';
+const HISTORY_VIGILANCE_SUBMIT_TEXT = '#FFFFFF';
+const HISTORY_SOFT_BORDER = 'rgba(52, 211, 153, 0.35)';
+
 export default function PastoralHistoryScreen() {
-  const params = useLocalSearchParams<{ userId?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    userId?: string | string[];
+    presentation?: string | string[];
+  }>();
   const routeUserId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
+  const isMinimalPresentation = isMinimalPresentationRoute(params.presentation);
+  const useVigilanceTheme = isMinimalPresentation;
   const router = useRouter();
 
   const accessStatus = useScreenAccessGuard({
@@ -62,6 +80,14 @@ export default function PastoralHistoryScreen() {
   const [submittingCancellationId, setSubmittingCancellationId] = useState<string | null>(null);
   const lastHistoryFetchAtRef = useRef(0);
   const HISTORY_FOCUS_STALE_MS = 60_000;
+
+  const buildPastoralHrefParams = useCallback(() => {
+    const next: Record<string, string> = {};
+    if (profileId) {
+      next.userId = profileId;
+    }
+    return useVigilanceTheme ? withMinimalPresentation(next) : next;
+  }, [profileId, useVigilanceTheme]);
 
   const loadHistory = useCallback(
     async (options?: { refresh?: boolean; force?: boolean }) => {
@@ -126,14 +152,14 @@ export default function PastoralHistoryScreen() {
 
     router.replace({
       pathname: '/pastoral',
-      params: profileId ? { userId: profileId } : undefined,
+      params: buildPastoralHrefParams(),
     });
   };
 
   const handleNewRequest = () => {
     router.replace({
       pathname: '/pastoral',
-      params: profileId ? { userId: profileId } : undefined,
+      params: buildPastoralHrefParams(),
     });
   };
 
@@ -245,138 +271,252 @@ export default function PastoralHistoryScreen() {
     }
   }, [cancellationModalRequest, cancellationReason, profileId]);
 
-  return (
-    <ScreenAccessGate status={accessStatus}>
-    <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        <Modal
-          visible={cancellationModalRequest !== null}
-          transparent
-          animationType="fade"
-          onRequestClose={handleCloseCancellationModal}
+  const content = (
+    <>
+      <Modal
+        visible={cancellationModalRequest !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseCancellationModal}
+      >
+        <Pressable
+          style={[
+            styles.cancellationBackdrop,
+            useVigilanceTheme && styles.cancellationBackdropVigilance,
+          ]}
+          onPress={handleCloseCancellationModal}
         >
-          <Pressable style={styles.cancellationBackdrop} onPress={handleCloseCancellationModal}>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-              style={styles.cancellationKeyboardWrap}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.cancellationKeyboardWrap}
+          >
+            <Pressable
+              style={[
+                styles.cancellationModalCard,
+                useVigilanceTheme && styles.cancellationModalCardVigilance,
+              ]}
+              onPress={() => undefined}
             >
-              <Pressable style={styles.cancellationModalCard} onPress={() => undefined}>
-                <Text style={styles.cancellationModalTitle}>Solicitar cancelamento</Text>
-                <Text style={styles.cancellationModalHint}>
-                  Informe o motivo do cancelamento. O Cuidado Pastoral verá esta justificativa
-                  antes de confirmar a exclusão.
-                </Text>
-                <TextInput
-                  accessibilityLabel="Justificativa do cancelamento"
-                  editable={!submittingCancellationId}
-                  multiline
-                  numberOfLines={4}
-                  onChangeText={setCancellationReason}
-                  placeholder="Descreva o motivo do cancelamento..."
-                  placeholderTextColor="#64748B"
-                  style={styles.cancellationReasonInput}
-                  textAlignVertical="top"
-                  value={cancellationReason}
-                />
-                <View style={styles.cancellationModalActions}>
-                  <TouchableOpacity
-                    accessibilityLabel="Fechar solicitação de cancelamento"
-                    accessibilityRole="button"
-                    activeOpacity={0.85}
-                    disabled={Boolean(submittingCancellationId)}
-                    onPress={handleCloseCancellationModal}
-                    style={styles.cancellationSecondaryButton}
-                  >
-                    <Text style={styles.cancellationSecondaryButtonText}>Voltar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    accessibilityLabel="Enviar solicitação de cancelamento"
-                    accessibilityRole="button"
-                    activeOpacity={0.85}
-                    disabled={Boolean(submittingCancellationId)}
-                    onPress={() => void handleSubmitCancellationRequest()}
+              <Text
+                style={[
+                  styles.cancellationModalTitle,
+                  useVigilanceTheme && styles.cancellationModalTitleVigilance,
+                ]}
+              >
+                Solicitar cancelamento
+              </Text>
+              <Text
+                style={[
+                  styles.cancellationModalHint,
+                  useVigilanceTheme && styles.cancellationModalHintVigilance,
+                ]}
+              >
+                Informe o motivo do cancelamento. O Cuidado Pastoral verá esta justificativa
+                antes de confirmar a exclusão.
+              </Text>
+              <TextInput
+                accessibilityLabel="Justificativa do cancelamento"
+                editable={!submittingCancellationId}
+                multiline
+                numberOfLines={4}
+                onChangeText={setCancellationReason}
+                placeholder="Descreva o motivo do cancelamento..."
+                placeholderTextColor={
+                  useVigilanceTheme ? VIGILANCE_SCALES_UI.accent : '#64748B'
+                }
+                style={[
+                  styles.cancellationReasonInput,
+                  useVigilanceTheme && styles.cancellationReasonInputVigilance,
+                ]}
+                textAlignVertical="top"
+                value={cancellationReason}
+              />
+              <View style={styles.cancellationModalActions}>
+                <TouchableOpacity
+                  accessibilityLabel="Fechar solicitação de cancelamento"
+                  accessibilityRole="button"
+                  activeOpacity={0.85}
+                  disabled={Boolean(submittingCancellationId)}
+                  onPress={handleCloseCancellationModal}
+                  style={[
+                    styles.cancellationSecondaryButton,
+                    useVigilanceTheme && styles.cancellationSecondaryButtonVigilance,
+                  ]}
+                >
+                  <Text
                     style={[
-                      styles.cancellationPrimaryButton,
-                      submittingCancellationId && styles.cancellationPrimaryButtonDisabled,
+                      styles.cancellationSecondaryButtonText,
+                      useVigilanceTheme && styles.cancellationSecondaryButtonTextVigilance,
                     ]}
                   >
-                    {submittingCancellationId ? (
-                      <ActivityIndicator color="#FFF" size="small" />
-                    ) : (
-                      <Text style={styles.cancellationPrimaryButtonText}>Enviar</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </Pressable>
-            </KeyboardAvoidingView>
-          </Pressable>
-        </Modal>
-        <View style={styles.headerBar}>
-          <View style={styles.headerTitles}>
-            <Text style={styles.title}>Meus pedidos</Text>
-            <Text style={styles.subtitle}>Histórico do Coração Aberto</Text>
-          </View>
+                    Voltar
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityLabel="Enviar solicitação de cancelamento"
+                  accessibilityRole="button"
+                  activeOpacity={0.85}
+                  disabled={Boolean(submittingCancellationId)}
+                  onPress={() => void handleSubmitCancellationRequest()}
+                  style={[
+                    styles.cancellationPrimaryButton,
+                    useVigilanceTheme && styles.cancellationPrimaryButtonVigilance,
+                    submittingCancellationId && styles.cancellationPrimaryButtonDisabled,
+                  ]}
+                >
+                  {submittingCancellationId ? (
+                    <ActivityIndicator
+                      color={useVigilanceTheme ? HISTORY_VIGILANCE_SUBMIT_TEXT : '#FFF'}
+                      size="small"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.cancellationPrimaryButtonText,
+                        useVigilanceTheme && styles.cancellationPrimaryButtonTextVigilance,
+                      ]}
+                    >
+                      Enviar
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </Pressable>
+      </Modal>
+
+      <View style={styles.headerBar}>
+        <View style={styles.headerTitles}>
+          {!useVigilanceTheme ? (
+            <>
+              <Text style={styles.title}>Meus pedidos</Text>
+              <Text style={styles.subtitle}>Histórico do Coração Aberto</Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.titleVigilance}>Meus pedidos</Text>
+              <Text style={styles.subtitleVigilance}>Histórico do Coração Aberto</Text>
+            </>
+          )}
+        </View>
+        {!useVigilanceTheme ? (
           <TouchableOpacity
             accessibilityLabel="Voltar"
             accessibilityRole="button"
             activeOpacity={0.85}
             onPress={handleBack}
-            style={styles.headerBackButton}>
+            style={styles.headerBackButton}
+          >
             <Text style={styles.headerBackText}>Voltar</Text>
           </TouchableOpacity>
-        </View>
-
-        {loading ? (
-          <View style={styles.centered}>
-            <ActivityIndicator color="#C4B5FD" size="large" />
-            <Text style={styles.loadingText}>Carregando pedidos...</Text>
-          </View>
-        ) : errorMessage ? (
-          <View style={styles.centered}>
-            <Text style={styles.errorText}>{errorMessage}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={() => void loadHistory()} activeOpacity={0.85}>
-              <Text style={styles.retryButtonText}>Tentar novamente</Text>
-            </TouchableOpacity>
-          </View>
-        ) : requests.length === 0 ? (
-          <View style={styles.centered}>
-            <FontAwesome name="inbox" size={40} color="#64748b" />
-            <Text style={styles.emptyTitle}>Nenhum pedido ainda</Text>
-            <Text style={styles.emptySubtitle}>
-              Quando você enviar um pedido pelo Coração Aberto, ele aparecerá aqui.
-            </Text>
-            <TouchableOpacity style={styles.primaryButton} onPress={handleNewRequest} activeOpacity={0.85}>
-              <Text style={styles.primaryButtonText}>Fazer um pedido</Text>
-            </TouchableOpacity>
-          </View>
         ) : (
-          <ScrollView
-            style={styles.listScroll}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={() => void loadHistory({ refresh: true })}
-                tintColor="#C4B5FD"
-              />
-            }>
-            {requests.map((item) => {
-              const canDelete = canDeletePastoralRequest(item.status);
-              const careStarted = isPastoralRequestCareStarted(item.status);
-              const cancellationRequested = hasPastoralCancellationRequested(item);
-              const canRequestCancellation = careStarted && !cancellationRequested;
-              const isDeleting = deletingRequestId === item.id;
-              const isSubmittingCancellation = submittingCancellationId === item.id;
-              const handlerDisplayName =
-                careStarted && item.handler_name?.trim()
-                  ? formatShortName(item.handler_name)
-                  : null;
+          <TouchableOpacity
+            accessibilityLabel="Voltar"
+            accessibilityRole="button"
+            activeOpacity={0.85}
+            onPress={handleBack}
+            style={styles.headerBackButtonVigilance}
+          >
+            <Text style={styles.headerBackTextVigilance}>Voltar</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
-              return (
-              <View key={item.id} style={styles.card}>
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator
+            color={useVigilanceTheme ? VIGILANCE_SCALES_UI.accent : '#C4B5FD'}
+            size="large"
+          />
+          <Text style={[styles.loadingText, useVigilanceTheme && styles.loadingTextVigilance]}>
+            Carregando pedidos...
+          </Text>
+        </View>
+      ) : errorMessage ? (
+        <View style={styles.centered}>
+          <Text style={[styles.errorText, useVigilanceTheme && styles.errorTextVigilance]}>
+            {errorMessage}
+          </Text>
+          <TouchableOpacity
+            style={[styles.retryButton, useVigilanceTheme && styles.retryButtonVigilance]}
+            onPress={() => void loadHistory()}
+            activeOpacity={0.85}
+          >
+            <Text
+              style={[styles.retryButtonText, useVigilanceTheme && styles.retryButtonTextVigilance]}
+            >
+              Tentar novamente
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : requests.length === 0 ? (
+        <View style={styles.centered}>
+          <FontAwesome
+            name="inbox"
+            size={40}
+            color={useVigilanceTheme ? HISTORY_VIGILANCE_ICON : '#64748b'}
+          />
+          <Text style={[styles.emptyTitle, useVigilanceTheme && styles.emptyTitleVigilance]}>
+            Nenhum pedido ainda
+          </Text>
+          <Text
+            style={[styles.emptySubtitle, useVigilanceTheme && styles.emptySubtitleVigilance]}
+          >
+            Quando você enviar um pedido pelo Coração Aberto, ele aparecerá aqui.
+          </Text>
+          <TouchableOpacity
+            style={[styles.primaryButton, useVigilanceTheme && styles.primaryButtonVigilance]}
+            onPress={handleNewRequest}
+            activeOpacity={0.85}
+          >
+            <Text
+              style={[
+                styles.primaryButtonText,
+                useVigilanceTheme && styles.primaryButtonTextVigilance,
+              ]}
+            >
+              Fazer um pedido
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.listScroll}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => void loadHistory({ refresh: true })}
+              tintColor={useVigilanceTheme ? VIGILANCE_SCALES_UI.accent : '#C4B5FD'}
+              colors={[useVigilanceTheme ? VIGILANCE_SCALES_UI.accent : '#C4B5FD']}
+            />
+          }
+        >
+          {requests.map((item) => {
+            const canDelete = canDeletePastoralRequest(item.status);
+            const careStarted = isPastoralRequestCareStarted(item.status);
+            const cancellationRequested = hasPastoralCancellationRequested(item);
+            const canRequestCancellation = careStarted && !cancellationRequested;
+            const isDeleting = deletingRequestId === item.id;
+            const isSubmittingCancellation = submittingCancellationId === item.id;
+            const handlerDisplayName =
+              careStarted && item.handler_name?.trim()
+                ? formatShortName(item.handler_name)
+                : null;
+
+            return (
+              <View
+                key={item.id}
+                style={[styles.card, useVigilanceTheme && styles.cardVigilance]}
+              >
                 <View style={styles.cardHeader}>
-                  <Text style={styles.cardDate}>{formatPastoralRequestDate(item.created_at)}</Text>
+                  <Text
+                    style={[styles.cardDate, useVigilanceTheme && styles.cardDateVigilance]}
+                  >
+                    {formatPastoralRequestDate(item.created_at)}
+                  </Text>
                   <View style={styles.cardHeaderActions}>
                     {canDelete ? (
                       <TouchableOpacity
@@ -388,45 +528,109 @@ export default function PastoralHistoryScreen() {
                         onPress={() => void handleDeleteRequest(item)}
                         style={[
                           styles.cardDeleteButton,
+                          useVigilanceTheme && styles.cardDeleteButtonVigilance,
                           isDeleting && styles.cardDeleteButtonDisabled,
-                        ]}>
+                          isDeleting && useVigilanceTheme && styles.cardDeleteButtonDisabledVigilance,
+                        ]}
+                      >
                         {isDeleting ? (
-                          <ActivityIndicator color="#FCA5A5" size="small" />
+                          <ActivityIndicator
+                            color={useVigilanceTheme ? '#DC2626' : '#FCA5A5'}
+                            size="small"
+                          />
                         ) : (
-                          <FontAwesome name="eraser" size={16} color="#FCA5A5" />
+                          <FontAwesome
+                            name="eraser"
+                            size={16}
+                            color={useVigilanceTheme ? '#DC2626' : '#FCA5A5'}
+                          />
                         )}
                       </TouchableOpacity>
                     ) : null}
-                    <View style={styles.statusBadge}>
-                      <Text style={styles.statusBadgeText}>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        useVigilanceTheme && styles.statusBadgeVigilance,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.statusBadgeText,
+                          useVigilanceTheme && styles.statusBadgeTextVigilance,
+                        ]}
+                      >
                         {formatPastoralStatusLabel(item.status)}
                       </Text>
                     </View>
                   </View>
                 </View>
 
-                <Text style={styles.cardMotivo} numberOfLines={2}>
+                <Text
+                  style={[styles.cardMotivo, useVigilanceTheme && styles.cardMotivoVigilance]}
+                  numberOfLines={2}
+                >
                   {item.motivo?.trim() || 'Motivo não informado'}
                 </Text>
-                <Text style={styles.cardSituacao} numberOfLines={2}>
+                <Text
+                  style={[
+                    styles.cardSituacao,
+                    useVigilanceTheme && styles.cardSituacaoVigilance,
+                  ]}
+                  numberOfLines={2}
+                >
                   {item.situacao?.trim() || 'Situação não informada'}
                 </Text>
 
                 <View style={styles.metaRow}>
-                  <Text style={styles.metaLabel}>Para:</Text>
-                  <Text style={styles.metaValue}>{formatPastoralBeneficiarySummary(item)}</Text>
+                  <Text
+                    style={[styles.metaLabel, useVigilanceTheme && styles.metaLabelVigilance]}
+                  >
+                    Para:
+                  </Text>
+                  <Text
+                    style={[styles.metaValue, useVigilanceTheme && styles.metaValueVigilance]}
+                  >
+                    {formatPastoralBeneficiarySummary(item)}
+                  </Text>
                 </View>
 
                 {item.destination_label ? (
                   <View style={styles.metaBlock}>
                     <View style={styles.metaRow}>
-                      <Text style={styles.metaLabel}>Encaminhado para:</Text>
-                      <Text style={styles.metaValue}>{item.destination_label}</Text>
+                      <Text
+                        style={[
+                          styles.metaLabel,
+                          useVigilanceTheme && styles.metaLabelVigilance,
+                        ]}
+                      >
+                        Encaminhado para:
+                      </Text>
+                      <Text
+                        style={[
+                          styles.metaValue,
+                          useVigilanceTheme && styles.metaValueVigilance,
+                        ]}
+                      >
+                        {item.destination_label}
+                      </Text>
                     </View>
                     {handlerDisplayName ? (
                       <View style={styles.metaRow}>
-                        <Text style={styles.metaLabel}>Acompanhado por:</Text>
-                        <Text style={styles.metaValue} numberOfLines={1}>
+                        <Text
+                          style={[
+                            styles.metaLabel,
+                            useVigilanceTheme && styles.metaLabelVigilance,
+                          ]}
+                        >
+                          Acompanhado por:
+                        </Text>
+                        <Text
+                          style={[
+                            styles.metaValue,
+                            useVigilanceTheme && styles.metaValueVigilance,
+                          ]}
+                          numberOfLines={1}
+                        >
                           {handlerDisplayName}
                         </Text>
                       </View>
@@ -435,20 +639,48 @@ export default function PastoralHistoryScreen() {
                 ) : null}
 
                 {item.description?.trim() ? (
-                  <Text style={styles.cardDescription} numberOfLines={3}>
+                  <Text
+                    style={[
+                      styles.cardDescription,
+                      useVigilanceTheme && styles.cardDescriptionVigilance,
+                    ]}
+                    numberOfLines={3}
+                  >
                     {item.description.trim()}
                   </Text>
                 ) : null}
 
                 {cancellationRequested ? (
-                  <View style={styles.cancellationPendingBox}>
-                    <Text style={styles.cancellationPendingTitle}>Cancelamento solicitado</Text>
+                  <View
+                    style={[
+                      styles.cancellationPendingBox,
+                      useVigilanceTheme && styles.cancellationPendingBoxVigilance,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.cancellationPendingTitle,
+                        useVigilanceTheme && styles.cancellationPendingTitleVigilance,
+                      ]}
+                    >
+                      Cancelamento solicitado
+                    </Text>
                     {item.cancellation_request_reason?.trim() ? (
-                      <Text style={styles.cancellationPendingReason}>
+                      <Text
+                        style={[
+                          styles.cancellationPendingReason,
+                          useVigilanceTheme && styles.cancellationPendingReasonVigilance,
+                        ]}
+                      >
                         {item.cancellation_request_reason.trim()}
                       </Text>
                     ) : null}
-                    <Text style={styles.cancellationPendingHint}>
+                    <Text
+                      style={[
+                        styles.cancellationPendingHint,
+                        useVigilanceTheme && styles.cancellationPendingHintVigilance,
+                      ]}
+                    >
                       Aguarde o Cuidado Pastoral confirmar a exclusão.
                     </Text>
                   </View>
@@ -463,38 +695,71 @@ export default function PastoralHistoryScreen() {
                     onPress={() => handleOpenCancellationModal(item)}
                     style={[
                       styles.requestCancellationButton,
+                      useVigilanceTheme && styles.requestCancellationButtonVigilance,
                       isSubmittingCancellation && styles.requestCancellationButtonDisabled,
                     ]}
                   >
                     {isSubmittingCancellation ? (
-                      <ActivityIndicator color="#FECACA" size="small" />
+                      <ActivityIndicator
+                        color={useVigilanceTheme ? '#DC2626' : '#FECACA'}
+                        size="small"
+                      />
                     ) : (
-                      <Text style={styles.requestCancellationButtonText}>Solicitar cancelamento</Text>
+                      <Text
+                        style={[
+                          styles.requestCancellationButtonText,
+                          useVigilanceTheme && styles.requestCancellationButtonTextVigilance,
+                        ]}
+                      >
+                        Solicitar cancelamento
+                      </Text>
                     )}
                   </TouchableOpacity>
                 ) : null}
               </View>
             );
-            })}
-          </ScrollView>
-        )}
+          })}
+        </ScrollView>
+      )}
 
-        {!loading && !errorMessage ? (
-          <View style={styles.footerBar}>
-            <View style={styles.footerActions}>
-              <TouchableOpacity
-                accessibilityLabel="Novo pedido pastoral"
-                accessibilityRole="button"
-                style={styles.footerButton}
-                onPress={handleNewRequest}
-                activeOpacity={0.85}>
-                <Text style={styles.footerButtonText}>Novo pedido</Text>
-              </TouchableOpacity>
-            </View>
+      {!loading && !errorMessage ? (
+        <View style={[styles.footerBar, useVigilanceTheme && styles.footerBarVigilance]}>
+          <View style={styles.footerActions}>
+            <TouchableOpacity
+              accessibilityLabel="Novo pedido pastoral"
+              accessibilityRole="button"
+              style={[styles.footerButton, useVigilanceTheme && styles.footerButtonVigilance]}
+              onPress={handleNewRequest}
+              activeOpacity={0.85}
+            >
+              <Text
+                style={[
+                  styles.footerButtonText,
+                  useVigilanceTheme && styles.footerButtonTextVigilance,
+                ]}
+              >
+                Novo pedido
+              </Text>
+            </TouchableOpacity>
           </View>
-        ) : null}
-      </SafeAreaView>
-    </LinearGradient>
+        </View>
+      ) : null}
+    </>
+  );
+
+  return (
+    <ScreenAccessGate status={accessStatus}>
+      {useVigilanceTheme ? (
+        <MinimalScreenLayout title="Meus pedidos" scroll={false}>
+          <View style={styles.vigilanceRoot}>{content}</View>
+        </MinimalScreenLayout>
+      ) : (
+        <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
+          <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+            {content}
+          </SafeAreaView>
+        </LinearGradient>
+      )}
     </ScreenAccessGate>
   );
 }
@@ -502,6 +767,11 @@ export default function PastoralHistoryScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
+  vigilanceRoot: {
+    flex: 1,
+    minHeight: 0,
+    backgroundColor: HISTORY_VIGILANCE_SURFACE,
+  },
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -525,6 +795,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
   },
+  headerBackButtonVigilance: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: HISTORY_SOFT_BORDER,
+    backgroundColor: HISTORY_VIGILANCE_SURFACE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+  },
+  headerBackTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 14,
+    fontWeight: '800',
+  },
   headerTitles: {
     flex: 1,
     minWidth: 0,
@@ -539,6 +825,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
+  titleVigilance: {
+    ...MINIMAL_SECTION_TITLE,
+    fontSize: 20,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    textAlign: 'left',
+  },
+  subtitleVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 12,
+    marginTop: 2,
+    opacity: 0.9,
+  },
   centered: {
     flex: 1,
     alignItems: 'center',
@@ -550,11 +849,17 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 14,
   },
+  loadingTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
   errorText: {
     color: '#FCA5A5',
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  errorTextVigilance: {
+    color: '#DC2626',
   },
   retryButton: {
     marginTop: 8,
@@ -564,9 +869,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#64748b',
   },
+  retryButtonVigilance: {
+    borderRadius: 16,
+    borderColor: HISTORY_SOFT_BORDER,
+    backgroundColor: HISTORY_VIGILANCE_SURFACE,
+  },
   retryButtonText: {
     color: '#E2E8F0',
     fontWeight: '700',
+  },
+  retryButtonTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
   },
   emptyTitle: {
     color: '#F8FAFC',
@@ -574,11 +887,17 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginTop: 8,
   },
+  emptyTitleVigilance: {
+    color: MINIMAL_UI.blueDark,
+  },
   emptySubtitle: {
     color: '#94A3B8',
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  emptySubtitleVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
   },
   primaryButton: {
     marginTop: 8,
@@ -587,10 +906,19 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 14,
   },
+  primaryButtonVigilance: {
+    backgroundColor: HISTORY_VIGILANCE_SUBMIT_BG,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: HISTORY_VIGILANCE_ICON,
+  },
   primaryButtonText: {
     color: '#FFF',
     fontWeight: '800',
     fontSize: 15,
+  },
+  primaryButtonTextVigilance: {
+    color: HISTORY_VIGILANCE_SUBMIT_TEXT,
   },
   listScroll: { flex: 1 },
   listContent: {
@@ -605,6 +933,11 @@ const styles = StyleSheet.create({
     borderColor: '#334155',
     padding: 14,
     gap: 6,
+  },
+  cardVigilance: {
+    backgroundColor: HISTORY_VIGILANCE_SURFACE,
+    borderRadius: 16,
+    borderColor: HISTORY_SOFT_BORDER,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -629,16 +962,29 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(248, 113, 113, 0.45)',
     backgroundColor: 'rgba(127, 29, 29, 0.2)',
   },
+  cardDeleteButtonVigilance: {
+    borderRadius: 12,
+    borderColor: 'rgba(220, 38, 38, 0.35)',
+    backgroundColor: 'rgba(254, 226, 226, 0.65)',
+  },
   cardDeleteButtonDisabled: {
     borderColor: '#334155',
     backgroundColor: 'rgba(30, 41, 59, 0.45)',
     opacity: 0.72,
+  },
+  cardDeleteButtonDisabledVigilance: {
+    borderColor: HISTORY_SOFT_BORDER,
+    backgroundColor: MINIMAL_UI.rowHover,
   },
   cardDate: {
     color: '#94A3B8',
     fontSize: 12,
     fontWeight: '600',
     flex: 1,
+  },
+  cardDateVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+    opacity: 0.85,
   },
   statusBadge: {
     backgroundColor: 'rgba(168, 85, 247, 0.2)',
@@ -648,10 +994,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(168, 85, 247, 0.45)',
   },
+  statusBadgeVigilance: {
+    backgroundColor: 'rgba(58, 150, 221, 0.12)',
+    borderRadius: 10,
+    borderColor: HISTORY_SOFT_BORDER,
+  },
   statusBadgeText: {
     color: '#E9D5FF',
     fontSize: 11,
     fontWeight: '800',
+  },
+  statusBadgeTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
   },
   cardMotivo: {
     color: '#F8FAFC',
@@ -659,10 +1013,16 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     lineHeight: 20,
   },
+  cardMotivoVigilance: {
+    color: MINIMAL_UI.blueDark,
+  },
   cardSituacao: {
     color: '#CBD5E1',
     fontSize: 13,
     lineHeight: 18,
+  },
+  cardSituacaoVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
   },
   metaBlock: {
     gap: 2,
@@ -678,16 +1038,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+  metaLabelVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+    opacity: 0.75,
+  },
   metaValue: {
     color: '#E2E8F0',
     fontSize: 12,
     flex: 1,
+  },
+  metaValueVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
   },
   cardDescription: {
     color: '#94A3B8',
     fontSize: 13,
     lineHeight: 18,
     marginTop: 4,
+  },
+  cardDescriptionVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+    opacity: 0.9,
   },
   requestCancellationButton: {
     marginTop: 8,
@@ -702,6 +1073,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  requestCancellationButtonVigilance: {
+    borderRadius: 16,
+    borderColor: 'rgba(220, 38, 38, 0.35)',
+    backgroundColor: 'rgba(254, 226, 226, 0.55)',
+  },
   requestCancellationButtonDisabled: {
     opacity: 0.7,
   },
@@ -709,6 +1085,9 @@ const styles = StyleSheet.create({
     color: '#FECACA',
     fontSize: 14,
     fontWeight: '800',
+  },
+  requestCancellationButtonTextVigilance: {
+    color: '#DC2626',
   },
   cancellationPendingBox: {
     marginTop: 8,
@@ -720,26 +1099,43 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 4,
   },
+  cancellationPendingBoxVigilance: {
+    borderRadius: 12,
+    borderColor: 'rgba(217, 119, 6, 0.35)',
+    backgroundColor: 'rgba(254, 243, 199, 0.65)',
+  },
   cancellationPendingTitle: {
     color: '#FDE68A',
     fontSize: 12,
     fontWeight: '800',
+  },
+  cancellationPendingTitleVigilance: {
+    color: '#B45309',
   },
   cancellationPendingReason: {
     color: '#FEF3C7',
     fontSize: 13,
     lineHeight: 18,
   },
+  cancellationPendingReasonVigilance: {
+    color: '#92400E',
+  },
   cancellationPendingHint: {
     color: '#FCD34D',
     fontSize: 11,
     lineHeight: 15,
+  },
+  cancellationPendingHintVigilance: {
+    color: '#B45309',
   },
   cancellationBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(2, 6, 23, 0.72)',
     justifyContent: 'center',
     paddingHorizontal: 20,
+  },
+  cancellationBackdropVigilance: {
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
   },
   cancellationKeyboardWrap: {
     width: '100%',
@@ -752,15 +1148,25 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 10,
   },
+  cancellationModalCardVigilance: {
+    borderColor: HISTORY_SOFT_BORDER,
+    backgroundColor: HISTORY_VIGILANCE_SURFACE,
+  },
   cancellationModalTitle: {
     color: '#F8FAFC',
     fontSize: 18,
     fontWeight: '800',
   },
+  cancellationModalTitleVigilance: {
+    color: MINIMAL_UI.blueDark,
+  },
   cancellationModalHint: {
     color: '#94A3B8',
     fontSize: 13,
     lineHeight: 18,
+  },
+  cancellationModalHintVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
   },
   cancellationReasonInput: {
     minHeight: 110,
@@ -773,6 +1179,12 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     paddingHorizontal: 12,
     paddingVertical: 10,
+  },
+  cancellationReasonInputVigilance: {
+    borderRadius: 16,
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    backgroundColor: HISTORY_VIGILANCE_SURFACE,
+    color: VIGILANCE_SCALES_UI.accent,
   },
   cancellationModalActions: {
     flexDirection: 'row',
@@ -790,10 +1202,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
   },
+  cancellationSecondaryButtonVigilance: {
+    borderRadius: 16,
+    borderColor: HISTORY_SOFT_BORDER,
+    backgroundColor: HISTORY_VIGILANCE_SURFACE,
+  },
   cancellationSecondaryButtonText: {
     color: '#E2E8F0',
     fontSize: 14,
     fontWeight: '800',
+  },
+  cancellationSecondaryButtonTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
   },
   cancellationPrimaryButton: {
     flex: 1,
@@ -806,6 +1226,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
   },
+  cancellationPrimaryButtonVigilance: {
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: HISTORY_VIGILANCE_ICON,
+    backgroundColor: HISTORY_VIGILANCE_SUBMIT_BG,
+  },
   cancellationPrimaryButtonDisabled: {
     opacity: 0.75,
   },
@@ -814,6 +1240,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
   },
+  cancellationPrimaryButtonTextVigilance: {
+    color: HISTORY_VIGILANCE_SUBMIT_TEXT,
+  },
   footerBar: {
     paddingHorizontal: 16,
     paddingTop: 8,
@@ -821,6 +1250,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#334155',
     backgroundColor: 'rgba(2, 6, 23, 0.92)',
+  },
+  footerBarVigilance: {
+    borderTopColor: VIGILANCE_SCALES_UI.border,
+    backgroundColor: HISTORY_VIGILANCE_SURFACE,
   },
   footerActions: {
     flexDirection: 'row',
@@ -835,9 +1268,18 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
+  footerButtonVigilance: {
+    backgroundColor: HISTORY_VIGILANCE_SUBMIT_BG,
+    borderWidth: 2,
+    borderColor: HISTORY_VIGILANCE_ICON,
+    borderRadius: 16,
+  },
   footerButtonText: {
     color: '#F5F3FF',
     fontWeight: '800',
     fontSize: 15,
+  },
+  footerButtonTextVigilance: {
+    color: HISTORY_VIGILANCE_SUBMIT_TEXT,
   },
 });

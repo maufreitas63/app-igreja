@@ -28,6 +28,7 @@ import {
   pickRouteParam,
   resolveReturnDashboardCardParam,
   isMinimalPresentationRoute,
+  withMinimalPresentation,
 } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
@@ -521,7 +522,9 @@ export default function PastoralScreen() {
 
     router.push({
       pathname: '/pastoral-history',
-      params: { userId: resolvedUserId },
+      params: isMinimalPresentation
+        ? withMinimalPresentation({ userId: resolvedUserId })
+        : { userId: resolvedUserId },
     });
   };
 
