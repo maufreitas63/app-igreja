@@ -45,52 +45,69 @@ export function AppDrawer() {
 
   const visibleItems = items.filter((item) => item.enabled);
 
+  const handleBackdropPress = () => {
+    if (settingsOpen) {
+      setSettingsOpen(false);
+      return;
+    }
+
+    closeDrawer();
+  };
+
   return (
-    <Modal animationType="slide" transparent visible={isOpen} onRequestClose={closeDrawer}>
+    <Modal
+      animationType="slide"
+      transparent
+      visible={isOpen}
+      onRequestClose={settingsOpen ? () => setSettingsOpen(false) : closeDrawer}
+    >
       <View style={styles.overlay}>
-        <View style={[styles.panel, { paddingTop: insets.top + 12 }]}>
-          <View style={styles.headerRow}>
-            <Text style={styles.title}>Menu</Text>
-            <Pressable
-              accessibilityLabel="Abrir configurações"
-              accessibilityRole="button"
-              onPress={() => setSettingsOpen(true)}
-              style={styles.settingsButton}
-            >
-              <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
-            </Pressable>
-          </View>
-          {loading ? (
-            <View style={styles.loaderWrap}>
-              <ActivityIndicator color={MINIMAL_UI.icon} />
+        {settingsOpen ? (
+          <AppDrawerSettings onClose={() => setSettingsOpen(false)} />
+        ) : (
+          <View style={[styles.panel, { paddingTop: insets.top + 12 }]}>
+            <View style={styles.headerRow}>
+              <Text style={styles.title}>Menu</Text>
+              <Pressable
+                accessibilityLabel="Abrir configurações"
+                accessibilityRole="button"
+                onPress={() => setSettingsOpen(true)}
+                style={styles.settingsButton}
+              >
+                <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
+              </Pressable>
             </View>
-          ) : (
-            <ScrollView
-              style={styles.scroll}
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator
-              keyboardShouldPersistTaps="handled"
-            >
-              {visibleItems.map((item) => (
-                <TouchableOpacity
-                  key={item.moduleKey}
-                  style={[styles.item, item.pendingRoute && styles.itemPendingRoute]}
-                  onPress={() => handlePress(item)}
-                  disabled={item.pendingRoute}
-                  accessibilityState={{ disabled: item.pendingRoute }}
-                >
-                  <Text style={[styles.itemLabel, item.pendingRoute && styles.itemLabelPendingRoute]}>
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-          <MinimalExitBar variant="drawer" />
-        </View>
-        <Pressable style={styles.backdrop} onPress={closeDrawer} accessibilityLabel="Fechar menu" />
+            {loading ? (
+              <View style={styles.loaderWrap}>
+                <ActivityIndicator color={MINIMAL_UI.icon} />
+              </View>
+            ) : (
+              <ScrollView
+                style={styles.scroll}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator
+                keyboardShouldPersistTaps="handled"
+              >
+                {visibleItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.moduleKey}
+                    style={[styles.item, item.pendingRoute && styles.itemPendingRoute]}
+                    onPress={() => handlePress(item)}
+                    disabled={item.pendingRoute}
+                    accessibilityState={{ disabled: item.pendingRoute }}
+                  >
+                    <Text style={[styles.itemLabel, item.pendingRoute && styles.itemLabelPendingRoute]}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+            <MinimalExitBar variant="drawer" />
+          </View>
+        )}
+        <Pressable style={styles.backdrop} onPress={handleBackdropPress} accessibilityLabel="Fechar menu" />
       </View>
-      <AppDrawerSettings visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </Modal>
   );
 }

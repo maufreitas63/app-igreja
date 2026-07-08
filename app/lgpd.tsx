@@ -197,6 +197,10 @@ export default function LgpdScreen() {
   }, [resetScrollGate]);
 
   useEffect(() => {
+    if (isMinimalPresentation) {
+      return;
+    }
+
     let active = true;
 
     void (async () => {
@@ -220,7 +224,7 @@ export default function LgpdScreen() {
     return () => {
       active = false;
     };
-  }, [phoneParam, router]);
+  }, [isMinimalPresentation, phoneParam, router]);
 
   useEffect(() => {
     let active = true;

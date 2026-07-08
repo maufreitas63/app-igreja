@@ -1,11 +1,12 @@
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { getStoredUserPhone } from '@/lib/userSession';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-  Modal,
+  InteractionManager,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -24,11 +25,10 @@ type SettingsItem = {
 };
 
 type Props = {
-  visible: boolean;
   onClose: () => void;
 };
 
-export function AppDrawerSettings({ visible, onClose }: Props) {
+export function AppDrawerSettings({ onClose }: Props) {
   const router = useRouter();
   const { closeDrawer } = useAppDrawer();
   const insets = useSafeAreaInsets();
@@ -36,9 +36,19 @@ export function AppDrawerSettings({ visible, onClose }: Props) {
   const navigateAndClose = () => {
     onClose();
     closeDrawer();
-    router.push({
-      pathname: '/lgpd',
-      params: withMinimalPresentation(),
+
+    void InteractionManager.runAfterInteractions(async () => {
+      const phone = (await getStoredUserPhone())?.trim();
+      const params = withMinimalPresentation();
+
+      if (phone) {
+        params.phone = encodeURIComponent(phone);
+      }
+
+      router.push({
+        pathname: '/lgpd',
+        params,
+      });
     });
   };
 
@@ -53,63 +63,49 @@ export function AppDrawerSettings({ visible, onClose }: Props) {
   ];
 
   return (
-    <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Fechar configurações" />
-        <View style={[styles.panel, { paddingTop: insets.top + 12, paddingBottom: Math.max(insets.bottom, 12) }]}>
-          <View style={styles.headerRow}>
-            <Text style={styles.title}>Configurações</Text>
-            <Pressable
-              accessibilityLabel="Fechar configurações"
-              accessibilityRole="button"
-              onPress={onClose}
-              style={styles.closeButton}
-            >
-              <FontAwesome name="times" size={MINIMAL_ICON.action + 4} color={MINIMAL_UI.icon} />
-            </Pressable>
-          </View>
-
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator
-            keyboardShouldPersistTaps="handled"
-          >
-            {items.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.item}
-                onPress={item.onPress}
-                accessibilityRole="button"
-                accessibilityLabel={item.label}
-              >
-                <View style={styles.itemIconWrap}>
-                  <FontAwesome name={item.icon} size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
-                </View>
-                <View style={styles.itemCopy}>
-                  <Text style={styles.itemLabel}>{item.label}</Text>
-                  {item.hint ? <Text style={styles.itemHint}>{item.hint}</Text> : null}
-                </View>
-                <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.textMuted} />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+    <View style={[styles.panel, { paddingTop: insets.top + 12, paddingBottom: Math.max(insets.bottom, 12) }]}>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Configurações</Text>
+        <Pressable
+          accessibilityLabel="Fechar configurações"
+          accessibilityRole="button"
+          onPress={onClose}
+          style={styles.closeButton}
+        >
+          <FontAwesome name="times" size={MINIMAL_ICON.action + 4} color={MINIMAL_UI.icon} />
+        </Pressable>
       </View>
-    </Modal>
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator
+        keyboardShouldPersistTaps="handled"
+      >
+        {items.map((item) => (
+          <TouchableOpacity
+            key={item.id}
+            style={styles.item}
+            onPress={item.onPress}
+            accessibilityRole="button"
+            accessibilityLabel={item.label}
+          >
+            <View style={styles.itemIconWrap}>
+              <FontAwesome name={item.icon} size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+            </View>
+            <View style={styles.itemCopy}>
+              <Text style={styles.itemLabel}>{item.label}</Text>
+              {item.hint ? <Text style={styles.itemHint}>{item.hint}</Text> : null}
+            </View>
+            <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.textMuted} />
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-  },
   panel: {
     width: '82%',
     maxWidth: 320,
