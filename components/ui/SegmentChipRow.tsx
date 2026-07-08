@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     color: '#F5F3FF',
   },
   chipVigilance: {
-    borderColor: VIGILANCE_SCALES_UI.border,
+    borderColor: VIGILANCE_SCALES_UI.accent,
     backgroundColor: '#FFFFFF',
   },
   chipVigilanceSelected: {

@@ -1216,7 +1216,7 @@ const styles = StyleSheet.create({
   },
   selectorFieldVigilance: {
     backgroundColor: PASTORAL_VIGILANCE_SURFACE,
-    borderColor: VIGILANCE_SCALES_UI.border,
+    borderColor: VIGILANCE_SCALES_UI.accent,
   },
   selectorFieldSelectedVigilance: {
     borderColor: VIGILANCE_SCALES_UI.accent,
@@ -1241,12 +1241,12 @@ const styles = StyleSheet.create({
   },
   inputSingleLineVigilance: {
     backgroundColor: PASTORAL_VIGILANCE_SURFACE,
-    borderColor: VIGILANCE_SCALES_UI.border,
+    borderColor: VIGILANCE_SCALES_UI.accent,
     color: VIGILANCE_SCALES_UI.accent,
   },
   inputVigilance: {
     backgroundColor: PASTORAL_VIGILANCE_SURFACE,
-    borderColor: VIGILANCE_SCALES_UI.border,
+    borderColor: VIGILANCE_SCALES_UI.accent,
     color: VIGILANCE_SCALES_UI.accent,
   },
   footerBarVigilance: {
