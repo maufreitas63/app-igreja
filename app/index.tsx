@@ -17,6 +17,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 
 const LOGIN_SURFACE = '#FFFFFF';
@@ -474,6 +475,21 @@ export default function IndexScreen() {
     }
   }, []);
 
+  const handleOpenExternalBible = useCallback(async () => {
+    const confirmed = await confirmDialog(
+      'Fonte externa',
+      'Você está saindo do aplicativo da igreja para uma fonte externa (A Bíblia Online). Deseja continuar?',
+      'Continuar',
+      'Cancelar'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    await handleOpenSocial('https://abibliaonline.com/');
+  }, [handleOpenSocial]);
+
   const submitAccess = useCallback(
     async (pin: string) => {
       if (isVerifyingPinRef.current) {
@@ -819,7 +835,7 @@ export default function IndexScreen() {
             accessibilityLabel="Abrir A Bíblia Online"
             accessibilityRole="button"
             onPress={() => {
-              void handleOpenSocial('https://abibliaonline.com/');
+              void handleOpenExternalBible();
             }}
             style={styles.socialButton}
           >
