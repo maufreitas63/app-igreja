@@ -3,7 +3,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-export type SocialBrandNetwork = 'instagram' | 'youtube';
+export type SocialBrandNetwork = 'bible' | 'instagram' | 'youtube';
 
 type SocialBrandIconProps = {
   network: SocialBrandNetwork;
@@ -18,6 +18,21 @@ const squircleRadius = (size: number) => Math.round(size * 0.27);
 
 export function SocialBrandIcon({ network, size = DEFAULT_SIZE, style }: SocialBrandIconProps) {
   const radius = squircleRadius(size);
+
+  if (network === 'bible') {
+    return (
+      <View
+        style={[
+          styles.iconBase,
+          styles.bibleSquircle,
+          { width: size, height: size, borderRadius: radius },
+          style,
+        ]}
+      >
+        <FontAwesome5 name="bible" size={Math.round(size * 0.52)} color="#FFFFFF" />
+      </View>
+    );
+  }
 
   if (network === 'instagram') {
     return (
@@ -81,6 +96,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  bibleSquircle: {
+    backgroundColor: '#1B4F8A',
   },
   youtubeSquircle: {
     backgroundColor: '#FFFFFF',

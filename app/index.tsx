@@ -816,6 +816,17 @@ export default function IndexScreen() {
       <View style={styles.socialRow}>
         <View style={styles.socialLinksCenter}>
           <TouchableOpacity
+            accessibilityLabel="Abrir A Bíblia Online"
+            accessibilityRole="button"
+            onPress={() => {
+              void handleOpenSocial('https://abibliaonline.com/');
+            }}
+            style={styles.socialButton}
+          >
+            <SocialBrandIcon network="bible" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
             accessibilityLabel="Abrir Instagram da Igreja Batista Norte"
             accessibilityRole="button"
             onPress={() => {
