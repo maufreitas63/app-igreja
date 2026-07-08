@@ -124,6 +124,10 @@ export default function FinancialScreen() {
     [budgetSectionBlocked]
   );
 
+  const collapseExpandedSection = useCallback(() => {
+    setExpandedSection(null);
+  }, []);
+
   const sectionsToRender = useMemo(
     () => (expandedSection ? [expandedSection] : FINANCIAL_SECTION_ORDER),
     [expandedSection]
@@ -478,10 +482,26 @@ export default function FinancialScreen() {
     </View>
   );
 
+  const reportBackFooter = expandedSection ? (
+    <TouchableOpacity
+      style={styles.reportBackButton}
+      onPress={collapseExpandedSection}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel="Voltar"
+    >
+      <Text style={styles.reportBackButtonText}>Voltar</Text>
+    </TouchableOpacity>
+  ) : null;
+
   if (isMinimalPresentation) {
     return (
       <ScreenAccessGate status={accessStatus}>
-        <MinimalScreenLayout fixedTop={minimalFixedTop}>
+        <MinimalScreenLayout
+          fixedTop={minimalFixedTop}
+          footer={reportBackFooter}
+          contentContainerStyle={expandedSection ? styles.minimalReportExpandedContent : undefined}
+        >
           {selectedMonthIsPlannedOnly ? (
             <Text style={styles.plannedOnlyHint}>
               Este mês só tem lançamentos PLANEJADO. O resultado REALIZADO aparece vazio.
@@ -599,6 +619,20 @@ export default function FinancialScreen() {
             </View>
           </View>
         </ScrollView>
+
+        {expandedSection ? (
+          <View style={[styles.reportBackFooterBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+            <TouchableOpacity
+              style={styles.reportBackButtonLegacy}
+              onPress={collapseExpandedSection}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Voltar"
+            >
+              <Text style={styles.reportBackButtonTextLegacy}>Voltar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
         <View style={[styles.footerControls, { paddingBottom: insets.bottom + 10 }]}>
           <CarouselFooterNav
@@ -949,5 +983,42 @@ const styles = StyleSheet.create({
   },
   financialMonthDropdownText: {
     color: '#54A2DD',
+  },
+  minimalReportExpandedContent: {
+    paddingBottom: 72,
+  },
+  reportBackButton: {
+    backgroundColor: MINIMAL_UI.rowHover,
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: MINIMAL_UI.divider,
+    marginBottom: 8,
+  },
+  reportBackButtonText: {
+    color: MINIMAL_UI.text,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  reportBackFooterBar: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(52, 211, 153, 0.25)',
+  },
+  reportBackButtonLegacy: {
+    backgroundColor: 'rgba(30, 58, 138, 0.35)',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(96, 165, 250, 0.35)',
+  },
+  reportBackButtonTextLegacy: {
+    color: '#BFDBFE',
+    fontWeight: '700',
+    fontSize: 14,
   },
 });
