@@ -83,6 +83,14 @@ async function isDrawerModuleEnabled(
     );
   }
 
+  if (moduleKey === 'menu_administrativo') {
+    return isDashboardCardFullyAllowed(
+      'administrativo',
+      context.dashboardCardAccess,
+      context.dashboardScreenAccess
+    );
+  }
+
   const panel = resolveDrawerMaintenancePanel(moduleKey);
 
   if (!panel) {

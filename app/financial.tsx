@@ -471,21 +471,6 @@ export default function FinancialScreen() {
     </View>
   );
 
-  const rdFooter = (
-    <TouchableOpacity
-      style={styles.minimalRdButton}
-      onPress={() =>
-        router.push({
-          pathname: '/expense-report',
-          params: withReturnDashboardCard(returnDashboardCard),
-        })
-      }
-      activeOpacity={0.85}
-    >
-      <Text style={styles.minimalRdButtonText}>Criar Relatório de Despesas (RD)</Text>
-    </TouchableOpacity>
-  );
-
   const minimalFixedTop = (
     <View style={styles.minimalFixedTop}>
       <Text style={styles.minimalScreenTitle}>Financeiro</Text>
@@ -496,7 +481,7 @@ export default function FinancialScreen() {
   if (isMinimalPresentation) {
     return (
       <ScreenAccessGate status={accessStatus}>
-        <MinimalScreenLayout fixedTop={minimalFixedTop} footer={rdFooter}>
+        <MinimalScreenLayout fixedTop={minimalFixedTop}>
           {selectedMonthIsPlannedOnly ? (
             <Text style={styles.plannedOnlyHint}>
               Este mês só tem lançamentos PLANEJADO. O resultado REALIZADO aparece vazio.
@@ -964,14 +949,5 @@ const styles = StyleSheet.create({
   },
   financialMonthDropdownText: {
     color: '#54A2DD',
-  },
-  minimalRdButton: {
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  minimalRdButtonText: {
-    color: MINIMAL_UI.text,
-    fontSize: 15,
-    fontWeight: '700',
   },
 });

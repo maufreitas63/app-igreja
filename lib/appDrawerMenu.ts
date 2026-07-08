@@ -5,9 +5,7 @@ import { withMinimalPresentation, withReturnDashboardCard } from '@/lib/dashboar
 import type { Router } from 'expo-router';
 
 /** Itens do menu reservados para futura associação de rota (sem navegação ativa). */
-export const DRAWER_MENU_PLACEHOLDER_KEYS = [
-  'menu_administrativo',
-] as const;
+export const DRAWER_MENU_PLACEHOLDER_KEYS = [] as const;
 
 export type AppDrawerPlaceholderModuleKey = (typeof DRAWER_MENU_PLACEHOLDER_KEYS)[number];
 
@@ -18,6 +16,7 @@ export type AppDrawerModuleKey =
   | 'menu_escalas'
   | 'menu_aniversariantes'
   | 'menu_membros'
+  | 'menu_administrativo'
   | AppDrawerPlaceholderModuleKey
   | 'gestao_financeira'
   | 'Events'
@@ -165,6 +164,14 @@ export async function navigateDrawerMenuItem(
       withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID),
       { method: 'push' }
     );
+    return;
+  }
+
+  if (moduleKey === 'menu_administrativo') {
+    router.push({
+      pathname: '/administrativo',
+      params: withMinimalPresentation(),
+    });
     return;
   }
 
