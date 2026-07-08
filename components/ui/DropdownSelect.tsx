@@ -1,3 +1,4 @@
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -32,7 +33,12 @@ type DropdownSelectProps = {
   triggerIconColor?: string;
   size?: 'default' | 'comfortable' | 'compact';
   disabled?: boolean;
+  /** Identidade visual clara (fundo branco, textos azuis). */
+  variant?: 'default' | 'vigilance';
 };
+
+const VIGILANCE_SURFACE = '#FFFFFF';
+const VIGILANCE_ICON = '#1B4F8A';
 
 const normalizeSearch = (value: string) =>
   value
@@ -51,12 +57,16 @@ export function DropdownSelect({
   searchable = false,
   style,
   triggerTextStyle,
-  triggerIconColor = '#94A3B8',
+  triggerIconColor,
   size = 'default',
   disabled = false,
+  variant = 'default',
 }: DropdownSelectProps) {
   const isComfortable = size === 'comfortable';
   const isCompact = size === 'compact';
+  const isVigilance = variant === 'vigilance';
+  const resolvedTriggerIconColor =
+    triggerIconColor ?? (isVigilance ? VIGILANCE_ICON : '#94A3B8');
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const blurCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -130,9 +140,15 @@ export function DropdownSelect({
 
     return (
       <View style={[styles.searchableRoot, style]}>
-        <View style={[styles.searchableTrigger, disabled && styles.triggerDisabled]}>
+        <View
+          style={[
+            styles.searchableTrigger,
+            isVigilance && styles.searchableTriggerVigilance,
+            disabled && styles.triggerDisabled,
+          ]}
+        >
           <TextInput
-            style={styles.searchableInput}
+            style={[styles.searchableInput, isVigilance && styles.searchableInputVigilance]}
             value={inputValue}
             onChangeText={(text) => {
               setSearchQuery(text);
@@ -141,7 +157,7 @@ export function DropdownSelect({
             onFocus={handleOpenSearch}
             onBlur={scheduleCloseSearch}
             placeholder={inputPlaceholder}
-            placeholderTextColor="#64748B"
+            placeholderTextColor={isVigilance ? VIGILANCE_SCALES_UI.accent : '#64748B'}
             editable={!disabled}
             autoCapitalize="words"
             autoCorrect={false}
@@ -158,7 +174,11 @@ export function DropdownSelect({
               accessibilityLabel="Limpar usuário selecionado"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <FontAwesome name="times-circle" size={18} color="#94A3B8" />
+              <FontAwesome
+                name="times-circle"
+                size={18}
+                color={isVigilance ? VIGILANCE_ICON : '#94A3B8'}
+              />
             </TouchableOpacity>
           ) : null}
           <TouchableOpacity
@@ -177,12 +197,16 @@ export function DropdownSelect({
             accessibilityRole="button"
             accessibilityLabel={open ? 'Fechar lista' : 'Abrir lista'}
           >
-            <FontAwesome name={open ? 'chevron-up' : 'chevron-down'} size={12} color="#94A3B8" />
+            <FontAwesome
+              name={open ? 'chevron-up' : 'chevron-down'}
+              size={12}
+              color={isVigilance ? VIGILANCE_ICON : '#94A3B8'}
+            />
           </TouchableOpacity>
         </View>
 
         {open ? (
-          <View style={styles.searchablePanel}>
+          <View style={[styles.searchablePanel, isVigilance && styles.searchablePanelVigilance]}>
             <ScrollView
               style={styles.searchableScroll}
               contentContainerStyle={styles.optionsContent}
@@ -197,25 +221,41 @@ export function DropdownSelect({
                   return (
                     <TouchableOpacity
                       key={option.value}
-                      style={[styles.optionButton, isSelected && styles.optionButtonSelected]}
+                      style={[
+                        styles.optionButton,
+                        isVigilance && styles.optionButtonVigilance,
+                        isSelected && styles.optionButtonSelected,
+                        isSelected && isVigilance && styles.optionButtonSelectedVigilance,
+                      ]}
                       onPress={() => handleSelect(option.value)}
                       onPressIn={clearBlurTimer}
                       activeOpacity={0.85}
                     >
                       <Text
-                        style={[styles.optionText, isSelected && styles.optionTextSelected]}
+                        style={[
+                          styles.optionText,
+                          isVigilance && styles.optionTextVigilance,
+                          isSelected && styles.optionTextSelected,
+                          isSelected && isVigilance && styles.optionTextSelectedVigilance,
+                        ]}
                         numberOfLines={2}
                       >
                         {option.label}
                       </Text>
                       {isSelected ? (
-                        <FontAwesome name="check" size={14} color="#10b981" />
+                        <FontAwesome
+                          name="check"
+                          size={14}
+                          color={isVigilance ? VIGILANCE_ICON : '#10b981'}
+                        />
                       ) : null}
                     </TouchableOpacity>
                   );
                 })
               ) : (
-                <Text style={styles.emptySearchText}>Nenhum resultado para a busca.</Text>
+                <Text style={[styles.emptySearchText, isVigilance && styles.emptySearchTextVigilance]}>
+                  Nenhum resultado para a busca.
+                </Text>
               )}
             </ScrollView>
           </View>
@@ -231,6 +271,7 @@ export function DropdownSelect({
           styles.trigger,
           isComfortable && styles.triggerComfortable,
           isCompact && styles.triggerCompact,
+          isVigilance && styles.triggerVigilance,
           disabled && styles.triggerDisabled,
           style,
         ]}
@@ -246,19 +287,28 @@ export function DropdownSelect({
             styles.triggerText,
             isComfortable && styles.triggerTextComfortable,
             isCompact && styles.triggerTextCompact,
+            isVigilance && styles.triggerTextVigilance,
             triggerTextStyle,
           ])}
           numberOfLines={1}
         >
           {selectedLabel || placeholder}
         </Text>
-        <FontAwesome name="chevron-down" size={12} color={triggerIconColor} />
+        <FontAwesome name="chevron-down" size={12} color={resolvedTriggerIconColor} />
       </TouchableOpacity>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
-          <Pressable style={styles.modalCard} onPress={() => undefined}>
-            <Text style={styles.modalTitle}>{modalTitle}</Text>
+        <Pressable
+          style={[styles.backdrop, isVigilance && styles.backdropVigilance]}
+          onPress={() => setOpen(false)}
+        >
+          <Pressable
+            style={[styles.modalCard, isVigilance && styles.modalCardVigilance]}
+            onPress={() => undefined}
+          >
+            <Text style={[styles.modalTitle, isVigilance && styles.modalTitleVigilance]}>
+              {modalTitle}
+            </Text>
             <ScrollView
               style={styles.optionsScroll}
               contentContainerStyle={styles.optionsContent}
@@ -271,26 +321,44 @@ export function DropdownSelect({
                 return (
                   <TouchableOpacity
                     key={option.value}
-                    style={[styles.optionButton, isSelected && styles.optionButtonSelected]}
+                    style={[
+                      styles.optionButton,
+                      isVigilance && styles.optionButtonVigilance,
+                      isSelected && styles.optionButtonSelected,
+                      isSelected && isVigilance && styles.optionButtonSelectedVigilance,
+                    ]}
                     onPress={() => handleSelect(option.value)}
                     activeOpacity={0.85}
                   >
-                    <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                    <Text
+                      style={[
+                        styles.optionText,
+                        isVigilance && styles.optionTextVigilance,
+                        isSelected && styles.optionTextSelected,
+                        isSelected && isVigilance && styles.optionTextSelectedVigilance,
+                      ]}
+                    >
                       {option.label}
                     </Text>
                     {isSelected ? (
-                      <FontAwesome name="check" size={14} color="#10b981" />
+                      <FontAwesome
+                        name="check"
+                        size={14}
+                        color={isVigilance ? VIGILANCE_ICON : '#10b981'}
+                      />
                     ) : null}
                   </TouchableOpacity>
                 );
               })}
             </ScrollView>
             <TouchableOpacity
-              style={styles.closeButton}
+              style={[styles.closeButton, isVigilance && styles.closeButtonVigilance]}
               onPress={() => setOpen(false)}
               activeOpacity={0.85}
             >
-              <Text style={styles.closeButtonText}>Fechar</Text>
+              <Text style={[styles.closeButtonText, isVigilance && styles.closeButtonTextVigilance]}>
+                Fechar
+              </Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
@@ -317,6 +385,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     paddingHorizontal: 12,
   },
+  searchableTriggerVigilance: {
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    backgroundColor: VIGILANCE_SURFACE,
+  },
   searchableInput: {
     flex: 1,
     minWidth: 0,
@@ -324,6 +396,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     paddingVertical: 10,
+  },
+  searchableInputVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
   },
   searchableClearButton: {
     alignItems: 'center',
@@ -339,6 +414,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f172a',
     overflow: 'hidden',
   },
+  searchablePanelVigilance: {
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    backgroundColor: VIGILANCE_SURFACE,
+  },
   searchableScroll: {
     maxHeight: 240,
   },
@@ -349,6 +428,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 14,
     paddingHorizontal: 10,
+  },
+  emptySearchTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
   },
   trigger: {
     flex: 1,
@@ -364,6 +446,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     paddingHorizontal: 12,
     paddingVertical: 10,
+  },
+  triggerVigilance: {
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    backgroundColor: VIGILANCE_SURFACE,
   },
   triggerComfortable: {
     minHeight: 52,
@@ -389,6 +475,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 20,
   },
+  triggerTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
   triggerTextComfortable: {
     fontSize: 16,
     lineHeight: 22,
@@ -405,6 +494,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
+  backdropVigilance: {
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+  },
   modalCard: {
     maxHeight: '70%',
     borderRadius: 16,
@@ -414,6 +506,10 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
+  modalCardVigilance: {
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    backgroundColor: VIGILANCE_SURFACE,
+  },
   modalTitle: {
     color: '#10b981',
     fontSize: 13,
@@ -421,6 +517,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     textAlign: 'center',
+  },
+  modalTitleVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
   },
   optionsScroll: {
     maxHeight: 320,
@@ -441,9 +540,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
+  optionButtonVigilance: {
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    backgroundColor: VIGILANCE_SURFACE,
+  },
   optionButtonSelected: {
     borderColor: '#10b981',
     backgroundColor: 'rgba(16, 185, 129, 0.15)',
+  },
+  optionButtonSelectedVigilance: {
+    borderColor: VIGILANCE_ICON,
+    backgroundColor: '#F0F9FF',
   },
   optionText: {
     flex: 1,
@@ -451,8 +558,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  optionTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
   optionTextSelected: {
     color: '#ECFDF5',
+    fontWeight: '800',
+  },
+  optionTextSelectedVigilance: {
+    color: VIGILANCE_ICON,
     fontWeight: '800',
   },
   closeButton: {
@@ -460,9 +574,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
+  closeButtonVigilance: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    backgroundColor: VIGILANCE_SURFACE,
+  },
   closeButtonText: {
     color: '#94A3B8',
     fontSize: 13,
     fontWeight: '700',
+  },
+  closeButtonTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
   },
 });

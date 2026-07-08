@@ -57,6 +57,7 @@ export function BirthdaysClass({
               onValueChange={onMonthChange}
               modalTitle="Selecionar mês"
               placeholder="Selecionar mês"
+              variant="vigilance"
               style={styles.monthDropdown}
               triggerTextStyle={styles.monthDropdownText}
               triggerIconColor={VIGILANCE_SCALES_UI.accent}
