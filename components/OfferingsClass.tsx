@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 
 const OFFERINGS_CLASS_SURFACE = '#FFFFFF';
-const OFFERINGS_CLASS_ICON_COLOR = '#1B4F8A';
+const OFFERINGS_COPY_BUTTON_BG = '#3A96DD';
+const OFFERINGS_COPY_BUTTON_TEXT = '#FFFFFF';
 
 export type OfferingsClassProps = {
   title?: string;
@@ -75,7 +76,7 @@ export function OfferingsClass({
               accessibilityRole="button"
               accessibilityLabel="Copiar chave PIX"
             >
-              <MaterialIcons name="touch-app" size={28} color={OFFERINGS_CLASS_ICON_COLOR} />
+              <MaterialIcons name="touch-app" size={28} color={OFFERINGS_COPY_BUTTON_TEXT} />
               <Text style={styles.copyButtonText}>Copiar chave PIX</Text>
             </TouchableOpacity>
             <Text style={styles.helpText}>
@@ -175,11 +176,12 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: OFFERINGS_CLASS_SURFACE,
+    backgroundColor: OFFERINGS_COPY_BUTTON_BG,
+    borderRadius: 10,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
   },
   copyButtonText: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: OFFERINGS_COPY_BUTTON_TEXT,
     fontSize: 16,
     fontWeight: '700',
   },
