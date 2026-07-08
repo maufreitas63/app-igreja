@@ -93,52 +93,64 @@ export function parseAssemblyMinuteIbnCode(
   return { sequence, year };
 }
 
-const ibnCodeFromMinute = (row: Pick<AssemblyMinuteRecord, 'title' | 'file_name'>) =>
-  parseAssemblyMinuteIbnCode(row.title) ?? parseAssemblyMinuteIbnCode(row.file_name);
+/** Prefixo de ordenação: 12 caracteres à esquerda do título. */
+export const ASSEMBLY_MINUTE_TITLE_SORT_PREFIX_LENGTH = 12;
 
-/** Ano mais recente primeiro; no mesmo ano, sequência maior primeiro (ex.: IBN.003.2025 antes de IBN.001.2025). */
+export function assemblyMinuteTitleSortKey(title: string | null | undefined): string {
+  return normalizeAssemblyMinuteLabel(title ?? '').slice(0, ASSEMBLY_MINUTE_TITLE_SORT_PREFIX_LENGTH);
+}
+
+/** Ordem decrescente pelos 12 caracteres à esquerda do título. */
+export function compareAssemblyMinutesByTitlePrefixDesc(
+  a: Pick<AssemblyMinuteRecord, 'title' | 'created_at'>,
+  b: Pick<AssemblyMinuteRecord, 'title' | 'created_at'>
+) {
+  const keyCompare = assemblyMinuteTitleSortKey(b.title).localeCompare(
+    assemblyMinuteTitleSortKey(a.title),
+    'pt-BR',
+    { sensitivity: 'base', numeric: true }
+  );
+
+  if (keyCompare !== 0) {
+    return keyCompare;
+  }
+
+  const titleCompare = normalizeAssemblyMinuteLabel(b.title).localeCompare(
+    normalizeAssemblyMinuteLabel(a.title),
+    'pt-BR',
+    { sensitivity: 'base', numeric: true }
+  );
+
+  if (titleCompare !== 0) {
+    return titleCompare;
+  }
+
+  return (b.created_at || '').localeCompare(a.created_at || '');
+}
+
+export function sortAssemblyMinutesByTitlePrefixDesc<
+  T extends Pick<AssemblyMinuteRecord, 'title' | 'created_at'>,
+>(rows: T[]): T[] {
+  return [...rows].sort(compareAssemblyMinutesByTitlePrefixDesc);
+}
+
+/** @deprecated Prefer sortAssemblyMinutesByTitlePrefixDesc — mantém compatibilidade de imports. */
 export function compareAssemblyMinutesByIbnDesc(
   a: Pick<AssemblyMinuteRecord, 'title' | 'file_name' | 'created_at'>,
   b: Pick<AssemblyMinuteRecord, 'title' | 'file_name' | 'created_at'>
 ) {
-  const codeA = ibnCodeFromMinute(a);
-  const codeB = ibnCodeFromMinute(b);
-
-  if (codeA && codeB) {
-    if (codeA.year !== codeB.year) {
-      return codeB.year - codeA.year;
-    }
-
-    if (codeA.sequence !== codeB.sequence) {
-      return codeB.sequence - codeA.sequence;
-    }
-  } else if (codeA && !codeB) {
-    return -1;
-  } else if (!codeA && codeB) {
-    return 1;
-  }
-
-  const createdCompare = (b.created_at || '').localeCompare(a.created_at || '');
-
-  if (createdCompare !== 0) {
-    return createdCompare;
-  }
-
-  return normalizeAssemblyMinuteLabel(b.title).localeCompare(
-    normalizeAssemblyMinuteLabel(a.title),
-    'pt-BR',
-    { sensitivity: 'base' }
-  );
+  return compareAssemblyMinutesByTitlePrefixDesc(a, b);
 }
 
-export function sortAssemblyMinutesByIbnDesc<T extends Pick<AssemblyMinuteRecord, 'title' | 'file_name' | 'created_at'>>(
-  rows: T[]
-): T[] {
-  return [...rows].sort(compareAssemblyMinutesByIbnDesc);
+/** @deprecated Prefer sortAssemblyMinutesByTitlePrefixDesc — mantém compatibilidade de imports. */
+export function sortAssemblyMinutesByIbnDesc<
+  T extends Pick<AssemblyMinuteRecord, 'title' | 'file_name' | 'created_at'>,
+>(rows: T[]): T[] {
+  return sortAssemblyMinutesByTitlePrefixDesc(rows);
 }
 
 const prepareAssemblyMinuteRows = (rows: Omit<AssemblyMinuteRecord, 'signedUrl'>[]) =>
-  sortAssemblyMinutesByIbnDesc(
+  sortAssemblyMinutesByTitlePrefixDesc(
     rows.map((row) => ({
       ...row,
       title: normalizeAssemblyMinuteLabel(row.title),
