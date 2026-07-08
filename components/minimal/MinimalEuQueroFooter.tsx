@@ -10,9 +10,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-
-/** Altura reservada na home para o bloco Eu quero… fixo no rodapé do painel. */
-export const MINIMAL_EU_QUERO_FOOTER_HEIGHT = 196;
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type EuQueroItemProps = {
   icon: React.ComponentProps<typeof FontAwesome>['name'];
@@ -46,6 +44,7 @@ function EuQueroItem({ icon, title, subtitle, onPress }: EuQueroItemProps) {
 
 export function MinimalEuQueroFooter() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { homeAgendaOpen } = useMinimalHome();
 
   if (homeAgendaOpen) {
@@ -66,51 +65,41 @@ export function MinimalEuQueroFooter() {
   };
 
   return (
-    <View style={styles.fixedWrap} pointerEvents="box-none">
-      <View style={styles.wrap}>
-        <Text style={styles.heading}>Eu quero…</Text>
-        <View style={styles.list}>
-          <EuQueroItem
-            icon="money"
-            title="Contribuir com meu Dízimo ou Oferta"
-            subtitle="Copie a chave PIX e contribua com a igreja."
-            onPress={handleOpenOfferings}
-          />
-          <EuQueroItem
-            icon="heart"
-            title="Fazer um pedido de Oração"
-            subtitle="Compartilhe seu pedido com a equipe pastoral."
-            onPress={handleOpenPastoral}
-          />
-        </View>
+    <View style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+      <Text style={styles.heading}>Eu quero…</Text>
+      <View style={styles.list}>
+        <EuQueroItem
+          icon="money"
+          title="Contribuir com meu Dízimo ou Oferta"
+          subtitle="Copie a chave PIX e contribua com a igreja."
+          onPress={handleOpenOfferings}
+        />
+        <EuQueroItem
+          icon="heart"
+          title="Fazer um pedido de Oração"
+          subtitle="Compartilhe seu pedido com a equipe pastoral."
+          onPress={handleOpenPastoral}
+        />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  fixedWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 0,
-    zIndex: 10,
-  },
   wrap: {
     gap: 12,
-    paddingTop: 4,
-    paddingBottom: 4,
+    paddingTop: 12,
     backgroundColor: MINIMAL_UI.background,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: MINIMAL_UI.divider,
+    width: '100%',
+    alignSelf: 'stretch',
   },
   heading: {
     fontSize: 18,
     fontWeight: '700',
     fontStyle: 'italic',
     color: MINIMAL_UI.text,
-    paddingHorizontal: 4,
   },
   list: {
     gap: 4,
@@ -120,7 +109,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
     paddingVertical: 10,
-    paddingHorizontal: 4,
+    paddingHorizontal: 0,
     borderRadius: 8,
   },
   itemPressed: {

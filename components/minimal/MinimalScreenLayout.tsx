@@ -29,8 +29,6 @@ function MinimalScreenLayoutBody({
   scroll = true,
   showGreeting = false,
 }: Props) {
-  const contentPaddingBottom = 12;
-
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <AppDrawer />
@@ -42,27 +40,15 @@ function MinimalScreenLayoutBody({
 
           {scroll ? (
             <ScrollView
-              style={styles.scroll}
-              contentContainerStyle={[
-                styles.scrollContent,
-                { paddingBottom: contentPaddingBottom },
-                contentContainerStyle,
-              ]}
+              style={styles.main}
+              contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator
             >
               {children}
             </ScrollView>
           ) : (
-            <View
-              style={[
-                styles.flexContent,
-                { paddingBottom: contentPaddingBottom },
-                contentContainerStyle,
-              ]}
-            >
-              {children}
-            </View>
+            <View style={[styles.main, styles.flexContent, contentContainerStyle]}>{children}</View>
           )}
 
           {footer ? <View style={styles.footer}>{footer}</View> : null}
@@ -92,31 +78,28 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     minHeight: 0,
+    flexDirection: 'column',
   },
   fixedTop: {
     paddingHorizontal: 16,
     paddingBottom: 8,
     backgroundColor: MINIMAL_UI.background,
+    flexShrink: 0,
   },
-  scroll: {
+  main: {
     flex: 1,
+    minHeight: 0,
   },
   scrollContent: {
     paddingHorizontal: 16,
+    paddingBottom: 12,
   },
   flexContent: {
-    flex: 1,
-    minHeight: 0,
     paddingHorizontal: 16,
   },
   footer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flexShrink: 0,
     paddingHorizontal: 16,
-    paddingVertical: 12,
     backgroundColor: MINIMAL_UI.background,
-    zIndex: 10,
   },
 });
