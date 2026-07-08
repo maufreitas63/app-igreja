@@ -63,6 +63,9 @@ type Props = {
   hideRoomSelos?: boolean;
 };
 
+/** Altura aproximada de cada linha em MemberCheckboxItem (padding + nome). */
+const FAMILY_MEMBER_ROW_HEIGHT = 44;
+
 export const FamilyRegistrationList = ({
   familyId,
   eventId,
@@ -491,6 +494,9 @@ export const FamilyRegistrationList = ({
     );
   }
 
+  const bulkSelectionHeight = Math.max(22, visibleMembers.length * FAMILY_MEMBER_ROW_HEIGHT);
+  const showBulkCheckbox = hasEventOpen && !quorumMode;
+
   return (
     <View style={styles.wrapper}>
       <GeoCheckinStatusBanner
@@ -515,26 +521,6 @@ export const FamilyRegistrationList = ({
             {title ?? 'Audiência da Família'}
           </Text>
         )}
-        {hasEventOpen && !quorumMode ? (
-          <TouchableOpacity
-            style={[
-              styles.bulkCheckbox,
-              allRegistered && styles.bulkCheckboxChecked,
-              (isBusy || allPending) && styles.bulkCheckboxDisabled,
-            ]}
-            onPress={() => {
-              void toggleAllMembers();
-            }}
-            disabled={isBusy || allPending}
-            activeOpacity={0.8}
-          >
-            {isBusy || allPending ? (
-              <ActivityIndicator size="small" color="#020617" />
-            ) : allRegistered ? (
-              <Text style={styles.bulkCheckboxMark}>✓</Text>
-            ) : null}
-          </TouchableOpacity>
-        ) : null}
         {hasEventOpen && quorumMode ? (
           <FontAwesome
             name={quorumTotemCheckinConfirmed ? 'lock' : 'unlock-alt'}
@@ -549,7 +535,47 @@ export const FamilyRegistrationList = ({
         ) : null}
       </View>
       <View style={[styles.listFrame, minimal && styles.listFrameMinimal]}>
-        <View style={styles.listContainer}>
+        <View style={styles.listWithBulkRow}>
+          {showBulkCheckbox ? (
+            <TouchableOpacity
+              accessibilityLabel={
+                allRegistered ? 'Desmarcar toda a família' : 'Marcar toda a família'
+              }
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: allRegistered, disabled: isBusy || allPending }}
+              style={[
+                styles.bulkCheckboxColumn,
+                minimal && styles.bulkCheckboxColumnMinimal,
+                { height: bulkSelectionHeight },
+                (isBusy || allPending) && styles.bulkCheckboxColumnDisabled,
+              ]}
+              onPress={() => {
+                void toggleAllMembers();
+              }}
+              disabled={isBusy || allPending}
+              activeOpacity={0.8}
+            >
+              <View
+                style={[
+                  styles.bulkCheckbox,
+                  minimal && styles.bulkCheckboxMinimal,
+                  { height: bulkSelectionHeight },
+                  allRegistered && styles.bulkCheckboxChecked,
+                  allRegistered && minimal && styles.bulkCheckboxCheckedMinimal,
+                  (isBusy || allPending) && styles.bulkCheckboxDisabled,
+                ]}
+              >
+                {isBusy || allPending ? (
+                  <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.icon : '#020617'} />
+                ) : allRegistered ? (
+                  <Text style={[styles.bulkCheckboxMark, minimal && styles.bulkCheckboxMarkMinimal]}>
+                    ✓
+                  </Text>
+                ) : null}
+              </View>
+            </TouchableOpacity>
+          ) : null}
+          <View style={styles.listContainer}>
         <FlatList
           data={visibleMembers}
           keyExtractor={(item) => String(item.id)}
@@ -591,6 +617,7 @@ export const FamilyRegistrationList = ({
           bounces
           alwaysBounceVertical
         />
+          </View>
         </View>
       </View>
       {hasEventOpen && loadingRegisteredMembers ? (
@@ -662,8 +689,29 @@ const styles = StyleSheet.create({
   listContainer: {
     flex: 1,
     minHeight: 0,
+    minWidth: 0,
     width: '100%',
     maxWidth: '100%',
+  },
+  listWithBulkRow: {
+    flex: 1,
+    minHeight: 0,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    width: '100%',
+  },
+  bulkCheckboxColumn: {
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 8,
+  },
+  bulkCheckboxColumnMinimal: {
+    paddingTop: 8,
+  },
+  bulkCheckboxColumnDisabled: {
+    opacity: 0.5,
   },
   listScroll: {
     flex: 1,
@@ -696,7 +744,6 @@ const styles = StyleSheet.create({
   },
   bulkCheckbox: {
     width: 22,
-    height: 22,
     borderRadius: 6,
     borderWidth: 2,
     borderColor: '#10b981',
@@ -704,8 +751,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
+  bulkCheckboxMinimal: {
+    borderColor: MINIMAL_UI.icon,
+  },
   bulkCheckboxChecked: {
     backgroundColor: '#10b981',
+  },
+  bulkCheckboxCheckedMinimal: {
+    backgroundColor: MINIMAL_UI.icon,
   },
   bulkCheckboxDisabled: {
     opacity: 0.5,
@@ -714,6 +767,9 @@ const styles = StyleSheet.create({
     color: '#020617',
     fontSize: 13,
     fontWeight: '900',
+  },
+  bulkCheckboxMarkMinimal: {
+    color: MINIMAL_UI.background,
   },
   helperErrorText: {
     color: '#F59E0B',
