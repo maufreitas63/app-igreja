@@ -685,12 +685,15 @@ export default function PastoralScreen() {
             contentContainerStyle={styles.formScrollContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
-            <View style={styles.fieldStack}>
+            <View style={[styles.fieldStack, useVigilanceTheme && styles.fieldStackCompact]}>
               <View style={styles.fieldBlock}>
-                <SectionLabel variant={sectionLabelVariant}>Motivo</SectionLabel>
+                <SectionLabel variant={sectionLabelVariant} tight={useVigilanceTheme}>
+                  Motivo
+                </SectionLabel>
                 <TouchableOpacity
                   style={[
                     styles.selectorField,
+                    useVigilanceTheme && styles.selectorFieldCompact,
                     useVigilanceTheme && styles.selectorFieldVigilance,
                     motivoSelecionadoLabel && styles.selectorFieldSelected,
                     motivoSelecionadoLabel && useVigilanceTheme && styles.selectorFieldSelectedVigilance,
@@ -701,6 +704,7 @@ export default function PastoralScreen() {
                   <Text
                     style={[
                       styles.selectorFieldValue,
+                      useVigilanceTheme && styles.selectorFieldValueCompact,
                       useVigilanceTheme && styles.selectorFieldValueVigilance,
                       !motivoSelecionadoLabel && styles.selectorFieldPlaceholder,
                       !motivoSelecionadoLabel && useVigilanceTheme && styles.selectorFieldPlaceholderVigilance,
@@ -714,10 +718,13 @@ export default function PastoralScreen() {
               </View>
 
               <View style={styles.fieldBlock}>
-                <SectionLabel variant={sectionLabelVariant}>Situação</SectionLabel>
+                <SectionLabel variant={sectionLabelVariant} tight={useVigilanceTheme}>
+                  Situação
+                </SectionLabel>
                 <TouchableOpacity
                   style={[
                     styles.selectorField,
+                    useVigilanceTheme && styles.selectorFieldCompact,
                     useVigilanceTheme && styles.selectorFieldVigilance,
                     submotivoSelecionadoLabel && styles.selectorFieldSelected,
                     submotivoSelecionadoLabel && useVigilanceTheme && styles.selectorFieldSelectedVigilance,
@@ -733,6 +740,7 @@ export default function PastoralScreen() {
                   <Text
                     style={[
                       styles.selectorFieldValue,
+                      useVigilanceTheme && styles.selectorFieldValueCompact,
                       useVigilanceTheme && styles.selectorFieldValueVigilance,
                       !submotivoSelecionadoLabel && styles.selectorFieldPlaceholder,
                       !submotivoSelecionadoLabel && useVigilanceTheme && styles.selectorFieldPlaceholderVigilance,
@@ -764,9 +772,12 @@ export default function PastoralScreen() {
               </Text>
             ) : null}
 
-            <SectionLabel spaced variant={sectionLabelVariant}>Este pedido é para</SectionLabel>
+            <SectionLabel spaced variant={sectionLabelVariant} tight={useVigilanceTheme}>
+              Este pedido é para
+            </SectionLabel>
             <SegmentChipRow
               variant={chipVariant}
+              compact={useVigilanceTheme}
               options={PASTORAL_BENEFICIARY_TYPES.map((option) => ({
                 value: option,
                 label: PASTORAL_BENEFICIARY_META[option].shortLabel,
@@ -827,9 +838,12 @@ export default function PastoralScreen() {
               </View>
             ) : null}
 
-            <SectionLabel spaced variant={sectionLabelVariant}>Encaminhar para</SectionLabel>
+            <SectionLabel spaced variant={sectionLabelVariant} tight={useVigilanceTheme}>
+              Encaminhar para
+            </SectionLabel>
             <SegmentChipRow
               variant={chipVariant}
+              compact={useVigilanceTheme}
               options={PASTORAL_DESTINATIONS.map((option) => ({
                 value: option,
                 label: option === 'Sigilo Pastoral' ? 'Sigilo pastoral' : 'Intercessão',
@@ -839,20 +853,32 @@ export default function PastoralScreen() {
               onSelect={setSelectedDestination}
             />
             {selectedDestination ? (
-              <Text style={[styles.destinationActiveHint, useVigilanceTheme && styles.destinationActiveHintVigilance]}>
+              <Text
+                style={[
+                  styles.destinationActiveHint,
+                  useVigilanceTheme && styles.destinationActiveHintCompact,
+                  useVigilanceTheme && styles.destinationActiveHintVigilance,
+                ]}
+              >
                 {PASTORAL_DESTINATION_META[selectedDestination].hint}
               </Text>
             ) : null}
 
-            <SectionLabel spaced variant={sectionLabelVariant}>Seu pedido</SectionLabel>
+            <SectionLabel spaced variant={sectionLabelVariant} tight={useVigilanceTheme}>
+              Seu pedido
+            </SectionLabel>
             <TextInput
-              style={[styles.input, useVigilanceTheme && styles.inputVigilance]}
+              style={[
+                styles.input,
+                useVigilanceTheme && styles.inputCompact,
+                useVigilanceTheme && styles.inputVigilance,
+              ]}
               placeholder="Descreva brevemente..."
               placeholderTextColor={useVigilanceTheme ? VIGILANCE_SCALES_UI.accent : '#64748b'}
               value={descricao}
               onChangeText={setDescricao}
               multiline
-              numberOfLines={6}
+              numberOfLines={useVigilanceTheme ? 4 : 6}
               textAlignVertical="top"
             />
           </ScrollView>
@@ -999,6 +1025,10 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 10,
   },
+  fieldStackCompact: {
+    gap: 6,
+    marginBottom: 6,
+  },
   fieldBlock: {
     width: '100%',
     alignSelf: 'stretch',
@@ -1022,6 +1052,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 10,
   },
+  selectorFieldCompact: {
+    minHeight: 40,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
   selectorFieldSelected: {
     borderColor: '#10b981',
     backgroundColor: 'rgba(16, 185, 129, 0.12)',
@@ -1034,6 +1070,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
+  },
+  selectorFieldValueCompact: {
+    fontSize: 12,
+    lineHeight: 16,
   },
   selectorFieldPlaceholder: {
     color: '#CBD5E1',
@@ -1090,6 +1130,11 @@ const styles = StyleSheet.create({
     lineHeight: 15,
     marginBottom: 8,
   },
+  destinationActiveHintCompact: {
+    fontSize: 10,
+    lineHeight: 14,
+    marginBottom: 4,
+  },
   beneficiaryFields: {
     marginBottom: 4,
   },
@@ -1116,6 +1161,15 @@ const styles = StyleSheet.create({
     maxHeight: 168,
     fontSize: 15,
     lineHeight: 22,
+  },
+  inputCompact: {
+    minHeight: 96,
+    maxHeight: 112,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    fontSize: 14,
+    lineHeight: 20,
   },
   footerBar: {
     paddingHorizontal: 16,

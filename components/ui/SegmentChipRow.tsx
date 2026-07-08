@@ -14,6 +14,7 @@ type SegmentChipRowProps<T extends string> = {
   selectedValue: T | null;
   onSelect: (value: T) => void;
   variant?: 'default' | 'vigilance';
+  compact?: boolean;
 };
 
 export function SegmentChipRow<T extends string>({
@@ -21,11 +22,12 @@ export function SegmentChipRow<T extends string>({
   selectedValue,
   onSelect,
   variant = 'default',
+  compact = false,
 }: SegmentChipRowProps<T>) {
   const isVigilance = variant === 'vigilance';
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, compact && styles.rowCompact]}>
       {options.map((option) => {
         const isSelected = selectedValue === option.value;
 
@@ -39,6 +41,7 @@ export function SegmentChipRow<T extends string>({
             onPress={() => onSelect(option.value)}
             style={[
               styles.chip,
+              compact && styles.chipCompact,
               isVigilance && styles.chipVigilance,
               isSelected && (isVigilance ? styles.chipVigilanceSelected : styles.chipSelected),
             ]}
@@ -46,6 +49,7 @@ export function SegmentChipRow<T extends string>({
             <Text
               style={[
                 styles.chipText,
+                compact && styles.chipTextCompact,
                 isVigilance && styles.chipTextVigilance,
                 isSelected && (isVigilance ? styles.chipTextVigilanceSelected : styles.chipTextSelected),
               ]}
@@ -66,6 +70,10 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 6,
   },
+  rowCompact: {
+    gap: 6,
+    marginBottom: 4,
+  },
   chip: {
     flex: 1,
     minHeight: UI_SEGMENT.minHeight,
@@ -78,6 +86,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  chipCompact: {
+    minHeight: 36,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
   chipSelected: {
     borderColor: UI_COLORS.segmentBorderPurple,
     backgroundColor: UI_COLORS.segmentSelectedPurple,
@@ -88,6 +102,10 @@ const styles = StyleSheet.create({
     fontWeight: UI_TYPO.segment.fontWeight,
     textAlign: 'center',
     lineHeight: UI_TYPO.segment.lineHeight,
+  },
+  chipTextCompact: {
+    fontSize: 13,
+    lineHeight: 16,
   },
   chipTextSelected: {
     color: '#F5F3FF',

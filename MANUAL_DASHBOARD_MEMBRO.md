@@ -967,18 +967,6 @@ Manter **seus dados**, **cadastrar integrantes da sua família**, responder o **
 ### Caminho
 Painel ou Índice → **Perfil & Identidade** → **Dados Cadastrais**, **Gerenciar Família**, **Perfil Ministerial** ou seletor de **Paleta de cores**.
 
-### Ilustração — Perfil & Identidade
-
-![Perfil & Identidade — captura anotada](docs/manual-painel/screens/14-gestao-cadastros.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Atalho **Dados Cadastrais** |
-| ② | Atalho **Gerenciar Família** |
-| ③ | Atalho **Perfil Ministerial** (questionário) |
-| ④ | Seletor de **Paleta de cores** (rodapé do card) |
-
-
 
 ## 12.1 Dados Cadastrais
 
@@ -1014,18 +1002,6 @@ Adicionar cônjuge, filhos e outros parentes ao **mesmo código de família** pa
 
 ### Caminho
 **Perfil & Identidade** → **Gerenciar Família**.
-
-### Ilustração — Gerenciar Família
-
-![Gerenciar Família — captura anotada](docs/manual-painel/screens/16-gerenciar-familia.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Código **Família Atual** no topo |
-| ② | Botão **Adicionar integrante** |
-| ③ | Lista **Integrantes Cadastrados** |
-| ④ | Campo **Grau de parentesco** |
-
 
 
 ### Passo a passo

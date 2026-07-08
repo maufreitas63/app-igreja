@@ -4,7 +4,7 @@ import React from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export const INBOX_EVENT_ROW_HEIGHT = 80;
-export const INBOX_VISIBLE_EVENT_ROWS = 3;
+export const INBOX_VISIBLE_EVENT_ROWS = 4;
 export const INBOX_EVENT_ROW_GAP = 8;
 export const INBOX_LIST_MAX_HEIGHT =
   INBOX_EVENT_ROW_HEIGHT * INBOX_VISIBLE_EVENT_ROWS +
@@ -22,7 +22,7 @@ type Props = {
   items: InboxListItem[];
   emptyMessage?: string;
   onItemPress?: (item: InboxListItem) => void;
-  /** Altura da janela da lista em número de linhas visíveis (padrão: 3). */
+  /** Altura da janela da lista em número de linhas visíveis (padrão: 4). */
   maxVisibleRows?: number;
 };
 

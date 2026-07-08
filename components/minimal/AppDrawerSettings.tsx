@@ -33,29 +33,22 @@ export function AppDrawerSettings({ visible, onClose }: Props) {
   const { closeDrawer } = useAppDrawer();
   const insets = useSafeAreaInsets();
 
-  const navigateAndClose = (pathname: '/perfil' | '/lgpd') => {
+  const navigateAndClose = () => {
     onClose();
     closeDrawer();
     router.push({
-      pathname,
+      pathname: '/lgpd',
       params: withMinimalPresentation(),
     });
   };
 
   const items: SettingsItem[] = [
     {
-      id: 'profile',
-      label: 'Meu perfil',
-      hint: 'Dados cadastrais e classificação ministerial',
-      icon: 'user',
-      onPress: () => navigateAndClose('/perfil'),
-    },
-    {
       id: 'lgpd',
       label: 'Privacidade (LGPD)',
       hint: 'Termos de uso e consentimento',
       icon: 'shield',
-      onPress: () => navigateAndClose('/lgpd'),
+      onPress: navigateAndClose,
     },
   ];
 

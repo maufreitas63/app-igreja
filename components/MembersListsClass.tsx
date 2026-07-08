@@ -19,6 +19,7 @@ import {
 
 const MEMBERS_LISTS_CLASS_SURFACE = '#FFFFFF';
 const MEMBERS_LISTS_CLASS_ICON_COLOR = '#1B4F8A';
+const MEMBERS_LISTS_ACTION_BORDER = '#3A96DD';
 
 export type MembersListsClassProps = {
   title?: string;
@@ -288,6 +289,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 12,
+    borderWidth: 2,
+    borderColor: MEMBERS_LISTS_ACTION_BORDER,
     backgroundColor: MEMBERS_LISTS_CLASS_SURFACE,
   },
   secondaryActionButtonText: {

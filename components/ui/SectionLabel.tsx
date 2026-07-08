@@ -64,5 +64,6 @@ const styles = StyleSheet.create({
   },
   tight: {
     marginTop: 0,
+    marginBottom: 2,
   },
 });

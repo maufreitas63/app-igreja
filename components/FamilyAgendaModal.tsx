@@ -5,6 +5,7 @@ import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { getStoredUserPhone } from '@/lib/userSession';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -156,6 +157,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
         sessionProfileName={profile?.full_name ?? null}
         sessionProfile={familyRegistrationSessionProfile}
         minimal
+        hideRoomSelos
       />
     ) : null;
 
@@ -222,17 +224,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   panelHeader: {
-    paddingHorizontal: 4,
-    paddingBottom: 8,
-    backgroundColor: VIGILANCE_SCALES_UI.surface,
     width: '100%',
+    backgroundColor: MINIMAL_UI.background,
   },
-  panelTitle: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 17,
-    fontWeight: '800',
-    flexShrink: 1,
-  },
+  panelTitle: MINIMAL_SECTION_TITLE,
   scroll: {
     flex: 1,
     width: '100%',

@@ -1,13 +1,20 @@
 import { OfferingsClass } from '@/components/OfferingsClass';
 import { getAppParameterValue } from '@/lib/appParameters';
 import { OFFERINGS_RECIPIENT_ROWS } from '@/lib/offeringsRecipientInfo';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import * as Clipboard from 'expo-clipboard';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
+type OfferingsClassPanelProps = {
+  onClose?: () => void;
+};
+
 /** Container com dados e ações — compõe o OfferingsClass stateless. */
-export function OfferingsClassPanel() {
+export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
+  const router = useRouter();
   const [pixKey, setPixKey] = useState<string | null>(null);
   const [pixKeyLoading, setPixKeyLoading] = useState(true);
 
@@ -49,6 +56,15 @@ export function OfferingsClassPanel() {
     }
   }, [pixKey]);
 
+  const handleClose = useCallback(() => {
+    if (onClose) {
+      onClose();
+      return;
+    }
+
+    router.back();
+  }, [onClose, router]);
+
   return (
     <View style={styles.root}>
       <OfferingsClass
@@ -62,6 +78,17 @@ export function OfferingsClassPanel() {
           void loadPixKey();
         }}
       />
+
+      <View style={styles.footerBar}>
+        <Pressable
+          onPress={handleClose}
+          style={styles.closeFooterButton}
+          accessibilityRole="button"
+          accessibilityLabel="Fechar"
+        >
+          <Text style={styles.closeFooterButtonText}>Fechar</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -71,5 +98,31 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     width: '100%',
+  },
+  footerBar: {
+    flexShrink: 0,
+    paddingTop: 8,
+    paddingBottom: 12,
+    borderTopWidth: 1,
+    borderTopColor: VIGILANCE_SCALES_UI.border,
+    backgroundColor: '#FFFFFF',
+    width: '100%',
+  },
+  closeFooterButton: {
+    minHeight: 51,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#1B4F8A',
+    backgroundColor: '#3A96DD',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
+  },
+  closeFooterButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
 });

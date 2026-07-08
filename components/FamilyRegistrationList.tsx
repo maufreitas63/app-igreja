@@ -63,8 +63,19 @@ type Props = {
   hideRoomSelos?: boolean;
 };
 
-/** Altura aproximada de cada linha em MemberCheckboxItem (padding + nome). */
-const FAMILY_MEMBER_ROW_HEIGHT = 44;
+/** Métricas alinhadas a MemberCheckboxItem + contentContainerStyle da lista. */
+const LIST_CONTENT_PADDING_TOP = 8;
+const MEMBER_ROW_PADDING_VERTICAL = 8;
+const MEMBER_CHECKBOX_HEIGHT = 24;
+const MEMBER_NAME_LINE_HEIGHT = 22;
+const MEMBER_REGISTERED_LINE_HEIGHT = 16;
+
+function getMemberRowHeight(isRegistered: boolean): number {
+  const infoHeight = isRegistered
+    ? MEMBER_NAME_LINE_HEIGHT + MEMBER_REGISTERED_LINE_HEIGHT
+    : MEMBER_NAME_LINE_HEIGHT;
+  return MEMBER_ROW_PADDING_VERTICAL * 2 + Math.max(MEMBER_CHECKBOX_HEIGHT, infoHeight);
+}
 
 export const FamilyRegistrationList = ({
   familyId,
@@ -494,7 +505,16 @@ export const FamilyRegistrationList = ({
     );
   }
 
-  const bulkSelectionHeight = Math.max(22, visibleMembers.length * FAMILY_MEMBER_ROW_HEIGHT);
+  const bulkTopOffset = LIST_CONTENT_PADDING_TOP + MEMBER_ROW_PADDING_VERTICAL;
+  const totalMemberRowsHeight = visibleMembers.reduce((sum, member) => {
+    const isRegistered =
+      registeredMemberIds.includes(member.id) && !pendingUnregisterIds.includes(member.id);
+    return sum + getMemberRowHeight(isRegistered);
+  }, 0);
+  const bulkSelectionHeight = Math.max(
+    MEMBER_CHECKBOX_HEIGHT,
+    totalMemberRowsHeight - MEMBER_ROW_PADDING_VERTICAL * 2
+  );
   const showBulkCheckbox = hasEventOpen && !quorumMode;
 
   return (
@@ -545,8 +565,7 @@ export const FamilyRegistrationList = ({
               accessibilityState={{ checked: allRegistered, disabled: isBusy || allPending }}
               style={[
                 styles.bulkCheckboxColumn,
-                minimal && styles.bulkCheckboxColumnMinimal,
-                { height: bulkSelectionHeight },
+                { paddingTop: bulkTopOffset },
                 (isBusy || allPending) && styles.bulkCheckboxColumnDisabled,
               ]}
               onPress={() => {
@@ -704,11 +723,7 @@ const styles = StyleSheet.create({
   bulkCheckboxColumn: {
     flexShrink: 0,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 8,
-  },
-  bulkCheckboxColumnMinimal: {
-    paddingTop: 8,
+    justifyContent: 'flex-start',
   },
   bulkCheckboxColumnDisabled: {
     opacity: 0.5,

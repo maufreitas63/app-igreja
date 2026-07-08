@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+﻿import fs from 'node:fs';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -518,7 +518,7 @@ export function MembersClassPanel({
 
   const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.manageMembers,
-    deniedMessage: 'Você não tem permissão para abrir Gerenciar família.',
+    deniedMessage: 'Voc├¬ n├úo tem permiss├úo para abrir Gerenciar fam├¡lia.',
   });
 
 ${panelLogic.replace(/  return \([\s\S]*/s, '').trim()}
@@ -626,7 +626,7 @@ fs.writeFileSync(
   path.join(root, 'app/manage-members.tsx'),
   `import { MembersClassPanel } from '@/components/MembersClassPanel';
 
-/** Rota expo-router — delega para o container MembersClassPanel. */
+/** Rota expo-router ÔÇö delega para o container MembersClassPanel. */
 export default function ManageMembersScreen() {
   return <MembersClassPanel />;
 }
