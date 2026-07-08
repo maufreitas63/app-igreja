@@ -5,7 +5,10 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 
 export const INBOX_EVENT_ROW_HEIGHT = 80;
 export const INBOX_VISIBLE_EVENT_ROWS = 3;
-export const INBOX_LIST_MAX_HEIGHT = INBOX_EVENT_ROW_HEIGHT * INBOX_VISIBLE_EVENT_ROWS;
+export const INBOX_EVENT_ROW_GAP = 8;
+export const INBOX_LIST_MAX_HEIGHT =
+  INBOX_EVENT_ROW_HEIGHT * INBOX_VISIBLE_EVENT_ROWS +
+  INBOX_EVENT_ROW_GAP * Math.max(0, INBOX_VISIBLE_EVENT_ROWS - 1);
 
 export type InboxListItem = {
   id: string;
@@ -34,7 +37,8 @@ export function InboxList({
     return <Text style={styles.empty}>{emptyMessage}</Text>;
   }
 
-  const listMaxHeight = INBOX_EVENT_ROW_HEIGHT * maxVisibleRows;
+  const listMaxHeight =
+    INBOX_EVENT_ROW_HEIGHT * maxVisibleRows + INBOX_EVENT_ROW_GAP * Math.max(0, maxVisibleRows - 1);
 
   return (
     <ScrollView
@@ -83,13 +87,15 @@ const styles = StyleSheet.create({
   },
   listContent: {
     flexGrow: 0,
+    gap: INBOX_EVENT_ROW_GAP,
   },
   eventButton: {
     width: '100%',
     height: INBOX_EVENT_ROW_HEIGHT,
     backgroundColor: MINIMAL_UI.background,
-    borderWidth: 0,
-    borderRadius: 0,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    borderRadius: 16,
     shadowOpacity: 0,
     elevation: 0,
     paddingVertical: 0,
@@ -110,7 +116,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 4,
+    paddingHorizontal: 12,
     gap: 6,
     backgroundColor: 'transparent',
   },
