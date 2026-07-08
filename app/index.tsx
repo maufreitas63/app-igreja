@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -17,6 +16,16 @@ import {
   type StyleProp,
   type TextStyle,
 } from 'react-native';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+
+const LOGIN_SURFACE = '#FFFFFF';
+const LOGIN_ACCENT = VIGILANCE_SCALES_UI.accent;
+const LOGIN_ICON = '#1B4F8A';
+const LOGIN_SOFT_BORDER = 'rgba(52, 211, 153, 0.35)';
+const LOGIN_SUBMIT_BG = '#3A96DD';
+const LOGIN_SUBMIT_TEXT = '#FFFFFF';
+const LOGIN_PLACEHOLDER = 'rgba(58, 150, 221, 0.55)';
 
 function ReadOnlyText({
   children,
@@ -754,7 +763,7 @@ export default function IndexScreen() {
             <TextInput
               style={[styles.input, styles.editableInput]}
               placeholder="seu@email.com"
-              placeholderTextColor="#475569"
+              placeholderTextColor={LOGIN_PLACEHOLDER}
               value={firstAccessEmail}
               onChangeText={setFirstAccessEmail}
               autoCapitalize="none"
@@ -768,7 +777,7 @@ export default function IndexScreen() {
             <TextInput
               style={[styles.input, styles.editableInput]}
               placeholder="repita o e-mail"
-              placeholderTextColor="#475569"
+              placeholderTextColor={LOGIN_PLACEHOLDER}
               value={firstAccessEmailConfirm}
               onChangeText={setFirstAccessEmailConfirm}
               autoCapitalize="none"
@@ -792,10 +801,10 @@ export default function IndexScreen() {
         ]}
       >
         {isSendingPin ? (
-          <ActivityIndicator color="#064E3B" size="small" />
+          <ActivityIndicator color={LOGIN_SUBMIT_TEXT} size="small" />
         ) : (
           <>
-            <FontAwesome name="envelope" size={20} color="#064E3B" />
+            <FontAwesome name="envelope" size={20} color={LOGIN_SUBMIT_TEXT} />
             <Text style={styles.emailPrimaryButtonText}>Receber código por e-mail</Text>
           </>
         )}
@@ -841,16 +850,16 @@ export default function IndexScreen() {
 
   if (isRestoringSession || isTotemConfigLoading) {
     return (
-      <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.restoreLoader}>
-          <ActivityIndicator color="#10b981" size="large" />
+          <ActivityIndicator color={LOGIN_ACCENT} size="large" />
         </View>
-      </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         importantForAutofill="noExcludeDescendants"
@@ -864,7 +873,7 @@ export default function IndexScreen() {
               source={require('../images/IBNORTE - LOGO MARCA 9.png')}
               style={styles.logo}
               contentFit="contain"
-              tintColor="#FFFFFF"
+              tintColor={LOGIN_ICON}
             />
           </View>
           <ReadOnlyText style={styles.title}>{getLoginTitle()}</ReadOnlyText>
@@ -880,7 +889,7 @@ export default function IndexScreen() {
                   <TextInput
                     style={[styles.input, styles.editableInput, styles.inputWithTrailingAction]}
                     placeholder="(00) 00000-0000"
-                    placeholderTextColor="#475569"
+                    placeholderTextColor={LOGIN_PLACEHOLDER}
                     value={phone}
                     onChangeText={handlePhoneChange}
                     blurOnSubmit={false}
@@ -940,7 +949,7 @@ export default function IndexScreen() {
 
               {!isTotemLoginMode ? (
                 <View pointerEvents="none" style={styles.phoneConfirmedRow}>
-                  <FontAwesome name="check-circle" size={18} color="#10b981" />
+                  <FontAwesome name="check-circle" size={18} color={LOGIN_ACCENT} />
                   <ReadOnlyText style={styles.phoneConfirmedText}>
                     Celular confirmado: {phone}
                   </ReadOnlyText>
@@ -949,7 +958,7 @@ export default function IndexScreen() {
 
               {!isTotemLoginMode && isCheckingStoredPin ? (
                 <View style={styles.checkingPinCard}>
-                  <ActivityIndicator color="#10b981" size="small" />
+                  <ActivityIndicator color={LOGIN_ACCENT} size="small" />
                   <ReadOnlyText style={styles.checkingPinText}>Verificando seu acesso...</ReadOnlyText>
                 </View>
               ) : null}
@@ -989,7 +998,7 @@ export default function IndexScreen() {
                     ref={pinInputRef}
                     style={[styles.input, styles.editableInput, styles.pinInput, styles.pinInputFullWidth]}
                     placeholder="****"
-                    placeholderTextColor="#475569"
+                    placeholderTextColor={LOGIN_PLACEHOLDER}
                     value={accessPin}
                     onChangeText={handlePinChange}
                     autoComplete="off"
@@ -1035,7 +1044,7 @@ export default function IndexScreen() {
                   </TouchableOpacity>
                 ) : null}
                 {!isTotemLoginMode && isLoading ? (
-                  <ActivityIndicator color="#10b981" style={styles.loginLoader} />
+                  <ActivityIndicator color={LOGIN_ACCENT} style={styles.loginLoader} />
                 ) : null}
               </View>
 
@@ -1045,7 +1054,7 @@ export default function IndexScreen() {
                 disabled={!canPressEntrar}
               >
                 {isLoading ? (
-                  <ActivityIndicator color="#020617" />
+                  <ActivityIndicator color={LOGIN_SUBMIT_TEXT} />
                 ) : (
                   <Text style={styles.btnText}>
                     {isTotemLoginMode ? 'Abrir tela do totem' : 'Acessar'}
@@ -1062,16 +1071,20 @@ export default function IndexScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+    backgroundColor: LOGIN_SURFACE,
+  },
   restoreLoader: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: LOGIN_SURFACE,
   },
   scrollContent: {
     flexGrow: 1,
@@ -1079,6 +1092,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 40,
     paddingBottom: 40,
+    backgroundColor: LOGIN_SURFACE,
   },
   logoWrapper: {
     alignItems: 'center',
@@ -1094,13 +1108,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#FFF',
+    color: MINIMAL_UI.blueDark,
     textAlign: 'center',
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 16,
-    color: '#94A3B8',
+    color: LOGIN_ACCENT,
     textAlign: 'center',
     marginBottom: 30,
   },
@@ -1109,7 +1123,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   label: {
-    color: '#10b981',
+    color: LOGIN_ACCENT,
     marginBottom: 8,
     fontWeight: '600',
   },
@@ -1123,14 +1137,14 @@ const styles = StyleSheet.create({
   },
   input: {
     padding: 20,
-    borderRadius: 20,
-    color: '#FFF',
+    borderRadius: 16,
+    color: LOGIN_ACCENT,
     fontSize: 18,
   },
   editableInput: {
-    backgroundColor: 'rgba(15, 23, 42, 0.92)',
-    borderWidth: 2,
-    borderColor: '#10b981',
+    backgroundColor: LOGIN_SURFACE,
+    borderWidth: 1,
+    borderColor: LOGIN_SOFT_BORDER,
   },
   pinInput: {
     letterSpacing: 8,
@@ -1145,16 +1159,17 @@ const styles = StyleSheet.create({
   pinLockedPanel: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: MINIMAL_UI.rowHover,
     borderWidth: 1,
-    borderColor: 'rgba(100, 116, 139, 0.45)',
+    borderColor: LOGIN_SOFT_BORDER,
     borderStyle: 'dashed',
   },
   readOnlyInputText: {
-    color: '#64748b',
+    color: LOGIN_ACCENT,
     fontSize: 15,
     fontWeight: '600',
     letterSpacing: 0,
+    opacity: 0.72,
   },
   nonSelectableText: Platform.select({
     web: {
@@ -1165,10 +1180,11 @@ const styles = StyleSheet.create({
     default: {},
   }),
   pinHint: {
-    color: '#64748b',
+    color: LOGIN_ACCENT,
     fontSize: 13,
     marginTop: 10,
     lineHeight: 18,
+    opacity: 0.85,
   },
   loginLoader: {
     marginTop: 12,
@@ -1190,36 +1206,40 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#475569',
+    borderColor: LOGIN_SOFT_BORDER,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: LOGIN_SURFACE,
   },
   stepNumberCircleActive: {
-    borderColor: '#10b981',
-    backgroundColor: '#10b981',
+    borderColor: LOGIN_ACCENT,
+    backgroundColor: LOGIN_SUBMIT_BG,
   },
   stepNumberText: {
-    color: '#94A3B8',
+    color: LOGIN_ACCENT,
     fontSize: 14,
     fontWeight: '800',
+    opacity: 0.65,
   },
   stepNumberTextActive: {
-    color: '#0f172a',
+    color: LOGIN_SUBMIT_TEXT,
+    opacity: 1,
   },
   stepChipLabel: {
-    color: '#64748b',
+    color: LOGIN_ACCENT,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 2,
+    opacity: 0.65,
   },
   stepChipLabelActive: {
-    color: '#D1FAE5',
+    color: LOGIN_ICON,
+    opacity: 1,
   },
   stepConnector: {
     width: 36,
     height: 2,
-    backgroundColor: '#334155',
+    backgroundColor: LOGIN_SOFT_BORDER,
     marginTop: 15,
   },
   backLink: {
@@ -1228,7 +1248,7 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
   },
   backLinkText: {
-    color: '#94A3B8',
+    color: LOGIN_ACCENT,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -1242,7 +1262,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   phoneConfirmedText: {
-    color: '#94A3B8',
+    color: LOGIN_ACCENT,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -1252,16 +1272,16 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 16,
-    backgroundColor: 'rgba(30, 41, 59, 0.55)',
+    backgroundColor: LOGIN_SURFACE,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: LOGIN_SOFT_BORDER,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
   },
   checkingPinText: {
-    color: '#94A3B8',
+    color: LOGIN_ACCENT,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -1270,8 +1290,10 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     paddingVertical: 18,
     paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: '#34D399',
+    borderRadius: 16,
+    backgroundColor: LOGIN_SUBMIT_BG,
+    borderWidth: 2,
+    borderColor: LOGIN_ICON,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1282,7 +1304,7 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   emailPrimaryButtonText: {
-    color: '#064E3B',
+    color: LOGIN_SUBMIT_TEXT,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -1291,13 +1313,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderRadius: 16,
+    backgroundColor: 'rgba(58, 150, 221, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.45)',
+    borderColor: LOGIN_SOFT_BORDER,
   },
   pinSentBannerText: {
-    color: '#A7F3D0',
+    color: LOGIN_ACCENT,
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
@@ -1308,14 +1330,14 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 8,
     paddingHorizontal: 14,
-    borderRadius: 10,
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
+    borderRadius: 16,
+    backgroundColor: LOGIN_SURFACE,
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: LOGIN_SOFT_BORDER,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
   },
   forgotPasswordBoxText: {
-    color: '#94A3B8',
+    color: LOGIN_ACCENT,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -1328,9 +1350,9 @@ const styles = StyleSheet.create({
     zIndex: 10,
     elevation: 10,
     borderRadius: 16,
-    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+    backgroundColor: LOGIN_SURFACE,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: LOGIN_SOFT_BORDER,
     alignItems: 'center',
     justifyContent: 'center',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
@@ -1339,14 +1361,16 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   clearButtonText: {
-    color: '#FFF',
+    color: LOGIN_ACCENT,
     fontSize: 18,
     fontWeight: '700',
   },
   btnPrimary: {
-    backgroundColor: '#10b981',
+    backgroundColor: LOGIN_SUBMIT_BG,
+    borderWidth: 2,
+    borderColor: LOGIN_ICON,
     padding: 20,
-    borderRadius: 20,
+    borderRadius: 16,
     alignItems: 'center',
     marginTop: 10,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
@@ -1355,16 +1379,17 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   btnText: {
-    color: '#020617',
+    color: LOGIN_SUBMIT_TEXT,
     fontWeight: 'bold',
     fontSize: 16,
   },
   helpText: {
     marginTop: 18,
-    color: '#64748b',
+    color: LOGIN_ACCENT,
     fontSize: 13,
     lineHeight: 19,
     textAlign: 'center',
+    opacity: 0.85,
   },
   socialFooter: {
     marginTop: 24,
