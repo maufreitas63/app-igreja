@@ -1,4 +1,3 @@
-import { PwaInstallButton } from '@/components/PwaInstallButton';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import {
   passwordRecoveryGetState,
@@ -6,9 +5,10 @@ import {
   passwordRecoveryVerifyAndSendPin,
 } from '@/lib/passwordRecovery';
 import { isBrazilianMobilePhoneComplete } from '@/lib/phoneValidation';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { clearUserSession } from '@/lib/userSession';
 import { FontAwesome } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -25,6 +25,14 @@ import {
 } from 'react-native';
 
 type RecoveryStep = 'loading' | 'email' | 'security';
+
+const RECOVERY_SURFACE = '#FFFFFF';
+const RECOVERY_ACCENT = VIGILANCE_SCALES_UI.accent;
+const RECOVERY_ICON = '#1B4F8A';
+const RECOVERY_SOFT_BORDER = 'rgba(52, 211, 153, 0.35)';
+const RECOVERY_SUBMIT_BG = '#3A96DD';
+const RECOVERY_SUBMIT_TEXT = '#FFFFFF';
+const RECOVERY_PLACEHOLDER = 'rgba(58, 150, 221, 0.55)';
 
 const buildLoginRouteAfterRecovery = (phoneValue: string, emailMasked?: string) => {
   const digits = phoneValue.replace(/\D/g, '');
@@ -225,7 +233,7 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.container}
@@ -239,7 +247,7 @@ export default function ForgotPasswordScreen() {
             onPress={() => router.replace('/')}
             activeOpacity={0.85}
           >
-            <FontAwesome name="chevron-left" size={14} color="#94A3B8" />
+            <FontAwesome name="chevron-left" size={14} color={RECOVERY_ACCENT} />
             <Text style={styles.backButtonText}>Voltar à entrada</Text>
           </TouchableOpacity>
 
@@ -248,7 +256,7 @@ export default function ForgotPasswordScreen() {
 
           {step === 'loading' ? (
             <View style={styles.loadingBlock}>
-              <ActivityIndicator color="#10b981" size="large" />
+              <ActivityIndicator color={RECOVERY_ACCENT} size="large" />
             </View>
           ) : null}
 
@@ -274,7 +282,7 @@ export default function ForgotPasswordScreen() {
                       setStepError(null);
                     }}
                     placeholder="seu@email.com"
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor={RECOVERY_PLACEHOLDER}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -292,7 +300,7 @@ export default function ForgotPasswordScreen() {
                       setStepError(null);
                     }}
                     placeholder="seu@email.com"
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor={RECOVERY_PLACEHOLDER}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -323,7 +331,7 @@ export default function ForgotPasswordScreen() {
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color="#020617" />
+                  <ActivityIndicator color={RECOVERY_SUBMIT_TEXT} />
                 ) : (
                   <Text style={styles.btnText}>
                     {needsEmail ? 'Salvar e-mail e continuar' : 'Confirmar e continuar'}
@@ -362,7 +370,7 @@ export default function ForgotPasswordScreen() {
                       setStepError(null);
                     }}
                     placeholder="Ex.: Qual o nome do seu primeiro animal de estimação?"
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor={RECOVERY_PLACEHOLDER}
                     multiline
                     textAlignVertical="top"
                     editable={!loading}
@@ -381,7 +389,7 @@ export default function ForgotPasswordScreen() {
                   setStepError(null);
                 }}
                 placeholder="Resposta secreta"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={RECOVERY_PLACEHOLDER}
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoComplete="off"
@@ -399,28 +407,30 @@ export default function ForgotPasswordScreen() {
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color="#020617" />
+                  <ActivityIndicator color={RECOVERY_SUBMIT_TEXT} />
                 ) : (
                   <Text style={styles.btnText}>Validar e enviar senha por e-mail</Text>
                 )}
               </TouchableOpacity>
             </View>
           ) : null}
-
-          <PwaInstallButton />
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+    backgroundColor: RECOVERY_SURFACE,
+  },
   scrollContent: {
     flexGrow: 1,
     padding: 20,
     paddingTop: 40,
     paddingBottom: 40,
+    backgroundColor: RECOVERY_SURFACE,
   },
   loadingBlock: {
     alignItems: 'center',
@@ -431,22 +441,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 24,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
   },
   backButtonText: {
-    color: '#94A3B8',
+    color: RECOVERY_ACCENT,
     fontSize: 14,
     fontWeight: '600',
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#FFF',
+    color: MINIMAL_UI.blueDark,
     textAlign: 'center',
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 16,
-    color: '#94A3B8',
+    color: RECOVERY_ACCENT,
     textAlign: 'center',
     marginBottom: 30,
     lineHeight: 22,
@@ -456,52 +467,56 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    color: '#10b981',
+    color: RECOVERY_ACCENT,
     fontWeight: '600',
   },
   hint: {
-    color: '#94A3B8',
+    color: RECOVERY_ACCENT,
     fontSize: 13,
     lineHeight: 18,
+    opacity: 0.9,
   },
   input: {
     padding: 20,
-    borderRadius: 20,
-    color: '#FFF',
+    borderRadius: 16,
+    color: RECOVERY_ACCENT,
     fontSize: 18,
   },
   editableInput: {
-    backgroundColor: 'rgba(15, 23, 42, 0.92)',
-    borderWidth: 2,
-    borderColor: '#10b981',
+    backgroundColor: RECOVERY_SURFACE,
+    borderWidth: 1,
+    borderColor: RECOVERY_SOFT_BORDER,
   },
   readOnlyPanel: {
-    backgroundColor: 'rgba(30, 41, 59, 0.75)',
+    backgroundColor: MINIMAL_UI.rowHover,
     borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.25)',
+    borderColor: RECOVERY_SOFT_BORDER,
   },
   readOnlyText: {
-    color: '#E2E8F0',
+    color: RECOVERY_ACCENT,
     fontSize: 16,
     lineHeight: 22,
   },
   btnPrimary: {
     marginTop: 8,
-    backgroundColor: '#10b981',
+    backgroundColor: RECOVERY_SUBMIT_BG,
+    borderWidth: 2,
+    borderColor: RECOVERY_ICON,
     paddingVertical: 16,
-    borderRadius: 999,
+    borderRadius: 16,
     alignItems: 'center',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
   },
   btnDisabled: {
     opacity: 0.65,
   },
   btnText: {
-    color: '#020617',
+    color: RECOVERY_SUBMIT_TEXT,
     fontSize: 16,
     fontWeight: '800',
   },
   errorText: {
-    color: '#FCA5A5',
+    color: '#DC2626',
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',
