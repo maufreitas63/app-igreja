@@ -13,6 +13,7 @@ import {
   formatVehicleFieldValue,
   type VehicleLookupResult,
 } from '@/lib/profileVehicleLookup';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 
 type Props = {
   placaQuery: string;
@@ -26,6 +27,9 @@ type Props = {
   /** Preenche a altura do card e rola o resultado do proprietário se necessário. */
   fillAvailableHeight?: boolean;
 };
+
+const PARKING_VEHICLE_SURFACE = '#FFFFFF';
+const PARKING_VEHICLE_ICON_COLOR = '#1B4F8A';
 
 const VehicleDetailRow = ({ label, value }: { label: string; value: string }) => (
   <View style={styles.detailRow}>
@@ -113,9 +117,9 @@ export function ParkingVehicleIdentifyPanel({
           accessibilityLabel="Buscar veículo pela placa"
         >
           {loading ? (
-            <ActivityIndicator color="#4C9FE0" size="small" />
+            <ActivityIndicator color={VIGILANCE_SCALES_UI.accent} size="small" />
           ) : (
-            <FontAwesome name="search" size={18} color="#4C9FE0" />
+            <FontAwesome name="search" size={18} color={PARKING_VEHICLE_ICON_COLOR} />
           )}
         </TouchableOpacity>
       </View>
@@ -144,7 +148,7 @@ export function ParkingVehicleIdentifyPanel({
 const styles = StyleSheet.create({
   sectionBox: {
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.72)',
+    backgroundColor: PARKING_VEHICLE_SURFACE,
     padding: 12,
     gap: 8,
   },
@@ -153,7 +157,7 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   sectionTitle: {
-    color: '#4C9FE0',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 12,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -171,11 +175,11 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 42,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.35)',
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: VIGILANCE_SCALES_UI.border,
+    backgroundColor: PARKING_VEHICLE_SURFACE,
     paddingHorizontal: 12,
-    color: '#00008B',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 1,
@@ -184,7 +188,9 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PARKING_VEHICLE_SURFACE,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: VIGILANCE_SCALES_UI.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -192,7 +198,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   errorText: {
-    color: '#FCA5A5',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 12,
     lineHeight: 16,
     flexShrink: 0,
@@ -209,25 +215,26 @@ const styles = StyleSheet.create({
     gap: 6,
     padding: 10,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.25)',
-    backgroundColor: 'rgba(2, 6, 23, 0.55)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: VIGILANCE_SCALES_UI.border,
+    backgroundColor: PARKING_VEHICLE_SURFACE,
   },
   ownerBlock: {
     gap: 2,
     paddingBottom: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(148, 163, 184, 0.2)',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: VIGILANCE_SCALES_UI.border,
   },
   ownerLabel: {
-    color: '#94A3B8',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    opacity: 0.88,
   },
   ownerName: {
-    color: '#F8FAFC',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 15,
     fontWeight: '800',
     lineHeight: 19,
@@ -239,18 +246,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   detailLabel: {
-    color: '#94A3B8',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     minWidth: 64,
+    opacity: 0.88,
   },
   detailValue: {
     flex: 1,
-    color: '#E2E8F0',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     textAlign: 'right',
     lineHeight: 17,
   },
@@ -260,8 +268,8 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 2,
     paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(148, 163, 184, 0.2)',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: VIGILANCE_SCALES_UI.border,
   },
   phoneTextBlock: {
     flex: 1,
@@ -269,7 +277,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   phoneValue: {
-    color: '#F8FAFC',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 14,
     fontWeight: '700',
     lineHeight: 18,
@@ -280,14 +288,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(37, 211, 102, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(37, 211, 102, 0.35)',
+    backgroundColor: PARKING_VEHICLE_SURFACE,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: VIGILANCE_SCALES_UI.border,
   },
   whatsappButtonDisabled: {
     opacity: 0.55,
-    borderColor: 'rgba(148, 163, 184, 0.25)',
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    borderColor: VIGILANCE_SCALES_UI.border,
+    backgroundColor: PARKING_VEHICLE_SURFACE,
   },
   newSearchButton: {
     alignSelf: 'center',
@@ -296,7 +304,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   newSearchText: {
-    color: '#FBBF24',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 12,
     fontWeight: '700',
   },
