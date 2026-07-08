@@ -1,3 +1,4 @@
+import { MinimalDailyVerseButton } from '@/components/minimal/MinimalDailyVerseButton';
 import {
   MINIMAL_TOP_IDENTITY_BAR_HEIGHT,
   MINIMAL_TOP_IDENTITY_LOGO_HEIGHT,
@@ -65,6 +66,12 @@ export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?:
         </View>
       ) : null}
 
+      {showGreeting ? (
+        <View style={styles.centerSlot} pointerEvents="box-none">
+          <MinimalDailyVerseButton />
+        </View>
+      ) : null}
+
       <View style={styles.logoSlot}>
         <Image source={LOGO_SOURCE} style={styles.logo} contentFit="contain" accessibilityLabel="Logo IBNORTE" />
       </View>
@@ -74,6 +81,7 @@ export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?:
 
 const styles = StyleSheet.create({
   row: {
+    position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -89,6 +97,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
     justifyContent: 'center',
     paddingRight: 12,
+    zIndex: 2,
+  },
+  centerSlot: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 3,
   },
   greeting: {
     ...MINIMAL_TYPO.greeting,
@@ -98,6 +113,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     alignItems: 'flex-end',
     justifyContent: 'center',
+    zIndex: 2,
   },
   logo: {
     width: MINIMAL_TOP_IDENTITY_LOGO_HEIGHT * 2.4,
