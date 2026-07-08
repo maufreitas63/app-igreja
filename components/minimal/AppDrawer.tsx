@@ -1,6 +1,8 @@
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { useAppDrawerMenu, type AppDrawerMenuItemResolved } from '@/hooks/useAppDrawerMenu';
 import { navigateDrawerMenuItem, isDrawerMenuPlaceholder } from '@/lib/appDrawerMenu';
+import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
+import { traceClick } from '@/lib/devClickTrace';
 import { MINIMAL_ICON, MINIMAL_UI, MINIMAL_TYPO } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -35,17 +37,44 @@ export function AppDrawer() {
   }, [isOpen, refresh]);
 
   const handlePress = (item: AppDrawerMenuItemResolved) => {
+    traceClick('drawer', 'menu-item-press', {
+      moduleKey: item.moduleKey,
+      label: item.label,
+      pendingRoute: item.pendingRoute,
+    });
+
     if (item.pendingRoute || isDrawerMenuPlaceholder(item.moduleKey)) {
+      traceClick('drawer', 'menu-item-blocked', { moduleKey: item.moduleKey });
       return;
     }
 
+    traceClick('drawer', 'menu-item-navigate', { moduleKey: item.moduleKey });
     closeDrawer();
     void navigateDrawerMenuItem(router, item.moduleKey);
   };
 
   const visibleItems = items.filter((item) => item.enabled);
 
+  const handleOpenLgpd = () => {
+    const params = withMinimalPresentation();
+
+    traceClick('drawer', 'settings-lgpd-press', { params });
+
+    router.push({
+      pathname: '/lgpd',
+      params,
+    });
+
+    traceClick('drawer', 'settings-lgpd-router-push-called', { pathname: '/lgpd', params });
+
+    setSettingsOpen(false);
+    closeDrawer();
+
+    traceClick('drawer', 'settings-lgpd-drawer-closed');
+  };
+
   const handleBackdropPress = () => {
+    traceClick('drawer', 'backdrop-press', { settingsOpen });
     if (settingsOpen) {
       setSettingsOpen(false);
       return;
@@ -63,7 +92,13 @@ export function AppDrawer() {
     >
       <View style={styles.overlay}>
         {settingsOpen ? (
-          <AppDrawerSettings onClose={() => setSettingsOpen(false)} />
+          <AppDrawerSettings
+            onClose={() => {
+              traceClick('drawer', 'settings-close-press');
+              setSettingsOpen(false);
+            }}
+            onOpenLgpd={handleOpenLgpd}
+          />
         ) : (
           <View style={[styles.panel, { paddingTop: insets.top + 12 }]}>
             <View style={styles.headerRow}>
@@ -71,7 +106,10 @@ export function AppDrawer() {
               <Pressable
                 accessibilityLabel="Abrir configurações"
                 accessibilityRole="button"
-                onPress={() => setSettingsOpen(true)}
+                onPress={() => {
+                  traceClick('drawer', 'settings-open-press');
+                  setSettingsOpen(true);
+                }}
                 style={styles.settingsButton}
               >
                 <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />

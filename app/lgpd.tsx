@@ -8,6 +8,7 @@ import { useWebDocumentTitle } from '@/hooks/useWebDocumentTitle';
 import { isLgpdAtivoEnabled } from '@/lib/appParameters';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
+import { traceClick } from '@/lib/devClickTrace';
 import {
   buildLgpdDeclineMessage,
   buildLgpdTermsText,
@@ -100,7 +101,19 @@ export default function LgpdScreen() {
   const isMinimalPresentation = isMinimalPresentationRoute(params.presentation);
   useRejectTotemPhoneFromMemberRoutes(phoneParam);
 
-  const accessStatus = useLgpdScreenAccess();
+  const { status: accessStatus, sessionProfileId } = useLgpdScreenAccess();
+
+  useEffect(() => {
+    traceClick('lgpd', 'screen-mounted', {
+      phoneParam,
+      isMinimalPresentation,
+      presentation: params.presentation,
+    });
+  }, [isMinimalPresentation, params.presentation, phoneParam]);
+
+  useEffect(() => {
+    traceClick('lgpd', 'access-status', { accessStatus });
+  }, [accessStatus]);
 
   const [profileId, setProfileId] = useState<string | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -158,8 +171,10 @@ export default function LgpdScreen() {
   }, [isMinimalPresentation, phoneParam, router]);
 
   const goBack = useCallback(() => {
+    traceClick('lgpd', 'go-back', { isMinimalPresentation, phoneParam });
+
     if (isMinimalPresentation) {
-      router.back();
+      router.replace('/(tabs)');
       return;
     }
 
@@ -168,6 +183,19 @@ export default function LgpdScreen() {
       params: phoneParam ? { phone: encodeURIComponent(phoneParam) } : {},
     });
   }, [isMinimalPresentation, phoneParam, router]);
+
+  const leaveAfterProfileError = useCallback(
+    (title: string, message: string) => {
+      if (isMinimalPresentation) {
+        traceClick('lgpd', 'profile-error-minimal-stay', { title, message });
+        Alert.alert(title, message);
+        return;
+      }
+
+      Alert.alert(title, message, [{ text: 'OK', onPress: () => goBack() }]);
+    },
+    [goBack, isMinimalPresentation]
+  );
 
   useEffect(() => {
     let active = true;
@@ -227,29 +255,35 @@ export default function LgpdScreen() {
   }, [isMinimalPresentation, phoneParam, router]);
 
   useEffect(() => {
+    if (accessStatus !== 'allowed') {
+      return;
+    }
+
     let active = true;
 
     void (async () => {
       setLoadingProfile(true);
 
       try {
-        const nextProfileId = await loadProfileId(phoneParam);
+        const nextProfileId = phoneParam ? await loadProfileId(phoneParam) : sessionProfileId;
 
         if (!active) {
           return;
         }
 
-        if (!nextProfileId) {
-          Alert.alert('Erro', 'Perfil não encontrado.');
-          goBack();
+        const resolvedProfileId = nextProfileId ?? sessionProfileId;
+
+        if (!resolvedProfileId) {
+          traceClick('lgpd', 'profile-not-found', { phoneParam, sessionProfileId });
+          leaveAfterProfileError('Erro', 'Perfil não encontrado.');
           return;
         }
 
-        setProfileId(nextProfileId);
+        traceClick('lgpd', 'profile-loaded', { profileId: resolvedProfileId });
+        setProfileId(resolvedProfileId);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Não foi possível carregar o perfil.';
-        Alert.alert('Erro', message);
-        goBack();
+        leaveAfterProfileError('Erro', message);
       } finally {
         if (active) {
           setLoadingProfile(false);
@@ -260,7 +294,7 @@ export default function LgpdScreen() {
     return () => {
       active = false;
     };
-  }, [goBack, phoneParam]);
+  }, [accessStatus, leaveAfterProfileError, phoneParam, sessionProfileId]);
 
   const handleLGPDChoice = (choice: boolean) => {
     if (!hasScrolledToBottom) {

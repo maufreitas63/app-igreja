@@ -1,12 +1,8 @@
-import { useAppDrawer } from '@/context/AppDrawerContext';
-import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { getStoredUserPhone } from '@/lib/userSession';
+import { traceClick } from '@/lib/devClickTrace';
 import { FontAwesome } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-  InteractionManager,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,31 +22,11 @@ type SettingsItem = {
 
 type Props = {
   onClose: () => void;
+  onOpenLgpd: () => void;
 };
 
-export function AppDrawerSettings({ onClose }: Props) {
-  const router = useRouter();
-  const { closeDrawer } = useAppDrawer();
+export function AppDrawerSettings({ onClose, onOpenLgpd }: Props) {
   const insets = useSafeAreaInsets();
-
-  const navigateAndClose = () => {
-    onClose();
-    closeDrawer();
-
-    void InteractionManager.runAfterInteractions(async () => {
-      const phone = (await getStoredUserPhone())?.trim();
-      const params = withMinimalPresentation();
-
-      if (phone) {
-        params.phone = encodeURIComponent(phone);
-      }
-
-      router.push({
-        pathname: '/lgpd',
-        params,
-      });
-    });
-  };
 
   const items: SettingsItem[] = [
     {
@@ -58,7 +34,7 @@ export function AppDrawerSettings({ onClose }: Props) {
       label: 'Privacidade (LGPD)',
       hint: 'Termos de uso e consentimento',
       icon: 'shield',
-      onPress: navigateAndClose,
+      onPress: onOpenLgpd,
     },
   ];
 
@@ -86,7 +62,10 @@ export function AppDrawerSettings({ onClose }: Props) {
           <TouchableOpacity
             key={item.id}
             style={styles.item}
-            onPress={item.onPress}
+            onPress={() => {
+              traceClick('drawer-settings', 'item-press', { id: item.id, label: item.label });
+              item.onPress();
+            }}
             accessibilityRole="button"
             accessibilityLabel={item.label}
           >
