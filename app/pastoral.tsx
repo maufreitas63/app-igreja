@@ -30,6 +30,7 @@ import {
   isMinimalPresentationRoute,
 } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -61,6 +62,12 @@ type PastoralSubcategory = {
 };
 
 type SelectorKind = 'motivo' | 'submotivo' | null;
+
+const PASTORAL_VIGILANCE_SURFACE = '#FFFFFF';
+const PASTORAL_VIGILANCE_ICON_COLOR = '#1B4F8A';
+const PASTORAL_VIGILANCE_SUBMIT_BG = '#3A96DD';
+const PASTORAL_VIGILANCE_SUBMIT_TEXT = '#FFFFFF';
+
 const FALLBACK_CATEGORIES: PastoralCategory[] = [
   { id: '10000000-0000-4000-8000-000000000001', label: 'Saúde e Bem-Estar Físico e Emocional', display_order: 1 },
   { id: '10000000-0000-4000-8000-000000000002', label: 'Família e Relacionamentos', display_order: 2 },
@@ -535,6 +542,10 @@ export default function PastoralScreen() {
   );
 
   function renderPastoralContent() {
+    const useVigilanceTheme = isMinimalPresentation;
+    const sectionLabelVariant = useVigilanceTheme ? 'vigilance' as const : 'form' as const;
+    const chipVariant = useVigilanceTheme ? 'vigilance' as const : 'default' as const;
+
     return (
       <>
         <Modal
@@ -543,9 +554,17 @@ export default function PastoralScreen() {
           animationType="fade"
           onRequestClose={() => setActiveSelector(null)}
         >
-          <Pressable style={styles.selectorBackdrop} onPress={() => setActiveSelector(null)}>
-            <Pressable style={styles.selectorModalCard} onPress={() => undefined}>
-              <Text style={styles.selectorModalTitle}>{selectorTitle}</Text>
+          <Pressable
+            style={[styles.selectorBackdrop, useVigilanceTheme && styles.selectorBackdropVigilance]}
+            onPress={() => setActiveSelector(null)}
+          >
+            <Pressable
+              style={[styles.selectorModalCard, useVigilanceTheme && styles.selectorModalCardVigilance]}
+              onPress={() => undefined}
+            >
+              <Text style={[styles.selectorModalTitle, useVigilanceTheme && styles.selectorModalTitleVigilance]}>
+                {selectorTitle}
+              </Text>
               <ScrollView
                 style={styles.selectorOptionsScroll}
                 contentContainerStyle={styles.selectorOptionsContent}
@@ -562,7 +581,9 @@ export default function PastoralScreen() {
                       key={option.id}
                       style={[
                         styles.selectorOptionButton,
+                        useVigilanceTheme && styles.selectorOptionButtonVigilance,
                         isSelected && styles.selectorOptionButtonSelected,
+                        isSelected && useVigilanceTheme && styles.selectorOptionButtonSelectedVigilance,
                       ]}
                       onPress={() => handleSelectOption(option.id)}
                       activeOpacity={0.85}
@@ -570,7 +591,9 @@ export default function PastoralScreen() {
                       <Text
                         style={[
                           styles.selectorOptionText,
+                          useVigilanceTheme && styles.selectorOptionTextVigilance,
                           isSelected && styles.selectorOptionTextSelected,
+                          isSelected && useVigilanceTheme && styles.selectorOptionTextSelectedVigilance,
                         ]}
                       >
                         {option.label}
@@ -580,11 +603,18 @@ export default function PastoralScreen() {
                 })}
               </ScrollView>
               <TouchableOpacity
-                style={styles.selectorCloseButton}
+                style={[styles.selectorCloseButton, useVigilanceTheme && styles.selectorCloseButtonVigilance]}
                 onPress={() => setActiveSelector(null)}
                 activeOpacity={0.85}
               >
-                <Text style={styles.selectorCloseButtonText}>Fechar</Text>
+                <Text
+                  style={[
+                    styles.selectorCloseButtonText,
+                    useVigilanceTheme && styles.selectorCloseButtonTextVigilance,
+                  ]}
+                >
+                  Fechar
+                </Text>
               </TouchableOpacity>
             </Pressable>
           </Pressable>
@@ -642,7 +672,7 @@ export default function PastoralScreen() {
           </View>
 
           {!loadingUserId && !resolvedUserId ? (
-            <Text style={styles.statusBannerError}>
+            <Text style={[styles.statusBannerError, useVigilanceTheme && styles.statusBannerErrorVigilance]}>
               Faça login novamente para enviar um pedido.
             </Text>
           ) : null}
@@ -654,11 +684,13 @@ export default function PastoralScreen() {
             showsVerticalScrollIndicator={false}>
             <View style={styles.fieldStack}>
               <View style={styles.fieldBlock}>
-                <SectionLabel>Motivo</SectionLabel>
+                <SectionLabel variant={sectionLabelVariant}>Motivo</SectionLabel>
                 <TouchableOpacity
                   style={[
                     styles.selectorField,
+                    useVigilanceTheme && styles.selectorFieldVigilance,
                     motivoSelecionadoLabel && styles.selectorFieldSelected,
+                    motivoSelecionadoLabel && useVigilanceTheme && styles.selectorFieldSelectedVigilance,
                   ]}
                   onPress={() => setActiveSelector('motivo')}
                   activeOpacity={0.85}
@@ -666,7 +698,9 @@ export default function PastoralScreen() {
                   <Text
                     style={[
                       styles.selectorFieldValue,
+                      useVigilanceTheme && styles.selectorFieldValueVigilance,
                       !motivoSelecionadoLabel && styles.selectorFieldPlaceholder,
+                      !motivoSelecionadoLabel && useVigilanceTheme && styles.selectorFieldPlaceholderVigilance,
                     ]}
                     numberOfLines={4}>
                     {loadingCategories
@@ -677,11 +711,13 @@ export default function PastoralScreen() {
               </View>
 
               <View style={styles.fieldBlock}>
-                <SectionLabel>Situação</SectionLabel>
+                <SectionLabel variant={sectionLabelVariant}>Situação</SectionLabel>
                 <TouchableOpacity
                   style={[
                     styles.selectorField,
+                    useVigilanceTheme && styles.selectorFieldVigilance,
                     submotivoSelecionadoLabel && styles.selectorFieldSelected,
+                    submotivoSelecionadoLabel && useVigilanceTheme && styles.selectorFieldSelectedVigilance,
                     !motivoSelecionado && styles.selectorFieldDisabled,
                   ]}
                   onPress={() => {
@@ -694,7 +730,9 @@ export default function PastoralScreen() {
                   <Text
                     style={[
                       styles.selectorFieldValue,
+                      useVigilanceTheme && styles.selectorFieldValueVigilance,
                       !submotivoSelecionadoLabel && styles.selectorFieldPlaceholder,
+                      !submotivoSelecionadoLabel && useVigilanceTheme && styles.selectorFieldPlaceholderVigilance,
                     ]}
                     numberOfLines={4}>
                     {!motivoSelecionado
@@ -712,13 +750,20 @@ export default function PastoralScreen() {
                 style={styles.inlineRetry}
                 onPress={() => void loadCategories()}
                 activeOpacity={0.85}>
-                <Text style={styles.inlineRetryText}>Recarregar motivos</Text>
+                <Text style={[styles.inlineRetryText, useVigilanceTheme && styles.inlineRetryTextVigilance]}>
+                  Recarregar motivos
+                </Text>
               </TouchableOpacity>
             ) : null}
-            {subcategoriesError ? <Text style={styles.inlineError}>{subcategoriesError}</Text> : null}
+            {subcategoriesError ? (
+              <Text style={[styles.inlineError, useVigilanceTheme && styles.inlineErrorVigilance]}>
+                {subcategoriesError}
+              </Text>
+            ) : null}
 
-            <SectionLabel spaced>Este pedido é para</SectionLabel>
+            <SectionLabel spaced variant={sectionLabelVariant}>Este pedido é para</SectionLabel>
             <SegmentChipRow
+              variant={chipVariant}
               options={PASTORAL_BENEFICIARY_TYPES.map((option) => ({
                 value: option,
                 label: PASTORAL_BENEFICIARY_META[option].shortLabel,
@@ -741,11 +786,11 @@ export default function PastoralScreen() {
 
             {requestFor === 'family' || requestFor === 'third_party' ? (
               <View style={styles.beneficiaryFields}>
-                <SectionLabel>Nome do necessitado</SectionLabel>
+                <SectionLabel variant={sectionLabelVariant}>Nome do necessitado</SectionLabel>
                 <TextInput
-                  style={styles.inputSingleLine}
+                  style={[styles.inputSingleLine, useVigilanceTheme && styles.inputSingleLineVigilance]}
                   placeholder="Nome completo"
-                  placeholderTextColor="#64748b"
+                  placeholderTextColor={useVigilanceTheme ? VIGILANCE_SCALES_UI.accent : '#64748b'}
                   value={beneficiaryName}
                   onChangeText={setBeneficiaryName}
                   autoCapitalize="words"
@@ -753,11 +798,11 @@ export default function PastoralScreen() {
 
                 {requestFor === 'family' ? (
                   <>
-                    <SectionLabel spaced>Grau de parentesco</SectionLabel>
+                    <SectionLabel spaced variant={sectionLabelVariant}>Grau de parentesco</SectionLabel>
                     <TextInput
-                      style={styles.inputSingleLine}
+                      style={[styles.inputSingleLine, useVigilanceTheme && styles.inputSingleLineVigilance]}
                       placeholder="Ex.: cônjuge, filho(a), pai, mãe..."
-                      placeholderTextColor="#64748b"
+                      placeholderTextColor={useVigilanceTheme ? VIGILANCE_SCALES_UI.accent : '#64748b'}
                       value={beneficiaryRelationship}
                       onChangeText={setBeneficiaryRelationship}
                       autoCapitalize="words"
@@ -765,11 +810,11 @@ export default function PastoralScreen() {
                   </>
                 ) : (
                   <>
-                    <SectionLabel spaced>Especifique (terceiros)</SectionLabel>
+                    <SectionLabel spaced variant={sectionLabelVariant}>Especifique (terceiros)</SectionLabel>
                     <TextInput
-                      style={styles.inputSingleLine}
+                      style={[styles.inputSingleLine, useVigilanceTheme && styles.inputSingleLineVigilance]}
                       placeholder="Ex.: vizinho, colega de trabalho, amigo..."
-                      placeholderTextColor="#64748b"
+                      placeholderTextColor={useVigilanceTheme ? VIGILANCE_SCALES_UI.accent : '#64748b'}
                       value={beneficiaryDetails}
                       onChangeText={setBeneficiaryDetails}
                       autoCapitalize="sentences"
@@ -779,8 +824,9 @@ export default function PastoralScreen() {
               </View>
             ) : null}
 
-            <SectionLabel spaced>Encaminhar para</SectionLabel>
+            <SectionLabel spaced variant={sectionLabelVariant}>Encaminhar para</SectionLabel>
             <SegmentChipRow
+              variant={chipVariant}
               options={PASTORAL_DESTINATIONS.map((option) => ({
                 value: option,
                 label: option === 'Sigilo Pastoral' ? 'Sigilo pastoral' : 'Intercessão',
@@ -790,16 +836,16 @@ export default function PastoralScreen() {
               onSelect={setSelectedDestination}
             />
             {selectedDestination ? (
-              <Text style={styles.destinationActiveHint}>
+              <Text style={[styles.destinationActiveHint, useVigilanceTheme && styles.destinationActiveHintVigilance]}>
                 {PASTORAL_DESTINATION_META[selectedDestination].hint}
               </Text>
             ) : null}
 
-            <SectionLabel spaced>Seu pedido</SectionLabel>
+            <SectionLabel spaced variant={sectionLabelVariant}>Seu pedido</SectionLabel>
             <TextInput
-              style={styles.input}
+              style={[styles.input, useVigilanceTheme && styles.inputVigilance]}
               placeholder="Descreva brevemente..."
-              placeholderTextColor="#64748b"
+              placeholderTextColor={useVigilanceTheme ? VIGILANCE_SCALES_UI.accent : '#64748b'}
               value={descricao}
               onChangeText={setDescricao}
               multiline
@@ -808,21 +854,32 @@ export default function PastoralScreen() {
             />
           </ScrollView>
 
-          <View style={styles.footerBar}>
+          <View style={[styles.footerBar, useVigilanceTheme && styles.footerBarVigilance]}>
             <View style={styles.footerActions}>
               <TouchableOpacity
                 accessibilityLabel="Enviar pedido pastoral"
                 accessibilityRole="button"
                 activeOpacity={0.85}
-                style={[styles.btnSubmitFull, (loading || loadingUserId) && styles.btnSubmitDisabled]}
+                style={[
+                  styles.btnSubmitFull,
+                  useVigilanceTheme && styles.btnSubmitFullVigilance,
+                  (loading || loadingUserId) && styles.btnSubmitDisabled,
+                ]}
                 onPress={() => {
                   void handleSubmit();
                 }}
                 disabled={loading || loadingUserId}>
                 {loading ? (
-                  <ActivityIndicator color="#FFF" />
+                  <ActivityIndicator color={useVigilanceTheme ? PASTORAL_VIGILANCE_SUBMIT_TEXT : '#FFF'} />
                 ) : (
-                  <Text style={styles.btnSubmitFullText}>Enviar pedido</Text>
+                  <Text
+                    style={[
+                      styles.btnSubmitFullText,
+                      useVigilanceTheme && styles.btnSubmitFullTextVigilance,
+                    ]}
+                  >
+                    Enviar pedido
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -1153,5 +1210,87 @@ const styles = StyleSheet.create({
   selectorCloseButtonText: {
     color: '#E9D5FF',
     fontWeight: '800',
+  },
+  statusBannerErrorVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
+  selectorFieldVigilance: {
+    backgroundColor: PASTORAL_VIGILANCE_SURFACE,
+    borderColor: VIGILANCE_SCALES_UI.border,
+  },
+  selectorFieldSelectedVigilance: {
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    backgroundColor: PASTORAL_VIGILANCE_SURFACE,
+  },
+  selectorFieldValueVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
+  selectorFieldPlaceholderVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+    opacity: 0.72,
+  },
+  inlineRetryTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
+  inlineErrorVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
+  destinationActiveHintVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+    opacity: 0.88,
+  },
+  inputSingleLineVigilance: {
+    backgroundColor: PASTORAL_VIGILANCE_SURFACE,
+    borderColor: VIGILANCE_SCALES_UI.border,
+    color: VIGILANCE_SCALES_UI.accent,
+  },
+  inputVigilance: {
+    backgroundColor: PASTORAL_VIGILANCE_SURFACE,
+    borderColor: VIGILANCE_SCALES_UI.border,
+    color: VIGILANCE_SCALES_UI.accent,
+  },
+  footerBarVigilance: {
+    borderTopColor: VIGILANCE_SCALES_UI.border,
+    backgroundColor: PASTORAL_VIGILANCE_SURFACE,
+  },
+  btnSubmitFullVigilance: {
+    backgroundColor: PASTORAL_VIGILANCE_SUBMIT_BG,
+    borderWidth: 2,
+    borderColor: PASTORAL_VIGILANCE_ICON_COLOR,
+  },
+  btnSubmitFullTextVigilance: {
+    color: PASTORAL_VIGILANCE_SUBMIT_TEXT,
+  },
+  selectorBackdropVigilance: {
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+  },
+  selectorModalCardVigilance: {
+    borderColor: VIGILANCE_SCALES_UI.border,
+    backgroundColor: PASTORAL_VIGILANCE_SURFACE,
+  },
+  selectorModalTitleVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
+  selectorOptionButtonVigilance: {
+    borderColor: VIGILANCE_SCALES_UI.border,
+    backgroundColor: PASTORAL_VIGILANCE_SURFACE,
+  },
+  selectorOptionButtonSelectedVigilance: {
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    backgroundColor: PASTORAL_VIGILANCE_SURFACE,
+  },
+  selectorOptionTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
+  selectorOptionTextSelectedVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontWeight: '700',
+  },
+  selectorCloseButtonVigilance: {
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    backgroundColor: PASTORAL_VIGILANCE_SURFACE,
+  },
+  selectorCloseButtonTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
   },
 });

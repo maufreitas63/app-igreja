@@ -1,4 +1,5 @@
 import { UI_COLORS, UI_TYPO } from '@/lib/uiTokens';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import React from 'react';
 import { StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
 
@@ -6,7 +7,7 @@ type SectionLabelProps = {
   children: string;
   spaced?: boolean;
   tight?: boolean;
-  variant?: 'form' | 'maintenance';
+  variant?: 'form' | 'maintenance' | 'vigilance';
   style?: StyleProp<TextStyle>;
 };
 
@@ -20,7 +21,11 @@ export function SectionLabel({
   return (
     <Text
       style={[
-        variant === 'maintenance' ? styles.maintenanceLabel : styles.label,
+        variant === 'maintenance'
+          ? styles.maintenanceLabel
+          : variant === 'vigilance'
+            ? styles.vigilanceLabel
+            : styles.label,
         spaced && styles.spaced,
         tight && styles.tight,
         style,
@@ -47,6 +52,12 @@ const styles = StyleSheet.create({
     fontWeight: UI_TYPO.maintenanceSectionLabel.fontWeight,
     letterSpacing: UI_TYPO.maintenanceSectionLabel.letterSpacing,
     textTransform: 'uppercase',
+  },
+  vigilanceLabel: {
+    color: VIGILANCE_SCALES_UI.accent,
+    marginBottom: 4,
+    fontSize: UI_TYPO.sectionLabel.fontSize,
+    fontWeight: '700',
   },
   spaced: {
     marginTop: 4,

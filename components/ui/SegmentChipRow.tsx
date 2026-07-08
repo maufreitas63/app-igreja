@@ -1,3 +1,4 @@
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { UI_COLORS, UI_SEGMENT, UI_TYPO } from '@/lib/uiTokens';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -12,13 +13,17 @@ type SegmentChipRowProps<T extends string> = {
   options: SegmentChipOption<T>[];
   selectedValue: T | null;
   onSelect: (value: T) => void;
+  variant?: 'default' | 'vigilance';
 };
 
 export function SegmentChipRow<T extends string>({
   options,
   selectedValue,
   onSelect,
+  variant = 'default',
 }: SegmentChipRowProps<T>) {
+  const isVigilance = variant === 'vigilance';
+
   return (
     <View style={styles.row}>
       {options.map((option) => {
@@ -32,10 +37,18 @@ export function SegmentChipRow<T extends string>({
             accessibilityLabel={option.accessibilityLabel ?? option.label}
             activeOpacity={0.85}
             onPress={() => onSelect(option.value)}
-            style={[styles.chip, isSelected && styles.chipSelected]}
+            style={[
+              styles.chip,
+              isVigilance && styles.chipVigilance,
+              isSelected && (isVigilance ? styles.chipVigilanceSelected : styles.chipSelected),
+            ]}
           >
             <Text
-              style={[styles.chipText, isSelected && styles.chipTextSelected]}
+              style={[
+                styles.chipText,
+                isVigilance && styles.chipTextVigilance,
+                isSelected && (isVigilance ? styles.chipTextVigilanceSelected : styles.chipTextSelected),
+              ]}
               numberOfLines={2}
             >
               {option.label}
@@ -78,5 +91,20 @@ const styles = StyleSheet.create({
   },
   chipTextSelected: {
     color: '#F5F3FF',
+  },
+  chipVigilance: {
+    borderColor: VIGILANCE_SCALES_UI.border,
+    backgroundColor: '#FFFFFF',
+  },
+  chipVigilanceSelected: {
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    backgroundColor: '#FFFFFF',
+  },
+  chipTextVigilance: {
+    color: VIGILANCE_SCALES_UI.accent,
+  },
+  chipTextVigilanceSelected: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontWeight: '800',
   },
 });
