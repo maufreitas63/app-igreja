@@ -76,19 +76,19 @@ export function EventsInboxHome() {
             <View style={styles.euQueroActions}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Dízimos e Ofertas"
+                accessibilityLabel="Contribuir com meu Dízimo ou Oferta"
                 onPress={handleOpenOfferings}
                 style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
               >
-                <Text style={styles.actionButtonText}>Dízimos e Ofertas</Text>
+                <Text style={styles.actionButtonText}>Contribuir com meu Dízimo ou Oferta</Text>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Pedido de Oração"
+                accessibilityLabel="Fazer um pedido de Oração"
                 onPress={handleOpenPastoral}
                 style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
               >
-                <Text style={styles.actionButtonText}>Pedido de Oração</Text>
+                <Text style={styles.actionButtonText}>Fazer um pedido de Oração</Text>
               </Pressable>
             </View>
           </View>
