@@ -40,7 +40,6 @@ function ReadOnlyText({
     </Text>
   );
 }
-import { PwaInstallButton } from '@/components/PwaInstallButton';
 import { SocialBrandIcon } from '@/components/SocialBrandIcon';
 import { FontAwesome } from '@expo/vector-icons';
 import {
@@ -815,10 +814,6 @@ export default function IndexScreen() {
   const renderSocialLinks = () => (
     <View style={styles.socialFooter}>
       <View style={styles.socialRow}>
-        <View style={styles.socialSideColumn}>
-          <PwaInstallButton />
-        </View>
-
         <View style={styles.socialLinksCenter}>
           <TouchableOpacity
             accessibilityLabel="Abrir Instagram da Igreja Batista Norte"
@@ -842,8 +837,6 @@ export default function IndexScreen() {
             <SocialBrandIcon network="youtube" />
           </TouchableOpacity>
         </View>
-
-        <View style={styles.socialSideColumn} />
       </View>
     </View>
   );
@@ -1385,11 +1378,10 @@ const styles = StyleSheet.create({
   },
   helpText: {
     marginTop: 18,
-    color: LOGIN_ACCENT,
+    color: '#00008B',
     fontSize: 13,
     lineHeight: 19,
     textAlign: 'center',
-    opacity: 0.85,
   },
   socialFooter: {
     marginTop: 24,
@@ -1399,20 +1391,11 @@ const styles = StyleSheet.create({
   socialRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     width: '100%',
     minHeight: 44,
   },
-  socialSideColumn: {
-    width: 44,
-    flexShrink: 0,
-    flexGrow: 0,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-  },
   socialLinksCenter: {
-    flex: 1,
-    flexShrink: 1,
-    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
