@@ -318,7 +318,9 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: MEMBERS_LISTS_CLASS_SURFACE,
     color: VIGILANCE_SCALES_UI.accent,
     fontSize: 15,

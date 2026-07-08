@@ -183,9 +183,9 @@ const styles = StyleSheet.create({
   listBox: {
     flex: 1,
     minHeight: 0,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: VIGILANCE_SCALES_UI.border,
-    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    borderRadius: 16,
     backgroundColor: BIRTHDAYS_CLASS_SURFACE,
     overflow: 'hidden',
   },
