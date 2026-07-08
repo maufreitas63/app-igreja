@@ -30,6 +30,7 @@ type Props = {
 
 const PARKING_VEHICLE_SURFACE = '#FFFFFF';
 const PARKING_VEHICLE_ICON_COLOR = '#1B4F8A';
+const PARKING_VEHICLE_BORDER_COLOR = VIGILANCE_SCALES_UI.accent;
 
 const VehicleDetailRow = ({ label, value }: { label: string; value: string }) => (
   <View style={styles.detailRow}>
@@ -175,8 +176,8 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 42,
     borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: VIGILANCE_SCALES_UI.border,
+    borderWidth: 1,
+    borderColor: PARKING_VEHICLE_BORDER_COLOR,
     backgroundColor: PARKING_VEHICLE_SURFACE,
     paddingHorizontal: 12,
     color: VIGILANCE_SCALES_UI.accent,
@@ -189,8 +190,8 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 12,
     backgroundColor: PARKING_VEHICLE_SURFACE,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: VIGILANCE_SCALES_UI.border,
+    borderWidth: 1,
+    borderColor: PARKING_VEHICLE_BORDER_COLOR,
     alignItems: 'center',
     justifyContent: 'center',
   },
