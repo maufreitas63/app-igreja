@@ -878,7 +878,8 @@ const styles = StyleSheet.create({
   },
   bankBalanceSection: {
     borderRadius: 16,
-    borderWidth: 0,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
   },
