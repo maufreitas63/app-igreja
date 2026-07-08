@@ -112,7 +112,7 @@ import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_TYPO } from '@/lib/dashboardCardSt
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
 import { withReturnDashboardCard, withReturnRoute, pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MINIMAL_FLAT_PANEL, MINIMAL_DASHBOARD_STYLES, MINIMAL_PAGE } from '@/lib/minimalPresentation';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -175,6 +175,17 @@ type DashboardCard = {
     | 'grouped_manage'
     | 'administrativo';
 };
+
+/** Cards minimalistas que renderizam o título principal no corpo da tela. */
+const MINIMAL_BODY_TITLE_CARD_CONTENTS = new Set<DashboardCard['content']>([
+  'vigilance_scales',
+  'scale_roster',
+  'parking_vehicle_v2',
+  'members_list',
+  'birthdays',
+  'financial',
+  'grouped_manage',
+]);
 
 type GroupedRoomConfig = {
   key: 'KIDS' | 'TEENS';
@@ -1987,8 +1998,16 @@ export default function Dashboard() {
 
   const activeDashboardScreenTitle = useMemo(() => {
     const card = data[currentIndex];
-    return card?.title?.trim() ?? '';
-  }, [currentIndex, data]);
+    if (!card) {
+      return '';
+    }
+
+    if (isMinimalPresentation && MINIMAL_BODY_TITLE_CARD_CONTENTS.has(card.content)) {
+      return '';
+    }
+
+    return card.title?.trim() ?? '';
+  }, [currentIndex, data, isMinimalPresentation]);
 
   const isVigilanceScalesScreen = data[currentIndex]?.content === 'vigilance_scales';
 
@@ -3207,7 +3226,13 @@ export default function Dashboard() {
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
-                    <Text style={[styles.dashboardPanelTitle, styles.vigilanceScalesPanelTitle, mds?.panelTitle]}>
+                    <Text
+                      style={[
+                        isMinimalPresentation ? styles.minimalSectionTitle : styles.dashboardPanelTitle,
+                        styles.vigilanceScalesPanelTitle,
+                        mds?.panelTitle,
+                      ]}
+                    >
                       {item.title}
                     </Text>
 
@@ -3282,7 +3307,12 @@ export default function Dashboard() {
                   </View>
                 ) : item.content === 'parking_vehicle_v2' ? (
                   <View style={[cardBaseStyle, styles.cardParkingVehicleV2, effectiveDashboardPanelCardSizeStyle]}>
-                    <Text style={[styles.cardTitle, styles.cardParkingVehicleV2Title]}>
+                    <Text
+                      style={[
+                        isMinimalPresentation ? styles.minimalSectionTitle : styles.cardTitle,
+                        !isMinimalPresentation && styles.cardParkingVehicleV2Title,
+                      ]}
+                    >
                       {selectedVigilanceScaleLabel}
                     </Text>
 
@@ -3320,7 +3350,11 @@ export default function Dashboard() {
                       effectiveDashboardPanelCardSizeStyle,
                     ]}
                   >
-                    <Text style={styles.cardTitle}>{selectedVigilanceScaleLabel}</Text>
+                    <Text
+                      style={isMinimalPresentation ? styles.minimalSectionTitle : styles.cardTitle}
+                    >
+                      {selectedVigilanceScaleLabel}
+                    </Text>
 
                     {isSelectedScaleParking ? (
                       <View style={styles.scaleRosterParkingPrompt}>
@@ -4975,7 +5009,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: '#FBBF24',
     borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.65)',
+    borderColor: '#3A96DD',
   },
   scaleRosterIdentifyVehicleButtonText: {
     color: '#020617',
@@ -5156,6 +5190,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   cardTitle: { ...DASHBOARD_CARD_TYPO.cardTitle, marginBottom: 16 },
+  minimalSectionTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    alignSelf: 'stretch',
+    marginBottom: 8,
+  },
   groupedAudienceSections: {
     flex: 1,
     minHeight: 0,

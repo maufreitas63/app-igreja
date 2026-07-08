@@ -429,8 +429,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
     backgroundColor: SCALES_CLASS_SURFACE,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: VIGILANCE_SCALES_UI.border,
+    borderWidth: 1,
+    borderColor: '#3A96DD',
   },
   identifyVehicleButtonText: {
     color: VIGILANCE_SCALES_UI.accent,
