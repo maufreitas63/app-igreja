@@ -2,6 +2,9 @@
 -- Substitua o e-mail abaixo e execute no SQL Editor do Supabase.
 -- Esperado: {"ok":true,"provider":"resend","resendId":"...","to":"..."}
 -- Depois confira em https://resend.com/emails
+--
+-- ATENÇÃO: este teste só valida ENVIO. O link do e-mail NÃO confirma autorização
+-- (não cria pendência no banco). Para testar confirmação, use o envio pelo aplicativo.
 
 with params as (
   select

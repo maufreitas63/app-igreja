@@ -1,11 +1,15 @@
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { useMediaAuthorizationAccess } from '@/hooks/useMediaAuthorizationAccess';
-import { resolveAuthorizationConfirmToken } from '@/lib/authorizationConfirmToken';
+import {
+  describeInvalidAuthorizationToken,
+  readRawAuthorizationTokenFromWeb,
+  resolveAuthorizationConfirmToken,
+} from '@/lib/authorizationConfirmToken';
 import { confirmMediaAuthorization, loadLatestMediaAuthorization } from '@/lib/mediaAuthorization';
 import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 const RECENT_AUTHORIZATION_MS = 7 * 24 * 60 * 60 * 1000;
@@ -13,7 +17,9 @@ const RECENT_AUTHORIZATION_MS = 7 * 24 * 60 * 60 * 1000;
 export default function MediaAuthorizationConfirmScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ token?: string | string[] }>();
-  const token = useMemo(() => resolveAuthorizationConfirmToken(params.token), [params.token]);
+  const [token, setToken] = useState<string | null>(null);
+  const [invalidMessage, setInvalidMessage] = useState<string | null>(null);
+  const [tokenReady, setTokenReady] = useState(false);
   const { sessionProfileId } = useMediaAuthorizationAccess();
   const [status, setStatus] = useState<'ready' | 'loading' | 'success' | 'error'>('ready');
   const [message, setMessage] = useState(
@@ -21,6 +27,26 @@ export default function MediaAuthorizationConfirmScreen() {
   );
   const confirmInFlightRef = useRef(false);
   const confirmedRef = useRef(false);
+
+  useEffect(() => {
+    const resolved = resolveAuthorizationConfirmToken(params.token);
+
+    if (resolved) {
+      setToken(resolved);
+      setInvalidMessage(null);
+      setTokenReady(true);
+      return;
+    }
+
+    const rawToken =
+      Platform.OS === 'web' && typeof window !== 'undefined'
+        ? readRawAuthorizationTokenFromWeb()
+        : (Array.isArray(params.token) ? params.token[0] : params.token) ?? null;
+
+    setToken(null);
+    setInvalidMessage(describeInvalidAuthorizationToken(rawToken));
+    setTokenReady(true);
+  }, [params.token]);
 
   const recoverRecentAuthorization = useCallback(async (): Promise<boolean> => {
     if (!sessionProfileId) {
@@ -97,13 +123,24 @@ export default function MediaAuthorizationConfirmScreen() {
     router.replace('/(tabs)');
   }, [router, sessionProfileId]);
 
+  if (!tokenReady) {
+    return (
+      <MinimalScreenLayout scroll={false}>
+        <View style={styles.root}>
+          <Text style={styles.title}>Confirmação de autorização</Text>
+          <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />
+        </View>
+      </MinimalScreenLayout>
+    );
+  }
+
   if (!token) {
     return (
       <MinimalScreenLayout scroll={false}>
         <View style={styles.root}>
           <Text style={styles.title}>Confirmação de autorização</Text>
           <Text style={[styles.message, styles.messageError]}>
-            Link inválido ou incompleto. Copie o link inteiro do e-mail ou solicite um novo envio pelo aplicativo.
+            {invalidMessage ?? 'Link inválido ou incompleto. Solicite um novo envio pelo aplicativo.'}
           </Text>
           <Pressable accessibilityRole="button" style={styles.button} onPress={handleBack}>
             <Text style={styles.buttonText}>Voltar ao aplicativo</Text>

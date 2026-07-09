@@ -580,14 +580,17 @@ set search_path = public
 as $$
 declare
   v_url text;
+  v_test_token text;
 begin
+  v_test_token := encode(gen_random_bytes(32), 'hex');
+
   v_url := coalesce(
     nullif(trim(p_confirm_url), ''),
     coalesce(
       public.get_app_parameter_value_trim('media_authorization_app_url'),
       public.get_app_parameter_value_trim('app_public_url'),
       'https://localhost:8081'
-    ) || '/autorizacao-midia-confirmar?token=teste-diagnostico'
+    ) || '/autorizacao-midia-confirmar?token=' || v_test_token
   );
 
   return public.send_media_authorization_confirm_email(
