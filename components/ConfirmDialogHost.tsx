@@ -1,5 +1,5 @@
 import { settleConfirmDialog, subscribeConfirmDialogHost, type ConfirmDialogRequest } from '@/lib/confirmDialogHost';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useEffect, useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -141,22 +141,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    color: MINIMAL_UI.text,
-    fontSize: 18,
-    fontWeight: '700',
+    ...MINIMAL_TYPO.screenTitle,
+    color: MINIMAL_UI.blueDark,
     lineHeight: 24,
     textAlign: 'center',
   },
   message: {
-    color: MINIMAL_UI.textMuted,
+    ...MINIMAL_TYPO.inboxPreview,
     fontSize: 15,
     lineHeight: 22,
     textAlign: 'center',
   },
   messageStandalone: {
-    color: MINIMAL_UI.text,
+    color: MINIMAL_UI.blueDark,
     fontSize: 16,
     lineHeight: 24,
+    textAlign: 'center',
   },
   actions: {
     flexDirection: 'row',
@@ -180,17 +180,17 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: MINIMAL_UI.background,
     borderWidth: 1,
-    borderColor: MINIMAL_UI.border,
+    borderColor: MINIMAL_UI.blueDark,
   },
   cancelButtonText: {
-    color: MINIMAL_UI.text,
+    color: MINIMAL_UI.blueDark,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   confirmButton: {
-    backgroundColor: MINIMAL_UI.accent,
+    backgroundColor: MINIMAL_UI.blueDark,
     borderWidth: 1,
-    borderColor: MINIMAL_UI.accent,
+    borderColor: MINIMAL_UI.blueDark,
   },
   confirmButtonText: {
     color: MINIMAL_UI.onDark,
@@ -198,9 +198,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   destructiveButton: {
-    backgroundColor: '#DC2626',
+    backgroundColor: MINIMAL_UI.blueDark,
     borderWidth: 1,
-    borderColor: '#DC2626',
+    borderColor: MINIMAL_UI.blueDark,
   },
   destructiveButtonText: {
     color: MINIMAL_UI.onDark,
