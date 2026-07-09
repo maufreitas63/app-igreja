@@ -19,8 +19,8 @@ export type MediaAuthorizationProfile = {
 export type SubmitMediaAuthorizationResult = {
   ok: boolean;
   message: string;
+  emailSent?: boolean;
   emailMasked?: string | null;
-  devConfirmUrl?: string | null;
 };
 
 export type ConfirmMediaAuthorizationResult = {
@@ -86,8 +86,8 @@ export async function submitMediaAuthorizationPending(input: {
   return {
     ok: payload.ok === true,
     message: String(payload.message ?? 'Resposta inválida do servidor.'),
+    emailSent: payload.emailSent === true,
     emailMasked: typeof payload.emailMasked === 'string' ? payload.emailMasked : null,
-    devConfirmUrl: typeof payload.devConfirmUrl === 'string' ? payload.devConfirmUrl : null,
   };
 }
 

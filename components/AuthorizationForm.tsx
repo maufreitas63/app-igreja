@@ -132,11 +132,10 @@ export function AuthorizationForm({ profileId }: Props) {
         return;
       }
 
-      if (__DEV__ && result.devConfirmUrl) {
+      if (!result.emailSent) {
         Alert.alert(
-          'Link de confirmação (dev)',
-          `${result.message}\n\n${result.devConfirmUrl}`,
-          [{ text: 'OK' }]
+          'E-mail não enviado',
+          result.message || 'O servidor não confirmou o envio do e-mail. Verifique a configuração de e-mail no Supabase.'
         );
         return;
       }
@@ -144,8 +143,8 @@ export function AuthorizationForm({ profileId }: Props) {
       Alert.alert(
         'Confirme seu e-mail',
         result.emailMasked
-          ? `${result.message}\n\nDestino: ${result.emailMasked}`
-          : result.message
+          ? `${result.message}\n\nDestino: ${result.emailMasked}\n\nVerifique também a pasta de spam.`
+          : `${result.message}\n\nVerifique também a pasta de spam.`
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao enviar autorização.';

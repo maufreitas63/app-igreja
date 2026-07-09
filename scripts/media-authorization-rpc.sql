@@ -32,10 +32,221 @@ stable
 security definer
 set search_path = public
 as $$
-  select nullif(trim(value), '')
-    from public.app_parameters
-   where lower(trim(parameter)) = lower(trim(p_parameter))
-   limit 1;
+  select nullif(trim(public.get_app_parameter_value(p_parameter)), '');
+$$;
+
+create or replace function public.media_authorization_confirm_email_text(
+  p_full_name text,
+  p_confirm_url text
+)
+returns text
+language sql
+immutable
+as $$
+  select
+    'Olá, ' || trim(p_full_name) || E',\n\n'
+    || 'Recebemos sua solicitação de autorização de uso de imagem e voz.' || E'\n\n'
+    || 'Para concluir com validade jurídica (Lei 14.063/2020 e LGPD), abra o link abaixo:' || E'\n\n'
+    || trim(p_confirm_url) || E'\n\n'
+    || 'Se você não solicitou esta autorização, ignore este e-mail.';
+$$;
+
+create or replace function public.send_media_authorization_confirm_email_via_gmail(
+  p_to_email text,
+  p_full_name text,
+  p_confirm_url text
+)
+returns void
+language plpgsql
+security definer
+set search_path = http, extensions, public, pg_temp
+as $$
+declare
+  v_smtp_user text;
+  v_smtp_password text;
+  v_from text;
+  v_function_url text;
+  v_function_secret text;
+  v_body text;
+  v_status integer;
+  v_content text;
+  v_recipient text;
+  v_payload jsonb;
+begin
+  v_recipient := public.normalize_profile_email(p_to_email);
+
+  v_smtp_user := public.get_app_parameter_value_trim('recovery_email_smtp_user');
+  v_smtp_password := public.get_app_parameter_value_trim('recovery_email_smtp_password');
+  v_from := public.get_app_parameter_value_trim('recovery_email_from');
+  v_function_url := public.get_app_parameter_value_trim('recovery_email_function_url');
+  v_function_secret := public.get_app_parameter_value_trim('recovery_email_function_secret');
+
+  if v_smtp_user is null
+     or v_smtp_password is null
+     or v_from is null
+     or v_function_url is null
+     or v_function_secret is null then
+    raise exception
+      'Gmail não configurado. Cadastre recovery_email_smtp_user, recovery_email_smtp_password, recovery_email_from, recovery_email_function_url e recovery_email_function_secret em app_parameters.';
+  end if;
+
+  v_body := json_build_object(
+    'secret', v_function_secret,
+    'smtp_user', v_smtp_user,
+    'smtp_password', v_smtp_password,
+    'from', v_from,
+    'to', v_recipient,
+    'subject', 'Confirme sua autorização de imagem e voz',
+    'text', public.media_authorization_confirm_email_text(p_full_name, p_confirm_url)
+  )::text;
+
+  select p.p_status, p.p_content
+    into v_status, v_content
+    from public.password_recovery_http_post(
+      v_function_url,
+      jsonb_build_object('content-type', 'application/json'),
+      v_body
+    ) as p;
+
+  if coalesce(v_status, 0) not between 200 and 299 then
+    raise exception
+      'Não foi possível acionar o envio Gmail (HTTP %). %',
+      coalesce(v_status, 0),
+      coalesce(nullif(trim(v_content), ''), 'Verifique a Edge Function send-password-recovery-email.');
+  end if;
+
+  begin
+    v_payload := v_content::jsonb;
+  exception
+    when others then
+      raise exception
+        'Resposta inválida da Edge Function Gmail: %',
+        coalesce(nullif(trim(v_content), ''), 'sem conteúdo');
+  end;
+
+  if coalesce(v_payload->>'ok', '') <> 'true' then
+    raise exception
+      'Não foi possível enviar o e-mail de autorização via Gmail. %',
+      coalesce(nullif(trim(v_payload->>'message'), ''), v_content);
+  end if;
+end;
+$$;
+
+create or replace function public.send_media_authorization_confirm_email_via_resend(
+  p_to_email text,
+  p_full_name text,
+  p_confirm_url text
+)
+returns void
+language plpgsql
+security definer
+set search_path = http, extensions, public, pg_temp
+as $$
+declare
+  v_api_key text;
+  v_from text;
+  v_body text;
+  v_status integer;
+  v_content text;
+  v_recipient text;
+begin
+  v_recipient := public.normalize_profile_email(p_to_email);
+
+  v_api_key := public.get_app_parameter_value_trim('recovery_email_api_key');
+  v_from := public.get_app_parameter_value_trim('recovery_email_from');
+
+  if v_api_key is null or v_from is null then
+    raise exception
+      'Resend não configurado. Cadastre recovery_email_api_key e recovery_email_from em app_parameters.';
+  end if;
+
+  v_body := json_build_object(
+    'from', v_from,
+    'to', json_build_array(v_recipient),
+    'subject', 'Confirme sua autorização de imagem e voz',
+    'text', public.media_authorization_confirm_email_text(p_full_name, p_confirm_url)
+  )::text;
+
+  select p.p_status, p.p_content
+    into v_status, v_content
+    from public.password_recovery_http_post(
+      'https://api.resend.com/emails',
+      jsonb_build_object(
+        'authorization', 'Bearer ' || v_api_key,
+        'content-type', 'application/json'
+      ),
+      v_body
+    ) as p;
+
+  if coalesce(v_status, 0) not between 200 and 299 then
+    raise exception
+      'Não foi possível enviar o e-mail de autorização (HTTP %). %',
+      coalesce(v_status, 0),
+      coalesce(nullif(trim(v_content), ''), 'Verifique recovery_email_api_key e recovery_email_from no Resend.');
+  end if;
+end;
+$$;
+
+create or replace function public.send_media_authorization_confirm_email(
+  p_to_email text,
+  p_full_name text,
+  p_confirm_url text
+)
+returns void
+language plpgsql
+security definer
+set search_path = http, extensions, public, pg_temp
+as $$
+declare
+  v_recipient text;
+  v_provider text;
+  v_has_gmail boolean;
+  v_has_resend boolean;
+begin
+  v_recipient := public.normalize_profile_email(p_to_email);
+
+  if v_recipient is null or not public.is_valid_profile_email(v_recipient) then
+    raise exception 'E-mail inválido para envio.';
+  end if;
+
+  v_provider := lower(coalesce(public.get_app_parameter_value_trim('recovery_email_provider'), ''));
+
+  v_has_gmail :=
+    public.get_app_parameter_value_trim('recovery_email_smtp_user') is not null
+    and public.get_app_parameter_value_trim('recovery_email_smtp_password') is not null
+    and public.get_app_parameter_value_trim('recovery_email_from') is not null
+    and public.get_app_parameter_value_trim('recovery_email_function_url') is not null
+    and public.get_app_parameter_value_trim('recovery_email_function_secret') is not null;
+
+  v_has_resend :=
+    public.get_app_parameter_value_trim('recovery_email_api_key') is not null
+    and public.get_app_parameter_value_trim('recovery_email_from') is not null;
+
+  if v_provider = '' then
+    if v_has_gmail then
+      v_provider := 'gmail';
+    elsif v_has_resend then
+      v_provider := 'resend';
+    else
+      raise exception
+        'Envio de e-mail não configurado. Defina recovery_email_provider=gmail ou resend e os parâmetros correspondentes em app_parameters.';
+    end if;
+  end if;
+
+  if v_provider = 'gmail' then
+    perform public.send_media_authorization_confirm_email_via_gmail(p_to_email, p_full_name, p_confirm_url);
+    return;
+  end if;
+
+  if v_provider = 'resend' then
+    perform public.send_media_authorization_confirm_email_via_resend(p_to_email, p_full_name, p_confirm_url);
+    return;
+  end if;
+
+  raise exception
+    'recovery_email_provider inválido: %. Use gmail ou resend.',
+    v_provider;
+end;
 $$;
 
 create or replace function public.submit_media_authorization_pending(
@@ -60,6 +271,8 @@ declare
   v_status integer;
   v_content text;
   v_body jsonb;
+  v_email_sent boolean := false;
+  v_payload jsonb;
 begin
   v_profile_id := public.current_session_profile_id();
 
@@ -111,7 +324,8 @@ begin
   v_app_url := coalesce(
     public.get_app_parameter_value_trim('media_authorization_app_url'),
     public.get_app_parameter_value_trim('app_public_url'),
-  'https://localhost:8081');
+    'https://localhost:8081'
+  );
 
   v_function_url := public.get_app_parameter_value_trim('media_authorization_email_function_url');
   v_function_secret := public.get_app_parameter_value_trim('media_authorization_email_function_secret');
@@ -123,7 +337,10 @@ begin
       'to', lower(trim(p_email)),
       'confirmUrl', v_confirm_url,
       'fullName', trim(p_full_name),
-      'secret', v_function_secret
+      'secret', v_function_secret,
+      'smtp_user', public.get_app_parameter_value_trim('recovery_email_smtp_user'),
+      'smtp_password', public.get_app_parameter_value_trim('recovery_email_smtp_password'),
+      'from', public.get_app_parameter_value_trim('recovery_email_from')
     );
 
     select p_status, p_content
@@ -138,17 +355,53 @@ begin
       delete from public.pending_authorizations where id = v_pending_id;
       return jsonb_build_object(
         'ok', false,
-        'message', 'Não foi possível enviar o e-mail de confirmação. Tente novamente.'
+        'emailSent', false,
+        'message', coalesce(nullif(trim(v_content), ''), 'Não foi possível enviar o e-mail de confirmação. Tente novamente.')
       );
     end if;
+
+    begin
+      v_payload := v_content::jsonb;
+    exception
+      when others then
+        v_payload := jsonb_build_object('ok', true);
+    end;
+
+    if coalesce(v_payload->>'ok', 'true') <> 'true' then
+      delete from public.pending_authorizations where id = v_pending_id;
+      return jsonb_build_object(
+        'ok', false,
+        'emailSent', false,
+        'message', coalesce(nullif(trim(v_payload->>'message'), ''), 'Não foi possível enviar o e-mail de confirmação.')
+      );
+    end if;
+
+    v_email_sent := true;
+  else
+    begin
+      perform public.send_media_authorization_confirm_email(
+        lower(trim(p_email)),
+        trim(p_full_name),
+        v_confirm_url
+      );
+      v_email_sent := true;
+    exception
+      when others then
+        delete from public.pending_authorizations where id = v_pending_id;
+        return jsonb_build_object(
+          'ok', false,
+          'emailSent', false,
+          'message', SQLERRM
+        );
+    end;
   end if;
 
   return jsonb_build_object(
     'ok', true,
+    'emailSent', v_email_sent,
     'message', 'Enviamos um link de confirmação para o seu e-mail. Abra-o para concluir a autorização.',
     'pendingId', v_pending_id,
-    'emailMasked', public.mask_profile_email(lower(trim(p_email))),
-    'devConfirmUrl', case when v_function_url is null then v_confirm_url else null end
+    'emailMasked', public.mask_profile_email(lower(trim(p_email)))
   );
 exception
   when others then
@@ -271,6 +524,7 @@ exception
 end;
 $$;
 
+grant execute on function public.send_media_authorization_confirm_email(text, text, text) to anon, authenticated;
 grant execute on function public.submit_media_authorization_pending(text, text, text, text) to anon, authenticated;
 grant execute on function public.confirm_media_authorization(text, text, text) to anon, authenticated;
 grant execute on function public.media_authorization_terms_text() to anon, authenticated;
