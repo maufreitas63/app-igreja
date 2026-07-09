@@ -62,11 +62,12 @@ Edite e execute `scripts/media-authorization-pdf-setup.sql` (substitua `SEU_PROJ
 | `media_authorization_pdf_function_url` | `https://SEU_REF.supabase.co/functions/v1/generate-authorization-pdf` |
 | `media_authorization_pdf_function_secret` | Mesmo valor de `MEDIA_AUTHORIZATION_PDF_SECRET` |
 
-### 3.3 Reexecute o RPC
+### 3.3 RPC de PDF no banco
 
-```
-scripts/media-authorization-rpc.sql
-```
+Se o teste `13` disser *function invoke_media_authorization_pdf_generation does not exist*, execute **um** dos scripts:
+
+- `scripts/media-authorization-pdf-rpc-patch.sql` (só PDF — mais rápido), **ou**
+- `scripts/media-authorization-rpc.sql` (completo — recomendado após qualquer atualização)
 
 ### 3.4 Testes
 
