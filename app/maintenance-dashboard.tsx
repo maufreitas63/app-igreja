@@ -291,11 +291,12 @@ type SimNaoToggleProps = {
 };
 
 const SimNaoToggle = ({ value, onValueChange, disabled, minimal }: SimNaoToggleProps) => (
-  <View style={styles.totemBlock}>
+  <View style={[styles.totemBlock, minimal && styles.totemBlockMinimal]}>
     <View style={[styles.totemChoiceRow, minimal && styles.totemChoiceRowMinimal]}>
       <TouchableOpacity
         style={[
           styles.totemChoiceButton,
+          minimal && styles.totemChoiceButtonMinimal,
           value && styles.totemChoiceButtonSimActive,
           minimal && value && styles.totemChoiceButtonSimActiveMinimal,
         ]}
@@ -317,6 +318,7 @@ const SimNaoToggle = ({ value, onValueChange, disabled, minimal }: SimNaoToggleP
       <TouchableOpacity
         style={[
           styles.totemChoiceButton,
+          minimal && styles.totemChoiceButtonMinimal,
           !value && styles.totemChoiceButtonNaoActive,
           minimal && !value && styles.totemChoiceButtonNaoActiveMinimal,
         ]}
@@ -355,7 +357,12 @@ const FeatureToggleColumn = ({
   minimal,
 }: FeatureToggleColumnProps) => (
   <View style={[styles.featureToggleColumn, minimal && styles.featureToggleColumnMinimal]}>
-    <Text style={[styles.totemFieldLabel, minimal && styles.totemFieldLabelMinimal]}>{label}</Text>
+    <Text
+      style={[styles.totemFieldLabel, minimal && styles.totemFieldLabelMinimal]}
+      numberOfLines={2}
+    >
+      {label}
+    </Text>
     <SimNaoToggle
       value={value}
       onValueChange={onValueChange}
@@ -1708,6 +1715,7 @@ export default function MaintenanceDashboard() {
                 style={styles.scroll}
                 contentContainerStyle={[
                   styles.scrollContent,
+                  isMinimalPresentation && styles.scrollContentMinimal,
                   styles.scrollContentWithFooter,
                   { paddingBottom: 16 },
                 ]}
@@ -1715,7 +1723,7 @@ export default function MaintenanceDashboard() {
                 showsVerticalScrollIndicator={false}
               >
             <View style={styles.editorSection}>
-              <View style={styles.editorCard}>
+              <View style={[styles.editorCard, isMinimalPresentation && styles.editorCardMinimal]}>
                 <View style={styles.nameGeofenceRow}>
                   <View style={styles.nameInputColumn}>
                     <Text style={styles.fieldLabel}>Nome do evento</Text>
@@ -1867,9 +1875,22 @@ export default function MaintenanceDashboard() {
                   </View>
                 ) : null}
 
-                <Text style={styles.fieldLabel}>Salas e recursos</Text>
-                <View style={styles.featureRow}>
-                  <View style={styles.featureRowChips}>
+                <Text
+                  style={[
+                    styles.fieldLabel,
+                    isMinimalPresentation && styles.fieldLabelMinimal,
+                    isMinimalPresentation && styles.fieldLabelCentered,
+                  ]}
+                >
+                  Salas e recursos
+                </Text>
+                <View style={[styles.featureRow, isMinimalPresentation && styles.featureRowMinimal]}>
+                  <View
+                    style={[
+                      styles.featureRowChips,
+                      isMinimalPresentation && styles.featureRowChipsMinimal,
+                    ]}
+                  >
                     <FeatureToggle
                       label={KIDS_ROOM_DISPLAY_LABEL}
                       value={form.kidsRoom}
@@ -2426,6 +2447,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 16,
   },
+  scrollContentMinimal: {
+    paddingHorizontal: 16,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'center',
+  },
   scrollContentWithFooter: {
     paddingBottom: 8,
   },
@@ -2610,6 +2637,13 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 10,
   },
+  editorCardMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+    borderColor: MINIMAL_UI.border,
+  },
   fieldLabel: {
     color: '#3A96DD',
     fontSize: 12,
@@ -2745,6 +2779,11 @@ const styles = StyleSheet.create({
   totemFieldLabelMinimal: {
     color: MINIMAL_UI.textMuted,
     textAlign: 'left',
+    flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
+    fontSize: 11,
+    lineHeight: 14,
   },
   featureRow: {
     flexDirection: 'row',
@@ -2753,12 +2792,30 @@ const styles = StyleSheet.create({
     gap: 10,
     flexWrap: 'wrap',
   },
+  featureRowMinimal: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    gap: 14,
+  },
   featureRowChips: {
     flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
     minWidth: 200,
+  },
+  featureRowChipsMinimal: {
+    flex: 0,
+    flexGrow: 0,
+    minWidth: 0,
+    width: '100%',
+    maxWidth: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   featureToggleGroup: {
     flexDirection: 'row',
@@ -2771,21 +2828,33 @@ const styles = StyleSheet.create({
   },
   featureToggleGroupMinimal: {
     width: '100%',
-    justifyContent: 'flex-start',
+    maxWidth: '100%',
+    minWidth: 0,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    justifyContent: 'center',
     marginLeft: 0,
-    flexWrap: 'wrap',
+    gap: 10,
   },
   featureToggleColumn: {
     alignItems: 'flex-end',
     gap: 6,
   },
   featureToggleColumnMinimal: {
-    alignItems: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: '100%',
     minWidth: 0,
-    flexShrink: 1,
+    gap: 10,
   },
   totemBlock: {
     flexShrink: 0,
+  },
+  totemBlockMinimal: {
+    flexShrink: 0,
+    marginLeft: 'auto',
   },
   totemChoiceRow: {
     flexDirection: 'row',
@@ -2806,6 +2875,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
+  },
+  totemChoiceButtonMinimal: {
+    minWidth: 40,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
   },
   totemChoiceButtonSimActive: {
     backgroundColor: 'rgba(34, 197, 94, 0.22)',
@@ -2920,6 +2994,10 @@ const styles = StyleSheet.create({
   },
   fieldLabelMinimal: {
     color: MINIMAL_UI.textMuted,
+  },
+  fieldLabelCentered: {
+    textAlign: 'center',
+    alignSelf: 'stretch',
   },
   publishPastWarning: {
     color: '#FCD34D',
