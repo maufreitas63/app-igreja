@@ -42,6 +42,14 @@ as $$
   select nullif(trim(public.get_app_parameter_value(p_parameter)), '');
 $$;
 
+create or replace function public.media_authorization_confirm_email_subject()
+returns text
+language sql
+immutable
+as $$
+  select 'Confirme sua autorização no app';
+$$;
+
 create or replace function public.media_authorization_confirm_email_text(
   p_full_name text,
   p_confirm_url text
@@ -52,10 +60,27 @@ immutable
 as $$
   select
     'Olá, ' || trim(p_full_name) || E',\n\n'
-    || 'Recebemos sua solicitação de autorização de uso de imagem e voz.' || E'\n\n'
-    || 'Para concluir com validade jurídica (Lei 14.063/2020 e LGPD), abra o link abaixo:' || E'\n\n'
+    || 'Você solicitou confirmar a autorização de imagem e voz no aplicativo da igreja.' || E'\n\n'
+    || 'Abra o link abaixo para concluir (válido por 48 horas):' || E'\n\n'
     || trim(p_confirm_url) || E'\n\n'
     || 'Se você não solicitou esta autorização, ignore este e-mail.';
+$$;
+
+create or replace function public.media_authorization_confirm_email_html(
+  p_full_name text,
+  p_confirm_url text
+)
+returns text
+language sql
+immutable
+as $$
+  select
+    '<p>Olá, ' || replace(trim(p_full_name), '<', '&lt;') || ',</p>'
+    || '<p>Você solicitou confirmar a autorização de imagem e voz no aplicativo da igreja.</p>'
+    || '<p><a href="' || replace(trim(p_confirm_url), '"', '&quot;') || '">Confirmar autorização</a></p>'
+    || '<p>Ou copie e cole este endereço no navegador:<br>'
+    || replace(trim(p_confirm_url), '<', '&lt;') || '</p>'
+    || '<p>Link válido por 48 horas. Se você não solicitou, ignore este e-mail.</p>';
 $$;
 
 create or replace function public.send_media_authorization_confirm_email_via_resend(
@@ -90,8 +115,10 @@ begin
   v_body := json_build_object(
     'from', v_from,
     'to', json_build_array(v_recipient),
-    'subject', 'Confirme sua autorização de imagem e voz',
-    'text', public.media_authorization_confirm_email_text(p_full_name, p_confirm_url)
+    'subject', public.media_authorization_confirm_email_subject(),
+    'text', public.media_authorization_confirm_email_text(p_full_name, p_confirm_url),
+    'html', public.media_authorization_confirm_email_html(p_full_name, p_confirm_url),
+    'tags', json_build_array(json_build_object('name', 'category', 'value', 'authorization'))
   )::text;
 
   select p.p_status, p.p_content
@@ -173,7 +200,7 @@ begin
     'smtp_password', v_smtp_password,
     'from', v_from,
     'to', v_recipient,
-    'subject', 'Confirme sua autorização de imagem e voz',
+    'subject', public.media_authorization_confirm_email_subject(),
     'text', public.media_authorization_confirm_email_text(p_full_name, p_confirm_url)
   )::text;
 

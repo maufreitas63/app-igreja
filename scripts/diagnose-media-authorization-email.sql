@@ -102,4 +102,5 @@ from cfg;
 --   'https://seu-app.pages.dev/autorizacao-midia-confirmar?token=teste-diagnostico'
 -- );
 -- Resultado esperado: {"ok":true,"provider":"resend","resendId":"...","to":"seu@email.com"}
--- Se resendId vier preenchido mas o e-mail não chegar, verifique Suppressions no painel Resend.
+-- Assunto no Gmail: "Confirme sua autorização no app"
+-- Se Resend mostra delivered mas não aparece no Gmail, busque: in:anywhere "Confirme sua autorização"
