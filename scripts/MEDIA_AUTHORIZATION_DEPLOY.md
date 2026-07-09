@@ -26,20 +26,63 @@ O envio da autorização usa **exatamente o mesmo provedor do PIN** (`recovery_e
 
 **Se o PIN chega mas a autorização não:** reexecute `scripts/media-authorization-rpc.sql` e rode os testes em `scripts/test-media-auth/`.
 
-## 3. Edge Functions (opcional — só PDF)
+## 3. PDF após confirmação
 
-Função dedicada de e-mail (`send-authorization-magic-link`) **não é mais usada** pelo RPC; o envio vai pelo mesmo Gmail/Resend do PIN.
+Após confirmar o link, o RPC chama a Edge Function `generate-authorization-pdf`, grava o arquivo no bucket `authorizations` e preenche `authorizations.storage_path`.
 
-Para PDF após confirmação:
+### 3.1 Deploy da Edge Function (uma vez)
+
+No terminal, na pasta do projeto:
 
 ```bash
+supabase login
+supabase link --project-ref SEU_PROJECT_REF
+```
+
+Gere um secret (guarde o mesmo valor para o passo 3.2):
+
+```bash
+# PowerShell — string aleatória
+[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
+```
+
+Configure o secret e faça deploy:
+
+```bash
+supabase secrets set MEDIA_AUTHORIZATION_PDF_SECRET=SEU_SECRET_AQUI
 supabase functions deploy generate-authorization-pdf --no-verify-jwt
 ```
 
-Parâmetros opcionais em `app_parameters`:
+### 3.2 Parâmetros no Supabase (SQL Editor)
 
-- `media_authorization_pdf_function_url`
-- `media_authorization_pdf_function_secret`
+Edite e execute `scripts/media-authorization-pdf-setup.sql` (substitua `SEU_PROJECT_REF` e o secret).
+
+| parameter | uso |
+|-----------|-----|
+| `media_authorization_pdf_function_url` | `https://SEU_REF.supabase.co/functions/v1/generate-authorization-pdf` |
+| `media_authorization_pdf_function_secret` | Mesmo valor de `MEDIA_AUTHORIZATION_PDF_SECRET` |
+
+### 3.3 Reexecute o RPC
+
+```
+scripts/media-authorization-rpc.sql
+```
+
+### 3.4 Testes
+
+| Script | O que testa |
+|--------|-------------|
+| `12-pdf-config.sql` | URL + secret configurados |
+| `13-generate-pdf.sql` | Gera PDF para autorização já confirmada (cole o `id` do teste 05) |
+| `05-list-confirmed.sql` | Deve mostrar `storage_path` preenchido após o PDF |
+
+### 3.5 No app
+
+Na tela de autorização, após confirmar: **Baixar PDF** (se já gerado) ou **Gerar PDF** (se confirmou antes de configurar o PDF).
+
+### 3.6 Edge Functions legadas
+
+`send-authorization-magic-link` **não é usada** — o e-mail vai pelo mesmo Resend/Gmail do PIN.
 
 ## Causa raiz recorrente (Resend “para” de novo)
 
@@ -70,6 +113,8 @@ Scripts em `scripts/test-media-auth/` — execute **um por vez**, na ordem:
 | `07-set-production-url.sql` | Cadastrar URL pública do app |
 | `08-confirm-token-manual.sql` | Confirmar token via SQL |
 | `10-session-ping.sql` | Sessão no SQL Editor (sem headers = ok false) |
+| `12-pdf-config.sql` | Configuração do PDF |
+| `13-generate-pdf.sql` | Gerar PDF para autorização existente |
 
 Se o botão retornar sucesso mas o e-mail não chegar:
 

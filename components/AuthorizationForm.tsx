@@ -3,10 +3,12 @@ import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { cpfValidationMessage, formatCpf } from '@/lib/cpfValidation';
 import {
   ensureServerSessionForMediaAuth,
+  getMediaAuthorizationPdfSignedUrl,
   loadLatestMediaAuthorization,
   loadMediaAuthorizationProfile,
   MEDIA_AUTHORIZATION_TERMS_BODY,
   MEDIA_AUTHORIZATION_TERMS_TITLE,
+  retryMediaAuthorizationPdf,
   submitMediaAuthorizationPending,
 } from '@/lib/mediaAuthorization';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -15,6 +17,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -31,9 +34,16 @@ type FieldKey = 'fullName' | 'email' | 'cpf' | 'phone';
 
 const isFilled = (value: string | null | undefined) => Boolean(value?.trim());
 
+type LatestAuthorization = {
+  id: string;
+  accepted_at: string | null;
+  storage_path: string | null;
+};
+
 export function AuthorizationForm({ profileId }: Props) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [legalOpen, setLegalOpen] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -42,6 +52,7 @@ export function AuthorizationForm({ profileId }: Props) {
   const [cpfError, setCpfError] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [alreadyAuthorized, setAlreadyAuthorized] = useState(false);
+  const [latestAuthorization, setLatestAuthorization] = useState<LatestAuthorization | null>(null);
   const [lockedFields, setLockedFields] = useState<Record<FieldKey, boolean>>({
     fullName: false,
     email: false,
@@ -74,6 +85,15 @@ export function AuthorizationForm({ profileId }: Props) {
         setCpf(formatCpf(loadedProfile.cpf ?? ''));
         setPhone(formatBrazilPhoneInput(loadedProfile.phone ?? ''));
         setAlreadyAuthorized(Boolean(latestAuthorization?.id));
+        setLatestAuthorization(
+          latestAuthorization?.id
+            ? {
+                id: String(latestAuthorization.id),
+                accepted_at: latestAuthorization.accepted_at ?? null,
+                storage_path: latestAuthorization.storage_path ?? null,
+              }
+            : null
+        );
         setLockedFields({
           fullName: isFilled(loadedProfile.full_name),
           email: isFilled(loadedProfile.email),
@@ -175,6 +195,73 @@ export function AuthorizationForm({ profileId }: Props) {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    const storagePath = latestAuthorization?.storage_path?.trim();
+    if (!storagePath) {
+      return;
+    }
+
+    setPdfLoading(true);
+
+    try {
+      const signedUrl = await getMediaAuthorizationPdfSignedUrl(storagePath);
+      if (!signedUrl) {
+        Alert.alert('PDF indisponível', 'Não foi possível abrir o documento. Tente gerar novamente.');
+        return;
+      }
+
+      await Linking.openURL(signedUrl);
+    } catch (error) {
+      console.error('[AuthorizationForm] download pdf failed', error);
+      Alert.alert('Erro', 'Não foi possível abrir o PDF.');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const handleGeneratePdf = async () => {
+    const authorizationId = latestAuthorization?.id;
+    if (!authorizationId) {
+      return;
+    }
+
+    setPdfLoading(true);
+
+    try {
+      const result = await retryMediaAuthorizationPdf(authorizationId);
+      if (!result.ok) {
+        Alert.alert('Não foi possível gerar o PDF', result.message);
+        return;
+      }
+
+      if (result.storagePath) {
+        setLatestAuthorization((current) =>
+          current ? { ...current, storage_path: result.storagePath ?? null } : current
+        );
+      }
+
+      Alert.alert('PDF gerado', result.message);
+    } catch (error) {
+      console.error('[AuthorizationForm] generate pdf failed', error);
+      Alert.alert('Erro', 'Falha ao gerar o PDF.');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
+  const acceptedAtLabel = useMemo(() => {
+    if (!latestAuthorization?.accepted_at) {
+      return null;
+    }
+
+    const date = new Date(latestAuthorization.accepted_at);
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  }, [latestAuthorization?.accepted_at]);
+
   if (loading) {
     return <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />;
   }
@@ -194,9 +281,41 @@ export function AuthorizationForm({ profileId }: Props) {
       </View>
 
       {alreadyAuthorized ? (
-        <Text style={styles.notice}>
-          Você já possui uma autorização registrada. Um novo envio substituirá o link pendente, se houver.
-        </Text>
+        <View style={styles.authorizedBox}>
+          <Text style={styles.notice}>
+            Autorização confirmada{acceptedAtLabel ? ` em ${acceptedAtLabel}` : ''}.
+          </Text>
+          {latestAuthorization?.storage_path ? (
+            <Pressable
+              accessibilityRole="button"
+              disabled={pdfLoading}
+              onPress={() => void handleDownloadPdf()}
+              style={styles.pdfButton}
+            >
+              {pdfLoading ? (
+                <ActivityIndicator color={MINIMAL_UI.onDark} />
+              ) : (
+                <Text style={styles.pdfButtonText}>Baixar PDF da autorização</Text>
+              )}
+            </Pressable>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              disabled={pdfLoading}
+              onPress={() => void handleGeneratePdf()}
+              style={styles.pdfButtonSecondary}
+            >
+              {pdfLoading ? (
+                <ActivityIndicator color={MINIMAL_UI.icon} />
+              ) : (
+                <Text style={styles.pdfButtonSecondaryText}>Gerar PDF da autorização</Text>
+              )}
+            </Pressable>
+          )}
+          <Text style={styles.noticeMuted}>
+            Um novo envio substituirá o link pendente, se houver.
+          </Text>
+        </View>
       ) : null}
 
       <ScrollView
@@ -365,6 +484,42 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: MINIMAL_UI.blue,
     marginBottom: 8,
+  },
+  noticeMuted: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: MINIMAL_UI.textMuted,
+    marginTop: 8,
+  },
+  authorizedBox: {
+    marginBottom: 8,
+  },
+  pdfButton: {
+    backgroundColor: MINIMAL_UI.icon,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  pdfButtonText: {
+    color: MINIMAL_UI.onDark,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  pdfButtonSecondary: {
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.icon,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  pdfButtonSecondaryText: {
+    color: MINIMAL_UI.icon,
+    fontSize: 14,
+    fontWeight: '600',
   },
   formScroll: {
     flex: 1,

@@ -10,6 +10,7 @@ select
   a.email,
   a.accepted_at,
   a.confirmed_via_email,
+  a.storage_path,
   left(coalesce(a.confirmation_token, ''), 10) || '...' as token_prefix
 from public.authorizations a
 cross join params x

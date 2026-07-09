@@ -211,3 +211,46 @@ export async function loadLatestMediaAuthorization(profileId: string) {
 
   return data;
 }
+
+export type MediaAuthorizationPdfResult = {
+  ok: boolean;
+  message: string;
+  storagePath?: string | null;
+};
+
+export async function retryMediaAuthorizationPdf(authorizationId: string): Promise<MediaAuthorizationPdfResult> {
+  const { data, error } = await supabase.rpc('retry_media_authorization_pdf', {
+    p_authorization_id: authorizationId,
+  });
+
+  if (error) {
+    console.error('[media-authorization] retry pdf failed', error);
+    return { ok: false, message: error.message || 'Não foi possível gerar o PDF.' };
+  }
+
+  const payload = parseRpcPayload(data);
+
+  return {
+    ok: payload.ok === true,
+    message: String(payload.message ?? 'Resposta inválida do servidor.'),
+    storagePath: typeof payload.storagePath === 'string' ? payload.storagePath : null,
+  };
+}
+
+export async function getMediaAuthorizationPdfSignedUrl(storagePath: string): Promise<string | null> {
+  const normalizedPath = storagePath.trim();
+  if (!normalizedPath) {
+    return null;
+  }
+
+  const { data, error } = await supabase.storage
+    .from('authorizations')
+    .createSignedUrl(normalizedPath, 3600);
+
+  if (error || !data?.signedUrl) {
+    console.error('[media-authorization] signed pdf url failed', error);
+    return null;
+  }
+
+  return data.signedUrl;
+}
