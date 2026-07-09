@@ -25,7 +25,7 @@ select
       public.get_app_parameter_value_trim('media_authorization_app_url'),
       public.get_app_parameter_value_trim('app_public_url'),
       'https://app-igreja.pages.dev'
-    ) || '/autorizacao-midia-confirmar?token=' || encode(gen_random_bytes(32), 'hex')
+    ) || '/autorizacao-midia-confirmar?token=' || public.media_authorization_new_token()
   ) as resultado;
 
 -- Se send_resend_transactional_email não existir: reexecute

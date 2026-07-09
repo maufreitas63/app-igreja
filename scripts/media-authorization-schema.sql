@@ -1,4 +1,4 @@
-create extension if not exists pgcrypto;
+create extension if not exists pgcrypto with schema extensions;
 
 -- Autorização de uso de imagem e voz (LGPD + Lei 14.063/2020).
 -- Execute no Supabase após access-control-schema.sql e profile-sessions.sql

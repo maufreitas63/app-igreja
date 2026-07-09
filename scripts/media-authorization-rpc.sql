@@ -8,6 +8,18 @@
 --   media_authorization_pdf_function_url = https://REF.supabase.co/functions/v1/generate-authorization-pdf
 --   media_authorization_pdf_function_secret = (secret)
 
+create extension if not exists pgcrypto with schema extensions;
+
+create or replace function public.media_authorization_new_token()
+returns text
+language sql
+volatile
+security definer
+set search_path = extensions, public, pg_temp
+as $$
+  select encode(gen_random_bytes(32), 'hex');
+$$;
+
 alter table public.authorizations
   add column if not exists confirmation_token text null;
 
@@ -563,7 +575,7 @@ begin
   delete from public.pending_authorizations
    where profile_id = v_profile_id;
 
-  v_token := encode(gen_random_bytes(32), 'hex');
+  v_token := public.media_authorization_new_token();
 
   insert into public.pending_authorizations (
     profile_id,
@@ -790,7 +802,7 @@ declare
   v_url text;
   v_test_token text;
 begin
-  v_test_token := encode(gen_random_bytes(32), 'hex');
+  v_test_token := public.media_authorization_new_token();
 
   v_url := coalesce(
     nullif(trim(p_confirm_url), ''),
