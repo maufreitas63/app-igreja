@@ -11,6 +11,8 @@ import {
   type MinisterialProfileResult,
   type MinisterialQuestion,
 } from '@/lib/ministerialProfileQuestionnaire';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -212,7 +214,7 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
     if (phase === 'loading' || phase === 'submitting') {
       return (
         <View style={styles.centered}>
-          <ActivityIndicator color="#34D399" size="large" />
+          <ActivityIndicator color={VIGILANCE_SCALES_UI.accent} size="large" />
           <Text style={styles.loadingText}>
             {phase === 'submitting' ? 'Calculando seu perfil ministerial...' : 'Carregando questionário...'}
           </Text>
@@ -223,7 +225,7 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
     if (phase === 'error') {
       return (
         <View style={styles.centered}>
-          <MaterialIcons name="error-outline" size={36} color="#FCA5A5" />
+          <MaterialIcons name="error-outline" size={36} color="#DC2626" />
           <Text style={styles.errorText}>{errorMessage ?? 'Não foi possível carregar.'}</Text>
           {errorMessage?.includes('ministerial-profile-questionnaire') ? (
             <Text style={styles.hintText}>{MINISTERIAL_PROFILE_QUESTIONNAIRE_SQL_HINT}</Text>
@@ -274,7 +276,7 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.resultBadge}>
-            <FontAwesome name="star" size={28} color="#FCD34D" />
+            <FontAwesome name="star" size={28} color={MINIMAL_UI.onDark} />
           </View>
           <Text style={styles.title}>Seu perfil ministerial</Text>
           <Text style={styles.resultLabel}>{label}</Text>
@@ -370,7 +372,7 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
               style={styles.closeButton}
               activeOpacity={0.85}
             >
-              <MaterialIcons name="close" size={22} color="#CBD5E1" />
+              <MaterialIcons name="close" size={22} color={MINIMAL_UI.icon} />
             </TouchableOpacity>
           </View>
 
@@ -381,10 +383,12 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
   );
 }
 
+const ACCENT = VIGILANCE_SCALES_UI.accent;
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(2, 6, 23, 0.72)',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
     justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 24,
@@ -397,8 +401,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: '#0F172A',
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
     overflow: 'hidden',
   },
   header: {
@@ -408,13 +412,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
-    backgroundColor: '#111827',
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
   },
   headerTitle: {
     flex: 1,
-    color: '#F8FAFC',
-    fontSize: 15,
+    color: MINIMAL_UI.text,
+    fontSize: 16,
     fontWeight: '700',
     paddingRight: 12,
   },
@@ -424,7 +428,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(51, 65, 85, 0.65)',
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
   },
   body: {
     flex: 1,
@@ -444,30 +450,30 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 14,
     textAlign: 'center',
   },
   title: {
-    color: '#F8FAFC',
+    color: MINIMAL_UI.text,
     fontSize: 20,
     fontWeight: '800',
     textAlign: 'center',
   },
   subtitle: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 14,
     lineHeight: 21,
     textAlign: 'center',
   },
   stepTitle: {
-    color: '#E2E8F0',
+    color: MINIMAL_UI.text,
     fontSize: 16,
     fontWeight: '800',
     textAlign: 'center',
   },
   themeLabel: {
-    color: '#34D399',
+    color: ACCENT,
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',
@@ -483,62 +489,62 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressLabel: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 12,
     fontWeight: '600',
   },
   progressValue: {
-    color: '#CBD5E1',
+    color: MINIMAL_UI.text,
     fontSize: 12,
     fontWeight: '700',
   },
   progressTrack: {
     height: 8,
     borderRadius: 999,
-    backgroundColor: '#1E293B',
+    backgroundColor: MINIMAL_UI.rowHover,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     borderRadius: 999,
-    backgroundColor: '#34D399',
+    backgroundColor: ACCENT,
   },
   infoBox: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'rgba(30, 41, 59, 0.55)',
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.rowHover,
     padding: 14,
     gap: 6,
   },
   infoTitle: {
-    color: '#F8FAFC',
+    color: MINIMAL_UI.text,
     fontSize: 14,
     fontWeight: '700',
     marginBottom: 4,
   },
   infoItem: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 13,
     lineHeight: 19,
   },
   questionCard: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
     padding: 14,
     gap: 10,
   },
   questionNumber: {
-    color: '#64748B',
+    color: MINIMAL_UI.textMuted,
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   questionText: {
-    color: '#F8FAFC',
+    color: MINIMAL_UI.text,
     fontSize: 14,
     lineHeight: 21,
     fontWeight: '600',
@@ -552,35 +558,35 @@ const styles = StyleSheet.create({
     gap: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'rgba(30, 41, 59, 0.45)',
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   optionButtonSelected: {
-    borderColor: '#34D399',
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    borderColor: ACCENT,
+    backgroundColor: MINIMAL_UI.rowHover,
   },
   optionRadio: {
     width: 18,
     height: 18,
     borderRadius: 9,
     borderWidth: 2,
-    borderColor: '#64748B',
+    borderColor: MINIMAL_UI.textMuted,
     marginTop: 2,
   },
   optionRadioSelected: {
-    borderColor: '#34D399',
-    backgroundColor: '#34D399',
+    borderColor: ACCENT,
+    backgroundColor: ACCENT,
   },
   optionText: {
     flex: 1,
-    color: '#CBD5E1',
+    color: MINIMAL_UI.textMuted,
     fontSize: 13,
     lineHeight: 19,
   },
   optionTextSelected: {
-    color: '#F8FAFC',
+    color: MINIMAL_UI.text,
     fontWeight: '600',
   },
   actionsRow: {
@@ -589,8 +595,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   primaryButton: {
-    borderRadius: 10,
-    backgroundColor: '#34D399',
+    borderRadius: 12,
+    backgroundColor: ACCENT,
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: 'center',
@@ -599,14 +605,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   primaryButtonText: {
-    color: '#052E16',
+    color: MINIMAL_UI.onDark,
     fontSize: 14,
     fontWeight: '800',
   },
   secondaryButton: {
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: 'center',
@@ -614,7 +621,7 @@ const styles = StyleSheet.create({
     minWidth: 110,
   },
   secondaryButtonText: {
-    color: '#E2E8F0',
+    color: MINIMAL_UI.text,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -628,12 +635,12 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(250, 204, 21, 0.12)',
+    backgroundColor: ACCENT,
     borderWidth: 1,
-    borderColor: 'rgba(250, 204, 21, 0.35)',
+    borderColor: ACCENT,
   },
   resultLabel: {
-    color: '#FCD34D',
+    color: ACCENT,
     fontSize: 28,
     fontWeight: '900',
     textAlign: 'center',
@@ -641,33 +648,33 @@ const styles = StyleSheet.create({
   resultDescriptionBox: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'rgba(30, 41, 59, 0.55)',
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.rowHover,
     padding: 14,
     gap: 10,
   },
   resultDescriptionHeading: {
-    color: '#6EE7B7',
+    color: MINIMAL_UI.text,
     fontSize: 14,
     fontWeight: '800',
     lineHeight: 20,
     textAlign: 'center',
   },
   resultDescriptionBody: {
-    color: '#CBD5E1',
+    color: MINIMAL_UI.textMuted,
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'left',
     fontStyle: 'italic',
   },
   errorText: {
-    color: '#FCA5A5',
+    color: '#DC2626',
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
   },
   hintText: {
-    color: '#FCD34D',
+    color: MINIMAL_UI.textMuted,
     fontSize: 12,
     lineHeight: 18,
     textAlign: 'center',
