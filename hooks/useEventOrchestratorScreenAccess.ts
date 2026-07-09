@@ -1,0 +1,13 @@
+import { useScreenAccessGuard, type ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
+import { DRAWER_EVENT_ORCHESTRATOR_RESOURCE } from '@/lib/drawerMenuAccess';
+
+/** Acesso à rota `/admin/orquestrador` — exige painel maintenance.card.event_orchestration. */
+export function useEventOrchestratorScreenAccess(
+  redirectPath: string = '/maintenance-dashboard'
+): ScreenAccessStatus {
+  return useScreenAccessGuard({
+    resourceKey: DRAWER_EVENT_ORCHESTRATOR_RESOURCE,
+    deniedMessage: 'Você não tem permissão para abrir a Orquestração do Evento.',
+    redirectPath,
+  });
+}

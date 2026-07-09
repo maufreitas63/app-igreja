@@ -5,6 +5,7 @@ import {
   sessionHasAccess,
   ACL_UNAVAILABLE_MESSAGE,
 } from '@/lib/accessControl';
+import { isSuggestionsImprovementsAccessAllowed } from '@/lib/drawerMenuAccess';
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
@@ -63,8 +64,11 @@ export function useSuggestionsImprovementsAccess(options?: {
           return;
         }
 
-        const allowed =
-          hasMaintenancePanel || (hasAdministrativo && activeMembership);
+        const allowed = isSuggestionsImprovementsAccessAllowed({
+          hasAdministrativoCard: hasAdministrativo,
+          hasMaintenancePanel,
+          hasActiveMembership: activeMembership,
+        });
 
         if (!allowed) {
           setStatus('denied');

@@ -1,5 +1,6 @@
 import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { DRAWER_OFFERINGS_RESOURCE } from '@/lib/drawerMenuAccess';
 import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
 import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -49,10 +50,13 @@ export function MinimalEuQueroFooter() {
   }
 
   const handleOpenOfferings = () => {
-    router.push({
-      pathname: '/ofertas',
-      params: withMinimalPresentation(),
-    });
+    void navigateWithScreenAccess(
+      router,
+      '/ofertas',
+      DRAWER_OFFERINGS_RESOURCE,
+      withMinimalPresentation(),
+      { deniedMessage: 'Você não tem permissão para abrir Dízimos e Ofertas.' }
+    );
   };
 
   const handleOpenPastoral = () => {

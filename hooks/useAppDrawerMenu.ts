@@ -6,7 +6,12 @@ import {
   type AppDrawerModuleKey,
 } from '@/lib/appDrawerMenu';
 import {
-  isDashboardCardFullyAllowed,
+  isDrawerMaintenanceModuleAllowed,
+  isDrawerMemberModuleAllowed,
+  isDrawerSuggestionsImprovementsAllowed,
+  DRAWER_MEMBER_CARD_BY_MODULE,
+} from '@/lib/drawerMenuAccess';
+import {
   loadDashboardLinkedScreenAccess,
   type DashboardScreenAccess,
 } from '@/lib/dashboardScreenAccess';
@@ -15,6 +20,7 @@ import {
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
+import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { getStoredUserPhone } from '@/lib/userSession';
 import { useCallback, useEffect, useState } from 'react';
@@ -24,7 +30,7 @@ export type AppDrawerMenuItemResolved = AppDrawerMenuItem & {
   pendingRoute: boolean;
 };
 
-async function isDrawerModuleEnabled(
+function isDrawerModuleEnabled(
   moduleKey: AppDrawerModuleKey,
   context: {
     dashboardCardAccess: DashboardCardViewAccess;
@@ -33,8 +39,9 @@ async function isDrawerModuleEnabled(
     canAccessMaintenance: boolean;
     canOperateGhostMode: boolean;
     canOpenAccessControl: boolean;
+    hasActiveMembership: boolean;
   }
-): Promise<boolean> {
+): boolean {
   if (isDrawerMenuPlaceholder(moduleKey)) {
     return true;
   }
@@ -43,73 +50,31 @@ async function isDrawerModuleEnabled(
     return true;
   }
 
-  if (moduleKey === 'menu_perfil') {
-    return isDashboardCardFullyAllowed(
-      'grouped_manage',
-      context.dashboardCardAccess,
-      context.dashboardScreenAccess
-    );
+  if (moduleKey in DRAWER_MEMBER_CARD_BY_MODULE) {
+    return isDrawerMemberModuleAllowed(moduleKey, {
+      dashboardCardAccess: context.dashboardCardAccess,
+      dashboardScreenAccess: context.dashboardScreenAccess,
+      hasActiveMembership: context.hasActiveMembership,
+    });
   }
 
-  if (moduleKey === 'menu_escalas') {
-    return isDashboardCardFullyAllowed(
-      'vigilance_scales',
-      context.dashboardCardAccess,
-      context.dashboardScreenAccess
-    );
-  }
-
-  if (moduleKey === 'menu_aniversariantes') {
-    return isDashboardCardFullyAllowed(
-      'birthdays',
-      context.dashboardCardAccess,
-      context.dashboardScreenAccess
-    );
-  }
-
-  if (moduleKey === 'menu_membros') {
-    return isDashboardCardFullyAllowed(
-      'members_list',
-      context.dashboardCardAccess,
-      context.dashboardScreenAccess
-    );
-  }
-
-  if (moduleKey === 'gestao_financeira') {
-    return isDashboardCardFullyAllowed(
-      'financial',
-      context.dashboardCardAccess,
-      context.dashboardScreenAccess
-    );
-  }
-
-  if (moduleKey === 'menu_administrativo') {
-    return isDashboardCardFullyAllowed(
-      'administrativo',
-      context.dashboardCardAccess,
-      context.dashboardScreenAccess
-    );
+  if (moduleKey === 'suggestions_improvements') {
+    return isDrawerSuggestionsImprovementsAllowed({
+      dashboardCardAccess: context.dashboardCardAccess,
+      dashboardScreenAccess: context.dashboardScreenAccess,
+      hasActiveMembership: context.hasActiveMembership,
+      maintenancePanelAccess: context.maintenancePanelAccess,
+    });
   }
 
   const panel = resolveDrawerMaintenancePanel(moduleKey);
 
-  if (!panel) {
-    return false;
-  }
-
-  if (!context.canAccessMaintenance) {
-    return false;
-  }
-
-  if (moduleKey === 'auditor') {
-    return context.canOperateGhostMode;
-  }
-
-  if (moduleKey === 'access_control') {
-    return context.canOpenAccessControl;
-  }
-
-  return context.maintenancePanelAccess[panel] === true;
+  return isDrawerMaintenanceModuleAllowed(moduleKey, panel, {
+    canAccessMaintenance: context.canAccessMaintenance,
+    maintenancePanelAccess: context.maintenancePanelAccess,
+    canOperateGhostMode: context.canOperateGhostMode,
+    canOpenAccessControl: context.canOpenAccessControl,
+  });
 }
 
 export function useAppDrawerMenu() {
@@ -124,15 +89,17 @@ export function useAppDrawerMenu() {
       const sessionProfile = phone ? await loadEffectiveSessionProfile(phone) : null;
       const profileId = sessionProfile?.id?.trim() ?? null;
 
-      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess] = await Promise.all([
-        profileId
-          ? loadDashboardCardViewAccess(profileId)
-          : Promise.resolve({} as DashboardCardViewAccess),
-        profileId
-          ? loadDashboardLinkedScreenAccess(profileId)
-          : Promise.resolve({} as DashboardScreenAccess),
-        loadMaintenanceDashboardAccess(),
-      ]);
+      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership] =
+        await Promise.all([
+          profileId
+            ? loadDashboardCardViewAccess(profileId)
+            : Promise.resolve({} as DashboardCardViewAccess),
+          profileId
+            ? loadDashboardLinkedScreenAccess(profileId)
+            : Promise.resolve({} as DashboardScreenAccess),
+          loadMaintenanceDashboardAccess(),
+          profileId ? fetchProfileHasActiveMembership(profileId) : Promise.resolve(false),
+        ]);
 
       const context = {
         dashboardCardAccess,
@@ -141,15 +108,14 @@ export function useAppDrawerMenu() {
         canAccessMaintenance: maintenanceAccess.allowed,
         canOperateGhostMode: maintenanceAccess.canOperateGhostMode,
         canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
+        hasActiveMembership,
       };
 
-      const resolved = await Promise.all(
-        APP_DRAWER_MENU_ITEMS.map(async (item) => ({
-          ...item,
-          pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
-          enabled: await isDrawerModuleEnabled(item.moduleKey, context),
-        }))
-      );
+      const resolved = APP_DRAWER_MENU_ITEMS.map((item) => ({
+        ...item,
+        pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
+        enabled: isDrawerModuleEnabled(item.moduleKey, context),
+      }));
 
       setItems(resolved);
     } catch (error) {
