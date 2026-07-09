@@ -1399,15 +1399,20 @@ export default function MaintenanceDashboard() {
           ) : item.content === 'sala_servidor' ? (
             <MaintenanceSalaServidorCard embedded panelHeight={cardHeight} />
           ) : item.content === 'events_gantt' ? (
-            <View style={styles.ganttPanel}>
-              <Text style={styles.ganttPanelTitle}>Cronograma de Eventos</Text>
-              <View style={styles.ganttPanelSubtitleSpacer} />
+            <View style={[styles.ganttPanel, isMinimalPresentation && styles.ganttPanelMinimal]}>
+              {!isMinimalPresentation ? (
+                <>
+                  <Text style={styles.ganttPanelTitle}>Cronograma de Eventos</Text>
+                  <View style={styles.ganttPanelSubtitleSpacer} />
+                </>
+              ) : null}
               <EventsGanttChart
                 events={safeEvents}
                 loading={loading}
                 error={error}
                 onRetry={() => void refetch()}
                 onEventPress={handleGanttEventPress}
+                minimal={isMinimalPresentation}
               />
             </View>
           ) : item.content === 'events' ? (
@@ -2354,6 +2359,13 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: STATIC_MAINTENANCE_PANEL_INSETS.menuPadding,
     minHeight: 0,
+  },
+  ganttPanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   ganttPanelTitle: {
     fontSize: UI_PANEL_TYPO.titleMuted.fontSize,

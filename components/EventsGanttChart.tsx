@@ -3,6 +3,7 @@ import {
   type GanttSourceEvent,
   type GanttViewMode,
 } from '@/lib/eventsGantt';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -28,6 +29,7 @@ type EventsGanttChartProps = {
   error?: Error | null;
   onRetry?: () => void;
   onEventPress?: (eventId: string) => void;
+  minimal?: boolean;
 };
 
 export const EventsGanttChart = ({
@@ -36,6 +38,7 @@ export const EventsGanttChart = ({
   error = null,
   onRetry,
   onEventPress,
+  minimal = false,
 }: EventsGanttChartProps) => {
   const [viewMode, setViewMode] = useState<GanttViewMode>('day');
   const safeEvents = events ?? [];
@@ -86,8 +89,8 @@ export const EventsGanttChart = ({
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color="#818CF8" size="large" />
-        <Text style={styles.hintText}>Carregando cronograma…</Text>
+        <ActivityIndicator color={minimal ? MINIMAL_UI.accent : '#818CF8'} size="large" />
+        <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>Carregando cronograma…</Text>
       </View>
     );
   }
@@ -95,10 +98,16 @@ export const EventsGanttChart = ({
   if (error) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>{error.message}</Text>
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error.message}</Text>
         {onRetry ? (
-          <TouchableOpacity style={styles.retryButton} onPress={onRetry} activeOpacity={0.85}>
-            <Text style={styles.retryButtonText}>Atualizar</Text>
+          <TouchableOpacity
+            style={[styles.retryButton, minimal && styles.retryButtonMinimal]}
+            onPress={onRetry}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.retryButtonText, minimal && styles.retryButtonTextMinimal]}>
+              Atualizar
+            </Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -108,8 +117,10 @@ export const EventsGanttChart = ({
   if (!model) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyTitle}>Nenhum evento ativo agendado</Text>
-        <Text style={styles.hintText}>
+        <Text style={[styles.emptyTitle, minimal && styles.emptyTitleMinimal]}>
+          Nenhum evento ativo agendado
+        </Text>
+        <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
           Cadastre eventos com data de hoje ou futura para visualizar no cronograma (publicados ou
           rascunho).
         </Text>
@@ -121,35 +132,50 @@ export const EventsGanttChart = ({
     viewMode === 'month' ? row.calendarMonth === columnKey : row.calendarDate === columnKey;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerToolbar}>
-        <View style={styles.legendRow}>
+    <View style={[styles.container, minimal && styles.containerMinimal]}>
+      <View style={[styles.headerToolbar, minimal && styles.headerToolbarMinimal]}>
+        <View style={[styles.legendRow, minimal && styles.legendRowMinimal]}>
           <View style={styles.legendItem}>
             <View style={[styles.legendSwatch, styles.legendSwatchPublished]} />
-            <Text style={styles.legendText}>Publicado</Text>
+            <Text style={[styles.legendText, minimal && styles.legendTextMinimal]}>Publicado</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendSwatch, styles.legendSwatchDraft]} />
-            <Text style={styles.legendText}>Rascunho</Text>
+            <Text style={[styles.legendText, minimal && styles.legendTextMinimal]}>Rascunho</Text>
           </View>
         </View>
 
-        <View style={styles.viewModeToggle}>
+        <View style={[styles.viewModeToggle, minimal && styles.viewModeToggleMinimal]}>
           <TouchableOpacity
-            style={[styles.viewModeButton, viewMode === 'day' && styles.viewModeButtonActive]}
+            style={[
+              styles.viewModeButton,
+              viewMode === 'day' && styles.viewModeButtonActive,
+              minimal && styles.viewModeButtonMinimal,
+              minimal && viewMode === 'day' && styles.viewModeButtonActiveMinimal,
+            ]}
             onPress={() => setViewMode('day')}
             activeOpacity={0.85}
             accessibilityRole="button"
             accessibilityState={{ selected: viewMode === 'day' }}
           >
             <Text
-              style={[styles.viewModeButtonText, viewMode === 'day' && styles.viewModeButtonTextActive]}
+              style={[
+                styles.viewModeButtonText,
+                viewMode === 'day' && styles.viewModeButtonTextActive,
+                minimal && styles.viewModeButtonTextMinimal,
+                minimal && viewMode === 'day' && styles.viewModeButtonTextActiveMinimal,
+              ]}
             >
               Por dia
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.viewModeButton, viewMode === 'month' && styles.viewModeButtonActive]}
+            style={[
+              styles.viewModeButton,
+              viewMode === 'month' && styles.viewModeButtonActive,
+              minimal && styles.viewModeButtonMinimal,
+              minimal && viewMode === 'month' && styles.viewModeButtonActiveMinimal,
+            ]}
             onPress={() => setViewMode('month')}
             activeOpacity={0.85}
             accessibilityRole="button"
@@ -159,6 +185,8 @@ export const EventsGanttChart = ({
               style={[
                 styles.viewModeButtonText,
                 viewMode === 'month' && styles.viewModeButtonTextActive,
+                minimal && styles.viewModeButtonTextMinimal,
+                minimal && viewMode === 'month' && styles.viewModeButtonTextActiveMinimal,
               ]}
             >
               Por mês
@@ -167,21 +195,21 @@ export const EventsGanttChart = ({
         </View>
       </View>
 
-      <Text style={styles.legendMeta}>
+      <Text style={[styles.legendMeta, minimal && styles.legendMetaMinimal]}>
         {model.rows.length} evento{model.rows.length === 1 ? '' : 's'} · {model.dateColumns.length}{' '}
         {model.dateColumns.length === 1 ? periodUnitLabel : periodUnitLabelPlural}
       </Text>
-      <Text style={styles.legendHint}>
+      <Text style={[styles.legendHint, minimal && styles.legendHintMinimal]}>
         Publicado = visível no app dos membros. Rascunho = Publicação desligada ao editar o evento
         (lista de eventos mostra como Inativo).
       </Text>
 
-      <View style={styles.gridShell}>
+      <View style={[styles.gridShell, minimal && styles.gridShellMinimal]}>
         {/* Coluna fixa: cabeçalho + nomes dos eventos */}
-        <View style={styles.frozenColumn}>
-          <View style={[styles.headerLabelCell, { height: HEADER_HEIGHT }]}>
-            <Text style={styles.headerLabelText}>Evento</Text>
-            <Text style={styles.headerLabelHint}>
+        <View style={[styles.frozenColumn, minimal && styles.frozenColumnMinimal]}>
+          <View style={[styles.headerLabelCell, { height: HEADER_HEIGHT }, minimal && styles.headerLabelCellMinimal]}>
+            <Text style={[styles.headerLabelText, minimal && styles.headerLabelTextMinimal]}>Evento</Text>
+            <Text style={[styles.headerLabelHint, minimal && styles.headerLabelHintMinimal]}>
               {viewMode === 'month' ? 'Colunas: meses' : 'Colunas: dias'}
             </Text>
           </View>
@@ -202,16 +230,18 @@ export const EventsGanttChart = ({
                   styles.labelCell,
                   { height: ROW_HEIGHT },
                   rowIndex % 2 === 1 && styles.dataRowAlt,
+                  rowIndex % 2 === 1 && minimal && styles.dataRowAltMinimal,
+                  minimal && styles.labelCellMinimal,
                 ]}
                 onPress={() => onEventPress?.(row.id)}
                 disabled={!onEventPress}
                 activeOpacity={onEventPress ? 0.75 : 1}
               >
-                <Text style={styles.eventNameText} numberOfLines={2}>
+                <Text style={[styles.eventNameText, minimal && styles.eventNameTextMinimal]} numberOfLines={2}>
                   {row.name}
                 </Text>
                 {row.localLabel ? (
-                  <Text style={styles.eventMetaText} numberOfLines={1}>
+                  <Text style={[styles.eventMetaText, minimal && styles.eventMetaTextMinimal]} numberOfLines={1}>
                     {row.localLabel}
                   </Text>
                 ) : null}
@@ -228,7 +258,7 @@ export const EventsGanttChart = ({
           contentContainerStyle={{ width: datesWidth }}
         >
           <View style={{ width: datesWidth }}>
-            <View style={[styles.datesHeaderRow, { height: HEADER_HEIGHT }]}>
+            <View style={[styles.datesHeaderRow, { height: HEADER_HEIGHT }, minimal && styles.datesHeaderRowMinimal]}>
               {model.dateColumns.map((column) => (
                 <View
                   key={column.key}
@@ -236,14 +266,28 @@ export const EventsGanttChart = ({
                     styles.dateHeaderCell,
                     { width: columnWidth },
                     column.isToday && styles.dateHeaderCellToday,
+                    minimal && styles.dateHeaderCellMinimal,
+                    minimal && column.isToday && styles.dateHeaderCellTodayMinimal,
                   ]}
                 >
                   <Text
-                    style={[styles.dateHeaderWeekday, column.isToday && styles.dateHeaderTextToday]}
+                    style={[
+                      styles.dateHeaderWeekday,
+                      column.isToday && styles.dateHeaderTextToday,
+                      minimal && styles.dateHeaderWeekdayMinimal,
+                      minimal && column.isToday && styles.dateHeaderTextTodayMinimal,
+                    ]}
                   >
                     {column.weekdayLabel}
                   </Text>
-                  <Text style={[styles.dateHeaderDay, column.isToday && styles.dateHeaderTextToday]}>
+                  <Text
+                    style={[
+                      styles.dateHeaderDay,
+                      column.isToday && styles.dateHeaderTextToday,
+                      minimal && styles.dateHeaderDayMinimal,
+                      minimal && column.isToday && styles.dateHeaderTextTodayMinimal,
+                    ]}
+                  >
                     {column.dayLabel}
                   </Text>
                 </View>
@@ -266,6 +310,8 @@ export const EventsGanttChart = ({
                     styles.dataRow,
                     { height: ROW_HEIGHT },
                     rowIndex % 2 === 1 && styles.dataRowAlt,
+                    rowIndex % 2 === 1 && minimal && styles.dataRowAltMinimal,
+                    minimal && styles.dataRowMinimal,
                   ]}
                 >
                   {model.dateColumns.map((column) => {
@@ -280,6 +326,8 @@ export const EventsGanttChart = ({
                           styles.dateCell,
                           { width: columnWidth },
                           column.isToday && styles.dateCellToday,
+                          minimal && styles.dateCellMinimal,
+                          minimal && column.isToday && styles.dateCellTodayMinimal,
                         ]}
                       >
                         {isScheduled ? (
@@ -319,14 +367,22 @@ export const EventsGanttChart = ({
                             </View>
                             {viewMode === 'day' && row.timeLabel ? (
                               <Text
-                                style={[styles.ganttBarTime, { maxWidth: columnWidth - 4 }]}
+                                style={[
+                                  styles.ganttBarTime,
+                                  minimal && styles.ganttBarTimeMinimal,
+                                  { maxWidth: columnWidth - 4 },
+                                ]}
                                 numberOfLines={1}
                               >
                                 {row.timeLabel}
                               </Text>
                             ) : viewMode === 'month' ? (
                               <Text
-                                style={[styles.ganttBarTime, { maxWidth: columnWidth - 4 }]}
+                                style={[
+                                  styles.ganttBarTime,
+                                  minimal && styles.ganttBarTimeMinimal,
+                                  { maxWidth: columnWidth - 4 },
+                                ]}
                                 numberOfLines={1}
                               >
                                 {`${row.calendarDate.slice(8, 10)}/${row.calendarDate.slice(5, 7)}`}
@@ -334,7 +390,7 @@ export const EventsGanttChart = ({
                             ) : null}
                           </TouchableOpacity>
                         ) : (
-                          <View style={styles.gridLine} />
+                          <View style={[styles.gridLine, minimal && styles.gridLineMinimal]} />
                         )}
                       </View>
                     );
@@ -643,5 +699,136 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 3,
     textAlign: 'center',
+  },
+  containerMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  headerToolbarMinimal: {
+    justifyContent: 'center',
+    width: '100%',
+    maxWidth: '100%',
+    paddingHorizontal: 0,
+  },
+  legendRowMinimal: {
+    justifyContent: 'center',
+    flexGrow: 1,
+  },
+  legendTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  viewModeToggleMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+    borderColor: MINIMAL_UI.border,
+  },
+  viewModeButtonMinimal: {
+    paddingHorizontal: 10,
+  },
+  viewModeButtonActiveMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  viewModeButtonTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  viewModeButtonTextActiveMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  legendMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: 0,
+  },
+  legendHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: 0,
+  },
+  hintTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  emptyTitleMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  errorTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  retryButtonMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  retryButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  gridShellMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    width: '100%',
+    maxWidth: '100%',
+  },
+  frozenColumnMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+    borderRightColor: MINIMAL_UI.border,
+    shadowOpacity: 0.08,
+    shadowColor: '#0F172A',
+  },
+  headerLabelCellMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+    borderBottomColor: MINIMAL_UI.border,
+  },
+  headerLabelTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  headerLabelHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  labelCellMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  dataRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  dataRowAltMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  eventNameTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  eventMetaTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  datesHeaderRowMinimal: {
+    borderBottomColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  dateHeaderCellMinimal: {
+    borderRightColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  dateHeaderCellTodayMinimal: {
+    backgroundColor: '#EFF6FF',
+  },
+  dateHeaderWeekdayMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  dateHeaderDayMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  dateHeaderTextTodayMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  dateCellMinimal: {
+    borderRightColor: MINIMAL_UI.divider,
+  },
+  dateCellTodayMinimal: {
+    backgroundColor: '#F8FAFC',
+  },
+  gridLineMinimal: {
+    backgroundColor: MINIMAL_UI.divider,
+    opacity: 1,
+  },
+  ganttBarTimeMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
 });
