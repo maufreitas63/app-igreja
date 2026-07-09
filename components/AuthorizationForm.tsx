@@ -85,6 +85,7 @@ export function AuthorizationForm({ profileId }: Props) {
         setCpf(formatCpf(loadedProfile.cpf ?? ''));
         setPhone(formatBrazilPhoneInput(loadedProfile.phone ?? ''));
         setAlreadyAuthorized(Boolean(latestAuthorization?.id));
+        setAcceptedTerms(Boolean(latestAuthorization?.id));
         setLatestAuthorization(
           latestAuthorization?.id
             ? {
@@ -121,18 +122,25 @@ export function AuthorizationForm({ profileId }: Props) {
     return message === null;
   }, []);
 
+  const isFormLocked = alreadyAuthorized;
+
   const canSubmit = useMemo(
     () =>
-      fullName.trim().length > 3
+      !isFormLocked
+      && fullName.trim().length > 3
       && email.trim().includes('@')
       && cpfValidationMessage(cpf) === null
       && phone.replace(/\D/g, '').length >= 10
       && acceptedTerms
       && !submitting,
-    [acceptedTerms, cpf, email, fullName, phone, submitting]
+    [acceptedTerms, cpf, email, fullName, isFormLocked, phone, submitting]
   );
 
   const handleSubmit = async () => {
+    if (isFormLocked) {
+      return;
+    }
+
     if (!validateCpfField(cpf)) {
       Alert.alert('CPF inválido', cpfError ?? 'Revise o CPF informado.');
       return;
@@ -312,14 +320,11 @@ export function AuthorizationForm({ profileId }: Props) {
               )}
             </Pressable>
           )}
-          <Text style={styles.noticeMuted}>
-            Um novo envio substituirá o link pendente, se houver.
-          </Text>
         </View>
       ) : null}
 
       <ScrollView
-        style={styles.formScroll}
+        style={[styles.formScroll, isFormLocked && styles.formScrollLocked]}
         contentContainerStyle={styles.formContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator
@@ -328,14 +333,14 @@ export function AuthorizationForm({ profileId }: Props) {
           label="Nome completo"
           value={fullName}
           onChangeText={setFullName}
-          editable={!lockedFields.fullName}
+          editable={!isFormLocked && !lockedFields.fullName}
           autoCapitalize="words"
         />
         <Field
           label="E-mail"
           value={email}
           onChangeText={setEmail}
-          editable={!lockedFields.email}
+          editable={!isFormLocked && !lockedFields.email}
           keyboardType="email-address"
           autoCapitalize="none"
         />
@@ -350,7 +355,7 @@ export function AuthorizationForm({ profileId }: Props) {
               }
             }}
             onBlur={() => validateCpfField(cpf)}
-            editable={!lockedFields.cpf}
+            editable={!isFormLocked && !lockedFields.cpf}
             keyboardType="number-pad"
             error={cpfError}
             compact
@@ -360,7 +365,7 @@ export function AuthorizationForm({ profileId }: Props) {
             label="Telefone"
             value={phone}
             onChangeText={(value) => setPhone(formatBrazilPhoneInput(value))}
-            editable={!lockedFields.phone}
+            editable={!isFormLocked && !lockedFields.phone}
             keyboardType="phone-pad"
             compact
             halfWidth
@@ -379,28 +384,43 @@ export function AuthorizationForm({ profileId }: Props) {
           </ScrollView>
         </View>
 
-        <Pressable
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: acceptedTerms }}
-          onPress={() => setAcceptedTerms((current) => !current)}
-          style={styles.acceptRow}
-        >
-          <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]} />
-          <Text style={styles.acceptLabel}>Li e concordo com a autorização acima</Text>
-        </Pressable>
+        {isFormLocked ? (
+          <View
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: true, disabled: true }}
+            style={[styles.acceptRow, styles.acceptRowLocked]}
+          >
+            <View style={[styles.checkbox, styles.checkboxChecked, styles.checkboxLocked]} />
+            <Text style={[styles.acceptLabel, styles.acceptLabelLocked]}>
+              Li e concordo com a autorização acima
+            </Text>
+          </View>
+        ) : (
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: acceptedTerms }}
+            onPress={() => setAcceptedTerms((current) => !current)}
+            style={styles.acceptRow}
+          >
+            <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]} />
+            <Text style={styles.acceptLabel}>Li e concordo com a autorização acima</Text>
+          </Pressable>
+        )}
 
-        <Pressable
-          accessibilityRole="button"
-          disabled={!canSubmit}
-          onPress={() => void handleSubmit()}
-          style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
-        >
-          {submitting ? (
-            <ActivityIndicator color={MINIMAL_UI.onDark} />
-          ) : (
-            <Text style={styles.submitButtonText}>Enviar e confirmar por e-mail</Text>
-          )}
-        </Pressable>
+        {!isFormLocked ? (
+          <Pressable
+            accessibilityRole="button"
+            disabled={!canSubmit}
+            onPress={() => void handleSubmit()}
+            style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
+          >
+            {submitting ? (
+              <ActivityIndicator color={MINIMAL_UI.onDark} />
+            ) : (
+              <Text style={styles.submitButtonText}>Enviar e confirmar por e-mail</Text>
+            )}
+          </Pressable>
+        ) : null}
       </ScrollView>
 
       <MediaAuthorizationLegalModal visible={legalOpen} onClose={() => setLegalOpen(false)} />
@@ -525,6 +545,9 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
   },
+  formScrollLocked: {
+    opacity: 0.92,
+  },
   formContent: {
     gap: 12,
     paddingBottom: 16,
@@ -607,6 +630,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  acceptRowLocked: {
+    opacity: 0.85,
+  },
   checkbox: {
     width: 22,
     height: 22,
@@ -617,10 +643,17 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     backgroundColor: MINIMAL_UI.icon,
   },
+  checkboxLocked: {
+    borderColor: MINIMAL_UI.textMuted,
+    backgroundColor: MINIMAL_UI.textMuted,
+  },
   acceptLabel: {
     flex: 1,
     fontSize: 14,
     color: MINIMAL_UI.text,
+  },
+  acceptLabelLocked: {
+    color: MINIMAL_UI.textMuted,
   },
   submitButton: {
     backgroundColor: MINIMAL_UI.blue,
