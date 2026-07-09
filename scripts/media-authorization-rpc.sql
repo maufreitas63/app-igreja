@@ -83,6 +83,11 @@ as $$
     || '<p>Link válido por 48 horas. Se você não solicitou, ignore este e-mail.</p>';
 $$;
 
+-- Retorno void → jsonb exige DROP antes de recriar (reexecução do script).
+drop function if exists public.send_media_authorization_confirm_email(text, text, text);
+drop function if exists public.send_media_authorization_confirm_email_via_resend(text, text, text);
+drop function if exists public.send_media_authorization_confirm_email_via_gmail(text, text, text);
+
 create or replace function public.send_media_authorization_confirm_email_via_resend(
   p_to_email text,
   p_full_name text,
