@@ -222,7 +222,7 @@ export function EventAvisosManager({ isActive = true, minimal = false }: Props) 
             />
           </View>
 
-          <View style={styles.actionsRow}>
+          <View style={[styles.actionsRow, minimal && styles.actionsRowMinimal]}>
             <Pressable
               style={[
                 styles.primaryButton,
@@ -341,8 +341,10 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
+    alignSelf: 'stretch',
     backgroundColor: MINIMAL_UI.background,
     borderColor: MINIMAL_UI.border,
+    overflow: 'hidden',
   },
   headerRow: {
     flexDirection: 'row',
@@ -381,6 +383,10 @@ const styles = StyleSheet.create({
   bodyMinimal: {
     paddingHorizontal: 12,
     borderTopColor: MINIMAL_UI.divider,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   helpText: {
     color: '#94A3B8',
@@ -430,6 +436,10 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.background,
     color: MINIMAL_UI.text,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   inputMultiline: {
     minHeight: 88,
@@ -446,6 +456,13 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 4,
   },
+  actionsRowMinimal: {
+    flexDirection: 'column',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+  },
   primaryButton: {
     borderRadius: 10,
     paddingHorizontal: 14,
@@ -459,6 +476,8 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.blueDark,
     width: '100%',
     maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   primaryButtonText: {
     color: '#0F172A',
@@ -479,6 +498,11 @@ const styles = StyleSheet.create({
   secondaryButtonMinimal: {
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.background,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+    alignItems: 'center',
   },
   secondaryButtonText: {
     color: '#CBD5E1',
@@ -492,6 +516,10 @@ const styles = StyleSheet.create({
   list: {
     gap: 8,
     marginTop: 8,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   listTitle: {
     color: '#E2E8F0',
@@ -513,18 +541,26 @@ const styles = StyleSheet.create({
   listItemMinimal: {
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.rowHover,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   listItemHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
+    minWidth: 0,
+    width: '100%',
   },
   listItemTitle: {
     color: '#F8FAFC',
     fontSize: 13,
     fontWeight: '800',
     flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
   },
   listItemTitleMinimal: {
     color: MINIMAL_UI.text,

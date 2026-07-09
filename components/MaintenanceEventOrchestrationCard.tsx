@@ -1,9 +1,9 @@
 import { EventOrchestratorPanel } from '@/components/EventOrchestratorPanel';
 import { setEventOrchestrationPanelFocused } from '@/lib/eventOrchestrationPanelFocus';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
-import { MINIMAL_FLAT_PANEL } from '@/lib/minimalPresentation';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 type Props = {
   isActive?: boolean;
@@ -34,7 +34,7 @@ export function MaintenanceEventOrchestrationCard({
     <View
       style={[
         maintenancePanelStyles.panel,
-        minimal && MINIMAL_FLAT_PANEL,
+        minimal && styles.panelMinimal,
         { maxHeight: contentHeight },
       ]}
     >
@@ -42,3 +42,17 @@ export function MaintenanceEventOrchestrationCard({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  panelMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    flex: 1,
+    alignSelf: 'stretch',
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'hidden',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+  },
+});

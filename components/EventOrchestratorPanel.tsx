@@ -113,6 +113,7 @@ export function EventOrchestratorPanel({
 
   return (
     <ScrollView
+      style={[minimal && styles.scrollMinimal]}
       contentContainerStyle={[
         styles.content,
         compact && styles.contentCompact,
@@ -286,6 +287,8 @@ const styles = StyleSheet.create({
   routeButtonMinimal: {
     width: '100%',
     maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
     backgroundColor: MINIMAL_UI.background,
     borderColor: MINIMAL_UI.border,
   },
@@ -305,5 +308,12 @@ const styles = StyleSheet.create({
   },
   routeButtonHintActiveMinimal: {
     color: 'rgba(255, 255, 255, 0.82)',
+  },
+  scrollMinimal: {
+    flex: 1,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
 });

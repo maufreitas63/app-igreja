@@ -1395,11 +1395,18 @@ export default function MaintenanceDashboard() {
           ) : item.content === 'auditor' ? (
             <MaintenanceGhostModeCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'event_orchestration' ? (
-            <MaintenanceEventOrchestrationCard
-              isActive={currentIndex === index}
-              panelHeight={cardHeight}
-              minimal={isMinimalPresentation}
-            />
+            <View
+              style={[
+                styles.orchestrationPanel,
+                isMinimalPresentation && styles.orchestrationPanelMinimal,
+              ]}
+            >
+              <MaintenanceEventOrchestrationCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'sala_servidor' ? (
             <MaintenanceSalaServidorCard embedded panelHeight={cardHeight} />
           ) : item.content === 'events_gantt' ? (
@@ -2370,6 +2377,18 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
+  },
+  orchestrationPanel: {
+    flex: 1,
+    minHeight: 0,
+  },
+  orchestrationPanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
   },
   ganttPanelTitle: {
     fontSize: UI_PANEL_TYPO.titleMuted.fontSize,
