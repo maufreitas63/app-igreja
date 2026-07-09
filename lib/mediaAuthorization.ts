@@ -1,5 +1,6 @@
 import { normalizeAuthorizationConfirmToken } from '@/lib/authorizationConfirmToken';
 import { supabase } from '@/lib/supabase';
+import { refreshProfileSessionToken } from '@/lib/userSession';
 
 export const MEDIA_AUTHORIZATION_PRIVACY_VERSION = '1.0';
 
@@ -28,7 +29,57 @@ export type SubmitMediaAuthorizationResult = {
   emailMasked?: string | null;
   emailProvider?: string | null;
   resendId?: string | null;
+  sessionValid?: boolean;
+  pendingId?: string | null;
 };
+
+async function pingServerSession(): Promise<{ ok: boolean; profileId: string | null }> {
+  const { data, error } = await supabase.rpc('ping_profile_session');
+
+  if (error) {
+    console.warn('[media-authorization] ping_profile_session failed', error);
+    return { ok: false, profileId: null };
+  }
+
+  const payload = parseRpcPayload(data);
+  const profileId = typeof payload.profileId === 'string' ? payload.profileId : null;
+
+  return {
+    ok: payload.ok === true && Boolean(profileId),
+    profileId,
+  };
+}
+
+/** Garante token válido no PostgREST antes do submit (evita formulário aberto com sessão expirada). */
+export async function ensureServerSessionForMediaAuth(profileId: string): Promise<{ ok: boolean; message?: string }> {
+  const normalizedProfileId = profileId.trim();
+  if (!normalizedProfileId) {
+    return { ok: false, message: 'Perfil inválido. Faça login novamente.' };
+  }
+
+  let ping = await pingServerSession();
+  if (ping.ok && ping.profileId === normalizedProfileId) {
+    return { ok: true };
+  }
+
+  const token = await refreshProfileSessionToken(normalizedProfileId);
+  if (!token) {
+    return {
+      ok: false,
+      message: 'Sessão expirada. Saia e entre novamente com o PIN enviado ao seu e-mail.',
+    };
+  }
+
+  ping = await pingServerSession();
+  if (!ping.ok) {
+    return {
+      ok: false,
+      message: 'Não foi possível validar sua sessão no servidor. Faça login novamente.',
+    };
+  }
+
+  return { ok: true };
+}
 
 export type ConfirmMediaAuthorizationResult = {
   ok: boolean;
@@ -75,7 +126,13 @@ export async function submitMediaAuthorizationPending(input: {
   email: string;
   cpf: string;
   phone: string;
+  profileId: string;
 }): Promise<SubmitMediaAuthorizationResult> {
+  const session = await ensureServerSessionForMediaAuth(input.profileId);
+  if (!session.ok) {
+    return { ok: false, message: session.message ?? 'Sessão inválida.', sessionValid: false };
+  }
+
   const { data, error } = await supabase.rpc('submit_media_authorization_pending', {
     p_full_name: input.fullName.trim(),
     p_email: input.email.trim().toLowerCase(),
@@ -90,9 +147,7 @@ export async function submitMediaAuthorizationPending(input: {
 
   const payload = parseRpcPayload(data);
 
-  if (__DEV__) {
-    console.info('[media-authorization] submit pending response', payload);
-  }
+  console.info('[media-authorization] submit pending response', payload);
 
   return {
     ok: payload.ok === true,
@@ -101,6 +156,8 @@ export async function submitMediaAuthorizationPending(input: {
     emailMasked: typeof payload.emailMasked === 'string' ? payload.emailMasked : null,
     emailProvider: typeof payload.emailProvider === 'string' ? payload.emailProvider : null,
     resendId: typeof payload.resendId === 'string' ? payload.resendId : null,
+    sessionValid: payload.sessionValid !== false,
+    pendingId: typeof payload.pendingId === 'string' ? payload.pendingId : null,
   };
 }
 

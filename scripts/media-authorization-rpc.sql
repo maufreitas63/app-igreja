@@ -335,6 +335,84 @@ begin
 end;
 $$;
 
+create or replace function public.ping_profile_session()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'ok', public.current_session_profile_id() is not null,
+    'profileId', public.current_session_profile_id()
+  );
+$$;
+
+-- Único caminho de envio usado pelo submit e pelo teste 03 (mesma rota do 03b quando provider=resend).
+create or replace function public.send_media_authorization_pending_email(
+  p_to_email text,
+  p_full_name text,
+  p_confirm_url text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = http, extensions, public, pg_temp
+as $$
+declare
+  v_recipient text;
+  v_provider text;
+  v_has_gmail boolean;
+  v_has_resend boolean;
+begin
+  v_recipient := public.normalize_profile_email(p_to_email);
+
+  if v_recipient is null or not public.is_valid_profile_email(v_recipient) then
+    raise exception 'E-mail inválido para envio.';
+  end if;
+
+  v_provider := lower(nullif(trim(public.get_app_parameter_value('recovery_email_provider')), ''));
+
+  v_has_gmail :=
+    nullif(trim(public.get_app_parameter_value('recovery_email_smtp_user')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_smtp_password')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_from')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_function_url')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_function_secret')), '') is not null;
+
+  v_has_resend :=
+    nullif(trim(public.get_app_parameter_value('recovery_email_api_key')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_from')), '') is not null;
+
+  if v_provider is null then
+    if v_has_gmail then
+      v_provider := 'gmail';
+    elsif v_has_resend then
+      v_provider := 'resend';
+    else
+      raise exception
+        'Envio de e-mail não configurado. Defina recovery_email_provider=gmail ou resend e os parâmetros correspondentes em app_parameters.';
+    end if;
+  end if;
+
+  if v_provider = 'gmail' then
+    return public.send_media_authorization_confirm_email_via_gmail(p_to_email, p_full_name, p_confirm_url);
+  end if;
+
+  if v_provider = 'resend' then
+    return public.send_resend_transactional_email(
+      p_to_email,
+      public.media_authorization_confirm_email_subject(),
+      public.media_authorization_confirm_email_text(p_full_name, p_confirm_url)
+    );
+  end if;
+
+  raise exception
+    'recovery_email_provider inválido: %. Use gmail ou resend.',
+    v_provider;
+end;
+$$;
+
 create or replace function public.submit_media_authorization_pending(
   p_full_name text,
   p_email text,
@@ -358,7 +436,11 @@ begin
   v_profile_id := public.current_session_profile_id();
 
   if v_profile_id is null then
-    return jsonb_build_object('ok', false, 'message', 'Faça login para enviar a autorização.');
+    return jsonb_build_object(
+      'ok', false,
+      'sessionValid', false,
+      'message', 'Sessão expirada. Saia e entre novamente com o PIN enviado ao seu e-mail.'
+    );
   end if;
 
   if not public.validate_cpf_digits(p_cpf) then
@@ -410,31 +492,33 @@ begin
 
   v_confirm_url := rtrim(v_app_url, '/') || '/autorizacao-midia-confirmar?token=' || v_token;
 
-  -- Mesmo provedor do PIN (recovery_email_*). Não usa função dedicada aqui para evitar
-  -- falso positivo quando media_authorization_email_function_* aponta para função inexistente.
+  -- Mesmo caminho do teste 03 / 03b (send_media_authorization_pending_email → send_resend_transactional_email).
   begin
-    v_send_result := public.send_media_authorization_confirm_email(
+    v_send_result := public.send_media_authorization_pending_email(
       lower(trim(p_email)),
       trim(p_full_name),
       v_confirm_url
     );
-    -- Sem exception = Resend/Gmail aceitou; não confiar só em @> jsonb (falso negativo).
     v_email_sent := true;
   exception
     when others then
-      delete from public.pending_authorizations where id = v_pending_id;
       return jsonb_build_object(
         'ok', false,
         'emailSent', false,
+        'sessionValid', true,
+        'pendingId', v_pending_id,
+        'pendingKept', true,
         'message', SQLERRM
       );
   end;
 
   if not v_email_sent then
-    delete from public.pending_authorizations where id = v_pending_id;
     return jsonb_build_object(
       'ok', false,
       'emailSent', false,
+      'sessionValid', true,
+      'pendingId', v_pending_id,
+      'pendingKept', true,
       'message', coalesce(v_send_result::text, 'O provedor de e-mail não confirmou o envio.')
     );
   end if;
@@ -442,6 +526,7 @@ begin
   return jsonb_build_object(
     'ok', true,
     'emailSent', v_email_sent,
+    'sessionValid', true,
     'emailProvider', coalesce(v_send_result->>'provider', null),
     'resendId', coalesce(v_send_result->>'resendId', null),
     'message', 'Enviamos um link de confirmação para o seu e-mail. Abra-o para concluir a autorização.',
@@ -615,7 +700,7 @@ begin
     ) || '/autorizacao-midia-confirmar?token=' || v_test_token
   );
 
-  return public.send_media_authorization_confirm_email(
+  return public.send_media_authorization_pending_email(
     lower(trim(p_email)),
     coalesce(nullif(trim(p_full_name), ''), 'Teste'),
     v_url
@@ -629,6 +714,8 @@ exception
 end;
 $$;
 
+grant execute on function public.ping_profile_session() to anon, authenticated;
+grant execute on function public.send_media_authorization_pending_email(text, text, text) to anon, authenticated;
 grant execute on function public.normalize_media_authorization_token(text) to anon, authenticated;
 grant execute on function public.send_media_authorization_confirm_email(text, text, text) to anon, authenticated;
 grant execute on function public.test_media_authorization_email_delivery(text, text, text) to anon, authenticated;

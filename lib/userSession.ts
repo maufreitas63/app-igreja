@@ -57,6 +57,23 @@ async function issueProfileSessionToken(profileId: string): Promise<string | nul
   }
 }
 
+/** Renova token de sessão no servidor (útil quando x-session-token expirou mas o perfil ainda está no app). */
+export async function refreshProfileSessionToken(profileId: string): Promise<string | null> {
+  const normalizedProfileId = profileId?.trim();
+  if (!normalizedProfileId) {
+    return null;
+  }
+
+  await persistSessionToken(null);
+
+  const token = await issueProfileSessionToken(normalizedProfileId);
+  if (token) {
+    await persistSessionToken(token);
+  }
+
+  return token;
+}
+
 export async function persistUserSession(
   profile: Record<string, unknown> | null | undefined,
   phoneForSession: string,

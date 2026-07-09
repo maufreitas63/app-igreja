@@ -5,8 +5,8 @@
 
 with params as (
   select
-    'seu@email.com'::text as email,
-    'Seu Nome'::text as full_name
+    'maufreitas63@gmail.com'::text as email,
+    'mauricio Seu Nome'::text as full_name
 )
 select
   'pin_via_resend' as teste,
@@ -18,7 +18,7 @@ select
 union all
 select
   'autorizacao_via_resend' as teste,
-  public.send_media_authorization_confirm_email_via_resend(
+  public.send_media_authorization_pending_email(
     (select email from params),
     (select full_name from params),
     coalesce(

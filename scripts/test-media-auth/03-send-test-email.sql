@@ -1,4 +1,4 @@
--- TESTE 3 — Envio de e-mail de teste (Resend/Gmail)
+-- TESTE 3 — Envio de e-mail de teste (mesmo caminho do submit no app)
 -- Substitua o e-mail abaixo e execute no SQL Editor do Supabase.
 -- Esperado: {"ok":true,"provider":"resend","resendId":"...","to":"..."}
 -- Depois confira em https://resend.com/emails

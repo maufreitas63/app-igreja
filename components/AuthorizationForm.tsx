@@ -126,10 +126,12 @@ export function AuthorizationForm({ profileId }: Props) {
         email,
         cpf,
         phone,
+        profileId,
       });
 
       if (!result.ok) {
-        Alert.alert('Não foi possível enviar', result.message);
+        const title = result.sessionValid === false ? 'Sessão expirada' : 'Não foi possível enviar';
+        Alert.alert(title, result.message);
         return;
       }
 
@@ -143,9 +145,13 @@ export function AuthorizationForm({ profileId }: Props) {
 
       Alert.alert(
         'Confirme seu e-mail',
-        result.emailMasked
-          ? `${result.message}\n\nDestino: ${result.emailMasked}\n\nVerifique também a pasta de spam.`
-          : `${result.message}\n\nVerifique também a pasta de spam.`
+        [
+          result.message,
+          result.emailMasked ? `Destino: ${result.emailMasked}` : null,
+          result.emailProvider ? `Provedor: ${result.emailProvider}` : null,
+          result.resendId ? `ID Resend: ${result.resendId}` : null,
+          'Verifique também a pasta de spam.',
+        ].filter(Boolean).join('\n\n')
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao enviar autorização.';

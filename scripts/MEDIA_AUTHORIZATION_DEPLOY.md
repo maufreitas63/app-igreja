@@ -41,6 +41,17 @@ Parâmetros opcionais em `app_parameters`:
 - `media_authorization_pdf_function_url`
 - `media_authorization_pdf_function_secret`
 
+## Causa raiz recorrente (Resend “para” de novo)
+
+O teste **03b** envia direto ao Resend **sem sessão** e **sem gravar pendência**. O app exige `x-session-token` válido. Se o token expirou, o formulário abre mas o submit **não chama o Resend** — parece que “o Resend parou”.
+
+**Correções aplicadas:**
+- App renova sessão automaticamente antes do submit (`ping_profile_session` + novo token).
+- Submit usa o **mesmo** `send_media_authorization_pending_email` que o teste 03.
+- Falha de e-mail **não apaga** mais a pendência (rode `04` para diagnosticar).
+
+Se o PIN de login funciona mas a autorização não: faça **logout + login** uma vez e tente de novo.
+
 ## 4. Testes de diagnóstico (SQL Editor)
 
 Scripts em `scripts/test-media-auth/` — execute **um por vez**, na ordem:
@@ -57,6 +68,7 @@ Scripts em `scripts/test-media-auth/` — execute **um por vez**, na ordem:
 | `06-check-token-from-link.sql` | Token copiado do e-mail |
 | `07-set-production-url.sql` | Cadastrar URL pública do app |
 | `08-confirm-token-manual.sql` | Confirmar token via SQL |
+| `10-session-ping.sql` | Sessão no SQL Editor (sem headers = ok false) |
 
 Se o botão retornar sucesso mas o e-mail não chegar:
 
