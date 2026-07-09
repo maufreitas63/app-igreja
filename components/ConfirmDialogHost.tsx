@@ -1,6 +1,25 @@
 import { settleConfirmDialog, subscribeConfirmDialogHost, type ConfirmDialogRequest } from '@/lib/confirmDialogHost';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useEffect, useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+function DialogCopy({ request }: { request: ConfirmDialogRequest }) {
+  const title = request.title?.trim() ?? '';
+  const message = request.message.trim();
+
+  if (title && message) {
+    return (
+      <View style={styles.copyBlock}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.message}>{message}</Text>
+      </View>
+    );
+  }
+
+  const primaryText = message || title;
+
+  return <Text style={[styles.message, styles.messageStandalone]}>{primaryText}</Text>;
+}
 
 export function ConfirmDialogHost() {
   const [request, setRequest] = useState<ConfirmDialogRequest | null>(null);
@@ -31,7 +50,7 @@ export function ConfirmDialogHost() {
         <Pressable style={styles.backdrop} onPress={dismiss} accessibilityRole="button" />
         <View style={styles.cardShell} pointerEvents="box-none">
           <View style={styles.card}>
-            <Text style={styles.message}>{request.message}</Text>
+            <DialogCopy request={request} />
             <View style={[styles.actions, request.alertOnly && styles.actionsSingle]}>
               {request.alertOnly ? null : (
                 <TouchableOpacity
@@ -91,7 +110,7 @@ const styles = StyleSheet.create({
   }),
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.72)',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
     zIndex: 0,
   },
   cardShell: {
@@ -104,18 +123,40 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#1E293B',
+    backgroundColor: MINIMAL_UI.background,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.35)',
-    padding: 20,
-    gap: 20,
+    borderColor: MINIMAL_UI.border,
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 18,
+    gap: 18,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
   },
-  message: {
-    color: '#F8FAFC',
-    fontSize: 16,
+  copyBlock: {
+    gap: 8,
+    alignItems: 'center',
+  },
+  title: {
+    color: MINIMAL_UI.text,
+    fontSize: 18,
+    fontWeight: '700',
     lineHeight: 24,
     textAlign: 'center',
+  },
+  message: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  messageStandalone: {
+    color: MINIMAL_UI.text,
+    fontSize: 16,
+    lineHeight: 24,
   },
   actions: {
     flexDirection: 'row',
@@ -137,32 +178,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   cancelButton: {
-    backgroundColor: 'rgba(51, 65, 85, 0.9)',
+    backgroundColor: MINIMAL_UI.background,
     borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.35)',
+    borderColor: MINIMAL_UI.border,
   },
   cancelButtonText: {
-    color: '#E2E8F0',
+    color: MINIMAL_UI.text,
     fontSize: 15,
     fontWeight: '600',
   },
   confirmButton: {
-    backgroundColor: 'rgba(79, 70, 229, 0.9)',
+    backgroundColor: MINIMAL_UI.accent,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.5)',
+    borderColor: MINIMAL_UI.accent,
   },
   confirmButtonText: {
-    color: '#FFFFFF',
+    color: MINIMAL_UI.onDark,
     fontSize: 15,
     fontWeight: '700',
   },
   destructiveButton: {
-    backgroundColor: 'rgba(220, 38, 38, 0.9)',
+    backgroundColor: '#DC2626',
     borderWidth: 1,
-    borderColor: 'rgba(248, 113, 113, 0.45)',
+    borderColor: '#DC2626',
   },
   destructiveButtonText: {
-    color: '#FFFFFF',
+    color: MINIMAL_UI.onDark,
     fontSize: 15,
     fontWeight: '700',
   },

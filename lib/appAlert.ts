@@ -4,9 +4,9 @@ import { Alert, Platform } from 'react-native';
 /** Alerta com um botão — na web usa o mesmo modal do ConfirmDialogHost. */
 export function appAlert(title: string, message: string, okLabel = 'OK') {
   if (Platform.OS === 'web') {
-    const text = message.trim() ? `${title}\n\n${message}` : title;
     return requestConfirmDialog({
-      message: text,
+      title,
+      message,
       confirmLabel: okLabel,
       cancelLabel: 'Cancelar',
       alertOnly: true,

@@ -1,4 +1,5 @@
 export type ConfirmDialogRequest = {
+  title?: string;
   message: string;
   confirmLabel: string;
   cancelLabel: string;
@@ -24,6 +25,7 @@ export function subscribeConfirmDialogHost(next: ConfirmDialogListener) {
 }
 
 export function requestConfirmDialog(options: {
+  title?: string;
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
@@ -37,6 +39,7 @@ export function requestConfirmDialog(options: {
     }
 
     pending = {
+      title: options.title?.trim() || undefined,
       message: options.message,
       confirmLabel: options.confirmLabel ?? 'Confirmar',
       cancelLabel: options.cancelLabel ?? 'Não',

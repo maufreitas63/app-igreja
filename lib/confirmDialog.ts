@@ -9,9 +9,9 @@ export function confirmDialog(
   options?: { destructive?: boolean; onConfirmed?: () => void }
 ) {
   if (Platform.OS === 'web') {
-    const text = message.trim() || title.trim();
     return requestConfirmDialog({
-      message: text,
+      title,
+      message,
       confirmLabel,
       cancelLabel,
       destructive: options?.destructive,
