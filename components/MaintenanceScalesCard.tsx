@@ -7,6 +7,7 @@ import {
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
 import { confirmDialog } from '@/lib/confirmDialog';
+import { SCALE_VOLUNTEERS_MENU_LABEL } from '@/lib/appDrawerMenu';
 import {
   formatScaleServiceDateLabel,
   MAINTENANCE_SCALES_SQL_HINT,
@@ -353,7 +354,7 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
             />
           ) : (
             <Text style={styles.panelHint}>
-              Nenhum servo ativo para este tipo. Cadastre no card Servos.
+              Nenhum servo ativo para este tipo. Cadastre em {SCALE_VOLUNTEERS_MENU_LABEL}.
             </Text>
           )}
 

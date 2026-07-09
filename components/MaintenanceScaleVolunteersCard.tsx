@@ -8,6 +8,7 @@ import {
 } from '@/lib/maintenanceCardStyles';
 import { MAINTENANCE_SCALE_VOLUNTEERS_SQL_HINT } from '@/hooks/useMaintenanceScaleVolunteers';
 import { confirmDialog } from '@/lib/confirmDialog';
+import { SCALE_VOLUNTEERS_MENU_LABEL } from '@/lib/appDrawerMenu';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { mapLegacyRoomDisplayLabel } from '@/lib/roomDisplayLabels';
 import { FontAwesome } from '@expo/vector-icons';
@@ -29,7 +30,7 @@ type Props = {
   minimal?: boolean;
 };
 
-const PANEL_TITLE = 'Servos em Disponibilidade';
+const PANEL_TITLE = SCALE_VOLUNTEERS_MENU_LABEL;
 
 /** Altura visível da lista «Já associados» (~7 linhas). */
 const REGISTERED_LIST_MAX_HEIGHT = 217;
@@ -75,25 +76,25 @@ export function MaintenanceScaleVolunteersCard({
     const nameKey = fullName.trim().toLocaleLowerCase('pt-BR');
 
     if (registeredNameKeys.has(nameKey)) {
-      Alert.alert('Servos', 'Este servo já está cadastrado neste tipo de escala.');
+      Alert.alert(PANEL_TITLE, 'Este servo já está cadastrado neste tipo de escala.');
       return;
     }
 
     const result = await associateProfile(profileId);
 
     if (!result.success) {
-      Alert.alert('Servos', result.message);
+      Alert.alert(PANEL_TITLE, result.message);
       return;
     }
 
-    Alert.alert('Servos', result.message);
+    Alert.alert(PANEL_TITLE, result.message);
   };
 
   const runRemove = async (volunteerId: string) => {
     const result = await removeVolunteer(volunteerId);
 
     if (!result.success) {
-      Alert.alert('Servos', result.message);
+      Alert.alert(PANEL_TITLE, result.message);
     }
   };
 

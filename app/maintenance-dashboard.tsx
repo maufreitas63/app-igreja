@@ -32,6 +32,7 @@ import { MaintenanceSalaServidorCard } from '@/components/MaintenanceSalaServido
 import { QuorumCheckinRegistryTable } from '@/components/QuorumCheckinRegistryTable';
 import { useGhostMode } from '@/context/GhostModeContext';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { SCALE_VOLUNTEERS_MENU_LABEL } from '@/lib/appDrawerMenu';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
 import { resolveMaintenancePanelAccessResourceKey } from '@/lib/screenAccessResourceKeys';
 import { recordProfileScreenVisit } from '@/lib/profileScreenVisitTracking';
@@ -192,7 +193,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '15', title: 'Orquestração do Evento', content: 'event_orchestration' },
   { id: '3', title: 'Sala(s) - Check In', content: 'sala_servidor' },
   { id: '5', title: 'Tipos de Escala', content: 'scale_types' },
-  { id: '6', title: 'Servos em Disponibilidade', content: 'scale_volunteers' },
+  { id: '6', title: SCALE_VOLUNTEERS_MENU_LABEL, content: 'scale_volunteers' },
   { id: '7', title: 'Programação de Escalas', content: 'scales' },
   { id: '8', title: 'Cuidado Pastoral', content: 'pastoral_care' },
   { id: '9', title: 'Informações Financeiras', content: 'financials' },

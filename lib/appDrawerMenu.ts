@@ -47,6 +47,8 @@ export type AppDrawerMenuItem = {
   dividerBefore?: boolean;
 };
 
+export const SCALE_VOLUNTEERS_MENU_LABEL = 'Servos em Disponibilidade';
+
 export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'a', label: 'Início', moduleKey: 'events_panel' },
   { letter: 'b', label: 'Perfil', moduleKey: 'menu_perfil' },
@@ -65,7 +67,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'j', label: 'Orquestração do Evento', moduleKey: 'event_orchestration' },
   { letter: 'k', label: 'Sala(s) - Check In', moduleKey: 'sala_servidor' },
   { letter: 'l', label: 'Tipos de Escala', moduleKey: 'scales_type' },
-  { letter: 'm', label: 'Servos em Disponibilidade', moduleKey: 'scales_volunteers' },
+  { letter: 'm', label: SCALE_VOLUNTEERS_MENU_LABEL, moduleKey: 'scales_volunteers' },
   { letter: 'n', label: 'Programação de Escalas', moduleKey: 'scales' },
   { letter: 'o', label: 'Cuidados Pastorais', moduleKey: 'pastoral_care' },
   { letter: 'p', label: 'Informações Financeiras', moduleKey: 'financials' },

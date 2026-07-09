@@ -20,6 +20,7 @@
 
  */
 
+import { SCALE_VOLUNTEERS_MENU_LABEL } from '@/lib/appDrawerMenu';
 import {
 
   formatScaleServiceDateLabel,
@@ -786,7 +787,7 @@ export function gerarCicloCompleto(input: GerarCicloCompletoInput): GerarCicloCo
 
       startSunday: null,
 
-      message: `${missingOrder.length} servo(s) ativo(s) sem ordem_sequencial. Defina a ordem no card Servos antes de gerar o ciclo.`,
+      message: `${missingOrder.length} servo(s) ativo(s) sem ordem_sequencial. Defina a ordem em ${SCALE_VOLUNTEERS_MENU_LABEL} antes de gerar o ciclo.`,
 
     };
 
