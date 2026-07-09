@@ -24,16 +24,8 @@ from public.authorizations
 order by accepted_at desc
 limit 10;
 
--- 3) Teste direto do Resend/Gmail (substitua e-mail e URL)
--- select public.send_media_authorization_confirm_email(
---   'seu@email.com',
---   'Seu Nome',
---   coalesce(
---     public.get_app_parameter_value_trim('media_authorization_app_url'),
---     public.get_app_parameter_value_trim('app_public_url'),
---     'https://localhost:8081'
---   ) || '/autorizacao-midia-confirmar?token=teste-diagnostico'
--- );
+-- 3) Teste direto (mostra erro completo se falhar)
+-- select public.test_media_authorization_email_delivery('seu@email.com', 'Seu Nome', null);
 
 -- 4) Se o teste (3) retornar resendId mas o e-mail não chegar:
 --    Resend → Suppressions / Bounces — remova o destinatário se estiver bloqueado

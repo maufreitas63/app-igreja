@@ -121,9 +121,7 @@ begin
     'from', v_from,
     'to', json_build_array(v_recipient),
     'subject', public.media_authorization_confirm_email_subject(),
-    'text', public.media_authorization_confirm_email_text(p_full_name, p_confirm_url),
-    'html', public.media_authorization_confirm_email_html(p_full_name, p_confirm_url),
-    'tags', json_build_array(json_build_object('name', 'category', 'value', 'authorization'))
+    'text', public.media_authorization_confirm_email_text(p_full_name, p_confirm_url)
   )::text;
 
   select p.p_status, p.p_content
@@ -561,7 +559,44 @@ exception
 end;
 $$;
 
+create or replace function public.test_media_authorization_email_delivery(
+  p_email text,
+  p_full_name text default 'Teste',
+  p_confirm_url text default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_url text;
+begin
+  v_url := coalesce(
+    nullif(trim(p_confirm_url), ''),
+    coalesce(
+      public.get_app_parameter_value_trim('media_authorization_app_url'),
+      public.get_app_parameter_value_trim('app_public_url'),
+      'https://localhost:8081'
+    ) || '/autorizacao-midia-confirmar?token=teste-diagnostico'
+  );
+
+  return public.send_media_authorization_confirm_email(
+    lower(trim(p_email)),
+    coalesce(nullif(trim(p_full_name), ''), 'Teste'),
+    v_url
+  );
+exception
+  when others then
+    return jsonb_build_object(
+      'ok', false,
+      'message', SQLERRM
+    );
+end;
+$$;
+
 grant execute on function public.send_media_authorization_confirm_email(text, text, text) to anon, authenticated;
+grant execute on function public.test_media_authorization_email_delivery(text, text, text) to anon, authenticated;
 grant execute on function public.submit_media_authorization_pending(text, text, text, text) to anon, authenticated;
 grant execute on function public.confirm_media_authorization(text, text, text) to anon, authenticated;
 grant execute on function public.media_authorization_terms_text() to anon, authenticated;
