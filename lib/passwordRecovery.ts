@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { coerceRpcBoolean, isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 const PASSWORD_RECOVERY_SQL_HINT =
-  'Execute no Supabase: scripts/password-recovery-security.sql e scripts/password-recovery-email-flow.sql';
+  'Execute no Supabase: scripts/password-recovery-security.sql, scripts/password-recovery-email-flow.sql e scripts/password-recovery-remove-security-question-patch.sql';
 
 const parseRpcObject = (data: unknown): Record<string, unknown> | null => {
   let payload: unknown = data;
@@ -35,10 +35,9 @@ const parseRpcObject = (data: unknown): Record<string, unknown> | null => {
 const PASSWORD_RECOVERY_RPCS = [
   'password_recovery_get_state',
   'password_recovery_set_email',
+  'password_recovery_send_pin',
   'password_recovery_verify_and_send_pin',
   'password_recovery_verify_challenge_and_dispatch',
-  'set_profile_security_question',
-  'save_my_profile_security_question',
 ] as const;
 
 const formatRpcError = (error: unknown) => {
@@ -62,8 +61,6 @@ export type PasswordRecoveryStateResult =
       ok: true;
       needsEmail: boolean;
       emailMasked: string;
-      hasSecurityQuestion: boolean;
-      securityQuestion: string;
     }
   | { ok: false; message: string; blocked?: boolean };
 
@@ -94,9 +91,6 @@ export async function passwordRecoveryGetState(
     needsEmail: payload?.needs_email === true,
     emailMasked:
       typeof payload?.email_masked === 'string' ? payload.email_masked : '',
-    hasSecurityQuestion: payload?.has_security_question === true,
-    securityQuestion:
-      typeof payload?.security_question === 'string' ? payload.security_question : '',
   };
 }
 
@@ -141,65 +135,24 @@ export async function passwordRecoverySetEmail(
 
 export type PasswordRecoverySendPinResult =
   | { ok: true; message: string; emailMasked: string }
-  | { ok: false; message: string; blocked?: boolean; attemptsRemaining?: number };
+  | { ok: false; message: string; blocked?: boolean };
 
-export async function passwordRecoveryVerifyAndSendPin(
-  phone: string,
-  answer: string,
-  question?: string
+export async function passwordRecoverySendPin(
+  phone: string
 ): Promise<PasswordRecoverySendPinResult> {
   assertAuthNotificationChannel(AUTH_NOTIFICATION_CHANNEL);
 
   const normalizedPhone = normalizePhoneForAccessPinRpc(phone);
-  const trimmedQuestion = question?.trim() ?? '';
 
-  const { data, error } = await supabase.rpc('password_recovery_verify_and_send_pin', {
+  const { data, error } = await supabase.rpc('password_recovery_send_pin', {
     p_phone: normalizedPhone,
-    p_answer: answer,
-    p_question: trimmedQuestion || null,
   });
 
   if (error) {
-    if (isSupabaseRpcMissingError(error, 'password_recovery_verify_and_send_pin')) {
-      const { data: fallbackData, error: fallbackError } = await supabase.rpc(
-        'password_recovery_verify_challenge_and_dispatch',
-        {
-          p_phone: normalizedPhone,
-          p_answer: answer,
-        }
-      );
-
-      if (fallbackError) {
-        return { ok: false, message: formatRpcError(fallbackError) };
-      }
-
-      const fallbackPayload = parseRpcObject(fallbackData);
-
-      if (!isRecoveryPayloadOk(fallbackPayload)) {
-        return {
-          ok: false,
-          message:
-            typeof fallbackPayload?.message === 'string'
-              ? fallbackPayload.message
-              : 'Não foi possível concluir a recuperação.',
-          blocked: fallbackPayload?.blocked === true,
-          attemptsRemaining:
-            typeof fallbackPayload?.attempts_remaining === 'number'
-              ? fallbackPayload.attempts_remaining
-              : undefined,
-        };
-      }
-
+    if (isSupabaseRpcMissingError(error, 'password_recovery_send_pin')) {
       return {
-        ok: true,
-        message:
-          typeof fallbackPayload?.message === 'string'
-            ? fallbackPayload.message
-            : 'Nova senha enviada por e-mail.',
-        emailMasked:
-          typeof fallbackPayload?.email_masked === 'string'
-            ? fallbackPayload.email_masked
-            : '',
+        ok: false,
+        message: PASSWORD_RECOVERY_SQL_HINT,
       };
     }
 
@@ -214,12 +167,8 @@ export async function passwordRecoveryVerifyAndSendPin(
       message:
         typeof payload?.message === 'string'
           ? payload.message
-          : 'Não foi possível concluir a recuperação.',
+          : 'Não foi possível enviar a nova senha.',
       blocked: payload?.blocked === true,
-      attemptsRemaining:
-        typeof payload?.attempts_remaining === 'number'
-          ? payload.attempts_remaining
-          : undefined,
     };
   }
 
@@ -231,64 +180,6 @@ export async function passwordRecoveryVerifyAndSendPin(
         : 'Nova senha enviada por e-mail.',
     emailMasked:
       typeof payload?.email_masked === 'string' ? payload.email_masked : '',
-  };
-}
-
-export type ProfileSecurityQuestionState =
-  | { ok: true; configured: boolean; securityQuestion: string }
-  | { ok: false; message: string };
-
-export async function loadProfileSecurityQuestion(): Promise<ProfileSecurityQuestionState> {
-  const { data, error } = await supabase.rpc('get_profile_security_question');
-
-  if (error) {
-    return { ok: false, message: formatRpcError(error) };
-  }
-
-  const payload = parseRpcObject(data);
-
-  if (payload?.ok !== true) {
-    return { ok: false, message: 'Não foi possível carregar a pergunta de segurança.' };
-  }
-
-  return {
-    ok: true,
-    configured: payload.configured === true,
-    securityQuestion:
-      typeof payload.security_question === 'string' ? payload.security_question : '',
-  };
-}
-
-export async function saveProfileSecurityQuestion(
-  question: string,
-  answer: string
-): Promise<{ ok: true; securityQuestion: string } | { ok: false; message: string }> {
-  const { data, error } = await supabase.rpc('save_my_profile_security_question', {
-    p_question: question.trim(),
-    p_answer: answer,
-  });
-
-  if (error) {
-    if (
-      isSupabaseRpcMissingError(error, 'save_my_profile_security_question')
-      || isSupabaseRpcMissingError(error, 'set_profile_security_question')
-    ) {
-      return { ok: false, message: PASSWORD_RECOVERY_SQL_HINT };
-    }
-
-    return { ok: false, message: formatRpcError(error) };
-  }
-
-  const payload = parseRpcObject(data);
-
-  if (payload?.ok !== true) {
-    return { ok: false, message: 'Não foi possível salvar a pergunta de segurança.' };
-  }
-
-  return {
-    ok: true,
-    securityQuestion:
-      typeof payload.security_question === 'string' ? payload.security_question : question.trim(),
   };
 }
 

@@ -175,7 +175,6 @@ export function ProfileClassPanel({
   const [accessPinSectionExpanded, setAccessPinSectionExpanded] = useState(
     () => isRecoveryAccessPinFlow
   );
-  const [securityQuestionSectionExpanded, setSecurityQuestionSectionExpanded] = useState(false);
   const [showCurrentAccessPin, setShowCurrentAccessPin] = useState(false);
   const [showNewAccessPin, setShowNewAccessPin] = useState(false);
   const [showConfirmAccessPin, setShowConfirmAccessPin] = useState(false);
@@ -1597,14 +1596,6 @@ export function ProfileClassPanel({
         accessPinSectionScrollYRef.current = y;
       }}
       accessPinFormContent={renderAccessPinFormFields()}
-      securityQuestionSectionExpanded={securityQuestionSectionExpanded}
-      onToggleSecurityQuestionSection={() => setSecurityQuestionSectionExpanded((open) => !open)}
-      onSecurityQuestionSaved={(securityQuestion) => {
-        setProfile((current) =>
-          current ? { ...current, security_question: securityQuestion } : current
-        );
-        void fetchProfile({ force: true });
-      }}
       editingFieldRow={editingFieldRow}
       editingPlaceholder={editingPlaceholder}
       editingValue={editingValue}

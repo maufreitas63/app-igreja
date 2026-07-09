@@ -564,7 +564,7 @@ export default function IndexScreen() {
           setShowForgotPasswordHelp(true);
           Alert.alert(
             'Senha incorreta',
-            'Toque em "Esqueci minha senha" para validar sua pergunta de segurança e receber a nova senha por e-mail.'
+            'Toque em "Esqueci minha senha" para receber a nova senha por e-mail.'
           );
           return;
         }
@@ -698,7 +698,7 @@ export default function IndexScreen() {
     }
 
     if (showForgotPasswordHelp) {
-      return 'Esqueceu a senha? Valide a pergunta de segurança e receba a nova senha por e-mail.';
+      return 'Esqueceu a senha? Confirme seu e-mail e receba a nova senha por e-mail.';
     }
 
     if (isLikelyFirstAccess) {
@@ -722,7 +722,7 @@ export default function IndexScreen() {
     }
 
     if (showForgotPasswordHelp) {
-      return 'Use "Esqueci minha senha" para validar a pergunta de segurança e receber o código por e-mail.';
+      return 'Use "Esqueci minha senha" para confirmar seu e-mail e receber o código por e-mail.';
     }
 
     if (needsEmailBeforePin) {

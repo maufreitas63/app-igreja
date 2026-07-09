@@ -1,4 +1,3 @@
-import { ProfileSecurityQuestionSection } from '@/components/ProfileSecurityQuestionSection';
 import {
   SECTION_TITLES,
   type ProfileFieldRow,
@@ -61,9 +60,6 @@ export type ProfileClassProps = {
   toggleAccessPinSection: () => void;
   onAccessPinSectionLayout: (y: number) => void;
   accessPinFormContent: React.ReactNode;
-  securityQuestionSectionExpanded: boolean;
-  onToggleSecurityQuestionSection: () => void;
-  onSecurityQuestionSaved: (securityQuestion: string) => void;
   editingFieldRow: ProfileFieldRow | null;
   editingPlaceholder: string;
   editingValue: string;
@@ -128,9 +124,6 @@ export function ProfileClass({
   toggleAccessPinSection,
   onAccessPinSectionLayout,
   accessPinFormContent,
-  securityQuestionSectionExpanded,
-  onToggleSecurityQuestionSection,
-  onSecurityQuestionSaved,
   editingFieldRow,
   editingPlaceholder,
   editingValue,
@@ -320,15 +313,6 @@ export function ProfileClass({
             ) : null}
           </View>
         ) : null}
-
-        <ProfileSecurityQuestionSection
-          expanded={securityQuestionSectionExpanded}
-          onToggle={onToggleSecurityQuestionSection}
-          initialSecurityQuestion={
-            typeof profile?.security_question === 'string' ? profile.security_question : null
-          }
-          onSaved={onSecurityQuestionSaved}
-        />
 
         {editingFieldRow ? (
           <View style={profileClassStyles.editorCard}>

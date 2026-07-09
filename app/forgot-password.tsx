@@ -1,8 +1,8 @@
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import {
   passwordRecoveryGetState,
+  passwordRecoverySendPin,
   passwordRecoverySetEmail,
-  passwordRecoveryVerifyAndSendPin,
 } from '@/lib/passwordRecovery';
 import { isBrazilianMobilePhoneComplete } from '@/lib/phoneValidation';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
@@ -24,7 +24,7 @@ import {
   View,
 } from 'react-native';
 
-type RecoveryStep = 'loading' | 'email' | 'security';
+type RecoveryStep = 'loading' | 'email';
 
 const RECOVERY_SURFACE = '#FFFFFF';
 const RECOVERY_ACCENT = VIGILANCE_SCALES_UI.accent;
@@ -68,12 +68,8 @@ export default function ForgotPasswordScreen() {
   const [phone] = useState(initialPhone);
   const [needsEmail, setNeedsEmail] = useState(false);
   const [emailMasked, setEmailMasked] = useState('');
-  const [hasSecurityQuestion, setHasSecurityQuestion] = useState(false);
-  const [securityQuestion, setSecurityQuestion] = useState('');
   const [email, setEmail] = useState('');
   const [emailConfirm, setEmailConfirm] = useState('');
-  const [newQuestion, setNewQuestion] = useState('');
-  const [securityAnswer, setSecurityAnswer] = useState('');
   const [loading, setLoading] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
   const recoverySessionClearedRef = useRef(false);
@@ -107,9 +103,6 @@ export default function ForgotPasswordScreen() {
 
     setNeedsEmail(result.needsEmail);
     setEmailMasked(result.emailMasked);
-    setHasSecurityQuestion(result.hasSecurityQuestion);
-    setSecurityQuestion(result.securityQuestion);
-    setNewQuestion(result.hasSecurityQuestion ? '' : result.securityQuestion);
     setStep('email');
   }, [phone, router]);
 
@@ -117,10 +110,30 @@ export default function ForgotPasswordScreen() {
     void loadState();
   }, [loadState]);
 
-  const goToSecurityStep = useCallback(() => {
+  const sendPinAndRedirect = useCallback(async () => {
+    setLoading(true);
     setStepError(null);
-    setStep('security');
-  }, []);
+
+    try {
+      const result = await passwordRecoverySendPin(phone);
+
+      if (!result.ok) {
+        setStepError(result.message);
+
+        if (result.blocked) {
+          Alert.alert('Recuperação bloqueada', result.message, [
+            { text: 'Voltar', onPress: () => router.replace('/') },
+          ]);
+        }
+
+        return;
+      }
+
+      router.replace(buildLoginRouteAfterRecovery(phone, result.emailMasked));
+    } finally {
+      setLoading(false);
+    }
+  }, [phone, router]);
 
   const handleSaveEmail = useCallback(async () => {
     if (!email.trim() || !emailConfirm.trim()) {
@@ -143,74 +156,19 @@ export default function ForgotPasswordScreen() {
       setEmailMasked(result.emailMasked);
       setEmail('');
       setEmailConfirm('');
-      goToSecurityStep();
+      await sendPinAndRedirect();
     } finally {
       setLoading(false);
     }
-  }, [email, emailConfirm, goToSecurityStep, phone]);
+  }, [email, emailConfirm, phone, sendPinAndRedirect]);
 
   const handleConfirmExistingEmail = useCallback(() => {
-    goToSecurityStep();
-  }, [goToSecurityStep]);
-
-  const handleVerifyAndSendPin = useCallback(async () => {
-    if (hasSecurityQuestion) {
-      if (!securityAnswer.trim()) {
-        setStepError('Informe a resposta da pergunta de segurança.');
-        return;
-      }
-    } else {
-      if (!newQuestion.trim()) {
-        setStepError('Informe a pergunta de segurança.');
-        return;
-      }
-
-      if (!securityAnswer.trim()) {
-        setStepError('Informe a resposta da pergunta de segurança.');
-        return;
-      }
-    }
-
-    setLoading(true);
-    setStepError(null);
-
-    try {
-      const result = await passwordRecoveryVerifyAndSendPin(
-        phone,
-        securityAnswer,
-        hasSecurityQuestion ? undefined : newQuestion
-      );
-
-      if (!result.ok) {
-        const attemptsSuffix =
-          typeof result.attemptsRemaining === 'number' && result.attemptsRemaining > 0
-            ? ` Tentativas restantes: ${result.attemptsRemaining}.`
-            : '';
-
-        setStepError(`${result.message}${attemptsSuffix}`);
-
-        if (result.blocked) {
-          Alert.alert('Recuperação bloqueada', result.message, [
-            { text: 'Voltar', onPress: () => router.replace('/') },
-          ]);
-        }
-
-        return;
-      }
-
-      router.replace(buildLoginRouteAfterRecovery(phone, result.emailMasked));
-    } finally {
-      setLoading(false);
-    }
-  }, [hasSecurityQuestion, newQuestion, phone, router, securityAnswer]);
+    void sendPinAndRedirect();
+  }, [sendPinAndRedirect]);
 
   const getTitle = () => {
     if (step === 'email') {
       return needsEmail ? 'Cadastrar e-mail' : 'Confirmar e-mail';
-    }
-
-    if (step === 'security') {
-      return hasSecurityQuestion ? 'Pergunta de segurança' : 'Cadastrar pergunta de segurança';
     }
 
     return 'Recuperar senha';
@@ -224,12 +182,10 @@ export default function ForgotPasswordScreen() {
     if (step === 'email') {
       return needsEmail
         ? 'Informe e confirme seu e-mail para receber a nova senha.'
-        : 'Confirme o e-mail cadastrado para continuar.';
+        : 'Confirme o e-mail cadastrado para receber a nova senha.';
     }
 
-    return hasSecurityQuestion
-      ? 'Responda à pergunta de segurança. Enviaremos a nova senha por e-mail.'
-      : 'Cadastre pergunta e resposta. Enviaremos a nova senha por e-mail.';
+    return '';
   };
 
   return (
@@ -334,82 +290,8 @@ export default function ForgotPasswordScreen() {
                   <ActivityIndicator color={RECOVERY_SUBMIT_TEXT} />
                 ) : (
                   <Text style={styles.btnText}>
-                    {needsEmail ? 'Salvar e-mail e continuar' : 'Confirmar e continuar'}
+                    {needsEmail ? 'Salvar e-mail e enviar senha' : 'Enviar senha por e-mail'}
                   </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          ) : null}
-
-          {step === 'security' ? (
-            <View style={styles.block}>
-              {emailMasked ? (
-                <>
-                  <Text style={styles.label}>E-mail para envio</Text>
-                  <View style={[styles.input, styles.readOnlyPanel]}>
-                    <Text style={styles.readOnlyText}>{emailMasked}</Text>
-                  </View>
-                </>
-              ) : null}
-
-              {hasSecurityQuestion ? (
-                <>
-                  <Text style={styles.label}>Pergunta de segurança</Text>
-                  <View style={[styles.input, styles.readOnlyPanel]}>
-                    <Text style={styles.readOnlyText}>{securityQuestion}</Text>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.label}>Pergunta de segurança</Text>
-                  <TextInput
-                    style={[styles.input, styles.editableInput]}
-                    value={newQuestion}
-                    onChangeText={(text) => {
-                      setNewQuestion(text);
-                      setStepError(null);
-                    }}
-                    placeholder="Ex.: Qual o nome do seu primeiro animal de estimação?"
-                    placeholderTextColor={RECOVERY_PLACEHOLDER}
-                    multiline
-                    textAlignVertical="top"
-                    editable={!loading}
-                  />
-                </>
-              )}
-
-              <Text style={styles.label}>
-                {hasSecurityQuestion ? 'Sua resposta' : 'Resposta da pergunta'}
-              </Text>
-              <TextInput
-                style={[styles.input, styles.editableInput]}
-                value={securityAnswer}
-                onChangeText={(text) => {
-                  setSecurityAnswer(text);
-                  setStepError(null);
-                }}
-                placeholder="Resposta secreta"
-                placeholderTextColor={RECOVERY_PLACEHOLDER}
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="off"
-                textContentType="none"
-                editable={!loading}
-                onSubmitEditing={() => void handleVerifyAndSendPin()}
-                returnKeyType="done"
-              />
-
-              {stepError ? <Text style={styles.errorText}>{stepError}</Text> : null}
-
-              <TouchableOpacity
-                style={[styles.btnPrimary, loading && styles.btnDisabled]}
-                onPress={() => void handleVerifyAndSendPin()}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color={RECOVERY_SUBMIT_TEXT} />
-                ) : (
-                  <Text style={styles.btnText}>Validar e enviar senha por e-mail</Text>
                 )}
               </TouchableOpacity>
             </View>
