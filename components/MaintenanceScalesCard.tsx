@@ -7,12 +7,13 @@ import {
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
 import { confirmDialog } from '@/lib/confirmDialog';
-import { SCALE_VOLUNTEERS_MENU_LABEL } from '@/lib/appDrawerMenu';
+import { SCALE_SCHEDULING_MENU_LABEL, SCALE_VOLUNTEERS_MENU_LABEL } from '@/lib/appDrawerMenu';
 import {
   formatScaleServiceDateLabel,
   MAINTENANCE_SCALES_SQL_HINT,
   parseScaleServiceDateInput,
 } from '@/lib/maintenanceScales';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
@@ -31,9 +32,16 @@ import {
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
 
-export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
+const PANEL_TITLE = SCALE_SCHEDULING_MENU_LABEL;
+
+export function MaintenanceScalesCard({
+  isActive = true,
+  panelHeight,
+  minimal = false,
+}: Props) {
   const {
     scaleTypes,
     selectedScaleTypeId,
@@ -207,19 +215,53 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
 
   if (loading) {
     return (
-      <View style={[styles.panel, maintenancePanelStyles.panelCentered, { height: contentHeight }]}>
-        <CardLoadingState lines={4} />
-        <Text style={maintenancePanelStyles.panelHint}>Carregando escalas…</Text>
+      <View
+        style={[
+          styles.panel,
+          minimal && styles.panelMinimal,
+          maintenancePanelStyles.panelCentered,
+          { height: contentHeight },
+        ]}
+      >
+        <CardLoadingState lines={4} minimal={minimal} />
+        <Text
+          style={[
+            maintenancePanelStyles.panelHint,
+            minimal && styles.panelHintMinimal,
+          ]}
+        >
+          Carregando escalas…
+        </Text>
       </View>
     );
   }
 
   if (!scaleTypes.length) {
     return (
-      <View style={[styles.panel, maintenancePanelStyles.panelCentered, { height: contentHeight }]}>
-        <FontAwesome name="calendar" size={28} color="#64748B" />
-        <Text style={maintenancePanelStyles.panelTitleMuted}>Escalas</Text>
-        <Text style={maintenancePanelStyles.panelHint}>
+      <View
+        style={[
+          styles.panel,
+          minimal && styles.panelMinimal,
+          maintenancePanelStyles.panelCentered,
+          { height: contentHeight },
+        ]}
+      >
+        <FontAwesome name="calendar" size={28} color={minimal ? MINIMAL_UI.textMuted : '#64748B'} />
+        <Text
+          style={
+            minimal
+              ? styles.sectionTitleMinimal
+              : maintenancePanelStyles.panelTitleMuted
+          }
+        >
+          {PANEL_TITLE}
+        </Text>
+        <Text
+          style={[
+            maintenancePanelStyles.panelHint,
+            minimal && styles.panelHintMinimal,
+          ]}
+        >
           Nenhum tipo de escala ativo. Cadastre no card Tipos de Escala.
         </Text>
         <TouchableOpacity style={styles.retryButton} onPress={() => void reload()} activeOpacity={0.85}>
@@ -230,12 +272,20 @@ export function MaintenanceScalesCard({ isActive = true, panelHeight }: Props) {
   }
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Manutenção de escalas</Text>
-      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+    <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
+      <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}>
+        {PANEL_TITLE}
+      </Text>
+      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
-      {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_SCALES_SQL_HINT}</Text> : null}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {rpcMissing ? (
+        <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
+          {MAINTENANCE_SCALES_SQL_HINT}
+        </Text>
+      ) : null}
+      {error ? (
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
+      ) : null}
 
       <ScrollView
         horizontal
@@ -810,5 +860,32 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: '#3A96DD',
     fontWeight: '700',
+  },
+  panelMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    borderRadius: 0,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'hidden',
+  },
+  sectionTitleMinimal: {
+    ...MINIMAL_SECTION_TITLE,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+  },
+  panelHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textAlign: 'center',
+  },
+  warningTextMinimal: {
+    color: '#B45309',
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
   },
 });

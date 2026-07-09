@@ -32,7 +32,7 @@ import { MaintenanceSalaServidorCard } from '@/components/MaintenanceSalaServido
 import { QuorumCheckinRegistryTable } from '@/components/QuorumCheckinRegistryTable';
 import { useGhostMode } from '@/context/GhostModeContext';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
-import { SCALE_VOLUNTEERS_MENU_LABEL } from '@/lib/appDrawerMenu';
+import { SCALE_SCHEDULING_MENU_LABEL, SCALE_VOLUNTEERS_MENU_LABEL } from '@/lib/appDrawerMenu';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
 import { resolveMaintenancePanelAccessResourceKey } from '@/lib/screenAccessResourceKeys';
 import { recordProfileScreenVisit } from '@/lib/profileScreenVisitTracking';
@@ -194,7 +194,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '3', title: 'Sala(s) - Check In', content: 'sala_servidor' },
   { id: '5', title: 'Tipos de Escala', content: 'scale_types' },
   { id: '6', title: SCALE_VOLUNTEERS_MENU_LABEL, content: 'scale_volunteers' },
-  { id: '7', title: 'Programação de Escalas', content: 'scales' },
+  { id: '7', title: SCALE_SCHEDULING_MENU_LABEL, content: 'scales' },
   { id: '8', title: 'Cuidado Pastoral', content: 'pastoral_care' },
   { id: '9', title: 'Informações Financeiras', content: 'financials' },
   { id: '16', title: 'Modelo Preditivo', content: 'predictive_insights' },
@@ -1380,7 +1380,18 @@ export default function MaintenanceDashboard() {
               />
             </View>
           ) : item.content === 'scales' ? (
-            <MaintenanceScalesCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <View
+              style={[
+                styles.scalesPanel,
+                isMinimalPresentation && styles.scalesPanelMinimal,
+              ]}
+            >
+              <MaintenanceScalesCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'pastoral_care' ? (
             <MaintenancePastoralCareCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'mudanca_papeis' ? (
@@ -2449,6 +2460,18 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   scaleVolunteersPanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  scalesPanel: {
+    flex: 1,
+    minHeight: 0,
+  },
+  scalesPanelMinimal: {
     paddingHorizontal: 0,
     paddingVertical: 4,
     width: '100%',
