@@ -77,6 +77,13 @@ create index if not exists authorizations_profile_idx
 create index if not exists authorizations_cpf_idx
   on public.authorizations (cpf);
 
+alter table public.authorizations
+  add column if not exists confirmation_token text null;
+
+create unique index if not exists authorizations_confirmation_token_uidx
+  on public.authorizations (confirmation_token)
+  where confirmation_token is not null;
+
 -- ---------------------------------------------------------------------------
 -- CPF (Módulo 11)
 -- ---------------------------------------------------------------------------

@@ -1,56 +1,95 @@
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { useMediaAuthorizationAccess } from '@/hooks/useMediaAuthorizationAccess';
 import { confirmMediaAuthorization } from '@/lib/mediaAuthorization';
-import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+
+function normalizeTokenParam(value: string | string[] | undefined): string | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw?.trim()) {
+    return null;
+  }
+
+  try {
+    return decodeURIComponent(raw.trim());
+  } catch {
+    return raw.trim();
+  }
+}
 
 export default function MediaAuthorizationConfirmScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ token?: string | string[] }>();
-  const token = Array.isArray(params.token) ? params.token[0] : params.token;
+  const token = useMemo(() => normalizeTokenParam(params.token), [params.token]);
   const { sessionProfileId } = useMediaAuthorizationAccess();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('Validando seu link de confirmação...');
+  const [status, setStatus] = useState<'ready' | 'loading' | 'success' | 'error'>('ready');
+  const [message, setMessage] = useState(
+    'Abra este link no mesmo aplicativo da igreja e toque em Confirmar autorização para concluir.'
+  );
+  const confirmInFlightRef = useRef(false);
+  const confirmedRef = useRef(false);
 
-  useEffect(() => {
-    if (!token?.trim()) {
-      setStatus('error');
-      setMessage('Link inválido. Solicite um novo envio pelo aplicativo.');
+  const handleConfirm = useCallback(async () => {
+    if (!token || confirmInFlightRef.current || confirmedRef.current) {
       return;
     }
 
-    let active = true;
+    confirmInFlightRef.current = true;
+    setStatus('loading');
+    setMessage('Confirmando sua autorização...');
 
-    void (async () => {
-      try {
-        const result = await confirmMediaAuthorization({
-          token: token.trim(),
-          ipAddress: null,
-          userAgent: Platform.OS === 'web' && typeof navigator !== 'undefined' ? navigator.userAgent : null,
-        });
+    try {
+      const result = await confirmMediaAuthorization({
+        token,
+        ipAddress: null,
+        userAgent: Platform.OS === 'web' && typeof navigator !== 'undefined' ? navigator.userAgent : null,
+      });
 
-        if (!active) {
-          return;
-        }
+      setStatus(result.ok ? 'success' : 'error');
+      setMessage(result.message);
 
-        setStatus(result.ok ? 'success' : 'error');
-        setMessage(result.message);
-      } catch (error) {
-        console.error('[autorizacao-midia-confirmar] failed', error);
-        if (active) {
-          setStatus('error');
-          setMessage('Não foi possível confirmar a autorização.');
-        }
+      if (result.ok) {
+        confirmedRef.current = true;
       }
-    })();
-
-    return () => {
-      active = false;
-    };
+    } catch (error) {
+      console.error('[autorizacao-midia-confirmar] failed', error);
+      setStatus('error');
+      setMessage('Não foi possível confirmar a autorização.');
+    } finally {
+      confirmInFlightRef.current = false;
+    }
   }, [token]);
+
+  const handleBack = useCallback(() => {
+    if (sessionProfileId) {
+      router.replace({
+        pathname: '/autorizacao-midia',
+        params: withMinimalPresentation(),
+      });
+      return;
+    }
+
+    router.replace('/(tabs)');
+  }, [router, sessionProfileId]);
+
+  if (!token) {
+    return (
+      <MinimalScreenLayout scroll={false}>
+        <View style={styles.root}>
+          <Text style={styles.title}>Confirmação de autorização</Text>
+          <Text style={[styles.message, styles.messageError]}>
+            Link inválido. Solicite um novo envio pelo aplicativo.
+          </Text>
+          <Pressable accessibilityRole="button" style={styles.button} onPress={handleBack}>
+            <Text style={styles.buttonText}>Voltar ao aplicativo</Text>
+          </Pressable>
+        </View>
+      </MinimalScreenLayout>
+    );
+  }
 
   return (
     <MinimalScreenLayout scroll={false}>
@@ -58,23 +97,16 @@ export default function MediaAuthorizationConfirmScreen() {
         <Text style={styles.title}>Confirmação de autorização</Text>
         {status === 'loading' ? <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} /> : null}
         <Text style={[styles.message, status === 'error' && styles.messageError]}>{message}</Text>
-        {status !== 'loading' ? (
-          <Pressable
-            accessibilityRole="button"
-            style={styles.button}
-            onPress={() => {
-              if (sessionProfileId) {
-                router.replace({
-                  pathname: '/autorizacao-midia',
-                  params: withMinimalPresentation(),
-                });
-                return;
-              }
 
-              router.replace('/(tabs)');
-            }}
-          >
-            <Text style={styles.buttonText}>Voltar ao aplicativo</Text>
+        {status === 'ready' ? (
+          <Pressable accessibilityRole="button" style={styles.button} onPress={() => void handleConfirm()}>
+            <Text style={styles.buttonText}>Confirmar autorização</Text>
+          </Pressable>
+        ) : null}
+
+        {status === 'success' || status === 'error' ? (
+          <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={handleBack}>
+            <Text style={styles.secondaryButtonText}>Voltar ao aplicativo</Text>
           </Pressable>
         ) : null}
       </View>
@@ -113,6 +145,16 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: MINIMAL_UI.onDark,
+    fontWeight: '700',
+  },
+  secondaryButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 12,
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+  },
+  secondaryButtonText: {
+    color: MINIMAL_UI.blue,
     fontWeight: '700',
   },
 });

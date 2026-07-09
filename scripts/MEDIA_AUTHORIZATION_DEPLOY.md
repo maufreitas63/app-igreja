@@ -50,3 +50,10 @@ Se o botão retornar sucesso mas o e-mail não chegar:
 3. Reexecute `scripts/media-authorization-rpc.sql`
 4. Verifique spam/lixo eletrônico (assunto: **Confirme sua autorização de imagem e voz**)
 5. Teste envio de PIN na tela de login — se PIN também não chega, o problema é na configuração Gmail/Resend
+
+## 5. Confirmação do link
+
+- O link do e-mail abre uma tela com botão **Confirmar autorização** (não confirma sozinho ao abrir).
+- Cada envio gera um token novo; links antigos ficam inválidos após um novo envio.
+- Se aparecer *link inválido ou já utilizado*, solicite um **novo envio** pelo app.
+- Execute `scripts/media-authorization-confirm-idempotent.sql` e reexecute `media-authorization-rpc.sql` após atualizações.

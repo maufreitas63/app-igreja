@@ -379,14 +379,30 @@ begin
     return jsonb_build_object('ok', false, 'message', 'Token inválido.');
   end if;
 
+  select a.id
+    into v_authorization_id
+    from public.authorizations a
+   where a.confirmation_token = trim(p_token)
+   limit 1;
+
+  if v_authorization_id is not null then
+    return jsonb_build_object(
+      'ok', true,
+      'message', 'Autorização já confirmada com sucesso.',
+      'authorizationId', v_authorization_id,
+      'alreadyConfirmed', true
+    );
+  end if;
+
   select *
     into v_pending
     from public.pending_authorizations
    where token = trim(p_token)
-   limit 1;
+   limit 1
+   for update;
 
   if v_pending.id is null then
-    return jsonb_build_object('ok', false, 'message', 'Link inválido ou já utilizado.');
+    return jsonb_build_object('ok', false, 'message', 'Link inválido ou já utilizado. Solicite um novo envio pelo aplicativo.');
   end if;
 
   if v_pending.expires_at < now() then
@@ -409,7 +425,8 @@ begin
     user_agent,
     privacy_policy_version,
     accepted_text_hash,
-    confirmed_via_email
+    confirmed_via_email,
+    confirmation_token
   )
   values (
     v_pending.profile_id,
@@ -422,7 +439,8 @@ begin
     nullif(trim(p_user_agent), ''),
     v_pending.privacy_policy_version,
     public.media_authorization_terms_hash(),
-    true
+    true,
+    trim(p_token)
   )
   returning id into v_authorization_id;
 
