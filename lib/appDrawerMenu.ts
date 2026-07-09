@@ -75,7 +75,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 't', label: 'Presença', moduleKey: 'quorum_presence' },
   { letter: 'u', label: 'Cadastro de Usuário', moduleKey: 'profile_cadastro' },
   { letter: 'v', label: 'Recepção Familiar', moduleKey: 'family_reception' },
-  { letter: 'w', label: 'Controle Acesso', moduleKey: 'access_control' },
+  { letter: 'w', label: 'Controle de Acesso', moduleKey: 'access_control' },
   { letter: 'x', label: 'Mudança Papéis', moduleKey: 'mudanca_papeis' },
   { letter: 'y', label: 'Acesso Usuários', moduleKey: 'profile_access_insights' },
   { letter: 'z', label: 'Modo Ghost', moduleKey: 'auditor' },
