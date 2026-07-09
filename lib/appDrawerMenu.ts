@@ -62,7 +62,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
     dividerBefore: true,
   },
   { letter: 'i', label: 'Cronograma de Eventos', moduleKey: 'Event_gantt' },
-  { letter: 'j', label: 'Orquestração', moduleKey: 'event_orchestration' },
+  { letter: 'j', label: 'Orquestração do Evento', moduleKey: 'event_orchestration' },
   { letter: 'k', label: 'Sala(s) - Check In', moduleKey: 'sala_servidor' },
   { letter: 'l', label: 'Tipos Escala', moduleKey: 'scales_type' },
   { letter: 'm', label: 'Servos', moduleKey: 'scales_volunteers' },
