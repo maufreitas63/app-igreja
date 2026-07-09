@@ -1,4 +1,5 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceScaleVolunteers } from '@/hooks/useMaintenanceScaleVolunteers';
 import {
@@ -8,8 +9,9 @@ import {
 import { MAINTENANCE_SCALE_VOLUNTEERS_SQL_HINT } from '@/hooks/useMaintenanceScaleVolunteers';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { mapLegacyRoomDisplayLabel } from '@/lib/roomDisplayLabels';
 import { FontAwesome } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -59,6 +61,15 @@ export function MaintenanceScaleVolunteersCard({
   } = useMaintenanceScaleVolunteers(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
+
+  const scaleTypeDropdownOptions = useMemo(
+    () =>
+      scaleTypes.map((type) => ({
+        value: type.id,
+        label: mapLegacyRoomDisplayLabel(type.name),
+      })),
+    [scaleTypes]
+  );
 
   const handleAssociate = async (profileId: string, fullName: string) => {
     const nameKey = fullName.trim().toLocaleLowerCase('pt-BR');
@@ -174,29 +185,22 @@ export function MaintenanceScaleVolunteersCard({
         <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
       ) : null}
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.typeChipRow}
-        style={[styles.typeChipScroll, minimal && styles.typeChipScrollMinimal]}
-      >
-        {scaleTypes.map((type) => {
-          const isSelected = type.id === selectedScaleTypeId;
-
-          return (
-            <TouchableOpacity
-              key={type.id}
-              style={[styles.typeChip, isSelected && styles.typeChipSelected]}
-              onPress={() => setSelectedScaleTypeId(type.id)}
-              activeOpacity={0.85}
-            >
-              <Text style={[styles.typeChipText, isSelected && styles.typeChipTextSelected]}>
-                {type.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      <View style={[styles.scaleTypePickerSection, minimal && styles.scaleTypePickerSectionMinimal]}>
+        <SectionLabel variant="maintenance" tight>
+          Tipo de escala
+        </SectionLabel>
+        <DropdownSelect
+          options={scaleTypeDropdownOptions}
+          selectedValue={selectedScaleTypeId ?? ''}
+          onValueChange={setSelectedScaleTypeId}
+          modalTitle="Tipo de escala"
+          placeholder="Selecionar tipo de escala"
+          searchPlaceholder="Buscar tipo de escala..."
+          searchable
+          style={[styles.scaleTypeDropdown, minimal && styles.scaleTypeDropdownMinimal]}
+          disabled={rpcMissing}
+        />
+      </View>
 
       <SectionLabel variant="maintenance">Associar servos</SectionLabel>
       <View style={[styles.searchInputRow, minimal && styles.searchInputRowMinimal]}>
@@ -351,35 +355,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 6,
   },
-  typeChipScroll: {
-    flexGrow: 0,
-    maxHeight: 44,
+  scaleTypePickerSection: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
     marginBottom: 8,
+    gap: 4,
   },
-  typeChipRow: {
-    gap: 8,
-    paddingHorizontal: 2,
+  scaleTypePickerSectionMinimal: {
+    alignSelf: 'stretch',
   },
-  typeChip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.35)',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  scaleTypeDropdown: {
+    width: '100%',
+    flex: 0,
+    flexGrow: 0,
+    alignSelf: 'stretch',
+    height: 44,
   },
-  typeChipSelected: {
-    borderColor: '#6EE7B7',
-    backgroundColor: 'rgba(16, 185, 129, 0.22)',
-  },
-  typeChipText: {
-    color: 'rgba(58, 150, 221, 0.82)',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  typeChipTextSelected: {
-    color: '#D1FAE5',
-    fontWeight: '800',
+  scaleTypeDropdownMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   sectionLabel: {
     color: '#3A96DD',
@@ -527,11 +523,6 @@ const styles = StyleSheet.create({
   },
   errorTextMinimal: {
     color: '#DC2626',
-  },
-  typeChipScrollMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
   },
   searchInputRowMinimal: {
     width: '100%',
