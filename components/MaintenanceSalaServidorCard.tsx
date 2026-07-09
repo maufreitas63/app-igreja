@@ -3,6 +3,7 @@ import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { useDashboardSelectedEvent } from '@/hooks/useDashboardSelectedEvent';
 import { useRoomServidorScales } from '@/hooks/useRoomServidorScales';
 import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useEventRegistrationsByStatus } from '@/hooks/useEventRegistrationsByStatus';
 import { readDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
@@ -13,7 +14,6 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   ScrollView,
   StyleSheet,
@@ -36,6 +36,7 @@ type GroupedRoomConfig = {
 type MaintenanceSalaServidorCardProps = {
   embedded?: boolean;
   panelHeight?: number;
+  minimal?: boolean;
 };
 
 const formatDisplayName = (fullName: string) => {
@@ -51,6 +52,7 @@ const formatDisplayName = (fullName: string) => {
 export const MaintenanceSalaServidorCard = ({
   embedded,
   panelHeight,
+  minimal = false,
 }: MaintenanceSalaServidorCardProps) => {
   const {
     kidsRoomLabel,
@@ -116,8 +118,17 @@ export const MaintenanceSalaServidorCard = ({
       ? Math.min(selectedEvent.registeredCount / selectedEvent.max_capacity, 1)
       : 0;
 
-  const capacityFillColor =
-    capacityRatio >= 0.85 ? '#0284c7' : capacityRatio >= 0.6 ? '#06b6d4' : '#67e8f9';
+  const capacityFillColor = minimal
+    ? capacityRatio >= 0.85
+      ? MINIMAL_UI.blueDark
+      : capacityRatio >= 0.6
+        ? MINIMAL_UI.accent
+        : MINIMAL_UI.textMuted
+    : capacityRatio >= 0.85
+      ? '#0284c7'
+      : capacityRatio >= 0.6
+        ? '#06b6d4'
+        : '#67e8f9';
 
   const safeKidsRegistrations = kidsRegistrations ?? [];
   const safeTeensRegistrations = teensRegistrations ?? [];
@@ -215,54 +226,102 @@ export const MaintenanceSalaServidorCard = ({
       style={[
         styles.root,
         embedded && styles.rootEmbedded,
+        minimal && styles.rootMinimal,
         panelHeight ? { height: panelHeight } : null,
       ]}
     >
-      {embedded ? (
+      {embedded && !minimal ? (
         <View style={styles.embeddedCardHeader}>
           <Text style={maintenancePanelStyles.panelTitle}>Sala(s) - Check In</Text>
           <View style={maintenancePanelStyles.panelSubtitleSpacer} />
         </View>
       ) : null}
 
-      <View style={[styles.contentBody, embedded && styles.contentBodyEmbedded]}>
-      <View style={styles.eventHero}>
-        <Text style={styles.eventHeroLabel}>Evento ativo (card 1 — Agenda)</Text>
+      <View
+        style={[
+          styles.contentBody,
+          embedded && styles.contentBodyEmbedded,
+          minimal && styles.contentBodyMinimal,
+        ]}
+      >
+      <View style={[styles.eventHero, minimal && styles.eventHeroMinimal]}>
+        <Text style={[styles.eventHeroLabel, minimal && styles.eventHeroLabelMinimal]}>
+          Evento ativo (card 1 — Agenda)
+        </Text>
         {selectedEvent ? (
           <View style={styles.eventHeroRow}>
             <View style={styles.eventHeroSummary}>
-              <Text style={styles.eventHeroName} numberOfLines={2}>
+              <Text
+                style={[styles.eventHeroName, minimal && styles.eventHeroNameMinimal]}
+                numberOfLines={2}
+              >
                 {selectedEvent.name}
               </Text>
               {selectedEventTime ? (
-                <Text style={styles.eventHeroMeta}>{selectedEventTime}</Text>
+                <Text style={[styles.eventHeroMeta, minimal && styles.eventHeroMetaMinimal]}>
+                  {selectedEventTime}
+                </Text>
               ) : null}
               {selectedEvent.event_local ? (
-                <Text style={styles.eventHeroMeta}>{selectedEvent.event_local}</Text>
+                <Text style={[styles.eventHeroMeta, minimal && styles.eventHeroMetaMinimal]}>
+                  {selectedEvent.event_local}
+                </Text>
               ) : null}
               {selectedEvent.kids_room || selectedEvent.teens_room ? (
                 <View style={styles.eventHeroRoomRow}>
                   {selectedEvent.kids_room ? (
-                    <View style={[styles.eventHeroRoomBadge, styles.eventHeroRoomBadgeKids]}>
+                    <View
+                      style={[
+                        styles.eventHeroRoomBadge,
+                        styles.eventHeroRoomBadgeKids,
+                        minimal && styles.eventHeroRoomBadgeMinimal,
+                        minimal && styles.eventHeroRoomBadgeKidsMinimal,
+                      ]}
+                    >
                       <View style={[styles.eventRoomDot, styles.eventRoomDotKids]} />
-                      <Text style={styles.eventHeroRoomText}>{kidsRoomBadgeLabel}</Text>
+                      <Text
+                        style={[
+                          styles.eventHeroRoomText,
+                          minimal && styles.eventHeroRoomTextMinimal,
+                        ]}
+                      >
+                        {kidsRoomBadgeLabel}
+                      </Text>
                     </View>
                   ) : null}
                   {selectedEvent.teens_room ? (
-                    <View style={[styles.eventHeroRoomBadge, styles.eventHeroRoomBadgeTeens]}>
+                    <View
+                      style={[
+                        styles.eventHeroRoomBadge,
+                        styles.eventHeroRoomBadgeTeens,
+                        minimal && styles.eventHeroRoomBadgeMinimal,
+                        minimal && styles.eventHeroRoomBadgeTeensMinimal,
+                      ]}
+                    >
                       <View style={[styles.eventRoomDot, styles.eventRoomDotTeens]} />
-                      <Text style={styles.eventHeroRoomText}>{teensRoomBadgeLabel}</Text>
+                      <Text
+                        style={[
+                          styles.eventHeroRoomText,
+                          minimal && styles.eventHeroRoomTextMinimal,
+                        ]}
+                      >
+                        {teensRoomBadgeLabel}
+                      </Text>
                     </View>
                   ) : null}
                 </View>
               ) : null}
             </View>
             <View style={styles.eventHeroCapacity}>
-              <Text style={styles.eventHeroLabel}>Vagas</Text>
+              <Text style={[styles.eventHeroLabel, minimal && styles.eventHeroLabelMinimal]}>
+                Vagas
+              </Text>
               {eventsError ? (
-                <Text style={styles.capacityPlaceholder}>--</Text>
+                <Text style={[styles.capacityPlaceholder, minimal && styles.capacityPlaceholderMinimal]}>
+                  --
+                </Text>
               ) : selectedEvent.remainingCapacity !== null ? (
-                <View style={styles.capacityCup}>
+                <View style={[styles.capacityCup, minimal && styles.capacityCupMinimal]}>
                   <View
                     style={[
                       styles.capacityLiquid,
@@ -273,36 +332,44 @@ export const MaintenanceSalaServidorCard = ({
                     ]}
                   />
                   <View style={styles.capacityOverlay}>
-                    <Text style={styles.capacityValue}>({selectedEvent.remainingCapacity})</Text>
-                    <Text style={styles.capacityMeta}>
+                    <Text
+                      style={[styles.capacityValue, minimal && styles.capacityValueMinimal]}
+                    >
+                      ({selectedEvent.remainingCapacity})
+                    </Text>
+                    <Text style={[styles.capacityMeta, minimal && styles.capacityMetaMinimal]}>
                       {selectedEvent.registeredCount}/{selectedEvent.max_capacity}
                     </Text>
                   </View>
                 </View>
               ) : (
-                <Text style={styles.capacityPlaceholder}>--</Text>
+                <Text style={[styles.capacityPlaceholder, minimal && styles.capacityPlaceholderMinimal]}>
+                  --
+                </Text>
               )}
             </View>
           </View>
         ) : (
-          <Text style={styles.placeholderText}>
+          <Text style={[styles.placeholderText, minimal && styles.placeholderTextMinimal]}>
             Nenhum evento ativo no dashboard. Selecione um evento no card Agenda da Família.
           </Text>
         )}
       </View>
 
       {isLoading ? (
-        <CardLoadingState lines={4} />
+        <CardLoadingState lines={4} minimal={minimal} />
       ) : eventsError ? (
-        <Text style={styles.errorText}>{eventsError.message}</Text>
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{eventsError.message}</Text>
       ) : groupedRegistrationsError ? (
-        <Text style={styles.errorText}>{groupedRegistrationsError.message}</Text>
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>
+          {groupedRegistrationsError.message}
+        </Text>
       ) : !selectedEvent ? null : !hasSalaResources ? (
-        <Text style={styles.placeholderText}>
+        <Text style={[styles.placeholderText, minimal && styles.placeholderTextMinimal]}>
           O evento selecionado no dashboard não possui salas Infantil ou Jovens ativas.
         </Text>
       ) : (
-        <View style={styles.groupedAudienceSections}>
+        <View style={[styles.groupedAudienceSections, minimal && styles.groupedAudienceSectionsMinimal]}>
           <View style={styles.groupedAudienceSelectorRow}>
             {availableGroupedRooms.map((room) => {
               const isSelected = room.key === selectedGroupedRoomConfig?.key;
@@ -312,8 +379,15 @@ export const MaintenanceSalaServidorCard = ({
                   key={room.key}
                   style={[
                     styles.groupedAudienceSelectorChip,
-                    isSelected ? room.headerStyle : styles.groupedAudienceSelectorChipInactive,
-                    isSelected && styles.groupedAudienceSelectorChipSelected,
+                    minimal && styles.groupedAudienceSelectorChipMinimal,
+                    isSelected
+                      ? minimal
+                        ? styles.groupedAudienceSelectorChipSelectedMinimal
+                        : room.headerStyle
+                      : minimal
+                        ? styles.groupedAudienceSelectorChipInactiveMinimal
+                        : styles.groupedAudienceSelectorChipInactive,
+                    isSelected && !minimal && styles.groupedAudienceSelectorChipSelected,
                   ]}
                   onPress={() => setSelectedGroupedRoom(room.key)}
                   activeOpacity={0.85}
@@ -329,7 +403,10 @@ export const MaintenanceSalaServidorCard = ({
                     <Text
                       style={[
                         styles.groupedAudienceHeaderText,
+                        minimal && styles.groupedAudienceHeaderTextMinimal,
+                        isSelected && minimal && styles.groupedAudienceHeaderTextSelectedMinimal,
                         !isSelected && styles.groupedAudienceHeaderTextInactive,
+                        !isSelected && minimal && styles.groupedAudienceHeaderTextInactiveMinimal,
                       ]}
                     >
                       {room.label}
@@ -338,15 +415,23 @@ export const MaintenanceSalaServidorCard = ({
                   <View
                     style={[
                       styles.groupedAudienceCountBadge,
+                      minimal && styles.groupedAudienceCountBadgeMinimal,
                       isSelected
-                        ? styles.groupedAudienceCountBadgeActive
-                        : styles.groupedAudienceCountBadgeInactive,
+                        ? minimal
+                          ? styles.groupedAudienceCountBadgeActiveMinimal
+                          : styles.groupedAudienceCountBadgeActive
+                        : minimal
+                          ? styles.groupedAudienceCountBadgeInactiveMinimal
+                          : styles.groupedAudienceCountBadgeInactive,
                     ]}
                   >
                     <Text
                       style={[
                         styles.groupedAudienceCountText,
+                        minimal && styles.groupedAudienceCountTextMinimal,
+                        isSelected && minimal && styles.groupedAudienceCountTextSelectedMinimal,
                         !isSelected && styles.groupedAudienceCountTextInactive,
+                        !isSelected && minimal && styles.groupedAudienceCountTextInactiveMinimal,
                       ]}
                     >
                       {`${room.checkedCount}/${room.totalCount}`}
@@ -360,8 +445,21 @@ export const MaintenanceSalaServidorCard = ({
           <View style={styles.groupedAudienceServidorNamesRow}>
             {availableGroupedRooms.map((room) => (
               <View key={`${room.key}-servidores`} style={styles.groupedAudienceServidorNamesColumn}>
-                <Text style={styles.groupedAudienceServidorNamesLabel}>Servidores</Text>
-                <Text style={styles.groupedAudienceServidorNamesText} numberOfLines={2}>
+                <Text
+                  style={[
+                    styles.groupedAudienceServidorNamesLabel,
+                    minimal && styles.groupedAudienceServidorNamesLabelMinimal,
+                  ]}
+                >
+                  Servidores
+                </Text>
+                <Text
+                  style={[
+                    styles.groupedAudienceServidorNamesText,
+                    minimal && styles.groupedAudienceServidorNamesTextMinimal,
+                  ]}
+                  numberOfLines={2}
+                >
                   {formatRoomServidorNames(
                     room.key === 'TEENS' ? teensServidorNames : kidsServidorNames
                   )}
@@ -371,7 +469,12 @@ export const MaintenanceSalaServidorCard = ({
           </View>
 
           {!canCheckInSelectedRoom ? (
-            <Text style={styles.roomServidorRestrictionText}>
+            <Text
+              style={[
+                styles.roomServidorRestrictionText,
+                minimal && styles.roomServidorRestrictionTextMinimal,
+              ]}
+            >
               Você não está escalado como servidor desta sala na data do evento. O check-in está
               bloqueado.
             </Text>
@@ -379,7 +482,12 @@ export const MaintenanceSalaServidorCard = ({
 
           {selectedGroupedRoomConfig ? (
             <View style={styles.groupedAudienceSection}>
-              <View style={styles.groupedAudienceListBox}>
+              <View
+                style={[
+                  styles.groupedAudienceListBox,
+                  minimal && styles.groupedAudienceListBoxMinimal,
+                ]}
+              >
                 {visibleGroupedRegistrations.length ? (
                   <ScrollView
                     style={styles.groupedAudienceListScroll}
@@ -392,6 +500,7 @@ export const MaintenanceSalaServidorCard = ({
                         key={`${selectedGroupedRoomConfig.key}-${registration.registration_id}-${index}`}
                         style={[
                           styles.groupedAudienceRow,
+                          minimal && styles.groupedAudienceRowMinimal,
                           index === visibleGroupedRegistrations.length - 1 &&
                             styles.groupedAudienceRowLast,
                         ]}
@@ -400,7 +509,11 @@ export const MaintenanceSalaServidorCard = ({
                           <TouchableOpacity
                             style={[
                               styles.roomEntryCheckbox,
+                              minimal && styles.roomEntryCheckboxMinimal,
                               registration.room_entry_checked && styles.roomEntryCheckboxChecked,
+                              registration.room_entry_checked &&
+                                minimal &&
+                                styles.roomEntryCheckboxCheckedMinimal,
                               (!canCheckInSelectedRoom
                                 || roomEntryPendingIds.includes(registration.registration_id)) &&
                                 styles.roomEntryCheckboxDisabled,
@@ -418,11 +531,24 @@ export const MaintenanceSalaServidorCard = ({
                             activeOpacity={0.85}
                           >
                             {registration.room_entry_checked ? (
-                              <Text style={styles.roomEntryCheckboxMark}>✓</Text>
+                              <Text
+                                style={[
+                                  styles.roomEntryCheckboxMark,
+                                  minimal && styles.roomEntryCheckboxMarkMinimal,
+                                ]}
+                              >
+                                ✓
+                              </Text>
                             ) : null}
                           </TouchableOpacity>
                           <View style={styles.groupedAudienceNameWrap}>
-                            <Text style={styles.groupedAudienceName} numberOfLines={1}>
+                            <Text
+                              style={[
+                                styles.groupedAudienceName,
+                                minimal && styles.groupedAudienceNameMinimal,
+                              ]}
+                              numberOfLines={1}
+                            >
                               {formatDisplayName(registration.full_name)}
                             </Text>
                           </View>
@@ -439,7 +565,15 @@ export const MaintenanceSalaServidorCard = ({
                                 <FontAwesome
                                   name="whatsapp"
                                   size={20}
-                                  color={registration.contact_phone ? '#25D366' : '#64748B'}
+                                  color={
+                                    registration.contact_phone
+                                      ? minimal
+                                        ? '#16A34A'
+                                        : '#25D366'
+                                      : minimal
+                                        ? MINIMAL_UI.textMuted
+                                        : '#64748B'
+                                  }
                                 />
                               </TouchableOpacity>
                             ) : null}
@@ -449,7 +583,12 @@ export const MaintenanceSalaServidorCard = ({
                     ))}
                   </ScrollView>
                 ) : (
-                  <Text style={styles.groupedAudienceEmptyText}>
+                  <Text
+                    style={[
+                      styles.groupedAudienceEmptyText,
+                      minimal && styles.groupedAudienceEmptyTextMinimal,
+                    ]}
+                  >
                     {selectedGroupedRoomConfig.key === 'KIDS'
                       ? `Nenhum inscrito em ${kidsRoomLabel}.`
                       : `Nenhum inscrito em ${teensRoomLabel}.`}
@@ -458,7 +597,9 @@ export const MaintenanceSalaServidorCard = ({
               </View>
             </View>
           ) : (
-            <Text style={styles.placeholderText}>Nenhuma sala disponível para este evento.</Text>
+            <Text style={[styles.placeholderText, minimal && styles.placeholderTextMinimal]}>
+              Nenhuma sala disponível para este evento.
+            </Text>
           )}
         </View>
       )}
@@ -490,6 +631,12 @@ const styles = StyleSheet.create({
   },
   contentBodyEmbedded: {
     marginTop: 4,
+  },
+  contentBodyMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   eventHero: {
     borderRadius: 18,
@@ -630,6 +777,11 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     gap: 12,
+  },
+  groupedAudienceSectionsMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   groupedAudienceSelectorRow: {
     flexDirection: 'row',
@@ -829,5 +981,135 @@ const styles = StyleSheet.create({
     color: '#082f49',
     fontSize: 13,
     fontWeight: '900',
+  },
+  rootMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  eventHeroMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 12,
+  },
+  eventHeroLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  eventHeroNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  eventHeroMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  eventHeroRoomBadgeMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderColor: MINIMAL_UI.border,
+  },
+  eventHeroRoomBadgeKidsMinimal: {
+    backgroundColor: 'rgba(250, 204, 21, 0.12)',
+    borderColor: 'rgba(250, 204, 21, 0.35)',
+  },
+  eventHeroRoomBadgeTeensMinimal: {
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderColor: 'rgba(239, 68, 68, 0.35)',
+  },
+  eventHeroRoomTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  capacityCupMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  capacityValueMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  capacityMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  capacityPlaceholderMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
+  },
+  placeholderTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  groupedAudienceSelectorChipMinimal: {
+    borderRadius: 12,
+  },
+  groupedAudienceSelectorChipInactiveMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+    borderColor: MINIMAL_UI.border,
+  },
+  groupedAudienceSelectorChipSelectedMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  groupedAudienceHeaderTextMinimal: {
+    color: MINIMAL_UI.text,
+    fontWeight: '700',
+  },
+  groupedAudienceHeaderTextSelectedMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  groupedAudienceHeaderTextInactiveMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  groupedAudienceCountBadgeMinimal: {
+    minWidth: 48,
+  },
+  groupedAudienceCountBadgeActiveMinimal: {
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+  },
+  groupedAudienceCountBadgeInactiveMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  groupedAudienceCountTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  groupedAudienceCountTextSelectedMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  groupedAudienceCountTextInactiveMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  groupedAudienceServidorNamesLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  groupedAudienceServidorNamesTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  roomServidorRestrictionTextMinimal: {
+    color: '#B45309',
+  },
+  groupedAudienceListBoxMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 12,
+  },
+  groupedAudienceRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  groupedAudienceNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  groupedAudienceEmptyTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  roomEntryCheckboxMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  roomEntryCheckboxCheckedMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  roomEntryCheckboxMarkMinimal: {
+    color: MINIMAL_UI.onDark,
   },
 });

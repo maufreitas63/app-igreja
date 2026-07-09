@@ -1408,7 +1408,18 @@ export default function MaintenanceDashboard() {
               />
             </View>
           ) : item.content === 'sala_servidor' ? (
-            <MaintenanceSalaServidorCard embedded panelHeight={cardHeight} />
+            <View
+              style={[
+                styles.salaServidorPanel,
+                isMinimalPresentation && styles.salaServidorPanelMinimal,
+              ]}
+            >
+              <MaintenanceSalaServidorCard
+                embedded={!isMinimalPresentation}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'events_gantt' ? (
             <View style={[styles.ganttPanel, isMinimalPresentation && styles.ganttPanelMinimal]}>
               {!isMinimalPresentation ? (
@@ -2383,6 +2394,18 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   orchestrationPanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  salaServidorPanel: {
+    flex: 1,
+    minHeight: 0,
+  },
+  salaServidorPanelMinimal: {
     paddingHorizontal: 0,
     paddingVertical: 4,
     width: '100%',

@@ -1,12 +1,18 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 
 type CardLoadingStateProps = {
   lines?: number;
   compact?: boolean;
+  minimal?: boolean;
 };
 
-export function CardLoadingState({ lines = 3, compact = false }: CardLoadingStateProps) {
+export function CardLoadingState({
+  lines = 3,
+  compact = false,
+  minimal = false,
+}: CardLoadingStateProps) {
   const pulse = useRef(new Animated.Value(0.35)).current;
 
   useEffect(() => {
@@ -39,6 +45,7 @@ export function CardLoadingState({ lines = 3, compact = false }: CardLoadingStat
           key={`skeleton-line-${index}`}
           style={[
             styles.line,
+            minimal && styles.lineMinimal,
             index === lines - 1 && styles.lineShort,
             { opacity: pulse },
           ]}
@@ -66,5 +73,8 @@ const styles = StyleSheet.create({
   },
   lineShort: {
     width: '62%',
+  },
+  lineMinimal: {
+    backgroundColor: MINIMAL_UI.divider,
   },
 });
