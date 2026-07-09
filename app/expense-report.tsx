@@ -17,21 +17,25 @@ import {
 } from '@/lib/expenseReport';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
+import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { sessionHasAccess } from '@/lib/accessControl';
+import {
+  resolveReturnRouteParam,
+  withMinimalPresentation,
+} from '@/lib/dashboardReturnNavigation';
+import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { toFinancialMonthReferenceDate } from '@/lib/maintenanceFinancialApi';
 import {
   formatFinancialMonthKey,
   getCalendarMonthKey,
   parseFinancialMonthKey,
 } from '@/lib/financialMonth';
-import { FontAwesome } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -44,8 +48,14 @@ type ScreenMode = 'list' | 'create' | 'view';
 
 export default function ExpenseReportScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ id?: string; referenciaMes?: string; from?: string }>();
+  const params = useLocalSearchParams<{
+    id?: string;
+    referenciaMes?: string;
+    from?: string;
+    returnRoute?: string;
+  }>();
   const reportIdParam = typeof params.id === 'string' ? params.id : undefined;
+  const returnRoute = resolveReturnRouteParam(params);
   const referenceMonthKey =
     typeof params.referenciaMes === 'string' ? params.referenciaMes.trim() : '';
   const fromMaintenance = params.from === 'maintenance';
@@ -305,33 +315,45 @@ export default function ExpenseReportScreen() {
     }
   };
 
+  const handleGoBack = useCallback(() => {
+    if (mode !== 'list') {
+      setMode('list');
+      setSelectedReport(null);
+      return;
+    }
+
+    if (returnRoute === '/administrativo') {
+      router.replace({
+        pathname: '/administrativo',
+        params: withMinimalPresentation(),
+      } as Href);
+      return;
+    }
+
+    router.back();
+  }, [mode, returnRoute, router]);
+
   return (
     <ScreenAccessGate status={accessStatus}>
-    <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.headerBar}>
-          <TouchableOpacity
-            accessibilityLabel="Voltar"
-            onPress={() => {
-              if (mode === 'list') {
-                router.back();
-                return;
-              }
-
-              setMode('list');
-              setSelectedReport(null);
-            }}
-            style={styles.headerBackButton}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.headerBackText}>{'‹'}</Text>
-          </TouchableOpacity>
-          <View style={styles.headerTitles}>
-            <Text style={styles.title}>Relatório de Despesas</Text>
-            <Text style={styles.subtitle}>RD · reembolso de despesas</Text>
+      <MinimalScreenLayout
+        scroll={false}
+        fixedTop={
+          <View style={styles.headerBar}>
+            <TouchableOpacity
+              accessibilityLabel="Voltar"
+              onPress={handleGoBack}
+              style={styles.headerBackButton}
+              activeOpacity={0.85}
+            >
+              <MaterialIcons name="chevron-left" size={24} color={MINIMAL_UI.icon} />
+            </TouchableOpacity>
+            <View style={styles.headerTitles}>
+              <Text style={styles.title}>Relatório de Despesas</Text>
+              <Text style={styles.subtitle}>RD · reembolso de despesas</Text>
+            </View>
           </View>
-        </View>
-
+        }
+      >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.sheet}>
             {loading ? <CardLoadingState label="Carregando RD..." /> : null}
@@ -354,7 +376,7 @@ export default function ExpenseReportScreen() {
                   onPress={() => setMode('create')}
                   activeOpacity={0.85}
                 >
-                  <FontAwesome name="plus" size={14} color="#FFFFFF" />
+                  <FontAwesome name="plus" size={14} color={MINIMAL_UI.onDark} />
                   <Text style={styles.createButtonText}>Novo RD</Text>
                 </TouchableOpacity>
 
@@ -417,7 +439,7 @@ export default function ExpenseReportScreen() {
                             accessibilityRole="button"
                             accessibilityLabel={`Excluir ${report.report_number}`}
                           >
-                            <FontAwesome name="trash-o" size={14} color="#FFFFFF" />
+                            <FontAwesome name="trash-o" size={14} color={MINIMAL_UI.blueDark} />
                             <Text style={styles.deleteReportButtonText}>
                               {deletingReportId === report.id ? 'Excluindo...' : 'Excluir RD'}
                             </Text>
@@ -450,26 +472,22 @@ export default function ExpenseReportScreen() {
             ) : null}
           </View>
         </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+      </MinimalScreenLayout>
     </ScreenAccessGate>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
   headerBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingTop: 4,
+    paddingBottom: 10,
+    backgroundColor: MINIMAL_UI.background,
+    borderBottomWidth: 1,
+    borderBottomColor: MINIMAL_UI.divider,
   },
   headerBackButton: {
     width: 36,
@@ -477,41 +495,31 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(148, 163, 184, 0.18)',
-  },
-  headerBackText: {
-    color: '#E2E8F0',
-    fontSize: 24,
-    lineHeight: 24,
-    fontWeight: '300',
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
   },
   headerTitles: {
     flex: 1,
     gap: 2,
   },
   title: {
-    color: '#F8FAFC',
-    fontSize: 20,
-    fontWeight: '800',
+    ...MINIMAL_TYPO.screenTitle,
+    color: MINIMAL_UI.blueDark,
   },
   subtitle: {
-    color: '#94A3B8',
-    fontSize: 12,
+    ...MINIMAL_TYPO.inboxPreview,
   },
   scrollContent: {
-    padding: 16,
     paddingBottom: 28,
   },
   sheet: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    padding: 14,
+    backgroundColor: MINIMAL_UI.background,
+    paddingVertical: 12,
     minHeight: 220,
   },
   errorText: {
-    color: '#B91C1C',
+    color: '#DC2626',
     fontSize: 13,
     lineHeight: 18,
   },
@@ -522,13 +530,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   listTitle: {
-    color: '#0F172A',
-    fontSize: 16,
-    fontWeight: '800',
+    ...MINIMAL_SECTION_TITLE,
+    alignSelf: 'stretch',
+    marginBottom: 0,
+    paddingVertical: 8,
   },
   listHint: {
-    color: '#64748B',
-    fontSize: 12,
+    ...MINIMAL_TYPO.inboxPreview,
+    textAlign: 'center',
   },
   createButton: {
     flexDirection: 'row',
@@ -536,24 +545,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderRadius: 12,
-    backgroundColor: '#059669',
+    backgroundColor: MINIMAL_UI.blueDark,
     paddingVertical: 12,
   },
   createButtonText: {
-    color: '#FFFFFF',
+    color: MINIMAL_UI.onDark,
     fontSize: 14,
     fontWeight: '800',
   },
   emptyText: {
-    color: '#64748B',
-    fontSize: 13,
+    ...MINIMAL_TYPO.inboxPreview,
     textAlign: 'center',
     paddingVertical: 12,
   },
   reportCard: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 12,
+    backgroundColor: MINIMAL_UI.background,
     padding: 12,
     gap: 4,
   },
@@ -564,31 +573,29 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   reportNumber: {
-    color: '#0F172A',
+    color: MINIMAL_UI.blueDark,
     fontSize: 14,
     fontWeight: '800',
   },
   reportStatus: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '700',
+    ...MINIMAL_TYPO.sectionLabel,
+    color: MINIMAL_UI.textMuted,
     textTransform: 'uppercase',
   },
   reportMeta: {
-    color: '#334155',
+    color: MINIMAL_UI.blueDark,
     fontSize: 13,
     fontWeight: '700',
   },
   reportStatusPending: {
-    color: '#B45309',
+    color: MINIMAL_UI.blue,
   },
   reportDescriptions: {
     marginTop: 6,
     gap: 2,
   },
   reportDescriptionLine: {
-    color: '#64748B',
-    fontSize: 12,
+    ...MINIMAL_TYPO.inboxPreview,
     lineHeight: 17,
   },
   deleteReportButton: {
@@ -598,7 +605,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderRadius: 10,
-    backgroundColor: '#DC2626',
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
     paddingVertical: 10,
   },
   deleteReportButtonDisabled: {
@@ -608,7 +617,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   deleteReportButtonText: {
-    color: '#FFFFFF',
+    color: MINIMAL_UI.blueDark,
     fontSize: 13,
     fontWeight: '700',
   },

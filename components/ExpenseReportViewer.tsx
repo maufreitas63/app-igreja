@@ -5,6 +5,7 @@ import {
   type ExpenseReportDetail,
 } from '@/lib/expenseReport';
 import { createFinancialReceiptSignedUrl } from '@/lib/financialReceipt';
+import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
@@ -89,7 +90,7 @@ export function ExpenseReportViewer({
               onPress={() => void openReceipt(item.receipt_url)}
               activeOpacity={0.85}
             >
-              <FontAwesome name="image" size={13} color="#059669" />
+              <FontAwesome name="image" size={13} color={MINIMAL_UI.blueDark} />
               <Text style={styles.receiptLinkText}>Ver comprovante</Text>
             </TouchableOpacity>
           ) : (
@@ -103,7 +104,7 @@ export function ExpenseReportViewer({
           <Pressable style={styles.previewCard} onPress={(event) => event.stopPropagation()}>
             <Text style={styles.previewTitle}>Comprovante</Text>
             {loadingPreview ? (
-              <ActivityIndicator color="#059669" size="large" style={styles.previewLoader} />
+              <ActivityIndicator color={MINIMAL_UI.blueDark} size="large" style={styles.previewLoader} />
             ) : previewUrl ? (
               <Image source={{ uri: previewUrl }} style={styles.previewImage} resizeMode="contain" />
             ) : null}
@@ -122,36 +123,37 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    color: '#0F172A',
-    fontSize: 18,
-    fontWeight: '800',
+    ...MINIMAL_SECTION_TITLE,
+    alignSelf: 'stretch',
+    marginBottom: 0,
+    paddingVertical: 8,
   },
   meta: {
-    color: '#64748B',
-    fontSize: 12,
+    ...MINIMAL_TYPO.inboxPreview,
+    textAlign: 'center',
   },
   headerCard: {
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: MINIMAL_UI.rowHover,
     padding: 12,
     gap: 6,
   },
   headerLine: {
-    color: '#334155',
+    color: MINIMAL_UI.blueDark,
     fontSize: 14,
   },
   sectionTitle: {
-    color: '#0F172A',
+    ...MINIMAL_TYPO.sectionLabel,
+    color: MINIMAL_UI.blueDark,
     fontSize: 14,
-    fontWeight: '800',
   },
   itemCard: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: MINIMAL_UI.background,
     padding: 12,
     gap: 6,
   },
@@ -162,18 +164,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   itemTitle: {
-    color: '#0F172A',
+    color: MINIMAL_UI.blueDark,
     fontSize: 13,
     fontWeight: '700',
     flex: 1,
   },
   itemAmount: {
-    color: '#0F172A',
+    color: MINIMAL_UI.blueDark,
     fontSize: 13,
     fontWeight: '800',
   },
   itemDescription: {
-    color: '#475569',
+    color: MINIMAL_UI.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -184,12 +186,12 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   receiptLinkText: {
-    color: '#059669',
+    color: MINIMAL_UI.blueDark,
     fontSize: 12,
     fontWeight: '700',
   },
   noReceipt: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 12,
   },
   previewBackdrop: {
@@ -202,15 +204,15 @@ const styles = StyleSheet.create({
   previewCard: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: MINIMAL_UI.background,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#6EE7B7',
+    borderColor: MINIMAL_UI.border,
     padding: 16,
     gap: 10,
   },
   previewTitle: {
-    color: '#065F46',
+    color: MINIMAL_UI.blueDark,
     fontSize: 13,
     fontWeight: '800',
     textAlign: 'center',
@@ -222,17 +224,17 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 280,
     borderRadius: 10,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: MINIMAL_UI.rowHover,
   },
   previewClose: {
     alignSelf: 'center',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: MINIMAL_UI.blueDark,
   },
   previewCloseText: {
-    color: '#065F46',
+    color: MINIMAL_UI.onDark,
     fontSize: 13,
     fontWeight: '700',
   },

@@ -21,6 +21,7 @@ import {
   pasteFinancialReceiptFromClipboard,
   pickFinancialReceiptFromGallery,
 } from '@/lib/financialReceipt';
+import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -160,7 +161,7 @@ export function ExpenseReportForm({
           value={pixKey}
           onChangeText={setPixKey}
           placeholder="Informe sua chave PIX"
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor={MINIMAL_UI.textMuted}
           editable={!submitting}
         />
       </View>
@@ -193,7 +194,7 @@ export function ExpenseReportForm({
             disabled={submitting}
             activeOpacity={0.85}
           >
-            <FontAwesome name="plus" size={12} color="#0F172A" />
+            <FontAwesome name="plus" size={12} color={MINIMAL_UI.blueDark} />
             <Text style={styles.addButtonText}>Adicionar linha</Text>
           </TouchableOpacity>
         </View>
@@ -209,7 +210,7 @@ export function ExpenseReportForm({
                 disabled={submitting}
                 hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
               >
-                <FontAwesome name="trash" size={14} color="#B91C1C" />
+                <FontAwesome name="trash" size={14} color={MINIMAL_UI.blueDark} />
               </TouchableOpacity>
             ) : null}
           </View>
@@ -222,7 +223,7 @@ export function ExpenseReportForm({
               updateItem(item.id, { dateInput: sanitizeExpenseReportDateInput(value) })
             }
             placeholder={getExpenseReportTodayDateInput()}
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={MINIMAL_UI.textMuted}
             keyboardType="numeric"
             inputMode="numeric"
             maxLength={10}
@@ -235,7 +236,7 @@ export function ExpenseReportForm({
             value={item.description}
             onChangeText={(value) => updateItem(item.id, { description: value })}
             placeholder="Ex.: combustível, alimentação"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={MINIMAL_UI.textMuted}
             editable={!submitting}
           />
 
@@ -247,7 +248,7 @@ export function ExpenseReportForm({
               updateItem(item.id, { amountInput: sanitizeExpenseAmountCentsInput(value) })
             }
             placeholder="0,00"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor={MINIMAL_UI.textMuted}
             keyboardType="number-pad"
             inputMode="numeric"
             editable={!submitting}
@@ -261,10 +262,10 @@ export function ExpenseReportForm({
               activeOpacity={0.85}
             >
               {uploadingItemId === item.id ? (
-                <ActivityIndicator color="#1D4ED8" size="small" />
+                <ActivityIndicator color={MINIMAL_UI.blueDark} size="small" />
               ) : (
                 <>
-                  <FontAwesome name="clipboard" size={13} color="#1D4ED8" />
+                  <FontAwesome name="clipboard" size={13} color={MINIMAL_UI.blueDark} />
                   <Text style={styles.receiptButtonText}>Colar comprovante</Text>
                 </>
               )}
@@ -275,7 +276,7 @@ export function ExpenseReportForm({
               disabled={submitting || uploadingItemId !== null}
               activeOpacity={0.85}
             >
-              <FontAwesome name="image" size={13} color="#1D4ED8" />
+              <FontAwesome name="image" size={13} color={MINIMAL_UI.blueDark} />
               <Text style={styles.receiptButtonText}>Galeria</Text>
             </TouchableOpacity>
           </View>
@@ -314,7 +315,7 @@ export function ExpenseReportForm({
         activeOpacity={0.85}
       >
         {submitting ? (
-          <ActivityIndicator color="#FFFFFF" size="small" />
+          <ActivityIndicator color={MINIMAL_UI.onDark} size="small" />
         ) : (
           <Text style={styles.submitButtonText}>Submeter e Finalizar</Text>
         )}
@@ -328,37 +329,36 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   title: {
-    color: '#0F172A',
-    fontSize: 18,
-    fontWeight: '800',
+    ...MINIMAL_SECTION_TITLE,
+    alignSelf: 'stretch',
+    marginBottom: 0,
+    paddingVertical: 8,
   },
   headerCard: {
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: MINIMAL_UI.rowHover,
     padding: 12,
     gap: 8,
   },
   headerLine: {
-    color: '#334155',
+    color: MINIMAL_UI.blueDark,
     fontSize: 14,
   },
   fieldLabel: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+    ...MINIMAL_TYPO.sectionLabel,
+    color: MINIMAL_UI.blueDark,
     marginTop: 4,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: MINIMAL_UI.background,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#0F172A',
+    color: MINIMAL_UI.blueDark,
     fontSize: 14,
   },
   amountInput: {
@@ -381,10 +381,8 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   referenceMonthLabel: {
-    color: '#64748B',
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+    ...MINIMAL_TYPO.sectionLabel,
+    color: MINIMAL_UI.blueDark,
   },
   referenceMonthDropdown: {
     minWidth: 132,
@@ -395,22 +393,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     borderRadius: 999,
-    backgroundColor: '#E2E8F0',
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.rowHover,
     paddingHorizontal: 12,
     paddingVertical: 8,
     minHeight: 31,
     flexShrink: 0,
   },
   addButtonText: {
-    color: '#0F172A',
+    color: MINIMAL_UI.blueDark,
     fontSize: 12,
     fontWeight: '700',
   },
   itemCard: {
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: MINIMAL_UI.background,
     padding: 12,
     gap: 6,
   },
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   itemTitle: {
-    color: '#0F172A',
+    color: MINIMAL_UI.blueDark,
     fontSize: 14,
     fontWeight: '800',
   },
@@ -436,19 +436,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 10,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: MINIMAL_UI.rowHover,
     paddingVertical: 10,
     minHeight: 40,
   },
   receiptButtonText: {
-    color: '#1D4ED8',
+    color: MINIMAL_UI.blueDark,
     fontSize: 12,
     fontWeight: '700',
   },
   receiptAttached: {
-    color: '#059669',
+    color: MINIMAL_UI.blue,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -457,19 +457,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 12,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: MINIMAL_UI.rowHover,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
   totalLabel: {
-    color: '#065F46',
+    color: MINIMAL_UI.blueDark,
     fontSize: 13,
     fontWeight: '700',
   },
   totalValue: {
-    color: '#065F46',
+    color: MINIMAL_UI.blueDark,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -478,13 +478,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#F8FAFC',
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
     paddingVertical: 14,
     minHeight: 48,
   },
   cancelButtonText: {
-    color: '#475569',
+    color: MINIMAL_UI.blueDark,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: '#059669',
+    backgroundColor: MINIMAL_UI.blueDark,
     paddingVertical: 14,
     minHeight: 48,
   },
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: MINIMAL_UI.onDark,
     fontSize: 15,
     fontWeight: '800',
   },
