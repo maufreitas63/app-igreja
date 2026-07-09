@@ -191,8 +191,8 @@ export const membersClassStyles = StyleSheet.create({
   addButtonText: { color: MINIMAL_UI.onDark, fontWeight: '700' },
   deleteMemberButton: {
     backgroundColor: SURFACE,
-    borderWidth: HAIRLINE,
-    borderColor: '#B91C1C',
+    borderWidth: 1,
+    borderColor: ACCENT,
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
@@ -201,7 +201,7 @@ export const membersClassStyles = StyleSheet.create({
     opacity: 0.6,
   },
   deleteMemberButtonText: {
-    color: '#B91C1C',
+    color: ACCENT,
     fontWeight: '700',
   },
   cancelEditButton: {
