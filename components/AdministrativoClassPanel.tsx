@@ -24,9 +24,17 @@ export function AdministrativoClassPanel() {
     });
   }, [router]);
 
+  const handleClose = useCallback(() => {
+    router.back();
+  }, [router]);
+
   return (
     <View style={styles.root}>
-      <AdministrativoClass initialTab={initialTab} onPressRd={handleOpenExpenseReport} />
+      <AdministrativoClass
+        initialTab={initialTab}
+        onPressRd={handleOpenExpenseReport}
+        onClose={handleClose}
+      />
     </View>
   );
 }

@@ -68,6 +68,7 @@ export type AdministrativoClassProps = {
   rdButtonLabel?: string;
   initialTab?: TabId;
   onPressRd?: () => void;
+  onClose?: () => void;
 };
 
 /** Visualização do módulo Administrativo — abas + RD via props. */
@@ -77,6 +78,7 @@ export function AdministrativoClass({
   rdButtonLabel = 'Criar Relatório de Despesas (RD)',
   initialTab = 'atas',
   onPressRd,
+  onClose,
 }: AdministrativoClassProps) {
   const { height: windowHeight } = useWindowDimensions();
   const panelHeight = useMemo(
@@ -344,15 +346,28 @@ export function AdministrativoClass({
         )}
       </View>
 
-      <TouchableOpacity
-        style={styles.rdButton}
-        onPress={onPressRd}
-        activeOpacity={0.85}
-        accessibilityRole="button"
-        accessibilityLabel={rdButtonLabel}
-      >
-        <Text style={styles.rdButtonText}>{rdButtonLabel}</Text>
-      </TouchableOpacity>
+      <View style={styles.footerActionsRow}>
+        <TouchableOpacity
+          style={styles.rdButton}
+          onPress={onPressRd}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={rdButtonLabel}
+        >
+          <Text style={styles.rdButtonText}>{rdButtonLabel}</Text>
+        </TouchableOpacity>
+        {onClose ? (
+          <TouchableOpacity
+            style={styles.closeScreenButton}
+            onPress={onClose}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Fechar"
+          >
+            <Text style={styles.closeScreenButtonText}>Fechar</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
 
       <Modal
         visible={minutesModalOpen}
@@ -702,8 +717,9 @@ const styles = StyleSheet.create({
     opacity: 0.82,
   },
   rdButton: {
-    alignSelf: 'stretch',
-    flexShrink: 0,
+    flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
     minHeight: 48,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -720,6 +736,30 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  footerActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexShrink: 0,
+  },
+  closeScreenButton: {
+    flexShrink: 0,
+    minHeight: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    backgroundColor: ADMINISTRATIVO_CLASS_SURFACE,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
+  },
+  closeScreenButtonText: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 13,
+    fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,
