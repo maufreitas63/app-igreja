@@ -265,14 +265,8 @@ declare
   v_token text;
   v_pending_id uuid;
   v_app_url text;
-  v_function_url text;
-  v_function_secret text;
   v_confirm_url text;
-  v_status integer;
-  v_content text;
-  v_body jsonb;
   v_email_sent boolean := false;
-  v_payload jsonb;
 begin
   v_profile_id := public.current_session_profile_id();
 
@@ -327,74 +321,26 @@ begin
     'https://localhost:8081'
   );
 
-  v_function_url := public.get_app_parameter_value_trim('media_authorization_email_function_url');
-  v_function_secret := public.get_app_parameter_value_trim('media_authorization_email_function_secret');
-
   v_confirm_url := rtrim(v_app_url, '/') || '/autorizacao-midia-confirmar?token=' || v_token;
 
-  if v_function_url is not null and v_function_secret is not null then
-    v_body := jsonb_build_object(
-      'to', lower(trim(p_email)),
-      'confirmUrl', v_confirm_url,
-      'fullName', trim(p_full_name),
-      'secret', v_function_secret,
-      'smtp_user', public.get_app_parameter_value_trim('recovery_email_smtp_user'),
-      'smtp_password', public.get_app_parameter_value_trim('recovery_email_smtp_password'),
-      'from', public.get_app_parameter_value_trim('recovery_email_from')
+  -- Mesmo provedor do PIN (recovery_email_*). Não usa função dedicada aqui para evitar
+  -- falso positivo quando media_authorization_email_function_* aponta para função inexistente.
+  begin
+    perform public.send_media_authorization_confirm_email(
+      lower(trim(p_email)),
+      trim(p_full_name),
+      v_confirm_url
     );
-
-    select p_status, p_content
-      into v_status, v_content
-      from public.password_recovery_http_post(
-        v_function_url,
-        jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || v_function_secret),
-        v_body::text
-      );
-
-    if coalesce(v_status, 0) < 200 or coalesce(v_status, 0) >= 300 then
-      delete from public.pending_authorizations where id = v_pending_id;
-      return jsonb_build_object(
-        'ok', false,
-        'emailSent', false,
-        'message', coalesce(nullif(trim(v_content), ''), 'Não foi possível enviar o e-mail de confirmação. Tente novamente.')
-      );
-    end if;
-
-    begin
-      v_payload := v_content::jsonb;
-    exception
-      when others then
-        v_payload := jsonb_build_object('ok', true);
-    end;
-
-    if coalesce(v_payload->>'ok', 'true') <> 'true' then
-      delete from public.pending_authorizations where id = v_pending_id;
-      return jsonb_build_object(
-        'ok', false,
-        'emailSent', false,
-        'message', coalesce(nullif(trim(v_payload->>'message'), ''), 'Não foi possível enviar o e-mail de confirmação.')
-      );
-    end if;
-
     v_email_sent := true;
-  else
-    begin
-      perform public.send_media_authorization_confirm_email(
-        lower(trim(p_email)),
-        trim(p_full_name),
-        v_confirm_url
+  exception
+    when others then
+      delete from public.pending_authorizations where id = v_pending_id;
+      return jsonb_build_object(
+        'ok', false,
+        'emailSent', false,
+        'message', SQLERRM
       );
-      v_email_sent := true;
-    exception
-      when others then
-        delete from public.pending_authorizations where id = v_pending_id;
-        return jsonb_build_object(
-          'ok', false,
-          'emailSent', false,
-          'message', SQLERRM
-        );
-    end;
-  end if;
+  end;
 
   return jsonb_build_object(
     'ok', true,

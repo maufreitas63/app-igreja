@@ -10,7 +10,7 @@ Execute nesta ordem:
 
 ## 2. E-mail (reutiliza recuperação de senha)
 
-Por padrão, o envio usa os mesmos parâmetros do PIN por e-mail:
+O envio da autorização usa **exatamente o mesmo provedor do PIN** (`recovery_email_*`). Não é necessário função dedicada para o e-mail de confirmação.
 
 | parameter | uso |
 |-----------|-----|
@@ -24,19 +24,20 @@ Por padrão, o envio usa os mesmos parâmetros do PIN por e-mail:
 
 **Importante:** defina também `media_authorization_app_url` com a URL pública do app (ex.: `https://seu-app.pages.dev`) para o link de confirmação apontar para produção.
 
-## 3. Edge Functions (opcional)
+**Se o PIN chega mas a autorização não:** reexecute `scripts/media-authorization-rpc.sql` e rode `scripts/diagnose-media-authorization-email.sql` no Supabase.
 
-Se quiser função dedicada em vez do fallback Gmail/Resend:
+## 3. Edge Functions (opcional — só PDF)
+
+Função dedicada de e-mail (`send-authorization-magic-link`) **não é mais usada** pelo RPC; o envio vai pelo mesmo Gmail/Resend do PIN.
+
+Para PDF após confirmação:
 
 ```bash
-supabase functions deploy send-authorization-magic-link --no-verify-jwt
 supabase functions deploy generate-authorization-pdf --no-verify-jwt
 ```
 
 Parâmetros opcionais em `app_parameters`:
 
-- `media_authorization_email_function_url`
-- `media_authorization_email_function_secret`
 - `media_authorization_pdf_function_url`
 - `media_authorization_pdf_function_secret`
 
@@ -44,7 +45,8 @@ Parâmetros opcionais em `app_parameters`:
 
 Se o botão retornar sucesso mas o e-mail não chegar:
 
-1. Confirme `recovery_email_*` no `app_parameters`
-2. Reexecute `scripts/media-authorization-rpc.sql`
-3. Verifique spam/lixo eletrônico
-4. Teste envio de PIN na tela de login — se PIN também não chega, o problema é na configuração Gmail/Resend
+1. Execute `scripts/diagnose-media-authorization-email.sql`
+2. Confirme `recovery_email_*` no `app_parameters`
+3. Reexecute `scripts/media-authorization-rpc.sql`
+4. Verifique spam/lixo eletrônico (assunto: **Confirme sua autorização de imagem e voz**)
+5. Teste envio de PIN na tela de login — se PIN também não chega, o problema é na configuração Gmail/Resend
