@@ -230,8 +230,15 @@ export function AuthorizationForm({ profileId }: Props) {
         </View>
 
         <View style={styles.termsBox}>
-          <Text style={styles.termsTitle}>{MEDIA_AUTHORIZATION_TERMS_TITLE}</Text>
-          <Text style={styles.termsText}>{MEDIA_AUTHORIZATION_TERMS_BODY}</Text>
+          <ScrollView
+            nestedScrollEnabled
+            showsVerticalScrollIndicator
+            style={styles.termsScroll}
+            contentContainerStyle={styles.termsScrollContent}
+          >
+            <Text style={styles.termsTitle}>{MEDIA_AUTHORIZATION_TERMS_TITLE}</Text>
+            <Text style={styles.termsText}>{MEDIA_AUTHORIZATION_TERMS_BODY}</Text>
+          </ScrollView>
         </View>
 
         <Pressable
@@ -399,9 +406,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
     borderRadius: 12,
+    maxHeight: 168,
+    overflow: 'hidden',
+  },
+  termsScroll: {
+    maxHeight: 168,
+  },
+  termsScrollContent: {
     padding: 14,
-    maxHeight: 220,
     gap: 8,
+    paddingBottom: 16,
   },
   termsTitle: {
     fontSize: 16,
