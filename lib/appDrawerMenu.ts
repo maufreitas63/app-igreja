@@ -68,7 +68,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'm', label: 'Servos em Disponibilidade', moduleKey: 'scales_volunteers' },
   { letter: 'n', label: 'Programação de Escalas', moduleKey: 'scales' },
   { letter: 'o', label: 'Cuidados Pastorais', moduleKey: 'pastoral_care' },
-  { letter: 'p', label: 'Info Financeiras', moduleKey: 'financials' },
+  { letter: 'p', label: 'Informações Financeiras', moduleKey: 'financials' },
   { letter: 'q', label: 'Modelo Preditivo', moduleKey: 'predictive_insights' },
   { letter: 'r', label: 'Relatórios', moduleKey: 'relatorios' },
   { letter: 's', label: 'Sugestões', moduleKey: 'suggestions_improvements' },
