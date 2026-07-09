@@ -201,27 +201,33 @@ export function AuthorizationForm({ profileId }: Props) {
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        <Field
-          label="CPF"
-          value={cpf}
-          onChangeText={(value) => {
-            setCpf(formatCpf(value));
-            if (cpfError) {
-              setCpfError(null);
-            }
-          }}
-          onBlur={() => validateCpfField(cpf)}
-          editable={!lockedFields.cpf}
-          keyboardType="number-pad"
-          error={cpfError}
-        />
-        <Field
-          label="Telefone"
-          value={phone}
-          onChangeText={(value) => setPhone(formatBrazilPhoneInput(value))}
-          editable={!lockedFields.phone}
-          keyboardType="phone-pad"
-        />
+        <View style={styles.fieldRow}>
+          <Field
+            label="CPF"
+            value={cpf}
+            onChangeText={(value) => {
+              setCpf(formatCpf(value));
+              if (cpfError) {
+                setCpfError(null);
+              }
+            }}
+            onBlur={() => validateCpfField(cpf)}
+            editable={!lockedFields.cpf}
+            keyboardType="number-pad"
+            error={cpfError}
+            compact
+            halfWidth
+          />
+          <Field
+            label="Telefone"
+            value={phone}
+            onChangeText={(value) => setPhone(formatBrazilPhoneInput(value))}
+            editable={!lockedFields.phone}
+            keyboardType="phone-pad"
+            compact
+            halfWidth
+          />
+        </View>
 
         <View style={styles.termsBox}>
           <Text style={styles.termsTitle}>{MEDIA_AUTHORIZATION_TERMS_TITLE}</Text>
@@ -266,6 +272,8 @@ type FieldProps = {
   keyboardType?: 'default' | 'email-address' | 'number-pad' | 'phone-pad';
   autoCapitalize?: 'none' | 'words';
   error?: string | null;
+  compact?: boolean;
+  halfWidth?: boolean;
 };
 
 function Field({
@@ -277,10 +285,12 @@ function Field({
   keyboardType = 'default',
   autoCapitalize = 'none',
   error,
+  compact = false,
+  halfWidth = false,
 }: FieldProps) {
   return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+    <View style={[styles.field, halfWidth && styles.fieldHalf]}>
+      <Text style={[styles.fieldLabel, compact && styles.fieldLabelCompact]}>{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -288,7 +298,12 @@ function Field({
         editable={editable}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
-        style={[styles.input, !editable && styles.inputLocked, error ? styles.inputError : null]}
+        style={[
+          styles.input,
+          compact && styles.inputCompact,
+          !editable && styles.inputLocked,
+          error ? styles.inputError : null,
+        ]}
         placeholderTextColor={MINIMAL_UI.textMuted}
       />
       {error ? <Text style={styles.fieldError}>{error}</Text> : null}
@@ -334,12 +349,24 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   field: {
-    gap: 6,
+    gap: 4,
+  },
+  fieldRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  fieldHalf: {
+    flex: 1,
+    minWidth: 0,
   },
   fieldLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: MINIMAL_UI.text,
+  },
+  fieldLabelCompact: {
+    fontSize: 13,
   },
   input: {
     borderWidth: 1,
@@ -350,6 +377,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: MINIMAL_UI.blue,
     backgroundColor: MINIMAL_UI.background,
+  },
+  inputCompact: {
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 14,
   },
   inputLocked: {
     backgroundColor: MINIMAL_UI.rowHover,
