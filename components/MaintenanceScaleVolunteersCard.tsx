@@ -7,6 +7,7 @@ import {
 } from '@/lib/maintenanceCardStyles';
 import { MAINTENANCE_SCALE_VOLUNTEERS_SQL_HINT } from '@/hooks/useMaintenanceScaleVolunteers';
 import { confirmDialog } from '@/lib/confirmDialog';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import {
@@ -23,12 +24,19 @@ import {
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
+
+const PANEL_TITLE = 'Servos em Disponibilidade';
 
 /** Altura visível da lista «Já associados» (~7 linhas). */
 const REGISTERED_LIST_MAX_HEIGHT = 217;
 
-export function MaintenanceScaleVolunteersCard({ isActive = true, panelHeight }: Props) {
+export function MaintenanceScaleVolunteersCard({
+  isActive = true,
+  panelHeight,
+  minimal = false,
+}: Props) {
   const {
     scaleTypes,
     selectedScaleTypeId,
@@ -98,35 +106,79 @@ export function MaintenanceScaleVolunteersCard({ isActive = true, panelHeight }:
 
   if (loading) {
     return (
-      <View style={[styles.panel, maintenancePanelStyles.panelCentered, { height: contentHeight }]}>
-        <CardLoadingState lines={4} />
-        <Text style={maintenancePanelStyles.panelHint}>Carregando tipos de escala…</Text>
+      <View
+        style={[
+          styles.panel,
+          minimal && styles.panelMinimal,
+          maintenancePanelStyles.panelCentered,
+          { height: contentHeight },
+        ]}
+      >
+        <CardLoadingState lines={4} minimal={minimal} />
+        <Text
+          style={[
+            maintenancePanelStyles.panelHint,
+            minimal && styles.panelHintMinimal,
+          ]}
+        >
+          Carregando tipos de escala…
+        </Text>
       </View>
     );
   }
 
   if (!scaleTypes.length) {
     return (
-      <View style={[styles.panel, styles.panelCentered, { height: contentHeight }]}>
-        <FontAwesome name="users" size={28} color="#64748B" />
-        <Text style={maintenancePanelStyles.panelTitleMuted}>Servos das escalas</Text>
-        <Text style={maintenancePanelStyles.panelHint}>Cadastre tipos de escala no card Tipos de Escala.</Text>
+      <View
+        style={[
+          styles.panel,
+          minimal && styles.panelMinimal,
+          styles.panelCentered,
+          { height: contentHeight },
+        ]}
+      >
+        <FontAwesome name="users" size={28} color={minimal ? MINIMAL_UI.textMuted : '#64748B'} />
+        <Text
+          style={
+            minimal
+              ? styles.sectionTitleMinimal
+              : maintenancePanelStyles.panelTitleMuted
+          }
+        >
+          {PANEL_TITLE}
+        </Text>
+        <Text
+          style={[
+            maintenancePanelStyles.panelHint,
+            minimal && styles.panelHintMinimal,
+          ]}
+        >
+          Cadastre tipos de escala no card Tipos de Escala.
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Servos das escalas</Text>
+    <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
+      <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}>
+        {PANEL_TITLE}
+      </Text>
 
-      {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_SCALE_VOLUNTEERS_SQL_HINT}</Text> : null}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {rpcMissing ? (
+        <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
+          {MAINTENANCE_SCALE_VOLUNTEERS_SQL_HINT}
+        </Text>
+      ) : null}
+      {error ? (
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
+      ) : null}
 
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.typeChipRow}
-        style={styles.typeChipScroll}
+        style={[styles.typeChipScroll, minimal && styles.typeChipScrollMinimal]}
       >
         {scaleTypes.map((type) => {
           const isSelected = type.id === selectedScaleTypeId;
@@ -147,9 +199,9 @@ export function MaintenanceScaleVolunteersCard({ isActive = true, panelHeight }:
       </ScrollView>
 
       <SectionLabel variant="maintenance">Associar servos</SectionLabel>
-      <View style={styles.searchInputRow}>
+      <View style={[styles.searchInputRow, minimal && styles.searchInputRowMinimal]}>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, minimal && styles.searchInputMinimal]}
           placeholder="Nome completo"
           placeholderTextColor="#64748B"
           value={profileSearchQuery}
@@ -448,5 +500,50 @@ const styles = StyleSheet.create({
     color: '#818CF8',
     fontSize: 12,
     fontWeight: '700',
+  },
+  panelMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    borderRadius: 0,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'hidden',
+  },
+  sectionTitleMinimal: {
+    ...MINIMAL_SECTION_TITLE,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+  },
+  panelHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textAlign: 'center',
+  },
+  warningTextMinimal: {
+    color: '#B45309',
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
+  },
+  typeChipScrollMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  searchInputRowMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  searchInputMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    borderColor: MINIMAL_UI.border,
+    color: MINIMAL_UI.text,
+    backgroundColor: MINIMAL_UI.background,
   },
 });

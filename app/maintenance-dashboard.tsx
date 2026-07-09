@@ -1366,10 +1366,18 @@ export default function MaintenanceDashboard() {
               />
             </View>
           ) : item.content === 'scale_volunteers' ? (
-            <MaintenanceScaleVolunteersCard
-              isActive={currentIndex === index}
-              panelHeight={cardHeight}
-            />
+            <View
+              style={[
+                styles.scaleVolunteersPanel,
+                isMinimalPresentation && styles.scaleVolunteersPanelMinimal,
+              ]}
+            >
+              <MaintenanceScaleVolunteersCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'scales' ? (
             <MaintenanceScalesCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'pastoral_care' ? (
@@ -2428,6 +2436,18 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   scaleTypesPanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  scaleVolunteersPanel: {
+    flex: 1,
+    minHeight: 0,
+  },
+  scaleVolunteersPanelMinimal: {
     paddingHorizontal: 0,
     paddingVertical: 4,
     width: '100%',
