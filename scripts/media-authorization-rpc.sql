@@ -40,6 +40,8 @@ create or replace function public.media_authorization_terms_hash()
 returns text
 language sql
 immutable
+security definer
+set search_path = extensions, public, pg_temp
 as $$
   select encode(digest(public.media_authorization_terms_text(), 'sha256'), 'hex');
 $$;
