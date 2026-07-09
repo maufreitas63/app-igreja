@@ -24,7 +24,7 @@ O envio da autorização usa **exatamente o mesmo provedor do PIN** (`recovery_e
 
 **Importante:** defina também `media_authorization_app_url` com a URL pública do app (ex.: `https://seu-app.pages.dev`) para o link de confirmação apontar para produção.
 
-**Se o PIN chega mas a autorização não:** reexecute `scripts/media-authorization-rpc.sql` e rode `scripts/diagnose-media-authorization-email.sql` no Supabase.
+**Se o PIN chega mas a autorização não:** reexecute `scripts/media-authorization-rpc.sql` e rode os testes em `scripts/test-media-auth/`.
 
 ## 3. Edge Functions (opcional — só PDF)
 
@@ -41,15 +41,28 @@ Parâmetros opcionais em `app_parameters`:
 - `media_authorization_pdf_function_url`
 - `media_authorization_pdf_function_secret`
 
-## 4. Diagnóstico
+## 4. Testes de diagnóstico (SQL Editor)
+
+Scripts em `scripts/test-media-auth/` — execute **um por vez**, na ordem:
+
+| Arquivo | O que testa |
+|---------|-------------|
+| `01-config-email.sql` | Resend/Gmail + URL de confirmação |
+| `02-functions-exist.sql` | Funções RPC instaladas |
+| `03-send-test-email.sql` | Envio de e-mail de teste |
+| `04-list-pending.sql` | Links pendentes (não confirmados) |
+| `05-list-confirmed.sql` | Autorizações já confirmadas |
+| `06-check-token-from-link.sql` | Token copiado do e-mail |
+| `07-set-production-url.sql` | Cadastrar URL pública do app |
+| `08-confirm-token-manual.sql` | Confirmar token via SQL |
 
 Se o botão retornar sucesso mas o e-mail não chegar:
 
-1. Execute `scripts/diagnose-media-authorization-email.sql`
-2. Confirme `recovery_email_*` no `app_parameters`
-3. Reexecute `scripts/media-authorization-rpc.sql`
-4. Verifique spam/lixo eletrônico (assunto: **Confirme sua autorização no app**)
-5. Teste envio de PIN na tela de login — se PIN também não chega, o problema é na configuração Gmail/Resend
+1. Rode `01` e `02`
+2. Rode `03` e confira [resend.com/emails](https://resend.com/emails)
+3. Reexecute `scripts/media-authorization-rpc.sql` se `02` falhar
+4. Verifique spam (assunto: **Confirme sua autorizacao no app**)
+5. Teste PIN na tela de login — se PIN também não chega, o problema é `recovery_email_*`
 
 ## 5. Confirmação do link
 

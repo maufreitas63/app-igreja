@@ -1,0 +1,33 @@
+-- TESTE 2 — Funções RPC de e-mail instaladas?
+-- Execute no SQL Editor do Supabase.
+-- Esperado: 4 linhas (send_*, submit_*, test_*).
+
+select
+  p.proname as function_name,
+  pg_get_function_result(p.oid) as return_type,
+  case
+    when p.proname = 'send_media_authorization_confirm_email'
+      and pg_get_function_result(p.oid) = 'jsonb'
+      then 'OK'
+    when p.proname in (
+      'send_media_authorization_confirm_email_via_resend',
+      'submit_media_authorization_pending',
+      'test_media_authorization_email_delivery'
+    )
+      then 'OK'
+    else 'VERIFICAR'
+  end as status
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname in (
+    'send_media_authorization_confirm_email',
+    'send_media_authorization_confirm_email_via_resend',
+    'submit_media_authorization_pending',
+    'test_media_authorization_email_delivery',
+    'confirm_media_authorization',
+    'normalize_media_authorization_token'
+  )
+order by p.proname;
+
+-- Se faltar função: reexecute scripts/media-authorization-rpc.sql
