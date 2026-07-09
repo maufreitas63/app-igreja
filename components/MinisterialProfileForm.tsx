@@ -12,7 +12,7 @@ import {
   type MinisterialQuestion,
 } from '@/lib/ministerialProfileQuestionnaire';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -241,21 +241,30 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
       return (
         <ScrollView
           style={styles.bodyScroll}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={styles.introScrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.title}>Perfil Ministerial</Text>
-          <Text style={styles.subtitle}>
-            Responda 50 perguntas sobre sua identidade e chamado no serviço cristão. O resultado indicará o
-            perfil ministerial predominante.
-          </Text>
+          <View style={styles.introHero}>
+            <View style={styles.introBadge}>
+              <FontAwesome name="clipboard" size={28} color={MINIMAL_UI.onDark} />
+            </View>
+            <Text style={styles.sectionTitle}>Perfil Ministerial</Text>
+            <Text style={styles.introSubtitle}>
+              Responda 50 perguntas sobre sua identidade e chamado no serviço cristão. O resultado indicará o
+              perfil ministerial predominante.
+            </Text>
+          </View>
           <View style={styles.infoBox}>
             <Text style={styles.infoTitle}>Como funciona</Text>
             <Text style={styles.infoItem}>• 10 etapas com 5 perguntas cada</Text>
             <Text style={styles.infoItem}>• Barra de progresso durante o preenchimento</Text>
             <Text style={styles.infoItem}>• Resultado calculado do perfil ministerial predominante</Text>
           </View>
-          <TouchableOpacity style={styles.primaryButton} onPress={handleStart} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={[styles.primaryButton, styles.primaryButtonFull]}
+            onPress={handleStart}
+            activeOpacity={0.85}
+          >
             <Text style={styles.primaryButtonText}>Começar questionário</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -409,18 +418,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: MINIMAL_UI.divider,
     backgroundColor: MINIMAL_UI.background,
   },
   headerTitle: {
     flex: 1,
-    color: MINIMAL_UI.text,
-    fontSize: 16,
-    fontWeight: '700',
-    paddingRight: 12,
+    ...MINIMAL_TYPO.screenTitle,
+    color: MINIMAL_UI.blueDark,
+    textAlign: 'center',
+    paddingHorizontal: 8,
   },
   closeButton: {
     width: 36,
@@ -443,6 +452,36 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 24,
     gap: 14,
+  },
+  introScrollContent: {
+    padding: 16,
+    paddingBottom: 24,
+    gap: 16,
+  },
+  introHero: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  introBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+  },
+  sectionTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    width: '100%',
+    marginBottom: 0,
+  },
+  introSubtitle: {
+    ...MINIMAL_TYPO.inboxPreview,
+    lineHeight: 21,
+    textAlign: 'center',
+    paddingHorizontal: 4,
   },
   centered: {
     padding: 24,
@@ -518,9 +557,8 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   infoTitle: {
-    color: MINIMAL_UI.text,
-    fontSize: 14,
-    fontWeight: '700',
+    ...MINIMAL_TYPO.sectionLabel,
+    color: MINIMAL_UI.blueDark,
     marginBottom: 4,
   },
   infoItem: {
@@ -596,10 +634,14 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     borderRadius: 12,
-    backgroundColor: ACCENT,
+    backgroundColor: MINIMAL_UI.blueDark,
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: 'center',
+  },
+  primaryButtonFull: {
+    alignSelf: 'stretch',
+    width: '100%',
   },
   primaryButtonInline: {
     flex: 1,
@@ -635,9 +677,9 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: ACCENT,
+    backgroundColor: MINIMAL_UI.blueDark,
     borderWidth: 1,
-    borderColor: ACCENT,
+    borderColor: MINIMAL_UI.border,
   },
   resultLabel: {
     color: ACCENT,
