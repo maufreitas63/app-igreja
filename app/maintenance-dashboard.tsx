@@ -287,32 +287,53 @@ type SimNaoToggleProps = {
   value: boolean;
   onValueChange: (next: boolean) => void;
   disabled?: boolean;
+  minimal?: boolean;
 };
 
-const SimNaoToggle = ({ value, onValueChange, disabled }: SimNaoToggleProps) => (
+const SimNaoToggle = ({ value, onValueChange, disabled, minimal }: SimNaoToggleProps) => (
   <View style={styles.totemBlock}>
-    <View style={styles.totemChoiceRow}>
+    <View style={[styles.totemChoiceRow, minimal && styles.totemChoiceRowMinimal]}>
       <TouchableOpacity
         style={[
           styles.totemChoiceButton,
           value && styles.totemChoiceButtonSimActive,
+          minimal && value && styles.totemChoiceButtonSimActiveMinimal,
         ]}
         onPress={() => onValueChange(true)}
         activeOpacity={0.85}
         disabled={disabled}
       >
-        <Text style={[styles.totemChoiceText, value && styles.totemChoiceTextActive]}>Sim</Text>
+        <Text
+          style={[
+            styles.totemChoiceText,
+            value && styles.totemChoiceTextActive,
+            minimal && styles.totemChoiceTextMinimal,
+            minimal && value && styles.totemChoiceTextSimActiveMinimal,
+          ]}
+        >
+          Sim
+        </Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={[
           styles.totemChoiceButton,
           !value && styles.totemChoiceButtonNaoActive,
+          minimal && !value && styles.totemChoiceButtonNaoActiveMinimal,
         ]}
         onPress={() => onValueChange(false)}
         activeOpacity={0.85}
         disabled={disabled}
       >
-        <Text style={[styles.totemChoiceText, !value && styles.totemChoiceTextActive]}>Não</Text>
+        <Text
+          style={[
+            styles.totemChoiceText,
+            !value && styles.totemChoiceTextActive,
+            minimal && styles.totemChoiceTextMinimal,
+            minimal && !value && styles.totemChoiceTextNaoActiveMinimal,
+          ]}
+        >
+          Não
+        </Text>
       </TouchableOpacity>
     </View>
   </View>
@@ -323,12 +344,24 @@ type FeatureToggleColumnProps = {
   value: boolean;
   onValueChange: (next: boolean) => void;
   disabled?: boolean;
+  minimal?: boolean;
 };
 
-const FeatureToggleColumn = ({ label, value, onValueChange, disabled }: FeatureToggleColumnProps) => (
-  <View style={styles.featureToggleColumn}>
-    <Text style={styles.totemFieldLabel}>{label}</Text>
-    <SimNaoToggle value={value} onValueChange={onValueChange} disabled={disabled} />
+const FeatureToggleColumn = ({
+  label,
+  value,
+  onValueChange,
+  disabled,
+  minimal,
+}: FeatureToggleColumnProps) => (
+  <View style={[styles.featureToggleColumn, minimal && styles.featureToggleColumnMinimal]}>
+    <Text style={[styles.totemFieldLabel, minimal && styles.totemFieldLabelMinimal]}>{label}</Text>
+    <SimNaoToggle
+      value={value}
+      onValueChange={onValueChange}
+      disabled={disabled}
+      minimal={minimal}
+    />
   </View>
 );
 
@@ -1699,6 +1732,7 @@ export default function MaintenanceDashboard() {
                     value={form.geofenceAtivo}
                     onValueChange={(geofenceAtivo) => patchForm({ geofenceAtivo })}
                     disabled={isBusy || !geofenceSchemaReady}
+                    minimal={isMinimalPresentation}
                   />
                 </View>
 
@@ -1782,7 +1816,14 @@ export default function MaintenanceDashboard() {
                       onChangeText={(text) => patchForm({ maxCapacity: text.replace(/\D/g, '') })}
                     />
                     {isUnlimitedEventCapacity(form.maxCapacity) ? (
-                      <Text style={styles.capacityUnlimitedHint}>{UNLIMITED_EVENT_CAPACITY_LABEL}</Text>
+                      <Text
+                        style={[
+                          styles.capacityUnlimitedHint,
+                          isMinimalPresentation && styles.capacityUnlimitedHintMinimal,
+                        ]}
+                      >
+                        {UNLIMITED_EVENT_CAPACITY_LABEL}
+                      </Text>
                     ) : null}
                   </View>
                 </View>
@@ -1844,24 +1885,32 @@ export default function MaintenanceDashboard() {
                       roomDot="teens"
                     />
                   </View>
-                  <View style={styles.featureToggleGroup}>
+                  <View
+                    style={[
+                      styles.featureToggleGroup,
+                      isMinimalPresentation && styles.featureToggleGroupMinimal,
+                    ]}
+                  >
                     <FeatureToggleColumn
                       label="Somente Membros"
                       value={form.somenteMembros}
                       onValueChange={(somenteMembros) => patchForm({ somenteMembros })}
                       disabled={isBusy}
+                      minimal={isMinimalPresentation}
                     />
                     <FeatureToggleColumn
                       label="Ativação de Totem"
                       value={form.totemAtivo}
                       onValueChange={(totemAtivo) => patchForm({ totemAtivo })}
                       disabled={isBusy}
+                      minimal={isMinimalPresentation}
                     />
                     <FeatureToggleColumn
                       label="Requer Quorum"
                       value={form.requerQuorum}
                       onValueChange={(requerQuorum) => patchForm({ requerQuorum })}
                       disabled={isBusy}
+                      minimal={isMinimalPresentation}
                     />
                   </View>
                 </View>
@@ -1964,7 +2013,7 @@ export default function MaintenanceDashboard() {
         </View>
 
         {showEditor ? (
-          <View style={[styles.editorFooter, { paddingBottom: insets.bottom + 12 }]}>
+          <View style={[styles.editorFooter, isMinimalPresentation && styles.editorFooterMinimal, { paddingBottom: insets.bottom + 12 }]}>
             {statusMessage ? (
               <View style={styles.statusBanner}>
                 <Text style={styles.statusBannerText}>{statusMessage}</Text>
@@ -2007,6 +2056,7 @@ export default function MaintenanceDashboard() {
               <Pressable
                 style={({ pressed }) => [
                   styles.deleteButton,
+                  isMinimalPresentation && styles.deleteButtonMinimal,
                   (pressed || isBusy) && styles.actionPressed,
                 ]}
                 onPress={beginDeleteConfirm}
@@ -2014,8 +2064,19 @@ export default function MaintenanceDashboard() {
                 accessibilityRole="button"
                 accessibilityLabel="Apagar evento"
               >
-                <FontAwesome name="trash-o" size={16} color="#FCA5A5" />
-                <Text style={styles.deleteButtonText}>Apagar evento</Text>
+                <FontAwesome
+                  name="trash-o"
+                  size={16}
+                  color={isMinimalPresentation ? MINIMAL_UI.icon : '#FCA5A5'}
+                />
+                <Text
+                  style={[
+                    styles.deleteButtonText,
+                    isMinimalPresentation && styles.deleteButtonTextMinimal,
+                  ]}
+                >
+                  Apagar evento
+                </Text>
               </Pressable>
             ) : null}
             <View style={styles.editorActions}>
@@ -2630,6 +2691,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 13,
   },
+  capacityUnlimitedHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
   dateTimeRow: {
     flexDirection: 'row',
     gap: 10,
@@ -2678,6 +2742,10 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flexShrink: 0,
   },
+  totemFieldLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textAlign: 'left',
+  },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -2701,9 +2769,20 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginLeft: 'auto',
   },
+  featureToggleGroupMinimal: {
+    width: '100%',
+    justifyContent: 'flex-start',
+    marginLeft: 0,
+    flexWrap: 'wrap',
+  },
   featureToggleColumn: {
     alignItems: 'flex-end',
     gap: 6,
+  },
+  featureToggleColumnMinimal: {
+    alignItems: 'flex-start',
+    minWidth: 0,
+    flexShrink: 1,
   },
   totemBlock: {
     flexShrink: 0,
@@ -2715,6 +2794,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(52, 211, 153, 0.35)',
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
+  },
+  totemChoiceRowMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
   },
   totemChoiceButton: {
     minWidth: 44,
@@ -2730,13 +2813,30 @@ const styles = StyleSheet.create({
   totemChoiceButtonNaoActive: {
     backgroundColor: 'rgba(100, 116, 139, 0.45)',
   },
+  totemChoiceButtonSimActiveMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  totemChoiceButtonNaoActiveMinimal: {
+    backgroundColor: MINIMAL_UI.divider,
+  },
   totemChoiceText: {
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 13,
     fontWeight: '700',
   },
+  totemChoiceTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
   totemChoiceTextActive: {
     color: '#3A96DD',
+    fontWeight: '800',
+  },
+  totemChoiceTextSimActiveMinimal: {
+    color: MINIMAL_UI.onDark,
+    fontWeight: '800',
+  },
+  totemChoiceTextNaoActiveMinimal: {
+    color: MINIMAL_UI.text,
     fontWeight: '800',
   },
   totemSqlWarning: {
@@ -2868,6 +2968,9 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: '#FFFFFF',
   },
+  editorFooterMinimal: {
+    borderTopColor: MINIMAL_UI.divider,
+  },
   statusBanner: {
     borderRadius: 10,
     borderWidth: 1,
@@ -2891,11 +2994,20 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(248, 113, 113, 0.55)',
     backgroundColor: 'rgba(127, 29, 29, 0.28)',
     paddingVertical: 12,
+    width: '100%',
+    maxWidth: '100%',
+  },
+  deleteButtonMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
   },
   deleteButtonText: {
     color: '#FCA5A5',
     fontWeight: '700',
     fontSize: 14,
+  },
+  deleteButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
   },
   deleteConfirmBox: {
     borderRadius: 12,
