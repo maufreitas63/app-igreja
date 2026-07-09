@@ -35,6 +35,7 @@ import {
   MAINTENANCE_SCROLL_PROPS,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -52,6 +53,7 @@ import Toast from 'react-native-toast-message';
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
 
 type AdminTab = 'profiles' | 'roles';
@@ -72,6 +74,7 @@ type AccessControlPanelHeaderProps = {
   savingLgpdAtivo: boolean;
   canEdit: boolean;
   onToggleLgpdAtivo: () => void;
+  minimal?: boolean;
 };
 
 function AccessControlPanelHeader({
@@ -80,59 +83,82 @@ function AccessControlPanelHeader({
   savingLgpdAtivo,
   canEdit,
   onToggleLgpdAtivo,
+  minimal = false,
 }: AccessControlPanelHeaderProps) {
   const isDisabled = !canEdit || loadingLgpdAtivo || savingLgpdAtivo;
+
+  const lgpdToggle = (
+    <TouchableOpacity
+      style={[
+        styles.lgpdRadioToggle,
+        minimal && styles.lgpdRadioToggleMinimal,
+        lgpdAtivo ? styles.lgpdRadioToggleActive : styles.lgpdRadioToggleInactive,
+        minimal && lgpdAtivo && styles.lgpdRadioToggleActiveMinimal,
+        minimal && !lgpdAtivo && styles.lgpdRadioToggleInactiveMinimal,
+        isDisabled && styles.lgpdRadioToggleDisabled,
+      ]}
+      onPress={() => {
+        if (!isDisabled) {
+          onToggleLgpdAtivo();
+        }
+      }}
+      disabled={isDisabled}
+      activeOpacity={0.85}
+      accessibilityRole="radio"
+      accessibilityState={{ selected: lgpdAtivo, disabled: isDisabled }}
+      accessibilityLabel={lgpdAtivo ? 'LGPD Ativo' : 'LGPD Inativo'}
+    >
+      {savingLgpdAtivo ? (
+        <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.accent : '#F8FAFC'} />
+      ) : (
+        <>
+          <View
+            style={[
+              styles.lgpdRadioOuter,
+              lgpdAtivo ? styles.lgpdRadioOuterActive : styles.lgpdRadioOuterInactive,
+              minimal && lgpdAtivo && styles.lgpdRadioOuterActiveMinimal,
+              minimal && !lgpdAtivo && styles.lgpdRadioOuterInactiveMinimal,
+            ]}
+          >
+            <View
+              style={[
+                styles.lgpdRadioInner,
+                lgpdAtivo ? styles.lgpdRadioInnerActive : styles.lgpdRadioInnerInactive,
+                minimal && lgpdAtivo && styles.lgpdRadioInnerActiveMinimal,
+                minimal && !lgpdAtivo && styles.lgpdRadioInnerInactiveMinimal,
+              ]}
+            />
+          </View>
+          <Text
+            style={[
+              styles.lgpdRadioLabel,
+              lgpdAtivo ? styles.lgpdRadioLabelActive : styles.lgpdRadioLabelInactive,
+              minimal && lgpdAtivo && styles.lgpdRadioLabelActiveMinimal,
+              minimal && !lgpdAtivo && styles.lgpdRadioLabelInactiveMinimal,
+            ]}
+          >
+            {lgpdAtivo ? 'LGPD Ativo' : 'LGPD Inativo'}
+          </Text>
+        </>
+      )}
+    </TouchableOpacity>
+  );
+
+  if (minimal) {
+    return (
+      <View style={styles.panelHeaderMinimal}>
+        <Text style={styles.sectionTitleMinimal}>Controle de Acesso</Text>
+        <View style={styles.panelHeaderControlsMinimal}>{lgpdToggle}</View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.panelHeaderRow}>
       <Text style={styles.panelTitleCompact} numberOfLines={1}>
         Controle de Acesso
       </Text>
-      <TouchableOpacity
-        style={[
-          styles.lgpdRadioToggle,
-          lgpdAtivo ? styles.lgpdRadioToggleActive : styles.lgpdRadioToggleInactive,
-          isDisabled && styles.lgpdRadioToggleDisabled,
-        ]}
-        onPress={() => {
-          if (!isDisabled) {
-            onToggleLgpdAtivo();
-          }
-        }}
-        disabled={isDisabled}
-        activeOpacity={0.85}
-        accessibilityRole="radio"
-        accessibilityState={{ selected: lgpdAtivo, disabled: isDisabled }}
-        accessibilityLabel={lgpdAtivo ? 'LGPD Ativo' : 'LGPD Inativo'}
-      >
-        {savingLgpdAtivo ? (
-          <ActivityIndicator size="small" color="#F8FAFC" />
-        ) : (
-          <>
-            <View
-              style={[
-                styles.lgpdRadioOuter,
-                lgpdAtivo ? styles.lgpdRadioOuterActive : styles.lgpdRadioOuterInactive,
-              ]}
-            >
-              <View
-                style={[
-                  styles.lgpdRadioInner,
-                  lgpdAtivo ? styles.lgpdRadioInnerActive : styles.lgpdRadioInnerInactive,
-                ]}
-              />
-            </View>
-            <Text
-              style={[
-                styles.lgpdRadioLabel,
-                lgpdAtivo ? styles.lgpdRadioLabelActive : styles.lgpdRadioLabelInactive,
-              ]}
-            >
-              {lgpdAtivo ? 'LGPD Ativo' : 'LGPD Inativo'}
-            </Text>
-          </>
-        )}
-      </TouchableOpacity>
+      {lgpdToggle}
     </View>
   );
 }
@@ -147,6 +173,7 @@ type AppAtivoParameterControlsProps = {
   onToggleAppAtivo: () => void;
   onChangeAppInativoMsg: (value: string) => void;
   onSaveAppInativoMsg: () => void;
+  minimal?: boolean;
 };
 
 function AppAtivoParameterControls({
@@ -159,16 +186,20 @@ function AppAtivoParameterControls({
   onToggleAppAtivo,
   onChangeAppInativoMsg,
   onSaveAppInativoMsg,
+  minimal = false,
 }: AppAtivoParameterControlsProps) {
   const toggleDisabled = !canEdit || loadingAppAtivo || savingAppAtivo;
   const messageDisabled = !canEdit || loadingAppAtivo || savingAppInativoMsg || appAtivo;
 
   return (
-    <View style={styles.appAtivoSection}>
+    <View style={[styles.appAtivoSection, minimal && styles.appAtivoSectionMinimal]}>
       <TouchableOpacity
         style={[
           styles.lgpdRadioToggle,
+          minimal && styles.lgpdRadioToggleMinimal,
           appAtivo ? styles.appAtivoToggleActive : styles.appAtivoToggleInactive,
+          minimal && appAtivo && styles.appAtivoToggleActiveMinimal,
+          minimal && !appAtivo && styles.appAtivoToggleInactiveMinimal,
           toggleDisabled && styles.lgpdRadioToggleDisabled,
         ]}
         onPress={() => {
@@ -183,7 +214,7 @@ function AppAtivoParameterControls({
         accessibilityLabel={appAtivo ? 'Aplicativo ativo' : 'Aplicativo inativo'}
       >
         {savingAppAtivo ? (
-          <ActivityIndicator size="small" color="#F8FAFC" />
+          <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.accent : '#F8FAFC'} />
         ) : (
           <>
             <View
@@ -203,6 +234,8 @@ function AppAtivoParameterControls({
               style={[
                 styles.lgpdRadioLabel,
                 appAtivo ? styles.appAtivoLabelActive : styles.appAtivoLabelInactive,
+                minimal && appAtivo && styles.appAtivoLabelActiveMinimal,
+                minimal && !appAtivo && styles.appAtivoLabelInactiveMinimal,
               ]}
             >
               {appAtivo ? 'App Ativo' : 'App Inativo'}
@@ -212,27 +245,40 @@ function AppAtivoParameterControls({
       </TouchableOpacity>
 
       {!appAtivo ? (
-        <View style={styles.appInativoMsgBlock}>
-          <Text style={styles.appInativoMsgLabel}>Mensagem exibida aos usuários</Text>
+        <View style={[styles.appInativoMsgBlock, minimal && styles.appInativoMsgBlockMinimal]}>
+          <Text style={[styles.appInativoMsgLabel, minimal && styles.appInativoMsgLabelMinimal]}>
+            Mensagem exibida aos usuários
+          </Text>
           <TextInput
-            style={styles.appInativoMsgInput}
+            style={[styles.appInativoMsgInput, minimal && styles.appInativoMsgInputMinimal]}
             value={appInativoMsg}
             onChangeText={onChangeAppInativoMsg}
             editable={!messageDisabled}
             multiline
             placeholder="Texto da tela de indisponibilidade"
-            placeholderTextColor="#64748B"
+            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
           />
           <TouchableOpacity
-            style={[styles.appInativoMsgSaveButton, messageDisabled && styles.appInativoMsgSaveButtonDisabled]}
+            style={[
+              styles.appInativoMsgSaveButton,
+              minimal && styles.appInativoMsgSaveButtonMinimal,
+              messageDisabled && styles.appInativoMsgSaveButtonDisabled,
+            ]}
             onPress={onSaveAppInativoMsg}
             disabled={messageDisabled}
             activeOpacity={0.85}
           >
             {savingAppInativoMsg ? (
-              <ActivityIndicator size="small" color="#0f172a" />
+              <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.onDark : '#0f172a'} />
             ) : (
-              <Text style={styles.appInativoMsgSaveButtonText}>Salvar mensagem</Text>
+              <Text
+                style={[
+                  styles.appInativoMsgSaveButtonText,
+                  minimal && styles.appInativoMsgSaveButtonTextMinimal,
+                ]}
+              >
+                Salvar mensagem
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -241,7 +287,11 @@ function AppAtivoParameterControls({
   );
 }
 
-export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: Props) {
+export function MaintenanceAccessControlCard({
+  isActive = true,
+  panelHeight,
+  minimal = false,
+}: Props) {
   const { showTechnicalKeys } = useShowAclTechnicalKeys(isActive);
   const [activeTab, setActiveTab] = useState<AdminTab>('profiles');
   const [grantSearchQuery, setGrantSearchQuery] = useState('');
@@ -743,22 +793,44 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
 
   if (loading) {
     return (
-      <View style={[styles.panel, maintenancePanelStyles.panelCentered, { height: contentHeight }]}>
-        <CardLoadingState lines={4} />
-        <Text style={maintenancePanelStyles.panelHint}>Carregando controle de acesso…</Text>
+      <View
+        style={[
+          styles.panel,
+          minimal && styles.panelMinimal,
+          maintenancePanelStyles.panelCentered,
+          { height: contentHeight },
+        ]}
+      >
+        <CardLoadingState lines={4} minimal={minimal} />
+        <Text
+          style={[
+            maintenancePanelStyles.panelHint,
+            minimal && styles.panelHintMinimal,
+          ]}
+        >
+          Carregando controle de acesso…
+        </Text>
       </View>
     );
   }
 
   if (isSuperAdmin === false) {
     return (
-      <View style={[styles.panel, maintenancePanelStyles.panelCentered, { height: contentHeight }]}>
+      <View
+        style={[
+          styles.panel,
+          minimal && styles.panelMinimal,
+          maintenancePanelStyles.panelCentered,
+          { height: contentHeight },
+        ]}
+      >
         <AccessControlPanelHeader
           lgpdAtivo={lgpdAtivo}
           loadingLgpdAtivo={loadingLgpdAtivo}
           savingLgpdAtivo={savingLgpdAtivo}
           canEdit={false}
           onToggleLgpdAtivo={handleToggleLgpdAtivo}
+          minimal={minimal}
         />
         <AppAtivoParameterControls
           appAtivo={appAtivo}
@@ -770,8 +842,14 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
           onToggleAppAtivo={handleToggleAppAtivo}
           onChangeAppInativoMsg={setAppInativoMsg}
           onSaveAppInativoMsg={handleSaveAppInativoMsg}
+          minimal={minimal}
         />
-        <Text style={maintenancePanelStyles.panelHint}>
+        <Text
+          style={[
+            maintenancePanelStyles.panelHint,
+            minimal && styles.panelHintMinimal,
+          ]}
+        >
           Apenas perfis com o papel super_admin podem gerenciar permissões.
         </Text>
       </View>
@@ -779,13 +857,14 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
   }
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
+    <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
       <AccessControlPanelHeader
         lgpdAtivo={lgpdAtivo}
         loadingLgpdAtivo={loadingLgpdAtivo}
         savingLgpdAtivo={savingLgpdAtivo}
         canEdit={isSuperAdmin === true && !rpcMissing && !busy}
         onToggleLgpdAtivo={handleToggleLgpdAtivo}
+        minimal={minimal}
       />
       <AppAtivoParameterControls
         appAtivo={appAtivo}
@@ -797,8 +876,9 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
         onToggleAppAtivo={handleToggleAppAtivo}
         onChangeAppInativoMsg={setAppInativoMsg}
         onSaveAppInativoMsg={handleSaveAppInativoMsg}
+        minimal={minimal}
       />
-      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
       {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_ACCESS_CONTROL_SQL_HINT}</Text> : null}
       {!rpcMissing && missingExpectedRoles.length > 0 ? (
@@ -809,22 +889,46 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
       ) : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      <View style={styles.tabRow}>
+      <View style={[styles.tabRow, minimal && styles.tabRowMinimal]}>
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'profiles' && styles.tabButtonActive]}
+          style={[
+            styles.tabButton,
+            minimal && styles.tabButtonMinimal,
+            activeTab === 'profiles' && styles.tabButtonActive,
+            minimal && activeTab === 'profiles' && styles.tabButtonActiveMinimal,
+          ]}
           onPress={() => setActiveTab('profiles')}
           activeOpacity={0.85}
         >
-          <Text style={[styles.tabButtonText, activeTab === 'profiles' && styles.tabButtonTextActive]}>
+          <Text
+            style={[
+              styles.tabButtonText,
+              minimal && styles.tabButtonTextMinimal,
+              activeTab === 'profiles' && styles.tabButtonTextActive,
+              minimal && activeTab === 'profiles' && styles.tabButtonTextActiveMinimal,
+            ]}
+          >
             Perfis
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'roles' && styles.tabButtonActive]}
+          style={[
+            styles.tabButton,
+            minimal && styles.tabButtonMinimal,
+            activeTab === 'roles' && styles.tabButtonActive,
+            minimal && activeTab === 'roles' && styles.tabButtonActiveMinimal,
+          ]}
           onPress={() => setActiveTab('roles')}
           activeOpacity={0.85}
         >
-          <Text style={[styles.tabButtonText, activeTab === 'roles' && styles.tabButtonTextActive]}>
+          <Text
+            style={[
+              styles.tabButtonText,
+              minimal && styles.tabButtonTextMinimal,
+              activeTab === 'roles' && styles.tabButtonTextActive,
+              minimal && activeTab === 'roles' && styles.tabButtonTextActiveMinimal,
+            ]}
+          >
             Papéis
           </Text>
         </TouchableOpacity>
@@ -832,8 +936,11 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
 
       {activeTab === 'profiles' ? (
         <ScrollView
-          style={styles.tabScroll}
-          contentContainerStyle={styles.tabScrollContent}
+          style={[styles.tabScroll, minimal && styles.tabScrollMinimal]}
+          contentContainerStyle={[
+            styles.tabScrollContent,
+            minimal && styles.tabScrollContentMinimal,
+          ]}
           nestedScrollEnabled
           keyboardShouldPersistTaps="handled"
           {...MAINTENANCE_SCROLL_PROPS}
@@ -863,7 +970,7 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
                 placeholder="Selecionar usuário"
                 searchPlaceholder="Digite nome, telefone ou código..."
                 searchable
-                style={styles.profileDropdown}
+                style={[styles.profileDropdown, minimal && styles.profileDropdownMinimal]}
                 disabled={rpcMissing || busy}
               />
             ) : (
@@ -987,8 +1094,11 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
         </ScrollView>
       ) : (
         <ScrollView
-          style={styles.tabScroll}
-          contentContainerStyle={styles.tabScrollContent}
+          style={[styles.tabScroll, minimal && styles.tabScrollMinimal]}
+          contentContainerStyle={[
+            styles.tabScrollContent,
+            minimal && styles.tabScrollContentMinimal,
+          ]}
           nestedScrollEnabled
           keyboardShouldPersistTaps="handled"
           {...MAINTENANCE_SCROLL_PROPS}
@@ -1153,13 +1263,13 @@ export function MaintenanceAccessControlCard({ isActive = true, panelHeight }: P
             <Text style={styles.subsectionHint}>{SCREEN_GRANT_SCOPE_HINT}</Text>
           ) : null}
 
-          <View style={styles.grantSearchRow}>
+          <View style={[styles.grantSearchRow, minimal && styles.grantSearchRowMinimal]}>
             <TextInput
-              style={styles.grantSearchInput}
+              style={[styles.grantSearchInput, minimal && styles.grantSearchInputMinimal]}
               value={grantSearchQuery}
               onChangeText={setGrantSearchQuery}
               placeholder="Buscar recurso (ex.: relatórios financeiros, /financial)"
-              placeholderTextColor="#64748B"
+              placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -1909,5 +2019,161 @@ const styles = StyleSheet.create({
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     lineHeight: 17,
+  },
+  panelMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    borderRadius: 0,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'hidden',
+  },
+  panelHeaderMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    gap: 8,
+  },
+  sectionTitleMinimal: {
+    ...MINIMAL_SECTION_TITLE,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+  },
+  panelHeaderControlsMinimal: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  panelHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textAlign: 'center',
+  },
+  lgpdRadioToggleMinimal: {
+    maxWidth: '100%',
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  lgpdRadioToggleActiveMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  lgpdRadioToggleInactiveMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderColor: MINIMAL_UI.border,
+  },
+  lgpdRadioOuterActiveMinimal: {
+    borderColor: MINIMAL_UI.onDark,
+  },
+  lgpdRadioOuterInactiveMinimal: {
+    borderColor: MINIMAL_UI.textMuted,
+  },
+  lgpdRadioInnerActiveMinimal: {
+    backgroundColor: MINIMAL_UI.onDark,
+  },
+  lgpdRadioInnerInactiveMinimal: {
+    backgroundColor: MINIMAL_UI.textMuted,
+  },
+  lgpdRadioLabelActiveMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  lgpdRadioLabelInactiveMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  appAtivoSectionMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  appAtivoToggleActiveMinimal: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#16A34A',
+  },
+  appAtivoToggleInactiveMinimal: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#D97706',
+  },
+  appAtivoLabelActiveMinimal: {
+    color: '#15803D',
+  },
+  appAtivoLabelInactiveMinimal: {
+    color: '#B45309',
+  },
+  appInativoMsgBlockMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  appInativoMsgLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  appInativoMsgInputMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+    borderColor: MINIMAL_UI.border,
+    color: MINIMAL_UI.text,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  appInativoMsgSaveButtonMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+    backgroundColor: MINIMAL_UI.accent,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  appInativoMsgSaveButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  tabRowMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  tabButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  tabButtonActiveMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  tabButtonTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  tabButtonTextActiveMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  tabScrollMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  tabScrollContentMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  profileDropdownMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  grantSearchRowMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  grantSearchInputMinimal: {
+    borderColor: MINIMAL_UI.border,
+    color: MINIMAL_UI.text,
+    backgroundColor: MINIMAL_UI.background,
   },
 });

@@ -1389,7 +1389,18 @@ export default function MaintenanceDashboard() {
               variant="vigilance"
             />
           ) : item.content === 'access_control' ? (
-            <MaintenanceAccessControlCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <View
+              style={[
+                styles.accessControlPanel,
+                isMinimalPresentation && styles.accessControlPanelMinimal,
+              ]}
+            >
+              <MaintenanceAccessControlCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'profile_access_insights' ? (
             <MaintenanceProfileAccessInsightsCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'auditor' ? (
@@ -1651,7 +1662,7 @@ export default function MaintenanceDashboard() {
   return (
     <MinimalRouteShell
       minimal={isMinimalPresentation}
-      title={activeMaintenanceScreenTitle}
+      title={isMinimalPresentation && !showEditor ? undefined : activeMaintenanceScreenTitle}
       gradientColors={MAINTENANCE_SCREEN_GRADIENT}
       statusBarStyle="dark-content"
     >
@@ -2406,6 +2417,18 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   salaServidorPanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  accessControlPanel: {
+    flex: 1,
+    minHeight: 0,
+  },
+  accessControlPanelMinimal: {
     paddingHorizontal: 0,
     paddingVertical: 4,
     width: '100%',
