@@ -472,9 +472,14 @@ export default function PastoralScreen() {
       await submitPastoralRequest(payload);
 
       await appAlert('Sucesso', 'Pedido enviado! Estaremos orando por você.');
-      router.replace(
-        buildReturnToDashboardHref(resolveReturnDashboardCardParam(params) ?? 'pastoral')
-      );
+      resetPastoralForm();
+      if (isMinimalPresentation) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace(
+          buildReturnToDashboardHref(resolveReturnDashboardCardParam(params) ?? 'pastoral')
+        );
+      }
     } catch (err) {
       console.error('Erro ao enviar:', err);
       await appAlert('Erro', getSupabaseErrorMessage(err));
