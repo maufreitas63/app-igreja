@@ -4,7 +4,8 @@ import { cpfValidationMessage, formatCpf } from '@/lib/cpfValidation';
 import {
   loadLatestMediaAuthorization,
   loadMediaAuthorizationProfile,
-  MEDIA_AUTHORIZATION_TERMS_TEXT,
+  MEDIA_AUTHORIZATION_TERMS_BODY,
+  MEDIA_AUTHORIZATION_TERMS_TITLE,
   submitMediaAuthorizationPending,
 } from '@/lib/mediaAuthorization';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -223,7 +224,8 @@ export function AuthorizationForm({ profileId }: Props) {
         />
 
         <View style={styles.termsBox}>
-          <Text style={styles.termsText}>{MEDIA_AUTHORIZATION_TERMS_TEXT}</Text>
+          <Text style={styles.termsTitle}>{MEDIA_AUTHORIZATION_TERMS_TITLE}</Text>
+          <Text style={styles.termsText}>{MEDIA_AUTHORIZATION_TERMS_BODY}</Text>
         </View>
 
         <Pressable
@@ -366,6 +368,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     maxHeight: 220,
+    gap: 8,
+  },
+  termsTitle: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '800',
+    color: MINIMAL_UI.blueDark,
   },
   termsText: {
     fontSize: 13,

@@ -2,8 +2,12 @@ import { supabase } from '@/lib/supabase';
 
 export const MEDIA_AUTHORIZATION_PRIVACY_VERSION = '1.0';
 
-export const MEDIA_AUTHORIZATION_TERMS_TEXT =
-  'Autorização para uso de imagem e voz: Declaro estar ciente de que os cultos, celebrações, eventos e demais atividades promovidas pela igreja poderão ser fotografados, filmados e transmitidos pelos seus canais oficiais. Na qualidade de participante e de responsável legal pelos menores de idade vinculados ao meu cadastro familiar, autorizo a captação e a utilização da minha imagem e voz, bem como da imagem e voz desses menores, para fins institucionais, educativos, históricos e de divulgação das atividades da igreja, em mídias impressas, digitais, redes sociais, transmissões ao vivo e demais canais oficiais, sem qualquer ônus, observadas a legislação aplicável, especialmente a Lei nº 13.709/2018 (LGPD), e o respeito à honra, à dignidade e à privacidade dos envolvidos.';
+export const MEDIA_AUTHORIZATION_TERMS_TITLE = 'Autorização para uso de imagem e voz';
+
+export const MEDIA_AUTHORIZATION_TERMS_BODY =
+  'Declaro estar ciente de que os cultos, celebrações, eventos e demais atividades promovidas pela igreja poderão ser fotografados, filmados e transmitidos pelos seus canais oficiais. Na qualidade de participante e de responsável legal pelos menores de idade vinculados ao meu cadastro familiar, autorizo a captação e a utilização da minha imagem e voz, bem como da imagem e voz desses menores, para fins institucionais, educativos, históricos e de divulgação das atividades da igreja, em mídias impressas, digitais, redes sociais, transmissões ao vivo e demais canais oficiais, sem qualquer ônus, observadas a legislação aplicável, especialmente a Lei nº 13.709/2018 (LGPD), e o respeito à honra, à dignidade e à privacidade dos envolvidos.';
+
+export const MEDIA_AUTHORIZATION_TERMS_TEXT = `${MEDIA_AUTHORIZATION_TERMS_TITLE}: ${MEDIA_AUTHORIZATION_TERMS_BODY}`;
 
 export const MEDIA_AUTHORIZATION_LEGAL_INFO =
   'Este sistema utiliza Assinatura Eletrônica Avançada (Lei 14.063/2020), registrando IP, data, hora e e-mail autenticado (Magic Link) para garantir a conformidade com a LGPD e a veracidade da sua manifestação de vontade.';
