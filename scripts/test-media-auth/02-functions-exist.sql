@@ -6,14 +6,17 @@ select
   p.proname as function_name,
   pg_get_function_result(p.oid) as return_type,
   case
-    when p.proname = 'send_media_authorization_confirm_email'
-      and pg_get_function_result(p.oid) = 'jsonb'
+    when p.proname = 'normalize_media_authorization_token'
+      and pg_get_function_result(p.oid) = 'text'
       then 'OK'
     when p.proname in (
+      'send_media_authorization_confirm_email',
       'send_media_authorization_confirm_email_via_resend',
       'submit_media_authorization_pending',
-      'test_media_authorization_email_delivery'
+      'test_media_authorization_email_delivery',
+      'confirm_media_authorization'
     )
+      and pg_get_function_result(p.oid) = 'jsonb'
       then 'OK'
     else 'VERIFICAR'
   end as status
