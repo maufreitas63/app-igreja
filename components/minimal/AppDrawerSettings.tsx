@@ -22,19 +22,19 @@ type SettingsItem = {
 
 type Props = {
   onClose: () => void;
-  onOpenLgpd: () => void;
+  onOpenMediaAuthorization: () => void;
 };
 
-export function AppDrawerSettings({ onClose, onOpenLgpd }: Props) {
+export function AppDrawerSettings({ onClose, onOpenMediaAuthorization }: Props) {
   const insets = useSafeAreaInsets();
 
   const items: SettingsItem[] = [
     {
-      id: 'lgpd',
-      label: 'Privacidade (LGPD)',
-      hint: 'Termos de uso e consentimento',
+      id: 'media-authorization',
+      label: 'Autorização de imagem e voz',
+      hint: 'Termos LGPD e confirmação por e-mail',
       icon: 'shield',
-      onPress: onOpenLgpd,
+      onPress: onOpenMediaAuthorization,
     },
   ];
 

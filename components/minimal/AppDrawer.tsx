@@ -55,22 +55,25 @@ export function AppDrawer() {
 
   const visibleItems = items.filter((item) => item.enabled);
 
-  const handleOpenLgpd = () => {
+  const handleOpenMediaAuthorization = () => {
     const params = withMinimalPresentation();
 
-    traceClick('drawer', 'settings-lgpd-press', { params });
+    traceClick('drawer', 'settings-media-authorization-press', { params });
 
     router.push({
-      pathname: '/lgpd',
+      pathname: '/autorizacao-midia',
       params,
     });
 
-    traceClick('drawer', 'settings-lgpd-router-push-called', { pathname: '/lgpd', params });
+    traceClick('drawer', 'settings-media-authorization-router-push-called', {
+      pathname: '/autorizacao-midia',
+      params,
+    });
 
     setSettingsOpen(false);
     closeDrawer();
 
-    traceClick('drawer', 'settings-lgpd-drawer-closed');
+    traceClick('drawer', 'settings-media-authorization-drawer-closed');
   };
 
   const handleBackdropPress = () => {
@@ -97,7 +100,7 @@ export function AppDrawer() {
               traceClick('drawer', 'settings-close-press');
               setSettingsOpen(false);
             }}
-            onOpenLgpd={handleOpenLgpd}
+            onOpenMediaAuthorization={handleOpenMediaAuthorization}
           />
         ) : (
           <View style={[styles.panel, { paddingTop: insets.top + 12 }]}>
