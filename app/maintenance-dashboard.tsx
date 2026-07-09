@@ -1395,7 +1395,11 @@ export default function MaintenanceDashboard() {
           ) : item.content === 'auditor' ? (
             <MaintenanceGhostModeCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'event_orchestration' ? (
-            <MaintenanceEventOrchestrationCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <MaintenanceEventOrchestrationCard
+              isActive={currentIndex === index}
+              panelHeight={cardHeight}
+              minimal={isMinimalPresentation}
+            />
           ) : item.content === 'sala_servidor' ? (
             <MaintenanceSalaServidorCard embedded panelHeight={cardHeight} />
           ) : item.content === 'events_gantt' ? (

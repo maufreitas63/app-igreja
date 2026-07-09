@@ -1,5 +1,6 @@
 import { EventAvisosManager } from '@/components/EventAvisosManager';
 import { usePalette } from '@/context/PaletteContext';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   fetchEventControlState,
   sessionCanManageEventControl,
@@ -28,6 +29,7 @@ type Props = {
   contentContainerStyle?: StyleProp<ViewStyle>;
   showTitle?: boolean;
   compact?: boolean;
+  minimal?: boolean;
 };
 
 export function EventOrchestratorPanel({
@@ -35,6 +37,7 @@ export function EventOrchestratorPanel({
   contentContainerStyle,
   showTitle = true,
   compact = false,
+  minimal = false,
 }: Props) {
   const { colors } = usePalette();
 
@@ -110,24 +113,39 @@ export function EventOrchestratorPanel({
 
   return (
     <ScrollView
-      contentContainerStyle={[styles.content, compact && styles.contentCompact, contentContainerStyle]}
+      contentContainerStyle={[
+        styles.content,
+        compact && styles.contentCompact,
+        minimal && styles.contentMinimal,
+        contentContainerStyle,
+      ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
       {showTitle ? (
         <>
-          <Text style={[styles.title, compact && styles.titleCompact]}>Orquestrador do Evento</Text>
-          <Text style={styles.subtitle}>
+          <Text
+            style={[
+              styles.title,
+              compact && styles.titleCompact,
+              minimal && styles.titleMinimal,
+            ]}
+          >
+            Orquestrador do Evento
+          </Text>
+          <Text style={[styles.subtitle, minimal && styles.subtitleMinimal]}>
             Escolha para onde os membros conectados devem ser guiados em tempo real.
           </Text>
         </>
       ) : null}
 
-      {loading ? <ActivityIndicator color={colors.accent} size="large" /> : null}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {loading ? (
+        <ActivityIndicator color={minimal ? MINIMAL_UI.accent : colors.accent} size="large" />
+      ) : null}
+      {error ? <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text> : null}
 
       {!loading && allowed ? (
-        <View style={styles.buttonsGrid}>
+        <View style={[styles.buttonsGrid, minimal && styles.buttonsGridMinimal]}>
           {EVENT_ORCHESTRATION_LEADER_BUTTONS.map((option) => {
             const isActiveRoute = activeRoute === option.code;
             const isSaving = savingRoute === option.code;
@@ -138,23 +156,42 @@ export function EventOrchestratorPanel({
                 style={[
                   styles.routeButton,
                   compact && styles.routeButtonCompact,
-                  {
+                  minimal && styles.routeButtonMinimal,
+                  minimal && isActiveRoute && styles.routeButtonActiveMinimal,
+                  !minimal && {
                     backgroundColor: isActiveRoute ? colors.primary : `${colors.primary}CC`,
                     borderColor: isActiveRoute ? colors.accent : `${colors.accent}66`,
                   },
                 ]}
-                    onPress={() => void handleSelectRoute(option.code)}
-                    onPressIn={triggerOrchestrationButtonHaptic}
-                    disabled={Boolean(savingRoute)}
+                onPress={() => void handleSelectRoute(option.code)}
+                onPressIn={triggerOrchestrationButtonHaptic}
+                disabled={Boolean(savingRoute)}
               >
                 {isSaving ? (
-                  <ActivityIndicator color="#0F172A" />
+                  <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0F172A'} />
                 ) : (
                   <>
-                    <Text style={[styles.routeButtonLabel, compact && styles.routeButtonLabelCompact]}>
+                    <Text
+                      style={[
+                        styles.routeButtonLabel,
+                        compact && styles.routeButtonLabelCompact,
+                        minimal && styles.routeButtonLabelMinimal,
+                        minimal && isActiveRoute && styles.routeButtonLabelActiveMinimal,
+                      ]}
+                    >
                       {option.label}
                     </Text>
-                    {!compact ? <Text style={styles.routeButtonHint}>{option.code}</Text> : null}
+                    {!compact ? (
+                      <Text
+                        style={[
+                          styles.routeButtonHint,
+                          minimal && styles.routeButtonHintMinimal,
+                          minimal && isActiveRoute && styles.routeButtonHintActiveMinimal,
+                        ]}
+                      >
+                        {option.code}
+                      </Text>
+                    ) : null}
                   </>
                 )}
               </Pressable>
@@ -163,7 +200,7 @@ export function EventOrchestratorPanel({
         </View>
       ) : null}
 
-      {!loading && allowed ? <EventAvisosManager isActive={isActive} /> : null}
+      {!loading && allowed ? <EventAvisosManager isActive={isActive} minimal={minimal} /> : null}
     </ScrollView>
   );
 }
@@ -225,5 +262,48 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     marginTop: 3,
+  },
+  contentMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+  },
+  titleMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  subtitleMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
+  },
+  buttonsGridMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  routeButtonMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    backgroundColor: MINIMAL_UI.background,
+    borderColor: MINIMAL_UI.border,
+  },
+  routeButtonActiveMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  routeButtonLabelMinimal: {
+    color: MINIMAL_UI.text,
+    fontWeight: '700',
+  },
+  routeButtonLabelActiveMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  routeButtonHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  routeButtonHintActiveMinimal: {
+    color: 'rgba(255, 255, 255, 0.82)',
   },
 });
