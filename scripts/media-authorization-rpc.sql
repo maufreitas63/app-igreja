@@ -58,7 +58,7 @@ returns text
 language sql
 immutable
 as $$
-  select 'Confirme sua autorização no app';
+  select 'Confirme sua autorizacao no app';
 $$;
 
 create or replace function public.media_authorization_confirm_email_text(
@@ -94,11 +94,6 @@ as $$
     || '<p>Link válido por 48 horas. Se você não solicitou, ignore este e-mail.</p>';
 $$;
 
--- Retorno void → jsonb exige DROP antes de recriar (reexecução do script).
-drop function if exists public.send_media_authorization_confirm_email(text, text, text);
-drop function if exists public.send_media_authorization_confirm_email_via_resend(text, text, text);
-drop function if exists public.send_media_authorization_confirm_email_via_gmail(text, text, text);
-
 create or replace function public.send_media_authorization_confirm_email_via_resend(
   p_to_email text,
   p_full_name text,
@@ -120,8 +115,8 @@ declare
 begin
   v_recipient := public.normalize_profile_email(p_to_email);
 
-  v_api_key := public.get_app_parameter_value_trim('recovery_email_api_key');
-  v_from := public.get_app_parameter_value_trim('recovery_email_from');
+  v_api_key := nullif(trim(public.get_app_parameter_value('recovery_email_api_key')), '');
+  v_from := nullif(trim(public.get_app_parameter_value('recovery_email_from')), '');
 
   if v_api_key is null or v_from is null then
     raise exception
@@ -402,7 +397,7 @@ begin
       trim(p_full_name),
       v_confirm_url
     );
-    v_email_sent := coalesce(v_send_result->>'ok', '') = 'true';
+    v_email_sent := coalesce(v_send_result @> '{"ok": true}'::jsonb, false);
   exception
     when others then
       delete from public.pending_authorizations where id = v_pending_id;
@@ -418,7 +413,7 @@ begin
     return jsonb_build_object(
       'ok', false,
       'emailSent', false,
-      'message', 'O provedor de e-mail não confirmou o envio.'
+      'message', coalesce(v_send_result::text, 'O provedor de e-mail não confirmou o envio.')
     );
   end if;
 
