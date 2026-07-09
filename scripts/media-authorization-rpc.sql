@@ -8,6 +8,13 @@
 --   media_authorization_pdf_function_url = https://REF.supabase.co/functions/v1/generate-authorization-pdf
 --   media_authorization_pdf_function_secret = (secret)
 
+alter table public.authorizations
+  add column if not exists confirmation_token text null;
+
+create unique index if not exists authorizations_confirmation_token_uidx
+  on public.authorizations (confirmation_token)
+  where confirmation_token is not null;
+
 create or replace function public.media_authorization_terms_text()
 returns text
 language sql
@@ -51,12 +58,82 @@ as $$
     || 'Se você não solicitou esta autorização, ignore este e-mail.';
 $$;
 
+create or replace function public.send_media_authorization_confirm_email_via_resend(
+  p_to_email text,
+  p_full_name text,
+  p_confirm_url text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = http, extensions, public, pg_temp
+as $$
+declare
+  v_api_key text;
+  v_from text;
+  v_body text;
+  v_status integer;
+  v_content text;
+  v_recipient text;
+  v_payload jsonb;
+begin
+  v_recipient := public.normalize_profile_email(p_to_email);
+
+  v_api_key := public.get_app_parameter_value_trim('recovery_email_api_key');
+  v_from := public.get_app_parameter_value_trim('recovery_email_from');
+
+  if v_api_key is null or v_from is null then
+    raise exception
+      'Resend não configurado. Cadastre recovery_email_api_key e recovery_email_from em app_parameters.';
+  end if;
+
+  v_body := json_build_object(
+    'from', v_from,
+    'to', json_build_array(v_recipient),
+    'subject', 'Confirme sua autorização de imagem e voz',
+    'text', public.media_authorization_confirm_email_text(p_full_name, p_confirm_url)
+  )::text;
+
+  select p.p_status, p.p_content
+    into v_status, v_content
+    from public.password_recovery_http_post(
+      'https://api.resend.com/emails',
+      jsonb_build_object(
+        'authorization', 'Bearer ' || v_api_key,
+        'content-type', 'application/json'
+      ),
+      v_body
+    ) as p;
+
+  if coalesce(v_status, 0) not between 200 and 299 then
+    raise exception
+      'Não foi possível enviar o e-mail de autorização (HTTP %). %',
+      coalesce(v_status, 0),
+      coalesce(nullif(trim(v_content), ''), 'Verifique recovery_email_api_key, recovery_email_from e a lista de supressão no Resend.');
+  end if;
+
+  begin
+    v_payload := v_content::jsonb;
+  exception
+    when others then
+      v_payload := jsonb_build_object('raw', v_content);
+  end;
+
+  return jsonb_build_object(
+    'ok', true,
+    'provider', 'resend',
+    'resendId', coalesce(v_payload->>'id', null),
+    'to', v_recipient
+  );
+end;
+$$;
+
 create or replace function public.send_media_authorization_confirm_email_via_gmail(
   p_to_email text,
   p_full_name text,
   p_confirm_url text
 )
-returns void
+returns jsonb
 language plpgsql
 security definer
 set search_path = http, extensions, public, pg_temp
@@ -129,61 +206,12 @@ begin
       'Não foi possível enviar o e-mail de autorização via Gmail. %',
       coalesce(nullif(trim(v_payload->>'message'), ''), v_content);
   end if;
-end;
-$$;
 
-create or replace function public.send_media_authorization_confirm_email_via_resend(
-  p_to_email text,
-  p_full_name text,
-  p_confirm_url text
-)
-returns void
-language plpgsql
-security definer
-set search_path = http, extensions, public, pg_temp
-as $$
-declare
-  v_api_key text;
-  v_from text;
-  v_body text;
-  v_status integer;
-  v_content text;
-  v_recipient text;
-begin
-  v_recipient := public.normalize_profile_email(p_to_email);
-
-  v_api_key := public.get_app_parameter_value_trim('recovery_email_api_key');
-  v_from := public.get_app_parameter_value_trim('recovery_email_from');
-
-  if v_api_key is null or v_from is null then
-    raise exception
-      'Resend não configurado. Cadastre recovery_email_api_key e recovery_email_from em app_parameters.';
-  end if;
-
-  v_body := json_build_object(
-    'from', v_from,
-    'to', json_build_array(v_recipient),
-    'subject', 'Confirme sua autorização de imagem e voz',
-    'text', public.media_authorization_confirm_email_text(p_full_name, p_confirm_url)
-  )::text;
-
-  select p.p_status, p.p_content
-    into v_status, v_content
-    from public.password_recovery_http_post(
-      'https://api.resend.com/emails',
-      jsonb_build_object(
-        'authorization', 'Bearer ' || v_api_key,
-        'content-type', 'application/json'
-      ),
-      v_body
-    ) as p;
-
-  if coalesce(v_status, 0) not between 200 and 299 then
-    raise exception
-      'Não foi possível enviar o e-mail de autorização (HTTP %). %',
-      coalesce(v_status, 0),
-      coalesce(nullif(trim(v_content), ''), 'Verifique recovery_email_api_key e recovery_email_from no Resend.');
-  end if;
+  return jsonb_build_object(
+    'ok', true,
+    'provider', 'gmail',
+    'to', v_recipient
+  );
 end;
 $$;
 
@@ -192,7 +220,7 @@ create or replace function public.send_media_authorization_confirm_email(
   p_full_name text,
   p_confirm_url text
 )
-returns void
+returns jsonb
 language plpgsql
 security definer
 set search_path = http, extensions, public, pg_temp
@@ -202,6 +230,7 @@ declare
   v_provider text;
   v_has_gmail boolean;
   v_has_resend boolean;
+  v_result jsonb;
 begin
   v_recipient := public.normalize_profile_email(p_to_email);
 
@@ -234,13 +263,13 @@ begin
   end if;
 
   if v_provider = 'gmail' then
-    perform public.send_media_authorization_confirm_email_via_gmail(p_to_email, p_full_name, p_confirm_url);
-    return;
+    v_result := public.send_media_authorization_confirm_email_via_gmail(p_to_email, p_full_name, p_confirm_url);
+    return v_result;
   end if;
 
   if v_provider = 'resend' then
-    perform public.send_media_authorization_confirm_email_via_resend(p_to_email, p_full_name, p_confirm_url);
-    return;
+    v_result := public.send_media_authorization_confirm_email_via_resend(p_to_email, p_full_name, p_confirm_url);
+    return v_result;
   end if;
 
   raise exception
@@ -267,6 +296,7 @@ declare
   v_app_url text;
   v_confirm_url text;
   v_email_sent boolean := false;
+  v_send_result jsonb;
 begin
   v_profile_id := public.current_session_profile_id();
 
@@ -326,12 +356,12 @@ begin
   -- Mesmo provedor do PIN (recovery_email_*). Não usa função dedicada aqui para evitar
   -- falso positivo quando media_authorization_email_function_* aponta para função inexistente.
   begin
-    perform public.send_media_authorization_confirm_email(
+    v_send_result := public.send_media_authorization_confirm_email(
       lower(trim(p_email)),
       trim(p_full_name),
       v_confirm_url
     );
-    v_email_sent := true;
+    v_email_sent := coalesce(v_send_result->>'ok', '') = 'true';
   exception
     when others then
       delete from public.pending_authorizations where id = v_pending_id;
@@ -342,9 +372,20 @@ begin
       );
   end;
 
+  if not v_email_sent then
+    delete from public.pending_authorizations where id = v_pending_id;
+    return jsonb_build_object(
+      'ok', false,
+      'emailSent', false,
+      'message', 'O provedor de e-mail não confirmou o envio.'
+    );
+  end if;
+
   return jsonb_build_object(
     'ok', true,
     'emailSent', v_email_sent,
+    'emailProvider', coalesce(v_send_result->>'provider', null),
+    'resendId', coalesce(v_send_result->>'resendId', null),
     'message', 'Enviamos um link de confirmação para o seu e-mail. Abra-o para concluir a autorização.',
     'pendingId', v_pending_id,
     'emailMasked', public.mask_profile_email(lower(trim(p_email)))

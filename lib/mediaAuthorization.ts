@@ -25,6 +25,8 @@ export type SubmitMediaAuthorizationResult = {
   message: string;
   emailSent?: boolean;
   emailMasked?: string | null;
+  emailProvider?: string | null;
+  resendId?: string | null;
 };
 
 export type ConfirmMediaAuthorizationResult = {
@@ -87,11 +89,17 @@ export async function submitMediaAuthorizationPending(input: {
 
   const payload = parseRpcPayload(data);
 
+  if (__DEV__) {
+    console.info('[media-authorization] submit pending response', payload);
+  }
+
   return {
     ok: payload.ok === true,
     message: String(payload.message ?? 'Resposta inválida do servidor.'),
     emailSent: payload.emailSent === true,
     emailMasked: typeof payload.emailMasked === 'string' ? payload.emailMasked : null,
+    emailProvider: typeof payload.emailProvider === 'string' ? payload.emailProvider : null,
+    resendId: typeof payload.resendId === 'string' ? payload.resendId : null,
   };
 }
 
