@@ -61,6 +61,7 @@ import {
 } from '@/lib/dashboardPanelLayout';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
 import { MINIMAL_FLAT_PANEL, MINIMAL_PAGE } from '@/lib/minimalPresentation';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
 import {
   MAINTENANCE_SHORTCUT_ICON_ACTIVE_COLOR,
@@ -138,6 +139,8 @@ const MAINTENANCE_SCREEN_GRADIENT = ['#FFFFFF', '#F0F9FF'] as const;
 const FOOTER_NAV_REPEAT_MS = 500;
 
 const STATIC_MAINTENANCE_PANEL_INSETS = computeMaintenancePanelInsets(390);
+/** Padding horizontal de `MinimalScreenLayout` (`flexContent`). */
+const MINIMAL_LAYOUT_HORIZONTAL_PADDING = 16;
 
 type MaintenanceCarouselCard = {
   id: string;
@@ -337,6 +340,13 @@ export default function MaintenanceDashboard() {
   const isMinimalPresentation = isMinimalPresentationRoute(presentationParam);
   const previousPageWidthRef = useRef(pageWidth);
   const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);
+  const carouselPageWidth = useMemo(
+    () =>
+      isMinimalPresentation
+        ? Math.max(280, pageWidth - MINIMAL_LAYOUT_HORIZONTAL_PADDING * 2)
+        : pageWidth,
+    [isMinimalPresentation, pageWidth]
+  );
   const router = useRouter();
   const { isActive: ghostModeActive, state: ghostModeState } = useGhostMode();
   const insets = useSafeAreaInsets();
@@ -892,14 +902,26 @@ export default function MaintenanceDashboard() {
   );
 
   const effectiveCarouselPageStyle = useMemo(
-    () => (isMinimalPresentation ? { width: pageWidth, flex: 1 } : carouselPageStyle),
-    [carouselPageStyle, isMinimalPresentation, pageWidth]
+    () =>
+      isMinimalPresentation
+        ? { width: '100%' as const, flex: 1, minWidth: 0, maxWidth: '100%' as const }
+        : carouselPageStyle,
+    [carouselPageStyle, isMinimalPresentation]
   );
 
   const effectiveCardWrapperStyle = useMemo(
     () =>
       isMinimalPresentation
-        ? { ...MINIMAL_PAGE, paddingTop: 0, paddingBottom: 0, justifyContent: 'flex-start' as const }
+        ? {
+            ...MINIMAL_PAGE,
+            paddingTop: 0,
+            paddingBottom: 0,
+            justifyContent: 'flex-start' as const,
+            width: '100%' as const,
+            minWidth: 0,
+            maxWidth: '100%' as const,
+            overflow: 'hidden' as const,
+          }
         : styles.cardWrapper,
     [isMinimalPresentation]
   );
@@ -907,13 +929,34 @@ export default function MaintenanceDashboard() {
   const effectivePanelCardStyle = useMemo(
     () =>
       isMinimalPresentation
-        ? { ...MINIMAL_FLAT_PANEL, flex: 1, width: '100%' as const }
+        ? {
+            ...MINIMAL_FLAT_PANEL,
+            flex: 1,
+            width: '100%' as const,
+            minWidth: 0,
+            maxWidth: '100%' as const,
+            overflow: 'hidden' as const,
+          }
         : null,
     [isMinimalPresentation]
   );
 
+  const effectivePanelScrollContentStyle = useMemo(
+    () =>
+      isMinimalPresentation
+        ? {
+            gap: UI_SPACING.md,
+            paddingBottom: UI_SPACING.lg,
+            paddingHorizontal: 0,
+            width: '100%' as const,
+            maxWidth: '100%' as const,
+          }
+        : styles.panelScrollContent,
+    [isMinimalPresentation]
+  );
+
   const scrollToMaintenanceCard = useCallback((targetIndex: number, animated = false) => {
-    if (targetIndex < 0 || targetIndex >= maintenanceCardCount || pageWidth <= 0) {
+    if (targetIndex < 0 || targetIndex >= maintenanceCardCount || carouselPageWidth <= 0) {
       return;
     }
 
@@ -927,7 +970,7 @@ export default function MaintenanceDashboard() {
       return;
     }
 
-    const offset = targetIndex * pageWidth;
+    const offset = targetIndex * carouselPageWidth;
 
     list.scrollToOffset({ offset, animated: false });
     requestAnimationFrame(() => {
@@ -937,7 +980,7 @@ export default function MaintenanceDashboard() {
         carouselScrollSyncLockRef.current = false;
       });
     });
-  }, [maintenanceCardCount, pageWidth]);
+  }, [carouselPageWidth, maintenanceCardCount]);
 
   const scrollToMaintenancePanel = useCallback(
     (panelContent: MaintenancePanelContent) => {
@@ -1028,12 +1071,12 @@ export default function MaintenanceDashboard() {
 
   const handleCarouselScrollToIndexFailed = useCallback(
     (info: { index: number }) => {
-      if (info.index < 0 || info.index >= maintenanceCardCount || pageWidth <= 0) {
+      if (info.index < 0 || info.index >= maintenanceCardCount || carouselPageWidth <= 0) {
         return;
       }
 
       carouselRef.current?.scrollToOffset({
-        offset: info.index * pageWidth,
+        offset: info.index * carouselPageWidth,
         animated: false,
       });
       requestAnimationFrame(() => {
@@ -1044,7 +1087,7 @@ export default function MaintenanceDashboard() {
         });
       });
     },
-    [maintenanceCardCount, pageWidth]
+    [carouselPageWidth, maintenanceCardCount]
   );
 
   useEffect(() => {
@@ -1136,13 +1179,13 @@ export default function MaintenanceDashboard() {
         return;
       }
 
-      const index = Math.round(event.nativeEvent.contentOffset.x / pageWidth);
+      const index = Math.round(event.nativeEvent.contentOffset.x / carouselPageWidth);
       if (index >= 0 && index < maintenanceCardCount && index !== currentIndexRef.current) {
         currentIndexRef.current = index;
         setCurrentIndex(index);
       }
     },
-    [maintenanceCardCount, pageWidth]
+    [carouselPageWidth, maintenanceCardCount]
   );
 
   const handleGanttEventPress = useCallback(
@@ -1327,24 +1370,45 @@ export default function MaintenanceDashboard() {
             </View>
           ) : item.content === 'events' ? (
             <ScrollView
-              style={styles.panelScroll}
-              contentContainerStyle={styles.panelScrollContent}
+              style={[styles.panelScroll, isMinimalPresentation && styles.panelScrollMinimal]}
+              contentContainerStyle={effectivePanelScrollContentStyle}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="always"
             >
               <>
                 <TouchableOpacity
-                  style={styles.newEventButton}
+                  style={[
+                    styles.newEventButton,
+                    isMinimalPresentation && styles.newEventButtonMinimal,
+                  ]}
                   onPress={startNewEvent}
                   activeOpacity={0.85}
                   disabled={deleteConfirmPending || isBusy}
                 >
-                  <FontAwesome name="plus" size={16} color="#0f172a" />
-                  <Text style={styles.newEventButtonText}>Novo evento</Text>
+                  <FontAwesome
+                    name="plus"
+                    size={16}
+                    color={isMinimalPresentation ? MINIMAL_UI.onDark : '#0f172a'}
+                  />
+                  <Text
+                    style={[
+                      styles.newEventButtonText,
+                      isMinimalPresentation && styles.newEventButtonTextMinimal,
+                    ]}
+                  >
+                    Novo evento
+                  </Text>
                 </TouchableOpacity>
 
                 <View style={styles.listSection}>
-                  <Text style={styles.sectionTitle}>Eventos cadastrados</Text>
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      isMinimalPresentation && styles.sectionTitleMinimal,
+                    ]}
+                  >
+                    Eventos cadastrados
+                  </Text>
 
                   {loading ? (
                     <ActivityIndicator color="#818CF8" style={styles.loader} />
@@ -1386,6 +1450,7 @@ export default function MaintenanceDashboard() {
                           key={event.id}
                           style={[
                             styles.eventCard,
+                            isMinimalPresentation && styles.eventCardMinimal,
                             deleteConfirmPending && styles.eventCardDisabled,
                           ]}
                           onPress={() => startEditEvent(event)}
@@ -1393,7 +1458,13 @@ export default function MaintenanceDashboard() {
                           activeOpacity={0.9}
                         >
                           <View style={styles.eventCardHeader}>
-                            <Text style={styles.eventCardName} numberOfLines={2}>
+                            <Text
+                              style={[
+                                styles.eventCardName,
+                                isMinimalPresentation && styles.eventCardNameMinimal,
+                              ]}
+                              numberOfLines={2}
+                            >
                               {event.name}
                             </Text>
                             <View
@@ -1402,6 +1473,7 @@ export default function MaintenanceDashboard() {
                                 summary.isPublished
                                   ? styles.statusBadgeActive
                                   : styles.statusBadgeInactive,
+                                isMinimalPresentation && styles.statusBadgeMinimal,
                               ]}
                             >
                               <Text
@@ -1410,17 +1482,40 @@ export default function MaintenanceDashboard() {
                                   summary.isPublished
                                     ? styles.statusBadgeTextActive
                                     : styles.statusBadgeTextInactive,
+                                  isMinimalPresentation && styles.statusBadgeTextMinimal,
                                 ]}
                               >
                                 {summary.isPublished ? 'Publicado' : 'Rascunho'}
                               </Text>
                             </View>
                           </View>
-                          <Text style={styles.eventCardMeta}>{summary.dateLabel}</Text>
-                          <Text style={styles.eventCardMeta}>
+                          <Text
+                            style={[
+                              styles.eventCardMeta,
+                              isMinimalPresentation && styles.eventCardMetaMinimal,
+                            ]}
+                            numberOfLines={2}
+                          >
+                            {summary.dateLabel}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.eventCardMeta,
+                              isMinimalPresentation && styles.eventCardMetaMinimal,
+                            ]}
+                            numberOfLines={2}
+                          >
                             {summary.localLabel} · {summary.capacityLabel}
                           </Text>
-                          <Text style={styles.eventCardFlags}>{summary.flagsLabel}</Text>
+                          <Text
+                            style={[
+                              styles.eventCardFlags,
+                              isMinimalPresentation && styles.eventCardFlagsMinimal,
+                            ]}
+                            numberOfLines={2}
+                          >
+                            {summary.flagsLabel}
+                          </Text>
                         </TouchableOpacity>
                       ))
                   ) : (
@@ -1448,6 +1543,7 @@ export default function MaintenanceDashboard() {
       effectiveCarouselPageStyle,
       effectiveCardWrapperStyle,
       effectivePanelCardStyle,
+      effectivePanelScrollContentStyle,
       isMinimalPresentation,
       panelCardSizeStyle,
       quorumPresenceShortcutEnabled,
@@ -1520,16 +1616,16 @@ export default function MaintenanceDashboard() {
                 scrollEventThrottle={16}
                 keyExtractor={(item) => item.id}
                 getItemLayout={(_, index) => ({
-                  length: pageWidth,
-                  offset: pageWidth * index,
+                  length: carouselPageWidth,
+                  offset: carouselPageWidth * index,
                   index,
                 })}
                 snapToAlignment="start"
-                snapToInterval={isMinimalPresentation ? undefined : pageWidth}
+                snapToInterval={isMinimalPresentation ? undefined : carouselPageWidth}
                 snapToOffsets={
                   isMinimalPresentation
                     ? undefined
-                    : maintenanceCarouselCards.map((_, index) => index * pageWidth)
+                    : maintenanceCarouselCards.map((_, index) => index * carouselPageWidth)
                 }
                 decelerationRate="fast"
                 disableIntervalMomentum
@@ -2037,10 +2133,15 @@ const styles = StyleSheet.create({
   listContainer: {
     flex: 1,
     minHeight: 0,
+    width: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
   },
   carouselFlatList: {
     flex: 1,
     minHeight: 0,
+    width: '100%',
+    minWidth: 0,
   },
   cardWrapper: {
     justifyContent: 'center',
@@ -2167,6 +2268,12 @@ const styles = StyleSheet.create({
   },
   panelScroll: {
     flex: 1,
+    width: '100%',
+    minWidth: 0,
+    maxWidth: '100%',
+  },
+  panelScrollMinimal: {
+    alignSelf: 'stretch',
   },
   panelScrollContent: {
     padding: STATIC_MAINTENANCE_PANEL_INSETS.scrollPadding,
@@ -2247,19 +2354,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    alignSelf: 'stretch',
+    width: '100%',
+    maxWidth: '100%',
     backgroundColor: '#3A96DD',
     borderWidth: 1,
     borderColor: '#1B4F8A',
     borderRadius: 14,
     paddingVertical: 14,
   },
+  newEventButtonMinimal: {
+    backgroundColor: MINIMAL_UI.accent,
+    borderColor: MINIMAL_UI.blueDark,
+  },
   newEventButtonText: {
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '800',
   },
+  newEventButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
   listSection: {
     gap: 10,
+    width: '100%',
+    minWidth: 0,
+    maxWidth: '100%',
   },
   sectionTitle: {
     color: '#3A96DD',
@@ -2267,6 +2387,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
+  },
+  sectionTitleMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
   loader: {
     marginVertical: 24,
@@ -2298,6 +2421,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 14,
     gap: 6,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+  },
+  eventCardMinimal: {
+    borderColor: MINIMAL_UI.border,
   },
   eventCardSelected: {
     borderColor: '#3A96DD',
@@ -2310,18 +2440,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
+    width: '100%',
+    minWidth: 0,
   },
   eventCardName: {
     flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
     color: '#3A96DD',
     fontSize: 17,
     fontWeight: '700',
+  },
+  eventCardNameMinimal: {
+    color: MINIMAL_UI.text,
   },
   statusBadge: {
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderWidth: 1,
+    flexShrink: 0,
+  },
+  statusBadgeMinimal: {
+    borderColor: MINIMAL_UI.border,
   },
   statusBadgeActive: {
     backgroundColor: 'rgba(34, 197, 94, 0.18)',
@@ -2342,14 +2483,27 @@ const styles = StyleSheet.create({
   statusBadgeTextInactive: {
     color: 'rgba(58, 150, 221, 0.82)',
   },
+  statusBadgeTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
   eventCardMeta: {
     color: '#3A96DD',
     fontSize: 13,
+    flexShrink: 1,
+    width: '100%',
+  },
+  eventCardMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
   eventCardFlags: {
     color: '#1B4F8A',
     fontSize: 12,
     fontWeight: '600',
+    flexShrink: 1,
+    width: '100%',
+  },
+  eventCardFlagsMinimal: {
+    color: MINIMAL_UI.text,
   },
   emptyText: {
     color: 'rgba(58, 150, 221, 0.82)',
