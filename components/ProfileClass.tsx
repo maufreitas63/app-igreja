@@ -569,7 +569,7 @@ export function ProfileClass({
                             </TouchableOpacity>
                             <TouchableOpacity
                               style={[
-                                profileClassStyles.deleteVehicleButton,
+                                profileClassStyles.editButton,
                                 (deletingVehicleId === vehicle.id || savingVehicle) && profileClassStyles.disabledButton,
                               ]}
                               onPress={() => onDeleteVehicle(vehicle)}
@@ -580,7 +580,7 @@ export function ProfileClass({
                               {deletingVehicleId === vehicle.id ? (
                                 <ActivityIndicator color={MINIMAL_UI.onDark} size="small" />
                               ) : (
-                                <MaterialIcons name="delete" size={18} color={MINIMAL_UI.onDark} />
+                                <MaterialIcons name="delete-forever" size={18} color={MINIMAL_UI.onDark} />
                               )}
                             </TouchableOpacity>
                           </View>

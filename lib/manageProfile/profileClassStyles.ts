@@ -298,14 +298,6 @@ export const profileClassStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  deleteVehicleButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#DC2626',
-  },
   vehicleEditor: {
     marginTop: 16,
     padding: 12,
