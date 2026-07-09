@@ -66,7 +66,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'k', label: 'Sala(s) - Check In', moduleKey: 'sala_servidor' },
   { letter: 'l', label: 'Tipos de Escala', moduleKey: 'scales_type' },
   { letter: 'm', label: 'Servos em Disponibilidade', moduleKey: 'scales_volunteers' },
-  { letter: 'n', label: 'Prog. Escalas', moduleKey: 'scales' },
+  { letter: 'n', label: 'Programação de Escalas', moduleKey: 'scales' },
   { letter: 'o', label: 'Cuidados Pastorais', moduleKey: 'pastoral_care' },
   { letter: 'p', label: 'Info Financeiras', moduleKey: 'financials' },
   { letter: 'q', label: 'Modelo Preditivo', moduleKey: 'predictive_insights' },
