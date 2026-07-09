@@ -1,8 +1,5 @@
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
-import {
-  DASHBOARD_ADMINISTRATIVO_CARD_ID,
-  SUGGESTIONS_IMPROVEMENTS_SCREEN,
-} from '@/lib/administrativoModule';
+import { MaintenanceSupportSuggestionsCard } from '@/components/MaintenanceSupportSuggestionsCard';
 import {
   createAssemblyMinuteSignedUrl,
   fetchAssemblyMinutes,
@@ -10,17 +7,17 @@ import {
   type AssemblyMinuteRecord,
 } from '@/lib/assemblyMinutesApi';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
-import { withMinimalPresentation, withReturnRoute } from '@/lib/dashboardReturnNavigation';
+import { computeDashboardCardHeight } from '@/lib/dashboardPanelLayout';
 import {
   fetchMaintenanceSupportRequests,
   MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS,
   MAINTENANCE_SUPPORT_STATUS_LABELS,
   type MaintenanceSupportRequest,
 } from '@/lib/maintenanceSupportApi';
-import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
-import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -31,7 +28,9 @@ import {
   Text,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ADMINISTRATIVO_CLASS_SURFACE = '#FFFFFF';
 const ADMINISTRATIVO_CLASS_ICON_COLOR = '#1B4F8A';
@@ -79,7 +78,11 @@ export function AdministrativoClass({
   initialTab = 'atas',
   onPressRd,
 }: AdministrativoClassProps) {
-  const router = useRouter();
+  const { height: windowHeight } = useWindowDimensions();
+  const panelHeight = useMemo(
+    () => computeDashboardCardHeight(windowHeight, 0, 0),
+    [windowHeight]
+  );
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
 
   const [minutes, setMinutes] = useState<AssemblyMinuteRecord[]>([]);
@@ -96,6 +99,7 @@ export function AdministrativoClass({
     title: string;
     action: string;
   } | null>(null);
+  const [registerSuggestionOpen, setRegisterSuggestionOpen] = useState(false);
 
   const loadMinutes = useCallback(async () => {
     setLoadingMinutes(true);
@@ -156,17 +160,17 @@ export function AdministrativoClass({
   );
 
   const handleRegisterSuggestion = useCallback(() => {
-    router.push({
-      pathname: SUGGESTIONS_IMPROVEMENTS_SCREEN,
-      params: withReturnRoute(
-        '/administrativo',
-        withMinimalPresentation({
-          supportMode: 'new',
-          returnDashboardCard: DASHBOARD_ADMINISTRATIVO_CARD_ID,
-        })
-      ),
-    });
-  }, [router]);
+    setRegisterSuggestionOpen(true);
+  }, []);
+
+  const handleCloseRegisterSuggestion = useCallback(() => {
+    setRegisterSuggestionOpen(false);
+  }, []);
+
+  const handleSuggestionCreated = useCallback(() => {
+    setRegisterSuggestionOpen(false);
+    void loadSuggestions();
+  }, [loadSuggestions]);
 
   const handleOpenAtasModal = useCallback(() => {
     setActiveTab('atas');
@@ -422,6 +426,40 @@ export function AdministrativoClass({
         pdfUrl={pdfPreview?.url ?? null}
         onClose={() => setPdfPreview(null)}
       />
+
+      <Modal
+        visible={registerSuggestionOpen}
+        animationType="slide"
+        onRequestClose={handleCloseRegisterSuggestion}
+      >
+        <SafeAreaView style={styles.registerSuggestionModal} edges={['top', 'left', 'right', 'bottom']}>
+          <View style={styles.registerSuggestionHeader}>
+            <Text style={styles.registerSuggestionTitle}>Nova sugestão ou melhoria</Text>
+            <TouchableOpacity
+              accessibilityLabel="Fechar formulário de sugestão"
+              accessibilityRole="button"
+              onPress={handleCloseRegisterSuggestion}
+              style={styles.registerSuggestionCloseButton}
+              activeOpacity={0.85}
+            >
+              <MaterialIcons name="close" size={22} color={MINIMAL_UI.icon} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.registerSuggestionBody}>
+            <MaintenanceSupportSuggestionsCard
+              isActive={registerSuggestionOpen}
+              panelHeight={panelHeight}
+              initialMode="new"
+              returnOnCreate
+              variant="vigilance"
+              fillContainer
+              hidePanelHeader
+              onNavigateBack={handleCloseRegisterSuggestion}
+              onRequestCreated={handleSuggestionCreated}
+            />
+          </View>
+        </SafeAreaView>
+      </Modal>
 
       <Modal
         visible={completedActionModal !== null}
@@ -688,6 +726,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
+  },
+  registerSuggestionModal: {
+    flex: 1,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  registerSuggestionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  registerSuggestionTitle: {
+    flex: 1,
+    color: MINIMAL_UI.blueDark,
+    fontSize: 16,
+    fontWeight: '700',
+    paddingRight: 12,
+  },
+  registerSuggestionCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+  },
+  registerSuggestionBody: {
+    flex: 1,
+    minHeight: 0,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,

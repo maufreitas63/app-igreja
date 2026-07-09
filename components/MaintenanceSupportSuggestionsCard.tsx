@@ -52,6 +52,10 @@ type Props = {
   initialMode?: 'list' | 'new' | 'detail';
   returnOnCreate?: boolean;
   variant?: 'default' | 'vigilance';
+  /** Preenche o container pai (modal/tela) em vez de altura fixa de card do dashboard. */
+  fillContainer?: boolean;
+  /** Oculta título/subtítulo internos quando a tela pai já exibe o cabeçalho. */
+  hidePanelHeader?: boolean;
   onNavigateBack?: () => void;
   onRequestCreated?: () => void;
 };
@@ -317,6 +321,8 @@ export function MaintenanceSupportSuggestionsCard({
   initialMode = 'list',
   returnOnCreate = false,
   variant = 'default',
+  fillContainer = false,
+  hidePanelHeader = false,
   onNavigateBack,
   onRequestCreated,
 }: Props) {
@@ -328,7 +334,9 @@ export function MaintenanceSupportSuggestionsCard({
   const accentColor = isVigilance ? VIGILANCE_SCALES_UI.accent : ACCENT;
   const iconColor = isVigilance ? '#1B4F8A' : '#BAE6FD';
   const statusToneMap = isVigilance ? statusToneVigilance : statusTone;
-  const contentHeight = computeMaintenanceContentHeight(panelHeight);
+  const contentHeight = fillContainer
+    ? undefined
+    : computeMaintenanceContentHeight(panelHeight);
   const { requests, loading, refreshing, schemaMissing, schemaHint, error, reload } =
     useMaintenanceSupport(isActive);
 
@@ -1343,11 +1351,22 @@ export function MaintenanceSupportSuggestionsCard({
   };
 
   return (
-    <View style={[themedStyles.panel, { height: contentHeight }]}>
-      <Text style={[maintenancePanelStyles.panelTitle, isVigilance && { color: VIGILANCE_SCALES_UI.accent }]}>Sugestões e Melhorias</Text>
-      <Text style={themedStyles.subtitle}>
-        Registro, acompanhamento, respostas e comunicações das solicitações dos usuários.
-      </Text>
+    <View
+      style={[
+        themedStyles.panel,
+        fillContainer ? themedStyles.panelFill : { height: contentHeight },
+      ]}
+    >
+      {!hidePanelHeader ? (
+        <>
+          <Text style={[maintenancePanelStyles.panelTitle, isVigilance && { color: VIGILANCE_SCALES_UI.accent }]}>
+            Sugestões e Melhorias
+          </Text>
+          <Text style={themedStyles.subtitle}>
+            Registro, acompanhamento, respostas e comunicações das solicitações dos usuários.
+          </Text>
+        </>
+      ) : null}
 
       {schemaMissing ? <Text style={themedStyles.warningText}>{schemaHint}</Text> : null}
       {error ? <Text style={themedStyles.errorText}>{error}</Text> : null}
@@ -1376,6 +1395,11 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     flex: 1,
     minHeight: 0,
     gap: 8,
+  },
+  panelFill: {
+    flex: 1,
+    minHeight: 0,
+    height: undefined,
   },
   contentArea: {
     flex: 1,

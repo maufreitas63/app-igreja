@@ -1,4 +1,5 @@
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
@@ -15,7 +16,7 @@ export function ScreenAccessGate({ status, children }: ScreenAccessGateProps) {
   if (status === 'checking') {
     return (
       <View style={styles.gate}>
-        <ActivityIndicator color="#818CF8" size="large" />
+        <ActivityIndicator color={MINIMAL_UI.blueDark} size="large" />
         <Text style={styles.gateText}>Verificando permissão...</Text>
       </View>
     );
@@ -35,10 +36,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     padding: 24,
-    backgroundColor: '#020617',
+    backgroundColor: MINIMAL_UI.background,
   },
   gateText: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 14,
     textAlign: 'center',
   },

@@ -39,7 +39,9 @@ export default function SuggestionsImprovementsScreen() {
   const returnRoute = resolveReturnRouteParam(params);
   const initialMode = pickRouteParam(params.supportMode) === 'new' ? 'new' : 'list';
 
-  const accessStatus = useSuggestionsImprovementsAccess();
+  const accessStatus = useSuggestionsImprovementsAccess({
+    redirectPath: returnRoute === '/administrativo' ? '/administrativo' : '/(tabs)/dashboard',
+  });
 
   const handleReturnToAdministrativo = () => {
     if (returnRoute === '/administrativo') {
@@ -72,6 +74,8 @@ export default function SuggestionsImprovementsScreen() {
             initialMode={initialMode}
             returnOnCreate
             variant="vigilance"
+            fillContainer
+            hidePanelHeader
             onNavigateBack={handleReturnToAdministrativo}
             onRequestCreated={handleReturnToAdministrativo}
           />
