@@ -13,6 +13,7 @@ import {
 } from '@/lib/eventFavoriteLocationsApi';
 import { formatEventCapacityLabel, isUnlimitedEventCapacity, UNLIMITED_EVENT_CAPACITY_LABEL } from '@/lib/eventCapacity';
 import { formatBrazilCepInput } from '@/lib/inputMasks';
+import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -325,7 +326,7 @@ export function EventFavoriteLocationPickerModal({
                   accessibilityRole="button"
                   accessibilityLabel="Cadastrar novo local favorito"
                 >
-                  <MaterialIcons name="add" size={18} color="#C7D2FE" />
+                  <MaterialIcons name="add" size={18} color={MINIMAL_UI.icon} />
                   <Text style={styles.headerActionText}>Novo</Text>
                 </Pressable>
               ) : null}
@@ -335,14 +336,14 @@ export function EventFavoriteLocationPickerModal({
                 accessibilityLabel="Fechar locais favoritos"
                 hitSlop={8}
               >
-                <MaterialIcons name="close" size={22} color="#CBD5E1" />
+                <MaterialIcons name="close" size={22} color={MINIMAL_UI.icon} />
               </Pressable>
             </View>
           </View>
 
           {loading ? (
             <View style={styles.centerBox}>
-              <ActivityIndicator color="#A5B4FC" />
+              <ActivityIndicator color={MINIMAL_UI.accent} />
             </View>
           ) : null}
 
@@ -404,7 +405,7 @@ export function EventFavoriteLocationPickerModal({
                             ) : null}
                           </View>
                           {location.is_active ? (
-                            <MaterialIcons name="chevron-right" size={20} color="#94A3B8" />
+                            <MaterialIcons name="chevron-right" size={20} color={MINIMAL_UI.textMuted} />
                           ) : null}
                         </Pressable>
 
@@ -416,7 +417,7 @@ export function EventFavoriteLocationPickerModal({
                               accessibilityRole="button"
                               accessibilityLabel={`Editar ${location.name}`}
                             >
-                              <MaterialIcons name="edit" size={18} color="#C7D2FE" />
+                              <MaterialIcons name="edit" size={18} color={MINIMAL_UI.accent} />
                             </Pressable>
                             <Pressable
                               style={styles.iconButton}
@@ -426,9 +427,9 @@ export function EventFavoriteLocationPickerModal({
                               accessibilityLabel={`Apagar ${location.name}`}
                             >
                               {isDeleting ? (
-                                <ActivityIndicator color="#FCA5A5" size="small" />
+                                <ActivityIndicator color={MINIMAL_UI.blueDark} size="small" />
                               ) : (
-                                <MaterialIcons name="delete-outline" size={18} color="#FCA5A5" />
+                                <MaterialIcons name="delete-outline" size={18} color={MINIMAL_UI.blueDark} />
                               )}
                             </Pressable>
                           </View>
@@ -449,7 +450,7 @@ export function EventFavoriteLocationPickerModal({
                     <TextInput
                       style={[styles.input, styles.nameInput]}
                       placeholder="Ex.: Templo principal"
-                      placeholderTextColor="#64748B"
+                      placeholderTextColor={MINIMAL_UI.textMuted}
                       value={form.name}
                       onChangeText={(text) => patchForm({ name: text })}
                     />
@@ -464,9 +465,9 @@ export function EventFavoriteLocationPickerModal({
                       accessibilityLabel="Usar localização atual do aparelho"
                     >
                       {geoLoading ? (
-                        <ActivityIndicator color="#C7D2FE" size="small" />
+                        <ActivityIndicator color={MINIMAL_UI.accent} size="small" />
                       ) : (
-                        <MaterialIcons name="gps-fixed" size={20} color="#C7D2FE" />
+                        <MaterialIcons name="gps-fixed" size={20} color={MINIMAL_UI.icon} />
                       )}
                     </Pressable>
                   </View>
@@ -475,7 +476,7 @@ export function EventFavoriteLocationPickerModal({
                   <TextInput
                     style={[styles.input, styles.capacityInput]}
                     placeholder="Capacidade *"
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor={MINIMAL_UI.textMuted}
                     value={form.capacity}
                     keyboardType="number-pad"
                     onChangeText={(text) => patchForm({ capacity: text.replace(/\D/g, '') })}
@@ -491,7 +492,7 @@ export function EventFavoriteLocationPickerModal({
                 <TextInput
                   style={[styles.input, styles.cepInput]}
                   placeholder="11677-042"
-                  placeholderTextColor="#64748B"
+                  placeholderTextColor={MINIMAL_UI.textMuted}
                   value={form.cep}
                   keyboardType="number-pad"
                   onChangeText={(text) => patchForm({ cep: formatBrazilCepInput(text) })}
@@ -505,7 +506,7 @@ export function EventFavoriteLocationPickerModal({
                   disabled={cepLoading || cepColumnMissing}
                 >
                   {cepLoading ? (
-                    <ActivityIndicator color="#C7D2FE" size="small" />
+                    <ActivityIndicator color={MINIMAL_UI.accent} size="small" />
                   ) : (
                     <Text style={styles.lookupButtonText}>Buscar</Text>
                   )}
@@ -516,7 +517,7 @@ export function EventFavoriteLocationPickerModal({
               <TextInput
                 style={[styles.input, styles.multilineInput]}
                 placeholder="Preenchido automaticamente pelo CEP"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={MINIMAL_UI.textMuted}
                 value={form.address}
                 multiline
                 onChangeText={(text) => patchForm({ address: text })}
@@ -528,7 +529,7 @@ export function EventFavoriteLocationPickerModal({
                   <TextInput
                     style={styles.input}
                     placeholder="-23.6206"
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor={MINIMAL_UI.textMuted}
                     value={form.latitude}
                     keyboardType="decimal-pad"
                     onChangeText={(text) => patchForm({ latitude: text })}
@@ -539,7 +540,7 @@ export function EventFavoriteLocationPickerModal({
                   <TextInput
                     style={styles.input}
                     placeholder="-45.4131"
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor={MINIMAL_UI.textMuted}
                     value={form.longitude}
                     keyboardType="decimal-pad"
                     onChangeText={(text) => patchForm({ longitude: text })}
@@ -553,7 +554,7 @@ export function EventFavoriteLocationPickerModal({
                   <TextInput
                     style={styles.input}
                     placeholder="0"
-                    placeholderTextColor="#64748B"
+                    placeholderTextColor={MINIMAL_UI.textMuted}
                     value={form.sortOrder}
                     keyboardType="number-pad"
                     onChangeText={(text) => patchForm({ sortOrder: text.replace(/\D/g, '') })}
@@ -566,8 +567,8 @@ export function EventFavoriteLocationPickerModal({
                 <Switch
                   value={form.isActive}
                   onValueChange={(isActive) => patchForm({ isActive })}
-                  trackColor={{ false: '#475569', true: '#22C55E' }}
-                  thumbColor="#F8FAFC"
+                  trackColor={{ false: MINIMAL_UI.divider, true: MINIMAL_UI.accent }}
+                  thumbColor={MINIMAL_UI.background}
                 />
               </View>
 
@@ -614,7 +615,7 @@ export function EventFavoriteLocationPickerModal({
                     disabled={saving}
                   >
                     {saving ? (
-                      <ActivityIndicator color="#0f172a" size="small" />
+                      <ActivityIndicator color={MINIMAL_UI.onDark} size="small" />
                     ) : (
                       <Text style={styles.primaryButtonText}>Salvar</Text>
                     )}
@@ -632,73 +633,87 @@ export function EventFavoriteLocationPickerModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(2, 6, 23, 0.72)',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 24,
   },
   sheet: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
     maxHeight: '86%',
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.45)',
-    backgroundColor: '#0f172a',
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
     padding: 16,
     gap: 12,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
+    minWidth: 0,
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 0,
   },
   headerActionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.45)',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
+    backgroundColor: MINIMAL_UI.background,
   },
   headerActionText: {
-    color: '#C7D2FE',
+    color: MINIMAL_UI.accent,
     fontSize: 12,
     fontWeight: '800',
   },
   title: {
-    color: '#F8FAFC',
-    fontSize: 17,
-    fontWeight: '800',
+    ...MINIMAL_TYPO.screenTitle,
+    color: MINIMAL_UI.blueDark,
     flex: 1,
+    minWidth: 0,
   },
   centerBox: {
     alignItems: 'center',
     paddingVertical: 20,
   },
   hintText: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
   warningText: {
-    color: '#FCD34D',
+    color: MINIMAL_UI.accent,
     fontSize: 12,
     lineHeight: 17,
   },
   errorText: {
-    color: '#FCA5A5',
+    color: MINIMAL_UI.blueDark,
     fontSize: 13,
     lineHeight: 18,
   },
   list: {
     maxHeight: 420,
+    width: '100%',
+    minWidth: 0,
   },
   listContent: {
     gap: 8,
@@ -707,6 +722,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
     gap: 8,
+    width: '100%',
+    minWidth: 0,
   },
   option: {
     flex: 1,
@@ -714,9 +731,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.22)',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    backgroundColor: MINIMAL_UI.background,
     paddingHorizontal: 12,
     paddingVertical: 10,
     minWidth: 0,
@@ -725,8 +742,8 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   optionPressed: {
-    borderColor: '#A5B4FC',
-    backgroundColor: 'rgba(99, 102, 241, 0.18)',
+    borderColor: MINIMAL_UI.accent,
+    backgroundColor: MINIMAL_UI.rowHover,
   },
   optionTextWrap: {
     flex: 1,
@@ -734,28 +751,28 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   optionTitle: {
-    color: '#F8FAFC',
+    color: MINIMAL_UI.text,
     fontSize: 15,
     fontWeight: '700',
   },
   optionMeta: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
   optionCapacity: {
-    color: '#A5B4FC',
+    color: MINIMAL_UI.accent,
     fontSize: 12,
     fontWeight: '700',
   },
   unlimitedHint: {
-    color: '#86EFAC',
+    color: MINIMAL_UI.textMuted,
     fontSize: 11,
     fontWeight: '700',
     lineHeight: 14,
   },
   optionInactiveLabel: {
-    color: '#F59E0B',
+    color: MINIMAL_UI.accent,
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -763,37 +780,40 @@ const styles = StyleSheet.create({
   optionActions: {
     justifyContent: 'center',
     gap: 6,
+    flexShrink: 0,
   },
   iconButton: {
     width: 34,
     height: 34,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.22)',
+    borderColor: MINIMAL_UI.border,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    backgroundColor: MINIMAL_UI.background,
   },
   formScroll: {
     maxHeight: 520,
+    width: '100%',
+    minWidth: 0,
   },
   formContent: {
     gap: 8,
     paddingBottom: 4,
   },
   fieldLabel: {
-    color: '#C7D2FE',
+    color: MINIMAL_UI.textMuted,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: '#020617',
+    backgroundColor: MINIMAL_UI.background,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 10,
-    color: '#F8FAFC',
+    color: MINIMAL_UI.text,
     fontSize: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -802,6 +822,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 10,
+    width: '100%',
+    minWidth: 0,
   },
   localColumn: {
     flex: 1,
@@ -821,10 +843,11 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.45)',
+    borderColor: MINIMAL_UI.border,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(99, 102, 241, 0.14)',
+    backgroundColor: MINIMAL_UI.rowHover,
+    flexShrink: 0,
   },
   geoTargetButtonPressed: {
     opacity: 0.85,
@@ -855,29 +878,33 @@ const styles = StyleSheet.create({
   lookupButton: {
     minWidth: 78,
     borderWidth: 1,
-    borderColor: 'rgba(129, 140, 248, 0.45)',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(99, 102, 241, 0.14)',
+    backgroundColor: MINIMAL_UI.rowHover,
+    flexShrink: 0,
   },
   lookupButtonPressed: {
     opacity: 0.85,
   },
   lookupButtonText: {
-    color: '#C7D2FE',
+    color: MINIMAL_UI.accent,
     fontSize: 13,
     fontWeight: '800',
   },
   coordRow: {
     flexDirection: 'row',
     gap: 10,
+    width: '100%',
+    minWidth: 0,
   },
   coordField: {
     flex: 1,
     gap: 6,
+    minWidth: 0,
   },
   switchRow: {
     flexDirection: 'row',
@@ -886,7 +913,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   switchLabel: {
-    color: '#E2E8F0',
+    color: MINIMAL_UI.text,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -896,23 +923,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
     marginTop: 8,
+    width: '100%',
+    minWidth: 0,
   },
   formActionsRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     marginLeft: 'auto',
+    flexShrink: 0,
   },
   primaryButton: {
     minWidth: 92,
     borderRadius: 10,
-    backgroundColor: '#A5B4FC',
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.blueDark,
     paddingHorizontal: 14,
     paddingVertical: 10,
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#0f172a',
+    color: MINIMAL_UI.onDark,
     fontSize: 13,
     fontWeight: '800',
   },
@@ -920,13 +952,14 @@ const styles = StyleSheet.create({
     minWidth: 92,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: MINIMAL_UI.blueDark,
     paddingHorizontal: 14,
     paddingVertical: 10,
     alignItems: 'center',
+    backgroundColor: MINIMAL_UI.background,
   },
   secondaryButtonText: {
-    color: '#CBD5E1',
+    color: MINIMAL_UI.blueDark,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -934,13 +967,14 @@ const styles = StyleSheet.create({
     minWidth: 84,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(248, 113, 113, 0.45)',
+    borderColor: MINIMAL_UI.blueDark,
     paddingHorizontal: 12,
     paddingVertical: 10,
     alignItems: 'center',
+    backgroundColor: MINIMAL_UI.background,
   },
   deleteButtonText: {
-    color: '#FCA5A5',
+    color: MINIMAL_UI.blueDark,
     fontSize: 13,
     fontWeight: '800',
   },

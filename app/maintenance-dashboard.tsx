@@ -138,6 +138,8 @@ const ROOM_CHIP_TEENS_ACTIVE: ViewStyle = {
 const MAINTENANCE_SCREEN_GRADIENT = ['#FFFFFF', '#F0F9FF'] as const;
 const FOOTER_NAV_REPEAT_MS = 500;
 
+const MINIMAL_SWITCH_TRACK = { false: MINIMAL_UI.divider, true: MINIMAL_UI.accent } as const;
+
 const STATIC_MAINTENANCE_PANEL_INSETS = computeMaintenancePanelInsets(390);
 /** Padding horizontal de `MinimalScreenLayout` (`flexContent`). */
 const MINIMAL_LAYOUT_HORIZONTAL_PADDING = 16;
@@ -1473,7 +1475,12 @@ export default function MaintenanceDashboard() {
                                 summary.isPublished
                                   ? styles.statusBadgeActive
                                   : styles.statusBadgeInactive,
-                                isMinimalPresentation && styles.statusBadgeMinimal,
+                                isMinimalPresentation
+                                  && summary.isPublished
+                                  && styles.statusBadgeActiveMinimal,
+                                isMinimalPresentation
+                                  && !summary.isPublished
+                                  && styles.statusBadgeInactiveMinimal,
                               ]}
                             >
                               <Text
@@ -1482,7 +1489,12 @@ export default function MaintenanceDashboard() {
                                   summary.isPublished
                                     ? styles.statusBadgeTextActive
                                     : styles.statusBadgeTextInactive,
-                                  isMinimalPresentation && styles.statusBadgeTextMinimal,
+                                  isMinimalPresentation
+                                    && summary.isPublished
+                                    && styles.statusBadgeTextActiveMinimal,
+                                  isMinimalPresentation
+                                    && !summary.isPublished
+                                    && styles.statusBadgeTextInactiveMinimal,
                                 ]}
                               >
                                 {summary.isPublished ? 'Publicado' : 'Rascunho'}
@@ -1873,10 +1885,17 @@ export default function MaintenanceDashboard() {
                   </View>
                 ) : null}
 
-                <View style={styles.publishRow}>
+                <View style={[styles.publishRow, isMinimalPresentation && styles.publishRowMinimal]}>
                   <View style={styles.publishCopy}>
-                    <Text style={styles.fieldLabel}>Publicação</Text>
-                    <Text style={styles.publishHint}>
+                    <Text style={[styles.fieldLabel, isMinimalPresentation && styles.fieldLabelMinimal]}>
+                      Publicação
+                    </Text>
+                    <Text
+                      style={[
+                        styles.publishHint,
+                        isMinimalPresentation && styles.publishHintMinimal,
+                      ]}
+                    >
                       {form.isPublished
                         ? 'Publicado — visível no dashboard e cronograma (verde)'
                         : 'Rascunho — oculto para membros; no cronograma aparece em laranja'}
@@ -1885,8 +1904,8 @@ export default function MaintenanceDashboard() {
                   <Switch
                     value={form.isPublished}
                     onValueChange={(isPublished) => patchForm({ isPublished })}
-                    trackColor={{ false: '#475569', true: '#22C55E' }}
-                    thumbColor="#F8FAFC"
+                    trackColor={isMinimalPresentation ? MINIMAL_SWITCH_TRACK : { false: '#475569', true: '#22C55E' }}
+                    thumbColor={isMinimalPresentation ? MINIMAL_UI.background : '#F8FAFC'}
                   />
                 </View>
                 {isEventDateInPast && form.isPublished && !canBypassEventPastDateLock ? (
@@ -2461,7 +2480,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexShrink: 0,
   },
-  statusBadgeMinimal: {
+  statusBadgeActiveMinimal: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#16A34A',
+  },
+  statusBadgeInactiveMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
     borderColor: MINIMAL_UI.border,
   },
   statusBadgeActive: {
@@ -2483,8 +2507,11 @@ const styles = StyleSheet.create({
   statusBadgeTextInactive: {
     color: 'rgba(58, 150, 221, 0.82)',
   },
-  statusBadgeTextMinimal: {
+  statusBadgeTextInactiveMinimal: {
     color: MINIMAL_UI.textMuted,
+  },
+  statusBadgeTextActiveMinimal: {
+    color: '#15803D',
   },
   eventCardMeta: {
     color: '#3A96DD',
@@ -2773,14 +2800,26 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: 'rgba(148, 163, 184, 0.2)',
+    width: '100%',
+    minWidth: 0,
+  },
+  publishRowMinimal: {
+    borderTopColor: MINIMAL_UI.divider,
   },
   publishCopy: {
     flex: 1,
     gap: 4,
+    minWidth: 0,
   },
   publishHint: {
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
+  },
+  publishHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  fieldLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
   publishPastWarning: {
     color: '#FCD34D',
