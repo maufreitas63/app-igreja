@@ -1353,7 +1353,18 @@ export default function MaintenanceDashboard() {
               panelHeight={cardHeight}
             />
           ) : item.content === 'scale_types' ? (
-            <MaintenanceScaleTypesCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <View
+              style={[
+                styles.scaleTypesPanel,
+                isMinimalPresentation && styles.scaleTypesPanelMinimal,
+              ]}
+            >
+              <MaintenanceScaleTypesCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'scale_volunteers' ? (
             <MaintenanceScaleVolunteersCard
               isActive={currentIndex === index}
@@ -2405,6 +2416,18 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   orchestrationPanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  scaleTypesPanel: {
+    flex: 1,
+    minHeight: 0,
+  },
+  scaleTypesPanelMinimal: {
     paddingHorizontal: 0,
     paddingVertical: 4,
     width: '100%',

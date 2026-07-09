@@ -6,6 +6,7 @@ import {
 } from '@/lib/maintenanceCardStyles';
 import { MAINTENANCE_SCALE_TYPES_SQL_HINT } from '@/hooks/useMaintenanceScaleTypes';
 import { mapLegacyRoomDisplayLabel } from '@/lib/roomDisplayLabels';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -22,6 +23,7 @@ import Toast from 'react-native-toast-message';
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
 
 type ScaleTypesSectionKey = 'create' | 'registered';
@@ -78,7 +80,11 @@ function CollapsibleSection({
   );
 }
 
-export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Props) {
+export function MaintenanceScaleTypesCard({
+  isActive = true,
+  panelHeight,
+  minimal = false,
+}: Props) {
   const {
     scaleTypes,
     loading,
@@ -179,12 +185,14 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
   };
 
   const renderScaleTypeForm = (mode: 'create' | 'edit') => (
-    <View style={styles.formCard}>
-      <Text style={styles.formTitle}>{mode === 'edit' ? 'Editar tipo de escala' : 'Novo tipo'}</Text>
+    <View style={[styles.formCard, minimal && styles.formCardMinimal]}>
+      <Text style={[styles.formTitle, minimal && styles.formTitleMinimal]}>
+        {mode === 'edit' ? 'Editar tipo de escala' : 'Novo tipo'}
+      </Text>
 
-      <Text style={styles.fieldLabel}>Código</Text>
+      <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Código</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, minimal && styles.inputMinimal]}
         placeholder="ex.: vigilancia_estacionamento"
         placeholderTextColor="#64748B"
         value={codeInput}
@@ -193,9 +201,9 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
         autoCorrect={false}
       />
 
-      <Text style={styles.fieldLabel}>Nome</Text>
+      <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Nome</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, minimal && styles.inputMinimal]}
         placeholder="Nome exibido no app"
         placeholderTextColor="#64748B"
         value={nameInput}
@@ -203,9 +211,9 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
         autoCapitalize="words"
       />
 
-      <Text style={styles.fieldLabel}>Vagas por domingo</Text>
+      <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Vagas por domingo</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, minimal && styles.inputMinimal]}
         placeholder="1 a 50"
         placeholderTextColor="#64748B"
         value={vagasInput}
@@ -214,56 +222,84 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
         maxLength={2}
       />
 
-      <Text style={styles.fieldLabel}>Modo do ciclo em bloco</Text>
+      <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Modo do ciclo em bloco</Text>
       <View style={styles.modeRow}>
         <TouchableOpacity
-          style={[styles.modeChip, modoCiclo === 'individual' && styles.modeChipActive]}
+          style={[
+            styles.modeChip,
+            minimal && styles.modeChipMinimal,
+            modoCiclo === 'individual' && styles.modeChipActive,
+            minimal && modoCiclo === 'individual' && styles.modeChipActiveMinimal,
+          ]}
           onPress={() => setModoCiclo('individual')}
           disabled={formBusy}
           activeOpacity={0.85}
         >
           <Text
-            style={[styles.modeChipText, modoCiclo === 'individual' && styles.modeChipTextActive]}
+            style={[
+              styles.modeChipText,
+              minimal && styles.modeChipTextMinimal,
+              modoCiclo === 'individual' && styles.modeChipTextActive,
+              minimal && modoCiclo === 'individual' && styles.modeChipTextActiveMinimal,
+            ]}
           >
             Individual
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.modeChip, modoCiclo === 'equipe' && styles.modeChipActive]}
+          style={[
+            styles.modeChip,
+            minimal && styles.modeChipMinimal,
+            modoCiclo === 'equipe' && styles.modeChipActive,
+            minimal && modoCiclo === 'equipe' && styles.modeChipActiveMinimal,
+          ]}
           onPress={() => setModoCiclo('equipe')}
           disabled={formBusy}
           activeOpacity={0.85}
         >
-          <Text style={[styles.modeChipText, modoCiclo === 'equipe' && styles.modeChipTextActive]}>
+          <Text
+            style={[
+              styles.modeChipText,
+              minimal && styles.modeChipTextMinimal,
+              modoCiclo === 'equipe' && styles.modeChipTextActive,
+              minimal && modoCiclo === 'equipe' && styles.modeChipTextActiveMinimal,
+            ]}
+          >
             Equipe
           </Text>
         </TouchableOpacity>
       </View>
-      <Text style={styles.fieldHint}>
+      <Text style={[styles.fieldHint, minimal && styles.fieldHintMinimal]}>
         Individual: cada servo em domingo distinto. Equipe: até N servos no mesmo domingo.
       </Text>
 
       <View style={styles.formActions}>
         {mode === 'edit' ? (
           <TouchableOpacity
-            style={styles.cancelButton}
+            style={[styles.cancelButton, minimal && styles.cancelButtonMinimal]}
             onPress={cancelEdit}
             disabled={formBusy}
             activeOpacity={0.85}
           >
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
+            <Text style={[styles.cancelButtonText, minimal && styles.cancelButtonTextMinimal]}>
+              Cancelar
+            </Text>
           </TouchableOpacity>
         ) : null}
         <TouchableOpacity
-          style={[styles.saveButton, formBusy && styles.saveButtonDisabled]}
+          style={[
+            styles.saveButton,
+            minimal && styles.saveButtonMinimal,
+            formBusy && styles.saveButtonDisabled,
+          ]}
           onPress={() => void handleSave()}
           disabled={formBusy || rpcMissing}
           activeOpacity={0.85}
         >
           {saving ? (
-            <ActivityIndicator color="#0f172a" size="small" />
+            <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0f172a'} size="small" />
           ) : (
-            <Text style={styles.saveButtonText}>
+            <Text style={[styles.saveButtonText, minimal && styles.saveButtonTextMinimal]}>
               {mode === 'edit' ? 'Salvar alterações' : 'Cadastrar'}
             </Text>
           )}
@@ -274,20 +310,42 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
 
   if (loading) {
     return (
-      <View style={[styles.panel, maintenancePanelStyles.panelCentered, { height: contentHeight }]}>
-        <CardLoadingState lines={4} />
-        <Text style={maintenancePanelStyles.panelHint}>Carregando tipos de escala…</Text>
+      <View
+        style={[
+          styles.panel,
+          minimal && styles.panelMinimal,
+          maintenancePanelStyles.panelCentered,
+          { height: contentHeight },
+        ]}
+      >
+        <CardLoadingState lines={4} minimal={minimal} />
+        <Text
+          style={[
+            maintenancePanelStyles.panelHint,
+            minimal && styles.panelHintMinimal,
+          ]}
+        >
+          Carregando tipos de escala…
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Tipos de Escala</Text>
-      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+    <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
+      <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}>
+        Tipos de Escala
+      </Text>
+      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
-      {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_SCALE_TYPES_SQL_HINT}</Text> : null}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {rpcMissing ? (
+        <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
+          {MAINTENANCE_SCALE_TYPES_SQL_HINT}
+        </Text>
+      ) : null}
+      {error ? (
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
+      ) : null}
 
       {!editingId ? (
         <CollapsibleSection
@@ -300,7 +358,7 @@ export function MaintenanceScaleTypesCard({ isActive = true, panelHeight }: Prop
         </CollapsibleSection>
       ) : null}
 
-      <View style={styles.registeredSectionWrap}>
+      <View style={[styles.registeredSectionWrap, minimal && styles.registeredSectionWrapMinimal]}>
         <CollapsibleSection
           title="Escalas cadastradas"
           subtitle={
@@ -608,5 +666,91 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
+  },
+  panelMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    borderRadius: 0,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'hidden',
+  },
+  sectionTitleMinimal: {
+    ...MINIMAL_SECTION_TITLE,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+  },
+  panelHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textAlign: 'center',
+  },
+  warningTextMinimal: {
+    color: '#B45309',
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
+  },
+  registeredSectionWrapMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  formCardMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  formTitleMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  fieldLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  fieldHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  inputMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+    borderColor: MINIMAL_UI.border,
+    color: MINIMAL_UI.text,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  modeChipMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  modeChipActiveMinimal: {
+    borderColor: MINIMAL_UI.accent,
+    backgroundColor: '#EFF6FF',
+  },
+  modeChipTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  modeChipTextActiveMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  cancelButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+  },
+  cancelButtonTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  saveButtonMinimal: {
+    flex: 1,
+    minWidth: 0,
+    maxWidth: '100%',
+    backgroundColor: MINIMAL_UI.accent,
+  },
+  saveButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
   },
 });
