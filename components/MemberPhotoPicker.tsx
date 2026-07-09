@@ -1,3 +1,5 @@
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { pickSelfieFromWeb } from '@/lib/selfie';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -104,7 +106,7 @@ export function MemberPhotoPicker({
               cachePolicy="none"
             />
           ) : (
-            <MaterialIcons name="person" size={34} color="#4C9FE0" />
+            <MaterialIcons name="person" size={34} color={MINIMAL_UI.icon} />
           )}
         </View>
         <TouchableOpacity
@@ -113,7 +115,7 @@ export function MemberPhotoPicker({
           disabled={disabled}
           activeOpacity={0.85}
         >
-          <MaterialIcons name="photo-camera" size={18} color="#0f172a" />
+          <MaterialIcons name="photo-camera" size={18} color={MINIMAL_UI.onDark} />
           <Text style={styles.buttonText}>
             {photoUri ? 'Alterar fotografia' : 'Adicionar fotografia'}
           </Text>
@@ -128,13 +130,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   label: {
-    color: '#CBD5E1',
+    color: MINIMAL_UI.text,
     fontSize: 13,
     fontWeight: '700',
     marginBottom: 6,
   },
   hint: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 12,
     lineHeight: 17,
     marginBottom: 10,
@@ -149,8 +151,8 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: '#D0FFF0',
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.rowHover,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -166,8 +168,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    borderRadius: 10,
-    backgroundColor: '#cbffee',
+    borderRadius: 12,
+    backgroundColor: VIGILANCE_SCALES_UI.accent,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
@@ -175,8 +177,8 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#4c9fe0',
-    fontSize: 13,
-    fontWeight: '800',
+    color: MINIMAL_UI.onDark,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
