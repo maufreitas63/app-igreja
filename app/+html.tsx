@@ -1,4 +1,5 @@
 import { ScrollViewStyleReset } from 'expo-router/html';
+import { WEB_NON_SELECTABLE_CSS } from '@/lib/webTextSelectionGuard';
 import { type PropsWithChildren } from 'react';
 
 const PWA_THEME_COLOR = '#0f172a';
@@ -23,6 +24,7 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="/pwa/icon-192.png" />
         <ScrollViewStyleReset />
+        <style dangerouslySetInnerHTML={{ __html: WEB_NON_SELECTABLE_CSS }} />
       </head>
       <body>{children}</body>
     </html>

@@ -12,12 +12,16 @@ import { GhostModeBanner } from '@/components/GhostModeBanner';
 import { GhostModeProvider } from '@/context/GhostModeContext';
 import { appToastConfig } from '@/components/ui/appToastConfig';
 import { ICON_FONT_SOURCES } from '@/lib/iconFonts';
+import { installWebTextSelectionGuard, WEB_NON_SELECTABLE_VIEW_STYLES } from '@/lib/webTextSelectionGuard';
 import { useFonts } from 'expo-font';
 import Toast from 'react-native-toast-message';
+import { useEffect } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
 export default function RootLayout() {
   const [iconFontsLoaded] = useFonts(ICON_FONT_SOURCES);
+
+  useEffect(() => installWebTextSelectionGuard(), []);
 
   if (!iconFontsLoaded) {
     return (
@@ -45,6 +49,7 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    ...WEB_NON_SELECTABLE_VIEW_STYLES,
   },
   fontLoader: {
     flex: 1,

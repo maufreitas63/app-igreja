@@ -19,6 +19,7 @@ import {
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { WEB_NON_SELECTABLE_VIEW_STYLES } from '@/lib/webTextSelectionGuard';
 
 const LOGIN_SURFACE = '#FFFFFF';
 const LOGIN_ACCENT = VIGILANCE_SCALES_UI.accent;
@@ -1198,14 +1199,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
     opacity: 0.72,
   },
-  nonSelectableText: Platform.select({
-    web: {
-      userSelect: 'none',
-      WebkitUserSelect: 'none',
-      WebkitTouchCallout: 'none',
-    },
-    default: {},
-  }),
+  nonSelectableText: WEB_NON_SELECTABLE_VIEW_STYLES,
   pinHint: {
     color: LOGIN_ACCENT,
     fontSize: 13,

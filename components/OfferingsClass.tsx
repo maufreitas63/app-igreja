@@ -67,9 +67,7 @@ export function OfferingsClass({
           </View>
         ) : pixKey ? (
           <>
-            <Text style={styles.pixKeyValue} selectable>
-              {pixKey}
-            </Text>
+            <Text style={styles.pixKeyValue}>{pixKey}</Text>
             <TouchableOpacity
               style={styles.copyButton}
               onPress={onCopyPixKey}
