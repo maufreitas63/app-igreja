@@ -42,6 +42,13 @@ select
   media_email_function_url,
   media_email_function_secret,
   case
+    when coalesce(media_app_url, app_public_url) is null
+      then 'ERRO — defina media_authorization_app_url (URL pública do app em produção)'
+    when coalesce(media_app_url, app_public_url) ~* 'localhost|127\.0\.0\.1'
+      then 'ERRO — URL local não serve em e-mail de produção'
+    else 'OK — link de confirmação aponta para produção'
+  end as link_status,
+  case
     when recovery_provider = 'gmail'
       and recovery_from is not null
       and recovery_function_url is not null
@@ -79,6 +86,14 @@ from cfg;
 --  where lower(email) = lower('seu@email.com')
 --  order by created_at desc
 --  limit 5;
+
+-- Cadastre a URL pública (substitua pela URL real do Cloudflare Pages):
+-- insert into public.app_parameters (parameter, value)
+-- values ('media_authorization_app_url', 'https://seu-app.pages.dev')
+-- on conflict do nothing;
+-- update public.app_parameters
+--    set value = 'https://seu-app.pages.dev'
+--  where lower(trim(parameter)) = 'media_authorization_app_url';
 
 -- Teste de envio manual (substitua nome, e-mail e URL pública):
 -- select public.send_media_authorization_confirm_email(
