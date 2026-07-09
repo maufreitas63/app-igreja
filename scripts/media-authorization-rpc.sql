@@ -94,10 +94,12 @@ as $$
     || '<p>Link válido por 48 horas. Se você não solicitou, ignore este e-mail.</p>';
 $$;
 
-create or replace function public.send_media_authorization_confirm_email_via_resend(
+-- Mesmo caminho HTTP do PIN (send_resend_transactional_email). Duplicado aqui para
+-- reexecutar só media-authorization-rpc.sql sem quebrar o envio.
+create or replace function public.send_resend_transactional_email(
   p_to_email text,
-  p_full_name text,
-  p_confirm_url text
+  p_subject text,
+  p_text text
 )
 returns jsonb
 language plpgsql
@@ -126,8 +128,8 @@ begin
   v_body := json_build_object(
     'from', v_from,
     'to', json_build_array(v_recipient),
-    'subject', public.media_authorization_confirm_email_subject(),
-    'text', public.media_authorization_confirm_email_text(p_full_name, p_confirm_url)
+    'subject', trim(p_subject),
+    'text', p_text
   )::text;
 
   select p.p_status, p.p_content
@@ -143,9 +145,9 @@ begin
 
   if coalesce(v_status, 0) not between 200 and 299 then
     raise exception
-      'Não foi possível enviar o e-mail de autorização (HTTP %). %',
+      'Não foi possível enviar o e-mail (HTTP %). %',
       coalesce(v_status, 0),
-      coalesce(nullif(trim(v_content), ''), 'Verifique recovery_email_api_key, recovery_email_from e a lista de supressão no Resend.');
+      coalesce(nullif(trim(v_content), ''), 'Verifique recovery_email_api_key e recovery_email_from no Resend.');
   end if;
 
   begin
@@ -160,6 +162,25 @@ begin
     'provider', 'resend',
     'resendId', coalesce(v_payload->>'id', null),
     'to', v_recipient
+  );
+end;
+$$;
+
+create or replace function public.send_media_authorization_confirm_email_via_resend(
+  p_to_email text,
+  p_full_name text,
+  p_confirm_url text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = http, extensions, public, pg_temp
+as $$
+begin
+  return public.send_resend_transactional_email(
+    p_to_email,
+    public.media_authorization_confirm_email_subject(),
+    public.media_authorization_confirm_email_text(p_full_name, p_confirm_url)
   );
 end;
 $$;
@@ -274,20 +295,20 @@ begin
     raise exception 'E-mail inválido para envio.';
   end if;
 
-  v_provider := lower(coalesce(public.get_app_parameter_value_trim('recovery_email_provider'), ''));
+  v_provider := lower(nullif(trim(public.get_app_parameter_value('recovery_email_provider')), ''));
 
   v_has_gmail :=
-    public.get_app_parameter_value_trim('recovery_email_smtp_user') is not null
-    and public.get_app_parameter_value_trim('recovery_email_smtp_password') is not null
-    and public.get_app_parameter_value_trim('recovery_email_from') is not null
-    and public.get_app_parameter_value_trim('recovery_email_function_url') is not null
-    and public.get_app_parameter_value_trim('recovery_email_function_secret') is not null;
+    nullif(trim(public.get_app_parameter_value('recovery_email_smtp_user')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_smtp_password')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_from')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_function_url')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_function_secret')), '') is not null;
 
   v_has_resend :=
-    public.get_app_parameter_value_trim('recovery_email_api_key') is not null
-    and public.get_app_parameter_value_trim('recovery_email_from') is not null;
+    nullif(trim(public.get_app_parameter_value('recovery_email_api_key')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_from')), '') is not null;
 
-  if v_provider = '' then
+  if v_provider is null then
     if v_has_gmail then
       v_provider := 'gmail';
     elsif v_has_resend then
@@ -397,7 +418,8 @@ begin
       trim(p_full_name),
       v_confirm_url
     );
-    v_email_sent := coalesce(v_send_result @> '{"ok": true}'::jsonb, false);
+    -- Sem exception = Resend/Gmail aceitou; não confiar só em @> jsonb (falso negativo).
+    v_email_sent := true;
   exception
     when others then
       delete from public.pending_authorizations where id = v_pending_id;

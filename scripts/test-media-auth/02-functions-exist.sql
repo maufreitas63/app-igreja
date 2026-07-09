@@ -1,6 +1,6 @@
 -- TESTE 2 — Funções RPC de e-mail instaladas?
 -- Execute no SQL Editor do Supabase.
--- Esperado: 4 linhas (send_*, submit_*, test_*).
+-- Esperado: 5 linhas (send_*, submit_*, test_*, send_resend_*).
 
 select
   p.proname as function_name,
@@ -12,6 +12,7 @@ select
     when p.proname in (
       'send_media_authorization_confirm_email',
       'send_media_authorization_confirm_email_via_resend',
+      'send_resend_transactional_email',
       'submit_media_authorization_pending',
       'test_media_authorization_email_delivery',
       'confirm_media_authorization'
@@ -26,6 +27,7 @@ where n.nspname = 'public'
   and p.proname in (
     'send_media_authorization_confirm_email',
     'send_media_authorization_confirm_email_via_resend',
+    'send_resend_transactional_email',
     'submit_media_authorization_pending',
     'test_media_authorization_email_delivery',
     'confirm_media_authorization',

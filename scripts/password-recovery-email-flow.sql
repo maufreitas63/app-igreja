@@ -156,11 +156,12 @@ begin
 end;
 $$;
 
-create or replace function public.send_password_recovery_pin_email_via_resend(
+create or replace function public.send_resend_transactional_email(
   p_to_email text,
-  p_pin text
+  p_subject text,
+  p_text text
 )
-returns void
+returns jsonb
 language plpgsql
 security definer
 set search_path = http, extensions, public, pg_temp
@@ -172,6 +173,7 @@ declare
   v_status integer;
   v_content text;
   v_recipient text;
+  v_payload jsonb;
 begin
   v_recipient := public.normalize_profile_email(p_to_email);
 
@@ -186,8 +188,8 @@ begin
   v_body := json_build_object(
     'from', v_from,
     'to', json_build_array(v_recipient),
-    'subject', 'Sua nova senha de acesso',
-    'text', public.password_recovery_pin_email_text(p_pin)
+    'subject', trim(p_subject),
+    'text', p_text
   )::text;
 
   select p.p_status, p.p_content
@@ -203,10 +205,42 @@ begin
 
   if coalesce(v_status, 0) not between 200 and 299 then
     raise exception
-      'Não foi possível enviar o e-mail de recuperação (HTTP %). %',
+      'Não foi possível enviar o e-mail (HTTP %). %',
       coalesce(v_status, 0),
       coalesce(nullif(trim(v_content), ''), 'Verifique recovery_email_api_key e recovery_email_from no Resend.');
   end if;
+
+  begin
+    v_payload := v_content::jsonb;
+  exception
+    when others then
+      v_payload := jsonb_build_object('raw', v_content);
+  end;
+
+  return jsonb_build_object(
+    'ok', true,
+    'provider', 'resend',
+    'resendId', coalesce(v_payload->>'id', null),
+    'to', v_recipient
+  );
+end;
+$$;
+
+create or replace function public.send_password_recovery_pin_email_via_resend(
+  p_to_email text,
+  p_pin text
+)
+returns void
+language plpgsql
+security definer
+set search_path = http, extensions, public, pg_temp
+as $$
+begin
+  perform public.send_resend_transactional_email(
+    p_to_email,
+    'Sua nova senha de acesso',
+    public.password_recovery_pin_email_text(p_pin)
+  );
 end;
 $$;
 
