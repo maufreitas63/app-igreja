@@ -52,6 +52,7 @@ Scripts em `scripts/test-media-auth/` — execute **um por vez**, na ordem:
 | `03-send-test-email.sql` | Envio de e-mail de teste |
 | `03b-resend-shared-path.sql` | PIN + autorização no mesmo caminho Resend |
 | `04-list-pending.sql` | Links pendentes (não confirmados) |
+| `04b-diagnose-empty.sql` | Por que o 04 está vazio (03b não cria pendência) |
 | `05-list-confirmed.sql` | Autorizações já confirmadas |
 | `06-check-token-from-link.sql` | Token copiado do e-mail |
 | `07-set-production-url.sql` | Cadastrar URL pública do app |
