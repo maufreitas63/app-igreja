@@ -136,11 +136,25 @@ export const EventsGanttChart = ({
       <View style={[styles.headerToolbar, minimal && styles.headerToolbarMinimal]}>
         <View style={[styles.legendRow, minimal && styles.legendRowMinimal]}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendSwatch, styles.legendSwatchPublished]} />
+            <View
+              style={[
+                styles.legendSwatch,
+                styles.legendSwatchPublished,
+                minimal && styles.legendSwatchCircle,
+                minimal && styles.legendSwatchPublishedMinimal,
+              ]}
+            />
             <Text style={[styles.legendText, minimal && styles.legendTextMinimal]}>Publicado</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendSwatch, styles.legendSwatchDraft]} />
+            <View
+              style={[
+                styles.legendSwatch,
+                styles.legendSwatchDraft,
+                minimal && styles.legendSwatchCircle,
+                minimal && styles.legendSwatchDraftMinimal,
+              ]}
+            />
             <Text style={[styles.legendText, minimal && styles.legendTextMinimal]}>Rascunho</Text>
           </View>
         </View>
@@ -350,6 +364,9 @@ export const EventsGanttChart = ({
                                   row.isPublished
                                     ? styles.ganttBarDotPublished
                                     : styles.ganttBarDotDraft,
+                                  minimal && styles.ganttBarDotCircle,
+                                  minimal && row.isPublished && styles.ganttBarDotPublishedMinimal,
+                                  minimal && !row.isPublished && styles.ganttBarDotDraftMinimal,
                                 ]}
                               />
                               {showSameDayPlus ? (
@@ -359,6 +376,8 @@ export const EventsGanttChart = ({
                                     row.isPublished
                                       ? styles.ganttBarDotPlusPublished
                                       : styles.ganttBarDotPlusDraft,
+                                    minimal && row.isPublished && styles.ganttBarDotPlusPublishedMinimal,
+                                    minimal && !row.isPublished && styles.ganttBarDotPlusDraftMinimal,
                                   ]}
                                 >
                                   +
@@ -716,6 +735,38 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   legendTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  legendSwatchCircle: {
+    borderRadius: 999,
+  },
+  legendSwatchPublishedMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderWidth: 0,
+  },
+  legendSwatchDraftMinimal: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  ganttBarDotCircle: {
+    borderRadius: 7,
+  },
+  ganttBarDotPublishedMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  ganttBarDotDraftMinimal: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  ganttBarDotPlusPublishedMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  ganttBarDotPlusDraftMinimal: {
     color: MINIMAL_UI.textMuted,
   },
   viewModeToggleMinimal: {
