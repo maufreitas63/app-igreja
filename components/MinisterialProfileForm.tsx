@@ -11,7 +11,6 @@ import {
   type MinisterialProfileResult,
   type MinisterialQuestion,
 } from '@/lib/ministerialProfileQuestionnaire';
-import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -214,7 +213,7 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
     if (phase === 'loading' || phase === 'submitting') {
       return (
         <View style={styles.centered}>
-          <ActivityIndicator color={VIGILANCE_SCALES_UI.accent} size="large" />
+          <ActivityIndicator color={MINIMAL_UI.blueDark} size="large" />
           <Text style={styles.loadingText}>
             {phase === 'submitting' ? 'Calculando seu perfil ministerial...' : 'Carregando questionário...'}
           </Text>
@@ -287,7 +286,7 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
           <View style={styles.resultBadge}>
             <FontAwesome name="star" size={28} color={MINIMAL_UI.onDark} />
           </View>
-          <Text style={styles.title}>Seu perfil ministerial</Text>
+          <Text style={styles.sectionTitle}>Seu perfil ministerial</Text>
           <Text style={styles.resultLabel}>{label}</Text>
           {resultCopy ? (
             <View style={styles.resultDescriptionBox}>
@@ -300,7 +299,11 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
               pode servir melhor na congregação.
             </Text>
           )}
-          <TouchableOpacity style={styles.primaryButton} onPress={handleRetake} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={[styles.primaryButton, styles.primaryButtonFull]}
+            onPress={handleRetake}
+            activeOpacity={0.85}
+          >
             <Text style={styles.primaryButtonText}>Refazer questionário</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -311,15 +314,20 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
       <ScrollView
         ref={questionsScrollRef}
         style={styles.bodyScroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.questionsScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.stepTitle}>
-          Etapa {stepIndex + 1} de {MINISTERIAL_TOTAL_STEPS}
-        </Text>
-        {currentTheme ? <Text style={styles.themeLabel}>{currentTheme}</Text> : null}
-        {renderProgressBar(stepProgress, 'Progresso da etapa')}
-        {renderProgressBar(progress, 'Perguntas respondidas')}
+        <View style={styles.stepHero}>
+          <Text style={styles.stepMeta}>
+            Etapa {stepIndex + 1} de {MINISTERIAL_TOTAL_STEPS}
+          </Text>
+          {currentTheme ? <Text style={styles.stepThemeTitle}>{currentTheme}</Text> : null}
+        </View>
+
+        <View style={styles.progressPanel}>
+          {renderProgressBar(stepProgress, 'Progresso da etapa')}
+          {renderProgressBar(progress, 'Perguntas respondidas')}
+        </View>
 
         {stepQuestions.map((question, index) => {
           const questionNumber = stepIndex * MINISTERIAL_QUESTIONS_PER_STEP + index + 1;
@@ -339,7 +347,9 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
                       onPress={() => handleSelectOption(question.id, option.id)}
                       activeOpacity={0.85}
                     >
-                      <View style={[styles.optionRadio, selected && styles.optionRadioSelected]} />
+                      <View style={[styles.optionRadio, selected && styles.optionRadioSelected]}>
+                        {selected ? <View style={styles.optionRadioDot} /> : null}
+                      </View>
                       <Text style={[styles.optionText, selected && styles.optionTextSelected]}>
                         {option.texto}
                       </Text>
@@ -391,8 +401,6 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
     </Modal>
   );
 }
-
-const ACCENT = VIGILANCE_SCALES_UI.accent;
 
 const styles = StyleSheet.create({
   overlay: {
@@ -458,6 +466,33 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     gap: 16,
   },
+  questionsScrollContent: {
+    padding: 16,
+    paddingBottom: 24,
+    gap: 14,
+  },
+  stepHero: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  stepMeta: {
+    ...MINIMAL_TYPO.sectionLabel,
+    color: MINIMAL_UI.textMuted,
+    textAlign: 'center',
+  },
+  stepThemeTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    width: '100%',
+    marginBottom: 0,
+  },
+  progressPanel: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.rowHover,
+    padding: 14,
+    gap: 12,
+  },
   introHero: {
     alignItems: 'center',
     gap: 12,
@@ -494,30 +529,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   title: {
-    color: MINIMAL_UI.text,
-    fontSize: 20,
-    fontWeight: '800',
+    ...MINIMAL_TYPO.screenTitle,
+    color: MINIMAL_UI.blueDark,
     textAlign: 'center',
   },
   subtitle: {
-    color: MINIMAL_UI.textMuted,
-    fontSize: 14,
+    ...MINIMAL_TYPO.inboxPreview,
     lineHeight: 21,
     textAlign: 'center',
-  },
-  stepTitle: {
-    color: MINIMAL_UI.text,
-    fontSize: 16,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  themeLabel: {
-    color: ACCENT,
-    fontSize: 13,
-    fontWeight: '700',
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
   },
   progressBlock: {
     gap: 6,
@@ -528,25 +547,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressLabel: {
-    color: MINIMAL_UI.textMuted,
-    fontSize: 12,
-    fontWeight: '600',
+    ...MINIMAL_TYPO.sectionLabel,
+    color: MINIMAL_UI.blueDark,
   },
   progressValue: {
-    color: MINIMAL_UI.text,
+    color: MINIMAL_UI.blueDark,
     fontSize: 12,
     fontWeight: '700',
   },
   progressTrack: {
     height: 8,
     borderRadius: 999,
-    backgroundColor: MINIMAL_UI.rowHover,
+    backgroundColor: MINIMAL_UI.background,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     borderRadius: 999,
-    backgroundColor: ACCENT,
+    backgroundColor: MINIMAL_UI.blueDark,
   },
   infoBox: {
     borderRadius: 12,
@@ -575,17 +595,16 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   questionNumber: {
-    color: MINIMAL_UI.textMuted,
-    fontSize: 11,
-    fontWeight: '800',
+    ...MINIMAL_TYPO.sectionLabel,
+    color: MINIMAL_UI.blueDark,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   questionText: {
-    color: MINIMAL_UI.text,
+    color: MINIMAL_UI.blueDark,
     fontSize: 14,
     lineHeight: 21,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   optionsList: {
     gap: 8,
@@ -597,13 +616,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
-    backgroundColor: MINIMAL_UI.background,
+    backgroundColor: MINIMAL_UI.rowHover,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   optionButtonSelected: {
-    borderColor: ACCENT,
-    backgroundColor: MINIMAL_UI.rowHover,
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
   },
   optionRadio: {
     width: 18,
@@ -612,10 +631,18 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: MINIMAL_UI.textMuted,
     marginTop: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   optionRadioSelected: {
-    borderColor: ACCENT,
-    backgroundColor: ACCENT,
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  optionRadioDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: MINIMAL_UI.blueDark,
   },
   optionText: {
     flex: 1,
@@ -624,8 +651,8 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   optionTextSelected: {
-    color: MINIMAL_UI.text,
-    fontWeight: '600',
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '700',
   },
   actionsRow: {
     flexDirection: 'row',
@@ -654,7 +681,7 @@ const styles = StyleSheet.create({
   secondaryButton: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: MINIMAL_UI.border,
+    borderColor: MINIMAL_UI.blueDark,
     backgroundColor: MINIMAL_UI.background,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -663,7 +690,7 @@ const styles = StyleSheet.create({
     minWidth: 110,
   },
   secondaryButtonText: {
-    color: MINIMAL_UI.text,
+    color: MINIMAL_UI.blueDark,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -682,7 +709,7 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.border,
   },
   resultLabel: {
-    color: ACCENT,
+    color: MINIMAL_UI.blueDark,
     fontSize: 28,
     fontWeight: '900',
     textAlign: 'center',
@@ -696,9 +723,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   resultDescriptionHeading: {
-    color: MINIMAL_UI.text,
-    fontSize: 14,
-    fontWeight: '800',
+    ...MINIMAL_TYPO.sectionLabel,
+    color: MINIMAL_UI.blueDark,
     lineHeight: 20,
     textAlign: 'center',
   },
