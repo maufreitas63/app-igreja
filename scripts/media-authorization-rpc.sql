@@ -335,6 +335,105 @@ begin
 end;
 $$;
 
+create or replace function public.resolve_profile_id_for_media_authorization()
+returns uuid
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_headers text;
+  v_token text;
+  v_raw text;
+  v_profile_id uuid;
+begin
+  begin
+    v_headers := current_setting('request.headers', true);
+  exception
+    when others then
+      return null;
+  end;
+
+  if v_headers is null or v_headers = '' then
+    return null;
+  end if;
+
+  v_token := nullif(trim(coalesce((v_headers::json ->> 'x-session-token'), '')), '');
+
+  if v_token is not null then
+    v_profile_id := public.resolve_profile_session_token(v_token);
+
+    if v_profile_id is not null then
+      return v_profile_id;
+    end if;
+  end if;
+
+  v_raw := nullif(trim(coalesce((v_headers::json ->> 'x-profile-id'), '')), '');
+
+  if v_raw is null then
+    return null;
+  end if;
+
+  begin
+    v_profile_id := v_raw::uuid;
+  exception
+    when invalid_text_representation then
+      return null;
+  end;
+
+  if exists (select 1 from public.profiles p where p.id = v_profile_id) then
+    return v_profile_id;
+  end if;
+
+  return null;
+end;
+$$;
+
+create or replace function public.debug_media_authorization_submit_context()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_headers text;
+  v_token text;
+  v_profile_header text;
+  v_provider text;
+  v_has_resend boolean;
+begin
+  begin
+    v_headers := current_setting('request.headers', true);
+  exception
+    when others then
+      v_headers := null;
+  end;
+
+  if v_headers is not null and v_headers <> '' then
+    v_token := nullif(trim(coalesce((v_headers::json ->> 'x-session-token'), '')), '');
+    v_profile_header := nullif(trim(coalesce((v_headers::json ->> 'x-profile-id'), '')), '');
+  end if;
+
+  v_provider := lower(nullif(trim(public.get_app_parameter_value('recovery_email_provider')), ''));
+
+  v_has_resend :=
+    nullif(trim(public.get_app_parameter_value('recovery_email_api_key')), '') is not null
+    and nullif(trim(public.get_app_parameter_value('recovery_email_from')), '') is not null;
+
+  return jsonb_build_object(
+    'tokenPresent', v_token is not null,
+    'tokenValid', v_token is not null and public.resolve_profile_session_token(v_token) is not null,
+    'profileIdHeader', v_profile_header,
+    'resolvedProfileId', public.resolve_profile_id_for_media_authorization(),
+    'currentSessionProfileId', public.current_session_profile_id(),
+    'recoveryEmailProvider', v_provider,
+    'hasResendConfig', v_has_resend
+  );
+end;
+$$;
+
 create or replace function public.ping_profile_session()
 returns jsonb
 language sql
@@ -343,8 +442,9 @@ security definer
 set search_path = public
 as $$
   select jsonb_build_object(
-    'ok', public.current_session_profile_id() is not null,
-    'profileId', public.current_session_profile_id()
+    'ok', public.resolve_profile_id_for_media_authorization() is not null,
+    'profileId', public.resolve_profile_id_for_media_authorization(),
+    'strictSessionOk', public.current_session_profile_id() is not null
   );
 $$;
 
@@ -385,10 +485,10 @@ begin
     and nullif(trim(public.get_app_parameter_value('recovery_email_from')), '') is not null;
 
   if v_provider is null then
-    if v_has_gmail then
-      v_provider := 'gmail';
-    elsif v_has_resend then
+    if v_has_resend then
       v_provider := 'resend';
+    elsif v_has_gmail then
+      v_provider := 'gmail';
     else
       raise exception
         'Envio de e-mail não configurado. Defina recovery_email_provider=gmail ou resend e os parâmetros correspondentes em app_parameters.';
@@ -399,7 +499,7 @@ begin
     return public.send_media_authorization_confirm_email_via_gmail(p_to_email, p_full_name, p_confirm_url);
   end if;
 
-  if v_provider = 'resend' then
+  if v_has_resend then
     return public.send_resend_transactional_email(
       p_to_email,
       public.media_authorization_confirm_email_subject(),
@@ -433,13 +533,14 @@ declare
   v_email_sent boolean := false;
   v_send_result jsonb;
 begin
-  v_profile_id := public.current_session_profile_id();
+  v_profile_id := public.resolve_profile_id_for_media_authorization();
 
   if v_profile_id is null then
     return jsonb_build_object(
       'ok', false,
       'sessionValid', false,
-      'message', 'Sessão expirada. Saia e entre novamente com o PIN enviado ao seu e-mail.'
+      'message', 'Sessão expirada. Saia e entre novamente com o PIN enviado ao seu e-mail.',
+      'debugHint', 'Chame debug_media_authorization_submit_context no app (F12) para ver token/profile-id.'
     );
   end if;
 
@@ -714,6 +815,8 @@ exception
 end;
 $$;
 
+grant execute on function public.resolve_profile_id_for_media_authorization() to anon, authenticated;
+grant execute on function public.debug_media_authorization_submit_context() to anon, authenticated;
 grant execute on function public.ping_profile_session() to anon, authenticated;
 grant execute on function public.send_media_authorization_pending_email(text, text, text) to anon, authenticated;
 grant execute on function public.normalize_media_authorization_token(text) to anon, authenticated;

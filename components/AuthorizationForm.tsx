@@ -2,6 +2,7 @@ import { MediaAuthorizationLegalModal } from '@/components/MediaAuthorizationLeg
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { cpfValidationMessage, formatCpf } from '@/lib/cpfValidation';
 import {
+  ensureServerSessionForMediaAuth,
   loadLatestMediaAuthorization,
   loadMediaAuthorizationProfile,
   MEDIA_AUTHORIZATION_TERMS_BODY,
@@ -47,6 +48,10 @@ export function AuthorizationForm({ profileId }: Props) {
     cpf: false,
     phone: false,
   });
+
+  useEffect(() => {
+    void ensureServerSessionForMediaAuth(profileId);
+  }, [profileId]);
 
   useEffect(() => {
     let active = true;
@@ -131,14 +136,22 @@ export function AuthorizationForm({ profileId }: Props) {
 
       if (!result.ok) {
         const title = result.sessionValid === false ? 'Sessão expirada' : 'Não foi possível enviar';
-        Alert.alert(title, result.message);
+        const detail = [
+          result.message,
+          result.pendingId ? `Pendência: ${result.pendingId}` : null,
+        ].filter(Boolean).join('\n\n');
+        Alert.alert(title, detail);
         return;
       }
 
       if (!result.emailSent) {
         Alert.alert(
           'E-mail não enviado',
-          result.message || 'O servidor não confirmou o envio do e-mail. Verifique a configuração de e-mail no Supabase.'
+          [
+            result.message,
+            result.emailProvider ? `Provedor: ${result.emailProvider}` : null,
+            result.pendingId ? `Pendência gravada: ${result.pendingId}` : null,
+          ].filter(Boolean).join('\n\n')
         );
         return;
       }

@@ -133,6 +133,9 @@ export async function submitMediaAuthorizationPending(input: {
     return { ok: false, message: session.message ?? 'Sessão inválida.', sessionValid: false };
   }
 
+  const { data: debugData } = await supabase.rpc('debug_media_authorization_submit_context');
+  console.info('[media-authorization] submit context', parseRpcPayload(debugData));
+
   const { data, error } = await supabase.rpc('submit_media_authorization_pending', {
     p_full_name: input.fullName.trim(),
     p_email: input.email.trim().toLowerCase(),

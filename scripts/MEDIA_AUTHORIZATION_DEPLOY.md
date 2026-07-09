@@ -46,9 +46,10 @@ Parâmetros opcionais em `app_parameters`:
 O teste **03b** envia direto ao Resend **sem sessão** e **sem gravar pendência**. O app exige `x-session-token` válido. Se o token expirou, o formulário abre mas o submit **não chama o Resend** — parece que “o Resend parou”.
 
 **Correções aplicadas:**
+- App envia **token + profile-id** nos headers (token expirado não bloqueia mais o submit).
+- `resolve_profile_id_for_media_authorization` no RPC aceita profile-id quando o token expirou.
 - App renova sessão automaticamente antes do submit (`ping_profile_session` + novo token).
-- Submit usa o **mesmo** `send_media_authorization_pending_email` que o teste 03.
-- Falha de e-mail **não apaga** mais a pendência (rode `04` para diagnosticar).
+- Autorização **prefere Resend** quando `recovery_email_api_key` está configurado.
 
 Se o PIN de login funciona mas a autorização não: faça **logout + login** uma vez e tente de novo.
 
