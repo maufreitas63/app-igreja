@@ -27,6 +27,8 @@ limit 10;
 -- 3) Teste direto (mostra erro completo se falhar)
 -- select public.test_media_authorization_email_delivery('seu@email.com', 'Seu Nome', null);
 
--- 4) Se o teste (3) retornar resendId mas o e-mail não chegar:
---    Resend → Suppressions / Bounces — remova o destinatário se estiver bloqueado
---    (comum após marcar o primeiro e-mail como spam).
+-- 4) Conferir token do link (cole o token da URL após token=)
+-- select public.normalize_media_authorization_token('COLE_O_TOKEN_AQUI') as token_normalizado;
+-- select id, email, created_at, expires_at
+--   from public.pending_authorizations
+--  where token = public.normalize_media_authorization_token('COLE_O_TOKEN_AQUI');

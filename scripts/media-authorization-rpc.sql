@@ -42,6 +42,17 @@ as $$
   select nullif(trim(public.get_app_parameter_value(p_parameter)), '');
 $$;
 
+create or replace function public.normalize_media_authorization_token(p_token text)
+returns text
+language sql
+immutable
+as $$
+  select nullif(
+    lower(substring(regexp_replace(coalesce(p_token, ''), '[^a-fA-F0-9]', '', 'g') from 1 for 64)),
+    ''
+  );
+$$;
+
 create or replace function public.media_authorization_confirm_email_subject()
 returns text
 language sql
@@ -445,15 +456,18 @@ declare
   v_content text;
   v_body jsonb;
   v_storage_path text;
+  v_token text;
 begin
-  if coalesce(trim(p_token), '') = '' then
+  v_token := public.normalize_media_authorization_token(p_token);
+
+  if v_token is null then
     return jsonb_build_object('ok', false, 'message', 'Token inválido.');
   end if;
 
   select a.id
     into v_authorization_id
     from public.authorizations a
-   where a.confirmation_token = trim(p_token)
+   where a.confirmation_token = v_token
    limit 1;
 
   if v_authorization_id is not null then
@@ -468,7 +482,7 @@ begin
   select *
     into v_pending
     from public.pending_authorizations
-   where token = trim(p_token)
+   where token = v_token
    limit 1
    for update;
 
@@ -511,7 +525,7 @@ begin
     v_pending.privacy_policy_version,
     public.media_authorization_terms_hash(),
     true,
-    trim(p_token)
+    v_token
   )
   returning id into v_authorization_id;
 
@@ -595,6 +609,7 @@ exception
 end;
 $$;
 
+grant execute on function public.normalize_media_authorization_token(text) to anon, authenticated;
 grant execute on function public.send_media_authorization_confirm_email(text, text, text) to anon, authenticated;
 grant execute on function public.test_media_authorization_email_delivery(text, text, text) to anon, authenticated;
 grant execute on function public.submit_media_authorization_pending(text, text, text, text) to anon, authenticated;

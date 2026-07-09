@@ -1,3 +1,4 @@
+import { normalizeAuthorizationConfirmToken } from '@/lib/authorizationConfirmToken';
 import { supabase } from '@/lib/supabase';
 
 export const MEDIA_AUTHORIZATION_PRIVACY_VERSION = '1.0';
@@ -108,8 +109,14 @@ export async function confirmMediaAuthorization(input: {
   ipAddress?: string | null;
   userAgent?: string | null;
 }): Promise<ConfirmMediaAuthorizationResult> {
+  const normalizedToken = normalizeAuthorizationConfirmToken(input.token);
+
+  if (!normalizedToken) {
+    return { ok: false, message: 'Token inválido.' };
+  }
+
   const { data, error } = await supabase.rpc('confirm_media_authorization', {
-    p_token: input.token.trim(),
+    p_token: normalizedToken,
     p_ip_address: input.ipAddress ?? null,
     p_user_agent: input.userAgent ?? null,
   });

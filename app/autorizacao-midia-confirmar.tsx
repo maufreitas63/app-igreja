@@ -1,36 +1,47 @@
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { useMediaAuthorizationAccess } from '@/hooks/useMediaAuthorizationAccess';
-import { confirmMediaAuthorization } from '@/lib/mediaAuthorization';
+import { resolveAuthorizationConfirmToken } from '@/lib/authorizationConfirmToken';
+import { confirmMediaAuthorization, loadLatestMediaAuthorization } from '@/lib/mediaAuthorization';
 import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-function normalizeTokenParam(value: string | string[] | undefined): string | null {
-  const raw = Array.isArray(value) ? value[0] : value;
-  if (!raw?.trim()) {
-    return null;
-  }
-
-  try {
-    return decodeURIComponent(raw.trim());
-  } catch {
-    return raw.trim();
-  }
-}
+const RECENT_AUTHORIZATION_MS = 7 * 24 * 60 * 60 * 1000;
 
 export default function MediaAuthorizationConfirmScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ token?: string | string[] }>();
-  const token = useMemo(() => normalizeTokenParam(params.token), [params.token]);
+  const token = useMemo(() => resolveAuthorizationConfirmToken(params.token), [params.token]);
   const { sessionProfileId } = useMediaAuthorizationAccess();
   const [status, setStatus] = useState<'ready' | 'loading' | 'success' | 'error'>('ready');
   const [message, setMessage] = useState(
-    'Abra este link no mesmo aplicativo da igreja e toque em Confirmar autorização para concluir.'
+    'Toque em Confirmar autorização para concluir. O link vale por 48 horas.'
   );
   const confirmInFlightRef = useRef(false);
   const confirmedRef = useRef(false);
+
+  const recoverRecentAuthorization = useCallback(async (): Promise<boolean> => {
+    if (!sessionProfileId) {
+      return false;
+    }
+
+    const latest = await loadLatestMediaAuthorization(sessionProfileId);
+    if (!latest?.accepted_at) {
+      return false;
+    }
+
+    const acceptedAtMs = new Date(latest.accepted_at).getTime();
+    if (Number.isNaN(acceptedAtMs) || Date.now() - acceptedAtMs > RECENT_AUTHORIZATION_MS) {
+      return false;
+    }
+
+    setStatus('success');
+    setMessage('Sua autorização já estava confirmada. Obrigado!');
+    confirmedRef.current = true;
+    return true;
+  }, [sessionProfileId]);
 
   const handleConfirm = useCallback(async () => {
     if (!token || confirmInFlightRef.current || confirmedRef.current) {
@@ -48,20 +59,31 @@ export default function MediaAuthorizationConfirmScreen() {
         userAgent: Platform.OS === 'web' && typeof navigator !== 'undefined' ? navigator.userAgent : null,
       });
 
-      setStatus(result.ok ? 'success' : 'error');
-      setMessage(result.message);
-
       if (result.ok) {
+        setStatus('success');
+        setMessage(result.message);
         confirmedRef.current = true;
+        return;
       }
+
+      const recovered = await recoverRecentAuthorization();
+      if (recovered) {
+        return;
+      }
+
+      setStatus('error');
+      setMessage(result.message);
     } catch (error) {
       console.error('[autorizacao-midia-confirmar] failed', error);
-      setStatus('error');
-      setMessage('Não foi possível confirmar a autorização.');
+      const recovered = await recoverRecentAuthorization();
+      if (!recovered) {
+        setStatus('error');
+        setMessage('Não foi possível confirmar a autorização.');
+      }
     } finally {
       confirmInFlightRef.current = false;
     }
-  }, [token]);
+  }, [recoverRecentAuthorization, token]);
 
   const handleBack = useCallback(() => {
     if (sessionProfileId) {
@@ -81,7 +103,7 @@ export default function MediaAuthorizationConfirmScreen() {
         <View style={styles.root}>
           <Text style={styles.title}>Confirmação de autorização</Text>
           <Text style={[styles.message, styles.messageError]}>
-            Link inválido. Solicite um novo envio pelo aplicativo.
+            Link inválido ou incompleto. Copie o link inteiro do e-mail ou solicite um novo envio pelo aplicativo.
           </Text>
           <Pressable accessibilityRole="button" style={styles.button} onPress={handleBack}>
             <Text style={styles.buttonText}>Voltar ao aplicativo</Text>
