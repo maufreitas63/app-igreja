@@ -117,6 +117,7 @@ Pré-requisito: passos 01–04 ok + checks 1–3 zerados.
 | 2d | `multi-tenant-wave2d-reports.sql` | Relatórios de manutenção `_report_*` |
 | 3a | `multi-tenant-wave3a-acl-ghost.sql` | ACL / papéis / ghost / insights |
 | 3b | `multi-tenant-wave3b-cadastro-exclusao.sql` | Cadastro / exclusão / ministerial |
+| 4a | `multi-tenant-wave4a-match-dedupe.sql` | Match / dedupe / família (helpers) |
 
 ### Se der erro
 
