@@ -179,6 +179,7 @@ Execute no SQL Editor **antes** de usar o seletor no app:
 6. `scripts/multi-tenant-14-igreja-social-links.sql` — `instagram_url` / `youtube_url` + menu Redes Sociais
 7. `scripts/multi-tenant-15-onboard-bypass-tenant-guard.sql` — **obrigatório** para Criar instância (corrige diverge do tenant da sessão)
 8. `scripts/multi-tenant-16-igreja-website-url.sql` — `website_url` (site oficial) + RPC de links atualizada
+9. `scripts/multi-tenant-17-onboard-igreja-admin-unique.sql` — remove sobrecarga ambígua de `onboard_igreja_admin`
 
 Fluxo no app:
 

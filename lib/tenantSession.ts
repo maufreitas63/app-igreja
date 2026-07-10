@@ -203,40 +203,20 @@ export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: s
     };
   }
 
-  const payload: { p_code: string; p_name: string; p_logo_url?: string } = {
+  const payload = {
     p_code: trimmedCode,
     p_name: trimmedName,
+    p_logo_url: trimmedLogo,
   };
-  if (trimmedLogo) {
-    payload.p_logo_url = trimmedLogo;
-  }
 
   const { data, error } = await supabase.rpc('onboard_igreja_admin', payload);
 
   if (error) {
-    if (trimmedLogo) {
-      // Fallback se o banco ainda não tem p_logo_url (multi-tenant-13)
-      const legacy = await supabase.rpc('onboard_igreja_admin', {
-        p_code: trimmedCode,
-        p_name: trimmedName,
-      });
-      if (!legacy.error) {
-        return legacy.data as {
-          success?: boolean;
-          message?: string;
-          tenant_id?: string;
-          code?: string;
-          name?: string;
-          logo_url?: string | null;
-        };
-      }
-    }
-
     if (isSupabaseRpcMissingError(error, 'onboard_igreja_admin')) {
       return {
         success: false,
         message:
-          'RPC ausente no banco. Execute scripts/multi-tenant-10 e multi-tenant-13 no Supabase.',
+          'RPC ausente ou ambígua. Execute scripts/multi-tenant-17-onboard-igreja-admin-unique.sql no Supabase.',
       };
     }
 
@@ -244,6 +224,14 @@ export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: s
       typeof error.message === 'string' && error.message.trim()
         ? error.message.trim()
         : 'Não foi possível criar a instância.';
+
+    if (/could not choose the best candidate function/i.test(message)) {
+      return {
+        success: false,
+        message:
+          'Função onboard ambígua no banco. Execute scripts/multi-tenant-17-onboard-igreja-admin-unique.sql.',
+      };
+    }
 
     return { success: false, message };
   }
