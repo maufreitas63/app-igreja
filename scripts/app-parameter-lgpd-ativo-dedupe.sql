@@ -45,8 +45,12 @@ select parameter, value
   from public.app_parameters
  where lower(trim(parameter)) = lower('LGPD_Ativo');
 
--- 4) Impede novas duplicatas por capitalização diferente
-create unique index if not exists app_parameters_parameter_lower_unique
-  on public.app_parameters (lower(trim(parameter)));
+-- 4) NÃO recriar índice GLOBAL em parameter.
+-- Multi-tenant: use app_parameters_tenant_parameter_lower_unique
+-- (scripts/multi-tenant-19-app-parameters-tenant-unique-fix.sql).
+-- O índice global abaixo quebra "Criar instância".
+--
+-- create unique index if not exists app_parameters_parameter_lower_unique
+--   on public.app_parameters (lower(trim(parameter)));
 
 notify pgrst, 'reload schema';

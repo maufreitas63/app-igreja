@@ -7,6 +7,11 @@
 --
 -- Pré-requisitos: multi-tenant-10 (onboard_igreja_admin).
 -- Execute no SQL Editor do Supabase.
+--
+-- ATENÇÃO (2026-07): se criar instância ainda pede este script, NÃO reexecute-o.
+-- Use scripts/multi-tenant-19-app-parameters-tenant-unique-fix.sql (remove também
+-- UNIQUE(parameter) global e recria criar_igreja_admin). Reexecutar o 12 ainda
+-- recria onboard_igreja_admin(text,text) e pode piorar sobrecargas.
 -- =============================================================================
 
 begin;

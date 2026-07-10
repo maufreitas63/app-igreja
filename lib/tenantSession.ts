@@ -217,7 +217,7 @@ export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: s
       return {
         success: false,
         message:
-          'RPC ausente. Execute scripts/multi-tenant-18-criar-igreja-admin.sql no Supabase.',
+          'RPC ausente. Execute scripts/multi-tenant-19-app-parameters-tenant-unique-fix.sql no Supabase.',
       };
     }
 
@@ -234,10 +234,18 @@ export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: s
       };
     }
 
+    if (/multi-tenant-12|Conflito ao copiar parâmetros|Conflito de unicidade/i.test(message)) {
+      return {
+        success: false,
+        message:
+          'Conflito em app_parameters. Execute scripts/multi-tenant-19-app-parameters-tenant-unique-fix.sql (não o 12).',
+      };
+    }
+
     return { success: false, message };
   }
 
-  return data as {
+  const result = data as {
     success?: boolean;
     message?: string;
     tenant_id?: string;
@@ -245,6 +253,21 @@ export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: s
     name?: string;
     logo_url?: string | null;
   };
+
+  if (
+    result &&
+    result.success === false &&
+    typeof result.message === 'string' &&
+    /multi-tenant-12|Conflito ao copiar parâmetros/i.test(result.message)
+  ) {
+    return {
+      ...result,
+      message:
+        'Conflito em app_parameters. Execute scripts/multi-tenant-19-app-parameters-tenant-unique-fix.sql (não o 12).',
+    };
+  }
+
+  return result;
 }
 
 export async function setIgrejaSocialLinksAdmin(
