@@ -118,6 +118,8 @@ Pré-requisito: passos 01–04 ok + checks 1–3 zerados.
 | 3a | `multi-tenant-wave3a-acl-ghost.sql` | ACL / papéis / ghost / insights |
 | 3b | `multi-tenant-wave3b-cadastro-exclusao.sql` | Cadastro / exclusão / ministerial |
 | 4a | `multi-tenant-wave4a-match-dedupe.sql` | Match / dedupe / família (helpers) |
+| 4b | `multi-tenant-wave4b-geofence-quorum.sql` | Geofence / quorum / ciclo de escala |
+| 4c | `multi-tenant-wave4c-sync-params-extras.sql` | Sync / params / e-mail / extras |
 
 ### Se der erro
 
