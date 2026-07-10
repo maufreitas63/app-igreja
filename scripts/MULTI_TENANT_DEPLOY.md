@@ -177,6 +177,7 @@ Execute no SQL Editor **antes** de usar o seletor no app:
 4. `scripts/multi-tenant-12-app-parameters-unique-per-tenant.sql` — índice único de `app_parameters` **por tenant** (obrigatório para Criar instância)
 5. `scripts/multi-tenant-13-igreja-logo-storage.sql` — bucket `church-logos` + `set_igreja_logo_admin` + onboard com logo
 6. `scripts/multi-tenant-14-igreja-social-links.sql` — `instagram_url` / `youtube_url` + menu Redes Sociais
+7. `scripts/multi-tenant-15-onboard-bypass-tenant-guard.sql` — **obrigatório** para Criar instância (corrige diverge do tenant da sessão)
 
 Fluxo no app:
 
