@@ -15,11 +15,11 @@ export default function Root({ children }: PropsWithChildren) {
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
         <meta name="theme-color" content={PWA_THEME_COLOR} />
-        <meta name="application-name" content="Igreja Batista Norte" />
+        <meta name="application-name" content="Comunidade Digital" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="IBNorte" />
-        <title>Igreja Batista Norte</title>
+        <meta name="apple-mobile-web-app-title" content="Comunidade Digital" />
+        <title>Comunidade Digital</title>
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="/pwa/icon-192.png" />

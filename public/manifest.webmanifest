@@ -1,7 +1,7 @@
 {
-  "name": "Igreja Batista Norte",
-  "short_name": "IBNorte",
-  "description": "Aplicativo da Igreja Batista Norte",
+  "name": "Comunidade Digital",
+  "short_name": "Comunidade Digital",
+  "description": "Acesso ao ambiente digital da sua igreja",
   "lang": "pt-BR",
   "start_url": "/",
   "scope": "/",

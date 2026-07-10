@@ -26,7 +26,7 @@ export function PwaInstallButton() {
   return (
     <>
       <TouchableOpacity
-        accessibilityHint="Cria um atalho na tela inicial com o logotipo da igreja"
+        accessibilityHint="Cria um atalho na tela inicial com o logotipo da Comunidade Digital"
         accessibilityLabel="Adicionar à tela inicial do celular"
         accessibilityRole="button"
         onPress={() => {
