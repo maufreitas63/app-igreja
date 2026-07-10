@@ -1,10 +1,12 @@
 import { OfferingsClass } from '@/components/OfferingsClass';
-import { getAppParameterValue } from '@/lib/appParameters';
-import { OFFERINGS_RECIPIENT_ROWS } from '@/lib/offeringsRecipientInfo';
+import {
+  loadOfferingsRecipientBundle,
+  type OfferingsRecipientRow,
+} from '@/lib/offeringsRecipientInfo';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import * as Clipboard from 'expo-clipboard';
-import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -15,26 +17,31 @@ type OfferingsClassPanelProps = {
 /** Container com dados e ações — compõe o OfferingsClass stateless. */
 export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
   const router = useRouter();
+  const [recipientRows, setRecipientRows] = useState<OfferingsRecipientRow[]>([]);
   const [pixKey, setPixKey] = useState<string | null>(null);
   const [pixKeyLoading, setPixKeyLoading] = useState(true);
 
-  const loadPixKey = useCallback(async () => {
+  const loadOfferingsInfo = useCallback(async () => {
     setPixKeyLoading(true);
 
     try {
-      const value = await getAppParameterValue('chave_pix');
-      setPixKey(value?.trim() || null);
+      const bundle = await loadOfferingsRecipientBundle();
+      setRecipientRows(bundle.recipientRows);
+      setPixKey(bundle.pixKey);
     } catch (error) {
-      console.error('Erro ao carregar chave PIX:', error);
+      console.error('Erro ao carregar dados de dízimos/ofertas:', error);
+      setRecipientRows([]);
       setPixKey(null);
     } finally {
       setPixKeyLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    void loadPixKey();
-  }, [loadPixKey]);
+  useFocusEffect(
+    useCallback(() => {
+      void loadOfferingsInfo();
+    }, [loadOfferingsInfo])
+  );
 
   const handleCopyPixKey = useCallback(async () => {
     if (!pixKey) {
@@ -68,14 +75,14 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
   return (
     <View style={styles.root}>
       <OfferingsClass
-        recipientRows={OFFERINGS_RECIPIENT_ROWS}
+        recipientRows={recipientRows}
         pixKey={pixKey}
         pixKeyLoading={pixKeyLoading}
         onCopyPixKey={() => {
           void handleCopyPixKey();
         }}
         onRetryLoadPixKey={() => {
-          void loadPixKey();
+          void loadOfferingsInfo();
         }}
       />
 

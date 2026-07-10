@@ -19,7 +19,10 @@ import { useEventGeofenceCoordinates } from '@/hooks/useEventGeofenceCoordinates
 import { useFamilyReceptionSuperAdminNotifier } from '@/hooks/useFamilyReceptionSuperAdminNotifier';
 import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import { getAppParameterValue } from '@/lib/appParameters';
-import { OFFERINGS_RECIPIENT_ROWS } from '@/lib/offeringsRecipientInfo';
+import {
+  loadOfferingsRecipientBundle,
+  type OfferingsRecipientRow,
+} from '@/lib/offeringsRecipientInfo';
 import {
   APP_PARAMETER,
   eventRequiresQrCheckIn,
@@ -573,6 +576,7 @@ export default function Dashboard() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [pixKey, setPixKey] = useState<string | null>(null);
+  const [offeringsRecipientRows, setOfferingsRecipientRows] = useState<OfferingsRecipientRow[]>([]);
   const [isPixKeyLoading, setIsPixKeyLoading] = useState(true);
   const [qrCodeAtivoEnabled, setQrCodeAtivoEnabled] = useState(true);
   const [checkInManualMode, setCheckInManualMode] = useState(false);
@@ -732,10 +736,12 @@ export default function Dashboard() {
     setIsPixKeyLoading(true);
 
     try {
-      const value = await getAppParameterValue('chave_pix');
-      setPixKey(value?.trim() || null);
+      const bundle = await loadOfferingsRecipientBundle();
+      setOfferingsRecipientRows(bundle.recipientRows);
+      setPixKey(bundle.pixKey);
     } catch (error) {
-      console.error('Erro ao carregar chave PIX:', error);
+      console.error('Erro ao carregar dados de dízimos/ofertas:', error);
+      setOfferingsRecipientRows([]);
       setPixKey(null);
     } finally {
       setIsPixKeyLoading(false);
@@ -3553,7 +3559,7 @@ export default function Dashboard() {
                   >
                     <OfferingsClass
                       title={item.title}
-                      recipientRows={OFFERINGS_RECIPIENT_ROWS}
+                      recipientRows={offeringsRecipientRows}
                       pixKey={pixKey}
                       pixKeyLoading={isPixKeyLoading}
                       onCopyPixKey={handleCopyPixKey}

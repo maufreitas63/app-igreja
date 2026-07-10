@@ -15,6 +15,9 @@ export type SessionIgreja = {
   website_url: string | null;
   instagram_url: string | null;
   youtube_url: string | null;
+  cnpj: string | null;
+  pix_institution: string | null;
+  pix_key: string | null;
   is_primary: boolean;
   is_linked: boolean;
 };
@@ -33,6 +36,9 @@ function mapSessionIgreja(row: Record<string, unknown> | null | undefined): Sess
   const webRaw = typeof row?.website_url === 'string' ? row.website_url.trim() : '';
   const igRaw = typeof row?.instagram_url === 'string' ? row.instagram_url.trim() : '';
   const ytRaw = typeof row?.youtube_url === 'string' ? row.youtube_url.trim() : '';
+  const cnpjRaw = typeof row?.cnpj === 'string' ? row.cnpj.trim() : '';
+  const pixInstRaw = typeof row?.pix_institution === 'string' ? row.pix_institution.trim() : '';
+  const pixKeyRaw = typeof row?.pix_key === 'string' ? row.pix_key.trim() : '';
   return {
     id,
     code: String(row?.code ?? '').trim(),
@@ -41,6 +47,9 @@ function mapSessionIgreja(row: Record<string, unknown> | null | undefined): Sess
     website_url: webRaw || null,
     instagram_url: igRaw || null,
     youtube_url: ytRaw || null,
+    cnpj: cnpjRaw || null,
+    pix_institution: pixInstRaw || null,
+    pix_key: pixKeyRaw || null,
     is_primary: Boolean(row?.is_primary),
     is_linked: Boolean(row?.is_linked),
   };
@@ -308,6 +317,42 @@ export async function setIgrejaSocialLinksAdmin(
     website_url?: string | null;
     instagram_url?: string | null;
     youtube_url?: string | null;
+  };
+}
+
+export async function setIgrejaOfferingsAdmin(
+  tenantId: string,
+  cnpj: string | null | undefined,
+  pixInstitution: string | null | undefined,
+  pixKey: string | null | undefined
+) {
+  const { data, error } = await supabase.rpc('set_igreja_offerings_admin', {
+    p_tenant_id: tenantId.trim(),
+    p_cnpj: cnpj?.trim() || null,
+    p_pix_institution: pixInstitution?.trim() || null,
+    p_pix_key: pixKey?.trim() || null,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'set_igreja_offerings_admin')) {
+      return {
+        success: false as const,
+        message:
+          'RPC ausente. Execute scripts/multi-tenant-21-igreja-offerings-pix.sql no Supabase.',
+      };
+    }
+    return {
+      success: false as const,
+      message: error.message?.trim() || 'Não foi possível salvar os dados de ofertas.',
+    };
+  }
+
+  return data as {
+    success?: boolean;
+    message?: string;
+    cnpj?: string | null;
+    pix_institution?: string | null;
+    pix_key?: string | null;
   };
 }
 

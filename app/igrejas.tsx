@@ -7,6 +7,7 @@ import {
   activateSessionTenant,
   listSessionIgrejas,
   onboardIgrejaAdmin,
+  setIgrejaOfferingsAdmin,
   setIgrejaSocialLinksAdmin,
   type SessionIgreja,
 } from '@/lib/tenantSession';
@@ -25,6 +26,7 @@ import {
 import Toast from 'react-native-toast-message';
 
 type SocialDraft = { website: string; instagram: string; youtube: string };
+type OfferingsDraft = { cnpj: string; pixInstitution: string; pixKey: string };
 
 function IgrejasAdminPanel() {
   const router = useRouter();
@@ -39,19 +41,30 @@ function IgrejasAdminPanel() {
   const [createWebsite, setCreateWebsite] = useState('');
   const [createInstagram, setCreateInstagram] = useState('');
   const [createYoutube, setCreateYoutube] = useState('');
+  const [createCnpj, setCreateCnpj] = useState('');
+  const [createPixInstitution, setCreatePixInstitution] = useState('');
+  const [createPixKey, setCreatePixKey] = useState('');
   const [socialDrafts, setSocialDrafts] = useState<Record<string, SocialDraft>>({});
+  const [offeringsDrafts, setOfferingsDrafts] = useState<Record<string, OfferingsDraft>>({});
   const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null);
 
   const syncSocialDrafts = useCallback((rows: SessionIgreja[]) => {
-    const next: Record<string, SocialDraft> = {};
+    const nextSocial: Record<string, SocialDraft> = {};
+    const nextOfferings: Record<string, OfferingsDraft> = {};
     for (const church of rows) {
-      next[church.id] = {
+      nextSocial[church.id] = {
         website: church.website_url ?? '',
         instagram: church.instagram_url ?? '',
         youtube: church.youtube_url ?? '',
       };
+      nextOfferings[church.id] = {
+        cnpj: church.cnpj ?? '',
+        pixInstitution: church.pix_institution ?? '',
+        pixKey: church.pix_key ?? '',
+      };
     }
-    setSocialDrafts(next);
+    setSocialDrafts(nextSocial);
+    setOfferingsDrafts(nextOfferings);
   }, []);
 
   const load = useCallback(async () => {
@@ -128,6 +141,8 @@ function IgrejasAdminPanel() {
 
   const handleSaveEdit = async (church: SessionIgreja) => {
     const draft = socialDrafts[church.id] ?? { website: '', instagram: '', youtube: '' };
+    const offerings =
+      offeringsDrafts[church.id] ?? { cnpj: '', pixInstitution: '', pixKey: '' };
     setEditBusy(true);
     try {
       if (editLogoPreview) {
@@ -152,10 +167,28 @@ function IgrejasAdminPanel() {
         return;
       }
 
+      const offeringsResult = await setIgrejaOfferingsAdmin(
+        church.id,
+        offerings.cnpj,
+        offerings.pixInstitution,
+        offerings.pixKey
+      );
+      if (!offeringsResult?.success) {
+        Toast.show({
+          type: 'error',
+          text1: 'Editar instância',
+          text2:
+            offeringsResult?.message ||
+            'Redes salvas, mas os dados de dízimos/ofertas falharam.',
+        });
+        await load();
+        return;
+      }
+
       Toast.show({
         type: 'success',
         text1: 'Instância atualizada',
-        text2: `${church.name}: logo e redes salvos.`,
+        text2: `${church.name}: logo, redes e ofertas salvos.`,
       });
       closeEdit();
       await load();
@@ -217,6 +250,27 @@ function IgrejasAdminPanel() {
         }
       }
 
+      if (
+        tenantId &&
+        (createCnpj.trim() || createPixInstitution.trim() || createPixKey.trim())
+      ) {
+        const offerings = await setIgrejaOfferingsAdmin(
+          tenantId,
+          createCnpj,
+          createPixInstitution,
+          createPixKey
+        );
+        if (!offerings?.success) {
+          Toast.show({
+            type: 'error',
+            text1: 'Instância criada',
+            text2:
+              offerings?.message ||
+              'Dados de dízimos/ofertas não foram salvos. Use Editar na lista.',
+          });
+        }
+      }
+
       Toast.show({
         type: 'success',
         text1: 'Instância criada',
@@ -228,6 +282,9 @@ function IgrejasAdminPanel() {
       setCreateWebsite('');
       setCreateInstagram('');
       setCreateYoutube('');
+      setCreateCnpj('');
+      setCreatePixInstitution('');
+      setCreatePixKey('');
       await load();
     } catch (error) {
       console.error(error);
@@ -362,6 +419,40 @@ function IgrejasAdminPanel() {
           Site e redes usados no menu Redes Sociais quando esta instância estiver ativa.
         </Text>
 
+        <Text style={styles.label}>CNPJ (dízimos/ofertas)</Text>
+        <TextInput
+          style={styles.input}
+          value={createCnpj}
+          onChangeText={setCreateCnpj}
+          placeholder="00.000.000/0000-00"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <Text style={styles.label}>Instituição PIX</Text>
+        <TextInput
+          style={styles.input}
+          value={createPixInstitution}
+          onChangeText={setCreatePixInstitution}
+          placeholder="Nome do banco / cooperativa"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="characters"
+          autoCorrect={false}
+        />
+        <Text style={styles.label}>Chave PIX</Text>
+        <TextInput
+          style={styles.input}
+          value={createPixKey}
+          onChangeText={setCreatePixKey}
+          placeholder="CNPJ, e-mail, telefone ou chave aleatória"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <Text style={styles.logoHint}>
+          Dados exibidos na tela Dízimos e Ofertas desta instância.
+        </Text>
+
         <TouchableOpacity
           style={[styles.button, saving && styles.buttonDisabled]}
           onPress={() => void handleCreate()}
@@ -384,6 +475,8 @@ function IgrejasAdminPanel() {
           {churches.map((church) => {
             const isEditing = editingId === church.id;
             const draft = socialDrafts[church.id] ?? { website: '', instagram: '', youtube: '' };
+            const offeringsDraft =
+              offeringsDrafts[church.id] ?? { cnpj: '', pixInstitution: '', pixKey: '' };
             const previewUri = editLogoPreview || church.logo_url;
 
             return (
@@ -431,7 +524,7 @@ function IgrejasAdminPanel() {
 
                 {isEditing ? (
                   <View style={styles.editPanel}>
-                    <Text style={styles.editTitle}>Logo e redes sociais</Text>
+                    <Text style={styles.editTitle}>Logo, redes e dízimos/ofertas</Text>
 
                     <Text style={styles.socialFieldLabel}>Logo</Text>
                     <View style={styles.logoRow}>
@@ -517,6 +610,55 @@ function IgrejasAdminPanel() {
                       autoCapitalize="none"
                       autoCorrect={false}
                       keyboardType="url"
+                      editable={!editBusy}
+                    />
+
+                    <Text style={styles.socialFieldLabel}>CNPJ (dízimos/ofertas)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={offeringsDraft.cnpj}
+                      onChangeText={(value) =>
+                        setOfferingsDrafts((prev) => ({
+                          ...prev,
+                          [church.id]: { ...offeringsDraft, cnpj: value },
+                        }))
+                      }
+                      placeholder="00.000.000/0000-00"
+                      placeholderTextColor={MINIMAL_UI.textMuted}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      editable={!editBusy}
+                    />
+                    <Text style={styles.socialFieldLabel}>Instituição PIX</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={offeringsDraft.pixInstitution}
+                      onChangeText={(value) =>
+                        setOfferingsDrafts((prev) => ({
+                          ...prev,
+                          [church.id]: { ...offeringsDraft, pixInstitution: value },
+                        }))
+                      }
+                      placeholder="Nome do banco / cooperativa"
+                      placeholderTextColor={MINIMAL_UI.textMuted}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                      editable={!editBusy}
+                    />
+                    <Text style={styles.socialFieldLabel}>Chave PIX</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={offeringsDraft.pixKey}
+                      onChangeText={(value) =>
+                        setOfferingsDrafts((prev) => ({
+                          ...prev,
+                          [church.id]: { ...offeringsDraft, pixKey: value },
+                        }))
+                      }
+                      placeholder="CNPJ, e-mail, telefone ou chave aleatória"
+                      placeholderTextColor={MINIMAL_UI.textMuted}
+                      autoCapitalize="none"
+                      autoCorrect={false}
                       editable={!editBusy}
                     />
 
