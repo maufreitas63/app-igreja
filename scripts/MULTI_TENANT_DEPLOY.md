@@ -81,3 +81,32 @@ Não há rollback automático seguro. Em emergência controlada:
 - [ ] Listagens (eventos, membros, pastoral, financeiro) retornam dados da IBN
 - [ ] INSERT de evento/pedido pastoral grava `tenant_id` da IBN
 - [ ] Revisar RPCs `security definer` críticos
+
+## Passo 5 — Auditoria de RPCs SECURITY DEFINER
+
+Execute **bloco a bloco** (separados) em:
+
+`scripts/multi-tenant-05-audit-security-definer.sql`
+
+| Bloco | O que mostra |
+|-------|----------------|
+| **A** | Inventário de todas as funções `SECURITY DEFINER` em `public` |
+| **B** | Funções que citam tabelas com `tenant_id` mas **não** citam filtro de tenant no source (heurística de risco) |
+| **C** | Checklist priorizado por área do app (pastoral → financeiro → escalas → …) |
+| **E** | Contagem de vínculos / tenant padrão IBN |
+
+### Como corrigir (padrão)
+
+No início do RPC:
+
+```sql
+v_tenant uuid := public.current_session_tenant_id();
+if v_tenant is null then
+  raise exception 'Sessão sem igreja (tenant) vinculada.';
+end if;
+```
+
+Em leituras/escritas: `where tenant_id = v_tenant`.  
+Em cadastro de profile: criar também linha em `profile_igreja_vinculos`.
+
+Prioridade sugerida no bloco **C**: pastoral, financeiro, despesas, escalas, autorização de mídia, membros/eventos, depois ACL/cadastro.
