@@ -34,6 +34,12 @@ export const MINIMAL_TOP_IDENTITY_BAR_HEIGHT = 80;
 /** Logo da instância no chrome (dobrado para melhor visibilidade). */
 export const MINIMAL_TOP_IDENTITY_LOGO_HEIGHT = 72;
 
+/**
+ * Altura mínima do chrome superior (`MinimalTopLeftChrome`).
+ * O drawer e o corpo da tela devem alinhar a esta margem.
+ */
+export const MINIMAL_TOP_CHROME_MIN_HEIGHT = 96;
+
 /** Altura base do chrome superior (menu + safe area aproximada). */
 export const MINIMAL_TOP_CHROME_BASE = 52;
 

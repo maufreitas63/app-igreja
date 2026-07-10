@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+
 type SettingsItem = {
   id: string;
   label: string;
@@ -58,7 +59,7 @@ export function AppDrawerSettings({
   ];
 
   return (
-    <View style={[styles.panel, { paddingTop: insets.top + 12, paddingBottom: Math.max(insets.bottom, 12) }]}>
+    <View style={[styles.panel, { paddingBottom: Math.max(insets.bottom, 12) }]}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Configurações</Text>
         <Pressable
@@ -110,6 +111,7 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: MINIMAL_UI.background,
     paddingHorizontal: 16,
+    paddingTop: 12,
     zIndex: 2,
   },
   headerRow: {

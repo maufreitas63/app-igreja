@@ -3,7 +3,7 @@ import { useAppDrawerMenu, type AppDrawerMenuItemResolved } from '@/hooks/useApp
 import { navigateDrawerMenuItem, isDrawerMenuPlaceholder } from '@/lib/appDrawerMenu';
 import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { traceClick } from '@/lib/devClickTrace';
-import { MINIMAL_ICON, MINIMAL_UI, MINIMAL_TYPO } from '@/lib/minimalUiTheme';
+import { MINIMAL_ICON, MINIMAL_TOP_CHROME_MIN_HEIGHT, MINIMAL_UI, MINIMAL_TYPO } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -93,6 +93,9 @@ export function AppDrawer() {
     closeDrawer();
   };
 
+  // Alinha ao corpo da tela (abaixo do chrome), mesma margem de «Proximos Eventos».
+  const panelTopOffset = insets.top + MINIMAL_TOP_CHROME_MIN_HEIGHT;
+
   return (
     <Modal
       animationType="slide"
@@ -101,62 +104,65 @@ export function AppDrawer() {
       onRequestClose={settingsOpen ? () => setSettingsOpen(false) : closeDrawer}
     >
       <View style={styles.overlay}>
-        {settingsOpen ? (
-          <AppDrawerSettings
-            onClose={() => {
-              traceClick('drawer', 'settings-close-press');
-              setSettingsOpen(false);
-            }}
-            onOpenMediaAuthorization={handleOpenMediaAuthorization}
-            showIgrejasInstances={isSuperAdmin}
-            onOpenIgrejasInstances={handleOpenIgrejasInstances}
-          />
-        ) : (
-          <View style={[styles.panel, { paddingTop: insets.top + 12 }]}>
-            <View style={styles.headerRow}>
-              <Text style={styles.title}>Menu</Text>
-              <Pressable
-                accessibilityLabel="Abrir configurações"
-                accessibilityRole="button"
-                onPress={() => {
-                  traceClick('drawer', 'settings-open-press');
-                  setSettingsOpen(true);
-                }}
-                style={styles.settingsButton}
-              >
-                <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
-              </Pressable>
-            </View>
-            {loading ? (
-              <View style={styles.loaderWrap}>
-                <ActivityIndicator color={MINIMAL_UI.icon} />
+        <View style={[styles.chromeGap, { height: panelTopOffset }]} pointerEvents="none" />
+        <View style={styles.sheet}>
+          {settingsOpen ? (
+            <AppDrawerSettings
+              onClose={() => {
+                traceClick('drawer', 'settings-close-press');
+                setSettingsOpen(false);
+              }}
+              onOpenMediaAuthorization={handleOpenMediaAuthorization}
+              showIgrejasInstances={isSuperAdmin}
+              onOpenIgrejasInstances={handleOpenIgrejasInstances}
+            />
+          ) : (
+            <View style={styles.panel}>
+              <View style={styles.headerRow}>
+                <Text style={styles.title}>Menu</Text>
+                <Pressable
+                  accessibilityLabel="Abrir configurações"
+                  accessibilityRole="button"
+                  onPress={() => {
+                    traceClick('drawer', 'settings-open-press');
+                    setSettingsOpen(true);
+                  }}
+                  style={styles.settingsButton}
+                >
+                  <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
+                </Pressable>
               </View>
-            ) : (
-              <ScrollView
-                style={styles.scroll}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator
-                keyboardShouldPersistTaps="handled"
-              >
-                {visibleItems.map((item) => (
-                  <TouchableOpacity
-                    key={item.moduleKey}
-                    style={[styles.item, item.pendingRoute && styles.itemPendingRoute]}
-                    onPress={() => handlePress(item)}
-                    disabled={item.pendingRoute}
-                    accessibilityState={{ disabled: item.pendingRoute }}
-                  >
-                    <Text style={[styles.itemLabel, item.pendingRoute && styles.itemLabelPendingRoute]}>
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-            <MinimalExitBar variant="drawer" />
-          </View>
-        )}
-        <Pressable style={styles.backdrop} onPress={handleBackdropPress} accessibilityLabel="Fechar menu" />
+              {loading ? (
+                <View style={styles.loaderWrap}>
+                  <ActivityIndicator color={MINIMAL_UI.icon} />
+                </View>
+              ) : (
+                <ScrollView
+                  style={styles.scroll}
+                  contentContainerStyle={styles.scrollContent}
+                  showsVerticalScrollIndicator
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {visibleItems.map((item) => (
+                    <TouchableOpacity
+                      key={item.moduleKey}
+                      style={[styles.item, item.pendingRoute && styles.itemPendingRoute]}
+                      onPress={() => handlePress(item)}
+                      disabled={item.pendingRoute}
+                      accessibilityState={{ disabled: item.pendingRoute }}
+                    >
+                      <Text style={[styles.itemLabel, item.pendingRoute && styles.itemLabelPendingRoute]}>
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+              <MinimalExitBar variant="drawer" />
+            </View>
+          )}
+          <Pressable style={styles.backdrop} onPress={handleBackdropPress} accessibilityLabel="Fechar menu" />
+        </View>
       </View>
     </Modal>
   );
@@ -165,13 +171,23 @@ export function AppDrawer() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
+    flexDirection: 'column',
+  },
+  chromeGap: {
+    width: '100%',
+    backgroundColor: 'transparent',
+  },
+  sheet: {
+    flex: 1,
     flexDirection: 'row',
+    minHeight: 0,
   },
   panel: {
     width: '82%',
     maxWidth: 320,
     backgroundColor: MINIMAL_UI.background,
     paddingHorizontal: 16,
+    paddingTop: 12,
     zIndex: 2,
     flex: 1,
     maxHeight: '100%',

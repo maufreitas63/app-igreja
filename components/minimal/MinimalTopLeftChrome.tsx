@@ -3,7 +3,7 @@ import { MinimalTopChurchLogo } from '@/components/minimal/MinimalTopChurchLogo'
 import { MinimalTopIdentityBar } from '@/components/minimal/MinimalTopIdentityBar';
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { useMinimalHome } from '@/context/MinimalHomeContext';
-import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_ICON, MINIMAL_TOP_CHROME_MIN_HEIGHT, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     zIndex: 30,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: MINIMAL_UI.divider,
-    minHeight: 96,
+    minHeight: MINIMAL_TOP_CHROME_MIN_HEIGHT,
   },
   leftStack: {
     width: '50%',
