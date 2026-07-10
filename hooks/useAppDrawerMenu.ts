@@ -85,6 +85,7 @@ function isDrawerModuleEnabled(
 export function useAppDrawerMenu() {
   const [items, setItems] = useState<AppDrawerMenuItemResolved[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -106,6 +107,9 @@ export function useAppDrawerMenu() {
           profileId ? fetchProfileHasActiveMembership(profileId) : Promise.resolve(false),
         ]);
 
+      const superAdmin = maintenanceAccess.isSuperAdmin === true;
+      setIsSuperAdmin(superAdmin);
+
       const context = {
         dashboardCardAccess,
         dashboardScreenAccess,
@@ -114,7 +118,7 @@ export function useAppDrawerMenu() {
         canOperateGhostMode: maintenanceAccess.canOperateGhostMode,
         canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
         hasActiveMembership,
-        isSuperAdmin: maintenanceAccess.isSuperAdmin === true,
+        isSuperAdmin: superAdmin,
       };
 
       const resolved = APP_DRAWER_MENU_ITEMS.map((item) => ({
@@ -126,6 +130,7 @@ export function useAppDrawerMenu() {
       setItems(resolved);
     } catch (error) {
       console.error('Erro ao carregar menu lateral:', error);
+      setIsSuperAdmin(false);
       setItems(
         APP_DRAWER_MENU_ITEMS.map((item) => ({
           ...item,
@@ -142,5 +147,5 @@ export function useAppDrawerMenu() {
     void refresh();
   }, [refresh]);
 
-  return { items, loading, refresh };
+  return { items, loading, refresh, isSuperAdmin };
 }

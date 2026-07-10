@@ -23,9 +23,17 @@ type SettingsItem = {
 type Props = {
   onClose: () => void;
   onOpenMediaAuthorization: () => void;
+  /** Apenas super_admin — gestão multi-instância. */
+  showIgrejasInstances?: boolean;
+  onOpenIgrejasInstances?: () => void;
 };
 
-export function AppDrawerSettings({ onClose, onOpenMediaAuthorization }: Props) {
+export function AppDrawerSettings({
+  onClose,
+  onOpenMediaAuthorization,
+  showIgrejasInstances = false,
+  onOpenIgrejasInstances,
+}: Props) {
   const insets = useSafeAreaInsets();
 
   const items: SettingsItem[] = [
@@ -36,6 +44,17 @@ export function AppDrawerSettings({ onClose, onOpenMediaAuthorization }: Props) 
       icon: 'shield',
       onPress: onOpenMediaAuthorization,
     },
+    ...(showIgrejasInstances && onOpenIgrejasInstances
+      ? [
+          {
+            id: 'igrejas-instances',
+            label: 'Instâncias (Igrejas)',
+            hint: 'Criar e alternar ambientes de igreja',
+            icon: 'building' as const,
+            onPress: onOpenIgrejasInstances,
+          } satisfies SettingsItem,
+        ]
+      : []),
   ];
 
   return (

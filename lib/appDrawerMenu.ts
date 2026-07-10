@@ -59,7 +59,6 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'e', label: 'Aniversariantes', moduleKey: 'menu_aniversariantes' },
   { letter: 'f', label: 'Lista de Membros', moduleKey: 'menu_membros' },
   { letter: 'g', label: 'Administrativo', moduleKey: 'menu_administrativo' },
-  { letter: 'g2', label: 'Instâncias (Igrejas)', moduleKey: 'menu_igrejas' },
   {
     letter: 'h',
     label: 'Programação de Eventos',

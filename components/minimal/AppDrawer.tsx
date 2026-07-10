@@ -23,7 +23,7 @@ import { AppDrawerSettings } from './AppDrawerSettings';
 
 export function AppDrawer() {
   const { isOpen, closeDrawer } = useAppDrawer();
-  const { items, loading, refresh } = useAppDrawerMenu();
+  const { items, loading, refresh, isSuperAdmin } = useAppDrawerMenu();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -76,6 +76,13 @@ export function AppDrawer() {
     traceClick('drawer', 'settings-media-authorization-drawer-closed');
   };
 
+  const handleOpenIgrejasInstances = () => {
+    traceClick('drawer', 'settings-igrejas-instances-press');
+    setSettingsOpen(false);
+    closeDrawer();
+    void navigateDrawerMenuItem(router, 'menu_igrejas');
+  };
+
   const handleBackdropPress = () => {
     traceClick('drawer', 'backdrop-press', { settingsOpen });
     if (settingsOpen) {
@@ -101,6 +108,8 @@ export function AppDrawer() {
               setSettingsOpen(false);
             }}
             onOpenMediaAuthorization={handleOpenMediaAuthorization}
+            showIgrejasInstances={isSuperAdmin}
+            onOpenIgrejasInstances={handleOpenIgrejasInstances}
           />
         ) : (
           <View style={[styles.panel, { paddingTop: insets.top + 12 }]}>
