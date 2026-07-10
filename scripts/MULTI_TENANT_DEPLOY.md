@@ -161,3 +161,10 @@ Com hard refresh após deploy Cloudflare:
 
 Se algum item falhar: anote a tela, a ação e a mensagem (toast/console/Network RPC).
 
+## Passo 8 — Segunda igreja (quando precisar)
+
+Playbook: `scripts/MULTI_TENANT_SEGUNDA_IGREJA.md`  
+Script: `scripts/multi-tenant-08-onboard-igreja.sql` (editar CONFIG → executar)
+
+Cria `igrejas` + copia `app_parameters` da IBN + `Parm_entidade` + vínculo admin opcional.
+
