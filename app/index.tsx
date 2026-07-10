@@ -874,28 +874,6 @@ export default function IndexScreen() {
           >
             <SocialBrandIcon network="bible" />
           </TouchableOpacity>
-
-          <TouchableOpacity
-            accessibilityLabel="Abrir Instagram da Igreja Batista Norte"
-            accessibilityRole="button"
-            onPress={() => {
-              void handleOpenSocial('https://www.instagram.com/igrejabatistanorte');
-            }}
-            style={styles.socialButton}
-          >
-            <SocialBrandIcon network="instagram" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            accessibilityLabel="Abrir YouTube da Igreja Batista Norte"
-            accessibilityRole="button"
-            onPress={() => {
-              void handleOpenSocial('https://www.youtube.com/@ibnorte');
-            }}
-            style={styles.socialButton}
-          >
-            <SocialBrandIcon network="youtube" />
-          </TouchableOpacity>
         </View>
       </View>
     </View>

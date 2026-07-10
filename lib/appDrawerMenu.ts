@@ -18,6 +18,7 @@ export type AppDrawerModuleKey =
   | 'menu_membros'
   | 'menu_administrativo'
   | 'menu_igrejas'
+  | 'menu_redes_sociais'
   | AppDrawerPlaceholderModuleKey
   | 'gestao_financeira'
   | 'Events'
@@ -83,6 +84,12 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'x', label: 'Mudança Papéis', moduleKey: 'mudanca_papeis' },
   { letter: 'y', label: 'Acesso Usuários', moduleKey: 'profile_access_insights' },
   { letter: 'z', label: 'Modo Ghost', moduleKey: 'auditor' },
+  {
+    letter: 'aa',
+    label: 'Redes Sociais',
+    moduleKey: 'menu_redes_sociais',
+    dividerBefore: true,
+  },
 ];
 
 export function isDrawerMenuPlaceholder(moduleKey: AppDrawerModuleKey): moduleKey is AppDrawerPlaceholderModuleKey {
@@ -182,6 +189,14 @@ export async function navigateDrawerMenuItem(
   if (moduleKey === 'menu_igrejas') {
     router.push({
       pathname: '/igrejas',
+      params: withMinimalPresentation(),
+    });
+    return;
+  }
+
+  if (moduleKey === 'menu_redes_sociais') {
+    router.push({
+      pathname: '/redes-sociais',
       params: withMinimalPresentation(),
     });
     return;

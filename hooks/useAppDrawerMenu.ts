@@ -47,7 +47,7 @@ function isDrawerModuleEnabled(
     return true;
   }
 
-  if (moduleKey === 'events_panel') {
+  if (moduleKey === 'events_panel' || moduleKey === 'menu_redes_sociais') {
     return true;
   }
 
@@ -135,7 +135,10 @@ export function useAppDrawerMenu() {
         APP_DRAWER_MENU_ITEMS.map((item) => ({
           ...item,
           pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
-          enabled: item.moduleKey === 'events_panel' || isDrawerMenuPlaceholder(item.moduleKey),
+          enabled:
+            item.moduleKey === 'events_panel'
+            || item.moduleKey === 'menu_redes_sociais'
+            || isDrawerMenuPlaceholder(item.moduleKey),
         }))
       );
     } finally {

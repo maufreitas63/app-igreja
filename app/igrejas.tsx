@@ -7,6 +7,7 @@ import {
   activateSessionTenant,
   listSessionIgrejas,
   onboardIgrejaAdmin,
+  setIgrejaSocialLinksAdmin,
   type SessionIgreja,
 } from '@/lib/tenantSession';
 import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
@@ -23,20 +24,39 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
+type SocialDraft = { instagram: string; youtube: string };
+
 function IgrejasAdminPanel() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [logoBusyId, setLogoBusyId] = useState<string | null>(null);
+  const [socialBusyId, setSocialBusyId] = useState<string | null>(null);
   const [churches, setChurches] = useState<SessionIgreja[]>([]);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [createInstagram, setCreateInstagram] = useState('');
+  const [createYoutube, setCreateYoutube] = useState('');
+  const [socialDrafts, setSocialDrafts] = useState<Record<string, SocialDraft>>({});
+
+  const syncSocialDrafts = useCallback((rows: SessionIgreja[]) => {
+    const next: Record<string, SocialDraft> = {};
+    for (const church of rows) {
+      next[church.id] = {
+        instagram: church.instagram_url ?? '',
+        youtube: church.youtube_url ?? '',
+      };
+    }
+    setSocialDrafts(next);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setChurches(await listSessionIgrejas());
+      const rows = await listSessionIgrejas();
+      setChurches(rows);
+      syncSocialDrafts(rows);
     } catch (error) {
       console.error(error);
       Toast.show({
@@ -47,7 +67,7 @@ function IgrejasAdminPanel() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [syncSocialDrafts]);
 
   useEffect(() => {
     void load();
@@ -96,11 +116,17 @@ function IgrejasAdminPanel() {
                 ? `Igreja ok, mas o logo falhou: ${logoError.message}`
                 : 'Igreja ok, mas o logo não foi salvo. Use “Trocar logo” na lista.',
           });
-          setCode('');
-          setName('');
-          setLogoPreview(null);
-          await load();
-          return;
+        }
+      }
+
+      if (tenantId && (createInstagram.trim() || createYoutube.trim())) {
+        const social = await setIgrejaSocialLinksAdmin(tenantId, createInstagram, createYoutube);
+        if (!social?.success) {
+          Toast.show({
+            type: 'error',
+            text1: 'Instância criada',
+            text2: social?.message || 'Links sociais não foram salvos. Edite na lista.',
+          });
         }
       }
 
@@ -112,6 +138,8 @@ function IgrejasAdminPanel() {
       setCode('');
       setName('');
       setLogoPreview(null);
+      setCreateInstagram('');
+      setCreateYoutube('');
       await load();
     } catch (error) {
       console.error(error);
@@ -154,6 +182,30 @@ function IgrejasAdminPanel() {
       });
     } finally {
       setLogoBusyId(null);
+    }
+  };
+
+  const handleSaveSocial = async (church: SessionIgreja) => {
+    const draft = socialDrafts[church.id] ?? { instagram: '', youtube: '' };
+    setSocialBusyId(church.id);
+    try {
+      const result = await setIgrejaSocialLinksAdmin(church.id, draft.instagram, draft.youtube);
+      if (!result?.success) {
+        Toast.show({
+          type: 'error',
+          text1: 'Redes sociais',
+          text2: result?.message || 'Não foi possível salvar.',
+        });
+        return;
+      }
+      Toast.show({
+        type: 'success',
+        text1: 'Redes sociais',
+        text2: `Links de ${church.name} atualizados.`,
+      });
+      await load();
+    } finally {
+      setSocialBusyId(null);
     }
   };
 
@@ -235,6 +287,32 @@ function IgrejasAdminPanel() {
           PNG ou JPG. Aparece no topo do app quando esta instância estiver ativa.
         </Text>
 
+        <Text style={styles.label}>Instagram (URL)</Text>
+        <TextInput
+          style={styles.input}
+          value={createInstagram}
+          onChangeText={setCreateInstagram}
+          placeholder="https://www.instagram.com/..."
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+        />
+        <Text style={styles.label}>YouTube (URL)</Text>
+        <TextInput
+          style={styles.input}
+          value={createYoutube}
+          onChangeText={setCreateYoutube}
+          placeholder="https://www.youtube.com/..."
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+        />
+        <Text style={styles.logoHint}>
+          Usados no menu Redes Sociais quando esta instância estiver ativa.
+        </Text>
+
         <TouchableOpacity
           style={[styles.button, saving && styles.buttonDisabled]}
           onPress={() => void handleCreate()}
@@ -256,6 +334,8 @@ function IgrejasAdminPanel() {
         <View style={styles.list}>
           {churches.map((church) => {
             const logoBusy = logoBusyId === church.id;
+            const socialBusy = socialBusyId === church.id;
+            const draft = socialDrafts[church.id] ?? { instagram: '', youtube: '' };
             return (
               <View key={church.id} style={styles.row}>
                 <TouchableOpacity
@@ -298,6 +378,53 @@ function IgrejasAdminPanel() {
                     </Text>
                   )}
                 </TouchableOpacity>
+
+                <View style={styles.socialBlock}>
+                  <Text style={styles.socialBlockTitle}>Redes sociais</Text>
+                  <Text style={styles.socialFieldLabel}>Instagram</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={draft.instagram}
+                    onChangeText={(value) =>
+                      setSocialDrafts((prev) => ({
+                        ...prev,
+                        [church.id]: { ...draft, instagram: value },
+                      }))
+                    }
+                    placeholder="https://www.instagram.com/..."
+                    placeholderTextColor={MINIMAL_UI.textMuted}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="url"
+                  />
+                  <Text style={styles.socialFieldLabel}>YouTube</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={draft.youtube}
+                    onChangeText={(value) =>
+                      setSocialDrafts((prev) => ({
+                        ...prev,
+                        [church.id]: { ...draft, youtube: value },
+                      }))
+                    }
+                    placeholder="https://www.youtube.com/..."
+                    placeholderTextColor={MINIMAL_UI.textMuted}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="url"
+                  />
+                  <TouchableOpacity
+                    style={[styles.secondaryButton, socialBusy && styles.buttonDisabled]}
+                    onPress={() => void handleSaveSocial(church)}
+                    disabled={Boolean(socialBusyId)}
+                  >
+                    {socialBusy ? (
+                      <ActivityIndicator color={MINIMAL_UI.accent} size="small" />
+                    ) : (
+                      <Text style={styles.secondaryButtonText}>Salvar redes</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
             );
           })}
@@ -474,6 +601,23 @@ const styles = StyleSheet.create({
   rowLogoActionText: {
     color: MINIMAL_UI.blueDark,
     fontSize: 13,
+    fontWeight: '600',
+  },
+  socialBlock: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: MINIMAL_UI.divider,
+    padding: 12,
+    gap: 6,
+  },
+  socialBlockTitle: {
+    color: MINIMAL_UI.text,
+    fontWeight: '700',
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  socialFieldLabel: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
     fontWeight: '600',
   },
 });

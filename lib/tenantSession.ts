@@ -12,6 +12,8 @@ export type SessionIgreja = {
   code: string;
   name: string;
   logo_url: string | null;
+  instagram_url: string | null;
+  youtube_url: string | null;
   is_primary: boolean;
   is_linked: boolean;
 };
@@ -27,11 +29,15 @@ function mapSessionIgreja(row: Record<string, unknown> | null | undefined): Sess
   const id = typeof row?.id === 'string' ? row.id.trim() : '';
   if (!id) return null;
   const logoRaw = typeof row?.logo_url === 'string' ? row.logo_url.trim() : '';
+  const igRaw = typeof row?.instagram_url === 'string' ? row.instagram_url.trim() : '';
+  const ytRaw = typeof row?.youtube_url === 'string' ? row.youtube_url.trim() : '';
   return {
     id,
     code: String(row?.code ?? '').trim(),
     name: String(row?.name ?? '').trim(),
     logo_url: logoRaw || null,
+    instagram_url: igRaw || null,
+    youtube_url: ytRaw || null,
     is_primary: Boolean(row?.is_primary),
     is_linked: Boolean(row?.is_linked),
   };
@@ -246,6 +252,39 @@ export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: s
     code?: string;
     name?: string;
     logo_url?: string | null;
+  };
+}
+
+export async function setIgrejaSocialLinksAdmin(
+  tenantId: string,
+  instagramUrl: string | null | undefined,
+  youtubeUrl: string | null | undefined
+) {
+  const { data, error } = await supabase.rpc('set_igreja_social_links_admin', {
+    p_tenant_id: tenantId.trim(),
+    p_instagram_url: instagramUrl?.trim() || null,
+    p_youtube_url: youtubeUrl?.trim() || null,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'set_igreja_social_links_admin')) {
+      return {
+        success: false as const,
+        message:
+          'RPC ausente. Execute scripts/multi-tenant-14-igreja-social-links.sql no Supabase.',
+      };
+    }
+    return {
+      success: false as const,
+      message: error.message?.trim() || 'Não foi possível salvar os links sociais.',
+    };
+  }
+
+  return data as {
+    success?: boolean;
+    message?: string;
+    instagram_url?: string | null;
+    youtube_url?: string | null;
   };
 }
 
