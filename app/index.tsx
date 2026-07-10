@@ -902,7 +902,7 @@ export default function IndexScreen() {
           <View style={styles.logoWrapper}>
             <View style={styles.logoSurface}>
               <Image
-                source={require('../images/conecta.png')}
+                source={require('../images/captura.png')}
                 style={styles.logo}
                 contentFit="contain"
                 accessibilityLabel="Conecta"
