@@ -45,6 +45,11 @@ export type UseActiveEventsOptions = {
   pollIntervalMs?: number;
   /** Pausa polling com app em segundo plano. */
   pauseWhenBackgrounded?: boolean;
+  /**
+   * Quando false, não carrega na montagem (útil para modais fechados).
+   * Default: true.
+   */
+  enabled?: boolean;
 };
 
 const serializeEvents = (items: ActiveEventListItem[]) =>
@@ -70,9 +75,10 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
   const enablePolling = options?.enablePolling !== false;
   const pollIntervalMs = options?.pollIntervalMs ?? DEFAULT_EVENT_REFRESH_INTERVAL_MS;
   const pauseWhenBackgrounded = options?.pauseWhenBackgrounded !== false;
+  const enabled = options?.enabled !== false;
 
   const [events, setEvents] = useState<ActiveEventListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<Error | null>(null);
   const eventsSnapshotRef = useRef('');
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
@@ -120,10 +126,15 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
         }
         setError(null);
 
-        await ensureEventsOptionalColumns();
-        await lockPastEvents();
+        // Lock em background — não bloqueia a lista inicial
+        void lockPastEvents().catch((lockError) => {
+          console.warn('lockPastEvents (background):', lockError);
+        });
 
-        const isSessionMember = await sessionIsActiveAppMember();
+        const [, isSessionMember] = await Promise.all([
+          ensureEventsOptionalColumns(),
+          sessionIsActiveAppMember(),
+        ]);
 
         let { data, error: fetchError } = await supabase
           .from('events')
@@ -202,6 +213,18 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
           return;
         }
 
+        // Pinta a lista cedo; contagens vêm em seguida (inbox não depende delas)
+        const eventsWithoutCounts: ActiveEventListItem[] = visibleEvents.map((event) => ({
+          ...event,
+          registeredCount: 0,
+          remainingCapacity:
+            typeof event.max_capacity === 'number' ? event.max_capacity : null,
+        }));
+        commitEvents(eventsWithoutCounts);
+        if (!silent) {
+          setLoading(false);
+        }
+
         const eventsWithCounts = await Promise.all(
           visibleEvents.map(async (event) => {
             let registeredCount = 0;
@@ -243,6 +266,11 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
   );
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     void refetch();
 
     if (!enablePolling) {
@@ -295,7 +323,7 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
       stopPolling();
       appStateSubscription?.remove();
     };
-  }, [enablePolling, pauseWhenBackgrounded, pollIntervalMs, refetch]);
+  }, [enabled, enablePolling, pauseWhenBackgrounded, pollIntervalMs, refetch]);
 
   return { events, loading, error, refetch };
 };

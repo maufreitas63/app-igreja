@@ -25,7 +25,10 @@ type Props = {
 
 /** Painel inline da Agenda da Família — entre o topo (saudação) e a barra «Encerrar sessão». */
 export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
-  const { events, loading, error, refetch } = useActiveEvents({ enablePolling: visible });
+  const { events, loading, error, refetch } = useActiveEvents({
+    enabled: visible,
+    enablePolling: visible,
+  });
   const {
     kidsRoomBadgeLabel,
     teensRoomBadgeLabel,

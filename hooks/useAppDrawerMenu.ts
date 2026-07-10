@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react';
 import {
   APP_DRAWER_MENU_ITEMS,
   isDrawerMenuPlaceholder,
@@ -23,7 +24,6 @@ import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { getStoredUserPhone } from '@/lib/userSession';
-import { useCallback, useEffect, useState } from 'react';
 
 export type AppDrawerMenuItemResolved = AppDrawerMenuItem & {
   enabled: boolean;
@@ -83,8 +83,17 @@ function isDrawerModuleEnabled(
 }
 
 export function useAppDrawerMenu() {
-  const [items, setItems] = useState<AppDrawerMenuItemResolved[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<AppDrawerMenuItemResolved[]>(() =>
+    APP_DRAWER_MENU_ITEMS.map((item) => ({
+      ...item,
+      pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
+      enabled:
+        item.moduleKey === 'events_panel'
+        || item.moduleKey === 'menu_redes_sociais'
+        || isDrawerMenuPlaceholder(item.moduleKey),
+    }))
+  );
+  const [loading, setLoading] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -145,10 +154,6 @@ export function useAppDrawerMenu() {
       setLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
 
   return { items, loading, refresh, isSuperAdmin };
 }

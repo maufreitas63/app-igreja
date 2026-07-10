@@ -6,7 +6,10 @@ import {
 } from '@/lib/minimalUiTheme';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { resolveTenantChromeLogo } from '@/lib/tenantBranding';
-import { resolveActiveIgrejaBranding } from '@/lib/tenantSession';
+import {
+  getStoredActiveIgrejaBranding,
+  resolveActiveIgrejaBranding,
+} from '@/lib/tenantSession';
 import { getStoredUserPhone } from '@/lib/userSession';
 import { Image, type ImageSource } from 'expo-image';
 import React, { useEffect, useState } from 'react';
@@ -34,6 +37,20 @@ export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?:
     let active = true;
 
     void (async () => {
+      // Pinta do cache local primeiro; depois atualiza via RPC
+      const stored = await getStoredActiveIgrejaBranding();
+      if (active && stored) {
+        const cached = resolveTenantChromeLogo(stored);
+        setLogoLabel(cached.label);
+        if (cached.kind === 'image') {
+          setLogoSource(cached.source);
+          setLogoText(null);
+        } else {
+          setLogoSource(null);
+          setLogoText(cached.name);
+        }
+      }
+
       const branding = await resolveActiveIgrejaBranding();
       if (!active) {
         return;
