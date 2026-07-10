@@ -1,7 +1,8 @@
 import { SocialBrandIcon } from '@/components/SocialBrandIcon';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
-import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_ICON, MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { listSessionIgrejas, getStoredTenantId, type SessionIgreja } from '@/lib/tenantSession';
+import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -57,13 +58,14 @@ export default function RedesSociaisScreen() {
     void load();
   }, [load]);
 
+  const websiteUrl = church?.website_url?.trim() || null;
   const instagramUrl =
     church?.instagram_url?.trim()
     || (church?.code?.toUpperCase() === 'IBN' ? 'https://www.instagram.com/igrejabatistanorte' : null);
   const youtubeUrl =
     church?.youtube_url?.trim()
     || (church?.code?.toUpperCase() === 'IBN' ? 'https://www.youtube.com/@ibnorte' : null);
-  const hasAny = Boolean(instagramUrl || youtubeUrl);
+  const hasAny = Boolean(websiteUrl || instagramUrl || youtubeUrl);
 
   return (
     <MinimalScreenLayout>
@@ -78,10 +80,22 @@ export default function RedesSociaisScreen() {
         <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />
       ) : !hasAny ? (
         <Text style={styles.empty}>
-          Esta instância ainda não cadastrou Instagram ou YouTube.
+          Esta instância ainda não cadastrou site, Instagram ou YouTube.
         </Text>
       ) : (
         <View style={styles.row}>
+          {websiteUrl ? (
+            <TouchableOpacity
+              accessibilityLabel="Abrir site oficial"
+              accessibilityRole="button"
+              onPress={() => void openExternalUrl(websiteUrl, 'site oficial')}
+              style={styles.socialButton}
+            >
+              <View style={styles.websiteIcon}>
+                <FontAwesome name="globe" size={MINIMAL_ICON.action} color={MINIMAL_UI.onDark} />
+              </View>
+            </TouchableOpacity>
+          ) : null}
           {instagramUrl ? (
             <TouchableOpacity
               accessibilityLabel="Abrir Instagram"
@@ -142,5 +156,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
+  },
+  websiteIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: MINIMAL_UI.blueDark,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

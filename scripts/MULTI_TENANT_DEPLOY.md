@@ -178,6 +178,7 @@ Execute no SQL Editor **antes** de usar o seletor no app:
 5. `scripts/multi-tenant-13-igreja-logo-storage.sql` — bucket `church-logos` + `set_igreja_logo_admin` + onboard com logo
 6. `scripts/multi-tenant-14-igreja-social-links.sql` — `instagram_url` / `youtube_url` + menu Redes Sociais
 7. `scripts/multi-tenant-15-onboard-bypass-tenant-guard.sql` — **obrigatório** para Criar instância (corrige diverge do tenant da sessão)
+8. `scripts/multi-tenant-16-igreja-website-url.sql` — `website_url` (site oficial) + RPC de links atualizada
 
 Fluxo no app:
 

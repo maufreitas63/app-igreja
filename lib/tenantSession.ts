@@ -12,6 +12,7 @@ export type SessionIgreja = {
   code: string;
   name: string;
   logo_url: string | null;
+  website_url: string | null;
   instagram_url: string | null;
   youtube_url: string | null;
   is_primary: boolean;
@@ -29,6 +30,7 @@ function mapSessionIgreja(row: Record<string, unknown> | null | undefined): Sess
   const id = typeof row?.id === 'string' ? row.id.trim() : '';
   if (!id) return null;
   const logoRaw = typeof row?.logo_url === 'string' ? row.logo_url.trim() : '';
+  const webRaw = typeof row?.website_url === 'string' ? row.website_url.trim() : '';
   const igRaw = typeof row?.instagram_url === 'string' ? row.instagram_url.trim() : '';
   const ytRaw = typeof row?.youtube_url === 'string' ? row.youtube_url.trim() : '';
   return {
@@ -36,6 +38,7 @@ function mapSessionIgreja(row: Record<string, unknown> | null | undefined): Sess
     code: String(row?.code ?? '').trim(),
     name: String(row?.name ?? '').trim(),
     logo_url: logoRaw || null,
+    website_url: webRaw || null,
     instagram_url: igRaw || null,
     youtube_url: ytRaw || null,
     is_primary: Boolean(row?.is_primary),
@@ -257,11 +260,13 @@ export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: s
 
 export async function setIgrejaSocialLinksAdmin(
   tenantId: string,
+  websiteUrl: string | null | undefined,
   instagramUrl: string | null | undefined,
   youtubeUrl: string | null | undefined
 ) {
   const { data, error } = await supabase.rpc('set_igreja_social_links_admin', {
     p_tenant_id: tenantId.trim(),
+    p_website_url: websiteUrl?.trim() || null,
     p_instagram_url: instagramUrl?.trim() || null,
     p_youtube_url: youtubeUrl?.trim() || null,
   });
@@ -271,18 +276,19 @@ export async function setIgrejaSocialLinksAdmin(
       return {
         success: false as const,
         message:
-          'RPC ausente. Execute scripts/multi-tenant-14-igreja-social-links.sql no Supabase.',
+          'RPC ausente. Execute scripts/multi-tenant-16-igreja-website-url.sql no Supabase.',
       };
     }
     return {
       success: false as const,
-      message: error.message?.trim() || 'Não foi possível salvar os links sociais.',
+      message: error.message?.trim() || 'Não foi possível salvar os links.',
     };
   }
 
   return data as {
     success?: boolean;
     message?: string;
+    website_url?: string | null;
     instagram_url?: string | null;
     youtube_url?: string | null;
   };

@@ -24,7 +24,7 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-type SocialDraft = { instagram: string; youtube: string };
+type SocialDraft = { website: string; instagram: string; youtube: string };
 
 function IgrejasAdminPanel() {
   const router = useRouter();
@@ -36,6 +36,7 @@ function IgrejasAdminPanel() {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [createWebsite, setCreateWebsite] = useState('');
   const [createInstagram, setCreateInstagram] = useState('');
   const [createYoutube, setCreateYoutube] = useState('');
   const [socialDrafts, setSocialDrafts] = useState<Record<string, SocialDraft>>({});
@@ -45,6 +46,7 @@ function IgrejasAdminPanel() {
     const next: Record<string, SocialDraft> = {};
     for (const church of rows) {
       next[church.id] = {
+        website: church.website_url ?? '',
         instagram: church.instagram_url ?? '',
         youtube: church.youtube_url ?? '',
       };
@@ -96,6 +98,7 @@ function IgrejasAdminPanel() {
     setSocialDrafts((prev) => ({
       ...prev,
       [church.id]: {
+        website: church.website_url ?? '',
         instagram: church.instagram_url ?? '',
         youtube: church.youtube_url ?? '',
       },
@@ -124,14 +127,19 @@ function IgrejasAdminPanel() {
   };
 
   const handleSaveEdit = async (church: SessionIgreja) => {
-    const draft = socialDrafts[church.id] ?? { instagram: '', youtube: '' };
+    const draft = socialDrafts[church.id] ?? { website: '', instagram: '', youtube: '' };
     setEditBusy(true);
     try {
       if (editLogoPreview) {
         await saveChurchLogoForTenant(church.id, editLogoPreview);
       }
 
-      const social = await setIgrejaSocialLinksAdmin(church.id, draft.instagram, draft.youtube);
+      const social = await setIgrejaSocialLinksAdmin(
+        church.id,
+        draft.website,
+        draft.instagram,
+        draft.youtube
+      );
       if (!social?.success) {
         Toast.show({
           type: 'error',
@@ -193,8 +201,13 @@ function IgrejasAdminPanel() {
         }
       }
 
-      if (tenantId && (createInstagram.trim() || createYoutube.trim())) {
-        const social = await setIgrejaSocialLinksAdmin(tenantId, createInstagram, createYoutube);
+      if (tenantId && (createWebsite.trim() || createInstagram.trim() || createYoutube.trim())) {
+        const social = await setIgrejaSocialLinksAdmin(
+          tenantId,
+          createWebsite,
+          createInstagram,
+          createYoutube
+        );
         if (!social?.success) {
           Toast.show({
             type: 'error',
@@ -212,6 +225,7 @@ function IgrejasAdminPanel() {
       setCode('');
       setName('');
       setLogoPreview(null);
+      setCreateWebsite('');
       setCreateInstagram('');
       setCreateYoutube('');
       await load();
@@ -311,6 +325,17 @@ function IgrejasAdminPanel() {
           PNG ou JPG. Aparece no topo do app quando esta instância estiver ativa.
         </Text>
 
+        <Text style={styles.label}>Site oficial (URL)</Text>
+        <TextInput
+          style={styles.input}
+          value={createWebsite}
+          onChangeText={setCreateWebsite}
+          placeholder="https://www.suaigreja.org.br"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+        />
         <Text style={styles.label}>Instagram (URL)</Text>
         <TextInput
           style={styles.input}
@@ -334,7 +359,7 @@ function IgrejasAdminPanel() {
           keyboardType="url"
         />
         <Text style={styles.logoHint}>
-          Usados no menu Redes Sociais quando esta instância estiver ativa.
+          Site e redes usados no menu Redes Sociais quando esta instância estiver ativa.
         </Text>
 
         <TouchableOpacity
@@ -358,7 +383,7 @@ function IgrejasAdminPanel() {
         <View style={styles.list}>
           {churches.map((church) => {
             const isEditing = editingId === church.id;
-            const draft = socialDrafts[church.id] ?? { instagram: '', youtube: '' };
+            const draft = socialDrafts[church.id] ?? { website: '', instagram: '', youtube: '' };
             const previewUri = editLogoPreview || church.logo_url;
 
             return (
@@ -443,6 +468,23 @@ function IgrejasAdminPanel() {
                       </View>
                     </View>
 
+                    <Text style={styles.socialFieldLabel}>Site oficial (URL)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={draft.website}
+                      onChangeText={(value) =>
+                        setSocialDrafts((prev) => ({
+                          ...prev,
+                          [church.id]: { ...draft, website: value },
+                        }))
+                      }
+                      placeholder="https://www.suaigreja.org.br"
+                      placeholderTextColor={MINIMAL_UI.textMuted}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="url"
+                      editable={!editBusy}
+                    />
                     <Text style={styles.socialFieldLabel}>Instagram (URL)</Text>
                     <TextInput
                       style={styles.input}
