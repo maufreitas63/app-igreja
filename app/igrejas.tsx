@@ -30,8 +30,8 @@ function IgrejasAdminPanel() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [logoBusyId, setLogoBusyId] = useState<string | null>(null);
-  const [socialBusyId, setSocialBusyId] = useState<string | null>(null);
+  const [editBusy, setEditBusy] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [churches, setChurches] = useState<SessionIgreja[]>([]);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -39,6 +39,7 @@ function IgrejasAdminPanel() {
   const [createInstagram, setCreateInstagram] = useState('');
   const [createYoutube, setCreateYoutube] = useState('');
   const [socialDrafts, setSocialDrafts] = useState<Record<string, SocialDraft>>({});
+  const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null);
 
   const syncSocialDrafts = useCallback((rows: SessionIgreja[]) => {
     const next: Record<string, SocialDraft> = {};
@@ -89,6 +90,79 @@ function IgrejasAdminPanel() {
     }
   };
 
+  const openEdit = (church: SessionIgreja) => {
+    setEditingId(church.id);
+    setEditLogoPreview(null);
+    setSocialDrafts((prev) => ({
+      ...prev,
+      [church.id]: {
+        instagram: church.instagram_url ?? '',
+        youtube: church.youtube_url ?? '',
+      },
+    }));
+  };
+
+  const closeEdit = () => {
+    setEditingId(null);
+    setEditLogoPreview(null);
+  };
+
+  const handlePickEditLogo = async () => {
+    try {
+      const uri = await pickChurchLogoFromGallery();
+      if (uri) {
+        setEditLogoPreview(uri);
+      }
+    } catch (error) {
+      console.error(error);
+      Toast.show({
+        type: 'error',
+        text1: 'Logo',
+        text2: error instanceof Error ? error.message : 'Não foi possível selecionar a imagem.',
+      });
+    }
+  };
+
+  const handleSaveEdit = async (church: SessionIgreja) => {
+    const draft = socialDrafts[church.id] ?? { instagram: '', youtube: '' };
+    setEditBusy(true);
+    try {
+      if (editLogoPreview) {
+        await saveChurchLogoForTenant(church.id, editLogoPreview);
+      }
+
+      const social = await setIgrejaSocialLinksAdmin(church.id, draft.instagram, draft.youtube);
+      if (!social?.success) {
+        Toast.show({
+          type: 'error',
+          text1: 'Editar instância',
+          text2: social?.message || 'Não foi possível salvar as redes sociais.',
+        });
+        if (editLogoPreview) {
+          await load();
+        }
+        return;
+      }
+
+      Toast.show({
+        type: 'success',
+        text1: 'Instância atualizada',
+        text2: `${church.name}: logo e redes salvos.`,
+      });
+      closeEdit();
+      await load();
+    } catch (error) {
+      console.error(error);
+      Toast.show({
+        type: 'error',
+        text1: 'Editar instância',
+        text2: error instanceof Error ? error.message : 'Falha ao salvar.',
+      });
+    } finally {
+      setEditBusy(false);
+    }
+  };
+
   const handleCreate = async () => {
     setSaving(true);
     try {
@@ -114,7 +188,7 @@ function IgrejasAdminPanel() {
             text2:
               logoError instanceof Error
                 ? `Igreja ok, mas o logo falhou: ${logoError.message}`
-                : 'Igreja ok, mas o logo não foi salvo. Use “Trocar logo” na lista.',
+                : 'Igreja ok, mas o logo não foi salvo. Use Editar na lista.',
           });
         }
       }
@@ -125,7 +199,7 @@ function IgrejasAdminPanel() {
           Toast.show({
             type: 'error',
             text1: 'Instância criada',
-            text2: social?.message || 'Links sociais não foram salvos. Edite na lista.',
+            text2: social?.message || 'Links sociais não foram salvos. Use Editar na lista.',
           });
         }
       }
@@ -156,56 +230,6 @@ function IgrejasAdminPanel() {
       });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleUpdateLogo = async (church: SessionIgreja) => {
-    setLogoBusyId(church.id);
-    try {
-      const uri = await pickChurchLogoFromGallery();
-      if (!uri) {
-        return;
-      }
-      await saveChurchLogoForTenant(church.id, uri);
-      Toast.show({
-        type: 'success',
-        text1: 'Logo',
-        text2: `Logo de ${church.name} atualizado.`,
-      });
-      await load();
-    } catch (error) {
-      console.error(error);
-      Toast.show({
-        type: 'error',
-        text1: 'Logo',
-        text2: error instanceof Error ? error.message : 'Falha ao atualizar o logo.',
-      });
-    } finally {
-      setLogoBusyId(null);
-    }
-  };
-
-  const handleSaveSocial = async (church: SessionIgreja) => {
-    const draft = socialDrafts[church.id] ?? { instagram: '', youtube: '' };
-    setSocialBusyId(church.id);
-    try {
-      const result = await setIgrejaSocialLinksAdmin(church.id, draft.instagram, draft.youtube);
-      if (!result?.success) {
-        Toast.show({
-          type: 'error',
-          text1: 'Redes sociais',
-          text2: result?.message || 'Não foi possível salvar.',
-        });
-        return;
-      }
-      Toast.show({
-        type: 'success',
-        text1: 'Redes sociais',
-        text2: `Links de ${church.name} atualizados.`,
-      });
-      await load();
-    } finally {
-      setSocialBusyId(null);
     }
   };
 
@@ -333,16 +357,13 @@ function IgrejasAdminPanel() {
       ) : (
         <View style={styles.list}>
           {churches.map((church) => {
-            const logoBusy = logoBusyId === church.id;
-            const socialBusy = socialBusyId === church.id;
+            const isEditing = editingId === church.id;
             const draft = socialDrafts[church.id] ?? { instagram: '', youtube: '' };
+            const previewUri = editLogoPreview || church.logo_url;
+
             return (
               <View key={church.id} style={styles.row}>
-                <TouchableOpacity
-                  style={styles.rowMain}
-                  onPress={() => void handleSwitch(church)}
-                  activeOpacity={0.85}
-                >
+                <View style={styles.rowMain}>
                   <View style={styles.rowLogoBox}>
                     {church.logo_url ? (
                       <Image
@@ -358,73 +379,118 @@ function IgrejasAdminPanel() {
                     <Text style={styles.rowName}>{church.name}</Text>
                     <Text style={styles.rowCode}>{church.code}</Text>
                   </View>
-                  {church.is_primary ? (
-                    <Text style={styles.badge}>Ativa</Text>
-                  ) : (
-                    <Text style={styles.switchHint}>Usar</Text>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.rowLogoAction}
-                  onPress={() => void handleUpdateLogo(church)}
-                  disabled={Boolean(logoBusyId)}
-                  accessibilityLabel={`Trocar logo de ${church.name}`}
-                >
-                  {logoBusy ? (
-                    <ActivityIndicator color={MINIMAL_UI.accent} size="small" />
-                  ) : (
-                    <Text style={styles.rowLogoActionText}>
-                      {church.logo_url ? 'Trocar logo' : 'Definir logo'}
-                    </Text>
-                  )}
-                </TouchableOpacity>
+                  {church.is_primary ? <Text style={styles.badge}>Ativa</Text> : null}
+                </View>
 
-                <View style={styles.socialBlock}>
-                  <Text style={styles.socialBlockTitle}>Redes sociais</Text>
-                  <Text style={styles.socialFieldLabel}>Instagram</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={draft.instagram}
-                    onChangeText={(value) =>
-                      setSocialDrafts((prev) => ({
-                        ...prev,
-                        [church.id]: { ...draft, instagram: value },
-                      }))
-                    }
-                    placeholder="https://www.instagram.com/..."
-                    placeholderTextColor={MINIMAL_UI.textMuted}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardType="url"
-                  />
-                  <Text style={styles.socialFieldLabel}>YouTube</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={draft.youtube}
-                    onChangeText={(value) =>
-                      setSocialDrafts((prev) => ({
-                        ...prev,
-                        [church.id]: { ...draft, youtube: value },
-                      }))
-                    }
-                    placeholder="https://www.youtube.com/..."
-                    placeholderTextColor={MINIMAL_UI.textMuted}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardType="url"
-                  />
+                <View style={styles.rowActions}>
+                  {!church.is_primary ? (
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => void handleSwitch(church)}
+                      disabled={editBusy}
+                    >
+                      <Text style={styles.actionButtonText}>Usar</Text>
+                    </TouchableOpacity>
+                  ) : null}
                   <TouchableOpacity
-                    style={[styles.secondaryButton, socialBusy && styles.buttonDisabled]}
-                    onPress={() => void handleSaveSocial(church)}
-                    disabled={Boolean(socialBusyId)}
+                    style={[styles.actionButton, styles.actionButtonPrimary]}
+                    onPress={() => (isEditing ? closeEdit() : openEdit(church))}
+                    disabled={editBusy}
+                    accessibilityLabel={`Editar ${church.name}`}
                   >
-                    {socialBusy ? (
-                      <ActivityIndicator color={MINIMAL_UI.accent} size="small" />
-                    ) : (
-                      <Text style={styles.secondaryButtonText}>Salvar redes</Text>
-                    )}
+                    <Text style={[styles.actionButtonText, styles.actionButtonPrimaryText]}>
+                      {isEditing ? 'Fechar' : 'Editar'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
+
+                {isEditing ? (
+                  <View style={styles.editPanel}>
+                    <Text style={styles.editTitle}>Logo e redes sociais</Text>
+
+                    <Text style={styles.socialFieldLabel}>Logo</Text>
+                    <View style={styles.logoRow}>
+                      <View style={styles.logoPreviewBox}>
+                        {previewUri ? (
+                          <Image
+                            source={{ uri: previewUri }}
+                            style={styles.logoPreview}
+                            contentFit="contain"
+                          />
+                        ) : (
+                          <Text style={styles.logoPlaceholder}>Sem logo</Text>
+                        )}
+                      </View>
+                      <View style={styles.logoActions}>
+                        <TouchableOpacity
+                          style={styles.secondaryButton}
+                          onPress={() => void handlePickEditLogo()}
+                          disabled={editBusy}
+                        >
+                          <Text style={styles.secondaryButtonText}>
+                            {previewUri ? 'Trocar logo' : 'Escolher logo'}
+                          </Text>
+                        </TouchableOpacity>
+                        {editLogoPreview ? (
+                          <TouchableOpacity
+                            style={styles.linkButton}
+                            onPress={() => setEditLogoPreview(null)}
+                            disabled={editBusy}
+                          >
+                            <Text style={styles.linkButtonText}>Desfazer escolha</Text>
+                          </TouchableOpacity>
+                        ) : null}
+                      </View>
+                    </View>
+
+                    <Text style={styles.socialFieldLabel}>Instagram (URL)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={draft.instagram}
+                      onChangeText={(value) =>
+                        setSocialDrafts((prev) => ({
+                          ...prev,
+                          [church.id]: { ...draft, instagram: value },
+                        }))
+                      }
+                      placeholder="https://www.instagram.com/..."
+                      placeholderTextColor={MINIMAL_UI.textMuted}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="url"
+                      editable={!editBusy}
+                    />
+                    <Text style={styles.socialFieldLabel}>YouTube (URL)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={draft.youtube}
+                      onChangeText={(value) =>
+                        setSocialDrafts((prev) => ({
+                          ...prev,
+                          [church.id]: { ...draft, youtube: value },
+                        }))
+                      }
+                      placeholder="https://www.youtube.com/..."
+                      placeholderTextColor={MINIMAL_UI.textMuted}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="url"
+                      editable={!editBusy}
+                    />
+
+                    <TouchableOpacity
+                      style={[styles.button, editBusy && styles.buttonDisabled]}
+                      onPress={() => void handleSaveEdit(church)}
+                      disabled={editBusy}
+                    >
+                      {editBusy ? (
+                        <ActivityIndicator color={MINIMAL_UI.onDark} />
+                      ) : (
+                        <Text style={styles.buttonText}>Salvar alterações</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
               </View>
             );
           })}
@@ -590,30 +656,41 @@ const styles = StyleSheet.create({
   rowName: { color: MINIMAL_UI.text, fontWeight: '700', fontSize: 15 },
   rowCode: { color: MINIMAL_UI.textMuted, fontSize: 12 },
   badge: { color: MINIMAL_UI.accent, fontWeight: '700', fontSize: 12 },
-  switchHint: { color: MINIMAL_UI.textMuted, fontSize: 12 },
-  rowLogoAction: {
+  rowActions: {
+    flexDirection: 'row',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: MINIMAL_UI.divider,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignItems: 'center',
   },
-  rowLogoActionText: {
-    color: MINIMAL_UI.blueDark,
+  actionButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtonPrimary: {
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: MINIMAL_UI.divider,
+  },
+  actionButtonText: {
+    color: MINIMAL_UI.text,
     fontSize: 13,
     fontWeight: '600',
   },
-  socialBlock: {
+  actionButtonPrimaryText: {
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '700',
+  },
+  editPanel: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: MINIMAL_UI.divider,
     padding: 12,
     gap: 6,
   },
-  socialBlockTitle: {
+  editTitle: {
     color: MINIMAL_UI.text,
     fontWeight: '700',
-    fontSize: 13,
-    marginBottom: 2,
+    fontSize: 14,
+    marginBottom: 4,
   },
   socialFieldLabel: {
     color: MINIMAL_UI.textMuted,
