@@ -22,8 +22,10 @@ export function MinimalRouteShell({
   children,
 }: Props) {
   if (minimal) {
+    const chromeTitle = title?.trim() ? title : undefined;
+
     return (
-      <MinimalScreenLayout title={title} scroll={false}>
+      <MinimalScreenLayout {...(chromeTitle ? { title: chromeTitle } : {})} scroll={false}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.minimalContent}>{children}</View>
       </MinimalScreenLayout>

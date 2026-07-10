@@ -37,9 +37,9 @@ export function MinimalTopLeftChrome({ title, header, showGreeting = false }: Pr
         <MinimalExpandedEventBar menuButton={menuButton} />
       </View>
 
-      {!expandedEventId && (header || title) ? (
+      {!expandedEventId && (header || title?.trim()) ? (
         <View style={styles.leftColumn}>
-          {header ? header : title ? <Text style={styles.title}>{title}</Text> : null}
+          {header ? header : title?.trim() ? <Text style={styles.title}>{title}</Text> : null}
         </View>
       ) : null}
     </View>

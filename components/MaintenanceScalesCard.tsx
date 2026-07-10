@@ -250,7 +250,7 @@ export function MaintenanceScalesCard({
         <Text
           style={
             minimal
-              ? styles.sectionTitleMinimal
+              ? styles.sectionTitle
               : maintenancePanelStyles.panelTitleMuted
           }
         >
@@ -273,7 +273,7 @@ export function MaintenanceScalesCard({
 
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
-      <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}>
+      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
         {PANEL_TITLE}
       </Text>
       {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
@@ -872,7 +872,7 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     overflow: 'hidden',
   },
-  sectionTitleMinimal: {
+  sectionTitle: {
     ...MINIMAL_SECTION_TITLE,
     width: '100%',
     maxWidth: '100%',
