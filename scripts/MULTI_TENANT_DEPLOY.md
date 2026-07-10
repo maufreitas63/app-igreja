@@ -180,6 +180,7 @@ Execute no SQL Editor **antes** de usar o seletor no app:
 7. `scripts/multi-tenant-15-onboard-bypass-tenant-guard.sql` — **obrigatório** para Criar instância (corrige diverge do tenant da sessão)
 8. `scripts/multi-tenant-16-igreja-website-url.sql` — `website_url` (site oficial) + RPC de links atualizada
 9. `scripts/multi-tenant-17-onboard-igreja-admin-unique.sql` — remove sobrecarga ambígua de `onboard_igreja_admin`
+10. `scripts/multi-tenant-18-criar-igreja-admin.sql` — **obrigatório se o erro de ambiguidade persistir**: apaga todas as `onboard_igreja_admin` e cria `criar_igreja_admin` (RPC usada pelo app)
 
 Fluxo no app:
 

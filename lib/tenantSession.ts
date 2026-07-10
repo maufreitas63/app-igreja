@@ -209,14 +209,15 @@ export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: s
     p_logo_url: trimmedLogo,
   };
 
-  const { data, error } = await supabase.rpc('onboard_igreja_admin', payload);
+  // Nome único (criar_igreja_admin) — evita ambiguidade PostgREST de onboard_igreja_admin
+  const { data, error } = await supabase.rpc('criar_igreja_admin', payload);
 
   if (error) {
-    if (isSupabaseRpcMissingError(error, 'onboard_igreja_admin')) {
+    if (isSupabaseRpcMissingError(error, 'criar_igreja_admin')) {
       return {
         success: false,
         message:
-          'RPC ausente ou ambígua. Execute scripts/multi-tenant-17-onboard-igreja-admin-unique.sql no Supabase.',
+          'RPC ausente. Execute scripts/multi-tenant-18-criar-igreja-admin.sql no Supabase.',
       };
     }
 
@@ -229,7 +230,7 @@ export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: s
       return {
         success: false,
         message:
-          'Função onboard ambígua no banco. Execute scripts/multi-tenant-17-onboard-igreja-admin-unique.sql.',
+          'Função ambígua no banco. Execute scripts/multi-tenant-18-criar-igreja-admin.sql.',
       };
     }
 

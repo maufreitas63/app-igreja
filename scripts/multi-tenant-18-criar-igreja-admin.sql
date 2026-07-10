@@ -1,29 +1,56 @@
 -- =============================================================================
--- Multi-tenancy 17 — resolver ambiguidade de onboard_igreja_admin
+-- Multi-tenancy 18 — criar_igreja_admin (nome único, sem sobrecarga)
 -- =============================================================================
--- Erro PostgREST:
+-- Erro PostgREST persistente:
 --   could not choose the best candidate function between
---   public.onboard_igreja_admin(text, text) e (text, text, text)
+--   public.onboard_igreja_admin(...)
 --
--- Causa: sobraram duas assinaturas no banco. Com só p_code/p_name, o PostgREST
--- não sabe qual chamar.
+-- Causa: várias assinaturas de onboard_igreja_admin no schema cache.
+-- Solução: apagar TODAS as variantes e usar função nova criar_igreja_admin
+-- com exatamente 3 argumentos obrigatórios (sem default).
 --
--- Solução: manter UMA função (text, text, text) com p_logo_url default null.
--- Execute no SQL Editor do Supabase.
---
--- Se o erro persistir: use scripts/multi-tenant-18-criar-igreja-admin.sql
--- (remove onboard_* e cria criar_igreja_admin — o app já chama essa RPC).
+-- Execute no SQL Editor do Supabase (uma vez). Depois hard refresh no app.
 -- =============================================================================
 
 begin;
 
-drop function if exists public.onboard_igreja_admin(text, text);
-drop function if exists public.onboard_igreja_admin(text, text, text);
+-- 1) Remover TODAS as sobrecargas de onboard_igreja_admin
+do $$
+declare
+  r record;
+begin
+  for r in
+    select p.oid::regprocedure as sig
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.proname = 'onboard_igreja_admin'
+  loop
+    execute 'drop function if exists ' || r.sig || ' cascade';
+  end loop;
+end $$;
 
-create or replace function public.onboard_igreja_admin(
+-- 2) Remover criar_igreja_admin se já existir (reexecução segura)
+do $$
+declare
+  r record;
+begin
+  for r in
+    select p.oid::regprocedure as sig
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.proname = 'criar_igreja_admin'
+  loop
+    execute 'drop function if exists ' || r.sig || ' cascade';
+  end loop;
+end $$;
+
+-- 3) Uma única função, 3 args obrigatórios (sem default = sem ambiguidade)
+create function public.criar_igreja_admin(
   p_code text,
   p_name text,
-  p_logo_url text default null
+  p_logo_url text
 )
 returns jsonb
 language plpgsql
@@ -144,15 +171,15 @@ exception
 end;
 $$;
 
-grant execute on function public.onboard_igreja_admin(text, text, text) to anon, authenticated;
+grant execute on function public.criar_igreja_admin(text, text, text) to anon, authenticated;
 
 notify pgrst, 'reload schema';
 
 commit;
 
--- Conferência (deve retornar 1 linha):
--- select p.oid::regprocedure
+-- Conferência (deve retornar 0 linhas para onboard, 1 para criar):
+-- select p.proname, p.oid::regprocedure
 --   from pg_proc p
 --   join pg_namespace n on n.oid = p.pronamespace
 --  where n.nspname = 'public'
---    and p.proname = 'onboard_igreja_admin';
+--    and p.proname in ('onboard_igreja_admin', 'criar_igreja_admin');
