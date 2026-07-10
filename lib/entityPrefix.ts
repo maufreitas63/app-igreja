@@ -8,11 +8,14 @@ import {
   buildTeensRoomLabel,
   DEFAULT_ENTITY_PREFIX,
   DEFAULT_FAMILY_ID,
+  FALLBACK_ENTITY_PREFIX,
   KIDS_ROOM_DISPLAY_LABEL,
   normalizeEntityPrefix,
   PARM_ENTIDADE_PARAMETER,
+  resolveEntityPrefixOrFallback,
   TEENS_ROOM_DISPLAY_LABEL,
 } from '@/lib/entityPrefixCore';
+import { resolveActiveIgrejaBranding } from '@/lib/tenantSession';
 
 export {
   buildFamilyId,
@@ -23,9 +26,11 @@ export {
   buildTeensRoomLabel,
   DEFAULT_ENTITY_PREFIX,
   DEFAULT_FAMILY_ID,
+  FALLBACK_ENTITY_PREFIX,
   KIDS_ROOM_DISPLAY_LABEL,
   normalizeEntityPrefix,
   PARM_ENTIDADE_PARAMETER,
+  resolveEntityPrefixOrFallback,
   TEENS_ROOM_DISPLAY_LABEL,
 };
 
@@ -56,11 +61,23 @@ export async function getEntityPrefix(): Promise<string> {
         value = await getAppParameterValue('parm_entidade');
       }
 
-      cachedEntityPrefix = normalizeEntityPrefix(value);
+      let prefix = normalizeEntityPrefix(value);
+
+      if (!prefix) {
+        const branding = await resolveActiveIgrejaBranding();
+        prefix = normalizeEntityPrefix(branding?.code);
+      }
+
+      cachedEntityPrefix = resolveEntityPrefixOrFallback(prefix);
       return cachedEntityPrefix;
     } catch (error) {
       console.error('Erro ao carregar Parm_entidade:', error);
-      cachedEntityPrefix = DEFAULT_ENTITY_PREFIX;
+      try {
+        const branding = await resolveActiveIgrejaBranding();
+        cachedEntityPrefix = resolveEntityPrefixOrFallback(branding?.code);
+      } catch {
+        cachedEntityPrefix = FALLBACK_ENTITY_PREFIX;
+      }
       return cachedEntityPrefix;
     } finally {
       inflightEntityPrefix = null;

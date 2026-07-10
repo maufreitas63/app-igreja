@@ -1468,7 +1468,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             <Text style={styles.formatHint}>
               Selecione um ou vários PDFs de uma vez. O título inicial de cada ata será o nome do
               arquivo (sem .pdf), com “_” trocado por espaço. A lista fica em ordem descendente pelo
-              código IBN (ex.: IBN.003.2025 antes de IBN.001.2025) e se atualiza a cada novo envio.
+              código documental (ex.: ABC.003.2025 antes de ABC.001.2025) e se atualiza a cada novo envio.
             </Text>
 
             <TouchableOpacity

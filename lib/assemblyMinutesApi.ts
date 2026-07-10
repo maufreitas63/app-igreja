@@ -62,35 +62,48 @@ const appendSignedUrl = async (row: Omit<AssemblyMinuteRecord, 'signedUrl'>) => 
   return { ...row, signedUrl: data?.signedUrl ?? null };
 };
 
-/** Código documental no formato IBN.001.2025 (aceita `.`, `_`, `-` ou espaço). */
-const IBN_CODE_RE = /IBN[\s._-]*(\d+)[\s._-]*(\d{4})/i;
+/** Código documental no formato PREFIXO.001.2025 (aceita `.`, `_`, `-` ou espaço). */
+const DOCUMENT_CODE_RE = /([A-Z]{2,12})[\s._-]*(\d+)[\s._-]*(\d{4})/i;
 
-export type AssemblyMinuteIbnCode = {
+export type AssemblyMinuteDocumentCode = {
+  prefix: string;
   sequence: number;
   year: number;
 };
 
-export function parseAssemblyMinuteIbnCode(
+/** @deprecated Use AssemblyMinuteDocumentCode */
+export type AssemblyMinuteIbnCode = AssemblyMinuteDocumentCode;
+
+export function parseAssemblyMinuteDocumentCode(
   value: string | null | undefined
-): AssemblyMinuteIbnCode | null {
+): AssemblyMinuteDocumentCode | null {
   if (!value?.trim()) {
     return null;
   }
 
-  const match = normalizeAssemblyMinuteLabel(value).match(IBN_CODE_RE) ?? value.match(IBN_CODE_RE);
+  const match =
+    normalizeAssemblyMinuteLabel(value).match(DOCUMENT_CODE_RE) ?? value.match(DOCUMENT_CODE_RE);
 
   if (!match) {
     return null;
   }
 
-  const sequence = Number(match[1]);
-  const year = Number(match[2]);
+  const prefix = String(match[1] ?? '').toUpperCase();
+  const sequence = Number(match[2]);
+  const year = Number(match[3]);
 
-  if (!Number.isFinite(sequence) || !Number.isFinite(year)) {
+  if (!prefix || !Number.isFinite(sequence) || !Number.isFinite(year)) {
     return null;
   }
 
-  return { sequence, year };
+  return { prefix, sequence, year };
+}
+
+/** @deprecated Use parseAssemblyMinuteDocumentCode */
+export function parseAssemblyMinuteIbnCode(
+  value: string | null | undefined
+): AssemblyMinuteIbnCode | null {
+  return parseAssemblyMinuteDocumentCode(value);
 }
 
 /** Prefixo de ordenação: 12 caracteres à esquerda do título. */

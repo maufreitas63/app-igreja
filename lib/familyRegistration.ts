@@ -258,8 +258,22 @@ export function buildFamilyRegistrationShareUrl(): string {
 
 export async function buildFamilyRegistrationWhatsAppUrl(pageUrl: string): Promise<string> {
   const prefix = await getEntityPrefixBrowser();
+
+  let churchName = '';
+  try {
+    const { data } = await supabaseBrowser.rpc('get_app_parameter_value', {
+      p_parameter: 'Nome_Entidade',
+    });
+    if (typeof data === 'string' && data.trim()) {
+      churchName = data.trim();
+    }
+  } catch {
+    churchName = '';
+  }
+
+  const who = churchName || (prefix && prefix !== 'APP' ? `nossa igreja (${prefix})` : 'nossa igreja');
   const message = [
-    `Olá! O Ministério de Acolhimento da Igreja Batista Norte - ${prefix} convida você e sua família a preencherem o cadastro da nossa igreja.`,
+    `Olá! O Ministério de Acolhimento da ${who} convida você e sua família a preencherem o cadastro da nossa igreja.`,
     'É rápido e ajuda a organizar nossa comunidade.',
     '',
     `Acesse o formulário: ${pageUrl}`,

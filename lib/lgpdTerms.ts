@@ -1,7 +1,8 @@
 import { getAppParameterValue } from '@/lib/appParameters';
-import { DEFAULT_ENTITY_PREFIX } from '@/lib/entityPrefix';
+import { resolveActiveIgrejaBranding } from '@/lib/tenantSession';
 
-export const DEFAULT_LGPD_ENTITY_NAME = `Igreja Batista Norte (${DEFAULT_ENTITY_PREFIX})`;
+/** Fallback neutro até carregar Nome_Entidade / nome da instância. */
+export const DEFAULT_LGPD_ENTITY_NAME = 'igreja';
 
 const LGPD_TERMS_SUFFIX =
   'respeita a privacidade de seus membros e visitantes, comprometendo-se a coletar e tratar os dados estritamente necessários para gestão administrativa, controle de segurança, atividades eclesiásticas e para a divulgação de eventos e ações da igreja em mídias sociais e outros veículos oficiais de comunicação, sempre em estrita observância à Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).';
@@ -14,11 +15,23 @@ export function buildLgpdTermsText(entityName: string) {
 export async function loadLgpdEntityName() {
   try {
     const value = await getAppParameterValue('Nome_Entidade');
-    return value?.trim() || DEFAULT_LGPD_ENTITY_NAME;
+    if (value?.trim()) {
+      return value.trim();
+    }
   } catch (error) {
     console.error('Erro ao carregar Nome_Entidade:', error);
-    return DEFAULT_LGPD_ENTITY_NAME;
   }
+
+  try {
+    const branding = await resolveActiveIgrejaBranding();
+    if (branding?.name?.trim()) {
+      return branding.name.trim();
+    }
+  } catch {
+    // ignora
+  }
+
+  return DEFAULT_LGPD_ENTITY_NAME;
 }
 
 export async function loadLgpdTermsText() {

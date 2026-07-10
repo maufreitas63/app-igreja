@@ -16,13 +16,6 @@ export type OfferingsRecipientBundle = {
   churchName: string;
 };
 
-/** @deprecated Use loadOfferingsRecipientBundle — valores hardcoded da IBN. */
-export const OFFERINGS_RECIPIENT_ROWS: OfferingsRecipientRow[] = [
-  { label: 'Para', value: 'Igreja Batista Norte' },
-  { label: 'CNPJ', value: '58.186.489/0001-18' },
-  { label: 'Instituição', value: 'COOP SICREDI VANGUARDA PR/SP/RJ' },
-];
-
 function buildRows(church: Pick<SessionIgreja, 'name' | 'cnpj' | 'pix_institution'>): OfferingsRecipientRow[] {
   return [
     { label: 'Para', value: church.name.trim() || '—' },

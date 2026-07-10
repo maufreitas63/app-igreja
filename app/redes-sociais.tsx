@@ -59,12 +59,8 @@ export default function RedesSociaisScreen() {
   }, [load]);
 
   const websiteUrl = church?.website_url?.trim() || null;
-  const instagramUrl =
-    church?.instagram_url?.trim()
-    || (church?.code?.toUpperCase() === 'IBN' ? 'https://www.instagram.com/igrejabatistanorte' : null);
-  const youtubeUrl =
-    church?.youtube_url?.trim()
-    || (church?.code?.toUpperCase() === 'IBN' ? 'https://www.youtube.com/@ibnorte' : null);
+  const instagramUrl = church?.instagram_url?.trim() || null;
+  const youtubeUrl = church?.youtube_url?.trim() || null;
   const hasAny = Boolean(websiteUrl || instagramUrl || youtubeUrl);
 
   return (

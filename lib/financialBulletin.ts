@@ -43,8 +43,6 @@ export type FinancialBulletin = {
   monthTotal: number;
 };
 
-const ORGANIZATION_NAME = 'Igreja Batista Norte';
-
 export const formatBulletinAmount = (value: number) =>
   new Intl.NumberFormat('pt-BR', {
     minimumFractionDigits: 2,
@@ -115,7 +113,8 @@ export const buildFinancialBulletin = (
   balances: {
     previousBalance: number;
     currentBalance: number;
-  }
+  },
+  organizationName = 'Igreja'
 ): FinancialBulletin => {
   const blocksByMovement = new Map<string, FinancialEntry[]>();
 
@@ -143,7 +142,7 @@ export const buildFinancialBulletin = (
   const monthTotal = computeFinancialBalance(monthEntries);
 
   return {
-    organizationName: ORGANIZATION_NAME,
+    organizationName: organizationName.trim() || 'Igreja',
     periodLabel: `${String(month.month).padStart(2, '0')} / ${month.year}`,
     periodCode: `${month.year}${String(month.month).padStart(2, '0')}`,
     previousBalance: balances.previousBalance,

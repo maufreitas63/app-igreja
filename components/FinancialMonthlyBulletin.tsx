@@ -4,8 +4,9 @@ import { buildMonthlyBulletinTableRows } from '@/lib/financialBulletinComparison
 import type { FinancialEntry } from '@/lib/financialEntry';
 import type { FinancialMonthKey } from '@/lib/financialMonth';
 import { FINANCIAL_MONTHLY_RESULT_BODY_MAX_HEIGHT } from '@/lib/financialReportTableLayout';
+import { resolveActiveIgrejaBranding } from '@/lib/tenantSession';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 type FinancialMonthlyBulletinProps = {
@@ -26,13 +27,32 @@ export function FinancialMonthlyBulletin({
   currentBalance,
   yearToDateRealizedBalance,
 }: FinancialMonthlyBulletinProps) {
+  const [organizationName, setOrganizationName] = useState('Igreja');
+
+  useEffect(() => {
+    let active = true;
+    void resolveActiveIgrejaBranding().then((branding) => {
+      if (active && branding?.name?.trim()) {
+        setOrganizationName(branding.name.trim());
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const bulletin = useMemo(
     () =>
-      buildFinancialBulletin(entries, month, {
-        previousBalance,
-        currentBalance,
-      }),
-    [currentBalance, entries, month, previousBalance]
+      buildFinancialBulletin(
+        entries,
+        month,
+        {
+          previousBalance,
+          currentBalance,
+        },
+        organizationName
+      ),
+    [currentBalance, entries, month, organizationName, previousBalance]
   );
 
   const tableRows = useMemo(

@@ -1,4 +1,4 @@
-import { DEFAULT_ENTITY_PREFIX, normalizeEntityPrefix } from '@/lib/entityPrefixCore';
+import { DEFAULT_ENTITY_PREFIX, resolveEntityPrefixOrFallback } from '@/lib/entityPrefixCore';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 
 let cachedEntityPrefix: string | null = null;
@@ -41,11 +41,11 @@ export async function getEntityPrefixBrowser(): Promise<string> {
   inflightEntityPrefix = (async () => {
     try {
       const value = await fetchEntityPrefixFromSupabase();
-      cachedEntityPrefix = normalizeEntityPrefix(value);
+      cachedEntityPrefix = resolveEntityPrefixOrFallback(value);
       return cachedEntityPrefix;
     } catch (error) {
       console.error('Erro ao carregar Parm_entidade:', error);
-      cachedEntityPrefix = DEFAULT_ENTITY_PREFIX;
+      cachedEntityPrefix = resolveEntityPrefixOrFallback(DEFAULT_ENTITY_PREFIX);
       return cachedEntityPrefix;
     } finally {
       inflightEntityPrefix = null;

@@ -1,4 +1,4 @@
-export const DEFAULT_TREASURY_RECEIPTS_DIR = 'C:\\IBN Tesouraria\\Comprovantes\\JPG';
+export const DEFAULT_TREASURY_RECEIPTS_DIR = '';
 
 const STORAGE_KEY = 'maintenance.treasuryReceiptsDir';
 

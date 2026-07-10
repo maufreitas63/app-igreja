@@ -54,12 +54,14 @@ export const isPwaInstalled = () => {
 export const canOfferPwaInstallUi = () => isWebPlatform() && !isPwaInstalled();
 
 export const getPwaInstallInstructions = (entityPrefix = DEFAULT_ENTITY_PREFIX) => {
+  const brand = entityPrefix?.trim() || 'igreja';
+
   if (isIosWeb()) {
     return {
       title: 'Adicionar à Tela de Início',
       message:
         'No Safari, toque em Compartilhar (ícone com seta para cima), role o menu e escolha '
-        + `"Adicionar à Tela de Início". O atalho usará o logotipo da ${entityPrefix}.`,
+        + `"Adicionar à Tela de Início". O atalho usará o logotipo da ${brand}.`,
     };
   }
 
@@ -68,7 +70,7 @@ export const getPwaInstallInstructions = (entityPrefix = DEFAULT_ENTITY_PREFIX) 
       title: 'Adicionar à Tela de Início',
       message:
         'No menu do Chrome (⋮), toque em "Instalar app", "Adicionar à tela inicial" '
-        + `ou "Instalar aplicativo" para criar o atalho com o logotipo da ${entityPrefix}.`,
+        + `ou "Instalar aplicativo" para criar o atalho com o logotipo da ${brand}.`,
     };
   }
 
@@ -76,6 +78,6 @@ export const getPwaInstallInstructions = (entityPrefix = DEFAULT_ENTITY_PREFIX) 
     title: 'Instalar o app',
     message:
       'Use a opção "Instalar aplicativo" ou "Adicionar à tela inicial" no menu do navegador '
-      + `para criar um atalho com o logotipo da ${entityPrefix}.`,
+      + `para criar um atalho com o logotipo da ${brand}.`,
   };
 };

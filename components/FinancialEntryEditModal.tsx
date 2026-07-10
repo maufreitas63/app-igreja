@@ -110,7 +110,7 @@ export function FinancialEntryEditModal({ visible, entry, saving, onClose, onSav
                   style={styles.input}
                   value={form.account}
                   onChangeText={(value) => updateField('account', value)}
-                  placeholder="Ex.: SICREDI"
+                  placeholder="Ex.: banco / cooperativa"
                   placeholderTextColor="#64748B"
                   autoCapitalize="characters"
                   editable={!saving}
