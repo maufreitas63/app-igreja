@@ -1,31 +1,79 @@
 -- =============================================================================
--- Multi-tenancy 19 — app_parameters: unicidade só por tenant + criar_igreja estável
+-- Multi-tenancy 20 — app_parameters_pkey era GLOBAL em parameter
 -- =============================================================================
--- Sintoma: ao criar instância, o app pede o script 12 de novo e de novo.
+-- Erro ao criar instância (após script 19):
+--   duplicate key value violates unique constraint "app_parameters_pkey"
 --
--- Causas típicas:
--- 1) Ainda existe UNIQUE(parameter) ou índice GLOBAL em lower(trim(parameter))
---    (ex.: app-parameter-lgpd-ativo-dedupe.sql recria o índice global).
--- 2) O script 12 falha no CREATE UNIQUE (duplicatas no mesmo tenant) e o
---    BEGIN/COMMIT faz rollback — o índice global volta.
--- 3) O handler de unique_violation sempre culpava o script 12, escondendo o
---    constraint real (SQLERRM).
+-- Causa: a PK de app_parameters é (provavelmente) só em `parameter`.
+-- Copiar parâmetros da IBN para outra igreja reutiliza os mesmos nomes → PK.
 --
--- Este script:
---   - remove unicidades GLOBAIS em app_parameters
---   - deduplica por (tenant_id, lower(trim(parameter)))
---   - cria o índice único por tenant
---   - recria criar_igreja_admin com cópia DISTINCT ON + mensagem de erro real
+-- Solução:
+--   1) coluna id uuid (surrogate)
+--   2) PK em id
+--   3) unicidade de negócio: (tenant_id, lower(trim(parameter)))
+--   4) recria criar_igreja_admin
 --
--- Execute no SQL Editor do Supabase (uma vez). NÃO reexecute o script 12 depois.
--- Se o erro for app_parameters_pkey, use multi-tenant-20-app-parameters-surrogate-pk.sql.
+-- Execute no SQL Editor do Supabase (uma vez). Depois hard refresh.
 -- =============================================================================
 
 begin;
 
--- ---------------------------------------------------------------------------
--- 1) Remover constraints UNIQUE que NÃO incluem tenant_id
--- ---------------------------------------------------------------------------
+-- 1) Surrogate key
+alter table public.app_parameters
+  add column if not exists id uuid;
+
+update public.app_parameters
+   set id = gen_random_uuid()
+ where id is null;
+
+alter table public.app_parameters
+  alter column id set default gen_random_uuid(),
+  alter column id set not null;
+
+-- 2) Trocar PK: parameter → id
+alter table public.app_parameters drop constraint if exists app_parameters_pkey;
+
+do $$
+declare
+  r record;
+  v_cols text;
+begin
+  for r in
+    select c.oid, c.conname, c.conkey, c.conrelid
+      from pg_constraint c
+     where c.conrelid = 'public.app_parameters'::regclass
+       and c.contype = 'p'
+  loop
+    select string_agg(a.attname, ',' order by u.ord)
+      into v_cols
+      from unnest(r.conkey) with ordinality as u(attnum, ord)
+      join pg_attribute a
+        on a.attrelid = r.conrelid and a.attnum = u.attnum;
+
+    if coalesce(v_cols, '') is distinct from 'id' then
+      execute format('alter table public.app_parameters drop constraint if exists %I', r.conname);
+      raise notice 'Dropped PK % (cols=%)', r.conname, v_cols;
+    end if;
+  end loop;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1
+      from pg_constraint c
+     where c.conrelid = 'public.app_parameters'::regclass
+       and c.contype = 'p'
+  ) then
+    alter table public.app_parameters
+      add constraint app_parameters_pkey primary key (id);
+  end if;
+end $$;
+
+-- 3) Remover unicidades globais restantes (não-PK)
+drop index if exists public.app_parameters_parameter_lower_unique;
+drop index if exists public.app_parameters_parameter_key;
+
 do $$
 declare
   r record;
@@ -40,16 +88,10 @@ begin
     v_def := pg_get_constraintdef(r.oid);
     if v_def is not null and position('tenant_id' in lower(v_def)) = 0 then
       execute format('alter table public.app_parameters drop constraint if exists %I', r.conname);
-      raise notice 'Dropped UNIQUE constraint: % (%)', r.conname, v_def;
+      raise notice 'Dropped UNIQUE % (%)', r.conname, v_def;
     end if;
   end loop;
 end $$;
-
--- ---------------------------------------------------------------------------
--- 2) Remover índices UNIQUE globais (sem tenant_id na definição)
--- ---------------------------------------------------------------------------
-drop index if exists public.app_parameters_parameter_lower_unique;
-drop index if exists public.app_parameters_parameter_key;
 
 do $$
 declare
@@ -69,35 +111,29 @@ begin
   loop
     if position('tenant_id' in lower(r.index_def)) = 0 then
       execute format('drop index if exists public.%I', r.index_name);
-      raise notice 'Dropped unique index: %', r.index_name;
+      raise notice 'Dropped unique index %', r.index_name;
     end if;
   end loop;
 end $$;
 
--- ---------------------------------------------------------------------------
--- 3) Deduplicar dentro de cada tenant (mantém 1 linha por parâmetro)
--- ---------------------------------------------------------------------------
+-- 4) Deduplicar por tenant + parâmetro
 delete from public.app_parameters a
  using public.app_parameters b
  where a.tenant_id is not distinct from b.tenant_id
    and lower(trim(a.parameter)) = lower(trim(b.parameter))
    and a.ctid > b.ctid;
 
--- ---------------------------------------------------------------------------
--- 4) Índice único correto: (tenant, parâmetro)
--- ---------------------------------------------------------------------------
+-- 5) Índice de negócio por tenant
 drop index if exists public.app_parameters_tenant_parameter_lower_unique;
 
 create unique index app_parameters_tenant_parameter_lower_unique
   on public.app_parameters (tenant_id, lower(trim(parameter)))
   where tenant_id is not null;
 
-comment on index public.app_parameters_tenant_parameter_lower_unique is
-  'Um parâmetro por tenant (case-insensitive). Sem unicidade global.';
+comment on column public.app_parameters.id is
+  'PK surrogate. Unicidade de negócio: (tenant_id, lower(trim(parameter))).';
 
--- ---------------------------------------------------------------------------
--- 5) Recriar criar_igreja_admin (cópia deduplicada + erro real)
--- ---------------------------------------------------------------------------
+-- 6) Recriar criar_igreja_admin
 do $$
 declare
   r record;
@@ -183,7 +219,6 @@ begin
   values (v_code, v_name, true, v_logo)
   returning id into v_new;
 
-  -- Uma linha por parâmetro (evita unique_violation se a IBN tiver duplicatas)
   insert into public.app_parameters (parameter, value, tenant_id)
   select distinct on (lower(trim(ap.parameter)))
          ap.parameter,
@@ -223,9 +258,9 @@ exception
       'success', false,
       'message',
       left(
-        'Conflito de unicidade ao criar instância. Execute scripts/multi-tenant-19-app-parameters-tenant-unique-fix.sql. Detalhe: '
+        'Conflito de unicidade ao criar instância. Se mencionar app_parameters_pkey, execute scripts/multi-tenant-20-app-parameters-surrogate-pk.sql. Detalhe: '
           || sqlerrm,
-        280
+        300
       )
     );
   when others then
@@ -242,16 +277,15 @@ notify pgrst, 'reload schema';
 
 commit;
 
--- Conferência (rode depois do commit):
--- Índices únicos em app_parameters — só deve restar o por tenant:
+-- Conferência:
+-- select conname, pg_get_constraintdef(oid)
+--   from pg_constraint
+--  where conrelid = 'public.app_parameters'::regclass and contype = 'p';
+-- -- esperado: PRIMARY KEY (id)
+--
 -- select i.relname, pg_get_indexdef(i.oid)
 --   from pg_index x
 --   join pg_class i on i.oid = x.indexrelid
 --   join pg_class t on t.oid = x.indrelid
 --   join pg_namespace n on n.oid = t.relnamespace
 --  where n.nspname = 'public' and t.relname = 'app_parameters' and x.indisunique;
---
--- Constraints UNIQUE:
--- select conname, pg_get_constraintdef(oid)
---   from pg_constraint
---  where conrelid = 'public.app_parameters'::regclass and contype = 'u';

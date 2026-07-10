@@ -181,7 +181,8 @@ Execute no SQL Editor **antes** de usar o seletor no app:
 8. `scripts/multi-tenant-16-igreja-website-url.sql` — `website_url` (site oficial) + RPC de links atualizada
 9. `scripts/multi-tenant-17-onboard-igreja-admin-unique.sql` — remove sobrecarga ambígua de `onboard_igreja_admin`
 10. `scripts/multi-tenant-18-criar-igreja-admin.sql` — **obrigatório se o erro de ambiguidade persistir**: apaga todas as `onboard_igreja_admin` e cria `criar_igreja_admin` (RPC usada pelo app)
-11. `scripts/multi-tenant-19-app-parameters-tenant-unique-fix.sql` — **se criar instância pede o script 12 em loop**: remove `UNIQUE(parameter)` / índice global, deduplica e recria `criar_igreja_admin`
+11. `scripts/multi-tenant-19-app-parameters-tenant-unique-fix.sql` — remove `UNIQUE(parameter)` / índice global (parcial)
+12. `scripts/multi-tenant-20-app-parameters-surrogate-pk.sql` — **obrigatório se o erro for `app_parameters_pkey`**: troca PK de `parameter` para `id` uuid
 
 Fluxo no app:
 

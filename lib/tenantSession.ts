@@ -234,11 +234,12 @@ export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: s
       };
     }
 
-    if (/multi-tenant-12|Conflito ao copiar parâmetros|Conflito de unicidade/i.test(message)) {
+    if (/multi-tenant-12|multi-tenant-19|app_parameters_pkey|Conflito ao copiar parâmetros|Conflito de unicidade/i.test(message)) {
       return {
         success: false,
-        message:
-          'Conflito em app_parameters. Execute scripts/multi-tenant-19-app-parameters-tenant-unique-fix.sql (não o 12).',
+        message: /app_parameters_pkey/i.test(message)
+          ? 'PK global em app_parameters. Execute scripts/multi-tenant-20-app-parameters-surrogate-pk.sql no Supabase.'
+          : 'Conflito em app_parameters. Execute scripts/multi-tenant-20-app-parameters-surrogate-pk.sql (não o 12/19).',
       };
     }
 
@@ -254,18 +255,22 @@ export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: s
     logo_url?: string | null;
   };
 
-  if (
-    result &&
-    result.success === false &&
-    typeof result.message === 'string' &&
-    /multi-tenant-12|Conflito ao copiar parâmetros/i.test(result.message)
-  ) {
-    return {
-      ...result,
-      message:
-        'Conflito em app_parameters. Execute scripts/multi-tenant-19-app-parameters-tenant-unique-fix.sql (não o 12).',
-    };
-  }
+    if (
+      result &&
+      result.success === false &&
+      typeof result.message === 'string' &&
+      /multi-tenant-12|multi-tenant-19|app_parameters_pkey|Conflito ao copiar parâmetros|Conflito de unicidade/i.test(
+        result.message
+      )
+    ) {
+      return {
+        ...result,
+        message:
+          /app_parameters_pkey/i.test(result.message)
+            ? 'PK global em app_parameters. Execute scripts/multi-tenant-20-app-parameters-surrogate-pk.sql no Supabase.'
+            : 'Conflito em app_parameters. Execute scripts/multi-tenant-20-app-parameters-surrogate-pk.sql (não o 12/19).',
+      };
+    }
 
   return result;
 }
