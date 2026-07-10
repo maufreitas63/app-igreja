@@ -130,4 +130,32 @@ Pré-requisito: passos 01–04 ok + checks 1–3 zerados.
 
 ### Depois de todas as ondas
 
-Reexecute `multi-tenant-05b-risk-missing-tenant-filter.sql`. As funções patchadas devem sumir da lista (ou passar a citar `tenant_id`). Auth bootstrap (`verificar_login`, `password_recovery_*`) pode continuar na lista — é esperado.
+Reexecute `multi-tenant-05b-risk-missing-tenant-filter.sql`. As funções patchadas devem sumir da lista (ou passar a citar `tenant_id`). Auth bootstrap (`verificar_login`, `password_recovery_*`) pode continuar na lista — é esperado. Residual de predicados/DDL/triggers/infra é aceitável.
+
+## Passo 7 — Smoke test (banco + app)
+
+### 7.1 SQL
+
+Execute bloco a bloco: `scripts/multi-tenant-07-smoke.sql`
+
+| Bloco | Esperado |
+|-------|----------|
+| **7A** | `igrejas_ativas >= 1`, `vinculos_ativos > 0`, `profiles_sem_vinculo = 0` |
+| **7B** | todos `null_tenant = 0` |
+| **7C** | contagens IBN > 0 onde houver dados |
+| **7D** | `session_tenant` null no Editor é normal |
+
+### 7.2 App (checklist manual)
+
+Com hard refresh após deploy Cloudflare:
+
+1. **Login** (PIN) — entra normalmente
+2. **Home / eventos** — lista eventos
+3. **Cuidado Pastoral** — lista solicitantes / pedidos
+4. **Financeiro (manutenção)** — lista lançamentos do período
+5. **Escalas** — tipos + voluntários + histórico
+6. **Criar um registro** (ex.: pedido pastoral ou lançamento) — grava sem erro
+7. **Logout / login** de novo — sessão ok
+
+Se algum item falhar: anote a tela, a ação e a mensagem (toast/console/Network RPC).
+
