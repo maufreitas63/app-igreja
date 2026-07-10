@@ -63,12 +63,14 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   menuChrome: {
-    width: '100%',
+    width: '50%',
+    alignSelf: 'flex-start',
   },
   leftColumn: {
     alignItems: 'flex-start',
     paddingLeft: 4,
-    maxWidth: '36%',
+    maxWidth: '50%',
+    alignSelf: 'flex-start',
   },
   title: {
     ...MINIMAL_TYPO.screenTitle,

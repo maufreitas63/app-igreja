@@ -28,11 +28,11 @@ export const MINIMAL_ICON = {
 /** Altura reservada para a barra inferior fixa (Sair do Aplicativo). */
 export const MINIMAL_EXIT_BAR_HEIGHT = 56;
 
-/** Faixa superior: saudação (esquerda) e logo (direita). */
-export const MINIMAL_TOP_IDENTITY_BAR_HEIGHT = 40;
+/** Faixa superior: saudação (esquerda) e logo (direita) — 50% da largura, alinhada à esquerda. */
+export const MINIMAL_TOP_IDENTITY_BAR_HEIGHT = 80;
 
-/** Logo compacto na faixa superior direita. */
-export const MINIMAL_TOP_IDENTITY_LOGO_HEIGHT = 36;
+/** Logo da instância no chrome (dobrado para melhor visibilidade). */
+export const MINIMAL_TOP_IDENTITY_LOGO_HEIGHT = 72;
 
 /** Altura base do chrome superior (menu + safe area aproximada). */
 export const MINIMAL_TOP_CHROME_BASE = 52;

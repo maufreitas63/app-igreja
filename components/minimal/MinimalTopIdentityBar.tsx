@@ -118,11 +118,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     minHeight: MINIMAL_TOP_IDENTITY_BAR_HEIGHT,
-    width: '100%',
+    width: '50%',
+    alignSelf: 'flex-start',
     backgroundColor: MINIMAL_UI.background,
   },
   rowLogoOnly: {
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
   },
   greetingSlot: {
     flex: 1,
@@ -136,8 +137,8 @@ const styles = StyleSheet.create({
   },
   logoSlot: {
     flexShrink: 0,
-    maxWidth: '55%',
-    alignItems: 'flex-end',
+    maxWidth: '100%',
+    alignItems: 'flex-start',
     justifyContent: 'center',
   },
   logo: {
@@ -148,6 +149,6 @@ const styles = StyleSheet.create({
     ...MINIMAL_TYPO.greeting,
     color: MINIMAL_UI.blueDark,
     fontWeight: '700',
-    textAlign: 'right',
+    textAlign: 'left',
   },
 });
