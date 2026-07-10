@@ -1,4 +1,6 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { SectionLabel } from '@/components/ui/SectionLabel';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
 import { ScaleVolunteerSelect } from '@/components/ScaleVolunteerSelect';
 import { useMaintenanceScales } from '@/hooks/useMaintenanceScales';
@@ -14,6 +16,7 @@ import {
   parseScaleServiceDateInput,
 } from '@/lib/maintenanceScales';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { mapLegacyRoomDisplayLabel } from '@/lib/roomDisplayLabels';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
@@ -101,6 +104,24 @@ export function MaintenanceScalesCard({
   const volunteerSelectOptions = useMemo(
     () => activeVolunteers.map((volunteer) => ({ id: volunteer.id, label: volunteer.name })),
     [activeVolunteers]
+  );
+
+  const scaleTypeDropdownOptions = useMemo(
+    () =>
+      scaleTypes.map((type) => ({
+        value: type.id,
+        label: mapLegacyRoomDisplayLabel(type.name),
+      })),
+    [scaleTypes]
+  );
+
+  const volunteerDropdownOptions = useMemo(
+    () =>
+      volunteerSelectOptions.map((option) => ({
+        value: option.id,
+        label: option.label,
+      })),
+    [volunteerSelectOptions]
   );
 
   const handleRegister = async () => {
@@ -287,102 +308,144 @@ export function MaintenanceScalesCard({
         <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
       ) : null}
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.typeChipRow}
-        style={styles.typeChipScroll}
-      >
-        {scaleTypes.map((type) => {
-          const isSelected = type.id === selectedScaleTypeId;
+      <View style={[styles.scaleTypePickerSection, minimal && styles.scaleTypePickerSectionMinimal]}>
+        <SectionLabel variant="maintenance" tight>
+          Tipo de escala
+        </SectionLabel>
+        <DropdownSelect
+          options={scaleTypeDropdownOptions}
+          selectedValue={selectedScaleTypeId ?? ''}
+          onValueChange={setSelectedScaleTypeId}
+          modalTitle="Tipo de escala"
+          placeholder="Selecionar tipo de escala"
+          searchPlaceholder="Buscar tipo de escala..."
+          searchable
+          style={[styles.scaleTypeDropdown, minimal && styles.scaleTypeDropdownMinimal]}
+          disabled={rpcMissing}
+        />
+      </View>
 
-          return (
-            <TouchableOpacity
-              key={type.id}
-              style={[styles.typeChip, isSelected && styles.typeChipSelected]}
-              onPress={() => setSelectedScaleTypeId(type.id)}
-              activeOpacity={0.85}
-            >
-              <Text style={[styles.typeChipText, isSelected && styles.typeChipTextSelected]}>
-                {type.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      <View style={styles.toolbarRow}>
-        <Text style={styles.historyTitle}>Histórico</Text>
-        <View style={styles.toolbarActions}>
+      <View style={[styles.toolbarRow, minimal && styles.toolbarRowMinimal]}>
+        <Text style={[styles.historyTitle, minimal && styles.historyTitleMinimal]}>Histórico</Text>
+        <View style={[styles.toolbarActions, minimal && styles.toolbarActionsMinimal]}>
           <TouchableOpacity
-            style={[styles.batchButton, (batchPreview?.length ?? 0) > 0 && styles.batchButtonActive]}
+            style={[
+              styles.batchButton,
+              minimal && styles.batchButtonMinimal,
+              (batchPreview?.length ?? 0) > 0 && styles.batchButtonActive,
+              minimal && (batchPreview?.length ?? 0) > 0 && styles.batchButtonActiveMinimal,
+            ]}
             onPress={() => void handleBatchScale()}
             activeOpacity={0.85}
             disabled={actionsBusy || rpcMissing}
           >
             {buildingBatch ? (
-              <ActivityIndicator color="#C7D2FE" size="small" />
+              <ActivityIndicator color={minimal ? MINIMAL_UI.accent : '#C7D2FE'} size="small" />
             ) : (
-              <Text style={styles.batchButtonText}>Escala em bloco</Text>
+              <Text style={[styles.batchButtonText, minimal && styles.batchButtonTextMinimal]}>
+                Escala em bloco
+              </Text>
             )}
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.newButton, showNewForm && styles.newButtonActive]}
+            style={[
+              styles.newButton,
+              minimal && styles.newButtonMinimal,
+              showNewForm && styles.newButtonActive,
+              minimal && showNewForm && styles.newButtonActiveMinimal,
+            ]}
             onPress={() => setShowNewForm((current) => !current)}
             activeOpacity={0.85}
             disabled={actionsBusy || rpcMissing}
           >
-            <FontAwesome name={showNewForm ? 'minus' : 'plus'} size={12} color="#0f172a" />
-            <Text style={styles.newButtonText}>{showNewForm ? 'Fechar' : 'Nova escala'}</Text>
+            <FontAwesome
+              name={showNewForm ? 'minus' : 'plus'}
+              size={12}
+              color={minimal ? MINIMAL_UI.onDark : '#0f172a'}
+            />
+            <Text style={[styles.newButtonText, minimal && styles.newButtonTextMinimal]}>
+              {showNewForm ? 'Fechar' : 'Nova escala'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {buildingBatch ? (
-        <Text style={styles.batchStatusText}>Gerando prévia da escala em bloco…</Text>
+        <Text style={[styles.batchStatusText, minimal && styles.batchStatusTextMinimal]}>
+          Gerando prévia da escala em bloco…
+        </Text>
       ) : batchPreviewMessage && !batchPreview?.length ? (
-        <Text style={styles.batchStatusError}>{batchPreviewMessage}</Text>
+        <Text style={[styles.batchStatusError, minimal && styles.batchStatusErrorMinimal]}>
+          {batchPreviewMessage}
+        </Text>
       ) : null}
 
       {batchPreview?.length ? (
-        <View style={styles.previewCard}>
-          <Text style={styles.previewTitle}>Prévia — escala em bloco</Text>
+        <View style={[styles.previewCard, minimal && styles.previewCardMinimal]}>
+          <Text style={[styles.previewTitle, minimal && styles.previewTitleMinimal]}>
+            Prévia — escala em bloco
+          </Text>
           {batchPreviewMessage ? (
-            <Text style={styles.previewSubtitle}>{batchPreviewMessage}</Text>
+            <Text style={[styles.previewSubtitle, minimal && styles.previewSubtitleMinimal]}>
+              {batchPreviewMessage}
+            </Text>
           ) : null}
-          <ScrollView style={styles.previewScroll} nestedScrollEnabled>
+          <ScrollView
+            style={[styles.previewScroll, minimal && styles.previewScrollMinimal]}
+            nestedScrollEnabled
+          >
             {batchPreview.map((entry, index) => (
               <View
                 key={`${entry.serviceDate}-${entry.volunteerId}`}
-                style={[styles.previewRow, index % 2 === 1 && styles.previewRowAlt]}
+                style={[
+                  styles.previewRow,
+                  minimal && styles.previewRowMinimal,
+                  index % 2 === 1 && styles.previewRowAlt,
+                  minimal && index % 2 === 1 && styles.previewRowAltMinimal,
+                ]}
               >
-                <Text style={styles.previewOrder}>{entry.sequenceOrder}</Text>
-                <Text style={styles.previewDate}>{formatScaleServiceDateLabel(entry.serviceDate)}</Text>
-                <Text style={styles.previewName} numberOfLines={2}>
+                <Text style={[styles.previewOrder, minimal && styles.previewOrderMinimal]}>
+                  {entry.sequenceOrder}
+                </Text>
+                <Text style={[styles.previewDate, minimal && styles.previewDateMinimal]}>
+                  {formatScaleServiceDateLabel(entry.serviceDate)}
+                </Text>
+                <Text
+                  style={[styles.previewName, minimal && styles.previewNameMinimal]}
+                  numberOfLines={2}
+                >
                   {entry.volunteerName}
                 </Text>
               </View>
             ))}
           </ScrollView>
-          <View style={styles.previewActions}>
+          <View style={[styles.previewActions, minimal && styles.previewActionsMinimal]}>
             <TouchableOpacity
-              style={styles.previewCancelButton}
+              style={[styles.previewCancelButton, minimal && styles.previewCancelButtonMinimal]}
               onPress={cancelBatchPreview}
               disabled={actionsBusy}
               activeOpacity={0.85}
             >
-              <Text style={styles.previewCancelText}>Cancelar</Text>
+              <Text style={[styles.previewCancelText, minimal && styles.previewCancelTextMinimal]}>
+                Cancelar
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.previewConfirmButton, actionsBusy && styles.saveButtonDisabled]}
+              style={[
+                styles.previewConfirmButton,
+                minimal && styles.previewConfirmButtonMinimal,
+                actionsBusy && styles.saveButtonDisabled,
+              ]}
               onPress={() => handleConfirmBatch()}
               disabled={actionsBusy}
               activeOpacity={0.85}
             >
               {saving ? (
-                <ActivityIndicator color="#0f172a" size="small" />
+                <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0f172a'} size="small" />
               ) : (
-                <Text style={styles.previewConfirmText}>Gravar bloco</Text>
+                <Text style={[styles.previewConfirmText, minimal && styles.previewConfirmTextMinimal]}>
+                  Gravar bloco
+                </Text>
               )}
             </TouchableOpacity>
           </View>
@@ -390,59 +453,91 @@ export function MaintenanceScalesCard({
       ) : null}
 
       {showNewForm ? (
-        <View style={styles.formCard}>
-          <Text style={styles.formTitle}>Nova escala</Text>
+        <View style={[styles.formCard, minimal && styles.formCardMinimal]}>
+          <Text style={[styles.formTitle, minimal && styles.formTitleMinimal]}>Nova escala</Text>
 
-          <Text style={styles.fieldLabel}>Servo</Text>
+          <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Servo</Text>
           {loadingVolunteers ? (
-            <ActivityIndicator color="#818CF8" style={styles.formLoader} />
-          ) : activeVolunteers.length ? (
-            <ScaleVolunteerSelect
-              options={volunteerSelectOptions}
-              value={selectedVolunteerId}
-              onValueChange={setSelectedVolunteerId}
+            <ActivityIndicator
+              color={minimal ? MINIMAL_UI.accent : '#818CF8'}
+              style={styles.formLoader}
             />
+          ) : activeVolunteers.length ? (
+            minimal ? (
+              <DropdownSelect
+                options={volunteerDropdownOptions}
+                selectedValue={selectedVolunteerId}
+                onValueChange={setSelectedVolunteerId}
+                modalTitle="Selecionar servo"
+                placeholder="Selecionar servo"
+                searchPlaceholder="Buscar servo..."
+                searchable
+                style={[styles.volunteerDropdown, minimal && styles.volunteerDropdownMinimal]}
+                disabled={rpcMissing}
+              />
+            ) : (
+              <ScaleVolunteerSelect
+                options={volunteerSelectOptions}
+                value={selectedVolunteerId}
+                onValueChange={setSelectedVolunteerId}
+              />
+            )
           ) : (
-            <Text style={styles.panelHint}>
+            <Text style={[styles.panelHint, minimal && styles.panelHintMinimal]}>
               Nenhum servo ativo para este tipo. Cadastre em {SCALE_VOLUNTEERS_MENU_LABEL}.
             </Text>
           )}
 
-          <Text style={styles.fieldLabel}>Data do serviço</Text>
+          <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Data do serviço</Text>
           <Pressable
             onPress={() => setServiceDatePickerVisible(true)}
             accessibilityRole="button"
             accessibilityLabel="Selecionar data do serviço"
           >
-            <View style={[styles.dateInput, styles.dateInputTrigger]}>
+            <View style={[styles.dateInput, styles.dateInputTrigger, minimal && styles.dateInputMinimal]}>
               <Text
                 style={[
                   styles.dateInputText,
+                  minimal && styles.dateInputTextMinimal,
                   !serviceDateInput.trim() && styles.dateInputPlaceholder,
+                  minimal && !serviceDateInput.trim() && styles.dateInputPlaceholderMinimal,
                 ]}
               >
                 {serviceDateInput.trim() || 'DD/MM/AAAA'}
               </Text>
-              <MaterialIcons name="calendar-today" size={18} color="#94A3B8" />
+              <MaterialIcons
+                name="calendar-today"
+                size={18}
+                color={minimal ? MINIMAL_UI.textMuted : '#94A3B8'}
+              />
             </View>
           </Pressable>
 
           <TouchableOpacity
-            style={[styles.saveButton, (saving || !activeVolunteers.length) && styles.saveButtonDisabled]}
+            style={[
+              styles.saveButton,
+              minimal && styles.saveButtonMinimal,
+              (saving || !activeVolunteers.length) && styles.saveButtonDisabled,
+            ]}
             onPress={() => void handleRegister()}
             disabled={saving || !activeVolunteers.length || rpcMissing}
             activeOpacity={0.85}
           >
             {saving ? (
-              <ActivityIndicator color="#0f172a" size="small" />
+              <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0f172a'} size="small" />
             ) : (
-              <Text style={styles.saveButtonText}>Salvar escala</Text>
+              <Text style={[styles.saveButtonText, minimal && styles.saveButtonTextMinimal]}>
+                Salvar escala
+              </Text>
             )}
           </TouchableOpacity>
         </View>
       ) : null}
 
-      <ScrollView style={styles.historyScroll} contentContainerStyle={styles.historyContent}>
+      <ScrollView
+        style={[styles.historyScroll, minimal && styles.historyScrollMinimal]}
+        contentContainerStyle={styles.historyContent}
+      >
         {historyForSelectedType.length ? (
           historyForSelectedType.map((entry, index) => {
             const isRemoving = removingScaleId === entry.id;
@@ -450,12 +545,20 @@ export function MaintenanceScalesCard({
             return (
               <View
                 key={entry.id}
-                style={[styles.historyRow, index % 2 === 1 && styles.historyRowAlt]}
+                style={[
+                  styles.historyRow,
+                  minimal && styles.historyRowMinimal,
+                  index % 2 === 1 && styles.historyRowAlt,
+                  minimal && index % 2 === 1 && styles.historyRowAltMinimal,
+                ]}
               >
-                <Text style={styles.historyDate}>
+                <Text style={[styles.historyDate, minimal && styles.historyDateMinimal]}>
                   {formatScaleServiceDateLabel(entry.serviceDate)}
                 </Text>
-                <Text style={styles.historyName} numberOfLines={2}>
+                <Text
+                  style={[styles.historyName, minimal && styles.historyNameMinimal]}
+                  numberOfLines={2}
+                >
                   {entry.volunteerName}
                 </Text>
                 <TouchableOpacity
@@ -468,9 +571,13 @@ export function MaintenanceScalesCard({
                   accessibilityLabel={`Excluir escala de ${entry.volunteerName} em ${formatScaleServiceDateLabel(entry.serviceDate)}`}
                 >
                   {isRemoving ? (
-                    <ActivityIndicator color="#FCA5A5" size="small" />
+                    <ActivityIndicator color={minimal ? MINIMAL_UI.accent : '#FCA5A5'} size="small" />
                   ) : (
-                    <FontAwesome name="trash-o" size={17} color="#FCA5A5" />
+                    <FontAwesome
+                      name="trash-o"
+                      size={17}
+                      color={minimal ? MINIMAL_UI.accent : '#FCA5A5'}
+                    />
                   )}
                 </TouchableOpacity>
               </View>
@@ -478,7 +585,9 @@ export function MaintenanceScalesCard({
           })
         ) : (
           <View style={styles.emptyHistory}>
-            <Text style={styles.panelHint}>Nenhuma escala futura para este tipo.</Text>
+            <Text style={[styles.panelHint, minimal && styles.panelHintMinimal]}>
+              Nenhuma escala futura para este tipo.
+            </Text>
           </View>
         )}
       </ScrollView>
@@ -542,35 +651,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 6,
   },
-  typeChipScroll: {
-    flexGrow: 0,
-    maxHeight: 44,
+  scaleTypePickerSection: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
     marginBottom: 8,
+    gap: 4,
   },
-  typeChipRow: {
-    gap: 8,
-    paddingHorizontal: 2,
+  scaleTypePickerSectionMinimal: {
+    alignSelf: 'stretch',
   },
-  typeChip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.35)',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  scaleTypeDropdown: {
+    width: '100%',
+    flex: 0,
+    flexGrow: 0,
+    alignSelf: 'stretch',
+    height: 44,
   },
-  typeChipSelected: {
-    borderColor: '#3A96DD',
-    backgroundColor: '#F0F9FF',
+  scaleTypeDropdownMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
-  typeChipText: {
-    color: 'rgba(58, 150, 221, 0.82)',
-    fontSize: 12,
-    fontWeight: '600',
+  volunteerDropdown: {
+    width: '100%',
+    flex: 0,
+    flexGrow: 0,
+    alignSelf: 'stretch',
+    height: 44,
   },
-  typeChipTextSelected: {
-    color: '#3A96DD',
-    fontWeight: '800',
+  volunteerDropdownMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   toolbarRow: {
     flexDirection: 'row',
@@ -887,5 +1000,166 @@ const styles = StyleSheet.create({
   },
   errorTextMinimal: {
     color: '#DC2626',
+  },
+  toolbarRowMinimal: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    gap: 10,
+  },
+  toolbarActionsMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 8,
+  },
+  historyTitleMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  batchStatusTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  batchStatusErrorMinimal: {
+    color: '#DC2626',
+  },
+  batchButtonMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  batchButtonActiveMinimal: {
+    borderColor: MINIMAL_UI.accent,
+    backgroundColor: '#EFF6FF',
+  },
+  batchButtonTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  newButtonMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    justifyContent: 'center',
+    backgroundColor: MINIMAL_UI.accent,
+  },
+  newButtonActiveMinimal: {
+    backgroundColor: MINIMAL_UI.textMuted,
+  },
+  newButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  previewCardMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  previewTitleMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  previewSubtitleMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  previewScrollMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  previewRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  previewRowAltMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  previewOrderMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  previewDateMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  previewNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  previewActionsMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 8,
+  },
+  previewCancelButtonMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    borderColor: MINIMAL_UI.border,
+  },
+  previewCancelTextMinimal: {
+    color: MINIMAL_UI.text,
+    textAlign: 'center',
+  },
+  previewConfirmButtonMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    backgroundColor: MINIMAL_UI.accent,
+  },
+  previewConfirmTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  formCardMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  formTitleMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  fieldLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  dateInputMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  dateInputTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  dateInputPlaceholderMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  saveButtonMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    backgroundColor: MINIMAL_UI.accent,
+  },
+  saveButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  historyScrollMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  historyRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  historyRowAltMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  historyDateMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  historyNameMinimal: {
+    color: MINIMAL_UI.text,
   },
 });
