@@ -185,6 +185,7 @@ Execute no SQL Editor **antes** de usar o seletor no app:
 12. `scripts/multi-tenant-20-app-parameters-surrogate-pk.sql` — **obrigatório se o erro for `app_parameters_pkey`**: troca PK de `parameter` para `id` uuid
 13. `scripts/multi-tenant-21-igreja-offerings-pix.sql` — CNPJ / instituição / chave PIX **por instância** (tela Dízimos e Ofertas)
 14. `scripts/multi-tenant-22-igreja-block-delete.sql` — bloquear acesso e excluir instância (+ dados com `tenant_id`)
+15. `scripts/multi-tenant-23-list-admin-igrejas-fix.sql` — corrige `list_admin_igrejas` vazia (conflito de colunas OUT)
 
 Fluxo no app:
 

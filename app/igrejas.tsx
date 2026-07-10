@@ -470,148 +470,13 @@ function IgrejasAdminPanel() {
         Super administrador: crie novas instâncias e alterne entre elas com o mesmo celular.
       </Text>
 
-      <View style={styles.form}>
-        <Text style={styles.label}>Código (ex.: IBC)</Text>
-        <TextInput
-          style={styles.input}
-          value={code}
-          onChangeText={(t) => setCode(t.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 12))}
-          placeholder="CODIGO"
-          placeholderTextColor={MINIMAL_UI.textMuted}
-          autoCapitalize="characters"
-        />
-        <Text style={styles.label}>Nome da igreja</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Nome oficial"
-          placeholderTextColor={MINIMAL_UI.textMuted}
-        />
-
-        <Text style={styles.label}>Logo da igreja (usado no app)</Text>
-        <View style={styles.logoRow}>
-          <View style={styles.logoPreviewBox}>
-            {logoPreview ? (
-              <Image source={{ uri: logoPreview }} style={styles.logoPreview} contentFit="contain" />
-            ) : (
-              <Text style={styles.logoPlaceholder}>Sem logo</Text>
-            )}
-          </View>
-          <View style={styles.logoActions}>
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => void handlePickCreateLogo()}
-              disabled={saving}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.secondaryButtonText}>
-                {logoPreview ? 'Trocar imagem' : 'Escolher logo'}
-              </Text>
-            </TouchableOpacity>
-            {logoPreview ? (
-              <TouchableOpacity
-                style={styles.linkButton}
-                onPress={() => setLogoPreview(null)}
-                disabled={saving}
-              >
-                <Text style={styles.linkButtonText}>Remover</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-        </View>
-        <Text style={styles.logoHint}>
-          PNG ou JPG. Aparece no topo do app quando esta instância estiver ativa.
-        </Text>
-
-        <Text style={styles.label}>Site oficial (URL)</Text>
-        <TextInput
-          style={styles.input}
-          value={createWebsite}
-          onChangeText={setCreateWebsite}
-          placeholder="https://www.suaigreja.org.br"
-          placeholderTextColor={MINIMAL_UI.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-        />
-        <Text style={styles.label}>Instagram (URL)</Text>
-        <TextInput
-          style={styles.input}
-          value={createInstagram}
-          onChangeText={setCreateInstagram}
-          placeholder="https://www.instagram.com/..."
-          placeholderTextColor={MINIMAL_UI.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-        />
-        <Text style={styles.label}>YouTube (URL)</Text>
-        <TextInput
-          style={styles.input}
-          value={createYoutube}
-          onChangeText={setCreateYoutube}
-          placeholder="https://www.youtube.com/..."
-          placeholderTextColor={MINIMAL_UI.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-        />
-        <Text style={styles.logoHint}>
-          Site e redes usados no menu Redes Sociais quando esta instância estiver ativa.
-        </Text>
-
-        <Text style={styles.label}>CNPJ (dízimos/ofertas)</Text>
-        <TextInput
-          style={styles.input}
-          value={createCnpj}
-          onChangeText={setCreateCnpj}
-          placeholder="00.000.000/0000-00"
-          placeholderTextColor={MINIMAL_UI.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        <Text style={styles.label}>Instituição PIX</Text>
-        <TextInput
-          style={styles.input}
-          value={createPixInstitution}
-          onChangeText={setCreatePixInstitution}
-          placeholder="Nome do banco / cooperativa"
-          placeholderTextColor={MINIMAL_UI.textMuted}
-          autoCapitalize="characters"
-          autoCorrect={false}
-        />
-        <Text style={styles.label}>Chave PIX</Text>
-        <TextInput
-          style={styles.input}
-          value={createPixKey}
-          onChangeText={setCreatePixKey}
-          placeholder="CNPJ, e-mail, telefone ou chave aleatória"
-          placeholderTextColor={MINIMAL_UI.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        <Text style={styles.logoHint}>
-          Dados exibidos na tela Dízimos e Ofertas desta instância.
-        </Text>
-
-        <TouchableOpacity
-          style={[styles.button, saving && styles.buttonDisabled]}
-          onPress={() => void handleCreate()}
-          disabled={saving}
-          activeOpacity={0.85}
-        >
-          {saving ? (
-            <ActivityIndicator color={MINIMAL_UI.onDark} />
-          ) : (
-            <Text style={styles.buttonText}>Criar instância</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
       <Text style={styles.section}>Instâncias disponíveis</Text>
       {loading ? (
         <ActivityIndicator color={MINIMAL_UI.accent} />
+      ) : churches.length === 0 ? (
+        <Text style={styles.emptyList}>
+          Nenhuma instância listada. Confira a sessão ou execute o script multi-tenant-22/23 no Supabase.
+        </Text>
       ) : (
         <View style={styles.list}>
           {churches.map((church) => {
@@ -889,6 +754,146 @@ function IgrejasAdminPanel() {
           })}
         </View>
       )}
+      <Text style={[styles.section, styles.sectionCreate]}>Nova instância</Text>
+      <View style={styles.form}>
+        <Text style={styles.label}>Código (ex.: IBC)</Text>
+        <TextInput
+          style={styles.input}
+          value={code}
+          onChangeText={(t) => setCode(t.toUpperCase().replace(/[^A-Z0-9_]/g, '').slice(0, 12))}
+          placeholder="CODIGO"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="characters"
+        />
+        <Text style={styles.label}>Nome da igreja</Text>
+        <TextInput
+          style={styles.input}
+          value={name}
+          onChangeText={setName}
+          placeholder="Nome oficial"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+        />
+
+        <Text style={styles.label}>Logo da igreja (usado no app)</Text>
+        <View style={styles.logoRow}>
+          <View style={styles.logoPreviewBox}>
+            {logoPreview ? (
+              <Image source={{ uri: logoPreview }} style={styles.logoPreview} contentFit="contain" />
+            ) : (
+              <Text style={styles.logoPlaceholder}>Sem logo</Text>
+            )}
+          </View>
+          <View style={styles.logoActions}>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => void handlePickCreateLogo()}
+              disabled={saving}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {logoPreview ? 'Trocar imagem' : 'Escolher logo'}
+              </Text>
+            </TouchableOpacity>
+            {logoPreview ? (
+              <TouchableOpacity
+                style={styles.linkButton}
+                onPress={() => setLogoPreview(null)}
+                disabled={saving}
+              >
+                <Text style={styles.linkButtonText}>Remover</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        </View>
+        <Text style={styles.logoHint}>
+          PNG ou JPG. Aparece no topo do app quando esta instância estiver ativa.
+        </Text>
+
+        <Text style={styles.label}>Site oficial (URL)</Text>
+        <TextInput
+          style={styles.input}
+          value={createWebsite}
+          onChangeText={setCreateWebsite}
+          placeholder="https://www.suaigreja.org.br"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+        />
+        <Text style={styles.label}>Instagram (URL)</Text>
+        <TextInput
+          style={styles.input}
+          value={createInstagram}
+          onChangeText={setCreateInstagram}
+          placeholder="https://www.instagram.com/..."
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+        />
+        <Text style={styles.label}>YouTube (URL)</Text>
+        <TextInput
+          style={styles.input}
+          value={createYoutube}
+          onChangeText={setCreateYoutube}
+          placeholder="https://www.youtube.com/..."
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+        />
+        <Text style={styles.logoHint}>
+          Site e redes usados no menu Redes Sociais quando esta instância estiver ativa.
+        </Text>
+
+        <Text style={styles.label}>CNPJ (dízimos/ofertas)</Text>
+        <TextInput
+          style={styles.input}
+          value={createCnpj}
+          onChangeText={setCreateCnpj}
+          placeholder="00.000.000/0000-00"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <Text style={styles.label}>Instituição PIX</Text>
+        <TextInput
+          style={styles.input}
+          value={createPixInstitution}
+          onChangeText={setCreatePixInstitution}
+          placeholder="Nome do banco / cooperativa"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="characters"
+          autoCorrect={false}
+        />
+        <Text style={styles.label}>Chave PIX</Text>
+        <TextInput
+          style={styles.input}
+          value={createPixKey}
+          onChangeText={setCreatePixKey}
+          placeholder="CNPJ, e-mail, telefone ou chave aleatória"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <Text style={styles.logoHint}>
+          Dados exibidos na tela Dízimos e Ofertas desta instância.
+        </Text>
+
+        <TouchableOpacity
+          style={[styles.button, saving && styles.buttonDisabled]}
+          onPress={() => void handleCreate()}
+          disabled={saving}
+          activeOpacity={0.85}
+        >
+          {saving ? (
+            <ActivityIndicator color={MINIMAL_UI.onDark} />
+          ) : (
+            <Text style={styles.buttonText}>Criar instância</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
     </View>
   );
 }
@@ -1009,6 +1014,16 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
     fontWeight: '700',
     fontSize: 14,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  sectionCreate: {
+    marginTop: 28,
+  },
+  emptyList: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
     paddingHorizontal: 16,
     marginBottom: 8,
   },

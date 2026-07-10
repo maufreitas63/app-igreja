@@ -35,6 +35,7 @@ stable
 security definer
 set search_path = public
 as $$
+#variable_conflict use_column
 declare
   v_profile_id uuid := public.current_session_profile_id();
 begin
@@ -46,27 +47,44 @@ begin
     return;
   end if;
 
+  -- Subquery evita conflito OUT (id/is_active/…) com colunas no RETURN QUERY.
   return query
   select
-    i.id,
-    i.code,
-    i.name,
-    nullif(trim(i.logo_url), '') as logo_url,
-    nullif(trim(i.website_url), '') as website_url,
-    nullif(trim(i.instagram_url), '') as instagram_url,
-    nullif(trim(i.youtube_url), '') as youtube_url,
-    nullif(trim(i.cnpj), '') as cnpj,
-    nullif(trim(i.pix_institution), '') as pix_institution,
-    nullif(trim(i.pix_key), '') as pix_key,
-    i.is_active,
-    coalesce(v.is_primary, false) as is_primary,
-    (v.id is not null) as is_linked
-  from public.igrejas i
-  left join public.profile_igreja_vinculos v
-    on v.tenant_id = i.id
-   and v.profile_id = v_profile_id
-   and v.is_active = true
-  order by i.is_active desc, coalesce(v.is_primary, false) desc, i.name asc;
+    q.id,
+    q.code,
+    q.name,
+    q.logo_url,
+    q.website_url,
+    q.instagram_url,
+    q.youtube_url,
+    q.cnpj,
+    q.pix_institution,
+    q.pix_key,
+    q.is_active,
+    q.is_primary,
+    q.is_linked
+  from (
+    select
+      i.id,
+      i.code,
+      i.name,
+      nullif(trim(i.logo_url), '') as logo_url,
+      nullif(trim(i.website_url), '') as website_url,
+      nullif(trim(i.instagram_url), '') as instagram_url,
+      nullif(trim(i.youtube_url), '') as youtube_url,
+      nullif(trim(i.cnpj), '') as cnpj,
+      nullif(trim(i.pix_institution), '') as pix_institution,
+      nullif(trim(i.pix_key), '') as pix_key,
+      i.is_active,
+      coalesce(v.is_primary, false) as is_primary,
+      (v.id is not null) as is_linked
+    from public.igrejas i
+    left join public.profile_igreja_vinculos v
+      on v.tenant_id = i.id
+     and v.profile_id = v_profile_id
+     and v.is_active = true
+  ) q
+  order by q.is_active desc, q.is_primary desc, q.name asc;
 end;
 $$;
 

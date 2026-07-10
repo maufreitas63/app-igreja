@@ -31,7 +31,7 @@ export type ActiveIgrejaBranding = {
 };
 
 function mapSessionIgreja(row: Record<string, unknown> | null | undefined): SessionIgreja | null {
-  const id = typeof row?.id === 'string' ? row.id.trim() : '';
+  const id = row?.id == null ? '' : String(row.id).trim();
   if (!id) return null;
   const logoRaw = typeof row?.logo_url === 'string' ? row.logo_url.trim() : '';
   const webRaw = typeof row?.website_url === 'string' ? row.website_url.trim() : '';
@@ -140,11 +140,7 @@ export async function clearTenantId() {
   await AsyncStorage.multiRemove([USER_TENANT_ID_STORAGE_KEY, USER_TENANT_BRANDING_STORAGE_KEY]);
 }
 
-export async function listSessionIgrejas(): Promise<SessionIgreja[]> {
-  const { data, error } = await supabase.rpc('list_session_igrejas');
-  if (error) {
-    throw error;
-  }
+function coerceSessionIgrejaRows(data: unknown): SessionIgreja[] {
   if (!Array.isArray(data)) {
     return [];
   }
@@ -153,21 +149,36 @@ export async function listSessionIgrejas(): Promise<SessionIgreja[]> {
     .filter((row): row is SessionIgreja => row != null);
 }
 
+export async function listSessionIgrejas(): Promise<SessionIgreja[]> {
+  const { data, error } = await supabase.rpc('list_session_igrejas');
+  if (error) {
+    throw error;
+  }
+  return coerceSessionIgrejaRows(data);
+}
+
 /** Lista admin (ativas + bloqueadas). Requer super_admin + script 22. */
 export async function listAdminIgrejas(): Promise<SessionIgreja[]> {
   const { data, error } = await supabase.rpc('list_admin_igrejas');
-  if (error) {
-    if (isSupabaseRpcMissingError(error, 'list_admin_igrejas')) {
-      return listSessionIgrejas();
+  if (!error) {
+    const rows = coerceSessionIgrejaRows(data);
+    if (rows.length > 0) {
+      return rows;
     }
-    throw error;
+    // RPC ok mas vazia: tenta list_session (ex.: sessão/super_admin divergente).
+    try {
+      const sessionRows = await listSessionIgrejas();
+      if (sessionRows.length > 0) {
+        return sessionRows;
+      }
+    } catch {
+      // mantém []
+    }
+    return rows;
   }
-  if (!Array.isArray(data)) {
-    return [];
-  }
-  return data
-    .map((row) => mapSessionIgreja(row as Record<string, unknown>))
-    .filter((row): row is SessionIgreja => row != null);
+
+  console.warn('list_admin_igrejas falhou; usando list_session_igrejas', error);
+  return listSessionIgrejas();
 }
 
 /** Precisa escolher igreja? (>1 disponível) */
