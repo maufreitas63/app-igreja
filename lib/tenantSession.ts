@@ -175,9 +175,10 @@ export async function activateSessionTenant(tenantId: string): Promise<{ success
   };
 }
 
-export async function onboardIgrejaAdmin(code: string, name: string) {
+export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: string | null) {
   const trimmedCode = code.trim();
   const trimmedName = name.trim();
+  const trimmedLogo = logoUrl?.trim() || null;
 
   if (trimmedCode.length < 2 || trimmedCode.length > 12) {
     return {
@@ -193,17 +194,40 @@ export async function onboardIgrejaAdmin(code: string, name: string) {
     };
   }
 
-  const { data, error } = await supabase.rpc('onboard_igreja_admin', {
+  const payload: { p_code: string; p_name: string; p_logo_url?: string } = {
     p_code: trimmedCode,
     p_name: trimmedName,
-  });
+  };
+  if (trimmedLogo) {
+    payload.p_logo_url = trimmedLogo;
+  }
+
+  const { data, error } = await supabase.rpc('onboard_igreja_admin', payload);
 
   if (error) {
+    if (trimmedLogo) {
+      // Fallback se o banco ainda não tem p_logo_url (multi-tenant-13)
+      const legacy = await supabase.rpc('onboard_igreja_admin', {
+        p_code: trimmedCode,
+        p_name: trimmedName,
+      });
+      if (!legacy.error) {
+        return legacy.data as {
+          success?: boolean;
+          message?: string;
+          tenant_id?: string;
+          code?: string;
+          name?: string;
+          logo_url?: string | null;
+        };
+      }
+    }
+
     if (isSupabaseRpcMissingError(error, 'onboard_igreja_admin')) {
       return {
         success: false,
         message:
-          'RPC ausente no banco. Execute scripts/multi-tenant-10-onboard-igreja-rpc.sql e multi-tenant-12-app-parameters-unique-per-tenant.sql.',
+          'RPC ausente no banco. Execute scripts/multi-tenant-10 e multi-tenant-13 no Supabase.',
       };
     }
 
@@ -221,6 +245,7 @@ export async function onboardIgrejaAdmin(code: string, name: string) {
     tenant_id?: string;
     code?: string;
     name?: string;
+    logo_url?: string | null;
   };
 }
 

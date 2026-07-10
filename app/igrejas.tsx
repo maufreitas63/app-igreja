@@ -1,6 +1,7 @@
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useIgrejasAdminAccess } from '@/hooks/useIgrejasAdminAccess';
+import { pickChurchLogoFromGallery, saveChurchLogoForTenant } from '@/lib/churchLogo';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   activateSessionTenant,
@@ -9,6 +10,7 @@ import {
   type SessionIgreja,
 } from '@/lib/tenantSession';
 import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -25,9 +27,11 @@ function IgrejasAdminPanel() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [logoBusyId, setLogoBusyId] = useState<string | null>(null);
   const [churches, setChurches] = useState<SessionIgreja[]>([]);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,6 +53,22 @@ function IgrejasAdminPanel() {
     void load();
   }, [load]);
 
+  const handlePickCreateLogo = async () => {
+    try {
+      const uri = await pickChurchLogoFromGallery();
+      if (uri) {
+        setLogoPreview(uri);
+      }
+    } catch (error) {
+      console.error(error);
+      Toast.show({
+        type: 'error',
+        text1: 'Logo',
+        text2: error instanceof Error ? error.message : 'Não foi possível selecionar a imagem.',
+      });
+    }
+  };
+
   const handleCreate = async () => {
     setSaving(true);
     try {
@@ -61,6 +81,29 @@ function IgrejasAdminPanel() {
         });
         return;
       }
+
+      const tenantId = typeof result.tenant_id === 'string' ? result.tenant_id.trim() : '';
+      if (logoPreview && tenantId) {
+        try {
+          await saveChurchLogoForTenant(tenantId, logoPreview);
+        } catch (logoError) {
+          console.error(logoError);
+          Toast.show({
+            type: 'error',
+            text1: 'Instância criada',
+            text2:
+              logoError instanceof Error
+                ? `Igreja ok, mas o logo falhou: ${logoError.message}`
+                : 'Igreja ok, mas o logo não foi salvo. Use “Trocar logo” na lista.',
+          });
+          setCode('');
+          setName('');
+          setLogoPreview(null);
+          await load();
+          return;
+        }
+      }
+
       Toast.show({
         type: 'success',
         text1: 'Instância criada',
@@ -68,6 +111,7 @@ function IgrejasAdminPanel() {
       });
       setCode('');
       setName('');
+      setLogoPreview(null);
       await load();
     } catch (error) {
       console.error(error);
@@ -84,6 +128,32 @@ function IgrejasAdminPanel() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUpdateLogo = async (church: SessionIgreja) => {
+    setLogoBusyId(church.id);
+    try {
+      const uri = await pickChurchLogoFromGallery();
+      if (!uri) {
+        return;
+      }
+      await saveChurchLogoForTenant(church.id, uri);
+      Toast.show({
+        type: 'success',
+        text1: 'Logo',
+        text2: `Logo de ${church.name} atualizado.`,
+      });
+      await load();
+    } catch (error) {
+      console.error(error);
+      Toast.show({
+        type: 'error',
+        text1: 'Logo',
+        text2: error instanceof Error ? error.message : 'Falha ao atualizar o logo.',
+      });
+    } finally {
+      setLogoBusyId(null);
     }
   };
 
@@ -129,6 +199,42 @@ function IgrejasAdminPanel() {
           placeholder="Nome oficial"
           placeholderTextColor={MINIMAL_UI.textMuted}
         />
+
+        <Text style={styles.label}>Logo da igreja (usado no app)</Text>
+        <View style={styles.logoRow}>
+          <View style={styles.logoPreviewBox}>
+            {logoPreview ? (
+              <Image source={{ uri: logoPreview }} style={styles.logoPreview} contentFit="contain" />
+            ) : (
+              <Text style={styles.logoPlaceholder}>Sem logo</Text>
+            )}
+          </View>
+          <View style={styles.logoActions}>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => void handlePickCreateLogo()}
+              disabled={saving}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {logoPreview ? 'Trocar imagem' : 'Escolher logo'}
+              </Text>
+            </TouchableOpacity>
+            {logoPreview ? (
+              <TouchableOpacity
+                style={styles.linkButton}
+                onPress={() => setLogoPreview(null)}
+                disabled={saving}
+              >
+                <Text style={styles.linkButtonText}>Remover</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        </View>
+        <Text style={styles.logoHint}>
+          PNG ou JPG. Aparece no topo do app quando esta instância estiver ativa.
+        </Text>
+
         <TouchableOpacity
           style={[styles.button, saving && styles.buttonDisabled]}
           onPress={() => void handleCreate()}
@@ -148,22 +254,53 @@ function IgrejasAdminPanel() {
         <ActivityIndicator color={MINIMAL_UI.accent} />
       ) : (
         <View style={styles.list}>
-          {churches.map((church) => (
-            <TouchableOpacity
-              key={church.id}
-              style={styles.row}
-              onPress={() => void handleSwitch(church)}
-              activeOpacity={0.85}
-            >
-              <View style={styles.rowText}>
-                <Text style={styles.rowName}>{church.name}</Text>
-                <Text style={styles.rowCode}>{church.code}</Text>
+          {churches.map((church) => {
+            const logoBusy = logoBusyId === church.id;
+            return (
+              <View key={church.id} style={styles.row}>
+                <TouchableOpacity
+                  style={styles.rowMain}
+                  onPress={() => void handleSwitch(church)}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.rowLogoBox}>
+                    {church.logo_url ? (
+                      <Image
+                        source={{ uri: church.logo_url }}
+                        style={styles.rowLogo}
+                        contentFit="contain"
+                      />
+                    ) : (
+                      <Text style={styles.rowLogoFallback}>{church.code.slice(0, 3) || '?'}</Text>
+                    )}
+                  </View>
+                  <View style={styles.rowText}>
+                    <Text style={styles.rowName}>{church.name}</Text>
+                    <Text style={styles.rowCode}>{church.code}</Text>
+                  </View>
+                  {church.is_primary ? (
+                    <Text style={styles.badge}>Ativa</Text>
+                  ) : (
+                    <Text style={styles.switchHint}>Usar</Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.rowLogoAction}
+                  onPress={() => void handleUpdateLogo(church)}
+                  disabled={Boolean(logoBusyId)}
+                  accessibilityLabel={`Trocar logo de ${church.name}`}
+                >
+                  {logoBusy ? (
+                    <ActivityIndicator color={MINIMAL_UI.accent} size="small" />
+                  ) : (
+                    <Text style={styles.rowLogoActionText}>
+                      {church.logo_url ? 'Trocar logo' : 'Definir logo'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
               </View>
-              {church.is_primary ? <Text style={styles.badge}>Ativa</Text> : (
-                <Text style={styles.switchHint}>Usar</Text>
-              )}
-            </TouchableOpacity>
-          ))}
+            );
+          })}
         </View>
       )}
     </View>
@@ -217,6 +354,59 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
     backgroundColor: MINIMAL_UI.background,
   },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  logoPreviewBox: {
+    width: 96,
+    height: 56,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'hidden',
+  },
+  logoPreview: {
+    width: '100%',
+    height: '100%',
+  },
+  logoPlaceholder: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 11,
+  },
+  logoActions: {
+    flex: 1,
+    gap: 6,
+  },
+  logoHint: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  secondaryButton: {
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: MINIMAL_UI.text,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  linkButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 2,
+  },
+  linkButtonText: {
+    color: MINIMAL_UI.accent,
+    fontSize: 13,
+    fontWeight: '600',
+  },
   button: {
     marginTop: 8,
     backgroundColor: MINIMAL_UI.blueDark,
@@ -241,16 +431,49 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
+  },
+  rowMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 12,
+    gap: 10,
+  },
+  rowLogoBox: {
+    width: 48,
+    height: 32,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: MINIMAL_UI.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  rowLogo: {
+    width: '100%',
+    height: '100%',
+  },
+  rowLogoFallback: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 10,
+    fontWeight: '700',
   },
   rowText: { flex: 1, minWidth: 0 },
   rowName: { color: MINIMAL_UI.text, fontWeight: '700', fontSize: 15 },
   rowCode: { color: MINIMAL_UI.textMuted, fontSize: 12 },
   badge: { color: MINIMAL_UI.accent, fontWeight: '700', fontSize: 12 },
   switchHint: { color: MINIMAL_UI.textMuted, fontSize: 12 },
+  rowLogoAction: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: MINIMAL_UI.divider,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+  rowLogoActionText: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 13,
+    fontWeight: '600',
+  },
 });

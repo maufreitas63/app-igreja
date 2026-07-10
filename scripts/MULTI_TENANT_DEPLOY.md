@@ -175,16 +175,17 @@ Execute no SQL Editor **antes** de usar o seletor no app:
 2. `scripts/multi-tenant-10-onboard-igreja-rpc.sql` — `onboard_igreja_admin`
 3. `scripts/multi-tenant-11-igreja-logo.sql` — coluna `igrejas.logo_url` + RPC com logo da instância
 4. `scripts/multi-tenant-12-app-parameters-unique-per-tenant.sql` — índice único de `app_parameters` **por tenant** (obrigatório para Criar instância)
+5. `scripts/multi-tenant-13-igreja-logo-storage.sql` — bucket `church-logos` + `set_igreja_logo_admin` + onboard com logo
 
 Fluxo no app:
 
 - Login com o mesmo telefone do super_admin
 - Se houver mais de uma igreja → `/selecionar-igreja`
-- Menu **Configurações → Instâncias (Igrejas)** → criar código/nome e alternar instância ativa
+- Menu **Configurações → Instâncias (Igrejas)** → criar código/nome/logo e alternar instância ativa
 
 ### Logo da instância (chrome)
 
 - Login / marca d'água usam a marca **Conecta** (plataforma).
-- O logo do topo (chrome) segue a igreja ativa: `igrejas.logo_url` (URL pública) ou fallback IBN (asset local) / nome da igreja.
-- Para cadastrar: `update public.igrejas set logo_url = 'https://...' where code = 'XYZ';`
+- O logo do topo (chrome) segue a igreja ativa: `igrejas.logo_url` (URL pública do bucket `church-logos`) ou fallback IBN (asset local) / nome da igreja.
+- Na tela de instâncias: **Escolher logo** na criação ou **Definir/Trocar logo** na lista.
 
