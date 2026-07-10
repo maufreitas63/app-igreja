@@ -238,11 +238,18 @@ export async function resolvePastoralSessionProfile(
 export const getSupabaseErrorMessage = (error: unknown) => {
   if (error && typeof error === 'object') {
     const record = error as { code?: string; message?: string; details?: string; hint?: string };
+    const blob = [record.message, record.details, record.hint].filter(Boolean).join('\n');
 
     if (record.code === '23503' && (record.message ?? '').includes('user_id')) {
       return (
         'Seu cadastro não está vinculado ao módulo pastoral. ' +
         'No Supabase, execute o script atualizado scripts/pastoral-requests-fields.sql e tente novamente.'
+      );
+    }
+
+    if (/assert_session_profile_matches/i.test(blob)) {
+      return (
+        'Função de sessão ausente no banco. Execute no Supabase: scripts/assert-session-profile-matches.sql e tente novamente.'
       );
     }
 
