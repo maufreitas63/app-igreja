@@ -5,8 +5,10 @@ import { pickChurchLogoFromGallery, saveChurchLogoForTenant } from '@/lib/church
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   activateSessionTenant,
-  listSessionIgrejas,
+  deleteIgrejaAdmin,
+  listAdminIgrejas,
   onboardIgrejaAdmin,
+  setIgrejaActiveAdmin,
   setIgrejaOfferingsAdmin,
   setIgrejaSocialLinksAdmin,
   type SessionIgreja,
@@ -17,6 +19,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -27,6 +30,10 @@ import Toast from 'react-native-toast-message';
 
 type SocialDraft = { website: string; instagram: string; youtube: string };
 type OfferingsDraft = { cnpj: string; pixInstitution: string; pixKey: string };
+
+function isProtectedDefaultChurch(church: SessionIgreja) {
+  return church.code.trim().toUpperCase() === 'IBN';
+}
 
 function IgrejasAdminPanel() {
   const router = useRouter();
@@ -47,6 +54,7 @@ function IgrejasAdminPanel() {
   const [socialDrafts, setSocialDrafts] = useState<Record<string, SocialDraft>>({});
   const [offeringsDrafts, setOfferingsDrafts] = useState<Record<string, OfferingsDraft>>({});
   const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null);
+  const [deleteConfirmById, setDeleteConfirmById] = useState<Record<string, string>>({});
 
   const syncSocialDrafts = useCallback((rows: SessionIgreja[]) => {
     const nextSocial: Record<string, SocialDraft> = {};
@@ -70,7 +78,7 @@ function IgrejasAdminPanel() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const rows = await listSessionIgrejas();
+      const rows = await listAdminIgrejas();
       setChurches(rows);
       syncSocialDrafts(rows);
     } catch (error) {
@@ -305,6 +313,14 @@ function IgrejasAdminPanel() {
   };
 
   const handleSwitch = async (church: SessionIgreja) => {
+    if (!church.is_active) {
+      Toast.show({
+        type: 'error',
+        text1: 'Instância bloqueada',
+        text2: 'Desbloqueie o acesso antes de usar esta igreja.',
+      });
+      return;
+    }
     const result = await activateSessionTenant(church.id);
     if (!result.success) {
       Toast.show({ type: 'error', text1: 'Trocar igreja', text2: result.message });
@@ -319,6 +335,132 @@ function IgrejasAdminPanel() {
       pathname: '/(tabs)',
       params: withMinimalPresentation(),
     });
+  };
+
+  const handleToggleActive = (church: SessionIgreja) => {
+    if (isProtectedDefaultChurch(church)) {
+      Toast.show({
+        type: 'error',
+        text1: 'Instância protegida',
+        text2: 'A IBN não pode ser bloqueada.',
+      });
+      return;
+    }
+
+    const nextActive = !church.is_active;
+    const title = nextActive ? 'Liberar acesso' : 'Bloquear acesso';
+    const message = nextActive
+      ? `Liberar o acesso dos usuários à instância ${church.name}?`
+      : `Bloquear o acesso dos usuários à instância ${church.name}? Eles não poderão selecioná-la até liberar.`;
+
+    Alert.alert(title, message, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: nextActive ? 'Liberar' : 'Bloquear',
+        style: nextActive ? 'default' : 'destructive',
+        onPress: () => {
+          void (async () => {
+            setEditBusy(true);
+            try {
+              const result = await setIgrejaActiveAdmin(church.id, nextActive);
+              if (!result?.success) {
+                Toast.show({
+                  type: 'error',
+                  text1: title,
+                  text2: result?.message || 'Não foi possível atualizar.',
+                });
+                return;
+              }
+              Toast.show({
+                type: 'success',
+                text1: title,
+                text2: result.message || church.name,
+              });
+              await load();
+            } catch (error) {
+              console.error(error);
+              Toast.show({
+                type: 'error',
+                text1: title,
+                text2: error instanceof Error ? error.message : 'Falha ao atualizar.',
+              });
+            } finally {
+              setEditBusy(false);
+            }
+          })();
+        },
+      },
+    ]);
+  };
+
+  const handleDelete = (church: SessionIgreja) => {
+    if (isProtectedDefaultChurch(church)) {
+      Toast.show({
+        type: 'error',
+        text1: 'Instância protegida',
+        text2: 'A IBN não pode ser excluída.',
+      });
+      return;
+    }
+
+    const typed = (deleteConfirmById[church.id] ?? '').trim();
+    if (typed.toUpperCase() !== church.code.trim().toUpperCase()) {
+      Toast.show({
+        type: 'error',
+        text1: 'Confirmação',
+        text2: `Digite o código ${church.code} para confirmar a exclusão.`,
+      });
+      return;
+    }
+
+    Alert.alert(
+      'Excluir instância',
+      `Isto apaga ${church.name} e todos os dados dependentes (membros, eventos, parâmetros, etc.). Não tem volta.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir definitivamente',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              setEditBusy(true);
+              try {
+                const result = await deleteIgrejaAdmin(church.id, typed);
+                if (!result?.success) {
+                  Toast.show({
+                    type: 'error',
+                    text1: 'Excluir instância',
+                    text2: result?.message || 'Não foi possível excluir.',
+                  });
+                  return;
+                }
+                Toast.show({
+                  type: 'success',
+                  text1: 'Instância excluída',
+                  text2: result.message || church.code,
+                });
+                closeEdit();
+                setDeleteConfirmById((prev) => {
+                  const next = { ...prev };
+                  delete next[church.id];
+                  return next;
+                });
+                await load();
+              } catch (error) {
+                console.error(error);
+                Toast.show({
+                  type: 'error',
+                  text1: 'Excluir instância',
+                  text2: error instanceof Error ? error.message : 'Falha ao excluir.',
+                });
+              } finally {
+                setEditBusy(false);
+              }
+            })();
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -497,11 +639,16 @@ function IgrejasAdminPanel() {
                     <Text style={styles.rowName}>{church.name}</Text>
                     <Text style={styles.rowCode}>{church.code}</Text>
                   </View>
-                  {church.is_primary ? <Text style={styles.badge}>Ativa</Text> : null}
+                  <View style={styles.badgeColumn}>
+                    {church.is_primary ? <Text style={styles.badge}>Sessão</Text> : null}
+                    {!church.is_active ? (
+                      <Text style={[styles.badge, styles.badgeBlocked]}>Bloqueada</Text>
+                    ) : null}
+                  </View>
                 </View>
 
                 <View style={styles.rowActions}>
-                  {!church.is_primary ? (
+                  {!church.is_primary && church.is_active ? (
                     <TouchableOpacity
                       style={styles.actionButton}
                       onPress={() => void handleSwitch(church)}
@@ -673,6 +820,68 @@ function IgrejasAdminPanel() {
                         <Text style={styles.buttonText}>Salvar alterações</Text>
                       )}
                     </TouchableOpacity>
+
+                    {!isProtectedDefaultChurch(church) ? (
+                      <View style={styles.dangerZone}>
+                        <Text style={styles.dangerTitle}>Acesso e exclusão</Text>
+                        <TouchableOpacity
+                          style={[
+                            styles.secondaryButton,
+                            !church.is_active && styles.secondaryButtonSuccess,
+                            editBusy && styles.buttonDisabled,
+                          ]}
+                          onPress={() => handleToggleActive(church)}
+                          disabled={editBusy}
+                        >
+                          <Text
+                            style={[
+                              styles.secondaryButtonText,
+                              !church.is_active && styles.secondaryButtonSuccessText,
+                            ]}
+                          >
+                            {church.is_active ? 'Bloquear acesso' : 'Liberar acesso'}
+                          </Text>
+                        </TouchableOpacity>
+                        <Text style={styles.dangerHint}>
+                          Bloquear impede que usuários selecionem esta instância. Os dados
+                          permanecem.
+                        </Text>
+
+                        <Text style={styles.socialFieldLabel}>
+                          Excluir — digite {church.code} para confirmar
+                        </Text>
+                        <TextInput
+                          style={styles.input}
+                          value={deleteConfirmById[church.id] ?? ''}
+                          onChangeText={(value) =>
+                            setDeleteConfirmById((prev) => ({
+                              ...prev,
+                              [church.id]: value.toUpperCase().replace(/[^A-Z0-9_]/g, ''),
+                            }))
+                          }
+                          placeholder={church.code}
+                          placeholderTextColor={MINIMAL_UI.textMuted}
+                          autoCapitalize="characters"
+                          autoCorrect={false}
+                          editable={!editBusy}
+                        />
+                        <TouchableOpacity
+                          style={[styles.dangerButton, editBusy && styles.buttonDisabled]}
+                          onPress={() => handleDelete(church)}
+                          disabled={editBusy}
+                        >
+                          <Text style={styles.dangerButtonText}>Excluir instância e dados</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.dangerHint}>
+                          Apaga a igreja e informações dependentes. Irreversível. A IBN não
+                          pode ser excluída.
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.dangerHint}>
+                        Instância padrão (IBN): não pode ser bloqueada nem excluída.
+                      </Text>
+                    )}
                   </View>
                 ) : null}
               </View>
@@ -840,6 +1049,13 @@ const styles = StyleSheet.create({
   rowName: { color: MINIMAL_UI.text, fontWeight: '700', fontSize: 15 },
   rowCode: { color: MINIMAL_UI.textMuted, fontSize: 12 },
   badge: { color: MINIMAL_UI.accent, fontWeight: '700', fontSize: 12 },
+  badgeColumn: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  badgeBlocked: {
+    color: '#B42318',
+  },
   rowActions: {
     flexDirection: 'row',
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -880,5 +1096,42 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     fontSize: 12,
     fontWeight: '600',
+  },
+  secondaryButtonSuccess: {
+    borderColor: '#067647',
+    backgroundColor: '#ECFDF3',
+  },
+  secondaryButtonSuccessText: {
+    color: '#067647',
+  },
+  dangerZone: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: MINIMAL_UI.divider,
+    gap: 8,
+  },
+  dangerTitle: {
+    color: MINIMAL_UI.text,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  dangerHint: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  dangerButton: {
+    minHeight: 44,
+    borderRadius: 8,
+    backgroundColor: '#B42318',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  dangerButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

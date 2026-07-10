@@ -184,6 +184,7 @@ Execute no SQL Editor **antes** de usar o seletor no app:
 11. `scripts/multi-tenant-19-app-parameters-tenant-unique-fix.sql` — remove `UNIQUE(parameter)` / índice global (parcial)
 12. `scripts/multi-tenant-20-app-parameters-surrogate-pk.sql` — **obrigatório se o erro for `app_parameters_pkey`**: troca PK de `parameter` para `id` uuid
 13. `scripts/multi-tenant-21-igreja-offerings-pix.sql` — CNPJ / instituição / chave PIX **por instância** (tela Dízimos e Ofertas)
+14. `scripts/multi-tenant-22-igreja-block-delete.sql` — bloquear acesso e excluir instância (+ dados com `tenant_id`)
 
 Fluxo no app:
 

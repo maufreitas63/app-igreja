@@ -18,6 +18,7 @@ export type SessionIgreja = {
   cnpj: string | null;
   pix_institution: string | null;
   pix_key: string | null;
+  is_active: boolean;
   is_primary: boolean;
   is_linked: boolean;
 };
@@ -50,6 +51,7 @@ function mapSessionIgreja(row: Record<string, unknown> | null | undefined): Sess
     cnpj: cnpjRaw || null,
     pix_institution: pixInstRaw || null,
     pix_key: pixKeyRaw || null,
+    is_active: row?.is_active === false ? false : true,
     is_primary: Boolean(row?.is_primary),
     is_linked: Boolean(row?.is_linked),
   };
@@ -141,6 +143,23 @@ export async function clearTenantId() {
 export async function listSessionIgrejas(): Promise<SessionIgreja[]> {
   const { data, error } = await supabase.rpc('list_session_igrejas');
   if (error) {
+    throw error;
+  }
+  if (!Array.isArray(data)) {
+    return [];
+  }
+  return data
+    .map((row) => mapSessionIgreja(row as Record<string, unknown>))
+    .filter((row): row is SessionIgreja => row != null);
+}
+
+/** Lista admin (ativas + bloqueadas). Requer super_admin + script 22. */
+export async function listAdminIgrejas(): Promise<SessionIgreja[]> {
+  const { data, error } = await supabase.rpc('list_admin_igrejas');
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'list_admin_igrejas')) {
+      return listSessionIgrejas();
+    }
     throw error;
   }
   if (!Array.isArray(data)) {
@@ -353,6 +372,59 @@ export async function setIgrejaOfferingsAdmin(
     cnpj?: string | null;
     pix_institution?: string | null;
     pix_key?: string | null;
+  };
+}
+
+export async function setIgrejaActiveAdmin(tenantId: string, isActive: boolean) {
+  const { data, error } = await supabase.rpc('set_igreja_active_admin', {
+    p_tenant_id: tenantId.trim(),
+    p_is_active: isActive,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'set_igreja_active_admin')) {
+      return {
+        success: false as const,
+        message:
+          'RPC ausente. Execute scripts/multi-tenant-22-igreja-block-delete.sql no Supabase.',
+      };
+    }
+    return {
+      success: false as const,
+      message: error.message?.trim() || 'Não foi possível atualizar o acesso.',
+    };
+  }
+
+  return data as {
+    success?: boolean;
+    message?: string;
+    is_active?: boolean;
+  };
+}
+
+export async function deleteIgrejaAdmin(tenantId: string, confirmCode: string) {
+  const { data, error } = await supabase.rpc('delete_igreja_admin', {
+    p_tenant_id: tenantId.trim(),
+    p_confirm_code: confirmCode.trim(),
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'delete_igreja_admin')) {
+      return {
+        success: false as const,
+        message:
+          'RPC ausente. Execute scripts/multi-tenant-22-igreja-block-delete.sql no Supabase.',
+      };
+    }
+    return {
+      success: false as const,
+      message: error.message?.trim() || 'Não foi possível excluir a instância.',
+    };
+  }
+
+  return data as {
+    success?: boolean;
+    message?: string;
   };
 }
 
