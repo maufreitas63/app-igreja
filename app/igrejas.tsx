@@ -71,10 +71,16 @@ function IgrejasAdminPanel() {
       await load();
     } catch (error) {
       console.error(error);
+      const message =
+        error instanceof Error && error.message.trim()
+          ? error.message.trim()
+          : error && typeof error === 'object' && 'message' in error && typeof (error as { message?: unknown }).message === 'string'
+            ? String((error as { message: string }).message)
+            : 'Erro inesperado.';
       Toast.show({
         type: 'error',
         text1: 'Nova instância',
-        text2: error instanceof Error ? error.message : 'Erro inesperado.',
+        text2: message,
       });
     } finally {
       setSaving(false);

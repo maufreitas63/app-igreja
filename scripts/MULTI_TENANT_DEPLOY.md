@@ -174,12 +174,13 @@ Execute no SQL Editor **antes** de usar o seletor no app:
 1. `scripts/multi-tenant-09-active-tenant-header.sql` — header `x-tenant-id` + `list_session_igrejas` + `set_session_active_tenant`
 2. `scripts/multi-tenant-10-onboard-igreja-rpc.sql` — `onboard_igreja_admin`
 3. `scripts/multi-tenant-11-igreja-logo.sql` — coluna `igrejas.logo_url` + RPC com logo da instância
+4. `scripts/multi-tenant-12-app-parameters-unique-per-tenant.sql` — índice único de `app_parameters` **por tenant** (obrigatório para Criar instância)
 
 Fluxo no app:
 
 - Login com o mesmo telefone do super_admin
 - Se houver mais de uma igreja → `/selecionar-igreja`
-- Menu **Instâncias (Igrejas)** → criar código/nome e alternar instância ativa
+- Menu **Configurações → Instâncias (Igrejas)** → criar código/nome e alternar instância ativa
 
 ### Logo da instância (chrome)
 

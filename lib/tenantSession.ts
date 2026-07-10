@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { clearEntityPrefixCache } from '@/lib/entityPrefix';
 import { clearAppParameterCache } from '@/lib/appParameters';
+import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { supabase } from '@/lib/supabase';
 
 export const USER_TENANT_ID_STORAGE_KEY = 'user_tenant_id';
@@ -175,13 +176,43 @@ export async function activateSessionTenant(tenantId: string): Promise<{ success
 }
 
 export async function onboardIgrejaAdmin(code: string, name: string) {
+  const trimmedCode = code.trim();
+  const trimmedName = name.trim();
+
+  if (trimmedCode.length < 2 || trimmedCode.length > 12) {
+    return {
+      success: false,
+      message: 'Código deve ter entre 2 e 12 caracteres.',
+    };
+  }
+
+  if (trimmedName.length < 3) {
+    return {
+      success: false,
+      message: 'Informe o nome da igreja (mínimo 3 caracteres).',
+    };
+  }
+
   const { data, error } = await supabase.rpc('onboard_igreja_admin', {
-    p_code: code.trim(),
-    p_name: name.trim(),
+    p_code: trimmedCode,
+    p_name: trimmedName,
   });
 
   if (error) {
-    throw error;
+    if (isSupabaseRpcMissingError(error, 'onboard_igreja_admin')) {
+      return {
+        success: false,
+        message:
+          'RPC ausente no banco. Execute scripts/multi-tenant-10-onboard-igreja-rpc.sql e multi-tenant-12-app-parameters-unique-per-tenant.sql.',
+      };
+    }
+
+    const message =
+      typeof error.message === 'string' && error.message.trim()
+        ? error.message.trim()
+        : 'Não foi possível criar a instância.';
+
+    return { success: false, message };
   }
 
   return data as {
