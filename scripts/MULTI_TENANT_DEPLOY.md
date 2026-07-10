@@ -97,3 +97,34 @@ Execute **um arquivo por vez** no SQL Editor:
 Índice: `scripts/multi-tenant-05-audit-security-definer.sql`
 
 Comece pelo **05b** (lista de risco). Cole o resultado para priorizar patches.
+
+## Passo 6 — Patches SECURITY DEFINER (ondas)
+
+Pré-requisito: passos 01–04 ok + checks 1–3 zerados.
+
+**Não há CLI Supabase neste ambiente** — execute **manualmente** no SQL Editor, **um arquivo por vez**, nesta ordem. Cada onda usa `BEGIN`/`COMMIT`: se der erro no meio, a onda inteira faz rollback.
+
+| Ordem | Arquivo | Conteúdo |
+|-------|---------|----------|
+| 0 | `multi-tenant-wave0-helper.sql` | `require_session_tenant_id()` |
+| 1a | `multi-tenant-wave1a-pastoral.sql` | Pedidos pastorais |
+| 1b | `multi-tenant-wave1b-financials.sql` | Financeiro |
+| 1c | `multi-tenant-wave1c-expense-reports.sql` | Relatórios de despesa |
+| 1d | `multi-tenant-wave1d-escalas.sql` | Tipos / voluntários / escalas |
+| 2a | `multi-tenant-wave2a-members-directory.sql` | Membros / diretório / família |
+| 2b | `multi-tenant-wave2b-events-checkin.sql` | Eventos / check-in / orquestrador |
+| 2c | `multi-tenant-wave2c-media-recepcao-params.sql` | Mídia / recepção / app_parameters |
+| 2d | `multi-tenant-wave2d-reports.sql` | Relatórios de manutenção `_report_*` |
+| 3a | `multi-tenant-wave3a-acl-ghost.sql` | ACL / papéis / ghost / insights |
+| 3b | `multi-tenant-wave3b-cadastro-exclusao.sql` | Cadastro / exclusão / ministerial |
+
+### Se der erro
+
+1. **Pare** — não execute a próxima onda.
+2. Copie a mensagem de erro completa.
+3. A onda com falha já deve ter feito `ROLLBACK` (nada daquele arquivo ficou pela metade).
+4. Ondas anteriores que deram `Success` permanecem aplicadas.
+
+### Depois de todas as ondas
+
+Reexecute `multi-tenant-05b-risk-missing-tenant-filter.sql`. As funções patchadas devem sumir da lista (ou passar a citar `tenant_id`). Auth bootstrap (`verificar_login`, `password_recovery_*`) pode continuar na lista — é esperado.
