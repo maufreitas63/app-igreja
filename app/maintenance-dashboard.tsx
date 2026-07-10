@@ -1393,7 +1393,18 @@ export default function MaintenanceDashboard() {
               />
             </View>
           ) : item.content === 'pastoral_care' ? (
-            <MaintenancePastoralCareCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <View
+              style={[
+                styles.pastoralCarePanel,
+                isMinimalPresentation && styles.pastoralCarePanelMinimal,
+              ]}
+            >
+              <MaintenancePastoralCareCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'mudanca_papeis' ? (
             <MaintenancePastoralRoleChangeCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'profile_cadastro' ? (
@@ -2472,6 +2483,18 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   scalesPanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  pastoralCarePanel: {
+    flex: 1,
+    minHeight: 0,
+  },
+  pastoralCarePanelMinimal: {
     paddingHorizontal: 0,
     paddingVertical: 4,
     width: '100%',

@@ -6,6 +6,7 @@ import {
   computeMaintenanceContentHeight,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MAINTENANCE_PASTORAL_CARE_SQL_HINT } from '@/hooks/useMaintenancePastoralCare';
 import {
   canApprovePastoralCancellation,
@@ -34,12 +35,19 @@ import {
   View,
 } from 'react-native';
 
+const PANEL_TITLE = 'Cuidado Pastoral';
+
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
 
-export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Props) {
+export function MaintenancePastoralCareCard({
+  isActive = true,
+  panelHeight,
+  minimal = false,
+}: Props) {
   const {
     submitterOptions,
     loadingOptions,
@@ -182,29 +190,39 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
   };
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Cuidado Pastoral</Text>
-      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+    <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
+      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
+        {PANEL_TITLE}
+      </Text>
+      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
-      {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_PASTORAL_CARE_SQL_HINT}</Text> : null}
-      {accessHint ? <Text style={styles.accessHintText}>{accessHint}</Text> : null}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {rpcMissing ? (
+        <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
+          {MAINTENANCE_PASTORAL_CARE_SQL_HINT}
+        </Text>
+      ) : null}
+      {accessHint ? (
+        <Text style={[styles.accessHintText, minimal && styles.accessHintTextMinimal]}>{accessHint}</Text>
+      ) : null}
+      {error ? (
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
+      ) : null}
 
       {loadingOptions ? (
-        <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
+        <ActivityIndicator color={minimal ? MINIMAL_UI.accent : '#818CF8'} style={styles.inlineLoader} />
       ) : submitterOptions.length ? (
-        <View style={styles.submitterPickerSection}>
+        <View style={[styles.submitterPickerSection, minimal && styles.submitterPickerSectionMinimal]}>
           <SectionLabel variant="maintenance" tight>
             Filtrar solicitante
           </SectionLabel>
-          <View style={styles.filterDropdownWrap}>
+          <View style={[styles.filterDropdownWrap, minimal && styles.filterDropdownWrapMinimal]}>
             <DropdownSelect
               options={filterDropdownOptions}
               selectedValue={filterProfileId}
               onValueChange={handleFilterChange}
               modalTitle="Filtrar solicitante"
               placeholder="Todos os usuários"
-              style={styles.filterDropdown}
+              style={[styles.filterDropdown, minimal && styles.filterDropdownMinimal]}
               disabled={rpcMissing}
             />
           </View>
@@ -257,7 +275,7 @@ export function MaintenancePastoralCareCard({ isActive = true, panelHeight }: Pr
       )}
 
       {loadingRequests ? (
-        <CardLoadingState lines={4} />
+        <CardLoadingState lines={4} minimal={minimal} />
       ) : selectedRequest ? (
         <ScrollView style={styles.detailScroll} nestedScrollEnabled>
           <ScrollView
@@ -563,6 +581,48 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 12,
     minHeight: 0,
+  },
+  panelMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    borderRadius: 0,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'hidden',
+  },
+  sectionTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+  },
+  warningTextMinimal: {
+    color: '#B45309',
+  },
+  accessHintTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
+  },
+  submitterPickerSectionMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+  },
+  filterDropdownWrapMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  filterDropdownMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   panelTitle: {
     color: '#3A96DD',
