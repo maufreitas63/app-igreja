@@ -136,14 +136,16 @@ Reexecute `multi-tenant-05b-risk-missing-tenant-filter.sql`. As funções patcha
 
 ### 7.1 SQL
 
-Execute bloco a bloco: `scripts/multi-tenant-07-smoke.sql`
+Execute **um arquivo por vez**:
 
-| Bloco | Esperado |
-|-------|----------|
-| **7A** | `igrejas_ativas >= 1`, `vinculos_ativos > 0`, `profiles_sem_vinculo = 0` |
-| **7B** | todos `null_tenant = 0` |
-| **7C** | contagens IBN > 0 onde houver dados |
-| **7D** | `session_tenant` null no Editor é normal |
+| Arquivo | Bloco | Esperado |
+|---------|-------|----------|
+| `scripts/multi-tenant-07a-vinculos.sql` | **7A** | `igrejas_ativas >= 1`, `vinculos_ativos > 0`, `profiles_sem_vinculo = 0` |
+| `scripts/multi-tenant-07b-null-tenant.sql` | **7B** | todos `null_tenant = 0` |
+| `scripts/multi-tenant-07c-amostra-ibn.sql` | **7C** | contagens IBN > 0 onde houver dados |
+| `scripts/multi-tenant-07d-session-helper.sql` | **7D** | `session_tenant` null no Editor é normal |
+
+Índice: `scripts/multi-tenant-07-smoke.sql`
 
 ### 7.2 App (checklist manual)
 
