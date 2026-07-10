@@ -922,12 +922,14 @@ export default function IndexScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <View style={styles.logoWrapper}>
-            <Image
-              source={require('../images/conecta.png')}
-              style={styles.logo}
-              contentFit="contain"
-              accessibilityLabel="Conecta"
-            />
+            <View style={styles.logoSurface}>
+              <Image
+                source={require('../images/conecta.png')}
+                style={styles.logo}
+                contentFit="contain"
+                accessibilityLabel="Conecta"
+              />
+            </View>
           </View>
           <ReadOnlyText style={styles.title}>{getLoginTitle()}</ReadOnlyText>
           <ReadOnlyText style={styles.subtitle}>{getLoginSubtitle()}</ReadOnlyText>
@@ -1153,10 +1155,18 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: 12,
   },
+  logoSurface: {
+    width: '100%',
+    maxWidth: 360,
+    height: 132,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
   logo: {
     width: '100%',
-    maxWidth: 300,
-    height: 110,
+    height: '100%',
   },
   title: {
     fontSize: 28,
