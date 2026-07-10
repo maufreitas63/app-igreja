@@ -232,10 +232,29 @@ export default function IndexScreen() {
       }
 
       const lgpdAtivo = await isLgpdAtivoEnabled();
-      const route = resolveRegisteredUserSessionRoute(profile, phoneForSession, lgpdAtivo);
+      let route = resolveRegisteredUserSessionRoute(profile, phoneForSession, lgpdAtivo);
 
       if (!route) {
         return false;
+      }
+
+      // Após LGPD/cadastro ok: se há mais de uma igreja, escolher instância
+      if (route.pathname === '/(tabs)' || route.pathname === '/(tabs)/dashboard') {
+        try {
+          const { shouldPromptTenantSelection, buildSelecionarIgrejaRoute, getStoredTenantId, listSessionIgrejas, persistTenantId } =
+            await import('@/lib/tenantSession');
+          const storedTenant = await getStoredTenantId();
+          if (!storedTenant) {
+            const churches = await listSessionIgrejas();
+            if (churches.length === 1 && churches[0]) {
+              await persistTenantId(churches[0].id);
+            } else if (await shouldPromptTenantSelection()) {
+              route = buildSelecionarIgrejaRoute(phoneForSession);
+            }
+          }
+        } catch (error) {
+          console.warn('tenant selection:', error);
+        }
       }
 
       router.replace(route);

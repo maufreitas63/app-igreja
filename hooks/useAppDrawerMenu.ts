@@ -40,6 +40,7 @@ function isDrawerModuleEnabled(
     canOperateGhostMode: boolean;
     canOpenAccessControl: boolean;
     hasActiveMembership: boolean;
+    isSuperAdmin: boolean;
   }
 ): boolean {
   if (isDrawerMenuPlaceholder(moduleKey)) {
@@ -48,6 +49,10 @@ function isDrawerModuleEnabled(
 
   if (moduleKey === 'events_panel') {
     return true;
+  }
+
+  if (moduleKey === 'menu_igrejas') {
+    return context.isSuperAdmin;
   }
 
   if (moduleKey in DRAWER_MEMBER_CARD_BY_MODULE) {
@@ -109,6 +114,7 @@ export function useAppDrawerMenu() {
         canOperateGhostMode: maintenanceAccess.canOperateGhostMode,
         canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
         hasActiveMembership,
+        isSuperAdmin: maintenanceAccess.isSuperAdmin === true,
       };
 
       const resolved = APP_DRAWER_MENU_ITEMS.map((item) => ({

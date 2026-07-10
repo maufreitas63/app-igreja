@@ -18,6 +18,9 @@ export const USER_PROFILE_ID_STORAGE_KEY = 'user_profile_id';
 /** Token emitido pelo Supabase no login/cadastro (`profile_sessions`). */
 export const USER_SESSION_TOKEN_STORAGE_KEY = 'user_session_token';
 
+/** Reexport — igreja ativa da sessão (também em `lib/tenantSession.ts`). */
+export { USER_TENANT_ID_STORAGE_KEY } from '@/lib/tenantSession';
+
 /** Query na rota `/` para impedir restauração automática após logout. */
 
 export const SIGN_OUT_QUERY_PARAM = 'signedOut';
@@ -258,8 +261,10 @@ const scrubWebSessionKeys = (options?: { keepPhone?: boolean }) => {
       isPhoneKey
       || key === USER_PROFILE_ID_STORAGE_KEY
       || key === USER_SESSION_TOKEN_STORAGE_KEY
+      || key === 'user_tenant_id'
       || key.includes(USER_PROFILE_ID_STORAGE_KEY)
       || key.includes(USER_SESSION_TOKEN_STORAGE_KEY)
+      || key.includes('user_tenant_id')
     ) {
       keysToDrop.push(key);
     }
@@ -294,10 +299,11 @@ export async function clearUserSession(options?: { keepPhone?: boolean }) {
   await revokeStoredProfileSession();
   scrubWebSessionKeys({ keepPhone });
   resetProfileScreenVisitTracking();
+  const { USER_TENANT_ID_STORAGE_KEY: tenantKey } = await import('@/lib/tenantSession');
   await AsyncStorage.multiRemove(
     keepPhone
-      ? [USER_PROFILE_ID_STORAGE_KEY, USER_SESSION_TOKEN_STORAGE_KEY]
-      : [USER_PHONE_STORAGE_KEY, USER_PROFILE_ID_STORAGE_KEY, USER_SESSION_TOKEN_STORAGE_KEY]
+      ? [USER_PROFILE_ID_STORAGE_KEY, USER_SESSION_TOKEN_STORAGE_KEY, tenantKey]
+      : [USER_PHONE_STORAGE_KEY, USER_PROFILE_ID_STORAGE_KEY, USER_SESSION_TOKEN_STORAGE_KEY, tenantKey]
   );
   scrubWebSessionKeys({ keepPhone });
 }
@@ -313,10 +319,13 @@ const clearUserSessionImmediately = () => {
   scrubWebSessionKeys({ keepPhone: true });
   resetProfileScreenVisitTracking();
   void revokeStoredProfileSession();
-  void AsyncStorage.multiRemove([
-    USER_PROFILE_ID_STORAGE_KEY,
-    USER_SESSION_TOKEN_STORAGE_KEY,
-  ]);
+  void import('@/lib/tenantSession').then(({ USER_TENANT_ID_STORAGE_KEY: tenantKey }) =>
+    AsyncStorage.multiRemove([
+      USER_PROFILE_ID_STORAGE_KEY,
+      USER_SESSION_TOKEN_STORAGE_KEY,
+      tenantKey,
+    ])
+  );
 };
 
 const buildWebLoginUrlAfterSignOut = () => {

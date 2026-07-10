@@ -164,7 +164,19 @@ Se algum item falhar: anote a tela, a ação e a mensagem (toast/console/Network
 ## Passo 8 — Segunda igreja (quando precisar)
 
 Playbook: `scripts/MULTI_TENANT_SEGUNDA_IGREJA.md`  
-Script: `scripts/multi-tenant-08-onboard-igreja.sql` (editar CONFIG → executar)
+Script manual: `scripts/multi-tenant-08-onboard-igreja.sql`  
+**App (recomendado):** menu **Instâncias (Igrejas)** (super_admin) → `/igrejas`
 
-Cria `igrejas` + copia `app_parameters` da IBN + `Parm_entidade` + vínculo admin opcional.
+### Sessão multi-igreja (mesmo celular)
+
+Execute no SQL Editor **antes** de usar o seletor no app:
+
+1. `scripts/multi-tenant-09-active-tenant-header.sql` — header `x-tenant-id` + `list_session_igrejas` + `set_session_active_tenant`
+2. `scripts/multi-tenant-10-onboard-igreja-rpc.sql` — `onboard_igreja_admin`
+
+Fluxo no app:
+
+- Login com o mesmo telefone do super_admin
+- Se houver mais de uma igreja → `/selecionar-igreja`
+- Menu **Instâncias (Igrejas)** → criar código/nome e alternar instância ativa
 

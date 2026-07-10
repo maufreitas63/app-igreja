@@ -17,6 +17,7 @@ export type AppDrawerModuleKey =
   | 'menu_aniversariantes'
   | 'menu_membros'
   | 'menu_administrativo'
+  | 'menu_igrejas'
   | AppDrawerPlaceholderModuleKey
   | 'gestao_financeira'
   | 'Events'
@@ -58,6 +59,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'e', label: 'Aniversariantes', moduleKey: 'menu_aniversariantes' },
   { letter: 'f', label: 'Lista de Membros', moduleKey: 'menu_membros' },
   { letter: 'g', label: 'Administrativo', moduleKey: 'menu_administrativo' },
+  { letter: 'g2', label: 'Instâncias (Igrejas)', moduleKey: 'menu_igrejas' },
   {
     letter: 'h',
     label: 'Programação de Eventos',
@@ -173,6 +175,14 @@ export async function navigateDrawerMenuItem(
   if (moduleKey === 'menu_administrativo') {
     router.push({
       pathname: '/administrativo',
+      params: withMinimalPresentation(),
+    });
+    return;
+  }
+
+  if (moduleKey === 'menu_igrejas') {
+    router.push({
+      pathname: '/igrejas',
       params: withMinimalPresentation(),
     });
     return;
