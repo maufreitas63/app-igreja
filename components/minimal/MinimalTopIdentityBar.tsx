@@ -5,12 +5,12 @@ import {
   MINIMAL_UI,
 } from '@/lib/minimalUiTheme';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { resolveTenantChromeLogo } from '@/lib/tenantBranding';
+import { resolveActiveIgrejaBranding } from '@/lib/tenantSession';
 import { getStoredUserPhone } from '@/lib/userSession';
-import { Image } from 'expo-image';
+import { Image, type ImageSource } from 'expo-image';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-
-const LOGO_SOURCE = require('@/images/IBNORTE - LOGO MARCA 9.png');
 
 function resolveGreetingName(fullName: string | null | undefined): string {
   const trimmed = fullName?.trim();
@@ -23,9 +23,37 @@ function resolveGreetingName(fullName: string | null | undefined): string {
   return firstName || 'usuário';
 }
 
-/** Faixa superior isolada: saudação à esquerda e logo à direita. */
+/** Faixa superior isolada: saudação à esquerda e logo da instância à direita. */
 export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?: boolean }) {
   const [greetingName, setGreetingName] = useState('usuário');
+  const [logoSource, setLogoSource] = useState<ImageSource | null>(null);
+  const [logoLabel, setLogoLabel] = useState('Logo da igreja');
+  const [logoText, setLogoText] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    void (async () => {
+      const branding = await resolveActiveIgrejaBranding();
+      if (!active) {
+        return;
+      }
+
+      const resolved = resolveTenantChromeLogo(branding);
+      setLogoLabel(resolved.label);
+      if (resolved.kind === 'image') {
+        setLogoSource(resolved.source);
+        setLogoText(null);
+      } else {
+        setLogoSource(null);
+        setLogoText(resolved.name);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!showGreeting) {
@@ -66,7 +94,18 @@ export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?:
       ) : null}
 
       <View style={styles.logoSlot}>
-        <Image source={LOGO_SOURCE} style={styles.logo} contentFit="contain" accessibilityLabel="Logo IBNORTE" />
+        {logoSource ? (
+          <Image
+            source={logoSource}
+            style={styles.logo}
+            contentFit="contain"
+            accessibilityLabel={logoLabel}
+          />
+        ) : (
+          <Text style={styles.logoFallback} numberOfLines={1} accessibilityLabel={logoLabel}>
+            {logoText || 'Igreja'}
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -97,11 +136,18 @@ const styles = StyleSheet.create({
   },
   logoSlot: {
     flexShrink: 0,
+    maxWidth: '55%',
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
   logo: {
     width: MINIMAL_TOP_IDENTITY_LOGO_HEIGHT * 2.4,
     height: MINIMAL_TOP_IDENTITY_LOGO_HEIGHT,
+  },
+  logoFallback: {
+    ...MINIMAL_TYPO.greeting,
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '700',
+    textAlign: 'right',
   },
 });

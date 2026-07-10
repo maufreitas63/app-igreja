@@ -5,7 +5,7 @@ import sharp from 'sharp';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
-const sourcePath = path.join(rootDir, 'logos', '4.jpeg');
+const sourcePath = path.join(rootDir, 'images', 'circulo.png');
 const outputDir = path.join(rootDir, 'assets', 'images');
 const pwaOutputDir = path.join(rootDir, 'public', 'pwa');
 
@@ -62,4 +62,4 @@ await sharp(iconBuffer).greyscale().png().toFile(path.join(outputDir, 'android-i
 await sharp(iconBuffer).resize(192, 192).toFile(path.join(pwaOutputDir, 'icon-192.png'));
 await sharp(iconBuffer).resize(512, 512).toFile(path.join(pwaOutputDir, 'icon-512.png'));
 
-console.log('Ícones gerados a partir de logos/4.jpeg (marca d\'água) em assets/images/ e public/pwa/');
+console.log('Ícones gerados a partir de images/circulo.png (marca d\'água) em assets/images/ e public/pwa/');

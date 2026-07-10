@@ -241,16 +241,24 @@ export default function IndexScreen() {
       // Após LGPD/cadastro ok: se há mais de uma igreja, escolher instância
       if (route.pathname === '/(tabs)' || route.pathname === '/(tabs)/dashboard') {
         try {
-          const { shouldPromptTenantSelection, buildSelecionarIgrejaRoute, getStoredTenantId, listSessionIgrejas, persistTenantId } =
-            await import('@/lib/tenantSession');
+          const {
+            shouldPromptTenantSelection,
+            buildSelecionarIgrejaRoute,
+            getStoredTenantId,
+            listSessionIgrejas,
+            persistActiveIgrejaBranding,
+          } = await import('@/lib/tenantSession');
           const storedTenant = await getStoredTenantId();
-          if (!storedTenant) {
-            const churches = await listSessionIgrejas();
-            if (churches.length === 1 && churches[0]) {
-              await persistTenantId(churches[0].id);
-            } else if (await shouldPromptTenantSelection()) {
-              route = buildSelecionarIgrejaRoute(phoneForSession);
+          const churches = await listSessionIgrejas();
+          if (storedTenant) {
+            const match = churches.find((church) => church.id === storedTenant);
+            if (match) {
+              await persistActiveIgrejaBranding(match);
             }
+          } else if (churches.length === 1 && churches[0]) {
+            await persistActiveIgrejaBranding(churches[0]);
+          } else if (await shouldPromptTenantSelection()) {
+            route = buildSelecionarIgrejaRoute(phoneForSession);
           }
         } catch (error) {
           console.warn('tenant selection:', error);
@@ -695,12 +703,16 @@ export default function IndexScreen() {
       return 'Seu primeiro acesso';
     }
 
+    if (loginStep === 1) {
+      return 'Boas-vindas ao ambiente da sua igreja';
+    }
+
     return 'Boas-vindas';
   };
 
   const getLoginSubtitle = () => {
     if (loginStep === 1) {
-      return 'Informe seu celular para começar';
+      return 'Acesse o ambiente da sua igreja com o celular cadastrado.';
     }
 
     if (isTotemLoginMode) {
@@ -911,10 +923,10 @@ export default function IndexScreen() {
           showsVerticalScrollIndicator={false}>
           <View style={styles.logoWrapper}>
             <Image
-              source={require('../images/IBNORTE - LOGO MARCA 9.png')}
+              source={require('../images/conecta.png')}
               style={styles.logo}
               contentFit="contain"
-              tintColor={LOGIN_ICON}
+              accessibilityLabel="Conecta"
             />
           </View>
           <ReadOnlyText style={styles.title}>{getLoginTitle()}</ReadOnlyText>

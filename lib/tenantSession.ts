@@ -4,14 +4,37 @@ import { clearAppParameterCache } from '@/lib/appParameters';
 import { supabase } from '@/lib/supabase';
 
 export const USER_TENANT_ID_STORAGE_KEY = 'user_tenant_id';
+export const USER_TENANT_BRANDING_STORAGE_KEY = 'user_tenant_branding';
 
 export type SessionIgreja = {
   id: string;
   code: string;
   name: string;
+  logo_url: string | null;
   is_primary: boolean;
   is_linked: boolean;
 };
+
+export type ActiveIgrejaBranding = {
+  id: string;
+  code: string;
+  name: string;
+  logo_url: string | null;
+};
+
+function mapSessionIgreja(row: Record<string, unknown> | null | undefined): SessionIgreja | null {
+  const id = typeof row?.id === 'string' ? row.id.trim() : '';
+  if (!id) return null;
+  const logoRaw = typeof row?.logo_url === 'string' ? row.logo_url.trim() : '';
+  return {
+    id,
+    code: String(row?.code ?? '').trim(),
+    name: String(row?.name ?? '').trim(),
+    logo_url: logoRaw || null,
+    is_primary: Boolean(row?.is_primary),
+    is_linked: Boolean(row?.is_linked),
+  };
+}
 
 export async function getStoredTenantId(): Promise<string | null> {
   const raw = (await AsyncStorage.getItem(USER_TENANT_ID_STORAGE_KEY))?.trim();
@@ -27,8 +50,73 @@ export async function persistTenantId(tenantId: string | null | undefined) {
   await AsyncStorage.removeItem(USER_TENANT_ID_STORAGE_KEY);
 }
 
+export async function persistActiveIgrejaBranding(
+  church: Pick<SessionIgreja, 'id' | 'code' | 'name' | 'logo_url'>
+) {
+  await persistTenantId(church.id);
+  const payload: ActiveIgrejaBranding = {
+    id: church.id,
+    code: church.code,
+    name: church.name,
+    logo_url: church.logo_url?.trim() || null,
+  };
+  await AsyncStorage.setItem(USER_TENANT_BRANDING_STORAGE_KEY, JSON.stringify(payload));
+}
+
+export async function getStoredActiveIgrejaBranding(): Promise<ActiveIgrejaBranding | null> {
+  const raw = await AsyncStorage.getItem(USER_TENANT_BRANDING_STORAGE_KEY);
+  if (!raw?.trim()) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<ActiveIgrejaBranding>;
+    const id = typeof parsed.id === 'string' ? parsed.id.trim() : '';
+    if (!id) {
+      return null;
+    }
+    return {
+      id,
+      code: typeof parsed.code === 'string' ? parsed.code.trim() : '',
+      name: typeof parsed.name === 'string' ? parsed.name.trim() : '',
+      logo_url: typeof parsed.logo_url === 'string' && parsed.logo_url.trim() ? parsed.logo_url.trim() : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Branding da instância ativa (storage + refresh via list_session_igrejas). */
+export async function resolveActiveIgrejaBranding(): Promise<ActiveIgrejaBranding | null> {
+  const stored = await getStoredActiveIgrejaBranding();
+  const tenantId = (await getStoredTenantId()) || stored?.id || null;
+
+  try {
+    const churches = await listSessionIgrejas();
+    const match =
+      (tenantId ? churches.find((church) => church.id === tenantId) : null)
+      ?? churches.find((church) => church.is_primary)
+      ?? churches[0]
+      ?? null;
+
+    if (match) {
+      await persistActiveIgrejaBranding(match);
+      return {
+        id: match.id,
+        code: match.code,
+        name: match.name,
+        logo_url: match.logo_url,
+      };
+    }
+  } catch {
+    // Mantém o cache local se a rede/RPC falhar.
+  }
+
+  return stored;
+}
+
 export async function clearTenantId() {
-  await AsyncStorage.removeItem(USER_TENANT_ID_STORAGE_KEY);
+  await AsyncStorage.multiRemove([USER_TENANT_ID_STORAGE_KEY, USER_TENANT_BRANDING_STORAGE_KEY]);
 }
 
 export async function listSessionIgrejas(): Promise<SessionIgreja[]> {
@@ -40,17 +128,7 @@ export async function listSessionIgrejas(): Promise<SessionIgreja[]> {
     return [];
   }
   return data
-    .map((row) => {
-      const id = typeof row?.id === 'string' ? row.id.trim() : '';
-      if (!id) return null;
-      return {
-        id,
-        code: String(row?.code ?? '').trim(),
-        name: String(row?.name ?? '').trim(),
-        is_primary: Boolean(row?.is_primary),
-        is_linked: Boolean(row?.is_linked),
-      } satisfies SessionIgreja;
-    })
+    .map((row) => mapSessionIgreja(row as Record<string, unknown>))
     .filter((row): row is SessionIgreja => row != null);
 }
 
@@ -77,6 +155,15 @@ export async function activateSessionTenant(tenantId: string): Promise<{ success
   const success = data?.success === true;
   if (success) {
     await persistTenantId(id);
+    try {
+      const churches = await listSessionIgrejas();
+      const church = churches.find((row) => row.id === id);
+      if (church) {
+        await persistActiveIgrejaBranding(church);
+      }
+    } catch {
+      // tenant id já persistido; branding pode ser resolvido depois
+    }
     clearEntityPrefixCache();
     clearAppParameterCache();
   }
