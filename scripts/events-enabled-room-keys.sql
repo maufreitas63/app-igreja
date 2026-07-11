@@ -61,11 +61,17 @@ as $$
 declare
   v_keys text[] := '{}'::text[];
 begin
-  select coalesce(array_agg(distinct upper(trim(k)) order by 1), '{}'::text[])
+  select coalesce(
+           array_agg(v_key order by v_key),
+           '{}'::text[]
+         )
     into v_keys
-    from unnest(coalesce(new.enabled_room_keys, '{}'::text[])) as k
-   where trim(coalesce(k, '')) <> ''
-     and upper(trim(k)) ~ '^[A-Z0-9_]{2,40}$';
+    from (
+      select distinct upper(trim(k)) as v_key
+        from unnest(coalesce(new.enabled_room_keys, '{}'::text[])) as k
+       where trim(coalesce(k, '')) <> ''
+         and upper(trim(k)) ~ '^[A-Z0-9_]{2,40}$'
+    ) normalized;
 
   -- Legado: se o array veio vazio, monta a partir dos booleans
   if coalesce(cardinality(v_keys), 0) = 0 then
