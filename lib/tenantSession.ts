@@ -67,19 +67,58 @@ export async function getStoredTenantId(): Promise<string | null> {
   return raw || null;
 }
 
-export async function persistTenantId(tenantId: string | null | undefined) {
-  const id = tenantId?.trim();
+type ActiveTenantListener = (tenantId: string | null) => void;
+const activeTenantListeners = new Set<ActiveTenantListener>();
+
+/** Notifica consumidores (ex.: EntityPrefixProvider) quando a instância ativa muda. */
+export function subscribeActiveTenantChange(listener: ActiveTenantListener): () => void {
+  activeTenantListeners.add(listener);
+  return () => {
+    activeTenantListeners.delete(listener);
+  };
+}
+
+function notifyActiveTenantChange(tenantId: string | null) {
+  for (const listener of activeTenantListeners) {
+    try {
+      listener(tenantId);
+    } catch (error) {
+      console.error('Erro em listener de tenant ativo:', error);
+    }
+  }
+}
+
+function invalidateTenantScopedCaches() {
+  clearEntityPrefixCache();
+  clearAppParameterCache();
+}
+
+export async function persistTenantId(
+  tenantId: string | null | undefined,
+  options?: { notify?: boolean }
+) {
+  const id = tenantId?.trim() || null;
+  const previous = await getStoredTenantId();
+  const shouldNotify = options?.notify !== false;
+
   if (id) {
     await AsyncStorage.setItem(USER_TENANT_ID_STORAGE_KEY, id);
-    return;
+  } else {
+    await AsyncStorage.removeItem(USER_TENANT_ID_STORAGE_KEY);
   }
-  await AsyncStorage.removeItem(USER_TENANT_ID_STORAGE_KEY);
+
+  if (previous !== id) {
+    invalidateTenantScopedCaches();
+    if (shouldNotify) {
+      notifyActiveTenantChange(id);
+    }
+  }
 }
 
 export async function persistActiveIgrejaBranding(
   church: Pick<SessionIgreja, 'id' | 'code' | 'name' | 'logo_url'>
 ) {
-  await persistTenantId(church.id);
+  await persistTenantId(church.id, { notify: false });
   const payload: ActiveIgrejaBranding = {
     id: church.id,
     code: church.code,
@@ -87,6 +126,9 @@ export async function persistActiveIgrejaBranding(
     logo_url: church.logo_url?.trim() || null,
   };
   await AsyncStorage.setItem(USER_TENANT_BRANDING_STORAGE_KEY, JSON.stringify(payload));
+
+  // Sempre após gravar o branding — selos/logo leem o código da instância ativa.
+  notifyActiveTenantChange(church.id.trim());
 }
 
 export async function getStoredActiveIgrejaBranding(): Promise<ActiveIgrejaBranding | null> {
@@ -142,7 +184,12 @@ export async function resolveActiveIgrejaBranding(): Promise<ActiveIgrejaBrandin
 }
 
 export async function clearTenantId() {
+  const previous = await getStoredTenantId();
   await AsyncStorage.multiRemove([USER_TENANT_ID_STORAGE_KEY, USER_TENANT_BRANDING_STORAGE_KEY]);
+  if (previous) {
+    invalidateTenantScopedCaches();
+    notifyActiveTenantChange(null);
+  }
 }
 
 function coerceSessionIgrejaRows(data: unknown): SessionIgreja[] {
@@ -232,18 +279,18 @@ export async function activateSessionTenant(tenantId: string): Promise<{ success
 
   const success = data?.success === true;
   if (success) {
-    await persistTenantId(id);
     try {
+      await persistTenantId(id, { notify: false });
       const churches = await listSessionIgrejas();
       const church = churches.find((row) => row.id === id);
       if (church) {
         await persistActiveIgrejaBranding(church);
+      } else {
+        notifyActiveTenantChange(id);
       }
     } catch {
-      // tenant id já persistido; branding pode ser resolvido depois
+      await persistTenantId(id);
     }
-    clearEntityPrefixCache();
-    clearAppParameterCache();
   }
 
   return {

@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isAppParameterNo } from '@/lib/checkInVisibility';
 import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import { supabase } from '@/lib/supabase';
@@ -9,6 +10,9 @@ export const LGPD_ATIVO_PARAMETER = 'LGPD_Ativo';
 export const SALVAR_APP_PARAMETER_ADMIN_SQL_HINT =
   'Execute no Supabase: scripts/salvar-app-parameter-admin.sql';
 
+/** Espelha `USER_TENANT_ID_STORAGE_KEY` sem importar tenantSession (evita ciclo). */
+const TENANT_ID_STORAGE_KEY = 'user_tenant_id';
+
 const PARAMETER_CACHE_TTL_MS = 5 * 60 * 1000;
 
 type CacheEntry = {
@@ -19,6 +23,15 @@ type CacheEntry = {
 const parameterCache = new Map<string, CacheEntry>();
 const inflightRequests = new Map<string, Promise<string | null>>();
 
+function buildParameterCacheKey(parameter: string, tenantId: string | null) {
+  return `${tenantId ?? 'none'}::${parameter}`;
+}
+
+async function readStoredTenantId(): Promise<string | null> {
+  const raw = (await AsyncStorage.getItem(TENANT_ID_STORAGE_KEY))?.trim();
+  return raw || null;
+}
+
 async function fetchAppParameterValue(parameter: string): Promise<string | null> {
   const { data: rpcData, error: rpcError } = await supabase.rpc('get_app_parameter_value', {
     p_parameter: parameter,
@@ -28,10 +41,14 @@ async function fetchAppParameterValue(parameter: string): Promise<string | null>
     return typeof rpcData === 'string' && rpcData.trim() ? rpcData : null;
   }
 
-  const { data: rows, error } = await supabase
-    .from('app_parameters')
-    .select('parameter, value')
-    .ilike('parameter', parameter);
+  const tenantId = await readStoredTenantId();
+  let query = supabase.from('app_parameters').select('parameter, value').ilike('parameter', parameter);
+
+  if (tenantId) {
+    query = query.eq('tenant_id', tenantId);
+  }
+
+  const { data: rows, error } = await query;
 
   if (error) {
     throw error;
@@ -50,9 +67,17 @@ export function clearAppParameterCache(parameter?: string) {
     return;
   }
 
-  const key = parameter.trim();
-  parameterCache.delete(key);
-  inflightRequests.delete(key);
+  const needle = `::${parameter.trim()}`;
+  for (const key of [...parameterCache.keys()]) {
+    if (key.endsWith(needle) || key === parameter.trim()) {
+      parameterCache.delete(key);
+    }
+  }
+  for (const key of [...inflightRequests.keys()]) {
+    if (key.endsWith(needle) || key === parameter.trim()) {
+      inflightRequests.delete(key);
+    }
+  }
 }
 
 export async function getAppParameterValue(parameter: string) {
@@ -62,29 +87,32 @@ export async function getAppParameterValue(parameter: string) {
     return null;
   }
 
-  const cached = parameterCache.get(normalizedParameter);
+  const tenantId = await readStoredTenantId();
+  const cacheKey = buildParameterCacheKey(normalizedParameter, tenantId);
+
+  const cached = parameterCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
     return cached.value;
   }
 
-  const inflight = inflightRequests.get(normalizedParameter);
+  const inflight = inflightRequests.get(cacheKey);
   if (inflight) {
     return inflight;
   }
 
   const request = fetchAppParameterValue(normalizedParameter)
     .then((value) => {
-      parameterCache.set(normalizedParameter, {
+      parameterCache.set(cacheKey, {
         value,
         expiresAt: Date.now() + PARAMETER_CACHE_TTL_MS,
       });
       return value;
     })
     .finally(() => {
-      inflightRequests.delete(normalizedParameter);
+      inflightRequests.delete(cacheKey);
     });
 
-  inflightRequests.set(normalizedParameter, request);
+  inflightRequests.set(cacheKey, request);
   return request;
 }
 

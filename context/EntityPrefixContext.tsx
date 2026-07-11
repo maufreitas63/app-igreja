@@ -5,6 +5,7 @@ import {
   getEntityPrefix,
 } from '@/lib/entityPrefix';
 import { buildRoomDisplayLabels } from '@/lib/roomDisplayLabels';
+import { subscribeActiveTenantChange } from '@/lib/tenantSession';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 export type EntityPrefixContextValue = {
@@ -29,14 +30,22 @@ export function EntityPrefixProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     let active = true;
 
-    void getEntityPrefix().then((loadedPrefix) => {
-      if (active) {
-        setPrefix(loadedPrefix);
-      }
+    const load = () => {
+      void getEntityPrefix().then((loadedPrefix) => {
+        if (active) {
+          setPrefix(loadedPrefix);
+        }
+      });
+    };
+
+    load();
+    const unsubscribe = subscribeActiveTenantChange(() => {
+      load();
     });
 
     return () => {
       active = false;
+      unsubscribe();
     };
   }, []);
 

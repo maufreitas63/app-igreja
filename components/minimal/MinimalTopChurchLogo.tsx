@@ -7,6 +7,7 @@ import { resolveTenantChromeLogo } from '@/lib/tenantBranding';
 import {
   getStoredActiveIgrejaBranding,
   resolveActiveIgrejaBranding,
+  subscribeActiveTenantChange,
 } from '@/lib/tenantSession';
 import { Image, type ImageSource } from 'expo-image';
 import React, { useEffect, useState } from 'react';
@@ -17,6 +18,13 @@ export function MinimalTopChurchLogo() {
   const [logoSource, setLogoSource] = useState<ImageSource | null>(null);
   const [logoLabel, setLogoLabel] = useState('Logo da igreja');
   const [logoText, setLogoText] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  useEffect(() => {
+    return subscribeActiveTenantChange(() => {
+      setReloadToken((value) => value + 1);
+    });
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -54,7 +62,7 @@ export function MinimalTopChurchLogo() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadToken]);
 
   return (
     <View style={styles.slot} pointerEvents="none">
