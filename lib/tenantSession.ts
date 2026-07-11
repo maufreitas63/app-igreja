@@ -33,17 +33,22 @@ export type ActiveIgrejaBranding = {
 function mapSessionIgreja(row: Record<string, unknown> | null | undefined): SessionIgreja | null {
   const id = row?.id == null ? '' : String(row.id).trim();
   if (!id) return null;
-  const logoRaw = typeof row?.logo_url === 'string' ? row.logo_url.trim() : '';
-  const webRaw = typeof row?.website_url === 'string' ? row.website_url.trim() : '';
-  const igRaw = typeof row?.instagram_url === 'string' ? row.instagram_url.trim() : '';
-  const ytRaw = typeof row?.youtube_url === 'string' ? row.youtube_url.trim() : '';
-  const cnpjRaw = typeof row?.cnpj === 'string' ? row.cnpj.trim() : '';
-  const pixInstRaw = typeof row?.pix_institution === 'string' ? row.pix_institution.trim() : '';
-  const pixKeyRaw = typeof row?.pix_key === 'string' ? row.pix_key.trim() : '';
+  const asText = (value: unknown) => {
+    if (value == null) return '';
+    const text = String(value).trim();
+    return text;
+  };
+  const logoRaw = asText(row?.logo_url);
+  const webRaw = asText(row?.website_url);
+  const igRaw = asText(row?.instagram_url);
+  const ytRaw = asText(row?.youtube_url);
+  const cnpjRaw = asText(row?.cnpj);
+  const pixInstRaw = asText(row?.pix_institution);
+  const pixKeyRaw = asText(row?.pix_key);
   return {
     id,
-    code: String(row?.code ?? '').trim(),
-    name: String(row?.name ?? '').trim(),
+    code: asText(row?.code),
+    name: asText(row?.name),
     logo_url: logoRaw || null,
     website_url: webRaw || null,
     instagram_url: igRaw || null,

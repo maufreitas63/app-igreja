@@ -1,3 +1,5 @@
+import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+import { supabase } from '@/lib/supabase';
 import {
   getStoredTenantId,
   listSessionIgrejas,
@@ -16,12 +18,63 @@ export type OfferingsRecipientBundle = {
   churchName: string;
 };
 
-function buildRows(church: Pick<SessionIgreja, 'name' | 'cnpj' | 'pix_institution'>): OfferingsRecipientRow[] {
+function textOrNull(value: unknown): string | null {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text || null;
+}
+
+function buildRows(church: {
+  name?: string | null;
+  cnpj?: string | null;
+  pix_institution?: string | null;
+}): OfferingsRecipientRow[] {
   return [
-    { label: 'Para', value: church.name.trim() || '—' },
-    { label: 'CNPJ', value: church.cnpj?.trim() || '—' },
-    { label: 'Instituição', value: church.pix_institution?.trim() || '—' },
+    { label: 'Para', value: textOrNull(church.name) || '—' },
+    { label: 'CNPJ', value: textOrNull(church.cnpj) || '—' },
+    { label: 'Instituição', value: textOrNull(church.pix_institution) || '—' },
   ];
+}
+
+function bundleFromChurch(church: {
+  name?: string | null;
+  cnpj?: string | null;
+  pix_institution?: string | null;
+  pix_key?: string | null;
+}): OfferingsRecipientBundle {
+  return {
+    recipientRows: buildRows(church),
+    pixKey: textOrNull(church.pix_key),
+    churchName: textOrNull(church.name) || '',
+  };
+}
+
+async function loadOfferingsFromDedicatedRpc(
+  tenantId: string | null
+): Promise<OfferingsRecipientBundle | null> {
+  const { data, error } = await supabase.rpc('get_session_offerings_recipient', {
+    p_tenant_id: tenantId,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'get_session_offerings_recipient')) {
+      return null;
+    }
+    console.warn('get_session_offerings_recipient:', error.message);
+    return null;
+  }
+
+  if (!data || typeof data !== 'object' || (data as { success?: boolean }).success !== true) {
+    return null;
+  }
+
+  const row = data as Record<string, unknown>;
+  return bundleFromChurch({
+    name: textOrNull(row.name),
+    cnpj: textOrNull(row.cnpj),
+    pix_institution: textOrNull(row.pix_institution),
+    pix_key: textOrNull(row.pix_key),
+  });
 }
 
 async function resolveActiveChurchForOfferings(): Promise<SessionIgreja | null> {
@@ -60,8 +113,19 @@ async function resolveActiveChurchForOfferings(): Promise<SessionIgreja | null> 
 
 /** Dados do recebedor + PIX da instância ativa. */
 export async function loadOfferingsRecipientBundle(): Promise<OfferingsRecipientBundle> {
-  const church = await resolveActiveChurchForOfferings();
+  const branding = await resolveActiveIgrejaBranding();
+  const tenantId = (await getStoredTenantId()) || branding?.id || null;
 
+  try {
+    const fromRpc = await loadOfferingsFromDedicatedRpc(tenantId);
+    if (fromRpc) {
+      return fromRpc;
+    }
+  } catch (error) {
+    console.warn('offerings dedicated rpc:', error);
+  }
+
+  const church = await resolveActiveChurchForOfferings();
   if (!church) {
     return {
       recipientRows: [
@@ -74,9 +138,5 @@ export async function loadOfferingsRecipientBundle(): Promise<OfferingsRecipient
     };
   }
 
-  return {
-    recipientRows: buildRows(church),
-    pixKey: church.pix_key?.trim() || null,
-    churchName: church.name.trim(),
-  };
+  return bundleFromChurch(church);
 }

@@ -187,6 +187,7 @@ Execute no SQL Editor **antes** de usar o seletor no app:
 14. `scripts/multi-tenant-22-igreja-block-delete.sql` — bloquear acesso e excluir instância (+ dados com `tenant_id`)
 15. `scripts/multi-tenant-23-list-admin-igrejas-fix.sql` — corrige `list_admin_igrejas` vazia (conflito de colunas OUT)
 16. `scripts/multi-tenant-24-list-igrejas-fix.sql` — **obrigatório se Instâncias falhar ao listar**: corrige `list_session_igrejas` + `list_admin_igrejas`
+17. `scripts/multi-tenant-25-session-offerings-recipient.sql` — **obrigatório se Dízimos/Ofertas não mostrar CNPJ/PIX** da `igrejas`
 
 Fluxo no app:
 
