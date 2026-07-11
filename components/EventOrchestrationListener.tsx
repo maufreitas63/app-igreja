@@ -201,17 +201,28 @@ export function EventOrchestrationListener() {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'event_control',
-          filter: 'id=eq.1',
         },
         (payload) => {
-          const record = (payload.new ?? {}) as Record<string, unknown>;
-          dispatchOrchestrationSignal(
-            String(record.active_route ?? '').trim(),
-            String(record.updated_at ?? '').trim()
-          );
+          void (async () => {
+            const record = (payload.new ?? {}) as Record<string, unknown>;
+            const rowTenant =
+              typeof record.tenant_id === 'string' ? record.tenant_id.trim() : '';
+            if (rowTenant) {
+              const { getStoredTenantId } = await import('@/lib/tenantSession');
+              const activeTenant = await getStoredTenantId();
+              if (activeTenant && rowTenant !== activeTenant) {
+                return;
+              }
+            }
+
+            dispatchOrchestrationSignal(
+              String(record.active_route ?? '').trim(),
+              String(record.updated_at ?? '').trim()
+            );
+          })();
         }
       )
       .subscribe((status) => {

@@ -8,12 +8,13 @@ import {
 } from '@/lib/eventOrchestrationRoutes';
 
 export const EVENT_ORCHESTRATION_SQL_HINT =
-  'Execute no Supabase: scripts/event-control-orchestration.sql, scripts/access-control-orquestrador-evento-role.sql e scripts/event-avisos-schema.sql';
+  'Execute no Supabase: scripts/event-control-per-tenant.sql (e, se ainda não rodou, event-control-orchestration.sql + access-control-orquestrador-evento-role.sql).';
 
 export type EventControlRow = {
   id: number;
   activeRoute: EventOrchestrationLeaderRouteCode;
   updatedAt: string;
+  tenantId?: string | null;
 };
 
 const parseEventControlRow = (record: Record<string, unknown> | null | undefined): EventControlRow | null => {
@@ -24,8 +25,13 @@ const parseEventControlRow = (record: Record<string, unknown> | null | undefined
   const id = Number(record.id);
   const activeRoute = String(record.active_route ?? record.activeRoute ?? '').trim().toLowerCase();
   const updatedAt = String(record.updated_at ?? record.updatedAt ?? '').trim();
+  const tenantId =
+    typeof record.tenant_id === 'string' && record.tenant_id.trim()
+      ? record.tenant_id.trim()
+      : null;
 
-  if (id !== EVENT_CONTROL_ID || !updatedAt) {
+  // id pode ser 1 em todos os tenants; o isolamento é por tenant_id / RLS.
+  if (!Number.isFinite(id) || !updatedAt) {
     return null;
   }
 
@@ -39,14 +45,16 @@ const parseEventControlRow = (record: Record<string, unknown> | null | undefined
     id,
     activeRoute: normalizedRoute,
     updatedAt,
+    tenantId,
   };
 };
 
 export async function fetchEventControlState(): Promise<EventControlRow | null> {
+  // Sem .eq('id', 1): com multi-tenant a linha é filtrada por RLS / x-tenant-id.
   const { data, error } = await supabase
     .from('event_control')
-    .select('id, active_route, updated_at')
-    .eq('id', EVENT_CONTROL_ID)
+    .select('id, active_route, updated_at, tenant_id')
+    .limit(1)
     .maybeSingle();
 
   if (error) {
@@ -54,6 +62,21 @@ export async function fetchEventControlState(): Promise<EventControlRow | null> 
 
     if (message.includes('event_control') && message.includes('does not exist')) {
       throw new Error(EVENT_ORCHESTRATION_SQL_HINT);
+    }
+
+    // Coluna tenant_id pode ainda não existir em ambientes sem o patch.
+    if (message.includes('tenant_id')) {
+      const fallback = await supabase
+        .from('event_control')
+        .select('id, active_route, updated_at')
+        .eq('id', EVENT_CONTROL_ID)
+        .maybeSingle();
+
+      if (fallback.error) {
+        throw fallback.error;
+      }
+
+      return parseEventControlRow(fallback.data as Record<string, unknown> | null);
     }
 
     throw error;
