@@ -166,9 +166,9 @@ const styles = StyleSheet.create({
     color: 'rgba(148, 163, 184, 0.95)',
     fontSize: 13,
     fontWeight: '700',
-    flexShrink: 1,
-    maxWidth: '42%',
-    textAlign: 'right',
+    width: 96,
+    flexShrink: 0,
+    textAlign: 'left',
   },
   roomLabelMinimal: {
     color: MINIMAL_UI.textMuted,
