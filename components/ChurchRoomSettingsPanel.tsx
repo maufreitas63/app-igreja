@@ -1,5 +1,7 @@
 import {
   clearChurchRoomSettingsCache,
+  createChurchRoomSetting,
+  deleteChurchRoomSetting,
   type ChurchRoomKey,
   type ChurchRoomSetting,
   upsertChurchRoomSetting,
@@ -29,7 +31,7 @@ type Props = {
 
 /**
  * Painel de gestão de salas (stateless quanto à navegação).
- * Recebe salas da instância ativa e permite editar nomes + atribuir membros.
+ * Edita nomes, cria salas customizadas e atribui membros.
  */
 export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
   const enabledRooms = useMemo(
@@ -39,6 +41,9 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
 
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<ChurchRoomKey | null>(null);
+  const [newRoomName, setNewRoomName] = useState('');
+  const [creating, setCreating] = useState(false);
+  const [deletingKey, setDeletingKey] = useState<ChurchRoomKey | null>(null);
   const [search, setSearch] = useState('');
   const [profiles, setProfiles] = useState<RoomAssignmentProfile[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
@@ -97,6 +102,60 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
     }
   };
 
+  const handleCreateRoom = async () => {
+    const label = newRoomName.trim();
+    if (label.length < 2) {
+      Toast.show({
+        type: 'error',
+        text1: 'Nova sala',
+        text2: 'Informe um nome (ex.: Homens, Mulheres, Discipulado).',
+      });
+      return;
+    }
+    setCreating(true);
+    try {
+      const result = await createChurchRoomSetting(label);
+      Toast.show({
+        type: result.success ? 'success' : 'error',
+        text1: 'Nova sala',
+        text2: result.message,
+      });
+      if (result.success) {
+        setNewRoomName('');
+        onRoomsChanged?.();
+        await loadProfiles(search);
+      }
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteRoom = async (room: ChurchRoomSetting) => {
+    if (room.is_system) {
+      Toast.show({
+        type: 'error',
+        text1: 'Sala de sistema',
+        text2: 'KIDS e TEENS não podem ser excluídas.',
+      });
+      return;
+    }
+    setDeletingKey(room.room_key);
+    try {
+      const result = await deleteChurchRoomSetting(room.room_key);
+      Toast.show({
+        type: result.success ? 'success' : 'error',
+        text1: 'Excluir sala',
+        text2: result.message,
+      });
+      if (result.success) {
+        onRoomsChanged?.();
+        await loadProfiles(search);
+      }
+    } finally {
+      setDeletingKey(null);
+    }
+  };
+
   const handleAssign = async (profileId: string, roomKey: ChurchRoomKey | null) => {
     setBusyProfileId(profileId);
     try {
@@ -118,15 +177,18 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
 
   return (
     <View style={styles.root}>
-      <Text style={styles.sectionTitle}>Nomes afetivos das salas</Text>
+      <Text style={styles.sectionTitle}>Salas da instância</Text>
       <Text style={styles.hint}>
-        Cada instância define seus próprios nomes. Os códigos internos (KIDS/TEENS) permanecem
-        estáveis para eventos e check-in.
+        Cada `room_key` é único. KIDS/TEENS são de sistema (eventos). Crie salas extras como Homens,
+        Mulheres, Discipulado ou Novos membros.
       </Text>
 
       {enabledRooms.map((room) => (
         <View key={room.room_key} style={styles.roomBlock}>
-          <Text style={styles.roomKey}>{room.room_key}</Text>
+          <Text style={styles.roomKey}>
+            {room.room_key}
+            {room.is_system ? ' · sistema' : ''}
+          </Text>
           <TextInput
             style={styles.input}
             value={drafts[room.room_key] ?? ''}
@@ -136,24 +198,64 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
                 [room.room_key]: text,
               }))
             }
-            placeholder={room.room_key === 'KIDS' ? 'Ex.: Turma do Rei' : 'Ex.: Geração Eleita'}
+            placeholder="Nome afetivo da sala"
             placeholderTextColor={MINIMAL_UI.textMuted}
           />
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => void handleSaveRoom(room.room_key)}
-            disabled={savingKey === room.room_key}
-            accessibilityRole="button"
-            accessibilityLabel={`Salvar nome da sala ${room.room_key}`}
-          >
-            {savingKey === room.room_key ? (
-              <ActivityIndicator color={MINIMAL_UI.onDark} />
-            ) : (
-              <Text style={styles.primaryButtonText}>Salvar nome</Text>
-            )}
-          </TouchableOpacity>
+          <View style={styles.roomActions}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => void handleSaveRoom(room.room_key)}
+              disabled={savingKey === room.room_key}
+              accessibilityRole="button"
+              accessibilityLabel={`Salvar nome da sala ${room.room_key}`}
+            >
+              {savingKey === room.room_key ? (
+                <ActivityIndicator color={MINIMAL_UI.onDark} />
+              ) : (
+                <Text style={styles.primaryButtonText}>Salvar</Text>
+              )}
+            </TouchableOpacity>
+            {!room.is_system ? (
+              <TouchableOpacity
+                style={styles.dangerButton}
+                onPress={() => void handleDeleteRoom(room)}
+                disabled={deletingKey === room.room_key}
+                accessibilityRole="button"
+                accessibilityLabel={`Excluir sala ${room.display_label}`}
+              >
+                {deletingKey === room.room_key ? (
+                  <ActivityIndicator color={MINIMAL_UI.accent} />
+                ) : (
+                  <Text style={styles.dangerButtonText}>Excluir</Text>
+                )}
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </View>
       ))}
+
+      <Text style={[styles.sectionTitle, styles.sectionSpaced]}>Criar nova sala</Text>
+      <TextInput
+        style={styles.input}
+        value={newRoomName}
+        onChangeText={setNewRoomName}
+        placeholder="Ex.: Homens, Mulheres, Discipulado, Novos membros"
+        placeholderTextColor={MINIMAL_UI.textMuted}
+        onSubmitEditing={() => void handleCreateRoom()}
+      />
+      <TouchableOpacity
+        style={styles.primaryButton}
+        onPress={() => void handleCreateRoom()}
+        disabled={creating}
+        accessibilityRole="button"
+        accessibilityLabel="Criar nova sala"
+      >
+        {creating ? (
+          <ActivityIndicator color={MINIMAL_UI.onDark} />
+        ) : (
+          <Text style={styles.primaryButtonText}>Criar sala</Text>
+        )}
+      </TouchableOpacity>
 
       <Text style={[styles.sectionTitle, styles.sectionSpaced]}>Atribuir membros às salas</Text>
       <Text style={styles.hint}>Opcional e editável a qualquer momento pelo Líder ou Administrador.</Text>
@@ -263,19 +365,34 @@ const styles = StyleSheet.create({
     fontSize: 15,
     paddingVertical: 10,
   },
+  roomActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    alignItems: 'center',
+  },
   primaryButton: {
     alignSelf: 'flex-start',
     backgroundColor: MINIMAL_UI.accent,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
-    minWidth: 120,
+    minWidth: 100,
     alignItems: 'center',
   },
   primaryButtonText: {
     color: MINIMAL_UI.onDark,
     fontWeight: '700',
     fontSize: 14,
+  },
+  dangerButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  dangerButtonText: {
+    color: '#B91C1C',
+    fontWeight: '700',
+    fontSize: 13,
   },
   secondaryButton: {
     alignSelf: 'flex-start',

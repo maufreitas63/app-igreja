@@ -4,9 +4,10 @@ import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { subscribeActiveTenantChange } from '@/lib/tenantSession';
 
 export const CHURCH_ROOM_SETTINGS_SQL_HINT =
-  'Execute no Supabase: scripts/church-room-settings.sql';
+  'Execute no Supabase: scripts/church-room-settings-custom-rooms.sql';
 
-export type ChurchRoomKey = 'KIDS' | 'TEENS';
+/** KIDS/TEENS (sistema) ou chave custom (HOMENS, DISCIPULADO, …). */
+export type ChurchRoomKey = string;
 
 export type ChurchRoomSetting = {
   id: string;
@@ -16,8 +17,11 @@ export type ChurchRoomSetting = {
   badge_label: string | null;
   color_hex: string | null;
   is_enabled: boolean;
+  is_system: boolean;
   sort_order: number;
 };
+
+export const SYSTEM_ROOM_KEYS = ['KIDS', 'TEENS'] as const;
 
 export const DEFAULT_CHURCH_ROOM_SETTINGS: ChurchRoomSetting[] = [
   {
@@ -28,6 +32,7 @@ export const DEFAULT_CHURCH_ROOM_SETTINGS: ChurchRoomSetting[] = [
     badge_label: null,
     color_hex: null,
     is_enabled: true,
+    is_system: true,
     sort_order: 10,
   },
   {
@@ -38,6 +43,7 @@ export const DEFAULT_CHURCH_ROOM_SETTINGS: ChurchRoomSetting[] = [
     badge_label: null,
     color_hex: null,
     is_enabled: true,
+    is_system: true,
     sort_order: 20,
   },
 ];
@@ -61,7 +67,7 @@ function mapRoomSetting(row: Record<string, unknown> | null | undefined): Church
   const roomKey = String(row?.room_key ?? '')
     .trim()
     .toUpperCase();
-  if (roomKey !== 'KIDS' && roomKey !== 'TEENS') {
+  if (!/^[A-Z0-9_]{2,40}$/.test(roomKey)) {
     return null;
   }
 
@@ -69,6 +75,10 @@ function mapRoomSetting(row: Record<string, unknown> | null | undefined): Church
   if (!displayLabel) {
     return null;
   }
+
+  const isSystem =
+    row?.is_system === true
+    || SYSTEM_ROOM_KEYS.includes(roomKey as (typeof SYSTEM_ROOM_KEYS)[number]);
 
   return {
     id: String(row?.id ?? `${roomKey}`),
@@ -82,6 +92,7 @@ function mapRoomSetting(row: Record<string, unknown> | null | undefined): Church
     color_hex:
       typeof row?.color_hex === 'string' && row.color_hex.trim() ? row.color_hex.trim() : null,
     is_enabled: row?.is_enabled === false ? false : true,
+    is_system: isSystem,
     sort_order: Number.isFinite(Number(row?.sort_order)) ? Number(row?.sort_order) : 0,
   };
 }
@@ -105,17 +116,26 @@ function parseListPayload(data: unknown): ChurchRoomSetting[] {
 
   const mapped = rows
     .map((row) => mapRoomSetting(row as Record<string, unknown>))
-    .filter((row): row is ChurchRoomSetting => row != null)
-    .sort((a, b) => a.sort_order - b.sort_order || a.room_key.localeCompare(b.room_key));
+    .filter((row): row is ChurchRoomSetting => row != null);
 
-  if (!mapped.some((row) => row.room_key === 'KIDS')) {
-    mapped.push(DEFAULT_CHURCH_ROOM_SETTINGS[0]);
-  }
-  if (!mapped.some((row) => row.room_key === 'TEENS')) {
-    mapped.push(DEFAULT_CHURCH_ROOM_SETTINGS[1]);
+  // Dedup client-side by room_key (defesa extra)
+  const byKey = new Map<string, ChurchRoomSetting>();
+  for (const row of mapped) {
+    if (!byKey.has(row.room_key)) {
+      byKey.set(row.room_key, row);
+    }
   }
 
-  return mapped.sort((a, b) => a.sort_order - b.sort_order || a.room_key.localeCompare(b.room_key));
+  const unique = [...byKey.values()];
+
+  if (!unique.some((row) => row.room_key === 'KIDS')) {
+    unique.push(DEFAULT_CHURCH_ROOM_SETTINGS[0]);
+  }
+  if (!unique.some((row) => row.room_key === 'TEENS')) {
+    unique.push(DEFAULT_CHURCH_ROOM_SETTINGS[1]);
+  }
+
+  return unique.sort((a, b) => a.sort_order - b.sort_order || a.room_key.localeCompare(b.room_key));
 }
 
 export function clearChurchRoomSettingsCache() {
@@ -129,7 +149,8 @@ export function getRoomLabelFromSettings(
   roomKey: ChurchRoomKey | null | undefined
 ): string | null {
   if (!roomKey) return null;
-  const match = settings.find((row) => row.room_key === roomKey && row.is_enabled);
+  const key = roomKey.trim().toUpperCase();
+  const match = settings.find((row) => row.room_key === key && row.is_enabled);
   return match?.display_label?.trim() || null;
 }
 
@@ -205,5 +226,64 @@ export async function upsertChurchRoomSetting(input: {
           ? 'Sala atualizada.'
           : 'Não foi possível salvar.',
     row: mapRoomSetting(payload.row as Record<string, unknown>) ?? undefined,
+  };
+}
+
+export async function createChurchRoomSetting(
+  displayLabel: string
+): Promise<{ success: boolean; message: string; row?: ChurchRoomSetting }> {
+  const { data, error } = await supabase.rpc('create_church_room_setting', {
+    p_display_label: displayLabel,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'create_church_room_setting')) {
+      return { success: false, message: CHURCH_ROOM_SETTINGS_SQL_HINT };
+    }
+    return { success: false, message: error.message || 'Falha ao criar sala.' };
+  }
+
+  const payload =
+    typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : {};
+  clearChurchRoomSettingsCache();
+
+  return {
+    success: payload.success === true,
+    message:
+      typeof payload.message === 'string' && payload.message.trim()
+        ? payload.message
+        : payload.success === true
+          ? 'Sala criada.'
+          : 'Não foi possível criar.',
+    row: mapRoomSetting(payload.row as Record<string, unknown>) ?? undefined,
+  };
+}
+
+export async function deleteChurchRoomSetting(
+  roomKey: ChurchRoomKey
+): Promise<{ success: boolean; message: string }> {
+  const { data, error } = await supabase.rpc('delete_church_room_setting', {
+    p_room_key: roomKey,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'delete_church_room_setting')) {
+      return { success: false, message: CHURCH_ROOM_SETTINGS_SQL_HINT };
+    }
+    return { success: false, message: error.message || 'Falha ao excluir sala.' };
+  }
+
+  const payload =
+    typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : {};
+  clearChurchRoomSettingsCache();
+
+  return {
+    success: payload.success === true,
+    message:
+      typeof payload.message === 'string' && payload.message.trim()
+        ? payload.message
+        : payload.success === true
+          ? 'Sala removida.'
+          : 'Não foi possível excluir.',
   };
 }

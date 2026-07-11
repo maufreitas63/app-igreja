@@ -45,8 +45,7 @@ function mapAssignmentProfile(row: Record<string, unknown>): RoomAssignmentProfi
   const roomKeyRaw = String(row.room_key ?? '')
     .trim()
     .toUpperCase();
-  const roomKey =
-    roomKeyRaw === 'KIDS' || roomKeyRaw === 'TEENS' ? (roomKeyRaw as ChurchRoomKey) : null;
+  const roomKey = /^[A-Z0-9_]{2,40}$/.test(roomKeyRaw) ? roomKeyRaw : null;
 
   return {
     profile_id: profileId,
@@ -63,7 +62,7 @@ function mapAudienceLabel(row: Record<string, unknown>): AudienceRoomLabel | nul
   const roomKeyRaw = String(row.room_key ?? '')
     .trim()
     .toUpperCase();
-  if (!profileId || (roomKeyRaw !== 'KIDS' && roomKeyRaw !== 'TEENS')) {
+  if (!profileId || !/^[A-Z0-9_]{2,40}$/.test(roomKeyRaw)) {
     return null;
   }
   const roomLabel = String(row.room_label ?? '').trim();

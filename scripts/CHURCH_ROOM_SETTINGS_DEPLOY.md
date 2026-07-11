@@ -1,59 +1,31 @@
 # Configuração de salas (multi-tenant)
 
-## Deploy (Supabase)
+## Deploy (Supabase) — ordem
 
-1. Abra o SQL Editor do projeto Supabase.
-2. Execute o script completo:
+1. Se ainda não rodou o schema inicial:
+   `scripts/church-room-settings.sql`
+2. **Obrigatório agora** (dedupe + salas customizadas):
+   `scripts/church-room-settings-custom-rooms.sql`
 
-```text
-scripts/church-room-settings.sql
+Resultado esperado do passo 2:
+
+```json
+{ "status": "custom rooms + dedupe ok", "room_rows": 4, "duplicate_room_keys": 0 }
 ```
 
-3. Confirme no final do script:
-   - `church_room_settings + user_room_assignment prontos.`
-   - `room_rows` ≥ 2 × número de igrejas
+3. Hard refresh no app.
 
-4. Hard refresh no app (Cloudflare Success).
+## O que mudou
 
-## Fluxo de teste (IBEP)
+- `room_key` único por instância (normalizado em MAIÚSCULAS; duplicatas removidas)
+- Nome afetivo (`display_label`) único por instância
+- Criar salas extras: Homens, Mulheres, Discipulado, Novos membros, etc.
+- KIDS / TEENS continuam de sistema (eventos/check-in) e **não** podem ser excluídas
 
-1. Entre na instância **IBEP** (Instâncias → Usar IBEP).
-2. Menu → engrenagem → **Configuração de salas**  
-   (requer papel `lider`, `lider_geral`, `events_admin` ou `super_admin`).
-3. Em **KIDS**, altere o nome para `Turma do Rei` → Salvar nome.  
-   Em **TEENS**, altere para `Geração Eleita` → Salvar nome.
-4. Em **Atribuir membros**, busque um membro e toque no chip da sala.
-5. Abra a **Programação / Agenda da Família** com evento que tenha salas.  
-   O participante deve aparecer como:
+## Fluxo IBEP
 
-```text
-Nome do Participante - [Turma do Rei]
-```
-
-6. Os selos do evento devem mostrar `IBEP Turma do Rei` / `IBEP Geração Eleita` (prefixo da instância + nome afetivo).
-
-## Isolamento
-
-- `church_room_settings` e `user_room_assignment` são filtrados por `tenant_id` da sessão.
-- Trocar para IBN não exibe nomes/atribuições da IBEP.
-- Códigos internos `KIDS` / `TEENS` (flags de evento e `kids_status`) **não mudam**.
-
-## SQL de checagem rápida (IBEP)
-
-```sql
-select i.code, s.room_key, s.display_label, s.is_enabled
-  from church_room_settings s
-  join igrejas i on i.id = s.tenant_id
- where upper(i.code) = 'IBEP'
- order by s.sort_order;
-
-select p.full_name, a.room_key, s.display_label
-  from user_room_assignment a
-  join profiles p on p.id = a.profile_id
-  join igrejas i on i.id = a.tenant_id
-  left join church_room_settings s
-    on s.tenant_id = a.tenant_id and s.room_key = a.room_key
- where upper(i.code) = 'IBEP'
- order by p.full_name
- limit 20;
-```
+1. Ative IBEP
+2. Menu → engrenagem → **Configuração de salas**
+3. Em **Criar nova sala**, digite `Homens` → Criar sala
+4. Atribua um membro ao chip da nova sala
+5. Na Agenda: `Nome - [Homens]`
