@@ -45,18 +45,40 @@ export function AppDrawerSettings({
       icon: 'shield',
       onPress: onOpenMediaAuthorization,
     },
-    ...(showIgrejasInstances && onOpenIgrejasInstances
-      ? [
-          {
-            id: 'igrejas-instances',
-            label: 'Instâncias (Igrejas)',
-            hint: 'Criar e alternar ambientes de igreja',
-            icon: 'building' as const,
-            onPress: onOpenIgrejasInstances,
-          } satisfies SettingsItem,
-        ]
-      : []),
   ];
+
+  const igrejasItem: SettingsItem | null =
+    showIgrejasInstances && onOpenIgrejasInstances
+      ? {
+          id: 'igrejas-instances',
+          label: 'Instâncias (Igrejas)',
+          hint: 'Criar e alternar ambientes de igreja',
+          icon: 'building',
+          onPress: onOpenIgrejasInstances,
+        }
+      : null;
+
+  const renderItem = (item: SettingsItem, pinned = false) => (
+    <TouchableOpacity
+      key={item.id}
+      style={[styles.item, pinned && styles.itemPinned]}
+      onPress={() => {
+        traceClick('drawer-settings', 'item-press', { id: item.id, label: item.label });
+        item.onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={item.label}
+    >
+      <View style={styles.itemIconWrap}>
+        <FontAwesome name={item.icon} size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+      </View>
+      <View style={styles.itemCopy}>
+        <Text style={styles.itemLabel}>{item.label}</Text>
+        {item.hint ? <Text style={styles.itemHint}>{item.hint}</Text> : null}
+      </View>
+      <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.textMuted} />
+    </TouchableOpacity>
+  );
 
   return (
     <View style={[styles.panel, { paddingBottom: Math.max(insets.bottom, 12) }]}>
@@ -78,28 +100,12 @@ export function AppDrawerSettings({
         showsVerticalScrollIndicator
         keyboardShouldPersistTaps="handled"
       >
-        {items.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.item}
-            onPress={() => {
-              traceClick('drawer-settings', 'item-press', { id: item.id, label: item.label });
-              item.onPress();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={item.label}
-          >
-            <View style={styles.itemIconWrap}>
-              <FontAwesome name={item.icon} size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
-            </View>
-            <View style={styles.itemCopy}>
-              <Text style={styles.itemLabel}>{item.label}</Text>
-              {item.hint ? <Text style={styles.itemHint}>{item.hint}</Text> : null}
-            </View>
-            <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.textMuted} />
-          </TouchableOpacity>
-        ))}
+        {items.map((item) => renderItem(item))}
       </ScrollView>
+
+      {igrejasItem ? (
+        <View style={styles.pinnedFooter}>{renderItem(igrejasItem, true)}</View>
+      ) : null}
     </View>
   );
 }
@@ -113,6 +119,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     zIndex: 2,
+    flexDirection: 'column',
   },
   headerRow: {
     flexDirection: 'row',
@@ -130,10 +137,19 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+    minHeight: 0,
   },
   scrollContent: {
     paddingBottom: 8,
     gap: 4,
+    flexGrow: 1,
+  },
+  pinnedFooter: {
+    flexShrink: 0,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: MINIMAL_UI.divider,
+    paddingTop: 4,
+    backgroundColor: MINIMAL_UI.background,
   },
   item: {
     flexDirection: 'row',
@@ -143,6 +159,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: MINIMAL_UI.divider,
+  },
+  itemPinned: {
+    borderBottomWidth: 0,
   },
   itemIconWrap: {
     width: 28,
