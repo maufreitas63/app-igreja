@@ -2,6 +2,7 @@ import { WatermarkSurface } from '@/components/AppWatermark';
 import { AppActiveGate } from '@/components/AppActiveGate';
 import { DevClickTraceBootstrap } from '@/components/DevClickTraceBootstrap';
 import { EventOrchestrationListener } from '@/components/EventOrchestrationListener';
+import { LayoutInconsistencyWatcher } from '@/components/LayoutInconsistencyWatcher';
 import { TotemDeviceRouteGuard } from '@/components/TotemDeviceRouteGuard';
 import { AppDrawerProvider } from '@/context/AppDrawerContext';
 import { EntityPrefixProvider } from '@/context/EntityPrefixContext';
@@ -48,6 +49,7 @@ function AppShellContent() {
   const routed = (
     <AppActiveGate>
       <DevClickTraceBootstrap />
+      <LayoutInconsistencyWatcher />
       <TotemDeviceRouteGuard />
       <EventOrchestrationListener />
       <Slot />

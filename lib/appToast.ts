@@ -14,7 +14,7 @@ let globalErrorClipboardInstalled = false;
 
 /**
  * Intercepta Toast.show (type=error) e Alert.alert (títulos/mensagens de falha)
- * para copiar o erro automaticamente para a área de transferência.
+ * para copiar o erro automaticamente — apenas super administrador.
  */
 export function installExecutionErrorClipboard(): void {
   if (globalErrorClipboardInstalled) {
@@ -27,15 +27,18 @@ export function installExecutionErrorClipboard(): void {
     if (params?.type === 'error') {
       const title = typeof params.text1 === 'string' ? params.text1 : null;
       const message = typeof params.text2 === 'string' ? params.text2 : null;
-      void copyExecutionErrorToClipboard({
-        title,
-        message,
-        type: 'toast-error',
-      });
-      return originalToastShow({
-        ...params,
-        text2: withCopiedErrorHint(message),
-      });
+      void (async () => {
+        const copied = await copyExecutionErrorToClipboard({
+          title,
+          message,
+          type: 'toast-error',
+        });
+        originalToastShow({
+          ...params,
+          text2: copied ? withCopiedErrorHint(message) : message ?? undefined,
+        });
+      })();
+      return;
     }
     return originalToastShow(params);
   }) as typeof Toast.show;
@@ -47,14 +50,19 @@ export function installExecutionErrorClipboard(): void {
     buttons?: AlertButton[],
     options?: AlertOptions
   ) => {
-    if (looksLikeExecutionError(title, message)) {
-      void copyExecutionErrorToClipboard({
+    if (!looksLikeExecutionError(title, message)) {
+      return originalAlert(title, message, buttons, options);
+    }
+
+    void (async () => {
+      const copied = await copyExecutionErrorToClipboard({
         title,
         message,
         type: 'alert-error',
       });
-    }
-    return originalAlert(title, message, buttons, options);
+      const displayMessage = copied ? withCopiedErrorHint(message) : message;
+      originalAlert(title, displayMessage, buttons, options);
+    })();
   }) as typeof Alert.alert;
 }
 

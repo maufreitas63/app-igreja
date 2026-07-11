@@ -6,61 +6,52 @@ import {
 } from '@/lib/errorClipboard';
 import { Alert, Platform } from 'react-native';
 
-/** Alerta com um botão — na web usa o mesmo modal do ConfirmDialogHost. */
-export function appAlert(title: string, message: string, okLabel = 'OK') {
-  const shouldCopy = looksLikeExecutionError(title, message);
-  const displayMessage = shouldCopy ? withCopiedErrorHint(message) ?? message : message;
-
-  if (shouldCopy) {
-    void copyExecutionErrorToClipboard({
+async function presentAlert(title: string, message: string, okLabel: string) {
+  if (Platform.OS === 'web') {
+    await requestConfirmDialog({
       title,
       message,
-      type: 'app-alert-error',
-    });
-  }
-
-  if (Platform.OS === 'web') {
-    return requestConfirmDialog({
-      title,
-      message: displayMessage,
       confirmLabel: okLabel,
       cancelLabel: 'Cancelar',
       alertOnly: true,
-    }).then(() => undefined);
+    });
+    return;
   }
 
-  return new Promise<void>((resolve) => {
-    Alert.alert(title, displayMessage, [{ text: okLabel, onPress: () => resolve() }], {
+  await new Promise<void>((resolve) => {
+    Alert.alert(title, message, [{ text: okLabel, onPress: () => resolve() }], {
       cancelable: true,
       onDismiss: () => resolve(),
     });
   });
 }
 
-/** Alerta de erro de execução — sempre copia para a área de transferência. */
-export function appErrorAlert(title: string, message: string, okLabel = 'OK') {
-  void copyExecutionErrorToClipboard({
+/** Alerta com um botão — na web usa o mesmo modal do ConfirmDialogHost. */
+export async function appAlert(title: string, message: string, okLabel = 'OK') {
+  const shouldCopy = looksLikeExecutionError(title, message);
+  let displayMessage = message;
+
+  if (shouldCopy) {
+    const copied = await copyExecutionErrorToClipboard({
+      title,
+      message,
+      type: 'app-alert-error',
+    });
+    if (copied) {
+      displayMessage = withCopiedErrorHint(message) ?? message;
+    }
+  }
+
+  await presentAlert(title, displayMessage, okLabel);
+}
+
+/** Alerta de erro de execução — copia só para super administrador. */
+export async function appErrorAlert(title: string, message: string, okLabel = 'OK') {
+  const copied = await copyExecutionErrorToClipboard({
     title,
     message,
     type: 'app-error-alert',
   });
-
-  const displayMessage = withCopiedErrorHint(message) ?? message;
-
-  if (Platform.OS === 'web') {
-    return requestConfirmDialog({
-      title,
-      message: displayMessage,
-      confirmLabel: okLabel,
-      cancelLabel: 'Cancelar',
-      alertOnly: true,
-    }).then(() => undefined);
-  }
-
-  return new Promise<void>((resolve) => {
-    Alert.alert(title, displayMessage, [{ text: okLabel, onPress: () => resolve() }], {
-      cancelable: true,
-      onDismiss: () => resolve(),
-    });
-  });
+  const displayMessage = copied ? withCopiedErrorHint(message) ?? message : message;
+  await presentAlert(title, displayMessage, okLabel);
 }
