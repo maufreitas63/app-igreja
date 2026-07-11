@@ -66,6 +66,7 @@ const serializeEvents = (items: ActiveEventListItem[]) =>
       parm_ofertas: event.parm_ofertas,
       kids_room: event.kids_room,
       teens_room: event.teens_room,
+      enabled_room_keys: event.enabled_room_keys ?? null,
       totem_ativo: event.totem_ativo,
       somente_membros: event.somente_membros,
       geofence_ativo: event.geofence_ativo,

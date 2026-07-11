@@ -189,24 +189,26 @@ export async function resolveAudienceRoomLabels(
     .filter((row): row is AudienceRoomLabel => row != null);
 }
 
-/** Mapa telefone normalizado / nome → rótulo da sala. */
+/** Mapa telefone normalizado / nome → sala (chave + rótulo). */
 export function buildAudienceRoomLabelIndex(rows: AudienceRoomLabel[]) {
-  const byPhone = new Map<string, string>();
-  const byDigits = new Map<string, string>();
-  const byName = new Map<string, string>();
+  type Entry = { room_key: string; room_label: string };
+  const byPhone = new Map<string, Entry>();
+  const byDigits = new Map<string, Entry>();
+  const byName = new Map<string, Entry>();
 
   for (const row of rows) {
+    const entry = { room_key: row.room_key, room_label: row.room_label };
     if (row.phone?.trim()) {
-      byPhone.set(row.phone.trim(), row.room_label);
+      byPhone.set(row.phone.trim(), entry);
       const digits = row.phone.replace(/\D/g, '');
-      if (digits) byDigits.set(digits, row.room_label);
+      if (digits) byDigits.set(digits, entry);
     }
     const name = (row.full_name ?? '')
       .trim()
       .toLocaleLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
-    if (name) byName.set(name, row.room_label);
+    if (name) byName.set(name, entry);
   }
 
   return { byPhone, byDigits, byName };
@@ -215,7 +217,7 @@ export function buildAudienceRoomLabelIndex(rows: AudienceRoomLabel[]) {
 export function lookupAudienceRoomLabel(
   index: ReturnType<typeof buildAudienceRoomLabelIndex>,
   member: { phone?: string | null; full_name?: string | null }
-): string | null {
+): { room_key: string; room_label: string } | null {
   const phone = member.phone?.trim();
   if (phone && index.byPhone.has(phone)) {
     return index.byPhone.get(phone) ?? null;

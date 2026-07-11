@@ -1,5 +1,6 @@
 import { FamilyAgendaView } from '@/components/FamilyAgendaView';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
+import { resolveEventEnabledRoomKeys } from '@/lib/maintenanceEventForm';
 import { useActiveEvents, type ActiveEventListItem } from '@/hooks/useActiveEvents';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
@@ -150,6 +151,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
         onRegistrationChange={handleRegistrationChange}
         showKidsIndicator={Boolean(selectedEvent.kids_room)}
         showTeensIndicator={Boolean(selectedEvent.teens_room)}
+        eventEnabledRoomKeys={resolveEventEnabledRoomKeys(selectedEvent)}
         quorumMode={selectedEvent.requer_quorum === true}
         sessionPhone={userPhone}
         sessionProfileName={profile?.full_name ?? null}

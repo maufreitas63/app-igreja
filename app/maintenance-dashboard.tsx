@@ -224,7 +224,6 @@ type FeatureToggleProps = {
   value: boolean;
   onValueChange: (next: boolean) => void;
   activeStyle: ViewStyle;
-  roomDot?: 'kids' | 'teens';
 };
 
 const getSaveErrorMessage = (err: unknown) => {
@@ -283,20 +282,12 @@ const getSaveErrorMessage = (err: unknown) => {
   return message;
 };
 
-const FeatureToggle = ({ label, value, onValueChange, activeStyle, roomDot }: FeatureToggleProps) => (
+const FeatureToggle = ({ label, value, onValueChange, activeStyle }: FeatureToggleProps) => (
   <TouchableOpacity
     style={[styles.featureChip, value && activeStyle]}
     onPress={() => onValueChange(!value)}
     activeOpacity={0.85}
   >
-    {roomDot ? (
-      <View
-        style={[
-          styles.roomDot,
-          roomDot === 'kids' ? styles.roomDotKids : styles.roomDotTeens,
-        ]}
-      />
-    ) : null}
     <Text style={[styles.featureChipText, value && styles.featureChipTextActive]}>{label}</Text>
   </TouchableOpacity>
 );
@@ -365,6 +356,7 @@ type FeatureToggleColumnProps = {
   onValueChange: (next: boolean) => void;
   disabled?: boolean;
   minimal?: boolean;
+  halfWidth?: boolean;
 };
 
 const FeatureToggleColumn = ({
@@ -373,8 +365,15 @@ const FeatureToggleColumn = ({
   onValueChange,
   disabled,
   minimal,
+  halfWidth,
 }: FeatureToggleColumnProps) => (
-  <View style={[styles.featureToggleColumn, minimal && styles.featureToggleColumnMinimal]}>
+  <View
+    style={[
+      styles.featureToggleColumn,
+      minimal && styles.featureToggleColumnMinimal,
+      halfWidth && styles.featureToggleColumnHalf,
+    ]}
+  >
     <Text
       style={[styles.totemFieldLabel, minimal && styles.totemFieldLabelMinimal]}
       numberOfLines={2}
@@ -1287,6 +1286,14 @@ export default function MaintenanceDashboard() {
     [safeEvents, startEditEvent]
   );
 
+  const roomLabelByKey = useMemo(() => {
+    const labels: Record<string, string> = {};
+    for (const room of eventRoomOptions) {
+      labels[room.room_key] = room.display_label;
+    }
+    return labels;
+  }, [eventRoomOptions]);
+
   const renderCarouselItem = useCallback(
     ({ item, index }: { item: MaintenanceCarouselCard; index: number }) => {
       const shouldMountPanel = Math.abs(currentIndex - index) <= 1;
@@ -1593,7 +1600,7 @@ export default function MaintenanceDashboard() {
                     [...safeEvents]
                       .map((event) => ({
                         event,
-                        summary: summarizeMaintenanceEvent(event),
+                        summary: summarizeMaintenanceEvent(event, roomLabelByKey),
                       }))
                       .sort((left, right) => {
                         // 1) Ativos (publicados) primeiro, depois inativos
@@ -1683,15 +1690,17 @@ export default function MaintenanceDashboard() {
                           >
                             {summary.localLabel} · {summary.capacityLabel}
                           </Text>
-                          <Text
-                            style={[
-                              styles.eventCardFlags,
-                              isMinimalPresentation && styles.eventCardFlagsMinimal,
-                            ]}
-                            numberOfLines={2}
-                          >
-                            {summary.flagsLabel}
-                          </Text>
+                          {summary.flagsLabel ? (
+                            <Text
+                              style={[
+                                styles.eventCardFlags,
+                                isMinimalPresentation && styles.eventCardFlagsMinimal,
+                              ]}
+                              numberOfLines={2}
+                            >
+                              {summary.flagsLabel}
+                            </Text>
+                          ) : null}
                         </TouchableOpacity>
                       ))
                   ) : (
@@ -1725,6 +1734,7 @@ export default function MaintenanceDashboard() {
       quorumPresenceShortcutEnabled,
       quorumRegistrySchemaMissing,
       refetch,
+      roomLabelByKey,
       scrollToMaintenancePanel,
       startEditEvent,
       startNewEvent,
@@ -2033,12 +2043,6 @@ export default function MaintenanceDashboard() {
                   >
                     {eventRoomOptions.map((room) => {
                       const selected = form.enabledRoomKeys.includes(room.room_key);
-                      const roomDot =
-                        room.room_key === 'KIDS'
-                          ? 'kids'
-                          : room.room_key === 'TEENS'
-                            ? 'teens'
-                            : undefined;
                       const activeStyle =
                         room.room_key === 'KIDS'
                           ? ROOM_CHIP_KIDS_ACTIVE
@@ -2055,7 +2059,6 @@ export default function MaintenanceDashboard() {
                             patchForm(toggleEnabledRoomKey(form.enabledRoomKeys, room.room_key));
                           }}
                           activeStyle={activeStyle}
-                          roomDot={roomDot}
                         />
                       );
                     })}
@@ -2072,6 +2075,7 @@ export default function MaintenanceDashboard() {
                       onValueChange={(somenteMembros) => patchForm({ somenteMembros })}
                       disabled={isBusy}
                       minimal={isMinimalPresentation}
+                      halfWidth={isMinimalPresentation}
                     />
                     <FeatureToggleColumn
                       label="Ativação de Totem"
@@ -2079,6 +2083,7 @@ export default function MaintenanceDashboard() {
                       onValueChange={(totemAtivo) => patchForm({ totemAtivo })}
                       disabled={isBusy}
                       minimal={isMinimalPresentation}
+                      halfWidth={isMinimalPresentation}
                     />
                     <FeatureToggleColumn
                       label="Requer Quorum"
@@ -2086,6 +2091,7 @@ export default function MaintenanceDashboard() {
                       onValueChange={(requerQuorum) => patchForm({ requerQuorum })}
                       disabled={isBusy}
                       minimal={isMinimalPresentation}
+                      halfWidth={isMinimalPresentation}
                     />
                   </View>
                 </View>
@@ -3052,11 +3058,10 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
   featureRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    alignItems: 'stretch',
     gap: 10,
-    flexWrap: 'wrap',
+    width: '100%',
   },
   featureRowMinimal: {
     flexDirection: 'column',
@@ -3065,17 +3070,16 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    gap: 14,
+    gap: 10,
   },
   featureRowChips: {
-    flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    minWidth: 200,
+    gap: 6,
+    width: '100%',
+    flexShrink: 0,
   },
   featureRowChipsMinimal: {
-    flex: 0,
     flexGrow: 0,
     minWidth: 0,
     width: '100%',
@@ -3085,26 +3089,26 @@ const styles = StyleSheet.create({
   },
   featureToggleGroup: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     gap: 8,
-    flexShrink: 0,
     flexWrap: 'wrap',
-    justifyContent: 'flex-end',
-    marginLeft: 'auto',
+    width: '100%',
+    flexShrink: 0,
   },
   featureToggleGroupMinimal: {
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    flexDirection: 'column',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'stretch',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     marginLeft: 0,
-    gap: 10,
+    gap: 6,
   },
   featureToggleColumn: {
     alignItems: 'flex-end',
-    gap: 6,
+    gap: 4,
   },
   featureToggleColumnMinimal: {
     flexDirection: 'row',
@@ -3113,14 +3117,18 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    gap: 10,
+    gap: 6,
+  },
+  featureToggleColumnHalf: {
+    width: '48%',
+    maxWidth: '48%',
   },
   totemBlock: {
     flexShrink: 0,
   },
   totemBlockMinimal: {
     flexShrink: 0,
-    marginLeft: 'auto',
+    marginLeft: 0,
   },
   totemChoiceRow: {
     flexDirection: 'row',
@@ -3143,9 +3151,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   totemChoiceButtonMinimal: {
-    minWidth: 40,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    minWidth: 34,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
   },
   totemChoiceButtonSimActive: {
     backgroundColor: 'rgba(34, 197, 94, 0.22)',
@@ -3166,6 +3174,7 @@ const styles = StyleSheet.create({
   },
   totemChoiceTextMinimal: {
     color: MINIMAL_UI.textMuted,
+    fontSize: 12,
   },
   totemChoiceTextActive: {
     color: '#3A96DD',
@@ -3201,26 +3210,14 @@ const styles = StyleSheet.create({
   featureChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    alignSelf: 'flex-start',
+    gap: 0,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     backgroundColor: '#FFFFFF',
-  },
-  roomDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.35)',
-  },
-  roomDotKids: {
-    backgroundColor: '#facc15',
-  },
-  roomDotTeens: {
-    backgroundColor: '#ef4444',
   },
   featureChipText: {
     color: 'rgba(58, 150, 221, 0.82)',
@@ -3286,11 +3283,15 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   replicateSevenSection: {
-    gap: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     marginTop: 4,
+    width: '100%',
   },
   replicateSevenButton: {
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
+    flexShrink: 0,
     minWidth: 56,
     borderRadius: 12,
     borderWidth: 1,
@@ -3311,6 +3312,10 @@ const styles = StyleSheet.create({
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     lineHeight: 17,
+    flexGrow: 0,
+    flexShrink: 1,
+    width: '70%',
+    maxWidth: '70%',
   },
   editorFooter: {
     paddingHorizontal: 20,

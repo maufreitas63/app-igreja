@@ -66,6 +66,8 @@ type Props = {
   minimal?: boolean;
   /** Selos IBN Kids/Teens já exibidos no cabeçalho expandido. */
   hideRoomSelos?: boolean;
+  /** Salas habilitadas no evento; só mostra o rótulo se a sala do membro estiver nesta lista. */
+  eventEnabledRoomKeys?: string[] | null;
 };
 
 /** Métricas alinhadas a MemberCheckboxItem + contentContainerStyle da lista. */
@@ -102,6 +104,7 @@ export const FamilyRegistrationList = ({
   geoCheckinRadiusMeters = 30,
   minimal = false,
   hideRoomSelos = false,
+  eventEnabledRoomKeys = null,
 }: Props) => {
   const hasFamilyId = Boolean(familyId?.trim());
   const { members, loading, error } = useFamilyAudienceMembers(
@@ -125,6 +128,21 @@ export const FamilyRegistrationList = ({
     RegistrationStatus | undefined
   >(undefined);
   const [roomLabelByMemberId, setRoomLabelByMemberId] = useState<Record<string, string>>({});
+
+  const allowedRoomKeys = useMemo(() => {
+    const keys = Array.isArray(eventEnabledRoomKeys)
+      ? eventEnabledRoomKeys
+          .map((key) => String(key ?? '').trim().toUpperCase())
+          .filter((key) => /^[A-Z0-9_]{2,40}$/.test(key))
+      : [];
+    if (keys.length > 0) {
+      return new Set(keys);
+    }
+    const fallback = new Set<string>();
+    if (showKidsIndicator) fallback.add('KIDS');
+    if (showTeensIndicator) fallback.add('TEENS');
+    return fallback;
+  }, [eventEnabledRoomKeys, showKidsIndicator, showTeensIndicator]);
   const [soloStatusLoading, setSoloStatusLoading] = useState(false);
   const [soloToggleLoading, setSoloToggleLoading] = useState(false);
 
@@ -205,8 +223,10 @@ export const FamilyRegistrationList = ({
       const index = buildAudienceRoomLabelIndex(rows);
       const next: Record<string, string> = {};
       for (const member of audience) {
-        const label = lookupAudienceRoomLabel(index, member);
-        if (label) next[member.id] = label;
+        const match = lookupAudienceRoomLabel(index, member);
+        if (match && allowedRoomKeys.has(match.room_key)) {
+          next[member.id] = match.room_label;
+        }
       }
       setRoomLabelByMemberId(next);
     });
@@ -214,7 +234,7 @@ export const FamilyRegistrationList = ({
     return () => {
       active = false;
     };
-  }, [soloMode, soloParticipant, visibleMembers]);
+  }, [allowedRoomKeys, soloMode, soloParticipant, visibleMembers]);
 
   const refetchSoloRegistrationStatus = useCallback(async () => {
     if (!soloMode || !eventId || !sessionProfile?.id) {
@@ -585,9 +605,11 @@ export const FamilyRegistrationList = ({
             }
           />
         ) : null}
-        <View style={styles.salasHeaderCell}>
-          <Text style={[styles.salasHeaderText, minimal && styles.salasHeaderTextMinimal]}>Salas</Text>
-        </View>
+        {allowedRoomKeys.size > 0 ? (
+          <View style={styles.salasHeaderCell}>
+            <Text style={[styles.salasHeaderText, minimal && styles.salasHeaderTextMinimal]}>Salas</Text>
+          </View>
+        ) : null}
       </View>
       <View style={[styles.listFrame, minimal && styles.listFrameMinimal]}>
         <View style={styles.listWithBulkRow}>

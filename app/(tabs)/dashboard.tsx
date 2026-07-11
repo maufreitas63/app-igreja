@@ -4,6 +4,7 @@ import { AdministrativoCard } from '@/components/AdministrativoCard';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
+import { resolveEventEnabledRoomKeys } from '@/lib/maintenanceEventForm';
 import { MinisterialProfileForm } from '@/components/MinisterialProfileForm';
 import { OfferingsClass } from '@/components/OfferingsClass';
 import { PerfilClassPanel } from '@/components/PerfilClassPanel';
@@ -2816,6 +2817,9 @@ export default function Dashboard() {
                               onRegistrationChange={handleEventRegistrationChange}
                               showKidsIndicator={Boolean(selectedEvent?.kids_room)}
                               showTeensIndicator={Boolean(selectedEvent?.teens_room)}
+                              eventEnabledRoomKeys={
+                                selectedEvent ? resolveEventEnabledRoomKeys(selectedEvent) : []
+                              }
                               quorumMode={selectedEvent?.requer_quorum === true}
                               quorumTotemCheckinConfirmed={hasTotemCheckinConfirmed}
                               sessionPhone={userPhone}

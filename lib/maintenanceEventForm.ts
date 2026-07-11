@@ -70,6 +70,21 @@ export const syncEnabledRoomKeysWithKidsTeens = (keys: string[]) => {
   };
 };
 
+export const resolveEventEnabledRoomKeys = (event: {
+  kids_room?: boolean | null;
+  teens_room?: boolean | null;
+  enabled_room_keys?: string[] | null;
+}): string[] => {
+  const fromColumn = normalizeRoomKeyList(event.enabled_room_keys);
+  if (fromColumn.length > 0) {
+    return fromColumn;
+  }
+  return [
+    ...(event.kids_room === true ? ['KIDS'] : []),
+    ...(event.teens_room === true ? ['TEENS'] : []),
+  ];
+};
+
 export const toggleEnabledRoomKey = (keys: string[], roomKey: string) => {
   const key = roomKey.trim().toUpperCase();
   if (!/^[A-Z0-9_]{2,40}$/.test(key)) {
@@ -516,7 +531,7 @@ export const summarizeMaintenanceEvent = (event: {
     dateLabel,
     localLabel,
     capacityLabel,
-    flagsLabel: flags.length ? flags.join(' · ') : 'Sem salas extras',
+    flagsLabel: flags.length ? flags.join(' · ') : '',
     isPublished: event.is_locked !== true,
   };
 };
