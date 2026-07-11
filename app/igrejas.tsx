@@ -6,6 +6,7 @@ import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   activateSessionTenant,
   deleteIgrejaAdmin,
+  getStoredTenantId,
   listAdminIgrejas,
   onboardIgrejaAdmin,
   setIgrejaActiveAdmin,
@@ -42,6 +43,7 @@ function IgrejasAdminPanel() {
   const [editBusy, setEditBusy] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [churches, setChurches] = useState<SessionIgreja[]>([]);
+  const [activeTenantId, setActiveTenantId] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -78,9 +80,10 @@ function IgrejasAdminPanel() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const rows = await listAdminIgrejas();
+      const [rows, storedTenantId] = await Promise.all([listAdminIgrejas(), getStoredTenantId()]);
       setChurches(rows);
       syncSocialDrafts(rows);
+      setActiveTenantId(storedTenantId);
     } catch (error) {
       console.error(error);
       const detail =
@@ -490,6 +493,9 @@ function IgrejasAdminPanel() {
             const offeringsDraft =
               offeringsDrafts[church.id] ?? { cnpj: '', pixInstitution: '', pixKey: '' };
             const previewUri = editLogoPreview || church.logo_url;
+            const isSessionChurch = activeTenantId
+              ? church.id === activeTenantId
+              : church.is_primary;
 
             return (
               <View key={church.id} style={styles.row}>
@@ -510,7 +516,7 @@ function IgrejasAdminPanel() {
                     <Text style={styles.rowCode}>{church.code}</Text>
                   </View>
                   <View style={styles.badgeColumn}>
-                    {church.is_primary ? <Text style={styles.badge}>Sessão</Text> : null}
+                    {isSessionChurch ? <Text style={styles.badge}>Sessão</Text> : null}
                     {!church.is_active ? (
                       <Text style={[styles.badge, styles.badgeBlocked]}>Bloqueada</Text>
                     ) : null}
@@ -518,7 +524,7 @@ function IgrejasAdminPanel() {
                 </View>
 
                 <View style={styles.rowActions}>
-                  {!church.is_primary && church.is_active ? (
+                  {!isSessionChurch && church.is_active ? (
                     <TouchableOpacity
                       style={styles.actionButton}
                       onPress={() => void handleSwitch(church)}
