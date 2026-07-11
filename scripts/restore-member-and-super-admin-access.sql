@@ -69,12 +69,21 @@ update public.igrejas
  where upper(trim(code)) in ('IBN', 'IBEP')
    and is_active is distinct from true;
 
--- (d) Vínculos ativos; primary = IBN
+-- (d) Vínculos ativos; no máximo 1 primary (índice profile_igreja_vinculos_one_primary_idx)
+-- 1) Zera primary do perfil (evita 23505 ao reativar IBN/IBEP)
+update public.profile_igreja_vinculos v
+   set is_primary = false,
+       updated_at = now()
+  from _restore_login_profile lp
+ where v.profile_id = lp.profile_id
+   and v.is_primary = true;
+
+-- 2) Garante linhas IBN/IBEP ativas (sempre sem primary neste passo)
 insert into public.profile_igreja_vinculos (profile_id, tenant_id, is_primary, is_active)
 select
   lp.profile_id,
   i.id,
-  (upper(trim(i.code)) = 'IBN'),
+  false,
   true
 from _restore_login_profile lp
 cross join public.igrejas i
@@ -82,16 +91,18 @@ where upper(trim(i.code)) in ('IBN', 'IBEP')
   and i.is_active = true
 on conflict (profile_id, tenant_id) do update
   set is_active = true,
+      is_primary = false,
       updated_at = now();
 
+-- 3) Define IBN como único primary
 update public.profile_igreja_vinculos v
-   set is_primary = (upper(trim(i.code)) = 'IBN'),
+   set is_primary = true,
        updated_at = now()
   from public.igrejas i, _restore_login_profile lp
  where v.tenant_id = i.id
    and v.profile_id = lp.profile_id
    and v.is_active = true
-   and upper(trim(i.code)) in ('IBN', 'IBEP');
+   and upper(trim(i.code)) = 'IBN';
 
 -- profiles.tenant_id → IBN (padrão)
 update public.profiles p
