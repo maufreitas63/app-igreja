@@ -10,8 +10,6 @@ export type FamilyAgendaViewProps = {
   events: ActiveEventListItem[];
   selectedEvent: ActiveEventListItem | null;
   eventsError?: Error | null;
-  kidsRoomBadgeLabel: string;
-  teensRoomBadgeLabel: string;
   capacityFillColor: string;
   capacityRatio: number;
   registrationSection?: ReactNode;
@@ -24,8 +22,6 @@ export function FamilyAgendaView({
   events,
   selectedEvent,
   eventsError = null,
-  kidsRoomBadgeLabel,
-  teensRoomBadgeLabel,
   capacityFillColor,
   capacityRatio,
   registrationSection,
@@ -65,26 +61,6 @@ export function FamilyAgendaView({
                 {selectedEventTime ? <Text style={styles.eventMeta}>{selectedEventTime}</Text> : null}
                 {selectedEvent.event_local ? (
                   <Text style={styles.eventLocation}>{selectedEvent.event_local}</Text>
-                ) : null}
-                {selectedEvent.kids_room || selectedEvent.teens_room ? (
-                  <View style={styles.roomLegendRow}>
-                    {selectedEvent.kids_room ? (
-                      <View style={[styles.roomBadge, styles.roomBadgeKids, styles.roomBadgeInline]}>
-                        <View style={[styles.roomIndicator, styles.roomIndicatorKids]} />
-                        <Text style={styles.roomBadgeText} numberOfLines={1}>
-                          {kidsRoomBadgeLabel}
-                        </Text>
-                      </View>
-                    ) : null}
-                    {selectedEvent.teens_room ? (
-                      <View style={[styles.roomBadge, styles.roomBadgeTeens, styles.roomBadgeInline]}>
-                        <View style={[styles.roomIndicator, styles.roomIndicatorTeens]} />
-                        <Text style={styles.roomBadgeText} numberOfLines={1}>
-                          {teensRoomBadgeLabel}
-                        </Text>
-                      </View>
-                    ) : null}
-                  </View>
                 ) : null}
               </>
             ) : (
@@ -214,56 +190,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.88,
     marginBottom: 8,
-  },
-  roomLegendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 4,
-    marginTop: 8,
-    width: '100%',
-  },
-  roomBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: 999,
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-    borderWidth: 1,
-  },
-  roomBadgeInline: {
-    flexGrow: 1,
-    flexShrink: 1,
-    minWidth: 0,
-    maxWidth: '100%',
-    justifyContent: 'center',
-  },
-  roomBadgeKids: {
-    backgroundColor: 'rgba(250, 204, 21, 0.12)',
-    borderColor: 'rgba(250, 204, 21, 0.35)',
-  },
-  roomBadgeTeens: {
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
-    borderColor: 'rgba(239, 68, 68, 0.35)',
-  },
-  roomBadgeText: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 11,
-    fontWeight: '600',
-    flexShrink: 1,
-    textAlign: 'center',
-  },
-  roomIndicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-  },
-  roomIndicatorKids: {
-    backgroundColor: '#FACC15',
-  },
-  roomIndicatorTeens: {
-    backgroundColor: '#EF4444',
   },
   capacityCard: {
     width: 96,

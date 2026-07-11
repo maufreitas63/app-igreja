@@ -1,7 +1,6 @@
 import { FamilyAgendaView } from '@/components/FamilyAgendaView';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { useActiveEvents, type ActiveEventListItem } from '@/hooks/useActiveEvents';
-import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
@@ -29,10 +28,6 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
     enabled: visible,
     enablePolling: visible,
   });
-  const {
-    kidsRoomBadgeLabel,
-    teensRoomBadgeLabel,
-  } = useRoomDisplayLabels();
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(initialEventId);
   const [userPhone, setUserPhone] = useState<string | null>(null);
@@ -186,8 +181,6 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
           events={events}
           selectedEvent={selectedEvent}
           eventsError={error}
-          kidsRoomBadgeLabel={kidsRoomBadgeLabel}
-          teensRoomBadgeLabel={teensRoomBadgeLabel}
           capacityFillColor={capacityFillColor}
           capacityRatio={capacityRatio}
           registrationSection={registrationSection}
