@@ -11,12 +11,15 @@ import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
 import { GhostModeBanner } from '@/components/GhostModeBanner';
 import { GhostModeProvider } from '@/context/GhostModeContext';
 import { appToastConfig } from '@/components/ui/appToastConfig';
+import { installExecutionErrorClipboard } from '@/lib/appToast';
 import { ICON_FONT_SOURCES } from '@/lib/iconFonts';
 import { installWebTextSelectionGuard, WEB_NON_SELECTABLE_VIEW_STYLES } from '@/lib/webTextSelectionGuard';
 import { useFonts } from 'expo-font';
 import Toast from 'react-native-toast-message';
 import { useEffect } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
+
+installExecutionErrorClipboard();
 
 export default function RootLayout() {
   const [iconFontsLoaded] = useFonts(ICON_FONT_SOURCES);
