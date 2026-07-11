@@ -1,4 +1,7 @@
 -- Restaura super_admin no perfil que o LOGIN realmente usa.
+-- Preferível para SA + membro + vínculos:
+--   scripts/restore-member-and-super-admin-access.sql
+--
 -- Ajuste o telefone em params e execute no Supabase.
 -- Não use find-profile-prefer-super-admin.sql (deprecado — risco de escalonamento no login).
 -- Após ajustar papéis, aplique scripts/fix-login-auth-avoid-super-admin-escalation.sql se ainda não rodou.

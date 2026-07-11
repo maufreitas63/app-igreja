@@ -244,6 +244,7 @@ export default function IndexScreen() {
             getStoredTenantId,
             listSessionIgrejas,
             persistActiveIgrejaBranding,
+            clearTenantId,
           } = await import('@/lib/tenantSession');
           const storedTenant = await getStoredTenantId();
           const churches = await listSessionIgrejas();
@@ -251,6 +252,14 @@ export default function IndexScreen() {
             const match = churches.find((church) => church.id === storedTenant);
             if (match) {
               await persistActiveIgrejaBranding(match);
+            } else {
+              // Tenant bloqueado/removido: limpa storage e força escolha válida.
+              await clearTenantId();
+              if (churches.length === 1 && churches[0]) {
+                await persistActiveIgrejaBranding(churches[0]);
+              } else if (churches.length > 1) {
+                route = buildSelecionarIgrejaRoute(phoneForSession);
+              }
             }
           } else if (churches.length === 1 && churches[0]) {
             await persistActiveIgrejaBranding(churches[0]);
