@@ -7,6 +7,10 @@ import { AppDrawerProvider } from '@/context/AppDrawerContext';
 import { EntityPrefixProvider } from '@/context/EntityPrefixContext';
 import { PaletteProvider } from '@/context/PaletteContext';
 import { useProfileScreenVisitTracker } from '@/hooks/useProfileScreenVisitTracker';
+import {
+  DEFAULT_WEB_DOCUMENT_TITLE,
+  useWebDocumentTitle,
+} from '@/hooks/useWebDocumentTitle';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { Slot, usePathname, useSegments } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
@@ -37,6 +41,7 @@ function AppShellContent() {
   const pathname = usePathname();
   const segments = useSegments();
   useProfileScreenVisitTracker();
+  useWebDocumentTitle(DEFAULT_WEB_DOCUMENT_TITLE);
   const showWatermark = !isWatermarkExcludedRoute(pathname, segments);
   const appStyle = [styles.app, { backgroundColor: MINIMAL_UI.background }];
 

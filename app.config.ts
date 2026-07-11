@@ -11,7 +11,7 @@ const googleMapsIosApiKey =
   '';
 
 const config: ExpoConfig = {
-  name: 'app-igreja',
+  name: 'Comunidade Digital',
   slug: 'app-igreja',
   version: '1.0.0',
   orientation: 'portrait',
