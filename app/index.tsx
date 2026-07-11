@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -17,7 +16,6 @@ import {
   type TextStyle,
 } from 'react-native';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
-import { confirmDialog } from '@/lib/confirmDialog';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { WEB_NON_SELECTABLE_VIEW_STYLES } from '@/lib/webTextSelectionGuard';
 
@@ -43,7 +41,6 @@ function ReadOnlyText({
     </Text>
   );
 }
-import { SocialBrandIcon } from '@/components/SocialBrandIcon';
 import { FontAwesome } from '@expo/vector-icons';
 import {
   ACCESS_PIN_LENGTH,
@@ -495,30 +492,6 @@ export default function IndexScreen() {
     })();
   };
 
-  const handleOpenSocial = useCallback(async (url: string) => {
-    try {
-      await Linking.openURL(url);
-    } catch (error) {
-      console.error('Erro ao abrir rede social:', error);
-      Alert.alert('Erro', 'Não foi possível abrir o link neste dispositivo.');
-    }
-  }, []);
-
-  const handleOpenExternalBible = useCallback(async () => {
-    const confirmed = await confirmDialog(
-      'Fonte externa',
-      'Você está saindo do aplicativo da igreja para uma fonte externa (A Bíblia Online). Deseja continuar?',
-      'Continuar',
-      'Cancelar'
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    await handleOpenSocial('https://abibliaonline.com/');
-  }, [handleOpenSocial]);
-
   const submitAccess = useCallback(
     async (pin: string) => {
       if (isVerifyingPinRef.current) {
@@ -860,25 +833,6 @@ export default function IndexScreen() {
     </View>
   );
 
-  const renderSocialLinks = () => (
-    <View style={styles.socialFooter}>
-      <View style={styles.socialRow}>
-        <View style={styles.socialLinksCenter}>
-          <TouchableOpacity
-            accessibilityLabel="Abrir A Bíblia Online"
-            accessibilityRole="button"
-            onPress={() => {
-              void handleOpenExternalBible();
-            }}
-            style={styles.socialButton}
-          >
-            <SocialBrandIcon network="bible" />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-
   if (isRestoringSession || isTotemConfigLoading) {
     return (
       <View style={styles.container}>
@@ -966,8 +920,6 @@ export default function IndexScreen() {
                   É sua primeira vez? O Ministério de Acolhimento da Igreja pode ajudar.
                 </ReadOnlyText>
               ) : null}
-
-              {!isTotemLoginMode ? renderSocialLinks() : null}
             </>
           ) : (
             <>
@@ -1429,30 +1381,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     textAlign: 'center',
-  },
-  socialFooter: {
-    marginTop: 24,
-    width: '100%',
-    alignSelf: 'stretch',
-  },
-  socialRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    minHeight: 44,
-  },
-  socialLinksCenter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  socialButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
   },
 });
