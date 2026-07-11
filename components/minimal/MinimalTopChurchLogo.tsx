@@ -3,15 +3,50 @@ import {
   MINIMAL_TYPO,
   MINIMAL_UI,
 } from '@/lib/minimalUiTheme';
-import { resolveTenantChromeLogo } from '@/lib/tenantBranding';
+import { resolveTenantChromeLogo, type TenantLogoResolution } from '@/lib/tenantBranding';
 import {
   getStoredActiveIgrejaBranding,
   resolveActiveIgrejaBranding,
   subscribeActiveTenantChange,
 } from '@/lib/tenantSession';
 import { Image, type ImageSource } from 'expo-image';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+
+function logoSignature(resolved: TenantLogoResolution): string {
+  if (resolved.kind === 'image') {
+    const source = resolved.source as { uri?: string } | number;
+    if (typeof source === 'number') {
+      return `local:${source}`;
+    }
+    return `uri:${source?.uri ?? ''}`;
+  }
+  return `text:${resolved.name}`;
+}
+
+function applyResolvedLogo(
+  resolved: TenantLogoResolution,
+  setters: {
+    setLogoSource: (value: ImageSource | null) => void;
+    setLogoLabel: (value: string) => void;
+    setLogoText: (value: string | null) => void;
+  },
+  lastSignature: React.MutableRefObject<string>
+) {
+  const signature = logoSignature(resolved);
+  if (lastSignature.current === signature) {
+    return;
+  }
+  lastSignature.current = signature;
+  setters.setLogoLabel(resolved.label);
+  if (resolved.kind === 'image') {
+    setters.setLogoSource(resolved.source);
+    setters.setLogoText(null);
+  } else {
+    setters.setLogoSource(null);
+    setters.setLogoText(resolved.name);
+  }
+}
 
 /** Logo da instância — posicionado à direita do chrome, fora da faixa de saudação. */
 export function MinimalTopChurchLogo() {
@@ -19,43 +54,41 @@ export function MinimalTopChurchLogo() {
   const [logoLabel, setLogoLabel] = useState('Logo da igreja');
   const [logoText, setLogoText] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
+  const lastSignature = useRef('');
+  const lastTenantId = useRef<string | null>(null);
 
   useEffect(() => {
-    return subscribeActiveTenantChange(() => {
+    return subscribeActiveTenantChange((tenantId) => {
+      // Só recarrega quando a instância de fato muda.
+      if (lastTenantId.current === tenantId) {
+        return;
+      }
+      lastTenantId.current = tenantId;
       setReloadToken((value) => value + 1);
     });
   }, []);
 
   useEffect(() => {
     let active = true;
+    const setters = { setLogoSource, setLogoLabel, setLogoText };
 
     void (async () => {
       const stored = await getStoredActiveIgrejaBranding();
-      if (active && stored) {
-        const cached = resolveTenantChromeLogo(stored);
-        setLogoLabel(cached.label);
-        if (cached.kind === 'image') {
-          setLogoSource(cached.source);
-          setLogoText(null);
-        } else {
-          setLogoSource(null);
-          setLogoText(cached.name);
-        }
+      if (!active) return;
+
+      if (stored) {
+        lastTenantId.current = stored.id;
+        applyResolvedLogo(resolveTenantChromeLogo(stored), setters, lastSignature);
       }
 
-      const branding = await resolveActiveIgrejaBranding();
-      if (!active) {
-        return;
-      }
-
-      const resolved = resolveTenantChromeLogo(branding);
-      setLogoLabel(resolved.label);
-      if (resolved.kind === 'image') {
-        setLogoSource(resolved.source);
-        setLogoText(null);
-      } else {
-        setLogoSource(null);
-        setLogoText(resolved.name);
+      // Refresh de rede em background; persistência silenciosa (sem re-notificar).
+      try {
+        const branding = await resolveActiveIgrejaBranding();
+        if (!active || !branding) return;
+        lastTenantId.current = branding.id;
+        applyResolvedLogo(resolveTenantChromeLogo(branding), setters, lastSignature);
+      } catch {
+        // Mantém logo local se a rede falhar.
       }
     })();
 
@@ -72,6 +105,8 @@ export function MinimalTopChurchLogo() {
           style={styles.logo}
           contentFit="contain"
           accessibilityLabel={logoLabel}
+          transition={0}
+          cachePolicy="memory-disk"
         />
       ) : (
         <Text style={styles.fallback} numberOfLines={2} accessibilityLabel={logoLabel}>

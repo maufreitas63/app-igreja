@@ -51,7 +51,7 @@ export default function SelecionarIgrejaScreen() {
   const handleSelect = async (church: SessionIgreja) => {
     setSavingId(church.id);
     try {
-      const result = await activateSessionTenant(church.id);
+      const result = await activateSessionTenant(church.id, church);
       if (!result.success) {
         Toast.show({ type: 'error', text1: 'Igreja', text2: result.message });
         return;

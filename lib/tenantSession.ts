@@ -116,19 +116,34 @@ export async function persistTenantId(
 }
 
 export async function persistActiveIgrejaBranding(
-  church: Pick<SessionIgreja, 'id' | 'code' | 'name' | 'logo_url'>
+  church: Pick<SessionIgreja, 'id' | 'code' | 'name' | 'logo_url'>,
+  options?: { notify?: boolean }
 ) {
-  await persistTenantId(church.id, { notify: false });
-  const payload: ActiveIgrejaBranding = {
-    id: church.id,
+  const nextId = church.id.trim();
+  const previousTenant = await getStoredTenantId();
+  const previousBranding = await getStoredActiveIgrejaBranding();
+  const nextLogo = church.logo_url?.trim() || null;
+  const nextPayload: ActiveIgrejaBranding = {
+    id: nextId,
     code: church.code,
     name: church.name,
-    logo_url: church.logo_url?.trim() || null,
+    logo_url: nextLogo,
   };
-  await AsyncStorage.setItem(USER_TENANT_BRANDING_STORAGE_KEY, JSON.stringify(payload));
 
-  // Sempre após gravar o branding — selos/logo leem o código da instância ativa.
-  notifyActiveTenantChange(church.id.trim());
+  await persistTenantId(nextId, { notify: false });
+  await AsyncStorage.setItem(USER_TENANT_BRANDING_STORAGE_KEY, JSON.stringify(nextPayload));
+
+  const changed =
+    previousTenant !== nextId
+    || previousBranding?.id !== nextPayload.id
+    || previousBranding?.code !== nextPayload.code
+    || previousBranding?.name !== nextPayload.name
+    || previousBranding?.logo_url !== nextPayload.logo_url;
+
+  // Evita loop: resolveActiveIgrejaBranding / logo não devem re-notificar a cada leitura.
+  if (changed && options?.notify !== false) {
+    notifyActiveTenantChange(nextId);
+  }
 }
 
 export async function getStoredActiveIgrejaBranding(): Promise<ActiveIgrejaBranding | null> {
@@ -168,7 +183,8 @@ export async function resolveActiveIgrejaBranding(): Promise<ActiveIgrejaBrandin
       ?? null;
 
     if (match) {
-      await persistActiveIgrejaBranding(match);
+      // Persistência silenciosa — não dispara listeners (evita piscar o logo).
+      await persistActiveIgrejaBranding(match, { notify: false });
       return {
         id: match.id,
         code: match.code,
@@ -263,7 +279,10 @@ export async function shouldPromptTenantSelection(): Promise<boolean> {
   return churches.length > 1;
 }
 
-export async function activateSessionTenant(tenantId: string): Promise<{ success: boolean; message: string }> {
+export async function activateSessionTenant(
+  tenantId: string,
+  churchHint?: Pick<SessionIgreja, 'id' | 'code' | 'name' | 'logo_url'> | null
+): Promise<{ success: boolean; message: string }> {
   const id = tenantId.trim();
   if (!id) {
     return { success: false, message: 'Igreja não informada.' };
@@ -280,13 +299,18 @@ export async function activateSessionTenant(tenantId: string): Promise<{ success
   const success = data?.success === true;
   if (success) {
     try {
-      await persistTenantId(id, { notify: false });
-      const churches = await listSessionIgrejas();
-      const church = churches.find((row) => row.id === id);
-      if (church) {
-        await persistActiveIgrejaBranding(church);
+      // Preferir o card já carregado — evita listSessionIgrejas extra em dados móveis.
+      if (churchHint && churchHint.id.trim() === id) {
+        await persistActiveIgrejaBranding(churchHint);
       } else {
-        notifyActiveTenantChange(id);
+        await persistTenantId(id, { notify: false });
+        const churches = await listSessionIgrejas();
+        const church = churches.find((row) => row.id === id);
+        if (church) {
+          await persistActiveIgrejaBranding(church);
+        } else {
+          notifyActiveTenantChange(id);
+        }
       }
     } catch {
       await persistTenantId(id);

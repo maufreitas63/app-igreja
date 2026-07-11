@@ -328,7 +328,7 @@ function IgrejasAdminPanel() {
       });
       return;
     }
-    const result = await activateSessionTenant(church.id);
+    const result = await activateSessionTenant(church.id, church);
     if (!result.success) {
       Toast.show({ type: 'error', text1: 'Trocar igreja', text2: result.message });
       return;
