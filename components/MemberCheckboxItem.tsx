@@ -1,6 +1,6 @@
 import type { FamilyMember } from '@/hooks/useFamilyMembers';
 import type { RegistrationStatus } from '@/hooks/useRegisteredEventMembers';
-import { formatFullName } from '@/lib/fullName';
+import { formatShortName } from '@/lib/formatShortName';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -33,7 +33,7 @@ export const MemberCheckboxItem = ({
   minimal = false,
   onToggle,
 }: Props) => {
-  const displayName = formatFullName(member.full_name);
+  const displayName = formatShortName(member.full_name);
   const roomLabel = assignedRoomLabel?.trim() || '';
   const shouldShowStatusDot =
     (registrationStatus === 'KIDS' && showKidsIndicator) ||
