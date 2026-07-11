@@ -20,7 +20,7 @@ import { MinimalRoomSelosRow } from '@/components/minimal/MinimalRoomSelosRow';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { MemberCheckboxItem } from './MemberCheckboxItem';
+import { MemberCheckboxItem, MEMBER_ROOM_LABEL_COLUMN_WIDTH } from './MemberCheckboxItem';
 import {
   buildAudienceRoomLabelIndex,
   lookupAudienceRoomLabel,
@@ -569,7 +569,7 @@ export const FamilyRegistrationList = ({
             />
           </View>
         ) : (
-          <Text style={[styles.headerTitle, minimal && styles.headerTitleMinimal]}>
+          <Text style={[styles.headerTitle, minimal && styles.headerTitleMinimal]} numberOfLines={2}>
             {title ?? 'Audiência da Família'}
           </Text>
         )}
@@ -585,6 +585,9 @@ export const FamilyRegistrationList = ({
             }
           />
         ) : null}
+        <View style={styles.salasHeaderCell}>
+          <Text style={[styles.salasHeaderText, minimal && styles.salasHeaderTextMinimal]}>Salas</Text>
+        </View>
       </View>
       <View style={[styles.listFrame, minimal && styles.listFrameMinimal]}>
         <View style={styles.listWithBulkRow}>
@@ -712,10 +715,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   headerSelosWrap: {
-    flex: 1,
+    flexGrow: 0,
+    flexShrink: 1,
     minWidth: 0,
-    width: '100%',
-    maxWidth: '100%',
+    maxWidth: '70%',
   },
   headerRow: {
     flexDirection: 'row',
@@ -730,12 +733,37 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 1,
-    flex: 1,
+    flexGrow: 0,
+    flexShrink: 1,
+    maxWidth: '70%',
   },
   headerTitleMinimal: {
     color: MINIMAL_UI.textMuted,
     textTransform: 'none',
     letterSpacing: 0,
+    fontSize: 12,
+  },
+  salasHeaderCell: {
+    width: MEMBER_ROOM_LABEL_COLUMN_WIDTH,
+    flexShrink: 0,
+    marginLeft: 'auto',
+    marginRight: 4,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(148, 163, 184, 0.45)',
+    borderRadius: 4,
+    backgroundColor: 'rgba(148, 163, 184, 0.08)',
+    justifyContent: 'center',
+  },
+  salasHeaderText: {
+    color: 'rgba(148, 163, 184, 0.95)',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'left',
+  },
+  salasHeaderTextMinimal: {
+    color: MINIMAL_UI.textMuted,
     fontSize: 12,
   },
   listContainer: {

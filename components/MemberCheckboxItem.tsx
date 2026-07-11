@@ -5,6 +5,9 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+/** Largura da coluna de sala — manter alinhada com o cabeçalho «Salas». */
+export const MEMBER_ROOM_LABEL_COLUMN_WIDTH = 96;
+
 type Props = {
   member: FamilyMember;
   disabled?: boolean;
@@ -166,7 +169,7 @@ const styles = StyleSheet.create({
     color: 'rgba(148, 163, 184, 0.95)',
     fontSize: 13,
     fontWeight: '700',
-    width: 96,
+    width: MEMBER_ROOM_LABEL_COLUMN_WIDTH,
     flexShrink: 0,
     textAlign: 'left',
   },
