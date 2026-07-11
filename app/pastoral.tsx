@@ -886,37 +886,45 @@ export default function PastoralScreen() {
               numberOfLines={useVigilanceTheme ? 4 : 6}
               textAlignVertical="top"
             />
+
+            <TouchableOpacity
+              accessibilityLabel="Enviar pedido pastoral"
+              accessibilityRole="button"
+              activeOpacity={0.85}
+              style={[
+                styles.btnSubmitFull,
+                styles.btnSubmitInline,
+                useVigilanceTheme && styles.btnSubmitFullVigilance,
+                (loading || loadingUserId) && styles.btnSubmitDisabled,
+              ]}
+              onPress={() => {
+                void handleSubmit();
+              }}
+              disabled={loading || loadingUserId}>
+              {loading ? (
+                <ActivityIndicator color={useVigilanceTheme ? PASTORAL_VIGILANCE_SUBMIT_TEXT : '#FFF'} />
+              ) : (
+                <Text
+                  style={[
+                    styles.btnSubmitFullText,
+                    useVigilanceTheme && styles.btnSubmitFullTextVigilance,
+                  ]}
+                >
+                  Enviar pedido
+                </Text>
+              )}
+            </TouchableOpacity>
           </ScrollView>
 
           <View style={[styles.footerBar, useVigilanceTheme && styles.footerBarVigilance]}>
-            <View style={styles.footerActions}>
-              <TouchableOpacity
-                accessibilityLabel="Enviar pedido pastoral"
-                accessibilityRole="button"
-                activeOpacity={0.85}
-                style={[
-                  styles.btnSubmitFull,
-                  useVigilanceTheme && styles.btnSubmitFullVigilance,
-                  (loading || loadingUserId) && styles.btnSubmitDisabled,
-                ]}
-                onPress={() => {
-                  void handleSubmit();
-                }}
-                disabled={loading || loadingUserId}>
-                {loading ? (
-                  <ActivityIndicator color={useVigilanceTheme ? PASTORAL_VIGILANCE_SUBMIT_TEXT : '#FFF'} />
-                ) : (
-                  <Text
-                    style={[
-                      styles.btnSubmitFullText,
-                      useVigilanceTheme && styles.btnSubmitFullTextVigilance,
-                    ]}
-                  >
-                    Enviar pedido
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
+            <Pressable
+              onPress={handleBackToDashboard}
+              style={styles.closeFooterButton}
+              accessibilityRole="button"
+              accessibilityLabel="Fechar"
+            >
+              <Text style={styles.closeFooterButtonText}>Fechar</Text>
+            </Pressable>
           </View>
         </KeyboardAvoidingView>
       </>
@@ -1022,7 +1030,7 @@ const styles = StyleSheet.create({
   },
   formScrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 8,
+    paddingBottom: 16,
   },
   fieldStack: {
     flexDirection: 'column',
@@ -1177,17 +1185,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   footerBar: {
+    flexShrink: 0,
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 12,
     borderTopWidth: 1,
     borderTopColor: '#334155',
     backgroundColor: 'rgba(2, 6, 23, 0.92)',
-  },
-  footerActions: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    gap: 10,
+    width: '100%',
   },
   btnSubmitFull: {
     flex: 1,
@@ -1196,6 +1201,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 50,
+  },
+  btnSubmitInline: {
+    flex: 0,
+    width: '100%',
+    marginTop: 12,
   },
   btnSubmitFullText: {
     color: '#FFF',
@@ -1204,6 +1215,23 @@ const styles = StyleSheet.create({
   },
   btnSubmitDisabled: {
     opacity: 0.6,
+  },
+  closeFooterButton: {
+    minHeight: 51,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#1B4F8A',
+    backgroundColor: '#3A96DD',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
+  },
+  closeFooterButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
   errorText: {
     color: '#FCA5A5',
