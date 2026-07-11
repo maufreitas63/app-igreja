@@ -189,6 +189,9 @@ Execute no SQL Editor **antes** de usar o seletor no app:
 16. `scripts/multi-tenant-24-list-igrejas-fix.sql` — **obrigatório se Instâncias falhar ao listar**: corrige `list_session_igrejas` + `list_admin_igrejas`
 17. `scripts/multi-tenant-25-session-offerings-recipient.sql` — **obrigatório se Dízimos/Ofertas não mostrar CNPJ/PIX** da `igrejas`
 18. `scripts/multi-tenant-26-igrejas-columns-list-fix.sql` — **obrigatório se erro `column i.website_url does not exist`**: cria colunas faltantes + recria listagens/ofertas
+19. `scripts/multi-tenant-27-fail-closed-tenant-header.sql` — **obrigatório para UAT IBEP**: header inválido não cai na IBN; ofertas sem fallback IBN
+20. `scripts/uat-ibep-read-only-checks.sql` — checagens somente leitura pós-teste IBEP
+21. `scripts/restore-member-and-super-admin-access.sql` — restaura SA + membro + vínculos
 
 Fluxo no app:
 
