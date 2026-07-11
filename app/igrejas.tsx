@@ -83,10 +83,14 @@ function IgrejasAdminPanel() {
       syncSocialDrafts(rows);
     } catch (error) {
       console.error(error);
+      const detail =
+        error instanceof Error && error.message.trim()
+          ? error.message.trim()
+          : 'Não foi possível listar as igrejas. Execute o script multi-tenant-24 no Supabase.';
       Toast.show({
         type: 'error',
         text1: 'Instâncias',
-        text2: 'Não foi possível listar as igrejas.',
+        text2: detail.slice(0, 160),
       });
     } finally {
       setLoading(false);
@@ -475,7 +479,8 @@ function IgrejasAdminPanel() {
         <ActivityIndicator color={MINIMAL_UI.accent} />
       ) : churches.length === 0 ? (
         <Text style={styles.emptyList}>
-          Nenhuma instância listada. Confira a sessão ou execute o script multi-tenant-22/23 no Supabase.
+          Nenhuma instância listada. Execute no Supabase o script
+          multi-tenant-24-list-igrejas-fix.sql e faça hard refresh.
         </Text>
       ) : (
         <View style={styles.list}>

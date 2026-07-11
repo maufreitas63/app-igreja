@@ -149,6 +149,17 @@ function coerceSessionIgrejaRows(data: unknown): SessionIgreja[] {
     .filter((row): row is SessionIgreja => row != null);
 }
 
+function rpcErrorMessage(error: unknown): string {
+  if (!error) return '';
+  if (typeof error === 'string') return error.trim();
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message.trim();
+  }
+  if (error instanceof Error && error.message.trim()) return error.message.trim();
+  return '';
+}
+
 export async function listSessionIgrejas(): Promise<SessionIgreja[]> {
   const { data, error } = await supabase.rpc('list_session_igrejas');
   if (error) {
@@ -157,28 +168,41 @@ export async function listSessionIgrejas(): Promise<SessionIgreja[]> {
   return coerceSessionIgrejaRows(data);
 }
 
-/** Lista admin (ativas + bloqueadas). Requer super_admin + script 22. */
+/** Lista admin (ativas + bloqueadas). Requer super_admin + scripts 22–24. */
 export async function listAdminIgrejas(): Promise<SessionIgreja[]> {
-  const { data, error } = await supabase.rpc('list_admin_igrejas');
-  if (!error) {
-    const rows = coerceSessionIgrejaRows(data);
-    if (rows.length > 0) {
-      return rows;
-    }
-    // RPC ok mas vazia: tenta list_session (ex.: sessão/super_admin divergente).
-    try {
-      const sessionRows = await listSessionIgrejas();
-      if (sessionRows.length > 0) {
-        return sessionRows;
+  const errors: string[] = [];
+
+  try {
+    const { data, error } = await supabase.rpc('list_admin_igrejas');
+    if (error) {
+      errors.push(rpcErrorMessage(error) || 'list_admin_igrejas');
+    } else {
+      const rows = coerceSessionIgrejaRows(data);
+      if (rows.length > 0) {
+        return rows;
       }
-    } catch {
-      // mantém []
     }
-    return rows;
+  } catch (error) {
+    errors.push(rpcErrorMessage(error) || 'list_admin_igrejas');
   }
 
-  console.warn('list_admin_igrejas falhou; usando list_session_igrejas', error);
-  return listSessionIgrejas();
+  try {
+    const rows = await listSessionIgrejas();
+    if (rows.length > 0 || errors.length === 0) {
+      return rows;
+    }
+  } catch (error) {
+    errors.push(rpcErrorMessage(error) || 'list_session_igrejas');
+  }
+
+  if (errors.length > 0) {
+    throw new Error(
+      errors.filter(Boolean).join(' | ')
+        || 'Não foi possível listar as igrejas. Execute scripts/multi-tenant-24-list-igrejas-fix.sql no Supabase.'
+    );
+  }
+
+  return [];
 }
 
 /** Precisa escolher igreja? (>1 disponível) */
