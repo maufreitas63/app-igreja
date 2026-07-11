@@ -408,6 +408,7 @@ export const MaintenanceSalaServidorCard = ({
                         !isSelected && styles.groupedAudienceHeaderTextInactive,
                         !isSelected && minimal && styles.groupedAudienceHeaderTextInactiveMinimal,
                       ]}
+                      numberOfLines={1}
                     >
                       {room.label}
                     </Text>
@@ -657,11 +658,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     alignItems: 'flex-start',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   eventHeroSummary: {
     flex: 1,
     gap: 4,
     minWidth: 0,
+    maxWidth: '100%',
   },
   eventHeroName: {
     color: '#3A96DD',
@@ -715,6 +720,7 @@ const styles = StyleSheet.create({
     width: 72,
     alignItems: 'center',
     gap: 4,
+    flexShrink: 0,
   },
   capacityCup: {
     width: 56,
@@ -785,19 +791,29 @@ const styles = StyleSheet.create({
   },
   groupedAudienceSelectorRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
     alignItems: 'stretch',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   groupedAudienceServidorNamesRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
     alignItems: 'flex-start',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   groupedAudienceServidorNamesColumn: {
-    flex: 1,
-    flexBasis: 0,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: '45%',
     gap: 2,
-    minWidth: 0,
+    minWidth: 120,
+    maxWidth: '100%',
   },
   groupedAudienceServidorNamesLabel: {
     color: 'rgba(58, 150, 221, 0.82)',
@@ -818,14 +834,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   groupedAudienceSelectorChip: {
-    flex: 1,
-    flexBasis: 0,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: '45%',
+    minWidth: 140,
+    maxWidth: '100%',
     borderRadius: 18,
     borderWidth: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
-    height: 56,
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
     overflow: 'hidden',
   },
   groupedAudienceSelectorChipInactive: {
@@ -874,17 +896,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.4,
+    flexShrink: 1,
+    minWidth: 0,
   },
   groupedAudienceHeaderTextInactive: {
     color: 'rgba(58, 150, 221, 0.82)',
   },
   groupedAudienceCountBadge: {
-    minWidth: 54,
-    paddingHorizontal: 10,
+    minWidth: 48,
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   groupedAudienceCountBadgeActive: {
     backgroundColor: 'rgba(15, 23, 42, 0.45)',

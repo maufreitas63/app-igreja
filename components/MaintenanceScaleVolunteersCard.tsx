@@ -187,9 +187,13 @@ export function MaintenanceScaleVolunteersCard({
       ) : null}
 
       <View style={[styles.scaleTypePickerSection, minimal && styles.scaleTypePickerSectionMinimal]}>
-        <SectionLabel variant="maintenance" tight>
-          Tipo de escala
-        </SectionLabel>
+      <SectionLabel
+        variant="maintenance"
+        tight
+        style={minimal ? styles.sectionLabelMinimal : undefined}
+      >
+        Tipo de escala
+      </SectionLabel>
         <DropdownSelect
           options={scaleTypeDropdownOptions}
           selectedValue={selectedScaleTypeId ?? ''}
@@ -203,7 +207,12 @@ export function MaintenanceScaleVolunteersCard({
         />
       </View>
 
-      <SectionLabel variant="maintenance">Associar servos</SectionLabel>
+      <SectionLabel
+        variant="maintenance"
+        style={minimal ? styles.sectionLabelMinimal : undefined}
+      >
+        Associar servos
+      </SectionLabel>
       <View style={[styles.searchInputRow, minimal && styles.searchInputRowMinimal]}>
         <TextInput
           style={[styles.searchInput, minimal && styles.searchInputMinimal]}
@@ -227,7 +236,13 @@ export function MaintenanceScaleVolunteersCard({
         ) : null}
       </View>
 
-      <SectionLabel variant="maintenance" tight>Já associados</SectionLabel>
+      <SectionLabel
+        variant="maintenance"
+        tight
+        style={minimal ? styles.sectionLabelMinimal : undefined}
+      >
+        Já associados
+      </SectionLabel>
       <ScrollView style={styles.registeredScroll} nestedScrollEnabled>
         {loadingVolunteers ? (
           <CardLoadingState lines={3} compact />
@@ -238,12 +253,22 @@ export function MaintenanceScaleVolunteersCard({
             return (
               <View
                 key={volunteer.id}
-                style={[styles.registeredRow, index % 2 === 1 && styles.registeredRowAlt]}
+                style={[
+                  styles.registeredRow,
+                  minimal && styles.registeredRowMinimal,
+                  index % 2 === 1
+                    && (minimal ? styles.registeredRowAltMinimal : styles.registeredRowAlt),
+                ]}
               >
-                <Text style={styles.registeredOrder}>
+                <Text
+                  style={[styles.registeredOrder, minimal && styles.registeredOrderMinimal]}
+                >
                   {volunteer.sequenceOrder ?? '—'}
                 </Text>
-                <Text style={styles.registeredName} numberOfLines={2}>
+                <Text
+                  style={[styles.registeredName, minimal && styles.registeredNameMinimal]}
+                  numberOfLines={2}
+                >
                   {volunteer.name}
                 </Text>
                 <TouchableOpacity
@@ -254,16 +279,22 @@ export function MaintenanceScaleVolunteersCard({
                   accessibilityLabel={`Remover ${volunteer.name}`}
                 >
                   {isRemoving ? (
-                    <ActivityIndicator color="#FCA5A5" size="small" />
+                    <ActivityIndicator color={minimal ? '#DC2626' : '#FCA5A5'} size="small" />
                   ) : (
-                    <FontAwesome name="trash-o" size={17} color="#FCA5A5" />
+                    <FontAwesome
+                      name="trash-o"
+                      size={17}
+                      color={minimal ? '#DC2626' : '#FCA5A5'}
+                    />
                   )}
                 </TouchableOpacity>
               </View>
             );
           })
         ) : (
-          <Text style={styles.panelHintCompact}>Nenhum servo neste tipo de escala ainda.</Text>
+          <Text style={[styles.panelHintCompact, minimal && styles.panelHintMinimal]}>
+            Nenhum servo neste tipo de escala ainda.
+          </Text>
         )}
       </ScrollView>
 
@@ -271,7 +302,9 @@ export function MaintenanceScaleVolunteersCard({
 
       <ScrollView style={styles.resultsScroll} nestedScrollEnabled keyboardShouldPersistTaps="handled">
         {profileSearchQuery.trim().length >= 2 && !searchingProfiles && !profileResults.length ? (
-          <Text style={styles.panelHintCompact}>Nenhum perfil com esse nome.</Text>
+          <Text style={[styles.panelHintCompact, minimal && styles.panelHintMinimal]}>
+            Nenhum perfil com esse nome.
+          </Text>
         ) : null}
 
         {profileResults.map((profile) => {
@@ -282,18 +315,31 @@ export function MaintenanceScaleVolunteersCard({
           return (
             <TouchableOpacity
               key={profile.id}
-              style={[styles.resultRow, alreadyRegistered && styles.resultRowDisabled]}
+              style={[
+                styles.resultRow,
+                minimal && styles.resultRowMinimal,
+                alreadyRegistered && styles.resultRowDisabled,
+              ]}
               onPress={() => void handleAssociate(profile.id, profile.fullName)}
               disabled={listBusy || alreadyRegistered || rpcMissing}
               activeOpacity={0.85}
             >
-              <Text style={styles.resultName} numberOfLines={2}>
+              <Text
+                style={[styles.resultName, minimal && styles.resultNameMinimal]}
+                numberOfLines={2}
+              >
                 {profile.fullName}
               </Text>
               {alreadyRegistered ? (
-                <Text style={styles.resultBadge}>Já cadastrado</Text>
+                <Text style={[styles.resultBadge, minimal && styles.resultBadgeMinimal]}>
+                  Já cadastrado
+                </Text>
               ) : (
-                <FontAwesome name="plus-circle" size={18} color="#6EE7B7" />
+                <FontAwesome
+                  name="plus-circle"
+                  size={18}
+                  color={minimal ? MINIMAL_UI.accent : '#6EE7B7'}
+                />
               )}
             </TouchableOpacity>
           );
@@ -301,7 +347,9 @@ export function MaintenanceScaleVolunteersCard({
       </ScrollView>
 
       <TouchableOpacity style={styles.refreshLink} onPress={() => void reload()} activeOpacity={0.85}>
-        <Text style={styles.refreshLinkText}>Atualizar</Text>
+        <Text style={[styles.refreshLinkText, minimal && styles.refreshLinkTextMinimal]}>
+          Atualizar
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -537,5 +585,34 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.border,
     color: MINIMAL_UI.text,
     backgroundColor: MINIMAL_UI.background,
+  },
+  sectionLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  registeredRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  registeredRowAltMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  registeredOrderMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  registeredNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  resultRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  resultNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  resultBadgeMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  refreshLinkTextMinimal: {
+    color: MINIMAL_UI.accent,
   },
 });

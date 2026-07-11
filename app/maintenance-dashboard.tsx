@@ -1804,11 +1804,27 @@ export default function MaintenanceDashboard() {
               >
             <View style={styles.editorSection}>
               <View style={[styles.editorCard, isMinimalPresentation && styles.editorCardMinimal]}>
-                <View style={styles.nameGeofenceRow}>
+                <View
+                  style={[
+                    styles.nameGeofenceRow,
+                    isMinimalPresentation && styles.nameGeofenceRowMinimal,
+                  ]}
+                >
                   <View style={styles.nameInputColumn}>
-                    <Text style={styles.fieldLabel}>Nome do evento</Text>
+                    <Text
+                      style={[
+                        styles.fieldLabel,
+                        isMinimalPresentation && styles.fieldLabelMinimal,
+                      ]}
+                    >
+                      Nome do evento
+                    </Text>
                     <TextInput
-                      style={[styles.input, styles.nameInput]}
+                      style={[
+                        styles.input,
+                        styles.nameInput,
+                        isMinimalPresentation && styles.inputMinimal,
+                      ]}
                       placeholder="Ex.: Culto de domingo"
                       placeholderTextColor="#64748B"
                       value={form.name}
@@ -2901,10 +2917,18 @@ const styles = StyleSheet.create({
   },
   dateTimeRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   dateTimeField: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 140,
+    minWidth: 120,
+    maxWidth: '100%',
   },
   dateInputTrigger: {
     flexDirection: 'row',
@@ -2930,13 +2954,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 10,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  nameGeofenceRowMinimal: {
+    // Evita featureToggleColumnMinimal (width 100%) esmagar o campo Nome.
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 12,
   },
   nameInputColumn: {
     flex: 1,
     minWidth: 0,
+    width: '100%',
+    maxWidth: '100%',
   },
   nameInput: {
     width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   totemFieldLabel: {
     color: '#3A96DD',
@@ -3165,6 +3202,14 @@ const styles = StyleSheet.create({
   },
   fieldLabelMinimal: {
     color: MINIMAL_UI.textMuted,
+  },
+  inputMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    borderColor: MINIMAL_UI.border,
+    color: MINIMAL_UI.text,
+    backgroundColor: MINIMAL_UI.background,
   },
   fieldLabelCentered: {
     textAlign: 'center',

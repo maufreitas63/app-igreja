@@ -34,6 +34,7 @@ type CollapsibleSectionProps = {
   expanded: boolean;
   onToggle: () => void;
   fill?: boolean;
+  minimal?: boolean;
   children: React.ReactNode;
 };
 
@@ -43,10 +44,17 @@ function CollapsibleSection({
   expanded,
   onToggle,
   fill = false,
+  minimal = false,
   children,
 }: CollapsibleSectionProps) {
   return (
-    <View style={[styles.collapseSection, fill && expanded && styles.collapseSectionFill]}>
+    <View
+      style={[
+        styles.collapseSection,
+        minimal && styles.collapseSectionMinimal,
+        fill && expanded && styles.collapseSectionFill,
+      ]}
+    >
       <TouchableOpacity
         style={styles.collapseHeader}
         onPress={onToggle}
@@ -56,25 +64,42 @@ function CollapsibleSection({
       >
         <View style={styles.collapseHeaderTextWrap}>
           <View style={styles.collapseHeaderTitleRow}>
-            <Text style={styles.collapseHeaderTitle} numberOfLines={1}>
+            <Text
+              style={[styles.collapseHeaderTitle, minimal && styles.collapseHeaderTitleMinimal]}
+              numberOfLines={1}
+            >
               {title}
             </Text>
             <FontAwesome
               name={expanded ? 'chevron-up' : 'chevron-down'}
               size={14}
-              color="#A5B4FC"
+              color={minimal ? MINIMAL_UI.icon : '#A5B4FC'}
               style={styles.collapseChevron}
             />
           </View>
           {subtitle ? (
-            <Text style={styles.collapseHeaderSubtitle} numberOfLines={2}>
+            <Text
+              style={[
+                styles.collapseHeaderSubtitle,
+                minimal && styles.collapseHeaderSubtitleMinimal,
+              ]}
+              numberOfLines={2}
+            >
               {subtitle}
             </Text>
           ) : null}
         </View>
       </TouchableOpacity>
       {expanded ? (
-        <View style={[styles.collapseBody, fill && styles.collapseBodyFill]}>{children}</View>
+        <View
+          style={[
+            styles.collapseBody,
+            minimal && styles.collapseBodyMinimal,
+            fill && styles.collapseBodyFill,
+          ]}
+        >
+          {children}
+        </View>
       ) : null}
     </View>
   );
@@ -353,6 +378,7 @@ export function MaintenanceScaleTypesCard({
           subtitle="Cadastrar código, nome, vagas e modo do ciclo"
           expanded={expandedSection === 'create'}
           onToggle={() => toggleSection('create')}
+          minimal={minimal}
         >
           {renderScaleTypeForm('create')}
         </CollapsibleSection>
@@ -369,6 +395,7 @@ export function MaintenanceScaleTypesCard({
           expanded={expandedSection === 'registered'}
           onToggle={() => toggleSection('registered')}
           fill={expandedSection === 'registered'}
+          minimal={minimal}
         >
           {editingId ? renderScaleTypeForm('edit') : null}
           <ScrollView style={styles.listScroll} nestedScrollEnabled>
@@ -382,20 +409,31 @@ export function MaintenanceScaleTypesCard({
                     key={row.id}
                     style={[
                       styles.listRow,
-                      index % 2 === 1 && styles.listRowAlt,
-                      isEditing && styles.listRowEditing,
+                      minimal && styles.listRowMinimal,
+                      index % 2 === 1 && (minimal ? styles.listRowAltMinimal : styles.listRowAlt),
+                      isEditing && (minimal ? styles.listRowEditingMinimal : styles.listRowEditing),
                     ]}
                   >
                     <View style={styles.listMain}>
-                      <Text style={styles.listName} numberOfLines={2}>
+                      <Text
+                        style={[styles.listName, minimal && styles.listNameMinimal]}
+                        numberOfLines={2}
+                      >
                         {mapLegacyRoomDisplayLabel(row.name)}
                       </Text>
-                      <Text style={styles.listCode} numberOfLines={1}>
+                      <Text
+                        style={[styles.listCode, minimal && styles.listCodeMinimal]}
+                        numberOfLines={1}
+                      >
                         {row.code} · {row.vagasPorServico} vaga(s) ·{' '}
                         {row.modoCiclo === 'equipe' ? 'equipe' : 'individual'}
                       </Text>
                       {!row.isActive ? (
-                        <Text style={styles.inactiveBadge}>Inativa</Text>
+                        <Text
+                          style={[styles.inactiveBadge, minimal && styles.inactiveBadgeMinimal]}
+                        >
+                          Inativa
+                        </Text>
                       ) : null}
                     </View>
                     <TouchableOpacity
@@ -405,7 +443,11 @@ export function MaintenanceScaleTypesCard({
                       activeOpacity={0.85}
                       accessibilityLabel={`Editar ${row.name}`}
                     >
-                      <FontAwesome name="pencil" size={16} color="#A5B4FC" />
+                      <FontAwesome
+                        name="pencil"
+                        size={16}
+                        color={minimal ? MINIMAL_UI.icon : '#A5B4FC'}
+                      />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.iconButton}
@@ -415,16 +457,25 @@ export function MaintenanceScaleTypesCard({
                       accessibilityLabel={`Excluir ${row.name}`}
                     >
                       {isDeleting ? (
-                        <ActivityIndicator color="#FCA5A5" size="small" />
+                        <ActivityIndicator
+                          color={minimal ? '#DC2626' : '#FCA5A5'}
+                          size="small"
+                        />
                       ) : (
-                        <FontAwesome name="trash-o" size={17} color="#FCA5A5" />
+                        <FontAwesome
+                          name="trash-o"
+                          size={17}
+                          color={minimal ? '#DC2626' : '#FCA5A5'}
+                        />
                       )}
                     </TouchableOpacity>
                   </View>
                 );
               })
             ) : (
-              <Text style={styles.panelHint}>Nenhum tipo de escala cadastrado ainda.</Text>
+              <Text style={[styles.panelHint, minimal && styles.panelHintMinimal]}>
+                Nenhum tipo de escala cadastrado ainda.
+              </Text>
             )}
           </ScrollView>
         </CollapsibleSection>
@@ -752,5 +803,39 @@ const styles = StyleSheet.create({
   },
   saveButtonTextMinimal: {
     color: MINIMAL_UI.onDark,
+  },
+  collapseSectionMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 12,
+  },
+  collapseHeaderTitleMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  collapseHeaderSubtitleMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  collapseBodyMinimal: {
+    borderTopColor: MINIMAL_UI.divider,
+  },
+  listRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  listRowAltMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  listRowEditingMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: '#EFF6FF',
+  },
+  listNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  listCodeMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  inactiveBadgeMinimal: {
+    color: '#B45309',
   },
 });

@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 
 const LABEL_COLUMN_WIDTH = 132;
+const LABEL_COLUMN_WIDTH_MINIMAL = 108;
 const DAY_COLUMN_WIDTH = 54;
 const MONTH_COLUMN_WIDTH = 68;
 const ROW_HEIGHT = 52;
@@ -60,6 +61,7 @@ export const EventsGanttChart = ({
   const isSyncingVerticalScrollRef = useRef(false);
 
   const columnWidth = viewMode === 'month' ? MONTH_COLUMN_WIDTH : DAY_COLUMN_WIDTH;
+  const labelColumnWidth = minimal ? LABEL_COLUMN_WIDTH_MINIMAL : LABEL_COLUMN_WIDTH;
   const datesWidth = model ? model.dateColumns.length * columnWidth : 0;
   const periodUnitLabel = viewMode === 'month' ? 'mês' : 'dia';
   const periodUnitLabelPlural = viewMode === 'month' ? 'meses' : 'dias';
@@ -220,8 +222,20 @@ export const EventsGanttChart = ({
 
       <View style={[styles.gridShell, minimal && styles.gridShellMinimal]}>
         {/* Coluna fixa: cabeçalho + nomes dos eventos */}
-        <View style={[styles.frozenColumn, minimal && styles.frozenColumnMinimal]}>
-          <View style={[styles.headerLabelCell, { height: HEADER_HEIGHT }, minimal && styles.headerLabelCellMinimal]}>
+        <View
+          style={[
+            styles.frozenColumn,
+            { width: labelColumnWidth },
+            minimal && styles.frozenColumnMinimal,
+          ]}
+        >
+          <View
+            style={[
+              styles.headerLabelCell,
+              { height: HEADER_HEIGHT, width: labelColumnWidth },
+              minimal && styles.headerLabelCellMinimal,
+            ]}
+          >
             <Text style={[styles.headerLabelText, minimal && styles.headerLabelTextMinimal]}>Evento</Text>
             <Text style={[styles.headerLabelHint, minimal && styles.headerLabelHintMinimal]}>
               {viewMode === 'month' ? 'Colunas: meses' : 'Colunas: dias'}
@@ -242,7 +256,7 @@ export const EventsGanttChart = ({
                 key={row.id}
                 style={[
                   styles.labelCell,
-                  { height: ROW_HEIGHT },
+                  { height: ROW_HEIGHT, width: labelColumnWidth },
                   rowIndex % 2 === 1 && styles.dataRowAlt,
                   rowIndex % 2 === 1 && minimal && styles.dataRowAltMinimal,
                   minimal && styles.labelCellMinimal,
@@ -428,6 +442,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     minHeight: 0,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   centered: {
     flex: 1,
@@ -540,6 +557,9 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     minHeight: 0,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
     borderRadius: 10,
@@ -568,6 +588,7 @@ const styles = StyleSheet.create({
   datesHorizontalScroll: {
     flex: 1,
     minWidth: 0,
+    maxWidth: '100%',
   },
   datesHeaderRow: {
     flexDirection: 'row',
@@ -723,6 +744,15 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
+    overflow: 'hidden',
+  },
+  gridShellMinimal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 12,
+    backgroundColor: MINIMAL_UI.background,
   },
   headerToolbarMinimal: {
     justifyContent: 'center',
@@ -811,12 +841,6 @@ const styles = StyleSheet.create({
   },
   retryButtonTextMinimal: {
     color: MINIMAL_UI.blueDark,
-  },
-  gridShellMinimal: {
-    borderColor: MINIMAL_UI.border,
-    backgroundColor: MINIMAL_UI.background,
-    width: '100%',
-    maxWidth: '100%',
   },
   frozenColumnMinimal: {
     backgroundColor: MINIMAL_UI.background,
