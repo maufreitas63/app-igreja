@@ -7,7 +7,7 @@ import { AppDrawer } from './AppDrawer';
 import { MinimalTopLeftChrome } from './MinimalTopLeftChrome';
 
 type Props = {
-  /** Exibe «Olá, {nome}» — apenas na tela inicial do menu. */
+  /** «Olá, {nome}» visível na home; nas demais o espaço permanece (texto invisível). */
   showGreeting?: boolean;
   title?: string;
   header?: React.ReactNode;

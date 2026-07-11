@@ -19,15 +19,15 @@ function resolveGreetingName(fullName: string | null | undefined): string {
   return firstName || 'usuário';
 }
 
-/** Faixa superior esquerda: apenas a saudação (logo fica separado no chrome). */
+/**
+ * Faixa superior esquerda: saudação.
+ * Na home fica visível; nas demais telas mantém o espaço com texto na cor do fundo
+ * para o menu não subir.
+ */
 export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?: boolean }) {
   const [greetingName, setGreetingName] = useState('usuário');
 
   useEffect(() => {
-    if (!showGreeting) {
-      return undefined;
-    }
-
     let active = true;
 
     void (async () => {
@@ -49,15 +49,19 @@ export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?:
     return () => {
       active = false;
     };
-  }, [showGreeting]);
-
-  if (!showGreeting) {
-    return null;
-  }
+  }, []);
 
   return (
-    <View style={styles.row}>
-      <Text style={styles.greeting} numberOfLines={1}>
+    <View
+      style={styles.row}
+      accessibilityElementsHidden={!showGreeting}
+      importantForAccessibility={showGreeting ? 'yes' : 'no-hide-descendants'}
+    >
+      <Text
+        style={[styles.greeting, !showGreeting && styles.greetingSpacer]}
+        numberOfLines={1}
+        accessibilityRole={showGreeting ? 'text' : undefined}
+      >
         Olá, {greetingName}
       </Text>
     </View>
@@ -78,5 +82,9 @@ const styles = StyleSheet.create({
     ...MINIMAL_TYPO.greeting,
     textAlign: 'left',
     flexShrink: 1,
+  },
+  /** Mesmo espaço da saudação, invisível no fundo branco. */
+  greetingSpacer: {
+    color: MINIMAL_UI.background,
   },
 });
