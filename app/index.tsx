@@ -704,7 +704,7 @@ export default function IndexScreen() {
     }
 
     if (loginStep === 1) {
-      return 'Boas-vindas ao ambiente da sua igreja';
+      return 'Sua Igreja mais perto de você !';
     }
 
     return 'Boas-vindas';
@@ -712,7 +712,7 @@ export default function IndexScreen() {
 
   const getLoginSubtitle = () => {
     if (loginStep === 1) {
-      return 'Acesse o ambiente da sua igreja com o celular cadastrado.';
+      return 'Entre usando o numero de celular cadastrado e aproveite todos os recursos disponiveis';
     }
 
     if (isTotemLoginMode) {
