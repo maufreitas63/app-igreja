@@ -1,15 +1,15 @@
 -- =============================================================================
--- Multi-tenancy 24 — corrige list_session_igrejas + list_admin_igrejas
+-- Multi-tenancy 26 — garante colunas de igrejas + recria listagens
 -- =============================================================================
--- Sintoma: tela Instâncias → "Não foi possível listar as igrejas."
--- Causa: conflito de nomes OUT (id, is_active, …) no RETURN QUERY (PL/pgSQL).
+-- Erro: column i.website_url does not exist
+-- (ou logo_url / instagram_url / youtube_url / cnpj / pix_*)
 --
--- Execute no SQL Editor do Supabase (substitui/complementa o 23).
+-- Causa: scripts 24/22 referenciam colunas que ainda não existem neste banco.
+-- Execute este arquivo no SQL Editor do Supabase.
 -- =============================================================================
 
 begin;
 
--- Colunas usadas pelas RPCs (idempotente se 11/14/16/21 já rodaram)
 alter table public.igrejas
   add column if not exists logo_url text,
   add column if not exists website_url text,
@@ -18,6 +18,9 @@ alter table public.igrejas
   add column if not exists cnpj text,
   add column if not exists pix_institution text,
   add column if not exists pix_key text;
+
+comment on column public.igrejas.website_url is
+  'URL do site oficial da instância (menu Redes Sociais / cadastro).';
 
 -- ---------------------------------------------------------------------------
 -- list_session_igrejas
@@ -141,7 +144,7 @@ $$;
 grant execute on function public.list_session_igrejas() to anon, authenticated;
 
 -- ---------------------------------------------------------------------------
--- list_admin_igrejas (ativas + bloqueadas, só super_admin)
+-- list_admin_igrejas
 -- ---------------------------------------------------------------------------
 drop function if exists public.list_admin_igrejas();
 
@@ -219,6 +222,68 @@ end;
 $$;
 
 grant execute on function public.list_admin_igrejas() to anon, authenticated;
+
+-- Ofertas (se ainda não existir)
+create or replace function public.get_session_offerings_recipient(p_tenant_id uuid default null)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_profile_id uuid := public.current_session_profile_id();
+  v_tenant uuid;
+  v_row record;
+begin
+  if v_profile_id is null then
+    return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
+  end if;
+
+  v_tenant := coalesce(
+    p_tenant_id,
+    public.current_session_tenant_id(),
+    public.resolve_default_tenant_id()
+  );
+
+  if v_tenant is null then
+    return jsonb_build_object('success', false, 'message', 'Igreja ativa não encontrada.');
+  end if;
+
+  if not public.profile_can_use_tenant(v_profile_id, v_tenant) then
+    return jsonb_build_object('success', false, 'message', 'Sem acesso a esta igreja.');
+  end if;
+
+  select
+    i.id,
+    i.code,
+    i.name,
+    nullif(trim(i.cnpj), '') as cnpj,
+    nullif(trim(i.pix_institution), '') as pix_institution,
+    nullif(trim(i.pix_key), '') as pix_key
+  into v_row
+  from public.igrejas i
+  where i.id = v_tenant
+    and i.is_active = true;
+
+  if v_row.id is null then
+    return jsonb_build_object('success', false, 'message', 'Igreja não encontrada ou inativa.');
+  end if;
+
+  return jsonb_build_object(
+    'success', true,
+    'id', v_row.id,
+    'code', v_row.code,
+    'name', v_row.name,
+    'cnpj', v_row.cnpj,
+    'pix_institution', v_row.pix_institution,
+    'pix_key', v_row.pix_key
+  );
+end;
+$$;
+
+grant execute on function public.get_session_offerings_recipient(uuid)
+  to anon, authenticated;
 
 notify pgrst, 'reload schema';
 
