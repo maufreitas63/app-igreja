@@ -34,10 +34,7 @@ export const MemberCheckboxItem = ({
   onToggle,
 }: Props) => {
   const displayName = formatFullName(member.full_name);
-  const roomSuffix = assignedRoomLabel?.trim()
-    ? ` - [${assignedRoomLabel.trim()}]`
-    : '';
-  const nameWithRoom = `${displayName}${roomSuffix}`;
+  const roomLabel = assignedRoomLabel?.trim() || '';
   const shouldShowStatusDot =
     (registrationStatus === 'KIDS' && showKidsIndicator) ||
     (registrationStatus === 'TEENS' && showTeensIndicator);
@@ -67,7 +64,7 @@ export const MemberCheckboxItem = ({
       <View style={styles.info}>
         <View style={styles.nameRow}>
           <Text style={[styles.name, minimal && styles.nameMinimal]} numberOfLines={1}>
-            {nameWithRoom}
+            {displayName}
           </Text>
           {shouldShowStatusDot ? (
             <View
@@ -76,6 +73,14 @@ export const MemberCheckboxItem = ({
                 registrationStatus === 'KIDS' ? styles.statusDotKids : styles.statusDotTeens,
               ]}
             />
+          ) : null}
+          {roomLabel ? (
+            <Text
+              style={[styles.roomLabel, minimal && styles.roomLabelMinimal]}
+              numberOfLines={1}
+            >
+              {roomLabel}
+            </Text>
           ) : null}
         </View>
         {isRegistered ? (
@@ -145,6 +150,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     minWidth: 0,
+    width: '100%',
   },
   name: {
     color: '#FFF',
@@ -155,6 +161,17 @@ const styles = StyleSheet.create({
   nameMinimal: {
     color: MINIMAL_UI.text,
     fontWeight: '600',
+  },
+  roomLabel: {
+    color: 'rgba(148, 163, 184, 0.95)',
+    fontSize: 13,
+    fontWeight: '700',
+    flexShrink: 1,
+    maxWidth: '42%',
+    textAlign: 'right',
+  },
+  roomLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
   statusDot: {
     width: 10,

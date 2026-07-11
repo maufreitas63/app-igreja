@@ -9,6 +9,7 @@ let totemAtivoColumnAvailable: boolean | null = null;
 let requerQuorumColumnAvailable: boolean | null = null;
 let somenteMembrosColumnAvailable: boolean | null = null;
 let geofenceAtivoColumnAvailable: boolean | null = null;
+let enabledRoomKeysColumnAvailable: boolean | null = null;
 
 const buildEventSelect = () => {
   const fields = [EVENT_SELECT_BASE];
@@ -27,6 +28,10 @@ const buildEventSelect = () => {
 
   if (geofenceAtivoColumnAvailable !== false) {
     fields.push('geofence_ativo');
+  }
+
+  if (enabledRoomKeysColumnAvailable !== false) {
+    fields.push('enabled_room_keys');
   }
 
   return fields.join(', ');
@@ -52,11 +57,16 @@ export const setGeofenceAtivoColumnAvailable = (available: boolean) => {
   geofenceAtivoColumnAvailable = available;
 };
 
+export const setEnabledRoomKeysColumnAvailable = (available: boolean) => {
+  enabledRoomKeysColumnAvailable = available;
+};
+
 export const resetTotemColumnAvailabilityCache = () => {
   totemAtivoColumnAvailable = null;
   requerQuorumColumnAvailable = null;
   somenteMembrosColumnAvailable = null;
   geofenceAtivoColumnAvailable = null;
+  enabledRoomKeysColumnAvailable = null;
 };
 
 export const isTotemAtivoColumnAvailable = () => totemAtivoColumnAvailable === true;
@@ -66,6 +76,8 @@ export const isRequerQuorumColumnAvailable = () => requerQuorumColumnAvailable =
 export const isSomenteMembrosColumnAvailable = () => somenteMembrosColumnAvailable === true;
 
 export const isGeofenceAtivoColumnAvailable = () => geofenceAtivoColumnAvailable === true;
+
+export const isEnabledRoomKeysColumnAvailable = () => enabledRoomKeysColumnAvailable === true;
 
 const isMissingColumnError = (
   error: Pick<PostgrestError, 'code' | 'message'> | null,
@@ -99,6 +111,10 @@ export const isMissingSomenteMembrosColumnError = (
 export const isMissingGeofenceAtivoColumnError = (
   error: Pick<PostgrestError, 'code' | 'message'> | null
 ) => isMissingColumnError(error, 'geofence_ativo');
+
+export const isMissingEnabledRoomKeysColumnError = (
+  error: Pick<PostgrestError, 'code' | 'message'> | null
+) => isMissingColumnError(error, 'enabled_room_keys');
 
 export const probeTotemAtivoColumn = async () => {
   const { error } = await supabase.from('events').select('totem_ativo').limit(1);
@@ -164,11 +180,28 @@ export const probeGeofenceAtivoColumn = async () => {
   return true;
 };
 
+export const probeEnabledRoomKeysColumn = async () => {
+  const { error } = await supabase.from('events').select('enabled_room_keys').limit(1);
+
+  if (isMissingEnabledRoomKeysColumnError(error)) {
+    setEnabledRoomKeysColumnAvailable(false);
+    return false;
+  }
+
+  if (error) {
+    throw error;
+  }
+
+  setEnabledRoomKeysColumnAvailable(true);
+  return true;
+};
+
 export type EventRowWithOptionals = {
   totem_ativo?: boolean | null;
   requer_quorum?: boolean | null;
   somente_membros?: boolean | null;
   geofence_ativo?: boolean | null;
+  enabled_room_keys?: string[] | null;
   [key: string]: unknown;
 };
 
@@ -181,13 +214,24 @@ export const withDefaultEventOptionals = <T extends EventRowWithOptionals>(row: 
   requer_quorum: row.requer_quorum === true,
   somente_membros: row.somente_membros === true,
   geofence_ativo: row.geofence_ativo === true,
+  enabled_room_keys: Array.isArray(row.enabled_room_keys)
+    ? row.enabled_room_keys
+        .map((key) => String(key ?? '').trim().toUpperCase())
+        .filter((key) => /^[A-Z0-9_]{2,40}$/.test(key))
+    : [],
 });
 
 export const withDefaultTotemAtivo = withDefaultEventOptionals;
 
 export const stripOptionalFieldsFromEventPayload = <T extends Record<string, unknown>>(
   payload: T,
-  options: { totem?: boolean; quorum?: boolean; somenteMembros?: boolean; geofenceAtivo?: boolean }
+  options: {
+    totem?: boolean;
+    quorum?: boolean;
+    somenteMembros?: boolean;
+    geofenceAtivo?: boolean;
+    enabledRoomKeys?: boolean;
+  }
 ) => {
   const next = { ...payload };
 
@@ -205,6 +249,10 @@ export const stripOptionalFieldsFromEventPayload = <T extends Record<string, unk
 
   if (options.geofenceAtivo) {
     delete next.geofence_ativo;
+  }
+
+  if (options.enabledRoomKeys) {
+    delete next.enabled_room_keys;
   }
 
   return next;
@@ -226,6 +274,9 @@ export const SOMENTE_MEMBROS_COLUMN_SQL_HINT =
 
 export const GEOFENCE_ATIVO_COLUMN_SQL_HINT =
   'Execute uma vez no Supabase o script scripts/events-geofence-ativo.sql (habilita Check-in automático por evento).';
+
+export const ENABLED_ROOM_KEYS_COLUMN_SQL_HINT =
+  'Execute no Supabase: scripts/events-enabled-room-keys.sql (libera salas customizadas no evento).';
 
 export async function ensureEventsTotemAtivoColumn(): Promise<boolean> {
   if (await probeTotemAtivoColumn().catch(() => false)) {
@@ -311,14 +362,40 @@ export async function ensureEventsGeofenceAtivoColumn(): Promise<boolean> {
   return true;
 }
 
-/** Garante colunas opcionais de eventos (totem_ativo, requer_quorum, somente_membros, geofence_ativo). */
+export async function ensureEventsEnabledRoomKeysColumn(): Promise<boolean> {
+  if (await probeEnabledRoomKeysColumn().catch(() => false)) {
+    return true;
+  }
+
+  const { error } = await supabase.rpc('ensure_events_enabled_room_keys_column');
+
+  if (error) {
+    if (!isSupabaseRpcMissingError(error, 'ensure_events_enabled_room_keys_column')) {
+      console.warn('ensure_events_enabled_room_keys_column:', error.message);
+    }
+    setEnabledRoomKeysColumnAvailable(false);
+    return false;
+  }
+
+  enabledRoomKeysColumnAvailable = null;
+  const probed = await probeEnabledRoomKeysColumn().catch(() => false);
+  if (probed) {
+    return true;
+  }
+
+  setEnabledRoomKeysColumnAvailable(true);
+  return true;
+}
+
+/** Garante colunas opcionais de eventos. */
 export async function ensureEventsOptionalColumns() {
-  const [totem, quorum, somenteMembros, geofenceAtivo] = await Promise.all([
+  const [totem, quorum, somenteMembros, geofenceAtivo, enabledRoomKeys] = await Promise.all([
     ensureEventsTotemAtivoColumn(),
     ensureEventsRequerQuorumColumn(),
     ensureEventsSomenteMembrosColumn(),
     ensureEventsGeofenceAtivoColumn(),
+    ensureEventsEnabledRoomKeysColumn(),
   ]);
 
-  return { totem, quorum, somenteMembros, geofenceAtivo };
+  return { totem, quorum, somenteMembros, geofenceAtivo, enabledRoomKeys };
 }

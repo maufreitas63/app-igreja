@@ -1,10 +1,12 @@
 import {
   ensureEventsOptionalColumns,
   getActiveEventSelect,
+  isMissingEnabledRoomKeysColumnError,
   isMissingGeofenceAtivoColumnError,
   isMissingRequerQuorumColumnError,
   isMissingSomenteMembrosColumnError,
   isMissingTotemColumnError,
+  setEnabledRoomKeysColumnAvailable,
   setGeofenceAtivoColumnAvailable,
   setRequerQuorumColumnAvailable,
   setSomenteMembrosColumnAvailable,
@@ -30,6 +32,7 @@ export type ActiveEventListItem = {
   parm_ofertas: boolean | null;
   kids_room: boolean | null;
   teens_room: boolean | null;
+  enabled_room_keys?: string[] | null;
   totem_ativo: boolean | null;
   requer_quorum: boolean | null;
   somente_membros: boolean | null;
@@ -192,6 +195,19 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
           fetchError = retry.error;
         } else if (!fetchError) {
           setGeofenceAtivoColumnAvailable(true);
+        }
+
+        if (fetchError && isMissingEnabledRoomKeysColumnError(fetchError)) {
+          setEnabledRoomKeysColumnAvailable(false);
+          const retry = await supabase
+            .from('events')
+            .select(getActiveEventSelect())
+            .or('is_locked.eq.false,is_locked.is.null')
+            .order('event_date', { ascending: true });
+          data = retry.data;
+          fetchError = retry.error;
+        } else if (!fetchError) {
+          setEnabledRoomKeysColumnAvailable(true);
         }
 
         if (fetchError) {

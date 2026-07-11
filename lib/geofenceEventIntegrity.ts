@@ -10,6 +10,7 @@ export type GeofenceEventSnapshot = {
   max_capacity?: number | null;
   kids_room?: boolean | null;
   teens_room?: boolean | null;
+  enabled_room_keys?: string[] | null;
   parm_ofertas?: boolean | null;
   totem_ativo?: boolean | null;
   requer_quorum?: boolean | null;
@@ -18,6 +19,13 @@ export type GeofenceEventSnapshot = {
 };
 
 const bool = (value: boolean | null | undefined) => value === true;
+
+const normalizeKeys = (keys: string[] | null | undefined) =>
+  (Array.isArray(keys) ? keys : [])
+    .map((key) => String(key ?? '').trim().toUpperCase())
+    .filter((key) => /^[A-Z0-9_]{2,40}$/.test(key))
+    .sort()
+    .join('|');
 
 const sameEventDate = (
   before: string | null | undefined,
@@ -47,6 +55,7 @@ export const geofenceEventHasCheckinRelevantChanges = (
   || (before.max_capacity ?? null) !== (after.max_capacity ?? null)
   || bool(before.kids_room) !== bool(after.kids_room)
   || bool(before.teens_room) !== bool(after.teens_room)
+  || normalizeKeys(before.enabled_room_keys) !== normalizeKeys(after.enabled_room_keys)
   || bool(before.parm_ofertas) !== bool(after.parm_ofertas)
   || bool(before.totem_ativo) !== bool(after.totem_ativo)
   || bool(before.requer_quorum) !== bool(after.requer_quorum)

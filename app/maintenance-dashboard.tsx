@@ -4,6 +4,7 @@ import {
   formatEventTimeInputMask,
   summarizeMaintenanceEvent,
   isMaintenanceEventFormDateInPast,
+  toggleEnabledRoomKey,
   validateMaintenanceEventForm,
   type MaintenanceEventFormState,
 } from '@/lib/maintenanceEventForm';
@@ -40,6 +41,7 @@ import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import { type MaintenanceScalePanelContent } from '@/lib/scaleAccess';
 import {
   ensureEventsOptionalColumns,
+  ENABLED_ROOM_KEYS_COLUMN_SQL_HINT,
   GEOFENCE_ATIVO_COLUMN_SQL_HINT,
   isGeofenceAtivoColumnAvailable,
   isRequerQuorumColumnAvailable,
@@ -49,6 +51,11 @@ import {
   SOMENTE_MEMBROS_COLUMN_SQL_HINT,
   TOTEM_COLUMN_SQL_HINT,
 } from '@/lib/eventsColumnSupport';
+import {
+  DEFAULT_CHURCH_ROOM_SETTINGS,
+  listChurchRoomSettings,
+  type ChurchRoomSetting,
+} from '@/lib/churchRoomSettings';
 import {
   ensureEventQuorumRegistry,
   isQuorumRegistryTableAvailable,
@@ -81,7 +88,6 @@ import {
 import { MAINTENANCE_LIGHT_PANEL_CARD, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { DASHBOARD_CARD_SHELL } from '@/lib/dashboardCardStyles';
 import { confirmDialog } from '@/lib/confirmDialog';
-import { KIDS_ROOM_DISPLAY_LABEL, TEENS_ROOM_DISPLAY_LABEL } from '@/lib/entityPrefix';
 import {
   deleteMaintenanceEvent,
   replicateMaintenanceEventFromRecord,
@@ -133,6 +139,10 @@ const ROOM_CHIP_KIDS_ACTIVE: ViewStyle = {
 const ROOM_CHIP_TEENS_ACTIVE: ViewStyle = {
   backgroundColor: 'rgba(239, 68, 68, 0.12)',
   borderColor: 'rgba(239, 68, 68, 0.35)',
+};
+const ROOM_CHIP_CUSTOM_ACTIVE: ViewStyle = {
+  backgroundColor: 'rgba(30, 64, 175, 0.10)',
+  borderColor: 'rgba(30, 64, 175, 0.35)',
 };
 
 /** Fundo claro no padrão vigilance. */
@@ -257,6 +267,13 @@ const getSaveErrorMessage = (err: unknown) => {
 
   if (message.toLowerCase().includes('geofence_ativo')) {
     return `Check-in automático não foi salvo no banco.\n\n${GEOFENCE_ATIVO_COLUMN_SQL_HINT}`;
+  }
+
+  if (
+    code === 'ENABLED_ROOM_KEYS_MISSING'
+    || message.toLowerCase().includes('enabled_room_keys')
+  ) {
+    return `Salas customizadas no evento não foram salvas.\n\n${ENABLED_ROOM_KEYS_COLUMN_SQL_HINT}`;
   }
 
   if (code === 'GEOFENCE_COLUMN_MISSING') {
@@ -403,6 +420,9 @@ export default function MaintenanceDashboard() {
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [form, setForm] = useState<MaintenanceEventFormState>(emptyMaintenanceEventForm);
+  const [eventRoomOptions, setEventRoomOptions] = useState<ChurchRoomSetting[]>(
+    DEFAULT_CHURCH_ROOM_SETTINGS
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [isReplicatingSeven, setIsReplicatingSeven] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -778,6 +798,30 @@ export default function MaintenanceDashboard() {
   }, [cancelDeleteConfirm, closeEditor, deleteTargetId, deleteTargetName, refetch]);
 
   const showEditor = selectedEventId !== null;
+
+  useEffect(() => {
+    if (!showEditor) {
+      return;
+    }
+
+    let cancelled = false;
+    void listChurchRoomSettings({ forceRefresh: true })
+      .then((rows) => {
+        if (!cancelled) {
+          setEventRoomOptions(rows.filter((row) => row.is_enabled));
+        }
+      })
+      .catch((error) => {
+        console.warn('listChurchRoomSettings (evento):', error);
+        if (!cancelled) {
+          setEventRoomOptions(DEFAULT_CHURCH_ROOM_SETTINGS);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showEditor]);
 
   const {
     locations: favoriteLocations,
@@ -1987,20 +2031,34 @@ export default function MaintenanceDashboard() {
                       isMinimalPresentation && styles.featureRowChipsMinimal,
                     ]}
                   >
-                    <FeatureToggle
-                      label={KIDS_ROOM_DISPLAY_LABEL}
-                      value={form.kidsRoom}
-                      onValueChange={(kidsRoom) => patchForm({ kidsRoom })}
-                      activeStyle={ROOM_CHIP_KIDS_ACTIVE}
-                      roomDot="kids"
-                    />
-                    <FeatureToggle
-                      label={TEENS_ROOM_DISPLAY_LABEL}
-                      value={form.teensRoom}
-                      onValueChange={(teensRoom) => patchForm({ teensRoom })}
-                      activeStyle={ROOM_CHIP_TEENS_ACTIVE}
-                      roomDot="teens"
-                    />
+                    {eventRoomOptions.map((room) => {
+                      const selected = form.enabledRoomKeys.includes(room.room_key);
+                      const roomDot =
+                        room.room_key === 'KIDS'
+                          ? 'kids'
+                          : room.room_key === 'TEENS'
+                            ? 'teens'
+                            : undefined;
+                      const activeStyle =
+                        room.room_key === 'KIDS'
+                          ? ROOM_CHIP_KIDS_ACTIVE
+                          : room.room_key === 'TEENS'
+                            ? ROOM_CHIP_TEENS_ACTIVE
+                            : ROOM_CHIP_CUSTOM_ACTIVE;
+
+                      return (
+                        <FeatureToggle
+                          key={room.room_key}
+                          label={room.display_label}
+                          value={selected}
+                          onValueChange={() => {
+                            patchForm(toggleEnabledRoomKey(form.enabledRoomKeys, room.room_key));
+                          }}
+                          activeStyle={activeStyle}
+                          roomDot={roomDot}
+                        />
+                      );
+                    })}
                   </View>
                   <View
                     style={[

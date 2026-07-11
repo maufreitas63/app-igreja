@@ -1,10 +1,12 @@
 import {
   ensureEventsOptionalColumns,
   getMaintenanceEventSelect,
+  isMissingEnabledRoomKeysColumnError,
   isMissingGeofenceAtivoColumnError,
   isMissingRequerQuorumColumnError,
   isMissingSomenteMembrosColumnError,
   isMissingTotemColumnError,
+  setEnabledRoomKeysColumnAvailable,
   setGeofenceAtivoColumnAvailable,
   setRequerQuorumColumnAvailable,
   setSomenteMembrosColumnAvailable,
@@ -24,6 +26,7 @@ export type MaintenanceEvent = {
   parm_ofertas: boolean | null;
   kids_room: boolean | null;
   teens_room: boolean | null;
+  enabled_room_keys?: string[] | null;
   totem_ativo: boolean | null;
   requer_quorum: boolean | null;
   somente_membros: boolean | null;
@@ -95,6 +98,18 @@ export const useMaintenanceEvents = () => {
         fetchError = retry.error;
       } else if (!fetchError) {
         setGeofenceAtivoColumnAvailable(true);
+      }
+
+      if (fetchError && isMissingEnabledRoomKeysColumnError(fetchError)) {
+        setEnabledRoomKeysColumnAvailable(false);
+        const retry = await supabase
+          .from('events')
+          .select(getMaintenanceEventSelect())
+          .order('event_date', { ascending: true, nullsFirst: false });
+        data = retry.data;
+        fetchError = retry.error;
+      } else if (!fetchError) {
+        setEnabledRoomKeysColumnAvailable(true);
       }
 
       if (fetchError) {

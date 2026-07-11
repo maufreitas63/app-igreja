@@ -17,6 +17,8 @@ export type MaintenanceEventFormState = {
   maxCapacity: string;
   kidsRoom: boolean;
   teensRoom: boolean;
+  /** Todas as salas habilitadas no evento (KIDS/TEENS + custom). */
+  enabledRoomKeys: string[];
   parmOfertas: boolean;
   totemAtivo: boolean;
   requerQuorum: boolean;
@@ -34,6 +36,7 @@ export const emptyMaintenanceEventForm = (): MaintenanceEventFormState => ({
   maxCapacity: '',
   kidsRoom: false,
   teensRoom: false,
+  enabledRoomKeys: [],
   parmOfertas: false,
   totemAtivo: false,
   requerQuorum: false,
@@ -41,6 +44,43 @@ export const emptyMaintenanceEventForm = (): MaintenanceEventFormState => ({
   geofenceAtivo: false,
   isPublished: true,
 });
+
+const normalizeRoomKeyList = (keys: unknown): string[] => {
+  if (!Array.isArray(keys)) {
+    return [];
+  }
+  const unique = new Set<string>();
+  for (const raw of keys) {
+    const key = String(raw ?? '')
+      .trim()
+      .toUpperCase();
+    if (/^[A-Z0-9_]{2,40}$/.test(key)) {
+      unique.add(key);
+    }
+  }
+  return [...unique];
+};
+
+export const syncEnabledRoomKeysWithKidsTeens = (keys: string[]) => {
+  const enabledRoomKeys = normalizeRoomKeyList(keys);
+  return {
+    enabledRoomKeys,
+    kidsRoom: enabledRoomKeys.includes('KIDS'),
+    teensRoom: enabledRoomKeys.includes('TEENS'),
+  };
+};
+
+export const toggleEnabledRoomKey = (keys: string[], roomKey: string) => {
+  const key = roomKey.trim().toUpperCase();
+  if (!/^[A-Z0-9_]{2,40}$/.test(key)) {
+    return syncEnabledRoomKeysWithKidsTeens(keys);
+  }
+  const current = normalizeRoomKeyList(keys);
+  const next = current.includes(key)
+    ? current.filter((item) => item !== key)
+    : [...current, key];
+  return syncEnabledRoomKeysWithKidsTeens(next);
+};
 
 const pad2 = (value: number) => String(value).padStart(2, '0');
 
@@ -191,30 +231,44 @@ export const formFromMaintenanceEvent = (event: {
   parm_ofertas: boolean | null;
   kids_room: boolean | null;
   teens_room: boolean | null;
+  enabled_room_keys?: string[] | null;
   totem_ativo?: boolean | null;
   requer_quorum?: boolean | null;
   somente_membros?: boolean | null;
   geofence_ativo?: boolean | null;
   is_locked: boolean | null;
-}): MaintenanceEventFormState => ({
-  name: event.name ?? '',
-  eventDateInput: formatEventDateOnlyForInput(event.event_date),
-  eventTimeInput: formatEventTimeForInput(event.event_date),
-  eventLocal: event.event_local ?? '',
-  eventLocalAddress: '',
-  maxCapacity:
-    typeof event.max_capacity === 'number' && !Number.isNaN(event.max_capacity)
-      ? String(event.max_capacity)
-      : '',
-  kidsRoom: event.kids_room === true,
-  teensRoom: event.teens_room === true,
-  parmOfertas: event.parm_ofertas === true,
-  totemAtivo: event.totem_ativo === true,
-  requerQuorum: event.requer_quorum === true,
-  somenteMembros: event.somente_membros === true,
-  geofenceAtivo: event.geofence_ativo === true,
-  isPublished: event.is_locked !== true,
-});
+}): MaintenanceEventFormState => {
+  const fromColumn = normalizeRoomKeyList(event.enabled_room_keys);
+  const enabledRoomKeys =
+    fromColumn.length > 0
+      ? fromColumn
+      : [
+          ...(event.kids_room === true ? ['KIDS'] : []),
+          ...(event.teens_room === true ? ['TEENS'] : []),
+        ];
+  const synced = syncEnabledRoomKeysWithKidsTeens(enabledRoomKeys);
+
+  return {
+    name: event.name ?? '',
+    eventDateInput: formatEventDateOnlyForInput(event.event_date),
+    eventTimeInput: formatEventTimeForInput(event.event_date),
+    eventLocal: event.event_local ?? '',
+    eventLocalAddress: '',
+    maxCapacity:
+      typeof event.max_capacity === 'number' && !Number.isNaN(event.max_capacity)
+        ? String(event.max_capacity)
+        : '',
+    kidsRoom: synced.kidsRoom,
+    teensRoom: synced.teensRoom,
+    enabledRoomKeys: synced.enabledRoomKeys,
+    parmOfertas: event.parm_ofertas === true,
+    totemAtivo: event.totem_ativo === true,
+    requerQuorum: event.requer_quorum === true,
+    somenteMembros: event.somente_membros === true,
+    geofenceAtivo: event.geofence_ativo === true,
+    isPublished: event.is_locked !== true,
+  };
+};
 
 export type MaintenanceEventPayload = ReturnType<typeof buildMaintenanceEventPayload>;
 
@@ -344,6 +398,7 @@ export const buildMaintenanceEventReplicationPayload = (
       max_capacity: payload.max_capacity,
       kids_room: payload.kids_room,
       teens_room: payload.teens_room,
+      enabled_room_keys: payload.enabled_room_keys,
       parm_ofertas: payload.parm_ofertas,
       totem_ativo: payload.totem_ativo,
       requer_quorum: payload.requer_quorum,
@@ -396,13 +451,16 @@ export const buildMaintenanceEventPayload = (
     && isEventDateBeforeToday(eventDate)
   );
 
+  const syncedRooms = syncEnabledRoomKeysWithKidsTeens(form.enabledRoomKeys);
+
   return {
     name,
     event_date: eventDate,
     event_local: eventLocal || null,
     max_capacity: maxCapacity,
-    kids_room: form.kidsRoom,
-    teens_room: form.teensRoom,
+    kids_room: syncedRooms.kidsRoom,
+    teens_room: syncedRooms.teensRoom,
+    enabled_room_keys: syncedRooms.enabledRoomKeys,
     parm_ofertas: form.parmOfertas,
     totem_ativo: form.totemAtivo,
     requer_quorum: form.requerQuorum,
@@ -421,15 +479,29 @@ export const summarizeMaintenanceEvent = (event: {
   parm_ofertas: boolean | null;
   kids_room: boolean | null;
   teens_room: boolean | null;
+  enabled_room_keys?: string[] | null;
   totem_ativo?: boolean | null;
   requer_quorum?: boolean | null;
   somente_membros?: boolean | null;
   geofence_ativo?: boolean | null;
   is_locked: boolean | null;
-}) => {
+}, roomLabelByKey?: Record<string, string>) => {
+  const roomKeys = normalizeRoomKeyList(event.enabled_room_keys);
+  const roomFlags =
+    roomKeys.length > 0
+      ? roomKeys.map((key) => {
+          if (roomLabelByKey?.[key]) return roomLabelByKey[key];
+          if (key === 'KIDS') return KIDS_ROOM_DISPLAY_LABEL;
+          if (key === 'TEENS') return TEENS_ROOM_DISPLAY_LABEL;
+          return key;
+        })
+      : [
+          event.kids_room ? KIDS_ROOM_DISPLAY_LABEL : null,
+          event.teens_room ? TEENS_ROOM_DISPLAY_LABEL : null,
+        ].filter(Boolean);
+
   const flags = [
-    event.kids_room ? KIDS_ROOM_DISPLAY_LABEL : null,
-    event.teens_room ? TEENS_ROOM_DISPLAY_LABEL : null,
+    ...roomFlags,
     event.somente_membros ? 'Somente membros' : null,
     event.geofence_ativo ? 'Check-in automático' : null,
     event.totem_ativo ? 'Totem' : null,

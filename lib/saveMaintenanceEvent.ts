@@ -11,13 +11,16 @@ import {
   isMissingRequerQuorumColumnError,
   isMissingSomenteMembrosColumnError,
   isMissingTotemColumnError,
+  isMissingEnabledRoomKeysColumnError,
   isGeofenceAtivoColumnAvailable,
   isRequerQuorumColumnAvailable,
   isSomenteMembrosColumnAvailable,
   isTotemAtivoColumnAvailable,
+  isEnabledRoomKeysColumnAvailable,
   stripOptionalFieldsFromEventPayload,
   TOTEM_COLUMN_SQL_HINT,
   GEOFENCE_ATIVO_COLUMN_SQL_HINT,
+  ENABLED_ROOM_KEYS_COLUMN_SQL_HINT,
 } from '@/lib/eventsColumnSupport';
 import { shouldInvalidateGeofenceEventCheckins } from '@/lib/geofenceEventIntegrity';
 import { supabase } from '@/lib/supabase';
@@ -60,6 +63,9 @@ const persistEvent = async (
     ...(payload.geofence_ativo !== undefined
       ? { geofence_ativo: payload.geofence_ativo === true }
       : {}),
+    ...(payload.enabled_room_keys !== undefined
+      ? { enabled_room_keys: payload.enabled_room_keys }
+      : {}),
   };
 
   if (mode === 'insert') {
@@ -89,6 +95,7 @@ const saveEventWithOptionalColumnFallback = async (
     quorum: !isRequerQuorumColumnAvailable(),
     somenteMembros: !isSomenteMembrosColumnAvailable(),
     geofenceAtivo: !isGeofenceAtivoColumnAvailable(),
+    enabledRoomKeys: !isEnabledRoomKeysColumnAvailable(),
   }) as MaintenanceEventPayload;
 
   const geofencePersistError = assertGeofenceAtivoCanPersist(payload);
@@ -104,10 +111,25 @@ const saveEventWithOptionalColumnFallback = async (
     (isMissingTotemColumnError(result.error) ||
       isMissingRequerQuorumColumnError(result.error) ||
       isMissingSomenteMembrosColumnError(result.error) ||
-      isMissingGeofenceAtivoColumnError(result.error))
+      isMissingGeofenceAtivoColumnError(result.error) ||
+      isMissingEnabledRoomKeysColumnError(result.error))
   ) {
-    if (payload.geofence_ativo === true) {
+    if (payload.geofence_ativo === true && isMissingGeofenceAtivoColumnError(result.error)) {
       return { data: null, error: geofenceColumnMissingError() };
+    }
+
+    if (
+      Array.isArray(payload.enabled_room_keys)
+      && payload.enabled_room_keys.length > 0
+      && isMissingEnabledRoomKeysColumnError(result.error)
+    ) {
+      return {
+        data: null,
+        error: {
+          message: ENABLED_ROOM_KEYS_COLUMN_SQL_HINT,
+          code: 'ENABLED_ROOM_KEYS_MISSING',
+        } as PostgrestError,
+      };
     }
 
     const withoutOptionals = stripOptionalFieldsFromEventPayload(prepared, {
@@ -115,6 +137,7 @@ const saveEventWithOptionalColumnFallback = async (
       quorum: true,
       somenteMembros: true,
       geofenceAtivo: true,
+      enabledRoomKeys: true,
     }) as MaintenanceEventPayload;
     result = await persistEvent(mode, selectedEventId, withoutOptionals);
   }
