@@ -21,6 +21,11 @@ import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MemberCheckboxItem } from './MemberCheckboxItem';
+import {
+  buildAudienceRoomLabelIndex,
+  lookupAudienceRoomLabel,
+  resolveAudienceRoomLabels,
+} from '@/lib/userRoomAssignment';
 
 export type SessionProfileRegistration = {
   id: string;
@@ -119,6 +124,7 @@ export const FamilyRegistrationList = ({
   const [soloRegistrationStatus, setSoloRegistrationStatus] = useState<
     RegistrationStatus | undefined
   >(undefined);
+  const [roomLabelByMemberId, setRoomLabelByMemberId] = useState<Record<string, string>>({});
   const [soloStatusLoading, setSoloStatusLoading] = useState(false);
   const [soloToggleLoading, setSoloToggleLoading] = useState(false);
 
@@ -184,6 +190,31 @@ export const FamilyRegistrationList = ({
       family_id: sessionProfile.family_id?.trim() || familyId || '',
     };
   }, [familyId, sessionPhone, sessionProfile, sessionProfileName]);
+
+  useEffect(() => {
+    let active = true;
+    const audience = soloMode && soloParticipant ? [soloParticipant] : visibleMembers;
+
+    if (!audience.length) {
+      setRoomLabelByMemberId({});
+      return undefined;
+    }
+
+    void resolveAudienceRoomLabels(audience.map((member) => member.phone)).then((rows) => {
+      if (!active) return;
+      const index = buildAudienceRoomLabelIndex(rows);
+      const next: Record<string, string> = {};
+      for (const member of audience) {
+        const label = lookupAudienceRoomLabel(index, member);
+        if (label) next[member.id] = label;
+      }
+      setRoomLabelByMemberId(next);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [soloMode, soloParticipant, visibleMembers]);
 
   const refetchSoloRegistrationStatus = useCallback(async () => {
     if (!soloMode || !eventId || !sessionProfile?.id) {
@@ -457,6 +488,7 @@ export const FamilyRegistrationList = ({
             registrationStatus={soloRegistrationStatus}
             showKidsIndicator={showKidsIndicator}
             showTeensIndicator={showTeensIndicator}
+            assignedRoomLabel={roomLabelByMemberId[soloParticipant.id]}
             onToggle={() => {
               if (!hasEventOpen || isBusy) {
                 return;
@@ -620,6 +652,7 @@ export const FamilyRegistrationList = ({
                 registrationStatus={registeredMemberStatusById[item.id]}
                 showKidsIndicator={showKidsIndicator}
                 showTeensIndicator={showTeensIndicator}
+                assignedRoomLabel={roomLabelByMemberId[item.id]}
                 onToggle={() => {
                   if (!hasEventOpen || isBusy || quorumUnregisterLocked) {
                     return;

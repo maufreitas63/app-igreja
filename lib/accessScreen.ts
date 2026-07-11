@@ -14,4 +14,5 @@ export const ACCESS_SCREEN = {
   mapGeolocationPinDetail: '/mapa-geolocalizacao/detalhe-pin',
   lgpd: '/lgpd',
   eventOrchestrator: '/admin/orquestrador',
+  configuracaoSalas: '/configuracao-salas',
 } as const;

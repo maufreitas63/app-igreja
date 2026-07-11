@@ -14,6 +14,8 @@ type Props = {
   registrationStatus?: RegistrationStatus;
   showKidsIndicator?: boolean;
   showTeensIndicator?: boolean;
+  /** Nome afetivo da sala atribuída (ex.: Turma do Rei). */
+  assignedRoomLabel?: string | null;
   minimal?: boolean;
   onToggle: () => void;
 };
@@ -27,10 +29,15 @@ export const MemberCheckboxItem = ({
   registrationStatus,
   showKidsIndicator = false,
   showTeensIndicator = false,
+  assignedRoomLabel = null,
   minimal = false,
   onToggle,
 }: Props) => {
   const displayName = formatFullName(member.full_name);
+  const roomSuffix = assignedRoomLabel?.trim()
+    ? ` - [${assignedRoomLabel.trim()}]`
+    : '';
+  const nameWithRoom = `${displayName}${roomSuffix}`;
   const shouldShowStatusDot =
     (registrationStatus === 'KIDS' && showKidsIndicator) ||
     (registrationStatus === 'TEENS' && showTeensIndicator);
@@ -60,7 +67,7 @@ export const MemberCheckboxItem = ({
       <View style={styles.info}>
         <View style={styles.nameRow}>
           <Text style={[styles.name, minimal && styles.nameMinimal]} numberOfLines={1}>
-            {displayName}
+            {nameWithRoom}
           </Text>
           {shouldShowStatusDot ? (
             <View

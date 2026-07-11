@@ -18,8 +18,10 @@ import {
 } from '@/lib/dashboardScreenAccess';
 import {
   loadDashboardCardViewAccess,
+  sessionHasAccess,
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
+import { ACCESS_SCREEN } from '@/lib/accessScreen';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
@@ -95,6 +97,7 @@ export function useAppDrawerMenu() {
   );
   const [loading, setLoading] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [canManageRooms, setCanManageRooms] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -104,7 +107,7 @@ export function useAppDrawerMenu() {
       const sessionProfile = phone ? await loadEffectiveSessionProfile(phone) : null;
       const profileId = sessionProfile?.id?.trim() ?? null;
 
-      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership] =
+      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership, roomAccess] =
         await Promise.all([
           profileId
             ? loadDashboardCardViewAccess(profileId)
@@ -114,10 +117,12 @@ export function useAppDrawerMenu() {
             : Promise.resolve({} as DashboardScreenAccess),
           loadMaintenanceDashboardAccess(),
           profileId ? fetchProfileHasActiveMembership(profileId) : Promise.resolve(false),
+          sessionHasAccess('screen', ACCESS_SCREEN.configuracaoSalas, 'view'),
         ]);
 
       const superAdmin = maintenanceAccess.isSuperAdmin === true;
       setIsSuperAdmin(superAdmin);
+      setCanManageRooms(superAdmin || roomAccess === true);
 
       const context = {
         dashboardCardAccess,
@@ -140,6 +145,7 @@ export function useAppDrawerMenu() {
     } catch (error) {
       console.error('Erro ao carregar menu lateral:', error);
       setIsSuperAdmin(false);
+      setCanManageRooms(false);
       setItems(
         APP_DRAWER_MENU_ITEMS.map((item) => ({
           ...item,
@@ -155,5 +161,5 @@ export function useAppDrawerMenu() {
     }
   }, []);
 
-  return { items, loading, refresh, isSuperAdmin };
+  return { items, loading, refresh, isSuperAdmin, canManageRooms };
 }

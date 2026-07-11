@@ -17,6 +17,11 @@ export {
   buildTeensRoomLabel,
 };
 
+export type RoomDisplayLabelOverrides = {
+  kidsDisplayLabel?: string | null;
+  teensDisplayLabel?: string | null;
+};
+
 /** Converte rótulos legados (Kids/Teens/KIDS/TEENS) para Infantil/Jovens na exibição. */
 export function mapLegacyRoomDisplayLabel(value: string): string {
   if (!value?.trim()) {
@@ -30,11 +35,26 @@ export function mapLegacyRoomDisplayLabel(value: string): string {
     .replace(/\bTeens\b/g, TEENS_ROOM_DISPLAY_LABEL);
 }
 
-export function buildRoomDisplayLabels(prefix: string = DEFAULT_ENTITY_PREFIX) {
-  const kidsRoomLabel = buildKidsRoomLabel(prefix);
-  const teensRoomLabel = buildTeensRoomLabel(prefix);
-  const kidsRoomBadgeLabel = buildKidsRoomBadgeLabel(prefix);
-  const teensRoomBadgeLabel = buildTeensRoomBadgeLabel(prefix);
+function withCustomLabel(prefix: string, label: string): string {
+  const safeLabel = label.trim() || '';
+  const trimmedPrefix = (prefix ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  if (!safeLabel) {
+    return trimmedPrefix;
+  }
+  return trimmedPrefix ? `${trimmedPrefix} ${safeLabel}` : safeLabel;
+}
+
+export function buildRoomDisplayLabels(
+  prefix: string = DEFAULT_ENTITY_PREFIX,
+  overrides?: RoomDisplayLabelOverrides
+) {
+  const kidsBase = overrides?.kidsDisplayLabel?.trim() || KIDS_ROOM_DISPLAY_LABEL;
+  const teensBase = overrides?.teensDisplayLabel?.trim() || TEENS_ROOM_DISPLAY_LABEL;
+
+  const kidsRoomLabel = withCustomLabel(prefix, kidsBase);
+  const teensRoomLabel = withCustomLabel(prefix, teensBase);
+  const kidsRoomBadgeLabel = kidsRoomLabel;
+  const teensRoomBadgeLabel = teensRoomLabel;
 
   return {
     prefix,
@@ -42,5 +62,7 @@ export function buildRoomDisplayLabels(prefix: string = DEFAULT_ENTITY_PREFIX) {
     teensRoomLabel: mapLegacyRoomDisplayLabel(teensRoomLabel),
     kidsRoomBadgeLabel: mapLegacyRoomDisplayLabel(kidsRoomBadgeLabel),
     teensRoomBadgeLabel: mapLegacyRoomDisplayLabel(teensRoomBadgeLabel),
+    kidsDisplayLabel: kidsBase,
+    teensDisplayLabel: teensBase,
   };
 }

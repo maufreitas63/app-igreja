@@ -24,6 +24,9 @@ type SettingsItem = {
 type Props = {
   onClose: () => void;
   onOpenMediaAuthorization: () => void;
+  /** Líder / admin — nomes e atribuição de salas. */
+  showRoomSettings?: boolean;
+  onOpenRoomSettings?: () => void;
   /** Apenas super_admin — gestão multi-instância. */
   showIgrejasInstances?: boolean;
   onOpenIgrejasInstances?: () => void;
@@ -32,6 +35,8 @@ type Props = {
 export function AppDrawerSettings({
   onClose,
   onOpenMediaAuthorization,
+  showRoomSettings = false,
+  onOpenRoomSettings,
   showIgrejasInstances = false,
   onOpenIgrejasInstances,
 }: Props) {
@@ -45,6 +50,17 @@ export function AppDrawerSettings({
       icon: 'shield',
       onPress: onOpenMediaAuthorization,
     },
+    ...(showRoomSettings && onOpenRoomSettings
+      ? [
+          {
+            id: 'room-settings',
+            label: 'Configuração de salas',
+            hint: 'Nomes afetivos e atribuição de membros',
+            icon: 'home' as const,
+            onPress: onOpenRoomSettings,
+          } satisfies SettingsItem,
+        ]
+      : []),
   ];
 
   const igrejasItem: SettingsItem | null =
