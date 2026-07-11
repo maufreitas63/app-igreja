@@ -4,13 +4,14 @@
 
 1. Se ainda não rodou o schema inicial:
    `scripts/church-room-settings.sql`
-2. **Obrigatório agora** (dedupe + salas customizadas):
+2. **Obrigatório** (dedupe + salas customizadas) — sem isto o app responde
+   `Sala inválida. Use KIDS ou TEENS` ao criar Homens/Mulheres/etc.:
    `scripts/church-room-settings-custom-rooms.sql`
 
 Resultado esperado do passo 2:
 
 ```json
-{ "status": "custom rooms + dedupe ok", "room_rows": 4, "duplicate_room_keys": 0 }
+{ "status": "custom rooms + dedupe ok", "room_rows": N, "duplicate_room_keys": 0 }
 ```
 
 3. Hard refresh no app.

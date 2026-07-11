@@ -307,6 +307,7 @@ declare
   v_key text;
   v_base text;
   v_suffix integer := 0;
+  v_row public.church_room_settings%rowtype;
 begin
   perform public.assert_church_room_manager(v_actor);
 
@@ -344,7 +345,42 @@ begin
     v_key := left(v_base, 36) || '_' || v_suffix::text;
   end loop;
 
-  return public.upsert_church_room_setting(v_key, v_label, null, true, 100);
+  -- Insert direto (não depende de upsert antigo limitado a KIDS/TEENS).
+  insert into public.church_room_settings as s (
+    tenant_id, room_key, display_label, badge_label, is_enabled, sort_order, is_system, updated_at
+  )
+  values (
+    v_tenant,
+    v_key,
+    v_label,
+    null,
+    true,
+    100,
+    false,
+    now()
+  )
+  on conflict (tenant_id, room_key) do update
+    set display_label = excluded.display_label,
+        is_enabled = true,
+        sort_order = coalesce(s.sort_order, 100),
+        updated_at = now()
+  returning * into v_row;
+
+  return jsonb_build_object(
+    'success', true,
+    'message', 'Sala criada.',
+    'row', jsonb_build_object(
+      'id', v_row.id,
+      'tenant_id', v_row.tenant_id,
+      'room_key', v_row.room_key,
+      'display_label', v_row.display_label,
+      'badge_label', v_row.badge_label,
+      'color_hex', v_row.color_hex,
+      'is_enabled', v_row.is_enabled,
+      'is_system', v_row.is_system,
+      'sort_order', v_row.sort_order
+    )
+  );
 end;
 $$;
 

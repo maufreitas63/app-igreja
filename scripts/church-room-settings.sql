@@ -315,8 +315,10 @@ declare
 begin
   perform public.assert_church_room_manager(v_actor);
 
-  if v_key not in ('KIDS', 'TEENS') then
-    return jsonb_build_object('success', false, 'message', 'Sala inválida. Use KIDS ou TEENS.');
+  -- Preferir scripts/church-room-settings-custom-rooms.sql para salas extras.
+  -- Aqui já liberamos qualquer room_key válido para não bloquear deploys mistos.
+  if v_key is null or v_key !~ '^[A-Z0-9_]{2,40}$' then
+    return jsonb_build_object('success', false, 'message', 'Código da sala inválido.');
   end if;
 
   if char_length(v_label) < 2 then
@@ -332,7 +334,14 @@ begin
     v_label,
     nullif(trim(coalesce(p_badge_label, '')), ''),
     coalesce(p_is_enabled, true),
-    coalesce(p_sort_order, case when v_key = 'KIDS' then 10 else 20 end),
+    coalesce(
+      p_sort_order,
+      case
+        when v_key = 'KIDS' then 10
+        when v_key = 'TEENS' then 20
+        else 100
+      end
+    ),
     now()
   )
   on conflict (tenant_id, room_key) do update

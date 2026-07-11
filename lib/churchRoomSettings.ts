@@ -4,7 +4,20 @@ import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { subscribeActiveTenantChange } from '@/lib/tenantSession';
 
 export const CHURCH_ROOM_SETTINGS_SQL_HINT =
-  'Execute no Supabase: scripts/church-room-settings-custom-rooms.sql';
+  'Execute no Supabase (SQL Editor): scripts/church-room-settings-custom-rooms.sql — libera criar salas além de KIDS/TEENS.';
+
+function withRoomSqlHintIfNeeded(message: string): string {
+  const normalized = message.toLocaleLowerCase();
+  if (
+    normalized.includes('kids')
+    || normalized.includes('teens')
+    || normalized.includes('does not exist')
+    || normalized.includes('could not find')
+  ) {
+    return `${message}\n\n${CHURCH_ROOM_SETTINGS_SQL_HINT}`;
+  }
+  return message;
+}
 
 /** KIDS/TEENS (sistema) ou chave custom (HOMENS, DISCIPULADO, …). */
 export type ChurchRoomKey = string;
@@ -209,7 +222,10 @@ export async function upsertChurchRoomSetting(input: {
     if (isSupabaseRpcMissingError(error, 'upsert_church_room_setting')) {
       return { success: false, message: CHURCH_ROOM_SETTINGS_SQL_HINT };
     }
-    return { success: false, message: error.message || 'Falha ao salvar sala.' };
+    return {
+      success: false,
+      message: withRoomSqlHintIfNeeded(error.message || 'Falha ao salvar sala.'),
+    };
   }
 
   const payload =
@@ -217,14 +233,16 @@ export async function upsertChurchRoomSetting(input: {
   clearChurchRoomSettingsCache();
   clearAppParameterCache();
 
+  const message =
+    typeof payload.message === 'string' && payload.message.trim()
+      ? payload.message
+      : payload.success === true
+        ? 'Sala atualizada.'
+        : 'Não foi possível salvar.';
+
   return {
     success: payload.success === true,
-    message:
-      typeof payload.message === 'string' && payload.message.trim()
-        ? payload.message
-        : payload.success === true
-          ? 'Sala atualizada.'
-          : 'Não foi possível salvar.',
+    message: payload.success === true ? message : withRoomSqlHintIfNeeded(message),
     row: mapRoomSetting(payload.row as Record<string, unknown>) ?? undefined,
   };
 }
@@ -240,21 +258,26 @@ export async function createChurchRoomSetting(
     if (isSupabaseRpcMissingError(error, 'create_church_room_setting')) {
       return { success: false, message: CHURCH_ROOM_SETTINGS_SQL_HINT };
     }
-    return { success: false, message: error.message || 'Falha ao criar sala.' };
+    return {
+      success: false,
+      message: withRoomSqlHintIfNeeded(error.message || 'Falha ao criar sala.'),
+    };
   }
 
   const payload =
     typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : {};
   clearChurchRoomSettingsCache();
 
+  const message =
+    typeof payload.message === 'string' && payload.message.trim()
+      ? payload.message
+      : payload.success === true
+        ? 'Sala criada.'
+        : 'Não foi possível criar.';
+
   return {
     success: payload.success === true,
-    message:
-      typeof payload.message === 'string' && payload.message.trim()
-        ? payload.message
-        : payload.success === true
-          ? 'Sala criada.'
-          : 'Não foi possível criar.',
+    message: payload.success === true ? message : withRoomSqlHintIfNeeded(message),
     row: mapRoomSetting(payload.row as Record<string, unknown>) ?? undefined,
   };
 }
