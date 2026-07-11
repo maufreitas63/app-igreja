@@ -41,7 +41,7 @@ export default function RootLayout() {
         <AppShell />
         <GhostModeBanner />
         <ConfirmDialogHost />
-        <View style={styles.toastHost} pointerEvents="box-none" {...({ 'data-layout-ignore': 'true' } as object)}>
+        <View style={styles.toastHost} pointerEvents="box-none">
           <Toast config={appToastConfig} topOffset={Platform.OS === 'web' ? 12 : 48} />
         </View>
       </View>

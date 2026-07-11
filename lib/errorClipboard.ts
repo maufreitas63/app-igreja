@@ -1,7 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
 import { Platform } from 'react-native';
-import { triggerSuperAdminDebugHaptic } from '@/lib/debugHaptics';
-import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
 
 export type ExecutionErrorClipboardInput = {
   title?: string | null;
@@ -56,22 +54,10 @@ export function withCopiedErrorHint(message?: string | null): string | undefined
   return `${base} ${ERROR_HINT_MARK}`;
 }
 
-/**
- * Copia o erro para a área de transferência — apenas super administrador.
- * Vibra o dispositivo quando copia com sucesso.
- */
+/** Copia o erro para a área de transferência. Falhas de clipboard são silenciosas. */
 export async function copyExecutionErrorToClipboard(
   input: ExecutionErrorClipboardInput
 ): Promise<boolean> {
-  try {
-    const isSuperAdmin = await checkSessionIsSuperAdmin();
-    if (!isSuperAdmin) {
-      return false;
-    }
-  } catch {
-    return false;
-  }
-
   const text = formatExecutionErrorClipboardText(input);
   if (!text.trim()) {
     return false;
@@ -79,13 +65,11 @@ export async function copyExecutionErrorToClipboard(
 
   try {
     await Clipboard.setStringAsync(text);
-    await triggerSuperAdminDebugHaptic();
     return true;
   } catch (error) {
     if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
       try {
         await navigator.clipboard.writeText(text);
-        await triggerSuperAdminDebugHaptic();
         return true;
       } catch {
         console.warn('Falha ao copiar erro para a área de transferência:', error);
