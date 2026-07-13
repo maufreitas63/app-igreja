@@ -1,5 +1,7 @@
+import { InstanceQrCode } from '@/components/InstanceQrCode';
 import { SocialBrandIcon } from '@/components/SocialBrandIcon';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
+import { resolveInstancePublicUrl } from '@/lib/instancePublicUrl';
 import { MINIMAL_ICON, MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { listSessionIgrejas, getStoredTenantId, type SessionIgreja } from '@/lib/tenantSession';
 import { FontAwesome } from '@expo/vector-icons';
@@ -28,6 +30,7 @@ async function openExternalUrl(url: string, label: string) {
 export default function RedesSociaisScreen() {
   const [loading, setLoading] = useState(true);
   const [church, setChurch] = useState<SessionIgreja | null>(null);
+  const [instanceUrl, setInstanceUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -40,9 +43,13 @@ export default function RedesSociaisScreen() {
         ?? churches[0]
         ?? null;
       setChurch(match);
+
+      const url = await resolveInstancePublicUrl();
+      setInstanceUrl(url);
     } catch (error) {
       console.error(error);
       setChurch(null);
+      setInstanceUrl(null);
     } finally {
       setLoading(false);
     }
@@ -74,44 +81,50 @@ export default function RedesSociaisScreen() {
 
       {loading ? (
         <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />
-      ) : !hasAny ? (
-        <Text style={styles.empty}>
-          Esta instância ainda não cadastrou site, Instagram ou YouTube.
-        </Text>
       ) : (
-        <View style={styles.row}>
-          {websiteUrl ? (
-            <TouchableOpacity
-              accessibilityLabel="Abrir site oficial"
-              accessibilityRole="button"
-              onPress={() => void openExternalUrl(websiteUrl, 'site oficial')}
-              style={styles.socialButton}
-            >
-              <View style={styles.websiteIcon}>
-                <FontAwesome name="globe" size={MINIMAL_ICON.action} color={MINIMAL_UI.onDark} />
-              </View>
-            </TouchableOpacity>
-          ) : null}
-          {instagramUrl ? (
-            <TouchableOpacity
-              accessibilityLabel="Abrir Instagram"
-              accessibilityRole="button"
-              onPress={() => void openExternalUrl(instagramUrl, 'Instagram')}
-              style={styles.socialButton}
-            >
-              <SocialBrandIcon network="instagram" />
-            </TouchableOpacity>
-          ) : null}
-          {youtubeUrl ? (
-            <TouchableOpacity
-              accessibilityLabel="Abrir YouTube"
-              accessibilityRole="button"
-              onPress={() => void openExternalUrl(youtubeUrl, 'YouTube')}
-              style={styles.socialButton}
-            >
-              <SocialBrandIcon network="youtube" />
-            </TouchableOpacity>
-          ) : null}
+        <View style={styles.content}>
+          {hasAny ? (
+            <View style={styles.row}>
+              {websiteUrl ? (
+                <TouchableOpacity
+                  accessibilityLabel="Abrir site oficial"
+                  accessibilityRole="button"
+                  onPress={() => void openExternalUrl(websiteUrl, 'site oficial')}
+                  style={styles.socialButton}
+                >
+                  <View style={styles.websiteIcon}>
+                    <FontAwesome name="globe" size={MINIMAL_ICON.action} color={MINIMAL_UI.onDark} />
+                  </View>
+                </TouchableOpacity>
+              ) : null}
+              {instagramUrl ? (
+                <TouchableOpacity
+                  accessibilityLabel="Abrir Instagram"
+                  accessibilityRole="button"
+                  onPress={() => void openExternalUrl(instagramUrl, 'Instagram')}
+                  style={styles.socialButton}
+                >
+                  <SocialBrandIcon network="instagram" />
+                </TouchableOpacity>
+              ) : null}
+              {youtubeUrl ? (
+                <TouchableOpacity
+                  accessibilityLabel="Abrir YouTube"
+                  accessibilityRole="button"
+                  onPress={() => void openExternalUrl(youtubeUrl, 'YouTube')}
+                  style={styles.socialButton}
+                >
+                  <SocialBrandIcon network="youtube" />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : (
+            <Text style={styles.empty}>
+              Esta instância ainda não cadastrou site, Instagram ou YouTube.
+            </Text>
+          )}
+
+          {instanceUrl ? <InstanceQrCode url={instanceUrl} /> : null}
         </View>
       )}
     </MinimalScreenLayout>
@@ -132,6 +145,10 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginTop: 24,
+  },
+  content: {
+    width: '100%',
+    alignItems: 'center',
   },
   empty: {
     color: MINIMAL_UI.textMuted,
