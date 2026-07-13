@@ -20,7 +20,7 @@ import { MinimalRoomSelosRow } from '@/components/minimal/MinimalRoomSelosRow';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { MemberCheckboxItem, MEMBER_ROOM_LABEL_COLUMN_WIDTH } from './MemberCheckboxItem';
+import { MemberCheckboxItem } from './MemberCheckboxItem';
 import {
   buildAudienceRoomLabelIndex,
   lookupAudienceRoomLabel,
@@ -143,9 +143,6 @@ export const FamilyRegistrationList = ({
     RegistrationStatus | undefined
   >(undefined);
   const [roomLabelByMemberId, setRoomLabelByMemberId] = useState<Record<string, string>>({});
-  const [roomOverlayByMemberId, setRoomOverlayByMemberId] = useState<Record<string, boolean>>(
-    {}
-  );
 
   const allowedRoomKeys = useMemo(() => {
     const keys = Array.isArray(eventEnabledRoomKeys)
@@ -233,7 +230,6 @@ export const FamilyRegistrationList = ({
 
     if (!audience.length) {
       setRoomLabelByMemberId({});
-      setRoomOverlayByMemberId({});
       return undefined;
     }
 
@@ -241,20 +237,16 @@ export const FamilyRegistrationList = ({
       if (!active) return;
       const index = buildAudienceRoomLabelIndex(rows);
       const next: Record<string, string> = {};
-      const nextOverlay: Record<string, boolean> = {};
       for (const member of audience) {
         const match = lookupAudienceRoomLabel(index, member);
         if (!match) continue;
         const isOverlay = match.room_kind === 'especial';
-        // Sala especial atribuída e vigente sempre aparece (sobreposição); padrão só se
-        // estiver entre as salas habilitadas no evento.
+        // Especial vigente sempre; padrão só se habilitada no evento.
         if (isOverlay || allowedRoomKeys.has(match.room_key)) {
           next[member.id] = match.room_label;
-          nextOverlay[member.id] = isOverlay;
         }
       }
       setRoomLabelByMemberId(next);
-      setRoomOverlayByMemberId(nextOverlay);
     });
 
     return () => {
@@ -536,7 +528,6 @@ export const FamilyRegistrationList = ({
             showKidsIndicator={showKidsIndicator}
             showTeensIndicator={showTeensIndicator}
             assignedRoomLabel={roomLabelByMemberId[soloParticipant.id]}
-            assignedRoomIsOverlay={roomOverlayByMemberId[soloParticipant.id] === true}
             onToggle={() => {
               if (!hasEventOpen || isBusy) {
                 return;
@@ -633,11 +624,6 @@ export const FamilyRegistrationList = ({
             }
           />
         ) : null}
-        {allowedRoomKeys.size > 0 ? (
-          <View style={styles.salasHeaderCell}>
-            <Text style={[styles.salasHeaderText, minimal && styles.salasHeaderTextMinimal]}>Salas</Text>
-          </View>
-        ) : null}
       </View>
       <View style={[styles.listFrame, minimal && styles.listFrameMinimal]}>
         <View style={styles.listWithBulkRow}>
@@ -707,7 +693,6 @@ export const FamilyRegistrationList = ({
                 showKidsIndicator={showKidsIndicator}
                 showTeensIndicator={showTeensIndicator}
                 assignedRoomLabel={roomLabelByMemberId[item.id]}
-                assignedRoomIsOverlay={roomOverlayByMemberId[item.id] === true}
                 onToggle={() => {
                   if (!hasEventOpen || isBusy || quorumUnregisterLocked) {
                     return;
@@ -801,29 +786,6 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     textTransform: 'none',
     letterSpacing: 0,
-    fontSize: 12,
-  },
-  salasHeaderCell: {
-    width: MEMBER_ROOM_LABEL_COLUMN_WIDTH,
-    flexShrink: 0,
-    marginLeft: 'auto',
-    marginRight: 4,
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(148, 163, 184, 0.45)',
-    borderRadius: 4,
-    backgroundColor: 'rgba(148, 163, 184, 0.08)',
-    justifyContent: 'center',
-  },
-  salasHeaderText: {
-    color: 'rgba(148, 163, 184, 0.95)',
-    fontSize: 12,
-    fontWeight: '700',
-    textAlign: 'left',
-  },
-  salasHeaderTextMinimal: {
-    color: MINIMAL_UI.textMuted,
     fontSize: 12,
   },
   listContainer: {

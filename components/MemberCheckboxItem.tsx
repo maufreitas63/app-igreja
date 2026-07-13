@@ -5,9 +5,6 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-/** Largura da coluna de sala — manter alinhada com o cabeçalho «Salas». */
-export const MEMBER_ROOM_LABEL_COLUMN_WIDTH = 96;
-
 type Props = {
   member: FamilyMember;
   disabled?: boolean;
@@ -19,10 +16,11 @@ type Props = {
   registrationStatus?: RegistrationStatus;
   showKidsIndicator?: boolean;
   showTeensIndicator?: boolean;
-  /** Nome afetivo da sala atribuída (ex.: Turma do Rei). */
+  /**
+   * Sala efetiva do membro (especial vigente ou padrão).
+   * Exibida só na linha «Inscrito em:» — a coluna Salas foi removida.
+   */
   assignedRoomLabel?: string | null;
-  /** Quando true, a sala é especial (sobreposição) e aparece também em «Inscrito em:». */
-  assignedRoomIsOverlay?: boolean;
   minimal?: boolean;
   onToggle: () => void;
 };
@@ -38,7 +36,6 @@ export const MemberCheckboxItem = ({
   showKidsIndicator = false,
   showTeensIndicator = false,
   assignedRoomLabel = null,
-  assignedRoomIsOverlay = false,
   minimal = false,
   onToggle,
 }: Props) => {
@@ -49,12 +46,12 @@ export const MemberCheckboxItem = ({
     (registrationStatus === 'KIDS' && showKidsIndicator) ||
     (registrationStatus === 'TEENS' && showTeensIndicator);
 
-  // Inscrito + especial: exibe somente a especial (não a padrão / não a coluna Salas).
-  const showRoomInNameRow = Boolean(roomLabel) && !(isRegistered && assignedRoomIsOverlay);
-
   const registeredLine = (() => {
     if (!isRegistered) return null;
-    if (assignedRoomIsOverlay && roomLabel) {
+    if (eventLabel && roomLabel) {
+      return `Inscrito em: ${eventLabel} · ${roomLabel}`;
+    }
+    if (roomLabel) {
       return `Inscrito em: ${roomLabel}`;
     }
     if (eventLabel) {
@@ -97,14 +94,6 @@ export const MemberCheckboxItem = ({
                 registrationStatus === 'KIDS' ? styles.statusDotKids : styles.statusDotTeens,
               ]}
             />
-          ) : null}
-          {showRoomInNameRow ? (
-            <Text
-              style={[styles.roomLabel, minimal && styles.roomLabelMinimal]}
-              numberOfLines={1}
-            >
-              {roomLabel}
-            </Text>
           ) : null}
         </View>
         {registeredLine ? (
@@ -188,17 +177,6 @@ const styles = StyleSheet.create({
   nameMinimal: {
     color: MINIMAL_UI.text,
     fontWeight: '600',
-  },
-  roomLabel: {
-    color: 'rgba(148, 163, 184, 0.95)',
-    fontSize: 13,
-    fontWeight: '700',
-    width: MEMBER_ROOM_LABEL_COLUMN_WIDTH,
-    flexShrink: 0,
-    textAlign: 'left',
-  },
-  roomLabelMinimal: {
-    color: MINIMAL_UI.textMuted,
   },
   statusDot: {
     width: 10,
