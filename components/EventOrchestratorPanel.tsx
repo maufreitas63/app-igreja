@@ -76,7 +76,7 @@ export function EventOrchestratorPanel({
         contentContainerStyle,
       ]}
       showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
+      keyboardShouldPersistTaps="always"
     >
       {showTitle ? (
         <>

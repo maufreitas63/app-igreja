@@ -7,9 +7,10 @@ import {
 } from '@/lib/eventAvisosApi';
 import { showAppToast } from '@/lib/appToast';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   StyleSheet,
   Switch,
@@ -35,6 +36,22 @@ const emptyDraft = () => ({
   isPublished: true,
 });
 
+type DraftState = ReturnType<typeof emptyDraft>;
+
+function scrollFormIntoView(anchor: View | null) {
+  if (!anchor) {
+    return;
+  }
+
+  const node = anchor as unknown as {
+    scrollIntoView?: (options?: ScrollIntoViewOptions) => void;
+  };
+
+  if (typeof node.scrollIntoView === 'function') {
+    node.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
 export function EventAvisosManager({
   isActive = true,
   minimal = false,
@@ -45,8 +62,11 @@ export function EventAvisosManager({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [items, setItems] = useState<EventAvisoRow[]>([]);
-  const [draft, setDraft] = useState(emptyDraft);
+  const [draft, setDraft] = useState<DraftState>(emptyDraft);
+  /** Remonta os TextInputs ao editar — no web o valor controlado às vezes não aplica. */
+  const [formKey, setFormKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const formAnchorRef = useRef<View>(null);
 
   const loadAvisos = useCallback(async () => {
     if (!isActive || !expanded) {
@@ -72,15 +92,25 @@ export function EventAvisosManager({
 
   const resetDraft = () => {
     setDraft(emptyDraft());
+    setFormKey((current) => current + 1);
   };
 
   const handleEdit = (row: EventAvisoRow) => {
     setDraft({
       id: row.id,
-      title: row.title,
-      body: row.body,
-      sortOrder: row.sortOrder,
-      isPublished: row.isPublished,
+      title: row.title ?? '',
+      body: row.body ?? '',
+      sortOrder: row.sortOrder ?? 0,
+      isPublished: row.isPublished === true,
+    });
+    setFormKey((current) => current + 1);
+    showAppToast({
+      type: 'info',
+      text1: 'Avisos',
+      text2: 'Aviso carregado no formulário. Role para cima para editar.',
+    });
+    requestAnimationFrame(() => {
+      scrollFormIntoView(formAnchorRef.current);
     });
   };
 
@@ -150,6 +180,8 @@ export function EventAvisosManager({
     }
   };
 
+  const isEditing = Boolean(draft.id);
+
   return (
     <View
       style={[
@@ -191,39 +223,53 @@ export function EventAvisosManager({
             <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
           ) : null}
 
-          <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
-            Título (opcional)
-          </Text>
-          <TextInput
-            style={[styles.input, minimal && styles.inputMinimal]}
-            value={draft.title}
-            onChangeText={(title) => setDraft((current) => ({ ...current, title }))}
-            placeholder="Ex.: Culto de domingo"
-            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
-            editable={!saving}
-          />
+          <View ref={formAnchorRef} collapsable={false}>
+            {isEditing ? (
+              <Text style={[styles.editingBanner, minimal && styles.editingBannerMinimal]}>
+                Editando aviso — altere os campos e toque em Atualizar aviso.
+              </Text>
+            ) : null}
 
-          <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Texto do aviso</Text>
-          <TextInput
-            style={[styles.input, styles.inputMultiline, minimal && styles.inputMinimal]}
-            value={draft.body}
-            onChangeText={(body) => setDraft((current) => ({ ...current, body }))}
-            placeholder="Digite o comunicado para os membros..."
-            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
-            multiline
-            textAlignVertical="top"
-            editable={!saving}
-          />
+            <View key={formKey}>
+              <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
+                Título (opcional)
+              </Text>
+              <TextInput
+                style={[styles.input, minimal && styles.inputMinimal]}
+                defaultValue={draft.title}
+                onChangeText={(title) => setDraft((current) => ({ ...current, title }))}
+                placeholder="Ex.: Culto de domingo"
+                placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
+                editable={!saving}
+              />
 
-          <View style={styles.publishRow}>
-            <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Publicado</Text>
-            <Switch
-              value={draft.isPublished}
-              onValueChange={(isPublished) => setDraft((current) => ({ ...current, isPublished }))}
-              disabled={saving}
-              trackColor={minimal ? MINIMAL_SWITCH_TRACK : undefined}
-              thumbColor={minimal ? MINIMAL_UI.onDark : undefined}
-            />
+              <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
+                Texto do aviso
+              </Text>
+              <TextInput
+                style={[styles.input, styles.inputMultiline, minimal && styles.inputMinimal]}
+                defaultValue={draft.body}
+                onChangeText={(body) => setDraft((current) => ({ ...current, body }))}
+                placeholder="Digite o comunicado para os membros..."
+                placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
+                multiline
+                textAlignVertical="top"
+                editable={!saving}
+              />
+
+              <View style={styles.publishRow}>
+                <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Publicado</Text>
+                <Switch
+                  value={draft.isPublished}
+                  onValueChange={(isPublished) =>
+                    setDraft((current) => ({ ...current, isPublished }))
+                  }
+                  disabled={saving}
+                  trackColor={minimal ? MINIMAL_SWITCH_TRACK : undefined}
+                  thumbColor={minimal ? MINIMAL_UI.onDark : undefined}
+                />
+              </View>
+            </View>
           </View>
 
           <View style={[styles.actionsRow, minimal && styles.actionsRowMinimal]}>
@@ -235,6 +281,7 @@ export function EventAvisosManager({
               ]}
               onPress={() => void handleSave()}
               disabled={saving}
+              accessibilityRole="button"
             >
               {saving ? (
                 <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0F172A'} />
@@ -245,15 +292,16 @@ export function EventAvisosManager({
                     minimal && styles.primaryButtonTextMinimal,
                   ]}
                 >
-                  {draft.id ? 'Atualizar aviso' : 'Salvar aviso'}
+                  {isEditing ? 'Atualizar aviso' : 'Salvar aviso'}
                 </Text>
               )}
             </Pressable>
-            {draft.id ? (
+            {isEditing ? (
               <Pressable
                 style={[styles.secondaryButton, minimal && styles.secondaryButtonMinimal]}
                 onPress={resetDraft}
                 disabled={saving}
+                accessibilityRole="button"
               >
                 <Text
                   style={[
@@ -272,59 +320,88 @@ export function EventAvisosManager({
               <Text style={[styles.listTitle, minimal && styles.listTitleMinimal]}>
                 Avisos cadastrados ({items.length})
               </Text>
-              {items.map((item) => (
-                <View key={item.id} style={[styles.listItem, minimal && styles.listItemMinimal]}>
-                  <View style={styles.listItemHeader}>
-                    <Text
-                      style={[styles.listItemTitle, minimal && styles.listItemTitleMinimal]}
-                      numberOfLines={1}
-                    >
-                      {item.title.trim() || 'Sem título'}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.listItemBadge,
-                        minimal && styles.listItemBadgeMinimal,
-                        minimal &&
-                          (item.isPublished
-                            ? styles.listItemBadgePublishedMinimal
-                            : styles.listItemBadgeDraftMinimal),
-                      ]}
-                    >
-                      {item.isPublished ? 'Publicado' : 'Rascunho'}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[styles.listItemBody, minimal && styles.listItemBodyMinimal]}
-                    numberOfLines={3}
+              {items.map((item) => {
+                const isRowEditing = draft.id === item.id;
+
+                return (
+                  <View
+                    key={item.id}
+                    style={[
+                      styles.listItem,
+                      minimal && styles.listItemMinimal,
+                      isRowEditing && styles.listItemEditing,
+                      isRowEditing && minimal && styles.listItemEditingMinimal,
+                    ]}
                   >
-                    {item.body}
-                  </Text>
-                  <View style={styles.listItemActions}>
-                    <Pressable onPress={() => handleEdit(item)} disabled={saving}>
+                    <View style={styles.listItemHeader}>
+                      <Text
+                        style={[styles.listItemTitle, minimal && styles.listItemTitleMinimal]}
+                        numberOfLines={1}
+                      >
+                        {item.title.trim() || 'Sem título'}
+                      </Text>
                       <Text
                         style={[
-                          styles.linkAction,
-                          minimal && styles.linkActionMinimal,
-                          !minimal && { color: colors.accent },
+                          styles.listItemBadge,
+                          minimal && styles.listItemBadgeMinimal,
+                          minimal &&
+                            (item.isPublished
+                              ? styles.listItemBadgePublishedMinimal
+                              : styles.listItemBadgeDraftMinimal),
                         ]}
                       >
-                        Editar
+                        {item.isPublished ? 'Publicado' : 'Rascunho'}
                       </Text>
-                    </Pressable>
-                    <Pressable onPress={() => void handleDelete(item.id)} disabled={saving}>
-                      <Text
-                        style={[
-                          styles.deleteAction,
-                          minimal && styles.deleteActionMinimal,
+                    </View>
+                    <Text
+                      style={[styles.listItemBody, minimal && styles.listItemBodyMinimal]}
+                      numberOfLines={3}
+                    >
+                      {item.body}
+                    </Text>
+                    <View style={styles.listItemActions}>
+                      <Pressable
+                        onPress={() => handleEdit(item)}
+                        disabled={saving}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Editar aviso ${item.title.trim() || 'sem título'}`}
+                        hitSlop={8}
+                        style={({ pressed }) => [
+                          styles.listItemActionButton,
+                          pressed && styles.listItemActionButtonPressed,
                         ]}
                       >
-                        Excluir
-                      </Text>
-                    </Pressable>
+                        <Text
+                          style={[
+                            styles.linkAction,
+                            minimal && styles.linkActionMinimal,
+                            !minimal && { color: colors.accent },
+                          ]}
+                        >
+                          Editar
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => void handleDelete(item.id)}
+                        disabled={saving}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Excluir aviso ${item.title.trim() || 'sem título'}`}
+                        hitSlop={8}
+                        style={({ pressed }) => [
+                          styles.listItemActionButton,
+                          pressed && styles.listItemActionButtonPressed,
+                        ]}
+                      >
+                        <Text
+                          style={[styles.deleteAction, minimal && styles.deleteActionMinimal]}
+                        >
+                          Excluir
+                        </Text>
+                      </Pressable>
+                    </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           ) : null}
         </View>
@@ -411,6 +488,23 @@ const styles = StyleSheet.create({
   },
   helpTextMinimal: {
     color: MINIMAL_UI.textMuted,
+  },
+  editingBanner: {
+    color: '#FDE68A',
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 17,
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  editingBannerMinimal: {
+    color: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   errorText: {
     color: '#FCA5A5',
@@ -557,6 +651,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
     alignSelf: 'stretch',
   },
+  listItemEditing: {
+    borderColor: '#FBBF24',
+  },
+  listItemEditingMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
+  },
   listItemHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -610,11 +711,25 @@ const styles = StyleSheet.create({
   },
   listItemActions: {
     flexDirection: 'row',
-    gap: 14,
+    gap: 8,
     marginTop: 4,
   },
+  listItemActionButton: {
+    minHeight: 36,
+    minWidth: 64,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
+  },
+  listItemActionButtonPressed: {
+    opacity: 0.72,
+    backgroundColor: 'rgba(148, 163, 184, 0.12)',
+  },
   linkAction: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
   },
   linkActionMinimal: {
@@ -623,7 +738,7 @@ const styles = StyleSheet.create({
   },
   deleteAction: {
     color: '#FCA5A5',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
   },
   deleteActionMinimal: {
