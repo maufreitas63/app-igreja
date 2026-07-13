@@ -147,6 +147,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
       <FamilyRegistrationList
         familyId={familyId ?? ''}
         eventId={selectedEvent.id}
+        eventName={selectedEvent.name}
         title={`Audiência para ${selectedEvent.name}`}
         onRegistrationChange={handleRegistrationChange}
         showKidsIndicator={Boolean(selectedEvent.kids_room)}

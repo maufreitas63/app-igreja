@@ -14,6 +14,8 @@ type Props = {
   isChecked: boolean;
   isLoading?: boolean;
   isRegistered?: boolean;
+  /** Nome do evento em que o membro está inscrito (exibido sob o nome). */
+  registeredEventName?: string | null;
   registrationStatus?: RegistrationStatus;
   showKidsIndicator?: boolean;
   showTeensIndicator?: boolean;
@@ -29,6 +31,7 @@ export const MemberCheckboxItem = ({
   isChecked,
   isLoading = false,
   isRegistered = false,
+  registeredEventName = null,
   registrationStatus,
   showKidsIndicator = false,
   showTeensIndicator = false,
@@ -38,6 +41,7 @@ export const MemberCheckboxItem = ({
 }: Props) => {
   const displayName = formatShortName(member.full_name);
   const roomLabel = assignedRoomLabel?.trim() || '';
+  const eventLabel = registeredEventName?.trim() || '';
   const shouldShowStatusDot =
     (registrationStatus === 'KIDS' && showKidsIndicator) ||
     (registrationStatus === 'TEENS' && showTeensIndicator);
@@ -87,8 +91,13 @@ export const MemberCheckboxItem = ({
           ) : null}
         </View>
         {isRegistered ? (
-          <Text style={[styles.registeredText, minimal && styles.registeredTextMinimal]}>
-            Registrado para o evento
+          <Text
+            style={[styles.registeredText, minimal && styles.registeredTextMinimal]}
+            numberOfLines={2}
+          >
+            {eventLabel
+              ? `Inscrito em: ${eventLabel}`
+              : 'Registrado para o evento'}
           </Text>
         ) : null}
       </View>

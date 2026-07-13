@@ -8,6 +8,7 @@ export type RoomAssignmentProfile = {
   full_name: string;
   phone: string | null;
   birth_date: string | null;
+  registered_event_name: string | null;
   room_key: ChurchRoomKey | null;
   room_label: string | null;
 };
@@ -55,6 +56,10 @@ function mapAssignmentProfile(row: Record<string, unknown>): RoomAssignmentProfi
     birth_date:
       typeof row.birth_date === 'string' && row.birth_date.trim()
         ? row.birth_date.trim()
+        : null,
+    registered_event_name:
+      typeof row.registered_event_name === 'string' && row.registered_event_name.trim()
+        ? row.registered_event_name.trim()
         : null,
     room_key: roomKey,
     room_label:

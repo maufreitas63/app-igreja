@@ -395,6 +395,16 @@ begin
       'full_name', p.full_name,
       'phone', p.phone,
       'birth_date', p.birth_date,
+      'registered_event_name', (
+        select coalesce(nullif(trim(e.name), ''), 'Evento')
+          from public.event_registrations er
+          join public.events e on e.id = er.event_id
+         where er.profile_id = p.id
+           and e.event_date is not null
+           and e.event_date::date >= current_date
+         order by e.event_date asc
+         limit 1
+      ),
       'room_key', a.room_key,
       'room_label', coalesce(nullif(trim(s.display_label), ''), a.room_key)
     )

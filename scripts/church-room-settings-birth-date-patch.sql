@@ -1,4 +1,4 @@
--- Inclui birth_date em list_profiles_for_room_assignment (idade na atribuição de salas).
+-- Idade + evento atual/próximo na atribuição de salas (configuração de salas).
 -- Execute no SQL Editor do Supabase (idempotente).
 
 create or replace function public.list_profiles_for_room_assignment(p_search text default null)
@@ -21,6 +21,16 @@ begin
       'full_name', p.full_name,
       'phone', p.phone,
       'birth_date', p.birth_date,
+      'registered_event_name', (
+        select coalesce(nullif(trim(e.name), ''), 'Evento')
+          from public.event_registrations er
+          join public.events e on e.id = er.event_id
+         where er.profile_id = p.id
+           and e.event_date is not null
+           and e.event_date::date >= current_date
+         order by e.event_date asc
+         limit 1
+      ),
       'room_key', a.room_key,
       'room_label', coalesce(nullif(trim(s.display_label), ''), a.room_key)
     )
@@ -51,4 +61,4 @@ grant execute on function public.list_profiles_for_room_assignment(text) to anon
 
 notify pgrst, 'reload schema';
 
-select 'list_profiles_for_room_assignment: birth_date ok' as status;
+select 'list_profiles_for_room_assignment: birth_date + registered_event_name ok' as status;

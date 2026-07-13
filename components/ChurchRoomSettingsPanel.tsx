@@ -295,6 +295,11 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
                   {age !== null ? `${age} anos` : 'Idade não informada'}
                 </Text>
                 {profile.phone ? <Text style={styles.profilePhone}>{profile.phone}</Text> : null}
+                <Text style={styles.profileEvent}>
+                  {profile.registered_event_name
+                    ? `Inscrito em: ${profile.registered_event_name}`
+                    : 'Sem inscrição em evento (hoje/próximos)'}
+                </Text>
                 <Text style={styles.profileRoom}>
                   {profile.room_label ? `Sala: ${profile.room_label}` : 'Sem sala atribuída'}
                 </Text>
@@ -439,6 +444,11 @@ const styles = StyleSheet.create({
   profilePhone: {
     color: MINIMAL_UI.textMuted,
     fontSize: 12,
+  },
+  profileEvent: {
+    color: MINIMAL_UI.accent,
+    fontSize: 12,
+    fontWeight: '600',
   },
   profileRoom: {
     color: MINIMAL_UI.textMuted,

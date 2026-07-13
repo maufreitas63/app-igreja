@@ -38,6 +38,8 @@ export type SessionProfileRegistration = {
 type Props = {
   familyId: string;
   eventId?: string;
+  /** Nome do evento (exibido em «Inscrito em: …»). */
+  eventName?: string | null;
   title?: string;
   onRegistrationChange?: () => Promise<void> | void;
   showKidsIndicator?: boolean;
@@ -87,6 +89,7 @@ function getMemberRowHeight(isRegistered: boolean): number {
 export const FamilyRegistrationList = ({
   familyId,
   eventId,
+  eventName = null,
   title,
   onRegistrationChange,
   showKidsIndicator = false,
@@ -106,6 +109,18 @@ export const FamilyRegistrationList = ({
   hideRoomSelos = false,
   eventEnabledRoomKeys = null,
 }: Props) => {
+  const resolvedEventName = useMemo(() => {
+    const explicit = eventName?.trim();
+    if (explicit) {
+      return explicit;
+    }
+    const fromTitle = title?.trim() ?? '';
+    const audiênciaPrefix = /^audiência\s+para\s+/i;
+    if (audiênciaPrefix.test(fromTitle)) {
+      return fromTitle.replace(audiênciaPrefix, '').trim();
+    }
+    return fromTitle || null;
+  }, [eventName, title]);
   const hasFamilyId = Boolean(familyId?.trim());
   const { members, loading, error } = useFamilyAudienceMembers(
     hasFamilyId ? familyId : '',
@@ -505,6 +520,7 @@ export const FamilyRegistrationList = ({
             isChecked={soloRegistered}
             isLoading={soloToggleLoading || soloStatusLoading}
             isRegistered={soloRegistered}
+            registeredEventName={resolvedEventName}
             registrationStatus={soloRegistrationStatus}
             showKidsIndicator={showKidsIndicator}
             showTeensIndicator={showTeensIndicator}
@@ -674,6 +690,7 @@ export const FamilyRegistrationList = ({
                   pendingRegisterIds.includes(item.id) || pendingUnregisterIds.includes(item.id)
                 }
                 isRegistered={isItemRegistered}
+                registeredEventName={resolvedEventName}
                 registrationStatus={registeredMemberStatusById[item.id]}
                 showKidsIndicator={showKidsIndicator}
                 showTeensIndicator={showTeensIndicator}

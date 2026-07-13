@@ -2813,6 +2813,7 @@ export default function Dashboard() {
                             <FamilyRegistrationList
                               familyId={familyId ?? ''}
                               eventId={selectedEvent?.id}
+                              eventName={selectedEvent?.name ?? null}
                               title={selectedEvent ? `Audiência para ${selectedEvent.name}` : 'Audiência da Família'}
                               onRegistrationChange={handleEventRegistrationChange}
                               showKidsIndicator={Boolean(selectedEvent?.kids_room)}
