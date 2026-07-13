@@ -128,7 +128,9 @@ export default function IndexScreen() {
   );
   const phoneDigits = normalizePhoneDigits(phone);
   const needsEmailBeforePin =
-    !isTotemLoginMode && !pinDeliveryUnlocked && hasStoredAccessPin === false;
+    !isTotemLoginMode
+    && !pinDeliveryUnlocked
+    && (hasStoredAccessPin === false || firstAccessNeedsEmail);
   const isCheckingStoredPin =
     loginStep === 2 && !isTotemLoginMode && isBrazilianPhoneComplete(phone) && hasStoredAccessPin === null;
   const showEmailPinDelivery =
@@ -344,8 +346,19 @@ export default function IndexScreen() {
 
         if (hasPin === true) {
           setHasStoredAccessPin(true);
-          setPinDeliveryUnlocked(true);
-          setFirstAccessNeedsEmail(false);
+
+          // PIN no banco mas sem e-mail: ainda precisa do fluxo de 1º acesso.
+          if (deliveryState.ok && deliveryState.needsEmail) {
+            setPinDeliveryUnlocked(false);
+            setFirstAccessNeedsEmail(true);
+            setFirstAccessEmailMasked('');
+          } else {
+            setPinDeliveryUnlocked(true);
+            setFirstAccessNeedsEmail(false);
+            if (deliveryState.ok) {
+              setFirstAccessEmailMasked(deliveryState.emailMasked);
+            }
+          }
           return;
         }
 
@@ -504,9 +517,13 @@ export default function IndexScreen() {
 
         Alert.alert(
           'Código enviado por e-mail',
-          result.emailMasked
-            ? `Enviamos o código de 4 dígitos para ${result.emailMasked}. Confira também a pasta de spam.`
-            : 'Enviamos o código de 4 dígitos por e-mail. Confira também a pasta de spam.'
+          [
+            result.emailMasked
+              ? `Enviamos o código de 4 dígitos para ${result.emailMasked}.`
+              : 'Enviamos o código de 4 dígitos por e-mail.',
+            'Confira a caixa de entrada e a pasta de spam/lixo eletrônico.',
+            'O assunto é: "Seu código de acesso — Conecta Mais".',
+          ].join('\n\n')
         );
       } catch (err: unknown) {
         console.error('Erro ao enviar código por e-mail:', err);
@@ -1057,6 +1074,22 @@ export default function IndexScreen() {
                     style={styles.forgotPasswordBox}
                   >
                     <Text style={styles.forgotPasswordBoxText}>Esqueci minha senha</Text>
+                  </TouchableOpacity>
+                ) : null}
+                {!isTotemLoginMode && pinCodeSent ? (
+                  <TouchableOpacity
+                    accessibilityLabel="Reenviar código por e-mail"
+                    accessibilityRole="button"
+                    activeOpacity={0.85}
+                    disabled={isSendingPin}
+                    onPress={handleEmailPinPress}
+                    style={styles.forgotPasswordBox}
+                  >
+                    {isSendingPin ? (
+                      <ActivityIndicator color={LOGIN_ACCENT} size="small" />
+                    ) : (
+                      <Text style={styles.forgotPasswordBoxText}>Não recebi — reenviar código</Text>
+                    )}
                   </TouchableOpacity>
                 ) : null}
                 {!isTotemLoginMode && isLoading ? (

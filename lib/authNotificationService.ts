@@ -116,7 +116,13 @@ export async function getAuthPinDeliveryState(phone: string): Promise<AuthPinDel
 }
 
 export type DispatchAuthPinResult =
-  | { ok: true; message: string; emailMasked: string; channel: AuthNotificationChannel }
+  | {
+      ok: true;
+      message: string;
+      emailMasked: string;
+      channel: AuthNotificationChannel;
+      resendId?: string;
+    }
   | { ok: false; message: string; needsEmail?: boolean };
 
 /**
@@ -161,6 +167,13 @@ export async function dispatchAuthAccessPinEmail(params: {
       };
     }
 
+    const resendId =
+      typeof payload?.resend_id === 'string'
+        ? payload.resend_id
+        : typeof payload?.resendId === 'string'
+          ? payload.resendId
+          : undefined;
+
     return {
       ok: true,
       channel: AUTH_NOTIFICATION_CHANNEL,
@@ -169,6 +182,7 @@ export async function dispatchAuthAccessPinEmail(params: {
           ? payload.message
           : 'Código de acesso enviado por e-mail.',
       emailMasked: typeof payload?.email_masked === 'string' ? payload.email_masked : '',
+      resendId,
     };
   } catch (error) {
     return { ok: false, message: formatRpcError(error) };
