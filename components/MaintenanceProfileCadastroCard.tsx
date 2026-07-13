@@ -407,18 +407,22 @@ const styles = StyleSheet.create({
   resultsScroll: {
     maxHeight: 120,
     borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.2)',
+    borderColor: 'rgba(148, 163, 184, 0.35)',
     borderRadius: 10,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
   },
   resultRow: {
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(148, 163, 184, 0.12)',
+    borderBottomColor: 'rgba(148, 163, 184, 0.18)',
+    backgroundColor: '#FFFFFF',
   },
   resultRowSelected: {
-    backgroundColor: 'rgba(167, 139, 250, 0.18)',
+    backgroundColor: '#F8FAFC',
+    borderLeftWidth: 3,
+    borderLeftColor: '#00008B',
   },
   resultName: {
     color: '#3A96DD',
