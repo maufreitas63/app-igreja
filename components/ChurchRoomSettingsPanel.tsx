@@ -13,6 +13,7 @@ import {
   setUserRoomAssignment,
   type RoomAssignmentProfile,
 } from '@/lib/userRoomAssignment';
+import { getAgeFromBirthDate } from '@/lib/kidsTeensStatus';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -285,10 +286,14 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
       ) : (
         profiles.map((profile) => {
           const busy = busyProfileId === profile.profile_id;
+          const age = getAgeFromBirthDate(profile.birth_date);
           return (
             <View key={profile.profile_id} style={styles.profileRow}>
               <View style={styles.profileCopy}>
                 <Text style={styles.profileName}>{profile.full_name}</Text>
+                <Text style={styles.profileAge}>
+                  {age !== null ? `${age} anos` : 'Idade não informada'}
+                </Text>
                 {profile.phone ? <Text style={styles.profilePhone}>{profile.phone}</Text> : null}
                 <Text style={styles.profileRoom}>
                   {profile.room_label ? `Sala: ${profile.room_label}` : 'Sem sala atribuída'}
@@ -424,6 +429,12 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
     fontSize: 15,
     fontWeight: '600',
+  },
+  profileAge: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 2,
   },
   profilePhone: {
     color: MINIMAL_UI.textMuted,

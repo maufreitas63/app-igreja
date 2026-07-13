@@ -394,6 +394,7 @@ begin
       'profile_id', p.id,
       'full_name', p.full_name,
       'phone', p.phone,
+      'birth_date', p.birth_date,
       'room_key', a.room_key,
       'room_label', coalesce(nullif(trim(s.display_label), ''), a.room_key)
     )
