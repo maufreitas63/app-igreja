@@ -126,7 +126,9 @@ declare
   v_padrao_label text;
   v_esp_key text;
   v_esp_label text;
+  v_esp_start date;
   v_esp_end date;
+  v_esp_active boolean := false;
   v_as_of date := coalesce(p_as_of, current_date);
 begin
   select a.room_key, coalesce(nullif(trim(s.display_label), ''), a.room_key)
@@ -142,10 +144,13 @@ begin
      and s.room_kind = 'padrao'
    limit 1;
 
+  -- Sempre retorna a atribuição especial (para o chip admin marcar selecionado).
+  -- A vigência por data só decide se ela vira a sala efetiva.
   select a.room_key,
          coalesce(nullif(trim(s.display_label), ''), a.room_key),
+         s.start_date,
          s.end_date
-    into v_esp_key, v_esp_label, v_esp_end
+    into v_esp_key, v_esp_label, v_esp_start, v_esp_end
     from public.user_room_assignment a
     join public.church_room_settings s
       on s.tenant_id = a.tenant_id
@@ -155,12 +160,15 @@ begin
      and a.assignment_kind = 'especial'
      and s.is_enabled = true
      and s.room_kind = 'especial'
-     and s.start_date is not null
-     and s.end_date is not null
-     and v_as_of between s.start_date and s.end_date
    limit 1;
 
-  if v_esp_key is not null then
+  v_esp_active :=
+    v_esp_key is not null
+    and v_esp_start is not null
+    and v_esp_end is not null
+    and v_as_of between v_esp_start and v_esp_end;
+
+  if v_esp_active then
     room_key := v_esp_key;
     room_label := v_esp_label;
     room_kind := 'especial';

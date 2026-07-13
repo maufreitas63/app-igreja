@@ -9,6 +9,9 @@
    `scripts/church-room-settings-custom-rooms.sql`
 3. **Salas padrão / especial** (override por período):
    `scripts/church-room-settings-special-rooms.sql`
+4. Se o chip da especial não marcar selecionado após atribuir:
+   `scripts/church-room-settings-especial-chip-selected-patch.sql`
+   (já incluso no `special-rooms.sql` atualizado; só rode o patch se o passo 3 foi de versão antiga)
 
 Resultado esperado do passo 2:
 

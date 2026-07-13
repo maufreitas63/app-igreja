@@ -50,7 +50,10 @@ function formatProfileRoomSummary(profile: RoomAssignmentProfile): string {
     const until = profile.especial_end_date
       ? ` até ${formatDisplayDateLike(profile.especial_end_date)}`
       : '';
-    parts.push(`Especial: ${profile.especial_room_label}${until}`);
+    const activeNow = profile.room_kind === 'especial';
+    parts.push(
+      `Especial: ${profile.especial_room_label}${until}${activeNow ? '' : ' (aguardando vigência)'}`
+    );
   }
   return parts.join(' · ');
 }
@@ -243,6 +246,40 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
         text2: result.message,
       });
       if (result.success) {
+        // Marca o chip imediatamente (mesmo padrão visual da padrão), antes do reload.
+        const roomMeta = roomKey
+          ? enabledRooms.find((row) => row.room_key === roomKey)
+          : null;
+        setProfiles((prev) =>
+          prev.map((profile) => {
+            if (profile.profile_id !== profileId) return profile;
+            if (assignmentKind === 'padrao') {
+              return {
+                ...profile,
+                padrao_room_key: roomKey,
+                padrao_room_label: roomMeta?.display_label ?? null,
+                room_key:
+                  profile.room_kind === 'especial' ? profile.room_key : roomKey,
+                room_label:
+                  profile.room_kind === 'especial'
+                    ? profile.room_label
+                    : roomMeta?.display_label ?? null,
+                room_kind:
+                  profile.room_kind === 'especial'
+                    ? profile.room_kind
+                    : roomKey
+                      ? 'padrao'
+                      : null,
+              };
+            }
+            return {
+              ...profile,
+              especial_room_key: roomKey,
+              especial_room_label: roomMeta?.display_label ?? null,
+              especial_end_date: roomMeta?.end_date ?? null,
+            };
+          })
+        );
         await loadProfiles(search);
       }
     } finally {
