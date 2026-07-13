@@ -172,7 +172,7 @@ export function MembersClass({
                 <TextInput
                   style={membersClassStyles.input}
                   placeholder="Nome completo (mín. 2 letras)"
-                  placeholderTextColor="#64748b"
+                  placeholderTextColor={MINIMAL_UI.textMuted}
                   value={name}
                   autoCapitalize="words"
                   autoCorrect={false}
@@ -180,7 +180,7 @@ export function MembersClass({
                   onBlur={onNameBlur}
                 />
                 {!editingMemberId && nameSearchLoading ? (
-                  <ActivityIndicator color={ACCENT} style={membersClassStyles.nameSearchLoader} />
+                  <ActivityIndicator color={MINIMAL_UI.blueDark} style={membersClassStyles.nameSearchLoader} />
                 ) : null}
                 {!editingMemberId && canSearchProfileByName(name) && !nameSearchLoading ? (
                   <ScrollView
@@ -236,7 +236,7 @@ export function MembersClass({
                   placeholder="(00) 00000-0000"
                   keyboardType="phone-pad"
                   maxLength={15}
-                  placeholderTextColor="#64748b"
+                  placeholderTextColor={MINIMAL_UI.textMuted}
                   value={phone}
                   onChangeText={onPhoneChange}
                   onBlur={onPhoneBlur}
@@ -248,7 +248,7 @@ export function MembersClass({
                   placeholder="DD/MM/AAAA"
                   keyboardType="number-pad"
                   maxLength={10}
-                  placeholderTextColor="#64748b"
+                  placeholderTextColor={MINIMAL_UI.textMuted}
                   value={birthDate}
                   onChangeText={(value) => onBirthDateChange(formatDate(value))}
                 />
