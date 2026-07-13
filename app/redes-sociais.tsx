@@ -44,7 +44,7 @@ export default function RedesSociaisScreen() {
         ?? null;
       setChurch(match);
 
-      const url = await resolveInstancePublicUrl();
+      const url = await resolveInstancePublicUrl({ churchCode: match?.code ?? null });
       setInstanceUrl(url);
     } catch (error) {
       console.error(error);

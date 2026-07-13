@@ -6,6 +6,47 @@ import { supabase } from '@/lib/supabase';
 
 export const USER_TENANT_ID_STORAGE_KEY = 'user_tenant_id';
 export const USER_TENANT_BRANDING_STORAGE_KEY = 'user_tenant_branding';
+/** Código da igreja vindo do QR / deep link (`?igreja=IBEP`). */
+export const PREFERRED_IGREJA_CODE_STORAGE_KEY = 'preferred_igreja_code';
+
+export async function persistPreferredIgrejaCode(code: string | null | undefined) {
+  const normalized = code?.trim().toUpperCase() || null;
+  if (normalized) {
+    await AsyncStorage.setItem(PREFERRED_IGREJA_CODE_STORAGE_KEY, normalized);
+  } else {
+    await AsyncStorage.removeItem(PREFERRED_IGREJA_CODE_STORAGE_KEY);
+  }
+}
+
+export async function getPreferredIgrejaCode(): Promise<string | null> {
+  const raw = (await AsyncStorage.getItem(PREFERRED_IGREJA_CODE_STORAGE_KEY))?.trim();
+  return raw ? raw.toUpperCase() : null;
+}
+
+/** Lê `?igreja=` da URL (web) e persiste para selecionar a instância após o login. */
+export async function capturePreferredIgrejaCodeFromLocation(
+  param?: string | string[] | null
+): Promise<string | null> {
+  let fromParam = '';
+  if (typeof param === 'string') {
+    fromParam = param;
+  } else if (Array.isArray(param)) {
+    fromParam = param[0] ?? '';
+  }
+
+  let fromQuery = '';
+  if (typeof window !== 'undefined' && window.location?.search) {
+    fromQuery = new URLSearchParams(window.location.search).get('igreja') ?? '';
+  }
+
+  const code = (fromParam || fromQuery).trim().toUpperCase();
+  if (!code) {
+    return getPreferredIgrejaCode();
+  }
+
+  await persistPreferredIgrejaCode(code);
+  return code;
+}
 
 export type SessionIgreja = {
   id: string;

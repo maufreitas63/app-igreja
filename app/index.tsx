@@ -76,12 +76,18 @@ import {
 } from '@/lib/totemDevice';
 
 export default function IndexScreen() {
-  const { [SIGN_OUT_QUERY_PARAM]: signedOutParam, phone: phoneParam, recovered: recoveredParam, email: emailParam } =
-    useLocalSearchParams<{
+  const {
+    [SIGN_OUT_QUERY_PARAM]: signedOutParam,
+    phone: phoneParam,
+    recovered: recoveredParam,
+    email: emailParam,
+    igreja: igrejaParam,
+  } = useLocalSearchParams<{
       [SIGN_OUT_QUERY_PARAM]?: string | string[];
       phone?: string | string[];
       recovered?: string | string[];
       email?: string | string[];
+      igreja?: string | string[];
     }>();
   const skipSessionRestore =
     signedOutParam === '1' || (Array.isArray(signedOutParam) && signedOutParam.includes('1'));
@@ -150,6 +156,12 @@ export default function IndexScreen() {
       pinInputRef.current?.focus();
     });
   }, []);
+
+  useEffect(() => {
+    void import('@/lib/tenantSession').then(({ capturePreferredIgrejaCodeFromLocation }) =>
+      capturePreferredIgrejaCodeFromLocation(igrejaParam)
+    );
+  }, [igrejaParam]);
 
   const goBackToPhoneStep = useCallback(() => {
     setPhone('');
@@ -242,13 +254,23 @@ export default function IndexScreen() {
             shouldPromptTenantSelection,
             buildSelecionarIgrejaRoute,
             getStoredTenantId,
+            getPreferredIgrejaCode,
             listSessionIgrejas,
             persistActiveIgrejaBranding,
             clearTenantId,
           } = await import('@/lib/tenantSession');
           const storedTenant = await getStoredTenantId();
+          const preferredCode = await getPreferredIgrejaCode();
           const churches = await listSessionIgrejas();
-          if (storedTenant) {
+          const preferredMatch = preferredCode
+            ? churches.find(
+                (church) => church.code.trim().toUpperCase() === preferredCode
+              )
+            : null;
+
+          if (preferredMatch) {
+            await persistActiveIgrejaBranding(preferredMatch);
+          } else if (storedTenant) {
             const match = churches.find((church) => church.id === storedTenant);
             if (match) {
               await persistActiveIgrejaBranding(match);
