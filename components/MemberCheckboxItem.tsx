@@ -49,16 +49,16 @@ export const MemberCheckboxItem = ({
     (registrationStatus === 'KIDS' && showKidsIndicator) ||
     (registrationStatus === 'TEENS' && showTeensIndicator);
 
+  // Inscrito + especial: exibe somente a especial (não a padrão / não a coluna Salas).
+  const showRoomInNameRow = Boolean(roomLabel) && !(isRegistered && assignedRoomIsOverlay);
+
   const registeredLine = (() => {
     if (!isRegistered) return null;
-    if (eventLabel && assignedRoomIsOverlay && roomLabel) {
-      return `Inscrito em: ${eventLabel} · ${roomLabel}`;
+    if (assignedRoomIsOverlay && roomLabel) {
+      return `Inscrito em: ${roomLabel}`;
     }
     if (eventLabel) {
       return `Inscrito em: ${eventLabel}`;
-    }
-    if (assignedRoomIsOverlay && roomLabel) {
-      return `Sala: ${roomLabel}`;
     }
     return 'Registrado para o evento';
   })();
@@ -98,7 +98,7 @@ export const MemberCheckboxItem = ({
               ]}
             />
           ) : null}
-          {roomLabel ? (
+          {showRoomInNameRow ? (
             <Text
               style={[styles.roomLabel, minimal && styles.roomLabelMinimal]}
               numberOfLines={1}
