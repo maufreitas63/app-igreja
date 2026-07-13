@@ -814,7 +814,9 @@ export default function MaintenanceDashboard() {
     void listChurchRoomSettings({ forceRefresh: true })
       .then((rows) => {
         if (!cancelled) {
-          setEventRoomOptions(rows.filter((row) => row.is_enabled));
+          setEventRoomOptions(
+            rows.filter((row) => row.is_enabled && row.room_kind !== 'especial')
+          );
         }
       })
       .catch((error) => {

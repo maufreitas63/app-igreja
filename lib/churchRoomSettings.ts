@@ -4,7 +4,7 @@ import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { subscribeActiveTenantChange } from '@/lib/tenantSession';
 
 export const CHURCH_ROOM_SETTINGS_SQL_HINT =
-  'Execute no Supabase (SQL Editor): scripts/church-room-settings-custom-rooms.sql — libera criar salas além de KIDS/TEENS.';
+  'Execute no Supabase (SQL Editor): scripts/church-room-settings-custom-rooms.sql e scripts/church-room-settings-special-rooms.sql — salas padrão/especial.';
 
 function withRoomSqlHintIfNeeded(message: string): string {
   const normalized = message.toLocaleLowerCase();
@@ -13,6 +13,8 @@ function withRoomSqlHintIfNeeded(message: string): string {
     || normalized.includes('teens')
     || normalized.includes('does not exist')
     || normalized.includes('could not find')
+    || normalized.includes('room_kind')
+    || normalized.includes('assignment_kind')
   ) {
     return `${message}\n\n${CHURCH_ROOM_SETTINGS_SQL_HINT}`;
   }
@@ -21,6 +23,8 @@ function withRoomSqlHintIfNeeded(message: string): string {
 
 /** KIDS/TEENS (sistema) ou chave custom (HOMENS, DISCIPULADO, …). */
 export type ChurchRoomKey = string;
+
+export type ChurchRoomKind = 'padrao' | 'especial';
 
 export type ChurchRoomSetting = {
   id: string;
@@ -32,6 +36,9 @@ export type ChurchRoomSetting = {
   is_enabled: boolean;
   is_system: boolean;
   sort_order: number;
+  room_kind: ChurchRoomKind;
+  start_date: string | null;
+  end_date: string | null;
 };
 
 export const SYSTEM_ROOM_KEYS = ['KIDS', 'TEENS'] as const;
@@ -47,6 +54,9 @@ export const DEFAULT_CHURCH_ROOM_SETTINGS: ChurchRoomSetting[] = [
     is_enabled: true,
     is_system: true,
     sort_order: 10,
+    room_kind: 'padrao',
+    start_date: null,
+    end_date: null,
   },
   {
     id: 'default-teens',
@@ -58,6 +68,9 @@ export const DEFAULT_CHURCH_ROOM_SETTINGS: ChurchRoomSetting[] = [
     is_enabled: true,
     is_system: true,
     sort_order: 20,
+    room_kind: 'padrao',
+    start_date: null,
+    end_date: null,
   },
 ];
 
@@ -93,6 +106,11 @@ function mapRoomSetting(row: Record<string, unknown> | null | undefined): Church
     row?.is_system === true
     || SYSTEM_ROOM_KEYS.includes(roomKey as (typeof SYSTEM_ROOM_KEYS)[number]);
 
+  const kindRaw = String(row?.room_kind ?? 'padrao')
+    .trim()
+    .toLowerCase();
+  const roomKind: ChurchRoomKind = kindRaw === 'especial' ? 'especial' : 'padrao';
+
   return {
     id: String(row?.id ?? `${roomKey}`),
     tenant_id: String(row?.tenant_id ?? ''),
@@ -107,6 +125,11 @@ function mapRoomSetting(row: Record<string, unknown> | null | undefined): Church
     is_enabled: row?.is_enabled === false ? false : true,
     is_system: isSystem,
     sort_order: Number.isFinite(Number(row?.sort_order)) ? Number(row?.sort_order) : 0,
+    room_kind: isSystem ? 'padrao' : roomKind,
+    start_date:
+      typeof row?.start_date === 'string' && row.start_date.trim() ? row.start_date.trim() : null,
+    end_date:
+      typeof row?.end_date === 'string' && row.end_date.trim() ? row.end_date.trim() : null,
   };
 }
 
@@ -247,11 +270,18 @@ export async function upsertChurchRoomSetting(input: {
   };
 }
 
-export async function createChurchRoomSetting(
-  displayLabel: string
-): Promise<{ success: boolean; message: string; row?: ChurchRoomSetting }> {
+export async function createChurchRoomSetting(input: {
+  displayLabel: string;
+  roomKind?: ChurchRoomKind;
+  startDate?: string | null;
+  endDate?: string | null;
+}): Promise<{ success: boolean; message: string; row?: ChurchRoomSetting }> {
+  const roomKind = input.roomKind === 'especial' ? 'especial' : 'padrao';
   const { data, error } = await supabase.rpc('create_church_room_setting', {
-    p_display_label: displayLabel,
+    p_display_label: input.displayLabel,
+    p_room_kind: roomKind,
+    p_start_date: roomKind === 'especial' ? input.startDate ?? null : null,
+    p_end_date: roomKind === 'especial' ? input.endDate ?? null : null,
   });
 
   if (error) {

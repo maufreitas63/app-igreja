@@ -3,9 +3,13 @@ import {
   createChurchRoomSetting,
   deleteChurchRoomSetting,
   type ChurchRoomKey,
+  type ChurchRoomKind,
   type ChurchRoomSetting,
   upsertChurchRoomSetting,
 } from '@/lib/churchRoomSettings';
+import { formatBrazilDateInput } from '@/lib/inputMasks';
+import { getAgeFromBirthDate } from '@/lib/kidsTeensStatus';
+import { formatDisplayDateLike, toIsoDate } from '@/lib/manageProfile/shared';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   clearUserRoomAssignment,
@@ -13,7 +17,6 @@ import {
   setUserRoomAssignment,
   type RoomAssignmentProfile,
 } from '@/lib/userRoomAssignment';
-import { getAgeFromBirthDate } from '@/lib/kidsTeensStatus';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -30,9 +33,31 @@ type Props = {
   onRoomsChanged?: () => void;
 };
 
+function roomKindLabel(kind: ChurchRoomKind): string {
+  return kind === 'especial' ? 'Especial' : 'Padrão';
+}
+
+function formatProfileRoomSummary(profile: RoomAssignmentProfile): string {
+  if (!profile.room_label) {
+    return 'Sem sala atribuída';
+  }
+
+  const parts = [`Efetiva: ${profile.room_label}`];
+  if (profile.padrao_room_label) {
+    parts.push(`Padrão: ${profile.padrao_room_label}`);
+  }
+  if (profile.especial_room_label) {
+    const until = profile.especial_end_date
+      ? ` até ${formatDisplayDateLike(profile.especial_end_date)}`
+      : '';
+    parts.push(`Especial: ${profile.especial_room_label}${until}`);
+  }
+  return parts.join(' · ');
+}
+
 /**
  * Painel de gestão de salas (stateless quanto à navegação).
- * Edita nomes, cria salas customizadas e atribui membros.
+ * Edita nomes, cria salas padrão/especial e atribui membros.
  */
 export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
   const enabledRooms = useMemo(
@@ -40,9 +65,22 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
     [rooms]
   );
 
+  const padraoRooms = useMemo(
+    () => enabledRooms.filter((row) => row.room_kind !== 'especial'),
+    [enabledRooms]
+  );
+
+  const especialRooms = useMemo(
+    () => enabledRooms.filter((row) => row.room_kind === 'especial'),
+    [enabledRooms]
+  );
+
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<ChurchRoomKey | null>(null);
   const [newRoomName, setNewRoomName] = useState('');
+  const [newRoomKind, setNewRoomKind] = useState<ChurchRoomKind>('padrao');
+  const [newStartDate, setNewStartDate] = useState('');
+  const [newEndDate, setNewEndDate] = useState('');
   const [creating, setCreating] = useState(false);
   const [deletingKey, setDeletingKey] = useState<ChurchRoomKey | null>(null);
   const [search, setSearch] = useState('');
@@ -113,9 +151,38 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
       });
       return;
     }
+
+    let startIso: string | null = null;
+    let endIso: string | null = null;
+    if (newRoomKind === 'especial') {
+      startIso = toIsoDate(newStartDate);
+      endIso = toIsoDate(newEndDate);
+      if (!startIso || !endIso) {
+        Toast.show({
+          type: 'error',
+          text1: 'Sala especial',
+          text2: 'Informe início e fim no formato DD/MM/AAAA.',
+        });
+        return;
+      }
+      if (endIso < startIso) {
+        Toast.show({
+          type: 'error',
+          text1: 'Sala especial',
+          text2: 'A data de fim deve ser igual ou posterior à de início.',
+        });
+        return;
+      }
+    }
+
     setCreating(true);
     try {
-      const result = await createChurchRoomSetting(label);
+      const result = await createChurchRoomSetting({
+        displayLabel: label,
+        roomKind: newRoomKind,
+        startDate: startIso,
+        endDate: endIso,
+      });
       Toast.show({
         type: result.success ? 'success' : 'error',
         text1: 'Nova sala',
@@ -123,6 +190,9 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
       });
       if (result.success) {
         setNewRoomName('');
+        setNewStartDate('');
+        setNewEndDate('');
+        setNewRoomKind('padrao');
         onRoomsChanged?.();
         await loadProfiles(search);
       }
@@ -157,12 +227,16 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
     }
   };
 
-  const handleAssign = async (profileId: string, roomKey: ChurchRoomKey | null) => {
+  const handleAssign = async (
+    profileId: string,
+    roomKey: ChurchRoomKey | null,
+    assignmentKind: ChurchRoomKind
+  ) => {
     setBusyProfileId(profileId);
     try {
       const result = roomKey
-        ? await setUserRoomAssignment(profileId, roomKey)
-        : await clearUserRoomAssignment(profileId);
+        ? await setUserRoomAssignment(profileId, roomKey, assignmentKind)
+        : await clearUserRoomAssignment(profileId, assignmentKind);
       Toast.show({
         type: result.success ? 'success' : 'error',
         text1: 'Atribuição',
@@ -176,74 +250,145 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
     }
   };
 
+  const renderRoomBlock = (room: ChurchRoomSetting) => {
+    const period =
+      room.room_kind === 'especial' && room.start_date && room.end_date
+        ? ` · ${formatDisplayDateLike(room.start_date)} → ${formatDisplayDateLike(room.end_date)}`
+        : '';
+
+    return (
+      <View key={room.room_key} style={styles.roomBlock}>
+        <Text style={styles.roomKey}>
+          {room.room_key}
+          {room.is_system ? ' · sistema' : ''}
+          {` · ${roomKindLabel(room.room_kind)}`}
+          {period}
+        </Text>
+        <TextInput
+          style={styles.input}
+          value={drafts[room.room_key] ?? ''}
+          onChangeText={(text) =>
+            setDrafts((prev) => ({
+              ...prev,
+              [room.room_key]: text,
+            }))
+          }
+          placeholder="Nome afetivo da sala"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+        />
+        <View style={styles.roomActions}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => void handleSaveRoom(room.room_key)}
+            disabled={savingKey === room.room_key}
+            accessibilityRole="button"
+            accessibilityLabel={`Salvar nome da sala ${room.room_key}`}
+          >
+            {savingKey === room.room_key ? (
+              <ActivityIndicator color={MINIMAL_UI.onDark} />
+            ) : (
+              <Text style={styles.primaryButtonText}>Salvar</Text>
+            )}
+          </TouchableOpacity>
+          {!room.is_system ? (
+            <TouchableOpacity
+              style={styles.dangerButton}
+              onPress={() => void handleDeleteRoom(room)}
+              disabled={deletingKey === room.room_key}
+              accessibilityRole="button"
+              accessibilityLabel={`Excluir sala ${room.display_label}`}
+            >
+              {deletingKey === room.room_key ? (
+                <ActivityIndicator color={MINIMAL_UI.accent} />
+              ) : (
+                <Text style={styles.dangerButtonText}>Excluir</Text>
+              )}
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.root}>
       <Text style={styles.sectionTitle}>Salas da instância</Text>
       <Text style={styles.hint}>
-        Cada `room_key` é único. KIDS/TEENS são de sistema (eventos). Crie salas extras como Homens,
-        Mulheres, Discipulado ou Novos membros.
+        Sala padrão é permanente. Sala especial tem período e, enquanto vigente, sobrepõe a padrão
+        do membro; ao terminar a data, a efetiva volta automaticamente à padrão.
       </Text>
 
-      {enabledRooms.map((room) => (
-        <View key={room.room_key} style={styles.roomBlock}>
-          <Text style={styles.roomKey}>
-            {room.room_key}
-            {room.is_system ? ' · sistema' : ''}
-          </Text>
-          <TextInput
-            style={styles.input}
-            value={drafts[room.room_key] ?? ''}
-            onChangeText={(text) =>
-              setDrafts((prev) => ({
-                ...prev,
-                [room.room_key]: text,
-              }))
-            }
-            placeholder="Nome afetivo da sala"
-            placeholderTextColor={MINIMAL_UI.textMuted}
-          />
-          <View style={styles.roomActions}>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={() => void handleSaveRoom(room.room_key)}
-              disabled={savingKey === room.room_key}
-              accessibilityRole="button"
-              accessibilityLabel={`Salvar nome da sala ${room.room_key}`}
-            >
-              {savingKey === room.room_key ? (
-                <ActivityIndicator color={MINIMAL_UI.onDark} />
-              ) : (
-                <Text style={styles.primaryButtonText}>Salvar</Text>
-              )}
-            </TouchableOpacity>
-            {!room.is_system ? (
-              <TouchableOpacity
-                style={styles.dangerButton}
-                onPress={() => void handleDeleteRoom(room)}
-                disabled={deletingKey === room.room_key}
-                accessibilityRole="button"
-                accessibilityLabel={`Excluir sala ${room.display_label}`}
-              >
-                {deletingKey === room.room_key ? (
-                  <ActivityIndicator color={MINIMAL_UI.accent} />
-                ) : (
-                  <Text style={styles.dangerButtonText}>Excluir</Text>
-                )}
-              </TouchableOpacity>
-            ) : null}
-          </View>
-        </View>
-      ))}
+      {padraoRooms.length > 0 ? (
+        <>
+          <Text style={styles.subTitle}>Padrão</Text>
+          {padraoRooms.map(renderRoomBlock)}
+        </>
+      ) : null}
+
+      {especialRooms.length > 0 ? (
+        <>
+          <Text style={[styles.subTitle, styles.sectionSpaced]}>Especial</Text>
+          {especialRooms.map(renderRoomBlock)}
+        </>
+      ) : null}
 
       <Text style={[styles.sectionTitle, styles.sectionSpaced]}>Criar nova sala</Text>
+      <View style={styles.kindRow}>
+        {(['padrao', 'especial'] as ChurchRoomKind[]).map((kind) => {
+          const selected = newRoomKind === kind;
+          return (
+            <TouchableOpacity
+              key={kind}
+              style={[styles.kindChip, selected && styles.kindChipSelected]}
+              onPress={() => setNewRoomKind(kind)}
+              accessibilityRole="button"
+              accessibilityLabel={`Tipo ${roomKindLabel(kind)}`}
+            >
+              <Text style={[styles.kindChipText, selected && styles.kindChipTextSelected]}>
+                {roomKindLabel(kind)}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
       <TextInput
         style={styles.input}
         value={newRoomName}
         onChangeText={setNewRoomName}
-        placeholder="Ex.: Homens, Mulheres, Discipulado, Novos membros"
+        placeholder={
+          newRoomKind === 'especial'
+            ? 'Ex.: Panorama do Velho Testamento'
+            : 'Ex.: Homens, Mulheres, Discipulado'
+        }
         placeholderTextColor={MINIMAL_UI.textMuted}
         onSubmitEditing={() => void handleCreateRoom()}
       />
+      {newRoomKind === 'especial' ? (
+        <View style={styles.dateRow}>
+          <View style={styles.dateField}>
+            <Text style={styles.dateLabel}>Início</Text>
+            <TextInput
+              style={styles.input}
+              value={newStartDate}
+              onChangeText={(value) => setNewStartDate(formatBrazilDateInput(value))}
+              placeholder="DD/MM/AAAA"
+              placeholderTextColor={MINIMAL_UI.textMuted}
+              keyboardType="number-pad"
+            />
+          </View>
+          <View style={styles.dateField}>
+            <Text style={styles.dateLabel}>Fim</Text>
+            <TextInput
+              style={styles.input}
+              value={newEndDate}
+              onChangeText={(value) => setNewEndDate(formatBrazilDateInput(value))}
+              placeholder="DD/MM/AAAA"
+              placeholderTextColor={MINIMAL_UI.textMuted}
+              keyboardType="number-pad"
+            />
+          </View>
+        </View>
+      ) : null}
       <TouchableOpacity
         style={styles.primaryButton}
         onPress={() => void handleCreateRoom()}
@@ -259,7 +404,10 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
       </TouchableOpacity>
 
       <Text style={[styles.sectionTitle, styles.sectionSpaced]}>Atribuir membros às salas</Text>
-      <Text style={styles.hint}>Opcional e editável a qualquer momento pelo Líder ou Administrador.</Text>
+      <Text style={styles.hint}>
+        Atribua a padrão e, se necessário, uma especial. A especial só vale entre as datas
+        programadas.
+      </Text>
 
       <TextInput
         style={styles.input}
@@ -300,21 +448,21 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
                     ? `Inscrito em: ${profile.registered_event_name}`
                     : 'Sem inscrição em evento (hoje/próximos)'}
                 </Text>
-                <Text style={styles.profileRoom}>
-                  {profile.room_label ? `Sala: ${profile.room_label}` : 'Sem sala atribuída'}
-                </Text>
+                <Text style={styles.profileRoom}>{formatProfileRoomSummary(profile)}</Text>
               </View>
+
+              <Text style={styles.assignLabel}>Padrão</Text>
               <View style={styles.profileActions}>
-                {enabledRooms.map((room) => {
-                  const selected = profile.room_key === room.room_key;
+                {padraoRooms.map((room) => {
+                  const selected = profile.padrao_room_key === room.room_key;
                   return (
                     <TouchableOpacity
-                      key={room.room_key}
+                      key={`padrao-${room.room_key}`}
                       style={[styles.chip, selected && styles.chipSelected]}
                       disabled={busy}
-                      onPress={() => void handleAssign(profile.profile_id, room.room_key)}
+                      onPress={() => void handleAssign(profile.profile_id, room.room_key, 'padrao')}
                       accessibilityRole="button"
-                      accessibilityLabel={`Atribuir ${profile.full_name} a ${room.display_label}`}
+                      accessibilityLabel={`Atribuir ${profile.full_name} à padrão ${room.display_label}`}
                     >
                       <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
                         {room.display_label}
@@ -324,14 +472,50 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
                 })}
                 <TouchableOpacity
                   style={styles.clearChip}
-                  disabled={busy || !profile.room_key}
-                  onPress={() => void handleAssign(profile.profile_id, null)}
+                  disabled={busy || !profile.padrao_room_key}
+                  onPress={() => void handleAssign(profile.profile_id, null, 'padrao')}
                   accessibilityRole="button"
-                  accessibilityLabel={`Remover sala de ${profile.full_name}`}
+                  accessibilityLabel={`Remover sala padrão de ${profile.full_name}`}
                 >
-                  <Text style={styles.clearChipText}>Limpar</Text>
+                  <Text style={styles.clearChipText}>Limpar padrão</Text>
                 </TouchableOpacity>
               </View>
+
+              {especialRooms.length > 0 ? (
+                <>
+                  <Text style={styles.assignLabel}>Especial</Text>
+                  <View style={styles.profileActions}>
+                    {especialRooms.map((room) => {
+                      const selected = profile.especial_room_key === room.room_key;
+                      return (
+                        <TouchableOpacity
+                          key={`especial-${room.room_key}`}
+                          style={[styles.chip, selected && styles.chipSelected]}
+                          disabled={busy}
+                          onPress={() =>
+                            void handleAssign(profile.profile_id, room.room_key, 'especial')
+                          }
+                          accessibilityRole="button"
+                          accessibilityLabel={`Atribuir ${profile.full_name} à especial ${room.display_label}`}
+                        >
+                          <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                            {room.display_label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                    <TouchableOpacity
+                      style={styles.clearChip}
+                      disabled={busy || !profile.especial_room_key}
+                      onPress={() => void handleAssign(profile.profile_id, null, 'especial')}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remover sala especial de ${profile.full_name}`}
+                    >
+                      <Text style={styles.clearChipText}>Limpar especial</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : null}
             </View>
           );
         })
@@ -349,6 +533,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: MINIMAL_UI.blueDark,
+  },
+  subTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: MINIMAL_UI.accent,
+    marginTop: 4,
   },
   sectionSpaced: {
     marginTop: 18,
@@ -380,6 +570,41 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 10,
     alignItems: 'center',
+  },
+  kindRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  kindChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  kindChipSelected: {
+    backgroundColor: MINIMAL_UI.accent,
+  },
+  kindChipText: {
+    color: MINIMAL_UI.text,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  kindChipTextSelected: {
+    color: MINIMAL_UI.onDark,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  dateField: {
+    flex: 1,
+    gap: 2,
+  },
+  dateLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: MINIMAL_UI.textMuted,
   },
   primaryButton: {
     alignSelf: 'flex-start',
@@ -454,6 +679,12 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     fontSize: 12,
     fontWeight: '600',
+  },
+  assignLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: MINIMAL_UI.blueDark,
+    marginTop: 2,
   },
   profileActions: {
     flexDirection: 'row',

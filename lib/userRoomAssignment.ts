@@ -1,4 +1,8 @@
-import { CHURCH_ROOM_SETTINGS_SQL_HINT, type ChurchRoomKey } from '@/lib/churchRoomSettings';
+import {
+  CHURCH_ROOM_SETTINGS_SQL_HINT,
+  type ChurchRoomKey,
+  type ChurchRoomKind,
+} from '@/lib/churchRoomSettings';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { subscribeActiveTenantChange } from '@/lib/tenantSession';
@@ -9,8 +13,15 @@ export type RoomAssignmentProfile = {
   phone: string | null;
   birth_date: string | null;
   registered_event_name: string | null;
+  /** Sala efetiva (especial vigente ou padrão). */
   room_key: ChurchRoomKey | null;
   room_label: string | null;
+  room_kind: ChurchRoomKind | null;
+  padrao_room_key: ChurchRoomKey | null;
+  padrao_room_label: string | null;
+  especial_room_key: ChurchRoomKey | null;
+  especial_room_label: string | null;
+  especial_end_date: string | null;
 };
 
 export type AudienceRoomLabel = {
@@ -19,6 +30,7 @@ export type AudienceRoomLabel = {
   full_name: string | null;
   room_key: ChurchRoomKey;
   room_label: string;
+  room_kind?: ChurchRoomKind | null;
 };
 
 let audienceCacheToken = 0;
@@ -41,13 +53,24 @@ function parseJsonArray(data: unknown): Record<string, unknown>[] {
   return [];
 }
 
+function normalizeRoomKey(raw: unknown): ChurchRoomKey | null {
+  const roomKeyRaw = String(raw ?? '')
+    .trim()
+    .toUpperCase();
+  return /^[A-Z0-9_]{2,40}$/.test(roomKeyRaw) ? roomKeyRaw : null;
+}
+
+function normalizeRoomKind(raw: unknown): ChurchRoomKind | null {
+  const kind = String(raw ?? '')
+    .trim()
+    .toLowerCase();
+  if (kind === 'padrao' || kind === 'especial') return kind;
+  return null;
+}
+
 function mapAssignmentProfile(row: Record<string, unknown>): RoomAssignmentProfile | null {
   const profileId = String(row.profile_id ?? '').trim();
   if (!profileId) return null;
-  const roomKeyRaw = String(row.room_key ?? '')
-    .trim()
-    .toUpperCase();
-  const roomKey = /^[A-Z0-9_]{2,40}$/.test(roomKeyRaw) ? roomKeyRaw : null;
 
   return {
     profile_id: profileId,
@@ -61,18 +84,31 @@ function mapAssignmentProfile(row: Record<string, unknown>): RoomAssignmentProfi
       typeof row.registered_event_name === 'string' && row.registered_event_name.trim()
         ? row.registered_event_name.trim()
         : null,
-    room_key: roomKey,
+    room_key: normalizeRoomKey(row.room_key),
     room_label:
       typeof row.room_label === 'string' && row.room_label.trim() ? row.room_label.trim() : null,
+    room_kind: normalizeRoomKind(row.room_kind),
+    padrao_room_key: normalizeRoomKey(row.padrao_room_key),
+    padrao_room_label:
+      typeof row.padrao_room_label === 'string' && row.padrao_room_label.trim()
+        ? row.padrao_room_label.trim()
+        : null,
+    especial_room_key: normalizeRoomKey(row.especial_room_key),
+    especial_room_label:
+      typeof row.especial_room_label === 'string' && row.especial_room_label.trim()
+        ? row.especial_room_label.trim()
+        : null,
+    especial_end_date:
+      typeof row.especial_end_date === 'string' && row.especial_end_date.trim()
+        ? row.especial_end_date.trim()
+        : null,
   };
 }
 
 function mapAudienceLabel(row: Record<string, unknown>): AudienceRoomLabel | null {
   const profileId = String(row.profile_id ?? '').trim();
-  const roomKeyRaw = String(row.room_key ?? '')
-    .trim()
-    .toUpperCase();
-  if (!profileId || !/^[A-Z0-9_]{2,40}$/.test(roomKeyRaw)) {
+  const roomKey = normalizeRoomKey(row.room_key);
+  if (!profileId || !roomKey) {
     return null;
   }
   const roomLabel = String(row.room_label ?? '').trim();
@@ -82,8 +118,9 @@ function mapAudienceLabel(row: Record<string, unknown>): AudienceRoomLabel | nul
     profile_id: profileId,
     phone: typeof row.phone === 'string' && row.phone.trim() ? row.phone.trim() : null,
     full_name: typeof row.full_name === 'string' ? row.full_name : null,
-    room_key: roomKeyRaw,
+    room_key: roomKey,
     room_label: roomLabel,
+    room_kind: normalizeRoomKind(row.room_kind),
   };
 }
 
@@ -108,11 +145,13 @@ export async function listProfilesForRoomAssignment(
 
 export async function setUserRoomAssignment(
   profileId: string,
-  roomKey: ChurchRoomKey
+  roomKey: ChurchRoomKey,
+  assignmentKind?: ChurchRoomKind | null
 ): Promise<{ success: boolean; message: string; room_label?: string }> {
   const { data, error } = await supabase.rpc('set_user_room_assignment', {
     p_profile_id: profileId,
     p_room_key: roomKey,
+    p_assignment_kind: assignmentKind ?? null,
   });
 
   if (error) {
@@ -140,10 +179,12 @@ export async function setUserRoomAssignment(
 }
 
 export async function clearUserRoomAssignment(
-  profileId: string
+  profileId: string,
+  assignmentKind?: ChurchRoomKind | null
 ): Promise<{ success: boolean; message: string }> {
   const { data, error } = await supabase.rpc('clear_user_room_assignment', {
     p_profile_id: profileId,
+    p_assignment_kind: assignmentKind ?? null,
   });
 
   if (error) {
