@@ -336,6 +336,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     overflow: 'hidden',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   wrapperMinimal: {
     width: '100%',

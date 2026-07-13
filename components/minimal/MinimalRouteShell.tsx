@@ -46,9 +46,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: MINIMAL_UI.background,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
   },
   minimalContent: {
     flex: 1,
     minHeight: 0,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
   },
 });

@@ -710,7 +710,9 @@ const styles = StyleSheet.create({
     minHeight: 0,
     width: '100%',
     maxWidth: '100%',
+    minWidth: 0,
     alignSelf: 'stretch',
+    overflow: 'hidden',
   },
   listFrame: {
     flex: 1,
@@ -720,6 +722,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: 'rgba(15, 23, 42, 0.22)',
     paddingHorizontal: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
   },
   listFrameMinimal: {
     borderWidth: 0,
@@ -728,7 +734,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     width: '100%',
     maxWidth: '100%',
+    minWidth: 0,
     alignSelf: 'stretch',
+    overflow: 'hidden',
   },
   headerRowMinimal: {
     marginBottom: 4,

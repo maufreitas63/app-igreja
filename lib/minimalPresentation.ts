@@ -5,6 +5,8 @@ import { StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 /** Remove aparência de card (bordas, sombra, fundo escuro) no modo minimalista. */
 export const MINIMAL_FLAT_PANEL: ViewStyle = {
   width: '100%',
+  maxWidth: '100%',
+  minWidth: 0,
   flex: 1,
   alignSelf: 'stretch',
   backgroundColor: MINIMAL_UI.background,
@@ -15,15 +17,19 @@ export const MINIMAL_FLAT_PANEL: ViewStyle = {
   paddingHorizontal: 8,
   paddingVertical: 4,
   alignItems: 'stretch',
-  overflow: 'visible',
+  overflow: 'hidden',
   minHeight: undefined,
   maxHeight: undefined,
 };
 
 export const MINIMAL_PAGE: ViewStyle = {
   width: '100%',
+  maxWidth: '100%',
+  minWidth: 0,
   flex: 1,
+  alignSelf: 'stretch',
   backgroundColor: MINIMAL_UI.background,
+  overflow: 'hidden',
 };
 
 /** Estilos de texto e superfície para painéis do dashboard em modo minimalista. */

@@ -445,6 +445,8 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
+    alignSelf: 'stretch',
+    overflow: 'hidden',
   },
   centered: {
     flex: 1,
@@ -489,12 +491,18 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 4,
     paddingBottom: 8,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   legendRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: 10,
+    maxWidth: '100%',
+    minWidth: 0,
+    flexShrink: 1,
   },
   viewModeToggle: {
     flexDirection: 'row',
@@ -545,6 +553,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     paddingHorizontal: 4,
     paddingBottom: 4,
+    maxWidth: '100%',
+    flexShrink: 1,
   },
   legendHint: {
     color: 'rgba(58, 150, 221, 0.82)',
@@ -552,6 +562,8 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     paddingHorizontal: 4,
     paddingBottom: 10,
+    maxWidth: '100%',
+    flexShrink: 1,
   },
   gridShell: {
     flex: 1,
@@ -560,6 +572,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
+    alignSelf: 'stretch',
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
     borderRadius: 10,
@@ -589,6 +602,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     maxWidth: '100%',
+    overflow: 'hidden',
   },
   datesHeaderRow: {
     flexDirection: 'row',

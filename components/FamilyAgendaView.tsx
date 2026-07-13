@@ -116,9 +116,11 @@ const styles = StyleSheet.create({
   body: {
     width: '100%',
     maxWidth: '100%',
+    minWidth: 0,
     alignSelf: 'stretch',
     gap: 8,
     backgroundColor: VIGILANCE_SCALES_UI.surface,
+    overflow: 'hidden',
   },
   loadingState: {
     alignItems: 'center',
@@ -137,12 +139,14 @@ const styles = StyleSheet.create({
   section: {
     width: '100%',
     maxWidth: '100%',
+    minWidth: 0,
     alignSelf: 'stretch',
     backgroundColor: VIGILANCE_SCALES_UI.surfaceHighlight,
     borderWidth: 1,
     borderColor: VIGILANCE_SCALES_UI.border,
     borderRadius: 16,
     padding: 14,
+    overflow: 'hidden',
   },
   heroSection: {
     padding: 10,
@@ -151,10 +155,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
     gap: 8,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   summary: {
     flex: 1,
     minWidth: 0,
+    maxWidth: '100%',
   },
   sectionLabel: {
     ...DASHBOARD_CARD_TYPO.sectionLabel,
@@ -193,6 +201,7 @@ const styles = StyleSheet.create({
   },
   capacityCard: {
     width: 96,
+    flexShrink: 0,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: VIGILANCE_SCALES_UI.border,
