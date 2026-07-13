@@ -184,24 +184,12 @@ begin
     );
   end if;
 
-  select public.normalize_profile_email(p.email)
-    into v_email
-  from public.profiles p
-  where p.id = v_profile_id;
+  -- E-mail informado no botão SEMPRE tem prioridade (evita enviar ao e-mail antigo do perfil).
+  v_email := public.normalize_profile_email(p_email);
+  v_confirm := public.normalize_profile_email(p_email_confirm);
 
-  if v_email is null then
-    v_email := public.normalize_profile_email(p_email);
-    v_confirm := public.normalize_profile_email(p_email_confirm);
-
-    if v_email is null or v_confirm is null then
-      return jsonb_build_object(
-        'ok', false,
-        'needs_email', true,
-        'message', 'Informe e confirme o e-mail para receber o código de acesso.'
-      );
-    end if;
-
-    if v_email <> v_confirm then
+  if v_email is not null then
+    if v_confirm is not null and v_email <> v_confirm then
       return jsonb_build_object(
         'ok', false,
         'needs_email', true,
@@ -221,6 +209,19 @@ begin
        set email = v_email,
            updated_at = now()
      where id = v_profile_id;
+  else
+    select public.normalize_profile_email(p.email)
+      into v_email
+      from public.profiles p
+     where p.id = v_profile_id;
+
+    if v_email is null then
+      return jsonb_build_object(
+        'ok', false,
+        'needs_email', true,
+        'message', 'Informe e confirme o e-mail para receber o código de acesso.'
+      );
+    end if;
   end if;
 
   begin
@@ -272,6 +273,7 @@ begin
     'preferred_channel', 'email',
     'provider', 'resend',
     'resend_id', v_send->>'resendId',
+    'to', v_email,
     'message',
       'Enviamos o código de acesso para '
       || coalesce(v_email_masked, 'seu e-mail')
@@ -286,24 +288,11 @@ grant execute on function public.send_resend_transactional_email(text, text, tex
 
 notify pgrst, 'reload schema';
 
--- === Diagnóstico (troque o e-mail) ===
--- select public.send_resend_transactional_email(
---   'seu@email.com',
---   'Teste Conecta Mais',
---   'Se este e-mail chegou, o Resend está ok.'
--- );
---
+-- === Diagnóstico (mesmo caminho do botão do app) ===
 -- select public.dispatch_auth_access_pin_email(
---   '19999999999',
---   'seu@email.com',
---   'seu@email.com'
+--   '19999999999',          -- celular só dígitos
+--   'destino@email.com',    -- e-mail que o usuário digitou
+--   'destino@email.com'
 -- );
---
--- Conferência de parâmetros:
--- select tenant_id, parameter,
---        case when parameter ilike '%api_key%' then left(value, 8) || '…' else value end as value_preview
---   from public.app_parameters
---  where lower(trim(parameter)) in (
---    'recovery_email_provider', 'recovery_email_from', 'recovery_email_api_key'
---  )
---  order by tenant_id, parameter;
+-- Esperado: ok=true, resend_id preenchido, to=destino@email.com
+-- Confira em https://resend.com/emails o destinatário (To).

@@ -465,19 +465,18 @@ export default function IndexScreen() {
       return;
     }
 
-    if (firstAccessNeedsEmail) {
-      const email = firstAccessEmail.trim();
-      const emailConfirm = firstAccessEmailConfirm.trim();
+    const typedEmail = firstAccessEmail.trim();
+    const typedConfirm = firstAccessEmailConfirm.trim();
 
-      if (!email || !emailConfirm) {
-        Alert.alert('Atenção', 'Informe e confirme o e-mail para receber o código de acesso.');
-        return;
-      }
+    // Sempre exige e-mail + confirmação neste botão (evita enviar ao e-mail antigo do perfil).
+    if (!typedEmail || !typedConfirm) {
+      Alert.alert('Atenção', 'Informe e confirme o e-mail para receber o código de acesso.');
+      return;
+    }
 
-      if (email.toLowerCase() !== emailConfirm.toLowerCase()) {
-        Alert.alert('Atenção', 'Os e-mails informados não coincidem.');
-        return;
-      }
+    if (typedEmail.toLowerCase() !== typedConfirm.toLowerCase()) {
+      Alert.alert('Atenção', 'Os e-mails informados não coincidem.');
+      return;
     }
 
     void (async () => {
@@ -486,8 +485,8 @@ export default function IndexScreen() {
       try {
         const result = await dispatchAuthAccessPinEmail({
           phone,
-          email: firstAccessNeedsEmail ? firstAccessEmail : undefined,
-          emailConfirm: firstAccessNeedsEmail ? firstAccessEmailConfirm : undefined,
+          email: typedEmail,
+          emailConfirm: typedConfirm,
           purpose: 'first_access',
         });
 
@@ -825,38 +824,42 @@ export default function IndexScreen() {
 
   const renderEmailPinDelivery = (marginBottom = 16) => (
     <View style={{ marginBottom, width: '100%', gap: 10 }}>
-      {firstAccessNeedsEmail ? (
-        <>
-          <View style={styles.inputContainer}>
-            <ReadOnlyText style={styles.label}>E-mail</ReadOnlyText>
-            <TextInput
-              style={[styles.input, styles.editableInput]}
-              placeholder="seu@email.com"
-              placeholderTextColor={LOGIN_PLACEHOLDER}
-              value={firstAccessEmail}
-              onChangeText={setFirstAccessEmail}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-              textContentType="emailAddress"
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <ReadOnlyText style={styles.label}>Confirmar e-mail</ReadOnlyText>
-            <TextInput
-              style={[styles.input, styles.editableInput]}
-              placeholder="repita o e-mail"
-              placeholderTextColor={LOGIN_PLACEHOLDER}
-              value={firstAccessEmailConfirm}
-              onChangeText={setFirstAccessEmailConfirm}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-              textContentType="emailAddress"
-            />
-          </View>
-        </>
-      ) : null}
+      <>
+        {firstAccessEmailMasked && !firstAccessNeedsEmail ? (
+          <ReadOnlyText style={styles.pinHint}>
+            Se o código não chegou, confirme ou altere o e-mail abaixo (último cadastro:{' '}
+            {firstAccessEmailMasked}).
+          </ReadOnlyText>
+        ) : null}
+        <View style={styles.inputContainer}>
+          <ReadOnlyText style={styles.label}>E-mail</ReadOnlyText>
+          <TextInput
+            style={[styles.input, styles.editableInput]}
+            placeholder="seu@email.com"
+            placeholderTextColor={LOGIN_PLACEHOLDER}
+            value={firstAccessEmail}
+            onChangeText={setFirstAccessEmail}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            textContentType="emailAddress"
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <ReadOnlyText style={styles.label}>Confirmar e-mail</ReadOnlyText>
+          <TextInput
+            style={[styles.input, styles.editableInput]}
+            placeholder="repita o e-mail"
+            placeholderTextColor={LOGIN_PLACEHOLDER}
+            value={firstAccessEmailConfirm}
+            onChangeText={setFirstAccessEmailConfirm}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            textContentType="emailAddress"
+          />
+        </View>
+      </>
 
       <TouchableOpacity
         accessibilityLabel="Receber código por e-mail"
