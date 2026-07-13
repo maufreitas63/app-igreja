@@ -314,59 +314,6 @@ export function ProfileClass({
           </View>
         ) : null}
 
-        {editingFieldRow ? (
-          <View style={profileClassStyles.editorCard}>
-            <Text style={profileClassStyles.editorLabel}>Editar: {editingFieldRow.label}</Text>
-            <TextInput
-              style={profileClassStyles.input}
-              placeholder={editingPlaceholder}
-              placeholderTextColor="#64748b"
-              value={editingValue}
-              editable={!saving && !lookingUpCep}
-              keyboardType={
-                editingFieldRow.kind === 'phone'
-                || editingFieldRow.kind === 'date'
-                || editingFieldRow.key === 'cep'
-                  ? 'number-pad'
-                  : 'default'
-              }
-              maxLength={
-                editingFieldRow.kind === 'date'
-                  ? 10
-                  : editingFieldRow.key === 'cep'
-                    ? 9
-                    : editingFieldRow.kind === 'phone'
-                      ? 15
-                      : undefined
-              }
-              multiline={editingFieldRow.kind === 'url'}
-              onChangeText={onEditingValueChange}
-            />
-            {lookingUpCep ? (
-              <View style={profileClassStyles.cepLookupRow}>
-                <ActivityIndicator color={PROFILE_CLASS_ICON_COLOR} size="small" />
-                <Text style={profileClassStyles.cepLookupText}>Consultando endereço do CEP…</Text>
-              </View>
-            ) : null}
-            <View style={profileClassStyles.editorActions}>
-              <TouchableOpacity
-                style={[profileClassStyles.saveButton, saving && profileClassStyles.disabledButton]}
-                onPress={onSaveField}
-                disabled={saving}
-              >
-                <Text style={profileClassStyles.saveButtonText}>{saving ? '...' : 'Salvar Campo'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[profileClassStyles.cancelButton, saving && profileClassStyles.disabledButton]}
-                onPress={onCancelEditing}
-                disabled={saving}
-              >
-                <Text style={profileClassStyles.cancelButtonText}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : null}
-
         {loading ? (
           <Text style={profileClassStyles.emptyText}>Carregando perfil...</Text>
         ) : !profile ? (
@@ -408,28 +355,118 @@ export function ProfileClass({
 
                   {isExpanded ? (
                     <View style={profileClassStyles.sectionFields}>
-                      {section.fields.map((field) => (
-                        <View key={field.key} style={profileClassStyles.fieldRow}>
-                          <View style={profileClassStyles.fieldInfoRow}>
-                            <Text style={profileClassStyles.fieldLabel} numberOfLines={3}>
-                              {field.label}
-                            </Text>
-                            <Text style={profileClassStyles.fieldValue} numberOfLines={6}>
-                              {field.value}
-                            </Text>
-                          </View>
-                          {!field.readOnly ? (
-                            <View style={profileClassStyles.actionsRow}>
-                              <TouchableOpacity
-                                style={profileClassStyles.editButton}
-                                onPress={() => onStartEditingField(field)}
-                              >
-                                <MaterialIcons name="edit" size={18} color={MINIMAL_UI.onDark} />
-                              </TouchableOpacity>
+                      {section.fields.map((field) => {
+                        const isEditing = editingFieldRow?.key === field.key;
+
+                        return (
+                          <View
+                            key={field.key}
+                            style={[
+                              profileClassStyles.fieldRow,
+                              isEditing && profileClassStyles.fieldRowEditing,
+                            ]}
+                          >
+                            <View style={profileClassStyles.fieldInfoRow}>
+                              <Text style={profileClassStyles.fieldLabel} numberOfLines={3}>
+                                {field.label}
+                              </Text>
+                              {isEditing ? (
+                                <View style={profileClassStyles.fieldInlineEditor}>
+                                  <TextInput
+                                    style={profileClassStyles.fieldValueInput}
+                                    placeholder={editingPlaceholder}
+                                    placeholderTextColor={MINIMAL_UI.textMuted}
+                                    value={editingValue}
+                                    editable={!saving && !lookingUpCep}
+                                    autoFocus
+                                    keyboardType={
+                                      editingFieldRow.kind === 'phone'
+                                      || editingFieldRow.kind === 'date'
+                                      || editingFieldRow.key === 'cep'
+                                        ? 'number-pad'
+                                        : 'default'
+                                    }
+                                    maxLength={
+                                      editingFieldRow.kind === 'date'
+                                        ? 10
+                                        : editingFieldRow.key === 'cep'
+                                          ? 9
+                                          : editingFieldRow.kind === 'phone'
+                                            ? 15
+                                            : undefined
+                                    }
+                                    multiline={editingFieldRow.kind === 'url'}
+                                    onChangeText={onEditingValueChange}
+                                    onSubmitEditing={() => {
+                                      if (!saving && !lookingUpCep) {
+                                        onSaveField();
+                                      }
+                                    }}
+                                    returnKeyType="done"
+                                  />
+                                  {lookingUpCep ? (
+                                    <View style={profileClassStyles.cepLookupRowInline}>
+                                      <ActivityIndicator color={PROFILE_CLASS_ICON_COLOR} size="small" />
+                                      <Text style={profileClassStyles.cepLookupText}>CEP…</Text>
+                                    </View>
+                                  ) : null}
+                                </View>
+                              ) : (
+                                <Text style={profileClassStyles.fieldValue} numberOfLines={6}>
+                                  {field.value}
+                                </Text>
+                              )}
                             </View>
-                          ) : null}
-                        </View>
-                      ))}
+                            {!field.readOnly ? (
+                              <View
+                                style={[
+                                  profileClassStyles.actionsRow,
+                                  isEditing && profileClassStyles.actionsRowEditing,
+                                ]}
+                              >
+                                {isEditing ? (
+                                  <>
+                                    <TouchableOpacity
+                                      style={[
+                                        profileClassStyles.inlineSaveButton,
+                                        (saving || lookingUpCep) && profileClassStyles.disabledButton,
+                                      ]}
+                                      onPress={onSaveField}
+                                      disabled={saving || lookingUpCep}
+                                      accessibilityLabel="Salvar campo"
+                                    >
+                                      {saving ? (
+                                        <ActivityIndicator color={MINIMAL_UI.onDark} size="small" />
+                                      ) : (
+                                        <MaterialIcons name="check" size={18} color={MINIMAL_UI.onDark} />
+                                      )}
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                      style={[
+                                        profileClassStyles.inlineCancelButton,
+                                        saving && profileClassStyles.disabledButton,
+                                      ]}
+                                      onPress={onCancelEditing}
+                                      disabled={saving}
+                                      accessibilityLabel="Cancelar edição"
+                                    >
+                                      <MaterialIcons name="close" size={18} color={MINIMAL_UI.blueDark} />
+                                    </TouchableOpacity>
+                                  </>
+                                ) : (
+                                  <TouchableOpacity
+                                    style={profileClassStyles.editButton}
+                                    onPress={() => onStartEditingField(field)}
+                                    accessibilityLabel={`Editar ${field.label}`}
+                                  >
+                                    <MaterialIcons name="edit" size={18} color={MINIMAL_UI.onDark} />
+                                  </TouchableOpacity>
+                                )}
+                              </View>
+                            ) : null}
+                          </View>
+                        );
+                      })}
                     </View>
                   ) : null}
                 </View>

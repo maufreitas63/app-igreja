@@ -920,8 +920,6 @@ export function ProfileClassPanel({
     } else {
       setEditingValue(rawValue ? String(rawValue) : '');
     }
-
-    scrollRef.current?.scrollTo({ y: 0, animated: true });
   }, [columnAccessLoading, profile, profileColumnAccess]);
 
   const handleEditingValueChange = useCallback(
