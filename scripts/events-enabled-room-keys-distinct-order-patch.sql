@@ -1,9 +1,14 @@
 -- =============================================================================
 -- Patch: sync_event_room_booleans_from_keys (DISTINCT + ORDER BY inválido)
 -- =============================================================================
--- Erro ao salvar salas customizadas (ex.: Homens):
+-- Erro ao clicar em «Salvar» no evento (toast «Erro ao salvar»):
 --   "in an aggregate with DISTINCT, ORDER BY expressions must appear in argument list"
--- Execute no SQL Editor do Supabase (idempotente).
+--
+-- Causa: trigger BEFORE INSERT/UPDATE em public.events ainda usa
+--   array_agg(DISTINCT … ORDER BY 1)  ← inválido no PostgreSQL
+--
+-- Execute TODO este arquivo no SQL Editor do Supabase (idempotente).
+-- Depois tente Salvar o evento de novo.
 -- =============================================================================
 
 create or replace function public.sync_event_room_booleans_from_keys()

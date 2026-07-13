@@ -278,6 +278,10 @@ export const GEOFENCE_ATIVO_COLUMN_SQL_HINT =
 export const ENABLED_ROOM_KEYS_COLUMN_SQL_HINT =
   'Execute no Supabase: scripts/events-enabled-room-keys.sql (libera salas customizadas no evento).';
 
+/** Trigger sync_event_room_booleans_from_keys com array_agg(DISTINCT … ORDER BY 1) inválido. */
+export const ENABLED_ROOM_KEYS_DISTINCT_ORDER_SQL_HINT =
+  'Execute no Supabase: scripts/events-enabled-room-keys-distinct-order-patch.sql (corrige o erro DISTINCT/ORDER BY ao salvar salas do evento).';
+
 export async function ensureEventsTotemAtivoColumn(): Promise<boolean> {
   if (await probeTotemAtivoColumn().catch(() => false)) {
     return true;

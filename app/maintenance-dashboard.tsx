@@ -42,6 +42,7 @@ import { type MaintenanceScalePanelContent } from '@/lib/scaleAccess';
 import {
   ensureEventsOptionalColumns,
   ENABLED_ROOM_KEYS_COLUMN_SQL_HINT,
+  ENABLED_ROOM_KEYS_DISTINCT_ORDER_SQL_HINT,
   GEOFENCE_ATIVO_COLUMN_SQL_HINT,
   isGeofenceAtivoColumnAvailable,
   isRequerQuorumColumnAvailable,
@@ -266,6 +267,13 @@ const getSaveErrorMessage = (err: unknown) => {
 
   if (message.toLowerCase().includes('geofence_ativo')) {
     return `Check-in automático não foi salvo no banco.\n\n${GEOFENCE_ATIVO_COLUMN_SQL_HINT}`;
+  }
+
+  if (
+    message.toLowerCase().includes('aggregate with distinct')
+    || message.toLowerCase().includes('order by expressions must appear')
+  ) {
+    return `Erro ao salvar salas do evento (trigger no banco).\n\n${ENABLED_ROOM_KEYS_DISTINCT_ORDER_SQL_HINT}`;
   }
 
   if (
