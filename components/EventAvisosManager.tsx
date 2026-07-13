@@ -6,6 +6,7 @@ import {
   type EventAvisoRow,
 } from '@/lib/eventAvisosApi';
 import { showAppToast } from '@/lib/appToast';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -151,7 +152,20 @@ export function EventAvisosManager({
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, label?: string) => {
+    const titleLabel = (label ?? '').trim() || 'este aviso';
+    const confirmed = await confirmDialog(
+      'Excluir aviso',
+      `Tem certeza que deseja excluir «${titleLabel}»? Esta ação não pode ser desfeita.`,
+      'Excluir',
+      'Cancelar',
+      { destructive: true }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -382,7 +396,9 @@ export function EventAvisosManager({
                         </Text>
                       </Pressable>
                       <Pressable
-                        onPress={() => void handleDelete(item.id)}
+                        onPress={() =>
+                          void handleDelete(item.id, item.title.trim() || item.body.slice(0, 40))
+                        }
                         disabled={saving}
                         accessibilityRole="button"
                         accessibilityLabel={`Excluir aviso ${item.title.trim() || 'sem título'}`}
