@@ -21,6 +21,8 @@ type Props = {
   showTeensIndicator?: boolean;
   /** Nome afetivo da sala atribuída (ex.: Turma do Rei). */
   assignedRoomLabel?: string | null;
+  /** Quando true, a sala é especial (sobreposição) e aparece também em «Inscrito em:». */
+  assignedRoomIsOverlay?: boolean;
   minimal?: boolean;
   onToggle: () => void;
 };
@@ -36,6 +38,7 @@ export const MemberCheckboxItem = ({
   showKidsIndicator = false,
   showTeensIndicator = false,
   assignedRoomLabel = null,
+  assignedRoomIsOverlay = false,
   minimal = false,
   onToggle,
 }: Props) => {
@@ -45,6 +48,20 @@ export const MemberCheckboxItem = ({
   const shouldShowStatusDot =
     (registrationStatus === 'KIDS' && showKidsIndicator) ||
     (registrationStatus === 'TEENS' && showTeensIndicator);
+
+  const registeredLine = (() => {
+    if (!isRegistered) return null;
+    if (eventLabel && assignedRoomIsOverlay && roomLabel) {
+      return `Inscrito em: ${eventLabel} · ${roomLabel}`;
+    }
+    if (eventLabel) {
+      return `Inscrito em: ${eventLabel}`;
+    }
+    if (assignedRoomIsOverlay && roomLabel) {
+      return `Sala: ${roomLabel}`;
+    }
+    return 'Registrado para o evento';
+  })();
 
   return (
     <View style={styles.row}>
@@ -90,14 +107,12 @@ export const MemberCheckboxItem = ({
             </Text>
           ) : null}
         </View>
-        {isRegistered ? (
+        {registeredLine ? (
           <Text
             style={[styles.registeredText, minimal && styles.registeredTextMinimal]}
             numberOfLines={2}
           >
-            {eventLabel
-              ? `Inscrito em: ${eventLabel}`
-              : 'Registrado para o evento'}
+            {registeredLine}
           </Text>
         ) : null}
       </View>

@@ -143,6 +143,9 @@ export const FamilyRegistrationList = ({
     RegistrationStatus | undefined
   >(undefined);
   const [roomLabelByMemberId, setRoomLabelByMemberId] = useState<Record<string, string>>({});
+  const [roomOverlayByMemberId, setRoomOverlayByMemberId] = useState<Record<string, boolean>>(
+    {}
+  );
 
   const allowedRoomKeys = useMemo(() => {
     const keys = Array.isArray(eventEnabledRoomKeys)
@@ -230,6 +233,7 @@ export const FamilyRegistrationList = ({
 
     if (!audience.length) {
       setRoomLabelByMemberId({});
+      setRoomOverlayByMemberId({});
       return undefined;
     }
 
@@ -237,13 +241,20 @@ export const FamilyRegistrationList = ({
       if (!active) return;
       const index = buildAudienceRoomLabelIndex(rows);
       const next: Record<string, string> = {};
+      const nextOverlay: Record<string, boolean> = {};
       for (const member of audience) {
         const match = lookupAudienceRoomLabel(index, member);
-        if (match && allowedRoomKeys.has(match.room_key)) {
+        if (!match) continue;
+        const isOverlay = match.room_kind === 'especial';
+        // Sala especial atribuída e vigente sempre aparece (sobreposição); padrão só se
+        // estiver entre as salas habilitadas no evento.
+        if (isOverlay || allowedRoomKeys.has(match.room_key)) {
           next[member.id] = match.room_label;
+          nextOverlay[member.id] = isOverlay;
         }
       }
       setRoomLabelByMemberId(next);
+      setRoomOverlayByMemberId(nextOverlay);
     });
 
     return () => {
@@ -525,6 +536,7 @@ export const FamilyRegistrationList = ({
             showKidsIndicator={showKidsIndicator}
             showTeensIndicator={showTeensIndicator}
             assignedRoomLabel={roomLabelByMemberId[soloParticipant.id]}
+            assignedRoomIsOverlay={roomOverlayByMemberId[soloParticipant.id] === true}
             onToggle={() => {
               if (!hasEventOpen || isBusy) {
                 return;
@@ -695,6 +707,7 @@ export const FamilyRegistrationList = ({
                 showKidsIndicator={showKidsIndicator}
                 showTeensIndicator={showTeensIndicator}
                 assignedRoomLabel={roomLabelByMemberId[item.id]}
+                assignedRoomIsOverlay={roomOverlayByMemberId[item.id] === true}
                 onToggle={() => {
                   if (!hasEventOpen || isBusy || quorumUnregisterLocked) {
                     return;

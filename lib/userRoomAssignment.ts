@@ -242,13 +242,21 @@ export async function resolveAudienceRoomLabels(
 
 /** Mapa telefone normalizado / nome → sala (chave + rótulo). */
 export function buildAudienceRoomLabelIndex(rows: AudienceRoomLabel[]) {
-  type Entry = { room_key: string; room_label: string };
+  type Entry = {
+    room_key: string;
+    room_label: string;
+    room_kind: ChurchRoomKind | null;
+  };
   const byPhone = new Map<string, Entry>();
   const byDigits = new Map<string, Entry>();
   const byName = new Map<string, Entry>();
 
   for (const row of rows) {
-    const entry = { room_key: row.room_key, room_label: row.room_label };
+    const entry = {
+      room_key: row.room_key,
+      room_label: row.room_label,
+      room_kind: row.room_kind ?? null,
+    };
     if (row.phone?.trim()) {
       byPhone.set(row.phone.trim(), entry);
       const digits = row.phone.replace(/\D/g, '');
@@ -268,7 +276,7 @@ export function buildAudienceRoomLabelIndex(rows: AudienceRoomLabel[]) {
 export function lookupAudienceRoomLabel(
   index: ReturnType<typeof buildAudienceRoomLabelIndex>,
   member: { phone?: string | null; full_name?: string | null }
-): { room_key: string; room_label: string } | null {
+): { room_key: string; room_label: string; room_kind: ChurchRoomKind | null } | null {
   const phone = member.phone?.trim();
   if (phone && index.byPhone.has(phone)) {
     return index.byPhone.get(phone) ?? null;
