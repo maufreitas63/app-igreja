@@ -531,40 +531,75 @@ export function AccessPinField({
   // Olho sempre ativo para conferir o PIN (inclusive campos só leitura).
   const canToggleVisibility = true;
 
+  // Só leitura: não usa TextInput — no web, password/remount apagava ou mascarava o PIN.
+  const showReadonlyDisplay = !editable;
+
+  const webInputProps =
+    Platform.OS === 'web'
+      ? ({
+          // type explícito: secureTextEntry sozinho nem sempre troca password ↔ text no web.
+          type: visible ? 'text' : 'password',
+        } as const)
+      : null;
+
   return (
     <View style={accessPinFieldStyles.fieldBlock}>
       <Text style={accessPinFieldStyles.label}>{label}</Text>
       <View style={accessPinFieldStyles.row}>
-        <TextInput
-          // Remonta ao alternar: no web, secureTextEntry sozinho não troca type=password → text.
-          key={visible ? 'pin-visible' : 'pin-hidden'}
-          ref={inputRef}
-          style={[
-            accessPinFieldStyles.input,
-            visible && accessPinFieldStyles.inputVisible,
-            hasError && accessPinFieldStyles.inputError,
-          ]}
-          placeholder="****"
-          placeholderTextColor={MINIMAL_UI.textMuted}
-          value={value}
-          onChangeText={onChangeText}
-          onFocus={onFocus}
-          onSubmitEditing={onSubmitEditing}
-          blurOnSubmit={blurOnSubmit}
-          returnKeyType={returnKeyType}
-          keyboardType="number-pad"
-          inputMode="numeric"
-          maxLength={ACCESS_PIN_LENGTH}
-          secureTextEntry={!visible}
-          editable={editable}
-          textAlign="center"
-          scrollEnabled={false}
-          autoCorrect={false}
-          autoCapitalize="none"
-          importantForAutofill="no"
-          autoComplete="off"
-          textContentType={visible ? 'none' : 'password'}
-        />
+        {showReadonlyDisplay ? (
+          <View
+            style={[
+              accessPinFieldStyles.input,
+              visible && accessPinFieldStyles.inputVisible,
+              accessPinFieldStyles.readonlyDigits,
+              hasError && accessPinFieldStyles.inputError,
+            ]}
+          >
+            <Text style={accessPinFieldStyles.readonlyDigitsText}>
+              {visible
+                ? value.length > 0
+                  ? value
+                  : '—'
+                : value.length > 0
+                  ? '•'.repeat(value.length)
+                  : '••••'}
+            </Text>
+          </View>
+        ) : (
+          <TextInput
+            ref={inputRef}
+            style={[
+              accessPinFieldStyles.input,
+              visible && accessPinFieldStyles.inputVisible,
+              hasError && accessPinFieldStyles.inputError,
+              // Garante que o web não mantenha -webkit-text-security: disc após o toggle.
+              Platform.OS === 'web'
+                ? ({ WebkitTextSecurity: visible ? 'none' : 'disc' } as object)
+                : null,
+            ]}
+            placeholder={visible ? '' : '••••'}
+            placeholderTextColor={MINIMAL_UI.textMuted}
+            value={value}
+            onChangeText={onChangeText}
+            onFocus={onFocus}
+            onSubmitEditing={onSubmitEditing}
+            blurOnSubmit={blurOnSubmit}
+            returnKeyType={returnKeyType}
+            keyboardType="number-pad"
+            inputMode="numeric"
+            maxLength={ACCESS_PIN_LENGTH}
+            secureTextEntry={!visible}
+            editable={editable}
+            textAlign="center"
+            scrollEnabled={false}
+            autoCorrect={false}
+            autoCapitalize="none"
+            importantForAutofill="no"
+            autoComplete="off"
+            textContentType="oneTimeCode"
+            {...(webInputProps ?? {})}
+          />
+        )}
         <TouchableOpacity
           style={accessPinFieldStyles.visibilityButton}
           onPress={onToggleVisible}
@@ -622,6 +657,17 @@ export const accessPinFieldStyles = StyleSheet.create({
   inputVisible: {
     letterSpacing: 10,
     fontWeight: '700',
+  },
+  readonlyDigits: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  readonlyDigitsText: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 10,
+    textAlign: 'center',
   },
   inputError: {
     borderColor: '#DC2626',
