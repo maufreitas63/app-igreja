@@ -17,10 +17,12 @@ O envio da autorização usa **exatamente o mesmo provedor do PIN** (`recovery_e
 | `recovery_email_provider` | `gmail` ou `resend` |
 | `recovery_email_smtp_user` | Gmail |
 | `recovery_email_smtp_password` | senha de app Google |
-| `recovery_email_from` | remetente |
+| `recovery_email_from` | remetente genérico da plataforma (`Conecta Mais <nao-responda@conectamais.api.br>`) |
 | `recovery_email_function_url` | Edge Function `send-password-recovery-email` |
 | `recovery_email_function_secret` | secret da Edge Function |
 | `recovery_email_api_key` | Resend (alternativa) |
+
+Setup do remetente multi-instância: `scripts/password-recovery-email-conectamais-resend-setup.sql` (`nao-responda@conectamais.api.br`).
 
 **Importante:** defina também `media_authorization_app_url` com a URL pública do app (ex.: `https://seu-app.pages.dev`) para o link de confirmação apontar para produção.
 

@@ -1,4 +1,12 @@
--- Recuperação de senha — envio via Resend com domínio ibnorte.api.br
+-- DEPRECATED — use scripts/password-recovery-email-conectamais-resend-setup.sql
+--
+-- Remetente legado (single-tenant IBN). Em multi-instância o From deve ser genérico:
+--   Conecta Mais <nao-responda@conectamais.api.br>
+--
+-- Este arquivo permanece só como histórico do setup ibnorte.api.br.
+-- NÃO execute em produção após a migração para conectamais.
+
+-- Recuperação de senha — envio via Resend com domínio ibnorte.api.br (legado)
 --
 -- FLUXO DE E-MAIL (já implementado no app + SQL):
 --   DE (remetente fixo):  recovery_email_from → nao-responda@ibnorte.api.br
@@ -39,19 +47,18 @@
 -- === TESTE ===
 -- select public.send_password_recovery_pin_email('destino@exemplo.com', '1234');
 
-insert into public.app_parameters (parameter, value)
-values
-  ('recovery_email_provider', 'resend'),
-  ('recovery_email_api_key', 'SUBSTITUA_PELA_CHAVE_RE_resend'),
-  ('recovery_email_from', 'Igreja IBN Norte <nao-responda@ibnorte.api.br>')
-on conflict (parameter) do update
-  set value = excluded.value;
+-- BLOQUEADO: script legado. Use password-recovery-email-conectamais-resend-setup.sql
+do $$
+begin
+  raise exception
+    'DEPRECATED: use scripts/password-recovery-email-conectamais-resend-setup.sql (nao-responda@conectamais.api.br).';
+end;
+$$;
 
--- Remova parâmetros Gmail se não for mais usar (opcional):
--- delete from public.app_parameters
---  where parameter in (
---    'recovery_email_smtp_user',
---    'recovery_email_smtp_password',
---    'recovery_email_function_url',
---    'recovery_email_function_secret'
---  );
+-- insert into public.app_parameters (parameter, value)
+-- values
+--   ('recovery_email_provider', 'resend'),
+--   ('recovery_email_api_key', 'SUBSTITUA_PELA_CHAVE_RE_resend'),
+--   ('recovery_email_from', 'Igreja IBN Norte <nao-responda@ibnorte.api.br>')
+-- on conflict (parameter) do update
+--   set value = excluded.value;

@@ -20,11 +20,12 @@
 --      recovery_email_smtp_password     = senha de app do Google (16 caracteres)
 --      recovery_email_from              = Igreja IBN <ibnmassagua@gmail.com>
 --
--- === Resend (produção com domínio ibnorte.api.br) ===
---      recovery_email_from              → remetente fixo (ex.: nao-responda@ibnorte.api.br)
+-- === Resend (produção multi-instância — domínio da plataforma) ===
+--      recovery_email_from              → remetente genérico (Conecta Mais <nao-responda@conectamais.api.br>)
 --      destinatário                     → profiles.email do membro (informado ou já cadastrado)
 --      recovery_email_provider          = resend
 --      recovery_email_api_key           = re_...
+--      setup: scripts/password-recovery-email-conectamais-resend-setup.sql
 --
 -- Extensão http do Supabase (Database → Extensions → http) deve estar ativa.
 
