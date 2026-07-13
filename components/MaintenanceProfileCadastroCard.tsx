@@ -332,10 +332,10 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
             accessibilityLabel="Excluir usuário selecionado"
           >
             {deletingUser ? (
-              <ActivityIndicator color="#FECACA" size="small" />
+              <ActivityIndicator color="#DC2626" size="small" />
             ) : (
               <>
-                <FontAwesome name="trash-o" size={14} color="#FECACA" />
+                <FontAwesome name="trash-o" size={14} color="#DC2626" />
                 <Text style={styles.deleteUserButtonText}>Excluir usuário</Text>
               </>
             )}
@@ -510,12 +510,12 @@ const styles = StyleSheet.create({
   },
   addressInput: {
     borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.55)',
+    borderColor: 'rgba(191, 219, 254, 1)',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#3A96DD',
-    backgroundColor: 'rgba(30, 27, 75, 0.55)',
+    color: '#1E40AF',
+    backgroundColor: '#FFFFFF',
     fontSize: 15,
   },
   addressInputWithClear: {
@@ -567,15 +567,15 @@ const styles = StyleSheet.create({
     gap: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(248, 113, 113, 0.55)',
-    backgroundColor: 'rgba(127, 29, 29, 0.35)',
+    borderColor: '#DC2626',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 12,
   },
   deleteUserButtonDisabled: {
     opacity: 0.65,
   },
   deleteUserButtonText: {
-    color: '#FECACA',
+    color: '#DC2626',
     fontWeight: '800',
     fontSize: 13,
   },
