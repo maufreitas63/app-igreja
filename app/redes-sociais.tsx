@@ -124,7 +124,7 @@ export default function RedesSociaisScreen() {
             </Text>
           )}
 
-          {instanceUrl ? <InstanceQrCode url={instanceUrl} /> : null}
+          {instanceUrl ? <InstanceQrCode url={instanceUrl} title={church?.name} /> : null}
         </View>
       )}
     </MinimalScreenLayout>

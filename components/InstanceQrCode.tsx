@@ -1,4 +1,4 @@
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
@@ -7,6 +7,8 @@ type InstanceQrCodeProps = {
   /** URL pública da instância atual (ex.: https://app-igreja.pages.dev/?igreja=IBEP). */
   url: string;
   size?: number;
+  /** Nome da igreja — mesmo formato tipográfico do título «Redes Sociais». */
+  title?: string | null;
   caption?: string;
 };
 
@@ -17,6 +19,7 @@ type InstanceQrCodeProps = {
 export function InstanceQrCode({
   url,
   size = 184,
+  title,
   caption = 'Escaneie para acessar o app',
 }: InstanceQrCodeProps) {
   const value = url.trim();
@@ -24,8 +27,11 @@ export function InstanceQrCode({
     return null;
   }
 
+  const heading = typeof title === 'string' ? title.trim() : '';
+
   return (
-    <View style={styles.wrap} accessibilityLabel={`${caption}. ${value}`}>
+    <View style={styles.wrap} accessibilityLabel={`${heading ? `${heading}. ` : ''}${caption}. ${value}`}>
+      {heading ? <Text style={styles.title}>{heading}</Text> : null}
       <View style={styles.qrSurface}>
         <QRCode
           value={value}
@@ -52,6 +58,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 28,
     paddingHorizontal: 16,
+  },
+  title: {
+    ...MINIMAL_SECTION_TITLE,
+    width: '100%',
+    marginBottom: 12,
   },
   qrSurface: {
     backgroundColor: MINIMAL_UI.background,
