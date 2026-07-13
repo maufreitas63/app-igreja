@@ -23,7 +23,7 @@ import { AppDrawerSettings } from './AppDrawerSettings';
 
 export function AppDrawer() {
   const { isOpen, closeDrawer } = useAppDrawer();
-  const { items, loading, refresh, isSuperAdmin, canManageRooms } = useAppDrawerMenu();
+  const { items, loading, refresh, isSuperAdmin, canManageRooms, canManageAvisos } = useAppDrawerMenu();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -93,6 +93,13 @@ export function AppDrawer() {
     });
   };
 
+  const handleOpenAvisosSettings = () => {
+    traceClick('drawer', 'settings-avisos-press');
+    setSettingsOpen(false);
+    closeDrawer();
+    void navigateDrawerMenuItem(router, 'event_orchestration');
+  };
+
   const handleBackdropPress = () => {
     traceClick('drawer', 'backdrop-press', { settingsOpen });
     if (settingsOpen) {
@@ -125,6 +132,8 @@ export function AppDrawer() {
               onOpenMediaAuthorization={handleOpenMediaAuthorization}
               showRoomSettings={canManageRooms}
               onOpenRoomSettings={handleOpenRoomSettings}
+              showAvisosSettings={canManageAvisos}
+              onOpenAvisosSettings={handleOpenAvisosSettings}
               showIgrejasInstances={isSuperAdmin}
               onOpenIgrejasInstances={handleOpenIgrejasInstances}
             />

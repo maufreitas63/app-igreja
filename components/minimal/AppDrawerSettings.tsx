@@ -27,6 +27,9 @@ type Props = {
   /** Líder / admin — nomes e atribuição de salas. */
   showRoomSettings?: boolean;
   onOpenRoomSettings?: () => void;
+  /** Orquestrador — cadastro e publicação de avisos. */
+  showAvisosSettings?: boolean;
+  onOpenAvisosSettings?: () => void;
   /** Apenas super_admin — gestão multi-instância. */
   showIgrejasInstances?: boolean;
   onOpenIgrejasInstances?: () => void;
@@ -37,6 +40,8 @@ export function AppDrawerSettings({
   onOpenMediaAuthorization,
   showRoomSettings = false,
   onOpenRoomSettings,
+  showAvisosSettings = false,
+  onOpenAvisosSettings,
   showIgrejasInstances = false,
   onOpenIgrejasInstances,
 }: Props) {
@@ -58,6 +63,17 @@ export function AppDrawerSettings({
             hint: 'Nomes afetivos e atribuição de membros',
             icon: 'home' as const,
             onPress: onOpenRoomSettings,
+          } satisfies SettingsItem,
+        ]
+      : []),
+    ...(showAvisosSettings && onOpenAvisosSettings
+      ? [
+          {
+            id: 'avisos-settings',
+            label: 'Manutenção de Avisos',
+            hint: 'Cadastre e publique comunicados da home',
+            icon: 'bullhorn' as const,
+            onPress: onOpenAvisosSettings,
           } satisfies SettingsItem,
         ]
       : []),

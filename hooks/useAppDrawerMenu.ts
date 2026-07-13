@@ -98,6 +98,7 @@ export function useAppDrawerMenu() {
   const [loading, setLoading] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [canManageRooms, setCanManageRooms] = useState(false);
+  const [canManageAvisos, setCanManageAvisos] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -123,6 +124,14 @@ export function useAppDrawerMenu() {
       const superAdmin = maintenanceAccess.isSuperAdmin === true;
       setIsSuperAdmin(superAdmin);
       setCanManageRooms(superAdmin || roomAccess === true);
+      setCanManageAvisos(
+        isDrawerMaintenanceModuleAllowed('event_orchestration', 'event_orchestration', {
+          canAccessMaintenance: maintenanceAccess.allowed,
+          maintenancePanelAccess: maintenanceAccess.maintenancePanelAccess,
+          canOperateGhostMode: maintenanceAccess.canOperateGhostMode,
+          canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
+        })
+      );
 
       const context = {
         dashboardCardAccess,
@@ -146,6 +155,7 @@ export function useAppDrawerMenu() {
       console.error('Erro ao carregar menu lateral:', error);
       setIsSuperAdmin(false);
       setCanManageRooms(false);
+      setCanManageAvisos(false);
       setItems(
         APP_DRAWER_MENU_ITEMS.map((item) => ({
           ...item,
@@ -161,5 +171,5 @@ export function useAppDrawerMenu() {
     }
   }, []);
 
-  return { items, loading, refresh, isSuperAdmin, canManageRooms };
+  return { items, loading, refresh, isSuperAdmin, canManageRooms, canManageAvisos };
 }
