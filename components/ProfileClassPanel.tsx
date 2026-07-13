@@ -395,7 +395,7 @@ export function ProfileClassPanel({
         visible={showCurrentAccessPin}
         onToggleVisible={() => setShowCurrentAccessPin((open) => !open)}
         editable={canUseAccessPinForm && !savingAccessPin && !isRecoveryAccessPinFlow}
-        allowVisibilityToggle={isRecoveryAccessPinFlow}
+        allowVisibilityToggle
         onFocus={lockAccessPinScrollPosition}
         onSubmitEditing={() => {
           newAccessPinRef.current?.focus();
@@ -415,6 +415,7 @@ export function ProfileClassPanel({
         visible={showNewAccessPin}
         onToggleVisible={() => setShowNewAccessPin((open) => !open)}
         editable={canUseAccessPinForm && !savingAccessPin}
+        allowVisibilityToggle
         hasError={accessPinConfirmMismatch || accessPinSameAsCurrent}
         onFocus={lockAccessPinScrollPosition}
         onSubmitEditing={() => {
@@ -435,6 +436,7 @@ export function ProfileClassPanel({
         visible={showConfirmAccessPin}
         onToggleVisible={() => setShowConfirmAccessPin((open) => !open)}
         editable={canUseAccessPinForm && !savingAccessPin}
+        allowVisibilityToggle
         hasError={accessPinConfirmMismatch}
         onFocus={lockAccessPinScrollPosition}
         onSubmitEditing={focusSaveAccessPinButton}

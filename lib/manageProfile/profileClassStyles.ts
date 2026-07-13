@@ -156,7 +156,7 @@ export const profileClassStyles = StyleSheet.create({
     color: 'transparent',
   },
   accessPinSaveButton: {
-    backgroundColor: ACCENT,
+    backgroundColor: MINIMAL_UI.blueDark,
     height: 50,
     borderRadius: 10,
     alignItems: 'center',

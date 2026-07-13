@@ -3,6 +3,7 @@ import { isPlaceholderVisitorName } from '@/lib/profileOnboarding';
 import { formatBrazilCepInput, formatBrazilDateInput, formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { ACCESS_PIN_LENGTH } from '@/lib/accessPin';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { supabase } from '@/lib/supabase';
 import { fetchEffectiveSessionProfileRow } from '@/lib/effectiveProfileRpc';
 import { getGhostEffectiveProfileId, isGhostModeActive } from '@/lib/ghostMode';
@@ -527,17 +528,24 @@ export function AccessPinField({
   blurOnSubmit,
   returnKeyType,
 }: AccessPinFieldProps) {
-  const canToggleVisibility = editable || allowVisibilityToggle;
+  // Olho sempre ativo para conferir o PIN (inclusive campos só leitura).
+  const canToggleVisibility = true;
 
   return (
     <View style={accessPinFieldStyles.fieldBlock}>
       <Text style={accessPinFieldStyles.label}>{label}</Text>
       <View style={accessPinFieldStyles.row}>
         <TextInput
+          // Remonta ao alternar: no web, secureTextEntry sozinho não troca type=password → text.
+          key={visible ? 'pin-visible' : 'pin-hidden'}
           ref={inputRef}
-          style={[accessPinFieldStyles.input, hasError && accessPinFieldStyles.inputError]}
+          style={[
+            accessPinFieldStyles.input,
+            visible && accessPinFieldStyles.inputVisible,
+            hasError && accessPinFieldStyles.inputError,
+          ]}
           placeholder="****"
-          placeholderTextColor="#64748b"
+          placeholderTextColor={MINIMAL_UI.textMuted}
           value={value}
           onChangeText={onChangeText}
           onFocus={onFocus}
@@ -545,11 +553,17 @@ export function AccessPinField({
           blurOnSubmit={blurOnSubmit}
           returnKeyType={returnKeyType}
           keyboardType="number-pad"
+          inputMode="numeric"
           maxLength={ACCESS_PIN_LENGTH}
           secureTextEntry={!visible}
           editable={editable}
           textAlign="center"
           scrollEnabled={false}
+          autoCorrect={false}
+          autoCapitalize="none"
+          importantForAutofill="no"
+          autoComplete="off"
+          textContentType={visible ? 'none' : 'password'}
         />
         <TouchableOpacity
           style={accessPinFieldStyles.visibilityButton}
@@ -557,12 +571,13 @@ export function AccessPinField({
           disabled={!canToggleVisibility}
           accessibilityRole="button"
           accessibilityLabel={visible ? 'Ocultar senha' : 'Mostrar senha'}
+          accessibilityState={{ disabled: !canToggleVisibility, selected: visible }}
           hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
         >
           <MaterialIcons
             name={visible ? 'visibility' : 'visibility-off'}
             size={22}
-            color="#94A3B8"
+            color={visible ? MINIMAL_UI.blueDark : MINIMAL_UI.textMuted}
           />
         </TouchableOpacity>
       </View>
@@ -576,7 +591,7 @@ export const accessPinFieldStyles = StyleSheet.create({
     marginBottom: 0,
   },
   label: {
-    color: '#CBD5E1',
+    color: MINIMAL_UI.blueDark,
     fontSize: 13,
     fontWeight: '700',
     lineHeight: 18,
@@ -591,18 +606,25 @@ export const accessPinFieldStyles = StyleSheet.create({
   input: {
     flex: 1,
     height: 52,
-    backgroundColor: '#0f172a',
-    color: '#FFF',
+    backgroundColor: MINIMAL_UI.background,
+    color: MINIMAL_UI.blueDark,
     paddingHorizontal: 15,
     paddingVertical: 0,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: MINIMAL_UI.border,
     marginBottom: 0,
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: 4,
     ...(Platform.OS === 'android' ? { includeFontPadding: false, textAlignVertical: 'center' as const } : {}),
   },
+  inputVisible: {
+    letterSpacing: 10,
+    fontWeight: '700',
+  },
   inputError: {
-    borderColor: '#f87171',
+    borderColor: '#DC2626',
   },
   visibilityButton: {
     width: 44,
@@ -610,5 +632,6 @@ export const accessPinFieldStyles = StyleSheet.create({
     marginLeft: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
   },
 });
