@@ -12,6 +12,9 @@
 4. Se o chip da especial não marcar selecionado após atribuir:
    `scripts/church-room-settings-especial-chip-selected-patch.sql`
    (já incluso no `special-rooms.sql` atualizado; só rode o patch se o passo 3 foi de versão antiga)
+5. Listar só usuários ativos na atribuição:
+   `scripts/church-room-settings-active-profiles-only-patch.sql`
+   (já incluso no `special-rooms.sql` atualizado)
 
 Resultado esperado do passo 2:
 

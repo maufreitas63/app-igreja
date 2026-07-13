@@ -568,7 +568,8 @@ begin
       on v.profile_id = p.id
      and v.tenant_id = v_tenant
     left join lateral public.effective_user_room(v_tenant, p.id, current_date) eff on true
-   where (
+   where p.membership_out is null
+     and (
      v_q = ''
      or lower(coalesce(p.full_name, '')) like '%' || v_q || '%'
      or regexp_replace(coalesce(p.phone, ''), '\D', '', 'g') like '%' || regexp_replace(v_q, '\D', '', 'g') || '%'

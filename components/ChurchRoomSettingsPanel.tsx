@@ -442,8 +442,8 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
 
       <Text style={[styles.sectionTitle, styles.sectionSpaced]}>Atribuir membros às salas</Text>
       <Text style={styles.hint}>
-        Atribua a padrão e, se necessário, uma especial. A especial só vale entre as datas
-        programadas.
+        Lista apenas usuários ativos. Atribua a padrão e, se necessário, uma especial. A especial só
+        vale entre as datas programadas.
       </Text>
 
       <TextInput

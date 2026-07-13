@@ -4,7 +4,7 @@ import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { subscribeActiveTenantChange } from '@/lib/tenantSession';
 
 export const CHURCH_ROOM_SETTINGS_SQL_HINT =
-  'Execute no Supabase (SQL Editor): scripts/church-room-settings-custom-rooms.sql e scripts/church-room-settings-special-rooms.sql — salas padrão/especial.';
+  'Execute no Supabase (SQL Editor): scripts/church-room-settings-custom-rooms.sql, scripts/church-room-settings-special-rooms.sql e scripts/church-room-settings-active-profiles-only-patch.sql — salas padrão/especial e só ativos.';
 
 function withRoomSqlHintIfNeeded(message: string): string {
   const normalized = message.toLocaleLowerCase();
