@@ -384,18 +384,7 @@ export function AuthorizationForm({ profileId }: Props) {
           </ScrollView>
         </View>
 
-        {isFormLocked ? (
-          <View
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: true, disabled: true }}
-            style={[styles.acceptRow, styles.acceptRowLocked]}
-          >
-            <View style={[styles.checkbox, styles.checkboxChecked, styles.checkboxLocked]} />
-            <Text style={[styles.acceptLabel, styles.acceptLabelLocked]}>
-              Li e concordo com a autorização acima
-            </Text>
-          </View>
-        ) : (
+        {!isFormLocked ? (
           <Pressable
             accessibilityRole="checkbox"
             accessibilityState={{ checked: acceptedTerms }}
@@ -405,7 +394,7 @@ export function AuthorizationForm({ profileId }: Props) {
             <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]} />
             <Text style={styles.acceptLabel}>Li e concordo com a autorização acima</Text>
           </Pressable>
-        )}
+        ) : null}
 
         {!isFormLocked ? (
           <Pressable
@@ -630,9 +619,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  acceptRowLocked: {
-    opacity: 0.85,
-  },
   checkbox: {
     width: 22,
     height: 22,
@@ -643,17 +629,10 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     backgroundColor: MINIMAL_UI.icon,
   },
-  checkboxLocked: {
-    borderColor: MINIMAL_UI.textMuted,
-    backgroundColor: MINIMAL_UI.textMuted,
-  },
   acceptLabel: {
     flex: 1,
     fontSize: 14,
     color: MINIMAL_UI.text,
-  },
-  acceptLabelLocked: {
-    color: MINIMAL_UI.textMuted,
   },
   submitButton: {
     backgroundColor: MINIMAL_UI.blue,
