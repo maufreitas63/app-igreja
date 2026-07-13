@@ -7,7 +7,7 @@ export function useEventOrchestratorScreenAccess(
 ): ScreenAccessStatus {
   return useScreenAccessGuard({
     resourceKey: DRAWER_EVENT_ORCHESTRATOR_RESOURCE,
-    deniedMessage: 'Você não tem permissão para abrir a Orquestração do Evento.',
+    deniedMessage: 'Você não tem permissão para abrir a Manutenção de Avisos.',
     redirectPath,
   });
 }

@@ -61,12 +61,6 @@ export const EVENT_ORCHESTRATION_TARGETS: Record<
   },
 };
 
-export const EVENT_ORCHESTRATION_LEADER_BUTTONS = [
-  EVENT_ORCHESTRATION_TARGETS['/home'],
-  EVENT_ORCHESTRATION_TARGETS['/ofertas_dizimos'],
-  EVENT_ORCHESTRATION_TARGETS['/avisos'],
-] as const;
-
 export const normalizeEventOrchestrationRouteCode = (
   value: string | null | undefined
 ): EventOrchestrationLeaderRouteCode | null => {

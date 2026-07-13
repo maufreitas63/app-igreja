@@ -200,7 +200,7 @@ const formatDisplayName = (fullName: string) => {
 const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '1', title: 'Programação de Eventos', content: 'events' },
   { id: '2', title: 'Cronograma de Eventos', content: 'events_gantt' },
-  { id: '15', title: 'Orquestração do Evento', content: 'event_orchestration' },
+  { id: '15', title: 'Manutenção de Avisos', content: 'event_orchestration' },
   { id: '3', title: 'Sala(s) - Check In', content: 'sala_servidor' },
   { id: '5', title: 'Tipos de Escala', content: 'scale_types' },
   { id: '6', title: SCALE_VOLUNTEERS_MENU_LABEL, content: 'scale_volunteers' },

@@ -21,6 +21,8 @@ import {
 type Props = {
   isActive?: boolean;
   minimal?: boolean;
+  /** Abre o formulário já expandido (útil quando é o único conteúdo do painel). */
+  defaultExpanded?: boolean;
 };
 
 const MINIMAL_SWITCH_TRACK = { false: MINIMAL_UI.divider, true: MINIMAL_UI.accent } as const;
@@ -33,9 +35,13 @@ const emptyDraft = () => ({
   isPublished: true,
 });
 
-export function EventAvisosManager({ isActive = true, minimal = false }: Props) {
+export function EventAvisosManager({
+  isActive = true,
+  minimal = false,
+  defaultExpanded = false,
+}: Props) {
   const { colors } = usePalette();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [items, setItems] = useState<EventAvisoRow[]>([]);
@@ -175,9 +181,7 @@ export function EventAvisosManager({ isActive = true, minimal = false }: Props) 
       {expanded ? (
         <View style={[styles.body, minimal && styles.bodyMinimal]}>
           <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>
-            Os avisos ficam na tabela{' '}
-            <Text style={[styles.helpMono, minimal && styles.helpMonoMinimal]}>event_avisos</Text> e
-            aparecem na rota /avisos quando publicados.
+            Avisos publicados aparecem na home dos membros (página Avisos do pager).
           </Text>
 
           {loading ? (
@@ -331,7 +335,7 @@ export function EventAvisosManager({ isActive = true, minimal = false }: Props) 
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginTop: 8,
+    marginTop: 0,
     borderWidth: 1,
     borderRadius: 14,
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
@@ -363,6 +367,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 14,
     fontWeight: '800',
+    flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
+    paddingRight: 8,
   },
   headerTitleMinimal: {
     color: MINIMAL_UI.text,
@@ -372,6 +380,7 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 12,
     fontWeight: '700',
+    flexShrink: 0,
   },
   headerHintMinimal: {
     color: MINIMAL_UI.textMuted,
@@ -397,16 +406,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     marginTop: 4,
+    flexShrink: 1,
+    maxWidth: '100%',
   },
   helpTextMinimal: {
     color: MINIMAL_UI.textMuted,
-  },
-  helpMono: {
-    color: '#CBD5E1',
-    fontWeight: '700',
-  },
-  helpMonoMinimal: {
-    color: MINIMAL_UI.text,
   },
   errorText: {
     color: '#FCA5A5',
@@ -435,6 +439,9 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     backgroundColor: 'rgba(2, 6, 23, 0.45)',
     fontSize: 14,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   inputMinimal: {
     borderColor: MINIMAL_UI.border,
