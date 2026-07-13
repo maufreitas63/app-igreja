@@ -92,10 +92,8 @@ export function MinimalEuQueroFooter() {
 const styles = StyleSheet.create({
   wrap: {
     gap: 12,
-    paddingTop: 12,
+    paddingTop: 8,
     backgroundColor: MINIMAL_UI.background,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: MINIMAL_UI.divider,
     width: '100%',
     alignSelf: 'stretch',
   },

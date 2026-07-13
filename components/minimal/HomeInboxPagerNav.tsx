@@ -23,11 +23,7 @@ export function HomeInboxPagerNav({ variant, onPress }: HomeInboxPagerNavProps) 
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      style={({ pressed }) => [
-        styles.row,
-        variant === 'toEventos' ? styles.rowTop : styles.rowBottom,
-        pressed && styles.rowPressed,
-      ]}
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
     >
       <View style={styles.sideSlot}>
         {variant === 'toEventos' ? (
@@ -56,19 +52,14 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: MINIMAL_UI.background,
-    paddingHorizontal: 4,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
-  },
-  rowTop: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: MINIMAL_UI.divider,
-  },
-  rowBottom: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: MINIMAL_UI.divider,
+    paddingHorizontal: 4,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
   },
   rowPressed: {
     backgroundColor: MINIMAL_UI.rowHover,

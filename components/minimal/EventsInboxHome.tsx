@@ -32,6 +32,7 @@ export function EventsInboxHome() {
   const { events, loading, error } = useActiveEvents({ enablePolling: true });
   const [modalEventId, setModalEventId] = useState<string | null>(null);
   const [pageWidth, setPageWidth] = useState(0);
+  const [pageHeight, setPageHeight] = useState(0);
   const [pagerIndex, setPagerIndex] = useState(0);
   const [avisos, setAvisos] = useState<EventAvisoRow[]>([]);
   const [avisosLoading, setAvisosLoading] = useState(false);
@@ -134,13 +135,23 @@ export function EventsInboxHome() {
     return <Text style={styles.error}>Não foi possível carregar os eventos.</Text>;
   }
 
+  const pageSizeStyle = {
+    width: resolvedPageWidth,
+    ...(pageHeight > 0 ? { height: pageHeight } : null),
+  };
+
   return (
     <View
       style={styles.root}
       onLayout={(event) => {
-        const nextWidth = Math.round(event.nativeEvent.layout.width);
-        if (nextWidth > 0 && nextWidth !== pageWidth) {
-          setPageWidth(nextWidth);
+        const { width: nextWidth, height: nextHeight } = event.nativeEvent.layout;
+        const roundedWidth = Math.round(nextWidth);
+        const roundedHeight = Math.round(nextHeight);
+        if (roundedWidth > 0 && roundedWidth !== pageWidth) {
+          setPageWidth(roundedWidth);
+        }
+        if (roundedHeight > 0 && roundedHeight !== pageHeight) {
+          setPageHeight(roundedHeight);
         }
       }}
     >
@@ -157,7 +168,7 @@ export function EventsInboxHome() {
           onScrollEndDrag={handlePagerScrollEnd}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={[styles.page, { width: resolvedPageWidth }]}>
+          <View style={[styles.page, pageSizeStyle]}>
             <View style={styles.inboxSection}>
               <Text style={styles.sectionTitle}>Proximos Eventos</Text>
               <InboxList
@@ -170,9 +181,9 @@ export function EventsInboxHome() {
             <HomeInboxPagerNav variant="toAvisos" onPress={() => scrollToPage(1)} />
           </View>
 
-          <View style={[styles.page, { width: resolvedPageWidth }]}>
-            <HomeInboxPagerNav variant="toEventos" onPress={() => scrollToPage(0)} />
+          <View style={[styles.page, pageSizeStyle]}>
             <View style={styles.avisosSection}>
+              <Text style={styles.sectionTitle}>Avisos</Text>
               {avisosLoading ? (
                 <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />
               ) : avisosError ? (
@@ -199,6 +210,7 @@ export function EventsInboxHome() {
                 </ScrollView>
               )}
             </View>
+            <HomeInboxPagerNav variant="toEventos" onPress={() => scrollToPage(0)} />
           </View>
         </ScrollView>
       ) : null}
@@ -224,37 +236,42 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pager: {
-    flexGrow: 0,
+    flex: 1,
+    minHeight: 0,
     width: '100%',
     maxWidth: '100%',
   },
   pagerContent: {
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
+    flexGrow: 1,
   },
   page: {
     maxWidth: '100%',
     minWidth: 0,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
     backgroundColor: MINIMAL_UI.background,
   },
   inboxSection: {
     flexGrow: 0,
+    flexShrink: 1,
     width: '100%',
     backgroundColor: MINIMAL_UI.background,
   },
   avisosSection: {
-    flexGrow: 1,
-    minHeight: 160,
-    maxHeight: 320,
+    flex: 1,
+    minHeight: 0,
     width: '100%',
-    paddingTop: 8,
   },
   avisosList: {
+    flex: 1,
+    minHeight: 0,
     width: '100%',
-    maxHeight: 320,
   },
   avisosListContent: {
     gap: 8,
     paddingBottom: 8,
+    flexGrow: 1,
   },
   avisoCard: {
     width: '100%',
