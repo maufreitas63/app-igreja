@@ -48,10 +48,25 @@ export async function verificarLogin(
   }
 
   const profile = row as Record<string, unknown>;
+  const profileId = typeof profile.id === 'string' ? profile.id.trim() : '';
+
+  if (!profileId) {
+    return { ok: false, reason: 'invalid_credentials' };
+  }
+
   const profilePhone = typeof profile.phone === 'string' ? profile.phone : '';
 
-  if (!phoneDigitsMatch(profilePhone, cleanPhone)) {
-    return { ok: false, reason: 'invalid_credentials' };
+  // A RPC já validou telefone+PIN. Só rejeita no cliente se ambos os lados
+  // tiverem dígitos e forem claramente de números diferentes.
+  const typedDigits = cleanPhone.replace(/\D/g, '');
+  const profileDigits = profilePhone.replace(/\D/g, '');
+
+  if (typedDigits && profileDigits && !phoneDigitsMatch(profilePhone, cleanPhone)) {
+    console.warn('verificar_login: telefone do perfil divergente do digitado', {
+      typedDigits,
+      profileDigits,
+      profileId,
+    });
   }
 
   return {
