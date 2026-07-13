@@ -115,6 +115,7 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     minWidth: 0,
     alignSelf: 'stretch',
+    overflow: 'hidden',
   },
   scrollMinimal: {
     flex: 1,

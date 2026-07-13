@@ -1,4 +1,5 @@
 import { MAINTENANCE_VIGILANCE_UI } from '@/lib/maintenanceVigilanceTheme';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { UI_RADIUS, UI_SPACING } from '@/lib/uiTokens';
 import type { ScrollViewProps } from 'react-native';
 import { StyleSheet } from 'react-native';
@@ -12,12 +13,14 @@ export const MAINTENANCE_SCROLL_PROPS = {
 /** Estilos compartilhados dos painéis internos do carrossel de manutenção (tema vigilance). */
 export const maintenancePanelStyles = StyleSheet.create({
   panel: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     minHeight: 0,
     gap: UI_SPACING.sm,
     backgroundColor: MAINTENANCE_VIGILANCE_UI.surface,
   },
   panelCentered: {
+    ...CONTAIN_WIDTH,
     alignItems: 'center',
     justifyContent: 'center',
     gap: UI_SPACING.md,

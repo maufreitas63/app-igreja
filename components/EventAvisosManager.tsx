@@ -485,14 +485,15 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     borderTopWidth: 1,
     borderTopColor: 'rgba(148, 163, 184, 0.18)',
-  },
-  bodyMinimal: {
-    paddingHorizontal: 12,
-    borderTopColor: MINIMAL_UI.divider,
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
     alignSelf: 'stretch',
+    overflow: 'hidden',
+  },
+  bodyMinimal: {
+    paddingHorizontal: 12,
+    borderTopColor: MINIMAL_UI.divider,
   },
   helpText: {
     color: '#94A3B8',
@@ -588,7 +589,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    minWidth: 132,
+    minWidth: 0,
+    flexShrink: 1,
     alignItems: 'center',
   },
   primaryButtonMinimal: {

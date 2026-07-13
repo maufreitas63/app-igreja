@@ -111,22 +111,24 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingBottom: 12,
-    width: '100%',
     maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   flexContent: {
     paddingHorizontal: 16,
-    width: '100%',
     maxWidth: '100%',
     minWidth: 0,
+    alignSelf: 'stretch',
     flex: 1,
+    overflow: 'hidden',
   },
   footer: {
     flexShrink: 0,
     paddingHorizontal: 16,
     backgroundColor: MINIMAL_UI.background,
-    width: '100%',
     maxWidth: '100%',
     minWidth: 0,
+    alignSelf: 'stretch',
   },
 });

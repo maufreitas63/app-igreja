@@ -68,7 +68,7 @@ import {
   resolveMaintenancePanelIndex,
 } from '@/lib/dashboardPanelLayout';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
-import { MINIMAL_FLAT_PANEL, MINIMAL_PAGE } from '@/lib/minimalPresentation';
+import { MINIMAL_FLAT_PANEL, MINIMAL_PAGE, CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
 import {
@@ -398,7 +398,6 @@ export default function MaintenanceDashboard() {
   const requestedPanel = pickRouteParam(panelParam);
   const isMinimalPresentation = isMinimalPresentationRoute(presentationParam);
   const previousPageWidthRef = useRef(pageWidth);
-  const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);
   const carouselPageWidth = useMemo(
     () =>
       isMinimalPresentation
@@ -988,11 +987,14 @@ export default function MaintenanceDashboard() {
   );
 
   const effectiveCarouselPageStyle = useMemo(
-    () =>
-      isMinimalPresentation
-        ? { width: '100%' as const, flex: 1, minWidth: 0, maxWidth: '100%' as const }
-        : carouselPageStyle,
-    [carouselPageStyle, isMinimalPresentation]
+    () => ({
+      width: carouselPageWidth,
+      maxWidth: carouselPageWidth,
+      minWidth: 0,
+      overflow: 'hidden' as const,
+      ...(isMinimalPresentation ? { flex: 1 } : null),
+    }),
+    [carouselPageWidth, isMinimalPresentation]
   );
 
   const effectiveCardWrapperStyle = useMemo(
@@ -1003,10 +1005,6 @@ export default function MaintenanceDashboard() {
             paddingTop: 0,
             paddingBottom: 0,
             justifyContent: 'flex-start' as const,
-            width: '100%' as const,
-            minWidth: 0,
-            maxWidth: '100%' as const,
-            overflow: 'hidden' as const,
           }
         : styles.cardWrapper,
     [isMinimalPresentation]
@@ -1018,10 +1016,6 @@ export default function MaintenanceDashboard() {
         ? {
             ...MINIMAL_FLAT_PANEL,
             flex: 1,
-            width: '100%' as const,
-            minWidth: 0,
-            maxWidth: '100%' as const,
-            overflow: 'hidden' as const,
           }
         : null,
     [isMinimalPresentation]
@@ -2403,6 +2397,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     width: '100%',
+    maxWidth: '100%',
     minWidth: 0,
     overflow: 'hidden',
   },
@@ -2410,7 +2405,9 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     width: '100%',
+    maxWidth: '100%',
     minWidth: 0,
+    overflow: 'hidden',
   },
   cardWrapper: {
     justifyContent: 'center',
@@ -2519,6 +2516,7 @@ const styles = StyleSheet.create({
     color: 'rgba(58, 150, 221, 0.82)',
   },
   ganttPanel: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     padding: STATIC_MAINTENANCE_PANEL_INSETS.menuPadding,
     minHeight: 0,
@@ -2529,8 +2527,10 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
+    overflow: 'hidden',
   },
   orchestrationPanel: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     minHeight: 0,
   },
@@ -2543,6 +2543,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   scaleTypesPanel: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     minHeight: 0,
   },
@@ -2555,6 +2556,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   scaleVolunteersPanel: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     minHeight: 0,
   },
@@ -2567,6 +2569,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   scalesPanel: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     minHeight: 0,
   },
@@ -2579,6 +2582,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pastoralCarePanel: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     minHeight: 0,
   },
@@ -2591,6 +2595,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   salaServidorPanel: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     minHeight: 0,
   },
@@ -2603,6 +2608,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   accessControlPanel: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     minHeight: 0,
   },

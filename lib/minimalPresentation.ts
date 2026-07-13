@@ -2,34 +2,38 @@ import { BIRTHDAYS_UI, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 
-/** Remove aparência de card (bordas, sombra, fundo escuro) no modo minimalista. */
-export const MINIMAL_FLAT_PANEL: ViewStyle = {
+/**
+ * Contém largura em cadeias flex/ScrollView/FlatList.
+ * Use em shells e painéis para evitar estouro horizontal (RN Web).
+ */
+export const CONTAIN_WIDTH = {
   width: '100%',
   maxWidth: '100%',
   minWidth: 0,
-  flex: 1,
   alignSelf: 'stretch',
+  overflow: 'hidden',
+} as const satisfies ViewStyle;
+
+/** Remove aparência de card (bordas, sombra, fundo escuro) no modo minimalista. */
+export const MINIMAL_FLAT_PANEL: ViewStyle = {
+  ...CONTAIN_WIDTH,
+  flex: 1,
   backgroundColor: MINIMAL_UI.background,
   borderWidth: 0,
   borderRadius: 0,
   shadowOpacity: 0,
   elevation: 0,
-  paddingHorizontal: 8,
+  paddingHorizontal: 0,
   paddingVertical: 4,
   alignItems: 'stretch',
-  overflow: 'hidden',
   minHeight: undefined,
   maxHeight: undefined,
 };
 
 export const MINIMAL_PAGE: ViewStyle = {
-  width: '100%',
-  maxWidth: '100%',
-  minWidth: 0,
+  ...CONTAIN_WIDTH,
   flex: 1,
-  alignSelf: 'stretch',
   backgroundColor: MINIMAL_UI.background,
-  overflow: 'hidden',
 };
 
 /** Estilos de texto e superfície para painéis do dashboard em modo minimalista. */
