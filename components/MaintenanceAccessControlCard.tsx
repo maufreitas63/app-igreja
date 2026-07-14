@@ -2152,7 +2152,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 0,
     backgroundColor: MINIMAL_UI.background,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   panelHeaderMinimal: {
     width: '100%',
@@ -2164,6 +2164,8 @@ const styles = StyleSheet.create({
     ...MINIMAL_SECTION_TITLE,
     width: '100%',
     maxWidth: '100%',
+    minWidth: 0,
+    paddingHorizontal: 0,
     alignSelf: 'stretch',
   },
   panelHeaderControlsMinimal: {

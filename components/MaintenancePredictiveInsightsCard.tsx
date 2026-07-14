@@ -470,11 +470,14 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     paddingHorizontal: 0,
     paddingVertical: 4,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   sectionTitle: {
     ...MINIMAL_SECTION_TITLE,
-    ...CONTAIN_WIDTH,
+    alignSelf: 'stretch',
+    maxWidth: '100%',
+    minWidth: 0,
+    paddingHorizontal: 0,
   },
   sectionLabelMinimal: {
     color: MINIMAL_UI.textMuted,
@@ -543,10 +546,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   summaryCard: {
-    width: 'calc(50% - 4px)',
-    maxWidth: 'calc(50% - 4px)',
-    flexGrow: 0,
-    flexShrink: 0,
+    flex: 1,
+    minWidth: 0,
+    maxWidth: '100%',
     borderWidth: 1,
     borderColor: 'rgba(34, 211, 238, 0.25)',
     borderRadius: 10,
@@ -556,18 +558,19 @@ const styles = StyleSheet.create({
   },
   summaryCardMinimal: {
     borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
   },
   summaryCardRightSlot: {
-    width: 'calc(50% - 4px)',
-    maxWidth: 'calc(50% - 4px)',
-    flexGrow: 0,
-    flexShrink: 0,
+    flex: 1,
+    minWidth: 0,
+    maxWidth: '100%',
     alignItems: 'flex-end',
     justifyContent: 'center',
     minHeight: 60,
   },
   ltvFormulaButton: {
-    width: 118,
+    width: '100%',
+    maxWidth: 118,
     minHeight: 60,
     borderWidth: 1,
     borderColor: 'rgba(34, 211, 238, 0.45)',
@@ -639,6 +642,7 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
   },
   table: {
+    ...CONTAIN_WIDTH,
     borderWidth: 1,
     borderColor: 'rgba(148, 163, 184, 0.18)',
     borderRadius: 10,
@@ -649,6 +653,9 @@ const styles = StyleSheet.create({
   },
   tableHeaderRow: {
     flexDirection: 'row',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
     backgroundColor: 'rgba(15, 23, 42, 0.85)',
   },
   tableHeaderRowMinimal: {
@@ -656,6 +663,9 @@ const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: 'row',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(148, 163, 184, 0.15)',
   },
@@ -665,6 +675,8 @@ const styles = StyleSheet.create({
   },
   tableCell: {
     flex: 1,
+    minWidth: 0,
+    flexShrink: 1,
     color: '#3A96DD',
     fontSize: 11,
     paddingHorizontal: 8,

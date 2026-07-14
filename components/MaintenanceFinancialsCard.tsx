@@ -3407,7 +3407,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 0,
     backgroundColor: MINIMAL_UI.background,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   sectionTitleMinimal: {
     ...MINIMAL_SECTION_TITLE,

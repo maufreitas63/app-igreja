@@ -387,11 +387,14 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 0,
     backgroundColor: MINIMAL_UI.background,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   sectionTitle: {
     ...MINIMAL_SECTION_TITLE,
-    ...CONTAIN_WIDTH,
+    alignSelf: 'stretch',
+    maxWidth: '100%',
+    minWidth: 0,
+    paddingHorizontal: 0,
   },
   sectionLabelMinimal: {
     color: MINIMAL_UI.textMuted,

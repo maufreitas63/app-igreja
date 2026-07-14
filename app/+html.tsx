@@ -36,6 +36,16 @@ export default function Root({ children }: PropsWithChildren) {
         <script dangerouslySetInnerHTML={{ __html: LOCK_DOCUMENT_TITLE_SCRIPT }} />
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{ __html: WEB_NON_SELECTABLE_CSS }} />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+html, body, #root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+`,
+          }}
+        />
       </head>
       <body>{children}</body>
     </html>

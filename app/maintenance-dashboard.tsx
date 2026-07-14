@@ -1005,8 +1005,11 @@ export default function MaintenanceDashboard() {
       width: carouselPageWidth,
       maxWidth: carouselPageWidth,
       minWidth: 0,
+      flexBasis: carouselPageWidth,
       overflow: 'hidden' as const,
-      ...(isMinimalPresentation ? { flex: 1 } : null),
+      ...(isMinimalPresentation
+        ? { flexGrow: 0, flexShrink: 0, alignSelf: 'stretch' as const }
+        : null),
     }),
     [carouselPageWidth, isMinimalPresentation]
   );
@@ -1890,9 +1893,12 @@ export default function MaintenanceDashboard() {
             >
               <FlatList
                 ref={carouselRef}
-                style={styles.carouselFlatList}
+                style={[
+                  styles.carouselFlatList,
+                  isMinimalPresentation && styles.carouselFlatListMinimal,
+                ]}
                 data={maintenanceCarouselCards}
-                extraData={{ currentIndex, maintenanceCardCount }}
+                extraData={{ currentIndex, maintenanceCardCount, carouselPageWidth }}
                 horizontal
                 pagingEnabled={!isMinimalPresentation}
                 scrollEnabled={false}
@@ -1911,6 +1917,11 @@ export default function MaintenanceDashboard() {
                   offset: carouselPageWidth * index,
                   index,
                 })}
+                contentContainerStyle={
+                  isMinimalPresentation
+                    ? { overflow: 'hidden' as const }
+                    : undefined
+                }
                 snapToAlignment="start"
                 snapToInterval={isMinimalPresentation ? undefined : carouselPageWidth}
                 snapToOffsets={
@@ -2520,6 +2531,10 @@ const styles = StyleSheet.create({
     minWidth: 0,
     overflow: 'hidden',
   },
+  carouselFlatListMinimal: {
+    flexGrow: 0,
+    alignSelf: 'stretch',
+  },
   cardWrapper: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -2677,7 +2692,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   scalesPanel: {
     ...CONTAIN_WIDTH,
@@ -2690,7 +2705,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   pastoralCarePanel: {
     ...CONTAIN_WIDTH,
@@ -2703,7 +2718,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   financialsPanel: {
     ...CONTAIN_WIDTH,
@@ -2716,7 +2731,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   salaServidorPanel: {
     ...CONTAIN_WIDTH,
@@ -2742,7 +2757,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   pastoralRoleChangePanel: {
     ...CONTAIN_WIDTH,
@@ -2755,7 +2770,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   profileCadastroPanel: {
     ...CONTAIN_WIDTH,
@@ -2768,7 +2783,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   familyReceptionPanel: {
     ...CONTAIN_WIDTH,
@@ -2781,7 +2796,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   predictivePanel: {
     ...CONTAIN_WIDTH,
@@ -2794,7 +2809,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   reportsPanel: {
     ...CONTAIN_WIDTH,
@@ -2807,7 +2822,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   profileAccessInsightsPanel: {
     ...CONTAIN_WIDTH,
@@ -2820,7 +2835,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   ghostModePanel: {
     ...CONTAIN_WIDTH,
@@ -2833,7 +2848,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   ganttPanelTitle: {
     fontSize: UI_PANEL_TYPO.titleMuted.fontSize,

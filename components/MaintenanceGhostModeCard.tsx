@@ -13,7 +13,7 @@ import {
   type GhostModeProfileOption,
   type GhostModeTargetPreview,
 } from '@/lib/ghostModeApi';
-import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
+import { computeMaintenanceContentHeight } from '@/lib/maintenanceCardStyles';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -484,9 +484,10 @@ export function MaintenanceGhostModeCard({
     return (
       <View
         style={[
-          maintenancePanelStyles.panelScrollContent,
+          styles.scroll,
+          styles.scrollContent,
           minimal && styles.panelMinimal,
-          { minHeight: contentHeight },
+          { height: contentHeight, maxHeight: contentHeight },
         ]}
       >
         <Text style={minimal ? styles.sectionTitle : styles.title}>Modo Ghost (Auditor)</Text>
@@ -500,12 +501,8 @@ export function MaintenanceGhostModeCard({
 
   return (
     <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={[
-        maintenancePanelStyles.panelScrollContent,
-        minimal && styles.panelMinimal,
-        { minHeight: contentHeight },
-      ]}
+      style={[styles.scroll, minimal && styles.panelMinimal, { height: contentHeight, maxHeight: contentHeight }]}
+      contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       nestedScrollEnabled
@@ -593,7 +590,13 @@ export function MaintenanceGhostModeCard({
 
 const styles = StyleSheet.create({
   scroll: {
+    ...CONTAIN_WIDTH,
     flex: 1,
+    minHeight: 0,
+  },
+  scrollContent: {
+    gap: 8,
+    paddingBottom: 16,
   },
   title: {
     color: '#3A96DD',
@@ -843,7 +846,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...MINIMAL_SECTION_TITLE,
-    ...CONTAIN_WIDTH,
+    alignSelf: 'stretch',
+    maxWidth: '100%',
+    minWidth: 0,
+    paddingHorizontal: 0,
     marginBottom: 8,
   },
   hintMinimal: {
