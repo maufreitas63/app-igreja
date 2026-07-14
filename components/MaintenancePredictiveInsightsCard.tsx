@@ -13,6 +13,8 @@ import {
 import { appAlert } from '@/lib/appAlert';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { usePredictiveInsights } from '@/hooks/usePredictiveInsights';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useMemo } from 'react';
 import {
   ScrollView,
@@ -25,11 +27,16 @@ import {
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
 
 const ACCENT = '#3A96DD';
 
-export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight }: Props) {
+export function MaintenancePredictiveInsightsCard({
+  isActive = true,
+  panelHeight,
+  minimal = false,
+}: Props) {
   const { model, loading, error, reload } = usePredictiveInsights(isActive, PREDICTIVE_BASE_MONTHS);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
@@ -68,95 +75,139 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
     );
   };
 
-  return (
-    <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Modelo Preditivo</Text>
-      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+  const sectionLabelStyle = minimal ? styles.sectionLabelMinimal : undefined;
 
-      <Text style={styles.helpText}>
+  return (
+    <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
+      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
+        Modelo Preditivo
+      </Text>
+      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
+
+      <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>
         Previsibilidade de arrecadação ordinária e de crescimento de membros com base nos últimos{' '}
         {PREDICTIVE_BASE_MONTHS} meses e projeção para os próximos {PREDICTIVE_FORECAST_MONTHS} meses,
         incluindo sazonalidade mensal e LTV eclesiástico.
       </Text>
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? (
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
+      ) : null}
 
       {!loading ? (
-        <TouchableOpacity style={styles.reloadButton} onPress={() => void reload()} activeOpacity={0.85}>
-          <Text style={styles.reloadButtonText}>Recalcular modelo</Text>
+        <TouchableOpacity
+          style={[styles.reloadButton, minimal && styles.reloadButtonMinimal]}
+          onPress={() => void reload()}
+          activeOpacity={0.85}
+        >
+          <Text style={[styles.reloadButtonText, minimal && styles.reloadButtonTextMinimal]}>
+            Recalcular modelo
+          </Text>
         </TouchableOpacity>
       ) : null}
 
-      {loading ? <CardLoadingState lines={5} /> : null}
+      {loading ? <CardLoadingState lines={5} minimal={minimal} /> : null}
 
       {!loading && model ? (
         <ScrollView
-          style={styles.scroll}
+          style={[styles.scroll, minimal && styles.scrollMinimal]}
           contentContainerStyle={styles.scrollContent}
           nestedScrollEnabled
           showsVerticalScrollIndicator={false}
         >
-          <SectionLabel variant="maintenance">Resumo da previsão ({PREDICTIVE_FORECAST_MONTHS} meses)</SectionLabel>
+          <SectionLabel variant="maintenance" style={sectionLabelStyle}>
+            Resumo da previsão ({PREDICTIVE_FORECAST_MONTHS} meses)
+          </SectionLabel>
           {summary ? (
             <View style={styles.summaryGrid}>
               <View style={styles.summaryRow}>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>Membros ativos (fim)</Text>
-                  <Text style={styles.summaryValue}>
+                <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
+                  <Text style={[styles.summaryLabel, minimal && styles.summaryLabelMinimal]}>
+                    Membros ativos (fim)
+                  </Text>
+                  <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
                     {summary.projectedActiveMembersEnd.toFixed(0)}
                   </Text>
                 </View>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>Crescimento de membros</Text>
-                  <Text style={styles.summaryValue}>
+                <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
+                  <Text style={[styles.summaryLabel, minimal && styles.summaryLabelMinimal]}>
+                    Crescimento de membros
+                  </Text>
+                  <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
                     {summary.memberGrowthPercent >= 0 ? '+' : ''}
                     {summary.memberGrowthPercent.toFixed(1)}%
                   </Text>
                 </View>
               </View>
               <View style={styles.summaryRow}>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>Entradas projetadas</Text>
-                  <Text style={styles.summaryValue}>{summary.totalProjectedEntries.toFixed(0)}</Text>
+                <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
+                  <Text style={[styles.summaryLabel, minimal && styles.summaryLabelMinimal]}>
+                    Entradas projetadas
+                  </Text>
+                  <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
+                    {summary.totalProjectedEntries.toFixed(0)}
+                  </Text>
                 </View>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>Saídas projetadas</Text>
-                  <Text style={styles.summaryValue}>{summary.totalProjectedExits.toFixed(0)}</Text>
+                <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
+                  <Text style={[styles.summaryLabel, minimal && styles.summaryLabelMinimal]}>
+                    Saídas projetadas
+                  </Text>
+                  <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
+                    {summary.totalProjectedExits.toFixed(0)}
+                  </Text>
                 </View>
               </View>
               <View style={styles.summaryRow}>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>Membros líquidos</Text>
-                  <Text style={styles.summaryValue}>{summary.totalProjectedNetMembers.toFixed(0)}</Text>
+                <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
+                  <Text style={[styles.summaryLabel, minimal && styles.summaryLabelMinimal]}>
+                    Membros líquidos
+                  </Text>
+                  <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
+                    {summary.totalProjectedNetMembers.toFixed(0)}
+                  </Text>
                 </View>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>Média líquida/mês</Text>
-                  <Text style={styles.summaryValue}>
+                <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
+                  <Text style={[styles.summaryLabel, minimal && styles.summaryLabelMinimal]}>
+                    Média líquida/mês
+                  </Text>
+                  <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
                     {summary.averageMonthlyNetMemberChange >= 0 ? '+' : ''}
                     {summary.averageMonthlyNetMemberChange.toFixed(1)}
                   </Text>
                 </View>
               </View>
               <View style={styles.summaryRow}>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>Arrecadação projetada</Text>
-                  <Text style={styles.summaryValue}>{formatPredictiveCurrency(summary.totalProjectedRevenue)}</Text>
+                <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
+                  <Text style={[styles.summaryLabel, minimal && styles.summaryLabelMinimal]}>
+                    Arrecadação projetada
+                  </Text>
+                  <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
+                    {formatPredictiveCurrency(summary.totalProjectedRevenue)}
+                  </Text>
                 </View>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>Média mensal</Text>
-                  <Text style={styles.summaryValue}>{formatPredictiveCurrency(summary.averageMonthlyRevenue)}</Text>
+                <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
+                  <Text style={[styles.summaryLabel, minimal && styles.summaryLabelMinimal]}>
+                    Média mensal
+                  </Text>
+                  <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
+                    {formatPredictiveCurrency(summary.averageMonthlyRevenue)}
+                  </Text>
                 </View>
               </View>
               <View style={styles.summaryRow}>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>LTV por novo membro/mês</Text>
-                  <Text style={styles.summaryValue}>
+                <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
+                  <Text style={[styles.summaryLabel, minimal && styles.summaryLabelMinimal]}>
+                    LTV por novo membro/mês
+                  </Text>
+                  <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
                     {formatPredictiveCurrency(model.revenuePerNewMemberMonthly)}
                   </Text>
                 </View>
-                <View style={styles.summaryCard}>
-                  <Text style={styles.summaryLabel}>LTV acumulado ({PREDICTIVE_FORECAST_MONTHS} meses)</Text>
-                  <Text style={styles.summaryValue}>
+                <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
+                  <Text style={[styles.summaryLabel, minimal && styles.summaryLabelMinimal]}>
+                    LTV acumulado ({PREDICTIVE_FORECAST_MONTHS} meses)
+                  </Text>
+                  <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
                     {formatPredictiveCurrency(model.revenuePerNewMemberHorizon[PREDICTIVE_FORECAST_MONTHS])}
                   </Text>
                 </View>
@@ -164,26 +215,32 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
               <View style={styles.summaryRow}>
                 <View style={styles.summaryCardRightSlot}>
                   <TouchableOpacity
-                    style={styles.ltvFormulaButton}
+                    style={[styles.ltvFormulaButton, minimal && styles.ltvFormulaButtonMinimal]}
                     onPress={showMemberFormula}
                     activeOpacity={0.85}
                     accessibilityRole="button"
                     accessibilityLabel="Ver fórmula de previsão de membros"
                   >
-                    <Text style={styles.ltvFormulaButtonText} numberOfLines={2}>
+                    <Text
+                      style={[styles.ltvFormulaButtonText, minimal && styles.ltvFormulaButtonTextMinimal]}
+                      numberOfLines={2}
+                    >
                       Fórmula{'\n'}membros
                     </Text>
                   </TouchableOpacity>
                 </View>
                 <View style={styles.summaryCardRightSlot}>
                   <TouchableOpacity
-                    style={styles.ltvFormulaButton}
+                    style={[styles.ltvFormulaButton, minimal && styles.ltvFormulaButtonMinimal]}
                     onPress={showLtvFormula}
                     activeOpacity={0.85}
                     accessibilityRole="button"
                     accessibilityLabel="Ver fórmula de cálculo do LTV"
                   >
-                    <Text style={styles.ltvFormulaButtonText} numberOfLines={2}>
+                    <Text
+                      style={[styles.ltvFormulaButtonText, minimal && styles.ltvFormulaButtonTextMinimal]}
+                      numberOfLines={2}
+                    >
                       Fórmula{'\n'}LTV
                     </Text>
                   </TouchableOpacity>
@@ -192,93 +249,206 @@ export function MaintenancePredictiveInsightsCard({ isActive = true, panelHeight
             </View>
           ) : null}
 
-          <SectionLabel variant="maintenance">Sazonalidade detectada</SectionLabel>
-          <View style={styles.seasonalityBox}>
+          <SectionLabel variant="maintenance" style={sectionLabelStyle}>
+            Sazonalidade detectada
+          </SectionLabel>
+          <View style={[styles.seasonalityBox, minimal && styles.seasonalityBoxMinimal]}>
             {model.seasonalityHighlights.map((item) => (
-              <Text key={item.month} style={styles.seasonalityText}>
+              <Text
+                key={item.month}
+                style={[styles.seasonalityText, minimal && styles.seasonalityTextMinimal]}
+              >
                 {item.label}: {item.factorPercent >= 0 ? '+' : ''}
                 {item.factorPercent.toFixed(1)}% vs. média histórica
               </Text>
             ))}
           </View>
 
-          <SectionLabel variant="maintenance">Qualidade do modelo</SectionLabel>
-          <Text style={styles.metaText}>
+          <SectionLabel variant="maintenance" style={sectionLabelStyle}>
+            Qualidade do modelo
+          </SectionLabel>
+          <Text style={[styles.metaText, minimal && styles.metaTextMinimal]}>
             R² receita: {(model.modelQuality.revenueRSquared * 100).toFixed(1)}% · R² membros
             líquidos: {(model.modelQuality.memberNetChangeRSquared * 100).toFixed(1)}% · Correlação
             crescimento: {(model.modelQuality.growthCorrelation * 100).toFixed(1)}% · Amostra:{' '}
             {model.modelQuality.sampleMonths} meses
           </Text>
 
-          <SectionLabel variant="maintenance">Base de cálculo preditivo</SectionLabel>
-          <Text style={styles.metaText}>
+          <SectionLabel variant="maintenance" style={sectionLabelStyle}>
+            Base de cálculo preditivo
+          </SectionLabel>
+          <Text style={[styles.metaText, minimal && styles.metaTextMinimal]}>
             Últimos {PREDICTIVE_BASE_MONTHS} meses com receita ordinária para sazonalidade, LTV e
             projeções. Previsão futura: {PREDICTIVE_FORECAST_MONTHS} meses.
           </Text>
 
-          <SectionLabel variant="maintenance">Histórico recente</SectionLabel>
-          <Text style={styles.metaText}>
+          <SectionLabel variant="maintenance" style={sectionLabelStyle}>
+            Histórico recente
+          </SectionLabel>
+          <Text style={[styles.metaText, minimal && styles.metaTextMinimal]}>
             {model.calculationBaseMonths} meses na base de cálculo
             {model.calculationBaseMonths < PREDICTIVE_BASE_MONTHS
               ? ` (apenas ${model.calculationBaseMonths} com receita cadastrada)`
               : ''}
             .
           </Text>
-          <View style={styles.table}>
-            <View style={styles.tableHeaderRow}>
-              <Text style={[styles.tableCell, styles.tableHeaderCell, styles.monthColumn]}>Mês</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Receita</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Ent</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Sai</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Líq.</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell]}>Ativos</Text>
+          <View style={[styles.table, minimal && styles.tableMinimal]}>
+            <View style={[styles.tableHeaderRow, minimal && styles.tableHeaderRowMinimal]}>
+              <Text
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.monthColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+              >
+                Mês
+              </Text>
+              <Text
+                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+              >
+                Receita
+              </Text>
+              <Text
+                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+              >
+                Ent
+              </Text>
+              <Text
+                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+              >
+                Sai
+              </Text>
+              <Text
+                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+              >
+                Líq.
+              </Text>
+              <Text
+                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+              >
+                Ativos
+              </Text>
             </View>
             {recentHistorical.map((point) => (
-              <View key={formatPredictiveMonthLabel(point.month)} style={styles.tableRow}>
-                <Text style={[styles.tableCell, styles.monthColumn]}>
+              <View
+                key={formatPredictiveMonthLabel(point.month)}
+                style={[styles.tableRow, minimal && styles.tableRowMinimal]}
+              >
+                <Text style={[styles.tableCell, styles.monthColumn, minimal && styles.tableCellMinimal]}>
                   {formatPredictiveMonthLabel(point.month)}
                 </Text>
-                <Text style={styles.tableCell}>{formatPredictiveCurrency(point.revenue)}</Text>
-                <Text style={styles.tableCell}>{point.memberEntries}</Text>
-                <Text style={styles.tableCell}>{point.memberExits}</Text>
-                <Text style={styles.tableCell}>{point.netMemberChange}</Text>
-                <Text style={styles.tableCell}>{point.activeMembersEnd}</Text>
+                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                  {formatPredictiveCurrency(point.revenue)}
+                </Text>
+                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                  {point.memberEntries}
+                </Text>
+                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                  {point.memberExits}
+                </Text>
+                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                  {point.netMemberChange}
+                </Text>
+                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                  {point.activeMembersEnd}
+                </Text>
               </View>
             ))}
           </View>
 
-          <SectionLabel variant="maintenance">
+          <SectionLabel variant="maintenance" style={sectionLabelStyle}>
             Previsão de receita ({PREDICTIVE_FORECAST_MONTHS} meses)
           </SectionLabel>
-          <View style={styles.table}>
-            <View style={styles.tableHeaderRow}>
-              <Text style={[styles.tableCell, styles.tableHeaderCell, styles.monthColumn]}>Mês</Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell, styles.revenueCompactColumn]}>
+          <View style={[styles.table, minimal && styles.tableMinimal]}>
+            <View style={[styles.tableHeaderRow, minimal && styles.tableHeaderRowMinimal]}>
+              <Text
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.monthColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+              >
+                Mês
+              </Text>
+              <Text
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.revenueCompactColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+              >
                 Total
               </Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell, styles.revenueCompactColumn]}>
+              <Text
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.revenueCompactColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+              >
                 Sazonal
               </Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell, styles.revenueCompactColumn]}>
+              <Text
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.revenueCompactColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+              >
                 Cresc.
               </Text>
-              <Text style={[styles.tableCell, styles.tableHeaderCell, styles.ativosColumn]}>Ativos</Text>
+              <Text
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.ativosColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+              >
+                Ativos
+              </Text>
             </View>
             {forecastPoints.map((point) => (
-              <View key={formatPredictiveMonthLabel(point.month)} style={styles.tableRow}>
-                <Text style={[styles.tableCell, styles.monthColumn]}>
+              <View
+                key={formatPredictiveMonthLabel(point.month)}
+                style={[styles.tableRow, minimal && styles.tableRowMinimal]}
+              >
+                <Text style={[styles.tableCell, styles.monthColumn, minimal && styles.tableCellMinimal]}>
                   {formatPredictiveMonthLabel(point.month)}
                 </Text>
-                <Text style={[styles.tableCell, styles.revenueCompactColumn]}>
+                <Text
+                  style={[
+                    styles.tableCell,
+                    styles.revenueCompactColumn,
+                    minimal && styles.tableCellMinimal,
+                  ]}
+                >
                   {formatPredictiveCurrency(point.revenue)}
                 </Text>
-                <Text style={[styles.tableCell, styles.revenueCompactColumn]}>
+                <Text
+                  style={[
+                    styles.tableCell,
+                    styles.revenueCompactColumn,
+                    minimal && styles.tableCellMinimal,
+                  ]}
+                >
                   {formatPredictiveCurrency(point.revenueFromSeasonality)}
                 </Text>
-                <Text style={[styles.tableCell, styles.revenueCompactColumn]}>
+                <Text
+                  style={[
+                    styles.tableCell,
+                    styles.revenueCompactColumn,
+                    minimal && styles.tableCellMinimal,
+                  ]}
+                >
                   {formatPredictiveCurrency(point.revenueFromGrowth)}
                 </Text>
-                <Text style={[styles.tableCell, styles.ativosColumn]}>
+                <Text style={[styles.tableCell, styles.ativosColumn, minimal && styles.tableCellMinimal]}>
                   {point.projectedActiveMembers.toFixed(0)}
                 </Text>
               </View>
@@ -295,16 +465,38 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
   },
+  panelMinimal: {
+    ...CONTAIN_WIDTH,
+    backgroundColor: MINIMAL_UI.background,
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    overflow: 'visible',
+  },
+  sectionTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    ...CONTAIN_WIDTH,
+  },
+  sectionLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textTransform: 'none',
+    letterSpacing: 0,
+  },
   helpText: {
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     lineHeight: 17,
     marginBottom: 8,
   },
+  helpTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
   errorText: {
     color: '#FCA5A5',
     fontSize: 12,
     marginBottom: 8,
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
   },
   reloadButton: {
     alignSelf: 'flex-start',
@@ -315,14 +507,25 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginBottom: 8,
   },
+  reloadButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 12,
+    backgroundColor: MINIMAL_UI.background,
+  },
   reloadButtonText: {
     color: ACCENT,
     fontSize: 12,
     fontWeight: '800',
   },
+  reloadButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
   scroll: {
     flex: 1,
     minHeight: 0,
+  },
+  scrollMinimal: {
+    ...CONTAIN_WIDTH,
   },
   scrollContent: {
     gap: 8,
@@ -351,6 +554,9 @@ const styles = StyleSheet.create({
     padding: 10,
     gap: 4,
   },
+  summaryCardMinimal: {
+    borderColor: MINIMAL_UI.border,
+  },
   summaryCardRightSlot: {
     width: 'calc(50% - 4px)',
     maxWidth: 'calc(50% - 4px)',
@@ -372,6 +578,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 8,
   },
+  ltvFormulaButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 12,
+  },
   ltvFormulaButtonText: {
     color: ACCENT,
     fontSize: 11,
@@ -379,16 +589,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 14,
   },
+  ltvFormulaButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
   summaryLabel: {
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
+  summaryLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textTransform: 'none',
+  },
   summaryValue: {
     color: '#3A96DD',
     fontSize: 15,
     fontWeight: '800',
+  },
+  summaryValueMinimal: {
+    color: MINIMAL_UI.text,
   },
   seasonalityBox: {
     borderWidth: 1,
@@ -398,15 +618,25 @@ const styles = StyleSheet.create({
     padding: 10,
     gap: 4,
   },
+  seasonalityBoxMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
   seasonalityText: {
     color: '#3A96DD',
     fontSize: 12,
     lineHeight: 16,
   },
+  seasonalityTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
   metaText: {
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     lineHeight: 15,
+  },
+  metaTextMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
   table: {
     borderWidth: 1,
@@ -414,14 +644,24 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
   },
+  tableMinimal: {
+    borderColor: MINIMAL_UI.border,
+  },
   tableHeaderRow: {
     flexDirection: 'row',
     backgroundColor: 'rgba(15, 23, 42, 0.85)',
+  },
+  tableHeaderRowMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
   },
   tableRow: {
     flexDirection: 'row',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(148, 163, 184, 0.15)',
+  },
+  tableRowMinimal: {
+    borderTopColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
   },
   tableCell: {
     flex: 1,
@@ -430,9 +670,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 7,
   },
+  tableCellMinimal: {
+    color: MINIMAL_UI.text,
+  },
   tableHeaderCell: {
     color: '#3A96DD',
     fontWeight: '800',
+  },
+  tableHeaderCellMinimal: {
+    color: MINIMAL_UI.blueDark,
   },
   monthColumn: {
     flex: 1.4,

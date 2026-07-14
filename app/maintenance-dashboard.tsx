@@ -1466,11 +1466,44 @@ export default function MaintenanceDashboard() {
               />
             </View>
           ) : item.content === 'mudanca_papeis' ? (
-            <MaintenancePastoralRoleChangeCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <View
+              style={[
+                styles.pastoralRoleChangePanel,
+                isMinimalPresentation && styles.pastoralRoleChangePanelMinimal,
+              ]}
+            >
+              <MaintenancePastoralRoleChangeCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'profile_cadastro' ? (
-            <MaintenanceProfileCadastroCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <View
+              style={[
+                styles.profileCadastroPanel,
+                isMinimalPresentation && styles.profileCadastroPanelMinimal,
+              ]}
+            >
+              <MaintenanceProfileCadastroCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'family_reception' ? (
-            <MaintenanceFamilyReceptionCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <View
+              style={[
+                styles.familyReceptionPanel,
+                isMinimalPresentation && styles.familyReceptionPanelMinimal,
+              ]}
+            >
+              <MaintenanceFamilyReceptionCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'financials' ? (
             <View
               style={[
@@ -1485,15 +1518,34 @@ export default function MaintenanceDashboard() {
               />
             </View>
           ) : item.content === 'predictive_insights' ? (
-            <MaintenancePredictiveInsightsCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <View
+              style={[
+                styles.predictivePanel,
+                isMinimalPresentation && styles.predictivePanelMinimal,
+              ]}
+            >
+              <MaintenancePredictiveInsightsCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'relatorios' ? (
-            <MaintenanceReportsCard
-              isActive={currentIndex === index}
-              panelHeight={cardHeight}
-              events={safeEvents}
-              loadingEvents={loading}
-              isSuperAdmin={canManageAccessControl}
-            />
+            <View
+              style={[
+                styles.reportsPanel,
+                isMinimalPresentation && styles.reportsPanelMinimal,
+              ]}
+            >
+              <MaintenanceReportsCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                events={safeEvents}
+                loadingEvents={loading}
+                isSuperAdmin={canManageAccessControl}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'suggestions_improvements' ? (
             <MaintenanceSupportSuggestionsCard
               isActive={currentIndex === index}
@@ -1515,9 +1567,31 @@ export default function MaintenanceDashboard() {
               />
             </View>
           ) : item.content === 'profile_access_insights' ? (
-            <MaintenanceProfileAccessInsightsCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <View
+              style={[
+                styles.profileAccessInsightsPanel,
+                isMinimalPresentation && styles.profileAccessInsightsPanelMinimal,
+              ]}
+            >
+              <MaintenanceProfileAccessInsightsCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'auditor' ? (
-            <MaintenanceGhostModeCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <View
+              style={[
+                styles.ghostModePanel,
+                isMinimalPresentation && styles.ghostModePanelMinimal,
+              ]}
+            >
+              <MaintenanceGhostModeCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'event_orchestration' ? (
             <View
               style={[
@@ -2668,7 +2742,98 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'hidden',
+    overflow: 'visible',
+  },
+  pastoralRoleChangePanel: {
+    ...CONTAIN_WIDTH,
+    flex: 1,
+    minHeight: 0,
+  },
+  pastoralRoleChangePanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'visible',
+  },
+  profileCadastroPanel: {
+    ...CONTAIN_WIDTH,
+    flex: 1,
+    minHeight: 0,
+  },
+  profileCadastroPanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'visible',
+  },
+  familyReceptionPanel: {
+    ...CONTAIN_WIDTH,
+    flex: 1,
+    minHeight: 0,
+  },
+  familyReceptionPanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'visible',
+  },
+  predictivePanel: {
+    ...CONTAIN_WIDTH,
+    flex: 1,
+    minHeight: 0,
+  },
+  predictivePanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'visible',
+  },
+  reportsPanel: {
+    ...CONTAIN_WIDTH,
+    flex: 1,
+    minHeight: 0,
+  },
+  reportsPanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'visible',
+  },
+  profileAccessInsightsPanel: {
+    ...CONTAIN_WIDTH,
+    flex: 1,
+    minHeight: 0,
+  },
+  profileAccessInsightsPanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'visible',
+  },
+  ghostModePanel: {
+    ...CONTAIN_WIDTH,
+    flex: 1,
+    minHeight: 0,
+  },
+  ghostModePanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'visible',
   },
   ganttPanelTitle: {
     fontSize: UI_PANEL_TYPO.titleMuted.fontSize,

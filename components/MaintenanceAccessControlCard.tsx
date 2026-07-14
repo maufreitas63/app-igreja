@@ -35,6 +35,7 @@ import {
   MAINTENANCE_SCROLL_PROPS,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -946,14 +947,20 @@ export function MaintenanceAccessControlCard({
           {...MAINTENANCE_SCROLL_PROPS}
         >
           <View style={styles.profilesPickerSection}>
-            <SectionLabel variant="maintenance" tight>
-              Selecionar perfil
-            </SectionLabel>
+            {minimal ? (
+              <Text style={styles.filterLabelMinimal}>Selecionar perfil</Text>
+            ) : (
+              <SectionLabel variant="maintenance" tight>
+                Selecionar perfil
+              </SectionLabel>
+            )}
             {!loadingProfiles && allProfiles.length > 0 ? (
-              <Text style={styles.searchHintText}>{allProfiles.length} usuários cadastrados</Text>
+              <Text style={[styles.searchHintText, minimal && styles.searchHintTextMinimal]}>
+                {allProfiles.length} usuários cadastrados
+              </Text>
             ) : null}
             {loadingProfiles ? (
-              <CardLoadingState lines={2} compact />
+              <CardLoadingState lines={2} compact minimal={minimal} />
             ) : allProfiles.length > 0 ? (
               <DropdownSelect
                 options={profileDropdownOptions}
@@ -970,67 +977,89 @@ export function MaintenanceAccessControlCard({
                 placeholder="Selecionar usuário"
                 searchPlaceholder="Digite nome, telefone ou código..."
                 searchable
+                variant={minimal ? 'minimal' : 'default'}
                 style={[styles.profileDropdown, minimal && styles.profileDropdownMinimal]}
                 disabled={rpcMissing || busy}
               />
             ) : (
-              <Text style={styles.searchHintText}>Nenhum perfil encontrado.</Text>
+              <Text style={[styles.searchHintText, minimal && styles.searchHintTextMinimal]}>
+                Nenhum perfil encontrado.
+              </Text>
             )}
           </View>
 
           {selectedProfile ? (
-            <View style={styles.selectedCard}>
+            <View style={[styles.selectedCard, minimal && styles.selectedCardMinimal]}>
               <View style={styles.selectedHeader}>
                 <View style={styles.selectedMain}>
-                  <Text style={styles.selectedName} numberOfLines={2}>
+                  <Text
+                    style={[styles.selectedName, minimal && styles.selectedNameMinimal]}
+                    numberOfLines={2}
+                  >
                     {selectedProfile.fullName}
                   </Text>
-                  <Text style={styles.selectedMeta} numberOfLines={1}>
+                  <Text
+                    style={[styles.selectedMeta, minimal && styles.selectedMetaMinimal]}
+                    numberOfLines={1}
+                  >
                     {[selectedProfile.phone, selectedProfile.memberCode].filter(Boolean).join(' · ')}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={clearSelectedProfile} activeOpacity={0.85}>
-                  <Text style={styles.clearLink}>Limpar</Text>
+                  <Text style={[styles.clearLink, minimal && styles.clearLinkMinimal]}>Limpar</Text>
                 </TouchableOpacity>
               </View>
 
               {!loadingProfileRoles && !hasAssignedProfileRoles ? (
-                <Text style={styles.visitanteHint}>
+                <Text style={[styles.visitanteHint, minimal && styles.visitanteHintMinimal]}>
                   Sem papéis atribuídos — este perfil é tratado automaticamente como visitante.
                 </Text>
               ) : null}
 
               <TouchableOpacity
-                style={styles.accordionHeader}
+                style={[styles.accordionHeader, minimal && styles.accordionHeaderMinimal]}
                 onPress={() => toggleProfileSection('roles')}
                 activeOpacity={0.85}
               >
-                <Text style={styles.accordionTitle}>Papéis do perfil</Text>
-                <Text style={styles.accordionChevron}>
+                <Text style={[styles.accordionTitle, minimal && styles.accordionTitleMinimal]}>
+                  Papéis do perfil
+                </Text>
+                <Text style={[styles.accordionChevron, minimal && styles.accordionChevronMinimal]}>
                   {expandedProfileSection === 'roles' ? '▼' : '▶'}
                 </Text>
               </TouchableOpacity>
 
               {expandedProfileSection === 'roles' ? (
                 loadingProfileRoles ? (
-                  <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
+                  <ActivityIndicator
+                    color={minimal ? MINIMAL_UI.accent : '#818CF8'}
+                    style={styles.inlineLoader}
+                  />
                 ) : (
                   <View style={styles.rolesList}>
                     {profileRoles.map((role) => {
                       const isSaving = savingRoleCode === role.roleCode;
 
                       return (
-                        <View key={role.roleId} style={styles.roleRow}>
+                        <View key={role.roleId} style={[styles.roleRow, minimal && styles.roleRowMinimal]}>
                           <View style={styles.roleMain}>
-                            <Text style={styles.roleName}>{role.roleName}</Text>
-                            <Text style={styles.roleCode}>{role.roleCode}</Text>
+                            <Text style={[styles.roleName, minimal && styles.roleNameMinimal]}>
+                              {role.roleName}
+                            </Text>
+                            <Text style={[styles.roleCode, minimal && styles.roleCodeMinimal]}>
+                              {role.roleCode}
+                            </Text>
                           </View>
                           <Switch
                             value={role.assigned}
                             onValueChange={(next) => void handleToggleRole(role.roleCode, next)}
                             disabled={busy || rpcMissing || isSaving}
-                            trackColor={{ false: '#334155', true: '#4F46E5' }}
-                            thumbColor="#F8FAFC"
+                            trackColor={
+                              minimal
+                                ? { false: MINIMAL_UI.divider, true: MINIMAL_UI.blueDark }
+                                : { false: '#334155', true: '#4F46E5' }
+                            }
+                            thumbColor={minimal ? '#FFFFFF' : '#F8FAFC'}
                           />
                         </View>
                       );
@@ -1040,32 +1069,46 @@ export function MaintenanceAccessControlCard({
               ) : null}
 
               <TouchableOpacity
-                style={styles.accordionHeader}
+                style={[styles.accordionHeader, minimal && styles.accordionHeaderMinimal]}
                 onPress={() => toggleProfileSection('scaleLeadership')}
                 activeOpacity={0.85}
               >
-                <Text style={styles.accordionTitle}>Liderança por tipo de escala</Text>
-                <Text style={styles.accordionChevron}>
+                <Text style={[styles.accordionTitle, minimal && styles.accordionTitleMinimal]}>
+                  Liderança por tipo de escala
+                </Text>
+                <Text style={[styles.accordionChevron, minimal && styles.accordionChevronMinimal]}>
                   {expandedProfileSection === 'scaleLeadership' ? '▼' : '▶'}
                 </Text>
               </TouchableOpacity>
 
               {expandedProfileSection === 'scaleLeadership' ? (
                 <>
-                  <Text style={styles.subsectionHint}>{scaleLeadershipHint}</Text>
+                  <Text style={[styles.subsectionHint, minimal && styles.subsectionHintMinimal]}>
+                    {scaleLeadershipHint}
+                  </Text>
 
                   {loadingScaleLeadership ? (
-                    <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
+                    <ActivityIndicator
+                      color={minimal ? MINIMAL_UI.accent : '#818CF8'}
+                      style={styles.inlineLoader}
+                    />
                   ) : profileScaleLeadership.length > 0 ? (
                     <View style={styles.rolesList}>
                       {profileScaleLeadership.map((entry) => {
                         const isSaving = savingScaleLeadershipId === entry.scaleTypeId;
 
                         return (
-                          <View key={entry.scaleTypeId} style={styles.roleRow}>
+                          <View
+                            key={entry.scaleTypeId}
+                            style={[styles.roleRow, minimal && styles.roleRowMinimal]}
+                          >
                             <View style={styles.roleMain}>
-                              <Text style={styles.roleName}>{entry.scaleTypeName}</Text>
-                              <Text style={styles.roleCode}>{entry.scaleTypeCode}</Text>
+                              <Text style={[styles.roleName, minimal && styles.roleNameMinimal]}>
+                                {entry.scaleTypeName}
+                              </Text>
+                              <Text style={[styles.roleCode, minimal && styles.roleCodeMinimal]}>
+                                {entry.scaleTypeCode}
+                              </Text>
                             </View>
                             <Switch
                               value={entry.assigned}
@@ -1073,21 +1116,27 @@ export function MaintenanceAccessControlCard({
                                 void handleToggleScaleLeadership(entry.scaleTypeId, next)
                               }
                               disabled={busy || rpcMissing || isSaving}
-                              trackColor={{ false: '#334155', true: '#4F46E5' }}
-                              thumbColor="#F8FAFC"
+                              trackColor={
+                                minimal
+                                  ? { false: MINIMAL_UI.divider, true: MINIMAL_UI.blueDark }
+                                  : { false: '#334155', true: '#4F46E5' }
+                              }
+                              thumbColor={minimal ? '#FFFFFF' : '#F8FAFC'}
                             />
                           </View>
                         );
                       })}
                     </View>
                   ) : (
-                    <Text style={styles.panelHint}>Nenhum tipo de escala ativo cadastrado.</Text>
+                    <Text style={[styles.panelHint, minimal && styles.panelHintMinimal]}>
+                      Nenhum tipo de escala ativo cadastrado.
+                    </Text>
                   )}
                 </>
               ) : null}
             </View>
           ) : (
-            <Text style={styles.profilesEmptyHint}>
+            <Text style={[styles.profilesEmptyHint, minimal && styles.profilesEmptyHintMinimal]}>
               Busque e selecione um perfil para atribuir papéis.
             </Text>
           )}
@@ -1107,18 +1156,20 @@ export function MaintenanceAccessControlCard({
             <>
               <View style={styles.resourceFocusHeader}>
                 <TouchableOpacity
-                  style={styles.resourceFocusBackButton}
+                  style={[styles.resourceFocusBackButton, minimal && styles.resourceFocusBackButtonMinimal]}
                   onPress={handleCloseResourceFocus}
                   activeOpacity={0.85}
                   accessibilityRole="button"
                   accessibilityLabel="Voltar para visão por papel"
                 >
-                  <FontAwesome name="arrow-left" size={14} color="#C7D2FE" />
-                  <Text style={styles.resourceFocusBackText}>Voltar</Text>
+                  <FontAwesome name="arrow-left" size={14} color={minimal ? MINIMAL_UI.blueDark : '#C7D2FE'} />
+                  <Text style={[styles.resourceFocusBackText, minimal && styles.resourceFocusBackTextMinimal]}>
+                    Voltar
+                  </Text>
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.resourceFocusCard}>
+              <View style={[styles.resourceFocusCard, minimal && styles.resourceFocusCardMinimal]}>
                 <View style={styles.resourceFocusTitleRow}>
                   {getAccessGrantDashboardScope(
                     focusedResourceGrant.resourceType,
@@ -1137,23 +1188,29 @@ export function MaintenanceAccessControlCard({
                     />
                   ) : null}
                   <View style={styles.resourceFocusTitleMain}>
-                    <Text style={styles.resourceFocusTitle} numberOfLines={2}>
+                    <Text
+                      style={[styles.resourceFocusTitle, minimal && styles.resourceFocusTitleMinimal]}
+                      numberOfLines={2}
+                    >
                       {focusedResourceGrant.label}
                     </Text>
                     {showTechnicalKeys ? (
-                      <Text style={styles.grantKey} numberOfLines={1}>
+                      <Text style={[styles.grantKey, minimal && styles.grantKeyMinimal]} numberOfLines={1}>
                         {focusedResourceGrant.resourceKey}
                       </Text>
                     ) : null}
                   </View>
                 </View>
-                <Text style={styles.resourceFocusHint}>
+                <Text style={[styles.resourceFocusHint, minimal && styles.resourceFocusHintMinimal]}>
                   Selecione quais papéis podem ver e editar este recurso.
                 </Text>
               </View>
 
               {loadingResourceRoleGrants ? (
-                <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
+                <ActivityIndicator
+                  color={minimal ? MINIMAL_UI.accent : '#818CF8'}
+                  style={styles.inlineLoader}
+                />
               ) : (
                 <View style={styles.grantsList}>
                   {resourceRoleGrants.map((entry, index) => {
@@ -1163,35 +1220,56 @@ export function MaintenanceAccessControlCard({
                     return (
                       <View
                         key={entry.roleId}
-                        style={[styles.grantRow, index % 2 === 1 && styles.grantRowAlt]}
+                        style={[
+                          styles.grantRow,
+                          minimal && styles.grantRowMinimal,
+                          index % 2 === 1 && styles.grantRowAlt,
+                          minimal && index % 2 === 1 && styles.grantRowAltMinimal,
+                        ]}
                       >
                         <View style={styles.grantMain}>
-                          <Text style={styles.roleName}>{entry.roleName}</Text>
-                          <Text style={styles.roleCode}>{entry.roleCode}</Text>
+                          <Text style={[styles.roleName, minimal && styles.roleNameMinimal]}>
+                            {entry.roleName}
+                          </Text>
+                          <Text style={[styles.roleCode, minimal && styles.roleCodeMinimal]}>
+                            {entry.roleCode}
+                          </Text>
                         </View>
                         <View style={styles.grantToggles}>
                           <View style={styles.toggleCell}>
-                            <Text style={styles.toggleLabel}>Ver</Text>
+                            <Text style={[styles.toggleLabel, minimal && styles.toggleLabelMinimal]}>
+                              Ver
+                            </Text>
                             <Switch
                               value={entry.canView}
                               onValueChange={(next) =>
                                 void handleToggleResourceRoleGrant(entry, 'canView', next)
                               }
                               disabled={busy || rpcMissing || isSaving}
-                              trackColor={{ false: '#334155', true: '#4F46E5' }}
-                              thumbColor="#F8FAFC"
+                              trackColor={
+                                minimal
+                                  ? { false: MINIMAL_UI.divider, true: MINIMAL_UI.blueDark }
+                                  : { false: '#334155', true: '#4F46E5' }
+                              }
+                              thumbColor={minimal ? '#FFFFFF' : '#F8FAFC'}
                             />
                           </View>
                           <View style={styles.toggleCell}>
-                            <Text style={styles.toggleLabel}>Editar</Text>
+                            <Text style={[styles.toggleLabel, minimal && styles.toggleLabelMinimal]}>
+                              Editar
+                            </Text>
                             <Switch
                               value={entry.canUpdate}
                               onValueChange={(next) =>
                                 void handleToggleResourceRoleGrant(entry, 'canUpdate', next)
                               }
                               disabled={busy || rpcMissing || isSaving || !entry.canView}
-                              trackColor={{ false: '#334155', true: '#4F46E5' }}
-                              thumbColor="#F8FAFC"
+                              trackColor={
+                                minimal
+                                  ? { false: MINIMAL_UI.divider, true: MINIMAL_UI.blueDark }
+                                  : { false: '#334155', true: '#4F46E5' }
+                              }
+                              thumbColor={minimal ? '#FFFFFF' : '#F8FAFC'}
                             />
                           </View>
                         </View>
@@ -1199,29 +1277,42 @@ export function MaintenanceAccessControlCard({
                     );
                   })}
                   {!resourceRoleGrants.length ? (
-                    <Text style={styles.panelHint}>Nenhum papel cadastrado para este recurso.</Text>
+                    <Text style={[styles.panelHint, minimal && styles.panelHintMinimal]}>
+                      Nenhum papel cadastrado para este recurso.
+                    </Text>
                   ) : null}
                 </View>
               )}
             </>
           ) : (
             <>
-          <SectionLabel variant="maintenance" tight>
-            Papel
-          </SectionLabel>
+          {minimal ? (
+            <Text style={styles.filterLabelMinimal}>Papel</Text>
+          ) : (
+            <SectionLabel variant="maintenance" tight>
+              Papel
+            </SectionLabel>
+          )}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.roleChipsScroll}>
             <View style={styles.roleChipsRow}>
               {roles.map((role) => (
                 <TouchableOpacity
                   key={role.id}
-                  style={[styles.roleChip, selectedRoleCode === role.code && styles.roleChipActive]}
+                  style={[
+                    styles.roleChip,
+                    minimal && styles.roleChipMinimal,
+                    selectedRoleCode === role.code && styles.roleChipActive,
+                    minimal && selectedRoleCode === role.code && styles.roleChipActiveMinimal,
+                  ]}
                   onPress={() => setSelectedRoleCode(role.code)}
                   activeOpacity={0.85}
                 >
                   <Text
                     style={[
                       styles.roleChipText,
+                      minimal && styles.roleChipTextMinimal,
                       selectedRoleCode === role.code && styles.roleChipTextActive,
+                      minimal && selectedRoleCode === role.code && styles.roleChipTextActiveMinimal,
                     ]}
                   >
                     {role.name}
@@ -1231,13 +1322,15 @@ export function MaintenanceAccessControlCard({
             </View>
           </ScrollView>
 
-          <View style={styles.filterRow}>
+          <View style={[styles.filterRow, minimal && styles.filterRowMinimal]}>
             {RESOURCE_TYPE_OPTIONS.map((option) => (
               <TouchableOpacity
                 key={option.value}
                 style={[
                   styles.filterChip,
+                  minimal && styles.filterChipMinimal,
                   resourceTypeFilter === option.value && styles.filterChipActive,
+                  minimal && resourceTypeFilter === option.value && styles.filterChipActiveMinimal,
                 ]}
                 onPress={() => setResourceTypeFilter(option.value)}
                 activeOpacity={0.85}
@@ -1245,7 +1338,9 @@ export function MaintenanceAccessControlCard({
                 <Text
                   style={[
                     styles.filterChipText,
+                    minimal && styles.filterChipTextMinimal,
                     resourceTypeFilter === option.value && styles.filterChipTextActive,
+                    minimal && resourceTypeFilter === option.value && styles.filterChipTextActiveMinimal,
                   ]}
                 >
                   {option.label}
@@ -1255,12 +1350,14 @@ export function MaintenanceAccessControlCard({
           </View>
 
           {resourceTypeFilter === 'column' ? (
-            <Text style={styles.subsectionHint}>
+            <Text style={[styles.subsectionHint, minimal && styles.subsectionHintMinimal]}>
               Recursos profiles.* definem quais campos cada papel pode ver e editar em Dados
               cadastrais.
             </Text>
           ) : resourceTypeFilter === 'screen' ? (
-            <Text style={styles.subsectionHint}>{SCREEN_GRANT_SCOPE_HINT}</Text>
+            <Text style={[styles.subsectionHint, minimal && styles.subsectionHintMinimal]}>
+              {SCREEN_GRANT_SCOPE_HINT}
+            </Text>
           ) : null}
 
           <View style={[styles.grantSearchRow, minimal && styles.grantSearchRowMinimal]}>
@@ -1281,20 +1378,20 @@ export function MaintenanceAccessControlCard({
                 accessibilityRole="button"
                 accessibilityLabel="Limpar busca de recursos"
               >
-                <FontAwesome name="times-circle" size={20} color="#94A3B8" />
+                <FontAwesome name="times-circle" size={20} color={minimal ? MINIMAL_UI.icon : '#94A3B8'} />
               </TouchableOpacity>
             ) : null}
           </View>
 
           {missingFinancialScreenResources ? (
-            <Text style={styles.financialResourcesHint}>
+            <Text style={[styles.financialResourcesHint, minimal && styles.financialResourcesHintMinimal]}>
               Recursos financeiros ausentes no Supabase. Execute scripts/financial-module-access.sql no
               SQL Editor (inclui a RPC garantir_recursos_financeiro_admin). Depois recarregue esta aba.
             </Text>
           ) : null}
 
           {missingAccessControlScreenResource ? (
-            <Text style={styles.financialResourcesHint}>
+            <Text style={[styles.financialResourcesHint, minimal && styles.financialResourcesHintMinimal]}>
               Recurso Controle de Acesso ausente em Papéis → Telas. Execute
               scripts/access-control-admin-rpc.sql no Supabase (RPC garantir_recurso_controle_acesso_admin)
               e recarregue esta aba.
@@ -1305,17 +1402,24 @@ export function MaintenanceAccessControlCard({
             <View style={styles.grantScopeLegend}>
               <View style={styles.grantScopeLegendItem}>
                 <View style={[styles.grantScopeDot, styles.grantScopeDotMain]} />
-                <Text style={styles.grantScopeLegendText}>Produto principal</Text>
+                <Text style={[styles.grantScopeLegendText, minimal && styles.grantScopeLegendTextMinimal]}>
+                  Produto principal
+                </Text>
               </View>
               <View style={styles.grantScopeLegendItem}>
                 <View style={[styles.grantScopeDot, styles.grantScopeDotMaintenance]} />
-                <Text style={styles.grantScopeLegendText}>Manutenção</Text>
+                <Text style={[styles.grantScopeLegendText, minimal && styles.grantScopeLegendTextMinimal]}>
+                  Manutenção
+                </Text>
               </View>
             </View>
           ) : null}
 
           {loadingGrants && filteredRoleGrants.length === 0 ? (
-            <ActivityIndicator color="#818CF8" style={styles.inlineLoader} />
+            <ActivityIndicator
+              color={minimal ? MINIMAL_UI.accent : '#818CF8'}
+              style={styles.inlineLoader}
+            />
           ) : (
             <View style={styles.grantsList}>
               {filteredRoleGrants.map((grant, index) => {
@@ -1329,7 +1433,12 @@ export function MaintenanceAccessControlCard({
                 return (
                   <View
                     key={grant.resourceId}
-                    style={[styles.grantRow, index % 2 === 1 && styles.grantRowAlt]}
+                    style={[
+                      styles.grantRow,
+                      minimal && styles.grantRowMinimal,
+                      index % 2 === 1 && styles.grantRowAlt,
+                      minimal && index % 2 === 1 && styles.grantRowAltMinimal,
+                    ]}
                   >
                     {dashboardScope ? (
                       <TouchableOpacity
@@ -1359,36 +1468,53 @@ export function MaintenanceAccessControlCard({
                       accessibilityLabel={`Abrir permissões por recurso — ${grant.label}`}
                     >
                       <Text
-                        style={[styles.grantLabel, sensitive && styles.grantLabelSensitive]}
+                        style={[
+                          styles.grantLabel,
+                          minimal && styles.grantLabelMinimal,
+                          sensitive && styles.grantLabelSensitive,
+                          minimal && sensitive && styles.grantLabelSensitiveMinimal,
+                        ]}
                         numberOfLines={2}
                       >
                         {grant.label}
                       </Text>
                       {showTechnicalKeys ? (
-                        <Text style={styles.grantKey} numberOfLines={1}>
+                        <Text style={[styles.grantKey, minimal && styles.grantKeyMinimal]} numberOfLines={1}>
                           {grant.resourceKey}
                         </Text>
                       ) : null}
                     </TouchableOpacity>
                     <View style={styles.grantToggles}>
                       <View style={styles.toggleCell}>
-                        <Text style={styles.toggleLabel}>Ver</Text>
+                        <Text style={[styles.toggleLabel, minimal && styles.toggleLabelMinimal]}>
+                          Ver
+                        </Text>
                         <Switch
                           value={grant.canView}
                           onValueChange={(next) => void handleToggleGrant(grant, 'canView', next)}
                           disabled={busy || rpcMissing || isSaving}
-                          trackColor={{ false: '#334155', true: '#4F46E5' }}
-                          thumbColor="#F8FAFC"
+                          trackColor={
+                            minimal
+                              ? { false: MINIMAL_UI.divider, true: MINIMAL_UI.blueDark }
+                              : { false: '#334155', true: '#4F46E5' }
+                          }
+                          thumbColor={minimal ? '#FFFFFF' : '#F8FAFC'}
                         />
                       </View>
                       <View style={styles.toggleCell}>
-                        <Text style={styles.toggleLabel}>Editar</Text>
+                        <Text style={[styles.toggleLabel, minimal && styles.toggleLabelMinimal]}>
+                          Editar
+                        </Text>
                         <Switch
                           value={grant.canUpdate}
                           onValueChange={(next) => void handleToggleGrant(grant, 'canUpdate', next)}
                           disabled={busy || rpcMissing || isSaving || !grant.canView}
-                          trackColor={{ false: '#334155', true: '#4F46E5' }}
-                          thumbColor="#F8FAFC"
+                          trackColor={
+                            minimal
+                              ? { false: MINIMAL_UI.divider, true: MINIMAL_UI.blueDark }
+                              : { false: '#334155', true: '#4F46E5' }
+                          }
+                          thumbColor={minimal ? '#FFFFFF' : '#F8FAFC'}
                         />
                       </View>
                     </View>
@@ -1396,12 +1522,12 @@ export function MaintenanceAccessControlCard({
                 );
               })}
               {!roleGrants.length ? (
-                <Text style={styles.panelHint}>
+                <Text style={[styles.panelHint, minimal && styles.panelHintMinimal]}>
                   Nenhum recurso cadastrado para este tipo. Execute scripts/financial-module-access.sql
                   no Supabase se faltar Card Financeiro ou Relatórios financeiros.
                 </Text>
               ) : filteredRoleGrants.length === 0 ? (
-                <Text style={styles.panelHint}>
+                <Text style={[styles.panelHint, minimal && styles.panelHintMinimal]}>
                   Nenhum recurso corresponde à busca. Tente &quot;relatórios financeiros&quot;,
                   &quot;/financial&quot; ou &quot;dashboard.card.financial&quot;.
                 </Text>
@@ -2021,15 +2147,12 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   panelMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    alignSelf: 'stretch',
+    ...CONTAIN_WIDTH,
     paddingHorizontal: 0,
     paddingVertical: 4,
     borderRadius: 0,
     backgroundColor: MINIMAL_UI.background,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   panelHeaderMinimal: {
     width: '100%',
@@ -2175,5 +2298,133 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.border,
     color: MINIMAL_UI.text,
     backgroundColor: MINIMAL_UI.background,
+  },
+  filterLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  searchHintTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  selectedCardMinimal: {
+    ...CONTAIN_WIDTH,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  selectedNameMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  selectedMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  clearLinkMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  visitanteHintMinimal: {
+    color: '#B45309',
+  },
+  accordionHeaderMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  accordionTitleMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontSize: 12,
+  },
+  accordionChevronMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  roleRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  roleNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  roleCodeMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  subsectionHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  profilesEmptyHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  resourceFocusBackButtonMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  resourceFocusBackTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  resourceFocusCardMinimal: {
+    ...CONTAIN_WIDTH,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  resourceFocusTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  resourceFocusHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  grantRowMinimal: {
+    borderRadius: 10,
+  },
+  grantRowAltMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  toggleLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  roleChipMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  roleChipActiveMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  roleChipTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  roleChipTextActiveMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  filterRowMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  filterChipMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  filterChipActiveMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  filterChipTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  filterChipTextActiveMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  financialResourcesHintMinimal: {
+    color: '#B45309',
+  },
+  grantScopeLegendTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  grantLabelMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  grantLabelSensitiveMinimal: {
+    color: '#B45309',
+  },
+  grantKeyMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
 });

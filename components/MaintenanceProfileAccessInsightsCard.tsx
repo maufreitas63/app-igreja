@@ -9,8 +9,11 @@ import {
   type ProfileAccessSessionBlock,
 } from '@/lib/profileAccessInsightsApi';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
+import Toast from 'react-native-toast-message';
 import {
   Modal,
   Pressable,
@@ -25,6 +28,7 @@ import {
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
 
 const ACCENT = '#3A96DD';
@@ -58,6 +62,7 @@ type ScreenHistoryBalloonProps = {
   error: string | null;
   rpcMissing: boolean;
   onClose: () => void;
+  minimal?: boolean;
 };
 
 function ScreenHistoryBalloon({
@@ -68,6 +73,7 @@ function ScreenHistoryBalloon({
   error,
   rpcMissing,
   onClose,
+  minimal = false,
 }: ScreenHistoryBalloonProps) {
   if (!profile) {
     return null;
@@ -75,19 +81,25 @@ function ScreenHistoryBalloon({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.balloonBackdrop} onPress={onClose}>
-        <Pressable style={styles.balloonCard} onPress={() => undefined}>
-          <View style={styles.balloonPointer} />
-          <Text style={styles.balloonTitle}>
+      <Pressable style={[styles.balloonBackdrop, minimal && styles.balloonBackdropMinimal]} onPress={onClose}>
+        <Pressable style={[styles.balloonCard, minimal && styles.balloonCardMinimal]} onPress={() => undefined}>
+          <View style={[styles.balloonPointer, minimal && styles.balloonPointerMinimal]} />
+          <Text style={[styles.balloonTitle, minimal && styles.balloonTitleMinimal]}>
             Telas visitadas — {formatShortName(profile.fullName)}
           </Text>
-          <Text style={styles.balloonSubtitle}>
+          <Text style={[styles.balloonSubtitle, minimal && styles.balloonSubtitleMinimal]}>
             Do login mais recente ao mais antigo, com as telas acessadas em cada sessão.
           </Text>
 
-          {rpcMissing ? <Text style={styles.warningText}>{PROFILE_ACCESS_INSIGHTS_SQL_HINT}</Text> : null}
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-          {loading ? <CardLoadingState lines={3} compact /> : null}
+          {rpcMissing ? (
+            <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
+              {PROFILE_ACCESS_INSIGHTS_SQL_HINT}
+            </Text>
+          ) : null}
+          {error ? (
+            <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
+          ) : null}
+          {loading ? <CardLoadingState lines={3} compact minimal={minimal} /> : null}
 
           {!loading && !error && !rpcMissing ? (
             <ScrollView
@@ -97,7 +109,9 @@ function ScreenHistoryBalloon({
               keyboardShouldPersistTaps="handled"
             >
               {sessions.length === 0 ? (
-                <Text style={styles.hintText}>Nenhuma tela registrada para este usuário.</Text>
+                <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+                  Nenhuma tela registrada para este usuário.
+                </Text>
               ) : (
                 sessions.map((session, sessionIndex) => (
                   <View
@@ -105,18 +119,24 @@ function ScreenHistoryBalloon({
                     style={[
                       styles.sessionBlock,
                       sessionIndex < sessions.length - 1 && styles.sessionBlockDivider,
+                      minimal && sessionIndex < sessions.length - 1 && styles.sessionBlockDividerMinimal,
                     ]}
                   >
-                    <Text style={styles.sessionDateTime}>
+                    <Text style={[styles.sessionDateTime, minimal && styles.sessionDateTimeMinimal]}>
                       {formatAccessDateTimeLabel(session.accessedAt)}
                     </Text>
 
                     {session.screens.length === 0 ? (
-                      <Text style={styles.emptySessionText}>Nenhuma tela registrada neste acesso.</Text>
+                      <Text style={[styles.emptySessionText, minimal && styles.emptySessionTextMinimal]}>
+                        Nenhuma tela registrada neste acesso.
+                      </Text>
                     ) : (
                       <View style={styles.screenList}>
                         {session.screens.map((screen) => (
-                          <Text key={`${session.accessEventId}-${screen.visitOrder}-${screen.screenKey}`} style={styles.screenItem}>
+                          <Text
+                            key={`${session.accessEventId}-${screen.visitOrder}-${screen.screenKey}`}
+                            style={[styles.screenItem, minimal && styles.screenItemMinimal]}
+                          >
                             • {screen.screenLabel}
                           </Text>
                         ))}
@@ -129,13 +149,15 @@ function ScreenHistoryBalloon({
           ) : null}
 
           <TouchableOpacity
-            style={styles.balloonCloseButton}
+            style={[styles.balloonCloseButton, minimal && styles.balloonCloseButtonMinimal]}
             onPress={onClose}
             activeOpacity={0.85}
             accessibilityRole="button"
             accessibilityLabel="Fechar histórico de telas"
           >
-            <Text style={styles.balloonCloseButtonText}>Fechar</Text>
+            <Text style={[styles.balloonCloseButtonText, minimal && styles.balloonCloseButtonTextMinimal]}>
+              Fechar
+            </Text>
           </TouchableOpacity>
         </Pressable>
       </Pressable>
@@ -143,7 +165,11 @@ function ScreenHistoryBalloon({
   );
 }
 
-export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHeight }: Props) {
+export function MaintenanceProfileAccessInsightsCard({
+  isActive = true,
+  panelHeight,
+  minimal = false,
+}: Props) {
   const {
     searchQuery,
     setSearchQuery,
@@ -229,23 +255,35 @@ export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHei
   const isBusy = loading || clearing;
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Acessos de Usuários</Text>
-      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+    <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
+      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
+        Acessos de Usuários
+      </Text>
+      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
-      <Text style={styles.helpText}>
+      <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>
         Painel exclusivo do super administrador. Lista apenas usuários com pelo menos um login
         registrado na aplicação.
       </Text>
 
-      {rpcMissing ? <Text style={styles.warningText}>{PROFILE_ACCESS_INSIGHTS_SQL_HINT}</Text> : null}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {rpcMissing ? (
+        <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
+          {PROFILE_ACCESS_INSIGHTS_SQL_HINT}
+        </Text>
+      ) : null}
+      {error ? (
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
+      ) : null}
 
-      <SectionLabel variant="maintenance">Filtrar lista</SectionLabel>
+      {minimal ? (
+        <Text style={styles.filterLabelMinimal}>Filtrar lista</Text>
+      ) : (
+        <SectionLabel variant="maintenance">Filtrar lista</SectionLabel>
+      )}
       <TextInput
-        style={styles.searchInput}
+        style={[styles.searchInput, minimal && styles.searchInputMinimal]}
         placeholder="Buscar por nome"
-        placeholderTextColor="#64748B"
+        placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
         value={searchQuery}
         onChangeText={setSearchQuery}
         autoCapitalize="words"
@@ -253,10 +291,10 @@ export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHei
         returnKeyType="search"
       />
 
-      {loading ? <CardLoadingState lines={2} compact /> : null}
+      {loading ? <CardLoadingState lines={2} compact minimal={minimal} /> : null}
 
       {!loading && allProfiles.length > 0 ? (
-        <Text style={styles.countText}>
+        <Text style={[styles.countText, minimal && styles.countTextMinimal]}>
           {hasSearch
             ? `${profiles.length} de ${allProfiles.length} usuários com acesso`
             : `${allProfiles.length} usuários com acesso registrado`}
@@ -264,47 +302,86 @@ export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHei
       ) : null}
 
       {!loading && !rpcMissing && allProfiles.length === 0 ? (
-        <Text style={styles.hintText}>Nenhum acesso registrado ainda.</Text>
+        <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+          Nenhum acesso registrado ainda.
+        </Text>
       ) : null}
 
       {!loading && allProfiles.length > 0 ? (
-        <View style={styles.tableSection}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.headerCell, styles.nameColumn]}>Nome curto</Text>
-            <Text style={[styles.headerCell, styles.lastAccessColumn]}>Último acesso</Text>
-            <Text style={[styles.headerCell, styles.countColumn]}>Total</Text>
+        <View style={[styles.tableSection, minimal && styles.tableSectionMinimal]}>
+          <View style={[styles.tableHeader, minimal && styles.tableHeaderMinimal]}>
+            <Text style={[styles.headerCell, minimal && styles.headerCellMinimal, styles.nameColumn]}>
+              Nome curto
+            </Text>
+            <Text
+              style={[styles.headerCell, minimal && styles.headerCellMinimal, styles.lastAccessColumn]}
+            >
+              Último acesso
+            </Text>
+            <Text style={[styles.headerCell, minimal && styles.headerCellMinimal, styles.countColumn]}>
+              Total
+            </Text>
             <View style={styles.historyColumn} />
           </View>
 
           <ScrollView
-            style={styles.tableScroll}
+            style={[styles.tableScroll, minimal && styles.tableScrollMinimal]}
             contentContainerStyle={styles.tableContent}
             nestedScrollEnabled
             keyboardShouldPersistTaps="handled"
           >
             {profiles.length === 0 ? (
-              <Text style={styles.emptyFilterText}>Nenhum usuário corresponde à busca.</Text>
+              <Text style={[styles.emptyFilterText, minimal && styles.emptyFilterTextMinimal]}>
+                Nenhum usuário corresponde à busca.
+              </Text>
             ) : (
-              profiles.map((profile) => (
-                <View key={profile.id} style={styles.tableRow}>
-                  <Text style={[styles.shortName, styles.nameColumn]} numberOfLines={2}>
+              profiles.map((profile, index) => (
+                <View
+                  key={profile.id}
+                  style={[
+                    styles.tableRow,
+                    minimal && styles.tableRowMinimal,
+                    minimal && index % 2 === 1 && styles.tableRowAltMinimal,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.shortName,
+                      minimal && styles.shortNameMinimal,
+                      styles.nameColumn,
+                    ]}
+                    numberOfLines={2}
+                  >
                     {formatShortName(profile.fullName)}
                   </Text>
-                  <Text style={[styles.lastAccess, styles.lastAccessColumn]} numberOfLines={2}>
+                  <Text
+                    style={[
+                      styles.lastAccess,
+                      minimal && styles.lastAccessMinimal,
+                      styles.lastAccessColumn,
+                    ]}
+                    numberOfLines={2}
+                  >
                     {formatLastAccessLabel(profile.lastAccessAt)}
                   </Text>
-                  <Text style={[styles.accessCount, styles.countColumn]}>
+                  <Text
+                    style={[
+                      styles.accessCount,
+                      minimal && styles.accessCountMinimal,
+                      styles.countColumn,
+                    ]}
+                  >
                     {profile.accessCount}
                   </Text>
                   <View style={styles.historyColumn}>
                     <TouchableOpacity
-                      style={styles.historyButton}
+                      style={[styles.historyButton, minimal && styles.historyButtonMinimal]}
                       onPress={() => void openScreenHistory(profile)}
                       activeOpacity={0.85}
                       accessibilityRole="button"
                       accessibilityLabel={`Ver telas visitadas por ${formatShortName(profile.fullName)}`}
                     >
-                      <FontAwesome name="history" size={16} color={ACCENT} />
+                      <FontAwesome name="history" size={16} color={minimal ? MINIMAL_UI.icon : ACCENT} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -315,27 +392,41 @@ export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHei
       ) : null}
 
       {!loading && !rpcMissing ? (
-        <View style={styles.actionRow}>
+        <View style={[styles.actionRow, minimal && styles.actionRowMinimal]}>
           <TouchableOpacity
-            style={[styles.actionButton, styles.reloadButton, isBusy && styles.actionButtonDisabled]}
+            style={[
+              styles.actionButton,
+              styles.reloadButton,
+              minimal && styles.actionButtonMinimal,
+              minimal && styles.reloadButtonMinimal,
+              isBusy && styles.actionButtonDisabled,
+            ]}
             onPress={() => void reloadProfiles()}
             activeOpacity={0.85}
             disabled={isBusy}
             accessibilityRole="button"
             accessibilityLabel="Atualizar lista"
           >
-            <Text style={styles.reloadButtonText}>Atualizar lista</Text>
+            <Text style={[styles.reloadButtonText, minimal && styles.reloadButtonTextMinimal]}>
+              Atualizar lista
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.actionButton, styles.clearButton, isBusy && styles.actionButtonDisabled]}
+            style={[
+              styles.actionButton,
+              styles.clearButton,
+              minimal && styles.actionButtonMinimal,
+              minimal && styles.clearButtonMinimal,
+              isBusy && styles.actionButtonDisabled,
+            ]}
             onPress={() => void handleClearHistory()}
             activeOpacity={0.85}
             disabled={isBusy}
             accessibilityRole="button"
             accessibilityLabel="Limpar histórico de acessos"
           >
-            <Text style={styles.clearButtonText}>
+            <Text style={[styles.clearButtonText, minimal && styles.clearButtonTextMinimal]}>
               {clearing ? 'Limpando...' : 'Limpar histórico'}
             </Text>
           </TouchableOpacity>
@@ -350,6 +441,7 @@ export function MaintenanceProfileAccessInsightsCard({ isActive = true, panelHei
         error={historyError}
         rpcMissing={historyRpcMissing}
         onClose={closeScreenHistory}
+        minimal={minimal}
       />
     </View>
   );
@@ -623,5 +715,141 @@ const styles = StyleSheet.create({
     color: '#3A96DD',
     fontSize: 13,
     fontWeight: '700',
+  },
+  panelMinimal: {
+    ...CONTAIN_WIDTH,
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    borderRadius: 0,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'visible',
+  },
+  sectionTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    ...CONTAIN_WIDTH,
+  },
+  helpTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  warningTextMinimal: {
+    color: '#B45309',
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
+  },
+  filterLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  searchInputMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    color: MINIMAL_UI.text,
+  },
+  countTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  hintTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  tableSectionMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  tableHeaderMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  headerCellMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  tableScrollMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  emptyFilterTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  tableRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  tableRowAltMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  shortNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  lastAccessMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  accessCountMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  historyButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderRadius: 10,
+  },
+  actionRowMinimal: {
+    ...CONTAIN_WIDTH,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  },
+  actionButtonMinimal: {
+    borderRadius: 12,
+  },
+  reloadButtonMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  reloadButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  clearButtonMinimal: {
+    borderColor: '#DC2626',
+    backgroundColor: '#FEF2F2',
+  },
+  clearButtonTextMinimal: {
+    color: '#DC2626',
+  },
+  balloonBackdropMinimal: {
+    backgroundColor: 'rgba(30, 64, 175, 0.28)',
+  },
+  balloonCardMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  balloonPointerMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+    borderColor: MINIMAL_UI.border,
+  },
+  balloonTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  balloonSubtitleMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  sessionBlockDividerMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  sessionDateTimeMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  screenItemMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  emptySessionTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  balloonCloseButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  balloonCloseButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
   },
 });

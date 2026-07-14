@@ -9,6 +9,8 @@ import { formatAccessPinDisplay } from '@/lib/accessPin';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { formatShortName } from '@/lib/formatShortName';
 import { useMaintenanceProfileCadastro } from '@/hooks/useMaintenanceProfileCadastro';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import Toast from 'react-native-toast-message';
@@ -25,6 +27,7 @@ import {
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
 
 const ACCENT = '#3A96DD';
@@ -54,7 +57,19 @@ const formatDisplayValue = (key: string, value: string | null | undefined) => {
   return trimmed;
 };
 
-export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }: Props) {
+function SectionHeading({ children, minimal }: { children: string; minimal: boolean }) {
+  return minimal ? (
+    <Text style={styles.sectionLabelMinimal}>{children}</Text>
+  ) : (
+    <SectionLabel variant="maintenance">{children}</SectionLabel>
+  );
+}
+
+export function MaintenanceProfileCadastroCard({
+  isActive = true,
+  panelHeight,
+  minimal = false,
+}: Props) {
   const {
     searchQuery,
     setSearchQuery,
@@ -139,27 +154,36 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
   };
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Cadastro de Usuário</Text>
-      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+    <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
+      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
+        Cadastro de Usuário
+      </Text>
+      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      {statusMessage ? <Text style={styles.successText}>{statusMessage}</Text> : null}
+      {error ? (
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
+      ) : null}
+      {statusMessage ? (
+        <Text style={[styles.successText, minimal && styles.successTextMinimal]}>
+          {statusMessage}
+        </Text>
+      ) : null}
 
-      <SectionLabel variant="maintenance">Buscar usuário</SectionLabel>
-      <View style={styles.searchRow}>
+      <SectionHeading minimal={minimal}>Buscar usuário</SectionHeading>
+      <View style={[styles.searchRow, minimal && styles.searchRowMinimal]}>
         <TextInput
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholder="Nome (mín. 2 letras)"
-          placeholderTextColor="#64748B"
-          style={styles.searchInput}
+          placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
+          style={[styles.searchInput, minimal && styles.searchInputMinimal]}
           autoCapitalize="words"
           autoCorrect={false}
         />
         <TouchableOpacity
           style={[
             styles.searchClearButton,
+            minimal && styles.searchClearButtonMinimal,
             searchQuery.length === 0 && styles.searchClearButtonDisabled,
           ]}
           onPress={clearSearchQuery}
@@ -168,16 +192,16 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
           accessibilityRole="button"
           accessibilityLabel="Limpar busca de usuário"
         >
-          <MaterialIcons name="close" size={20} color="#94A3B8" />
+          <MaterialIcons name="close" size={20} color={minimal ? MINIMAL_UI.icon : '#94A3B8'} />
         </TouchableOpacity>
       </View>
 
-      {searching ? <CardLoadingState lines={2} compact /> : null}
+      {searching ? <CardLoadingState lines={2} compact minimal={minimal} /> : null}
 
       {searchQuery.trim().length >= 2 && !searching ? (
         <ScrollView
           horizontal={false}
-          style={styles.resultsScroll}
+          style={[styles.resultsScroll, minimal && styles.resultsScrollMinimal]}
           nestedScrollEnabled
           keyboardShouldPersistTaps="handled"
         >
@@ -188,7 +212,12 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
               return (
                 <TouchableOpacity
                   key={option.id}
-                  style={[styles.resultRow, isSelected && styles.resultRowSelected]}
+                  style={[
+                    styles.resultRow,
+                    minimal && styles.resultRowMinimal,
+                    isSelected && styles.resultRowSelected,
+                    minimal && isSelected && styles.resultRowSelectedMinimal,
+                  ]}
                   onPress={() => void selectProfile(option.id)}
                   activeOpacity={0.85}
                   accessibilityRole="button"
@@ -199,51 +228,69 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
                       : `Exibir dados de ${formatShortName(option.fullName)}`
                   }
                 >
-                  <Text style={styles.resultName}>{formatShortName(option.fullName)}</Text>
-                  <Text style={styles.resultMeta}>
+                  <Text style={[styles.resultName, minimal && styles.resultNameMinimal]}>
+                    {formatShortName(option.fullName)}
+                  </Text>
+                  <Text style={[styles.resultMeta, minimal && styles.resultMetaMinimal]}>
                     {[option.phone, option.memberCode].filter(Boolean).join(' · ') || option.fullName}
                   </Text>
                 </TouchableOpacity>
               );
             })
           ) : (
-            <Text style={styles.hintText}>Nenhum perfil encontrado.</Text>
+            <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+              Nenhum perfil encontrado.
+            </Text>
           )}
         </ScrollView>
       ) : (
-        <Text style={styles.hintText}>Digite pelo menos 2 letras para buscar.</Text>
+        <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+          Digite pelo menos 2 letras para buscar.
+        </Text>
       )}
 
       {loadingProfile ? (
-        <CardLoadingState lines={4} />
+        <CardLoadingState lines={4} minimal={minimal} />
       ) : profile ? (
-        <ScrollView style={styles.detailScroll} nestedScrollEnabled keyboardShouldPersistTaps="handled">
-          <Text style={styles.selectedTitle}>
+        <ScrollView
+          style={[styles.detailScroll, minimal && styles.detailScrollMinimal]}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={[styles.selectedTitle, minimal && styles.selectedTitleMinimal]}>
             {selectedPickerOption?.fullName ?? profile.full_name ?? 'Usuário selecionado'}
           </Text>
 
-          <Text style={styles.groupTitle}>Dados pessoais</Text>
+          <Text style={[styles.groupTitle, minimal && styles.groupTitleMinimal]}>
+            Dados pessoais
+          </Text>
           {personalFields.map((field) => (
-            <View key={field.key} style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>{field.label}</Text>
-              <Text style={styles.fieldValue}>
+            <View key={field.key} style={[styles.fieldRow, minimal && styles.fieldRowMinimal]}>
+              <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
+                {field.label}
+              </Text>
+              <Text style={[styles.fieldValue, minimal && styles.fieldValueMinimal]}>
                 {formatDisplayValue(field.key, profile[field.key])}
               </Text>
             </View>
           ))}
 
-          <Text style={styles.groupTitle}>Endereço</Text>
+          <Text style={[styles.groupTitle, minimal && styles.groupTitleMinimal]}>Endereço</Text>
 
-          <View style={styles.addressFormBlock}>
-            <Text style={styles.fieldLabel}>CEP</Text>
+          <View style={[styles.addressFormBlock, minimal && styles.addressFormBlockMinimal]}>
+            <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>CEP</Text>
             <View style={styles.cepInputWrap}>
               <TextInput
                 value={cepDraft}
                 onChangeText={handleCepDraftChange}
                 placeholder="00000-000"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
                 keyboardType="number-pad"
-                style={[styles.addressInput, cepDraft.length > 0 && styles.addressInputWithClear]}
+                style={[
+                  styles.addressInput,
+                  minimal && styles.addressInputMinimal,
+                  cepDraft.length > 0 && styles.addressInputWithClear,
+                ]}
               />
               {cepDraft.length > 0 ? (
                 <TouchableOpacity
@@ -253,17 +300,23 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
                   accessibilityRole="button"
                   accessibilityLabel="Limpar CEP"
                 >
-                  <MaterialIcons name="close" size={18} color="#94A3B8" />
+                  <MaterialIcons name="close" size={18} color={minimal ? MINIMAL_UI.icon : '#94A3B8'} />
                 </TouchableOpacity>
               ) : null}
             </View>
 
             {shouldPreviewCepAddress && loadingCepPreview ? (
-              <ActivityIndicator color={ACCENT} size="small" style={styles.previewLoader} />
+              <ActivityIndicator
+                color={minimal ? MINIMAL_UI.accent : ACCENT}
+                size="small"
+                style={styles.previewLoader}
+              />
             ) : shouldPreviewCepAddress && cepPreview ? (
-              <View style={styles.cepPreviewBox}>
-                <Text style={styles.cepPreviewTitle}>Endereço que será gravado:</Text>
-                <Text style={styles.cepPreviewText}>
+              <View style={[styles.cepPreviewBox, minimal && styles.cepPreviewBoxMinimal]}>
+                <Text style={[styles.cepPreviewTitle, minimal && styles.cepPreviewTitleMinimal]}>
+                  Endereço que será gravado:
+                </Text>
+                <Text style={[styles.cepPreviewText, minimal && styles.cepPreviewTextMinimal]}>
                   {[cepPreview.street, cepPreview.neighborhood, cepPreview.city, cepPreview.state]
                     .filter(Boolean)
                     .join(' · ')}
@@ -271,60 +324,80 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
               </View>
             ) : null}
 
-            <Text style={styles.fieldLabel}>Número</Text>
+            <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Número</Text>
             <TextInput
               value={addressNumberDraft}
               onChangeText={setAddressNumberDraft}
               placeholder="Ex.: 120, s/n"
-              placeholderTextColor="#64748B"
-              style={styles.addressInput}
+              placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
+              style={[styles.addressInput, minimal && styles.addressInputMinimal]}
               autoCapitalize="characters"
             />
 
-            <Text style={styles.fieldLabel}>Complemento</Text>
+            <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
+              Complemento
+            </Text>
             <TextInput
               value={addressComplementDraft}
               onChangeText={setAddressComplementDraft}
               placeholder="Apto, bloco, casa…"
-              placeholderTextColor="#64748B"
-              style={styles.addressInput}
+              placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
+              style={[styles.addressInput, minimal && styles.addressInputMinimal]}
             />
 
             <TouchableOpacity
-              style={[styles.saveCepButton, savingCep && styles.saveCepButtonDisabled]}
+              style={[
+                styles.saveCepButton,
+                minimal && styles.saveCepButtonMinimal,
+                savingCep && styles.saveCepButtonDisabled,
+              ]}
               onPress={() => void handleSaveCep()}
               disabled={savingCep}
               activeOpacity={0.85}
             >
               {savingCep ? (
-                <ActivityIndicator color="#0F172A" size="small" />
+                <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0F172A'} size="small" />
               ) : (
                 <>
-                  <FontAwesome name="map-marker" size={14} color="#0F172A" />
-                  <Text style={styles.saveCepButtonText}>Salvar CEP e endereço</Text>
+                  <FontAwesome
+                    name="map-marker"
+                    size={14}
+                    color={minimal ? MINIMAL_UI.onDark : '#0F172A'}
+                  />
+                  <Text style={[styles.saveCepButtonText, minimal && styles.saveCepButtonTextMinimal]}>
+                    Salvar CEP e endereço
+                  </Text>
                 </>
               )}
             </TouchableOpacity>
           </View>
 
           {addressReadOnlyFields.map((field) => (
-            <View key={field.key} style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>{field.label}</Text>
-              <Text style={styles.fieldValue}>
+            <View key={field.key} style={[styles.fieldRow, minimal && styles.fieldRowMinimal]}>
+              <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
+                {field.label}
+              </Text>
+              <Text style={[styles.fieldValue, minimal && styles.fieldValueMinimal]}>
                 {formatDisplayValue(field.key, profile[field.key])}
               </Text>
             </View>
           ))}
 
-          <View style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>Senha de acesso (PIN)</Text>
-            <Text style={styles.fieldValue}>
+          <View style={[styles.fieldRow, minimal && styles.fieldRowMinimal]}>
+            <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
+              Senha de acesso (PIN)
+            </Text>
+            <Text style={[styles.fieldValue, minimal && styles.fieldValueMinimal]}>
               {formatAccessPinDisplay(profile.access_pin ?? selectedPickerOption?.accessPin)}
             </Text>
           </View>
 
           <TouchableOpacity
-            style={[styles.deleteUserButton, (deletingUser || savingCep) && styles.deleteUserButtonDisabled]}
+            style={[
+              styles.deleteUserButton,
+              minimal && styles.deleteUserButtonMinimal,
+              (deletingUser || savingCep) && styles.deleteUserButtonDisabled,
+            ]}
             onPress={() => void handleDeleteUser()}
             disabled={deletingUser || savingCep}
             activeOpacity={0.85}
@@ -342,7 +415,9 @@ export function MaintenanceProfileCadastroCard({ isActive = true, panelHeight }:
           </TouchableOpacity>
         </ScrollView>
       ) : selectedProfileId ? (
-        <Text style={styles.hintText}>Perfil não carregado.</Text>
+        <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+          Perfil não carregado.
+        </Text>
       ) : null}
     </View>
   );
@@ -578,5 +653,122 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontWeight: '800',
     fontSize: 13,
+  },
+  panelMinimal: {
+    ...CONTAIN_WIDTH,
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    borderRadius: 0,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'visible',
+  },
+  sectionTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    ...CONTAIN_WIDTH,
+  },
+  sectionLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
+  },
+  successTextMinimal: {
+    color: '#16A34A',
+  },
+  searchRowMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  searchInputMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 12,
+    color: MINIMAL_UI.text,
+  },
+  searchClearButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 12,
+  },
+  resultsScrollMinimal: {
+    ...CONTAIN_WIDTH,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  resultRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  resultRowSelectedMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderLeftColor: MINIMAL_UI.blueDark,
+  },
+  resultNameMinimal: {
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '700',
+  },
+  resultMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  hintTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  detailScrollMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  selectedTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  groupTitleMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  fieldRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  fieldLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  fieldValueMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  addressFormBlockMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  addressInputMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    color: MINIMAL_UI.text,
+    borderRadius: 12,
+  },
+  cepPreviewBoxMinimal: {
+    borderColor: '#BBF7D0',
+    backgroundColor: '#F0FDF4',
+    borderRadius: 12,
+  },
+  cepPreviewTitleMinimal: {
+    color: '#15803D',
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontSize: 12,
+  },
+  cepPreviewTextMinimal: {
+    color: '#166534',
+  },
+  saveCepButtonMinimal: {
+    borderRadius: 12,
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  saveCepButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  deleteUserButtonMinimal: {
+    borderRadius: 12,
   },
 });

@@ -28,6 +28,8 @@ import { buildSupportSuggestionsReportPdfObjectUrl } from '@/lib/supportSuggesti
 import { SUPPORT_SUGGESTIONS_REPORT_PDF_FILENAME } from '@/lib/maintenanceSupportSuggestionsReport';
 import type { MaintenanceReportResult } from '@/lib/maintenanceReportsApi';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -48,6 +50,7 @@ type Props = {
   events?: MaintenanceEvent[];
   loadingEvents?: boolean;
   isSuperAdmin?: boolean;
+  minimal?: boolean;
 };
 
 const ACCENT = '#3A96DD';
@@ -112,6 +115,7 @@ type ConfigFieldProps = {
   events: MaintenanceEvent[];
   loadingEvents: boolean;
   onChange: (value: string) => void;
+  minimal?: boolean;
 };
 
 function EventDropdown({
@@ -121,6 +125,7 @@ function EventDropdown({
   events,
   loadingEvents,
   onChange,
+  minimal = false,
 }: ConfigFieldProps) {
   const [open, setOpen] = useState(false);
 
@@ -143,27 +148,43 @@ function EventDropdown({
 
   return (
     <View style={styles.configField}>
-      <Text style={styles.configLabel}>{field.label}</Text>
+      <Text style={[styles.configLabel, minimal && styles.configLabelMinimal]}>{field.label}</Text>
       <TouchableOpacity
-        style={[styles.dropdownTrigger, disabled && styles.dropdownTriggerDisabled]}
+        style={[
+          styles.dropdownTrigger,
+          minimal && styles.dropdownTriggerMinimal,
+          disabled && styles.dropdownTriggerDisabled,
+        ]}
         onPress={() => setOpen((current) => !current)}
         disabled={disabled || loadingEvents}
         activeOpacity={0.85}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
       >
-        <Text style={styles.dropdownTriggerText} numberOfLines={2}>
+        <Text
+          style={[styles.dropdownTriggerText, minimal && styles.dropdownTriggerTextMinimal]}
+          numberOfLines={2}
+        >
           {loadingEvents ? 'Carregando eventos…' : selectedLabel}
         </Text>
-        <FontAwesome name={open ? 'chevron-up' : 'chevron-down'} size={12} color="#94A3B8" />
+        <FontAwesome
+          name={open ? 'chevron-up' : 'chevron-down'}
+          size={12}
+          color={minimal ? MINIMAL_UI.icon : '#94A3B8'}
+        />
       </TouchableOpacity>
 
       {open ? (
-        <View style={styles.dropdownList}>
+        <View style={[styles.dropdownList, minimal && styles.dropdownListMinimal]}>
           <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" style={styles.dropdownScroll}>
             {field.optional ? (
               <TouchableOpacity
-                style={[styles.dropdownOption, !value && styles.dropdownOptionSelected]}
+                style={[
+                  styles.dropdownOption,
+                  minimal && styles.dropdownOptionMinimal,
+                  !value && styles.dropdownOptionSelected,
+                  minimal && !value && styles.dropdownOptionSelectedMinimal,
+                ]}
                 onPress={() => {
                   onChange('');
                   setOpen(false);
@@ -171,7 +192,12 @@ function EventDropdown({
                 activeOpacity={0.85}
               >
                 <Text
-                  style={[styles.dropdownOptionText, !value && styles.dropdownOptionTextSelected]}
+                  style={[
+                    styles.dropdownOptionText,
+                    minimal && styles.dropdownOptionTextMinimal,
+                    !value && styles.dropdownOptionTextSelected,
+                    minimal && !value && styles.dropdownOptionTextSelectedMinimal,
+                  ]}
                 >
                   Automático (próximo culto com inscrições)
                 </Text>
@@ -179,7 +205,9 @@ function EventDropdown({
             ) : null}
 
             {sortedEvents.length === 0 ? (
-              <Text style={styles.dropdownEmptyText}>Nenhum evento cadastrado.</Text>
+              <Text style={[styles.dropdownEmptyText, minimal && styles.dropdownEmptyTextMinimal]}>
+                Nenhum evento cadastrado.
+              </Text>
             ) : (
               sortedEvents.map((event) => {
                 const selected = value === event.id;
@@ -187,7 +215,12 @@ function EventDropdown({
                 return (
                   <TouchableOpacity
                     key={event.id}
-                    style={[styles.dropdownOption, selected && styles.dropdownOptionSelected]}
+                    style={[
+                      styles.dropdownOption,
+                      minimal && styles.dropdownOptionMinimal,
+                      selected && styles.dropdownOptionSelected,
+                      minimal && selected && styles.dropdownOptionSelectedMinimal,
+                    ]}
                     onPress={() => {
                       onChange(event.id);
                       setOpen(false);
@@ -197,7 +230,9 @@ function EventDropdown({
                     <Text
                       style={[
                         styles.dropdownOptionText,
+                        minimal && styles.dropdownOptionTextMinimal,
                         selected && styles.dropdownOptionTextSelected,
+                        minimal && selected && styles.dropdownOptionTextSelectedMinimal,
                       ]}
                       numberOfLines={2}
                     >
@@ -215,7 +250,7 @@ function EventDropdown({
 }
 
 function ConfigField(props: ConfigFieldProps) {
-  const { field, value, disabled, onChange } = props;
+  const { field, value, disabled, onChange, minimal = false } = props;
 
   if (field.type === 'event') {
     return <EventDropdown {...props} />;
@@ -224,7 +259,7 @@ function ConfigField(props: ConfigFieldProps) {
   if (field.type === 'select' && field.options?.length) {
     return (
       <View style={styles.configField}>
-        <Text style={styles.configLabel}>{field.label}</Text>
+        <Text style={[styles.configLabel, minimal && styles.configLabelMinimal]}>{field.label}</Text>
         <View style={styles.selectRow}>
           {field.options.map((option) => {
             const selected = value === option.value;
@@ -232,12 +267,24 @@ function ConfigField(props: ConfigFieldProps) {
             return (
               <TouchableOpacity
                 key={option.value}
-                style={[styles.selectChip, selected && styles.selectChipActive]}
+                style={[
+                  styles.selectChip,
+                  minimal && styles.selectChipMinimal,
+                  selected && styles.selectChipActive,
+                  minimal && selected && styles.selectChipActiveMinimal,
+                ]}
                 onPress={() => onChange(option.value)}
                 disabled={disabled}
                 activeOpacity={0.85}
               >
-                <Text style={[styles.selectChipText, selected && styles.selectChipTextActive]}>
+                <Text
+                  style={[
+                    styles.selectChipText,
+                    minimal && styles.selectChipTextMinimal,
+                    selected && styles.selectChipTextActive,
+                    minimal && selected && styles.selectChipTextActiveMinimal,
+                  ]}
+                >
                   {option.label}
                 </Text>
               </TouchableOpacity>
@@ -250,13 +297,13 @@ function ConfigField(props: ConfigFieldProps) {
 
   return (
     <View style={styles.configField}>
-      <Text style={styles.configLabel}>{field.label}</Text>
+      <Text style={[styles.configLabel, minimal && styles.configLabelMinimal]}>{field.label}</Text>
       <TextInput
-        style={styles.configInput}
+        style={[styles.configInput, minimal && styles.configInputMinimal]}
         value={value}
         onChangeText={onChange}
         placeholder={field.placeholder}
-        placeholderTextColor="#64748B"
+        placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
         keyboardType={field.type === 'number' ? 'numeric' : 'default'}
         editable={!disabled}
         autoCapitalize="none"
@@ -268,17 +315,18 @@ function ConfigField(props: ConfigFieldProps) {
 
 type ReportResultsTableProps = {
   result: NonNullable<ReturnType<typeof useMaintenanceReports>['resultsByCode'][string]>;
+  minimal?: boolean;
 };
 
-function ReportResultsTable({ result }: ReportResultsTableProps) {
+function ReportResultsTable({ result, minimal = false }: ReportResultsTableProps) {
   if (result.reportCode === 'support_suggestions') {
     return <SupportSuggestionsReportView result={result} />;
   }
 
-  return <GenericReportResultsTable result={result} />;
+  return <GenericReportResultsTable result={result} minimal={minimal} />;
 }
 
-function GenericReportResultsTable({ result }: ReportResultsTableProps) {
+function GenericReportResultsTable({ result, minimal = false }: ReportResultsTableProps) {
   const [ageBracketModal, setAgeBracketModal] = useState<AgeBracketMembersModalState | null>(null);
   const [eventRegistrationsModal, setEventRegistrationsModal] =
     useState<EventRegistrationsModalState | null>(null);
@@ -310,15 +358,15 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
   return (
     <>
     <View style={styles.resultsBox}>
-      <Text style={styles.resultsTitle}>
+      <Text style={[styles.resultsTitle, minimal && styles.resultsTitleMinimal]}>
         {result.rows.length.toLocaleString('pt-BR')} registro(s)
       </Text>
 
       <View style={isAgeBracketReport ? styles.ageBracketResultsRow : undefined}>
         <View style={isAgeBracketReport ? styles.ageBracketTableSection : undefined}>
           <ScrollView horizontal nestedScrollEnabled showsHorizontalScrollIndicator>
-            <View style={styles.tableContainer}>
-              <View style={styles.tableHeaderRow}>
+            <View style={[styles.tableContainer, minimal && styles.tableContainerMinimal]}>
+              <View style={[styles.tableHeaderRow, minimal && styles.tableHeaderRowMinimal]}>
                 {visibleColumns.map((column) => {
                   const align = getReportColumnAlign(column);
                   const columnWidth = getReportColumnWidth(column, reportCode);
@@ -329,6 +377,7 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                       key={column}
                       style={[
                         styles.tableHeaderCell,
+                        minimal && styles.tableHeaderCellMinimal,
                         { width: columnWidth },
                         isEventRegistrationsReport && styles.tableHeaderCellCompact,
                         align === 'right' && styles.cellAlignRight,
@@ -351,8 +400,11 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                   key={`row-${rowIndex}`}
                   style={[
                     styles.tableDataRow,
+                    minimal && styles.tableDataRowMinimal,
                     rowIndex % 2 === 1 && styles.tableDataRowAlt,
+                    minimal && rowIndex % 2 === 1 && styles.tableDataRowAltMinimal,
                     isAgeMatrixTotalRow && styles.tableDataRowTotal,
+                    minimal && isAgeMatrixTotalRow && styles.tableDataRowTotalMinimal,
                   ]}
                 >
                   {visibleColumns.map((column) => {
@@ -393,7 +445,10 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                           accessibilityRole="button"
                           accessibilityLabel={`Ver integrantes da faixa ${cellValue}`}
                         >
-                          <Text style={styles.ageBracketLink} numberOfLines={3}>
+                          <Text
+                            style={[styles.ageBracketLink, minimal && styles.ageBracketLinkMinimal]}
+                            numberOfLines={3}
+                          >
                             {formatReportCellValue(column, cellValue, reportCode)}
                           </Text>
                         </Pressable>
@@ -424,7 +479,11 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                           accessibilityLabel={`Ver inscritos do evento ${cellValue}`}
                         >
                           <Text
-                            style={[styles.ageBracketLink, wrapEventName && styles.tableCellWrap]}
+                            style={[
+                              styles.ageBracketLink,
+                              minimal && styles.ageBracketLinkMinimal,
+                              wrapEventName && styles.tableCellWrap,
+                            ]}
                           >
                             {formatReportCellValue(column, cellValue, reportCode)}
                           </Text>
@@ -437,6 +496,7 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
                         key={`${rowIndex}-${column}`}
                         style={[
                           styles.tableDataCell,
+                          minimal && styles.tableDataCellMinimal,
                           { width: columnWidth },
                           isEventRegistrationsReport && styles.tableDataCellCompact,
                           wrapEventName && styles.tableCellWrap,
@@ -463,7 +523,9 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
       </View>
 
       {result.rows.length > 100 ? (
-        <Text style={styles.hintText}>Exibindo os primeiros 100 registros.</Text>
+        <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+          Exibindo os primeiros 100 registros.
+        </Text>
       ) : null}
     </View>
 
@@ -477,9 +539,11 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
         <Pressable style={styles.ageBracketModalBackdrop} onPress={closeAgeBracketModal} />
 
         {ageBracketModal ? (
-          <View style={styles.ageBracketBubble}>
-            <Text style={styles.ageBracketModalTitle}>{ageBracketModal.faixa}</Text>
-            <Text style={styles.ageBracketModalHelp}>
+          <View style={[styles.ageBracketBubble, minimal && styles.ageBracketBubbleMinimal]}>
+            <Text style={[styles.ageBracketModalTitle, minimal && styles.ageBracketModalTitleMinimal]}>
+              {ageBracketModal.faixa}
+            </Text>
+            <Text style={[styles.ageBracketModalHelp, minimal && styles.ageBracketModalHelpMinimal]}>
               {ageBracketModal.integrantes.length.toLocaleString('pt-BR')} integrante(s) nesta faixa
               etária.
             </Text>
@@ -490,10 +554,15 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
               nestedScrollEnabled
             >
               {ageBracketModal.integrantes.length === 0 ? (
-                <Text style={styles.hintText}>Nenhum integrante listado para esta faixa.</Text>
+                <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+                  Nenhum integrante listado para esta faixa.
+                </Text>
               ) : (
                 ageBracketModal.integrantes.map((nome, index) => (
-                  <Text key={`${nome}-${index}`} style={styles.ageBracketMemberName}>
+                  <Text
+                    key={`${nome}-${index}`}
+                    style={[styles.ageBracketMemberName, minimal && styles.ageBracketMemberNameMinimal]}
+                  >
                     {nome}
                   </Text>
                 ))
@@ -501,11 +570,18 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
             </ScrollView>
 
             <TouchableOpacity
-              style={styles.ageBracketCloseButton}
+              style={[styles.ageBracketCloseButton, minimal && styles.ageBracketCloseButtonMinimal]}
               onPress={closeAgeBracketModal}
               activeOpacity={0.85}
             >
-              <Text style={styles.ageBracketCloseButtonText}>Fechar</Text>
+              <Text
+                style={[
+                  styles.ageBracketCloseButtonText,
+                  minimal && styles.ageBracketCloseButtonTextMinimal,
+                ]}
+              >
+                Fechar
+              </Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -525,9 +601,11 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
         />
 
         {eventRegistrationsModal ? (
-          <View style={styles.ageBracketBubble}>
-            <Text style={styles.ageBracketModalTitle}>{eventRegistrationsModal.evento}</Text>
-            <Text style={styles.ageBracketModalHelp}>
+          <View style={[styles.ageBracketBubble, minimal && styles.ageBracketBubbleMinimal]}>
+            <Text style={[styles.ageBracketModalTitle, minimal && styles.ageBracketModalTitleMinimal]}>
+              {eventRegistrationsModal.evento}
+            </Text>
+            <Text style={[styles.ageBracketModalHelp, minimal && styles.ageBracketModalHelpMinimal]}>
               {eventRegistrationsModal.data} ·{' '}
               {eventRegistrationsModal.participantes.length.toLocaleString('pt-BR')} inscrito(s)
             </Text>
@@ -538,12 +616,29 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
               nestedScrollEnabled
             >
               {eventRegistrationsModal.participantes.length === 0 ? (
-                <Text style={styles.hintText}>Nenhum inscrito listado para este evento.</Text>
+                <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+                  Nenhum inscrito listado para este evento.
+                </Text>
               ) : (
                 eventRegistrationsModal.participantes.map((participant, index) => (
-                  <View key={`${participant.nome}-${index}`} style={styles.eventRegistrationRow}>
-                    <Text style={styles.ageBracketMemberName}>{participant.nome}</Text>
-                    <Text style={styles.eventRegistrationMeta}>
+                  <View
+                    key={`${participant.nome}-${index}`}
+                    style={[styles.eventRegistrationRow, minimal && styles.eventRegistrationRowMinimal]}
+                  >
+                    <Text
+                      style={[
+                        styles.ageBracketMemberName,
+                        minimal && styles.ageBracketMemberNameMinimal,
+                      ]}
+                    >
+                      {participant.nome}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.eventRegistrationMeta,
+                        minimal && styles.eventRegistrationMetaMinimal,
+                      ]}
+                    >
                       {participant.familia} · {participant.papel}
                     </Text>
                   </View>
@@ -552,11 +647,18 @@ function GenericReportResultsTable({ result }: ReportResultsTableProps) {
             </ScrollView>
 
             <TouchableOpacity
-              style={styles.ageBracketCloseButton}
+              style={[styles.ageBracketCloseButton, minimal && styles.ageBracketCloseButtonMinimal]}
               onPress={closeEventRegistrationsModal}
               activeOpacity={0.85}
             >
-              <Text style={styles.ageBracketCloseButtonText}>Fechar</Text>
+              <Text
+                style={[
+                  styles.ageBracketCloseButtonText,
+                  minimal && styles.ageBracketCloseButtonTextMinimal,
+                ]}
+              >
+                Fechar
+              </Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -571,9 +673,10 @@ type ReportSummaryProps = {
   summary: Record<string, unknown>;
   params: Record<string, string>;
   events: MaintenanceEvent[];
+  minimal?: boolean;
 };
 
-function ReportSummary({ reportCode, summary, params, events }: ReportSummaryProps) {
+function ReportSummary({ reportCode, summary, params, events, minimal = false }: ReportSummaryProps) {
   const resolvedEntries = useMemo(
     () => resolveReportSummaryEntries(summary, events, params),
     [events, params, summary]
@@ -585,30 +688,47 @@ function ReportSummary({ reportCode, summary, params, events }: ReportSummaryPro
       ?? resolveMaintenanceEventLabel(params.event_id, events);
 
     return (
-      <View style={styles.summaryBox}>
-        <Text style={styles.summaryTitle}>Resumo</Text>
+      <View style={[styles.summaryBox, minimal && styles.summaryBoxMinimal]}>
+        <Text style={[styles.summaryTitle, minimal && styles.summaryTitleMinimal]}>Resumo</Text>
         {eventLabel ? (
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryCardLabel}>Evento</Text>
-            <Text style={styles.summaryCardValue} numberOfLines={2}>
+          <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
+            <Text style={[styles.summaryCardLabel, minimal && styles.summaryCardLabelMinimal]}>
+              Evento
+            </Text>
+            <Text
+              style={[styles.summaryCardValue, minimal && styles.summaryCardValueMinimal]}
+              numberOfLines={2}
+            >
               {eventLabel}
             </Text>
           </View>
         ) : null}
         <View style={styles.summaryRowInline}>
-          <View style={[styles.summaryCard, styles.summaryCardInline]}>
-            <Text style={styles.summaryCardLabel}>
+          <View
+            style={[
+              styles.summaryCard,
+              minimal && styles.summaryCardMinimal,
+              styles.summaryCardInline,
+            ]}
+          >
+            <Text style={[styles.summaryCardLabel, minimal && styles.summaryCardLabelMinimal]}>
               {formatReportSummaryLabel('familias_inscritas')}
             </Text>
-            <Text style={styles.summaryCardValue}>
+            <Text style={[styles.summaryCardValue, minimal && styles.summaryCardValueMinimal]}>
               {formatReportSummaryValue('familias_inscritas', summary.familias_inscritas)}
             </Text>
           </View>
-          <View style={[styles.summaryCard, styles.summaryCardNarrow]}>
-            <Text style={styles.summaryCardLabel}>
+          <View
+            style={[
+              styles.summaryCard,
+              minimal && styles.summaryCardMinimal,
+              styles.summaryCardNarrow,
+            ]}
+          >
+            <Text style={[styles.summaryCardLabel, minimal && styles.summaryCardLabelMinimal]}>
               {formatReportSummaryLabel('estimativa_total_veiculos')}
             </Text>
-            <Text style={styles.summaryCardValue}>
+            <Text style={[styles.summaryCardValue, minimal && styles.summaryCardValueMinimal]}>
               {formatReportSummaryValue('estimativa_total_veiculos', summary.estimativa_total_veiculos)}
             </Text>
           </View>
@@ -618,13 +738,17 @@ function ReportSummary({ reportCode, summary, params, events }: ReportSummaryPro
   }
 
   return (
-    <View style={styles.summaryBox}>
-      <Text style={styles.summaryTitle}>Resumo</Text>
+    <View style={[styles.summaryBox, minimal && styles.summaryBoxMinimal]}>
+      <Text style={[styles.summaryTitle, minimal && styles.summaryTitleMinimal]}>Resumo</Text>
       <View style={styles.summaryGrid}>
         {resolvedEntries.map(([key, value]) => (
-          <View key={key} style={styles.summaryCard}>
-            <Text style={styles.summaryCardLabel}>{formatReportSummaryLabel(key)}</Text>
-            <Text style={styles.summaryCardValue}>{formatReportSummaryValue(key, value)}</Text>
+          <View key={key} style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
+            <Text style={[styles.summaryCardLabel, minimal && styles.summaryCardLabelMinimal]}>
+              {formatReportSummaryLabel(key)}
+            </Text>
+            <Text style={[styles.summaryCardValue, minimal && styles.summaryCardValueMinimal]}>
+              {formatReportSummaryValue(key, value)}
+            </Text>
           </View>
         ))}
       </View>
@@ -649,6 +773,7 @@ type ReportSectionProps = {
   onRun: () => Promise<MaintenanceReportResult | null>;
   onOpenPdf?: () => void;
   pdfLoading?: boolean;
+  minimal?: boolean;
 };
 
 function ReportSection({
@@ -668,9 +793,10 @@ function ReportSection({
   onRun,
   onOpenPdf,
   pdfLoading = false,
+  minimal = false,
 }: ReportSectionProps) {
   return (
-    <View style={styles.reportCard}>
+    <View style={[styles.reportCard, minimal && styles.reportCardMinimal]}>
       <TouchableOpacity
         style={styles.reportHeader}
         onPress={onToggle}
@@ -679,21 +805,30 @@ function ReportSection({
         accessibilityState={{ expanded }}
       >
         <View style={styles.reportHeaderText}>
-          <Text style={styles.reportIndex}>{index + 1}.</Text>
-          <Text style={styles.reportTitle}>{definition.title}</Text>
+          <Text style={[styles.reportIndex, minimal && styles.reportIndexMinimal]}>
+            {index + 1}.
+          </Text>
+          <Text style={[styles.reportTitle, minimal && styles.reportTitleMinimal]}>
+            {definition.title}
+          </Text>
         </View>
         <FontAwesome
           name={expanded ? 'chevron-up' : 'chevron-down'}
           size={14}
-          color="#94A3B8"
+          color={minimal ? MINIMAL_UI.icon : '#94A3B8'}
         />
       </TouchableOpacity>
 
       {expanded ? (
-        <View style={styles.reportBody}>
+        <View style={[styles.reportBody, minimal && styles.reportBodyMinimal]}>
           {definition.restricted ? (
             <Text
-              style={[styles.restrictedBadge, isSuperAdmin && styles.restrictedBadgeAllowed]}
+              style={[
+                styles.restrictedBadge,
+                minimal && styles.restrictedBadgeMinimal,
+                isSuperAdmin && styles.restrictedBadgeAllowed,
+                minimal && isSuperAdmin && styles.restrictedBadgeAllowedMinimal,
+              ]}
             >
               {isSuperAdmin
                 ? 'Dado sensível (LGPD). Acesso liberado como super administrador.'
@@ -701,7 +836,9 @@ function ReportSection({
             </Text>
           ) : null}
 
-          <Text style={styles.reportDescription}>{definition.description}</Text>
+          <Text style={[styles.reportDescription, minimal && styles.reportDescriptionMinimal]}>
+            {definition.description}
+          </Text>
 
           {definition.configFields.map((field) => (
             <ConfigField
@@ -712,48 +849,63 @@ function ReportSection({
               events={events}
               loadingEvents={loadingEvents}
               onChange={(value) => onParamChange(field.key, value)}
+              minimal={minimal}
             />
           ))}
 
           <View style={styles.reportActions}>
             <TouchableOpacity
-              style={styles.resetButton}
+              style={[styles.resetButton, minimal && styles.resetButtonMinimal]}
               onPress={onReset}
               disabled={loading}
               activeOpacity={0.85}
             >
-              <Text style={styles.resetButtonText}>Restaurar padrões</Text>
+              <Text style={[styles.resetButtonText, minimal && styles.resetButtonTextMinimal]}>
+                Restaurar padrões
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.runButton, loading && styles.runButtonDisabled]}
+              style={[
+                styles.runButton,
+                minimal && styles.runButtonMinimal,
+                loading && styles.runButtonDisabled,
+              ]}
               onPress={() => void onRun()}
               disabled={loading || pdfLoading}
               activeOpacity={0.85}
             >
               {loading ? (
-                <ActivityIndicator color="#0F172A" size="small" />
+                <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0F172A'} size="small" />
               ) : (
-                <Text style={styles.runButtonText}>Gerar relatório</Text>
+                <Text style={[styles.runButtonText, minimal && styles.runButtonTextMinimal]}>
+                  Gerar relatório
+                </Text>
               )}
             </TouchableOpacity>
             {definition.code === 'support_suggestions' && result && result.rows.length > 0 ? (
               <TouchableOpacity
-                style={[styles.pdfButton, pdfLoading && styles.runButtonDisabled]}
+                style={[
+                  styles.pdfButton,
+                  minimal && styles.pdfButtonMinimal,
+                  pdfLoading && styles.runButtonDisabled,
+                ]}
                 onPress={() => onOpenPdf?.()}
                 disabled={loading || pdfLoading}
                 activeOpacity={0.85}
               >
                 {pdfLoading ? (
-                  <ActivityIndicator color="#F3E8FF" size="small" />
+                  <ActivityIndicator color={minimal ? MINIMAL_UI.blueDark : '#F3E8FF'} size="small" />
                 ) : (
-                  <Text style={styles.pdfButtonText}>Abrir PDF</Text>
+                  <Text style={[styles.pdfButtonText, minimal && styles.pdfButtonTextMinimal]}>
+                    Abrir PDF
+                  </Text>
                 )}
               </TouchableOpacity>
             ) : null}
           </View>
 
           {error ? (
-            <Text style={styles.errorText}>
+            <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>
               {error.includes('maintenance-reports') ? MAINTENANCE_REPORTS_SQL_HINT : error}
             </Text>
           ) : null}
@@ -764,13 +916,18 @@ function ReportSection({
               summary={result.summary}
               params={params}
               events={events}
+              minimal={minimal}
             />
           ) : null}
 
-          {result && result.rows.length > 0 ? <ReportResultsTable result={result} /> : null}
+          {result && result.rows.length > 0 ? (
+            <ReportResultsTable result={result} minimal={minimal} />
+          ) : null}
 
           {result && result.rows.length === 0 && !error ? (
-            <Text style={styles.hintText}>Nenhum registro encontrado para os filtros informados.</Text>
+            <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+              Nenhum registro encontrado para os filtros informados.
+            </Text>
           ) : null}
         </View>
       ) : null}
@@ -783,6 +940,7 @@ export function MaintenanceReportsCard({
   events = [],
   loadingEvents = false,
   isSuperAdmin = false,
+  minimal = false,
 }: Props) {
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const {
@@ -861,23 +1019,30 @@ export function MaintenanceReportsCard({
   );
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Relatórios</Text>
-      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+    <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
+      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
+        Relatórios
+      </Text>
+      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
-      <Text style={styles.helpText}>
+      <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>
         Catálogo analítico da igreja: membros, finanças, território, eventos, pastoral, voluntários,
         adoção digital e operações. Expanda cada relatório, ajuste os parâmetros e toque em Gerar.
       </Text>
 
       <ScrollView
-        style={styles.scroll}
+        style={[styles.scroll, minimal && styles.scrollMinimal]}
         contentContainerStyle={styles.scrollContent}
         nestedScrollEnabled
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <SectionLabel variant="maintenance">Catálogo ({definitions.length} relatórios)</SectionLabel>
+        <SectionLabel
+          variant="maintenance"
+          style={minimal ? styles.sectionLabelMinimal : undefined}
+        >
+          Catálogo ({definitions.length} relatórios)
+        </SectionLabel>
 
         {definitions.map((definition, index) => (
           <ReportSection
@@ -898,10 +1063,11 @@ export function MaintenanceReportsCard({
             onRun={() => handleRunReport(definition)}
             onOpenPdf={() => void handleOpenSupportSuggestionsPdf(definition)}
             pdfLoading={pdfLoadingCode === definition.code}
+            minimal={minimal}
           />
         ))}
 
-        {loadingCode ? <CardLoadingState lines={2} compact /> : null}
+        {loadingCode ? <CardLoadingState lines={2} compact minimal={minimal} /> : null}
       </ScrollView>
 
       <SupportSuggestionsReportPdfModal
@@ -1369,5 +1535,199 @@ const styles = StyleSheet.create({
   },
   cellAlignCenter: {
     textAlign: 'center',
+  },
+  panelMinimal: {
+    ...CONTAIN_WIDTH,
+    backgroundColor: MINIMAL_UI.background,
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    overflow: 'visible',
+  },
+  sectionTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    ...CONTAIN_WIDTH,
+  },
+  sectionLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textTransform: 'none',
+    letterSpacing: 0,
+  },
+  helpTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  scrollMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  reportCardMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  reportIndexMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  reportTitleMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  reportBodyMinimal: {
+    borderTopColor: MINIMAL_UI.divider,
+  },
+  restrictedBadgeMinimal: {
+    color: '#DC2626',
+  },
+  restrictedBadgeAllowedMinimal: {
+    color: '#16A34A',
+  },
+  reportDescriptionMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  configLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textTransform: 'none',
+  },
+  configInputMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    color: MINIMAL_UI.text,
+    borderRadius: 12,
+  },
+  dropdownTriggerMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 12,
+  },
+  dropdownTriggerTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  dropdownListMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  dropdownOptionMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  dropdownOptionSelectedMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  dropdownOptionTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  dropdownOptionTextSelectedMinimal: {
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '700',
+  },
+  dropdownEmptyTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  selectChipMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  selectChipActiveMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: '#EFF6FF',
+  },
+  selectChipTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  selectChipTextActiveMinimal: {
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '800',
+  },
+  resetButtonMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  resetButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  runButtonMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  runButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  pdfButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  pdfButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
+  },
+  hintTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  summaryBoxMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  summaryTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  summaryCardMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  summaryCardLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textTransform: 'none',
+  },
+  summaryCardValueMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  resultsTitleMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  tableContainerMinimal: {
+    borderColor: MINIMAL_UI.border,
+  },
+  tableHeaderRowMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  tableHeaderCellMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  tableDataRowMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  tableDataRowAltMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  tableDataRowTotalMinimal: {
+    backgroundColor: '#EFF6FF',
+  },
+  tableDataCellMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  ageBracketLinkMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  ageBracketBubbleMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  ageBracketModalTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  ageBracketModalHelpMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  ageBracketMemberNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  eventRegistrationRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  eventRegistrationMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  ageBracketCloseButtonMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  ageBracketCloseButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
   },
 });

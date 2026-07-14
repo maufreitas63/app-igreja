@@ -16,6 +16,8 @@ import {
   profileHasEditableMembershipDates,
   profileHasMembershipDateLink,
 } from '@/lib/pastoralRoleChangeApi';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
@@ -33,6 +35,7 @@ import {
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
 
 const ACCENT = '#3A96DD';
@@ -50,7 +53,11 @@ type MembershipDateEditorState = {
   outError: string | null;
 };
 
-export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight }: Props) {
+export function MaintenancePastoralRoleChangeCard({
+  isActive = true,
+  panelHeight,
+  minimal = false,
+}: Props) {
   const [membershipDateEditor, setMembershipDateEditor] = useState<MembershipDateEditorState | null>(
     null
   );
@@ -208,11 +215,13 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
   };
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Mudança de Papéis</Text>
-      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+    <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
+      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
+        Mudança de Papéis
+      </Text>
+      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
-      <Text style={styles.helpText}>
+      <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>
         Lista de perfis elegíveis (exceto super admin e equipe pastoral). Use a busca para filtrar
         por nome, telefone ou código. Toque nos cabeçalhos Visitante, Congregado ou Membro para
         filtrar pelo papel atual. Membros e congregados exibem o nome em azul sublinhado — toque para
@@ -221,13 +230,19 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
         preenchida).
       </Text>
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? (
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
+      ) : null}
 
-      <SectionLabel variant="maintenance">Filtrar lista</SectionLabel>
+      {minimal ? (
+        <Text style={styles.filterLabelMinimal}>Filtrar lista</Text>
+      ) : (
+        <SectionLabel variant="maintenance">Filtrar lista</SectionLabel>
+      )}
       <TextInput
-        style={styles.searchInput}
+        style={[styles.searchInput, minimal && styles.searchInputMinimal]}
         placeholder="Nome, telefone ou código"
-        placeholderTextColor="#64748B"
+        placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
         value={searchQuery}
         onChangeText={setSearchQuery}
         autoCapitalize="words"
@@ -235,10 +250,10 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
         returnKeyType="search"
       />
 
-      {loading ? <CardLoadingState lines={2} compact /> : null}
+      {loading ? <CardLoadingState lines={2} compact minimal={minimal} /> : null}
 
       {!loading && allProfiles.length > 0 ? (
-        <Text style={styles.countText}>
+        <Text style={[styles.countText, minimal && styles.countTextMinimal]}>
           {hasActiveFilters
             ? `${profiles.length} de ${allProfiles.length} perfis`
             : `${allProfiles.length} perfis`}
@@ -249,14 +264,14 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
       ) : null}
 
       {!loading && allProfiles.length === 0 ? (
-        <Text style={styles.hintText}>
+        <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
           Nenhum perfil elegível encontrado. Se o card deveria listar membros, execute no Supabase o
           script access-control-pastoral-role-change-fix-protected-list.sql e toque em Recarregar.
         </Text>
       ) : null}
 
       {!loading && allProfiles.length > 0 && profiles.length === 0 ? (
-        <Text style={styles.hintText}>
+        <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
           Nenhum perfil corresponde aos filtros. Limpe a busca ou toque de novo no cabeçalho do
           papel para remover o filtro.
         </Text>
@@ -264,32 +279,48 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
 
       {!loading ? (
         <TouchableOpacity
-          style={styles.reloadButton}
+          style={[styles.reloadButton, minimal && styles.reloadButtonMinimal]}
           onPress={() => void reloadProfiles()}
           activeOpacity={0.85}
         >
-          <Text style={styles.reloadButtonText}>Recarregar lista</Text>
+          <Text style={[styles.reloadButtonText, minimal && styles.reloadButtonTextMinimal]}>
+            Recarregar lista
+          </Text>
         </TouchableOpacity>
       ) : null}
 
       {!loading && allProfiles.length > 0 ? (
-        <View style={styles.tableSection}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.headerCell, styles.nameColumn]}>Nome curto</Text>
+        <View style={[styles.tableSection, minimal && styles.tableSectionMinimal]}>
+          <View style={[styles.tableHeader, minimal && styles.tableHeaderMinimal]}>
+            <Text style={[styles.headerCell, minimal && styles.headerCellMinimal, styles.nameColumn]}>
+              Nome curto
+            </Text>
             {PASTORAL_BASIC_ROLE_OPTIONS.map((option) => {
               const isActiveFilter = roleFilter === option.code;
 
               return (
                 <TouchableOpacity
                   key={option.code}
-                  style={[styles.roleHeaderButton, isActiveFilter && styles.roleHeaderButtonActive]}
+                  style={[
+                    styles.roleHeaderButton,
+                    minimal && styles.roleHeaderButtonMinimal,
+                    isActiveFilter && styles.roleHeaderButtonActive,
+                    minimal && isActiveFilter && styles.roleHeaderButtonActiveMinimal,
+                  ]}
                   onPress={() => toggleRoleFilter(option.code)}
                   activeOpacity={0.85}
                   accessibilityRole="button"
                   accessibilityState={{ selected: isActiveFilter }}
                   accessibilityLabel={`Filtrar por ${option.label}`}
                 >
-                  <Text style={[styles.roleHeaderCell, isActiveFilter && styles.roleHeaderCellActive]}>
+                  <Text
+                    style={[
+                      styles.roleHeaderCell,
+                      minimal && styles.roleHeaderCellMinimal,
+                      isActiveFilter && styles.roleHeaderCellActive,
+                      minimal && isActiveFilter && styles.roleHeaderCellActiveMinimal,
+                    ]}
+                  >
                     {option.label}
                   </Text>
                 </TouchableOpacity>
@@ -298,22 +329,31 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
           </View>
 
           <ScrollView
-            style={styles.tableScroll}
+            style={[styles.tableScroll, minimal && styles.tableScrollMinimal]}
             contentContainerStyle={styles.tableContent}
             nestedScrollEnabled
             keyboardShouldPersistTaps="handled"
           >
             {profiles.length === 0 ? (
-              <Text style={styles.emptyFilterText}>Nenhum perfil corresponde aos filtros.</Text>
+              <Text style={[styles.emptyFilterText, minimal && styles.emptyFilterTextMinimal]}>
+                Nenhum perfil corresponde aos filtros.
+              </Text>
             ) : (
-              profiles.map((profile) => {
+              profiles.map((profile, index) => {
                 const isSaving = savingProfileId === profile.id;
                 const hasMembershipLink = profileHasMembershipDateLink(profile);
                 const shortName = formatShortName(profile.fullName);
                 const hasMembershipOut = !isProfileVisibleInApp(profile.membershipOut);
 
                 return (
-                  <View key={profile.id} style={styles.tableRow}>
+                  <View
+                    key={profile.id}
+                    style={[
+                      styles.tableRow,
+                      minimal && styles.tableRowMinimal,
+                      minimal && index % 2 === 1 && styles.tableRowAltMinimal,
+                    ]}
+                  >
                     <View style={styles.nameColumn}>
                       {hasMembershipLink ? (
                         <Pressable
@@ -324,7 +364,9 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                           <Text
                             style={[
                               styles.memberNameLink,
+                              minimal && styles.memberNameLinkMinimal,
                               hasMembershipOut && styles.memberNameInactive,
+                              minimal && hasMembershipOut && styles.memberNameInactiveMinimal,
                             ]}
                             numberOfLines={2}
                           >
@@ -332,11 +374,19 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                           </Text>
                         </Pressable>
                       ) : (
-                        <Text style={styles.shortName} numberOfLines={2}>
+                        <Text
+                          style={[styles.shortName, minimal && styles.shortNameMinimal]}
+                          numberOfLines={2}
+                        >
                           {shortName}
                         </Text>
                       )}
-                      {isSaving ? <ActivityIndicator color={ACCENT} size="small" /> : null}
+                      {isSaving ? (
+                        <ActivityIndicator
+                          color={minimal ? MINIMAL_UI.accent : ACCENT}
+                          size="small"
+                        />
+                      ) : null}
                     </View>
 
                     {PASTORAL_BASIC_ROLE_OPTIONS.map((option) => {
@@ -356,8 +406,19 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                           accessibilityRole="radio"
                           accessibilityState={{ selected, disabled: isSaving || selected }}
                         >
-                          <View style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
-                            {selected ? <View style={styles.radioInner} /> : null}
+                          <View
+                            style={[
+                              styles.radioOuter,
+                              minimal && styles.radioOuterMinimal,
+                              selected && styles.radioOuterSelected,
+                              minimal && selected && styles.radioOuterSelectedMinimal,
+                            ]}
+                          >
+                            {selected ? (
+                              <View
+                                style={[styles.radioInner, minimal && styles.radioInnerMinimal]}
+                              />
+                            ) : null}
                           </View>
                         </TouchableOpacity>
                       );
@@ -376,28 +437,42 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
         animationType="fade"
         onRequestClose={closeMembershipDateEditor}
       >
-        <View style={styles.membershipDateModalOverlay}>
+        <View
+          style={[
+            styles.membershipDateModalOverlay,
+            minimal && styles.membershipDateModalOverlayMinimal,
+          ]}
+        >
           <Pressable
             style={styles.membershipDateModalBackdrop}
             onPress={closeMembershipDateEditor}
           />
 
           {membershipDateEditor ? (
-            <View style={styles.membershipDateBubble}>
-              <Text style={styles.membershipDateTitle}>Data de Membresia</Text>
-              <Text style={styles.membershipDateHelp}>
+            <View style={[styles.membershipDateBubble, minimal && styles.membershipDateBubbleMinimal]}>
+              <Text style={[styles.membershipDateTitle, minimal && styles.membershipDateTitleMinimal]}>
+                Data de Membresia
+              </Text>
+              <Text style={[styles.membershipDateHelp, minimal && styles.membershipDateHelpMinimal]}>
                 {membershipDateEditor.profileName}
                 {membershipDateEditor.readOnly && membershipDateEditor.inheritedFromName
                   ? ` — datas herdadas de ${membershipDateEditor.inheritedFromName}.`
                   : ' — informe ou edite as datas no formato dd/mm/aa.'}
               </Text>
-              <Text style={styles.membershipDateFieldLabel}>Data de entrada</Text>
+              <Text
+                style={[
+                  styles.membershipDateFieldLabel,
+                  minimal && styles.membershipDateFieldLabelMinimal,
+                ]}
+              >
+                Data de entrada
+              </Text>
               <TextInput
-                style={styles.membershipDateInput}
+                style={[styles.membershipDateInput, minimal && styles.membershipDateInputMinimal]}
                 value={membershipDateEditor.dateInput}
                 onChangeText={handleChangeMembershipDateInput}
                 placeholder="dd/mm/aa"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
                 keyboardType="numeric"
                 maxLength={8}
                 returnKeyType="next"
@@ -405,45 +480,79 @@ export function MaintenancePastoralRoleChangeCard({ isActive = true, panelHeight
                 editable={!membershipDateEditor.readOnly}
               />
               {membershipDateEditor.error ? (
-                <Text style={styles.membershipDateError}>{membershipDateEditor.error}</Text>
+                <Text style={[styles.membershipDateError, minimal && styles.membershipDateErrorMinimal]}>
+                  {membershipDateEditor.error}
+                </Text>
               ) : null}
-              <Text style={styles.membershipDateFieldLabel}>Data de desligamento</Text>
+              <Text
+                style={[
+                  styles.membershipDateFieldLabel,
+                  minimal && styles.membershipDateFieldLabelMinimal,
+                ]}
+              >
+                Data de desligamento
+              </Text>
               <TextInput
-                style={styles.membershipDateInput}
+                style={[styles.membershipDateInput, minimal && styles.membershipDateInputMinimal]}
                 value={membershipDateEditor.outDateInput}
                 onChangeText={handleChangeMembershipOutDateInput}
                 placeholder="dd/mm/aa"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
                 keyboardType="numeric"
                 maxLength={8}
                 returnKeyType="done"
                 editable={!membershipDateEditor.readOnly}
               />
               {membershipDateEditor.outError ? (
-                <Text style={styles.membershipDateError}>{membershipDateEditor.outError}</Text>
+                <Text style={[styles.membershipDateError, minimal && styles.membershipDateErrorMinimal]}>
+                  {membershipDateEditor.outError}
+                </Text>
               ) : null}
               <View style={styles.membershipDateActions}>
                 <TouchableOpacity
-                  style={[styles.membershipDateButton, styles.membershipDateCancelButton]}
+                  style={[
+                    styles.membershipDateButton,
+                    styles.membershipDateCancelButton,
+                    minimal && styles.membershipDateCancelButtonMinimal,
+                  ]}
                   onPress={closeMembershipDateEditor}
                   activeOpacity={0.85}
                   disabled={isSavingMembershipDate}
                 >
-                  <Text style={styles.membershipDateCancelText}>
+                  <Text
+                    style={[
+                      styles.membershipDateCancelText,
+                      minimal && styles.membershipDateCancelTextMinimal,
+                    ]}
+                  >
                     {membershipDateEditor.readOnly ? 'Fechar' : 'Cancelar'}
                   </Text>
                 </TouchableOpacity>
                 {!membershipDateEditor.readOnly ? (
                   <TouchableOpacity
-                    style={[styles.membershipDateButton, styles.membershipDateSaveButton]}
+                    style={[
+                      styles.membershipDateButton,
+                      styles.membershipDateSaveButton,
+                      minimal && styles.membershipDateSaveButtonMinimal,
+                    ]}
                     onPress={() => void handleSaveMembershipDate()}
                     activeOpacity={0.85}
                     disabled={isSavingMembershipDate}
                   >
                     {isSavingMembershipDate ? (
-                      <ActivityIndicator color="#0F172A" size="small" />
+                      <ActivityIndicator
+                        color={minimal ? MINIMAL_UI.onDark : '#0F172A'}
+                        size="small"
+                      />
                     ) : (
-                      <Text style={styles.membershipDateSaveText}>Salvar</Text>
+                      <Text
+                        style={[
+                          styles.membershipDateSaveText,
+                          minimal && styles.membershipDateSaveTextMinimal,
+                        ]}
+                      >
+                        Salvar
+                      </Text>
                     )}
                   </TouchableOpacity>
                 ) : null}
@@ -698,5 +807,142 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     fontSize: 12,
     fontWeight: '900',
+  },
+  panelMinimal: {
+    ...CONTAIN_WIDTH,
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    borderRadius: 0,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'visible',
+  },
+  sectionTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    ...CONTAIN_WIDTH,
+  },
+  helpTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
+  },
+  filterLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  searchInputMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    color: MINIMAL_UI.text,
+  },
+  countTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  hintTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  reloadButtonMinimal: {
+    ...CONTAIN_WIDTH,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    borderRadius: 12,
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  reloadButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  tableSectionMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  tableHeaderMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  headerCellMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  roleHeaderButtonMinimal: {
+    borderRadius: 8,
+  },
+  roleHeaderButtonActiveMinimal: {
+    backgroundColor: '#EFF6FF',
+  },
+  roleHeaderCellMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  roleHeaderCellActiveMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  tableScrollMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  emptyFilterTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  tableRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  tableRowAltMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  shortNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  memberNameLinkMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  memberNameInactiveMinimal: {
+    color: '#DC2626',
+  },
+  radioOuterMinimal: {
+    borderColor: MINIMAL_UI.border,
+  },
+  radioOuterSelectedMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  radioInnerMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  membershipDateModalOverlayMinimal: {
+    backgroundColor: 'rgba(30, 64, 175, 0.28)',
+  },
+  membershipDateBubbleMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  membershipDateTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  membershipDateHelpMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  membershipDateFieldLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  membershipDateInputMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    color: MINIMAL_UI.text,
+  },
+  membershipDateErrorMinimal: {
+    color: '#DC2626',
+  },
+  membershipDateCancelButtonMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  membershipDateCancelTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  membershipDateSaveButtonMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  membershipDateSaveTextMinimal: {
+    color: MINIMAL_UI.onDark,
   },
 });

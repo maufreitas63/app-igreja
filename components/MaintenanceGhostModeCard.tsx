@@ -14,6 +14,8 @@ import {
   type GhostModeTargetPreview,
 } from '@/lib/ghostModeApi';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -28,6 +30,7 @@ import Toast from 'react-native-toast-message';
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
 
 const RESOURCE_TYPE_LABELS: Record<GhostModeAccessAuditRow['resourceType'], string> = {
@@ -42,10 +45,12 @@ function GhostModeAccessAuditPanel({
   loading,
   error,
   report,
+  minimal = false,
 }: {
   loading: boolean;
   error: string | null;
   report: GhostModeAccessAuditReport | null;
+  minimal?: boolean;
 }) {
   const [showOnlyGranted, setShowOnlyGranted] = useState(false);
   const [expandedTypes, setExpandedTypes] = useState<Record<string, boolean>>({
@@ -90,18 +95,22 @@ function GhostModeAccessAuditPanel({
 
   if (loading) {
     return (
-      <View style={styles.auditBox}>
-        <Text style={styles.previewSectionTitle}>Relatório de acesso (ACL)</Text>
-        <CardLoadingState lines={5} compact />
+      <View style={[styles.auditBox, minimal && styles.auditBoxMinimal]}>
+        <Text style={[styles.previewSectionTitle, minimal && styles.previewSectionTitleMinimal]}>
+          Relatório de acesso (ACL)
+        </Text>
+        <CardLoadingState lines={5} compact minimal={minimal} />
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.auditBox}>
-        <Text style={styles.previewSectionTitle}>Relatório de acesso (ACL)</Text>
-        <Text style={styles.previewError}>{error}</Text>
+      <View style={[styles.auditBox, minimal && styles.auditBoxMinimal]}>
+        <Text style={[styles.previewSectionTitle, minimal && styles.previewSectionTitleMinimal]}>
+          Relatório de acesso (ACL)
+        </Text>
+        <Text style={[styles.previewError, minimal && styles.previewErrorMinimal]}>{error}</Text>
       </View>
     );
   }
@@ -111,38 +120,42 @@ function GhostModeAccessAuditPanel({
   }
 
   return (
-    <View style={styles.auditBox}>
-      <Text style={styles.previewSectionTitle}>Relatório de acesso (ACL)</Text>
-      <Text style={styles.previewSubtitle}>
+    <View style={[styles.auditBox, minimal && styles.auditBoxMinimal]}>
+      <Text style={[styles.previewSectionTitle, minimal && styles.previewSectionTitleMinimal]}>
+        Relatório de acesso (ACL)
+      </Text>
+      <Text style={[styles.previewSubtitle, minimal && styles.previewSubtitleMinimal]}>
         Telas e elementos do aplicativo com permissão de visualizar e alterar para este usuário.
       </Text>
-      <Text style={styles.auditSummary}>
+      <Text style={[styles.auditSummary, minimal && styles.auditSummaryMinimal]}>
         {report.summary.canViewCount} com visualização · {report.summary.canUpdateCount} com alteração
         {' · '}
         {report.summary.total} recursos cadastrados
       </Text>
 
       <TouchableOpacity
-        style={styles.auditFilterButton}
+        style={[styles.auditFilterButton, minimal && styles.auditFilterButtonMinimal]}
         onPress={() => setShowOnlyGranted((current) => !current)}
         activeOpacity={0.85}
       >
-        <Text style={styles.auditFilterButtonText}>
+        <Text style={[styles.auditFilterButtonText, minimal && styles.auditFilterButtonTextMinimal]}>
           {showOnlyGranted ? 'Mostrar todos os recursos' : 'Mostrar somente com acesso'}
         </Text>
       </TouchableOpacity>
 
       {groupedRows.length === 0 ? (
-        <Text style={styles.previewMuted}>Nenhum recurso corresponde ao filtro atual.</Text>
+        <Text style={[styles.previewMuted, minimal && styles.previewMutedMinimal]}>
+          Nenhum recurso corresponde ao filtro atual.
+        </Text>
       ) : (
         groupedRows.map((group) => {
           const isExpanded = expandedTypes[group.type] ?? false;
           const grantedCount = group.rows.filter((row) => row.canView || row.canUpdate).length;
 
           return (
-            <View key={group.type} style={styles.auditGroup}>
+            <View key={group.type} style={[styles.auditGroup, minimal && styles.auditGroupMinimal]}>
               <TouchableOpacity
-                style={styles.auditGroupHeader}
+                style={[styles.auditGroupHeader, minimal && styles.auditGroupHeaderMinimal]}
                 onPress={() =>
                   setExpandedTypes((current) => ({
                     ...current,
@@ -152,32 +165,65 @@ function GhostModeAccessAuditPanel({
                 activeOpacity={0.85}
               >
                 <View style={styles.auditGroupHeaderText}>
-                  <Text style={styles.auditGroupTitle}>{group.title}</Text>
-                  <Text style={styles.auditGroupMeta}>
+                  <Text style={[styles.auditGroupTitle, minimal && styles.auditGroupTitleMinimal]}>
+                    {group.title}
+                  </Text>
+                  <Text style={[styles.auditGroupMeta, minimal && styles.auditGroupMetaMinimal]}>
                     {grantedCount} com acesso · {group.rows.length} listado(s)
                   </Text>
                 </View>
-                <Text style={styles.auditGroupToggle}>{isExpanded ? '−' : '+'}</Text>
+                <Text style={[styles.auditGroupToggle, minimal && styles.auditGroupToggleMinimal]}>
+                  {isExpanded ? '−' : '+'}
+                </Text>
               </TouchableOpacity>
 
               {isExpanded ? (
-                <View style={styles.auditTable}>
-                  <View style={styles.auditTableHeader}>
-                    <Text style={[styles.auditHeaderCell, styles.auditElementCell]}>Tela / elemento</Text>
-                    <Text style={styles.auditHeaderCell}>Ver</Text>
-                    <Text style={styles.auditHeaderCell}>Alterar</Text>
+                <View style={[styles.auditTable, minimal && styles.auditTableMinimal]}>
+                  <View style={[styles.auditTableHeader, minimal && styles.auditTableHeaderMinimal]}>
+                    <Text
+                      style={[
+                        styles.auditHeaderCell,
+                        minimal && styles.auditHeaderCellMinimal,
+                        styles.auditElementCell,
+                      ]}
+                    >
+                      Tela / elemento
+                    </Text>
+                    <Text style={[styles.auditHeaderCell, minimal && styles.auditHeaderCellMinimal]}>
+                      Ver
+                    </Text>
+                    <Text style={[styles.auditHeaderCell, minimal && styles.auditHeaderCellMinimal]}>
+                      Alterar
+                    </Text>
                   </View>
 
-                  {group.rows.map((row) => (
-                    <View key={`${row.resourceType}:${row.resourceKey}`} style={styles.auditTableRow}>
+                  {group.rows.map((row, index) => (
+                    <View
+                      key={`${row.resourceType}:${row.resourceKey}`}
+                      style={[
+                        styles.auditTableRow,
+                        minimal && styles.auditTableRowMinimal,
+                        minimal && index % 2 === 1 && styles.auditTableRowAltMinimal,
+                      ]}
+                    >
                       <View style={styles.auditElementCell}>
-                        <Text style={styles.auditElementLabel}>{row.label}</Text>
-                        <Text style={styles.auditElementKey}>{row.resourceKey}</Text>
+                        <Text
+                          style={[styles.auditElementLabel, minimal && styles.auditElementLabelMinimal]}
+                        >
+                          {row.label}
+                        </Text>
+                        <Text style={[styles.auditElementKey, minimal && styles.auditElementKeyMinimal]}>
+                          {row.resourceKey}
+                        </Text>
                       </View>
                       <Text
                         style={[
                           styles.auditPermissionCell,
                           row.canView ? styles.auditPermissionYes : styles.auditPermissionNo,
+                          minimal &&
+                            (row.canView
+                              ? styles.auditPermissionYesMinimal
+                              : styles.auditPermissionNoMinimal),
                         ]}
                       >
                         {formatPermissionLabel(row.canView)}
@@ -186,6 +232,10 @@ function GhostModeAccessAuditPanel({
                         style={[
                           styles.auditPermissionCell,
                           row.canUpdate ? styles.auditPermissionYes : styles.auditPermissionNo,
+                          minimal &&
+                            (row.canUpdate
+                              ? styles.auditPermissionYesMinimal
+                              : styles.auditPermissionNoMinimal),
                         ]}
                       >
                         {formatPermissionLabel(row.canUpdate)}
@@ -206,25 +256,31 @@ function GhostModeRolesPreviewPanel({
   loading,
   error,
   preview,
+  minimal = false,
 }: {
   loading: boolean;
   error: string | null;
   preview: GhostModeTargetPreview | null;
+  minimal?: boolean;
 }) {
   if (loading) {
     return (
-      <View style={styles.previewBox}>
-        <Text style={styles.previewTitle}>Papéis de acesso</Text>
-        <CardLoadingState lines={3} compact />
+      <View style={[styles.previewBox, minimal && styles.previewBoxMinimal]}>
+        <Text style={[styles.previewTitle, minimal && styles.previewTitleMinimal]}>
+          Papéis de acesso
+        </Text>
+        <CardLoadingState lines={3} compact minimal={minimal} />
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.previewBox}>
-        <Text style={styles.previewTitle}>Papéis de acesso</Text>
-        <Text style={styles.previewError}>{error}</Text>
+      <View style={[styles.previewBox, minimal && styles.previewBoxMinimal]}>
+        <Text style={[styles.previewTitle, minimal && styles.previewTitleMinimal]}>
+          Papéis de acesso
+        </Text>
+        <Text style={[styles.previewError, minimal && styles.previewErrorMinimal]}>{error}</Text>
       </View>
     );
   }
@@ -236,14 +292,16 @@ function GhostModeRolesPreviewPanel({
   const { roles, implicitVisitante } = preview;
 
   return (
-    <View style={styles.previewBox}>
-      <Text style={styles.previewTitle}>Papéis de acesso</Text>
-      <Text style={styles.previewSubtitle}>
+    <View style={[styles.previewBox, minimal && styles.previewBoxMinimal]}>
+      <Text style={[styles.previewTitle, minimal && styles.previewTitleMinimal]}>
+        Papéis de acesso
+      </Text>
+      <Text style={[styles.previewSubtitle, minimal && styles.previewSubtitleMinimal]}>
         Papéis atribuídos ao usuário selecionado antes de ativar o Modo Ghost.
       </Text>
 
       {implicitVisitante ? (
-        <Text style={styles.visitanteHint}>
+        <Text style={[styles.visitanteHint, minimal && styles.visitanteHintMinimal]}>
           Nenhum papel atribuído — o aplicativo trata este perfil como visitante.
         </Text>
       ) : null}
@@ -251,20 +309,30 @@ function GhostModeRolesPreviewPanel({
       {roles.length ? (
         <View style={styles.rolesList}>
           {roles.map((role) => (
-            <View key={role.roleId} style={styles.roleChip}>
-              <Text style={styles.roleChipName}>{role.roleName}</Text>
-              <Text style={styles.roleChipCode}>{role.roleCode}</Text>
+            <View key={role.roleId} style={[styles.roleChip, minimal && styles.roleChipMinimal]}>
+              <Text style={[styles.roleChipName, minimal && styles.roleChipNameMinimal]}>
+                {role.roleName}
+              </Text>
+              <Text style={[styles.roleChipCode, minimal && styles.roleChipCodeMinimal]}>
+                {role.roleCode}
+              </Text>
             </View>
           ))}
         </View>
       ) : (
-        <Text style={styles.previewMuted}>Sem papéis explícitos na tabela de acesso.</Text>
+        <Text style={[styles.previewMuted, minimal && styles.previewMutedMinimal]}>
+          Sem papéis explícitos na tabela de acesso.
+        </Text>
       )}
     </View>
   );
 }
 
-export function MaintenanceGhostModeCard({ isActive = false, panelHeight }: Props) {
+export function MaintenanceGhostModeCard({
+  isActive = false,
+  panelHeight,
+  minimal = false,
+}: Props) {
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const { isActive: ghostActive, startGhostMode } = useGhostMode();
   const [profiles, setProfiles] = useState<GhostModeProfileOption[]>([]);
@@ -414,9 +482,15 @@ export function MaintenanceGhostModeCard({ isActive = false, panelHeight }: Prop
 
   if (ghostActive) {
     return (
-      <View style={[maintenancePanelStyles.panelScrollContent, { minHeight: contentHeight }]}>
-        <Text style={styles.title}>Modo Ghost (Auditor)</Text>
-        <Text style={styles.hint}>
+      <View
+        style={[
+          maintenancePanelStyles.panelScrollContent,
+          minimal && styles.panelMinimal,
+          { minHeight: contentHeight },
+        ]}
+      >
+        <Text style={minimal ? styles.sectionTitle : styles.title}>Modo Ghost (Auditor)</Text>
+        <Text style={[styles.hint, minimal && styles.hintMinimal]}>
           O Modo Ghost já está ativo. Use o banner superior para encerrar a simulação e voltar ao seu
           usuário real.
         </Text>
@@ -427,25 +501,39 @@ export function MaintenanceGhostModeCard({ isActive = false, panelHeight }: Prop
   return (
     <ScrollView
       style={styles.scroll}
-      contentContainerStyle={[maintenancePanelStyles.panelScrollContent, { minHeight: contentHeight }]}
+      contentContainerStyle={[
+        maintenancePanelStyles.panelScrollContent,
+        minimal && styles.panelMinimal,
+        { minHeight: contentHeight },
+      ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       nestedScrollEnabled
     >
-      <Text style={styles.title}>Modo Ghost (Auditor)</Text>
-      <Text style={styles.hint}>
+      <Text style={minimal ? styles.sectionTitle : styles.title}>Modo Ghost (Auditor)</Text>
+      <Text style={[styles.hint, minimal && styles.hintMinimal]}>
         Selecione um usuário ativo para simular a identidade dele e validar permissões de acesso na
         Dashboard e demais telas. Disponível apenas para administradores autorizados.
       </Text>
 
-      {rpcMissing ? <Text style={styles.warningText}>{GHOST_MODE_SQL_HINT}</Text> : null}
-      {error && !rpcMissing ? <Text style={styles.errorText}>{error}</Text> : null}
+      {rpcMissing ? (
+        <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
+          {GHOST_MODE_SQL_HINT}
+        </Text>
+      ) : null}
+      {error && !rpcMissing ? (
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
+      ) : null}
 
-      {loading ? <CardLoadingState lines={3} compact /> : null}
+      {loading ? <CardLoadingState lines={3} compact minimal={minimal} /> : null}
 
       {!loading ? (
         <>
-          <SectionLabel>Usuário ativo</SectionLabel>
+          {minimal ? (
+            <Text style={styles.filterLabelMinimal}>Usuário ativo</Text>
+          ) : (
+            <SectionLabel>Usuário ativo</SectionLabel>
+          )}
           <DropdownSelect
             options={profileOptions}
             selectedValue={selectedProfileId ?? ''}
@@ -454,23 +542,30 @@ export function MaintenanceGhostModeCard({ isActive = false, panelHeight }: Prop
             placeholder="Selecione um usuário..."
             searchPlaceholder="Digite nome ou telefone..."
             searchable
+            variant={minimal ? 'minimal' : 'default'}
             disabled={starting || profileOptions.length === 0}
           />
 
           <TouchableOpacity
-            style={[styles.primaryButton, (starting || !selectedProfileId) && styles.primaryButtonDisabled]}
+            style={[
+              styles.primaryButton,
+              minimal && styles.primaryButtonMinimal,
+              (starting || !selectedProfileId) && styles.primaryButtonDisabled,
+            ]}
             onPress={() => void handleStartGhost()}
             disabled={starting || !selectedProfileId}
             activeOpacity={0.85}
           >
             {starting ? (
-              <ActivityIndicator color="#0f172a" size="small" />
+              <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0f172a'} size="small" />
             ) : (
-              <Text style={styles.primaryButtonText}>Ativar Modo Ghost</Text>
+              <Text style={[styles.primaryButtonText, minimal && styles.primaryButtonTextMinimal]}>
+                Ativar Modo Ghost
+              </Text>
             )}
           </TouchableOpacity>
 
-          <Text style={styles.footerHint}>
+          <Text style={[styles.footerHint, minimal && styles.footerHintMinimal]}>
             O estado persiste durante a navegação e é resetado ao sair do app ou fazer logout.
           </Text>
 
@@ -480,11 +575,13 @@ export function MaintenanceGhostModeCard({ isActive = false, panelHeight }: Prop
                 loading={previewLoading}
                 error={previewError}
                 preview={preview}
+                minimal={minimal}
               />
               <GhostModeAccessAuditPanel
                 loading={auditLoading}
                 error={auditError}
                 report={auditReport}
+                minimal={minimal}
               />
             </>
           ) : null}
@@ -737,5 +834,130 @@ const styles = StyleSheet.create({
   },
   auditPermissionNo: {
     color: 'rgba(58, 150, 221, 0.82)',
+  },
+  panelMinimal: {
+    ...CONTAIN_WIDTH,
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  sectionTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    ...CONTAIN_WIDTH,
+    marginBottom: 8,
+  },
+  hintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  footerHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  warningTextMinimal: {
+    color: '#B45309',
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
+  },
+  filterLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  primaryButtonMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  primaryButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  previewBoxMinimal: {
+    ...CONTAIN_WIDTH,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  previewTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  previewSubtitleMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  previewSectionTitleMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  previewErrorMinimal: {
+    color: '#DC2626',
+  },
+  previewMutedMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  visitanteHintMinimal: {
+    color: '#B45309',
+  },
+  roleChipMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  roleChipNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  roleChipCodeMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  auditBoxMinimal: {
+    ...CONTAIN_WIDTH,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  auditSummaryMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  auditFilterButtonMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  auditFilterButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  auditGroupMinimal: {
+    borderColor: MINIMAL_UI.border,
+  },
+  auditGroupHeaderMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  auditGroupTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  auditGroupMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  auditGroupToggleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  auditTableMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+  },
+  auditTableHeaderMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  auditHeaderCellMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  auditTableRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  auditTableRowAltMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  auditElementLabelMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  auditElementKeyMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  auditPermissionYesMinimal: {
+    color: '#16A34A',
+  },
+  auditPermissionNoMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
 });

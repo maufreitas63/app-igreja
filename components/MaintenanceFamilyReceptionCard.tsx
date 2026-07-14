@@ -4,6 +4,8 @@ import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceFamilyReception } from '@/hooks/useMaintenanceFamilyReception';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { formatShortName } from '@/lib/formatShortName';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import Toast from 'react-native-toast-message';
@@ -19,6 +21,7 @@ import {
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
 
 const ACCENT = '#3A96DD';
@@ -33,7 +36,19 @@ const formatSubmissionDate = (value: string) => {
   return new Date(parsed).toLocaleString('pt-BR');
 };
 
-export function MaintenanceFamilyReceptionCard({ isActive = true, panelHeight }: Props) {
+function SectionHeading({ children, minimal }: { children: string; minimal: boolean }) {
+  return minimal ? (
+    <Text style={styles.sectionLabelMinimal}>{children}</Text>
+  ) : (
+    <SectionLabel variant="maintenance">{children}</SectionLabel>
+  );
+}
+
+export function MaintenanceFamilyReceptionCard({
+  isActive = true,
+  panelHeight,
+  minimal = false,
+}: Props) {
   const { prefix, newFamilyRecordingHint } = useEntityPrefix();
   const {
     submissions,
@@ -73,42 +88,72 @@ export function MaintenanceFamilyReceptionCard({ isActive = true, panelHeight }:
   };
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Recepção — Cadastro Familiar</Text>
-      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+    <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
+      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
+        Recepção — Cadastro Familiar
+      </Text>
+      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
-      <Text style={styles.helpText}>
+      <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>
         Formulários públicos entram aqui antes de profiles/members. Lotes com código familiar
         detectado nas tabelas finais usam o mesmo {prefix}; conflitos exigem revisão manual.
       </Text>
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      {statusMessage ? <Text style={styles.successText}>{statusMessage}</Text> : null}
+      {error ? (
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
+      ) : null}
+      {statusMessage ? (
+        <Text style={[styles.successText, minimal && styles.successTextMinimal]}>
+          {statusMessage}
+        </Text>
+      ) : null}
 
-      <View style={styles.toolbar}>
-        <TouchableOpacity style={styles.toolbarButton} onPress={() => void refetch()} activeOpacity={0.85}>
-          <MaterialIcons name="refresh" size={18} color="#E2E8F0" />
-          <Text style={styles.toolbarButtonText}>Atualizar</Text>
+      <View style={[styles.toolbar, minimal && styles.toolbarMinimal]}>
+        <TouchableOpacity
+          style={[styles.toolbarButton, minimal && styles.toolbarButtonMinimal]}
+          onPress={() => void refetch()}
+          activeOpacity={0.85}
+        >
+          <MaterialIcons name="refresh" size={18} color={minimal ? MINIMAL_UI.icon : '#E2E8F0'} />
+          <Text style={[styles.toolbarButtonText, minimal && styles.toolbarButtonTextMinimal]}>
+            Atualizar
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.toolbarButton} onPress={selectAllSubmissions} activeOpacity={0.85}>
-          <Text style={styles.toolbarButtonText}>Selecionar todos</Text>
+        <TouchableOpacity
+          style={[styles.toolbarButton, minimal && styles.toolbarButtonMinimal]}
+          onPress={selectAllSubmissions}
+          activeOpacity={0.85}
+        >
+          <Text style={[styles.toolbarButtonText, minimal && styles.toolbarButtonTextMinimal]}>
+            Selecionar todos
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.toolbarButton} onPress={clearSubmissionSelection} activeOpacity={0.85}>
-          <Text style={styles.toolbarButtonText}>Limpar</Text>
+        <TouchableOpacity
+          style={[styles.toolbarButton, minimal && styles.toolbarButtonMinimal]}
+          onPress={clearSubmissionSelection}
+          activeOpacity={0.85}
+        >
+          <Text style={[styles.toolbarButtonText, minimal && styles.toolbarButtonTextMinimal]}>
+            Limpar
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.batchActions}>
+      <View style={[styles.batchActions, minimal && styles.batchActionsMinimal]}>
         <TouchableOpacity
-          style={[styles.primaryButton, processing && styles.buttonDisabled]}
+          style={[
+            styles.primaryButton,
+            minimal && styles.primaryButtonMinimal,
+            processing && styles.buttonDisabled,
+          ]}
           onPress={() => void handleProcess()}
           disabled={processing}
           activeOpacity={0.85}
         >
           {processing ? (
-            <ActivityIndicator color="#052e16" size="small" />
+            <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#052e16'} size="small" />
           ) : (
-            <Text style={styles.primaryButtonText}>
+            <Text style={[styles.primaryButtonText, minimal && styles.primaryButtonTextMinimal]}>
               {selectedSubmissionIds.length > 0
                 ? `Gravar selecionados (${selectedSubmissionIds.length})`
                 : 'Gravar todos pendentes'}
@@ -117,56 +162,77 @@ export function MaintenanceFamilyReceptionCard({ isActive = true, panelHeight }:
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.secondaryButton, processing && styles.buttonDisabled]}
+          style={[
+            styles.secondaryButton,
+            minimal && styles.secondaryButtonMinimal,
+            processing && styles.buttonDisabled,
+          ]}
           onPress={() => void handleReject()}
           disabled={processing || selectedSubmissionIds.length === 0}
           activeOpacity={0.85}
         >
-          <Text style={styles.secondaryButtonText}>Rejeitar selecionados</Text>
+          <Text style={[styles.secondaryButtonText, minimal && styles.secondaryButtonTextMinimal]}>
+            Rejeitar selecionados
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <SectionLabel variant="maintenance">Fila pendente ({submissions.length})</SectionLabel>
+      <SectionHeading minimal={minimal}>Fila pendente ({submissions.length})</SectionHeading>
 
       {loading ? (
-        <CardLoadingState label="Carregando recepção..." />
+        <CardLoadingState label="Carregando recepção..." minimal={minimal} />
       ) : submissions.length === 0 ? (
-        <Text style={styles.emptyText}>Nenhum cadastro aguardando análise.</Text>
+        <Text style={[styles.emptyText, minimal && styles.emptyTextMinimal]}>
+          Nenhum cadastro aguardando análise.
+        </Text>
       ) : (
-        <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+        <ScrollView
+          style={[styles.list, minimal && styles.listMinimal]}
+          contentContainerStyle={styles.listContent}
+        >
           {submissions.map((submission) => {
             const selected = selectedSubmissionIds.includes(submission.submissionId);
 
             return (
               <TouchableOpacity
                 key={submission.submissionId}
-                style={[styles.submissionCard, selected && styles.submissionCardSelected]}
+                style={[
+                  styles.submissionCard,
+                  minimal && styles.submissionCardMinimal,
+                  selected && styles.submissionCardSelected,
+                  minimal && selected && styles.submissionCardSelectedMinimal,
+                ]}
                 onPress={() => toggleSubmissionSelection(submission.submissionId)}
                 activeOpacity={0.9}
               >
                 <View style={styles.submissionHeader}>
-                  <Text style={styles.submissionTitle}>
+                  <Text style={[styles.submissionTitle, minimal && styles.submissionTitleMinimal]}>
                     {submission.memberCount} integrante(s) · {formatSubmissionDate(submission.createdAt)}
                   </Text>
                   {submission.hasFamilyConflict ? (
-                    <Text style={styles.conflictBadge}>Conflito de família</Text>
+                    <Text style={[styles.conflictBadge, minimal && styles.conflictBadgeMinimal]}>
+                      Conflito de família
+                    </Text>
                   ) : null}
                 </View>
 
-                <Text style={styles.submissionMeta}>
+                <Text style={[styles.submissionMeta, minimal && styles.submissionMetaMinimal]}>
                   Protocolo: {submission.submissionId.slice(0, 8).toUpperCase()}
                 </Text>
-                <Text style={styles.submissionMeta}>
+                <Text style={[styles.submissionMeta, minimal && styles.submissionMetaMinimal]}>
                   Código detectado: {submission.detectedFamilyId ?? newFamilyRecordingHint}
                 </Text>
 
                 {submission.members.map((member) => (
-                  <View key={member.id} style={styles.memberRow}>
-                    <Text style={styles.memberName}>
+                  <View
+                    key={member.id}
+                    style={[styles.memberRow, minimal && styles.memberRowMinimal]}
+                  >
+                    <Text style={[styles.memberName, minimal && styles.memberNameMinimal]}>
                       {member.isInformant ? '★ ' : '• '}
                       {formatShortName(member.fullName)} — {member.relationship}
                     </Text>
-                    <Text style={styles.memberHint}>
+                    <Text style={[styles.memberHint, minimal && styles.memberHintMinimal]}>
                       {member.matchedProfileId || member.matchedMemberId
                         ? 'Já existe em profiles/members'
                         : 'Novo integrante'}
@@ -314,5 +380,94 @@ const styles = StyleSheet.create({
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     marginTop: 2,
+  },
+  panelMinimal: {
+    ...CONTAIN_WIDTH,
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    borderRadius: 0,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'visible',
+  },
+  sectionTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    ...CONTAIN_WIDTH,
+  },
+  sectionLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  helpTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
+  },
+  successTextMinimal: {
+    color: '#16A34A',
+  },
+  toolbarMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  toolbarButtonMinimal: {
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 10,
+  },
+  toolbarButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  batchActionsMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  primaryButtonMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  primaryButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  secondaryButtonMinimal: {
+    borderColor: '#DC2626',
+    backgroundColor: MINIMAL_UI.background,
+  },
+  secondaryButtonTextMinimal: {
+    color: '#DC2626',
+  },
+  emptyTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+    fontStyle: 'normal',
+  },
+  listMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  submissionCardMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  submissionCardSelectedMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: '#EFF6FF',
+  },
+  submissionTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  conflictBadgeMinimal: {
+    color: '#B45309',
+  },
+  submissionMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  memberRowMinimal: {
+    borderTopColor: MINIMAL_UI.divider,
+  },
+  memberNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  memberHintMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
 });
