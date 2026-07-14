@@ -118,7 +118,8 @@ export function DropdownSelect({
 
     clearBlurTimer();
     setOpen(true);
-    setSearchQuery(selectedValue ? selectedLabel : '');
+    // Não pré-filtra pelo rótulo selecionado — senão a lista some e fica “só um tipo”.
+    setSearchQuery('');
   };
 
   const scheduleCloseSearch = () => {
