@@ -4,7 +4,6 @@ import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import {
-  CHURCH_ROOM_SETTINGS_SQL_HINT,
   clearChurchRoomSettingsCache,
   listChurchRoomSettings,
   type ChurchRoomSetting,
@@ -47,16 +46,12 @@ export default function ConfiguracaoSalasScreen() {
     <ScreenAccessGate status={accessStatus}>
       <MinimalScreenLayout>
         <Text style={styles.title}>Configuração de Salas</Text>
-        <Text style={styles.subtitle}>
-          Defina os nomes afetivos da instância ativa e atribua membros às salas.
-        </Text>
 
         {loading ? (
           <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />
         ) : (
           <View style={styles.body}>
             <ChurchRoomSettingsPanel rooms={rooms} onRoomsChanged={() => void loadRooms()} />
-            <Text style={styles.footerHint}>{CHURCH_ROOM_SETTINGS_SQL_HINT}</Text>
           </View>
         )}
       </MinimalScreenLayout>
@@ -67,27 +62,12 @@ export default function ConfiguracaoSalasScreen() {
 const styles = StyleSheet.create({
   title: {
     ...MINIMAL_SECTION_TITLE,
-    marginBottom: 4,
-  },
-  subtitle: {
-    color: MINIMAL_UI.textMuted,
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 8,
+    marginBottom: 12,
   },
   loader: {
     marginTop: 24,
   },
   body: {
     width: '100%',
-    gap: 12,
-  },
-  footerHint: {
-    marginTop: 20,
-    fontSize: 11,
-    color: MINIMAL_UI.textMuted,
-    lineHeight: 15,
   },
 });
