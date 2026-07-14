@@ -79,10 +79,8 @@ const MEMBER_CHECKBOX_HEIGHT = 24;
 const MEMBER_NAME_LINE_HEIGHT = 22;
 const MEMBER_REGISTERED_LINE_HEIGHT = 16;
 
-function getMemberRowHeight(isRegistered: boolean): number {
-  const infoHeight = isRegistered
-    ? MEMBER_NAME_LINE_HEIGHT + MEMBER_REGISTERED_LINE_HEIGHT
-    : MEMBER_NAME_LINE_HEIGHT;
+function getMemberRowHeight(_isRegistered: boolean): number {
+  const infoHeight = MEMBER_NAME_LINE_HEIGHT + MEMBER_REGISTERED_LINE_HEIGHT;
   return MEMBER_ROW_PADDING_VERTICAL * 2 + Math.max(MEMBER_CHECKBOX_HEIGHT, infoHeight);
 }
 
@@ -143,6 +141,9 @@ export const FamilyRegistrationList = ({
     RegistrationStatus | undefined
   >(undefined);
   const [roomLabelByMemberId, setRoomLabelByMemberId] = useState<Record<string, string>>({});
+  const [roomOverlayByMemberId, setRoomOverlayByMemberId] = useState<Record<string, boolean>>(
+    {}
+  );
 
   const allowedRoomKeys = useMemo(() => {
     const keys = Array.isArray(eventEnabledRoomKeys)
@@ -230,6 +231,7 @@ export const FamilyRegistrationList = ({
 
     if (!audience.length) {
       setRoomLabelByMemberId({});
+      setRoomOverlayByMemberId({});
       return undefined;
     }
 
@@ -237,6 +239,7 @@ export const FamilyRegistrationList = ({
       if (!active) return;
       const index = buildAudienceRoomLabelIndex(rows);
       const next: Record<string, string> = {};
+      const nextOverlay: Record<string, boolean> = {};
       for (const member of audience) {
         const match = lookupAudienceRoomLabel(index, member);
         if (!match) continue;
@@ -244,9 +247,11 @@ export const FamilyRegistrationList = ({
         // Especial vigente sempre; padrão só se habilitada no evento.
         if (isOverlay || allowedRoomKeys.has(match.room_key)) {
           next[member.id] = match.room_label;
+          nextOverlay[member.id] = isOverlay;
         }
       }
       setRoomLabelByMemberId(next);
+      setRoomOverlayByMemberId(nextOverlay);
     });
 
     return () => {
@@ -528,6 +533,7 @@ export const FamilyRegistrationList = ({
             showKidsIndicator={showKidsIndicator}
             showTeensIndicator={showTeensIndicator}
             assignedRoomLabel={roomLabelByMemberId[soloParticipant.id]}
+            assignedRoomIsOverlay={roomOverlayByMemberId[soloParticipant.id] === true}
             onToggle={() => {
               if (!hasEventOpen || isBusy) {
                 return;
@@ -693,6 +699,7 @@ export const FamilyRegistrationList = ({
                 showKidsIndicator={showKidsIndicator}
                 showTeensIndicator={showTeensIndicator}
                 assignedRoomLabel={roomLabelByMemberId[item.id]}
+                assignedRoomIsOverlay={roomOverlayByMemberId[item.id] === true}
                 onToggle={() => {
                   if (!hasEventOpen || isBusy || quorumUnregisterLocked) {
                     return;

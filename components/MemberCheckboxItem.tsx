@@ -11,16 +11,15 @@ type Props = {
   isChecked: boolean;
   isLoading?: boolean;
   isRegistered?: boolean;
-  /** Nome do evento em que o membro está inscrito (exibido sob o nome). */
+  /** Nome do evento padrão (culto) em que o membro está inscrito. */
   registeredEventName?: string | null;
   registrationStatus?: RegistrationStatus;
   showKidsIndicator?: boolean;
   showTeensIndicator?: boolean;
-  /**
-   * Sala efetiva do membro (especial vigente ou padrão).
-   * Exibida só na linha «Inscrito em:» — a coluna Salas foi removida.
-   */
+  /** Sala efetiva (especial vigente ou padrão). */
   assignedRoomLabel?: string | null;
+  /** True quando a sala efetiva é especial (sobreposição). */
+  assignedRoomIsOverlay?: boolean;
   minimal?: boolean;
   onToggle: () => void;
 };
@@ -36,6 +35,7 @@ export const MemberCheckboxItem = ({
   showKidsIndicator = false,
   showTeensIndicator = false,
   assignedRoomLabel = null,
+  assignedRoomIsOverlay = false,
   minimal = false,
   onToggle,
 }: Props) => {
@@ -46,18 +46,20 @@ export const MemberCheckboxItem = ({
     (registrationStatus === 'KIDS' && showKidsIndicator) ||
     (registrationStatus === 'TEENS' && showTeensIndicator);
 
-  const registeredLine = (() => {
-    if (!isRegistered) return null;
-    if (eventLabel && roomLabel) {
-      return `Inscrito em: ${eventLabel} · ${roomLabel}`;
-    }
-    if (roomLabel) {
+  // Especial vigente + inscrito → só a especial.
+  // Só inscrição no evento padrão → só o evento.
+  // Sem vínculo → «Sem Inscrições».
+  const statusLine = (() => {
+    if (isRegistered && assignedRoomIsOverlay && roomLabel) {
       return `Inscrito em: ${roomLabel}`;
     }
-    if (eventLabel) {
+    if (isRegistered && eventLabel) {
       return `Inscrito em: ${eventLabel}`;
     }
-    return 'Registrado para o evento';
+    if (isRegistered) {
+      return 'Inscrito em: evento';
+    }
+    return 'Sem Inscrições';
   })();
 
   return (
@@ -96,14 +98,17 @@ export const MemberCheckboxItem = ({
             />
           ) : null}
         </View>
-        {registeredLine ? (
-          <Text
-            style={[styles.registeredText, minimal && styles.registeredTextMinimal]}
-            numberOfLines={2}
-          >
-            {registeredLine}
-          </Text>
-        ) : null}
+        <Text
+          style={[
+            styles.registeredText,
+            minimal && styles.registeredTextMinimal,
+            !isRegistered && styles.noRegistrationText,
+            !isRegistered && minimal && styles.noRegistrationTextMinimal,
+          ]}
+          numberOfLines={2}
+        >
+          {statusLine}
+        </Text>
       </View>
     </View>
   );
@@ -198,5 +203,13 @@ const styles = StyleSheet.create({
   },
   registeredTextMinimal: {
     color: MINIMAL_UI.textMuted,
+  },
+  noRegistrationText: {
+    color: 'rgba(148, 163, 184, 0.9)',
+    fontWeight: '500',
+  },
+  noRegistrationTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+    fontWeight: '500',
   },
 });
