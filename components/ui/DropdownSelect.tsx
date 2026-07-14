@@ -427,11 +427,16 @@ export function DropdownSelect({
 const styles = StyleSheet.create({
   searchableRoot: {
     width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
     position: 'relative',
     zIndex: 20,
   },
   searchableTrigger: {
     width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
     minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',

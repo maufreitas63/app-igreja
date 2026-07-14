@@ -406,13 +406,17 @@ export default function MaintenanceDashboard() {
   const requestedPanel = pickRouteParam(panelParam);
   const isMinimalPresentation = isMinimalPresentationRoute(presentationParam);
   const previousPageWidthRef = useRef(pageWidth);
-  const carouselPageWidth = useMemo(
-    () =>
-      isMinimalPresentation
-        ? Math.max(280, pageWidth - MINIMAL_LAYOUT_HORIZONTAL_PADDING * 2)
-        : pageWidth,
-    [isMinimalPresentation, pageWidth]
-  );
+  /** Largura real do estágio (após padding do MinimalScreenLayout), para o carrossel caber. */
+  const [measuredCarouselWidth, setMeasuredCarouselWidth] = useState(0);
+  const carouselPageWidth = useMemo(() => {
+    if (!isMinimalPresentation) {
+      return pageWidth;
+    }
+    if (measuredCarouselWidth > 0) {
+      return measuredCarouselWidth;
+    }
+    return Math.max(280, pageWidth - MINIMAL_LAYOUT_HORIZONTAL_PADDING * 2);
+  }, [isMinimalPresentation, measuredCarouselWidth, pageWidth]);
   const router = useRouter();
   const { isActive: ghostModeActive, state: ghostModeState } = useGhostMode();
   const insets = useSafeAreaInsets();
@@ -1190,6 +1194,7 @@ export default function MaintenanceDashboard() {
     }
 
     previousPageWidthRef.current = pageWidth;
+    setMeasuredCarouselWidth(0);
     const index = currentIndexRef.current;
     requestAnimationFrame(() => {
       scrollToMaintenanceCard(index, false);
@@ -1786,7 +1791,18 @@ export default function MaintenanceDashboard() {
 
         <View style={styles.mainStage}>
           <View style={styles.carouselStage}>
-            <View style={styles.listContainer}>
+            <View
+              style={styles.listContainer}
+              onLayout={(event) => {
+                if (!isMinimalPresentation) {
+                  return;
+                }
+                const nextWidth = Math.floor(event.nativeEvent.layout.width);
+                if (nextWidth > 0 && nextWidth !== measuredCarouselWidth) {
+                  setMeasuredCarouselWidth(nextWidth);
+                }
+              }}
+            >
               <FlatList
                 ref={carouselRef}
                 style={styles.carouselFlatList}
@@ -2576,7 +2592,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   scalesPanel: {
     ...CONTAIN_WIDTH,

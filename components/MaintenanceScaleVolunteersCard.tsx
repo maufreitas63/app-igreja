@@ -1,6 +1,5 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
-import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceScaleVolunteers } from '@/hooks/useMaintenanceScaleVolunteers';
 import {
   computeMaintenanceContentHeight,
@@ -9,6 +8,7 @@ import {
 import { MAINTENANCE_SCALE_VOLUNTEERS_SQL_HINT } from '@/hooks/useMaintenanceScaleVolunteers';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { SCALE_VOLUNTEERS_MENU_LABEL } from '@/lib/appDrawerMenu';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { mapLegacyRoomDisplayLabel } from '@/lib/roomDisplayLabels';
 import { FontAwesome } from '@expo/vector-icons';
@@ -34,6 +34,12 @@ const PANEL_TITLE = SCALE_VOLUNTEERS_MENU_LABEL;
 
 /** Altura visível da lista «Já associados» (~7 linhas). */
 const REGISTERED_LIST_MAX_HEIGHT = 217;
+
+function FieldLabel({ children, minimal }: { children: string; minimal: boolean }) {
+  return (
+    <Text style={minimal ? styles.fieldLabelMinimal : styles.fieldLabel}>{children}</Text>
+  );
+}
 
 export function MaintenanceScaleVolunteersCard({
   isActive = true,
@@ -116,6 +122,10 @@ export function MaintenanceScaleVolunteersCard({
     setProfileSearchQuery('');
   };
 
+  const mutedIcon = minimal ? MINIMAL_UI.textMuted : '#64748B';
+  const dangerIcon = minimal ? '#DC2626' : '#FCA5A5';
+  const addIcon = minimal ? MINIMAL_UI.accent : '#6EE7B7';
+
   if (loading) {
     return (
       <View
@@ -127,14 +137,7 @@ export function MaintenanceScaleVolunteersCard({
         ]}
       >
         <CardLoadingState lines={4} minimal={minimal} />
-        <Text
-          style={[
-            maintenancePanelStyles.panelHint,
-            minimal && styles.panelHintMinimal,
-          ]}
-        >
-          Carregando tipos de escala…
-        </Text>
+        <Text style={[styles.hint, minimal && styles.hintMinimal]}>Carregando tipos de escala…</Text>
       </View>
     );
   }
@@ -149,22 +152,11 @@ export function MaintenanceScaleVolunteersCard({
           { height: contentHeight },
         ]}
       >
-        <FontAwesome name="users" size={28} color={minimal ? MINIMAL_UI.textMuted : '#64748B'} />
-        <Text
-          style={
-            minimal
-              ? styles.sectionTitleMinimal
-              : maintenancePanelStyles.panelTitleMuted
-          }
-        >
+        <FontAwesome name="users" size={28} color={mutedIcon} />
+        <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitleMuted}>
           {PANEL_TITLE}
         </Text>
-        <Text
-          style={[
-            maintenancePanelStyles.panelHint,
-            minimal && styles.panelHintMinimal,
-          ]}
-        >
+        <Text style={[styles.hint, minimal && styles.hintMinimal]}>
           Cadastre tipos de escala no card Tipos de Escala.
         </Text>
       </View>
@@ -186,14 +178,8 @@ export function MaintenanceScaleVolunteersCard({
         <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
       ) : null}
 
-      <View style={[styles.scaleTypePickerSection, minimal && styles.scaleTypePickerSectionMinimal]}>
-      <SectionLabel
-        variant="maintenance"
-        tight
-        style={minimal ? styles.sectionLabelMinimal : undefined}
-      >
-        Tipo de escala
-      </SectionLabel>
+      <View style={styles.block}>
+        <FieldLabel minimal={minimal}>Tipo de escala</FieldLabel>
         <DropdownSelect
           options={scaleTypeDropdownOptions}
           selectedValue={selectedScaleTypeId ?? ''}
@@ -202,107 +188,105 @@ export function MaintenanceScaleVolunteersCard({
           placeholder="Selecionar tipo de escala"
           searchPlaceholder="Buscar tipo de escala..."
           searchable
-          style={[styles.scaleTypeDropdown, minimal && styles.scaleTypeDropdownMinimal]}
+          variant={minimal ? 'minimal' : 'default'}
+          style={styles.scaleTypeDropdown}
           disabled={rpcMissing}
         />
       </View>
 
-      <SectionLabel
-        variant="maintenance"
-        style={minimal ? styles.sectionLabelMinimal : undefined}
-      >
-        Associar servos
-      </SectionLabel>
-      <View style={[styles.searchInputRow, minimal && styles.searchInputRowMinimal]}>
-        <TextInput
-          style={[styles.searchInput, minimal && styles.searchInputMinimal]}
-          placeholder="Nome completo"
-          placeholderTextColor="#64748B"
-          value={profileSearchQuery}
-          onChangeText={setProfileSearchQuery}
-          autoCapitalize="words"
-          autoCorrect={false}
-        />
-        {hasProfileSearchQuery ? (
-          <TouchableOpacity
-            style={styles.clearSearchButton}
-            onPress={handleClearProfileSearch}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="Limpar busca de servos"
-          >
-            <FontAwesome name="times-circle" size={20} color="#94A3B8" />
-          </TouchableOpacity>
-        ) : null}
+      <View style={styles.block}>
+        <FieldLabel minimal={minimal}>Associar servos</FieldLabel>
+        <View style={styles.searchInputRow}>
+          <TextInput
+            style={[styles.searchInput, minimal && styles.searchInputMinimal]}
+            placeholder="Nome completo"
+            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
+            value={profileSearchQuery}
+            onChangeText={setProfileSearchQuery}
+            autoCapitalize="words"
+            autoCorrect={false}
+          />
+          {hasProfileSearchQuery ? (
+            <TouchableOpacity
+              style={styles.clearSearchButton}
+              onPress={handleClearProfileSearch}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Limpar busca de servos"
+            >
+              <FontAwesome
+                name="times-circle"
+                size={20}
+                color={minimal ? MINIMAL_UI.icon : '#94A3B8'}
+              />
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
 
-      <SectionLabel
-        variant="maintenance"
-        tight
-        style={minimal ? styles.sectionLabelMinimal : undefined}
+      <View style={[styles.block, styles.registeredBlock]}>
+        <FieldLabel minimal={minimal}>Já associados</FieldLabel>
+        <ScrollView style={styles.registeredScroll} nestedScrollEnabled>
+          {loadingVolunteers ? (
+            <CardLoadingState lines={3} compact minimal={minimal} />
+          ) : registeredVolunteers.length ? (
+            registeredVolunteers.map((volunteer, index) => {
+              const isRemoving = removingVolunteerId === volunteer.id;
+
+              return (
+                <View
+                  key={volunteer.id}
+                  style={[
+                    styles.registeredRow,
+                    minimal && styles.registeredRowMinimal,
+                    index % 2 === 1 &&
+                      (minimal ? styles.registeredRowAltMinimal : styles.registeredRowAlt),
+                  ]}
+                >
+                  <Text
+                    style={[styles.registeredOrder, minimal && styles.registeredOrderMinimal]}
+                  >
+                    {volunteer.sequenceOrder ?? '—'}
+                  </Text>
+                  <Text
+                    style={[styles.registeredName, minimal && styles.registeredNameMinimal]}
+                    numberOfLines={2}
+                  >
+                    {volunteer.name}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.removeButton}
+                    onPress={() => handleRemove(volunteer.id, volunteer.name)}
+                    disabled={listBusy || rpcMissing}
+                    activeOpacity={0.85}
+                    accessibilityLabel={`Remover ${volunteer.name}`}
+                  >
+                    {isRemoving ? (
+                      <ActivityIndicator color={dangerIcon} size="small" />
+                    ) : (
+                      <FontAwesome name="trash-o" size={17} color={dangerIcon} />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              );
+            })
+          ) : (
+            <Text style={[styles.hint, minimal && styles.hintMinimal]}>
+              Nenhum servo neste tipo de escala ainda.
+            </Text>
+          )}
+        </ScrollView>
+      </View>
+
+      {searchingProfiles ? <CardLoadingState lines={2} compact minimal={minimal} /> : null}
+
+      <ScrollView
+        style={styles.resultsScroll}
+        nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
       >
-        Já associados
-      </SectionLabel>
-      <ScrollView style={styles.registeredScroll} nestedScrollEnabled>
-        {loadingVolunteers ? (
-          <CardLoadingState lines={3} compact />
-        ) : registeredVolunteers.length ? (
-          registeredVolunteers.map((volunteer, index) => {
-            const isRemoving = removingVolunteerId === volunteer.id;
-
-            return (
-              <View
-                key={volunteer.id}
-                style={[
-                  styles.registeredRow,
-                  minimal && styles.registeredRowMinimal,
-                  index % 2 === 1
-                    && (minimal ? styles.registeredRowAltMinimal : styles.registeredRowAlt),
-                ]}
-              >
-                <Text
-                  style={[styles.registeredOrder, minimal && styles.registeredOrderMinimal]}
-                >
-                  {volunteer.sequenceOrder ?? '—'}
-                </Text>
-                <Text
-                  style={[styles.registeredName, minimal && styles.registeredNameMinimal]}
-                  numberOfLines={2}
-                >
-                  {volunteer.name}
-                </Text>
-                <TouchableOpacity
-                  style={styles.removeButton}
-                  onPress={() => handleRemove(volunteer.id, volunteer.name)}
-                  disabled={listBusy || rpcMissing}
-                  activeOpacity={0.85}
-                  accessibilityLabel={`Remover ${volunteer.name}`}
-                >
-                  {isRemoving ? (
-                    <ActivityIndicator color={minimal ? '#DC2626' : '#FCA5A5'} size="small" />
-                  ) : (
-                    <FontAwesome
-                      name="trash-o"
-                      size={17}
-                      color={minimal ? '#DC2626' : '#FCA5A5'}
-                    />
-                  )}
-                </TouchableOpacity>
-              </View>
-            );
-          })
-        ) : (
-          <Text style={[styles.panelHintCompact, minimal && styles.panelHintMinimal]}>
-            Nenhum servo neste tipo de escala ainda.
-          </Text>
-        )}
-      </ScrollView>
-
-      {searchingProfiles ? <CardLoadingState lines={2} compact /> : null}
-
-      <ScrollView style={styles.resultsScroll} nestedScrollEnabled keyboardShouldPersistTaps="handled">
         {profileSearchQuery.trim().length >= 2 && !searchingProfiles && !profileResults.length ? (
-          <Text style={[styles.panelHintCompact, minimal && styles.panelHintMinimal]}>
+          <Text style={[styles.hint, minimal && styles.hintMinimal]}>
             Nenhum perfil com esse nome.
           </Text>
         ) : null}
@@ -335,11 +319,7 @@ export function MaintenanceScaleVolunteersCard({
                   Já cadastrado
                 </Text>
               ) : (
-                <FontAwesome
-                  name="plus-circle"
-                  size={18}
-                  color={minimal ? MINIMAL_UI.accent : '#6EE7B7'}
-                />
+                <FontAwesome name="plus-circle" size={18} color={addIcon} />
               )}
             </TouchableOpacity>
           );
@@ -357,12 +337,20 @@ export function MaintenanceScaleVolunteersCard({
 
 const styles = StyleSheet.create({
   panel: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     borderRadius: 16,
-    overflow: 'hidden',
     backgroundColor: '#FFFFFF',
     padding: 12,
     minHeight: 0,
+  },
+  panelMinimal: {
+    ...CONTAIN_WIDTH,
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    borderRadius: 0,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'visible',
   },
   panelCentered: {
     alignItems: 'center',
@@ -370,28 +358,41 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 20,
   },
-  panelTitle: {
+  sectionTitleMinimal: {
+    ...MINIMAL_SECTION_TITLE,
+    ...CONTAIN_WIDTH,
+  },
+  fieldLabel: {
     color: '#3A96DD',
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: 8,
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
-  panelTitleMuted: {
-    color: 'rgba(58, 150, 221, 0.82)',
-    fontSize: 17,
-    fontWeight: '800',
+  fieldLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 6,
   },
-  panelHint: {
-    color: 'rgba(58, 150, 221, 0.82)',
-    fontSize: 12,
-    lineHeight: 17,
-    paddingVertical: 6,
+  block: {
+    ...CONTAIN_WIDTH,
+    marginBottom: 12,
+    gap: 4,
   },
-  panelHintCompact: {
+  registeredBlock: {
+    marginBottom: 6,
+  },
+  hint: {
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
     lineHeight: 16,
     paddingVertical: 4,
+  },
+  hintMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textAlign: 'left',
   },
   warningText: {
     color: '#FBBF24',
@@ -399,54 +400,26 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginBottom: 6,
   },
+  warningTextMinimal: {
+    color: '#B45309',
+  },
   errorText: {
     color: '#FCA5A5',
     fontSize: 12,
     marginBottom: 6,
   },
-  scaleTypePickerSection: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    marginBottom: 8,
-    gap: 4,
-  },
-  scaleTypePickerSectionMinimal: {
-    alignSelf: 'stretch',
+  errorTextMinimal: {
+    color: '#DC2626',
   },
   scaleTypeDropdown: {
-    width: '100%',
-    flex: 0,
+    ...CONTAIN_WIDTH,
     flexGrow: 0,
-    alignSelf: 'stretch',
-    height: 44,
-  },
-  scaleTypeDropdownMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-  },
-  sectionLabel: {
-    color: '#3A96DD',
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  sectionLabelTight: {
-    color: '#3A96DD',
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginTop: 2,
-    marginBottom: 4,
+    flexShrink: 1,
   },
   registeredScroll: {
+    ...CONTAIN_WIDTH,
     flexGrow: 0,
     maxHeight: REGISTERED_LIST_MAX_HEIGHT,
-    marginBottom: 6,
   },
   registeredRow: {
     flexDirection: 'row',
@@ -456,9 +429,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(52, 211, 153, 0.35)',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  registeredRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+    paddingHorizontal: 0,
   },
   registeredRowAlt: {
     backgroundColor: 'rgba(30, 41, 59, 0.35)',
+  },
+  registeredRowAltMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
   },
   registeredOrder: {
     width: 28,
@@ -466,6 +449,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     textAlign: 'center',
+    flexShrink: 0,
+  },
+  registeredOrderMinimal: {
+    color: MINIMAL_UI.accent,
   },
   registeredName: {
     flex: 1,
@@ -474,17 +461,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
+  registeredNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
   removeButton: {
     width: 28,
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   searchInputRow: {
+    ...CONTAIN_WIDTH,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 4,
   },
   searchInput: {
     flex: 1,
@@ -498,6 +489,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
+  searchInputMinimal: {
+    borderColor: MINIMAL_UI.border,
+    color: MINIMAL_UI.text,
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 12,
+  },
   clearSearchButton: {
     width: 36,
     height: 36,
@@ -506,6 +503,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   resultsScroll: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     minHeight: 48,
   },
@@ -517,6 +515,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(52, 211, 153, 0.35)',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  resultRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+    paddingHorizontal: 0,
   },
   resultRowDisabled: {
     opacity: 0.55,
@@ -528,14 +533,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+  resultNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
   resultBadge: {
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
+    flexShrink: 0,
   },
-  inlineLoader: {
-    marginVertical: 4,
+  resultBadgeMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textTransform: 'none',
   },
   refreshLink: {
     alignSelf: 'center',
@@ -545,72 +555,6 @@ const styles = StyleSheet.create({
     color: '#818CF8',
     fontSize: 12,
     fontWeight: '700',
-  },
-  panelMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    alignSelf: 'stretch',
-    paddingHorizontal: 0,
-    paddingVertical: 4,
-    borderRadius: 0,
-    backgroundColor: MINIMAL_UI.background,
-    overflow: 'hidden',
-  },
-  sectionTitleMinimal: {
-    ...MINIMAL_SECTION_TITLE,
-    width: '100%',
-    maxWidth: '100%',
-    alignSelf: 'stretch',
-  },
-  panelHintMinimal: {
-    color: MINIMAL_UI.textMuted,
-    textAlign: 'center',
-  },
-  warningTextMinimal: {
-    color: '#B45309',
-  },
-  errorTextMinimal: {
-    color: '#DC2626',
-  },
-  searchInputRowMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-  },
-  searchInputMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    borderColor: MINIMAL_UI.border,
-    color: MINIMAL_UI.text,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  sectionLabelMinimal: {
-    color: MINIMAL_UI.textMuted,
-  },
-  registeredRowMinimal: {
-    borderBottomColor: MINIMAL_UI.divider,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  registeredRowAltMinimal: {
-    backgroundColor: MINIMAL_UI.rowHover,
-  },
-  registeredOrderMinimal: {
-    color: MINIMAL_UI.accent,
-  },
-  registeredNameMinimal: {
-    color: MINIMAL_UI.text,
-  },
-  resultRowMinimal: {
-    borderBottomColor: MINIMAL_UI.divider,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  resultNameMinimal: {
-    color: MINIMAL_UI.text,
-  },
-  resultBadgeMinimal: {
-    color: MINIMAL_UI.textMuted,
   },
   refreshLinkTextMinimal: {
     color: MINIMAL_UI.accent,
