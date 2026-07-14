@@ -1,5 +1,6 @@
 import {
   fetchMembersDirectoryFromProfiles,
+  fetchInactiveMembersDirectoryFromProfiles,
   fetchVisitorsDirectoryFromProfiles,
   type MembersDirectoryEntry,
 } from '@/lib/membersListApi';
@@ -23,6 +24,11 @@ const mapDirectoryEntry = (entry: MembersDirectoryEntry): MembersListsClassEntry
 
 export async function loadMembersListsClassMembers(): Promise<MembersListsClassEntry[]> {
   const directoryEntries = await fetchMembersDirectoryFromProfiles();
+  return dedupeMembersListsClassEntries(directoryEntries.map(mapDirectoryEntry));
+}
+
+export async function loadMembersListsClassInactiveMembers(): Promise<MembersListsClassEntry[]> {
+  const directoryEntries = await fetchInactiveMembersDirectoryFromProfiles();
   return dedupeMembersListsClassEntries(directoryEntries.map(mapDirectoryEntry));
 }
 

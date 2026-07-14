@@ -1,5 +1,4 @@
-import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
-import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type {
   MembersListsClassAudience,
   MembersListsClassEntry,
@@ -17,9 +16,27 @@ import {
   View,
 } from 'react-native';
 
-const MEMBERS_LISTS_CLASS_SURFACE = '#FFFFFF';
-const MEMBERS_LISTS_CLASS_ICON_COLOR = '#1B4F8A';
-const MEMBERS_LISTS_ACTION_BORDER = '#3A96DD';
+const FILTERS: Array<{
+  key: MembersListsClassAudience;
+  label: string;
+  accessibilityLabel: string;
+}> = [
+  {
+    key: 'active_members',
+    label: 'Membros Ativos',
+    accessibilityLabel: 'Filtrar membros ativos',
+  },
+  {
+    key: 'inactive_members',
+    label: 'Membros Inativos',
+    accessibilityLabel: 'Filtrar membros inativos',
+  },
+  {
+    key: 'visitors',
+    label: 'Visitantes',
+    accessibilityLabel: 'Filtrar visitantes',
+  },
+];
 
 export type MembersListsClassProps = {
   title?: string;
@@ -33,13 +50,36 @@ export type MembersListsClassProps = {
   totalCount: number;
   mapEnabled?: boolean;
   canViewMapPinDetails?: boolean;
-  onShowVisitors?: () => void;
-  onShowMembers?: () => void;
+  onAudienceChange: (audience: MembersListsClassAudience) => void;
   onOpenMap?: () => void;
   onOpenFamily?: (entry: MembersListsClassEntry) => void;
   onOpenWhatsapp?: (entry: MembersListsClassEntry) => void;
   onOpenEntryMap?: (entry: MembersListsClassEntry) => void;
 };
+
+function audienceNoun(audience: MembersListsClassAudience): string {
+  if (audience === 'visitors') return 'visitante';
+  if (audience === 'inactive_members') return 'membro inativo';
+  return 'membro ativo';
+}
+
+function audienceTitle(audience: MembersListsClassAudience, fallback: string): string {
+  if (audience === 'visitors') return 'Lista de Visitantes';
+  if (audience === 'inactive_members') return 'Lista de Membros Inativos';
+  return fallback;
+}
+
+function emptyListMessage(audience: MembersListsClassAudience): string {
+  if (audience === 'visitors') return 'Nenhum visitante encontrado.';
+  if (audience === 'inactive_members') return 'Nenhum membro inativo encontrado.';
+  return 'Nenhum membro ativo encontrado.';
+}
+
+function emptySearchMessage(audience: MembersListsClassAudience): string {
+  if (audience === 'visitors') return 'Nenhum visitante corresponde à busca.';
+  if (audience === 'inactive_members') return 'Nenhum membro inativo corresponde à busca.';
+  return 'Nenhum membro ativo corresponde à busca.';
+}
 
 /** Visualização pura de Lista de Membros — extraída de dashboard.card.members_list. */
 export function MembersListsClass({
@@ -54,16 +94,15 @@ export function MembersListsClass({
   totalCount,
   mapEnabled = false,
   canViewMapPinDetails = false,
-  onShowVisitors,
-  onShowMembers,
+  onAudienceChange,
   onOpenMap,
   onOpenFamily,
   onOpenWhatsapp,
   onOpenEntryMap,
 }: MembersListsClassProps) {
-  const audienceLabel = audience === 'visitors' ? 'visitante' : 'membro';
+  const audienceLabel = audienceNoun(audience);
   const hasSearchQuery = Boolean(normalizeMembersListsSearchQuery(searchQuery));
-  const screenTitle = audience === 'visitors' ? 'Lista de Visitantes' : title;
+  const screenTitle = audienceTitle(audience, title);
 
   const summaryText = hasSearchQuery
     ? `${entries.length} de ${totalCount} ${audienceLabel}${totalCount === 1 ? '' : 's'}`
@@ -74,36 +113,43 @@ export function MembersListsClass({
       <Text style={styles.title}>{screenTitle}</Text>
 
       <View style={styles.body}>
-        <View style={styles.actionButtons}>
-          {audience === 'members' ? (
-            <TouchableOpacity
-              style={styles.secondaryActionButton}
-              onPress={onShowVisitors}
-              activeOpacity={0.85}
-            >
-              <FontAwesome name="user-o" size={16} color={MEMBERS_LISTS_CLASS_ICON_COLOR} />
-              <Text style={styles.secondaryActionButtonText}>Visitantes</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.primaryActionButton}
-              onPress={onShowMembers}
-              activeOpacity={0.85}
-            >
-              <FontAwesome name="users" size={16} color={MEMBERS_LISTS_CLASS_ICON_COLOR} />
-              <Text style={styles.primaryActionButtonText}>Membros</Text>
-            </TouchableOpacity>
-          )}
+        <View style={styles.toolbarRow}>
+          <View style={styles.filterGroup}>
+            {FILTERS.map((filter) => {
+              const selected = audience === filter.key;
+              return (
+                <TouchableOpacity
+                  key={filter.key}
+                  style={[styles.filterChip, selected && styles.filterChipSelected]}
+                  onPress={() => onAudienceChange(filter.key)}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={filter.accessibilityLabel}
+                >
+                  <Text
+                    style={[styles.filterChipText, selected && styles.filterChipTextSelected]}
+                    numberOfLines={1}
+                  >
+                    {filter.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
           {mapEnabled ? (
             <TouchableOpacity
-              style={styles.secondaryActionButton}
+              style={styles.mapButton}
               onPress={onOpenMap}
               activeOpacity={0.85}
               accessibilityRole="button"
               accessibilityLabel="Abrir mapa geral de geolocalização"
             >
-              <FontAwesome name="map" size={18} color={MEMBERS_LISTS_CLASS_ICON_COLOR} />
-              <Text style={styles.secondaryActionButtonText}>Mapa Geral</Text>
+              <FontAwesome name="map" size={14} color={MINIMAL_UI.icon} />
+              <Text style={styles.mapButtonText} numberOfLines={1}>
+                Mapa Geral
+              </Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -119,7 +165,7 @@ export function MembersListsClass({
               <TextInput
                 style={styles.searchInput}
                 placeholder="Digite o nome..."
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={MINIMAL_UI.textMuted}
                 value={searchQuery}
                 onChangeText={onSearchQueryChange}
                 autoCapitalize="words"
@@ -133,7 +179,7 @@ export function MembersListsClass({
                   accessibilityRole="button"
                   accessibilityLabel="Limpar busca"
                 >
-                  <FontAwesome name="times-circle" size={22} color={VIGILANCE_SCALES_UI.accent} />
+                  <FontAwesome name="times-circle" size={22} color={MINIMAL_UI.accent} />
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -152,7 +198,7 @@ export function MembersListsClass({
         <View style={styles.listBox}>
           {loading ? (
             <View style={styles.loadingState}>
-              <ActivityIndicator color={VIGILANCE_SCALES_UI.accent} size="large" />
+              <ActivityIndicator color={MINIMAL_UI.accent} size="large" />
             </View>
           ) : error ? (
             <View style={styles.messageBox}>
@@ -187,7 +233,7 @@ export function MembersListsClass({
                           activeOpacity={0.85}
                           accessibilityLabel={`Ver família de ${entry.short_name}`}
                         >
-                          <FontAwesome name="users" size={18} color={MEMBERS_LISTS_CLASS_ICON_COLOR} />
+                          <FontAwesome name="users" size={18} color={MINIMAL_UI.icon} />
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.actionCell, !entry.phone && styles.actionCellDisabled]}
@@ -198,7 +244,7 @@ export function MembersListsClass({
                           <FontAwesome
                             name="whatsapp"
                             size={20}
-                            color={entry.phone ? '#25D366' : '#94A3B8'}
+                            color={entry.phone ? '#25D366' : MINIMAL_UI.textMuted}
                           />
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -212,7 +258,7 @@ export function MembersListsClass({
                           <FontAwesome
                             name="map-marker"
                             size={18}
-                            color={canOpenMemberOnMap ? MEMBERS_LISTS_CLASS_ICON_COLOR : '#94A3B8'}
+                            color={canOpenMemberOnMap ? MINIMAL_UI.icon : MINIMAL_UI.textMuted}
                           />
                         </TouchableOpacity>
                       </View>
@@ -221,18 +267,10 @@ export function MembersListsClass({
                 })}
               </ScrollView>
             ) : (
-              <Text style={styles.emptyText}>
-                {audience === 'visitors'
-                  ? 'Nenhum visitante corresponde à busca.'
-                  : 'Nenhum membro corresponde à busca.'}
-              </Text>
+              <Text style={styles.emptyText}>{emptySearchMessage(audience)}</Text>
             )
           ) : (
-            <Text style={styles.emptyText}>
-              {audience === 'visitors'
-                ? 'Nenhum visitante encontrado.'
-                : 'Nenhum membro encontrado.'}
-            </Text>
+            <Text style={styles.emptyText}>{emptyListMessage(audience)}</Text>
           )}
         </View>
       </View>
@@ -245,7 +283,7 @@ const styles = StyleSheet.create({
     width: '100%',
     flex: 1,
     alignSelf: 'stretch',
-    backgroundColor: MEMBERS_LISTS_CLASS_SURFACE,
+    backgroundColor: MINIMAL_UI.background,
     gap: 12,
   },
   title: {
@@ -256,50 +294,67 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     gap: 10,
-    backgroundColor: MEMBERS_LISTS_CLASS_SURFACE,
+    backgroundColor: MINIMAL_UI.background,
   },
-  actionButtons: {
+  toolbarRow: {
     flexDirection: 'row',
-    alignItems: 'stretch',
+    alignItems: 'center',
     width: '100%',
     gap: 8,
   },
-  primaryActionButton: {
+  filterGroup: {
     flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 6,
+  },
+  filterChip: {
+    flex: 1,
+    minWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: MEMBERS_LISTS_CLASS_SURFACE,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
   },
-  primaryActionButtonText: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 13,
+  filterChipSelected: {
+    borderColor: MINIMAL_UI.accent,
+    backgroundColor: '#EFF6FF',
+  },
+  filterChipText: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 11,
     fontWeight: '700',
+    textAlign: 'center',
   },
-  secondaryActionButton: {
-    flex: 1,
+  filterChipTextSelected: {
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '800',
+  },
+  mapButton: {
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: MEMBERS_LISTS_ACTION_BORDER,
-    backgroundColor: MEMBERS_LISTS_CLASS_SURFACE,
+    gap: 5,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
   },
-  secondaryActionButtonText: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 13,
+  mapButtonText: {
+    color: MINIMAL_UI.text,
+    fontSize: 11,
     fontWeight: '700',
   },
   summaryText: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.textMuted,
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
@@ -308,7 +363,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   sectionLabel: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.blueDark,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -323,9 +378,9 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.35)',
-    backgroundColor: MEMBERS_LISTS_CLASS_SURFACE,
-    color: VIGILANCE_SCALES_UI.accent,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    color: MINIMAL_UI.text,
     fontSize: 15,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -344,7 +399,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerCell: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.textMuted,
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -369,7 +424,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     borderRadius: 12,
-    backgroundColor: MEMBERS_LISTS_CLASS_SURFACE,
+    backgroundColor: MINIMAL_UI.background,
     overflow: 'hidden',
   },
   loadingState: {
@@ -388,7 +443,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   errorText: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.text,
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
@@ -397,10 +452,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: MEMBERS_LISTS_CLASS_SURFACE,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
   },
   retryButtonText: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.accent,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -420,7 +477,7 @@ const styles = StyleSheet.create({
   nameText: {
     flex: 1,
     minWidth: 0,
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.text,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -440,7 +497,7 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   emptyText: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.textMuted,
     fontSize: 14,
     textAlign: 'center',
     paddingHorizontal: 16,

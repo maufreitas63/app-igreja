@@ -7,6 +7,7 @@ import { withReturnRoute } from '@/lib/dashboardReturnNavigation';
 import { normalizeFamilyCode } from '@/lib/family';
 import {
   loadMembersListsClassMembers,
+  loadMembersListsClassInactiveMembers,
   loadMembersListsClassVisitors,
 } from '@/lib/membersListsClassData';
 import type {
@@ -41,11 +42,14 @@ import Toast from 'react-native-toast-message';
 export function MembersListsClassPanel() {
   const router = useRouter();
   const visitorsListLoadedRef = useRef(false);
+  const inactiveMembersLoadedRef = useRef(false);
 
-  const [audience, setAudience] = useState<MembersListsClassAudience>('members');
+  const [audience, setAudience] = useState<MembersListsClassAudience>('active_members');
   const [memberEntries, setMemberEntries] = useState<MembersListsClassEntry[]>([]);
+  const [inactiveMemberEntries, setInactiveMemberEntries] = useState<MembersListsClassEntry[]>([]);
   const [visitorEntries, setVisitorEntries] = useState<MembersListsClassEntry[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
+  const [loadingInactiveMembers, setLoadingInactiveMembers] = useState(false);
   const [loadingVisitors, setLoadingVisitors] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -75,12 +79,18 @@ export function MembersListsClassPanel() {
     );
   }, []);
 
-  const activeEntries = useMemo(
-    () => (audience === 'visitors' ? visitorEntries : memberEntries),
-    [audience, memberEntries, visitorEntries]
-  );
+  const activeEntries = useMemo(() => {
+    if (audience === 'visitors') return visitorEntries;
+    if (audience === 'inactive_members') return inactiveMemberEntries;
+    return memberEntries;
+  }, [audience, inactiveMemberEntries, memberEntries, visitorEntries]);
 
-  const isActiveLoading = audience === 'visitors' ? loadingVisitors : loadingMembers;
+  const isActiveLoading =
+    audience === 'visitors'
+      ? loadingVisitors
+      : audience === 'inactive_members'
+        ? loadingInactiveMembers
+        : loadingMembers;
 
   const filteredEntries = useMemo(
     () => filterMembersListsClassEntries(activeEntries, searchQuery),
@@ -104,6 +114,27 @@ export function MembersListsClassPanel() {
       );
     } finally {
       setLoadingMembers(false);
+    }
+  }, []);
+
+  const loadInactiveMembers = useCallback(async () => {
+    setLoadingInactiveMembers(true);
+    setError(null);
+
+    try {
+      const loaded = await loadMembersListsClassInactiveMembers();
+      setInactiveMemberEntries(loaded);
+      inactiveMembersLoadedRef.current = true;
+    } catch (loadError) {
+      console.error('Erro ao carregar lista de membros inativos:', loadError);
+      setInactiveMemberEntries([]);
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : 'Nao foi possivel carregar a lista de membros inativos.'
+      );
+    } finally {
+      setLoadingInactiveMembers(false);
     }
   }, []);
 
@@ -134,8 +165,13 @@ export function MembersListsClassPanel() {
       return;
     }
 
+    if (audience === 'inactive_members') {
+      await loadInactiveMembers();
+      return;
+    }
+
     await loadMembers();
-  }, [audience, loadMembers, loadVisitors]);
+  }, [audience, loadInactiveMembers, loadMembers, loadVisitors]);
 
   useEffect(() => {
     void loadMembers();
@@ -217,21 +253,22 @@ export function MembersListsClassPanel() {
     };
   }, [audience, familyModalSeedEntry]);
 
-  const handleShowMembers = useCallback(() => {
-    setAudience('members');
-    setSearchQuery('');
-    setError(null);
-  }, []);
+  const handleAudienceChange = useCallback(
+    (nextAudience: MembersListsClassAudience) => {
+      setAudience(nextAudience);
+      setSearchQuery('');
+      setError(null);
 
-  const handleShowVisitors = useCallback(() => {
-    setAudience('visitors');
-    setSearchQuery('');
-    setError(null);
+      if (nextAudience === 'visitors' && !visitorsListLoadedRef.current) {
+        void loadVisitors();
+      }
 
-    if (!visitorsListLoadedRef.current) {
-      void loadVisitors();
-    }
-  }, [loadVisitors]);
+      if (nextAudience === 'inactive_members' && !inactiveMembersLoadedRef.current) {
+        void loadInactiveMembers();
+      }
+    },
+    [loadInactiveMembers, loadVisitors]
+  );
 
   const handleOpenMembersMap = useCallback(() => {
     if (!isMapGeolocationEnabled) {
@@ -320,8 +357,7 @@ export function MembersListsClassPanel() {
         totalCount={activeEntries.length}
         mapEnabled={isMapGeolocationEnabled}
         canViewMapPinDetails={canViewMapPinDetails}
-        onShowVisitors={handleShowVisitors}
-        onShowMembers={handleShowMembers}
+        onAudienceChange={handleAudienceChange}
         onOpenMap={handleOpenMembersMap}
         onOpenFamily={handleOpenFamily}
         onOpenWhatsapp={handleOpenWhatsapp}

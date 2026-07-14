@@ -23,6 +23,9 @@ export type MembersDirectoryEntry = {
 const MEMBERS_DIRECTORY_RPC_HINT =
   'Execute no Supabase: scripts/members-list-family-sync.sql, scripts/members-list-exclude-congregado.sql e scripts/members-list-active-membership-out.sql';
 
+const MEMBERS_INACTIVE_DIRECTORY_RPC_HINT =
+  'Execute no Supabase: scripts/members-list-inactive-directory.sql';
+
 const VISITORS_DIRECTORY_RPC_HINT =
   'Execute no Supabase: scripts/members-list-family-sync.sql (list_profiles_visitors_directory)';
 
@@ -286,8 +289,12 @@ const fetchFamilyMembersByProfile = async (
 };
 
 const fetchDirectoryFromRpc = async (
-  rpcName: 'list_profiles_members_directory' | 'list_profiles_visitors_directory',
-  missingRpcHint: string
+  rpcName:
+    | 'list_profiles_members_directory'
+    | 'list_profiles_members_inactive_directory'
+    | 'list_profiles_visitors_directory',
+  missingRpcHint: string,
+  options?: { skipActiveMembershipFilter?: boolean }
 ): Promise<MembersDirectoryEntry[]> => {
   const { data, error } = await supabase.rpc(rpcName);
 
@@ -301,13 +308,25 @@ const fetchDirectoryFromRpc = async (
     throw error;
   }
 
-  return filterEntriesWithActiveMembership(
-    mapDirectoryRows(data as Array<Record<string, unknown>> | null)
-  );
+  const mapped = mapDirectoryRows(data as Array<Record<string, unknown>> | null);
+
+  if (options?.skipActiveMembershipFilter) {
+    return mapped;
+  }
+
+  return filterEntriesWithActiveMembership(mapped);
 };
 
 export async function fetchMembersDirectoryFromProfiles(): Promise<MembersDirectoryEntry[]> {
   return fetchDirectoryFromRpc('list_profiles_members_directory', MEMBERS_DIRECTORY_RPC_HINT);
+}
+
+export async function fetchInactiveMembersDirectoryFromProfiles(): Promise<MembersDirectoryEntry[]> {
+  return fetchDirectoryFromRpc(
+    'list_profiles_members_inactive_directory',
+    MEMBERS_INACTIVE_DIRECTORY_RPC_HINT,
+    { skipActiveMembershipFilter: true }
+  );
 }
 
 export async function fetchVisitorsDirectoryFromProfiles(): Promise<MembersDirectoryEntry[]> {
