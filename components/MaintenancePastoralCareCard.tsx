@@ -1,12 +1,10 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
-import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenancePastoralCare } from '@/hooks/useMaintenancePastoralCare';
 import {
   computeMaintenanceContentHeight,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
-import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MAINTENANCE_PASTORAL_CARE_SQL_HINT } from '@/hooks/useMaintenancePastoralCare';
 import {
   canApprovePastoralCancellation,
@@ -22,6 +20,8 @@ import {
   formatPastoralRequestForLabel,
   PASTORAL_FOLLOW_UP_STAGES,
 } from '@/lib/pastoralRequest';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -36,12 +36,19 @@ import {
 } from 'react-native';
 
 const PANEL_TITLE = 'Cuidado Pastoral';
+const POOL_BLUE = '#22D3EE';
 
 type Props = {
   isActive?: boolean;
   panelHeight: number;
   minimal?: boolean;
 };
+
+function FieldLabel({ children, minimal }: { children: string; minimal: boolean }) {
+  return (
+    <Text style={minimal ? styles.fieldLabelMinimal : styles.fieldLabel}>{children}</Text>
+  );
+}
 
 export function MaintenancePastoralCareCard({
   isActive = true,
@@ -127,8 +134,6 @@ export function MaintenancePastoralCareCard({
   const [filterProfileId, setFilterProfileId] = useState(allSubmittersFilterValue);
   const [isDetailExpanded, setIsDetailExpanded] = useState(false);
 
-  const POOL_BLUE = '#22D3EE';
-
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
   const filterDropdownOptions = useMemo(
@@ -189,6 +194,11 @@ export function MaintenancePastoralCareCard({
     void openRoomContactWhatsapp(phone);
   };
 
+  const accentColor = minimal ? MINIMAL_UI.accent : '#818CF8';
+  const stageDoneColor = minimal ? MINIMAL_UI.blueDark : POOL_BLUE;
+  const chevronColor = minimal ? MINIMAL_UI.icon : '#94A3B8';
+  const whatsappColor = minimal ? '#16A34A' : '#4ADE80';
+
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
       <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
@@ -202,19 +212,19 @@ export function MaintenancePastoralCareCard({
         </Text>
       ) : null}
       {accessHint ? (
-        <Text style={[styles.accessHintText, minimal && styles.accessHintTextMinimal]}>{accessHint}</Text>
+        <Text style={[styles.accessHintText, minimal && styles.accessHintTextMinimal]}>
+          {accessHint}
+        </Text>
       ) : null}
       {error ? (
         <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
       ) : null}
 
       {loadingOptions ? (
-        <ActivityIndicator color={minimal ? MINIMAL_UI.accent : '#818CF8'} style={styles.inlineLoader} />
+        <ActivityIndicator color={accentColor} style={styles.inlineLoader} />
       ) : submitterOptions.length ? (
         <View style={[styles.submitterPickerSection, minimal && styles.submitterPickerSectionMinimal]}>
-          <SectionLabel variant="maintenance" tight>
-            Filtrar solicitante
-          </SectionLabel>
+          <FieldLabel minimal={minimal}>Filtrar solicitante</FieldLabel>
           <View style={[styles.filterDropdownWrap, minimal && styles.filterDropdownWrapMinimal]}>
             <DropdownSelect
               options={filterDropdownOptions}
@@ -222,12 +232,13 @@ export function MaintenancePastoralCareCard({
               onValueChange={handleFilterChange}
               modalTitle="Filtrar solicitante"
               placeholder="Todos os usuários"
+              variant={minimal ? 'minimal' : 'default'}
               style={[styles.filterDropdown, minimal && styles.filterDropdownMinimal]}
               disabled={rpcMissing}
             />
           </View>
 
-          <Text style={styles.hintText}>
+          <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
             Selecione quem enviou o pedido pastoral.
             {totalRequestCount > 0
               ? ` ${totalRequestCount} pedido${totalRequestCount === 1 ? '' : 's'} no total.`
@@ -246,7 +257,12 @@ export function MaintenancePastoralCareCard({
               return (
                 <TouchableOpacity
                   key={submitter.profileId}
-                  style={[styles.submitterRow, isSelected && styles.submitterRowSelected]}
+                  style={[
+                    styles.submitterRow,
+                    minimal && styles.submitterRowMinimal,
+                    isSelected && styles.submitterRowSelected,
+                    minimal && isSelected && styles.submitterRowSelectedMinimal,
+                  ]}
                   onPress={() => {
                     setFilterProfileId(submitter.profileId);
                     void selectProfileId(submitter.profileId);
@@ -254,16 +270,36 @@ export function MaintenancePastoralCareCard({
                   activeOpacity={0.85}
                 >
                   <View style={styles.submitterRowMain}>
-                    <Text style={styles.submitterName} numberOfLines={1}>
+                    <Text
+                      style={[styles.submitterName, minimal && styles.submitterNameMinimal]}
+                      numberOfLines={1}
+                    >
                       {submitter.shortName}
                     </Text>
-                    <Text style={styles.submitterMeta} numberOfLines={1}>
+                    <Text
+                      style={[styles.submitterMeta, minimal && styles.submitterMetaMinimal]}
+                      numberOfLines={1}
+                    >
                       {submitter.requestCount} pedido{submitter.requestCount === 1 ? '' : 's'}
                       {submitter.phone ? ` · ${submitter.phone}` : ''}
                     </Text>
                   </View>
-                  <View style={styles.submitterCountBadge}>
-                    <Text style={styles.submitterCountBadgeText}>{submitter.requestCount}</Text>
+                  <View
+                    style={[
+                      styles.submitterCountBadge,
+                      minimal && styles.submitterCountBadgeMinimal,
+                      isSelected && minimal && styles.submitterCountBadgeSelectedMinimal,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.submitterCountBadgeText,
+                        minimal && styles.submitterCountBadgeTextMinimal,
+                        isSelected && minimal && styles.submitterCountBadgeTextSelectedMinimal,
+                      ]}
+                    >
+                      {submitter.requestCount}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -271,13 +307,18 @@ export function MaintenancePastoralCareCard({
           </ScrollView>
         </View>
       ) : (
-        <Text style={styles.hintText}>Nenhum pedido pastoral cadastrado ainda.</Text>
+        <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+          Nenhum pedido pastoral cadastrado ainda.
+        </Text>
       )}
 
       {loadingRequests ? (
         <CardLoadingState lines={4} minimal={minimal} />
       ) : selectedRequest ? (
-        <ScrollView style={styles.detailScroll} nestedScrollEnabled>
+        <ScrollView
+          style={[styles.detailScroll, minimal && styles.detailScrollMinimal]}
+          nestedScrollEnabled
+        >
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -290,13 +331,23 @@ export function MaintenancePastoralCareCard({
               return (
                 <TouchableOpacity
                   key={request.id}
-                  style={[styles.requestChip, isSelected && styles.requestChipSelected]}
+                  style={[
+                    styles.requestChip,
+                    minimal && styles.requestChipMinimal,
+                    isSelected && styles.requestChipSelected,
+                    minimal && isSelected && styles.requestChipSelectedMinimal,
+                  ]}
                   onPress={() => setSelectedRequestId(request.id)}
                   activeOpacity={0.85}
                   disabled={requests.length === 1}
                 >
                   <Text
-                    style={[styles.requestChipText, isSelected && styles.requestChipTextSelected]}
+                    style={[
+                      styles.requestChipText,
+                      minimal && styles.requestChipTextMinimal,
+                      isSelected && styles.requestChipTextSelected,
+                      minimal && isSelected && styles.requestChipTextSelectedMinimal,
+                    ]}
                   >
                     {formatRequestDateTimeLabel(request.created_at)}
                   </Text>
@@ -305,7 +356,7 @@ export function MaintenancePastoralCareCard({
             })}
           </ScrollView>
 
-          <View style={styles.detailCard}>
+          <View style={[styles.detailCard, minimal && styles.detailCardMinimal]}>
             <View style={styles.detailCardHeader}>
               <TouchableOpacity
                 style={styles.detailCardHeaderMain}
@@ -320,15 +371,24 @@ export function MaintenancePastoralCareCard({
                 }
               >
                 <View style={styles.contactRow}>
-                  <Text style={styles.contactName} numberOfLines={1}>
+                  <Text
+                    style={[styles.contactName, minimal && styles.contactNameMinimal]}
+                    numberOfLines={1}
+                  >
                     {selectedSubmitter?.shortName ?? selectedRequest.submitterName}
                   </Text>
-                  <Text style={styles.contactPhone} numberOfLines={1}>
+                  <Text
+                    style={[styles.contactPhone, minimal && styles.contactPhoneMinimal]}
+                    numberOfLines={1}
+                  >
                     {selectedRequest.phone?.trim() || '—'}
                   </Text>
                 </View>
                 {!isDetailExpanded ? (
-                  <Text style={styles.detailCollapsedHint} numberOfLines={1}>
+                  <Text
+                    style={[styles.detailCollapsedHint, minimal && styles.detailCollapsedHintMinimal]}
+                    numberOfLines={1}
+                  >
                     {selectedRequest.request_for && selectedRequest.request_for !== 'self'
                       ? formatPastoralBeneficiarySummary(selectedRequest)
                       : selectedRequest.destination_label?.trim()
@@ -339,12 +399,12 @@ export function MaintenancePastoralCareCard({
               </TouchableOpacity>
               {selectedRequest.phone ? (
                 <TouchableOpacity
-                  style={styles.whatsappButton}
+                  style={[styles.whatsappButton, minimal && styles.whatsappButtonMinimal]}
                   onPress={() => void handleOpenWhatsApp()}
                   activeOpacity={0.85}
                   accessibilityLabel="Abrir WhatsApp"
                 >
-                  <FontAwesome name="whatsapp" size={20} color="#4ADE80" />
+                  <FontAwesome name="whatsapp" size={20} color={whatsappColor} />
                 </TouchableOpacity>
               ) : (
                 <View style={styles.whatsappPlaceholder} />
@@ -360,56 +420,73 @@ export function MaintenancePastoralCareCard({
                 <FontAwesome
                   name={isDetailExpanded ? 'chevron-up' : 'chevron-down'}
                   size={14}
-                  color="#94A3B8"
+                  color={chevronColor}
                 />
               </TouchableOpacity>
             </View>
 
             {isDetailExpanded ? (
-              <View style={styles.detailCardBody}>
-                <Text style={styles.detailLabel}>Destino</Text>
-                <Text style={styles.detailValue}>
-                  {selectedRequest.destination_label?.trim() || '—'}
-                </Text>
-
-                <Text style={styles.detailLabel}>Motivo</Text>
-                <Text style={styles.detailValueMultiline}>
-                  {selectedRequest.motivo?.trim() || '—'}
-                </Text>
-
-                <Text style={styles.detailLabel}>Situação</Text>
-                <Text style={styles.detailValueMultiline}>
-                  {selectedRequest.situacao?.trim() || '—'}
-                </Text>
-
-                <Text style={styles.detailLabel}>Descrição</Text>
-                <Text style={styles.detailValueMultiline}>
-                  {selectedRequest.description?.trim() || '—'}
-                </Text>
-
-                <Text style={styles.detailLabel}>Pedido para</Text>
-                <Text style={styles.detailValue}>
-                  {formatPastoralRequestForLabel(selectedRequest.request_for)}
-                </Text>
+              <View style={[styles.detailCardBody, minimal && styles.detailCardBodyMinimal]}>
+                {(
+                  [
+                    ['Destino', selectedRequest.destination_label?.trim() || '—', false],
+                    ['Motivo', selectedRequest.motivo?.trim() || '—', true],
+                    ['Situação', selectedRequest.situacao?.trim() || '—', true],
+                    ['Descrição', selectedRequest.description?.trim() || '—', true],
+                    [
+                      'Pedido para',
+                      formatPastoralRequestForLabel(selectedRequest.request_for),
+                      false,
+                    ],
+                  ] as const
+                ).map(([label, value, multiline]) => (
+                  <View key={label}>
+                    <Text style={[styles.detailLabel, minimal && styles.detailLabelMinimal]}>
+                      {label}
+                    </Text>
+                    <Text
+                      style={[
+                        multiline ? styles.detailValueMultiline : styles.detailValue,
+                        minimal &&
+                          (multiline
+                            ? styles.detailValueMultilineMinimal
+                            : styles.detailValueMinimal),
+                      ]}
+                    >
+                      {value}
+                    </Text>
+                  </View>
+                ))}
 
                 {selectedRequest.request_for && selectedRequest.request_for !== 'self' ? (
                   <>
-                    <Text style={styles.detailLabel}>Nome do necessitado</Text>
-                    <Text style={styles.detailValue}>
+                    <Text style={[styles.detailLabel, minimal && styles.detailLabelMinimal]}>
+                      Nome do necessitado
+                    </Text>
+                    <Text style={[styles.detailValue, minimal && styles.detailValueMinimal]}>
                       {selectedRequest.beneficiary_name?.trim() || '—'}
                     </Text>
 
                     {selectedRequest.request_for === 'family' ? (
                       <>
-                        <Text style={styles.detailLabel}>Grau de parentesco</Text>
-                        <Text style={styles.detailValue}>
+                        <Text style={[styles.detailLabel, minimal && styles.detailLabelMinimal]}>
+                          Grau de parentesco
+                        </Text>
+                        <Text style={[styles.detailValue, minimal && styles.detailValueMinimal]}>
                           {selectedRequest.beneficiary_relationship?.trim() || '—'}
                         </Text>
                       </>
                     ) : (
                       <>
-                        <Text style={styles.detailLabel}>Especifique (terceiros)</Text>
-                        <Text style={styles.detailValueMultiline}>
+                        <Text style={[styles.detailLabel, minimal && styles.detailLabelMinimal]}>
+                          Especifique (terceiros)
+                        </Text>
+                        <Text
+                          style={[
+                            styles.detailValueMultiline,
+                            minimal && styles.detailValueMultilineMinimal,
+                          ]}
+                        >
                           {selectedRequest.beneficiary_details?.trim() || '—'}
                         </Text>
                       </>
@@ -421,17 +498,23 @@ export function MaintenancePastoralCareCard({
 
             <View style={styles.stageHeaderRow}>
               <View style={styles.stageSectionLabelWrap}>
-                <Text style={styles.stageSectionLabel}>Acompanhamento</Text>
+                <Text style={[styles.stageSectionLabel, minimal && styles.stageSectionLabelMinimal]}>
+                  Acompanhamento
+                </Text>
               </View>
               {isFollowUpStarted && handlerDisplayName ? (
-                <Text style={styles.stageHandlerName} numberOfLines={1}>
+                <Text
+                  style={[styles.stageHandlerName, minimal && styles.stageHandlerNameMinimal]}
+                  numberOfLines={1}
+                >
                   {handlerDisplayName}
                 </Text>
               ) : null}
             </View>
             {isIntercessionReadOnly ? (
-              <Text style={styles.stageReadOnlyHint}>
-                Pedido em acompanhamento por {handlerDisplayName ?? 'outra pessoa'} (somente leitura).
+              <Text style={[styles.stageReadOnlyHint, minimal && styles.stageReadOnlyHintMinimal]}>
+                Pedido em acompanhamento por {handlerDisplayName ?? 'outra pessoa'} (somente
+                leitura).
               </Text>
             ) : null}
             <View style={styles.stageRow}>
@@ -447,16 +530,15 @@ export function MaintenancePastoralCareCard({
                     key={stage}
                     style={[
                       styles.stageButton,
+                      minimal && styles.stageButtonMinimal,
                       stage === 'Acolher' && styles.stageButtonLead,
                       isDone && styles.stageButtonDone,
+                      minimal && isDone && styles.stageButtonDoneMinimal,
                       isLocked && styles.stageButtonLocked,
+                      minimal && isLocked && styles.stageButtonLockedMinimal,
                     ]}
                     onPress={() => {
-                      if (
-                        !selectedRequestId
-                        || isSavingFollowUpStage
-                        || !canAdvance
-                      ) {
+                      if (!selectedRequestId || isSavingFollowUpStage || !canAdvance) {
                         return;
                       }
 
@@ -485,8 +567,10 @@ export function MaintenancePastoralCareCard({
                     <Text
                       style={[
                         styles.stageButtonText,
-                        isDone && { color: POOL_BLUE },
+                        minimal && styles.stageButtonTextMinimal,
+                        isDone && { color: stageDoneColor },
                         isLocked && styles.stageButtonTextLocked,
+                        minimal && isLocked && styles.stageButtonTextLockedMinimal,
                       ]}
                     >
                       {stage}
@@ -496,19 +580,52 @@ export function MaintenancePastoralCareCard({
               })}
             </View>
             {isSavingFollowUpStage ? (
-              <ActivityIndicator color="#F9A8D4" size="small" style={styles.stageLoader} />
+              <ActivityIndicator
+                color={minimal ? MINIMAL_UI.accent : '#F9A8D4'}
+                size="small"
+                style={styles.stageLoader}
+              />
             ) : null}
             {cancellationRequested ? (
-              <View style={styles.cancellationRequestBox}>
-                <Text style={styles.cancellationRequestTitle}>Solicitação de cancelamento</Text>
-                <Text style={styles.cancellationRequestMessage}>
+              <View
+                style={[
+                  styles.cancellationRequestBox,
+                  minimal && styles.cancellationRequestBoxMinimal,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.cancellationRequestTitle,
+                    minimal && styles.cancellationRequestTitleMinimal,
+                  ]}
+                >
+                  Solicitação de cancelamento
+                </Text>
+                <Text
+                  style={[
+                    styles.cancellationRequestMessage,
+                    minimal && styles.cancellationRequestMessageMinimal,
+                  ]}
+                >
                   O solicitante pediu o cancelamento de &quot;
                   {selectedRequest?.motivo?.trim() || 'este pedido'}&quot;.
                 </Text>
                 {selectedRequest?.cancellation_request_reason?.trim() ? (
                   <>
-                    <Text style={styles.cancellationRequestReasonLabel}>Justificativa</Text>
-                    <Text style={styles.cancellationRequestReasonText}>
+                    <Text
+                      style={[
+                        styles.cancellationRequestReasonLabel,
+                        minimal && styles.cancellationRequestReasonLabelMinimal,
+                      ]}
+                    >
+                      Justificativa
+                    </Text>
+                    <Text
+                      style={[
+                        styles.cancellationRequestReasonText,
+                        minimal && styles.cancellationRequestReasonTextMinimal,
+                      ]}
+                    >
                       {selectedRequest.cancellation_request_reason.trim()}
                     </Text>
                   </>
@@ -517,7 +634,7 @@ export function MaintenancePastoralCareCard({
             ) : null}
             {canCancelSelectedRequest ? (
               <TouchableOpacity
-                style={styles.cancellationButton}
+                style={[styles.cancellationButton, minimal && styles.cancellationButtonMinimal]}
                 onPress={() => {
                   if (!selectedRequestId || isApprovingCancellation || rpcMissing) {
                     return;
@@ -558,16 +675,28 @@ export function MaintenancePastoralCareCard({
                 accessibilityLabel="Cancelar pedido em acompanhamento"
               >
                 {isApprovingCancellation ? (
-                  <ActivityIndicator color="#FECACA" size="small" />
+                  <ActivityIndicator
+                    color={minimal ? MINIMAL_UI.onDark : '#FECACA'}
+                    size="small"
+                  />
                 ) : (
-                  <Text style={styles.cancellationButtonText}>Cancelar pedido</Text>
+                  <Text
+                    style={[
+                      styles.cancellationButtonText,
+                      minimal && styles.cancellationButtonTextMinimal,
+                    ]}
+                  >
+                    Cancelar pedido
+                  </Text>
                 )}
               </TouchableOpacity>
             ) : null}
           </View>
         </ScrollView>
       ) : selectedSubmitter ? (
-        <Text style={styles.hintText}>Nenhum pedido encontrado para este perfil.</Text>
+        <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+          Nenhum pedido encontrado para este perfil.
+        </Text>
       ) : null}
     </View>
   );
@@ -575,65 +704,38 @@ export function MaintenancePastoralCareCard({
 
 const styles = StyleSheet.create({
   panel: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     borderRadius: 16,
-    overflow: 'hidden',
     backgroundColor: '#FFFFFF',
     padding: 12,
     minHeight: 0,
   },
   panelMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    alignSelf: 'stretch',
+    ...CONTAIN_WIDTH,
     paddingHorizontal: 0,
     paddingVertical: 4,
     borderRadius: 0,
     backgroundColor: MINIMAL_UI.background,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   sectionTitle: {
     ...MINIMAL_SECTION_TITLE,
-    width: '100%',
-    maxWidth: '100%',
-    alignSelf: 'stretch',
+    ...CONTAIN_WIDTH,
   },
-  warningTextMinimal: {
-    color: '#B45309',
-  },
-  accessHintTextMinimal: {
-    color: MINIMAL_UI.textMuted,
-  },
-  errorTextMinimal: {
-    color: '#DC2626',
-  },
-  submitterPickerSectionMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    alignSelf: 'stretch',
-  },
-  filterDropdownWrapMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-  },
-  filterDropdownMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-  },
-  panelTitle: {
+  fieldLabel: {
     color: '#3A96DD',
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  panelSubtitle: {
-    color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
-    marginBottom: 8,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  fieldLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 6,
   },
   warningText: {
     color: '#FBBF24',
@@ -641,36 +743,54 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginBottom: 6,
   },
+  warningTextMinimal: {
+    color: '#B45309',
+  },
   accessHintText: {
     color: '#93C5FD',
     fontSize: 11,
     lineHeight: 16,
     marginBottom: 6,
   },
+  accessHintTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
   errorText: {
     color: '#FCA5A5',
     fontSize: 12,
     marginBottom: 6,
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
   },
   submitterPickerSection: {
     flexGrow: 0,
     flexShrink: 0,
     gap: 4,
     marginBottom: 6,
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  submitterPickerSectionMinimal: {
+    ...CONTAIN_WIDTH,
   },
   filterDropdownWrap: {
     flexGrow: 0,
     flexShrink: 0,
     alignSelf: 'stretch',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  filterDropdownWrapMinimal: {
+    ...CONTAIN_WIDTH,
   },
   filterDropdown: {
-    flex: 0,
+    ...CONTAIN_WIDTH,
     flexGrow: 0,
-    alignSelf: 'stretch',
-    height: 52,
-    borderColor: 'rgba(52, 211, 153, 0.35)',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 10,
+    flexShrink: 1,
+  },
+  filterDropdownMinimal: {
+    ...CONTAIN_WIDTH,
   },
   inlineLoader: {
     marginVertical: 8,
@@ -681,10 +801,15 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     marginBottom: 2,
   },
+  hintTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
   submitterList: {
     flexGrow: 0,
     flexShrink: 0,
     maxHeight: 110,
+    maxWidth: '100%',
+    minWidth: 0,
   },
   submitterListContent: {
     gap: 6,
@@ -700,10 +825,21 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.9)',
     paddingHorizontal: 10,
     paddingVertical: 6,
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  submitterRowMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 12,
   },
   submitterRowSelected: {
     borderColor: '#F472B6',
     backgroundColor: 'rgba(244, 114, 182, 0.14)',
+  },
+  submitterRowSelectedMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: '#EFF6FF',
   },
   submitterRowMain: {
     flex: 1,
@@ -715,10 +851,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
+  submitterNameMinimal: {
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '700',
+  },
   submitterMeta: {
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     fontWeight: '600',
+  },
+  submitterMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
   submitterCountBadge: {
     minWidth: 28,
@@ -730,18 +873,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,
+    flexShrink: 0,
+  },
+  submitterCountBadgeMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderRadius: 10,
+  },
+  submitterCountBadgeSelectedMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.blueDark,
   },
   submitterCountBadgeText: {
     color: '#3A96DD',
     fontSize: 12,
     fontWeight: '800',
   },
-  detailLoader: {
-    marginTop: 12,
+  submitterCountBadgeTextMinimal: {
+    color: MINIMAL_UI.text,
+    fontWeight: '700',
+  },
+  submitterCountBadgeTextSelectedMinimal: {
+    color: MINIMAL_UI.onDark,
   },
   detailScroll: {
     flex: 1,
     minHeight: 0,
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  detailScrollMinimal: {
+    ...CONTAIN_WIDTH,
   },
   requestChipScroll: {
     flexGrow: 0,
@@ -760,18 +922,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
+  requestChipMinimal: {
+    borderRadius: 10,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
   requestChipSelected: {
     borderColor: '#F472B6',
     backgroundColor: 'rgba(244, 114, 182, 0.2)',
+  },
+  requestChipSelectedMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.blueDark,
   },
   requestChipText: {
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 11,
     fontWeight: '600',
   },
+  requestChipTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
   requestChipTextSelected: {
     color: '#FBCFE8',
     fontWeight: '800',
+  },
+  requestChipTextSelectedMinimal: {
+    color: MINIMAL_UI.onDark,
+    fontWeight: '700',
   },
   detailCard: {
     borderRadius: 12,
@@ -780,6 +958,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.85)',
     padding: 12,
     gap: 4,
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  detailCardMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
   },
   detailCardHeader: {
     flexDirection: 'row',
@@ -796,6 +980,9 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     marginTop: 2,
   },
+  detailCollapsedHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
   detailExpandButton: {
     width: 28,
     height: 36,
@@ -810,6 +997,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(51, 65, 85, 0.65)',
   },
+  detailCardBodyMinimal: {
+    borderTopColor: MINIMAL_UI.divider,
+  },
   detailLabel: {
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
@@ -818,16 +1008,29 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     marginTop: 6,
   },
+  detailLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontSize: 12,
+  },
   detailValue: {
     color: '#3A96DD',
     fontSize: 14,
     fontWeight: '700',
+  },
+  detailValueMinimal: {
+    color: MINIMAL_UI.text,
+    fontWeight: '600',
   },
   detailValueMultiline: {
     color: '#3A96DD',
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
+  },
+  detailValueMultilineMinimal: {
+    color: MINIMAL_UI.text,
   },
   contactRow: {
     flexDirection: 'row',
@@ -841,12 +1044,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
   },
+  contactNameMinimal: {
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '700',
+  },
   contactPhone: {
     flexShrink: 0,
     maxWidth: '42%',
     color: '#3A96DD',
     fontSize: 13,
     fontWeight: '600',
+  },
+  contactPhoneMinimal: {
+    color: MINIMAL_UI.text,
   },
   whatsappButton: {
     width: 36,
@@ -858,6 +1068,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(22, 101, 52, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  whatsappButtonMinimal: {
+    borderRadius: 12,
+    borderColor: '#BBF7D0',
+    backgroundColor: '#F0FDF4',
   },
   whatsappPlaceholder: {
     width: 36,
@@ -872,7 +1087,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   stageSectionLabelWrap: {
-    maxWidth: 112,
+    maxWidth: 140,
     flexShrink: 0,
   },
   stageSectionLabel: {
@@ -882,6 +1097,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
+  stageSectionLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontSize: 12,
+  },
   stageHandlerName: {
     flex: 1,
     minWidth: 0,
@@ -890,12 +1111,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'right',
   },
+  stageHandlerNameMinimal: {
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '700',
+  },
   stageReadOnlyHint: {
     color: '#93C5FD',
     fontSize: 11,
     lineHeight: 14,
     marginTop: 2,
     marginBottom: 2,
+  },
+  stageReadOnlyHintMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
   stageRow: {
     flexDirection: 'row',
@@ -913,6 +1141,11 @@ const styles = StyleSheet.create({
     minWidth: 84,
     alignItems: 'center',
   },
+  stageButtonMinimal: {
+    borderRadius: 10,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
   stageButtonLead: {
     minWidth: 78,
   },
@@ -920,18 +1153,33 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(34, 211, 238, 0.65)',
     backgroundColor: 'rgba(34, 211, 238, 0.2)',
   },
+  stageButtonDoneMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: '#EFF6FF',
+  },
   stageButtonLocked: {
     opacity: 0.4,
     borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: '#FFFFFF',
+  },
+  stageButtonLockedMinimal: {
+    borderColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.rowHover,
   },
   stageButtonText: {
     color: '#3A96DD',
     fontSize: 13,
     fontWeight: '800',
   },
+  stageButtonTextMinimal: {
+    color: MINIMAL_UI.text,
+    fontWeight: '700',
+  },
   stageButtonTextLocked: {
     color: 'rgba(58, 150, 221, 0.82)',
+  },
+  stageButtonTextLockedMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
   stageLoader: {
     alignSelf: 'flex-start',
@@ -947,6 +1195,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 4,
   },
+  cancellationRequestBoxMinimal: {
+    borderColor: '#F59E0B',
+    backgroundColor: '#FFFBEB',
+    borderRadius: 12,
+  },
   cancellationRequestTitle: {
     color: '#FDE68A',
     fontSize: 11,
@@ -954,11 +1207,21 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
+  cancellationRequestTitleMinimal: {
+    color: '#B45309',
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontSize: 13,
+    fontWeight: '700',
+  },
   cancellationRequestMessage: {
     color: '#FEF3C7',
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
+  },
+  cancellationRequestMessageMinimal: {
+    color: '#92400E',
   },
   cancellationRequestReasonLabel: {
     color: '#FCD34D',
@@ -968,10 +1231,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     marginTop: 2,
   },
+  cancellationRequestReasonLabelMinimal: {
+    color: '#B45309',
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontSize: 12,
+  },
   cancellationRequestReasonText: {
     color: '#FFFBEB',
     fontSize: 13,
     lineHeight: 18,
+  },
+  cancellationRequestReasonTextMinimal: {
+    color: '#78350F',
   },
   cancellationButton: {
     alignSelf: 'stretch',
@@ -987,9 +1259,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  cancellationButtonMinimal: {
+    borderRadius: 12,
+    borderColor: '#DC2626',
+    backgroundColor: '#DC2626',
+  },
   cancellationButtonText: {
     color: '#FECACA',
     fontSize: 14,
     fontWeight: '800',
+  },
+  cancellationButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+    fontWeight: '700',
   },
 });
