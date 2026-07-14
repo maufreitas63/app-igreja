@@ -38,6 +38,10 @@ const FILTERS: Array<{
   },
 ];
 
+const ACTION_COL_WIDTH = 40;
+const ACTION_COLS_WIDTH = ACTION_COL_WIDTH * 3;
+const ACTION_CELL_HEIGHT = 32;
+
 export type MembersListsClassProps = {
   title?: string;
   audience: MembersListsClassAudience;
@@ -243,7 +247,7 @@ export function MembersListsClass({
                         >
                           <FontAwesome
                             name="whatsapp"
-                            size={20}
+                            size={18}
                             color={entry.phone ? '#25D366' : MINIMAL_UI.textMuted}
                           />
                         </TouchableOpacity>
@@ -405,6 +409,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     textAlign: 'center',
+    lineHeight: 16,
   },
   headerName: {
     flex: 1,
@@ -414,11 +419,17 @@ const styles = StyleSheet.create({
   actionsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     flexShrink: 0,
-    gap: 2,
+    width: ACTION_COLS_WIDTH,
   },
   headerAction: {
-    width: 40,
+    width: ACTION_COL_WIDTH,
+    height: ACTION_CELL_HEIGHT,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    lineHeight: ACTION_CELL_HEIGHT,
   },
   listBox: {
     flex: 1,
@@ -470,9 +481,10 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 4,
     gap: 8,
+    minHeight: ACTION_CELL_HEIGHT + 16,
   },
   nameText: {
     flex: 1,
@@ -480,18 +492,20 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
     fontSize: 15,
     fontWeight: '600',
+    lineHeight: 20,
   },
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     flexShrink: 0,
-    gap: 2,
+    width: ACTION_COLS_WIDTH,
   },
   actionCell: {
-    width: 40,
+    width: ACTION_COL_WIDTH,
+    height: ACTION_CELL_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
   },
   actionCellDisabled: {
     opacity: 0.55,
