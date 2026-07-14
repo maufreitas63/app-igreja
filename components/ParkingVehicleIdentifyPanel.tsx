@@ -58,34 +58,28 @@ export function ParkingVehicleIdentifyPanel({
 
   const resultBody = result ? (
     <View style={styles.resultCard}>
-      <View style={styles.ownerBlock}>
-        <Text style={styles.ownerLabel}>Proprietário</Text>
-        <Text style={styles.ownerName} numberOfLines={2}>
-          {ownerName}
-        </Text>
-      </View>
-
+      <VehicleDetailRow label="Proprietário" value={ownerName} />
       <VehicleDetailRow label="Placa" value={formatVehicleFieldValue(result.vehicle.placa)} />
       <VehicleDetailRow label="Marca" value={formatVehicleFieldValue(result.vehicle.marca)} />
       <VehicleDetailRow label="Modelo" value={formatVehicleFieldValue(result.vehicle.modelo)} />
       <VehicleDetailRow label="Cor" value={formatVehicleFieldValue(result.vehicle.cor)} />
 
-      <View style={styles.phoneRow}>
-        <View style={styles.phoneTextBlock}>
-          <Text style={styles.detailLabel}>Telefone</Text>
-          <Text style={styles.phoneValue} numberOfLines={1}>
+      <View style={styles.detailRow}>
+        <Text style={styles.detailLabel}>Telefone</Text>
+        <View style={styles.phoneValueRow}>
+          <Text style={styles.detailValue} numberOfLines={1}>
             {formatVehicleFieldValue(contactPhone)}
           </Text>
+          <TouchableOpacity
+            style={[styles.whatsappButton, !canOpenWhatsapp && styles.whatsappButtonDisabled]}
+            onPress={() => onOpenWhatsapp(contactPhone)}
+            disabled={!canOpenWhatsapp}
+            activeOpacity={0.85}
+            accessibilityLabel="Abrir WhatsApp do proprietário"
+          >
+            <FontAwesome name="whatsapp" size={18} color={canOpenWhatsapp ? '#25D366' : '#64748B'} />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={[styles.whatsappButton, !canOpenWhatsapp && styles.whatsappButtonDisabled]}
-          onPress={() => onOpenWhatsapp(contactPhone)}
-          disabled={!canOpenWhatsapp}
-          activeOpacity={0.85}
-          accessibilityLabel="Abrir WhatsApp do proprietário"
-        >
-          <FontAwesome name="whatsapp" size={20} color={canOpenWhatsapp ? '#25D366' : '#64748B'} />
-        </TouchableOpacity>
       </View>
 
       <TouchableOpacity style={styles.newSearchButton} onPress={onReset} activeOpacity={0.85}>
@@ -220,29 +214,9 @@ const styles = StyleSheet.create({
     borderColor: VIGILANCE_SCALES_UI.border,
     backgroundColor: PARKING_VEHICLE_SURFACE,
   },
-  ownerBlock: {
-    gap: 2,
-    paddingBottom: 4,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: VIGILANCE_SCALES_UI.border,
-  },
-  ownerLabel: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    opacity: 0.88,
-  },
-  ownerName: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 15,
-    fontWeight: '800',
-    lineHeight: 19,
-  },
   detailRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
   },
@@ -252,7 +226,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
-    minWidth: 64,
+    minWidth: 88,
     opacity: 0.88,
   },
   detailValue: {
@@ -263,35 +237,24 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     lineHeight: 17,
   },
-  phoneRow: {
+  phoneValueRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 8,
-    marginTop: 2,
-    paddingTop: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: VIGILANCE_SCALES_UI.border,
-  },
-  phoneTextBlock: {
-    flex: 1,
     minWidth: 0,
-    gap: 2,
-  },
-  phoneValue: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 18,
   },
   whatsappButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: PARKING_VEHICLE_SURFACE,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: VIGILANCE_SCALES_UI.border,
+    flexShrink: 0,
   },
   whatsappButtonDisabled: {
     opacity: 0.55,
