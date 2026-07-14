@@ -1,6 +1,5 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
-import { SectionLabel } from '@/components/ui/SectionLabel';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
 import { ScaleVolunteerSelect } from '@/components/ScaleVolunteerSelect';
 import { useMaintenanceScales } from '@/hooks/useMaintenanceScales';
@@ -15,6 +14,7 @@ import {
   MAINTENANCE_SCALES_SQL_HINT,
   parseScaleServiceDateInput,
 } from '@/lib/maintenanceScales';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { mapLegacyRoomDisplayLabel } from '@/lib/roomDisplayLabels';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
@@ -39,6 +39,12 @@ type Props = {
 };
 
 const PANEL_TITLE = SCALE_SCHEDULING_MENU_LABEL;
+
+function FieldLabel({ children, minimal }: { children: string; minimal: boolean }) {
+  return (
+    <Text style={minimal ? styles.fieldLabelMinimal : styles.fieldLabel}>{children}</Text>
+  );
+}
 
 export function MaintenanceScalesCard({
   isActive = true,
@@ -309,9 +315,7 @@ export function MaintenanceScalesCard({
       ) : null}
 
       <View style={[styles.scaleTypePickerSection, minimal && styles.scaleTypePickerSectionMinimal]}>
-        <SectionLabel variant="maintenance" tight>
-          Tipo de escala
-        </SectionLabel>
+        <FieldLabel minimal={minimal}>Tipo de escala</FieldLabel>
         <DropdownSelect
           options={scaleTypeDropdownOptions}
           selectedValue={selectedScaleTypeId ?? ''}
@@ -320,6 +324,7 @@ export function MaintenanceScalesCard({
           placeholder="Selecionar tipo de escala"
           searchPlaceholder="Buscar tipo de escala..."
           searchable
+          variant={minimal ? 'minimal' : 'default'}
           style={[styles.scaleTypeDropdown, minimal && styles.scaleTypeDropdownMinimal]}
           disabled={rpcMissing}
         />
@@ -456,7 +461,7 @@ export function MaintenanceScalesCard({
         <View style={[styles.formCard, minimal && styles.formCardMinimal]}>
           <Text style={[styles.formTitle, minimal && styles.formTitleMinimal]}>Nova escala</Text>
 
-          <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Servo</Text>
+          <FieldLabel minimal={minimal}>Servo</FieldLabel>
           {loadingVolunteers ? (
             <ActivityIndicator
               color={minimal ? MINIMAL_UI.accent : '#818CF8'}
@@ -472,7 +477,8 @@ export function MaintenanceScalesCard({
                 placeholder="Selecionar servo"
                 searchPlaceholder="Buscar servo..."
                 searchable
-                style={[styles.volunteerDropdown, minimal && styles.volunteerDropdownMinimal]}
+                variant="minimal"
+                style={[styles.volunteerDropdown, styles.volunteerDropdownMinimal]}
                 disabled={rpcMissing}
               />
             ) : (
@@ -488,7 +494,7 @@ export function MaintenanceScalesCard({
             </Text>
           )}
 
-          <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Data do serviço</Text>
+          <FieldLabel minimal={minimal}>Data do serviço</FieldLabel>
           <Pressable
             onPress={() => setServiceDatePickerVisible(true)}
             accessibilityRole="button"
@@ -571,12 +577,15 @@ export function MaintenanceScalesCard({
                   accessibilityLabel={`Excluir escala de ${entry.volunteerName} em ${formatScaleServiceDateLabel(entry.serviceDate)}`}
                 >
                   {isRemoving ? (
-                    <ActivityIndicator color={minimal ? MINIMAL_UI.accent : '#FCA5A5'} size="small" />
+                    <ActivityIndicator
+                      color={minimal ? '#DC2626' : '#FCA5A5'}
+                      size="small"
+                    />
                   ) : (
                     <FontAwesome
                       name="trash-o"
                       size={17}
-                      color={minimal ? MINIMAL_UI.accent : '#FCA5A5'}
+                      color={minimal ? '#DC2626' : '#FCA5A5'}
                     />
                   )}
                 </TouchableOpacity>
@@ -596,6 +605,7 @@ export function MaintenanceScalesCard({
         visible={serviceDatePickerVisible}
         value={serviceDateInput}
         title="Data do serviço"
+        variant={minimal ? 'minimal' : 'default'}
         onClose={() => setServiceDatePickerVisible(false)}
         onConfirm={(dateInput) => setServiceDateInput(dateInput)}
       />
@@ -605,9 +615,9 @@ export function MaintenanceScalesCard({
 
 const styles = StyleSheet.create({
   panel: {
+    ...CONTAIN_WIDTH,
     flex: 1,
     borderRadius: 16,
-    overflow: 'hidden',
     backgroundColor: '#FFFFFF',
     padding: 12,
     minHeight: 0,
@@ -652,9 +662,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   scaleTypePickerSection: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
     marginBottom: 8,
     gap: 4,
   },
@@ -662,28 +670,20 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   scaleTypeDropdown: {
-    width: '100%',
-    flex: 0,
+    ...CONTAIN_WIDTH,
     flexGrow: 0,
-    alignSelf: 'stretch',
-    height: 44,
+    flexShrink: 1,
   },
   scaleTypeDropdownMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
   },
   volunteerDropdown: {
-    width: '100%',
-    flex: 0,
+    ...CONTAIN_WIDTH,
     flexGrow: 0,
-    alignSelf: 'stretch',
-    height: 44,
+    flexShrink: 1,
   },
   volunteerDropdownMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
   },
   toolbarRow: {
     flexDirection: 'row',
@@ -691,12 +691,15 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     gap: 12,
     marginBottom: 8,
+    maxWidth: '100%',
+    minWidth: 0,
   },
   toolbarActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     flexShrink: 1,
+    minWidth: 0,
   },
   historyTitle: {
     color: '#3A96DD',
@@ -762,6 +765,8 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     maxHeight: 200,
+    maxWidth: '100%',
+    minWidth: 0,
   },
   previewTitle: {
     color: '#3A96DD',
@@ -786,6 +791,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#4338CA',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   previewRowAlt: {
     backgroundColor: 'rgba(30, 27, 75, 0.35)',
@@ -796,6 +803,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     textAlign: 'center',
+    flexShrink: 0,
   },
   previewDate: {
     minWidth: 88,
@@ -806,6 +814,7 @@ const styles = StyleSheet.create({
   },
   previewName: {
     flex: 1,
+    minWidth: 0,
     color: '#3A96DD',
     fontSize: 13,
     fontWeight: '600',
@@ -848,6 +857,8 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 8,
     marginBottom: 10,
+    maxWidth: '100%',
+    minWidth: 0,
   },
   formTitle: {
     color: '#3A96DD',
@@ -921,6 +932,8 @@ const styles = StyleSheet.create({
   historyScroll: {
     flex: 1,
     minHeight: 0,
+    maxWidth: '100%',
+    minWidth: 0,
   },
   historyContent: {
     paddingBottom: 8,
@@ -933,6 +946,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(52, 211, 153, 0.35)',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   historyRowAlt: {
     backgroundColor: 'rgba(30, 41, 59, 0.35)',
@@ -975,21 +990,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   panelMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    alignSelf: 'stretch',
+    ...CONTAIN_WIDTH,
     paddingHorizontal: 0,
     paddingVertical: 4,
     borderRadius: 0,
     backgroundColor: MINIMAL_UI.background,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   sectionTitle: {
     ...MINIMAL_SECTION_TITLE,
-    width: '100%',
-    maxWidth: '100%',
-    alignSelf: 'stretch',
+    ...CONTAIN_WIDTH,
   },
   panelHintMinimal: {
     color: MINIMAL_UI.textMuted,
@@ -1004,21 +1014,21 @@ const styles = StyleSheet.create({
   toolbarRowMinimal: {
     flexDirection: 'column',
     alignItems: 'stretch',
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
     gap: 10,
   },
   toolbarActionsMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
     flexDirection: 'column',
     alignItems: 'stretch',
     gap: 8,
   },
   historyTitleMinimal: {
     color: MINIMAL_UI.textMuted,
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontSize: 13,
+    fontWeight: '700',
   },
   batchStatusTextMinimal: {
     color: MINIMAL_UI.textMuted,
@@ -1027,25 +1037,23 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   batchButtonMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
+    borderRadius: 12,
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.background,
   },
   batchButtonActiveMinimal: {
-    borderColor: MINIMAL_UI.accent,
+    borderColor: MINIMAL_UI.blueDark,
     backgroundColor: '#EFF6FF',
   },
   batchButtonTextMinimal: {
-    color: MINIMAL_UI.text,
+    color: MINIMAL_UI.blueDark,
   },
   newButtonMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
+    borderRadius: 12,
     justifyContent: 'center',
-    backgroundColor: MINIMAL_UI.accent,
+    backgroundColor: MINIMAL_UI.blueDark,
   },
   newButtonActiveMinimal: {
     backgroundColor: MINIMAL_UI.textMuted,
@@ -1054,25 +1062,22 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.onDark,
   },
   previewCardMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.background,
   },
   previewTitleMinimal: {
-    color: MINIMAL_UI.text,
+    color: MINIMAL_UI.blueDark,
   },
   previewSubtitleMinimal: {
     color: MINIMAL_UI.textMuted,
   },
   previewScrollMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
   },
   previewRowMinimal: {
     borderBottomColor: MINIMAL_UI.divider,
+    paddingHorizontal: 0,
   },
   previewRowAltMinimal: {
     backgroundColor: MINIMAL_UI.rowHover,
@@ -1087,49 +1092,49 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
   },
   previewActionsMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
     flexDirection: 'column',
     alignItems: 'stretch',
     gap: 8,
   },
   previewCancelButtonMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    borderColor: MINIMAL_UI.border,
+    ...CONTAIN_WIDTH,
+    borderRadius: 12,
+    borderColor: MINIMAL_UI.blueDark,
   },
   previewCancelTextMinimal: {
-    color: MINIMAL_UI.text,
+    color: MINIMAL_UI.blueDark,
     textAlign: 'center',
   },
   previewConfirmButtonMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    backgroundColor: MINIMAL_UI.accent,
+    ...CONTAIN_WIDTH,
+    borderRadius: 12,
+    backgroundColor: MINIMAL_UI.blueDark,
   },
   previewConfirmTextMinimal: {
     color: MINIMAL_UI.onDark,
   },
   formCardMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.background,
   },
   formTitleMinimal: {
-    color: MINIMAL_UI.text,
+    color: MINIMAL_UI.blueDark,
   },
   fieldLabelMinimal: {
     color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'none',
+    letterSpacing: 0,
+    marginBottom: 4,
   },
   dateInputMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.background,
+    borderRadius: 12,
   },
   dateInputTextMinimal: {
     color: MINIMAL_UI.text,
@@ -1138,26 +1143,26 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
   },
   saveButtonMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    backgroundColor: MINIMAL_UI.accent,
+    ...CONTAIN_WIDTH,
+    borderRadius: 12,
+    backgroundColor: MINIMAL_UI.blueDark,
   },
   saveButtonTextMinimal: {
     color: MINIMAL_UI.onDark,
   },
   historyScrollMinimal: {
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
+    ...CONTAIN_WIDTH,
   },
   historyRowMinimal: {
     borderBottomColor: MINIMAL_UI.divider,
+    paddingHorizontal: 0,
+    backgroundColor: MINIMAL_UI.background,
   },
   historyRowAltMinimal: {
     backgroundColor: MINIMAL_UI.rowHover,
   },
   historyDateMinimal: {
-    color: MINIMAL_UI.textMuted,
+    color: MINIMAL_UI.accent,
   },
   historyNameMinimal: {
     color: MINIMAL_UI.text,

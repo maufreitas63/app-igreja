@@ -12,6 +12,7 @@ import {
   type CalendarDateParts,
 } from '@/lib/monthlyDatePicker';
 import { getTodayCalendarDateInAppTimezone } from '@/lib/eventDate';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -29,6 +30,7 @@ type MonthlyDatePickerModalProps = {
   onClose: () => void;
   onConfirm: (dateInput: string) => void;
   title?: string;
+  variant?: 'default' | 'minimal';
 };
 
 const getDefaultParts = (): CalendarDateParts => {
@@ -54,7 +56,9 @@ export function MonthlyDatePickerModal({
   onClose,
   onConfirm,
   title = 'Selecionar data',
+  variant = 'default',
 }: MonthlyDatePickerModalProps) {
+  const isMinimal = variant === 'minimal';
   const [draft, setDraft] = useState<CalendarDateParts>(() => resolveInitialParts(value));
   const [viewYear, setViewYear] = useState(draft.year);
   const [viewMonth, setViewMonth] = useState(draft.month);
@@ -100,19 +104,31 @@ export function MonthlyDatePickerModal({
     onClose();
   };
 
+  const iconColor = isMinimal ? MINIMAL_UI.icon : '#5F6368';
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.card} onPress={() => undefined}>
-          <Text style={styles.title}>{title}</Text>
+      <Pressable
+        style={[styles.backdrop, isMinimal && styles.backdropMinimal]}
+        onPress={onClose}
+      >
+        <Pressable
+          style={[styles.card, isMinimal && styles.cardMinimal]}
+          onPress={() => undefined}
+        >
+          <Text style={[styles.title, isMinimal && styles.titleMinimal]}>{title}</Text>
 
           <View style={styles.selectedDateRow}>
-            <Text style={styles.selectedDateText}>{formatPickerSelectedDateLabel(draft)}</Text>
-            <MaterialIcons name="edit-calendar" size={22} color="#5F6368" />
+            <Text style={[styles.selectedDateText, isMinimal && styles.selectedDateTextMinimal]}>
+              {formatPickerSelectedDateLabel(draft)}
+            </Text>
+            <MaterialIcons name="edit-calendar" size={22} color={iconColor} />
           </View>
 
           <View style={styles.monthNavRow}>
-            <Text style={styles.monthNavLabel}>{formatMonthYearLabel(viewYear, viewMonth)}</Text>
+            <Text style={[styles.monthNavLabel, isMinimal && styles.monthNavLabelMinimal]}>
+              {formatMonthYearLabel(viewYear, viewMonth)}
+            </Text>
             <View style={styles.monthNavButtons}>
               <TouchableOpacity
                 style={styles.monthNavButton}
@@ -120,7 +136,7 @@ export function MonthlyDatePickerModal({
                 activeOpacity={0.75}
                 accessibilityLabel="Mês anterior"
               >
-                <MaterialIcons name="chevron-left" size={24} color="#5F6368" />
+                <MaterialIcons name="chevron-left" size={24} color={iconColor} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.monthNavButton}
@@ -128,14 +144,17 @@ export function MonthlyDatePickerModal({
                 activeOpacity={0.75}
                 accessibilityLabel="Próximo mês"
               >
-                <MaterialIcons name="chevron-right" size={24} color="#5F6368" />
+                <MaterialIcons name="chevron-right" size={24} color={iconColor} />
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.weekdaysRow}>
             {WEEKDAY_LABELS_PT.map((label, index) => (
-              <Text key={`${label}-${index}`} style={styles.weekdayLabel}>
+              <Text
+                key={`${label}-${index}`}
+                style={[styles.weekdayLabel, isMinimal && styles.weekdayLabelMinimal]}
+              >
                 {label}
               </Text>
             ))}
@@ -171,13 +190,16 @@ export function MonthlyDatePickerModal({
                       <View
                         style={[
                           styles.dayBadge,
-                          isSelected && styles.dayBadgeSelected,
+                          isSelected &&
+                            (isMinimal ? styles.dayBadgeSelectedMinimal : styles.dayBadgeSelected),
                           !isSelected && isToday && styles.dayBadgeToday,
+                          !isSelected && isToday && isMinimal && styles.dayBadgeTodayMinimal,
                         ]}
                       >
                         <Text
                           style={[
                             styles.dayText,
+                            isMinimal && styles.dayTextMinimal,
                             isSelected && styles.dayTextSelected,
                           ]}
                         >
@@ -193,10 +215,18 @@ export function MonthlyDatePickerModal({
 
           <View style={styles.footer}>
             <TouchableOpacity style={styles.footerButton} onPress={onClose} activeOpacity={0.75}>
-              <Text style={styles.footerButtonText}>Cancelar</Text>
+              <Text
+                style={[styles.footerButtonText, isMinimal && styles.footerButtonTextMinimal]}
+              >
+                Cancelar
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.footerButton} onPress={handleConfirm} activeOpacity={0.75}>
-              <Text style={styles.footerButtonText}>OK</Text>
+              <Text
+                style={[styles.footerButtonText, isMinimal && styles.footerButtonTextMinimal]}
+              >
+                OK
+              </Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -213,6 +243,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
+  backdropMinimal: {
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+  },
   card: {
     width: '100%',
     maxWidth: 360,
@@ -227,11 +260,22 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 8,
   },
+  cardMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 16,
+    shadowOpacity: 0.08,
+  },
   title: {
     color: '#5F6368',
     fontSize: 13,
     fontWeight: '500',
     marginBottom: 10,
+  },
+  titleMinimal: {
+    color: MINIMAL_UI.textMuted,
+    fontWeight: '700',
   },
   selectedDateRow: {
     flexDirection: 'row',
@@ -247,6 +291,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     lineHeight: 34,
   },
+  selectedDateTextMinimal: {
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '700',
+  },
   monthNavRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -257,6 +305,9 @@ const styles = StyleSheet.create({
     color: '#1F1F1F',
     fontSize: 15,
     fontWeight: '600',
+  },
+  monthNavLabelMinimal: {
+    color: MINIMAL_UI.text,
   },
   monthNavButtons: {
     flexDirection: 'row',
@@ -281,6 +332,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  weekdayLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
   calendarGrid: {
     gap: 2,
     marginBottom: 8,
@@ -304,14 +358,23 @@ const styles = StyleSheet.create({
   dayBadgeSelected: {
     backgroundColor: '#1A73E8',
   },
+  dayBadgeSelectedMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
   dayBadgeToday: {
     borderWidth: 1,
     borderColor: '#94A3B8',
+  },
+  dayBadgeTodayMinimal: {
+    borderColor: MINIMAL_UI.border,
   },
   dayText: {
     color: '#1F1F1F',
     fontSize: 14,
     fontWeight: '500',
+  },
+  dayTextMinimal: {
+    color: MINIMAL_UI.text,
   },
   dayTextSelected: {
     color: '#FFFFFF',
@@ -332,5 +395,8 @@ const styles = StyleSheet.create({
     color: '#1A73E8',
     fontSize: 15,
     fontWeight: '700',
+  },
+  footerButtonTextMinimal: {
+    color: MINIMAL_UI.accent,
   },
 });
