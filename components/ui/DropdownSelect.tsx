@@ -1,4 +1,5 @@
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -34,7 +35,7 @@ type DropdownSelectProps = {
   size?: 'default' | 'comfortable' | 'compact';
   disabled?: boolean;
   /** Identidade visual clara (fundo branco, textos azuis). */
-  variant?: 'default' | 'vigilance';
+  variant?: 'default' | 'vigilance' | 'minimal';
 };
 
 const VIGILANCE_SURFACE = '#FFFFFF';
@@ -65,8 +66,15 @@ export function DropdownSelect({
   const isComfortable = size === 'comfortable';
   const isCompact = size === 'compact';
   const isVigilance = variant === 'vigilance';
+  const isMinimal = variant === 'minimal';
   const resolvedTriggerIconColor =
-    triggerIconColor ?? (isVigilance ? '#FFFFFF' : '#94A3B8');
+    triggerIconColor
+    ?? (isMinimal ? MINIMAL_UI.icon : isVigilance ? '#FFFFFF' : '#94A3B8');
+  const selectedCheckColor = isMinimal
+    ? MINIMAL_UI.accent
+    : isVigilance
+      ? VIGILANCE_ICON
+      : '#10b981';
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const blurCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -144,11 +152,16 @@ export function DropdownSelect({
           style={[
             styles.searchableTrigger,
             isVigilance && styles.searchableTriggerVigilance,
+            isMinimal && styles.searchableTriggerMinimal,
             disabled && styles.triggerDisabled,
           ]}
         >
           <TextInput
-            style={[styles.searchableInput, isVigilance && styles.searchableInputVigilance]}
+            style={[
+              styles.searchableInput,
+              isVigilance && styles.searchableInputVigilance,
+              isMinimal && styles.searchableInputMinimal,
+            ]}
             value={inputValue}
             onChangeText={(text) => {
               setSearchQuery(text);
@@ -157,7 +170,9 @@ export function DropdownSelect({
             onFocus={handleOpenSearch}
             onBlur={scheduleCloseSearch}
             placeholder={inputPlaceholder}
-            placeholderTextColor={isVigilance ? '#FFFFFF' : '#64748B'}
+            placeholderTextColor={
+              isMinimal ? MINIMAL_UI.textMuted : isVigilance ? '#FFFFFF' : '#64748B'
+            }
             editable={!disabled}
             autoCapitalize="words"
             autoCorrect={false}
@@ -177,7 +192,9 @@ export function DropdownSelect({
               <FontAwesome
                 name="times-circle"
                 size={18}
-                color={isVigilance ? '#FFFFFF' : '#94A3B8'}
+                color={
+                  isMinimal ? MINIMAL_UI.icon : isVigilance ? '#FFFFFF' : '#94A3B8'
+                }
               />
             </TouchableOpacity>
           ) : null}
@@ -200,13 +217,21 @@ export function DropdownSelect({
             <FontAwesome
               name={open ? 'chevron-up' : 'chevron-down'}
               size={12}
-              color={isVigilance ? '#FFFFFF' : '#94A3B8'}
+              color={
+                isMinimal ? MINIMAL_UI.icon : isVigilance ? '#FFFFFF' : '#94A3B8'
+              }
             />
           </TouchableOpacity>
         </View>
 
         {open ? (
-          <View style={[styles.searchablePanel, isVigilance && styles.searchablePanelVigilance]}>
+          <View
+            style={[
+              styles.searchablePanel,
+              isVigilance && styles.searchablePanelVigilance,
+              isMinimal && styles.searchablePanelMinimal,
+            ]}
+          >
             <ScrollView
               style={styles.searchableScroll}
               contentContainerStyle={styles.optionsContent}
@@ -224,8 +249,10 @@ export function DropdownSelect({
                       style={[
                         styles.optionButton,
                         isVigilance && styles.optionButtonVigilance,
+                        isMinimal && styles.optionButtonMinimal,
                         isSelected && styles.optionButtonSelected,
                         isSelected && isVigilance && styles.optionButtonSelectedVigilance,
+                        isSelected && isMinimal && styles.optionButtonSelectedMinimal,
                       ]}
                       onPress={() => handleSelect(option.value)}
                       onPressIn={clearBlurTimer}
@@ -235,25 +262,29 @@ export function DropdownSelect({
                         style={[
                           styles.optionText,
                           isVigilance && styles.optionTextVigilance,
+                          isMinimal && styles.optionTextMinimal,
                           isSelected && styles.optionTextSelected,
                           isSelected && isVigilance && styles.optionTextSelectedVigilance,
+                          isSelected && isMinimal && styles.optionTextSelectedMinimal,
                         ]}
                         numberOfLines={2}
                       >
                         {option.label}
                       </Text>
                       {isSelected ? (
-                        <FontAwesome
-                          name="check"
-                          size={14}
-                          color={isVigilance ? VIGILANCE_ICON : '#10b981'}
-                        />
+                        <FontAwesome name="check" size={14} color={selectedCheckColor} />
                       ) : null}
                     </TouchableOpacity>
                   );
                 })
               ) : (
-                <Text style={[styles.emptySearchText, isVigilance && styles.emptySearchTextVigilance]}>
+                <Text
+                  style={[
+                    styles.emptySearchText,
+                    isVigilance && styles.emptySearchTextVigilance,
+                    isMinimal && styles.emptySearchTextMinimal,
+                  ]}
+                >
                   Nenhum resultado para a busca.
                 </Text>
               )}
@@ -272,6 +303,7 @@ export function DropdownSelect({
           isComfortable && styles.triggerComfortable,
           isCompact && styles.triggerCompact,
           isVigilance && styles.triggerVigilance,
+          isMinimal && styles.triggerMinimal,
           disabled && styles.triggerDisabled,
           style,
         ]}
@@ -288,6 +320,7 @@ export function DropdownSelect({
             isComfortable && styles.triggerTextComfortable,
             isCompact && styles.triggerTextCompact,
             isVigilance && styles.triggerTextVigilance,
+            isMinimal && styles.triggerTextMinimal,
             triggerTextStyle,
           ])}
           numberOfLines={1}
@@ -299,14 +332,28 @@ export function DropdownSelect({
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable
-          style={[styles.backdrop, isVigilance && styles.backdropVigilance]}
+          style={[
+            styles.backdrop,
+            isVigilance && styles.backdropVigilance,
+            isMinimal && styles.backdropMinimal,
+          ]}
           onPress={() => setOpen(false)}
         >
           <Pressable
-            style={[styles.modalCard, isVigilance && styles.modalCardVigilance]}
+            style={[
+              styles.modalCard,
+              isVigilance && styles.modalCardVigilance,
+              isMinimal && styles.modalCardMinimal,
+            ]}
             onPress={() => undefined}
           >
-            <Text style={[styles.modalTitle, isVigilance && styles.modalTitleVigilance]}>
+            <Text
+              style={[
+                styles.modalTitle,
+                isVigilance && styles.modalTitleVigilance,
+                isMinimal && styles.modalTitleMinimal,
+              ]}
+            >
               {modalTitle}
             </Text>
             <ScrollView
@@ -324,8 +371,10 @@ export function DropdownSelect({
                     style={[
                       styles.optionButton,
                       isVigilance && styles.optionButtonVigilance,
+                      isMinimal && styles.optionButtonMinimal,
                       isSelected && styles.optionButtonSelected,
                       isSelected && isVigilance && styles.optionButtonSelectedVigilance,
+                      isSelected && isMinimal && styles.optionButtonSelectedMinimal,
                     ]}
                     onPress={() => handleSelect(option.value)}
                     activeOpacity={0.85}
@@ -334,29 +383,37 @@ export function DropdownSelect({
                       style={[
                         styles.optionText,
                         isVigilance && styles.optionTextVigilance,
+                        isMinimal && styles.optionTextMinimal,
                         isSelected && styles.optionTextSelected,
                         isSelected && isVigilance && styles.optionTextSelectedVigilance,
+                        isSelected && isMinimal && styles.optionTextSelectedMinimal,
                       ]}
                     >
                       {option.label}
                     </Text>
                     {isSelected ? (
-                      <FontAwesome
-                        name="check"
-                        size={14}
-                        color={isVigilance ? VIGILANCE_ICON : '#10b981'}
-                      />
+                      <FontAwesome name="check" size={14} color={selectedCheckColor} />
                     ) : null}
                   </TouchableOpacity>
                 );
               })}
             </ScrollView>
             <TouchableOpacity
-              style={[styles.closeButton, isVigilance && styles.closeButtonVigilance]}
+              style={[
+                styles.closeButton,
+                isVigilance && styles.closeButtonVigilance,
+                isMinimal && styles.closeButtonMinimal,
+              ]}
               onPress={() => setOpen(false)}
               activeOpacity={0.85}
             >
-              <Text style={[styles.closeButtonText, isVigilance && styles.closeButtonTextVigilance]}>
+              <Text
+                style={[
+                  styles.closeButtonText,
+                  isVigilance && styles.closeButtonTextVigilance,
+                  isMinimal && styles.closeButtonTextMinimal,
+                ]}
+              >
                 Fechar
               </Text>
             </TouchableOpacity>
@@ -389,6 +446,10 @@ const styles = StyleSheet.create({
     borderColor: '#1B4F8A',
     backgroundColor: VIGILANCE_SCALES_UI.accent,
   },
+  searchableTriggerMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
   searchableInput: {
     flex: 1,
     minWidth: 0,
@@ -399,6 +460,9 @@ const styles = StyleSheet.create({
   },
   searchableInputVigilance: {
     color: '#FFFFFF',
+  },
+  searchableInputMinimal: {
+    color: MINIMAL_UI.text,
   },
   searchableClearButton: {
     alignItems: 'center',
@@ -418,6 +482,10 @@ const styles = StyleSheet.create({
     borderColor: VIGILANCE_SCALES_UI.accent,
     backgroundColor: VIGILANCE_SURFACE,
   },
+  searchablePanelMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
   searchableScroll: {
     maxHeight: 240,
   },
@@ -431,6 +499,9 @@ const styles = StyleSheet.create({
   },
   emptySearchTextVigilance: {
     color: VIGILANCE_SCALES_UI.accent,
+  },
+  emptySearchTextMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
   trigger: {
     flex: 1,
@@ -450,6 +521,10 @@ const styles = StyleSheet.create({
   triggerVigilance: {
     borderColor: '#1B4F8A',
     backgroundColor: VIGILANCE_SCALES_UI.accent,
+  },
+  triggerMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
   },
   triggerComfortable: {
     minHeight: 52,
@@ -478,6 +553,9 @@ const styles = StyleSheet.create({
   triggerTextVigilance: {
     color: '#FFFFFF',
   },
+  triggerTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
   triggerTextComfortable: {
     fontSize: 16,
     lineHeight: 22,
@@ -497,6 +575,9 @@ const styles = StyleSheet.create({
   backdropVigilance: {
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
   },
+  backdropMinimal: {
+    backgroundColor: 'rgba(30, 64, 175, 0.28)',
+  },
   modalCard: {
     maxHeight: '70%',
     borderRadius: 16,
@@ -510,6 +591,10 @@ const styles = StyleSheet.create({
     borderColor: VIGILANCE_SCALES_UI.accent,
     backgroundColor: VIGILANCE_SURFACE,
   },
+  modalCardMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
   modalTitle: {
     color: '#10b981',
     fontSize: 13,
@@ -520,6 +605,9 @@ const styles = StyleSheet.create({
   },
   modalTitleVigilance: {
     color: VIGILANCE_SCALES_UI.accent,
+  },
+  modalTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
   },
   optionsScroll: {
     maxHeight: 320,
@@ -544,6 +632,10 @@ const styles = StyleSheet.create({
     borderColor: VIGILANCE_SCALES_UI.accent,
     backgroundColor: VIGILANCE_SURFACE,
   },
+  optionButtonMinimal: {
+    borderColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
   optionButtonSelected: {
     borderColor: '#10b981',
     backgroundColor: 'rgba(16, 185, 129, 0.15)',
@@ -551,6 +643,10 @@ const styles = StyleSheet.create({
   optionButtonSelectedVigilance: {
     borderColor: VIGILANCE_ICON,
     backgroundColor: '#F0F9FF',
+  },
+  optionButtonSelectedMinimal: {
+    borderColor: MINIMAL_UI.accent,
+    backgroundColor: '#EFF6FF',
   },
   optionText: {
     flex: 1,
@@ -561,12 +657,19 @@ const styles = StyleSheet.create({
   optionTextVigilance: {
     color: VIGILANCE_SCALES_UI.accent,
   },
+  optionTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
   optionTextSelected: {
     color: '#ECFDF5',
     fontWeight: '800',
   },
   optionTextSelectedVigilance: {
     color: VIGILANCE_ICON,
+    fontWeight: '800',
+  },
+  optionTextSelectedMinimal: {
+    color: MINIMAL_UI.blueDark,
     fontWeight: '800',
   },
   closeButton: {
@@ -580,6 +683,12 @@ const styles = StyleSheet.create({
     borderColor: VIGILANCE_SCALES_UI.accent,
     backgroundColor: VIGILANCE_SURFACE,
   },
+  closeButtonMinimal: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
   closeButtonText: {
     color: '#94A3B8',
     fontSize: 13,
@@ -587,5 +696,8 @@ const styles = StyleSheet.create({
   },
   closeButtonTextVigilance: {
     color: VIGILANCE_SCALES_UI.accent,
+  },
+  closeButtonTextMinimal: {
+    color: MINIMAL_UI.accent,
   },
 });

@@ -1,5 +1,4 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
-import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   BIRTHDAYS_CLASS_MONTHS,
@@ -16,8 +15,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
-const BIRTHDAYS_CLASS_SURFACE = '#FFFFFF';
 
 export type BirthdaysClassProps = {
   title?: string;
@@ -57,10 +54,10 @@ export function BirthdaysClass({
               onValueChange={onMonthChange}
               modalTitle="Selecionar mês"
               placeholder="Selecionar mês"
-              variant="vigilance"
+              variant="minimal"
               style={styles.monthDropdown}
               triggerTextStyle={styles.monthDropdownText}
-              triggerIconColor="#FFFFFF"
+              triggerIconColor={MINIMAL_UI.icon}
             />
           </View>
         </View>
@@ -73,7 +70,7 @@ export function BirthdaysClass({
         <View style={styles.listBox}>
           {loading ? (
             <View style={styles.loadingState}>
-              <ActivityIndicator color={VIGILANCE_SCALES_UI.accent} size="large" />
+              <ActivityIndicator color={MINIMAL_UI.accent} size="large" />
             </View>
           ) : error ? (
             <View style={styles.messageBox}>
@@ -110,7 +107,7 @@ export function BirthdaysClass({
                       <FontAwesome
                         name="whatsapp"
                         size={18}
-                        color={entry.phone ? '#25D366' : '#94A3B8'}
+                        color={entry.phone ? '#25D366' : MINIMAL_UI.textMuted}
                       />
                     </TouchableOpacity>
                   </View>
@@ -133,7 +130,7 @@ const styles = StyleSheet.create({
     width: '100%',
     flex: 1,
     alignSelf: 'stretch',
-    backgroundColor: BIRTHDAYS_CLASS_SURFACE,
+    backgroundColor: MINIMAL_UI.background,
     gap: 12,
   },
   title: {
@@ -151,7 +148,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   filterLabel: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.blueDark,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -166,16 +163,16 @@ const styles = StyleSheet.create({
   },
   monthDropdown: {
     width: '100%',
-    borderColor: '#1B4F8A',
-    backgroundColor: VIGILANCE_SCALES_UI.accent,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
   },
   monthDropdownText: {
-    color: '#FFFFFF',
+    color: MINIMAL_UI.text,
     fontWeight: '700',
     textAlign: 'center',
   },
   summaryText: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.textMuted,
     fontSize: 12,
     textAlign: 'center',
   },
@@ -183,9 +180,9 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.35)',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 16,
-    backgroundColor: BIRTHDAYS_CLASS_SURFACE,
+    backgroundColor: MINIMAL_UI.background,
     overflow: 'hidden',
   },
   loadingState: {
@@ -204,21 +201,21 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   errorText: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.text,
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
   },
   retryButton: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: VIGILANCE_SCALES_UI.border,
+    borderColor: MINIMAL_UI.border,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: BIRTHDAYS_CLASS_SURFACE,
+    backgroundColor: MINIMAL_UI.background,
   },
   retryButtonText: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.accent,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -235,9 +232,9 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: BIRTHDAYS_CLASS_SURFACE,
+    backgroundColor: MINIMAL_UI.background,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: VIGILANCE_SCALES_UI.border,
+    borderBottomColor: MINIMAL_UI.divider,
   },
   rowContent: {
     flex: 1,
@@ -249,21 +246,21 @@ const styles = StyleSheet.create({
     minWidth: 64,
     borderRadius: 999,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: VIGILANCE_SCALES_UI.border,
-    backgroundColor: BIRTHDAYS_CLASS_SURFACE,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.rowHover,
     paddingVertical: 5,
     paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dateBadgeText: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.blueDark,
     fontSize: 12,
     fontWeight: '800',
   },
   nameText: {
     flex: 1,
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.text,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -273,7 +270,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(37, 211, 102, 0.35)',
-    backgroundColor: BIRTHDAYS_CLASS_SURFACE,
+    backgroundColor: MINIMAL_UI.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -281,7 +278,7 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   emptyText: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.textMuted,
     fontSize: 13,
     opacity: 0.88,
     padding: 16,
