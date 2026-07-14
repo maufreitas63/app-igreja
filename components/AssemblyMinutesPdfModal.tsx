@@ -1,4 +1,5 @@
 import { FontAwesome } from '@expo/vector-icons';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import {
   Modal,
@@ -48,7 +49,7 @@ export function AssemblyMinutesPdfModal({ visible, title, pdfUrl, onClose }: Pro
               activeOpacity={0.85}
               accessibilityLabel="Fechar"
             >
-              <FontAwesome name="times" size={16} color="#CBD5E1" />
+              <FontAwesome name="times" size={16} color={MINIMAL_UI.icon} />
             </TouchableOpacity>
           </View>
 
@@ -70,7 +71,7 @@ export function AssemblyMinutesPdfModal({ visible, title, pdfUrl, onClose }: Pro
               onPress={() => openPdfInNewTab(pdfUrl)}
               activeOpacity={0.85}
             >
-              <FontAwesome name="external-link" size={14} color="#DBEAFE" />
+              <FontAwesome name="external-link" size={14} color={MINIMAL_UI.blueDark} />
               <Text style={styles.actionButtonText}>Abrir em nova aba</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.85}>
@@ -92,18 +93,22 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(2, 6, 23, 0.72)',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
   },
   card: {
     width: '100%',
     maxWidth: 920,
     maxHeight: '92%',
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.35)',
-    backgroundColor: '#0F172A',
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
     overflow: 'hidden',
     zIndex: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
   },
   header: {
     flexDirection: 'row',
@@ -112,35 +117,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(51, 65, 85, 0.9)',
+    borderBottomColor: MINIMAL_UI.divider,
   },
   headerText: {
     flex: 1,
     minWidth: 0,
   },
   title: {
-    color: '#E0F2FE',
+    color: MINIMAL_UI.blueDark,
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   iconButton: {
     width: 34,
     height: 34,
-    borderRadius: 999,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(51, 65, 85, 0.65)',
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
   },
   viewerShell: {
     flex: 1,
     minHeight: 420,
-    backgroundColor: '#111827',
+    backgroundColor: MINIMAL_UI.background,
   },
   iframe: {
     width: '100%',
     height: '100%',
     border: 'none',
     minHeight: 420,
+    backgroundColor: MINIMAL_UI.background,
   },
   nativeFallback: {
     minHeight: 180,
@@ -149,7 +157,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   nativeFallbackText: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',
@@ -159,15 +167,15 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 14,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(51, 65, 85, 0.9)',
+    borderTopColor: MINIMAL_UI.divider,
   },
   actionButton: {
     flex: 1,
     minHeight: 42,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.45)',
-    backgroundColor: 'rgba(30, 64, 175, 0.35)',
+    borderColor: MINIMAL_UI.blueDark,
+    backgroundColor: MINIMAL_UI.background,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -175,9 +183,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   actionButtonText: {
-    color: '#DBEAFE',
+    color: MINIMAL_UI.blueDark,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   closeButton: {
     minWidth: 96,
@@ -185,12 +193,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#60A5FA',
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.blueDark,
     paddingHorizontal: 14,
   },
   closeButtonText: {
-    color: '#0F172A',
+    color: MINIMAL_UI.onDark,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
   },
 });

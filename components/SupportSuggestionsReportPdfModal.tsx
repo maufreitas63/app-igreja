@@ -1,4 +1,6 @@
+import { FontAwesome } from '@expo/vector-icons';
 import { SUPPORT_SUGGESTIONS_REPORT_PDF_FILENAME } from '@/lib/maintenanceSupportSuggestionsReport';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import {
   Modal,
@@ -52,7 +54,11 @@ export function SupportSuggestionsReportPdfModal({
   return (
     <Modal transparent visible animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Fechar visualização do PDF" />
+        <Pressable
+          style={styles.backdrop}
+          onPress={onClose}
+          accessibilityLabel="Fechar visualização do PDF"
+        />
 
         <View style={styles.card}>
           <View style={styles.header}>
@@ -68,29 +74,23 @@ export function SupportSuggestionsReportPdfModal({
               activeOpacity={0.85}
               accessibilityLabel="Fechar"
             >
-              <FontAwesome name="times" size={16} color="#CBD5E1" />
+              <FontAwesome name="times" size={16} color={MINIMAL_UI.icon} />
             </TouchableOpacity>
           </View>
 
           {Platform.OS === 'web' ? (
             <View style={styles.viewerShell}>
-              {/* iframe é suportado apenas na web */}
               <iframe
                 src={pdfUrl}
                 title="Relatório de Sugestões e Melhorias"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  border: 'none',
-                  borderRadius: 10,
-                  backgroundColor: '#FFFFFF',
-                }}
+                style={styles.iframe as never}
               />
             </View>
           ) : (
             <View style={styles.nativeFallback}>
               <Text style={styles.nativeFallbackText}>
-                A visualização embutida do PDF está disponível na versão web. Use o botão abaixo para abrir o arquivo.
+                A visualização embutida do PDF está disponível na versão web. Use o botão abaixo para
+                abrir o arquivo.
               </Text>
             </View>
           )}
@@ -103,6 +103,7 @@ export function SupportSuggestionsReportPdfModal({
                   onPress={() => openPdfInNewTab(pdfUrl)}
                   activeOpacity={0.85}
                 >
+                  <FontAwesome name="external-link" size={13} color={MINIMAL_UI.blueDark} />
                   <Text style={styles.secondaryButtonText}>Abrir em nova aba</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -110,6 +111,7 @@ export function SupportSuggestionsReportPdfModal({
                   onPress={() => downloadPdf(pdfUrl)}
                   activeOpacity={0.85}
                 >
+                  <FontAwesome name="download" size={13} color={MINIMAL_UI.onDark} />
                   <Text style={styles.primaryButtonText}>Baixar PDF</Text>
                 </TouchableOpacity>
               </>
@@ -130,69 +132,79 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    backgroundColor: 'rgba(2, 6, 23, 0.72)',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
   },
   card: {
     width: '100%',
     maxWidth: 920,
     maxHeight: '92%',
     borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.35)',
-    borderRadius: 14,
-    backgroundColor: 'rgba(15, 23, 42, 0.98)',
-    padding: 14,
-    gap: 10,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 16,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'hidden',
+    zIndex: 2,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
     gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: MINIMAL_UI.divider,
   },
   headerText: {
     flex: 1,
     gap: 2,
+    minWidth: 0,
   },
   title: {
-    color: '#F8FAFC',
+    color: MINIMAL_UI.blueDark,
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   subtitle: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
   iconButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 999,
+    width: 34,
+    height: 34,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.9)',
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
   },
   viewerShell: {
     flex: 1,
     minHeight: 420,
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.2)',
-    borderRadius: 10,
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: MINIMAL_UI.background,
+  },
+  iframe: {
+    width: '100%',
+    height: '100%',
+    border: 'none',
+    minHeight: 420,
+    backgroundColor: MINIMAL_UI.background,
   },
   nativeFallback: {
     minHeight: 180,
-    borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.2)',
-    borderRadius: 10,
     padding: 16,
     justifyContent: 'center',
   },
   nativeFallbackText: {
-    color: '#CBD5E1',
+    color: MINIMAL_UI.textMuted,
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',
@@ -201,38 +213,55 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-end',
+    alignItems: 'center',
     gap: 8,
+    padding: 14,
+    borderTopWidth: 1,
+    borderTopColor: MINIMAL_UI.divider,
   },
   primaryButton: {
-    borderRadius: 999,
-    backgroundColor: '#C084FC',
+    minHeight: 42,
+    borderRadius: 12,
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.blueDark,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   primaryButtonText: {
-    color: '#0F172A',
+    color: MINIMAL_UI.onDark,
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: '700',
   },
   secondaryButton: {
+    minHeight: 42,
     borderWidth: 1,
-    borderColor: '#475569',
-    borderRadius: 999,
+    borderColor: MINIMAL_UI.blueDark,
+    borderRadius: 12,
+    backgroundColor: MINIMAL_UI.background,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   secondaryButtonText: {
-    color: '#CBD5E1',
+    color: MINIMAL_UI.blueDark,
     fontSize: 12,
     fontWeight: '700',
   },
   closeButton: {
-    borderRadius: 999,
+    minHeight: 42,
+    borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   closeButtonText: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 12,
     fontWeight: '700',
   },
