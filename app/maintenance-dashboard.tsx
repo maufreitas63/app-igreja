@@ -1472,7 +1472,18 @@ export default function MaintenanceDashboard() {
           ) : item.content === 'family_reception' ? (
             <MaintenanceFamilyReceptionCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'financials' ? (
-            <MaintenanceFinancialsCard isActive={currentIndex === index} panelHeight={cardHeight} />
+            <View
+              style={[
+                styles.financialsPanel,
+                isMinimalPresentation && styles.financialsPanelMinimal,
+              ]}
+            >
+              <MaintenanceFinancialsCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
           ) : item.content === 'predictive_insights' ? (
             <MaintenancePredictiveInsightsCard isActive={currentIndex === index} panelHeight={cardHeight} />
           ) : item.content === 'relatorios' ? (
@@ -2613,6 +2624,19 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   pastoralCarePanelMinimal: {
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'visible',
+  },
+  financialsPanel: {
+    ...CONTAIN_WIDTH,
+    flex: 1,
+    minHeight: 0,
+  },
+  financialsPanelMinimal: {
     paddingHorizontal: 0,
     paddingVertical: 4,
     width: '100%',

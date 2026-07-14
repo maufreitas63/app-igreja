@@ -62,6 +62,8 @@ import {
   sortAssemblyMinutesByIbnDesc,
   type AssemblyMinuteRecord,
 } from '@/lib/assemblyMinutesApi';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
@@ -84,6 +86,7 @@ import Toast from 'react-native-toast-message';
 type Props = {
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
 
 const ACCENT = '#3A96DD';
@@ -95,6 +98,7 @@ type CollapsibleSectionProps = {
   subtitle: string;
   expanded: boolean;
   onToggle: () => void;
+  minimal?: boolean;
   children: React.ReactNode;
 };
 
@@ -103,10 +107,11 @@ function CollapsibleSection({
   subtitle,
   expanded,
   onToggle,
+  minimal = false,
   children,
 }: CollapsibleSectionProps) {
   return (
-    <View style={styles.collapseSection}>
+    <View style={[styles.collapseSection, minimal && styles.collapseSectionMinimal]}>
       <TouchableOpacity
         style={styles.collapseHeader}
         onPress={onToggle}
@@ -116,29 +121,46 @@ function CollapsibleSection({
       >
         <View style={styles.collapseHeaderTextWrap}>
           <View style={styles.collapseHeaderTitleRow}>
-            <Text style={styles.collapseHeaderTitle} numberOfLines={1}>
+            <Text
+              style={[styles.collapseHeaderTitle, minimal && styles.collapseHeaderTitleMinimal]}
+              numberOfLines={1}
+            >
               {title}
             </Text>
             <FontAwesome
               name={expanded ? 'chevron-up' : 'chevron-down'}
               size={14}
-              color="#6EE7B7"
+              color={minimal ? MINIMAL_UI.icon : '#6EE7B7'}
               style={styles.collapseChevron}
             />
           </View>
           {subtitle ? (
-            <Text style={styles.collapseHeaderSubtitle} numberOfLines={2}>
+            <Text
+              style={[
+                styles.collapseHeaderSubtitle,
+                minimal && styles.collapseHeaderSubtitleMinimal,
+              ]}
+              numberOfLines={2}
+            >
               {subtitle}
             </Text>
           ) : null}
         </View>
       </TouchableOpacity>
-      {expanded ? <View style={styles.collapseBody}>{children}</View> : null}
+      {expanded ? (
+        <View style={[styles.collapseBody, minimal && styles.collapseBodyMinimal]}>
+          {children}
+        </View>
+      ) : null}
     </View>
   );
 }
 
-export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Props) {
+export function MaintenanceFinancialsCard({
+  isActive = true,
+  panelHeight,
+  minimal = false,
+}: Props) {
   const router = useRouter();
   const {
     setSelectedMonth,
@@ -1089,21 +1111,32 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
   };
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Informações Financeiras</Text>
-      <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+    <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
+      <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}>
+        Informações Financeiras
+      </Text>
+      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
-      {rpcMissing ? <Text style={styles.warningText}>{MAINTENANCE_FINANCIALS_SQL_HINT}</Text> : null}
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {rpcMissing ? (
+        <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
+          {MAINTENANCE_FINANCIALS_SQL_HINT}
+        </Text>
+      ) : null}
+      {error ? (
+        <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
+      ) : null}
 
       <CollapsibleSection
         title={`Mês de referência · ${periodLabel}`}
         subtitle={periodSummaryLine}
         expanded={expandedSection === 'period'}
         onToggle={() => toggleSection('period')}
+        minimal={minimal}
       >
-        <View style={styles.periodBox}>
-          <Text style={styles.periodPickerLabel}>Mês</Text>
+        <View style={[styles.periodBox, minimal && styles.periodBoxMinimal]}>
+          <Text style={[styles.periodPickerLabel, minimal && styles.periodPickerLabelMinimal]}>
+            Mês
+          </Text>
           <DropdownSelect
             options={maintenanceMonthDropdownOptions}
             selectedValue={formatFinancialMonthKey(selectedMonth)}
@@ -1116,18 +1149,23 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             }}
             modalTitle="Selecionar mês"
             placeholder="Selecionar mês"
-            style={styles.monthDropdown}
+            variant={minimal ? 'minimal' : 'default'}
+            style={[styles.monthDropdown, minimal && styles.monthDropdownMinimal]}
             disabled={formBusy || rpcMissing}
           />
 
-          <Text style={styles.periodPickerLabel}>Versão para carga/limpeza</Text>
+          <Text style={[styles.periodPickerLabel, minimal && styles.periodPickerLabelMinimal]}>
+            Versão para carga/limpeza
+          </Text>
           <View style={styles.versionChipRow}>
             {budgetVersionOptions.map((version) => (
               <TouchableOpacity
                 key={version}
                 style={[
                   styles.versionChip,
+                  minimal && styles.versionChipMinimal,
                   bulkBudgetVersion === version && styles.versionChipActive,
+                  minimal && bulkBudgetVersion === version && styles.versionChipActiveMinimal,
                 ]}
                 onPress={() => setBulkBudgetVersion(version)}
                 disabled={formBusy || rpcMissing}
@@ -1136,7 +1174,11 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                 <Text
                   style={[
                     styles.versionChipText,
+                    minimal && styles.versionChipTextMinimal,
                     bulkBudgetVersion === version && styles.versionChipTextActive,
+                    minimal &&
+                      bulkBudgetVersion === version &&
+                      styles.versionChipTextActiveMinimal,
                   ]}
                 >
                   {version}
@@ -1148,6 +1190,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           <TouchableOpacity
             style={[
               styles.emptyMonthButton,
+              minimal && styles.emptyMonthButtonMinimal,
               (formBusy || rpcMissing || versionEntryCount === 0) && styles.saveButtonDisabled,
             ]}
             onPress={() => void handleEmptyMonth()}
@@ -1155,9 +1198,11 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             activeOpacity={0.85}
           >
             {emptyingMonth ? (
-              <ActivityIndicator color="#FECACA" size="small" />
+              <ActivityIndicator color={minimal ? '#DC2626' : '#FECACA'} size="small" />
             ) : (
-              <Text style={styles.emptyMonthButtonText}>
+              <Text
+                style={[styles.emptyMonthButtonText, minimal && styles.emptyMonthButtonTextMinimal]}
+              >
                 Esvaziar {bulkBudgetVersion} · {periodLabel}
               </Text>
             )}
@@ -1176,18 +1221,25 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           subtitle={`Versão ${bulkBudgetVersion} · importar CSV para ${periodLabel}`}
           expanded={expandedSection === 'bulk'}
           onToggle={() => toggleSection('bulk')}
+          minimal={minimal}
         >
-        <View style={styles.formCard}>
-          <Text style={styles.formatHint}>{FINANCIAL_BULK_CSV_FORMAT_HINT}</Text>
+        <View style={[styles.formCard, minimal && styles.formCardMinimal]}>
+          <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
+            {FINANCIAL_BULK_CSV_FORMAT_HINT}
+          </Text>
 
-          <Text style={styles.periodPickerLabel}>Versão afetada na limpeza</Text>
+          <Text style={[styles.periodPickerLabel, minimal && styles.periodPickerLabelMinimal]}>
+            Versão afetada na limpeza
+          </Text>
           <View style={styles.versionChipRow}>
             {budgetVersionOptions.map((version) => (
               <TouchableOpacity
                 key={version}
                 style={[
                   styles.versionChip,
+                  minimal && styles.versionChipMinimal,
                   bulkBudgetVersion === version && styles.versionChipActive,
+                  minimal && bulkBudgetVersion === version && styles.versionChipActiveMinimal,
                 ]}
                 onPress={() => setBulkBudgetVersion(version)}
                 disabled={formBusy || rpcMissing}
@@ -1196,7 +1248,11 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                 <Text
                   style={[
                     styles.versionChipText,
+                    minimal && styles.versionChipTextMinimal,
                     bulkBudgetVersion === version && styles.versionChipTextActive,
+                    minimal &&
+                      bulkBudgetVersion === version &&
+                      styles.versionChipTextActiveMinimal,
                   ]}
                 >
                   {version}
@@ -1207,29 +1263,33 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
 
           <View style={styles.bulkToolbar}>
             <TouchableOpacity
-              style={styles.toolbarButton}
+              style={[styles.toolbarButton, minimal && styles.toolbarButtonMinimal]}
               onPress={() => void handlePasteClipboard()}
               disabled={formBusy || rpcMissing}
               activeOpacity={0.85}
             >
-              <FontAwesome name="clipboard" size={14} color="#D1FAE5" />
-              <Text style={styles.toolbarButtonText}>Colar</Text>
+              <FontAwesome name="clipboard" size={14} color={minimal ? MINIMAL_UI.icon : '#D1FAE5'} />
+              <Text style={[styles.toolbarButtonText, minimal && styles.toolbarButtonTextMinimal]}>
+                Colar
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.toolbarButton}
+              style={[styles.toolbarButton, minimal && styles.toolbarButtonMinimal]}
               onPress={() => setCsvText('')}
               disabled={formBusy || !csvText.trim()}
               activeOpacity={0.85}
             >
-              <FontAwesome name="eraser" size={14} color="#D1FAE5" />
-              <Text style={styles.toolbarButtonText}>Limpar</Text>
+              <FontAwesome name="eraser" size={14} color={minimal ? MINIMAL_UI.icon : '#D1FAE5'} />
+              <Text style={[styles.toolbarButtonText, minimal && styles.toolbarButtonTextMinimal]}>
+                Limpar
+              </Text>
             </TouchableOpacity>
           </View>
 
           <TextInput
-            style={styles.csvInput}
+            style={[styles.csvInput, minimal && styles.csvInputMinimal]}
             placeholder="Ex.: 04/05/2026;AP.MPAGO;PROJETOS;ENTRE CONTAS;ORDINÁRIO;REALIZADO;1348;observação opcional"
-            placeholderTextColor="#64748B"
+            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
             value={csvText}
             onChangeText={setCsvText}
             multiline
@@ -1240,21 +1300,24 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           />
 
           {bulkPreview ? (
-            <Text style={styles.previewText}>
+            <Text style={[styles.previewText, minimal && styles.previewTextMinimal]}>
               Prévia para {periodLabel}: {bulkPreview.validRows.length} linha(s) válida(s)
               {bulkPreview.errors.length ? ` · ${bulkPreview.errors.length} com erro` : ''}
             </Text>
           ) : null}
 
           {bulkPreview && bulkPreview.errors.length > 0 ? (
-            <View style={styles.errorBox}>
+            <View style={[styles.errorBox, minimal && styles.errorBoxMinimal]}>
               {bulkPreview.errors.slice(0, 4).map((item) => (
-                <Text key={`${item.line}-${item.message}`} style={styles.errorLineText}>
+                <Text
+                  key={`${item.line}-${item.message}`}
+                  style={[styles.errorLineText, minimal && styles.errorLineTextMinimal]}
+                >
                   Linha {item.line}: {item.message}
                 </Text>
               ))}
               {bulkPreview.errors.length > 4 ? (
-                <Text style={styles.errorLineText}>
+                <Text style={[styles.errorLineText, minimal && styles.errorLineTextMinimal]}>
                   … e mais {bulkPreview.errors.length - 4} linha(s) com erro.
                 </Text>
               ) : null}
@@ -1263,7 +1326,12 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
 
           <View style={styles.importModeRow}>
             <TouchableOpacity
-              style={[styles.importModeChip, replacePeriod && styles.importModeChipActive]}
+              style={[
+                styles.importModeChip,
+                minimal && styles.importModeChipMinimal,
+                replacePeriod && styles.importModeChipActive,
+                minimal && replacePeriod && styles.importModeChipActiveMinimal,
+              ]}
               onPress={() => setReplacePeriod(true)}
               disabled={formBusy || rpcMissing}
               activeOpacity={0.85}
@@ -1271,14 +1339,21 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               <Text
                 style={[
                   styles.importModeChipText,
+                  minimal && styles.importModeChipTextMinimal,
                   replacePeriod && styles.importModeChipTextActive,
+                  minimal && replacePeriod && styles.importModeChipTextActiveMinimal,
                 ]}
               >
                 Limpar versão antes
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.importModeChip, !replacePeriod && styles.importModeChipActive]}
+              style={[
+                styles.importModeChip,
+                minimal && styles.importModeChipMinimal,
+                !replacePeriod && styles.importModeChipActive,
+                minimal && !replacePeriod && styles.importModeChipActiveMinimal,
+              ]}
               onPress={() => setReplacePeriod(false)}
               disabled={formBusy || rpcMissing}
               activeOpacity={0.85}
@@ -1286,7 +1361,9 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               <Text
                 style={[
                   styles.importModeChipText,
+                  minimal && styles.importModeChipTextMinimal,
                   !replacePeriod && styles.importModeChipTextActive,
+                  minimal && !replacePeriod && styles.importModeChipTextActiveMinimal,
                 ]}
               >
                 Só acrescentar
@@ -1295,15 +1372,21 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           </View>
 
           <TouchableOpacity
-            style={[styles.saveButton, (formBusy || rpcMissing) && styles.saveButtonDisabled]}
+            style={[
+              styles.saveButton,
+              minimal && styles.saveButtonMinimal,
+              (formBusy || rpcMissing) && styles.saveButtonDisabled,
+            ]}
             onPress={() => void handleImportBulk()}
             disabled={formBusy || rpcMissing}
             activeOpacity={0.85}
           >
             {importing ? (
-              <ActivityIndicator color="#0f172a" size="small" />
+              <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0f172a'} size="small" />
             ) : (
-              <Text style={styles.saveButtonText}>Importar para {periodLabel}</Text>
+              <Text style={[styles.saveButtonText, minimal && styles.saveButtonTextMinimal]}>
+                Importar para {periodLabel}
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -1318,27 +1401,30 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           }
           expanded={expandedSection === 'receipt_batch'}
           onToggle={() => toggleSection('receipt_batch')}
+          minimal={minimal}
         >
-          <View style={styles.formCard}>
-            <Text style={styles.formatHint}>
+          <View style={[styles.formCard, minimal && styles.formCardMinimal]}>
+            <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
               Selecione a pasta local no navegador (Chrome/Edge). O caminho abaixo é apenas referência
               visual. Padrões: 20260526 3825,00.jpg/.jpeg e 20260608 1500,00 2.jpg (múltiplos anexos).
               Referências ambíguas (mesma data+valor em mais de um lançamento) são bloqueadas no pré-voo.
             </Text>
 
             {!isTreasuryReceiptFolderAccessSupported() ? (
-              <Text style={styles.warningText}>
+              <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
                 Use Chrome ou Edge no desktop para permitir leitura e renomeação da pasta local.
               </Text>
             ) : null}
 
-            <Text style={styles.periodPickerLabel}>Pasta de referência (visual)</Text>
+            <Text style={[styles.periodPickerLabel, minimal && styles.periodPickerLabelMinimal]}>
+              Pasta de referência (visual)
+            </Text>
             <TextInput
-              style={styles.receiptsDirInput}
+              style={[styles.receiptsDirInput, minimal && styles.receiptsDirInputMinimal]}
               value={receiptsDir}
               onChangeText={setReceiptsDir}
               placeholder={DEFAULT_TREASURY_RECEIPTS_DIR}
-              placeholderTextColor="#64748B"
+              placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
               autoCapitalize="none"
               autoCorrect={false}
               editable={!processingReceiptBatch && !rpcMissing && canUpdateFinancials === true}
@@ -1346,7 +1432,12 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
 
             <View style={styles.importModeRow}>
               <TouchableOpacity
-                style={[styles.importModeChip, receiptBatchDryRun && styles.importModeChipActive]}
+                style={[
+                  styles.importModeChip,
+                  minimal && styles.importModeChipMinimal,
+                  receiptBatchDryRun && styles.importModeChipActive,
+                  minimal && receiptBatchDryRun && styles.importModeChipActiveMinimal,
+                ]}
                 onPress={() => setReceiptBatchDryRun((current) => !current)}
                 disabled={processingReceiptBatch || rpcMissing || canUpdateFinancials !== true}
                 activeOpacity={0.85}
@@ -1354,14 +1445,21 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                 <Text
                   style={[
                     styles.importModeChipText,
+                    minimal && styles.importModeChipTextMinimal,
                     receiptBatchDryRun && styles.importModeChipTextActive,
+                    minimal && receiptBatchDryRun && styles.importModeChipTextActiveMinimal,
                   ]}
                 >
                   Simular (dry-run)
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.importModeChip, receiptBatchForce && styles.importModeChipActive]}
+                style={[
+                  styles.importModeChip,
+                  minimal && styles.importModeChipMinimal,
+                  receiptBatchForce && styles.importModeChipActive,
+                  minimal && receiptBatchForce && styles.importModeChipActiveMinimal,
+                ]}
                 onPress={() => setReceiptBatchForce((current) => !current)}
                 disabled={processingReceiptBatch || rpcMissing || canUpdateFinancials !== true}
                 activeOpacity={0.85}
@@ -1369,7 +1467,9 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                 <Text
                   style={[
                     styles.importModeChipText,
+                    minimal && styles.importModeChipTextMinimal,
                     receiptBatchForce && styles.importModeChipTextActive,
+                    minimal && receiptBatchForce && styles.importModeChipTextActiveMinimal,
                   ]}
                 >
                   Substituir ocupadas
@@ -1380,6 +1480,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             <TouchableOpacity
               style={[
                 styles.saveButton,
+                minimal && styles.saveButtonMinimal,
                 (processingReceiptBatch || rpcMissing || canUpdateFinancials !== true) &&
                   styles.saveButtonDisabled,
               ]}
@@ -1388,21 +1489,25 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               activeOpacity={0.85}
             >
               {processingReceiptBatch ? (
-                <ActivityIndicator color="#0f172a" size="small" />
+                <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0f172a'} size="small" />
               ) : (
-                <Text style={styles.saveButtonText}>Processar</Text>
+                <Text style={[styles.saveButtonText, minimal && styles.saveButtonTextMinimal]}>
+                  Processar
+                </Text>
               )}
             </TouchableOpacity>
 
             {receiptBatchReport ? (
-              <View style={styles.receiptBatchReportBox}>
-                <Text style={styles.previewText}>{receiptBatchReport.message}</Text>
-                <Text style={styles.receiptBatchReportLine}>
+              <View style={[styles.receiptBatchReportBox, minimal && styles.receiptBatchReportBoxMinimal]}>
+                <Text style={[styles.previewText, minimal && styles.previewTextMinimal]}>
+                  {receiptBatchReport.message}
+                </Text>
+                <Text style={[styles.receiptBatchReportLine, minimal && styles.receiptBatchReportLineMinimal]}>
                   JPG na pasta: {receiptBatchReport.folderFileCount} · Normalizados:{' '}
                   {receiptBatchReport.normalizedFileNames} · Lançamentos com referencia:{' '}
                   {receiptBatchReport.entriesWithReferencia}
                 </Text>
-                <Text style={styles.receiptBatchReportLine}>
+                <Text style={[styles.receiptBatchReportLine, minimal && styles.receiptBatchReportLineMinimal]}>
                   Vinculados: {receiptBatchReport.linked.length} · Renomeados (já anexados):{' '}
                   {receiptBatchReport.renamedOnly.length} · Sem correspondência:{' '}
                   {receiptBatchReport.unmatchedFiles.length + receiptBatchReport.unmatchedEntries.length}
@@ -1415,19 +1520,28 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                 </Text>
 
                 {receiptBatchReport.preflightIssues.slice(0, 4).map((issue) => (
-                  <Text key={`preflight-${issue.fileName}-${issue.code}`} style={styles.errorLineText}>
+                  <Text
+                    key={`preflight-${issue.fileName}-${issue.code}`}
+                    style={[styles.errorLineText, minimal && styles.errorLineTextMinimal]}
+                  >
                     [pré-voo] {issue.fileName}: {issue.message}
                   </Text>
                 ))}
 
                 {receiptBatchReport.ambiguousReferencias.slice(0, 4).map((item) => (
-                  <Text key={`ambiguous-${item.referencia}`} style={styles.errorLineText}>
+                  <Text
+                    key={`ambiguous-${item.referencia}`}
+                    style={[styles.errorLineText, minimal && styles.errorLineTextMinimal]}
+                  >
                     [ambiguidade] {item.referencia} · {item.entryCount} lançamentos
                   </Text>
                 ))}
 
                 {receiptBatchReport.linked.slice(0, 6).map((item) => (
-                  <Text key={`${item.entryId}-${item.fileName}`} style={styles.receiptBatchReportOk}>
+                  <Text
+                    key={`${item.entryId}-${item.fileName}`}
+                    style={[styles.receiptBatchReportOk, minimal && styles.receiptBatchReportOkMinimal]}
+                  >
                     [OK] {item.fileName}
                     {item.renamed ? ' → updated_' : item.renameError ? ' (sem rename)' : ''}
                   </Text>
@@ -1436,20 +1550,26 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                 {receiptBatchReport.renamedOnly.slice(0, 6).map((item) => (
                   <Text
                     key={`renamed-${item.entryId}-${item.fileName}`}
-                    style={styles.receiptBatchReportOk}
+                    style={[styles.receiptBatchReportOk, minimal && styles.receiptBatchReportOkMinimal]}
                   >
                     [rename] {item.fileName} → updated_ (já anexado)
                   </Text>
                 ))}
 
                 {receiptBatchReport.errors.slice(0, 4).map((item) => (
-                  <Text key={`err-${item.fileName}-${item.entryId ?? 'x'}`} style={styles.errorLineText}>
+                  <Text
+                    key={`err-${item.fileName}-${item.entryId ?? 'x'}`}
+                    style={[styles.errorLineText, minimal && styles.errorLineTextMinimal]}
+                  >
                     [!] {item.fileName}: {item.error}
                   </Text>
                 ))}
 
                 {receiptBatchReport.unmatchedEntries.slice(0, 4).map((item) => (
-                  <Text key={`missing-${item.entryId}`} style={styles.receiptBatchReportMuted}>
+                  <Text
+                    key={`missing-${item.entryId}`}
+                    style={[styles.receiptBatchReportMuted, minimal && styles.receiptBatchReportMutedMinimal]}
+                  >
                     [—] Sem JPG: {item.fileName}
                   </Text>
                 ))}
@@ -1463,9 +1583,10 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           subtitle="Publicar, visualizar e renomear PDFs do card Administrativo"
           expanded={expandedSection === 'assembly_minutes'}
           onToggle={() => toggleSection('assembly_minutes')}
+          minimal={minimal}
         >
-          <View style={styles.formCard}>
-            <Text style={styles.formatHint}>
+          <View style={[styles.formCard, minimal && styles.formCardMinimal]}>
+            <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
               Selecione um ou vários PDFs de uma vez. O título inicial de cada ata será o nome do
               arquivo (sem .pdf), com “_” trocado por espaço. A lista fica em ordem descendente pelo
               código documental (ex.: ABC.003.2025 antes de ABC.001.2025) e se atualiza a cada novo envio.
@@ -1474,6 +1595,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             <TouchableOpacity
               style={[
                 styles.uploadAssemblyButton,
+                minimal && styles.uploadAssemblyButtonMinimal,
                 (uploadingAssemblyMinute || rpcMissing || canUpdateFinancials !== true) &&
                   styles.saveButtonDisabled,
               ]}
@@ -1482,45 +1604,75 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               activeOpacity={0.85}
             >
               {uploadingAssemblyMinute ? (
-                <ActivityIndicator color="#0F172A" size="small" />
+                <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0F172A'} size="small" />
               ) : (
                 <>
-                  <FontAwesome name="file-pdf-o" size={16} color="#0F172A" />
-                  <Text style={styles.uploadAssemblyButtonText}>Enviar PDF da ata</Text>
+                  <FontAwesome
+                    name="file-pdf-o"
+                    size={16}
+                    color={minimal ? MINIMAL_UI.onDark : '#0F172A'}
+                  />
+                  <Text
+                    style={[styles.uploadAssemblyButtonText, minimal && styles.uploadAssemblyButtonTextMinimal]}
+                  >
+                    Enviar PDF da ata
+                  </Text>
                 </>
               )}
             </TouchableOpacity>
 
             <View style={styles.assemblyMinutesListHeader}>
-              <Text style={styles.periodPickerLabel}>Documentos publicados</Text>
+              <Text style={[styles.periodPickerLabel, minimal && styles.periodPickerLabelMinimal]}>
+                Documentos publicados
+              </Text>
               <TouchableOpacity
                 onPress={() => void loadAssemblyMinutes()}
                 disabled={loadingAssemblyMinutes}
                 activeOpacity={0.85}
               >
-                <Text style={styles.assemblyMinutesRefreshText}>
+                <Text
+                  style={[
+                    styles.assemblyMinutesRefreshText,
+                    minimal && styles.assemblyMinutesRefreshTextMinimal,
+                  ]}
+                >
                   {loadingAssemblyMinutes ? 'Atualizando…' : 'Atualizar'}
                 </Text>
               </TouchableOpacity>
             </View>
 
             {assemblyMinutesError ? (
-              <Text style={styles.errorText}>{assemblyMinutesError}</Text>
+              <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>
+                {assemblyMinutesError}
+              </Text>
             ) : null}
 
             {loadingAssemblyMinutes && assemblyMinutes.length === 0 ? (
-              <ActivityIndicator color={ACCENT} style={{ marginVertical: 12 }} />
+              <ActivityIndicator
+                color={minimal ? MINIMAL_UI.accent : ACCENT}
+                style={{ marginVertical: 12 }}
+              />
             ) : assemblyMinutes.length === 0 ? (
-              <Text style={styles.hintText}>Nenhuma ata publicada ainda.</Text>
+              <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+                Nenhuma ata publicada ainda.
+              </Text>
             ) : (
               <View style={styles.assemblyMinutesList}>
                 {assemblyMinutes.map((minute) => (
-                  <View key={minute.id} style={styles.assemblyMinuteRow}>
+                  <View
+                    key={minute.id}
+                    style={[styles.assemblyMinuteRow, minimal && styles.assemblyMinuteRowMinimal]}
+                  >
                     <View style={styles.assemblyMinuteMain}>
-                      <Text style={styles.assemblyMinuteTitle} numberOfLines={2}>
+                      <Text
+                        style={[styles.assemblyMinuteTitle, minimal && styles.assemblyMinuteTitleMinimal]}
+                        numberOfLines={2}
+                      >
                         {minute.title}
                       </Text>
-                      <Text style={styles.assemblyMinuteMeta}>
+                      <Text
+                        style={[styles.assemblyMinuteMeta, minimal && styles.assemblyMinuteMetaMinimal]}
+                      >
                         {formatAssemblyMinuteDate(minute.created_at)} ·{' '}
                         {normalizeAssemblyMinuteLabel(minute.file_name.replace(/\.pdf$/i, ''))}
                         .pdf
@@ -1528,25 +1680,35 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                     </View>
                     <View style={styles.assemblyMinuteActions}>
                       <TouchableOpacity
-                        style={styles.assemblyMinuteActionButton}
+                        style={[
+                          styles.assemblyMinuteActionButton,
+                          minimal && styles.assemblyMinuteActionButtonMinimal,
+                        ]}
                         onPress={() => handleOpenRenameAssemblyMinute(minute)}
                         disabled={canUpdateFinancials !== true || savingRename}
                         activeOpacity={0.85}
                         accessibilityLabel={`Renomear ${minute.title}`}
                       >
-                        <FontAwesome name="pencil" size={14} color="#A7F3D0" />
+                        <FontAwesome name="pencil" size={14} color={minimal ? MINIMAL_UI.icon : '#A7F3D0'} />
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={styles.assemblyMinuteActionButton}
+                        style={[
+                          styles.assemblyMinuteActionButton,
+                          minimal && styles.assemblyMinuteActionButtonMinimal,
+                        ]}
                         onPress={() => void handleOpenAssemblyMinutePdf(minute)}
                         disabled={loadingAssemblyPdfId === minute.id}
                         activeOpacity={0.85}
                         accessibilityLabel={`Visualizar ${minute.title}`}
                       >
                         {loadingAssemblyPdfId === minute.id ? (
-                          <ActivityIndicator color="#F87171" size="small" />
+                          <ActivityIndicator color={minimal ? '#DC2626' : '#F87171'} size="small" />
                         ) : (
-                          <FontAwesome name="file-pdf-o" size={16} color="#F87171" />
+                          <FontAwesome
+                            name="file-pdf-o"
+                            size={16}
+                            color={minimal ? '#DC2626' : '#F87171'}
+                          />
                         )}
                       </TouchableOpacity>
                     </View>
@@ -1562,9 +1724,10 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           subtitle={periodSummaryLine}
           expanded={expandedSection === 'entries'}
           onToggle={() => toggleSection('entries')}
+          minimal={minimal}
         >
         {loading ? (
-          <CardLoadingState lines={3} compact />
+          <CardLoadingState lines={3} compact minimal={minimal} />
         ) : entries.length ? (
           entries.map((entry, index) => {
             const signed = signedFinancialAmount(entry);
@@ -1578,23 +1741,38 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             return (
               <View
                 key={entry.id}
-                style={[styles.listRow, index % 2 === 1 && styles.listRowAlt]}
+                style={[
+                  styles.listRow,
+                  minimal && styles.listRowMinimal,
+                  index % 2 === 1 && (minimal ? styles.listRowAltMinimal : styles.listRowAlt),
+                ]}
               >
                 <View style={styles.listMain}>
-                  <Text style={styles.listTitle} numberOfLines={2}>
+                  <Text
+                    style={[styles.listTitle, minimal && styles.listTitleMinimal]}
+                    numberOfLines={2}
+                  >
                     {entry.transaction_kind} · {formatFinancialBulkDateLabel(entry.transaction_date)} ·{' '}
                     {entry.account} · {entry.movement} · {entry.ministry}
                   </Text>
-                  <Text style={styles.listMeta} numberOfLines={1}>
+                  <Text style={[styles.listMeta, minimal && styles.listMetaMinimal]} numberOfLines={1}>
                     {entry.budget_version}
                   </Text>
                   <Text
-                    style={entryComment ? styles.listComment : styles.listCommentEmpty}
+                    style={[
+                      entryComment ? styles.listComment : styles.listCommentEmpty,
+                      minimal && styles.listCommentMinimal,
+                    ]}
                     numberOfLines={2}
                   >
                     {entryComment ? `Comentário: ${entryComment}` : 'Sem comentário'}
                   </Text>
-                  <Text style={hasReceipt ? styles.listReceiptAttached : styles.listReceiptEmpty}>
+                  <Text
+                    style={[
+                      hasReceipt ? styles.listReceiptAttached : styles.listReceiptEmpty,
+                      minimal && (hasReceipt ? styles.listReceiptAttachedMinimal : styles.listReceiptEmptyMinimal),
+                    ]}
+                  >
                     {hasReceipt ? 'Comprovante anexado' : 'Sem comprovante'}
                   </Text>
                   {linkedExpenseReportId ? (
@@ -1610,7 +1788,12 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                       accessibilityLabel={`Ver RD ${linkedExpenseReportNumber ?? ''}`.trim()}
                     >
                       <FontAwesome5 name="file-alt" size={12} color="#059669" solid />
-                      <Text style={styles.listExpenseReportLinkText}>
+                      <Text
+                        style={[
+                          styles.listExpenseReportLinkText,
+                          minimal && styles.listExpenseReportLinkTextMinimal,
+                        ]}
+                      >
                         RD {linkedExpenseReportNumber ?? 'vinculado'}
                       </Text>
                     </TouchableOpacity>
@@ -1619,6 +1802,8 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                     style={[
                       styles.listAmount,
                       signed < 0 ? styles.listAmountNegative : styles.listAmountPositive,
+                      minimal &&
+                        (signed < 0 ? styles.listAmountNegativeMinimal : styles.listAmountPositiveMinimal),
                     ]}
                   >
                     {formatFinancialBrl(signed)}
@@ -1628,7 +1813,13 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                   <TouchableOpacity
                     style={[
                       styles.commentButton,
-                      entryComment ? styles.commentButtonFilled : styles.commentButtonEmpty,
+                      entryComment
+                        ? minimal
+                          ? styles.commentButtonFilledMinimal
+                          : styles.commentButtonFilled
+                        : minimal
+                          ? styles.commentButtonEmptyMinimal
+                          : styles.commentButtonEmpty,
                     ]}
                     onPress={() => openCommentEditor(entry)}
                     disabled={formBusy || rpcMissing || isSavingThisComment}
@@ -1641,18 +1832,30 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                     }
                   >
                     {isSavingThisComment ? (
-                      <ActivityIndicator color="#D1FAE5" size="small" />
+                      <ActivityIndicator color={minimal ? MINIMAL_UI.icon : '#D1FAE5'} size="small" />
                     ) : (
                       <>
                         <FontAwesome
                           name={entryComment ? 'comment' : 'comment-o'}
                           size={14}
-                          color={entryComment ? '#6EE7B7' : '#94A3B8'}
+                          color={
+                            minimal
+                              ? entryComment
+                                ? MINIMAL_UI.accent
+                                : MINIMAL_UI.textMuted
+                              : entryComment
+                                ? '#6EE7B7'
+                                : '#94A3B8'
+                          }
                         />
                         <Text
                           style={[
                             styles.commentButtonLabel,
-                            entryComment && styles.commentButtonLabelFilled,
+                            minimal && styles.commentButtonLabelMinimal,
+                            entryComment &&
+                              (minimal
+                                ? styles.commentButtonLabelFilledMinimal
+                                : styles.commentButtonLabelFilled),
                           ]}
                         >
                           {entryComment ? 'Editar' : 'Adicionar'}
@@ -1662,7 +1865,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                   </TouchableOpacity>
                   {canUpdateFinancials === true ? (
                     <TouchableOpacity
-                      style={styles.editEntryButton}
+                      style={[styles.editEntryButton, minimal && styles.editEntryButtonMinimal]}
                       onPress={() => openEntryEditor(entry)}
                       disabled={formBusy || rpcMissing || isSavingThisEntry}
                       activeOpacity={0.85}
@@ -1670,11 +1873,19 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                       accessibilityLabel={`Editar registro de ${entry.account}`}
                     >
                       {isSavingThisEntry ? (
-                        <ActivityIndicator color="#BFDBFE" size="small" />
+                        <ActivityIndicator color={minimal ? MINIMAL_UI.icon : '#BFDBFE'} size="small" />
                       ) : (
                         <>
-                          <FontAwesome name="pencil" size={14} color="#BFDBFE" />
-                          <Text style={styles.editEntryButtonLabel}>Editar registro</Text>
+                          <FontAwesome
+                            name="pencil"
+                            size={14}
+                            color={minimal ? MINIMAL_UI.icon : '#BFDBFE'}
+                          />
+                          <Text
+                            style={[styles.editEntryButtonLabel, minimal && styles.editEntryButtonLabelMinimal]}
+                          >
+                            Editar registro
+                          </Text>
                         </>
                       )}
                     </TouchableOpacity>
@@ -1684,7 +1895,9 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             );
           })
         ) : (
-          <Text style={styles.hintText}>Nenhum lançamento neste mês. Importe um CSV em lote.</Text>
+          <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+            Nenhum lançamento neste mês. Importe um CSV em lote.
+          </Text>
         )}
         </CollapsibleSection>
 
@@ -1693,9 +1906,12 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
           subtitle={rdSummaryLine}
           expanded={expandedSection === 'rd'}
           onToggle={() => toggleSection('rd')}
+          minimal={minimal}
         >
           <View style={styles.rdMonthFilterRow}>
-            <Text style={styles.periodPickerLabel}>Mês</Text>
+            <Text style={[styles.periodPickerLabel, minimal && styles.periodPickerLabelMinimal]}>
+              Mês
+            </Text>
             <DropdownSelect
               options={maintenanceMonthDropdownOptions}
               selectedValue={formatFinancialMonthKey(selectedMonth)}
@@ -1708,59 +1924,78 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               }}
               modalTitle="Selecionar mês"
               placeholder="Selecionar mês"
+              variant={minimal ? 'minimal' : 'default'}
               style={styles.rdMonthDropdown}
               disabled={formBusy || rpcMissing}
             />
             {canUpdateFinancials === true ? (
               <TouchableOpacity
-                style={styles.emitRdButton}
+                style={[styles.emitRdButton, minimal && styles.emitRdButtonMinimal]}
                 onPress={handleEmitRdForSelectedMonth}
                 disabled={formBusy || rpcMissing}
                 activeOpacity={0.85}
               >
-                <FontAwesome name="plus" size={14} color="#ECFDF5" />
-                <Text style={styles.emitRdButtonText}>Emitir RD</Text>
+                <FontAwesome name="plus" size={14} color={minimal ? MINIMAL_UI.onDark : '#ECFDF5'} />
+                <Text style={[styles.emitRdButtonText, minimal && styles.emitRdButtonTextMinimal]}>
+                  Emitir RD
+                </Text>
               </TouchableOpacity>
             ) : null}
           </View>
 
-          {rdReportsError ? <Text style={styles.warningText}>{rdReportsError}</Text> : null}
+          {rdReportsError ? (
+            <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
+              {rdReportsError}
+            </Text>
+          ) : null}
           {loadingRdReports ? (
-            <CardLoadingState lines={3} compact />
+            <CardLoadingState lines={3} compact minimal={minimal} />
           ) : rdReports.length ? (
             rdReports.map((report, index) => (
               <View
                 key={report.id}
-                style={[styles.rdListRow, index % 2 === 1 && styles.listRowAlt]}
+                style={[
+                  styles.rdListRow,
+                  minimal && styles.rdListRowMinimal,
+                  index % 2 === 1 && (minimal ? styles.listRowAltMinimal : styles.listRowAlt),
+                ]}
               >
                 <View style={styles.rdListMain}>
-                  <Text style={styles.rdListTitle}>{report.report_number}</Text>
-                  <Text style={styles.rdListMeta} numberOfLines={1}>
+                  <Text style={[styles.rdListTitle, minimal && styles.rdListTitleMinimal]}>
+                    {report.report_number}
+                  </Text>
+                  <Text style={[styles.rdListMeta, minimal && styles.rdListMetaMinimal]} numberOfLines={1}>
                     {report.member_name} · {formatExpenseReportDateTime(report.created_at)}
                   </Text>
-                  <Text style={styles.rdListMeta}>
+                  <Text style={[styles.rdListMeta, minimal && styles.rdListMetaMinimal]}>
                     {formatExpenseReportAmount(report.total_amount)} ·{' '}
                     {report.status === 'reconciled' ? 'Conciliado' : 'Pendente'}
                   </Text>
                 </View>
                 {report.status === 'reconciled' ? (
                   <TouchableOpacity
-                    style={styles.rdUnreconcileButton}
+                    style={[styles.rdUnreconcileButton, minimal && styles.rdUnreconcileButtonMinimal]}
                     onPress={() => void handleUnreconcileRd(report.id)}
                     disabled={unreconcilingReportId === report.id}
                     activeOpacity={0.85}
                   >
                     {unreconcilingReportId === report.id ? (
-                      <ActivityIndicator color="#FECACA" size="small" />
+                      <ActivityIndicator color={minimal ? '#DC2626' : '#FECACA'} size="small" />
                     ) : (
-                      <Text style={styles.rdUnreconcileButtonText}>Remover vínculo</Text>
+                      <Text
+                        style={[styles.rdUnreconcileButtonText, minimal && styles.rdUnreconcileButtonTextMinimal]}
+                      >
+                        Remover vínculo
+                      </Text>
                     )}
                   </TouchableOpacity>
                 ) : null}
               </View>
             ))
           ) : (
-            <Text style={styles.hintText}>Nenhum RD emitido neste mês de referência.</Text>
+            <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
+              Nenhum RD emitido neste mês de referência.
+            </Text>
           )}
         </CollapsibleSection>
       </ScrollView>
@@ -1772,27 +2007,37 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
         onRequestClose={closeCommentEditor}
       >
         <Pressable style={styles.commentModalBackdrop} onPress={closeCommentEditor}>
-          <Pressable style={styles.commentModalCard} onPress={(event) => event.stopPropagation()}>
+          <Pressable
+            style={[styles.commentModalCard, minimal && styles.commentModalCardMinimal]}
+            onPress={(event) => event.stopPropagation()}
+          >
             <ScrollView
               style={styles.commentModalScroll}
               contentContainerStyle={styles.commentModalScrollContent}
               keyboardShouldPersistTaps="handled"
               {...MAINTENANCE_SCROLL_PROPS}
             >
-            <Text style={styles.commentModalTitle}>Comentários e comprovante</Text>
+            <Text style={[styles.commentModalTitle, minimal && styles.commentModalTitleMinimal]}>
+              Comentários e comprovante
+            </Text>
             {activeEditorEntry ? (
-              <Text style={styles.commentModalMeta} numberOfLines={2}>
+              <Text
+                style={[styles.commentModalMeta, minimal && styles.commentModalMetaMinimal]}
+                numberOfLines={2}
+              >
                 {activeEditorEntry.account} · {activeEditorEntry.ministry} ·{' '}
                 {formatFinancialBulkDateLabel(activeEditorEntry.transaction_date)}
               </Text>
             ) : null}
-            <Text style={styles.commentModalFieldLabel}>Comentário / observação</Text>
+            <Text style={[styles.commentModalFieldLabel, minimal && styles.commentModalFieldLabelMinimal]}>
+              Comentário / observação
+            </Text>
             {commentInputActive || commentDraft ? (
               <TextInput
                 ref={commentInputRef}
-                style={styles.commentModalInput}
+                style={[styles.commentModalInput, minimal && styles.commentModalInputMinimal]}
                 placeholder="Digite a observação sobre este lançamento"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
                 value={commentDraft}
                 onChangeText={setCommentDraft}
                 multiline
@@ -1801,17 +2046,25 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               />
             ) : (
               <Pressable
-                style={styles.commentModalInputPlaceholder}
+                style={[
+                  styles.commentModalInputPlaceholder,
+                  minimal && styles.commentModalInputPlaceholderMinimal,
+                ]}
                 onPress={activateCommentInput}
                 disabled={savingCommentEntryId !== null || receiptBusy}
               >
-                <Text style={styles.commentModalInputPlaceholderText}>
+                <Text
+                  style={[
+                    styles.commentModalInputPlaceholderText,
+                    minimal && styles.commentModalInputPlaceholderTextMinimal,
+                  ]}
+                >
                   Toque para digitar a observação
                 </Text>
               </Pressable>
             )}
 
-            <Text style={styles.commentModalFieldLabel}>
+            <Text style={[styles.commentModalFieldLabel, minimal && styles.commentModalFieldLabelMinimal]}>
               Comprovante
               {hasStoredReceipts && !pendingReceiptImage
                 ? ` ${receiptPreviewIndex + 1}/${editorReceiptUrls.length}`
@@ -1820,13 +2073,17 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                   : ''}
             </Text>
             {canUpdateFinancials === false ? (
-              <Text style={styles.receiptPermissionHint}>
+              <Text style={[styles.receiptPermissionHint, minimal && styles.receiptPermissionHintMinimal]}>
                 Sem permissão para anexar ou alterar comprovantes.
               </Text>
             ) : hasEditorReceiptPreview ? (
-              <View style={styles.receiptAttachedBox}>
+              <View style={[styles.receiptAttachedBox, minimal && styles.receiptAttachedBoxMinimal]}>
                 {loadingReceiptPreview && !pendingReceiptImage ? (
-                  <ActivityIndicator color="#6EE7B7" size="small" style={styles.receiptPreviewLoader} />
+                  <ActivityIndicator
+                    color={minimal ? MINIMAL_UI.icon : '#6EE7B7'}
+                    size="small"
+                    style={styles.receiptPreviewLoader}
+                  />
                 ) : editorReceiptPreviewUri ? (
                   <Image
                     source={{ uri: editorReceiptPreviewUri }}
@@ -1834,7 +2091,7 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                     resizeMode="cover"
                   />
                 ) : (
-                  <Text style={styles.receiptAttachedText}>
+                  <Text style={[styles.receiptAttachedText, minimal && styles.receiptAttachedTextMinimal]}>
                     {pendingReceiptImage
                       ? 'Comprovante selecionado (aguardando Salvar)'
                       : `Comprovante ${receiptPreviewIndex + 1} anexado`}
@@ -1845,17 +2102,26 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                     <TouchableOpacity
                       style={[
                         styles.receiptEditorNavButton,
+                        minimal && styles.receiptEditorNavButtonMinimal,
                         receiptPreviewIndex <= 0 && styles.receiptEditorNavButtonDisabled,
                       ]}
                       onPress={() => setReceiptPreviewIndex((current) => Math.max(current - 1, 0))}
                       disabled={receiptPreviewIndex <= 0 || receiptBusy}
                       activeOpacity={0.85}
                     >
-                      <Text style={styles.receiptEditorNavButtonText}>Anterior</Text>
+                      <Text
+                        style={[
+                          styles.receiptEditorNavButtonText,
+                          minimal && styles.receiptEditorNavButtonTextMinimal,
+                        ]}
+                      >
+                        Anterior
+                      </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[
                         styles.receiptEditorNavButton,
+                        minimal && styles.receiptEditorNavButtonMinimal,
                         receiptPreviewIndex >= editorReceiptUrls.length - 1 &&
                           styles.receiptEditorNavButtonDisabled,
                       ]}
@@ -1867,32 +2133,54 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                       disabled={receiptPreviewIndex >= editorReceiptUrls.length - 1 || receiptBusy}
                       activeOpacity={0.85}
                     >
-                      <Text style={styles.receiptEditorNavButtonText}>Próximo</Text>
+                      <Text
+                        style={[
+                          styles.receiptEditorNavButtonText,
+                          minimal && styles.receiptEditorNavButtonTextMinimal,
+                        ]}
+                      >
+                        Próximo
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 ) : null}
                 <View style={styles.receiptActionRow}>
                   <TouchableOpacity
-                    style={styles.receiptActionButton}
+                    style={[styles.receiptActionButton, minimal && styles.receiptActionButtonMinimal]}
                     onPress={() => void handleViewReceipt()}
                     disabled={receiptBusy}
                     activeOpacity={0.85}
                   >
-                    <FontAwesome name="eye" size={14} color="#D1FAE5" />
-                    <Text style={styles.receiptActionButtonText}>Visualizar</Text>
+                    <FontAwesome name="eye" size={14} color={minimal ? MINIMAL_UI.icon : '#D1FAE5'} />
+                    <Text
+                      style={[styles.receiptActionButtonText, minimal && styles.receiptActionButtonTextMinimal]}
+                    >
+                      Visualizar
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.receiptActionButton, styles.receiptDeleteButton]}
+                    style={[
+                      styles.receiptActionButton,
+                      minimal && styles.receiptActionButtonMinimal,
+                      minimal ? styles.receiptDeleteButtonMinimal : styles.receiptDeleteButton,
+                    ]}
                     onPress={() => void handleDeleteReceipt()}
                     disabled={receiptBusy || canUpdateFinancials !== true}
                     activeOpacity={0.85}
                   >
                     {deletingReceiptEntryId ? (
-                      <ActivityIndicator color="#FECACA" size="small" />
+                      <ActivityIndicator color={minimal ? '#DC2626' : '#FECACA'} size="small" />
                     ) : (
                       <>
-                        <FontAwesome name="trash" size={14} color="#FECACA" />
-                        <Text style={styles.receiptDeleteButtonText}>Excluir</Text>
+                        <FontAwesome name="trash" size={14} color={minimal ? '#DC2626' : '#FECACA'} />
+                        <Text
+                          style={[
+                            styles.receiptDeleteButtonText,
+                            minimal && styles.receiptDeleteButtonTextMinimal,
+                          ]}
+                        >
+                          Excluir
+                        </Text>
                       </>
                     )}
                   </TouchableOpacity>
@@ -1904,44 +2192,67 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
               <View
                 style={[
                   styles.receiptAttachBox,
+                  minimal && styles.receiptAttachBoxMinimal,
                   hasEditorReceiptPreview ? styles.receiptAttachBoxStacked : null,
                 ]}
               >
                 {showReceiptAttachOptions ? (
                   <>
-                    <Text style={styles.receiptAttachHint}>
+                    <Text style={[styles.receiptAttachHint, minimal && styles.receiptAttachHintMinimal]}>
                       {hasStoredReceipts
                         ? 'Como deseja anexar o próximo comprovante?'
                         : 'Como deseja anexar o comprovante?'}
                     </Text>
                     <View style={styles.receiptAttachRow}>
                       <TouchableOpacity
-                        style={styles.receiptAttachButton}
+                        style={[styles.receiptAttachButton, minimal && styles.receiptAttachButtonMinimal]}
                         onPress={() => void handleAttachReceiptFromClipboard()}
                         disabled={receiptBusy || formBusy || rpcMissing}
                         activeOpacity={0.85}
                       >
                         {uploadingReceiptEntryId ? (
-                          <ActivityIndicator color="#D1FAE5" size="small" />
+                          <ActivityIndicator color={minimal ? MINIMAL_UI.icon : '#D1FAE5'} size="small" />
                         ) : (
                           <>
-                            <FontAwesome name="clipboard" size={14} color="#D1FAE5" />
-                            <Text style={styles.receiptAttachButtonText}>Colar da Área de Transferência</Text>
+                            <FontAwesome
+                              name="clipboard"
+                              size={14}
+                              color={minimal ? MINIMAL_UI.icon : '#D1FAE5'}
+                            />
+                            <Text
+                              style={[
+                                styles.receiptAttachButtonText,
+                                minimal && styles.receiptAttachButtonTextMinimal,
+                              ]}
+                            >
+                              Colar da Área de Transferência
+                            </Text>
                           </>
                         )}
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={styles.receiptAttachButton}
+                        style={[styles.receiptAttachButton, minimal && styles.receiptAttachButtonMinimal]}
                         onPress={() => void handleAttachReceiptFromGallery()}
                         disabled={receiptBusy || formBusy || rpcMissing}
                         activeOpacity={0.85}
                       >
                         {uploadingReceiptEntryId ? (
-                          <ActivityIndicator color="#D1FAE5" size="small" />
+                          <ActivityIndicator color={minimal ? MINIMAL_UI.icon : '#D1FAE5'} size="small" />
                         ) : (
                           <>
-                            <FontAwesome name="image" size={14} color="#D1FAE5" />
-                            <Text style={styles.receiptAttachButtonText}>Selecionar da Galeria</Text>
+                            <FontAwesome
+                              name="image"
+                              size={14}
+                              color={minimal ? MINIMAL_UI.icon : '#D1FAE5'}
+                            />
+                            <Text
+                              style={[
+                                styles.receiptAttachButtonText,
+                                minimal && styles.receiptAttachButtonTextMinimal,
+                              ]}
+                            >
+                              Selecionar da Galeria
+                            </Text>
                           </>
                         )}
                       </TouchableOpacity>
@@ -1952,18 +2263,34 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                       disabled={receiptBusy}
                       activeOpacity={0.85}
                     >
-                      <Text style={styles.receiptAttachCancelText}>Voltar</Text>
+                      <Text
+                        style={[styles.receiptAttachCancelText, minimal && styles.receiptAttachCancelTextMinimal]}
+                      >
+                        Voltar
+                      </Text>
                     </TouchableOpacity>
                   </>
                 ) : (
                   <TouchableOpacity
-                    style={styles.receiptAttachPrimaryButton}
+                    style={[
+                      styles.receiptAttachPrimaryButton,
+                      minimal && styles.receiptAttachPrimaryButtonMinimal,
+                    ]}
                     onPress={() => setShowReceiptAttachOptions(true)}
                     disabled={receiptBusy || formBusy || rpcMissing}
                     activeOpacity={0.85}
                   >
-                    <FontAwesome name="paperclip" size={14} color="#D1FAE5" />
-                    <Text style={styles.receiptAttachPrimaryButtonText}>
+                    <FontAwesome
+                      name="paperclip"
+                      size={14}
+                      color={minimal ? MINIMAL_UI.onDark : '#D1FAE5'}
+                    />
+                    <Text
+                      style={[
+                        styles.receiptAttachPrimaryButtonText,
+                        minimal && styles.receiptAttachPrimaryButtonTextMinimal,
+                      ]}
+                    >
                       {hasStoredReceipts ? 'Adicionar outro comprovante' : 'Anexar Comprovante'}
                     </Text>
                   </TouchableOpacity>
@@ -1972,13 +2299,17 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             ) : canUpdateFinancials !== true &&
               canUpdateFinancials !== false &&
               !hasEditorReceiptPreview ? (
-              <ActivityIndicator color="#6EE7B7" size="small" style={styles.receiptPreviewLoader} />
+              <ActivityIndicator
+                color={minimal ? MINIMAL_UI.icon : '#6EE7B7'}
+                size="small"
+                style={styles.receiptPreviewLoader}
+              />
             ) : null}
 
             {canUpdateFinancials === true ? (
               activeEditorEntry?.expense_report_id ? (
                 <TouchableOpacity
-                  style={styles.linkRdButton}
+                  style={[styles.linkRdButton, minimal && styles.linkRdButtonMinimal]}
                   onPress={() => {
                     const reportId = activeEditorEntry.expense_report_id?.trim();
 
@@ -1989,20 +2320,22 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                   disabled={!activeEditorEntry?.expense_report_id}
                   activeOpacity={0.85}
                 >
-                  <FontAwesome5 name="file-alt" size={14} color="#D1FAE5" solid />
-                  <Text style={styles.linkRdButtonText}>
+                  <FontAwesome5 name="file-alt" size={14} color={minimal ? MINIMAL_UI.icon : '#D1FAE5'} solid />
+                  <Text style={[styles.linkRdButtonText, minimal && styles.linkRdButtonTextMinimal]}>
                     Ver RD {activeEditorEntry.expense_report_number ?? ''}
                   </Text>
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
-                  style={styles.linkRdButton}
+                  style={[styles.linkRdButton, minimal && styles.linkRdButtonMinimal]}
                   onPress={() => setRdConciliationOpen(true)}
                   disabled={savingCommentEntryId !== null || receiptBusy || !activeEditorEntry}
                   activeOpacity={0.85}
                 >
-                  <FontAwesome name="link" size={14} color="#D1FAE5" />
-                  <Text style={styles.linkRdButtonText}>Vincular RD</Text>
+                  <FontAwesome name="link" size={14} color={minimal ? MINIMAL_UI.icon : '#D1FAE5'} />
+                  <Text style={[styles.linkRdButtonText, minimal && styles.linkRdButtonTextMinimal]}>
+                    Vincular RD
+                  </Text>
                 </TouchableOpacity>
               )
             ) : null}
@@ -2010,28 +2343,37 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             <View style={styles.commentModalActions}>
               {activeEditorEntry && getFinancialEntryComment(activeEditorEntry) ? (
                 <TouchableOpacity
-                  style={styles.commentModalDeleteButton}
+                  style={[styles.commentModalDeleteButton, minimal && styles.commentModalDeleteButtonMinimal]}
                   onPress={() => void handleDeleteComment()}
                   disabled={savingCommentEntryId !== null || receiptBusy}
                   activeOpacity={0.85}
                 >
-                  <Text style={styles.commentModalDeleteText}>Excluir</Text>
+                  <Text
+                    style={[styles.commentModalDeleteText, minimal && styles.commentModalDeleteTextMinimal]}
+                  >
+                    Excluir
+                  </Text>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.commentModalDeleteSpacer} />
               )}
               <View style={styles.commentModalPrimaryActions}>
                 <TouchableOpacity
-                  style={styles.commentModalCancelButton}
+                  style={[styles.commentModalCancelButton, minimal && styles.commentModalCancelButtonMinimal]}
                   onPress={closeCommentEditor}
                   disabled={savingCommentEntryId !== null || receiptBusy}
                   activeOpacity={0.85}
                 >
-                  <Text style={styles.commentModalCancelText}>Cancelar</Text>
+                  <Text
+                    style={[styles.commentModalCancelText, minimal && styles.commentModalCancelTextMinimal]}
+                  >
+                    Cancelar
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.commentModalSaveButton,
+                    minimal && styles.commentModalSaveButtonMinimal,
                     (savingCommentEntryId !== null || receiptBusy) && styles.saveButtonDisabled,
                   ]}
                   onPress={() => void handleSaveComment()}
@@ -2039,9 +2381,13 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                   activeOpacity={0.85}
                 >
                   {savingCommentEntryId ? (
-                    <ActivityIndicator color="#0f172a" size="small" />
+                    <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0f172a'} size="small" />
                   ) : (
-                    <Text style={styles.commentModalSaveText}>Salvar</Text>
+                    <Text
+                      style={[styles.commentModalSaveText, minimal && styles.commentModalSaveTextMinimal]}
+                    >
+                      Salvar
+                    </Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -2104,23 +2450,25 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
             }
           }}
         >
-          <View style={styles.assemblyRenameCard}>
-            <Text style={styles.assemblyRenameTitle}>Renomear ata</Text>
-            <Text style={styles.assemblyRenameHint}>
+          <View style={[styles.assemblyRenameCard, minimal && styles.assemblyRenameCardMinimal]}>
+            <Text style={[styles.assemblyRenameTitle, minimal && styles.assemblyRenameTitleMinimal]}>
+              Renomear ata
+            </Text>
+            <Text style={[styles.assemblyRenameHint, minimal && styles.assemblyRenameHintMinimal]}>
               Arquivo: {renamingMinute?.file_name ?? '—'}
             </Text>
             <TextInput
-              style={styles.assemblyRenameInput}
+              style={[styles.assemblyRenameInput, minimal && styles.assemblyRenameInputMinimal]}
               value={renameTitleDraft}
               onChangeText={setRenameTitleDraft}
               placeholder="Novo título da ata"
-              placeholderTextColor="#64748B"
+              placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
               editable={!savingRename}
               autoFocus
             />
             <View style={styles.assemblyRenameActions}>
               <TouchableOpacity
-                style={styles.assemblyRenameCancelButton}
+                style={[styles.assemblyRenameCancelButton, minimal && styles.assemblyRenameCancelButtonMinimal]}
                 onPress={() => {
                   setRenamingMinute(null);
                   setRenameTitleDraft('');
@@ -2128,11 +2476,16 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                 disabled={savingRename}
                 activeOpacity={0.85}
               >
-                <Text style={styles.assemblyRenameCancelText}>Cancelar</Text>
+                <Text
+                  style={[styles.assemblyRenameCancelText, minimal && styles.assemblyRenameCancelTextMinimal]}
+                >
+                  Cancelar
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.assemblyRenameSaveButton,
+                  minimal && styles.assemblyRenameSaveButtonMinimal,
                   savingRename && styles.saveButtonDisabled,
                 ]}
                 onPress={() => void handleSaveRenameAssemblyMinute()}
@@ -2140,9 +2493,13 @@ export function MaintenanceFinancialsCard({ isActive = true, panelHeight }: Prop
                 activeOpacity={0.85}
               >
                 {savingRename ? (
-                  <ActivityIndicator color="#0F172A" size="small" />
+                  <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0F172A'} size="small" />
                 ) : (
-                  <Text style={styles.assemblyRenameSaveText}>Salvar</Text>
+                  <Text
+                    style={[styles.assemblyRenameSaveText, minimal && styles.assemblyRenameSaveTextMinimal]}
+                  >
+                    Salvar
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -3043,5 +3400,374 @@ const styles = StyleSheet.create({
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 10,
     fontFamily: 'monospace',
+  },
+  panelMinimal: {
+    ...CONTAIN_WIDTH,
+    paddingHorizontal: 0,
+    paddingVertical: 4,
+    borderRadius: 0,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'visible',
+  },
+  sectionTitleMinimal: {
+    ...MINIMAL_SECTION_TITLE,
+    ...CONTAIN_WIDTH,
+  },
+  warningTextMinimal: {
+    color: '#B45309',
+  },
+  errorTextMinimal: {
+    color: '#DC2626',
+  },
+  collapseSectionMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 12,
+  },
+  collapseHeaderTitleMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  collapseHeaderSubtitleMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  collapseBodyMinimal: {
+    borderTopColor: MINIMAL_UI.divider,
+  },
+  periodBoxMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  periodPickerLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  monthDropdownMinimal: {
+    ...CONTAIN_WIDTH,
+    height: undefined,
+    minHeight: 44,
+  },
+  emitRdButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.accent,
+  },
+  emitRdButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  versionChipMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 10,
+  },
+  versionChipActiveMinimal: {
+    borderColor: MINIMAL_UI.accent,
+    backgroundColor: '#EFF6FF',
+  },
+  versionChipTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  versionChipTextActiveMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  emptyMonthButtonMinimal: {
+    borderRadius: 12,
+    borderColor: '#DC2626',
+    backgroundColor: '#FEF2F2',
+  },
+  emptyMonthButtonTextMinimal: {
+    color: '#DC2626',
+  },
+  rdListRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  rdListTitleMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  rdListMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  rdUnreconcileButtonMinimal: {
+    borderRadius: 10,
+    borderColor: '#DC2626',
+    backgroundColor: '#FEF2F2',
+  },
+  rdUnreconcileButtonTextMinimal: {
+    color: '#DC2626',
+  },
+  commentModalInputPlaceholderMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  commentModalInputPlaceholderTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  formCardMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  formatHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  toolbarButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  toolbarButtonTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  csvInputMinimal: {
+    ...CONTAIN_WIDTH,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    color: MINIMAL_UI.text,
+  },
+  previewTextMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  errorBoxMinimal: {
+    backgroundColor: '#FEF2F2',
+  },
+  errorLineTextMinimal: {
+    color: '#DC2626',
+  },
+  importModeChipMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  importModeChipActiveMinimal: {
+    borderColor: MINIMAL_UI.accent,
+    backgroundColor: '#EFF6FF',
+  },
+  importModeChipTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  importModeChipTextActiveMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  saveButtonMinimal: {
+    backgroundColor: MINIMAL_UI.accent,
+  },
+  saveButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  listRowMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  listRowAltMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  listTitleMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  listMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  listCommentMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  listReceiptAttachedMinimal: {
+    color: '#16A34A',
+  },
+  listReceiptEmptyMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  listExpenseReportLinkTextMinimal: {
+    color: '#16A34A',
+  },
+  listAmountPositiveMinimal: {
+    color: '#16A34A',
+  },
+  listAmountNegativeMinimal: {
+    color: '#DC2626',
+  },
+  commentButtonEmptyMinimal: {
+    borderColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  commentButtonFilledMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: '#EFF6FF',
+  },
+  commentButtonLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  commentButtonLabelFilledMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  editEntryButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: '#EFF6FF',
+  },
+  editEntryButtonLabelMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  commentModalCardMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  commentModalTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  commentModalMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  commentModalFieldLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  commentModalInputMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    color: MINIMAL_UI.text,
+  },
+  linkRdButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: '#EFF6FF',
+  },
+  linkRdButtonTextMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  commentModalDeleteButtonMinimal: {
+    borderColor: '#DC2626',
+    backgroundColor: '#FEF2F2',
+  },
+  commentModalDeleteTextMinimal: {
+    color: '#DC2626',
+  },
+  commentModalCancelButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+  },
+  commentModalCancelTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  commentModalSaveButtonMinimal: {
+    backgroundColor: MINIMAL_UI.accent,
+  },
+  commentModalSaveTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  receiptPermissionHintMinimal: {
+    color: '#B45309',
+  },
+  receiptAttachBoxMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  receiptAttachHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  receiptAttachButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  receiptAttachButtonTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  receiptAttachPrimaryButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.accent,
+  },
+  receiptAttachPrimaryButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  receiptAttachCancelTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  receiptAttachedBoxMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  receiptAttachedTextMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  receiptEditorNavButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  receiptEditorNavButtonTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  receiptActionButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  receiptActionButtonTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  receiptDeleteButtonMinimal: {
+    borderColor: '#DC2626',
+    backgroundColor: '#FEF2F2',
+  },
+  receiptDeleteButtonTextMinimal: {
+    color: '#DC2626',
+  },
+  hintTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  assemblyMinutesRefreshTextMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  assemblyMinuteRowMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  assemblyMinuteTitleMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  assemblyMinuteMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  assemblyMinuteActionButtonMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+    borderColor: MINIMAL_UI.border,
+  },
+  assemblyRenameCardMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  assemblyRenameTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  assemblyRenameHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  assemblyRenameInputMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    color: MINIMAL_UI.text,
+  },
+  assemblyRenameCancelButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+  },
+  assemblyRenameCancelTextMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  assemblyRenameSaveButtonMinimal: {
+    backgroundColor: MINIMAL_UI.accent,
+  },
+  assemblyRenameSaveTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  uploadAssemblyButtonMinimal: {
+    backgroundColor: MINIMAL_UI.accent,
+  },
+  uploadAssemblyButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
+  },
+  receiptsDirInputMinimal: {
+    ...CONTAIN_WIDTH,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    color: MINIMAL_UI.text,
+  },
+  receiptBatchReportBoxMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  receiptBatchReportLineMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  receiptBatchReportOkMinimal: {
+    color: '#16A34A',
+  },
+  receiptBatchReportMutedMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
 });
