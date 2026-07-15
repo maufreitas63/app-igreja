@@ -372,6 +372,32 @@ async function fetchProfileHasAccess(
   resourceKey: string,
   action: AccessAction
 ): Promise<boolean> {
+  // Em Ghost o bypass de SA do operador é desligado no cliente. Se o header
+  // x-ghost-profile-id não trocar a sessão no Postgres, profile_has_access
+  // (operadores não-SA) nega p_profile_id ≠ sessão — menu fica só Início/Redes.
+  // evaluate_profile_resource_access lê grants do alvo sem esse bloqueio.
+  const ghostTarget = getGhostEffectiveProfileId();
+  if (isGhostModeActive() && ghostTarget && ghostTarget === profileId.trim()) {
+    const evaluated = await supabase.rpc('evaluate_profile_resource_access', {
+      p_profile_id: profileId,
+      p_resource_type: resourceType,
+      p_resource_key: resourceKey,
+      p_action: action,
+    });
+
+    if (!evaluated.error) {
+      return coerceAccessResult(
+        evaluated.data as boolean | null | undefined,
+        evaluated.error
+      );
+    }
+
+    if (!isSupabaseRpcMissingError(evaluated.error, 'evaluate_profile_resource_access')) {
+      console.error('evaluate_profile_resource_access:', evaluated.error);
+      return false;
+    }
+  }
+
   const { data, error } = await supabase.rpc('profile_has_access', {
     p_profile_id: profileId,
     p_resource_type: resourceType,

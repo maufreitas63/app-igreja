@@ -37,6 +37,7 @@ export function GhostModeBanner() {
         <Pressable
           style={({ pressed }) => [styles.exitButton, pressed && styles.exitButtonPressed]}
           onPress={() => void endGhostMode()}
+          hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
           accessibilityRole="button"
           accessibilityLabel="Encerrar Modo Ghost"
         >
@@ -66,7 +67,7 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     minWidth: 168,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 8,
     backgroundColor: 'rgba(127, 29, 29, 0.94)',
     borderColor: 'rgba(252, 211, 77, 0.55)',
@@ -98,18 +99,22 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   exitButton: {
-    borderRadius: 6,
+    borderRadius: 8,
     backgroundColor: '#FCD34D',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    marginTop: 1,
+    minWidth: 48,
+    minHeight: 44,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginTop: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   exitButtonPressed: {
     opacity: 0.85,
   },
   exitButtonText: {
     color: '#1c1917',
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '800',
   },
 });
