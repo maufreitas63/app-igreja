@@ -23,6 +23,8 @@ const config: ExpoConfig = {
     infoPlist: {
       NSCameraUsageDescription:
         'Permita o acesso à câmera para leitura de QR Code no totem e registro de selfie.',
+      NSMicrophoneUsageDescription:
+        'Permita o microfone para o Walkie-Talkie entre voluntários do estacionamento e da recepção.',
       LSApplicationQueriesSchemes: ['whatsapp', 'whatsapp-api'],
     },
     config: {
@@ -38,6 +40,7 @@ const config: ExpoConfig = {
       monochromeImage: './assets/images/android-icon-monochrome.png',
     },
     package: 'com.anonymous.appigreja',
+    permissions: ['RECORD_AUDIO', 'android.permission.RECORD_AUDIO'],
     config: {
       googleMaps: {
         apiKey: googleMapsApiKey,
@@ -82,7 +85,8 @@ const config: ExpoConfig = {
       {
         photosPermission:
           'Permita o acesso à galeria para anexar imagens às sugestões e melhorias.',
-        microphonePermission: false,
+        microphonePermission:
+          'Permita o microfone para o Walkie-Talkie entre voluntários do estacionamento e da recepção.',
       },
     ],
     'expo-font',

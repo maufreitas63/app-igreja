@@ -2,6 +2,7 @@ import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { CheckinModal } from '@/components/CheckinModal';
 import { AdministrativoCard } from '@/components/AdministrativoCard';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
+import { PttWalkieTalkieButton } from '@/components/PttWalkieTalkieButton';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { resolveEventEnabledRoomKeys } from '@/lib/maintenanceEventForm';
@@ -3370,18 +3371,26 @@ export default function Dashboard() {
 
                     {isSelectedScaleParking ? (
                       <View style={styles.scaleRosterParkingPrompt}>
-                        <TouchableOpacity
-                          style={styles.scaleRosterIdentifyVehicleButton}
-                          onPress={handleOpenParkingFromRoster}
-                          activeOpacity={0.85}
-                          accessibilityRole="button"
-                          accessibilityLabel="Identificar veículo pela placa"
-                        >
-                          <FontAwesome name="car" size={18} color="#020617" />
-                          <Text style={styles.scaleRosterIdentifyVehicleButtonText}>
-                            Identificar veículo
-                          </Text>
-                        </TouchableOpacity>
+                        <View style={styles.scaleRosterParkingActionsRow}>
+                          <TouchableOpacity
+                            style={[styles.scaleRosterIdentifyVehicleButton, styles.scaleRosterParkingActionHalf]}
+                            onPress={handleOpenParkingFromRoster}
+                            activeOpacity={0.85}
+                            accessibilityRole="button"
+                            accessibilityLabel="Identificar veículo pela placa"
+                          >
+                            <FontAwesome name="car" size={18} color="#020617" />
+                            <Text style={styles.scaleRosterIdentifyVehicleButtonText}>
+                              Identificar veículo
+                            </Text>
+                          </TouchableOpacity>
+                          <PttWalkieTalkieButton
+                            style={styles.scaleRosterParkingActionHalf}
+                            senderProfileId={profile?.id}
+                            senderName={profile?.full_name}
+                            setor="Estacionamento"
+                          />
+                        </View>
                       </View>
                     ) : null}
 
@@ -4966,15 +4975,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 8,
   },
-  scaleRosterIdentifyVehicleButton: {
+  scaleRosterParkingActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 10,
     width: '100%',
+  },
+  scaleRosterParkingActionHalf: {
+    flex: 1,
+    minWidth: 0,
+  },
+  scaleRosterIdentifyVehicleButton: {
     minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
     paddingVertical: 14,
-    paddingHorizontal: 18,
+    paddingHorizontal: 12,
     borderRadius: 14,
     backgroundColor: '#FBBF24',
     borderWidth: 1,
@@ -4982,9 +5000,10 @@ const styles = StyleSheet.create({
   },
   scaleRosterIdentifyVehicleButtonText: {
     color: '#020617',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
+    flexShrink: 1,
   },
   scaleRosterListArea: {
     flex: 1,

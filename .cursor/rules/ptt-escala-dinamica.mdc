@@ -45,7 +45,10 @@ Ao implementar ou alterar o PTT (Push-to-Talk / Walkie-Talkie), seguir este spec
 - Mic: hoje `microphonePermission: false` / `recordAudioAndroid: false` em `app.config.ts` — habilitar só o necessário ao implantar PTT.
 - Preferir alinhar UI ao tema existente do dashboard; não criar rota paralela se o fluxo já vive no painel de escala/estacionamento.
 
-## Fora de escopo até pedido explícito
+## Implementação atual (referência)
 
-- Implementação completa sem o usuário pedir “implementar/desenvolver o PTT”.
-- Destinos além do par Estacionamento → Acolhimento Recepção (exceto extensão pedida).
+- Botão: `components/PttWalkieTalkieButton.tsx` ao lado de Identificar veículo no `dashboard` (`scale_roster` parking).
+- Inbox: `components/PttInboxListener.tsx` no `AppShell`.
+- SQL: `scripts/ptt-messages-escala-dinamica.sql` (obrigatório no Supabase).
+- STT: Web Speech (web) + Edge `supabase/functions/ptt-transcribe` (Whisper / `OPENAI_API_KEY`).
+- Realtime: Supabase Realtime em `ptt_messages`; Socket.io opcional em `services/ptt-server` via `EXPO_PUBLIC_PTT_SOCKET_URL`.
