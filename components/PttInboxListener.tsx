@@ -18,6 +18,7 @@ import {
   startPttRecording,
   type PttRecordingSession,
 } from '@/lib/pttRecordSend';
+import { pulsePttDeliveryVibration } from '@/lib/pttHaptics';
 import { playPttAudioUrl } from '@/lib/pttRecording';
 import { subscribePttSocket } from '@/lib/pttSocket';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
@@ -120,6 +121,7 @@ export function PttInboxListener() {
       }
       seenMessageIdsRef.current.add(row.id);
       void markPttDelivered(row.id);
+      pulsePttDeliveryVibration();
 
       const convId = conversationIdFromPttRow(row);
       if (!convId) {
@@ -156,7 +158,11 @@ export function PttInboxListener() {
     const opens = await listOpenPttConversations();
     const withUnread = opens.find((c) => Number(c.unread_count) > 0) ?? opens[0];
     if (withUnread && !conversationIdRef.current) {
-      await openConversation(withUnread.id, { toast: Number(withUnread.unread_count) > 0 });
+      const hasUnread = Number(withUnread.unread_count) > 0;
+      if (hasUnread) {
+        pulsePttDeliveryVibration();
+      }
+      await openConversation(withUnread.id, { toast: hasUnread });
       return;
     }
 
