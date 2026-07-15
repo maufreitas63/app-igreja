@@ -100,6 +100,14 @@ export function AppDrawer() {
     void navigateDrawerMenuItem(router, 'event_orchestration');
   };
 
+  const handleOpenBilling = () => {
+    traceClick('drawer', 'settings-billing-press');
+    setSettingsOpen(false);
+    setSettingsPanel('root');
+    closeDrawer();
+    void navigateDrawerMenuItem(router, 'menu_billing');
+  };
+
   const handleBackdropPress = () => {
     traceClick('drawer', 'backdrop-press', { settingsOpen, settingsPanel });
     if (settingsOpen && settingsPanel !== 'root') {
@@ -147,6 +155,7 @@ export function AppDrawer() {
           setSettingsPanel('root');
         }}
         onOpenMediaAuthorization={handleOpenMediaAuthorization}
+        onOpenBilling={handleOpenBilling}
         onOpenWalkieTalkie={() => {
           traceClick('drawer', 'settings-walkie-press');
           setSettingsPanel('walkie');

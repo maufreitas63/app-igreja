@@ -25,6 +25,7 @@ type Props = {
   onClose: () => void;
   onOpenMediaAuthorization: () => void;
   onOpenWalkieTalkie?: () => void;
+  onOpenBilling?: () => void;
   /** Líder / admin — nomes e atribuição de salas. */
   showRoomSettings?: boolean;
   onOpenRoomSettings?: () => void;
@@ -40,6 +41,7 @@ export function AppDrawerSettings({
   onClose,
   onOpenMediaAuthorization,
   onOpenWalkieTalkie,
+  onOpenBilling,
   showRoomSettings = false,
   onOpenRoomSettings,
   showAvisosSettings = false,
@@ -57,6 +59,17 @@ export function AppDrawerSettings({
             label: 'Walkie-Talkie',
             icon: 'microphone' as const,
             onPress: onOpenWalkieTalkie,
+          } satisfies SettingsItem,
+        ]
+      : []),
+    ...(onOpenBilling
+      ? [
+          {
+            id: 'billing',
+            label: 'Assinaturas',
+            hint: 'Planos e cobrança da igreja',
+            icon: 'credit-card' as const,
+            onPress: onOpenBilling,
           } satisfies SettingsItem,
         ]
       : []),

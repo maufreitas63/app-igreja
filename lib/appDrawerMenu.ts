@@ -86,14 +86,9 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'z', label: 'Modo Ghost', moduleKey: 'auditor' },
   {
     letter: 'aa',
-    label: 'Assinaturas',
-    moduleKey: 'menu_billing',
-    dividerBefore: true,
-  },
-  {
-    letter: 'ab',
     label: 'Redes Sociais',
     moduleKey: 'menu_redes_sociais',
+    dividerBefore: true,
   },
 ];
 

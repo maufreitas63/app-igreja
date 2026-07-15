@@ -32,6 +32,8 @@ const emptyStatus = (message?: string): TenantBillingStatus => ({
   status: 'inactive',
   accessAllowed: true,
   memberCount: 0,
+  activeMembers: 0,
+  activeCongregados: 0,
   maxMembers: null,
   canAddMember: true,
   plan: null,
@@ -83,6 +85,8 @@ export async function getTenantBillingStatus(
     status: String(record.status ?? 'inactive'),
     accessAllowed: record.access_allowed === true,
     memberCount: Number(record.member_count ?? 0) || 0,
+    activeMembers: Number(record.active_members ?? 0) || 0,
+    activeCongregados: Number(record.active_congregados ?? 0) || 0,
     maxMembers:
       record.max_members == null || record.max_members === ''
         ? null

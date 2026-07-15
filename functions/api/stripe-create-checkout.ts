@@ -74,6 +74,7 @@ export const onRequestPost = async (context: PagesContext) => {
 
     const params: Record<string, string> = {
       mode: 'subscription',
+      locale: 'pt-BR',
       success_url: `${successUrl}${successUrl.includes('?') ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: cancelUrl,
       'line_items[0][price]': priceId,

@@ -14,8 +14,9 @@ import {
 export type BillingClassProps = {
   plans: BillingPlan[];
   currentPlanCode?: string | null;
-  subscriptionStatus?: string | null;
-  memberCount?: number | null;
+  activeUsers?: number | null;
+  activeMembers?: number | null;
+  activeCongregados?: number | null;
   loading?: boolean;
   checkoutLoadingPlanCode?: string | null;
   onSubscribe: (plan: BillingPlan) => void;
@@ -42,8 +43,9 @@ const formatMembers = (maxMembers: number) => {
 export function BillingClass({
   plans,
   currentPlanCode = null,
-  subscriptionStatus = null,
-  memberCount = null,
+  activeUsers = null,
+  activeMembers = null,
+  activeCongregados = null,
   loading = false,
   checkoutLoadingPlanCode = null,
   onSubscribe,
@@ -58,6 +60,11 @@ export function BillingClass({
     );
   }
 
+  const users = activeUsers ?? 0;
+  const members = activeMembers ?? 0;
+  const congregados = activeCongregados ?? 0;
+  const showStatus = activeUsers != null || activeMembers != null || activeCongregados != null;
+
   return (
     <ScrollView
       style={styles.root}
@@ -67,11 +74,12 @@ export function BillingClass({
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
 
-      {subscriptionStatus ? (
+      {showStatus ? (
         <Text style={styles.statusLine}>
-          Status atual: {subscriptionStatus}
+          Status atual: {users.toLocaleString('pt-BR')} usuários (
+          {members.toLocaleString('pt-BR')} membros +{' '}
+          {congregados.toLocaleString('pt-BR')} congregados) ativos
           {currentPlanCode ? ` · plano ${currentPlanCode}` : ''}
-          {memberCount != null ? ` · ${memberCount} membros` : ''}
         </Text>
       ) : null}
 

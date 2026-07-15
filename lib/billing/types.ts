@@ -18,6 +18,10 @@ export type TenantBillingStatus = {
   status: string;
   accessAllowed: boolean;
   memberCount: number;
+  /** Membros ativos (papel member). */
+  activeMembers: number;
+  /** Congregados ativos. */
+  activeCongregados: number;
   maxMembers: number | null;
   canAddMember: boolean;
   cancelAtPeriodEnd?: boolean;

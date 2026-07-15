@@ -24,9 +24,10 @@ export default function BillingScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<BillingPlan[]>([]);
-  const [statusLabel, setStatusLabel] = useState<string | null>(null);
   const [currentPlanCode, setCurrentPlanCode] = useState<string | null>(null);
-  const [memberCount, setMemberCount] = useState<number | null>(null);
+  const [activeUsers, setActiveUsers] = useState<number | null>(null);
+  const [activeMembers, setActiveMembers] = useState<number | null>(null);
+  const [activeCongregados, setActiveCongregados] = useState<number | null>(null);
   const [checkoutLoadingPlanCode, setCheckoutLoadingPlanCode] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
@@ -39,9 +40,10 @@ export default function BillingScreen() {
         checkSessionIsSuperAdmin().catch(() => false),
       ]);
       setPlans(planRows);
-      setStatusLabel(billing.status);
       setCurrentPlanCode(billing.plan?.code ?? null);
-      setMemberCount(billing.memberCount);
+      setActiveUsers(billing.memberCount);
+      setActiveMembers(billing.activeMembers);
+      setActiveCongregados(billing.activeCongregados);
       setIsSuperAdmin(sa);
     } finally {
       setLoading(false);
@@ -134,8 +136,9 @@ export default function BillingScreen() {
         plans={plans}
         loading={loading}
         currentPlanCode={currentPlanCode}
-        subscriptionStatus={statusLabel}
-        memberCount={memberCount}
+        activeUsers={activeUsers}
+        activeMembers={activeMembers}
+        activeCongregados={activeCongregados}
         checkoutLoadingPlanCode={checkoutLoadingPlanCode}
         onSubscribe={(plan) => void handleSubscribe(plan)}
       />
