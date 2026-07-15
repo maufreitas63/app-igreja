@@ -4,14 +4,29 @@ export type PttRecordingSession = {
   stop: () => Promise<{ blob: Blob; mimeType: string; extension: string }>;
 };
 
+type SpeechRecognitionResultLike = {
+  isFinal?: boolean;
+  0?: { transcript?: string };
+};
+
+type SpeechRecognitionEventLike = {
+  resultIndex: number;
+  results: ArrayLike<SpeechRecognitionResultLike> & {
+    length: number;
+  };
+};
+
 type SpeechRecognitionLike = {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
-  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript?: string }>> }) => void) | null;
-  onerror: (() => void) | null;
+  maxAlternatives?: number;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event?: { error?: string }) => void) | null;
+  onend: (() => void) | null;
   start: () => void;
   stop: () => void;
+  abort: () => void;
 };
 
 /** Storage e Content-Type não aceitam `;codecs=...` (ex. Supabase bucket). */
@@ -84,6 +99,8 @@ const getSpeechRecognitionCtor = (): (new () => SpeechRecognitionLike) | null =>
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 };
 
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 /** Grava áudio (web MediaRecorder) e tenta legenda via Web Speech API. */
 export async function startPttRecording(): Promise<{
   session: PttRecordingSession;
@@ -96,7 +113,9 @@ export async function startPttRecording(): Promise<{
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   const { recorder, mimeType, extension } = createMediaRecorder(stream);
   const chunks: BlobPart[] = [];
-  let transcript = '';
+  let finalParts: string[] = [];
+  let interimText = '';
+  let live = true;
 
   recorder.ondataavailable = (event) => {
     if (event.data && event.data.size > 0) {
@@ -106,24 +125,51 @@ export async function startPttRecording(): Promise<{
 
   const SpeechCtor = getSpeechRecognitionCtor();
   let recognition: SpeechRecognitionLike | null = null;
+
+  const readTranscript = () => {
+    const joined = [...finalParts, interimText].join(' ').replace(/\s+/g, ' ').trim();
+    return joined;
+  };
+
   if (SpeechCtor) {
     recognition = new SpeechCtor();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'pt-BR';
+    recognition.maxAlternatives = 1;
+
     recognition.onresult = (event) => {
-      const parts: string[] = [];
-      for (let i = 0; i < event.results.length; i += 1) {
-        const piece = event.results[i]?.[0]?.transcript?.trim();
-        if (piece) {
-          parts.push(piece);
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        const piece = result?.[0]?.transcript?.trim() ?? '';
+        if (!piece) continue;
+        if (result.isFinal) {
+          finalParts.push(piece);
+          interimText = '';
+        } else {
+          interim = piece;
         }
       }
-      transcript = parts.join(' ').trim();
+      if (interim) {
+        interimText = interim;
+      }
     };
+
     recognition.onerror = () => {
-      /* ignore — áudio ainda é enviado */
+      /* áudio ainda é enviado; Whisper / texto manual cobrem o fallback */
     };
+
+    recognition.onend = () => {
+      // Chrome encerra após silêncio — reinicia enquanto a gravação está ativa.
+      if (!live || !recognition) return;
+      try {
+        recognition.start();
+      } catch {
+        /* already started */
+      }
+    };
+
     try {
       recognition.start();
     } catch {
@@ -135,6 +181,8 @@ export async function startPttRecording(): Promise<{
 
   const session: PttRecordingSession = {
     stop: async () => {
+      live = false;
+
       const blob = await new Promise<Blob>((resolve, reject) => {
         recorder.onstop = () => {
           const type = normalizeAudioMimeType(recorder.mimeType || mimeType);
@@ -152,16 +200,34 @@ export async function startPttRecording(): Promise<{
         }
       });
 
-      try {
-        recognition?.stop();
-      } catch {
-        /* ignore */
+      if (recognition) {
+        const ended = new Promise<void>((resolve) => {
+          let done = false;
+          const finish = () => {
+            if (done) return;
+            done = true;
+            if (recognition) {
+              recognition.onend = null;
+            }
+            resolve();
+          };
+          recognition.onend = () => {
+            finish();
+          };
+          try {
+            recognition.stop();
+          } catch {
+            finish();
+          }
+          void wait(1200).then(finish);
+        });
+        await ended;
       }
 
       stream.getTracks().forEach((track) => track.stop());
 
       if (!blob.size) {
-        throw new Error('Nenhum áudio capturado. Segure o botão e fale antes de soltar.');
+        throw new Error('Nenhum áudio capturado. Toque em Gravar, fale e depois em Enviar.');
       }
 
       const finalMime = normalizeAudioMimeType(blob.type || mimeType);
@@ -175,7 +241,7 @@ export async function startPttRecording(): Promise<{
 
   return {
     session,
-    getTranscript: () => transcript.trim(),
+    getTranscript: () => readTranscript(),
   };
 }
 

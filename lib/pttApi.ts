@@ -91,35 +91,47 @@ export async function uploadPttAudioBlob(
   return { path, publicUrl };
 }
 
-/** Whisper (Edge Function). Se indisponível, devolve null e o app usa Web Speech / fallback. */
+/** Whisper (Edge Function). Prefere URL pública; base64 só como reforço em blobs curtos. */
 export async function transcribePttAudioViaEdge(
   audioUrl: string,
   base64?: string,
   mimeType?: string
-): Promise<string | null> {
+): Promise<{ text: string | null; error?: string }> {
   try {
-    const { data, error } = await supabase.functions.invoke('ptt-transcribe', {
-      body: {
-        audio_url: audioUrl,
-        audio_base64: base64,
-        mime_type: mimeType,
-        language: 'pt',
-      },
-    });
+    const body: Record<string, string> = {
+      audio_url: audioUrl,
+      language: 'pt',
+    };
+    if (mimeType?.trim()) {
+      body.mime_type = mimeType.trim();
+    }
+    // Payloads enormes falham no invoke; só envia base64 de áudios pequenos.
+    if (base64 && base64.length > 0 && base64.length < 900_000) {
+      body.audio_base64 = base64;
+    }
+
+    const { data, error } = await supabase.functions.invoke('ptt-transcribe', { body });
 
     if (error) {
       console.warn('ptt-transcribe:', error.message);
-      return null;
+      return { text: null, error: error.message };
     }
 
-    const text =
-      data && typeof data === 'object' && 'text' in data
-        ? String((data as { text?: string }).text ?? '').trim()
-        : '';
-    return text || null;
+    const payload = data && typeof data === 'object' ? (data as { text?: string; error?: string }) : null;
+    const text = String(payload?.text ?? '').trim();
+    const remoteError = String(payload?.error ?? '').trim();
+    if (text) {
+      return { text };
+    }
+    if (remoteError) {
+      console.warn('ptt-transcribe:', remoteError);
+      return { text: null, error: remoteError };
+    }
+    return { text: null };
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Falha ao invocar ptt-transcribe';
     console.warn('ptt-transcribe invoke failed', error);
-    return null;
+    return { text: null, error: message };
   }
 }
 

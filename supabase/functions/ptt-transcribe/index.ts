@@ -12,6 +12,15 @@ type Body = {
   language?: string;
 };
 
+const extensionForMime = (mimeType: string) => {
+  const base = mimeType.split(';')[0]?.trim().toLowerCase() || 'audio/webm';
+  if (base.includes('mp4') || base.includes('m4a')) return 'm4a';
+  if (base.includes('mpeg') || base.includes('mp3')) return 'mp3';
+  if (base.includes('ogg')) return 'ogg';
+  if (base.includes('wav')) return 'wav';
+  return 'webm';
+};
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -20,10 +29,16 @@ Deno.serve(async (request) => {
   try {
     const openaiKey = Deno.env.get('OPENAI_API_KEY')?.trim();
     if (!openaiKey) {
-      return new Response(JSON.stringify({ text: '', error: 'OPENAI_API_KEY não configurada' }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({
+          text: '',
+          error: 'OPENAI_API_KEY não configurada no Supabase (Edge Function Secrets).',
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
@@ -34,7 +49,6 @@ Deno.serve(async (request) => {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: userData } = await supabase.auth.getUser();
-    // auth opcional: app também autentica por sessão phone/profile
     void userData;
 
     const body = (await request.json()) as Body;
@@ -52,7 +66,7 @@ Deno.serve(async (request) => {
         throw new Error(`Falha ao baixar áudio (${audioRes.status})`);
       }
       audioBytes = new Uint8Array(await audioRes.arrayBuffer());
-      mimeType = audioRes.headers.get('content-type') || mimeType;
+      mimeType = audioRes.headers.get('content-type')?.split(';')[0]?.trim() || mimeType;
     }
 
     if (!audioBytes?.length) {
@@ -62,14 +76,12 @@ Deno.serve(async (request) => {
       });
     }
 
+    const filename = `audio.${extensionForMime(mimeType)}`;
     const form = new FormData();
-    form.append(
-      'file',
-      new Blob([audioBytes], { type: mimeType }),
-      mimeType.includes('mp4') ? 'audio.m4a' : 'audio.webm'
-    );
+    form.append('file', new File([audioBytes], filename, { type: mimeType.split(';')[0] || 'audio/webm' }));
     form.append('model', 'whisper-1');
     form.append('language', language);
+    form.append('response_format', 'json');
 
     const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
@@ -89,7 +101,7 @@ Deno.serve(async (request) => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro na transcrição';
     return new Response(JSON.stringify({ text: '', error: message }), {
-      status: 500,
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
