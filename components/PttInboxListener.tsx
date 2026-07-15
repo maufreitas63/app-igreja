@@ -18,7 +18,7 @@ import {
   startPttRecording,
   type PttRecordingSession,
 } from '@/lib/pttRecordSend';
-import { pulsePttDeliveryVibration } from '@/lib/pttHaptics';
+import { ensurePttDeliveryFeedbackReady, pulsePttDeliveryVibration } from '@/lib/pttHaptics';
 import { playPttAudioUrl } from '@/lib/pttRecording';
 import { hasPttAutoDialogueShown, markPttAutoDialogueShown } from '@/lib/pttSessionFlags';
 import { subscribePttSocket } from '@/lib/pttSocket';
@@ -192,6 +192,10 @@ export function PttInboxListener() {
     },
     [handleIncomingMessage, openConversation, refreshMessages]
   );
+
+  useEffect(() => {
+    ensurePttDeliveryFeedbackReady();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;

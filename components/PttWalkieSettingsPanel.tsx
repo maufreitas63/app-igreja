@@ -6,6 +6,10 @@ import {
   type PttDirectoryPeer,
 } from '@/lib/pttApi';
 import { requestOpenPttConversation } from '@/lib/pttEvents';
+import {
+  ensurePttDeliveryFeedbackReady,
+  requestPttDeliveryNotificationPermission,
+} from '@/lib/pttHaptics';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
@@ -81,6 +85,8 @@ export function PttWalkieSettingsPanel({
 
   const openPick = useCallback(async () => {
     if (!allowed) return;
+    ensurePttDeliveryFeedbackReady();
+    void requestPttDeliveryNotificationPermission();
     setLoadingPeers(true);
     setStep('pick');
     try {
