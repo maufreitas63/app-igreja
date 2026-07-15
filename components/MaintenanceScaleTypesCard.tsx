@@ -209,22 +209,18 @@ export function MaintenanceScaleTypesCard({
     }
   };
 
+  const handleNameChange = (text: string, mode: 'create' | 'edit') => {
+    setNameInput(text);
+    if (mode === 'create') {
+      setCodeInput(normalizeScaleTypeCode(text));
+    }
+  };
+
   const renderScaleTypeForm = (mode: 'create' | 'edit') => (
     <View style={[styles.formCard, minimal && styles.formCardMinimal]}>
       <Text style={[styles.formTitle, minimal && styles.formTitleMinimal]}>
         {mode === 'edit' ? 'Editar tipo de escala' : 'Novo tipo'}
       </Text>
-
-      <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Código</Text>
-      <TextInput
-        style={[styles.input, minimal && styles.inputMinimal]}
-        placeholder="ex.: vigilancia_estacionamento"
-        placeholderTextColor="#64748B"
-        value={codeInput}
-        onChangeText={(text) => setCodeInput(normalizeScaleTypeCode(text))}
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
 
       <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Nome</Text>
       <TextInput
@@ -232,8 +228,26 @@ export function MaintenanceScaleTypesCard({
         placeholder="Nome exibido no app"
         placeholderTextColor="#64748B"
         value={nameInput}
-        onChangeText={setNameInput}
+        onChangeText={(text) => handleNameChange(text, mode)}
         autoCapitalize="words"
+      />
+
+      <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Código</Text>
+      <TextInput
+        style={[
+          styles.input,
+          styles.codeInputReadonly,
+          minimal && styles.inputMinimal,
+          minimal && styles.codeInputReadonlyMinimal,
+        ]}
+        placeholder="gerado automaticamente do nome"
+        placeholderTextColor="#64748B"
+        value={codeInput}
+        editable={false}
+        selectTextOnFocus={false}
+        autoCapitalize="none"
+        autoCorrect={false}
+        accessibilityLabel="Código gerado automaticamente a partir do nome"
       />
 
       <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Vagas por domingo</Text>
@@ -633,6 +647,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
+  codeInputReadonly: {
+    backgroundColor: '#F8FAFC',
+    color: 'rgba(58, 150, 221, 0.82)',
+  },
   formActions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -774,6 +792,10 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.border,
     color: MINIMAL_UI.text,
     backgroundColor: MINIMAL_UI.background,
+  },
+  codeInputReadonlyMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+    color: MINIMAL_UI.textMuted,
   },
   modeChipMinimal: {
     borderColor: MINIMAL_UI.border,
