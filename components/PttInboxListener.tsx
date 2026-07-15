@@ -31,20 +31,15 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-type DialoguePhase = 'idle' | 'recording' | 'sending' | 'caption';
-
-type PendingCaption = {
-  audioUrl: string;
-  audioPath: string;
-};
+type DialoguePhase = 'idle' | 'recording' | 'sending';
 
 /**
  * Mantém o diálogo PTT ativo nas duas pontas até Encerrar conversa.
+ * Respostas usam transcrição automática (sem digitação).
  */
 export function PttInboxListener() {
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -54,8 +49,6 @@ export function PttInboxListener() {
   const [status, setStatus] = useState<'open' | 'ended' | string>('open');
   const [messages, setMessages] = useState<PttMessageRow[]>([]);
   const [phase, setPhase] = useState<DialoguePhase>('idle');
-  const [captionDraft, setCaptionDraft] = useState('');
-  const [pendingCaption, setPendingCaption] = useState<PendingCaption | null>(null);
   const [ending, setEnding] = useState(false);
 
   const sessionRef = useRef<PttRecordingSession | null>(null);
@@ -114,8 +107,6 @@ export function PttInboxListener() {
     setConversationId(null);
     setMessages([]);
     setPhase('idle');
-    setPendingCaption(null);
-    setCaptionDraft('');
     sessionRef.current = null;
     getTranscriptRef.current = () => '';
     actionLockRef.current = false;
@@ -308,8 +299,6 @@ export function PttInboxListener() {
     sessionRef.current = null;
     getTranscriptRef.current = () => '';
     actionLockRef.current = false;
-    setPendingCaption(null);
-    setCaptionDraft('');
     setPhase('idle');
   }, []);
 
@@ -385,6 +374,13 @@ export function PttInboxListener() {
     setPhase('sending');
     sessionRef.current = null;
 
+    Toast.show({
+      type: 'info',
+      text1: 'Transcrevendo…',
+      text2: 'Gerando o texto automático do áudio.',
+      visibilityTime: 4000,
+    });
+
     try {
       const prepared = await preparePttAudioFromSession({
         profileId,
@@ -392,51 +388,16 @@ export function PttInboxListener() {
         getTranscript: getTranscriptRef.current,
       });
 
-      if (!prepared.texto) {
-        setPendingCaption({
-          audioUrl: prepared.audioUrl,
-          audioPath: prepared.audioPath,
-        });
-        setCaptionDraft('');
-        setPhase('caption');
-        return;
-      }
-
       await sendPreparedReply(prepared.audioUrl, prepared.audioPath, prepared.texto);
       resetReplyIdle();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao responder.';
-      Toast.show({ type: 'error', text1: 'Walkie-Talkie', text2: message, visibilityTime: 6000 });
+      Toast.show({ type: 'error', text1: 'Walkie-Talkie', text2: message, visibilityTime: 7000 });
       resetReplyIdle();
     } finally {
       actionLockRef.current = false;
     }
   }, [phase, profileId, resetReplyIdle, sendPreparedReply]);
-
-  const confirmCaption = useCallback(async () => {
-    if (!pendingCaption || actionLockRef.current) return;
-    const texto = captionDraft.trim();
-    if (!texto) {
-      Toast.show({
-        type: 'error',
-        text1: 'Walkie-Talkie',
-        text2: 'Escreva o texto da resposta.',
-      });
-      return;
-    }
-    actionLockRef.current = true;
-    setPhase('sending');
-    try {
-      await sendPreparedReply(pendingCaption.audioUrl, pendingCaption.audioPath, texto);
-      resetReplyIdle();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao responder.';
-      Toast.show({ type: 'error', text1: 'Walkie-Talkie', text2: message, visibilityTime: 6000 });
-      setPhase('caption');
-    } finally {
-      actionLockRef.current = false;
-    }
-  }, [captionDraft, pendingCaption, resetReplyIdle, sendPreparedReply]);
 
   const onEndConversation = useCallback(async () => {
     const convId = conversationIdRef.current;
@@ -543,7 +504,7 @@ export function PttInboxListener() {
                     isRecording && styles.replyBtnRecording,
                     isSending && styles.btnDisabled,
                   ]}
-                  disabled={isSending || phase === 'caption'}
+                  disabled={isSending}
                   onPress={() => {
                     if (phase === 'idle') void startReply();
                     else if (phase === 'recording') void stopAndSendReply();
@@ -585,36 +546,6 @@ export function PttInboxListener() {
                   <Text style={styles.endText}>{ending ? 'Encerrando…' : 'Encerrar conversa'}</Text>
                 </Pressable>
               ) : null}
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        visible={phase === 'caption' && !!pendingCaption}
-        transparent
-        animationType="fade"
-        onRequestClose={resetReplyIdle}
-      >
-        <View style={styles.captionBackdrop}>
-          <View style={styles.captionCard}>
-            <Text style={styles.captionTitle}>Texto da resposta</Text>
-            <TextInput
-              style={styles.captionInput}
-              value={captionDraft}
-              onChangeText={setCaptionDraft}
-              placeholder="O que você falou?"
-              placeholderTextColor="#94A3B8"
-              multiline
-              autoFocus
-            />
-            <View style={styles.captionActions}>
-              <Pressable onPress={resetReplyIdle}>
-                <Text style={styles.minimizeText}>Cancelar</Text>
-              </Pressable>
-              <Pressable style={styles.endBtn} onPress={() => void confirmCaption()}>
-                <Text style={styles.endText}>Enviar</Text>
-              </Pressable>
             </View>
           </View>
         </View>
@@ -779,38 +710,5 @@ const styles = StyleSheet.create({
   },
   btnDisabled: {
     opacity: 0.7,
-  },
-  captionBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(2, 6, 23, 0.55)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  captionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 18,
-    gap: 12,
-  },
-  captionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  captionInput: {
-    minHeight: 80,
-    borderWidth: 1,
-    borderColor: '#94A3B8',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#0F172A',
-    textAlignVertical: 'top',
-  },
-  captionActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    gap: 14,
   },
 });

@@ -54,5 +54,5 @@ Ao implementar ou alterar o PTT (Push-to-Talk / Walkie-Talkie), seguir este spec
 - SQL base: `scripts/ptt-messages-escala-dinamica.sql`
 - SQL diálogo (obrigatório após o base): `scripts/ptt-conversations-dialogo.sql`
 - RPCs: `send_ptt_estacionamento_message`, `reply_ptt_conversation`, `end_ptt_conversation`, `list_open_ptt_conversations`, `list_ptt_conversation_messages`, `ack_ptt_conversation_messages`
-- STT: Web Speech + Edge `ptt-transcribe` (Whisper / `OPENAI_API_KEY`); se falhar, legenda manual
+- STT automática (sem digitação): Cloudflare Workers AI `POST /api/ptt-transcribe` → Edge Supabase `ptt-transcribe` → Web Speech
 - Realtime: `ptt_messages` + `ptt_conversations`; Socket.io opcional em `services/ptt-server`

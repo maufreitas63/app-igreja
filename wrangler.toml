@@ -6,3 +6,7 @@
 name = "app-igreja"
 compatibility_date = "2026-06-22"
 pages_build_output_dir = "dist"
+
+# Whisper automático do Walkie-Talkie (POST /api/ptt-transcribe)
+[ai]
+binding = "AI"

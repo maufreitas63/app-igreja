@@ -116,12 +116,63 @@ export async function uploadPttAudioBlob(
   return { path, publicUrl };
 }
 
-/** Whisper (Edge Function). Prefere URL pública; base64 só como reforço em blobs curtos. */
+async function transcribeViaCloudflarePages(
+  wavBase64: string
+): Promise<{ text: string | null; error?: string }> {
+  if (typeof window === 'undefined' || !window.location?.origin) {
+    return { text: null, error: 'Ambiente sem origin para /api/ptt-transcribe' };
+  }
+
+  const origin = window.location.origin.replace(/\/$/, '');
+  // Em localhost o Pages Function não existe — pula direto para o Edge Supabase.
+  if (/localhost|127\.0\.0\.1/i.test(origin)) {
+    return { text: null, error: 'dev-local' };
+  }
+
+  try {
+    const response = await fetch(`${origin}/api/ptt-transcribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        audio_base64: wavBase64,
+        language: 'pt',
+      }),
+    });
+    const payload = (await response.json().catch(() => null)) as {
+      text?: string;
+      error?: string;
+    } | null;
+    const text = String(payload?.text ?? '').trim();
+    if (text) {
+      return { text };
+    }
+    const remoteError = String(payload?.error ?? '').trim() || `HTTP ${response.status}`;
+    return { text: null, error: remoteError };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Falha no Whisper Cloudflare';
+    return { text: null, error: message };
+  }
+}
+
+/** Whisper: Cloudflare Workers AI (produção) → Edge Supabase (OPENAI_API_KEY). */
 export async function transcribePttAudioViaEdge(
   audioUrl: string,
   base64?: string,
-  mimeType?: string
+  mimeType?: string,
+  wavBase64?: string
 ): Promise<{ text: string | null; error?: string }> {
+  const errors: string[] = [];
+
+  if (wavBase64?.trim()) {
+    const cf = await transcribeViaCloudflarePages(wavBase64.trim());
+    if (cf.text) {
+      return cf;
+    }
+    if (cf.error && cf.error !== 'dev-local') {
+      errors.push(cf.error);
+    }
+  }
+
   try {
     const body: Record<string, string> = {
       audio_url: audioUrl,
@@ -130,7 +181,6 @@ export async function transcribePttAudioViaEdge(
     if (mimeType?.trim()) {
       body.mime_type = mimeType.trim();
     }
-    // Payloads enormes falham no invoke; só envia base64 de áudios pequenos.
     if (base64 && base64.length > 0 && base64.length < 900_000) {
       body.audio_base64 = base64;
     }
@@ -138,26 +188,23 @@ export async function transcribePttAudioViaEdge(
     const { data, error } = await supabase.functions.invoke('ptt-transcribe', { body });
 
     if (error) {
-      console.warn('ptt-transcribe:', error.message);
-      return { text: null, error: error.message };
+      errors.push(error.message);
+    } else {
+      const payload = data && typeof data === 'object' ? (data as { text?: string; error?: string }) : null;
+      const text = String(payload?.text ?? '').trim();
+      if (text) {
+        return { text };
+      }
+      const remoteError = String(payload?.error ?? '').trim();
+      if (remoteError) {
+        errors.push(remoteError);
+      }
     }
-
-    const payload = data && typeof data === 'object' ? (data as { text?: string; error?: string }) : null;
-    const text = String(payload?.text ?? '').trim();
-    const remoteError = String(payload?.error ?? '').trim();
-    if (text) {
-      return { text };
-    }
-    if (remoteError) {
-      console.warn('ptt-transcribe:', remoteError);
-      return { text: null, error: remoteError };
-    }
-    return { text: null };
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Falha ao invocar ptt-transcribe';
-    console.warn('ptt-transcribe invoke failed', error);
-    return { text: null, error: message };
+    errors.push(error instanceof Error ? error.message : 'Falha ao invocar ptt-transcribe');
   }
+
+  return { text: null, error: errors.filter(Boolean).join(' | ') || undefined };
 }
 
 export async function sendPttEstacionamentoMessage(input: {

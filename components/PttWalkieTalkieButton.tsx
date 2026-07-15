@@ -9,11 +9,9 @@ import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
   type StyleProp,
   type ViewStyle,
@@ -27,17 +25,10 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
-type Phase = 'idle' | 'recording' | 'sending' | 'caption';
-
-type PendingSend = {
-  audioUrl: string;
-  audioPath: string;
-};
+type Phase = 'idle' | 'recording' | 'sending';
 
 /**
- * Walkie em 2 etapas:
- * 1) Gravar  2) Enviar
- * Inicia diálogo com Acolhimento ou continua a conversa aberta.
+ * Walkie em 2 etapas com transcrição automática (sem digitação).
  */
 export function PttWalkieTalkieButton({
   senderProfileId,
@@ -46,8 +37,6 @@ export function PttWalkieTalkieButton({
   style,
 }: Props) {
   const [phase, setPhase] = useState<Phase>('idle');
-  const [captionDraft, setCaptionDraft] = useState('');
-  const [pendingSend, setPendingSend] = useState<PendingSend | null>(null);
   const sessionRef = useRef<PttRecordingSession | null>(null);
   const getTranscriptRef = useRef<() => string>(() => '');
   const actionLockRef = useRef(false);
@@ -56,8 +45,6 @@ export function PttWalkieTalkieButton({
     sessionRef.current = null;
     getTranscriptRef.current = () => '';
     actionLockRef.current = false;
-    setPendingSend(null);
-    setCaptionDraft('');
     setPhase('idle');
   }, []);
 
@@ -94,7 +81,7 @@ export function PttWalkieTalkieButton({
         type: 'success',
         text1: activeId ? 'Mensagem no diálogo' : 'Diálogo iniciado',
         text2: activeId
-          ? 'Conversa continua aberta até Encerrar conversa.'
+          ? 'Áudio + texto enviados.'
           : `Chamada ao Ministério De Acolhimento (${result.recipientCount}).`,
         visibilityTime: 4000,
       });
@@ -155,7 +142,13 @@ export function PttWalkieTalkieButton({
     setPhase('sending');
     sessionRef.current = null;
 
-    let openedCaption = false;
+    Toast.show({
+      type: 'info',
+      text1: 'Transcrevendo…',
+      text2: 'Gerando o texto automático do áudio.',
+      visibilityTime: 4000,
+    });
+
     try {
       const prepared = await preparePttAudioFromSession({
         profileId,
@@ -163,67 +156,18 @@ export function PttWalkieTalkieButton({
         getTranscript: getTranscriptRef.current,
       });
 
-      if (!prepared.texto) {
-        openedCaption = true;
-        setPendingSend({
-          audioUrl: prepared.audioUrl,
-          audioPath: prepared.audioPath,
-        });
-        setCaptionDraft('');
-        setPhase('caption');
-        Toast.show({
-          type: 'info',
-          text1: 'Digite a legenda',
-          text2: prepared.sttError?.includes('OPENAI_API_KEY')
-            ? 'Transcrição automática indisponível. Escreva o que falou.'
-            : 'Não deu para transcrever sozinho. Confirme o texto da mensagem.',
-          visibilityTime: 4500,
-        });
-        return;
-      }
-
       await deliverMessage(prepared.audioUrl, prepared.audioPath, prepared.texto);
       resetIdle();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao enviar o Walkie-Talkie.';
-      Toast.show({ type: 'error', text1: 'Walkie-Talkie', text2: message, visibilityTime: 6000 });
+      Toast.show({ type: 'error', text1: 'Walkie-Talkie', text2: message, visibilityTime: 7000 });
       resetIdle();
     } finally {
       actionLockRef.current = false;
-      if (!openedCaption) {
-        sessionRef.current = null;
-        getTranscriptRef.current = () => '';
-      }
+      sessionRef.current = null;
+      getTranscriptRef.current = () => '';
     }
   }, [deliverMessage, phase, resetIdle, senderProfileId]);
-
-  const confirmCaption = useCallback(async () => {
-    if (actionLockRef.current || !pendingSend) {
-      return;
-    }
-    const texto = captionDraft.trim();
-    if (!texto) {
-      Toast.show({
-        type: 'error',
-        text1: 'Walkie-Talkie',
-        text2: 'Escreva o texto da mensagem ou cancele.',
-      });
-      return;
-    }
-
-    actionLockRef.current = true;
-    setPhase('sending');
-    try {
-      await deliverMessage(pendingSend.audioUrl, pendingSend.audioPath, texto);
-      resetIdle();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao enviar o Walkie-Talkie.';
-      Toast.show({ type: 'error', text1: 'Walkie-Talkie', text2: message, visibilityTime: 6000 });
-      setPhase('caption');
-    } finally {
-      actionLockRef.current = false;
-    }
-  }, [captionDraft, deliverMessage, pendingSend, resetIdle]);
 
   const cancelRecording = useCallback(async () => {
     if (actionLockRef.current || phase !== 'recording') {
@@ -257,7 +201,6 @@ export function PttWalkieTalkieButton({
 
   const isRecording = phase === 'recording';
   const isSending = phase === 'sending';
-  const showCaption = phase === 'caption' && !!pendingSend;
 
   return (
     <View style={[styles.wrap, style]}>
@@ -268,7 +211,7 @@ export function PttWalkieTalkieButton({
           isSending && styles.buttonDisabled,
         ]}
         onPress={onPrimaryPress}
-        disabled={isSending || showCaption}
+        disabled={isSending}
         accessibilityRole="button"
         accessibilityLabel={
           isRecording
@@ -288,7 +231,7 @@ export function PttWalkieTalkieButton({
             />
           )}
           <Text style={[styles.text, isRecording && styles.textRecording]}>
-            {isSending ? 'Enviando…' : isRecording ? 'Enviar' : 'Gravar'}
+            {isSending ? 'Transcrevendo…' : isRecording ? 'Enviar' : 'Gravar'}
           </Text>
         </View>
       </Pressable>
@@ -303,34 +246,6 @@ export function PttWalkieTalkieButton({
           <Text style={styles.cancelText}>Cancelar</Text>
         </Pressable>
       ) : null}
-
-      <Modal visible={showCaption} transparent animationType="fade" onRequestClose={resetIdle}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Texto da mensagem</Text>
-            <Text style={styles.modalHint}>
-              O áudio já está pronto. Escreva o que falou para o Acolhimento ler na tela.
-            </Text>
-            <TextInput
-              style={styles.modalInput}
-              value={captionDraft}
-              onChangeText={setCaptionDraft}
-              placeholder="Ex.: Visita para o veículo ABC1D23"
-              placeholderTextColor="#94A3B8"
-              multiline
-              autoFocus
-            />
-            <View style={styles.modalActions}>
-              <Pressable style={styles.modalCancel} onPress={resetIdle}>
-                <Text style={styles.modalCancelText}>Cancelar</Text>
-              </Pressable>
-              <Pressable style={styles.modalSend} onPress={() => void confirmCaption()}>
-                <Text style={styles.modalSendText}>Enviar</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -387,66 +302,5 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 12,
     fontWeight: '700',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(2, 6, 23, 0.55)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 18,
-    gap: 12,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-  },
-  modalTitle: {
-    color: '#0F172A',
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  modalHint: {
-    color: '#475569',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  modalInput: {
-    minHeight: 88,
-    borderWidth: 1,
-    borderColor: '#94A3B8',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#0F172A',
-    fontSize: 15,
-    textAlignVertical: 'top',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 10,
-    marginTop: 4,
-  },
-  modalCancel: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  modalCancelText: {
-    color: '#64748B',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  modalSend: {
-    backgroundColor: '#3A96DD',
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  modalSendText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 14,
   },
 });
