@@ -1,0 +1,51 @@
+---
+description: Spec PTT Walkie-Talkie com roteamento por escala diária (Estacionamento → Recepção)
+alwaysApply: true
+---
+
+# Sistema PTT com Escala Dinâmica
+
+Ao implementar ou alterar o PTT (Push-to-Talk / Walkie-Talkie), seguir este spec. Não inventar destinatário fixo.
+
+## UI — Acolhimento Estacionamento
+
+- Host: `app/(tabs)/dashboard.tsx` (painel `scale_roster` + `parking_vehicle_v2`).
+- Componente de vehicle: `components/ParkingVehicleIdentifyPanel.tsx`.
+- Adicionar botão **Walkie-Talkie ao lado** do botão **"Identificar Veículo"** (roster ~`handleOpenParkingFromRoster` / área do Identificar Veículo).
+- Escala de origem (heurística existente `isParkingWelcomeScale`):
+  - código `acolhimento_estacionamento` / nome com acolhimento+estacionamento
+  - ou `vigilancia_estacionamento`
+- Comportamento do botão: **pressionar e segurar** = grava áudio; **soltar** = para, envia à API STT e dispara o pacote ao servidor.
+
+## Roteamento (obrigatório)
+
+- Destinatário **dinâmico** via escalas do dia — nunca ID hard-coded.
+- Tabelas: `tipos_escala` (`codigo`/`nome`), `voluntarios_escala`, `escalas_log` (`data_servico`, `voluntario_id`, `tipo_escala_id`).
+- RPCs úteis: `listar_escalas`, `aplicar_ciclo_escala`, `registrar_escala_manual`.
+- Regra inicial: remetente no setor **Estacionamento** → buscar quem está em **Acolhimento Recepção** (`acolhimento_recepcao`) para **a data de serviço atual** (fuso igreja `America/Sao_Paulo`) e entregar **só** a esse(s) profile/socket id.
+- Voluntário ↔ profile: via `cadastrar_voluntario_escala(p_tipo_escala_id, p_profile_id)` / `voluntarios_escala`.
+
+## Payload ao acolhedor
+
+```json
+{
+  "remetente": "Nome do Voluntário",
+  "setor": "Estacionamento",
+  "audio_url": "link_do_arquivo_de_audio",
+  "texto_transcrito": "Quatro pessoas chegando para o culto",
+  "timestamp": "10:32:00"
+}
+```
+
+## Stack técnica
+
+- **Realtime:** Node.js + Socket.io (hoje o repo é Expo/PWA + Supabase; **não há** servidor Socket.io — criar serviço/backend dedicado ou Worker com WS; não fingir que Cloudflare Pages estático basta).
+- **STT:** OpenAI Whisper ou Google Speech-to-Text; áudio persistido (ex. Supabase Storage) → `audio_url`.
+- **Offline:** se destinatário offline, gravar mensagem no banco e entregar/notificar no reconnect (fila + ack).
+- Mic: hoje `microphonePermission: false` / `recordAudioAndroid: false` em `app.config.ts` — habilitar só o necessário ao implantar PTT.
+- Preferir alinhar UI ao tema existente do dashboard; não criar rota paralela se o fluxo já vive no painel de escala/estacionamento.
+
+## Fora de escopo até pedido explícito
+
+- Implementação completa sem o usuário pedir “implementar/desenvolver o PTT”.
+- Destinos além do par Estacionamento → Acolhimento Recepção (exceto extensão pedida).
