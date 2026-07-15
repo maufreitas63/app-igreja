@@ -1,9 +1,12 @@
 import { getTenantBillingStatus } from '@/lib/billing/billingApi';
 import type { TenantBillingStatus } from '@/lib/billing/types';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
-import { getStoredTenantId } from '@/lib/tenantSession';
+import {
+  getStoredActiveIgrejaBranding,
+  getStoredTenantId,
+} from '@/lib/tenantSession';
 import { usePathname, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 type Props = {
@@ -15,7 +18,7 @@ const normalizePathname = (pathname: string) => {
   return trimmed || '/';
 };
 
-/** Rotas liberadas sem assinatura ativa (login, billing, público). */
+/** Rotas liberadas sem assinatura ativa. */
 const isBillingExemptRoute = (pathname: string) => {
   const normalized = normalizePathname(pathname);
   return (
@@ -25,6 +28,7 @@ const isBillingExemptRoute = (pathname: string) => {
     || normalized === '/register'
     || normalized === '/forgot-password'
     || normalized === '/selecionar-igreja'
+    || normalized === '/igrejas'
     || normalized === '/totem-checkin'
     || normalized === '/sessao-encerrada'
     || normalized === '/lgpd'
@@ -36,40 +40,46 @@ const isBillingExemptRoute = (pathname: string) => {
 const isBillingEnforceEnabled = () =>
   String(process.env.EXPO_PUBLIC_BILLING_ENFORCE ?? '').trim().toLowerCase() === 'true';
 
-const shouldBlockForBilling = (billing: TenantBillingStatus) => {
+const isIbepTenantCode = (code: string | null | undefined) =>
+  (code ?? '').trim().toUpperCase() === 'IBEP';
+
+/**
+ * Sem assinatura: só bloqueia IBEP quando ENFORCE=true.
+ * Assinatura inativa/vencida: bloqueia aquele tenant (quando há registro).
+ * Outras igrejas sem plano NÃO são derrubadas ao trocar de instância.
+ */
+const shouldBlockForBilling = (
+  billing: TenantBillingStatus,
+  tenantCode: string | null
+) => {
   if (!billing.billingConfigured || !billing.success || billing.accessAllowed) {
     return false;
   }
 
-  // Já existe assinatura inativa/vencida → sempre bloqueia.
   if (billing.hasSubscription) {
     return true;
   }
 
-  // Sem assinatura: só força em ambiente com EXPO_PUBLIC_BILLING_ENFORCE=true (IBEP).
-  return isBillingEnforceEnabled();
+  return isBillingEnforceEnabled() && isIbepTenantCode(tenantCode);
 };
 
 /**
- * Middleware de assinatura: redireciona para /billing (BillingClass)
- * quando o tenant não tem plano active/trialing.
- * Fail-open se o SQL de billing ainda não foi instalado.
+ * Middleware de assinatura por tenant.
+ * Fail-open se SQL ausente, se checagem SA falhar, ou se não for IBEP sem plano.
  */
 export function AppBillingGate({ children }: Props) {
   const pathname = usePathname();
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
-  const [blocked, setBlocked] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const redirectingRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    redirectingRef.current = false;
 
     const run = async () => {
       if (isBillingExemptRoute(pathname)) {
-        if (!cancelled) {
-          setChecking(false);
-          setBlocked(false);
-        }
+        if (!cancelled) setChecking(false);
         return;
       }
 
@@ -77,22 +87,29 @@ export function AppBillingGate({ children }: Props) {
       try {
         const tenantId = await getStoredTenantId();
         if (!tenantId) {
-          if (!cancelled) {
-            setBlocked(false);
-          }
           return;
         }
 
-        const [billing, isSa] = await Promise.all([
-          getTenantBillingStatus(tenantId),
-          checkSessionIsSuperAdmin().catch(() => false),
-        ]);
+        const branding = await getStoredActiveIgrejaBranding();
+        const tenantCode = branding?.code ?? null;
 
+        let isSa = false;
+        try {
+          isSa = await checkSessionIsSuperAdmin();
+        } catch {
+          // Fail-open: erro na checagem SA não pode pagar a app.
+          return;
+        }
+
+        if (isSa) {
+          return;
+        }
+
+        const billing = await getTenantBillingStatus(tenantId);
         if (cancelled) return;
 
-        const enforce = !isSa && shouldBlockForBilling(billing);
-        setBlocked(enforce);
-        if (enforce) {
+        if (shouldBlockForBilling(billing, tenantCode)) {
+          redirectingRef.current = true;
           router.replace('/billing');
         }
       } finally {
@@ -110,7 +127,8 @@ export function AppBillingGate({ children }: Props) {
     return <>{children}</>;
   }
 
-  if (checking || blocked) {
+  // Spinner só durante a checagem breve — nunca “prende” a UI após redirect.
+  if (checking && !redirectingRef.current) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color="#1E40AF" />

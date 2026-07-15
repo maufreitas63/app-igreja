@@ -105,18 +105,26 @@ export default function BillingScreen() {
   return (
     <View style={[styles.root, { paddingTop: Math.max(insets.top, 12) }]}>
       <View style={styles.topRow}>
-        {isSuperAdmin ? (
+        <View style={styles.topLeft}>
+          {isSuperAdmin ? (
+            <Pressable
+              onPress={() => router.replace('/(tabs)')}
+              style={styles.backBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Voltar ao início"
+            >
+              <Text style={styles.backLabel}>Voltar</Text>
+            </Pressable>
+          ) : null}
           <Pressable
-            onPress={() => router.replace('/(tabs)')}
+            onPress={() => router.replace('/igrejas')}
             style={styles.backBtn}
             accessibilityRole="button"
-            accessibilityLabel="Voltar ao início"
+            accessibilityLabel="Trocar igreja"
           >
-            <Text style={styles.backLabel}>Voltar</Text>
+            <Text style={styles.backLabel}>Trocar igreja</Text>
           </Pressable>
-        ) : (
-          <View />
-        )}
+        </View>
         <Pressable onPress={() => void refresh()} style={styles.backBtn}>
           <Text style={styles.backLabel}>Atualizar</Text>
         </Pressable>
@@ -143,8 +151,14 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingBottom: 4,
+  },
+  topLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   backBtn: {
     paddingVertical: 8,

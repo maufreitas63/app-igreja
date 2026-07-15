@@ -58,7 +58,7 @@ Variáveis opcionais do app (só se precisar no build/runtime):
 | `EXPO_PUBLIC_GOOGLE_MAPS_GEOCODING_API_KEY` | Geocodificação Google (senão usa ViaCEP + OSM) |
 | `EXPO_PUBLIC_ACL_STRICT` | `true` para negar acesso quando RPC de ACL estiver ausente |
 | `EXPO_PUBLIC_APP_URL` | URL pública do PWA (retorno do Stripe Checkout) |
-| `EXPO_PUBLIC_BILLING_ENFORCE` | `true` para exigir assinatura ativa (ambiente IBEP) |
+| `EXPO_PUBLIC_BILLING_ENFORCE` | `true` só força paywall na instância **IBEP** sem plano; outras igrejas não são bloqueadas ao trocar de instância |
 
 ### Billing SaaS — Stripe Test Keys (runtime das Pages Functions)
 
