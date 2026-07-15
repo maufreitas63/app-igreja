@@ -2069,21 +2069,6 @@ export default function MaintenanceDashboard() {
 
                 <View style={styles.localCapacityHeader}>
                   <Text style={styles.fieldLabel}>Local do evento</Text>
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.favoritePickerButton,
-                      pressed && styles.actionPressed,
-                    ]}
-                    onPress={() => {
-                      void reloadFavoriteLocations();
-                      setFavoritePickerVisible(true);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel="Selecionar local favorito"
-                  >
-                    <MaterialIcons name="place" size={16} color="#3A96DD" />
-                    <Text style={styles.favoritePickerButtonText}>Favoritos</Text>
-                  </Pressable>
                 </View>
                 <View style={styles.localCapacityRow}>
                   <View style={styles.localColumn}>
@@ -2102,38 +2087,55 @@ export default function MaintenanceDashboard() {
                       onChangeText={(text) => patchForm({ eventLocalAddress: text })}
                     />
                   </View>
-                  <View style={styles.capacityColumn}>
-                    <Text
-                      style={[
-                        styles.fieldLabel,
-                        styles.capacityFieldLabel,
-                        isMinimalPresentation && styles.fieldLabelMinimal,
+                  <View style={styles.localSideColumn}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.favoritePickerButton,
+                        pressed && styles.actionPressed,
                       ]}
+                      onPress={() => {
+                        void reloadFavoriteLocations();
+                        setFavoritePickerVisible(true);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Selecionar local favorito"
                     >
-                      Capacidade
-                    </Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        styles.capacityInput,
-                        isMinimalPresentation && styles.inputMinimal,
-                      ]}
-                      placeholder="Ex.: 70"
-                      placeholderTextColor="#64748B"
-                      value={form.maxCapacity}
-                      keyboardType="number-pad"
-                      onChangeText={(text) => patchForm({ maxCapacity: text.replace(/\D/g, '') })}
-                    />
-                    {isUnlimitedEventCapacity(form.maxCapacity) ? (
+                      <MaterialIcons name="place" size={16} color="#3A96DD" />
+                      <Text style={styles.favoritePickerButtonText}>Favoritos</Text>
+                    </Pressable>
+                    <View style={styles.capacityColumn}>
                       <Text
                         style={[
-                          styles.capacityUnlimitedHint,
-                          isMinimalPresentation && styles.capacityUnlimitedHintMinimal,
+                          styles.fieldLabel,
+                          styles.capacityFieldLabel,
+                          isMinimalPresentation && styles.fieldLabelMinimal,
                         ]}
                       >
-                        {UNLIMITED_EVENT_CAPACITY_LABEL}
+                        Capacidade
                       </Text>
-                    ) : null}
+                      <TextInput
+                        style={[
+                          styles.input,
+                          styles.capacityInput,
+                          isMinimalPresentation && styles.inputMinimal,
+                        ]}
+                        placeholder="Ex.: 70"
+                        placeholderTextColor="#64748B"
+                        value={form.maxCapacity}
+                        keyboardType="number-pad"
+                        onChangeText={(text) => patchForm({ maxCapacity: text.replace(/\D/g, '') })}
+                      />
+                      {isUnlimitedEventCapacity(form.maxCapacity) ? (
+                        <Text
+                          style={[
+                            styles.capacityUnlimitedHint,
+                            isMinimalPresentation && styles.capacityUnlimitedHintMinimal,
+                          ]}
+                        >
+                          {UNLIMITED_EVENT_CAPACITY_LABEL}
+                        </Text>
+                      ) : null}
+                    </View>
                   </View>
                 </View>
 
@@ -3184,13 +3186,15 @@ const styles = StyleSheet.create({
   localCapacityHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     gap: 10,
     marginBottom: 2,
   },
   favoritePickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'stretch',
     gap: 6,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
@@ -3206,7 +3210,7 @@ const styles = StyleSheet.create({
   },
   localCapacityRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
     gap: 10,
   },
   localColumn: {
@@ -3220,9 +3224,15 @@ const styles = StyleSheet.create({
   localAddressInput: {
     width: '100%',
   },
-  capacityColumn: {
+  localSideColumn: {
     width: 112,
     flexShrink: 0,
+    justifyContent: 'space-between',
+    alignItems: 'stretch',
+    gap: 8,
+  },
+  capacityColumn: {
+    width: '100%',
     gap: 6,
   },
   capacityFieldLabel: {
