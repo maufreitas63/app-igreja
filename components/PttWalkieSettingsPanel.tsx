@@ -19,6 +19,9 @@ import Toast from 'react-native-toast-message';
 
 type Props = {
   onBack: () => void;
+  /** Super admin — atalho para gerenciar a lista, abaixo de Iniciar. */
+  canManageUsers?: boolean;
+  onOpenUsers?: () => void;
 };
 
 type Step = 'home' | 'pick' | 'talk';
@@ -27,7 +30,11 @@ type Step = 'home' | 'pick' | 'talk';
  * Painel minimal no drawer: uma etapa por vez.
  * home → escolher contato → gravar/enviar.
  */
-export function PttWalkieSettingsPanel({ onBack }: Props) {
+export function PttWalkieSettingsPanel({
+  onBack,
+  canManageUsers = false,
+  onOpenUsers,
+}: Props) {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [allowed, setAllowed] = useState(false);
@@ -151,6 +158,20 @@ export function PttWalkieSettingsPanel({ onBack }: Props) {
               <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.textMuted} />
             </TouchableOpacity>
           )}
+          {canManageUsers && onOpenUsers ? (
+            <TouchableOpacity
+              style={styles.primaryRow}
+              onPress={onOpenUsers}
+              accessibilityRole="button"
+              accessibilityLabel="Usuários Walkie"
+            >
+              <View style={styles.itemIconWrap}>
+                <FontAwesome name="users" size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+              </View>
+              <Text style={styles.primaryLabel}>Usuários Walkie</Text>
+              <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.textMuted} />
+            </TouchableOpacity>
+          ) : null}
         </View>
       ) : step === 'pick' ? (
         loadingPeers ? (

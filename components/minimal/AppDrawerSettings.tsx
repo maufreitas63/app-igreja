@@ -25,8 +25,6 @@ type Props = {
   onClose: () => void;
   onOpenMediaAuthorization: () => void;
   onOpenWalkieTalkie?: () => void;
-  onOpenWalkieUsers?: () => void;
-  showWalkieUsers?: boolean;
   /** Líder / admin — nomes e atribuição de salas. */
   showRoomSettings?: boolean;
   onOpenRoomSettings?: () => void;
@@ -42,8 +40,6 @@ export function AppDrawerSettings({
   onClose,
   onOpenMediaAuthorization,
   onOpenWalkieTalkie,
-  onOpenWalkieUsers,
-  showWalkieUsers = false,
   showRoomSettings = false,
   onOpenRoomSettings,
   showAvisosSettings = false,
@@ -61,16 +57,6 @@ export function AppDrawerSettings({
             label: 'Walkie-Talkie',
             icon: 'microphone' as const,
             onPress: onOpenWalkieTalkie,
-          } satisfies SettingsItem,
-        ]
-      : []),
-    ...(showWalkieUsers && onOpenWalkieUsers
-      ? [
-          {
-            id: 'walkie-users',
-            label: 'Usuários Walkie',
-            icon: 'users' as const,
-            onPress: onOpenWalkieUsers,
           } satisfies SettingsItem,
         ]
       : []),

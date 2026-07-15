@@ -125,10 +125,19 @@ export function AppDrawer() {
 
   const renderSettingsBranch = () => {
     if (settingsPanel === 'walkie') {
-      return <PttWalkieSettingsPanel onBack={() => setSettingsPanel('root')} />;
+      return (
+        <PttWalkieSettingsPanel
+          onBack={() => setSettingsPanel('root')}
+          canManageUsers={isSuperAdmin}
+          onOpenUsers={() => {
+            traceClick('drawer', 'settings-walkie-users-press');
+            setSettingsPanel('walkie-users');
+          }}
+        />
+      );
     }
     if (settingsPanel === 'walkie-users') {
-      return <PttDirectoryAdminPanel onBack={() => setSettingsPanel('root')} />;
+      return <PttDirectoryAdminPanel onBack={() => setSettingsPanel('walkie')} />;
     }
     return (
       <AppDrawerSettings
@@ -141,11 +150,6 @@ export function AppDrawer() {
         onOpenWalkieTalkie={() => {
           traceClick('drawer', 'settings-walkie-press');
           setSettingsPanel('walkie');
-        }}
-        showWalkieUsers={isSuperAdmin}
-        onOpenWalkieUsers={() => {
-          traceClick('drawer', 'settings-walkie-users-press');
-          setSettingsPanel('walkie-users');
         }}
         showRoomSettings={canManageRooms}
         onOpenRoomSettings={handleOpenRoomSettings}
