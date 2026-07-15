@@ -24,6 +24,7 @@ type SettingsItem = {
 type Props = {
   onClose: () => void;
   onOpenMediaAuthorization: () => void;
+  onOpenWalkieTalkie?: () => void;
   /** Líder / admin — nomes e atribuição de salas. */
   showRoomSettings?: boolean;
   onOpenRoomSettings?: () => void;
@@ -38,6 +39,7 @@ type Props = {
 export function AppDrawerSettings({
   onClose,
   onOpenMediaAuthorization,
+  onOpenWalkieTalkie,
   showRoomSettings = false,
   onOpenRoomSettings,
   showAvisosSettings = false,
@@ -48,6 +50,17 @@ export function AppDrawerSettings({
   const insets = useSafeAreaInsets();
 
   const items: SettingsItem[] = [
+    ...(onOpenWalkieTalkie
+      ? [
+          {
+            id: 'walkie-talkie',
+            label: 'Walkie-Talkie',
+            hint: 'Áudio com texto automático entre usuários autorizados',
+            icon: 'microphone' as const,
+            onPress: onOpenWalkieTalkie,
+          } satisfies SettingsItem,
+        ]
+      : []),
     {
       id: 'media-authorization',
       label: 'Autorização de imagem e voz',

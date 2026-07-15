@@ -2,7 +2,6 @@ import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { CheckinModal } from '@/components/CheckinModal';
 import { AdministrativoCard } from '@/components/AdministrativoCard';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
-import { PttWalkieTalkieButton } from '@/components/PttWalkieTalkieButton';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { resolveEventEnabledRoomKeys } from '@/lib/maintenanceEventForm';
@@ -3371,26 +3370,18 @@ export default function Dashboard() {
 
                     {isSelectedScaleParking ? (
                       <View style={styles.scaleRosterParkingPrompt}>
-                        <View style={styles.scaleRosterParkingActionsRow}>
-                          <TouchableOpacity
-                            style={[styles.scaleRosterIdentifyVehicleButton, styles.scaleRosterParkingActionHalf]}
-                            onPress={handleOpenParkingFromRoster}
-                            activeOpacity={0.85}
-                            accessibilityRole="button"
-                            accessibilityLabel="Identificar veículo pela placa"
-                          >
-                            <FontAwesome name="car" size={18} color="#020617" />
-                            <Text style={styles.scaleRosterIdentifyVehicleButtonText}>
-                              Identificar veículo
-                            </Text>
-                          </TouchableOpacity>
-                          <PttWalkieTalkieButton
-                            style={styles.scaleRosterParkingActionHalf}
-                            senderProfileId={profile?.id}
-                            senderName={profile?.full_name}
-                            setor="Estacionamento"
-                          />
-                        </View>
+                        <TouchableOpacity
+                          style={styles.scaleRosterIdentifyVehicleButton}
+                          onPress={handleOpenParkingFromRoster}
+                          activeOpacity={0.85}
+                          accessibilityRole="button"
+                          accessibilityLabel="Identificar veículo pela placa"
+                        >
+                          <FontAwesome name="car" size={18} color="#020617" />
+                          <Text style={styles.scaleRosterIdentifyVehicleButtonText}>
+                            Identificar veículo
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                     ) : null}
 

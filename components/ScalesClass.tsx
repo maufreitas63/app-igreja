@@ -10,7 +10,6 @@ import type {
   ScalesClassVolunteerEntry,
   ScalesClassView,
 } from '@/lib/scalesClassTypes';
-import { PttWalkieTalkieButton } from '@/components/PttWalkieTalkieButton';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import {
@@ -22,8 +21,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  type StyleProp,
-  type ViewStyle,
 } from 'react-native';
 
 const SCALES_CLASS_SURFACE = '#FFFFFF';
@@ -52,10 +49,6 @@ export type ScalesClassProps = {
   onOpenWhatsapp?: (phone: string | null) => void;
   parkingPanel?: React.ReactNode;
   onBackFromParking?: () => void;
-  /** Remetente do Walkie-Talkie (escala de estacionamento). */
-  pttSenderProfileId?: string | null;
-  pttSenderName?: string | null;
-  pttButtonStyle?: StyleProp<ViewStyle>;
 };
 
 /** Visualização pura de Escalas — extraída de dashboard.card.vigilance_scales. */
@@ -82,9 +75,6 @@ export function ScalesClass({
   onOpenWhatsapp,
   parkingPanel,
   onBackFromParking,
-  pttSenderProfileId = null,
-  pttSenderName = null,
-  pttButtonStyle,
 }: ScalesClassProps) {
   if (view === 'parking') {
     return (
@@ -105,24 +95,16 @@ export function ScalesClass({
 
         {isParking ? (
           <View style={styles.parkingPrompt}>
-            <View style={styles.parkingActionsRow}>
-              <TouchableOpacity
-                style={[styles.identifyVehicleButton, styles.parkingActionHalf]}
-                onPress={onOpenParking}
-                activeOpacity={0.85}
-                accessibilityRole="button"
-                accessibilityLabel="Identificar veículo pela placa"
-              >
-                <FontAwesome name="car" size={18} color={SCALES_CLASS_ICON_COLOR} />
-                <Text style={styles.identifyVehicleButtonText}>Identificar veículo</Text>
-              </TouchableOpacity>
-              <PttWalkieTalkieButton
-                style={[styles.parkingActionHalf, pttButtonStyle]}
-                senderProfileId={pttSenderProfileId}
-                senderName={pttSenderName}
-                setor="Estacionamento"
-              />
-            </View>
+            <TouchableOpacity
+              style={styles.identifyVehicleButton}
+              onPress={onOpenParking}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Identificar veículo pela placa"
+            >
+              <FontAwesome name="car" size={18} color={SCALES_CLASS_ICON_COLOR} />
+              <Text style={styles.identifyVehicleButtonText}>Identificar veículo</Text>
+            </TouchableOpacity>
           </View>
         ) : null}
 

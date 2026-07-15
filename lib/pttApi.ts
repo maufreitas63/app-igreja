@@ -4,7 +4,20 @@ import { decode } from 'base64-arraybuffer';
 
 export const PTT_AUDIO_BUCKET = 'ptt-audio';
 export const PTT_SQL_HINT =
-  'Execute no Supabase: scripts/ptt-messages-escala-dinamica.sql e scripts/ptt-conversations-dialogo.sql';
+  'Execute no Supabase: scripts/ptt-messages-escala-dinamica.sql, scripts/ptt-conversations-dialogo.sql e scripts/ptt-directory-users.sql';
+
+export type PttDirectoryPeer = {
+  profile_id: string;
+  full_name: string;
+};
+
+export type PttDirectoryUser = {
+  id: string;
+  profile_id: string;
+  full_name: string;
+  is_active: boolean;
+  created_at: string;
+};
 
 export type PttMessagePayload = {
   remetente: string;
@@ -65,8 +78,11 @@ const isMissingRpcError = (message: string) => {
     || m.includes('ack_ptt_message')
     || m.includes('reply_ptt_conversation')
     || m.includes('end_ptt_conversation')
-    || m.includes('list_open_ptt_conversations')
+    ||     m.includes('list_open_ptt_conversations')
     || m.includes('list_ptt_conversation_messages')
+    || m.includes('send_ptt_directory_message')
+    || m.includes('list_ptt_directory_peers')
+    || m.includes('can_use_ptt_walkie')
     || (m.includes('could not find') && m.includes('function'))
     || m.includes('schema cache')
   );
@@ -207,13 +223,119 @@ export async function transcribePttAudioViaEdge(
   return { text: null, error: errors.filter(Boolean).join(' | ') || undefined };
 }
 
-export async function sendPttEstacionamentoMessage(input: {
+export async function canUsePttWalkie(): Promise<boolean> {
+  const { data, error } = await supabase.rpc('can_use_ptt_walkie');
+  if (error) {
+    if (isMissingRpcError(error.message ?? '')) {
+      return false;
+    }
+    console.warn('can_use_ptt_walkie:', error.message);
+    return false;
+  }
+  return data === true;
+}
+
+export async function listPttDirectoryPeers(): Promise<PttDirectoryPeer[]> {
+  const { data, error } = await supabase.rpc('list_ptt_directory_peers');
+  if (error) {
+    if (isMissingRpcError(error.message ?? '')) {
+      return [];
+    }
+    console.warn('list_ptt_directory_peers:', error.message);
+    return [];
+  }
+  return ((data ?? []) as PttDirectoryPeer[]).map((row) => ({
+    profile_id: String(row.profile_id ?? ''),
+    full_name: String(row.full_name ?? 'Voluntário'),
+  }));
+}
+
+export async function listPttDirectoryUsers(): Promise<PttDirectoryUser[]> {
+  const { data, error } = await supabase.rpc('list_ptt_directory_users');
+  if (error) {
+    console.warn('list_ptt_directory_users:', error.message);
+    return [];
+  }
+  return ((data ?? []) as PttDirectoryUser[]).map((row) => ({
+    id: String(row.id ?? ''),
+    profile_id: String(row.profile_id ?? ''),
+    full_name: String(row.full_name ?? 'Voluntário'),
+    is_active: row.is_active === true,
+    created_at: String(row.created_at ?? ''),
+  }));
+}
+
+export async function addPttDirectoryUser(
+  profileId: string
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const { data, error } = await supabase.rpc('add_ptt_directory_user', {
+    p_profile_id: profileId.trim(),
+  });
+  if (error) {
+    return { ok: false, message: error.message || 'Falha ao incluir usuário.' };
+  }
+  const record = (data ?? {}) as Record<string, unknown>;
+  if (record.success !== true) {
+    return {
+      ok: false,
+      message: typeof record.message === 'string' ? record.message : 'Não foi possível incluir.',
+    };
+  }
+  return { ok: true };
+}
+
+export async function setPttDirectoryUserActive(
+  profileId: string,
+  isActive: boolean
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const { data, error } = await supabase.rpc('set_ptt_directory_user_active', {
+    p_profile_id: profileId.trim(),
+    p_is_active: isActive,
+  });
+  if (error) {
+    return { ok: false, message: error.message || 'Falha ao atualizar usuário.' };
+  }
+  const record = (data ?? {}) as Record<string, unknown>;
+  if (record.success !== true) {
+    return {
+      ok: false,
+      message: typeof record.message === 'string' ? record.message : 'Não foi possível atualizar.',
+    };
+  }
+  return { ok: true };
+}
+
+export async function searchProfilesForPttDirectory(
+  query: string
+): Promise<PttDirectoryPeer[]> {
+  const q = query.trim();
+  if (q.length < 2) {
+    return [];
+  }
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .ilike('full_name', `%${q}%`)
+    .order('full_name', { ascending: true })
+    .limit(20);
+  if (error) {
+    console.warn('searchProfilesForPttDirectory:', error.message);
+    return [];
+  }
+  return ((data ?? []) as Array<{ id: string; full_name: string | null }>).map((row) => ({
+    profile_id: String(row.id ?? ''),
+    full_name: String(row.full_name ?? 'Voluntário'),
+  }));
+}
+
+export async function sendPttDirectoryMessage(input: {
   remetente: string;
   setor?: string;
   audioUrl: string;
   audioPath: string;
   textoTranscrito: string;
   conversationId?: string | null;
+  peerProfileId?: string | null;
 }): Promise<
   | {
       ok: true;
@@ -227,7 +349,7 @@ export async function sendPttEstacionamentoMessage(input: {
   const timestamp = brazilTimeLabel();
   const params: Record<string, string | null> = {
     p_remetente: input.remetente.trim(),
-    p_setor: input.setor?.trim() || 'Estacionamento',
+    p_setor: input.setor?.trim() || 'Walkie-Talkie',
     p_audio_url: input.audioUrl,
     p_audio_path: input.audioPath,
     p_texto_transcrito: input.textoTranscrito.trim(),
@@ -236,8 +358,11 @@ export async function sendPttEstacionamentoMessage(input: {
   if (input.conversationId?.trim()) {
     params.p_conversation_id = input.conversationId.trim();
   }
+  if (input.peerProfileId?.trim()) {
+    params.p_peer_profile_id = input.peerProfileId.trim();
+  }
 
-  const { data, error } = await supabase.rpc('send_ptt_estacionamento_message', params);
+  const { data, error } = await supabase.rpc('send_ptt_directory_message', params);
 
   if (error) {
     if (isMissingRpcError(error.message ?? '')) {
@@ -250,13 +375,13 @@ export async function sendPttEstacionamentoMessage(input: {
   if (record.success !== true) {
     return {
       ok: false,
-      message: typeof record.message === 'string' ? record.message : 'Não foi possível rotear a mensagem.',
+      message: typeof record.message === 'string' ? record.message : 'Não foi possível enviar a mensagem.',
     };
   }
 
   const payload = (record.payload ?? {
     remetente: input.remetente,
-    setor: input.setor || 'Estacionamento',
+    setor: input.setor || 'Walkie-Talkie',
     audio_url: input.audioUrl,
     texto_transcrito: input.textoTranscrito,
     timestamp,
@@ -273,6 +398,19 @@ export async function sendPttEstacionamentoMessage(input: {
     conversationId,
     conversationIds,
   };
+}
+
+/** @deprecated use sendPttDirectoryMessage */
+export async function sendPttEstacionamentoMessage(input: {
+  remetente: string;
+  setor?: string;
+  audioUrl: string;
+  audioPath: string;
+  textoTranscrito: string;
+  conversationId?: string | null;
+  peerProfileId?: string | null;
+}) {
+  return sendPttDirectoryMessage(input);
 }
 
 export async function replyPttConversation(input: {

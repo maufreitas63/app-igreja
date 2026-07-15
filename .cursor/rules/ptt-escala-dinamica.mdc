@@ -1,58 +1,36 @@
 ---
-description: Spec PTT Walkie-Talkie com diálogo bidirecional e roteamento dinâmico
+description: Spec PTT Walkie-Talkie com diretório de usuários e diálogo bidirecional
 alwaysApply: true
 ---
 
-# Sistema PTT com Escala Dinâmica (diálogo)
+# Sistema PTT Walkie-Talkie (diretório)
 
-Ao implementar ou alterar o PTT (Push-to-Talk / Walkie-Talkie), seguir este spec. Não inventar destinatário fixo.
+Ao implementar ou alterar o PTT, seguir este spec.
 
-## Modelo de uso — diálogo, não monólogo
+## Modelo de uso — diálogo entre usuários autorizados
 
-- Fluxo é **conversa ativa 1:1** (`ptt_conversations`), não aviso one-shot.
-- Estacionamento inicia a chamada → abre conversa com servos do Ministério De Acolhimento.
-- **Qualquer ponta responde** (áudio + legenda) enquanto `status = open`.
-- Painel de diálogo fica disponível nas duas pontas (histórico, Ouvir, Responder).
-- **Encerrar conversa** (qualquer ponta) finaliza a sessão; só então deixa de ficar ativo.
-- Minimizar o painel não encerra; no reconnect a conversa aberta reaparece.
-- Primeira resposta do peer concentra o canal (outras chamadas abertas do mesmo initiator são encerradas).
+- Tabela `ptt_directory_users`: quem pode usar o Walkie e com quem pode falar.
+- Qualquer membro **ativo** inicia diálogo 1:1 com outro membro ativo.
+- Fluxo: **Gravar** → escolher destinatário na lista → gravar → enviar (áudio + STT automática).
+- Painel de diálogo permanece aberto até **Encerrar conversa**.
+- Não usar mais roteamento Estacionamento → Ministério De Acolhimento.
 
-## UI — Acolhimento Estacionamento
+## UI
 
-- Hosts com «Identificar veículo» (ambos precisam do Walkie ao lado):
-  - `app/(tabs)/dashboard.tsx` (`scale_roster`)
-  - `components/ScalesClass.tsx` via `ScalesClassPanel` (`/escalas` — menu Escalas; é o caminho mais comum no PWA)
-- Componente de vehicle: `components/ParkingVehicleIdentifyPanel.tsx`.
-- Escala de origem (heurística existente `isParkingWelcomeScale`):
-  - código `acolhimento_estacionamento` / nome com acolhimento+estacionamento
-  - ou `vigilancia_estacionamento`
-- Botão Walkie (2 etapas): **Gravar** → **Enviar**. Se já houver conversa aberta do initiator, a mensagem continua nesse diálogo.
-- Inbox/diálogo global: `components/PttInboxListener.tsx` no `AppShell` (Responder + Encerrar conversa).
+- Entrada: menu **Configurações** (engrenagem do drawer) → **Walkie-Talkie**.
+- Super admin: botão **Usuários Walkie** no painel para incluir/ativar/desativar perfis.
+- **Não** colocar o botão ao lado de «Identificar veículo» (dashboard / Escalas).
+- Inbox/diálogo global: `components/PttInboxListener.tsx` no `AppShell`.
 
-## Roteamento (obrigatório)
+## SQL (obrigatório no Supabase)
 
-- Destinatário **dinâmico** — nunca ID hard-coded.
-- Regra: remetente **Estacionamento** → servos **ativos em disponibilidade** do tipo **Ministério De Acolhimento** (`ministerioacolhimento` / `voluntarios_escala.is_ativo`).
-- Voluntário ↔ profile: match `voluntarios_escala.nome` ↔ `profiles.full_name`.
-- Excluir tipos com “estacionamento” no código/nome.
+1. `scripts/ptt-messages-escala-dinamica.sql` (base)
+2. `scripts/ptt-conversations-dialogo.sql` (conversas)
+3. `scripts/ptt-directory-users.sql` (diretório + `send_ptt_directory_message`)
 
-## Payload
+RPCs principais: `list_ptt_directory_peers`, `send_ptt_directory_message`, `can_use_ptt_walkie`, `add_ptt_directory_user`, `reply_ptt_conversation`, `end_ptt_conversation`.
 
-```json
-{
-  "remetente": "Nome do Voluntário",
-  "setor": "Estacionamento",
-  "audio_url": "link_do_arquivo_de_audio",
-  "texto_transcrito": "Quatro pessoas chegando para o culto",
-  "timestamp": "10:32:00",
-  "conversation_id": "uuid"
-}
-```
+## Stack
 
-## Stack / SQL
-
-- SQL base: `scripts/ptt-messages-escala-dinamica.sql`
-- SQL diálogo (obrigatório após o base): `scripts/ptt-conversations-dialogo.sql`
-- RPCs: `send_ptt_estacionamento_message`, `reply_ptt_conversation`, `end_ptt_conversation`, `list_open_ptt_conversations`, `list_ptt_conversation_messages`, `ack_ptt_conversation_messages`
-- STT automática (sem digitação): Cloudflare Workers AI `POST /api/ptt-transcribe` → Edge Supabase `ptt-transcribe` → Web Speech
-- Realtime: `ptt_messages` + `ptt_conversations`; Socket.io opcional em `services/ptt-server`
+- STT automática: Cloudflare `/api/ptt-transcribe` → Edge `ptt-transcribe` → Web Speech (sem digitação).
+- Realtime: `ptt_messages` + `ptt_conversations`.

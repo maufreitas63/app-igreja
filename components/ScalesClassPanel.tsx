@@ -48,8 +48,6 @@ export function ScalesClassPanel() {
   const [vehicleLookupLoading, setVehicleLookupLoading] = useState(false);
   const [vehicleLookupError, setVehicleLookupError] = useState<string | null>(null);
   const [vehicleLookupResult, setVehicleLookupResult] = useState<VehicleLookupResult | null>(null);
-  const [sessionProfileId, setSessionProfileId] = useState<string | null>(null);
-  const [sessionProfileName, setSessionProfileName] = useState<string | null>(null);
 
   const selectedScaleType = useMemo(
     () => scaleTypes.find((entry) => entry.code === selectedScaleCode) ?? null,
@@ -139,9 +137,6 @@ export function ScalesClassPanel() {
         ?? sessionProfile?.id?.trim()
         ?? null;
       const profileFullName = sessionProfile?.full_name?.trim() || null;
-
-      setSessionProfileId(profileId);
-      setSessionProfileName(profileFullName);
 
       if (profileId) {
         const cardAccess = await loadDashboardCardViewAccess(profileId);
@@ -348,8 +343,6 @@ export function ScalesClassPanel() {
           />
         }
         onBackFromParking={handleBackFromParking}
-        pttSenderProfileId={sessionProfileId}
-        pttSenderName={sessionProfileName}
       />
     </View>
   );
