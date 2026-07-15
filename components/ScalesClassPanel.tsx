@@ -23,8 +23,8 @@ import {
 } from '@/lib/scalesClassUtils';
 import { fetchVolunteersForScaleType } from '@/lib/maintenanceScaleVolunteersApi';
 import { sessionCanAccessScaleType } from '@/lib/scaleAccess';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
-import { getStoredUserPhone } from '@/lib/userSession';
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp';
 import * as Linking from 'expo-linking';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -48,6 +48,8 @@ export function ScalesClassPanel() {
   const [vehicleLookupLoading, setVehicleLookupLoading] = useState(false);
   const [vehicleLookupError, setVehicleLookupError] = useState<string | null>(null);
   const [vehicleLookupResult, setVehicleLookupResult] = useState<VehicleLookupResult | null>(null);
+  const [sessionProfileId, setSessionProfileId] = useState<string | null>(null);
+  const [sessionProfileName, setSessionProfileName] = useState<string | null>(null);
 
   const selectedScaleType = useMemo(
     () => scaleTypes.find((entry) => entry.code === selectedScaleCode) ?? null,
@@ -131,10 +133,15 @@ export function ScalesClassPanel() {
     setError(null);
 
     try {
-      const phone = await getStoredUserPhone();
-      const sessionProfile = phone ? await loadEffectiveSessionProfile(phone) : null;
-      const profileId = sessionProfile?.id?.trim() ?? null;
-      const profileFullName = sessionProfile?.full_name ?? null;
+      const sessionProfile = await loadEffectiveSessionProfile();
+      const profileId =
+        (await resolveEffectiveProfileId())?.trim()
+        ?? sessionProfile?.id?.trim()
+        ?? null;
+      const profileFullName = sessionProfile?.full_name?.trim() || null;
+
+      setSessionProfileId(profileId);
+      setSessionProfileName(profileFullName);
 
       if (profileId) {
         const cardAccess = await loadDashboardCardViewAccess(profileId);
@@ -341,6 +348,8 @@ export function ScalesClassPanel() {
           />
         }
         onBackFromParking={handleBackFromParking}
+        pttSenderProfileId={sessionProfileId}
+        pttSenderName={sessionProfileName}
       />
     </View>
   );

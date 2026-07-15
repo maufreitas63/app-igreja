@@ -10,6 +10,7 @@ import type {
   ScalesClassVolunteerEntry,
   ScalesClassView,
 } from '@/lib/scalesClassTypes';
+import { PttWalkieTalkieButton } from '@/components/PttWalkieTalkieButton';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import {
@@ -21,6 +22,8 @@ import {
   Text,
   TouchableOpacity,
   View,
+  type StyleProp,
+  type ViewStyle,
 } from 'react-native';
 
 const SCALES_CLASS_SURFACE = '#FFFFFF';
@@ -49,6 +52,10 @@ export type ScalesClassProps = {
   onOpenWhatsapp?: (phone: string | null) => void;
   parkingPanel?: React.ReactNode;
   onBackFromParking?: () => void;
+  /** Remetente do Walkie-Talkie (escala de estacionamento). */
+  pttSenderProfileId?: string | null;
+  pttSenderName?: string | null;
+  pttButtonStyle?: StyleProp<ViewStyle>;
 };
 
 /** Visualização pura de Escalas — extraída de dashboard.card.vigilance_scales. */
@@ -75,6 +82,9 @@ export function ScalesClass({
   onOpenWhatsapp,
   parkingPanel,
   onBackFromParking,
+  pttSenderProfileId = null,
+  pttSenderName = null,
+  pttButtonStyle,
 }: ScalesClassProps) {
   if (view === 'parking') {
     return (
@@ -95,16 +105,24 @@ export function ScalesClass({
 
         {isParking ? (
           <View style={styles.parkingPrompt}>
-            <TouchableOpacity
-              style={styles.identifyVehicleButton}
-              onPress={onOpenParking}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-              accessibilityLabel="Identificar veículo pela placa"
-            >
-              <FontAwesome name="car" size={18} color={SCALES_CLASS_ICON_COLOR} />
-              <Text style={styles.identifyVehicleButtonText}>Identificar veículo</Text>
-            </TouchableOpacity>
+            <View style={styles.parkingActionsRow}>
+              <TouchableOpacity
+                style={[styles.identifyVehicleButton, styles.parkingActionHalf]}
+                onPress={onOpenParking}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Identificar veículo pela placa"
+              >
+                <FontAwesome name="car" size={18} color={SCALES_CLASS_ICON_COLOR} />
+                <Text style={styles.identifyVehicleButtonText}>Identificar veículo</Text>
+              </TouchableOpacity>
+              <PttWalkieTalkieButton
+                style={[styles.parkingActionHalf, pttButtonStyle]}
+                senderProfileId={pttSenderProfileId}
+                senderName={pttSenderName}
+                setor="Estacionamento"
+              />
+            </View>
           </View>
         ) : null}
 
@@ -418,24 +436,34 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     paddingVertical: 4,
   },
-  identifyVehicleButton: {
+  parkingActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 10,
     width: '100%',
-    minHeight: 48,
+  },
+  parkingActionHalf: {
+    flex: 1,
+    minWidth: 0,
+  },
+  identifyVehicleButton: {
+    minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     borderRadius: 12,
-    backgroundColor: SCALES_CLASS_SURFACE,
+    backgroundColor: '#FBBF24',
     borderWidth: 1,
     borderColor: '#3A96DD',
   },
   identifyVehicleButtonText: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 15,
-    fontWeight: '700',
+    color: '#020617',
+    fontSize: 14,
+    fontWeight: '800',
+    flexShrink: 1,
   },
   tableBox: {
     flex: 1,

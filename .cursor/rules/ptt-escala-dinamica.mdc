@@ -9,9 +9,10 @@ Ao implementar ou alterar o PTT (Push-to-Talk / Walkie-Talkie), seguir este spec
 
 ## UI — Acolhimento Estacionamento
 
-- Host: `app/(tabs)/dashboard.tsx` (painel `scale_roster` + `parking_vehicle_v2`).
+- Hosts com «Identificar veículo» (ambos precisam do Walkie ao lado):
+  - `app/(tabs)/dashboard.tsx` (`scale_roster`)
+  - `components/ScalesClass.tsx` via `ScalesClassPanel` (`/escalas` — menu Escalas; é o caminho mais comum no PWA)
 - Componente de vehicle: `components/ParkingVehicleIdentifyPanel.tsx`.
-- Adicionar botão **Walkie-Talkie ao lado** do botão **"Identificar Veículo"** (roster ~`handleOpenParkingFromRoster` / área do Identificar Veículo).
 - Escala de origem (heurística existente `isParkingWelcomeScale`):
   - código `acolhimento_estacionamento` / nome com acolhimento+estacionamento
   - ou `vigilancia_estacionamento`
