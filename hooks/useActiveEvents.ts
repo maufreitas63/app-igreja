@@ -85,6 +85,12 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<Error | null>(null);
   const eventsSnapshotRef = useRef('');
+  const previousCountsByEventIdRef = useRef(
+    new Map<
+      string,
+      Pick<ActiveEventListItem, 'registeredCount' | 'remainingCapacity' | 'registrationCountError'>
+    >()
+  );
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
   const getRegisteredCount = useCallback(async (eventId: string) => {
@@ -217,6 +223,7 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
         }
 
         if (!data?.length) {
+          previousCountsByEventIdRef.current.clear();
           commitEvents([]);
           return;
         }
@@ -226,17 +233,29 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
           .filter((event) => isEventVisibleInEventPanel(event, isSessionMember));
 
         if (!visibleEvents.length) {
+          previousCountsByEventIdRef.current.clear();
           commitEvents([]);
           return;
         }
 
-        // Pinta a lista cedo; contagens vêm em seguida (inbox não depende delas)
-        const eventsWithoutCounts: ActiveEventListItem[] = visibleEvents.map((event) => ({
-          ...event,
-          registeredCount: 0,
-          remainingCapacity:
-            typeof event.max_capacity === 'number' ? event.max_capacity : null,
-        }));
+        // Pinta a lista cedo; no polling, mantém a última contagem para não
+        // parecer um loop (zera → reconta) no cup “(vagas) inscritos/limite”.
+        const eventsWithoutCounts: ActiveEventListItem[] = visibleEvents.map((event) => {
+          const previous = previousCountsByEventIdRef.current.get(event.id);
+          const maxCapacity =
+            typeof event.max_capacity === 'number' ? event.max_capacity : null;
+          const registeredCount = previous?.registeredCount ?? 0;
+
+          return {
+            ...event,
+            registeredCount,
+            remainingCapacity:
+              maxCapacity === null
+                ? null
+                : Math.max(maxCapacity - registeredCount, 0),
+            registrationCountError: previous?.registrationCountError,
+          };
+        });
         commitEvents(eventsWithoutCounts);
         if (!silent) {
           setLoading(false);
@@ -266,6 +285,16 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
           })
         );
 
+        previousCountsByEventIdRef.current = new Map(
+          eventsWithCounts.map((event) => [
+            event.id,
+            {
+              registeredCount: event.registeredCount,
+              remainingCapacity: event.remainingCapacity,
+              registrationCountError: event.registrationCountError,
+            },
+          ])
+        );
         commitEvents(eventsWithCounts);
       } catch (err: unknown) {
         console.error('Erro no hook useActiveEvents:', err);
