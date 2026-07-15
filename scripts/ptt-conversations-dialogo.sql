@@ -187,8 +187,8 @@ begin
     end if;
 
     v_peer := public.ptt_other_participant(v_conv_id, v_sender);
-    if v_peer is null then
-      return jsonb_build_object('success', false, 'message', 'Participante da conversa não encontrado.');
+    if v_peer is null or v_peer = v_sender then
+      return jsonb_build_object('success', false, 'message', 'Participante da conversa inválido.');
     end if;
 
     insert into public.ptt_messages (
@@ -256,10 +256,16 @@ begin
     );
   end if;
 
-  -- Nova chamada: abre 1 conversa por destinatário do Ministério De Acolhimento
+  -- Nova chamada: abre 1 conversa por destinatário (nunca consigo mesmo)
   for v_recipient in
-    select * from public.ptt_list_acolhimento_recepcao_recipients(v_service_date)
+    select r.*
+    from public.ptt_list_acolhimento_recepcao_recipients(v_service_date) r
+    where r.profile_id is distinct from v_sender
   loop
+    if v_recipient.profile_id is null or v_recipient.profile_id = v_sender then
+      continue;
+    end if;
+
     insert into public.ptt_conversations (
       tenant_id, initiator_profile_id, peer_profile_id, status, last_message_at
     ) values (
@@ -303,8 +309,9 @@ begin
     return jsonb_build_object(
       'success', false,
       'message',
-      'Nenhum servo em disponibilidade no Ministério De Acolhimento. '
-        || 'Cadastre em Manutenção → Servos em Disponibilidade.',
+      'Nenhum outro servo em disponibilidade no Ministério De Acolhimento '
+        || '(o remetente não pode receber a própria chamada). '
+        || 'Cadastre outro servo em Manutenção → Servos em Disponibilidade.',
       'service_date', v_service_date
     );
   end if;
