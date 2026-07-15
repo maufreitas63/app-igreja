@@ -6,26 +6,32 @@ import {
   type PttDirectoryPeer,
   type PttDirectoryUser,
 } from '@/lib/pttApi';
+import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
 type Props = {
-  visible: boolean;
-  onClose: () => void;
+  onBack: () => void;
 };
 
-export function PttDirectoryAdminPanel({ visible, onClose }: Props) {
+type Step = 'list' | 'add';
+
+/** Painel minimal: lista OU inclusão — nunca as duas ao mesmo tempo. */
+export function PttDirectoryAdminPanel({ onBack }: Props) {
+  const insets = useSafeAreaInsets();
+  const [step, setStep] = useState<Step>('list');
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<PttDirectoryUser[]>([]);
   const [query, setQuery] = useState('');
@@ -42,15 +48,11 @@ export function PttDirectoryAdminPanel({ visible, onClose }: Props) {
   }, []);
 
   useEffect(() => {
-    if (visible) {
-      void reload();
-      setQuery('');
-      setResults([]);
-    }
-  }, [reload, visible]);
+    void reload();
+  }, [reload]);
 
   useEffect(() => {
-    if (!visible) return;
+    if (step !== 'add') return;
     const q = query.trim();
     if (q.length < 2) {
       setResults([]);
@@ -71,7 +73,7 @@ export function PttDirectoryAdminPanel({ visible, onClose }: Props) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query, visible]);
+  }, [query, step]);
 
   const onAdd = async (profileId: string) => {
     const result = await addPttDirectoryUser(profileId);
@@ -79,9 +81,10 @@ export function PttDirectoryAdminPanel({ visible, onClose }: Props) {
       Toast.show({ type: 'error', text1: 'Walkie', text2: result.message, visibilityTime: 5000 });
       return;
     }
-    Toast.show({ type: 'success', text1: 'Usuário incluído no Walkie' });
+    Toast.show({ type: 'success', text1: 'Incluído' });
     setQuery('');
     setResults([]);
+    setStep('list');
     await reload();
   };
 
@@ -94,184 +97,198 @@ export function PttDirectoryAdminPanel({ visible, onClose }: Props) {
     await reload();
   };
 
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={styles.card}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Usuários Walkie-Talkie</Text>
-            <Pressable onPress={onClose} hitSlop={10}>
-              <FontAwesome name="times" size={18} color="#0F172A" />
-            </Pressable>
-          </View>
-          <Text style={styles.hint}>
-            Quem estiver ativo nesta lista pode conversar entre si pelo Walkie.
-          </Text>
+  const handleHeaderBack = () => {
+    if (step === 'add') {
+      setQuery('');
+      setResults([]);
+      setStep('list');
+      return;
+    }
+    onBack();
+  };
 
+  return (
+    <View style={[styles.panel, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      <View style={styles.headerRow}>
+        <Pressable
+          accessibilityLabel="Voltar"
+          accessibilityRole="button"
+          onPress={handleHeaderBack}
+          style={styles.backButton}
+        >
+          <FontAwesome name="chevron-left" size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+        </Pressable>
+        <Text style={styles.title}>{step === 'add' ? 'Incluir' : 'Usuários Walkie'}</Text>
+        {step === 'list' ? (
+          <Pressable
+            accessibilityLabel="Incluir usuário"
+            accessibilityRole="button"
+            onPress={() => setStep('add')}
+            style={styles.backButton}
+          >
+            <FontAwesome name="plus" size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+          </Pressable>
+        ) : (
+          <View style={styles.headerSpacer} />
+        )}
+      </View>
+
+      {step === 'list' ? (
+        loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={MINIMAL_UI.icon} />
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            {users.length === 0 ? (
+              <Text style={styles.empty}>Nenhum usuário na lista.</Text>
+            ) : (
+              users.map((user) => (
+                <TouchableOpacity
+                  key={user.id}
+                  style={styles.row}
+                  onPress={() => void onToggle(user.profile_id, !user.is_active)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${user.is_active ? 'Desativar' : 'Ativar'} ${user.full_name}`}
+                >
+                  <View style={styles.itemIconWrap}>
+                    <FontAwesome
+                      name={user.is_active ? 'check-circle' : 'circle-o'}
+                      size={MINIMAL_ICON.action}
+                      color={MINIMAL_UI.icon}
+                    />
+                  </View>
+                  <Text style={[styles.rowLabel, !user.is_active && styles.rowLabelMuted]}>
+                    {user.full_name}
+                  </Text>
+                </TouchableOpacity>
+              ))
+            )}
+          </ScrollView>
+        )
+      ) : (
+        <View style={styles.addBody}>
           <TextInput
             style={styles.input}
             value={query}
             onChangeText={setQuery}
-            placeholder="Buscar perfil para incluir…"
-            placeholderTextColor="#94A3B8"
+            placeholder="Nome do perfil"
+            placeholderTextColor={MINIMAL_UI.textMuted}
+            autoFocus
           />
-          {searching ? <ActivityIndicator color="#3A96DD" /> : null}
-          {results.length > 0 ? (
-            <View style={styles.searchBox}>
-              {results.map((row) => (
-                <Pressable
-                  key={row.profile_id}
-                  style={styles.searchRow}
-                  onPress={() => void onAdd(row.profile_id)}
-                >
-                  <Text style={styles.searchName}>{row.full_name}</Text>
-                  <Text style={styles.addLabel}>Incluir</Text>
-                </Pressable>
-              ))}
-            </View>
+          {searching ? (
+            <ActivityIndicator color={MINIMAL_UI.icon} style={styles.searchSpinner} />
           ) : null}
-
-          <Text style={styles.section}>Lista atual</Text>
-          {loading ? (
-            <ActivityIndicator color="#3A96DD" />
-          ) : (
-            <ScrollView style={styles.list}>
-              {users.length === 0 ? (
-                <Text style={styles.empty}>Nenhum usuário cadastrado.</Text>
-              ) : (
-                users.map((user) => (
-                  <View key={user.id} style={styles.userRow}>
-                    <View style={styles.userCopy}>
-                      <Text style={styles.userName}>{user.full_name}</Text>
-                      <Text style={styles.userMeta}>{user.is_active ? 'Ativo' : 'Inativo'}</Text>
-                    </View>
-                    <Pressable
-                      style={[styles.toggleBtn, !user.is_active && styles.toggleBtnOff]}
-                      onPress={() => void onToggle(user.profile_id, !user.is_active)}
-                    >
-                      <Text style={styles.toggleText}>
-                        {user.is_active ? 'Desativar' : 'Ativar'}
-                      </Text>
-                    </Pressable>
-                  </View>
-                ))
-              )}
-            </ScrollView>
-          )}
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            {results.map((row) => (
+              <TouchableOpacity
+                key={row.profile_id}
+                style={styles.row}
+                onPress={() => void onAdd(row.profile_id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Incluir ${row.full_name}`}
+              >
+                <View style={styles.itemIconWrap}>
+                  <FontAwesome name="user-plus" size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+                </View>
+                <Text style={styles.rowLabel}>{row.full_name}</Text>
+                <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.textMuted} />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
-      </View>
-    </Modal>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(2, 6, 23, 0.55)',
-    justifyContent: 'flex-end',
+  panel: {
+    width: '82%',
+    maxWidth: 320,
+    height: '100%',
+    backgroundColor: MINIMAL_UI.background,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    zIndex: 2,
+    flexDirection: 'column',
   },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    padding: 16,
-    gap: 10,
-    maxHeight: '88%',
-  },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 12,
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerSpacer: {
+    width: 26,
   },
   title: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  hint: {
-    fontSize: 13,
-    color: '#475569',
-    lineHeight: 18,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#94A3B8',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#0F172A',
-  },
-  searchBox: {
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E2E8F0',
-  },
-  searchName: {
-    color: '#0F172A',
-    fontWeight: '700',
+    ...MINIMAL_TYPO.screenTitle,
     flex: 1,
-  },
-  addLabel: {
-    color: '#0369A1',
-    fontWeight: '800',
-    fontSize: 13,
-  },
-  section: {
-    marginTop: 4,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  list: {
-    maxHeight: 320,
-  },
-  empty: {
-    color: '#64748B',
-    paddingVertical: 16,
     textAlign: 'center',
   },
-  userRow: {
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scroll: {
+    flex: 1,
+    minHeight: 0,
+  },
+  scrollContent: {
+    paddingBottom: 8,
+  },
+  empty: {
+    ...MINIMAL_TYPO.inboxPreview,
+    paddingVertical: 16,
+  },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
+    minHeight: 56,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: MINIMAL_UI.divider,
   },
-  userCopy: {
+  rowLabel: {
+    ...MINIMAL_TYPO.menuItem,
+    fontWeight: '600',
     flex: 1,
-    minWidth: 0,
   },
-  userName: {
-    color: '#0F172A',
-    fontWeight: '700',
+  rowLabelMuted: {
+    color: MINIMAL_UI.textMuted,
   },
-  userMeta: {
-    color: '#64748B',
-    fontSize: 12,
-    marginTop: 2,
+  itemIconWrap: {
+    width: 28,
+    alignItems: 'center',
   },
-  toggleBtn: {
-    backgroundColor: '#0F172A',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+  addBody: {
+    flex: 1,
+    minHeight: 0,
+    gap: 8,
   },
-  toggleBtnOff: {
-    backgroundColor: '#3A96DD',
+  input: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: MINIMAL_UI.divider,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    color: MINIMAL_UI.text,
+    fontSize: 15,
   },
-  toggleText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 12,
+  searchSpinner: {
+    marginVertical: 8,
   },
 });

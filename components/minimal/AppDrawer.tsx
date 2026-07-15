@@ -18,9 +18,12 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PttDirectoryAdminPanel } from '@/components/PttDirectoryAdminPanel';
 import { PttWalkieSettingsPanel } from '@/components/PttWalkieSettingsPanel';
 import { MinimalExitBar } from './MinimalExitBar';
 import { AppDrawerSettings } from './AppDrawerSettings';
+
+type SettingsPanel = 'root' | 'walkie' | 'walkie-users';
 
 export function AppDrawer() {
   const { isOpen, closeDrawer } = useAppDrawer();
@@ -28,13 +31,14 @@ export function AppDrawer() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [walkieOpen, setWalkieOpen] = useState(false);
+  const [settingsPanel, setSettingsPanel] = useState<SettingsPanel>('root');
 
   useEffect(() => {
     if (isOpen) {
       void refresh();
     } else {
       setSettingsOpen(false);
+      setSettingsPanel('root');
     }
   }, [isOpen, refresh]);
 
@@ -59,28 +63,20 @@ export function AppDrawer() {
 
   const handleOpenMediaAuthorization = () => {
     const params = withMinimalPresentation();
-
     traceClick('drawer', 'settings-media-authorization-press', { params });
-
     router.push({
       pathname: '/autorizacao-midia',
       params,
     });
-
-    traceClick('drawer', 'settings-media-authorization-router-push-called', {
-      pathname: '/autorizacao-midia',
-      params,
-    });
-
     setSettingsOpen(false);
+    setSettingsPanel('root');
     closeDrawer();
-
-    traceClick('drawer', 'settings-media-authorization-drawer-closed');
   };
 
   const handleOpenIgrejasInstances = () => {
     traceClick('drawer', 'settings-igrejas-instances-press');
     setSettingsOpen(false);
+    setSettingsPanel('root');
     closeDrawer();
     void navigateDrawerMenuItem(router, 'menu_igrejas');
   };
@@ -88,6 +84,7 @@ export function AppDrawer() {
   const handleOpenRoomSettings = () => {
     traceClick('drawer', 'settings-room-config-press');
     setSettingsOpen(false);
+    setSettingsPanel('root');
     closeDrawer();
     router.push({
       pathname: '/configuracao-salas',
@@ -98,112 +95,130 @@ export function AppDrawer() {
   const handleOpenAvisosSettings = () => {
     traceClick('drawer', 'settings-avisos-press');
     setSettingsOpen(false);
+    setSettingsPanel('root');
     closeDrawer();
     void navigateDrawerMenuItem(router, 'event_orchestration');
   };
 
-  const handleOpenWalkieTalkie = () => {
-    traceClick('drawer', 'settings-walkie-press');
-    setSettingsOpen(false);
-    setWalkieOpen(true);
-    closeDrawer();
-  };
-
   const handleBackdropPress = () => {
-    traceClick('drawer', 'backdrop-press', { settingsOpen });
+    traceClick('drawer', 'backdrop-press', { settingsOpen, settingsPanel });
+    if (settingsOpen && settingsPanel !== 'root') {
+      setSettingsPanel('root');
+      return;
+    }
     if (settingsOpen) {
       setSettingsOpen(false);
       return;
     }
-
     closeDrawer();
   };
 
-  // Alinha ao corpo da tela (abaixo do chrome), mesma margem de «Proximos Eventos».
+  const handleSettingsRequestClose = () => {
+    if (settingsPanel !== 'root') {
+      setSettingsPanel('root');
+      return;
+    }
+    setSettingsOpen(false);
+  };
+
   const panelTopOffset = insets.top + MINIMAL_TOP_CHROME_MIN_HEIGHT;
 
-  return (
-    <>
-      <Modal
-        animationType="slide"
-        transparent
-        visible={isOpen}
-        onRequestClose={settingsOpen ? () => setSettingsOpen(false) : closeDrawer}
-      >
-        <View style={styles.overlay}>
-          <View style={[styles.chromeGap, { height: panelTopOffset }]} pointerEvents="none" />
-          <View style={styles.sheet}>
-            {settingsOpen ? (
-              <AppDrawerSettings
-                onClose={() => {
-                  traceClick('drawer', 'settings-close-press');
-                  setSettingsOpen(false);
-                }}
-                onOpenMediaAuthorization={handleOpenMediaAuthorization}
-                onOpenWalkieTalkie={handleOpenWalkieTalkie}
-                showRoomSettings={canManageRooms}
-                onOpenRoomSettings={handleOpenRoomSettings}
-                showAvisosSettings={canManageAvisos}
-                onOpenAvisosSettings={handleOpenAvisosSettings}
-                showIgrejasInstances={isSuperAdmin}
-                onOpenIgrejasInstances={handleOpenIgrejasInstances}
-              />
-            ) : (
-              <View style={styles.panel}>
-                <View style={styles.headerRow}>
-                  <Text style={styles.title}>Menu</Text>
-                  <Pressable
-                    accessibilityLabel="Abrir configurações"
-                    accessibilityRole="button"
-                    onPress={() => {
-                      traceClick('drawer', 'settings-open-press');
-                      setSettingsOpen(true);
-                    }}
-                    style={styles.settingsButton}
-                  >
-                    <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
-                  </Pressable>
-                </View>
-                {loading ? (
-                  <View style={styles.loaderWrap}>
-                    <ActivityIndicator color={MINIMAL_UI.icon} />
-                  </View>
-                ) : (
-                  <ScrollView
-                    style={styles.scroll}
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator
-                    keyboardShouldPersistTaps="handled"
-                  >
-                    {visibleItems.map((item) => (
-                      <TouchableOpacity
-                        key={item.moduleKey}
-                        style={[styles.item, item.pendingRoute && styles.itemPendingRoute]}
-                        onPress={() => handlePress(item)}
-                        disabled={item.pendingRoute}
-                        accessibilityState={{ disabled: item.pendingRoute }}
-                      >
-                        <Text style={[styles.itemLabel, item.pendingRoute && styles.itemLabelPendingRoute]}>
-                          {item.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
-                <MinimalExitBar variant="drawer" />
-              </View>
-            )}
-            <Pressable style={styles.backdrop} onPress={handleBackdropPress} accessibilityLabel="Fechar menu" />
-          </View>
-        </View>
-      </Modal>
-
-      <PttWalkieSettingsPanel
-        visible={walkieOpen}
-        canManageDirectory={isSuperAdmin}
-        onClose={() => setWalkieOpen(false)}
+  const renderSettingsBranch = () => {
+    if (settingsPanel === 'walkie') {
+      return <PttWalkieSettingsPanel onBack={() => setSettingsPanel('root')} />;
+    }
+    if (settingsPanel === 'walkie-users') {
+      return <PttDirectoryAdminPanel onBack={() => setSettingsPanel('root')} />;
+    }
+    return (
+      <AppDrawerSettings
+        onClose={() => {
+          traceClick('drawer', 'settings-close-press');
+          setSettingsOpen(false);
+          setSettingsPanel('root');
+        }}
+        onOpenMediaAuthorization={handleOpenMediaAuthorization}
+        onOpenWalkieTalkie={() => {
+          traceClick('drawer', 'settings-walkie-press');
+          setSettingsPanel('walkie');
+        }}
+        showWalkieUsers={isSuperAdmin}
+        onOpenWalkieUsers={() => {
+          traceClick('drawer', 'settings-walkie-users-press');
+          setSettingsPanel('walkie-users');
+        }}
+        showRoomSettings={canManageRooms}
+        onOpenRoomSettings={handleOpenRoomSettings}
+        showAvisosSettings={canManageAvisos}
+        onOpenAvisosSettings={handleOpenAvisosSettings}
+        showIgrejasInstances={isSuperAdmin}
+        onOpenIgrejasInstances={handleOpenIgrejasInstances}
       />
-    </>
+    );
+  };
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent
+      visible={isOpen}
+      onRequestClose={settingsOpen ? handleSettingsRequestClose : closeDrawer}
+    >
+      <View style={styles.overlay}>
+        <View style={[styles.chromeGap, { height: panelTopOffset }]} pointerEvents="none" />
+        <View style={styles.sheet}>
+          {settingsOpen ? (
+            renderSettingsBranch()
+          ) : (
+            <View style={styles.panel}>
+              <View style={styles.headerRow}>
+                <Text style={styles.title}>Menu</Text>
+                <Pressable
+                  accessibilityLabel="Abrir configurações"
+                  accessibilityRole="button"
+                  onPress={() => {
+                    traceClick('drawer', 'settings-open-press');
+                    setSettingsPanel('root');
+                    setSettingsOpen(true);
+                  }}
+                  style={styles.settingsButton}
+                >
+                  <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
+                </Pressable>
+              </View>
+              {loading ? (
+                <View style={styles.loaderWrap}>
+                  <ActivityIndicator color={MINIMAL_UI.icon} />
+                </View>
+              ) : (
+                <ScrollView
+                  style={styles.scroll}
+                  contentContainerStyle={styles.scrollContent}
+                  showsVerticalScrollIndicator
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {visibleItems.map((item) => (
+                    <TouchableOpacity
+                      key={item.moduleKey}
+                      style={[styles.item, item.pendingRoute && styles.itemPendingRoute]}
+                      onPress={() => handlePress(item)}
+                      disabled={item.pendingRoute}
+                      accessibilityState={{ disabled: item.pendingRoute }}
+                    >
+                      <Text style={[styles.itemLabel, item.pendingRoute && styles.itemLabelPendingRoute]}>
+                        {item.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+              <MinimalExitBar variant="drawer" />
+            </View>
+          )}
+          <Pressable style={styles.backdrop} onPress={handleBackdropPress} accessibilityLabel="Fechar menu" />
+        </View>
+      </View>
+    </Modal>
   );
 }
 

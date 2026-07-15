@@ -1,42 +1,44 @@
-import { PttDirectoryAdminPanel } from '@/components/PttDirectoryAdminPanel';
 import { PttWalkieTalkieButton } from '@/components/PttWalkieTalkieButton';
-import { canUsePttWalkie } from '@/lib/pttApi';
+import { canUsePttWalkie, listPttDirectoryPeers, type PttDirectoryPeer } from '@/lib/pttApi';
+import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 type Props = {
-  visible: boolean;
-  onClose: () => void;
-  canManageDirectory?: boolean;
+  onBack: () => void;
 };
 
-export function PttWalkieSettingsPanel({
-  visible,
-  onClose,
-  canManageDirectory = false,
-}: Props) {
+type Step = 'home' | 'pick' | 'talk';
+
+/**
+ * Painel minimal no drawer: uma etapa por vez.
+ * home → escolher contato → gravar/enviar.
+ */
+export function PttWalkieSettingsPanel({ onBack }: Props) {
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [allowed, setAllowed] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [profileName, setProfileName] = useState('Voluntário');
-  const [adminOpen, setAdminOpen] = useState(false);
+  const [step, setStep] = useState<Step>('home');
+  const [peers, setPeers] = useState<PttDirectoryPeer[]>([]);
+  const [peer, setPeer] = useState<PttDirectoryPeer | null>(null);
+  const [loadingPeers, setLoadingPeers] = useState(false);
 
   useEffect(() => {
-    if (!visible) {
-      setAdminOpen(false);
-      return;
-    }
-
     let cancelled = false;
     const boot = async () => {
       setLoading(true);
@@ -62,108 +64,220 @@ export function PttWalkieSettingsPanel({
     return () => {
       cancelled = true;
     };
-  }, [visible]);
+  }, []);
+
+  const openPick = useCallback(async () => {
+    if (!allowed) return;
+    setLoadingPeers(true);
+    setStep('pick');
+    try {
+      const list = await listPttDirectoryPeers();
+      const mine = profileId?.trim();
+      const filtered = list.filter((p) => p.profile_id && p.profile_id !== mine);
+      setPeers(filtered);
+      if (filtered.length === 0) {
+        Toast.show({
+          type: 'info',
+          text1: 'Walkie-Talkie',
+          text2: 'Nenhum contato disponível na lista.',
+          visibilityTime: 4000,
+        });
+        setStep('home');
+      }
+    } catch {
+      Toast.show({
+        type: 'error',
+        text1: 'Walkie-Talkie',
+        text2: 'Não foi possível carregar os contatos.',
+      });
+      setStep('home');
+    } finally {
+      setLoadingPeers(false);
+    }
+  }, [allowed, profileId]);
+
+  const title =
+    step === 'pick' ? 'Contato' : step === 'talk' ? peer?.full_name || 'Walkie-Talkie' : 'Walkie-Talkie';
+
+  const handleHeaderBack = () => {
+    if (step === 'talk') {
+      setPeer(null);
+      setStep('home');
+      return;
+    }
+    if (step === 'pick') {
+      setStep('home');
+      return;
+    }
+    onBack();
+  };
 
   return (
-    <>
-      <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-        <View style={styles.backdrop}>
-          <View style={styles.card}>
-            <View style={styles.header}>
-              <FontAwesome name="microphone" size={18} color="#0F172A" />
-              <Text style={styles.title}>Walkie-Talkie</Text>
-              <Pressable onPress={onClose} hitSlop={10}>
-                <FontAwesome name="times" size={18} color="#0F172A" />
-              </Pressable>
-            </View>
+    <View style={[styles.panel, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      <View style={styles.headerRow}>
+        <Pressable
+          accessibilityLabel="Voltar"
+          accessibilityRole="button"
+          onPress={handleHeaderBack}
+          style={styles.backButton}
+        >
+          <FontAwesome name="chevron-left" size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+        </Pressable>
+        <Text style={styles.title} numberOfLines={1}>
+          {title}
+        </Text>
+        <View style={styles.headerSpacer} />
+      </View>
 
-            {loading ? (
-              <ActivityIndicator color="#3A96DD" />
-            ) : !allowed ? (
-              <Text style={styles.warn}>
-                Seu perfil ainda não está na lista de usuários do Walkie-Talkie.
-                {canManageDirectory
-                  ? ' Use «Usuários Walkie» abaixo para incluir os participantes.'
-                  : ' Peça a um super admin para incluir você na lista.'}
-              </Text>
-            ) : (
-              <>
-                <Text style={styles.hint}>
-                  Toque em Gravar, escolha com quem falar e envie o áudio com texto automático.
-                </Text>
-                <PttWalkieTalkieButton
-                  fullWidth
-                  senderProfileId={profileId}
-                  senderName={profileName}
-                  setor="Walkie-Talkie"
-                />
-              </>
-            )}
-
-            {canManageDirectory ? (
-              <Pressable style={styles.manageBtn} onPress={() => setAdminOpen(true)}>
-                <FontAwesome name="users" size={14} color="#FFFFFF" />
-                <Text style={styles.manageText}>Usuários Walkie</Text>
-              </Pressable>
-            ) : null}
-          </View>
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator color={MINIMAL_UI.icon} />
         </View>
-      </Modal>
-
-      <PttDirectoryAdminPanel visible={adminOpen} onClose={() => setAdminOpen(false)} />
-    </>
+      ) : step === 'home' ? (
+        <View style={styles.body}>
+          {!allowed ? (
+            <Text style={styles.message}>Você ainda não está na lista do Walkie.</Text>
+          ) : (
+            <TouchableOpacity
+              style={styles.primaryRow}
+              onPress={() => void openPick()}
+              accessibilityRole="button"
+              accessibilityLabel="Iniciar Walkie-Talkie"
+            >
+              <View style={styles.itemIconWrap}>
+                <FontAwesome name="microphone" size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+              </View>
+              <Text style={styles.primaryLabel}>Iniciar</Text>
+              <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : step === 'pick' ? (
+        loadingPeers ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={MINIMAL_UI.icon} />
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            {peers.map((item) => (
+              <TouchableOpacity
+                key={item.profile_id}
+                style={styles.row}
+                onPress={() => {
+                  setPeer(item);
+                  setStep('talk');
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Falar com ${item.full_name}`}
+              >
+                <View style={styles.itemIconWrap}>
+                  <FontAwesome name="user" size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+                </View>
+                <Text style={styles.rowLabel}>{item.full_name}</Text>
+                <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.textMuted} />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )
+      ) : (
+        <View style={styles.body}>
+          <PttWalkieTalkieButton
+            fullWidth
+            lockedPeer={peer}
+            senderProfileId={profileId}
+            senderName={profileName}
+            setor="Walkie-Talkie"
+          />
+        </View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(2, 6, 23, 0.55)',
-    justifyContent: 'flex-end',
+  panel: {
+    width: '82%',
+    maxWidth: 320,
+    height: '100%',
+    backgroundColor: MINIMAL_UI.background,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    zIndex: 2,
+    flexDirection: 'column',
   },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    padding: 16,
-    gap: 14,
-  },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+    marginBottom: 12,
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerSpacer: {
+    width: 26,
   },
   title: {
+    ...MINIMAL_TYPO.screenTitle,
     flex: 1,
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#0F172A',
+    textAlign: 'center',
   },
-  hint: {
-    color: '#475569',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  warn: {
-    color: '#9A3412',
-    fontSize: 13,
-    lineHeight: 18,
-    backgroundColor: '#FFF7ED',
-    padding: 12,
-    borderRadius: 10,
-  },
-  manageBtn: {
-    marginTop: 4,
-    minHeight: 44,
-    borderRadius: 10,
-    backgroundColor: '#0F172A',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  body: {
+    flex: 1,
+    minHeight: 0,
+    justifyContent: 'flex-start',
     gap: 8,
   },
-  manageText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  message: {
+    ...MINIMAL_TYPO.inboxPreview,
+    paddingVertical: 12,
+  },
+  scroll: {
+    flex: 1,
+    minHeight: 0,
+  },
+  scrollContent: {
+    paddingBottom: 8,
+  },
+  primaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 56,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  primaryLabel: {
+    ...MINIMAL_TYPO.menuItem,
+    fontWeight: '600',
+    flex: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 56,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  rowLabel: {
+    ...MINIMAL_TYPO.menuItem,
+    fontWeight: '600',
+    flex: 1,
+  },
+  itemIconWrap: {
+    width: 28,
+    alignItems: 'center',
   },
 });

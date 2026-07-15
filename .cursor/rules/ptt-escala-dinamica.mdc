@@ -15,12 +15,13 @@ Ao implementar ou alterar o PTT, seguir este spec.
 - Painel de diálogo permanece aberto até **Encerrar conversa**.
 - Não usar mais roteamento Estacionamento → Ministério De Acolhimento.
 
-## UI
+## UI (minimal)
 
-- Entrada: menu **Configurações** (engrenagem do drawer) → **Walkie-Talkie**.
-- Super admin: botão **Usuários Walkie** no painel para incluir/ativar/desativar perfis.
-- **Não** colocar o botão ao lado de «Identificar veículo» (dashboard / Escalas).
-- Inbox/diálogo global: `components/PttInboxListener.tsx` no `AppShell`.
+- Painéis no **mesmo drawer** de Configurações (`MINIMAL_UI`), uma etapa por tela.
+- Configurações → **Walkie-Talkie** → Iniciar → escolher contato → Gravar/Enviar.
+- Configurações → **Usuários Walkie** (super admin): lista; `+` abre inclusão (telas separadas).
+- **Não** colocar o botão ao lado de «Identificar veículo».
+- Inbox/diálogo: `components/PttInboxListener.tsx` no `AppShell`.
 
 ## SQL (obrigatório no Supabase)
 
