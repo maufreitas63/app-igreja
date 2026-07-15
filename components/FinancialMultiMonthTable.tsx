@@ -3,7 +3,7 @@ import { formatBulletinAmount } from '@/lib/financialBulletin';
 import { compareFinancialMonthKeys, formatFinancialMonthLabel } from '@/lib/financialMonth';
 import type { TwelveMonthMatrix, TwelveMonthMatrixRow } from '@/lib/financialTwelveMonthMatrix';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Modal,
   NativeScrollEvent,
@@ -165,12 +165,28 @@ export function FinancialMultiMonthTable({
   const [selectedRow, setSelectedRow] = useState<TwelveMonthMatrixRow | null>(null);
   const [rowHeights, setRowHeights] = useState<Record<string, number>>({});
   const labelsScrollRef = useRef<ScrollView>(null);
+  const valuesHorizontalScrollRef = useRef<ScrollView>(null);
   const valuesTableWidth = matrix.columns.length * VALUE_COLUMN_WIDTH;
 
   const handleBodyScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     labelsScrollRef.current?.scrollTo({ y: offsetY, animated: false });
   }, []);
+
+  /** Mantém ordem cronológica (antigo → recente); ao abrir, mostra o mês mais recente. */
+  const scrollToLatestMonth = useCallback(() => {
+    valuesHorizontalScrollRef.current?.scrollToEnd({ animated: false });
+  }, []);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(scrollToLatestMonth);
+    const timeout = setTimeout(scrollToLatestMonth, 50);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timeout);
+    };
+  }, [matrix.columns, valuesTableWidth, scrollToLatestMonth]);
 
   const syncRowHeight = useCallback((rowKey: string, height: number) => {
     const nextHeight = Math.max(ROW_MIN_HEIGHT, Math.ceil(height));
@@ -251,11 +267,14 @@ export function FinancialMultiMonthTable({
           </View>
 
           <ScrollView
+            ref={valuesHorizontalScrollRef}
             horizontal
             bounces={false}
             nestedScrollEnabled
             showsHorizontalScrollIndicator
             style={styles.valuesPane}
+            onContentSizeChange={scrollToLatestMonth}
+            onLayout={scrollToLatestMonth}
           >
             <View style={[styles.valuesTable, { width: valuesTableWidth }]}>
               <View style={styles.valuesHeader}>
