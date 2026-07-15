@@ -30,7 +30,6 @@ type GroupedRoomConfig = {
   checkedCount: number;
   totalCount: number;
   headerStyle: object;
-  dotStyle: object;
 };
 
 type MaintenanceSalaServidorCardProps = {
@@ -149,7 +148,6 @@ export const MaintenanceSalaServidorCard = ({
       checkedCount: kidsCheckedCount,
       totalCount: kidsRegistrations.length,
       headerStyle: styles.groupedAudienceHeaderKids,
-      dotStyle: styles.groupedAudienceDotKids,
     });
   }
 
@@ -160,7 +158,6 @@ export const MaintenanceSalaServidorCard = ({
       checkedCount: teensCheckedCount,
       totalCount: safeTeensRegistrations.length,
       headerStyle: styles.groupedAudienceHeaderTeens,
-      dotStyle: styles.groupedAudienceDotTeens,
     });
   }
 
@@ -273,12 +270,10 @@ export const MaintenanceSalaServidorCard = ({
                     <View
                       style={[
                         styles.eventHeroRoomBadge,
-                        styles.eventHeroRoomBadgeKids,
-                        minimal && styles.eventHeroRoomBadgeMinimal,
-                        minimal && styles.eventHeroRoomBadgeKidsMinimal,
+                        styles.eventHeroRoomBadgeUnified,
+                        minimal && styles.eventHeroRoomBadgeUnifiedMinimal,
                       ]}
                     >
-                      <View style={[styles.eventRoomDot, styles.eventRoomDotKids]} />
                       <Text
                         style={[
                           styles.eventHeroRoomText,
@@ -293,12 +288,10 @@ export const MaintenanceSalaServidorCard = ({
                     <View
                       style={[
                         styles.eventHeroRoomBadge,
-                        styles.eventHeroRoomBadgeTeens,
-                        minimal && styles.eventHeroRoomBadgeMinimal,
-                        minimal && styles.eventHeroRoomBadgeTeensMinimal,
+                        styles.eventHeroRoomBadgeUnified,
+                        minimal && styles.eventHeroRoomBadgeUnifiedMinimal,
                       ]}
                     >
-                      <View style={[styles.eventRoomDot, styles.eventRoomDotTeens]} />
                       <Text
                         style={[
                           styles.eventHeroRoomText,
@@ -393,13 +386,6 @@ export const MaintenanceSalaServidorCard = ({
                   activeOpacity={0.85}
                 >
                   <View style={styles.groupedAudienceHeaderLabel}>
-                    <View
-                      style={[
-                        styles.groupedAudienceDot,
-                        room.dotStyle,
-                        !isSelected && styles.groupedAudienceDotInactive,
-                      ]}
-                    />
                     <Text
                       style={[
                         styles.groupedAudienceHeaderText,
@@ -703,34 +689,20 @@ const styles = StyleSheet.create({
   eventHeroRoomBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
+    gap: 0,
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
-  eventHeroRoomBadgeKids: {
-    backgroundColor: 'rgba(250, 204, 21, 0.12)',
-    borderColor: 'rgba(250, 204, 21, 0.35)',
-  },
-  eventHeroRoomBadgeTeens: {
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
-    borderColor: 'rgba(239, 68, 68, 0.35)',
-  },
-  eventRoomDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-  },
-  eventRoomDotKids: {
-    backgroundColor: '#FACC15',
-  },
-  eventRoomDotTeens: {
-    backgroundColor: '#EF4444',
+  eventHeroRoomBadgeUnified: {
+    backgroundColor: 'rgba(30, 64, 175, 0.10)',
+    borderColor: 'rgba(30, 64, 175, 0.35)',
   },
   eventHeroRoomText: {
     color: '#3A96DD',
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '700',
   },
   eventHeroCapacity: {
@@ -894,20 +866,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
     flex: 1,
   },
-  groupedAudienceDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-  },
-  groupedAudienceDotInactive: {
-    opacity: 0.55,
-  },
-  groupedAudienceDotKids: {
-    backgroundColor: '#FACC15',
-  },
-  groupedAudienceDotTeens: {
-    backgroundColor: '#EF4444',
-  },
   groupedAudienceHeaderText: {
     color: '#3A96DD',
     fontSize: 13,
@@ -1047,20 +1005,12 @@ const styles = StyleSheet.create({
   eventHeroMetaMinimal: {
     color: MINIMAL_UI.textMuted,
   },
-  eventHeroRoomBadgeMinimal: {
-    backgroundColor: MINIMAL_UI.rowHover,
-    borderColor: MINIMAL_UI.border,
-  },
-  eventHeroRoomBadgeKidsMinimal: {
-    backgroundColor: 'rgba(250, 204, 21, 0.12)',
-    borderColor: 'rgba(250, 204, 21, 0.35)',
-  },
-  eventHeroRoomBadgeTeensMinimal: {
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
-    borderColor: 'rgba(239, 68, 68, 0.35)',
+  eventHeroRoomBadgeUnifiedMinimal: {
+    backgroundColor: 'rgba(30, 64, 175, 0.10)',
+    borderColor: 'rgba(30, 64, 175, 0.35)',
   },
   eventHeroRoomTextMinimal: {
-    color: MINIMAL_UI.text,
+    color: MINIMAL_UI.blueDark,
   },
   capacityCupMinimal: {
     borderColor: MINIMAL_UI.border,

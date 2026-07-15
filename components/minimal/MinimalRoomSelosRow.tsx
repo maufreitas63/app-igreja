@@ -8,6 +8,12 @@ type Props = {
   showTeens?: boolean;
 };
 
+/** Mesmo padrão visual dos chips de sala do editor (ex.: Curso de Batismo). */
+const ROOM_CHIP_STYLE = {
+  backgroundColor: 'rgba(30, 64, 175, 0.10)',
+  borderColor: 'rgba(30, 64, 175, 0.35)',
+} as const;
+
 /** Selos de salas (ex.: IBN Infantil / IBN Jovens) no modo minimalista. */
 export function MinimalRoomSelosRow({ showKids = false, showTeens = false }: Props) {
   const { kidsRoomBadgeLabel, teensRoomBadgeLabel } = useRoomDisplayLabels();
@@ -19,16 +25,14 @@ export function MinimalRoomSelosRow({ showKids = false, showTeens = false }: Pro
   return (
     <View style={styles.row}>
       {showKids ? (
-        <View style={[styles.selo, styles.seloKids]}>
-          <View style={[styles.dot, styles.dotKids]} />
+        <View style={styles.selo}>
           <Text style={styles.seloText} numberOfLines={1}>
             {kidsRoomBadgeLabel}
           </Text>
         </View>
       ) : null}
       {showTeens ? (
-        <View style={[styles.selo, styles.seloTeens]}>
-          <View style={[styles.dot, styles.dotTeens]} />
+        <View style={styles.selo}>
           <Text style={styles.seloText} numberOfLines={1}>
             {teensRoomBadgeLabel}
           </Text>
@@ -49,40 +53,26 @@ const styles = StyleSheet.create({
   selo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: MINIMAL_UI.background,
+    justifyContent: 'center',
+    gap: 0,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    backgroundColor: ROOM_CHIP_STYLE.backgroundColor,
+    borderColor: ROOM_CHIP_STYLE.borderColor,
     minWidth: 0,
     flexBasis: '48%',
     maxWidth: '100%',
     flexGrow: 1,
     flexShrink: 1,
   },
-  seloKids: {
-    borderColor: '#FACC15',
-  },
-  seloTeens: {
-    borderColor: '#EF4444',
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-    flexShrink: 0,
-  },
-  dotKids: {
-    backgroundColor: '#FACC15',
-  },
-  dotTeens: {
-    backgroundColor: '#EF4444',
-  },
   seloText: {
-    flex: 1,
-    fontSize: 11,
+    flexShrink: 1,
+    minWidth: 0,
+    fontSize: 13,
     fontWeight: '700',
     color: MINIMAL_UI.blueDark,
+    textAlign: 'center',
   },
 });

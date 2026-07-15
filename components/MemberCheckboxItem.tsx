@@ -31,9 +31,6 @@ export const MemberCheckboxItem = ({
   isLoading = false,
   isRegistered = false,
   registeredEventName = null,
-  registrationStatus,
-  showKidsIndicator = false,
-  showTeensIndicator = false,
   assignedRoomLabel = null,
   assignedRoomIsOverlay = false,
   minimal = false,
@@ -42,10 +39,6 @@ export const MemberCheckboxItem = ({
   const displayName = formatShortName(member.full_name);
   const roomLabel = assignedRoomLabel?.trim() || '';
   const eventLabel = registeredEventName?.trim() || '';
-  const shouldShowStatusDot =
-    (registrationStatus === 'KIDS' && showKidsIndicator) ||
-    (registrationStatus === 'TEENS' && showTeensIndicator);
-
   // Especial vigente + inscrito → só a especial.
   // Só inscrição no evento padrão → só o evento.
   // Sem vínculo → «Sem Inscrições».
@@ -89,14 +82,6 @@ export const MemberCheckboxItem = ({
           <Text style={[styles.name, minimal && styles.nameMinimal]} numberOfLines={1}>
             {displayName}
           </Text>
-          {shouldShowStatusDot ? (
-            <View
-              style={[
-                styles.statusDot,
-                registrationStatus === 'KIDS' ? styles.statusDotKids : styles.statusDotTeens,
-              ]}
-            />
-          ) : null}
         </View>
         <Text
           style={[
@@ -182,18 +167,6 @@ const styles = StyleSheet.create({
   nameMinimal: {
     color: MINIMAL_UI.text,
     fontWeight: '600',
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    flexShrink: 0,
-  },
-  statusDotKids: {
-    backgroundColor: '#FACC15',
-  },
-  statusDotTeens: {
-    backgroundColor: '#EF4444',
   },
   registeredText: {
     color: '#34d399',
