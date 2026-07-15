@@ -19,6 +19,7 @@ export type AppDrawerModuleKey =
   | 'menu_administrativo'
   | 'menu_igrejas'
   | 'menu_redes_sociais'
+  | 'menu_billing'
   | AppDrawerPlaceholderModuleKey
   | 'gestao_financeira'
   | 'Events'
@@ -85,9 +86,14 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'z', label: 'Modo Ghost', moduleKey: 'auditor' },
   {
     letter: 'aa',
+    label: 'Assinaturas',
+    moduleKey: 'menu_billing',
+    dividerBefore: true,
+  },
+  {
+    letter: 'ab',
     label: 'Redes Sociais',
     moduleKey: 'menu_redes_sociais',
-    dividerBefore: true,
   },
 ];
 
@@ -188,6 +194,14 @@ export async function navigateDrawerMenuItem(
   if (moduleKey === 'menu_igrejas') {
     router.push({
       pathname: '/igrejas',
+      params: withMinimalPresentation(),
+    });
+    return;
+  }
+
+  if (moduleKey === 'menu_billing') {
+    router.push({
+      pathname: '/billing',
       params: withMinimalPresentation(),
     });
     return;

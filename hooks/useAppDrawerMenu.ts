@@ -50,7 +50,11 @@ function isDrawerModuleEnabled(
     return true;
   }
 
-  if (moduleKey === 'events_panel' || moduleKey === 'menu_redes_sociais') {
+  if (
+    moduleKey === 'events_panel'
+    || moduleKey === 'menu_redes_sociais'
+    || moduleKey === 'menu_billing'
+  ) {
     return true;
   }
 
@@ -93,6 +97,7 @@ export function useAppDrawerMenu() {
       enabled:
         item.moduleKey === 'events_panel'
         || item.moduleKey === 'menu_redes_sociais'
+        || item.moduleKey === 'menu_billing'
         || isDrawerMenuPlaceholder(item.moduleKey),
     }))
   );
@@ -166,6 +171,7 @@ export function useAppDrawerMenu() {
           enabled:
             item.moduleKey === 'events_panel'
             || item.moduleKey === 'menu_redes_sociais'
+            || item.moduleKey === 'menu_billing'
             || isDrawerMenuPlaceholder(item.moduleKey),
         }))
       );
