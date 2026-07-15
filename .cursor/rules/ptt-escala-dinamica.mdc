@@ -22,8 +22,9 @@ Ao implementar ou alterar o PTT (Push-to-Talk / Walkie-Talkie), seguir este spec
 - Destinatário **dinâmico** via escalas do dia — nunca ID hard-coded.
 - Tabelas: `tipos_escala` (`codigo`/`nome`), `voluntarios_escala`, `escalas_log` (`data_servico`, `voluntario_id`, `tipo_escala_id`).
 - RPCs úteis: `listar_escalas`, `aplicar_ciclo_escala`, `registrar_escala_manual`.
-- Regra inicial: remetente no setor **Estacionamento** → buscar quem está em **Acolhimento Recepção** (`acolhimento_recepcao`) para **a data de serviço atual** (fuso igreja `America/Sao_Paulo`) e entregar **só** a esse(s) profile/socket id.
-- Voluntário ↔ profile: via `cadastrar_voluntario_escala(p_tipo_escala_id, p_profile_id)` / `voluntarios_escala`.
+- Regra: remetente **Estacionamento** → destinatários = servos **ativos em disponibilidade** do tipo **Ministério De Acolhimento** (`ministerioacolhimento` em `voluntarios_escala.is_ativo`), não `escalas_log` do dia / não só `acolhimento_recepcao`.
+- Voluntário ↔ profile: match `voluntarios_escala.nome` ↔ `profiles.full_name` (via `cadastrar_voluntario_escala`).
+- Excluir tipos com “estacionamento” no código/nome.
 
 ## Payload ao acolhedor
 

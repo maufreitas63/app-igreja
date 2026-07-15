@@ -3,9 +3,10 @@
 -- =============================================================================
 -- Execute TODO este arquivo no SQL Editor do Supabase.
 --
--- Roteamento: remetente Estacionamento → destinatários da escala
--- `acolhimento_recepcao` (ou nome com acolhimento+recepção) em data_servico = hoje (America/Sao_Paulo).
--- Perfil do destinatário resolvido por match de nome (voluntarios_escala.nome ↔ profiles.full_name).
+-- Roteamento: remetente Estacionamento → servos em disponibilidade do
+-- Ministério De Acolhimento (`ministerioacolhimento` / voluntarios_escala.is_ativo).
+-- NÃO usa escalas_log do dia nem só acolhimento_recepcao.
+-- Perfil do destinatário: match de nome (voluntarios_escala.nome ↔ profiles.full_name).
 -- =============================================================================
 
 begin;
@@ -119,7 +120,8 @@ as $$
   select lower(trim(regexp_replace(coalesce(p_value, ''), '\s+', ' ', 'g')));
 $$;
 
--- Destinatários do dia na função Acolhimento Recepção
+-- Destinatários = pool "Servos em Disponibilidade" do Ministério De Acolhimento
+-- (p_service_date mantido por compatibilidade; o pool ativo não depende da data).
 create or replace function public.ptt_list_acolhimento_recepcao_recipients(
   p_service_date date default public.ptt_service_date_today()
 )
@@ -137,32 +139,43 @@ as $$
 declare
   v_tenant uuid := public.require_session_tenant_id();
 begin
+  -- parâmetro legado (roteamento atual é por disponibilidade, não por data)
+  perform p_service_date;
+
   return query
   select distinct on (p.id)
     p.id as profile_id,
     ve.nome as volunteer_name,
     te.codigo as tipo_escala_codigo,
     te.nome as tipo_escala_nome
-  from public.escalas_log el
+  from public.voluntarios_escala ve
   join public.tipos_escala te
-    on te.id = el.tipo_escala_id
+    on te.id = ve.tipo_escala_id
    and te.tenant_id = v_tenant
-  join public.voluntarios_escala ve
-    on ve.id = el.voluntario_id
-   and ve.tenant_id = v_tenant
+   and te.is_ativa = true
   join public.profiles p
     on p.tenant_id = v_tenant
    and public.ptt_normalize_name(p.full_name) = public.ptt_normalize_name(ve.nome)
-  where el.tenant_id = v_tenant
-    and el.data_servico = p_service_date
+  where ve.tenant_id = v_tenant
+    and ve.is_ativo = true
+    and lower(replace(trim(te.codigo), ' ', '')) not like '%estacionamento%'
+    and public.ptt_normalize_name(te.nome) not like '%estacionamento%'
     and (
-      lower(trim(te.codigo)) in ('acolhimento_recepcao', 'acolhimentorecepcao')
+      lower(replace(trim(te.codigo), ' ', '')) in (
+        'ministerioacolhimento',
+        'acolhimento_recepcao',
+        'acolhimentorecepcao'
+      )
+      or (
+        public.ptt_normalize_name(te.nome) like '%ministerio%'
+        and public.ptt_normalize_name(te.nome) like '%acolhimento%'
+      )
       or (
         public.ptt_normalize_name(te.nome) like '%acolhimento%'
         and public.ptt_normalize_name(te.nome) like '%recep%'
       )
     )
-  order by p.id, te.nome;
+  order by p.id, ve.ordem_sequencial nulls last, te.nome;
 end;
 $$;
 
@@ -256,16 +269,15 @@ begin
     return jsonb_build_object(
       'success', false,
       'message',
-      'Nenhum voluntário em Acolhimento Recepção na escala de hoje ('
-        || v_service_date::text
-        || '). Cadastre a escala do dia antes de usar o Walkie-Talkie.',
+      'Nenhum servo em disponibilidade no Ministério De Acolhimento. '
+        || 'Cadastre em Manutenção → Servos em Disponibilidade.',
       'service_date', v_service_date
     );
   end if;
 
   return jsonb_build_object(
     'success', true,
-    'message', 'Mensagem roteada para Acolhimento Recepção.',
+    'message', 'Mensagem roteada para Ministério De Acolhimento (disponibilidade).',
     'service_date', v_service_date,
     'recipient_count', v_count,
     'message_ids', to_jsonb(v_ids),

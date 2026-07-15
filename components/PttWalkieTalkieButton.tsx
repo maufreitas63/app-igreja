@@ -120,7 +120,7 @@ export function PttWalkieTalkieButton({
       Toast.show({
         type: 'success',
         text1: 'Mensagem enviada',
-        text2: `Roteada para Acolhimento Recepção (${result.recipientCount}).`,
+        text2: `Roteada ao Ministério De Acolhimento (${result.recipientCount}).`,
         visibilityTime: 4000,
       });
     } catch (error) {
