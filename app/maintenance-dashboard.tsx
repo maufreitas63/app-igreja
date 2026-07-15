@@ -406,8 +406,9 @@ export default function MaintenanceDashboard() {
   const requestedPanel = pickRouteParam(panelParam);
   const isMinimalPresentation = isMinimalPresentationRoute(presentationParam);
   const previousPageWidthRef = useRef(pageWidth);
-  /** Largura real do estágio (após padding do MinimalScreenLayout), para o carrossel caber. */
+  /** Largura/altura reais do estágio (após padding do MinimalScreenLayout), para o carrossel caber. */
   const [measuredCarouselWidth, setMeasuredCarouselWidth] = useState(0);
+  const [measuredCarouselHeight, setMeasuredCarouselHeight] = useState(0);
   const carouselPageWidth = useMemo(() => {
     if (!isMinimalPresentation) {
       return pageWidth;
@@ -1005,13 +1006,23 @@ export default function MaintenanceDashboard() {
       width: carouselPageWidth,
       maxWidth: carouselPageWidth,
       minWidth: 0,
-      flexBasis: carouselPageWidth,
       overflow: 'hidden' as const,
+      // Em modo minimal a página precisa preencher a altura do estágio;
+      // flexGrow:0 colapsava o conteúdo para tela em branco.
       ...(isMinimalPresentation
-        ? { flexGrow: 0, flexShrink: 0, alignSelf: 'stretch' as const }
-        : null),
+        ? {
+            flex: 1,
+            alignSelf: 'stretch' as const,
+            ...(measuredCarouselHeight > 0
+              ? {
+                  height: measuredCarouselHeight,
+                  maxHeight: measuredCarouselHeight,
+                }
+              : null),
+          }
+        : { flexBasis: carouselPageWidth }),
     }),
-    [carouselPageWidth, isMinimalPresentation]
+    [carouselPageWidth, isMinimalPresentation, measuredCarouselHeight]
   );
 
   const effectiveCardWrapperStyle = useMemo(
@@ -1885,9 +1896,14 @@ export default function MaintenanceDashboard() {
                 if (!isMinimalPresentation) {
                   return;
                 }
-                const nextWidth = Math.floor(event.nativeEvent.layout.width);
+                const { width, height } = event.nativeEvent.layout;
+                const nextWidth = Math.floor(width);
+                const nextHeight = Math.floor(height);
                 if (nextWidth > 0 && nextWidth !== measuredCarouselWidth) {
                   setMeasuredCarouselWidth(nextWidth);
+                }
+                if (nextHeight > 0 && nextHeight !== measuredCarouselHeight) {
+                  setMeasuredCarouselHeight(nextHeight);
                 }
               }}
             >
@@ -1895,10 +1911,19 @@ export default function MaintenanceDashboard() {
                 ref={carouselRef}
                 style={[
                   styles.carouselFlatList,
-                  isMinimalPresentation && styles.carouselFlatListMinimal,
+                  isMinimalPresentation &&
+                    measuredCarouselHeight > 0 && {
+                      height: measuredCarouselHeight,
+                      maxHeight: measuredCarouselHeight,
+                    },
                 ]}
                 data={maintenanceCarouselCards}
-                extraData={{ currentIndex, maintenanceCardCount, carouselPageWidth }}
+                extraData={{
+                  currentIndex,
+                  maintenanceCardCount,
+                  carouselPageWidth,
+                  measuredCarouselHeight,
+                }}
                 horizontal
                 pagingEnabled={!isMinimalPresentation}
                 scrollEnabled={false}
@@ -1919,7 +1944,12 @@ export default function MaintenanceDashboard() {
                 })}
                 contentContainerStyle={
                   isMinimalPresentation
-                    ? { overflow: 'hidden' as const }
+                    ? {
+                        flexGrow: 1,
+                        alignItems: 'stretch' as const,
+                        minHeight:
+                          measuredCarouselHeight > 0 ? measuredCarouselHeight : undefined,
+                      }
                     : undefined
                 }
                 snapToAlignment="start"
@@ -2530,10 +2560,6 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     minWidth: 0,
     overflow: 'hidden',
-  },
-  carouselFlatListMinimal: {
-    flexGrow: 0,
-    alignSelf: 'stretch',
   },
   cardWrapper: {
     justifyContent: 'center',
