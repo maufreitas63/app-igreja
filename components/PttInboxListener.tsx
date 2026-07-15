@@ -18,6 +18,7 @@ import {
   startPttRecording,
   type PttRecordingSession,
 } from '@/lib/pttRecordSend';
+import { playPttAudioUrl } from '@/lib/pttRecording';
 import { subscribePttSocket } from '@/lib/pttSocket';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
@@ -426,10 +427,9 @@ export function PttInboxListener() {
   }, [closePanel, ending]);
 
   const playAudio = (url: string | null | undefined) => {
-    const audioUrl = url?.trim();
-    if (!audioUrl || Platform.OS !== 'web' || typeof Audio === 'undefined') return;
+    if (Platform.OS !== 'web') return;
     try {
-      void new Audio(audioUrl).play();
+      playPttAudioUrl(url ?? '');
     } catch (error) {
       console.warn('PTT play audio', error);
     }

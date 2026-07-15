@@ -4,30 +4,8 @@ export type PttRecordingSession = {
   stop: () => Promise<{ blob: Blob; mimeType: string; extension: string }>;
 };
 
-type SpeechRecognitionResultLike = {
-  isFinal?: boolean;
-  0?: { transcript?: string };
-};
-
-type SpeechRecognitionEventLike = {
-  resultIndex: number;
-  results: ArrayLike<SpeechRecognitionResultLike> & {
-    length: number;
-  };
-};
-
-type SpeechRecognitionLike = {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  maxAlternatives?: number;
-  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: ((event?: { error?: string }) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-};
+/** Caps de áudio em reprodução — param ao gravar para evitar eco no microfone. */
+const activePlayback = new Set<HTMLAudioElement>();
 
 /** Storage e Content-Type não aceitam `;codecs=...` (ex. Supabase bucket). */
 export const normalizeAudioMimeType = (value: string | null | undefined) => {
@@ -53,6 +31,84 @@ const extensionForMime = (mimeType: string) => {
   return 'webm';
 };
 
+/** Reproduz áudio PTT e registra para pausar se outra gravação começar. */
+export function playPttAudioUrl(url: string): HTMLAudioElement | null {
+  if (typeof Audio === 'undefined') {
+    return null;
+  }
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return null;
+  }
+  stopAllPttPlayback();
+  const audio = new Audio(trimmed);
+  activePlayback.add(audio);
+  const cleanup = () => {
+    activePlayback.delete(audio);
+  };
+  audio.addEventListener('ended', cleanup);
+  audio.addEventListener('error', cleanup);
+  void audio.play().catch(() => {
+    cleanup();
+  });
+  return audio;
+}
+
+export function stopAllPttPlayback() {
+  activePlayback.forEach((audio) => {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+    } catch {
+      /* ignore */
+    }
+  });
+  activePlayback.clear();
+}
+
+const getMicStream = async () => {
+  const preferred: MediaStreamConstraints = {
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+      channelCount: 1,
+      // Vocais: estreita um pouco a faixa de ambiente/rebote
+      sampleRate: { ideal: 48000 },
+    },
+  };
+
+  try {
+    return await navigator.mediaDevices.getUserMedia(preferred);
+  } catch {
+    // Fallback se o browser rejeitar constraints avançadas
+    return navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    });
+  }
+};
+
+const tightenTrackProcessing = async (stream: MediaStream) => {
+  const track = stream.getAudioTracks()[0];
+  if (!track || typeof track.applyConstraints !== 'function') {
+    return;
+  }
+  try {
+    await track.applyConstraints({
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+      channelCount: 1,
+    } as MediaTrackConstraints);
+  } catch {
+    /* alguns browsers ignoram pós-apply */
+  }
+};
+
 const createMediaRecorder = (stream: MediaStream) => {
   if (typeof MediaRecorder === 'undefined') {
     throw new Error('Gravação de áudio não suportada neste navegador.');
@@ -71,9 +127,22 @@ const createMediaRecorder = (stream: MediaStream) => {
         continue;
       }
 
-      const recorder = candidate
-        ? new MediaRecorder(stream, { mimeType: candidate })
-        : new MediaRecorder(stream);
+      const withRate: MediaRecorderOptions = {
+        // Taxa adequada à voz: menos captura de ruído de sala
+        audioBitsPerSecond: 48_000,
+      };
+      if (candidate) {
+        withRate.mimeType = candidate;
+      }
+
+      let recorder: MediaRecorder;
+      try {
+        recorder = new MediaRecorder(stream, withRate);
+      } catch {
+        recorder = candidate
+          ? new MediaRecorder(stream, { mimeType: candidate })
+          : new MediaRecorder(stream);
+      }
       const mimeType = normalizeAudioMimeType(recorder.mimeType || candidate || 'audio/webm');
       return {
         recorder,
@@ -88,20 +157,7 @@ const createMediaRecorder = (stream: MediaStream) => {
   throw new Error('Nenhum formato de áudio compatível neste navegador.');
 };
 
-const getSpeechRecognitionCtor = (): (new () => SpeechRecognitionLike) | null => {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  const w = window as Window & {
-    SpeechRecognition?: new () => SpeechRecognitionLike;
-    webkitSpeechRecognition?: new () => SpeechRecognitionLike;
-  };
-  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
-};
-
-const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
-
-/** Grava áudio (web MediaRecorder) e tenta legenda via Web Speech API. */
+/** Grava áudio (web MediaRecorder). Transcrição fica a cargo do Whisper (sem Web Speech em paralelo). */
 export async function startPttRecording(): Promise<{
   session: PttRecordingSession;
   getTranscript: () => string;
@@ -110,12 +166,14 @@ export async function startPttRecording(): Promise<{
     throw new Error('Walkie-Talkie disponível na versão web. Abra o app no navegador com microfone.');
   }
 
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  // Para qualquer áudio em alto-falante — evita feedback/eco na nova gravação.
+  stopAllPttPlayback();
+
+  const stream = await getMicStream();
+  await tightenTrackProcessing(stream);
+
   const { recorder, mimeType, extension } = createMediaRecorder(stream);
   const chunks: BlobPart[] = [];
-  let finalParts: string[] = [];
-  let interimText = '';
-  let live = true;
 
   recorder.ondataavailable = (event) => {
     if (event.data && event.data.size > 0) {
@@ -123,66 +181,12 @@ export async function startPttRecording(): Promise<{
     }
   };
 
-  const SpeechCtor = getSpeechRecognitionCtor();
-  let recognition: SpeechRecognitionLike | null = null;
-
-  const readTranscript = () => {
-    const joined = [...finalParts, interimText].join(' ').replace(/\s+/g, ' ').trim();
-    return joined;
-  };
-
-  if (SpeechCtor) {
-    recognition = new SpeechCtor();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'pt-BR';
-    recognition.maxAlternatives = 1;
-
-    recognition.onresult = (event) => {
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const result = event.results[i];
-        const piece = result?.[0]?.transcript?.trim() ?? '';
-        if (!piece) continue;
-        if (result.isFinal) {
-          finalParts.push(piece);
-          interimText = '';
-        } else {
-          interim = piece;
-        }
-      }
-      if (interim) {
-        interimText = interim;
-      }
-    };
-
-    recognition.onerror = () => {
-      /* áudio ainda é enviado; Whisper / texto manual cobrem o fallback */
-    };
-
-    recognition.onend = () => {
-      // Chrome encerra após silêncio — reinicia enquanto a gravação está ativa.
-      if (!live || !recognition) return;
-      try {
-        recognition.start();
-      } catch {
-        /* already started */
-      }
-    };
-
-    try {
-      recognition.start();
-    } catch {
-      recognition = null;
-    }
-  }
-
+  // Sem Web Speech em paralelo: a 2ª captura do mic costuma gerar “eco”/dobra no áudio.
+  // A legenda vem do Whisper (Cloudflare / Edge).
   recorder.start(250);
 
   const session: PttRecordingSession = {
     stop: async () => {
-      live = false;
-
       const blob = await new Promise<Blob>((resolve, reject) => {
         recorder.onstop = () => {
           const type = normalizeAudioMimeType(recorder.mimeType || mimeType);
@@ -199,30 +203,6 @@ export async function startPttRecording(): Promise<{
           reject(error instanceof Error ? error : new Error('Falha ao gravar áudio.'));
         }
       });
-
-      if (recognition) {
-        const ended = new Promise<void>((resolve) => {
-          let done = false;
-          const finish = () => {
-            if (done) return;
-            done = true;
-            if (recognition) {
-              recognition.onend = null;
-            }
-            resolve();
-          };
-          recognition.onend = () => {
-            finish();
-          };
-          try {
-            recognition.stop();
-          } catch {
-            finish();
-          }
-          void wait(1200).then(finish);
-        });
-        await ended;
-      }
 
       stream.getTracks().forEach((track) => track.stop());
 
@@ -241,7 +221,7 @@ export async function startPttRecording(): Promise<{
 
   return {
     session,
-    getTranscript: () => readTranscript(),
+    getTranscript: () => '',
   };
 }
 
