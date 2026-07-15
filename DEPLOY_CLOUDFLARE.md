@@ -57,6 +57,34 @@ Variáveis opcionais do app (só se precisar no build/runtime):
 |----------|-----|
 | `EXPO_PUBLIC_GOOGLE_MAPS_GEOCODING_API_KEY` | Geocodificação Google (senão usa ViaCEP + OSM) |
 | `EXPO_PUBLIC_ACL_STRICT` | `true` para negar acesso quando RPC de ACL estiver ausente |
+| `EXPO_PUBLIC_APP_URL` | URL pública do PWA (retorno do Stripe Checkout) |
+| `EXPO_PUBLIC_BILLING_ENFORCE` | `true` para exigir assinatura ativa (ambiente IBEP) |
+
+### Billing SaaS — Stripe Test Keys (runtime das Pages Functions)
+
+Em **Settings → Variables and Secrets** (ambiente **Production**), cadastre:
+
+| Nome | Tipo | Onde obter |
+|------|------|------------|
+| `STRIPE_SECRET_KEY` | **Secret** | Stripe → Developers → API keys → Secret key **test** (`sk_test_…`) |
+| `STRIPE_WEBHOOK_SECRET` | **Secret** | Stripe → Developers → Webhooks → endpoint → Signing secret (`whsec_…`) |
+| `SUPABASE_URL` | Secret ou texto | URL do projeto Supabase (ex.: `https://bldbrsuiwctoaxzcrjoc.supabase.co`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Secret** | Supabase → Settings → API → `service_role` |
+| `STRIPE_PRICE_SEMENTE` | Texto | Price ID do produto Semente (`price_…`) |
+| `STRIPE_PRICE_CRESCIMENTO` | Texto | Price ID do plano Crescimento |
+| `STRIPE_PRICE_EXPANSAO` | Texto | Price ID do plano Expansão |
+| `STRIPE_PRICE_MINISTERIO` | Texto | Price ID do plano Ministério |
+| `EXPO_PUBLIC_APP_URL` | Texto | URL do Pages (ex.: `https://app-igreja.pages.dev`) |
+
+Webhook Stripe (modo **Test**):
+
+```
+https://SEU-DOMINIO.pages.dev/api/stripe-webhook
+```
+
+Eventos sugeridos: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`.
+
+Após salvar secrets, faça um **Retry deployment** (ou um novo push) para as Functions enxergarem os valores.
 
 ---
 
