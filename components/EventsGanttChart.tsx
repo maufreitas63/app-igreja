@@ -20,7 +20,9 @@ const LABEL_COLUMN_WIDTH = 132;
 const LABEL_COLUMN_WIDTH_MINIMAL = 108;
 const DAY_COLUMN_WIDTH = 54;
 const MONTH_COLUMN_WIDTH = 68;
-const ROW_HEIGHT = 52;
+/** Nome (até 3 linhas) + local (1 linha) + padding da célula. */
+const ROW_HEIGHT = 80;
+const EVENT_NAME_MAX_LINES = 3;
 const HEADER_HEIGHT = 46;
 const BODY_MAX_HEIGHT = 420;
 
@@ -265,7 +267,10 @@ export const EventsGanttChart = ({
                 disabled={!onEventPress}
                 activeOpacity={onEventPress ? 0.75 : 1}
               >
-                <Text style={[styles.eventNameText, minimal && styles.eventNameTextMinimal]} numberOfLines={2}>
+                <Text
+                  style={[styles.eventNameText, minimal && styles.eventNameTextMinimal]}
+                  numberOfLines={EVENT_NAME_MAX_LINES}
+                >
                   {row.name}
                 </Text>
                 {row.localLabel ? (
