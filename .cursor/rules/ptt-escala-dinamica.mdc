@@ -1,11 +1,21 @@
 ---
-description: Spec PTT Walkie-Talkie com roteamento por escala diária (Estacionamento → Recepção)
+description: Spec PTT Walkie-Talkie com diálogo bidirecional e roteamento dinâmico
 alwaysApply: true
 ---
 
-# Sistema PTT com Escala Dinâmica
+# Sistema PTT com Escala Dinâmica (diálogo)
 
 Ao implementar ou alterar o PTT (Push-to-Talk / Walkie-Talkie), seguir este spec. Não inventar destinatário fixo.
+
+## Modelo de uso — diálogo, não monólogo
+
+- Fluxo é **conversa ativa 1:1** (`ptt_conversations`), não aviso one-shot.
+- Estacionamento inicia a chamada → abre conversa com servos do Ministério De Acolhimento.
+- **Qualquer ponta responde** (áudio + legenda) enquanto `status = open`.
+- Painel de diálogo fica disponível nas duas pontas (histórico, Ouvir, Responder).
+- **Encerrar conversa** (qualquer ponta) finaliza a sessão; só então deixa de ficar ativo.
+- Minimizar o painel não encerra; no reconnect a conversa aberta reaparece.
+- Primeira resposta do peer concentra o canal (outras chamadas abertas do mesmo initiator são encerradas).
 
 ## UI — Acolhimento Estacionamento
 
@@ -16,18 +26,17 @@ Ao implementar ou alterar o PTT (Push-to-Talk / Walkie-Talkie), seguir este spec
 - Escala de origem (heurística existente `isParkingWelcomeScale`):
   - código `acolhimento_estacionamento` / nome com acolhimento+estacionamento
   - ou `vigilancia_estacionamento`
-- Comportamento do botão (2 etapas, touch-friendly): **Gravar** inicia o áudio; **Enviar** (segundo toque) para, transcreve e envia. Cancelar aborta a gravação.
+- Botão Walkie (2 etapas): **Gravar** → **Enviar**. Se já houver conversa aberta do initiator, a mensagem continua nesse diálogo.
+- Inbox/diálogo global: `components/PttInboxListener.tsx` no `AppShell` (Responder + Encerrar conversa).
 
 ## Roteamento (obrigatório)
 
-- Destinatário **dinâmico** via escalas do dia — nunca ID hard-coded.
-- Tabelas: `tipos_escala` (`codigo`/`nome`), `voluntarios_escala`, `escalas_log` (`data_servico`, `voluntario_id`, `tipo_escala_id`).
-- RPCs úteis: `listar_escalas`, `aplicar_ciclo_escala`, `registrar_escala_manual`.
-- Regra: remetente **Estacionamento** → destinatários = servos **ativos em disponibilidade** do tipo **Ministério De Acolhimento** (`ministerioacolhimento` em `voluntarios_escala.is_ativo`), não `escalas_log` do dia / não só `acolhimento_recepcao`.
-- Voluntário ↔ profile: match `voluntarios_escala.nome` ↔ `profiles.full_name` (via `cadastrar_voluntario_escala`).
+- Destinatário **dinâmico** — nunca ID hard-coded.
+- Regra: remetente **Estacionamento** → servos **ativos em disponibilidade** do tipo **Ministério De Acolhimento** (`ministerioacolhimento` / `voluntarios_escala.is_ativo`).
+- Voluntário ↔ profile: match `voluntarios_escala.nome` ↔ `profiles.full_name`.
 - Excluir tipos com “estacionamento” no código/nome.
 
-## Payload ao acolhedor
+## Payload
 
 ```json
 {
@@ -35,22 +44,15 @@ Ao implementar ou alterar o PTT (Push-to-Talk / Walkie-Talkie), seguir este spec
   "setor": "Estacionamento",
   "audio_url": "link_do_arquivo_de_audio",
   "texto_transcrito": "Quatro pessoas chegando para o culto",
-  "timestamp": "10:32:00"
+  "timestamp": "10:32:00",
+  "conversation_id": "uuid"
 }
 ```
 
-## Stack técnica
+## Stack / SQL
 
-- **Realtime:** Node.js + Socket.io (hoje o repo é Expo/PWA + Supabase; **não há** servidor Socket.io — criar serviço/backend dedicado ou Worker com WS; não fingir que Cloudflare Pages estático basta).
-- **STT:** OpenAI Whisper ou Google Speech-to-Text; áudio persistido (ex. Supabase Storage) → `audio_url`.
-- **Offline:** se destinatário offline, gravar mensagem no banco e entregar/notificar no reconnect (fila + ack).
-- Mic: hoje `microphonePermission: false` / `recordAudioAndroid: false` em `app.config.ts` — habilitar só o necessário ao implantar PTT.
-- Preferir alinhar UI ao tema existente do dashboard; não criar rota paralela se o fluxo já vive no painel de escala/estacionamento.
-
-## Implementação atual (referência)
-
-- Botão: `components/PttWalkieTalkieButton.tsx` ao lado de Identificar veículo no `dashboard` (`scale_roster` parking).
-- Inbox: `components/PttInboxListener.tsx` no `AppShell`.
-- SQL: `scripts/ptt-messages-escala-dinamica.sql` (obrigatório no Supabase).
-- STT: Web Speech (web) + Edge `supabase/functions/ptt-transcribe` (Whisper / `OPENAI_API_KEY`).
-- Realtime: Supabase Realtime em `ptt_messages`; Socket.io opcional em `services/ptt-server` via `EXPO_PUBLIC_PTT_SOCKET_URL`.
+- SQL base: `scripts/ptt-messages-escala-dinamica.sql`
+- SQL diálogo (obrigatório após o base): `scripts/ptt-conversations-dialogo.sql`
+- RPCs: `send_ptt_estacionamento_message`, `reply_ptt_conversation`, `end_ptt_conversation`, `list_open_ptt_conversations`, `list_ptt_conversation_messages`, `ack_ptt_conversation_messages`
+- STT: Web Speech + Edge `ptt-transcribe` (Whisper / `OPENAI_API_KEY`); se falhar, legenda manual
+- Realtime: `ptt_messages` + `ptt_conversations`; Socket.io opcional em `services/ptt-server`

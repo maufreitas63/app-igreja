@@ -1,9 +1,10 @@
+import { listOpenPttConversations, sendPttEstacionamentoMessage } from '@/lib/pttApi';
+import { requestOpenPttConversation } from '@/lib/pttEvents';
 import {
-  sendPttEstacionamentoMessage,
-  transcribePttAudioViaEdge,
-  uploadPttAudioBlob,
-} from '@/lib/pttApi';
-import { blobToBase64, startPttRecording, type PttRecordingSession } from '@/lib/pttRecording';
+  preparePttAudioFromSession,
+  startPttRecording,
+  type PttRecordingSession,
+} from '@/lib/pttRecordSend';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useRef, useState } from 'react';
 import {
@@ -31,14 +32,12 @@ type Phase = 'idle' | 'recording' | 'sending' | 'caption';
 type PendingSend = {
   audioUrl: string;
   audioPath: string;
-  draftText: string;
 };
 
 /**
- * Walkie em 2 etapas (melhor em touch/PWA):
- * 1) toque → inicia gravação
- * 2) toque → para e envia
- * Se a STT falhar, pede a legenda manualmente.
+ * Walkie em 2 etapas:
+ * 1) Gravar  2) Enviar
+ * Inicia diálogo com Acolhimento ou continua a conversa aberta.
  */
 export function PttWalkieTalkieButton({
   senderProfileId,
@@ -64,12 +63,16 @@ export function PttWalkieTalkieButton({
 
   const deliverMessage = useCallback(
     async (audioUrl: string, audioPath: string, textoTranscrito: string) => {
+      const open = await listOpenPttConversations();
+      const activeId = open[0]?.id ?? null;
+
       const result = await sendPttEstacionamentoMessage({
         remetente: senderName?.trim() || 'Voluntário',
         setor,
         audioUrl,
         audioPath,
         textoTranscrito,
+        conversationId: activeId,
       });
 
       if (!result.ok) {
@@ -82,10 +85,17 @@ export function PttWalkieTalkieButton({
         return false;
       }
 
+      const conversationId = result.conversationId ?? result.conversationIds[0] ?? activeId;
+      if (conversationId) {
+        requestOpenPttConversation(conversationId);
+      }
+
       Toast.show({
         type: 'success',
-        text1: 'Mensagem enviada',
-        text2: `Roteada ao Ministério De Acolhimento (${result.recipientCount}).`,
+        text1: activeId ? 'Mensagem no diálogo' : 'Diálogo iniciado',
+        text2: activeId
+          ? 'Conversa continua aberta até Encerrar conversa.'
+          : `Chamada ao Ministério De Acolhimento (${result.recipientCount}).`,
         visibilityTime: 4000,
       });
       return true;
@@ -147,41 +157,24 @@ export function PttWalkieTalkieButton({
 
     let openedCaption = false;
     try {
-      const recorded = await session.stop();
-      const speechText = getTranscriptRef.current()?.trim() ?? '';
-      const uploaded = await uploadPttAudioBlob(
+      const prepared = await preparePttAudioFromSession({
         profileId,
-        recorded.blob,
-        recorded.extension,
-        recorded.mimeType
-      );
+        session,
+        getTranscript: getTranscriptRef.current,
+      });
 
-      let texto = speechText;
-      let sttError: string | undefined;
-      if (!texto) {
-        const base64 = await blobToBase64(recorded.blob);
-        const whisper = await transcribePttAudioViaEdge(
-          uploaded.publicUrl,
-          base64,
-          recorded.mimeType
-        );
-        texto = whisper.text?.trim() ?? '';
-        sttError = whisper.error;
-      }
-
-      if (!texto) {
+      if (!prepared.texto) {
         openedCaption = true;
         setPendingSend({
-          audioUrl: uploaded.publicUrl,
-          audioPath: uploaded.path,
-          draftText: '',
+          audioUrl: prepared.audioUrl,
+          audioPath: prepared.audioPath,
         });
         setCaptionDraft('');
         setPhase('caption');
         Toast.show({
           type: 'info',
           text1: 'Digite a legenda',
-          text2: sttError?.includes('OPENAI_API_KEY')
+          text2: prepared.sttError?.includes('OPENAI_API_KEY')
             ? 'Transcrição automática indisponível. Escreva o que falou.'
             : 'Não deu para transcrever sozinho. Confirme o texto da mensagem.',
           visibilityTime: 4500,
@@ -189,7 +182,7 @@ export function PttWalkieTalkieButton({
         return;
       }
 
-      await deliverMessage(uploaded.publicUrl, uploaded.path, texto);
+      await deliverMessage(prepared.audioUrl, prepared.audioPath, prepared.texto);
       resetIdle();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Falha ao enviar o Walkie-Talkie.';

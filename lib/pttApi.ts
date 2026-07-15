@@ -3,7 +3,8 @@ import { supabase } from '@/lib/supabase';
 import { decode } from 'base64-arraybuffer';
 
 export const PTT_AUDIO_BUCKET = 'ptt-audio';
-export const PTT_SQL_HINT = 'Execute no Supabase: scripts/ptt-messages-escala-dinamica.sql';
+export const PTT_SQL_HINT =
+  'Execute no Supabase: scripts/ptt-messages-escala-dinamica.sql e scripts/ptt-conversations-dialogo.sql';
 
 export type PttMessagePayload = {
   remetente: string;
@@ -11,12 +12,14 @@ export type PttMessagePayload = {
   audio_url: string;
   texto_transcrito: string;
   timestamp: string;
+  conversation_id?: string;
 };
 
 export type PttMessageRow = {
   id: string;
   sender_profile_id: string | null;
   recipient_profile_id: string;
+  conversation_id?: string | null;
   remetente: string;
   setor: string;
   audio_url: string | null;
@@ -25,6 +28,19 @@ export type PttMessageRow = {
   delivered_at: string | null;
   acked_at: string | null;
   created_at: string;
+};
+
+export type PttConversationSummary = {
+  id: string;
+  initiator_profile_id: string;
+  peer_profile_id: string;
+  status: string;
+  last_message_at: string;
+  created_at: string;
+  other_profile_id: string;
+  other_name: string;
+  last_texto: string;
+  unread_count: number;
 };
 
 const brazilTimeLabel = () => {
@@ -47,9 +63,18 @@ const isMissingRpcError = (message: string) => {
     m.includes('send_ptt_estacionamento_message')
     || m.includes('list_pending_ptt_messages')
     || m.includes('ack_ptt_message')
+    || m.includes('reply_ptt_conversation')
+    || m.includes('end_ptt_conversation')
+    || m.includes('list_open_ptt_conversations')
+    || m.includes('list_ptt_conversation_messages')
     || (m.includes('could not find') && m.includes('function'))
     || m.includes('schema cache')
   );
+};
+
+const asUuidArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item ?? '').trim()).filter(Boolean);
 };
 
 export async function uploadPttAudioBlob(
@@ -141,16 +166,31 @@ export async function sendPttEstacionamentoMessage(input: {
   audioUrl: string;
   audioPath: string;
   textoTranscrito: string;
-}): Promise<{ ok: true; payload: PttMessagePayload; recipientCount: number } | { ok: false; message: string }> {
+  conversationId?: string | null;
+}): Promise<
+  | {
+      ok: true;
+      payload: PttMessagePayload;
+      recipientCount: number;
+      conversationId: string | null;
+      conversationIds: string[];
+    }
+  | { ok: false; message: string }
+> {
   const timestamp = brazilTimeLabel();
-  const { data, error } = await supabase.rpc('send_ptt_estacionamento_message', {
+  const params: Record<string, string | null> = {
     p_remetente: input.remetente.trim(),
     p_setor: input.setor?.trim() || 'Estacionamento',
     p_audio_url: input.audioUrl,
     p_audio_path: input.audioPath,
     p_texto_transcrito: input.textoTranscrito.trim(),
     p_timestamp: timestamp,
-  });
+  };
+  if (input.conversationId?.trim()) {
+    params.p_conversation_id = input.conversationId.trim();
+  }
+
+  const { data, error } = await supabase.rpc('send_ptt_estacionamento_message', params);
 
   if (error) {
     if (isMissingRpcError(error.message ?? '')) {
@@ -175,11 +215,144 @@ export async function sendPttEstacionamentoMessage(input: {
     timestamp,
   }) as PttMessagePayload;
 
+  const conversationIds = asUuidArray(record.conversation_ids);
+  const conversationId =
+    String(record.conversation_id ?? conversationIds[0] ?? '').trim() || null;
+
   return {
     ok: true,
     payload,
     recipientCount: Number(record.recipient_count ?? 0),
+    conversationId,
+    conversationIds,
   };
+}
+
+export async function replyPttConversation(input: {
+  conversationId: string;
+  remetente: string;
+  setor?: string;
+  audioUrl: string;
+  audioPath: string;
+  textoTranscrito: string;
+}): Promise<{ ok: true; conversationId: string } | { ok: false; message: string }> {
+  const timestamp = brazilTimeLabel();
+  const { data, error } = await supabase.rpc('reply_ptt_conversation', {
+    p_conversation_id: input.conversationId.trim(),
+    p_remetente: input.remetente.trim(),
+    p_setor: input.setor?.trim() || null,
+    p_audio_url: input.audioUrl,
+    p_audio_path: input.audioPath,
+    p_texto_transcrito: input.textoTranscrito.trim(),
+    p_timestamp: timestamp,
+  });
+
+  if (error) {
+    if (isMissingRpcError(error.message ?? '')) {
+      return { ok: false, message: `Função de diálogo PTT ausente. ${PTT_SQL_HINT}` };
+    }
+    return { ok: false, message: error.message || 'Falha ao responder PTT.' };
+  }
+
+  const record = (data ?? {}) as Record<string, unknown>;
+  if (record.success !== true) {
+    return {
+      ok: false,
+      message: typeof record.message === 'string' ? record.message : 'Não foi possível responder.',
+    };
+  }
+
+  return {
+    ok: true,
+    conversationId: String(record.conversation_id ?? input.conversationId).trim(),
+  };
+}
+
+export async function endPttConversation(
+  conversationId: string
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const { data, error } = await supabase.rpc('end_ptt_conversation', {
+    p_conversation_id: conversationId.trim(),
+  });
+  if (error) {
+    if (isMissingRpcError(error.message ?? '')) {
+      return { ok: false, message: `Função de diálogo PTT ausente. ${PTT_SQL_HINT}` };
+    }
+    return { ok: false, message: error.message || 'Falha ao encerrar conversa.' };
+  }
+  const record = (data ?? {}) as Record<string, unknown>;
+  if (record.success !== true) {
+    return {
+      ok: false,
+      message: typeof record.message === 'string' ? record.message : 'Não foi possível encerrar.',
+    };
+  }
+  return { ok: true };
+}
+
+export async function listOpenPttConversations(): Promise<PttConversationSummary[]> {
+  const { data, error } = await supabase.rpc('list_open_ptt_conversations');
+  if (error) {
+    if (isMissingRpcError(error.message ?? '')) {
+      return [];
+    }
+    console.warn('list_open_ptt_conversations:', error.message);
+    return [];
+  }
+  return ((data ?? []) as PttConversationSummary[]).map((row) => ({
+    ...row,
+    unread_count: Number(row.unread_count ?? 0),
+  }));
+}
+
+export async function listPttConversationMessages(conversationId: string): Promise<PttMessageRow[]> {
+  const { data, error } = await supabase.rpc('list_ptt_conversation_messages', {
+    p_conversation_id: conversationId.trim(),
+  });
+  if (error) {
+    console.warn('list_ptt_conversation_messages:', error.message);
+    return [];
+  }
+  return (data ?? []) as PttMessageRow[];
+}
+
+export async function getPttConversation(conversationId: string): Promise<{
+  id: string;
+  status: string;
+  other_name: string;
+  other_profile_id: string;
+  initiator_profile_id: string;
+  peer_profile_id: string;
+} | null> {
+  const { data, error } = await supabase.rpc('get_ptt_conversation', {
+    p_conversation_id: conversationId.trim(),
+  });
+  if (error) {
+    console.warn('get_ptt_conversation:', error.message);
+    return null;
+  }
+  const record = (data ?? {}) as Record<string, unknown>;
+  if (record.success !== true || !record.conversation || typeof record.conversation !== 'object') {
+    return null;
+  }
+  const c = record.conversation as Record<string, unknown>;
+  return {
+    id: String(c.id ?? ''),
+    status: String(c.status ?? ''),
+    other_name: String(c.other_name ?? 'Contato'),
+    other_profile_id: String(c.other_profile_id ?? ''),
+    initiator_profile_id: String(c.initiator_profile_id ?? ''),
+    peer_profile_id: String(c.peer_profile_id ?? ''),
+  };
+}
+
+export async function ackPttConversationMessages(conversationId: string): Promise<void> {
+  const { error } = await supabase.rpc('ack_ptt_conversation_messages', {
+    p_conversation_id: conversationId.trim(),
+  });
+  if (error) {
+    console.warn('ack_ptt_conversation_messages:', error.message);
+  }
 }
 
 export async function listPendingPttMessages(): Promise<PttMessageRow[]> {
@@ -210,6 +383,11 @@ export async function markPttDelivered(messageId: string): Promise<void> {
 
 export function payloadFromPttRow(row: PttMessageRow): PttMessagePayload {
   const fromJson = row.payload && typeof row.payload === 'object' ? row.payload : null;
+  const conversationId = String(
+    (fromJson as PttMessagePayload | null)?.conversation_id
+      ?? row.conversation_id
+      ?? ''
+  ).trim();
   return {
     remetente: String((fromJson as PttMessagePayload | null)?.remetente ?? row.remetente ?? ''),
     setor: String((fromJson as PttMessagePayload | null)?.setor ?? row.setor ?? 'Estacionamento'),
@@ -218,5 +396,13 @@ export function payloadFromPttRow(row: PttMessageRow): PttMessagePayload {
       (fromJson as PttMessagePayload | null)?.texto_transcrito ?? row.texto_transcrito ?? ''
     ),
     timestamp: String((fromJson as PttMessagePayload | null)?.timestamp ?? ''),
+    ...(conversationId ? { conversation_id: conversationId } : {}),
   };
+}
+
+export function conversationIdFromPttRow(row: PttMessageRow): string | null {
+  const fromPayload = payloadFromPttRow(row).conversation_id?.trim();
+  if (fromPayload) return fromPayload;
+  const fromCol = String(row.conversation_id ?? '').trim();
+  return fromCol || null;
 }
