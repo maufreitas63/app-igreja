@@ -23,12 +23,12 @@ const FILTERS: Array<{
 }> = [
   {
     key: 'active_members',
-    label: 'Membros Ativos',
+    label: 'Membros\nAtivos',
     accessibilityLabel: 'Filtrar membros ativos',
   },
   {
     key: 'inactive_members',
-    label: 'Membros Inativos',
+    label: 'Membros\nInativos',
     accessibilityLabel: 'Filtrar membros inativos',
   },
   {
@@ -133,7 +133,7 @@ export function MembersListsClass({
                 >
                   <Text
                     style={[styles.filterChipText, selected && styles.filterChipTextSelected]}
-                    numberOfLines={1}
+                    numberOfLines={2}
                   >
                     {filter.label}
                   </Text>
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   toolbarRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     width: '100%',
     gap: 8,
   },
@@ -316,9 +316,10 @@ const styles = StyleSheet.create({
   filterChip: {
     flex: 1,
     minWidth: 0,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 6,
     paddingHorizontal: 6,
     borderRadius: 10,
     borderWidth: 1,
@@ -332,6 +333,7 @@ const styles = StyleSheet.create({
   filterChipText: {
     color: MINIMAL_UI.textMuted,
     fontSize: 11,
+    lineHeight: 14,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -341,11 +343,13 @@ const styles = StyleSheet.create({
   },
   mapButton: {
     flexShrink: 0,
+    alignSelf: 'flex-end',
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
-    paddingVertical: 8,
+    paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 10,
     borderWidth: 1,
@@ -355,6 +359,7 @@ const styles = StyleSheet.create({
   mapButtonText: {
     color: MINIMAL_UI.text,
     fontSize: 11,
+    lineHeight: 14,
     fontWeight: '700',
   },
   summaryText: {
