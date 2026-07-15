@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   APP_DRAWER_MENU_ITEMS,
   isDrawerMenuPlaceholder,
@@ -22,10 +22,11 @@ import {
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
 import { ACCESS_SCREEN } from '@/lib/accessScreen';
+import { getGhostModeState, isGhostModeActive, subscribeGhostMode } from '@/lib/ghostMode';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
-import { getStoredUserPhone } from '@/lib/userSession';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 
 export type AppDrawerMenuItemResolved = AppDrawerMenuItem & {
   enabled: boolean;
@@ -104,19 +105,21 @@ export function useAppDrawerMenu() {
     setLoading(true);
 
     try {
-      const phone = await getStoredUserPhone();
-      const sessionProfile = phone ? await loadEffectiveSessionProfile(phone) : null;
-      const profileId = sessionProfile?.id?.trim() ?? null;
+      const ghostActive = isGhostModeActive();
+      const profileId =
+        (await resolveEffectiveProfileId({ forceRefresh: ghostActive }))
+        ?? (await loadEffectiveSessionProfile())?.id?.trim()
+        ?? null;
 
       const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership, roomAccess] =
         await Promise.all([
           profileId
-            ? loadDashboardCardViewAccess(profileId)
+            ? loadDashboardCardViewAccess(profileId, { forceRefresh: ghostActive })
             : Promise.resolve({} as DashboardCardViewAccess),
           profileId
-            ? loadDashboardLinkedScreenAccess(profileId)
+            ? loadDashboardLinkedScreenAccess(profileId, { forceRefresh: ghostActive })
             : Promise.resolve({} as DashboardScreenAccess),
-          loadMaintenanceDashboardAccess(),
+          loadMaintenanceDashboardAccess({ forceRefresh: ghostActive }),
           profileId ? fetchProfileHasActiveMembership(profileId) : Promise.resolve(false),
           sessionHasAccess('screen', ACCESS_SCREEN.configuracaoSalas, 'view'),
         ]);
@@ -170,6 +173,18 @@ export function useAppDrawerMenu() {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    let previousTarget = getGhostModeState()?.targetProfileId ?? null;
+
+    return subscribeGhostMode(() => {
+      const nextTarget = getGhostModeState()?.targetProfileId ?? null;
+      if (nextTarget !== previousTarget) {
+        previousTarget = nextTarget;
+        void refresh();
+      }
+    });
+  }, [refresh]);
 
   return { items, loading, refresh, isSuperAdmin, canManageRooms, canManageAvisos };
 }

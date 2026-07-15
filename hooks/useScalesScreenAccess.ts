@@ -7,16 +7,29 @@ import {
 } from '@/lib/accessControl';
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
+import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
+import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
-import { Alert } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Acesso à rota `/escalas` — exige card dashboard.card.vigilance_scales. */
 export function useScalesScreenAccess(redirectPath: string = '/(tabs)'): ScreenAccessStatus {
   const router = useRouter();
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
   const hasAllowedRef = useRef(false);
+  const [ghostTargetId, setGhostTargetId] = useState(
+    () => getGhostModeState()?.targetProfileId ?? null
+  );
+
+  useEffect(
+    () =>
+      subscribeGhostMode(() => {
+        hasAllowedRef.current = false;
+        setGhostTargetId(getGhostModeState()?.targetProfileId ?? null);
+      }),
+    []
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -35,9 +48,7 @@ export function useScalesScreenAccess(redirectPath: string = '/(tabs)'): ScreenA
 
         if (aclStatus === 'missing' && isAclStrictMode()) {
           setStatus('denied');
-          Alert.alert('ACL indisponível', ACL_UNAVAILABLE_MESSAGE, [
-            { text: 'OK', onPress: () => router.replace(redirectPath) },
-          ]);
+          denyScreenAccessAndRedirect(router, redirectPath, 'ACL indisponível', ACL_UNAVAILABLE_MESSAGE);
           return;
         }
 
@@ -53,9 +64,12 @@ export function useScalesScreenAccess(redirectPath: string = '/(tabs)'): ScreenA
 
         if (!hasScalesCard || !activeMembership) {
           setStatus('denied');
-          Alert.alert('Acesso negado', 'Você não tem permissão para abrir Escalas.', [
-            { text: 'OK', onPress: () => router.replace(redirectPath) },
-          ]);
+          denyScreenAccessAndRedirect(
+            router,
+            redirectPath,
+            'Acesso negado',
+            'Você não tem permissão para abrir Escalas.'
+          );
           return;
         }
 
@@ -66,7 +80,7 @@ export function useScalesScreenAccess(redirectPath: string = '/(tabs)'): ScreenA
       return () => {
         active = false;
       };
-    }, [redirectPath, router])
+    }, [ghostTargetId, redirectPath, router])
   );
 
   return status;

@@ -9,9 +9,9 @@ import { isSuggestionsImprovementsAccessAllowed } from '@/lib/drawerMenuAccess';
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
+import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert } from 'react-native';
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
 
 const SUGGESTIONS_MAINTENANCE_RESOURCE = 'maintenance.card.suggestions_improvements';
@@ -53,9 +53,7 @@ export function useSuggestionsImprovementsAccess(options?: {
 
           if (aclStatus === 'missing' && isAclStrictMode()) {
             setStatus('denied');
-            Alert.alert('ACL indisponível', ACL_UNAVAILABLE_MESSAGE, [
-              { text: 'OK', onPress: () => router.replace(redirectPath) },
-            ]);
+            denyScreenAccessAndRedirect(router, redirectPath, 'ACL indisponível', ACL_UNAVAILABLE_MESSAGE);
             return;
           }
 
@@ -78,10 +76,11 @@ export function useSuggestionsImprovementsAccess(options?: {
 
           if (!allowed) {
             setStatus('denied');
-            Alert.alert(
+            denyScreenAccessAndRedirect(
+              router,
+              redirectPath,
               'Sem permissão',
-              'Você não tem acesso para registrar sugestões e melhorias.',
-              [{ text: 'OK', onPress: () => router.replace(redirectPath) }]
+              'Você não tem acesso para registrar sugestões e melhorias.'
             );
             return;
           }
@@ -95,10 +94,11 @@ export function useSuggestionsImprovementsAccess(options?: {
           }
 
           setStatus('denied');
-          Alert.alert(
+          denyScreenAccessAndRedirect(
+            router,
+            redirectPath,
             'Erro de acesso',
-            'Não foi possível verificar sua permissão. Tente novamente.',
-            [{ text: 'OK', onPress: () => router.replace(redirectPath) }]
+            'Não foi possível verificar sua permissão. Tente novamente.'
           );
         }
       })();

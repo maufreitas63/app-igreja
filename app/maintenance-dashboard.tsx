@@ -589,10 +589,12 @@ export default function MaintenanceDashboard() {
 
         if (!snapshot.allowed) {
           setAccessState('denied');
-          Alert.alert(
+          const { denyScreenAccessAndRedirect } = await import('@/lib/screenAccessDenyRedirect');
+          denyScreenAccessAndRedirect(
+            router,
+            '/(tabs)',
             'Sem permissão',
-            'Você não tem acesso à manutenção do sistema.',
-            [{ text: 'OK', onPress: () => router.replace('/(tabs)/dashboard') }]
+            'Você não tem acesso à manutenção do sistema.'
           );
           return;
         }

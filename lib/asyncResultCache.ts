@@ -59,9 +59,26 @@ export function invalidateAsyncCache(keyOrPrefix?: string) {
     return;
   }
 
+  // Aceita 'acl' ou 'acl:' — ambos limpam chaves `acl:<id>:...`
+  const normalized = keyOrPrefix.endsWith(':') ? keyOrPrefix.slice(0, -1) : keyOrPrefix;
+
   for (const key of [...cache.keys()]) {
-    if (key === keyOrPrefix || key.startsWith(`${keyOrPrefix}:`)) {
+    if (
+      key === keyOrPrefix
+      || key === normalized
+      || key.startsWith(`${normalized}:`)
+    ) {
       cache.delete(key);
+    }
+  }
+
+  for (const inflightKey of [...inflight.keys()]) {
+    if (
+      inflightKey === keyOrPrefix
+      || inflightKey === normalized
+      || inflightKey.startsWith(`${normalized}:`)
+    ) {
+      inflight.delete(inflightKey);
     }
   }
 }

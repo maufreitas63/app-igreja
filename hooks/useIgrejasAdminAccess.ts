@@ -1,8 +1,8 @@
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
+import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert } from 'react-native';
 
 /** Acesso à rota `/igrejas` — apenas super_admin. */
 export function useIgrejasAdminAccess(redirectPath: string = '/(tabs)'): ScreenAccessStatus {
@@ -20,18 +20,24 @@ export function useIgrejasAdminAccess(redirectPath: string = '/(tabs)'): ScreenA
           if (!active) return;
           if (!isSuper) {
             setStatus('denied');
-            Alert.alert('Acesso negado', 'Apenas super administradores gerenciam instâncias.', [
-              { text: 'OK', onPress: () => router.replace(redirectPath) },
-            ]);
+            denyScreenAccessAndRedirect(
+              router,
+              redirectPath,
+              'Acesso negado',
+              'Apenas super administradores gerenciam instâncias.'
+            );
             return;
           }
           setStatus('allowed');
         } catch {
           if (!active) return;
           setStatus('denied');
-          Alert.alert('Acesso negado', 'Não foi possível validar o acesso.', [
-            { text: 'OK', onPress: () => router.replace(redirectPath) },
-          ]);
+          denyScreenAccessAndRedirect(
+            router,
+            redirectPath,
+            'Acesso negado',
+            'Não foi possível validar o acesso.'
+          );
         }
       })();
 

@@ -4,12 +4,13 @@ import {
   isAclStrictMode,
 } from '@/lib/accessControl';
 import { traceClick } from '@/lib/devClickTrace';
+import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
-import { getStoredUserPhone } from '@/lib/userSession';
+import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
-import { Alert } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type LgpdScreenAccessState = {
   status: ScreenAccessStatus;
@@ -22,6 +23,18 @@ export function useLgpdScreenAccess(redirectPath: string = '/(tabs)'): LgpdScree
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
   const [sessionProfileId, setSessionProfileId] = useState<string | null>(null);
   const hasAllowedRef = useRef(false);
+  const [ghostTargetId, setGhostTargetId] = useState(
+    () => getGhostModeState()?.targetProfileId ?? null
+  );
+
+  useEffect(
+    () =>
+      subscribeGhostMode(() => {
+        hasAllowedRef.current = false;
+        setGhostTargetId(getGhostModeState()?.targetProfileId ?? null);
+      }),
+    []
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -41,15 +54,14 @@ export function useLgpdScreenAccess(redirectPath: string = '/(tabs)'): LgpdScree
         if (aclStatus === 'missing' && isAclStrictMode()) {
           traceClick('lgpd-access', 'denied-acl-missing');
           setStatus('denied');
-          Alert.alert('ACL indisponível', ACL_UNAVAILABLE_MESSAGE, [
-            { text: 'OK', onPress: () => router.replace(redirectPath) },
-          ]);
+          denyScreenAccessAndRedirect(router, redirectPath, 'ACL indisponível', ACL_UNAVAILABLE_MESSAGE);
           return;
         }
 
-        const phone = await getStoredUserPhone();
-        const sessionProfile = phone ? await loadEffectiveSessionProfile(phone) : null;
-        const profileId = sessionProfile?.id?.trim() ?? null;
+        const profileId =
+          (await resolveEffectiveProfileId())
+          ?? (await loadEffectiveSessionProfile())?.id?.trim()
+          ?? null;
 
         if (!active) {
           return;
@@ -59,9 +71,12 @@ export function useLgpdScreenAccess(redirectPath: string = '/(tabs)'): LgpdScree
           traceClick('lgpd-access', 'denied-no-session');
           setSessionProfileId(null);
           setStatus('denied');
-          Alert.alert('Acesso negado', 'Faça login para abrir os termos de privacidade.', [
-            { text: 'OK', onPress: () => router.replace(redirectPath) },
-          ]);
+          denyScreenAccessAndRedirect(
+            router,
+            redirectPath,
+            'Acesso negado',
+            'Faça login para abrir os termos de privacidade.'
+          );
           return;
         }
 
@@ -74,7 +89,7 @@ export function useLgpdScreenAccess(redirectPath: string = '/(tabs)'): LgpdScree
       return () => {
         active = false;
       };
-    }, [redirectPath, router])
+    }, [ghostTargetId, redirectPath, router])
   );
 
   return { status, sessionProfileId };

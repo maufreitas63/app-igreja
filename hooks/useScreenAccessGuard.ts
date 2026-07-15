@@ -5,9 +5,9 @@ import {
   sessionHasAccess,
 } from '@/lib/accessControl';
 import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
+import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert } from 'react-native';
 
 export type ScreenAccessStatus = 'checking' | 'allowed' | 'denied' | 'skipped';
 
@@ -63,9 +63,7 @@ export function useScreenAccessGuard({
 
         if (aclStatus === 'missing' && isAclStrictMode()) {
           setStatus('denied');
-          Alert.alert('ACL indisponível', ACL_UNAVAILABLE_MESSAGE, [
-            { text: 'OK', onPress: () => router.replace(redirectPath) },
-          ]);
+          denyScreenAccessAndRedirect(router, redirectPath, 'ACL indisponível', ACL_UNAVAILABLE_MESSAGE);
           return;
         }
 
@@ -77,9 +75,7 @@ export function useScreenAccessGuard({
 
         if (!allowed) {
           setStatus('denied');
-          Alert.alert(deniedTitle, deniedMessage, [
-            { text: 'OK', onPress: () => router.replace(redirectPath) },
-          ]);
+          denyScreenAccessAndRedirect(router, redirectPath, deniedTitle, deniedMessage);
           return;
         }
 
