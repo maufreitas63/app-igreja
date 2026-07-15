@@ -4,15 +4,16 @@ import {
   uploadPttAudioBlob,
 } from '@/lib/pttApi';
 import { blobToBase64, startPttRecording, type PttRecordingSession } from '@/lib/pttRecording';
-import { emitPttViaSocket } from '@/lib/pttSocket';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
+  Pressable,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
+  type GestureResponderEvent,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -25,6 +26,12 @@ type Props = {
   style?: StyleProp<ViewStyle>;
 };
 
+type HoldPhase = 'idle' | 'starting' | 'holding' | 'sending';
+
+/**
+ * Push-to-talk: segurar grava; soltar envia uma única vez.
+ * Protege contra pressIn/pressOut duplicados no web e release durante o start async.
+ */
 export function PttWalkieTalkieButton({
   senderProfileId,
   senderName,
@@ -33,12 +40,88 @@ export function PttWalkieTalkieButton({
 }: Props) {
   const [isHolding, setIsHolding] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const phaseRef = useRef<HoldPhase>('idle');
   const sessionRef = useRef<PttRecordingSession | null>(null);
   const getTranscriptRef = useRef<() => string>(() => '');
-  const busyRef = useRef(false);
+  const generationRef = useRef(0);
+  const releaseRequestedRef = useRef(false);
 
-  const beginHold = async () => {
-    if (busyRef.current || isSending) {
+  const resetIdle = useCallback(() => {
+    phaseRef.current = 'idle';
+    sessionRef.current = null;
+    getTranscriptRef.current = () => '';
+    releaseRequestedRef.current = false;
+    setIsHolding(false);
+    setIsSending(false);
+  }, []);
+
+  const sendRecording = useCallback(
+    async (session: PttRecordingSession, profileId: string) => {
+      if (phaseRef.current === 'sending') {
+        return;
+      }
+      phaseRef.current = 'sending';
+      setIsHolding(false);
+      setIsSending(true);
+      sessionRef.current = null;
+
+      try {
+        const recorded = await session.stop();
+        const speechText = getTranscriptRef.current()?.trim() ?? '';
+        const uploaded = await uploadPttAudioBlob(
+          profileId,
+          recorded.blob,
+          recorded.extension,
+          recorded.mimeType
+        );
+
+        let texto = speechText;
+        if (!texto) {
+          const base64 = await blobToBase64(recorded.blob);
+          texto =
+            (await transcribePttAudioViaEdge(uploaded.publicUrl, base64, recorded.mimeType))
+            ?? '';
+        }
+        if (!texto) {
+          texto = '(áudio sem transcrição automática)';
+        }
+
+        const result = await sendPttEstacionamentoMessage({
+          remetente: senderName?.trim() || 'Voluntário',
+          setor,
+          audioUrl: uploaded.publicUrl,
+          audioPath: uploaded.path,
+          textoTranscrito: texto,
+        });
+
+        if (!result.ok) {
+          Toast.show({
+            type: 'error',
+            text1: 'Walkie-Talkie',
+            text2: result.message,
+            visibilityTime: 7000,
+          });
+          return;
+        }
+
+        Toast.show({
+          type: 'success',
+          text1: 'Mensagem enviada',
+          text2: `Roteada ao Ministério De Acolhimento (${result.recipientCount}).`,
+          visibilityTime: 4000,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Falha ao enviar o Walkie-Talkie.';
+        Toast.show({ type: 'error', text1: 'Walkie-Talkie', text2: message, visibilityTime: 6000 });
+      } finally {
+        resetIdle();
+      }
+    },
+    [resetIdle, senderName, setor]
+  );
+
+  const beginHold = useCallback(async () => {
+    if (phaseRef.current !== 'idle') {
       return;
     }
     if (!senderProfileId?.trim()) {
@@ -50,120 +133,122 @@ export function PttWalkieTalkieButton({
       return;
     }
 
-    busyRef.current = true;
+    const generation = generationRef.current + 1;
+    generationRef.current = generation;
+    phaseRef.current = 'starting';
+    releaseRequestedRef.current = false;
+
     try {
       const started = await startPttRecording();
-      sessionRef.current = started.session;
-      getTranscriptRef.current = started.getTranscript;
-      setIsHolding(true);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Não foi possível acessar o microfone.';
-      Toast.show({ type: 'error', text1: 'Walkie-Talkie', text2: message, visibilityTime: 5000 });
-    } finally {
-      busyRef.current = false;
-    }
-  };
 
-  const endHold = async () => {
-    const session = sessionRef.current;
-    sessionRef.current = null;
-    setIsHolding(false);
-
-    if (!session || !senderProfileId?.trim()) {
-      return;
-    }
-
-    setIsSending(true);
-    try {
-      const recorded = await session.stop();
-      const speechText = getTranscriptRef.current()?.trim() ?? '';
-      const uploaded = await uploadPttAudioBlob(
-        senderProfileId,
-        recorded.blob,
-        recorded.extension,
-        recorded.mimeType
-      );
-
-      let texto = speechText;
-      if (!texto) {
-        const base64 = await blobToBase64(recorded.blob);
-        texto =
-          (await transcribePttAudioViaEdge(uploaded.publicUrl, base64, recorded.mimeType))
-          ?? '';
-      }
-      if (!texto) {
-        texto = '(áudio sem transcrição automática)';
-      }
-
-      const result = await sendPttEstacionamentoMessage({
-        remetente: senderName?.trim() || 'Voluntário',
-        setor,
-        audioUrl: uploaded.publicUrl,
-        audioPath: uploaded.path,
-        textoTranscrito: texto,
-      });
-
-      if (!result.ok) {
-        Toast.show({
-          type: 'error',
-          text1: 'Walkie-Talkie',
-          text2: result.message,
-          visibilityTime: 7000,
-        });
+      // Soltou durante a permissão/start → envia o trecho gravado (ou aborta se vazio).
+      if (generation !== generationRef.current) {
+        try {
+          await started.session.stop();
+        } catch {
+          /* ignore */
+        }
+        resetIdle();
         return;
       }
 
-      void emitPttViaSocket(senderProfileId, {
-        ...result.payload,
-      });
+      sessionRef.current = started.session;
+      getTranscriptRef.current = started.getTranscript;
 
-      Toast.show({
-        type: 'success',
-        text1: 'Mensagem enviada',
-        text2: `Roteada ao Ministério De Acolhimento (${result.recipientCount}).`,
-        visibilityTime: 4000,
-      });
+      if (releaseRequestedRef.current) {
+        await sendRecording(started.session, senderProfileId.trim());
+        return;
+      }
+
+      phaseRef.current = 'holding';
+      setIsHolding(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Falha ao enviar o Walkie-Talkie.';
-      Toast.show({ type: 'error', text1: 'Walkie-Talkie', text2: message, visibilityTime: 6000 });
-    } finally {
-      setIsSending(false);
+      if (generation === generationRef.current) {
+        const message =
+          error instanceof Error ? error.message : 'Não foi possível acessar o microfone.';
+        Toast.show({ type: 'error', text1: 'Walkie-Talkie', text2: message, visibilityTime: 5000 });
+        resetIdle();
+      }
     }
-  };
+  }, [resetIdle, sendRecording, senderProfileId]);
+
+  const endHold = useCallback(() => {
+    if (phaseRef.current === 'idle' || phaseRef.current === 'sending') {
+      return;
+    }
+
+    if (phaseRef.current === 'starting') {
+      // Ainda pedindo mic / abrindo recorder — marca release e envia ao concluir o start.
+      releaseRequestedRef.current = true;
+      return;
+    }
+
+    if (phaseRef.current !== 'holding') {
+      return;
+    }
+
+    const session = sessionRef.current;
+    const profileId = senderProfileId?.trim();
+    if (!session || !profileId) {
+      resetIdle();
+      return;
+    }
+
+    void sendRecording(session, profileId);
+  }, [resetIdle, sendRecording, senderProfileId]);
+
+  const onPressIn = useCallback(
+    (_event?: GestureResponderEvent) => {
+      void beginHold();
+    },
+    [beginHold]
+  );
+
+  const onPressOut = useCallback(
+    (_event?: GestureResponderEvent) => {
+      endHold();
+    },
+    [endHold]
+  );
 
   return (
-    <TouchableOpacity
+    <Pressable
       style={[
         styles.button,
+        webHoldStyles,
         isHolding && styles.buttonHolding,
         isSending && styles.buttonDisabled,
         style,
       ]}
-      onPressIn={() => {
-        void beginHold();
-      }}
-      onPressOut={() => {
-        void endHold();
-      }}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
       disabled={isSending}
-      activeOpacity={0.9}
       accessibilityRole="button"
       accessibilityLabel="Walkie-Talkie: segure para falar"
-      accessibilityHint="Pressione e segure para gravar. Solte para enviar à recepção."
+      accessibilityHint="Pressione e segure para gravar. Solte para enviar automaticamente."
     >
-      <View style={styles.inner}>
+      <View style={styles.inner} pointerEvents="none">
         {isSending ? (
           <ActivityIndicator color="#020617" />
         ) : (
           <FontAwesome name="microphone" size={18} color={isHolding ? '#FEF2F2' : '#020617'} />
         )}
         <Text style={[styles.text, isHolding && styles.textHolding]}>
-          {isSending ? 'Enviando…' : isHolding ? 'Solte para enviar' : 'Walkie-Talkie'}
+          {isSending ? 'Enviando…' : isHolding ? 'Solte para enviar' : 'Segure para falar'}
         </Text>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
+
+const webHoldStyles =
+  Platform.OS === 'web'
+    ? ({
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        touchAction: 'none',
+      } as ViewStyle)
+    : null;
 
 const styles = StyleSheet.create({
   button: {

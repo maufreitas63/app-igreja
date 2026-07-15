@@ -26,20 +26,26 @@ type InboxItem = {
   payload: PttMessagePayload;
 };
 
+const fingerprintOf = (item: InboxItem) => {
+  if (item.id?.trim()) {
+    return `id:${item.id.trim()}`;
+  }
+  const p = item.payload;
+  return `fp:${p.audio_url || ''}|${p.timestamp || ''}|${p.texto_transcrito || ''}|${p.remetente || ''}`;
+};
+
 export function PttInboxListener() {
   const [item, setItem] = useState<InboxItem | null>(null);
-  const profileIdRef = useRef<string | null>(null);
-  const seenIdsRef = useRef<Set<string>>(new Set());
+  const seenRef = useRef<Set<string>>(new Set());
+  const queueRef = useRef<InboxItem[]>([]);
+  const showingRef = useRef(false);
 
-  const present = useCallback((next: InboxItem) => {
-    if (next.id && seenIdsRef.current.has(next.id)) {
-      return;
-    }
+  const showNext = useCallback((next: InboxItem) => {
+    showingRef.current = true;
+    setItem(next);
     if (next.id) {
-      seenIdsRef.current.add(next.id);
       void markPttDelivered(next.id);
     }
-    setItem(next);
     Toast.show({
       type: 'info',
       text1: `PTT · ${next.payload.setor}`,
@@ -48,11 +54,32 @@ export function PttInboxListener() {
     });
   }, []);
 
+  const present = useCallback(
+    (next: InboxItem) => {
+      const key = fingerprintOf(next);
+      if (seenRef.current.has(key)) {
+        return;
+      }
+      // Também marca o id se veio só fingerprint e depois chega o id
+      if (next.id) {
+        seenRef.current.add(`id:${next.id}`);
+      }
+      seenRef.current.add(key);
+
+      if (showingRef.current) {
+        queueRef.current.push(next);
+        return;
+      }
+
+      showNext(next);
+    },
+    [showNext]
+  );
+
   const drainPending = useCallback(async () => {
     const rows = await listPendingPttMessages();
     for (const row of rows) {
       present({ id: row.id, payload: payloadFromPttRow(row) });
-      break;
     }
   }, [present]);
 
@@ -66,7 +93,6 @@ export function PttInboxListener() {
       if (cancelled || !profileId) {
         return;
       }
-      profileIdRef.current = profileId;
 
       await drainPending();
 
@@ -90,11 +116,13 @@ export function PttInboxListener() {
         )
         .subscribe();
 
+      // Socket opcional — só aceita eventos com id (evita duplicar o Realtime sem chave).
       unsubscribeSocket = subscribePttSocket(profileId, (payload) => {
-        present({
-          id: typeof (payload as { id?: string }).id === 'string' ? payload.id : undefined,
-          payload,
-        });
+        const id = typeof (payload as { id?: string }).id === 'string' ? payload.id : undefined;
+        if (!id) {
+          return;
+        }
+        present({ id, payload });
       });
     };
 
@@ -127,6 +155,14 @@ export function PttInboxListener() {
     if (current?.id) {
       await ackPttMessage(current.id);
     }
+
+    const next = queueRef.current.shift();
+    if (next) {
+      showNext(next);
+      return;
+    }
+
+    showingRef.current = false;
     void drainPending();
   };
 
