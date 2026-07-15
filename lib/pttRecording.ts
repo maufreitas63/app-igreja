@@ -14,23 +14,63 @@ type SpeechRecognitionLike = {
   stop: () => void;
 };
 
-const pickMimeType = () => {
-  if (typeof MediaRecorder === 'undefined') {
-    return { mimeType: 'audio/webm', extension: 'webm' };
+/** Storage e Content-Type não aceitam `;codecs=...` (ex. Supabase bucket). */
+export const normalizeAudioMimeType = (value: string | null | undefined) => {
+  const raw = (value ?? '').trim().toLowerCase();
+  if (!raw) {
+    return 'audio/webm';
   }
-  const candidates = [
-    'audio/webm;codecs=opus',
-    'audio/webm',
-    'audio/ogg;codecs=opus',
-    'audio/mp4',
-  ];
-  for (const mimeType of candidates) {
-    if (MediaRecorder.isTypeSupported?.(mimeType)) {
-      const extension = mimeType.includes('mp4') ? 'm4a' : mimeType.includes('ogg') ? 'ogg' : 'webm';
-      return { mimeType, extension };
+  const base = raw.split(';')[0]?.trim() || 'audio/webm';
+  if (base.includes('webm')) return 'audio/webm';
+  if (base.includes('ogg')) return 'audio/ogg';
+  if (base.includes('mp4') || base.includes('m4a') || base.includes('aac')) return 'audio/mp4';
+  if (base.includes('mpeg') || base.includes('mp3')) return 'audio/mpeg';
+  if (base.includes('wav')) return 'audio/wav';
+  return base;
+};
+
+const extensionForMime = (mimeType: string) => {
+  const base = normalizeAudioMimeType(mimeType);
+  if (base === 'audio/mp4') return 'm4a';
+  if (base === 'audio/ogg') return 'ogg';
+  if (base === 'audio/mpeg') return 'mp3';
+  if (base === 'audio/wav') return 'wav';
+  return 'webm';
+};
+
+const createMediaRecorder = (stream: MediaStream) => {
+  if (typeof MediaRecorder === 'undefined') {
+    throw new Error('Gravação de áudio não suportada neste navegador.');
+  }
+
+  // Preferir tipos sem codecs — alguns browsers reportam codecs=opus e o Storage rejeita.
+  const candidates = ['audio/webm', 'audio/mp4', 'audio/ogg', ''];
+
+  for (const candidate of candidates) {
+    try {
+      if (
+        candidate
+        && typeof MediaRecorder.isTypeSupported === 'function'
+        && !MediaRecorder.isTypeSupported(candidate)
+      ) {
+        continue;
+      }
+
+      const recorder = candidate
+        ? new MediaRecorder(stream, { mimeType: candidate })
+        : new MediaRecorder(stream);
+      const mimeType = normalizeAudioMimeType(recorder.mimeType || candidate || 'audio/webm');
+      return {
+        recorder,
+        mimeType,
+        extension: extensionForMime(mimeType),
+      };
+    } catch {
+      /* tenta próximo candidato */
     }
   }
-  return { mimeType: '', extension: 'webm' };
+
+  throw new Error('Nenhum formato de áudio compatível neste navegador.');
 };
 
 const getSpeechRecognitionCtor = (): (new () => SpeechRecognitionLike) | null => {
@@ -54,10 +94,7 @@ export async function startPttRecording(): Promise<{
   }
 
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  const { mimeType, extension } = pickMimeType();
-  const recorder = mimeType
-    ? new MediaRecorder(stream, { mimeType })
-    : new MediaRecorder(stream);
+  const { recorder, mimeType, extension } = createMediaRecorder(stream);
   const chunks: BlobPart[] = [];
   let transcript = '';
 
@@ -100,17 +137,18 @@ export async function startPttRecording(): Promise<{
     stop: async () => {
       const blob = await new Promise<Blob>((resolve, reject) => {
         recorder.onstop = () => {
-          resolve(new Blob(chunks, { type: recorder.mimeType || mimeType || 'audio/webm' }));
+          const type = normalizeAudioMimeType(recorder.mimeType || mimeType);
+          resolve(new Blob(chunks, { type }));
         };
         recorder.onerror = () => reject(new Error('Falha ao gravar áudio.'));
         try {
           if (recorder.state !== 'inactive') {
             recorder.stop();
           } else {
-            resolve(new Blob(chunks, { type: recorder.mimeType || mimeType || 'audio/webm' }));
+            resolve(new Blob(chunks, { type: mimeType }));
           }
         } catch (error) {
-          reject(error);
+          reject(error instanceof Error ? error : new Error('Falha ao gravar áudio.'));
         }
       });
 
@@ -126,10 +164,11 @@ export async function startPttRecording(): Promise<{
         throw new Error('Nenhum áudio capturado. Segure o botão e fale antes de soltar.');
       }
 
+      const finalMime = normalizeAudioMimeType(blob.type || mimeType);
       return {
-        blob,
-        mimeType: blob.type || mimeType || 'audio/webm',
-        extension,
+        blob: blob.type === finalMime ? blob : new Blob([blob], { type: finalMime }),
+        mimeType: finalMime,
+        extension: extensionForMime(finalMime) || extension,
       };
     },
   };

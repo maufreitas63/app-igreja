@@ -78,7 +78,17 @@ values (
   'ptt-audio',
   true,
   10485760,
-  array['audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/x-m4a', 'audio/aac']
+  array[
+    'audio/webm',
+    'audio/ogg',
+    'audio/mpeg',
+    'audio/mp4',
+    'audio/wav',
+    'audio/x-m4a',
+    'audio/aac',
+    'audio/webm;codecs=opus',
+    'audio/ogg;codecs=opus'
+  ]
 )
 on conflict (id) do update
   set public = excluded.public,

@@ -1,4 +1,4 @@
-import { blobToBase64 } from '@/lib/pttRecording';
+import { blobToBase64, normalizeAudioMimeType } from '@/lib/pttRecording';
 import { supabase } from '@/lib/supabase';
 import { decode } from 'base64-arraybuffer';
 
@@ -60,10 +60,11 @@ export async function uploadPttAudioBlob(
 ): Promise<{ path: string; publicUrl: string }> {
   const safeExt = extension.replace(/[^a-z0-9]/gi, '') || 'webm';
   const path = `${senderProfileId.trim()}/${Date.now()}.${safeExt}`;
+  const contentType = normalizeAudioMimeType(mimeType || blob.type || 'audio/webm');
   const base64 = await blobToBase64(blob);
 
   const { error } = await supabase.storage.from(PTT_AUDIO_BUCKET).upload(path, decode(base64), {
-    contentType: mimeType || 'audio/webm',
+    contentType,
     upsert: false,
   });
 
@@ -71,6 +72,12 @@ export async function uploadPttAudioBlob(
     const message = (error.message ?? '').toLowerCase();
     if (message.includes('bucket') && message.includes('not found')) {
       throw new Error(`Bucket ptt-audio ausente. ${PTT_SQL_HINT}`);
+    }
+    if (message.includes('mime type') || message.includes('not supported')) {
+      throw new Error(
+        `Formato de áudio rejeitado pelo storage (${contentType}). `
+        + `Reexecute scripts/ptt-messages-escala-dinamica.sql ou scripts/ptt-audio-mime-patch.sql.`
+      );
     }
     throw new Error(error.message || 'Falha ao enviar áudio.');
   }
