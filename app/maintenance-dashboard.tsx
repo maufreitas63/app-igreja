@@ -132,15 +132,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
-/** Mesmas cores do card Check In (dashboard). */
-const ROOM_CHIP_KIDS_ACTIVE: ViewStyle = {
-  backgroundColor: 'rgba(250, 204, 21, 0.12)',
-  borderColor: 'rgba(250, 204, 21, 0.35)',
-};
-const ROOM_CHIP_TEENS_ACTIVE: ViewStyle = {
-  backgroundColor: 'rgba(239, 68, 68, 0.12)',
-  borderColor: 'rgba(239, 68, 68, 0.35)',
-};
+/** Cor ativa unificada dos chips de sala no editor de eventos. */
 const ROOM_CHIP_CUSTOM_ACTIVE: ViewStyle = {
   backgroundColor: 'rgba(30, 64, 175, 0.10)',
   borderColor: 'rgba(30, 64, 175, 0.35)',
@@ -2111,9 +2103,22 @@ export default function MaintenanceDashboard() {
                     />
                   </View>
                   <View style={styles.capacityColumn}>
+                    <Text
+                      style={[
+                        styles.fieldLabel,
+                        styles.capacityFieldLabel,
+                        isMinimalPresentation && styles.fieldLabelMinimal,
+                      ]}
+                    >
+                      Capacidade
+                    </Text>
                     <TextInput
-                      style={[styles.input, styles.capacityInput]}
-                      placeholder="Capacidade *"
+                      style={[
+                        styles.input,
+                        styles.capacityInput,
+                        isMinimalPresentation && styles.inputMinimal,
+                      ]}
+                      placeholder="Ex.: 70"
                       placeholderTextColor="#64748B"
                       value={form.maxCapacity}
                       keyboardType="number-pad"
@@ -2189,12 +2194,6 @@ export default function MaintenanceDashboard() {
                   >
                     {eventRoomOptions.map((room) => {
                       const selected = form.enabledRoomKeys.includes(room.room_key);
-                      const activeStyle =
-                        room.room_key === 'KIDS'
-                          ? ROOM_CHIP_KIDS_ACTIVE
-                          : room.room_key === 'TEENS'
-                            ? ROOM_CHIP_TEENS_ACTIVE
-                            : ROOM_CHIP_CUSTOM_ACTIVE;
 
                       return (
                         <FeatureToggle
@@ -2204,7 +2203,7 @@ export default function MaintenanceDashboard() {
                           onValueChange={() => {
                             patchForm(toggleEnabledRoomKey(form.enabledRoomKeys, room.room_key));
                           }}
-                          activeStyle={activeStyle}
+                          activeStyle={ROOM_CHIP_CUSTOM_ACTIVE}
                         />
                       );
                     })}
@@ -3207,7 +3206,7 @@ const styles = StyleSheet.create({
   },
   localCapacityRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     gap: 10,
   },
   localColumn: {
@@ -3227,11 +3226,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   capacityFieldLabel: {
-    color: '#3A96DD',
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
     textAlign: 'center',
   },
   capacityInput: {
