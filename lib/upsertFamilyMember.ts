@@ -1,3 +1,4 @@
+import { assertTenantCanAddMember } from '@/lib/billing/billingApi';
 import {
   findMemberDuplicateInFamily,
   type FamilyMemberMatchRow,
@@ -58,6 +59,11 @@ async function upsertFamilyMemberFallback(
     full_name: payload.fullName,
     phone: payload.phone,
   });
+
+  if (!existing?.id) {
+    // Escalonamento SaaS: impede novo membro acima do limite do plano do tenant.
+    await assertTenantCanAddMember();
+  }
 
   if (existing?.id) {
     const { data, error } = await supabase
@@ -120,6 +126,15 @@ export async function upsertFamilyMember(
   input: UpsertFamilyMemberInput
 ): Promise<UpsertFamilyMemberResult> {
   const payload = buildMemberPayload(input);
+
+  const existing = await findMemberDuplicateInFamily(payload.familyId, {
+    full_name: payload.fullName,
+    phone: payload.phone,
+  }).catch(() => null);
+
+  if (!existing?.id) {
+    await assertTenantCanAddMember();
+  }
 
   const { data, error } = await supabase.rpc('upsert_family_member', {
     p_family_id: payload.familyId,

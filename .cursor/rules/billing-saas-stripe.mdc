@@ -1,0 +1,13 @@
+---
+description: Assinaturas SaaS por tenant (Stripe + Supabase)
+globs: "{components/billing/**,lib/billing/**,functions/api/stripe-*.ts,app/billing.tsx,scripts/billing-*.sql}"
+alwaysApply: false
+---
+
+# Billing SaaS
+
+- Isolamento por `tenant_id` (`igrejas.id`). Nunca use só o código da igreja como chave Stripe sem o UUID.
+- UI de planos: `BillingClass` (stateless) + rota `/billing`. Paleta `#FFFFFF` + azuis.
+- Checkout/webhook: Cloudflare Pages Functions (`/api/stripe-create-checkout`, `/api/stripe-webhook`) com **Test Keys**.
+- Gate: `AppBillingGate` — `active`/`trialing` liberam; falha de SQL = fail-open.
+- Limite de membros: `assert_tenant_can_add_member` + `upsertFamilyMember`.
