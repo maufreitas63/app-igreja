@@ -279,6 +279,15 @@ const getSaveErrorMessage = (err: unknown) => {
     return `Check-in automático não foi salvo no banco.\n\n${GEOFENCE_ATIVO_COLUMN_SQL_HINT}`;
   }
 
+  if (
+    code === 'EVENT_DUPLICATE'
+    || code === '23505'
+    || message.toLowerCase().includes('já existe um evento com o mesmo nome')
+    || message.toLowerCase().includes('events_tenant_name_local_date_uq')
+  ) {
+    return 'Já existe um evento com o mesmo nome, local e data/hora. Altere um desses campos ou edite o evento existente.';
+  }
+
   return message;
 };
 
@@ -614,6 +623,10 @@ export default function MaintenanceDashboard() {
   );
 
   const handleSave = useCallback(async () => {
+    if (isSaving) {
+      return;
+    }
+
     Keyboard.dismiss();
     setStatusMessage(null);
 
@@ -679,7 +692,7 @@ export default function MaintenanceDashboard() {
     } finally {
       setIsSaving(false);
     }
-  }, [canBypassEventPastDateLock, closeEditor, form, refetch, selectedEventId]);
+  }, [canBypassEventPastDateLock, closeEditor, form, isSaving, refetch, selectedEventId]);
 
   const handleReplicateSevenDays = useCallback(async () => {
     if (isCreating || !selectedEventId) {

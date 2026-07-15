@@ -30,6 +30,63 @@ export type SaveMaintenanceEventResult =
   | { ok: true; purgedCheckins?: number; purgeWarning?: string }
   | { ok: false; message: string; code?: string };
 
+export const DUPLICATE_EVENT_MESSAGE =
+  'Já existe um evento com o mesmo nome, local e data/hora. Altere um desses campos ou edite o evento existente.';
+
+export const DUPLICATE_EVENT_CODE = 'EVENT_DUPLICATE';
+
+const normalizeEventIdentityPart = (value: string | null | undefined) =>
+  (value ?? '').trim().toLowerCase();
+
+/** Mesmo critério do índice unique: tenant (RLS) + nome + local + event_date. */
+const findConflictingEventId = async (
+  payload: Pick<MaintenanceEventPayload, 'name' | 'event_local' | 'event_date'>,
+  excludeEventId?: string | null
+): Promise<string | null> => {
+  if (!payload.event_date || !payload.name?.trim()) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from('events')
+    .select('id, name, event_local, event_date')
+    .eq('event_date', payload.event_date);
+
+  if (error) {
+    console.warn('findConflictingEventId:', error.message);
+    return null;
+  }
+
+  const targetName = normalizeEventIdentityPart(payload.name);
+  const targetLocal = normalizeEventIdentityPart(payload.event_local);
+
+  const match = (data ?? []).find((row) => {
+    if (excludeEventId && row.id === excludeEventId) {
+      return false;
+    }
+    return (
+      normalizeEventIdentityPart(row.name) === targetName
+      && normalizeEventIdentityPart(row.event_local) === targetLocal
+    );
+  });
+
+  return match?.id ?? null;
+};
+
+const isUniqueViolationError = (error: { code?: string; message?: string } | null | undefined) => {
+  if (!error) {
+    return false;
+  }
+  if (error.code === '23505') {
+    return true;
+  }
+  const message = (error.message ?? '').toLowerCase();
+  return (
+    message.includes('events_tenant_name_local_date_uq')
+    || (message.includes('duplicate key') && message.includes('events'))
+  );
+};
+
 const geofenceColumnMissingError = (): PostgrestError =>
   ({
     message: GEOFENCE_ATIVO_COLUMN_SQL_HINT,
@@ -181,9 +238,17 @@ export const saveMaintenanceEvent = async (
   await ensureEventsOptionalColumns();
 
   if (selectedEventId === '__new__') {
+    const conflictId = await findConflictingEventId(payload);
+    if (conflictId) {
+      return { ok: false, message: DUPLICATE_EVENT_MESSAGE, code: DUPLICATE_EVENT_CODE };
+    }
+
     const { error } = await saveEventWithOptionalColumnFallback('insert', null, payload);
 
     if (error) {
+      if (isUniqueViolationError(error)) {
+        return { ok: false, message: DUPLICATE_EVENT_MESSAGE, code: DUPLICATE_EVENT_CODE };
+      }
       return { ok: false, message: error.message, code: error.code };
     }
 
@@ -192,6 +257,11 @@ export const saveMaintenanceEvent = async (
 
   if (!selectedEventId) {
     return { ok: false, message: 'Nenhum evento selecionado para salvar.' };
+  }
+
+  const conflictId = await findConflictingEventId(payload, selectedEventId);
+  if (conflictId) {
+    return { ok: false, message: DUPLICATE_EVENT_MESSAGE, code: DUPLICATE_EVENT_CODE };
   }
 
   const existingEvent = await loadEventSnapshotForGeofence(selectedEventId);
@@ -203,6 +273,9 @@ export const saveMaintenanceEvent = async (
   const { error } = await saveEventWithOptionalColumnFallback('update', selectedEventId, payload);
 
   if (error) {
+    if (isUniqueViolationError(error)) {
+      return { ok: false, message: DUPLICATE_EVENT_MESSAGE, code: DUPLICATE_EVENT_CODE };
+    }
     return { ok: false, message: error.message, code: error.code };
   }
 
@@ -301,9 +374,17 @@ export const replicateMaintenanceEventForDays = async (
 
   await ensureEventsOptionalColumns();
 
+  const conflictId = await findConflictingEventId(validation.payload);
+  if (conflictId) {
+    return { ok: false, message: DUPLICATE_EVENT_MESSAGE, code: DUPLICATE_EVENT_CODE };
+  }
+
   const { error } = await saveEventWithOptionalColumnFallback('insert', null, validation.payload);
 
   if (error) {
+    if (isUniqueViolationError(error)) {
+      return { ok: false, message: DUPLICATE_EVENT_MESSAGE, code: DUPLICATE_EVENT_CODE };
+    }
     return {
       ok: false,
       message: error.message,
