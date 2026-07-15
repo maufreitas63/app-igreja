@@ -20,6 +20,7 @@ import {
 } from '@/lib/pttRecordSend';
 import { pulsePttDeliveryVibration } from '@/lib/pttHaptics';
 import { playPttAudioUrl } from '@/lib/pttRecording';
+import { hasPttAutoDialogueShown, markPttAutoDialogueShown } from '@/lib/pttSessionFlags';
 import { subscribePttSocket } from '@/lib/pttSocket';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
@@ -115,7 +116,7 @@ export function PttInboxListener() {
   }, []);
 
   const handleIncomingMessage = useCallback(
-    async (row: PttMessageRow) => {
+    async (row: PttMessageRow, opts?: { allowAutoOpen?: boolean }) => {
       if (!row?.id || seenMessageIdsRef.current.has(row.id)) {
         return;
       }
@@ -149,28 +150,48 @@ export function PttInboxListener() {
         return;
       }
 
+      // Painel só abre sozinho 1x por sessão (boot). Depois: toast + vibração.
+      const canAuto =
+        opts?.allowAutoOpen === true && !hasPttAutoDialogueShown() && !conversationIdRef.current;
+      if (!canAuto) {
+        return;
+      }
+      markPttAutoDialogueShown();
       await openConversation(convId, { toast: false });
     },
     [openConversation, refreshMessages]
   );
 
-  const drainPending = useCallback(async () => {
-    const opens = await listOpenPttConversations();
-    const withUnread = opens.find((c) => Number(c.unread_count) > 0) ?? opens[0];
-    if (withUnread && !conversationIdRef.current) {
-      const hasUnread = Number(withUnread.unread_count) > 0;
-      if (hasUnread) {
-        pulsePttDeliveryVibration();
-      }
-      await openConversation(withUnread.id, { toast: hasUnread });
-      return;
-    }
+  const drainPending = useCallback(
+    async (opts?: { allowAutoOpen?: boolean }) => {
+      const allowAuto = opts?.allowAutoOpen === true && !hasPttAutoDialogueShown();
 
-    const rows = await listPendingPttMessages();
-    for (const row of rows) {
-      await handleIncomingMessage(row);
-    }
-  }, [handleIncomingMessage, openConversation]);
+      const opens = await listOpenPttConversations();
+      const withUnread = opens.find((c) => Number(c.unread_count) > 0) ?? opens[0] ?? null;
+
+      if (conversationIdRef.current) {
+        await refreshMessages(conversationIdRef.current);
+        return;
+      }
+
+      if (allowAuto && withUnread) {
+        const hasUnread = Number(withUnread.unread_count) > 0;
+        if (hasUnread) {
+          pulsePttDeliveryVibration();
+        }
+        markPttAutoDialogueShown();
+        await openConversation(withUnread.id, { toast: hasUnread });
+        return;
+      }
+
+      // Sem auto-abrir: só processa pendentes (toast/vibração), sem forçar modal.
+      const rows = await listPendingPttMessages();
+      for (const row of rows) {
+        await handleIncomingMessage(row, { allowAutoOpen: false });
+      }
+    },
+    [handleIncomingMessage, openConversation, refreshMessages]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -195,7 +216,9 @@ export function PttInboxListener() {
         /* ignore */
       }
 
-      await drainPending();
+      // Única tentativa automática: no primeiro boot da sessão (mesmo sem conversa).
+      await drainPending({ allowAutoOpen: true });
+      markPttAutoDialogueShown();
 
       msgChannel = supabase
         .channel(`ptt-dialogue-msg-${id}`)
@@ -208,7 +231,7 @@ export function PttInboxListener() {
             filter: `recipient_profile_id=eq.${id}`,
           },
           (payload) => {
-            void handleIncomingMessage(payload.new as PttMessageRow);
+            void handleIncomingMessage(payload.new as PttMessageRow, { allowAutoOpen: false });
           }
         )
         .subscribe();
@@ -252,12 +275,12 @@ export function PttInboxListener() {
           typeof (payload as { conversation_id?: string }).conversation_id === 'string'
             ? (payload as { conversation_id: string }).conversation_id
             : undefined;
-        if (convId) {
-          void openConversation(convId);
+        if (convId && conversationIdRef.current === convId) {
+          void refreshMessages(convId);
           return;
         }
-        if (msgId) {
-          void drainPending();
+        if (msgId || convId) {
+          void drainPending({ allowAutoOpen: false });
         }
       });
     };
@@ -267,16 +290,18 @@ export function PttInboxListener() {
     const onOpenEvent = (event: Event) => {
       const detail = (event as CustomEvent<PttOpenConversationDetail>).detail;
       if (detail?.conversationId) {
+        // Pedido explícito do usuário (retomar / enviar) — sempre abre.
         void openConversation(detail.conversationId);
       }
     };
 
     const onVisible = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        // Troca de tela / volta ao app: nunca reabre o modal sozinho.
         if (conversationIdRef.current) {
           void refreshMessages(conversationIdRef.current);
         } else {
-          void drainPending();
+          void drainPending({ allowAutoOpen: false });
         }
       }
     };

@@ -225,6 +225,7 @@ begin
   where c.tenant_id = v_tenant
     and c.status = 'open'
     and c.initiator_profile_id = v_sender
+    and c.peer_profile_id <> v_sender
   order by c.last_message_at desc
   limit 1;
 

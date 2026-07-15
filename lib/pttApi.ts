@@ -453,6 +453,45 @@ export async function replyPttConversation(input: {
   };
 }
 
+/**
+ * Ao escolher um contato:
+ * - se já há conversa aberta com ele → retoma
+ * - se há outras conversas abertas → encerra (apaga o canal anterior)
+ */
+export async function preparePttConversationForPeer(peerProfileId: string): Promise<
+  | { ok: true; mode: 'resume'; conversationId: string }
+  | { ok: true; mode: 'new' }
+  | { ok: false; message: string }
+> {
+  const peerId = peerProfileId.trim();
+  if (!peerId) {
+    return { ok: false, message: 'Contato inválido.' };
+  }
+
+  const opens = await listOpenPttConversations();
+  const withPeer = opens.find(
+    (c) =>
+      c.other_profile_id === peerId
+      || c.peer_profile_id === peerId
+      || c.initiator_profile_id === peerId
+  );
+
+  for (const open of opens) {
+    if (withPeer && open.id === withPeer.id) {
+      continue;
+    }
+    const ended = await endPttConversation(open.id);
+    if (!ended.ok) {
+      return { ok: false, message: ended.message };
+    }
+  }
+
+  if (withPeer?.id) {
+    return { ok: true, mode: 'resume', conversationId: withPeer.id };
+  }
+  return { ok: true, mode: 'new' };
+}
+
 export async function endPttConversation(
   conversationId: string
 ): Promise<{ ok: true } | { ok: false; message: string }> {

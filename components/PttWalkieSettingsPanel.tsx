@@ -1,5 +1,11 @@
 import { PttWalkieTalkieButton } from '@/components/PttWalkieTalkieButton';
-import { canUsePttWalkie, listPttDirectoryPeers, type PttDirectoryPeer } from '@/lib/pttApi';
+import {
+  canUsePttWalkie,
+  listPttDirectoryPeers,
+  preparePttConversationForPeer,
+  type PttDirectoryPeer,
+} from '@/lib/pttApi';
+import { requestOpenPttConversation } from '@/lib/pttEvents';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
@@ -189,8 +195,31 @@ export function PttWalkieSettingsPanel({
                 key={item.profile_id}
                 style={styles.row}
                 onPress={() => {
-                  setPeer(item);
-                  setStep('talk');
+                  void (async () => {
+                    const prep = await preparePttConversationForPeer(item.profile_id);
+                    if (!prep.ok) {
+                      Toast.show({
+                        type: 'error',
+                        text1: 'Walkie-Talkie',
+                        text2: prep.message,
+                        visibilityTime: 5000,
+                      });
+                      return;
+                    }
+                    if (prep.mode === 'resume') {
+                      requestOpenPttConversation(prep.conversationId, { force: true });
+                      Toast.show({
+                        type: 'info',
+                        text1: 'Conversa retomada',
+                        text2: item.full_name,
+                        visibilityTime: 2800,
+                      });
+                      onBack();
+                      return;
+                    }
+                    setPeer(item);
+                    setStep('talk');
+                  })();
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={`Falar com ${item.full_name}`}
