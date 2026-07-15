@@ -17,6 +17,7 @@ as $$
     when 'orquestrador_evento' then 52
     when 'tesoureiro' then 55
     when 'pastoral' then 60
+    when 'gestor_controle_acesso' then 65
     when 'super_admin' then 70
     else 100
   end;

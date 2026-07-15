@@ -1,0 +1,17 @@
+---
+description: Blindagem do Super Admin para Gestor em Controle de Acesso
+alwaysApply: true
+---
+
+# Gestor em Controle de Acesso — segurança
+
+Sempre que o código envolver **gestão de papéis**, **listagem de usuários**, **logs de acesso** ou **matriz de grants**:
+
+1. Priorize a **camada SQL** (`assert_gestor_super_admin_shield`, `profile_visible_to_access_actor`, RPCs em `scripts/access-control-gestor-controle-acesso.sql`).
+2. O Gestor (`gestor_controle_acesso`) **nunca** lista, visualiza nem edita:
+   - perfil/papel `super_admin`
+   - registros de acesso do Super Administrador
+   - PIN/senha (`access_pin` / password)
+3. Inclua no código o comentário:
+   `// Proteção aplicada: Gestor não tem visibilidade do Super Administrador`
+4. Não crie rotas Express/`authMiddleware` para isto — o app usa RPCs SECURITY DEFINER + headers de sessão. Replique o middleware no SQL e filtre no cliente (`lib/gestorControleAcessoSecurity.ts`) como defesa em profundidade.

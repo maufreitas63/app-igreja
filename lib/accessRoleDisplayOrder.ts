@@ -13,6 +13,7 @@ export const ACCESS_ROLE_DISPLAY_ORDER = [
   'orquestrador_evento',
   'tesoureiro',
   'pastoral',
+  'gestor_controle_acesso',
   'super_admin',
 ] as const;
 

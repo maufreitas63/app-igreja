@@ -23,23 +23,50 @@ import {
   resolveEffectiveProfileId,
   resolveRealSessionProfileId,
 } from '@/lib/sessionProfile';
+import {
+  isColumnResourceAllowedForAccessActor,
+  isRoleVisibleToAccessActor,
+  isSuperAdminRoleCode,
+} from '@/lib/gestorControleAcessoSecurity';
 
 export { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
+export {
+  isColumnResourceAllowedForAccessActor,
+  isRoleVisibleToAccessActor,
+  isSuperAdminRoleCode,
+};
 
 export const ACCESS_CONTROL_PANEL_RESOURCE = 'maintenance.card.access_control';
 
 export const MAINTENANCE_ACCESS_CONTROL_SQL_HINT =
-  'Execute no Supabase: scripts/access-control-admin-rpc.sql; se faltar Congregado/Visitantes, scripts/access-control-congregado-visitantes-roles.sql; se visitantes não forem atribuídos automaticamente, scripts/access-control-visitantes-auto-assign.sql; se faltar Card Financeiro ou Relatórios financeiros em Papéis, scripts/financial-module-access.sql; se faltar papel Tesoureiro, scripts/access-control-tesoureiro-role.sql; se Equipe Pastoral não tiver acesso de Membro, scripts/access-control-pastoral-role-grants.sql; para ocultar escalas TstMax em Papéis, scripts/access-control-remove-tstmax-scale-resources.sql';
+  'Execute no Supabase: scripts/access-control-admin-rpc.sql; para o papel Gestor em Controle de Acesso + blindagem do Super Admin, scripts/access-control-gestor-controle-acesso.sql; se faltar Congregado/Visitantes, scripts/access-control-congregado-visitantes-roles.sql; se visitantes não forem atribuídos automaticamente, scripts/access-control-visitantes-auto-assign.sql; se faltar Card Financeiro ou Relatórios financeiros em Papéis, scripts/financial-module-access.sql; se faltar papel Tesoureiro, scripts/access-control-tesoureiro-role.sql; se Equipe Pastoral não tiver acesso de Membro, scripts/access-control-pastoral-role-grants.sql; para ocultar escalas TstMax em Papéis, scripts/access-control-remove-tstmax-scale-resources.sql';
 
-export const EXPECTED_ACCESS_ROLE_CODES = ['congregado', 'visitantes'] as const;
+export const EXPECTED_ACCESS_ROLE_CODES = ['congregado', 'visitantes', 'gestor_controle_acesso'] as const;
 
 /** Papéis de sistema usados só como fallback ACL — não aparecem na atribuição de perfil. */
 export const ACCESS_ROLES_NOT_ASSIGNABLE_TO_PROFILE = ['visitantes'] as const;
 
-export const isAssignableProfileRole = (roleCode: string) =>
-  !ACCESS_ROLES_NOT_ASSIGNABLE_TO_PROFILE.includes(
-    roleCode.trim().toLowerCase() as (typeof ACCESS_ROLES_NOT_ASSIGNABLE_TO_PROFILE)[number]
-  );
+export const isAssignableProfileRole = (
+  roleCode: string,
+  options?: { actorIsSuperAdmin?: boolean }
+) => {
+  const normalized = roleCode.trim().toLowerCase();
+
+  if (
+    ACCESS_ROLES_NOT_ASSIGNABLE_TO_PROFILE.includes(
+      normalized as (typeof ACCESS_ROLES_NOT_ASSIGNABLE_TO_PROFILE)[number]
+    )
+  ) {
+    return false;
+  }
+
+  // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+  if (options?.actorIsSuperAdmin === false && isSuperAdminRoleCode(normalized)) {
+    return false;
+  }
+
+  return true;
+};
 
 export const MAINTENANCE_ACCESS_CONTROL_RPC_MISSING = 'MAINTENANCE_ACCESS_CONTROL_RPC_MISSING';
 
@@ -265,8 +292,7 @@ const parseProfileRoleRows = (data: unknown): ProfileRoleAssignment[] => {
         assigned: record.assigned === true,
       } satisfies ProfileRoleAssignment;
     })
-    .filter((row): row is ProfileRoleAssignment => row !== null)
-    .filter((row) => isAssignableProfileRole(row.roleCode));
+    .filter((row): row is ProfileRoleAssignment => row !== null);
 
   return sortRowsByRoleCode(rows);
 };
@@ -340,7 +366,15 @@ export async function listAccessRolesAdmin() {
     throw new Error('Sessão inválida. Saia e entre novamente.');
   }
 
-  return callAdminRpc('listar_access_roles_admin', { p_actor_profile_id: actorProfileId }, parseRoleRows);
+  const rows = await callAdminRpc(
+    'listar_access_roles_admin',
+    { p_actor_profile_id: actorProfileId },
+    parseRoleRows
+  );
+  const actorIsSuperAdmin = await checkSessionIsSuperAdmin();
+
+  // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+  return rows.filter((row) => isRoleVisibleToAccessActor(row.code, actorIsSuperAdmin));
 }
 
 export async function searchProfilesForAccessAdmin(query: string, limit = 20) {
@@ -378,11 +412,15 @@ export async function listProfileRoleAssignments(targetProfileId: string) {
     throw new Error('Sessão inválida. Saia e entre novamente.');
   }
 
-  return callAdminRpc(
+  const rows = await callAdminRpc(
     'listar_papeis_perfil_access_admin',
     { p_actor_profile_id: actorProfileId, p_target_profile_id: targetProfileId },
     parseProfileRoleRows
   );
+  const actorIsSuperAdmin = await checkSessionIsSuperAdmin();
+
+  // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+  return rows.filter((row) => isAssignableProfileRole(row.roleCode, { actorIsSuperAdmin }));
 }
 
 export async function assignProfileRole(targetProfileId: string, roleCode: string) {
@@ -392,10 +430,15 @@ export async function assignProfileRole(targetProfileId: string, roleCode: strin
     return { success: false as const, message: 'Sessão inválida. Saia e entre novamente.' };
   }
 
-  if (!isAssignableProfileRole(roleCode)) {
+  const actorIsSuperAdmin = await checkSessionIsSuperAdmin();
+
+  if (!isAssignableProfileRole(roleCode, { actorIsSuperAdmin })) {
     return {
       success: false as const,
-      message: 'Este papel é automático: perfis sem papéis são tratados como visitante.',
+      // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+      message: isSuperAdminRoleCode(roleCode)
+        ? '403 Forbidden: Gestor não pode atribuir o papel Super Administrador.'
+        : 'Este papel é automático: perfis sem papéis são tratados como visitante.',
     };
   }
 
@@ -483,7 +526,14 @@ export async function listRoleGrantsAdmin(roleCode: string, resourceType: Access
     throw new Error('Sessão inválida. Saia e entre novamente.');
   }
 
-  return callAdminRpc(
+  const actorIsSuperAdmin = await checkSessionIsSuperAdmin();
+
+  // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+  if (!isRoleVisibleToAccessActor(roleCode, actorIsSuperAdmin)) {
+    throw new Error('403 Forbidden: Gestor não pode gerenciar o papel Super Administrador.');
+  }
+
+  const rows = await callAdminRpc(
     'listar_grants_recurso_papel_admin',
     {
       p_actor_profile_id: actorProfileId,
@@ -491,6 +541,14 @@ export async function listRoleGrantsAdmin(roleCode: string, resourceType: Access
       p_resource_type: resourceType,
     },
     parseGrantRows
+  );
+
+  if (resourceType !== 'column') {
+    return rows;
+  }
+
+  return rows.filter((row) =>
+    isColumnResourceAllowedForAccessActor(row.resourceKey, actorIsSuperAdmin)
   );
 }
 
@@ -540,6 +598,26 @@ export async function saveRoleGrantAdmin(
 
   if (!actorProfileId) {
     return { success: false as const, message: 'Sessão inválida. Saia e entre novamente.' };
+  }
+
+  const actorIsSuperAdmin = await checkSessionIsSuperAdmin();
+
+  // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+  if (!isRoleVisibleToAccessActor(roleCode, actorIsSuperAdmin)) {
+    return {
+      success: false as const,
+      message: '403 Forbidden: Gestor não pode alterar permissões do Super Administrador.',
+    };
+  }
+
+  if (
+    resourceType === 'column'
+    && !isColumnResourceAllowedForAccessActor(resourceKey, actorIsSuperAdmin)
+  ) {
+    return {
+      success: false as const,
+      message: '403 Forbidden: Gestor não pode gerenciar PIN/senha.',
+    };
   }
 
   const { data, error } = await supabase.rpc('salvar_grant_papel_admin', {
