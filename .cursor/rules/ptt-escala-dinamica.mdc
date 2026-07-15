@@ -16,7 +16,7 @@ Ao implementar ou alterar o PTT (Push-to-Talk / Walkie-Talkie), seguir este spec
 - Escala de origem (heurística existente `isParkingWelcomeScale`):
   - código `acolhimento_estacionamento` / nome com acolhimento+estacionamento
   - ou `vigilancia_estacionamento`
-- Comportamento do botão: **pressionar e segurar** = grava áudio; **soltar** = para, envia à API STT e dispara o pacote ao servidor.
+- Comportamento do botão (2 etapas, touch-friendly): **Gravar** inicia o áudio; **Enviar** (segundo toque) para, transcreve e envia. Cancelar aborta a gravação.
 
 ## Roteamento (obrigatório)
 
