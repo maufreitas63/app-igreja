@@ -106,31 +106,18 @@ export default function BillingScreen() {
 
   return (
     <View style={[styles.root, { paddingTop: Math.max(insets.top, 12) }]}>
-      <View style={styles.topRow}>
-        <View style={styles.topLeft}>
-          {isSuperAdmin ? (
-            <Pressable
-              onPress={() => router.replace('/(tabs)')}
-              style={styles.backBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Voltar ao início"
-            >
-              <Text style={styles.backLabel}>Voltar</Text>
-            </Pressable>
-          ) : null}
+      {isSuperAdmin ? (
+        <View style={styles.topRow}>
           <Pressable
-            onPress={() => router.replace('/igrejas')}
+            onPress={() => router.replace('/(tabs)')}
             style={styles.backBtn}
             accessibilityRole="button"
-            accessibilityLabel="Trocar igreja"
+            accessibilityLabel="Voltar ao início"
           >
-            <Text style={styles.backLabel}>Trocar igreja</Text>
+            <Text style={styles.backLabel}>Voltar</Text>
           </Pressable>
         </View>
-        <Pressable onPress={() => void refresh()} style={styles.backBtn}>
-          <Text style={styles.backLabel}>Atualizar</Text>
-        </Pressable>
-      </View>
+      ) : null}
 
       <BillingClass
         plans={plans}
@@ -153,15 +140,9 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingBottom: 4,
-  },
-  topLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
   backBtn: {
     paddingVertical: 8,
