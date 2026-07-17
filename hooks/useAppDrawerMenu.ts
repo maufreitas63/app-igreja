@@ -54,7 +54,7 @@ function isDrawerModuleEnabled(
     return true;
   }
 
-  if (moduleKey === 'menu_igrejas') {
+  if (moduleKey === 'menu_igrejas' || moduleKey === 'auditor') {
     return context.isSuperAdmin;
   }
 
