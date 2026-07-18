@@ -775,8 +775,26 @@ export default function IndexScreen() {
       return 'Toque no botão acima para receber seu código por e-mail.';
     }
 
-    return 'Digite os 4 números da sua senha.';
+    // Texto padrão fica no subtítulo abaixo das caixas OTP (`getLoginSubtitle`).
+    return null;
   };
+
+  const showLoginSubtitleAbove =
+    loginStep === 1
+    || isTotemLoginMode
+    || isCheckingStoredPin
+    || passwordRecoveredBanner
+    || showForgotPasswordHelp
+    || isLikelyFirstAccess;
+
+  const showDefaultPinSubtitleBelow =
+    loginStep === 2
+    && !isTotemLoginMode
+    && !isCheckingStoredPin
+    && !passwordRecoveredBanner
+    && !showForgotPasswordHelp
+    && !isLikelyFirstAccess
+    && isPinInputEditable;
 
   const renderStepIndicator = () => (
     <View pointerEvents="none" style={styles.stepIndicatorRow}>
@@ -901,7 +919,9 @@ export default function IndexScreen() {
             </View>
           </View>
           <ReadOnlyText style={styles.title}>{getLoginTitle()}</ReadOnlyText>
-          <ReadOnlyText style={styles.subtitle}>{getLoginSubtitle()}</ReadOnlyText>
+          {showLoginSubtitleAbove ? (
+            <ReadOnlyText style={styles.subtitle}>{getLoginSubtitle()}</ReadOnlyText>
+          ) : null}
 
           {!isTotemLoginMode ? renderStepIndicator() : null}
 
@@ -1067,11 +1087,17 @@ export default function IndexScreen() {
                     <ReadOnlyText style={styles.readOnlyInputText}>Aguardando código</ReadOnlyText>
                   </View>
                 )}
-                <ReadOnlyText style={styles.pinHint}>
-                  {isTotemLoginMode
-                    ? 'Este aparelho não usa cadastro de membro.'
-                    : getMemberPinHint()}
-                </ReadOnlyText>
+                {showDefaultPinSubtitleBelow ? (
+                  <ReadOnlyText style={styles.pinHintBelowOtp}>
+                    Digite sua senha de 4 dígitos para continuar.
+                  </ReadOnlyText>
+                ) : isTotemLoginMode ? (
+                  <ReadOnlyText style={styles.pinHint}>
+                    Este aparelho não usa cadastro de membro.
+                  </ReadOnlyText>
+                ) : getMemberPinHint() ? (
+                  <ReadOnlyText style={styles.pinHint}>{getMemberPinHint()}</ReadOnlyText>
+                ) : null}
                 {!isTotemLoginMode && showForgotPasswordLink ? (
                   <TouchableOpacity
                     accessibilityLabel="Esqueci minha senha"
@@ -1280,6 +1306,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
     lineHeight: 18,
     opacity: 0.85,
+  },
+  pinHintBelowOtp: {
+    color: LOGIN_ACCENT,
+    fontSize: 16,
+    marginTop: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+    opacity: 0.95,
   },
   loginLoader: {
     marginTop: 12,
