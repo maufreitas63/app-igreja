@@ -143,11 +143,6 @@ export default function IndexScreen() {
     loginStep === 2
     && (isTotemLoginMode
       || (hasStoredAccessPin !== null && (!needsEmailBeforePin || pinDeliveryUnlocked)));
-  const canPressEntrar =
-    loginStep === 2
-    && isValidAccessPin(accessPin)
-    && !isLoading
-    && (isTotemLoginMode || canAttemptMemberPinLogin);
   const isEmailPinButtonDisabled = isSendingPin;
   const isVerifyingPinRef = useRef(false);
   const pinInputRef = useRef<TextInput>(null);
@@ -700,15 +695,6 @@ export default function IndexScreen() {
     submitAccess,
   ]);
 
-  const handleAccess = () => {
-    if (!isValidAccessPin(accessPin)) {
-      Alert.alert('Atenção', 'Digite a senha de acesso de 4 dígitos.');
-      return;
-    }
-
-    void submitAccess(accessPin);
-  };
-
   const isLikelyFirstAccess =
     !isTotemLoginMode
     && loginStep === 2
@@ -1030,25 +1016,47 @@ export default function IndexScreen() {
                       : '2. Sua senha'}
                 </ReadOnlyText>
                 {isPinInputEditable ? (
-                  <TextInput
-                    ref={pinInputRef}
-                    style={[styles.input, styles.pinEditableInput, styles.pinInput, styles.pinInputFullWidth]}
-                    placeholder="****"
-                    placeholderTextColor={LOGIN_PLACEHOLDER}
-                    value={accessPin}
-                    onChangeText={handlePinChange}
-                    autoComplete="off"
-                    autoCorrect={false}
-                    importantForAutofill="no"
-                    contextMenuHidden
-                    disableFullscreenUI
-                    keyboardType="number-pad"
-                    maxLength={ACCESS_PIN_LENGTH}
-                    secureTextEntry
-                    spellCheck={false}
-                    textAlign="center"
-                    textContentType="none"
-                  />
+                  <View style={styles.otpRow}>
+                    {Array.from({ length: ACCESS_PIN_LENGTH }).map((_, index) => {
+                      const isFilled = index < accessPin.length;
+                      const isActive =
+                        index === Math.min(accessPin.length, ACCESS_PIN_LENGTH - 1)
+                        && accessPin.length < ACCESS_PIN_LENGTH;
+
+                      return (
+                        <View
+                          key={index}
+                          style={[
+                            styles.otpBox,
+                            isFilled && styles.otpBoxFilled,
+                            isActive && styles.otpBoxActive,
+                          ]}
+                        >
+                          <ReadOnlyText style={styles.otpDigit}>
+                            {isFilled ? '•' : ''}
+                          </ReadOnlyText>
+                        </View>
+                      );
+                    })}
+                    <TextInput
+                      ref={pinInputRef}
+                      accessibilityLabel="Senha de 4 dígitos"
+                      style={styles.otpHiddenInput}
+                      value={accessPin}
+                      onChangeText={handlePinChange}
+                      autoComplete="off"
+                      autoCorrect={false}
+                      importantForAutofill="no"
+                      contextMenuHidden
+                      disableFullscreenUI
+                      caretHidden
+                      keyboardType="number-pad"
+                      maxLength={ACCESS_PIN_LENGTH}
+                      secureTextEntry
+                      spellCheck={false}
+                      textContentType="none"
+                    />
+                  </View>
                 ) : (
                   <View
                     accessibilityLabel="Senha bloqueada até receber o código por e-mail"
@@ -1095,24 +1103,10 @@ export default function IndexScreen() {
                     )}
                   </TouchableOpacity>
                 ) : null}
-                {!isTotemLoginMode && isLoading ? (
+                {isLoading ? (
                   <ActivityIndicator color={LOGIN_ACCENT} style={styles.loginLoader} />
                 ) : null}
               </View>
-
-              <TouchableOpacity
-                style={[styles.btnPrimary, !canPressEntrar && styles.btnPrimaryDisabled]}
-                onPress={handleAccess}
-                disabled={!canPressEntrar}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color={LOGIN_SUBMIT_TEXT} />
-                ) : (
-                  <Text style={styles.btnText}>
-                    {isTotemLoginMode ? 'Abrir tela do totem' : 'Acessar'}
-                  </Text>
-                )}
-              </TouchableOpacity>
 
               {!isTotemLoginMode && isLikelyFirstAccess ? (
                 <ReadOnlyText style={styles.helpText}>
@@ -1206,11 +1200,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: LOGIN_SOFT_BORDER,
   },
-  pinEditableInput: {
-    backgroundColor: LOGIN_SURFACE,
-    borderWidth: 1,
-    borderColor: LOGIN_INPUT_BORDER,
-  },
   pinInput: {
     letterSpacing: 8,
     fontSize: 22,
@@ -1221,6 +1210,53 @@ const styles = StyleSheet.create({
   },
   pinInputFullWidth: {
     width: '100%',
+  },
+  otpRow: {
+    position: 'relative',
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 14,
+  },
+  otpBox: {
+    width: 58,
+    height: 66,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: LOGIN_INPUT_BORDER,
+    backgroundColor: LOGIN_SURFACE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  otpBoxFilled: {
+    borderColor: LOGIN_ACCENT,
+    backgroundColor: 'rgba(58, 150, 221, 0.08)',
+  },
+  otpBoxActive: {
+    borderWidth: 2,
+    borderColor: LOGIN_SUBMIT_BG,
+  },
+  otpDigit: {
+    color: LOGIN_ACCENT,
+    fontSize: 30,
+    fontWeight: '800',
+    lineHeight: 36,
+  },
+  otpHiddenInput: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    opacity: 0.011,
+    color: 'transparent',
+    fontSize: 1,
+    textAlign: 'center',
+    ...(Platform.OS === 'web'
+      ? { caretColor: 'transparent' as const, cursor: 'pointer' as const }
+      : {}),
   },
   pinLockedPanel: {
     alignItems: 'center',
