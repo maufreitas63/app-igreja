@@ -1,11 +1,11 @@
-import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_ICON, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { traceClick } from '@/lib/devClickTrace';
+import { cn } from '@/lib/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import {
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -118,7 +118,10 @@ export function AppDrawerSettings({
   const renderItem = (item: SettingsItem, pinned = false) => (
     <TouchableOpacity
       key={item.id}
-      style={[styles.item, pinned && styles.itemPinned]}
+      className={cn(
+        'min-h-14 flex-row items-center gap-3 border-b border-minimal-divider py-2.5',
+        pinned && 'border-b-0',
+      )}
       onPress={() => {
         traceClick('drawer-settings', 'item-press', { id: item.id, label: item.label });
         item.onPress();
@@ -126,34 +129,39 @@ export function AppDrawerSettings({
       accessibilityRole="button"
       accessibilityLabel={item.label}
     >
-      <View style={styles.itemIconWrap}>
+      <View className="w-7 items-center">
         <FontAwesome name={item.icon} size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
       </View>
-      <View style={styles.itemCopy}>
-        <Text style={styles.itemLabel}>{item.label}</Text>
-        {item.hint ? <Text style={styles.itemHint}>{item.hint}</Text> : null}
+      <View className="min-w-0 flex-1 gap-0.5">
+        <Text className="text-minimal-menu font-semibold text-minimal-text">{item.label}</Text>
+        {item.hint ? (
+          <Text className="text-xs leading-4 text-minimal-muted">{item.hint}</Text>
+        ) : null}
       </View>
       <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.textMuted} />
     </TouchableOpacity>
   );
 
   return (
-    <View style={[styles.panel, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>Configurações</Text>
+    <View
+      className="z-[2] h-full max-w-[320px] flex-col bg-minimal-bg px-4 pt-3"
+      style={{ width: '82%', paddingBottom: Math.max(insets.bottom, 12) }}
+    >
+      <View className="mb-3 flex-row items-center justify-between gap-3">
+        <Text className="flex-1 text-minimal-title text-minimal-text">Configurações</Text>
         <Pressable
           accessibilityLabel="Fechar configurações"
           accessibilityRole="button"
           onPress={onClose}
-          style={styles.closeButton}
+          className="p-1"
         >
           <FontAwesome name="times" size={MINIMAL_ICON.action + 4} color={MINIMAL_UI.icon} />
         </Pressable>
       </View>
 
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        className="min-h-0 flex-1"
+        contentContainerClassName="flex-grow gap-1 pb-2"
         showsVerticalScrollIndicator
         keyboardShouldPersistTaps="handled"
       >
@@ -161,81 +169,10 @@ export function AppDrawerSettings({
       </ScrollView>
 
       {igrejasItem ? (
-        <View style={styles.pinnedFooter}>{renderItem(igrejasItem, true)}</View>
+        <View className="flex-shrink-0 border-t border-minimal-divider bg-minimal-bg pt-1">
+          {renderItem(igrejasItem, true)}
+        </View>
       ) : null}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  panel: {
-    width: '82%',
-    maxWidth: 320,
-    height: '100%',
-    backgroundColor: MINIMAL_UI.background,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    zIndex: 2,
-    flexDirection: 'column',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 12,
-  },
-  title: {
-    ...MINIMAL_TYPO.screenTitle,
-    flex: 1,
-  },
-  closeButton: {
-    padding: 4,
-  },
-  scroll: {
-    flex: 1,
-    minHeight: 0,
-  },
-  scrollContent: {
-    paddingBottom: 8,
-    gap: 4,
-    flexGrow: 1,
-  },
-  pinnedFooter: {
-    flexShrink: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: MINIMAL_UI.divider,
-    paddingTop: 4,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 56,
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: MINIMAL_UI.divider,
-  },
-  itemPinned: {
-    borderBottomWidth: 0,
-  },
-  itemIconWrap: {
-    width: 28,
-    alignItems: 'center',
-  },
-  itemCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  itemLabel: {
-    ...MINIMAL_TYPO.menuItem,
-    fontWeight: '600',
-  },
-  itemHint: {
-    fontSize: 12,
-    color: MINIMAL_UI.textMuted,
-    lineHeight: 16,
-  },
-});

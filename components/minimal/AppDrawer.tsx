@@ -3,7 +3,8 @@ import { useAppDrawerMenu, type AppDrawerMenuItemResolved } from '@/hooks/useApp
 import { navigateDrawerMenuItem, isDrawerMenuPlaceholder } from '@/lib/appDrawerMenu';
 import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { traceClick } from '@/lib/devClickTrace';
-import { MINIMAL_ICON, MINIMAL_TOP_CHROME_MIN_HEIGHT, MINIMAL_UI, MINIMAL_TYPO } from '@/lib/minimalUiTheme';
+import { MINIMAL_ICON, MINIMAL_TOP_CHROME_MIN_HEIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { cn } from '@/lib/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -12,7 +13,6 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -177,15 +177,18 @@ export function AppDrawer() {
       visible={isOpen}
       onRequestClose={settingsOpen ? handleSettingsRequestClose : closeDrawer}
     >
-      <View style={styles.overlay}>
-        <View style={[styles.chromeGap, { height: panelTopOffset }]} pointerEvents="none" />
-        <View style={styles.sheet}>
+      <View className="flex-1 flex-col">
+        <View className="w-full bg-transparent" style={{ height: panelTopOffset }} pointerEvents="none" />
+        <View className="min-h-0 flex-1 flex-row">
           {settingsOpen ? (
             renderSettingsBranch()
           ) : (
-            <View style={styles.panel}>
-              <View style={styles.headerRow}>
-                <Text style={styles.title}>Menu</Text>
+            <View
+              className="z-[2] max-h-full max-w-[320px] flex-1 flex-col bg-minimal-bg px-4 pt-3"
+              style={{ width: '82%' }}
+            >
+              <View className="mb-3 flex-row items-center justify-between gap-3">
+                <Text className="flex-1 text-minimal-title text-minimal-text">Menu</Text>
                 <Pressable
                   accessibilityLabel="Abrir configurações"
                   accessibilityRole="button"
@@ -194,31 +197,39 @@ export function AppDrawer() {
                     setSettingsPanel('root');
                     setSettingsOpen(true);
                   }}
-                  style={styles.settingsButton}
+                  className="p-1"
                 >
                   <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
                 </Pressable>
               </View>
               {loading ? (
-                <View style={styles.loaderWrap}>
+                <View className="flex-1 items-center justify-center">
                   <ActivityIndicator color={MINIMAL_UI.icon} />
                 </View>
               ) : (
                 <ScrollView
-                  style={styles.scroll}
-                  contentContainerStyle={styles.scrollContent}
+                  className="flex-1"
+                  contentContainerClassName="pb-2"
                   showsVerticalScrollIndicator
                   keyboardShouldPersistTaps="handled"
                 >
                   {visibleItems.map((item) => (
                     <TouchableOpacity
                       key={item.moduleKey}
-                      style={[styles.item, item.pendingRoute && styles.itemPendingRoute]}
+                      className={cn(
+                        'min-h-12 justify-center py-3',
+                        item.pendingRoute && 'opacity-70',
+                      )}
                       onPress={() => handlePress(item)}
                       disabled={item.pendingRoute}
                       accessibilityState={{ disabled: item.pendingRoute }}
                     >
-                      <Text style={[styles.itemLabel, item.pendingRoute && styles.itemLabelPendingRoute]}>
+                      <Text
+                        className={cn(
+                          'text-left text-minimal-menu text-minimal-text',
+                          item.pendingRoute && 'text-minimal-muted',
+                        )}
+                      >
                         {item.label}
                       </Text>
                     </TouchableOpacity>
@@ -228,80 +239,13 @@ export function AppDrawer() {
               <MinimalExitBar variant="drawer" />
             </View>
           )}
-          <Pressable style={styles.backdrop} onPress={handleBackdropPress} accessibilityLabel="Fechar menu" />
+          <Pressable
+            className="flex-1 bg-black/25"
+            onPress={handleBackdropPress}
+            accessibilityLabel="Fechar menu"
+          />
         </View>
       </View>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    flexDirection: 'column',
-  },
-  chromeGap: {
-    width: '100%',
-    backgroundColor: 'transparent',
-  },
-  sheet: {
-    flex: 1,
-    flexDirection: 'row',
-    minHeight: 0,
-  },
-  panel: {
-    width: '82%',
-    maxWidth: 320,
-    backgroundColor: MINIMAL_UI.background,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    zIndex: 2,
-    flex: 1,
-    maxHeight: '100%',
-    flexDirection: 'column',
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-  },
-  title: {
-    ...MINIMAL_TYPO.screenTitle,
-    flex: 1,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 12,
-  },
-  settingsButton: {
-    padding: 4,
-  },
-  loaderWrap: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 8,
-  },
-  item: {
-    minHeight: 48,
-    justifyContent: 'center',
-    paddingVertical: 12,
-  },
-  itemLabel: {
-    ...MINIMAL_TYPO.menuItem,
-    textAlign: 'left',
-  },
-  itemPendingRoute: {
-    opacity: 0.72,
-  },
-  itemLabelPendingRoute: {
-    color: MINIMAL_UI.textMuted,
-  },
-});

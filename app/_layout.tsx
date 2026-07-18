@@ -18,7 +18,7 @@ import { installWebTextSelectionGuard, WEB_NON_SELECTABLE_VIEW_STYLES } from '@/
 import { useFonts } from 'expo-font';
 import Toast from 'react-native-toast-message';
 import { useEffect } from 'react';
-import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, View } from 'react-native';
 
 installExecutionErrorClipboard();
 
@@ -29,7 +29,7 @@ export default function RootLayout() {
 
   if (!iconFontsLoaded) {
     return (
-      <View style={styles.fontLoader}>
+      <View className="flex-1 items-center justify-center bg-slate-900">
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
@@ -37,38 +37,18 @@ export default function RootLayout() {
 
   return (
     <GhostModeProvider>
-      <View style={styles.root}>
+      <View className="flex-1" style={WEB_NON_SELECTABLE_VIEW_STYLES}>
         <AppBackHandler />
         <AppShell />
         <GhostModeBanner />
         <ConfirmDialogHost />
-        <View style={styles.toastHost} pointerEvents="box-none">
+        <View
+          className="web:fixed web:inset-x-0 web:top-0 web:z-[999999]"
+          pointerEvents="box-none"
+        >
           <Toast config={appToastConfig} topOffset={Platform.OS === 'web' ? 12 : 48} />
         </View>
       </View>
     </GhostModeProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    ...WEB_NON_SELECTABLE_VIEW_STYLES,
-  },
-  fontLoader: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#0f172a',
-  },
-  toastHost: Platform.select({
-    web: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 999999,
-    },
-    default: {},
-  }),
-});
