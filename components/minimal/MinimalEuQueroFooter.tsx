@@ -7,7 +7,7 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type EuQueroItemProps = {
@@ -23,16 +23,19 @@ function EuQueroItem({ icon, title, subtitle, onPress }: EuQueroItemProps) {
       accessibilityRole="button"
       accessibilityLabel={title}
       onPress={onPress}
-      className="flex-row items-center gap-3.5 rounded-lg px-0 py-2.5 active:bg-minimal-hover hover:bg-minimal-hover"
+      style={({ pressed, hovered }) => [
+        styles.item,
+        (pressed || (Platform.OS === 'web' && hovered)) && styles.itemPressed,
+      ]}
     >
-      <View className="w-10 items-center justify-center">
+      <View style={styles.iconWrap}>
         <FontAwesome name={icon} size={28} color={MINIMAL_UI.accent} />
       </View>
-      <View className="min-w-0 flex-1 gap-0.5">
-        <Text className="text-[15px] font-semibold text-minimal-text">{title}</Text>
-        <Text className="text-[13px] leading-[18px] text-minimal-muted">{subtitle}</Text>
+      <View style={styles.textBlock}>
+        <Text style={styles.itemTitle}>{title}</Text>
+        <Text style={styles.itemSubtitle}>{subtitle}</Text>
       </View>
-      <FontAwesome name="chevron-right" size={16} color={MINIMAL_UI.textMuted} style={{ marginLeft: 4 }} />
+      <FontAwesome name="chevron-right" size={16} color={MINIMAL_UI.textMuted} style={styles.chevron} />
     </Pressable>
   );
 }
@@ -66,12 +69,9 @@ export function MinimalEuQueroFooter() {
   };
 
   return (
-    <View
-      className="w-full gap-3 self-stretch bg-minimal-bg pt-2"
-      style={{ paddingBottom: Math.max(insets.bottom, 8) }}
-    >
-      <Text className="text-lg font-bold italic text-minimal-text">Eu quero…</Text>
-      <View className="gap-1">
+    <View style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+      <Text style={styles.heading}>Eu quero…</Text>
+      <View style={styles.list}>
         <EuQueroItem
           icon="money"
           title="Contribuir com meu Dízimo ou Oferta"
@@ -88,3 +88,56 @@ export function MinimalEuQueroFooter() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: {
+    gap: 12,
+    paddingTop: 8,
+    backgroundColor: MINIMAL_UI.background,
+    width: '100%',
+    alignSelf: 'stretch',
+  },
+  heading: {
+    fontSize: 18,
+    fontWeight: '700',
+    fontStyle: 'italic',
+    color: MINIMAL_UI.text,
+  },
+  list: {
+    gap: 4,
+  },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 0,
+    borderRadius: 8,
+  },
+  itemPressed: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  iconWrap: {
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textBlock: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  itemTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: MINIMAL_UI.text,
+  },
+  itemSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: MINIMAL_UI.textMuted,
+  },
+  chevron: {
+    marginLeft: 4,
+  },
+});

@@ -1,7 +1,7 @@
+import { UI_COLORS, UI_TYPO } from '@/lib/uiTokens';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
-import { cn } from '@/lib/utils';
 import React from 'react';
-import { Text, type StyleProp, type TextStyle } from 'react-native';
+import { StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
 
 type SectionLabelProps = {
   children: string;
@@ -20,16 +20,14 @@ export function SectionLabel({
 }: SectionLabelProps) {
   return (
     <Text
-      className={cn(
-        variant === 'maintenance' &&
-          'mb-1.5 mt-1 text-xs font-bold uppercase tracking-wide text-slate-300',
-        variant === 'vigilance' && 'mb-1 text-[13px] font-bold',
-        variant === 'form' && 'mb-1 text-[13px] font-semibold text-emerald-500',
-        spaced && 'mt-1',
-        tight && 'mb-0.5 mt-0'
-      )}
       style={[
-        variant === 'vigilance' ? { color: VIGILANCE_SCALES_UI.accent } : null,
+        variant === 'maintenance'
+          ? styles.maintenanceLabel
+          : variant === 'vigilance'
+            ? styles.vigilanceLabel
+            : styles.label,
+        spaced && styles.spaced,
+        tight && styles.tight,
         style,
       ]}
       accessibilityRole="text"
@@ -38,3 +36,34 @@ export function SectionLabel({
     </Text>
   );
 }
+
+const styles = StyleSheet.create({
+  label: {
+    color: UI_COLORS.borderAccentEmerald,
+    marginBottom: 4,
+    fontSize: UI_TYPO.sectionLabel.fontSize,
+    fontWeight: UI_TYPO.sectionLabel.fontWeight,
+  },
+  maintenanceLabel: {
+    color: UI_COLORS.maintenanceSectionLabel,
+    marginBottom: 6,
+    marginTop: 4,
+    fontSize: UI_TYPO.maintenanceSectionLabel.fontSize,
+    fontWeight: UI_TYPO.maintenanceSectionLabel.fontWeight,
+    letterSpacing: UI_TYPO.maintenanceSectionLabel.letterSpacing,
+    textTransform: 'uppercase',
+  },
+  vigilanceLabel: {
+    color: VIGILANCE_SCALES_UI.accent,
+    marginBottom: 4,
+    fontSize: UI_TYPO.sectionLabel.fontSize,
+    fontWeight: '700',
+  },
+  spaced: {
+    marginTop: 4,
+  },
+  tight: {
+    marginTop: 0,
+    marginBottom: 2,
+  },
+});
