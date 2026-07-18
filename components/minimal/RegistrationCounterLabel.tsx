@@ -1,7 +1,6 @@
-import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { isUnlimitedEventCapacity } from '@/lib/eventCapacity';
 import React from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
 type Props = {
   registeredCount: number;
@@ -17,16 +16,8 @@ export function RegistrationCounterLabel({ registeredCount, maxCapacity }: Props
         : String(maxCapacity);
 
   return (
-    <Text style={styles.label} accessibilityRole="text">
+    <Text className="text-minimal-label font-semibold text-minimal-text" accessibilityRole="text">
       Inscritos {registeredCount} / Limite {limitLabel}
     </Text>
   );
 }
-
-const styles = StyleSheet.create({
-  label: {
-    ...MINIMAL_TYPO.sectionLabel,
-    color: MINIMAL_UI.text,
-    fontWeight: '600',
-  },
-});

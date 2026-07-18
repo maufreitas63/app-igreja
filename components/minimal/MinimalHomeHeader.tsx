@@ -1,13 +1,7 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 /** Reservado para extensões futuras do chrome; saudação ficou no corpo da inbox. */
 export function MinimalHomeHeader(_props: { userName: string }) {
-  return <View style={styles.wrap} />;
+  return <View className="h-0" />;
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    height: 0,
-  },
-});

@@ -1,7 +1,6 @@
-import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
 import React from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 export const INBOX_EVENT_ROW_HEIGHT = 80;
 export const INBOX_VISIBLE_EVENT_ROWS = 4;
@@ -34,7 +33,9 @@ export function InboxList({
   maxVisibleRows = INBOX_VISIBLE_EVENT_ROWS,
 }: Props) {
   if (!items.length) {
-    return <Text style={styles.empty}>{emptyMessage}</Text>;
+    return (
+      <Text className="bg-minimal-bg py-6 text-center text-sm text-minimal-blue">{emptyMessage}</Text>
+    );
   }
 
   const listMaxHeight =
@@ -42,8 +43,9 @@ export function InboxList({
 
   return (
     <ScrollView
-      style={[styles.list, { maxHeight: listMaxHeight }]}
-      contentContainerStyle={styles.listContent}
+      className="w-full grow-0 bg-minimal-bg"
+      style={{ maxHeight: listMaxHeight }}
+      contentContainerClassName="grow-0 gap-2"
       nestedScrollEnabled
       showsVerticalScrollIndicator
       keyboardShouldPersistTaps="handled"
@@ -55,22 +57,24 @@ export function InboxList({
           disabled={!onItemPress}
           accessibilityRole="button"
           accessibilityLabel={item.subject}
-          style={({ pressed, hovered }) => [
-            styles.eventButton,
-            (pressed || (Platform.OS === 'web' && hovered)) && styles.eventButtonHovered,
-          ]}
+          className="h-20 w-full cursor-pointer rounded-2xl border bg-minimal-bg px-0 py-0 active:bg-minimal-hover hover:bg-minimal-hover"
+          style={{ borderColor: 'rgba(52, 211, 153, 0.35)' }}
         >
-          <View style={styles.row}>
-            <View style={styles.textBlock}>
-              <Text style={styles.subject} numberOfLines={1}>
+          <View className="flex-1 flex-row items-center gap-1.5 bg-transparent px-3 py-2">
+            <View className="min-w-0 flex-1 justify-center gap-0.5 bg-transparent">
+              <Text className="text-left text-minimal-inbox text-minimal-blue" numberOfLines={1}>
                 {item.subject}
               </Text>
               {item.preview ? (
-                <Text style={styles.preview} numberOfLines={1}>
+                <Text className="text-left text-minimal-preview text-minimal-blue" numberOfLines={1}>
                   {item.preview}
                 </Text>
               ) : null}
-              {item.meta ? <Text style={styles.meta}>{item.meta}</Text> : null}
+              {item.meta ? (
+                <Text className="bg-transparent text-left text-[11px] leading-[14px] text-minimal-blue">
+                  {item.meta}
+                </Text>
+              ) : null}
             </View>
           </View>
         </Pressable>
@@ -78,77 +82,3 @@ export function InboxList({
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  list: {
-    width: '100%',
-    backgroundColor: MINIMAL_UI.background,
-    flexGrow: 0,
-  },
-  listContent: {
-    flexGrow: 0,
-    gap: INBOX_EVENT_ROW_GAP,
-  },
-  eventButton: {
-    width: '100%',
-    height: INBOX_EVENT_ROW_HEIGHT,
-    backgroundColor: MINIMAL_UI.background,
-    borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.35)',
-    borderRadius: 16,
-    shadowOpacity: 0,
-    elevation: 0,
-    paddingVertical: 0,
-    paddingHorizontal: 0,
-    ...(Platform.OS === 'web'
-      ? {
-          cursor: 'pointer',
-          appearance: 'none',
-          WebkitAppearance: 'none',
-        }
-      : null),
-  },
-  eventButtonHovered: {
-    backgroundColor: MINIMAL_UI.rowHover,
-  },
-  row: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    gap: 6,
-    backgroundColor: 'transparent',
-  },
-  textBlock: {
-    flex: 1,
-    gap: 2,
-    minWidth: 0,
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-  },
-  subject: {
-    ...MINIMAL_TYPO.inboxSubject,
-    color: MINIMAL_UI.blue,
-    textAlign: 'left',
-  },
-  preview: {
-    ...MINIMAL_TYPO.inboxPreview,
-    color: MINIMAL_UI.blue,
-    textAlign: 'left',
-  },
-  meta: {
-    fontSize: 11,
-    lineHeight: 14,
-    color: MINIMAL_UI.blue,
-    backgroundColor: 'transparent',
-    textAlign: 'left',
-  },
-  empty: {
-    color: MINIMAL_UI.blue,
-    fontSize: 14,
-    paddingVertical: 24,
-    textAlign: 'center',
-    backgroundColor: MINIMAL_UI.background,
-  },
-});

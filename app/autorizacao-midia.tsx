@@ -5,8 +5,7 @@ import { useMediaAuthorizationAccess } from '@/hooks/useMediaAuthorizationAccess
 import { isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { View } from 'react-native';
 
 export default function MediaAuthorizationScreen() {
   const params = useLocalSearchParams();
@@ -21,24 +20,11 @@ export default function MediaAuthorizationScreen() {
     <ScreenAccessGate status={status}>
       {isMinimalPresentation ? (
         <MinimalScreenLayout scroll={false}>
-          <View style={styles.root}>{content}</View>
+          <View className="min-h-0 flex-1 bg-minimal-bg">{content}</View>
         </MinimalScreenLayout>
       ) : (
-        <View style={styles.legacyRoot}>{content}</View>
+        <View className="flex-1 bg-minimal-bg p-4">{content}</View>
       )}
     </ScreenAccessGate>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    minHeight: 0,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  legacyRoot: {
-    flex: 1,
-    backgroundColor: MINIMAL_UI.background,
-    padding: 16,
-  },
-});

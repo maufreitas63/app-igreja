@@ -1,8 +1,9 @@
-import { MINIMAL_EXIT_BAR_HEIGHT, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_EXIT_BAR_HEIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { getExitSessionUi } from '@/lib/sessionExitUi';
 import { confirmExitApplication } from '@/lib/userSession';
+import { cn } from '@/lib/utils';
 import React, { useMemo } from 'react';
-import { Platform, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Platform, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = {
@@ -24,48 +25,20 @@ export function MinimalExitBar({ variant = 'drawer' }: Props) {
       onPress={() => {
         void confirmExitApplication();
       }}
-      style={[
-        styles.bar,
-        isDrawer ? styles.barDrawer : styles.barScreen,
-        { paddingBottom: Math.max(insets.bottom, 8) },
-        Platform.OS === 'web' ? styles.barWeb : null,
-      ]}
+      className={cn(
+        'shrink-0 items-center justify-center border-t border-minimal-divider bg-minimal-bg px-4 pt-3',
+        isDrawer ? 'w-full self-stretch' : 'absolute bottom-0 left-0 right-0 z-[100]',
+        Platform.OS === 'web' && 'cursor-pointer'
+      )}
+      style={{
+        minHeight: MINIMAL_EXIT_BAR_HEIGHT,
+        paddingBottom: Math.max(insets.bottom, 8),
+        ...(Platform.OS !== 'web' && !isDrawer ? { elevation: 12 } : null),
+      }}
     >
-      <Text style={styles.label}>{exitUi.button}</Text>
+      <Text className="text-minimal-menu font-bold" style={{ color: MINIMAL_UI.icon }}>
+        {exitUi.button}
+      </Text>
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  bar: {
-    minHeight: MINIMAL_EXIT_BAR_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 12,
-    paddingHorizontal: 16,
-    backgroundColor: MINIMAL_UI.background,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: MINIMAL_UI.divider,
-    flexShrink: 0,
-  },
-  barDrawer: {
-    width: '100%',
-    alignSelf: 'stretch',
-  },
-  barScreen: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 100,
-    elevation: 12,
-  },
-  barWeb: {
-    cursor: 'pointer',
-  },
-  label: {
-    ...MINIMAL_TYPO.menuItem,
-    fontWeight: '700',
-    color: MINIMAL_UI.icon,
-  },
-});

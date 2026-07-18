@@ -1,7 +1,7 @@
 import { MinimalHomeProvider } from '@/context/MinimalHomeContext';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { cn } from '@/lib/utils';
 import React from 'react';
-import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
+import { ScrollView, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppDrawer } from './AppDrawer';
 import { MinimalTopLeftChrome } from './MinimalTopLeftChrome';
@@ -30,28 +30,42 @@ function MinimalScreenLayoutBody({
   showGreeting = false,
 }: Props) {
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      className="w-full min-w-0 max-w-full flex-1 overflow-hidden bg-minimal-bg"
+      edges={['top', 'left', 'right']}
+    >
       <AppDrawer />
-      <View style={styles.shell}>
+      <View className="min-h-0 w-full min-w-0 max-w-full flex-1 overflow-hidden">
         <MinimalTopLeftChrome title={title} header={header} showGreeting={showGreeting} />
 
-        <View style={styles.body}>
-          {fixedTop ? <View style={styles.fixedTop}>{fixedTop}</View> : null}
+        <View className="min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-hidden">
+          {fixedTop ? (
+            <View className="w-full min-w-0 max-w-full shrink-0 bg-minimal-bg px-4 pb-2">{fixedTop}</View>
+          ) : null}
 
           {scroll ? (
             <ScrollView
-              style={styles.main}
-              contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
+              className="min-h-0 w-full min-w-0 max-w-full flex-1"
+              contentContainerStyle={[{ paddingHorizontal: 16, paddingBottom: 12, maxWidth: '100%', minWidth: 0, alignSelf: 'stretch' }, contentContainerStyle]}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator
             >
               {children}
             </ScrollView>
           ) : (
-            <View style={[styles.main, styles.flexContent, contentContainerStyle]}>{children}</View>
+            <View
+              className={cn(
+                'min-h-0 w-full min-w-0 max-w-full flex-1 self-stretch overflow-hidden px-4'
+              )}
+              style={contentContainerStyle}
+            >
+              {children}
+            </View>
           )}
 
-          {footer ? <View style={styles.footer}>{footer}</View> : null}
+          {footer ? (
+            <View className="w-full min-w-0 max-w-full shrink-0 self-stretch bg-minimal-bg px-4">{footer}</View>
+          ) : null}
         </View>
       </View>
     </SafeAreaView>
@@ -65,70 +79,3 @@ export function MinimalScreenLayout(props: Props) {
     </MinimalHomeProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: MINIMAL_UI.background,
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    overflow: 'hidden',
-  },
-  shell: {
-    flex: 1,
-    minHeight: 0,
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    overflow: 'hidden',
-  },
-  body: {
-    flex: 1,
-    minHeight: 0,
-    flexDirection: 'column',
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    overflow: 'hidden',
-  },
-  fixedTop: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    backgroundColor: MINIMAL_UI.background,
-    flexShrink: 0,
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-  },
-  main: {
-    flex: 1,
-    minHeight: 0,
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    maxWidth: '100%',
-    minWidth: 0,
-    alignSelf: 'stretch',
-  },
-  flexContent: {
-    paddingHorizontal: 16,
-    maxWidth: '100%',
-    minWidth: 0,
-    alignSelf: 'stretch',
-    flex: 1,
-    overflow: 'hidden',
-  },
-  footer: {
-    flexShrink: 0,
-    paddingHorizontal: 16,
-    backgroundColor: MINIMAL_UI.background,
-    maxWidth: '100%',
-    minWidth: 0,
-    alignSelf: 'stretch',
-  },
-});
