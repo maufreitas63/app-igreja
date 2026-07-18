@@ -1,6 +1,7 @@
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { StatusBar, View } from 'react-native';
+import { StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MinimalScreenLayout } from './MinimalScreenLayout';
 
@@ -26,20 +27,36 @@ export function MinimalRouteShell({
     return (
       <MinimalScreenLayout {...(chromeTitle ? { title: chromeTitle } : {})} scroll={false}>
         <StatusBar barStyle="dark-content" />
-        <View className="min-h-0 w-full min-w-0 max-w-full flex-1 overflow-hidden">{children}</View>
+        <View style={styles.minimalContent}>{children}</View>
       </MinimalScreenLayout>
     );
   }
 
   return (
-    <LinearGradient colors={gradientColors} className="w-full min-w-0 max-w-full flex-1 overflow-hidden bg-minimal-bg">
-      <SafeAreaView
-        className="w-full min-w-0 max-w-full flex-1 overflow-hidden bg-minimal-bg"
-        edges={['top', 'left', 'right']}
-      >
+    <LinearGradient colors={gradientColors} style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         <StatusBar barStyle={statusBarStyle} />
         {children}
       </SafeAreaView>
     </LinearGradient>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: MINIMAL_UI.background,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  minimalContent: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+});

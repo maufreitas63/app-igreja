@@ -8,10 +8,10 @@ import {
   listChurchRoomSettings,
   type ChurchRoomSetting,
 } from '@/lib/churchRoomSettings';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 export default function ConfiguracaoSalasScreen() {
   const accessStatus = useScreenAccessGuard({
@@ -45,14 +45,12 @@ export default function ConfiguracaoSalasScreen() {
   return (
     <ScreenAccessGate status={accessStatus}>
       <MinimalScreenLayout>
-        <Text className="mb-3 px-3 py-2.5 text-center text-minimal-section text-minimal-blue-dark bg-minimal-bg">
-          Configuração de Salas
-        </Text>
+        <Text style={styles.title}>Configuração de Salas</Text>
 
         {loading ? (
-          <ActivityIndicator color={MINIMAL_UI.accent} className="mt-6" />
+          <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />
         ) : (
-          <View className="w-full">
+          <View style={styles.body}>
             <ChurchRoomSettingsPanel rooms={rooms} onRoomsChanged={() => void loadRooms()} />
           </View>
         )}
@@ -60,3 +58,16 @@ export default function ConfiguracaoSalasScreen() {
     </ScreenAccessGate>
   );
 }
+
+const styles = StyleSheet.create({
+  title: {
+    ...MINIMAL_SECTION_TITLE,
+    marginBottom: 12,
+  },
+  loader: {
+    marginTop: 24,
+  },
+  body: {
+    width: '100%',
+  },
+});

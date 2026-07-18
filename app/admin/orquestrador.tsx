@@ -6,7 +6,7 @@ import { buildIndexScreenGradient } from '@/lib/paletteTheme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, Text } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EventOrchestratorScreen() {
@@ -17,15 +17,38 @@ export default function EventOrchestratorScreen() {
 
   return (
     <ScreenAccessGate status={accessStatus}>
-      <LinearGradient colors={gradient} className="flex-1">
-        <SafeAreaView className="flex-1 px-5 pt-2">
+      <LinearGradient colors={gradient} style={styles.gradient}>
+        <SafeAreaView style={styles.safeArea}>
           <Stack.Screen options={{ headerShown: false }} />
-          <Pressable onPress={() => router.back()} className="mb-2 self-start py-1">
-            <Text className="text-base font-semibold">Voltar</Text>
+          <Pressable onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backButtonText}>Voltar</Text>
           </Pressable>
-          <EventOrchestratorPanel contentContainerStyle={{ flex: 1 }} />
+          <EventOrchestratorPanel contentContainerStyle={styles.content} />
         </SafeAreaView>
       </LinearGradient>
     </ScreenAccessGate>
   );
 }
+
+const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+    marginBottom: 8,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  content: {
+    flex: 1,
+  },
+});

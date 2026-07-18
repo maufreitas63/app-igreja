@@ -8,7 +8,7 @@ import {
   type EventAvisoRow,
 } from '@/lib/eventAvisosApi';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
 import { supabase } from '@/lib/supabase';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -17,6 +17,7 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
+  StyleSheet,
   Text,
   useWindowDimensions,
   View,
@@ -127,15 +128,11 @@ export function EventsInboxHome() {
   };
 
   if (loading) {
-    return <ActivityIndicator color={MINIMAL_UI.icon} className="my-8" />;
+    return <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />;
   }
 
   if (error) {
-    return (
-      <Text className="py-6 text-center text-minimal-muted">
-        Não foi possível carregar os eventos.
-      </Text>
-    );
+    return <Text style={styles.error}>Não foi possível carregar os eventos.</Text>;
   }
 
   const pageSizeStyle = {
@@ -145,7 +142,7 @@ export function EventsInboxHome() {
 
   return (
     <View
-      className="min-h-0 w-full min-w-0 max-w-full flex-1 self-stretch overflow-hidden bg-minimal-bg"
+      style={styles.root}
       onLayout={(event) => {
         const { width: nextWidth, height: nextHeight } = event.nativeEvent.layout;
         const roundedWidth = Math.round(nextWidth);
@@ -165,17 +162,15 @@ export function EventsInboxHome() {
           pagingEnabled
           nestedScrollEnabled
           showsHorizontalScrollIndicator={false}
-          className="min-h-0 w-full max-w-full flex-1"
-          contentContainerClassName="grow items-stretch"
+          style={styles.pager}
+          contentContainerStyle={styles.pagerContent}
           onMomentumScrollEnd={handlePagerScrollEnd}
           onScrollEndDrag={handlePagerScrollEnd}
           keyboardShouldPersistTaps="handled"
         >
-          <View className="min-w-0 max-w-full flex-col justify-between bg-minimal-bg" style={pageSizeStyle}>
-            <View className="w-full grow-0 shrink bg-minimal-bg">
-              <Text className="bg-minimal-bg px-3 py-2.5 text-center text-minimal-section text-minimal-blue-dark">
-                Proximos Eventos
-              </Text>
+          <View style={[styles.page, pageSizeStyle]}>
+            <View style={styles.inboxSection}>
+              <Text style={styles.sectionTitle}>Proximos Eventos</Text>
               <InboxList
                 items={inboxItems}
                 emptyMessage="Nenhum evento disponível no momento."
@@ -186,39 +181,30 @@ export function EventsInboxHome() {
             <HomeInboxPagerNav variant="toAvisos" onPress={() => scrollToPage(1)} />
           </View>
 
-          <View className="min-w-0 max-w-full flex-col justify-between bg-minimal-bg" style={pageSizeStyle}>
-            <View className="min-h-0 w-full flex-1">
-              <Text className="bg-minimal-bg px-3 py-2.5 text-center text-minimal-section text-minimal-blue-dark">
-                Avisos
-              </Text>
+          <View style={[styles.page, pageSizeStyle]}>
+            <View style={styles.avisosSection}>
+              <Text style={styles.sectionTitle}>Avisos</Text>
               {avisosLoading ? (
-                <ActivityIndicator color={MINIMAL_UI.icon} className="my-8" />
+                <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />
               ) : avisosError ? (
-                <Text className="py-6 text-center text-minimal-muted">{avisosError}</Text>
+                <Text style={styles.error}>{avisosError}</Text>
               ) : avisos.length === 0 ? (
-                <Text className="py-6 text-center text-sm text-minimal-muted">
-                  Nenhum aviso publicado no momento.
-                </Text>
+                <Text style={styles.emptyAvisos}>Nenhum aviso publicado no momento.</Text>
               ) : (
                 <ScrollView
-                  className="min-h-0 w-full flex-1"
-                  contentContainerClassName="grow gap-2 pb-2"
+                  style={styles.avisosList}
+                  contentContainerStyle={styles.avisosListContent}
                   nestedScrollEnabled
                   showsVerticalScrollIndicator
                 >
                   {avisos.map((item) => (
-                    <View
-                      key={item.id}
-                      className="w-full gap-1 rounded-xl border border-minimal-border bg-minimal-bg px-3 py-2.5"
-                    >
+                    <View key={item.id} style={styles.avisoCard}>
                       {item.title ? (
-                        <Text className="text-minimal-inbox text-minimal-blue-dark" numberOfLines={2}>
+                        <Text style={styles.avisoTitle} numberOfLines={2}>
                           {item.title}
                         </Text>
                       ) : null}
-                      <Text className="text-minimal-preview leading-[18px] text-minimal-blue">
-                        {item.body}
-                      </Text>
+                      <Text style={styles.avisoBody}>{item.body}</Text>
                     </View>
                   ))}
                 </ScrollView>
@@ -237,3 +223,88 @@ export function EventsInboxHome() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'hidden',
+  },
+  pager: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+    maxWidth: '100%',
+  },
+  pagerContent: {
+    alignItems: 'stretch',
+    flexGrow: 1,
+  },
+  page: {
+    maxWidth: '100%',
+    minWidth: 0,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    backgroundColor: MINIMAL_UI.background,
+  },
+  inboxSection: {
+    flexGrow: 0,
+    flexShrink: 1,
+    width: '100%',
+    backgroundColor: MINIMAL_UI.background,
+  },
+  avisosSection: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+  },
+  avisosList: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+  },
+  avisosListContent: {
+    gap: 8,
+    paddingBottom: 8,
+    flexGrow: 1,
+  },
+  avisoCard: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: MINIMAL_UI.background,
+    gap: 4,
+  },
+  avisoTitle: {
+    ...MINIMAL_TYPO.inboxSubject,
+    color: MINIMAL_UI.blueDark,
+  },
+  avisoBody: {
+    ...MINIMAL_TYPO.inboxPreview,
+    color: MINIMAL_UI.blue,
+    lineHeight: 18,
+  },
+  emptyAvisos: {
+    color: MINIMAL_UI.textMuted,
+    textAlign: 'center',
+    paddingVertical: 24,
+    fontSize: 14,
+  },
+  sectionTitle: MINIMAL_SECTION_TITLE,
+  loader: {
+    marginVertical: 32,
+  },
+  error: {
+    color: MINIMAL_UI.textMuted,
+    textAlign: 'center',
+    paddingVertical: 24,
+  },
+});

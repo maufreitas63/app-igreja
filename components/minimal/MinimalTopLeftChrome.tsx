@@ -3,10 +3,10 @@ import { MinimalTopChurchLogo } from '@/components/minimal/MinimalTopChurchLogo'
 import { MinimalTopIdentityBar } from '@/components/minimal/MinimalTopIdentityBar';
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { useMinimalHome } from '@/context/MinimalHomeContext';
-import { MINIMAL_ICON, MINIMAL_TOP_CHROME_MIN_HEIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_ICON, MINIMAL_TOP_CHROME_MIN_HEIGHT, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
   title?: string;
@@ -24,39 +24,80 @@ export function MinimalTopLeftChrome({ title, header, showGreeting = false }: Pr
       accessibilityLabel="Abrir menu"
       accessibilityRole="button"
       onPress={openDrawer}
-      className="mt-0.5 p-1"
+      style={styles.menuButton}
     >
       <FontAwesome name="bars" size={MINIMAL_ICON.menu} color={MINIMAL_UI.icon} />
     </Pressable>
   );
 
   return (
-    <View
-      className="relative z-30 shrink-0 gap-1 border-b border-minimal-divider bg-minimal-bg px-3 pb-2 pt-2"
-      style={{ minHeight: MINIMAL_TOP_CHROME_MIN_HEIGHT }}
-    >
-      <View className="z-[1] w-1/2 gap-1 self-start">
+    <View style={styles.wrap}>
+      <View style={styles.leftStack}>
         <MinimalTopIdentityBar showGreeting={showGreeting} />
 
-        <View className="w-full self-start">
+        <View style={styles.menuChrome}>
           <MinimalExpandedEventBar menuButton={menuButton} />
         </View>
 
         {!expandedEventId && (header || title?.trim()) ? (
-          <View className="w-full items-start self-start pl-1">
-            {header ? header : title?.trim() ? (
-              <Text className="text-left text-minimal-title text-minimal-text">{title}</Text>
-            ) : null}
+          <View style={styles.leftColumn}>
+            {header ? header : title?.trim() ? <Text style={styles.title}>{title}</Text> : null}
           </View>
         ) : null}
       </View>
 
-      <View
-        className="absolute bottom-0 right-3 top-0 z-[2] items-end justify-center"
-        pointerEvents="box-none"
-      >
+      <View style={styles.logoOverlay} pointerEvents="box-none">
         <MinimalTopChurchLogo />
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: {
+    position: 'relative',
+    flexShrink: 0,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
+    backgroundColor: MINIMAL_UI.background,
+    gap: 4,
+    zIndex: 30,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: MINIMAL_UI.divider,
+    minHeight: MINIMAL_TOP_CHROME_MIN_HEIGHT,
+  },
+  leftStack: {
+    width: '50%',
+    alignSelf: 'flex-start',
+    gap: 4,
+    zIndex: 1,
+  },
+  logoOverlay: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 12,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    zIndex: 2,
+  },
+  menuButton: {
+    padding: 4,
+    marginTop: 2,
+  },
+  menuChrome: {
+    width: '100%',
+    alignSelf: 'flex-start',
+  },
+  leftColumn: {
+    alignItems: 'flex-start',
+    paddingLeft: 4,
+    width: '100%',
+    alignSelf: 'flex-start',
+  },
+  title: {
+    ...MINIMAL_TYPO.screenTitle,
+    textAlign: 'left',
+  },
+});

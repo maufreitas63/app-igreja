@@ -1,12 +1,12 @@
 import type { BillingPlan } from '@/lib/billing/types';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { cn } from '@/lib/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -54,7 +54,7 @@ export function BillingClass({
 }: BillingClassProps) {
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-minimal-bg">
+      <View style={styles.center}>
         <ActivityIndicator color={MINIMAL_UI.blue} />
       </View>
     );
@@ -67,15 +67,15 @@ export function BillingClass({
 
   return (
     <ScrollView
-      className="flex-1 bg-minimal-bg"
-      contentContainerClassName="gap-3 px-5 pb-10 pt-4"
+      style={styles.root}
+      contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
-      <Text className="text-2xl font-extrabold text-minimal-blue-dark">{title}</Text>
-      <Text className="text-sm leading-5 text-minimal-muted">{subtitle}</Text>
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.subtitle}>{subtitle}</Text>
 
       {showStatus ? (
-        <Text className="text-[13px] font-semibold text-minimal-blue">
+        <Text style={styles.statusLine}>
           Status atual: {users.toLocaleString('pt-BR')} usuários (
           {members.toLocaleString('pt-BR')} membros +{' '}
           {congregados.toLocaleString('pt-BR')} congregados) ativos
@@ -83,33 +83,28 @@ export function BillingClass({
         </Text>
       ) : null}
 
-      <View className="mt-2 gap-3.5">
+      <View style={styles.list}>
         {plans.map((plan) => {
           const isCurrent = currentPlanCode?.toLowerCase() === plan.code.toLowerCase();
           const busy = checkoutLoadingPlanCode === plan.code;
           const icon = PLAN_ICONS[plan.code] || 'circle-o';
 
           return (
-            <View
-              key={plan.id || plan.code}
-              className="gap-1.5 border-b border-minimal-border bg-minimal-bg py-3.5"
-            >
-              <View className="flex-row items-center gap-2.5">
+            <View key={plan.id || plan.code} style={styles.card}>
+              <View style={styles.cardHeader}>
                 <FontAwesome name={icon} size={18} color={MINIMAL_UI.icon} />
-                <Text className="text-lg font-bold text-minimal-blue-dark">{plan.name}</Text>
+                <Text style={styles.planName}>{plan.name}</Text>
               </View>
-              <Text className="text-sm font-semibold text-minimal-blue">
-                {formatMembers(plan.maxMembers)}
-              </Text>
+              <Text style={styles.planLimit}>{formatMembers(plan.maxMembers)}</Text>
               {plan.description ? (
-                <Text className="text-[13px] leading-[18px] text-minimal-muted">{plan.description}</Text>
+                <Text style={styles.planDescription}>{plan.description}</Text>
               ) : null}
               <Pressable
-                className={cn(
-                  'mt-2 min-w-[120px] items-center self-start rounded-lg px-4 py-2.5',
-                  isCurrent ? 'bg-minimal-blue-dark' : 'bg-minimal-blue'
-                )}
-                style={({ pressed }) => (pressed ? { opacity: 0.88 } : null)}
+                style={({ pressed }) => [
+                  styles.cta,
+                  isCurrent && styles.ctaCurrent,
+                  pressed && styles.ctaPressed,
+                ]}
                 disabled={busy}
                 onPress={() => onSubscribe(plan)}
                 accessibilityRole="button"
@@ -118,9 +113,7 @@ export function BillingClass({
                 {busy ? (
                   <ActivityIndicator color={MINIMAL_UI.onDark} />
                 ) : (
-                  <Text className="text-sm font-bold text-minimal-on-dark">
-                    {isCurrent ? 'Gerenciar / Renovar' : 'Assinar'}
-                  </Text>
+                  <Text style={styles.ctaLabel}>{isCurrent ? 'Gerenciar / Renovar' : 'Assinar'}</Text>
                 )}
               </Pressable>
             </View>
@@ -130,3 +123,89 @@ export function BillingClass({
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+    gap: 12,
+  },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  title: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  subtitle: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  statusLine: {
+    color: MINIMAL_UI.blue,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  list: {
+    gap: 14,
+    marginTop: 8,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: MINIMAL_UI.border,
+    paddingVertical: 14,
+    gap: 6,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  planName: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  planLimit: {
+    color: MINIMAL_UI.blue,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  planDescription: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  cta: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: MINIMAL_UI.blue,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  ctaCurrent: {
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  ctaPressed: {
+    opacity: 0.88,
+  },
+  ctaLabel: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+});

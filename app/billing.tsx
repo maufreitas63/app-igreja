@@ -5,12 +5,13 @@ import {
   listBillingPlans,
 } from '@/lib/billing/billingApi';
 import type { BillingPlan } from '@/lib/billing/types';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { getStoredTenantId } from '@/lib/tenantSession';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
@@ -104,16 +105,16 @@ export default function BillingScreen() {
   };
 
   return (
-    <View className="flex-1 bg-minimal-bg" style={{ paddingTop: Math.max(insets.top, 12) }}>
+    <View style={[styles.root, { paddingTop: Math.max(insets.top, 12) }]}>
       {isSuperAdmin ? (
-        <View className="flex-row items-center px-4 pb-1">
+        <View style={styles.topRow}>
           <Pressable
             onPress={() => router.replace('/(tabs)')}
-            className="px-1 py-2"
+            style={styles.backBtn}
             accessibilityRole="button"
             accessibilityLabel="Voltar ao início"
           >
-            <Text className="text-sm font-bold text-minimal-blue">Voltar</Text>
+            <Text style={styles.backLabel}>Voltar</Text>
           </Pressable>
         </View>
       ) : null}
@@ -131,3 +132,25 @@ export default function BillingScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 4,
+  },
+  backBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  backLabel: {
+    color: MINIMAL_UI.blue,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+});
