@@ -13,10 +13,9 @@ import {
 } from '@/lib/dashboardReturnNavigation';
 import { computeDashboardCardHeight } from '@/lib/dashboardPanelLayout';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
-import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SuggestionsImprovementsScreen() {
@@ -62,12 +61,19 @@ export default function SuggestionsImprovementsScreen() {
   return (
     <ScreenAccessGate status={accessStatus}>
       <MinimalScreenLayout scroll={false}>
-        <View style={styles.header}>
-          <Text style={styles.welcomeText}>Sugestões e Melhorias</Text>
-          <Text style={styles.badgeTitle}>Registrar solicitação</Text>
+        <View className="shrink-0 gap-1 bg-minimal-bg pb-2">
+          <Text className="w-full self-stretch text-center text-minimal-section text-minimal-blue-dark">
+            Sugestões e Melhorias
+          </Text>
+          <Text
+            className="text-center text-[13px] font-bold opacity-90"
+            style={{ color: VIGILANCE_SCALES_UI.accent }}
+          >
+            Registrar solicitação
+          </Text>
         </View>
 
-        <View style={styles.cardStage}>
+        <View className="min-h-0 flex-1 bg-minimal-bg">
           <MaintenanceSupportSuggestionsCard
             isActive
             panelHeight={panelHeight}
@@ -84,28 +90,3 @@ export default function SuggestionsImprovementsScreen() {
     </ScreenAccessGate>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    flexShrink: 0,
-    gap: 4,
-    paddingBottom: 8,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  welcomeText: {
-    ...MINIMAL_SECTION_TITLE,
-    alignSelf: 'stretch',
-  },
-  badgeTitle: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 13,
-    fontWeight: '700',
-    textAlign: 'center',
-    opacity: 0.9,
-  },
-  cardStage: {
-    flex: 1,
-    minHeight: 0,
-    backgroundColor: MINIMAL_UI.background,
-  },
-});

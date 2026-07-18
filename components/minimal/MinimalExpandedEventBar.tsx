@@ -1,9 +1,8 @@
 import { EventRegistrationCupInline } from '@/components/minimal/EventRegistrationCupInline';
 import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
-import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 type Props = {
   menuButton: React.ReactNode;
@@ -14,29 +13,29 @@ export function MinimalExpandedEventBar({ menuButton }: Props) {
   const { expandedEvent } = useMinimalHome();
 
   if (!expandedEvent) {
-    return <View style={styles.menuOnlyRow}>{menuButton}</View>;
+    return <View className="w-full flex-row items-start">{menuButton}</View>;
   }
 
   const local = expandedEvent.event_local?.trim() || 'Sem local informado';
   const meta = formatEventDateTimeLabel(expandedEvent.event_date);
 
   return (
-    <View style={styles.row}>
-      <View style={styles.half}>
-        <View style={styles.halfInner}>
+    <View className="min-h-[52px] w-full flex-row items-stretch border-b border-minimal-border">
+      <View className="min-w-0 flex-1">
+        <View className="flex-1 flex-row items-center gap-1 py-1 pr-1">
           {menuButton}
-          <View style={styles.textBlock}>
-            <Text style={styles.subject} numberOfLines={2}>
+          <View className="min-w-0 flex-1 justify-center gap-0.5">
+            <Text className="text-minimal-inbox text-minimal-blue-dark" numberOfLines={2}>
               {expandedEvent.name}
             </Text>
-            <Text style={styles.preview} numberOfLines={1}>
+            <Text className="text-minimal-preview text-minimal-blue" numberOfLines={1}>
               {local}
             </Text>
           </View>
         </View>
       </View>
-      <View style={[styles.half, styles.halfRight]}>
-        <Text style={styles.meta} numberOfLines={2}>
+      <View className="min-w-0 flex-1 items-center justify-center gap-0.5 border-l border-minimal-border px-2 py-1.5">
+        <Text className="text-center text-xs text-minimal-blue" numberOfLines={2}>
           {meta}
         </Text>
         <EventRegistrationCupInline event={expandedEvent} />
@@ -44,59 +43,3 @@ export function MinimalExpandedEventBar({ menuButton }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  menuOnlyRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    width: '100%',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    width: '100%',
-    minHeight: 52,
-    borderBottomWidth: 1,
-    borderBottomColor: MINIMAL_UI.border,
-  },
-  half: {
-    flex: 1,
-    minWidth: 0,
-  },
-  halfInner: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 4,
-    paddingRight: 4,
-  },
-  halfRight: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    gap: 2,
-    borderLeftWidth: 1,
-    borderLeftColor: MINIMAL_UI.border,
-  },
-  textBlock: {
-    flex: 1,
-    minWidth: 0,
-    justifyContent: 'center',
-    gap: 2,
-  },
-  preview: {
-    ...MINIMAL_TYPO.inboxPreview,
-    color: MINIMAL_UI.blue,
-  },
-  subject: {
-    ...MINIMAL_TYPO.inboxSubject,
-    color: MINIMAL_UI.blueDark,
-  },
-  meta: {
-    fontSize: 12,
-    color: MINIMAL_UI.blue,
-    textAlign: 'center',
-  },
-});

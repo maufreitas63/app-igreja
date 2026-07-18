@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -61,40 +60,51 @@ export default function AvisosScreen() {
   }, [loadAvisos]);
 
   return (
-    <LinearGradient colors={gradient} style={styles.gradient}>
-      <SafeAreaView style={styles.safeArea}>
+    <LinearGradient colors={gradient} style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 8 }}>
         <Stack.Screen options={{ headerShown: false }} />
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>Voltar</Text>
+        <View className="mb-3 gap-1">
+          <Pressable onPress={() => router.back()} className="mb-1 self-start px-0.5 py-1">
+            <Text className="text-sm font-bold text-slate-300">Voltar</Text>
           </Pressable>
-          <Text style={styles.title}>Avisos</Text>
-          <Text style={styles.subtitle}>Comunicados do culto em tempo real</Text>
+          <Text className="text-[28px] font-extrabold text-slate-50">Avisos</Text>
+          <Text className="text-[13px] text-slate-400">Comunicados do culto em tempo real</Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerClassName="gap-3 pb-6" showsVerticalScrollIndicator={false}>
           {loading ? <ActivityIndicator color={colors.accent} size="large" /> : null}
           {error ? (
-            <View style={[styles.card, styles.errorCard]}>
-              <Text style={styles.errorText}>{error}</Text>
+            <View className="gap-2 rounded-2xl border border-red-400/45 bg-slate-950/70 p-[18px]">
+              <Text className="text-[13px] leading-[19px] text-red-300">{error}</Text>
             </View>
           ) : null}
 
           {!loading && !error && items.length === 0 ? (
-            <View style={[styles.card, { borderColor: `${colors.accent}55` }]}>
-              <Text style={[styles.cardTitle, { color: colors.accent }]}>Nenhum aviso publicado</Text>
-              <Text style={styles.cardBody}>
+            <View
+              className="gap-2 rounded-2xl border bg-slate-950/70 p-[18px]"
+              style={{ borderColor: `${colors.accent}55` }}
+            >
+              <Text className="text-base font-extrabold" style={{ color: colors.accent }}>
+                Nenhum aviso publicado
+              </Text>
+              <Text className="text-sm leading-[21px] text-slate-300">
                 Quando a equipe publicar avisos no orquestrador, eles aparecerão aqui automaticamente.
               </Text>
             </View>
           ) : null}
 
           {items.map((item) => (
-            <View key={item.id} style={[styles.card, { borderColor: `${colors.accent}55` }]}>
+            <View
+              key={item.id}
+              className="gap-2 rounded-2xl border bg-slate-950/70 p-[18px]"
+              style={{ borderColor: `${colors.accent}55` }}
+            >
               {item.title ? (
-                <Text style={[styles.cardTitle, { color: colors.accent }]}>{item.title}</Text>
+                <Text className="text-base font-extrabold" style={{ color: colors.accent }}>
+                  {item.title}
+                </Text>
               ) : null}
-              <Text style={styles.cardBody}>{item.body}</Text>
+              <Text className="text-sm leading-[21px] text-slate-300">{item.body}</Text>
             </View>
           ))}
         </ScrollView>
@@ -102,66 +112,3 @@ export default function AvisosScreen() {
     </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  header: {
-    marginBottom: 12,
-    gap: 4,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    paddingVertical: 4,
-    paddingHorizontal: 2,
-    marginBottom: 4,
-  },
-  backButtonText: {
-    color: '#CBD5E1',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  title: {
-    color: '#F8FAFC',
-    fontSize: 28,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: '#94A3B8',
-    fontSize: 13,
-  },
-  content: {
-    gap: 12,
-    paddingBottom: 24,
-  },
-  card: {
-    borderWidth: 1,
-    borderRadius: 16,
-    backgroundColor: 'rgba(15, 23, 42, 0.72)',
-    padding: 18,
-    gap: 8,
-  },
-  errorCard: {
-    borderColor: 'rgba(248, 113, 113, 0.45)',
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  cardBody: {
-    color: '#CBD5E1',
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  errorText: {
-    color: '#FCA5A5',
-    fontSize: 13,
-    lineHeight: 19,
-  },
-});

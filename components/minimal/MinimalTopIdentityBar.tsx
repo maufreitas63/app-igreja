@@ -1,12 +1,11 @@
 import {
   MINIMAL_TOP_IDENTITY_BAR_HEIGHT,
-  MINIMAL_TYPO,
-  MINIMAL_UI,
 } from '@/lib/minimalUiTheme';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { getStoredUserPhone } from '@/lib/userSession';
+import { cn } from '@/lib/utils';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 function resolveGreetingName(fullName: string | null | undefined): string {
   const trimmed = fullName?.trim();
@@ -53,12 +52,16 @@ export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?:
 
   return (
     <View
-      style={styles.row}
+      className="w-1/2 flex-row items-center justify-start self-start bg-minimal-bg"
+      style={{ minHeight: Math.round(MINIMAL_TOP_IDENTITY_BAR_HEIGHT * 0.45) }}
       accessibilityElementsHidden={!showGreeting}
       importantForAccessibility={showGreeting ? 'yes' : 'no-hide-descendants'}
     >
       <Text
-        style={[styles.greeting, !showGreeting && styles.greetingSpacer]}
+        className={cn(
+          'shrink text-left text-minimal-greeting',
+          !showGreeting && 'text-minimal-bg'
+        )}
         numberOfLines={1}
         accessibilityRole={showGreeting ? 'text' : undefined}
       >
@@ -67,24 +70,3 @@ export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?:
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    minHeight: Math.round(MINIMAL_TOP_IDENTITY_BAR_HEIGHT * 0.45),
-    width: '50%',
-    alignSelf: 'flex-start',
-    backgroundColor: MINIMAL_UI.background,
-  },
-  greeting: {
-    ...MINIMAL_TYPO.greeting,
-    textAlign: 'left',
-    flexShrink: 1,
-  },
-  /** Mesmo espaço da saudação, invisível no fundo branco. */
-  greetingSpacer: {
-    color: MINIMAL_UI.background,
-  },
-});

@@ -1,6 +1,7 @@
-import { UI_ACCENT_STYLES, UI_TYPO, type UiAccent } from '@/lib/uiTokens';
+import { UI_ACCENT_STYLES, type UiAccent } from '@/lib/uiTokens';
+import { cn } from '@/lib/utils';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 type ActiveScreenBadgeProps = {
   title: string;
@@ -30,14 +31,19 @@ export function ActiveScreenBadge({
   const isRight = align === 'right';
 
   return (
-    <View style={[styles.wrap, isRight ? styles.wrapRight : styles.wrapLeft]}>
+    <View
+      className={cn(
+        'max-w-full shrink',
+        isRight ? 'max-w-[48%] shrink-0 items-end' : 'items-start'
+      )}
+    >
       <Text
         numberOfLines={2}
-        style={[
-          styles.badge,
-          isRight ? styles.textRight : styles.textLeft,
-          { color: textColor },
-        ]}
+        className={cn(
+          'text-[13px] font-extrabold leading-4 tracking-[0.4px]',
+          isRight ? 'text-right' : 'text-left'
+        )}
+        style={{ color: textColor }}
         accessibilityRole="text"
       >
         {title}
@@ -45,11 +51,11 @@ export function ActiveScreenBadge({
       {trimmedTechnicalKey ? (
         <Text
           numberOfLines={2}
-          style={[
-            styles.technicalKey,
-            isRight ? styles.textRight : styles.textLeft,
-            { color: textColor },
-          ]}
+          className={cn(
+            'mt-0.5 text-[10px] font-semibold leading-[13px] tracking-[0.2px] opacity-70',
+            isRight ? 'text-right' : 'text-left'
+          )}
+          style={{ color: textColor }}
           accessibilityRole="text"
           accessibilityLabel={`Chave ACL: ${trimmedTechnicalKey}`}
         >
@@ -59,38 +65,3 @@ export function ActiveScreenBadge({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    flexShrink: 1,
-    maxWidth: '100%',
-  },
-  wrapLeft: {
-    alignItems: 'flex-start',
-  },
-  wrapRight: {
-    flexShrink: 0,
-    maxWidth: '48%',
-    alignItems: 'flex-end',
-  },
-  badge: {
-    fontSize: UI_TYPO.activeModule.fontSize,
-    fontWeight: UI_TYPO.activeModule.fontWeight,
-    letterSpacing: UI_TYPO.activeModule.letterSpacing,
-    lineHeight: UI_TYPO.activeModule.lineHeight,
-  },
-  technicalKey: {
-    marginTop: 2,
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.2,
-    lineHeight: 13,
-    opacity: 0.72,
-  },
-  textLeft: {
-    textAlign: 'left',
-  },
-  textRight: {
-    textAlign: 'right',
-  },
-});

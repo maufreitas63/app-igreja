@@ -1,9 +1,8 @@
 import { ParticipantCupBadge } from '@/components/minimal/ParticipantCupBadge';
-import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { isUnlimitedEventCapacity } from '@/lib/eventCapacity';
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 type Props = {
   event: ActiveEventListItem;
@@ -18,32 +17,15 @@ export function EventRegistrationCupInline({ event }: Props) {
         : String(event.max_capacity);
 
   return (
-    <View style={styles.wrap}>
+    <View className="w-[108px] shrink-0 items-center justify-center gap-1">
       <ParticipantCupBadge
         count={event.registeredCount}
         maxCapacity={event.max_capacity}
         size="md"
       />
-      <Text style={styles.ratio}>
+      <Text className="text-center text-[11px] font-bold text-minimal-icon">
         {event.registeredCount} de {limitLabel}
       </Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    width: 108,
-    gap: 4,
-  },
-  ratio: {
-    ...MINIMAL_TYPO.sectionLabel,
-    color: MINIMAL_UI.icon,
-    fontSize: 11,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-});

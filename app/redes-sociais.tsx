@@ -2,7 +2,7 @@ import { InstanceQrCode } from '@/components/InstanceQrCode';
 import { SocialBrandIcon } from '@/components/SocialBrandIcon';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { resolveInstancePublicUrl } from '@/lib/instancePublicUrl';
-import { MINIMAL_ICON, MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_ICON, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { listSessionIgrejas, getStoredTenantId, type SessionIgreja } from '@/lib/tenantSession';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -10,8 +10,6 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
-  Platform,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -72,27 +70,29 @@ export default function RedesSociaisScreen() {
 
   return (
     <MinimalScreenLayout>
-      <Text style={styles.title}>Redes Sociais</Text>
-      <Text style={styles.hint}>
+      <Text className="w-full text-center text-minimal-section text-minimal-blue-dark bg-minimal-bg px-3 py-2.5">
+        Redes Sociais
+      </Text>
+      <Text className="mb-6 px-4 text-center text-[13px] text-minimal-muted">
         {church?.name
           ? `Links oficiais de ${church.name}.`
           : 'Links oficiais da igreja ativa nesta sessão.'}
       </Text>
 
       {loading ? (
-        <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />
+        <ActivityIndicator color={MINIMAL_UI.accent} className="mt-6" />
       ) : (
-        <View style={styles.content}>
+        <View className="w-full items-center">
           {hasAny ? (
-            <View style={styles.row}>
+            <View className="flex-row items-center justify-center gap-4 py-3">
               {websiteUrl ? (
                 <TouchableOpacity
                   accessibilityLabel="Abrir site oficial"
                   accessibilityRole="button"
                   onPress={() => void openExternalUrl(websiteUrl, 'site oficial')}
-                  style={styles.socialButton}
+                  className="h-11 w-11 items-center justify-center cursor-pointer"
                 >
-                  <View style={styles.websiteIcon}>
+                  <View className="h-11 w-11 items-center justify-center rounded-xl bg-minimal-blue-dark">
                     <FontAwesome name="globe" size={MINIMAL_ICON.action} color={MINIMAL_UI.onDark} />
                   </View>
                 </TouchableOpacity>
@@ -102,7 +102,7 @@ export default function RedesSociaisScreen() {
                   accessibilityLabel="Abrir Instagram"
                   accessibilityRole="button"
                   onPress={() => void openExternalUrl(instagramUrl, 'Instagram')}
-                  style={styles.socialButton}
+                  className="h-11 w-11 items-center justify-center cursor-pointer"
                 >
                   <SocialBrandIcon network="instagram" />
                 </TouchableOpacity>
@@ -112,14 +112,14 @@ export default function RedesSociaisScreen() {
                   accessibilityLabel="Abrir YouTube"
                   accessibilityRole="button"
                   onPress={() => void openExternalUrl(youtubeUrl, 'YouTube')}
-                  style={styles.socialButton}
+                  className="h-11 w-11 items-center justify-center cursor-pointer"
                 >
                   <SocialBrandIcon network="youtube" />
                 </TouchableOpacity>
               ) : null}
             </View>
           ) : (
-            <Text style={styles.empty}>
+            <Text className="px-6 text-center text-sm text-minimal-muted">
               Esta instância ainda não cadastrou site, Instagram ou YouTube.
             </Text>
           )}
@@ -130,52 +130,3 @@ export default function RedesSociaisScreen() {
     </MinimalScreenLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  title: {
-    ...MINIMAL_SECTION_TITLE,
-    width: '100%',
-  },
-  hint: {
-    color: MINIMAL_UI.textMuted,
-    fontSize: 13,
-    textAlign: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  loader: {
-    marginTop: 24,
-  },
-  content: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  empty: {
-    color: MINIMAL_UI.textMuted,
-    fontSize: 14,
-    textAlign: 'center',
-    paddingHorizontal: 24,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    paddingVertical: 12,
-  },
-  socialButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
-  },
-  websiteIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: MINIMAL_UI.blueDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

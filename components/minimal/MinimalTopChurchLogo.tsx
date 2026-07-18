@@ -1,7 +1,5 @@
 import {
   MINIMAL_TOP_IDENTITY_LOGO_HEIGHT,
-  MINIMAL_TYPO,
-  MINIMAL_UI,
 } from '@/lib/minimalUiTheme';
 import { resolveTenantChromeLogo, type TenantLogoResolution } from '@/lib/tenantBranding';
 import {
@@ -11,7 +9,7 @@ import {
 } from '@/lib/tenantSession';
 import { Image, type ImageSource } from 'expo-image';
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 function logoSignature(resolved: TenantLogoResolution): string {
   if (resolved.kind === 'image') {
@@ -98,40 +96,28 @@ export function MinimalTopChurchLogo() {
   }, [reloadToken]);
 
   return (
-    <View style={styles.slot} pointerEvents="none">
+    <View className="max-w-[48%] items-end justify-center" pointerEvents="none">
       {logoSource ? (
         <Image
           source={logoSource}
-          style={styles.logo}
+          style={{
+            width: MINIMAL_TOP_IDENTITY_LOGO_HEIGHT * 2.4,
+            height: MINIMAL_TOP_IDENTITY_LOGO_HEIGHT,
+          }}
           contentFit="contain"
           accessibilityLabel={logoLabel}
           transition={0}
           cachePolicy="memory-disk"
         />
       ) : (
-        <Text style={styles.fallback} numberOfLines={2} accessibilityLabel={logoLabel}>
+        <Text
+          className="max-w-[180px] text-right text-minimal-greeting font-bold text-minimal-blue-dark"
+          numberOfLines={2}
+          accessibilityLabel={logoLabel}
+        >
           {logoText || 'Igreja'}
         </Text>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  slot: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    maxWidth: '48%',
-  },
-  logo: {
-    width: MINIMAL_TOP_IDENTITY_LOGO_HEIGHT * 2.4,
-    height: MINIMAL_TOP_IDENTITY_LOGO_HEIGHT,
-  },
-  fallback: {
-    ...MINIMAL_TYPO.greeting,
-    color: MINIMAL_UI.blueDark,
-    fontWeight: '700',
-    textAlign: 'right',
-    maxWidth: 180,
-  },
-});
