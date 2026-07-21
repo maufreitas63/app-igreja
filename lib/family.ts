@@ -223,9 +223,13 @@ export async function reserveNextFamilyId() {
   );
 }
 
-export async function resolveFamilyIdForPhone(phone: string | null | undefined) {
-  if (!phone) {
-    return resolveCurrentFamilyId();
+/**
+ * Resolve o código da família vinculado ao telefone (perfil ou members).
+ * Retorna null quando não há vínculo — não usa o family_ref global (próximo código).
+ */
+export async function resolveLinkedFamilyIdForPhone(phone: string | null | undefined) {
+  if (!phone?.trim()) {
+    return null;
   }
 
   const profile = await getProfileFamilyByPhone(phone);
@@ -243,6 +247,40 @@ export async function resolveFamilyIdForPhone(phone: string | null | undefined) 
   const memberByName = await findMemberByName(profile?.full_name);
   if (memberByName?.family_id) {
     return normalizeFamilyCode(memberByName.family_id);
+  }
+
+  return null;
+}
+
+/**
+ * Família da sessão efetiva a partir do perfil (ghost-aware) e, se preciso, do telefone efetivo.
+ * Nunca usa o telefone do operador real quando o perfil efetivo já está carregado.
+ */
+export async function resolveSessionFamilyId(
+  sessionProfile: {
+    family_id?: string | null;
+    codigo_membro?: string | null;
+    phone?: string | null;
+  } | null | undefined,
+  fallbackPhone?: string | null
+) {
+  const fromProfile = normalizeFamilyCode(
+    sessionProfile?.family_id ?? sessionProfile?.codigo_membro ?? null
+  );
+
+  if (fromProfile) {
+    return fromProfile;
+  }
+
+  const effectivePhone = sessionProfile?.phone?.trim() || fallbackPhone?.trim() || null;
+  return resolveLinkedFamilyIdForPhone(effectivePhone);
+}
+
+export async function resolveFamilyIdForPhone(phone: string | null | undefined) {
+  const linkedFamilyId = await resolveLinkedFamilyIdForPhone(phone);
+
+  if (linkedFamilyId) {
+    return linkedFamilyId;
   }
 
   return resolveCurrentFamilyId();

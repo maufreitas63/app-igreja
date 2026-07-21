@@ -172,10 +172,11 @@ export const FamilyRegistrationList = ({
   const activeSessionMember = useMemo(
     () =>
       resolveActiveSessionMember(members, {
-        sessionPhone,
-        sessionProfileName,
+        // Preferir telefone do perfil efetivo (Modo Ghost) ao telefone armazenado do operador.
+        sessionPhone: sessionProfile?.phone ?? sessionPhone,
+        sessionProfileName: sessionProfile?.full_name ?? sessionProfileName,
       }),
-    [members, sessionPhone, sessionProfileName]
+    [members, sessionPhone, sessionProfile?.full_name, sessionProfile?.phone, sessionProfileName]
   );
 
   const visibleMembers = useMemo(() => {

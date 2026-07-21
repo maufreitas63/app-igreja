@@ -40,7 +40,7 @@ import {
 } from '@/lib/geoCheckinWindow';
 import { parseGeofenceRadiusMeters } from '@/lib/checkinGeofence';
 import { formatRoomServidorNames } from '@/lib/roomServidorScales';
-import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
+import { resolveSessionFamilyId, normalizeFamilyCode } from '@/lib/family';
 import { withActiveMembershipProfileFilter } from '@/lib/activeMemberProfile';
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { formatFullName } from '@/lib/fullName';
@@ -978,10 +978,11 @@ export default function Dashboard() {
           sessionProfile = await loadEffectiveSessionProfile(targetPhone);
         }
 
-        const resolvedFamilyId =
-          sessionProfile?.family_id
-          ?? sessionProfile?.codigo_membro
-          ?? (await resolveFamilyIdForPhone(sessionProfile?.phone ?? targetPhone));
+        // Em Modo Ghost, família/telefone vêm do perfil efetivo — nunca do operador real.
+        const resolvedFamilyId = await resolveSessionFamilyId(
+          sessionProfile,
+          isGhostModeActive() ? null : targetPhone
+        );
         setFamilyId(resolvedFamilyId);
 
         if (!sessionProfile) {
@@ -2823,7 +2824,7 @@ export default function Dashboard() {
                               }
                               quorumMode={selectedEvent?.requer_quorum === true}
                               quorumTotemCheckinConfirmed={hasTotemCheckinConfirmed}
-                              sessionPhone={userPhone}
+                              sessionPhone={profile?.phone ?? userPhone}
                               sessionProfileName={profile?.full_name ?? null}
                               deviceCoordinates={geoDeviceCoordinates}
                               skipGeofenceOnSave={skipGeofenceOnAudienceSave}

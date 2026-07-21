@@ -1,8 +1,9 @@
 import { FamilyAgendaView } from '@/components/FamilyAgendaView';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
+import { useGhostMode } from '@/context/GhostModeContext';
 import { resolveEventEnabledRoomKeys } from '@/lib/maintenanceEventForm';
 import { useActiveEvents, type ActiveEventListItem } from '@/hooks/useActiveEvents';
-import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
+import { resolveSessionFamilyId } from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -25,13 +26,14 @@ type Props = {
 
 /** Painel inline da Agenda da Família — entre o topo (saudação) e a barra «Encerrar sessão». */
 export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
+  const { isActive: ghostModeActive, state: ghostModeState } = useGhostMode();
   const { events, loading, error, refetch } = useActiveEvents({
     enabled: visible,
     enablePolling: visible,
   });
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(initialEventId);
-  const [userPhone, setUserPhone] = useState<string | null>(null);
+  const [sessionPhone, setSessionPhone] = useState<string | null>(null);
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [profile, setProfile] = useState<{
     id: string;
@@ -80,21 +82,28 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
       setIsProfileLoading(true);
 
       try {
-        const phone = await getStoredUserPhone();
-        const sessionProfile = await loadEffectiveSessionProfile();
+        // Telefone armazenado = operador real; em Modo Ghost use só o perfil efetivo.
+        const storedPhone = await getStoredUserPhone();
+        const sessionProfile = await loadEffectiveSessionProfile(
+          ghostModeActive ? undefined : storedPhone
+        );
 
         if (!isMounted) {
           return;
         }
 
-        setUserPhone(phone);
+        const effectivePhone =
+          sessionProfile?.phone?.trim()
+          || (ghostModeActive ? null : storedPhone?.trim() || null)
+          || null;
+
+        setSessionPhone(effectivePhone);
         setProfile(sessionProfile?.id ? sessionProfile : null);
 
-        const resolvedFamilyId = sessionProfile?.family_id
-          ? normalizeFamilyCode(sessionProfile.family_id)
-          : phone
-            ? await resolveFamilyIdForPhone(phone)
-            : null;
+        const resolvedFamilyId = await resolveSessionFamilyId(
+          sessionProfile,
+          ghostModeActive ? null : storedPhone
+        );
 
         setFamilyId(resolvedFamilyId);
       } finally {
@@ -109,7 +118,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
     return () => {
       isMounted = false;
     };
-  }, [visible]);
+  }, [ghostModeActive, ghostModeState?.targetProfileId, visible]);
 
   const selectedEvent: ActiveEventListItem | null = useMemo(
     () => events.find((event) => event.id === selectedEventId) ?? events[0] ?? null,
@@ -130,12 +139,12 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
         ? {
             id: profile.id,
             full_name: profile.full_name ?? null,
-            phone: profile.phone ?? userPhone,
+            phone: profile.phone ?? sessionPhone,
             birth_date: profile.birth_date ?? null,
             family_id: familyId ?? profile.codigo_membro ?? null,
           }
         : null,
-    [familyId, profile, userPhone]
+    [familyId, profile, sessionPhone]
   );
 
   const handleRegistrationChange = useCallback(async () => {
@@ -154,7 +163,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
         showTeensIndicator={Boolean(selectedEvent.teens_room)}
         eventEnabledRoomKeys={resolveEventEnabledRoomKeys(selectedEvent)}
         quorumMode={selectedEvent.requer_quorum === true}
-        sessionPhone={userPhone}
+        sessionPhone={sessionPhone}
         sessionProfileName={profile?.full_name ?? null}
         sessionProfile={familyRegistrationSessionProfile}
         minimal
