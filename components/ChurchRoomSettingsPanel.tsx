@@ -17,6 +17,7 @@ import {
   setUserRoomAssignment,
   type RoomAssignmentProfile,
 } from '@/lib/userRoomAssignment';
+import { ChurchRoomDistributionTab } from '@/components/ChurchRoomDistributionTab';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -33,7 +34,7 @@ type Props = {
   onRoomsChanged?: () => void;
 };
 
-type PanelTab = 'salas' | 'membros';
+type PanelTab = 'salas' | 'membros' | 'distribuicao';
 
 function roomKindLabel(kind: ChurchRoomKind): string {
   return kind === 'especial' ? 'Especial' : 'Padrão';
@@ -70,7 +71,7 @@ function roomPeriodLabel(room: ChurchRoomSetting): string | null {
 
 /**
  * Painel de gestão de salas (stateless quanto à navegação).
- * Abas: Salas (CRUD) e Membros (atribuição) — evita um scroll único poluído.
+ * Abas: Salas (CRUD), Membros (atribuição) e Distribuição (visão por sala).
  */
 export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
   const enabledRooms = useMemo(
@@ -102,6 +103,7 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
   const [profiles, setProfiles] = useState<RoomAssignmentProfile[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
   const [busyProfileId, setBusyProfileId] = useState<string | null>(null);
+  const [assigningBatch, setAssigningBatch] = useState(false);
 
   useEffect(() => {
     const next: Record<string, string> = {};
@@ -132,6 +134,12 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
   useEffect(() => {
     void loadProfiles();
   }, [loadProfiles]);
+
+  useEffect(() => {
+    if (tab === 'distribuicao') {
+      void loadProfiles('');
+    }
+  }, [tab, loadProfiles]);
 
   const handleSaveRoom = async (roomKey: ChurchRoomKey) => {
     const label = (drafts[roomKey] ?? '').trim();
@@ -313,6 +321,37 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
     void handleAssign(profile.profile_id, room.room_key, assignmentKind);
   };
 
+  const handleBatchAssign = async (
+    profileIds: string[],
+    roomKey: ChurchRoomKey,
+    assignmentKind: ChurchRoomKind
+  ) => {
+    if (!profileIds.length) return;
+    setAssigningBatch(true);
+    try {
+      let ok = 0;
+      let lastMessage = '';
+      for (const profileId of profileIds) {
+        const result = await setUserRoomAssignment(profileId, roomKey, assignmentKind);
+        lastMessage = result.message;
+        if (result.success) ok += 1;
+      }
+      Toast.show({
+        type: ok > 0 ? 'success' : 'error',
+        text1: 'Distribuição',
+        text2:
+          ok === profileIds.length
+            ? `${ok} membro(s) alocado(s).`
+            : ok > 0
+              ? `${ok} de ${profileIds.length} alocados. ${lastMessage}`
+              : lastMessage || 'Falha ao alocar.',
+      });
+      await loadProfiles(tab === 'distribuicao' ? '' : search);
+    } finally {
+      setAssigningBatch(false);
+    }
+  };
+
   const isRoomDirty = (room: ChurchRoomSetting) =>
     (drafts[room.room_key] ?? '').trim() !== room.display_label.trim();
 
@@ -386,6 +425,7 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
           [
             { key: 'salas', label: 'Salas' },
             { key: 'membros', label: 'Membros' },
+            { key: 'distribuicao', label: 'Distribuição' },
           ] as const
         ).map((item) => {
           const selected = tab === item.key;
@@ -529,7 +569,9 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
             </View>
           )}
         </View>
-      ) : (
+      ) : null}
+
+      {tab === 'membros' ? (
         <View style={styles.tabBody}>
           <View style={styles.searchRow}>
             <TextInput
@@ -653,7 +695,20 @@ export function ChurchRoomSettingsPanel({ rooms, onRoomsChanged }: Props) {
             })
           )}
         </View>
-      )}
+      ) : null}
+
+      {tab === 'distribuicao' ? (
+        <View style={styles.tabBody}>
+          <ChurchRoomDistributionTab
+            rooms={enabledRooms}
+            profiles={profiles}
+            loading={loadingProfiles}
+            busyProfileId={busyProfileId}
+            assigningBatch={assigningBatch}
+            onAssign={handleBatchAssign}
+          />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -679,9 +734,10 @@ const styles = StyleSheet.create({
     borderBottomColor: MINIMAL_UI.blueDark,
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: MINIMAL_UI.textMuted,
+    textAlign: 'center',
   },
   tabTextSelected: {
     color: MINIMAL_UI.blueDark,
