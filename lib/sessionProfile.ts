@@ -26,6 +26,7 @@ export function invalidateSessionProfileCache() {
   invalidateAsyncCache('acl:');
   invalidateAsyncCache('dashboard:cards:');
   invalidateAsyncCache('dashboard:screens:');
+  invalidateAsyncCache('dashboard:grouped-manage:');
   invalidateAsyncCache('profile:columns:');
 }
 

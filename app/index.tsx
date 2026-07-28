@@ -253,35 +253,54 @@ export default function IndexScreen() {
             getStoredTenantId,
             getPreferredIgrejaCode,
             listSessionIgrejas,
-            persistActiveIgrejaBranding,
+            activateSessionTenant,
             clearTenantId,
           } = await import('@/lib/tenantSession');
           const storedTenant = await getStoredTenantId();
           const preferredCode = await getPreferredIgrejaCode();
           const churches = await listSessionIgrejas();
+          const storedMatch = storedTenant
+            ? churches.find((church) => church.id === storedTenant)
+            : null;
           const preferredMatch = preferredCode
             ? churches.find(
                 (church) => church.code.trim().toUpperCase() === preferredCode
               )
             : null;
+          const primaryMatch = churches.find((church) => church.is_primary) ?? null;
 
-          if (preferredMatch) {
-            await persistActiveIgrejaBranding(preferredMatch);
-          } else if (storedTenant) {
-            const match = churches.find((church) => church.id === storedTenant);
-            if (match) {
-              await persistActiveIgrejaBranding(match);
-            } else {
-              // Tenant bloqueado/removido: limpa storage e força escolha válida.
-              await clearTenantId();
-              if (churches.length === 1 && churches[0]) {
-                await persistActiveIgrejaBranding(churches[0]);
-              } else if (churches.length > 1) {
-                route = buildSelecionarIgrejaRoute(phoneForSession);
-              }
+          // Prioridade: última instância ativa → deep link (?igreja=) → primary no banco → única / escolha.
+          // preferred_igreja_code NÃO pode sobrescrever um tenant já salvo (ex.: IBN após QR IBEP).
+          const applyTenant = async (
+            church: NonNullable<typeof storedMatch>
+          ) => {
+            const activated = await activateSessionTenant(church.id, church);
+            if (!activated.success) {
+              const { persistActiveIgrejaBranding } = await import('@/lib/tenantSession');
+              await persistActiveIgrejaBranding(church);
             }
+          };
+
+          if (storedMatch) {
+            await applyTenant(storedMatch);
+          } else if (storedTenant && !storedMatch) {
+            // Tenant bloqueado/removido: limpa storage e força escolha válida.
+            await clearTenantId();
+            if (preferredMatch) {
+              await applyTenant(preferredMatch);
+            } else if (primaryMatch) {
+              await applyTenant(primaryMatch);
+            } else if (churches.length === 1 && churches[0]) {
+              await applyTenant(churches[0]);
+            } else if (churches.length > 1) {
+              route = buildSelecionarIgrejaRoute(phoneForSession);
+            }
+          } else if (preferredMatch) {
+            await applyTenant(preferredMatch);
+          } else if (primaryMatch) {
+            await applyTenant(primaryMatch);
           } else if (churches.length === 1 && churches[0]) {
-            await persistActiveIgrejaBranding(churches[0]);
+            await applyTenant(churches[0]);
           } else if (await shouldPromptTenantSelection()) {
             route = buildSelecionarIgrejaRoute(phoneForSession);
           }

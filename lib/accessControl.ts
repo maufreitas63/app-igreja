@@ -394,7 +394,8 @@ async function fetchProfileHasAccess(
 
     if (!isSupabaseRpcMissingError(evaluated.error, 'evaluate_profile_resource_access')) {
       console.error('evaluate_profile_resource_access:', evaluated.error);
-      return false;
+      // Propaga erro transitório para não cachear `false` no getCachedOrFetch.
+      throw evaluated.error;
     }
   }
 
@@ -405,7 +406,16 @@ async function fetchProfileHasAccess(
     p_action: action,
   });
 
-  return coerceAccessResult(data as boolean | null | undefined, error);
+  if (error) {
+    if (isAccessRpcMissing(error)) {
+      return !isAclStrictMode();
+    }
+
+    console.error('profile_has_access:', error);
+    throw error;
+  }
+
+  return coerceRpcBoolean(data);
 }
 
 export async function profileHasAccess(
@@ -430,14 +440,23 @@ export async function profileHasAccess(
   }
 
   if (options?.skipCache) {
-    return fetchProfileHasAccess(trimmed, resourceType, resourceKey, action);
+    try {
+      return await fetchProfileHasAccess(trimmed, resourceType, resourceKey, action);
+    } catch {
+      return false;
+    }
   }
 
-  return getCachedOrFetch(
-    `acl:${trimmed}:${resourceType}:${resourceKey}:${action}`,
-    () => fetchProfileHasAccess(trimmed, resourceType, resourceKey, action),
-    { scopeId: trimmed, forceRefresh: options?.forceRefresh }
-  );
+  try {
+    return await getCachedOrFetch(
+      `acl:${trimmed}:${resourceType}:${resourceKey}:${action}`,
+      () => fetchProfileHasAccess(trimmed, resourceType, resourceKey, action),
+      { scopeId: trimmed, forceRefresh: options?.forceRefresh }
+    );
+  } catch {
+    // Erro de rede/sessão: nega sem cachear, para a próxima tentativa reavaliar.
+    return false;
+  }
 }
 
 export async function profileHasAccessByPhone(
@@ -475,6 +494,7 @@ export function invalidateAccessControlCache(options?: {
     invalidateAsyncCache('acl:');
     invalidateAsyncCache('dashboard:cards:');
     invalidateAsyncCache('dashboard:screens:');
+    invalidateAsyncCache('dashboard:grouped-manage:');
     invalidateAsyncCache('profile:columns:');
     return;
   }
@@ -483,6 +503,7 @@ export function invalidateAccessControlCache(options?: {
   invalidateAsyncCache(`acl:${trimmed}`);
   invalidateAsyncCache(`dashboard:cards:${trimmed}`);
   invalidateAsyncCache(`dashboard:screens:${trimmed}`);
+  invalidateAsyncCache(`dashboard:grouped-manage:${trimmed}`);
   invalidateAsyncCache(`profile:columns:${trimmed}`);
 }
 

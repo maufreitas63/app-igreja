@@ -98,6 +98,16 @@ export async function persistUserSession(
   if (token) {
     await AsyncStorage.setItem(USER_SESSION_TOKEN_STORAGE_KEY, token);
   }
+
+  // Evita ACL/perfil cacheados de tentativas anteriores (fail-closed falso após PIN).
+  try {
+    const { invalidateSessionProfileCache } = await import('@/lib/sessionProfile');
+    const { invalidateAccessControlCache } = await import('@/lib/accessControl');
+    invalidateSessionProfileCache();
+    invalidateAccessControlCache({ profileId, allProfiles: !profileId });
+  } catch {
+    // best-effort
+  }
 }
 
 export async function persistSessionToken(sessionToken: string | null | undefined) {
@@ -262,9 +272,13 @@ const scrubWebSessionKeys = (options?: { keepPhone?: boolean }) => {
       || key === USER_PROFILE_ID_STORAGE_KEY
       || key === USER_SESSION_TOKEN_STORAGE_KEY
       || key === 'user_tenant_id'
+      || key === 'user_tenant_branding'
+      || key === 'preferred_igreja_code'
       || key.includes(USER_PROFILE_ID_STORAGE_KEY)
       || key.includes(USER_SESSION_TOKEN_STORAGE_KEY)
       || key.includes('user_tenant_id')
+      || key.includes('user_tenant_branding')
+      || key.includes('preferred_igreja_code')
     ) {
       keysToDrop.push(key);
     }
@@ -299,11 +313,28 @@ export async function clearUserSession(options?: { keepPhone?: boolean }) {
   await revokeStoredProfileSession();
   scrubWebSessionKeys({ keepPhone });
   resetProfileScreenVisitTracking();
-  const { USER_TENANT_ID_STORAGE_KEY: tenantKey } = await import('@/lib/tenantSession');
+  const {
+    USER_TENANT_ID_STORAGE_KEY: tenantKey,
+    USER_TENANT_BRANDING_STORAGE_KEY: brandingKey,
+    PREFERRED_IGREJA_CODE_STORAGE_KEY: preferredKey,
+  } = await import('@/lib/tenantSession');
   await AsyncStorage.multiRemove(
     keepPhone
-      ? [USER_PROFILE_ID_STORAGE_KEY, USER_SESSION_TOKEN_STORAGE_KEY, tenantKey]
-      : [USER_PHONE_STORAGE_KEY, USER_PROFILE_ID_STORAGE_KEY, USER_SESSION_TOKEN_STORAGE_KEY, tenantKey]
+      ? [
+          USER_PROFILE_ID_STORAGE_KEY,
+          USER_SESSION_TOKEN_STORAGE_KEY,
+          tenantKey,
+          brandingKey,
+          preferredKey,
+        ]
+      : [
+          USER_PHONE_STORAGE_KEY,
+          USER_PROFILE_ID_STORAGE_KEY,
+          USER_SESSION_TOKEN_STORAGE_KEY,
+          tenantKey,
+          brandingKey,
+          preferredKey,
+        ]
   );
   scrubWebSessionKeys({ keepPhone });
 }
@@ -319,12 +350,19 @@ const clearUserSessionImmediately = () => {
   scrubWebSessionKeys({ keepPhone: true });
   resetProfileScreenVisitTracking();
   void revokeStoredProfileSession();
-  void import('@/lib/tenantSession').then(({ USER_TENANT_ID_STORAGE_KEY: tenantKey }) =>
-    AsyncStorage.multiRemove([
-      USER_PROFILE_ID_STORAGE_KEY,
-      USER_SESSION_TOKEN_STORAGE_KEY,
-      tenantKey,
-    ])
+  void import('@/lib/tenantSession').then(
+    ({
+      USER_TENANT_ID_STORAGE_KEY: tenantKey,
+      USER_TENANT_BRANDING_STORAGE_KEY: brandingKey,
+      PREFERRED_IGREJA_CODE_STORAGE_KEY: preferredKey,
+    }) =>
+      AsyncStorage.multiRemove([
+        USER_PROFILE_ID_STORAGE_KEY,
+        USER_SESSION_TOKEN_STORAGE_KEY,
+        tenantKey,
+        brandingKey,
+        preferredKey,
+      ])
   );
 };
 

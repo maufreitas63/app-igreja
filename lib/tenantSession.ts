@@ -343,12 +343,14 @@ export async function activateSessionTenant(
       // Preferir o card já carregado — evita listSessionIgrejas extra em dados móveis.
       if (churchHint && churchHint.id.trim() === id) {
         await persistActiveIgrejaBranding(churchHint);
+        await persistPreferredIgrejaCode(churchHint.code);
       } else {
         await persistTenantId(id, { notify: false });
         const churches = await listSessionIgrejas();
         const church = churches.find((row) => row.id === id);
         if (church) {
           await persistActiveIgrejaBranding(church);
+          await persistPreferredIgrejaCode(church.code);
         } else {
           notifyActiveTenantChange(id);
         }

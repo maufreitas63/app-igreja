@@ -5,7 +5,8 @@ import { ProfileClassPanel } from '@/components/ProfileClassPanel';
 import { loadGroupedManageScreenAccess } from '@/lib/groupedManageAccess';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { getStoredUserPhone } from '@/lib/userSession';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 /** Container com dados e navegação — compõe o PerfilClass stateless. */
@@ -18,52 +19,52 @@ export function PerfilClassPanel() {
   const [ministerialFormVisible, setMinisterialFormVisible] = useState(false);
   const [profileClassVisible, setProfileClassVisible] = useState(false);
   const [membersClassVisible, setMembersClassVisible] = useState(false);
+  const loadGenerationRef = useRef(0);
 
-  useEffect(() => {
-    let active = true;
+  const reloadAccess = useCallback(async (options?: { forceRefresh?: boolean }) => {
+    const generation = ++loadGenerationRef.current;
+    setLoading(true);
 
-    const load = async () => {
-      setLoading(true);
+    try {
+      const phone = await getStoredUserPhone();
+      const sessionProfile = phone ? await loadEffectiveSessionProfile(phone) : null;
+      const resolvedProfileId = sessionProfile?.id?.trim() ?? null;
 
-      try {
-        const phone = await getStoredUserPhone();
-        const sessionProfile = phone ? await loadEffectiveSessionProfile(phone) : null;
-        const resolvedProfileId = sessionProfile?.id?.trim() ?? null;
-
-        if (!active) {
-          return;
-        }
-
-        setUserPhone(phone);
-        setProfileId(resolvedProfileId);
-
-        if (!resolvedProfileId) {
-          setManageProfile(false);
-          setManageMembers(false);
-          return;
-        }
-
-        const access = await loadGroupedManageScreenAccess(resolvedProfileId);
-
-        if (!active) {
-          return;
-        }
-
-        setManageProfile(access.manageProfile);
-        setManageMembers(access.manageMembers);
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
+      if (generation !== loadGenerationRef.current) {
+        return;
       }
-    };
 
-    void load();
+      setUserPhone(phone);
+      setProfileId(resolvedProfileId);
 
-    return () => {
-      active = false;
-    };
+      if (!resolvedProfileId) {
+        setManageProfile(false);
+        setManageMembers(false);
+        return;
+      }
+
+      const access = await loadGroupedManageScreenAccess(resolvedProfileId, {
+        forceRefresh: options?.forceRefresh === true,
+      });
+
+      if (generation !== loadGenerationRef.current) {
+        return;
+      }
+
+      setManageProfile(access.manageProfile);
+      setManageMembers(access.manageMembers);
+    } finally {
+      if (generation === loadGenerationRef.current) {
+        setLoading(false);
+      }
+    }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void reloadAccess({ forceRefresh: true });
+    }, [reloadAccess])
+  );
 
   const openManageProfile = useCallback(() => {
     setProfileClassVisible(true);
@@ -158,8 +159,5 @@ const styles = StyleSheet.create({
   embeddedPanel: {
     flex: 1,
     minHeight: 0,
-    width: '100%',
-    alignSelf: 'stretch',
-    backgroundColor: '#FFFFFF',
   },
 });
