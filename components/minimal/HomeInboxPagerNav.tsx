@@ -80,5 +80,7 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     fontSize: 18,
     color: MINIMAL_UI.blueDark,
+    // Herda o fundo da faixa (rowHover); MINIMAL_SECTION_TITLE traz branco.
+    backgroundColor: 'transparent',
   },
 });
