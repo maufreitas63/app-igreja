@@ -1,3 +1,4 @@
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import type { ChurchRoomKey, ChurchRoomKind, ChurchRoomSetting } from '@/lib/churchRoomSettings';
 import { getAgeFromBirthDate } from '@/lib/kidsTeensStatus';
 import { MINIMAL_ICON, MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -41,7 +42,7 @@ function isInRoom(profile: RoomAssignmentProfile, room: ChurchRoomSetting): bool
 }
 
 /**
- * Aba Distribuição: salas em linhas expansíveis + não alocados com checkbox.
+ * Aba Distribuição: salas em linhas expansíveis + não alocados com dropdown de sala.
  */
 export function ChurchRoomDistributionTab({
   rooms,
@@ -52,12 +53,34 @@ export function ChurchRoomDistributionTab({
   onAssign,
 }: Props) {
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
-  const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({});
 
   const sortedRooms = useMemo(
-    () => [...rooms].sort((a, b) => a.sort_order - b.sort_order || a.display_label.localeCompare(b.display_label)),
+    () =>
+      [...rooms].sort(
+        (a, b) => a.sort_order - b.sort_order || a.display_label.localeCompare(b.display_label)
+      ),
     [rooms]
   );
+
+  const roomOptions = useMemo(
+    () =>
+      sortedRooms.map((room) => ({
+        value: room.room_key,
+        label:
+          room.room_kind === 'especial'
+            ? `${room.display_label} (especial)`
+            : room.display_label,
+      })),
+    [sortedRooms]
+  );
+
+  const roomByKey = useMemo(() => {
+    const map = new Map<string, ChurchRoomSetting>();
+    for (const room of sortedRooms) {
+      map.set(room.room_key, room);
+    }
+    return map;
+  }, [sortedRooms]);
 
   const membersByRoom = useMemo(() => {
     const map = new Map<string, RoomAssignmentProfile[]>();
@@ -80,24 +103,14 @@ export function ChurchRoomDistributionTab({
     [profiles]
   );
 
-  const selectedList = useMemo(
-    () => unallocated.filter((profile) => selectedIds[profile.profile_id]),
-    [selectedIds, unallocated]
-  );
-
   const toggleExpanded = (key: string) => {
     setExpandedKeys((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const toggleSelected = (profileId: string) => {
-    setSelectedIds((prev) => ({ ...prev, [profileId]: !prev[profileId] }));
-  };
-
-  const handleAssignSelected = async (room: ChurchRoomSetting) => {
-    const ids = selectedList.map((profile) => profile.profile_id);
-    if (!ids.length) return;
-    await onAssign(ids, room.room_key, room.room_kind);
-    setSelectedIds({});
+  const handlePickRoom = (profileId: string, roomKey: string) => {
+    const room = roomByKey.get(roomKey);
+    if (!room) return;
+    void onAssign([profileId], room.room_key, room.room_kind);
   };
 
   const renderMemberLine = (profile: RoomAssignmentProfile) => {
@@ -166,7 +179,8 @@ export function ChurchRoomDistributionTab({
   return (
     <View style={styles.root}>
       <Text style={styles.hint}>
-        Toque em uma sala para ver os membros. Em Não alocados, marque e escolha a sala de destino.
+        Toque em uma sala para ver os membros. Em Não alocados, escolha a sala no dropdown ao lado
+        do nome.
       </Text>
 
       {sortedRooms.map((room) => {
@@ -194,71 +208,51 @@ export function ChurchRoomDistributionTab({
         'Não alocados',
         'Sem sala padrão nem especial',
         unallocated.length,
-        <>
-          {unallocated.length === 0 ? (
-            <Text style={styles.empty}>Todos os membros estão alocados.</Text>
-          ) : (
-            unallocated.map((profile) => {
-              const checked = !!selectedIds[profile.profile_id];
-              const busy = busyProfileId === profile.profile_id || assigningBatch;
-              const age = getAgeFromBirthDate(profile.birth_date);
-              const meta = [age !== null ? `${age} anos` : null, profile.phone || null]
-                .filter(Boolean)
-                .join(' · ');
+        unallocated.length === 0 ? (
+          <Text style={styles.empty}>Todos os membros estão alocados.</Text>
+        ) : (
+          unallocated.map((profile) => {
+            const busy = busyProfileId === profile.profile_id || assigningBatch;
+            const age = getAgeFromBirthDate(profile.birth_date);
+            const meta = [age !== null ? `${age} anos` : null, profile.phone || null]
+              .filter(Boolean)
+              .join(' · ');
 
-              return (
-                <View key={profile.profile_id} style={styles.unallocatedRow}>
-                  <TouchableOpacity
-                    style={[styles.checkbox, checked && styles.checkboxChecked]}
-                    onPress={() => toggleSelected(profile.profile_id)}
-                    disabled={busy}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked, disabled: busy }}
-                    accessibilityLabel={`Selecionar ${profile.full_name}`}
-                  >
-                    {checked ? <Text style={styles.checkmark}>✓</Text> : null}
-                  </TouchableOpacity>
-                  <View style={styles.unallocatedInfo}>
-                    <Text style={styles.memberName} numberOfLines={1}>
-                      {profile.full_name}
+            return (
+              <View key={profile.profile_id} style={styles.unallocatedRow}>
+                <View style={styles.unallocatedInfo}>
+                  <Text style={styles.memberName} numberOfLines={1}>
+                    {profile.full_name}
+                  </Text>
+                  {meta ? (
+                    <Text style={styles.memberMeta} numberOfLines={1}>
+                      {meta}
                     </Text>
-                    {meta ? (
-                      <Text style={styles.memberMeta} numberOfLines={1}>
-                        {meta}
-                      </Text>
-                    ) : null}
-                  </View>
+                  ) : null}
                 </View>
-              );
-            })
-          )}
-
-          {selectedList.length > 0 ? (
-            <View style={styles.assignPanel}>
-              <Text style={styles.assignLabel}>
-                Atribuir {selectedList.length}{' '}
-                {selectedList.length === 1 ? 'selecionado' : 'selecionados'} a:
-              </Text>
-              <View style={styles.chipRow}>
-                {sortedRooms.map((room) => (
-                  <TouchableOpacity
-                    key={`assign-${room.room_key}`}
-                    style={styles.chip}
-                    disabled={assigningBatch}
-                    onPress={() => void handleAssignSelected(room)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Atribuir selecionados a ${room.display_label}`}
-                  >
-                    <Text style={styles.chipText}>{room.display_label}</Text>
-                  </TouchableOpacity>
-                ))}
+                <View style={styles.dropdownWrap}>
+                  {busy ? (
+                    <ActivityIndicator color={MINIMAL_UI.accent} size="small" />
+                  ) : (
+                    <DropdownSelect
+                      options={roomOptions}
+                      selectedValue=""
+                      onValueChange={(roomKey) => handlePickRoom(profile.profile_id, roomKey)}
+                      modalTitle={`Alocar ${profile.full_name}`}
+                      placeholder="Sala"
+                      variant="minimal"
+                      size="compact"
+                      disabled={busy || roomOptions.length === 0}
+                      style={styles.dropdown}
+                      triggerTextStyle={styles.dropdownText}
+                      triggerIconColor={MINIMAL_UI.icon}
+                    />
+                  )}
+                </View>
               </View>
-              {assigningBatch ? (
-                <ActivityIndicator color={MINIMAL_UI.accent} style={styles.batchLoader} />
-              ) : null}
-            </View>
-          ) : null}
-        </>
+            );
+          })
+        )
       )}
     </View>
   );
@@ -346,57 +340,20 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: 2,
   },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: MINIMAL_UI.icon,
-    alignItems: 'center',
+  dropdownWrap: {
+    flexShrink: 0,
+    minWidth: 120,
+    maxWidth: '46%',
+    alignItems: 'flex-end',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
   },
-  checkboxChecked: {
-    backgroundColor: MINIMAL_UI.icon,
+  dropdown: {
+    alignSelf: 'stretch',
+    minWidth: 120,
   },
-  checkmark: {
-    color: MINIMAL_UI.background,
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  assignPanel: {
-    marginTop: 8,
-    paddingTop: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: MINIMAL_UI.divider,
-    gap: 8,
-  },
-  assignLabel: {
+  dropdownText: {
+    color: MINIMAL_UI.blueDark,
     fontSize: 12,
     fontWeight: '700',
-    color: MINIMAL_UI.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: MINIMAL_UI.border,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  chipText: {
-    color: MINIMAL_UI.text,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  batchLoader: {
-    marginTop: 4,
   },
 });
