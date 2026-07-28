@@ -11,31 +11,51 @@ drop policy if exists ptt_audio_storage_insert on storage.objects;
 drop policy if exists ptt_audio_storage_update on storage.objects;
 drop policy if exists ptt_audio_storage_delete on storage.objects;
 
--- Funções RPC / helpers (todas as assinaturas conhecidas)
-drop function if exists public.send_ptt_directory_message(text, uuid, text, text, text, text, text, uuid);
-drop function if exists public.send_ptt_estacionamento_message(text, text, text, text, text, text, uuid, uuid);
-drop function if exists public.send_ptt_estacionamento_message(text, text, text, text, text, text, uuid);
-drop function if exists public.send_ptt_estacionamento_message(text, text, text, text, text, text);
-drop function if exists public.reply_ptt_conversation(uuid, text, text, text, text);
-drop function if exists public.end_ptt_conversation(uuid);
-drop function if exists public.list_open_ptt_conversations();
-drop function if exists public.list_ptt_conversation_messages(uuid);
-drop function if exists public.get_ptt_conversation(uuid);
-drop function if exists public.ack_ptt_conversation_messages(uuid);
-drop function if exists public.list_pending_ptt_messages();
-drop function if exists public.ack_ptt_message(uuid);
-drop function if exists public.mark_ptt_message_delivered(uuid);
-drop function if exists public.can_use_ptt_walkie();
-drop function if exists public.list_ptt_directory_peers();
-drop function if exists public.list_ptt_directory_users();
-drop function if exists public.add_ptt_directory_user(uuid);
-drop function if exists public.set_ptt_directory_user_active(uuid, boolean);
-drop function if exists public.ptt_is_directory_member(uuid);
-drop function if exists public.ptt_list_acolhimento_recepcao_recipients(uuid, date);
-drop function if exists public.ptt_other_participant(uuid, uuid);
-drop function if exists public.ptt_profile_display_name(uuid);
-drop function if exists public.ptt_service_date_today();
-drop function if exists public.ptt_normalize_name(text);
+-- Todas as funções PTT (qualquer assinatura), respeitando dependências
+do $$
+declare
+  r record;
+begin
+  for r in
+    select
+      n.nspname as schema_name,
+      p.proname as func_name,
+      pg_get_function_identity_arguments(p.oid) as func_args
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and (
+        p.proname like 'ptt\_%' escape '\'
+        or p.proname like '%\_ptt\_%' escape '\'
+        or p.proname like 'ptt%'
+        or p.proname in (
+          'can_use_ptt_walkie',
+          'list_ptt_directory_peers',
+          'list_ptt_directory_users',
+          'add_ptt_directory_user',
+          'set_ptt_directory_user_active',
+          'send_ptt_directory_message',
+          'send_ptt_estacionamento_message',
+          'reply_ptt_conversation',
+          'end_ptt_conversation',
+          'list_open_ptt_conversations',
+          'list_ptt_conversation_messages',
+          'get_ptt_conversation',
+          'ack_ptt_conversation_messages',
+          'list_pending_ptt_messages',
+          'ack_ptt_message',
+          'mark_ptt_message_delivered'
+        )
+      )
+  loop
+    execute format(
+      'drop function if exists %I.%I(%s) cascade',
+      r.schema_name,
+      r.func_name,
+      r.func_args
+    );
+  end loop;
+end $$;
 
 -- Tabelas (CASCADE remove índices/policies dependentes)
 drop table if exists public.ptt_directory_users cascade;
