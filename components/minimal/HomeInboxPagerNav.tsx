@@ -55,14 +55,14 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: MINIMAL_UI.background,
+    backgroundColor: MINIMAL_UI.rowHover,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: MINIMAL_UI.divider,
     paddingHorizontal: 4,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
   },
   rowPressed: {
-    backgroundColor: MINIMAL_UI.rowHover,
+    backgroundColor: MINIMAL_UI.divider,
   },
   sideSlot: {
     width: 40,
