@@ -56,8 +56,8 @@ export function ChurchRoomDistributionTab({
 
   const sortedRooms = useMemo(
     () =>
-      [...rooms].sort(
-        (a, b) => a.sort_order - b.sort_order || a.display_label.localeCompare(b.display_label)
+      [...rooms].sort((a, b) =>
+        a.display_label.localeCompare(b.display_label, 'pt-BR', { sensitivity: 'base' })
       ),
     [rooms]
   );
