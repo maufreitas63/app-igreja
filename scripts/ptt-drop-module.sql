@@ -1,15 +1,15 @@
 -- Remoção completa do módulo Walkie-Talkie / PTT no Supabase.
 -- Execute no SQL Editor (uma vez). Seguro com IF EXISTS.
+--
+-- Bucket de áudio: NÃO apague via SQL (bloqueado pelo Storage).
+-- No Dashboard: Storage → bucket "ptt-audio" → Delete bucket
+-- (ou esvazie os arquivos e remova o bucket pela UI).
 
 -- Políticas de storage do áudio PTT
 drop policy if exists ptt_audio_storage_select on storage.objects;
 drop policy if exists ptt_audio_storage_insert on storage.objects;
 drop policy if exists ptt_audio_storage_update on storage.objects;
 drop policy if exists ptt_audio_storage_delete on storage.objects;
-
--- Objetos e bucket de áudio
-delete from storage.objects where bucket_id = 'ptt-audio';
-delete from storage.buckets where id = 'ptt-audio';
 
 -- Funções RPC / helpers (todas as assinaturas conhecidas)
 drop function if exists public.send_ptt_directory_message(text, uuid, text, text, text, text, text, uuid);
