@@ -18,12 +18,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PttDirectoryAdminPanel } from '@/components/PttDirectoryAdminPanel';
-import { PttWalkieSettingsPanel } from '@/components/PttWalkieSettingsPanel';
 import { MinimalExitBar } from './MinimalExitBar';
 import { AppDrawerSettings } from './AppDrawerSettings';
-
-type SettingsPanel = 'root' | 'walkie' | 'walkie-users';
 
 export function AppDrawer() {
   const { isOpen, closeDrawer } = useAppDrawer();
@@ -31,14 +27,12 @@ export function AppDrawer() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsPanel, setSettingsPanel] = useState<SettingsPanel>('root');
 
   useEffect(() => {
     if (isOpen) {
       void refresh();
     } else {
       setSettingsOpen(false);
-      setSettingsPanel('root');
     }
   }, [isOpen, refresh]);
 
@@ -69,14 +63,12 @@ export function AppDrawer() {
       params,
     });
     setSettingsOpen(false);
-    setSettingsPanel('root');
     closeDrawer();
   };
 
   const handleOpenIgrejasInstances = () => {
     traceClick('drawer', 'settings-igrejas-instances-press');
     setSettingsOpen(false);
-    setSettingsPanel('root');
     closeDrawer();
     void navigateDrawerMenuItem(router, 'menu_igrejas');
   };
@@ -84,7 +76,6 @@ export function AppDrawer() {
   const handleOpenRoomSettings = () => {
     traceClick('drawer', 'settings-room-config-press');
     setSettingsOpen(false);
-    setSettingsPanel('root');
     closeDrawer();
     router.push({
       pathname: '/configuracao-salas',
@@ -95,7 +86,6 @@ export function AppDrawer() {
   const handleOpenAvisosSettings = () => {
     traceClick('drawer', 'settings-avisos-press');
     setSettingsOpen(false);
-    setSettingsPanel('root');
     closeDrawer();
     void navigateDrawerMenuItem(router, 'event_orchestration');
   };
@@ -103,17 +93,12 @@ export function AppDrawer() {
   const handleOpenBilling = () => {
     traceClick('drawer', 'settings-billing-press');
     setSettingsOpen(false);
-    setSettingsPanel('root');
     closeDrawer();
     void navigateDrawerMenuItem(router, 'menu_billing');
   };
 
   const handleBackdropPress = () => {
-    traceClick('drawer', 'backdrop-press', { settingsOpen, settingsPanel });
-    if (settingsOpen && settingsPanel !== 'root') {
-      setSettingsPanel('root');
-      return;
-    }
+    traceClick('drawer', 'backdrop-press', { settingsOpen });
     if (settingsOpen) {
       setSettingsOpen(false);
       return;
@@ -121,67 +106,33 @@ export function AppDrawer() {
     closeDrawer();
   };
 
-  const handleSettingsRequestClose = () => {
-    if (settingsPanel !== 'root') {
-      setSettingsPanel('root');
-      return;
-    }
-    setSettingsOpen(false);
-  };
-
   const panelTopOffset = insets.top + MINIMAL_TOP_CHROME_MIN_HEIGHT;
-
-  const renderSettingsBranch = () => {
-    if (settingsPanel === 'walkie') {
-      return (
-        <PttWalkieSettingsPanel
-          onBack={() => setSettingsPanel('root')}
-          canManageUsers={isSuperAdmin}
-          onOpenUsers={() => {
-            traceClick('drawer', 'settings-walkie-users-press');
-            setSettingsPanel('walkie-users');
-          }}
-        />
-      );
-    }
-    if (settingsPanel === 'walkie-users') {
-      return <PttDirectoryAdminPanel onBack={() => setSettingsPanel('walkie')} />;
-    }
-    return (
-      <AppDrawerSettings
-        onClose={() => {
-          traceClick('drawer', 'settings-close-press');
-          setSettingsOpen(false);
-          setSettingsPanel('root');
-        }}
-        onOpenMediaAuthorization={handleOpenMediaAuthorization}
-        onOpenBilling={handleOpenBilling}
-        onOpenWalkieTalkie={() => {
-          traceClick('drawer', 'settings-walkie-press');
-          setSettingsPanel('walkie');
-        }}
-        showRoomSettings={canManageRooms}
-        onOpenRoomSettings={handleOpenRoomSettings}
-        showAvisosSettings={canManageAvisos}
-        onOpenAvisosSettings={handleOpenAvisosSettings}
-        showIgrejasInstances={isSuperAdmin}
-        onOpenIgrejasInstances={handleOpenIgrejasInstances}
-      />
-    );
-  };
 
   return (
     <Modal
       animationType="slide"
       transparent
       visible={isOpen}
-      onRequestClose={settingsOpen ? handleSettingsRequestClose : closeDrawer}
+      onRequestClose={settingsOpen ? () => setSettingsOpen(false) : closeDrawer}
     >
       <View style={styles.overlay}>
         <View style={[styles.chromeGap, { height: panelTopOffset }]} pointerEvents="none" />
         <View style={styles.sheet}>
           {settingsOpen ? (
-            renderSettingsBranch()
+            <AppDrawerSettings
+              onClose={() => {
+                traceClick('drawer', 'settings-close-press');
+                setSettingsOpen(false);
+              }}
+              onOpenMediaAuthorization={handleOpenMediaAuthorization}
+              onOpenBilling={handleOpenBilling}
+              showRoomSettings={canManageRooms}
+              onOpenRoomSettings={handleOpenRoomSettings}
+              showAvisosSettings={canManageAvisos}
+              onOpenAvisosSettings={handleOpenAvisosSettings}
+              showIgrejasInstances={isSuperAdmin}
+              onOpenIgrejasInstances={handleOpenIgrejasInstances}
+            />
           ) : (
             <View style={styles.panel}>
               <View style={styles.headerRow}>
@@ -191,7 +142,6 @@ export function AppDrawer() {
                   accessibilityRole="button"
                   onPress={() => {
                     traceClick('drawer', 'settings-open-press');
-                    setSettingsPanel('root');
                     setSettingsOpen(true);
                   }}
                   style={styles.settingsButton}

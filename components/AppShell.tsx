@@ -3,7 +3,6 @@ import { AppActiveGate } from '@/components/AppActiveGate';
 import { AppBillingGate } from '@/components/AppBillingGate';
 import { DevClickTraceBootstrap } from '@/components/DevClickTraceBootstrap';
 import { EventOrchestrationListener } from '@/components/EventOrchestrationListener';
-import { PttInboxListener } from '@/components/PttInboxListener';
 import { TotemDeviceRouteGuard } from '@/components/TotemDeviceRouteGuard';
 import { AppDrawerProvider } from '@/context/AppDrawerContext';
 import { EntityPrefixProvider } from '@/context/EntityPrefixContext';
@@ -53,7 +52,6 @@ function AppShellContent() {
         <DevClickTraceBootstrap />
         <TotemDeviceRouteGuard />
         <EventOrchestrationListener />
-        <PttInboxListener />
         <Slot />
       </AppBillingGate>
     </AppActiveGate>
