@@ -243,12 +243,9 @@ export const FamilyRegistrationList = ({
       for (const member of audience) {
         const match = lookupAudienceRoomLabel(index, member);
         if (!match) continue;
-        const isOverlay = match.room_kind === 'especial';
-        // Especial vigente sempre; padrão só se habilitada no evento.
-        if (isOverlay || allowedRoomKeys.has(match.room_key)) {
-          next[member.id] = match.room_label;
-          nextOverlay[member.id] = isOverlay;
-        }
+        // Exibe a sala efetiva (padrão ou especial), independente das salas habilitadas no evento.
+        next[member.id] = match.room_label;
+        nextOverlay[member.id] = match.room_kind === 'especial';
       }
       setRoomLabelByMemberId(next);
       setRoomOverlayByMemberId(nextOverlay);
@@ -257,7 +254,7 @@ export const FamilyRegistrationList = ({
     return () => {
       active = false;
     };
-  }, [allowedRoomKeys, soloMode, soloParticipant, visibleMembers]);
+  }, [soloMode, soloParticipant, visibleMembers]);
 
   const refetchSoloRegistrationStatus = useCallback(async () => {
     if (!soloMode || !eventId || !sessionProfile?.id) {

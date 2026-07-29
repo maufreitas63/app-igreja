@@ -32,18 +32,17 @@ export const MemberCheckboxItem = ({
   isRegistered = false,
   registeredEventName = null,
   assignedRoomLabel = null,
-  assignedRoomIsOverlay = false,
+  assignedRoomIsOverlay: _assignedRoomIsOverlay = false,
   minimal = false,
   onToggle,
 }: Props) => {
   const displayName = formatShortName(member.full_name);
   const roomLabel = assignedRoomLabel?.trim() || '';
   const eventLabel = registeredEventName?.trim() || '';
-  // Especial vigente + inscrito → só a especial.
-  // Só inscrição no evento padrão → só o evento.
-  // Sem vínculo → «Sem Inscrições».
+  // Sala alocada (padrão/especial) tem prioridade na linha de status.
+  // Sem sala: inscrição no evento padrão, senão «Sem Inscrições».
   const statusLine = (() => {
-    if (isRegistered && assignedRoomIsOverlay && roomLabel) {
+    if (roomLabel) {
       return `Inscrito em: ${roomLabel}`;
     }
     if (isRegistered && eventLabel) {
@@ -54,6 +53,7 @@ export const MemberCheckboxItem = ({
     }
     return 'Sem Inscrições';
   })();
+  const hasStatusHighlight = Boolean(roomLabel) || isRegistered;
 
   return (
     <View style={styles.row}>
@@ -87,8 +87,8 @@ export const MemberCheckboxItem = ({
           style={[
             styles.registeredText,
             minimal && styles.registeredTextMinimal,
-            !isRegistered && styles.noRegistrationText,
-            !isRegistered && minimal && styles.noRegistrationTextMinimal,
+            !hasStatusHighlight && styles.noRegistrationText,
+            !hasStatusHighlight && minimal && styles.noRegistrationTextMinimal,
           ]}
           numberOfLines={2}
         >
