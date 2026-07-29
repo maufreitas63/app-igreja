@@ -32,6 +32,11 @@ const FILTERS: Array<{
     accessibilityLabel: 'Filtrar membros inativos',
   },
   {
+    key: 'congregados',
+    label: 'Congregados',
+    accessibilityLabel: 'Filtrar congregados',
+  },
+  {
     key: 'visitors',
     label: 'Visitantes',
     accessibilityLabel: 'Filtrar visitantes',
@@ -63,24 +68,28 @@ export type MembersListsClassProps = {
 
 function audienceNoun(audience: MembersListsClassAudience): string {
   if (audience === 'visitors') return 'visitante';
+  if (audience === 'congregados') return 'congregado';
   if (audience === 'inactive_members') return 'membro inativo';
   return 'membro ativo';
 }
 
 function audienceTitle(audience: MembersListsClassAudience, fallback: string): string {
   if (audience === 'visitors') return 'Lista de Visitantes';
+  if (audience === 'congregados') return 'Lista de Congregados';
   if (audience === 'inactive_members') return 'Lista de Membros Inativos';
   return fallback;
 }
 
 function emptyListMessage(audience: MembersListsClassAudience): string {
   if (audience === 'visitors') return 'Nenhum visitante encontrado.';
+  if (audience === 'congregados') return 'Nenhum congregado encontrado.';
   if (audience === 'inactive_members') return 'Nenhum membro inativo encontrado.';
   return 'Nenhum membro ativo encontrado.';
 }
 
 function emptySearchMessage(audience: MembersListsClassAudience): string {
   if (audience === 'visitors') return 'Nenhum visitante corresponde à busca.';
+  if (audience === 'congregados') return 'Nenhum congregado corresponde à busca.';
   if (audience === 'inactive_members') return 'Nenhum membro inativo corresponde à busca.';
   return 'Nenhum membro ativo corresponde à busca.';
 }
@@ -163,7 +172,11 @@ export function MembersListsClass({
         {!loading && !error ? (
           <View style={styles.searchSection}>
             <Text style={styles.sectionLabel}>
-              {audience === 'visitors' ? 'Procurar visitante' : 'Procurar membro'}
+              {audience === 'visitors'
+                ? 'Procurar visitante'
+                : audience === 'congregados'
+                  ? 'Procurar congregado'
+                  : 'Procurar membro'}
             </Text>
             <View style={styles.searchRow}>
               <TextInput
@@ -311,7 +324,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'stretch',
-    gap: 6,
+    gap: 4,
   },
   filterChip: {
     flex: 1,
@@ -319,8 +332,8 @@ const styles = StyleSheet.create({
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
@@ -332,8 +345,8 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     color: MINIMAL_UI.textMuted,
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 10,
+    lineHeight: 12,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -348,9 +361,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
+    gap: 4,
     paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
@@ -358,8 +371,8 @@ const styles = StyleSheet.create({
   },
   mapButtonText: {
     color: MINIMAL_UI.text,
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 10,
+    lineHeight: 12,
     fontWeight: '700',
   },
   summaryText: {

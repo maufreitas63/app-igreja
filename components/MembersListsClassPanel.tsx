@@ -8,6 +8,7 @@ import { normalizeFamilyCode } from '@/lib/family';
 import {
   loadMembersListsClassMembers,
   loadMembersListsClassInactiveMembers,
+  loadMembersListsClassCongregados,
   loadMembersListsClassVisitors,
 } from '@/lib/membersListsClassData';
 import type {
@@ -43,13 +44,16 @@ export function MembersListsClassPanel() {
   const router = useRouter();
   const visitorsListLoadedRef = useRef(false);
   const inactiveMembersLoadedRef = useRef(false);
+  const congregadosLoadedRef = useRef(false);
 
   const [audience, setAudience] = useState<MembersListsClassAudience>('active_members');
   const [memberEntries, setMemberEntries] = useState<MembersListsClassEntry[]>([]);
   const [inactiveMemberEntries, setInactiveMemberEntries] = useState<MembersListsClassEntry[]>([]);
+  const [congregadoEntries, setCongregadoEntries] = useState<MembersListsClassEntry[]>([]);
   const [visitorEntries, setVisitorEntries] = useState<MembersListsClassEntry[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [loadingInactiveMembers, setLoadingInactiveMembers] = useState(false);
+  const [loadingCongregados, setLoadingCongregados] = useState(false);
   const [loadingVisitors, setLoadingVisitors] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,16 +85,19 @@ export function MembersListsClassPanel() {
 
   const activeEntries = useMemo(() => {
     if (audience === 'visitors') return visitorEntries;
+    if (audience === 'congregados') return congregadoEntries;
     if (audience === 'inactive_members') return inactiveMemberEntries;
     return memberEntries;
-  }, [audience, inactiveMemberEntries, memberEntries, visitorEntries]);
+  }, [audience, congregadoEntries, inactiveMemberEntries, memberEntries, visitorEntries]);
 
   const isActiveLoading =
     audience === 'visitors'
       ? loadingVisitors
-      : audience === 'inactive_members'
-        ? loadingInactiveMembers
-        : loadingMembers;
+      : audience === 'congregados'
+        ? loadingCongregados
+        : audience === 'inactive_members'
+          ? loadingInactiveMembers
+          : loadingMembers;
 
   const filteredEntries = useMemo(
     () => filterMembersListsClassEntries(activeEntries, searchQuery),
@@ -138,6 +145,27 @@ export function MembersListsClassPanel() {
     }
   }, []);
 
+  const loadCongregados = useCallback(async () => {
+    setLoadingCongregados(true);
+    setError(null);
+
+    try {
+      const loaded = await loadMembersListsClassCongregados();
+      setCongregadoEntries(loaded);
+      congregadosLoadedRef.current = true;
+    } catch (loadError) {
+      console.error('Erro ao carregar lista de congregados:', loadError);
+      setCongregadoEntries([]);
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : 'Nao foi possivel carregar a lista de congregados.'
+      );
+    } finally {
+      setLoadingCongregados(false);
+    }
+  }, []);
+
   const loadVisitors = useCallback(async () => {
     setLoadingVisitors(true);
     setError(null);
@@ -165,13 +193,18 @@ export function MembersListsClassPanel() {
       return;
     }
 
+    if (audience === 'congregados') {
+      await loadCongregados();
+      return;
+    }
+
     if (audience === 'inactive_members') {
       await loadInactiveMembers();
       return;
     }
 
     await loadMembers();
-  }, [audience, loadInactiveMembers, loadMembers, loadVisitors]);
+  }, [audience, loadCongregados, loadInactiveMembers, loadMembers, loadVisitors]);
 
   useEffect(() => {
     void loadMembers();
@@ -263,11 +296,15 @@ export function MembersListsClassPanel() {
         void loadVisitors();
       }
 
+      if (nextAudience === 'congregados' && !congregadosLoadedRef.current) {
+        void loadCongregados();
+      }
+
       if (nextAudience === 'inactive_members' && !inactiveMembersLoadedRef.current) {
         void loadInactiveMembers();
       }
     },
-    [loadInactiveMembers, loadVisitors]
+    [loadCongregados, loadInactiveMembers, loadVisitors]
   );
 
   const handleOpenMembersMap = useCallback(() => {

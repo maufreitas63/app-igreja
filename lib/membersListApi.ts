@@ -29,6 +29,9 @@ const MEMBERS_INACTIVE_DIRECTORY_RPC_HINT =
 const VISITORS_DIRECTORY_RPC_HINT =
   'Execute no Supabase: scripts/members-list-family-sync.sql (list_profiles_visitors_directory)';
 
+const CONGREGADOS_DIRECTORY_RPC_HINT =
+  'Execute no Supabase: scripts/members-list-congregados-directory.sql';
+
 const FAMILY_DIRECTORY_RPC_HINT =
   'Execute no Supabase: scripts/members-list-family-sync.sql';
 
@@ -292,6 +295,7 @@ const fetchDirectoryFromRpc = async (
   rpcName:
     | 'list_profiles_members_directory'
     | 'list_profiles_members_inactive_directory'
+    | 'list_profiles_congregados_directory'
     | 'list_profiles_visitors_directory',
   missingRpcHint: string,
   options?: { skipActiveMembershipFilter?: boolean }
@@ -331,6 +335,13 @@ export async function fetchInactiveMembersDirectoryFromProfiles(): Promise<Membe
 
 export async function fetchVisitorsDirectoryFromProfiles(): Promise<MembersDirectoryEntry[]> {
   return fetchDirectoryFromRpc('list_profiles_visitors_directory', VISITORS_DIRECTORY_RPC_HINT);
+}
+
+export async function fetchCongregadosDirectoryFromProfiles(): Promise<MembersDirectoryEntry[]> {
+  return fetchDirectoryFromRpc(
+    'list_profiles_congregados_directory',
+    CONGREGADOS_DIRECTORY_RPC_HINT
+  );
 }
 
 export type FamilyDirectoryMember = MembersDirectoryEntry;

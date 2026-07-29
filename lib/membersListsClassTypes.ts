@@ -14,4 +14,8 @@ export type MembersListsClassEntry = {
   address_state: string | null;
 };
 
-export type MembersListsClassAudience = 'active_members' | 'inactive_members' | 'visitors';
+export type MembersListsClassAudience =
+  | 'active_members'
+  | 'inactive_members'
+  | 'congregados'
+  | 'visitors';
