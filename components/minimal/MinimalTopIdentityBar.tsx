@@ -1,10 +1,10 @@
+import { useGhostMode } from '@/context/GhostModeContext';
 import {
   MINIMAL_TOP_IDENTITY_BAR_HEIGHT,
   MINIMAL_TYPO,
   MINIMAL_UI,
 } from '@/lib/minimalUiTheme';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
-import { getStoredUserPhone } from '@/lib/userSession';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -25,19 +25,14 @@ function resolveGreetingName(fullName: string | null | undefined): string {
  * para o menu não subir.
  */
 export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?: boolean }) {
+  const { state: ghostModeState } = useGhostMode();
   const [greetingName, setGreetingName] = useState('usuário');
 
   useEffect(() => {
     let active = true;
 
     void (async () => {
-      const phone = await getStoredUserPhone();
-
-      if (!phone?.trim() || !active) {
-        return;
-      }
-
-      const profile = await loadEffectiveSessionProfile(phone);
+      const profile = await loadEffectiveSessionProfile();
 
       if (!active) {
         return;
@@ -49,7 +44,7 @@ export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?:
     return () => {
       active = false;
     };
-  }, []);
+  }, [ghostModeState?.targetProfileId]);
 
   return (
     <View

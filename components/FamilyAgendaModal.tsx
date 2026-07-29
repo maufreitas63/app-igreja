@@ -1,12 +1,12 @@
 import { FamilyAgendaView } from '@/components/FamilyAgendaView';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
+import { useGhostMode } from '@/context/GhostModeContext';
 import { resolveEventEnabledRoomKeys } from '@/lib/maintenanceEventForm';
 import { useActiveEvents, type ActiveEventListItem } from '@/hooks/useActiveEvents';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { getStoredUserPhone } from '@/lib/userSession';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Platform,
@@ -25,6 +25,7 @@ type Props = {
 
 /** Painel inline da Agenda da Família — entre o topo (saudação) e a barra «Encerrar sessão». */
 export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
+  const { state: ghostModeState } = useGhostMode();
   const { events, loading, error, refetch } = useActiveEvents({
     enabled: visible,
     enablePolling: visible,
@@ -80,8 +81,9 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
       setIsProfileLoading(true);
 
       try {
-        const phone = await getStoredUserPhone();
+        // Identidade efetiva (alvo do Modo Ghost) — nunca o telefone/família do operador real.
         const sessionProfile = await loadEffectiveSessionProfile();
+        const phone = sessionProfile?.phone?.trim() || null;
 
         if (!isMounted) {
           return;
@@ -96,6 +98,10 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
             ? await resolveFamilyIdForPhone(phone)
             : null;
 
+        if (!isMounted) {
+          return;
+        }
+
         setFamilyId(resolvedFamilyId);
       } finally {
         if (isMounted) {
@@ -109,7 +115,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
     return () => {
       isMounted = false;
     };
-  }, [visible]);
+  }, [visible, ghostModeState?.targetProfileId]);
 
   const selectedEvent: ActiveEventListItem | null = useMemo(
     () => events.find((event) => event.id === selectedEventId) ?? events[0] ?? null,

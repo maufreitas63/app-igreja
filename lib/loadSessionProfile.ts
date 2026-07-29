@@ -188,6 +188,22 @@ export async function loadEffectiveSessionProfile(
   );
 }
 
+/**
+ * Telefone da identidade efetiva (alvo do Modo Ghost, se ativo).
+ * Use em telas/listas que devem espelhar o usuário simulado — nunca getStoredUserPhone nesses fluxos.
+ */
+export async function getEffectiveUserPhone(
+  fallbackPhone?: string | null
+): Promise<string | null> {
+  if (isGhostModeActive()) {
+    const profile = await loadEffectiveSessionProfile();
+    return profile?.phone?.trim() || null;
+  }
+
+  const phone = fallbackPhone?.trim() || (await getStoredUserPhone())?.trim();
+  return phone || null;
+}
+
 export function invalidateSessionProfileLoadCache() {
   invalidateAsyncCache('session:profile:');
 }

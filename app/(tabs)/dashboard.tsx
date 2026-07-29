@@ -959,7 +959,7 @@ export default function Dashboard() {
         } else {
           await AsyncStorage.setItem('user_phone', targetPhone);
         }
-        if (!targetPhone) {
+        if (!targetPhone && !isGhostModeActive()) {
           setCanViewMaintenance(false);
           setCanMonitorFamilyReception(false);
           setDashboardCardAccess({});
@@ -969,7 +969,6 @@ export default function Dashboard() {
         setCanViewMapPinDetails(false);
           return;
         }
-        setUserPhone(targetPhone);
 
         let sessionProfile = await loadEffectiveSessionProfile(targetPhone);
 
@@ -978,10 +977,16 @@ export default function Dashboard() {
           sessionProfile = await loadEffectiveSessionProfile(targetPhone);
         }
 
+        // No Modo Ghost, telefone/família vêm só do alvo — nunca do operador real.
+        const effectivePhone =
+          sessionProfile?.phone?.trim()
+          || (isGhostModeActive() ? null : targetPhone?.trim() || null);
+        setUserPhone(effectivePhone);
+
         const resolvedFamilyId =
           sessionProfile?.family_id
           ?? sessionProfile?.codigo_membro
-          ?? (await resolveFamilyIdForPhone(sessionProfile?.phone ?? targetPhone));
+          ?? (effectivePhone ? await resolveFamilyIdForPhone(effectivePhone) : null);
         setFamilyId(resolvedFamilyId);
 
         if (!sessionProfile) {
@@ -1004,7 +1009,7 @@ export default function Dashboard() {
           codigo_membro: sessionProfile.codigo_membro ?? sessionProfile.family_id ?? resolvedFamilyId,
           lgpd_accepted: sessionProfile.lgpd_accepted,
           birth_date: sessionProfile.birth_date ?? null,
-          phone: sessionProfile.phone ?? targetPhone,
+          phone: sessionProfile.phone ?? effectivePhone,
         };
 
         setProfile(loadedProfile);
@@ -1094,7 +1099,7 @@ export default function Dashboard() {
       let active = true;
 
       void (async () => {
-        const [targetPhone, lgpdModuleActive] = await Promise.all([
+        const [storedPhone, lgpdModuleActive] = await Promise.all([
           phone ? Promise.resolve(phone) : getStoredUserPhone(),
           isLgpdAtivoEnabled(),
         ]);
@@ -1105,15 +1110,15 @@ export default function Dashboard() {
 
         setLgpdAtivo(lgpdModuleActive);
 
-        if (!targetPhone) {
-          return;
-        }
-
-        const sessionProfile = await loadEffectiveSessionProfile(targetPhone);
+        const sessionProfile = await loadEffectiveSessionProfile(storedPhone);
 
         if (!active || !sessionProfile?.id) {
           return;
         }
+
+        const effectivePhone =
+          sessionProfile.phone?.trim()
+          || (isGhostModeActive() ? null : storedPhone?.trim() || null);
 
         const refreshedProfile: DashboardProfile = {
           id: sessionProfile.id,
@@ -1121,7 +1126,7 @@ export default function Dashboard() {
           codigo_membro: sessionProfile.codigo_membro ?? sessionProfile.family_id ?? familyId,
           lgpd_accepted: sessionProfile.lgpd_accepted,
           birth_date: sessionProfile.birth_date ?? null,
-          phone: sessionProfile.phone ?? targetPhone,
+          phone: sessionProfile.phone ?? effectivePhone,
         };
 
         setProfile((current) => {

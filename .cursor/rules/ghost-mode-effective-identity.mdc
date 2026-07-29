@@ -1,0 +1,23 @@
+---
+description: Modo Ghost deve espelhar 100% a identidade efetiva do alvo
+alwaysApply: true
+---
+
+# Modo Ghost — identidade efetiva
+
+Com Modo Ghost ativo, **toda** tela/lista/permissão deve usar a identidade do alvo (`loadEffectiveSessionProfile` / `resolveEffectiveProfileId` / `getEffectiveUserPhone`).
+
+## Proibido em fluxos de identidade do usuário
+
+- `getStoredUserPhone()` como telefone “do usuário”
+- `family_id` resolvido pelo telefone do operador real
+- ACL/cards/telas pelo `realProfileId` do auditor
+
+## Correto
+
+- Perfil: `loadEffectiveSessionProfile()`
+- Profile id: `resolveEffectiveProfileId()`
+- Telefone: `getEffectiveUserPhone()` ou `sessionProfile.phone`
+- Família: `sessionProfile.family_id` (fallback só com o telefone efetivo)
+
+`getStoredUserPhone` / `resolveRealSessionProfileId` só para auditoria, login real, totem e encerrar Ghost.

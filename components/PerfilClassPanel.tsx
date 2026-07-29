@@ -4,7 +4,6 @@ import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ProfileClassPanel } from '@/components/ProfileClassPanel';
 import { loadGroupedManageScreenAccess } from '@/lib/groupedManageAccess';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
-import { getStoredUserPhone } from '@/lib/userSession';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -26,9 +25,9 @@ export function PerfilClassPanel() {
     setLoading(true);
 
     try {
-      const phone = await getStoredUserPhone();
-      const sessionProfile = phone ? await loadEffectiveSessionProfile(phone) : null;
+      const sessionProfile = await loadEffectiveSessionProfile();
       const resolvedProfileId = sessionProfile?.id?.trim() ?? null;
+      const phone = sessionProfile?.phone?.trim() ?? null;
 
       if (generation !== loadGenerationRef.current) {
         return;
