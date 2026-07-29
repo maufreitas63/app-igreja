@@ -127,10 +127,12 @@ export async function loadSessionProfileById(
 
   if (isGhostModeActive() && getGhostEffectiveProfileId() === trimmed) {
     const row = await fetchEffectiveSessionProfileRow();
+    const rowId = String(row?.id ?? '').trim();
 
-    if (row) {
+    // Só confia no RPC se ele devolveu o alvo do Ghost (evita sessão real quando o SQL ignora o header).
+    if (row && rowId === trimmed) {
       return normalizeProfileRow({
-        id: String(row.id ?? trimmed),
+        id: rowId,
         full_name: row.full_name as string | null | undefined,
         codigo_membro: row.codigo_membro as string | null | undefined,
         lgpd_accepted: row.lgpd_accepted as boolean | null | undefined,
@@ -147,18 +149,38 @@ export async function loadSessionProfileById(
     .eq('id', trimmed)
     .maybeSingle();
 
-  if (error || !data) {
-    return null;
+  if ((!error && data) || !isGhostModeActive()) {
+    if (error || !data) {
+      return null;
+    }
+
+    const phoneVariants = buildPhoneDbQueryVariants(data.phone ?? '');
+    const profile = await enrichSessionProfileName(normalizeProfileRow(data), phoneVariants);
+
+    if (profile.id && options?.persist !== false && !isGhostModeActive()) {
+      await persistProfileId(profile.id);
+    }
+
+    return profile;
   }
 
-  const phoneVariants = buildPhoneDbQueryVariants(data.phone ?? '');
-  const profile = await enrichSessionProfileName(normalizeProfileRow(data), phoneVariants);
+  // Ghost ativo e SELECT direto falhou (RLS): tenta de novo via RPC após o patch, ou null.
+  const fallbackRow = await fetchEffectiveSessionProfileRow();
+  const fallbackId = String(fallbackRow?.id ?? '').trim();
 
-  if (profile.id && options?.persist !== false && !isGhostModeActive()) {
-    await persistProfileId(profile.id);
+  if (fallbackRow && fallbackId === trimmed) {
+    return normalizeProfileRow({
+      id: fallbackId,
+      full_name: fallbackRow.full_name as string | null | undefined,
+      codigo_membro: fallbackRow.codigo_membro as string | null | undefined,
+      lgpd_accepted: fallbackRow.lgpd_accepted as boolean | null | undefined,
+      phone: fallbackRow.phone as string | null | undefined,
+      family_id: fallbackRow.family_id as string | null | undefined,
+      birth_date: fallbackRow.birth_date as string | null | undefined,
+    });
   }
 
-  return profile;
+  return null;
 }
 
 /** Perfil da sessão efetiva (alvo do Modo Ghost, se ativo). */
