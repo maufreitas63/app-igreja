@@ -235,7 +235,10 @@ export const FamilyRegistrationList = ({
       return undefined;
     }
 
-    void resolveAudienceRoomLabels(audience.map((member) => member.phone)).then((rows) => {
+    void resolveAudienceRoomLabels(
+      audience.map((member) => member.phone),
+      { familyId: familyId || null }
+    ).then((rows) => {
       if (!active) return;
       const index = buildAudienceRoomLabelIndex(rows);
       const next: Record<string, string> = {};
@@ -254,7 +257,7 @@ export const FamilyRegistrationList = ({
     return () => {
       active = false;
     };
-  }, [soloMode, soloParticipant, visibleMembers]);
+  }, [familyId, soloMode, soloParticipant, visibleMembers]);
 
   const refetchSoloRegistrationStatus = useCallback(async () => {
     if (!soloMode || !eventId || !sessionProfile?.id) {

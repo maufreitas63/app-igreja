@@ -208,19 +208,22 @@ export async function clearUserRoomAssignment(
 }
 
 export async function resolveAudienceRoomLabels(
-  phones: Array<string | null | undefined>
+  phones: Array<string | null | undefined>,
+  options?: { familyId?: string | null }
 ): Promise<AudienceRoomLabel[]> {
   const cleaned = Array.from(
     new Set(phones.map((phone) => (phone ?? '').trim()).filter(Boolean))
   );
+  const familyId = options?.familyId?.trim() || null;
 
-  if (!cleaned.length) {
+  if (!cleaned.length && !familyId) {
     return [];
   }
 
   const token = audienceCacheToken;
   const { data, error } = await supabase.rpc('resolve_audience_room_labels', {
-    p_phones: cleaned,
+    p_phones: cleaned.length ? cleaned : null,
+    p_family_id: familyId,
   });
 
   if (error) {
