@@ -1,0 +1,30 @@
+---
+description: Executar SQL automaticamente no Supabase (sem pedir ao usuário)
+alwaysApply: true
+---
+
+# SQL no Supabase → executar automaticamente
+
+Sempre que um fluxo exigir **aplicar/alterar SQL no banco Supabase** (migrations, patches, drops, RPCs, etc.):
+
+1. **Não** peça ao usuário para colar no SQL Editor.
+2. **Não** abra o Bloco de Notas só para copiar/colar.
+3. Execute o arquivo (ou o SQL) automaticamente via CLI já autenticada e projeto linkado:
+
+```powershell
+npx supabase db query --linked -f "scripts/arquivo.sql"
+```
+
+SQL inline curto:
+
+```powershell
+npx supabase db query --linked "select 1;"
+```
+
+4. Se o comando falhar, leia o erro, corrija o SQL se possível e **reexecute**. Só peça intervenção humana se faltar autenticação/link ou se a falha exigir decisão do usuário (ex.: destruição irreversível ambígua).
+5. Na resposta final, informe o que foi executado e se deu certo (não diga “execute no SQL Editor”).
+
+## Preferência
+
+- Preferir `-f` com o arquivo em `scripts/*.sql` versionado no repo.
+- Manter o SQL no repositório (commit) mesmo após executar.

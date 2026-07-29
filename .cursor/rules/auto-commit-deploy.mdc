@@ -26,4 +26,4 @@ Quando o usuário solicitar uma **alteração** (código, layout, config, script
 
 Deploy: branch `main`, comando remoto `npm run build:web`, saída `dist/`. Ver `DEPLOY_CLOUDFLARE.md`.
 
-Scripts SQL em `scripts/` vão no commit, mas execução no Supabase continua **manual** — mencionar na resposta quando houver SQL novo ou alterado.
+Scripts SQL em `scripts/` vão no commit e a execução no Supabase é **automática** via `npx supabase db query --linked -f …` (ver regra `supabase-sql-auto-execute`).
