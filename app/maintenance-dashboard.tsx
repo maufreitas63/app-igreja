@@ -23,6 +23,7 @@ import { MaintenanceReportsCard } from '@/components/MaintenanceReportsCard';
 import { MaintenanceSupportSuggestionsCard } from '@/components/MaintenanceSupportSuggestionsCard';
 import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCareCard';
 import { MaintenanceDiscipleshipAlertsCard } from '@/components/MaintenanceDiscipleshipAlertsCard';
+import { MaintenanceDiscipleshipThemesCard } from '@/components/MaintenanceDiscipleshipThemesCard';
 import { MaintenancePastoralRoleChangeCard } from '@/components/MaintenancePastoralRoleChangeCard';
 import { MaintenanceEventOrchestrationCard } from '@/components/MaintenanceEventOrchestrationCard';
 import { MaintenanceFamilyReceptionCard } from '@/components/MaintenanceFamilyReceptionCard';
@@ -172,6 +173,7 @@ type MaintenanceCarouselCard = {
     | 'access_control'
     | 'profile_access_insights'
   | 'auditor'
+  | 'discipleship_themes'
   | 'discipleship_alerts'
   | 'event_orchestration';
 };
@@ -201,6 +203,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '6', title: SCALE_VOLUNTEERS_MENU_LABEL, content: 'scale_volunteers' },
   { id: '7', title: SCALE_SCHEDULING_MENU_LABEL, content: 'scales' },
   { id: '8', title: 'Cuidado Pastoral', content: 'pastoral_care' },
+  { id: '21', title: 'Temas da Trilha', content: 'discipleship_themes' },
   { id: '20', title: 'Trilha — Reconhecimentos', content: 'discipleship_alerts' },
   { id: '9', title: 'Informações Financeiras', content: 'financials' },
   { id: '16', title: 'Modelo Preditivo', content: 'predictive_insights' },
@@ -890,7 +893,7 @@ export default function MaintenanceDashboard() {
         return canAccessPastoralCare;
       }
 
-      if (card.content === 'discipleship_alerts') {
+      if (card.content === 'discipleship_alerts' || card.content === 'discipleship_themes') {
         return canAccessPastoralCare || maintenancePanelAccess[card.content] === true;
       }
 
@@ -1488,6 +1491,19 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenancePastoralCareCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
+          ) : item.content === 'discipleship_themes' ? (
+            <View
+              style={[
+                styles.pastoralCarePanel,
+                isMinimalPresentation && styles.pastoralCarePanelMinimal,
+              ]}
+            >
+              <MaintenanceDiscipleshipThemesCard
                 isActive={currentIndex === index}
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}

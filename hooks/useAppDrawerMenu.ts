@@ -146,6 +146,12 @@ export function useAppDrawerMenu() {
           canOperateGhostMode: maintenanceAccess.canOperateGhostMode,
           canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
         })
+        || isDrawerMaintenanceModuleAllowed('discipleship_themes', 'discipleship_themes', {
+          canAccessMaintenance: maintenanceAccess.allowed,
+          maintenancePanelAccess: maintenanceAccess.maintenancePanelAccess,
+          canOperateGhostMode: maintenanceAccess.canOperateGhostMode,
+          canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
+        })
       );
 
       const context = {

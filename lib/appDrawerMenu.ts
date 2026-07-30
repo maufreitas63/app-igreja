@@ -30,6 +30,7 @@ export type AppDrawerModuleKey =
   | 'scales_volunteers'
   | 'scales'
   | 'pastoral_care'
+  | 'discipleship_themes'
   | 'discipleship_alerts'
   | 'financials'
   | 'predictive_insights'
@@ -106,6 +107,7 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   scales_volunteers: 'scale_volunteers',
   scales: 'scales',
   pastoral_care: 'pastoral_care',
+  discipleship_themes: 'discipleship_themes',
   discipleship_alerts: 'discipleship_alerts',
   financials: 'financials',
   predictive_insights: 'predictive_insights',

@@ -31,6 +31,7 @@ export const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   event_orchestration: 'maintenance.card.event_orchestration',
   suggestions_improvements: 'maintenance.card.suggestions_improvements',
   discipleship_alerts: 'maintenance.card.discipleship_alerts',
+  discipleship_themes: 'maintenance.card.discipleship_themes',
 };
 
 export function resolveDashboardCardAccessResourceKey(

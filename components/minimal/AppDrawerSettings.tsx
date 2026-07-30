@@ -31,8 +31,9 @@ type Props = {
   /** Orquestrador — cadastro e publicação de avisos. */
   showAvisosSettings?: boolean;
   onOpenAvisosSettings?: () => void;
-  /** Pastoral / líderes — reconhecimentos da Trilha de Discipulado. */
+  /** Pastoral / líderes — temas e reconhecimentos da Trilha. */
   showDiscipleshipSettings?: boolean;
+  onOpenDiscipleshipThemes?: () => void;
   onOpenDiscipleshipSettings?: () => void;
   /** Apenas super_admin — gestão multi-instância. */
   showIgrejasInstances?: boolean;
@@ -48,6 +49,7 @@ export function AppDrawerSettings({
   showAvisosSettings = false,
   onOpenAvisosSettings,
   showDiscipleshipSettings = false,
+  onOpenDiscipleshipThemes,
   onOpenDiscipleshipSettings,
   showIgrejasInstances = false,
   onOpenIgrejasInstances,
@@ -95,12 +97,23 @@ export function AppDrawerSettings({
           } satisfies SettingsItem,
         ]
       : []),
+    ...(showDiscipleshipSettings && onOpenDiscipleshipThemes
+      ? [
+          {
+            id: 'discipleship-themes',
+            label: 'Temas da Trilha',
+            hint: 'Textos, vídeos e reflexões dos passos (desta igreja)',
+            icon: 'book' as const,
+            onPress: onOpenDiscipleshipThemes,
+          } satisfies SettingsItem,
+        ]
+      : []),
     ...(showDiscipleshipSettings && onOpenDiscipleshipSettings
       ? [
           {
             id: 'discipleship-settings',
-            label: 'Trilha de Discipulado',
-            hint: 'Reconhecimentos e conclusões prontas para certificado',
+            label: 'Trilha — Reconhecimentos',
+            hint: 'Alunos 100% prontos para certificado',
             icon: 'graduation-cap' as const,
             onPress: onOpenDiscipleshipSettings,
           } satisfies SettingsItem,

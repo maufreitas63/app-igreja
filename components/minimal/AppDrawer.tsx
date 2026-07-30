@@ -91,6 +91,13 @@ export function AppDrawer() {
     void navigateDrawerMenuItem(router, 'event_orchestration');
   };
 
+  const handleOpenDiscipleshipThemes = () => {
+    traceClick('drawer', 'settings-discipleship-themes-press');
+    setSettingsOpen(false);
+    closeDrawer();
+    void navigateDrawerMenuItem(router, 'discipleship_themes');
+  };
+
   const handleOpenDiscipleshipSettings = () => {
     traceClick('drawer', 'settings-discipleship-press');
     setSettingsOpen(false);
@@ -139,6 +146,7 @@ export function AppDrawer() {
               showAvisosSettings={canManageAvisos}
               onOpenAvisosSettings={handleOpenAvisosSettings}
               showDiscipleshipSettings={canManageDiscipleship}
+              onOpenDiscipleshipThemes={handleOpenDiscipleshipThemes}
               onOpenDiscipleshipSettings={handleOpenDiscipleshipSettings}
               showIgrejasInstances={isSuperAdmin}
               onOpenIgrejasInstances={handleOpenIgrejasInstances}
