@@ -1,4 +1,5 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { DiscipleshipProcessGuideModal } from '@/components/DiscipleshipProcessGuideModal';
 import {
   acknowledgeDiscipleshipPastoralAlert,
   DISCIPLESHIP_TRAIL_SQL_HINT,
@@ -39,6 +40,7 @@ export function MaintenanceDiscipleshipAlertsCard({
   const [error, setError] = useState<string | null>(null);
   const [ackId, setAckId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [guideVisible, setGuideVisible] = useState(false);
 
   const loadAlerts = useCallback(async () => {
     setLoading(true);
@@ -88,9 +90,21 @@ export function MaintenanceDiscipleshipAlertsCard({
 
   return (
     <View style={[maintenancePanelStyles.panel, { height: contentHeight }]}>
-      <Text style={minimal ? styles.titleMinimal : styles.title}>
-        Trilha — Reconhecimentos
-      </Text>
+      <View style={styles.titleRow}>
+        <Text style={[minimal ? styles.titleMinimal : styles.title, styles.titleFlex]}>
+          Trilha — Reconhecimentos
+        </Text>
+        <TouchableOpacity
+          style={styles.guideButton}
+          onPress={() => setGuideVisible(true)}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Abrir Guia do Processo"
+        >
+          <FontAwesome name="book" size={13} color={MINIMAL_UI.blueDark} />
+          <Text style={styles.guideButtonText}>Guia do Processo</Text>
+        </TouchableOpacity>
+      </View>
       <Text style={styles.subtitle}>
         Alunos que concluíram 100% da Trilha e estão prontos para certificado ou reconhecimento
         público.
@@ -176,11 +190,27 @@ export function MaintenanceDiscipleshipAlertsCard({
           )}
         </ScrollView>
       )}
+
+      <DiscipleshipProcessGuideModal
+        visible={guideVisible}
+        onClose={() => setGuideVisible(false)}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  titleFlex: {
+    flex: 1,
+    marginBottom: 0,
+    textAlign: 'left',
+  },
   title: {
     ...MINIMAL_SECTION_TITLE,
     color: '#3A96DD',
@@ -190,6 +220,22 @@ const styles = StyleSheet.create({
     ...MINIMAL_SECTION_TITLE,
     color: MINIMAL_UI.blueDark,
     marginBottom: 4,
+  },
+  guideButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#FFF',
+  },
+  guideButtonText: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 12,
+    fontWeight: '700',
   },
   subtitle: {
     color: MINIMAL_UI.textMuted,
