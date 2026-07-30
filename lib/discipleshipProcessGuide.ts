@@ -11,32 +11,32 @@ export type DiscipleshipGuideStep = {
 };
 
 export const DISCIPLESHIP_PROCESS_GUIDE_INTRO =
-  'Use este guia para acompanhar o que o discípulo vive em cada etapa e como a liderança deve acolher, ensinar e acompanhar.';
+  'A Trilha tem 5 passos sequenciais. Use este guia para acompanhar o discípulo em cada etapa e orientar o avanço até o reconhecimento público.';
 
 export const DISCIPLESHIP_PROCESS_GUIDE_STEPS: DiscipleshipGuideStep[] = [
   {
     step: 1,
     title: 'Boas-Vindas e Identidade da Igreja',
     purpose:
-      'Acolher o visitante, apresentar a visão e os valores da comunidade, lendo as reflexões enviadas.',
+      'Acolher o visitante, apresentar a visão e os valores da comunidade, e ler as reflexões enviadas.',
     leaderFocus:
-      'Confirme se a pessoa se sentiu bem-vinda e se compreendeu a identidade da igreja. Leia as reflexões com atenção pastoral.',
+      'Confirme se a pessoa se sentiu bem-vinda e compreendeu a identidade da igreja. Leia a reflexão da lição 1.3 com atenção pastoral.',
   },
   {
     step: 2,
     title: 'O Fundamento da Fé (A Graça e a Palavra)',
     purpose:
-      'Estabelecer os pilares da fé cristã, a autoridade da Bíblia e a salvação pela graça.',
+      'Estabelecer os pilares da fé cristã: a autoridade da Bíblia e a salvação pela graça.',
     leaderFocus:
-      'Verifique se o discípulo articula graça, arrependimento e confiança na Escritura com clareza simples.',
+      'Verifique se o discípulo articula graça, arrependimento e confiança na Escritura. Use a reflexão 2.3 como termômetro.',
   },
   {
     step: 3,
     title: 'O Passo da Fé (O Batismo por Imersão)',
     purpose:
-      'Ensinar o significado do batismo e gerenciar os pedidos de batismo que chegam dos alunos.',
+      'Ensinar o significado do batismo e acompanhar pedidos de batismo que chegam dos alunos.',
     leaderFocus:
-      'Acompanhe dúvidas práticas e registre quem expressou desejo de batismo para encaminhamento pastoral.',
+      'Acompanhe dúvidas práticas e registre quem expressou desejo de batismo na reflexão 3.3.',
   },
   {
     step: 4,
@@ -44,14 +44,14 @@ export const DISCIPLESHIP_PROCESS_GUIDE_STEPS: DiscipleshipGuideStep[] = [
     purpose:
       'Conectar o novo membro à vida comunitária e aos grupos nos lares.',
     leaderFocus:
-      'Ajude a pessoa a encontrar comunhão concreta: culto, relacionamentos e um pequeno grupo adequado.',
+      'Use o dia preferido da reflexão 4.3 para encaminhar a um pequeno grupo compatível.',
   },
   {
     step: 5,
     title: 'Servindo com Propósito (Ministérios e Mordomia)',
     purpose:
-      'Orientar o aluno na descoberta de dons, mordomia e alinhamento com os voluntários.',
+      'Orientar a descoberta de dons, mordomia e alinhamento com os ministérios. Ao concluir 100%, prepare certificado ou reconhecimento público.',
     leaderFocus:
-      'Dialogue sobre dons, disponibilidade e próximos passos de serviço, sem pressa e com acompanhamento.',
+      'Dialogue sobre a área desejada na reflexão 5.3. Alunos em «Novos» no card de Reconhecimentos estão prontos para celebração.',
   },
 ];

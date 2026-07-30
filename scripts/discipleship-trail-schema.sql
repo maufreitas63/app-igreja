@@ -378,6 +378,8 @@ declare
   v_mod1 uuid;
   v_mod2 uuid;
   v_mod3 uuid;
+  v_mod4 uuid;
+  v_mod5 uuid;
 begin
   if p_tenant_id is null then
     raise exception 'seed_default_discipleship_trail: tenant_id obrigatório';
@@ -418,15 +420,15 @@ begin
     (
       p_tenant_id, v_mod1,
       'Bem-vindo à Família',
-      'Edite este texto com a mensagem de boas-vindas da sua igreja. Inclua um link de vídeo abaixo para apresentar a comunidade.',
-      null, -- espaço para o pastor preencher o link de vídeo
+      'Assista à mensagem de boas-vindas e conheça o coração da nossa família de fé. (Lição em vídeo — preencha video_url.)',
+      null,
       null,
       1, true, true
     ),
     (
       p_tenant_id, v_mod1,
       'Nossa História e Missão',
-      'Conte aqui a história da igreja, a visão e a missão. Este conteúdo é um texto de apoio editável pelos pastores.',
+      'Conheça a história da igreja e a missão que nos une: conduzir pessoas à cruz de Cristo.',
       null,
       null,
       2, true, true
@@ -434,7 +436,7 @@ begin
     (
       p_tenant_id, v_mod1,
       'O Sacerdócio de Todos os Crentes',
-      'Explique o sacerdócio universal: todo crente é chamado a servir. Personalize com exemplos da sua congregação.',
+      'Todo crente é chamado a servir. Reflita sobre o papel de cada um na comunidade.',
       null,
       'O que mais te chamou a atenção na nossa comunidade até agora?',
       3, true, true
@@ -459,19 +461,19 @@ begin
     (
       p_tenant_id, v_mod2,
       'A Bíblia como Regra de Fé',
-      'A Escritura é a regra infalível de fé e prática. Edite com referências e ênfases da sua tradição.',
+      'A Escritura é a regra de fé e prática para a vida cristã.',
       null, null, 1, true, true
     ),
     (
       p_tenant_id, v_mod2,
       'A Salvação pela Graça',
-      'Somos salvos pela graça, mediante a fé, e isto não vem de nós; é dom de Deus. Personalize o texto de apoio.',
+      'Somos salvos pela graça, mediante a fé — não por obras, para que ninguém se glorie.',
       null, null, 2, true, true
     ),
     (
       p_tenant_id, v_mod2,
       'O Arrependimento e a Nova Vida',
-      'O arrependimento genuino produz nova vida em Cristo. Inclua exemplos práticos da caminhada cristã.',
+      'O arrependimento abre caminho para uma nova vida em Cristo.',
       null,
       'Em suas próprias palavras, o que significa receber a graça de Deus?',
       3, true, true
@@ -496,28 +498,102 @@ begin
     (
       p_tenant_id, v_mod3,
       'Por que Batizamos por Imersão?',
-      'Explique o fundamento bíblico e o significado da imersão na morte e ressurreição de Cristo.',
+      'Entenda o significado bíblico do batismo por imersão. (Lição em vídeo — preencha video_url.)',
       null, null, 1, true, true
     ),
     (
       p_tenant_id, v_mod3,
       'O Testemunho Público da Fé',
-      'O batismo é confissão pública de fé. Edite com o fluxo praticado na sua igreja (pré-batismo, data, etc.).',
+      'O batismo é um testemunho público de fé e identificação com Cristo.',
       null, null, 2, true, true
     ),
     (
       p_tenant_id, v_mod3,
       'Tire Suas Dúvidas Práticas',
-      'Espaço para FAQ: idade, vestimenta, documentos, acompanhamento pastoral. Personalize conforme a prática local.',
+      'Esclareça dúvidas sobre o dia, a preparação e o que esperar no batismo.',
       null,
       'Você sente o desejo de dar este passo de fé através do batismo?',
+      3, true, true
+    );
+
+  -- Módulo 4
+  insert into public.discipleship_modules (
+    tenant_id, title, description, sort_order, is_active, is_seed
+  ) values (
+    p_tenant_id,
+    'Comunhão e Pertença (A Igreja Local e os Pequenos Grupos)',
+    'Compromisso com a igreja local e conexão com pequenos grupos nos lares.',
+    4,
+    true,
+    true
+  )
+  returning id into v_mod4;
+
+  insert into public.discipleship_lessons (
+    tenant_id, module_id, title, content, video_url, reflection_question, sort_order, is_active, is_seed
+  ) values
+    (
+      p_tenant_id, v_mod4,
+      'O Que Significa Ser Membro de uma Igreja Local',
+      'Ser membro é compromisso de comunhão, cuidado mútuo e missão compartilhada.',
+      null, null, 1, true, true
+    ),
+    (
+      p_tenant_id, v_mod4,
+      'A Vida em Comunidade',
+      'A vida cristã floresce em comunidade — oração, partilha e serviço juntos.',
+      null, null, 2, true, true
+    ),
+    (
+      p_tenant_id, v_mod4,
+      'Encontre seu Pequeno Grupo',
+      'Os pequenos grupos nos lares são espaço de crescimento e cuidado próximo.',
+      null,
+      'Qual dia da semana funciona melhor para você participar de um grupo nos lares?',
+      3, true, true
+    );
+
+  -- Módulo 5
+  insert into public.discipleship_modules (
+    tenant_id, title, description, sort_order, is_active, is_seed
+  ) values (
+    p_tenant_id,
+    'Servindo com Propósito (Ministérios e Mordomia)',
+    'Dons, mordomia cristã e integração aos ministérios da igreja.',
+    5,
+    true,
+    true
+  )
+  returning id into v_mod5;
+
+  insert into public.discipleship_lessons (
+    tenant_id, module_id, title, content, video_url, reflection_question, sort_order, is_active, is_seed
+  ) values
+    (
+      p_tenant_id, v_mod5,
+      'Descobrindo meus Dons',
+      'Deus distribui dons para o bem comum. Comece a identificar os seus.',
+      null, null, 1, true, true
+    ),
+    (
+      p_tenant_id, v_mod5,
+      'Mordomia Cristã',
+      'Mordomia é administrar com fidelidade tempo, talentos e recursos para a glória de Deus.',
+      null, null, 2, true, true
+    ),
+    (
+      p_tenant_id, v_mod5,
+      'Conhecendo os Ministérios da Igreja',
+      'Conheça os ministérios e descubra onde pode servir com alegria.',
+      null,
+      'Em qual área ou ministério você sente maior desejo de servir?',
       3, true, true
     );
 end;
 $$;
 
 comment on function public.seed_default_discipleship_trail(uuid) is
-  'Insere o material inicial padrão (3 módulos × 3 lições) para uma igreja. Idempotente.';
+  'Insere o material inicial padrão (5 módulos × 3 lições) para uma igreja. Idempotente.';
 
 grant execute on function public.seed_default_discipleship_trail(uuid) to service_role;
 
