@@ -1,7 +1,7 @@
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { traceClick } from '@/lib/devClickTrace';
 import { FontAwesome } from '@expo/vector-icons';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -11,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 
 type SettingsItem = {
   id: string;
@@ -31,10 +30,13 @@ type Props = {
   /** Orquestrador — cadastro e publicação de avisos. */
   showAvisosSettings?: boolean;
   onOpenAvisosSettings?: () => void;
-  /** Pastoral / líderes — temas e reconhecimentos da Trilha. */
+  /** Pastoral / líderes — manutenção da Trilha. */
   showDiscipleshipSettings?: boolean;
   onOpenDiscipleshipThemes?: () => void;
   onOpenDiscipleshipSettings?: () => void;
+  /** Super admin — resetar progresso de um usuário. */
+  showDiscipleshipReset?: boolean;
+  onOpenDiscipleshipReset?: () => void;
   /** Apenas super_admin — gestão multi-instância. */
   showIgrejasInstances?: boolean;
   onOpenIgrejasInstances?: () => void;
@@ -51,10 +53,51 @@ export function AppDrawerSettings({
   showDiscipleshipSettings = false,
   onOpenDiscipleshipThemes,
   onOpenDiscipleshipSettings,
+  showDiscipleshipReset = false,
+  onOpenDiscipleshipReset,
   showIgrejasInstances = false,
   onOpenIgrejasInstances,
 }: Props) {
   const insets = useSafeAreaInsets();
+  const [trailMenuOpen, setTrailMenuOpen] = useState(false);
+
+  const trailSubItems: SettingsItem[] = [
+    ...(showDiscipleshipSettings && onOpenDiscipleshipThemes
+      ? [
+          {
+            id: 'discipleship-themes',
+            label: 'Temas da Trilha',
+            hint: 'Textos, vídeos e reflexões dos passos',
+            icon: 'book' as const,
+            onPress: onOpenDiscipleshipThemes,
+          } satisfies SettingsItem,
+        ]
+      : []),
+    ...(showDiscipleshipSettings && onOpenDiscipleshipSettings
+      ? [
+          {
+            id: 'discipleship-settings',
+            label: 'Trilha — Reconhecimentos',
+            hint: 'Alunos 100% prontos para certificado',
+            icon: 'graduation-cap' as const,
+            onPress: onOpenDiscipleshipSettings,
+          } satisfies SettingsItem,
+        ]
+      : []),
+    ...(showDiscipleshipReset && onOpenDiscipleshipReset
+      ? [
+          {
+            id: 'discipleship-reset',
+            label: 'Resetar Trilha',
+            hint: 'Reiniciar progresso de um usuário nesta igreja',
+            icon: 'refresh' as const,
+            onPress: onOpenDiscipleshipReset,
+          } satisfies SettingsItem,
+        ]
+      : []),
+  ];
+
+  const showTrailGroup = trailSubItems.length > 0;
 
   const items: SettingsItem[] = [
     ...(onOpenBilling
@@ -97,28 +140,6 @@ export function AppDrawerSettings({
           } satisfies SettingsItem,
         ]
       : []),
-    ...(showDiscipleshipSettings && onOpenDiscipleshipThemes
-      ? [
-          {
-            id: 'discipleship-themes',
-            label: 'Temas da Trilha',
-            hint: 'Textos, vídeos e reflexões dos passos (desta igreja)',
-            icon: 'book' as const,
-            onPress: onOpenDiscipleshipThemes,
-          } satisfies SettingsItem,
-        ]
-      : []),
-    ...(showDiscipleshipSettings && onOpenDiscipleshipSettings
-      ? [
-          {
-            id: 'discipleship-settings',
-            label: 'Trilha — Reconhecimentos',
-            hint: 'Alunos 100% prontos para certificado',
-            icon: 'graduation-cap' as const,
-            onPress: onOpenDiscipleshipSettings,
-          } satisfies SettingsItem,
-        ]
-      : []),
   ];
 
   const igrejasItem: SettingsItem | null =
@@ -132,10 +153,10 @@ export function AppDrawerSettings({
         }
       : null;
 
-  const renderItem = (item: SettingsItem, pinned = false) => (
+  const renderItem = (item: SettingsItem, pinned = false, nested = false) => (
     <TouchableOpacity
       key={item.id}
-      style={[styles.item, pinned && styles.itemPinned]}
+      style={[styles.item, pinned && styles.itemPinned, nested && styles.itemNested]}
       onPress={() => {
         traceClick('drawer-settings', 'item-press', { id: item.id, label: item.label });
         item.onPress();
@@ -175,6 +196,38 @@ export function AppDrawerSettings({
         keyboardShouldPersistTaps="handled"
       >
         {items.map((item) => renderItem(item))}
+
+        {showTrailGroup ? (
+          <View>
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => {
+                traceClick('drawer-settings', 'trail-group-toggle', { open: !trailMenuOpen });
+                setTrailMenuOpen((open) => !open);
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: trailMenuOpen }}
+              accessibilityLabel="Manutenção da Trilha"
+            >
+              <View style={styles.itemIconWrap}>
+                <FontAwesome name="graduation-cap" size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+              </View>
+              <View style={styles.itemCopy}>
+                <Text style={styles.itemLabel}>Manutenção da Trilha</Text>
+                <Text style={styles.itemHint}>Temas, reconhecimentos e reset</Text>
+              </View>
+              <FontAwesome
+                name={trailMenuOpen ? 'chevron-down' : 'chevron-right'}
+                size={12}
+                color={MINIMAL_UI.textMuted}
+              />
+            </TouchableOpacity>
+
+            {trailMenuOpen
+              ? trailSubItems.map((item) => renderItem(item, false, true))
+              : null}
+          </View>
+        ) : null}
       </ScrollView>
 
       {igrejasItem ? (
@@ -233,6 +286,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: MINIMAL_UI.divider,
+  },
+  itemNested: {
+    paddingLeft: 16,
+    backgroundColor: MINIMAL_UI.rowHover,
+    minHeight: 52,
   },
   itemPinned: {
     borderBottomWidth: 0,

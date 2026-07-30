@@ -105,6 +105,13 @@ export function AppDrawer() {
     void navigateDrawerMenuItem(router, 'discipleship_alerts');
   };
 
+  const handleOpenDiscipleshipReset = () => {
+    traceClick('drawer', 'settings-discipleship-reset-press');
+    setSettingsOpen(false);
+    closeDrawer();
+    void navigateDrawerMenuItem(router, 'discipleship_reset');
+  };
+
   const handleOpenBilling = () => {
     traceClick('drawer', 'settings-billing-press');
     setSettingsOpen(false);
@@ -148,6 +155,8 @@ export function AppDrawer() {
               showDiscipleshipSettings={canManageDiscipleship}
               onOpenDiscipleshipThemes={handleOpenDiscipleshipThemes}
               onOpenDiscipleshipSettings={handleOpenDiscipleshipSettings}
+              showDiscipleshipReset={isSuperAdmin}
+              onOpenDiscipleshipReset={handleOpenDiscipleshipReset}
               showIgrejasInstances={isSuperAdmin}
               onOpenIgrejasInstances={handleOpenIgrejasInstances}
             />

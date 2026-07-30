@@ -32,6 +32,7 @@ export type AppDrawerModuleKey =
   | 'pastoral_care'
   | 'discipleship_themes'
   | 'discipleship_alerts'
+  | 'discipleship_reset'
   | 'financials'
   | 'predictive_insights'
   | 'relatorios'
@@ -109,6 +110,7 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   pastoral_care: 'pastoral_care',
   discipleship_themes: 'discipleship_themes',
   discipleship_alerts: 'discipleship_alerts',
+  discipleship_reset: 'discipleship_reset',
   financials: 'financials',
   predictive_insights: 'predictive_insights',
   relatorios: 'relatorios',
