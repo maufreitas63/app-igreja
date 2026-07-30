@@ -890,6 +890,10 @@ export default function MaintenanceDashboard() {
         return canAccessPastoralCare;
       }
 
+      if (card.content === 'discipleship_alerts') {
+        return canAccessPastoralCare || maintenancePanelAccess[card.content] === true;
+      }
+
       if (card.content === 'mudanca_papeis') {
         return canAccessPastoralRoleChange || canManageAccessControl;
       }
