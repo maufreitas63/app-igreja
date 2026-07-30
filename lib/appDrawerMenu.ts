@@ -20,7 +20,6 @@ export type AppDrawerModuleKey =
   | 'menu_igrejas'
   | 'menu_redes_sociais'
   | 'menu_billing'
-  | 'menu_trilha_discipulado'
   | AppDrawerPlaceholderModuleKey
   | 'gestao_financeira'
   | 'Events'
@@ -58,7 +57,6 @@ export const SCALE_SCHEDULING_MENU_LABEL = 'Programação de Escalas';
 export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'a', label: 'Início', moduleKey: 'events_panel' },
   { letter: 'b', label: 'Perfil', moduleKey: 'menu_perfil' },
-  { letter: 'bd', label: 'Trilha de Discipulado', moduleKey: 'menu_trilha_discipulado' },
   { letter: 'c', label: 'Financeiro', moduleKey: 'gestao_financeira' },
   { letter: 'd', label: 'Escalas', moduleKey: 'menu_escalas' },
   { letter: 'e', label: 'Aniversariantes', moduleKey: 'menu_aniversariantes' },
@@ -76,7 +74,6 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'm', label: SCALE_VOLUNTEERS_MENU_LABEL, moduleKey: 'scales_volunteers' },
   { letter: 'n', label: SCALE_SCHEDULING_MENU_LABEL, moduleKey: 'scales' },
   { letter: 'o', label: 'Cuidados Pastorais', moduleKey: 'pastoral_care' },
-  { letter: 'oe', label: 'Trilha — Reconhecimentos', moduleKey: 'discipleship_alerts' },
   { letter: 'p', label: 'Informações Financeiras', moduleKey: 'financials' },
   { letter: 'q', label: 'Modelo Preditivo', moduleKey: 'predictive_insights' },
   { letter: 'r', label: 'Relatórios', moduleKey: 'relatorios' },
@@ -140,17 +137,6 @@ export async function navigateDrawerMenuItem(
       pathname: '/perfil',
       params: withMinimalPresentation(),
     });
-    return;
-  }
-
-  if (moduleKey === 'menu_trilha_discipulado') {
-    await navigateWithScreenAccess(
-      router,
-      '/trilha-discipulado',
-      ACCESS_SCREEN.discipleshipTrail,
-      withMinimalPresentation(),
-      { method: 'push' }
-    );
     return;
   }
 

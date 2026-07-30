@@ -23,7 +23,8 @@ import { AppDrawerSettings } from './AppDrawerSettings';
 
 export function AppDrawer() {
   const { isOpen, closeDrawer } = useAppDrawer();
-  const { items, loading, refresh, isSuperAdmin, canManageRooms, canManageAvisos } = useAppDrawerMenu();
+  const { items, loading, refresh, isSuperAdmin, canManageRooms, canManageAvisos, canManageDiscipleship } =
+    useAppDrawerMenu();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -90,6 +91,13 @@ export function AppDrawer() {
     void navigateDrawerMenuItem(router, 'event_orchestration');
   };
 
+  const handleOpenDiscipleshipSettings = () => {
+    traceClick('drawer', 'settings-discipleship-press');
+    setSettingsOpen(false);
+    closeDrawer();
+    void navigateDrawerMenuItem(router, 'discipleship_alerts');
+  };
+
   const handleOpenBilling = () => {
     traceClick('drawer', 'settings-billing-press');
     setSettingsOpen(false);
@@ -130,6 +138,8 @@ export function AppDrawer() {
               onOpenRoomSettings={handleOpenRoomSettings}
               showAvisosSettings={canManageAvisos}
               onOpenAvisosSettings={handleOpenAvisosSettings}
+              showDiscipleshipSettings={canManageDiscipleship}
+              onOpenDiscipleshipSettings={handleOpenDiscipleshipSettings}
               showIgrejasInstances={isSuperAdmin}
               onOpenIgrejasInstances={handleOpenIgrejasInstances}
             />

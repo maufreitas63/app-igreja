@@ -31,6 +31,9 @@ type Props = {
   /** Orquestrador — cadastro e publicação de avisos. */
   showAvisosSettings?: boolean;
   onOpenAvisosSettings?: () => void;
+  /** Pastoral / líderes — reconhecimentos da Trilha de Discipulado. */
+  showDiscipleshipSettings?: boolean;
+  onOpenDiscipleshipSettings?: () => void;
   /** Apenas super_admin — gestão multi-instância. */
   showIgrejasInstances?: boolean;
   onOpenIgrejasInstances?: () => void;
@@ -44,6 +47,8 @@ export function AppDrawerSettings({
   onOpenRoomSettings,
   showAvisosSettings = false,
   onOpenAvisosSettings,
+  showDiscipleshipSettings = false,
+  onOpenDiscipleshipSettings,
   showIgrejasInstances = false,
   onOpenIgrejasInstances,
 }: Props) {
@@ -87,6 +92,17 @@ export function AppDrawerSettings({
             hint: 'Cadastre e publique comunicados da home',
             icon: 'bullhorn' as const,
             onPress: onOpenAvisosSettings,
+          } satisfies SettingsItem,
+        ]
+      : []),
+    ...(showDiscipleshipSettings && onOpenDiscipleshipSettings
+      ? [
+          {
+            id: 'discipleship-settings',
+            label: 'Trilha de Discipulado',
+            hint: 'Reconhecimentos e conclusões prontas para certificado',
+            icon: 'graduation-cap' as const,
+            onPress: onOpenDiscipleshipSettings,
           } satisfies SettingsItem,
         ]
       : []),
