@@ -3,8 +3,6 @@ import { MembersClassPanel } from '@/components/MembersClassPanel';
 import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ProfileClassPanel } from '@/components/ProfileClassPanel';
 import { DiscipleshipTrailPanel } from '@/components/DiscipleshipTrailPanel';
-import { sessionHasAccess } from '@/lib/accessControl';
-import { ACCESS_SCREEN } from '@/lib/accessScreen';
 import { loadGroupedManageScreenAccess } from '@/lib/groupedManageAccess';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -20,7 +18,6 @@ export function PerfilClassPanel() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [manageProfile, setManageProfile] = useState(false);
   const [manageMembers, setManageMembers] = useState(false);
-  const [canOpenDiscipleshipTrail, setCanOpenDiscipleshipTrail] = useState(false);
   const [ministerialFormVisible, setMinisterialFormVisible] = useState(false);
   const [profileClassVisible, setProfileClassVisible] = useState(false);
   const [membersClassVisible, setMembersClassVisible] = useState(false);
@@ -46,16 +43,12 @@ export function PerfilClassPanel() {
       if (!resolvedProfileId) {
         setManageProfile(false);
         setManageMembers(false);
-        setCanOpenDiscipleshipTrail(false);
         return;
       }
 
-      const [access, trailAccess] = await Promise.all([
-        loadGroupedManageScreenAccess(resolvedProfileId, {
-          forceRefresh: options?.forceRefresh === true,
-        }),
-        sessionHasAccess('screen', ACCESS_SCREEN.discipleshipTrail, 'view'),
-      ]);
+      const access = await loadGroupedManageScreenAccess(resolvedProfileId, {
+        forceRefresh: options?.forceRefresh === true,
+      });
 
       if (generation !== loadGenerationRef.current) {
         return;
@@ -63,7 +56,6 @@ export function PerfilClassPanel() {
 
       setManageProfile(access.manageProfile);
       setManageMembers(access.manageMembers);
-      setCanOpenDiscipleshipTrail(trailAccess === true);
     } finally {
       if (generation === loadGenerationRef.current) {
         setLoading(false);
@@ -121,18 +113,16 @@ export function PerfilClassPanel() {
       onPress: openMinisterialProfile,
     });
 
-    if (canOpenDiscipleshipTrail) {
-      items.push({
-        key: 'discipleship-trail',
-        label: 'Trilha de Discipulado',
-        icon: 'school',
-        onPress: openDiscipleshipTrail,
-      });
-    }
+    // Sempre disponível no Perfil (como Perfil Ministerial); a tela/SQL tratam permissão e seed.
+    items.push({
+      key: 'discipleship-trail',
+      label: 'Trilha de Discipulado',
+      icon: 'school',
+      onPress: openDiscipleshipTrail,
+    });
 
     return items;
   }, [
-    canOpenDiscipleshipTrail,
     manageMembers,
     manageProfile,
     openDiscipleshipTrail,

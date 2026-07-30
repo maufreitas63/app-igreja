@@ -136,8 +136,10 @@ export function useAppDrawerMenu() {
           canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
         })
       );
+      // Engrenagem: pastoral/líderes (cuidado pastoral) ou grant explícito do card da trilha
       setCanManageDiscipleship(
         superAdmin
+        || maintenanceAccess.canAccessPastoralCare === true
         || isDrawerMaintenanceModuleAllowed('discipleship_alerts', 'discipleship_alerts', {
           canAccessMaintenance: maintenanceAccess.allowed,
           maintenancePanelAccess: maintenanceAccess.maintenancePanelAccess,
