@@ -22,6 +22,7 @@ import { MaintenancePredictiveInsightsCard } from '@/components/MaintenancePredi
 import { MaintenanceReportsCard } from '@/components/MaintenanceReportsCard';
 import { MaintenanceSupportSuggestionsCard } from '@/components/MaintenanceSupportSuggestionsCard';
 import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCareCard';
+import { MaintenanceDiscipleshipAlertsCard } from '@/components/MaintenanceDiscipleshipAlertsCard';
 import { MaintenancePastoralRoleChangeCard } from '@/components/MaintenancePastoralRoleChangeCard';
 import { MaintenanceEventOrchestrationCard } from '@/components/MaintenanceEventOrchestrationCard';
 import { MaintenanceFamilyReceptionCard } from '@/components/MaintenanceFamilyReceptionCard';
@@ -170,8 +171,9 @@ type MaintenanceCarouselCard = {
     | 'suggestions_improvements'
     | 'access_control'
     | 'profile_access_insights'
-    | 'auditor'
-    | 'event_orchestration';
+  | 'auditor'
+  | 'discipleship_alerts'
+  | 'event_orchestration';
 };
 
 type MaintenanceShortcut = {
@@ -199,6 +201,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '6', title: SCALE_VOLUNTEERS_MENU_LABEL, content: 'scale_volunteers' },
   { id: '7', title: SCALE_SCHEDULING_MENU_LABEL, content: 'scales' },
   { id: '8', title: 'Cuidado Pastoral', content: 'pastoral_care' },
+  { id: '20', title: 'Trilha — Reconhecimentos', content: 'discipleship_alerts' },
   { id: '9', title: 'Informações Financeiras', content: 'financials' },
   { id: '16', title: 'Modelo Preditivo', content: 'predictive_insights' },
   { id: '17', title: 'Relatórios', content: 'relatorios' },
@@ -1481,6 +1484,19 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenancePastoralCareCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
+          ) : item.content === 'discipleship_alerts' ? (
+            <View
+              style={[
+                styles.pastoralCarePanel,
+                isMinimalPresentation && styles.pastoralCarePanelMinimal,
+              ]}
+            >
+              <MaintenanceDiscipleshipAlertsCard
                 isActive={currentIndex === index}
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}

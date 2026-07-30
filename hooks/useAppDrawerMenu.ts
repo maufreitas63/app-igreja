@@ -44,6 +44,7 @@ function isDrawerModuleEnabled(
     canOpenAccessControl: boolean;
     hasActiveMembership: boolean;
     isSuperAdmin: boolean;
+    canAccessDiscipleshipTrail: boolean;
   }
 ): boolean {
   if (isDrawerMenuPlaceholder(moduleKey)) {
@@ -52,6 +53,10 @@ function isDrawerModuleEnabled(
 
   if (moduleKey === 'events_panel' || moduleKey === 'menu_redes_sociais') {
     return true;
+  }
+
+  if (moduleKey === 'menu_trilha_discipulado') {
+    return context.canAccessDiscipleshipTrail;
   }
 
   if (moduleKey === 'menu_igrejas' || moduleKey === 'auditor') {
@@ -111,7 +116,7 @@ export function useAppDrawerMenu() {
         ?? (await loadEffectiveSessionProfile())?.id?.trim()
         ?? null;
 
-      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership, roomAccess] =
+      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership, roomAccess, trailAccess] =
         await Promise.all([
           profileId
             ? loadDashboardCardViewAccess(profileId, { forceRefresh: ghostActive })
@@ -122,6 +127,7 @@ export function useAppDrawerMenu() {
           loadMaintenanceDashboardAccess({ forceRefresh: ghostActive }),
           profileId ? fetchProfileHasActiveMembership(profileId) : Promise.resolve(false),
           sessionHasAccess('screen', ACCESS_SCREEN.configuracaoSalas, 'view'),
+          sessionHasAccess('screen', ACCESS_SCREEN.discipleshipTrail, 'view'),
         ]);
 
       const superAdmin = maintenanceAccess.isSuperAdmin === true;
@@ -145,6 +151,7 @@ export function useAppDrawerMenu() {
         canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
         hasActiveMembership,
         isSuperAdmin: superAdmin,
+        canAccessDiscipleshipTrail: superAdmin || trailAccess === true,
       };
 
       const resolved = APP_DRAWER_MENU_ITEMS.map((item) => ({

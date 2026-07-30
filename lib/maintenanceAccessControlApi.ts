@@ -654,7 +654,7 @@ export const isSensitiveAccessResourceKey = (resourceKey: string) =>
 /** Indica se a tela pertence ao produto principal (membros) ou à manutenção. */
 export type AccessGrantDashboardScope = 'main' | 'maintenance';
 
-const MAIN_PRODUCT_SCREEN_ROUTE_KEYS = new Set(
+const MAIN_PRODUCT_SCREEN_ROUTE_KEYS = new Set<string>(
   Object.values(ACCESS_SCREEN).filter((routeKey) => routeKey !== ACCESS_SCREEN.maintenance)
 );
 

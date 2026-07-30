@@ -15,4 +15,5 @@ export const ACCESS_SCREEN = {
   lgpd: '/lgpd',
   eventOrchestrator: '/admin/orquestrador',
   configuracaoSalas: '/configuracao-salas',
+  discipleshipTrail: '/trilha-discipulado',
 } as const;

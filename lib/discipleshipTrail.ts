@@ -1,18 +1,24 @@
 /**
- * Trilha de Discipulado — consultas Supabase (multi-tenant).
+ * Trilha de Discipulado — progresso, estados visuais, selos e alertas pastorais.
  *
- * Isolamento: `tenant_id` (= church_id / public.igrejas.id) via headers de sessão
- * (`x-tenant-id`, `x-session-token`) injetados por `supabaseSessionFetch`.
- * O RLS filtra automaticamente; não é obrigatório `.eq('tenant_id', …)` no client,
- * mas pode ser usado como defesa em profundidade quando o tenant ativo é conhecido.
- *
- * SQL: scripts/discipleship-trail-schema.sql
+ * SQL:
+ *   scripts/discipleship-trail-schema.sql
+ *   scripts/discipleship-trail-badges-alerts.sql
  */
 
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
+import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+
+export const DISCIPLESHIP_TRAIL_SQL_HINT =
+  'Execute no Supabase: scripts/discipleship-trail-schema.sql e scripts/discipleship-trail-badges-alerts.sql';
 
 export type DiscipleshipProgressStatus = 'not_started' | 'in_progress' | 'completed';
+
+/** Estado visual sequencial da trilha. */
+export type DiscipleshipVisualState = 'locked' | 'available' | 'in_progress' | 'completed';
+
+export type DiscipleshipBadgeCode = 'module_complete' | 'trail_complete';
 
 export type DiscipleshipModule = {
   id: string;
@@ -48,12 +54,59 @@ export type UserDiscipleshipProgress = {
   completed_at: string | null;
 };
 
+export type UserDiscipleshipBadge = {
+  id: string;
+  tenant_id: string;
+  profile_id: string;
+  module_id: string | null;
+  badge_code: DiscipleshipBadgeCode;
+  badge_title: string;
+  badge_description: string | null;
+  earned_at: string;
+};
+
+export type DiscipleshipPastoralAlert = {
+  id: string;
+  tenant_id: string;
+  profile_id: string;
+  alert_type: string;
+  title: string;
+  message: string;
+  status: 'new' | 'acknowledged' | 'closed';
+  acknowledged_at: string | null;
+  created_at: string;
+  profile_full_name?: string | null;
+};
+
 export type DiscipleshipLessonWithProgress = DiscipleshipLesson & {
   progress: UserDiscipleshipProgress | null;
+  visualState: DiscipleshipVisualState;
 };
 
 export type DiscipleshipModuleWithLessons = DiscipleshipModule & {
   lessons: DiscipleshipLessonWithProgress[];
+  visualState: DiscipleshipVisualState;
+  percentComplete: number;
+  completedLessons: number;
+  totalLessons: number;
+  badge: UserDiscipleshipBadge | null;
+};
+
+export type DiscipleshipTrailSnapshot = {
+  modules: DiscipleshipModuleWithLessons[];
+  badges: UserDiscipleshipBadge[];
+  percentComplete: number;
+  completedLessons: number;
+  totalLessons: number;
+  trailComplete: boolean;
+  trailBadge: UserDiscipleshipBadge | null;
+};
+
+export type DiscipleshipAchievementEvent = {
+  moduleBadge: UserDiscipleshipBadge | null;
+  trailBadge: UserDiscipleshipBadge | null;
+  moduleJustCompleted: boolean;
+  trailJustCompleted: boolean;
 };
 
 const MODULE_COLUMNS =
@@ -62,12 +115,149 @@ const LESSON_COLUMNS =
   'id, tenant_id, module_id, title, content, video_url, reflection_question, sort_order, is_active, is_seed';
 const PROGRESS_COLUMNS =
   'id, tenant_id, profile_id, lesson_id, status, reflection_answer, started_at, completed_at';
+const BADGE_COLUMNS =
+  'id, tenant_id, profile_id, module_id, badge_code, badge_title, badge_description, earned_at';
+const ALERT_COLUMNS =
+  'id, tenant_id, profile_id, alert_type, title, message, status, acknowledged_at, created_at';
+
+export function lessonProgressStatus(
+  lesson: Pick<DiscipleshipLessonWithProgress, 'progress'>
+): DiscipleshipProgressStatus {
+  return lesson.progress?.status ?? 'not_started';
+}
+
+export function computePercent(done: number, total: number): number {
+  if (total <= 0) {
+    return 0;
+  }
+  return Math.round((done / total) * 100);
+}
+
+export function countCompletedLessons(
+  modules: Array<{ lessons: Array<{ progress: UserDiscipleshipProgress | null }> }>
+): { completed: number; total: number; percent: number } {
+  let completed = 0;
+  let total = 0;
+
+  for (const module of modules) {
+    for (const lesson of module.lessons) {
+      total += 1;
+      if (lesson.progress?.status === 'completed') {
+        completed += 1;
+      }
+    }
+  }
+
+  return { completed, total, percent: computePercent(completed, total) };
+}
 
 /**
- * Busca módulos ativos da igreja da sessão, com lições aninhadas (ordenados).
- * O RLS garante que só retornam linhas do tenant ativo.
+ * Aplica estados visuais sequenciais: lição/módulo bloqueados até o anterior concluir.
  */
-export async function fetchDiscipleshipModulesWithLessons(): Promise<DiscipleshipModuleWithLessons[]> {
+export function enrichTrailWithVisualState(
+  modules: Array<DiscipleshipModule & { lessons: DiscipleshipLessonWithProgress[] }>,
+  badges: UserDiscipleshipBadge[] = []
+): DiscipleshipModuleWithLessons[] {
+  const badgeByModule = new Map(
+    badges
+      .filter((b) => b.badge_code === 'module_complete' && b.module_id)
+      .map((b) => [b.module_id as string, b])
+  );
+
+  const sortedModules = [...modules].sort((a, b) => a.sort_order - b.sort_order);
+  let previousModuleComplete = true;
+
+  return sortedModules.map((module) => {
+    const lessons = [...module.lessons].sort((a, b) => a.sort_order - b.sort_order);
+    const moduleUnlocked = previousModuleComplete;
+    let previousLessonComplete = true;
+
+    const lessonsWithState: DiscipleshipLessonWithProgress[] = lessons.map((lesson) => {
+      const status = lesson.progress?.status ?? 'not_started';
+      let visualState: DiscipleshipVisualState;
+
+      if (!moduleUnlocked || !previousLessonComplete) {
+        visualState = 'locked';
+      } else if (status === 'completed') {
+        visualState = 'completed';
+      } else if (status === 'in_progress') {
+        visualState = 'in_progress';
+      } else {
+        visualState = 'available';
+      }
+
+      previousLessonComplete = status === 'completed';
+
+      return { ...lesson, visualState };
+    });
+
+    const completedLessons = lessonsWithState.filter(
+      (l) => l.progress?.status === 'completed'
+    ).length;
+    const totalLessons = lessonsWithState.length;
+    const percentComplete = computePercent(completedLessons, totalLessons);
+
+    let visualState: DiscipleshipVisualState;
+    if (!moduleUnlocked) {
+      visualState = 'locked';
+    } else if (totalLessons > 0 && completedLessons === totalLessons) {
+      visualState = 'completed';
+    } else if (completedLessons > 0 || lessonsWithState.some((l) => l.visualState === 'in_progress')) {
+      visualState = 'in_progress';
+    } else {
+      visualState = 'available';
+    }
+
+    previousModuleComplete = totalLessons > 0 && completedLessons === totalLessons;
+
+    return {
+      ...module,
+      lessons: lessonsWithState,
+      visualState,
+      percentComplete,
+      completedLessons,
+      totalLessons,
+      badge: badgeByModule.get(module.id) ?? null,
+    };
+  });
+}
+
+export function buildTrailSnapshot(
+  modules: DiscipleshipModuleWithLessons[],
+  badges: UserDiscipleshipBadge[]
+): DiscipleshipTrailSnapshot {
+  const { completed, total, percent } = countCompletedLessons(modules);
+  const trailBadge = badges.find((b) => b.badge_code === 'trail_complete') ?? null;
+
+  return {
+    modules,
+    badges,
+    percentComplete: percent,
+    completedLessons: completed,
+    totalLessons: total,
+    trailComplete: total > 0 && completed === total,
+    trailBadge,
+  };
+}
+
+export function visualStateLabel(state: DiscipleshipVisualState): string {
+  switch (state) {
+    case 'locked':
+      return 'Bloqueado';
+    case 'available':
+      return 'Disponível';
+    case 'in_progress':
+      return 'Em andamento';
+    case 'completed':
+      return 'Concluído';
+    default:
+      return 'Disponível';
+  }
+}
+
+export async function fetchDiscipleshipModulesWithLessons(): Promise<
+  Array<DiscipleshipModule & { lessons: DiscipleshipLessonWithProgress[] }>
+> {
   const { data, error } = await supabase
     .from('discipleship_modules')
     .select(
@@ -111,15 +301,13 @@ export async function fetchDiscipleshipModulesWithLessons(): Promise<Discipleshi
           is_active: Boolean(lesson.is_active),
           is_seed: Boolean(lesson.is_seed),
           progress: null as UserDiscipleshipProgress | null,
+          visualState: 'available' as DiscipleshipVisualState,
         }))
         .sort((a, b) => a.sort_order - b.sort_order),
     };
   });
 }
 
-/**
- * Progresso do usuário efetivo (respeita Modo Ghost) na igreja da sessão.
- */
 export async function fetchMyDiscipleshipProgress(
   profileId?: string
 ): Promise<UserDiscipleshipProgress[]> {
@@ -140,29 +328,62 @@ export async function fetchMyDiscipleshipProgress(
   return (data ?? []).map(mapProgressRow);
 }
 
+export async function fetchMyDiscipleshipBadges(
+  profileId?: string
+): Promise<UserDiscipleshipBadge[]> {
+  const effectiveProfileId = profileId ?? (await resolveEffectiveProfileId());
+  if (!effectiveProfileId) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('user_discipleship_badges')
+    .select(BADGE_COLUMNS)
+    .eq('profile_id', effectiveProfileId)
+    .order('earned_at', { ascending: true });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'user_discipleship_badges') || isMissingRelation(error)) {
+      return [];
+    }
+    throw error;
+  }
+
+  return (data ?? []).map(mapBadgeRow);
+}
+
 /**
- * Trilha completa: módulos + lições + status de progresso do usuário logado.
+ * Trilha completa com % e estados visuais do usuário logado.
  */
-export async function fetchDiscipleshipTrailForCurrentUser(): Promise<DiscipleshipModuleWithLessons[]> {
-  const [modules, progressRows] = await Promise.all([
+export async function fetchDiscipleshipTrailForCurrentUser(): Promise<DiscipleshipTrailSnapshot> {
+  const [modulesRaw, progressRows, badges] = await Promise.all([
     fetchDiscipleshipModulesWithLessons(),
     fetchMyDiscipleshipProgress(),
+    fetchMyDiscipleshipBadges(),
   ]);
 
   const progressByLesson = new Map(progressRows.map((row) => [row.lesson_id, row]));
 
-  return modules.map((module) => ({
+  const withProgress = modulesRaw.map((module) => ({
     ...module,
     lessons: module.lessons.map((lesson) => ({
       ...lesson,
       progress: progressByLesson.get(lesson.id) ?? null,
     })),
   }));
+
+  const modules = enrichTrailWithVisualState(withProgress, badges);
+  return buildTrailSnapshot(modules, badges);
 }
 
-/**
- * Cria ou atualiza o progresso de uma lição do usuário efetivo.
- */
+/** @deprecated use fetchDiscipleshipTrailForCurrentUser */
+export async function fetchDiscipleshipModulesWithProgressLegacy(): Promise<
+  DiscipleshipModuleWithLessons[]
+> {
+  const snapshot = await fetchDiscipleshipTrailForCurrentUser();
+  return snapshot.modules;
+}
+
 export async function upsertMyLessonProgress(input: {
   lessonId: string;
   tenantId: string;
@@ -206,6 +427,134 @@ export async function upsertMyLessonProgress(input: {
   return mapProgressRow(data);
 }
 
+/**
+ * Conclui (ou atualiza) uma lição e detecta conquistas novas (selo de módulo / trilha).
+ * O trigger SQL concede selos e cria o alerta pastoral ao fechar a trilha.
+ */
+export async function completeLessonWithAchievements(input: {
+  lessonId: string;
+  tenantId: string;
+  reflectionAnswer?: string | null;
+  profileId?: string;
+  status?: DiscipleshipProgressStatus;
+}): Promise<{
+  progress: UserDiscipleshipProgress;
+  snapshot: DiscipleshipTrailSnapshot;
+  achievement: DiscipleshipAchievementEvent;
+}> {
+  const badgesBefore = await fetchMyDiscipleshipBadges(input.profileId);
+  const beforeIds = new Set(badgesBefore.map((b) => b.id));
+
+  const progress = await upsertMyLessonProgress({
+    lessonId: input.lessonId,
+    tenantId: input.tenantId,
+    status: input.status ?? 'completed',
+    reflectionAnswer: input.reflectionAnswer,
+    profileId: input.profileId,
+  });
+
+  // Garante avaliação mesmo se o trigger ainda não estiver deployado
+  const { error: evalError } = await supabase.rpc('evaluate_discipleship_achievements', {
+    p_tenant_id: input.tenantId,
+    p_profile_id: progress.profile_id,
+    p_lesson_id: input.lessonId,
+  });
+
+  if (evalError && !isSupabaseRpcMissingError(evalError, 'evaluate_discipleship_achievements')) {
+    console.warn('evaluate_discipleship_achievements:', evalError.message);
+  }
+
+  const snapshot = await fetchDiscipleshipTrailForCurrentUser();
+  const newBadges = snapshot.badges.filter((b) => !beforeIds.has(b.id));
+  const moduleBadge = newBadges.find((b) => b.badge_code === 'module_complete') ?? null;
+  const trailBadge = newBadges.find((b) => b.badge_code === 'trail_complete') ?? null;
+
+  return {
+    progress,
+    snapshot,
+    achievement: {
+      moduleBadge,
+      trailBadge,
+      moduleJustCompleted: Boolean(moduleBadge),
+      trailJustCompleted: Boolean(trailBadge),
+    },
+  };
+}
+
+export async function fetchDiscipleshipPastoralAlerts(options?: {
+  status?: 'new' | 'acknowledged' | 'closed' | 'all';
+}): Promise<DiscipleshipPastoralAlert[]> {
+  const status = options?.status ?? 'new';
+
+  let query = supabase
+    .from('discipleship_pastoral_alerts')
+    .select(
+      `${ALERT_COLUMNS}, profiles:profile_id ( full_name )`
+    )
+    .order('created_at', { ascending: false });
+
+  if (status !== 'all') {
+    query = query.eq('status', status);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    if (isMissingRelation(error)) {
+      throw Object.assign(new Error(DISCIPLESHIP_TRAIL_SQL_HINT), { cause: error });
+    }
+    throw error;
+  }
+
+  return (data ?? []).map((row) => {
+    const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+    return {
+      id: String(row.id),
+      tenant_id: String(row.tenant_id),
+      profile_id: String(row.profile_id),
+      alert_type: String(row.alert_type),
+      title: String(row.title),
+      message: String(row.message),
+      status: (['new', 'acknowledged', 'closed'].includes(String(row.status))
+        ? row.status
+        : 'new') as DiscipleshipPastoralAlert['status'],
+      acknowledged_at: row.acknowledged_at == null ? null : String(row.acknowledged_at),
+      created_at: String(row.created_at),
+      profile_full_name:
+        profile && typeof profile === 'object' && 'full_name' in profile
+          ? (profile.full_name as string | null)
+          : null,
+    };
+  });
+}
+
+export async function acknowledgeDiscipleshipPastoralAlert(alertId: string): Promise<void> {
+  const actorId = await resolveEffectiveProfileId();
+  const { error } = await supabase
+    .from('discipleship_pastoral_alerts')
+    .update({
+      status: 'acknowledged',
+      acknowledged_at: new Date().toISOString(),
+      acknowledged_by_profile_id: actorId,
+    })
+    .eq('id', alertId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+function isMissingRelation(error: { message?: string; code?: string } | null): boolean {
+  const message = (error?.message ?? '').toLowerCase();
+  return (
+    error?.code === '42P01'
+    || error?.code === 'PGRST205'
+    || message.includes('does not exist')
+    || message.includes('could not find the table')
+    || message.includes('schema cache')
+  );
+}
+
 function mapProgressRow(row: {
   id: string;
   tenant_id: string;
@@ -232,37 +581,24 @@ function mapProgressRow(row: {
   };
 }
 
-/* =============================================================================
- * Exemplos de uso (comentados) — queries diretas no cliente Supabase
- * =============================================================================
- *
- * // 1) Módulos + lições da igreja da sessão
- * const { data: modules } = await supabase
- *   .from('discipleship_modules')
- *   .select(`
- *     id, title, description, sort_order,
- *     lessons:discipleship_lessons (
- *       id, title, content, video_url, reflection_question, sort_order
- *     )
- *   `)
- *   .eq('is_active', true)
- *   .order('sort_order', { ascending: true });
- *
- * // 2) Progresso do usuário logado (use resolveEffectiveProfileId / Ghost)
- * const profileId = await resolveEffectiveProfileId();
- * const { data: progress } = await supabase
- *   .from('user_discipleship_progress')
- *   .select('lesson_id, status, reflection_answer, completed_at')
- *   .eq('profile_id', profileId);
- *
- * // 3) Marcar lição como concluída
- * await supabase.from('user_discipleship_progress').upsert({
- *   tenant_id: activeTenantId,
- *   profile_id: profileId,
- *   lesson_id: lessonId,
- *   status: 'completed',
- *   completed_at: new Date().toISOString(),
- * }, { onConflict: 'tenant_id,profile_id,lesson_id' });
- *
- * // Preferência no app: fetchDiscipleshipTrailForCurrentUser()
- * ========================================================================== */
+function mapBadgeRow(row: {
+  id: string;
+  tenant_id: string;
+  profile_id: string;
+  module_id: string | null;
+  badge_code: string;
+  badge_title: string;
+  badge_description: string | null;
+  earned_at: string;
+}): UserDiscipleshipBadge {
+  return {
+    id: String(row.id),
+    tenant_id: String(row.tenant_id),
+    profile_id: String(row.profile_id),
+    module_id: row.module_id == null ? null : String(row.module_id),
+    badge_code: row.badge_code === 'trail_complete' ? 'trail_complete' : 'module_complete',
+    badge_title: String(row.badge_title),
+    badge_description: row.badge_description == null ? null : String(row.badge_description),
+    earned_at: String(row.earned_at),
+  };
+}
