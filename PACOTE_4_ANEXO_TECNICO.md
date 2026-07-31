@@ -425,7 +425,7 @@ Tela inicial após o login com **etiquetas** (atalhos) para cada módulo do Pain
 
 | 9 | Estacionamento | 11 | `parking_vehicle_v2` | Painel de estacionamento ativo |
 
-| 6 | Perfil & Identidade | 12 | `grouped_manage` | Sempre (com ACL) — título na UI; atalhos Dados Cadastrais, Gerenciar Família, Perfil Ministerial e Paleta de cores |
+| 6 | Perfil & Identidade | 12 | `grouped_manage` | Sempre (com ACL) — título na UI; atalhos Dados Cadastrais, Gerenciar Família, Trilha de Discipulado e Paleta de cores |
 
 
 
@@ -546,7 +546,7 @@ Constante usada para o menu: `DASHBOARD_MENU_CARD_ID = '6'`.
 ## Card Perfil & Identidade (`grouped_manage`)
 
 - Título exibido: **Perfil & Identidade** (identificador interno do card permanece `grouped_manage`; atalho no Índice do Aplicativo com o mesmo nome).
-- Botões com ícones: **Dados Cadastrais** → `/manage-profile`; **Gerenciar Família** → `/manage-members`; **Perfil Ministerial** → questionário de 50 perguntas (modal; RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial`).
+- Botões com ícones: **Dados Cadastrais** → `/manage-profile`; **Gerenciar Família** → `/manage-members`; **Trilha de Discipulado** → painel da jornada (5×3), selos coloridos e, na lição 5.1, **Perfil Ministerial** (questionário de 50 perguntas; RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial`).
 - Rodapé: seletor de **Paleta de cores** (`GroupedManagePaletteFooter`).
 - Atalhos de tela propagam `returnDashboardCard` para retorno ao card 6.
 

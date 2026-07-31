@@ -1036,30 +1036,53 @@ O representante legal da família não pode ser excluído — proteção do cada
 ## 12.3 Trilha de Discipulado e Perfil Ministerial
 
 ### Objetivo
-Avançar nos **5 passos** da Trilha e, na lição **5.1 — Descobrindo meus Dons**, responder o questionário de **50 perguntas** (10 etapas de 5) para ver o **perfil ministerial predominante**, com texto de reflexão.
+Avançar nos **5 passos** da Trilha (3 lições por passo), conquistar **selos coloridos** e, na lição **5.1 — Descobrindo meus Dons**, responder o questionário de **50 perguntas** (10 etapas de 5) para ver o **perfil ministerial predominante**.
 
 ### Caminho
-**Perfil & Identidade** → **Trilha de Discipulado** → passo 5 → lição **Descobrindo meus Dons** → **Perfil Ministerial**.
+**Perfil & Identidade** → **Trilha de Discipulado**.
 
-### Passo a passo
+### Os 5 passos e as cores dos selos
 
-1. Toque em **Trilha de Discipulado** e avance lição a lição até a **5.1**.
-2. Toque em **Perfil Ministerial**.
-3. Leia a introdução e toque em **Começar questionário**.
-4. Em cada etapa, responda as 5 perguntas e avance com **Próxima etapa** (a tela volta ao topo ao mudar de etapa).
-5. Na última etapa, toque em **Finalizar**.
-6. Volte à lição e toque em **Concluir lição** (o app exige o questionário preenchido).
-7. Se desejar, use **Refazer questionário** no resultado do Perfil Ministerial.
+| Passo | Tema | Cor do selo |
+|:-----:|------|-------------|
+| 1 | Boas-Vindas e Identidade da Igreja | Azul céu / turquesa |
+| 2 | O Fundamento da Fé | Verde esmeralda |
+| 3 | O Passo da Fé (Batismo) | Azul royal / profundo |
+| 4 | Comunhão e Pertença | Laranja / âmbar |
+| 5 | Servindo com Propósito | Dourado / bronze |
+
+Ao concluir **100% da Trilha**, você recebe o **selo dourado final** e a liderança é avisada para certificado ou reconhecimento público.
+
+### Passo a passo — Trilha
+
+1. Toque em **Trilha de Discipulado**.
+2. Veja **Minhas Conquistas / Selos**: selos desbloqueados nas cores acima; futuros em cinza.
+3. Abra a próxima lição disponível (as anteriores precisam estar concluídas).
+4. Leia o conteúdo; se houver vídeo, use **Assistir vídeo** (opcional — não bloqueia a conclusão).
+5. Se a lição pedir reflexão, escreva pelo menos 3 caracteres.
+6. Toque em **Concluir lição** (o botão fica fixo no rodapé do modal).
+7. Ao fechar um passo inteiro, celebramos o selo daquele passo.
+
+### Passo a passo — Perfil Ministerial (lição 5.1)
+
+1. Na lição **Descobrindo meus Dons**, toque em **Perfil Ministerial**.
+2. Leia a introdução e toque em **Começar questionário**.
+3. Em cada etapa, responda as 5 perguntas e avance com **Próxima etapa**.
+4. Na última etapa, toque em **Finalizar**.
+5. Volte à lição e toque em **Concluir lição** (o app exige o questionário preenchido).
+6. Se desejar, use **Refazer questionário** no resultado.
 
 ### Resultado esperado
 
-- Perfil predominante entre: **Pregação**, **Discipulado**, **Pastoral**, **Evangelismo**, **Liderança** ou **Louvor**.
-- Texto descritivo do perfil exibido antes do botão **Refazer questionário**.
-- Respostas e resultado gravados no servidor; ao **refazer e finalizar de novo**, o resultado anterior é **substituído** (não há histórico de tentativas).
+- Progresso sequencial, selos coloridos na galeria e celebração ao concluir cada passo.
+- Na 5.1: perfil predominante entre **Pregação**, **Discipulado**, **Pastoral**, **Evangelismo**, **Liderança** ou **Louvor**.
+- Ao fechar a trilha: selo dourado + notificação pastoral para certificado.
+- Ao **refazer** o questionário e finalizar de novo, o resultado anterior é **substituído**.
 
 ### Se der erro
 
-- Mensagem pedindo scripts SQL no Supabase — a equipe TI deve executar `ministerial-profile-questionnaire.sql`, o seed e, se necessário, `ministerial-profile-questionnaire-session-fix.sql`.
+- «Lição não encontrada nesta igreja» — confirme a **igreja ativa** na sessão e reabra a Trilha.
+- Mensagem pedindo scripts SQL — a equipe TI deve executar os scripts `discipleship-trail-*.sql` e `ministerial-profile-questionnaire*.sql`.
 
 ---
 
@@ -1120,9 +1143,10 @@ Encerrar a sessão no aparelho (essencial em celular compartilhado).
 | Quem está de escala hoje | Escalas → tipo → data de hoje na lista |
 | Incluir família no meu círculo | Perfil & Identidade → **Gerenciar Família** → adicionar + checkbox ✓ |
 | Descobrir perfil ministerial | Perfil & Identidade → **Trilha de Discipulado** → 5.1 **Descobrindo meus Dons** → questionário |
+| Ver selos da Trilha | Perfil & Identidade → **Trilha de Discipulado** → **Minhas Conquistas / Selos** |
 | Ofertar via PIX | Dízimos e Ofertas → **Copiar chave PIX** |
 | Check-in no culto | Agenda (audiência) + QR no dia do evento |
 
 ---
 
-*App IBN · Igreja Batista Norte · Manual do Painel v2026-07-03*
+*App IBN · Igreja Batista Norte · Manual do Painel v2026-07-30*

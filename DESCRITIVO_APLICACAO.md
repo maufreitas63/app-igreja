@@ -3,7 +3,7 @@
 **Sistema:** Aplicativo digital da Igreja Batista Norte  
 **Repositório:** `maufreitas63/app-igreja`  
 **Versão do app:** 1.0.0  
-**Data deste documento:** 3 de julho de 2026
+**Data deste documento:** 30 de julho de 2026
 
 **Documentação de entrega:** [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) · [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
@@ -11,7 +11,7 @@
 
 ## 1. Resumo executivo
 
-O **app-igreja** é uma plataforma **PWA (Progressive Web App)** e **mobile** (Expo/React Native) que centraliza a operação digital da igreja: login de membros (primeira entrada por WhatsApp; **recuperação de senha por e-mail**), cadastro e LGPD, dashboard com cards operacionais (incluindo **Perfil & Identidade** com questionário de **perfil ministerial**), check-in em eventos (totem com QR Code, **check-in automático por proximidade/geofence**), gestão familiar, módulo pastoral, financeiro, escalas, mapa de geolocalização por CEP, painel de manutenção administrativa (relatórios, **Modo Ghost** com grant explícito) e controle de acesso granular (ACL).
+O **app-igreja** é uma plataforma **PWA (Progressive Web App)** e **mobile** (Expo/React Native) que centraliza a operação digital da igreja: login de membros (primeira entrada por WhatsApp; **recuperação de senha por e-mail**), cadastro e LGPD, dashboard com cards operacionais (incluindo **Perfil & Identidade** com **Trilha de Discipulado**, selos coloridos e **perfil ministerial** na lição 5.1), check-in em eventos (totem com QR Code, **check-in automático por proximidade/geofence**), gestão familiar, módulo pastoral, financeiro, escalas, mapa de geolocalização por CEP, painel de manutenção administrativa (relatórios, **Manutenção da Trilha**, **Modo Ghost** com grant explícito) e controle de acesso granular (ACL).
 
 Não há servidor de API próprio: o cliente comunica-se diretamente com o **Supabase** (PostgreSQL, RPCs, RLS, Storage) via HTTPS. O deploy de produção é automático via **Cloudflare Pages** a cada push na branch `main`.
 
@@ -87,6 +87,7 @@ Não há servidor de API próprio: o cliente comunica-se diretamente com o **Sup
 | **Parâmetros** | `app_parameters` (LGPD ativo, totem, etc.) |
 | **Versículos** | `bible_themes`, `bible_verses_by_theme`, RPC `get_random_bible_verse` |
 | **Perfil ministerial** | `ministerial_perguntas`, `ministerial_opcoes`, `ministerial_respostas`, `ministerial_resultados`; RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial` |
+| **Trilha de Discipulado** | `discipleship_modules`, `discipleship_lessons`, `user_discipleship_progress`, `user_discipleship_badges` (com `badge_color` / `step_order`), `discipleship_pastoral_alerts`; RPCs `upsert_my_discipleship_lesson_progress`, `evaluate_discipleship_achievements`, admin Temas/Reset |
 | **Recepção familiar** | Fila de cadastros públicos |
 
 ### 3.2 Armazenamento local (dispositivo)
@@ -102,6 +103,7 @@ Não há servidor de API próprio: o cliente comunica-se diretamente com o **Sup
 - Categorias: ACL (~33), perfis/sessão (~35), família/membros (~35), eventos/check-in/geo (~17), financeiro (~10), pastoral (~7), escalas (~8), CEP/geo (~8), versículos bíblicos (~18), diagnóstico, seeds de teste (TSTMAX), entre outros.
 - **Geofence (jun/2026):** `events-geofence-ativo.sql`, `event-favorite-locations.sql`, `geo-checkin-automatic.sql`, `geo-checkin-purge-on-event-update.sql` — RPCs atômicas, `normalize_location_key`, triggers de invalidação, RLS restrito em locais favoritos.
 - **Perfil ministerial (jul/2026):** `ministerial-profile-questionnaire.sql`, `ministerial-profile-questionnaire-seed.sql`, `ministerial-profile-questionnaire-session-fix.sql`.
+- **Trilha de Discipulado (jul/2026):** `discipleship-trail-schema.sql`, `discipleship-trail-badges-alerts.sql`, `discipleship-trail-themes-admin.sql`, `discipleship-trail-reset-admin.sql`, `discipleship-trail-progress-gates.sql`, `discipleship-trail-badge-colors.sql`, `discipleship-trail-tenant-scope-fix.sql`.
 - **Modo Ghost (jul/2026):** `access-control-ghost-mode.sql` — `can_operate_ghost_mode` exige grant explícito em `maintenance.card.auditor` ou `super_admin`.
 - **Recuperação de senha por e-mail:** `password-recovery-security.sql`, `password-recovery-email-flow.sql`.
 - **Execução:** manual no SQL Editor do Supabase ou via scripts Node (`apply-bible-verses-supabase.mjs`).
@@ -294,9 +296,10 @@ O build gera `public/build-info.json` com hash do commit para rastreabilidade.
 |--------|-----------|
 | **Acesso e sessão** | Login PIN, restauração de sessão, logout, reparo de referência de perfil |
 | **LGPD** | Aceite de termos, bloqueio de fluxo se pendente |
-| **Dashboard membro** | Carrossel: eventos, QR check-in, kids/teens, ofertas, pastoral, membros, aniversariantes, financeiro, escalas, estacionamento |
+| **Dashboard membro** | Carrossel: eventos, QR check-in, kids/teens, ofertas, pastoral, membros, aniversariantes, financeiro, escalas, estacionamento, Perfil & Identidade |
+| **Trilha de Discipulado** | 5×3 lições, selos coloridos, Perfil Ministerial na 5.1, alertas pastorais, admin Temas/Reconhecimentos/Reset |
 | **Índice** | Atalhos filtrados por ACL; versículo bíblico aleatório por tema |
-| **Manutenção** | Gantt de eventos, quorum, escalas, ACL, financeiro, pastoral, recepção familiar, monitor de salas |
+| **Manutenção** | Gantt de eventos, quorum, escalas, ACL, financeiro, pastoral, recepção familiar, monitor de salas, **Manutenção da Trilha** |
 | **Família** | CRUD membros, transferência entre famílias, reconhecimento familiar |
 | **Check-in / Totem** | QR Code, câmera, confirmação de audiência familiar |
 | **Pastoral** | Abertura e histórico de solicitações |

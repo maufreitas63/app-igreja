@@ -27,7 +27,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 ## Autenticação e sessão
 
 - Login por **celular + PIN de 4 dígitos** (validação no Supabase via `verificar_login`)
-- **Primeira entrada** com geração de PIN temporário via **WhatsApp** (configurável: envio ao usuário ou ao gestor) — somente quando ainda não há senha cadastrada
+- **Primeira entrada** com geração de PIN temporário **exclusivamente por e-mail** (`dispatchAuthAccessPinEmail` / `dispatch_auth_access_pin_email`; gateway `lib/authNotificationService.ts`) — WhatsApp **bloqueado** no fluxo de autenticação
 - **Recuperação de senha** (`/forgot-password`) — pergunta de segurança + envio de **novo PIN por e-mail** (passo 2 do login → **Esqueci minha senha**; não usa WhatsApp)
 - **Modo totem** — login dedicado com senha `9999` e celular `cel_totem`
 - Restauração automática de sessão ao reabrir o app
@@ -52,7 +52,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 - **Selfie** — captura, substituição com confirmação
 - **Veículos** — cadastro de placa, marca, modelo e cor
 - **Vincular à família** — busca por código e solicitação de vínculo
-- **Perfil Ministerial** — questionário de **50 perguntas** em **10 etapas** (modal); resultado predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor) com texto descritivo; pontuação e desempate no servidor; tabelas `ministerial_*` e RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial` (scripts `ministerial-profile-questionnaire.sql`, seed e `ministerial-profile-questionnaire-session-fix.sql`); refazer **substitui** respostas e resultado anteriores (sem histórico)
+- **Trilha de Discipulado** — 5 passos × 3 lições com progresso sequencial; **selos coloridos** por passo (céu, esmeralda, royal, laranja, dourado) + selo dourado final; galeria **Minhas Conquistas / Selos**; na lição **5.1 Descobrindo meus Dons**, o **Perfil Ministerial** (50 perguntas / 10 etapas); gates de conclusão no servidor (`upsert_my_discipleship_lesson_progress`); alertas pastorais por módulo e de certificado ao fechar a trilha; admin em **Manutenção da Trilha** (Temas, Reconhecimentos, Reset)
 - **Paleta de cores** — seletor no rodapé do card Perfil & Identidade
 - **Onboarding** — fluxo guiado para completar cadastro pendente
 - **Termos LGPD** — tela dedicada para aceite/recusa com registro no banco
@@ -107,7 +107,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **Financeiro** | Hub: relatórios (`/financial`) e **Relatório de Despesas (RD)** destacado (`/expense-report`); Fluxo de caixa, Categorias e Relatórios extras em breve |
 | **Escalas** | Lista de tipos de escala, escala por data, WhatsApp dos servos |
 | **Estacionamento** | Identificação de veículo por placa, WhatsApp do proprietário |
-| **Perfil & Identidade** (`grouped_manage`) | Título do card e atalho no Índice; **Dados Cadastrais**, **Gerenciar Família**, **Perfil Ministerial** (questionário de 50 perguntas em 10 etapas) e **Paleta de cores** |
+| **Perfil & Identidade** (`grouped_manage`) | Título do card e atalho no Índice; **Dados Cadastrais**, **Gerenciar Família**, **Trilha de Discipulado** (Perfil Ministerial na lição 5.1) e **Paleta de cores** |
 
 ---
 
@@ -817,10 +817,10 @@ Respostas às dúvidas mais comuns sobre o aplicativo da **Igreja Batista Norte*
 Seu **número de celular** (com DDD) e sua **senha de acesso de 4 dígitos** (PIN).
 
 **É a primeira vez que uso o app. E a senha?**  
-Na primeira entrada você ainda não tem senha definitiva. Toque no ícone do **WhatsApp** ao lado do campo de senha, receba o código temporário e digite os 4 dígitos. Depois altere a senha em **Dados Cadastrais**.
+Na primeira entrada você ainda não tem senha definitiva. No passo 2, toque em **Receber código por e-mail** (informe o e-mail se ainda não estiver cadastrado), receba o código temporário e digite os 4 dígitos. Depois altere a senha em **Dados Cadastrais**.
 
 **Por que o WhatsApp não abre ou dá erro?**  
-O envio depende da configuração da igreja (`psw_user` / `psw_mngr` em `app_parameters`). Pode abrir no seu celular ou no do gestor. Se falhar, confira o número digitado ou peça ajuda à secretaria.
+O PIN de autenticação é enviado **somente por e-mail** (WhatsApp foi desativado nesse fluxo). Se falhar, confira o e-mail (e a pasta de spam) ou peça ajuda à secretaria / equipe TI (`scripts/auth-pin-email-only.sql` e configuração de e-mail em `app_parameters`).
 
 **Posso entrar sem passar pelo WhatsApp?**  
 Não na primeira vez. O app exibirá *"Código necessário"* se você tentar digitar senha sem ter solicitado o PIN temporário.
@@ -829,7 +829,7 @@ Não na primeira vez. O app exibirá *"Código necessário"* se você tentar dig
 Sim. Ao completar o 4º dígito, a validação pode ocorrer automaticamente. Você também pode tocar em **Entrar**.
 
 **Aparece "Número ou senha inválidos". O que fazer?**  
-Confira os 4 dígitos. Se **esqueceu** a senha pessoal, use **Esqueci minha senha** no **passo 2** (código) para validar a pergunta de segurança e receber nova senha por **e-mail**. Na **primeira entrada**, use **Receber código no WhatsApp**.
+Confira os 4 dígitos. Se **esqueceu** a senha pessoal, use **Esqueci minha senha** no **passo 2** (código) para validar a pergunta de segurança e receber nova senha por **e-mail**. Na **primeira entrada**, use **Receber código por e-mail**.
 
 **Esqueci minha senha pessoal (já sou cadastrado).**  
 No **passo 2** do login, toque **Esqueci minha senha** → confirme ou cadastre o **e-mail** → responda a **pergunta de segurança** → o app envia um novo PIN de 4 dígitos por **e-mail** (não usa WhatsApp).
@@ -1124,7 +1124,7 @@ Não. Alterações são na **Manutenção → Programação de Escalas** *(staff
 
 ## 12. Perfil & Identidade e Dados Cadastrais
 
-O card e o atalho no Índice chamam-se **Perfil & Identidade**. Dentro dele ficam **Dados Cadastrais**, **Gerenciar Família**, **Perfil Ministerial** e a **Paleta de cores**.
+O card e o atalho no Índice chamam-se **Perfil & Identidade**. Dentro dele ficam **Dados Cadastrais**, **Gerenciar Família**, a **Trilha de Discipulado** e a **Paleta de cores**.
 
 **Não consigo ver alguns campos em Dados Cadastrais.**  
 Permissões de **coluna** (ACL) podem ocultar CPF, alertas médicos, etc., conforme seu papel.
@@ -1148,7 +1148,16 @@ Seção **Vincular à família**: busque pelo código e solicite vínculo (confo
 Faltam campos obrigatórios do onboarding (CPF, e-mail, endereço, etc.).
 
 **O que é o Perfil Ministerial?**  
-Questionário de **50 perguntas** (10 etapas) que indica o perfil predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor), com texto de reflexão. Acesse em **Perfil & Identidade → Perfil Ministerial**.
+Questionário de **50 perguntas** (10 etapas) que indica o perfil predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor), com texto de reflexão. Acesse na **Trilha de Discipulado**, lição **5.1 — Descobrindo meus Dons** (**Perfil & Identidade → Trilha de Discipulado**).
+
+**O que é a Trilha de Discipulado?**  
+Jornada em **5 passos** (3 lições cada), com desbloqueio sequencial, reflexões, selos coloridos por passo e selo dourado ao concluir 100%. Abra em **Perfil & Identidade → Trilha de Discipulado**.
+
+**Como funcionam os selos?**  
+Ao concluir 100% de um passo, você ganha um selo com cor própria (azul céu, esmeralda, azul royal, laranja, dourado). A seção **Minhas Conquistas / Selos** mostra os conquistados e os futuros em cinza.
+
+**A liderança sabe quando eu termino um passo?**  
+Sim. Cada passo gera alerta em **Manutenção → Manutenção da Trilha → Reconhecimentos**; ao fechar a trilha, há alerta específico para certificado / reconhecimento público.
 
 **Se eu refizer o questionário, o resultado antigo fica salvo?**  
 Não. Ao **Finalizar** de novo, respostas e resultado anteriores são **substituídos** (não há histórico de tentativas).

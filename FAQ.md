@@ -387,6 +387,15 @@ Faltam campos obrigatórios do onboarding (CPF, e-mail, endereço, etc.).
 **O que é o Perfil Ministerial?**  
 Questionário de **50 perguntas** (10 etapas) que indica o perfil predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor), com texto de reflexão. Acesse na **Trilha de Discipulado**, lição **5.1 — Descobrindo meus Dons** (**Perfil & Identidade → Trilha de Discipulado**).
 
+**O que é a Trilha de Discipulado?**  
+Jornada em **5 passos** (3 lições cada), com desbloqueio sequencial, reflexões, selos coloridos por passo e selo dourado ao concluir 100%. Abra em **Perfil & Identidade → Trilha de Discipulado**.
+
+**Como funcionam os selos?**  
+Ao concluir 100% de um passo, você ganha um selo com cor própria (azul céu, esmeralda, azul royal, laranja, dourado). A seção **Minhas Conquistas / Selos** mostra os conquistados e os futuros em cinza.
+
+**A liderança sabe quando eu termino um passo?**  
+Sim. Cada passo gera alerta em **Manutenção → Manutenção da Trilha → Reconhecimentos**; ao fechar a trilha, há alerta específico para certificado / reconhecimento público.
+
 **Se eu refizer o questionário, o resultado antigo fica salvo?**  
 Não. Ao **Finalizar** de novo, respostas e resultado anteriores são **substituídos** (não há histórico de tentativas).
 

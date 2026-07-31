@@ -1011,6 +1011,55 @@ O card fica **por último** no carrossel de manutenção para não atrapalhar a 
 | Recuperação de senha (e-mail) | `password-recovery-security.sql`, `password-recovery-email-flow.sql` |
 | Histórico de acessos / telas | `access-control-profile-access-insights.sql`, `profile-access-insights.sql` ou `profile-access-insights-screen-visits-patch.sql`; hotfix limpeza: `profile-access-insights-clear-fix.sql` |
 | Excluir perfil completo | `delete-profile-complete-rpc.sql` |
+| Trilha de Discipulado | `discipleship-trail-schema.sql`, `discipleship-trail-badges-alerts.sql`, `discipleship-trail-themes-admin.sql`, `discipleship-trail-reset-admin.sql`, `discipleship-trail-progress-gates.sql`, `discipleship-trail-badge-colors.sql`, `discipleship-trail-tenant-scope-fix.sql` |
+
+---
+
+# Parte 15 — Manutenção da Trilha de Discipulado
+
+### Objetivo
+Gerir o conteúdo da Trilha por igreja, acompanhar a evolução dos discípulos (passos e certificado) e, se necessário, resetar o progresso.
+
+### Caminho
+**Engrenagem (Configurações)** → **Manutenção da Trilha** → **Temas** / **Reconhecimentos** / **Resetar Trilha** (este último só **super_admin**).
+
+### Quem pode usar
+- **Temas** e **Reconhecimentos:** pastoral, líderes e super admin (ACL `maintenance.card.discipleship_themes` / `discipleship_alerts`).
+- **Resetar Trilha:** somente **super_admin**.
+
+### 15.1 Temas da Trilha
+1. Abra **Temas**.
+2. Expanda um passo (módulo) para editar título, descrição e lições.
+3. Em cada lição: conteúdo, URL de vídeo (quando houver), pergunta de reflexão e ativo/inativo.
+4. Na lição **5.1 Descobrindo meus Dons**, o vídeo é substituído pela atividade **Perfil Ministerial** (não edite URL de vídeo nesse item).
+5. Use **Nova lição neste passo** ou **Novo passo (módulo)** se a igreja precisar de conteúdo extra.
+6. Salve módulo/lição — as alterações valem **somente para a igreja da sessão**.
+
+### 15.2 Reconhecimentos
+1. Abra **Reconhecimentos**.
+2. Filtros **Novos** / **Todos**.
+3. Alertas de **Evolução — passo concluído** (cada módulo 100%) e de **Certificado / reconhecimento** (trilha 100%).
+4. **Marcar como visto** → depois **Fechar (certificado feito)** quando o reconhecimento público for concluído.
+5. Use **Guia do Processo** para orientação pedagógica dos 5 passos.
+
+### 15.3 Resetar Trilha *(super_admin)*
+1. Busque o membro por nome ou telefone.
+2. Confirme o reset — apaga progresso, selos e alertas **dessa igreja**.
+3. A pessoa recomeça do passo 1.
+
+### Selos coloridos (referência)
+| Passo | Cor |
+|:-----:|-----|
+| 1 | Azul céu |
+| 2 | Verde esmeralda |
+| 3 | Azul royal |
+| 4 | Laranja / âmbar |
+| 5 + trilha completa | Dourado |
+
+### Resultado esperado
+- Conteúdo da Trilha alinhado à igreja.
+- Pastoral acompanha evolução e certificados na mesma fila.
+- Reset disponível apenas para super admin, com confirmação.
 
 ---
 
@@ -1040,8 +1089,10 @@ Card **Manutenção** → **Menu** → Índice → **Encerrar sessão**; ou use 
 | Pedido pastoral acompanhado | Parte 7 — Acolher → Apoiar → Acompanhar |
 | Finanças do mês atualizadas | Parte 8 — importação CSV |
 | Novo líder com acesso | Parte 11 — papéis e permissões |
+| Trilha: editar temas / selos / reset | Parte 15 — Manutenção da Trilha |
+| Discípulo pronto para certificado | Parte 15 — Reconhecimentos |
 
 ---
 
-*App IBN · Igreja Batista Norte · Manual de Manutenção v2026-07-03*
+*App IBN · Igreja Batista Norte · Manual de Manutenção v2026-07-30*
 

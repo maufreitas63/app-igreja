@@ -498,6 +498,15 @@ Fluxo recomendado de uso:
 
 ---
 
+**Não consigo excluir um membro.**  
+O **representante legal** da conta não pode ser removido.
+
+**"Telefone já no grupo familiar".**  
+Já existe membro/perfil com esse número na mesma família.
+
+**Kids/Teens: bolinhas coloridas.**  
+Indicam faixa etária conforme parâmetros da igreja (sala Kids ou Teens).
+
 ---
 
 ## 14. Coração Aberto e Meus Pedidos
@@ -533,12 +542,3 @@ Requisito de **consentimento informado** — o sistema só libera o aceite após
 **Posso mudar de ideia depois?**  
 O aceite fica em `lgpd_accepted` no perfil. Para revisar, acesse **LGPD** ou **Dados Cadastrais**.
 
-**Recusei os termos. Posso usar o app?**  
-Depende da política da igreja; o app registra sua preferência. Alguns recursos podem ficar limitados.
-
----
-
-## 16. Menu, navegação e saída
-
-**Qual a diferença entre Menu e Sair?**  
-No **Painel**, **Menu** leva aos atalhos. O **Sair** / **Encerrar sessão** fica na tela de atalhos (rodapé).

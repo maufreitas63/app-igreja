@@ -38,7 +38,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 - **Selfie** — captura, substituição com confirmação
 - **Veículos** — cadastro de placa, marca, modelo e cor
 - **Vincular à família** — busca por código e solicitação de vínculo
-- **Trilha de Discipulado** — 5 passos × 3 lições com progresso sequencial, selos e alertas pastorais; na lição **5.1 Descobrindo meus Dons**, o **Perfil Ministerial** (questionário de **50 perguntas** em **10 etapas**); resultado predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor); tabelas `ministerial_*` e RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial`; gates de conclusão no servidor (`upsert_my_discipleship_lesson_progress`); refazer **substitui** respostas e resultado anteriores (sem histórico)
+- **Trilha de Discipulado** — 5 passos × 3 lições com progresso sequencial; **selos coloridos** por passo (céu, esmeralda, royal, laranja, dourado) + selo dourado final; galeria **Minhas Conquistas / Selos**; na lição **5.1 Descobrindo meus Dons**, o **Perfil Ministerial** (50 perguntas / 10 etapas); gates de conclusão no servidor (`upsert_my_discipleship_lesson_progress`); alertas pastorais por módulo e de certificado ao fechar a trilha; admin em **Manutenção da Trilha** (Temas, Reconhecimentos, Reset)
 - **Paleta de cores** — seletor no rodapé do card Perfil & Identidade
 - **Onboarding** — fluxo guiado para completar cadastro pendente
 - **Termos LGPD** — tela dedicada para aceite/recusa com registro no banco

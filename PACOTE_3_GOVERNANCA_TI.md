@@ -1474,12 +1474,14 @@ Recursos protegidos:
 | **1** | **Botão X (celular)** | Limpa o número digitado |
 | **1** | Texto de ajuda | Orientação para primeira vez (Ministério de Acolhimento) |
 | **2** | **Campo Senha de acesso** | 4 dígitos, ocultos; auto-submit ao completar |
-| **2** | **Ícone WhatsApp** | Gera e envia PIN temporário — **somente primeira entrada** (sem PIN cadastrado) |
+| **2** | **Receber código por e-mail** | Gera e envia PIN temporário — **somente primeira entrada** (sem PIN cadastrado); canal imutável **e-mail** (`lib/authNotificationService.ts`) |
 | **2** | **Esqueci minha senha** | Visível **apenas no passo 2** → `/forgot-password` (e-mail + pergunta de segurança; **não** usa WhatsApp) |
-| **2** | Texto de hint (PIN) | Varia conforme `psw_user`/`psw_mngr` em `app_parameters` |
+| **2** | Texto de hint (PIN) | Orienta envio exclusivo por e-mail |
 | **2** | **Botão "Entrar"** / **Acessar** | Valida e autentica |
 | — | **Logo IBNORTE**, **Boas-Vindas** | Identidade visual e cabeçalho |
 | — | **Instagram / YouTube** | Abre links externos da igreja |
+
+**PIN de autenticação:** gateway único `dispatchAuthAccessPinEmail` / RPC `dispatch_auth_access_pin_email` (`scripts/auth-pin-email-only.sql`). WhatsApp está **bloqueado** (`AUTH_CHANNEL_BLOCKED`) em `sendAccessPinViaWhatsApp` e no gateway. WhatsApp permanece apenas para contatos operacionais (aniversariantes, membros, etc.), **fora** de autenticação.
 
 **Recuperação de senha** (`/forgot-password`): membro já cadastrado confirma e-mail, responde pergunta de segurança e recebe novo PIN por **e-mail** (RPCs em `scripts/password-recovery-*.sql`).
 
