@@ -1,6 +1,7 @@
 import { WatermarkSurface } from '@/components/AppWatermark';
 import { AppActiveGate } from '@/components/AppActiveGate';
 import { AppBillingGate } from '@/components/AppBillingGate';
+import { BiometricUnlockGate } from '@/components/BiometricUnlockGate';
 import { DevClickTraceBootstrap } from '@/components/DevClickTraceBootstrap';
 import { EventOrchestrationListener } from '@/components/EventOrchestrationListener';
 import { TotemDeviceRouteGuard } from '@/components/TotemDeviceRouteGuard';
@@ -49,10 +50,12 @@ function AppShellContent() {
   const routed = (
     <AppActiveGate>
       <AppBillingGate>
-        <DevClickTraceBootstrap />
-        <TotemDeviceRouteGuard />
-        <EventOrchestrationListener />
-        <Slot />
+        <BiometricUnlockGate>
+          <DevClickTraceBootstrap />
+          <TotemDeviceRouteGuard />
+          <EventOrchestrationListener />
+          <Slot />
+        </BiometricUnlockGate>
       </AppBillingGate>
     </AppActiveGate>
   );
