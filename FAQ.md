@@ -361,7 +361,7 @@ Não. Alterações são na **Manutenção → Programação de Escalas** *(staff
 
 ## 12. Perfil & Identidade e Dados Cadastrais
 
-O card e o atalho no Índice chamam-se **Perfil & Identidade**. Dentro dele ficam **Dados Cadastrais**, **Gerenciar Família**, **Perfil Ministerial** e a **Paleta de cores**.
+O card e o atalho no Índice chamam-se **Perfil & Identidade**. Dentro dele ficam **Dados Cadastrais**, **Gerenciar Família**, a **Trilha de Discipulado** e a **Paleta de cores**.
 
 **Não consigo ver alguns campos em Dados Cadastrais.**  
 Permissões de **coluna** (ACL) podem ocultar CPF, alertas médicos, etc., conforme seu papel.
@@ -385,7 +385,7 @@ Seção **Vincular à família**: busque pelo código e solicite vínculo (confo
 Faltam campos obrigatórios do onboarding (CPF, e-mail, endereço, etc.).
 
 **O que é o Perfil Ministerial?**  
-Questionário de **50 perguntas** (10 etapas) que indica o perfil predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor), com texto de reflexão. Acesse em **Perfil & Identidade → Perfil Ministerial**.
+Questionário de **50 perguntas** (10 etapas) que indica o perfil predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor), com texto de reflexão. Acesse na **Trilha de Discipulado**, lição **5.1 — Descobrindo meus Dons** (**Perfil & Identidade → Trilha de Discipulado**).
 
 **Se eu refizer o questionário, o resultado antigo fica salvo?**  
 Não. Ao **Finalizar** de novo, respostas e resultado anteriores são **substituídos** (não há histórico de tentativas).

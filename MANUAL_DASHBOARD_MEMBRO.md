@@ -962,10 +962,10 @@ Escalas → escala de estacionamento → **Identificar veículo** — ou card **
 # Parte 12 — Perfil & Identidade (seu círculo familiar e chamado)
 
 ### Objetivo
-Manter **seus dados**, **cadastrar integrantes da sua família**, responder o **questionário de Perfil Ministerial** e escolher a **paleta de cores** do app.
+Manter **seus dados**, **cadastrar integrantes da sua família**, avançar na **Trilha de Discipulado** (incluindo o **Perfil Ministerial** na lição 5.1) e escolher a **paleta de cores** do app.
 
 ### Caminho
-Painel ou Índice → **Perfil & Identidade** → **Dados Cadastrais**, **Gerenciar Família**, **Perfil Ministerial** ou seletor de **Paleta de cores**.
+Painel ou Índice → **Perfil & Identidade** → **Dados Cadastrais**, **Gerenciar Família**, **Trilha de Discipulado** ou seletor de **Paleta de cores**.
 
 
 ## 12.1 Dados Cadastrais
@@ -1033,21 +1033,23 @@ O representante legal da família não pode ser excluído — proteção do cada
 
 ---
 
-## 12.3 Perfil Ministerial
+## 12.3 Trilha de Discipulado e Perfil Ministerial
 
 ### Objetivo
-Responder o questionário de **50 perguntas** (10 etapas de 5) e ver o **perfil ministerial predominante**, com texto de reflexão.
+Avançar nos **5 passos** da Trilha e, na lição **5.1 — Descobrindo meus Dons**, responder o questionário de **50 perguntas** (10 etapas de 5) para ver o **perfil ministerial predominante**, com texto de reflexão.
 
 ### Caminho
-**Perfil & Identidade** → **Perfil Ministerial**.
+**Perfil & Identidade** → **Trilha de Discipulado** → passo 5 → lição **Descobrindo meus Dons** → **Perfil Ministerial**.
 
 ### Passo a passo
 
-1. Toque em **Perfil Ministerial**.
-2. Leia a introdução e toque em **Começar questionário**.
-3. Em cada etapa, responda as 5 perguntas e avance com **Próxima etapa** (a tela volta ao topo ao mudar de etapa).
-4. Na última etapa, toque em **Finalizar**.
-5. Leia o resultado (nome do perfil + texto descritivo) e, se desejar, use **Refazer questionário**.
+1. Toque em **Trilha de Discipulado** e avance lição a lição até a **5.1**.
+2. Toque em **Perfil Ministerial**.
+3. Leia a introdução e toque em **Começar questionário**.
+4. Em cada etapa, responda as 5 perguntas e avance com **Próxima etapa** (a tela volta ao topo ao mudar de etapa).
+5. Na última etapa, toque em **Finalizar**.
+6. Volte à lição e toque em **Concluir lição** (o app exige o questionário preenchido).
+7. Se desejar, use **Refazer questionário** no resultado do Perfil Ministerial.
 
 ### Resultado esperado
 
@@ -1117,7 +1119,7 @@ Encerrar a sessão no aparelho (essencial em celular compartilhado).
 | Pedido pastoral acompanhado | Coração Aberto → **Meus pedidos** → status **Acolher / Apoiar / Acompanhar** |
 | Quem está de escala hoje | Escalas → tipo → data de hoje na lista |
 | Incluir família no meu círculo | Perfil & Identidade → **Gerenciar Família** → adicionar + checkbox ✓ |
-| Descobrir perfil ministerial | Perfil & Identidade → **Perfil Ministerial** → questionário (50 perguntas) |
+| Descobrir perfil ministerial | Perfil & Identidade → **Trilha de Discipulado** → 5.1 **Descobrindo meus Dons** → questionário |
 | Ofertar via PIX | Dízimos e Ofertas → **Copiar chave PIX** |
 | Check-in no culto | Agenda (audiência) + QR no dia do evento |
 

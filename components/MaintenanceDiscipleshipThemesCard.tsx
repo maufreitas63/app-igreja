@@ -189,6 +189,31 @@ export function MaintenanceDiscipleshipThemesCard({
     }
   };
 
+  const handleAddModule = async () => {
+    setSaving(true);
+    try {
+      const nextOrder =
+        modules.reduce((max, module) => Math.max(max, Number(module.sort_order) || 0), 0) + 1;
+      const id = await saveDiscipleshipModuleAdmin({
+        title: `Novo passo ${nextOrder}`,
+        description: '',
+        sort_order: nextOrder,
+        is_active: true,
+      });
+      Toast.show({ type: 'success', text1: 'Passo criado' });
+      await load();
+      setExpandedModuleId(id);
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Falha ao criar passo',
+        text2: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
   return (
@@ -375,6 +400,16 @@ export function MaintenanceDiscipleshipThemesCard({
               </View>
             );
           })}
+
+          <TouchableOpacity
+            style={styles.addModuleBtn}
+            disabled={saving}
+            onPress={() => void handleAddModule()}
+            activeOpacity={0.85}
+          >
+            <FontAwesome name="plus" size={13} color="#FFF" />
+            <Text style={styles.addModuleBtnText}>Novo passo (módulo)</Text>
+          </TouchableOpacity>
         </ScrollView>
       )}
     </View>
@@ -564,6 +599,21 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.accent,
     fontSize: 12,
     fontWeight: '700',
+  },
+  addModuleBtn: {
+    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderRadius: 10,
+    paddingVertical: 12,
+  },
+  addModuleBtnText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '800',
   },
   errorText: {
     color: MINIMAL_UI.text,

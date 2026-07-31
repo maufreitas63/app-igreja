@@ -52,6 +52,6 @@ export const DISCIPLESHIP_PROCESS_GUIDE_STEPS: DiscipleshipGuideStep[] = [
     purpose:
       'Orientar a descoberta de dons, mordomia e alinhamento com os ministérios. Ao concluir 100%, prepare certificado ou reconhecimento público.',
     leaderFocus:
-      'Dialogue sobre a área desejada na reflexão 5.3. Alunos em «Novos» no card de Reconhecimentos estão prontos para celebração.',
+      'Na lição 5.1 o aluno preenche o Perfil Ministerial (dons). Dialogue sobre a área desejada na reflexão 5.3. Alunos em «Novos» no card de Reconhecimentos estão prontos para celebração.',
   },
 ];

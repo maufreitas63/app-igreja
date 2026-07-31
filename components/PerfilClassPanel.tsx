@@ -2,6 +2,7 @@ import { MembersClassPanel } from '@/components/MembersClassPanel';
 import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ProfileClassPanel } from '@/components/ProfileClassPanel';
 import { DiscipleshipTrailPanel } from '@/components/DiscipleshipTrailPanel';
+import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { loadGroupedManageScreenAccess } from '@/lib/groupedManageAccess';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -9,6 +10,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 /** Container com dados e navegação — compõe o PerfilClass stateless. */
 export function PerfilClassPanel() {
@@ -16,6 +18,7 @@ export function PerfilClassPanel() {
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [manageProfile, setManageProfile] = useState(false);
   const [manageMembers, setManageMembers] = useState(false);
+  const [canOpenDiscipleshipTrail, setCanOpenDiscipleshipTrail] = useState(false);
   const [profileClassVisible, setProfileClassVisible] = useState(false);
   const [membersClassVisible, setMembersClassVisible] = useState(false);
   const [discipleshipTrailVisible, setDiscipleshipTrailVisible] = useState(false);
@@ -39,12 +42,16 @@ export function PerfilClassPanel() {
       if (!resolvedProfileId) {
         setManageProfile(false);
         setManageMembers(false);
+        setCanOpenDiscipleshipTrail(false);
         return;
       }
 
-      const access = await loadGroupedManageScreenAccess(resolvedProfileId, {
-        forceRefresh: options?.forceRefresh === true,
-      });
+      const [access, trailAllowed] = await Promise.all([
+        loadGroupedManageScreenAccess(resolvedProfileId, {
+          forceRefresh: options?.forceRefresh === true,
+        }),
+        sessionHasAccess('screen', ACCESS_SCREEN.discipleshipTrail, 'view'),
+      ]);
 
       if (generation !== loadGenerationRef.current) {
         return;
@@ -52,10 +59,15 @@ export function PerfilClassPanel() {
 
       setManageProfile(access.manageProfile);
       setManageMembers(access.manageMembers);
+      setCanOpenDiscipleshipTrail(trailAllowed);
+      if (!trailAllowed) {
+        setDiscipleshipTrailVisible(false);
+      }
     } catch {
       if (generation === loadGenerationRef.current) {
         setManageProfile(false);
         setManageMembers(false);
+        setCanOpenDiscipleshipTrail(false);
       }
     } finally {
       if (generation === loadGenerationRef.current) {
@@ -79,8 +91,16 @@ export function PerfilClassPanel() {
   }, []);
 
   const openDiscipleshipTrail = useCallback(() => {
+    if (!canOpenDiscipleshipTrail) {
+      Toast.show({
+        type: 'error',
+        text1: 'Acesso negado',
+        text2: 'Você não tem permissão para abrir a Trilha de Discipulado.',
+      });
+      return;
+    }
     setDiscipleshipTrailVisible(true);
-  }, []);
+  }, [canOpenDiscipleshipTrail]);
 
   const actions = useMemo(() => {
     const items: PerfilClassAction[] = [];
@@ -104,15 +124,24 @@ export function PerfilClassPanel() {
     }
 
     // Perfil Ministerial vive na lição 5.1 da Trilha («Descobrindo meus Dons»).
-    items.push({
-      key: 'discipleship-trail',
-      label: 'Trilha de Discipulado',
-      icon: 'school',
-      onPress: openDiscipleshipTrail,
-    });
+    if (canOpenDiscipleshipTrail) {
+      items.push({
+        key: 'discipleship-trail',
+        label: 'Trilha de Discipulado',
+        icon: 'school',
+        onPress: openDiscipleshipTrail,
+      });
+    }
 
     return items;
-  }, [manageMembers, manageProfile, openDiscipleshipTrail, openManageMembers, openManageProfile]);
+  }, [
+    canOpenDiscipleshipTrail,
+    manageMembers,
+    manageProfile,
+    openDiscipleshipTrail,
+    openManageMembers,
+    openManageProfile,
+  ]);
 
   if (discipleshipTrailVisible) {
     return (

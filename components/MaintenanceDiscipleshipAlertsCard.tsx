@@ -2,6 +2,7 @@ import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DiscipleshipProcessGuideModal } from '@/components/DiscipleshipProcessGuideModal';
 import {
   acknowledgeDiscipleshipPastoralAlert,
+  closeDiscipleshipPastoralAlert,
   DISCIPLESHIP_TRAIL_SQL_HINT,
   fetchDiscipleshipPastoralAlerts,
   type DiscipleshipPastoralAlert,
@@ -79,6 +80,27 @@ export function MaintenanceDiscipleshipAlertsCard({
       Toast.show({
         type: 'error',
         text1: 'Não foi possível reconhecer',
+        text2: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setAckId(null);
+    }
+  };
+
+  const handleClose = async (alertId: string) => {
+    setAckId(alertId);
+    try {
+      await closeDiscipleshipPastoralAlert(alertId);
+      Toast.show({
+        type: 'success',
+        text1: 'Alerta fechado',
+        text2: 'Reconhecimento/certificado registrado como concluído.',
+      });
+      await loadAlerts();
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Não foi possível fechar',
         text2: err instanceof Error ? err.message : undefined,
       });
     } finally {
@@ -182,6 +204,20 @@ export function MaintenanceDiscipleshipAlertsCard({
                       <ActivityIndicator color="#FFF" size="small" />
                     ) : (
                       <Text style={styles.ackButtonText}>Marcar como visto</Text>
+                    )}
+                  </TouchableOpacity>
+                ) : null}
+                {alert.status === 'acknowledged' ? (
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => void handleClose(alert.id)}
+                    disabled={ackId === alert.id}
+                    activeOpacity={0.85}
+                  >
+                    {ackId === alert.id ? (
+                      <ActivityIndicator color={MINIMAL_UI.blueDark} size="small" />
+                    ) : (
+                      <Text style={styles.closeButtonText}>Fechar (certificado feito)</Text>
                     )}
                   </TouchableOpacity>
                 ) : null}
@@ -338,6 +374,20 @@ const styles = StyleSheet.create({
   },
   ackButtonText: {
     color: '#FFF',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  closeButton: {
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 8,
+    paddingVertical: 9,
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+  },
+  closeButtonText: {
+    color: MINIMAL_UI.blueDark,
     fontWeight: '700',
     fontSize: 13,
   },

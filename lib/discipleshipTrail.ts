@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 export const DISCIPLESHIP_TRAIL_SQL_HINT =
-  'Execute no Supabase: scripts/discipleship-trail-schema.sql e scripts/discipleship-trail-badges-alerts.sql';
+  'Execute no Supabase: scripts/discipleship-trail-schema.sql, scripts/discipleship-trail-badges-alerts.sql e scripts/discipleship-trail-progress-gates.sql';
 
 export type DiscipleshipProgressStatus = 'not_started' | 'in_progress' | 'completed';
 
@@ -353,9 +353,20 @@ export async function fetchMyDiscipleshipBadges(
 }
 
 /**
+ * Garante seed 5×3 no tenant da sessão (no-op se RPC ausente).
+ */
+export async function ensureDiscipleshipTrailForSession(): Promise<void> {
+  const { error } = await supabase.rpc('ensure_discipleship_trail_for_session');
+  if (error && !isSupabaseRpcMissingError(error, 'ensure_discipleship_trail_for_session')) {
+    console.warn('ensure_discipleship_trail_for_session:', error.message);
+  }
+}
+
+/**
  * Trilha completa com % e estados visuais do usuário logado.
  */
 export async function fetchDiscipleshipTrailForCurrentUser(): Promise<DiscipleshipTrailSnapshot> {
+  await ensureDiscipleshipTrailForSession();
   const [modulesRaw, progressRows, badges] = await Promise.all([
     fetchDiscipleshipModulesWithLessons(),
     fetchMyDiscipleshipProgress(),
@@ -396,6 +407,54 @@ export async function upsertMyLessonProgress(input: {
     throw new Error('Sessão inválida: perfil não identificado.');
   }
 
+  const { data: rpcData, error: rpcError } = await supabase.rpc(
+    'upsert_my_discipleship_lesson_progress',
+    {
+      p_lesson_id: input.lessonId,
+      p_status: input.status,
+      p_reflection_answer: input.reflectionAnswer ?? null,
+    }
+  );
+
+  if (!rpcError) {
+    const payload = rpcData as {
+      success?: boolean;
+      message?: string;
+      progress?: Record<string, unknown>;
+    } | null;
+    if (!payload?.success || !payload.progress) {
+      throw new Error(payload?.message || 'Não foi possível atualizar o progresso da Trilha.');
+    }
+    return mapProgressRow({
+      id: String(payload.progress.id),
+      tenant_id: String(payload.progress.tenant_id),
+      profile_id: String(payload.progress.profile_id),
+      lesson_id: String(payload.progress.lesson_id),
+      status: String(payload.progress.status),
+      reflection_answer:
+        payload.progress.reflection_answer == null
+          ? null
+          : String(payload.progress.reflection_answer),
+      started_at:
+        payload.progress.started_at == null ? null : String(payload.progress.started_at),
+      completed_at:
+        payload.progress.completed_at == null ? null : String(payload.progress.completed_at),
+    });
+  }
+
+  if (!isSupabaseRpcMissingError(rpcError, 'upsert_my_discipleship_lesson_progress')) {
+    throw new Error(rpcError.message || 'Falha ao atualizar progresso da Trilha.');
+  }
+
+  // Fallback legado (antes do patch de gates)
+  const existing = await supabase
+    .from('user_discipleship_progress')
+    .select('started_at')
+    .eq('tenant_id', input.tenantId)
+    .eq('profile_id', effectiveProfileId)
+    .eq('lesson_id', input.lessonId)
+    .maybeSingle();
+
   const now = new Date().toISOString();
   const payload: Record<string, unknown> = {
     tenant_id: input.tenantId,
@@ -406,10 +465,10 @@ export async function upsertMyLessonProgress(input: {
     completed_at: input.status === 'completed' ? now : null,
   };
 
-  if (input.status !== 'not_started') {
-    payload.started_at = now;
-  } else {
+  if (input.status === 'not_started') {
     payload.started_at = null;
+  } else {
+    payload.started_at = existing.data?.started_at ?? now;
   }
 
   const { data, error } = await supabase
@@ -534,6 +593,23 @@ export async function acknowledgeDiscipleshipPastoralAlert(alertId: string): Pro
     .from('discipleship_pastoral_alerts')
     .update({
       status: 'acknowledged',
+      acknowledged_at: new Date().toISOString(),
+      acknowledged_by_profile_id: actorId,
+    })
+    .eq('id', alertId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+/** Fecha o alerta pastoral após o reconhecimento/certificado. */
+export async function closeDiscipleshipPastoralAlert(alertId: string): Promise<void> {
+  const actorId = await resolveEffectiveProfileId();
+  const { error } = await supabase
+    .from('discipleship_pastoral_alerts')
+    .update({
+      status: 'closed',
       acknowledged_at: new Date().toISOString(),
       acknowledged_by_profile_id: actorId,
     })

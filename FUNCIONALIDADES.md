@@ -38,7 +38,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 - **Selfie** — captura, substituição com confirmação
 - **Veículos** — cadastro de placa, marca, modelo e cor
 - **Vincular à família** — busca por código e solicitação de vínculo
-- **Perfil Ministerial** — questionário de **50 perguntas** em **10 etapas** (modal); resultado predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor) com texto descritivo; pontuação e desempate no servidor; tabelas `ministerial_*` e RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial` (scripts `ministerial-profile-questionnaire.sql`, seed e `ministerial-profile-questionnaire-session-fix.sql`); refazer **substitui** respostas e resultado anteriores (sem histórico)
+- **Trilha de Discipulado** — 5 passos × 3 lições com progresso sequencial, selos e alertas pastorais; na lição **5.1 Descobrindo meus Dons**, o **Perfil Ministerial** (questionário de **50 perguntas** em **10 etapas**); resultado predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor); tabelas `ministerial_*` e RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial`; gates de conclusão no servidor (`upsert_my_discipleship_lesson_progress`); refazer **substitui** respostas e resultado anteriores (sem histórico)
 - **Paleta de cores** — seletor no rodapé do card Perfil & Identidade
 - **Onboarding** — fluxo guiado para completar cadastro pendente
 - **Termos LGPD** — tela dedicada para aceite/recusa com registro no banco
@@ -93,7 +93,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 | **Financeiro** | Hub: relatórios (`/financial`) e **Relatório de Despesas (RD)** destacado (`/expense-report`); Fluxo de caixa, Categorias e Relatórios extras em breve |
 | **Escalas** | Lista de tipos de escala, escala por data, WhatsApp dos servos |
 | **Estacionamento** | Identificação de veículo por placa, WhatsApp do proprietário |
-| **Perfil & Identidade** (`grouped_manage`) | Título do card e atalho no Índice; **Dados Cadastrais**, **Gerenciar Família**, **Perfil Ministerial** (questionário de 50 perguntas em 10 etapas) e **Paleta de cores** |
+| **Perfil & Identidade** (`grouped_manage`) | Título do card e atalho no Índice; **Dados Cadastrais**, **Gerenciar Família**, **Trilha de Discipulado** (Perfil Ministerial na lição 5.1) e **Paleta de cores** |
 
 ---
 

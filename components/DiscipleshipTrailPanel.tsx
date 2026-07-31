@@ -19,6 +19,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  Linking,
   Modal,
   Pressable,
   RefreshControl,
@@ -441,7 +442,31 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
                   </Text>
                 </View>
               ) : selectedLesson?.lesson.video_url ? (
-                <Text style={styles.videoLink}>Vídeo: {selectedLesson.lesson.video_url}</Text>
+                <TouchableOpacity
+                  style={styles.videoButton}
+                  onPress={() => {
+                    const url = selectedLesson.lesson.video_url?.trim();
+                    if (!url) return;
+                    void Linking.openURL(url).catch(() => {
+                      Toast.show({
+                        type: 'error',
+                        text1: 'Não foi possível abrir o vídeo',
+                        text2: 'Verifique se o link está correto.',
+                      });
+                    });
+                  }}
+                  activeOpacity={0.85}
+                  accessibilityRole="link"
+                  accessibilityLabel="Abrir vídeo da lição"
+                >
+                  <FontAwesome name="play-circle" size={18} color={MINIMAL_UI.blueDark} />
+                  <View style={styles.videoButtonCopy}>
+                    <Text style={styles.videoButtonTitle}>Assistir vídeo</Text>
+                    <Text style={styles.videoButtonUrl} numberOfLines={1}>
+                      {selectedLesson.lesson.video_url}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               ) : selectedLesson?.lesson.title === 'Bem-vindo à Família' ? (
                 <Text style={styles.modalBodyMuted}>Espaço reservado para link de vídeo.</Text>
               ) : null}
@@ -823,10 +848,32 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     fontStyle: 'italic',
   },
-  videoLink: {
+  videoButton: {
     marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(27, 79, 138, 0.06)',
+  },
+  videoButtonCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  videoButtonTitle: {
     color: MINIMAL_UI.blueDark,
     fontSize: 13,
+    fontWeight: '800',
+  },
+  videoButtonUrl: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 11,
+    fontWeight: '600',
   },
   ministerialBlock: {
     marginTop: 12,
