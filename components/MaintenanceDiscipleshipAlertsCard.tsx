@@ -128,8 +128,8 @@ export function MaintenanceDiscipleshipAlertsCard({
         </TouchableOpacity>
       </View>
       <Text style={styles.subtitle}>
-        Alunos que concluíram 100% da Trilha e estão prontos para certificado ou reconhecimento
-        público.
+        Evolução dos discípulos: passos concluídos e prontos para certificado / reconhecimento
+        público ao fechar a Trilha.
       </Text>
 
       <View style={styles.filterRow}>
@@ -173,7 +173,11 @@ export function MaintenanceDiscipleshipAlertsCard({
             alerts.map((alert) => (
               <View key={alert.id} style={styles.alertCard}>
                 <View style={styles.alertHeader}>
-                  <FontAwesome name="trophy" size={14} color="#D97706" />
+                  <FontAwesome
+                    name={alert.alert_type === 'module_complete' ? 'certificate' : 'trophy'}
+                    size={14}
+                    color={alert.alert_type === 'module_complete' ? MINIMAL_UI.blueDark : '#D97706'}
+                  />
                   <Text style={styles.alertName}>
                     {formatShortName(alert.profile_full_name ?? 'Membro')}
                   </Text>
@@ -188,6 +192,11 @@ export function MaintenanceDiscipleshipAlertsCard({
                     </Text>
                   </View>
                 </View>
+                <Text style={styles.alertKind}>
+                  {alert.alert_type === 'module_complete'
+                    ? 'Evolução — passo concluído'
+                    : 'Certificado / reconhecimento'}
+                </Text>
                 <Text style={styles.alertTitle}>{alert.title}</Text>
                 <Text style={styles.alertMessage}>{alert.message}</Text>
                 <Text style={styles.alertDate}>
@@ -355,6 +364,12 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.blueDark,
     fontSize: 13,
     fontWeight: '700',
+  },
+  alertKind: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   alertMessage: {
     color: MINIMAL_UI.textMuted,

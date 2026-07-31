@@ -4,15 +4,22 @@
  * SQL:
  *   scripts/discipleship-trail-schema.sql
  *   scripts/discipleship-trail-badges-alerts.sql
+ *   scripts/discipleship-trail-badge-colors.sql
  */
 
+import {
+  discipleshipBadgeColorForStep,
+  DISCIPLESHIP_LOCKED_BADGE_COLOR,
+  DISCIPLESHIP_STEP_BADGE_META,
+  DISCIPLESHIP_TRAIL_GOLD_COLOR,
+} from '@/lib/discipleshipBadgeColors';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { getStoredTenantId } from '@/lib/tenantSession';
 
 export const DISCIPLESHIP_TRAIL_SQL_HINT =
-  'Execute no Supabase: scripts/discipleship-trail-schema.sql, scripts/discipleship-trail-badges-alerts.sql e scripts/discipleship-trail-progress-gates.sql';
+  'Execute no Supabase: scripts/discipleship-trail-schema.sql, scripts/discipleship-trail-badges-alerts.sql, scripts/discipleship-trail-progress-gates.sql e scripts/discipleship-trail-badge-colors.sql';
 
 export type DiscipleshipProgressStatus = 'not_started' | 'in_progress' | 'completed';
 
@@ -63,6 +70,8 @@ export type UserDiscipleshipBadge = {
   badge_code: DiscipleshipBadgeCode;
   badge_title: string;
   badge_description: string | null;
+  badge_color: string | null;
+  step_order: number | null;
   earned_at: string;
 };
 
@@ -76,6 +85,7 @@ export type DiscipleshipPastoralAlert = {
   status: 'new' | 'acknowledged' | 'closed';
   acknowledged_at: string | null;
   created_at: string;
+  module_id?: string | null;
   profile_full_name?: string | null;
 };
 
@@ -117,9 +127,9 @@ const LESSON_COLUMNS =
 const PROGRESS_COLUMNS =
   'id, tenant_id, profile_id, lesson_id, status, reflection_answer, started_at, completed_at';
 const BADGE_COLUMNS =
-  'id, tenant_id, profile_id, module_id, badge_code, badge_title, badge_description, earned_at';
+  'id, tenant_id, profile_id, module_id, badge_code, badge_title, badge_description, badge_color, step_order, earned_at';
 const ALERT_COLUMNS =
-  'id, tenant_id, profile_id, alert_type, title, message, status, acknowledged_at, created_at';
+  'id, tenant_id, profile_id, module_id, alert_type, title, message, status, acknowledged_at, created_at';
 
 export function lessonProgressStatus(
   lesson: Pick<DiscipleshipLessonWithProgress, 'progress'>
@@ -254,6 +264,64 @@ export function visualStateLabel(state: DiscipleshipVisualState): string {
     default:
       return 'Disponível';
   }
+}
+
+export type DiscipleshipAchievementSlot = {
+  key: string;
+  stepOrder: number;
+  title: string;
+  meaning: string;
+  color: string;
+  unlocked: boolean;
+  badge: UserDiscipleshipBadge | null;
+  isTrailFinale: boolean;
+};
+
+/** Galeria dos 5 selos + selo dourado final (bloqueados em cinza até conquistar). */
+export function buildDiscipleshipAchievementSlots(
+  modules: DiscipleshipModuleWithLessons[],
+  badges: UserDiscipleshipBadge[]
+): DiscipleshipAchievementSlot[] {
+  const moduleByOrder = new Map(modules.map((module) => [module.sort_order, module]));
+  const trailBadge = badges.find((badge) => badge.badge_code === 'trail_complete') ?? null;
+
+  const slots: DiscipleshipAchievementSlot[] = ([1, 2, 3, 4, 5] as const).map((step) => {
+    const meta = DISCIPLESHIP_STEP_BADGE_META[step];
+    const module = moduleByOrder.get(step) ?? null;
+    const badge =
+      module?.badge
+      ?? badges.find(
+        (item) => item.badge_code === 'module_complete' && Number(item.step_order) === step
+      )
+      ?? null;
+    const unlocked = Boolean(badge) || module?.visualState === 'completed';
+    return {
+      key: `step-${step}`,
+      stepOrder: step,
+      title: module?.title ? `Passo ${step}` : meta.label,
+      meaning: module?.title ?? meta.meaning,
+      color: unlocked
+        ? badge?.badge_color || discipleshipBadgeColorForStep(step)
+        : DISCIPLESHIP_LOCKED_BADGE_COLOR,
+      unlocked,
+      badge,
+      isTrailFinale: false,
+    };
+  });
+
+  const trailUnlocked = Boolean(trailBadge);
+  slots.push({
+    key: 'trail-complete',
+    stepOrder: 5,
+    title: 'Trilha completa',
+    meaning: 'Selo dourado de honra — jornada concluída',
+    color: trailUnlocked ? DISCIPLESHIP_TRAIL_GOLD_COLOR : DISCIPLESHIP_LOCKED_BADGE_COLOR,
+    unlocked: trailUnlocked,
+    badge: trailBadge,
+    isTrailFinale: true,
+  });
+
+  return slots;
 }
 
 export async function fetchDiscipleshipModulesWithLessons(): Promise<
@@ -601,6 +669,7 @@ export async function fetchDiscipleshipPastoralAlerts(options?: {
         : 'new') as DiscipleshipPastoralAlert['status'],
       acknowledged_at: row.acknowledged_at == null ? null : String(row.acknowledged_at),
       created_at: String(row.created_at),
+      module_id: row.module_id == null ? null : String(row.module_id),
       profile_full_name:
         profile && typeof profile === 'object' && 'full_name' in profile
           ? (profile.full_name as string | null)
@@ -687,6 +756,8 @@ function mapBadgeRow(row: {
   badge_code: string;
   badge_title: string;
   badge_description: string | null;
+  badge_color?: string | null;
+  step_order?: number | null;
   earned_at: string;
 }): UserDiscipleshipBadge {
   return {
@@ -697,6 +768,8 @@ function mapBadgeRow(row: {
     badge_code: row.badge_code === 'trail_complete' ? 'trail_complete' : 'module_complete',
     badge_title: String(row.badge_title),
     badge_description: row.badge_description == null ? null : String(row.badge_description),
+    badge_color: row.badge_color == null ? null : String(row.badge_color),
+    step_order: row.step_order == null ? null : Number(row.step_order),
     earned_at: String(row.earned_at),
   };
 }

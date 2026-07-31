@@ -1,4 +1,5 @@
 import {
+  buildDiscipleshipAchievementSlots,
   completeLessonWithAchievements,
   DISCIPLESHIP_TRAIL_SQL_HINT,
   fetchDiscipleshipTrailForCurrentUser,
@@ -9,6 +10,10 @@ import {
   type DiscipleshipVisualState,
   visualStateLabel,
 } from '@/lib/discipleshipTrail';
+import {
+  discipleshipBadgeColorForStep,
+  DISCIPLESHIP_TRAIL_GOLD_COLOR,
+} from '@/lib/discipleshipBadgeColors';
 import { isMinisterialGiftsLesson } from '@/lib/discipleshipMinisterialLesson';
 import { fetchMinisterialProfileResult } from '@/lib/ministerialProfileQuestionnaire';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
@@ -293,23 +298,55 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
           </Text>
         </View>
 
-        {(snapshot?.badges.length ?? 0) > 0 ? (
-          <View style={styles.badgesSection}>
-            <Text style={styles.sectionTitle}>Seus selos</Text>
-            <View style={styles.badgesRow}>
-              {snapshot?.badges.map((badge) => (
-                <View key={badge.id} style={styles.badgeChip}>
-                  <FontAwesome
-                    name={badge.badge_code === 'trail_complete' ? 'trophy' : 'certificate'}
-                    size={14}
-                    color="#B45309"
-                  />
-                  <Text style={styles.badgeChipText}>{badge.badge_title}</Text>
+        <View style={styles.badgesSection}>
+          <Text style={styles.sectionTitle}>Minhas Conquistas / Selos</Text>
+          <Text style={styles.achievementsHint}>
+            Cada passo concluído libera um selo com cor própria. Os futuros permanecem em cinza até
+            você avançar.
+          </Text>
+          <View style={styles.achievementsGrid}>
+            {buildDiscipleshipAchievementSlots(snapshot?.modules ?? [], snapshot?.badges ?? []).map(
+              (slot) => (
+                <View
+                  key={slot.key}
+                  style={[
+                    styles.achievementCard,
+                    {
+                      borderColor: slot.unlocked ? slot.color : MINIMAL_UI.border,
+                      backgroundColor: slot.unlocked ? `${slot.color}14` : MINIMAL_UI.background,
+                      opacity: slot.unlocked ? 1 : 0.72,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.achievementIcon,
+                      { backgroundColor: slot.unlocked ? slot.color : '#CBD5E1' },
+                    ]}
+                  >
+                    <FontAwesome
+                      name={slot.isTrailFinale ? 'trophy' : 'certificate'}
+                      size={16}
+                      color="#FFF"
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      styles.achievementTitle,
+                      { color: slot.unlocked ? MINIMAL_UI.blueDark : MINIMAL_UI.textMuted },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {slot.isTrailFinale ? 'Dourado' : `Passo ${slot.stepOrder}`}
+                  </Text>
+                  <Text style={styles.achievementMeaning} numberOfLines={2}>
+                    {slot.unlocked ? slot.meaning : 'Bloqueado'}
+                  </Text>
                 </View>
-              ))}
-            </View>
+              )
+            )}
           </View>
-        ) : null}
+        </View>
 
         {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
@@ -345,8 +382,26 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
               <Text style={styles.moduleProgressLabel}>{module.percentComplete}%</Text>
               {module.badge ? (
                 <View style={styles.moduleBadgeInline}>
-                  <FontAwesome name="certificate" size={12} color="#B45309" />
-                  <Text style={styles.moduleBadgeText}>Selo conquistado</Text>
+                  <FontAwesome
+                    name="certificate"
+                    size={12}
+                    color={
+                      module.badge.badge_color
+                      || discipleshipBadgeColorForStep(module.sort_order)
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.moduleBadgeText,
+                      {
+                        color:
+                          module.badge.badge_color
+                          || discipleshipBadgeColorForStep(module.sort_order),
+                      },
+                    ]}
+                  >
+                    Selo conquistado
+                  </Text>
                 </View>
               ) : null}
             </View>
@@ -569,13 +624,27 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
         onRequestClose={() => setAchievement(null)}
       >
         <View style={styles.celebrateBackdrop}>
+          {(() => {
+            const celebrateColor = achievement?.trailJustCompleted
+              ? DISCIPLESHIP_TRAIL_GOLD_COLOR
+              : achievement?.moduleBadge?.badge_color
+                || discipleshipBadgeColorForStep(achievement?.moduleBadge?.step_order)
+                || MINIMAL_UI.blueDark;
+
+            return (
           <Animated.View
             style={[
               styles.celebrateCard,
+              achievement?.trailJustCompleted ? styles.celebrateCardGold : null,
               { opacity: celebrateOpacity, transform: [{ scale: celebrateScale }] },
             ]}
           >
-            <View style={styles.celebrateIcon}>
+            <View
+              style={[
+                styles.celebrateIcon,
+                { backgroundColor: celebrateColor },
+              ]}
+            >
               <FontAwesome
                 name={achievement?.trailJustCompleted ? 'trophy' : 'certificate'}
                 size={32}
@@ -583,7 +652,9 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
               />
             </View>
             <Text style={styles.celebrateTitle}>
-              {achievement?.trailJustCompleted ? 'Trilha concluída!' : 'Selo conquistado!'}
+              {achievement?.trailJustCompleted
+                ? 'Selo dourado conquistado!'
+                : 'Selo conquistado!'}
             </Text>
             <Text style={styles.celebrateBody}>
               {achievement?.trailBadge?.badge_title
@@ -592,17 +663,27 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
             </Text>
             {achievement?.trailJustCompleted ? (
               <Text style={styles.celebrateHint}>
-                A liderança pastoral foi notificada para o certificado ou reconhecimento público.
+                Você concluiu a Trilha. A liderança pastoral foi notificada para o certificado ou
+                reconhecimento público.
               </Text>
-            ) : null}
+            ) : (
+              <Text style={styles.celebrateHint}>
+                Continue a jornada — cada passo revela uma nova cor na sua galeria de conquistas.
+              </Text>
+            )}
             <TouchableOpacity
-              style={styles.primaryButton}
+              style={[
+                styles.primaryButton,
+                { backgroundColor: celebrateColor },
+              ]}
               onPress={() => setAchievement(null)}
               activeOpacity={0.85}
             >
               <Text style={styles.primaryButtonText}>Continuar</Text>
             </TouchableOpacity>
           </Animated.View>
+            );
+          })()}
         </View>
       </Modal>
 
@@ -691,6 +772,46 @@ const styles = StyleSheet.create({
     ...MINIMAL_SECTION_TITLE,
     color: MINIMAL_UI.blueDark,
     fontSize: 15,
+  },
+  achievementsHint: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  achievementsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  achievementCard: {
+    width: '31%',
+    minWidth: 96,
+    flexGrow: 1,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    gap: 6,
+  },
+  achievementIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  achievementTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  achievementMeaning: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 10,
+    lineHeight: 13,
+    textAlign: 'center',
+    fontWeight: '600',
   },
   badgesRow: {
     flexDirection: 'row',
@@ -1000,6 +1121,11 @@ const styles = StyleSheet.create({
     padding: 22,
     alignItems: 'center',
     gap: 10,
+  },
+  celebrateCardGold: {
+    borderWidth: 2,
+    borderColor: DISCIPLESHIP_TRAIL_GOLD_COLOR,
+    backgroundColor: 'rgba(201, 162, 39, 0.08)',
   },
   celebrateIcon: {
     width: 64,
