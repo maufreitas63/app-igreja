@@ -12,11 +12,20 @@ import {
   Keyboard,
   Platform,
   ScrollView,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import {
+  disableBiometricUnlock,
+  enableBiometricUnlock,
+  getBiometricAvailability,
+  isBiometricUnlockEnabledForPhone,
+  syncBiometricCredentialAfterPinChange,
+} from '@/lib/biometricAuth';
+import { verificarLogin } from '@/lib/verificarLogin';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { changePhoneEverywhere } from '@/lib/changePhone';
@@ -177,6 +186,10 @@ export function ProfileClassPanel({
   );
   const [showCurrentAccessPin, setShowCurrentAccessPin] = useState(false);
   const [showNewAccessPin, setShowNewAccessPin] = useState(false);
+  const [biometricSupported, setBiometricSupported] = useState(false);
+  const [biometricLabel, setBiometricLabel] = useState('Biometria');
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [biometricBusy, setBiometricBusy] = useState(false);
   const [showConfirmAccessPin, setShowConfirmAccessPin] = useState(false);
   const currentAccessPinRef = useRef<TextInput>(null);
   const newAccessPinRef = useRef<TextInput>(null);
@@ -329,6 +342,13 @@ export function ProfileClassPanel({
     [editingField, profileFields]
   );
 
+  const showBiometricToggle =
+    Platform.OS !== 'web'
+    && !ghostModeActive
+    && !isRecoveryAccessPinFlow
+    && biometricSupported
+    && Boolean(profile);
+
   const profilePhoneForAccessPin = useMemo(() => {
     const fromProfile = profile?.phone;
     if (typeof fromProfile === 'string' && fromProfile.trim()) {
@@ -337,6 +357,33 @@ export function ProfileClassPanel({
 
     return phoneParam?.trim() ?? '';
   }, [phoneParam, profile?.phone]);
+
+  useEffect(() => {
+    if (Platform.OS === 'web' || ghostModeActive || !profilePhoneForAccessPin) {
+      setBiometricSupported(false);
+      setBiometricEnabled(false);
+      return;
+    }
+
+    let active = true;
+
+    void (async () => {
+      const [availability, enabled] = await Promise.all([
+        getBiometricAvailability(),
+        isBiometricUnlockEnabledForPhone(profilePhoneForAccessPin),
+      ]);
+      if (!active) {
+        return;
+      }
+      setBiometricLabel(availability.label);
+      setBiometricSupported(availability.supported);
+      setBiometricEnabled(enabled);
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [ghostModeActive, profilePhoneForAccessPin]);
 
   const accessPinConfirmMismatch = useMemo(
     () =>
@@ -375,8 +422,95 @@ export function ProfileClassPanel({
     setShowConfirmAccessPin(false);
   }, []);
 
+  const handleBiometricToggle = useCallback(
+    async (nextValue: boolean) => {
+      if (biometricBusy || ghostModeActive) {
+        return;
+      }
+
+      if (!profilePhoneForAccessPin) {
+        Alert.alert('Atenção', 'Telefone do perfil não encontrado.');
+        return;
+      }
+
+      setBiometricBusy(true);
+
+      try {
+        if (!nextValue) {
+          await disableBiometricUnlock();
+          setBiometricEnabled(false);
+          Alert.alert('Biometria desativada', 'Na próxima entrada use a senha de 4 dígitos.');
+          return;
+        }
+
+        if (!isValidAccessPin(currentAccessPin)) {
+          Alert.alert(
+            `Ativar ${biometricLabel}`,
+            'Informe a senha atual de 4 dígitos no campo abaixo e ative novamente.'
+          );
+          return;
+        }
+
+        const cleanPhone = profilePhoneForAccessPin.replace(/\D/g, '');
+        const verification = await verificarLogin(cleanPhone, currentAccessPin);
+
+        if (!verification.ok) {
+          Alert.alert('Senha incorreta', 'Confira a senha atual antes de ativar a biometria.');
+          return;
+        }
+
+        const result = await enableBiometricUnlock({
+          phoneDigits: cleanPhone,
+          pin: currentAccessPin.trim(),
+        });
+
+        if (!result.ok) {
+          if (!result.cancelled) {
+            Alert.alert('Biometria', result.message);
+          }
+          setBiometricEnabled(false);
+          return;
+        }
+
+        setBiometricEnabled(true);
+        Alert.alert(
+          `${result.label} ativado`,
+          `Na próxima vez você poderá entrar com ${result.label}.`
+        );
+      } finally {
+        setBiometricBusy(false);
+      }
+    },
+    [
+      biometricBusy,
+      biometricLabel,
+      currentAccessPin,
+      ghostModeActive,
+      profilePhoneForAccessPin,
+    ]
+  );
+
   const renderAccessPinFormFields = () => (
     <>
+      {showBiometricToggle ? (
+        <View style={profileClassStyles.biometricRow}>
+          <View style={profileClassStyles.biometricCopy}>
+            <Text style={profileClassStyles.biometricTitle}>Entrar com {biometricLabel}</Text>
+            <Text style={profileClassStyles.biometricMeta}>
+              Acesso rápido neste aparelho. Se falhar, use a senha de 4 dígitos.
+            </Text>
+          </View>
+          <Switch
+            accessibilityLabel={`Entrar com ${biometricLabel}`}
+            value={biometricEnabled}
+            onValueChange={(value) => void handleBiometricToggle(value)}
+            disabled={biometricBusy || !canUseAccessPinForm}
+            trackColor={{ false: '#CBD5E1', true: '#93C5FD' }}
+            thumbColor={biometricEnabled ? '#1B4F8A' : '#F8FAFC'}
+          />
+        </View>
+      ) : null}
+
       <AccessPinField
         label={
           isRecoveryAccessPinFlow
@@ -520,6 +654,11 @@ export function ProfileClassPanel({
         Alert.alert('Não foi possível alterar', result.message);
         return;
       }
+
+      await syncBiometricCredentialAfterPinChange({
+        phone: profilePhoneForAccessPin,
+        newPin: newAccessPin,
+      });
 
       if (isRecoveryAccessPinFlow) {
         const phoneForIndex = profilePhoneForAccessPin.trim();

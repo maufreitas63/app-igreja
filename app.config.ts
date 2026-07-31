@@ -23,10 +23,13 @@ const config: ExpoConfig = {
     infoPlist: {
       NSCameraUsageDescription:
         'Permita o acesso à câmera para leitura de QR Code no totem e registro de selfie.',
+      NSFaceIDUsageDescription:
+        'Permita o uso do Face ID para entrar no app com acesso rápido e seguro.',
       LSApplicationQueriesSchemes: ['whatsapp', 'whatsapp-api'],
     },
     config: {
       googleMapsApiKey: googleMapsIosApiKey,
+      usesNonExemptEncryption: false,
     },
   },
   android: {
@@ -86,6 +89,21 @@ const config: ExpoConfig = {
       },
     ],
     'expo-font',
+    [
+      'expo-local-authentication',
+      {
+        faceIDPermission:
+          'Permita o uso do Face ID para entrar no app com acesso rápido e seguro.',
+      },
+    ],
+    [
+      'expo-secure-store',
+      {
+        configureAndroidBackup: true,
+        faceIDPermission:
+          'Permita o uso do Face ID para proteger o acesso rápido ao app.',
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,

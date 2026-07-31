@@ -313,6 +313,25 @@ export async function clearUserSession(options?: { keepPhone?: boolean }) {
   await revokeStoredProfileSession();
   scrubWebSessionKeys({ keepPhone });
   resetProfileScreenVisitTracking();
+
+  // Troca de conta (sem manter celular): remove credencial biométrica do aparelho.
+  // Com keepPhone, a biometria permanece para o próximo acesso rápido.
+  if (!keepPhone) {
+    try {
+      const { clearBiometricUnlockCredentials } = await import('@/lib/biometricAuth');
+      await clearBiometricUnlockCredentials();
+    } catch {
+      // best-effort
+    }
+  } else {
+    try {
+      const { clearBiometricProcessUnlock } = await import('@/lib/biometricAuth');
+      clearBiometricProcessUnlock();
+    } catch {
+      // best-effort
+    }
+  }
+
   const {
     USER_TENANT_ID_STORAGE_KEY: tenantKey,
     USER_TENANT_BRANDING_STORAGE_KEY: brandingKey,
@@ -350,6 +369,9 @@ const clearUserSessionImmediately = () => {
   scrubWebSessionKeys({ keepPhone: true });
   resetProfileScreenVisitTracking();
   void revokeStoredProfileSession();
+  void import('@/lib/biometricAuth').then(({ clearBiometricProcessUnlock }) => {
+    clearBiometricProcessUnlock();
+  });
   void import('@/lib/tenantSession').then(
     ({
       USER_TENANT_ID_STORAGE_KEY: tenantKey,

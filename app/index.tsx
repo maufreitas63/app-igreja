@@ -52,6 +52,13 @@ import {
   dispatchAuthAccessPinEmail,
   getAuthPinDeliveryState,
 } from '@/lib/authNotificationService';
+import {
+  getBiometricAvailability,
+  isBiometricUnlockEnabledForPhone,
+  markBiometricProcessUnlocked,
+  maybeOfferEnableBiometricAfterLogin,
+  unlockWithBiometrics,
+} from '@/lib/biometricAuth';
 import { isBrazilianMobilePhoneComplete, isBrazilianPhoneComplete } from '@/lib/phoneValidation';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { verificarLogin } from '@/lib/verificarLogin';
@@ -123,6 +130,11 @@ export default function IndexScreen() {
   const [firstAccessEmail, setFirstAccessEmail] = useState('');
   const [firstAccessEmailConfirm, setFirstAccessEmailConfirm] = useState('');
   const [firstAccessEmailMasked, setFirstAccessEmailMasked] = useState('');
+  const [biometricLabel, setBiometricLabel] = useState('Biometria');
+  const [biometricSupported, setBiometricSupported] = useState(false);
+  const [biometricEnabledForPhone, setBiometricEnabledForPhone] = useState(false);
+  const [isBiometricUnlocking, setIsBiometricUnlocking] = useState(false);
+  const biometricAutoPromptedRef = useRef(false);
   const isTotemLoginMode = Boolean(
     celTotemPhone && normalizePhoneDigits(phone) === celTotemPhone
   );
@@ -430,6 +442,68 @@ export default function IndexScreen() {
     };
   }, []);
 
+  // Disponibilidade de biometria no aparelho + vínculo com o celular atual.
+  useEffect(() => {
+    if (Platform.OS === 'web' || isTotemLoginMode) {
+      setBiometricSupported(false);
+      setBiometricEnabledForPhone(false);
+      return;
+    }
+
+    let active = true;
+
+    void (async () => {
+      try {
+        const [availability, enabled] = await Promise.all([
+          getBiometricAvailability(),
+          isBiometricUnlockEnabledForPhone(phoneDigits),
+        ]);
+
+        if (!active) {
+          return;
+        }
+
+        setBiometricLabel(availability.label);
+        setBiometricSupported(availability.supported);
+        setBiometricEnabledForPhone(enabled);
+      } catch (error) {
+        console.warn('Erro ao verificar biometria:', error);
+        if (active) {
+          setBiometricSupported(false);
+          setBiometricEnabledForPhone(false);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [isTotemLoginMode, phoneDigits]);
+
+  // Com biometria ativa para o celular salvo, vai direto ao passo da senha.
+  useEffect(() => {
+    if (
+      Platform.OS === 'web'
+      || isTotemLoginMode
+      || isRestoringSession
+      || isTotemConfigLoading
+      || loginStep !== 1
+      || !biometricEnabledForPhone
+      || !isBrazilianMobilePhoneComplete(phone)
+    ) {
+      return;
+    }
+
+    setLoginStep(2);
+  }, [
+    biometricEnabledForPhone,
+    isRestoringSession,
+    isTotemConfigLoading,
+    isTotemLoginMode,
+    loginStep,
+    phone,
+  ]);
+
   useEffect(() => {
     if (skipSessionRestore) {
       setIsTotemConfigLoading(false);
@@ -631,6 +705,15 @@ export default function IndexScreen() {
           return;
         }
 
+        markBiometricProcessUnlocked();
+
+        if (!isPasswordRecovered) {
+          await maybeOfferEnableBiometricAfterLogin({
+            phoneDigits: cleanPhone,
+            pin: pin.trim(),
+          });
+        }
+
         const continued = await continueWithExistingProfile(
           verification.profile,
           cleanPhone,
@@ -661,6 +744,74 @@ export default function IndexScreen() {
       router,
     ]
   );
+
+  const submitBiometricUnlock = useCallback(async () => {
+    if (isVerifyingPinRef.current || isBiometricUnlocking || isLoading || isTotemLoginMode) {
+      return;
+    }
+
+    if (!isBrazilianPhoneComplete(phone) || !canAttemptMemberPinLogin) {
+      return;
+    }
+
+    isVerifyingPinRef.current = true;
+    setIsBiometricUnlocking(true);
+    setIsLoading(true);
+
+    try {
+      const unlock = await unlockWithBiometrics(phoneDigits);
+
+      if (!unlock.ok) {
+        if (!unlock.cancelled && !unlock.unavailable) {
+          Alert.alert('Biometria', unlock.message);
+        }
+        return;
+      }
+
+      const verification = await verificarLogin(
+        unlock.credential.phoneDigits,
+        unlock.credential.pin
+      );
+
+      if (!verification.ok) {
+        Alert.alert(
+          'Não foi possível entrar',
+          'A senha salva para biometria não é mais válida. Digite a senha de 4 dígitos.'
+        );
+        return;
+      }
+
+      markBiometricProcessUnlocked();
+
+      const continued = await continueWithExistingProfile(
+        verification.profile,
+        unlock.credential.phoneDigits,
+        verification.sessionToken
+      );
+
+      if (!continued) {
+        Alert.alert('Erro de Acesso', 'Não foi possível continuar com este perfil.');
+      }
+    } catch (err) {
+      console.error('Erro no desbloqueio biométrico:', err);
+      Alert.alert(
+        'Biometria',
+        'Não foi possível autenticar. Digite a senha de 4 dígitos ou use o login tradicional.'
+      );
+    } finally {
+      setIsLoading(false);
+      setIsBiometricUnlocking(false);
+      isVerifyingPinRef.current = false;
+    }
+  }, [
+    canAttemptMemberPinLogin,
+    continueWithExistingProfile,
+    isBiometricUnlocking,
+    isLoading,
+    isTotemLoginMode,
+    phone,
+    phoneDigits,
+  ]);
 
   useEffect(() => {
     if (loginStep !== 2 || isRestoringSession || isTotemConfigLoading) {
@@ -712,6 +863,41 @@ export default function IndexScreen() {
     isLoading,
     isRestoringSession,
     submitAccess,
+  ]);
+
+  // Na abertura, dispara a biometria nativa automaticamente (com fallback para PIN).
+  useEffect(() => {
+    if (
+      Platform.OS === 'web'
+      || biometricAutoPromptedRef.current
+      || isRestoringSession
+      || isTotemConfigLoading
+      || isTotemLoginMode
+      || isPasswordRecovered
+      || loginStep !== 2
+      || !biometricSupported
+      || !biometricEnabledForPhone
+      || !canAttemptMemberPinLogin
+      || isLoading
+      || isBiometricUnlocking
+    ) {
+      return;
+    }
+
+    biometricAutoPromptedRef.current = true;
+    void submitBiometricUnlock();
+  }, [
+    biometricEnabledForPhone,
+    biometricSupported,
+    canAttemptMemberPinLogin,
+    isBiometricUnlocking,
+    isLoading,
+    isPasswordRecovered,
+    isRestoringSession,
+    isTotemConfigLoading,
+    isTotemLoginMode,
+    loginStep,
+    submitBiometricUnlock,
   ]);
 
   const isLikelyFirstAccess =
@@ -1108,7 +1294,9 @@ export default function IndexScreen() {
                 )}
                 {showDefaultPinSubtitleBelow ? (
                   <ReadOnlyText style={styles.pinHintBelowOtp}>
-                    Digite sua senha de 4 dígitos para continuar.
+                    {biometricEnabledForPhone && biometricSupported
+                      ? `Use ${biometricLabel} ou digite sua senha de 4 dígitos.`
+                      : 'Digite sua senha de 4 dígitos para continuar.'}
                   </ReadOnlyText>
                 ) : isTotemLoginMode ? (
                   <ReadOnlyText style={styles.pinHint}>
@@ -1116,6 +1304,34 @@ export default function IndexScreen() {
                   </ReadOnlyText>
                 ) : getMemberPinHint() ? (
                   <ReadOnlyText style={styles.pinHint}>{getMemberPinHint()}</ReadOnlyText>
+                ) : null}
+                {!isTotemLoginMode
+                && biometricSupported
+                && biometricEnabledForPhone
+                && isPinInputEditable
+                && !isLikelyFirstAccess ? (
+                  <TouchableOpacity
+                    accessibilityLabel={`Entrar com ${biometricLabel}`}
+                    accessibilityRole="button"
+                    activeOpacity={0.85}
+                    disabled={isLoading || isBiometricUnlocking}
+                    onPress={() => void submitBiometricUnlock()}
+                    style={[
+                      styles.biometricButton,
+                      (isLoading || isBiometricUnlocking) && styles.biometricButtonDisabled,
+                    ]}
+                  >
+                    {isBiometricUnlocking ? (
+                      <ActivityIndicator color={LOGIN_SUBMIT_TEXT} size="small" />
+                    ) : (
+                      <>
+                        <FontAwesome name="user-circle" size={18} color={LOGIN_SUBMIT_TEXT} />
+                        <Text style={styles.biometricButtonText}>
+                          Entrar com {biometricLabel}
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
                 ) : null}
                 {!isTotemLoginMode && showForgotPasswordLink ? (
                   <TouchableOpacity
@@ -1450,6 +1666,28 @@ const styles = StyleSheet.create({
   },
   emailPrimaryButtonDisabled: {
     opacity: 0.55,
+  },
+  biometricButton: {
+    width: '100%',
+    marginTop: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: LOGIN_SUBMIT_BG,
+    borderWidth: 2,
+    borderColor: LOGIN_ICON,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  biometricButtonDisabled: {
+    opacity: 0.55,
+  },
+  biometricButtonText: {
+    color: LOGIN_SUBMIT_TEXT,
+    fontSize: 15,
+    fontWeight: '700',
   },
   emailPrimaryButtonText: {
     color: LOGIN_SUBMIT_TEXT,

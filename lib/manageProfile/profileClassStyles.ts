@@ -135,6 +135,30 @@ export const profileClassStyles = StyleSheet.create({
     height: 54,
     marginBottom: 12,
   },
+  biometricRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderBottomWidth: HAIRLINE,
+    borderBottomColor: DIVIDER,
+  },
+  biometricCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  biometricTitle: {
+    color: TEXT,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  biometricMeta: {
+    color: TEXT_MUTED,
+    fontSize: 12,
+    lineHeight: 16,
+  },
   accessPinFieldLabel: {
     color: TEXT,
     fontSize: 13,
