@@ -63,6 +63,7 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
   const [ministerialFormVisible, setMinisterialFormVisible] = useState(false);
   const [hasMinisterialResult, setHasMinisterialResult] = useState(false);
   const [achievement, setAchievement] = useState<DiscipleshipAchievementEvent | null>(null);
+  const [achievementsOpen, setAchievementsOpen] = useState(false);
   const celebrateScale = useRef(new Animated.Value(0.6)).current;
   const celebrateOpacity = useRef(new Animated.Value(0)).current;
 
@@ -299,53 +300,75 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
         </View>
 
         <View style={styles.badgesSection}>
-          <Text style={styles.sectionTitle}>Minhas Conquistas / Selos</Text>
-          <Text style={styles.achievementsHint}>
-            Cada passo concluído libera um selo com cor própria. Os futuros permanecem em cinza até
-            você avançar.
-          </Text>
-          <View style={styles.achievementsGrid}>
-            {buildDiscipleshipAchievementSlots(snapshot?.modules ?? [], snapshot?.badges ?? []).map(
-              (slot) => (
-                <View
-                  key={slot.key}
-                  style={[
-                    styles.achievementCard,
-                    {
-                      borderColor: slot.unlocked ? slot.color : MINIMAL_UI.border,
-                      backgroundColor: slot.unlocked ? `${slot.color}14` : MINIMAL_UI.background,
-                      opacity: slot.unlocked ? 1 : 0.72,
-                    },
-                  ]}
-                >
+          <Pressable
+            style={styles.achievementsHeader}
+            onPress={() => setAchievementsOpen((open) => !open)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: achievementsOpen }}
+            accessibilityLabel="Minhas Conquistas / Selos"
+          >
+            <Text style={styles.sectionTitle}>Minhas Conquistas / Selos</Text>
+            <FontAwesome
+              name={achievementsOpen ? 'chevron-up' : 'chevron-down'}
+              size={14}
+              color={MINIMAL_UI.blueDark}
+            />
+          </Pressable>
+          {achievementsOpen ? (
+            <>
+              <Text style={styles.achievementsHint}>
+                Cada passo concluído libera um selo com cor própria. Os futuros permanecem em cinza
+                até você avançar.
+              </Text>
+              <View style={styles.achievementsGrid}>
+                {buildDiscipleshipAchievementSlots(
+                  snapshot?.modules ?? [],
+                  snapshot?.badges ?? []
+                ).map((slot) => (
                   <View
+                    key={slot.key}
                     style={[
-                      styles.achievementIcon,
-                      { backgroundColor: slot.unlocked ? slot.color : '#CBD5E1' },
+                      styles.achievementCard,
+                      {
+                        borderColor: slot.unlocked ? slot.color : MINIMAL_UI.border,
+                        backgroundColor: slot.unlocked
+                          ? `${slot.color}14`
+                          : MINIMAL_UI.background,
+                        opacity: slot.unlocked ? 1 : 0.72,
+                      },
                     ]}
                   >
-                    <FontAwesome
-                      name={slot.isTrailFinale ? 'trophy' : 'certificate'}
-                      size={16}
-                      color="#FFF"
-                    />
+                    <View
+                      style={[
+                        styles.achievementIcon,
+                        { backgroundColor: slot.unlocked ? slot.color : '#CBD5E1' },
+                      ]}
+                    >
+                      <FontAwesome
+                        name={slot.isTrailFinale ? 'trophy' : 'certificate'}
+                        size={16}
+                        color="#FFF"
+                      />
+                    </View>
+                    <Text
+                      style={[
+                        styles.achievementTitle,
+                        {
+                          color: slot.unlocked ? MINIMAL_UI.blueDark : MINIMAL_UI.textMuted,
+                        },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {slot.isTrailFinale ? 'Dourado' : `Passo ${slot.stepOrder}`}
+                    </Text>
+                    <Text style={styles.achievementMeaning} numberOfLines={2}>
+                      {slot.unlocked ? slot.meaning : 'Bloqueado'}
+                    </Text>
                   </View>
-                  <Text
-                    style={[
-                      styles.achievementTitle,
-                      { color: slot.unlocked ? MINIMAL_UI.blueDark : MINIMAL_UI.textMuted },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {slot.isTrailFinale ? 'Dourado' : `Passo ${slot.stepOrder}`}
-                  </Text>
-                  <Text style={styles.achievementMeaning} numberOfLines={2}>
-                    {slot.unlocked ? slot.meaning : 'Bloqueado'}
-                  </Text>
-                </View>
-              )
-            )}
-          </View>
+                ))}
+              </View>
+            </>
+          ) : null}
         </View>
 
         {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
@@ -768,10 +791,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   badgesSection: { gap: 8 },
+  achievementsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingVertical: 4,
+  },
   sectionTitle: {
     ...MINIMAL_SECTION_TITLE,
     color: MINIMAL_UI.blueDark,
     fontSize: 15,
+    flex: 1,
+    textAlign: 'left',
   },
   achievementsHint: {
     color: MINIMAL_UI.textMuted,
