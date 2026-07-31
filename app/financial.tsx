@@ -470,7 +470,10 @@ export default function FinancialScreen() {
           />
         </View>
       ) : (
-        <Text style={styles.monthFilterEmptyText}>Nenhum mês disponível.</Text>
+        <View style={styles.monthFilterEmptyWrap}>
+          <Text style={styles.monthFilterEmptyText}>Nenhum mês disponível.</Text>
+          {errorMessage ? <Text style={styles.monthFilterEmptyHint}>{errorMessage}</Text> : null}
+        </View>
       )}
     </View>
   );
@@ -912,6 +915,16 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 14,
     paddingVertical: 8,
+  },
+  monthFilterEmptyWrap: {
+    flex: 1,
+    gap: 4,
+    paddingVertical: 4,
+  },
+  monthFilterEmptyHint: {
+    color: '#F87171',
+    fontSize: 12,
+    lineHeight: 16,
   },
   sectionHintText: {
     color: '#94A3B8',

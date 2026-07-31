@@ -31,6 +31,8 @@ import {
   type FinancialMonthKey,
 } from '@/lib/financialMonth';
 import { supabase } from '@/lib/supabase';
+import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
+import { subscribeActiveTenantChange } from '@/lib/tenantSession';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export type { FinancialEntry } from '@/lib/financialEntry';
@@ -537,6 +539,28 @@ export function useFinancialsByMonth(): UseFinancialsByMonthResult {
   useEffect(() => {
     void loadMonths();
   }, [loadMonths]);
+
+  useEffect(() => {
+    let previousGhostTarget = getGhostModeState()?.targetProfileId ?? null;
+
+    const unsubscribeGhost = subscribeGhostMode(() => {
+      const nextTarget = getGhostModeState()?.targetProfileId ?? null;
+      if (nextTarget === previousGhostTarget) {
+        return;
+      }
+      previousGhostTarget = nextTarget;
+      void reload();
+    });
+
+    const unsubscribeTenant = subscribeActiveTenantChange(() => {
+      void reload();
+    });
+
+    return () => {
+      unsubscribeGhost();
+      unsubscribeTenant();
+    };
+  }, [reload]);
 
   useEffect(() => {
     void loadEntries(selectedMonth);

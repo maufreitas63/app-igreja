@@ -6,10 +6,15 @@ import {
   type GhostModeState,
 } from '@/lib/ghostMode';
 import { invalidateAccessControlCache } from '@/lib/accessControl';
-import {
-  registerGhostModeAuditEvent,
-} from '@/lib/ghostModeApi';
+import { registerGhostModeAuditEvent } from '@/lib/ghostModeApi';
 import { invalidateSessionProfileCache } from '@/lib/sessionProfile';
+import {
+  activateTenantForGhostTarget,
+  getStoredActiveIgrejaBranding,
+  getStoredTenantId,
+  persistActiveIgrejaBranding,
+  persistTenantId,
+} from '@/lib/tenantSession';
 import { useRouter } from 'expo-router';
 import React, {
   createContext,
@@ -33,13 +38,26 @@ type GhostModeContextValue = {
 
 const GhostModeContext = createContext<GhostModeContextValue | null>(null);
 
+async function restoreTenantAfterGhost(state: GhostModeState) {
+  if (state.previousTenantBranding?.id) {
+    await persistActiveIgrejaBranding(state.previousTenantBranding);
+    return;
+  }
+
+  await persistTenantId(state.previousTenantId);
+}
+
 export function GhostModeProvider({ children }: PropsWithChildren) {
   const router = useRouter();
   const [state, setState] = useState<GhostModeState | null>(() => getGhostModeState());
 
-  useEffect(() => subscribeGhostMode(() => {
-    setState(getGhostModeState());
-  }), []);
+  useEffect(
+    () =>
+      subscribeGhostMode(() => {
+        setState(getGhostModeState());
+      }),
+    []
+  );
 
   const startGhostMode = useCallback(
     async (input: { targetProfileId: string; targetFullName: string }) => {
@@ -63,11 +81,26 @@ export function GhostModeProvider({ children }: PropsWithChildren) {
         return { success: false, message: audit.message };
       }
 
+      const previousTenantId = await getStoredTenantId();
+      const previousTenantBranding = await getStoredActiveIgrejaBranding();
+
+      // Alinha x-tenant-id à igreja do alvo antes de ativar o Ghost (evita RLS vazia).
+      const tenantSwitch = await activateTenantForGhostTarget(input.targetProfileId);
+      if (!tenantSwitch.success) {
+        return {
+          success: false,
+          message:
+            tenantSwitch.message || 'Não foi possível alinhar a igreja do usuário no Ghost.',
+        };
+      }
+
       setGhostModeState({
         targetProfileId: input.targetProfileId,
         targetFullName: input.targetFullName,
         realProfileId,
         startedAt: new Date().toISOString(),
+        previousTenantId,
+        previousTenantBranding,
       });
 
       invalidateSessionProfileCache();
@@ -92,6 +125,7 @@ export function GhostModeProvider({ children }: PropsWithChildren) {
     });
 
     clearGhostModeState();
+    await restoreTenantAfterGhost(current);
     invalidateSessionProfileCache();
     invalidateAccessControlCache({ allProfiles: true });
     router.replace('/(tabs)');

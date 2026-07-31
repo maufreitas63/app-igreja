@@ -8,6 +8,14 @@ export type GhostModeState = {
   targetFullName: string;
   realProfileId: string;
   startedAt: string;
+  /** Igreja ativa antes do Ghost (restaurada ao sair). */
+  previousTenantId: string | null;
+  previousTenantBranding: {
+    id: string;
+    code: string;
+    name: string;
+    logo_url: string | null;
+  } | null;
 };
 
 let ghostState: GhostModeState | null = null;

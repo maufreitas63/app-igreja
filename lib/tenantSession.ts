@@ -366,6 +366,65 @@ export async function activateSessionTenant(
   };
 }
 
+/**
+ * Alinha o header x-tenant-id à igreja primária do alvo do Ghost (só no cliente).
+ * Não chama set_session_active_tenant — evita alterar vínculos do operador/alvo no banco.
+ */
+export async function activateTenantForGhostTarget(
+  targetProfileId: string
+): Promise<{ success: boolean; message: string; tenantId: string | null }> {
+  const profileId = targetProfileId.trim();
+  if (!profileId) {
+    return { success: false, message: 'Perfil alvo inválido.', tenantId: null };
+  }
+
+  const { data, error } = await supabase.rpc('profile_primary_tenant_id', {
+    p_profile_id: profileId,
+  });
+
+  if (error) {
+    return {
+      success: false,
+      message: error.message || 'Não foi possível obter a igreja do usuário.',
+      tenantId: null,
+    };
+  }
+
+  const tenantId = data == null ? '' : String(data).trim();
+  if (!tenantId) {
+    return {
+      success: false,
+      message: 'O usuário não possui igreja vinculada.',
+      tenantId: null,
+    };
+  }
+
+  const currentTenantId = await getStoredTenantId();
+  if (currentTenantId === tenantId) {
+    return { success: true, message: 'Igreja já alinhada.', tenantId };
+  }
+
+  let churchHint: Pick<SessionIgreja, 'id' | 'code' | 'name' | 'logo_url'> | null = null;
+  try {
+    const churches = await listAdminIgrejas().catch(() => listSessionIgrejas());
+    const match = churches.find((row) => row.id === tenantId);
+    if (match) {
+      churchHint = match;
+    }
+  } catch {
+    churchHint = null;
+  }
+
+  if (churchHint) {
+    await persistActiveIgrejaBranding(churchHint);
+    await persistPreferredIgrejaCode(churchHint.code);
+  } else {
+    await persistTenantId(tenantId);
+  }
+
+  return { success: true, message: 'Igreja do usuário ativada para o Ghost.', tenantId };
+}
+
 export async function onboardIgrejaAdmin(code: string, name: string, logoUrl?: string | null) {
   const trimmedCode = code.trim();
   const trimmedName = name.trim();
