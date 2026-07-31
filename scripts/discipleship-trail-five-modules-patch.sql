@@ -91,7 +91,7 @@ begin
       tenant_id, module_id, title, content, video_url, reflection_question, sort_order, is_active, is_seed
     ) values
       (p_tenant_id, v_mod5, 'Descobrindo meus Dons',
-       'Deus distribui dons para o bem comum. Comece a identificar os seus.',
+       'Nesta etapa você descobre seus dons espirituais preenchendo o Perfil Ministerial. Use o botão «Perfil Ministerial» para responder ao questionário e, em seguida, conclua a lição.',
        null, null, 1, true, true),
       (p_tenant_id, v_mod5, 'Mordomia Cristã',
        'Mordomia é administrar com fidelidade tempo, talentos e recursos para a glória de Deus.',

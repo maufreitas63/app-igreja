@@ -9,7 +9,11 @@ import {
   type DiscipleshipVisualState,
   visualStateLabel,
 } from '@/lib/discipleshipTrail';
+import { isMinisterialGiftsLesson } from '@/lib/discipleshipMinisterialLesson';
+import { fetchMinisterialProfileResult } from '@/lib/ministerialProfileQuestionnaire';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MinisterialProfileForm } from '@/components/MinisterialProfileForm';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -25,6 +29,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 type Props = {
   onClose?: () => void;
@@ -48,6 +53,9 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
   } | null>(null);
   const [reflectionAnswer, setReflectionAnswer] = useState('');
   const [saving, setSaving] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [ministerialFormVisible, setMinisterialFormVisible] = useState(false);
+  const [hasMinisterialResult, setHasMinisterialResult] = useState(false);
   const [achievement, setAchievement] = useState<DiscipleshipAchievementEvent | null>(null);
   const celebrateScale = useRef(new Animated.Value(0.6)).current;
   const celebrateOpacity = useRef(new Animated.Value(0)).current;
@@ -83,6 +91,28 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
   }, [loadTrail]);
 
   useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const id = await resolveEffectiveProfileId();
+      if (!cancelled) {
+        setProfileId(id);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const refreshMinisterialResult = useCallback(async (id: string | null) => {
+    if (!id) {
+      setHasMinisterialResult(false);
+      return;
+    }
+    const result = await fetchMinisterialProfileResult(id);
+    setHasMinisterialResult(Boolean(result.success && result.hasResult));
+  }, []);
+
+  useEffect(() => {
     if (!achievement) {
       return;
     }
@@ -114,6 +144,11 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
     }
     setSelectedLesson({ module, lesson });
     setReflectionAnswer(lesson.progress?.reflection_answer ?? '');
+    if (isMinisterialGiftsLesson(module, lesson)) {
+      void refreshMinisterialResult(profileId);
+    } else {
+      setHasMinisterialResult(false);
+    }
   };
 
   const handleStartLesson = async () => {
@@ -158,6 +193,22 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
     if (needsReflection && reflectionAnswer.trim().length < 3) {
       setErrorMessage('Responda a pergunta de reflexão antes de concluir.');
       return;
+    }
+
+    if (isMinisterialGiftsLesson(selectedLesson.module, selectedLesson.lesson)) {
+      await refreshMinisterialResult(profileId);
+      const latest = profileId ? await fetchMinisterialProfileResult(profileId) : null;
+      const filled = Boolean(latest?.success && latest.hasResult);
+      setHasMinisterialResult(filled);
+      if (!filled) {
+        Toast.show({
+          type: 'info',
+          text1: 'Perfil Ministerial pendente',
+          text2: 'Preencha o questionário de dons antes de concluir esta lição.',
+          visibilityTime: 3500,
+        });
+        return;
+      }
     }
 
     setSaving(true);
@@ -367,7 +418,29 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
                   Conteúdo de apoio ainda não personalizado pela liderança.
                 </Text>
               )}
-              {selectedLesson?.lesson.video_url ? (
+              {selectedLesson
+              && isMinisterialGiftsLesson(selectedLesson.module, selectedLesson.lesson) ? (
+                <View style={styles.ministerialBlock}>
+                  <Text style={styles.ministerialHint}>
+                    Nesta lição você descobre seus dons preenchendo o Perfil Ministerial.
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.ministerialButton}
+                    onPress={() => setMinisterialFormVisible(true)}
+                    activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel="Perfil Ministerial"
+                  >
+                    <FontAwesome name="list-alt" size={16} color={MINIMAL_UI.blueDark} />
+                    <Text style={styles.ministerialButtonText}>Perfil Ministerial</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.ministerialStatus}>
+                    {hasMinisterialResult
+                      ? 'Questionário concluído — você já pode finalizar a lição.'
+                      : 'Status: pendente — abra o botão acima para responder.'}
+                  </Text>
+                </View>
+              ) : selectedLesson?.lesson.video_url ? (
                 <Text style={styles.videoLink}>Vídeo: {selectedLesson.lesson.video_url}</Text>
               ) : selectedLesson?.lesson.title === 'Bem-vindo à Família' ? (
                 <Text style={styles.modalBodyMuted}>Espaço reservado para link de vídeo.</Text>
@@ -474,6 +547,15 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
           </Animated.View>
         </View>
       </Modal>
+
+      <MinisterialProfileForm
+        visible={ministerialFormVisible}
+        profileId={profileId}
+        onClose={() => {
+          setMinisterialFormVisible(false);
+          void refreshMinisterialResult(profileId);
+        }}
+      />
     </View>
   );
 }
@@ -745,6 +827,38 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: MINIMAL_UI.blueDark,
     fontSize: 13,
+  },
+  ministerialBlock: {
+    marginTop: 12,
+    gap: 10,
+  },
+  ministerialHint: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+  },
+  ministerialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 50,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+  },
+  ministerialButtonText: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  ministerialStatus: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
   },
   reflectionBlock: {
     marginTop: 14,

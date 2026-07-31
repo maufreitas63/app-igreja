@@ -1,4 +1,3 @@
-import { MinisterialProfileForm } from '@/components/MinisterialProfileForm';
 import { MembersClassPanel } from '@/components/MembersClassPanel';
 import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ProfileClassPanel } from '@/components/ProfileClassPanel';
@@ -15,10 +14,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 export function PerfilClassPanel() {
   const [loading, setLoading] = useState(true);
   const [userPhone, setUserPhone] = useState<string | null>(null);
-  const [profileId, setProfileId] = useState<string | null>(null);
   const [manageProfile, setManageProfile] = useState(false);
   const [manageMembers, setManageMembers] = useState(false);
-  const [ministerialFormVisible, setMinisterialFormVisible] = useState(false);
   const [profileClassVisible, setProfileClassVisible] = useState(false);
   const [membersClassVisible, setMembersClassVisible] = useState(false);
   const [discipleshipTrailVisible, setDiscipleshipTrailVisible] = useState(false);
@@ -38,7 +35,6 @@ export function PerfilClassPanel() {
       }
 
       setUserPhone(phone);
-      setProfileId(resolvedProfileId);
 
       if (!resolvedProfileId) {
         setManageProfile(false);
@@ -56,6 +52,11 @@ export function PerfilClassPanel() {
 
       setManageProfile(access.manageProfile);
       setManageMembers(access.manageMembers);
+    } catch {
+      if (generation === loadGenerationRef.current) {
+        setManageProfile(false);
+        setManageMembers(false);
+      }
     } finally {
       if (generation === loadGenerationRef.current) {
         setLoading(false);
@@ -75,10 +76,6 @@ export function PerfilClassPanel() {
 
   const openManageMembers = useCallback(() => {
     setMembersClassVisible(true);
-  }, []);
-
-  const openMinisterialProfile = useCallback(() => {
-    setMinisterialFormVisible(true);
   }, []);
 
   const openDiscipleshipTrail = useCallback(() => {
@@ -106,14 +103,7 @@ export function PerfilClassPanel() {
       });
     }
 
-    items.push({
-      key: 'ministerial-profile',
-      label: 'Perfil Ministerial',
-      icon: 'quiz',
-      onPress: openMinisterialProfile,
-    });
-
-    // Sempre disponível no Perfil (como Perfil Ministerial); a tela/SQL tratam permissão e seed.
+    // Perfil Ministerial vive na lição 5.1 da Trilha («Descobrindo meus Dons»).
     items.push({
       key: 'discipleship-trail',
       label: 'Trilha de Discipulado',
@@ -122,14 +112,7 @@ export function PerfilClassPanel() {
     });
 
     return items;
-  }, [
-    manageMembers,
-    manageProfile,
-    openDiscipleshipTrail,
-    openManageMembers,
-    openManageProfile,
-    openMinisterialProfile,
-  ]);
+  }, [manageMembers, manageProfile, openDiscipleshipTrail, openManageMembers, openManageProfile]);
 
   if (discipleshipTrailVisible) {
     return (
@@ -158,11 +141,6 @@ export function PerfilClassPanel() {
           phoneParam={userPhone}
           onBack={() => setMembersClassVisible(false)}
         />
-        <MinisterialProfileForm
-          visible={ministerialFormVisible}
-          profileId={profileId}
-          onClose={() => setMinisterialFormVisible(false)}
-        />
       </View>
     );
   }
@@ -175,25 +153,11 @@ export function PerfilClassPanel() {
           phoneParam={userPhone}
           onBack={() => setProfileClassVisible(false)}
         />
-        <MinisterialProfileForm
-          visible={ministerialFormVisible}
-          profileId={profileId}
-          onClose={() => setMinisterialFormVisible(false)}
-        />
       </View>
     );
   }
 
-  return (
-    <>
-      <PerfilClass loading={loading} actions={actions} />
-      <MinisterialProfileForm
-        visible={ministerialFormVisible}
-        profileId={profileId}
-        onClose={() => setMinisterialFormVisible(false)}
-      />
-    </>
-  );
+  return <PerfilClass loading={loading} actions={actions} />;
 }
 
 const styles = StyleSheet.create({

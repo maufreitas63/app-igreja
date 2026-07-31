@@ -5,6 +5,7 @@ import {
   type DiscipleshipAdminLesson,
   type DiscipleshipAdminModule,
 } from '@/lib/discipleshipTrailAdmin';
+import { isMinisterialGiftsLesson } from '@/lib/discipleshipMinisterialLesson';
 import {
   computeMaintenanceContentHeight,
   maintenancePanelStyles,
@@ -308,15 +309,28 @@ export function MaintenanceDiscipleshipThemesCard({
                                 value={draft.content}
                                 onChangeText={(content) => setDraft({ ...draft, content })}
                               />
-                              <Text style={styles.fieldLabel}>URL do vídeo (opcional)</Text>
-                              <TextInput
-                                style={styles.input}
-                                autoCapitalize="none"
-                                value={draft.video_url}
-                                onChangeText={(video_url) => setDraft({ ...draft, video_url })}
-                                placeholder="https://..."
-                                placeholderTextColor={MINIMAL_UI.textMuted}
-                              />
+                              {isMinisterialGiftsLesson(module, lesson) ? (
+                                <View style={styles.ministerialNote}>
+                                  <Text style={styles.fieldLabel}>Atividade desta lição</Text>
+                                  <Text style={styles.ministerialNoteText}>
+                                    Em vez de URL de vídeo, o participante vê o botão «Perfil
+                                    Ministerial» para preencher o questionário de dons nesta etapa
+                                    (passo 5.1).
+                                  </Text>
+                                </View>
+                              ) : (
+                                <>
+                                  <Text style={styles.fieldLabel}>URL do vídeo (opcional)</Text>
+                                  <TextInput
+                                    style={styles.input}
+                                    autoCapitalize="none"
+                                    value={draft.video_url}
+                                    onChangeText={(video_url) => setDraft({ ...draft, video_url })}
+                                    placeholder="https://..."
+                                    placeholderTextColor={MINIMAL_UI.textMuted}
+                                  />
+                                </>
+                              )}
                               <Text style={styles.fieldLabel}>Pergunta de reflexão (opcional)</Text>
                               <TextInput
                                 style={[styles.input, styles.inputMultiline]}
@@ -463,6 +477,20 @@ const styles = StyleSheet.create({
   inputMultilineTall: {
     minHeight: 110,
     textAlignVertical: 'top',
+  },
+  ministerialNote: {
+    gap: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: '#EFF6FF',
+    padding: 10,
+  },
+  ministerialNoteText: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '600',
   },
   saveModuleBtn: {
     alignSelf: 'flex-start',

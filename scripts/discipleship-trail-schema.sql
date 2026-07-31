@@ -572,7 +572,7 @@ begin
     (
       p_tenant_id, v_mod5,
       'Descobrindo meus Dons',
-      'Deus distribui dons para o bem comum. Comece a identificar os seus.',
+      'Nesta etapa você descobre seus dons espirituais preenchendo o Perfil Ministerial. Use o botão «Perfil Ministerial» para responder ao questionário e, em seguida, conclua a lição.',
       null, null, 1, true, true
     ),
     (
