@@ -9,6 +9,7 @@
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+import { getStoredTenantId } from '@/lib/tenantSession';
 
 export const DISCIPLESHIP_TRAIL_SQL_HINT =
   'Execute no Supabase: scripts/discipleship-trail-schema.sql, scripts/discipleship-trail-badges-alerts.sql e scripts/discipleship-trail-progress-gates.sql';
@@ -258,6 +259,11 @@ export function visualStateLabel(state: DiscipleshipVisualState): string {
 export async function fetchDiscipleshipModulesWithLessons(): Promise<
   Array<DiscipleshipModule & { lessons: DiscipleshipLessonWithProgress[] }>
 > {
+  const tenantId = (await getStoredTenantId())?.trim() || null;
+  if (!tenantId) {
+    throw new Error('Igreja da sessão não identificada. Selecione a igreja e tente novamente.');
+  }
+
   const { data, error } = await supabase
     .from('discipleship_modules')
     .select(
@@ -268,6 +274,7 @@ export async function fetchDiscipleshipModulesWithLessons(): Promise<
       )
     `
     )
+    .eq('tenant_id', tenantId)
     .eq('is_active', true)
     .eq('lessons.is_active', true)
     .order('sort_order', { ascending: true })
@@ -303,6 +310,7 @@ export async function fetchDiscipleshipModulesWithLessons(): Promise<
           progress: null as UserDiscipleshipProgress | null,
           visualState: 'available' as DiscipleshipVisualState,
         }))
+        .filter((lesson) => lesson.tenant_id === tenantId)
         .sort((a, b) => a.sort_order - b.sort_order),
     };
   });
@@ -316,10 +324,17 @@ export async function fetchMyDiscipleshipProgress(
     return [];
   }
 
-  const { data, error } = await supabase
+  const tenantId = (await getStoredTenantId())?.trim() || null;
+  let query = supabase
     .from('user_discipleship_progress')
     .select(PROGRESS_COLUMNS)
     .eq('profile_id', effectiveProfileId);
+
+  if (tenantId) {
+    query = query.eq('tenant_id', tenantId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw error;
@@ -336,11 +351,18 @@ export async function fetchMyDiscipleshipBadges(
     return [];
   }
 
-  const { data, error } = await supabase
+  const tenantId = (await getStoredTenantId())?.trim() || null;
+  let query = supabase
     .from('user_discipleship_badges')
     .select(BADGE_COLUMNS)
     .eq('profile_id', effectiveProfileId)
     .order('earned_at', { ascending: true });
+
+  if (tenantId) {
+    query = query.eq('tenant_id', tenantId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     if (isSupabaseRpcMissingError(error, 'user_discipleship_badges') || isMissingRelation(error)) {

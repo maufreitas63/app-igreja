@@ -203,10 +203,7 @@ drop policy if exists discipleship_modules_select_tenant on public.discipleship_
 create policy discipleship_modules_select_tenant
   on public.discipleship_modules
   for select
-  using (
-    public.session_tenant_matches(tenant_id)
-    or public.is_super_admin_profile(public.current_session_profile_id())
-  );
+  using (public.session_tenant_matches(tenant_id));
 
 drop policy if exists discipleship_modules_insert_manage on public.discipleship_modules;
 create policy discipleship_modules_insert_manage
@@ -256,10 +253,7 @@ drop policy if exists discipleship_lessons_select_tenant on public.discipleship_
 create policy discipleship_lessons_select_tenant
   on public.discipleship_lessons
   for select
-  using (
-    public.session_tenant_matches(tenant_id)
-    or public.is_super_admin_profile(public.current_session_profile_id())
-  );
+  using (public.session_tenant_matches(tenant_id));
 
 drop policy if exists discipleship_lessons_insert_manage on public.discipleship_lessons;
 create policy discipleship_lessons_insert_manage
