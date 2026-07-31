@@ -91,6 +91,19 @@ const statusTone: Record<MaintenanceSupportStatus, { bg: string; border: string;
   not_applicable: { bg: 'rgba(248, 113, 113, 0.16)', border: '#F87171', text: '#FECACA' },
 };
 
+/** Badges legíveis no tema claro (rota /suggestions-improvements e Administrativo). */
+const statusToneVigilance: Record<
+  MaintenanceSupportStatus,
+  { bg: string; border: string; text: string }
+> = {
+  received: { bg: 'rgba(100, 116, 139, 0.14)', border: '#64748B', text: '#334155' },
+  in_review: { bg: 'rgba(245, 158, 11, 0.16)', border: '#D97706', text: '#92400E' },
+  in_development: { bg: 'rgba(58, 150, 221, 0.14)', border: '#0284C7', text: '#0C4A6E' },
+  awaiting_validation: { bg: 'rgba(168, 85, 247, 0.14)', border: '#7C3AED', text: '#5B21B6' },
+  completed: { bg: 'rgba(34, 197, 94, 0.14)', border: '#16A34A', text: '#166534' },
+  not_applicable: { bg: 'rgba(239, 68, 68, 0.14)', border: '#DC2626', text: '#991B1B' },
+};
+
 const formatDateTime = (value: string | null | undefined) => {
   if (!value) {
     return '—';
