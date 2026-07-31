@@ -64,6 +64,7 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
   const [hasMinisterialResult, setHasMinisterialResult] = useState(false);
   const [achievement, setAchievement] = useState<DiscipleshipAchievementEvent | null>(null);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
+  const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
   const celebrateScale = useRef(new Animated.Value(0.6)).current;
   const celebrateOpacity = useRef(new Animated.Value(0)).current;
 
@@ -373,7 +374,10 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
 
         {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
-        {(snapshot?.modules ?? []).map((module) => (
+        {(snapshot?.modules ?? []).map((module) => {
+          const moduleExpanded = expandedModuleId === module.id;
+
+          return (
           <View
             key={module.id}
             style={[
@@ -382,27 +386,46 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
               module.visualState === 'completed' && styles.moduleCardDone,
             ]}
           >
-            <View style={styles.moduleHeader}>
+            <Pressable
+              style={styles.moduleHeader}
+              onPress={() =>
+                setExpandedModuleId((current) => (current === module.id ? null : module.id))
+              }
+              accessibilityRole="button"
+              accessibilityState={{ expanded: moduleExpanded }}
+              accessibilityLabel={module.title}
+            >
               <View style={{ flex: 1, gap: 4 }}>
                 <Text style={styles.moduleTitle}>{module.title}</Text>
                 {module.description ? (
-                  <Text style={styles.moduleDescription}>{module.description}</Text>
+                  <Text style={styles.moduleDescription} numberOfLines={moduleExpanded ? undefined : 2}>
+                    {module.description}
+                  </Text>
                 ) : null}
+                <Text style={styles.moduleProgressLabel}>{module.percentComplete}%</Text>
               </View>
-              <View
-                style={[
-                  styles.statePill,
-                  { borderColor: STATE_COLORS[module.visualState] },
-                ]}
-              >
-                <Text style={[styles.statePillText, { color: STATE_COLORS[module.visualState] }]}>
-                  {visualStateLabel(module.visualState)}
-                </Text>
+              <View style={styles.moduleHeaderAside}>
+                <View
+                  style={[
+                    styles.statePill,
+                    { borderColor: STATE_COLORS[module.visualState] },
+                  ]}
+                >
+                  <Text style={[styles.statePillText, { color: STATE_COLORS[module.visualState] }]}>
+                    {visualStateLabel(module.visualState)}
+                  </Text>
+                </View>
+                <FontAwesome
+                  name={moduleExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={14}
+                  color={MINIMAL_UI.blueDark}
+                />
               </View>
-            </View>
+            </Pressable>
 
+            {moduleExpanded ? (
+              <>
             <View style={styles.moduleProgressHeader}>
-              <Text style={styles.moduleProgressLabel}>{module.percentComplete}%</Text>
               {module.badge ? (
                 <View style={styles.moduleBadgeInline}>
                   <FontAwesome
@@ -426,7 +449,9 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
                     Selo conquistado
                   </Text>
                 </View>
-              ) : null}
+              ) : (
+                <View />
+              )}
             </View>
             <View style={styles.progressTrack}>
               <View
@@ -482,8 +507,11 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
                 );
               })}
             </View>
+              </>
+            ) : null}
           </View>
-        ))}
+          );
+        })}
 
         {onClose ? (
           <TouchableOpacity style={styles.secondaryButton} onPress={onClose} activeOpacity={0.85}>
@@ -891,6 +919,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     alignItems: 'flex-start',
+  },
+  moduleHeaderAside: {
+    alignItems: 'flex-end',
+    gap: 8,
+    paddingTop: 2,
   },
   moduleTitle: {
     color: MINIMAL_UI.text,
