@@ -158,6 +158,7 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
     }
 
     setSaving(true);
+    setErrorMessage(null);
     try {
       const result = await completeLessonWithAchievements({
         lessonId: selectedLesson.lesson.id,
@@ -179,7 +180,9 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
           : null
       );
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao iniciar a lição.');
+      const message = error instanceof Error ? error.message : 'Falha ao iniciar a lição.';
+      setErrorMessage(message);
+      Toast.show({ type: 'error', text1: 'Não foi possível iniciar', text2: message });
     } finally {
       setSaving(false);
     }
@@ -192,7 +195,9 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
 
     const needsReflection = Boolean(selectedLesson.lesson.reflection_question?.trim());
     if (needsReflection && reflectionAnswer.trim().length < 3) {
-      setErrorMessage('Responda a pergunta de reflexão antes de concluir.');
+      const message = 'Responda a pergunta de reflexão antes de concluir.';
+      setErrorMessage(message);
+      Toast.show({ type: 'info', text1: 'Reflexão pendente', text2: message });
       return;
     }
 
@@ -226,9 +231,17 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
 
       if (result.achievement.moduleJustCompleted || result.achievement.trailJustCompleted) {
         setAchievement(result.achievement);
+      } else {
+        Toast.show({
+          type: 'success',
+          text1: 'Lição concluída',
+          text2: selectedLesson.lesson.title,
+        });
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Falha ao concluir a lição.');
+      const message = error instanceof Error ? error.message : 'Falha ao concluir a lição.';
+      setErrorMessage(message);
+      Toast.show({ type: 'error', text1: 'Não foi possível concluir', text2: message });
     } finally {
       setSaving(false);
     }
@@ -407,9 +420,20 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
         animationType="fade"
         onRequestClose={() => setSelectedLesson(null)}
       >
-        <Pressable style={styles.modalBackdrop} onPress={() => setSelectedLesson(null)}>
-          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.modalBackdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFillObject}
+            onPress={() => setSelectedLesson(null)}
+            accessibilityRole="button"
+            accessibilityLabel="Fechar lição"
+          />
+          <View style={styles.modalCard} accessibilityViewIsModal>
+            <ScrollView
+              style={styles.modalScroll}
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator
+              keyboardShouldPersistTaps="handled"
+            >
               <Text style={styles.modalEyebrow}>{selectedLesson?.module.title}</Text>
               <Text style={styles.modalTitle}>{selectedLesson?.lesson.title}</Text>
               {selectedLesson?.lesson.content ? (
@@ -468,7 +492,10 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
                   </View>
                 </TouchableOpacity>
               ) : selectedLesson?.lesson.title === 'Bem-vindo à Família' ? (
-                <Text style={styles.modalBodyMuted}>Espaço reservado para link de vídeo.</Text>
+                <Text style={styles.modalBodyMuted}>
+                  Vídeo opcional — a liderança pode cadastrar o link em Temas da Trilha. Você já
+                  pode concluir esta lição.
+                </Text>
               ) : null}
 
               {selectedLesson?.lesson.reflection_question ? (
@@ -488,45 +515,51 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
                 </View>
               ) : null}
 
-              <View style={styles.modalActions}>
-                {selectedLesson?.lesson.visualState !== 'completed'
-                  && selectedLesson?.lesson.visualState !== 'in_progress' ? (
-                  <TouchableOpacity
-                    style={styles.secondaryButton}
-                    onPress={() => void handleStartLesson()}
-                    disabled={saving}
-                    activeOpacity={0.85}
-                  >
-                    <Text style={styles.secondaryButtonText}>Iniciar</Text>
-                  </TouchableOpacity>
-                ) : null}
-
-                {selectedLesson?.lesson.visualState !== 'completed' ? (
-                  <TouchableOpacity
-                    style={styles.primaryButton}
-                    onPress={() => void handleCompleteLesson()}
-                    disabled={saving}
-                    activeOpacity={0.85}
-                  >
-                    {saving ? (
-                      <ActivityIndicator color="#FFF" />
-                    ) : (
-                      <Text style={styles.primaryButtonText}>Concluir lição</Text>
-                    )}
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.primaryButton}
-                    onPress={() => setSelectedLesson(null)}
-                    activeOpacity={0.85}
-                  >
-                    <Text style={styles.primaryButtonText}>Fechar</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+              {errorMessage && selectedLesson ? (
+                <Text style={styles.modalErrorText}>{errorMessage}</Text>
+              ) : null}
             </ScrollView>
-          </Pressable>
-        </Pressable>
+
+            <View style={styles.modalActions}>
+              {selectedLesson?.lesson.visualState !== 'completed'
+                && selectedLesson?.lesson.visualState !== 'in_progress' ? (
+                <TouchableOpacity
+                  style={styles.secondaryButton}
+                  onPress={() => void handleStartLesson()}
+                  disabled={saving}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.secondaryButtonText}>Iniciar</Text>
+                </TouchableOpacity>
+              ) : null}
+
+              {selectedLesson?.lesson.visualState !== 'completed' ? (
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  onPress={() => void handleCompleteLesson()}
+                  disabled={saving}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel="Concluir lição"
+                >
+                  {saving ? (
+                    <ActivityIndicator color="#FFF" />
+                  ) : (
+                    <Text style={styles.primaryButtonText}>Concluir lição</Text>
+                  )}
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  onPress={() => setSelectedLesson(null)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.primaryButtonText}>Fechar</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
       </Modal>
 
       <Modal
@@ -821,9 +854,18 @@ const styles = StyleSheet.create({
     maxHeight: '88%',
     borderRadius: 16,
     backgroundColor: '#FFF',
-    padding: 18,
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
+    overflow: 'hidden',
+    zIndex: 1,
+  },
+  modalScroll: {
+    flexGrow: 0,
+    flexShrink: 1,
+  },
+  modalScrollContent: {
+    padding: 18,
+    paddingBottom: 8,
   },
   modalEyebrow: {
     color: MINIMAL_UI.textMuted,
@@ -847,6 +889,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     fontStyle: 'italic',
+    marginTop: 8,
+  },
+  modalErrorText: {
+    marginTop: 12,
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
   },
   videoButton: {
     marginTop: 10,
@@ -927,8 +977,13 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
   },
   modalActions: {
-    marginTop: 16,
     gap: 8,
+    paddingHorizontal: 18,
+    paddingTop: 10,
+    paddingBottom: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: MINIMAL_UI.divider,
+    backgroundColor: '#FFF',
   },
   celebrateBackdrop: {
     flex: 1,
