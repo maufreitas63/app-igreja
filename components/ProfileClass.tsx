@@ -8,6 +8,7 @@ import {
 } from '@/lib/manageProfile/shared';
 import { PROFILE_CLASS_ICON_COLOR, profileClassStyles } from '@/lib/manageProfile/profileClassStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { BiometricUnlockSettingsCard } from '@/components/BiometricUnlockSettingsCard';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView } from 'expo-camera';
 import { Image } from 'expo-image';
@@ -312,6 +313,10 @@ export function ProfileClass({
               </View>
             ) : null}
           </View>
+        ) : null}
+
+        {!isRecoveryAccessPinFlow ? (
+          <BiometricUnlockSettingsCard iconColor={PROFILE_CLASS_ICON_COLOR} />
         ) : null}
 
         {loading ? (

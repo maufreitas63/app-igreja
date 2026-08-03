@@ -65,6 +65,7 @@ import {
   getStoredUserPhone,
   persistUserPhone,
   persistUserSession,
+  resolveProfileId,
   SIGN_OUT_QUERY_PARAM,
 } from '@/lib/userSession';
 import {
@@ -74,6 +75,12 @@ import {
   normalizePhoneDigits,
   persistTotemDeviceSession,
 } from '@/lib/totemDevice';
+import {
+  getBiometricAvailability,
+  isBiometricUnlockEnabled,
+  maybeOfferBiometricEnrollment,
+  unlockSessionWithBiometrics,
+} from '@/lib/biometricAuth';
 
 export default function IndexScreen() {
   const {
@@ -123,6 +130,9 @@ export default function IndexScreen() {
   const [firstAccessEmail, setFirstAccessEmail] = useState('');
   const [firstAccessEmailConfirm, setFirstAccessEmailConfirm] = useState('');
   const [firstAccessEmailMasked, setFirstAccessEmailMasked] = useState('');
+  const [biometricLoginAvailable, setBiometricLoginAvailable] = useState(false);
+  const [biometricLoginLabel, setBiometricLoginLabel] = useState('Biometria');
+  const [isBiometricUnlocking, setIsBiometricUnlocking] = useState(false);
   const isTotemLoginMode = Boolean(
     celTotemPhone && normalizePhoneDigits(phone) === celTotemPhone
   );
@@ -218,7 +228,11 @@ export default function IndexScreen() {
       profile: Record<string, unknown>,
       phoneForSession: string,
       sessionToken?: string | null,
-      options?: { afterPasswordRecovery?: boolean; recoveryPin?: string }
+      options?: {
+        afterPasswordRecovery?: boolean;
+        recoveryPin?: string;
+        skipBiometricOffer?: boolean;
+      }
     ) => {
       await persistUserSession(profile, phoneForSession, sessionToken);
       await notifyAppActiveSessionEstablished();
@@ -235,6 +249,17 @@ export default function IndexScreen() {
           )
         );
         return true;
+      }
+
+      // Atalho nativo: oferece biometria sem substituir telefone+PIN.
+      if (!options?.skipBiometricOffer) {
+        const profileId = resolveProfileId(profile);
+        if (profileId) {
+          await maybeOfferBiometricEnrollment({
+            phone: phoneForSession,
+            profileId,
+          });
+        }
       }
 
       const lgpdAtivo = await isLgpdAtivoEnabled();
@@ -431,6 +456,76 @@ export default function IndexScreen() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+
+    void (async () => {
+      try {
+        const [enabled, availability] = await Promise.all([
+          isBiometricUnlockEnabled(),
+          getBiometricAvailability(),
+        ]);
+
+        if (!active) {
+          return;
+        }
+
+        setBiometricLoginLabel(availability.label);
+        setBiometricLoginAvailable(enabled && availability.supported);
+      } catch (error) {
+        console.warn('biometric login option:', error);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleBiometricLogin = useCallback(async () => {
+    if (isBiometricUnlocking || isLoading || isVerifyingPinRef.current) {
+      return;
+    }
+
+    setIsBiometricUnlocking(true);
+
+    try {
+      const unlock = await unlockSessionWithBiometrics();
+
+      if (!unlock.ok || !unlock.profile || !unlock.phone) {
+        if (unlock.message) {
+          Alert.alert('Biometria', unlock.message);
+        }
+
+        setLoginStep(2);
+        setPinDeliveryUnlocked(true);
+        setHasStoredAccessPin(true);
+        focusPinInput();
+        return;
+      }
+
+      const continued = await continueWithExistingProfile(
+        unlock.profile,
+        unlock.phone,
+        unlock.sessionToken,
+        { skipBiometricOffer: true }
+      );
+
+      if (!continued) {
+        Alert.alert('Erro de Acesso', 'Não foi possível continuar com a biometria. Use a senha.');
+        setLoginStep(2);
+        focusPinInput();
+      }
+    } catch (error) {
+      console.error('Erro no login biométrico:', error);
+      Alert.alert('Biometria', 'Não foi possível entrar. Digite a senha de 4 dígitos.');
+      setLoginStep(2);
+      focusPinInput();
+    } finally {
+      setIsBiometricUnlocking(false);
+    }
+  }, [continueWithExistingProfile, focusPinInput, isLoading, isBiometricUnlocking]);
+
+  useEffect(() => {
     if (skipSessionRestore) {
       setIsTotemConfigLoading(false);
       setIsRestoringSession(false);
@@ -457,6 +552,50 @@ export default function IndexScreen() {
           normalizePhoneDigits(storedPhone) === configuredTotemPhone
         ) {
           router.replace('/totem-checkin');
+          return;
+        }
+
+        const biometricEnabled = await isBiometricUnlockEnabled();
+        if (!active) {
+          return;
+        }
+
+        if (biometricEnabled) {
+          const availability = await getBiometricAvailability();
+          if (!active) {
+            return;
+          }
+
+          setBiometricLoginLabel(availability.label);
+          setBiometricLoginAvailable(availability.supported);
+
+          if (availability.supported) {
+            const unlock = await unlockSessionWithBiometrics();
+            if (!active) {
+              return;
+            }
+
+            if (unlock.ok && unlock.profile && unlock.phone) {
+              const continued = await continueWithExistingProfile(
+                unlock.profile,
+                unlock.phone,
+                unlock.sessionToken,
+                { skipBiometricOffer: true }
+              );
+
+              if (continued) {
+                return;
+              }
+            }
+
+            // Fallback: mantém telefone+PIN na tela.
+            if (storedPhone?.trim()) {
+              setPhone(formatBrazilPhoneInput(storedPhone));
+              setLoginStep(2);
+              setPinDeliveryUnlocked(true);
+              setHasStoredAccessPin(true);
+            }
+          }
         }
       } catch (error) {
         console.error('Erro ao restaurar sessão:', error);
@@ -991,6 +1130,30 @@ export default function IndexScreen() {
                 <Text style={styles.btnText}>Continuar</Text>
               </TouchableOpacity>
 
+              {biometricLoginAvailable ? (
+                <TouchableOpacity
+                  accessibilityLabel={`Entrar com ${biometricLoginLabel}`}
+                  accessibilityRole="button"
+                  disabled={isBiometricUnlocking || isLoading}
+                  onPress={() => {
+                    void handleBiometricLogin();
+                  }}
+                  style={[
+                    styles.btnBiometric,
+                    (isBiometricUnlocking || isLoading) && styles.btnPrimaryDisabled,
+                  ]}
+                >
+                  {isBiometricUnlocking ? (
+                    <ActivityIndicator color={LOGIN_ACCENT} />
+                  ) : (
+                    <>
+                      <FontAwesome name="lock" size={18} color={LOGIN_ACCENT} />
+                      <Text style={styles.btnBiometricText}>Entrar com {biometricLoginLabel}</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              ) : null}
+
               {!isTotemLoginMode ? (
                 <ReadOnlyText style={styles.helpText}>
                   É sua primeira vez? O Ministério de Acolhimento da Igreja pode ajudar.
@@ -1152,6 +1315,30 @@ export default function IndexScreen() {
                   <ActivityIndicator color={LOGIN_ACCENT} style={styles.loginLoader} />
                 ) : null}
               </View>
+
+              {!isTotemLoginMode && biometricLoginAvailable ? (
+                <TouchableOpacity
+                  accessibilityLabel={`Entrar com ${biometricLoginLabel}`}
+                  accessibilityRole="button"
+                  disabled={isBiometricUnlocking || isLoading}
+                  onPress={() => {
+                    void handleBiometricLogin();
+                  }}
+                  style={[
+                    styles.btnBiometric,
+                    (isBiometricUnlocking || isLoading) && styles.btnPrimaryDisabled,
+                  ]}
+                >
+                  {isBiometricUnlocking ? (
+                    <ActivityIndicator color={LOGIN_ACCENT} />
+                  ) : (
+                    <>
+                      <FontAwesome name="lock" size={18} color={LOGIN_ACCENT} />
+                      <Text style={styles.btnBiometricText}>Entrar com {biometricLoginLabel}</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              ) : null}
 
               {!isTotemLoginMode && isLikelyFirstAccess ? (
                 <ReadOnlyText style={styles.helpText}>
@@ -1525,6 +1712,25 @@ const styles = StyleSheet.create({
   },
   btnPrimaryDisabled: {
     opacity: 0.45,
+  },
+  btnBiometric: {
+    marginTop: 14,
+    borderWidth: 1.5,
+    borderColor: LOGIN_INPUT_BORDER,
+    backgroundColor: '#F8FBFF',
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
+  },
+  btnBiometricText: {
+    color: LOGIN_ICON,
+    fontWeight: '700',
+    fontSize: 15,
   },
   btnText: {
     color: LOGIN_SUBMIT_TEXT,

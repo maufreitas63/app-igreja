@@ -337,6 +337,16 @@ export async function clearUserSession(options?: { keepPhone?: boolean }) {
         ]
   );
   scrubWebSessionKeys({ keepPhone });
+
+  // Troca completa de conta: remove atalho biométrico deste aparelho.
+  if (!keepPhone) {
+    try {
+      const { disableBiometricUnlock } = await import('@/lib/biometricAuth');
+      await disableBiometricUnlock();
+    } catch {
+      // best-effort
+    }
+  }
 }
 
 const LOGIN_AFTER_SIGN_OUT_ROUTE = {
