@@ -99,6 +99,12 @@ export async function persistUserSession(
     await AsyncStorage.setItem(USER_SESSION_TOKEN_STORAGE_KEY, token);
   }
 
+  const { patchSessionRequestIdentity } = await import('@/lib/sessionRequestIdentity');
+  patchSessionRequestIdentity({
+    profileId: profileId ?? null,
+    sessionToken: token,
+  });
+
   // Evita ACL/perfil cacheados de tentativas anteriores (fail-closed falso após PIN).
   try {
     const { invalidateSessionProfileCache } = await import('@/lib/sessionProfile');
@@ -114,10 +120,14 @@ export async function persistSessionToken(sessionToken: string | null | undefine
   const token = sessionToken?.trim();
   if (token) {
     await AsyncStorage.setItem(USER_SESSION_TOKEN_STORAGE_KEY, token);
+    const { patchSessionRequestIdentity } = await import('@/lib/sessionRequestIdentity');
+    patchSessionRequestIdentity({ sessionToken: token });
     return;
   }
 
   await AsyncStorage.removeItem(USER_SESSION_TOKEN_STORAGE_KEY);
+  const { patchSessionRequestIdentity } = await import('@/lib/sessionRequestIdentity');
+  patchSessionRequestIdentity({ sessionToken: null });
 }
 
 
@@ -127,6 +137,8 @@ export async function persistProfileId(profileId: string | null | undefined) {
   if (profileId?.trim()) {
 
     await AsyncStorage.setItem(USER_PROFILE_ID_STORAGE_KEY, profileId.trim());
+    const { patchSessionRequestIdentity } = await import('@/lib/sessionRequestIdentity');
+    patchSessionRequestIdentity({ profileId: profileId.trim() });
 
   }
 
@@ -168,6 +180,8 @@ export async function getStoredSessionToken() {
 export async function clearStoredProfileId() {
 
   await AsyncStorage.removeItem(USER_PROFILE_ID_STORAGE_KEY);
+  const { patchSessionRequestIdentity } = await import('@/lib/sessionRequestIdentity');
+  patchSessionRequestIdentity({ profileId: null });
 
 }
 
@@ -338,6 +352,9 @@ export async function clearUserSession(options?: { keepPhone?: boolean }) {
   );
   scrubWebSessionKeys({ keepPhone });
 
+  const { clearSessionRequestIdentityMemory } = await import('@/lib/sessionRequestIdentity');
+  clearSessionRequestIdentityMemory();
+
   // Troca completa de conta: remove atalho biométrico deste aparelho.
   if (!keepPhone) {
     try {
@@ -360,6 +377,9 @@ const clearUserSessionImmediately = () => {
   scrubWebSessionKeys({ keepPhone: true });
   resetProfileScreenVisitTracking();
   void revokeStoredProfileSession();
+  void import('@/lib/sessionRequestIdentity').then(({ clearSessionRequestIdentityMemory }) =>
+    clearSessionRequestIdentityMemory()
+  );
   void import('@/lib/tenantSession').then(
     ({
       USER_TENANT_ID_STORAGE_KEY: tenantKey,

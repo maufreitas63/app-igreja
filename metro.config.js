@@ -15,4 +15,21 @@ config.transformer = {
   unstable_allowRequireContext: true,
 };
 
+// O pacote Node `ws` não deve entrar no bundle Android/iOS.
+const previousResolveRequest = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (
+    (platform === 'android' || platform === 'ios')
+    && (moduleName === 'ws' || moduleName.startsWith('ws/'))
+  ) {
+    return { type: 'empty' };
+  }
+
+  if (typeof previousResolveRequest === 'function') {
+    return previousResolveRequest(context, moduleName, platform);
+  }
+
+  return context.resolveRequest(context, moduleName, platform);
+};
+
 module.exports = config;

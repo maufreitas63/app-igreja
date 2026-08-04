@@ -103,6 +103,13 @@ const config: ExpoConfig = {
           'Permita o uso do Face ID para entrar no app de forma rápida e segura.',
       },
     ],
+    [
+      'expo-location',
+      {
+        locationWhenInUsePermission:
+          'Permita a localização para check-in, geolocalização de eventos e recursos que usam GPS.',
+      },
+    ],
     'expo-font',
   ],
   experiments: {

@@ -148,6 +148,9 @@ export async function persistTenantId(
     await AsyncStorage.removeItem(USER_TENANT_ID_STORAGE_KEY);
   }
 
+  const { patchSessionRequestIdentity } = await import('@/lib/sessionRequestIdentity');
+  patchSessionRequestIdentity({ tenantId: id });
+
   if (previous !== id) {
     invalidateTenantScopedCaches();
     if (shouldNotify) {
@@ -243,6 +246,8 @@ export async function resolveActiveIgrejaBranding(): Promise<ActiveIgrejaBrandin
 export async function clearTenantId() {
   const previous = await getStoredTenantId();
   await AsyncStorage.multiRemove([USER_TENANT_ID_STORAGE_KEY, USER_TENANT_BRANDING_STORAGE_KEY]);
+  const { patchSessionRequestIdentity } = await import('@/lib/sessionRequestIdentity');
+  patchSessionRequestIdentity({ tenantId: null });
   if (previous) {
     invalidateTenantScopedCaches();
     notifyActiveTenantChange(null);

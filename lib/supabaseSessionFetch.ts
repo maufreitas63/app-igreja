@@ -1,28 +1,21 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getGhostEffectiveProfileId } from '@/lib/ghostMode';
-
-/** Mesmas chaves de `lib/userSession.ts` / `lib/tenantSession.ts` — evita import circular com supabase. */
-const USER_PROFILE_ID_STORAGE_KEY = 'user_profile_id';
-const USER_SESSION_TOKEN_STORAGE_KEY = 'user_session_token';
-const USER_TENANT_ID_STORAGE_KEY = 'user_tenant_id';
+import { getSessionRequestIdentity } from '@/lib/sessionRequestIdentity';
 
 /** Envia token de sessão (fase 2), profile-id e tenant ativo. */
 export const supabaseSessionFetch: typeof fetch = async (input, init) => {
-  const sessionToken = (await AsyncStorage.getItem(USER_SESSION_TOKEN_STORAGE_KEY))?.trim();
-  const profileId = (await AsyncStorage.getItem(USER_PROFILE_ID_STORAGE_KEY))?.trim();
-  const tenantId = (await AsyncStorage.getItem(USER_TENANT_ID_STORAGE_KEY))?.trim();
+  const identity = await getSessionRequestIdentity();
   const headers = new Headers(init?.headers);
 
-  if (sessionToken) {
-    headers.set('x-session-token', sessionToken);
+  if (identity.sessionToken) {
+    headers.set('x-session-token', identity.sessionToken);
   }
 
-  if (profileId) {
-    headers.set('x-profile-id', profileId);
+  if (identity.profileId) {
+    headers.set('x-profile-id', identity.profileId);
   }
 
-  if (tenantId) {
-    headers.set('x-tenant-id', tenantId);
+  if (identity.tenantId) {
+    headers.set('x-tenant-id', identity.tenantId);
   }
 
   const ghostProfileId = getGhostEffectiveProfileId();

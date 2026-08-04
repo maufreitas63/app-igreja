@@ -34,9 +34,10 @@ export default function MapGeolocalizacaoNativeFallback() {
       </View>
 
       <View style={styles.body}>
-        <Text style={styles.infoTitle}>Deploy PWA validado</Text>
+        <Text style={styles.infoTitle}>Mapa disponível no PWA</Text>
         <Text style={styles.infoText}>
-          O mapa com clustering está ativo para a versão web (PWA), que é o alvo de deploy.
+          O mapa geral com clustering e lista de membros no GPS funciona na versão web (PWA) do
+          app. No aplicativo instalado (APK), use o navegador ou o PWA instalado para este recurso.
         </Text>
       </View>
     </SafeAreaView>
