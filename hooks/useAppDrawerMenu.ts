@@ -54,8 +54,13 @@ function isDrawerModuleEnabled(
     return true;
   }
 
-  if (moduleKey === 'menu_igrejas' || moduleKey === 'auditor') {
+  if (moduleKey === 'menu_igrejas') {
     return context.isSuperAdmin;
+  }
+
+  // Ghost: mesmo critério do painel de manutenção (não exige só super_admin).
+  if (moduleKey === 'auditor') {
+    return context.canOperateGhostMode || context.isSuperAdmin;
   }
 
   if (moduleKey in DRAWER_MEMBER_CARD_BY_MODULE) {

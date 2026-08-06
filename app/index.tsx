@@ -235,6 +235,12 @@ export default function IndexScreen() {
       }
     ) => {
       await persistUserSession(profile, phoneForSession, sessionToken);
+      try {
+        const { ensureSessionReady } = await import('@/lib/ensureSessionReady');
+        await ensureSessionReady();
+      } catch {
+        // best-effort — login segue mesmo se renovar token falhar offline
+      }
       await notifyAppActiveSessionEstablished();
 
       if (

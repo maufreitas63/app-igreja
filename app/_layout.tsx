@@ -9,8 +9,10 @@ import { AppBackHandler } from '@/components/AppBackHandler';
 import { AppShell } from '@/components/AppShell';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
 import { GhostModeBanner } from '@/components/GhostModeBanner';
+import { PwaAppShell } from '@/components/PwaAppShell';
 import { GhostModeProvider } from '@/context/GhostModeContext';
 import { appToastConfig } from '@/components/ui/appToastConfig';
+import { isApkPwaShellEnabled } from '@/lib/apkRuntimeMode';
 import { installExecutionErrorClipboard } from '@/lib/appToast';
 import { ICON_FONT_SOURCES } from '@/lib/iconFonts';
 import { installWebTextSelectionGuard, WEB_NON_SELECTABLE_VIEW_STYLES } from '@/lib/webTextSelectionGuard';
@@ -23,6 +25,8 @@ installExecutionErrorClipboard();
 
 export default function RootLayout() {
   const [iconFontsLoaded] = useFonts(ICON_FONT_SOURCES);
+  // APK EAS com EXPO_PUBLIC_APK_SHELL_MODE=pwa: mesma experiência da PWA em produção.
+  const usePwaShell = Platform.OS !== 'web' && isApkPwaShellEnabled();
 
   useEffect(() => installWebTextSelectionGuard(), []);
 
@@ -32,6 +36,10 @@ export default function RootLayout() {
         <ActivityIndicator size="large" color="#10b981" />
       </View>
     );
+  }
+
+  if (usePwaShell) {
+    return <PwaAppShell />;
   }
 
   return (

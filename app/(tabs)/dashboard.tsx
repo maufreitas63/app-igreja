@@ -2581,7 +2581,7 @@ export default function Dashboard() {
             initialNumToRender={carouselData.length}
             maxToRenderPerBatch={carouselData.length}
             windowSize={Math.max(5, carouselData.length)}
-            removeClippedSubviews={Platform.OS !== 'web'}
+            removeClippedSubviews={false}
             onScroll={handleScroll}
             onScrollToIndexFailed={handleDashboardScrollToIndexFailed}
             scrollEventThrottle={16}

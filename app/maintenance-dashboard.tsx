@@ -1995,7 +1995,7 @@ export default function MaintenanceDashboard() {
                 initialNumToRender={maintenanceCardCount}
                 maxToRenderPerBatch={Math.min(5, maintenanceCardCount)}
                 windowSize={Math.max(5, maintenanceCardCount)}
-                removeClippedSubviews={Platform.OS !== 'web'}
+                removeClippedSubviews={false}
                 onScroll={handleCarouselScroll}
                 onScrollToIndexFailed={handleCarouselScrollToIndexFailed}
                 scrollEventThrottle={16}
