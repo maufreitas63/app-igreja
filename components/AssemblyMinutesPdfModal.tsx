@@ -1,4 +1,5 @@
 import { FontAwesome } from '@expo/vector-icons';
+import { openPdfUri } from '@/lib/openPdfUri';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import {
@@ -16,14 +17,6 @@ type Props = {
   title: string;
   pdfUrl: string | null;
   onClose: () => void;
-};
-
-const openPdfInNewTab = (pdfUrl: string) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.open(pdfUrl, '_blank', 'noopener,noreferrer');
 };
 
 export function AssemblyMinutesPdfModal({ visible, title, pdfUrl, onClose }: Props) {
@@ -60,7 +53,7 @@ export function AssemblyMinutesPdfModal({ visible, title, pdfUrl, onClose }: Pro
           ) : (
             <View style={styles.nativeFallback}>
               <Text style={styles.nativeFallbackText}>
-                Visualização embutida disponível na versão web. Use o botão abaixo para abrir o PDF.
+                No aplicativo, use o botão abaixo para abrir ou compartilhar o PDF.
               </Text>
             </View>
           )}
@@ -68,11 +61,15 @@ export function AssemblyMinutesPdfModal({ visible, title, pdfUrl, onClose }: Pro
           <View style={styles.actions}>
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => openPdfInNewTab(pdfUrl)}
+              onPress={() => {
+                void openPdfUri(pdfUrl);
+              }}
               activeOpacity={0.85}
             >
               <FontAwesome name="external-link" size={14} color={MINIMAL_UI.blueDark} />
-              <Text style={styles.actionButtonText}>Abrir em nova aba</Text>
+              <Text style={styles.actionButtonText}>
+                {Platform.OS === 'web' ? 'Abrir em nova aba' : 'Abrir / compartilhar'}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.85}>
               <Text style={styles.closeButtonText}>Fechar</Text>

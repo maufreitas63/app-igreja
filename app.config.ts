@@ -110,6 +110,7 @@ const config: ExpoConfig = {
           'Permita a localização para check-in, geolocalização de eventos e recursos que usam GPS.',
       },
     ],
+    'expo-document-picker',
     'expo-font',
   ],
   experiments: {

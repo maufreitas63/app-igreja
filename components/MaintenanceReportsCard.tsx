@@ -960,7 +960,7 @@ export function MaintenanceReportsCard({
 
   const closePdfPreview = useCallback(() => {
     setPdfPreview((current) => {
-      if (current?.url) {
+      if (current?.url && current.url.startsWith('blob:') && typeof URL !== 'undefined') {
         URL.revokeObjectURL(current.url);
       }
       return null;
@@ -974,6 +974,7 @@ export function MaintenanceReportsCard({
 
   const downloadSupportSuggestionsPdf = useCallback((pdfUrl: string) => {
     if (typeof document === 'undefined') {
+      void import('@/lib/openPdfUri').then(({ openPdfUri }) => openPdfUri(pdfUrl));
       return;
     }
 
@@ -998,9 +999,11 @@ export function MaintenanceReportsCard({
 
       try {
         const url = await buildSupportSuggestionsReportPdfObjectUrl(result);
-        downloadSupportSuggestionsPdf(url);
+        if (typeof document !== 'undefined' && url.startsWith('blob:')) {
+          downloadSupportSuggestionsPdf(url);
+        }
         setPdfPreview((current) => {
-          if (current?.url) {
+          if (current?.url && current.url.startsWith('blob:') && typeof URL !== 'undefined') {
             URL.revokeObjectURL(current.url);
           }
 

@@ -48,11 +48,22 @@ export function ClientGeoLeafletMap({
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
       return;
     }
 
     let active = true;
+    const href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    let link: HTMLLinkElement | null = null;
+
+    const existing = document.querySelector(`link[data-geo-map-css="${href}"]`) as HTMLLinkElement | null;
+    if (!existing) {
+      link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.setAttribute('data-geo-map-css', href);
+      document.head.appendChild(link);
+    }
 
     void import('./GeoLeafletMap.web')
       .then((mod) => {

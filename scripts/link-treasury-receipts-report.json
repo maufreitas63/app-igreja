@@ -1,0 +1,3775 @@
+{
+  "runAt": "2026-07-01T23:58:48.350Z",
+  "dryRun": false,
+  "force": false,
+  "receiptsDir": "C:\\IBN Tesouraria\\Comprovantes\\JPG",
+  "summary": {
+    "totalRealizado": 738,
+    "skippedAlreadyLinked": 8,
+    "fileNotFound": 702,
+    "invalidFilename": 0,
+    "linked": 28,
+    "errors": 0
+  },
+  "linked": [
+    {
+      "entryId": "2f6bde69-d373-4a00-9b6a-c4faf4056e4a",
+      "label": "20260102 · R$ 1000,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20260102 1000,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260102 1000,00.jpg",
+      "storagePath": "receipts/2f6bde69-d373-4a00-9b6a-c4faf4056e4a/1782950328354.jpg"
+    },
+    {
+      "entryId": "ae9468e9-3616-4d05-a686-bcfc93632a42",
+      "label": "20260102 · R$ 1000,00 · ENTRE CONTAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260102 1000,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260102 1000,00.jpg",
+      "storagePath": "receipts/ae9468e9-3616-4d05-a686-bcfc93632a42/1782950329345.jpg"
+    },
+    {
+      "entryId": "46aee5b5-9dde-4bdb-8003-3a9e2bd5100d",
+      "label": "20260106 · R$ 30000,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260106 30000,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260106 30000,00.jpg",
+      "storagePath": "receipts/46aee5b5-9dde-4bdb-8003-3a9e2bd5100d/1782950330534.jpg"
+    },
+    {
+      "entryId": "8e6d3d61-848b-4e43-be54-a2bea2adc058",
+      "label": "20260106 · R$ 30000,00 · ENTRE CONTAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260106 30000,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260106 30000,00.jpg",
+      "storagePath": "receipts/8e6d3d61-848b-4e43-be54-a2bea2adc058/1782950331505.jpg"
+    },
+    {
+      "entryId": "751612dd-caf4-4e10-ab0b-17e88355f073",
+      "label": "20260108 · R$ 9746,76 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20260108 9746,76.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260108 9746,76.jpg",
+      "storagePath": "receipts/751612dd-caf4-4e10-ab0b-17e88355f073/1782950332745.jpg"
+    },
+    {
+      "entryId": "aea9f028-4067-4e0e-ac5b-496afa0ecc6e",
+      "label": "20260113 · R$ 700,04 · SAÍDAS · SICREDI · SOCIAL",
+      "expectedFilename": "20260113 700,04.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260113 700,04.jpg",
+      "storagePath": "receipts/aea9f028-4067-4e0e-ac5b-496afa0ecc6e/1782950333328.jpg"
+    },
+    {
+      "entryId": "a94ae55b-8b78-48b8-ab52-2c991ad6d97e",
+      "label": "20260122 · R$ 76,47 · SAÍDAS · SICREDI · SOCIAL",
+      "expectedFilename": "20260122 76,47.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260122 76,47.jpg",
+      "storagePath": "receipts/a94ae55b-8b78-48b8-ab52-2c991ad6d97e/1782950333870.jpg"
+    },
+    {
+      "entryId": "ece297ee-d998-4b00-b527-e98304d56a0a",
+      "label": "20260126 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20260126 3825,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260126 3825,00.jpg",
+      "storagePath": "receipts/ece297ee-d998-4b00-b527-e98304d56a0a/1782950334838.jpg"
+    },
+    {
+      "entryId": "f21a677d-30bb-41fe-933c-9cc01a9010db",
+      "label": "20260202 · R$ 100,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260202 100,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260202 100,00.jpg",
+      "storagePath": "receipts/f21a677d-30bb-41fe-933c-9cc01a9010db/1782950335788.jpg"
+    },
+    {
+      "entryId": "22259257-914a-4502-9d58-e5e062c15679",
+      "label": "20260210 · R$ 10297,28 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20260210 10297,28.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260210 10297,28.jpg",
+      "storagePath": "receipts/22259257-914a-4502-9d58-e5e062c15679/1782950336450.jpg"
+    },
+    {
+      "entryId": "44a2172e-02fd-4d91-8184-1c8fb7609a8e",
+      "label": "20260218 · R$ 2508,62 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20260218 2508,62.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260218 2508,62.jpg",
+      "storagePath": "receipts/44a2172e-02fd-4d91-8184-1c8fb7609a8e/1782950337441.jpg"
+    },
+    {
+      "entryId": "7061f449-b85e-49bc-9cd7-a4a27cc8136f",
+      "label": "20260223 · R$ 424,50 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260223 424,50.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260223 424,50.jpg",
+      "storagePath": "receipts/7061f449-b85e-49bc-9cd7-a4a27cc8136f/1782950338162.jpg"
+    },
+    {
+      "entryId": "b3ec08ed-7d39-46ad-8c12-babb50b641a1",
+      "label": "20260223 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20260223 3825,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260223 3825,00.jpg",
+      "storagePath": "receipts/b3ec08ed-7d39-46ad-8c12-babb50b641a1/1782950338881.jpg"
+    },
+    {
+      "entryId": "3c3c3be5-833c-40f9-a68e-c78c38f6bf54",
+      "label": "20260302 · R$ 100,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260302 100,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260302 100,00.jpg",
+      "storagePath": "receipts/3c3c3be5-833c-40f9-a68e-c78c38f6bf54/1782950339506.jpg"
+    },
+    {
+      "entryId": "bb7621c7-e592-4d08-a3e1-8c4a2e0e8c69",
+      "label": "20260307 · R$ 62,97 · SAÍDAS · SICREDI · BOAS VINDAS",
+      "expectedFilename": "20260307 62,97.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260307 62,97.jpg",
+      "storagePath": "receipts/bb7621c7-e592-4d08-a3e1-8c4a2e0e8c69/1782950340184.jpg"
+    },
+    {
+      "entryId": "5f23f6fd-0979-4542-bdb5-49c15c26aa52",
+      "label": "20260309 · R$ 350,00 · SAÍDAS · SICREDI · SOCIAL",
+      "expectedFilename": "20260309 350,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260309 350,00.jpg",
+      "storagePath": "receipts/5f23f6fd-0979-4542-bdb5-49c15c26aa52/1782950340884.jpg"
+    },
+    {
+      "entryId": "c6862896-1cab-4277-8074-19674d256f9b",
+      "label": "20260310 · R$ 10349,42 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20260310 10349,42.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260310 10349,42.jpg",
+      "storagePath": "receipts/c6862896-1cab-4277-8074-19674d256f9b/1782950341414.jpg"
+    },
+    {
+      "entryId": "b29ea1f4-b60a-43ee-8fea-99052bf6332a",
+      "label": "20260330 · R$ 100,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260330 100,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260330 100,00.jpg",
+      "storagePath": "receipts/b29ea1f4-b60a-43ee-8fea-99052bf6332a/1782950341984.jpg"
+    },
+    {
+      "entryId": "c833dc64-c176-495e-8895-09eb5acf54cf",
+      "label": "20260330 · R$ 424,50 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260330 424,50.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260330 424,50.jpg",
+      "storagePath": "receipts/c833dc64-c176-495e-8895-09eb5acf54cf/1782950342915.jpg"
+    },
+    {
+      "entryId": "1c9c510e-3855-44ee-8c52-fa1d0e079656",
+      "label": "20260407 · R$ 1500,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260407 1500,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260407 1500,00.jpg",
+      "storagePath": "receipts/1c9c510e-3855-44ee-8c52-fa1d0e079656/1782950343469.jpg"
+    },
+    {
+      "entryId": "ca1dc882-2657-477b-934a-2ec53c30c661",
+      "label": "20260413 · R$ 735,00 · ENTRE CONTAS · SICREDI · PROJETOS",
+      "expectedFilename": "20260413 735,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260413 735,00.jpg",
+      "storagePath": "receipts/ca1dc882-2657-477b-934a-2ec53c30c661/1782950344438.jpg"
+    },
+    {
+      "entryId": "fd8dfe8c-c824-46f1-a15c-7e42e6e7e99f",
+      "label": "20260413 · R$ 735,00 · ENTRADAS · AP.MPAGO · PROJETOS",
+      "expectedFilename": "20260413 735,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260413 735,00.jpg",
+      "storagePath": "receipts/fd8dfe8c-c824-46f1-a15c-7e42e6e7e99f/1782950345399.jpg"
+    },
+    {
+      "entryId": "c66a3aa9-1c7c-4e5c-9fd0-cec14986e616",
+      "label": "20260427 · R$ 424,50 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260427 424,50.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260427 424,50.jpg",
+      "storagePath": "receipts/c66a3aa9-1c7c-4e5c-9fd0-cec14986e616/1782950345958.jpg"
+    },
+    {
+      "entryId": "f6b1c70a-0f97-4731-b876-2431483f6208",
+      "label": "20260427 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20260427 3825,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260427 3825,00.jpg",
+      "storagePath": "receipts/f6b1c70a-0f97-4731-b876-2431483f6208/1782950346809.jpg"
+    },
+    {
+      "entryId": "99316780-e240-4a00-b941-ba60a28c5925",
+      "label": "20260430 · R$ 144,86 · SAÍDAS · SICREDI · BOAS VINDAS",
+      "expectedFilename": "20260430 144,86.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260430 144,86.jpg",
+      "storagePath": "receipts/99316780-e240-4a00-b941-ba60a28c5925/1782950347602.jpg"
+    },
+    {
+      "entryId": "517d9d2d-0829-47d0-a5f2-fc6fc1ba926d",
+      "label": "20260504 · R$ 100,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260504 100,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260504 100,00.jpg",
+      "storagePath": "receipts/517d9d2d-0829-47d0-a5f2-fc6fc1ba926d/1782950348203.jpg"
+    },
+    {
+      "entryId": "df5f1cc7-7511-46ba-bae9-b2c059569fbb",
+      "label": "20260512 · R$ 83,00 · SAÍDAS · SICREDI · SOCIAL",
+      "expectedFilename": "20260512 83,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260512 83,00.jpg",
+      "storagePath": "receipts/df5f1cc7-7511-46ba-bae9-b2c059569fbb/1782950348791.jpg"
+    },
+    {
+      "entryId": "5961ca19-2890-4290-a167-3d00dbad704d",
+      "label": "20260526 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20260526 3825,00.jpg",
+      "localFile": "C:\\IBN Tesouraria\\Comprovantes\\JPG\\20260526 3825,00.jpg",
+      "storagePath": "receipts/5961ca19-2890-4290-a167-3d00dbad704d/1782950349732.jpg"
+    }
+  ],
+  "skipped": [
+    {
+      "entryId": "594f6592-fca0-421c-b255-295a7bfb6a28",
+      "label": "20260601 · R$ 100,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260601 100,00.jpg",
+      "receiptUrl": "receipts/594f6592-fca0-421c-b255-295a7bfb6a28/1782921961667.jpg"
+    },
+    {
+      "entryId": "c86c2588-2ec0-4acd-8d6b-9128c1a7faf7",
+      "label": "20260601 · R$ 82,27 · SAÍDAS · SICREDI · INFANTIL",
+      "expectedFilename": "20260601 82,27.jpg",
+      "receiptUrl": "receipts/c86c2588-2ec0-4acd-8d6b-9128c1a7faf7/1782921944640.jpg"
+    },
+    {
+      "entryId": "368af246-b1e4-47e8-8306-48299ac13249",
+      "label": "20260602 · R$ 4562,83 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260602 4562,83.jpg",
+      "receiptUrl": "receipts/368af246-b1e4-47e8-8306-48299ac13249/1782922013713.jpg"
+    },
+    {
+      "entryId": "aececf74-2fe4-4992-bfc8-3e0359149d71",
+      "label": "20260602 · R$ 437,17 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260602 437,17.jpg",
+      "receiptUrl": "receipts/aececf74-2fe4-4992-bfc8-3e0359149d71/1782922028828.jpg"
+    },
+    {
+      "entryId": "01b27382-e4e1-4b6d-9a9a-6858918815c0",
+      "label": "20260630 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20260630 3825,00.jpg",
+      "receiptUrl": "receipts/01b27382-e4e1-4b6d-9a9a-6858918815c0/1782941112030.jpg"
+    },
+    {
+      "entryId": "96738231-45bd-43e6-9d87-3589ae034531",
+      "label": "20260630 · R$ 100,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260630 100,00.jpg",
+      "receiptUrl": "receipts/96738231-45bd-43e6-9d87-3589ae034531/1782940992553.jpg"
+    },
+    {
+      "entryId": "ed0ccde4-13af-4717-86c8-dfc6648cc3d9",
+      "label": "20260630 · R$ 424,50 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260630 424,50.jpg",
+      "receiptUrl": "receipts/ed0ccde4-13af-4717-86c8-dfc6648cc3d9/1782941038379.jpg"
+    },
+    {
+      "entryId": "ffa6434f-3e83-49c7-8cb3-5622c132ef8c",
+      "label": "20260630 · R$ 82,27 · SAÍDAS · SICREDI · INFANTIL",
+      "expectedFilename": "20260630 82,27.jpg",
+      "receiptUrl": "receipts/ffa6434f-3e83-49c7-8cb3-5622c132ef8c/1782941014417.jpg"
+    }
+  ],
+  "notFound": [
+    {
+      "entryId": "b4867e63-fdd8-4272-8a5b-c502dfd0ad3b",
+      "label": "20231231 · R$ 0,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20231231 0,00.jpg"
+    },
+    {
+      "entryId": "c3c48c16-ae34-4804-b2a3-c32696124688",
+      "label": "20240101 · R$ 10,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240101 10,00.jpg"
+    },
+    {
+      "entryId": "d7925b41-1e0e-48a7-b9ed-3b026dd6d0cd",
+      "label": "20240119 · R$ 200,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240119 200,00.jpg"
+    },
+    {
+      "entryId": "569a9fe3-ef7f-4294-9902-8b7d4879ba74",
+      "label": "20240129 · R$ 2000,00 · ENTRADAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240129 2000,00.jpg"
+    },
+    {
+      "entryId": "75715d2d-2b42-4ab6-b2c9-7a5dc9eb1f48",
+      "label": "20240129 · R$ 2000,00 · SAÍDAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240129 2000,00.jpg"
+    },
+    {
+      "entryId": "afcbbf5e-19b7-4556-9647-437559e97722",
+      "label": "20240131 · R$ 20000,00 · ENTRADAS · PLANTACAO · IBNT",
+      "expectedFilename": "20240131 20000,00.jpg"
+    },
+    {
+      "entryId": "b2104c5b-adce-4932-b4d8-b4ffc6f4d498",
+      "label": "20240201 · R$ 600,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240201 600,00.jpg"
+    },
+    {
+      "entryId": "4a45b0c2-42db-4d51-96f5-fbd9337b0f33",
+      "label": "20240205 · R$ 3000,00 · ENTRADAS · PLANTACAO · IBNT",
+      "expectedFilename": "20240205 3000,00.jpg"
+    },
+    {
+      "entryId": "0cf1183e-ea94-4dc6-9d42-d354dcc1f07c",
+      "label": "20240207 · R$ 936,25 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240207 936,25.jpg"
+    },
+    {
+      "entryId": "7aeffbfc-e55c-4b5b-ac27-8050e87ccc25",
+      "label": "20240208 · R$ 500,01 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240208 500,01.jpg"
+    },
+    {
+      "entryId": "22979c16-98ff-4afe-8fae-9a69607dec5f",
+      "label": "20240209 · R$ 185,49 · SAÍDAS · PLANTACAO · INFANTIL",
+      "expectedFilename": "20240209 185,49.jpg"
+    },
+    {
+      "entryId": "d717757e-fa3b-4162-9770-36d57fe3e96f",
+      "label": "20240209 · R$ 115,90 · SAÍDAS · PLANTACAO · BOAS VINDAS",
+      "expectedFilename": "20240209 115,90.jpg"
+    },
+    {
+      "entryId": "fb6b0c5d-c1c6-4dd8-a7b1-c186231bd1d9",
+      "label": "20240209 · R$ 107,95 · SAÍDAS · PLANTACAO · BOAS VINDAS",
+      "expectedFilename": "20240209 107,95.jpg"
+    },
+    {
+      "entryId": "c808a122-9ebd-42bf-9680-62b8e3062d19",
+      "label": "20240210 · R$ 112,00 · SAÍDAS · PLANTACAO · COMUNICAÇÃO",
+      "expectedFilename": "20240210 112,00.jpg"
+    },
+    {
+      "entryId": "226c9e68-9a6f-498d-907e-d1feae7c5924",
+      "label": "20240214 · R$ 493,67 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240214 493,67.jpg"
+    },
+    {
+      "entryId": "4b946115-2120-4ae3-ac6b-0bb9d6171d64",
+      "label": "20240220 · R$ 2000,00 · ENTRADAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240220 2000,00.jpg"
+    },
+    {
+      "entryId": "8a9de625-04d2-4cd5-95da-011ee2d56bf7",
+      "label": "20240221 · R$ 1430,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240221 1430,00.jpg"
+    },
+    {
+      "entryId": "46e37e2c-5165-4cb5-9aa1-b39e8ba66cb9",
+      "label": "20240228 · R$ 560,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240228 560,00.jpg"
+    },
+    {
+      "entryId": "d31309c1-9e0a-4754-a754-4598223398bb",
+      "label": "20240228 · R$ 2000,00 · SAÍDAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240228 2000,00.jpg"
+    },
+    {
+      "entryId": "ab50cfb0-eaff-43ce-99de-38f873d6a4f3",
+      "label": "20240229 · R$ 193,50 · SAÍDAS · PLANTACAO · COMUNICAÇÃO",
+      "expectedFilename": "20240229 193,50.jpg"
+    },
+    {
+      "entryId": "9c0ccbad-8357-4c7f-be9c-f1b9afa2aa66",
+      "label": "20240301 · R$ 3000,00 · ENTRADAS · PLANTACAO · IBNT",
+      "expectedFilename": "20240301 3000,00.jpg"
+    },
+    {
+      "entryId": "9a05698f-6138-40ab-a83a-83a7028c2f6e",
+      "label": "20240302 · R$ 400,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240302 400,00.jpg"
+    },
+    {
+      "entryId": "d9c98e64-45f2-4837-ab64-9a746282ad89",
+      "label": "20240306 · R$ 1375,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240306 1375,00.jpg"
+    },
+    {
+      "entryId": "42578ff0-8433-4580-a165-a0cf8ef8d568",
+      "label": "20240313 · R$ 830,20 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240313 830,20.jpg"
+    },
+    {
+      "entryId": "2a5c5bcb-e97d-4f07-ba64-e1e37fcb0ff7",
+      "label": "20240318 · R$ 132,88 · SAÍDAS · PLANTACAO · INFANTIL",
+      "expectedFilename": "20240318 132,88.jpg"
+    },
+    {
+      "entryId": "229826df-4a9a-40b1-af9f-ae61e8a8a608",
+      "label": "20240320 · R$ 1050,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240320 1050,00.jpg"
+    },
+    {
+      "entryId": "ab351cc5-4796-410f-8449-5084c496c920",
+      "label": "20240323 · R$ 30,00 · SAÍDAS · PLANTACAO · CAPACITAÇÃO",
+      "expectedFilename": "20240323 30,00.jpg"
+    },
+    {
+      "entryId": "28fb3005-e518-42c7-bc8f-2a85b9fe21c9",
+      "label": "20240326 · R$ 2000,00 · SAÍDAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240326 2000,00.jpg"
+    },
+    {
+      "entryId": "d2692371-96f7-448f-9fdc-7f5f898e1936",
+      "label": "20240326 · R$ 2000,00 · ENTRADAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240326 2000,00.jpg"
+    },
+    {
+      "entryId": "5181aef5-ef0b-4b05-b201-74ce4f10f619",
+      "label": "20240327 · R$ 1132,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240327 1132,00.jpg"
+    },
+    {
+      "entryId": "6b25364f-112d-4baf-9dc4-3ae1a451460b",
+      "label": "20240401 · R$ 3000,00 · ENTRADAS · PLANTACAO · IBNT",
+      "expectedFilename": "20240401 3000,00.jpg"
+    },
+    {
+      "entryId": "d814be0b-0de3-48ab-9b7a-c2f8844f30bb",
+      "label": "20240401 · R$ 49,98 · SAÍDAS · PLANTACAO · ESTACIONAMENTO",
+      "expectedFilename": "20240401 49,98.jpg"
+    },
+    {
+      "entryId": "e325f3b1-6484-44c4-bb45-ebb9f8df9e12",
+      "label": "20240403 · R$ 702,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240403 702,00.jpg"
+    },
+    {
+      "entryId": "973c086d-a3c0-402c-acc3-6c6044e3bf40",
+      "label": "20240410 · R$ 1815,25 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240410 1815,25.jpg"
+    },
+    {
+      "entryId": "28af8acc-9fa1-4996-87b9-de89c439e472",
+      "label": "20240417 · R$ 1040,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240417 1040,00.jpg"
+    },
+    {
+      "entryId": "db858233-cdd1-414b-9697-4ae3ad17402c",
+      "label": "20240419 · R$ 2500,00 · ENTRADAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240419 2500,00.jpg"
+    },
+    {
+      "entryId": "4e6dca5d-8450-4c35-979c-66608182f70b",
+      "label": "20240422 · R$ 2500,00 · SAÍDAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240422 2500,00.jpg"
+    },
+    {
+      "entryId": "1879471c-ffa9-4f40-a709-7423b036d57a",
+      "label": "20240424 · R$ 370,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240424 370,00.jpg"
+    },
+    {
+      "entryId": "fce0011f-8ba1-4be6-a06a-f045eada5310",
+      "label": "20240501 · R$ 3000,00 · ENTRADAS · PLANTACAO · IBNT",
+      "expectedFilename": "20240501 3000,00.jpg"
+    },
+    {
+      "entryId": "fd345b76-ad19-46f5-9592-02c63866eac5",
+      "label": "20240501 · R$ 1471,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240501 1471,00.jpg"
+    },
+    {
+      "entryId": "378e3799-74a6-45b7-834f-0844491b9186",
+      "label": "20240508 · R$ 893,70 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240508 893,70.jpg"
+    },
+    {
+      "entryId": "48ca5ffa-3b9c-4829-95d9-bcda7af802aa",
+      "label": "20240514 · R$ 53,87 · SAÍDAS · PLANTACAO · BOAS VINDAS",
+      "expectedFilename": "20240514 53,87.jpg"
+    },
+    {
+      "entryId": "fca03569-d634-4e1a-ba8d-8406cf634b88",
+      "label": "20240515 · R$ 820,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240515 820,00.jpg"
+    },
+    {
+      "entryId": "566e78de-0aa2-4059-8709-7903142645e8",
+      "label": "20240520 · R$ 2000,00 · ENTRADAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240520 2000,00.jpg"
+    },
+    {
+      "entryId": "471551a0-780c-48d6-9470-94af7097f0e2",
+      "label": "20240522 · R$ 1110,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240522 1110,00.jpg"
+    },
+    {
+      "entryId": "49809181-f7fe-4cba-ac0b-0eb9ab6f1680",
+      "label": "20240528 · R$ 2000,00 · SAÍDAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240528 2000,00.jpg"
+    },
+    {
+      "entryId": "1863fd00-3b78-4c9a-8922-d5d4a878f9e0",
+      "label": "20240529 · R$ 35,76 · SAÍDAS · PLANTACAO · BOAS VINDAS",
+      "expectedFilename": "20240529 35,76.jpg"
+    },
+    {
+      "entryId": "6f36c00d-e868-4e02-8dd6-82b310db483e",
+      "label": "20240529 · R$ 850,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240529 850,00.jpg"
+    },
+    {
+      "entryId": "98a6f77c-5713-4275-8a3c-bec7755bf504",
+      "label": "20240529 · R$ 1000,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240529 1000,00.jpg"
+    },
+    {
+      "entryId": "a7274052-b9ff-499b-af21-9437b7526e92",
+      "label": "20240601 · R$ 3000,00 · ENTRADAS · PLANTACAO · IBNT",
+      "expectedFilename": "20240601 3000,00.jpg"
+    },
+    {
+      "entryId": "39aa7090-726e-4d7b-b095-4b9395ef8e70",
+      "label": "20240603 · R$ 658,37 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240603 658,37.jpg"
+    },
+    {
+      "entryId": "d396acde-220f-4db4-bf9a-b3838817e63c",
+      "label": "20240605 · R$ 1000,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240605 1000,00.jpg"
+    },
+    {
+      "entryId": "c278adea-5c42-4e86-babb-b483f71ea017",
+      "label": "20240612 · R$ 1210,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240612 1210,00.jpg"
+    },
+    {
+      "entryId": "daf1bdd9-f75c-45a3-9508-ea116bddf544",
+      "label": "20240616 · R$ 200,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240616 200,00.jpg"
+    },
+    {
+      "entryId": "64c2832c-9d30-47b9-a196-b7fb8e433d69",
+      "label": "20240619 · R$ 415,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240619 415,00.jpg"
+    },
+    {
+      "entryId": "03475294-b4a3-4fbb-bc12-2092122fcd70",
+      "label": "20240622 · R$ 2000,00 · ENTRADAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240622 2000,00.jpg"
+    },
+    {
+      "entryId": "2866cd70-a952-4c0f-8475-d89715792736",
+      "label": "20240625 · R$ 2500,00 · SAÍDAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240625 2500,00.jpg"
+    },
+    {
+      "entryId": "28ac3bb0-8e93-4552-9e9e-e0d3fd363688",
+      "label": "20240626 · R$ 1111,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240626 1111,00.jpg"
+    },
+    {
+      "entryId": "ffc0e630-88e7-4b05-9a73-16fe3a33deb8",
+      "label": "20240701 · R$ 3000,00 · ENTRADAS · PLANTACAO · IBNT",
+      "expectedFilename": "20240701 3000,00.jpg"
+    },
+    {
+      "entryId": "56979351-878a-4a33-ac58-221a74fac4ab",
+      "label": "20240703 · R$ 565,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240703 565,00.jpg"
+    },
+    {
+      "entryId": "21b9212b-27b4-4750-bc4a-0d954f9d9028",
+      "label": "20240710 · R$ 2005,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240710 2005,00.jpg"
+    },
+    {
+      "entryId": "6736dd25-1de0-4888-8b0a-5ec3c515695b",
+      "label": "20240717 · R$ 1170,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240717 1170,00.jpg"
+    },
+    {
+      "entryId": "eefd47ac-7f0d-4373-b639-a1170853938f",
+      "label": "20240722 · R$ 2000,00 · ENTRADAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240722 2000,00.jpg"
+    },
+    {
+      "entryId": "4d62468d-a99c-473d-bd1e-54af495fbc62",
+      "label": "20240724 · R$ 620,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240724 620,00.jpg"
+    },
+    {
+      "entryId": "7b94a68f-f905-42c6-b02b-7572ed0b087b",
+      "label": "20240727 · R$ 0,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240727 0,00.jpg"
+    },
+    {
+      "entryId": "07e317b9-5b64-46fc-a9aa-d08c5af9301e",
+      "label": "20240729 · R$ 31,36 · SAÍDAS · PLANTACAO · EVENTOS",
+      "expectedFilename": "20240729 31,36.jpg"
+    },
+    {
+      "entryId": "af126210-d28b-4148-8f63-dd9cd7411e17",
+      "label": "20240730 · R$ 2000,00 · SAÍDAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240730 2000,00.jpg"
+    },
+    {
+      "entryId": "a0dfa3e5-4f2c-4fc3-be03-d15fdf424ce8",
+      "label": "20240731 · R$ 972,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240731 972,00.jpg"
+    },
+    {
+      "entryId": "0eaca157-6989-4422-80dc-aef4bb5e3249",
+      "label": "20240801 · R$ 3000,00 · ENTRADAS · PLANTACAO · IBNT",
+      "expectedFilename": "20240801 3000,00.jpg"
+    },
+    {
+      "entryId": "e06f0df3-1d00-4e9c-b9cc-0507a9d3df0d",
+      "label": "20240807 · R$ 2290,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240807 2290,00.jpg"
+    },
+    {
+      "entryId": "fa698777-52e9-4cc6-bf69-44338cd844ec",
+      "label": "20240814 · R$ 413,30 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240814 413,30.jpg"
+    },
+    {
+      "entryId": "690f3593-9bd2-42a1-8943-7aecacf1db90",
+      "label": "20240821 · R$ 1340,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240821 1340,00.jpg"
+    },
+    {
+      "entryId": "6eb85de6-3427-41dd-b4e6-3059e9b22ae6",
+      "label": "20240823 · R$ 2000,00 · ENTRADAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240823 2000,00.jpg"
+    },
+    {
+      "entryId": "caa1173c-bc12-4250-8c70-b4c088dcf8a4",
+      "label": "20240826 · R$ 2000,00 · SAÍDAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240826 2000,00.jpg"
+    },
+    {
+      "entryId": "be12e0f7-24c8-4dcd-bf0c-2921fe3574f4",
+      "label": "20240828 · R$ 750,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240828 750,00.jpg"
+    },
+    {
+      "entryId": "182d9d88-4239-48df-bedd-bbea34db24f4",
+      "label": "20240901 · R$ 1300,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240901 1300,00.jpg"
+    },
+    {
+      "entryId": "cc3362db-6876-4bf5-82f2-f141e6469c55",
+      "label": "20240901 · R$ 3000,00 · ENTRADAS · PLANTACAO · IBNT",
+      "expectedFilename": "20240901 3000,00.jpg"
+    },
+    {
+      "entryId": "186f3fef-bb07-4e16-b844-5014c5017fb0",
+      "label": "20240902 · R$ 49,58 · SAÍDAS · PLANTACAO · BOAS VINDAS",
+      "expectedFilename": "20240902 49,58.jpg"
+    },
+    {
+      "entryId": "d406349f-2f1d-412d-aa1f-7d70d246d776",
+      "label": "20240902 · R$ 100,00 · SAÍDAS · PLANTACAO · MISSÕES",
+      "expectedFilename": "20240902 100,00.jpg"
+    },
+    {
+      "entryId": "dd85ead2-df77-4ff1-98b0-55f1edcd2468",
+      "label": "20240904 · R$ 2449,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240904 2449,00.jpg"
+    },
+    {
+      "entryId": "9abfc757-2558-4ffa-a78e-06d86ca98c41",
+      "label": "20240909 · R$ 100,01 · ENTRADAS · PLANTACAO · EVENTOS",
+      "expectedFilename": "20240909 100,01.jpg"
+    },
+    {
+      "entryId": "4bdcd2a1-3d56-44dd-8920-4bf19604e55a",
+      "label": "20240910 · R$ 250,04 · ENTRADAS · PLANTACAO · EVENTOS",
+      "expectedFilename": "20240910 250,04.jpg"
+    },
+    {
+      "entryId": "2ff60e75-2e78-4a41-8a0e-c0dd963175aa",
+      "label": "20240911 · R$ 555,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240911 555,00.jpg"
+    },
+    {
+      "entryId": "a52cbd56-9e9a-4318-b1a2-d2f9e2dcecfd",
+      "label": "20240916 · R$ 100,01 · ENTRADAS · PLANTACAO · EVENTOS",
+      "expectedFilename": "20240916 100,01.jpg"
+    },
+    {
+      "entryId": "1d693e25-5f89-4cdc-a646-c733e039442d",
+      "label": "20240918 · R$ 1185,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240918 1185,00.jpg"
+    },
+    {
+      "entryId": "888d50da-f88f-470e-a398-738d95eab12b",
+      "label": "20240919 · R$ 120,02 · ENTRADAS · PLANTACAO · EVENTOS",
+      "expectedFilename": "20240919 120,02.jpg"
+    },
+    {
+      "entryId": "b2adb3ff-a0ab-4766-b6c5-7bb5d6b7b9d0",
+      "label": "20240920 · R$ 2500,00 · ENTRADAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240920 2500,00.jpg"
+    },
+    {
+      "entryId": "a27702c9-5bd4-4018-8b74-867a17cda68e",
+      "label": "20240925 · R$ 2050,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20240925 2050,00.jpg"
+    },
+    {
+      "entryId": "77f40168-a505-48bc-a0eb-bd1ab5e11680",
+      "label": "20240926 · R$ 2500,00 · SAÍDAS · PLANTACAO · ALUGUEL",
+      "expectedFilename": "20240926 2500,00.jpg"
+    },
+    {
+      "entryId": "dbf041a8-3beb-4fbd-928f-c794a9fe5d0c",
+      "label": "20240926 · R$ 4000,00 · SAÍDAS · PLANTACAO · COMUNICAÇÃO",
+      "expectedFilename": "20240926 4000,00.jpg"
+    },
+    {
+      "entryId": "2e266d99-8679-4dfc-b2c0-4a7445264b87",
+      "label": "20241001 · R$ 100,00 · SAÍDAS · PLANTACAO · MISSÕES",
+      "expectedFilename": "20241001 100,00.jpg"
+    },
+    {
+      "entryId": "f8adddc4-9273-4853-8202-1e37bd70be19",
+      "label": "20241001 · R$ 3000,00 · ENTRADAS · PLANTACAO · IBNT",
+      "expectedFilename": "20241001 3000,00.jpg"
+    },
+    {
+      "entryId": "6ad13596-bea0-4fd0-bef6-8d3fc46e2431",
+      "label": "20241002 · R$ 83160,00 · ENTRE CONTAS · IBNT · FINANCEIRO",
+      "expectedFilename": "20241002 83160,00.jpg"
+    },
+    {
+      "entryId": "8c4da0a1-463d-418d-995a-98b38e5fb977",
+      "label": "20241002 · R$ 511,27 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241002 511,27.jpg"
+    },
+    {
+      "entryId": "c44f53f8-22ac-4d8d-a803-3ae13a01631c",
+      "label": "20241002 · R$ 615,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20241002 615,00.jpg"
+    },
+    {
+      "entryId": "db8dc237-eba3-49da-a984-072ffd4529ac",
+      "label": "20241002 · R$ 83160,00 · ENTRE CONTAS · PLANTACAO · FINANCEIRO",
+      "expectedFilename": "20241002 83160,00.jpg"
+    },
+    {
+      "entryId": "a923569d-d551-4355-bab9-dc6fbd354c3e",
+      "label": "20241008 · R$ 250,00 · ENTRADAS · SUBMERSO · EVENTOS",
+      "expectedFilename": "20241008 250,00.jpg"
+    },
+    {
+      "entryId": "7544537e-9fc2-4859-bfe9-65005f379b5c",
+      "label": "20241009 · R$ 25,00 · SAÍDAS · PLANTACAO · EVENTOS",
+      "expectedFilename": "20241009 25,00.jpg"
+    },
+    {
+      "entryId": "9015edb6-0c0c-453e-b055-4439260bc07b",
+      "label": "20241009 · R$ 2944,99 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241009 2944,99.jpg"
+    },
+    {
+      "entryId": "ce37b169-c970-4171-bfeb-315c37112faf",
+      "label": "20241009 · R$ 600,00 · SAÍDAS · PLANTACAO · FINANCEIRO",
+      "expectedFilename": "20241009 600,00.jpg"
+    },
+    {
+      "entryId": "3b971e65-b7c3-4d5e-85d2-7f842d475876",
+      "label": "20241012 · R$ 45,96 · SAÍDAS · PLANTACAO · EVENTOS",
+      "expectedFilename": "20241012 45,96.jpg"
+    },
+    {
+      "entryId": "c4d65cb5-3e47-4552-8596-e77827d2eb85",
+      "label": "20241012 · R$ 147,11 · SAÍDAS · PLANTACAO · EVENTOS",
+      "expectedFilename": "20241012 147,11.jpg"
+    },
+    {
+      "entryId": "e4264009-19c3-4df4-bb64-f99c8dc8e88b",
+      "label": "20241014 · R$ 67,50 · SAÍDAS · PLANTACAO · INFANTIL",
+      "expectedFilename": "20241014 67,50.jpg"
+    },
+    {
+      "entryId": "9458fa6d-6e63-4307-bd44-53bbc512b123",
+      "label": "20241016 · R$ 280,00 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241016 280,00.jpg"
+    },
+    {
+      "entryId": "be6ba8c2-c8de-41c3-9516-c72c10029c42",
+      "label": "20241016 · R$ 150,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20241016 150,00.jpg"
+    },
+    {
+      "entryId": "d84aafc1-d5fe-4c7f-bdde-236b6345a4d6",
+      "label": "20241021 · R$ 2000,00 · ENTRADAS · SUBMERSO · ALUGUEL",
+      "expectedFilename": "20241021 2000,00.jpg"
+    },
+    {
+      "entryId": "1a2047fd-b49e-4490-95db-4bf818b047a3",
+      "label": "20241022 · R$ 194,04 · SAÍDAS · SUBMERSO · EVENTOS",
+      "expectedFilename": "20241022 194,04.jpg"
+    },
+    {
+      "entryId": "6d67d498-4823-414d-b7de-14221b24993e",
+      "label": "20241023 · R$ 440,00 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241023 440,00.jpg"
+    },
+    {
+      "entryId": "b6128ba4-afc1-4c84-b082-9e3d19e2cf23",
+      "label": "20241023 · R$ 190,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20241023 190,00.jpg"
+    },
+    {
+      "entryId": "96d9b057-2bcb-4717-ac1c-35c0ffa9147b",
+      "label": "20241028 · R$ 2000,00 · SAÍDAS · SUBMERSO · ALUGUEL",
+      "expectedFilename": "20241028 2000,00.jpg"
+    },
+    {
+      "entryId": "22a51b28-60b7-487d-bd9b-4b81ed703788",
+      "label": "20241030 · R$ 285,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20241030 285,00.jpg"
+    },
+    {
+      "entryId": "5bfd35ce-6381-4dbb-afd3-33e0c30df692",
+      "label": "20241030 · R$ 300,00 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241030 300,00.jpg"
+    },
+    {
+      "entryId": "6c4cbbc8-9588-4d70-aadc-3d5af8409e81",
+      "label": "20241030 · R$ 96,46 · SAÍDAS · PLANTACAO · FINANCEIRO",
+      "expectedFilename": "20241030 96,46.jpg"
+    },
+    {
+      "entryId": "123a7db1-774b-49cb-8e83-a17c341856cf",
+      "label": "20241104 · R$ 100,00 · SAÍDAS · PLANTACAO · MISSÕES",
+      "expectedFilename": "20241104 100,00.jpg"
+    },
+    {
+      "entryId": "305f1354-aecc-48a4-9a83-bd3eb4a65b09",
+      "label": "20241106 · R$ 2100,00 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241106 2100,00.jpg"
+    },
+    {
+      "entryId": "30af636e-790b-4d37-9340-1ed40d76ec22",
+      "label": "20241106 · R$ 140,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20241106 140,00.jpg"
+    },
+    {
+      "entryId": "1b70fddd-4cfb-441f-9aa3-3a15dc7313a5",
+      "label": "20241113 · R$ 1370,00 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241113 1370,00.jpg"
+    },
+    {
+      "entryId": "28c39697-54a2-49b7-9530-bcad22bc9581",
+      "label": "20241113 · R$ 200,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20241113 200,00.jpg"
+    },
+    {
+      "entryId": "98ed2686-8c75-4f94-ab3d-a18191304009",
+      "label": "20241114 · R$ 76,44 · SAÍDAS · PLANTACAO · FINANCEIRO",
+      "expectedFilename": "20241114 76,44.jpg"
+    },
+    {
+      "entryId": "0d8036d1-553c-4631-a76a-8a1a7ccda567",
+      "label": "20241118 · R$ 336,54 · SAÍDAS · PLANTACAO · FINANCEIRO",
+      "expectedFilename": "20241118 336,54.jpg"
+    },
+    {
+      "entryId": "231de913-c1d4-409f-a001-6252f9ca5050",
+      "label": "20241120 · R$ 50,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20241120 50,00.jpg"
+    },
+    {
+      "entryId": "7161dbe0-60de-49c2-87c1-0d3ae3f2372e",
+      "label": "20241120 · R$ 1590,00 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241120 1590,00.jpg"
+    },
+    {
+      "entryId": "daa22cac-fe41-468b-ae17-67d0a83733fb",
+      "label": "20241120 · R$ 100,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20241120 100,00.jpg"
+    },
+    {
+      "entryId": "e573be4e-8841-40d0-a803-62f5db4386d5",
+      "label": "20241120 · R$ 200,02 · ENTRADAS · SUBMERSO · EVENTOS",
+      "expectedFilename": "20241120 200,02.jpg"
+    },
+    {
+      "entryId": "75b9f145-a407-48c6-b6d7-d4efb857a6b9",
+      "label": "20241124 · R$ 265,08 · ENTRADAS · SUBMERSO · EVENTOS",
+      "expectedFilename": "20241124 265,08.jpg"
+    },
+    {
+      "entryId": "2ab1e8c1-686c-4631-8fdf-0dbf7e54307d",
+      "label": "20241125 · R$ 1500,00 · SAÍDAS · SUBMERSO · ALUGUEL",
+      "expectedFilename": "20241125 1500,00.jpg"
+    },
+    {
+      "entryId": "d1770e4a-f4cd-4712-973b-4d4c28eef829",
+      "label": "20241125 · R$ 3000,00 · ENTRADAS · SUBMERSO · IBNT",
+      "expectedFilename": "20241125 3000,00.jpg"
+    },
+    {
+      "entryId": "e77a8c68-9a0d-40dc-b9c5-ec44561cd5d0",
+      "label": "20241125 · R$ 1500,00 · ENTRADAS · SUBMERSO · ALUGUEL",
+      "expectedFilename": "20241125 1500,00.jpg"
+    },
+    {
+      "entryId": "3b6ad87b-cac8-4398-a7cb-4193821444a2",
+      "label": "20241127 · R$ 645,07 · ENTRADAS · SUBMERSO · EVENTOS",
+      "expectedFilename": "20241127 645,07.jpg"
+    },
+    {
+      "entryId": "4c4ed22f-3150-4f7b-8e7f-52558087820a",
+      "label": "20241127 · R$ 50,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20241127 50,00.jpg"
+    },
+    {
+      "entryId": "668a1c4e-2a94-4e39-a7cc-97af6439a902",
+      "label": "20241127 · R$ 150,00 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241127 150,00.jpg"
+    },
+    {
+      "entryId": "99cec876-1392-47fa-8841-59ae550728e8",
+      "label": "20241127 · R$ 272,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20241127 272,00.jpg"
+    },
+    {
+      "entryId": "1d2a8c00-722b-46d3-9344-bf991e570640",
+      "label": "20241129 · R$ 190,00 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20241129 190,00.jpg"
+    },
+    {
+      "entryId": "569d3f27-77d1-4b4a-895b-502f5ded36ee",
+      "label": "20241129 · R$ 600,00 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20241129 600,00.jpg"
+    },
+    {
+      "entryId": "1b0ae2d1-53e4-413c-97d3-b40f2edc16fb",
+      "label": "20241201 · R$ 765,07 · ENTRADAS · SUBMERSO · EVENTOS",
+      "expectedFilename": "20241201 765,07.jpg"
+    },
+    {
+      "entryId": "f51068a3-7ec6-4d89-9d4b-6532f1485d6c",
+      "label": "20241201 · R$ 400,00 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20241201 400,00.jpg"
+    },
+    {
+      "entryId": "4ee57263-2934-4998-a561-5e4e5cff8b00",
+      "label": "20241202 · R$ 3000,00 · ENTRADAS · SUBMERSO · IBNT",
+      "expectedFilename": "20241202 3000,00.jpg"
+    },
+    {
+      "entryId": "97d24f3d-6c41-4e7b-8225-bbac23c69248",
+      "label": "20241202 · R$ 100,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20241202 100,00.jpg"
+    },
+    {
+      "entryId": "9a26d9c2-5313-492c-85c2-5675fcac7ad3",
+      "label": "20241204 · R$ 350,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20241204 350,00.jpg"
+    },
+    {
+      "entryId": "e1a48065-9e95-4d55-89ef-b5b6c158c7ba",
+      "label": "20241205 · R$ 40,00 · SAÍDAS · MPAGO · COMUNICAÇÃO",
+      "expectedFilename": "20241205 40,00.jpg"
+    },
+    {
+      "entryId": "555a87bb-feda-4787-815c-cce49838c450",
+      "label": "20241207 · R$ 250,00 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241207 250,00.jpg"
+    },
+    {
+      "entryId": "74939f78-cb3d-405e-b720-a1fce8ef9d3e",
+      "label": "20241208 · R$ 955,18 · ENTRADAS · SUBMERSO · EVENTOS",
+      "expectedFilename": "20241208 955,18.jpg"
+    },
+    {
+      "entryId": "ef487bde-a56c-4f6b-87e0-ead780b78156",
+      "label": "20241210 · R$ 500,00 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241210 500,00.jpg"
+    },
+    {
+      "entryId": "1b9fb1e8-c809-4861-9d9d-29882b42d95e",
+      "label": "20241211 · R$ 840,00 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241211 840,00.jpg"
+    },
+    {
+      "entryId": "53aca63d-f591-4f2b-af4b-7fea0a2ff053",
+      "label": "20241211 · R$ 50,00 · ENTRADAS · PLANTACAO · OFERTAS",
+      "expectedFilename": "20241211 50,00.jpg"
+    },
+    {
+      "entryId": "71bd0a54-d2fc-415c-a9fe-0a8eec2e32bf",
+      "label": "20241211 · R$ 155,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20241211 155,00.jpg"
+    },
+    {
+      "entryId": "61a73372-4c84-4f6d-baa3-1a99da349ce5",
+      "label": "20241213 · R$ 345,00 · SAÍDAS · MPAGO · EVENTOS",
+      "expectedFilename": "20241213 345,00.jpg"
+    },
+    {
+      "entryId": "8606bcc3-4b85-4d04-90ea-3c4f0a3a5b9e",
+      "label": "20241213 · R$ 195,04 · ENTRADAS · SUBMERSO · EVENTOS",
+      "expectedFilename": "20241213 195,04.jpg"
+    },
+    {
+      "entryId": "a9d2f68f-eba1-4bb6-87f2-26df90271843",
+      "label": "20241213 · R$ 299,14 · SAÍDAS · MPAGO · EVENTOS",
+      "expectedFilename": "20241213 299,14.jpg"
+    },
+    {
+      "entryId": "0663d3ab-d7a7-4800-8427-7834a247c3ec",
+      "label": "20241215 · R$ 620,67 · SAÍDAS · MPAGO · EVENTOS",
+      "expectedFilename": "20241215 620,67.jpg"
+    },
+    {
+      "entryId": "720f0a71-a952-4b91-b8b0-708a74d6a7c5",
+      "label": "20241216 · R$ 556,00 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20241216 556,00.jpg"
+    },
+    {
+      "entryId": "8a9cdabb-bbb3-4b3a-92f8-8fec7b5209d5",
+      "label": "20241216 · R$ 18000,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20241216 18000,00.jpg"
+    },
+    {
+      "entryId": "9cc051b2-5062-4279-9930-16a20655338d",
+      "label": "20241216 · R$ 18000,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20241216 18000,00.jpg"
+    },
+    {
+      "entryId": "a95d2d66-eb0b-43bf-bd37-8ee1069347f9",
+      "label": "20241216 · R$ 580,20 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20241216 580,20.jpg"
+    },
+    {
+      "entryId": "615b819a-5daf-4d98-ad86-635b4d8b0d69",
+      "label": "20241217 · R$ 110,07 · SAÍDAS · MPAGO · EVENTOS",
+      "expectedFilename": "20241217 110,07.jpg"
+    },
+    {
+      "entryId": "8021dbf3-ea2b-4c39-8e69-cc48d4396d8c",
+      "label": "20241217 · R$ 71,62 · SAÍDAS · MPAGO · EVENTOS",
+      "expectedFilename": "20241217 71,62.jpg"
+    },
+    {
+      "entryId": "829d2000-8c46-449b-80ae-a83a876b0f61",
+      "label": "20241218 · R$ 350,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20241218 350,00.jpg"
+    },
+    {
+      "entryId": "be5e7bd7-5cff-45e2-bcda-6048cbc123bd",
+      "label": "20241218 · R$ 1350,73 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241218 1350,73.jpg"
+    },
+    {
+      "entryId": "ddbca3c4-e8bf-4a19-b53c-9488050a5328",
+      "label": "20241219 · R$ 96,00 · SAÍDAS · MPAGO · EVENTOS",
+      "expectedFilename": "20241219 96,00.jpg"
+    },
+    {
+      "entryId": "2c2a51ca-b0fe-4fda-84ca-019a1cf78659",
+      "label": "20241220 · R$ 2500,00 · ENTRADAS · SUBMERSO · ALUGUEL",
+      "expectedFilename": "20241220 2500,00.jpg"
+    },
+    {
+      "entryId": "bc5c849f-d182-4836-97ff-1b59aec51c49",
+      "label": "20241220 · R$ 500,00 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241220 500,00.jpg"
+    },
+    {
+      "entryId": "4aa24141-2041-4a2b-9b84-bb28bf050fef",
+      "label": "20241223 · R$ 440,00 · ENTRADAS · SUBMERSO · OFERTAS",
+      "expectedFilename": "20241223 440,00.jpg"
+    },
+    {
+      "entryId": "e64fd89b-20fe-46e0-a9d8-9e90d8b97366",
+      "label": "20241223 · R$ 2000,00 · SAÍDAS · MPAGO · ALUGUEL",
+      "expectedFilename": "20241223 2000,00.jpg"
+    },
+    {
+      "entryId": "f7a2f8d1-a770-4a9a-81d6-92e3d346e13d",
+      "label": "20241223 · R$ 347,98 · SAÍDAS · MPAGO · EVENTOS",
+      "expectedFilename": "20241223 347,98.jpg"
+    },
+    {
+      "entryId": "2327f14d-d26a-40c6-9d11-12a66d9c2948",
+      "label": "20241231 · R$ 25842,96 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20241231 25842,96.jpg"
+    },
+    {
+      "entryId": "8e2c5f6e-d4d9-4dd8-a1f2-7faa50b22e40",
+      "label": "20241231 · R$ 31,84 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20241231 31,84.jpg"
+    },
+    {
+      "entryId": "8fd9c168-41c4-430e-9999-14bb86123532",
+      "label": "20241231 · R$ 694,55 · ENTRE CONTAS · PLANTACAO · FINANCEIRO",
+      "expectedFilename": "20241231 694,55.jpg"
+    },
+    {
+      "entryId": "ecbaaa9b-a73d-429c-b6f2-9d2a395f7688",
+      "label": "20241231 · R$ 25148,41 · ENTRE CONTAS · SUBMERSO · FINANCEIRO",
+      "expectedFilename": "20241231 25148,41.jpg"
+    },
+    {
+      "entryId": "0379e03f-cae8-42b7-97ec-99410dbe4302",
+      "label": "20250101 · R$ 400,00 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20250101 400,00.jpg"
+    },
+    {
+      "entryId": "15fd5471-d1c4-471e-814a-5f274e84b35a",
+      "label": "20250102 · R$ 80000,00 · ENTRE CONTAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250102 80000,00.jpg"
+    },
+    {
+      "entryId": "31abf95e-35dc-4bd7-8f1b-f8d85e14221a",
+      "label": "20250102 · R$ 83160,00 · ENTRE CONTAS · IBNT · FINANCEIRO",
+      "expectedFilename": "20250102 83160,00.jpg"
+    },
+    {
+      "entryId": "6139fbe7-0489-4851-8f9e-4e0e4aac36ac",
+      "label": "20250102 · R$ 100,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20250102 100,00.jpg"
+    },
+    {
+      "entryId": "c0c8d9bf-d90d-45f6-bed9-e8a1c6e92c81",
+      "label": "20250102 · R$ 3160,00 · ENTRE CONTAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250102 3160,00.jpg"
+    },
+    {
+      "entryId": "a294da18-684e-4e99-9541-e23a36d230e4",
+      "label": "20250103 · R$ 100,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250103 100,00.jpg"
+    },
+    {
+      "entryId": "06bc72e0-3625-4b98-8ad9-1f78c75ae1ea",
+      "label": "20250108 · R$ 2945,11 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250108 2945,11.jpg"
+    },
+    {
+      "entryId": "6390d53f-5c4f-4644-b61e-dff39fc0fb9e",
+      "label": "20250108 · R$ 400,75 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250108 400,75.jpg"
+    },
+    {
+      "entryId": "6536d129-a197-48c2-8874-3b45c3b7ce4b",
+      "label": "20250108 · R$ 167,62 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250108 167,62.jpg"
+    },
+    {
+      "entryId": "8d6a012e-be17-4c1e-83f3-0cecbe667f05",
+      "label": "20250108 · R$ 750,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20250108 750,00.jpg"
+    },
+    {
+      "entryId": "b7d0e3a0-7ad5-4128-9960-073cde7835f1",
+      "label": "20250108 · R$ 400,01 · ENTRADAS · MPAGO · SOCIAL",
+      "expectedFilename": "20250108 400,01.jpg"
+    },
+    {
+      "entryId": "e2612abd-9885-4db2-bbc9-1978c56f7847",
+      "label": "20250108 · R$ 38,29 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250108 38,29.jpg"
+    },
+    {
+      "entryId": "ee6f180b-a628-463c-9fd8-142923bdf0c1",
+      "label": "20250113 · R$ 3000,00 · ENTRADAS · SICREDI · IBNT",
+      "expectedFilename": "20250113 3000,00.jpg"
+    },
+    {
+      "entryId": "a4b4ed98-29f8-4220-b668-080c46d3c9c7",
+      "label": "20250115 · R$ 960,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250115 960,00.jpg"
+    },
+    {
+      "entryId": "da45335c-aad9-4903-b0b5-69bea286ac11",
+      "label": "20250115 · R$ 237,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250115 237,00.jpg"
+    },
+    {
+      "entryId": "0ab9fdff-24c7-490f-b267-11c047d1a63c",
+      "label": "20250120 · R$ 74,25 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250120 74,25.jpg"
+    },
+    {
+      "entryId": "1a7dcc64-8f4c-45ac-a625-38e8cb220cf9",
+      "label": "20250120 · R$ 2000,00 · ENTRADAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250120 2000,00.jpg"
+    },
+    {
+      "entryId": "0fb02a4b-311c-46a4-a101-010f047c4126",
+      "label": "20250122 · R$ 740,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250122 740,00.jpg"
+    },
+    {
+      "entryId": "18e3258e-b6fd-42e8-8c88-32605f8b2389",
+      "label": "20250122 · R$ 220,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250122 220,00.jpg"
+    },
+    {
+      "entryId": "d70491e2-558d-4467-91d9-b656e27b6550",
+      "label": "20250123 · R$ 100,00 · SAÍDAS · SICREDI · CAPACITAÇÃO",
+      "expectedFilename": "20250123 100,00.jpg"
+    },
+    {
+      "entryId": "51fefaee-603e-4423-b8ae-aeec61394b63",
+      "label": "20250128 · R$ 2000,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250128 2000,00.jpg"
+    },
+    {
+      "entryId": "86cb0260-cc33-4a19-b6fc-d63cca361f6f",
+      "label": "20250129 · R$ 370,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250129 370,00.jpg"
+    },
+    {
+      "entryId": "cb04d5a9-4e72-4133-aaa5-b79e8d2275dc",
+      "label": "20250129 · R$ 792,90 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250129 792,90.jpg"
+    },
+    {
+      "entryId": "e8c8d875-9d2b-4f80-9808-3941b9e7a51c",
+      "label": "20250129 · R$ 400,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250129 400,00.jpg"
+    },
+    {
+      "entryId": "8b3ed6e8-3293-4eb9-91a1-386a9ce109ff",
+      "label": "20250130 · R$ 130,91 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250130 130,91.jpg"
+    },
+    {
+      "entryId": "b88518f7-1af0-4fac-83cf-a32f8c89aeae",
+      "label": "20250130 · R$ 577,80 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250130 577,80.jpg"
+    },
+    {
+      "entryId": "c657a343-87e6-4101-9504-4780eec4882f",
+      "label": "20250201 · R$ 109,33 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250201 109,33.jpg"
+    },
+    {
+      "entryId": "5e707841-1572-4e75-bf66-c4a635969f89",
+      "label": "20250203 · R$ 500,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20250203 500,00.jpg"
+    },
+    {
+      "entryId": "f29352ea-d38e-4cb7-bb98-da9f4f5cf350",
+      "label": "20250203 · R$ 100,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20250203 100,00.jpg"
+    },
+    {
+      "entryId": "024ce974-1254-4a81-8860-df71c555ca36",
+      "label": "20250205 · R$ 64,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250205 64,00.jpg"
+    },
+    {
+      "entryId": "19bee2f8-f004-4440-a199-8318dacc63bf",
+      "label": "20250205 · R$ 1429,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250205 1429,00.jpg"
+    },
+    {
+      "entryId": "b4c855f0-4fe7-4d8f-afff-03f660046e77",
+      "label": "20250205 · R$ 46,36 · SAÍDAS · MPAGO · BOAS VINDAS",
+      "expectedFilename": "20250205 46,36.jpg"
+    },
+    {
+      "entryId": "52f13560-29b2-4ece-af01-e1604d93c151",
+      "label": "20250206 · R$ 136,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20250206 136,00.jpg"
+    },
+    {
+      "entryId": "1befe4b2-1799-4964-8599-d3a00ac0c653",
+      "label": "20250207 · R$ 168,72 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20250207 168,72.jpg"
+    },
+    {
+      "entryId": "2a1c2055-ffff-473b-9c29-2a2b3d6d0f60",
+      "label": "20250207 · R$ 42,80 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20250207 42,80.jpg"
+    },
+    {
+      "entryId": "3bbf336b-2533-4adf-872e-116a47c7d2f4",
+      "label": "20250207 · R$ 121,62 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20250207 121,62.jpg"
+    },
+    {
+      "entryId": "5766a67c-ea24-42cc-8c60-4bf9f2c1d55b",
+      "label": "20250207 · R$ 30,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20250207 30,00.jpg"
+    },
+    {
+      "entryId": "2432f514-74a8-4ed7-aa63-568ed4dbef4f",
+      "label": "20250208 · R$ 136,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20250208 136,00.jpg"
+    },
+    {
+      "entryId": "13b362c3-ee1e-42ba-b0f9-1660074da97d",
+      "label": "20250210 · R$ 190,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250210 190,00.jpg"
+    },
+    {
+      "entryId": "ecb36438-24b5-4a05-b7bb-27e83bc2dbba",
+      "label": "20250210 · R$ 100,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250210 100,00.jpg"
+    },
+    {
+      "entryId": "6e867ae9-1a37-4795-92cb-fb530ec839b0",
+      "label": "20250212 · R$ 1080,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250212 1080,00.jpg"
+    },
+    {
+      "entryId": "d946ba8a-5392-4747-a26b-7510a2e96094",
+      "label": "20250212 · R$ 652,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250212 652,00.jpg"
+    },
+    {
+      "entryId": "6dd89f98-79a3-4d1c-bee9-0df235bda377",
+      "label": "20250217 · R$ 10000,00 · ENTRE CONTAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250217 10000,00.jpg"
+    },
+    {
+      "entryId": "dfde7bc2-bb8f-4e17-98ca-069398576906",
+      "label": "20250217 · R$ 10000,00 · ENTRE CONTAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250217 10000,00.jpg"
+    },
+    {
+      "entryId": "69511c64-8bb4-4ea2-aef9-8d3d6bcdf40c",
+      "label": "20250219 · R$ 780,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250219 780,00.jpg"
+    },
+    {
+      "entryId": "1dd25865-e516-425e-81a4-11d14f08a8ed",
+      "label": "20250220 · R$ 74,25 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250220 74,25.jpg"
+    },
+    {
+      "entryId": "ee058cf5-3019-4136-a167-3e56388ea90a",
+      "label": "20250220 · R$ 295,00 · SAÍDAS · SICREDI · LOUVOR",
+      "expectedFilename": "20250220 295,00.jpg"
+    },
+    {
+      "entryId": "ee90dfd8-38c9-4bbd-9ab5-9454d30131ed",
+      "label": "20250220 · R$ 2000,00 · ENTRADAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250220 2000,00.jpg"
+    },
+    {
+      "entryId": "823973bb-a424-4e6e-a9b3-7274e389e1b1",
+      "label": "20250221 · R$ 3000,00 · ENTRADAS · SICREDI · IBNT",
+      "expectedFilename": "20250221 3000,00.jpg"
+    },
+    {
+      "entryId": "e387b269-50fb-44e8-88c7-8c993d9f3c61",
+      "label": "20250221 · R$ 420,20 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250221 420,20.jpg"
+    },
+    {
+      "entryId": "c27d06d5-b86a-4be7-b1d5-bffe269812d1",
+      "label": "20250224 · R$ 2000,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250224 2000,00.jpg"
+    },
+    {
+      "entryId": "2e877eae-db14-4ed5-bfe5-29d814b23fe5",
+      "label": "20250226 · R$ 800,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250226 800,00.jpg"
+    },
+    {
+      "entryId": "a2d13894-6d3c-4a8e-822e-d4f5b750f924",
+      "label": "20250226 · R$ 200,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250226 200,00.jpg"
+    },
+    {
+      "entryId": "295a0468-e947-46a3-bd53-09ed7c46399f",
+      "label": "20250228 · R$ 111,64 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250228 111,64.jpg"
+    },
+    {
+      "entryId": "7cd51040-ff42-429f-9b1d-268357d7f055",
+      "label": "20250228 · R$ 247,35 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250228 247,35.jpg"
+    },
+    {
+      "entryId": "a92d45ea-2564-4d67-8d06-3e5d56d55296",
+      "label": "20250228 · R$ 400,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250228 400,00.jpg"
+    },
+    {
+      "entryId": "945229fd-bf7f-4c2e-86bd-7b725ba6f20a",
+      "label": "20250305 · R$ 1665,55 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250305 1665,55.jpg"
+    },
+    {
+      "entryId": "f643f822-922a-40f2-9bf2-19ed69b8f0da",
+      "label": "20250305 · R$ 310,60 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250305 310,60.jpg"
+    },
+    {
+      "entryId": "235a866e-1e26-4420-9775-300dc553afca",
+      "label": "20250307 · R$ 4000,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20250307 4000,00.jpg"
+    },
+    {
+      "entryId": "4061615f-779f-4ad7-801a-871c328f093e",
+      "label": "20250307 · R$ 21,04 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250307 21,04.jpg"
+    },
+    {
+      "entryId": "650c521d-ce8d-4c4a-a000-976877b44f30",
+      "label": "20250307 · R$ 82,59 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250307 82,59.jpg"
+    },
+    {
+      "entryId": "78ee056e-e933-405a-8f6c-5a196d213143",
+      "label": "20250307 · R$ 3000,00 · ENTRADAS · SICREDI · IBNT",
+      "expectedFilename": "20250307 3000,00.jpg"
+    },
+    {
+      "entryId": "8eb5d7ea-f93b-418e-a06c-ee7bc60756aa",
+      "label": "20250307 · R$ 4000,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250307 4000,00.jpg"
+    },
+    {
+      "entryId": "c86fab05-0acb-4839-9a48-f8a8df471613",
+      "label": "20250307 · R$ 100,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20250307 100,00.jpg"
+    },
+    {
+      "entryId": "1459e773-e988-4de0-85d4-29793bd45014",
+      "label": "20250310 · R$ 100,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250310 100,00.jpg"
+    },
+    {
+      "entryId": "0d6865de-0361-4239-8255-96b654a18cf5",
+      "label": "20250312 · R$ 1670,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250312 1670,00.jpg"
+    },
+    {
+      "entryId": "6d5c0431-caa9-493f-88f2-36fa885328e9",
+      "label": "20250312 · R$ 554,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250312 554,00.jpg"
+    },
+    {
+      "entryId": "bc39a4ab-a2da-442e-b17e-e950a5c97cdd",
+      "label": "20250313 · R$ 34,17 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250313 34,17.jpg"
+    },
+    {
+      "entryId": "ca82a1cf-4845-4378-bd4a-04e687fa9c00",
+      "label": "20250313 · R$ 165,42 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250313 165,42.jpg"
+    },
+    {
+      "entryId": "61cbf016-f094-440a-81b6-b3c7c3ba53c8",
+      "label": "20250319 · R$ 300,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250319 300,00.jpg"
+    },
+    {
+      "entryId": "b30a4e38-c148-473a-bc9e-33c3946b4a08",
+      "label": "20250319 · R$ 2500,00 · ENTRADAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250319 2500,00.jpg"
+    },
+    {
+      "entryId": "b508525b-ec4e-4e92-a695-0a2a8685fdc7",
+      "label": "20250319 · R$ 1081,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250319 1081,00.jpg"
+    },
+    {
+      "entryId": "983e23c8-c1e8-4d42-8c33-bc0bb47c3cce",
+      "label": "20250320 · R$ 74,25 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250320 74,25.jpg"
+    },
+    {
+      "entryId": "14771b39-65ef-4342-aeb2-404da04ee60f",
+      "label": "20250323 · R$ 1000,00 · SAÍDAS · SICREDI · COMUNICAÇÃO",
+      "expectedFilename": "20250323 1000,00.jpg"
+    },
+    {
+      "entryId": "26353138-348d-4c29-b757-de3504bbab38",
+      "label": "20250324 · R$ 135,90 · SAÍDAS · SICREDI · COMUNICAÇÃO",
+      "expectedFilename": "20250324 135,90.jpg"
+    },
+    {
+      "entryId": "e44ce37e-6b26-422a-8609-2bfd1b3a5312",
+      "label": "20250324 · R$ 2000,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250324 2000,00.jpg"
+    },
+    {
+      "entryId": "f58450f7-bb3d-444e-ad6a-9f1a08ef27bd",
+      "label": "20250324 · R$ 400,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250324 400,00.jpg"
+    },
+    {
+      "entryId": "0e68af3a-af5f-48f7-800a-8b9f4183cb6e",
+      "label": "20250326 · R$ 202,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250326 202,00.jpg"
+    },
+    {
+      "entryId": "fb7ecccd-df9a-412b-90a8-98f457bc3dbf",
+      "label": "20250326 · R$ 2130,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250326 2130,00.jpg"
+    },
+    {
+      "entryId": "13878c3a-cb33-4105-aa47-4d9944d04dc2",
+      "label": "20250331 · R$ 107,22 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250331 107,22.jpg"
+    },
+    {
+      "entryId": "67b17913-3695-4acf-873a-72447ceacd18",
+      "label": "20250331 · R$ 563,40 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250331 563,40.jpg"
+    },
+    {
+      "entryId": "4ed2efb8-6725-427a-bedb-84ce9021a94e",
+      "label": "20250401 · R$ 100,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20250401 100,00.jpg"
+    },
+    {
+      "entryId": "59ff9dbc-f944-466b-8bd2-0042ec04e596",
+      "label": "20250401 · R$ 9108,00 · ENTRADAS · SICREDI · IBNT",
+      "expectedFilename": "20250401 9108,00.jpg"
+    },
+    {
+      "entryId": "4293aeea-9b2b-4a58-aa96-ee2cf8d7d3c9",
+      "label": "20250402 · R$ 1565,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250402 1565,00.jpg"
+    },
+    {
+      "entryId": "e9545b3d-0f54-4676-af7a-8c06f7ef9c69",
+      "label": "20250402 · R$ 276,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250402 276,00.jpg"
+    },
+    {
+      "entryId": "67b1a2d5-d107-4f83-989e-3ea344846744",
+      "label": "20250407 · R$ 800,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250407 800,00.jpg"
+    },
+    {
+      "entryId": "24971083-6141-4732-82f5-03e5d500aed3",
+      "label": "20250408 · R$ 9746,76 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20250408 9746,76.jpg"
+    },
+    {
+      "entryId": "99f8cd97-bd14-4cd5-9a53-176d6924c7ee",
+      "label": "20250409 · R$ 556,35 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250409 556,35.jpg"
+    },
+    {
+      "entryId": "bce0523c-5dd4-440e-9b75-514c7ff4f23c",
+      "label": "20250409 · R$ 3648,88 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250409 3648,88.jpg"
+    },
+    {
+      "entryId": "dd5fbd51-20d5-44bb-8687-f85328ca3c3d",
+      "label": "20250410 · R$ 100,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250410 100,00.jpg"
+    },
+    {
+      "entryId": "b1d06ed6-cba0-416e-b1bd-6d4d1cac18ae",
+      "label": "20250414 · R$ 2245,44 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20250414 2245,44.jpg"
+    },
+    {
+      "entryId": "91f07c6b-3115-447c-9ee9-879919ad00af",
+      "label": "20250416 · R$ 950,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250416 950,00.jpg"
+    },
+    {
+      "entryId": "b5a011af-788b-43b9-83e8-aa999fc880a7",
+      "label": "20250417 · R$ 3825,00 · ENTRADAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250417 3825,00.jpg"
+    },
+    {
+      "entryId": "11bd9992-7584-4f51-877b-6098c908efcf",
+      "label": "20250422 · R$ 140,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250422 140,00.jpg"
+    },
+    {
+      "entryId": "19aa44b0-2b8a-4269-b212-2dae0e969246",
+      "label": "20250422 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250422 3825,00.jpg"
+    },
+    {
+      "entryId": "57a6cc6e-345b-4e8c-82bc-af613b991b74",
+      "label": "20250422 · R$ 74,25 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250422 74,25.jpg"
+    },
+    {
+      "entryId": "40144dc3-ee9f-4886-95cd-aa7c81c401cf",
+      "label": "20250423 · R$ 1109,63 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250423 1109,63.jpg"
+    },
+    {
+      "entryId": "50a55ab5-a166-40c3-92a7-f6c5516093c0",
+      "label": "20250423 · R$ 150,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250423 150,00.jpg"
+    },
+    {
+      "entryId": "ad29c7ae-cafa-4761-b7b5-f49739fc67e1",
+      "label": "20250423 · R$ 1110,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250423 1110,00.jpg"
+    },
+    {
+      "entryId": "f11c1dbd-ed9f-4bcb-96b4-9eee814fd3f3",
+      "label": "20250423 · R$ 1109,63 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20250423 1109,63.jpg"
+    },
+    {
+      "entryId": "06595c7a-b19e-42e9-8686-c7a72645ccd8",
+      "label": "20250425 · R$ 550,00 · SAÍDAS · SICREDI · LOUVOR",
+      "expectedFilename": "20250425 550,00.jpg"
+    },
+    {
+      "entryId": "3c958133-3559-43f4-a998-8a4c17ae0d66",
+      "label": "20250428 · R$ 10,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250428 10,00.jpg"
+    },
+    {
+      "entryId": "7045fc8e-2fd2-41a7-b28e-f9fe375b2684",
+      "label": "20250429 · R$ 400,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250429 400,00.jpg"
+    },
+    {
+      "entryId": "29ba57a7-9903-4f1b-964d-1adcbeff3df6",
+      "label": "20250430 · R$ 190,30 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250430 190,30.jpg"
+    },
+    {
+      "entryId": "4ce16929-7ce5-4e14-ae9e-9969be6c8ace",
+      "label": "20250430 · R$ 896,55 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250430 896,55.jpg"
+    },
+    {
+      "entryId": "e679e119-18e2-498d-87df-9e7ae1419861",
+      "label": "20250501 · R$ 100,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20250501 100,00.jpg"
+    },
+    {
+      "entryId": "90b76f13-d776-4892-9ee0-52f30cf4bf59",
+      "label": "20250504 · R$ 51,18 · SAÍDAS · MPAGO · BOAS VINDAS",
+      "expectedFilename": "20250504 51,18.jpg"
+    },
+    {
+      "entryId": "9a69ac70-c69c-4d3d-89ee-ce66221df223",
+      "label": "20250504 · R$ 254,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250504 254,00.jpg"
+    },
+    {
+      "entryId": "78d4b914-ba9e-4b52-8aa7-d4db748dce29",
+      "label": "20250505 · R$ 670,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250505 670,00.jpg"
+    },
+    {
+      "entryId": "a44d9ebe-390e-4fee-9bea-8e4e9197a166",
+      "label": "20250505 · R$ 9108,00 · ENTRADAS · SICREDI · IBNT",
+      "expectedFilename": "20250505 9108,00.jpg"
+    },
+    {
+      "entryId": "be04dfd3-a18a-4b10-bf76-e132fcc2d274",
+      "label": "20250506 · R$ 79,00 · SAÍDAS · SICREDI · INFANTIL",
+      "expectedFilename": "20250506 79,00.jpg"
+    },
+    {
+      "entryId": "3c95eb27-72bc-43d4-ba2e-707187aa29fd",
+      "label": "20250507 · R$ 9746,76 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20250507 9746,76.jpg"
+    },
+    {
+      "entryId": "0a522539-a419-4120-abfa-54fbaddcdb77",
+      "label": "20250508 · R$ 2550,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250508 2550,00.jpg"
+    },
+    {
+      "entryId": "360bc3ce-3bd3-427c-9d1a-262e272c0455",
+      "label": "20250508 · R$ 100,00 · ENTRADAS · SICREDI · EVENTOS",
+      "expectedFilename": "20250508 100,00.jpg"
+    },
+    {
+      "entryId": "60178d3e-e9ce-477d-aa43-9ebeeeb16587",
+      "label": "20250510 · R$ 54,90 · SAÍDAS · MPAGO · INFANTIL",
+      "expectedFilename": "20250510 54,90.jpg"
+    },
+    {
+      "entryId": "cd931a5f-5483-4ef9-8f78-09d91db9109f",
+      "label": "20250511 · R$ 564,25 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250511 564,25.jpg"
+    },
+    {
+      "entryId": "87fd63ce-400e-4288-a6af-999cc9caf503",
+      "label": "20250512 · R$ 100,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250512 100,00.jpg"
+    },
+    {
+      "entryId": "9bfbbcb5-90ca-4226-99d5-5a7b0a3e3eca",
+      "label": "20250512 · R$ 2165,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250512 2165,00.jpg"
+    },
+    {
+      "entryId": "d8ba0bde-24b6-49c8-a459-a369efc0a3ab",
+      "label": "20250513 · R$ 1000,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250513 1000,00.jpg"
+    },
+    {
+      "entryId": "f0b3d457-1715-4b6b-933f-1e8baf591c2f",
+      "label": "20250513 · R$ 1000,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20250513 1000,00.jpg"
+    },
+    {
+      "entryId": "2b0b879b-e480-43ba-8048-fe8c4a9c8445",
+      "label": "20250514 · R$ 41,50 · SAÍDAS · MPAGO · EVENTOS",
+      "expectedFilename": "20250514 41,50.jpg"
+    },
+    {
+      "entryId": "a13137ae-1bdb-4b07-b21b-26945db32ecf",
+      "label": "20250514 · R$ 54,92 · SAÍDAS · MPAGO · EVENTOS",
+      "expectedFilename": "20250514 54,92.jpg"
+    },
+    {
+      "entryId": "0a5b365f-d1fd-4b2c-9092-db93171f9a27",
+      "label": "20250518 · R$ 1010,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250518 1010,00.jpg"
+    },
+    {
+      "entryId": "511117db-924b-4761-a48c-dc2ab31164d1",
+      "label": "20250518 · R$ 254,50 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250518 254,50.jpg"
+    },
+    {
+      "entryId": "b12c5962-a3df-4638-bb23-8d7e132b2001",
+      "label": "20250520 · R$ 3825,00 · ENTRADAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250520 3825,00.jpg"
+    },
+    {
+      "entryId": "c0820214-60a5-4a4f-8fd9-1e7363458aa0",
+      "label": "20250520 · R$ 2245,44 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20250520 2245,44.jpg"
+    },
+    {
+      "entryId": "eb4b5c57-d933-4ad0-bd71-212ce1d9d000",
+      "label": "20250520 · R$ 74,25 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250520 74,25.jpg"
+    },
+    {
+      "entryId": "b76b4a88-98d0-46d0-80f7-9fd91dae1bee",
+      "label": "20250525 · R$ 224,50 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250525 224,50.jpg"
+    },
+    {
+      "entryId": "dd4749ae-5cec-4ee2-befb-32e60f8d6b86",
+      "label": "20250525 · R$ 1370,15 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250525 1370,15.jpg"
+    },
+    {
+      "entryId": "1f47f7d8-d183-4139-9462-6def386285c0",
+      "label": "20250526 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250526 3825,00.jpg"
+    },
+    {
+      "entryId": "c95a1f70-f4ea-4572-8a2d-fcd0df92af7b",
+      "label": "20250526 · R$ 400,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250526 400,00.jpg"
+    },
+    {
+      "entryId": "595c3ded-516c-47de-a1d3-6693a287afd3",
+      "label": "20250530 · R$ 229,02 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250530 229,02.jpg"
+    },
+    {
+      "entryId": "dfbe69e0-15ee-4f02-bd27-11a76137b198",
+      "label": "20250530 · R$ 976,30 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250530 976,30.jpg"
+    },
+    {
+      "entryId": "110f71b9-1317-454a-ad29-136914bbcb8e",
+      "label": "20250601 · R$ 324,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250601 324,00.jpg"
+    },
+    {
+      "entryId": "3343d1f1-0942-43ca-8763-a9852bb72f54",
+      "label": "20250601 · R$ 9108,00 · ENTRADAS · SICREDI · IBNT",
+      "expectedFilename": "20250601 9108,00.jpg"
+    },
+    {
+      "entryId": "bc62af41-cb53-4133-bc42-5e2550146841",
+      "label": "20250601 · R$ 1600,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250601 1600,00.jpg"
+    },
+    {
+      "entryId": "2f3d12a0-f5b3-4e61-bfc3-61ccd99283d4",
+      "label": "20250602 · R$ 1000,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20250602 1000,00.jpg"
+    },
+    {
+      "entryId": "3e4635a7-f41f-4f52-87ce-98aa7eb69ddd",
+      "label": "20250602 · R$ 79,00 · SAÍDAS · MPAGO · INFANTIL",
+      "expectedFilename": "20250602 79,00.jpg"
+    },
+    {
+      "entryId": "81b95f9f-643a-4836-ab40-a659961fdbdf",
+      "label": "20250602 · R$ 1000,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250602 1000,00.jpg"
+    },
+    {
+      "entryId": "8d59bcce-52b6-4317-b500-b2d68c077eb0",
+      "label": "20250602 · R$ 100,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20250602 100,00.jpg"
+    },
+    {
+      "entryId": "f4823e95-d6dc-48f4-adb3-12ea5a921f96",
+      "label": "20250605 · R$ 9746,76 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20250605 9746,76.jpg"
+    },
+    {
+      "entryId": "792d8208-fa82-41f5-9fb3-a46038bdb2c9",
+      "label": "20250608 · R$ 3980,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250608 3980,00.jpg"
+    },
+    {
+      "entryId": "e21c8d05-1e56-4743-9623-eaa11fc58ee4",
+      "label": "20250608 · R$ 787,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250608 787,00.jpg"
+    },
+    {
+      "entryId": "0fcab6ee-cb4f-4d56-8d53-dd1728738c8d",
+      "label": "20250615 · R$ 370,80 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250615 370,80.jpg"
+    },
+    {
+      "entryId": "73b5116f-bc37-4c58-a194-af531d62cdb6",
+      "label": "20250615 · R$ 1050,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250615 1050,00.jpg"
+    },
+    {
+      "entryId": "a5000b14-e82c-485f-bef8-c4fe04f4db0d",
+      "label": "20250615 · R$ 27,98 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20250615 27,98.jpg"
+    },
+    {
+      "entryId": "e8dfd1a5-0a74-4b59-a6af-c39db0889913",
+      "label": "20250616 · R$ 2245,44 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20250616 2245,44.jpg"
+    },
+    {
+      "entryId": "713236d7-02e2-4afa-b3a7-4ff5b784a1b7",
+      "label": "20250618 · R$ 49,97 · SAÍDAS · MPAGO · SOCIAL",
+      "expectedFilename": "20250618 49,97.jpg"
+    },
+    {
+      "entryId": "9d4c3df3-4da1-4ba8-be93-18b8f6fc3192",
+      "label": "20250620 · R$ 74,25 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250620 74,25.jpg"
+    },
+    {
+      "entryId": "1a0ecb26-377e-4d1d-820b-025454aee8ff",
+      "label": "20250622 · R$ 970,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250622 970,00.jpg"
+    },
+    {
+      "entryId": "5dce44dc-aec9-4629-8897-2cc2b473140a",
+      "label": "20250622 · R$ 3000,00 · ENTRADAS · SICREDI · CAMPANHAS",
+      "expectedFilename": "20250622 3000,00.jpg"
+    },
+    {
+      "entryId": "ae204e90-bf67-4eb5-8e74-61e9dd977c06",
+      "label": "20250622 · R$ 255,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250622 255,00.jpg"
+    },
+    {
+      "entryId": "0e7e727b-e8ec-40fe-9541-417650cb1575",
+      "label": "20250624 · R$ 1000,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20250624 1000,00.jpg"
+    },
+    {
+      "entryId": "3363423e-8dde-49d8-a03a-ffa4bdbdaaf2",
+      "label": "20250624 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250624 3825,00.jpg"
+    },
+    {
+      "entryId": "df086bc8-30b1-451d-8d2e-d5fd813e8d3f",
+      "label": "20250624 · R$ 1000,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250624 1000,00.jpg"
+    },
+    {
+      "entryId": "582db67b-f746-4db2-ae75-d832f137a90e",
+      "label": "20250626 · R$ 3825,00 · ENTRADAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250626 3825,00.jpg"
+    },
+    {
+      "entryId": "cc6a06d1-8026-4958-80e8-7b6631d5c849",
+      "label": "20250627 · R$ 254,89 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250627 254,89.jpg"
+    },
+    {
+      "entryId": "d7f8dc8a-fc41-4ef4-bd5c-b2341754aa9d",
+      "label": "20250627 · R$ 1094,90 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250627 1094,90.jpg"
+    },
+    {
+      "entryId": "3fb5d5c7-4086-4ad6-856f-40b455dd3ddd",
+      "label": "20250629 · R$ 2749,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250629 2749,00.jpg"
+    },
+    {
+      "entryId": "d334db7c-80cf-4337-b92d-fb38cbf0c7c4",
+      "label": "20250629 · R$ 232,50 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250629 232,50.jpg"
+    },
+    {
+      "entryId": "75728684-c350-40fe-b5a8-a8853289aeb0",
+      "label": "20250630 · R$ 400,00 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20250630 400,00.jpg"
+    },
+    {
+      "entryId": "745f411f-4ee1-4f32-bbe6-db3f932c8acc",
+      "label": "20250701 · R$ 79,00 · SAÍDAS · MPAGO · INFANTIL",
+      "expectedFilename": "20250701 79,00.jpg"
+    },
+    {
+      "entryId": "841650c9-f79d-4ddf-a2db-998845e1210c",
+      "label": "20250701 · R$ 6000,00 · ENTRADAS · SICREDI · IBNT",
+      "expectedFilename": "20250701 6000,00.jpg"
+    },
+    {
+      "entryId": "e349614e-fa3c-45f4-8701-469b634ad1b7",
+      "label": "20250701 · R$ 100,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20250701 100,00.jpg"
+    },
+    {
+      "entryId": "723f7c60-afda-4037-b6f4-107762c36325",
+      "label": "20250706 · R$ 428,50 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250706 428,50.jpg"
+    },
+    {
+      "entryId": "8cf39fd2-903d-40f8-8ead-a6b7be79b95b",
+      "label": "20250706 · R$ 2651,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250706 2651,00.jpg"
+    },
+    {
+      "entryId": "3f22c5f1-0829-45d5-a2df-eb6d1358f20f",
+      "label": "20250708 · R$ 9746,76 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20250708 9746,76.jpg"
+    },
+    {
+      "entryId": "2b061234-2a89-47b0-acb3-4b739ce179c1",
+      "label": "20250711 · R$ 28,49 · SAÍDAS · MPAGO · BOAS VINDAS",
+      "expectedFilename": "20250711 28,49.jpg"
+    },
+    {
+      "entryId": "467f6c10-d9ca-4c42-8183-3517bd9e40eb",
+      "label": "20250713 · R$ 200,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250713 200,00.jpg"
+    },
+    {
+      "entryId": "4ef6703e-30cb-4a44-bd3c-9134c1a39473",
+      "label": "20250714 · R$ 2450,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250714 2450,00.jpg"
+    },
+    {
+      "entryId": "345d3a78-dff3-436d-b5c3-39978efc7893",
+      "label": "20250715 · R$ 177,78 · SAÍDAS · MPAGO · SOCIAL",
+      "expectedFilename": "20250715 177,78.jpg"
+    },
+    {
+      "entryId": "3eccad05-1ade-46b1-afb3-508e9aa9dcf6",
+      "label": "20250715 · R$ 100,00 · ENTRADAS · SICREDI · SOCIAL",
+      "expectedFilename": "20250715 100,00.jpg"
+    },
+    {
+      "entryId": "a96ab041-5231-4cc9-9b95-765a1582118a",
+      "label": "20250715 · R$ 20000,00 · ENTRE CONTAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250715 20000,00.jpg"
+    },
+    {
+      "entryId": "b9ea0070-32dd-4831-885f-64d55973bd3e",
+      "label": "20250715 · R$ 20000,00 · ENTRE CONTAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250715 20000,00.jpg"
+    },
+    {
+      "entryId": "dce640a3-3849-4934-90a6-5fbb249bfe7a",
+      "label": "20250715 · R$ 2245,44 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20250715 2245,44.jpg"
+    },
+    {
+      "entryId": "38a11d60-b513-44c1-89b9-1fad39639a72",
+      "label": "20250718 · R$ 3000,00 · ENTRADAS · SICREDI · CAMPANHAS",
+      "expectedFilename": "20250718 3000,00.jpg"
+    },
+    {
+      "entryId": "0e3a7eb6-d355-4ef6-958e-5aea4a98ec81",
+      "label": "20250720 · R$ 256,60 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250720 256,60.jpg"
+    },
+    {
+      "entryId": "4ed9dadb-42c2-40b5-9af6-d95b7f5f360f",
+      "label": "20250720 · R$ 198,96 · SAÍDAS · MPAGO · INFANTIL",
+      "expectedFilename": "20250720 198,96.jpg"
+    },
+    {
+      "entryId": "f8f4f3da-585e-4c84-ad48-dacc12b1c091",
+      "label": "20250720 · R$ 3970,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250720 3970,00.jpg"
+    },
+    {
+      "entryId": "219768a1-23b4-4753-8f41-f41714b7c26c",
+      "label": "20250721 · R$ 78,36 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250721 78,36.jpg"
+    },
+    {
+      "entryId": "2102f175-5f2f-4114-aabc-0d669979de97",
+      "label": "20250722 · R$ 3825,00 · ENTRADAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250722 3825,00.jpg"
+    },
+    {
+      "entryId": "da65e7d0-71b6-4ab2-9a1e-00c64be82f13",
+      "label": "20250722 · R$ 400,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250722 400,00.jpg"
+    },
+    {
+      "entryId": "f2af1b0a-858d-4d06-9b93-d4a2c5ee2ce6",
+      "label": "20250722 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250722 3825,00.jpg"
+    },
+    {
+      "entryId": "2bbac169-07cb-4c50-8e59-3be2dcb5c3c6",
+      "label": "20250725 · R$ 33,95 · SAÍDAS · MPAGO · INFANTIL",
+      "expectedFilename": "20250725 33,95.jpg"
+    },
+    {
+      "entryId": "66c4ecf8-8327-4b4b-a170-ab9b59f77c42",
+      "label": "20250725 · R$ 309,50 · SAÍDAS · SICREDI · LOUVOR",
+      "expectedFilename": "20250725 309,50.jpg"
+    },
+    {
+      "entryId": "a2cf49be-cfb0-46a5-bb9f-87feae1d24b8",
+      "label": "20250725 · R$ 424,80 · SAÍDAS · MPAGO · INFANTIL",
+      "expectedFilename": "20250725 424,80.jpg"
+    },
+    {
+      "entryId": "ad72c11d-f216-4232-ae5f-3a1d663b9efc",
+      "label": "20250725 · R$ 270,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250725 270,00.jpg"
+    },
+    {
+      "entryId": "a26abf58-a5ab-4747-b805-26f819af0641",
+      "label": "20250727 · R$ 574,35 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250727 574,35.jpg"
+    },
+    {
+      "entryId": "d6b61d0b-0217-419a-8f46-cc8db22c78f1",
+      "label": "20250727 · R$ 1277,62 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250727 1277,62.jpg"
+    },
+    {
+      "entryId": "43dcf637-7b90-4948-bd30-1da600ab6e05",
+      "label": "20250731 · R$ 1105,48 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250731 1105,48.jpg"
+    },
+    {
+      "entryId": "5884273f-1e0f-4c5c-ab83-caeb86a89b90",
+      "label": "20250731 · R$ 305,74 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250731 305,74.jpg"
+    },
+    {
+      "entryId": "79eb38fd-d080-428d-8b9e-fc513edb98c5",
+      "label": "20250801 · R$ 6000,00 · ENTRADAS · SICREDI · IBNT",
+      "expectedFilename": "20250801 6000,00.jpg"
+    },
+    {
+      "entryId": "2ea39ed9-b1be-4881-ab7d-3bb95bb13fb1",
+      "label": "20250803 · R$ 415,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250803 415,00.jpg"
+    },
+    {
+      "entryId": "a5c9c0cd-2f33-40b7-98b3-559d4766496e",
+      "label": "20250803 · R$ 3150,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250803 3150,00.jpg"
+    },
+    {
+      "entryId": "20c5e4e1-eed9-427a-90c2-d52ee281c2c3",
+      "label": "20250805 · R$ 100,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20250805 100,00.jpg"
+    },
+    {
+      "entryId": "376854ad-3abe-493d-9099-cb6cf3ec8e22",
+      "label": "20250805 · R$ 9746,76 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20250805 9746,76.jpg"
+    },
+    {
+      "entryId": "785223f7-7754-41d9-9000-3a1050e7ab77",
+      "label": "20250805 · R$ 1000,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250805 1000,00.jpg"
+    },
+    {
+      "entryId": "82c0e2b7-09a4-4494-95c2-dfc5f3fee8ce",
+      "label": "20250805 · R$ 1000,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20250805 1000,00.jpg"
+    },
+    {
+      "entryId": "c5fd8e32-6e2d-4173-a872-0b5f960d50a2",
+      "label": "20250805 · R$ 79,00 · SAÍDAS · SICREDI · INFANTIL",
+      "expectedFilename": "20250805 79,00.jpg"
+    },
+    {
+      "entryId": "d9069b7d-7893-456b-8592-f9b0de327d69",
+      "label": "20250806 · R$ 3000,00 · ENTRADAS · SICREDI · CAMPANHAS",
+      "expectedFilename": "20250806 3000,00.jpg"
+    },
+    {
+      "entryId": "72bc193a-0a2f-40f8-b15c-0e93039ce223",
+      "label": "20250810 · R$ 2216,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250810 2216,00.jpg"
+    },
+    {
+      "entryId": "efc47ccb-1736-4709-bc5b-db0710e937d9",
+      "label": "20250810 · R$ 9,98 · SAÍDAS · MPAGO · BOAS VINDAS",
+      "expectedFilename": "20250810 9,98.jpg"
+    },
+    {
+      "entryId": "ffb351a8-10b3-47bf-9e06-8b84f98f98f6",
+      "label": "20250810 · R$ 410,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250810 410,00.jpg"
+    },
+    {
+      "entryId": "055ba922-a754-4f55-a101-66cf9fa85c76",
+      "label": "20250811 · R$ 10,70 · SAÍDAS · MPAGO · SOCIAL",
+      "expectedFilename": "20250811 10,70.jpg"
+    },
+    {
+      "entryId": "3a715c25-eb20-4d21-845d-01d9a9fc67fd",
+      "label": "20250813 · R$ 200,00 · SAÍDAS · MPAGO · EVENTOS",
+      "expectedFilename": "20250813 200,00.jpg"
+    },
+    {
+      "entryId": "207bb4d1-c291-451a-b63a-632e0b8d748e",
+      "label": "20250814 · R$ 36,00 · SAÍDAS · MPAGO · INFANTIL",
+      "expectedFilename": "20250814 36,00.jpg"
+    },
+    {
+      "entryId": "3c770c47-3773-4ab7-affb-4d169023c124",
+      "label": "20250817 · R$ 415,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250817 415,00.jpg"
+    },
+    {
+      "entryId": "8408f21c-ceec-487d-9b1d-e1a19eabc03d",
+      "label": "20250817 · R$ 1260,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250817 1260,00.jpg"
+    },
+    {
+      "entryId": "d894a37b-36bf-4f73-b0ce-337b591cc75e",
+      "label": "20250817 · R$ 171,56 · SAÍDAS · MPAGO · BOAS VINDAS",
+      "expectedFilename": "20250817 171,56.jpg"
+    },
+    {
+      "entryId": "ce06ab85-d373-47a4-b412-f03f1b61ab20",
+      "label": "20250818 · R$ 2245,44 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20250818 2245,44.jpg"
+    },
+    {
+      "entryId": "d2d1e91c-1b2b-4849-bc7d-16c6e3e640dc",
+      "label": "20250820 · R$ 78,36 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250820 78,36.jpg"
+    },
+    {
+      "entryId": "e2dd75b1-7f2b-4e8d-a2aa-62cdca7dc3e6",
+      "label": "20250822 · R$ 3825,00 · ENTRADAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250822 3825,00.jpg"
+    },
+    {
+      "entryId": "5ffb3e6d-f426-4779-8462-8a649372daad",
+      "label": "20250824 · R$ 810,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250824 810,00.jpg"
+    },
+    {
+      "entryId": "cd389020-a404-4185-bcc8-c9c6f62d19eb",
+      "label": "20250824 · R$ 424,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250824 424,00.jpg"
+    },
+    {
+      "entryId": "09a74818-116c-40bc-bdf8-18a79575e277",
+      "label": "20250826 · R$ 400,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250826 400,00.jpg"
+    },
+    {
+      "entryId": "904d5e92-bc32-45f3-a963-8ea8b8dd4145",
+      "label": "20250826 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250826 3825,00.jpg"
+    },
+    {
+      "entryId": "28afb6e7-d3f9-4f7f-8ae0-d1f5a03c596d",
+      "label": "20250831 · R$ 1248,52 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250831 1248,52.jpg"
+    },
+    {
+      "entryId": "36576185-ebb2-425c-baaf-625aadf92ec6",
+      "label": "20250831 · R$ 278,56 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250831 278,56.jpg"
+    },
+    {
+      "entryId": "63670a07-62b8-4ae0-8f6f-b1f1353e4456",
+      "label": "20250831 · R$ 2873,02 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250831 2873,02.jpg"
+    },
+    {
+      "entryId": "a82d18f5-7b4f-42d3-9ed0-f3698df5f218",
+      "label": "20250831 · R$ 450,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250831 450,00.jpg"
+    },
+    {
+      "entryId": "122a387a-720d-453e-86f9-aa58e13c51b9",
+      "label": "20250901 · R$ 6000,00 · ENTRADAS · SICREDI · IBNT",
+      "expectedFilename": "20250901 6000,00.jpg"
+    },
+    {
+      "entryId": "69c9e48d-4580-49ff-823b-7951d1a81631",
+      "label": "20250902 · R$ 100,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20250902 100,00.jpg"
+    },
+    {
+      "entryId": "6a0f2850-9e20-477b-8500-3cf0874adea8",
+      "label": "20250902 · R$ 79,00 · SAÍDAS · MPAGO · INFANTIL",
+      "expectedFilename": "20250902 79,00.jpg"
+    },
+    {
+      "entryId": "adb43cda-9ff2-4335-9479-059fe67dfb02",
+      "label": "20250902 · R$ 3000,00 · ENTRADAS · SICREDI · CAMPANHAS",
+      "expectedFilename": "20250902 3000,00.jpg"
+    },
+    {
+      "entryId": "dd486b84-2d13-47f5-9aa5-bb5cd2a45e93",
+      "label": "20250902 · R$ 1000,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250902 1000,00.jpg"
+    },
+    {
+      "entryId": "ca59f953-66a0-480f-92ce-d9bfcb07b790",
+      "label": "20250903 · R$ 105,00 · SAÍDAS · MPAGO · PROJETOS",
+      "expectedFilename": "20250903 105,00.jpg"
+    },
+    {
+      "entryId": "3e93e27b-dac8-4fe9-b461-4cec5bb162f2",
+      "label": "20250907 · R$ 173,40 · SAÍDAS · SICREDI · LOUVOR",
+      "expectedFilename": "20250907 173,40.jpg"
+    },
+    {
+      "entryId": "51be617f-bfbf-4410-a602-90e802d90fe6",
+      "label": "20250907 · R$ 132,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250907 132,00.jpg"
+    },
+    {
+      "entryId": "e5644f83-87b7-433e-86c7-ab451a17f14c",
+      "label": "20250907 · R$ 4430,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250907 4430,00.jpg"
+    },
+    {
+      "entryId": "15b928ec-3c59-45a0-9d88-d6e0cd5fcff5",
+      "label": "20250909 · R$ 9746,76 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20250909 9746,76.jpg"
+    },
+    {
+      "entryId": "08408e06-1ec7-4015-98e3-b5ab4415f437",
+      "label": "20250912 · R$ 127,52 · SAÍDAS · MPAGO · CAPACITAÇÃO",
+      "expectedFilename": "20250912 127,52.jpg"
+    },
+    {
+      "entryId": "3a2eb691-1d0f-4686-b648-f4185a19eda9",
+      "label": "20250912 · R$ 100,00 · SAÍDAS · SICREDI · CAPACITAÇÃO",
+      "expectedFilename": "20250912 100,00.jpg"
+    },
+    {
+      "entryId": "a5608c3d-fc28-4e2e-8ca5-56cf2cae4035",
+      "label": "20250912 · R$ 247,48 · SAÍDAS · MPAGO · CAPACITAÇÃO",
+      "expectedFilename": "20250912 247,48.jpg"
+    },
+    {
+      "entryId": "f29a2762-14dd-4b45-a162-823e865a8561",
+      "label": "20250912 · R$ 691,98 · SAÍDAS · MPAGO · CAPACITAÇÃO",
+      "expectedFilename": "20250912 691,98.jpg"
+    },
+    {
+      "entryId": "d4a59e62-0282-4f70-89b9-d4b2183e585a",
+      "label": "20250914 · R$ 1328,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250914 1328,00.jpg"
+    },
+    {
+      "entryId": "eb7d1864-dedc-4537-9147-ae0190cb3361",
+      "label": "20250914 · R$ 250,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250914 250,00.jpg"
+    },
+    {
+      "entryId": "f32a969d-0ed8-45df-9ee2-6e52633ba6dc",
+      "label": "20250916 · R$ 2245,44 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20250916 2245,44.jpg"
+    },
+    {
+      "entryId": "e117c707-cf23-47c1-97d8-2ca6c1bf89bc",
+      "label": "20250918 · R$ 3825,00 · ENTRADAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250918 3825,00.jpg"
+    },
+    {
+      "entryId": "00792684-9ad5-4089-8dbd-dae961173f0f",
+      "label": "20250919 · R$ 95,90 · SAÍDAS · AP.MPAGO · LOUVOR",
+      "expectedFilename": "20250919 95,90.jpg"
+    },
+    {
+      "entryId": "40d93450-6a63-4cd1-b5d0-5122cc4184b0",
+      "label": "20250919 · R$ 674,00 · SAÍDAS · AP.MPAGO · LOUVOR",
+      "expectedFilename": "20250919 674,00.jpg"
+    },
+    {
+      "entryId": "6ae7f78d-9415-4f7b-aab9-e86047fae193",
+      "label": "20250919 · R$ 330,88 · SAÍDAS · AP.MPAGO · LOUVOR",
+      "expectedFilename": "20250919 330,88.jpg"
+    },
+    {
+      "entryId": "7fc420e8-e21e-46a0-8eaa-ebd43e121d12",
+      "label": "20250919 · R$ 497,26 · SAÍDAS · AP.MPAGO · LOUVOR",
+      "expectedFilename": "20250919 497,26.jpg"
+    },
+    {
+      "entryId": "d0e23b8d-ed8a-4e2b-8205-17683b3c53ac",
+      "label": "20250919 · R$ 206,26 · SAÍDAS · AP.MPAGO · LOUVOR",
+      "expectedFilename": "20250919 206,26.jpg"
+    },
+    {
+      "entryId": "f5f55b56-a818-4cef-8aed-c6dc08a34c98",
+      "label": "20250919 · R$ 615,99 · SAÍDAS · AP.MPAGO · COMUNICAÇÃO",
+      "expectedFilename": "20250919 615,99.jpg"
+    },
+    {
+      "entryId": "69bf12ab-156b-4856-8a88-7ff3b35f3a27",
+      "label": "20250921 · R$ 1553,65 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250921 1553,65.jpg"
+    },
+    {
+      "entryId": "bec49fa1-c3a1-4557-81ff-abbcc563f3cd",
+      "label": "20250921 · R$ 225,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250921 225,00.jpg"
+    },
+    {
+      "entryId": "57ccd194-1348-4578-a8f4-3ae2bec7563a",
+      "label": "20250922 · R$ 78,36 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250922 78,36.jpg"
+    },
+    {
+      "entryId": "f1ff7e93-bb58-46fa-94ba-5e3d9be269c6",
+      "label": "20250923 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20250923 3825,00.jpg"
+    },
+    {
+      "entryId": "1d149d8e-956f-4738-b345-7c6ab75824d8",
+      "label": "20250926 · R$ 374,99 · SAÍDAS · AP.MPAGO · EVENTOS",
+      "expectedFilename": "20250926 374,99.jpg"
+    },
+    {
+      "entryId": "314b7424-8fd0-496f-a6c4-1421377c6e3f",
+      "label": "20250927 · R$ 180,20 · SAÍDAS · SICREDI · LOUVOR",
+      "expectedFilename": "20250927 180,20.jpg"
+    },
+    {
+      "entryId": "02a60b11-ec70-47df-8b6c-8f8403d81e72",
+      "label": "20250928 · R$ 262,25 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20250928 262,25.jpg"
+    },
+    {
+      "entryId": "183f0794-5485-40e4-8c37-8e9542f3ca13",
+      "label": "20250928 · R$ 1090,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20250928 1090,00.jpg"
+    },
+    {
+      "entryId": "9cfaaa51-f943-4c76-9ab7-c2395541f02b",
+      "label": "20250929 · R$ 374,90 · SAÍDAS · MPAGO · COMUNICAÇÃO",
+      "expectedFilename": "20250929 374,90.jpg"
+    },
+    {
+      "entryId": "391da43b-39c5-4ff0-a2e6-92229ef61ee4",
+      "label": "20250930 · R$ 309,84 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20250930 309,84.jpg"
+    },
+    {
+      "entryId": "636431e2-916a-4c7f-8894-1781e0a7beeb",
+      "label": "20250930 · R$ 100,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20250930 100,00.jpg"
+    },
+    {
+      "entryId": "b033b1bc-6973-46af-9117-46568336c5b6",
+      "label": "20250930 · R$ 1322,34 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20250930 1322,34.jpg"
+    },
+    {
+      "entryId": "cde7cfba-4f75-4739-9554-6a477464e711",
+      "label": "20250930 · R$ 400,00 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20250930 400,00.jpg"
+    },
+    {
+      "entryId": "76ac0a96-100f-42f8-977a-13a9f9c17e30",
+      "label": "20251001 · R$ 4000,00 · ENTRADAS · SICREDI · IBNT",
+      "expectedFilename": "20251001 4000,00.jpg"
+    },
+    {
+      "entryId": "a752100f-0b65-48f4-b4bf-b5676ba9d1cf",
+      "label": "20251002 · R$ 150,00 · ENTRADAS · SICREDI · EVENTOS",
+      "expectedFilename": "20251002 150,00.jpg"
+    },
+    {
+      "entryId": "b92b89c9-17c6-498b-acbb-58ffd8a188ff",
+      "label": "20251002 · R$ 90,00 · SAÍDAS · MPAGO · EVENTOS",
+      "expectedFilename": "20251002 90,00.jpg"
+    },
+    {
+      "entryId": "4caf6168-3477-4ce6-ad82-05e383344c5c",
+      "label": "20251003 · R$ 3000,00 · ENTRADAS · MPAGO · CAMPANHAS",
+      "expectedFilename": "20251003 3000,00.jpg"
+    },
+    {
+      "entryId": "4dea2b13-c74b-4042-9cdb-96ac34b3200c",
+      "label": "20251003 · R$ 117,32 · SAÍDAS · MPAGO · COMUNICAÇÃO",
+      "expectedFilename": "20251003 117,32.jpg"
+    },
+    {
+      "entryId": "47fd2da5-980d-499e-b145-a99af8cab7e5",
+      "label": "20251005 · R$ 1000,00 · ENTRADAS · MPAGO · CAMPANHAS",
+      "expectedFilename": "20251005 1000,00.jpg"
+    },
+    {
+      "entryId": "c3eab831-5cbe-487f-ae57-c56b167caec4",
+      "label": "20251005 · R$ 250,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20251005 250,00.jpg"
+    },
+    {
+      "entryId": "f8253f33-4cd0-4b23-b647-af742f29485c",
+      "label": "20251005 · R$ 6490,31 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251005 6490,31.jpg"
+    },
+    {
+      "entryId": "bd4b9498-4a16-45bd-befa-0d5d8bdc1825",
+      "label": "20251006 · R$ 9746,76 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20251006 9746,76.jpg"
+    },
+    {
+      "entryId": "cf167692-a752-41b4-b398-74ea487b8876",
+      "label": "20251006 · R$ 79,00 · SAÍDAS · SICREDI · INFANTIL",
+      "expectedFilename": "20251006 79,00.jpg"
+    },
+    {
+      "entryId": "4fe2bfbf-97f0-47d9-a604-1183e8730687",
+      "label": "20251010 · R$ 320,00 · SAÍDAS · MPAGO · PROJETOS",
+      "expectedFilename": "20251010 320,00.jpg"
+    },
+    {
+      "entryId": "58f51429-f793-44be-baad-b901a1bcffb6",
+      "label": "20251011 · R$ 375,00 · SAÍDAS · MPAGO · PROJETOS",
+      "expectedFilename": "20251011 375,00.jpg"
+    },
+    {
+      "entryId": "060a1818-f4f3-4e9e-8cdf-c98a3ce08657",
+      "label": "20251012 · R$ 535,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20251012 535,00.jpg"
+    },
+    {
+      "entryId": "9e75e74d-5e0f-40f4-8545-54f43e635c65",
+      "label": "20251012 · R$ 2100,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251012 2100,00.jpg"
+    },
+    {
+      "entryId": "eab6f9a2-d56c-4f25-a031-9a88a76fb183",
+      "label": "20251012 · R$ 300,00 · SAÍDAS · MPAGO · CAPACITAÇÃO",
+      "expectedFilename": "20251012 300,00.jpg"
+    },
+    {
+      "entryId": "0f50fbc0-1f61-40c2-980c-749d867ae63e",
+      "label": "20251013 · R$ 360,00 · SAÍDAS · MPAGO · PROJETOS",
+      "expectedFilename": "20251013 360,00.jpg"
+    },
+    {
+      "entryId": "ca0d3d19-77b1-4d3e-8f7b-9de3bb5f50ec",
+      "label": "20251015 · R$ 2245,44 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20251015 2245,44.jpg"
+    },
+    {
+      "entryId": "183a81cb-b9b9-4205-af8a-4434708683b9",
+      "label": "20251019 · R$ 26,90 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20251019 26,90.jpg"
+    },
+    {
+      "entryId": "3ee2a890-6964-460e-8dbe-a0b34405bc18",
+      "label": "20251019 · R$ 251,25 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20251019 251,25.jpg"
+    },
+    {
+      "entryId": "f01a90e1-0172-4994-b0ad-86941208b45e",
+      "label": "20251019 · R$ 460,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251019 460,00.jpg"
+    },
+    {
+      "entryId": "a68fa419-119e-4ae8-8966-445e5cb711f0",
+      "label": "20251020 · R$ 78,36 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20251020 78,36.jpg"
+    },
+    {
+      "entryId": "ebaf9696-42af-454e-b71d-31cc20b3dad5",
+      "label": "20251024 · R$ 230,00 · SAÍDAS · SICREDI · LOUVOR",
+      "expectedFilename": "20251024 230,00.jpg"
+    },
+    {
+      "entryId": "437ff82e-561f-4545-b093-043cb338ee9e",
+      "label": "20251026 · R$ 1250,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251026 1250,00.jpg"
+    },
+    {
+      "entryId": "8b4ed9ac-3034-4d79-a016-0cef58827853",
+      "label": "20251026 · R$ 224,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20251026 224,00.jpg"
+    },
+    {
+      "entryId": "5dd3c849-3d3b-4142-87bf-48c0584f13d7",
+      "label": "20251028 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20251028 3825,00.jpg"
+    },
+    {
+      "entryId": "e4fed787-1010-4911-8070-70b6fadb46a0",
+      "label": "20251029 · R$ 400,00 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251029 400,00.jpg"
+    },
+    {
+      "entryId": "6df330f0-6b85-4ee5-b5c5-2da9db4432fb",
+      "label": "20251030 · R$ 277,39 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20251030 277,39.jpg"
+    },
+    {
+      "entryId": "e0c17b2f-40e8-44a6-a9de-4eb747000988",
+      "label": "20251030 · R$ 1398,34 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20251030 1398,34.jpg"
+    },
+    {
+      "entryId": "1229685b-c974-4e81-86ed-9d0e3791c91d",
+      "label": "20251102 · R$ 4000,00 · ENTRADAS · SICREDI · IBNT",
+      "expectedFilename": "20251102 4000,00.jpg"
+    },
+    {
+      "entryId": "46b7adf8-c0dc-4e38-926d-94f001927313",
+      "label": "20251102 · R$ 1965,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251102 1965,00.jpg"
+    },
+    {
+      "entryId": "d4fcc430-1ad2-4261-9184-7e7e4a6a32db",
+      "label": "20251102 · R$ 200,50 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20251102 200,50.jpg"
+    },
+    {
+      "entryId": "94f1d587-58a4-4ab2-b233-b9b1b5af97a1",
+      "label": "20251103 · R$ 79,00 · SAÍDAS · MPAGO · INFANTIL",
+      "expectedFilename": "20251103 79,00.jpg"
+    },
+    {
+      "entryId": "c8aa96e4-4b92-486c-ab93-5c0f942c9593",
+      "label": "20251103 · R$ 100,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20251103 100,00.jpg"
+    },
+    {
+      "entryId": "e23b4dd6-48d7-4d44-a377-8e2c4e0fb679",
+      "label": "20251103 · R$ 3000,00 · ENTRADAS · MPAGO · CAMPANHAS",
+      "expectedFilename": "20251103 3000,00.jpg"
+    },
+    {
+      "entryId": "9d1f0167-896f-48c6-ae27-f0189e7afcd3",
+      "label": "20251105 · R$ 113,59 · SAÍDAS · MPAGO · BOAS VINDAS",
+      "expectedFilename": "20251105 113,59.jpg"
+    },
+    {
+      "entryId": "a7250591-0341-4f4c-804d-567263f5f397",
+      "label": "20251105 · R$ 159,20 · SAÍDAS · MPAGO · BOAS VINDAS",
+      "expectedFilename": "20251105 159,20.jpg"
+    },
+    {
+      "entryId": "d9a3dfc3-78e3-4e3a-bb83-bcc9afef1e39",
+      "label": "20251105 · R$ 2250,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251105 2250,00.jpg"
+    },
+    {
+      "entryId": "dbe97a2d-65c7-4cc6-8b82-2560081479f8",
+      "label": "20251108 · R$ 300,00 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20251108 300,00.jpg"
+    },
+    {
+      "entryId": "fe87c697-09e3-4d5c-8866-8cd8e5e2ee48",
+      "label": "20251109 · R$ 600,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20251109 600,00.jpg"
+    },
+    {
+      "entryId": "038dbb01-7d51-48ae-99ee-546da589df73",
+      "label": "20251110 · R$ 13,32 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251110 13,32.jpg"
+    },
+    {
+      "entryId": "32039b9e-cee1-490a-a0de-56dcb53b54a6",
+      "label": "20251110 · R$ 4718,50 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251110 4718,50.jpg"
+    },
+    {
+      "entryId": "eb4fdf26-49ae-4724-bb6b-a97f76f16970",
+      "label": "20251110 · R$ 100,01 · ENTRADAS · SICREDI · SOCIAL",
+      "expectedFilename": "20251110 100,01.jpg"
+    },
+    {
+      "entryId": "5fe2cbb3-bec9-4665-9a93-85c7a8abbc31",
+      "label": "20251111 · R$ 40,00 · SAÍDAS · MPAGO · COMUNICAÇÃO",
+      "expectedFilename": "20251111 40,00.jpg"
+    },
+    {
+      "entryId": "2a0f671a-0451-47c0-9707-e8ad298540a5",
+      "label": "20251112 · R$ 65,11 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20251112 65,11.jpg"
+    },
+    {
+      "entryId": "c892c1fe-3517-4eee-8567-93d52df6c699",
+      "label": "20251114 · R$ 300,00 · SAÍDAS · MPAGO · CAPACITAÇÃO",
+      "expectedFilename": "20251114 300,00.jpg"
+    },
+    {
+      "entryId": "a9d72dcb-8263-4178-ac2a-a1fbe7941d5e",
+      "label": "20251116 · R$ 210,80 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20251116 210,80.jpg"
+    },
+    {
+      "entryId": "cf2967ed-1927-4daf-8478-07cad88ae2db",
+      "label": "20251116 · R$ 1750,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251116 1750,00.jpg"
+    },
+    {
+      "entryId": "07f0fad9-790f-463c-93ae-3d163bbc4848",
+      "label": "20251117 · R$ 6000,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251117 6000,00.jpg"
+    },
+    {
+      "entryId": "239f13f6-4d1a-4cc2-a45a-a6f3d12cc180",
+      "label": "20251117 · R$ 6000,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20251117 6000,00.jpg"
+    },
+    {
+      "entryId": "7113d07e-3722-4baf-aea4-a95662dd642f",
+      "label": "20251117 · R$ 11992,20 · SAÍDAS · MPAGO · PREBENDA BRUTA",
+      "expectedFilename": "20251117 11992,20.jpg"
+    },
+    {
+      "entryId": "20458e52-b0ec-4462-8983-d2ce64695971",
+      "label": "20251118 · R$ 119,70 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20251118 119,70.jpg"
+    },
+    {
+      "entryId": "09e294d3-868b-4bd1-a008-d93c2ed7865d",
+      "label": "20251119 · R$ 26,90 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20251119 26,90.jpg"
+    },
+    {
+      "entryId": "e3d52b69-f01e-4c05-8a42-698b6dbb70b1",
+      "label": "20251121 · R$ 78,36 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20251121 78,36.jpg"
+    },
+    {
+      "entryId": "17f70ece-0ec8-43f6-a78e-06296b4a8a79",
+      "label": "20251122 · R$ 330,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20251122 330,00.jpg"
+    },
+    {
+      "entryId": "5d730281-700e-4268-a145-1efa978a9d96",
+      "label": "20251122 · R$ 330,00 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20251122 330,00.jpg"
+    },
+    {
+      "entryId": "f8e59211-e44f-4f05-9756-548882f31e4b",
+      "label": "20251122 · R$ 330,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251122 330,00.jpg"
+    },
+    {
+      "entryId": "364846f9-7257-4eb0-8033-80bcab228349",
+      "label": "20251123 · R$ 221,50 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20251123 221,50.jpg"
+    },
+    {
+      "entryId": "752a9b6d-ff1b-4395-aaa9-39e89dddcf04",
+      "label": "20251124 · R$ 3825,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251124 3825,00.jpg"
+    },
+    {
+      "entryId": "a5453d02-6de6-4908-a99b-6d80963da327",
+      "label": "20251124 · R$ 3825,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20251124 3825,00.jpg"
+    },
+    {
+      "entryId": "b7e05a23-95ab-41c1-a44d-1c1a92ee9701",
+      "label": "20251124 · R$ 3825,00 · SAÍDAS · MPAGO · ALUGUEL",
+      "expectedFilename": "20251124 3825,00.jpg"
+    },
+    {
+      "entryId": "5913fe61-ad19-4450-94b9-7fa0aceb5e7f",
+      "label": "20251126 · R$ 190,00 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251126 190,00.jpg"
+    },
+    {
+      "entryId": "4d544ede-221b-4cb3-b822-c14dcc8d8993",
+      "label": "20251128 · R$ 1950,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251128 1950,00.jpg"
+    },
+    {
+      "entryId": "b437b789-b9d0-4786-9bb8-5431f31de08e",
+      "label": "20251128 · R$ 650,04 · ENTRADAS · MPAGO · SOCIAL",
+      "expectedFilename": "20251128 650,04.jpg"
+    },
+    {
+      "entryId": "0bfecea3-993d-4d29-a30f-40cb0e3e6026",
+      "label": "20251129 · R$ 200,00 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20251129 200,00.jpg"
+    },
+    {
+      "entryId": "b387906c-78ca-4e8e-bf04-23170ae90db3",
+      "label": "20251129 · R$ 79,26 · SAÍDAS · MPAGO · SOCIAL",
+      "expectedFilename": "20251129 79,26.jpg"
+    },
+    {
+      "entryId": "df89a7cf-1541-437e-a4f4-26b634990b1a",
+      "label": "20251129 · R$ 52,00 · SAÍDAS · MPAGO · SOCIAL",
+      "expectedFilename": "20251129 52,00.jpg"
+    },
+    {
+      "entryId": "d1c45159-ee47-4f02-8991-416a44810476",
+      "label": "20251130 · R$ 1167,54 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20251130 1167,54.jpg"
+    },
+    {
+      "entryId": "e34330fe-5dd5-41e8-b162-eb7ff85d6d8a",
+      "label": "20251130 · R$ 400,00 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251130 400,00.jpg"
+    },
+    {
+      "entryId": "fa64240e-cf4d-4042-8f63-94d26d16029d",
+      "label": "20251130 · R$ 213,71 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20251130 213,71.jpg"
+    },
+    {
+      "entryId": "06022aed-5976-485e-b036-4b1582c08f59",
+      "label": "20251201 · R$ 79,00 · SAÍDAS · MPAGO · INFANTIL",
+      "expectedFilename": "20251201 79,00.jpg"
+    },
+    {
+      "entryId": "12b7e123-a584-4a1c-8fd4-08f9bb8b3200",
+      "label": "20251201 · R$ 100,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20251201 100,00.jpg"
+    },
+    {
+      "entryId": "36e1239c-2184-4f72-bdb6-7f77eb9ffb59",
+      "label": "20251201 · R$ 400,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251201 400,00.jpg"
+    },
+    {
+      "entryId": "59cd0537-3c31-4b39-8334-39ec2447bbd9",
+      "label": "20251201 · R$ 400,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20251201 400,00.jpg"
+    },
+    {
+      "entryId": "8b398f81-d1a2-4f29-bb3a-e9881c05b28e",
+      "label": "20251201 · R$ 1780,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251201 1780,00.jpg"
+    },
+    {
+      "entryId": "cf47b102-f840-4172-98a8-d36afdbd69b7",
+      "label": "20251201 · R$ 223,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20251201 223,00.jpg"
+    },
+    {
+      "entryId": "fb8f4962-cd6b-4d15-86cc-bbc4fed52286",
+      "label": "20251201 · R$ 4000,00 · ENTRADAS · SICREDI · IBNT",
+      "expectedFilename": "20251201 4000,00.jpg"
+    },
+    {
+      "entryId": "bad522a8-b5e0-4955-93e5-425f07fd3ef3",
+      "label": "20251203 · R$ 3000,00 · ENTRADAS · MPAGO · CAMPANHAS",
+      "expectedFilename": "20251203 3000,00.jpg"
+    },
+    {
+      "entryId": "3aaa495d-1129-41ee-b36f-3801ba619e5d",
+      "label": "20251207 · R$ 4083,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251207 4083,00.jpg"
+    },
+    {
+      "entryId": "8e9185b1-e7dd-46d1-9f56-c4e902bd2f67",
+      "label": "20251207 · R$ 100,00 · ENTRADAS · MPAGO · CAMPANHAS",
+      "expectedFilename": "20251207 100,00.jpg"
+    },
+    {
+      "entryId": "921f7bde-9854-43b2-8eb9-1d5a172eac25",
+      "label": "20251207 · R$ 0,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20251207 0,00.jpg"
+    },
+    {
+      "entryId": "0005b39d-dfc8-4f24-b7a7-5ec2981b60ca",
+      "label": "20251208 · R$ 8000,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251208 8000,00.jpg"
+    },
+    {
+      "entryId": "28dfae84-d027-425f-8cda-d4e43cac95ef",
+      "label": "20251208 · R$ 9746,76 · SAÍDAS · MPAGO · PREBENDA BRUTA",
+      "expectedFilename": "20251208 9746,76.jpg"
+    },
+    {
+      "entryId": "b266b778-d9fe-4211-85a3-a176d388bec1",
+      "label": "20251208 · R$ 8000,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20251208 8000,00.jpg"
+    },
+    {
+      "entryId": "6d0ce9b5-ff44-451f-b594-c18bda9efeff",
+      "label": "20251212 · R$ 330,00 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20251212 330,00.jpg"
+    },
+    {
+      "entryId": "aa73e1e8-12e1-40ab-be59-73b1bccf03ee",
+      "label": "20251214 · R$ 2350,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251214 2350,00.jpg"
+    },
+    {
+      "entryId": "a3d99701-af9f-4fcc-b4a5-3201c5f70c10",
+      "label": "20251216 · R$ 2245,44 · SAÍDAS · MPAGO · PREBENDA BRUTA",
+      "expectedFilename": "20251216 2245,44.jpg"
+    },
+    {
+      "entryId": "17282aef-165e-4829-8baa-e524b60fa677",
+      "label": "20251217 · R$ 230,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251217 230,00.jpg"
+    },
+    {
+      "entryId": "6e7444d9-2010-47a0-9e11-82fbb4ca6ea0",
+      "label": "20251217 · R$ 8,71 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251217 8,71.jpg"
+    },
+    {
+      "entryId": "abf7b3b1-e1d1-4920-9d00-3a6152dd392d",
+      "label": "20251217 · R$ 230,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20251217 230,00.jpg"
+    },
+    {
+      "entryId": "c6e7aa21-9447-4b36-a97c-0c228bf1d210",
+      "label": "20251217 · R$ 230,61 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251217 230,61.jpg"
+    },
+    {
+      "entryId": "060e7718-8028-4a16-85f1-99622f7f5321",
+      "label": "20251218 · R$ 400,00 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251218 400,00.jpg"
+    },
+    {
+      "entryId": "616d4dcf-21d2-48d6-a8e4-59acafd68d11",
+      "label": "20251218 · R$ 400,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251218 400,00.jpg"
+    },
+    {
+      "entryId": "c8a88e46-773e-43e6-b17c-6de6f6f41905",
+      "label": "20251218 · R$ 400,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20251218 400,00.jpg"
+    },
+    {
+      "entryId": "06cb3e96-fc00-4d0f-93c8-4292e81304ba",
+      "label": "20251219 · R$ 26,90 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20251219 26,90.jpg"
+    },
+    {
+      "entryId": "7ba1dfd3-0d0f-4b32-b187-157c55e065b2",
+      "label": "20251221 · R$ 2620,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20251221 2620,00.jpg"
+    },
+    {
+      "entryId": "c513b5b2-5028-4819-a77c-9117d0f2eadb",
+      "label": "20251222 · R$ 78,36 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20251222 78,36.jpg"
+    },
+    {
+      "entryId": "0e419071-b0e4-445b-8c15-911958be1d29",
+      "label": "20251228 · R$ 618,79 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251228 618,79.jpg"
+    },
+    {
+      "entryId": "1c89f6e0-6356-4008-90d6-e12c3d9b3b70",
+      "label": "20251228 · R$ 618,79 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20251228 618,79.jpg"
+    },
+    {
+      "entryId": "2505c597-9abe-4e13-a521-2db88d717180",
+      "label": "20251228 · R$ 618,79 · SAÍDAS · MPAGO · SOCIAL",
+      "expectedFilename": "20251228 618,79.jpg"
+    },
+    {
+      "entryId": "390d62f1-be74-44ae-b837-2e04605cc578",
+      "label": "20251228 · R$ 137,98 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20251228 137,98.jpg"
+    },
+    {
+      "entryId": "85eff5f5-5ae8-4a35-a50a-0fa730b7cf1c",
+      "label": "20251228 · R$ 1366,05 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20251228 1366,05.jpg"
+    },
+    {
+      "entryId": "0e815345-4e21-49ac-b108-8f3e4748a822",
+      "label": "20251230 · R$ 4225,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20251230 4225,00.jpg"
+    },
+    {
+      "entryId": "447fe3ff-457d-4a5c-af74-3b3d1cc63ef9",
+      "label": "20251230 · R$ 400,00 · SAÍDAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251230 400,00.jpg"
+    },
+    {
+      "entryId": "7c2a7373-4138-4548-a023-ff79ff1531b4",
+      "label": "20251230 · R$ 3825,00 · SAÍDAS · MPAGO · ALUGUEL",
+      "expectedFilename": "20251230 3825,00.jpg"
+    },
+    {
+      "entryId": "ad6f3f28-1e66-454d-9bfa-d8e795650fd0",
+      "label": "20251230 · R$ 4225,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20251230 4225,00.jpg"
+    },
+    {
+      "entryId": "07b242b8-be8a-4f29-ade3-ed4ec4dd1da0",
+      "label": "20260105 · R$ 300,01 · ENTRADAS · SICREDI · SOCIAL",
+      "expectedFilename": "20260105 300,01.jpg"
+    },
+    {
+      "entryId": "26c44781-35a7-440c-99d1-e56facd8f870",
+      "label": "20260105 · R$ 3000,00 · ENTRADAS · MPAGO · CAMPANHAS",
+      "expectedFilename": "20260105 3000,00.jpg"
+    },
+    {
+      "entryId": "5e9a4216-93f3-4e93-969f-cad21f37639e",
+      "label": "20260105 · R$ 2300,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260105 2300,00.jpg"
+    },
+    {
+      "entryId": "00328077-35ec-4bea-8430-b947a78d40fa",
+      "label": "20260106 · R$ 100,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20260106 100,00.jpg"
+    },
+    {
+      "entryId": "15e04a36-e28e-4904-a74e-72cf37c79b9d",
+      "label": "20260106 · R$ 79,00 · SAÍDAS · MPAGO · INFANTIL",
+      "expectedFilename": "20260106 79,00.jpg"
+    },
+    {
+      "entryId": "1a3404f9-99b0-4aea-be9e-35c1d54ade47",
+      "label": "20260106 · R$ 530,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260106 530,00.jpg"
+    },
+    {
+      "entryId": "37939f1e-483c-49c0-b2f3-573f13b8161b",
+      "label": "20260106 · R$ 0,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20260106 0,00.jpg"
+    },
+    {
+      "entryId": "4ab19fad-77b1-4af5-973c-9b51dd724257",
+      "label": "20260107 · R$ 1140,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260107 1140,00.jpg"
+    },
+    {
+      "entryId": "58e8f2b6-a341-4c6d-bda3-5a2e0a5a113a",
+      "label": "20260107 · R$ 300,02 · ENTRADAS · SICREDI · SOCIAL",
+      "expectedFilename": "20260107 300,02.jpg"
+    },
+    {
+      "entryId": "eafb5d80-63c7-4f4e-bdfb-9402c75632b4",
+      "label": "20260108 · R$ 920,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260108 920,00.jpg"
+    },
+    {
+      "entryId": "9964320a-ffb2-4356-8b8a-c4f1031446c6",
+      "label": "20260111 · R$ 435,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260111 435,00.jpg"
+    },
+    {
+      "entryId": "ed6742af-57f6-4f55-8e7a-ae2b8cbbc2ae",
+      "label": "20260112 · R$ 2025,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260112 2025,00.jpg"
+    },
+    {
+      "entryId": "0f9d02d4-8ccd-4f86-b2df-b413cb54b914",
+      "label": "20260113 · R$ 2245,44 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20260113 2245,44.jpg"
+    },
+    {
+      "entryId": "85e9d8ed-fb53-4a60-9fbc-ad2b852b0808",
+      "label": "20260113 · R$ 500,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260113 500,00.jpg"
+    },
+    {
+      "entryId": "8a3a1c23-af0d-47ed-9a18-f65ae5af8b5f",
+      "label": "20260113 · R$ 100,01 · ENTRADAS · SICREDI · SOCIAL",
+      "expectedFilename": "20260113 100,01.jpg"
+    },
+    {
+      "entryId": "4728ef27-3013-49fc-bfcd-46d71bec0e42",
+      "label": "20260118 · R$ 0,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260118 0,00.jpg"
+    },
+    {
+      "entryId": "4fdeb675-de10-421e-9107-f29faf52ac53",
+      "label": "20260119 · R$ 1100,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260119 1100,00.jpg"
+    },
+    {
+      "entryId": "bd944439-36b7-478d-997f-440c7471b354",
+      "label": "20260119 · R$ 26,90 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20260119 26,90.jpg"
+    },
+    {
+      "entryId": "2915ec76-90db-41ea-94bd-ad57d2233170",
+      "label": "20260120 · R$ 78,36 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260120 78,36.jpg"
+    },
+    {
+      "entryId": "6024173d-0bbe-499f-b007-a0d3a2d88f88",
+      "label": "20260123 · R$ 150,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260123 150,00.jpg"
+    },
+    {
+      "entryId": "f29f56c1-5ff6-43cc-8e66-d7fd830b5afc",
+      "label": "20260125 · R$ 140,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260125 140,00.jpg"
+    },
+    {
+      "entryId": "b6563a90-a99e-4c64-8560-8fa428f1ea0d",
+      "label": "20260126 · R$ 700,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260126 700,00.jpg"
+    },
+    {
+      "entryId": "fc6de819-56e0-4f7c-aebb-912b5371c15a",
+      "label": "20260129 · R$ 350,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260129 350,00.jpg"
+    },
+    {
+      "entryId": "0aa7840a-f613-457a-8d38-45b05d862a61",
+      "label": "20260130 · R$ 600,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260130 600,00.jpg"
+    },
+    {
+      "entryId": "c62330e7-392d-41d3-a57f-34c3911860d7",
+      "label": "20260130 · R$ 424,50 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260130 424,50.jpg"
+    },
+    {
+      "entryId": "d1e42e02-4842-4793-87e5-bcd09d916636",
+      "label": "20260130 · R$ 1318,27 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260130 1318,27.jpg"
+    },
+    {
+      "entryId": "ffe360e1-272a-49bf-8e5b-4e80d0857f88",
+      "label": "20260130 · R$ 282,19 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260130 282,19.jpg"
+    },
+    {
+      "entryId": "07a18598-aaa7-409d-a08e-c66e6d91feab",
+      "label": "20260201 · R$ 615,50 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260201 615,50.jpg"
+    },
+    {
+      "entryId": "c38e0b83-c7e8-4892-b242-54bdc0d51c99",
+      "label": "20260201 · R$ 400,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260201 400,00.jpg"
+    },
+    {
+      "entryId": "34327a3d-edcb-4a51-a6c3-930c9b8cd9e8",
+      "label": "20260202 · R$ 79,00 · SAÍDAS · SICREDI · INFANTIL",
+      "expectedFilename": "20260202 79,00.jpg"
+    },
+    {
+      "entryId": "8e7f6725-982e-466f-a68b-559e605497df",
+      "label": "20260202 · R$ 1230,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260202 1230,00.jpg"
+    },
+    {
+      "entryId": "f152ecd6-e0e0-4493-b9ba-d7014ba54fc1",
+      "label": "20260203 · R$ 220,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260203 220,00.jpg"
+    },
+    {
+      "entryId": "1d0aa81c-534d-4c3b-93fc-8c39be8a66e4",
+      "label": "20260204 · R$ 1000,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260204 1000,00.jpg"
+    },
+    {
+      "entryId": "056775fa-d8ab-48e5-8c67-f996bfb6c558",
+      "label": "20260206 · R$ 350,00 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20260206 350,00.jpg"
+    },
+    {
+      "entryId": "1d4afe4d-9427-4ac6-8ef7-d91871a09196",
+      "label": "20260206 · R$ 49,43 · SAÍDAS · MPAGO · MISSÕES",
+      "expectedFilename": "20260206 49,43.jpg"
+    },
+    {
+      "entryId": "9a738181-4898-41c6-9786-b20ffbde688e",
+      "label": "20260206 · R$ 3000,00 · ENTRADAS · MPAGO · CAMPANHAS",
+      "expectedFilename": "20260206 3000,00.jpg"
+    },
+    {
+      "entryId": "4c48ff61-7fd0-44e9-b5bf-26c06f9a9f9a",
+      "label": "20260208 · R$ 20,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260208 20,00.jpg"
+    },
+    {
+      "entryId": "ad6cc8b4-c930-4897-8ff8-9da06ade9c35",
+      "label": "20260209 · R$ 5880,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260209 5880,00.jpg"
+    },
+    {
+      "entryId": "9b0abe41-ebd5-4c58-bb23-f15b775430e7",
+      "label": "20260210 · R$ 800,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260210 800,00.jpg"
+    },
+    {
+      "entryId": "fe2e58d4-cc7c-488c-8ae2-a44db075c257",
+      "label": "20260213 · R$ 50,02 · ENTRADAS · MPAGO · MISSÕES",
+      "expectedFilename": "20260213 50,02.jpg"
+    },
+    {
+      "entryId": "cd805240-ecb3-43a9-bf83-84b36cb0f1ff",
+      "label": "20260215 · R$ 700,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260215 700,00.jpg"
+    },
+    {
+      "entryId": "e34040b7-0552-46fb-96c8-9c84b439b8e6",
+      "label": "20260215 · R$ 600,06 · ENTRADAS · MPAGO · MISSÕES",
+      "expectedFilename": "20260215 600,06.jpg"
+    },
+    {
+      "entryId": "b79f2796-b76e-40b2-b634-d323bde5603e",
+      "label": "20260218 · R$ 200,02 · ENTRADAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260218 200,02.jpg"
+    },
+    {
+      "entryId": "d0bc77cb-9fd9-4a5f-a84e-88b5c915f723",
+      "label": "20260218 · R$ 870,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260218 870,00.jpg"
+    },
+    {
+      "entryId": "96d186fe-77d3-4e6b-8f56-7245ad39cb26",
+      "label": "20260219 · R$ 26,90 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20260219 26,90.jpg"
+    },
+    {
+      "entryId": "16526775-a92a-46ee-90d1-861f8a2ab229",
+      "label": "20260220 · R$ 500,02 · ENTRADAS · MPAGO · MISSÕES",
+      "expectedFilename": "20260220 500,02.jpg"
+    },
+    {
+      "entryId": "16ea2dbf-f696-4d0b-9f12-f275f6914244",
+      "label": "20260220 · R$ 6000,00 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20260220 6000,00.jpg"
+    },
+    {
+      "entryId": "4eeb7936-4315-4e2b-8627-ef80cd90d55a",
+      "label": "20260220 · R$ 6000,00 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260220 6000,00.jpg"
+    },
+    {
+      "entryId": "99c6a1ad-63d4-461b-8640-18050f71bfdc",
+      "label": "20260220 · R$ 78,36 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260220 78,36.jpg"
+    },
+    {
+      "entryId": "c69b0dfb-fff4-46b1-ba46-ff4b98be67ae",
+      "label": "20260222 · R$ 350,04 · ENTRADAS · MPAGO · MISSÕES",
+      "expectedFilename": "20260222 350,04.jpg"
+    },
+    {
+      "entryId": "2305d59d-8c5d-4f78-88d3-743d366129a1",
+      "label": "20260223 · R$ 257,02 · ENTRADAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260223 257,02.jpg"
+    },
+    {
+      "entryId": "3124c069-3aaa-4009-8e08-2bc194c88e4b",
+      "label": "20260223 · R$ 1100,71 · ENTRE CONTAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260223 1100,71.jpg"
+    },
+    {
+      "entryId": "5cd52ae0-317a-4d4c-8129-1a688a159008",
+      "label": "20260223 · R$ 1157,75 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260223 1157,75.jpg"
+    },
+    {
+      "entryId": "99938d70-45b1-44fd-a9da-9218c5f250e4",
+      "label": "20260223 · R$ 2090,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260223 2090,00.jpg"
+    },
+    {
+      "entryId": "d67ba890-672a-402e-b01b-452e107eed89",
+      "label": "20260223 · R$ 1100,71 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20260223 1100,71.jpg"
+    },
+    {
+      "entryId": "fe146bcb-06f3-4ed5-9029-2469793d6f2c",
+      "label": "20260223 · R$ 300,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20260223 300,00.jpg"
+    },
+    {
+      "entryId": "6f313c1e-062a-4f85-92da-f40653277851",
+      "label": "20260227 · R$ 400,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260227 400,00.jpg"
+    },
+    {
+      "entryId": "267bb7f5-a57a-4084-b967-39a1c7641056",
+      "label": "20260228 · R$ 283,36 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260228 283,36.jpg"
+    },
+    {
+      "entryId": "fcbcc93d-f99c-4d5d-82e6-ded83d31d142",
+      "label": "20260228 · R$ 1141,19 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260228 1141,19.jpg"
+    },
+    {
+      "entryId": "a8ebeae3-a6d5-480c-8f3e-89345f3bf1cc",
+      "label": "20260302 · R$ 79,00 · SAÍDAS · SICREDI · INFANTIL",
+      "expectedFilename": "20260302 79,00.jpg"
+    },
+    {
+      "entryId": "f88f0ace-b965-4623-b558-678735c8a868",
+      "label": "20260302 · R$ 1220,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260302 1220,00.jpg"
+    },
+    {
+      "entryId": "ddf3b2bc-b5ff-469d-889a-cf1aced2fbff",
+      "label": "20260304 · R$ 542,34 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260304 542,34.jpg"
+    },
+    {
+      "entryId": "481acb1b-c32f-44b6-b796-d3dc09c06b9d",
+      "label": "20260305 · R$ 2000,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260305 2000,00.jpg"
+    },
+    {
+      "entryId": "70401898-2443-4d15-b625-32db0859e509",
+      "label": "20260306 · R$ 318,85 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260306 318,85.jpg"
+    },
+    {
+      "entryId": "a23a0627-f8b3-4c4d-957e-e9fda0998ee9",
+      "label": "20260306 · R$ 3000,00 · ENTRADAS · MPAGO · CAMPANHAS",
+      "expectedFilename": "20260306 3000,00.jpg"
+    },
+    {
+      "entryId": "b12fc450-faa9-468d-9eea-629798c714fd",
+      "label": "20260306 · R$ 195,00 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260306 195,00.jpg"
+    },
+    {
+      "entryId": "cb4a46ed-6058-4650-89a9-fa3d68cc4bee",
+      "label": "20260306 · R$ 170,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260306 170,00.jpg"
+    },
+    {
+      "entryId": "4d39ab49-e07d-42a7-8e34-f39d020f2857",
+      "label": "20260309 · R$ 5048,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260309 5048,00.jpg"
+    },
+    {
+      "entryId": "51491879-5d0c-4351-b427-7910ed923a66",
+      "label": "20260309 · R$ 50,01 · ENTRADAS · SICREDI · SOCIAL",
+      "expectedFilename": "20260309 50,01.jpg"
+    },
+    {
+      "entryId": "019722f1-49e9-44cb-96dd-ac13fb082834",
+      "label": "20260310 · R$ 2052,72 · ENTRADAS · SICREDI · PROJETOS",
+      "expectedFilename": "20260310 2052,72.jpg"
+    },
+    {
+      "entryId": "7c279115-6228-4c45-b24c-215597369035",
+      "label": "20260310 · R$ 0,00 · ENTRE CONTAS · MPAGO · PROJETOS",
+      "expectedFilename": "20260310 0,00.jpg"
+    },
+    {
+      "entryId": "99657cec-13c4-4121-8ee8-ed1e276e16b0",
+      "label": "20260310 · R$ 2052,72 · ENTRE CONTAS · SICREDI · PROJETOS",
+      "expectedFilename": "20260310 2052,72.jpg"
+    },
+    {
+      "entryId": "d2768a94-2514-47c9-9394-c377128986cd",
+      "label": "20260310 · R$ 3250,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260310 3250,00.jpg"
+    },
+    {
+      "entryId": "f9a033c1-2742-4df1-abb3-f1d75590322a",
+      "label": "20260310 · R$ 319,67 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260310 319,67.jpg"
+    },
+    {
+      "entryId": "fa0d8b94-86df-47d2-a91d-678d1f9b4446",
+      "label": "20260310 · R$ 2052,72 · ENTRADAS · AP.MPAGO · PROJETOS",
+      "expectedFilename": "20260310 2052,72.jpg"
+    },
+    {
+      "entryId": "42427334-e973-4ea0-859b-09de18dbd6ea",
+      "label": "20260313 · R$ 400,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20260313 400,00.jpg"
+    },
+    {
+      "entryId": "478f8ce5-bd54-42d9-a121-d6b114adb19a",
+      "label": "20260320 · R$ 156,16 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260320 156,16.jpg"
+    },
+    {
+      "entryId": "662b3bfc-13dc-4ee6-ae69-ae6cdcdc3cf7",
+      "label": "20260320 · R$ 78,36 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260320 78,36.jpg"
+    },
+    {
+      "entryId": "68d62e43-5563-4f45-a4bb-e561c54401af",
+      "label": "20260320 · R$ 2456,48 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20260320 2456,48.jpg"
+    },
+    {
+      "entryId": "6dcb6c9a-725e-4535-9137-5f9f680dc4cc",
+      "label": "20260320 · R$ 26,90 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20260320 26,90.jpg"
+    },
+    {
+      "entryId": "838c0dbb-f9ab-4b2f-a39b-2205dc33a8cf",
+      "label": "20260320 · R$ 444,87 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260320 444,87.jpg"
+    },
+    {
+      "entryId": "89181da4-1e9b-44fa-849d-da5799ad62f9",
+      "label": "20260320 · R$ 160,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260320 160,00.jpg"
+    },
+    {
+      "entryId": "12693ff0-59c6-4379-aecf-d304510e07cf",
+      "label": "20260323 · R$ 1260,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260323 1260,00.jpg"
+    },
+    {
+      "entryId": "b27776a0-29ab-45ef-a351-b6731aa6e9c5",
+      "label": "20260324 · R$ 3825,00 · SAÍDAS · SICREDI · ALUGUEL",
+      "expectedFilename": "20260324 3825,00.jpg"
+    },
+    {
+      "entryId": "d0045bad-975f-4447-b217-43e401de236c",
+      "label": "20260324 · R$ 1200,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260324 1200,00.jpg"
+    },
+    {
+      "entryId": "d57ec159-552d-4884-a738-e06a0729a7aa",
+      "label": "20260327 · R$ 550,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260327 550,00.jpg"
+    },
+    {
+      "entryId": "0665997c-66ae-473b-a7e7-b4db49bdb1b1",
+      "label": "20260330 · R$ 55,36 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260330 55,36.jpg"
+    },
+    {
+      "entryId": "1c1d73aa-8873-4721-a7c2-28fc026cc56e",
+      "label": "20260330 · R$ 1370,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260330 1370,00.jpg"
+    },
+    {
+      "entryId": "ad82a508-dfb3-4f08-8129-1f26e350bdac",
+      "label": "20260330 · R$ 189,83 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260330 189,83.jpg"
+    },
+    {
+      "entryId": "3c025667-acc3-4bf5-8b4a-f5acf8140cfa",
+      "label": "20260331 · R$ 36,96 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260331 36,96.jpg"
+    },
+    {
+      "entryId": "4f5bea0a-140f-476e-9410-cc5eef5a4a0b",
+      "label": "20260331 · R$ 45,65 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20260331 45,65.jpg"
+    },
+    {
+      "entryId": "84e5f8ca-6264-49cc-b00f-31879e27e906",
+      "label": "20260331 · R$ 126,73 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260331 126,73.jpg"
+    },
+    {
+      "entryId": "981740d8-fc89-485e-88c4-94e560b4a5b5",
+      "label": "20260331 · R$ 1657,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260331 1657,00.jpg"
+    },
+    {
+      "entryId": "5356177c-15a1-4711-898d-a3e2a6d4581c",
+      "label": "20260401 · R$ 300,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20260401 300,00.jpg"
+    },
+    {
+      "entryId": "4bd7f9c1-ebbb-41ab-85c3-946d8981ce31",
+      "label": "20260406 · R$ 350,00 · SAÍDAS · SICREDI · LOUVOR",
+      "expectedFilename": "20260406 350,00.jpg"
+    },
+    {
+      "entryId": "76b5d8b5-927f-4299-a10a-f553ea7e8f4b",
+      "label": "20260406 · R$ 500,00 · SAÍDAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260406 500,00.jpg"
+    },
+    {
+      "entryId": "811eb829-8d68-470f-aae7-d856c5124afe",
+      "label": "20260406 · R$ 3030,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260406 3030,00.jpg"
+    },
+    {
+      "entryId": "bed2c47d-f743-4bc9-a4b0-942262867ec0",
+      "label": "20260406 · R$ 126,84 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260406 126,84.jpg"
+    },
+    {
+      "entryId": "c98b9bf5-aa82-4f1d-b9d8-797940827bc7",
+      "label": "20260406 · R$ 79,00 · SAÍDAS · SICREDI · INFANTIL",
+      "expectedFilename": "20260406 79,00.jpg"
+    },
+    {
+      "entryId": "f54e9226-cd2a-4392-a30a-51e7921b0365",
+      "label": "20260406 · R$ 3000,00 · ENTRADAS · MPAGO · CAMPANHAS",
+      "expectedFilename": "20260406 3000,00.jpg"
+    },
+    {
+      "entryId": "b19e8e4e-5e92-4da6-ab6b-5653bf13292a",
+      "label": "20260407 · R$ 10698,00 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20260407 10698,00.jpg"
+    },
+    {
+      "entryId": "c6b6b41d-97ea-4bf2-9a8b-229e16109078",
+      "label": "20260409 · R$ 2300,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260409 2300,00.jpg"
+    },
+    {
+      "entryId": "055ca916-639f-4b71-a789-a4fdb9a6fc7b",
+      "label": "20260410 · R$ 317,67 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260410 317,67.jpg"
+    },
+    {
+      "entryId": "077efcff-29a5-4c47-a823-3900c89356da",
+      "label": "20260410 · R$ 111,86 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260410 111,86.jpg"
+    },
+    {
+      "entryId": "7b3c754d-33a0-495e-a1a4-2101cad69a2e",
+      "label": "20260410 · R$ 700,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260410 700,00.jpg"
+    },
+    {
+      "entryId": "88f3a75b-a65e-4983-a045-e202ce11a3e2",
+      "label": "20260410 · R$ 7267,82 · ENTRE CONTAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260410 7267,82.jpg"
+    },
+    {
+      "entryId": "a7a0bff0-2c5c-4c34-9313-e77996736e19",
+      "label": "20260410 · R$ 7267,82 · ENTRE CONTAS · MPAGO · FINANCEIRO",
+      "expectedFilename": "20260410 7267,82.jpg"
+    },
+    {
+      "entryId": "ed956ffb-5ef2-4d08-9121-6bb9988a04c6",
+      "label": "20260410 · R$ 400,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20260410 400,00.jpg"
+    },
+    {
+      "entryId": "40f85492-845c-471a-ae1a-d0a63dc26719",
+      "label": "20260413 · R$ 1430,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260413 1430,00.jpg"
+    },
+    {
+      "entryId": "d0232fb7-9253-4890-bb7f-5c0ec2e0c482",
+      "label": "20260413 · R$ 0,00 · ENTRE CONTAS · MPAGO · PROJETOS",
+      "expectedFilename": "20260413 0,00.jpg"
+    },
+    {
+      "entryId": "1e4224b1-9914-4363-a3a3-140ec502f692",
+      "label": "20260420 · R$ 78,36 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260420 78,36.jpg"
+    },
+    {
+      "entryId": "a18db9b2-33da-43e3-aefd-194410cad7d5",
+      "label": "20260420 · R$ 129,47 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260420 129,47.jpg"
+    },
+    {
+      "entryId": "b2c9fb60-342c-4b78-af35-c020bb3bf319",
+      "label": "20260420 · R$ 318,46 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260420 318,46.jpg"
+    },
+    {
+      "entryId": "cc0a521e-f6ff-40dd-bf9a-8b3ce88aa1d1",
+      "label": "20260420 · R$ 1490,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260420 1490,00.jpg"
+    },
+    {
+      "entryId": "d6edfb3b-fc24-4f2e-a0b3-05d22a04e1ad",
+      "label": "20260420 · R$ 735,00 · ENTRE CONTAS · SICREDI · PROJETOS",
+      "expectedFilename": "20260420 735,00.jpg"
+    },
+    {
+      "entryId": "dd39a178-08ed-4e1a-b67e-f58dbf569b68",
+      "label": "20260420 · R$ 26,90 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20260420 26,90.jpg"
+    },
+    {
+      "entryId": "451d13f9-1ac0-40a5-bc35-5f44fc763ad8",
+      "label": "20260422 · R$ 350,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260422 350,00.jpg"
+    },
+    {
+      "entryId": "1f1667c7-6ee7-42d5-9fa4-dddaaa8ad9a7",
+      "label": "20260427 · R$ 155,52 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260427 155,52.jpg"
+    },
+    {
+      "entryId": "8cb12103-070d-49b5-abc2-c612705ab98e",
+      "label": "20260427 · R$ 255,35 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260427 255,35.jpg"
+    },
+    {
+      "entryId": "90ff41e5-f2d1-4308-acac-6def85eeb706",
+      "label": "20260427 · R$ 1280,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260427 1280,00.jpg"
+    },
+    {
+      "entryId": "8547e3e6-6cb0-43d4-82cc-8e7534962cc2",
+      "label": "20260429 · R$ 600,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260429 600,00.jpg"
+    },
+    {
+      "entryId": "cc80049d-9839-4594-8573-d63d370ee24a",
+      "label": "20260429 · R$ 191,85 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260429 191,85.jpg"
+    },
+    {
+      "entryId": "4b9dfd30-d74e-400e-8ca0-fe33e146cb9c",
+      "label": "20260430 · R$ 1840,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260430 1840,00.jpg"
+    },
+    {
+      "entryId": "b16312ea-0771-4514-b9d5-515938eed13e",
+      "label": "20260430 · R$ 62,99 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260430 62,99.jpg"
+    },
+    {
+      "entryId": "10ee9cf8-7851-42b8-a1e1-5bb6dba78fad",
+      "label": "20260504 · R$ 683,50 · SAÍDAS · MPAGO · SOCIAL",
+      "expectedFilename": "20260504 683,50.jpg"
+    },
+    {
+      "entryId": "6f4b0c0d-2560-4a72-8861-889f81381ebd",
+      "label": "20260504 · R$ 79,00 · SAÍDAS · SICREDI · INFANTIL",
+      "expectedFilename": "20260504 79,00.jpg"
+    },
+    {
+      "entryId": "7e16760e-8b96-40d3-886f-330f3e8f3983",
+      "label": "20260504 · R$ 600,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260504 600,00.jpg"
+    },
+    {
+      "entryId": "827f154b-489b-4c1d-8e57-b93fb9643907",
+      "label": "20260504 · R$ 1348,00 · ENTRADAS · AP.MPAGO · PROJETOS",
+      "expectedFilename": "20260504 1348,00.jpg"
+    },
+    {
+      "entryId": "8e9322e2-9005-4c04-b5aa-3c9d7db1987d",
+      "label": "20260504 · R$ 683,50 · ENTRADAS · MPAGO · SOCIAL",
+      "expectedFilename": "20260504 683,50.jpg"
+    },
+    {
+      "entryId": "ee138b45-7a0a-48f4-95ac-90a6e1a50b59",
+      "label": "20260504 · R$ 0,00 · ENTRE CONTAS · MPAGO · PROJETOS",
+      "expectedFilename": "20260504 0,00.jpg"
+    },
+    {
+      "entryId": "b9ccb949-8258-4ce2-bea6-0bedeac6d0b4",
+      "label": "20260505 · R$ 100,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260505 100,00.jpg"
+    },
+    {
+      "entryId": "af5666e6-56cd-41d6-8ee3-10d7aadc1e03",
+      "label": "20260506 · R$ 3000,00 · ENTRADAS · MPAGO · CAMPANHAS",
+      "expectedFilename": "20260506 3000,00.jpg"
+    },
+    {
+      "entryId": "f011e128-8097-429f-b8e9-78e676a2081d",
+      "label": "20260506 · R$ 300,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260506 300,00.jpg"
+    },
+    {
+      "entryId": "5802a452-172b-440a-b193-f5f97daf8cd4",
+      "label": "20260508 · R$ 1000,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260508 1000,00.jpg"
+    },
+    {
+      "entryId": "63bad8c4-8406-4f71-8a62-d86f94dc8219",
+      "label": "20260511 · R$ 500,00 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20260511 500,00.jpg"
+    },
+    {
+      "entryId": "bcf952dd-3a64-4c7b-8fe2-765f0761b10d",
+      "label": "20260511 · R$ 10698,00 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20260511 10698,00.jpg"
+    },
+    {
+      "entryId": "df30ebb8-b965-4df3-a0a1-87e2e4ae0265",
+      "label": "20260511 · R$ 4250,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260511 4250,00.jpg"
+    },
+    {
+      "entryId": "73c11c12-84a6-41d8-a73a-b3f3ca2d6b5c",
+      "label": "20260512 · R$ 2400,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260512 2400,00.jpg"
+    },
+    {
+      "entryId": "19134fef-580a-4e31-b82f-bc817169988c",
+      "label": "20260513 · R$ 900,00 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260513 900,00.jpg"
+    },
+    {
+      "entryId": "3650c7b3-0563-4734-883a-c7c8baa59587",
+      "label": "20260517 · R$ 600,99 · ENTRADAS · MPAGO · MISSÕES",
+      "expectedFilename": "20260517 600,99.jpg"
+    },
+    {
+      "entryId": "61408719-25d5-491a-9d58-9c5e71201000",
+      "label": "20260517 · R$ 0,97 · ENTRADAS · MPAGO · OFERTAS",
+      "expectedFilename": "20260517 0,97.jpg"
+    },
+    {
+      "entryId": "4a70ed67-0cdf-4a63-89da-4350bded1091",
+      "label": "20260518 · R$ 300,00 · SAÍDAS · SICREDI · INFANTIL",
+      "expectedFilename": "20260518 300,00.jpg"
+    },
+    {
+      "entryId": "50076897-9cd0-4083-b206-8ef503509921",
+      "label": "20260518 · R$ 4257,92 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260518 4257,92.jpg"
+    },
+    {
+      "entryId": "d3c00749-a344-42d3-91b7-693abacb41f2",
+      "label": "20260518 · R$ 144,08 · SAÍDAS · SICREDI · BOAS VINDAS",
+      "expectedFilename": "20260518 144,08.jpg"
+    },
+    {
+      "entryId": "673a8c22-9da2-4c49-887d-dc892c0109b8",
+      "label": "20260519 · R$ 411,08 · ENTRADAS · SICREDI · OFERTAS",
+      "expectedFilename": "20260519 411,08.jpg"
+    },
+    {
+      "entryId": "ae7c0db6-f7a9-460e-8962-09edafd2f593",
+      "label": "20260519 · R$ 26,90 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20260519 26,90.jpg"
+    },
+    {
+      "entryId": "3c6a4e88-1209-448f-b5b8-a0bf9e54e83a",
+      "label": "20260520 · R$ 78,36 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260520 78,36.jpg"
+    },
+    {
+      "entryId": "dd71f24a-f8c1-4b8e-ab0d-53d573193036",
+      "label": "20260520 · R$ 300,00 · SAÍDAS · AP.MPAGO · CAMPANHAS",
+      "expectedFilename": "20260520 300,00.jpg"
+    },
+    {
+      "entryId": "58375c62-8e18-414e-8cda-70a42f56ee57",
+      "label": "20260526 · R$ 140,00 · SAÍDAS · SICREDI · EVENTOS",
+      "expectedFilename": "20260526 140,00.jpg"
+    },
+    {
+      "entryId": "28a6dbed-4ff7-4413-a467-a3a5d402097c",
+      "label": "20260531 · R$ 424,50 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260531 424,50.jpg"
+    },
+    {
+      "entryId": "4e950fd6-b198-4b96-98d6-c311d9bf8934",
+      "label": "20260531 · R$ 472,23 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260531 472,23.jpg"
+    },
+    {
+      "entryId": "544e3254-55e4-481e-a163-e973bdf723e3",
+      "label": "20260531 · R$ 1266,34 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260531 1266,34.jpg"
+    },
+    {
+      "entryId": "e34569d9-4d25-40d9-b8a6-27e6426b1844",
+      "label": "20260531 · R$ 3358,90 · ENTRADAS · SICREDI · MISSÕES",
+      "expectedFilename": "20260531 3358,90.jpg"
+    },
+    {
+      "entryId": "398c3f72-adbe-47b4-8a97-7ca2137f3e31",
+      "label": "20260603 · R$ 700,00 · ENTRADAS · SICREDI · RECEBIMENTO PIX",
+      "expectedFilename": "20260603 700,00.jpg"
+    },
+    {
+      "entryId": "344efa18-9391-4b80-a4fc-4767e0c58734",
+      "label": "20260605 · R$ 1282,00 · ENTRADAS · SICREDI · RECEBIMENTO PIX",
+      "expectedFilename": "20260605 1282,00.jpg"
+    },
+    {
+      "entryId": "61df681e-07cd-4bc2-9b13-4adbe5981b96",
+      "label": "20260606 · R$ 3000,00 · ENTRADAS · MPAGO · CAMPANHAS",
+      "expectedFilename": "20260606 3000,00.jpg"
+    },
+    {
+      "entryId": "2e3893ab-0d29-4047-8cde-6f8d93459322",
+      "label": "20260608 · R$ 10698,00 · SAÍDAS · SICREDI · PREBENDA BRUTA",
+      "expectedFilename": "20260608 10698,00.jpg"
+    },
+    {
+      "entryId": "3f5cc57b-d607-4a57-9b88-45b154d6b6ee",
+      "label": "20260608 · R$ 5750,00 · ENTRADAS · SICREDI · RECEBIMENTO PIX",
+      "expectedFilename": "20260608 5750,00.jpg"
+    },
+    {
+      "entryId": "2765cb47-ce3c-49ee-b894-a3e358cdb973",
+      "label": "20260609 · R$ 300,00 · SAÍDAS · SICREDI · CAMPANHAS",
+      "expectedFilename": "20260609 300,00.jpg"
+    },
+    {
+      "entryId": "62213ba5-3be2-491e-bede-8f1c050e3f98",
+      "label": "20260609 · R$ 600,00 · SAÍDAS · AP.MPAGO · CAMPANHAS",
+      "expectedFilename": "20260609 600,00.jpg"
+    },
+    {
+      "entryId": "4dd80be4-50b2-4e9c-93af-5e7c75d1ac54",
+      "label": "20260610 · R$ 300,00 · ENTRADAS · SICREDI · RECEBIMENTO PIX",
+      "expectedFilename": "20260610 300,00.jpg"
+    },
+    {
+      "entryId": "3a829402-c7e4-428b-9768-b811abb92974",
+      "label": "20260615 · R$ 2590,00 · ENTRADAS · SICREDI · RECEBIMENTO PIX",
+      "expectedFilename": "20260615 2590,00.jpg"
+    },
+    {
+      "entryId": "4b137332-fc28-48a4-8de3-4479a252a0fb",
+      "label": "20260619 · R$ 1924,70 · ENTRADAS · SICREDI · RECEBIMENTO PIX",
+      "expectedFilename": "20260619 1924,70.jpg"
+    },
+    {
+      "entryId": "87e701af-afbb-4b68-9f90-0012b91585ec",
+      "label": "20260619 · R$ 26,90 · SAÍDAS · MPAGO · LOUVOR",
+      "expectedFilename": "20260619 26,90.jpg"
+    },
+    {
+      "entryId": "13ee68a9-ab14-4ba6-bd7a-bb1edaf09229",
+      "label": "20260622 · R$ 692,00 · ENTRADAS · SICREDI · RECEBIMENTO PIX",
+      "expectedFilename": "20260622 692,00.jpg"
+    },
+    {
+      "entryId": "ad792405-7cbb-47b7-a36f-493d357ecb08",
+      "label": "20260622 · R$ 78,36 · SAÍDAS · SICREDI · FINANCEIRO",
+      "expectedFilename": "20260622 78,36.jpg"
+    },
+    {
+      "entryId": "c0179380-18cf-4a0f-889a-4caaec7ef187",
+      "label": "20260623 · R$ 350,00 · ENTRADAS · SICREDI · RECEBIMENTO PIX",
+      "expectedFilename": "20260623 350,00.jpg"
+    },
+    {
+      "entryId": "620a6a18-6061-4fa5-a608-57e2fd8c9120",
+      "label": "20260626 · R$ 650,00 · ENTRADAS · SICREDI · RECEBIMENTO PIX",
+      "expectedFilename": "20260626 650,00.jpg"
+    },
+    {
+      "entryId": "f0d95e40-d4ef-4cb0-b03a-48010974d6e7",
+      "label": "20260629 · R$ 670,00 · ENTRADAS · SICREDI · RECEBIMENTO PIX",
+      "expectedFilename": "20260629 670,00.jpg"
+    },
+    {
+      "entryId": "30d19ea1-9080-4a93-9358-8b9a5a16388d",
+      "label": "20260630 · R$ 1333,73 · ENTRADAS · AP.SICREDI · FINANCEIRO",
+      "expectedFilename": "20260630 1333,73.jpg"
+    },
+    {
+      "entryId": "b896dd00-b09a-42c2-b6e4-9710302e5d25",
+      "label": "20260630 · R$ 500,00 · ENTRADAS · SICREDI · RECEBIMENTO PIX",
+      "expectedFilename": "20260630 500,00.jpg"
+    },
+    {
+      "entryId": "fa6fa094-d727-4650-9702-f5de7f5300e3",
+      "label": "20260630 · R$ 453,64 · ENTRADAS · AP.MPAGO · FINANCEIRO",
+      "expectedFilename": "20260630 453,64.jpg"
+    }
+  ],
+  "errors": []
+}

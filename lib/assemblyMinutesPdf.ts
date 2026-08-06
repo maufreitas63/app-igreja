@@ -120,7 +120,31 @@ export async function pickAssemblyMinutePdfs(): Promise<AssemblyMinutePdfInput[]
     });
   }
 
-  throw new Error('Envio de PDF de atas disponível na versão web (PWA).');
+  const DocumentPicker = await import('expo-document-picker');
+  const FileSystem = await import('expo-file-system/legacy');
+
+  const result = await DocumentPicker.getDocumentAsync({
+    type: 'application/pdf',
+    multiple: true,
+    copyToCacheDirectory: true,
+  });
+
+  if (result.canceled || !result.assets?.length) {
+    return null;
+  }
+
+  const pdfs: AssemblyMinutePdfInput[] = [];
+
+  for (const asset of result.assets) {
+    const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: 'base64' });
+    pdfs.push({
+      fileName: sanitizeFileName(asset.name || 'documento.pdf'),
+      base64,
+      contentType: asset.mimeType || 'application/pdf',
+    });
+  }
+
+  return pdfs.length ? pdfs : null;
 }
 
 export async function pickAssemblyMinutePdf(): Promise<AssemblyMinutePdfInput | null> {

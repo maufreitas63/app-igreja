@@ -133,20 +133,35 @@ export const drainGeoCheckinQueue = async (
 };
 
 export const attachGeoCheckinOnlineSync = (processor: GeoCheckinQueueProcessor) => {
-  if (onlineListenerAttached || Platform.OS !== 'web' || typeof window === 'undefined') {
+  if (onlineListenerAttached) {
     return () => undefined;
   }
 
   onlineListenerAttached = true;
 
-  const handleOnline = () => {
-    void drainGeoCheckinQueue(processor);
-  };
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const handleOnline = () => {
+      void drainGeoCheckinQueue(processor);
+    };
 
-  window.addEventListener('online', handleOnline);
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      onlineListenerAttached = false;
+    };
+  }
+
+  // Nativo: drena a fila ao voltar o app ao primeiro plano.
+  const { AppState } = require('react-native') as typeof import('react-native');
+  const sub = AppState.addEventListener('change', (state) => {
+    if (state === 'active') {
+      void drainGeoCheckinQueue(processor);
+    }
+  });
 
   return () => {
-    window.removeEventListener('online', handleOnline);
+    sub.remove();
     onlineListenerAttached = false;
   };
 };

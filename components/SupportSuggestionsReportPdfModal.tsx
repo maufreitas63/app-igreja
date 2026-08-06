@@ -1,5 +1,6 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { SUPPORT_SUGGESTIONS_REPORT_PDF_FILENAME } from '@/lib/maintenanceSupportSuggestionsReport';
+import { openPdfUri } from '@/lib/openPdfUri';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import {
@@ -19,16 +20,9 @@ type Props = {
   onClose: () => void;
 };
 
-const openPdfInNewTab = (pdfUrl: string) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.open(pdfUrl, '_blank', 'noopener,noreferrer');
-};
-
 const downloadPdf = (pdfUrl: string) => {
   if (typeof document === 'undefined') {
+    void openPdfUri(pdfUrl);
     return;
   }
 
@@ -89,8 +83,8 @@ export function SupportSuggestionsReportPdfModal({
           ) : (
             <View style={styles.nativeFallback}>
               <Text style={styles.nativeFallbackText}>
-                A visualização embutida do PDF está disponível na versão web. Use o botão abaixo para
-                abrir o arquivo.
+                No aplicativo, use Abrir / compartilhar para enviar o PDF a outro app
+                (Drive, WhatsApp, leitor de PDF).
               </Text>
             </View>
           )}
@@ -100,7 +94,9 @@ export function SupportSuggestionsReportPdfModal({
               <>
                 <TouchableOpacity
                   style={styles.secondaryButton}
-                  onPress={() => openPdfInNewTab(pdfUrl)}
+                  onPress={() => {
+                    void openPdfUri(pdfUrl);
+                  }}
                   activeOpacity={0.85}
                 >
                   <FontAwesome name="external-link" size={13} color={MINIMAL_UI.blueDark} />
@@ -115,7 +111,18 @@ export function SupportSuggestionsReportPdfModal({
                   <Text style={styles.primaryButtonText}>Baixar PDF</Text>
                 </TouchableOpacity>
               </>
-            ) : null}
+            ) : (
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => {
+                  void openPdfUri(pdfUrl);
+                }}
+                activeOpacity={0.85}
+              >
+                <FontAwesome name="share-alt" size={13} color={MINIMAL_UI.onDark} />
+                <Text style={styles.primaryButtonText}>Abrir / compartilhar</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.85}>
               <Text style={styles.closeButtonText}>Fechar</Text>
             </TouchableOpacity>

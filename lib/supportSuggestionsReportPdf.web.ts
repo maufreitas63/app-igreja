@@ -364,6 +364,25 @@ export async function buildSupportSuggestionsReportPdfBlob(
 export async function buildSupportSuggestionsReportPdfObjectUrl(
   result: MaintenanceReportResult
 ): Promise<string> {
-  const blob = await buildSupportSuggestionsReportPdfBlob(result);
-  return URL.createObjectURL(blob);
+  const doc = await buildPdfDocument(result);
+
+  if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function' && typeof Blob !== 'undefined') {
+    try {
+      const blob = doc.output('blob') as Blob;
+      if (blob && typeof blob.size === 'number') {
+        return URL.createObjectURL(blob);
+      }
+    } catch {
+      // cai no caminho nativo
+    }
+  }
+
+  const FileSystem = await import('expo-file-system/legacy');
+  const dataUri = doc.output('datauristring') as string;
+  const base64 = dataUri.includes('base64,')
+    ? dataUri.slice(dataUri.indexOf('base64,') + 'base64,'.length)
+    : dataUri;
+  const path = `${FileSystem.cacheDirectory ?? ''}sugestoes-melhorias.pdf`;
+  await FileSystem.writeAsStringAsync(path, base64, { encoding: 'base64' });
+  return path;
 }

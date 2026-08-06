@@ -68,20 +68,16 @@ export function MembersListsClassPanel() {
   const { canViewMapPinDetails } = useMapPinDetailAccess();
 
   const isMapGeolocationEnabled = useMemo(
-    () => canAccessMapGeolocation && Platform.OS === 'web',
+    () => canAccessMapGeolocation,
     [canAccessMapGeolocation]
   );
 
-  const mapGeolocationDisabledMessage = useMemo(() => {
-    if (Platform.OS !== 'web') {
-      return 'O mapa está disponível apenas na versão web (PWA).';
-    }
-
-    return (
+  const mapGeolocationDisabledMessage = useMemo(
+    () =>
       DASHBOARD_SCREEN_DENIED_MESSAGES[ACCESS_SCREEN.mapGeolocation]
-      ?? 'Você não tem permissão para abrir o mapa de geolocalização.'
-    );
-  }, []);
+      ?? 'Você não tem permissão para abrir o mapa de geolocalização.',
+    []
+  );
 
   const activeEntries = useMemo(() => {
     if (audience === 'visitors') return visitorEntries;
