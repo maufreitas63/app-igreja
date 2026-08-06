@@ -46,3 +46,10 @@ app-example
 # generated native folders
 /ios
 /android
+
+# local tools / reports
+scripts/*.log
+scripts/*-report.json
+scripts/*-report.txt
+supabase/.temp/
+
