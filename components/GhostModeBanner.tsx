@@ -1,7 +1,7 @@
 import { useGhostMode } from '@/context/GhostModeContext';
 import { formatShortName } from '@/lib/formatShortName';
 import { FontAwesome } from '@expo/vector-icons';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,12 +10,47 @@ const CONTENT_HORIZONTAL_INSET = 16;
 export function GhostModeBanner() {
   const { isActive, state, endGhostMode } = useGhostMode();
   const insets = useSafeAreaInsets();
+  const [operatorShortName, setOperatorShortName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isActive || !state?.realProfileId) {
+      setOperatorShortName(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', state.realProfileId)
+          .maybeSingle();
+        if (cancelled) {
+          return;
+        }
+        const name = typeof data?.full_name === 'string' ? data.full_name.trim() : '';
+        setOperatorShortName(name ? formatShortName(name) : 'Auditor');
+      } catch {
+        if (!cancelled) {
+          setOperatorShortName('Auditor');
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isActive, state?.realProfileId]);
 
   if (!isActive || !state) {
     return null;
   }
 
-  const label = formatShortName(state.targetFullName);
+  const targetLabel = formatShortName(state.targetFullName);
+  const operatorLabel = operatorShortName ?? 'Auditor';
 
   return (
     <View
@@ -29,9 +64,9 @@ export function GhostModeBanner() {
       <View style={styles.inner}>
         <FontAwesome name="user-secret" size={13} color="#FDE68A" style={styles.icon} />
         <View style={styles.textBlock}>
-          <Text style={styles.labelTitle}>Modo Ghost ativo:</Text>
-          <Text style={styles.labelSubtitle} numberOfLines={2}>
-            Visualizando como {label}
+          <Text style={styles.labelTitle}>Modo Ghost ativo (auditor)</Text>
+          <Text style={styles.labelSubtitle} numberOfLines={3}>
+            {operatorLabel} está simulado como {targetLabel} — não é o login da pessoa
           </Text>
         </View>
         <Pressable
@@ -63,9 +98,9 @@ const styles = StyleSheet.create({
     position: 'fixed' as unknown as 'absolute',
   },
   inner: {
-    width: '50%',
-    maxWidth: 300,
-    minWidth: 168,
+    width: '58%',
+    maxWidth: 360,
+    minWidth: 200,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
