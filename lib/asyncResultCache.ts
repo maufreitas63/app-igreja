@@ -9,6 +9,12 @@ const inflight = new Map<string, Promise<unknown>>();
 
 export const DEFAULT_ASYNC_CACHE_TTL_MS = 120_000;
 
+/** Chave física: base + escopo — evita vazar permissão entre usuários no mesmo browser/app. */
+function resolveCacheStorageKey(key: string, scopeId?: string | null): string {
+  const scope = scopeId?.trim();
+  return scope ? `${key}@@${scope}` : key;
+}
+
 export async function getCachedOrFetch<T>(
   key: string,
   fetcher: () => Promise<T>,
@@ -16,16 +22,15 @@ export async function getCachedOrFetch<T>(
 ): Promise<T> {
   const ttlMs = options?.ttlMs ?? DEFAULT_ASYNC_CACHE_TTL_MS;
   const now = Date.now();
-  const cached = cache.get(key) as CacheEntry<T> | undefined;
+  const storageKey = resolveCacheStorageKey(key, options?.scopeId);
+  const cached = cache.get(storageKey) as CacheEntry<T> | undefined;
 
   if (!options?.forceRefresh && cached && cached.expiresAt > now) {
-    if (!options?.scopeId || cached.scopeId === options.scopeId) {
-      return cached.value;
-    }
+    return cached.value;
   }
 
   if (!options?.forceRefresh) {
-    const pending = inflight.get(key) as Promise<T> | undefined;
+    const pending = inflight.get(storageKey) as Promise<T> | undefined;
 
     if (pending) {
       return pending;
@@ -34,7 +39,7 @@ export async function getCachedOrFetch<T>(
 
   const promise = (async () => {
     const value = await fetcher();
-    cache.set(key, {
+    cache.set(storageKey, {
       value,
       expiresAt: Date.now() + ttlMs,
       scopeId: options?.scopeId ?? null,
@@ -42,13 +47,13 @@ export async function getCachedOrFetch<T>(
     return value;
   })();
 
-  inflight.set(key, promise);
+  inflight.set(storageKey, promise);
 
   try {
     return await promise;
   } finally {
-    if (inflight.get(key) === promise) {
-      inflight.delete(key);
+    if (inflight.get(storageKey) === promise) {
+      inflight.delete(storageKey);
     }
   }
 }
@@ -59,25 +64,24 @@ export function invalidateAsyncCache(keyOrPrefix?: string) {
     return;
   }
 
-  // Aceita 'acl' ou 'acl:' — ambos limpam chaves `acl:<id>:...`
+  // Aceita 'acl' ou 'acl:' — ambos limpam chaves `acl:<id>:...` e `acl:...@@scope`
   const normalized = keyOrPrefix.endsWith(':') ? keyOrPrefix.slice(0, -1) : keyOrPrefix;
 
-  for (const key of [...cache.keys()]) {
-    if (
-      key === keyOrPrefix
-      || key === normalized
-      || key.startsWith(`${normalized}:`)
-    ) {
-      cache.delete(key);
+  const matches = (entryKey: string) =>
+    entryKey === keyOrPrefix
+    || entryKey === normalized
+    || entryKey.startsWith(`${normalized}:`)
+    || entryKey.startsWith(`${normalized}@@`)
+    || entryKey.startsWith(`${keyOrPrefix}@@`);
+
+  for (const entryKey of [...cache.keys()]) {
+    if (matches(entryKey)) {
+      cache.delete(entryKey);
     }
   }
 
   for (const inflightKey of [...inflight.keys()]) {
-    if (
-      inflightKey === keyOrPrefix
-      || inflightKey === normalized
-      || inflightKey.startsWith(`${normalized}:`)
-    ) {
+    if (matches(inflightKey)) {
       inflight.delete(inflightKey);
     }
   }

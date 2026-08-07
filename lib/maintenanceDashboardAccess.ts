@@ -20,6 +20,7 @@ import { formatShortName } from '@/lib/formatShortName';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import {
   resolveEffectiveProfileId,
+  resolveRealSessionProfileId,
 } from '@/lib/sessionProfile';
 import {
   getStoredUserPhone,
@@ -172,13 +173,19 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
 }
 
 export async function loadMaintenanceDashboardAccess(options?: { forceRefresh?: boolean }) {
-  const profileId = await resolveEffectiveProfileId();
+  // Inclui operador real + identidade efetiva: no Ghost o snapshot mistura canOperate (real)
+  // com painéis (efetivo). Cache só pelo alvo fazia o alvo “herdar” Ghost após o super admin.
+  const [realProfileId, effectiveProfileId] = await Promise.all([
+    resolveRealSessionProfileId().catch(() => null),
+    resolveEffectiveProfileId(),
+  ]);
+  const scopeId = `${realProfileId ?? 'none'}|${effectiveProfileId ?? 'none'}`;
 
   return getCachedOrFetch(
     'maintenance:dashboard:access',
     resolveMaintenanceDashboardAccess,
     {
-      scopeId: profileId,
+      scopeId,
       forceRefresh: options?.forceRefresh,
     }
   );

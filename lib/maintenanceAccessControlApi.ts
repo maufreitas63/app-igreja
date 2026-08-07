@@ -211,7 +211,8 @@ export async function checkSessionIsSuperAdmin(options?: { forceRefresh?: boolea
       return isSuperAdmin;
     },
     {
-      scopeId: isGhostModeActive() ? profileId : 'real-session',
+      // Sempre por perfil — 'real-session' vazava super_admin entre usuários no mesmo app.
+      scopeId: profileId,
       forceRefresh: options?.forceRefresh,
     }
   );

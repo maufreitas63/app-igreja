@@ -266,11 +266,14 @@ const readOperatorIsSuperAdminUncached = async () => {
   return isSuperAdmin;
 };
 
-const readOperatorIsSuperAdmin = (options?: { forceRefresh?: boolean }) =>
-  getCachedOrFetch('operator:super_admin', readOperatorIsSuperAdminUncached, {
+const readOperatorIsSuperAdmin = async (options?: { forceRefresh?: boolean }) => {
+  const realId = (await resolveRealSessionProfileId())?.trim() || 'none';
+  return getCachedOrFetch('operator:super_admin', readOperatorIsSuperAdminUncached, {
     forceRefresh: options?.forceRefresh,
     ttlMs: 120_000,
+    scopeId: realId,
   });
+};
 
 /** API pública para bypass de ACL do operador real (fora do Modo Ghost). */
 export async function checkOperatorIsSuperAdmin(options?: { forceRefresh?: boolean }) {
@@ -310,14 +313,15 @@ const readSessionIsSuperAdmin = async (profileId?: string | null): Promise<boole
   return coerceRpcBoolean(data);
 };
 
-const sessionIsSuperAdmin = (scopeId?: string | null, options?: { forceRefresh?: boolean }) => {
-  const cacheScope =
+const sessionIsSuperAdmin = async (scopeId?: string | null, options?: { forceRefresh?: boolean }) => {
+  const resolvedScope =
     scopeId?.trim()
-    ?? (isGhostModeActive() ? getGhostEffectiveProfileId() : null)
-    ?? 'session';
+    || (isGhostModeActive() ? getGhostEffectiveProfileId() : null)
+    || (await resolveRealSessionProfileId())
+    || 'none';
 
   return getCachedOrFetch('session:super_admin', () => readSessionIsSuperAdmin(scopeId), {
-    scopeId: cacheScope,
+    scopeId: resolvedScope,
     forceRefresh: options?.forceRefresh,
   });
 };

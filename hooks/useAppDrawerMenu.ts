@@ -58,9 +58,10 @@ function isDrawerModuleEnabled(
     return context.isSuperAdmin;
   }
 
-  // Ghost: mesmo critério do painel de manutenção (não exige só super_admin).
+  // Ghost: só canOperateGhostMode (RPC = super_admin OU grant maintenance.card.auditor).
+  // Não reutilizar isSuperAdmin de cache — evita vazar o menu a outros usuários no mesmo app.
   if (moduleKey === 'auditor') {
-    return context.canOperateGhostMode || context.isSuperAdmin;
+    return context.canOperateGhostMode;
   }
 
   if (moduleKey in DRAWER_MEMBER_CARD_BY_MODULE) {
