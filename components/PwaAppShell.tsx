@@ -1,6 +1,9 @@
 import {
+  buildShellPdfViewerUri,
   downloadAndOpenShellFile,
+  isPdfUrl,
   openShellExternalUrl,
+  openWhatsAppShellUrl,
   shouldHandoffShellNavigation,
 } from '@/lib/pwaShellNavigation';
 import { resolvePwaShellEntryUrl } from '@/lib/apkRuntimeMode';
@@ -10,6 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   BackHandler,
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -27,13 +31,14 @@ import type {
 const FIRST_LOAD_TIMEOUT_MS = 25_000;
 
 /**
- * Intercepta window.open, target=_blank e links whatsapp/tel/pdf no PWA,
- * encaminhando ao shell nativo (Linking / download) em vez de quebrar o WebView.
+ * Bridge: WhatsApp / schemes externos → nativo.
+ * PDF e window.open de PDF → visualizador embutido (não force download).
+ * Não intercepta cliques genéricos _blank de navegação in-app.
  */
 const SHELL_BRIDGE_JS = `
 (function() {
-  if (window.__cdApkShellBridge) { return true; }
-  window.__cdApkShellBridge = true;
+  if (window.__cdApkShellBridgeV2) { return true; }
+  window.__cdApkShellBridgeV2 = true;
 
   function post(type, url) {
     try {
@@ -46,17 +51,33 @@ const SHELL_BRIDGE_JS = `
     } catch (e) {}
   }
 
+  function isWa(u) {
+    return /^(whatsapp|whatsapp-api):/i.test(u) || /wa\\.me|api\\.whatsapp\\.com|whatsapp\\.com/i.test(u);
+  }
+  function isApp(u) {
+    return /^(whatsapp|whatsapp-api|tel|mailto|sms|smsto|intent|market|geo):/i.test(u);
+  }
+  function isPdf(u) {
+    return /\\.pdf(\\?|#|$)/i.test(u) || /\\/object\\/(sign|public)\\/.*\\.pdf/i.test(u);
+  }
+
   var origOpen = window.open;
   window.open = function(url) {
-    if (url) {
-      post('open', url);
+    if (!url) {
+      try { return origOpen ? origOpen.apply(window, arguments) : null; } catch (e) { return null; }
+    }
+    var abs = String(url);
+    if (isApp(abs) || isWa(abs)) {
+      post('whatsapp', abs);
       return null;
     }
-    try {
-      return origOpen ? origOpen.apply(window, arguments) : null;
-    } catch (e) {
+    if (isPdf(abs)) {
+      post('pdf', abs);
       return null;
     }
+    // Demais _blank: tenta manter no WebView via location (SPA) ou externo genérico
+    post('open', abs);
+    return null;
   };
 
   document.addEventListener('click', function(e) {
@@ -67,15 +88,16 @@ const SHELL_BRIDGE_JS = `
     if (!node) { return; }
     var abs = node.href || '';
     if (!abs) { return; }
-    var target = (node.getAttribute('target') || '').toLowerCase();
-    var hasDownload = node.hasAttribute('download');
-    var isApp = /^(whatsapp|whatsapp-api|tel|mailto|sms|smsto|intent|market|geo):/i.test(abs);
-    var isWa = /wa\\.me|whatsapp\\.com/i.test(abs);
-    var isFile = /\\.(pdf|docx?|xlsx?|pptx?|zip)(\\?|#|$)/i.test(abs);
-    if (isApp || isWa || hasDownload || target === '_blank' || isFile) {
+    if (isApp(abs) || isWa(abs)) {
       e.preventDefault();
       e.stopPropagation();
-      post(isFile || hasDownload ? 'download' : 'open', abs);
+      post('whatsapp', abs);
+      return;
+    }
+    if (isPdf(abs)) {
+      e.preventDefault();
+      e.stopPropagation();
+      post('pdf', abs);
     }
   }, true);
 
@@ -84,10 +106,6 @@ const SHELL_BRIDGE_JS = `
 true;
 `;
 
-/**
- * Shell nativo: carrega o PWA de produção dentro do APK.
- * Trata safe area inferior, WhatsApp e downloads de PDF.
- */
 export function PwaAppShell() {
   const entryUrl = useMemo(() => resolvePwaShellEntryUrl(), []);
   const webRef = useRef<WebViewType | null>(null);
@@ -96,6 +114,7 @@ export function PwaAppShell() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [canGoBack, setCanGoBack] = useState(false);
+  const [pdfViewerUri, setPdfViewerUri] = useState<string | null>(null);
 
   useEffect(() => {
     void Location.requestForegroundPermissionsAsync().catch(() => {
@@ -124,6 +143,10 @@ export function PwaAppShell() {
     }
 
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (pdfViewerUri) {
+        setPdfViewerUri(null);
+        return true;
+      }
       if (canGoBack && webRef.current) {
         webRef.current.goBack();
         return true;
@@ -132,42 +155,86 @@ export function PwaAppShell() {
     });
 
     return () => sub.remove();
-  }, [canGoBack]);
+  }, [canGoBack, pdfViewerUri]);
 
   const markFirstPaintDone = useCallback(() => {
     firstPaintDoneRef.current = true;
     setLoading(false);
   }, []);
 
-  const handoffUrl = useCallback(async (url: string, forcedMode?: 'external' | 'download') => {
-    const decision = shouldHandoffShellNavigation(url);
-    const mode = forcedMode ?? decision.mode;
+  const openInlinePdf = useCallback(
+    (pdfUrl: string) => {
+      const absolute = pdfUrl.trim();
+      if (!absolute) {
+        return;
+      }
+      setPdfViewerUri(buildShellPdfViewerUri(absolute, entryUrl));
+    },
+    [entryUrl]
+  );
 
-    if (mode === 'download' || isLikelyPdfNavigation(url)) {
-      await downloadAndOpenShellFile(url);
-      return;
-    }
+  const handoffUrl = useCallback(
+    async (url: string, forcedMode?: 'external' | 'pdf' | 'download' | 'whatsapp') => {
+      // "Abrir em nova aba" com viewer PDF.js da própria PWA.
+      if (url.includes('/pdfjs/viewer.html')) {
+        setPdfViewerUri(url);
+        return;
+      }
 
-    // WhatsApp, tel, target=_blank (window.open), etc. → app/navegador do SO.
-    await openShellExternalUrl(url);
-  }, []);
+      const decision = shouldHandoffShellNavigation(url);
+      const mode = forcedMode === 'whatsapp' ? 'external' : forcedMode ?? decision.mode;
+
+      if (mode === 'pdf' || (!forcedMode && isPdfUrl(url)) || (mode === 'download' && isPdfUrl(url))) {
+        openInlinePdf(url);
+        return;
+      }
+
+      if (mode === 'download') {
+        await downloadAndOpenShellFile(url);
+        return;
+      }
+
+      if (forcedMode === 'whatsapp' || /wa\.me|whatsapp/i.test(url)) {
+        await openWhatsAppShellUrl(url);
+        return;
+      }
+
+      await openShellExternalUrl(url);
+    },
+    [openInlinePdf]
+  );
 
   const handleShellMessage = useCallback(
     (event: WebViewMessageEvent) => {
       try {
-        const raw = event.nativeEvent.data;
-        const data = JSON.parse(raw) as { type?: string; url?: string };
+        const data = JSON.parse(event.nativeEvent.data) as { type?: string; url?: string };
         const url = data.url?.trim();
         if (!url) {
           return;
         }
+        if (url.includes('/pdfjs/viewer.html')) {
+          setPdfViewerUri(url);
+          return;
+        }
         const type = (data.type || 'open').toLowerCase();
-        void handoffUrl(url, type === 'download' ? 'download' : 'external');
+        if (type === 'pdf' || (type === 'download' && isPdfUrl(url))) {
+          openInlinePdf(url);
+          return;
+        }
+        if (type === 'whatsapp') {
+          void openWhatsAppShellUrl(url);
+          return;
+        }
+        if (type === 'download') {
+          void downloadAndOpenShellFile(url);
+          return;
+        }
+        void handoffUrl(url, isPdfUrl(url) ? 'pdf' : 'external');
       } catch {
-        // ignore non-json messages
+        // ignore
       }
     },
-    [handoffUrl]
+    [handoffUrl, openInlinePdf]
   );
 
   const handleShouldStartLoad = useCallback(
@@ -177,9 +244,14 @@ export function PwaAppShell() {
         return true;
       }
 
+      // Visualizador PDF embutido no modal ou pdfjs.
+      if (url.includes('/pdfjs/viewer.html')) {
+        return true;
+      }
+
       const decision = shouldHandoffShellNavigation(url);
       if (decision.handoff) {
-        void handoffUrl(url, decision.mode === 'download' ? 'download' : 'external');
+        void handoffUrl(url, decision.mode === 'none' ? undefined : decision.mode);
         return false;
       }
 
@@ -196,11 +268,10 @@ export function PwaAppShell() {
       const code = event.nativeEvent?.code;
       const failedUrl = event.nativeEvent?.url?.trim() || '';
 
-      // Link whatsapp:// caiu no WebView — volta e tenta openURL nativo.
       if (
         code === -10
         || /ERR_UNKNOWN_URL_SCHEME/i.test(description)
-        || isExternalAppLike(failedUrl)
+        || /^(whatsapp|tel|mailto|intent):/i.test(failedUrl)
       ) {
         if (failedUrl) {
           void openShellExternalUrl(failedUrl);
@@ -243,7 +314,6 @@ export function PwaAppShell() {
   }, []);
 
   return (
-    // bottom incluso: barra de gestos / botões do Android não cobrem o PWA.
     <SafeAreaView style={styles.root} edges={['top', 'bottom', 'left', 'right']}>
       {errorMessage ? (
         <View style={styles.errorBox}>
@@ -281,15 +351,25 @@ export function PwaAppShell() {
           injectedJavaScript={SHELL_BRIDGE_JS}
           onOpenWindow={(event) => {
             const targetUrl = event.nativeEvent?.targetUrl?.trim();
-            if (targetUrl) {
-              void handoffUrl(targetUrl, isLikelyPdfNavigation(targetUrl) ? 'download' : 'external');
+            if (!targetUrl) {
+              return;
             }
+            if (isPdfUrl(targetUrl)) {
+              openInlinePdf(targetUrl);
+              return;
+            }
+            void handoffUrl(targetUrl);
           }}
           onFileDownload={({ nativeEvent }) => {
             const downloadUrl = nativeEvent?.downloadUrl?.trim();
-            if (downloadUrl) {
-              void downloadAndOpenShellFile(downloadUrl);
+            if (!downloadUrl) {
+              return;
             }
+            if (isPdfUrl(downloadUrl)) {
+              openInlinePdf(downloadUrl);
+              return;
+            }
+            void downloadAndOpenShellFile(downloadUrl);
           }}
           domStorageEnabled
           javaScriptEnabled
@@ -299,7 +379,6 @@ export function PwaAppShell() {
           allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
           allowsBackForwardNavigationGestures
-          // true: captura window.open / target=_blank em onOpenWindow
           setSupportMultipleWindows
           originWhitelist={['*']}
           mixedContentMode="always"
@@ -310,14 +389,49 @@ export function PwaAppShell() {
           }
           applicationNameForUserAgent="ComunidadeDigitalAPK"
           startInLoadingState={false}
-          // Android: melhora entrega de links de download Content-Disposition
-          {...(Platform.OS === 'android'
-            ? {
-                nestedScrollEnabled: true,
-              }
-            : {})}
+          {...(Platform.OS === 'android' ? { nestedScrollEnabled: true } : {})}
         />
       )}
+
+      <Modal
+        visible={Boolean(pdfViewerUri)}
+        animationType="slide"
+        onRequestClose={() => setPdfViewerUri(null)}
+        presentationStyle="fullScreen"
+      >
+        <SafeAreaView style={styles.pdfModal} edges={['top', 'bottom', 'left', 'right']}>
+          <View style={styles.pdfHeader}>
+            <Text style={styles.pdfTitle} numberOfLines={1}>
+              Documento PDF
+            </Text>
+            <Pressable
+              style={styles.pdfClose}
+              onPress={() => setPdfViewerUri(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Fechar PDF"
+            >
+              <Text style={styles.pdfCloseText}>Fechar</Text>
+            </Pressable>
+          </View>
+          {pdfViewerUri ? (
+            <WebView
+              source={{ uri: pdfViewerUri }}
+              style={styles.pdfWebview}
+              originWhitelist={['*']}
+              javaScriptEnabled
+              domStorageEnabled
+              mixedContentMode="always"
+              setSupportMultipleWindows={false}
+              startInLoadingState
+              renderLoading={() => (
+                <View style={styles.pdfLoader}>
+                  <ActivityIndicator size="large" color="#10b981" />
+                </View>
+              )}
+            />
+          ) : null}
+        </SafeAreaView>
+      </Modal>
 
       {loading && !errorMessage ? (
         <View style={styles.loader} pointerEvents="none">
@@ -328,14 +442,6 @@ export function PwaAppShell() {
       ) : null}
     </SafeAreaView>
   );
-}
-
-function isLikelyPdfNavigation(url: string): boolean {
-  return /\.pdf(\?|#|$)/i.test(url) || url.toLowerCase().includes('.pdf');
-}
-
-function isExternalAppLike(url: string): boolean {
-  return /^(whatsapp|whatsapp-api|tel|mailto|intent|market):/i.test(url.trim());
 }
 
 const styles = StyleSheet.create({
@@ -399,5 +505,47 @@ const styles = StyleSheet.create({
     color: '#042f2e',
     fontWeight: '700',
     fontSize: 15,
+  },
+  pdfModal: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+  },
+  pdfHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+  },
+  pdfTitle: {
+    flex: 1,
+    color: '#f8fafc',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  pdfClose: {
+    backgroundColor: '#1d4ed8',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  pdfCloseText: {
+    color: '#f8fafc',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  pdfWebview: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+  },
+  pdfLoader: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0f172a',
   },
 });

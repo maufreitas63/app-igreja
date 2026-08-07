@@ -1,8 +1,9 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { SUPPORT_SUGGESTIONS_REPORT_PDF_FILENAME } from '@/lib/maintenanceSupportSuggestionsReport';
 import { openPdfUri } from '@/lib/openPdfUri';
+import { buildInlinePdfViewerUrl, isApkShellWebClient } from '@/lib/pdfViewerUrl';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Modal,
   Platform,
@@ -41,7 +42,17 @@ export function SupportSuggestionsReportPdfModal({
   requestCount,
   onClose,
 }: Props) {
-  if (!visible || !pdfUrl) {
+  const viewerSrc = useMemo(() => {
+    if (!pdfUrl) {
+      return null;
+    }
+    if (Platform.OS === 'web' && isApkShellWebClient()) {
+      return buildInlinePdfViewerUrl(pdfUrl);
+    }
+    return pdfUrl;
+  }, [pdfUrl]);
+
+  if (!visible || !pdfUrl || !viewerSrc) {
     return null;
   }
 
@@ -75,7 +86,7 @@ export function SupportSuggestionsReportPdfModal({
           {Platform.OS === 'web' ? (
             <View style={styles.viewerShell}>
               <iframe
-                src={pdfUrl}
+                src={viewerSrc}
                 title="Relatório de Sugestões e Melhorias"
                 style={styles.iframe as never}
               />
@@ -132,6 +143,7 @@ export function SupportSuggestionsReportPdfModal({
     </Modal>
   );
 }
+
 
 const styles = StyleSheet.create({
   overlay: {

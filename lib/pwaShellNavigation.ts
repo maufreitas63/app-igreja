@@ -1,14 +1,9 @@
-import * as FileSystem from 'expo-file-system/legacy';
 import * as Linking from 'expo-linking';
-import * as Sharing from 'expo-sharing';
 import * as WebBrowser from 'expo-web-browser';
 import { Alert, Platform } from 'react-native';
 
 const EXTERNAL_APP_SCHEME =
   /^(whatsapp|whatsapp-api|tel|mailto|sms|smsto|geo|maps|intent|market|tg|viber|fb|instagram|twitter|x|zoommtg|facetime):/i;
-
-const FILE_EXT =
-  /\.(pdf|docx?|xlsx?|pptx?|txt|csv|zip|rar|7z|png|jpe?g|gif|webp|mp3|mp4|mov)(\?|#|$)/i;
 
 export function isExternalAppScheme(url: string): boolean {
   const trimmed = url?.trim() ?? '';
@@ -22,24 +17,37 @@ export function isHttpUrl(url: string): boolean {
   return /^https?:\/\//i.test(url.trim());
 }
 
-export function isProbablyDownloadUrl(url: string): boolean {
+export function isPdfUrl(url: string): boolean {
   const trimmed = url?.trim() ?? '';
-  if (!trimmed || trimmed.startsWith('blob:') || trimmed.startsWith('data:')) {
-    return FILE_EXT.test(trimmed) || trimmed.startsWith('blob:');
+  if (!trimmed) {
+    return false;
+  }
+  if (trimmed.startsWith('blob:') || trimmed.startsWith('data:application/pdf')) {
+    return true;
   }
   try {
     const parsed = new URL(trimmed);
-    if (FILE_EXT.test(parsed.pathname) || FILE_EXT.test(parsed.href)) {
+    const path = parsed.pathname.toLowerCase();
+    if (path.endsWith('.pdf') || path.includes('.pdf')) {
       return true;
     }
-    // Supabase Storage signed PDFs costuma usar path com .pdf
-    if (parsed.pathname.toLowerCase().includes('/object/sign/') && parsed.pathname.toLowerCase().includes('.pdf')) {
-      return true;
+    if (path.includes('/object/sign/') || path.includes('/object/public/')) {
+      // signed storage: frequentemente PDF nas atas; Content-Type tratado pelo viewer
+      return /\.pdf/i.test(path) || parsed.searchParams.get('download') === null && /\.pdf/i.test(trimmed);
     }
   } catch {
-    return FILE_EXT.test(trimmed);
+    return /\.pdf(\?|#|$)/i.test(trimmed);
   }
-  return false;
+  return /\.pdf(\?|#|$)/i.test(trimmed);
+}
+
+/** Outros arquivos (não-PDF) que o shell baixa e compartilha. */
+export function isOtherDownloadUrl(url: string): boolean {
+  const trimmed = url?.trim() ?? '';
+  if (!trimmed || isPdfUrl(trimmed)) {
+    return false;
+  }
+  return /\.(docx?|xlsx?|pptx?|zip|rar|7z|csv)(\?|#|$)/i.test(trimmed);
 }
 
 export function isWhatsAppHttpUrl(url: string): boolean {
@@ -56,48 +64,108 @@ export function isWhatsAppHttpUrl(url: string): boolean {
   }
 }
 
-function guessFileName(url: string): string {
+function extractWhatsAppPhoneAndText(url: string): { phone: string; text: string } {
   try {
-    const path = new URL(url).pathname;
-    const base = path.split('/').filter(Boolean).pop() || 'arquivo.pdf';
-    const decoded = decodeURIComponent(base).replace(/[^\w.\-()+ ]+/g, '_');
-    return decoded.includes('.') ? decoded : `${decoded}.pdf`;
+    const parsed = new URL(url);
+    if (parsed.protocol === 'whatsapp:' || parsed.protocol === 'whatsapp-api:') {
+      const phone =
+        parsed.searchParams.get('phone')
+        || parsed.pathname.replace(/^\/*send\/?/, '').replace(/\D/g, '')
+        || '';
+      return { phone: phone.replace(/\D/g, ''), text: parsed.searchParams.get('text') || '' };
+    }
+    if (parsed.hostname === 'wa.me' || parsed.hostname.endsWith('.wa.me')) {
+      const phone = parsed.pathname.replace(/^\//, '').split(/[/?#]/)[0] || '';
+      return {
+        phone: phone.replace(/\D/g, ''),
+        text: parsed.searchParams.get('text') || '',
+      };
+    }
+    if (parsed.hostname.includes('whatsapp.com')) {
+      return {
+        phone: (parsed.searchParams.get('phone') || '').replace(/\D/g, ''),
+        text: parsed.searchParams.get('text') || '',
+      };
+    }
   } catch {
-    return 'arquivo.pdf';
+    // ignore
   }
+  return { phone: '', text: '' };
 }
 
-function guessMime(fileName: string): string {
-  const lower = fileName.toLowerCase();
-  if (lower.endsWith('.pdf')) return 'application/pdf';
-  if (lower.endsWith('.png')) return 'image/png';
-  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
-  if (lower.endsWith('.doc')) return 'application/msword';
-  if (lower.endsWith('.docx')) {
-    return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+/** Candidatos de URL para abrir o app WhatsApp no Android/iOS. */
+export function buildWhatsAppOpenCandidates(url: string): string[] {
+  const target = url.trim();
+  const { phone, text } = extractWhatsAppPhoneAndText(target);
+  const list: string[] = [];
+  const textQ = text ? `&text=${encodeURIComponent(text)}` : '';
+
+  if (phone) {
+    list.push(`whatsapp://send?phone=${phone}${textQ}`);
+    if (Platform.OS === 'android') {
+      list.push(
+        `intent://send?phone=${phone}${textQ}#Intent;scheme=whatsapp;package=com.whatsapp;end`
+      );
+      list.push(
+        `intent://send?phone=${phone}${textQ}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end`
+      );
+    }
   }
-  return 'application/octet-stream';
+
+  if (/^whatsapp:/i.test(target)) {
+    list.push(target);
+  }
+
+  if (isWhatsAppHttpUrl(target) || isHttpUrl(target)) {
+    list.push(target);
+  }
+
+  // wa.me como último fallback se veio só whatsapp://
+  if (phone && !list.includes(`https://wa.me/${phone}`)) {
+    list.push(text ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : `https://wa.me/${phone}`);
+  }
+
+  return [...new Set(list.filter(Boolean))];
 }
 
-/** Abre app externo (WhatsApp, telefone…) ou browser do sistema. */
+export async function openWhatsAppShellUrl(url: string): Promise<boolean> {
+  const candidates = buildWhatsAppOpenCandidates(url);
+
+  for (const candidate of candidates) {
+    try {
+      await Linking.openURL(candidate);
+      return true;
+    } catch (error) {
+      console.warn('openWhatsAppShellUrl candidate failed', candidate, error);
+    }
+  }
+
+  Alert.alert(
+    'WhatsApp',
+    'Não foi possível abrir o WhatsApp. Confira se o app está instalado e tente de novo.'
+  );
+  return false;
+}
+
+/** Abre app externo (telefone, WhatsApp, etc.) ou browser do sistema. */
 export async function openShellExternalUrl(url: string): Promise<boolean> {
   const target = url?.trim();
   if (!target) {
     return false;
   }
 
+  if (isWhatsAppHttpUrl(target) || /^whatsapp:/i.test(target) || target.includes('wa.me')) {
+    return openWhatsAppShellUrl(target);
+  }
+
   try {
-    if (isExternalAppScheme(target) || isWhatsAppHttpUrl(target)) {
+    if (isExternalAppScheme(target)) {
       await Linking.openURL(target);
       return true;
     }
 
     if (isHttpUrl(target)) {
-      if (Platform.OS === 'android' || Platform.OS === 'ios') {
-        await Linking.openURL(target);
-        return true;
-      }
-      await WebBrowser.openBrowserAsync(target);
+      await Linking.openURL(target);
       return true;
     }
 
@@ -115,69 +183,78 @@ export async function openShellExternalUrl(url: string): Promise<boolean> {
     }
     Alert.alert(
       'Não foi possível abrir',
-      'Instale o aplicativo necessário (ex.: WhatsApp) ou tente novamente.'
+      'Instale o aplicativo necessário ou tente novamente.'
     );
     return false;
   }
 }
 
-/** Baixa PDF/arquivo (URLs http/https) e abre o compartilhamento do SO para visualizar. */
+export function shouldHandoffShellNavigation(url: string): {
+  handoff: boolean;
+  mode: 'external' | 'pdf' | 'download' | 'none';
+} {
+  const target = url?.trim() ?? '';
+  if (!target || target === 'about:blank') {
+    return { handoff: false, mode: 'none' };
+  }
+
+  // Visualizador PDF.js da própria PWA — fica no WebView.
+  if (/\/pdfjs\/viewer\.html/i.test(target) || target.includes('pdfjs/viewer.html')) {
+    return { handoff: false, mode: 'none' };
+  }
+
+  if (isExternalAppScheme(target) || isWhatsAppHttpUrl(target)) {
+    return { handoff: true, mode: 'external' };
+  }
+
+  // PDF: painel nativo embutido (não share sheet).
+  if (isPdfUrl(target)) {
+    return { handoff: true, mode: 'pdf' };
+  }
+
+  if (isOtherDownloadUrl(target)) {
+    return { handoff: true, mode: 'download' };
+  }
+
+  return { handoff: false, mode: 'none' };
+}
+
+export function buildShellPdfViewerUri(pdfUrl: string, entryBaseUrl: string): string {
+  const base = entryBaseUrl.replace(/\/+$/, '');
+  return `${base}/pdfjs/viewer.html?file=${encodeURIComponent(pdfUrl)}`;
+}
+
+/** Baixa arquivo não-PDF e abre o share sheet do SO. */
 export async function downloadAndOpenShellFile(url: string): Promise<boolean> {
   const target = url?.trim();
-  if (!target) {
-    return false;
+  if (!target || !isHttpUrl(target)) {
+    return openShellExternalUrl(target || '');
   }
 
-  if (target.startsWith('blob:') || target.startsWith('data:')) {
-    // blob: só existe no WebView — tenta abrir via URL nativa se for data:, senão falha gentil.
-    if (target.startsWith('data:')) {
+  try {
+    const FileSystem = await import('expo-file-system/legacy');
+    const Sharing = await import('expo-sharing');
+    const fileName = (() => {
       try {
-        await Linking.openURL(target);
-        return true;
+        const path = new URL(target).pathname;
+        const base = path.split('/').filter(Boolean).pop() || 'arquivo.bin';
+        return decodeURIComponent(base).replace(/[^\w.\-()+ ]+/g, '_') || 'arquivo.bin';
       } catch {
-        Alert.alert('Arquivo', 'Não foi possível abrir este arquivo no aplicativo.');
-        return false;
+        return 'arquivo.bin';
       }
-    }
-    Alert.alert(
-      'Arquivo',
-      'Use o botão Abrir em nova aba novamente. Se persistir, abra o documento pelo site no Chrome.'
-    );
-    return false;
-  }
-
-  if (!isHttpUrl(target)) {
-    return openShellExternalUrl(target);
-  }
-
-  try {
-    // Primeiro: deixa o sistema (Chrome/Drive/Adobe) tentar abrir o link direto.
-    const can = await Linking.canOpenURL(target);
-    if (can) {
-      await Linking.openURL(target);
-      // Em muitos Androids o PDF abre no viewer externo; ainda assim baixamos se o SO só “Download” orfão.
-    }
-  } catch {
-    // segue download local
-  }
-
-  try {
-    const fileName = guessFileName(target);
+    })();
     const dest = `${FileSystem.cacheDirectory ?? ''}shell-${Date.now()}-${fileName}`;
     const result = await FileSystem.downloadAsync(target, dest);
     if (result.status && result.status >= 400) {
       throw new Error(`HTTP ${result.status}`);
     }
-
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(result.uri, {
-        mimeType: guessMime(fileName),
+        mimeType: 'application/octet-stream',
         dialogTitle: 'Abrir arquivo',
-        UTI: fileName.toLowerCase().endsWith('.pdf') ? 'com.adobe.pdf' : undefined,
       });
       return true;
     }
-
     await Linking.openURL(result.uri);
     return true;
   } catch (error) {
@@ -186,36 +263,8 @@ export async function downloadAndOpenShellFile(url: string): Promise<boolean> {
       await WebBrowser.openBrowserAsync(target);
       return true;
     } catch {
-      Alert.alert('Download', 'Não foi possível baixar ou abrir o arquivo. Verifique a internet.');
+      Alert.alert('Download', 'Não foi possível baixar o arquivo.');
       return false;
     }
   }
-}
-
-/**
- * Decide se a URL deve sair do WebView (apps externos / downloads).
- * Retorna false = cancelar navegação no WebView.
- */
-export function shouldHandoffShellNavigation(url: string): {
-  handoff: boolean;
-  mode: 'external' | 'download' | 'none';
-} {
-  const target = url?.trim() ?? '';
-  if (!target || target === 'about:blank') {
-    return { handoff: false, mode: 'none' };
-  }
-
-  if (isExternalAppScheme(target)) {
-    return { handoff: true, mode: 'external' };
-  }
-
-  if (isWhatsAppHttpUrl(target)) {
-    return { handoff: true, mode: 'external' };
-  }
-
-  if (isProbablyDownloadUrl(target)) {
-    return { handoff: true, mode: 'download' };
-  }
-
-  return { handoff: false, mode: 'none' };
 }

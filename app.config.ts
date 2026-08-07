@@ -33,7 +33,28 @@ const config: ExpoConfig = {
     },
   },
   android: {
-    queries: [{ package: 'com.whatsapp' }],
+    queries: [
+      { package: 'com.whatsapp' },
+      { package: 'com.whatsapp.w4b' },
+      {
+        intent: {
+          action: 'VIEW',
+          data: { scheme: 'https', host: 'wa.me' },
+        },
+      },
+      {
+        intent: {
+          action: 'VIEW',
+          data: { scheme: 'whatsapp' },
+        },
+      },
+      {
+        intent: {
+          action: 'VIEW',
+          data: { scheme: 'https', host: 'api.whatsapp.com' },
+        },
+      },
+    ],
     adaptiveIcon: {
       backgroundColor: '#FFFFFF',
       foregroundImage: './assets/images/android-icon-foreground.png',

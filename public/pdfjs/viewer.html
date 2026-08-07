@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3" />
+  <title>PDF</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0f172a; }
+    #toolbar {
+      position: sticky; top: 0; z-index: 2;
+      display: flex; gap: 8px; align-items: center;
+      padding: 8px 10px; background: #1e293b; color: #e2e8f0;
+      font: 13px/1.2 system-ui, sans-serif;
+    }
+    #toolbar button {
+      border: 0; border-radius: 8px; padding: 8px 12px;
+      background: #334155; color: #f8fafc; font-weight: 700;
+    }
+    #status { flex: 1; opacity: 0.85; font-size: 12px; }
+    #pages { overflow: auto; height: calc(100% - 48px); -webkit-overflow-scrolling: touch; }
+    .page-wrap { margin: 10px auto; box-shadow: 0 4px 16px rgba(0,0,0,.35); width: fit-content; max-width: 100%; }
+    canvas { display: block; max-width: 100%; height: auto; }
+    .error { color: #fecaca; padding: 24px; text-align: center; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+  <div id="toolbar">
+    <button type="button" id="zoomOut" aria-label="Diminuir">−</button>
+    <button type="button" id="zoomIn" aria-label="Aumentar">+</button>
+    <span id="status">Carregando PDF…</span>
+  </div>
+  <div id="pages"></div>
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var file = params.get('file');
+      var statusEl = document.getElementById('status');
+      var pagesEl = document.getElementById('pages');
+      var scale = 1.15;
+
+      if (!file) {
+        statusEl.textContent = 'Arquivo não informado';
+        pagesEl.innerHTML = '<p class="error">URL do PDF ausente.</p>';
+        return;
+      }
+
+      if (!window['pdfjsLib']) {
+        statusEl.textContent = 'Falha ao carregar visualizador';
+        pagesEl.innerHTML = '<p class="error">Biblioteca PDF indisponível. Verifique a internet.</p>';
+        return;
+      }
+
+      var pdfjsLib = window['pdfjsLib'];
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+      var pdfDoc = null;
+
+      function renderAll() {
+        pagesEl.innerHTML = '';
+        var total = pdfDoc.numPages;
+        statusEl.textContent = 'Página 1 / ' + total;
+        var chain = Promise.resolve();
+        for (var n = 1; n <= total; n++) {
+          (function (pageNum) {
+            chain = chain.then(function () {
+              return pdfDoc.getPage(pageNum).then(function (page) {
+                var viewport = page.getViewport({ scale: scale });
+                var wrap = document.createElement('div');
+                wrap.className = 'page-wrap';
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                wrap.appendChild(canvas);
+                pagesEl.appendChild(wrap);
+                return page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function () {
+                  statusEl.textContent = 'Página ' + pageNum + ' / ' + total;
+                });
+              });
+            });
+          })(n);
+        }
+        return chain;
+      }
+
+      pdfjsLib.getDocument({ url: file, withCredentials: false }).promise
+        .then(function (doc) {
+          pdfDoc = doc;
+          return renderAll();
+        })
+        .then(function () {
+          statusEl.textContent = 'PDF · ' + pdfDoc.numPages + ' página(s)';
+        })
+        .catch(function (err) {
+          console.error(err);
+          statusEl.textContent = 'Erro ao abrir';
+          pagesEl.innerHTML = '<p class="error">Não foi possível carregar o PDF no aplicativo. Tente novamente.</p>';
+        });
+
+      document.getElementById('zoomIn').onclick = function () {
+        scale = Math.min(scale + 0.2, 3);
+        if (pdfDoc) renderAll();
+      };
+      document.getElementById('zoomOut').onclick = function () {
+        scale = Math.max(scale - 0.2, 0.6);
+        if (pdfDoc) renderAll();
+      };
+    })();
+  </script>
+</body>
+</html>

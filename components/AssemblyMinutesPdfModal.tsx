@@ -1,7 +1,8 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { openPdfUri } from '@/lib/openPdfUri';
+import { buildInlinePdfViewerUrl, isApkShellWebClient } from '@/lib/pdfViewerUrl';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Modal,
   Platform,
@@ -20,7 +21,18 @@ type Props = {
 };
 
 export function AssemblyMinutesPdfModal({ visible, title, pdfUrl, onClose }: Props) {
-  if (!visible || !pdfUrl) {
+  const viewerSrc = useMemo(() => {
+    if (!pdfUrl) {
+      return null;
+    }
+    // WebView Android (APK) não renderiza PDF cru no iframe — usa PDF.js embutido.
+    if (Platform.OS === 'web' && isApkShellWebClient()) {
+      return buildInlinePdfViewerUrl(pdfUrl);
+    }
+    return pdfUrl;
+  }, [pdfUrl]);
+
+  if (!visible || !pdfUrl || !viewerSrc) {
     return null;
   }
 
@@ -48,7 +60,7 @@ export function AssemblyMinutesPdfModal({ visible, title, pdfUrl, onClose }: Pro
 
           {Platform.OS === 'web' ? (
             <View style={styles.viewerShell}>
-              <iframe src={pdfUrl} title={title} style={styles.iframe as never} />
+              <iframe src={viewerSrc} title={title} style={styles.iframe as never} />
             </View>
           ) : (
             <View style={styles.nativeFallback}>
