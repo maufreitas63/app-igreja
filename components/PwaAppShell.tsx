@@ -1,3 +1,8 @@
+import {
+  downloadAndOpenShellFile,
+  openShellExternalUrl,
+  shouldHandoffShellNavigation,
+} from '@/lib/pwaShellNavigation';
 import { resolvePwaShellEntryUrl } from '@/lib/apkRuntimeMode';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import * as Location from 'expo-location';
@@ -14,13 +19,74 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import type { WebView as WebViewType } from 'react-native-webview';
+import type {
+  ShouldStartLoadRequest,
+  WebViewMessageEvent,
+} from 'react-native-webview/lib/WebViewTypes';
 
 const FIRST_LOAD_TIMEOUT_MS = 25_000;
 
 /**
+ * Intercepta window.open, target=_blank e links whatsapp/tel/pdf no PWA,
+ * encaminhando ao shell nativo (Linking / download) em vez de quebrar o WebView.
+ */
+const SHELL_BRIDGE_JS = `
+(function() {
+  if (window.__cdApkShellBridge) { return true; }
+  window.__cdApkShellBridge = true;
+
+  function post(type, url) {
+    try {
+      if (window.ReactNativeWebView && url) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: String(type || 'open'),
+          url: String(url)
+        }));
+      }
+    } catch (e) {}
+  }
+
+  var origOpen = window.open;
+  window.open = function(url) {
+    if (url) {
+      post('open', url);
+      return null;
+    }
+    try {
+      return origOpen ? origOpen.apply(window, arguments) : null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  document.addEventListener('click', function(e) {
+    var node = e.target;
+    while (node && node.tagName !== 'A') {
+      node = node.parentElement;
+    }
+    if (!node) { return; }
+    var abs = node.href || '';
+    if (!abs) { return; }
+    var target = (node.getAttribute('target') || '').toLowerCase();
+    var hasDownload = node.hasAttribute('download');
+    var isApp = /^(whatsapp|whatsapp-api|tel|mailto|sms|smsto|intent|market|geo):/i.test(abs);
+    var isWa = /wa\\.me|whatsapp\\.com/i.test(abs);
+    var isFile = /\\.(pdf|docx?|xlsx?|pptx?|zip)(\\?|#|$)/i.test(abs);
+    if (isApp || isWa || hasDownload || target === '_blank' || isFile) {
+      e.preventDefault();
+      e.stopPropagation();
+      post(isFile || hasDownload ? 'download' : 'open', abs);
+    }
+  }, true);
+
+  return true;
+})();
+true;
+`;
+
+/**
  * Shell nativo: carrega o PWA de produção dentro do APK.
- * Não bloqueia o WebView por permissões do SO — isso travava o loader
- * em "Carregando Comunidade Digital…".
+ * Trata safe area inferior, WhatsApp e downloads de PDF.
  */
 export function PwaAppShell() {
   const entryUrl = useMemo(() => resolvePwaShellEntryUrl(), []);
@@ -31,14 +97,12 @@ export function PwaAppShell() {
   const [reloadKey, setReloadKey] = useState(0);
   const [canGoBack, setCanGoBack] = useState(false);
 
-  // Permissão de GPS em paralelo — nunca impede o boot do PWA.
   useEffect(() => {
     void Location.requestForegroundPermissionsAsync().catch(() => {
       // best-effort
     });
   }, []);
 
-  // Escape hatch: se o Android não disparar onLoadEnd, tira o overlay.
   useEffect(() => {
     if (!loading || errorMessage) {
       return;
@@ -46,7 +110,6 @@ export function PwaAppShell() {
 
     const timer = setTimeout(() => {
       if (!firstPaintDoneRef.current) {
-        // Ainda pode estar carregando JS; some o splash para o usuário ver erros da página.
         firstPaintDoneRef.current = true;
         setLoading(false);
       }
@@ -76,16 +139,90 @@ export function PwaAppShell() {
     setLoading(false);
   }, []);
 
-  const handleError = useCallback((event: { nativeEvent?: { description?: string } }) => {
-    if (firstPaintDoneRef.current) {
+  const handoffUrl = useCallback(async (url: string, forcedMode?: 'external' | 'download') => {
+    const decision = shouldHandoffShellNavigation(url);
+    const mode = forcedMode ?? decision.mode;
+
+    if (mode === 'download' || isLikelyPdfNavigation(url)) {
+      await downloadAndOpenShellFile(url);
       return;
     }
-    const description = event.nativeEvent?.description?.trim();
-    setErrorMessage(
-      description || 'Não foi possível carregar o aplicativo. Verifique a internet.'
-    );
-    setLoading(false);
+
+    // WhatsApp, tel, target=_blank (window.open), etc. → app/navegador do SO.
+    await openShellExternalUrl(url);
   }, []);
+
+  const handleShellMessage = useCallback(
+    (event: WebViewMessageEvent) => {
+      try {
+        const raw = event.nativeEvent.data;
+        const data = JSON.parse(raw) as { type?: string; url?: string };
+        const url = data.url?.trim();
+        if (!url) {
+          return;
+        }
+        const type = (data.type || 'open').toLowerCase();
+        void handoffUrl(url, type === 'download' ? 'download' : 'external');
+      } catch {
+        // ignore non-json messages
+      }
+    },
+    [handoffUrl]
+  );
+
+  const handleShouldStartLoad = useCallback(
+    (request: ShouldStartLoadRequest) => {
+      const url = request.url?.trim() ?? '';
+      if (!url || url === 'about:blank') {
+        return true;
+      }
+
+      const decision = shouldHandoffShellNavigation(url);
+      if (decision.handoff) {
+        void handoffUrl(url, decision.mode === 'download' ? 'download' : 'external');
+        return false;
+      }
+
+      return true;
+    },
+    [handoffUrl]
+  );
+
+  const handleError = useCallback(
+    (event: {
+      nativeEvent?: { description?: string; code?: number; url?: string };
+    }) => {
+      const description = event.nativeEvent?.description?.trim() || '';
+      const code = event.nativeEvent?.code;
+      const failedUrl = event.nativeEvent?.url?.trim() || '';
+
+      // Link whatsapp:// caiu no WebView — volta e tenta openURL nativo.
+      if (
+        code === -10
+        || /ERR_UNKNOWN_URL_SCHEME/i.test(description)
+        || isExternalAppLike(failedUrl)
+      ) {
+        if (failedUrl) {
+          void openShellExternalUrl(failedUrl);
+        }
+        if (webRef.current && firstPaintDoneRef.current) {
+          webRef.current.goBack();
+        }
+        setLoading(false);
+        return;
+      }
+
+      if (firstPaintDoneRef.current) {
+        return;
+      }
+
+      setErrorMessage(
+        description || 'Não foi possível carregar o aplicativo. Verifique a internet.'
+      );
+      setLoading(false);
+    },
+    []
+  );
 
   const handleHttpError = useCallback((event: { nativeEvent?: { statusCode?: number } }) => {
     if (firstPaintDoneRef.current) {
@@ -106,7 +243,8 @@ export function PwaAppShell() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.root} edges={['top', 'left', 'right']}>
+    // bottom incluso: barra de gestos / botões do Android não cobrem o PWA.
+    <SafeAreaView style={styles.root} edges={['top', 'bottom', 'left', 'right']}>
       {errorMessage ? (
         <View style={styles.errorBox}>
           <Text style={styles.errorTitle}>Sem conexão com o app</Text>
@@ -122,7 +260,6 @@ export function PwaAppShell() {
           key={reloadKey}
           source={{ uri: entryUrl }}
           style={styles.webview}
-          // Só o primeiro documento: navegação SPA / adminAccess não reabre o splash.
           onLoadEnd={() => markFirstPaintDone()}
           onLoadProgress={({ nativeEvent }) => {
             if (nativeEvent.progress >= 0.9) {
@@ -133,13 +270,27 @@ export function PwaAppShell() {
           onHttpError={handleHttpError}
           onNavigationStateChange={(navState) => {
             setCanGoBack(navState.canGoBack);
-            // SPA: primeiro paint costuma ser o entry; limpa overlay se a URL mudou e já havia conteúdo.
             if (navState.loading === false && navState.url) {
               markFirstPaintDone();
             }
           }}
           onContentProcessDidTerminate={retry}
-          // PWA precisa de storage, geolocation e mídia no WebView Android/iOS.
+          onShouldStartLoadWithRequest={handleShouldStartLoad}
+          onMessage={handleShellMessage}
+          injectedJavaScriptBeforeContentLoaded={SHELL_BRIDGE_JS}
+          injectedJavaScript={SHELL_BRIDGE_JS}
+          onOpenWindow={(event) => {
+            const targetUrl = event.nativeEvent?.targetUrl?.trim();
+            if (targetUrl) {
+              void handoffUrl(targetUrl, isLikelyPdfNavigation(targetUrl) ? 'download' : 'external');
+            }
+          }}
+          onFileDownload={({ nativeEvent }) => {
+            const downloadUrl = nativeEvent?.downloadUrl?.trim();
+            if (downloadUrl) {
+              void downloadAndOpenShellFile(downloadUrl);
+            }
+          }}
           domStorageEnabled
           javaScriptEnabled
           sharedCookiesEnabled
@@ -148,7 +299,8 @@ export function PwaAppShell() {
           allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction={false}
           allowsBackForwardNavigationGestures
-          setSupportMultipleWindows={false}
+          // true: captura window.open / target=_blank em onOpenWindow
+          setSupportMultipleWindows
           originWhitelist={['*']}
           mixedContentMode="always"
           cacheEnabled
@@ -156,9 +308,14 @@ export function PwaAppShell() {
           mediaCapturePermissionGrantType={
             Platform.OS === 'ios' ? 'grantIfSameHostElsePrompt' : undefined
           }
-          // Chrome Android UA melhora compatibilidade de mapas/geolocation em alguns WebViews antigos.
           applicationNameForUserAgent="ComunidadeDigitalAPK"
           startInLoadingState={false}
+          // Android: melhora entrega de links de download Content-Disposition
+          {...(Platform.OS === 'android'
+            ? {
+                nestedScrollEnabled: true,
+              }
+            : {})}
         />
       )}
 
@@ -171,6 +328,14 @@ export function PwaAppShell() {
       ) : null}
     </SafeAreaView>
   );
+}
+
+function isLikelyPdfNavigation(url: string): boolean {
+  return /\.pdf(\?|#|$)/i.test(url) || url.toLowerCase().includes('.pdf');
+}
+
+function isExternalAppLike(url: string): boolean {
+  return /^(whatsapp|whatsapp-api|tel|mailto|intent|market):/i.test(url.trim());
 }
 
 const styles = StyleSheet.create({
