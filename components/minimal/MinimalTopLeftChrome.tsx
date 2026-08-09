@@ -14,7 +14,10 @@ type Props = {
   showGreeting?: boolean;
 };
 
-/** Chrome fixo no topo: coluna esquerda (saudação/menu) + logo à direita, centrado na altura. */
+/**
+ * Chrome fixo no topo: linha flex (saudação+menu | logo).
+ * Sem overlay absoluto — o nome não fica espremido sob o logo.
+ */
 export function MinimalTopLeftChrome({ title, header, showGreeting = false }: Props) {
   const { openDrawer } = useAppDrawer();
   const { expandedEventId } = useMinimalHome();
@@ -32,22 +35,24 @@ export function MinimalTopLeftChrome({ title, header, showGreeting = false }: Pr
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.leftStack}>
-        <MinimalTopIdentityBar showGreeting={showGreeting} />
+      <View style={styles.mainRow}>
+        <View style={styles.leftStack}>
+          <MinimalTopIdentityBar showGreeting={showGreeting} />
 
-        <View style={styles.menuChrome}>
-          <MinimalExpandedEventBar menuButton={menuButton} />
+          <View style={styles.menuChrome}>
+            <MinimalExpandedEventBar menuButton={menuButton} />
+          </View>
+
+          {!expandedEventId && (header || title?.trim()) ? (
+            <View style={styles.leftColumn}>
+              {header ? header : title?.trim() ? <Text style={styles.title}>{title}</Text> : null}
+            </View>
+          ) : null}
         </View>
 
-        {!expandedEventId && (header || title?.trim()) ? (
-          <View style={styles.leftColumn}>
-            {header ? header : title?.trim() ? <Text style={styles.title}>{title}</Text> : null}
-          </View>
-        ) : null}
-      </View>
-
-      <View style={styles.logoOverlay} pointerEvents="box-none">
-        <MinimalTopChurchLogo />
+        <View style={styles.logoColumn} pointerEvents="none">
+          <MinimalTopChurchLogo />
+        </View>
       </View>
     </View>
   );
@@ -55,37 +60,34 @@ export function MinimalTopLeftChrome({ title, header, showGreeting = false }: Pr
 
 const styles = StyleSheet.create({
   wrap: {
-    position: 'relative',
     flexShrink: 0,
-    paddingHorizontal: 16,
+    paddingLeft: 16,
+    // Folga da borda direita do aparelho (logo não “cola”).
+    paddingRight: 20,
     paddingTop: 8,
     paddingBottom: 8,
     backgroundColor: MINIMAL_UI.background,
-    gap: 4,
     zIndex: 30,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: MINIMAL_UI.divider,
     minHeight: MINIMAL_TOP_CHROME_MIN_HEIGHT,
   },
-  leftStack: {
-    // Antes: 50% rígido — recortava a saudação em telas estreitas.
-    maxWidth: '70%',
-    minWidth: 0,
-    alignSelf: 'flex-start',
-    gap: 4,
-    zIndex: 1,
-    paddingRight: 12,
+  mainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
   },
-  logoOverlay: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    // Folga da borda direita para não “colar” o logo no aparelho.
-    right: 16,
-    paddingRight: 4,
-    justifyContent: 'center',
+  leftStack: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+  },
+  logoColumn: {
+    flexShrink: 0,
+    flexGrow: 0,
     alignItems: 'flex-end',
-    zIndex: 2,
+    justifyContent: 'center',
   },
   menuButton: {
     padding: 4,
@@ -93,13 +95,13 @@ const styles = StyleSheet.create({
   },
   menuChrome: {
     width: '100%',
-    alignSelf: 'flex-start',
+    alignSelf: 'stretch',
   },
   leftColumn: {
     alignItems: 'flex-start',
     paddingLeft: 4,
     width: '100%',
-    alignSelf: 'flex-start',
+    alignSelf: 'stretch',
   },
   title: {
     ...MINIMAL_TYPO.screenTitle,

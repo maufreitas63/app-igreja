@@ -48,7 +48,7 @@ function applyResolvedLogo(
   }
 }
 
-/** Logo da instância — posicionado à direita do chrome, fora da faixa de saudação. */
+/** Logo da instância — coluna direita do chrome (não overlay absoluto). */
 export function MinimalTopChurchLogo() {
   const [logoSource, setLogoSource] = useState<ImageSource | null>(null);
   const [logoLabel, setLogoLabel] = useState('Logo da igreja');
@@ -59,7 +59,6 @@ export function MinimalTopChurchLogo() {
 
   useEffect(() => {
     return subscribeActiveTenantChange((tenantId) => {
-      // Só recarrega quando a instância de fato muda.
       if (lastTenantId.current === tenantId) {
         return;
       }
@@ -81,7 +80,6 @@ export function MinimalTopChurchLogo() {
         applyResolvedLogo(resolveTenantChromeLogo(stored), setters, lastSignature);
       }
 
-      // Refresh de rede em background; persistência silenciosa (sem re-notificar).
       try {
         const branding = await resolveActiveIgrejaBranding();
         if (!active || !branding) return;
@@ -121,13 +119,11 @@ const styles = StyleSheet.create({
   slot: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    maxWidth: '44%',
-    // Afasta da margem direita sem perder hierarquia do chrome.
-    marginRight: 4,
-    paddingRight: 2,
+    flexShrink: 0,
   },
   logo: {
-    width: MINIMAL_TOP_IDENTITY_LOGO_HEIGHT * 2.4,
+    // Um pouco menor para não roubar largura da saudação em telas estreitas.
+    width: MINIMAL_TOP_IDENTITY_LOGO_HEIGHT * 2.05,
     height: MINIMAL_TOP_IDENTITY_LOGO_HEIGHT,
   },
   fallback: {
@@ -135,6 +131,6 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.blueDark,
     fontWeight: '700',
     textAlign: 'right',
-    maxWidth: 180,
+    maxWidth: 160,
   },
 });
