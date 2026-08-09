@@ -6,22 +6,12 @@ import {
   normalizeAssemblyMinuteLabel,
   type AssemblyMinuteRecord,
 } from '@/lib/assemblyMinutesApi';
-import {
-  fetchMaintenanceSupportRequests,
-  MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS,
-  MAINTENANCE_SUPPORT_STATUS_LABELS,
-  type MaintenanceSupportRequest,
-} from '@/lib/maintenanceSupportApi';
-import {
-  DASHBOARD_ADMINISTRATIVO_CARD_ID,
-  SUGGESTIONS_IMPROVEMENTS_SCREEN,
-} from '@/lib/administrativoModule';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
-import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -37,11 +27,6 @@ type Props = {
   isActive?: boolean;
   initialTab?: TabId;
 };
-
-const TABS: { id: TabId; label: string; icon: keyof typeof MaterialIcons.glyphMap }[] = [
-  { id: 'atas', label: 'Atos Constitutivos', icon: 'description' },
-  { id: 'outros', label: 'Outros', icon: 'folder-open' },
-];
 
 const formatDateTime = (value: string | null | undefined) => {
   if (!value) {
@@ -63,10 +48,12 @@ const formatDateTime = (value: string | null | undefined) => {
   });
 };
 
-export function AdministrativoCard({ panelHeight, isActive = true, initialTab }: Props) {
-  const router = useRouter();
+/** Card Administrativo (dashboard) — só Atos Constitutivos; aba de troca desabilitada. */
+export function AdministrativoCard({ panelHeight, isActive = true, initialTab: _initialTab }: Props) {
+  void isActive;
+  void _initialTab;
+
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
-  const [activeTab, setActiveTab] = useState<TabId>(initialTab ?? 'atas');
 
   const [minutes, setMinutes] = useState<AssemblyMinuteRecord[]>([]);
   const [loadingMinutes, setLoadingMinutes] = useState(false);
@@ -74,14 +61,6 @@ export function AdministrativoCard({ panelHeight, isActive = true, initialTab }:
   const [minutesModalOpen, setMinutesModalOpen] = useState(false);
   const [pdfPreview, setPdfPreview] = useState<{ title: string; url: string } | null>(null);
   const [loadingPdfId, setLoadingPdfId] = useState<string | null>(null);
-
-  const [suggestions, setSuggestions] = useState<MaintenanceSupportRequest[]>([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
-  const [completedActionModal, setCompletedActionModal] = useState<{
-    title: string;
-    action: string;
-  } | null>(null);
 
   const loadMinutes = useCallback(async () => {
     setLoadingMinutes(true);
@@ -100,63 +79,7 @@ export function AdministrativoCard({ panelHeight, isActive = true, initialTab }:
     }
   }, []);
 
-  const loadSuggestions = useCallback(async () => {
-    setLoadingSuggestions(true);
-    setSuggestionsError(null);
-
-    try {
-      const result = await fetchMaintenanceSupportRequests(120);
-      setSuggestions(result.rows);
-    } catch (error) {
-      setSuggestions([]);
-      setSuggestionsError(
-        error instanceof Error
-          ? error.message
-          : 'Não foi possível carregar sugestões e melhorias.'
-      );
-    } finally {
-      setLoadingSuggestions(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isActive) {
-      return;
-    }
-
-    if (activeTab === 'outros') {
-      void loadSuggestions();
-    }
-  }, [activeTab, isActive, loadSuggestions]);
-
-  useEffect(() => {
-    if (initialTab) {
-      setActiveTab(initialTab);
-    }
-  }, [initialTab]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (!isActive || activeTab !== 'outros') {
-        return;
-      }
-
-      void loadSuggestions();
-    }, [activeTab, isActive, loadSuggestions])
-  );
-
-  const handleRegisterSuggestion = useCallback(() => {
-    router.push({
-      pathname: SUGGESTIONS_IMPROVEMENTS_SCREEN,
-      params: {
-        supportMode: 'new',
-        returnDashboardCard: DASHBOARD_ADMINISTRATIVO_CARD_ID,
-      },
-    });
-  }, [router]);
-
   const handleOpenAtasModal = useCallback(() => {
-    setActiveTab('atas');
     setMinutesModalOpen(true);
     void loadMinutes();
   }, [loadMinutes]);
@@ -173,9 +96,7 @@ export function AdministrativoCard({ panelHeight, isActive = true, initialTab }:
 
       setPdfPreview({ title: minute.title, url });
     } catch (error) {
-      setMinutesError(
-        error instanceof Error ? error.message : 'Não foi possível abrir o PDF.'
-      );
+      setMinutesError(error instanceof Error ? error.message : 'Não foi possível abrir o PDF.');
     } finally {
       setLoadingPdfId(null);
     }
@@ -184,147 +105,33 @@ export function AdministrativoCard({ panelHeight, isActive = true, initialTab }:
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
       <Text style={maintenancePanelStyles.panelTitle}>Administrativo</Text>
-      <Text style={styles.subtitle}>
-        Documentos administrativos e acompanhamento de sugestões.
-      </Text>
+      <Text style={styles.subtitle}>Documentos administrativos e atos constitutivos.</Text>
 
       <View style={styles.tabRow}>
-        {TABS.map((tab) => {
-          const selected = activeTab === tab.id;
-
-          return (
-            <TouchableOpacity
-              key={tab.id}
-              style={[styles.tabChip, selected && styles.tabChipSelected]}
-              onPress={() => {
-                if (tab.id === 'atas') {
-                  handleOpenAtasModal();
-                  return;
-                }
-
-                setActiveTab(tab.id);
-              }}
-              activeOpacity={0.85}
-            >
-              <MaterialIcons
-                name={tab.icon}
-                size={16}
-                color={selected ? '#1E3A8A' : '#BFDBFE'}
-              />
-              <Text style={[styles.tabChipText, selected && styles.tabChipTextSelected]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        <View
+          style={[styles.tabChip, styles.tabChipDisabled]}
+          accessibilityRole="button"
+          accessibilityState={{ selected: true, disabled: true }}
+          accessibilityLabel="Atos Constitutivos (indisponível para troca)"
+        >
+          <MaterialIcons name="description" size={16} color="#94A3B8" />
+          <Text style={styles.tabChipTextDisabled}>Atos Constitutivos</Text>
+        </View>
       </View>
 
       <View style={styles.bodyCard}>
-        {activeTab === 'atas' ? (
-          <>
-            <FontAwesome name="file-text-o" size={28} color="#60A5FA" />
-            <Text style={styles.bodyTitle}>Atos Constitutivos</Text>
-            <Text style={styles.bodyHint}>
-              Consulte os PDFs publicados pelo financeiro. Toque no botão abaixo para abrir a lista.
-            </Text>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={handleOpenAtasModal}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.primaryButtonText}>Ver documentos publicados</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <ScrollView
-            style={styles.suggestionsScroll}
-            contentContainerStyle={styles.suggestionsContent}
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.suggestionsHeaderRow}>
-              <Text style={[styles.bodyTitle, styles.suggestionsHeaderTitle]}>
-                Sugestões e Melhorias
-              </Text>
-              <TouchableOpacity
-                style={styles.registerSuggestionButton}
-                onPress={handleRegisterSuggestion}
-                activeOpacity={0.85}
-                accessibilityRole="button"
-                accessibilityLabel="Registrar sugestão ou melhoria"
-              >
-                <MaterialIcons name="add-circle-outline" size={16} color="#0F172A" />
-                <Text style={styles.registerSuggestionButtonText}>Registrar</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.bodyHint}>
-              Solicitações registradas no relatório de Sugestões e Melhorias.
-            </Text>
-
-            {loadingSuggestions ? (
-              <ActivityIndicator color="#60A5FA" style={styles.inlineLoader} />
-            ) : suggestionsError ? (
-              <Text style={styles.errorText}>{suggestionsError}</Text>
-            ) : suggestions.length === 0 ? (
-              <Text style={styles.emptyText}>Nenhuma solicitação registrada.</Text>
-            ) : (
-              suggestions.map((request) => {
-                const isCompleted = request.status === 'completed';
-                const CardWrapper = isCompleted ? TouchableOpacity : View;
-
-                return (
-                  <CardWrapper
-                    key={request.id}
-                    style={[
-                      styles.suggestionCard,
-                      isCompleted && styles.suggestionCardCompleted,
-                    ]}
-                    {...(isCompleted
-                      ? {
-                          onPress: () =>
-                            setCompletedActionModal({
-                              title: MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS[request.record_type],
-                              action:
-                                request.developer_action?.trim()
-                                || 'Nenhuma ação registrada pelo desenvolvedor.',
-                            }),
-                          activeOpacity: 0.85,
-                        }
-                      : {})}
-                  >
-                    <View style={styles.suggestionHeader}>
-                      <Text style={styles.suggestionType}>
-                        {MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS[request.record_type]}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.suggestionStatus,
-                          isCompleted && styles.suggestionStatusCompleted,
-                        ]}
-                      >
-                        {MAINTENANCE_SUPPORT_STATUS_LABELS[request.status]}
-                      </Text>
-                    </View>
-                    <Text style={styles.suggestionMeta}>
-                      {request.requester_name} · {formatDateTime(request.created_at)}
-                    </Text>
-                    {request.tema ? (
-                      <Text style={styles.suggestionTheme}>{request.tema}</Text>
-                    ) : null}
-                    <Text style={styles.suggestionDescription} numberOfLines={4}>
-                      {request.description}
-                    </Text>
-                    {isCompleted ? (
-                      <Text style={styles.suggestionCompletedHint}>
-                        Toque para ver a ação tomada
-                      </Text>
-                    ) : null}
-                  </CardWrapper>
-                );
-              })
-            )}
-          </ScrollView>
-        )}
+        <FontAwesome name="file-text-o" size={28} color="#60A5FA" />
+        <Text style={styles.bodyTitle}>Atos Constitutivos</Text>
+        <Text style={styles.bodyHint}>
+          Consulte os PDFs publicados pelo financeiro. Toque no botão abaixo para abrir a lista.
+        </Text>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={handleOpenAtasModal}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.primaryButtonText}>Ver documentos publicados</Text>
+        </TouchableOpacity>
       </View>
 
       <Modal
@@ -334,10 +141,7 @@ export function AdministrativoCard({ panelHeight, isActive = true, initialTab }:
         onRequestClose={() => setMinutesModalOpen(false)}
       >
         <View style={styles.modalOverlay}>
-          <Pressable
-            style={styles.modalBackdrop}
-            onPress={() => setMinutesModalOpen(false)}
-          />
+          <Pressable style={styles.modalBackdrop} onPress={() => setMinutesModalOpen(false)} />
 
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Atos Constitutivos</Text>
@@ -404,43 +208,6 @@ export function AdministrativoCard({ panelHeight, isActive = true, initialTab }:
         pdfUrl={pdfPreview?.url ?? null}
         onClose={() => setPdfPreview(null)}
       />
-
-      <Modal
-        visible={completedActionModal !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setCompletedActionModal(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <Pressable
-            style={styles.modalBackdrop}
-            onPress={() => setCompletedActionModal(null)}
-          />
-
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Ação Tomada</Text>
-            {completedActionModal?.title ? (
-              <Text style={styles.modalHelp}>{completedActionModal.title}</Text>
-            ) : null}
-            <ScrollView
-              style={styles.actionTakenScroll}
-              contentContainerStyle={styles.actionTakenContent}
-              nestedScrollEnabled
-            >
-              <Text style={styles.actionTakenText}>
-                {completedActionModal?.action ?? '—'}
-              </Text>
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setCompletedActionModal(null)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.modalCloseButtonText}>Fechar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -474,17 +241,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  tabChipSelected: {
-    backgroundColor: '#BFDBFE',
-    borderColor: '#93C5FD',
+  tabChipDisabled: {
+    opacity: 0.85,
+    borderColor: 'rgba(148, 163, 184, 0.55)',
+    backgroundColor: 'rgba(30, 41, 59, 0.55)',
+    ...(Platform.OS === 'web' ? { cursor: 'not-allowed' as const } : null),
   },
-  tabChipText: {
-    color: '#BFDBFE',
+  tabChipTextDisabled: {
+    color: '#94A3B8',
     fontSize: 11,
     fontWeight: '800',
-  },
-  tabChipTextSelected: {
-    color: '#1E3A8A',
   },
   bodyCard: {
     flex: 1,
@@ -495,6 +261,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
     padding: 16,
     gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bodyTitle: {
     color: '#E0F2FE',
@@ -513,117 +281,17 @@ const styles = StyleSheet.create({
     marginTop: 8,
     minHeight: 40,
     borderRadius: 12,
-    backgroundColor: '#60A5FA',
+    borderWidth: 1,
+    borderColor: '#60A5FA',
+    backgroundColor: 'rgba(30, 58, 138, 0.45)',
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   primaryButtonText: {
-    color: '#0F172A',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  suggestionsScroll: {
-    flex: 1,
-    minHeight: 0,
-  },
-  suggestionsHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  suggestionsHeaderTitle: {
-    flex: 1,
-    minWidth: 0,
-    textAlign: 'left',
-  },
-  registerSuggestionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: 999,
-    backgroundColor: '#60A5FA',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    flexShrink: 0,
-  },
-  registerSuggestionButtonText: {
-    color: '#0F172A',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  suggestionsContent: {
-    gap: 8,
-    paddingBottom: 8,
-  },
-  suggestionCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.25)',
-    backgroundColor: 'rgba(15, 23, 42, 0.72)',
-    padding: 10,
-    gap: 4,
-  },
-  suggestionCardCompleted: {
-    borderColor: 'rgba(34, 197, 94, 0.55)',
-    backgroundColor: 'rgba(20, 83, 45, 0.42)',
-  },
-  suggestionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  suggestionType: {
     color: '#E0F2FE',
     fontSize: 12,
     fontWeight: '800',
-    flex: 1,
-  },
-  suggestionStatus: {
-    color: '#93C5FD',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  suggestionStatusCompleted: {
-    color: '#BBF7D0',
-  },
-  suggestionCompletedHint: {
-    color: '#86EFAC',
-    fontSize: 10,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  suggestionMeta: {
-    color: '#94A3B8',
-    fontSize: 11,
-  },
-  suggestionTheme: {
-    color: '#7DD3FC',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  suggestionDescription: {
-    color: '#CBD5E1',
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  inlineLoader: {
-    paddingVertical: 12,
-  },
-  errorText: {
-    color: '#FCA5A5',
-    fontSize: 12,
-    lineHeight: 17,
-    textAlign: 'center',
-  },
-  emptyText: {
-    color: '#94A3B8',
-    fontSize: 12,
-    lineHeight: 17,
-    textAlign: 'center',
-    paddingVertical: 12,
   },
   modalOverlay: {
     flex: 1,
@@ -633,7 +301,7 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(2, 6, 23, 0.72)',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
   },
   modalCard: {
     width: '100%',
@@ -641,7 +309,7 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.35)',
+    borderColor: 'rgba(96, 165, 250, 0.45)',
     backgroundColor: '#0F172A',
     padding: 16,
     gap: 10,
@@ -672,8 +340,8 @@ const styles = StyleSheet.create({
     gap: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(51, 65, 85, 0.95)',
-    backgroundColor: 'rgba(15, 23, 42, 0.68)',
+    borderColor: 'rgba(96, 165, 250, 0.35)',
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
     padding: 12,
   },
   minuteMain: {
@@ -682,7 +350,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   minuteTitle: {
-    color: '#F8FAFC',
+    color: '#E0F2FE',
     fontSize: 13,
     fontWeight: '800',
   },
@@ -694,25 +362,31 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     minHeight: 36,
     borderRadius: 999,
-    backgroundColor: '#60A5FA',
-    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(96, 165, 250, 0.45)',
+    backgroundColor: 'rgba(30, 58, 138, 0.45)',
+    paddingHorizontal: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalCloseButtonText: {
-    color: '#0F172A',
+    color: '#E0F2FE',
     fontSize: 12,
     fontWeight: '800',
   },
-  actionTakenScroll: {
-    maxHeight: 280,
+  inlineLoader: {
+    paddingVertical: 12,
   },
-  actionTakenContent: {
-    paddingVertical: 4,
+  errorText: {
+    color: '#FCA5A5',
+    fontSize: 12,
+    textAlign: 'center',
   },
-  actionTakenText: {
-    color: '#E2E8F0',
-    fontSize: 13,
-    lineHeight: 19,
+  emptyText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
+    paddingVertical: 12,
   },
 });

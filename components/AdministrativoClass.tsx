@@ -1,5 +1,4 @@
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
-import { MaintenanceSupportSuggestionsCard } from '@/components/MaintenanceSupportSuggestionsCard';
 import {
   createAssemblyMinuteSignedUrl,
   fetchAssemblyMinutes,
@@ -7,17 +6,9 @@ import {
   type AssemblyMinuteRecord,
 } from '@/lib/assemblyMinutesApi';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
-import { computeDashboardCardHeight } from '@/lib/dashboardPanelLayout';
-import {
-  fetchMaintenanceSupportRequests,
-  MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS,
-  MAINTENANCE_SUPPORT_STATUS_LABELS,
-  type MaintenanceSupportRequest,
-} from '@/lib/maintenanceSupportApi';
-import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -28,19 +19,20 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ADMINISTRATIVO_CLASS_SURFACE = '#FFFFFF';
 const ADMINISTRATIVO_CLASS_ICON_COLOR = '#1B4F8A';
 
 type TabId = 'atas' | 'outros';
 
-const TABS: { id: TabId; label: string; icon: keyof typeof MaterialIcons.glyphMap }[] = [
-  { id: 'atas', label: 'Atos Constitutivos', icon: 'description' },
-  { id: 'outros', label: 'Outros', icon: 'folder-open' },
-];
+/** Atos é a única função; “Outros” oculto e aba Atos desabilitada até existir outra. */
+const ADMINISTRATIVO_TABS: {
+  id: TabId;
+  label: string;
+  icon: keyof typeof MaterialIcons.glyphMap;
+  enabled: boolean;
+}[] = [{ id: 'atas', label: 'Atos Constitutivos', icon: 'description', enabled: false }];
 
 const formatDateTime = (value: string | null | undefined) => {
   if (!value) {
@@ -66,26 +58,22 @@ export type AdministrativoClassProps = {
   title?: string;
   description?: string;
   rdButtonLabel?: string;
+  /** Mantido por compatibilidade de rotas; ignorado até existir aba Outros. */
   initialTab?: TabId;
   onPressRd?: () => void;
   onClose?: () => void;
 };
 
-/** Visualização do módulo Administrativo — abas + RD via props. */
+/** Visualização do módulo Administrativo — Atos Constitutivos (+ RD). */
 export function AdministrativoClass({
   title = 'Administrativo',
-  description = 'Documentos administrativos, sugestões e relatórios de despesas.',
+  description = 'Documentos administrativos e atos constitutivos.',
   rdButtonLabel = 'Criar Relatório de Despesas (RD)',
-  initialTab = 'atas',
+  initialTab: _initialTab = 'atas',
   onPressRd,
   onClose,
 }: AdministrativoClassProps) {
-  const { height: windowHeight } = useWindowDimensions();
-  const panelHeight = useMemo(
-    () => computeDashboardCardHeight(windowHeight, 0, 0),
-    [windowHeight]
-  );
-  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+  void _initialTab;
 
   const [minutes, setMinutes] = useState<AssemblyMinuteRecord[]>([]);
   const [loadingMinutes, setLoadingMinutes] = useState(false);
@@ -93,15 +81,6 @@ export function AdministrativoClass({
   const [minutesModalOpen, setMinutesModalOpen] = useState(false);
   const [pdfPreview, setPdfPreview] = useState<{ title: string; url: string } | null>(null);
   const [loadingPdfId, setLoadingPdfId] = useState<string | null>(null);
-
-  const [suggestions, setSuggestions] = useState<MaintenanceSupportRequest[]>([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
-  const [completedActionModal, setCompletedActionModal] = useState<{
-    title: string;
-    action: string;
-  } | null>(null);
-  const [registerSuggestionOpen, setRegisterSuggestionOpen] = useState(false);
 
   const loadMinutes = useCallback(async () => {
     setLoadingMinutes(true);
@@ -120,62 +99,7 @@ export function AdministrativoClass({
     }
   }, []);
 
-  const loadSuggestions = useCallback(async () => {
-    setLoadingSuggestions(true);
-    setSuggestionsError(null);
-
-    try {
-      const result = await fetchMaintenanceSupportRequests(120);
-      setSuggestions(result.rows);
-    } catch (error) {
-      setSuggestions([]);
-      setSuggestionsError(
-        error instanceof Error
-          ? error.message
-          : 'Não foi possível carregar sugestões e melhorias.'
-      );
-    } finally {
-      setLoadingSuggestions(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (initialTab) {
-      setActiveTab(initialTab);
-    }
-  }, [initialTab]);
-
-  useEffect(() => {
-    if (activeTab === 'outros') {
-      void loadSuggestions();
-    }
-  }, [activeTab, loadSuggestions]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (activeTab !== 'outros') {
-        return;
-      }
-
-      void loadSuggestions();
-    }, [activeTab, loadSuggestions])
-  );
-
-  const handleRegisterSuggestion = useCallback(() => {
-    setRegisterSuggestionOpen(true);
-  }, []);
-
-  const handleCloseRegisterSuggestion = useCallback(() => {
-    setRegisterSuggestionOpen(false);
-  }, []);
-
-  const handleSuggestionCreated = useCallback(() => {
-    setRegisterSuggestionOpen(false);
-    void loadSuggestions();
-  }, [loadSuggestions]);
-
   const handleOpenAtasModal = useCallback(() => {
-    setActiveTab('atas');
     setMinutesModalOpen(true);
     void loadMinutes();
   }, [loadMinutes]);
@@ -204,146 +128,37 @@ export function AdministrativoClass({
       <Text style={styles.description}>{description}</Text>
 
       <View style={styles.tabRow}>
-        {TABS.map((tab) => {
-          const selected = activeTab === tab.id;
-
-          return (
-            <TouchableOpacity
-              key={tab.id}
-              style={[styles.tabChip, selected && styles.tabChipSelected]}
-              onPress={() => {
-                if (tab.id === 'atas') {
-                  handleOpenAtasModal();
-                  return;
-                }
-
-                setActiveTab(tab.id);
-              }}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              accessibilityLabel={tab.label}
-            >
-              <MaterialIcons
-                name={tab.icon}
-                size={16}
-                color={selected ? ADMINISTRATIVO_CLASS_ICON_COLOR : VIGILANCE_SCALES_UI.accent}
-              />
-              <Text style={[styles.tabChipText, selected && styles.tabChipTextSelected]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        {ADMINISTRATIVO_TABS.map((tab) => (
+          <View
+            key={tab.id}
+            style={[styles.tabChip, styles.tabChipSelected, styles.tabChipDisabled]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: true, disabled: true }}
+            accessibilityLabel={`${tab.label} (indisponível para troca)`}
+          >
+            <MaterialIcons name={tab.icon} size={16} color="#94A3B8" />
+            <Text style={[styles.tabChipText, styles.tabChipTextDisabled]}>{tab.label}</Text>
+          </View>
+        ))}
       </View>
 
       <View style={styles.bodyCard}>
-        {activeTab === 'atas' ? (
-          <View style={styles.atasBody}>
-            <FontAwesome name="file-text-o" size={28} color={ADMINISTRATIVO_CLASS_ICON_COLOR} />
-            <Text style={styles.bodyTitle}>Atos Constitutivos</Text>
-            <Text style={styles.bodyHint}>
-              Consulte os PDFs publicados pelo financeiro. Toque no botão abaixo para abrir a lista.
-            </Text>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={handleOpenAtasModal}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-              accessibilityLabel="Ver documentos publicados"
-            >
-              <Text style={styles.primaryButtonText}>Ver documentos publicados</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <ScrollView
-            style={styles.suggestionsScroll}
-            contentContainerStyle={styles.suggestionsContent}
-            nestedScrollEnabled
-            showsVerticalScrollIndicator
+        <View style={styles.atasBody}>
+          <FontAwesome name="file-text-o" size={28} color={ADMINISTRATIVO_CLASS_ICON_COLOR} />
+          <Text style={styles.bodyTitle}>Atos Constitutivos</Text>
+          <Text style={styles.bodyHint}>
+            Consulte os PDFs publicados pelo financeiro. Toque no botão abaixo para abrir a lista.
+          </Text>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={handleOpenAtasModal}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Ver documentos publicados"
           >
-            <View style={styles.suggestionsHeaderRow}>
-              <Text style={[styles.bodyTitle, styles.suggestionsHeaderTitle]}>
-                Sugestões e Melhorias
-              </Text>
-              <TouchableOpacity
-                style={styles.registerSuggestionButton}
-                onPress={handleRegisterSuggestion}
-                activeOpacity={0.85}
-                accessibilityRole="button"
-                accessibilityLabel="Registrar sugestão ou melhoria"
-              >
-                <MaterialIcons
-                  name="add-circle-outline"
-                  size={16}
-                  color={ADMINISTRATIVO_CLASS_ICON_COLOR}
-                />
-                <Text style={styles.registerSuggestionButtonText}>Registrar</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.bodyHint}>
-              Solicitações registradas no relatório de Sugestões e Melhorias.
-            </Text>
-
-            {loadingSuggestions ? (
-              <ActivityIndicator color={VIGILANCE_SCALES_UI.accent} style={styles.inlineLoader} />
-            ) : suggestionsError ? (
-              <Text style={styles.errorText}>{suggestionsError}</Text>
-            ) : suggestions.length === 0 ? (
-              <Text style={styles.emptyText}>Nenhuma solicitação registrada.</Text>
-            ) : (
-              suggestions.map((request) => {
-                const isCompleted = request.status === 'completed';
-                const CardWrapper = isCompleted ? TouchableOpacity : View;
-
-                return (
-                  <CardWrapper
-                    key={request.id}
-                    style={[styles.suggestionCard, isCompleted && styles.suggestionCardCompleted]}
-                    {...(isCompleted
-                      ? {
-                          onPress: () =>
-                            setCompletedActionModal({
-                              title: MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS[request.record_type],
-                              action:
-                                request.developer_action?.trim()
-                                || 'Nenhuma ação registrada pelo desenvolvedor.',
-                            }),
-                          activeOpacity: 0.85,
-                        }
-                      : {})}
-                  >
-                    <View style={styles.suggestionHeader}>
-                      <Text style={styles.suggestionType}>
-                        {MAINTENANCE_SUPPORT_RECORD_TYPE_LABELS[request.record_type]}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.suggestionStatus,
-                          isCompleted && styles.suggestionStatusCompleted,
-                        ]}
-                      >
-                        {MAINTENANCE_SUPPORT_STATUS_LABELS[request.status]}
-                      </Text>
-                    </View>
-                    <Text style={styles.suggestionMeta}>
-                      {request.requester_name} · {formatDateTime(request.created_at)}
-                    </Text>
-                    {request.tema ? (
-                      <Text style={styles.suggestionTheme}>{request.tema}</Text>
-                    ) : null}
-                    <Text style={styles.suggestionDescription} numberOfLines={4}>
-                      {request.description}
-                    </Text>
-                    {isCompleted ? (
-                      <Text style={styles.suggestionCompletedHint}>Toque para ver a ação tomada</Text>
-                    ) : null}
-                  </CardWrapper>
-                );
-              })
-            )}
-          </ScrollView>
-        )}
+            <Text style={styles.primaryButtonText}>Ver documentos publicados</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.footerActionsRow}>
@@ -441,72 +256,6 @@ export function AdministrativoClass({
         pdfUrl={pdfPreview?.url ?? null}
         onClose={() => setPdfPreview(null)}
       />
-
-      <Modal
-        visible={registerSuggestionOpen}
-        animationType="slide"
-        onRequestClose={handleCloseRegisterSuggestion}
-      >
-        <SafeAreaView style={styles.registerSuggestionModal} edges={['top', 'left', 'right', 'bottom']}>
-          <View style={styles.registerSuggestionHeader}>
-            <Text style={styles.registerSuggestionTitle}>Nova sugestão ou melhoria</Text>
-            <TouchableOpacity
-              accessibilityLabel="Fechar formulário de sugestão"
-              accessibilityRole="button"
-              onPress={handleCloseRegisterSuggestion}
-              style={styles.registerSuggestionCloseButton}
-              activeOpacity={0.85}
-            >
-              <MaterialIcons name="close" size={22} color={MINIMAL_UI.icon} />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.registerSuggestionBody}>
-            <MaintenanceSupportSuggestionsCard
-              isActive={registerSuggestionOpen}
-              panelHeight={panelHeight}
-              initialMode="new"
-              returnOnCreate
-              variant="vigilance"
-              fillContainer
-              hidePanelHeader
-              onNavigateBack={handleCloseRegisterSuggestion}
-              onRequestCreated={handleSuggestionCreated}
-            />
-          </View>
-        </SafeAreaView>
-      </Modal>
-
-      <Modal
-        visible={completedActionModal !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setCompletedActionModal(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={() => setCompletedActionModal(null)} />
-
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Ação Tomada</Text>
-            {completedActionModal?.title ? (
-              <Text style={styles.modalHelp}>{completedActionModal.title}</Text>
-            ) : null}
-            <ScrollView
-              style={styles.actionTakenScroll}
-              contentContainerStyle={styles.actionTakenContent}
-              nestedScrollEnabled
-            >
-              <Text style={styles.actionTakenText}>{completedActionModal?.action ?? '—'}</Text>
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setCompletedActionModal(null)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.modalCloseButtonText}>Fechar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -547,19 +296,24 @@ const styles = StyleSheet.create({
     backgroundColor: ADMINISTRATIVO_CLASS_SURFACE,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
   },
   tabChipSelected: {
     backgroundColor: '#F0F9FF',
     borderColor: ADMINISTRATIVO_CLASS_ICON_COLOR,
+  },
+  tabChipDisabled: {
+    opacity: 0.85,
+    borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
+    ...(Platform.OS === 'web' ? { cursor: 'not-allowed' as const } : null),
   },
   tabChipText: {
     color: VIGILANCE_SCALES_UI.accent,
     fontSize: 11,
     fontWeight: '800',
   },
-  tabChipTextSelected: {
-    color: ADMINISTRATIVO_CLASS_ICON_COLOR,
+  tabChipTextDisabled: {
+    color: '#94A3B8',
   },
   bodyCard: {
     flex: 1,
@@ -608,113 +362,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
-  suggestionsScroll: {
-    flex: 1,
-    minHeight: 0,
-  },
-  suggestionsHeaderRow: {
+  footerActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: 10,
-  },
-  suggestionsHeaderTitle: {
-    flex: 1,
-    minWidth: 0,
-    textAlign: 'left',
-  },
-  registerSuggestionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: VIGILANCE_SCALES_UI.accent,
-    backgroundColor: ADMINISTRATIVO_CLASS_SURFACE,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
     flexShrink: 0,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
-  },
-  registerSuggestionButtonText: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  suggestionsContent: {
-    gap: 8,
-    paddingBottom: 8,
-  },
-  suggestionCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: VIGILANCE_SCALES_UI.accent,
-    backgroundColor: ADMINISTRATIVO_CLASS_SURFACE,
-    padding: 10,
-    gap: 4,
-  },
-  suggestionCardCompleted: {
-    borderColor: ADMINISTRATIVO_CLASS_ICON_COLOR,
-  },
-  suggestionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  suggestionType: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 12,
-    fontWeight: '800',
-    flex: 1,
-  },
-  suggestionStatus: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 10,
-    fontWeight: '700',
-    opacity: 0.88,
-  },
-  suggestionStatusCompleted: {
-    color: ADMINISTRATIVO_CLASS_ICON_COLOR,
-    opacity: 1,
-  },
-  suggestionCompletedHint: {
-    color: ADMINISTRATIVO_CLASS_ICON_COLOR,
-    fontSize: 10,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  suggestionMeta: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 11,
-    opacity: 0.82,
-  },
-  suggestionTheme: {
-    color: ADMINISTRATIVO_CLASS_ICON_COLOR,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  suggestionDescription: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  inlineLoader: {
-    paddingVertical: 12,
-  },
-  errorText: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 12,
-    lineHeight: 17,
-    textAlign: 'center',
-  },
-  emptyText: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 12,
-    lineHeight: 17,
-    textAlign: 'center',
-    paddingVertical: 12,
-    opacity: 0.82,
   },
   rdButton: {
     flex: 1,
@@ -736,12 +388,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
-  },
-  footerActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flexShrink: 0,
   },
   closeScreenButton: {
     flexShrink: 0,
@@ -766,44 +412,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-  },
-  registerSuggestionModal: {
-    flex: 1,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  registerSuggestionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: MINIMAL_UI.divider,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  registerSuggestionTitle: {
-    flex: 1,
-    color: MINIMAL_UI.blueDark,
-    fontSize: 16,
-    fontWeight: '700',
-    paddingRight: 12,
-  },
-  registerSuggestionCloseButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: MINIMAL_UI.rowHover,
-    borderWidth: 1,
-    borderColor: MINIMAL_UI.border,
-  },
-  registerSuggestionBody: {
-    flex: 1,
-    minHeight: 0,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 12,
   },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -882,15 +490,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
-  actionTakenScroll: {
-    maxHeight: 220,
+  inlineLoader: {
+    paddingVertical: 12,
   },
-  actionTakenContent: {
-    paddingVertical: 4,
+  errorText: {
+    color: '#B91C1C',
+    fontSize: 12,
+    textAlign: 'center',
   },
-  actionTakenText: {
+  emptyText: {
     color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
+    paddingVertical: 12,
+    opacity: 0.82,
   },
 });

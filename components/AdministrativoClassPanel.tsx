@@ -14,7 +14,9 @@ export function AdministrativoClassPanel() {
   const params = useLocalSearchParams<{ administrativoTab?: string }>();
 
   const initialTab = useMemo(() => {
-    return pickRouteParam(params.administrativoTab) === 'outros' ? 'outros' : 'atas';
+    // Aba "outros" descontinuada temporariamente — sempre Atos.
+    void pickRouteParam(params.administrativoTab);
+    return 'atas' as const;
   }, [params.administrativoTab]);
 
   const handleOpenExpenseReport = useCallback(() => {
