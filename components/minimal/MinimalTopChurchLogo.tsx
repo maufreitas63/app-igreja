@@ -121,7 +121,10 @@ const styles = StyleSheet.create({
   slot: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    maxWidth: '48%',
+    maxWidth: '44%',
+    // Afasta da margem direita sem perder hierarquia do chrome.
+    marginRight: 4,
+    paddingRight: 2,
   },
   logo: {
     width: MINIMAL_TOP_IDENTITY_LOGO_HEIGHT * 2.4,

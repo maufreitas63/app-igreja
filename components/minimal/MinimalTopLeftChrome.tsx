@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   wrap: {
     position: 'relative',
     flexShrink: 0,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 8,
     backgroundColor: MINIMAL_UI.background,
@@ -68,16 +68,21 @@ const styles = StyleSheet.create({
     minHeight: MINIMAL_TOP_CHROME_MIN_HEIGHT,
   },
   leftStack: {
-    width: '50%',
+    // Antes: 50% rígido — recortava a saudação em telas estreitas.
+    maxWidth: '70%',
+    minWidth: 0,
     alignSelf: 'flex-start',
     gap: 4,
     zIndex: 1,
+    paddingRight: 12,
   },
   logoOverlay: {
     position: 'absolute',
     top: 0,
     bottom: 0,
-    right: 12,
+    // Folga da borda direita para não “colar” o logo no aparelho.
+    right: 16,
+    paddingRight: 4,
     justifyContent: 'center',
     alignItems: 'flex-end',
     zIndex: 2,

@@ -48,13 +48,15 @@ export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?:
 
   return (
     <View
-      style={styles.row}
+      style={[styles.row, showGreeting ? styles.rowVisible : null]}
       accessibilityElementsHidden={!showGreeting}
       importantForAccessibility={showGreeting ? 'yes' : 'no-hide-descendants'}
     >
       <Text
         style={[styles.greeting, !showGreeting && styles.greetingSpacer]}
+        // Não fuerza shrink/ellipsis: o primeiro nome precisa aparecer por completo.
         numberOfLines={1}
+        ellipsizeMode="clip"
         accessibilityRole={showGreeting ? 'text' : undefined}
       >
         Olá, {greetingName}
@@ -69,14 +71,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     minHeight: Math.round(MINIMAL_TOP_IDENTITY_BAR_HEIGHT * 0.45),
-    width: '50%',
+    // Largura pelo conteúdo (não “50%” rígido) — evita “Maur…”
     alignSelf: 'flex-start',
+    maxWidth: '72%',
     backgroundColor: MINIMAL_UI.background,
+    paddingRight: 8,
+  },
+  rowVisible: {
+    zIndex: 3,
   },
   greeting: {
     ...MINIMAL_TYPO.greeting,
     textAlign: 'left',
-    flexShrink: 1,
+    flexShrink: 0,
+    flexGrow: 0,
   },
   /** Mesmo espaço da saudação, invisível no fundo branco. */
   greetingSpacer: {
