@@ -17,7 +17,8 @@ import {
   View,
 } from 'react-native';
 
-const LABEL_COLUMN_WIDTH = 132;
+/** Largura fixa da coluna Descrição — comporta blocos (ex.: EXTRAORDINÁRIO) sem quebra. */
+const LABEL_COLUMN_WIDTH = 172;
 const VALUE_COLUMN_WIDTH = 76;
 const BODY_MAX_HEIGHT = 420;
 const ROW_MIN_HEIGHT = 34;

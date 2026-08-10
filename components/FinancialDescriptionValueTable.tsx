@@ -33,7 +33,8 @@ import {
   financialReportTableLayoutMaxHeight,
 } from '@/lib/financialReportTableLayout';
 
-const LABEL_COLUMN_WIDTH = 128;
+/** Largura fixa da coluna Descrição — comporta blocos (ex.: EXTRAORDINÁRIO) sem quebra. */
+const LABEL_COLUMN_WIDTH = 172;
 const VALUE_COLUMN_MIN_WIDTH = 108;
 const ICON_SLOT_WIDTH = 24;
 const ICON_COLUMN_WIDTH = ICON_SLOT_WIDTH * 3 + 8;
