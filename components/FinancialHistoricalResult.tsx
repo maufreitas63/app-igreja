@@ -1,8 +1,10 @@
 import { FinancialDescriptionValueTable } from '@/components/FinancialDescriptionValueTable';
+import { FinancialMonthValueDetailModal } from '@/components/FinancialMonthValueDetailModal';
 import { buildFinancialBulletin } from '@/lib/financialBulletin';
 import {
   flattenBulletinRows,
   toSingleColumnComparisonRows,
+  type BulletinComparisonRow,
 } from '@/lib/financialBulletinComparison';
 import { computeFinancialBalance, type FinancialEntry } from '@/lib/financialEntry';
 import {
@@ -10,10 +12,14 @@ import {
   type FinancialMonthKey,
 } from '@/lib/financialMonth';
 import { FINANCIAL_MONTHLY_RESULT_BODY_MAX_HEIGHT } from '@/lib/financialReportTableLayout';
+import {
+  buildBulletinRowMonthlyValues,
+  type FinancialRowMonthlyValue,
+} from '@/lib/financialRowMonthlyDetail';
 import { resolveActiveIgrejaBranding } from '@/lib/tenantSession';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 type FinancialHistoricalResultProps = {
   endMonth: FinancialMonthKey;
@@ -29,6 +35,10 @@ export function FinancialHistoricalResult({
   currentBalance,
 }: FinancialHistoricalResultProps) {
   const [organizationName, setOrganizationName] = useState('Igreja');
+  const [detailTitle, setDetailTitle] = useState('');
+  const [detailItems, setDetailItems] = useState<FinancialRowMonthlyValue[]>([]);
+  const [detailVisible, setDetailVisible] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -76,6 +86,29 @@ export function FinancialHistoricalResult({
     [bulletin]
   );
 
+  const handleRowPress = useCallback(
+    (row: BulletinComparisonRow) => {
+      setDetailTitle(row.label);
+      setDetailVisible(true);
+      setDetailLoading(true);
+      setDetailItems([]);
+
+      // Deixa o modal abrir e calcula a série fora do ciclo de gestos.
+      requestAnimationFrame(() => {
+        const items = buildBulletinRowMonthlyValues(row.key, endMonth, realizedEntries);
+        setDetailItems(items);
+        setDetailLoading(false);
+      });
+    },
+    [endMonth, realizedEntries]
+  );
+
+  const closeDetail = useCallback(() => {
+    setDetailVisible(false);
+    setDetailItems([]);
+    setDetailLoading(false);
+  }, []);
+
   const hasAnyData =
     realizedEntries.length > 0 || Math.abs(closingBalance) > 0.009;
 
@@ -93,22 +126,37 @@ export function FinancialHistoricalResult({
 
   return (
     <View style={styles.sheet}>
+      <FinancialMonthValueDetailModal
+        title={detailTitle}
+        items={detailLoading ? [] : detailItems}
+        visible={detailVisible}
+        onClose={closeDetail}
+        emptyMessage={
+          detailLoading ? 'Carregando mês a mês…' : 'Sem meses com movimentação para esta conta.'
+        }
+      />
+
       <View style={styles.reportHeader}>
         <FontAwesome name="history" size={20} color="#0f172a" style={styles.reportIcon} />
         <View style={styles.reportHeaderText}>
           <Text style={styles.reportTitle}>RESULTADO HISTÓRICO</Text>
           <Text style={styles.reportPeriod}>{periodLabel}</Text>
           <Text style={styles.reportHint}>
-            Realizado · todas as movimentações · saldo inicial e saldo final até o mês de
+            Realizado · toque em uma conta para ver mês a mês · saldo inicial e final até a
             referência
           </Text>
         </View>
       </View>
 
+      {detailVisible && detailLoading ? (
+        <ActivityIndicator color="#2563EB" style={styles.detailLoader} />
+      ) : null}
+
       <View style={styles.tableHost}>
         <FinancialDescriptionValueTable
           rows={tableRows}
           maxBodyHeight={FINANCIAL_MONTHLY_RESULT_BODY_MAX_HEIGHT}
+          onRowPress={handleRowPress}
         />
       </View>
     </View>
@@ -163,5 +211,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     paddingVertical: 20,
+  },
+  detailLoader: {
+    position: 'absolute',
+    alignSelf: 'center',
+    top: '45%',
+    zIndex: 2,
   },
 });

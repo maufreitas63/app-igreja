@@ -56,6 +56,8 @@ export type FinancialDescriptionValueTableProps = {
   showCommentIcons?: boolean;
   /** Altura máxima do corpo rolável (padrão: comparativos; boletim mensal usa valor menor). */
   maxBodyHeight?: number;
+  /** Ao informar, cada linha abre detalhe (ex.: série mensal no resultado histórico). */
+  onRowPress?: (row: BulletinComparisonRow) => void;
 };
 
 const AmountCell = ({
@@ -445,6 +447,7 @@ export function FinancialDescriptionValueTable({
   emptyMessage = 'Nenhum lançamento para exibir neste mês.',
   showCommentIcons = false,
   maxBodyHeight = FINANCIAL_REPORT_TABLE_BODY_MAX_HEIGHT,
+  onRowPress,
 }: FinancialDescriptionValueTableProps) {
   const router = useRouter();
   const [openCommentDetails, setOpenCommentDetails] = useState<FinancialBulletinCommentDetail[] | null>(
@@ -563,12 +566,25 @@ export function FinancialDescriptionValueTable({
             const showExpenseReportIcon = Boolean(expenseReportInfo?.reportId);
             const hasMultipleReceipts = receiptUrls.length > 1;
 
-            return (
-              <View key={row.key} style={styles.dataRow}>
+            const rowBody = (
+              <>
                 <View style={[styles.labelBodyCell, styles.labelColumnCell]}>
-                  <Text style={labelStyleForLevel(row.level)} numberOfLines={4}>
-                    {row.label}
-                  </Text>
+                  <View style={styles.labelBodyInner}>
+                    <Text
+                      style={[labelStyleForLevel(row.level), styles.labelBodyText]}
+                      numberOfLines={4}
+                    >
+                      {row.label}
+                    </Text>
+                    {onRowPress ? (
+                      <FontAwesome
+                        name="bars"
+                        size={10}
+                        color="#94A3B8"
+                        style={styles.rowDetailIcon}
+                      />
+                    ) : null}
+                  </View>
                 </View>
                 <View style={[styles.valueBodyCell, { minWidth: valueColumnMinWidth }]}>
                   <AmountCell value={row.currentValue} bold={bold} compact={showCommentIcons} />
@@ -602,6 +618,27 @@ export function FinancialDescriptionValueTable({
                     </View>
                   </View>
                 ) : null}
+              </>
+            );
+
+            if (onRowPress) {
+              return (
+                <TouchableOpacity
+                  key={row.key}
+                  style={styles.dataRow}
+                  onPress={() => onRowPress(row)}
+                  activeOpacity={0.75}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver valores mensais de ${row.label}`}
+                >
+                  {rowBody}
+                </TouchableOpacity>
+              );
+            }
+
+            return (
+              <View key={row.key} style={styles.dataRow}>
+                {rowBody}
               </View>
             );
           })}
@@ -723,6 +760,19 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 8,
     justifyContent: 'center',
+  },
+  labelBodyInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  labelBodyText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  rowDetailIcon: {
+    flexShrink: 0,
+    opacity: 0.85,
   },
   valueBodyCell: {
     flex: 1,
