@@ -13,6 +13,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -23,7 +24,11 @@ const ROW_MIN_HEIGHT = 34;
 const ROW_DETAIL_ICON_COLOR = '#94A3B8';
 /** Altura de uma linha Mês/Valor no balão de detalhe (padding + texto + borda). */
 const MONTH_DETAIL_ROW_HEIGHT = 33;
+/** Cap do corpo Mês/Valor (12 linhas) — em telas baixas usa fração da janela. */
 const TWELVE_MONTH_DETAIL_HEIGHT = MONTH_DETAIL_ROW_HEIGHT * 12;
+/** Reserva p/ título, cabeçalho e paddings do balão no viewport. */
+const DETAIL_BUBBLE_CHROME_RESERVE = 168;
+const DETAIL_BUBBLE_SCROLL_MIN = 140;
 
 export type FinancialMultiMonthTableProps = {
   title: string;
@@ -82,6 +87,8 @@ const TwelveMonthRowDetailBubble = ({
   visible: boolean;
   onClose: () => void;
 }) => {
+  const { height: windowHeight } = useWindowDimensions();
+
   if (!row) {
     return null;
   }
@@ -95,10 +102,20 @@ const TwelveMonthRowDetailBubble = ({
       compareFinancialMonthKeys(right.column.month, left.column.month)
     );
 
+  const detailScrollMaxHeight = Math.min(
+    TWELVE_MONTH_DETAIL_HEIGHT,
+    Math.max(DETAIL_BUBBLE_SCROLL_MIN, windowHeight - DETAIL_BUBBLE_CHROME_RESERVE)
+  );
+  const naturalContentHeight = monthEntries.length * MONTH_DETAIL_ROW_HEIGHT;
+  const needsScroll = naturalContentHeight > detailScrollMaxHeight + 1;
+
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.bubbleBackdrop} onPress={onClose}>
-        <Pressable style={styles.bubbleCard} onPress={(event) => event.stopPropagation()}>
+        <Pressable
+          style={[styles.bubbleCard, { maxHeight: Math.min(windowHeight * 0.9, windowHeight - 48) }]}
+          onPress={(event) => event.stopPropagation()}
+        >
           <View style={styles.bubbleArrow} />
           <View style={styles.bubbleHeaderRow}>
             <Text style={styles.bubbleTitle} numberOfLines={4}>
@@ -121,11 +138,12 @@ const TwelveMonthRowDetailBubble = ({
           </View>
 
           <ScrollView
-            style={styles.monthDetailScroll}
+            style={[styles.monthDetailScroll, { maxHeight: detailScrollMaxHeight }]}
             contentContainerStyle={styles.monthDetailScrollContent}
             nestedScrollEnabled
-            scrollEnabled={monthEntries.length > 12}
-            showsVerticalScrollIndicator={monthEntries.length > 12}
+            scrollEnabled={needsScroll}
+            showsVerticalScrollIndicator={needsScroll}
+            bounces={needsScroll}
           >
             {monthEntries.map(({ column, value }) => {
               const negative = value < 0;
@@ -520,7 +538,7 @@ const styles = StyleSheet.create({
   bubbleCard: {
     maxWidth: 380,
     width: '100%',
-    maxHeight: '92%',
+    maxHeight: '90%',
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     borderWidth: 1,
@@ -529,6 +547,7 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingBottom: 12,
     gap: 8,
+    overflow: 'hidden',
     shadowColor: '#0F172A',
     shadowOpacity: 0.12,
     shadowRadius: 12,
@@ -595,8 +614,8 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   monthDetailScroll: {
-    height: TWELVE_MONTH_DETAIL_HEIGHT,
-    maxHeight: TWELVE_MONTH_DETAIL_HEIGHT,
+    flexGrow: 0,
+    flexShrink: 1,
   },
   monthDetailScrollContent: {
     gap: 0,

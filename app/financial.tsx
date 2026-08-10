@@ -2,6 +2,7 @@ import { FinancialMonthlyBankBalance } from '@/components/FinancialMonthlyBankBa
 import { FinancialMonthlyBulletin } from '@/components/FinancialMonthlyBulletin';
 import { FinancialMonthlyBudgetComparison } from '@/components/FinancialMonthlyBudgetComparison';
 import { FinancialLastTwelveMonths } from '@/components/FinancialLastTwelveMonths';
+import { FinancialHistoricalResult } from '@/components/FinancialHistoricalResult';
 import { FinancialMonthlyComparison } from '@/components/FinancialMonthlyComparison';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import {
@@ -33,12 +34,19 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-type FinancialSectionId = 'result' | 'comparison' | 'twelveMonths' | 'budget' | 'bankBalance';
+type FinancialSectionId =
+  | 'result'
+  | 'comparison'
+  | 'twelveMonths'
+  | 'historical'
+  | 'budget'
+  | 'bankBalance';
 
 const FINANCIAL_SECTION_ORDER: FinancialSectionId[] = [
   'result',
   'comparison',
   'twelveMonths',
+  'historical',
   'budget',
   'bankBalance',
 ];
@@ -312,6 +320,52 @@ export default function FinancialScreen() {
                   <FinancialLastTwelveMonths
                     endMonth={selectedMonth}
                     realizedEntries={realizedEntriesThroughSelectedMonth}
+                  />
+                ) : null}
+              </View>
+            ) : null}
+          </View>
+        );
+
+      case 'historical':
+        return (
+          <View key="historical" style={styles.historicalSection}>
+            <TouchableOpacity
+              accessibilityLabel="Resultado histórico"
+              accessibilityRole="button"
+              accessibilityState={{ expanded: expandedSection === 'historical' }}
+              activeOpacity={0.85}
+              onPress={() => toggleSection('historical')}
+              style={[styles.resultSectionHeader, styles.historicalSectionHeader]}
+            >
+              <View style={styles.resultSectionHeaderText}>
+                <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
+                  Resultado histórico
+                </Text>
+                {selectedMonth ? (
+                  <Text style={styles.resultSectionMeta}>
+                    Do início · até {formatFinancialMonthLabel(selectedMonth)}
+                  </Text>
+                ) : null}
+              </View>
+              <FontAwesome
+                name={expandedSection === 'historical' ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color="#94A3B8"
+              />
+            </TouchableOpacity>
+
+            {expandedSection === 'historical' ? (
+              <View style={styles.resultSectionBody}>
+                {isLoading ? (
+                  <ActivityIndicator color="#10b981" style={styles.bulletinLoader} />
+                ) : null}
+
+                {!isLoading && selectedMonth ? (
+                  <FinancialHistoricalResult
+                    endMonth={selectedMonth}
+                    realizedEntries={realizedEntriesThroughSelectedMonth}
+                    currentBalance={currentBalance}
                   />
                 ) : null}
               </View>
@@ -816,6 +870,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 0,
   },
+  historicalSectionHeader: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0,
+  },
   bankBalanceSectionHeader: {
     backgroundColor: '#FFFFFF',
     borderWidth: 0,
@@ -856,6 +914,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: 'rgba(19, 78, 74, 0.15)',
+    overflow: 'hidden',
+  },
+  historicalSection: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: 'rgba(30, 58, 138, 0.12)',
     overflow: 'hidden',
   },
   budgetSection: {
