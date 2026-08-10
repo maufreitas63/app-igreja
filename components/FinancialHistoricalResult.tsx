@@ -81,7 +81,16 @@ export function FinancialHistoricalResult({
   const tableRows = useMemo(
     () =>
       toSingleColumnComparisonRows(
-        flattenBulletinRows(bulletin).map((row) => ({ ...row, comment: null }))
+        flattenBulletinRows(bulletin).map((row) => {
+          const label =
+            row.key === 'saldo-anterior'
+              ? 'Saldo inicial'
+              : row.key === 'saldo-atual'
+                ? 'Saldo atual'
+                : row.label;
+
+          return { ...row, label, comment: null };
+        })
       ),
     [bulletin]
   );
