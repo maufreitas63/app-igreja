@@ -9,6 +9,7 @@ import {
   type AssemblyMinutePdfInput,
 } from '@/lib/assemblyMinutesPdf';
 import { supabase } from '@/lib/supabase';
+import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
 
 export const ASSEMBLY_MINUTES_SQL_HINT =
   'Execute no Supabase: scripts/assembly-minutes.sql para habilitar atas de assembleias.';
@@ -44,9 +45,11 @@ const isMissingAssemblyMinutesSchemaError = (
   );
 };
 
-const buildStoragePath = (fileName: string, index = 0) => {
+const buildStoragePath = async (fileName: string, index = 0) => {
   const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
-  return `minutes/${Date.now()}_${index}_${Math.random().toString(36).slice(2, 8)}_${safeName}`;
+  return withActiveTenantStoragePrefix(
+    `minutes/${Date.now()}_${index}_${Math.random().toString(36).slice(2, 8)}_${safeName}`
+  );
 };
 
 const appendSignedUrl = async (row: Omit<AssemblyMinuteRecord, 'signedUrl'>) => {
@@ -203,7 +206,7 @@ export async function uploadAssemblyMinute(input: {
   }
 
   const actorProfileId = await resolveActorProfileId();
-  const storagePath = buildStoragePath(input.pdf.fileName, input.storageIndex ?? 0);
+  const storagePath = await buildStoragePath(input.pdf.fileName, input.storageIndex ?? 0);
 
   const { error: uploadError } = await supabase.storage
     .from(ASSEMBLY_MINUTES_BUCKET)

@@ -1,6 +1,7 @@
 import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import { loadSessionProfile } from '@/lib/loadSessionProfile';
 import { supabase } from '@/lib/supabase';
+import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
 import { getStoredUserPhone } from '@/lib/userSession';
 import { openWhatsAppPhone } from '@/lib/whatsapp';
 import { decode } from 'base64-arraybuffer';
@@ -558,7 +559,9 @@ export async function uploadMaintenanceSupportAttachments(
     const image = images[index];
     const parsed = await parseImageInput(image);
     const safeName = image.fileName?.replace(/[^a-zA-Z0-9._-]/g, '_') || `imagem_${index + 1}`;
-    const storagePath = `requests/${requestId}/${Date.now()}_${index + 1}.${parsed.fileExtension}`;
+    const storagePath = await withActiveTenantStoragePrefix(
+      `requests/${requestId}/${Date.now()}_${index + 1}.${parsed.fileExtension}`
+    );
 
     const { error: uploadError } = await supabase.storage
       .from(MAINTENANCE_SUPPORT_BUCKET)

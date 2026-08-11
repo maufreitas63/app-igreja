@@ -396,6 +396,7 @@ security definer
 set search_path = public
 as $$
 declare
+  v_tenant uuid := public.require_session_tenant_id();
   v_query text;
   v_digits text;
   v_limit integer;
@@ -417,7 +418,8 @@ begin
     coalesce(p.phone, '') as phone,
     coalesce(p.codigo_membro, '') as codigo_membro
   from public.profiles p
-  where coalesce(p.full_name, '') <> ''
+  where p.tenant_id = v_tenant
+    and coalesce(p.full_name, '') <> ''
     and public.profile_visible_to_access_actor(p_actor_profile_id, p.id)
     and (
       p.full_name ilike '%' || v_query || '%'
@@ -447,6 +449,7 @@ security definer
 set search_path = public
 as $$
 declare
+  v_tenant uuid := public.require_session_tenant_id();
   v_limit integer;
 begin
   perform public.assert_access_admin(p_actor_profile_id);
@@ -460,7 +463,8 @@ begin
     coalesce(p.phone, '') as phone,
     coalesce(p.codigo_membro, '') as codigo_membro
   from public.profiles p
-  where coalesce(
+  where p.tenant_id = v_tenant
+    and coalesce(
       nullif(trim(p.full_name), ''),
       nullif(trim(p.phone), ''),
       nullif(trim(p.codigo_membro), '')

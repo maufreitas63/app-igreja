@@ -4,6 +4,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
+import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
 
 export const FINANCIAL_DOCS_BUCKET = 'financial-docs';
 export const FINANCIAL_RECEIPT_SIGNED_URL_TTL_SECONDS = 60;
@@ -41,14 +42,20 @@ const parseImageInput = async (imageInput: string) => {
   return { base64, contentType, fileExtension };
 };
 
-export const buildFinancialReceiptStoragePath = (financialId: string, fileExtension = 'jpg') =>
-  `receipts/${financialId}/${Date.now()}.${fileExtension}`;
+export const buildFinancialReceiptStoragePath = async (
+  financialId: string,
+  fileExtension = 'jpg'
+) =>
+  withActiveTenantStoragePrefix(`receipts/${financialId}/${Date.now()}.${fileExtension}`);
 
-export const buildExpenseReportReceiptStoragePath = (
+export const buildExpenseReportReceiptStoragePath = async (
   reportId: string,
   itemId: string,
   fileExtension = 'jpg'
-) => `receipts/rd/${reportId}/${itemId}/${Date.now()}.${fileExtension}`;
+) =>
+  withActiveTenantStoragePrefix(
+    `receipts/rd/${reportId}/${itemId}/${Date.now()}.${fileExtension}`
+  );
 
 export const resolveFinancialReceiptStoragePath = (receiptUrl: string | null | undefined) => {
   const normalized = receiptUrl?.trim();
@@ -195,7 +202,7 @@ export async function uploadExpenseReportReceiptImage(
   imageInput: string
 ) {
   const { base64, contentType, fileExtension } = await parseImageInput(imageInput);
-  const storagePath = buildExpenseReportReceiptStoragePath(reportId, itemId, fileExtension);
+  const storagePath = await buildExpenseReportReceiptStoragePath(reportId, itemId, fileExtension);
 
   const { error } = await supabase.storage
     .from(FINANCIAL_DOCS_BUCKET)
@@ -213,7 +220,7 @@ export async function uploadExpenseReportReceiptImage(
 
 export async function uploadFinancialReceiptImage(financialId: string, imageInput: string) {
   const { base64, contentType, fileExtension } = await parseImageInput(imageInput);
-  const storagePath = buildFinancialReceiptStoragePath(financialId, fileExtension);
+  const storagePath = await buildFinancialReceiptStoragePath(financialId, fileExtension);
 
   const { error } = await supabase.storage
     .from(FINANCIAL_DOCS_BUCKET)
