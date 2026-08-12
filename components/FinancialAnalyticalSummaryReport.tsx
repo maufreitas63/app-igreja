@@ -1,6 +1,7 @@
 import {
   buildFinancialAnalyticalSummaryReport,
   type AnalyticalAccountRow,
+  type AnalyticalCashflowColumn,
   type AnalyticalPeriodColumn,
   type FinancialAnalyticalSummaryReport,
 } from '@/lib/financialAnalyticalSummaryReport';
@@ -57,20 +58,22 @@ const AmountCell = ({
   );
 };
 
-function PeriodTable({ columns }: { columns: AnalyticalPeriodColumn[] }) {
-  const rows: { label: string; key: 'ordinario' | 'extraordinario' | 'total'; bold?: boolean }[] = [
-    { label: 'Ordinário', key: 'ordinario' },
-    { label: 'Extraordinário', key: 'extraordinario' },
-    { label: 'Resultado total', key: 'total', bold: true },
-  ];
-
+function ThreeMonthTable<T extends { month: FinancialMonthKey; header: string; isFocus: boolean }>({
+  labelHeader,
+  columns,
+  rows,
+}: {
+  labelHeader: string;
+  columns: T[];
+  rows: { label: string; key: keyof T; bold?: boolean }[];
+}) {
   return (
     <View style={styles.tableCard}>
       <View style={[styles.tableRow, styles.tableHeaderRow]}>
-        <Text style={[styles.headerCell, styles.periodLabelCol, styles.headerCellLeft]}>Período</Text>
+        <Text style={[styles.headerCell, styles.periodLabelCol, styles.headerCellLeft]}>{labelHeader}</Text>
         {columns.map((column) => (
           <Text
-            key={`${column.month.year}-${column.month.month}`}
+            key={`${String(column.header)}-${column.month.year}-${column.month.month}`}
             style={[
               styles.headerCell,
               styles.periodValueCol,
@@ -84,7 +87,7 @@ function PeriodTable({ columns }: { columns: AnalyticalPeriodColumn[] }) {
 
       {rows.map((row, index) => (
         <View
-          key={row.key}
+          key={String(row.key)}
           style={[styles.tableRow, index % 2 === 1 && styles.tableRowAlt, row.bold && styles.totalRow]}
         >
           <Text style={[styles.labelCell, styles.periodLabelCol, row.bold && styles.labelBold]}>
@@ -92,11 +95,11 @@ function PeriodTable({ columns }: { columns: AnalyticalPeriodColumn[] }) {
           </Text>
           {columns.map((column) => (
             <View
-              key={`${row.key}-${column.month.year}-${column.month.month}`}
+              key={`${String(row.key)}-${column.month.year}-${column.month.month}`}
               style={[styles.periodValueCol, column.isFocus && styles.cellFocus]}
             >
               <AmountCell
-                value={column[row.key]}
+                value={Number(column[row.key]) || 0}
                 highlighted={column.isFocus}
                 bold={row.bold}
                 compact
@@ -106,6 +109,34 @@ function PeriodTable({ columns }: { columns: AnalyticalPeriodColumn[] }) {
         </View>
       ))}
     </View>
+  );
+}
+
+function CashflowTable({ columns }: { columns: AnalyticalCashflowColumn[] }) {
+  return (
+    <ThreeMonthTable
+      labelHeader="Movimento"
+      columns={columns}
+      rows={[
+        { label: 'Entradas', key: 'entradas' },
+        { label: 'Saídas', key: 'saidas' },
+        { label: 'Total', key: 'total', bold: true },
+      ]}
+    />
+  );
+}
+
+function PeriodTable({ columns }: { columns: AnalyticalPeriodColumn[] }) {
+  return (
+    <ThreeMonthTable
+      labelHeader="Período"
+      columns={columns}
+      rows={[
+        { label: 'Ordinário', key: 'ordinario' },
+        { label: 'Extraordinário', key: 'extraordinario' },
+        { label: 'Resultado total', key: 'total', bold: true },
+      ]}
+    />
   );
 }
 
@@ -241,6 +272,7 @@ export function FinancialAnalyticalSummaryReportView({
           <Text style={styles.reportTitle}>RELATÓRIO ANALÍTICO — RESUMO FINANCEIRO</Text>
         </View>
 
+        <CashflowTable columns={report.cashflowColumns} />
         <PeriodTable columns={report.periodColumns} />
         <MovementsTable rows={report.accountRows} totals={report.monthTotals} />
         <HistoricalTable historical={report.historical} />

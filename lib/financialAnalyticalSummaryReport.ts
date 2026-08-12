@@ -1,6 +1,8 @@
 import {
   computeFinancialBalance,
+  isFinancialEntrada,
   isFinancialMovementExtraordinario,
+  isFinancialSaida,
   signedFinancialAmount,
   type FinancialEntry,
 } from '@/lib/financialEntry';
@@ -13,6 +15,15 @@ import {
 } from '@/lib/financialMonth';
 
 export type AnalyticalMovementBucket = 'ordinario' | 'extraordinario';
+
+export type AnalyticalCashflowColumn = {
+  month: FinancialMonthKey;
+  header: string;
+  entradas: number;
+  saidas: number;
+  total: number;
+  isFocus: boolean;
+};
 
 export type AnalyticalPeriodColumn = {
   month: FinancialMonthKey;
@@ -32,6 +43,7 @@ export type AnalyticalAccountRow = {
 
 export type FinancialAnalyticalSummaryReport = {
   endMonth: FinancialMonthKey;
+  cashflowColumns: AnalyticalCashflowColumn[];
   periodColumns: AnalyticalPeriodColumn[];
   accountRows: AnalyticalAccountRow[];
   monthTotals: {
@@ -86,10 +98,32 @@ const sumByBucket = (entries: FinancialEntry[]) => {
   };
 };
 
+const sumCashflow = (entries: FinancialEntry[]) => {
+  let entradas = 0;
+  let saidas = 0;
+
+  for (const entry of entries) {
+    const signed = signedFinancialAmount(entry);
+
+    if (isFinancialEntrada(entry.transaction_kind)) {
+      entradas += signed;
+    } else if (isFinancialSaida(entry.transaction_kind)) {
+      saidas += signed;
+    }
+  }
+
+  return {
+    entradas,
+    saidas,
+    total: entradas + saidas,
+  };
+};
+
 /**
  * Monta o Relatório Analítico / Resumo Financeiro a partir dos lançamentos REALIZADO.
- * - Período: últimos 3 meses (colunas)
- * - Movimentos do mês: por ministério ( Conta ), ordinário / extraordinário / total
+ * - Movimento: entradas / saídas / total nos últimos 3 meses
+ * - Período: ordinário / extraordinário / resultado total
+ * - Movimentos do mês: por ministério
  * - Acumulado histórico: até o fim do mês de referência
  */
 export function buildFinancialAnalyticalSummaryReport(
@@ -101,6 +135,21 @@ export function buildFinancialAnalyticalSummaryReport(
   );
 
   const periodMonths = getTrailingFinancialMonths(endMonth, 3);
+
+  const cashflowColumns: AnalyticalCashflowColumn[] = periodMonths.map((month) => {
+    const monthEntries = entriesThrough.filter((entry) => entryInMonth(entry, month));
+    const cashflow = sumCashflow(monthEntries);
+
+    return {
+      month,
+      header: formatFinancialMonthShortLabel(month).toLowerCase(),
+      entradas: cashflow.entradas,
+      saidas: cashflow.saidas,
+      total: cashflow.total,
+      isFocus: month.year === endMonth.year && month.month === endMonth.month,
+    };
+  });
+
   const periodColumns: AnalyticalPeriodColumn[] = periodMonths.map((month) => {
     const monthEntries = entriesThrough.filter((entry) => entryInMonth(entry, month));
     const totals = sumByBucket(monthEntries);
@@ -146,6 +195,7 @@ export function buildFinancialAnalyticalSummaryReport(
 
   return {
     endMonth,
+    cashflowColumns,
     periodColumns,
     accountRows,
     monthTotals,
