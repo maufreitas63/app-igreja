@@ -269,7 +269,7 @@ export function FinancialAnalyticalSummaryReportView({
     >
       <View style={styles.reportRoot}>
         <View style={styles.reportTitleBar}>
-          <Text style={styles.reportTitle}>RELATÓRIO ANALÍTICO — RESUMO FINANCEIRO</Text>
+          <Text style={styles.reportTitle}>RESUMO FINANCEIRO</Text>
         </View>
 
         <CashflowTable columns={report.cashflowColumns} />
@@ -299,7 +299,7 @@ export function FinancialAnalyticalSummarySection({
   return (
     <View style={styles.section}>
       <TouchableOpacity
-        accessibilityLabel="Relatório Analítico / Resumo Financeiro"
+        accessibilityLabel="Resumo Financeiro"
         accessibilityRole="button"
         accessibilityState={{ expanded }}
         activeOpacity={0.85}
@@ -308,7 +308,7 @@ export function FinancialAnalyticalSummarySection({
         disabled={!month}
       >
         <View style={styles.sectionHeaderText}>
-          <Text style={styles.sectionLabel}>Relatório Analítico / Resumo Financeiro</Text>
+          <Text style={styles.sectionLabel}>Resumo Financeiro</Text>
           {month ? (
             <Text style={styles.sectionMeta}>{formatFinancialMonthLabel(month)}</Text>
           ) : (

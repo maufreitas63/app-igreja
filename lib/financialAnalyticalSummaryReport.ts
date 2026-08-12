@@ -120,7 +120,7 @@ const sumCashflow = (entries: FinancialEntry[]) => {
 };
 
 /**
- * Monta o Relatório Analítico / Resumo Financeiro a partir dos lançamentos REALIZADO.
+ * Monta o Resumo Financeiro a partir dos lançamentos REALIZADO.
  * - Movimento: entradas / saídas / total nos últimos 3 meses
  * - Período: ordinário / extraordinário / resultado total
  * - Movimentos do mês: por ministério
