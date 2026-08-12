@@ -26,10 +26,12 @@ const AmountCell = ({
   value,
   highlighted,
   bold,
+  compact,
 }: {
   value: number;
   highlighted?: boolean;
   bold?: boolean;
+  compact?: boolean;
 }) => {
   const negative = value < -0.005;
 
@@ -37,11 +39,14 @@ const AmountCell = ({
     <Text
       style={[
         styles.amount,
+        compact && styles.amountCompact,
         highlighted && styles.amountHighlighted,
         bold && styles.amountBold,
         negative && styles.amountNegative,
       ]}
       numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.75}
     >
       {formatFinancialBrl(value)}
     </Text>
@@ -86,7 +91,12 @@ function PeriodTable({ columns }: { columns: AnalyticalPeriodColumn[] }) {
               key={`${row.key}-${column.month.year}-${column.month.month}`}
               style={[styles.periodValueCol, column.isFocus && styles.cellFocus]}
             >
-              <AmountCell value={column[row.key]} highlighted={column.isFocus} bold={row.bold} />
+              <AmountCell
+                value={column[row.key]}
+                highlighted={column.isFocus}
+                bold={row.bold}
+                compact
+              />
             </View>
           ))}
         </View>
@@ -110,8 +120,8 @@ function MovementsTable({
 
       <View style={[styles.tableRow, styles.subHeaderRow]}>
         <Text style={[styles.subHeaderCell, styles.accountCol, styles.subHeaderLeft]}>Conta</Text>
-        <Text style={[styles.subHeaderCell, styles.valueCol]}>Movimentos Ordinários</Text>
-        <Text style={[styles.subHeaderCell, styles.valueCol]}>Movimentos Extraordinários</Text>
+        <Text style={[styles.subHeaderCell, styles.valueCol]}>Ordinários</Text>
+        <Text style={[styles.subHeaderCell, styles.valueCol]}>Extraordinários</Text>
         <Text style={[styles.subHeaderCell, styles.valueCol]}>Total</Text>
       </View>
 
@@ -121,27 +131,27 @@ function MovementsTable({
             {row.account}
           </Text>
           <View style={styles.valueCol}>
-            <AmountCell value={row.ordinario} />
+            <AmountCell value={row.ordinario} compact />
           </View>
           <View style={styles.valueCol}>
-            <AmountCell value={row.extraordinario} />
+            <AmountCell value={row.extraordinario} compact />
           </View>
           <View style={styles.valueCol}>
-            <AmountCell value={row.total} bold />
+            <AmountCell value={row.total} bold compact />
           </View>
         </View>
       ))}
 
-      <View style={[styles.tableRow, styles.totalRow, styles.totalRowFocus]}>
+      <View style={[styles.tableRow, styles.totalRow, styles.totalRowFocus, styles.totalRowBorder]}>
         <Text style={[styles.labelCell, styles.accountCol, styles.labelBold]}>TOTAL</Text>
         <View style={styles.valueCol}>
-          <AmountCell value={totals.ordinario} bold highlighted />
+          <AmountCell value={totals.ordinario} bold highlighted compact />
         </View>
         <View style={styles.valueCol}>
-          <AmountCell value={totals.extraordinario} bold highlighted />
+          <AmountCell value={totals.extraordinario} bold highlighted compact />
         </View>
         <View style={styles.valueCol}>
-          <AmountCell value={totals.total} bold highlighted />
+          <AmountCell value={totals.total} bold highlighted compact />
         </View>
       </View>
     </View>
@@ -153,29 +163,49 @@ function HistoricalTable({
 }: {
   historical: FinancialAnalyticalSummaryReport['historical'];
 }) {
+  const cells = [
+    { label: 'Ordinário', value: historical.ordinario },
+    { label: 'Extraordinário', value: historical.extraordinario },
+    { label: 'Saldo acumulado', value: historical.saldo, bold: true, focus: true },
+  ] as const;
+
   return (
     <View style={styles.tableCard}>
       <View style={styles.sectionBanner}>
         <Text style={styles.sectionBannerText}>ACUMULADO HISTÓRICO</Text>
       </View>
 
-      <View style={styles.tableRow}>
-        <Text style={[styles.labelCell, styles.histLabelCol]}>Ordinário</Text>
-        <View style={styles.histValueCol}>
-          <AmountCell value={historical.ordinario} />
-        </View>
+      <View style={[styles.tableRow, styles.subHeaderRow]}>
+        {cells.map((cell, index) => (
+          <Text
+            key={`h-${cell.label}`}
+            style={[
+              styles.subHeaderCell,
+              styles.histCol,
+              index === 0 && styles.histColFirst,
+              styles.subHeaderCenter,
+              cell.focus && styles.subHeaderFocus,
+            ]}
+          >
+            {cell.label}
+          </Text>
+        ))}
       </View>
-      <View style={[styles.tableRow, styles.tableRowAlt]}>
-        <Text style={[styles.labelCell, styles.histLabelCol]}>Extraordinário</Text>
-        <View style={styles.histValueCol}>
-          <AmountCell value={historical.extraordinario} />
-        </View>
-      </View>
+
       <View style={[styles.tableRow, styles.totalRow]}>
-        <Text style={[styles.labelCell, styles.histLabelCol, styles.labelBold]}>Saldo acumulado</Text>
-        <View style={styles.histValueCol}>
-          <AmountCell value={historical.saldo} bold />
-        </View>
+        {cells.map((cell, index) => (
+          <View
+            key={`v-${cell.label}`}
+            style={[
+              styles.histCol,
+              index === 0 && styles.histColFirst,
+              styles.histValueCell,
+              cell.focus && styles.cellFocus,
+            ]}
+          >
+            <AmountCell value={cell.value} bold={cell.bold} highlighted={cell.focus} compact />
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -192,9 +222,8 @@ export function FinancialAnalyticalSummaryReportView({
 
   return (
     <ScrollView
-      horizontal
       nestedScrollEnabled
-      showsHorizontalScrollIndicator
+      showsVerticalScrollIndicator
       contentContainerStyle={styles.reportScrollContent}
     >
       <View style={styles.reportRoot}>
@@ -218,7 +247,6 @@ type FinancialAnalyticalSummarySectionProps = {
   onToggle: () => void;
 };
 
-/** Seção expansível no hub financeiro (substitui o viewer de JPG). */
 export function FinancialAnalyticalSummarySection({
   month,
   realizedEntries,
@@ -297,33 +325,35 @@ const styles = StyleSheet.create({
   },
   sectionBody: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingBottom: 12,
-    maxHeight: 560,
+    maxHeight: 640,
   },
   loader: {
     marginVertical: 24,
   },
   reportScrollContent: {
-    paddingBottom: 4,
+    paddingBottom: 8,
   },
   reportRoot: {
-    minWidth: 720,
-    gap: 12,
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
+    gap: 10,
     paddingTop: 4,
   },
   reportTitleBar: {
     backgroundColor: '#1E3A5F',
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     borderRadius: 6,
   },
   reportTitle: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
     textAlign: 'center',
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
   },
   tableCard: {
     borderWidth: 1,
@@ -334,20 +364,20 @@ const styles = StyleSheet.create({
   },
   sectionBanner: {
     backgroundColor: '#1E3A5F',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 8,
   },
   sectionBannerText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
     textAlign: 'center',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
   tableRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 36,
+    alignItems: 'stretch',
+    minHeight: 32,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: '#E2E8F0',
   },
@@ -368,12 +398,16 @@ const styles = StyleSheet.create({
   totalRowFocus: {
     backgroundColor: '#FDE68A',
   },
+  totalRowBorder: {
+    borderTopWidth: 2,
+    borderTopColor: '#F59E0B',
+  },
   headerCell: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 7,
     textAlign: 'right',
   },
   headerCellLeft: {
@@ -385,31 +419,41 @@ const styles = StyleSheet.create({
   },
   subHeaderCell: {
     color: '#0F172A',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
-    paddingHorizontal: 6,
-    paddingVertical: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 6,
     textAlign: 'right',
   },
   subHeaderLeft: {
     textAlign: 'left',
   },
+  subHeaderCenter: {
+    textAlign: 'center',
+  },
+  subHeaderFocus: {
+    backgroundColor: '#FBBF24',
+  },
   labelCell: {
     color: '#0F172A',
-    fontSize: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
+    fontSize: 11,
+    paddingHorizontal: 6,
+    paddingVertical: 6,
   },
   labelBold: {
     fontWeight: '800',
   },
   amount: {
     color: '#0F172A',
-    fontSize: 12,
+    fontSize: 11,
     textAlign: 'right',
-    paddingHorizontal: 6,
-    paddingVertical: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 6,
     fontVariant: ['tabular-nums'],
+  },
+  amountCompact: {
+    fontSize: 10,
+    paddingHorizontal: 2,
   },
   amountHighlighted: {
     backgroundColor: 'transparent',
@@ -421,32 +465,32 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   periodLabelCol: {
-    width: 140,
-    flexGrow: 0,
-    flexShrink: 0,
+    flex: 1.15,
+    minWidth: 96,
   },
   periodValueCol: {
-    width: 120,
-    flexGrow: 0,
-    flexShrink: 0,
+    flex: 1,
+    minWidth: 84,
   },
   accountCol: {
-    width: 160,
-    flexGrow: 0,
-    flexShrink: 0,
+    flex: 1.2,
+    minWidth: 96,
   },
   valueCol: {
-    width: 150,
-    flexGrow: 0,
-    flexShrink: 0,
-  },
-  histLabelCol: {
     flex: 1,
+    minWidth: 88,
   },
-  histValueCol: {
-    width: 180,
-    flexGrow: 0,
-    flexShrink: 0,
+  histCol: {
+    flex: 1,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: '#CBD5E1',
+  },
+  histColFirst: {
+    borderLeftWidth: 0,
+  },
+  histValueCell: {
+    justifyContent: 'center',
+    alignItems: 'stretch',
   },
   cellFocus: {
     backgroundColor: '#FEF3C7',
