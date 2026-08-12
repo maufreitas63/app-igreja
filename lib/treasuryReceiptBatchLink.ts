@@ -167,62 +167,22 @@ export async function processTreasuryReceiptBatchFromFolder(
 ): Promise<TreasuryReceiptBatchLinkReport> {
   const dryRun = Boolean(options.dryRun);
   const force = Boolean(options.force);
+  const summaryFiles = folderAccess.summaryFiles ?? [];
   const schemaStatus = await checkFinancialReceiptUrlsSchema();
 
-  if (!schemaStatus.available) {
-    return {
-      ...buildEmptyReport(options, schemaStatus),
-      message: schemaStatus.message,
-    };
-  }
-
-  const allEntries = await fetchRealizadoFinancialEntriesForReceiptBatch();
-  const rawFileNames = folderAccess.files.map((file) => file.fileName);
-  const summaryFiles = folderAccess.summaryFiles ?? [];
-  const preflight = runTreasuryReceiptBatchPreflight(rawFileNames, allEntries);
-  const dateRange = preflight.dateRange ?? extractReceiptBatchDateRange(preflight.files);
-  const entries = dateRange
-    ? await fetchRealizadoFinancialEntriesForReceiptBatch(dateRange)
-    : allEntries;
-  const referenciaLookup = buildReferenciaLookup(entries);
-  const receiptUrlsByEntryId = new Map<string, string[]>(
-    entries.map((entry) => [entry.id, getFinancialEntryReceiptUrls(entry)])
-  );
-  const matchedEntryIds = new Set<string>();
-  const normalizedFileNames =
+  // Resumos mensais não dependem do schema de receipt_urls — processa antes.
+  const summaryOnlyReport = buildEmptyReport(options, schemaStatus);
+  summaryOnlyReport.folderFileCount = folderAccess.files.length + summaryFiles.length;
+  summaryOnlyReport.normalizedFileNames =
     folderAccess.files.filter((file) => file.originalFileName).length +
     summaryFiles.filter((file) => file.originalFileName).length;
-
-  const report: TreasuryReceiptBatchLinkReport = {
-    success: true,
-    message: 'Processamento concluído.',
-    dryRun,
-    force,
-    schemaStatus,
-    folderFileCount: folderAccess.files.length + summaryFiles.length,
-    entriesWithReferencia: [...referenciaLookup.values()].reduce(
-      (count, bucket) => count + bucket.length,
-      0
-    ),
-    normalizedFileNames,
-    linked: [],
-    renamedOnly: [],
-    skippedAlreadyLinked: [],
-    unmatchedFiles: [],
-    unmatchedEntries: [],
-    ambiguousReferencias: preflight.ambiguousReferencias.map((item) => ({
-      referencia: item.referencia,
-      entryCount: item.entries.length,
-    })),
-    preflightIssues: preflight.issues,
-    errors: [],
-    summaryReports: [],
-    renameUnsupported: !folderAccess.canRenameAfterUpload,
-  };
+  summaryOnlyReport.renameUnsupported = !folderAccess.canRenameAfterUpload;
+  summaryOnlyReport.success = true;
+  summaryOnlyReport.message = 'Processamento concluído.';
 
   for (const summaryFile of summaryFiles) {
     if (dryRun) {
-      report.summaryReports.push({
+      summaryOnlyReport.summaryReports.push({
         fileName: summaryFile.fileName,
         periodCode: summaryFile.periodCode,
         dryRun: true,
@@ -241,21 +201,21 @@ export async function processTreasuryReceiptBatchFromFolder(
         await summaryFile.markProcessed();
         renamed = true;
       } catch (error) {
-        report.renameUnsupported = true;
+        summaryOnlyReport.renameUnsupported = true;
         renameError =
           error instanceof Error
             ? error.message
             : 'Resumo carregado, mas não foi possível renomear o arquivo local.';
       }
 
-      report.summaryReports.push({
+      summaryOnlyReport.summaryReports.push({
         fileName: summaryFile.fileName,
         periodCode: summaryFile.periodCode,
         renamed,
         renameError,
       });
     } catch (error) {
-      report.summaryReports.push({
+      summaryOnlyReport.summaryReports.push({
         fileName: summaryFile.fileName,
         periodCode: summaryFile.periodCode,
         error:
@@ -264,8 +224,46 @@ export async function processTreasuryReceiptBatchFromFolder(
     }
   }
 
+  if (!schemaStatus.available) {
+    if (summaryFiles.length > 0) {
+      finalizeReportMessage(summaryOnlyReport);
+      summaryOnlyReport.message = `${summaryOnlyReport.message} Comprovantes por referencia indisponíveis: ${schemaStatus.message}`;
+      return summaryOnlyReport;
+    }
+
+    return {
+      ...buildEmptyReport(options, schemaStatus),
+      message: schemaStatus.message,
+    };
+  }
+
+  const allEntries = await fetchRealizadoFinancialEntriesForReceiptBatch();
+  const rawFileNames = folderAccess.files.map((file) => file.fileName);
+  const preflight = runTreasuryReceiptBatchPreflight(rawFileNames, allEntries);
+  const dateRange = preflight.dateRange ?? extractReceiptBatchDateRange(preflight.files);
+  const entries = dateRange
+    ? await fetchRealizadoFinancialEntriesForReceiptBatch(dateRange)
+    : allEntries;
+  const referenciaLookup = buildReferenciaLookup(entries);
+  const receiptUrlsByEntryId = new Map<string, string[]>(
+    entries.map((entry) => [entry.id, getFinancialEntryReceiptUrls(entry)])
+  );
+  const matchedEntryIds = new Set<string>();
+
+  const report: TreasuryReceiptBatchLinkReport = {
+    ...summaryOnlyReport,
+    entriesWithReferencia: [...referenciaLookup.values()].reduce(
+      (count, bucket) => count + bucket.length,
+      0
+    ),
+    ambiguousReferencias: preflight.ambiguousReferencias.map((item) => ({
+      referencia: item.referencia,
+      entryCount: item.entries.length,
+    })),
+    preflightIssues: preflight.issues,
+  };
+
   if (!preflight.valid) {
-    // Pasta só com Resumo Financeiro: ainda assim conclui o carregamento dos summaries.
     if (summaryFiles.length > 0 && folderAccess.files.length === 0) {
       report.preflightIssues = [];
       finalizeReportMessage(report);
