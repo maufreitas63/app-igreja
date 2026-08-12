@@ -125,7 +125,7 @@ drop policy if exists "Finance-Docs-Delete-Policy" on storage.objects;
 create policy financial_docs_select
   on storage.objects
   for select
-  to authenticated
+  to anon, authenticated
   using (
     bucket_id = 'financial-docs'
     and public.session_has_resource_access('table', 'financials', 'view')
@@ -135,7 +135,7 @@ create policy financial_docs_select
 create policy financial_docs_insert
   on storage.objects
   for insert
-  to authenticated
+  to anon, authenticated
   with check (
     bucket_id = 'financial-docs'
     and public.session_has_resource_access('table', 'financials', 'update')
@@ -145,7 +145,7 @@ create policy financial_docs_insert
 create policy financial_docs_update
   on storage.objects
   for update
-  to authenticated
+  to anon, authenticated
   using (
     bucket_id = 'financial-docs'
     and public.session_has_resource_access('table', 'financials', 'update')
@@ -160,7 +160,7 @@ create policy financial_docs_update
 create policy financial_docs_delete
   on storage.objects
   for delete
-  to authenticated
+  to anon, authenticated
   using (
     bucket_id = 'financial-docs'
     and public.session_has_resource_access('table', 'financials', 'update')

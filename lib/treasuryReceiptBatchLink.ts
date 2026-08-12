@@ -154,6 +154,17 @@ const finalizeReportMessage = (report: TreasuryReceiptBatchLinkReport) => {
     parts.push(`${report.errors.length} erro(s)`);
   }
 
+  const summaryErrorCount = report.summaryReports.filter((item) => Boolean(item.error)).length;
+
+  if (summaryErrorCount > 0) {
+    parts.push(`${summaryErrorCount} erro(s) no Resumo Financeiro`);
+    const firstSummaryError = report.summaryReports.find((item) => item.error)?.error;
+
+    if (firstSummaryError) {
+      parts.push(firstSummaryError);
+    }
+  }
+
   if (warningCount > 0) {
     parts.push(`${warningCount} aviso(s) de rename`);
   }
