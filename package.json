@@ -79,6 +79,7 @@
     "expo-updates": "~29.0.17",
     "expo-web-browser": "~15.0.11",
     "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
     "nativewind": "^4.2.6",
