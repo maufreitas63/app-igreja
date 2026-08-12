@@ -25,11 +25,10 @@ export function ConfirmDialogHost() {
   const [request, setRequest] = useState<ConfirmDialogRequest | null>(null);
 
   useEffect(() => {
-    if (Platform.OS !== 'web') {
-      return;
-    }
-
-    return subscribeConfirmDialogHost(setRequest);
+    // Host só renderiza UI na web; no nativo confirmDialog usa Alert.
+    return subscribeConfirmDialogHost((next) => {
+      setRequest(next);
+    });
   }, []);
 
   if (Platform.OS !== 'web' || !request) {

@@ -185,8 +185,8 @@ export function PwaAppShell() {
         return true;
       }
 
-      // No Índice: não voltar no histórico interno do WebView.
-      if (canGoBack) {
+      // No Índice: sempre diálogo Encerrar sessão (não sair do app em silêncio).
+      if (isShellHomeUrl(currentUrl)) {
         void import('@/lib/userSession').then(({ confirmExitApplication }) => {
           void confirmExitApplication();
         });
