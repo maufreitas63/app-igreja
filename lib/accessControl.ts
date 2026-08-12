@@ -17,7 +17,7 @@ import { resolveEffectiveProfileId, resolveRealSessionProfileId } from '@/lib/se
 import { ACCESS_SCREEN } from '@/lib/accessScreen';
 
 export { ACL_UNAVAILABLE_MESSAGE, isAclStrictMode } from '@/lib/aclPolicy';
-export { ACCESS_SCREEN } from '@/lib/accessScreen';
+export { ACCESS_SCREEN, ACCESS_SCREEN_MAINTENANCE_EXTRA } from '@/lib/accessScreen';
 
 export type AccessResourceType = 'screen' | 'table' | 'column';
 export type AccessAction = 'view' | 'update';

@@ -4,6 +4,7 @@ import {
   profileHasAccess,
   sessionHasAccess,
 } from '@/lib/accessControl';
+import { ACCESS_SCREEN_MAINTENANCE_EXTRA } from '@/lib/accessScreen';
 import { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
 import { getCachedOrFetch } from '@/lib/asyncResultCache';
 import { mapProfileSearchRows } from '@/lib/profileSearchRow';
@@ -659,13 +660,20 @@ const MAIN_PRODUCT_SCREEN_ROUTE_KEYS = new Set<string>(
   Object.values(ACCESS_SCREEN).filter((routeKey) => routeKey !== ACCESS_SCREEN.maintenance)
 );
 
+const MAINTENANCE_EXTRA_SCREEN_ROUTE_KEYS = new Set<string>(
+  Object.values(ACCESS_SCREEN_MAINTENANCE_EXTRA)
+);
+
 const isMaintenanceScreenKey = (key: string) =>
   key === ACCESS_SCREEN.maintenance
   || key.startsWith('maintenance.card.')
-  || key.startsWith('scale_type.');
+  || key.startsWith('scale_type.')
+  || MAINTENANCE_EXTRA_SCREEN_ROUTE_KEYS.has(key);
 
 const isMainProductScreenKey = (key: string) =>
-  key.startsWith('dashboard.card.') || MAIN_PRODUCT_SCREEN_ROUTE_KEYS.has(key);
+  key.startsWith('dashboard.card.')
+  || key.startsWith('menu_')
+  || MAIN_PRODUCT_SCREEN_ROUTE_KEYS.has(key);
 
 export const getAccessGrantDashboardScope = (
   resourceType: RoleGrantRecord['resourceType'],
@@ -676,6 +684,11 @@ export const getAccessGrantDashboardScope = (
   }
 
   const key = resourceKey.trim();
+
+  // Curinga cobre produto e manutenção — sem bolinha de escopo único.
+  if (key === '*') {
+    return null;
+  }
 
   if (isMaintenanceScreenKey(key)) {
     return 'maintenance';

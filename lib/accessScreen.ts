@@ -16,4 +16,15 @@ export const ACCESS_SCREEN = {
   eventOrchestrator: '/admin/orquestrador',
   configuracaoSalas: '/configuracao-salas',
   discipleshipTrail: '/trilha-discipulado',
+  /** Alias legado ainda presente em `access_resources`. */
+  discipleshipTrailLegacy: '/trilha',
+  redesSociais: '/redes-sociais',
+} as const;
+
+/**
+ * Rotas de tela ligadas à manutenção (legado ou painéis) —
+ * usadas na bolinha laranja em Papéis → Telas.
+ */
+export const ACCESS_SCREEN_MAINTENANCE_EXTRA = {
+  discipleshipRecognitionsLegacy: '/trilha-reconhecimentos',
 } as const;
