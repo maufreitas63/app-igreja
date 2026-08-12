@@ -4,7 +4,6 @@ import {
   type FinancialReceiptUrlsSchemaStatus,
   checkFinancialReceiptUrlsSchema,
 } from '@/lib/maintenanceFinancialApi';
-import { uploadFinancialAnalyticalSummaryImage } from '@/lib/financialAnalyticalSummary';
 import type { FinancialEntry } from '@/lib/financialEntry';
 import {
   FINANCIAL_MAX_RECEIPTS_PER_ENTRY,
@@ -33,15 +32,6 @@ export type TreasuryReceiptBatchLinkItem = {
   dryRun?: boolean;
 };
 
-export type TreasuryReceiptBatchSummaryItem = {
-  fileName: string;
-  periodCode: string;
-  dryRun?: boolean;
-  renamed?: boolean;
-  renameError?: string;
-  error?: string;
-};
-
 export type TreasuryReceiptBatchLinkReport = {
   success: boolean;
   message: string;
@@ -59,7 +49,6 @@ export type TreasuryReceiptBatchLinkReport = {
   ambiguousReferencias: { referencia: string; entryCount: number }[];
   preflightIssues: TreasuryReceiptBatchPreflightIssue[];
   errors: TreasuryReceiptBatchLinkItem[];
-  summaryReports: TreasuryReceiptBatchSummaryItem[];
   renameUnsupported: boolean;
 };
 
@@ -95,14 +84,12 @@ const buildEmptyReport = (
   ambiguousReferencias: [],
   preflightIssues: [],
   errors: [],
-  summaryReports: [],
   renameUnsupported: false,
 });
 
 const finalizeReportMessage = (report: TreasuryReceiptBatchLinkReport) => {
   const linkedCount = report.linked.length;
   const renamedOnlyCount = report.renamedOnly.length;
-  const summaryCount = report.summaryReports.filter((item) => !item.error).length;
   const warningCount = report.linked.filter((item) => item.renameError).length;
 
   if (report.preflightIssues.length) {
@@ -114,19 +101,13 @@ const finalizeReportMessage = (report: TreasuryReceiptBatchLinkReport) => {
   if (
     linkedCount === 0 &&
     renamedOnlyCount === 0 &&
-    summaryCount === 0 &&
     report.errors.length === 0 &&
-    report.skippedAlreadyLinked.length === 0 &&
-    report.summaryReports.every((item) => !item.error)
+    report.skippedAlreadyLinked.length === 0
   ) {
-    const noSummaryHint =
-      report.summaryReports.length === 0
-        ? ' Nenhum “AAAAMM Resumo Financeiro.jpg” (nem updated_) encontrado na pasta selecionada.'
-        : '';
     report.message = report.dryRun
-      ? `Simulação concluída: nenhum comprovante novo seria vinculado.${noSummaryHint}`
-      : `Nenhum comprovante novo foi vinculado.${noSummaryHint}`;
-    report.success = report.errors.length === 0 && report.summaryReports.every((item) => !item.error);
+      ? 'Simulação concluída: nenhum comprovante novo seria vinculado.'
+      : 'Nenhum comprovante novo foi vinculado.';
+    report.success = report.errors.length === 0;
     return;
   }
 
@@ -144,25 +125,8 @@ const finalizeReportMessage = (report: TreasuryReceiptBatchLinkReport) => {
     parts.push(`${renamedOnlyCount} ${report.dryRun ? 'a renomear' : 'renomeado(s)'} (já anexados)`);
   }
 
-  if (summaryCount > 0) {
-    parts.push(
-      `${summaryCount} Resumo Financeiro ${report.dryRun ? 'a carregar' : 'carregado(s)'}`
-    );
-  }
-
   if (report.errors.length > 0) {
     parts.push(`${report.errors.length} erro(s)`);
-  }
-
-  const summaryErrorCount = report.summaryReports.filter((item) => Boolean(item.error)).length;
-
-  if (summaryErrorCount > 0) {
-    parts.push(`${summaryErrorCount} erro(s) no Resumo Financeiro`);
-    const firstSummaryError = report.summaryReports.find((item) => item.error)?.error;
-
-    if (firstSummaryError) {
-      parts.push(firstSummaryError);
-    }
   }
 
   if (warningCount > 0) {
@@ -170,10 +134,7 @@ const finalizeReportMessage = (report: TreasuryReceiptBatchLinkReport) => {
   }
 
   report.message = parts.length ? `${parts.join(' · ')}.` : 'Processamento concluído.';
-  report.success =
-    report.errors.length === 0 &&
-    warningCount === 0 &&
-    report.summaryReports.every((item) => !item.error);
+  report.success = report.errors.length === 0 && warningCount === 0;
 };
 
 export async function processTreasuryReceiptBatchFromFolder(
@@ -182,72 +143,9 @@ export async function processTreasuryReceiptBatchFromFolder(
 ): Promise<TreasuryReceiptBatchLinkReport> {
   const dryRun = Boolean(options.dryRun);
   const force = Boolean(options.force);
-  const summaryFiles = folderAccess.summaryFiles ?? [];
   const schemaStatus = await checkFinancialReceiptUrlsSchema();
 
-  // Resumos mensais não dependem do schema de receipt_urls — processa antes.
-  const summaryOnlyReport = buildEmptyReport(options, schemaStatus);
-  summaryOnlyReport.folderFileCount = folderAccess.files.length + summaryFiles.length;
-  summaryOnlyReport.normalizedFileNames =
-    folderAccess.files.filter((file) => file.originalFileName).length +
-    summaryFiles.filter((file) => file.originalFileName).length;
-  summaryOnlyReport.renameUnsupported = !folderAccess.canRenameAfterUpload;
-  summaryOnlyReport.success = true;
-  summaryOnlyReport.message = 'Processamento concluído.';
-
-  for (const summaryFile of summaryFiles) {
-    if (dryRun) {
-      summaryOnlyReport.summaryReports.push({
-        fileName: summaryFile.fileName,
-        periodCode: summaryFile.periodCode,
-        dryRun: true,
-      });
-      continue;
-    }
-
-    try {
-      const dataUrl = await summaryFile.readDataUrl();
-      await uploadFinancialAnalyticalSummaryImage(summaryFile.periodCode, dataUrl);
-
-      let renamed = false;
-      let renameError: string | undefined;
-
-      if (folderAccess.canRenameAfterUpload) {
-        try {
-          await summaryFile.markProcessed();
-          renamed = true;
-        } catch (error) {
-          summaryOnlyReport.renameUnsupported = true;
-          renameError =
-            error instanceof Error
-              ? error.message
-              : 'Resumo carregado, mas não foi possível renomear o arquivo local.';
-        }
-      }
-
-      summaryOnlyReport.summaryReports.push({
-        fileName: summaryFile.fileName,
-        periodCode: summaryFile.periodCode,
-        renamed,
-        renameError,
-      });
-    } catch (error) {
-      summaryOnlyReport.summaryReports.push({
-        fileName: summaryFile.fileName,
-        periodCode: summaryFile.periodCode,
-        error:
-          error instanceof Error ? error.message : 'Erro ao carregar o Resumo Financeiro.',
-      });
-    }
-  }
-
   if (!schemaStatus.available) {
-    if (summaryFiles.length > 0) {
-      finalizeReportMessage(summaryOnlyReport);
-      summaryOnlyReport.message = `${summaryOnlyReport.message} Comprovantes por referencia indisponíveis: ${schemaStatus.message}`;
-      return summaryOnlyReport;
-    }
-
     return {
       ...buildEmptyReport(options, schemaStatus),
       message: schemaStatus.message,
@@ -268,7 +166,10 @@ export async function processTreasuryReceiptBatchFromFolder(
   const matchedEntryIds = new Set<string>();
 
   const report: TreasuryReceiptBatchLinkReport = {
-    ...summaryOnlyReport,
+    ...buildEmptyReport(options, schemaStatus),
+    folderFileCount: folderAccess.files.length,
+    normalizedFileNames: folderAccess.files.filter((file) => file.originalFileName).length,
+    renameUnsupported: !folderAccess.canRenameAfterUpload,
     entriesWithReferencia: [...referenciaLookup.values()].reduce(
       (count, bucket) => count + bucket.length,
       0
@@ -281,12 +182,6 @@ export async function processTreasuryReceiptBatchFromFolder(
   };
 
   if (!preflight.valid) {
-    if (summaryFiles.length > 0 && folderAccess.files.length === 0) {
-      report.preflightIssues = [];
-      finalizeReportMessage(report);
-      return report;
-    }
-
     finalizeReportMessage(report);
     return report;
   }

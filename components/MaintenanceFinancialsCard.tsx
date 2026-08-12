@@ -956,14 +956,12 @@ export function MaintenanceFinancialsCard({
     }
 
     const receiptCount = folderAccess.files.length;
-    const summaryCount = folderAccess.summaryFiles.length;
 
-    if (receiptCount === 0 && summaryCount === 0) {
+    if (receiptCount === 0) {
       Toast.show({
         type: 'error',
         text1: 'Comprovantes',
-        text2:
-          'Nenhum JPG de comprovante nem “AAAAMM Resumo Financeiro.jpg” encontrado na pasta selecionada.',
+        text2: 'Nenhum JPG de comprovante encontrado na pasta selecionada.',
         visibilityTime: 7000,
       });
       return;
@@ -971,7 +969,7 @@ export function MaintenanceFinancialsCard({
 
     const confirmed = await confirmDialog(
       receiptBatchDryRun ? 'Simular comprovantes' : 'Processar comprovantes',
-      `Pasta selecionada (somente arquivos na raiz, sem subpastas):\n• ${receiptCount} comprovante(s)\n• ${summaryCount} Resumo Financeiro\n\n${
+      `Pasta selecionada (somente arquivos na raiz, sem subpastas):\n• ${receiptCount} comprovante(s)\n\n${
         receiptBatchDryRun ? 'Simulação' : 'Vinculação'
       } de JPG/JPEG aos lançamentos REALIZADO pelo campo referencia.${
         receiptBatchForce
@@ -1007,19 +1005,10 @@ export function MaintenanceFinancialsCard({
       return;
     }
 
-    const reportSummaryCount = result.report?.summaryReports?.length ?? 0;
-    const summaryErrors =
-      result.report?.summaryReports?.filter((item) => Boolean(item.error)).length ?? 0;
-
     Toast.show({
-      type: result.success && summaryErrors === 0 ? 'success' : 'error',
+      type: result.success ? 'success' : 'error',
       text1: 'Comprovantes',
-      text2:
-        reportSummaryCount > 0
-          ? `${result.message} (${reportSummaryCount - summaryErrors} resumo(s) ok${
-              summaryErrors ? `, ${summaryErrors} com erro` : ''
-            })`
-          : result.message,
+      text2: result.message,
       visibilityTime: result.success ? 5500 : 7000,
     });
   };
@@ -1466,11 +1455,7 @@ export function MaintenanceFinancialsCard({
           title="Comprovantes em lote"
           subtitle={
             receiptBatchReport
-              ? `${receiptBatchReport.linked.length} vinculado(s) · ${receiptBatchReport.renamedOnly.length} renomeado(s)${
-                  receiptBatchReport.summaryReports?.length
-                    ? ` · ${receiptBatchReport.summaryReports.length} resumo(s)`
-                    : ''
-                }`
+              ? `${receiptBatchReport.linked.length} vinculado(s) · ${receiptBatchReport.renamedOnly.length} renomeado(s)`
               : 'Vincular JPG locais pelo campo referencia'
           }
           expanded={expandedSection === 'receipt_batch'}
@@ -1618,22 +1603,6 @@ export function MaintenanceFinancialsCard({
                   >
                     [OK] {item.fileName}
                     {item.renamed ? ' → updated_' : item.renameError ? ' (sem rename)' : ''}
-                  </Text>
-                ))}
-
-                {(receiptBatchReport.summaryReports ?? []).slice(0, 6).map((item) => (
-                  <Text
-                    key={`summary-${item.periodCode}-${item.fileName}`}
-                    style={[
-                      item.error ? styles.errorLineText : styles.receiptBatchReportOk,
-                      minimal &&
-                        (item.error
-                          ? styles.errorLineTextMinimal
-                          : styles.receiptBatchReportOkMinimal),
-                    ]}
-                  >
-                    {item.error ? '[erro resumo]' : '[resumo]'} {item.fileName}
-                    {item.error ? `: ${item.error}` : ` · ${item.periodCode}`}
                   </Text>
                 ))}
 

@@ -1,4 +1,3 @@
-import { parseFinancialAnalyticalSummaryFileName } from '@/lib/financialAnalyticalSummary';
 import {
   hasTreasuryReceiptImageExtension,
   parseTreasuryReceiptFileName,
@@ -7,7 +6,6 @@ import {
 import type {
   TreasuryReceiptFolderAccess,
   TreasuryReceiptFolderFile,
-  TreasuryReceiptSummaryFolderFile,
 } from '@/lib/treasuryReceiptFolderAccess';
 
 const readFileAsDataUrl = (file: File) =>
@@ -42,7 +40,6 @@ const isCollectableTreasuryImage = (fileName: string) => {
   return hasTreasuryReceiptImageExtension(fileName.trim());
 };
 
-/** Normaliza webkitRelativePath / name para segmentos de pasta. */
 const getRelativePathParts = (file: File) => {
   const relative =
     typeof (file as File & { webkitRelativePath?: string }).webkitRelativePath === 'string' &&
@@ -57,10 +54,6 @@ const getRelativePathParts = (file: File) => {
     .filter(Boolean);
 };
 
-/**
- * Detecta o nome da pasta escolhida no diálogo (primeiro segmento comum).
- * Chrome costuma enviar "PastaEscolhida/arquivo.jpg"; em alguns casos só "arquivo.jpg".
- */
 const resolveSelectedFolderRootName = (browserFiles: File[]) => {
   const paths = browserFiles.map(getRelativePathParts).filter((parts) => parts.length > 0);
 
@@ -79,11 +72,7 @@ const resolveSelectedFolderRootName = (browserFiles: File[]) => {
   return null;
 };
 
-/**
- * Só arquivos diretamente na pasta escolhida (desconsidera subpastas).
- * - Com prefixo: "Pasta/arquivo.jpg" ✓ · "Pasta/sub/arquivo.jpg" ✗
- * - Sem prefixo: "arquivo.jpg" ✓ · "sub/arquivo.jpg" ✗
- */
+/** Só arquivos diretamente na pasta escolhida (desconsidera subpastas). */
 const isTopLevelFolderFile = (file: File, selectedRootName: string | null) => {
   const parts = getRelativePathParts(file);
 
@@ -100,7 +89,6 @@ const isTopLevelFolderFile = (file: File, selectedRootName: string | null) => {
 
 const collectFromBrowserFiles = (browserFiles: File[]) => {
   const files: TreasuryReceiptFolderFile[] = [];
-  const summaryFiles: TreasuryReceiptSummaryFolderFile[] = [];
   const selectedRootName = resolveSelectedFolderRootName(browserFiles);
 
   for (const file of browserFiles) {
@@ -109,19 +97,6 @@ const collectFromBrowserFiles = (browserFiles: File[]) => {
     }
 
     const fileName = file.name;
-    const summaryParsed = parseFinancialAnalyticalSummaryFileName(fileName);
-
-    if (summaryParsed) {
-      summaryFiles.push({
-        fileName,
-        periodCode: summaryParsed.periodCode,
-        canonicalFileName: summaryParsed.canonicalFileName,
-        originalFileName: fileName !== summaryParsed.canonicalFileName ? fileName : undefined,
-        readDataUrl: async () => readFileAsDataUrl(file),
-        markProcessed: noopMarkProcessed,
-      });
-      continue;
-    }
 
     if (fileName.trim().toLowerCase().startsWith('updated_')) {
       continue;
@@ -157,18 +132,9 @@ const collectFromBrowserFiles = (browserFiles: File[]) => {
     return left.position - right.position;
   });
 
-  summaryFiles.sort((left, right) => right.periodCode.localeCompare(left.periodCode));
-
-  return { files, summaryFiles };
+  return { files };
 };
 
-/**
- * Seletor de pasta via input nativo (webkitdirectory).
- * Mais estável no Chrome/Edge Windows do que showDirectoryPicker.
- *
- * Não usa detecção por `window.focus` — isso cancelava o fluxo enquanto o
- * usuário ainda navegava no diálogo do Windows.
- */
 const pickFolderFilesViaInput = (): Promise<File[] | null> =>
   new Promise((resolve) => {
     if (typeof document === 'undefined') {
@@ -204,7 +170,6 @@ const pickFolderFilesViaInput = (): Promise<File[] | null> =>
     };
 
     const onChange = () => {
-      // Pasta confirmada (pode vir vazia).
       finish(Array.from(input.files ?? []));
     };
 
@@ -234,11 +199,10 @@ export async function pickTreasuryReceiptFolderFiles(): Promise<TreasuryReceiptF
     return null;
   }
 
-  const { files, summaryFiles } = collectFromBrowserFiles(browserFiles);
+  const { files } = collectFromBrowserFiles(browserFiles);
 
   return {
     files,
-    summaryFiles,
     canRenameAfterUpload: false,
   };
 }
