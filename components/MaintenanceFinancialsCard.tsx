@@ -971,7 +971,7 @@ export function MaintenanceFinancialsCard({
 
     const confirmed = await confirmDialog(
       receiptBatchDryRun ? 'Simular comprovantes' : 'Processar comprovantes',
-      `Pasta selecionada:\n• ${receiptCount} comprovante(s)\n• ${summaryCount} Resumo Financeiro\n\n${
+      `Pasta selecionada (somente arquivos na raiz, sem subpastas):\n• ${receiptCount} comprovante(s)\n• ${summaryCount} Resumo Financeiro\n\n${
         receiptBatchDryRun ? 'Simulação' : 'Vinculação'
       } de JPG/JPEG aos lançamentos REALIZADO pelo campo referencia.${
         receiptBatchForce

@@ -42,24 +42,69 @@ const isCollectableTreasuryImage = (fileName: string) => {
   return hasTreasuryReceiptImageExtension(fileName.trim());
 };
 
-/** Só arquivos na raiz da pasta escolhida (ignora subpastas). */
-const isTopLevelFolderFile = (file: File) => {
+/** Normaliza webkitRelativePath / name para segmentos de pasta. */
+const getRelativePathParts = (file: File) => {
   const relative =
-    typeof (file as File & { webkitRelativePath?: string }).webkitRelativePath === 'string'
+    typeof (file as File & { webkitRelativePath?: string }).webkitRelativePath === 'string' &&
+    (file as File & { webkitRelativePath: string }).webkitRelativePath.trim()
       ? (file as File & { webkitRelativePath: string }).webkitRelativePath
       : file.name;
-  const parts = relative.split(/[/\\]/).filter(Boolean);
 
-  // "Pasta/arquivo.jpg" → 2 partes; arquivo solto → 1.
-  return parts.length <= 2;
+  return relative
+    .replace(/\\/g, '/')
+    .split('/')
+    .map((part) => part.trim())
+    .filter(Boolean);
+};
+
+/**
+ * Detecta o nome da pasta escolhida no diálogo (primeiro segmento comum).
+ * Chrome costuma enviar "PastaEscolhida/arquivo.jpg"; em alguns casos só "arquivo.jpg".
+ */
+const resolveSelectedFolderRootName = (browserFiles: File[]) => {
+  const paths = browserFiles.map(getRelativePathParts).filter((parts) => parts.length > 0);
+
+  if (!paths.length) {
+    return null;
+  }
+
+  const rootCandidate = paths[0]![0]!;
+  const allShareRoot = paths.every((parts) => parts[0] === rootCandidate);
+  const hasNestedOrFileUnderRoot = paths.some((parts) => parts.length >= 2);
+
+  if (allShareRoot && hasNestedOrFileUnderRoot) {
+    return rootCandidate;
+  }
+
+  return null;
+};
+
+/**
+ * Só arquivos diretamente na pasta escolhida (desconsidera subpastas).
+ * - Com prefixo: "Pasta/arquivo.jpg" ✓ · "Pasta/sub/arquivo.jpg" ✗
+ * - Sem prefixo: "arquivo.jpg" ✓ · "sub/arquivo.jpg" ✗
+ */
+const isTopLevelFolderFile = (file: File, selectedRootName: string | null) => {
+  const parts = getRelativePathParts(file);
+
+  if (!parts.length) {
+    return false;
+  }
+
+  if (selectedRootName) {
+    return parts.length === 2 && parts[0] === selectedRootName;
+  }
+
+  return parts.length === 1;
 };
 
 const collectFromBrowserFiles = (browserFiles: File[]) => {
   const files: TreasuryReceiptFolderFile[] = [];
   const summaryFiles: TreasuryReceiptSummaryFolderFile[] = [];
+  const selectedRootName = resolveSelectedFolderRootName(browserFiles);
 
   for (const file of browserFiles) {
-    if (!isTopLevelFolderFile(file) || !isCollectableTreasuryImage(file.name)) {
+    if (!isTopLevelFolderFile(file, selectedRootName) || !isCollectableTreasuryImage(file.name)) {
       continue;
     }
 
