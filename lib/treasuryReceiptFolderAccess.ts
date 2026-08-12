@@ -30,9 +30,7 @@ export type TreasuryReceiptFolderAccess = {
 };
 
 export const isTreasuryReceiptFolderAccessSupported = () =>
-  Platform.OS === 'web' &&
-  typeof window !== 'undefined' &&
-  typeof window.showDirectoryPicker === 'function';
+  Platform.OS === 'web' && typeof document !== 'undefined';
 
 export async function pickTreasuryReceiptFolderFiles(): Promise<TreasuryReceiptFolderAccess | null> {
   throw new Error(

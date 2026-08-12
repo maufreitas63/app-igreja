@@ -926,8 +926,7 @@ export function MaintenanceFinancialsCard({
         ? 'Processar substituindo posições ocupadas'
         : 'Processar';
 
-    // Abre o seletor no mesmo clique do botão (gesto do usuário). Confirmar antes
-    // faz o Chrome abortar showDirectoryPicker e parecer “cancelado”.
+    // Abre o seletor no mesmo clique do botão (gesto do usuário).
     let folderAccess: Awaited<ReturnType<typeof pickTreasuryReceiptFolderFiles>>;
 
     try {
@@ -982,7 +981,7 @@ export function MaintenanceFinancialsCard({
         receiptBatchDryRun
           ? '\n\nNenhum arquivo será enviado nem renomeado.'
           : '\n\nArquivos vinculados serão renomeados com updated_ após sucesso.'
-      }${!folderAccess.canRenameAfterUpload ? '\n\nAviso: sem permissão de escrita na pasta — o upload na nuvem segue, mas o rename local pode falhar.' : ''}`,
+      }${!folderAccess.canRenameAfterUpload ? '\n\nObservação: os arquivos serão enviados à nuvem; o rename local (updated_) pode não ocorrer neste modo de seleção.' : ''}`,
       modeLabel,
       'Cancelar'
     );
@@ -1487,7 +1486,7 @@ export function MaintenanceFinancialsCard({
 
             {!isTreasuryReceiptFolderAccessSupported() ? (
               <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
-                Use Chrome ou Edge no desktop para permitir leitura e renomeação da pasta local.
+                Use o Chrome ou Edge no desktop. Ao clicar em Processar, escolha a pasta dos JPGs no diálogo do sistema.
               </Text>
             ) : null}
 

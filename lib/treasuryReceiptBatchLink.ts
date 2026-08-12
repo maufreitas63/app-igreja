@@ -201,15 +201,17 @@ export async function processTreasuryReceiptBatchFromFolder(
       let renamed = false;
       let renameError: string | undefined;
 
-      try {
-        await summaryFile.markProcessed();
-        renamed = true;
-      } catch (error) {
-        summaryOnlyReport.renameUnsupported = true;
-        renameError =
-          error instanceof Error
-            ? error.message
-            : 'Resumo carregado, mas não foi possível renomear o arquivo local.';
+      if (folderAccess.canRenameAfterUpload) {
+        try {
+          await summaryFile.markProcessed();
+          renamed = true;
+        } catch (error) {
+          summaryOnlyReport.renameUnsupported = true;
+          renameError =
+            error instanceof Error
+              ? error.message
+              : 'Resumo carregado, mas não foi possível renomear o arquivo local.';
+        }
       }
 
       summaryOnlyReport.summaryReports.push({
@@ -317,14 +319,23 @@ export async function processTreasuryReceiptBatchFromFolder(
       }
 
       try {
-        await file.markProcessed();
-        report.renamedOnly.push({
-          fileName: file.fileName,
-          entryId: entry.id,
-          label,
-          position: file.position,
-          renamed: true,
-        });
+        if (folderAccess.canRenameAfterUpload) {
+          await file.markProcessed();
+          report.renamedOnly.push({
+            fileName: file.fileName,
+            entryId: entry.id,
+            label,
+            position: file.position,
+            renamed: true,
+          });
+        } else {
+          report.skippedAlreadyLinked.push({
+            fileName: file.fileName,
+            entryId: entry.id,
+            label,
+            position: file.position,
+          });
+        }
       } catch (error) {
         report.errors.push({
           fileName: file.fileName,
@@ -394,22 +405,24 @@ export async function processTreasuryReceiptBatchFromFolder(
       let renamed = false;
       let renameError: string | undefined;
 
-      try {
-        await file.markProcessed();
-        renamed = true;
-      } catch (error) {
-        report.renameUnsupported = true;
-        renameError =
-          error instanceof Error
-            ? error.message
-            : 'Comprovante anexado, mas não foi possível renomear o arquivo local.';
-        report.errors.push({
-          fileName: file.fileName,
-          entryId: entry.id,
-          label,
-          position: file.position,
-          error: renameError,
-        });
+      if (folderAccess.canRenameAfterUpload) {
+        try {
+          await file.markProcessed();
+          renamed = true;
+        } catch (error) {
+          report.renameUnsupported = true;
+          renameError =
+            error instanceof Error
+              ? error.message
+              : 'Comprovante anexado, mas não foi possível renomear o arquivo local.';
+          report.errors.push({
+            fileName: file.fileName,
+            entryId: entry.id,
+            label,
+            position: file.position,
+            error: renameError,
+          });
+        }
       }
 
       matchedEntryIds.add(entry.id);

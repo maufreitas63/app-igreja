@@ -1,6 +1,5 @@
 import { parseFinancialAnalyticalSummaryFileName } from '@/lib/financialAnalyticalSummary';
 import {
-  buildUpdatedTreasuryReceiptFileName,
   hasTreasuryReceiptImageExtension,
   parseTreasuryReceiptFileName,
   resolveTreasuryReceiptLinkPosition,
@@ -10,16 +9,6 @@ import type {
   TreasuryReceiptFolderFile,
   TreasuryReceiptSummaryFolderFile,
 } from '@/lib/treasuryReceiptFolderAccess';
-
-type FileSystemFileHandleLike = {
-  kind: 'file';
-  getFile: () => Promise<File>;
-  move?: (newName: string) => Promise<void>;
-};
-
-type FileSystemDirectoryHandleLike = {
-  entries: () => AsyncIterable<[string, FileSystemFileHandleLike | { kind: 'directory' }]>;
-};
 
 const readFileAsDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -41,34 +30,10 @@ const readFileAsDataUrl = (file: File) =>
     reader.readAsDataURL(file);
   });
 
-const createMarkProcessed =
-  (fileHandle: FileSystemFileHandleLike, fileName: string, canonicalFileName: string, canRename: boolean) =>
-  async () => {
-    if (!canRename) {
-      throw new Error('O navegador não permitiu renomear arquivos nesta pasta.');
-    }
+const noopMarkProcessed = async () => {
+  // Seleção via <input webkitdirectory> não permite renomear no disco.
+};
 
-    const processedName = buildUpdatedTreasuryReceiptFileName(canonicalFileName);
-    const currentName = fileName;
-
-    if (currentName !== canonicalFileName && currentName !== processedName) {
-      try {
-        await fileHandle.move!(canonicalFileName);
-      } catch {
-        // Já pode estar no nome canônico / updated_.
-      }
-    }
-
-    if (currentName !== processedName) {
-      try {
-        await fileHandle.move!(processedName);
-      } catch {
-        // Se já estiver updated_, segue sem falhar o upload na nuvem.
-      }
-    }
-  };
-
-/** Aceita .jpg/.jpeg, inclusive já renomeados com updated_ (necessário p/ reenviar Resumo). */
 const isCollectableTreasuryImage = (fileName: string) => {
   if (typeof fileName !== 'string' || !fileName.trim()) {
     return false;
@@ -77,17 +42,28 @@ const isCollectableTreasuryImage = (fileName: string) => {
   return hasTreasuryReceiptImageExtension(fileName.trim());
 };
 
-const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleLike) => {
+/** Só arquivos na raiz da pasta escolhida (ignora subpastas). */
+const isTopLevelFolderFile = (file: File) => {
+  const relative =
+    typeof (file as File & { webkitRelativePath?: string }).webkitRelativePath === 'string'
+      ? (file as File & { webkitRelativePath: string }).webkitRelativePath
+      : file.name;
+  const parts = relative.split(/[/\\]/).filter(Boolean);
+
+  // "Pasta/arquivo.jpg" → 2 partes; arquivo solto → 1.
+  return parts.length <= 2;
+};
+
+const collectFromBrowserFiles = (browserFiles: File[]) => {
   const files: TreasuryReceiptFolderFile[] = [];
   const summaryFiles: TreasuryReceiptSummaryFolderFile[] = [];
 
-  for await (const [fileName, handle] of directoryHandle.entries()) {
-    if (handle.kind !== 'file' || !isCollectableTreasuryImage(fileName)) {
+  for (const file of browserFiles) {
+    if (!isTopLevelFolderFile(file) || !isCollectableTreasuryImage(file.name)) {
       continue;
     }
 
-    const fileHandle = handle as FileSystemFileHandleLike;
-    const canRename = typeof fileHandle.move === 'function';
+    const fileName = file.name;
     const summaryParsed = parseFinancialAnalyticalSummaryFileName(fileName);
 
     if (summaryParsed) {
@@ -96,18 +72,12 @@ const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleL
         periodCode: summaryParsed.periodCode,
         canonicalFileName: summaryParsed.canonicalFileName,
         originalFileName: fileName !== summaryParsed.canonicalFileName ? fileName : undefined,
-        readDataUrl: async () => readFileAsDataUrl(await fileHandle.getFile()),
-        markProcessed: createMarkProcessed(
-          fileHandle,
-          fileName,
-          summaryParsed.canonicalFileName,
-          canRename
-        ),
+        readDataUrl: async () => readFileAsDataUrl(file),
+        markProcessed: noopMarkProcessed,
       });
       continue;
     }
 
-    // Comprovantes já processados (updated_) não reentram no vínculo por referencia.
     if (fileName.trim().toLowerCase().startsWith('updated_')) {
       continue;
     }
@@ -127,8 +97,8 @@ const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleL
       referencia,
       position: linkPosition,
       originalFileName: fileName !== canonicalFileName ? fileName : undefined,
-      readDataUrl: async () => readFileAsDataUrl(await fileHandle.getFile()),
-      markProcessed: createMarkProcessed(fileHandle, fileName, canonicalFileName, canRename),
+      readDataUrl: async () => readFileAsDataUrl(file),
+      markProcessed: noopMarkProcessed,
     });
   }
 
@@ -147,87 +117,83 @@ const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleL
   return { files, summaryFiles };
 };
 
+/**
+ * Seletor de pasta via input nativo (webkitdirectory).
+ * Mais estável no Chrome/Edge Windows do que showDirectoryPicker.
+ *
+ * Não usa detecção por `window.focus` — isso cancelava o fluxo enquanto o
+ * usuário ainda navegava no diálogo do Windows.
+ */
+const pickFolderFilesViaInput = (): Promise<File[] | null> =>
+  new Promise((resolve) => {
+    if (typeof document === 'undefined') {
+      resolve(null);
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = 'image/jpeg,.jpg,.jpeg,image/*';
+    input.setAttribute('webkitdirectory', '');
+    input.setAttribute('directory', '');
+    // @ts-expect-error — propriedade legada ainda usada pelos browsers
+    input.webkitdirectory = true;
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    input.style.top = '0';
+    input.tabIndex = -1;
+
+    let settled = false;
+
+    const finish = (value: File[] | null) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      input.removeEventListener('change', onChange);
+      input.removeEventListener('cancel', onCancel);
+      input.remove();
+      resolve(value);
+    };
+
+    const onChange = () => {
+      // Pasta confirmada (pode vir vazia).
+      finish(Array.from(input.files ?? []));
+    };
+
+    const onCancel = () => {
+      finish(null);
+    };
+
+    input.addEventListener('change', onChange);
+    input.addEventListener('cancel', onCancel);
+    document.body.appendChild(input);
+    input.click();
+  });
+
 export const isTreasuryReceiptFolderAccessSupported = () =>
-  typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function';
+  typeof window !== 'undefined' && typeof document !== 'undefined';
 
 export async function pickTreasuryReceiptFolderFiles(): Promise<TreasuryReceiptFolderAccess | null> {
   if (!isTreasuryReceiptFolderAccessSupported()) {
     throw new Error(
-      'Selecione a pasta no Chrome ou Edge (desktop). Firefox e Safari ainda não suportam esta integração.'
+      'Seleção de pasta disponível apenas na versão web (Chrome ou Edge no desktop).'
     );
   }
 
-  const pickDirectory = async (mode: 'read' | 'readwrite') =>
-    (await window.showDirectoryPicker({ mode })) as FileSystemDirectoryHandleLike;
+  const browserFiles = await pickFolderFilesViaInput();
 
-  const isAbortError = (error: unknown) => {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      return true;
-    }
-
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'name' in error &&
-      (error as { name?: string }).name === 'AbortError'
-    );
-  };
-
-  const describePickerError = (error: unknown) => {
-    const name =
-      error instanceof DOMException
-        ? error.name
-        : typeof error === 'object' && error && 'name' in error
-          ? String((error as { name?: string }).name ?? '')
-          : '';
-    const message = error instanceof Error ? error.message : '';
-
-    if (name === 'NotAllowedError' || /user gesture|user activation/i.test(message)) {
-      return new Error(
-        'O navegador bloqueou o seletor de pasta. Clique em Processar e escolha a pasta imediatamente no diálogo do sistema (Chrome/Edge no desktop).'
-      );
-    }
-
-    if (name === 'SecurityError') {
-      return new Error(
-        'O navegador bloqueou o acesso à pasta por segurança. Use Chrome ou Edge no desktop e permita o acesso quando solicitado.'
-      );
-    }
-
-    return error instanceof Error
-      ? error
-      : new Error('Não foi possível abrir o seletor de pasta.');
-  };
-
-  let directoryHandle: FileSystemDirectoryHandleLike;
-  let canRenameAfterUpload = true;
-
-  try {
-    directoryHandle = await pickDirectory('readwrite');
-  } catch (error) {
-    if (isAbortError(error)) {
-      return null;
-    }
-
-    // Sem permissão de escrita: ainda dá para ler e enviar; só não renomeia localmente.
-    try {
-      directoryHandle = await pickDirectory('read');
-      canRenameAfterUpload = false;
-    } catch (fallbackError) {
-      if (isAbortError(fallbackError)) {
-        return null;
-      }
-
-      throw describePickerError(fallbackError);
-    }
+  if (browserFiles === null) {
+    return null;
   }
 
-  const { files, summaryFiles } = await collectDirectoryFiles(directoryHandle);
+  const { files, summaryFiles } = collectFromBrowserFiles(browserFiles);
 
   return {
     files,
     summaryFiles,
-    canRenameAfterUpload,
+    canRenameAfterUpload: false,
   };
 }
-
