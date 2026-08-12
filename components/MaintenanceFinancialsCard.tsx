@@ -50,7 +50,7 @@ import { MAINTENANCE_FINANCIALS_SQL_HINT } from '@/hooks/useMaintenanceFinancial
 import {
   DEFAULT_TREASURY_RECEIPTS_DIR,
 } from '@/lib/treasuryReceiptBatchPath';
-import { isTreasuryReceiptFolderAccessSupported } from '@/lib/treasuryReceiptFolderAccess';
+import { isTreasuryReceiptFolderAccessSupported, pickTreasuryReceiptFolderFiles } from '@/lib/treasuryReceiptFolderAccess';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import {
   ASSEMBLY_MINUTES_SQL_HINT,
@@ -926,9 +926,63 @@ export function MaintenanceFinancialsCard({
         ? 'Processar substituindo posições ocupadas'
         : 'Processar';
 
+    // Abre o seletor no mesmo clique do botão (gesto do usuário). Confirmar antes
+    // faz o Chrome abortar showDirectoryPicker e parecer “cancelado”.
+    let folderAccess: Awaited<ReturnType<typeof pickTreasuryReceiptFolderFiles>>;
+
+    try {
+      folderAccess = await pickTreasuryReceiptFolderFiles();
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Comprovantes',
+        text2:
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível abrir o seletor de pasta.',
+        visibilityTime: 7000,
+      });
+      return;
+    }
+
+    if (!folderAccess) {
+      Toast.show({
+        type: 'info',
+        text1: 'Comprovantes',
+        text2:
+          'Pasta não selecionada. No diálogo do sistema, escolha a pasta dos JPGs e confirme (não cancele).',
+        visibilityTime: 5000,
+      });
+      return;
+    }
+
+    const receiptCount = folderAccess.files.length;
+    const summaryCount = folderAccess.summaryFiles.length;
+
+    if (receiptCount === 0 && summaryCount === 0) {
+      Toast.show({
+        type: 'error',
+        text1: 'Comprovantes',
+        text2:
+          'Nenhum JPG de comprovante nem “AAAAMM Resumo Financeiro.jpg” encontrado na pasta selecionada.',
+        visibilityTime: 7000,
+      });
+      return;
+    }
+
     const confirmed = await confirmDialog(
       receiptBatchDryRun ? 'Simular comprovantes' : 'Processar comprovantes',
-      `${receiptBatchDryRun ? 'Simulação' : 'Vinculação'} de JPG/JPEG aos lançamentos REALIZADO pelo campo referencia.\n\nTambém carrega o relatório mensal no padrão AAAAMM Resumo Financeiro.jpg (ex.: 202607 Resumo Financeiro.jpg).\n\nO navegador abrirá o seletor de pasta (Chrome/Edge no desktop). A pasta exibida abaixo é apenas referência visual — selecione a pasta correta no diálogo.\n\nReferência: ${receiptsDir.trim() || DEFAULT_TREASURY_RECEIPTS_DIR}${receiptBatchForce ? '\n\nSubstituir: comprovantes existentes na mesma posição serão trocados.' : ''}${receiptBatchDryRun ? '\n\nNenhum arquivo será enviado nem renomeado.' : '\n\nArquivos vinculados serão renomeados com updated_ após sucesso.'}`,
+      `Pasta selecionada:\n• ${receiptCount} comprovante(s)\n• ${summaryCount} Resumo Financeiro\n\n${
+        receiptBatchDryRun ? 'Simulação' : 'Vinculação'
+      } de JPG/JPEG aos lançamentos REALIZADO pelo campo referencia.${
+        receiptBatchForce
+          ? '\n\nSubstituir: comprovantes existentes na mesma posição serão trocados.'
+          : ''
+      }${
+        receiptBatchDryRun
+          ? '\n\nNenhum arquivo será enviado nem renomeado.'
+          : '\n\nArquivos vinculados serão renomeados com updated_ após sucesso.'
+      }${!folderAccess.canRenameAfterUpload ? '\n\nAviso: sem permissão de escrita na pasta — o upload na nuvem segue, mas o rename local pode falhar.' : ''}`,
       modeLabel,
       'Cancelar'
     );
@@ -940,19 +994,21 @@ export function MaintenanceFinancialsCard({
     const result = await processReceiptBatch(receiptsDir.trim() || DEFAULT_TREASURY_RECEIPTS_DIR, {
       dryRun: receiptBatchDryRun,
       force: receiptBatchForce,
+      folderAccess,
     });
 
     if ('cancelled' in result && result.cancelled) {
       Toast.show({
         type: 'info',
         text1: 'Comprovantes',
-        text2: 'Seleção de pasta cancelada — nenhum arquivo foi processado.',
-        visibilityTime: 3500,
+        text2:
+          'Pasta não selecionada. No diálogo do sistema, escolha a pasta dos JPGs e confirme (não cancele).',
+        visibilityTime: 5000,
       });
       return;
     }
 
-    const summaryCount = result.report?.summaryReports?.length ?? 0;
+    const reportSummaryCount = result.report?.summaryReports?.length ?? 0;
     const summaryErrors =
       result.report?.summaryReports?.filter((item) => Boolean(item.error)).length ?? 0;
 
@@ -960,8 +1016,8 @@ export function MaintenanceFinancialsCard({
       type: result.success && summaryErrors === 0 ? 'success' : 'error',
       text1: 'Comprovantes',
       text2:
-        summaryCount > 0
-          ? `${result.message} (${summaryCount - summaryErrors} resumo(s) ok${
+        reportSummaryCount > 0
+          ? `${result.message} (${reportSummaryCount - summaryErrors} resumo(s) ok${
               summaryErrors ? `, ${summaryErrors} com erro` : ''
             })`
           : result.message,

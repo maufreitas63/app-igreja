@@ -157,18 +157,69 @@ export async function pickTreasuryReceiptFolderFiles(): Promise<TreasuryReceiptF
     );
   }
 
+  const pickDirectory = async (mode: 'read' | 'readwrite') =>
+    (await window.showDirectoryPicker({ mode })) as FileSystemDirectoryHandleLike;
+
+  const isAbortError = (error: unknown) => {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return true;
+    }
+
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'name' in error &&
+      (error as { name?: string }).name === 'AbortError'
+    );
+  };
+
+  const describePickerError = (error: unknown) => {
+    const name =
+      error instanceof DOMException
+        ? error.name
+        : typeof error === 'object' && error && 'name' in error
+          ? String((error as { name?: string }).name ?? '')
+          : '';
+    const message = error instanceof Error ? error.message : '';
+
+    if (name === 'NotAllowedError' || /user gesture|user activation/i.test(message)) {
+      return new Error(
+        'O navegador bloqueou o seletor de pasta. Clique em Processar e escolha a pasta imediatamente no diálogo do sistema (Chrome/Edge no desktop).'
+      );
+    }
+
+    if (name === 'SecurityError') {
+      return new Error(
+        'O navegador bloqueou o acesso à pasta por segurança. Use Chrome ou Edge no desktop e permita o acesso quando solicitado.'
+      );
+    }
+
+    return error instanceof Error
+      ? error
+      : new Error('Não foi possível abrir o seletor de pasta.');
+  };
+
   let directoryHandle: FileSystemDirectoryHandleLike;
+  let canRenameAfterUpload = true;
 
   try {
-    directoryHandle = (await window.showDirectoryPicker({
-      mode: 'readwrite',
-    })) as FileSystemDirectoryHandleLike;
+    directoryHandle = await pickDirectory('readwrite');
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
+    if (isAbortError(error)) {
       return null;
     }
 
-    throw error;
+    // Sem permissão de escrita: ainda dá para ler e enviar; só não renomeia localmente.
+    try {
+      directoryHandle = await pickDirectory('read');
+      canRenameAfterUpload = false;
+    } catch (fallbackError) {
+      if (isAbortError(fallbackError)) {
+        return null;
+      }
+
+      throw describePickerError(fallbackError);
+    }
   }
 
   const { files, summaryFiles } = await collectDirectoryFiles(directoryHandle);
@@ -176,6 +227,7 @@ export async function pickTreasuryReceiptFolderFiles(): Promise<TreasuryReceiptF
   return {
     files,
     summaryFiles,
-    canRenameAfterUpload: true,
+    canRenameAfterUpload,
   };
 }
+

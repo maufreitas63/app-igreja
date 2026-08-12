@@ -532,7 +532,11 @@ export function useMaintenanceFinancials(enabled: boolean) {
   const processReceiptBatch = useCallback(
     async (
       folderPath: string,
-      options: { dryRun?: boolean; force?: boolean } = {}
+      options: {
+        dryRun?: boolean;
+        force?: boolean;
+        folderAccess?: Awaited<ReturnType<typeof pickTreasuryReceiptFolderFiles>>;
+      } = {}
     ) => {
       const normalizedPath = folderPath.trim() || DEFAULT_TREASURY_RECEIPTS_DIR;
 
@@ -543,7 +547,10 @@ export function useMaintenanceFinancials(enabled: boolean) {
       setError(null);
 
       try {
-        const folderAccess = await pickTreasuryReceiptFolderFiles();
+        const folderAccess =
+          options.folderAccess === undefined
+            ? await pickTreasuryReceiptFolderFiles()
+            : options.folderAccess;
 
         if (!folderAccess) {
           return {
