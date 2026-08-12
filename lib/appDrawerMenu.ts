@@ -178,8 +178,8 @@ export async function navigateDrawerMenuItem(
       router,
       '/financial',
       ACCESS_SCREEN.financial,
-      withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID),
-      { method: 'push' }
+      withMinimalPresentation(withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID)),
+      { method: 'navigate' }
     );
     return;
   }
