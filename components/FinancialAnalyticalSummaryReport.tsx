@@ -27,11 +27,13 @@ const AmountCell = ({
   highlighted,
   bold,
   compact,
+  align = 'right',
 }: {
   value: number;
   highlighted?: boolean;
   bold?: boolean;
   compact?: boolean;
+  align?: 'left' | 'center' | 'right';
 }) => {
   const negative = value < -0.005;
 
@@ -40,6 +42,8 @@ const AmountCell = ({
       style={[
         styles.amount,
         compact && styles.amountCompact,
+        align === 'center' && styles.amountCenter,
+        align === 'left' && styles.amountLeft,
         highlighted && styles.amountHighlighted,
         bold && styles.amountBold,
         negative && styles.amountNegative,
@@ -203,7 +207,13 @@ function HistoricalTable({
               cell.focus && styles.cellFocus,
             ]}
           >
-            <AmountCell value={cell.value} bold={cell.bold} highlighted={cell.focus} compact />
+            <AmountCell
+              value={cell.value}
+              bold={cell.bold}
+              highlighted={cell.focus}
+              compact
+              align="center"
+            />
           </View>
         ))}
       </View>
@@ -455,6 +465,13 @@ const styles = StyleSheet.create({
     fontSize: 10,
     paddingHorizontal: 2,
   },
+  amountCenter: {
+    textAlign: 'center',
+    width: '100%',
+  },
+  amountLeft: {
+    textAlign: 'left',
+  },
   amountHighlighted: {
     backgroundColor: 'transparent',
   },
@@ -490,7 +507,8 @@ const styles = StyleSheet.create({
   },
   histValueCell: {
     justifyContent: 'center',
-    alignItems: 'stretch',
+    alignItems: 'center',
+    paddingHorizontal: 4,
   },
   cellFocus: {
     backgroundColor: '#FEF3C7',
