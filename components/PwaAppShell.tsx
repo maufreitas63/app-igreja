@@ -114,6 +114,7 @@ export function PwaAppShell() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [canGoBack, setCanGoBack] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState(entryUrl);
   const [pdfViewerUri, setPdfViewerUri] = useState<string | null>(null);
 
   useEffect(() => {
@@ -142,20 +143,61 @@ export function PwaAppShell() {
       return;
     }
 
+    const isShellHomeUrl = (url: string) => {
+      try {
+        const { pathname } = new URL(url);
+        const normalized = pathname.replace(/\/+$/, '') || '/';
+        return (
+          normalized === '/'
+          || normalized === '/index'
+          || normalized === '/(tabs)'
+          || normalized === '/(tabs)/index'
+        );
+      } catch {
+        return false;
+      }
+    };
+
+    const navigateWebViewToHome = () => {
+      const js = `
+        (function() {
+          try {
+            if (typeof window !== 'undefined' && window.location) {
+              var origin = window.location.origin || '';
+              window.location.replace(origin + '/(tabs)');
+            }
+          } catch (e) {}
+          true;
+        })();
+      `;
+      webRef.current?.injectJavaScript(js);
+    };
+
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (pdfViewerUri) {
         setPdfViewerUri(null);
         return true;
       }
-      if (canGoBack && webRef.current) {
-        webRef.current.goBack();
+
+      // Fora do Índice: sempre tela inicial (não webView.goBack → Perfil etc.).
+      if (!isShellHomeUrl(currentUrl)) {
+        navigateWebViewToHome();
         return true;
       }
+
+      // No Índice: não voltar no histórico interno do WebView.
+      if (canGoBack) {
+        void import('@/lib/userSession').then(({ confirmExitApplication }) => {
+          void confirmExitApplication();
+        });
+        return true;
+      }
+
       return false;
     });
 
     return () => sub.remove();
-  }, [canGoBack, pdfViewerUri]);
+  }, [canGoBack, currentUrl, pdfViewerUri]);
 
   const markFirstPaintDone = useCallback(() => {
     firstPaintDoneRef.current = true;
@@ -340,6 +382,9 @@ export function PwaAppShell() {
           onHttpError={handleHttpError}
           onNavigationStateChange={(navState) => {
             setCanGoBack(navState.canGoBack);
+            if (navState.url) {
+              setCurrentUrl(navState.url);
+            }
             if (navState.loading === false && navState.url) {
               markFirstPaintDone();
             }

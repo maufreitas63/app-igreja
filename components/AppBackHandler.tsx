@@ -32,10 +32,15 @@ const isPublicEntryScreen = (pathname: string, segments: string[]) => {
   );
 };
 
+const HOME_HREF = '/(tabs)';
+
 /**
- * Botão nativo "voltar" (Android):
- * - em qualquer tela autenticada fora do Índice → vai ao Índice;
+ * Botão nativo "voltar" (Android) e voltar do navegador/PWA:
+ * - em qualquer tela autenticada fora do Índice → vai ao Índice (tela inicial);
  * - no Índice (ou no login) → executa sair do aplicativo (com confirmação).
+ *
+ * Na web o BackHandler da RN não existe; usamos `popstate` + sentinel no history
+ * para não cair na rota anterior da pilha (ex.: Perfil → Financeiro → voltar).
  */
 export function AppBackHandler() {
   const router = useRouter();
@@ -43,17 +48,41 @@ export function AppBackHandler() {
   const segments = useSegments();
 
   useEffect(() => {
+    const onIndexOrPublic =
+      isAppIndexScreen(pathname, segments) || isPublicEntryScreen(pathname, segments);
+
     if (Platform.OS === 'web') {
-      return;
+      if (typeof window === 'undefined') {
+        return undefined;
+      }
+
+      const onPopState = () => {
+        if (onIndexOrPublic) {
+          void confirmExitApplication();
+          window.history.pushState({ appBackHandler: true }, '', window.location.href);
+          return;
+        }
+
+        router.replace(HOME_HREF);
+      };
+
+      // Sentinel: o próximo "voltar" do sistema/navegador dispara popstate aqui,
+      // em vez de restaurar a rota anterior (ex.: /perfil).
+      window.history.pushState({ appBackHandler: true }, '', window.location.href);
+      window.addEventListener('popstate', onPopState);
+
+      return () => {
+        window.removeEventListener('popstate', onPopState);
+      };
     }
 
     const onHardwareBackPress = () => {
-      if (isAppIndexScreen(pathname, segments) || isPublicEntryScreen(pathname, segments)) {
+      if (onIndexOrPublic) {
         void confirmExitApplication();
         return true;
       }
 
-      router.replace('/(tabs)');
+      router.replace(HOME_HREF);
       return true;
     };
 
