@@ -92,11 +92,10 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
         setUserPhone(phone);
         setProfile(sessionProfile?.id ? sessionProfile : null);
 
-        const resolvedFamilyId = sessionProfile?.family_id
-          ? normalizeFamilyCode(sessionProfile.family_id)
-          : phone
-            ? await resolveFamilyIdForPhone(phone)
-            : null;
+        const resolvedFamilyId =
+          normalizeFamilyCode(
+            sessionProfile?.family_id ?? sessionProfile?.codigo_membro ?? null
+          ) || (phone ? await resolveFamilyIdForPhone(phone) : null);
 
         if (!isMounted) {
           return;

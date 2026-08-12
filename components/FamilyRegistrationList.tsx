@@ -44,7 +44,7 @@ type Props = {
   onRegistrationChange?: () => Promise<void> | void;
   showKidsIndicator?: boolean;
   showTeensIndicator?: boolean;
-  /** Audiência individual: só o membro do usuário ativo na lista. */
+  /** Audiência familiar com regras de quórum (cadeado/totem); a lista mostra toda a família. */
   quorumMode?: boolean;
   /** Quórum: check-in confirmado no totem — cadeado fechado e sem desmarcar audiência. */
   quorumTotemCheckinConfirmed?: boolean;
@@ -178,17 +178,7 @@ export const FamilyRegistrationList = ({
     [members, sessionPhone, sessionProfileName]
   );
 
-  const visibleMembers = useMemo(() => {
-    if (!quorumMode) {
-      return members;
-    }
-
-    if (!activeSessionMember) {
-      return [];
-    }
-
-    return [activeSessionMember];
-  }, [activeSessionMember, members, quorumMode]);
+  const visibleMembers = useMemo(() => members, [members]);
 
   const soloMode = useMemo(() => {
     if (!sessionProfile?.id || quorumMode) {
@@ -411,6 +401,15 @@ export const FamilyRegistrationList = ({
 
     const member = members.find((item) => item.id === memberId);
     if (!member) {
+      return;
+    }
+
+    // Quórum: só o integrante da sessão pode marcar/desmarcar a própria presença.
+    if (
+      quorumMode
+      && activeSessionMember
+      && memberId !== activeSessionMember.id
+    ) {
       return;
     }
 
@@ -680,12 +679,18 @@ export const FamilyRegistrationList = ({
               registeredMemberIds.includes(item.id) && !pendingUnregisterIds.includes(item.id);
             const quorumUnregisterLocked =
               quorumMode && quorumTotemCheckinConfirmed && isItemRegistered;
+            const quorumOtherMemberLocked =
+              quorumMode
+              && Boolean(activeSessionMember)
+              && item.id !== activeSessionMember?.id;
+            const rowDisabled =
+              !hasEventOpen || isBusy || quorumUnregisterLocked || quorumOtherMemberLocked;
 
             return (
               <MemberCheckboxItem
                 member={item}
                 minimal={minimal}
-                disabled={!hasEventOpen || isBusy || quorumUnregisterLocked}
+                disabled={rowDisabled}
                 isChecked={
                   pendingRegisterIds.includes(item.id) ||
                   (registeredMemberIds.includes(item.id) && !pendingUnregisterIds.includes(item.id))
@@ -701,7 +706,7 @@ export const FamilyRegistrationList = ({
                 assignedRoomLabel={roomLabelByMemberId[item.id]}
                 assignedRoomIsOverlay={roomOverlayByMemberId[item.id] === true}
                 onToggle={() => {
-                  if (!hasEventOpen || isBusy || quorumUnregisterLocked) {
+                  if (rowDisabled) {
                     return;
                   }
                   void toggleMember(item.id);
