@@ -1,5 +1,5 @@
 /**
- * Gera docs/matriz-acessos-usuarios.md e docs/matriz-acessos-usuarios.pdf
+ * Gera docs/matriz-acessos-usuarios.md, .pdf e .xlsx
  * a partir de scripts/access-matrix-raw.json (export do Supabase).
  *
  * Uso:
@@ -8,6 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -536,8 +537,19 @@ function main() {
   );
   buildPdf(report, users, roleRows, scaleRows, menuRows, gearRows);
 
+  const xlsxScript = path.join(__dirname, 'export-access-matrix-xlsx.mjs');
+  const xlsxResult = spawnSync(process.execPath, [xlsxScript], {
+    cwd: root,
+    encoding: 'utf8',
+    stdio: 'inherit',
+  });
+  if (xlsxResult.status !== 0) {
+    throw new Error('Falha ao gerar o Excel da matriz de acessos.');
+  }
+
   console.log(`MD  → ${outMd}`);
   console.log(`PDF → ${outPdf}`);
+  console.log(`XLSX → ${path.join(root, 'docs', 'matriz-acessos-usuarios.xlsx')}`);
   console.log(`Usuários: ${users.length}`);
 }
 
