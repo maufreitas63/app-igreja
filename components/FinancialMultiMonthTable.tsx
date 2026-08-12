@@ -8,6 +8,7 @@ import {
   Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,8 +18,8 @@ import {
   View,
 } from 'react-native';
 
-/** Largura fixa da coluna Descrição — comporta blocos (ex.: EXTRAORDINÁRIO) sem quebra. */
-const LABEL_COLUMN_WIDTH = 172;
+import { financialReportLabelColumnWidth } from '@/lib/financialReportTableLayout';
+
 const VALUE_COLUMN_WIDTH = 76;
 const BODY_MAX_HEIGHT = 420;
 const ROW_MIN_HEIGHT = 34;
@@ -103,9 +104,10 @@ const TwelveMonthRowDetailBubble = ({
       compareFinancialMonthKeys(right.column.month, left.column.month)
     );
 
-  const detailScrollMaxHeight = Math.min(
-    TWELVE_MONTH_DETAIL_HEIGHT,
-    Math.max(DETAIL_BUBBLE_SCROLL_MIN, windowHeight - DETAIL_BUBBLE_CHROME_RESERVE)
+  const cardMaxHeight = Math.min(windowHeight * 0.9, windowHeight - 48);
+  const detailScrollMaxHeight = Math.max(
+    DETAIL_BUBBLE_SCROLL_MIN,
+    Math.min(TWELVE_MONTH_DETAIL_HEIGHT, cardMaxHeight - DETAIL_BUBBLE_CHROME_RESERVE)
   );
   const naturalContentHeight = monthEntries.length * MONTH_DETAIL_ROW_HEIGHT;
   const needsScroll = naturalContentHeight > detailScrollMaxHeight + 1;
@@ -114,7 +116,7 @@ const TwelveMonthRowDetailBubble = ({
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.bubbleBackdrop} onPress={onClose}>
         <Pressable
-          style={[styles.bubbleCard, { maxHeight: Math.min(windowHeight * 0.9, windowHeight - 48) }]}
+          style={[styles.bubbleCard, { maxHeight: cardMaxHeight }]}
           onPress={(event) => event.stopPropagation()}
         >
           <View style={styles.bubbleArrow} />
@@ -139,12 +141,18 @@ const TwelveMonthRowDetailBubble = ({
           </View>
 
           <ScrollView
-            style={[styles.monthDetailScroll, { maxHeight: detailScrollMaxHeight }]}
+            style={[
+              styles.monthDetailScroll,
+              { maxHeight: detailScrollMaxHeight },
+              Platform.OS === 'web' ? ({ overflowY: 'scroll' } as object) : null,
+            ]}
             contentContainerStyle={styles.monthDetailScrollContent}
             nestedScrollEnabled
-            scrollEnabled={needsScroll}
-            showsVerticalScrollIndicator={needsScroll}
+            scrollEnabled
+            showsVerticalScrollIndicator
+            persistentScrollbar={needsScroll}
             bounces={needsScroll}
+            indicatorStyle="black"
           >
             {monthEntries.map(({ column, value }) => {
               const negative = value < 0;
@@ -181,6 +189,8 @@ export function FinancialMultiMonthTable({
   emptyMessage,
   icon = 'table',
 }: FinancialMultiMonthTableProps) {
+  const { width: windowWidth } = useWindowDimensions();
+  const labelColumnWidth = financialReportLabelColumnWidth(windowWidth);
   const [selectedRow, setSelectedRow] = useState<TwelveMonthMatrixRow | null>(null);
   const [rowHeights, setRowHeights] = useState<Record<string, number>>({});
   const labelsScrollRef = useRef<ScrollView>(null);
@@ -247,7 +257,7 @@ export function FinancialMultiMonthTable({
 
       <View style={styles.tableFrame}>
         <View style={styles.tableLayout}>
-          <View style={styles.labelColumn}>
+          <View style={[styles.labelColumn, { width: labelColumnWidth }]}>
             <View style={styles.headerLabelCell}>
               <Text style={styles.headerLabel}>Descrição</Text>
             </View>
@@ -393,7 +403,6 @@ const styles = StyleSheet.create({
     maxHeight: BODY_MAX_HEIGHT + 40,
   },
   labelColumn: {
-    width: LABEL_COLUMN_WIDTH,
     borderRightWidth: 1,
     borderRightColor: '#E2E8F0',
     backgroundColor: '#F8FAFC',
@@ -402,7 +411,7 @@ const styles = StyleSheet.create({
   headerLabelCell: {
     minHeight: 36,
     paddingVertical: 8,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     justifyContent: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#CBD5E1',
@@ -424,7 +433,7 @@ const styles = StyleSheet.create({
   labelBodyRow: {
     minHeight: ROW_MIN_HEIGHT,
     paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -620,6 +629,7 @@ const styles = StyleSheet.create({
   },
   monthDetailScrollContent: {
     gap: 0,
+    paddingRight: 4,
   },
   monthDetailDataRow: {
     flexDirection: 'row',

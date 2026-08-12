@@ -1,6 +1,17 @@
 /** Altura do cabeçalho da grade (Descrição / Valor / obs.). */
 export const FINANCIAL_REPORT_TABLE_HEADER_HEIGHT = 36;
 
+/** Coluna Descrição mais estreita no mobile para o valor não ser recortado. */
+export const FINANCIAL_REPORT_LABEL_COLUMN_WIDTH_COMPACT = 108;
+export const FINANCIAL_REPORT_LABEL_COLUMN_WIDTH_WIDE = 132;
+
+/** Largura da coluna Descrição / rótulos (Saldo anterior, EXTRAORDINÁRIO, …). */
+export function financialReportLabelColumnWidth(windowWidth: number): number {
+  return windowWidth < 560
+    ? FINANCIAL_REPORT_LABEL_COLUMN_WIDTH_COMPACT
+    : FINANCIAL_REPORT_LABEL_COLUMN_WIDTH_WIDE;
+}
+
 /** Altura do corpo rolável — comparativos e telas amplas. */
 export const FINANCIAL_REPORT_TABLE_BODY_MAX_HEIGHT = 420;
 

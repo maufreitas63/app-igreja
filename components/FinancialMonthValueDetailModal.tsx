@@ -8,6 +8,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import {
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -38,7 +39,7 @@ type FinancialMonthValueDetailModalProps = {
 
 /**
  * Balão modal Mês/Valor (ex.: detalhe de conta no resultado histórico ou 12 meses).
- * Ordenação esperada já decrescente; sempre habilita rolagem quando o conteúdo excede a tela.
+ * Ordenação esperada já decrescente; rolagem com indicador quando o conteúdo excede a tela.
  */
 export function FinancialMonthValueDetailModal({
   title,
@@ -49,9 +50,10 @@ export function FinancialMonthValueDetailModal({
 }: FinancialMonthValueDetailModalProps) {
   const { height: windowHeight } = useWindowDimensions();
 
-  const detailScrollMaxHeight = Math.min(
-    DETAIL_SCROLL_CAP,
-    Math.max(DETAIL_BUBBLE_SCROLL_MIN, windowHeight - DETAIL_BUBBLE_CHROME_RESERVE)
+  const cardMaxHeight = Math.min(windowHeight * 0.9, windowHeight - 48);
+  const detailScrollMaxHeight = Math.max(
+    DETAIL_BUBBLE_SCROLL_MIN,
+    Math.min(DETAIL_SCROLL_CAP, cardMaxHeight - DETAIL_BUBBLE_CHROME_RESERVE)
   );
   const naturalContentHeight = Math.max(items.length, 1) * MONTH_DETAIL_ROW_HEIGHT;
   const needsScroll = naturalContentHeight > detailScrollMaxHeight + 1;
@@ -60,7 +62,7 @@ export function FinancialMonthValueDetailModal({
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.bubbleBackdrop} onPress={onClose}>
         <Pressable
-          style={[styles.bubbleCard, { maxHeight: Math.min(windowHeight * 0.9, windowHeight - 48) }]}
+          style={[styles.bubbleCard, { maxHeight: cardMaxHeight }]}
           onPress={(event) => event.stopPropagation()}
         >
           <View style={styles.bubbleArrow} />
@@ -85,11 +87,16 @@ export function FinancialMonthValueDetailModal({
           </View>
 
           <ScrollView
-            style={[styles.monthDetailScroll, { maxHeight: detailScrollMaxHeight }]}
+            style={[
+              styles.monthDetailScroll,
+              { maxHeight: detailScrollMaxHeight },
+              Platform.OS === 'web' ? ({ overflowY: 'scroll' } as object) : null,
+            ]}
             contentContainerStyle={styles.monthDetailScrollContent}
             nestedScrollEnabled
-            scrollEnabled={needsScroll || items.length > 8}
+            scrollEnabled
             showsVerticalScrollIndicator
+            persistentScrollbar={needsScroll}
             bounces={needsScroll}
             indicatorStyle="black"
           >
@@ -220,6 +227,7 @@ const styles = StyleSheet.create({
   monthDetailScrollContent: {
     gap: 0,
     paddingBottom: 4,
+    paddingRight: 4,
   },
   monthDetailDataRow: {
     flexDirection: 'row',

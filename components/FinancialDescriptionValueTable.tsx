@@ -24,17 +24,17 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
 import {
   FINANCIAL_REPORT_TABLE_BODY_MAX_HEIGHT,
+  financialReportLabelColumnWidth,
   financialReportTableFrameStyle,
   financialReportTableLayoutMaxHeight,
 } from '@/lib/financialReportTableLayout';
 
-/** Largura fixa da coluna Descrição — comporta blocos (ex.: EXTRAORDINÁRIO) sem quebra. */
-const LABEL_COLUMN_WIDTH = 172;
 const VALUE_COLUMN_MIN_WIDTH = 108;
 const ICON_SLOT_WIDTH = 24;
 const ICON_COLUMN_WIDTH = ICON_SLOT_WIDTH * 3 + 8;
@@ -82,7 +82,7 @@ const AmountCell = ({
       ]}
       numberOfLines={1}
       adjustsFontSizeToFit
-      minimumFontScale={0.85}
+      minimumFontScale={0.7}
     >
       {formatBulletinAmount(value)}
     </Text>
@@ -451,6 +451,8 @@ export function FinancialDescriptionValueTable({
   onRowPress,
 }: FinancialDescriptionValueTableProps) {
   const router = useRouter();
+  const { width: windowWidth } = useWindowDimensions();
+  const labelColumnWidth = financialReportLabelColumnWidth(windowWidth);
   const [openCommentDetails, setOpenCommentDetails] = useState<FinancialBulletinCommentDetail[] | null>(
     null
   );
@@ -518,7 +520,8 @@ export function FinancialDescriptionValueTable({
   const valueColumnMinWidth = showCommentIcons ? 0 : VALUE_COLUMN_MIN_WIDTH;
   const tableMinWidth = showCommentIcons
     ? undefined
-    : LABEL_COLUMN_WIDTH + VALUE_COLUMN_MIN_WIDTH;
+    : labelColumnWidth + VALUE_COLUMN_MIN_WIDTH;
+  const labelColumnStyle = [styles.labelColumnCell, { width: labelColumnWidth }];
 
   const tablePanel = (
     <View
@@ -536,7 +539,7 @@ export function FinancialDescriptionValueTable({
         ]}
       >
         <View style={styles.tableHeaderRow}>
-          <View style={[styles.headerLabelCell, styles.labelColumnCell]}>
+          <View style={[styles.headerLabelCell, labelColumnStyle]}>
             <Text style={styles.headerLabel}>Descrição</Text>
           </View>
           <View style={[styles.headerValueCell, { minWidth: valueColumnMinWidth }]}>
@@ -569,7 +572,7 @@ export function FinancialDescriptionValueTable({
 
             const rowBody = (
               <>
-                <View style={[styles.labelBodyCell, styles.labelColumnCell]}>
+                <View style={[styles.labelBodyCell, labelColumnStyle]}>
                   <View style={styles.labelBodyInner}>
                     <Text
                       style={[labelStyleForLevel(row.level), styles.labelBodyText]}
@@ -710,7 +713,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
   },
   labelColumnCell: {
-    width: LABEL_COLUMN_WIDTH,
     flexShrink: 0,
     borderRightWidth: 1,
     borderRightColor: '#E2E8F0',
@@ -719,7 +721,7 @@ const styles = StyleSheet.create({
   headerLabelCell: {
     minHeight: 36,
     paddingVertical: 8,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     justifyContent: 'center',
   },
   headerLabel: {
@@ -759,7 +761,7 @@ const styles = StyleSheet.create({
   },
   labelBodyCell: {
     paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     justifyContent: 'center',
   },
   labelBodyInner: {
@@ -836,12 +838,16 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   valueCell: {
+    width: '100%',
     textAlign: 'right',
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 15,
+    ...(Platform.OS === 'web'
+      ? ({ whiteSpace: 'nowrap', overflow: 'visible' } as object)
+      : null),
   },
   valueCellCompact: {
-    fontSize: 12,
+    fontSize: 11,
     lineHeight: 14,
   },
   valueBold: {

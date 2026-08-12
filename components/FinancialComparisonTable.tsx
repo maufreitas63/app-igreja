@@ -11,18 +11,18 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
 import {
   FINANCIAL_REPORT_TABLE_LAYOUT_MAX_HEIGHT,
+  financialReportLabelColumnWidth,
   financialReportTableBodyScrollStyle,
   financialReportTableFrameStyle,
   financialReportTableLayoutStyle,
 } from '@/lib/financialReportTableLayout';
 
-/** Largura fixa da coluna Descrição — comporta blocos (ex.: EXTRAORDINÁRIO) sem quebra. */
-const LABEL_COLUMN_WIDTH = 172;
 const VALUE_COLUMN_WIDTH = 88;
 const TRIPLE_VALUES_TABLE_WIDTH = VALUE_COLUMN_WIDTH * 3;
 const ROW_MIN_HEIGHT = 34;
@@ -145,6 +145,8 @@ export function FinancialComparisonTable({
   emptyMessage,
   icon = 'bar-chart',
 }: FinancialComparisonTableProps) {
+  const { width: windowWidth } = useWindowDimensions();
+  const labelColumnWidth = financialReportLabelColumnWidth(windowWidth);
   const isSingleColumn = displayMode === 'single';
   const valuesTableWidth = isSingleColumn ? VALUE_COLUMN_WIDTH : TRIPLE_VALUES_TABLE_WIDTH;
   const labelsScrollRef = useRef<ScrollView>(null);
@@ -188,7 +190,7 @@ export function FinancialComparisonTable({
 
       <View style={styles.tableFrame}>
         <View style={styles.tableLayout}>
-          <View style={styles.labelColumn}>
+          <View style={[styles.labelColumn, { width: labelColumnWidth }]}>
             <View style={styles.headerLabelCell}>
               <Text style={styles.headerLabel}>Descrição</Text>
             </View>
@@ -310,7 +312,6 @@ const styles = StyleSheet.create({
   tableFrame: financialReportTableFrameStyle,
   tableLayout: financialReportTableLayoutStyle,
   labelColumn: {
-    width: LABEL_COLUMN_WIDTH,
     height: FINANCIAL_REPORT_TABLE_LAYOUT_MAX_HEIGHT,
     borderRightWidth: 1,
     borderRightColor: '#E2E8F0',
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
   headerLabelCell: {
     minHeight: 36,
     paddingVertical: 8,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     justifyContent: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#CBD5E1',
@@ -341,7 +342,7 @@ const styles = StyleSheet.create({
   labelBodyRow: {
     minHeight: ROW_MIN_HEIGHT,
     paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     justifyContent: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
