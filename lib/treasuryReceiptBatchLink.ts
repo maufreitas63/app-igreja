@@ -119,9 +119,13 @@ const finalizeReportMessage = (report: TreasuryReceiptBatchLinkReport) => {
     report.skippedAlreadyLinked.length === 0 &&
     report.summaryReports.every((item) => !item.error)
   ) {
+    const noSummaryHint =
+      report.summaryReports.length === 0
+        ? ' Nenhum “AAAAMM Resumo Financeiro.jpg” (nem updated_) encontrado na pasta selecionada.'
+        : '';
     report.message = report.dryRun
-      ? 'Simulação concluída: nenhum comprovante novo seria vinculado.'
-      : 'Nenhum comprovante novo foi vinculado.';
+      ? `Simulação concluída: nenhum comprovante novo seria vinculado.${noSummaryHint}`
+      : `Nenhum comprovante novo foi vinculado.${noSummaryHint}`;
     report.success = report.errors.length === 0 && report.summaryReports.every((item) => !item.error);
     return;
   }

@@ -943,14 +943,29 @@ export function MaintenanceFinancialsCard({
     });
 
     if ('cancelled' in result && result.cancelled) {
+      Toast.show({
+        type: 'info',
+        text1: 'Comprovantes',
+        text2: 'Seleção de pasta cancelada — nenhum arquivo foi processado.',
+        visibilityTime: 3500,
+      });
       return;
     }
 
+    const summaryCount = result.report?.summaryReports?.length ?? 0;
+    const summaryErrors =
+      result.report?.summaryReports?.filter((item) => Boolean(item.error)).length ?? 0;
+
     Toast.show({
-      type: result.success ? 'success' : 'error',
+      type: result.success && summaryErrors === 0 ? 'success' : 'error',
       text1: 'Comprovantes',
-      text2: result.message,
-      visibilityTime: result.success ? 5000 : 6000,
+      text2:
+        summaryCount > 0
+          ? `${result.message} (${summaryCount - summaryErrors} resumo(s) ok${
+              summaryErrors ? `, ${summaryErrors} com erro` : ''
+            })`
+          : result.message,
+      visibilityTime: result.success ? 5500 : 7000,
     });
   };
 

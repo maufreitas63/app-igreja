@@ -1,7 +1,7 @@
 import { parseFinancialAnalyticalSummaryFileName } from '@/lib/financialAnalyticalSummary';
 import {
   buildUpdatedTreasuryReceiptFileName,
-  isTreasuryReceiptFileName,
+  hasTreasuryReceiptImageExtension,
   parseTreasuryReceiptFileName,
   resolveTreasuryReceiptLinkPosition,
 } from '@/lib/treasuryReceiptBatchPath';
@@ -51,19 +51,38 @@ const createMarkProcessed =
     const processedName = buildUpdatedTreasuryReceiptFileName(canonicalFileName);
     const currentName = fileName;
 
-    if (currentName !== canonicalFileName) {
-      await fileHandle.move!(canonicalFileName);
+    if (currentName !== canonicalFileName && currentName !== processedName) {
+      try {
+        await fileHandle.move!(canonicalFileName);
+      } catch {
+        // Já pode estar no nome canônico / updated_.
+      }
     }
 
-    await fileHandle.move!(processedName);
+    if (currentName !== processedName) {
+      try {
+        await fileHandle.move!(processedName);
+      } catch {
+        // Se já estiver updated_, segue sem falhar o upload na nuvem.
+      }
+    }
   };
+
+/** Aceita .jpg/.jpeg, inclusive já renomeados com updated_ (necessário p/ reenviar Resumo). */
+const isCollectableTreasuryImage = (fileName: string) => {
+  if (typeof fileName !== 'string' || !fileName.trim()) {
+    return false;
+  }
+
+  return hasTreasuryReceiptImageExtension(fileName.trim());
+};
 
 const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleLike) => {
   const files: TreasuryReceiptFolderFile[] = [];
   const summaryFiles: TreasuryReceiptSummaryFolderFile[] = [];
 
   for await (const [fileName, handle] of directoryHandle.entries()) {
-    if (handle.kind !== 'file' || !isTreasuryReceiptFileName(fileName)) {
+    if (handle.kind !== 'file' || !isCollectableTreasuryImage(fileName)) {
       continue;
     }
 
@@ -85,6 +104,11 @@ const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleL
           canRename
         ),
       });
+      continue;
+    }
+
+    // Comprovantes já processados (updated_) não reentram no vínculo por referencia.
+    if (fileName.trim().toLowerCase().startsWith('updated_')) {
       continue;
     }
 

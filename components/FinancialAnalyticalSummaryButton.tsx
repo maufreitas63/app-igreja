@@ -74,18 +74,26 @@ export function FinancialAnalyticalSummaryButton({ month }: FinancialAnalyticalS
 
   return (
     <>
-      <TouchableOpacity
-        style={styles.openButton}
-        activeOpacity={0.85}
-        onPress={() => setVisible(true)}
-        accessibilityRole="button"
-        accessibilityLabel="Relatório Analítico / Resumo Financeiro"
-        disabled={!month}
-      >
-        <FontAwesome name="file-image-o" size={16} color="#0F766E" style={styles.openButtonIcon} />
-        <Text style={styles.openButtonText}>Relatório Analítico / Resumo Financeiro</Text>
-        <FontAwesome name="external-link" size={13} color="#64748B" />
-      </TouchableOpacity>
+      <View style={styles.section}>
+        <TouchableOpacity
+          style={styles.sectionHeader}
+          activeOpacity={0.85}
+          onPress={() => setVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Relatório Analítico / Resumo Financeiro"
+          disabled={!month}
+        >
+          <View style={styles.sectionHeaderText}>
+            <Text style={styles.sectionLabel}>Relatório Analítico / Resumo Financeiro</Text>
+            {month ? (
+              <Text style={styles.sectionMeta}>{formatFinancialMonthLabel(month)}</Text>
+            ) : (
+              <Text style={styles.sectionMeta}>Selecione o mês de referência</Text>
+            )}
+          </View>
+          <FontAwesome name="chevron-right" size={14} color="#94A3B8" />
+        </TouchableOpacity>
+      </View>
 
       <Modal
         transparent
@@ -140,25 +148,36 @@ export function FinancialAnalyticalSummaryButton({ month }: FinancialAnalyticalS
 }
 
 const styles = StyleSheet.create({
-  openButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#FFFFFF',
+  section: {
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    backgroundColor: 'rgba(30, 58, 138, 0.12)',
+    overflow: 'hidden',
   },
-  openButtonIcon: {
-    marginTop: 1,
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    padding: 14,
+    backgroundColor: '#FFFFFF',
   },
-  openButtonText: {
+  sectionHeaderText: {
     flex: 1,
-    color: '#0F766E',
-    fontSize: 14,
-    fontWeight: '700',
+    gap: 4,
+  },
+  sectionLabel: {
+    color: '#3A96DD',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  sectionMeta: {
+    color: '#5AA8E3',
+    fontSize: 13,
+    fontWeight: '600',
   },
   modalRoot: {
     flex: 1,

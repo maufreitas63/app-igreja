@@ -30,7 +30,7 @@ export const saveTreasuryReceiptsDir = (value: string) => {
 /** Extensão canônica da referencia no banco e após normalização de nomes locais. */
 export const TREASURY_RECEIPT_CANONICAL_EXTENSION = '.jpg';
 
-const hasTreasuryReceiptImageExtension = (fileName: string) => {
+export const hasTreasuryReceiptImageExtension = (fileName: string) => {
   const lower = fileName.toLowerCase();
 
   return lower.endsWith('.jpeg') || lower.endsWith('.jpg');
