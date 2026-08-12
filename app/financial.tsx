@@ -3,6 +3,7 @@ import { FinancialMonthlyBulletin } from '@/components/FinancialMonthlyBulletin'
 import { FinancialMonthlyBudgetComparison } from '@/components/FinancialMonthlyBudgetComparison';
 import { FinancialLastTwelveMonths } from '@/components/FinancialLastTwelveMonths';
 import { FinancialHistoricalResult } from '@/components/FinancialHistoricalResult';
+import { FinancialAnalyticalSummaryButton } from '@/components/FinancialAnalyticalSummaryButton';
 import { FinancialMonthlyComparison } from '@/components/FinancialMonthlyComparison';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import {
@@ -40,7 +41,8 @@ type FinancialSectionId =
   | 'twelveMonths'
   | 'historical'
   | 'budget'
-  | 'bankBalance';
+  | 'bankBalance'
+  | 'analyticalSummary';
 
 const FINANCIAL_SECTION_ORDER: FinancialSectionId[] = [
   'result',
@@ -49,6 +51,7 @@ const FINANCIAL_SECTION_ORDER: FinancialSectionId[] = [
   'historical',
   'budget',
   'bankBalance',
+  'analyticalSummary',
 ];
 
 export default function FinancialScreen() {
@@ -413,6 +416,13 @@ export default function FinancialScreen() {
                 ) : null}
               </View>
             ) : null}
+          </View>
+        );
+
+      case 'analyticalSummary':
+        return (
+          <View key="analyticalSummary" style={styles.analyticalSummarySection}>
+            <FinancialAnalyticalSummaryButton month={selectedMonth} />
           </View>
         );
 
@@ -950,6 +960,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(52, 211, 153, 0.35)',
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
+  },
+  analyticalSummarySection: {
+    width: '100%',
+    alignSelf: 'stretch',
   },
   monthDropdownWrap: {
     width: 209,

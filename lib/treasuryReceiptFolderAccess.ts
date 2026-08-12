@@ -13,8 +13,19 @@ export type TreasuryReceiptFolderFile = {
   markProcessed: () => Promise<void>;
 };
 
+/** Arquivo mensal `AAAAMM Resumo Financeiro.jpg` (não vinculado a lançamento). */
+export type TreasuryReceiptSummaryFolderFile = {
+  fileName: string;
+  periodCode: string;
+  canonicalFileName: string;
+  originalFileName?: string;
+  readDataUrl: () => Promise<string>;
+  markProcessed: () => Promise<void>;
+};
+
 export type TreasuryReceiptFolderAccess = {
   files: TreasuryReceiptFolderFile[];
+  summaryFiles: TreasuryReceiptSummaryFolderFile[];
   canRenameAfterUpload: boolean;
 };
 

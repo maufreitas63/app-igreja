@@ -1,3 +1,4 @@
+import { parseFinancialAnalyticalSummaryFileName } from '@/lib/financialAnalyticalSummary';
 import {
   buildUpdatedTreasuryReceiptFileName,
   isTreasuryReceiptFileName,
@@ -7,6 +8,7 @@ import {
 import type {
   TreasuryReceiptFolderAccess,
   TreasuryReceiptFolderFile,
+  TreasuryReceiptSummaryFolderFile,
 } from '@/lib/treasuryReceiptFolderAccess';
 
 type FileSystemFileHandleLike = {
@@ -39,8 +41,26 @@ const readFileAsDataUrl = (file: File) =>
     reader.readAsDataURL(file);
   });
 
+const createMarkProcessed =
+  (fileHandle: FileSystemFileHandleLike, fileName: string, canonicalFileName: string, canRename: boolean) =>
+  async () => {
+    if (!canRename) {
+      throw new Error('O navegador não permitiu renomear arquivos nesta pasta.');
+    }
+
+    const processedName = buildUpdatedTreasuryReceiptFileName(canonicalFileName);
+    const currentName = fileName;
+
+    if (currentName !== canonicalFileName) {
+      await fileHandle.move!(canonicalFileName);
+    }
+
+    await fileHandle.move!(processedName);
+  };
+
 const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleLike) => {
   const files: TreasuryReceiptFolderFile[] = [];
+  const summaryFiles: TreasuryReceiptSummaryFolderFile[] = [];
 
   for await (const [fileName, handle] of directoryHandle.entries()) {
     if (handle.kind !== 'file' || !isTreasuryReceiptFileName(fileName)) {
@@ -49,6 +69,25 @@ const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleL
 
     const fileHandle = handle as FileSystemFileHandleLike;
     const canRename = typeof fileHandle.move === 'function';
+    const summaryParsed = parseFinancialAnalyticalSummaryFileName(fileName);
+
+    if (summaryParsed) {
+      summaryFiles.push({
+        fileName,
+        periodCode: summaryParsed.periodCode,
+        canonicalFileName: summaryParsed.canonicalFileName,
+        originalFileName: fileName !== summaryParsed.canonicalFileName ? fileName : undefined,
+        readDataUrl: async () => readFileAsDataUrl(await fileHandle.getFile()),
+        markProcessed: createMarkProcessed(
+          fileHandle,
+          fileName,
+          summaryParsed.canonicalFileName,
+          canRename
+        ),
+      });
+      continue;
+    }
+
     const parsed = parseTreasuryReceiptFileName(fileName);
 
     if (!parsed) {
@@ -65,21 +104,7 @@ const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleL
       position: linkPosition,
       originalFileName: fileName !== canonicalFileName ? fileName : undefined,
       readDataUrl: async () => readFileAsDataUrl(await fileHandle.getFile()),
-      markProcessed: async () => {
-        if (!canRename) {
-          throw new Error('O navegador não permitiu renomear arquivos nesta pasta.');
-        }
-
-        const processedName = buildUpdatedTreasuryReceiptFileName(canonicalFileName);
-        const currentName = fileName;
-
-        if (currentName !== canonicalFileName) {
-          await fileHandle.move!(canonicalFileName);
-        }
-
-        const handleAfterCanonical = fileHandle;
-        await handleAfterCanonical.move!(processedName);
-      },
+      markProcessed: createMarkProcessed(fileHandle, fileName, canonicalFileName, canRename),
     });
   }
 
@@ -93,7 +118,9 @@ const collectDirectoryFiles = async (directoryHandle: FileSystemDirectoryHandleL
     return left.position - right.position;
   });
 
-  return files;
+  summaryFiles.sort((left, right) => right.periodCode.localeCompare(left.periodCode));
+
+  return { files, summaryFiles };
 };
 
 export const isTreasuryReceiptFolderAccessSupported = () =>
@@ -120,10 +147,11 @@ export async function pickTreasuryReceiptFolderFiles(): Promise<TreasuryReceiptF
     throw error;
   }
 
-  const files = await collectDirectoryFiles(directoryHandle);
+  const { files, summaryFiles } = await collectDirectoryFiles(directoryHandle);
 
   return {
     files,
+    summaryFiles,
     canRenameAfterUpload: true,
   };
 }

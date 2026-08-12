@@ -928,7 +928,7 @@ export function MaintenanceFinancialsCard({
 
     const confirmed = await confirmDialog(
       receiptBatchDryRun ? 'Simular comprovantes' : 'Processar comprovantes',
-      `${receiptBatchDryRun ? 'Simulação' : 'Vinculação'} de JPG/JPEG aos lançamentos REALIZADO pelo campo referencia.\n\nO navegador abrirá o seletor de pasta (Chrome/Edge no desktop). A pasta exibida abaixo é apenas referência visual — selecione a pasta correta no diálogo.\n\nReferência: ${receiptsDir.trim() || DEFAULT_TREASURY_RECEIPTS_DIR}${receiptBatchForce ? '\n\nSubstituir: comprovantes existentes na mesma posição serão trocados.' : ''}${receiptBatchDryRun ? '\n\nNenhum arquivo será enviado nem renomeado.' : '\n\nArquivos vinculados serão renomeados com updated_ após sucesso.'}`,
+      `${receiptBatchDryRun ? 'Simulação' : 'Vinculação'} de JPG/JPEG aos lançamentos REALIZADO pelo campo referencia.\n\nTambém carrega o relatório mensal no padrão AAAAMM Resumo Financeiro.jpg (ex.: 202607 Resumo Financeiro.jpg).\n\nO navegador abrirá o seletor de pasta (Chrome/Edge no desktop). A pasta exibida abaixo é apenas referência visual — selecione a pasta correta no diálogo.\n\nReferência: ${receiptsDir.trim() || DEFAULT_TREASURY_RECEIPTS_DIR}${receiptBatchForce ? '\n\nSubstituir: comprovantes existentes na mesma posição serão trocados.' : ''}${receiptBatchDryRun ? '\n\nNenhum arquivo será enviado nem renomeado.' : '\n\nArquivos vinculados serão renomeados com updated_ após sucesso.'}`,
       modeLabel,
       'Cancelar'
     );
@@ -1396,7 +1396,11 @@ export function MaintenanceFinancialsCard({
           title="Comprovantes em lote"
           subtitle={
             receiptBatchReport
-              ? `${receiptBatchReport.linked.length} vinculado(s) · ${receiptBatchReport.renamedOnly.length} renomeado(s)`
+              ? `${receiptBatchReport.linked.length} vinculado(s) · ${receiptBatchReport.renamedOnly.length} renomeado(s)${
+                  receiptBatchReport.summaryReports?.length
+                    ? ` · ${receiptBatchReport.summaryReports.length} resumo(s)`
+                    : ''
+                }`
               : 'Vincular JPG locais pelo campo referencia'
           }
           expanded={expandedSection === 'receipt_batch'}
@@ -1544,6 +1548,22 @@ export function MaintenanceFinancialsCard({
                   >
                     [OK] {item.fileName}
                     {item.renamed ? ' → updated_' : item.renameError ? ' (sem rename)' : ''}
+                  </Text>
+                ))}
+
+                {(receiptBatchReport.summaryReports ?? []).slice(0, 6).map((item) => (
+                  <Text
+                    key={`summary-${item.periodCode}-${item.fileName}`}
+                    style={[
+                      item.error ? styles.errorLineText : styles.receiptBatchReportOk,
+                      minimal &&
+                        (item.error
+                          ? styles.errorLineTextMinimal
+                          : styles.receiptBatchReportOkMinimal),
+                    ]}
+                  >
+                    {item.error ? '[erro resumo]' : '[resumo]'} {item.fileName}
+                    {item.error ? `: ${item.error}` : ` · ${item.periodCode}`}
                   </Text>
                 ))}
 
