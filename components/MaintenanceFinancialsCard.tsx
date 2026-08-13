@@ -204,6 +204,7 @@ export function MaintenanceFinancialsCard({
   } = useMaintenanceFinancials(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
+  const [convertingPdfFolder, setConvertingPdfFolder] = useState(false);
   const formBusy =
     importing || emptyingMonth || savingEntryId !== null || processingReceiptBatch || convertingPdfFolder;
 
@@ -239,7 +240,6 @@ export function MaintenanceFinancialsCard({
   const [savingRename, setSavingRename] = useState(false);
   const [receiptBatchDryRun, setReceiptBatchDryRun] = useState(false);
   const [receiptBatchForce, setReceiptBatchForce] = useState(false);
-  const [convertingPdfFolder, setConvertingPdfFolder] = useState(false);
 
   const toggleSection = useCallback((section: MaintenanceSectionKey) => {
     setExpandedSection((current) => (current === section ? null : section));
