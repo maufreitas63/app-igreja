@@ -1,18 +1,5 @@
 import type { PdfFolderToJpgResult } from '@/lib/pdfFolderToJpg';
 
-type DirectoryHandle = FileSystemDirectoryHandle;
-type FileHandle = FileSystemFileHandle;
-
-declare global {
-  interface Window {
-    showDirectoryPicker?: (options?: {
-      id?: string;
-      mode?: 'read' | 'readwrite';
-      startIn?: 'documents' | 'desktop' | 'downloads' | string;
-    }) => Promise<DirectoryHandle>;
-  }
-}
-
 const JPEG_QUALITY = 0.85;
 const RENDER_SCALE = 2;
 
@@ -44,21 +31,100 @@ const outputsAlreadyExist = (pdfBaseName: string, namesLower: Set<string>) => {
   return false;
 };
 
-async function listTopLevelEntries(dirHandle: DirectoryHandle) {
-  const files: Array<{ name: string; handle: FileHandle }> = [];
-  const namesLower = new Set<string>();
+const getRelativePathParts = (file: File) => {
+  const relative =
+    typeof (file as File & { webkitRelativePath?: string }).webkitRelativePath === 'string' &&
+    (file as File & { webkitRelativePath: string }).webkitRelativePath.trim()
+      ? (file as File & { webkitRelativePath: string }).webkitRelativePath
+      : file.name;
 
-  // entries() retorna só o nível da pasta (não entra em subpastas).
-  for await (const [name, handle] of dirHandle.entries()) {
-    namesLower.add(name.toLowerCase());
+  return relative
+    .replace(/\\/g, '/')
+    .split('/')
+    .map((part) => part.trim())
+    .filter(Boolean);
+};
 
-    if (handle.kind === 'file') {
-      files.push({ name, handle: handle as FileHandle });
-    }
+const resolveSelectedFolderRootName = (browserFiles: File[]) => {
+  const paths = browserFiles.map(getRelativePathParts).filter((parts) => parts.length > 0);
+
+  if (!paths.length) {
+    return null;
   }
 
-  return { files, namesLower };
-}
+  const rootCandidate = paths[0]![0]!;
+  const allShareRoot = paths.every((parts) => parts[0] === rootCandidate);
+  const hasNestedOrFileUnderRoot = paths.some((parts) => parts.length >= 2);
+
+  if (allShareRoot && hasNestedOrFileUnderRoot) {
+    return rootCandidate;
+  }
+
+  return null;
+};
+
+/** Só arquivos diretamente na pasta escolhida (desconsidera subpastas). */
+const isTopLevelFolderFile = (file: File, selectedRootName: string | null) => {
+  const parts = getRelativePathParts(file);
+
+  if (!parts.length) {
+    return false;
+  }
+
+  if (selectedRootName) {
+    return parts.length === 2 && parts[0] === selectedRootName;
+  }
+
+  return parts.length === 1;
+};
+
+const pickFolderFilesViaInput = (): Promise<File[] | null> =>
+  new Promise((resolve) => {
+    if (typeof document === 'undefined') {
+      resolve(null);
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '.pdf,application/pdf,image/jpeg,.jpg,.jpeg';
+    input.setAttribute('webkitdirectory', '');
+    input.setAttribute('directory', '');
+    // @ts-expect-error — propriedade legada ainda usada pelos browsers
+    input.webkitdirectory = true;
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    input.style.top = '0';
+    input.tabIndex = -1;
+
+    let settled = false;
+
+    const finish = (value: File[] | null) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      input.removeEventListener('change', onChange);
+      input.removeEventListener('cancel', onCancel);
+      input.remove();
+      resolve(value);
+    };
+
+    const onChange = () => {
+      finish(Array.from(input.files ?? []));
+    };
+
+    const onCancel = () => {
+      finish(null);
+    };
+
+    input.addEventListener('change', onChange);
+    input.addEventListener('cancel', onCancel);
+    document.body.appendChild(input);
+    input.click();
+  });
 
 async function ensurePdfJs() {
   const pdfjs = await import('pdfjs-dist');
@@ -73,12 +139,12 @@ async function ensurePdfJs() {
 async function renderPdfPagesToJpegBlobs(file: File): Promise<Blob[]> {
   const pdfjs = await ensurePdfJs();
   const data = new Uint8Array(await file.arrayBuffer());
-  const document = await pdfjs.getDocument({ data }).promise;
+  const pdfDocument = await pdfjs.getDocument({ data }).promise;
   const blobs: Blob[] = [];
 
   try {
-    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-      const page = await document.getPage(pageNumber);
+    for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
+      const page = await pdfDocument.getPage(pageNumber);
       const viewport = page.getViewport({ scale: RENDER_SCALE });
       const canvas = globalThis.document.createElement('canvas');
       canvas.width = Math.max(1, Math.floor(viewport.width));
@@ -113,64 +179,60 @@ async function renderPdfPagesToJpegBlobs(file: File): Promise<Blob[]> {
       page.cleanup();
     }
   } finally {
-    await document.destroy();
+    await pdfDocument.destroy();
   }
 
   return blobs;
 }
 
-async function writeBlobToDirectory(
-  dirHandle: DirectoryHandle,
-  fileName: string,
-  blob: Blob
-) {
-  const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
-  const writable = await fileHandle.createWritable();
-  await writable.write(blob);
-  await writable.close();
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.rel = 'noopener';
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }
 
+export type PdfFolderPick = {
+  topLevelFiles: File[];
+};
+
 export const isPdfFolderToJpgSupported = () =>
-  typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function';
+  typeof window !== 'undefined' && typeof document !== 'undefined';
 
-export async function pickPdfConversionFolder(): Promise<DirectoryHandle | null> {
+/** Abre o seletor de pasta (webkitdirectory — estável no Windows/PWA). */
+export async function pickPdfConversionFolder(): Promise<PdfFolderPick | null> {
   if (!isPdfFolderToJpgSupported()) {
-    throw new Error(
-      'Conversão PDF → JPG requer Chrome ou Edge no desktop (seletor de pasta com gravação).'
-    );
+    throw new Error('Conversão PDF → JPG disponível apenas na versão web (Chrome ou Edge).');
   }
 
-  try {
-    const dirHandle = await window.showDirectoryPicker!({
-      id: 'treasury-pdf-to-jpg',
-      mode: 'readwrite',
-    });
+  const browserFiles = await pickFolderFilesViaInput();
 
-    const permission =
-      typeof dirHandle.requestPermission === 'function'
-        ? await dirHandle.requestPermission({ mode: 'readwrite' })
-        : 'granted';
-
-    if (permission !== 'granted') {
-      throw new Error('Permissão de gravação na pasta negada.');
-    }
-
-    return dirHandle;
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      return null;
-    }
-
-    throw error;
+  if (browserFiles === null) {
+    return null;
   }
+
+  const selectedRootName = resolveSelectedFolderRootName(browserFiles);
+  const topLevelFiles = browserFiles.filter((file) =>
+    isTopLevelFolderFile(file, selectedRootName)
+  );
+
+  return { topLevelFiles };
 }
 
 export async function convertPdfsInDirectory(
-  dirHandle: DirectoryHandle
+  pick: PdfFolderPick
 ): Promise<PdfFolderToJpgResult> {
-  const { files, namesLower } = await listTopLevelEntries(dirHandle);
-  const pdfFiles = files
-    .filter((entry) => hasPdfExtension(entry.name))
+  const namesLower = new Set(pick.topLevelFiles.map((file) => file.name.toLowerCase()));
+  const pdfFiles = pick.topLevelFiles
+    .filter((file) => hasPdfExtension(file.name))
     .sort((left, right) => left.name.localeCompare(right.name, 'pt-BR'));
 
   const result: PdfFolderToJpgResult = {
@@ -182,34 +244,34 @@ export async function convertPdfsInDirectory(
     pageCount: 0,
   };
 
-  for (const pdfEntry of pdfFiles) {
-    const baseName = stripExtension(pdfEntry.name);
+  for (const pdfFile of pdfFiles) {
+    const baseName = stripExtension(pdfFile.name);
 
     if (outputsAlreadyExist(baseName, namesLower)) {
-      result.skippedExisting.push(pdfEntry.name);
+      result.skippedExisting.push(pdfFile.name);
       continue;
     }
 
     try {
-      const file = await pdfEntry.handle.getFile();
-      const blobs = await renderPdfPagesToJpegBlobs(file);
+      const blobs = await renderPdfPagesToJpegBlobs(pdfFile);
 
       if (!blobs.length) {
-        result.skippedEmpty.push(pdfEntry.name);
+        result.skippedEmpty.push(pdfFile.name);
         continue;
       }
 
       for (let index = 0; index < blobs.length; index += 1) {
         const outName = pageOutputName(baseName, index + 1, blobs.length);
-        await writeBlobToDirectory(dirHandle, outName, blobs[index]!);
+        await downloadBlob(blobs[index]!, outName);
         namesLower.add(outName.toLowerCase());
+        await sleep(250);
       }
 
-      result.converted.push(pdfEntry.name);
+      result.converted.push(pdfFile.name);
       result.pageCount += blobs.length;
     } catch (error) {
       result.errors.push({
-        fileName: pdfEntry.name,
+        fileName: pdfFile.name,
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -219,11 +281,11 @@ export async function convertPdfsInDirectory(
 }
 
 export async function convertPdfFolderToJpg(): Promise<PdfFolderToJpgResult | null> {
-  const dirHandle = await pickPdfConversionFolder();
+  const pick = await pickPdfConversionFolder();
 
-  if (!dirHandle) {
+  if (!pick) {
     return null;
   }
 
-  return convertPdfsInDirectory(dirHandle);
+  return convertPdfsInDirectory(pick);
 }

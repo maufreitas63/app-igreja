@@ -931,17 +931,17 @@ export function MaintenanceFinancialsCard({
       Toast.show({
         type: 'error',
         text1: 'PDF → JPG',
-        text2: 'Use o Chrome ou Edge no desktop para escolher a pasta e gravar os JPGs.',
+        text2: 'Use o Chrome ou Edge no desktop para escolher a pasta.',
         visibilityTime: 7000,
       });
       return;
     }
 
-    let dirHandle: Awaited<ReturnType<typeof pickPdfConversionFolder>>;
+    let pick: Awaited<ReturnType<typeof pickPdfConversionFolder>>;
 
     try {
-      // Abre o seletor no mesmo clique do botão (gesto do usuário).
-      dirHandle = await pickPdfConversionFolder();
+      // Seletor no mesmo clique (gesto do usuário) — sem setState antes.
+      pick = await pickPdfConversionFolder();
     } catch (error) {
       Toast.show({
         type: 'error',
@@ -952,7 +952,7 @@ export function MaintenanceFinancialsCard({
       return;
     }
 
-    if (!dirHandle) {
+    if (!pick) {
       Toast.show({
         type: 'info',
         text1: 'PDF → JPG',
@@ -965,7 +965,7 @@ export function MaintenanceFinancialsCard({
     setConvertingPdfFolder(true);
 
     try {
-      const result = await convertPdfsInDirectory(dirHandle);
+      const result = await convertPdfsInDirectory(pick);
 
       const summary = [
         `${result.converted.length} convertido(s)`,
@@ -981,9 +981,11 @@ export function MaintenanceFinancialsCard({
         text1: 'PDF → JPG',
         text2:
           result.pdfCount === 0
-            ? 'Nenhum PDF encontrado na pasta selecionada.'
-            : summary,
-        visibilityTime: result.errors.length ? 8000 : 5000,
+            ? 'Nenhum PDF encontrado na pasta selecionada (raiz, sem subpastas).'
+            : result.converted.length
+              ? `${summary}. JPGs novos foram baixados (pasta Downloads).`
+              : summary,
+        visibilityTime: result.errors.length || result.converted.length ? 8000 : 5000,
       });
     } catch (error) {
       Toast.show({
@@ -1567,8 +1569,9 @@ export function MaintenanceFinancialsCard({
               )}
             </TouchableOpacity>
             <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
-              Converte só os PDFs da pasta escolhida (sem subpastas) e grava os JPGs nela. Se o JPG já
-              existir, o PDF correspondente é ignorado.
+              Converte só os PDFs da pasta escolhida (sem subpastas). Se o JPG já existir na pasta,
+              o PDF é ignorado. Os JPGs novos são baixados pelo navegador (em geral na pasta
+              Downloads).
             </Text>
 
             {!isTreasuryReceiptFolderAccessSupported() ? (

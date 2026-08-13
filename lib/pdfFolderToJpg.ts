@@ -9,19 +9,21 @@ export type PdfFolderToJpgResult = {
   pageCount: number;
 };
 
-export type PdfConversionFolderHandle = unknown;
+export type PdfFolderPick = {
+  topLevelFiles: unknown[];
+};
 
 export const isPdfFolderToJpgSupported = () =>
   Platform.OS === 'web' && typeof window !== 'undefined';
 
-export async function pickPdfConversionFolder(): Promise<PdfConversionFolderHandle | null> {
+export async function pickPdfConversionFolder(): Promise<PdfFolderPick | null> {
   throw new Error(
     'Conversão PDF → JPG disponível apenas na versão web (Chrome ou Edge no desktop).'
   );
 }
 
 export async function convertPdfsInDirectory(
-  _dirHandle: PdfConversionFolderHandle
+  _pick: PdfFolderPick
 ): Promise<PdfFolderToJpgResult> {
   throw new Error(
     'Conversão PDF → JPG disponível apenas na versão web (Chrome ou Edge no desktop).'
