@@ -240,6 +240,12 @@ export function MaintenanceFinancialsCard({
   const [savingRename, setSavingRename] = useState(false);
   const [receiptBatchDryRun, setReceiptBatchDryRun] = useState(false);
   const [receiptBatchForce, setReceiptBatchForce] = useState(false);
+  const [pdfConvertReport, setPdfConvertReport] = useState<{
+    converted: number;
+    skippedExisting: number;
+    errors: Array<{ fileName: string; error: string }>;
+    outputHint: string;
+  } | null>(null);
 
   const toggleSection = useCallback((section: MaintenanceSectionKey) => {
     setExpandedSection((current) => (current === section ? null : section));
@@ -966,7 +972,19 @@ export function MaintenanceFinancialsCard({
 
     try {
       const result = await convertPdfsInDirectory(pick);
+      const outputHint =
+        pick.kind === 'fsa'
+          ? 'JPGs gravados na pasta selecionada.'
+          : 'JPGs empacotados em um ZIP na pasta Downloads.';
 
+      setPdfConvertReport({
+        converted: result.converted.length,
+        skippedExisting: result.skippedExisting.length,
+        errors: result.errors,
+        outputHint,
+      });
+
+      const firstError = result.errors[0]?.error;
       const summary = [
         `${result.converted.length} convertido(s)`,
         `${result.skippedExisting.length} já existia(m)`,
@@ -977,15 +995,17 @@ export function MaintenanceFinancialsCard({
         .join(' · ');
 
       Toast.show({
-        type: result.errors.length ? 'error' : 'success',
+        type: result.errors.length && !result.converted.length ? 'error' : result.errors.length ? 'info' : 'success',
         text1: 'PDF → JPG',
         text2:
           result.pdfCount === 0
             ? 'Nenhum PDF encontrado na pasta selecionada (raiz, sem subpastas).'
             : result.converted.length
-              ? `${summary}. JPGs novos foram baixados (pasta Downloads).`
-              : summary,
-        visibilityTime: result.errors.length || result.converted.length ? 8000 : 5000,
+              ? `${summary}. ${outputHint}`
+              : firstError
+                ? `${summary}. ${firstError}`
+                : summary,
+        visibilityTime: 9000,
       });
     } catch (error) {
       Toast.show({
@@ -1569,10 +1589,31 @@ export function MaintenanceFinancialsCard({
               )}
             </TouchableOpacity>
             <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
-              Converte só os PDFs da pasta escolhida (sem subpastas). Se o JPG já existir na pasta,
-              o PDF é ignorado. Os JPGs novos são baixados pelo navegador (em geral na pasta
-              Downloads).
+              Converte só os PDFs da pasta escolhida (sem subpastas). Se o JPG já existir, o PDF é
+              ignorado. No Chrome/Edge com permissão de pasta, grava os JPGs nela; caso contrário,
+              baixa um ZIP em Downloads.
             </Text>
+
+            {pdfConvertReport ? (
+              <View style={[styles.receiptBatchReportBox, minimal && styles.receiptBatchReportBoxMinimal]}>
+                <Text style={[styles.previewText, minimal && styles.previewTextMinimal]}>
+                  Última conversão: {pdfConvertReport.converted} convertido(s) ·{' '}
+                  {pdfConvertReport.skippedExisting} ignorado(s) · {pdfConvertReport.errors.length}{' '}
+                  erro(s)
+                </Text>
+                <Text style={[styles.receiptBatchReportLine, minimal && styles.receiptBatchReportLineMinimal]}>
+                  {pdfConvertReport.outputHint}
+                </Text>
+                {pdfConvertReport.errors.slice(0, 5).map((item) => (
+                  <Text
+                    key={`pdf-err-${item.fileName}`}
+                    style={[styles.errorLineText, minimal && styles.errorLineTextMinimal]}
+                  >
+                    [!] {item.fileName}: {item.error}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
 
             {!isTreasuryReceiptFolderAccessSupported() ? (
               <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>

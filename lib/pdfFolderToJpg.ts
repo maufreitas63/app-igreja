@@ -10,7 +10,10 @@ export type PdfFolderToJpgResult = {
 };
 
 export type PdfFolderPick = {
-  topLevelFiles: unknown[];
+  kind: 'fsa' | 'input';
+  namesLower: Set<string>;
+  pdfFiles: Array<{ name: string; read: () => Promise<unknown> }>;
+  dirHandle?: unknown;
 };
 
 export const isPdfFolderToJpgSupported = () =>
