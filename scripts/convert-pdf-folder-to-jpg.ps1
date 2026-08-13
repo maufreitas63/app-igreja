@@ -1,12 +1,14 @@
-# Converte PDFs → JPG em C:\IBN Tesouraria\Comprovantes
+# Converte PDFs → JPG apenas na pasta citada (sem subpastas).
+# Padrão: C:\IBN Tesouraria\Comprovantes\JPG
+#
 # Uso:
 #   .\scripts\convert-pdf-folder-to-jpg.ps1
 #   .\scripts\convert-pdf-folder-to-jpg.ps1 -Force
 #   .\scripts\convert-pdf-folder-to-jpg.ps1 -Limit 5
 
 param(
-  [string]$InDir = 'C:\IBN Tesouraria\Comprovantes\PDF',
-  [string]$OutDir = 'C:\IBN Tesouraria\Comprovantes\JPG',
+  [string]$Dir = 'C:\IBN Tesouraria\Comprovantes\JPG',
+  [string]$OutDir = '',
   [switch]$Force,
   [int]$Limit = 0,
   [double]$Scale = 2,
@@ -17,9 +19,11 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
+if (-not $OutDir) { $OutDir = $Dir }
+
 $argsList = @(
   'scripts/convert-pdf-folder-to-jpg.mjs',
-  '--in', $InDir,
+  '--in', $Dir,
   '--out', $OutDir,
   '--scale', "$Scale",
   '--quality', "$Quality"

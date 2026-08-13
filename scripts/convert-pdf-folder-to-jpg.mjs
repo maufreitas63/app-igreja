@@ -1,16 +1,16 @@
 /**
  * Converte PDFs de uma pasta em JPGs (uma imagem por página).
+ * Não percorre subpastas — só arquivos .pdf no nível da pasta informada.
  *
  * Uso:
  *   node scripts/convert-pdf-folder-to-jpg.mjs
- *   node scripts/convert-pdf-folder-to-jpg.mjs --in "C:\IBN Tesouraria\Comprovantes\PDF" --out "C:\IBN Tesouraria\Comprovantes\JPG"
+ *   node scripts/convert-pdf-folder-to-jpg.mjs --in "C:\IBN Tesouraria\Comprovantes\JPG"
  *   node scripts/convert-pdf-folder-to-jpg.mjs --force
  *   node scripts/convert-pdf-folder-to-jpg.mjs --limit 3
  *   node scripts/convert-pdf-folder-to-jpg.mjs --scale 2 --quality 85
  *
- * Padrão:
- *   --in  C:\IBN Tesouraria\Comprovantes\PDF
- *   --out C:\IBN Tesouraria\Comprovantes\JPG
+ * Padrão (mesma pasta de entrada e saída):
+ *   C:\IBN Tesouraria\Comprovantes\JPG
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,13 +22,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const STANDARD_FONTS_DIR = path.join(root, 'node_modules', 'pdfjs-dist', 'standard_fonts');
 
-const DEFAULT_IN = String.raw`C:\IBN Tesouraria\Comprovantes\PDF`;
-const DEFAULT_OUT = String.raw`C:\IBN Tesouraria\Comprovantes\JPG`;
+const DEFAULT_DIR = String.raw`C:\IBN Tesouraria\Comprovantes\JPG`;
 
 function parseArgs(argv) {
   const opts = {
-    inputDir: DEFAULT_IN,
-    outputDir: DEFAULT_OUT,
+    inputDir: DEFAULT_DIR,
+    outputDir: DEFAULT_DIR,
     force: false,
     limit: 0,
     scale: 2,
@@ -39,8 +38,11 @@ function parseArgs(argv) {
     const arg = argv[i];
     const next = argv[i + 1];
 
-    if (arg === '--in' && next) {
+    if ((arg === '--in' || arg === '--dir') && next) {
       opts.inputDir = next;
+      if (!argv.includes('--out')) {
+        opts.outputDir = next;
+      }
       i += 1;
     } else if (arg === '--out' && next) {
       opts.outputDir = next;
@@ -64,6 +66,7 @@ function parseArgs(argv) {
   return opts;
 }
 
+/** Apenas .pdf no nível da pasta (ignora subpastas). */
 function listPdfFiles(dir) {
   if (!fs.existsSync(dir)) {
     throw new Error(`Pasta de entrada não encontrada: ${dir}`);
@@ -132,9 +135,8 @@ async function main() {
     console.log(`Uso:
   node scripts/convert-pdf-folder-to-jpg.mjs [--in DIR] [--out DIR] [--force] [--limit N] [--scale 2] [--quality 85]
 
-Padrão:
-  --in  ${DEFAULT_IN}
-  --out ${DEFAULT_OUT}`);
+Padrão (só a pasta, sem subpastas):
+  ${DEFAULT_DIR}`);
     return;
   }
 
@@ -145,8 +147,9 @@ Padrão:
     files = files.slice(0, opts.limit);
   }
 
-  console.log(`Entrada : ${opts.inputDir}`);
+  console.log(`Pasta   : ${opts.inputDir}`);
   console.log(`Saída   : ${opts.outputDir}`);
+  console.log(`Escopo  : apenas arquivos .pdf nesta pasta (sem subpastas)`);
   console.log(`PDFs    : ${files.length}${opts.force ? ' (force)' : ''}`);
   console.log(`Escala  : ${opts.scale} · Qualidade JPG: ${opts.quality}`);
   console.log('');
