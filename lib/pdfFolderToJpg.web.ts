@@ -148,22 +148,62 @@ const pickFolderFilesViaInput = (): Promise<File[] | null> =>
     input.click();
   });
 
-let pdfJsModulePromise: Promise<typeof import('pdfjs-dist')> | null = null;
+type PdfJsModule = {
+  version: string;
+  GlobalWorkerOptions: { workerSrc: string };
+  getDocument: (params: {
+    data: Uint8Array;
+    useSystemFonts?: boolean;
+    isEvalSupported?: boolean;
+    useWorkerFetch?: boolean;
+  }) => { promise: Promise<PdfJsDocument> };
+};
 
-async function ensurePdfJs() {
-  if (!pdfJsModulePromise) {
-    pdfJsModulePromise = import('pdfjs-dist');
+type PdfJsDocument = {
+  numPages: number;
+  getPage: (pageNumber: number) => Promise<PdfJsPage>;
+  destroy: () => Promise<void>;
+};
+
+type PdfJsPage = {
+  getViewport: (params: { scale: number }) => { width: number; height: number };
+  render: (params: {
+    canvasContext: CanvasRenderingContext2D;
+    viewport: { width: number; height: number };
+    canvas: HTMLCanvasElement;
+  }) => { promise: Promise<void> };
+  cleanup: () => void;
+};
+
+let pdfJsModulePromise: Promise<PdfJsModule> | null = null;
+
+async function importSameOriginModule(moduleUrl: string): Promise<PdfJsModule> {
+  // new Function evita que o Metro reescreva o import dinâmico.
+  const importer = new Function('url', 'return import(url)') as (url: string) => Promise<PdfJsModule>;
+  return importer(moduleUrl);
+}
+
+async function ensurePdfJs(): Promise<PdfJsModule> {
+  if (pdfJsModulePromise) {
+    return pdfJsModulePromise;
   }
 
-  const pdfjs = await pdfJsModulePromise;
+  pdfJsModulePromise = (async () => {
+    const origin = window.location.origin;
+    const pdfjs = await importSameOriginModule(`${origin}/pdf.min.mjs`);
+    if (!pdfjs?.getDocument) {
+      throw new Error('pdf.js carregou, mas getDocument não está disponível.');
+    }
+    pdfjs.GlobalWorkerOptions.workerSrc = `${origin}/pdf.worker.min.mjs`;
+    return pdfjs;
+  })();
 
-  // Worker same-origin (evita bloqueio de CDN/CSP no PWA).
-  const workerSrc = `${window.location.origin}/pdf.worker.min.mjs`;
-  if (pdfjs.GlobalWorkerOptions.workerSrc !== workerSrc) {
-    pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+  try {
+    return await pdfJsModulePromise;
+  } catch (error) {
+    pdfJsModulePromise = null;
+    throw error;
   }
-
-  return pdfjs;
 }
 
 async function canvasToJpegBlob(canvas: HTMLCanvasElement): Promise<Blob> {

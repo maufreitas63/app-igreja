@@ -1,18 +1,25 @@
 /**
- * Copia o worker do pdf.js para public/ (mesmo origin no PWA).
+ * Copia pdf.js (viewer + worker) para public/ — carregados no PWA sem Metro.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const source = path.join(root, 'node_modules', 'pdfjs-dist', 'build', 'pdf.worker.min.mjs');
-const target = path.join(root, 'public', 'pdf.worker.min.mjs');
+const buildDir = path.join(root, 'node_modules', 'pdfjs-dist', 'build');
+const publicDir = path.join(root, 'public');
 
-if (!fs.existsSync(source)) {
-  throw new Error(`Worker pdf.js não encontrado: ${source}`);
+const files = ['pdf.min.mjs', 'pdf.worker.min.mjs'];
+
+for (const fileName of files) {
+  const source = path.join(buildDir, fileName);
+  const target = path.join(publicDir, fileName);
+
+  if (!fs.existsSync(source)) {
+    throw new Error(`Arquivo pdf.js não encontrado: ${source}`);
+  }
+
+  fs.mkdirSync(publicDir, { recursive: true });
+  fs.copyFileSync(source, target);
+  console.log(`${fileName} → ${target}`);
 }
-
-fs.mkdirSync(path.dirname(target), { recursive: true });
-fs.copyFileSync(source, target);
-console.log(`pdf.worker.min.mjs → ${target}`);

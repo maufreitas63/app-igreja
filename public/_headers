@@ -36,3 +36,7 @@
 /pdf.worker.min.mjs
   Content-Type: text/javascript; charset=utf-8
   Cache-Control: public, max-age=31536000, immutable
+
+/pdf.min.mjs
+  Content-Type: text/javascript; charset=utf-8
+  Cache-Control: public, max-age=31536000, immutable
