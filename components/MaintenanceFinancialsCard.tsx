@@ -51,6 +51,11 @@ import {
   DEFAULT_TREASURY_RECEIPTS_DIR,
 } from '@/lib/treasuryReceiptBatchPath';
 import { isTreasuryReceiptFolderAccessSupported, pickTreasuryReceiptFolderFiles } from '@/lib/treasuryReceiptFolderAccess';
+import {
+  convertPdfsInDirectory,
+  isPdfFolderToJpgSupported,
+  pickPdfConversionFolder,
+} from '@/lib/pdfFolderToJpg';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import {
   ASSEMBLY_MINUTES_SQL_HINT,
@@ -199,7 +204,8 @@ export function MaintenanceFinancialsCard({
   } = useMaintenanceFinancials(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
-  const formBusy = importing || emptyingMonth || savingEntryId !== null || processingReceiptBatch;
+  const formBusy =
+    importing || emptyingMonth || savingEntryId !== null || processingReceiptBatch || convertingPdfFolder;
 
   const [csvText, setCsvText] = useState('');
   const [replacePeriod, setReplacePeriod] = useState(true);
@@ -233,6 +239,7 @@ export function MaintenanceFinancialsCard({
   const [savingRename, setSavingRename] = useState(false);
   const [receiptBatchDryRun, setReceiptBatchDryRun] = useState(false);
   const [receiptBatchForce, setReceiptBatchForce] = useState(false);
+  const [convertingPdfFolder, setConvertingPdfFolder] = useState(false);
 
   const toggleSection = useCallback((section: MaintenanceSectionKey) => {
     setExpandedSection((current) => (current === section ? null : section));
@@ -919,6 +926,77 @@ export function MaintenanceFinancialsCard({
     });
   };
 
+  const handleConvertPdfFolderToJpg = async () => {
+    if (!isPdfFolderToJpgSupported()) {
+      Toast.show({
+        type: 'error',
+        text1: 'PDF → JPG',
+        text2: 'Use o Chrome ou Edge no desktop para escolher a pasta e gravar os JPGs.',
+        visibilityTime: 7000,
+      });
+      return;
+    }
+
+    let dirHandle: Awaited<ReturnType<typeof pickPdfConversionFolder>>;
+
+    try {
+      // Abre o seletor no mesmo clique do botão (gesto do usuário).
+      dirHandle = await pickPdfConversionFolder();
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'PDF → JPG',
+        text2: error instanceof Error ? error.message : 'Falha ao abrir a pasta.',
+        visibilityTime: 7000,
+      });
+      return;
+    }
+
+    if (!dirHandle) {
+      Toast.show({
+        type: 'info',
+        text1: 'PDF → JPG',
+        text2: 'Seleção de pasta cancelada.',
+        visibilityTime: 3000,
+      });
+      return;
+    }
+
+    setConvertingPdfFolder(true);
+
+    try {
+      const result = await convertPdfsInDirectory(dirHandle);
+
+      const summary = [
+        `${result.converted.length} convertido(s)`,
+        `${result.skippedExisting.length} já existia(m)`,
+        result.errors.length ? `${result.errors.length} erro(s)` : null,
+        `${result.pageCount} página(s)`,
+      ]
+        .filter(Boolean)
+        .join(' · ');
+
+      Toast.show({
+        type: result.errors.length ? 'error' : 'success',
+        text1: 'PDF → JPG',
+        text2:
+          result.pdfCount === 0
+            ? 'Nenhum PDF encontrado na pasta selecionada.'
+            : summary,
+        visibilityTime: result.errors.length ? 8000 : 5000,
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'PDF → JPG',
+        text2: error instanceof Error ? error.message : 'Falha na conversão.',
+        visibilityTime: 7000,
+      });
+    } finally {
+      setConvertingPdfFolder(false);
+    }
+  };
+
   const handleProcessReceiptBatch = async () => {
     const modeLabel = receiptBatchDryRun
       ? 'Simular (dry-run)'
@@ -1467,6 +1545,30 @@ export function MaintenanceFinancialsCard({
               Selecione a pasta local no navegador (Chrome/Edge). O caminho abaixo é apenas referência
               visual. Padrões: 20260526 3825,00.jpg/.jpeg e 20260608 1500,00 2.jpg (múltiplos anexos).
               Referências ambíguas (mesma data+valor em mais de um lançamento) são bloqueadas no pré-voo.
+            </Text>
+
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                minimal && styles.saveButtonMinimal,
+                (convertingPdfFolder || processingReceiptBatch || rpcMissing) &&
+                  styles.saveButtonDisabled,
+              ]}
+              onPress={() => void handleConvertPdfFolderToJpg()}
+              disabled={convertingPdfFolder || processingReceiptBatch || rpcMissing}
+              activeOpacity={0.85}
+            >
+              {convertingPdfFolder ? (
+                <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0f172a'} size="small" />
+              ) : (
+                <Text style={[styles.saveButtonText, minimal && styles.saveButtonTextMinimal]}>
+                  Converter PDF → JPG
+                </Text>
+              )}
+            </TouchableOpacity>
+            <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
+              Converte só os PDFs da pasta escolhida (sem subpastas) e grava os JPGs nela. Se o JPG já
+              existir, o PDF correspondente é ignorado.
             </Text>
 
             {!isTreasuryReceiptFolderAccessSupported() ? (
