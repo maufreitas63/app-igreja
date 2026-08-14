@@ -301,6 +301,7 @@ export function FinancialAnalyticalSummarySection({
   onToggle,
 }: FinancialAnalyticalSummarySectionProps) {
   const [exporting, setExporting] = useState(false);
+  const [captureReady, setCaptureReady] = useState(false);
 
   const handleExportAndNotify = async () => {
     if (!month || exporting) {
@@ -311,8 +312,10 @@ export function FinancialAnalyticalSummarySection({
     try {
       if (!expanded) {
         onToggle();
-        await new Promise((resolve) => setTimeout(resolve, 450));
       }
+      setCaptureReady(true);
+      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const result = await exportFinancialSummaryPdfAndNotifyTreasurer({
         endMonth: month,
@@ -323,9 +326,7 @@ export function FinancialAnalyticalSummarySection({
         Toast.show({
           type: 'info',
           text1: 'Resumo financeiro',
-          text2: result.copiedImage
-            ? 'Imagem copiada. Configure Tesoureiro_contato nesta instância para abrir o WhatsApp do tesoureiro.'
-            : 'Configure Tesoureiro_contato nesta instância para enviar ao tesoureiro.',
+          text2: 'Imagem gravada. Configure Tesoureiro_contato nesta instância para enviar ao tesoureiro.',
           visibilityTime: 7000,
         });
         return;
@@ -334,25 +335,24 @@ export function FinancialAnalyticalSummarySection({
       Toast.show({
         type: 'success',
         text1: 'Resumo financeiro',
-        text2: result.copiedImage
-          ? 'Imagem copiada. Cole no WhatsApp do tesoureiro (Ctrl+V).'
-          : 'WhatsApp do tesoureiro aberto. Anexe a imagem do resumo.',
-        visibilityTime: 7000,
+        text2: 'Imagem gravada no Supabase e enviada ao WhatsApp do tesoureiro.',
+        visibilityTime: 6000,
       });
     } catch (error) {
       Toast.show({
         type: 'error',
         text1: 'Resumo financeiro',
-        text2: error instanceof Error ? error.message : 'Não foi possível exportar o PDF.',
+        text2: error instanceof Error ? error.message : 'Não foi possível enviar a imagem.',
         visibilityTime: 7000,
       });
     } finally {
+      setCaptureReady(false);
       setExporting(false);
     }
   };
 
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, captureReady && styles.sectionCapture]}>
       <View style={styles.sectionHeader}>
         <TouchableOpacity
           accessibilityLabel="Resumo Financeiro"
@@ -403,7 +403,7 @@ export function FinancialAnalyticalSummarySection({
       </View>
 
       {expanded ? (
-        <View style={styles.sectionBody}>
+        <View style={[styles.sectionBody, captureReady && styles.sectionBodyCapture]}>
           {loading ? <ActivityIndicator color="#10b981" style={styles.loader} /> : null}
           {!loading && month ? (
             <FinancialAnalyticalSummaryReportView
@@ -473,11 +473,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  sectionCapture: {
+    overflow: 'visible',
+  },
   sectionBody: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 8,
     paddingBottom: 12,
     maxHeight: 640,
+  },
+  sectionBodyCapture: {
+    maxHeight: 20000,
+    overflow: 'visible',
   },
   loader: {
     marginVertical: 24,

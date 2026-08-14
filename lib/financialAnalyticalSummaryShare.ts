@@ -1,15 +1,19 @@
 import { getAppParameterValue } from '@/lib/appParameters';
 import type { FinancialEntry } from '@/lib/financialEntry';
-import { type FinancialMonthKey } from '@/lib/financialMonth';
+import { formatFinancialMonthKey, type FinancialMonthKey } from '@/lib/financialMonth';
+import { FINANCIAL_DOCS_BUCKET } from '@/lib/financialReceipt';
+import { supabase } from '@/lib/supabase';
+import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
 import { openWhatsAppPhone } from '@/lib/whatsapp';
 
 export const FINANCIAL_SUMMARY_REPORT_DOM_ID = 'financial-summary-report';
 
+const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 7;
+
 export type FinancialSummaryExportResult = {
-  sentImage: boolean;
+  imageUrl: string;
   notifiedTreasurer: boolean;
   missingTreasurerPhone: boolean;
-  copiedImage: boolean;
 };
 
 async function canvasToJpegBlob(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -29,7 +33,7 @@ async function canvasToJpegBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 }
 
 export async function captureFinancialSummaryImage(): Promise<Blob> {
-  if (typeof document === 'undefined') {
+  if (typeof document === 'undefined' || typeof window === 'undefined') {
     throw new Error('A imagem do resumo só pode ser gerada no navegador.');
   }
 
@@ -38,19 +42,37 @@ export async function captureFinancialSummaryImage(): Promise<Blob> {
     throw new Error('Abra o resumo financeiro antes de enviar.');
   }
 
+  const width = Math.max(1, Math.round(node.getBoundingClientRect().width || node.clientWidth));
+  const height = Math.max(1, Math.round(node.scrollHeight || node.getBoundingClientRect().height));
+  const scale = window.devicePixelRatio || 1;
+
   const html2canvas = (await import('html2canvas')).default;
   const canvas = await html2canvas(node, {
-    scale: 2,
+    scale,
+    width,
+    height,
+    windowWidth: width,
+    windowHeight: height,
     backgroundColor: '#ffffff',
     useCORS: true,
     logging: false,
+    foreignObjectRendering: false,
     onclone: (clonedDoc) => {
       const cloned = clonedDoc.getElementById(FINANCIAL_SUMMARY_REPORT_DOM_ID);
-      let parent = cloned as HTMLElement | null;
+      if (!cloned) {
+        return;
+      }
+
+      cloned.style.width = `${width}px`;
+      cloned.style.maxWidth = `${width}px`;
+      cloned.style.height = 'auto';
+      cloned.style.maxHeight = 'none';
+      cloned.style.overflow = 'visible';
+
+      let parent = cloned.parentElement;
       while (parent) {
         parent.style.maxHeight = 'none';
         parent.style.overflow = 'visible';
-        parent.style.height = 'auto';
         parent = parent.parentElement;
       }
     },
@@ -59,72 +81,60 @@ export async function captureFinancialSummaryImage(): Promise<Blob> {
   return canvasToJpegBlob(canvas);
 }
 
-async function copyImageToClipboard(blob: Blob): Promise<boolean> {
-  try {
-    if (typeof navigator === 'undefined' || !navigator.clipboard || typeof ClipboardItem === 'undefined') {
-      return false;
-    }
+async function uploadSummaryJpeg(blob: Blob, endMonth: FinancialMonthKey): Promise<string> {
+  const monthKey = formatFinancialMonthKey(endMonth);
+  const storagePath = await withActiveTenantStoragePrefix(
+    `summaries/resumo-financeiro-${monthKey}-${Date.now()}.jpg`
+  );
 
-    const pngBlob = await new Promise<Blob>((resolve, reject) => {
-      const image = new Image();
-      const url = URL.createObjectURL(blob);
-      image.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = image.width;
-        canvas.height = image.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          URL.revokeObjectURL(url);
-          reject(new Error('Canvas indisponível.'));
-          return;
-        }
-        ctx.drawImage(image, 0, 0);
-        canvas.toBlob((converted) => {
-          URL.revokeObjectURL(url);
-          if (!converted) {
-            reject(new Error('Falha ao copiar imagem.'));
-            return;
-          }
-          resolve(converted);
-        }, 'image/png');
-      };
-      image.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error('Falha ao ler a imagem.'));
-      };
-      image.src = url;
+  const { error: uploadError } = await supabase.storage
+    .from(FINANCIAL_DOCS_BUCKET)
+    .upload(storagePath, blob, {
+      contentType: 'image/jpeg',
+      cacheControl: '3600',
+      upsert: false,
     });
 
-    await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
-    return true;
-  } catch {
-    return false;
+  if (uploadError) {
+    throw new Error(`Não foi possível gravar a imagem no Supabase: ${uploadError.message}`);
   }
+
+  const { data, error: signedError } = await supabase.storage
+    .from(FINANCIAL_DOCS_BUCKET)
+    .createSignedUrl(storagePath, SIGNED_URL_TTL_SECONDS, {
+      download: false,
+    });
+
+  if (signedError || !data?.signedUrl) {
+    throw new Error('A imagem foi gravada, mas não foi possível gerar o link para o WhatsApp.');
+  }
+
+  return data.signedUrl;
 }
 
-export async function exportFinancialSummaryPdfAndNotifyTreasurer(_input: {
+export async function exportFinancialSummaryPdfAndNotifyTreasurer(input: {
   endMonth: FinancialMonthKey;
   realizedEntries: FinancialEntry[];
 }): Promise<FinancialSummaryExportResult> {
+  void input.realizedEntries;
+
   const imageBlob = await captureFinancialSummaryImage();
-  const copiedImage = await copyImageToClipboard(imageBlob);
+  const imageUrl = await uploadSummaryJpeg(imageBlob, input.endMonth);
   const treasurerPhone = await getAppParameterValue('Tesoureiro_contato');
 
   if (!treasurerPhone?.trim()) {
     return {
-      sentImage: copiedImage,
+      imageUrl,
       notifiedTreasurer: false,
       missingTreasurerPhone: true,
-      copiedImage,
     };
   }
 
-  await openWhatsAppPhone(treasurerPhone);
+  await openWhatsAppPhone(treasurerPhone, imageUrl);
 
   return {
-    sentImage: copiedImage,
+    imageUrl,
     notifiedTreasurer: true,
     missingTreasurerPhone: false,
-    copiedImage,
   };
 }
