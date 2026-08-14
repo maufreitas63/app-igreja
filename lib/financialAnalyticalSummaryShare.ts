@@ -1,4 +1,3 @@
-import { getAppParameterValue } from '@/lib/appParameters';
 import type { FinancialEntry } from '@/lib/financialEntry';
 import { formatFinancialMonthKey, type FinancialMonthKey } from '@/lib/financialMonth';
 import { FINANCIAL_DOCS_BUCKET } from '@/lib/financialReceipt';
@@ -11,12 +10,13 @@ export const FINANCIAL_SUMMARY_REPORT_DOM_ID = 'financial-summary-report';
 const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 7;
 const PDF_MIME = 'application/pdf';
 
-export type FinancialSummaryExportResult = {
-  sharedFile: boolean;
-  missingTreasurerPhone: boolean;
+export type FinancialSummaryPdfPreview = {
+  blob: Blob;
+  fileName: string;
+  previewUrl: string;
 };
 
-async function canvasToJpegBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+async function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -26,8 +26,7 @@ async function canvasToJpegBlob(canvas: HTMLCanvasElement): Promise<Blob> {
         }
         resolve(blob);
       },
-      'image/jpeg',
-      0.92
+      'image/png'
     );
   });
 }
@@ -39,6 +38,48 @@ async function blobToDataUrl(blob: Blob): Promise<string> {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(blob);
   });
+}
+
+function copyComputedLook(fromRoot: HTMLElement, toRoot: HTMLElement) {
+  const apply = (from: Element, to: Element) => {
+    if (!(from instanceof HTMLElement) || !(to instanceof HTMLElement)) {
+      return;
+    }
+
+    const cs = window.getComputedStyle(from);
+    to.style.backgroundColor = cs.backgroundColor;
+    to.style.color = cs.color;
+    to.style.borderTopColor = cs.borderTopColor;
+    to.style.borderRightColor = cs.borderRightColor;
+    to.style.borderBottomColor = cs.borderBottomColor;
+    to.style.borderLeftColor = cs.borderLeftColor;
+    to.style.borderTopWidth = cs.borderTopWidth;
+    to.style.borderRightWidth = cs.borderRightWidth;
+    to.style.borderBottomWidth = cs.borderBottomWidth;
+    to.style.borderLeftWidth = cs.borderLeftWidth;
+    to.style.borderTopStyle = cs.borderTopStyle;
+    to.style.fontWeight = cs.fontWeight;
+    to.style.fontSize = cs.fontSize;
+    to.style.fontFamily = cs.fontFamily;
+    to.style.textAlign = cs.textAlign;
+    to.style.letterSpacing = cs.letterSpacing;
+    to.style.paddingTop = cs.paddingTop;
+    to.style.paddingRight = cs.paddingRight;
+    to.style.paddingBottom = cs.paddingBottom;
+    to.style.paddingLeft = cs.paddingLeft;
+    to.style.backgroundImage = cs.backgroundImage;
+    to.style.opacity = cs.opacity;
+    to.style.boxSizing = cs.boxSizing;
+
+    const fromChildren = from.children;
+    const toChildren = to.children;
+    const count = Math.min(fromChildren.length, toChildren.length);
+    for (let index = 0; index < count; index += 1) {
+      apply(fromChildren[index]!, toChildren[index]!);
+    }
+  };
+
+  apply(fromRoot, toRoot);
 }
 
 export async function captureFinancialSummaryImage(): Promise<Blob> {
@@ -54,9 +95,10 @@ export async function captureFinancialSummaryImage(): Promise<Blob> {
   const width = Math.max(1, Math.round(node.getBoundingClientRect().width || node.clientWidth));
   const height = Math.max(1, Math.round(node.scrollHeight || node.getBoundingClientRect().height));
   const scale = window.devicePixelRatio || 1;
+  const original = node;
 
   const html2canvas = (await import('html2canvas')).default;
-  const canvas = await html2canvas(node, {
+  const options = {
     scale,
     width,
     height,
@@ -65,8 +107,12 @@ export async function captureFinancialSummaryImage(): Promise<Blob> {
     backgroundColor: '#ffffff',
     useCORS: true,
     logging: false,
+    scrollX: 0,
+    scrollY: -window.scrollY,
+    x: 0,
+    y: 0,
     foreignObjectRendering: false,
-    onclone: (clonedDoc) => {
+    onclone: (clonedDoc: Document) => {
       const cloned = clonedDoc.getElementById(FINANCIAL_SUMMARY_REPORT_DOM_ID);
       if (!cloned) {
         return;
@@ -77,6 +123,7 @@ export async function captureFinancialSummaryImage(): Promise<Blob> {
       cloned.style.height = 'auto';
       cloned.style.maxHeight = 'none';
       cloned.style.overflow = 'visible';
+      copyComputedLook(original, cloned);
 
       let parent = cloned.parentElement;
       while (parent) {
@@ -85,33 +132,37 @@ export async function captureFinancialSummaryImage(): Promise<Blob> {
         parent = parent.parentElement;
       }
     },
-  });
+  };
 
-  return canvasToJpegBlob(canvas);
+  const canvas = await html2canvas(node, options);
+
+  return canvasToPngBlob(canvas);
 }
 
-async function jpegToPdfBlob(jpegBlob: Blob): Promise<Blob> {
+async function pngToPdfBlob(pngBlob: Blob): Promise<Blob> {
   const module = await import('jspdf/dist/jspdf.es.min.js');
   const jsPDF = module.jsPDF;
-  const dataUrl = await blobToDataUrl(jpegBlob);
-  const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true, orientation: 'portrait' });
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const props = doc.getImageProperties(dataUrl);
-  const ratio = props.width / props.height;
-  let drawWidth = pageWidth;
-  let drawHeight = drawWidth / ratio;
-  if (drawHeight > pageHeight) {
-    drawHeight = pageHeight;
-    drawWidth = drawHeight * ratio;
-  }
-  const x = (pageWidth - drawWidth) / 2;
-  const y = (pageHeight - drawHeight) / 2;
-  doc.addImage(dataUrl, 'JPEG', x, y, drawWidth, drawHeight);
+  const dataUrl = await blobToDataUrl(pngBlob);
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error('Falha ao ler a imagem do resumo.'));
+    el.src = dataUrl;
+  });
+
+  const widthMm = 210;
+  const heightMm = Math.max(80, (image.height / image.width) * widthMm);
+  const doc = new jsPDF({
+    unit: 'mm',
+    format: [widthMm, heightMm],
+    compress: true,
+    orientation: heightMm >= widthMm ? 'portrait' : 'landscape',
+  });
+  doc.addImage(dataUrl, 'PNG', 0, 0, widthMm, heightMm);
   return doc.output('blob') as Blob;
 }
 
-async function uploadAndSignPdf(blob: Blob, fileName: string): Promise<string> {
+async function uploadAndDownloadPdf(blob: Blob, fileName: string): Promise<Blob> {
   const storagePath = await withActiveTenantStoragePrefix(`summaries/${fileName}`);
   const { error: uploadError } = await supabase.storage.from(FINANCIAL_DOCS_BUCKET).upload(storagePath, blob, {
     contentType: PDF_MIME,
@@ -131,11 +182,7 @@ async function uploadAndSignPdf(blob: Blob, fileName: string): Promise<string> {
     throw new Error('O PDF foi gravado, mas não foi possível baixá-lo do Supabase.');
   }
 
-  return data.signedUrl;
-}
-
-async function downloadPdfFromSupabase(signedUrl: string): Promise<Blob> {
-  const response = await fetch(signedUrl);
+  const response = await fetch(data.signedUrl);
   if (!response.ok) {
     throw new Error('Não foi possível baixar o PDF gravado no Supabase.');
   }
@@ -144,7 +191,7 @@ async function downloadPdfFromSupabase(signedUrl: string): Promise<Blob> {
   return new Blob([buffer], { type: PDF_MIME });
 }
 
-function postShareFileToApkShell(signedUrl: string, fileName: string): boolean {
+function postShareFileToApkShell(blobUrlOrSigned: string, fileName: string): boolean {
   if (!isApkShellWebClient()) {
     return false;
   }
@@ -158,7 +205,7 @@ function postShareFileToApkShell(signedUrl: string, fileName: string): boolean {
   bridge.postMessage(
     JSON.stringify({
       type: 'share-file',
-      url: signedUrl,
+      url: blobUrlOrSigned,
       mimeType: PDF_MIME,
       fileName,
     })
@@ -166,10 +213,9 @@ function postShareFileToApkShell(signedUrl: string, fileName: string): boolean {
   return true;
 }
 
-async function sharePdfFileOnly(blob: Blob, fileName: string): Promise<boolean> {
+export async function shareFinancialSummaryPdfFile(blob: Blob, fileName: string): Promise<boolean> {
   const file = new File([blob], fileName, { type: PDF_MIME });
 
-  // Nunca passar `url` nem `text`: o WhatsApp transforma isso em mensagem de link.
   if (
     typeof navigator !== 'undefined' &&
     typeof navigator.share === 'function' &&
@@ -187,6 +233,10 @@ async function sharePdfFileOnly(blob: Blob, fileName: string): Promise<boolean> 
   }
 
   const href = URL.createObjectURL(file);
+  if (postShareFileToApkShell(href, fileName)) {
+    return true;
+  }
+
   const anchor = document.createElement('a');
   anchor.href = href;
   anchor.download = fileName;
@@ -198,24 +248,21 @@ async function sharePdfFileOnly(blob: Blob, fileName: string): Promise<boolean> 
   return false;
 }
 
-export async function exportFinancialSummaryPdfAndNotifyTreasurer(input: {
+export async function buildFinancialSummaryPdfPreview(input: {
   endMonth: FinancialMonthKey;
   realizedEntries: FinancialEntry[];
-}): Promise<FinancialSummaryExportResult> {
+}): Promise<FinancialSummaryPdfPreview> {
   void input.realizedEntries;
 
-  const jpeg = await captureFinancialSummaryImage();
-  const pdfBlob = await jpegToPdfBlob(jpeg);
+  const png = await captureFinancialSummaryImage();
+  const pdfBlob = await pngToPdfBlob(png);
   const fileName = `resumo-financeiro-${formatFinancialMonthKey(input.endMonth)}-${Date.now()}.pdf`;
-  const signedUrl = await uploadAndSignPdf(pdfBlob, fileName);
-  const downloadedPdf = await downloadPdfFromSupabase(signedUrl);
-  const treasurerPhone = await getAppParameterValue('Tesoureiro_contato');
-
-  const sharedViaShell = postShareFileToApkShell(signedUrl, fileName);
-  const sharedViaWeb = sharedViaShell ? true : await sharePdfFileOnly(downloadedPdf, fileName);
+  const storedBlob = await uploadAndDownloadPdf(pdfBlob, fileName);
+  const previewUrl = URL.createObjectURL(storedBlob);
 
   return {
-    sharedFile: sharedViaWeb,
-    missingTreasurerPhone: !treasurerPhone?.trim(),
+    blob: storedBlob,
+    fileName,
+    previewUrl,
   };
 }

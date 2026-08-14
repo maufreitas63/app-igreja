@@ -18,7 +18,11 @@ import {
   View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { exportFinancialSummaryPdfAndNotifyTreasurer, FINANCIAL_SUMMARY_REPORT_DOM_ID } from '@/lib/financialAnalyticalSummaryShare';
+import { FinancialSummaryPdfModal } from '@/components/FinancialSummaryPdfModal';
+import {
+  buildFinancialSummaryPdfPreview,
+  FINANCIAL_SUMMARY_REPORT_DOM_ID,
+} from '@/lib/financialAnalyticalSummaryShare';
 
 type FinancialAnalyticalSummaryReportViewProps = {
   endMonth: FinancialMonthKey;
@@ -302,49 +306,40 @@ export function FinancialAnalyticalSummarySection({
 }: FinancialAnalyticalSummarySectionProps) {
   const [exporting, setExporting] = useState(false);
   const [captureReady, setCaptureReady] = useState(false);
+  const [pdfPreview, setPdfPreview] = useState<{
+    blob: Blob;
+    fileName: string;
+    previewUrl: string;
+  } | null>(null);
+
+  const closePdfPreview = () => {
+    if (pdfPreview?.previewUrl) {
+      URL.revokeObjectURL(pdfPreview.previewUrl);
+    }
+    setPdfPreview(null);
+  };
 
   const handleExportAndNotify = async () => {
-    if (!month || exporting) {
+    if (!month || exporting || !expanded) {
       return;
     }
 
     setExporting(true);
     try {
-      if (!expanded) {
-        onToggle();
-      }
       setCaptureReady(true);
       await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const result = await exportFinancialSummaryPdfAndNotifyTreasurer({
+      const preview = await buildFinancialSummaryPdfPreview({
         endMonth: month,
         realizedEntries,
       });
-
-      if (result.missingTreasurerPhone) {
-        Toast.show({
-          type: 'info',
-          text1: 'Resumo financeiro',
-          text2: 'PDF gravado. Configure Tesoureiro_contato nesta instância.',
-          visibilityTime: 7000,
-        });
-        return;
-      }
-
-      Toast.show({
-        type: 'success',
-        text1: 'Resumo financeiro',
-        text2: result.sharedFile
-          ? 'PDF baixado do Supabase. No compartilhar, escolha WhatsApp — envie o arquivo, não um link.'
-          : 'PDF baixado neste computador. No WhatsApp, anexe esse arquivo ao tesoureiro.',
-        visibilityTime: 8000,
-      });
+      setPdfPreview(preview);
     } catch (error) {
       Toast.show({
         type: 'error',
         text1: 'Resumo financeiro',
-        text2: error instanceof Error ? error.message : 'Não foi possível enviar a imagem.',
+        text2: error instanceof Error ? error.message : 'Não foi possível gerar o PDF.',
         visibilityTime: 7000,
       });
     } finally {
@@ -374,25 +369,27 @@ export function FinancialAnalyticalSummarySection({
             )}
           </View>
         </TouchableOpacity>
-        <TouchableOpacity
-          accessibilityLabel="Exportar resumo financeiro em PDF e enviar ao tesoureiro"
-          activeOpacity={0.85}
-          onPress={() => void handleExportAndNotify()}
-          disabled={!month || loading || exporting}
-          style={[
-            styles.exportButton,
-            (!month || loading || exporting) && styles.exportButtonDisabled,
-          ]}
-        >
-          {exporting ? (
-            <ActivityIndicator color="#FFFFFF" size="small" />
-          ) : (
-            <>
-              <FontAwesome name="file-pdf-o" size={13} color="#FFFFFF" />
-              <Text style={styles.exportButtonText}>PDF</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {expanded ? (
+          <TouchableOpacity
+            accessibilityLabel="Exportar resumo financeiro em PDF e enviar ao tesoureiro"
+            activeOpacity={0.85}
+            onPress={() => void handleExportAndNotify()}
+            disabled={!month || loading || exporting}
+            style={[
+              styles.exportButton,
+              (!month || loading || exporting) && styles.exportButtonDisabled,
+            ]}
+          >
+            {exporting ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <>
+                <FontAwesome name="file-pdf-o" size={13} color="#FFFFFF" />
+                <Text style={styles.exportButtonText}>PDF</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity
           accessibilityLabel={expanded ? 'Recolher resumo' : 'Expandir resumo'}
           activeOpacity={0.85}
@@ -415,6 +412,15 @@ export function FinancialAnalyticalSummarySection({
           ) : null}
         </View>
       ) : null}
+
+      <FinancialSummaryPdfModal
+        visible={Boolean(pdfPreview)}
+        title={month ? `Resumo financeiro ${formatFinancialMonthLabel(month)}` : 'Resumo financeiro'}
+        previewUrl={pdfPreview?.previewUrl ?? null}
+        pdfBlob={pdfPreview?.blob ?? null}
+        fileName={pdfPreview?.fileName ?? null}
+        onClose={closePdfPreview}
+      />
     </View>
   );
 }
