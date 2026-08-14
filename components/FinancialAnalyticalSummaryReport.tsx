@@ -8,7 +8,7 @@ import {
 import { formatFinancialBrl, formatFinancialMonthLabel, type FinancialMonthKey } from '@/lib/financialMonth';
 import type { FinancialEntry } from '@/lib/financialEntry';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -17,6 +17,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { exportFinancialSummaryPdfAndNotifyTreasurer } from '@/lib/financialAnalyticalSummaryShare';
 
 type FinancialAnalyticalSummaryReportViewProps = {
   endMonth: FinancialMonthKey;
@@ -269,7 +271,9 @@ export function FinancialAnalyticalSummaryReportView({
     >
       <View style={styles.reportRoot}>
         <View style={styles.reportTitleBar}>
-          <Text style={styles.reportTitle}>RESUMO FINANCEIRO</Text>
+          <Text style={styles.reportTitle}>
+            RESUMO FINANCEIRO {formatFinancialMonthLabel(endMonth)}
+          </Text>
         </View>
 
         <CashflowTable columns={report.cashflowColumns} />
@@ -296,27 +300,101 @@ export function FinancialAnalyticalSummarySection({
   expanded,
   onToggle,
 }: FinancialAnalyticalSummarySectionProps) {
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportAndNotify = async () => {
+    if (!month || exporting) {
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const result = await exportFinancialSummaryPdfAndNotifyTreasurer({
+        endMonth: month,
+        realizedEntries,
+      });
+
+      if (result.missingTreasurerPhone) {
+        Toast.show({
+          type: 'info',
+          text1: 'Resumo financeiro',
+          text2:
+            'PDF gerado. Configure Tesoureiro_contato nesta instância para enviar ao tesoureiro.',
+          visibilityTime: 7000,
+        });
+        return;
+      }
+
+      Toast.show({
+        type: 'success',
+        text1: 'Resumo financeiro',
+        text2: result.notifiedTreasurer
+          ? 'PDF gerado e WhatsApp do tesoureiro desta instância aberto.'
+          : 'PDF gerado.',
+        visibilityTime: 5000,
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Resumo financeiro',
+        text2: error instanceof Error ? error.message : 'Não foi possível exportar o PDF.',
+        visibilityTime: 7000,
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <View style={styles.section}>
-      <TouchableOpacity
-        accessibilityLabel="Resumo Financeiro"
-        accessibilityRole="button"
-        accessibilityState={{ expanded }}
-        activeOpacity={0.85}
-        onPress={onToggle}
-        style={styles.sectionHeader}
-        disabled={!month}
-      >
-        <View style={styles.sectionHeaderText}>
-          <Text style={styles.sectionLabel}>Resumo Financeiro</Text>
-          {month ? (
-            <Text style={styles.sectionMeta}>{formatFinancialMonthLabel(month)}</Text>
+      <View style={styles.sectionHeader}>
+        <TouchableOpacity
+          accessibilityLabel="Resumo Financeiro"
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          activeOpacity={0.85}
+          onPress={onToggle}
+          style={styles.sectionHeaderToggle}
+          disabled={!month}
+        >
+          <View style={styles.sectionHeaderText}>
+            <Text style={styles.sectionLabel}>Resumo Financeiro</Text>
+            {month ? (
+              <Text style={styles.sectionMeta}>{formatFinancialMonthLabel(month)}</Text>
+            ) : (
+              <Text style={styles.sectionMeta}>Selecione o mês de referência</Text>
+            )}
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityLabel="Exportar resumo financeiro em PDF e enviar ao tesoureiro"
+          activeOpacity={0.85}
+          onPress={() => void handleExportAndNotify()}
+          disabled={!month || loading || exporting}
+          style={[
+            styles.exportButton,
+            (!month || loading || exporting) && styles.exportButtonDisabled,
+          ]}
+        >
+          {exporting ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
-            <Text style={styles.sectionMeta}>Selecione o mês de referência</Text>
+            <>
+              <FontAwesome name="file-pdf-o" size={13} color="#FFFFFF" />
+              <Text style={styles.exportButtonText}>PDF</Text>
+            </>
           )}
-        </View>
-        <FontAwesome name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color="#94A3B8" />
-      </TouchableOpacity>
+        </TouchableOpacity>
+        <TouchableOpacity
+          accessibilityLabel={expanded ? 'Recolher resumo' : 'Expandir resumo'}
+          activeOpacity={0.85}
+          onPress={onToggle}
+          disabled={!month}
+          style={styles.sectionChevronButton}
+        >
+          <FontAwesome name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color="#94A3B8" />
+        </TouchableOpacity>
+      </View>
 
       {expanded ? (
         <View style={styles.sectionBody}>
@@ -345,9 +423,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 8,
     padding: 14,
     backgroundColor: '#FFFFFF',
+  },
+  sectionHeaderToggle: {
+    flex: 1,
+  },
+  sectionChevronButton: {
+    padding: 6,
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#1E3A5F',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    minHeight: 36,
+  },
+  exportButtonDisabled: {
+    opacity: 0.45,
+  },
+  exportButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
   },
   sectionHeaderText: {
     flex: 1,
