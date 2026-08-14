@@ -253,6 +253,8 @@ export function PwaAppShell() {
         const data = JSON.parse(event.nativeEvent.data) as {
           type?: string;
           url?: string;
+          mimeType?: string;
+          fileName?: string;
         };
         const url = data.url?.trim();
         if (!url) {
@@ -263,8 +265,11 @@ export function PwaAppShell() {
           return;
         }
         const type = (data.type || 'open').toLowerCase();
-        if (type === 'share-image') {
-          void downloadAndShareImageFile(url);
+        if (type === 'share-image' || type === 'share-file') {
+          void downloadAndShareImageFile(url, {
+            mimeType: data.mimeType,
+            fileName: data.fileName,
+          });
           return;
         }
         if (type === 'pdf' || (type === 'download' && isPdfUrl(url))) {

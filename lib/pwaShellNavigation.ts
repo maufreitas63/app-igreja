@@ -224,26 +224,33 @@ export function buildShellPdfViewerUri(pdfUrl: string, entryBaseUrl: string): st
   return `${base}/pdfjs/viewer.html?file=${encodeURIComponent(pdfUrl)}`;
 }
 
-/** Baixa uma imagem HTTP e abre o compartilhamento nativo (WhatsApp, etc.). */
-export async function downloadAndShareImageFile(url: string): Promise<boolean> {
+/** Baixa um arquivo HTTP e abre o compartilhamento nativo (WhatsApp recebe o arquivo, não o link). */
+export async function downloadAndShareImageFile(
+  url: string,
+  options?: { mimeType?: string; fileName?: string }
+): Promise<boolean> {
   const target = url?.trim();
   if (!target || !isHttpUrl(target)) {
     return false;
   }
 
+  const mimeType = options?.mimeType || 'image/jpeg';
+  const ext = mimeType.includes('pdf') ? 'pdf' : 'jpg';
+  const fileName = options?.fileName || `resumo-financeiro-${Date.now()}.${ext}`;
+
   try {
     const FileSystem = await import('expo-file-system/legacy');
     const Sharing = await import('expo-sharing');
-    const dest = `${FileSystem.cacheDirectory ?? ''}resumo-financeiro-${Date.now()}.jpg`;
+    const dest = `${FileSystem.cacheDirectory ?? ''}${fileName}`;
     const result = await FileSystem.downloadAsync(target, dest);
     if (result.status && result.status >= 400) {
       throw new Error(`HTTP ${result.status}`);
     }
     if (await Sharing.isAvailableAsync()) {
       await Sharing.shareAsync(result.uri, {
-        mimeType: 'image/jpeg',
+        mimeType,
         dialogTitle: 'Enviar resumo financeiro pelo WhatsApp',
-        UTI: 'public.jpeg',
+        UTI: mimeType.includes('pdf') ? 'com.adobe.pdf' : 'public.jpeg',
       });
       return true;
     }
