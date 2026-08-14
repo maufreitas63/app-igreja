@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   sectionBody: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingBottom: 12,
     maxHeight: 640,
   },
@@ -401,7 +401,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     gap: 10,
     paddingTop: 4,
-    paddingHorizontal: 4,
   },
   reportTitleBar: {
     backgroundColor: '#1E3A5F',
