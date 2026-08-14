@@ -1,7 +1,6 @@
 import type { FinancialEntry } from '@/lib/financialEntry';
 import { formatFinancialMonthKey, type FinancialMonthKey } from '@/lib/financialMonth';
 import { FINANCIAL_DOCS_BUCKET } from '@/lib/financialReceipt';
-import { isApkShellWebClient } from '@/lib/pdfViewerUrl';
 import { supabase } from '@/lib/supabase';
 import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
 
@@ -14,6 +13,7 @@ export type FinancialSummaryPdfPreview = {
   blob: Blob;
   fileName: string;
   previewUrl: string;
+  signedUrl: string;
 };
 
 async function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -151,18 +151,24 @@ async function pngToPdfBlob(pngBlob: Blob): Promise<Blob> {
   });
 
   const widthMm = 210;
+  const sideMm = 6;
   const heightMm = Math.max(80, (image.height / image.width) * widthMm);
   const doc = new jsPDF({
     unit: 'mm',
-    format: [widthMm, heightMm],
+    format: [widthMm + sideMm * 2, heightMm],
     compress: true,
-    orientation: heightMm >= widthMm ? 'portrait' : 'landscape',
+    orientation: 'portrait',
   });
-  doc.addImage(dataUrl, 'PNG', 0, 0, widthMm, heightMm);
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 0, widthMm + sideMm * 2, heightMm, 'F');
+  doc.addImage(dataUrl, 'PNG', sideMm, 0, widthMm, heightMm);
   return doc.output('blob') as Blob;
 }
 
-async function uploadAndDownloadPdf(blob: Blob, fileName: string): Promise<Blob> {
+async function uploadAndDownloadPdf(
+  blob: Blob,
+  fileName: string
+): Promise<{ storedBlob: Blob; signedUrl: string }> {
   const storagePath = await withActiveTenantStoragePrefix(`summaries/${fileName}`);
   const { error: uploadError } = await supabase.storage.from(FINANCIAL_DOCS_BUCKET).upload(storagePath, blob, {
     contentType: PDF_MIME,
@@ -188,14 +194,13 @@ async function uploadAndDownloadPdf(blob: Blob, fileName: string): Promise<Blob>
   }
 
   const buffer = await response.arrayBuffer();
-  return new Blob([buffer], { type: PDF_MIME });
+  return {
+    storedBlob: new Blob([buffer], { type: PDF_MIME }),
+    signedUrl: data.signedUrl,
+  };
 }
 
 function postShareFileToApkShell(blobUrlOrSigned: string, fileName: string): boolean {
-  if (!isApkShellWebClient()) {
-    return false;
-  }
-
   const bridge = (window as Window & { ReactNativeWebView?: { postMessage: (msg: string) => void } })
     .ReactNativeWebView;
   if (!bridge?.postMessage) {
@@ -213,39 +218,36 @@ function postShareFileToApkShell(blobUrlOrSigned: string, fileName: string): boo
   return true;
 }
 
-export async function shareFinancialSummaryPdfFile(blob: Blob, fileName: string): Promise<boolean> {
-  const file = new File([blob], fileName, { type: PDF_MIME });
+export async function shareFinancialSummaryPdfFile(input: {
+  blob: Blob;
+  fileName: string;
+  signedUrl?: string | null;
+}): Promise<boolean> {
+  const { blob, fileName, signedUrl } = input;
 
-  if (
-    typeof navigator !== 'undefined' &&
-    typeof navigator.share === 'function' &&
-    typeof navigator.canShare === 'function' &&
-    navigator.canShare({ files: [file] })
-  ) {
-    try {
-      await navigator.share({ files: [file] });
-      return true;
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        return true;
-      }
-    }
-  }
-
-  const href = URL.createObjectURL(file);
-  if (postShareFileToApkShell(href, fileName)) {
+  if (signedUrl && postShareFileToApkShell(signedUrl, fileName)) {
     return true;
   }
 
-  const anchor = document.createElement('a');
-  anchor.href = href;
-  anchor.download = fileName;
-  anchor.rel = 'noopener';
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  window.setTimeout(() => URL.revokeObjectURL(href), 2000);
-  return false;
+  if (typeof navigator === 'undefined' || typeof navigator.share !== 'function') {
+    throw new Error('Este dispositivo não oferece a folha de compartilhar. Abra no celular.');
+  }
+
+  const file = new File([blob], fileName, { type: PDF_MIME });
+
+  try {
+    await navigator.share({
+      files: [file],
+      title: fileName,
+    });
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return true;
+    }
+  }
+
+  throw new Error('Não foi possível abrir o compartilhar do dispositivo para este PDF.');
 }
 
 export async function buildFinancialSummaryPdfPreview(input: {
@@ -257,12 +259,13 @@ export async function buildFinancialSummaryPdfPreview(input: {
   const png = await captureFinancialSummaryImage();
   const pdfBlob = await pngToPdfBlob(png);
   const fileName = `resumo-financeiro-${formatFinancialMonthKey(input.endMonth)}-${Date.now()}.pdf`;
-  const storedBlob = await uploadAndDownloadPdf(pdfBlob, fileName);
+  const { storedBlob, signedUrl } = await uploadAndDownloadPdf(pdfBlob, fileName);
   const previewUrl = URL.createObjectURL(storedBlob);
 
   return {
     blob: storedBlob,
     fileName,
     previewUrl,
+    signedUrl,
   };
 }

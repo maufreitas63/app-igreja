@@ -21,6 +21,7 @@ type Props = {
   previewUrl: string | null;
   pdfBlob: Blob | null;
   fileName: string | null;
+  signedUrl: string | null;
   onClose: () => void;
 };
 
@@ -30,6 +31,7 @@ export function FinancialSummaryPdfModal({
   previewUrl,
   pdfBlob,
   fileName,
+  signedUrl,
   onClose,
 }: Props) {
   const [sharing, setSharing] = React.useState(false);
@@ -61,13 +63,17 @@ export function FinancialSummaryPdfModal({
 
     setSharing(true);
     try {
-      const shared = await shareFinancialSummaryPdfFile(pdfBlob, fileName);
+      const shared = await shareFinancialSummaryPdfFile({
+        blob: pdfBlob,
+        fileName,
+        signedUrl,
+      });
       Toast.show({
         type: 'success',
         text1: 'Resumo financeiro',
         text2: shared
-          ? 'Escolha o WhatsApp para enviar o PDF ao tesoureiro.'
-          : 'PDF baixado. Anexe o arquivo no WhatsApp do tesoureiro.',
+          ? 'Escolha o WhatsApp na lista de compartilhar para enviar o PDF.'
+          : 'Não foi possível abrir o compartilhar do dispositivo.',
         visibilityTime: 7000,
       });
     } catch (error) {
@@ -98,7 +104,7 @@ export function FinancialSummaryPdfModal({
                 onPress={() => void handleShare()}
                 disabled={sharing}
                 activeOpacity={0.85}
-                accessibilityLabel="Compartilhar PDF no WhatsApp"
+                accessibilityLabel="Compartilhar PDF pelo aplicativo do dispositivo"
               >
                 {sharing ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />

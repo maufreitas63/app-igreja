@@ -254,8 +254,7 @@ export async function downloadAndShareImageFile(
       });
       return true;
     }
-    await Linking.openURL(result.uri);
-    return true;
+    return false;
   } catch (error) {
     console.warn('downloadAndShareImageFile', error);
     return false;

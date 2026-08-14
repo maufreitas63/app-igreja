@@ -310,6 +310,7 @@ export function FinancialAnalyticalSummarySection({
     blob: Blob;
     fileName: string;
     previewUrl: string;
+    signedUrl: string;
   } | null>(null);
 
   const closePdfPreview = () => {
@@ -419,6 +420,7 @@ export function FinancialAnalyticalSummarySection({
         previewUrl={pdfPreview?.previewUrl ?? null}
         pdfBlob={pdfPreview?.blob ?? null}
         fileName={pdfPreview?.fileName ?? null}
+        signedUrl={pdfPreview?.signedUrl ?? null}
         onClose={closePdfPreview}
       />
     </View>
@@ -486,7 +488,7 @@ const styles = StyleSheet.create({
   },
   sectionBody: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 8,
+    paddingHorizontal: 16,
     paddingBottom: 12,
     maxHeight: 640,
   },
@@ -506,6 +508,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     gap: 10,
     paddingTop: 4,
+    paddingHorizontal: 4,
   },
   reportTitleBar: {
     backgroundColor: '#1E3A5F',
