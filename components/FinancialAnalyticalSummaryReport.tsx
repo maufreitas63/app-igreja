@@ -18,7 +18,7 @@ import {
   View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { exportFinancialSummaryPdfAndNotifyTreasurer } from '@/lib/financialAnalyticalSummaryShare';
+import { exportFinancialSummaryPdfAndNotifyTreasurer, FINANCIAL_SUMMARY_REPORT_DOM_ID } from '@/lib/financialAnalyticalSummaryShare';
 
 type FinancialAnalyticalSummaryReportViewProps = {
   endMonth: FinancialMonthKey;
@@ -269,7 +269,7 @@ export function FinancialAnalyticalSummaryReportView({
       showsVerticalScrollIndicator
       contentContainerStyle={styles.reportScrollContent}
     >
-      <View style={styles.reportRoot}>
+      <View nativeID={FINANCIAL_SUMMARY_REPORT_DOM_ID} collapsable={false} style={styles.reportRoot}>
         <View style={styles.reportTitleBar}>
           <Text style={styles.reportTitle}>
             RESUMO FINANCEIRO {formatFinancialMonthLabel(endMonth)}
@@ -309,6 +309,11 @@ export function FinancialAnalyticalSummarySection({
 
     setExporting(true);
     try {
+      if (!expanded) {
+        onToggle();
+        await new Promise((resolve) => setTimeout(resolve, 450));
+      }
+
       const result = await exportFinancialSummaryPdfAndNotifyTreasurer({
         endMonth: month,
         realizedEntries,
@@ -318,8 +323,9 @@ export function FinancialAnalyticalSummarySection({
         Toast.show({
           type: 'info',
           text1: 'Resumo financeiro',
-          text2:
-            'PDF gerado. Configure Tesoureiro_contato nesta instância para enviar ao tesoureiro.',
+          text2: result.copiedImage
+            ? 'Imagem copiada. Configure Tesoureiro_contato nesta instância para abrir o WhatsApp do tesoureiro.'
+            : 'Configure Tesoureiro_contato nesta instância para enviar ao tesoureiro.',
           visibilityTime: 7000,
         });
         return;
@@ -328,10 +334,10 @@ export function FinancialAnalyticalSummarySection({
       Toast.show({
         type: 'success',
         text1: 'Resumo financeiro',
-        text2: result.notifiedTreasurer
-          ? 'PDF gerado e WhatsApp do tesoureiro desta instância aberto.'
-          : 'PDF gerado.',
-        visibilityTime: 5000,
+        text2: result.copiedImage
+          ? 'Imagem copiada. Cole no WhatsApp do tesoureiro (Ctrl+V).'
+          : 'WhatsApp do tesoureiro aberto. Anexe a imagem do resumo.',
+        visibilityTime: 7000,
       });
     } catch (error) {
       Toast.show({
