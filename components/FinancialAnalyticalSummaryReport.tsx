@@ -8,7 +8,7 @@ import {
 import { formatFinancialBrl, formatFinancialMonthLabel, type FinancialMonthKey } from '@/lib/financialMonth';
 import type { FinancialEntry } from '@/lib/financialEntry';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -17,12 +17,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Toast from 'react-native-toast-message';
-import { FinancialSummaryPdfModal } from '@/components/FinancialSummaryPdfModal';
-import {
-  buildFinancialSummaryPdfPreview,
-  FINANCIAL_SUMMARY_REPORT_DOM_ID,
-} from '@/lib/financialAnalyticalSummaryShare';
 
 type FinancialAnalyticalSummaryReportViewProps = {
   endMonth: FinancialMonthKey;
@@ -273,7 +267,7 @@ export function FinancialAnalyticalSummaryReportView({
       showsVerticalScrollIndicator
       contentContainerStyle={styles.reportScrollContent}
     >
-      <View nativeID={FINANCIAL_SUMMARY_REPORT_DOM_ID} collapsable={false} style={styles.reportRoot}>
+      <View style={styles.reportRoot}>
         <View style={styles.reportTitleBar}>
           <Text style={styles.reportTitle}>
             RESUMO FINANCEIRO {formatFinancialMonthLabel(endMonth)}
@@ -304,53 +298,8 @@ export function FinancialAnalyticalSummarySection({
   expanded,
   onToggle,
 }: FinancialAnalyticalSummarySectionProps) {
-  const [exporting, setExporting] = useState(false);
-  const [captureReady, setCaptureReady] = useState(false);
-  const [pdfPreview, setPdfPreview] = useState<{
-    blob: Blob;
-    fileName: string;
-    previewUrl: string;
-    signedUrl: string;
-  } | null>(null);
-
-  const closePdfPreview = () => {
-    if (pdfPreview?.previewUrl) {
-      URL.revokeObjectURL(pdfPreview.previewUrl);
-    }
-    setPdfPreview(null);
-  };
-
-  const handleExportAndNotify = async () => {
-    if (!month || exporting || !expanded) {
-      return;
-    }
-
-    setExporting(true);
-    try {
-      setCaptureReady(true);
-      await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const preview = await buildFinancialSummaryPdfPreview({
-        endMonth: month,
-        realizedEntries,
-      });
-      setPdfPreview(preview);
-    } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: 'Resumo financeiro',
-        text2: error instanceof Error ? error.message : 'Não foi possível gerar o PDF.',
-        visibilityTime: 7000,
-      });
-    } finally {
-      setCaptureReady(false);
-      setExporting(false);
-    }
-  };
-
   return (
-    <View style={[styles.section, captureReady && styles.sectionCapture]}>
+    <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <TouchableOpacity
           accessibilityLabel="Resumo Financeiro"
@@ -370,27 +319,6 @@ export function FinancialAnalyticalSummarySection({
             )}
           </View>
         </TouchableOpacity>
-        {expanded ? (
-          <TouchableOpacity
-            accessibilityLabel="Exportar resumo financeiro em PDF e enviar ao tesoureiro"
-            activeOpacity={0.85}
-            onPress={() => void handleExportAndNotify()}
-            disabled={!month || loading || exporting}
-            style={[
-              styles.exportButton,
-              (!month || loading || exporting) && styles.exportButtonDisabled,
-            ]}
-          >
-            {exporting ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
-            ) : (
-              <>
-                <FontAwesome name="file-pdf-o" size={13} color="#FFFFFF" />
-                <Text style={styles.exportButtonText}>PDF</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        ) : null}
         <TouchableOpacity
           accessibilityLabel={expanded ? 'Recolher resumo' : 'Expandir resumo'}
           activeOpacity={0.85}
@@ -403,7 +331,7 @@ export function FinancialAnalyticalSummarySection({
       </View>
 
       {expanded ? (
-        <View style={[styles.sectionBody, captureReady && styles.sectionBodyCapture]}>
+        <View style={styles.sectionBody}>
           {loading ? <ActivityIndicator color="#10b981" style={styles.loader} /> : null}
           {!loading && month ? (
             <FinancialAnalyticalSummaryReportView
@@ -413,16 +341,6 @@ export function FinancialAnalyticalSummarySection({
           ) : null}
         </View>
       ) : null}
-
-      <FinancialSummaryPdfModal
-        visible={Boolean(pdfPreview)}
-        title={month ? `Resumo financeiro ${formatFinancialMonthLabel(month)}` : 'Resumo financeiro'}
-        previewUrl={pdfPreview?.previewUrl ?? null}
-        pdfBlob={pdfPreview?.blob ?? null}
-        fileName={pdfPreview?.fileName ?? null}
-        signedUrl={pdfPreview?.signedUrl ?? null}
-        onClose={closePdfPreview}
-      />
     </View>
   );
 }
@@ -449,24 +367,6 @@ const styles = StyleSheet.create({
   sectionChevronButton: {
     padding: 6,
   },
-  exportButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#1E3A5F',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    minHeight: 36,
-  },
-  exportButtonDisabled: {
-    opacity: 0.45,
-  },
-  exportButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
-  },
   sectionHeaderText: {
     flex: 1,
     gap: 4,
@@ -483,18 +383,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  sectionCapture: {
-    overflow: 'visible',
-  },
   sectionBody: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     paddingBottom: 12,
     maxHeight: 640,
-  },
-  sectionBodyCapture: {
-    maxHeight: 20000,
-    overflow: 'visible',
   },
   loader: {
     marginVertical: 24,
