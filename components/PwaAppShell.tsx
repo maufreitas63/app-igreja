@@ -1,6 +1,7 @@
 import {
   buildShellPdfViewerUri,
   downloadAndOpenShellFile,
+  downloadAndShareImageFile,
   isPdfUrl,
   openShellExternalUrl,
   openWhatsAppShellUrl,
@@ -249,7 +250,10 @@ export function PwaAppShell() {
   const handleShellMessage = useCallback(
     (event: WebViewMessageEvent) => {
       try {
-        const data = JSON.parse(event.nativeEvent.data) as { type?: string; url?: string };
+        const data = JSON.parse(event.nativeEvent.data) as {
+          type?: string;
+          url?: string;
+        };
         const url = data.url?.trim();
         if (!url) {
           return;
@@ -259,6 +263,10 @@ export function PwaAppShell() {
           return;
         }
         const type = (data.type || 'open').toLowerCase();
+        if (type === 'share-image') {
+          void downloadAndShareImageFile(url);
+          return;
+        }
         if (type === 'pdf' || (type === 'download' && isPdfUrl(url))) {
           openInlinePdf(url);
           return;

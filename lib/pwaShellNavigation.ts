@@ -224,6 +224,37 @@ export function buildShellPdfViewerUri(pdfUrl: string, entryBaseUrl: string): st
   return `${base}/pdfjs/viewer.html?file=${encodeURIComponent(pdfUrl)}`;
 }
 
+/** Baixa uma imagem HTTP e abre o compartilhamento nativo (WhatsApp, etc.). */
+export async function downloadAndShareImageFile(url: string): Promise<boolean> {
+  const target = url?.trim();
+  if (!target || !isHttpUrl(target)) {
+    return false;
+  }
+
+  try {
+    const FileSystem = await import('expo-file-system/legacy');
+    const Sharing = await import('expo-sharing');
+    const dest = `${FileSystem.cacheDirectory ?? ''}resumo-financeiro-${Date.now()}.jpg`;
+    const result = await FileSystem.downloadAsync(target, dest);
+    if (result.status && result.status >= 400) {
+      throw new Error(`HTTP ${result.status}`);
+    }
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(result.uri, {
+        mimeType: 'image/jpeg',
+        dialogTitle: 'Enviar resumo financeiro pelo WhatsApp',
+        UTI: 'public.jpeg',
+      });
+      return true;
+    }
+    await Linking.openURL(result.uri);
+    return true;
+  } catch (error) {
+    console.warn('downloadAndShareImageFile', error);
+    return false;
+  }
+}
+
 /** Baixa arquivo não-PDF e abre o share sheet do SO. */
 export async function downloadAndOpenShellFile(url: string): Promise<boolean> {
   const target = url?.trim();

@@ -2,9 +2,9 @@ import { getAppParameterValue } from '@/lib/appParameters';
 import type { FinancialEntry } from '@/lib/financialEntry';
 import { formatFinancialMonthKey, type FinancialMonthKey } from '@/lib/financialMonth';
 import { FINANCIAL_DOCS_BUCKET } from '@/lib/financialReceipt';
+import { isApkShellWebClient } from '@/lib/pdfViewerUrl';
 import { supabase } from '@/lib/supabase';
 import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
-import { openWhatsAppPhone } from '@/lib/whatsapp';
 
 export const FINANCIAL_SUMMARY_REPORT_DOM_ID = 'financial-summary-report';
 
@@ -12,7 +12,7 @@ const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 7;
 
 export type FinancialSummaryExportResult = {
   imageUrl: string;
-  notifiedTreasurer: boolean;
+  sharedImage: boolean;
   missingTreasurerPhone: boolean;
 };
 
@@ -81,7 +81,10 @@ export async function captureFinancialSummaryImage(): Promise<Blob> {
   return canvasToJpegBlob(canvas);
 }
 
-async function uploadSummaryJpeg(blob: Blob, endMonth: FinancialMonthKey): Promise<string> {
+async function uploadSummaryJpeg(
+  blob: Blob,
+  endMonth: FinancialMonthKey
+): Promise<{ storagePath: string; signedUrl: string }> {
   const monthKey = formatFinancialMonthKey(endMonth);
   const storagePath = await withActiveTenantStoragePrefix(
     `summaries/resumo-financeiro-${monthKey}-${Date.now()}.jpg`
@@ -101,15 +104,70 @@ async function uploadSummaryJpeg(blob: Blob, endMonth: FinancialMonthKey): Promi
 
   const { data, error: signedError } = await supabase.storage
     .from(FINANCIAL_DOCS_BUCKET)
-    .createSignedUrl(storagePath, SIGNED_URL_TTL_SECONDS, {
-      download: false,
-    });
+    .createSignedUrl(storagePath, SIGNED_URL_TTL_SECONDS);
 
   if (signedError || !data?.signedUrl) {
-    throw new Error('A imagem foi gravada, mas não foi possível gerar o link para o WhatsApp.');
+    throw new Error('A imagem foi gravada, mas não foi possível obter o endereço para baixá-la.');
   }
 
-  return data.signedUrl;
+  return { storagePath, signedUrl: data.signedUrl };
+}
+
+async function downloadJpegFromSupabase(signedUrl: string): Promise<Blob> {
+  const response = await fetch(signedUrl);
+  if (!response.ok) {
+    throw new Error('Não foi possível baixar a imagem gravada no Supabase.');
+  }
+
+  const buffer = await response.arrayBuffer();
+  return new Blob([buffer], { type: 'image/jpeg' });
+}
+
+function postShareImageToApkShell(signedUrl: string): boolean {
+  if (!isApkShellWebClient()) {
+    return false;
+  }
+
+  const bridge = (window as Window & { ReactNativeWebView?: { postMessage: (msg: string) => void } })
+    .ReactNativeWebView;
+  if (!bridge?.postMessage) {
+    return false;
+  }
+
+  bridge.postMessage(JSON.stringify({ type: 'share-image', url: signedUrl }));
+  return true;
+}
+
+async function shareDownloadedJpeg(blob: Blob, fileName: string): Promise<boolean> {
+  const file = new File([blob], fileName, { type: 'image/jpeg' });
+
+  if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    const payload = { files: [file] };
+    const canShare =
+      typeof navigator.canShare !== 'function' || navigator.canShare(payload);
+
+    if (canShare) {
+      try {
+        await navigator.share(payload);
+        return true;
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return true;
+        }
+      }
+    }
+  }
+
+  const href = URL.createObjectURL(file);
+  const anchor = document.createElement('a');
+  anchor.href = href;
+  anchor.download = fileName;
+  anchor.rel = 'noopener';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(href), 2000);
+  return false;
 }
 
 export async function exportFinancialSummaryPdfAndNotifyTreasurer(input: {
@@ -118,23 +176,18 @@ export async function exportFinancialSummaryPdfAndNotifyTreasurer(input: {
 }): Promise<FinancialSummaryExportResult> {
   void input.realizedEntries;
 
-  const imageBlob = await captureFinancialSummaryImage();
-  const imageUrl = await uploadSummaryJpeg(imageBlob, input.endMonth);
+  const captured = await captureFinancialSummaryImage();
+  const { signedUrl } = await uploadSummaryJpeg(captured, input.endMonth);
+  const downloaded = await downloadJpegFromSupabase(signedUrl);
+  const fileName = `resumo-financeiro-${formatFinancialMonthKey(input.endMonth)}.jpg`;
   const treasurerPhone = await getAppParameterValue('Tesoureiro_contato');
 
-  if (!treasurerPhone?.trim()) {
-    return {
-      imageUrl,
-      notifiedTreasurer: false,
-      missingTreasurerPhone: true,
-    };
-  }
-
-  await openWhatsAppPhone(treasurerPhone, imageUrl);
+  const sharedViaShell = postShareImageToApkShell(signedUrl);
+  const sharedViaWeb = sharedViaShell ? true : await shareDownloadedJpeg(downloaded, fileName);
 
   return {
-    imageUrl,
-    notifiedTreasurer: true,
-    missingTreasurerPhone: false,
+    imageUrl: signedUrl,
+    sharedImage: sharedViaWeb,
+    missingTreasurerPhone: !treasurerPhone?.trim(),
   };
 }

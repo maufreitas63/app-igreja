@@ -326,7 +326,7 @@ export function FinancialAnalyticalSummarySection({
         Toast.show({
           type: 'info',
           text1: 'Resumo financeiro',
-          text2: 'Imagem gravada. Configure Tesoureiro_contato nesta instância para enviar ao tesoureiro.',
+          text2: 'Imagem gravada no Supabase. Configure Tesoureiro_contato nesta instância.',
           visibilityTime: 7000,
         });
         return;
@@ -335,8 +335,10 @@ export function FinancialAnalyticalSummarySection({
       Toast.show({
         type: 'success',
         text1: 'Resumo financeiro',
-        text2: 'Imagem gravada no Supabase e enviada ao WhatsApp do tesoureiro.',
-        visibilityTime: 6000,
+        text2: result.sharedImage
+          ? 'Imagem baixada do Supabase. Escolha o WhatsApp para enviar ao tesoureiro.'
+          : 'Imagem baixada. Anexe o JPG no WhatsApp do tesoureiro.',
+        visibilityTime: 7000,
       });
     } catch (error) {
       Toast.show({
