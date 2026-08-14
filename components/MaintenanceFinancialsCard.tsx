@@ -53,7 +53,6 @@ import {
 import { isTreasuryReceiptFolderAccessSupported, pickTreasuryReceiptFolderFiles } from '@/lib/treasuryReceiptFolderAccess';
 import {
   DEFAULT_PDF_TO_JPG_DIR,
-  convertPdfsInDirectory,
   isPdfFolderToJpgSupported,
   pickPdfConversionFolder,
   resolvePdfToJpgFolderPath,
@@ -974,44 +973,24 @@ export function MaintenanceFinancialsCard({
 
     const folderPath = resolvePdfToJpgFolderPath(receiptsDir.trim() || DEFAULT_PDF_TO_JPG_DIR);
 
-    setConvertingPdfFolder(true);
+    setPdfConvertReport({
+      folderPath,
+      pdfCount: pick.pdfCount,
+      ok: 0,
+      skipped: 0,
+      failed: 0,
+      pages: 0,
+      message:
+        `${pick.pdfCount} PDF(s) na raiz. O PWA na nuvem não grava no Windows. ` +
+        `A conversão roda neste computador: npm run pdf-to-jpg`,
+    });
 
-    try {
-      const result = await convertPdfsInDirectory(folderPath);
-      const ok = result.helperSummary?.ok ?? result.converted.length;
-      const skipped = result.helperSummary?.skipped ?? result.skippedExisting.length;
-      const failed = result.helperSummary?.failed ?? result.errors.length;
-      const pages = result.helperSummary?.pages ?? result.pageCount;
-
-      setPdfConvertReport({
-        folderPath,
-        pdfCount: pick.pdfCount,
-        ok,
-        skipped,
-        failed,
-        pages,
-        message: `${ok} convertido(s) · ${skipped} já existia(m) · ${failed} falha(s) · ${pages} página(s)`,
-      });
-
-      Toast.show({
-        type: failed ? 'error' : 'success',
-        text1: 'PDF → JPG',
-        text2: `Pasta ${folderPath}. ${ok} JPG(s) gravado(s) no disco.`,
-        visibilityTime: 7000,
-      });
-    } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: 'PDF → JPG',
-        text2:
-          error instanceof Error
-            ? error.message
-            : 'Abra o helper local: npm run pdf-to-jpg:helper',
-        visibilityTime: 8000,
-      });
-    } finally {
-      setConvertingPdfFolder(false);
-    }
+    Toast.show({
+      type: 'success',
+      text1: 'Pasta reconhecida',
+      text2: `${pick.pdfCount} PDF(s) em ${folderPath}. A conversão no disco é o comando npm run pdf-to-jpg.`,
+      visibilityTime: 8000,
+    });
   };
 
   const handleProcessReceiptBatch = async () => {
@@ -1584,10 +1563,8 @@ export function MaintenanceFinancialsCard({
               )}
             </TouchableOpacity>
             <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
-              Informe o caminho absoluto no campo abaixo (padrão
-              C:\IBN Tesouraria\Comprovantes\JPG). O botão só confirma a pasta e pede ao conversor
-              Node local para gravar os JPGs nela, sem subpastas. Deixe o helper aberto:
-              npm run pdf-to-jpg:helper
+              O botão só confirma a pasta (sem subpastas). Quem grava JPG no disco é o comando neste
+              computador: npm run pdf-to-jpg
             </Text>
 
             {pdfConvertReport ? (
