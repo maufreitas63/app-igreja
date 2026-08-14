@@ -19,6 +19,5 @@ if (process.env.CF_PAGES === '1' || process.env.CI === 'true') {
 
 run('node scripts/write-build-info.mjs');
 run('node scripts/generate-app-icons.mjs');
-run('node scripts/copy-pdfjs-worker.mjs');
 run('npx expo export -p web');
 run('npm run build:family-form');

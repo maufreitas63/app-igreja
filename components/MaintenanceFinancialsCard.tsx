@@ -52,9 +52,11 @@ import {
 } from '@/lib/treasuryReceiptBatchPath';
 import { isTreasuryReceiptFolderAccessSupported, pickTreasuryReceiptFolderFiles } from '@/lib/treasuryReceiptFolderAccess';
 import {
+  DEFAULT_PDF_TO_JPG_DIR,
   convertPdfsInDirectory,
   isPdfFolderToJpgSupported,
   pickPdfConversionFolder,
+  resolvePdfToJpgFolderPath,
 } from '@/lib/pdfFolderToJpg';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import {
@@ -241,10 +243,13 @@ export function MaintenanceFinancialsCard({
   const [receiptBatchDryRun, setReceiptBatchDryRun] = useState(false);
   const [receiptBatchForce, setReceiptBatchForce] = useState(false);
   const [pdfConvertReport, setPdfConvertReport] = useState<{
-    converted: number;
-    skippedExisting: number;
-    errors: Array<{ fileName: string; error: string }>;
-    outputHint: string;
+    folderPath: string;
+    pdfCount: number;
+    ok: number;
+    skipped: number;
+    failed: number;
+    pages: number;
+    message: string;
   } | null>(null);
 
   const toggleSection = useCallback((section: MaintenanceSectionKey) => {
@@ -946,7 +951,6 @@ export function MaintenanceFinancialsCard({
     let pick: Awaited<ReturnType<typeof pickPdfConversionFolder>>;
 
     try {
-      // Seletor no mesmo clique (gesto do usuário) — sem setState antes.
       pick = await pickPdfConversionFolder();
     } catch (error) {
       Toast.show({
@@ -968,51 +972,42 @@ export function MaintenanceFinancialsCard({
       return;
     }
 
+    const folderPath = resolvePdfToJpgFolderPath(receiptsDir.trim() || DEFAULT_PDF_TO_JPG_DIR);
+
     setConvertingPdfFolder(true);
 
     try {
-      const result = await convertPdfsInDirectory(pick);
-      const outputHint =
-        pick.kind === 'fsa'
-          ? 'JPGs gravados na pasta selecionada.'
-          : 'JPGs empacotados em um ZIP na pasta Downloads.';
+      const result = await convertPdfsInDirectory(folderPath);
+      const ok = result.helperSummary?.ok ?? result.converted.length;
+      const skipped = result.helperSummary?.skipped ?? result.skippedExisting.length;
+      const failed = result.helperSummary?.failed ?? result.errors.length;
+      const pages = result.helperSummary?.pages ?? result.pageCount;
 
       setPdfConvertReport({
-        converted: result.converted.length,
-        skippedExisting: result.skippedExisting.length,
-        errors: result.errors,
-        outputHint,
+        folderPath,
+        pdfCount: pick.pdfCount,
+        ok,
+        skipped,
+        failed,
+        pages,
+        message: `${ok} convertido(s) · ${skipped} já existia(m) · ${failed} falha(s) · ${pages} página(s)`,
       });
 
-      const firstError = result.errors[0]?.error;
-      const summary = [
-        `${result.converted.length} convertido(s)`,
-        `${result.skippedExisting.length} já existia(m)`,
-        result.errors.length ? `${result.errors.length} erro(s)` : null,
-        `${result.pageCount} página(s)`,
-      ]
-        .filter(Boolean)
-        .join(' · ');
-
       Toast.show({
-        type: result.errors.length && !result.converted.length ? 'error' : result.errors.length ? 'info' : 'success',
+        type: failed ? 'error' : 'success',
         text1: 'PDF → JPG',
-        text2:
-          result.pdfCount === 0
-            ? 'Nenhum PDF encontrado na pasta selecionada (raiz, sem subpastas).'
-            : result.converted.length
-              ? `${summary}. ${outputHint}`
-              : firstError
-                ? `${summary}. ${firstError}`
-                : summary,
-        visibilityTime: 9000,
+        text2: `Pasta ${folderPath}. ${ok} JPG(s) gravado(s) no disco.`,
+        visibilityTime: 7000,
       });
     } catch (error) {
       Toast.show({
         type: 'error',
         text1: 'PDF → JPG',
-        text2: error instanceof Error ? error.message : 'Falha na conversão.',
-        visibilityTime: 7000,
+        text2:
+          error instanceof Error
+            ? error.message
+            : 'Abra o helper local: npm run pdf-to-jpg:helper',
+        visibilityTime: 8000,
       });
     } finally {
       setConvertingPdfFolder(false);
@@ -1589,29 +1584,20 @@ export function MaintenanceFinancialsCard({
               )}
             </TouchableOpacity>
             <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
-              Converte só os PDFs da pasta escolhida (sem subpastas). Se o JPG já existir, o PDF é
-              ignorado. No Chrome/Edge com permissão de pasta, grava os JPGs nela; caso contrário,
-              baixa um ZIP em Downloads.
+              Informe o caminho absoluto no campo abaixo (padrão
+              C:\IBN Tesouraria\Comprovantes\JPG). O botão só confirma a pasta e pede ao conversor
+              Node local para gravar os JPGs nela, sem subpastas. Deixe o helper aberto:
+              npm run pdf-to-jpg:helper
             </Text>
 
             {pdfConvertReport ? (
               <View style={[styles.receiptBatchReportBox, minimal && styles.receiptBatchReportBoxMinimal]}>
                 <Text style={[styles.previewText, minimal && styles.previewTextMinimal]}>
-                  Última conversão: {pdfConvertReport.converted} convertido(s) ·{' '}
-                  {pdfConvertReport.skippedExisting} ignorado(s) · {pdfConvertReport.errors.length}{' '}
-                  erro(s)
+                  Pasta: {pdfConvertReport.folderPath} · {pdfConvertReport.pdfCount} PDF(s) na raiz
                 </Text>
                 <Text style={[styles.receiptBatchReportLine, minimal && styles.receiptBatchReportLineMinimal]}>
-                  {pdfConvertReport.outputHint}
+                  {pdfConvertReport.message}
                 </Text>
-                {pdfConvertReport.errors.slice(0, 5).map((item) => (
-                  <Text
-                    key={`pdf-err-${item.fileName}`}
-                    style={[styles.errorLineText, minimal && styles.errorLineTextMinimal]}
-                  >
-                    [!] {item.fileName}: {item.error}
-                  </Text>
-                ))}
               </View>
             ) : null}
 
@@ -1622,13 +1608,13 @@ export function MaintenanceFinancialsCard({
             ) : null}
 
             <Text style={[styles.periodPickerLabel, minimal && styles.periodPickerLabelMinimal]}>
-              Pasta de referência (visual)
+              Pasta no disco (caminho absoluto Windows)
             </Text>
             <TextInput
               style={[styles.receiptsDirInput, minimal && styles.receiptsDirInputMinimal]}
               value={receiptsDir}
               onChangeText={setReceiptsDir}
-              placeholder={DEFAULT_TREASURY_RECEIPTS_DIR}
+              placeholder={DEFAULT_PDF_TO_JPG_DIR}
               placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
               autoCapitalize="none"
               autoCorrect={false}

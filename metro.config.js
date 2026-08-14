@@ -25,11 +25,6 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     return { type: 'empty' };
   }
 
-  // pdfjs-dist não entra no bundle Metro/PWA (carregado via CDN no browser).
-  if (moduleName === 'pdfjs-dist' || moduleName.startsWith('pdfjs-dist/')) {
-    return { type: 'empty' };
-  }
-
   if (typeof previousResolveRequest === 'function') {
     return previousResolveRequest(context, moduleName, platform);
   }
