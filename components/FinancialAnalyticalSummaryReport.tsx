@@ -265,6 +265,7 @@ export function FinancialAnalyticalSummaryReportView({
     <ScrollView
       nestedScrollEnabled
       showsVerticalScrollIndicator
+      style={styles.reportScroll}
       contentContainerStyle={styles.reportScrollContent}
     >
       <View style={styles.reportRoot}>
@@ -394,11 +395,15 @@ const styles = StyleSheet.create({
   },
   reportScrollContent: {
     paddingBottom: 8,
+    width: '100%',
+  },
+  reportScroll: {
+    width: '100%',
+    alignSelf: 'stretch',
   },
   reportRoot: {
     width: '100%',
-    maxWidth: 640,
-    alignSelf: 'center',
+    alignSelf: 'stretch',
     gap: 10,
     paddingTop: 4,
   },
@@ -533,19 +538,19 @@ const styles = StyleSheet.create({
   },
   periodLabelCol: {
     flex: 1.15,
-    minWidth: 96,
+    minWidth: 0,
   },
   periodValueCol: {
     flex: 1,
-    minWidth: 84,
+    minWidth: 0,
   },
   accountCol: {
     flex: 1.2,
-    minWidth: 96,
+    minWidth: 0,
   },
   valueCol: {
     flex: 1,
-    minWidth: 88,
+    minWidth: 0,
   },
   histCol: {
     flex: 1,
