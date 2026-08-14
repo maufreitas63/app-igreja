@@ -51,10 +51,8 @@ import {
   DEFAULT_TREASURY_RECEIPTS_DIR,
 } from '@/lib/treasuryReceiptBatchPath';
 import { isTreasuryReceiptFolderAccessSupported, pickTreasuryReceiptFolderFiles } from '@/lib/treasuryReceiptFolderAccess';
-import { PdfToJpgConvertLink } from '@/components/PdfToJpgConvertLink';
 import {
   DEFAULT_PDF_TO_JPG_DIR,
-  buildPdfToJpgProtocolUrl,
   resolvePdfToJpgFolderPath,
 } from '@/lib/pdfFolderToJpg';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
@@ -935,10 +933,16 @@ export function MaintenanceFinancialsCard({
     });
   };
 
-  const pdfToJpgFolderPath = resolvePdfToJpgFolderPath(receiptsDir.trim() || DEFAULT_PDF_TO_JPG_DIR);
-  const pdfToJpgHref = buildPdfToJpgProtocolUrl(pdfToJpgFolderPath);
+  const pdfToJpgFolderPath = resolvePdfToJpgFolderPath(
+    (receiptsDir ?? '').trim() || DEFAULT_PDF_TO_JPG_DIR
+  );
 
-  const handleConvertPdfFolderToJpgLaunch = () => {
+  const handleConvertPdfFolderToJpg = () => {
+    const url =
+      `http://127.0.0.1:47821/?dir=${encodeURIComponent(pdfToJpgFolderPath)}&run=1`;
+
+    void Linking.openURL(url);
+
     setPdfConvertReport({
       folderPath: pdfToJpgFolderPath,
       pdfCount: 0,
@@ -947,14 +951,14 @@ export function MaintenanceFinancialsCard({
       failed: 0,
       pages: 0,
       message:
-        `Conversão disparada neste computador para ${pdfToJpgFolderPath}. ` +
-        `Se o Windows perguntar, confirme abrir o conversor.`,
+        'Abriu o conversor local (http://127.0.0.1:47821). Se a aba não abrir, neste computador rode: npm run pdf-to-jpg:helper',
     });
+
     Toast.show({
-      type: 'success',
+      type: 'info',
       text1: 'PDF → JPG',
-      text2: 'Pedido enviado ao Windows. Confirme abrir o conversor se o Chrome perguntar.',
-      visibilityTime: 8000,
+      text2: 'Abriu o conversor neste computador. Deixe npm run pdf-to-jpg:helper ligado.',
+      visibilityTime: 7000,
     });
   };
 
@@ -1508,24 +1512,23 @@ export function MaintenanceFinancialsCard({
               Referências ambíguas (mesma data+valor em mais de um lançamento) são bloqueadas no pré-voo.
             </Text>
 
-            <PdfToJpgConvertLink
-              href={pdfToJpgHref}
-              disabled={processingReceiptBatch}
+            <TouchableOpacity
               style={[
                 styles.saveButton,
                 minimal && styles.saveButtonMinimal,
                 processingReceiptBatch && styles.saveButtonDisabled,
               ]}
-              onLaunch={handleConvertPdfFolderToJpgLaunch}
+              onPress={handleConvertPdfFolderToJpg}
+              disabled={processingReceiptBatch}
+              activeOpacity={0.85}
             >
               <Text style={[styles.saveButtonText, minimal && styles.saveButtonTextMinimal]}>
                 Converter PDF → JPG
               </Text>
-            </PdfToJpgConvertLink>
+            </TouchableOpacity>
             <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
-              O clique abre o conversor neste Windows (PDFs da pasta abaixo, sem subpastas). Confirme
-              no Chrome se perguntar para abrir o aplicativo. Já foi registrado com npm run
-              pdf-to-jpg:install neste computador.
+              A conversão roda neste computador em http://127.0.0.1:47821 (não na nuvem). Deixe
+              ligado: npm run pdf-to-jpg:helper
             </Text>
 
             {pdfConvertReport ? (

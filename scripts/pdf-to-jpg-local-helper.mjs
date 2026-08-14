@@ -1,81 +1,84 @@
 /**
- * Helper local HTTPS: o PWA dispara a conversão; este processo grava JPG no disco
- * via scripts/convert-pdf-folder-to-jpg.mjs (sem subpastas).
+ * Conversor local (HTTP). Roda neste computador e grava JPG no disco.
  *
- * Uso (deixar aberto neste computador):
  *   npm run pdf-to-jpg:helper
  *
- * O PWA em HTTPS precisa deste helper em HTTPS (senão o navegador bloqueia).
- * Na primeira vez, abra https://127.0.0.1:47821/health e aceite o certificado local.
+ * Abra http://127.0.0.1:47821 — o botão desta página executa a conversão.
+ * O PWA só abre esta página numa aba nova (não converte no navegador da nuvem).
  */
+import http from 'node:http';
 import fs from 'node:fs';
-import https from 'node:https';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import selfsigned from 'selfsigned';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const converter = path.join(root, 'scripts', 'convert-pdf-folder-to-jpg.mjs');
-const certDir = path.join(root, 'scripts', '.pdf-to-jpg-certs');
-const keyPath = path.join(certDir, 'key.pem');
-const certPath = path.join(certDir, 'cert.pem');
 const PORT = Number.parseInt(process.env.PDF_TO_JPG_HELPER_PORT || '47821', 10);
 const DEFAULT_DIR = String.raw`C:\IBN Tesouraria\Comprovantes\JPG`;
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
+const PAGE = `<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <title>Converter PDF → JPG</title>
+  <style>
+    body { font-family: Segoe UI, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    input { width: 100%; padding: 10px; font-size: 14px; box-sizing: border-box; }
+    button { margin-top: 12px; padding: 12px 18px; font-size: 16px; cursor: pointer; }
+    pre { background: #111; color: #d1fae5; padding: 12px; white-space: pre-wrap; min-height: 80px; }
+  </style>
+</head>
+<body>
+  <h1>Converter PDF → JPG</h1>
+  <p>Só os arquivos <code>.pdf</code> desta pasta (sem subpastas). JPG já existente é pulado.</p>
+  <label>Pasta</label>
+  <input id="dir" value="${DEFAULT_DIR.replace(/\\/g, '\\\\')}"/>
+  <p><button id="go" type="button">Converter agora</button></p>
+  <pre id="out">Pronto.</pre>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const dirInput = document.getElementById('dir');
+    const out = document.getElementById('out');
+    const go = document.getElementById('go');
+    if (params.get('dir')) dirInput.value = params.get('dir');
 
-async function loadOrCreateCert() {
-  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
-    return {
-      key: fs.readFileSync(keyPath),
-      cert: fs.readFileSync(certPath),
-    };
-  }
-
-  const pems = await selfsigned.generate(
-    [
-      { name: 'commonName', value: 'localhost' },
-      { name: 'organizationName', value: 'app-igreja-pdf-to-jpg' },
-    ],
-    {
-      days: 3650,
-      keySize: 2048,
-      algorithm: 'sha256',
-      extensions: [
-        { name: 'basicConstraints', cA: true },
-        {
-          name: 'keyUsage',
-          keyCertSign: true,
-          digitalSignature: true,
-          keyEncipherment: true,
-        },
-        {
-          name: 'subjectAltName',
-          altNames: [
-            { type: 2, value: 'localhost' },
-            { type: 7, ip: '127.0.0.1' },
-          ],
-        },
-      ],
+    async function convert() {
+      go.disabled = true;
+      out.textContent = 'Convertendo…';
+      try {
+        const response = await fetch('/convert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ folderPath: dirInput.value })
+        });
+        const payload = await response.json();
+        out.textContent = payload.message || payload.stdout || JSON.stringify(payload, null, 2);
+        if (payload.stdout) out.textContent += '\\n\\n' + payload.stdout;
+      } catch (error) {
+        out.textContent = String(error);
+      } finally {
+        go.disabled = false;
+      }
     }
-  );
 
-  fs.mkdirSync(certDir, { recursive: true });
-  fs.writeFileSync(keyPath, pems.private);
-  fs.writeFileSync(certPath, pems.cert);
+    go.addEventListener('click', convert);
+    if (params.get('run') === '1') convert();
+  </script>
+</body>
+</html>`;
 
-  return { key: pems.private, cert: pems.cert };
+function send(res, status, body, headers = {}) {
+  res.writeHead(status, headers);
+  res.end(body);
 }
 
-function send(res, status, body) {
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', ...cors });
-  res.end(JSON.stringify(body));
+function sendJson(res, status, body) {
+  send(res, status, JSON.stringify(body), {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Access-Control-Allow-Origin': '*',
+  });
 }
 
 function readJson(req) {
@@ -103,7 +106,6 @@ function runConverter(folderPath) {
       cwd: root,
       windowsHide: true,
     });
-
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', (chunk) => {
@@ -122,11 +124,9 @@ function parseSummary(stdout) {
   const match = stdout.match(
     /Concluído — ok: (\d+) · pulados: (\d+) · falhas: (\d+) · páginas: (\d+)/
   );
-
   if (!match) {
     return { ok: 0, skipped: 0, failed: 0, pages: 0 };
   }
-
   return {
     ok: Number(match[1]),
     skipped: Number(match[2]),
@@ -135,21 +135,29 @@ function parseSummary(stdout) {
   };
 }
 
-const tls = await loadOrCreateCert();
+const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url || '/', `http://127.0.0.1:${PORT}`);
 
-const server = https.createServer(tls, async (req, res) => {
   if (req.method === 'OPTIONS') {
-    res.writeHead(204, cors);
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    });
     res.end();
     return;
   }
 
-  if (req.method === 'GET' && (req.url === '/health' || req.url === '/')) {
-    send(res, 200, { ok: true, defaultDir: DEFAULT_DIR });
+  if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) {
+    if (url.pathname === '/health') {
+      sendJson(res, 200, { ok: true, defaultDir: DEFAULT_DIR });
+      return;
+    }
+    send(res, 200, PAGE, { 'Content-Type': 'text/html; charset=utf-8' });
     return;
   }
 
-  if (req.method === 'POST' && req.url === '/convert') {
+  if (req.method === 'POST' && url.pathname === '/convert') {
     try {
       const body = await readJson(req);
       const folderPath =
@@ -158,34 +166,30 @@ const server = https.createServer(tls, async (req, res) => {
           : DEFAULT_DIR;
 
       if (!/^[A-Za-z]:[\\/]/.test(folderPath) && !folderPath.startsWith('\\\\')) {
-        send(res, 400, { ok: false, message: 'Informe um caminho absoluto de pasta no Windows.' });
+        sendJson(res, 400, { ok: false, message: 'Informe um caminho absoluto de pasta no Windows.' });
         return;
       }
 
       if (!fs.existsSync(folderPath)) {
-        send(res, 400, { ok: false, message: `Pasta não encontrada: ${folderPath}` });
+        sendJson(res, 400, { ok: false, message: `Pasta não encontrada: ${folderPath}` });
         return;
       }
 
       const result = await runConverter(folderPath);
       const summary = parseSummary(result.stdout);
-
-      send(res, result.code === 0 ? 200 : 500, {
+      sendJson(res, result.code === 0 ? 200 : 500, {
         ok: result.code === 0,
         folderPath,
-        okCount: summary.ok,
+        converted: summary.ok,
         skipped: summary.skipped,
         failed: summary.failed,
         pages: summary.pages,
         stdout: result.stdout,
         stderr: result.stderr,
-        message:
-          result.code === 0
-            ? `Conversão concluída — ok: ${summary.ok} · pulados: ${summary.skipped} · falhas: ${summary.failed} · páginas: ${summary.pages}`
-            : result.stderr?.trim() || result.stdout?.trim() || 'Falha na conversão.',
+        message: `Concluído — ok: ${summary.ok} · pulados: ${summary.skipped} · falhas: ${summary.failed} · páginas: ${summary.pages}`,
       });
     } catch (error) {
-      send(res, 500, {
+      sendJson(res, 500, {
         ok: false,
         message: error instanceof Error ? error.message : String(error),
       });
@@ -193,11 +197,11 @@ const server = https.createServer(tls, async (req, res) => {
     return;
   }
 
-  send(res, 404, { ok: false, message: 'Rota não encontrada.' });
+  sendJson(res, 404, { ok: false, message: 'Rota não encontrada.' });
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Helper PDF→JPG em https://127.0.0.1:${PORT}`);
+  console.log(`Conversor PDF→JPG: http://127.0.0.1:${PORT}`);
   console.log(`Padrão: ${DEFAULT_DIR}`);
-  console.log('Deixe este terminal aberto. Na 1ª vez, abra a URL acima no Chrome e aceite o certificado.');
+  console.log('Deixe este terminal aberto.');
 });
