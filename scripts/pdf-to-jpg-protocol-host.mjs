@@ -3,6 +3,8 @@
  * Executa scripts/convert-pdf-folder-to-jpg.mjs na pasta pedida (sem subpastas).
  */
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -49,6 +51,12 @@ function showMessage(text) {
     { windowsHide: true }
   );
 }
+
+const logPath = path.join(os.tmpdir(), 'conectapdfjpg.log');
+fs.appendFileSync(
+  logPath,
+  `${new Date().toISOString()} argv=${JSON.stringify(process.argv.slice(2))}\n`
+);
 
 const folderPath = parseFolderPath(process.argv.slice(2));
 

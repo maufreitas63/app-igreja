@@ -20,12 +20,18 @@ export type PdfFolderToJpgResult = {
   };
 };
 
+export const PDF_TO_JPG_PROTOCOL = 'conectapdfjpg';
+
 export const isPdfFolderToJpgSupported = () =>
   Platform.OS === 'web' && typeof window !== 'undefined';
 
 export function buildPdfToJpgCommand(folderPath: string) {
   const escaped = folderPath.replace(/"/g, '\\"');
   return `node scripts/convert-pdf-folder-to-jpg.mjs --in "${escaped}" --out "${escaped}"`;
+}
+
+export function buildPdfToJpgProtocolUrl(folderPath: string) {
+  return `${PDF_TO_JPG_PROTOCOL}://convert?dir=${encodeURIComponent(folderPath)}`;
 }
 
 export function resolvePdfToJpgFolderPath(folderHint: string | null | undefined) {

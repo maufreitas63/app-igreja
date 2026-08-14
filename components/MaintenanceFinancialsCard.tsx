@@ -51,10 +51,10 @@ import {
   DEFAULT_TREASURY_RECEIPTS_DIR,
 } from '@/lib/treasuryReceiptBatchPath';
 import { isTreasuryReceiptFolderAccessSupported, pickTreasuryReceiptFolderFiles } from '@/lib/treasuryReceiptFolderAccess';
+import { PdfToJpgConvertLink } from '@/components/PdfToJpgConvertLink';
 import {
   DEFAULT_PDF_TO_JPG_DIR,
-  convertPdfsInDirectory,
-  isPdfFolderToJpgSupported,
+  buildPdfToJpgProtocolUrl,
   resolvePdfToJpgFolderPath,
 } from '@/lib/pdfFolderToJpg';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
@@ -205,9 +205,8 @@ export function MaintenanceFinancialsCard({
   } = useMaintenanceFinancials(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
-  const [convertingPdfFolder, setConvertingPdfFolder] = useState(false);
   const formBusy =
-    importing || emptyingMonth || savingEntryId !== null || processingReceiptBatch || convertingPdfFolder;
+    importing || emptyingMonth || savingEntryId !== null || processingReceiptBatch;
 
   const [csvText, setCsvText] = useState('');
   const [replacePeriod, setReplacePeriod] = useState(true);
@@ -936,62 +935,27 @@ export function MaintenanceFinancialsCard({
     });
   };
 
-  const handleConvertPdfFolderToJpg = async () => {
-    if (!isPdfFolderToJpgSupported()) {
-      Toast.show({
-        type: 'error',
-        text1: 'PDF → JPG',
-        text2: 'Use o Chrome ou Edge no desktop neste computador.',
-        visibilityTime: 7000,
-      });
-      return;
-    }
+  const pdfToJpgFolderPath = resolvePdfToJpgFolderPath(receiptsDir.trim() || DEFAULT_PDF_TO_JPG_DIR);
+  const pdfToJpgHref = buildPdfToJpgProtocolUrl(pdfToJpgFolderPath);
 
-    const folderPath = resolvePdfToJpgFolderPath(receiptsDir.trim() || DEFAULT_PDF_TO_JPG_DIR);
-
-    setConvertingPdfFolder(true);
-    try {
-      const result = await convertPdfsInDirectory(folderPath);
-      const message =
-        `Conversão disparada neste computador para ${result.folderPath}. ` +
-        `Se o Windows perguntar, confirme abrir o conversor. O resultado aparece numa janela ao terminar.`;
-
-      setPdfConvertReport({
-        folderPath: result.folderPath,
-        pdfCount: result.pdfCount,
-        ok: 0,
-        skipped: 0,
-        failed: 0,
-        pages: 0,
-        message,
-      });
-
-      Toast.show({
-        type: 'success',
-        text1: 'PDF → JPG',
-        text2: 'Conversão iniciada neste computador. Confirme no Windows se pedir.',
-        visibilityTime: 8000,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      setPdfConvertReport({
-        folderPath,
-        pdfCount: 0,
-        ok: 0,
-        skipped: 0,
-        failed: 1,
-        pages: 0,
-        message,
-      });
-      Toast.show({
-        type: 'error',
-        text1: 'PDF → JPG',
-        text2: message,
-        visibilityTime: 9000,
-      });
-    } finally {
-      setConvertingPdfFolder(false);
-    }
+  const handleConvertPdfFolderToJpgLaunch = () => {
+    setPdfConvertReport({
+      folderPath: pdfToJpgFolderPath,
+      pdfCount: 0,
+      ok: 0,
+      skipped: 0,
+      failed: 0,
+      pages: 0,
+      message:
+        `Conversão disparada neste computador para ${pdfToJpgFolderPath}. ` +
+        `Se o Windows perguntar, confirme abrir o conversor.`,
+    });
+    Toast.show({
+      type: 'success',
+      text1: 'PDF → JPG',
+      text2: 'Pedido enviado ao Windows. Confirme abrir o conversor se o Chrome perguntar.',
+      visibilityTime: 8000,
+    });
   };
 
   const handleProcessReceiptBatch = async () => {
@@ -1544,28 +1508,24 @@ export function MaintenanceFinancialsCard({
               Referências ambíguas (mesma data+valor em mais de um lançamento) são bloqueadas no pré-voo.
             </Text>
 
-            <TouchableOpacity
+            <PdfToJpgConvertLink
+              href={pdfToJpgHref}
+              disabled={processingReceiptBatch}
               style={[
                 styles.saveButton,
                 minimal && styles.saveButtonMinimal,
-                (convertingPdfFolder || processingReceiptBatch) && styles.saveButtonDisabled,
+                processingReceiptBatch && styles.saveButtonDisabled,
               ]}
-              onPress={() => void handleConvertPdfFolderToJpg()}
-              disabled={convertingPdfFolder || processingReceiptBatch}
-              activeOpacity={0.85}
+              onLaunch={handleConvertPdfFolderToJpgLaunch}
             >
-              {convertingPdfFolder ? (
-                <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0f172a'} size="small" />
-              ) : (
-                <Text style={[styles.saveButtonText, minimal && styles.saveButtonTextMinimal]}>
-                  Converter PDF → JPG
-                </Text>
-              )}
-            </TouchableOpacity>
+              <Text style={[styles.saveButtonText, minimal && styles.saveButtonTextMinimal]}>
+                Converter PDF → JPG
+              </Text>
+            </PdfToJpgConvertLink>
             <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
-              O botão dispara a conversão neste computador (PDFs da pasta abaixo, sem subpastas). Na
-              primeira vez o Windows pede para abrir o conversor — confirme. Uma vez:
-              npm run pdf-to-jpg:install
+              O clique abre o conversor neste Windows (PDFs da pasta abaixo, sem subpastas). Confirme
+              no Chrome se perguntar para abrir o aplicativo. Já foi registrado com npm run
+              pdf-to-jpg:install neste computador.
             </Text>
 
             {pdfConvertReport ? (

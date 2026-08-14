@@ -1,10 +1,9 @@
 import {
   buildPdfToJpgCommand,
+  buildPdfToJpgProtocolUrl,
   resolvePdfToJpgFolderPath,
   type PdfFolderToJpgResult,
 } from '@/lib/pdfFolderToJpg';
-
-export const PDF_TO_JPG_PROTOCOL = 'conectapdfjpg';
 
 export const isPdfFolderToJpgSupported = () =>
   typeof window !== 'undefined' && typeof document !== 'undefined';
@@ -18,15 +17,8 @@ export async function pickPdfConversionFolder(): Promise<{
 }
 
 function launchLocalConverter(folderPath: string) {
-  const url = `${PDF_TO_JPG_PROTOCOL}://convert?dir=${encodeURIComponent(folderPath)}`;
-
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.rel = 'noopener';
-  anchor.style.display = 'none';
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
+  const url = buildPdfToJpgProtocolUrl(folderPath);
+  window.location.assign(url);
 }
 
 export async function convertPdfsInDirectory(folderHint?: string | null): Promise<PdfFolderToJpgResult> {
