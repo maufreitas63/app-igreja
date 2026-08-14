@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, type StyleProp, type ViewStyle } from 'react-native';
 
 type Props = {
   href: string;
@@ -9,27 +9,30 @@ type Props = {
   children: React.ReactNode;
 };
 
-export function PdfToJpgConvertLink({ href, disabled, style, onLaunch, children }: Props) {
-  if (disabled) {
-    return <View style={style}>{children}</View>;
+function launchProtocolWithoutLeavingPage(href: string) {
+  if (typeof document === 'undefined') {
+    return;
   }
 
-  return React.createElement(
-    'a',
-    {
-      href,
-      onClick: () => {
+  const iframe = document.createElement('iframe');
+  iframe.src = href;
+  iframe.style.display = 'none';
+  iframe.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(iframe);
+  window.setTimeout(() => iframe.remove(), 4000);
+}
+
+export function PdfToJpgConvertLink({ href, disabled, style, onLaunch, children }: Props) {
+  return (
+    <Pressable
+      style={style}
+      disabled={disabled}
+      onPress={() => {
         onLaunch?.();
-      },
-      style: {
-        display: 'block',
-        textDecoration: 'none',
-        color: 'inherit',
-        cursor: 'pointer',
-      },
-    },
-    <View style={style} pointerEvents="none">
+        launchProtocolWithoutLeavingPage(href);
+      }}
+    >
       {children}
-    </View>
+    </Pressable>
   );
 }

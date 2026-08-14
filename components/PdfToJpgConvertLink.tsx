@@ -1,5 +1,5 @@
 import React from 'react';
-import { Linking, TouchableOpacity, type StyleProp, type ViewStyle } from 'react-native';
+import { Linking, Pressable, type StyleProp, type ViewStyle } from 'react-native';
 
 type Props = {
   href: string;
@@ -11,16 +11,15 @@ type Props = {
 
 export function PdfToJpgConvertLink({ href, disabled, style, onLaunch, children }: Props) {
   return (
-    <TouchableOpacity
+    <Pressable
       style={style}
       disabled={disabled}
-      activeOpacity={0.85}
       onPress={() => {
         onLaunch?.();
         void Linking.openURL(href);
       }}
     >
       {children}
-    </TouchableOpacity>
+    </Pressable>
   );
 }

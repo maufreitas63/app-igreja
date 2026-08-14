@@ -18,7 +18,17 @@ export async function pickPdfConversionFolder(): Promise<{
 
 function launchLocalConverter(folderPath: string) {
   const url = buildPdfToJpgProtocolUrl(folderPath);
-  window.location.assign(url);
+
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  const iframe = document.createElement('iframe');
+  iframe.src = url;
+  iframe.style.display = 'none';
+  iframe.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(iframe);
+  window.setTimeout(() => iframe.remove(), 4000);
 }
 
 export async function convertPdfsInDirectory(folderHint?: string | null): Promise<PdfFolderToJpgResult> {
