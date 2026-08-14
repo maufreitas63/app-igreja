@@ -938,10 +938,20 @@ export function MaintenanceFinancialsCard({
   );
 
   const handleConvertPdfFolderToJpg = () => {
+    const returnTo =
+      typeof window !== 'undefined' && window.location?.href
+        ? window.location.href
+        : '';
     const url =
-      `http://127.0.0.1:47821/?dir=${encodeURIComponent(pdfToJpgFolderPath)}&run=1`;
+      `http://127.0.0.1:47821/?dir=${encodeURIComponent(pdfToJpgFolderPath)}` +
+      `&run=1` +
+      (returnTo ? `&return=${encodeURIComponent(returnTo)}` : '');
 
-    void Linking.openURL(url);
+    if (typeof window !== 'undefined' && typeof window.open === 'function') {
+      window.open(url, '_blank');
+    } else {
+      void Linking.openURL(url);
+    }
 
     setPdfConvertReport({
       folderPath: pdfToJpgFolderPath,

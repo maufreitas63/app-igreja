@@ -27,6 +27,8 @@ const PAGE = `<!doctype html>
     body { font-family: Segoe UI, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
     input { width: 100%; padding: 10px; font-size: 14px; box-sizing: border-box; }
     button { margin-top: 12px; padding: 12px 18px; font-size: 16px; cursor: pointer; }
+    .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    #back { background: #e2e8f0; border: 1px solid #94a3b8; }
     pre { background: #111; color: #d1fae5; padding: 12px; white-space: pre-wrap; min-height: 80px; }
   </style>
 </head>
@@ -35,14 +37,32 @@ const PAGE = `<!doctype html>
   <p>Só os arquivos <code>.pdf</code> desta pasta (sem subpastas). JPG já existente é pulado.</p>
   <label>Pasta</label>
   <input id="dir" value="${DEFAULT_DIR.replace(/\\/g, '\\\\')}"/>
-  <p><button id="go" type="button">Converter agora</button></p>
+  <p class="actions">
+    <button id="go" type="button">Converter agora</button>
+    <button id="back" type="button">Fechar e voltar às Informações Financeiras</button>
+  </p>
   <pre id="out">Pronto.</pre>
   <script>
     const params = new URLSearchParams(location.search);
     const dirInput = document.getElementById('dir');
     const out = document.getElementById('out');
     const go = document.getElementById('go');
+    const back = document.getElementById('back');
     if (params.get('dir')) dirInput.value = params.get('dir');
+
+    function returnToFinancials() {
+      const ret = params.get('return');
+      window.close();
+      window.setTimeout(() => {
+        if (!ret) return;
+        try {
+          const target = new URL(ret);
+          if (target.protocol === 'https:' || target.protocol === 'http:') {
+            location.href = target.href;
+          }
+        } catch (error) {}
+      }, 150);
+    }
 
     async function convert() {
       go.disabled = true;
@@ -64,6 +84,7 @@ const PAGE = `<!doctype html>
     }
 
     go.addEventListener('click', convert);
+    back.addEventListener('click', returnToFinancials);
     if (params.get('run') === '1') convert();
   </script>
 </body>
