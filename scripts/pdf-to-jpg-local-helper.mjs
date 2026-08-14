@@ -1,17 +1,26 @@
 /**
- * Helper local: o PWA pede a conversão; este processo grava JPG no disco.
+ * Helper local HTTPS: o PWA dispara a conversão; este processo grava JPG no disco
+ * via scripts/convert-pdf-folder-to-jpg.mjs (sem subpastas).
  *
  * Uso (deixar aberto neste computador):
- *   node scripts/pdf-to-jpg-local-helper.mjs
+ *   npm run pdf-to-jpg:helper
+ *
+ * O PWA em HTTPS precisa deste helper em HTTPS (senão o navegador bloqueia).
+ * Na primeira vez, abra https://127.0.0.1:47821/health e aceite o certificado local.
  */
-import http from 'node:http';
+import fs from 'node:fs';
+import https from 'node:https';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import selfsigned from 'selfsigned';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const converter = path.join(root, 'scripts', 'convert-pdf-folder-to-jpg.mjs');
+const certDir = path.join(root, 'scripts', '.pdf-to-jpg-certs');
+const keyPath = path.join(certDir, 'key.pem');
+const certPath = path.join(certDir, 'cert.pem');
 const PORT = Number.parseInt(process.env.PDF_TO_JPG_HELPER_PORT || '47821', 10);
 const DEFAULT_DIR = String.raw`C:\IBN Tesouraria\Comprovantes\JPG`;
 
@@ -20,6 +29,49 @@ const cors = {
   'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
+
+async function loadOrCreateCert() {
+  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+    return {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath),
+    };
+  }
+
+  const pems = await selfsigned.generate(
+    [
+      { name: 'commonName', value: 'localhost' },
+      { name: 'organizationName', value: 'app-igreja-pdf-to-jpg' },
+    ],
+    {
+      days: 3650,
+      keySize: 2048,
+      algorithm: 'sha256',
+      extensions: [
+        { name: 'basicConstraints', cA: true },
+        {
+          name: 'keyUsage',
+          keyCertSign: true,
+          digitalSignature: true,
+          keyEncipherment: true,
+        },
+        {
+          name: 'subjectAltName',
+          altNames: [
+            { type: 2, value: 'localhost' },
+            { type: 7, ip: '127.0.0.1' },
+          ],
+        },
+      ],
+    }
+  );
+
+  fs.mkdirSync(certDir, { recursive: true });
+  fs.writeFileSync(keyPath, pems.private);
+  fs.writeFileSync(certPath, pems.cert);
+
+  return { key: pems.private, cert: pems.cert };
+}
 
 function send(res, status, body) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', ...cors });
@@ -83,14 +135,16 @@ function parseSummary(stdout) {
   };
 }
 
-const server = http.createServer(async (req, res) => {
+const tls = await loadOrCreateCert();
+
+const server = https.createServer(tls, async (req, res) => {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, cors);
     res.end();
     return;
   }
 
-  if (req.method === 'GET' && req.url === '/health') {
+  if (req.method === 'GET' && (req.url === '/health' || req.url === '/')) {
     send(res, 200, { ok: true, defaultDir: DEFAULT_DIR });
     return;
   }
@@ -108,6 +162,11 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      if (!fs.existsSync(folderPath)) {
+        send(res, 400, { ok: false, message: `Pasta não encontrada: ${folderPath}` });
+        return;
+      }
+
       const result = await runConverter(folderPath);
       const summary = parseSummary(result.stdout);
 
@@ -120,6 +179,10 @@ const server = http.createServer(async (req, res) => {
         pages: summary.pages,
         stdout: result.stdout,
         stderr: result.stderr,
+        message:
+          result.code === 0
+            ? `Conversão concluída — ok: ${summary.ok} · pulados: ${summary.skipped} · falhas: ${summary.failed} · páginas: ${summary.pages}`
+            : result.stderr?.trim() || result.stdout?.trim() || 'Falha na conversão.',
       });
     } catch (error) {
       send(res, 500, {
@@ -134,7 +197,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Helper PDF→JPG em http://127.0.0.1:${PORT}`);
+  console.log(`Helper PDF→JPG em https://127.0.0.1:${PORT}`);
   console.log(`Padrão: ${DEFAULT_DIR}`);
-  console.log('Deixe este terminal aberto enquanto usar o botão no PWA.');
+  console.log('Deixe este terminal aberto. Na 1ª vez, abra a URL acima no Chrome e aceite o certificado.');
 });

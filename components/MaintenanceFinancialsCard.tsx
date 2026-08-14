@@ -53,8 +53,8 @@ import {
 import { isTreasuryReceiptFolderAccessSupported, pickTreasuryReceiptFolderFiles } from '@/lib/treasuryReceiptFolderAccess';
 import {
   DEFAULT_PDF_TO_JPG_DIR,
+  convertPdfsInDirectory,
   isPdfFolderToJpgSupported,
-  pickPdfConversionFolder,
   resolvePdfToJpgFolderPath,
 } from '@/lib/pdfFolderToJpg';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
@@ -941,56 +941,60 @@ export function MaintenanceFinancialsCard({
       Toast.show({
         type: 'error',
         text1: 'PDF → JPG',
-        text2: 'Use o Chrome ou Edge no desktop para escolher a pasta.',
+        text2: 'Use o Chrome ou Edge no desktop. Deixe o helper local ligado: npm run pdf-to-jpg:helper',
         visibilityTime: 7000,
-      });
-      return;
-    }
-
-    let pick: Awaited<ReturnType<typeof pickPdfConversionFolder>>;
-
-    try {
-      pick = await pickPdfConversionFolder();
-    } catch (error) {
-      Toast.show({
-        type: 'error',
-        text1: 'PDF → JPG',
-        text2: error instanceof Error ? error.message : 'Falha ao abrir a pasta.',
-        visibilityTime: 7000,
-      });
-      return;
-    }
-
-    if (!pick) {
-      Toast.show({
-        type: 'info',
-        text1: 'PDF → JPG',
-        text2: 'Seleção de pasta cancelada.',
-        visibilityTime: 3000,
       });
       return;
     }
 
     const folderPath = resolvePdfToJpgFolderPath(receiptsDir.trim() || DEFAULT_PDF_TO_JPG_DIR);
 
-    setPdfConvertReport({
-      folderPath,
-      pdfCount: pick.pdfCount,
-      ok: 0,
-      skipped: 0,
-      failed: 0,
-      pages: 0,
-      message:
-        `${pick.pdfCount} PDF(s) na raiz. O PWA na nuvem não grava no Windows. ` +
-        `A conversão roda neste computador: npm run pdf-to-jpg`,
-    });
+    setConvertingPdfFolder(true);
+    try {
+      const result = await convertPdfsInDirectory(folderPath);
+      const summary = result.helperSummary;
+      const message =
+        `Concluído — ok: ${summary?.ok ?? result.converted.length} · ` +
+        `pulados: ${summary?.skipped ?? result.skippedExisting.length} · ` +
+        `falhas: ${summary?.failed ?? result.errors.length} · ` +
+        `páginas: ${summary?.pages ?? result.pageCount}`;
 
-    Toast.show({
-      type: 'success',
-      text1: 'Pasta reconhecida',
-      text2: `${pick.pdfCount} PDF(s) em ${folderPath}. A conversão no disco é o comando npm run pdf-to-jpg.`,
-      visibilityTime: 8000,
-    });
+      setPdfConvertReport({
+        folderPath: result.folderPath,
+        pdfCount: result.pdfCount,
+        ok: summary?.ok ?? result.converted.length,
+        skipped: summary?.skipped ?? result.skippedExisting.length,
+        failed: summary?.failed ?? result.errors.length,
+        pages: summary?.pages ?? result.pageCount,
+        message,
+      });
+
+      Toast.show({
+        type: (summary?.failed ?? result.errors.length) > 0 ? 'error' : 'success',
+        text1: 'PDF → JPG',
+        text2: message,
+        visibilityTime: 8000,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setPdfConvertReport({
+        folderPath,
+        pdfCount: 0,
+        ok: 0,
+        skipped: 0,
+        failed: 1,
+        pages: 0,
+        message,
+      });
+      Toast.show({
+        type: 'error',
+        text1: 'PDF → JPG',
+        text2: message,
+        visibilityTime: 9000,
+      });
+    } finally {
+      setConvertingPdfFolder(false);
+    }
   };
 
   const handleProcessReceiptBatch = async () => {
@@ -1563,8 +1567,9 @@ export function MaintenanceFinancialsCard({
               )}
             </TouchableOpacity>
             <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
-              O botão só confirma a pasta (sem subpastas). Quem grava JPG no disco é o comando neste
-              computador: npm run pdf-to-jpg
+              O botão converte os PDFs da pasta abaixo (sem subpastas) e grava JPG no disco. Deixe
+              ligado neste computador: npm run pdf-to-jpg:helper. Na primeira vez, abra
+              https://127.0.0.1:47821/health e aceite o certificado local.
             </Text>
 
             {pdfConvertReport ? (

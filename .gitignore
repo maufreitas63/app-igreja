@@ -48,6 +48,7 @@ app-example
 /android
 
 # local tools / reports
+scripts/.pdf-to-jpg-certs/
 scripts/*.log
 scripts/*-report.json
 scripts/*-report.txt

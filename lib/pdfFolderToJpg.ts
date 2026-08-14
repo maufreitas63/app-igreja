@@ -23,19 +23,6 @@ export type PdfFolderToJpgResult = {
 export const isPdfFolderToJpgSupported = () =>
   Platform.OS === 'web' && typeof window !== 'undefined';
 
-/** Infere o nome da pasta a partir dos arquivos escolhidos no seletor. */
-export function inferSelectedFolderName(files: File[]): string | null {
-  const first = files[0] as File & { webkitRelativePath?: string };
-  const relative = first?.webkitRelativePath?.trim();
-
-  if (relative) {
-    const root = relative.replace(/\\/g, '/').split('/')[0]?.trim();
-    return root || null;
-  }
-
-  return null;
-}
-
 export function buildPdfToJpgCommand(folderPath: string) {
   const escaped = folderPath.replace(/"/g, '\\"');
   return `node scripts/convert-pdf-folder-to-jpg.mjs --in "${escaped}" --out "${escaped}"`;
@@ -69,9 +56,7 @@ export async function pickPdfConversionFolder(): Promise<{
   fileCount: number;
   pdfCount: number;
 } | null> {
-  throw new Error(
-    'Seleção de pasta disponível apenas na versão web (Chrome ou Edge no desktop).'
-  );
+  return null;
 }
 
 export async function convertPdfsInDirectory(
