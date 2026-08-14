@@ -941,7 +941,7 @@ export function MaintenanceFinancialsCard({
       Toast.show({
         type: 'error',
         text1: 'PDF → JPG',
-        text2: 'Use o Chrome ou Edge no desktop. Deixe o helper local ligado: npm run pdf-to-jpg:helper',
+        text2: 'Use o Chrome ou Edge no desktop neste computador.',
         visibilityTime: 7000,
       });
       return;
@@ -952,27 +952,24 @@ export function MaintenanceFinancialsCard({
     setConvertingPdfFolder(true);
     try {
       const result = await convertPdfsInDirectory(folderPath);
-      const summary = result.helperSummary;
       const message =
-        `Concluído — ok: ${summary?.ok ?? result.converted.length} · ` +
-        `pulados: ${summary?.skipped ?? result.skippedExisting.length} · ` +
-        `falhas: ${summary?.failed ?? result.errors.length} · ` +
-        `páginas: ${summary?.pages ?? result.pageCount}`;
+        `Conversão disparada neste computador para ${result.folderPath}. ` +
+        `Se o Windows perguntar, confirme abrir o conversor. O resultado aparece numa janela ao terminar.`;
 
       setPdfConvertReport({
         folderPath: result.folderPath,
         pdfCount: result.pdfCount,
-        ok: summary?.ok ?? result.converted.length,
-        skipped: summary?.skipped ?? result.skippedExisting.length,
-        failed: summary?.failed ?? result.errors.length,
-        pages: summary?.pages ?? result.pageCount,
+        ok: 0,
+        skipped: 0,
+        failed: 0,
+        pages: 0,
         message,
       });
 
       Toast.show({
-        type: (summary?.failed ?? result.errors.length) > 0 ? 'error' : 'success',
+        type: 'success',
         text1: 'PDF → JPG',
-        text2: message,
+        text2: 'Conversão iniciada neste computador. Confirme no Windows se pedir.',
         visibilityTime: 8000,
       });
     } catch (error) {
@@ -1551,11 +1548,10 @@ export function MaintenanceFinancialsCard({
               style={[
                 styles.saveButton,
                 minimal && styles.saveButtonMinimal,
-                (convertingPdfFolder || processingReceiptBatch || rpcMissing) &&
-                  styles.saveButtonDisabled,
+                (convertingPdfFolder || processingReceiptBatch) && styles.saveButtonDisabled,
               ]}
               onPress={() => void handleConvertPdfFolderToJpg()}
-              disabled={convertingPdfFolder || processingReceiptBatch || rpcMissing}
+              disabled={convertingPdfFolder || processingReceiptBatch}
               activeOpacity={0.85}
             >
               {convertingPdfFolder ? (
@@ -1567,9 +1563,9 @@ export function MaintenanceFinancialsCard({
               )}
             </TouchableOpacity>
             <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
-              O botão converte os PDFs da pasta abaixo (sem subpastas) e grava JPG no disco. Deixe
-              ligado neste computador: npm run pdf-to-jpg:helper. Na primeira vez, abra
-              https://127.0.0.1:47821/health e aceite o certificado local.
+              O botão dispara a conversão neste computador (PDFs da pasta abaixo, sem subpastas). Na
+              primeira vez o Windows pede para abrir o conversor — confirme. Uma vez:
+              npm run pdf-to-jpg:install
             </Text>
 
             {pdfConvertReport ? (

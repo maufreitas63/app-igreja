@@ -36,7 +36,8 @@
     "build:validation-checklist-xlsx": "node scripts/build-validation-checklist-xlsx.mjs",
     "lint": "expo lint",
     "pdf-to-jpg": "node scripts/convert-pdf-folder-to-jpg.mjs",
-    "pdf-to-jpg:helper": "node scripts/pdf-to-jpg-local-helper.mjs"
+    "pdf-to-jpg:helper": "node scripts/pdf-to-jpg-local-helper.mjs",
+    "pdf-to-jpg:install": "node scripts/register-pdf-to-jpg-protocol.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
