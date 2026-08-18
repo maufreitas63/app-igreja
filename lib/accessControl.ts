@@ -70,7 +70,11 @@ export async function loadDashboardCardViewAccess(
   profileId: string,
   options?: { forceRefresh?: boolean }
 ): Promise<DashboardCardViewAccess> {
-  if (await readOperatorIsSuperAdmin(options) || (await sessionIsSuperAdmin(profileId, options))) {
+  // Proteção aplicada: no Ghost os cards seguem o alvo, não o Super Admin operador
+  if (
+    (!isGhostModeActive() && (await readOperatorIsSuperAdmin(options)))
+    || (await sessionIsSuperAdmin(profileId, options))
+  ) {
     return Object.fromEntries(
       Object.keys(DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY).map((content) => [content, true] as const)
     );
@@ -268,10 +272,11 @@ const readOperatorIsSuperAdminUncached = async () => {
 
 const readOperatorIsSuperAdmin = async (options?: { forceRefresh?: boolean }) => {
   const realId = (await resolveRealSessionProfileId())?.trim() || 'none';
+  const ghostId = getGhostEffectiveProfileId() ?? 'none';
   return getCachedOrFetch('operator:super_admin', readOperatorIsSuperAdminUncached, {
     forceRefresh: options?.forceRefresh,
     ttlMs: 120_000,
-    scopeId: realId,
+    scopeId: `${realId}:${ghostId}`,
   });
 };
 
@@ -435,7 +440,7 @@ export async function profileHasAccess(
     return false;
   }
 
-  if (await readOperatorIsSuperAdmin(options)) {
+  if (!isGhostModeActive() && (await readOperatorIsSuperAdmin(options))) {
     return true;
   }
 
@@ -519,11 +524,12 @@ export async function sessionHasAccess(
   const profileId = await resolveEffectiveProfileId();
 
   if (profileId) {
-    if (await readOperatorIsSuperAdmin()) {
+    // Proteção aplicada: no Ghost a ACL é do alvo, não do operador Super Admin
+    if (!isGhostModeActive() && (await readOperatorIsSuperAdmin())) {
       return true;
     }
 
-    if (isGhostModeActive() && (await sessionIsSuperAdmin(profileId))) {
+    if (await sessionIsSuperAdmin(profileId)) {
       return true;
     }
 

@@ -77,3 +77,5 @@ grant execute on function public.current_session_tenant_id() to anon, authentica
 
 comment on function public.current_session_tenant_id() is
   'Tenant da sessão: header autorizado, ou (em Ghost) igreja primária do alvo; senão fail-closed.';
+
+notify pgrst, 'reload schema';
