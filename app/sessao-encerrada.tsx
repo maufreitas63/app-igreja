@@ -1,10 +1,13 @@
 import { Image } from 'expo-image';
-import { PWA_SIGNED_OUT_ROUTE } from '@/lib/userSession';
+import { PWA_SIGNED_OUT_ROUTE, SIGN_OUT_QUERY_PARAM } from '@/lib/userSession';
+import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 /** Tela neutra após sair do app quando o sistema não permite fechar a janela. */
 export default function SessaoEncerradaScreen() {
+  const router = useRouter();
+
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') {
       return;
@@ -24,15 +27,35 @@ export default function SessaoEncerradaScreen() {
     };
   }, []);
 
+  const handleEnterAgain = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.pathname = '/';
+      url.search = `${SIGN_OUT_QUERY_PARAM}=1`;
+      url.hash = '';
+      window.location.replace(url.toString());
+      return;
+    }
+
+    router.replace({ pathname: '/', params: { [SIGN_OUT_QUERY_PARAM]: '1' } });
+  };
+
   return (
     <View style={styles.container}>
       <Image source={require('@/assets/images/icon.png')} style={styles.logo} contentFit="contain" />
       <Text style={styles.title}>Sessão encerrada</Text>
       <Text style={styles.message}>
         Sua sessão foi encerrada. Em aplicativos instalados, o sistema pode manter o app em
-        segundo plano — use o botão Início ou troque de app para sair completamente. Para entrar
-        novamente, abra o atalho na tela inicial.
+        segundo plano — use o botão Início ou troque de app para sair completamente.
       </Text>
+      <Pressable
+        onPress={handleEnterAgain}
+        style={styles.enterButton}
+        accessibilityRole="button"
+        accessibilityLabel="Entrar novamente"
+      >
+        <Text style={styles.enterButtonText}>Entrar novamente</Text>
+      </Pressable>
     </View>
   );
 }
@@ -62,5 +85,19 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#94a3b8',
     textAlign: 'center',
+  },
+  enterButton: {
+    marginTop: 24,
+    backgroundColor: '#3A96DD',
+    paddingHorizontal: 22,
+    paddingVertical: 14,
+    borderRadius: 14,
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  enterButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

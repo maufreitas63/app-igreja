@@ -10,7 +10,7 @@ import { isEventCalendarToday } from '@/lib/checkInVisibility';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { isEventPublished, isEventVisibleForCheckIn } from '@/lib/eventVisibility';
 import { useExitSessionUi } from '@/hooks/useExitSessionUi';
-import { exitApplication } from '@/lib/userSession';
+import { signOutAndNavigateToLogin } from '@/lib/userSession';
 import { lockPastEvents } from '@/lib/lockPastEvents';
 import { supabase } from '@/lib/supabase';
 import { getWebCameraProbe, requestWebCameraForTotem } from '@/lib/totemWebCamera';
@@ -178,7 +178,8 @@ export default function TotemCheckinScreen() {
   }, [loadEvents]);
 
   const handleExitSession = useCallback(() => {
-    exitApplication();
+    // Volta ao login (não tenta fechar o app / intent HOME — isso trava no celular).
+    signOutAndNavigateToLogin();
   }, []);
 
   const syncCameraPermission = useCallback(async () => {

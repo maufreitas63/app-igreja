@@ -2,6 +2,7 @@ import {
   buildShellPdfViewerUri,
   downloadAndOpenShellFile,
   downloadAndShareImageFile,
+  isAndroidHomeIntent,
   isPdfUrl,
   openShellExternalUrl,
   openWhatsAppShellUrl,
@@ -56,7 +57,8 @@ const SHELL_BRIDGE_JS = `
     return /^(whatsapp|whatsapp-api):/i.test(u) || /wa\\.me|api\\.whatsapp\\.com|whatsapp\\.com/i.test(u);
   }
   function isApp(u) {
-    return /^(whatsapp|whatsapp-api|tel|mailto|sms|smsto|intent|market|geo):/i.test(u);
+    return /^(whatsapp|whatsapp-api|tel|mailto|sms|smsto|market|geo):/i.test(u)
+      || (/^intent:/i.test(u) && !/category\\.HOME/i.test(u));
   }
   function isPdf(u) {
     return /\\.pdf(\\?|#|$)/i.test(u) || /\\/object\\/(sign|public)\\/.*\\.pdf/i.test(u);
@@ -299,6 +301,10 @@ export function PwaAppShell() {
         return true;
       }
 
+      if (isAndroidHomeIntent(url)) {
+        return false;
+      }
+
       // Visualizador PDF embutido no modal ou pdfjs.
       if (url.includes('/pdfjs/viewer.html')) {
         return true;
@@ -324,11 +330,12 @@ export function PwaAppShell() {
       const failedUrl = event.nativeEvent?.url?.trim() || '';
 
       if (
-        code === -10
+        isAndroidHomeIntent(failedUrl)
+        || code === -10
         || /ERR_UNKNOWN_URL_SCHEME/i.test(description)
         || /^(whatsapp|tel|mailto|intent):/i.test(failedUrl)
       ) {
-        if (failedUrl) {
+        if (failedUrl && !isAndroidHomeIntent(failedUrl)) {
           void openShellExternalUrl(failedUrl);
         }
         if (webRef.current && firstPaintDoneRef.current) {

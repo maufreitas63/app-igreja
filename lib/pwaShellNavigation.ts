@@ -13,6 +13,16 @@ export function isExternalAppScheme(url: string): boolean {
   return EXTERNAL_APP_SCHEME.test(trimmed);
 }
 
+/** Intent Android de tela inicial — usado ao sair do PWA, não é um app para instalar. */
+export function isAndroidHomeIntent(url: string): boolean {
+  const trimmed = url?.trim() ?? '';
+  if (!trimmed || !/^intent:/i.test(trimmed)) {
+    return false;
+  }
+
+  return /android\.intent\.action\.MAIN/i.test(trimmed) && /category\.HOME/i.test(trimmed);
+}
+
 export function isHttpUrl(url: string): boolean {
   return /^https?:\/\//i.test(url.trim());
 }
@@ -154,6 +164,10 @@ export async function openShellExternalUrl(url: string): Promise<boolean> {
     return false;
   }
 
+  if (isAndroidHomeIntent(target)) {
+    return false;
+  }
+
   if (isWhatsAppHttpUrl(target) || /^whatsapp:/i.test(target) || target.includes('wa.me')) {
     return openWhatsAppShellUrl(target);
   }
@@ -194,7 +208,7 @@ export function shouldHandoffShellNavigation(url: string): {
   mode: 'external' | 'pdf' | 'download' | 'none';
 } {
   const target = url?.trim() ?? '';
-  if (!target || target === 'about:blank') {
+  if (!target || target === 'about:blank' || isAndroidHomeIntent(target)) {
     return { handoff: false, mode: 'none' };
   }
 

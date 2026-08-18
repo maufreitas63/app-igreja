@@ -74,19 +74,44 @@ function uniqueTotemPhones(values: Array<string | null | undefined>) {
   return [...phones];
 }
 
+const TOTEM_PHONE_FETCH_TIMEOUT_MS = 8000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+}
+
 async function fetchCelTotemPhones(): Promise<string[]> {
-  const { data, error } = await supabase.rpc('list_cel_totem_phones');
+  try {
+    const { data, error } = await withTimeout(
+      supabase.rpc('list_cel_totem_phones'),
+      TOTEM_PHONE_FETCH_TIMEOUT_MS
+    );
 
-  if (!error && Array.isArray(data)) {
-    const fromRpc = uniqueTotemPhones(data.map((value) => String(value ?? '')));
+    if (!error && Array.isArray(data)) {
+      const fromRpc = uniqueTotemPhones(data.map((value) => String(value ?? '')));
 
-    if (fromRpc.length > 0) {
-      return fromRpc;
+      if (fromRpc.length > 0) {
+        return fromRpc;
+      }
     }
-  }
 
-  if (error && !isSupabaseRpcMissingError(error, 'list_cel_totem_phones')) {
-    console.error('list_cel_totem_phones:', error);
+    if (error && !isSupabaseRpcMissingError(error, 'list_cel_totem_phones')) {
+      console.error('list_cel_totem_phones:', error);
+    }
+  } catch (error) {
+    console.warn('list_cel_totem_phones timeout/fallback:', error);
   }
 
   const fallback = await getAppParameterValue(CEL_TOTEM_PARAMETER);

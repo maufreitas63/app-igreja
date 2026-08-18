@@ -453,6 +453,10 @@ const navigateToPwaSignedOutScreen = () => {
 const ANDROID_HOME_INTENT =
   'intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end';
 
+const isInsideApkWebView = () =>
+  typeof navigator !== 'undefined'
+  && /ComunidadeDigitalAPK/i.test(navigator.userAgent ?? '');
+
 const isWebWindowStillOpen = () => {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return false;
@@ -486,7 +490,7 @@ const tryCloseWebWindow = () => {
 };
 
 const trySendAndroidPwaToHome = () => {
-  if (!isAndroidWeb() || typeof window === 'undefined') {
+  if (!isAndroidWeb() || typeof window === 'undefined' || isInsideApkWebView()) {
     return false;
   }
 
