@@ -25,15 +25,22 @@ type FieldRowProps = {
   icon: React.ComponentProps<typeof MaterialIcons>['name'];
   label: string;
   value: string;
+  /** Valor na mesma linha do rótulo, à direita — campos curtos. */
+  inline?: boolean;
 };
 
-function FieldRow({ icon, label, value }: FieldRowProps) {
+function FieldRow({ icon, label, value, inline = false }: FieldRowProps) {
   return (
-    <View style={styles.fieldRow}>
+    <View style={[styles.fieldRow, inline && styles.fieldRowInline]}>
       <MaterialIcons name={icon} size={20} color={ICON_COLOR} />
-      <View style={styles.fieldText}>
+      <View style={[styles.fieldText, inline && styles.fieldTextInline]}>
         <Text style={styles.fieldLabel}>{label}</Text>
-        <Text style={styles.fieldValue}>{value}</Text>
+        <Text
+          style={[styles.fieldValue, inline && styles.fieldValueInline]}
+          numberOfLines={inline ? 1 : undefined}
+        >
+          {value}
+        </Text>
       </View>
     </View>
   );
@@ -213,11 +220,11 @@ export function DigitalIDCard() {
                 </View>
 
                 <FieldRow icon="badge" label="Nome completo" value={data.fullName} />
-                <FieldRow icon="cake" label="Data de nascimento" value={data.birthDate} />
+                <FieldRow icon="cake" label="Data de nascimento" value={data.birthDate} inline />
                 <FieldRow icon="home" label="Endereço completo" value={data.address} />
-                <FieldRow icon="phone" label="Telefone" value={data.phone} />
+                <FieldRow icon="phone" label="Telefone" value={data.phone} inline />
                 <FieldRow icon="email" label="E-mail" value={data.email} />
-                <FieldRow icon="groups" label="Grupo familiar" value={data.familyId} />
+                <FieldRow icon="groups" label="Grupo familiar" value={data.familyId} inline />
               </ScrollView>
 
               <ScrollView
@@ -259,8 +266,9 @@ export function DigitalIDCard() {
                   <Text style={styles.statusLabel}>Status</Text>
                   <FieldRow
                     icon="event-available"
-                    label="Data de entrada no aplicativo"
+                    label="Entrada no app"
                     value={data.registeredAt}
+                    inline
                   />
                 </View>
               </ScrollView>
@@ -444,10 +452,19 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 10,
   },
+  fieldRowInline: {
+    alignItems: 'center',
+  },
   fieldText: {
     flex: 1,
     minWidth: 0,
     gap: 2,
+  },
+  fieldTextInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   fieldLabel: {
     color: MINIMAL_UI.textMuted,
@@ -455,12 +472,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
+    flexShrink: 0,
   },
   fieldValue: {
     color: MINIMAL_UI.text,
     fontSize: 15,
     fontWeight: '600',
     lineHeight: 20,
+  },
+  fieldValueInline: {
+    flexShrink: 1,
+    textAlign: 'right',
   },
   qrBlock: {
     alignItems: 'center',
