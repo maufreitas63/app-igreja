@@ -20,6 +20,8 @@ import QRCode from 'react-native-qrcode-svg';
 
 const ICON_COLOR = MINIMAL_UI.icon;
 const PAGE_TITLES = ['Informações Pessoais', 'Informações Complementares'] as const;
+/** Foto 30% maior que 112px, para ocupar o espaço liberado na página pessoal. */
+const PHOTO_SIZE = 146;
 
 type FieldRowProps = {
   icon: React.ComponentProps<typeof MaterialIcons>['name'];
@@ -42,6 +44,42 @@ function FieldRow({ icon, label, value, inline = false }: FieldRowProps) {
           {value}
         </Text>
       </View>
+    </View>
+  );
+}
+
+function AddressDisclosure({ value }: { value: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasAddress = Boolean(value.trim() && value.trim() !== '—');
+
+  return (
+    <View style={styles.addressCard}>
+      <Pressable
+        onPress={() => setExpanded((current) => !current)}
+        style={({ pressed }) => [styles.addressHeader, pressed && styles.addressHeaderPressed]}
+        accessibilityRole="button"
+        accessibilityLabel="Endereço"
+        accessibilityState={{ expanded }}
+        accessibilityHint={expanded ? 'Recolhe o endereço completo' : 'Mostra o endereço completo'}
+      >
+        <View style={styles.addressHeaderText}>
+          <Text style={styles.addressTitle}>Endereço</Text>
+          <Text style={styles.addressMeta}>
+            {expanded ? 'Toque para recolher' : hasAddress ? 'Toque para visualizar' : 'Não informado'}
+          </Text>
+        </View>
+        <MaterialIcons
+          name={expanded ? 'expand-less' : 'expand-more'}
+          size={22}
+          color={ICON_COLOR}
+        />
+      </Pressable>
+
+      {expanded ? (
+        <View style={styles.addressBody}>
+          <Text style={styles.fieldValue}>{hasAddress ? value : '—'}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -213,18 +251,19 @@ export function DigitalIDCard() {
                       {data.initials !== '?' ? (
                         <Text style={styles.initials}>{data.initials}</Text>
                       ) : (
-                        <MaterialIcons name="person" size={48} color={ICON_COLOR} />
+                        <MaterialIcons name="person" size={62} color={ICON_COLOR} />
                       )}
                     </View>
                   )}
                 </View>
 
                 <FieldRow icon="badge" label="Nome completo" value={data.fullName} />
-                <FieldRow icon="cake" label="Data de nascimento" value={data.birthDate} inline />
-                <FieldRow icon="home" label="Endereço completo" value={data.address} />
-                <FieldRow icon="phone" label="Telefone" value={data.phone} inline />
+                <View style={styles.compactPair}>
+                  <FieldRow icon="cake" label="Nascimento" value={data.birthDate} inline />
+                  <FieldRow icon="phone" label="Telefone" value={data.phone} inline />
+                </View>
                 <FieldRow icon="email" label="E-mail" value={data.email} />
-                <FieldRow icon="groups" label="Grupo familiar" value={data.familyId} inline />
+                <AddressDisclosure value={data.address} />
               </ScrollView>
 
               <ScrollView
@@ -411,7 +450,9 @@ const styles = StyleSheet.create({
   pageContent: {
     paddingHorizontal: 16,
     paddingBottom: 12,
-    gap: 10,
+    gap: 12,
+    justifyContent: 'space-between',
+    flexGrow: 1,
   },
   pageTwoContent: {
     paddingHorizontal: 16,
@@ -423,17 +464,17 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   photo: {
-    width: 112,
-    height: 112,
-    borderRadius: 56,
+    width: PHOTO_SIZE,
+    height: PHOTO_SIZE,
+    borderRadius: PHOTO_SIZE / 2,
     borderWidth: 2,
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.rowHover,
   },
   photoFallback: {
-    width: 112,
-    height: 112,
-    borderRadius: 56,
+    width: PHOTO_SIZE,
+    height: PHOTO_SIZE,
+    borderRadius: PHOTO_SIZE / 2,
     borderWidth: 2,
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.rowHover,
@@ -443,9 +484,50 @@ const styles = StyleSheet.create({
   },
   initials: {
     color: MINIMAL_UI.blueDark,
-    fontSize: 36,
+    fontSize: 47,
     fontWeight: '700',
     letterSpacing: 1,
+  },
+  compactPair: {
+    gap: 10,
+  },
+  addressCard: {
+    backgroundColor: MINIMAL_UI.background,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: MINIMAL_UI.divider,
+    overflow: 'hidden',
+    marginHorizontal: -16,
+  },
+  addressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
+  },
+  addressHeaderPressed: {
+    opacity: 0.75,
+  },
+  addressHeaderText: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 8,
+  },
+  addressTitle: {
+    color: MINIMAL_UI.text,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  addressMeta: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  addressBody: {
+    paddingHorizontal: 16,
+    paddingBottom: 14,
   },
   fieldRow: {
     flexDirection: 'row',
