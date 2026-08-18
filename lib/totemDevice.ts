@@ -94,28 +94,31 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 async function fetchCelTotemPhones(): Promise<string[]> {
   try {
-    const { data, error } = await withTimeout(
-      supabase.rpc('list_cel_totem_phones'),
+    return await withTimeout(
+      (async () => {
+        const { data, error } = await supabase.rpc('list_cel_totem_phones');
+
+        if (!error && Array.isArray(data)) {
+          const fromRpc = uniqueTotemPhones(data.map((value) => String(value ?? '')));
+
+          if (fromRpc.length > 0) {
+            return fromRpc;
+          }
+        }
+
+        if (error && !isSupabaseRpcMissingError(error, 'list_cel_totem_phones')) {
+          console.error('list_cel_totem_phones:', error);
+        }
+
+        const fallback = await getAppParameterValue(CEL_TOTEM_PARAMETER);
+        return uniqueTotemPhones([fallback]);
+      })(),
       TOTEM_PHONE_FETCH_TIMEOUT_MS
     );
-
-    if (!error && Array.isArray(data)) {
-      const fromRpc = uniqueTotemPhones(data.map((value) => String(value ?? '')));
-
-      if (fromRpc.length > 0) {
-        return fromRpc;
-      }
-    }
-
-    if (error && !isSupabaseRpcMissingError(error, 'list_cel_totem_phones')) {
-      console.error('list_cel_totem_phones:', error);
-    }
   } catch (error) {
     console.warn('list_cel_totem_phones timeout/fallback:', error);
+    return [];
   }
-
-  const fallback = await getAppParameterValue(CEL_TOTEM_PARAMETER);
-  return uniqueTotemPhones([fallback]);
 }
 
 /** Números de totem de todas as igrejas (login ainda sem tenant). */

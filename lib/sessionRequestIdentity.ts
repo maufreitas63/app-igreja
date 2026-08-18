@@ -84,8 +84,24 @@ async function hydrateFromDisk() {
   await hydratePromise;
 }
 
+const HYDRATE_TIMEOUT_MS = 1500;
+
 /** Identidade de sessão para headers HTTP (token / profile / tenant). */
 export async function getSessionRequestIdentity(): Promise<SessionRequestIdentity> {
-  await hydrateFromDisk();
+  try {
+    await Promise.race([
+      hydrateFromDisk(),
+      new Promise<void>((resolve) => {
+        setTimeout(() => {
+          hydratedFromDisk = true;
+          resolve();
+        }, HYDRATE_TIMEOUT_MS);
+      }),
+    ]);
+  } catch (error) {
+    console.warn('sessionRequestIdentity timeout:', error);
+    hydratedFromDisk = true;
+  }
+
   return { ...cache };
 }

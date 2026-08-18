@@ -17,20 +17,43 @@ import { installExecutionErrorClipboard } from '@/lib/appToast';
 import { ICON_FONT_SOURCES } from '@/lib/iconFonts';
 import { installWebTextSelectionGuard, WEB_NON_SELECTABLE_VIEW_STYLES } from '@/lib/webTextSelectionGuard';
 import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import Toast from 'react-native-toast-message';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 
 installExecutionErrorClipboard();
 
+const FONT_WAIT_TIMEOUT_MS = 2500;
+
 export default function RootLayout() {
-  const [iconFontsLoaded] = useFonts(ICON_FONT_SOURCES);
   // APK EAS com EXPO_PUBLIC_APK_SHELL_MODE=pwa: mesma experiência da PWA em produção.
   const usePwaShell = Platform.OS !== 'web' && isApkPwaShellEnabled();
+  const [iconFontsLoaded, iconFontError] = useFonts(usePwaShell ? {} : ICON_FONT_SOURCES);
+  const [fontsTimedOut, setFontsTimedOut] = useState(usePwaShell);
 
   useEffect(() => installWebTextSelectionGuard(), []);
 
-  if (!iconFontsLoaded) {
+  useEffect(() => {
+    if (usePwaShell) {
+      return;
+    }
+
+    const timer = setTimeout(() => setFontsTimedOut(true), FONT_WAIT_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [usePwaShell]);
+
+  const fontsReady = usePwaShell || iconFontsLoaded || Boolean(iconFontError) || fontsTimedOut;
+
+  useEffect(() => {
+    if (fontsReady) {
+      void SplashScreen.hideAsync().catch(() => {
+        // já oculta ou plugin ainda não montou
+      });
+    }
+  }, [fontsReady]);
+
+  if (!fontsReady) {
     return (
       <View style={styles.fontLoader}>
         <ActivityIndicator size="large" color="#10b981" />

@@ -3,6 +3,7 @@ import {
   downloadAndOpenShellFile,
   downloadAndShareImageFile,
   isAndroidHomeIntent,
+  isExternalAppScheme,
   isPdfUrl,
   openShellExternalUrl,
   openWhatsAppShellUrl,
@@ -10,7 +11,6 @@ import {
 } from '@/lib/pwaShellNavigation';
 import { resolvePwaShellEntryUrl } from '@/lib/apkRuntimeMode';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import * as Location from 'expo-location';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -30,7 +30,7 @@ import type {
   WebViewMessageEvent,
 } from 'react-native-webview/lib/WebViewTypes';
 
-const FIRST_LOAD_TIMEOUT_MS = 25_000;
+const FIRST_LOAD_TIMEOUT_MS = 8_000;
 
 /**
  * Bridge: WhatsApp / schemes externos → nativo.
@@ -119,12 +119,7 @@ export function PwaAppShell() {
   const [canGoBack, setCanGoBack] = useState(false);
   const [currentUrl, setCurrentUrl] = useState(entryUrl);
   const [pdfViewerUri, setPdfViewerUri] = useState<string | null>(null);
-
-  useEffect(() => {
-    void Location.requestForegroundPermissionsAsync().catch(() => {
-      // best-effort
-    });
-  }, []);
+  const allowFirstDocumentLoadRef = useRef(true);
 
   useEffect(() => {
     if (!loading || errorMessage) {
@@ -305,6 +300,24 @@ export function PwaAppShell() {
         return false;
       }
 
+      // Android WebView: bloquear o 1º documento ou same-origin deixa a ampulheta eterna.
+      if (allowFirstDocumentLoadRef.current) {
+        allowFirstDocumentLoadRef.current = false;
+        if (!isExternalAppScheme(url)) {
+          return true;
+        }
+      }
+
+      try {
+        const requestOrigin = new URL(url).origin;
+        const entryOrigin = new URL(entryUrl).origin;
+        if (requestOrigin === entryOrigin) {
+          return true;
+        }
+      } catch {
+        // segue para o handoff
+      }
+
       // Visualizador PDF embutido no modal ou pdfjs.
       if (url.includes('/pdfjs/viewer.html')) {
         return true;
@@ -318,7 +331,7 @@ export function PwaAppShell() {
 
       return true;
     },
-    [handoffUrl]
+    [entryUrl, handoffUrl]
   );
 
   const handleError = useCallback(
@@ -370,6 +383,7 @@ export function PwaAppShell() {
 
   const retry = useCallback(() => {
     firstPaintDoneRef.current = false;
+    allowFirstDocumentLoadRef.current = true;
     setErrorMessage(null);
     setLoading(true);
     setReloadKey((value) => value + 1);
@@ -448,7 +462,6 @@ export function PwaAppShell() {
           originWhitelist={['*']}
           mixedContentMode="always"
           cacheEnabled
-          androidLayerType="hardware"
           mediaCapturePermissionGrantType={
             Platform.OS === 'ios' ? 'grantIfSameHostElsePrompt' : undefined
           }

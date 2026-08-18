@@ -119,7 +119,6 @@ export default function IndexScreen() {
   const [isSendingPin, setIsSendingPin] = useState(false);
   const [isRestoringSession, setIsRestoringSession] = useState(() => !skipSessionRestore);
   const [celTotemPhones, setCelTotemPhones] = useState<string[]>([]);
-  const [isTotemConfigLoading, setIsTotemConfigLoading] = useState(true);
   const [hasStoredAccessPin, setHasStoredAccessPin] = useState<boolean | null>(null);
   const [pinDeliveryUnlocked, setPinDeliveryUnlocked] = useState(false);
   const [loginStep, setLoginStep] = useState<1 | 2>(1);
@@ -552,10 +551,6 @@ export default function IndexScreen() {
         setCelTotemPhones(phones);
       } catch (error) {
         console.error('Erro ao carregar celular do totem:', error);
-      } finally {
-        if (active) {
-          setIsTotemConfigLoading(false);
-        }
       }
     })();
 
@@ -571,6 +566,11 @@ export default function IndexScreen() {
     }
 
     let active = true;
+    const restoreTimeout = setTimeout(() => {
+      if (active) {
+        setIsRestoringSession(false);
+      }
+    }, 6000);
 
     void (async () => {
       try {
@@ -630,6 +630,7 @@ export default function IndexScreen() {
       } catch (error) {
         console.error('Erro ao restaurar sessão:', error);
       } finally {
+        clearTimeout(restoreTimeout);
         if (active) {
           setIsRestoringSession(false);
         }
@@ -638,6 +639,7 @@ export default function IndexScreen() {
 
     return () => {
       active = false;
+      clearTimeout(restoreTimeout);
     };
   }, [continueWithExistingProfile, router, skipSessionRestore]);
 
@@ -831,7 +833,7 @@ export default function IndexScreen() {
   );
 
   useEffect(() => {
-    if (loginStep !== 2 || isRestoringSession || isTotemConfigLoading) {
+    if (loginStep !== 2 || isRestoringSession) {
       return;
     }
 
@@ -847,7 +849,6 @@ export default function IndexScreen() {
     focusPinInput,
     hasStoredAccessPin,
     isRestoringSession,
-    isTotemConfigLoading,
     isTotemLoginMode,
     loginStep,
     pinDeliveryUnlocked,
@@ -1075,7 +1076,7 @@ export default function IndexScreen() {
     </View>
   );
 
-  if (isRestoringSession || isTotemConfigLoading) {
+  if (isRestoringSession) {
     return (
       <View style={styles.container}>
         <View style={styles.restoreLoader}>
