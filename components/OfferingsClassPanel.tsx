@@ -69,7 +69,8 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
       return;
     }
 
-    router.back();
+    // replace — `router.back()` dispara popstate e o AppBackHandler abre «Encerrar sessão».
+    router.replace('/(tabs)');
   }, [onClose, router]);
 
   return (
