@@ -18,6 +18,7 @@ import { appAlert } from '@/lib/appAlert';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { supabase } from '@/lib/supabase';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
@@ -916,16 +917,10 @@ export default function PastoralScreen() {
             </TouchableOpacity>
           </ScrollView>
 
-          <View style={[styles.footerBar, useVigilanceTheme && styles.footerBarVigilance]}>
-            <Pressable
-              onPress={handleBackToDashboard}
-              style={styles.closeFooterButton}
-              accessibilityRole="button"
-              accessibilityLabel="Fechar"
-            >
-              <Text style={styles.closeFooterButtonText}>Fechar</Text>
-            </Pressable>
-          </View>
+          <CloseFooterBar
+            onPress={handleBackToDashboard}
+            variant={useVigilanceTheme ? 'minimal' : 'dark'}
+          />
         </KeyboardAvoidingView>
       </>
     );
@@ -1184,16 +1179,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  footerBar: {
-    flexShrink: 0,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#334155',
-    backgroundColor: 'rgba(2, 6, 23, 0.92)',
-    width: '100%',
-  },
   btnSubmitFull: {
     flex: 1,
     backgroundColor: '#a855f7',
@@ -1215,23 +1200,6 @@ const styles = StyleSheet.create({
   },
   btnSubmitDisabled: {
     opacity: 0.6,
-  },
-  closeFooterButton: {
-    minHeight: 51,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#1B4F8A',
-    backgroundColor: '#3A96DD',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
-  },
-  closeFooterButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
   },
   errorText: {
     color: '#FCA5A5',
@@ -1338,10 +1306,6 @@ const styles = StyleSheet.create({
     backgroundColor: PASTORAL_VIGILANCE_SURFACE,
     borderColor: VIGILANCE_SCALES_UI.accent,
     color: VIGILANCE_SCALES_UI.accent,
-  },
-  footerBarVigilance: {
-    borderTopColor: VIGILANCE_SCALES_UI.border,
-    backgroundColor: PASTORAL_VIGILANCE_SURFACE,
   },
   btnSubmitFullVigilance: {
     backgroundColor: PASTORAL_VIGILANCE_SUBMIT_BG,

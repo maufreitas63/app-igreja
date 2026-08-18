@@ -1,13 +1,13 @@
 import { OfferingsClass } from '@/components/OfferingsClass';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import {
   loadOfferingsRecipientBundle,
   type OfferingsRecipientRow,
 } from '@/lib/offeringsRecipientInfo';
-import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import * as Clipboard from 'expo-clipboard';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 type OfferingsClassPanelProps = {
@@ -86,16 +86,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
         }}
       />
 
-      <View style={styles.footerBar}>
-        <Pressable
-          onPress={handleClose}
-          style={styles.closeFooterButton}
-          accessibilityRole="button"
-          accessibilityLabel="Fechar"
-        >
-          <Text style={styles.closeFooterButtonText}>Fechar</Text>
-        </Pressable>
-      </View>
+      <CloseFooterBar onPress={handleClose} />
     </View>
   );
 }
@@ -105,31 +96,5 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     width: '100%',
-  },
-  footerBar: {
-    flexShrink: 0,
-    paddingTop: 8,
-    paddingBottom: 12,
-    borderTopWidth: 1,
-    borderTopColor: VIGILANCE_SCALES_UI.border,
-    backgroundColor: '#FFFFFF',
-    width: '100%',
-  },
-  closeFooterButton: {
-    minHeight: 51,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#1B4F8A',
-    backgroundColor: '#3A96DD',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
-  },
-  closeFooterButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
   },
 });

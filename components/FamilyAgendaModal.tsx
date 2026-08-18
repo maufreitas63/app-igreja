@@ -1,3 +1,4 @@
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { FamilyAgendaView } from '@/components/FamilyAgendaView';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { useGhostMode } from '@/context/GhostModeContext';
@@ -8,14 +9,7 @@ import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
   visible: boolean;
@@ -200,16 +194,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
         />
       </ScrollView>
 
-      <View style={styles.footerBar}>
-        <Pressable
-          onPress={onClose}
-          style={styles.closeFooterButton}
-          accessibilityRole="button"
-          accessibilityLabel="Fechar"
-        >
-          <Text style={styles.closeFooterButtonText}>Fechar</Text>
-        </Pressable>
-      </View>
+      <CloseFooterBar onPress={onClose} />
     </View>
   );
 }
@@ -242,31 +227,5 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     backgroundColor: VIGILANCE_SCALES_UI.surface,
-  },
-  footerBar: {
-    flexShrink: 0,
-    paddingTop: 8,
-    paddingBottom: 12,
-    borderTopWidth: 1,
-    borderTopColor: VIGILANCE_SCALES_UI.border,
-    backgroundColor: VIGILANCE_SCALES_UI.surface,
-    width: '100%',
-  },
-  closeFooterButton: {
-    minHeight: 51,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#1B4F8A',
-    backgroundColor: '#3A96DD',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
-  },
-  closeFooterButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
   },
 });
