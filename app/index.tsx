@@ -69,11 +69,12 @@ import {
   SIGN_OUT_QUERY_PARAM,
 } from '@/lib/userSession';
 import {
-  getCelTotemPhone,
   isTotemDevicePhone,
   isValidTotemAccessPin,
+  listCelTotemPhones,
   normalizePhoneDigits,
   persistTotemDeviceSession,
+  phoneDigitsMatch,
 } from '@/lib/totemDevice';
 import {
   getBiometricAvailability,
@@ -117,8 +118,8 @@ export default function IndexScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingPin, setIsSendingPin] = useState(false);
   const [isRestoringSession, setIsRestoringSession] = useState(() => !skipSessionRestore);
-  const [celTotemPhone, setCelTotemPhone] = useState<string | null>(null);
-  const [isTotemConfigLoading, setIsTotemConfigLoading] = useState(() => !skipSessionRestore);
+  const [celTotemPhones, setCelTotemPhones] = useState<string[]>([]);
+  const [isTotemConfigLoading, setIsTotemConfigLoading] = useState(true);
   const [hasStoredAccessPin, setHasStoredAccessPin] = useState<boolean | null>(null);
   const [pinDeliveryUnlocked, setPinDeliveryUnlocked] = useState(false);
   const [loginStep, setLoginStep] = useState<1 | 2>(1);
@@ -133,9 +134,7 @@ export default function IndexScreen() {
   const [biometricLoginAvailable, setBiometricLoginAvailable] = useState(false);
   const [biometricLoginLabel, setBiometricLoginLabel] = useState('Biometria');
   const [isBiometricUnlocking, setIsBiometricUnlocking] = useState(false);
-  const isTotemLoginMode = Boolean(
-    celTotemPhone && normalizePhoneDigits(phone) === celTotemPhone
-  );
+  const isTotemLoginMode = celTotemPhones.some((totem) => phoneDigitsMatch(phone, totem));
   const phoneDigits = normalizePhoneDigits(phone);
   const needsEmailBeforePin =
     !isTotemLoginMode
@@ -389,6 +388,14 @@ export default function IndexScreen() {
           return;
         }
 
+        if (deliveryState.ok && deliveryState.isTotem) {
+          setHasStoredAccessPin(true);
+          setFirstAccessNeedsEmail(false);
+          setPinDeliveryUnlocked(true);
+          setFirstAccessEmailMasked('');
+          return;
+        }
+
         if (hasPin === true) {
           setHasStoredAccessPin(true);
 
@@ -532,8 +539,33 @@ export default function IndexScreen() {
   }, [continueWithExistingProfile, focusPinInput, isLoading, isBiometricUnlocking]);
 
   useEffect(() => {
+    let active = true;
+
+    void (async () => {
+      try {
+        const phones = await listCelTotemPhones();
+
+        if (!active) {
+          return;
+        }
+
+        setCelTotemPhones(phones);
+      } catch (error) {
+        console.error('Erro ao carregar celular do totem:', error);
+      } finally {
+        if (active) {
+          setIsTotemConfigLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (skipSessionRestore) {
-      setIsTotemConfigLoading(false);
       setIsRestoringSession(false);
       return;
     }
@@ -542,21 +574,13 @@ export default function IndexScreen() {
 
     void (async () => {
       try {
-        const configuredTotemPhone = await getCelTotemPhone();
-
-        if (!active) {
-          return;
-        }
-
-        setCelTotemPhone(configuredTotemPhone);
-
         const storedPhone = await getStoredUserPhone();
 
-        if (
-          storedPhone &&
-          configuredTotemPhone &&
-          normalizePhoneDigits(storedPhone) === configuredTotemPhone
-        ) {
+        if (storedPhone && (await isTotemDevicePhone(storedPhone))) {
+          if (!active) {
+            return;
+          }
+
           router.replace('/totem-checkin');
           return;
         }
@@ -607,7 +631,6 @@ export default function IndexScreen() {
         console.error('Erro ao restaurar sessão:', error);
       } finally {
         if (active) {
-          setIsTotemConfigLoading(false);
           setIsRestoringSession(false);
         }
       }
@@ -740,7 +763,7 @@ export default function IndexScreen() {
             return;
           }
 
-          const entered = await persistTotemDeviceSession();
+          const entered = await persistTotemDeviceSession(phone);
 
           if (!entered) {
             Alert.alert(
