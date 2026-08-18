@@ -1,3 +1,4 @@
+import { DigitalIDCard } from '@/components/DigitalIDCard';
 import { MembersClassPanel } from '@/components/MembersClassPanel';
 import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ProfileClassPanel } from '@/components/ProfileClassPanel';
@@ -22,6 +23,7 @@ export function PerfilClassPanel() {
   const [profileClassVisible, setProfileClassVisible] = useState(false);
   const [membersClassVisible, setMembersClassVisible] = useState(false);
   const [discipleshipTrailVisible, setDiscipleshipTrailVisible] = useState(false);
+  const [digitalIdVisible, setDigitalIdVisible] = useState(false);
   const loadGenerationRef = useRef(0);
 
   const reloadAccess = useCallback(async (options?: { forceRefresh?: boolean }) => {
@@ -82,6 +84,10 @@ export function PerfilClassPanel() {
     }, [reloadAccess])
   );
 
+  const openDigitalIdCard = useCallback(() => {
+    setDigitalIdVisible(true);
+  }, []);
+
   const openManageProfile = useCallback(() => {
     setProfileClassVisible(true);
   }, []);
@@ -103,7 +109,14 @@ export function PerfilClassPanel() {
   }, [canOpenDiscipleshipTrail]);
 
   const actions = useMemo(() => {
-    const items: PerfilClassAction[] = [];
+    const items: PerfilClassAction[] = [
+      {
+        key: 'digital-id',
+        label: 'Carteirinha Digital',
+        icon: 'badge',
+        onPress: openDigitalIdCard,
+      },
+    ];
 
     if (manageProfile) {
       items.push({
@@ -138,10 +151,30 @@ export function PerfilClassPanel() {
     canOpenDiscipleshipTrail,
     manageMembers,
     manageProfile,
+    openDigitalIdCard,
     openDiscipleshipTrail,
     openManageMembers,
     openManageProfile,
   ]);
+
+  if (digitalIdVisible) {
+    return (
+      <View style={styles.embeddedPanel}>
+        <View style={styles.embeddedHeader}>
+          <Pressable
+            onPress={() => setDigitalIdVisible(false)}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar ao perfil"
+          >
+            <FontAwesome name="chevron-left" size={14} color={MINIMAL_UI.blueDark} />
+            <Text style={styles.backButtonText}>Perfil</Text>
+          </Pressable>
+        </View>
+        <DigitalIDCard />
+      </View>
+    );
+  }
 
   if (discipleshipTrailVisible) {
     return (
