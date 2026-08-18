@@ -27,10 +27,12 @@ import {
   isFinancialMonthBeforeCurrentCalendarMonth,
   listFinancialMonthsFromDates,
   mergeFinancialMonthLists,
+  parseFinancialMonthKey,
   resolveDefaultFinancialMonth,
   type FinancialMonthKey,
 } from '@/lib/financialMonth';
 import { supabase } from '@/lib/supabase';
+import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
 import { subscribeActiveTenantChange } from '@/lib/tenantSession';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -107,6 +109,12 @@ const financialRowsQuery = (select: string, endDate: string) =>
     .order('transaction_date', { ascending: true });
 
 const fetchFinancialRowsThroughDate = async (endDate: string) => {
+  const viaRpc = await fetchFinancialRowsThroughDateViaRpc(endDate);
+
+  if (viaRpc) {
+    return viaRpc;
+  }
+
   const withLowercase = await financialRowsQuery(FINANCIAL_SELECT_WITH_COMMENTS, endDate);
 
   if (!withLowercase.error) {
@@ -308,6 +316,99 @@ const mergeReceiptUrlsIntoEntries = (
   receiptRows: { id?: string; receipt_url?: string | null; receipt_urls?: unknown }[] | null | undefined
 ) => mergeFinancialReceiptUrlsIntoEntries(entries, receiptRows);
 
+const readErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = String((error as { message?: unknown }).message ?? '').trim();
+    if (message) {
+      return message;
+    }
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim();
+  }
+
+  return fallback;
+};
+
+type SessionFinancialMonthRow = {
+  year?: number | string | null;
+  month?: number | string | null;
+  has_realized?: boolean | null;
+  has_planned?: boolean | null;
+};
+
+const fetchFinancialMonthsFromSession = async (): Promise<{
+  months: FinancialMonthKey[];
+  plannedOnlyKeys: Set<string>;
+} | null> => {
+  const { data, error } = await supabase.rpc('listar_meses_financeiros_sessao');
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'listar_meses_financeiros_sessao')) {
+      return null;
+    }
+
+    throw error;
+  }
+
+  const realizedKeys = new Set<string>();
+  const plannedKeys = new Set<string>();
+
+  for (const row of (data ?? []) as SessionFinancialMonthRow[]) {
+    const year = Number(row.year);
+    const month = Number(row.month);
+
+    if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
+      continue;
+    }
+
+    const key = formatFinancialMonthKey({ year, month });
+
+    if (row.has_realized) {
+      realizedKeys.add(key);
+    }
+
+    if (row.has_planned) {
+      plannedKeys.add(key);
+    }
+
+    if (!row.has_realized && !row.has_planned) {
+      realizedKeys.add(key);
+    }
+  }
+
+  const months = filterSelectableFinancialMonths(
+    mergeFinancialMonthLists(
+      [...realizedKeys].map((key) => parseFinancialMonthKey(key)).filter((item): item is FinancialMonthKey => item !== null),
+      [...plannedKeys].map((key) => parseFinancialMonthKey(key)).filter((item): item is FinancialMonthKey => item !== null)
+    )
+  );
+  const plannedOnlyKeys = new Set(
+    months
+      .map((item) => formatFinancialMonthKey(item))
+      .filter((key) => plannedKeys.has(key) && !realizedKeys.has(key))
+  );
+
+  return { months, plannedOnlyKeys };
+};
+
+const fetchFinancialRowsThroughDateViaRpc = async (endDate: string) => {
+  const { data, error } = await supabase.rpc('listar_lancamentos_financeiros_ate', {
+    p_end: endDate,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'listar_lancamentos_financeiros_ate')) {
+      return null;
+    }
+
+    throw error;
+  }
+
+  return { data, error: null };
+};
+
 type UseFinancialsByMonthResult = {
   loadingMonths: boolean;
   loadingEntries: boolean;
@@ -369,43 +470,52 @@ export function useFinancialsByMonth(): UseFinancialsByMonthResult {
     setErrorMessage(null);
 
     try {
-      const [realizedResult, plannedResult] = await Promise.all([
-        supabase
-          .from('financials')
-          .select('transaction_date')
-          .eq('budget_version', FINANCIAL_BUDGET_VERSION_REALIZED)
-          .order('transaction_date', { ascending: false }),
-        supabase
-          .from('financials')
-          .select('transaction_date')
-          .eq('budget_version', FINANCIAL_BUDGET_VERSION_PLANNED)
-          .order('transaction_date', { ascending: false }),
-      ]);
+      const fromRpc = await fetchFinancialMonthsFromSession();
+      let months: FinancialMonthKey[] = [];
+      let plannedOnlyKeys = new Set<string>();
 
-      if (realizedResult.error) {
-        throw realizedResult.error;
+      if (fromRpc) {
+        months = fromRpc.months;
+        plannedOnlyKeys = fromRpc.plannedOnlyKeys;
+      } else {
+        const [realizedResult, plannedResult] = await Promise.all([
+          supabase
+            .from('financials')
+            .select('transaction_date')
+            .eq('budget_version', FINANCIAL_BUDGET_VERSION_REALIZED)
+            .order('transaction_date', { ascending: false }),
+          supabase
+            .from('financials')
+            .select('transaction_date')
+            .eq('budget_version', FINANCIAL_BUDGET_VERSION_PLANNED)
+            .order('transaction_date', { ascending: false }),
+        ]);
+
+        if (realizedResult.error) {
+          throw realizedResult.error;
+        }
+
+        if (plannedResult.error) {
+          throw plannedResult.error;
+        }
+
+        const realizedMonths = listFinancialMonthsFromDates(
+          (realizedResult.data ?? []).map((row) => String(row.transaction_date))
+        );
+        const plannedMonths = listFinancialMonthsFromDates(
+          (plannedResult.data ?? []).map((row) => String(row.transaction_date))
+        );
+        const allMonths = mergeFinancialMonthLists(realizedMonths, plannedMonths);
+        months = filterSelectableFinancialMonths(allMonths);
+        const realizedMonthKeys = new Set(
+          realizedMonths.map((month) => formatFinancialMonthKey(month))
+        );
+        plannedOnlyKeys = new Set(
+          months
+            .map((month) => formatFinancialMonthKey(month))
+            .filter((monthKey) => !realizedMonthKeys.has(monthKey))
+        );
       }
-
-      if (plannedResult.error) {
-        throw plannedResult.error;
-      }
-
-      const realizedMonths = listFinancialMonthsFromDates(
-        (realizedResult.data ?? []).map((row) => String(row.transaction_date))
-      );
-      const plannedMonths = listFinancialMonthsFromDates(
-        (plannedResult.data ?? []).map((row) => String(row.transaction_date))
-      );
-      const allMonths = mergeFinancialMonthLists(realizedMonths, plannedMonths);
-      const months = filterSelectableFinancialMonths(allMonths);
-      const realizedMonthKeys = new Set(
-        realizedMonths.map((month) => formatFinancialMonthKey(month))
-      );
-      const plannedOnlyKeys = new Set(
-        months
-          .map((month) => formatFinancialMonthKey(month))
-          .filter((monthKey) => !realizedMonthKeys.has(monthKey))
-      );
 
       const currentMonth = selectedMonthRef.current;
       const nextMonth =
@@ -423,7 +533,7 @@ export function useFinancialsByMonth(): UseFinancialsByMonthResult {
       return nextMonth;
     } catch (error) {
       console.error('Erro ao carregar meses financeiros:', error);
-      setErrorMessage('Não foi possível carregar os meses disponíveis.');
+      setErrorMessage(readErrorMessage(error, 'Não foi possível carregar os meses disponíveis.'));
       setMonthOptions([]);
       setPlannedOnlyMonthKeys(new Set());
       setSelectedMonth(null);
