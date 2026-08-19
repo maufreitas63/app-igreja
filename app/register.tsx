@@ -56,17 +56,9 @@ const REGISTER_SUBMIT_TEXT = '#FFFFFF';
 const REGISTER_PLACEHOLDER = 'rgba(58, 150, 221, 0.55)';
 
 const REGISTER_LGPD_TERMS_HEIGHT = 200;
-const REGISTER_LGPD_TERMS_MARGIN_BOTTOM = 5;
 const REGISTER_LGPD_HINT_LINE_HEIGHT = 16;
-const REGISTER_LGPD_HINT_MARGIN_BOTTOM = 15;
 const REGISTER_LGPD_CHECKBOX_ROW_HEIGHT = 24;
 const REGISTER_LGPD_ROW_MARGIN_BOTTOM = 25;
-const REGISTER_LGPD_SECTION_HEIGHT =
-  REGISTER_LGPD_TERMS_HEIGHT +
-  REGISTER_LGPD_TERMS_MARGIN_BOTTOM +
-  REGISTER_LGPD_HINT_LINE_HEIGHT +
-  REGISTER_LGPD_HINT_MARGIN_BOTTOM +
-  REGISTER_LGPD_CHECKBOX_ROW_HEIGHT;
 
 const formatCepInput = formatBrazilCepInput;
 
@@ -615,7 +607,7 @@ export default function RegisterScreen() {
                     )}
                   </View>
 
-                  {/* Seção (b) — Continuar (LGPD_Ativo = nao), mesmo slot e dimensões da seção (a) */}
+                  {/* Seção (b) — Continuar (LGPD_Ativo = nao), logo abaixo do celular confirmado */}
                   <View
                     style={[
                       styles.registerLgpdSection,
@@ -624,7 +616,6 @@ export default function RegisterScreen() {
                     accessibilityElementsHidden={!showLgpdSectionB}
                     importantForAccessibility={showLgpdSectionB ? 'auto' : 'no-hide-descendants'}
                   >
-                    <View style={styles.registerLgpdSectionBTopSpacer} />
                     <View style={styles.registerLgpdSectionBButtonRow}>
                       <TouchableOpacity
                         style={[
@@ -762,31 +753,20 @@ const styles = StyleSheet.create({
   },
   registerLgpdSlot: {
     width: '100%',
-    minHeight: REGISTER_LGPD_SECTION_HEIGHT,
     marginBottom: REGISTER_LGPD_ROW_MARGIN_BOTTOM,
   },
   registerLgpdLoading: {
-    ...StyleSheet.absoluteFillObject,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 2,
   },
   registerLgpdSection: {
     width: '100%',
-    minHeight: REGISTER_LGPD_SECTION_HEIGHT,
   },
   registerLgpdSectionHidden: {
     display: 'none',
   },
-  registerLgpdSectionBTopSpacer: {
-    height:
-      REGISTER_LGPD_TERMS_HEIGHT +
-      REGISTER_LGPD_TERMS_MARGIN_BOTTOM +
-      REGISTER_LGPD_HINT_LINE_HEIGHT +
-      REGISTER_LGPD_HINT_MARGIN_BOTTOM,
-  },
   registerLgpdSectionBButtonRow: {
-    minHeight: REGISTER_LGPD_CHECKBOX_ROW_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
