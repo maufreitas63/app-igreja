@@ -1,5 +1,5 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { LinearGradient } from 'expo-linear-gradient';
+import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -7,6 +7,7 @@ import {
   Alert,
   Image,
   Keyboard,
+  KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
@@ -41,7 +42,18 @@ import { useLgpdTermsScrollGate } from '@/hooks/useLgpdTermsScrollGate';
 import { useRejectTotemPhoneFromMemberRoutes } from '@/hooks/useRejectTotemPhoneFromMemberRoutes';
 import { useWebDocumentTitle } from '@/hooks/useWebDocumentTitle';
 import { useEntityPrefix } from '@/context/EntityPrefixContext';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const REGISTER_SURFACE = '#FFFFFF';
+const REGISTER_ACCENT = VIGILANCE_SCALES_UI.accent;
+const REGISTER_ICON = '#1B4F8A';
+const REGISTER_INPUT_BORDER = 'rgba(28, 79, 138, 0.35)';
+const REGISTER_SOFT_BORDER = 'rgba(52, 211, 153, 0.35)';
+const REGISTER_SUBMIT_BG = '#3A96DD';
+const REGISTER_SUBMIT_TEXT = '#FFFFFF';
+const REGISTER_PLACEHOLDER = 'rgba(58, 150, 221, 0.55)';
 
 const REGISTER_LGPD_TERMS_HEIGHT = 200;
 const REGISTER_LGPD_TERMS_MARGIN_BOTTOM = 5;
@@ -416,7 +428,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <LinearGradient colors={['#0f172a', '#020617']} style={styles.container}>
+    <View style={styles.container}>
       {stage === 'CAMERA' ? (
         <View style={styles.container}>
           <View style={styles.selfieCameraShell}>
@@ -455,39 +467,66 @@ export default function RegisterScreen() {
           </TouchableOpacity>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <KeyboardAvoidingView
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.title}>
             {stage === 'CONFIRM' ? 'Confirmar Registro' : `Cadastro ${entityName}`}
           </Text>
+          {stage === 'FORM' ? (
+            <Text style={styles.subtitle}>Complete seus dados para entrar no aplicativo.</Text>
+          ) : null}
           <View style={styles.formContainer}>
             {stage === 'FORM' && (
               <>
-                <TextInput
-                  ref={nameInputRef}
-                  style={styles.input}
-                  placeholder="Nome completo"
-                  placeholderTextColor="#94A3B8"
-                  value={fullName}
-                  onChangeText={handleNameChange}
-                  onFocus={handleNameFocus}
-                  onBlur={() => setFullName((current) => formatFullName(current))}
-                />
-                <TextInput style={styles.input} placeholder="Data Nascimento - dd/mm/aaaa" placeholderTextColor="#94A3B8" value={birthDate} onChangeText={handleDateChange} maxLength={10} keyboardType="numeric" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="CEP da residência - 00000-000"
-                  placeholderTextColor="#94A3B8"
-                  value={cep}
-                  onChangeText={handleCepChange}
-                  maxLength={9}
-                  keyboardType="numeric"
-                />
-                <TextInput style={styles.inputDisabled} value={`Telefone: ${phoneValue}`} editable={false} />
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.fieldLabel}>Nome completo</Text>
+                  <TextInput
+                    ref={nameInputRef}
+                    style={styles.input}
+                    placeholder="Nome completo"
+                    placeholderTextColor={REGISTER_PLACEHOLDER}
+                    value={fullName}
+                    onChangeText={handleNameChange}
+                    onFocus={handleNameFocus}
+                    onBlur={() => setFullName((current) => formatFullName(current))}
+                  />
+                </View>
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.fieldLabel}>Data de nascimento</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="dd/mm/aaaa"
+                    placeholderTextColor={REGISTER_PLACEHOLDER}
+                    value={birthDate}
+                    onChangeText={handleDateChange}
+                    maxLength={10}
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={styles.fieldBlock}>
+                  <Text style={styles.fieldLabel}>CEP da residência</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="00000-000"
+                    placeholderTextColor={REGISTER_PLACEHOLDER}
+                    value={cep}
+                    onChangeText={handleCepChange}
+                    maxLength={9}
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={styles.phoneConfirmedRow}>
+                  <FontAwesome name="check-circle" size={18} color={REGISTER_ACCENT} />
+                  <Text style={styles.phoneConfirmedText}>Celular confirmado: {phoneValue}</Text>
+                </View>
 
                 <View style={styles.registerLgpdSlot}>
                   {loadingLgpdSetting ? (
                     <View style={styles.registerLgpdLoading}>
-                      <ActivityIndicator color="#10b981" />
+                      <ActivityIndicator color={REGISTER_ACCENT} />
                     </View>
                   ) : null}
 
@@ -568,7 +607,7 @@ export default function RegisterScreen() {
                         disabled={isLoading}
                       >
                         {isLoading ? (
-                          <ActivityIndicator color="#FFF" />
+                          <ActivityIndicator color={REGISTER_ICON} />
                         ) : (
                           <Text style={styles.btnTextSecondary}>Concluir Cadastro</Text>
                         )}
@@ -598,7 +637,7 @@ export default function RegisterScreen() {
                         accessibilityLabel="Continuar"
                       >
                         {isLoading ? (
-                          <ActivityIndicator color="#020617" />
+                          <ActivityIndicator color={REGISTER_SUBMIT_TEXT} />
                         ) : (
                           <Text style={styles.btnText}>Continuar</Text>
                         )}
@@ -619,41 +658,108 @@ export default function RegisterScreen() {
                   onPress={() => void handleRegister()}
                   disabled={isLoading}
                 >
-                  {isLoading ? <ActivityIndicator color="#020617" /> : <Text style={styles.btnText}>Confirmar Registro</Text>}
+                  {isLoading ? <ActivityIndicator color={REGISTER_SUBMIT_TEXT} /> : <Text style={styles.btnText}>Confirmar Registro</Text>}
                 </TouchableOpacity>
-                <TouchableOpacity style={{marginTop: 15, alignItems: 'center'}} onPress={() => void handleOpenCamera()}>
-                  <Text style={{color: '#94A3B8'}}>Repetir Foto</Text>
+                <TouchableOpacity style={styles.repeatPhotoLink} onPress={() => void handleOpenCamera()}>
+                  <Text style={styles.repeatPhotoText}>Repetir Foto</Text>
                 </TouchableOpacity>
               </View>
             )}
           </View>
         </ScrollView>
+        </KeyboardAvoidingView>
       )}
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: { padding: 20, flexGrow: 1, paddingTop: 60 },
+  container: {
+    flex: 1,
+    backgroundColor: REGISTER_SURFACE,
+  },
+  scroll: {
+    padding: 20,
+    flexGrow: 1,
+    paddingTop: 40,
+    paddingBottom: 40,
+    backgroundColor: REGISTER_SURFACE,
+  },
   formContainer: { flex: 1 },
   confirmContainer: { marginTop: 10 },
-  title: { fontSize: 24, fontWeight: '800', color: '#FFF', marginBottom: 30, textAlign: 'center' },
-  input: { backgroundColor: 'rgba(30, 41, 59, 0.7)', borderWidth: 1, borderColor: '#10b981', padding: 20, borderRadius: 20, color: '#FFF', marginBottom: 15 },
-  inputDisabled: { backgroundColor: 'rgba(15, 23, 42, 0.4)', borderWidth: 1, borderColor: '#475569', padding: 20, borderRadius: 20, color: '#FFF', marginBottom: 15 },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: MINIMAL_UI.blueDark,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: REGISTER_ACCENT,
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  fieldBlock: {
+    marginBottom: 20,
+    width: '100%',
+  },
+  fieldLabel: {
+    color: REGISTER_ACCENT,
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  input: {
+    backgroundColor: REGISTER_SURFACE,
+    borderWidth: 1,
+    borderColor: REGISTER_SOFT_BORDER,
+    padding: 20,
+    borderRadius: 16,
+    color: REGISTER_ACCENT,
+    fontSize: 18,
+  },
+  phoneConfirmedRow: {
+    width: '100%',
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 4,
+  },
+  phoneConfirmedText: {
+    color: REGISTER_ACCENT,
+    fontSize: 14,
+    fontWeight: '600',
+  },
   lgpdBox: {
-    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    backgroundColor: MINIMAL_UI.rowHover,
     height: REGISTER_LGPD_TERMS_HEIGHT,
     padding: 15,
-    borderRadius: 15,
+    borderRadius: 16,
     marginBottom: 5,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: REGISTER_INPUT_BORDER,
     overflow: 'hidden',
   },
-  lgpdTitle: { color: '#10b981', fontWeight: 'bold', fontSize: 16, marginBottom: 8 },
-  lgpdText: { color: '#94A3B8', fontSize: 13, lineHeight: 20 },
-  hintText: { color: '#64748b', textAlign: 'center', marginBottom: 15, fontSize: 12, minHeight: REGISTER_LGPD_HINT_LINE_HEIGHT },
+  lgpdTitle: {
+    color: MINIMAL_UI.blueDark,
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  lgpdText: {
+    color: MINIMAL_UI.text,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  hintText: {
+    color: REGISTER_ACCENT,
+    textAlign: 'center',
+    marginBottom: 15,
+    fontSize: 12,
+    minHeight: REGISTER_LGPD_HINT_LINE_HEIGHT,
+  },
   registerLgpdSlot: {
     width: '100%',
     minHeight: REGISTER_LGPD_SECTION_HEIGHT,
@@ -692,48 +798,72 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxWrapper: { flexDirection: 'row', alignItems: 'center' },
-  checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: '#94A3B8', marginRight: 8 },
-  checkboxCheckedGreen: { backgroundColor: '#10b981', borderColor: '#10b981' },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: REGISTER_INPUT_BORDER,
+    marginRight: 8,
+  },
+  checkboxCheckedGreen: { backgroundColor: REGISTER_ACCENT, borderColor: REGISTER_ACCENT },
   checkboxCheckedRed: { backgroundColor: '#ef4444', borderColor: '#ef4444' },
-  checkboxLabel: { color: '#FFF', fontSize: 14 },
-  btnPrimary: { backgroundColor: '#10b981', padding: 20, borderRadius: 20, alignItems: 'center', marginTop: 10 },
-  btnPrimarySectionA: {
-    backgroundColor: '#10b981',
+  checkboxLabel: { color: MINIMAL_UI.text, fontSize: 14, fontWeight: '600' },
+  btnPrimary: {
+    backgroundColor: REGISTER_SUBMIT_BG,
+    borderWidth: 2,
+    borderColor: REGISTER_ICON,
     padding: 20,
-    borderRadius: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  btnPrimarySectionA: {
+    backgroundColor: REGISTER_SUBMIT_BG,
+    borderWidth: 2,
+    borderColor: REGISTER_ICON,
+    padding: 20,
+    borderRadius: 16,
     alignItems: 'center',
     marginTop: 10,
     width: '100%',
   },
   btnSecondarySectionA: {
-    backgroundColor: '#475569',
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderWidth: 2,
+    borderColor: REGISTER_ICON,
     padding: 20,
-    borderRadius: 20,
+    borderRadius: 16,
     alignItems: 'center',
     marginTop: 10,
     width: '100%',
   },
   btnPrimaryContinue: {
-    backgroundColor: '#10b981',
+    backgroundColor: REGISTER_SUBMIT_BG,
+    borderWidth: 2,
+    borderColor: REGISTER_ICON,
     paddingVertical: 18,
     paddingHorizontal: 48,
-    borderRadius: 20,
+    borderRadius: 16,
     alignItems: 'center',
     minWidth: 220,
   },
-  btnDisabled: { opacity: 0.55 },
-  btnSecondary: { backgroundColor: '#475569', padding: 20, borderRadius: 20, alignItems: 'center', marginTop: 10 },
-  btnText: { color: '#020617', fontWeight: 'bold', fontSize: 16 },
-  btnTextSecondary: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
-  btnCameraBottom: { 
-    backgroundColor: '#10b981', 
-    padding: 20, 
-    borderRadius: 20, 
-    alignItems: 'center', 
-    position: 'absolute', 
-    bottom: 40, 
-    left: 20, 
-    right: 20 
+  btnDisabled: { opacity: 0.45 },
+  btnText: { color: REGISTER_SUBMIT_TEXT, fontWeight: 'bold', fontSize: 16 },
+  btnTextSecondary: { color: REGISTER_ICON, fontWeight: 'bold', fontSize: 16 },
+  repeatPhotoLink: { marginTop: 15, alignItems: 'center' },
+  repeatPhotoText: { color: REGISTER_ACCENT, fontSize: 15, fontWeight: '600' },
+  btnCameraBottom: {
+    backgroundColor: REGISTER_SUBMIT_BG,
+    borderWidth: 2,
+    borderColor: REGISTER_ICON,
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 40,
+    left: 20,
+    right: 20,
   },
   btnCameraDisabled: {
     opacity: 0.6,
@@ -744,12 +874,12 @@ const styles = StyleSheet.create({
     maxWidth: 280,
     aspectRatio: 3 / 4,
     alignSelf: 'center',
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: '#10b981',
-    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    borderColor: REGISTER_ICON,
+    backgroundColor: MINIMAL_UI.rowHover,
   },
   previewImage: {
     width: '100%',
@@ -760,9 +890,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 20,
     paddingBottom: 120,
+    backgroundColor: REGISTER_SURFACE,
   },
   selfieCameraHint: {
-    color: '#cbd5e1',
+    color: MINIMAL_UI.text,
     textAlign: 'center',
     marginBottom: 14,
     fontSize: 14,
@@ -771,11 +902,11 @@ const styles = StyleSheet.create({
   selfieCameraFrame: {
     width: '100%',
     aspectRatio: 3 / 4,
-    borderRadius: 28,
+    borderRadius: 16,
     overflow: 'hidden',
     alignSelf: 'center',
     borderWidth: 2,
-    borderColor: '#10b981',
+    borderColor: REGISTER_ICON,
     backgroundColor: '#020617',
   },
 });
