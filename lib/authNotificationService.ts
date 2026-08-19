@@ -127,7 +127,7 @@ export type DispatchAuthPinResult =
       channel: AuthNotificationChannel;
       resendId?: string;
     }
-  | { ok: false; message: string; needsEmail?: boolean };
+  | { ok: false; message: string; needsEmail?: boolean; emailInUse?: boolean };
 
 /**
  * Único caminho operacional para PIN de autenticação (primeira entrada).
@@ -168,6 +168,7 @@ export async function dispatchAuthAccessPinEmail(params: {
             ? payload.message
             : 'Não foi possível enviar o código por e-mail.',
         needsEmail: payload?.needs_email === true,
+        emailInUse: payload?.email_in_use === true,
       };
     }
 

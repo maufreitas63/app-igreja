@@ -700,12 +700,14 @@ export default function IndexScreen() {
           }
 
           Alert.alert(
-            'Não foi possível enviar o código',
-            result.message.includes('AUTH_CHANNEL_BLOCKED')
-              ? 'O envio por WhatsApp foi desativado. Use apenas e-mail.'
-              : result.message.includes('auth-pin-email-only')
-                ? AUTH_PIN_EMAIL_SQL_HINT
-                : result.message
+            result.emailInUse ? 'E-mail já cadastrado' : 'Não foi possível enviar o código',
+            result.emailInUse
+              ? result.message
+              : result.message.includes('AUTH_CHANNEL_BLOCKED')
+                ? 'O envio por WhatsApp foi desativado. Use apenas e-mail.'
+                : result.message.includes('auth-pin-email-only')
+                  ? AUTH_PIN_EMAIL_SQL_HINT
+                  : result.message
           );
           return;
         }
