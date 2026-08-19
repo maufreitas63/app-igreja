@@ -12,6 +12,22 @@ drop function if exists public.list_discipleship_trail_recognitions(text);
 drop function if exists public.acknowledge_discipleship_trail_recognition(uuid);
 drop function if exists public.session_can_manage_discipleship_trail();
 drop function if exists public.seed_discipleship_trail_for_tenant(uuid);
+
+-- Alias recriado após o drop: criar_igreja_admin em produção ainda pode chamar este nome.
+create or replace function public.seed_discipleship_trail_for_tenant(p_tenant_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+set row_security = off
+as $$
+begin
+  perform public.seed_default_discipleship_trail(p_tenant_id);
+end;
+$$;
+
+grant execute on function public.seed_discipleship_trail_for_tenant(uuid)
+  to anon, authenticated, service_role;
 drop table if exists public.discipleship_trail_progress cascade;
 drop table if exists public.discipleship_trail_recognitions cascade;
 drop table if exists public.discipleship_trail_lessons cascade;
