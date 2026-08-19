@@ -74,6 +74,7 @@ export type AuthPinDeliveryState =
       ok: true;
       hasPin: boolean;
       needsEmail: boolean;
+      needsFirstAccess: boolean;
       isTotem: boolean;
       emailMasked: string;
       preferredChannel: AuthNotificationChannel;
@@ -108,6 +109,7 @@ export async function getAuthPinDeliveryState(phone: string): Promise<AuthPinDel
       ok: true,
       hasPin: payload?.has_pin === true,
       needsEmail: payload?.needs_email === true,
+      needsFirstAccess: payload?.needs_first_access === true,
       isTotem: payload?.is_totem === true,
       emailMasked: typeof payload?.email_masked === 'string' ? payload.email_masked : '',
       preferredChannel: AUTH_NOTIFICATION_CHANNEL,

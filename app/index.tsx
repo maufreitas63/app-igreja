@@ -127,6 +127,7 @@ export default function IndexScreen() {
   const [passwordRecoveredBanner, setPasswordRecoveredBanner] = useState(false);
   const [recoveryEmailMasked, setRecoveryEmailMasked] = useState('');
   const [firstAccessNeedsEmail, setFirstAccessNeedsEmail] = useState(false);
+  const [firstAccessIncomplete, setFirstAccessIncomplete] = useState(false);
   const [firstAccessEmail, setFirstAccessEmail] = useState('');
   const [firstAccessEmailConfirm, setFirstAccessEmailConfirm] = useState('');
   const [firstAccessEmailMasked, setFirstAccessEmailMasked] = useState('');
@@ -138,7 +139,7 @@ export default function IndexScreen() {
   const needsEmailBeforePin =
     !isTotemLoginMode
     && !pinDeliveryUnlocked
-    && (hasStoredAccessPin === false || firstAccessNeedsEmail);
+    && (hasStoredAccessPin === false || firstAccessNeedsEmail || firstAccessIncomplete);
   const isCheckingStoredPin =
     loginStep === 2 && !isTotemLoginMode && isBrazilianPhoneComplete(phone) && hasStoredAccessPin === null;
   const showEmailPinDelivery =
@@ -153,6 +154,7 @@ export default function IndexScreen() {
       || (hasStoredAccessPin !== null && (!needsEmailBeforePin || pinDeliveryUnlocked)));
   const isEmailPinButtonDisabled = isSendingPin;
   const isVerifyingPinRef = useRef(false);
+  const autoSendEmailKeyRef = useRef('');
   const pinInputRef = useRef<TextInput>(null);
   const router = useRouter();
 
@@ -177,11 +179,13 @@ export default function IndexScreen() {
     setPasswordRecoveredBanner(false);
     setRecoveryEmailMasked('');
     setFirstAccessNeedsEmail(false);
+    setFirstAccessIncomplete(false);
     setFirstAccessEmail('');
     setFirstAccessEmailConfirm('');
     setFirstAccessEmailMasked('');
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
+    autoSendEmailKeyRef.current = '';
   }, []);
 
   const advanceToPinStep = useCallback(() => {
@@ -209,11 +213,13 @@ export default function IndexScreen() {
     setPasswordRecoveredBanner(false);
     setRecoveryEmailMasked('');
     setFirstAccessNeedsEmail(false);
+    setFirstAccessIncomplete(false);
     setFirstAccessEmail('');
     setFirstAccessEmailConfirm('');
     setFirstAccessEmailMasked('');
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
+    autoSendEmailKeyRef.current = '';
   };
 
   const handlePinChange = (text: string) => {
@@ -371,6 +377,7 @@ export default function IndexScreen() {
     if (isTotemLoginMode || !isBrazilianPhoneComplete(phone)) {
       setHasStoredAccessPin(null);
       setFirstAccessNeedsEmail(false);
+      setFirstAccessIncomplete(false);
       return;
     }
 
@@ -390,6 +397,7 @@ export default function IndexScreen() {
         if (deliveryState.ok && deliveryState.isTotem) {
           setHasStoredAccessPin(true);
           setFirstAccessNeedsEmail(false);
+          setFirstAccessIncomplete(false);
           setPinDeliveryUnlocked(true);
           setFirstAccessEmailMasked('');
           return;
@@ -398,14 +406,19 @@ export default function IndexScreen() {
         if (hasPin === true) {
           setHasStoredAccessPin(true);
 
-          // PIN no banco mas sem e-mail: ainda precisa do fluxo de 1º acesso.
-          if (deliveryState.ok && deliveryState.needsEmail) {
+          const needsDelivery =
+            deliveryState.ok
+            && (deliveryState.needsEmail || deliveryState.needsFirstAccess);
+
+          if (needsDelivery) {
             setPinDeliveryUnlocked(false);
-            setFirstAccessNeedsEmail(true);
-            setFirstAccessEmailMasked('');
+            setFirstAccessNeedsEmail(deliveryState.needsEmail);
+            setFirstAccessIncomplete(deliveryState.needsFirstAccess);
+            setFirstAccessEmailMasked(deliveryState.emailMasked);
           } else {
             setPinDeliveryUnlocked(true);
             setFirstAccessNeedsEmail(false);
+            setFirstAccessIncomplete(false);
             if (deliveryState.ok) {
               setFirstAccessEmailMasked(deliveryState.emailMasked);
             }
@@ -419,9 +432,11 @@ export default function IndexScreen() {
 
           if (deliveryState.ok) {
             setFirstAccessNeedsEmail(deliveryState.needsEmail);
+            setFirstAccessIncomplete(deliveryState.needsFirstAccess);
             setFirstAccessEmailMasked(deliveryState.emailMasked);
           } else {
             setFirstAccessNeedsEmail(true);
+            setFirstAccessIncomplete(true);
           }
 
           return;
@@ -643,23 +658,28 @@ export default function IndexScreen() {
     };
   }, [continueWithExistingProfile, router, skipSessionRestore]);
 
-  const handleEmailPinPress = () => {
+  const handleEmailPinPress = useCallback((options?: { silent?: boolean }) => {
     if (!isBrazilianPhoneComplete(phone)) {
-      Alert.alert('Atenção', 'Informe um número de celular válido antes de solicitar o código.');
+      if (!options?.silent) {
+        Alert.alert('Atenção', 'Informe um número de celular válido antes de solicitar o código.');
+      }
       return;
     }
 
     const typedEmail = firstAccessEmail.trim();
     const typedConfirm = firstAccessEmailConfirm.trim();
 
-    // Sempre exige e-mail + confirmação neste botão (evita enviar ao e-mail antigo do perfil).
     if (!typedEmail || !typedConfirm) {
-      Alert.alert('Atenção', 'Informe e confirme o e-mail para receber o código de acesso.');
+      if (!options?.silent) {
+        Alert.alert('Atenção', 'Informe e confirme o e-mail para receber o código de acesso.');
+      }
       return;
     }
 
     if (typedEmail.toLowerCase() !== typedConfirm.toLowerCase()) {
-      Alert.alert('Atenção', 'Os e-mails informados não coincidem.');
+      if (!options?.silent) {
+        Alert.alert('Atenção', 'Os e-mails informados não coincidem.');
+      }
       return;
     }
 
@@ -691,6 +711,7 @@ export default function IndexScreen() {
         }
 
         setFirstAccessNeedsEmail(false);
+        setFirstAccessIncomplete(false);
         setFirstAccessEmailMasked(result.emailMasked);
         setPinDeliveryUnlocked(true);
         setHasStoredAccessPin(true);
@@ -721,7 +742,48 @@ export default function IndexScreen() {
         setIsSendingPin(false);
       }
     })();
-  };
+  }, [firstAccessEmail, firstAccessEmailConfirm, focusPinInput, phone]);
+
+  useEffect(() => {
+    if (
+      !showEmailPinDelivery
+      || isSendingPin
+      || pinCodeSent
+      || isCheckingStoredPin
+      || loginStep !== 2
+    ) {
+      return;
+    }
+
+    const typedEmail = firstAccessEmail.trim().toLowerCase();
+    const typedConfirm = firstAccessEmailConfirm.trim().toLowerCase();
+
+    if (!typedEmail || typedEmail !== typedConfirm || !typedEmail.includes('@')) {
+      return;
+    }
+
+    const key = `${phoneDigits}|${typedEmail}`;
+    if (autoSendEmailKeyRef.current === key) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      autoSendEmailKeyRef.current = key;
+      handleEmailPinPress({ silent: true });
+    }, 700);
+
+    return () => clearTimeout(timer);
+  }, [
+    firstAccessEmail,
+    firstAccessEmailConfirm,
+    handleEmailPinPress,
+    isCheckingStoredPin,
+    isSendingPin,
+    loginStep,
+    phoneDigits,
+    pinCodeSent,
+    showEmailPinDelivery,
+  ]);
 
   const submitAccess = useCallback(
     async (pin: string) => {

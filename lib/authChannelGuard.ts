@@ -10,7 +10,7 @@ export const AUTH_CHANNEL_BLOCKED_MESSAGE =
   'AUTH_CHANNEL_BLOCKED: autenticação só pode enviar PIN por e-mail. WhatsApp está desativado neste fluxo.';
 
 export const AUTH_PIN_EMAIL_SQL_HINT =
-  'Execute no Supabase: scripts/auth-pin-email-only.sql (após password-recovery-email-flow.sql e preparar-perfil-acesso-cadastro.sql).';
+  'Não foi possível enviar o código agora. Confira o e-mail e tente de novo em instantes.';
 
 export const AUTH_PREFERRED_CHANNEL = 'email' as const;
 
