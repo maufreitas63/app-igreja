@@ -74,7 +74,7 @@ begin
 
   return 'Este e-mail já está cadastrado. Entre com o celular anterior'
     || case
-         when v_masked is not null then ' (' || v_masked || ')'
+         when v_masked is not null then ': ' || v_masked
          else ''
        end
     || '. Depois do acesso, altere o número em Dados cadastrais.';

@@ -18,6 +18,7 @@ import {
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { WEB_NON_SELECTABLE_VIEW_STYLES } from '@/lib/webTextSelectionGuard';
+import { showAppToast } from '@/lib/appToast';
 
 const LOGIN_SURFACE = '#FFFFFF';
 const LOGIN_ACCENT = VIGILANCE_SCALES_UI.accent;
@@ -131,6 +132,11 @@ export default function IndexScreen() {
   const [firstAccessEmail, setFirstAccessEmail] = useState('');
   const [firstAccessEmailConfirm, setFirstAccessEmailConfirm] = useState('');
   const [firstAccessEmailMasked, setFirstAccessEmailMasked] = useState('');
+  const [pinEmailFeedback, setPinEmailFeedback] = useState<{
+    kind: 'error' | 'success';
+    title: string;
+    message: string;
+  } | null>(null);
   const [biometricLoginAvailable, setBiometricLoginAvailable] = useState(false);
   const [biometricLoginLabel, setBiometricLoginLabel] = useState('Biometria');
   const [isBiometricUnlocking, setIsBiometricUnlocking] = useState(false);
@@ -183,6 +189,7 @@ export default function IndexScreen() {
     setFirstAccessEmail('');
     setFirstAccessEmailConfirm('');
     setFirstAccessEmailMasked('');
+    setPinEmailFeedback(null);
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
     autoSendEmailKeyRef.current = '';
@@ -217,6 +224,7 @@ export default function IndexScreen() {
     setFirstAccessEmail('');
     setFirstAccessEmailConfirm('');
     setFirstAccessEmailMasked('');
+    setPinEmailFeedback(null);
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
     autoSendEmailKeyRef.current = '';
@@ -658,11 +666,11 @@ export default function IndexScreen() {
     };
   }, [continueWithExistingProfile, router, skipSessionRestore]);
 
-  const handleEmailPinPress = useCallback((options?: { silent?: boolean }) => {
+  const handleEmailPinPress = useCallback((_options?: { silent?: boolean }) => {
     if (!isBrazilianPhoneComplete(phone)) {
-      if (!options?.silent) {
-        Alert.alert('Atenção', 'Informe um número de celular válido antes de solicitar o código.');
-      }
+      const message = 'Informe um número de celular válido antes de solicitar o código.';
+      setPinEmailFeedback({ kind: 'error', title: 'Atenção', message });
+      showAppToast({ type: 'error', text1: 'Atenção', text2: message });
       return;
     }
 
@@ -670,21 +678,22 @@ export default function IndexScreen() {
     const typedConfirm = firstAccessEmailConfirm.trim();
 
     if (!typedEmail || !typedConfirm) {
-      if (!options?.silent) {
-        Alert.alert('Atenção', 'Informe e confirme o e-mail para receber o código de acesso.');
-      }
+      const message = 'Informe e confirme o e-mail para receber o código de acesso.';
+      setPinEmailFeedback({ kind: 'error', title: 'Atenção', message });
+      showAppToast({ type: 'error', text1: 'Atenção', text2: message });
       return;
     }
 
     if (typedEmail.toLowerCase() !== typedConfirm.toLowerCase()) {
-      if (!options?.silent) {
-        Alert.alert('Atenção', 'Os e-mails informados não coincidem.');
-      }
+      const message = 'Os e-mails informados não coincidem.';
+      setPinEmailFeedback({ kind: 'error', title: 'Atenção', message });
+      showAppToast({ type: 'error', text1: 'Atenção', text2: message });
       return;
     }
 
     void (async () => {
       setIsSendingPin(true);
+      setPinEmailFeedback(null);
 
       try {
         const result = await dispatchAuthAccessPinEmail({
@@ -699,16 +708,17 @@ export default function IndexScreen() {
             setFirstAccessNeedsEmail(true);
           }
 
-          Alert.alert(
-            result.emailInUse ? 'E-mail já cadastrado' : 'Não foi possível enviar o código',
-            result.emailInUse
-              ? result.message
-              : result.message.includes('AUTH_CHANNEL_BLOCKED')
-                ? 'O envio por WhatsApp foi desativado. Use apenas e-mail.'
-                : result.message.includes('auth-pin-email-only')
-                  ? AUTH_PIN_EMAIL_SQL_HINT
-                  : result.message
-          );
+          const title = result.emailInUse ? 'E-mail já cadastrado' : 'Não foi possível enviar o código';
+          const message = result.emailInUse
+            ? result.message
+            : result.message.includes('AUTH_CHANNEL_BLOCKED')
+              ? 'O envio por WhatsApp foi desativado. Use apenas e-mail.'
+              : result.message.includes('auth-pin-email-only')
+                ? AUTH_PIN_EMAIL_SQL_HINT
+                : result.message;
+
+          setPinEmailFeedback({ kind: 'error', title, message });
+          showAppToast({ type: 'error', text1: title, text2: message });
           return;
         }
 
@@ -721,25 +731,24 @@ export default function IndexScreen() {
         setAccessPin('');
         focusPinInput();
 
-        Alert.alert(
-          'Código enviado por e-mail',
-          [
-            result.emailMasked
-              ? `Enviamos o código de 4 dígitos para ${result.emailMasked}.`
-              : 'Enviamos o código de 4 dígitos por e-mail.',
-            'Confira a caixa de entrada e a pasta de spam/lixo eletrônico.',
-            'O assunto é: "Seu código de acesso — Conecta Mais".',
-          ].join('\n\n')
-        );
+        const title = 'Código enviado por e-mail';
+        const message = [
+          result.emailMasked
+            ? `Enviamos o código de 4 dígitos para ${result.emailMasked}.`
+            : 'Enviamos o código de 4 dígitos por e-mail.',
+          'Confira a caixa de entrada e a pasta de spam.',
+        ].join(' ');
+
+        setPinEmailFeedback({ kind: 'success', title, message });
+        showAppToast({ type: 'success', text1: title, text2: message });
       } catch (err: unknown) {
         console.error('Erro ao enviar código por e-mail:', err);
-        const message = err instanceof Error ? err.message : '';
-        Alert.alert(
-          'Erro',
-          message.includes('AUTH_CHANNEL_BLOCKED')
-            ? 'O envio por WhatsApp foi desativado. Use apenas e-mail.'
-            : AUTH_PIN_EMAIL_SQL_HINT
-        );
+        const raw = err instanceof Error ? err.message : '';
+        const message = raw.includes('AUTH_CHANNEL_BLOCKED')
+          ? 'O envio por WhatsApp foi desativado. Use apenas e-mail.'
+          : AUTH_PIN_EMAIL_SQL_HINT;
+        setPinEmailFeedback({ kind: 'error', title: 'Erro', message });
+        showAppToast({ type: 'error', text1: 'Erro', text2: message });
       } finally {
         setIsSendingPin(false);
       }
@@ -1094,7 +1103,10 @@ export default function IndexScreen() {
             placeholder="seu@email.com"
             placeholderTextColor={LOGIN_PLACEHOLDER}
             value={firstAccessEmail}
-            onChangeText={setFirstAccessEmail}
+            onChangeText={(text) => {
+              setFirstAccessEmail(text);
+              setPinEmailFeedback(null);
+            }}
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
@@ -1108,7 +1120,10 @@ export default function IndexScreen() {
             placeholder="repita o e-mail"
             placeholderTextColor={LOGIN_PLACEHOLDER}
             value={firstAccessEmailConfirm}
-            onChangeText={setFirstAccessEmailConfirm}
+            onChangeText={(text) => {
+              setFirstAccessEmailConfirm(text);
+              setPinEmailFeedback(null);
+            }}
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
@@ -1122,7 +1137,7 @@ export default function IndexScreen() {
         accessibilityRole="button"
         activeOpacity={0.85}
         disabled={isEmailPinButtonDisabled}
-        onPress={handleEmailPinPress}
+        onPress={() => handleEmailPinPress()}
         style={[
           styles.emailPrimaryButton,
           isEmailPinButtonDisabled && styles.emailPrimaryButtonDisabled,
@@ -1137,6 +1152,28 @@ export default function IndexScreen() {
           </>
         )}
       </TouchableOpacity>
+      {pinEmailFeedback ? (
+        <View
+          style={[
+            styles.pinEmailFeedbackBox,
+            pinEmailFeedback.kind === 'error'
+              ? styles.pinEmailFeedbackError
+              : styles.pinEmailFeedbackSuccess,
+          ]}
+        >
+          <Text
+            style={[
+              styles.pinEmailFeedbackTitle,
+              pinEmailFeedback.kind === 'error'
+                ? styles.pinEmailFeedbackTitleError
+                : styles.pinEmailFeedbackTitleSuccess,
+            ]}
+          >
+            {pinEmailFeedback.title}
+          </Text>
+          <Text style={styles.pinEmailFeedbackText}>{pinEmailFeedback.message}</Text>
+        </View>
+      ) : null}
     </View>
   );
 
@@ -1395,7 +1432,7 @@ export default function IndexScreen() {
                     accessibilityRole="button"
                     activeOpacity={0.85}
                     disabled={isSendingPin}
-                    onPress={handleEmailPinPress}
+                    onPress={() => handleEmailPinPress()}
                     style={styles.forgotPasswordBox}
                   >
                     {isSendingPin ? (
@@ -1736,6 +1773,37 @@ const styles = StyleSheet.create({
     color: LOGIN_SUBMIT_TEXT,
     fontSize: 16,
     fontWeight: '800',
+  },
+  pinEmailFeedbackBox: {
+    width: '100%',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  pinEmailFeedbackError: {
+    backgroundColor: 'rgba(220, 38, 38, 0.08)',
+    borderColor: 'rgba(220, 38, 38, 0.35)',
+  },
+  pinEmailFeedbackSuccess: {
+    backgroundColor: 'rgba(22, 163, 74, 0.08)',
+    borderColor: 'rgba(22, 163, 74, 0.35)',
+  },
+  pinEmailFeedbackTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  pinEmailFeedbackTitleError: {
+    color: '#B91C1C',
+  },
+  pinEmailFeedbackTitleSuccess: {
+    color: '#166534',
+  },
+  pinEmailFeedbackText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: MINIMAL_UI.text,
   },
   pinSentBanner: {
     width: '100%',
