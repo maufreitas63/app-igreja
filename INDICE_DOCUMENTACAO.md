@@ -10,13 +10,13 @@ Cada **pacote** é um arquivo **autocontido**: o texto integral dos documentos d
 
 ## Manual de entrega (referência principal)
 
-| Documento | Markdown | PDF | Público |
-|-----------|----------|-----|---------|
+| Documento | Markdown | PDF / Word | Público |
+|-----------|----------|------------|---------|
 | **Manual de Entrega** | [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) | [`pdfs/MANUAL_ENTREGA.pdf`](pdfs/MANUAL_ENTREGA.pdf) | Cliente + equipe de manutenção |
 | **Descritivo técnico** | [`DESCRITIVO_APLICACAO.md`](DESCRITIVO_APLICACAO.md) | [`pdfs/DESCRITIVO_APLICACAO.pdf`](pdfs/DESCRITIVO_APLICACAO.pdf) | TI / arquitetura |
-| **Análise institucional de telas** | [`ANALISE_INSTITUCIONAL_TELAS.md`](ANALISE_INSTITUCIONAL_TELAS.md) | [`pdfs/ANALISE_INSTITUCIONAL_TELAS.pdf`](pdfs/ANALISE_INSTITUCIONAL_TELAS.pdf) | Liderança e comercial |
+| **Análise institucional de telas** | [`ANALISE_INSTITUCIONAL_TELAS.md`](ANALISE_INSTITUCIONAL_TELAS.md) | [`PDF`](pdfs/ANALISE_INSTITUCIONAL_TELAS.pdf) · [`DOCX`](pdfs/ANALISE_INSTITUCIONAL_TELAS.docx) · [`DOC`](pdfs/ANALISE_INSTITUCIONAL_TELAS.doc) | Liderança e comercial |
 
-Regenerar: `npm run build:manual-entrega-pdf` · `node scripts/build-descritivo-aplicacao-pdf.mjs` · `node scripts/build-analise-institucional-telas-pdf.mjs`
+Regenerar: `npm run build:manual-entrega-pdf` · `node scripts/build-descritivo-aplicacao-pdf.mjs` · `npm run build:analise-institucional-pdf` · `npm run build:analise-institucional-doc`
 
 ---
 

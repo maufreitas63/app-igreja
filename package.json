@@ -34,6 +34,7 @@
     "build:access-roles-pdf": "node scripts/build-access-roles-pdf.mjs",
     "build:manual-entrega-pdf": "node scripts/build-manual-entrega-pdf.mjs",
     "build:analise-institucional-pdf": "node scripts/build-analise-institucional-telas-pdf.mjs",
+    "build:analise-institucional-doc": "node scripts/build-analise-institucional-telas-doc.mjs",
     "build:validation-checklist-xlsx": "node scripts/build-validation-checklist-xlsx.mjs",
     "lint": "expo lint",
     "pdf-to-jpg": "node scripts/convert-pdf-folder-to-jpg.mjs",

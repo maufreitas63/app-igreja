@@ -1,0 +1,2003 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Análise institucional de telas e menus</title>
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+  <w:View>Print</w:View>
+  <w:Zoom>100</w:Zoom>
+  <w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+
+
+  @page { size: A4; margin: 16mm 14mm 20mm 14mm; }
+  body {
+    font-family: 'Segoe UI', Calibri, system-ui, sans-serif;
+    font-size: 10.2pt;
+    line-height: 1.48;
+    color: #1e293b;
+  }
+  .cover {
+    page-break-after: always;
+    min-height: 240mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 12mm 8mm;
+  }
+  .cover-kicker {
+    color: #1d4ed8;
+    font-size: 11pt;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .cover h1 {
+    font-size: 28pt;
+    line-height: 1.15;
+    color: #0f172a;
+    border: none;
+    margin: 0 0 16px;
+    padding: 0;
+  }
+  .cover-sub {
+    font-size: 13pt;
+    color: #334155;
+    max-width: 150mm;
+    margin-bottom: 28px;
+  }
+  .cover-meta {
+    border-top: 3px solid #1e40af;
+    padding-top: 16px;
+    color: #475569;
+    font-size: 10pt;
+  }
+  h1 {
+    font-size: 20pt;
+    color: #0f172a;
+    border-bottom: 3px solid #1e40af;
+    padding-bottom: 8px;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-size: 14.5pt;
+    color: #1e3a8a;
+    margin-top: 1.35em;
+    page-break-after: avoid;
+    border-bottom: 1px solid #bfdbfe;
+    padding-bottom: 4px;
+  }
+  h3 {
+    font-size: 11.5pt;
+    color: #1e40af;
+    margin-top: 0.95em;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 10.5pt;
+    margin: 0 0 6px;
+    page-break-after: avoid;
+  }
+  .screen {
+    page-break-inside: avoid;
+    margin: 14px 0 18px;
+    padding: 12px 14px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+  }
+  .route {
+    display: inline-block;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 8pt;
+    color: #1e40af;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-bottom: 8px;
+  }
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .vision {
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 9.6pt;
+    line-height: 1.42;
+  }
+  .vision h4 { font-size: 10pt; }
+  .user {
+    background: #f0fdf4;
+    border-left: 4px solid #15803d;
+  }
+  .user h4 { color: #166534; }
+  .admin {
+    background: #eff6ff;
+    border-left: 4px solid #1d4ed8;
+  }
+  .admin h4 { color: #1e3a8a; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 9.2pt;
+    margin: 10px 0 14px;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 5px 7px;
+    vertical-align: top;
+    text-align: left;
+  }
+  th { background: #1e3a8a; color: #ffffff; font-weight: 600; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  code {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 8.3pt;
+    background: #f1f5f9;
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+  blockquote {
+    border-left: 3px solid #1e40af;
+    margin: 10px 0;
+    padding: 6px 12px;
+    color: #334155;
+    background: #f8fafc;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 18px 0;
+  }
+  ul, ol { margin: 6px 0 10px; padding-left: 20px; }
+  li { margin-bottom: 3px; }
+  a { color: #1d4ed8; text-decoration: none; }
+  .toc a { color: #1e3a8a; }
+  @media print {
+    .split { break-inside: avoid; }
+    .screen { break-inside: avoid; }
+  }
+
+.split-table { width: 100%; border-collapse: separate; border-spacing: 10px 0; margin-top: 10px; }
+.split-table td.vision { width: 50%; vertical-align: top; }
+.img-ph { margin: 12px 0 4px; }
+@page Section1 {
+  size: 21cm 29.7cm;
+  margin: 16mm 14mm 20mm 14mm;
+  mso-header-margin: 8mm;
+  mso-footer-margin: 10mm;
+  mso-paper-source: 0;
+}
+div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+
+		<div class="cover">
+
+<p class="cover-kicker">Documento comercial institucional</p>
+
+<h1 id="análise-de-telas-e-menus-da-plataforma-digital-da-igreja">Análise de Telas e Menus da Plataforma Digital da Igreja</h1>
+<p class="cover-sub">
+Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na jornada da família, a conexão com os demais módulos e a visão simultânea de quem usa e de quem administra.
+</p>
+
+<p class="cover-meta">
+<strong>Solução:</strong> ecossistema app-igreja (PWA + mobile)<br>
+<strong>Público:</strong> liderança, secretaria, pastoral, tesouraria e operação<br>
+<strong>Base:</strong> código-fonte, rotas Expo Router, menu lateral, Índice, Painel e Manutenção<br>
+<strong>Data:</strong> 19 de agosto de 2026
+</p>
+
+</div>
+
+<h2 id="1-apresentação-institucional">1. Apresentação institucional</h2>
+<p>A plataforma concentra, em um único aplicativo, o que a igreja precisa para receber pessoas, cuidar de famílias, conduzir cultos e prestar contas com transparência. O membro encontra autonomia no celular. A equipe encontra controle, trilha de auditoria e eficiência operacional — sem duplicar planilhas e grupos de WhatsApp como sistema oficial.</p>
+<p>Há três camadas visíveis:</p>
+<ol>
+<li><strong>Entrada e confiança</strong> — login, cadastro, LGPD, escolha da igreja e encerramento seguro da sessão.</li>
+<li><strong>Vida da família</strong> — Índice, Painel, Perfil, eventos, ofertas, pastoral, financeiro de leitura e escalas.</li>
+<li><strong>Operação e governança</strong> — totem, salas, manutenção, papéis, relatórios, instâncias e assinatura.</li>
+</ol>
+<p>Cada tela abaixo segue o mesmo roteiro: título, valor comercial, propósito técnico e as duas perspectivas (usuário final e administração).</p>
+<h2 id="2-mapa-da-jornada">2. Mapa da jornada</h2>
+<table>
+<thead>
+<tr>
+<th>Momento</th>
+<th>Telas-chave</th>
+<th>Resultado para a igreja</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Chegar</td>
+<td>Login, cadastro, recuperar senha, selecionar igreja, LGPD</td>
+<td>Identidade única, sem fila de senha improvisada</td>
+</tr>
+<tr>
+<td>Orientar-se</td>
+<td>Índice, menu lateral, Painel</td>
+<td>Atalhos claros; o que a pessoa pode ver já vem filtrado por papel</td>
+</tr>
+<tr>
+<td>Participar</td>
+<td>Agenda, QR, salas, totem</td>
+<td>Presença confirmada, crianças localizadas, culto fluindo</td>
+</tr>
+<tr>
+<td>Cuidar</td>
+<td>Pastoral, aniversariantes, membros, mapa</td>
+<td>Cuidado pastoral e vínculo sem exposição indevida</td>
+</tr>
+<tr>
+<td>Contribuir</td>
+<td>Ofertas, financeiro, RD</td>
+<td>PIX imediato e prestação de contas legível</td>
+</tr>
+<tr>
+<td>Servir</td>
+<td>Escalas, estacionamento, administrativo</td>
+<td>Escala visível e documentos à mão</td>
+</tr>
+<tr>
+<td>Governar</td>
+<td>Manutenção, ACL, Ghost, igrejas, billing</td>
+<td>Controle institucional com rastreio</td>
+</tr>
+</tbody></table>
+<hr>
+<h1 id="parte-a--acesso-e-onboarding">Parte A — Acesso e onboarding</h1>
+<div class="screen">
+
+<h2 id="login">Login</h2>
+<p class="route">Rota <code>/</code> · tela pública</p>
+
+<h3 id="descrição-comercial">Descrição comercial</h3>
+<p>É a porta da casa digital. A igreja deixa de depender de “manda o link no grupo” e passa a reconhecer cada pessoa pelo celular e por uma senha de quatro dígitos. Primeira entrada e recuperação seguem e-mail — canal auditável, sem misturar WhatsApp com autenticação. No totem, o aparelho do culto entra com fluxo próprio, para o quiosque nunca se parecer com o celular de um membro.</p>
+<h3 id="propósito-e-conexões">Propósito e conexões</h3>
+<p>Valida telefone + PIN no servidor (<code>verificar_login</code>), restaura sessão, oferece biometria no aparelho nativo (atalho, sem substituir o PIN) e encaminha conforme o estado do perfil: Índice, cadastro incompleto, LGPD pendente ou totem. Liga-se a <code>/register</code>, <code>/forgot-password</code>, <code>/selecionar-igreja</code>, LGPD e <code>cel_totem</code>.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Entrada rápida, com o próprio celular. Quem já cadastrou biometria desbloqueia o app sem redigitar a senha toda vez, mas continua podendo usar o PIN.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Sessão rastreável, PIN no servidor, totem isolado e primeiro acesso controlado por e-mail. Reduz senha compartilhada e aparelho “logado como outra pessoa”.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Login</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="cadastro-inicial">Cadastro inicial</h2>
+<p class="route">Rota <code>/register</code></p>
+
+<h3 id="descrição-comercial-1">Descrição comercial</h3>
+<p>Transforma o visitante em pessoa conhecida pela igreja: nome, nascimento, telefone e endereço. Quando a igreja ativa LGPD, o cadastro inclui selfie e aceite dos termos — base jurídica e visual para a carteirinha e o totem. Quando desativa, o fluxo fica enxuto, sem fricção desnecessária.</p>
+<h3 id="propósito-e-conexões-1">Propósito e conexões</h3>
+<p>Completa o perfil após o primeiro PIN. Reserva código de família, sincroniza endereço por CEP e, com <code>LGPD_Ativo = sim</code>, exige selfie e termos. Conecta-se a <code>/lgpd</code>, Dados Cadastrais e Recepção Familiar.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+A pessoa se apresenta uma vez e passa a existir na comunidade digital, sem preencher papel na porta.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Cadastro padronizado, família já identificada e opção institucional de exigir ou não LGPD/selfie.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Cadastro inicial</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="recuperação-de-senha">Recuperação de senha</h2>
+<p class="route">Rota <code>/forgot-password</code></p>
+
+<h3 id="descrição-comercial-2">Descrição comercial</h3>
+<p>Evita o “perdi a senha, me coloca de novo”. A pessoa responde a pergunta de segurança e recebe um novo PIN no e-mail. A igreja não improvisar reset por conversa paralela.</p>
+<h3 id="propósito-e-conexões-2">Propósito e conexões</h3>
+<p>Abre-se no passo 2 do login. Gera PIN temporário por e-mail e devolve ao fluxo de autenticação. WhatsApp permanece fora da autenticação.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Recupera o acesso sozinha, no mesmo canal em que recebeu o primeiro PIN.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Menos atendimento de TI na porta do culto e trilha de envio por e-mail.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Recuperação de senha</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="selecionar-igreja">Selecionar igreja</h2>
+<p class="route">Rota <code>/selecionar-igreja</code></p>
+
+<h3 id="descrição-comercial-3">Descrição comercial</h3>
+<p>A plataforma atende mais de uma instância. Esta tela deixa explícito em qual igreja a pessoa está entrando — logo, nome e identidade visual corretos — sem misturar dados de congregações distintas.</p>
+<h3 id="propósito-e-conexões-3">Propósito e conexões</h3>
+<p>Resolve o <code>tenant_id</code> da sessão, carrega branding e parâmetros da instância (prefixo familiar, PIX, totem). Alimenta Índice, ofertas, carteirinha e billing.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Vê a própria igreja, com a marca que reconhece, e não um app genérico.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Isolamento por igreja: membros, finanças e eventos não vazam entre instâncias.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Selecionar igreja</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="termos-lgpd">Termos LGPD</h2>
+<p class="route">Rota <code>/lgpd</code></p>
+
+<h3 id="descrição-comercial-4">Descrição comercial</h3>
+<p>É o momento em que a igreja demonstra respeito ao dado pessoal. A pessoa lê, rola até o fim e registra aceite ou recusa. Não é um checkbox escondido: é um rito de confiança.</p>
+<h3 id="propósito-e-conexões-4">Propósito e conexões</h3>
+<p>Trava a rolagem antes do aceite, grava o registro no banco e libera ou bloqueia o restante do app conforme <code>LGPD_Ativo</code>. Integra-se ao cadastro, ao alerta vermelho no Painel e ao Controle de Acesso.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Sabe o que a igreja faz com seus dados e decide com clareza.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Comprova aceite, reduz risco jurídico e pode desligar a exigência quando a política da igreja for outra.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Termos LGPD</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="sessão-encerrada">Sessão encerrada</h2>
+<p class="route">Rota <code>/sessao-encerrada</code></p>
+
+<h3 id="descrição-comercial-5">Descrição comercial</h3>
+<p>Fecha o ciclo com dignidade: a pessoa saiu, o aparelho não ficou “aberto”. Em celular emprestado ou totem, isso é proteção pastoral e operacional.</p>
+<h3 id="propósito-e-conexões-5">Propósito e conexões</h3>
+<p>Recebe o logout (<code>clearUserSession</code>), limpa perfil e token e devolve ao login. Disparada por Encerrar sessão / Sair do aplicativo.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Confirmação clara de que saiu. Na próxima abertura, começa do login.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Aparelho compartilhado não permanece autenticado. Histórico de acesso registra a saída.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Sessão encerrada</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="cadastro-familiar-público">Cadastro familiar público</h2>
+<p class="route">Rota pública <code>/cadastro-familia/</code> (Vite standalone)</p>
+
+<h3 id="descrição-comercial-6">Descrição comercial</h3>
+<p>Permite que uma família se apresente antes mesmo de ter login — útil em campanhas, recepção e primeiros cultos. A secretaria depois decide gravar ou rejeitar o pedido, em lote.</p>
+<h3 id="propósito-e-conexões-6">Propósito e conexões</h3>
+<p>Formulário sem autenticação; a fila entra em <strong>Recepção Familiar</strong> na manutenção. Evita cadastro improvisado em papel.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+A família se cadastra pelo link, no próprio ritmo, sem depender de alguém “lançar no sistema”.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Fila única de acolhimento, com aceite ou recusa institucional — não um amontoado de prints.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Cadastro familiar público</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<hr>
+<h1 id="parte-b--navegação-principal">Parte B — Navegação principal</h1>
+<div class="screen">
+
+<h2 id="índice-do-aplicativo">Índice do Aplicativo</h2>
+<p class="route">Rota <code>/(tabs)</code> · tela inicial autenticada</p>
+
+<h3 id="descrição-comercial-7">Descrição comercial</h3>
+<p>É o “saguão”. Depois do login, a pessoa vê atalhos coloridos para Agenda, Salas, QR, Ofertas, Pastoral, Membros, Aniversariantes, Financeiro, Escalas e Perfil. Nada de labirinto: o que está disponível aparece; o que não cabe naquele dia (QR fora do culto, salas sem evento) fica explicado, não quebrado.</p>
+<h3 id="propósito-e-conexões-7">Propósito e conexões</h3>
+<p>Distribui etiquetas na altura da tela (<code>indexShortcutHints</code>). Cada toque abre o Painel no card correspondente (<code>dashboardCard</code>). Rodapé: Encerrar sessão; engrenagem de manutenção à direita, se houver permissão. Marca d’água da instância.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Encontra o que precisa em um toque, com linguagem de igreja, não de sistema.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Atalhos respeitam ACL. Quem não deve ver Financeiro ou Membros simplesmente não recebe o botão.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Índice do Aplicativo</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="menu-lateral">Menu lateral</h2>
+<p class="route">Componente <code>AppDrawer</code> · ícone de três linhas</p>
+
+<h3 id="descrição-comercial-8">Descrição comercial</h3>
+<p>É o corredor interno da plataforma. Na parte de cima, a vida do membro (Início, Perfil, Financeiro, Escalas, Aniversariantes, Lista de Membros, Administrativo). Depois da linha, a operação da igreja (eventos, salas, escalas, pastoral, finanças, relatórios, papéis, Ghost). A engrenagem abre configurações finas: trilha, salas, avisos, igrejas, assinaturas e autorização de imagem.</p>
+<h3 id="propósito-e-conexões-8">Propósito e conexões</h3>
+<p>Itens em <code>lib/appDrawerMenu.ts</code>, filtrados por papel. Navega para rotas próprias ou para o carrossel da Manutenção (<code>maintenance-dashboard</code> + painel). Configurações em <code>AppDrawerSettings</code>.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Um menu estável, sempre no mesmo lugar, com o que aquela pessoa realmente pode usar.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+A equipe entra nos módulos de gestão sem misturar com a jornada do membro. Super admin vê instâncias e billing.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Menu lateral</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="painel-carrossel-de-cards">Painel (carrossel de cards)</h2>
+<p class="route">Rota <code>/(tabs)/dashboard</code></p>
+
+<h3 id="descrição-comercial-9">Descrição comercial</h3>
+<p>É o “culto operacional” no bolso: um card por vez, deslizando, com o mesmo recorte visual da igreja. A família agenda presença, gera QR, vê salas, contribui, pede oração, encontra irmãos, consulta aniversários, lê o financeiro e confere a escala — sem abrir dez aplicativos.</p>
+<h3 id="propósito-e-conexões-9">Propósito e conexões</h3>
+<p>Carrossel com ACL <code>dashboard.card.*</code>. Rodapé <code>‹</code> <code>›</code> e Menu. Telas filhas devolvem ao card de origem via <code>returnDashboardCard</code>. Paletas em <code>dashboardCardThemes</code>.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Experiência contínua, com saudação pelo nome e retorno exatamente ao card de onde saiu.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Módulos ligados ou desligados por papel e por regra de evento (QR só no dia, estacionamento só se ativo).
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Painel (carrossel de cards)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="encerrar-sessão-diálogo">Encerrar sessão (diálogo)</h2>
+<p class="route">Índice / totem · <code>confirmExitApplication</code></p>
+
+<h3 id="descrição-comercial-10">Descrição comercial</h3>
+<p>O botão de saída não é um “voltar” qualquer. Pede confirmação — “Deseja encerrar sua sessão?” — para não deslogar por toque acidental e para lembrar que sair limpa o aparelho.</p>
+<h3 id="propósito-e-conexões-10">Propósito e conexões</h3>
+<p>Intercepta voltar do navegador no Índice (<code>AppBackHandler</code>). Distingue Encerrar sessão (web) de Sair do aplicativo (PWA instalado / nativo). Não deve ser disparado pelo Fechar de Ofertas ou Pastoral: esses voltam ao Índice.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Sai quando quer, com aviso claro. Não perde a sessão ao apenas fechar uma tela de conteúdo.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Logout consciente em aparelhos do templo e em navegadores compartilhados.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Encerrar sessão (diálogo)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<hr>
+<h1 id="parte-c--módulos-da-vida-da-família">Parte C — Módulos da vida da família</h1>
+<div class="screen">
+
+<h2 id="agenda-da-família">Agenda da Família</h2>
+<p class="route">Card do Painel · painel <code>FamilyAgendaModal</code></p>
+
+<h3 id="descrição-comercial-11">Descrição comercial</h3>
+<p>É o “vamos no culto?” digital. A família escolhe o evento, vê vagas e marca quem vai — cônjuge, filhos, congregados do núcleo. Esse pré-check-in é o passaporte para QR, geofence e salas infantis.</p>
+<h3 id="propósito-e-conexões-11">Propósito e conexões</h3>
+<p>Lista eventos ativos, capacidade e inscrição por membro (<code>FamilyRegistrationList</code>). Conecta-se a Check-in, Totem, SALA(S) e Programação de Eventos. Fechar retorna ao Índice/Painel.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+A família decide juntas, no sofá, quem estará presente — sem fila na portaria.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Audiência previsível, capacidade respeitada e base para presença, kids e ofertas do culto.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Agenda da Família</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="check-in--qr-code">Check-in / QR Code</h2>
+<p class="route">Card do Painel · carteirinha também em <code>/perfil</code></p>
+
+<h3 id="descrição-comercial-12">Descrição comercial</h3>
+<p>No dia do evento, a família apresenta um QR. No totem, a leitura confirma presença. Não é um QR genérico da igreja: é o código daquela família (ex.: <code>IBN0001</code>), o mesmo texto abaixo do código na carteirinha.</p>
+<h3 id="propósito-e-conexões-12">Propósito e conexões</h3>
+<p>Visível no dia do evento, após audiência quando o culto exige. Geofence pode confirmar sem QR. Quórum trava após um check-in. O payload do QR é só o código familiar, sem dados pessoais.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Chega, mostra o celular, entra. Sem papel, sem “qual o seu nome mesmo?”.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Presença objetiva, sem duplo check-in, com trilha para lista de presença e salas.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Check-in / QR Code</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="salas--kids-e-teens">SALA(S) — Kids e Teens</h2>
+<p class="route">Card do Painel (família) · Manutenção (equipe)</p>
+
+<h3 id="descrição-comercial-13">Descrição comercial</h3>
+<p>Pais precisam saber se a criança já entrou na sala. O card do membro mostra só a própria família. A equipe, na manutenção, vê todas as inscrições e marca a entrada.</p>
+<h3 id="propósito-e-conexões-13">Propósito e conexões</h3>
+<p>Inscrição nasce na Agenda quando o evento tem Kids/Teens. Check-in de sala é staff. WhatsApp do responsável após entrada.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Tranquilidade: o pai vê o status da criança da sua casa, e só dela.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Controle de entrada, contato imediato com o responsável e visão completa do andar infantil.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — SALA(S) — Kids e Teens</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="dízimos-e-ofertas">Dízimos e Ofertas</h2>
+<p class="route">Rota <code>/ofertas</code> · card do Painel</p>
+
+<h3 id="descrição-comercial-14">Descrição comercial</h3>
+<p>A contribuição deixa de ser um constrangimento de “como eu pago?”. A tela mostra o recebedor da igreja e a chave PIX, com um toque para copiar. O Fechar volta ao Índice — não encerra a sessão.</p>
+<h3 id="propósito-e-conexões-14">Propósito e conexões</h3>
+<p>Carrega dados da instância (<code>loadOfferingsRecipientBundle</code>). Independente da flag de ofertas do evento. PIX copiado com feedback.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Contribui no próprio banco, na hora, sem pedir chave no corredor.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Chave oficial única, atualizável, sem grupos paralelos de PIX.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Dízimos e Ofertas</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="coração-aberto-pedido-pastoral">Coração Aberto (pedido pastoral)</h2>
+<p class="route">Rota <code>/pastoral</code></p>
+
+<h3 id="descrição-comercial-15">Descrição comercial</h3>
+<p>É o confessionário digital com dignidade: motivo, situação, para quem é o pedido e se vai para sigilo pastoral ou intercessão. A pessoa é ouvida sem precisar interceptar o pastor no pátio.</p>
+<h3 id="propósito-e-conexões-15">Propósito e conexões</h3>
+<p>Categorias no banco; envio vinculado ao perfil. Histórico em <code>/pastoral-history</code>. Equipe trata em <strong>Cuidado Pastoral</strong>. Fechar → Índice.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Pede oração com privacidade, escolhendo o grau de sigilo.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Fila pastoral organizada, com motivo e destino, em vez de recados perdidos.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Coração Aberto (pedido pastoral)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="meus-pedidos-pastorais">Meus pedidos pastorais</h2>
+<p class="route">Rota <code>/pastoral-history</code></p>
+
+<h3 id="descrição-comercial-16">Descrição comercial</h3>
+<p>Devolve à pessoa a memória do cuidado: o que pediu, o status, o acompanhamento. Cuidado pastoral deixa de ser um envio sem eco.</p>
+<h3 id="propósito-e-conexões-16">Propósito e conexões</h3>
+<p>Lista pedidos do perfil logado, com pull-to-refresh. Espelha o painel staff de Cuidado Pastoral.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Acompanha o próprio pedido sem ligar para a secretaria.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Transparência de status reduz retrabalho e “será que chegou?”.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Meus pedidos pastorais</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="lista-de-membros">Lista de Membros</h2>
+<p class="route">Rota <code>/membros</code> · card do Painel</p>
+
+<h3 id="descrição-comercial-17">Descrição comercial</h3>
+<p>A comunidade se enxerga: nome, família, WhatsApp, GPS. Alterna membros e visitantes. O ícone da família abre o núcleo. O mapa geral posiciona a igreja no território — com detalhe de endereço só para quem pastoralmente deve vê-lo.</p>
+<h3 id="propósito-e-conexões-17">Propósito e conexões</h3>
+<p>Busca, modal de família, WhatsApp e <code>/mapa-geolocalizacao</code>. ACL no detalhe do pin.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Encontra o irmão, manda um Zap, percebe-se parte de um corpo.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Visão de membros vs visitantes, com proteção de endereço no mapa.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Lista de Membros</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="aniversariantes">Aniversariantes</h2>
+<p class="route">Rota <code>/aniversariantes</code></p>
+
+<h3 id="descrição-comercial-18">Descrição comercial</h3>
+<p>A igreja não esquece o aniversário. Filtro por mês e WhatsApp na hora — cuidado simples que constrói vínculo.</p>
+<h3 id="propósito-e-conexões-18">Propósito e conexões</h3>
+<p>Lê perfis com data de nascimento; atalho de mensagem. Sem dados extras além do necessário para cumprimentar.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+A comunidade lembra da data; a pessoa se sente vista.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Pastoral e recepção têm lista mensal pronta, sem planilha paralela.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Aniversariantes</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="financeiro-leitura">Financeiro (leitura)</h2>
+<p class="route">Rota <code>/financial</code></p>
+
+<h3 id="descrição-comercial-19">Descrição comercial</h3>
+<p>Presta contas com linguagem de boletim, não de ERP: resultado do mês, comparativo, 12 meses, planejado × realizado e saldo bancário. A confiança na tesouraria cresce quando o membro lê o mesmo número que a diretoria.</p>
+<h3 id="propósito-e-conexões-19">Propósito e conexões</h3>
+<p>Hub do card Financeiro. RD em <code>/expense-report</code>. Carga e conciliação na manutenção. ACL <code>dashboard.card.financial</code>.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Entende para onde foi a oferta, em linguagem clara, mês a mês.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Uma fonte da verdade. Versões REALIZADO e PLANEJADO coexistem sem misturar.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Financeiro (leitura)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="relatório-de-despesas-rd">Relatório de Despesas (RD)</h2>
+<p class="route">Rota <code>/expense-report</code></p>
+
+<h3 id="descrição-comercial-20">Descrição comercial</h3>
+<p>Quem gastou pela igreja registra itens, comprovantes e PIX de reembolso, submete e avisa o tesoureiro no WhatsApp. Acaba o envelope de notinhas.</p>
+<h3 id="propósito-e-conexões-20">Propósito e conexões</h3>
+<p>Membro cria, lista e exclui pendentes. Tesouraria concilia na manutenção. Contato em <code>Tesoureiro_contato</code>.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Pede reembolso com comprovante, sem perder o papel na bolsa.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Fila de RD, vínculo ao lançamento e rastreio do mês de emissão vs conciliação.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Relatório de Despesas (RD)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="escalas">Escalas</h2>
+<p class="route">Rota <code>/escalas</code></p>
+
+<h3 id="descrição-comercial-21">Descrição comercial</h3>
+<p>O servo vê quando serve e com quem. A igreja deixa de anunciar escala só no grupo, onde a mensagem some.</p>
+<h3 id="propósito-e-conexões-21">Propósito e conexões</h3>
+<p>Leitura dos tipos, datas e WhatsApp. Manutenção gera ciclo em bloco (<code>aplicar_ciclo_escala</code>). Estacionamento cruza placa.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Sabe o domingo em que está de pé, e fala com o parceiro de escala.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Ciclo justo (individual ou equipe), vagas por domingo e ordem sequencial.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Escalas</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="servos-em-escala-e-estacionamento">Servos em escala e Estacionamento</h2>
+<p class="route">Cards condicionais do Painel</p>
+
+<h3 id="descrição-comercial-22">Descrição comercial</h3>
+<p>No dia, a lista de quem está servindo e o estacionamento por placa aceleram a operação: achar o dono do carro, chamar o servo, destravar o pátio.</p>
+<h3 id="propósito-e-conexões-22">Propósito e conexões</h3>
+<p>Aparecem quando há escala/painel ativos. Placa + WhatsApp. Tipos e voluntários na manutenção.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Quem serve se reconhece; quem estacionou é encontrado com respeito.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Operação de culto com nomes e placas, não com grito no microfone.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Servos em escala e Estacionamento</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<hr>
+<h1 id="parte-d--identidade-família-e-discipulado">Parte D — Identidade, família e discipulado</h1>
+<div class="screen">
+
+<h2 id="perfil--identidade">Perfil &amp; Identidade</h2>
+<p class="route">Rota <code>/perfil</code> · card <code>grouped_manage</code></p>
+
+<h3 id="descrição-comercial-23">Descrição comercial</h3>
+<p>É a identidade digital da pessoa na igreja: dados cadastrais, família, trilha de discipulado e carteirinha. Um único lugar para “quem eu sou aqui”.</p>
+<h3 id="propósito-e-conexões-23">Propósito e conexões</h3>
+<p><code>PerfilClassPanel</code> abre Dados Cadastrais, Gerenciar Família, Trilha e Carteirinha Digital, conforme ACL. Paleta de cores no rodapé do card.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Atualiza a própria vida na igreja sem pedir à secretaria para “mudar o telefone”.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Campos visíveis/editáveis por papel. Onboarding incompleto é visível e corrigível.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Perfil &amp; Identidade</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="dados-cadastrais">Dados cadastrais</h2>
+<p class="route">Rota <code>/manage-profile</code></p>
+
+<h3 id="descrição-comercial-24">Descrição comercial</h3>
+<p>Nome, documentos, endereço em seções que abrem só se a pessoa precisar — como o acordeão de Endereço. Senha de quatro dígitos e biometria (no celular) ficam aqui, com o PIN sempre como base.</p>
+<h3 id="propósito-e-conexões-24">Propósito e conexões</h3>
+<p>Seções recolhíveis (<code>ProfileClass</code>). CEP sincroniza endereço. ACL por coluna. Selfie e veículos. Vínculo à família.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Edita o que é seu, sem uma ficha infinita na cara. Endereço completo só aparece quando ela abre a caixa.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Cadastro vivo, CEP consistente, CPF/PIN protegidos por ACL.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Dados cadastrais</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="gerenciar-família">Gerenciar família</h2>
+<p class="route">Rota <code>/manage-members</code></p>
+
+<h3 id="descrição-comercial-25">Descrição comercial</h3>
+<p>O núcleo familiar deixa de ser “mais ou menos aquelas pessoas”. Inclui, reconhece, transfere e protege o representante legal. Endereço do gestor pode herdar para o membro aceito.</p>
+<h3 id="propósito-e-conexões-25">Propósito e conexões</h3>
+<p>CRUD em <code>members</code>, busca por telefone/nome, RPC de aceite. Indicadores Kids/Teens. Liga-se à Agenda e ao QR familiar.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+A família se vê completa no app — filhos, cônjuge, parentesco.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Um código familiar, sem duplicata e com rastreio de transferência entre núcleos.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Gerenciar família</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="carteirinha-digital">Carteirinha Digital</h2>
+<p class="route">Dentro de <code>/perfil</code> · <code>DigitalIDCard</code></p>
+
+<h3 id="descrição-comercial-26">Descrição comercial</h3>
+<p>Duas páginas: quem a pessoa é (foto 30% maior, nome, nascimento, telefone, e-mail, endereço em caixa recolhida) e o QR de check-in. O grupo familiar não aparece na frente — o código vive no QR (<code>IBN0001</code>), para o totem, não para exposição social.</p>
+<h3 id="propósito-e-conexões-26">Propósito e conexões</h3>
+<p>Dados do perfil efetivo (inclui Modo Ghost). QR = código familiar normalizado. Página 2: status Membro/Congregado e data de entrada no app.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Uma identidade digna para apresentar no culto, com foto grande e dados pessoais sob controle.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Check-in familiar padronizado; QR sem vazamento de telefone, endereço ou token.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Carteirinha Digital</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="trilha-de-discipulado">Trilha de Discipulado</h2>
+<p class="route">Rota <code>/trilha-discipulado</code></p>
+
+<h3 id="descrição-comercial-27">Descrição comercial</h3>
+<p>A igreja acompanha formação, não só frequência. Cinco passos, três lições cada, selos coloridos e, na 5.1, o Perfil Ministerial (50 perguntas). A pessoa vê conquista; a pastoral vê quem parou no caminho.</p>
+<h3 id="propósito-e-conexões-27">Propósito e conexões</h3>
+<p>Progresso no servidor (<code>upsert_my_discipleship_lesson_progress</code>). Alertas e certificado. Manutenção: Temas, Reconhecimentos, Reset.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Caminha com clareza, coleciona selos e descobre dons no momento certo.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Conteúdo da trilha editável, alertas pastorais e reset responsável — sem planilha de progresso.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Trilha de Discipulado</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<hr>
+<h1 id="parte-e--comunidade-documentos-e-comunicação">Parte E — Comunidade, documentos e comunicação</h1>
+<div class="screen">
+
+<h2 id="mapa-de-geolocalização">Mapa de geolocalização</h2>
+<p class="route">Rota <code>/mapa-geolocalizacao</code></p>
+
+<h3 id="descrição-comercial-28">Descrição comercial</h3>
+<p>Mostra a igreja no território: pins por CEP, filtros (todos, com papel, visitantes). O detalhe do endereço de outra pessoa só abre para quem a política de acesso autoriza.</p>
+<h3 id="propósito-e-conexões-28">Propósito e conexões</h3>
+<p>Leaflet no PWA, geocodificação e cache. Recurso ACL <code>/mapa-geolocalizacao/detalhe-pin</code>. Nativo informa uso via PWA.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Vê a dispersão da comunidade, sem expor a casa de ninguém indevidamente.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Pastoral e super admin enxergam o detalhe; demais veem o mapa. CEPs inválidos são auditáveis.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Mapa de geolocalização</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="administrativo">Administrativo</h2>
+<p class="route">Rota <code>/administrativo</code></p>
+
+<h3 id="descrição-comercial-29">Descrição comercial</h3>
+<p>Documentos constitutivos e atas à mão: a igreja transparente para quem deve ler o institucional, sem mandar PDF por e-mail a cada pergunta.</p>
+<h3 id="propósito-e-conexões-29">Propósito e conexões</h3>
+<p>Lista atas, abre PDF no visualizador do app (<code>AssemblyMinutesPdfModal</code>). Fechar permanece na jornada autenticada.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Consulta a vida jurídica da igreja quando precisa, no próprio celular.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Repositório único de atas, com publicação controlada.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Administrativo</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="redes-sociais">Redes sociais</h2>
+<p class="route">Rota <code>/redes-sociais</code></p>
+
+<h3 id="descrição-comercial-30">Descrição comercial</h3>
+<p>Instagram, YouTube e demais canais oficiais da instância — a voz da igreja em um lugar, não em cartaz desatualizado.</p>
+<h3 id="propósito-e-conexões-30">Propósito e conexões</h3>
+<p>Lê cadastro da igreja (<code>/igrejas</code>). Login também pode exibir atalhos no passo do celular.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Encontra o canal certo, o oficial, em um toque.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+URLs centralizadas por instância; troca uma vez, vale no app inteiro.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Redes sociais</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="avisos-e-manutenção-de-avisos">Avisos e Manutenção de Avisos</h2>
+<p class="route">Rota <code>/avisos</code> · painel <code>event_orchestration</code></p>
+
+<h3 id="descrição-comercial-31">Descrição comercial</h3>
+<p>O recado do culto chega a quem está no app, no tempo certo, sem depender só do projetor.</p>
+<h3 id="propósito-e-conexões-31">Propósito e conexões</h3>
+<p>Membro lê avisos. Equipe orquestra na manutenção (engrenagem). Liga-se à programação de eventos.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Não perde o comunicado se chegou depois do anúncio ao vivo.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Comunicado versionado, por evento/instância, com dono editorial.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Avisos e Manutenção de Avisos</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="autorização-de-imagem-e-voz">Autorização de imagem e voz</h2>
+<p class="route">Rotas <code>/autorizacao-midia</code> e <code>/autorizacao-midia-confirmar</code></p>
+
+<h3 id="descrição-comercial-32">Descrição comercial</h3>
+<p>Transmissões e fotos de culto exigem consentimento. Esta tela registra a autorização — e o link de confirmação fecha o ciclo mesmo fora da sessão plena.</p>
+<h3 id="propósito-e-conexões-32">Propósito e conexões</h3>
+<p>Menu de configurações. Confirmação por token. Relaciona-se a LGPD e ao cadastro.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Decide sobre o próprio rosto e a própria voz na mídia da igreja.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Base de consentimento para equipe de mídia, auditável.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Autorização de imagem e voz</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="sugestões-e-melhorias">Sugestões e melhorias</h2>
+<p class="route">Rota <code>/suggestions-improvements</code></p>
+
+<h3 id="descrição-comercial-33">Descrição comercial</h3>
+<p>A igreja escuta. O membro envia ideia ou problema; a equipe lê o catálogo na manutenção e no relatório dedicado.</p>
+<h3 id="propósito-e-conexões-33">Propósito e conexões</h3>
+<p>Formulário autenticado; painel staff e relatório analítico.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Fala com a liderança sem precisar de um “amigo que conhece o pastor”.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Backlog visível, priorizável, sem recados perdidos no WhatsApp da secretaria.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Sugestões e melhorias</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<hr>
+<h1 id="parte-f--operação-no-templo">Parte F — Operação no templo</h1>
+<div class="screen">
+
+<h2 id="totem-de-check-in">Totem de check-in</h2>
+<p class="route">Rota <code>/totem-checkin</code></p>
+
+<h3 id="descrição-comercial-34">Descrição comercial</h3>
+<p>O aparelho da portaria existe para um gesto só: ler o QR da família e confirmar quem já estava na audiência. Não é um computador de secretaria. Encerrar sessão no totem é rotina de fim de culto.</p>
+<h3 id="propósito-e-conexões-34">Propósito e conexões</h3>
+<p>Câmera, lookup por código familiar, RPC de confirmação, cooldown anti-duplo. Login dedicado (<code>cel_totem</code> + PIN 9999).</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Apresenta a carteirinha, ouve o “confirmado”, segue para o templo.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Fila rápida, presença oficial, aparelho que não vaza sessão de membro.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Totem de check-in</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="configuração-de-salas">Configuração de salas</h2>
+<p class="route">Rota <code>/configuracao-salas</code></p>
+
+<h3 id="descrição-comercial-35">Descrição comercial</h3>
+<p>Define como Kids e Teens existem nesta igreja: rótulos, habilitação, operação. Sem isso, o card SALA(S) seria um enfeite.</p>
+<h3 id="propósito-e-conexões-35">Propósito e conexões</h3>
+<p>Engrenagem do menu. Alimenta eventos (<code>enabled_room_keys</code>) e o monitor de salas.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Vê nomes de sala que a igreja realmente usa (Infantil, Jovens, etc.).
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Parametriza a operação infantil por instância, sem código novo a cada igreja.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Configuração de salas</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<hr>
+<h1 id="parte-g--administração-e-manutenção">Parte G — Administração e manutenção</h1>
+<p>Os itens abaixo aparecem no menu após a linha divisória e no carrossel <code>/maintenance-dashboard</code>, conforme o papel.</p>
+<div class="screen">
+
+<h2 id="programação-de-eventos">Programação de Eventos</h2>
+<p class="route">Painel <code>events</code></p>
+
+<h3 id="descrição-comercial-36">Descrição comercial</h3>
+<p>O calendário oficial: criar, publicar, capacidade, totem, quórum, geofence, salas, ofertas. O culto deixa de ser um post e vira um objeto de operação.</p>
+<h3 id="propósito-e-conexões-36">Propósito e conexões</h3>
+<p>CRUD em <code>events</code>. Dispara Agenda, QR, salas, presença e avisos. Locais favoritos alimentam geofence.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Só vê eventos publicados, com data e vaga reais.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Um editor para o culto inteiro: portaria, kids, ofertas e presença.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Programação de Eventos</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="cronograma-de-eventos-gantt">Cronograma de Eventos (Gantt)</h2>
+<p class="route">Painel <code>events_gantt</code></p>
+
+<h3 id="descrição-comercial-37">Descrição comercial</h3>
+<p>Visão no tempo — dia e mês — para a liderança enxergar sobrecarga e vazios. Toque edita o evento.</p>
+<h3 id="propósito-e-conexões-37">Propósito e conexões</h3>
+<p>Leitura temporal da mesma base de Programação de Eventos.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Indireta: a programação fica mais coerente na Agenda.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Planejamento visual, menos choque de horários e de equipes.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Cronograma de Eventos (Gantt)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="salas--check-in-manutenção">Sala(s) — Check-in (manutenção)</h2>
+<p class="route">Painel <code>sala_servidor</code></p>
+
+<h3 id="descrição-comercial-38">Descrição comercial</h3>
+<p>A equipe do andar marca entrada de cada criança inscrita. É o crachá digital da sala.</p>
+<h3 id="propósito-e-conexões-38">Propósito e conexões</h3>
+<p>Lista todas as inscrições do evento (sem filtro de família). WhatsApp do responsável.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+O status no card da família atualiza quando a equipe confirma a entrada.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Controle tático no culto, com contato imediato.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Sala(s) — Check-in (manutenção)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="tipos-de-escala-servos-e-programação-de-escalas">Tipos de escala, Servos e Programação de Escalas</h2>
+<p class="route">Painéis <code>scale_types</code>, <code>scale_volunteers</code>, <code>scales</code></p>
+
+<h3 id="descrição-comercial-39">Descrição comercial</h3>
+<p>Três peças de um único relógio: o tipo (louvor, recepção, som), quem está disponível e o ciclo gerado. A igreja para de “combinar no privado”.</p>
+<h3 id="propósito-e-conexões-39">Propósito e conexões</h3>
+<p>Vagas por domingo, modo individual/equipe, preview transacional <code>aplicar_ciclo_escala</code>. Alimenta o card Escalas do membro.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Recebe uma escala previsível e justa.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Geração em bloco, ordem sequencial, alerta ao remover servo com datas futuras.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Tipos de escala, Servos e Programação de Escalas</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="cuidado-pastoral-equipe">Cuidado Pastoral (equipe)</h2>
+<p class="route">Painel <code>pastoral_care</code></p>
+
+<h3 id="descrição-comercial-40">Descrição comercial</h3>
+<p>A fila sagrada: pedidos do Coração Aberto chegam aqui para o pastor e a intercessão tratarem com método, sem perder sigilo.</p>
+<h3 id="propósito-e-conexões-40">Propósito e conexões</h3>
+<p>Gestão dos envios de <code>/pastoral</code>. Status visível em Meus pedidos.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Sabe que o pedido não caiu no vazio.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Distribuição de cuidado, priorização e registro ministerial.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Cuidado Pastoral (equipe)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="temas-reconhecimentos-e-reset-da-trilha">Temas, Reconhecimentos e Reset da Trilha</h2>
+<p class="route">Painéis <code>discipleship_*</code> · engrenagem</p>
+
+<h3 id="descrição-comercial-41">Descrição comercial</h3>
+<p>A trilha é conteúdo vivo. Temas se editam, reconhecimentos alertam a pastoral, o reset existe para recomeçar com critério — não para apagar formação por acidente.</p>
+<h3 id="propósito-e-conexões-41">Propósito e conexões</h3>
+<p>Alimenta <code>/trilha-discipulado</code> e o Perfil Ministerial. Grants específicos.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Estuda o material atual da igreja, com selos que significam algo.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Currículo discipulador sob governança, com alertas e reset auditável.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Temas, Reconhecimentos e Reset da Trilha</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="informações-financeiras-manutenção">Informações Financeiras (manutenção)</h2>
+<p class="route">Painel <code>financials</code></p>
+
+<h3 id="descrição-comercial-42">Descrição comercial</h3>
+<p>A tesouraria importa CSV, escolhe REALIZADO ou PLANEJADO, esvazia mês com escopo e concilia RD. O boletim que o membro lê nasce daqui.</p>
+<h3 id="propósito-e-conexões-42">Propósito e conexões</h3>
+<p>Carga, accordion de seções, RD do mês, desconciliação. Alimenta <code>/financial</code>.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Números confiáveis no card Financeiro.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Operação de tesouraria com versão orçamentária explícita e rastro de RD.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Informações Financeiras (manutenção)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="modelo-preditivo">Modelo preditivo</h2>
+<p class="route">Painel <code>predictive_insights</code></p>
+
+<h3 id="descrição-comercial-43">Descrição comercial</h3>
+<p>Projeta receita ordinária (dízimos e ofertas) com base no realizado. A diretoria planeja com evidência, não só com esperança.</p>
+<h3 id="propósito-e-conexões-43">Propósito e conexões</h3>
+<p>Modelo em <code>financialPredictiveModel</code>. Exige histórico mínimo de meses positivos.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Indireta: orçamento da igreja mais responsável.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Insight quantitativo para conselho e tesouraria.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Modelo preditivo</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="relatórios">Relatórios</h2>
+<p class="route">Painel <code>relatorios</code></p>
+
+<h3 id="descrição-comercial-44">Descrição comercial</h3>
+<p>Sete olhares analíticos: membros ativos/inativos, necessidades pastorais, saúde infantil (LGPD), quórum, estacionamento, sugestões, inscritos por evento. Sem relatório de faixa etária — decisão consciente de privacidade.</p>
+<h3 id="propósito-e-conexões-44">Propósito e conexões</h3>
+<p>Catálogo da manutenção. Papéis pastoral/super admin conforme o relatório.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Benefício indireto: decisões da igreja baseadas em fato, com menos exposição etária.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Painel de gestão sem exportar a igreja inteira para uma planilha solta.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Relatórios</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="lista-de-presença-quórum">Lista de Presença (quórum)</h2>
+<p class="route">Painel <code>quorum_presence</code></p>
+
+<h3 id="descrição-comercial-45">Descrição comercial</h3>
+<p>Quando o evento exige quórum, esta é a ata viva: quem confirmou no totem, a que horas, pronta para impressão.</p>
+<h3 id="propósito-e-conexões-45">Propósito e conexões</h3>
+<p>Atualiza após check-in. Flag <code>requer_quorum</code> no evento.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+O check-in da família conta de verdade para a assembleia.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Documento de presença, não lista de WhatsApp.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Lista de Presença (quórum)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="cadastro-de-usuário">Cadastro de Usuário</h2>
+<p class="route">Painel <code>profile_cadastro</code> · super admin</p>
+
+<h3 id="descrição-comercial-46">Descrição comercial</h3>
+<p>Correção cirúrgica: buscar pessoa, ajustar CEP/endereço, em último caso excluir perfil. Poder alto, uso raro, responsabilidade máxima.</p>
+<h3 id="propósito-e-conexões-46">Propósito e conexões</h3>
+<p>Busca em <code>profiles</code>. Exclusão completa restrita. Complementa Mudança de Papéis.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Erros de cadastro se resolvem sem a pessoa “criar outra conta”.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Higiene cadastral com trilha, não edição clandestina no banco.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Cadastro de Usuário</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="recepção-familiar">Recepção Familiar</h2>
+<p class="route">Painel <code>family_reception</code></p>
+
+<h3 id="descrição-comercial-47">Descrição comercial</h3>
+<p>A porta de entrada institucional da fila pública <code>/cadastro-familia/</code>. Gravar ou rejeitar em lote é acolher com processo.</p>
+<h3 id="propósito-e-conexões-47">Propósito e conexões</h3>
+<p>Fila do formulário standalone. Gera família/perfil oficiais.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+O cadastro feito no link vira gente de verdade na igreja.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Acolhimento com aceite formal, sem planilha de “pendentes da recepção”.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Recepção Familiar</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="controle-de-acesso">Controle de Acesso</h2>
+<p class="route">Painel <code>access_control</code></p>
+
+<h3 id="descrição-comercial-48">Descrição comercial</h3>
+<p>O coração da governança: papéis, grants, visão por papel ou por recurso. O Gestor de Controle de Acesso não vê o Super Administrador — escudo explícito. LGPD da instância liga/desliga aqui.</p>
+<h3 id="propósito-e-conexões-48">Propósito e conexões</h3>
+<p>RPCs SECURITY DEFINER, matriz de grants, <code>assert_gestor_super_admin_shield</code>. Afeta todas as telas.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Vê só o que lhe cabe — e isso é cuidado, não restrição vazia.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+ACL auditável, fail-closed, sem o gestor enxergar o super admin.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Controle de Acesso</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="mudança-de-papéis">Mudança de Papéis</h2>
+<p class="route">Painel <code>mudanca_papeis</code></p>
+
+<h3 id="descrição-comercial-49">Descrição comercial</h3>
+<p>Visitante, congregado, membro: a caminhada eclesial vira dado oficial, com contagem de ativos e herança familiar.</p>
+<h3 id="propósito-e-conexões-49">Propósito e conexões</h3>
+<p>Pastoral e super admin. Integra-se à Lista de Membros, carteirinha (status) e limites de billing.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+O reconhecimento da igreja (membro/congregado) aparece na carteirinha.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Métricas de membresia reais, não estimativa de lista de presença.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Mudança de Papéis</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="acessos-de-usuários">Acessos de Usuários</h2>
+<p class="route">Painel <code>profile_access_insights</code></p>
+
+<h3 id="descrição-comercial-50">Descrição comercial</h3>
+<p>Quem entrou, quando, quais telas. Transparência de uso para a liderança responsável — e limpeza global só no super admin.</p>
+<h3 id="propósito-e-conexões-50">Propósito e conexões</h3>
+<p>Histórico de sessão. Gestor não vê registros do Super Administrador.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Indireta: a igreja cuida do acesso sem vigiar a vida privada além do necessário.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Auditoria de login e navegação, com recorte de segurança entre papéis.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Acessos de Usuários</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="modo-ghost-auditor">Modo Ghost (Auditor)</h2>
+<p class="route">Painel <code>auditor</code></p>
+
+<h3 id="descrição-comercial-51">Descrição comercial</h3>
+<p>Ver o app com os olhos de outra pessoa, para testar permissão de verdade. Não é “entrar na conta”: é simular a jornada do alvo, com identidade efetiva em todas as telas.</p>
+<h3 id="propósito-e-conexões-51">Propósito e conexões</h3>
+<p>Grant <code>maintenance.card.auditor</code> ou super admin. <code>loadEffectiveSessionProfile</code> em todo fluxo. Encerrar Ghost volta ao auditor.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Não usa esta tela. Beneficia-se de um app em que as permissões foram testadas.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+QA pastoral e de TI: “o congregado vê o que deveria ver?” — sem senha alheia.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Modo Ghost (Auditor)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="instâncias-igrejas">Instâncias (Igrejas)</h2>
+<p class="route">Rota <code>/igrejas</code> · super admin</p>
+
+<h3 id="descrição-comercial-52">Descrição comercial</h3>
+<p>O ecossistema multi-igreja: logo, redes, CNPJ de ofertas, código da entidade. Cada casa tem cara e PIX próprios.</p>
+<h3 id="propósito-e-conexões-52">Propósito e conexões</h3>
+<p>Tenancy, branding, prefixo familiar (<code>Parm_entidade</code>), ofertas. Engrenagem do menu.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Vive a identidade da sua congregação.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Operar várias igrejas sem misturar cadastro, marca e tesouraria.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Instâncias (Igrejas)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="assinaturas-billing">Assinaturas (Billing)</h2>
+<p class="route">Rota <code>/billing</code></p>
+
+<h3 id="descrição-comercial-53">Descrição comercial</h3>
+<p>A sustentabilidade da plataforma: planos, limite de membros, checkout Stripe em modo teste/produção conforme ambiente. A igreja escolhe o plano com números de ativos à vista.</p>
+<h3 id="propósito-e-conexões-53">Propósito e conexões</h3>
+<p><code>BillingClass</code>, Functions Stripe, <code>assert_tenant_can_add_member</code>. Isolamento por <code>tenant_id</code>.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Indireta: o app da igreja permanece disponível e dimensionado.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Contrato SaaS visível, com teto de membresia alinhado ao plano.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Assinaturas (Billing)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
+<h2 id="orquestrador-admin">Orquestrador (admin)</h2>
+<p class="route">Rota <code>/admin/orquestrador</code></p>
+
+<h3 id="descrição-comercial-54">Descrição comercial</h3>
+<p>Console avançado de orquestração de eventos e avisos para operação de alto volume — o “mesa de controle” quando o culto é complexo.</p>
+<h3 id="propósito-e-conexões-54">Propósito e conexões</h3>
+<p>Complementa Manutenção de Avisos e Programação de Eventos.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Recebe a programação certa, no tempo certo.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Coordenação central de fluxos de evento sem editar registro por registro na pressa.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Orquestrador (admin)</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<hr>
+<h1 id="parte-h--síntese-comercial">Parte H — Síntese comercial</h1>
+<p>A plataforma não é um conjunto de telas soltas. É uma <strong>jornada</strong>:</p>
+<ol>
+<li>A pessoa <strong>entra com identidade</strong> (login, PIN, opcionalmente biometria).</li>
+<li><strong>Reconhece a própria igreja</strong> (instância, marca, PIX).</li>
+<li><strong>Participa com a família</strong> (agenda, QR só com código familiar, salas).</li>
+<li><strong>Cuidado e serviço</strong> (pastoral, escalas, RD, ofertas).</li>
+<li>A equipe <strong>governa</strong> (ACL, papéis, Ghost, relatórios, tesouraria).</li>
+</ol>
+<p>O valor para o membro é autonomia e dignidade. O valor para a administração é controle com rastreio, menos WhatsApp como sistema e um único lugar em que o culto, a família e a prestação de contas se encontram.</p>
+<p>Este documento descreve o produto como ele está no código em 19 de agosto de 2026. Telas condicionais (QR, estacionamento, servos, manutenção) aparecem somente quando o papel, o evento e os parâmetros da instância autorizam — e isso, em si, já é parte da proposta comercial: <strong>cada pessoa vê a igreja que lhe cabe viver</strong>.</p>
+
+	
+
+
+</div>
+</body>
+</html>

@@ -9,7 +9,7 @@ const inputPath = path.join(root, 'ANALISE_INSTITUCIONAL_TELAS.md');
 const outDir = path.join(root, 'pdfs');
 const outputPath = path.join(outDir, 'ANALISE_INSTITUCIONAL_TELAS.pdf');
 
-const pdfCss = `
+export const pdfCss = `
   @page { size: A4; margin: 16mm 14mm 20mm 14mm; }
   body {
     font-family: 'Segoe UI', Calibri, system-ui, sans-serif;
@@ -165,6 +165,15 @@ const pdfCss = `
   }
 `;
 
+const isDirectRun =
+  Boolean(process.argv[1]) &&
+  path.normalize(fileURLToPath(import.meta.url)).toLowerCase() ===
+    path.normalize(path.resolve(process.argv[1])).toLowerCase();
+
+if (!isDirectRun) {
+  // importado só pelo gerador .doc/.docx
+} else {
+
 if (!fs.existsSync(inputPath)) {
   throw new Error(`Arquivo não encontrado: ${inputPath}`);
 }
@@ -204,3 +213,4 @@ if (!pdf?.filename) {
 }
 
 console.log(`PDF salvo em: ${outputPath}`);
+}
