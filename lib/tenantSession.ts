@@ -382,6 +382,58 @@ export async function restoreTenantIdentityFromStorage(): Promise<void> {
   patchSessionRequestIdentity({ tenantId });
 }
 
+export const PHONE_NOT_IN_INSTANCE_MESSAGE =
+  'Este celular não está cadastrado nesta igreja. Confira o código da instância ou fale com o Ministério de Acolhimento.';
+
+export type LoginPhoneInstanceLookup =
+  | {
+      ok: true;
+      inInstance: boolean;
+      existsElsewhere: boolean;
+      hasPin: boolean;
+    }
+  | { ok: false; message: string };
+
+/** Verifica se o celular pertence à instância já validada no login. */
+export async function lookupLoginPhoneForInstance(
+  phone: string
+): Promise<LoginPhoneInstanceLookup> {
+  const { data, error } = await supabase.rpc('lookup_login_phone_for_instance', {
+    p_phone: phone.replace(/\D/g, ''),
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      message: 'Não foi possível verificar o celular nesta instância. Tente novamente.',
+    };
+  }
+
+  const payload =
+    data && typeof data === 'object' && !Array.isArray(data)
+      ? (data as Record<string, unknown>)
+      : Array.isArray(data) && data[0] && typeof data[0] === 'object'
+        ? (data[0] as Record<string, unknown>)
+        : null;
+
+  if (!payload || payload.ok === false) {
+    return {
+      ok: false,
+      message:
+        typeof payload?.message === 'string' && payload.message.trim()
+          ? payload.message
+          : 'Informe o código da instância da sua igreja para continuar.',
+    };
+  }
+
+  return {
+    ok: true,
+    inInstance: payload.in_instance === true,
+    existsElsewhere: payload.exists_elsewhere === true,
+    hasPin: payload.has_pin === true,
+  };
+}
+
 function coerceSessionIgrejaRows(data: unknown): SessionIgreja[] {
   if (!Array.isArray(data)) {
     return [];

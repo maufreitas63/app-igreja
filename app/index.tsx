@@ -140,6 +140,9 @@ export default function IndexScreen() {
     title: string;
     message: string;
   } | null>(null);
+  const [phoneInstanceError, setPhoneInstanceError] = useState<string | null>(null);
+  const [phoneBelongsToInstance, setPhoneBelongsToInstance] = useState(false);
+  const [isCheckingPhoneInstance, setIsCheckingPhoneInstance] = useState(false);
   const [biometricLoginAvailable, setBiometricLoginAvailable] = useState(false);
   const [biometricLoginLabel, setBiometricLoginLabel] = useState('Biometria');
   const [isBiometricUnlocking, setIsBiometricUnlocking] = useState(false);
@@ -203,6 +206,8 @@ export default function IndexScreen() {
     setFirstAccessEmailConfirm('');
     setFirstAccessEmailMasked('');
     setPinEmailFeedback(null);
+    setPhoneInstanceError(null);
+    setPhoneBelongsToInstance(false);
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
     autoSendEmailKeyRef.current = '';
@@ -226,13 +231,46 @@ export default function IndexScreen() {
         return;
       }
 
-      // Persiste o celular localmente para autofill na próxima abertura.
-      void persistUserPhone(phone);
-
-      setLoginStep(2);
-
       if (isTotemLoginMode) {
+        void persistUserPhone(phone);
+        setPhoneBelongsToInstance(true);
+        setPhoneInstanceError(null);
+        setLoginStep(2);
         focusPinInput();
+        return;
+      }
+
+      setIsCheckingPhoneInstance(true);
+      setPhoneInstanceError(null);
+      try {
+        const { lookupLoginPhoneForInstance, PHONE_NOT_IN_INSTANCE_MESSAGE } = await import(
+          '@/lib/tenantSession'
+        );
+        const lookup = await lookupLoginPhoneForInstance(phone);
+
+        if (!lookup.ok) {
+          setPhoneBelongsToInstance(false);
+          setPhoneInstanceError(lookup.message);
+          showAppToast({ type: 'error', text1: 'Celular', text2: lookup.message });
+          return;
+        }
+
+        if (!lookup.inInstance && lookup.existsElsewhere) {
+          setPhoneBelongsToInstance(false);
+          setPhoneInstanceError(PHONE_NOT_IN_INSTANCE_MESSAGE);
+          showAppToast({
+            type: 'error',
+            text1: 'Celular não cadastrado',
+            text2: PHONE_NOT_IN_INSTANCE_MESSAGE,
+          });
+          return;
+        }
+
+        setPhoneBelongsToInstance(lookup.inInstance);
+        void persistUserPhone(phone);
+        setLoginStep(2);
+      } finally {
+        setIsCheckingPhoneInstance(false);
       }
     })();
   }, [
@@ -258,6 +296,8 @@ export default function IndexScreen() {
     setFirstAccessEmailConfirm('');
     setFirstAccessEmailMasked('');
     setPinEmailFeedback(null);
+    setPhoneInstanceError(null);
+    setPhoneBelongsToInstance(false);
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
     autoSendEmailKeyRef.current = '';
@@ -1332,17 +1372,30 @@ export default function IndexScreen() {
                     <Text style={styles.clearButtonText}>X</Text>
                   </TouchableOpacity>
                 </View>
+                {phoneInstanceError ? (
+                  <Text style={styles.instanceErrorText}>{phoneInstanceError}</Text>
+                ) : null}
               </View>
 
               <TouchableOpacity
                 style={[
                   styles.btnPrimary,
-                  (!isBrazilianMobilePhoneComplete(phone) || !instanceCode.trim()) && styles.btnPrimaryDisabled,
+                  (!isBrazilianMobilePhoneComplete(phone) || !instanceCode.trim() || isCheckingPhoneInstance) &&
+                    styles.btnPrimaryDisabled,
                 ]}
                 onPress={advanceToPinStep}
-                disabled={!isBrazilianMobilePhoneComplete(phone) || !instanceCode.trim() || isValidating}
+                disabled={
+                  !isBrazilianMobilePhoneComplete(phone)
+                  || !instanceCode.trim()
+                  || isValidating
+                  || isCheckingPhoneInstance
+                }
               >
-                <Text style={styles.btnText}>Continuar</Text>
+                {isCheckingPhoneInstance ? (
+                  <ActivityIndicator color={LOGIN_SUBMIT_TEXT} />
+                ) : (
+                  <Text style={styles.btnText}>Continuar</Text>
+                )}
               </TouchableOpacity>
 
               {biometricLoginAvailable ? (
@@ -1399,7 +1452,7 @@ export default function IndexScreen() {
                   <View pointerEvents="none" style={styles.phoneConfirmedRow}>
                     <FontAwesome name="check-circle" size={18} color={LOGIN_ACCENT} />
                     <ReadOnlyText style={styles.phoneConfirmedText}>
-                      Celular confirmado: {phone}
+                      {phoneBelongsToInstance ? 'Celular confirmado' : 'Celular informado'}: {phone}
                     </ReadOnlyText>
                   </View>
                 </>
