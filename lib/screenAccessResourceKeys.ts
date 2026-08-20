@@ -20,6 +20,7 @@ export const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   scales: MAINTENANCE_SCALE_PANEL_CONTENT_TO_KEY.scales,
   pastoral_care: PASTORAL_CARE_PANEL_RESOURCE,
   mudanca_papeis: 'maintenance.card.mudanca_papeis',
+  transferencia_igreja: 'maintenance.card.transferencia_igreja',
   financials: 'maintenance.card.financials',
   predictive_insights: 'maintenance.card.predictive_insights',
   relatorios: 'maintenance.card.relatorios',

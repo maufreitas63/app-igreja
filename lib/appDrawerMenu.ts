@@ -42,6 +42,7 @@ export type AppDrawerModuleKey =
   | 'family_reception'
   | 'access_control'
   | 'mudanca_papeis'
+  | 'transferencia_igreja'
   | 'profile_access_insights'
   | 'auditor';
 
@@ -85,6 +86,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'v', label: 'Recepção Familiar', moduleKey: 'family_reception' },
   { letter: 'w', label: 'Controle de Acesso', moduleKey: 'access_control' },
   { letter: 'x', label: 'Mudança Papéis', moduleKey: 'mudanca_papeis' },
+  { letter: 'x2', label: 'Transferência de Membro', moduleKey: 'transferencia_igreja' },
   { letter: 'y', label: 'Acesso Usuários', moduleKey: 'profile_access_insights' },
   { letter: 'z', label: 'Modo Ghost', moduleKey: 'auditor' },
   {
@@ -120,6 +122,7 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   family_reception: 'family_reception',
   access_control: 'access_control',
   mudanca_papeis: 'mudanca_papeis',
+  transferencia_igreja: 'transferencia_igreja',
   profile_access_insights: 'profile_access_insights',
   auditor: 'auditor',
 };

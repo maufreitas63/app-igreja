@@ -383,7 +383,7 @@ export async function restoreTenantIdentityFromStorage(): Promise<void> {
 }
 
 export const PHONE_NOT_IN_INSTANCE_MESSAGE =
-  'O número do celular informado já está cadastrado em outra igreja. Confira o código da instância ou fale com o Ministério de Acolhimento.';
+  'O número do celular informado já está cadastrado em outra igreja. Confira o código da instância ou solicite a transferência.';
 
 export type LoginPhoneInstanceLookup =
   | {
@@ -391,6 +391,12 @@ export type LoginPhoneInstanceLookup =
       inInstance: boolean;
       existsElsewhere: boolean;
       hasPin: boolean;
+      canRequestTransfer: boolean;
+      pendingRequestId: string | null;
+      originCode: string | null;
+      originName: string | null;
+      destinationCode: string | null;
+      destinationName: string | null;
     }
   | { ok: false; message: string };
 
@@ -431,6 +437,16 @@ export async function lookupLoginPhoneForInstance(
     inInstance: payload.in_instance === true,
     existsElsewhere: payload.exists_elsewhere === true,
     hasPin: payload.has_pin === true,
+    canRequestTransfer: payload.can_request_transfer === true,
+    pendingRequestId:
+      typeof payload.pending_request_id === 'string' && payload.pending_request_id.trim()
+        ? payload.pending_request_id
+        : null,
+    originCode: typeof payload.origin_code === 'string' ? payload.origin_code : null,
+    originName: typeof payload.origin_name === 'string' ? payload.origin_name : null,
+    destinationCode: typeof payload.destination_code === 'string' ? payload.destination_code : null,
+    destinationName:
+      typeof payload.destination_name === 'string' ? payload.destination_name : null,
   };
 }
 

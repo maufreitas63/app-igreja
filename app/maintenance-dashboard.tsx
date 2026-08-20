@@ -26,6 +26,7 @@ import { MaintenanceDiscipleshipAlertsCard } from '@/components/MaintenanceDisci
 import { MaintenanceDiscipleshipThemesCard } from '@/components/MaintenanceDiscipleshipThemesCard';
 import { MaintenanceDiscipleshipResetCard } from '@/components/MaintenanceDiscipleshipResetCard';
 import { MaintenancePastoralRoleChangeCard } from '@/components/MaintenancePastoralRoleChangeCard';
+import { MaintenanceIgrejaTransferCard } from '@/components/MaintenanceIgrejaTransferCard';
 import { MaintenanceEventOrchestrationCard } from '@/components/MaintenanceEventOrchestrationCard';
 import { MaintenanceFamilyReceptionCard } from '@/components/MaintenanceFamilyReceptionCard';
 import { MaintenanceProfileCadastroCard } from '@/components/MaintenanceProfileCadastroCard';
@@ -165,6 +166,7 @@ type MaintenanceCarouselCard = {
     | 'scales'
     | 'pastoral_care'
     | 'mudanca_papeis'
+    | 'transferencia_igreja'
     | 'profile_cadastro'
     | 'family_reception'
     | 'financials'
@@ -217,6 +219,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '12', title: 'Recepção Familiar', content: 'family_reception' },
   { id: '10', title: 'Controle de Acesso', content: 'access_control' },
   { id: '13', title: 'Mudança de Papéis', content: 'mudanca_papeis' },
+  { id: '23', title: 'Transferência de Membro', content: 'transferencia_igreja' },
   { id: '14', title: 'Acessos de Usuários', content: 'profile_access_insights' },
   { id: '19', title: 'Modo Ghost (Auditor)', content: 'auditor' },
 ];
@@ -908,6 +911,14 @@ export default function MaintenanceDashboard() {
         return canAccessPastoralRoleChange || canManageAccessControl;
       }
 
+      if (card.content === 'transferencia_igreja') {
+        return (
+          canAccessPastoralRoleChange
+          || canManageAccessControl
+          || maintenancePanelAccess[card.content] === true
+        );
+      }
+
       if (card.content === 'profile_access_insights') {
         return canManageAccessControl || maintenancePanelAccess[card.content] === true;
       }
@@ -1358,6 +1369,7 @@ export default function MaintenanceDashboard() {
             !isMinimalPresentation && item.content === 'scales' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'pastoral_care' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'mudanca_papeis' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'transferencia_igreja' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'profile_cadastro' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'family_reception' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'financials' && styles.panelCardInnerPadding,
@@ -1550,6 +1562,19 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenancePastoralRoleChangeCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
+          ) : item.content === 'transferencia_igreja' ? (
+            <View
+              style={[
+                styles.pastoralRoleChangePanel,
+                isMinimalPresentation && styles.pastoralRoleChangePanelMinimal,
+              ]}
+            >
+              <MaintenanceIgrejaTransferCard
                 isActive={currentIndex === index}
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}

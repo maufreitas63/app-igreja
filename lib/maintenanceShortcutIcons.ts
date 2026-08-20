@@ -8,6 +8,7 @@ export type MaintenancePanelContent =
   | 'scales'
   | 'pastoral_care'
   | 'mudanca_papeis'
+  | 'transferencia_igreja'
   | 'profile_cadastro'
   | 'family_reception'
   | 'financials'
@@ -29,6 +30,7 @@ export type MaintenanceShortcutIconName =
   | 'clipboard'
   | 'heart'
   | 'exchange'
+  | 'share'
   | 'line-chart'
   | 'area-chart'
   | 'file-text-o'
@@ -53,6 +55,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   scales: 'clipboard',
   pastoral_care: 'heart',
   mudanca_papeis: 'exchange',
+  transferencia_igreja: 'share',
   financials: 'line-chart',
   predictive_insights: 'area-chart',
   relatorios: 'file-text-o',
@@ -76,6 +79,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   scales: '#34D399',
   pastoral_care: '#F472B6',
   mudanca_papeis: '#FB7185',
+  transferencia_igreja: '#818CF8',
   financials: '#34D399',
   predictive_insights: '#22D3EE',
   relatorios: '#C084FC',

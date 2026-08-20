@@ -141,8 +141,12 @@ export default function IndexScreen() {
     message: string;
   } | null>(null);
   const [phoneInstanceError, setPhoneInstanceError] = useState<string | null>(null);
+  const [phoneTransferAvailable, setPhoneTransferAvailable] = useState(false);
+  const [phoneTransferOriginName, setPhoneTransferOriginName] = useState<string | null>(null);
+  const [phoneTransferDestinationName, setPhoneTransferDestinationName] = useState<string | null>(null);
   const [phoneBelongsToInstance, setPhoneBelongsToInstance] = useState(false);
   const [isCheckingPhoneInstance, setIsCheckingPhoneInstance] = useState(false);
+  const [isRequestingPhoneTransfer, setIsRequestingPhoneTransfer] = useState(false);
   const [biometricLoginAvailable, setBiometricLoginAvailable] = useState(false);
   const [biometricLoginLabel, setBiometricLoginLabel] = useState('Biometria');
   const [isBiometricUnlocking, setIsBiometricUnlocking] = useState(false);
@@ -207,11 +211,63 @@ export default function IndexScreen() {
     setFirstAccessEmailMasked('');
     setPinEmailFeedback(null);
     setPhoneInstanceError(null);
+    setPhoneTransferAvailable(false);
+    setPhoneTransferOriginName(null);
+    setPhoneTransferDestinationName(null);
     setPhoneBelongsToInstance(false);
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
     autoSendEmailKeyRef.current = '';
   }, []);
+
+  const requestMemberTransfer = useCallback(async (options?: { skipConfirm?: boolean }) => {
+    if (isRequestingPhoneTransfer) {
+      return;
+    }
+
+    if (!options?.skipConfirm) {
+      const originLabel = phoneTransferOriginName || 'a igreja atual';
+      const destLabel = phoneTransferDestinationName || 'esta igreja';
+      const confirmed = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          'Solicitar Transferência',
+          `Enviar pedido para ${originLabel} autorizar sua entrada em ${destLabel}? Cargos e privilégios da igreja atual não serão levados.`,
+          [
+            { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Solicitar Transferência', onPress: () => resolve(true) },
+          ]
+        );
+      });
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setIsRequestingPhoneTransfer(true);
+    try {
+      const { solicitarTransferenciaMembroLogin } = await import('@/lib/igrejaTransferenciaApi');
+      const result = await solicitarTransferenciaMembroLogin(phone);
+      setPhoneInstanceError(result.message);
+      setPhoneTransferAvailable(false);
+      showAppToast({
+        type: 'success',
+        text1: result.alreadyPending ? 'Pedido já enviado' : 'Pedido enviado',
+        text2: result.message,
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Não foi possível solicitar a transferência.';
+      showAppToast({ type: 'error', text1: 'Transferência', text2: message });
+    } finally {
+      setIsRequestingPhoneTransfer(false);
+    }
+  }, [
+    isRequestingPhoneTransfer,
+    phone,
+    phoneTransferDestinationName,
+    phoneTransferOriginName,
+  ]);
 
   const advanceToPinStep = useCallback(() => {
     void (async () => {
@@ -257,15 +313,37 @@ export default function IndexScreen() {
 
         if (!lookup.inInstance && lookup.existsElsewhere) {
           setPhoneBelongsToInstance(false);
-          setPhoneInstanceError(PHONE_NOT_IN_INSTANCE_MESSAGE);
+          setPhoneTransferAvailable(lookup.canRequestTransfer);
+          setPhoneTransferOriginName(lookup.originName);
+          setPhoneTransferDestinationName(lookup.destinationName);
+          const originLabel = lookup.originName || lookup.originCode || 'outra igreja';
+          const destLabel = lookup.destinationName || lookup.destinationCode || 'esta igreja';
+          const conflictMessage = lookup.pendingRequestId
+            ? `Este celular já está cadastrado em ${originLabel}. Já existe um pedido de transferência para ${destLabel} aguardando a origem.`
+            : `Este celular já está cadastrado em ${originLabel}. Para ingressar em ${destLabel}, solicite a transferência.`;
+          setPhoneInstanceError(conflictMessage);
           showAppToast({
             type: 'error',
-            text1: 'Celular já cadastrado',
-            text2: PHONE_NOT_IN_INSTANCE_MESSAGE,
+            text1: 'Cadastro em outra igreja',
+            text2: conflictMessage,
           });
+          if (lookup.canRequestTransfer && !lookup.pendingRequestId) {
+            Alert.alert('Cadastro em outra igreja', conflictMessage, [
+              { text: 'Agora não', style: 'cancel' },
+              {
+                text: 'Solicitar Transferência',
+                onPress: () => {
+                  void requestMemberTransfer({ skipConfirm: true });
+                },
+              },
+            ]);
+          }
           return;
         }
 
+        setPhoneTransferAvailable(false);
+        setPhoneTransferOriginName(null);
+        setPhoneTransferDestinationName(null);
         setPhoneBelongsToInstance(lookup.inInstance);
         void persistUserPhone(phone);
         setLoginStep(2);
@@ -279,6 +357,7 @@ export default function IndexScreen() {
     isInstanceValid,
     isTotemLoginMode,
     phone,
+    requestMemberTransfer,
     validateInstance,
   ]);
 
@@ -297,6 +376,9 @@ export default function IndexScreen() {
     setFirstAccessEmailMasked('');
     setPinEmailFeedback(null);
     setPhoneInstanceError(null);
+    setPhoneTransferAvailable(false);
+    setPhoneTransferOriginName(null);
+    setPhoneTransferDestinationName(null);
     setPhoneBelongsToInstance(false);
     setPinDeliveryUnlocked(false);
     setHasStoredAccessPin(null);
@@ -1374,6 +1456,23 @@ export default function IndexScreen() {
                 </View>
                 {phoneInstanceError ? (
                   <Text style={styles.instanceErrorText}>{phoneInstanceError}</Text>
+                ) : null}
+                {phoneTransferAvailable ? (
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel="Solicitar Transferência"
+                    disabled={isRequestingPhoneTransfer}
+                    onPress={() => {
+                      void requestMemberTransfer();
+                    }}
+                    style={styles.btnBiometric}
+                  >
+                    {isRequestingPhoneTransfer ? (
+                      <ActivityIndicator color={LOGIN_ACCENT} size="small" />
+                    ) : (
+                      <Text style={styles.btnBiometricText}>Solicitar Transferência</Text>
+                    )}
+                  </TouchableOpacity>
                 ) : null}
               </View>
 
