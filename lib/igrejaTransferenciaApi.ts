@@ -112,7 +112,17 @@ export const parseIgrejaTransferRequest = (value: unknown): IgrejaTransferReques
 };
 
 const parseRpcPayload = (data: unknown): Record<string, unknown> => {
-  const payload = asRecord(data) ?? (Array.isArray(data) ? asRecord(data[0]) : null);
+  let value: unknown = data;
+
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value) as unknown;
+    } catch {
+      throw new Error('Resposta inválida do servidor.');
+    }
+  }
+
+  const payload = asRecord(value) ?? (Array.isArray(value) ? asRecord(value[0]) : null);
 
   if (!payload) {
     throw new Error('Resposta inválida do servidor.');
@@ -133,10 +143,14 @@ const requireOk = (payload: Record<string, unknown>, fallback: string) => {
   }
 };
 
-export async function solicitarTransferenciaMembroLogin(phone: string, note?: string) {
+export async function solicitarTransferenciaMembroLogin(
+  phone: string,
+  options?: { note?: string; destinationTenantId?: string | null }
+) {
   const { data, error } = await supabase.rpc('solicitar_transferencia_membro_login', {
     p_phone: phone.replace(/\D/g, ''),
-    p_note: note?.trim() || null,
+    p_note: options?.note?.trim() || null,
+    p_destination_tenant_id: options?.destinationTenantId?.trim() || null,
   });
 
   throwIfRpcMissing(error, 'solicitar_transferencia_membro_login');

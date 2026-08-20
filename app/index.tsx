@@ -19,6 +19,7 @@ import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { WEB_NON_SELECTABLE_VIEW_STYLES } from '@/lib/webTextSelectionGuard';
 import { showAppToast } from '@/lib/appToast';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { useLoginInstanceCode } from '@/hooks/useLoginInstanceCode';
 
 const LOGIN_SURFACE = '#FFFFFF';
@@ -228,16 +229,12 @@ export default function IndexScreen() {
     if (!options?.skipConfirm) {
       const originLabel = phoneTransferOriginName || 'a igreja atual';
       const destLabel = phoneTransferDestinationName || 'esta igreja';
-      const confirmed = await new Promise<boolean>((resolve) => {
-        Alert.alert(
-          'Solicitar Transferência',
-          `Enviar pedido para ${originLabel} autorizar sua entrada em ${destLabel}? Cargos e privilégios da igreja atual não serão levados.`,
-          [
-            { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Solicitar Transferência', onPress: () => resolve(true) },
-          ]
-        );
-      });
+      const confirmed = await confirmDialog(
+        'Solicitar Transferência',
+        `Enviar pedido para ${originLabel} autorizar sua entrada em ${destLabel}? Cargos e privilégios da igreja atual não serão levados.`,
+        'Solicitar Transferência',
+        'Cancelar'
+      );
 
       if (!confirmed) {
         return;
@@ -246,8 +243,17 @@ export default function IndexScreen() {
 
     setIsRequestingPhoneTransfer(true);
     try {
-      const { solicitarTransferenciaMembroLogin } = await import('@/lib/igrejaTransferenciaApi');
-      const result = await solicitarTransferenciaMembroLogin(phone);
+      const instanceOk = isInstanceValid || (await validateInstance(instanceCode));
+      if (!instanceOk) {
+        throw new Error('Informe o código da instância da igreja de destino para continuar.');
+      }
+
+      const [{ solicitarTransferenciaMembroLogin }, { getStoredTenantId }] = await Promise.all([
+        import('@/lib/igrejaTransferenciaApi'),
+        import('@/lib/tenantSession'),
+      ]);
+      const destinationTenantId = await getStoredTenantId();
+      const result = await solicitarTransferenciaMembroLogin(phone, { destinationTenantId });
       setPhoneInstanceError(result.message);
       setPhoneTransferAvailable(false);
       showAppToast({
@@ -258,15 +264,19 @@ export default function IndexScreen() {
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Não foi possível solicitar a transferência.';
+      setPhoneInstanceError(message);
       showAppToast({ type: 'error', text1: 'Transferência', text2: message });
     } finally {
       setIsRequestingPhoneTransfer(false);
     }
   }, [
+    instanceCode,
+    isInstanceValid,
     isRequestingPhoneTransfer,
     phone,
     phoneTransferDestinationName,
     phoneTransferOriginName,
+    validateInstance,
   ]);
 
   const advanceToPinStep = useCallback(() => {
@@ -328,15 +338,15 @@ export default function IndexScreen() {
             text2: conflictMessage,
           });
           if (lookup.canRequestTransfer && !lookup.pendingRequestId) {
-            Alert.alert('Cadastro em outra igreja', conflictMessage, [
-              { text: 'Agora não', style: 'cancel' },
-              {
-                text: 'Solicitar Transferência',
-                onPress: () => {
-                  void requestMemberTransfer({ skipConfirm: true });
-                },
-              },
-            ]);
+            const confirmed = await confirmDialog(
+              'Cadastro em outra igreja',
+              conflictMessage,
+              'Solicitar Transferência',
+              'Agora não'
+            );
+            if (confirmed) {
+              void requestMemberTransfer({ skipConfirm: true });
+            }
           }
           return;
         }
@@ -1463,7 +1473,7 @@ export default function IndexScreen() {
                     accessibilityLabel="Solicitar Transferência"
                     disabled={isRequestingPhoneTransfer}
                     onPress={() => {
-                      void requestMemberTransfer();
+                      void requestMemberTransfer({ skipConfirm: true });
                     }}
                     style={styles.btnBiometric}
                   >

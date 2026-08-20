@@ -888,14 +888,22 @@ begin
 end;
 $$;
 
-create or replace function public.solicitar_transferencia_membro_login(p_phone text, p_note text default null)
+drop function if exists public.solicitar_transferencia_membro_login(text);
+drop function if exists public.solicitar_transferencia_membro_login(text, text);
+drop function if exists public.solicitar_transferencia_membro_login(text, text, uuid);
+
+create or replace function public.solicitar_transferencia_membro_login(
+  p_phone text,
+  p_note text default null,
+  p_destination_tenant_id uuid default null
+)
 returns jsonb
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
-  v_dest uuid := public.current_session_tenant_id();
+  v_dest uuid;
   v_profile_id uuid;
   v_origin uuid;
   v_request_id uuid;
@@ -903,7 +911,11 @@ declare
   v_person record;
   v_family text;
 begin
-  if v_dest is null then
+  v_dest := coalesce(p_destination_tenant_id, public.current_session_tenant_id());
+
+  if v_dest is null or not exists (
+    select 1 from public.igrejas i where i.id = v_dest and i.is_active = true
+  ) then
     return jsonb_build_object(
       'ok', false,
       'message', 'Informe o código da instância da igreja de destino para solicitar a transferência.'
@@ -990,6 +1002,12 @@ begin
       v_person.origin_family_id
     );
   end loop;
+
+  if not exists (
+    select 1 from public.igreja_transfer_people tp where tp.request_id = v_request_id
+  ) then
+    raise exception 'Não foi possível vincular o membro ao pedido de transferência.';
+  end if;
 
   return jsonb_build_object(
     'ok', true,
@@ -1412,7 +1430,7 @@ grant execute on function public.transfer_strip_leadership_roles(uuid, uuid, tex
 grant execute on function public.apply_igreja_transfer_request(uuid, uuid) to anon, authenticated;
 grant execute on function public.lookup_login_phone_for_instance(text) to anon, authenticated;
 grant execute on function public.lookup_identity_conflict_for_instance(text, text) to anon, authenticated;
-grant execute on function public.solicitar_transferencia_membro_login(text, text) to anon, authenticated;
+grant execute on function public.solicitar_transferencia_membro_login(text, text, uuid) to anon, authenticated;
 grant execute on function public.listar_igrejas_para_transferencia() to anon, authenticated;
 grant execute on function public.pastoral_preview_transferencia_entrada(uuid, text, text, text, boolean) to anon, authenticated;
 grant execute on function public.pastoral_iniciar_transferencia_entrada(uuid, text, text, text, boolean, text) to anon, authenticated;
