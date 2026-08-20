@@ -1284,7 +1284,7 @@ export default function IndexScreen() {
                   <TextInput
                     ref={instanceInputRef}
                     style={[styles.input, styles.editableInput, styles.inputWithTrailingAction]}
-                    placeholder="Ex.: IBN"
+                    placeholder="Ex.: IXB"
                     placeholderTextColor={LOGIN_PLACEHOLDER}
                     value={instanceCode}
                     onChangeText={handleInstanceCodeChange}
