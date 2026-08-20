@@ -185,6 +185,8 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.blueDark,
     fontSize: 15,
     fontWeight: '700',
+    textAlign: 'center',
+    width: '100%',
   },
   confirmButton: {
     backgroundColor: MINIMAL_UI.blueDark,
@@ -195,6 +197,8 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.onDark,
     fontSize: 15,
     fontWeight: '700',
+    textAlign: 'center',
+    width: '100%',
   },
   destructiveButton: {
     backgroundColor: MINIMAL_UI.blueDark,
@@ -205,5 +209,7 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.onDark,
     fontSize: 15,
     fontWeight: '700',
+    textAlign: 'center',
+    width: '100%',
   },
 });
