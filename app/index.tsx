@@ -1646,6 +1646,7 @@ const styles = StyleSheet.create({
   },
   inputWithTrailingAction: {
     width: '100%',
+    paddingLeft: 68,
     paddingRight: 68,
   },
   input: {
