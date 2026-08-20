@@ -19,6 +19,7 @@ import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { WEB_NON_SELECTABLE_VIEW_STYLES } from '@/lib/webTextSelectionGuard';
 import { showAppToast } from '@/lib/appToast';
+import { useLoginInstanceCode } from '@/hooks/useLoginInstanceCode';
 
 const LOGIN_SURFACE = '#FFFFFF';
 const LOGIN_ACCENT = VIGILANCE_SCALES_UI.accent;
@@ -91,12 +92,14 @@ export default function IndexScreen() {
     recovered: recoveredParam,
     email: emailParam,
     igreja: igrejaParam,
+    codigo: codigoParam,
   } = useLocalSearchParams<{
       [SIGN_OUT_QUERY_PARAM]?: string | string[];
       phone?: string | string[];
       recovered?: string | string[];
       email?: string | string[];
       igreja?: string | string[];
+      codigo?: string | string[];
     }>();
   const skipSessionRestore =
     signedOutParam === '1' || (Array.isArray(signedOutParam) && signedOutParam.includes('1'));
@@ -163,18 +166,28 @@ export default function IndexScreen() {
   const autoSendEmailKeyRef = useRef('');
   const pinInputRef = useRef<TextInput>(null);
   const router = useRouter();
+  const {
+    instanceCode,
+    instanceName,
+    isInstanceValid,
+    isValidating,
+    instanceError,
+    hasStoredInstance,
+    instanceInputRef,
+    handleInstanceCodeChange,
+    handleInstanceBlur,
+    validateInstance,
+    beginChangeInstance,
+  } = useLoginInstanceCode({
+    igrejaParam,
+    codigoParam,
+  });
 
   const focusPinInput = useCallback(() => {
     requestAnimationFrame(() => {
       pinInputRef.current?.focus();
     });
   }, []);
-
-  useEffect(() => {
-    void import('@/lib/tenantSession').then(({ capturePreferredIgrejaCodeFromLocation }) =>
-      capturePreferredIgrejaCodeFromLocation(igrejaParam)
-    );
-  }, [igrejaParam]);
 
   const goBackToPhoneStep = useCallback(() => {
     setPhone('');
@@ -196,20 +209,40 @@ export default function IndexScreen() {
   }, []);
 
   const advanceToPinStep = useCallback(() => {
-    if (!isBrazilianMobilePhoneComplete(phone)) {
-      Alert.alert('Atenção', 'Digite o celular completo com 11 dígitos.');
-      return;
-    }
+    void (async () => {
+      const instanceOk = isInstanceValid || (await validateInstance(instanceCode));
+      if (!instanceOk) {
+        Alert.alert(
+          'Código da instância',
+          instanceCode.trim()
+            ? 'Código de instância não encontrado. Verifique com a administração.'
+            : 'Informe o código da instância da sua igreja para continuar.'
+        );
+        return;
+      }
 
-    // Persiste o celular localmente para autofill na próxima abertura.
-    void persistUserPhone(phone);
+      if (!isBrazilianMobilePhoneComplete(phone)) {
+        Alert.alert('Atenção', 'Digite o celular completo com 11 dígitos.');
+        return;
+      }
 
-    setLoginStep(2);
+      // Persiste o celular localmente para autofill na próxima abertura.
+      void persistUserPhone(phone);
 
-    if (isTotemLoginMode) {
-      focusPinInput();
-    }
-  }, [focusPinInput, isTotemLoginMode, phone]);
+      setLoginStep(2);
+
+      if (isTotemLoginMode) {
+        focusPinInput();
+      }
+    })();
+  }, [
+    focusPinInput,
+    instanceCode,
+    isInstanceValid,
+    isTotemLoginMode,
+    phone,
+    validateInstance,
+  ]);
 
   const handlePhoneChange = (text: string) => {
     setPhone(formatBrazilPhoneInput(text));
@@ -521,6 +554,15 @@ export default function IndexScreen() {
       return;
     }
 
+    const instanceOk = isInstanceValid || (await validateInstance(instanceCode));
+    if (!instanceOk) {
+      Alert.alert(
+        'Código da instância',
+        'Informe o código da instância da sua igreja para continuar.'
+      );
+      return;
+    }
+
     setIsBiometricUnlocking(true);
 
     try {
@@ -558,7 +600,15 @@ export default function IndexScreen() {
     } finally {
       setIsBiometricUnlocking(false);
     }
-  }, [continueWithExistingProfile, focusPinInput, isLoading, isBiometricUnlocking]);
+  }, [
+    continueWithExistingProfile,
+    focusPinInput,
+    instanceCode,
+    isInstanceValid,
+    isLoading,
+    isBiometricUnlocking,
+    validateInstance,
+  ]);
 
   useEffect(() => {
     let active = true;
@@ -812,6 +862,15 @@ export default function IndexScreen() {
           return;
         }
 
+        const instanceOk = isInstanceValid || (await validateInstance(instanceCode));
+        if (!instanceOk) {
+          Alert.alert(
+            'Código da instância',
+            'Informe o código da instância da sua igreja para continuar.'
+          );
+          return;
+        }
+
         if (!isValidAccessPin(pin)) {
           Alert.alert('Atenção', 'Digite a senha de acesso de 4 dígitos.');
           return;
@@ -898,10 +957,13 @@ export default function IndexScreen() {
     [
       canAttemptMemberPinLogin,
       continueWithExistingProfile,
+      instanceCode,
+      isInstanceValid,
       isPasswordRecovered,
       isTotemLoginMode,
       phone,
       router,
+      validateInstance,
     ]
   );
 
@@ -1217,6 +1279,60 @@ export default function IndexScreen() {
           {loginStep === 1 ? (
             <>
               <View importantForAutofill="noExcludeDescendants" style={styles.inputContainer}>
+                <ReadOnlyText style={styles.label}>Código da instância</ReadOnlyText>
+                <View style={styles.inputRowWithAction}>
+                  <TextInput
+                    ref={instanceInputRef}
+                    style={[styles.input, styles.editableInput, styles.inputWithTrailingAction]}
+                    placeholder="Ex.: IBN"
+                    placeholderTextColor={LOGIN_PLACEHOLDER}
+                    value={instanceCode}
+                    onChangeText={handleInstanceCodeChange}
+                    onBlur={handleInstanceBlur}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    autoComplete="off"
+                    importantForAutofill="no"
+                    spellCheck={false}
+                    textAlign="center"
+                    textContentType="none"
+                    editable={!isValidating}
+                    accessibilityLabel="Código da instância"
+                  />
+                  {isValidating ? (
+                    <View style={styles.trailingActionButton}>
+                      <ActivityIndicator color={LOGIN_ACCENT} size="small" />
+                    </View>
+                  ) : instanceCode ? (
+                    <TouchableOpacity
+                      accessibilityLabel="Apagar código da instância"
+                      accessibilityRole="button"
+                      onPress={() => handleInstanceCodeChange('')}
+                      style={styles.trailingActionButton}
+                    >
+                      <Text style={styles.clearButtonText}>X</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+                {instanceName && isInstanceValid ? (
+                  <ReadOnlyText style={styles.instanceHint}>{instanceName}</ReadOnlyText>
+                ) : null}
+                {instanceError ? (
+                  <Text style={styles.instanceErrorText}>{instanceError}</Text>
+                ) : null}
+                {hasStoredInstance && isInstanceValid ? (
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel="Alterar instância"
+                    onPress={beginChangeInstance}
+                    style={styles.changeInstanceLink}
+                  >
+                    <ReadOnlyText style={styles.changeInstanceLinkText}>Alterar instância</ReadOnlyText>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+
+              <View importantForAutofill="noExcludeDescendants" style={styles.inputContainer}>
                 <ReadOnlyText style={styles.label}>1. Seu celular</ReadOnlyText>
                 <View style={styles.inputRowWithAction}>
                   <TextInput
@@ -1253,10 +1369,10 @@ export default function IndexScreen() {
               <TouchableOpacity
                 style={[
                   styles.btnPrimary,
-                  !isBrazilianMobilePhoneComplete(phone) && styles.btnPrimaryDisabled,
+                  (!isBrazilianMobilePhoneComplete(phone) || !instanceCode.trim()) && styles.btnPrimaryDisabled,
                 ]}
                 onPress={advanceToPinStep}
-                disabled={!isBrazilianMobilePhoneComplete(phone)}
+                disabled={!isBrazilianMobilePhoneComplete(phone) || !instanceCode.trim() || isValidating}
               >
                 <Text style={styles.btnText}>Continuar</Text>
               </TouchableOpacity>
@@ -1303,12 +1419,22 @@ export default function IndexScreen() {
               </TouchableOpacity>
 
               {!isTotemLoginMode ? (
-                <View pointerEvents="none" style={styles.phoneConfirmedRow}>
-                  <FontAwesome name="check-circle" size={18} color={LOGIN_ACCENT} />
-                  <ReadOnlyText style={styles.phoneConfirmedText}>
-                    Celular confirmado: {phone}
-                  </ReadOnlyText>
-                </View>
+                <>
+                  {instanceCode ? (
+                    <View pointerEvents="none" style={styles.phoneConfirmedRow}>
+                      <FontAwesome name="check-circle" size={18} color={LOGIN_ACCENT} />
+                      <ReadOnlyText style={styles.phoneConfirmedText}>
+                        Instância: {instanceName || instanceCode}
+                      </ReadOnlyText>
+                    </View>
+                  ) : null}
+                  <View pointerEvents="none" style={styles.phoneConfirmedRow}>
+                    <FontAwesome name="check-circle" size={18} color={LOGIN_ACCENT} />
+                    <ReadOnlyText style={styles.phoneConfirmedText}>
+                      Celular confirmado: {phone}
+                    </ReadOnlyText>
+                  </View>
+                </>
               ) : null}
 
               {!isTotemLoginMode && isCheckingStoredPin ? (
@@ -1731,6 +1857,31 @@ const styles = StyleSheet.create({
     color: LOGIN_ACCENT,
     fontSize: 14,
     fontWeight: '600',
+  },
+  instanceHint: {
+    color: LOGIN_ACCENT,
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  instanceErrorText: {
+    color: '#B91C1C',
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  changeInstanceLink: {
+    alignSelf: 'center',
+    marginTop: 10,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
+  },
+  changeInstanceLinkText: {
+    color: LOGIN_ACCENT,
+    fontSize: 13,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   checkingPinCard: {
     width: '100%',

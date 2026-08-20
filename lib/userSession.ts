@@ -285,14 +285,8 @@ const scrubWebSessionKeys = (options?: { keepPhone?: boolean }) => {
       isPhoneKey
       || key === USER_PROFILE_ID_STORAGE_KEY
       || key === USER_SESSION_TOKEN_STORAGE_KEY
-      || key === 'user_tenant_id'
-      || key === 'user_tenant_branding'
-      || key === 'preferred_igreja_code'
       || key.includes(USER_PROFILE_ID_STORAGE_KEY)
       || key.includes(USER_SESSION_TOKEN_STORAGE_KEY)
-      || key.includes('user_tenant_id')
-      || key.includes('user_tenant_branding')
-      || key.includes('preferred_igreja_code')
     ) {
       keysToDrop.push(key);
     }
@@ -327,33 +321,17 @@ export async function clearUserSession(options?: { keepPhone?: boolean }) {
   await revokeStoredProfileSession();
   scrubWebSessionKeys({ keepPhone });
   resetProfileScreenVisitTracking();
-  const {
-    USER_TENANT_ID_STORAGE_KEY: tenantKey,
-    USER_TENANT_BRANDING_STORAGE_KEY: brandingKey,
-    PREFERRED_IGREJA_CODE_STORAGE_KEY: preferredKey,
-  } = await import('@/lib/tenantSession');
   await AsyncStorage.multiRemove(
     keepPhone
-      ? [
-          USER_PROFILE_ID_STORAGE_KEY,
-          USER_SESSION_TOKEN_STORAGE_KEY,
-          tenantKey,
-          brandingKey,
-          preferredKey,
-        ]
-      : [
-          USER_PHONE_STORAGE_KEY,
-          USER_PROFILE_ID_STORAGE_KEY,
-          USER_SESSION_TOKEN_STORAGE_KEY,
-          tenantKey,
-          brandingKey,
-          preferredKey,
-        ]
+      ? [USER_PROFILE_ID_STORAGE_KEY, USER_SESSION_TOKEN_STORAGE_KEY]
+      : [USER_PHONE_STORAGE_KEY, USER_PROFILE_ID_STORAGE_KEY, USER_SESSION_TOKEN_STORAGE_KEY]
   );
   scrubWebSessionKeys({ keepPhone });
 
   const { clearSessionRequestIdentityMemory } = await import('@/lib/sessionRequestIdentity');
   clearSessionRequestIdentityMemory();
+  const { restoreTenantIdentityFromStorage } = await import('@/lib/tenantSession');
+  await restoreTenantIdentityFromStorage();
 
   // Troca completa de conta: remove atalho biométrico deste aparelho.
   if (!keepPhone) {
@@ -377,23 +355,12 @@ const clearUserSessionImmediately = () => {
   scrubWebSessionKeys({ keepPhone: true });
   resetProfileScreenVisitTracking();
   void revokeStoredProfileSession();
-  void import('@/lib/sessionRequestIdentity').then(({ clearSessionRequestIdentityMemory }) =>
-    clearSessionRequestIdentityMemory()
-  );
-  void import('@/lib/tenantSession').then(
-    ({
-      USER_TENANT_ID_STORAGE_KEY: tenantKey,
-      USER_TENANT_BRANDING_STORAGE_KEY: brandingKey,
-      PREFERRED_IGREJA_CODE_STORAGE_KEY: preferredKey,
-    }) =>
-      AsyncStorage.multiRemove([
-        USER_PROFILE_ID_STORAGE_KEY,
-        USER_SESSION_TOKEN_STORAGE_KEY,
-        tenantKey,
-        brandingKey,
-        preferredKey,
-      ])
-  );
+  void AsyncStorage.multiRemove([USER_PROFILE_ID_STORAGE_KEY, USER_SESSION_TOKEN_STORAGE_KEY]);
+  void import('@/lib/sessionRequestIdentity').then(async ({ clearSessionRequestIdentityMemory }) => {
+    clearSessionRequestIdentityMemory();
+    const { restoreTenantIdentityFromStorage } = await import('@/lib/tenantSession');
+    await restoreTenantIdentityFromStorage();
+  });
 };
 
 const buildWebLoginUrlAfterSignOut = () => {

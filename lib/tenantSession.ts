@@ -6,11 +6,65 @@ import { supabase } from '@/lib/supabase';
 
 export const USER_TENANT_ID_STORAGE_KEY = 'user_tenant_id';
 export const USER_TENANT_BRANDING_STORAGE_KEY = 'user_tenant_branding';
-/** Código da igreja vindo do QR / deep link (`?igreja=IBEP`). */
+/** Código da igreja vindo do QR / deep link (`?igreja=IBEP` / `?codigo=`). */
 export const PREFERRED_IGREJA_CODE_STORAGE_KEY = 'preferred_igreja_code';
 
+export const INSTANCE_CODE_NOT_FOUND_MESSAGE =
+  'Código de instância não encontrado. Verifique com a administração.';
+
+export function normalizeInstanceCode(raw: string | null | undefined): string {
+  return (raw ?? '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+}
+
+/** Extrai o código de convite: `?igreja=`, `?codigo=` ou `appigreja://configurar?codigo=`. */
+export function parseInstanceCodeFromUrl(url: string | null | undefined): string | null {
+  if (!url?.trim()) {
+    return null;
+  }
+
+  const fromQueryString = (query: string) => {
+    try {
+      const params = new URLSearchParams(query);
+      return normalizeInstanceCode(
+        params.get('codigo') || params.get('igreja') || params.get('code') || ''
+      );
+    } catch {
+      return '';
+    }
+  };
+
+  try {
+    const parsed = new URL(url);
+    const fromSearch = fromQueryString(parsed.search.replace(/^\?/, ''));
+    if (fromSearch) {
+      return fromSearch;
+    }
+
+    if (parsed.hash) {
+      const hash = parsed.hash.replace(/^#/, '');
+      const hashQuery = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : hash;
+      const fromHash = fromQueryString(hashQuery);
+      if (fromHash) {
+        return fromHash;
+      }
+    }
+  } catch {
+    const match = url.match(/[?&](?:codigo|igreja|code)=([^&]+)/i);
+    if (match?.[1]) {
+      try {
+        const decoded = normalizeInstanceCode(decodeURIComponent(match[1]));
+        return decoded || null;
+      } catch {
+        return normalizeInstanceCode(match[1]) || null;
+      }
+    }
+  }
+
+  return null;
+}
+
 export async function persistPreferredIgrejaCode(code: string | null | undefined) {
-  const normalized = code?.trim().toUpperCase() || null;
+  const normalized = normalizeInstanceCode(code) || null;
   if (normalized) {
     await AsyncStorage.setItem(PREFERRED_IGREJA_CODE_STORAGE_KEY, normalized);
   } else {
@@ -23,28 +77,31 @@ export async function getPreferredIgrejaCode(): Promise<string | null> {
   return raw ? raw.toUpperCase() : null;
 }
 
-/** Lê `?igreja=` da URL (web) e persiste para selecionar a instância após o login. */
+function firstParamText(param?: string | string[] | null): string {
+  if (typeof param === 'string') {
+    return param;
+  }
+  if (Array.isArray(param)) {
+    return param[0] ?? '';
+  }
+  return '';
+}
+
+/** Lê `?igreja=` / `?codigo=` da URL (web) sem persistir — a validação grava depois. */
 export async function capturePreferredIgrejaCodeFromLocation(
   param?: string | string[] | null
 ): Promise<string | null> {
-  let fromParam = '';
-  if (typeof param === 'string') {
-    fromParam = param;
-  } else if (Array.isArray(param)) {
-    fromParam = param[0] ?? '';
-  }
-
+  const fromParam = normalizeInstanceCode(firstParamText(param));
   let fromQuery = '';
-  if (typeof window !== 'undefined' && window.location?.search) {
-    fromQuery = new URLSearchParams(window.location.search).get('igreja') ?? '';
+  if (typeof window !== 'undefined' && window.location?.href) {
+    fromQuery = parseInstanceCodeFromUrl(window.location.href) ?? '';
   }
 
-  const code = (fromParam || fromQuery).trim().toUpperCase();
+  const code = fromParam || fromQuery;
   if (!code) {
     return getPreferredIgrejaCode();
   }
 
-  await persistPreferredIgrejaCode(code);
   return code;
 }
 
@@ -252,6 +309,77 @@ export async function clearTenantId() {
     invalidateTenantScopedCaches();
     notifyActiveTenantChange(null);
   }
+}
+
+export type PublicIgrejaLookup = {
+  id: string;
+  code: string;
+  name: string;
+  logo_url: string | null;
+};
+
+/** Consulta pública: código de instância ativo (sem sessão). */
+export async function lookupIgrejaByCode(code: string): Promise<PublicIgrejaLookup | null> {
+  const normalized = normalizeInstanceCode(code);
+  if (!normalized) {
+    return null;
+  }
+
+  const { data, error } = await supabase.rpc('lookup_igreja_by_code', {
+    p_code: normalized,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const rows = Array.isArray(data) ? data : data ? [data] : [];
+  const row = rows[0] as Record<string, unknown> | undefined;
+  const mapped = mapSessionIgreja(
+    row
+      ? {
+          ...row,
+          is_active: true,
+          is_primary: false,
+          is_linked: false,
+        }
+      : null
+  );
+
+  if (!mapped) {
+    return null;
+  }
+
+  return {
+    id: mapped.id,
+    code: mapped.code,
+    name: mapped.name,
+    logo_url: mapped.logo_url,
+  };
+}
+
+/** Persiste instância validada e injeta `x-tenant-id` nas requisições seguintes. */
+export async function applyValidatedInstance(church: PublicIgrejaLookup): Promise<void> {
+  await persistPreferredIgrejaCode(church.code);
+  await persistActiveIgrejaBranding({
+    id: church.id,
+    code: church.code,
+    name: church.name,
+    logo_url: church.logo_url,
+  });
+}
+
+/** Limpa o código de instância do aparelho (Alterar instância). */
+export async function clearValidatedInstance(): Promise<void> {
+  await persistPreferredIgrejaCode(null);
+  await clearTenantId();
+}
+
+/** Recoloca o tenant persistido no cache de headers após logout. */
+export async function restoreTenantIdentityFromStorage(): Promise<void> {
+  const tenantId = await getStoredTenantId();
+  const { patchSessionRequestIdentity } = await import('@/lib/sessionRequestIdentity');
+  patchSessionRequestIdentity({ tenantId });
 }
 
 function coerceSessionIgrejaRows(data: unknown): SessionIgreja[] {

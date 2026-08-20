@@ -62,6 +62,30 @@ const config: ExpoConfig = {
       monochromeImage: './assets/images/android-icon-monochrome.png',
     },
     package: 'com.anonymous.appigreja',
+    intentFilters: [
+      {
+        action: 'VIEW',
+        autoVerify: true,
+        data: [
+          {
+            scheme: 'https',
+            host: 'app-igreja.pages.dev',
+            pathPrefix: '/configurar',
+          },
+          {
+            scheme: 'https',
+            host: 'app-igreja.pages.dev',
+            pathPrefix: '/',
+          },
+        ],
+        category: ['BROWSABLE', 'DEFAULT'],
+      },
+      {
+        action: 'VIEW',
+        data: [{ scheme: 'appigreja' }],
+        category: ['BROWSABLE', 'DEFAULT'],
+      },
+    ],
     config: {
       googleMaps: {
         apiKey: googleMapsApiKey,

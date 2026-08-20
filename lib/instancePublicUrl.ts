@@ -85,6 +85,7 @@ export function buildInstanceShareUrl(
 
   const url = new URL(base);
   url.searchParams.set('igreja', code);
+  url.searchParams.set('codigo', code);
   return url.toString();
 }
 
