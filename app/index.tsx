@@ -1119,36 +1119,6 @@ export default function IndexScreen() {
     && !isLikelyFirstAccess
     && isPinInputEditable;
 
-  const renderStepIndicator = () => (
-    <View pointerEvents="none" style={styles.stepIndicatorRow}>
-      <View style={styles.stepIndicatorItem}>
-        <View style={[styles.stepNumberCircle, loginStep === 1 && styles.stepNumberCircleActive]}>
-          <ReadOnlyText
-            style={[styles.stepNumberText, loginStep === 1 && styles.stepNumberTextActive]}
-          >
-            1
-          </ReadOnlyText>
-        </View>
-        <ReadOnlyText style={[styles.stepChipLabel, loginStep === 1 && styles.stepChipLabelActive]}>
-          Celular
-        </ReadOnlyText>
-      </View>
-      <View style={styles.stepConnector} />
-      <View style={styles.stepIndicatorItem}>
-        <View style={[styles.stepNumberCircle, loginStep === 2 && styles.stepNumberCircleActive]}>
-          <ReadOnlyText
-            style={[styles.stepNumberText, loginStep === 2 && styles.stepNumberTextActive]}
-          >
-            2
-          </ReadOnlyText>
-        </View>
-        <ReadOnlyText style={[styles.stepChipLabel, loginStep === 2 && styles.stepChipLabelActive]}>
-          Código
-        </ReadOnlyText>
-      </View>
-    </View>
-  );
-
   const renderEmailPinDelivery = (marginBottom = 16) => (
     <View style={{ marginBottom, width: '100%', gap: 10 }}>
       <>
@@ -1274,8 +1244,6 @@ export default function IndexScreen() {
             <ReadOnlyText style={styles.subtitle}>{getLoginSubtitle()}</ReadOnlyText>
           ) : null}
 
-          {!isTotemLoginMode ? renderStepIndicator() : null}
-
           {loginStep === 1 ? (
             <>
               <View importantForAutofill="noExcludeDescendants" style={styles.inputContainer}>
@@ -1333,7 +1301,7 @@ export default function IndexScreen() {
               </View>
 
               <View importantForAutofill="noExcludeDescendants" style={styles.inputContainer}>
-                <ReadOnlyText style={styles.label}>1. Seu celular</ReadOnlyText>
+                <ReadOnlyText style={styles.label}>Seu celular</ReadOnlyText>
                 <View style={styles.inputRowWithAction}>
                   <TextInput
                     style={[styles.input, styles.editableInput, styles.inputWithTrailingAction]}
@@ -1471,8 +1439,8 @@ export default function IndexScreen() {
                   {isTotemLoginMode
                     ? 'Senha do totem'
                     : isLikelyFirstAccess
-                      ? '2. Código de acesso'
-                      : '2. Sua senha'}
+                      ? 'Código de acesso'
+                      : 'Sua senha'}
                 </ReadOnlyText>
                 {isPinInputEditable ? (
                   <View style={styles.otpRow}>
@@ -1659,7 +1627,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: LOGIN_ACCENT,
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 16,
   },
   inputContainer: {
     marginBottom: 20,
@@ -1781,58 +1749,6 @@ const styles = StyleSheet.create({
   loginLoader: {
     marginTop: 12,
     alignSelf: 'center',
-  },
-  stepIndicatorRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    marginBottom: 24,
-    gap: 10,
-  },
-  stepIndicatorItem: {
-    alignItems: 'center',
-    minWidth: 88,
-  },
-  stepNumberCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: LOGIN_SOFT_BORDER,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: LOGIN_SURFACE,
-  },
-  stepNumberCircleActive: {
-    borderColor: LOGIN_ACCENT,
-    backgroundColor: LOGIN_SUBMIT_BG,
-  },
-  stepNumberText: {
-    color: LOGIN_ACCENT,
-    fontSize: 14,
-    fontWeight: '800',
-    opacity: 0.65,
-  },
-  stepNumberTextActive: {
-    color: LOGIN_SUBMIT_TEXT,
-    opacity: 1,
-  },
-  stepChipLabel: {
-    color: LOGIN_ACCENT,
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 2,
-    opacity: 0.65,
-  },
-  stepChipLabelActive: {
-    color: LOGIN_ICON,
-    opacity: 1,
-  },
-  stepConnector: {
-    width: 36,
-    height: 2,
-    backgroundColor: LOGIN_SOFT_BORDER,
-    marginTop: 15,
   },
   backLink: {
     alignSelf: 'flex-start',
