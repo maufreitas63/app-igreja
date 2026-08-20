@@ -1646,14 +1646,16 @@ const styles = StyleSheet.create({
   },
   inputWithTrailingAction: {
     width: '100%',
-    paddingLeft: 68,
-    paddingRight: 68,
   },
   input: {
-    padding: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingLeft: 20,
+    paddingRight: 20,
     borderRadius: 16,
     color: LOGIN_ACCENT,
     fontSize: 18,
+    textAlign: 'center',
   },
   editableInput: {
     backgroundColor: LOGIN_SURFACE,
