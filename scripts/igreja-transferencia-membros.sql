@@ -548,6 +548,7 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = public
+set row_security = off
 as $$
 declare
   v_req public.igreja_transfer_requests%rowtype;
@@ -567,6 +568,9 @@ begin
   if v_req.status <> 'pending_origin' then
     return jsonb_build_object('ok', false, 'message', 'Este pedido já foi processado.');
   end if;
+
+  -- Origem grava no tenant de destino (família, vínculo, membro, papéis).
+  perform set_config('app.bypass_tenant_guard', 'on', true);
 
   v_dest_family := public.reserve_next_family_id_for_tenant(v_req.destination_tenant_id);
 
