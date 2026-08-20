@@ -260,7 +260,7 @@ export default function IndexScreen() {
           setPhoneInstanceError(PHONE_NOT_IN_INSTANCE_MESSAGE);
           showAppToast({
             type: 'error',
-            text1: 'Celular não cadastrado',
+            text1: 'Celular já cadastrado',
             text2: PHONE_NOT_IN_INSTANCE_MESSAGE,
           });
           return;

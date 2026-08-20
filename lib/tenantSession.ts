@@ -383,7 +383,7 @@ export async function restoreTenantIdentityFromStorage(): Promise<void> {
 }
 
 export const PHONE_NOT_IN_INSTANCE_MESSAGE =
-  'Este celular não está cadastrado nesta igreja. Confira o código da instância ou fale com o Ministério de Acolhimento.';
+  'O número do celular informado já está cadastrado em outra igreja. Confira o código da instância ou fale com o Ministério de Acolhimento.';
 
 export type LoginPhoneInstanceLookup =
   | {
