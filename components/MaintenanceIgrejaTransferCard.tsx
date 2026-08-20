@@ -71,6 +71,9 @@ function RequestCard({
       {request.destFamilyId ? (
         <Text style={styles.requestMeta}>Nova família: {request.destFamilyId}</Text>
       ) : null}
+      {request.destinationName ? (
+        <Text style={styles.requestMeta}>Destino: {request.destinationName}</Text>
+      ) : null}
       {request.note ? <Text style={styles.requestNote}>{request.note}</Text> : null}
       {actions}
     </View>
@@ -263,6 +266,7 @@ export function MaintenanceIgrejaTransferCard({
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const pendingInbound = inbound.filter((row) => row.status === 'pending_origin');
+  const historyInbound = inbound.filter((row) => row.status !== 'pending_origin');
 
   return (
     <View style={[maintenancePanelStyles.panel, { height: contentHeight }]}>
@@ -430,33 +434,47 @@ export function MaintenanceIgrejaTransferCard({
           ) : null}
 
           {tab === 'origem' ? (
-            pendingInbound.length === 0 ? (
-              <Text style={styles.emptyText}>Nenhum pedido aguardando decisão nesta igreja.</Text>
+            pendingInbound.length === 0 && historyInbound.length === 0 ? (
+              <Text style={styles.emptyText}>Nenhuma transferência registrada nesta igreja.</Text>
             ) : (
-              pendingInbound.map((request) => (
-                <RequestCard
-                  key={request.id}
-                  request={request}
-                  actions={
-                    <View style={styles.actionRow}>
-                      <TouchableOpacity
-                        style={styles.primaryBtn}
-                        onPress={() => void handleDecide(request, true)}
-                        disabled={saving}
-                      >
-                        <Text style={styles.primaryBtnText}>Aprovar saída</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.secondaryBtn}
-                        onPress={() => void handleDecide(request, false)}
-                        disabled={saving}
-                      >
-                        <Text style={styles.secondaryBtnText}>Recusar</Text>
-                      </TouchableOpacity>
-                    </View>
-                  }
-                />
-              ))
+              <>
+                {pendingInbound.length === 0 ? (
+                  <Text style={styles.emptyText}>Nenhum pedido aguardando decisão.</Text>
+                ) : (
+                  pendingInbound.map((request) => (
+                    <RequestCard
+                      key={request.id}
+                      request={request}
+                      actions={
+                        <View style={styles.actionRow}>
+                          <TouchableOpacity
+                            style={styles.primaryBtn}
+                            onPress={() => void handleDecide(request, true)}
+                            disabled={saving}
+                          >
+                            <Text style={styles.primaryBtnText}>Aprovar saída</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.secondaryBtn}
+                            onPress={() => void handleDecide(request, false)}
+                            disabled={saving}
+                          >
+                            <Text style={styles.secondaryBtnText}>Recusar</Text>
+                          </TouchableOpacity>
+                        </View>
+                      }
+                    />
+                  ))
+                )}
+                {historyInbound.length > 0 ? (
+                  <>
+                    <Text style={styles.fieldLabel}>Histórico de saídas</Text>
+                    {historyInbound.map((request) => (
+                      <RequestCard key={request.id} request={request} />
+                    ))}
+                  </>
+                ) : null}
+              </>
             )
           ) : null}
 
