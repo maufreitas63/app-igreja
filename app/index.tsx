@@ -1637,6 +1637,8 @@ const styles = StyleSheet.create({
     color: LOGIN_ACCENT,
     marginBottom: 8,
     fontWeight: '600',
+    textAlign: 'center',
+    width: '100%',
   },
   inputRowWithAction: {
     position: 'relative',
