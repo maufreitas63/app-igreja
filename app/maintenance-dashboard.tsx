@@ -74,7 +74,7 @@ import {
 } from '@/lib/dashboardPanelLayout';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
 import { MINIMAL_FLAT_PANEL, MINIMAL_PAGE, CONTAIN_WIDTH } from '@/lib/minimalPresentation';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
 import {
   MAINTENANCE_SHORTCUT_ICON_ACTIVE_COLOR,
@@ -1745,6 +1745,14 @@ export default function MaintenanceDashboard() {
               keyboardShouldPersistTaps="always"
             >
               <>
+                <Text
+                  style={[
+                    styles.eventsScreenTitle,
+                    isMinimalPresentation && styles.eventsScreenTitleMinimal,
+                  ]}
+                >
+                  {item.title}
+                </Text>
                 <TouchableOpacity
                   style={[
                     styles.newEventButton,
@@ -3073,6 +3081,19 @@ const styles = StyleSheet.create({
   },
   scrollContentWithFooter: {
     paddingBottom: 8,
+  },
+  eventsScreenTitle: {
+    color: '#3A96DD',
+    fontSize: MINIMAL_SECTION_TITLE.fontSize,
+    fontWeight: MINIMAL_SECTION_TITLE.fontWeight,
+    textAlign: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    alignSelf: 'stretch',
+  },
+  eventsScreenTitleMinimal: {
+    ...MINIMAL_SECTION_TITLE,
+    alignSelf: 'stretch',
   },
   newEventButton: {
     flexDirection: 'row',
