@@ -73,10 +73,13 @@ export const MINIMAL_SECTION_TITLE_FONT_SIZE = Math.round(MINIMAL_TYPO.screenTit
 
 export const MINIMAL_SECTION_TITLE: TextStyle = {
   fontSize: MINIMAL_SECTION_TITLE_FONT_SIZE,
+  lineHeight: Math.round(MINIMAL_SECTION_TITLE_FONT_SIZE * 1.25),
   fontWeight: MINIMAL_TYPO.screenTitle.fontWeight,
   color: MINIMAL_UI.blueDark,
   backgroundColor: MINIMAL_UI.background,
   textAlign: 'center',
   paddingHorizontal: 12,
   paddingVertical: 10,
+  flexShrink: 0,
+  zIndex: 1,
 };

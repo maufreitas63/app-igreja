@@ -153,9 +153,11 @@ export function MaintenanceScaleVolunteersCard({
         ]}
       >
         <FontAwesome name="users" size={28} color={mutedIcon} />
-        <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitleMuted}>
-          {PANEL_TITLE}
-        </Text>
+        <View style={styles.sectionTitleWrap}>
+          <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitleMuted}>
+            {PANEL_TITLE}
+          </Text>
+        </View>
         <Text style={[styles.hint, minimal && styles.hintMinimal]}>
           Cadastre tipos de escala no card Tipos de Escala.
         </Text>
@@ -165,9 +167,11 @@ export function MaintenanceScaleVolunteersCard({
 
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
-      <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}>
-        {PANEL_TITLE}
-      </Text>
+      <View style={styles.sectionTitleWrap}>
+        <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}>
+          {PANEL_TITLE}
+        </Text>
+      </View>
 
       {rpcMissing ? (
         <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
@@ -358,9 +362,20 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 20,
   },
+  sectionTitleWrap: {
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+    flexShrink: 0,
+    zIndex: 2,
+    backgroundColor: MINIMAL_UI.background,
+  },
   sectionTitleMinimal: {
     ...MINIMAL_SECTION_TITLE,
-    ...CONTAIN_WIDTH,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+    overflow: 'visible',
   },
   fieldLabel: {
     color: '#3A96DD',
