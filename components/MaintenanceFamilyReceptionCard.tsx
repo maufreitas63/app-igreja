@@ -1,5 +1,6 @@
 import { useEntityPrefix } from '@/context/EntityPrefixContext';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceFamilyReception } from '@/hooks/useMaintenanceFamilyReception';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
@@ -89,15 +90,12 @@ export function MaintenanceFamilyReceptionCard({
 
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
-      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
-        Recepção — Cadastro Familiar
-      </Text>
-      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
-
-      <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>
-        Formulários públicos entram aqui antes de profiles/members. Lotes com código familiar
-        detectado nas tabelas finais usam o mesmo {prefix}; conflitos exigem revisão manual.
-      </Text>
+      <MaintenanceHelpInfoTitle
+        title="Recepção — Cadastro Familiar"
+        helpText={`Formulários públicos entram aqui antes de profiles/members. Lotes com código familiar detectado nas tabelas finais usam o mesmo ${prefix}; conflitos exigem revisão manual.`}
+        minimal={minimal}
+        titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
+      />
 
       {error ? (
         <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
@@ -253,12 +251,6 @@ const styles = StyleSheet.create({
   panel: {
     flex: 1,
   },
-  helpText: {
-    color: 'rgba(58, 150, 221, 0.82)',
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 10,
-  },
   errorText: {
     color: '#FCA5A5',
     fontSize: 13,
@@ -402,9 +394,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 6,
     marginTop: 4,
-  },
-  helpTextMinimal: {
-    color: MINIMAL_UI.textMuted,
   },
   errorTextMinimal: {
     color: '#DC2626',

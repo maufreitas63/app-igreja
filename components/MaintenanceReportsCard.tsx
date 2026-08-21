@@ -2,6 +2,7 @@ import { AgeBracketPieChart, parseAgeBracketChartSlices } from '@/components/Age
 import { SupportSuggestionsReportPdfModal } from '@/components/SupportSuggestionsReportPdfModal';
 import { SupportSuggestionsReportView } from '@/components/SupportSuggestionsReportView';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import type { MaintenanceEvent } from '@/hooks/useMaintenanceEvents';
 import { useMaintenanceReports } from '@/hooks/useMaintenanceReports';
@@ -1023,15 +1024,12 @@ export function MaintenanceReportsCard({
 
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
-      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
-        Relatórios
-      </Text>
-      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
-
-      <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>
-        Catálogo analítico da igreja: membros, finanças, território, eventos, pastoral, voluntários,
-        adoção digital e operações. Expanda cada relatório, ajuste os parâmetros e toque em Gerar.
-      </Text>
+      <MaintenanceHelpInfoTitle
+        title="Relatórios"
+        helpText="Catálogo analítico da igreja: membros, finanças, território, eventos, pastoral, voluntários, adoção digital e operações. Expanda cada relatório, ajuste os parâmetros e toque em Gerar."
+        minimal={minimal}
+        titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
+      />
 
       <ScrollView
         style={[styles.scroll, minimal && styles.scrollMinimal]}
@@ -1086,12 +1084,6 @@ export function MaintenanceReportsCard({
 const styles = StyleSheet.create({
   panel: {
     flex: 1,
-  },
-  helpText: {
-    color: 'rgba(58, 150, 221, 0.82)',
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 10,
   },
   scroll: {
     flex: 1,
@@ -1563,9 +1555,6 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     textTransform: 'none',
     letterSpacing: 0,
-  },
-  helpTextMinimal: {
-    color: MINIMAL_UI.textMuted,
   },
   scrollMinimal: {
     ...CONTAIN_WIDTH,

@@ -20,6 +20,7 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { formatCpf } from '@/lib/cpfValidation';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
+import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -270,11 +271,13 @@ export function MaintenanceIgrejaTransferCard({
 
   return (
     <View style={[maintenancePanelStyles.panel, { height: contentHeight }]}>
-      <Text style={minimal ? styles.titleMinimal : styles.title}>Transferência de Membro</Text>
-      <Text style={styles.subtitle}>
-        Solicite a entrada de um membro ou família de outra igreja. A origem registra a saída; nesta
-        igreja o cadastro entra sem cargos de liderança.
-      </Text>
+      <MaintenanceHelpInfoTitle
+        title="Transferência de Membro"
+        helpText="Solicite a entrada de um membro ou família de outra igreja. A origem registra a saída; nesta igreja o cadastro entra sem cargos de liderança."
+        minimal={minimal}
+        titleStyle={minimal ? styles.titleMinimal : styles.title}
+        showSubtitleSpacer={false}
+      />
 
       <View style={styles.tabs}>
         {(
@@ -513,21 +516,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     textAlign: 'center',
+    marginBottom: 8,
   },
   titleMinimal: {
     color: MINIMAL_UI.blueDark,
     fontSize: 16,
     fontWeight: '800',
     textAlign: 'center',
-  },
-  subtitle: {
-    color: MINIMAL_UI.textMuted,
-    fontSize: 12,
-    lineHeight: 17,
-    textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 10,
-    fontWeight: '600',
+    marginBottom: 8,
   },
   tabs: {
     flexDirection: 'row',

@@ -1,4 +1,5 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import {
   buildPredictiveLtvFormulaMessage,
@@ -79,16 +80,12 @@ export function MaintenancePredictiveInsightsCard({
 
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
-      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
-        Modelo Preditivo
-      </Text>
-      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
-
-      <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>
-        Previsibilidade de arrecadação ordinária e de crescimento de membros com base nos últimos{' '}
-        {PREDICTIVE_BASE_MONTHS} meses e projeção para os próximos {PREDICTIVE_FORECAST_MONTHS} meses,
-        incluindo sazonalidade mensal e LTV eclesiástico.
-      </Text>
+      <MaintenanceHelpInfoTitle
+        title="Modelo Preditivo"
+        helpText={`Previsibilidade de arrecadação ordinária e de crescimento de membros com base nos últimos ${PREDICTIVE_BASE_MONTHS} meses e projeção para os próximos ${PREDICTIVE_FORECAST_MONTHS} meses, incluindo sazonalidade mensal e LTV eclesiástico.`}
+        minimal={minimal}
+        titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
+      />
 
       {error ? (
         <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
@@ -483,15 +480,6 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     textTransform: 'none',
     letterSpacing: 0,
-  },
-  helpText: {
-    color: 'rgba(58, 150, 221, 0.82)',
-    fontSize: 12,
-    lineHeight: 17,
-    marginBottom: 8,
-  },
-  helpTextMinimal: {
-    color: MINIMAL_UI.textMuted,
   },
   errorText: {
     color: '#FCA5A5',

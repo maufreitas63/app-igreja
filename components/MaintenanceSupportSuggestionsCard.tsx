@@ -1,4 +1,5 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { formatPhoneDisplay } from '@/lib/familyRegistration';
 import { formatShortName } from '@/lib/formatShortName';
@@ -983,10 +984,14 @@ export function MaintenanceSupportSuggestionsCard({
   const renderList = () => (
     <View style={themedStyles.listBody}>
       <View style={themedStyles.summaryCard}>
-        <Text style={themedStyles.summaryTitle}>Central de relacionamento e suporte</Text>
-        <Text style={themedStyles.summaryText}>
-          Registre sugestões, dúvidas, comentários e incidentes com rastreabilidade até a conclusão.
-        </Text>
+        <MaintenanceHelpInfoTitle
+          title="Central de relacionamento e suporte"
+          helpText="Registre sugestões, dúvidas, comentários e incidentes com rastreabilidade até a conclusão."
+          minimal={isVigilance}
+          titleStyle={themedStyles.summaryTitle}
+          iconColor={accentColor}
+          showSubtitleSpacer={false}
+        />
       </View>
 
       <View style={themedStyles.actionsRow}>
@@ -1463,6 +1468,7 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
     color: '#3A96DD',
     fontSize: 14,
     fontWeight: '800',
+    textAlign: 'center',
   },
   summaryText: {
     color: '#1B4F8A',

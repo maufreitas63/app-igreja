@@ -1,4 +1,5 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import {
   PASTORAL_BASIC_ROLE_OPTIONS,
@@ -18,7 +19,6 @@ import {
 } from '@/lib/pastoralRoleChangeApi';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { FontAwesome } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
@@ -62,7 +62,6 @@ export function MaintenancePastoralRoleChangeCard({
   panelHeight,
   minimal = false,
 }: Props) {
-  const [helpOpen, setHelpOpen] = useState(false);
   const [membershipDateEditor, setMembershipDateEditor] = useState<MembershipDateEditorState | null>(
     null
   );
@@ -221,30 +220,12 @@ export function MaintenancePastoralRoleChangeCard({
 
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
-      <View style={styles.titleRow}>
-        <Text
-          style={[
-            minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle,
-            styles.titleText,
-          ]}
-        >
-          Mudança de Papéis
-        </Text>
-        <TouchableOpacity
-          style={styles.helpButton}
-          onPress={() => setHelpOpen(true)}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Como usar a mudança de papéis"
-        >
-          <FontAwesome
-            name="info-circle"
-            size={18}
-            color={minimal ? MINIMAL_UI.blueDark : ACCENT}
-          />
-        </TouchableOpacity>
-      </View>
-      {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
+      <MaintenanceHelpInfoTitle
+        title="Mudança de Papéis"
+        helpText={PASTORAL_ROLE_CHANGE_HELP}
+        minimal={minimal}
+        titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
+      />
 
       {error ? (
         <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
@@ -448,52 +429,6 @@ export function MaintenancePastoralRoleChangeCard({
       ) : null}
 
       <Modal
-        visible={helpOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setHelpOpen(false)}
-      >
-        <View
-          style={[
-            styles.membershipDateModalOverlay,
-            minimal && styles.membershipDateModalOverlayMinimal,
-          ]}
-        >
-          <Pressable style={styles.membershipDateModalBackdrop} onPress={() => setHelpOpen(false)} />
-          <View style={[styles.membershipDateBubble, minimal && styles.membershipDateBubbleMinimal]}>
-            <Text style={[styles.membershipDateTitle, minimal && styles.membershipDateTitleMinimal]}>
-              Como usar
-            </Text>
-            <Text style={[styles.helpModalText, minimal && styles.helpTextMinimal]}>
-              {PASTORAL_ROLE_CHANGE_HELP}
-            </Text>
-            <View style={styles.membershipDateActions}>
-              <TouchableOpacity
-                style={[
-                  styles.membershipDateButton,
-                  styles.membershipDateCancelButton,
-                  minimal && styles.membershipDateCancelButtonMinimal,
-                ]}
-                onPress={() => setHelpOpen(false)}
-                activeOpacity={0.85}
-                accessibilityRole="button"
-                accessibilityLabel="Fechar"
-              >
-                <Text
-                  style={[
-                    styles.membershipDateCancelText,
-                    minimal && styles.membershipDateCancelTextMinimal,
-                  ]}
-                >
-                  Fechar
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
         visible={membershipDateEditor !== null}
         transparent
         animationType="fade"
@@ -630,34 +565,6 @@ export function MaintenancePastoralRoleChangeCard({
 const styles = StyleSheet.create({
   panel: {
     flex: 1,
-  },
-  titleRow: {
-    alignSelf: 'stretch',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 28,
-  },
-  titleText: {
-    flex: 1,
-    paddingHorizontal: 28,
-  },
-  helpButton: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  helpModalText: {
-    color: '#3A96DD',
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  helpTextMinimal: {
-    color: MINIMAL_UI.text,
   },
   errorText: {
     color: '#FCA5A5',
