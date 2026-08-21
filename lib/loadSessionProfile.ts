@@ -231,6 +231,10 @@ export function invalidateSessionProfileLoadCache() {
 }
 
 export async function loadSessionProfile(targetPhone: string): Promise<SessionProfile | null> {
+  if (!targetPhone?.trim()) {
+    return null;
+  }
+
   const phoneVariants = buildPhoneDbQueryVariants(targetPhone);
   const storedProfileId = await getStoredProfileId();
   let storedProfileIdWasInvalid = false;

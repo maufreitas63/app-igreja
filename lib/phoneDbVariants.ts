@@ -1,6 +1,6 @@
 /** Gera variantes de telefone para consultas `.in('phone', …)` no Supabase. */
-export const buildPhoneDbQueryVariants = (raw: string): string[] => {
-  const trimmed = raw.trim();
+export const buildPhoneDbQueryVariants = (raw: string | null | undefined): string[] => {
+  const trimmed = String(raw ?? '').trim();
   if (!trimmed) {
     return [];
   }

@@ -7,7 +7,7 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useEventRegistrationsByStatus } from '@/hooks/useEventRegistrationsByStatus';
 import { readDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
-import { loadSessionProfile } from '@/lib/loadSessionProfile';
+import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { formatRoomServidorNames } from '@/lib/roomServidorScales';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
@@ -101,7 +101,7 @@ export const MaintenanceSalaServidorCard = ({
       void refetchActiveEvents();
       void refetchGroupedRegistrations();
       void refetchRoomServidores();
-      void loadSessionProfile().then((sessionProfile) => {
+      void loadEffectiveSessionProfile().then((sessionProfile) => {
         setOperatorProfile({
           id: sessionProfile?.id?.trim() || null,
           fullName: sessionProfile?.full_name?.trim() || null,
