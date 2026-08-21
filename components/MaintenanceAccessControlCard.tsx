@@ -73,8 +73,12 @@ type AccessControlPanelHeaderProps = {
   lgpdAtivo: boolean;
   loadingLgpdAtivo: boolean;
   savingLgpdAtivo: boolean;
+  appAtivo: boolean;
+  loadingAppAtivo: boolean;
+  savingAppAtivo: boolean;
   canEdit: boolean;
   onToggleLgpdAtivo: () => void;
+  onToggleAppAtivo: () => void;
   minimal?: boolean;
 };
 
@@ -82,11 +86,16 @@ function AccessControlPanelHeader({
   lgpdAtivo,
   loadingLgpdAtivo,
   savingLgpdAtivo,
+  appAtivo,
+  loadingAppAtivo,
+  savingAppAtivo,
   canEdit,
   onToggleLgpdAtivo,
+  onToggleAppAtivo,
   minimal = false,
 }: AccessControlPanelHeaderProps) {
-  const isDisabled = !canEdit || loadingLgpdAtivo || savingLgpdAtivo;
+  const lgpdDisabled = !canEdit || loadingLgpdAtivo || savingLgpdAtivo;
+  const appDisabled = !canEdit || loadingAppAtivo || savingAppAtivo;
 
   const lgpdToggle = (
     <TouchableOpacity
@@ -96,17 +105,17 @@ function AccessControlPanelHeader({
         lgpdAtivo ? styles.lgpdRadioToggleActive : styles.lgpdRadioToggleInactive,
         minimal && lgpdAtivo && styles.lgpdRadioToggleActiveMinimal,
         minimal && !lgpdAtivo && styles.lgpdRadioToggleInactiveMinimal,
-        isDisabled && styles.lgpdRadioToggleDisabled,
+        lgpdDisabled && styles.lgpdRadioToggleDisabled,
       ]}
       onPress={() => {
-        if (!isDisabled) {
+        if (!lgpdDisabled) {
           onToggleLgpdAtivo();
         }
       }}
-      disabled={isDisabled}
+      disabled={lgpdDisabled}
       activeOpacity={0.85}
       accessibilityRole="radio"
-      accessibilityState={{ selected: lgpdAtivo, disabled: isDisabled }}
+      accessibilityState={{ selected: lgpdAtivo, disabled: lgpdDisabled }}
       accessibilityLabel={lgpdAtivo ? 'LGPD Ativo' : 'LGPD Inativo'}
     >
       {savingLgpdAtivo ? (
@@ -145,21 +154,80 @@ function AccessControlPanelHeader({
     </TouchableOpacity>
   );
 
+  const appToggle = (
+    <TouchableOpacity
+      style={[
+        styles.lgpdRadioToggle,
+        minimal && styles.lgpdRadioToggleMinimal,
+        appAtivo ? styles.appAtivoToggleActive : styles.appAtivoToggleInactive,
+        minimal && appAtivo && styles.appAtivoToggleActiveMinimal,
+        minimal && !appAtivo && styles.appAtivoToggleInactiveMinimal,
+        appDisabled && styles.lgpdRadioToggleDisabled,
+      ]}
+      onPress={() => {
+        if (!appDisabled) {
+          onToggleAppAtivo();
+        }
+      }}
+      disabled={appDisabled}
+      activeOpacity={0.85}
+      accessibilityRole="radio"
+      accessibilityState={{ selected: appAtivo, disabled: appDisabled }}
+      accessibilityLabel={appAtivo ? 'Aplicativo ativo' : 'Aplicativo inativo'}
+    >
+      {savingAppAtivo ? (
+        <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.accent : '#F8FAFC'} />
+      ) : (
+        <>
+          <View
+            style={[
+              styles.lgpdRadioOuter,
+              appAtivo ? styles.appAtivoRadioOuterActive : styles.appAtivoRadioOuterInactive,
+            ]}
+          >
+            <View
+              style={[
+                styles.lgpdRadioInner,
+                appAtivo ? styles.appAtivoRadioInnerActive : styles.appAtivoRadioInnerInactive,
+              ]}
+            />
+          </View>
+          <Text
+            style={[
+              styles.lgpdRadioLabel,
+              appAtivo ? styles.appAtivoLabelActive : styles.appAtivoLabelInactive,
+              minimal && appAtivo && styles.appAtivoLabelActiveMinimal,
+              minimal && !appAtivo && styles.appAtivoLabelInactiveMinimal,
+            ]}
+          >
+            {appAtivo ? 'App Ativo' : 'App Inativo'}
+          </Text>
+        </>
+      )}
+    </TouchableOpacity>
+  );
+
   if (minimal) {
     return (
       <View style={styles.panelHeaderMinimal}>
         <Text style={styles.sectionTitleMinimal}>Controle de Acesso</Text>
-        <View style={styles.panelHeaderControlsMinimal}>{lgpdToggle}</View>
+        <View style={styles.panelHeaderControlsMinimal}>
+          {appToggle}
+          {lgpdToggle}
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.panelHeaderRow}>
+    <View style={styles.panelHeaderBlock}>
       <Text style={styles.panelTitleCompact} numberOfLines={1}>
         Controle de Acesso
       </Text>
-      {lgpdToggle}
+      <View style={styles.panelHeaderControls}>
+        {appToggle}
+        {lgpdToggle}
+      </View>
     </View>
   );
 }
@@ -189,101 +257,49 @@ function AppAtivoParameterControls({
   onSaveAppInativoMsg,
   minimal = false,
 }: AppAtivoParameterControlsProps) {
-  const toggleDisabled = !canEdit || loadingAppAtivo || savingAppAtivo;
   const messageDisabled = !canEdit || loadingAppAtivo || savingAppInativoMsg || appAtivo;
+
+  if (appAtivo) {
+    return null;
+  }
 
   return (
     <View style={[styles.appAtivoSection, minimal && styles.appAtivoSectionMinimal]}>
+      <Text style={[styles.appInativoMsgLabel, minimal && styles.appInativoMsgLabelMinimal]}>
+        Mensagem exibida aos usuários
+      </Text>
+      <TextInput
+        style={[styles.appInativoMsgInput, minimal && styles.appInativoMsgInputMinimal]}
+        value={appInativoMsg}
+        onChangeText={onChangeAppInativoMsg}
+        editable={!messageDisabled}
+        multiline
+        placeholder="Texto da tela de indisponibilidade"
+        placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
+      />
       <TouchableOpacity
         style={[
-          styles.lgpdRadioToggle,
-          minimal && styles.lgpdRadioToggleMinimal,
-          appAtivo ? styles.appAtivoToggleActive : styles.appAtivoToggleInactive,
-          minimal && appAtivo && styles.appAtivoToggleActiveMinimal,
-          minimal && !appAtivo && styles.appAtivoToggleInactiveMinimal,
-          toggleDisabled && styles.lgpdRadioToggleDisabled,
+          styles.appInativoMsgSaveButton,
+          minimal && styles.appInativoMsgSaveButtonMinimal,
+          messageDisabled && styles.appInativoMsgSaveButtonDisabled,
         ]}
-        onPress={() => {
-          if (!toggleDisabled) {
-            onToggleAppAtivo();
-          }
-        }}
-        disabled={toggleDisabled}
+        onPress={onSaveAppInativoMsg}
+        disabled={messageDisabled}
         activeOpacity={0.85}
-        accessibilityRole="radio"
-        accessibilityState={{ selected: appAtivo, disabled: toggleDisabled }}
-        accessibilityLabel={appAtivo ? 'Aplicativo ativo' : 'Aplicativo inativo'}
       >
-        {savingAppAtivo ? (
-          <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.accent : '#F8FAFC'} />
+        {savingAppInativoMsg ? (
+          <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.onDark : '#0f172a'} />
         ) : (
-          <>
-            <View
-              style={[
-                styles.lgpdRadioOuter,
-                appAtivo ? styles.appAtivoRadioOuterActive : styles.appAtivoRadioOuterInactive,
-              ]}
-            >
-              <View
-                style={[
-                  styles.lgpdRadioInner,
-                  appAtivo ? styles.appAtivoRadioInnerActive : styles.appAtivoRadioInnerInactive,
-                ]}
-              />
-            </View>
-            <Text
-              style={[
-                styles.lgpdRadioLabel,
-                appAtivo ? styles.appAtivoLabelActive : styles.appAtivoLabelInactive,
-                minimal && appAtivo && styles.appAtivoLabelActiveMinimal,
-                minimal && !appAtivo && styles.appAtivoLabelInactiveMinimal,
-              ]}
-            >
-              {appAtivo ? 'App Ativo' : 'App Inativo'}
-            </Text>
-          </>
+          <Text
+            style={[
+              styles.appInativoMsgSaveButtonText,
+              minimal && styles.appInativoMsgSaveButtonTextMinimal,
+            ]}
+          >
+            Salvar mensagem
+          </Text>
         )}
       </TouchableOpacity>
-
-      {!appAtivo ? (
-        <View style={[styles.appInativoMsgBlock, minimal && styles.appInativoMsgBlockMinimal]}>
-          <Text style={[styles.appInativoMsgLabel, minimal && styles.appInativoMsgLabelMinimal]}>
-            Mensagem exibida aos usuários
-          </Text>
-          <TextInput
-            style={[styles.appInativoMsgInput, minimal && styles.appInativoMsgInputMinimal]}
-            value={appInativoMsg}
-            onChangeText={onChangeAppInativoMsg}
-            editable={!messageDisabled}
-            multiline
-            placeholder="Texto da tela de indisponibilidade"
-            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
-          />
-          <TouchableOpacity
-            style={[
-              styles.appInativoMsgSaveButton,
-              minimal && styles.appInativoMsgSaveButtonMinimal,
-              messageDisabled && styles.appInativoMsgSaveButtonDisabled,
-            ]}
-            onPress={onSaveAppInativoMsg}
-            disabled={messageDisabled}
-            activeOpacity={0.85}
-          >
-            {savingAppInativoMsg ? (
-              <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.onDark : '#0f172a'} />
-            ) : (
-              <Text
-                style={[
-                  styles.appInativoMsgSaveButtonText,
-                  minimal && styles.appInativoMsgSaveButtonTextMinimal,
-                ]}
-              >
-                Salvar mensagem
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -829,8 +845,12 @@ export function MaintenanceAccessControlCard({
           lgpdAtivo={lgpdAtivo}
           loadingLgpdAtivo={loadingLgpdAtivo}
           savingLgpdAtivo={savingLgpdAtivo}
+          appAtivo={appAtivo}
+          loadingAppAtivo={loadingAppAtivo}
+          savingAppAtivo={savingAppAtivo}
           canEdit={false}
           onToggleLgpdAtivo={handleToggleLgpdAtivo}
+          onToggleAppAtivo={handleToggleAppAtivo}
           minimal={minimal}
         />
         <AppAtivoParameterControls
@@ -863,8 +883,12 @@ export function MaintenanceAccessControlCard({
         lgpdAtivo={lgpdAtivo}
         loadingLgpdAtivo={loadingLgpdAtivo}
         savingLgpdAtivo={savingLgpdAtivo}
+        appAtivo={appAtivo}
+        loadingAppAtivo={loadingAppAtivo}
+        savingAppAtivo={savingAppAtivo}
         canEdit={isSuperAdmin === true && !rpcMissing && !busy}
         onToggleLgpdAtivo={handleToggleLgpdAtivo}
+        onToggleAppAtivo={handleToggleAppAtivo}
         minimal={minimal}
       />
       <AppAtivoParameterControls
@@ -1570,7 +1594,11 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 20,
   },
-  panelHeaderRow: {
+  panelHeaderBlock: {
+    alignSelf: 'stretch',
+    gap: 8,
+  },
+  panelHeaderControls: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1594,6 +1622,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     flexShrink: 0,
+    alignSelf: 'flex-start',
     minHeight: 36,
   },
   lgpdRadioToggleActive: {
@@ -2170,17 +2199,18 @@ const styles = StyleSheet.create({
   },
   panelHeaderControlsMinimal: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
+    gap: 8,
   },
   panelHintMinimal: {
     color: MINIMAL_UI.textMuted,
     textAlign: 'center',
   },
   lgpdRadioToggleMinimal: {
-    maxWidth: '100%',
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.background,
   },
