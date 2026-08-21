@@ -1722,12 +1722,15 @@ export default function MaintenanceDashboard() {
             </View>
           ) : item.content === 'events_gantt' ? (
             <View style={[styles.ganttPanel, isMinimalPresentation && styles.ganttPanelMinimal]}>
-              {!isMinimalPresentation ? (
-                <>
-                  <Text style={styles.ganttPanelTitle}>Cronograma de Eventos</Text>
-                  <View style={styles.ganttPanelSubtitleSpacer} />
-                </>
-              ) : null}
+              <Text
+                style={[
+                  styles.eventsScreenTitle,
+                  isMinimalPresentation && styles.eventsScreenTitleMinimal,
+                ]}
+              >
+                {item.title}
+              </Text>
+              {!isMinimalPresentation ? <View style={styles.ganttPanelSubtitleSpacer} /> : null}
               <EventsGanttChart
                 events={safeEvents}
                 loading={loading}
