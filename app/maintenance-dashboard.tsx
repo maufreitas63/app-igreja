@@ -1462,6 +1462,7 @@ export default function MaintenanceDashboard() {
               schemaMissing={quorumRegistrySchemaMissing}
               isActive={currentIndex === index}
               panelHeight={cardHeight}
+              minimal={isMinimalPresentation}
             />
           ) : item.content === 'scale_types' ? (
             <View

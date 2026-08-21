@@ -16,6 +16,7 @@ import {
 } from '@/lib/quorumPresenceDocument';
 import { QUORUM_REGISTRY_SQL_HINT } from '@/lib/quorumRegistry';
 import type { MaintenanceEvent } from '@/hooks/useMaintenanceEvents';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -27,12 +28,15 @@ import {
   View,
 } from 'react-native';
 
+const PANEL_TITLE = 'Lista de Presença';
+
 type Props = {
   events: MaintenanceEvent[];
   loadingEvents?: boolean;
   schemaMissing?: boolean;
   isActive?: boolean;
   panelHeight: number;
+  minimal?: boolean;
 };
 
 export function MaintenanceQuorumPresenceCard({
@@ -41,6 +45,7 @@ export function MaintenanceQuorumPresenceCard({
   schemaMissing,
   isActive = true,
   panelHeight,
+  minimal = false,
 }: Props) {
   const quorumEvents = useMemo(
     () => (events ?? []).filter((event) => event.requer_quorum === true),
@@ -80,39 +85,56 @@ export function MaintenanceQuorumPresenceCard({
 
   const documentHeight = computeMaintenanceContentHeight(panelHeight);
 
+  const screenTitle = (
+    <View style={styles.sectionTitleWrap}>
+      <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}>
+        {PANEL_TITLE}
+      </Text>
+    </View>
+  );
+
+  const wrapPanel = (body: React.ReactNode, extraPanelStyle?: object) => (
+    <View style={[styles.root, minimal && styles.rootMinimal, { height: documentHeight }]}>
+      {screenTitle}
+      <View style={[styles.panel, extraPanelStyle, styles.panelFill]}>{body}</View>
+    </View>
+  );
+
   if (loadingEvents) {
-    return (
-      <View style={[styles.panel, maintenancePanelStyles.panelCentered, { height: documentHeight }]}>
+    return wrapPanel(
+      <>
         <CardLoadingState lines={4} />
         <Text style={maintenancePanelStyles.panelHint}>Carregando eventos…</Text>
-      </View>
+      </>,
+      maintenancePanelStyles.panelCentered
     );
   }
 
   if (schemaMissing) {
-    return (
-      <View style={[styles.panel, styles.panelMessage, { height: documentHeight }]}>
+    return wrapPanel(
+      <>
         <Text style={styles.warningText}>Registro de quórum indisponível no Supabase.</Text>
         <Text style={styles.panelHint}>{QUORUM_REGISTRY_SQL_HINT}</Text>
-      </View>
+      </>,
+      styles.panelMessage
     );
   }
 
   if (!quorumEvents.length) {
-    return (
-      <View style={[styles.panel, styles.panelMessage, { height: documentHeight }]}>
+    return wrapPanel(
+      <>
         <FontAwesome name="clipboard" size={28} color="#64748B" />
-        <Text style={maintenancePanelStyles.panelTitleMuted}>Lista de Presença</Text>
         <Text style={maintenancePanelStyles.panelHint}>
           Nenhum evento com Requer Quórum = Sim. Ative o quórum na edição de um evento para
           gerar a lista de check-in.
         </Text>
-      </View>
+      </>,
+      styles.panelMessage
     );
   }
 
-  return (
-    <View style={[styles.panel, { height: documentHeight }]}>
+  return wrapPanel(
+    <>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -211,17 +233,43 @@ export function MaintenanceQuorumPresenceCard({
           {isRefreshing ? <Text style={styles.refreshHint}>Atualizando lista…</Text> : null}
         </View>
       </ScrollView>
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+  },
+  rootMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+  },
+  sectionTitleWrap: {
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+    flexShrink: 0,
+    zIndex: 2,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  sectionTitleMinimal: {
+    ...MINIMAL_SECTION_TITLE,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+    overflow: 'visible',
+  },
   panel: {
     flex: 1,
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#E2E8F0',
     padding: 8,
+  },
+  panelFill: {
+    minHeight: 0,
   },
   panelMessage: {
     alignItems: 'center',
