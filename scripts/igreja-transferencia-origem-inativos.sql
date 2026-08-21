@@ -143,10 +143,18 @@ begin
 
   select upper(nullif(trim(m.family_id), ''))
     into v_family
-    from public.members m
-   where m.tenant_id = v_tenant
+    from public.profiles p
+    join public.members m
+      on m.tenant_id = v_tenant
      and nullif(trim(coalesce(m.family_id, '')), '') is not null
-     and public.find_profile_id_by_phone(m.phone) = p_profile_id
+     and (
+       public.phones_match_for_sync(m.phone, p.phone)
+       or (
+         length(trim(coalesce(p.full_name, ''))) > 0
+         and lower(trim(m.full_name)) = lower(trim(p.full_name))
+       )
+     )
+   where p.id = p_profile_id
    order by
      case when m.accepted is true then 0 else 1 end,
      m.created_at desc nulls last,
@@ -378,8 +386,17 @@ begin
     and p.full_name is not null
     and trim(p.full_name) <> ''
     and p.membership_out is null
-    and public.profile_session_membership_out(p.id) is null
-    and not public.profile_transferred_out_of_session(p.id)
+    and not exists (
+      select 1
+        from public.profile_igreja_vinculos v
+       where v.profile_id = p.id
+         and v.tenant_id = v_tenant
+         and (
+           coalesce(v.membership_status, '') = 'Transferido'
+           or v.transferred_to_tenant_id is not null
+           or v.membership_out is not null
+         )
+    )
     and public.profile_is_members_list_member(p.id)
   order by trim(p.full_name) asc;
 end;
@@ -412,12 +429,28 @@ begin
   end if;
 
   return query
+  with transferred as (
+    select v.profile_id
+      from public.profile_igreja_vinculos v
+     where v.tenant_id = v_tenant
+       and (
+         coalesce(v.membership_status, '') = 'Transferido'
+         or v.transferred_to_tenant_id is not null
+         or v.membership_out is not null
+       )
+  )
   select
     p.id as profile_id,
     trim(p.full_name) as full_name,
     nullif(trim(coalesce(p.phone, '')), '') as phone,
     coalesce(
-      public.profile_session_directory_family_id(p.id, p.phone, trim(p.full_name)),
+      public.resolve_member_family_id_for_directory_person(p.phone, trim(p.full_name)),
+      public.profile_session_origin_family_id(p.id),
+      case
+        when p.tenant_id = v_tenant
+          then public.profile_directory_family_code(p.family_id, p.codigo_membro)
+        else null
+      end,
       '—'
     ) as family_id,
     public.profile_is_visitantes_only(p.id) as is_visitantes_only,
@@ -428,16 +461,16 @@ begin
     nullif(trim(coalesce(p.address_city, '')), '') as address_city,
     nullif(trim(coalesce(p.address_state, '')), '') as address_state
   from public.profiles p
+  left join transferred t on t.profile_id = p.id
   where p.full_name is not null
     and trim(p.full_name) <> ''
-    and public.profile_session_membership_out(p.id) is not null
     and (
-      p.tenant_id = v_tenant
-      or public.profile_transferred_out_of_session(p.id)
+      (p.tenant_id = v_tenant and p.membership_out is not null)
+      or t.profile_id is not null
     )
     and (
       public.profile_is_members_list_member(p.id)
-      or public.profile_transferred_out_of_session(p.id)
+      or t.profile_id is not null
     )
   order by trim(p.full_name) asc;
 end;
@@ -473,43 +506,80 @@ security definer
 set search_path = public
 as $$
 declare
+  v_tenant uuid;
   v_limit integer;
 begin
-  perform public.require_session_tenant_id();
+  v_tenant := public.require_session_tenant_id();
   perform public.assert_pastoral_role_change_actor(p_actor_profile_id);
 
   v_limit := greatest(1, least(coalesce(p_limit, 5000), 5000));
 
   return query
+  with transferred as (
+    select
+      v.profile_id,
+      coalesce(
+        v.membership_out,
+        (v.transferred_at at time zone 'America/Sao_Paulo')::date
+      ) as session_out
+    from public.profile_igreja_vinculos v
+    where v.tenant_id = v_tenant
+      and (
+        coalesce(v.membership_status, '') = 'Transferido'
+        or v.transferred_to_tenant_id is not null
+        or v.membership_out is not null
+      )
+  ),
+  origin_family as (
+    select distinct on (tp.profile_id)
+      tp.profile_id,
+      upper(nullif(trim(tp.origin_family_id), '')) as family_id,
+      tp.origin_roles
+    from public.igreja_transfer_people tp
+    join public.igreja_transfer_requests r on r.id = tp.request_id
+    where r.origin_tenant_id = v_tenant
+      and r.status = 'completed'
+    order by tp.profile_id, r.decided_at desc nulls last, r.created_at desc
+  )
   select
     p.id,
-    coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as full_name,
-    coalesce(p.phone, '') as phone,
-    coalesce(
-      public.profile_session_origin_family_id(p.id),
-      nullif(trim(p.codigo_membro), ''),
-      ''
-    ) as codigo_membro,
-    eff.membership_date,
-    eff.membership_out,
-    p.membership_date as own_membership_date,
-    public.profile_session_membership_out(p.id) as own_membership_out,
-    coalesce(
-      public.profile_session_origin_family_id(p.id),
-      nullif(trim(p.family_id), ''),
-      ''
-    ) as family_id,
-    coalesce(eff.membership_inherited, false) as membership_inherited,
-    coalesce(eff.inherited_from_name, '') as inherited_from_name,
-    public.profile_session_basic_role_code(p.id) as current_role_code
+    coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)'),
+    coalesce(p.phone, ''),
+    coalesce(ofam.family_id, nullif(trim(p.codigo_membro), ''), ''),
+    case when t.session_out is not null then p.membership_date else eff.membership_date end,
+    coalesce(t.session_out, eff.membership_out),
+    p.membership_date,
+    coalesce(t.session_out, case when p.tenant_id = v_tenant then p.membership_out end),
+    coalesce(ofam.family_id, nullif(trim(p.family_id), ''), ''),
+    case when t.session_out is not null then false else coalesce(eff.membership_inherited, false) end,
+    case when t.session_out is not null then '' else coalesce(eff.inherited_from_name, '') end,
+    case
+      when t.profile_id is not null then
+        case
+          when exists (
+            select 1
+              from jsonb_array_elements(coalesce(ofam.origin_roles, '[]'::jsonb)) elem
+             where elem->>'code' = 'member'
+          ) then 'member'
+          when exists (
+            select 1
+              from jsonb_array_elements(coalesce(ofam.origin_roles, '[]'::jsonb)) elem
+             where elem->>'code' = 'congregado'
+          ) then 'congregado'
+          else 'member'
+        end
+      else public.resolve_basic_role_code_for_profile(p.id)
+    end
   from public.profiles p
+  left join transferred t on t.profile_id = p.id
+  left join origin_family ofam on ofam.profile_id = p.id
   cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
-  where public.profile_visible_in_session_church(p.id)
+  where (p.tenant_id = v_tenant or t.profile_id is not null)
     and coalesce(
       nullif(trim(p.full_name), ''),
       nullif(trim(p.phone), ''),
       nullif(trim(p.codigo_membro), ''),
-      public.profile_session_origin_family_id(p.id)
+      ofam.family_id
     ) is not null
   order by p.full_name asc
   limit v_limit;
@@ -540,11 +610,12 @@ security definer
 set search_path = public
 as $$
 declare
+  v_tenant uuid;
   v_query text;
   v_digits text;
   v_limit integer;
 begin
-  perform public.require_session_tenant_id();
+  v_tenant := public.require_session_tenant_id();
   perform public.assert_pastoral_role_change_actor(p_actor_profile_id);
 
   v_query := trim(coalesce(p_query, ''));
@@ -556,33 +627,69 @@ begin
   end if;
 
   return query
+  with transferred as (
+    select
+      v.profile_id,
+      coalesce(
+        v.membership_out,
+        (v.transferred_at at time zone 'America/Sao_Paulo')::date
+      ) as session_out
+    from public.profile_igreja_vinculos v
+    where v.tenant_id = v_tenant
+      and (
+        coalesce(v.membership_status, '') = 'Transferido'
+        or v.transferred_to_tenant_id is not null
+        or v.membership_out is not null
+      )
+  ),
+  origin_family as (
+    select distinct on (tp.profile_id)
+      tp.profile_id,
+      upper(nullif(trim(tp.origin_family_id), '')) as family_id,
+      tp.origin_roles
+    from public.igreja_transfer_people tp
+    join public.igreja_transfer_requests r on r.id = tp.request_id
+    where r.origin_tenant_id = v_tenant
+      and r.status = 'completed'
+    order by tp.profile_id, r.decided_at desc nulls last, r.created_at desc
+  )
   select
     p.id,
-    coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)') as full_name,
-    coalesce(p.phone, '') as phone,
-    coalesce(
-      public.profile_session_origin_family_id(p.id),
-      nullif(trim(p.codigo_membro), ''),
-      ''
-    ) as codigo_membro,
-    eff.membership_date,
-    eff.membership_out,
-    p.membership_date as own_membership_date,
-    public.profile_session_membership_out(p.id) as own_membership_out,
-    coalesce(
-      public.profile_session_origin_family_id(p.id),
-      nullif(trim(p.family_id), ''),
-      ''
-    ) as family_id,
-    coalesce(eff.membership_inherited, false) as membership_inherited,
-    coalesce(eff.inherited_from_name, '') as inherited_from_name,
-    public.profile_session_basic_role_code(p.id) as current_role_code
+    coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), '(sem nome)'),
+    coalesce(p.phone, ''),
+    coalesce(ofam.family_id, nullif(trim(p.codigo_membro), ''), ''),
+    case when t.session_out is not null then p.membership_date else eff.membership_date end,
+    coalesce(t.session_out, eff.membership_out),
+    p.membership_date,
+    coalesce(t.session_out, case when p.tenant_id = v_tenant then p.membership_out end),
+    coalesce(ofam.family_id, nullif(trim(p.family_id), ''), ''),
+    case when t.session_out is not null then false else coalesce(eff.membership_inherited, false) end,
+    case when t.session_out is not null then '' else coalesce(eff.inherited_from_name, '') end,
+    case
+      when t.profile_id is not null then
+        case
+          when exists (
+            select 1
+              from jsonb_array_elements(coalesce(ofam.origin_roles, '[]'::jsonb)) elem
+             where elem->>'code' = 'member'
+          ) then 'member'
+          when exists (
+            select 1
+              from jsonb_array_elements(coalesce(ofam.origin_roles, '[]'::jsonb)) elem
+             where elem->>'code' = 'congregado'
+          ) then 'congregado'
+          else 'member'
+        end
+      else public.resolve_basic_role_code_for_profile(p.id)
+    end
   from public.profiles p
+  left join transferred t on t.profile_id = p.id
+  left join origin_family ofam on ofam.profile_id = p.id
   cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
-  where public.profile_visible_in_session_church(p.id)
+  where (p.tenant_id = v_tenant or t.profile_id is not null)
     and (
       coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), ''), nullif(trim(p.codigo_membro), '')) is not null
-      or public.profile_session_origin_family_id(p.id) is not null
+      or ofam.family_id is not null
     )
     and (
       coalesce(p.full_name, '') ilike '%' || v_query || '%'
@@ -591,7 +698,7 @@ begin
         and regexp_replace(coalesce(p.phone, ''), '\D', '', 'g') like '%' || v_digits || '%'
       )
       or coalesce(p.codigo_membro, '') ilike '%' || v_query || '%'
-      or coalesce(public.profile_session_origin_family_id(p.id), '') ilike '%' || v_query || '%'
+      or coalesce(ofam.family_id, '') ilike '%' || v_query || '%'
       or exists (
         select 1
           from public.profile_access_roles par
@@ -605,15 +712,15 @@ begin
       )
       or (
         lower(v_query) like 'visit%'
-        and public.profile_session_basic_role_code(p.id) = 'visitante'
+        and public.resolve_basic_role_code_for_profile(p.id) = 'visitante'
       )
       or (
         lower(v_query) in ('membro', 'member')
-        and public.profile_session_basic_role_code(p.id) = 'member'
+        and public.resolve_basic_role_code_for_profile(p.id) = 'member'
       )
       or (
         lower(v_query) like 'congreg%'
-        and public.profile_session_basic_role_code(p.id) = 'congregado'
+        and public.resolve_basic_role_code_for_profile(p.id) = 'congregado'
       )
     )
   order by p.full_name asc
