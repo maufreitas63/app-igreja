@@ -626,11 +626,17 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     color: '#FFFFFF',
     fontWeight: '800',
-    fontSize: 13,
+    fontSize: 14,
+    lineHeight: 20,
   },
   submitBtn: {
-    flex: 0,
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: 'auto',
     alignSelf: 'stretch',
+    minHeight: 48,
+    paddingVertical: 14,
+    justifyContent: 'center',
   },
   secondaryBtn: {
     borderWidth: 1,
