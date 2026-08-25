@@ -310,27 +310,57 @@ export function MaintenancePredictiveInsightsCard({
                 Mês
               </Text>
               <Text
-                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.revenueColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+                numberOfLines={1}
               >
                 Receita
               </Text>
               <Text
-                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.countColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+                numberOfLines={1}
               >
                 Ent
               </Text>
               <Text
-                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.countColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+                numberOfLines={1}
               >
                 Sai
               </Text>
               <Text
-                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.countColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+                numberOfLines={1}
               >
                 Líq.
               </Text>
               <Text
-                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.ativosColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+                numberOfLines={1}
               >
                 Ativos
               </Text>
@@ -343,19 +373,34 @@ export function MaintenancePredictiveInsightsCard({
                 <Text style={[styles.tableCell, styles.monthColumn, minimal && styles.tableCellMinimal]}>
                   {formatPredictiveMonthLabel(point.month)}
                 </Text>
-                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                <Text
+                  style={[styles.tableCell, styles.revenueColumn, minimal && styles.tableCellMinimal]}
+                  numberOfLines={1}
+                >
                   {formatPredictiveCurrency(point.revenue)}
                 </Text>
-                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                <Text
+                  style={[styles.tableCell, styles.countColumn, minimal && styles.tableCellMinimal]}
+                  numberOfLines={1}
+                >
                   {point.memberEntries}
                 </Text>
-                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                <Text
+                  style={[styles.tableCell, styles.countColumn, minimal && styles.tableCellMinimal]}
+                  numberOfLines={1}
+                >
                   {point.memberExits}
                 </Text>
-                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                <Text
+                  style={[styles.tableCell, styles.countColumn, minimal && styles.tableCellMinimal]}
+                  numberOfLines={1}
+                >
                   {point.netMemberChange}
                 </Text>
-                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                <Text
+                  style={[styles.tableCell, styles.ativosColumn, minimal && styles.tableCellMinimal]}
+                  numberOfLines={1}
+                >
                   {point.activeMembersEnd}
                 </Text>
               </View>
@@ -432,6 +477,7 @@ export function MaintenancePredictiveInsightsCard({
                     styles.revenueCompactColumn,
                     minimal && styles.tableCellMinimal,
                   ]}
+                  numberOfLines={1}
                 >
                   {formatPredictiveCurrency(point.revenue)}
                 </Text>
@@ -441,6 +487,7 @@ export function MaintenancePredictiveInsightsCard({
                     styles.revenueCompactColumn,
                     minimal && styles.tableCellMinimal,
                   ]}
+                  numberOfLines={1}
                 >
                   {formatPredictiveCurrency(point.revenueFromSeasonality)}
                 </Text>
@@ -450,6 +497,7 @@ export function MaintenancePredictiveInsightsCard({
                     styles.revenueCompactColumn,
                     minimal && styles.tableCellMinimal,
                   ]}
+                  numberOfLines={1}
                 >
                   {formatPredictiveCurrency(point.revenueFromGrowth)}
                 </Text>
@@ -476,17 +524,35 @@ export function MaintenancePredictiveInsightsCard({
                 Mês
               </Text>
               <Text
-                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.countColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+                numberOfLines={1}
               >
                 Ent
               </Text>
               <Text
-                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.countColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+                numberOfLines={1}
               >
                 Sai
               </Text>
               <Text
-                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.countColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+                numberOfLines={1}
               >
                 Líq.
               </Text>
@@ -509,17 +575,29 @@ export function MaintenancePredictiveInsightsCard({
                 <Text style={[styles.tableCell, styles.monthColumn, minimal && styles.tableCellMinimal]}>
                   {formatPredictiveMonthLabel(point.month)}
                 </Text>
-                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                <Text
+                  style={[styles.tableCell, styles.countColumn, minimal && styles.tableCellMinimal]}
+                  numberOfLines={1}
+                >
                   {point.projectedEntries}
                 </Text>
-                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                <Text
+                  style={[styles.tableCell, styles.countColumn, minimal && styles.tableCellMinimal]}
+                  numberOfLines={1}
+                >
                   {point.projectedExits}
                 </Text>
-                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                <Text
+                  style={[styles.tableCell, styles.countColumn, minimal && styles.tableCellMinimal]}
+                  numberOfLines={1}
+                >
                   {point.projectedNetMemberChange > 0 ? '+' : ''}
                   {point.projectedNetMemberChange}
                 </Text>
-                <Text style={[styles.tableCell, styles.ativosColumn, minimal && styles.tableCellMinimal]}>
+                <Text
+                  style={[styles.tableCell, styles.ativosColumn, minimal && styles.tableCellMinimal]}
+                  numberOfLines={1}
+                >
                   {Math.round(point.projectedActiveMembers)}
                 </Text>
               </View>
@@ -764,15 +842,39 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.blueDark,
   },
   monthColumn: {
-    flex: 1.4,
+    flex: 1.35,
+    minWidth: 78,
+  },
+  revenueColumn: {
+    flex: 1.9,
+    flexShrink: 0,
+    minWidth: 96,
+    paddingHorizontal: 4,
+  },
+  countColumn: {
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: 36,
+    width: 36,
+    maxWidth: 40,
+    minWidth: 36,
+    paddingHorizontal: 2,
+    textAlign: 'right',
   },
   revenueCompactColumn: {
-    flex: 0.72,
+    flex: 1.05,
+    flexShrink: 0,
+    minWidth: 80,
     paddingHorizontal: 4,
   },
   ativosColumn: {
-    flex: 0.55,
-    paddingHorizontal: 6,
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: 48,
+    width: 48,
+    maxWidth: 52,
+    minWidth: 48,
+    paddingHorizontal: 4,
     textAlign: 'right',
   },
 });
