@@ -1,12 +1,10 @@
 import {
   igrejaTransferStatusLabel,
-  listarIgrejasParaTransferencia,
   listarTransferenciasPastoral,
   pastoralCancelarTransferenciaDestino,
   pastoralDecidirTransferenciaOrigem,
   pastoralIniciarTransferenciaEntrada,
   pastoralPreviewTransferenciaEntrada,
-  type IgrejaTransferChurch,
   type IgrejaTransferPerson,
   type IgrejaTransferPreview,
   type IgrejaTransferRequest,
@@ -87,8 +85,6 @@ export function MaintenanceIgrejaTransferCard({
   minimal = false,
 }: Props) {
   const [tab, setTab] = useState<TabKey>('solicitar');
-  const [churches, setChurches] = useState<IgrejaTransferChurch[]>([]);
-  const [originTenantId, setOriginTenantId] = useState<string>('');
   const [phone, setPhone] = useState('');
   const [cpf, setCpf] = useState('');
   const [familyCode, setFamilyCode] = useState('');
@@ -105,14 +101,9 @@ export function MaintenanceIgrejaTransferCard({
     setLoading(true);
     setError(null);
     try {
-      const [churchRows, lists] = await Promise.all([
-        listarIgrejasParaTransferencia(),
-        listarTransferenciasPastoral(),
-      ]);
-      setChurches(churchRows);
+      const lists = await listarTransferenciasPastoral();
       setInbound(lists.inbound);
       setOutbound(lists.outbound);
-      setOriginTenantId((current) => current || churchRows[0]?.id || '');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao carregar transferências.');
     } finally {
@@ -128,8 +119,8 @@ export function MaintenanceIgrejaTransferCard({
   }, [isActive, loadLists]);
 
   const handlePreview = async () => {
-    if (!originTenantId) {
-      Toast.show({ type: 'error', text1: 'Selecione a igreja de origem' });
+    if (!phone.replace(/\D/g, '')) {
+      Toast.show({ type: 'error', text1: 'Informe o celular para localizar o cadastro' });
       return;
     }
 
@@ -137,7 +128,6 @@ export function MaintenanceIgrejaTransferCard({
     setError(null);
     try {
       const next = await pastoralPreviewTransferenciaEntrada({
-        originTenantId,
         phone,
         cpf,
         familyCode,
@@ -158,7 +148,8 @@ export function MaintenanceIgrejaTransferCard({
   };
 
   const handleSubmit = async () => {
-    if (!originTenantId) {
+    if (!preview?.originTenantId) {
+      Toast.show({ type: 'error', text1: 'Localize o cadastro pelo celular antes de enviar' });
       return;
     }
 
@@ -176,7 +167,7 @@ export function MaintenanceIgrejaTransferCard({
     setSaving(true);
     try {
       const result = await pastoralIniciarTransferenciaEntrada({
-        originTenantId,
+        originTenantId: preview.originTenantId,
         phone,
         cpf,
         familyCode,
@@ -273,7 +264,7 @@ export function MaintenanceIgrejaTransferCard({
     <View style={[maintenancePanelStyles.panel, { height: contentHeight }]}>
       <MaintenanceHelpInfoTitle
         title="Transferência de Membro"
-        helpText="Solicite a entrada de um membro ou família de outra igreja. A origem registra a saída; nesta igreja o cadastro entra sem cargos de liderança."
+        helpText="Informe o celular para localizar o cadastro. A igreja de origem só aparece depois da busca. A origem registra a saída; nesta igreja o cadastro entra sem cargos de liderança."
         minimal={minimal}
         titleStyle={minimal ? styles.titleMinimal : styles.title}
         showSubtitleSpacer={false}
@@ -318,29 +309,6 @@ export function MaintenanceIgrejaTransferCard({
         >
           {tab === 'solicitar' ? (
             <>
-              <Text style={styles.fieldLabel}>Igreja de origem</Text>
-              <View style={styles.churchList}>
-                {churches.map((church) => (
-                  <TouchableOpacity
-                    key={church.id}
-                    style={[styles.churchChip, originTenantId === church.id && styles.churchChipActive]}
-                    onPress={() => {
-                      setOriginTenantId(church.id);
-                      setPreview(null);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.churchChipText,
-                        originTenantId === church.id && styles.churchChipTextActive,
-                      ]}
-                    >
-                      {church.code}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
               <Text style={styles.fieldLabel}>Celular</Text>
               <TextInput
                 style={styles.input}
@@ -410,6 +378,11 @@ export function MaintenanceIgrejaTransferCard({
 
               {preview ? (
                 <View style={styles.previewBox}>
+                  <Text style={styles.fieldLabel}>Igreja de origem</Text>
+                  <Text style={styles.originFound}>
+                    {preview.originCode}
+                    {preview.originName ? ` · ${preview.originName}` : ''}
+                  </Text>
                   <Text style={styles.previewTitle}>
                     {preview.originName} → {preview.destinationName}
                   </Text>
@@ -583,29 +556,10 @@ const styles = StyleSheet.create({
     minHeight: 64,
     textAlignVertical: 'top',
   },
-  churchList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  churchChip: {
-    borderWidth: 1,
-    borderColor: MINIMAL_UI.border,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  churchChipActive: {
-    borderColor: ACCENT,
-    backgroundColor: 'rgba(58, 150, 221, 0.12)',
-  },
-  churchChipText: {
-    color: MINIMAL_UI.textMuted,
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  churchChipTextActive: {
-    color: ACCENT,
+  originFound: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 14,
+    fontWeight: '800',
   },
   checkRow: {
     flexDirection: 'row',

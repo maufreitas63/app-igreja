@@ -38,6 +38,7 @@ export type IgrejaTransferChurch = {
 };
 
 export type IgrejaTransferPreview = {
+  originTenantId: string;
   originCode: string;
   originName: string;
   destinationCode: string;
@@ -204,14 +205,14 @@ export async function listarIgrejasParaTransferencia(): Promise<IgrejaTransferCh
 }
 
 export async function pastoralPreviewTransferenciaEntrada(input: {
-  originTenantId: string;
+  originTenantId?: string;
   phone?: string;
   cpf?: string;
   familyCode?: string;
   includeFamily?: boolean;
 }): Promise<IgrejaTransferPreview> {
   const { data, error } = await supabase.rpc('pastoral_preview_transferencia_entrada', {
-    p_origin_tenant_id: input.originTenantId,
+    p_origin_tenant_id: input.originTenantId || null,
     p_phone: input.phone?.replace(/\D/g, '') || null,
     p_cpf: input.cpf?.replace(/\D/g, '') || null,
     p_family_code: input.familyCode?.trim().toUpperCase() || null,
@@ -229,12 +230,18 @@ export async function pastoralPreviewTransferenciaEntrada(input: {
 
   const people = parsePeople(payload.people);
   const primaryProfileId = asText(payload.primary_profile_id) ?? people[0]?.profileId;
+  const originTenantId = asText(payload.origin_id) ?? asText(payload.origin_tenant_id);
 
   if (!primaryProfileId) {
     throw new Error('Nenhum membro encontrado com os dados informados.');
   }
 
+  if (!originTenantId) {
+    throw new Error('Não foi possível identificar a igreja de origem.');
+  }
+
   return {
+    originTenantId,
     originCode: asText(payload.origin_code) ?? '',
     originName: asText(payload.origin_name) ?? '',
     destinationCode: asText(payload.destination_code) ?? '',
@@ -246,7 +253,7 @@ export async function pastoralPreviewTransferenciaEntrada(input: {
 }
 
 export async function pastoralIniciarTransferenciaEntrada(input: {
-  originTenantId: string;
+  originTenantId?: string;
   phone?: string;
   cpf?: string;
   familyCode?: string;
@@ -254,7 +261,7 @@ export async function pastoralIniciarTransferenciaEntrada(input: {
   note?: string;
 }) {
   const { data, error } = await supabase.rpc('pastoral_iniciar_transferencia_entrada', {
-    p_origin_tenant_id: input.originTenantId,
+    p_origin_tenant_id: input.originTenantId || null,
     p_phone: input.phone?.replace(/\D/g, '') || null,
     p_cpf: input.cpf?.replace(/\D/g, '') || null,
     p_family_code: input.familyCode?.trim().toUpperCase() || null,
