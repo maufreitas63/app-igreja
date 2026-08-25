@@ -196,14 +196,14 @@ div.Section1 { page: Section1; }
 
 <h1 id="análise-de-telas-e-menus-da-plataforma-digital-da-igreja">Análise de Telas e Menus da Plataforma Digital da Igreja</h1>
 <p class="cover-sub">
-Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na jornada da família, a conexão com os demais módulos e a visão simultânea de quem usa e de quem administra.
+Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na jornada da família, a conexão com os demais módulos, a visão simultânea de quem usa e de quem administra, e o significado de cada botão, texto interativo e resultado exibido.
 </p>
 
 <p class="cover-meta">
 <strong>Solução:</strong> ecossistema app-igreja (PWA + mobile)<br>
 <strong>Público:</strong> liderança, secretaria, pastoral, tesouraria e operação<br>
 <strong>Base:</strong> código-fonte, rotas Expo Router, menu lateral, Índice, Painel e Manutenção<br>
-<strong>Data:</strong> 19 de agosto de 2026
+<strong>Data:</strong> 25 de agosto de 2026
 </p>
 
 </div>
@@ -216,7 +216,7 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 <li><strong>Vida da família</strong> — Índice, Painel, Perfil, eventos, ofertas, pastoral, financeiro de leitura e escalas.</li>
 <li><strong>Operação e governança</strong> — totem, salas, manutenção, papéis, relatórios, instâncias e assinatura.</li>
 </ol>
-<p>Cada tela abaixo segue o mesmo roteiro: título, valor comercial, propósito técnico e as duas perspectivas (usuário final e administração).</p>
+<p>Cada tela abaixo segue o mesmo roteiro: título, valor comercial, propósito técnico, <strong>controles interativos</strong> (botões, campos, abas e selos), <strong>o que os resultados representam</strong> e as duas perspectivas (usuário final e administração). Onde a tela usa o padrão visual da plataforma, o título centralizado em azul-escuro (informativo de tela) identifica o módulo — o mesmo recurso visto em Administrativo, Sugestões e Melhorias, Programação de Eventos, Cronograma, Lista de Presença e Transferência de Membro.</p>
 <h2 id="2-mapa-da-jornada">2. Mapa da jornada</h2>
 <table>
 <thead>
@@ -258,8 +258,8 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 </tr>
 <tr>
 <td>Governar</td>
-<td>Manutenção, ACL, Ghost, igrejas, billing</td>
-<td>Controle institucional com rastreio</td>
+<td>Manutenção, ACL, Ghost, igrejas, billing, <strong>Transferência de Membro</strong></td>
+<td>Controle institucional com rastreio; saída e entrada entre instâncias sem duplicar cadastro</td>
 </tr>
 </tbody></table>
 <hr>
@@ -273,6 +273,91 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 <p>É a porta da casa digital. A igreja deixa de depender de “manda o link no grupo” e passa a reconhecer cada pessoa pelo celular e por uma senha de quatro dígitos. Primeira entrada e recuperação seguem e-mail — canal auditável, sem misturar WhatsApp com autenticação. No totem, o aparelho do culto entra com fluxo próprio, para o quiosque nunca se parecer com o celular de um membro.</p>
 <h3 id="propósito-e-conexões">Propósito e conexões</h3>
 <p>Valida telefone + PIN no servidor (<code>verificar_login</code>), restaura sessão, oferece biometria no aparelho nativo (atalho, sem substituir o PIN) e encaminha conforme o estado do perfil: Índice, cadastro incompleto, LGPD pendente ou totem. Liga-se a <code>/register</code>, <code>/forgot-password</code>, <code>/selecionar-igreja</code>, LGPD e <code>cel_totem</code>.</p>
+<h3 id="controles-interativos">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Campo <strong>Instância</strong></td>
+<td>Texto</td>
+<td>Identifica a igreja (código ou nome). A validação confirma que aquela instância existe e carrega logo, cores e parâmetros.</td>
+</tr>
+<tr>
+<td><strong>X</strong> no campo da instância</td>
+<td>Botão</td>
+<td><strong>Só apaga o texto digitado.</strong> Não troca de igreja nem limpa a sessão.</td>
+</tr>
+<tr>
+<td><strong>Alterar instância</strong></td>
+<td>Botão</td>
+<td>Encerra a instância já validada, esvazia o campo e devolve o foco para escolher outra igreja. Use este controle — e não o X — quando a pessoa entrou na instância errada.</td>
+</tr>
+<tr>
+<td>Campo <strong>Celular</strong></td>
+<td>Telefone</td>
+<td>Identidade de login. Formato brasileiro; o servidor reconhece o perfil pelo número.</td>
+</tr>
+<tr>
+<td><strong>X</strong> no celular</td>
+<td>Botão</td>
+<td>Limpa apenas o número, sem sair da instância.</td>
+</tr>
+<tr>
+<td>Campo <strong>PIN</strong> (4 dígitos)</td>
+<td>Senha</td>
+<td>Autentica no servidor. Não substitui a biometria: a biometria só desbloqueia o aparelho depois que o PIN já foi cadastrado.</td>
+</tr>
+<tr>
+<td><strong>Entrar</strong></td>
+<td>Botão principal</td>
+<td>Dispara <code>verificar_login</code>. Em sucesso, segue para Índice, cadastro, LGPD ou totem.</td>
+</tr>
+<tr>
+<td><strong>Primeiro acesso</strong></td>
+<td>Link</td>
+<td>Abre o cadastro (<code>/register</code>) para quem ainda não tem PIN.</td>
+</tr>
+<tr>
+<td><strong>Esqueci a senha</strong></td>
+<td>Link</td>
+<td>Abre recuperação por pergunta de segurança e e-mail.</td>
+</tr>
+<tr>
+<td><strong>Atalhos de redes</strong> (quando a instância cadastrou URLs)</td>
+<td>Ícones</td>
+<td>Abrem o canal oficial daquela igreja, sem misturar marcas.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Logo e nome da igreja após validar a instância</td>
+<td>A sessão já está amarrada àquele <code>tenant</code>; dados de outra congregação não entram.</td>
+</tr>
+<tr>
+<td>Mensagem de telefone ou PIN inválido</td>
+<td>O servidor recusou a combinação; não há “usuário genérico”.</td>
+</tr>
+<tr>
+<td>Avanço silencioso para o Índice</td>
+<td>Perfil completo, LGPD em dia (ou desligada) e sessão gravada.</td>
+</tr>
+<tr>
+<td>Encaminhamento ao cadastro ou à LGPD</td>
+<td>Falta dado obrigatório ou aceite; o app não libera a vida da família até isso.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -304,6 +389,62 @@ Sessão rastreável, PIN no servidor, totem isolado e primeiro acesso controlado
 <p>Transforma o visitante em pessoa conhecida pela igreja: nome, nascimento, telefone e endereço. Quando a igreja ativa LGPD, o cadastro inclui selfie e aceite dos termos — base jurídica e visual para a carteirinha e o totem. Quando desativa, o fluxo fica enxuto, sem fricção desnecessária.</p>
 <h3 id="propósito-e-conexões-1">Propósito e conexões</h3>
 <p>Completa o perfil após o primeiro PIN. Reserva código de família, sincroniza endereço por CEP e, com <code>LGPD_Ativo = sim</code>, exige selfie e termos. Conecta-se a <code>/lgpd</code>, Dados Cadastrais e Recepção Familiar.</p>
+<h3 id="controles-interativos-1">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Campos <strong>Nome</strong>, <strong>Nascimento</strong>, <strong>Celular</strong></td>
+<td>Texto/data/telefone</td>
+<td>Identidade mínima da pessoa. Sem eles o cadastro não avança.</td>
+</tr>
+<tr>
+<td>Campo <strong>CEP da residência</strong></td>
+<td>Texto</td>
+<td>Dispara busca de logradouro; o endereço oficial nasce daqui, não de digitação livre.</td>
+</tr>
+<tr>
+<td><strong>Selfie</strong> (quando LGPD ativa)</td>
+<td>Câmera/arquivo</td>
+<td>Foto biométrica para carteirinha e totem. Sem ela o fluxo LGPD não fecha.</td>
+</tr>
+<tr>
+<td><strong>Continuar</strong></td>
+<td>Botão principal</td>
+<td>Grava o perfil e segue: Índice (LGPD desligada) ou termos (LGPD ligada).</td>
+</tr>
+<tr>
+<td>Aceite de termos (se exigido)</td>
+<td>Confirmação</td>
+<td>Só libera o restante do app depois do rito em <code>/lgpd</code>.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-1">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Endereço preenchido após o CEP</td>
+<td>O servidor reconheceu o CEP; o cadastro está georreferenciável.</td>
+</tr>
+<tr>
+<td>Aviso para preencher nome/nascimento/CEP</td>
+<td>Faltam dados obrigatórios; a igreja ainda não tem ficha válida.</td>
+</tr>
+<tr>
+<td>Encaminhamento à LGPD</td>
+<td>A instância exige aceite; o Índice ainda não está liberado.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -335,6 +476,53 @@ Cadastro padronizado, família já identificada e opção institucional de exigi
 <p>Evita o “perdi a senha, me coloca de novo”. A pessoa responde a pergunta de segurança e recebe um novo PIN no e-mail. A igreja não improvisar reset por conversa paralela.</p>
 <h3 id="propósito-e-conexões-2">Propósito e conexões</h3>
 <p>Abre-se no passo 2 do login. Gera PIN temporário por e-mail e devolve ao fluxo de autenticação. WhatsApp permanece fora da autenticação.</p>
+<h3 id="controles-interativos-2">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Campo <strong>Celular</strong></td>
+<td>Telefone</td>
+<td>Localiza o perfil que pediu o reset.</td>
+</tr>
+<tr>
+<td><strong>Pergunta de segurança</strong> + resposta</td>
+<td>Desafio</td>
+<td>Confirma que quem pede o PIN é a pessoa cadastrada.</td>
+</tr>
+<tr>
+<td><strong>Enviar novo PIN</strong></td>
+<td>Botão</td>
+<td>Gera senha temporária e dispara e-mail.</td>
+</tr>
+<tr>
+<td>Voltar ao login</td>
+<td>Link</td>
+<td>Devolve à porta de entrada sem alterar a instância.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-2">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Mensagem de e-mail enviado</td>
+<td>O PIN novo já saiu pelo canal auditável; a pessoa ainda precisa entrar com ele.</td>
+</tr>
+<tr>
+<td>Resposta de segurança recusada</td>
+<td>O reset não ocorre; evita troca de senha por terceiros.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -366,6 +554,48 @@ Menos atendimento de TI na porta do culto e trilha de envio por e-mail.
 <p>A plataforma atende mais de uma instância. Esta tela deixa explícito em qual igreja a pessoa está entrando — logo, nome e identidade visual corretos — sem misturar dados de congregações distintas.</p>
 <h3 id="propósito-e-conexões-3">Propósito e conexões</h3>
 <p>Resolve o <code>tenant_id</code> da sessão, carrega branding e parâmetros da instância (prefixo familiar, PIX, totem). Alimenta Índice, ofertas, carteirinha e billing.</p>
+<h3 id="controles-interativos-3">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lista / cartões de igreja</td>
+<td>Toque</td>
+<td>Escolhe a instância da sessão (logo, nome, cores).</td>
+</tr>
+<tr>
+<td>Confirmar igreja</td>
+<td>Botão</td>
+<td>Grava o <code>tenant_id</code> e carrega parâmetros (prefixo familiar, PIX, totem).</td>
+</tr>
+<tr>
+<td>Voltar</td>
+<td>Navegação</td>
+<td>Retorna ao login sem misturar congregações.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-3">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Logo e paleta da igreja</td>
+<td>A sessão já está isolada naquela casa.</td>
+</tr>
+<tr>
+<td>Igreja ausente da lista</td>
+<td>A pessoa não tem vínculo ali, ou a instância não está publicada.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -397,6 +627,52 @@ Isolamento por igreja: membros, finanças e eventos não vazam entre instâncias
 <p>É o momento em que a igreja demonstra respeito ao dado pessoal. A pessoa lê, rola até o fim e registra aceite ou recusa. Não é um checkbox escondido: é um rito de confiança.</p>
 <h3 id="propósito-e-conexões-4">Propósito e conexões</h3>
 <p>Trava a rolagem antes do aceite, grava o registro no banco e libera ou bloqueia o restante do app conforme <code>LGPD_Ativo</code>. Integra-se ao cadastro, ao alerta vermelho no Painel e ao Controle de Acesso.</p>
+<h3 id="controles-interativos-4">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Texto dos termos</td>
+<td>Rolagem</td>
+<td>Precisa ir até o fim; o aceite não libera sem leitura.</td>
+</tr>
+<tr>
+<td><strong>Aceito os termos</strong></td>
+<td>Botão</td>
+<td>Grava o aceite com data/hora e libera o Índice.</td>
+</tr>
+<tr>
+<td><strong>Recuso</strong></td>
+<td>Botão</td>
+<td>Bloqueia o restante do app enquanto a instância exigir LGPD.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-4">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Botões ainda bloqueados</td>
+<td>A pessoa ainda não rolou o documento até o fim.</td>
+</tr>
+<tr>
+<td>Alerta vermelho no Painel</td>
+<td>Há pendência de LGPD; a jornada da família está incompleta.</td>
+</tr>
+<tr>
+<td>Tela pulada</td>
+<td><code>LGPD_Ativo</code> está desligado nesta igreja (chip no Controle de Acesso).</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -428,6 +704,43 @@ Comprova aceite, reduz risco jurídico e pode desligar a exigência quando a pol
 <p>Fecha o ciclo com dignidade: a pessoa saiu, o aparelho não ficou “aberto”. Em celular emprestado ou totem, isso é proteção pastoral e operacional.</p>
 <h3 id="propósito-e-conexões-5">Propósito e conexões</h3>
 <p>Recebe o logout (<code>clearUserSession</code>), limpa perfil e token e devolve ao login. Disparada por Encerrar sessão / Sair do aplicativo.</p>
+<h3 id="controles-interativos-5">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Mensagem de sessão encerrada</td>
+<td>Leitura</td>
+<td>Confirma que perfil e token saíram do aparelho.</td>
+</tr>
+<tr>
+<td>Voltar ao login</td>
+<td>Botão/atalho</td>
+<td>Abre <code>/</code> para nova autenticação.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-5">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Esta tela após “Encerrar sessão”</td>
+<td>Logout consciente; o histórico de acesso registra a saída.</td>
+</tr>
+<tr>
+<td>Login vazio na sequência</td>
+<td>Não há sessão residual no navegador ou no totem.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -459,6 +772,48 @@ Aparelho compartilhado não permanece autenticado. Histórico de acesso registra
 <p>Permite que uma família se apresente antes mesmo de ter login — útil em campanhas, recepção e primeiros cultos. A secretaria depois decide gravar ou rejeitar o pedido, em lote.</p>
 <h3 id="propósito-e-conexões-6">Propósito e conexões</h3>
 <p>Formulário sem autenticação; a fila entra em <strong>Recepção Familiar</strong> na manutenção. Evita cadastro improvisado em papel.</p>
+<h3 id="controles-interativos-6">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Dados do informante</td>
+<td>Campos</td>
+<td>Quem preenche o pedido (telefone, nome, parentesco).</td>
+</tr>
+<tr>
+<td>Incluir outros membros</td>
+<td>Botões/linhas</td>
+<td>Adiciona cônjuge, filhos e demais do núcleo.</td>
+</tr>
+<tr>
+<td><strong>Enviar cadastro</strong></td>
+<td>Botão</td>
+<td>Coloca o lote na fila da <strong>Recepção Familiar</strong>; ainda não cria <code>profiles</code> oficiais.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-6">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Confirmação de envio</td>
+<td>A secretaria verá o lote; a família ainda não está “no sistema” até gravar.</td>
+</tr>
+<tr>
+<td>Pedido invisível no app autenticado</td>
+<td>Esperado: só a manutenção processa a fila.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -492,6 +847,62 @@ Fila única de acolhimento, com aceite ou recusa institucional — não um amont
 <p>É o “saguão”. Depois do login, a pessoa vê atalhos coloridos para Agenda, Salas, QR, Ofertas, Pastoral, Membros, Aniversariantes, Financeiro, Escalas e Perfil. Nada de labirinto: o que está disponível aparece; o que não cabe naquele dia (QR fora do culto, salas sem evento) fica explicado, não quebrado.</p>
 <h3 id="propósito-e-conexões-7">Propósito e conexões</h3>
 <p>Distribui etiquetas na altura da tela (<code>indexShortcutHints</code>). Cada toque abre o Painel no card correspondente (<code>dashboardCard</code>). Rodapé: Encerrar sessão; engrenagem de manutenção à direita, se houver permissão. Marca d’água da instância.</p>
+<h3 id="controles-interativos-7">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Atalhos coloridos (Agenda, Salas, QR, Ofertas, Pastoral, Membros, Aniversariantes, Financeiro, Escalas, Perfil)</td>
+<td>Botões</td>
+<td>Abrem o Painel já no card daquele módulo. Só aparecem se o papel tiver grant e a regra do dia permitir.</td>
+</tr>
+<tr>
+<td>Texto de hint no atalho</td>
+<td>Leitura</td>
+<td>Explica por que QR ou salas estão indisponíveis naquele momento (fora do culto, sem evento).</td>
+</tr>
+<tr>
+<td><strong>Encerrar sessão</strong></td>
+<td>Botão (rodapé)</td>
+<td>Abre o diálogo de logout consciente.</td>
+</tr>
+<tr>
+<td><strong>Engrenagem</strong></td>
+<td>Botão</td>
+<td>Entra na manutenção, se o papel tiver permissão.</td>
+</tr>
+<tr>
+<td>Marca d’água da instância</td>
+<td>Identidade</td>
+<td>Lembra em qual igreja a sessão está.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-7">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Atalho ausente</td>
+<td>ACL: a pessoa não deve usar aquele módulo.</td>
+</tr>
+<tr>
+<td>QR cinza / hint</td>
+<td>Não é dia de evento com check-in, ou falta audiência.</td>
+</tr>
+<tr>
+<td>Engrenagem invisível</td>
+<td>Não há grant de manutenção.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -520,9 +931,61 @@ Atalhos respeitam ACL. Quem não deve ver Financeiro ou Membros simplesmente nã
 <p class="route">Componente <code>AppDrawer</code> · ícone de três linhas</p>
 
 <h3 id="descrição-comercial-8">Descrição comercial</h3>
-<p>É o corredor interno da plataforma. Na parte de cima, a vida do membro (Início, Perfil, Financeiro, Escalas, Aniversariantes, Lista de Membros, Administrativo). Depois da linha, a operação da igreja (eventos, salas, escalas, pastoral, finanças, relatórios, papéis, Ghost). A engrenagem abre configurações finas: trilha, salas, avisos, igrejas, assinaturas e autorização de imagem.</p>
+<p>É o corredor interno da plataforma. Na parte de cima, a vida do membro (Início, Perfil, Financeiro, Escalas, Aniversariantes, Lista de Membros, Administrativo). Depois da linha, a operação da igreja (eventos, salas, escalas, pastoral, finanças, relatórios, papéis, <strong>Transferência de Membro</strong>, Ghost). A engrenagem abre configurações finas: trilha, salas, avisos, igrejas, assinaturas e autorização de imagem.</p>
 <h3 id="propósito-e-conexões-8">Propósito e conexões</h3>
 <p>Itens em <code>lib/appDrawerMenu.ts</code>, filtrados por papel. Navega para rotas próprias ou para o carrossel da Manutenção (<code>maintenance-dashboard</code> + painel). Configurações em <code>AppDrawerSettings</code>.</p>
+<h3 id="controles-interativos-8">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Ícone de <strong>três linhas</strong></td>
+<td>Botão</td>
+<td>Abre o menu sobre a tela atual, sem perder o contexto.</td>
+</tr>
+<tr>
+<td>Itens acima da linha</td>
+<td>Links</td>
+<td>Jornada do membro/família. Só aparecem se o papel tiver grant.</td>
+</tr>
+<tr>
+<td>Itens abaixo da linha</td>
+<td>Links</td>
+<td>Operação (manutenção). <strong>Transferência de Membro</strong> abre o painel pastoral de entrada/saída entre igrejas.</td>
+</tr>
+<tr>
+<td><strong>Engrenagem</strong></td>
+<td>Botão</td>
+<td>Ajustes da instância (trilha, salas, avisos, igrejas, billing, mídia).</td>
+</tr>
+<tr>
+<td>Toque fora / fechar</td>
+<td>Gesto</td>
+<td>Recolhe o menu.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-8">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Item ausente</td>
+<td>A pessoa não tem permissão — não é falha de tela.</td>
+</tr>
+<tr>
+<td>Menu mais curto no totem</td>
+<td>O quiosque não deve parecer o celular de um membro.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -554,6 +1017,58 @@ A equipe entra nos módulos de gestão sem misturar com a jornada do membro. Sup
 <p>É o “culto operacional” no bolso: um card por vez, deslizando, com o mesmo recorte visual da igreja. A família agenda presença, gera QR, vê salas, contribui, pede oração, encontra irmãos, consulta aniversários, lê o financeiro e confere a escala — sem abrir dez aplicativos.</p>
 <h3 id="propósito-e-conexões-9">Propósito e conexões</h3>
 <p>Carrossel com ACL <code>dashboard.card.*</code>. Rodapé <code>‹</code> <code>›</code> e Menu. Telas filhas devolvem ao card de origem via <code>returnDashboardCard</code>. Paletas em <code>dashboardCardThemes</code>.</p>
+<h3 id="controles-interativos-9">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Card atual (deslize)</td>
+<td>Gesto</td>
+<td>Troca o módulo visível (Agenda, QR, Ofertas, etc.).</td>
+</tr>
+<tr>
+<td><strong>‹</strong> / <strong>›</strong></td>
+<td>Botões do rodapé</td>
+<td>Navegam para o card anterior ou seguinte, no mesmo recorte visual.</td>
+</tr>
+<tr>
+<td><strong>Menu</strong></td>
+<td>Botão</td>
+<td>Abre o Índice sem perder a sessão.</td>
+</tr>
+<tr>
+<td>Botões internos de cada card</td>
+<td>Ações</td>
+<td>Abrem a tela filha (ex.: ver PIX, abrir carteirinha). O Fechar dessas telas devolve <strong>a este card</strong>, não ao login.</td>
+</tr>
+<tr>
+<td>Saudação pelo nome</td>
+<td>Texto</td>
+<td>Identidade efetiva (inclui Modo Ghost).</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-9">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Card que não aparece no carrossel</td>
+<td>Grant <code>dashboard.card.*</code> desligado ou regra de evento (estacionamento, QR).</td>
+</tr>
+<tr>
+<td>Retorno ao mesmo card após Fechar</td>
+<td>A jornada é contínua; Fechar ≠ Encerrar sessão.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -585,6 +1100,48 @@ Módulos ligados ou desligados por papel e por regra de evento (QR só no dia, e
 <p>O botão de saída não é um “voltar” qualquer. Pede confirmação — “Deseja encerrar sua sessão?” — para não deslogar por toque acidental e para lembrar que sair limpa o aparelho.</p>
 <h3 id="propósito-e-conexões-10">Propósito e conexões</h3>
 <p>Intercepta voltar do navegador no Índice (<code>AppBackHandler</code>). Distingue Encerrar sessão (web) de Sair do aplicativo (PWA instalado / nativo). Não deve ser disparado pelo Fechar de Ofertas ou Pastoral: esses voltam ao Índice.</p>
+<h3 id="controles-interativos-10">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Texto <strong>Deseja encerrar sua sessão?</strong></td>
+<td>Confirmação</td>
+<td>Evita logout por toque acidental.</td>
+</tr>
+<tr>
+<td><strong>Encerrar sessão</strong> / <strong>Sair do aplicativo</strong></td>
+<td>Botão de confirmar</td>
+<td>Limpa perfil e token; vai para <code>/sessao-encerrada</code>. No PWA/nativo o rótulo deixa claro que o app fecha a sessão no aparelho.</td>
+</tr>
+<tr>
+<td><strong>Cancelar</strong></td>
+<td>Botão</td>
+<td>Fecha o diálogo; a pessoa continua autenticada.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-10">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Diálogo após o botão do Índice</td>
+<td>Logout consciente.</td>
+</tr>
+<tr>
+<td>Diálogo <strong>não</strong> aparece ao Fechar Ofertas/Pastoral</td>
+<td>Correto: Fechar volta à jornada, não desloga.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -618,6 +1175,57 @@ Logout consciente em aparelhos do templo e em navegadores compartilhados.
 <p>É o “vamos no culto?” digital. A família escolhe o evento, vê vagas e marca quem vai — cônjuge, filhos, congregados do núcleo. Esse pré-check-in é o passaporte para QR, geofence e salas infantis.</p>
 <h3 id="propósito-e-conexões-11">Propósito e conexões</h3>
 <p>Lista eventos ativos, capacidade e inscrição por membro (<code>FamilyRegistrationList</code>). Conecta-se a Check-in, Totem, SALA(S) e Programação de Eventos. Fechar retorna ao Índice/Painel.</p>
+<h3 id="controles-interativos-11">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lista de eventos</td>
+<td>Toque</td>
+<td>Escolhe o culto/atividade para marcar presença.</td>
+</tr>
+<tr>
+<td>Caixas por membro da família</td>
+<td>Seleção</td>
+<td>Diz quem vai (cônjuge, filhos, congregados do núcleo).</td>
+</tr>
+<tr>
+<td><strong>Confirmar inscrição</strong> / gravar</td>
+<td>Botão</td>
+<td>Reserva vaga e gera o pré-check-in usado no QR e nas salas.</td>
+</tr>
+<tr>
+<td><strong>Fechar</strong></td>
+<td>Botão</td>
+<td>Volta ao Painel/Índice sem encerrar a sessão.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-11">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Contagem de vagas</td>
+<td>Capacidade do evento menos inscrições já feitas.</td>
+</tr>
+<tr>
+<td>Membro sem caixa</td>
+<td>Não pertence à família da sessão, ou já está inscrito em conflito.</td>
+</tr>
+<tr>
+<td>Evento ausente</td>
+<td>Não está publicado, ou a pessoa não tem grant de agenda.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -649,6 +1257,52 @@ Audiência previsível, capacidade respeitada e base para presença, kids e ofer
 <p>No dia do evento, a família apresenta um QR. No totem, a leitura confirma presença. Não é um QR genérico da igreja: é o código daquela família (ex.: <code>IBN0001</code>), o mesmo texto abaixo do código na carteirinha.</p>
 <h3 id="propósito-e-conexões-12">Propósito e conexões</h3>
 <p>Visível no dia do evento, após audiência quando o culto exige. Geofence pode confirmar sem QR. Quórum trava após um check-in. O payload do QR é só o código familiar, sem dados pessoais.</p>
+<h3 id="controles-interativos-12">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>QR da família</td>
+<td>Imagem</td>
+<td>Payload = código familiar (ex.: <code>IBN0001</code>), o mesmo da carteirinha. O totem lê isto.</td>
+</tr>
+<tr>
+<td>Código em texto abaixo do QR</td>
+<td>Leitura</td>
+<td>Conferência humana se a câmera falhar.</td>
+</tr>
+<tr>
+<td><strong>Fechar</strong></td>
+<td>Botão</td>
+<td>Volta ao card do Painel.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-12">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>QR visível</td>
+<td>Há evento no dia e (se exigido) a família já está na audiência.</td>
+</tr>
+<tr>
+<td>Card/QR oculto</td>
+<td>Fora do culto, sem inscrição, ou geofence já confirmou.</td>
+</tr>
+<tr>
+<td>Check-in já feito</td>
+<td>A lista de presença conta esta família; novo scan no totem entra em cooldown.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -680,6 +1334,52 @@ Presença objetiva, sem duplo check-in, com trilha para lista de presença e sal
 <p>Pais precisam saber se a criança já entrou na sala. O card do membro mostra só a própria família. A equipe, na manutenção, vê todas as inscrições e marca a entrada.</p>
 <h3 id="propósito-e-conexões-13">Propósito e conexões</h3>
 <p>Inscrição nasce na Agenda quando o evento tem Kids/Teens. Check-in de sala é staff. WhatsApp do responsável após entrada.</p>
+<h3 id="controles-interativos-13">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lista da própria família (card do membro)</td>
+<td>Leitura</td>
+<td>Mostra só as crianças da casa e o status (inscrita / na sala).</td>
+</tr>
+<tr>
+<td>Marcar entrada (manutenção)</td>
+<td>Botão staff</td>
+<td>Confirma que a criança entrou na sala e pode avisar o responsável no WhatsApp.</td>
+</tr>
+<tr>
+<td><strong>Fechar</strong></td>
+<td>Botão</td>
+<td>Volta ao Painel.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-13">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Criança “na sala”</td>
+<td>Check-in de staff feito; o pai pode ficar tranquilo.</td>
+</tr>
+<tr>
+<td>Lista vazia no card da família</td>
+<td>Ninguém do núcleo está inscrito em Kids/Teens naquele evento.</td>
+</tr>
+<tr>
+<td>Visão completa na manutenção</td>
+<td>Equipe vê todas as inscrições, não só a própria casa.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -711,6 +1411,53 @@ Controle de entrada, contato imediato com o responsável e visão completa do an
 <p>A contribuição deixa de ser um constrangimento de “como eu pago?”. A tela mostra o recebedor da igreja e a chave PIX, com um toque para copiar. O Fechar volta ao Índice — não encerra a sessão.</p>
 <h3 id="propósito-e-conexões-14">Propósito e conexões</h3>
 <p>Carrega dados da instância (<code>loadOfferingsRecipientBundle</code>). Independente da flag de ofertas do evento. PIX copiado com feedback.</p>
+<h3 id="controles-interativos-14">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Nome do recebedor</td>
+<td>Leitura</td>
+<td>Identifica a igreja/CNPJ oficial da oferta.</td>
+</tr>
+<tr>
+<td>Chave PIX</td>
+<td>Texto</td>
+<td>Valor a colar no banco.</td>
+</tr>
+<tr>
+<td><strong>Copiar PIX</strong></td>
+<td>Botão</td>
+<td>Copia a chave e mostra confirmação.</td>
+</tr>
+<tr>
+<td><strong>Fechar</strong></td>
+<td>Botão</td>
+<td>Volta ao Índice/Painel — <strong>não</strong> encerra a sessão.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-14">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Chave visível</td>
+<td>Parâmetro da instância; é a chave oficial, não um PIX pessoal.</td>
+</tr>
+<tr>
+<td>Feedback “copiado”</td>
+<td>O aparelho já tem a chave na área de transferência.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -742,6 +1489,58 @@ Chave oficial única, atualizável, sem grupos paralelos de PIX.
 <p>É o confessionário digital com dignidade: motivo, situação, para quem é o pedido e se vai para sigilo pastoral ou intercessão. A pessoa é ouvida sem precisar interceptar o pastor no pátio.</p>
 <h3 id="propósito-e-conexões-15">Propósito e conexões</h3>
 <p>Categorias no banco; envio vinculado ao perfil. Histórico em <code>/pastoral-history</code>. Equipe trata em <strong>Cuidado Pastoral</strong>. Fechar → Índice.</p>
+<h3 id="controles-interativos-15">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Motivo / situação</td>
+<td>Campos</td>
+<td>Descreve o pedido.</td>
+</tr>
+<tr>
+<td>Destinatário (sigilo pastoral vs intercessão)</td>
+<td>Escolha</td>
+<td>Define quem vê o conteúdo na equipe.</td>
+</tr>
+<tr>
+<td><strong>Enviar pedido</strong></td>
+<td>Botão</td>
+<td>Grava o pedido ligado ao perfil e abre a fila pastoral.</td>
+</tr>
+<tr>
+<td><strong>Fechar</strong></td>
+<td>Botão</td>
+<td>Volta ao Índice, sem logout.</td>
+</tr>
+<tr>
+<td>Atalho para <strong>Meus pedidos</strong></td>
+<td>Link</td>
+<td>Abre o histórico pessoal.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-15">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Confirmação de envio</td>
+<td>O pedido entrou na fila; status inicial visível em Meus pedidos.</td>
+</tr>
+<tr>
+<td>Sigilo pastoral</td>
+<td>Só a equipe autorizada lê; não vai para intercessão aberta.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -773,6 +1572,48 @@ Fila pastoral organizada, com motivo e destino, em vez de recados perdidos.
 <p>Devolve à pessoa a memória do cuidado: o que pediu, o status, o acompanhamento. Cuidado pastoral deixa de ser um envio sem eco.</p>
 <h3 id="propósito-e-conexões-16">Propósito e conexões</h3>
 <p>Lista pedidos do perfil logado, com pull-to-refresh. Espelha o painel staff de Cuidado Pastoral.</p>
+<h3 id="controles-interativos-16">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lista de pedidos</td>
+<td>Toque</td>
+<td>Abre detalhe e status.</td>
+</tr>
+<tr>
+<td>Puxar para atualizar</td>
+<td>Gesto</td>
+<td>Recarrega o status (em andamento, respondido).</td>
+</tr>
+<tr>
+<td>Voltar</td>
+<td>Navegação</td>
+<td>Retorna ao Coração Aberto ou ao Painel.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-16">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Status do pedido</td>
+<td>Espelho do que a equipe registrou em Cuidado Pastoral.</td>
+</tr>
+<tr>
+<td>Lista vazia</td>
+<td>Nenhum pedido deste perfil, ou ainda não sincronizou.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -804,6 +1645,58 @@ Transparência de status reduz retrabalho e “será que chegou?”.
 <p>A comunidade se enxerga: nome, família, WhatsApp, GPS. Alterna membros e visitantes. O ícone da família abre o núcleo. O mapa geral posiciona a igreja no território — com detalhe de endereço só para quem pastoralmente deve vê-lo.</p>
 <h3 id="propósito-e-conexões-17">Propósito e conexões</h3>
 <p>Busca, modal de família, WhatsApp e <code>/mapa-geolocalizacao</code>. ACL no detalhe do pin.</p>
+<h3 id="controles-interativos-17">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Busca</td>
+<td>Campo</td>
+<td>Filtra por nome.</td>
+</tr>
+<tr>
+<td>Alternar <strong>Membros</strong> / <strong>Visitantes</strong></td>
+<td>Filtro</td>
+<td>Recorta a lista pelo papel eclesial.</td>
+</tr>
+<tr>
+<td>Ícone da família</td>
+<td>Botão</td>
+<td>Abre o núcleo (nomes do mesmo código familiar).</td>
+</tr>
+<tr>
+<td>WhatsApp</td>
+<td>Link</td>
+<td>Abre conversa com o número cadastrado.</td>
+</tr>
+<tr>
+<td>Atalho do <strong>mapa</strong></td>
+<td>Link</td>
+<td>Abre a geolocalização da comunidade.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-17">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pessoa na lista</td>
+<td>Perfil visível nesta instância, conforme ACL.</td>
+</tr>
+<tr>
+<td>Transferido / inativo ausente</td>
+<td>Não aparece como ativo; ver Mudança de Papéis (nome vermelho).</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -835,6 +1728,43 @@ Visão de membros vs visitantes, com proteção de endereço no mapa.
 <p>A igreja não esquece o aniversário. Filtro por mês e WhatsApp na hora — cuidado simples que constrói vínculo.</p>
 <h3 id="propósito-e-conexões-18">Propósito e conexões</h3>
 <p>Lê perfis com data de nascimento; atalho de mensagem. Sem dados extras além do necessário para cumprimentar.</p>
+<h3 id="controles-interativos-18">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filtro por <strong>mês</strong></td>
+<td>Seletor</td>
+<td>Mostra aniversariantes daquele mês.</td>
+</tr>
+<tr>
+<td>WhatsApp no nome</td>
+<td>Link</td>
+<td>Abre mensagem de parabéns.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-18">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Nome na lista</td>
+<td>Há data de nascimento cadastrada e o perfil está visível nesta igreja.</td>
+</tr>
+<tr>
+<td>Mês vazio</td>
+<td>Ninguém com aniversário naquele recorte, ou cadastro sem data.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -866,6 +1796,53 @@ Pastoral e recepção têm lista mensal pronta, sem planilha paralela.
 <p>Presta contas com linguagem de boletim, não de ERP: resultado do mês, comparativo, 12 meses, planejado × realizado e saldo bancário. A confiança na tesouraria cresce quando o membro lê o mesmo número que a diretoria.</p>
 <h3 id="propósito-e-conexões-19">Propósito e conexões</h3>
 <p>Hub do card Financeiro. RD em <code>/expense-report</code>. Carga e conciliação na manutenção. ACL <code>dashboard.card.financial</code>.</p>
+<h3 id="controles-interativos-19">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Resultado do mês / comparativo / 12 meses</td>
+<td>Leitura</td>
+<td>Prestação de contas em linguagem de boletim.</td>
+</tr>
+<tr>
+<td>Planejado × realizado</td>
+<td>Leitura</td>
+<td>Duas visões coexistentes; não misturam na mesma coluna.</td>
+</tr>
+<tr>
+<td>Saldo bancário</td>
+<td>Leitura</td>
+<td>Posição informada pela tesouraria.</td>
+</tr>
+<tr>
+<td>Atalho <strong>RD</strong></td>
+<td>Link</td>
+<td>Abre o Relatório de Despesas.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-19">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Números do mês</td>
+<td>O que a manutenção lançou e conciliou — a mesma fonte da diretoria.</td>
+</tr>
+<tr>
+<td>Tela vazia / bloqueada</td>
+<td>Sem grant <code>dashboard.card.financial</code> ou ainda sem carga.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -897,6 +1874,53 @@ Uma fonte da verdade. Versões REALIZADO e PLANEJADO coexistem sem misturar.
 <p>Quem gastou pela igreja registra itens, comprovantes e PIX de reembolso, submete e avisa o tesoureiro no WhatsApp. Acaba o envelope de notinhas.</p>
 <h3 id="propósito-e-conexões-20">Propósito e conexões</h3>
 <p>Membro cria, lista e exclui pendentes. Tesouraria concilia na manutenção. Contato em <code>Tesoureiro_contato</code>.</p>
+<h3 id="controles-interativos-20">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Novo item / comprovante</td>
+<td>Campos + anexo</td>
+<td>Registra gasto e PIX de reembolso.</td>
+</tr>
+<tr>
+<td><strong>Submeter</strong></td>
+<td>Botão</td>
+<td>Envia o RD e pode avisar o tesoureiro no WhatsApp.</td>
+</tr>
+<tr>
+<td>Excluir pendente</td>
+<td>Botão</td>
+<td>Remove rascunho ainda não conciliado.</td>
+</tr>
+<tr>
+<td>Lista dos próprios RDs</td>
+<td>Leitura</td>
+<td>Acompanha status (pendente, conciliado).</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-20">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RD pendente</td>
+<td>Tesouraria ainda não conciliou.</td>
+</tr>
+<tr>
+<td>RD conciliado</td>
+<td>Entrou no mês financeiro oficial.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -928,6 +1952,43 @@ Fila de RD, vínculo ao lançamento e rastreio do mês de emissão vs conciliaç
 <p>O servo vê quando serve e com quem. A igreja deixa de anunciar escala só no grupo, onde a mensagem some.</p>
 <h3 id="propósito-e-conexões-21">Propósito e conexões</h3>
 <p>Leitura dos tipos, datas e WhatsApp. Manutenção gera ciclo em bloco (<code>aplicar_ciclo_escala</code>). Estacionamento cruza placa.</p>
+<h3 id="controles-interativos-21">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lista por tipo/data</td>
+<td>Leitura</td>
+<td>Mostra quando a pessoa (ou a equipe) serve.</td>
+</tr>
+<tr>
+<td>WhatsApp do parceiro</td>
+<td>Link</td>
+<td>Contato direto com quem divide a escala.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-21">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Domingo na lista</td>
+<td>Há vaga/ciclo aplicado na manutenção.</td>
+</tr>
+<tr>
+<td>Lista vazia</td>
+<td>Sem escala para este perfil, ou ciclo ainda não gerado.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -959,6 +2020,43 @@ Ciclo justo (individual ou equipe), vagas por domingo e ordem sequencial.
 <p>No dia, a lista de quem está servindo e o estacionamento por placa aceleram a operação: achar o dono do carro, chamar o servo, destravar o pátio.</p>
 <h3 id="propósito-e-conexões-22">Propósito e conexões</h3>
 <p>Aparecem quando há escala/painel ativos. Placa + WhatsApp. Tipos e voluntários na manutenção.</p>
+<h3 id="controles-interativos-22">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lista de servos do dia</td>
+<td>Leitura</td>
+<td>Nomes de quem está de pé naquele culto.</td>
+</tr>
+<tr>
+<td>Placa + WhatsApp (estacionamento)</td>
+<td>Link</td>
+<td>Encontra o dono do carro sem gritar no microfone.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-22">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Cards visíveis</td>
+<td>Evento/escala ativos e grant correspondente.</td>
+</tr>
+<tr>
+<td>Cards ausentes</td>
+<td>Fora do dia operacional, ou módulo desligado.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -992,6 +2090,58 @@ Operação de culto com nomes e placas, não com grito no microfone.
 <p>É a identidade digital da pessoa na igreja: dados cadastrais, família, trilha de discipulado e carteirinha. Um único lugar para “quem eu sou aqui”.</p>
 <h3 id="propósito-e-conexões-23">Propósito e conexões</h3>
 <p><code>PerfilClassPanel</code> abre Dados Cadastrais, Gerenciar Família, Trilha e Carteirinha Digital, conforme ACL. Paleta de cores no rodapé do card.</p>
+<h3 id="controles-interativos-23">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Dados cadastrais</strong></td>
+<td>Botão</td>
+<td>Abre <code>/manage-profile</code>.</td>
+</tr>
+<tr>
+<td><strong>Gerenciar família</strong></td>
+<td>Botão</td>
+<td>Abre <code>/manage-members</code>.</td>
+</tr>
+<tr>
+<td><strong>Trilha de discipulado</strong></td>
+<td>Botão</td>
+<td>Abre <code>/trilha-discipulado</code>.</td>
+</tr>
+<tr>
+<td><strong>Carteirinha digital</strong></td>
+<td>Botão</td>
+<td>Abre o documento de identidade (duas páginas).</td>
+</tr>
+<tr>
+<td>Paleta no rodapé</td>
+<td>Leitura</td>
+<td>Identidade visual da instância.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-23">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Botão ausente</td>
+<td>Grant daquele submódulo desligado para o papel.</td>
+</tr>
+<tr>
+<td>Nome/foto no card</td>
+<td>Perfil efetivo (Ghost usa o alvo, não o auditor).</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1023,6 +2173,58 @@ Campos visíveis/editáveis por papel. Onboarding incompleto é visível e corri
 <p>Nome, documentos, endereço em seções que abrem só se a pessoa precisar — como o acordeão de Endereço. Senha de quatro dígitos e biometria (no celular) ficam aqui, com o PIN sempre como base.</p>
 <h3 id="propósito-e-conexões-24">Propósito e conexões</h3>
 <p>Seções recolhíveis (<code>ProfileClass</code>). CEP sincroniza endereço. ACL por coluna. Selfie e veículos. Vínculo à família.</p>
+<h3 id="controles-interativos-24">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Seções (pessoais, documentos, endereço)</td>
+<td>Acordeão</td>
+<td>Abre só o bloco que a pessoa vai editar.</td>
+</tr>
+<tr>
+<td>CEP</td>
+<td>Campo</td>
+<td>Sincroniza logradouro.</td>
+</tr>
+<tr>
+<td>PIN / biometria</td>
+<td>Segurança</td>
+<td>Troca a senha de 4 dígitos; biometria é atalho no aparelho.</td>
+</tr>
+<tr>
+<td>Selfie / veículos</td>
+<td>Mídia</td>
+<td>Atualiza foto e placas.</td>
+</tr>
+<tr>
+<td><strong>Salvar</strong></td>
+<td>Botão</td>
+<td>Grava no perfil, respeitando ACL por coluna.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-24">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Campo invisível ou só leitura</td>
+<td>O papel não edita aquela coluna (ex.: CPF).</td>
+</tr>
+<tr>
+<td>Endereço após CEP</td>
+<td>Cadastro georreferenciável, alinhado à Recepção/Mapa.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1054,6 +2256,53 @@ Cadastro vivo, CEP consistente, CPF/PIN protegidos por ACL.
 <p>O núcleo familiar deixa de ser “mais ou menos aquelas pessoas”. Inclui, reconhece, transfere e protege o representante legal. Endereço do gestor pode herdar para o membro aceito.</p>
 <h3 id="propósito-e-conexões-25">Propósito e conexões</h3>
 <p>CRUD em <code>members</code>, busca por telefone/nome, RPC de aceite. Indicadores Kids/Teens. Liga-se à Agenda e ao QR familiar.</p>
+<h3 id="controles-interativos-25">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Busca por telefone/nome</td>
+<td>Campo</td>
+<td>Localiza pessoa para incluir no núcleo.</td>
+</tr>
+<tr>
+<td>Incluir / reconhecer / aceitar</td>
+<td>Botões</td>
+<td>Fecha o vínculo familiar oficial.</td>
+</tr>
+<tr>
+<td>Transferir entre núcleos</td>
+<td>Ação</td>
+<td>Move o membro para outra família desta igreja (não é Transferência de Membro entre instâncias).</td>
+</tr>
+<tr>
+<td>Indicadores Kids/Teens</td>
+<td>Leitura</td>
+<td>Sinaliza quem entra em sala no culto.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-25">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Código familiar único</td>
+<td>Todos da lista compartilham o QR de check-in.</td>
+</tr>
+<tr>
+<td>Representante legal</td>
+<td>Quem responde pelo núcleo na Agenda e na recepção.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1085,6 +2334,57 @@ Um código familiar, sem duplicata e com rastreio de transferência entre núcle
 <p>Duas páginas: quem a pessoa é (foto 30% maior, nome, nascimento, telefone, e-mail, endereço em caixa recolhida) e o QR de check-in. O grupo familiar não aparece na frente — o código vive no QR (<code>IBN0001</code>), para o totem, não para exposição social.</p>
 <h3 id="propósito-e-conexões-26">Propósito e conexões</h3>
 <p>Dados do perfil efetivo (inclui Modo Ghost). QR = código familiar normalizado. Página 2: status Membro/Congregado e data de entrada no app.</p>
+<h3 id="controles-interativos-26">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Página 1 (foto, nome, nascimento, telefone, e-mail)</td>
+<td>Leitura</td>
+<td>Identidade visível no culto.</td>
+</tr>
+<tr>
+<td>Caixa de <strong>endereço</strong></td>
+<td>Acordeão</td>
+<td>Endereço só aparece se a pessoa abrir — não fica exposto na frente.</td>
+</tr>
+<tr>
+<td>Página 2 / virar</td>
+<td>Gesto</td>
+<td>Mostra QR de check-in, status eclesial e data de entrada.</td>
+</tr>
+<tr>
+<td>QR</td>
+<td>Imagem</td>
+<td>Código familiar (<code>IBN0001</code>); o totem lê isto, não o telefone.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-26">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Status Membro/Congregado</td>
+<td>Papel eclesial oficial (Mudança de Papéis).</td>
+</tr>
+<tr>
+<td>Data de entrada</td>
+<td>Quando a pessoa passou a existir nesta instância do app.</td>
+</tr>
+<tr>
+<td>Ausência do grupo familiar na frente</td>
+<td>Decisão de privacidade: o código vive no QR.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1116,6 +2416,53 @@ Check-in familiar padronizado; QR sem vazamento de telefone, endereço ou token.
 <p>A igreja acompanha formação, não só frequência. Cinco passos, três lições cada, selos coloridos e, na 5.1, o Perfil Ministerial (50 perguntas). A pessoa vê conquista; a pastoral vê quem parou no caminho.</p>
 <h3 id="propósito-e-conexões-27">Propósito e conexões</h3>
 <p>Progresso no servidor (<code>upsert_my_discipleship_lesson_progress</code>). Alertas e certificado. Manutenção: Temas, Reconhecimentos, Reset.</p>
+<h3 id="controles-interativos-27">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Passos 1–5 e lições</td>
+<td>Botões</td>
+<td>Abre o conteúdo e registra progresso.</td>
+</tr>
+<tr>
+<td>Selos coloridos</td>
+<td>Status</td>
+<td>Marcam lição cumprida.</td>
+</tr>
+<tr>
+<td><strong>Perfil Ministerial</strong> (5.1)</td>
+<td>Questionário</td>
+<td>50 perguntas de dons; resultado pastoral.</td>
+</tr>
+<tr>
+<td>Certificado / alerta</td>
+<td>Leitura</td>
+<td>Conclusão ou atraso visível para a pessoa e a pastoral.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-27">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Selo preenchido</td>
+<td>Lição gravada no servidor para este perfil.</td>
+</tr>
+<tr>
+<td>Passo travado</td>
+<td>Pré-requisito ainda não cumprido.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1149,6 +2496,43 @@ Conteúdo da trilha editável, alertas pastorais e reset responsável — sem pl
 <p>Mostra a igreja no território: pins por CEP, filtros (todos, com papel, visitantes). O detalhe do endereço de outra pessoa só abre para quem a política de acesso autoriza.</p>
 <h3 id="propósito-e-conexões-28">Propósito e conexões</h3>
 <p>Leaflet no PWA, geocodificação e cache. Recurso ACL <code>/mapa-geolocalizacao/detalhe-pin</code>. Nativo informa uso via PWA.</p>
+<h3 id="controles-interativos-28">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Filtros (todos, com papel, visitantes)</td>
+<td>Chips</td>
+<td>Recortam os pins.</td>
+</tr>
+<tr>
+<td>Pin no mapa</td>
+<td>Toque</td>
+<td>Abre resumo; endereço completo só com ACL de detalhe.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-28">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pin sem endereço</td>
+<td>Política: o papel não vê a casa de outra pessoa.</td>
+</tr>
+<tr>
+<td>CEP inválido</td>
+<td>Cadastro a corrigir (auditoria na manutenção).</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1180,6 +2564,58 @@ Pastoral e super admin enxergam o detalhe; demais veem o mapa. CEPs inválidos s
 <p>Documentos constitutivos e atas à mão: a igreja transparente para quem deve ler o institucional, sem mandar PDF por e-mail a cada pergunta.</p>
 <h3 id="propósito-e-conexões-29">Propósito e conexões</h3>
 <p>Lista atas, abre PDF no visualizador do app (<code>AssemblyMinutesPdfModal</code>). Fechar permanece na jornada autenticada.</p>
+<h3 id="controles-interativos-29">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Informativo <strong>Administrativo</strong></td>
+<td>Título de tela</td>
+<td>Faixa centralizada em azul-escuro — padrão de identificação de módulo.</td>
+</tr>
+<tr>
+<td>Chip <strong>Atos Constitutivos</strong></td>
+<td>Aba (única ativa)</td>
+<td>Área dos documentos oficiais.</td>
+</tr>
+<tr>
+<td><strong>Ver documentos publicados</strong></td>
+<td>Botão</td>
+<td>Abre a lista de PDFs publicados pelo financeiro.</td>
+</tr>
+<tr>
+<td>Item da lista de atas</td>
+<td>Toque</td>
+<td>Abre o PDF na tela.</td>
+</tr>
+<tr>
+<td><strong>Criar Relatório de Despesas (RD)</strong></td>
+<td>Botão</td>
+<td>Encaminha ao fluxo de RD.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-29">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lista de atas</td>
+<td>Documentos que a tesouraria/secretaria publicou para consulta.</td>
+</tr>
+<tr>
+<td>Visualizador PDF</td>
+<td>Leitura no próprio app, sem baixar arquivo solto por e-mail.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1211,6 +2647,38 @@ Repositório único de atas, com publicação controlada.
 <p>Instagram, YouTube e demais canais oficiais da instância — a voz da igreja em um lugar, não em cartaz desatualizado.</p>
 <h3 id="propósito-e-conexões-30">Propósito e conexões</h3>
 <p>Lê cadastro da igreja (<code>/igrejas</code>). Login também pode exibir atalhos no passo do celular.</p>
+<h3 id="controles-interativos-30">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Ícones / links dos canais</td>
+<td>Botões</td>
+<td>Abrem Instagram, YouTube e demais URLs oficiais desta instância.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-30">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Canal ausente</td>
+<td>A igreja não cadastrou aquela URL em Instâncias.</td>
+</tr>
+<tr>
+<td>Mesmos ícones no login</td>
+<td>Atalhos oficiais também no passo do celular, sem misturar marcas.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1242,6 +2710,48 @@ URLs centralizadas por instância; troca uma vez, vale no app inteiro.
 <p>O recado do culto chega a quem está no app, no tempo certo, sem depender só do projetor.</p>
 <h3 id="propósito-e-conexões-31">Propósito e conexões</h3>
 <p>Membro lê avisos. Equipe orquestra na manutenção (engrenagem). Liga-se à programação de eventos.</p>
+<h3 id="controles-interativos-31">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lista de avisos (membro)</td>
+<td>Leitura</td>
+<td>Comunicados vigentes do culto/instância.</td>
+</tr>
+<tr>
+<td>Editor / orquestração (manutenção)</td>
+<td>Formulário</td>
+<td>Cria, agenda e publica o recado por evento.</td>
+</tr>
+<tr>
+<td>Publicar / desativar</td>
+<td>Botões</td>
+<td>Liga ou tira o aviso da vista do membro.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-31">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Aviso na tela do membro</td>
+<td>Está publicado e no recorte de tempo/evento.</td>
+</tr>
+<tr>
+<td>Aviso só na manutenção</td>
+<td>Rascunho ou fora da janela.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1273,6 +2783,48 @@ Comunicado versionado, por evento/instância, com dono editorial.
 <p>Transmissões e fotos de culto exigem consentimento. Esta tela registra a autorização — e o link de confirmação fecha o ciclo mesmo fora da sessão plena.</p>
 <h3 id="propósito-e-conexões-32">Propósito e conexões</h3>
 <p>Menu de configurações. Confirmação por token. Relaciona-se a LGPD e ao cadastro.</p>
+<h3 id="controles-interativos-32">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Texto da autorização</td>
+<td>Leitura</td>
+<td>Explica uso de imagem e voz em transmissões e fotos.</td>
+</tr>
+<tr>
+<td><strong>Autorizo</strong> / <strong>Não autorizo</strong></td>
+<td>Botões</td>
+<td>Grava o consentimento no perfil.</td>
+</tr>
+<tr>
+<td>Link de confirmação (<code>/autorizacao-midia-confirmar</code>)</td>
+<td>Token</td>
+<td>Fecha o ciclo mesmo fora da sessão plena.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-32">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Autorização registrada</td>
+<td>Equipe de mídia tem base auditável.</td>
+</tr>
+<tr>
+<td>Recusa</td>
+<td>A pessoa não deve aparecer em cortes identificáveis, conforme política da igreja.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1304,6 +2856,53 @@ Base de consentimento para equipe de mídia, auditável.
 <p>A igreja escuta. O membro envia ideia ou problema; a equipe lê o catálogo na manutenção e no relatório dedicado.</p>
 <h3 id="propósito-e-conexões-33">Propósito e conexões</h3>
 <p>Formulário autenticado; painel staff e relatório analítico.</p>
+<h3 id="controles-interativos-33">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Informativo <strong>Sugestões e Melhorias</strong></td>
+<td>Título de tela</td>
+<td>Identifica o módulo no padrão institucional.</td>
+</tr>
+<tr>
+<td>Formulário de nova solicitação</td>
+<td>Campos + envio</td>
+<td>O membro registra ideia ou problema.</td>
+</tr>
+<tr>
+<td>Lista / detalhe / resposta (manutenção)</td>
+<td>Painel</td>
+<td>A equipe acompanha, responde e comunica.</td>
+</tr>
+<tr>
+<td>Ícone <strong>i</strong> (painéis de manutenção)</td>
+<td>Botão</td>
+<td>Textos de ajuda em modal, para não ocupar a lista.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-33">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Solicitação na lista</td>
+<td>Há um pedido aberto, em andamento ou respondido.</td>
+</tr>
+<tr>
+<td>Relatório em PDF</td>
+<td>Consolidado institucional do backlog.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1337,6 +2936,52 @@ Backlog visível, priorizável, sem recados perdidos no WhatsApp da secretaria.
 <p>O aparelho da portaria existe para um gesto só: ler o QR da família e confirmar quem já estava na audiência. Não é um computador de secretaria. Encerrar sessão no totem é rotina de fim de culto.</p>
 <h3 id="propósito-e-conexões-34">Propósito e conexões</h3>
 <p>Câmera, lookup por código familiar, RPC de confirmação, cooldown anti-duplo. Login dedicado (<code>cel_totem</code> + PIN 9999).</p>
+<h3 id="controles-interativos-34">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Câmera / leitor</td>
+<td>Sensor</td>
+<td>Lê o QR da carteirinha (código familiar).</td>
+</tr>
+<tr>
+<td>Confirmação sonora/visual</td>
+<td>Feedback</td>
+<td>“Confirmado” quando a família estava na audiência.</td>
+</tr>
+<tr>
+<td><strong>Encerrar sessão</strong></td>
+<td>Botão</td>
+<td>Logout do quiosque no fim do culto — rotina operacional.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-34">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Confirmado</td>
+<td>Presença oficial na Lista de Presença; cooldown evita duplo check-in.</td>
+</tr>
+<tr>
+<td>Recusa / não encontrado</td>
+<td>Código inválido, família fora da audiência, ou evento sem totem.</td>
+</tr>
+<tr>
+<td>Menu curto</td>
+<td>O totem não deve parecer o celular de um membro.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1368,6 +3013,48 @@ Fila rápida, presença oficial, aparelho que não vaza sessão de membro.
 <p>Define como Kids e Teens existem nesta igreja: rótulos, habilitação, operação. Sem isso, o card SALA(S) seria um enfeite.</p>
 <h3 id="propósito-e-conexões-35">Propósito e conexões</h3>
 <p>Engrenagem do menu. Alimenta eventos (<code>enabled_room_keys</code>) e o monitor de salas.</p>
+<h3 id="controles-interativos-35">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Ligar/desligar sala (Kids, Teens, etc.)</td>
+<td>Chaves</td>
+<td>Define quais salas existem nesta igreja.</td>
+</tr>
+<tr>
+<td>Rótulos</td>
+<td>Campos</td>
+<td>Nomes que o membro vê no card SALA(S).</td>
+</tr>
+<tr>
+<td><strong>Salvar</strong></td>
+<td>Botão</td>
+<td>Grava parâmetros da instância.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-35">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Sala desligada</td>
+<td>Eventos não oferecem aquela categoria; o card da família não lista.</td>
+</tr>
+<tr>
+<td>Nomes customizados</td>
+<td>Operação infantil desta casa, não um rótulo genérico.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1402,6 +3089,66 @@ Parametriza a operação infantil por instância, sem código novo a cada igreja
 <p>O calendário oficial: criar, publicar, capacidade, totem, quórum, geofence, salas, ofertas. O culto deixa de ser um post e vira um objeto de operação.</p>
 <h3 id="propósito-e-conexões-36">Propósito e conexões</h3>
 <p>CRUD em <code>events</code>. Dispara Agenda, QR, salas, presença e avisos. Locais favoritos alimentam geofence.</p>
+<h3 id="controles-interativos-36">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Informativo <strong>Programação de Eventos</strong></td>
+<td>Título de tela</td>
+<td>Identifica o módulo (mesmo padrão visual de Administrativo).</td>
+</tr>
+<tr>
+<td><strong>+ Novo evento</strong></td>
+<td>Botão</td>
+<td>Abre o editor em branco para cadastrar culto, reunião ou assembleia.</td>
+</tr>
+<tr>
+<td>Cartão do evento (título, data, local, vagas, categorias)</td>
+<td>Toque</td>
+<td>Abre a edição daquele registro.</td>
+</tr>
+<tr>
+<td>Selo <strong>PUBLICADO</strong> (verde)</td>
+<td>Status</td>
+<td>O evento está visível na Agenda dos membros e pode alimentar totem, salas e ofertas.</td>
+</tr>
+<tr>
+<td>Selo <strong>RASCUNHO</strong> (azul claro)</td>
+<td>Status</td>
+<td>Publicação desligada. A lista da equipe mostra como inativo; o membro não vê.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-36">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lista <strong>EVENTOS CADASTRADOS</strong></td>
+<td>Todos os eventos desta igreja, publicados ou rascunho.</td>
+</tr>
+<tr>
+<td>Data/hora e local no cartão</td>
+<td>O que a família verá se o evento estiver publicado.</td>
+</tr>
+<tr>
+<td>“Vagas ilimitadas” vs número</td>
+<td>Capacidade usada no check-in e na inscrição.</td>
+</tr>
+<tr>
+<td>Categorias (Infantil, Jovens, check-in automático)</td>
+<td>Regras de sala, faixa e fluxo de portaria.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1433,6 +3180,57 @@ Um editor para o culto inteiro: portaria, kids, ofertas e presença.
 <p>Visão no tempo — dia e mês — para a liderança enxergar sobrecarga e vazios. Toque edita o evento.</p>
 <h3 id="propósito-e-conexões-37">Propósito e conexões</h3>
 <p>Leitura temporal da mesma base de Programação de Eventos.</p>
+<h3 id="controles-interativos-37">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Informativo <strong>Cronograma de Eventos</strong></td>
+<td>Título de tela</td>
+<td>Identifica o módulo no padrão institucional.</td>
+</tr>
+<tr>
+<td>Legenda <strong>Publicado</strong> (ponto cheio) / <strong>Rascunho</strong> (círculo)</td>
+<td>Leitura</td>
+<td>Traduz o mesmo status da lista de eventos.</td>
+</tr>
+<tr>
+<td><strong>Por dia</strong> / <strong>Por mês</strong></td>
+<td>Seletor</td>
+<td>Muda a granularidade da grade (colunas = dias ou visão mensal).</td>
+</tr>
+<tr>
+<td>Célula com horário</td>
+<td>Toque</td>
+<td>Abre o editor daquele evento.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-37">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Contagem “N eventos · N dias”</td>
+<td>Volume no recorte visível — ajuda a ver sobrecarga.</td>
+</tr>
+<tr>
+<td>Texto sobre Publicado vs Rascunho</td>
+<td>Publicado = visível no app dos membros; Rascunho = publicação desligada (equivalente a Inativo na lista).</td>
+</tr>
+<tr>
+<td>Ponto azul na grade + horário</td>
+<td>Há culto/reunião naquele dia; o ponto cheio confirma publicação.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1464,6 +3262,53 @@ Planejamento visual, menos choque de horários e de equipes.
 <p>A equipe do andar marca entrada de cada criança inscrita. É o crachá digital da sala.</p>
 <h3 id="propósito-e-conexões-38">Propósito e conexões</h3>
 <p>Lista todas as inscrições do evento (sem filtro de família). WhatsApp do responsável.</p>
+<h3 id="controles-interativos-38">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Informativo / ícone <strong>i</strong></td>
+<td>Título/ajuda</td>
+<td>Identifica o monitor de salas.</td>
+</tr>
+<tr>
+<td>Lista de inscritos</td>
+<td>Leitura</td>
+<td>Todas as crianças do evento, não só uma família.</td>
+</tr>
+<tr>
+<td>Marcar entrada</td>
+<td>Botão</td>
+<td>Check-in de sala; atualiza o card dos pais.</td>
+</tr>
+<tr>
+<td>WhatsApp do responsável</td>
+<td>Link</td>
+<td>Contato imediato se houver ocorrência.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-38">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Entrada marcada</td>
+<td>A criança está na sala; o pai vê o status no card.</td>
+</tr>
+<tr>
+<td>Lista vazia</td>
+<td>Evento sem Kids/Teens inscritos, ou salas desligadas.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1495,6 +3340,72 @@ Controle tático no culto, com contato imediato.
 <p>Três peças de um único relógio: o tipo (louvor, recepção, som), quem está disponível e o ciclo gerado. A igreja para de “combinar no privado”.</p>
 <h3 id="propósito-e-conexões-39">Propósito e conexões</h3>
 <p>Vagas por domingo, modo individual/equipe, preview transacional <code>aplicar_ciclo_escala</code>. Alimenta o card Escalas do membro.</p>
+<h3 id="controles-interativos-servos-em-disponibilidade">Controles interativos (Servos em Disponibilidade)</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Informativo <strong>Servos em Disponibilidade</strong></td>
+<td>Título de tela</td>
+<td>Identifica o módulo; permanece visível acima dos campos (não é coberto pela lista).</td>
+</tr>
+<tr>
+<td><strong>Tipo de escala</strong></td>
+<td>Lista</td>
+<td>Escolhe o ministério (louvor, recepção, som…). A lista de associados é daquele tipo.</td>
+</tr>
+<tr>
+<td>Campo <strong>Nome completo</strong></td>
+<td>Busca</td>
+<td>Localiza perfis da igreja para associar como servo.</td>
+</tr>
+<tr>
+<td><strong>X</strong> na busca</td>
+<td>Botão</td>
+<td>Limpa o texto da busca.</td>
+</tr>
+<tr>
+<td>Lista <strong>Já associados</strong> + lixeira</td>
+<td>Ação</td>
+<td>Remove o servo daquele tipo (com confirmação).</td>
+</tr>
+<tr>
+<td>Linha de resultado com <strong>+</strong></td>
+<td>Ação</td>
+<td>Associa o perfil ao tipo. “Já cadastrado” impede duplicata.</td>
+</tr>
+<tr>
+<td><strong>Atualizar</strong></td>
+<td>Link</td>
+<td>Recarrega tipos e lista.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-39">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lista vazia de associados</td>
+<td>Ninguém disponível naquele tipo ainda.</td>
+</tr>
+<tr>
+<td>Número à esquerda do nome</td>
+<td>Ordem sequencial usada na geração do ciclo.</td>
+</tr>
+<tr>
+<td>Nome em destaque após associar</td>
+<td>A pessoa entra no rodízio da próxima programação de escalas.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1526,6 +3437,53 @@ Geração em bloco, ordem sequencial, alerta ao remover servo com datas futuras.
 <p>A fila sagrada: pedidos do Coração Aberto chegam aqui para o pastor e a intercessão tratarem com método, sem perder sigilo.</p>
 <h3 id="propósito-e-conexões-40">Propósito e conexões</h3>
 <p>Gestão dos envios de <code>/pastoral</code>. Status visível em Meus pedidos.</p>
+<h3 id="controles-interativos-39">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Fila de pedidos</td>
+<td>Lista</td>
+<td>Mostra Coração Aberto ainda não tratado.</td>
+</tr>
+<tr>
+<td>Abrir pedido</td>
+<td>Toque</td>
+<td>Lê motivo, sigilo e destinatário.</td>
+</tr>
+<tr>
+<td>Alterar <strong>status</strong> / responder</td>
+<td>Ações</td>
+<td>Atualiza o que o membro vê em Meus pedidos.</td>
+</tr>
+<tr>
+<td>Filtro por destino (sigilo vs intercessão)</td>
+<td>Filtro</td>
+<td>Separa o confessionário da intercessão.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-40">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pedido aberto</td>
+<td>Ainda não houve acompanhamento registrado.</td>
+</tr>
+<tr>
+<td>Status no histórico do membro</td>
+<td>Espelho desta tela — transparência sem quebrar sigilo.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1557,6 +3515,52 @@ Distribuição de cuidado, priorização e registro ministerial.
 <p>A trilha é conteúdo vivo. Temas se editam, reconhecimentos alertam a pastoral, o reset existe para recomeçar com critério — não para apagar formação por acidente.</p>
 <h3 id="propósito-e-conexões-41">Propósito e conexões</h3>
 <p>Alimenta <code>/trilha-discipulado</code> e o Perfil Ministerial. Grants específicos.</p>
+<h3 id="controles-interativos-40">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Editor de <strong>temas</strong> e lições</td>
+<td>Formulário</td>
+<td>Atualiza o currículo que o membro estuda.</td>
+</tr>
+<tr>
+<td><strong>Reconhecimentos</strong></td>
+<td>Lista/alertas</td>
+<td>Sinaliza à pastoral quem parou ou concluiu.</td>
+</tr>
+<tr>
+<td><strong>Reset</strong> da trilha</td>
+<td>Ação protegida</td>
+<td>Recomeça o progresso com critério; pede confirmação.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-41">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tema publicado</td>
+<td>O membro vê o material novo na Trilha.</td>
+</tr>
+<tr>
+<td>Alerta pastoral</td>
+<td>Alguém precisa de cuidado formativo.</td>
+</tr>
+<tr>
+<td>Reset gravado</td>
+<td>Progresso anterior deixou de valer, com rastro.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1588,6 +3592,58 @@ Currículo discipulador sob governança, com alertas e reset auditável.
 <p>A tesouraria importa CSV, escolhe REALIZADO ou PLANEJADO, esvazia mês com escopo e concilia RD. O boletim que o membro lê nasce daqui.</p>
 <h3 id="propósito-e-conexões-42">Propósito e conexões</h3>
 <p>Carga, accordion de seções, RD do mês, desconciliação. Alimenta <code>/financial</code>.</p>
+<h3 id="controles-interativos-41">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Importar <strong>CSV</strong></td>
+<td>Arquivo</td>
+<td>Carrega lançamentos do mês.</td>
+</tr>
+<tr>
+<td><strong>REALIZADO</strong> / <strong>PLANEJADO</strong></td>
+<td>Seletor</td>
+<td>Escolhe a versão orçamentária; as duas coexistem.</td>
+</tr>
+<tr>
+<td>Esvaziar mês (com escopo)</td>
+<td>Ação</td>
+<td>Remove carga daquele recorte, com confirmação.</td>
+</tr>
+<tr>
+<td>Conciliação de <strong>RD</strong></td>
+<td>Ações</td>
+<td>Amarra reembolsos ao mês; permite desconciliar.</td>
+</tr>
+<tr>
+<td>Accordion de seções</td>
+<td>Navegação</td>
+<td>Organiza receitas, despesas e saldos.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-42">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Números no card Financeiro do membro</td>
+<td>Espelho desta carga, não uma planilha paralela.</td>
+</tr>
+<tr>
+<td>RD conciliado</td>
+<td>Já entrou no realizado do mês.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1619,6 +3675,43 @@ Operação de tesouraria com versão orçamentária explícita e rastro de RD.
 <p>Projeta receita ordinária (dízimos e ofertas) com base no realizado. A diretoria planeja com evidência, não só com esperança.</p>
 <h3 id="propósito-e-conexões-43">Propósito e conexões</h3>
 <p>Modelo em <code>financialPredictiveModel</code>. Exige histórico mínimo de meses positivos.</p>
+<h3 id="controles-interativos-42">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Recorte de meses / parâmetros</td>
+<td>Controles</td>
+<td>Ajusta a janela usada na projeção.</td>
+</tr>
+<tr>
+<td>Gráfico / totais projetados</td>
+<td>Leitura</td>
+<td>Mostra a tendência de dízimos e ofertas ordinárias.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-43">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Projeção numérica</td>
+<td>Estimativa com base no <strong>realizado</strong>, não no planejado.</td>
+</tr>
+<tr>
+<td>Mensagem de histórico insuficiente</td>
+<td>Ainda não há meses positivos bastante para o modelo.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1649,7 +3742,49 @@ Insight quantitativo para conselho e tesouraria.
 <h3 id="descrição-comercial-44">Descrição comercial</h3>
 <p>Sete olhares analíticos: membros ativos/inativos, necessidades pastorais, saúde infantil (LGPD), quórum, estacionamento, sugestões, inscritos por evento. Sem relatório de faixa etária — decisão consciente de privacidade.</p>
 <h3 id="propósito-e-conexões-44">Propósito e conexões</h3>
-<p>Catálogo da manutenção. Papéis pastoral/super admin conforme o relatório.</p>
+<p>Catálogo da manutenção. Papéis pastoral/super admin conforme o relatório. Textos de ajuda saíram da tela e foram para o ícone <strong>i</strong> (modal), para liberar espaço à lista.</p>
+<h3 id="controles-interativos-43">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Informativo <strong>Relatórios</strong></td>
+<td>Título</td>
+<td>Identifica o módulo.</td>
+</tr>
+<tr>
+<td>Ícone <strong>i</strong></td>
+<td>Botão</td>
+<td>Explica o conjunto de relatórios sem ocupar a lista.</td>
+</tr>
+<tr>
+<td>Card de cada relatório</td>
+<td>Toque</td>
+<td>Abre o olhar analítico correspondente (membros, pastoral, quórum, sugestões, inscritos etc.).</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-44">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Totais de ativos/inativos</td>
+<td>Recorte da igreja da sessão, com herança familiar de <code>membership_out</code> e saídas por transferência no vínculo.</td>
+</tr>
+<tr>
+<td>Ausência de faixa etária detalhada</td>
+<td>Decisão de privacidade: o relatório não expõe idade além do necessário.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1681,6 +3816,64 @@ Painel de gestão sem exportar a igreja inteira para uma planilha solta.
 <p>Quando o evento exige quórum, esta é a ata viva: quem confirmou no totem, a que horas, pronta para impressão.</p>
 <h3 id="propósito-e-conexões-45">Propósito e conexões</h3>
 <p>Atualiza após check-in. Flag <code>requer_quorum</code> no evento.</p>
+<h3 id="controles-interativos-44">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Informativo <strong>Lista de Presença</strong></td>
+<td>Título de tela</td>
+<td>Identifica o módulo no padrão institucional.</td>
+</tr>
+<tr>
+<td>Chip com o <strong>nome do evento</strong></td>
+<td>Seletor</td>
+<td>Troca a assembleia/culto cujo quórum está sendo lido. O chip ativo (azul) é o documento da vez.</td>
+</tr>
+<tr>
+<td>Tabela <strong># / Nome / Hora do check-in</strong></td>
+<td>Leitura</td>
+<td>Relação oficial dos presentes.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-45">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Chip do evento</td>
+<td>Só eventos com “Requer quórum = Sim” aparecem.</td>
+</tr>
+<tr>
+<td>Data, horário e local no documento</td>
+<td>Cabeçalho da ata daquele encontro.</td>
+</tr>
+<tr>
+<td>Texto em itálico do estatuto</td>
+<td>Declaração de convocação e quitação — contexto jurídico da lista.</td>
+</tr>
+<tr>
+<td>Linha na tabela</td>
+<td>A pessoa fez check-in (totem/QR) naquele evento; a hora é o instante do registro.</td>
+</tr>
+<tr>
+<td>Tabela vazia</td>
+<td>Ainda não houve check-in, ou o evento está no futuro.</td>
+</tr>
+<tr>
+<td>“Atualizando lista…”</td>
+<td>A tela consulta o registro de quórum de novo (cerca de 15 s).</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1712,6 +3905,48 @@ Documento de presença, não lista de WhatsApp.
 <p>Correção cirúrgica: buscar pessoa, ajustar CEP/endereço, em último caso excluir perfil. Poder alto, uso raro, responsabilidade máxima.</p>
 <h3 id="propósito-e-conexões-46">Propósito e conexões</h3>
 <p>Busca em <code>profiles</code>. Exclusão completa restrita. Complementa Mudança de Papéis.</p>
+<h3 id="controles-interativos-45">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Busca por nome/telefone</td>
+<td>Campo</td>
+<td>Localiza o perfil nesta instância.</td>
+</tr>
+<tr>
+<td>Ajuste de CEP/endereço</td>
+<td>Campos</td>
+<td>Corrige geolocalização sem a pessoa criar outra conta.</td>
+</tr>
+<tr>
+<td><strong>Excluir perfil</strong></td>
+<td>Ação rara</td>
+<td>Remove cadastro por completo (super admin); pede confirmação.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-46">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Perfil encontrado</td>
+<td>Há identidade global; a correção vale para a ficha oficial.</td>
+</tr>
+<tr>
+<td>Exclusão</td>
+<td>Uso excepcional; o rastro de acesso permanece na auditoria conforme política.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1743,6 +3978,76 @@ Higiene cadastral com trilha, não edição clandestina no banco.
 <p>A porta de entrada institucional da fila pública <code>/cadastro-familia/</code>. Gravar ou rejeitar em lote é acolher com processo.</p>
 <h3 id="propósito-e-conexões-47">Propósito e conexões</h3>
 <p>Fila do formulário standalone. Gera família/perfil oficiais.</p>
+<h3 id="controles-interativos-46">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Informativo <strong>Recepção — Cadastro Familiar</strong> + ícone <strong>i</strong></td>
+<td>Título/ajuda</td>
+<td>Explica que o formulário público entra aqui antes de virar <code>profiles</code>/<code>members</code>.</td>
+</tr>
+<tr>
+<td><strong>Atualizar</strong></td>
+<td>Botão</td>
+<td>Recarrega a fila pendente.</td>
+</tr>
+<tr>
+<td><strong>Selecionar todos</strong></td>
+<td>Botão</td>
+<td>Marca todos os lotes visíveis.</td>
+</tr>
+<tr>
+<td><strong>Limpar</strong></td>
+<td>Botão</td>
+<td>Desmarca a seleção.</td>
+</tr>
+<tr>
+<td>Cartão do lote (toque)</td>
+<td>Seleção</td>
+<td>Inclui ou tira aquele pedido da ação em lote. Mostra nomes, parentesco e conflitos.</td>
+</tr>
+<tr>
+<td><strong>Gravar selecionados (N)</strong> / <strong>Gravar todos pendentes</strong></td>
+<td>Botão principal</td>
+<td>Cria família e perfis oficiais. Sem seleção, grava a fila inteira.</td>
+</tr>
+<tr>
+<td><strong>Rejeitar selecionados</strong></td>
+<td>Botão</td>
+<td>Descarta os lotes marcados sem gerar cadastro.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-47">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Fila pendente (N)</strong></td>
+<td>Quantidade de formulários públicos ainda não decididos.</td>
+</tr>
+<tr>
+<td>“Nenhum cadastro aguardando análise”</td>
+<td>Fila vazia — a recepção está em dia.</td>
+</tr>
+<tr>
+<td>Conflito de família no cartão</td>
+<td>O lote bateu em códigos divergentes; exige revisão manual antes de gravar.</td>
+</tr>
+<tr>
+<td>Mensagem de sucesso após gravar</td>
+<td>As pessoas já existem no app (login, Agenda, QR).</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1774,6 +4079,62 @@ Acolhimento com aceite formal, sem planilha de “pendentes da recepção”.
 <p>O coração da governança: papéis, grants, visão por papel ou por recurso. O Gestor de Controle de Acesso não vê o Super Administrador — escudo explícito. LGPD da instância liga/desliga aqui.</p>
 <h3 id="propósito-e-conexões-48">Propósito e conexões</h3>
 <p>RPCs SECURITY DEFINER, matriz de grants, <code>assert_gestor_super_admin_shield</code>. Afeta todas as telas.</p>
+<h3 id="controles-interativos-47">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Informativo da tela</td>
+<td>Título</td>
+<td>Identifica <strong>Controle de Acesso</strong>.</td>
+</tr>
+<tr>
+<td>Chip <strong>App Ativo</strong> (compacto, à esquerda)</td>
+<td>Status</td>
+<td>Mostra se o aplicativo da instância está liberado.</td>
+</tr>
+<tr>
+<td>Chip <strong>LGPD</strong> (mesma linha, à direita)</td>
+<td>Ação/status</td>
+<td>Liga ou consulta a exigência de termos e selfie nesta igreja.</td>
+</tr>
+<tr>
+<td>Lista de usuários / papéis</td>
+<td>Tabela</td>
+<td>Edição de grants. O <strong>Gestor</strong> nunca vê nem edita Super Administrador, nem PIN.</td>
+</tr>
+<tr>
+<td>Visão por papel vs por recurso</td>
+<td>Abas/filtros</td>
+<td>Alterna a matriz de permissões.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-48">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Usuário invisível para o Gestor</td>
+<td>Proteção: Super Administrador fora do alcance desse papel.</td>
+</tr>
+<tr>
+<td>Grant desligado</td>
+<td>A tela ou o card some do menu daquela pessoa.</td>
+</tr>
+<tr>
+<td>LGPD desligada</td>
+<td>Cadastro e login não exigem aceite/selfie nesta instância.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1804,7 +4165,64 @@ ACL auditável, fail-closed, sem o gestor enxergar o super admin.
 <h3 id="descrição-comercial-49">Descrição comercial</h3>
 <p>Visitante, congregado, membro: a caminhada eclesial vira dado oficial, com contagem de ativos e herança familiar.</p>
 <h3 id="propósito-e-conexões-49">Propósito e conexões</h3>
-<p>Pastoral e super admin. Integra-se à Lista de Membros, carteirinha (status) e limites de billing.</p>
+<p>Pastoral e super admin. Integra-se à Lista de Membros, carteirinha (status), limites de billing e <strong>Transferência de Membro</strong> (quem saiu por transferência aparece como inativo nesta igreja, com nome em vermelho).</p>
+<h3 id="controles-interativos-48">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Ícone <strong>i</strong> ao lado do título</td>
+<td>Botão</td>
+<td>Abre o texto de ajuda em um modal, sem ocupar a lista.</td>
+</tr>
+<tr>
+<td>Busca (nome, telefone, código)</td>
+<td>Campo</td>
+<td>Filtra a lista de perfis elegíveis.</td>
+</tr>
+<tr>
+<td>Cabeçalhos <strong>Visitante / Congregado / Membro</strong></td>
+<td>Filtro</td>
+<td>Mostra só aquele papel atual.</td>
+</tr>
+<tr>
+<td>Nome azul sublinhado</td>
+<td>Link</td>
+<td>Abre as datas de membresia (entrada e desligamento). Congregados em família herdam datas do responsável.</td>
+</tr>
+<tr>
+<td>Nome em <strong>vermelho</strong></td>
+<td>Status</td>
+<td>Há data de saída: desligamento pastoral <strong>ou</strong> transferência aprovada na origem.</td>
+</tr>
+<tr>
+<td>Ações de papel</td>
+<td>Botões</td>
+<td>Promovem ou rebaixam o papel eclesial, com registro.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-49">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Contagens por papel</td>
+<td>Ativos daquela igreja (sem super admin e sem equipe pastoral na lista operacional).</td>
+</tr>
+<tr>
+<td>Data de desligamento preenchida</td>
+<td>A pessoa não conta mais como membro/congregado ativo <strong>nesta</strong> instância. Em transferência, a data vive no vínculo (<code>profile_igreja_vinculos</code>), não em <code>profiles.membership_out</code> (para o destino poder recebê-la ativa).</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1829,13 +4247,215 @@ Métricas de membresia reais, não estimativa de lista de presença.
 
 <div class="screen">
 
+<h2 id="transferência-de-membro">Transferência de Membro</h2>
+<p class="route">Painel <code>transferencia_igreja</code> · menu operacional</p>
+
+<h3 id="descrição-comercial-50">Descrição comercial</h3>
+<p>É a porta oficial entre instâncias da mesma plataforma: a pessoa (ou a família) <strong>sai</strong> de uma igreja e <strong>entra</strong> em outra sem criar um segundo cadastro, sem levar cargos de liderança e sem expor o diretório de congregações na tela. A igreja de destino solicita; a de origem registra a saída. O histórico fica auditável — não um “apaga aqui e lança lá” no WhatsApp.</p>
+<h3 id="propósito-e-conexões-50">Propósito e conexões</h3>
+<p>A identidade (<code>profiles.id</code>, telefone, CPF) é global. O pedido fica em <code>igreja_transfer_requests</code> e as pessoas em <code>igreja_transfer_people</code>. Na origem, a data de saída e o status <strong>Transferido</strong> ficam em <code>profile_igreja_vinculos</code> (<code>membership_out</code>, <code>transferred_at</code>, <code>transferred_to_tenant_id</code>) — <strong>não</strong> em <code>profiles.membership_out</code>, para o membro permanecer ativo no destino. Após a aprovação, o destino gera novo código de família e zera cargos administrativos. Integra-se a Mudança de Papéis, Membros Inativos, login (conflito de instância) e Recepção Familiar.</p>
+<h3 id="controles-interativos-49">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Informativo <strong>Transferência de Membro</strong></td>
+<td>Título de tela</td>
+<td>Identifica o módulo (padrão Administrativo / Sugestões).</td>
+</tr>
+<tr>
+<td>Ícone <strong>i</strong></td>
+<td>Botão</td>
+<td>Explica o fluxo: localizar pelo celular; a origem só aparece depois da busca; a entrada no destino é sem cargos de liderança.</td>
+</tr>
+<tr>
+<td>Aba <strong>Solicitar</strong></td>
+<td>Navegação</td>
+<td>Formulário da igreja de <strong>destino</strong> para pedir a entrada de alguém que ainda está em outra instância.</td>
+</tr>
+<tr>
+<td>Aba <strong>Recebidos (N)</strong></td>
+<td>Navegação</td>
+<td>Pedidos em que <strong>esta</strong> igreja é a origem e precisa decidir a saída. O número é a quantidade pendente.</td>
+</tr>
+<tr>
+<td>Aba <strong>Enviados</strong></td>
+<td>Navegação</td>
+<td>Pedidos que esta igreja já mandou a outras origens.</td>
+</tr>
+<tr>
+<td>Campo <strong>Celular</strong> (compacto)</td>
+<td>Telefone</td>
+<td>Única chave de busca na tela. Não há lista prévia de igrejas (IBEP, IBS etc.) — isso protege dados de outras congregações.</td>
+</tr>
+<tr>
+<td><strong>Localizar cadastro</strong></td>
+<td>Botão (à direita do celular)</td>
+<td>Consulta o servidor pelo número. Se encontrar, revela a igreja de origem daquela pessoa e o grupo que será transferido.</td>
+</tr>
+<tr>
+<td><strong>Observação pastoral</strong></td>
+<td>Texto</td>
+<td>Motivo opcional que viaja com o pedido para a origem.</td>
+</tr>
+<tr>
+<td><strong>Incluir o grupo familiar inteiro</strong></td>
+<td>Caixa</td>
+<td>Se marcado, o pedido leva todos os membros da família de origem, não só o telefone digitado. Fica abaixo da observação.</td>
+</tr>
+<tr>
+<td><strong>Solicitar transferência</strong></td>
+<td>Botão principal (altura mínima 48 px)</td>
+<td>Envia o pedido à origem <strong>depois</strong> que o cadastro foi localizado. Sem localização, o app pede para buscar pelo celular primeiro. Confirmação: cargos de liderança serão removidos na entrada.</td>
+</tr>
+<tr>
+<td>Cartão do pedido (Recebidos / Enviados)</td>
+<td>Leitura</td>
+<td>Mostra tipo (Membro/Família), status, códigos origem → destino e nomes.</td>
+</tr>
+<tr>
+<td><strong>Aprovar saída</strong></td>
+<td>Botão</td>
+<td>A origem confirma: grava a data de saída no vínculo, gera família no destino e conclui o pedido.</td>
+</tr>
+<tr>
+<td><strong>Recusar</strong></td>
+<td>Botão</td>
+<td>A origem recusa; o cadastro permanece na igreja atual.</td>
+</tr>
+<tr>
+<td><strong>Cancelar pedido</strong> (Enviados, se pendente)</td>
+<td>Botão</td>
+<td>A igreja de destino desiste antes da decisão da origem.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-50">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Ausência de chips IBEP/IBS/outras</td>
+<td>Comportamento correto: outras igrejas <strong>não</strong> são listadas até existir um cadastro encontrado.</td>
+</tr>
+<tr>
+<td>Bloco <strong>Igreja de origem</strong> após localizar</td>
+<td>Código e nome da instância a que o telefone pertence hoje.</td>
+</tr>
+<tr>
+<td>Linha <strong>origem → destino</strong></td>
+<td>De onde a pessoa sai e para onde esta igreja a recebe.</td>
+</tr>
+<tr>
+<td>Nomes no preview</td>
+<td>Quem vai no pedido (uma pessoa ou o grupo familiar). “Entra como…” é o papel básico no destino, sem liderança.</td>
+</tr>
+<tr>
+<td>Aviso âmbar sobre cargos</td>
+<td>Garantia institucional: privilégios da origem não atravessam a fronteira.</td>
+</tr>
+<tr>
+<td>Status <strong>Pendente</strong></td>
+<td>A origem ainda não aprovou nem recusou.</td>
+</tr>
+<tr>
+<td>Status <strong>Concluído</strong></td>
+<td>Saída registrada na origem; entrada válida no destino.</td>
+</tr>
+<tr>
+<td>Status <strong>Recusado</strong> / <strong>Cancelado</strong></td>
+<td>Não houve mudança de vínculo.</td>
+</tr>
+<tr>
+<td><strong>Histórico de saídas</strong> (aba Recebidos)</td>
+<td>Pedidos já processados em que esta igreja foi origem (<code>igreja_transfer_requests</code>).</td>
+</tr>
+<tr>
+<td>Nome vermelho em Mudança de Papéis / Inativos na origem</td>
+<td>A transferência foi aplicada; a pessoa não está ativa <strong>aqui</strong>, mas está (ou estará) no destino.</td>
+</tr>
+</tbody></table>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Continua sendo a mesma pessoa no app (mesmo telefone). Muda a igreja da sessão, a família e o que pode fazer — sem “criar outra conta”.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Rastro completo do pedido, decisão pastoral na origem e entrada limpa no destino. Sem vitrine de congregações irmãs na tela de busca.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Transferência de Membro</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
 <h2 id="acessos-de-usuários">Acessos de Usuários</h2>
 <p class="route">Painel <code>profile_access_insights</code></p>
 
-<h3 id="descrição-comercial-50">Descrição comercial</h3>
+<h3 id="descrição-comercial-51">Descrição comercial</h3>
 <p>Quem entrou, quando, quais telas. Transparência de uso para a liderança responsável — e limpeza global só no super admin.</p>
-<h3 id="propósito-e-conexões-50">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-51">Propósito e conexões</h3>
 <p>Histórico de sessão. Gestor não vê registros do Super Administrador.</p>
+<h3 id="controles-interativos-50">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Buscar por nome</strong></td>
+<td>Campo</td>
+<td>Filtra o histórico.</td>
+</tr>
+<tr>
+<td>Linhas de acesso</td>
+<td>Leitura</td>
+<td>Quem entrou, quando e quais telas.</td>
+</tr>
+<tr>
+<td><strong>Limpar histórico</strong></td>
+<td>Botão (super admin)</td>
+<td>Apaga o histórico global; o Gestor não vê Super Administrador nem executa limpeza indevida.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-51">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Linha de login/navegação</td>
+<td>Uso real do app naquela instância.</td>
+</tr>
+<tr>
+<td>Ausência de registros do Super Admin para o Gestor</td>
+<td>Escudo de segurança (mesmo princípio do Controle de Acesso).</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1863,10 +4483,90 @@ Auditoria de login e navegação, com recorte de segurança entre papéis.
 <h2 id="modo-ghost-auditor">Modo Ghost (Auditor)</h2>
 <p class="route">Painel <code>auditor</code></p>
 
-<h3 id="descrição-comercial-51">Descrição comercial</h3>
+<h3 id="descrição-comercial-52">Descrição comercial</h3>
 <p>Ver o app com os olhos de outra pessoa, para testar permissão de verdade. Não é “entrar na conta”: é simular a jornada do alvo, com identidade efetiva em todas as telas.</p>
-<h3 id="propósito-e-conexões-51">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-52">Propósito e conexões</h3>
 <p>Grant <code>maintenance.card.auditor</code> ou super admin. <code>loadEffectiveSessionProfile</code> em todo fluxo. Encerrar Ghost volta ao auditor.</p>
+<h3 id="controles-interativos-51">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Informativo <strong>Modo Ghost (Auditor)</strong></td>
+<td>Título</td>
+<td>Identifica o módulo.</td>
+</tr>
+<tr>
+<td><strong>Usuário ativo</strong> (lista pesquisável)</td>
+<td>Seletor</td>
+<td>Escolhe o alvo pelo nome ou telefone. Placeholder: “Selecione um usuário...”.</td>
+</tr>
+<tr>
+<td><strong>Ativar Modo Ghost</strong></td>
+<td>Botão</td>
+<td>Pede confirmação e simula a sessão do alvo. Alterações ficam em nome dele, com auditoria do operador real.</td>
+</tr>
+<tr>
+<td><strong>Papéis de acesso</strong> (após selecionar)</td>
+<td>Leitura</td>
+<td>Papéis do alvo <strong>antes</strong> de ativar.</td>
+</tr>
+<tr>
+<td><strong>Relatório de acesso (ACL)</strong></td>
+<td>Tabela</td>
+<td>Telas/tabelas/colunas com Ver / Alterar (Sim/Não).</td>
+</tr>
+<tr>
+<td><strong>Mostrar somente com acesso</strong> / <strong>Mostrar todos os recursos</strong></td>
+<td>Botão</td>
+<td>Filtra a matriz ACL.</td>
+</tr>
+<tr>
+<td>Grupos Telas / Tabelas / Colunas (<strong>+</strong> / <strong>−</strong>)</td>
+<td>Expansão</td>
+<td>Abre ou fecha cada tipo de recurso.</td>
+</tr>
+<tr>
+<td>Banner <strong>Modo Ghost ativo (auditor)</strong></td>
+<td>Status global</td>
+<td>Lembra que o operador está simulado como o alvo — não é o login da pessoa.</td>
+</tr>
+<tr>
+<td><strong>Sair</strong> no banner</td>
+<td>Botão</td>
+<td>Encerra a simulação e devolve a identidade do auditor.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-52">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>“Nenhum papel atribuído — visitante”</td>
+<td>O app trata o alvo como visitante até haver papel explícito.</td>
+</tr>
+<tr>
+<td>Contagens “com visualização · com alteração · recursos cadastrados”</td>
+<td>Tamanho da ACL daquela pessoa.</td>
+</tr>
+<tr>
+<td>Menu/cards diferentes após Ativar</td>
+<td>A jornada efetiva é a do alvo (<code>loadEffectiveSessionProfile</code>).</td>
+</tr>
+<tr>
+<td>Tela pedindo para usar o banner</td>
+<td>Ghost já está ativo; não se escolhe outro alvo até <strong>Sair</strong>.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1894,10 +4594,57 @@ QA pastoral e de TI: “o congregado vê o que deveria ver?” — sem senha alh
 <h2 id="instâncias-igrejas">Instâncias (Igrejas)</h2>
 <p class="route">Rota <code>/igrejas</code> · super admin</p>
 
-<h3 id="descrição-comercial-52">Descrição comercial</h3>
+<h3 id="descrição-comercial-53">Descrição comercial</h3>
 <p>O ecossistema multi-igreja: logo, redes, CNPJ de ofertas, código da entidade. Cada casa tem cara e PIX próprios.</p>
-<h3 id="propósito-e-conexões-52">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-53">Propósito e conexões</h3>
 <p>Tenancy, branding, prefixo familiar (<code>Parm_entidade</code>), ofertas. Engrenagem do menu.</p>
+<h3 id="controles-interativos-52">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lista de igrejas</td>
+<td>Navegação</td>
+<td>Abre a ficha da instância.</td>
+</tr>
+<tr>
+<td>Logo, cores, redes, CNPJ, PIX</td>
+<td>Campos</td>
+<td>Identidade visual e tesouraria daquela casa.</td>
+</tr>
+<tr>
+<td>Código da entidade / prefixo familiar</td>
+<td>Campo</td>
+<td>Gera códigos tipo <code>IBN0001</code> e isola famílias.</td>
+</tr>
+<tr>
+<td><strong>Salvar</strong></td>
+<td>Botão</td>
+<td>Publica branding e parâmetros.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-53">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Logo no login e no Índice</td>
+<td>A sessão está amarrada a este tenant.</td>
+</tr>
+<tr>
+<td>Prefixo diferente entre igrejas</td>
+<td>Famílias e QR não se misturam.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1925,10 +4672,52 @@ Operar várias igrejas sem misturar cadastro, marca e tesouraria.
 <h2 id="assinaturas-billing">Assinaturas (Billing)</h2>
 <p class="route">Rota <code>/billing</code></p>
 
-<h3 id="descrição-comercial-53">Descrição comercial</h3>
+<h3 id="descrição-comercial-54">Descrição comercial</h3>
 <p>A sustentabilidade da plataforma: planos, limite de membros, checkout Stripe em modo teste/produção conforme ambiente. A igreja escolhe o plano com números de ativos à vista.</p>
-<h3 id="propósito-e-conexões-53">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-54">Propósito e conexões</h3>
 <p><code>BillingClass</code>, Functions Stripe, <code>assert_tenant_can_add_member</code>. Isolamento por <code>tenant_id</code>.</p>
+<h3 id="controles-interativos-53">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Planos e limite de membros</td>
+<td>Leitura/escolha</td>
+<td>Mostra teto de ativos da igreja.</td>
+</tr>
+<tr>
+<td>Checkout Stripe</td>
+<td>Botão</td>
+<td>Assina ou altera plano (teste ou produção conforme ambiente).</td>
+</tr>
+<tr>
+<td>Contagem de ativos</td>
+<td>Leitura</td>
+<td>Base para <code>assert_tenant_can_add_member</code> (inclui o efeito de transferências).</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-54">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Limite atingido</td>
+<td>Novos membros/transferências de entrada podem ser recusados até subir o plano.</td>
+</tr>
+<tr>
+<td>Modo teste</td>
+<td>Cobrança não é produção; útil para homologação.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1956,10 +4745,47 @@ Contrato SaaS visível, com teto de membresia alinhado ao plano.
 <h2 id="orquestrador-admin">Orquestrador (admin)</h2>
 <p class="route">Rota <code>/admin/orquestrador</code></p>
 
-<h3 id="descrição-comercial-54">Descrição comercial</h3>
+<h3 id="descrição-comercial-55">Descrição comercial</h3>
 <p>Console avançado de orquestração de eventos e avisos para operação de alto volume — o “mesa de controle” quando o culto é complexo.</p>
-<h3 id="propósito-e-conexões-54">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-55">Propósito e conexões</h3>
 <p>Complementa Manutenção de Avisos e Programação de Eventos.</p>
+<h3 id="controles-interativos-54">Controles interativos</h3>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Tipo</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Console de eventos e avisos</td>
+<td>Painel</td>
+<td>Dispara e coordena fluxos em lote no culto complexo.</td>
+</tr>
+<tr>
+<td>Publicar / agendar</td>
+<td>Ações</td>
+<td>Alinha projetor, app e portaria no mesmo tempo.</td>
+</tr>
+</tbody></table>
+<h3 id="o-que-os-resultados-representam-55">O que os resultados representam</h3>
+<table>
+<thead>
+<tr>
+<th>Resultado</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Aviso/evento no app do membro</td>
+<td>O orquestrador publicou no recorte certo.</td>
+</tr>
+<tr>
+<td>Item só no console</td>
+<td>Ainda não chegou à jornada da família.</td>
+</tr>
+</tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1990,10 +4816,10 @@ Coordenação central de fluxos de evento sem editar registro por registro na pr
 <li><strong>Reconhece a própria igreja</strong> (instância, marca, PIX).</li>
 <li><strong>Participa com a família</strong> (agenda, QR só com código familiar, salas).</li>
 <li><strong>Cuidado e serviço</strong> (pastoral, escalas, RD, ofertas).</li>
-<li>A equipe <strong>governa</strong> (ACL, papéis, Ghost, relatórios, tesouraria).</li>
+<li>A equipe <strong>governa</strong> (ACL, papéis, Ghost, relatórios, tesouraria e <strong>transferência entre igrejas</strong>).</li>
 </ol>
 <p>O valor para o membro é autonomia e dignidade. O valor para a administração é controle com rastreio, menos WhatsApp como sistema e um único lugar em que o culto, a família e a prestação de contas se encontram.</p>
-<p>Este documento descreve o produto como ele está no código em 19 de agosto de 2026. Telas condicionais (QR, estacionamento, servos, manutenção) aparecem somente quando o papel, o evento e os parâmetros da instância autorizam — e isso, em si, já é parte da proposta comercial: <strong>cada pessoa vê a igreja que lhe cabe viver</strong>.</p>
+<p>Este documento descreve o produto como ele está no código em <strong>25 de agosto de 2026</strong>, incluindo informativos de tela padronizados, busca de transferência somente pelo celular (sem listar outras igrejas), registro de saídas em <code>igreja_transfer_requests</code> / <code>profile_igreja_vinculos</code>, e a distinção entre o <strong>X</strong> (limpa o campo) e <strong>Alterar instância</strong> no login. Telas condicionais (QR, estacionamento, servos, manutenção) aparecem somente quando o papel, o evento e os parâmetros da instância autorizam — e isso, em si, já é parte da proposta comercial: <strong>cada pessoa vê a igreja que lhe cabe viver</strong>.</p>
 
 	
 

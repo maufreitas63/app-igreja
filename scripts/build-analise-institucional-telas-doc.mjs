@@ -351,7 +351,7 @@ const imagePlaceholder = (screenTitle) =>
     ],
   });
 
-const screenBox = ({ title, route, commercial, purpose, user, admin }) => {
+const screenBox = ({ title, route, commercial, purpose, user, admin, extraChildren = [] }) => {
   const inner = [
     new Paragraph({
       heading: HeadingLevel.HEADING_2,
@@ -364,6 +364,7 @@ const screenBox = ({ title, route, commercial, purpose, user, admin }) => {
     para(commercial, { size: 20, after: 140 }),
     heading3('Propósito e conexões'),
     para(purpose, { size: 20, after: 160 }),
+    ...extraChildren,
     splitVisions(user, admin),
     emptyLine(160),
     imagePlaceholder(title),
@@ -424,6 +425,46 @@ const collectUntil = (lines, start, stopTest) => {
   return { text: stripTags(buf.join('\n')).replace(/\n{2,}/g, '\n'), next: i };
 };
 
+const isSectionStop = (line) => {
+  const trimmed = line.trim();
+  return (
+    trimmed.startsWith('### ') ||
+    trimmed.startsWith('## ') ||
+    trimmed.includes('class="split"') ||
+    trimmed.startsWith('<div class="screen">')
+  );
+};
+
+const collectBlocks = (lines, start, stopTest) => {
+  const children = [];
+  const paras = [];
+  let i = start;
+
+  const flushParas = () => {
+    const text = stripTags(paras.join('\n')).replace(/\n{2,}/g, '\n').trim();
+    paras.length = 0;
+    if (text) {
+      children.push(para(text, { size: 20, after: 140 }));
+    }
+  };
+
+  while (i < lines.length && !stopTest(lines[i])) {
+    if (lines[i].trim().startsWith('|')) {
+      flushParas();
+      const parsed = parseTable(lines, i);
+      children.push(parsed.table, emptyLine(120));
+      i = parsed.next;
+      continue;
+    }
+
+    paras.push(lines[i]);
+    i += 1;
+  }
+
+  flushParas();
+  return { children, next: i };
+};
+
 const parseScreen = (lines, start) => {
   let i = start + 1;
   while (i < lines.length && !lines[i].startsWith('## ')) {
@@ -456,8 +497,32 @@ const parseScreen = (lines, start) => {
   );
   i = commercial.next;
   skipHeading();
-  const purpose = collectUntil(lines, i, (line) => line.includes('class="split"') || line.startsWith('## '));
+  const purpose = collectUntil(
+    lines,
+    i,
+    (line) =>
+      line.includes('class="split"') ||
+      line.startsWith('## ') ||
+      line.startsWith('### ')
+  );
   i = purpose.next;
+
+  const extraChildren = [];
+  while (i < lines.length) {
+    const heading = lines[i].trim();
+    if (heading.startsWith('### ')) {
+      const headingText = heading.replace(/^###\s+/, '').trim();
+      i += 1;
+      while (i < lines.length && !lines[i].trim()) {
+        i += 1;
+      }
+      const block = collectBlocks(lines, i, isSectionStop);
+      extraChildren.push(heading3(headingText), ...block.children);
+      i = block.next;
+      continue;
+    }
+    break;
+  }
 
   let user = '';
   let admin = '';
@@ -492,6 +557,7 @@ const parseScreen = (lines, start) => {
         route: route || 'Rota do aplicativo',
         commercial: commercial.text,
         purpose: purpose.text,
+        extraChildren,
         user,
         admin,
       }),
@@ -532,7 +598,7 @@ const coverChildren = () => [
     spacing: { after: 400, line: 300, lineRule: LineRuleType.AUTO },
     children: [
       new TextRun({
-        text: 'Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na jornada da família, a conexão com os demais módulos e a visão simultânea de quem usa e de quem administra.',
+        text: 'Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na jornada da família, a conexão com os demais módulos, a visão simultânea de quem usa e de quem administra, e o significado de cada botão, texto interativo e resultado exibido.',
         font: 'Calibri',
         size: 26,
         color: C.slate700,
@@ -568,7 +634,7 @@ const coverChildren = () => [
     color: C.slate600,
     after: 40,
   }),
-  para('Data: 19 de agosto de 2026', { size: 20, color: C.slate600, after: 400 }),
+  para('Data: 25 de agosto de 2026', { size: 20, color: C.slate600, after: 400 }),
   new Paragraph({ children: [], pageBreakBefore: false }),
 ];
 
