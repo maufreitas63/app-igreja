@@ -1,8 +1,8 @@
 import {
   buildFinancialAnalyticalSummaryReport,
   type AnalyticalAccountRow,
-  type AnalyticalCashflowColumn,
-  type AnalyticalPeriodColumn,
+  type AnalyticalKindTotals,
+  type AnalyticalMovementColumn,
   type FinancialAnalyticalSummaryReport,
 } from '@/lib/financialAnalyticalSummaryReport';
 import { formatFinancialBrl, formatFinancialMonthLabel, type FinancialMonthKey } from '@/lib/financialMonth';
@@ -58,6 +58,10 @@ const AmountCell = ({
   );
 };
 
+type ThreeMonthRow<T> =
+  | { type: 'section'; label: string }
+  | { type: 'data'; label: string; key: keyof T; bold?: boolean };
+
 function ThreeMonthTable<T extends { month: FinancialMonthKey; header: string; isFocus: boolean }>({
   labelHeader,
   columns,
@@ -65,7 +69,7 @@ function ThreeMonthTable<T extends { month: FinancialMonthKey; header: string; i
 }: {
   labelHeader: string;
   columns: T[];
-  rows: { label: string; key: keyof T; bold?: boolean }[];
+  rows: ThreeMonthRow<T>[];
 }) {
   return (
     <View style={styles.tableCard}>
@@ -85,66 +89,150 @@ function ThreeMonthTable<T extends { month: FinancialMonthKey; header: string; i
         ))}
       </View>
 
-      {rows.map((row, index) => (
-        <View
-          key={String(row.key)}
-          style={[styles.tableRow, index % 2 === 1 && styles.tableRowAlt, row.bold && styles.totalRow]}
-        >
-          <Text style={[styles.labelCell, styles.periodLabelCol, row.bold && styles.labelBold]}>
-            {row.label}
-          </Text>
-          {columns.map((column) => (
-            <View
-              key={`${String(row.key)}-${column.month.year}-${column.month.month}`}
-              style={[styles.periodValueCol, column.isFocus && styles.cellFocus]}
-            >
-              <AmountCell
-                value={Number(column[row.key]) || 0}
-                highlighted={column.isFocus}
-                bold={row.bold}
-                compact
-              />
+      {rows.map((row, index) => {
+        if (row.type === 'section') {
+          return (
+            <View key={`section-${row.label}`} style={[styles.tableRow, styles.groupBannerRow]}>
+              <Text style={styles.groupBannerText}>{row.label}</Text>
             </View>
-          ))}
-        </View>
-      ))}
+          );
+        }
+
+        const dataIndex = rows.slice(0, index).filter((item) => item.type === 'data').length;
+
+        return (
+          <View
+            key={String(row.key)}
+            style={[styles.tableRow, dataIndex % 2 === 1 && styles.tableRowAlt, row.bold && styles.totalRow]}
+          >
+            <Text style={[styles.labelCell, styles.periodLabelCol, row.bold && styles.labelBold]}>
+              {row.label}
+            </Text>
+            {columns.map((column) => (
+              <View
+                key={`${String(row.key)}-${column.month.year}-${column.month.month}`}
+                style={[styles.periodValueCol, column.isFocus && styles.cellFocus]}
+              >
+                <AmountCell
+                  value={Number(column[row.key]) || 0}
+                  highlighted={column.isFocus}
+                  bold={row.bold}
+                  compact
+                />
+              </View>
+            ))}
+          </View>
+        );
+      })}
     </View>
   );
 }
 
-function CashflowTable({ columns }: { columns: AnalyticalCashflowColumn[] }) {
+function MovementSummaryTable({ columns }: { columns: AnalyticalMovementColumn[] }) {
   return (
     <ThreeMonthTable
-      labelHeader="Movimento"
+      labelHeader="Conta"
       columns={columns}
       rows={[
-        { label: 'Entradas', key: 'entradas' },
-        { label: 'Saídas', key: 'saidas' },
-        { label: 'Total', key: 'total', bold: true },
+        { type: 'section', label: 'ENTRADAS' },
+        { type: 'data', label: 'Ordinário', key: 'entradasOrdinario' },
+        { type: 'data', label: 'Extraordinário', key: 'entradasExtraordinario' },
+        { type: 'data', label: 'Total entradas', key: 'entradasTotal', bold: true },
+        { type: 'section', label: 'SAÍDAS' },
+        { type: 'data', label: 'Ordinário', key: 'saidasOrdinario' },
+        { type: 'data', label: 'Extraordinário', key: 'saidasExtraordinario' },
+        { type: 'data', label: 'Total saídas', key: 'saidasTotal', bold: true },
       ]}
     />
   );
 }
 
-function PeriodTable({ columns }: { columns: AnalyticalPeriodColumn[] }) {
+function KindTotalsRow({
+  label,
+  totals,
+  variant,
+}: {
+  label: string;
+  totals: AnalyticalKindTotals;
+  variant: 'subtotal' | 'grand';
+}) {
+  const isGrand = variant === 'grand';
+
   return (
-    <ThreeMonthTable
-      labelHeader="Período"
-      columns={columns}
-      rows={[
-        { label: 'Ordinário', key: 'ordinario' },
-        { label: 'Extraordinário', key: 'extraordinario' },
-        { label: 'Resultado total', key: 'total', bold: true },
+    <View
+      style={[
+        styles.tableRow,
+        isGrand ? styles.totalRowFocus : styles.totalRow,
+        isGrand && styles.totalRowBorder,
       ]}
-    />
+    >
+      <Text style={[styles.labelCell, styles.accountCol, styles.labelBold]}>{label}</Text>
+      <View style={styles.valueCol}>
+        <AmountCell value={totals.ordinario} bold highlighted={isGrand} compact />
+      </View>
+      <View style={styles.valueCol}>
+        <AmountCell value={totals.extraordinario} bold highlighted={isGrand} compact />
+      </View>
+      <View style={styles.valueCol}>
+        <AmountCell value={totals.total} bold highlighted={isGrand} compact />
+      </View>
+    </View>
+  );
+}
+
+function AccountKindBlock({
+  title,
+  rows,
+  subtotalLabel,
+  subtotal,
+}: {
+  title: string;
+  rows: AnalyticalAccountRow[];
+  subtotalLabel: string;
+  subtotal: AnalyticalKindTotals;
+}) {
+  return (
+    <>
+      <View style={[styles.tableRow, styles.groupBannerRow]}>
+        <Text style={styles.groupBannerText}>{title}</Text>
+      </View>
+      {rows.length === 0 ? (
+        <View style={styles.tableRow}>
+          <Text style={[styles.labelCell, styles.accountCol, styles.emptyHint]}>Nenhum lançamento</Text>
+          <View style={styles.valueCol} />
+          <View style={styles.valueCol} />
+          <View style={styles.valueCol} />
+        </View>
+      ) : (
+        rows.map((row, index) => (
+          <View key={`${row.kind}-${row.account}`} style={[styles.tableRow, index % 2 === 1 && styles.tableRowAlt]}>
+            <Text style={[styles.labelCell, styles.accountCol]} numberOfLines={2}>
+              {row.account}
+            </Text>
+            <View style={styles.valueCol}>
+              <AmountCell value={row.ordinario} compact />
+            </View>
+            <View style={styles.valueCol}>
+              <AmountCell value={row.extraordinario} compact />
+            </View>
+            <View style={styles.valueCol}>
+              <AmountCell value={row.total} bold compact />
+            </View>
+          </View>
+        ))
+      )}
+      <KindTotalsRow label={subtotalLabel} totals={subtotal} variant="subtotal" />
+    </>
   );
 }
 
 function MovementsTable({
-  rows,
+  entradaRows,
+  saidaRows,
   totals,
 }: {
-  rows: AnalyticalAccountRow[];
+  entradaRows: AnalyticalAccountRow[];
+  saidaRows: AnalyticalAccountRow[];
   totals: FinancialAnalyticalSummaryReport['monthTotals'];
 }) {
   return (
@@ -160,35 +248,19 @@ function MovementsTable({
         <Text style={[styles.subHeaderCell, styles.valueCol]}>Total</Text>
       </View>
 
-      {rows.map((row, index) => (
-        <View key={row.account} style={[styles.tableRow, index % 2 === 1 && styles.tableRowAlt]}>
-          <Text style={[styles.labelCell, styles.accountCol]} numberOfLines={2}>
-            {row.account}
-          </Text>
-          <View style={styles.valueCol}>
-            <AmountCell value={row.ordinario} compact />
-          </View>
-          <View style={styles.valueCol}>
-            <AmountCell value={row.extraordinario} compact />
-          </View>
-          <View style={styles.valueCol}>
-            <AmountCell value={row.total} bold compact />
-          </View>
-        </View>
-      ))}
-
-      <View style={[styles.tableRow, styles.totalRow, styles.totalRowFocus, styles.totalRowBorder]}>
-        <Text style={[styles.labelCell, styles.accountCol, styles.labelBold]}>TOTAL</Text>
-        <View style={styles.valueCol}>
-          <AmountCell value={totals.ordinario} bold highlighted compact />
-        </View>
-        <View style={styles.valueCol}>
-          <AmountCell value={totals.extraordinario} bold highlighted compact />
-        </View>
-        <View style={styles.valueCol}>
-          <AmountCell value={totals.total} bold highlighted compact />
-        </View>
-      </View>
+      <AccountKindBlock
+        title="ENTRADAS"
+        rows={entradaRows}
+        subtotalLabel="Subtotal entradas"
+        subtotal={totals.entradas}
+      />
+      <AccountKindBlock
+        title="SAÍDAS"
+        rows={saidaRows}
+        subtotalLabel="Subtotal saídas"
+        subtotal={totals.saidas}
+      />
+      <KindTotalsRow label="TOTAL GERAL" totals={totals.geral} variant="grand" />
     </View>
   );
 }
@@ -275,9 +347,12 @@ export function FinancialAnalyticalSummaryReportView({
           </Text>
         </View>
 
-        <CashflowTable columns={report.cashflowColumns} />
-        <PeriodTable columns={report.periodColumns} />
-        <MovementsTable rows={report.accountRows} totals={report.monthTotals} />
+        <MovementSummaryTable columns={report.movementColumns} />
+        <MovementsTable
+          entradaRows={report.entradaRows}
+          saidaRows={report.saidaRows}
+          totals={report.monthTotals}
+        />
         <HistoricalTable historical={report.historical} />
       </View>
     </ScrollView>
@@ -438,6 +513,24 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
     letterSpacing: 0.4,
+  },
+  groupBannerRow: {
+    backgroundColor: '#334E68',
+    borderTopWidth: 0,
+    minHeight: 26,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+  },
+  groupBannerText: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  emptyHint: {
+    color: '#64748B',
+    fontStyle: 'italic',
   },
   tableRow: {
     flexDirection: 'row',

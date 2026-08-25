@@ -16,26 +16,29 @@ import {
 
 export type AnalyticalMovementBucket = 'ordinario' | 'extraordinario';
 
-export type AnalyticalCashflowColumn = {
-  month: FinancialMonthKey;
-  header: string;
-  entradas: number;
-  saidas: number;
-  total: number;
-  isFocus: boolean;
-};
+export type AnalyticalAccountKind = 'entrada' | 'saida';
 
-export type AnalyticalPeriodColumn = {
-  month: FinancialMonthKey;
-  header: string;
+export type AnalyticalKindTotals = {
   ordinario: number;
   extraordinario: number;
   total: number;
+};
+
+export type AnalyticalMovementColumn = {
+  month: FinancialMonthKey;
+  header: string;
   isFocus: boolean;
+  entradasOrdinario: number;
+  entradasExtraordinario: number;
+  entradasTotal: number;
+  saidasOrdinario: number;
+  saidasExtraordinario: number;
+  saidasTotal: number;
 };
 
 export type AnalyticalAccountRow = {
   account: string;
+  kind: AnalyticalAccountKind;
   ordinario: number;
   extraordinario: number;
   total: number;
@@ -43,13 +46,13 @@ export type AnalyticalAccountRow = {
 
 export type FinancialAnalyticalSummaryReport = {
   endMonth: FinancialMonthKey;
-  cashflowColumns: AnalyticalCashflowColumn[];
-  periodColumns: AnalyticalPeriodColumn[];
-  accountRows: AnalyticalAccountRow[];
+  movementColumns: AnalyticalMovementColumn[];
+  entradaRows: AnalyticalAccountRow[];
+  saidaRows: AnalyticalAccountRow[];
   monthTotals: {
-    ordinario: number;
-    extraordinario: number;
-    total: number;
+    entradas: AnalyticalKindTotals;
+    saidas: AnalyticalKindTotals;
+    geral: AnalyticalKindTotals;
   };
   historical: {
     ordinario: number;
@@ -98,32 +101,54 @@ const sumByBucket = (entries: FinancialEntry[]) => {
   };
 };
 
-const sumCashflow = (entries: FinancialEntry[]) => {
-  let entradas = 0;
-  let saidas = 0;
+const emptyKindTotals = (): AnalyticalKindTotals => ({
+  ordinario: 0,
+  extraordinario: 0,
+  total: 0,
+});
+
+const addSignedToKindTotals = (target: AnalyticalKindTotals, entry: FinancialEntry) => {
+  const signed = signedFinancialAmount(entry);
+
+  if (movementBucket(entry) === 'extraordinario') {
+    target.extraordinario += signed;
+  } else {
+    target.ordinario += signed;
+  }
+
+  target.total = target.ordinario + target.extraordinario;
+};
+
+const sumKindSplit = (entries: FinancialEntry[]) => {
+  const entradas = emptyKindTotals();
+  const saidas = emptyKindTotals();
 
   for (const entry of entries) {
-    const signed = signedFinancialAmount(entry);
-
     if (isFinancialEntrada(entry.transaction_kind)) {
-      entradas += signed;
+      addSignedToKindTotals(entradas, entry);
     } else if (isFinancialSaida(entry.transaction_kind)) {
-      saidas += signed;
+      addSignedToKindTotals(saidas, entry);
     }
   }
 
   return {
     entradas,
     saidas,
-    total: entradas + saidas,
+    geral: {
+      ordinario: entradas.ordinario + saidas.ordinario,
+      extraordinario: entradas.extraordinario + saidas.extraordinario,
+      total: entradas.total + saidas.total,
+    },
   };
 };
 
+const sortAccountRows = (rows: AnalyticalAccountRow[]) =>
+  [...rows].sort((left, right) => left.account.localeCompare(right.account, 'pt-BR'));
+
 /**
  * Monta o Resumo Financeiro a partir dos lançamentos REALIZADO.
- * - Movimento: entradas / saídas / total nos últimos 3 meses
- * - Período: ordinário / extraordinário / resultado total
- * - Movimentos do mês: por ministério
+ * - Quadro único: entradas e saídas (ordinário / extraordinário / total) nos últimos 3 meses
+ * - Movimentos do mês: entradas com subtotal, depois saídas com subtotal, depois total geral
  * - Acumulado histórico: até o fim do mês de referência
  */
 export function buildFinancialAnalyticalSummaryReport(
@@ -136,40 +161,46 @@ export function buildFinancialAnalyticalSummaryReport(
 
   const periodMonths = getTrailingFinancialMonths(endMonth, 3);
 
-  const cashflowColumns: AnalyticalCashflowColumn[] = periodMonths.map((month) => {
+  const movementColumns: AnalyticalMovementColumn[] = periodMonths.map((month) => {
     const monthEntries = entriesThrough.filter((entry) => entryInMonth(entry, month));
-    const cashflow = sumCashflow(monthEntries);
+    const split = sumKindSplit(monthEntries);
 
     return {
       month,
       header: formatFinancialMonthShortLabel(month).toLowerCase(),
-      entradas: cashflow.entradas,
-      saidas: cashflow.saidas,
-      total: cashflow.total,
       isFocus: month.year === endMonth.year && month.month === endMonth.month,
-    };
-  });
-
-  const periodColumns: AnalyticalPeriodColumn[] = periodMonths.map((month) => {
-    const monthEntries = entriesThrough.filter((entry) => entryInMonth(entry, month));
-    const totals = sumByBucket(monthEntries);
-
-    return {
-      month,
-      header: formatFinancialMonthShortLabel(month).toLowerCase(),
-      ordinario: totals.ordinario,
-      extraordinario: totals.extraordinario,
-      total: totals.total,
-      isFocus: month.year === endMonth.year && month.month === endMonth.month,
+      entradasOrdinario: split.entradas.ordinario,
+      entradasExtraordinario: split.entradas.extraordinario,
+      entradasTotal: split.entradas.total,
+      saidasOrdinario: split.saidas.ordinario,
+      saidasExtraordinario: split.saidas.extraordinario,
+      saidasTotal: split.saidas.total,
     };
   });
 
   const focusMonthEntries = entriesThrough.filter((entry) => entryInMonth(entry, endMonth));
-  const byAccount = new Map<string, { ordinario: number; extraordinario: number }>();
+  const byAccount = new Map<string, AnalyticalAccountRow>();
 
   for (const entry of focusMonthEntries) {
+    const kind: AnalyticalAccountKind | null = isFinancialEntrada(entry.transaction_kind)
+      ? 'entrada'
+      : isFinancialSaida(entry.transaction_kind)
+        ? 'saida'
+        : null;
+
+    if (!kind) {
+      continue;
+    }
+
     const account = reportAccountLabel(entry);
-    const current = byAccount.get(account) ?? { ordinario: 0, extraordinario: 0 };
+    const key = `${kind}:${account}`;
+    const current = byAccount.get(key) ?? {
+      account,
+      kind,
+      ordinario: 0,
+      extraordinario: 0,
+      total: 0,
+    };
     const signed = signedFinancialAmount(entry);
 
     if (movementBucket(entry) === 'extraordinario') {
@@ -178,26 +209,19 @@ export function buildFinancialAnalyticalSummaryReport(
       current.ordinario += signed;
     }
 
-    byAccount.set(account, current);
+    current.total = current.ordinario + current.extraordinario;
+    byAccount.set(key, current);
   }
 
-  const accountRows: AnalyticalAccountRow[] = [...byAccount.entries()]
-    .map(([account, values]) => ({
-      account,
-      ordinario: values.ordinario,
-      extraordinario: values.extraordinario,
-      total: values.ordinario + values.extraordinario,
-    }))
-    .sort((left, right) => left.account.localeCompare(right.account, 'pt-BR'));
-
-  const monthTotals = sumByBucket(focusMonthEntries);
+  const accountRows = [...byAccount.values()];
+  const monthTotals = sumKindSplit(focusMonthEntries);
   const historicalTotals = sumByBucket(entriesThrough);
 
   return {
     endMonth,
-    cashflowColumns,
-    periodColumns,
-    accountRows,
+    movementColumns,
+    entradaRows: sortAccountRows(accountRows.filter((row) => row.kind === 'entrada')),
+    saidaRows: sortAccountRows(accountRows.filter((row) => row.kind === 'saida')),
     monthTotals,
     historical: {
       ordinario: historicalTotals.ordinario,
