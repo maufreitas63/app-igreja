@@ -327,15 +327,6 @@ export function MaintenanceIgrejaTransferCard({
                 </TouchableOpacity>
               </View>
 
-              <TouchableOpacity
-                style={styles.checkRow}
-                onPress={() => setIncludeFamily((current) => !current)}
-                activeOpacity={0.85}
-              >
-                <View style={[styles.checkbox, includeFamily && styles.checkboxOn]} />
-                <Text style={styles.checkLabel}>Incluir o grupo familiar inteiro</Text>
-              </TouchableOpacity>
-
               <Text style={styles.fieldLabel}>Observação pastoral</Text>
               <TextInput
                 style={[styles.input, styles.noteInput]}
@@ -345,6 +336,15 @@ export function MaintenanceIgrejaTransferCard({
                 placeholderTextColor={MINIMAL_UI.textMuted}
                 multiline
               />
+
+              <TouchableOpacity
+                style={styles.checkRow}
+                onPress={() => setIncludeFamily((current) => !current)}
+                activeOpacity={0.85}
+              >
+                <View style={[styles.checkbox, includeFamily && styles.checkboxOn]} />
+                <Text style={styles.checkLabel}>Incluir o grupo familiar inteiro</Text>
+              </TouchableOpacity>
 
               {preview ? (
                 <View style={styles.previewBox}>
