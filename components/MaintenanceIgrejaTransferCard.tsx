@@ -346,6 +346,19 @@ export function MaintenanceIgrejaTransferCard({
                 <Text style={styles.checkLabel}>Incluir o grupo familiar inteiro</Text>
               </TouchableOpacity>
 
+              <TouchableOpacity
+                style={[styles.primaryBtn, styles.submitBtn]}
+                onPress={() => void handleSubmit()}
+                disabled={saving}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Solicitar transferência"
+              >
+                <Text style={styles.primaryBtnText}>
+                  {saving ? 'Enviando...' : 'Solicitar transferência'}
+                </Text>
+              </TouchableOpacity>
+
               {preview ? (
                 <View style={styles.previewBox}>
                   <Text style={styles.fieldLabel}>Igreja de origem</Text>
@@ -366,14 +379,6 @@ export function MaintenanceIgrejaTransferCard({
                   <Text style={styles.securityNote}>
                     Cargos administrativos, liderança e privilégios da origem serão removidos.
                   </Text>
-                  <TouchableOpacity
-                    style={styles.primaryBtn}
-                    onPress={() => void handleSubmit()}
-                    disabled={saving}
-                    activeOpacity={0.85}
-                  >
-                    <Text style={styles.primaryBtnText}>Enviar pedido à origem</Text>
-                  </TouchableOpacity>
                 </View>
               ) : null}
             </>
@@ -622,6 +627,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 13,
+  },
+  submitBtn: {
+    flex: 0,
+    alignSelf: 'stretch',
   },
   secondaryBtn: {
     borderWidth: 1,
