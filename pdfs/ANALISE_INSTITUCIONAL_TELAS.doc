@@ -3674,7 +3674,7 @@ Operação de tesouraria com versão orçamentária explícita e rastro de RD.
 <h3 id="descrição-comercial-43">Descrição comercial</h3>
 <p>Projeta receita ordinária (dízimos e ofertas) com base no realizado. A diretoria planeja com evidência, não só com esperança.</p>
 <h3 id="propósito-e-conexões-43">Propósito e conexões</h3>
-<p>Modelo em <code>financialPredictiveModel</code>. Exige histórico mínimo de meses positivos.</p>
+<p>Modelo em <code>financialPredictiveModel</code>. Exige histórico mínimo de meses positivos. Treina nos últimos 12 meses <strong>com receita</strong>; a previsão começa no mês seguinte ao <strong>calendário</strong>. Líquido projetado = entradas − saídas (inteiros).</p>
 <h3 id="controles-interativos-42">Controles interativos</h3>
 <table>
 <thead>
@@ -3685,14 +3685,24 @@ Operação de tesouraria com versão orçamentária explícita e rastro de RD.
 </tr>
 </thead>
 <tbody><tr>
-<td>Recorte de meses / parâmetros</td>
-<td>Controles</td>
-<td>Ajusta a janela usada na projeção.</td>
+<td>Informativo <strong>Modelo Preditivo</strong> + ícone <strong>i</strong></td>
+<td>Título/ajuda</td>
+<td>Explica treino vs previsão e o líquido.</td>
 </tr>
 <tr>
-<td>Gráfico / totais projetados</td>
+<td><strong>Recalcular modelo</strong></td>
+<td>Botão</td>
+<td>Relê financeiro e membresia e refaz a regressão.</td>
+</tr>
+<tr>
+<td><strong>Fórmula membros</strong> / <strong>Fórmula LTV</strong></td>
+<td>Botões</td>
+<td>Mostram as contas usadas nos cards.</td>
+</tr>
+<tr>
+<td>Tabelas de histórico e previsão</td>
 <td>Leitura</td>
-<td>Mostra a tendência de dízimos e ofertas ordinárias.</td>
+<td>Histórico de treino; receita e membros dos 12 meses <strong>futuros</strong> (após o mês calendário).</td>
 </tr>
 </tbody></table>
 <h3 id="o-que-os-resultados-representam-43">O que os resultados representam</h3>
@@ -3704,12 +3714,24 @@ Operação de tesouraria com versão orçamentária explícita e rastro de RD.
 </tr>
 </thead>
 <tbody><tr>
-<td>Projeção numérica</td>
-<td>Estimativa com base no <strong>realizado</strong>, não no planejado.</td>
+<td><strong>Último mês da base</strong></td>
+<td>Último mês com dízimos/ofertas ordinários realizados. Se for anterior a julho quando estamos em agosto, o financeiro está atrasado.</td>
 </tr>
 <tr>
-<td>Mensagem de histórico insuficiente</td>
-<td>Ainda não há meses positivos bastante para o modelo.</td>
+<td><strong>Previsão a partir de</strong></td>
+<td>Primeiro mês projetado = mês seguinte ao calendário (não o mês seguinte ao último financeiro).</td>
+</tr>
+<tr>
+<td>Aviso âmbar de atraso</td>
+<td>Junho–agosto sem carga: o treino continua em maio, mas a janela projetada <strong>avança</strong> com o calendário.</td>
+</tr>
+<tr>
+<td>Entradas / saídas / líquidos</td>
+<td>Líquidos = entradas − saídas em cada mês. Os totais do resumo são a soma desses inteiros.</td>
+</tr>
+<tr>
+<td>LTV negativo</td>
+<td>No histórico, mais membros no mês associou-se a menos receita no mês seguinte (ou o inverso).</td>
 </tr>
 </tbody></table>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">

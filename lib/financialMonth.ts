@@ -80,6 +80,10 @@ export const compareFinancialMonthKeys = (
   return left.month - right.month;
 };
 
+/** Distância em meses de calendário (`to` − `from`). Pode ser negativa. */
+export const countFinancialMonthsBetween = (from: FinancialMonthKey, to: FinancialMonthKey) =>
+  (to.year - from.year) * 12 + (to.month - from.month);
+
 export const getCalendarMonthKey = (referenceDate = new Date()): FinancialMonthKey => ({
   year: referenceDate.getFullYear(),
   month: referenceDate.getMonth() + 1,

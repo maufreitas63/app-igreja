@@ -1,8 +1,11 @@
 import {
+  compareFinancialMonthKeys,
+  countFinancialMonthsBetween,
   formatFinancialMonthKey,
   formatFinancialMonthLabel,
   getCalendarMonthKey,
   getNextFinancialMonth,
+  getPreviousFinancialMonth,
   type FinancialMonthKey,
 } from '@/lib/financialMonth';
 import type { MemberGrowthMonthPoint } from '@/lib/memberGrowthSeries';
@@ -56,6 +59,9 @@ export type PredictiveInsightsModel = {
   };
   calculationBaseMonths: number;
   lastHistoricalMonth: FinancialMonthKey;
+  calendarMonth: FinancialMonthKey;
+  forecastStartMonth: FinancialMonthKey;
+  financialHistoryLagMonths: number;
 };
 
 export const PREDICTIVE_FORECAST_MONTHS = 12 as const;
@@ -473,6 +479,8 @@ const fitSeasonalLinearRegression = (
 const average = (values: number[]) =>
   values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
 
+const roundMemberCount = (value: number) => Math.max(0, Math.round(value));
+
 export const countPositiveRevenueMonths = (revenueByMonth: Map<string, number>) =>
   [...revenueByMonth.values()].filter((value) => value > 0).length;
 
@@ -545,6 +553,7 @@ export const buildPredictiveInsightsModel = (input: {
       } satisfies PredictiveHistoricalPoint;
     })
     .filter((point) => Number.isFinite(point.month.year) && Number.isFinite(point.month.month))
+    .filter((point) => compareFinancialMonthKeys(point.month, endMonth) <= 0)
     .sort((left, right) => formatFinancialMonthKey(left.month).localeCompare(formatFinancialMonthKey(right.month)));
 
   const revenueHistory = historicalPoints.filter((point) => point.revenue > 0);
@@ -587,15 +596,8 @@ export const buildPredictiveInsightsModel = (input: {
     growthPairs.map((pair) => pair.nextRevenueDelta)
   );
 
-  const avgNetMemberChange = average(calculationHistory.map((point) => point.netMemberChange));
   const avgEntries = average(calculationHistory.map((point) => point.memberEntries));
   const avgExits = average(calculationHistory.map((point) => point.memberExits));
-  const memberNetRegression =
-    fitScalarSeasonalRegression(toScalarMonthPoints(calculationHistory, (point) => point.netMemberChange))
-    ?? {
-      rSquared: 0,
-      predict: (_timeIndex: number, _month: number) => avgNetMemberChange,
-    };
   const memberEntriesRegression =
     fitScalarSeasonalRegression(toScalarMonthPoints(calculationHistory, (point) => point.memberEntries))
     ?? {
@@ -608,13 +610,33 @@ export const buildPredictiveInsightsModel = (input: {
       rSquared: 0,
       predict: (_timeIndex: number, _month: number) => avgExits,
     };
-  const lastActiveMembers =
-    calculationHistory[calculationHistory.length - 1]?.activeMembersEnd
-    ?? historicalPoints[historicalPoints.length - 1]?.activeMembersEnd
-    ?? 0;
+  const reconstructedNetPredictions = calculationHistory.map((point, index) => {
+    const entries = roundMemberCount(memberEntriesRegression.predict(index, point.month.month));
+    const exits = roundMemberCount(memberExitsRegression.predict(index, point.month.month));
+    return entries - exits;
+  });
+  const memberNetChangeRSquared = computeScalarRSquared(
+    toScalarMonthPoints(calculationHistory, (point) => point.netMemberChange),
+    reconstructedNetPredictions
+  );
+
+  const calendarMemberPoint =
+    memberByKey.get(formatFinancialMonthKey(endMonth))
+    ?? [...historicalPoints].reverse().find(
+      (point) => compareFinancialMonthKeys(point.month, endMonth) <= 0
+    )
+    ?? calculationHistory[calculationHistory.length - 1];
+  const lastActiveMembers = calendarMemberPoint?.activeMembersEnd ?? 0;
 
   const baselineMonthIndex = calculationHistory.length - 1;
   const baselineMonth = calculationHistory[baselineMonthIndex].month;
+  const expectedClosedMonth = getPreviousFinancialMonth(endMonth);
+  const financialHistoryLagMonths = Math.max(
+    0,
+    countFinancialMonthsBetween(baselineMonth, expectedClosedMonth)
+  );
+  const forecastOriginMonth = endMonth;
+  const forecastStartMonth = getNextFinancialMonth(forecastOriginMonth);
   const meanRevenue = average(calculationHistory.map((point) => point.revenue));
 
   const seasonalityHighlights = Array.from({ length: 12 }, (_, index) => {
@@ -637,7 +659,7 @@ export const buildPredictiveInsightsModel = (input: {
 
   for (const horizonMonths of FORECAST_HORIZONS) {
     const forecastPoints: PredictiveForecastPoint[] = [];
-    let cursorMonth = baselineMonth;
+    let cursorMonth = forecastOriginMonth;
     let activeMembers = lastActiveMembers;
     let totalProjectedRevenue = 0;
     let growthAttributedRevenue = 0;
@@ -648,13 +670,15 @@ export const buildPredictiveInsightsModel = (input: {
 
     for (let step = 1; step <= horizonMonths; step += 1) {
       cursorMonth = getNextFinancialMonth(cursorMonth);
-      const timeIndex = baselineMonthIndex + step;
+      const timeIndex = baselineMonthIndex + countFinancialMonthsBetween(baselineMonth, cursorMonth);
       const seasonalRevenue = regression.predict(timeIndex, cursorMonth.month);
-      const projectedEntries = Math.max(0, memberEntriesRegression.predict(timeIndex, cursorMonth.month));
-      const projectedExits = Math.max(0, memberExitsRegression.predict(timeIndex, cursorMonth.month));
-      const projectedNetMemberChange = Math.round(
-        memberNetRegression.predict(timeIndex, cursorMonth.month)
+      const projectedEntries = roundMemberCount(
+        memberEntriesRegression.predict(timeIndex, cursorMonth.month)
       );
+      const projectedExits = roundMemberCount(
+        memberExitsRegression.predict(timeIndex, cursorMonth.month)
+      );
+      const projectedNetMemberChange = projectedEntries - projectedExits;
       const growthRevenue = revenuePerNewMemberMonthly * projectedNetMemberChange;
       const revenue = Math.max(0, seasonalRevenue + growthRevenue);
 
@@ -713,11 +737,14 @@ export const buildPredictiveInsightsModel = (input: {
     modelQuality: {
       revenueRSquared: regression.rSquared,
       growthCorrelation,
-      memberNetChangeRSquared: memberNetRegression.rSquared,
+      memberNetChangeRSquared,
       sampleMonths: calculationHistory.length,
     },
     calculationBaseMonths: calculationHistory.length,
     lastHistoricalMonth: baselineMonth,
+    calendarMonth: endMonth,
+    forecastStartMonth,
+    financialHistoryLagMonths,
   };
 };
 
@@ -745,17 +772,17 @@ export const buildPredictiveMemberFormulaMessage = (
     'Base de dados:',
     '• Entradas: perfis com membership_date no mês.',
     '• Saídas: perfis com membership_out no mês.',
-    '• Membros líquidos = entradas − saídas.',
-    '• Membros ativos = contagem no fim de cada mês.',
-    `• Janela de cálculo: últimos ${baseCalculationMonths} meses com receita ordinária (padrão ${PREDICTIVE_BASE_MONTHS}).`,
+    '• Membros líquidos = entradas − saídas (inteiros por mês; a projeção não usa um terceiro modelo).',
+    '• Membros ativos = estoque no fim do mês calendário + líquido projetado mês a mês.',
+    `• Janela de treino: últimos ${baseCalculationMonths} meses com receita ordinária (padrão ${PREDICTIVE_BASE_MONTHS}).`,
+    '• A previsão começa no mês seguinte ao calendário, mesmo se o financeiro estiver atrasado.',
     '',
-    'Modelo mensal (entradas, saídas e líquido):',
+    'Modelo mensal (entradas e saídas):',
     'Regressão linear com tendência + fator sazonal por mês do calendário.',
     '',
     `Projeção (${horizonMonths} meses):`,
-    '• Cada mês futuro usa a tendência + sazonalidade estimadas.',
-    '• Membros ativos acumulam o líquido mês a mês.',
-    '• Crescimento % = (ativos no fim − ativos hoje) ÷ ativos hoje.',
+    '• Cada mês futuro usa a tendência + sazonalidade, com o índice de tempo alinhado ao calendário.',
+    '• Crescimento % = (ativos no fim da previsão − ativos hoje) ÷ ativos hoje.',
     '',
     'A receita de crescimento usa o líquido projetado × LTV por novo membro/mês.',
   ].join('\n');
@@ -767,8 +794,9 @@ export const buildPredictiveLtvFormulaMessage = (
   [
     'Base de dados:',
     '• Receita ordinária realizada (dízimos e ofertas).',
-    '• Membros líquidos = entradas (membership_date) − saídas (membership_out) por mês.',
-    `• Janela de cálculo: últimos ${baseCalculationMonths} meses com receita (padrão ${PREDICTIVE_BASE_MONTHS}).`,
+    '• Membros líquidos = entradas − saídas (inteiros) por mês.',
+    `• Janela de treino: últimos ${baseCalculationMonths} meses com receita (padrão ${PREDICTIVE_BASE_MONTHS}).`,
+    '• A previsão futura começa após o mês calendário, não após o último mês financeiro.',
     '',
     'LTV por novo membro/mês:',
     'Média histórica de (Δ receita no mês seguinte ÷ Δ membros líquidos no mês),',
@@ -778,5 +806,35 @@ export const buildPredictiveLtvFormulaMessage = (
     'LTV por novo membro/mês × horizonte de previsão (12 meses).',
     '',
     'Na previsão mensal, a parcela de crescimento usa:',
-    'membros líquidos projetados (tendência + sazonalidade) × LTV por novo membro/mês.',
+    'membros líquidos projetados (entradas − saídas) × LTV por novo membro/mês.',
   ].join('\n');
+
+export const describePredictiveForecastAnchor = (model: {
+  lastHistoricalMonth: FinancialMonthKey;
+  forecastStartMonth: FinancialMonthKey;
+}) =>
+  `Último mês com receita ordinária: ${formatFinancialMonthLabel(model.lastHistoricalMonth)}. Previsão a partir de ${formatFinancialMonthLabel(model.forecastStartMonth)}.`;
+
+export const describePredictiveBaseWindow = (model: {
+  lastHistoricalMonth: FinancialMonthKey;
+  calendarMonth: FinancialMonthKey;
+  forecastStartMonth: FinancialMonthKey;
+  calculationBaseMonths: number;
+  financialHistoryLagMonths: number;
+}) => {
+  const lastLabel = formatFinancialMonthLabel(model.lastHistoricalMonth);
+  const startLabel = formatFinancialMonthLabel(model.forecastStartMonth);
+  const calendarLabel = formatFinancialMonthLabel(model.calendarMonth);
+  const expectedClosed = formatFinancialMonthLabel(getPreviousFinancialMonth(model.calendarMonth));
+
+  if (model.financialHistoryLagMonths <= 0) {
+    return `Base: ${model.calculationBaseMonths} meses com receita ordinária até ${lastLabel}. Previsão a partir de ${startLabel}.`;
+  }
+
+  return [
+    `Último mês com receita ordinária na base: ${lastLabel}.`,
+    `O financeiro está atrasado em relação a ${expectedClosed} (${model.financialHistoryLagMonths} mês(es)).`,
+    `A previsão começa em ${startLabel} (mês seguinte a ${calendarLabel}), não no mês após ${lastLabel}.`,
+    'Importe dízimos/ofertas realizados dos meses faltantes para o modelo treinar com o período atual.',
+  ].join(' ');
+};

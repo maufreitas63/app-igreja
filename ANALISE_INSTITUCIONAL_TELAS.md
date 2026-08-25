@@ -1899,21 +1899,26 @@ Projeta receita ordinária (dízimos e ofertas) com base no realizado. A diretor
 
 ### Propósito e conexões
 
-Modelo em `financialPredictiveModel`. Exige histórico mínimo de meses positivos.
+Modelo em `financialPredictiveModel`. Exige histórico mínimo de meses positivos. Treina nos últimos 12 meses **com receita**; a previsão começa no mês seguinte ao **calendário**. Líquido projetado = entradas − saídas (inteiros).
 
 ### Controles interativos
 
 | Controle | Tipo | O que faz |
 |---|---|---|
-| Recorte de meses / parâmetros | Controles | Ajusta a janela usada na projeção. |
-| Gráfico / totais projetados | Leitura | Mostra a tendência de dízimos e ofertas ordinárias. |
+| Informativo **Modelo Preditivo** + ícone **i** | Título/ajuda | Explica treino vs previsão e o líquido. |
+| **Recalcular modelo** | Botão | Relê financeiro e membresia e refaz a regressão. |
+| **Fórmula membros** / **Fórmula LTV** | Botões | Mostram as contas usadas nos cards. |
+| Tabelas de histórico e previsão | Leitura | Histórico de treino; receita e membros dos 12 meses **futuros** (após o mês calendário). |
 
 ### O que os resultados representam
 
 | Resultado | Significado |
 |---|---|
-| Projeção numérica | Estimativa com base no **realizado**, não no planejado. |
-| Mensagem de histórico insuficiente | Ainda não há meses positivos bastante para o modelo. |
+| **Último mês da base** | Último mês com dízimos/ofertas ordinários realizados. Se for anterior a julho quando estamos em agosto, o financeiro está atrasado. |
+| **Previsão a partir de** | Primeiro mês projetado = mês seguinte ao calendário (não o mês seguinte ao último financeiro). |
+| Aviso âmbar de atraso | Junho–agosto sem carga: o treino continua em maio, mas a janela projetada **avança** com o calendário. |
+| Entradas / saídas / líquidos | Líquidos = entradas − saídas em cada mês. Os totais do resumo são a soma desses inteiros. |
+| LTV negativo | No histórico, mais membros no mês associou-se a menos receita no mês seguinte (ou o inverso). |
 
 <div class="split">
 <div class="vision user">

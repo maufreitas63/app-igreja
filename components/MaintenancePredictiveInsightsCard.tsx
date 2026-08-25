@@ -4,6 +4,8 @@ import { SectionLabel } from '@/components/ui/SectionLabel';
 import {
   buildPredictiveLtvFormulaMessage,
   buildPredictiveMemberFormulaMessage,
+  describePredictiveBaseWindow,
+  describePredictiveForecastAnchor,
   formatPredictiveCurrency,
   formatPredictiveMonthLabel,
   PREDICTIVE_BASE_MONTHS,
@@ -82,7 +84,7 @@ export function MaintenancePredictiveInsightsCard({
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
       <MaintenanceHelpInfoTitle
         title="Modelo Preditivo"
-        helpText={`Previsibilidade de arrecadação ordinária e de crescimento de membros com base nos últimos ${PREDICTIVE_BASE_MONTHS} meses e projeção para os próximos ${PREDICTIVE_FORECAST_MONTHS} meses, incluindo sazonalidade mensal e LTV eclesiástico.`}
+        helpText={`Previsibilidade de arrecadação ordinária e de crescimento de membros. O treino usa os últimos ${PREDICTIVE_BASE_MONTHS} meses com receita ordinária; a previsão dos próximos ${PREDICTIVE_FORECAST_MONTHS} meses começa após o mês calendário. Líquido projetado = entradas − saídas.`}
         minimal={minimal}
         titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
       />
@@ -115,6 +117,11 @@ export function MaintenancePredictiveInsightsCard({
           <SectionLabel variant="maintenance" style={sectionLabelStyle}>
             Resumo da previsão ({PREDICTIVE_FORECAST_MONTHS} meses)
           </SectionLabel>
+          {model.financialHistoryLagMonths > 0 ? (
+            <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
+              {describePredictiveBaseWindow(model)}
+            </Text>
+          ) : null}
           {summary ? (
             <View style={styles.summaryGrid}>
               <View style={styles.summaryRow}>
@@ -123,7 +130,7 @@ export function MaintenancePredictiveInsightsCard({
                     Membros ativos (fim)
                   </Text>
                   <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
-                    {summary.projectedActiveMembersEnd.toFixed(0)}
+                    {Math.round(summary.projectedActiveMembersEnd)}
                   </Text>
                 </View>
                 <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
@@ -142,7 +149,7 @@ export function MaintenancePredictiveInsightsCard({
                     Entradas projetadas
                   </Text>
                   <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
-                    {summary.totalProjectedEntries.toFixed(0)}
+                    {Math.round(summary.totalProjectedEntries)}
                   </Text>
                 </View>
                 <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
@@ -150,7 +157,7 @@ export function MaintenancePredictiveInsightsCard({
                     Saídas projetadas
                   </Text>
                   <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
-                    {summary.totalProjectedExits.toFixed(0)}
+                    {Math.round(summary.totalProjectedExits)}
                   </Text>
                 </View>
               </View>
@@ -160,7 +167,8 @@ export function MaintenancePredictiveInsightsCard({
                     Membros líquidos
                   </Text>
                   <Text style={[styles.summaryValue, minimal && styles.summaryValueMinimal]}>
-                    {summary.totalProjectedNetMembers.toFixed(0)}
+                    {summary.totalProjectedNetMembers > 0 ? '+' : ''}
+                    {Math.round(summary.totalProjectedNetMembers)}
                   </Text>
                 </View>
                 <View style={[styles.summaryCard, minimal && styles.summaryCardMinimal]}>
@@ -266,7 +274,7 @@ export function MaintenancePredictiveInsightsCard({
           </SectionLabel>
           <Text style={[styles.metaText, minimal && styles.metaTextMinimal]}>
             R² receita: {(model.modelQuality.revenueRSquared * 100).toFixed(1)}% · R² membros
-            líquidos: {(model.modelQuality.memberNetChangeRSquared * 100).toFixed(1)}% · Correlação
+            líquidos (entradas − saídas): {(model.modelQuality.memberNetChangeRSquared * 100).toFixed(1)}% · Correlação
             crescimento: {(model.modelQuality.growthCorrelation * 100).toFixed(1)}% · Amostra:{' '}
             {model.modelQuality.sampleMonths} meses
           </Text>
@@ -275,8 +283,7 @@ export function MaintenancePredictiveInsightsCard({
             Base de cálculo preditivo
           </SectionLabel>
           <Text style={[styles.metaText, minimal && styles.metaTextMinimal]}>
-            Últimos {PREDICTIVE_BASE_MONTHS} meses com receita ordinária para sazonalidade, LTV e
-            projeções. Previsão futura: {PREDICTIVE_FORECAST_MONTHS} meses.
+            {describePredictiveForecastAnchor(model)}
           </Text>
 
           <SectionLabel variant="maintenance" style={sectionLabelStyle}>
@@ -287,7 +294,8 @@ export function MaintenancePredictiveInsightsCard({
             {model.calculationBaseMonths < PREDICTIVE_BASE_MONTHS
               ? ` (apenas ${model.calculationBaseMonths} com receita cadastrada)`
               : ''}
-            .
+            . Último mês da base: {formatPredictiveMonthLabel(model.lastHistoricalMonth)}. Previsão a
+            partir de {formatPredictiveMonthLabel(model.forecastStartMonth)}.
           </Text>
           <View style={[styles.table, minimal && styles.tableMinimal]}>
             <View style={[styles.tableHeaderRow, minimal && styles.tableHeaderRowMinimal]}>
@@ -446,7 +454,73 @@ export function MaintenancePredictiveInsightsCard({
                   {formatPredictiveCurrency(point.revenueFromGrowth)}
                 </Text>
                 <Text style={[styles.tableCell, styles.ativosColumn, minimal && styles.tableCellMinimal]}>
-                  {point.projectedActiveMembers.toFixed(0)}
+                  {Math.round(point.projectedActiveMembers)}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <SectionLabel variant="maintenance" style={sectionLabelStyle}>
+            Previsão de membros ({PREDICTIVE_FORECAST_MONTHS} meses)
+          </SectionLabel>
+          <View style={[styles.table, minimal && styles.tableMinimal]}>
+            <View style={[styles.tableHeaderRow, minimal && styles.tableHeaderRowMinimal]}>
+              <Text
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.monthColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+              >
+                Mês
+              </Text>
+              <Text
+                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+              >
+                Ent
+              </Text>
+              <Text
+                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+              >
+                Sai
+              </Text>
+              <Text
+                style={[styles.tableCell, styles.tableHeaderCell, minimal && styles.tableHeaderCellMinimal]}
+              >
+                Líq.
+              </Text>
+              <Text
+                style={[
+                  styles.tableCell,
+                  styles.tableHeaderCell,
+                  styles.ativosColumn,
+                  minimal && styles.tableHeaderCellMinimal,
+                ]}
+              >
+                Ativos
+              </Text>
+            </View>
+            {forecastPoints.map((point) => (
+              <View
+                key={`membros-${formatPredictiveMonthLabel(point.month)}`}
+                style={[styles.tableRow, minimal && styles.tableRowMinimal]}
+              >
+                <Text style={[styles.tableCell, styles.monthColumn, minimal && styles.tableCellMinimal]}>
+                  {formatPredictiveMonthLabel(point.month)}
+                </Text>
+                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                  {point.projectedEntries}
+                </Text>
+                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                  {point.projectedExits}
+                </Text>
+                <Text style={[styles.tableCell, minimal && styles.tableCellMinimal]}>
+                  {point.projectedNetMemberChange > 0 ? '+' : ''}
+                  {point.projectedNetMemberChange}
+                </Text>
+                <Text style={[styles.tableCell, styles.ativosColumn, minimal && styles.tableCellMinimal]}>
+                  {Math.round(point.projectedActiveMembers)}
                 </Text>
               </View>
             ))}
@@ -488,6 +562,15 @@ const styles = StyleSheet.create({
   },
   errorTextMinimal: {
     color: '#DC2626',
+  },
+  warningText: {
+    color: '#FBBF24',
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 4,
+  },
+  warningTextMinimal: {
+    color: '#B45309',
   },
   reloadButton: {
     alignSelf: 'flex-start',
