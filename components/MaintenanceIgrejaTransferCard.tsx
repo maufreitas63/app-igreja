@@ -16,7 +16,6 @@ import {
 } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { confirmDialog } from '@/lib/confirmDialog';
-import { formatCpf } from '@/lib/cpfValidation';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -86,8 +85,6 @@ export function MaintenanceIgrejaTransferCard({
 }: Props) {
   const [tab, setTab] = useState<TabKey>('solicitar');
   const [phone, setPhone] = useState('');
-  const [cpf, setCpf] = useState('');
-  const [familyCode, setFamilyCode] = useState('');
   const [includeFamily, setIncludeFamily] = useState(false);
   const [note, setNote] = useState('');
   const [preview, setPreview] = useState<IgrejaTransferPreview | null>(null);
@@ -129,9 +126,7 @@ export function MaintenanceIgrejaTransferCard({
     try {
       const next = await pastoralPreviewTransferenciaEntrada({
         phone,
-        cpf,
-        familyCode,
-        includeFamily: includeFamily || Boolean(familyCode.trim()),
+        includeFamily,
       });
       setPreview(next);
       setIncludeFamily(next.includeFamily);
@@ -169,9 +164,7 @@ export function MaintenanceIgrejaTransferCard({
       const result = await pastoralIniciarTransferenciaEntrada({
         originTenantId: preview.originTenantId,
         phone,
-        cpf,
-        familyCode,
-        includeFamily: includeFamily || Boolean(familyCode.trim()),
+        includeFamily,
         note,
       });
       Toast.show({ type: 'success', text1: 'Pedido enviado', text2: result.message });
@@ -310,43 +303,29 @@ export function MaintenanceIgrejaTransferCard({
           {tab === 'solicitar' ? (
             <>
               <Text style={styles.fieldLabel}>Celular</Text>
-              <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={(value) => {
-                  setPhone(formatBrazilPhoneInput(value));
-                  setPreview(null);
-                }}
-                placeholder="(00) 00000-0000"
-                placeholderTextColor={MINIMAL_UI.textMuted}
-                keyboardType="phone-pad"
-              />
-
-              <Text style={styles.fieldLabel}>CPF</Text>
-              <TextInput
-                style={styles.input}
-                value={cpf}
-                onChangeText={(value) => {
-                  setCpf(formatCpf(value));
-                  setPreview(null);
-                }}
-                placeholder="000.000.000-00"
-                placeholderTextColor={MINIMAL_UI.textMuted}
-                keyboardType="number-pad"
-              />
-
-              <Text style={styles.fieldLabel}>Código da família</Text>
-              <TextInput
-                style={styles.input}
-                value={familyCode}
-                onChangeText={(value) => {
-                  setFamilyCode(value.toUpperCase());
-                  setPreview(null);
-                }}
-                placeholder="Ex.: IBN0001"
-                placeholderTextColor={MINIMAL_UI.textMuted}
-                autoCapitalize="characters"
-              />
+              <View style={styles.phoneRow}>
+                <TextInput
+                  style={[styles.input, styles.phoneInput]}
+                  value={phone}
+                  onChangeText={(value) => {
+                    setPhone(formatBrazilPhoneInput(value));
+                    setPreview(null);
+                  }}
+                  placeholder="(00) 00000-0000"
+                  placeholderTextColor={MINIMAL_UI.textMuted}
+                  keyboardType="phone-pad"
+                />
+                <TouchableOpacity
+                  style={styles.searchBtnInline}
+                  onPress={() => void handlePreview()}
+                  disabled={saving}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.searchBtnText}>
+                    {saving ? 'Buscando...' : 'Localizar cadastro'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
               <TouchableOpacity
                 style={styles.checkRow}
@@ -366,15 +345,6 @@ export function MaintenanceIgrejaTransferCard({
                 placeholderTextColor={MINIMAL_UI.textMuted}
                 multiline
               />
-
-              <TouchableOpacity
-                style={styles.searchBtn}
-                onPress={() => void handlePreview()}
-                disabled={saving}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.searchBtnText}>{saving ? 'Buscando...' : 'Localizar cadastro'}</Text>
-              </TouchableOpacity>
 
               {preview ? (
                 <View style={styles.previewBox}>
@@ -552,6 +522,29 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
     fontSize: 14,
   },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  phoneInput: {
+    width: 148,
+    flexGrow: 0,
+    flexShrink: 0,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  searchBtnInline: {
+    flex: 1,
+    minWidth: 0,
+    backgroundColor: ACCENT,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 37,
+  },
   noteInput: {
     minHeight: 64,
     textAlignVertical: 'top',
@@ -592,7 +585,8 @@ const styles = StyleSheet.create({
   searchBtnText: {
     color: '#FFFFFF',
     fontWeight: '800',
-    fontSize: 13,
+    fontSize: 12,
+    textAlign: 'center',
   },
   previewBox: {
     marginTop: 10,
