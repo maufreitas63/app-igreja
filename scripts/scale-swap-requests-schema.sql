@@ -552,6 +552,16 @@ begin
   end if;
 
   if v_req.escala_id_origem is null then
+    update public.scale_swap_requests
+       set status = 'cancelado',
+           resolved_at = now(),
+           resolved_by = v_me,
+           updated_at = now()
+     where id = v_req.id;
+    perform public.scale_swap_insert_audit(
+      v_tenant, v_req.id, v_req.escala_id_origem, v_me, 'cancelado',
+      v_req.voluntario_id_origem, v_req.voluntario_id_substituto, '{}'::jsonb
+    );
     return jsonb_build_object('success', false, 'message', 'A escala de origem não existe mais.');
   end if;
 
@@ -562,10 +572,35 @@ begin
    for update;
 
   if not found then
+    update public.scale_swap_requests
+       set status = 'cancelado',
+           resolved_at = now(),
+           resolved_by = v_me,
+           updated_at = now()
+     where id = v_req.id;
+    perform public.scale_swap_insert_audit(
+      v_tenant, v_req.id, v_req.escala_id_origem, v_me, 'cancelado',
+      v_req.voluntario_id_origem, v_req.voluntario_id_substituto, '{}'::jsonb
+    );
     return jsonb_build_object('success', false, 'message', 'A escala de origem não existe mais.');
   end if;
 
   if v_log.voluntario_id is distinct from v_req.voluntario_id_origem then
+    update public.scale_swap_requests
+       set status = 'cancelado',
+           resolved_at = now(),
+           resolved_by = v_me,
+           updated_at = now()
+     where id = v_req.id;
+    perform public.scale_swap_insert_notice(
+      v_tenant, v_req.solicitante_profile_id, v_req.id,
+      'Troca cancelada',
+      'A escala original já foi alterada. O pedido foi cancelado.'
+    );
+    perform public.scale_swap_insert_audit(
+      v_tenant, v_req.id, v_req.escala_id_origem, v_me, 'cancelado',
+      v_req.voluntario_id_origem, v_req.voluntario_id_substituto, '{}'::jsonb
+    );
     return jsonb_build_object('success', false, 'message', 'A escala original já foi alterada. O pedido foi cancelado.');
   end if;
 
@@ -719,6 +754,13 @@ begin
     return jsonb_build_object('success', false, 'message', 'A escala de origem não existe mais.');
   end if;
 
+  if v_log.voluntario_id is distinct from v_req.voluntario_id_substituto then
+    return jsonb_build_object(
+      'success', false,
+      'message', 'A escala já foi alterada depois desta troca. Não é possível desfazer.'
+    );
+  end if;
+
   if exists (
     select 1 from public.escalas_log busy
      where busy.tenant_id = v_tenant
@@ -780,6 +822,7 @@ declare
   v_solicitante uuid;
   v_id uuid;
   v_type_name text;
+  v_pending public.scale_swap_requests%rowtype;
 begin
   if v_me is null or not public.scale_swap_can_lead() then
     return jsonb_build_object('success', false, 'message', 'Sem permissão para intervir na escala.');
@@ -831,6 +874,39 @@ begin
     when unique_violation then
       return jsonb_build_object('success', false, 'message', 'O substituto já possui escala nesta data.');
   end;
+
+  for v_pending in
+    select *
+      from public.scale_swap_requests r
+     where r.tenant_id = v_tenant
+       and r.escala_id_origem = v_log.id
+       and r.status = 'pendente'
+     for update
+  loop
+    update public.scale_swap_requests
+       set status = 'cancelado',
+           resolved_at = now(),
+           resolved_by = v_me,
+           updated_at = now()
+     where id = v_pending.id;
+
+    perform public.scale_swap_insert_notice(
+      v_tenant, v_pending.solicitante_profile_id, v_pending.id,
+      'Troca cancelada',
+      'A liderança alterou esta escala. O pedido pendente foi cancelado.'
+    );
+    if v_pending.substituto_profile_id is not null then
+      perform public.scale_swap_insert_notice(
+        v_tenant, v_pending.substituto_profile_id, v_pending.id,
+        'Troca cancelada',
+        'A liderança alterou esta escala. O pedido pendente foi cancelado.'
+      );
+    end if;
+    perform public.scale_swap_insert_audit(
+      v_tenant, v_pending.id, v_log.id, v_me, 'cancelado',
+      v_pending.voluntario_id_origem, v_pending.voluntario_id_substituto, '{}'::jsonb
+    );
+  end loop;
 
   insert into public.scale_swap_requests (
     tenant_id, escala_id_origem, tipo_escala_id, data_servico,
@@ -1071,5 +1147,23 @@ grant execute on function public.list_unread_scale_swap_notices() to anon, authe
 grant execute on function public.mark_scale_swap_notices_read() to anon, authenticated, service_role;
 grant execute on function public.set_tipo_escala_allow_swap(uuid, boolean) to anon, authenticated, service_role;
 grant execute on function public.listar_tipos_escala_manutencao() to anon, authenticated, service_role;
+
+-- Pedidos que diziam "cancelado" na mensagem mas continuavam pendentes.
+update public.scale_swap_requests r
+   set status = 'cancelado',
+       resolved_at = coalesce(r.resolved_at, now()),
+       updated_at = now()
+ where r.status = 'pendente'
+   and (
+     r.escala_id_origem is null
+     or not exists (
+       select 1 from public.escalas_log el where el.id = r.escala_id_origem
+     )
+     or exists (
+       select 1 from public.escalas_log el
+        where el.id = r.escala_id_origem
+          and el.voluntario_id is distinct from r.voluntario_id_origem
+     )
+   );
 
 notify pgrst, 'reload schema';

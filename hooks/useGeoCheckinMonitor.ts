@@ -117,6 +117,7 @@ export const useGeoCheckinMonitor = ({
   const stopWatchRef = useRef<(() => void) | null>(null);
   const triggeredRef = useRef(false);
   const precheckinPromptShownRef = useRef(false);
+  const pendingConfirmCoordsRef = useRef<GeoCoordinates | null>(null);
   const onConfirmedRef = useRef(onConfirmed);
   const onRequiresPrecheckinRef = useRef(onRequiresPrecheckin);
   const proximityUiRef = useRef({
@@ -163,14 +164,9 @@ export const useGeoCheckinMonitor = ({
     && !hasFamilyGeoCheckinConfirmed;
 
   useEffect(() => {
-    if (hasFamilyPreCheckin) {
-      precheckinPromptShownRef.current = false;
-    }
-  }, [hasFamilyPreCheckin]);
-
-  useEffect(() => {
     triggeredRef.current = false;
     precheckinPromptShownRef.current = false;
+    pendingConfirmCoordsRef.current = null;
   }, [eventId, familyId]);
 
   const runConfirmFlow = useCallback(
@@ -179,6 +175,7 @@ export const useGeoCheckinMonitor = ({
         return;
       }
 
+      pendingConfirmCoordsRef.current = coords;
       setLastCoordinates(coords);
       setStatus('syncing');
       setErrorMessage(null);
@@ -229,6 +226,7 @@ export const useGeoCheckinMonitor = ({
           throw new Error(result.message ?? 'Falha ao confirmar check-in.');
         }
 
+        pendingConfirmCoordsRef.current = null;
         setStatus('confirmed');
         notifyGeoCheckinConfirmed(result.participant_names);
         await onConfirmedRef.current?.();
@@ -244,6 +242,25 @@ export const useGeoCheckinMonitor = ({
 
   const runConfirmFlowRef = useRef(runConfirmFlow);
   runConfirmFlowRef.current = runConfirmFlow;
+
+  useEffect(() => {
+    if (hasFamilyPreCheckin) {
+      precheckinPromptShownRef.current = false;
+    }
+
+    if (!hasFamilyPreCheckin || hasFamilyGeoCheckinConfirmed) {
+      return;
+    }
+
+    const pendingCoords = pendingConfirmCoordsRef.current;
+
+    if (pendingCoords && triggeredRef.current) {
+      void runConfirmFlowRef.current(pendingCoords);
+      return;
+    }
+
+    triggeredRef.current = false;
+  }, [hasFamilyPreCheckin, hasFamilyGeoCheckinConfirmed]);
 
   const flushProximityUi = useCallback((force = false) => {
     const snapshot = proximityUiRef.current;
@@ -345,6 +362,7 @@ export const useGeoCheckinMonitor = ({
           }
 
           triggeredRef.current = true;
+          pendingConfirmCoordsRef.current = coords;
           stopWatchRef.current?.();
           stopWatchRef.current = null;
           flushProximityUi(true);
@@ -373,6 +391,7 @@ export const useGeoCheckinMonitor = ({
     flushProximityUi,
     geofenceActive,
     geofenceRadiusMeters,
+    hasFamilyPreCheckin,
   ]);
 
   useEffect(() => {
