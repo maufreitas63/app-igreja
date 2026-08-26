@@ -292,7 +292,7 @@ function HistoricalTable({
   return (
     <View style={styles.tableCard}>
       <View style={styles.sectionBanner}>
-        <Text style={styles.sectionBannerText}>ACUMULADO HISTÓRICO</Text>
+        <Text style={styles.sectionBannerText}>SALDO ACUMULADO HISTÓRICO</Text>
       </View>
 
       <View style={[styles.tableRow, styles.subHeaderRow]}>

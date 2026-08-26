@@ -150,7 +150,7 @@ const sortAccountRows = (rows: AnalyticalAccountRow[]) =>
  * Monta o Resumo Financeiro a partir dos lançamentos REALIZADO.
  * - Movimentos do mês: entradas com subtotal, depois saídas com subtotal, depois total geral
  * - Últimos 3 meses: entradas e saídas (ordinário / extraordinário / total) + total geral
- * - Acumulado histórico: até o fim do mês de referência
+ * - Saldo acumulado histórico: até o fim do mês de referência
  */
 export function buildFinancialAnalyticalSummaryReport(
   endMonth: FinancialMonthKey,
