@@ -77,16 +77,14 @@ alter table public.pastoral_slots enable row level security;
 alter table public.pastoral_slot_notices enable row level security;
 
 drop policy if exists pastoral_slots_tenant_all on public.pastoral_slots;
-create policy pastoral_slots_tenant_all
-  on public.pastoral_slots
-  using (public.session_tenant_matches(tenant_id))
-  with check (public.session_tenant_matches(tenant_id));
+drop policy if exists pastoral_slots_deny_direct on public.pastoral_slots;
+create policy pastoral_slots_deny_direct
+  on public.pastoral_slots for all using (false) with check (false);
 
 drop policy if exists pastoral_slot_notices_tenant_all on public.pastoral_slot_notices;
-create policy pastoral_slot_notices_tenant_all
-  on public.pastoral_slot_notices
-  using (public.session_tenant_matches(tenant_id))
-  with check (public.session_tenant_matches(tenant_id));
+drop policy if exists pastoral_slot_notices_deny_direct on public.pastoral_slot_notices;
+create policy pastoral_slot_notices_deny_direct
+  on public.pastoral_slot_notices for all using (false) with check (false);
 
 -- ---------------------------------------------------------------------------
 -- 2) Helpers
@@ -215,6 +213,7 @@ language plpgsql
 stable
 security definer
 set search_path = public
+set row_security = off
 as $$
 declare
   v_tenant uuid := public.require_session_tenant_id();
@@ -333,6 +332,7 @@ language plpgsql
 stable
 security definer
 set search_path = public
+set row_security = off
 as $$
 declare
   v_tenant uuid := public.require_session_tenant_id();
@@ -388,6 +388,7 @@ language plpgsql
 stable
 security definer
 set search_path = public
+set row_security = off
 as $$
 declare
   v_tenant uuid := public.require_session_tenant_id();
@@ -647,6 +648,7 @@ language plpgsql
 stable
 security definer
 set search_path = public
+set row_security = off
 as $$
 declare
   v_actor uuid := public.current_session_profile_id();

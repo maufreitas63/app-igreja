@@ -193,28 +193,11 @@ export const buildPastoralRequestPayload = (input: {
 };
 
 export async function resolvePastoralSessionProfile(
-  routeUserId?: string | null
+  _routeUserId?: string | null
 ): Promise<PastoralSessionProfile | null> {
-  if (routeUserId) {
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('id, phone')
-      .eq('id', routeUserId)
-      .maybeSingle();
-
-    if (error) {
-      throw error;
-    }
-
-    if (profile?.id) {
-      return {
-        userId: String(profile.id),
-        phone: String(profile.phone ?? '').trim(),
-      };
-    }
-
-    return null;
-  }
+  // userId na URL não impersona outro perfil (IDOR). Assinatura mantida
+  // para deep links; a identidade é sempre a sessão efetiva (inclui Ghost).
+  void _routeUserId;
 
   // Proteção aplicada: no Ghost o Coração Aberto segue o alvo, não o operador
   const session = await loadEffectiveSessionProfile();

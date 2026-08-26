@@ -293,13 +293,30 @@ set search_path = public
 set row_security = off
 as $$
 declare
-  v_tenant uuid := coalesce(p_tenant_id, public.current_session_tenant_id());
+  v_tenant uuid;
+  v_session_tenant uuid := public.current_session_tenant_id();
+  v_session_profile uuid := public.current_session_profile_id();
+  v_privileged boolean := (session_user in ('postgres', 'supabase_admin'));
   v_linked int := 0;
   v_count int := 0;
   v_campaign record;
   v_loop_tenant uuid;
 begin
+  if v_privileged then
+    v_tenant := coalesce(p_tenant_id, v_session_tenant);
+  else
+    if v_session_profile is null or v_session_tenant is null then
+      raise exception 'Sessão inválida.';
+    end if;
+    -- PostgREST nunca concilia outra igreja nem todas as igrejas.
+    v_tenant := v_session_tenant;
+  end if;
+
   if v_tenant is null then
+    if not v_privileged then
+      raise exception 'Sessão inválida.';
+    end if;
+
     for v_loop_tenant in
       select distinct tenant_id from public.campaign_projects
     loop
@@ -344,7 +361,9 @@ begin
 end;
 $$;
 
-grant execute on function public.reconcile_campaign_deposits(uuid) to anon, authenticated;
+revoke all on function public.reconcile_campaign_deposits(uuid) from public;
+revoke all on function public.reconcile_campaign_deposits(uuid) from anon;
+grant execute on function public.reconcile_campaign_deposits(uuid) to authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
 -- 3) Membro

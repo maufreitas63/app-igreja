@@ -78,7 +78,7 @@ export default function PastoralHistoryScreen() {
     deniedMessage: 'Você não tem permissão para ver seus pedidos pastorais.',
   });
 
-  const [profileId, setProfileId] = useState<string | null>(routeUserId ?? null);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const [requests, setRequests] = useState<PastoralRequestHistoryItem[]>([]);
   const [appointments, setAppointments] = useState<MyPastoralAppointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,7 +124,7 @@ export default function PastoralHistoryScreen() {
 
       try {
         const session = await resolvePastoralSessionProfile(routeUserId ?? null);
-        const activeProfileId = session?.userId ?? routeUserId ?? null;
+        const activeProfileId = session?.userId ?? null;
 
         if (!activeProfileId) {
           setProfileId(null);

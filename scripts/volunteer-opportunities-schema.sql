@@ -226,10 +226,12 @@ returns void
 language plpgsql
 security definer
 set search_path = public
+set row_security = off
 as $$
 declare
   v_opp public.volunteer_opportunities%rowtype;
   v_type_name text;
+  v_privileged boolean := (session_user in ('postgres', 'supabase_admin'));
 begin
   select * into v_opp
     from public.volunteer_opportunities
@@ -237,6 +239,15 @@ begin
 
   if not found or v_opp.status is distinct from 'aberta' then
     return;
+  end if;
+
+  if not v_privileged then
+    if public.current_session_profile_id() is null
+       or not public.session_can_manage_volunteer_mural()
+       or v_opp.tenant_id is distinct from public.current_session_tenant_id()
+    then
+      raise exception 'Sem permissão.';
+    end if;
   end if;
 
   select te.nome into v_type_name
@@ -858,6 +869,11 @@ grant execute on function public.list_volunteer_opportunities_admin() to anon, a
 grant execute on function public.upsert_volunteer_opportunity(uuid, text, text, uuid, uuid, text[], text) to anon, authenticated, service_role;
 grant execute on function public.list_opportunity_matching_members(uuid) to anon, authenticated, service_role;
 grant execute on function public.resolve_volunteer_opportunity_interest(uuid, boolean) to anon, authenticated, service_role;
+revoke all on function public.volunteer_opportunity_notify_matches(uuid) from public;
+revoke all on function public.volunteer_opportunity_notify_matches(uuid) from anon;
+revoke all on function public.volunteer_opportunity_notify_matches(uuid) from authenticated;
+grant execute on function public.volunteer_opportunity_notify_matches(uuid) to service_role;
+
 grant execute on function public.list_unread_opportunity_notices() to anon, authenticated, service_role;
 grant execute on function public.listar_event_avisos_publicados() to anon, authenticated, service_role;
 grant execute on function public.salvar_event_aviso(uuid, uuid, text, text, integer, boolean, text, uuid) to anon, authenticated, service_role;
