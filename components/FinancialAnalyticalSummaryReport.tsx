@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   groupBannerRow: {
-    backgroundColor: '#334E68',
+    backgroundColor: '#FBBF24',
     borderTopWidth: 0,
     minHeight: 26,
     paddingVertical: 7,
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   groupBannerText: {
-    color: '#FFFFFF',
+    color: '#1E293B',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
