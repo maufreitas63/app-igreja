@@ -6,6 +6,8 @@ import {
 import { supabase } from '@/lib/supabase';
 
 export const PASTORAL_CARE_PANEL_RESOURCE = 'maintenance.card.pastoral_care';
+export const PASTORAL_SCHEDULE_RESOURCE = 'dashboard.pastoral.schedule';
+export const PASTORAL_AGENDA_RESOURCE = 'maintenance.pastoral.agenda';
 
 export const PASTORAL_DESTINATION_INTERCESSION = 'Ministério de Intercessão';
 export const PASTORAL_DESTINATION_SIGILO = 'Sigilo Pastoral';

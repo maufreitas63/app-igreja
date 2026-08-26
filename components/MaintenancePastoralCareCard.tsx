@@ -1,8 +1,11 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
+import { MaintenancePastoralAgendaPanel } from '@/components/MaintenancePastoralAgendaPanel';
 import { useMaintenancePastoralCare } from '@/hooks/useMaintenancePastoralCare';
 import {
   computeMaintenanceContentHeight,
+  MAINTENANCE_SCROLL_PROPS,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
 import { MAINTENANCE_PASTORAL_CARE_SQL_HINT } from '@/hooks/useMaintenancePastoralCare';
@@ -10,7 +13,9 @@ import {
   canApprovePastoralCancellation,
   pastoralDestinationIsIntercession,
   PASTORAL_DESTINATION_INTERCESSION,
+  PASTORAL_AGENDA_RESOURCE,
 } from '@/lib/pastoralAccess';
+import { sessionHasAccess } from '@/lib/accessControl';
 import { formatShortName } from '@/lib/formatShortName';
 import { confirmDialog } from '@/lib/confirmDialog';
 import {
@@ -133,6 +138,8 @@ export function MaintenancePastoralCareCard({
 
   const [filterProfileId, setFilterProfileId] = useState(allSubmittersFilterValue);
   const [isDetailExpanded, setIsDetailExpanded] = useState(false);
+  const [panelTab, setPanelTab] = useState<'pedidos' | 'agenda'>('pedidos');
+  const [canManageAgenda, setCanManageAgenda] = useState(false);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
@@ -176,6 +183,28 @@ export function MaintenancePastoralCareCard({
 
   useEffect(() => {
     if (!isActive) {
+      return;
+    }
+
+    let mounted = true;
+
+    void sessionHasAccess('screen', PASTORAL_AGENDA_RESOURCE, 'view').then((allowed) => {
+      if (mounted) {
+        setCanManageAgenda(allowed);
+
+        if (!allowed) {
+          setPanelTab('pedidos');
+        }
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [isActive]);
+
+  useEffect(() => {
+    if (!isActive) {
       setFilterProfileId(allSubmittersFilterValue);
     }
   }, [allSubmittersFilterValue, isActive]);
@@ -205,6 +234,31 @@ export function MaintenancePastoralCareCard({
         {PANEL_TITLE}
       </Text>
       {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
+
+      {canManageAgenda ? (
+        <SegmentChipRow
+          variant={minimal ? 'vigilance' : 'default'}
+          compact
+          options={[
+            { value: 'pedidos', label: 'Pedidos' },
+            { value: 'agenda', label: 'Minha Agenda' },
+          ]}
+          selectedValue={panelTab}
+          onSelect={(value) => setPanelTab(value as 'pedidos' | 'agenda')}
+        />
+      ) : null}
+
+      {panelTab === 'agenda' && canManageAgenda ? (
+        <ScrollView
+          style={styles.agendaScroll}
+          contentContainerStyle={styles.agendaScrollContent}
+          nestedScrollEnabled
+          {...MAINTENANCE_SCROLL_PROPS}
+        >
+          <MaintenancePastoralAgendaPanel isActive={isActive} minimal={minimal} />
+        </ScrollView>
+      ) : (
+      <>
 
       {rpcMissing ? (
         <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
@@ -698,6 +752,8 @@ export function MaintenancePastoralCareCard({
           Nenhum pedido encontrado para este perfil.
         </Text>
       ) : null}
+      </>
+      )}
     </View>
   );
 }
@@ -722,6 +778,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...MINIMAL_SECTION_TITLE,
     ...CONTAIN_WIDTH,
+  },
+  agendaScroll: {
+    flex: 1,
+    minHeight: 0,
+  },
+  agendaScrollContent: {
+    paddingBottom: 12,
   },
   fieldLabel: {
     color: '#3A96DD',

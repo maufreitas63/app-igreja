@@ -17,6 +17,8 @@ import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
 import { appAlert } from '@/lib/appAlert';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
+import { PastoralSchedulePanel } from '@/components/PastoralSchedulePanel';
+import { PASTORAL_SCHEDULE_RESOURCE } from '@/lib/pastoralAccess';
 import { supabase } from '@/lib/supabase';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
@@ -195,6 +197,8 @@ export default function PastoralScreen() {
   const [loading, setLoading] = useState(false);
   const [loadingUserId, setLoadingUserId] = useState(!routeUserId);
   const [activeSelector, setActiveSelector] = useState<SelectorKind>(null);
+  const [activeFlow, setActiveFlow] = useState<'pedido' | 'agendar'>('pedido');
+  const [canSchedule, setCanSchedule] = useState(false);
   const motivoSelecionado =
     categories.find((motivo) => motivo.id === selectedMotivo) ?? null;
   const submotivoSelecionado =
@@ -350,6 +354,20 @@ export default function PastoralScreen() {
   }, [loadCategories]);
 
   useEffect(() => {
+    let mounted = true;
+
+    void sessionHasAccess('screen', PASTORAL_SCHEDULE_RESOURCE, 'view').then((allowed) => {
+      if (mounted) {
+        setCanSchedule(allowed);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
 
     async function resolveUserId() {
@@ -500,11 +518,6 @@ export default function PastoralScreen() {
   };
 
   const handleBackToDashboard = () => {
-    if (isMinimalPresentation) {
-      router.replace('/(tabs)');
-      return;
-    }
-
     router.replace(
       buildReturnToDashboardHref(resolveReturnDashboardCardParam(params) ?? 'pastoral')
     );
@@ -526,11 +539,20 @@ export default function PastoralScreen() {
       return;
     }
 
+    const historyParams: Record<string, string> = {
+      userId: resolvedUserId,
+    };
+    const returnCard = resolveReturnDashboardCardParam(params);
+
+    if (returnCard) {
+      historyParams.returnDashboardCard = returnCard;
+    }
+
     router.push({
       pathname: '/pastoral-history',
       params: isMinimalPresentation
-        ? withMinimalPresentation({ userId: resolvedUserId })
-        : { userId: resolvedUserId },
+        ? withMinimalPresentation(historyParams)
+        : historyParams,
     });
   };
 
@@ -636,7 +658,9 @@ export default function PastoralScreen() {
             {!isMinimalPresentation ? (
             <View style={styles.headerTitles}>
               <Text style={styles.title}>Coração Aberto</Text>
-              <Text style={styles.subtitle}>Pedido de cuidado pastoral</Text>
+              <Text style={styles.subtitle}>
+                {activeFlow === 'agendar' ? 'Agendar atendimento pastoral' : 'Pedido de cuidado pastoral'}
+              </Text>
             </View>
             ) : (
               <View style={styles.headerTitlesMinimal} />
@@ -691,6 +715,29 @@ export default function PastoralScreen() {
             contentContainerStyle={styles.formScrollContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
+            {canSchedule ? (
+              <View style={styles.flowChips}>
+                <SegmentChipRow
+                  variant={chipVariant}
+                  compact={useVigilanceTheme}
+                  options={[
+                    { value: 'pedido', label: 'Pedido' },
+                    { value: 'agendar', label: 'Agendar Atendimento' },
+                  ]}
+                  selectedValue={activeFlow}
+                  onSelect={(value) => setActiveFlow(value as 'pedido' | 'agendar')}
+                />
+              </View>
+            ) : null}
+
+            {activeFlow === 'agendar' && resolvedUserId ? (
+              <PastoralSchedulePanel profileId={resolvedUserId} vigilance={useVigilanceTheme} />
+            ) : activeFlow === 'agendar' ? (
+              <Text style={[styles.statusBannerError, useVigilanceTheme && styles.statusBannerErrorVigilance]}>
+                Faça login novamente para agendar um atendimento.
+              </Text>
+            ) : (
+            <>
             <View style={[styles.fieldStack, useVigilanceTheme && styles.fieldStackCompact]}>
               <View style={styles.fieldBlock}>
                 <SectionLabel variant={sectionLabelVariant} tight={useVigilanceTheme}>
@@ -915,6 +962,8 @@ export default function PastoralScreen() {
                 </Text>
               )}
             </TouchableOpacity>
+            </>
+            )}
           </ScrollView>
 
           <CloseFooterBar
@@ -938,6 +987,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 4,
     paddingBottom: 8,
+  },
+  flowChips: {
+    marginBottom: 8,
   },
   headerBackButton: {
     paddingHorizontal: 12,

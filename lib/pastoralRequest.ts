@@ -1,3 +1,4 @@
+import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { loadProfileByPhone } from '@/lib/profileOnboarding';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
@@ -206,15 +207,23 @@ export async function resolvePastoralSessionProfile(
     }
 
     if (profile?.id) {
-      const storedPhone = await AsyncStorage.getItem('user_phone');
-
       return {
         userId: String(profile.id),
-        phone: String(profile.phone ?? storedPhone ?? '').trim(),
+        phone: String(profile.phone ?? '').trim(),
       };
     }
 
     return null;
+  }
+
+  // Proteção aplicada: no Ghost o Coração Aberto segue o alvo, não o operador
+  const session = await loadEffectiveSessionProfile();
+
+  if (session?.id) {
+    return {
+      userId: String(session.id),
+      phone: String(session.phone ?? '').trim(),
+    };
   }
 
   const storedPhone = await AsyncStorage.getItem('user_phone');

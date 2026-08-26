@@ -18,19 +18,28 @@ import {
 import { appAlert } from '@/lib/appAlert';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
-import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import {
+  fetchMyPastoralAppointments,
+  formatPastoralSlotTimeRange,
+  PASTORAL_ATTENDANCE_TYPE_LABEL,
+  PASTORAL_SLOT_STATUS_LABEL,
+  type MyPastoralAppointment,
+} from '@/lib/pastoralSlotsApi';
 import {
   isMinimalPresentationRoute,
   withMinimalPresentation,
+  buildReturnToDashboardHref,
+  resolveReturnDashboardCardParam,
 } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -57,6 +66,7 @@ export default function PastoralHistoryScreen() {
   const params = useLocalSearchParams<{
     userId?: string | string[];
     presentation?: string | string[];
+    returnDashboardCard?: string | string[];
   }>();
   const routeUserId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
   const isMinimalPresentation = isMinimalPresentationRoute(params.presentation);
@@ -70,6 +80,7 @@ export default function PastoralHistoryScreen() {
 
   const [profileId, setProfileId] = useState<string | null>(routeUserId ?? null);
   const [requests, setRequests] = useState<PastoralRequestHistoryItem[]>([]);
+  const [appointments, setAppointments] = useState<MyPastoralAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -118,24 +129,57 @@ export default function PastoralHistoryScreen() {
         if (!activeProfileId) {
           setProfileId(null);
           setRequests([]);
+          setAppointments([]);
           setErrorMessage('Faça login novamente para ver seus pedidos.');
           return;
         }
 
         setProfileId(activeProfileId);
         const items = await fetchMyPastoralRequests(activeProfileId);
+        let nextAppointments: MyPastoralAppointment[] = [];
+
+        try {
+          nextAppointments = await fetchMyPastoralAppointments();
+        } catch (appointmentError) {
+          console.warn('Agendamentos pastorais indisponíveis:', appointmentError);
+        }
+
         setRequests(items);
+        setAppointments(nextAppointments);
         lastHistoryFetchAtRef.current = Date.now();
       } catch (error) {
         console.error('Erro ao carregar histórico pastoral:', error);
         setErrorMessage(getSupabaseErrorMessage(error));
         setRequests([]);
+        setAppointments([]);
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
     [routeUserId]
+  );
+
+  const appointmentByRequestId = useMemo(() => {
+    const map = new Map<string, MyPastoralAppointment>();
+
+    for (const item of appointments) {
+      if (item.pastoral_request_id) {
+        map.set(item.pastoral_request_id, item);
+      }
+    }
+
+    return map;
+  }, [appointments]);
+
+  const standaloneAppointments = useMemo(
+    () =>
+      appointments.filter(
+        (item) =>
+          !item.pastoral_request_id
+          || !requests.some((request) => request.id === item.pastoral_request_id)
+      ),
+    [appointments, requests]
   );
 
   useFocusEffect(
@@ -145,6 +189,13 @@ export default function PastoralHistoryScreen() {
   );
 
   const handleBack = () => {
+    const returnCard = resolveReturnDashboardCardParam(params);
+
+    if (returnCard) {
+      router.replace(buildReturnToDashboardHref(returnCard));
+      return;
+    }
+
     if (router.canGoBack()) {
       router.back();
       return;
@@ -450,7 +501,7 @@ export default function PastoralHistoryScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      ) : requests.length === 0 ? (
+      ) : requests.length === 0 && appointments.length === 0 ? (
         <View style={styles.centered}>
           <FontAwesome
             name="inbox"
@@ -505,6 +556,7 @@ export default function PastoralHistoryScreen() {
               careStarted && item.handler_name?.trim()
                 ? formatShortName(item.handler_name)
                 : null;
+            const appointment = appointmentByRequestId.get(item.id);
 
             return (
               <View
@@ -638,6 +690,73 @@ export default function PastoralHistoryScreen() {
                   </View>
                 ) : null}
 
+                {appointment ? (
+                  <View style={styles.metaBlock}>
+                    <View style={styles.metaRow}>
+                      <Text
+                        style={[
+                          styles.metaLabel,
+                          useVigilanceTheme && styles.metaLabelVigilance,
+                        ]}
+                      >
+                        Agendamento:
+                      </Text>
+                      <Text
+                        style={[
+                          styles.metaValue,
+                          useVigilanceTheme && styles.metaValueVigilance,
+                        ]}
+                      >
+                        {formatPastoralSlotTimeRange(
+                          appointment.data_hora_inicio,
+                          appointment.data_hora_fim
+                        )}
+                      </Text>
+                    </View>
+                    <View style={styles.metaRow}>
+                      <Text
+                        style={[
+                          styles.metaLabel,
+                          useVigilanceTheme && styles.metaLabelVigilance,
+                        ]}
+                      >
+                        Local:
+                      </Text>
+                      <Text
+                        style={[
+                          styles.metaValue,
+                          useVigilanceTheme && styles.metaValueVigilance,
+                        ]}
+                      >
+                        {PASTORAL_ATTENDANCE_TYPE_LABEL[appointment.tipo_atendimento]}
+                        {' · '}
+                        {PASTORAL_SLOT_STATUS_LABEL[appointment.status]}
+                      </Text>
+                    </View>
+                    {appointment.pastor_name ? (
+                      <View style={styles.metaRow}>
+                        <Text
+                          style={[
+                            styles.metaLabel,
+                            useVigilanceTheme && styles.metaLabelVigilance,
+                          ]}
+                        >
+                          Atendente:
+                        </Text>
+                        <Text
+                          style={[
+                            styles.metaValue,
+                            useVigilanceTheme && styles.metaValueVigilance,
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {appointment.pastor_name}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                ) : null}
+
                 {item.description?.trim() ? (
                   <Text
                     style={[
@@ -719,6 +838,59 @@ export default function PastoralHistoryScreen() {
               </View>
             );
           })}
+          {standaloneAppointments.map((appointment) => (
+            <View
+              key={`slot-${appointment.id}`}
+              style={[styles.card, useVigilanceTheme && styles.cardVigilance]}
+            >
+              <View style={styles.cardHeader}>
+                <Text style={[styles.cardDate, useVigilanceTheme && styles.cardDateVigilance]}>
+                  {formatPastoralSlotTimeRange(
+                    appointment.data_hora_inicio,
+                    appointment.data_hora_fim
+                  )}
+                </Text>
+                <View
+                  style={[styles.statusBadge, useVigilanceTheme && styles.statusBadgeVigilance]}
+                >
+                  <Text
+                    style={[
+                      styles.statusBadgeText,
+                      useVigilanceTheme && styles.statusBadgeTextVigilance,
+                    ]}
+                  >
+                    {PASTORAL_SLOT_STATUS_LABEL[appointment.status]}
+                  </Text>
+                </View>
+              </View>
+              <Text
+                style={[styles.cardMotivo, useVigilanceTheme && styles.cardMotivoVigilance]}
+                numberOfLines={2}
+              >
+                Atendimento {PASTORAL_ATTENDANCE_TYPE_LABEL[appointment.tipo_atendimento]}
+              </Text>
+              {appointment.pastor_name ? (
+                <View style={styles.metaRow}>
+                  <Text style={[styles.metaLabel, useVigilanceTheme && styles.metaLabelVigilance]}>
+                    Atendente:
+                  </Text>
+                  <Text style={[styles.metaValue, useVigilanceTheme && styles.metaValueVigilance]}>
+                    {appointment.pastor_name}
+                  </Text>
+                </View>
+              ) : null}
+              {appointment.request_status ? (
+                <View style={styles.metaRow}>
+                  <Text style={[styles.metaLabel, useVigilanceTheme && styles.metaLabelVigilance]}>
+                    Pedido:
+                  </Text>
+                  <Text style={[styles.metaValue, useVigilanceTheme && styles.metaValueVigilance]}>
+                    {formatPastoralStatusLabel(appointment.request_status)}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ))}
         </ScrollView>
       )}
 
@@ -742,6 +914,10 @@ export default function PastoralHistoryScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+          <CloseFooterBar
+            onPress={handleBack}
+            variant={useVigilanceTheme ? 'minimal' : 'dark'}
+          />
         </View>
       ) : null}
     </>
