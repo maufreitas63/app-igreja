@@ -4,7 +4,6 @@ import { FinancialMonthlyBudgetComparison } from '@/components/FinancialMonthlyB
 import { FinancialLastTwelveMonths } from '@/components/FinancialLastTwelveMonths';
 import { FinancialHistoricalResult } from '@/components/FinancialHistoricalResult';
 import { FinancialAnalyticalSummarySection } from '@/components/FinancialAnalyticalSummaryReport';
-import { FinancialCampaignsReadingBlock } from '@/components/FinancialCampaignsReadingBlock';
 import { FinancialMonthlyComparison } from '@/components/FinancialMonthlyComparison';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import {
@@ -405,7 +404,6 @@ export default function FinancialScreen() {
       case 'analyticalSummary':
         return (
           <View key="analyticalSummary">
-            <FinancialCampaignsReadingBlock />
             <FinancialAnalyticalSummarySection
               month={selectedMonth}
               realizedEntries={realizedEntriesThroughSelectedMonth}
