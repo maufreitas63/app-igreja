@@ -1,6 +1,6 @@
 import { showAppToast } from '@/lib/appToast';
 import { hasStoredMemberSession } from '@/lib/memberSession';
-import { fetchUnreadScaleSwapNotices } from '@/lib/scaleSwapApi';
+import { fetchUnreadScaleSwapNotices, markScaleSwapNoticesRead } from '@/lib/scaleSwapApi';
 import React, { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
@@ -34,6 +34,7 @@ export function ScaleSwapNoticesListener() {
         text1: unread.title,
         text2: unread.body,
       });
+      void markScaleSwapNoticesRead();
     };
 
     void poll();

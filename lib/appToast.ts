@@ -58,6 +58,8 @@ export function installExecutionErrorClipboard(): void {
   }) as typeof Alert.alert;
 }
 
+const pendingToastTimers = new Set<ReturnType<typeof setTimeout>>();
+
 export function showAppToast(params: ToastShowParams, options?: AppToastOptions): void {
   const visibilityTime =
     params.visibilityTime ??
@@ -73,9 +75,20 @@ export function showAppToast(params: ToastShowParams, options?: AppToastOptions)
   const afterMs = options?.afterMs ?? 0;
 
   if (afterMs > 0) {
-    setTimeout(show, afterMs);
+    const timer = setTimeout(() => {
+      pendingToastTimers.delete(timer);
+      show();
+    }, afterMs);
+    pendingToastTimers.add(timer);
     return;
   }
 
   show();
+}
+
+export function clearPendingAppToasts() {
+  for (const timer of pendingToastTimers) {
+    clearTimeout(timer);
+  }
+  pendingToastTimers.clear();
 }

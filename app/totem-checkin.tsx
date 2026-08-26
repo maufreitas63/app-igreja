@@ -94,11 +94,21 @@ export default function TotemCheckinScreen() {
 
   const lastScanRef = useRef<{ value: string; at: number } | null>(null);
   const processingScanRef = useRef(false);
+  const scanCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === selectedEventId) ?? null,
     [events, selectedEventId]
   );
+
+  useEffect(() => {
+    return () => {
+      if (scanCooldownTimerRef.current) {
+        clearTimeout(scanCooldownTimerRef.current);
+        scanCooldownTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const loadEvents = useCallback(async () => {
     setLoadingEvents(true);
@@ -388,7 +398,11 @@ export default function TotemCheckinScreen() {
         setStatusTone('error');
       } finally {
         processingScanRef.current = false;
-        setTimeout(() => {
+        if (scanCooldownTimerRef.current) {
+          clearTimeout(scanCooldownTimerRef.current);
+        }
+        scanCooldownTimerRef.current = setTimeout(() => {
+          scanCooldownTimerRef.current = null;
           setScanEnabled(true);
         }, SCAN_COOLDOWN_MS);
       }

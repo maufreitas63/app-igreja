@@ -5,6 +5,7 @@ export const normalizePersonName = (value: string) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+    .replace(/\s+/g, ' ')
     .trim();
 
 export const profileShortDisplayName = (fullName: string) => {

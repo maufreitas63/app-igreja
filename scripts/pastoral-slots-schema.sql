@@ -688,6 +688,31 @@ $$;
 
 grant execute on function public.list_my_pastoral_slot_notices() to anon, authenticated;
 
+create or replace function public.mark_pastoral_slot_notices_read()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+set row_security = off
+as $$
+declare
+  v_actor uuid := public.current_session_profile_id();
+  v_tenant uuid := public.current_session_tenant_id();
+begin
+  if v_actor is null then
+    return jsonb_build_object('success', false);
+  end if;
+  update public.pastoral_slot_notices
+     set read_at = now()
+   where profile_id = v_actor
+     and (v_tenant is null or tenant_id = v_tenant)
+     and read_at is null;
+  return jsonb_build_object('success', true);
+end;
+$$;
+
+grant execute on function public.mark_pastoral_slot_notices_read() to anon, authenticated;
+
 -- pg_cron opcional (ignora se a extensão não existir)
 do $$
 begin

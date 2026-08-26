@@ -7,10 +7,10 @@ import {
   fetchPublishedEventAvisos,
   type EventAvisoRow,
 } from '@/lib/eventAvisosApi';
-import { fetchMyPastoralSlotNotices, type PastoralSlotNotice } from '@/lib/pastoralSlotsApi';
+import { fetchMyPastoralSlotNotices, markPastoralSlotNoticesRead, type PastoralSlotNotice } from '@/lib/pastoralSlotsApi';
 import { fetchMyCampaignNotices, type CampaignNotice } from '@/lib/campaignProjectsApi';
-import { fetchUnreadOpportunityNotices, type OpportunityNotice } from '@/lib/volunteerOpportunitiesApi';
-import { fetchUnreadScaleSwapNotices, type ScaleSwapNotice } from '@/lib/scaleSwapApi';
+import { fetchUnreadOpportunityNotices, markOpportunityNoticesRead, type OpportunityNotice } from '@/lib/volunteerOpportunitiesApi';
+import { fetchUnreadScaleSwapNotices, markScaleSwapNoticesRead, type ScaleSwapNotice } from '@/lib/scaleSwapApi';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
@@ -60,10 +60,21 @@ export function EventsInboxHome() {
       const slotNotices = await fetchMyPastoralSlotNotices();
       setPastoralNotices(slotNotices);
       setCampaignNotices(await fetchMyCampaignNotices());
-      setOpportunityNotices(await fetchUnreadOpportunityNotices());
-      setScaleSwapNotices(await fetchUnreadScaleSwapNotices());
+      const nextOpportunity = await fetchUnreadOpportunityNotices();
+      const nextSwaps = await fetchUnreadScaleSwapNotices();
+      setOpportunityNotices(nextOpportunity);
+      setScaleSwapNotices(nextSwaps);
       const rows = await fetchPublishedEventAvisos();
       setAvisos(rows);
+      if (slotNotices.some((item) => !item.read_at)) {
+        void markPastoralSlotNoticesRead();
+      }
+      if (nextOpportunity.length > 0) {
+        void markOpportunityNoticesRead();
+      }
+      if (nextSwaps.length > 0) {
+        void markScaleSwapNoticesRead();
+      }
     } catch (loadError) {
       setAvisosError(loadError instanceof Error ? loadError.message : EVENT_AVISOS_SQL_HINT);
       setAvisos([]);

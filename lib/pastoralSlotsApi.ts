@@ -346,3 +346,11 @@ export async function fetchMyPastoralSlotNotices(): Promise<PastoralSlotNotice[]
     return [];
   }
 }
+
+export async function markPastoralSlotNoticesRead() {
+  try {
+    await rpcJson('mark_pastoral_slot_notices_read');
+  } catch {
+    // Aviso já foi exibido; falha silenciosa no marcador.
+  }
+}

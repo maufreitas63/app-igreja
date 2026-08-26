@@ -129,8 +129,10 @@ as $$
 declare
   v_name text;
   v_id uuid;
+  v_parts text[];
+  v_short text;
 begin
-  select trim(coalesce(p.full_name, ''))
+  select trim(regexp_replace(coalesce(p.full_name, ''), '\s+', ' ', 'g'))
     into v_name
     from public.profiles p
    where p.id = p_profile_id
@@ -147,8 +149,27 @@ begin
      and ve.tipo_escala_id = p_tipo_escala_id
      and ve.is_ativo is true
      and public.unaccent(lower(regexp_replace(trim(coalesce(ve.nome, '')), '\s+', ' ', 'g')))
-         = public.unaccent(lower(regexp_replace(v_name, '\s+', ' ', 'g')))
+         = public.unaccent(lower(v_name))
    limit 1;
+
+  if v_id is not null then
+    return v_id;
+  end if;
+
+  -- Mesma regra da UI: primeiro + último quando o cadastro tem nome composto.
+  v_parts := regexp_split_to_array(v_name, '\s+');
+  if coalesce(array_length(v_parts, 1), 0) >= 3 then
+    v_short := v_parts[1] || ' ' || v_parts[array_length(v_parts, 1)];
+    select ve.id
+      into v_id
+      from public.voluntarios_escala ve
+     where ve.tenant_id = p_tenant_id
+       and ve.tipo_escala_id = p_tipo_escala_id
+       and ve.is_ativo is true
+       and public.unaccent(lower(regexp_replace(trim(coalesce(ve.nome, '')), '\s+', ' ', 'g')))
+           = public.unaccent(lower(v_short))
+     limit 1;
+  end if;
 
   return v_id;
 end;

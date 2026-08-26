@@ -306,3 +306,11 @@ export async function fetchUnreadOpportunityNotices(): Promise<OpportunityNotice
     return [];
   }
 }
+
+export async function markOpportunityNoticesRead() {
+  try {
+    await rpcJson('mark_opportunity_notices_read');
+  } catch {
+    // Aviso já foi exibido; falha silenciosa no marcador.
+  }
+}

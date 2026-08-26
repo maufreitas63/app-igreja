@@ -875,6 +875,31 @@ revoke all on function public.volunteer_opportunity_notify_matches(uuid) from au
 grant execute on function public.volunteer_opportunity_notify_matches(uuid) to service_role;
 
 grant execute on function public.list_unread_opportunity_notices() to anon, authenticated, service_role;
+
+create or replace function public.mark_opportunity_notices_read()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+set row_security = off
+as $$
+declare
+  v_tenant uuid := public.require_session_tenant_id();
+  v_me uuid := public.current_session_profile_id();
+begin
+  if v_me is null then
+    return jsonb_build_object('success', false);
+  end if;
+  update public.volunteer_opportunity_notices
+     set read_at = now()
+   where tenant_id = v_tenant
+     and profile_id = v_me
+     and read_at is null;
+  return jsonb_build_object('success', true);
+end;
+$$;
+
+grant execute on function public.mark_opportunity_notices_read() to anon, authenticated, service_role;
 grant execute on function public.listar_event_avisos_publicados() to anon, authenticated, service_role;
 grant execute on function public.salvar_event_aviso(uuid, uuid, text, text, integer, boolean, text, uuid) to anon, authenticated, service_role;
 

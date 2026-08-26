@@ -1,4 +1,4 @@
-import { fetchMyPastoralSlotNotices } from '@/lib/pastoralSlotsApi';
+import { fetchMyPastoralSlotNotices, markPastoralSlotNoticesRead } from '@/lib/pastoralSlotsApi';
 import { hasStoredMemberSession } from '@/lib/memberSession';
 import { showAppToast } from '@/lib/appToast';
 import React, { useEffect, useRef } from 'react';
@@ -34,6 +34,7 @@ export function PastoralAppointmentReminderListener() {
         text1: unread.title,
         text2: unread.body,
       });
+      void markPastoralSlotNoticesRead();
     };
 
     void poll();

@@ -354,6 +354,9 @@ const clearUserSessionImmediately = () => {
   clearGhostModeState();
   scrubWebSessionKeys({ keepPhone: true });
   resetProfileScreenVisitTracking();
+  void import('@/lib/appToast').then(({ clearPendingAppToasts }) => {
+    clearPendingAppToasts();
+  });
   void revokeStoredProfileSession();
   void AsyncStorage.multiRemove([USER_PROFILE_ID_STORAGE_KEY, USER_SESSION_TOKEN_STORAGE_KEY]);
   void import('@/lib/sessionRequestIdentity').then(async ({ clearSessionRequestIdentityMemory }) => {
