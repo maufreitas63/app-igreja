@@ -1,3 +1,4 @@
+import { getAppParameterValue } from '@/lib/appParameters';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { supabase } from '@/lib/supabase';
 import {
@@ -111,6 +112,16 @@ async function resolveActiveChurchForOfferings(): Promise<SessionIgreja | null> 
   }
 }
 
+async function preferInstancePixKey(fallback: string | null): Promise<string | null> {
+  try {
+    // Chave oficial da instância (app_parameters.chave_pix), isolada pelo tenant da sessão.
+    const fromParameters = textOrNull(await getAppParameterValue('chave_pix'));
+    return fromParameters ?? textOrNull(fallback);
+  } catch {
+    return textOrNull(fallback);
+  }
+}
+
 /** Dados do recebedor + PIX da instância ativa. */
 export async function loadOfferingsRecipientBundle(): Promise<OfferingsRecipientBundle> {
   const branding = await resolveActiveIgrejaBranding();
@@ -119,7 +130,10 @@ export async function loadOfferingsRecipientBundle(): Promise<OfferingsRecipient
   try {
     const fromRpc = await loadOfferingsFromDedicatedRpc(tenantId);
     if (fromRpc) {
-      return fromRpc;
+      return {
+        ...fromRpc,
+        pixKey: await preferInstancePixKey(fromRpc.pixKey),
+      };
     }
   } catch (error) {
     console.warn('offerings dedicated rpc:', error);
@@ -133,10 +147,14 @@ export async function loadOfferingsRecipientBundle(): Promise<OfferingsRecipient
         { label: 'CNPJ', value: '—' },
         { label: 'Instituição', value: '—' },
       ],
-      pixKey: null,
+      pixKey: await preferInstancePixKey(null),
       churchName: '',
     };
   }
 
-  return bundleFromChurch(church);
+  const bundle = bundleFromChurch(church);
+  return {
+    ...bundle,
+    pixKey: await preferInstancePixKey(bundle.pixKey),
+  };
 }

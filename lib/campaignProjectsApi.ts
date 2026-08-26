@@ -114,7 +114,7 @@ export function formatCampaignBrl(value: number) {
 export function formatCampaignCentsHint(centavos: number) {
   const cents = Math.round((Number.isFinite(centavos) ? centavos : 0) * 100);
   const padded = String(Math.max(1, Math.min(99, cents))).padStart(2, '0');
-  return `Para este projeto, adicione ,${padded} ao valor da sua doação para identificação`;
+  return `Os centavos ,${padded} são adicionados automaticamente ao valor para identificar este projeto`;
 }
 
 export function formatCampaignCentsShort(centavos: number) {

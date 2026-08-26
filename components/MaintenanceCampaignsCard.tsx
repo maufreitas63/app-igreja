@@ -187,7 +187,7 @@ export function MaintenanceCampaignsCard({
     <View style={[styles.panel, { height: contentHeight }]}>
       <MaintenanceHelpInfoTitle
         title="Gestão de Campanhas"
-        helpText="Cadastre projetos com meta, prazo e centavos simbólicos. Depósitos PIX com esse sufixo são reconhecidos automaticamente e ficam fora da receita ordinária do modelo preditivo."
+        helpText="Cadastre projetos com meta, prazo e centavos simbólicos. O Pix Copia e Cola aplica esse sufixo automaticamente; os depósitos são reconhecidos e ficam fora da receita ordinária."
         minimal={minimal}
         titleStyle={minimal ? styles.titleMinimal : maintenancePanelStyles.panelTitle}
       />
@@ -277,17 +277,20 @@ export function MaintenanceCampaignsCard({
               placeholderTextColor="#94A3B8"
             />
           </View>
+          <Text style={styles.fieldLabel}>Centavos simbólicos de referência</Text>
           <TextInput
             style={maintenancePanelStyles.input}
             value={centavos}
             onChangeText={setCentavos}
-            placeholder="Centavos (ex: 60)"
+            placeholder="Ex.: 60 (vira 0,60 no Pix)"
             placeholderTextColor="#94A3B8"
             keyboardType="number-pad"
+            accessibilityLabel="Centavos simbólicos de referência"
           />
           <Text style={styles.hint}>
-            O membro deve incluir {formatCampaignCentsShort(parseCentsInput(centavos) || 0.6)} no valor
-            do PIX para conciliação automática.
+            O Pix Copia e Cola do membro recebe automaticamente{' '}
+            {formatCampaignCentsShort(parseCentsInput(centavos) || 0.6)}. Depósitos com esse sufixo
+            são conciliados a este projeto e ficam fora da receita ordinária.
           </Text>
           <SegmentChipRow
             variant={minimal ? 'vigilance' : 'default'}
@@ -371,6 +374,12 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  fieldLabel: {
+    color: '#1E3A5F',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   hint: {
     color: '#1D4ED8',

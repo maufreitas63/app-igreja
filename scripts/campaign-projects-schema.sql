@@ -5,6 +5,7 @@
 -- ACL: dashboard.card.campaign / maintenance.finance.campaigns
 -- Conciliação: sufixo de centavos em financials.amount reconhece depósitos da campanha
 --   e reclassifica como EXTRAORDINÁRIO / CAMPANHAS (fora da receita ordinária do modelo preditivo).
+-- Pix Copia e Cola (EMV) é gerado no cliente com chave de app_parameters.chave_pix da instância.
 -- tenant_id sempre da sessão (require_session_tenant_id).
 -- Aplica: npx supabase db query --linked -f scripts/campaign-projects-schema.sql
 -- =============================================================================

@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -30,6 +31,10 @@ export type OfferingsClassProps = {
   campaignTitle?: string | null;
   campaignHint?: string | null;
   campaignCoverUrl?: string | null;
+  campaignIntegerAmount?: string;
+  onCampaignIntegerAmountChange?: (value: string) => void;
+  campaignFinalAmountLabel?: string | null;
+  campaignCopiaECola?: string | null;
 };
 
 /** Visualização pura de Dízimos e Ofertas — extraída de dashboard.card.offerings. */
@@ -43,7 +48,16 @@ export function OfferingsClass({
   campaignTitle = null,
   campaignHint = null,
   campaignCoverUrl = null,
+  campaignIntegerAmount = '',
+  onCampaignIntegerAmountChange,
+  campaignFinalAmountLabel = null,
+  campaignCopiaECola = null,
 }: OfferingsClassProps) {
+  const isCampaign = Boolean(campaignTitle);
+  const qrValue = isCampaign ? campaignCopiaECola : null;
+  const copyEnabled = isCampaign ? Boolean(campaignCopiaECola) : Boolean(pixKey);
+  const copyLabel = isCampaign ? 'Copiar Chave Pix' : 'Copiar chave PIX';
+
   return (
     <ScrollView
       style={styles.root}
@@ -77,32 +91,63 @@ export function OfferingsClass({
         </View>
       </View>
 
+      {isCampaign ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Valor da contribuição</Text>
+          <TextInput
+            style={styles.amountInput}
+            value={campaignIntegerAmount}
+            onChangeText={onCampaignIntegerAmountChange}
+            placeholder="Ex.: 100"
+            placeholderTextColor="#94A3B8"
+            keyboardType="number-pad"
+            inputMode="numeric"
+            accessibilityLabel="Valor em reais, sem centavos"
+          />
+          <Text style={styles.helpText}>
+            Digite apenas o valor inteiro em reais. Os centavos de identificação são aplicados
+            automaticamente.
+          </Text>
+          {campaignFinalAmountLabel ? (
+            <View style={styles.finalAmountBox}>
+              <Text style={styles.finalAmountLabel}>Valor do Pix</Text>
+              <Text style={styles.finalAmountValue}>{campaignFinalAmountLabel}</Text>
+            </View>
+          ) : (
+            <Text style={styles.helpText}>Informe o valor para gerar o Pix Copia e Cola.</Text>
+          )}
+        </View>
+      ) : null}
+
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Chave PIX</Text>
+        <Text style={styles.sectionLabel}>{isCampaign ? 'Pix Copia e Cola' : 'Chave PIX'}</Text>
         {pixKeyLoading ? (
           <View style={styles.loadingState}>
             <ActivityIndicator color={VIGILANCE_SCALES_UI.accent} />
           </View>
         ) : pixKey ? (
           <>
-            <Text style={styles.pixKeyValue}>{pixKey}</Text>
-            {campaignTitle ? (
+            {isCampaign ? null : <Text style={styles.pixKeyValue}>{pixKey}</Text>}
+            {qrValue ? (
               <View style={styles.qrWrap}>
-                <QRCode value={pixKey} size={148} color="#1E3A5F" backgroundColor="#FFFFFF" />
+                <QRCode value={qrValue} size={148} color="#1E3A5F" backgroundColor="#FFFFFF" />
               </View>
             ) : null}
             <TouchableOpacity
-              style={styles.copyButton}
+              style={[styles.copyButton, copyEnabled ? null : styles.copyButtonDisabled]}
               onPress={onCopyPixKey}
+              disabled={!copyEnabled}
               activeOpacity={0.85}
               accessibilityRole="button"
-              accessibilityLabel="Copiar chave PIX"
+              accessibilityLabel={copyLabel}
             >
               <MaterialIcons name="touch-app" size={28} color={OFFERINGS_COPY_BUTTON_TEXT} />
-              <Text style={styles.copyButtonText}>Copiar chave PIX</Text>
+              <Text style={styles.copyButtonText}>{copyLabel}</Text>
             </TouchableOpacity>
             <Text style={styles.helpText}>
-              Toque no botão para copiar a chave e colar no aplicativo do seu banco.
+              {isCampaign
+                ? 'Toque no botão para copiar o Pix Copia e Cola já com o valor exato e colar no aplicativo do banco.'
+                : 'Toque no botão para copiar a chave e colar no aplicativo do seu banco.'}
             </Text>
           </>
         ) : (
@@ -220,6 +265,39 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     backgroundColor: OFFERINGS_CLASS_SURFACE,
   },
+  amountInput: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: VIGILANCE_SCALES_UI.border,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    color: '#1E3A5F',
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    backgroundColor: '#F8FAFC',
+  },
+  finalAmountBox: {
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+  },
+  finalAmountLabel: {
+    color: '#166534',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  finalAmountValue: {
+    color: '#14532D',
+    fontSize: 22,
+    fontWeight: '800',
+  },
   copyButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -233,6 +311,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: OFFERINGS_COPY_BUTTON_BORDER,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
+  },
+  copyButtonDisabled: {
+    opacity: 0.45,
   },
   copyButtonText: {
     color: OFFERINGS_COPY_BUTTON_TEXT,
