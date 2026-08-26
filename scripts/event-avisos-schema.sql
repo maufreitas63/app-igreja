@@ -277,7 +277,10 @@ create policy event_avisos_select_published
   on public.event_avisos
   for select
   to anon, authenticated
-  using (is_published is true);
+  using (
+    is_published is true
+    and coalesce(audience, 'all') = 'all'
+  );
 
 create policy event_avisos_write_orchestrator
   on public.event_avisos
