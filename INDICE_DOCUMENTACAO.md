@@ -14,7 +14,7 @@ Cada **pacote** é um arquivo **autocontido**: o texto integral dos documentos d
 |-----------|----------|------------|---------|
 | **Manual de Entrega** | [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) | [`pdfs/MANUAL_ENTREGA.pdf`](pdfs/MANUAL_ENTREGA.pdf) | Cliente + equipe de manutenção |
 | **Descritivo técnico** | [`DESCRITIVO_APLICACAO.md`](DESCRITIVO_APLICACAO.md) | [`pdfs/DESCRITIVO_APLICACAO.pdf`](pdfs/DESCRITIVO_APLICACAO.pdf) | TI / arquitetura |
-| **Análise institucional de telas** | [`ANALISE_INSTITUCIONAL_TELAS.md`](ANALISE_INSTITUCIONAL_TELAS.md) | [`PDF`](pdfs/ANALISE_INSTITUCIONAL_TELAS.pdf) · [`DOCX`](pdfs/ANALISE_INSTITUCIONAL_TELAS.docx) · [`DOC`](pdfs/ANALISE_INSTITUCIONAL_TELAS.doc) | Liderança e comercial |
+| **Análise institucional de telas** | [`ANALISE_INSTITUCIONAL_TELAS.md`](ANALISE_INSTITUCIONAL_TELAS.md) | [`PDF`](pdfs/ANALISE_INSTITUCIONAL_TELAS.pdf) · [`DOCX`](pdfs/ANALISE_INSTITUCIONAL_TELAS.docx) · [`DOC`](pdfs/ANALISE_INSTITUCIONAL_TELAS.doc) | Liderança e comercial · atualizado em 26/08/2026 |
 
 Regenerar: `npm run build:manual-entrega-pdf` · `node scripts/build-descritivo-aplicacao-pdf.mjs` · `npm run build:analise-institucional-pdf` · `npm run build:analise-institucional-doc`
 
