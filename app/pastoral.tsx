@@ -30,12 +30,14 @@ import {
   buildReturnToDashboardHref,
   pickRouteParam,
   resolveReturnDashboardCardParam,
+  resolveReturnRouteParam,
   isMinimalPresentationRoute,
   withMinimalPresentation,
 } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import type { Href } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -518,6 +520,21 @@ export default function PastoralScreen() {
   };
 
   const handleBackToDashboard = () => {
+    const returnRoute = resolveReturnRouteParam(params);
+
+    if (returnRoute) {
+      router.replace({
+        pathname: returnRoute,
+        params: withMinimalPresentation(),
+      } as Href);
+      return;
+    }
+
+    if (isMinimalPresentation) {
+      router.replace('/(tabs)');
+      return;
+    }
+
     router.replace(
       buildReturnToDashboardHref(resolveReturnDashboardCardParam(params) ?? 'pastoral')
     );

@@ -5,6 +5,7 @@ import {
   type OfferingsRecipientRow,
 } from '@/lib/offeringsRecipientInfo';
 import {
+  fetchActiveCampaignProjects,
   fetchCampaignProject,
   formatCampaignBrl,
   formatCampaignCentsHint,
@@ -15,6 +16,10 @@ import {
   buildReturnToDashboardHref,
   pickRouteParam,
   resolveReturnDashboardCardParam,
+  resolveReturnRouteParam,
+  withMinimalPresentation,
+  withReturnDashboardCard,
+  withReturnRoute,
 } from '@/lib/dashboardReturnNavigation';
 import {
   buildPixCopiaECola,
@@ -23,8 +28,18 @@ import {
 } from '@/lib/pixEmvPayload';
 import * as Clipboard from 'expo-clipboard';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import type { Href } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Toast from 'react-native-toast-message';
 
 type OfferingsClassPanelProps = {
@@ -36,14 +51,18 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
   const router = useRouter();
   const params = useLocalSearchParams<{
     campaignId?: string | string[];
+    campaignContribute?: string | string[];
     returnDashboardCard?: string | string[];
+    returnRoute?: string | string[];
   }>();
   const campaignId = pickRouteParam(params.campaignId);
+  const campaignContribute = pickRouteParam(params.campaignContribute) === '1';
   const [recipientRows, setRecipientRows] = useState<OfferingsRecipientRow[]>([]);
   const [pixKey, setPixKey] = useState<string | null>(null);
   const [churchName, setChurchName] = useState('');
   const [pixKeyLoading, setPixKeyLoading] = useState(true);
   const [campaign, setCampaign] = useState<CampaignProject | null>(null);
+  const [campaignChoices, setCampaignChoices] = useState<CampaignProject[]>([]);
   const [integerAmount, setIntegerAmount] = useState('');
 
   const campaignPix = useMemo(() => {
@@ -80,8 +99,13 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
 
       if (campaignId) {
         setCampaign(await fetchCampaignProject(campaignId));
+        setCampaignChoices([]);
+      } else if (campaignContribute) {
+        setCampaign(null);
+        setCampaignChoices(await fetchActiveCampaignProjects());
       } else {
         setCampaign(null);
+        setCampaignChoices([]);
       }
     } catch (error) {
       console.error('Erro ao carregar dados de dízimos/ofertas:', error);
@@ -91,7 +115,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
     } finally {
       setPixKeyLoading(false);
     }
-  }, [campaignId]);
+  }, [campaignContribute, campaignId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -139,33 +163,112 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
       return;
     }
 
+    const returnRoute = resolveReturnRouteParam(params);
+
+    if (returnRoute) {
+      router.replace({
+        pathname: returnRoute,
+        params: withMinimalPresentation(),
+      } as Href);
+      return;
+    }
+
     const returnCard = resolveReturnDashboardCardParam(params) ?? (campaignId ? 'campaign_card' : 'offerings');
     router.replace(buildReturnToDashboardHref(returnCard));
   }, [campaignId, onClose, params, router]);
 
+  const handlePickCampaign = useCallback(
+    (nextCampaign: CampaignProject) => {
+      const returnRoute = resolveReturnRouteParam(params);
+      const returnCard = resolveReturnDashboardCardParam(params);
+      const extra = { campaignId: nextCampaign.id, campaignContribute: '1' };
+
+      setIntegerAmount('');
+      router.replace({
+        pathname: '/ofertas',
+        params: returnRoute
+          ? withReturnRoute(returnRoute, extra)
+          : returnCard
+            ? withReturnDashboardCard(returnCard, extra)
+            : withReturnRoute('/(tabs)', extra),
+      });
+    },
+    [params, router]
+  );
+
+  const pickingCampaign = campaignContribute && !campaignId;
+
   return (
     <View style={styles.root}>
-      <OfferingsClass
-        title={campaign ? 'Contribuir com a campanha' : 'Dízimos e Ofertas'}
-        recipientRows={recipientRows}
-        pixKey={pixKey}
-        pixKeyLoading={pixKeyLoading}
-        campaignTitle={campaign?.titulo ?? null}
-        campaignHint={campaign ? formatCampaignCentsHint(campaign.centavos_referencia) : null}
-        campaignCoverUrl={campaign?.cover_url ?? null}
-        campaignIntegerAmount={integerAmount}
-        onCampaignIntegerAmountChange={(value) => setIntegerAmount(parseIntegerReaisInput(value))}
-        campaignFinalAmountLabel={
-          campaignPix.amount != null ? formatCampaignBrl(campaignPix.amount) : null
-        }
-        campaignCopiaECola={campaignPix.copiaECola}
-        onCopyPixKey={() => {
-          void handleCopyPixKey();
-        }}
-        onRetryLoadPixKey={() => {
-          void loadOfferingsInfo();
-        }}
-      />
+      {pickingCampaign ? (
+        <ScrollView
+          style={styles.picker}
+          contentContainerStyle={styles.pickerContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.pickerTitle}>Contribuir com uma campanha ou projeto</Text>
+          <Text style={styles.pickerSubtitle}>Escolha o projeto para gerar o Pix Copia e Cola.</Text>
+          {pixKeyLoading ? (
+            <ActivityIndicator color="#1E3A5F" style={styles.pickerLoader} />
+          ) : campaignChoices.length === 0 ? (
+            <Text style={styles.pickerEmpty}>Nenhuma campanha ativa no momento.</Text>
+          ) : (
+            campaignChoices.map((item) => {
+              const pct = Math.max(0, Math.min(100, item.progress_pct));
+
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.pickerCard}
+                  onPress={() => handlePickCampaign(item)}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Contribuir com ${item.titulo}`}
+                >
+                  {item.cover_url ? (
+                    <Image source={{ uri: item.cover_url }} style={styles.pickerCover} />
+                  ) : null}
+                  <Text style={styles.pickerCardTitle}>{item.titulo}</Text>
+                  {item.descricao ? (
+                    <Text style={styles.pickerCardDescription} numberOfLines={3}>
+                      {item.descricao}
+                    </Text>
+                  ) : null}
+                  <View style={styles.progressTrack}>
+                    <View style={[styles.progressFill, { width: `${pct}%` }]} />
+                  </View>
+                  <Text style={styles.progressLabel}>
+                    {pct.toFixed(0)}% · {formatCampaignBrl(item.valor_arrecadado)} de{' '}
+                    {formatCampaignBrl(item.meta_financeira)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </ScrollView>
+      ) : (
+        <OfferingsClass
+          title={campaign ? 'Contribuir com a campanha' : 'Dízimos e Ofertas'}
+          recipientRows={recipientRows}
+          pixKey={pixKey}
+          pixKeyLoading={pixKeyLoading}
+          campaignTitle={campaign?.titulo ?? null}
+          campaignHint={campaign ? formatCampaignCentsHint(campaign.centavos_referencia) : null}
+          campaignCoverUrl={campaign?.cover_url ?? null}
+          campaignIntegerAmount={integerAmount}
+          onCampaignIntegerAmountChange={(value) => setIntegerAmount(parseIntegerReaisInput(value))}
+          campaignFinalAmountLabel={
+            campaignPix.amount != null ? formatCampaignBrl(campaignPix.amount) : null
+          }
+          campaignCopiaECola={campaignPix.copiaECola}
+          onCopyPixKey={() => {
+            void handleCopyPixKey();
+          }}
+          onRetryLoadPixKey={() => {
+            void loadOfferingsInfo();
+          }}
+        />
+      )}
 
       <CloseFooterBar onPress={handleClose} />
     </View>
@@ -177,5 +280,73 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     width: '100%',
+  },
+  picker: {
+    flex: 1,
+    minHeight: 0,
+  },
+  pickerContent: {
+    gap: 12,
+    paddingBottom: 16,
+  },
+  pickerTitle: {
+    color: '#1E3A5F',
+    fontWeight: '800',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  pickerSubtitle: {
+    color: '#64748B',
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  pickerLoader: {
+    marginTop: 24,
+  },
+  pickerEmpty: {
+    color: '#64748B',
+    textAlign: 'center',
+    marginTop: 16,
+  },
+  pickerCard: {
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  pickerCover: {
+    width: '100%',
+    height: 88,
+    borderRadius: 8,
+    backgroundColor: '#E2E8F0',
+  },
+  pickerCardTitle: {
+    color: '#1E3A5F',
+    fontWeight: '800',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  pickerCardDescription: {
+    color: '#475569',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  progressTrack: {
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: '#E2E8F0',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#16A34A',
+  },
+  progressLabel: {
+    color: '#1E3A5F',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });

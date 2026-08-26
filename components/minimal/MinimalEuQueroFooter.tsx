@@ -1,14 +1,16 @@
 import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { fetchActiveCampaignProjects } from '@/lib/campaignProjectsApi';
+import { withReturnRoute } from '@/lib/dashboardReturnNavigation';
+import { ensureScreenAccess, navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
 import { DRAWER_OFFERINGS_RESOURCE } from '@/lib/drawerMenuAccess';
-import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
-import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useRef } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 type EuQueroItemProps = {
   icon: React.ComponentProps<typeof FontAwesome>['name'];
@@ -44,6 +46,7 @@ export function MinimalEuQueroFooter() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { homeAgendaOpen } = useMinimalHome();
+  const openingCampaignRef = useRef(false);
 
   if (homeAgendaOpen) {
     return null;
@@ -54,9 +57,56 @@ export function MinimalEuQueroFooter() {
       router,
       '/ofertas',
       DRAWER_OFFERINGS_RESOURCE,
-      withMinimalPresentation(),
+      withReturnRoute('/(tabs)'),
       { deniedMessage: 'Você não tem permissão para abrir Dízimos e Ofertas.' }
     );
+  };
+
+  const handleOpenCampaign = () => {
+    if (openingCampaignRef.current) {
+      return;
+    }
+
+    openingCampaignRef.current = true;
+
+    void (async () => {
+      try {
+        const allowed = await ensureScreenAccess(
+          DRAWER_OFFERINGS_RESOURCE,
+          'Você não tem permissão para contribuir.'
+        );
+
+        if (!allowed) {
+          return;
+        }
+
+        const campaigns = await fetchActiveCampaignProjects();
+
+        if (campaigns.length === 0) {
+          Toast.show({
+            type: 'info',
+            text1: 'Campanhas e projetos',
+            text2: 'Nenhuma campanha ativa no momento.',
+          });
+          return;
+        }
+
+        const params =
+          campaigns.length === 1
+            ? withReturnRoute('/(tabs)', { campaignId: campaigns[0].id })
+            : withReturnRoute('/(tabs)', { campaignContribute: '1' });
+
+        router.push({ pathname: '/ofertas', params });
+      } catch (error) {
+        Toast.show({
+          type: 'error',
+          text1: 'Campanhas e projetos',
+          text2: error instanceof Error ? error.message : 'Não foi possível abrir as campanhas.',
+        });
+      } finally {
+        openingCampaignRef.current = false;
+      }
+    })();
   };
 
   const handleOpenPastoral = () => {
@@ -64,7 +114,7 @@ export function MinimalEuQueroFooter() {
       router,
       '/pastoral',
       ACCESS_SCREEN.pastoral,
-      withMinimalPresentation()
+      withReturnRoute('/(tabs)')
     );
   };
 
@@ -77,6 +127,12 @@ export function MinimalEuQueroFooter() {
           title="Contribuir com meu Dízimo ou Oferta"
           subtitle="Copie a chave PIX e contribua com a igreja."
           onPress={handleOpenOfferings}
+        />
+        <EuQueroItem
+          icon="flag"
+          title="Contribuir com uma campanha ou projeto"
+          subtitle="Informe o valor e copie o Pix já identificado."
+          onPress={handleOpenCampaign}
         />
         <EuQueroItem
           icon="heart"
