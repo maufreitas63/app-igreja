@@ -60,19 +60,24 @@ const AmountCell = ({
 
 type ThreeMonthRow<T> =
   | { type: 'section'; label: string }
-  | { type: 'data'; label: string; key: keyof T; bold?: boolean };
+  | { type: 'data'; label: string; key: keyof T; bold?: boolean; highlight?: boolean };
 
 function ThreeMonthTable<T extends { month: FinancialMonthKey; header: string; isFocus: boolean }>({
+  banner,
   labelHeader,
   columns,
   rows,
 }: {
+  banner: string;
   labelHeader: string;
   columns: T[];
   rows: ThreeMonthRow<T>[];
 }) {
   return (
     <View style={styles.tableCard}>
+      <View style={styles.sectionBanner}>
+        <Text style={styles.sectionBannerText}>{banner}</Text>
+      </View>
       <View style={[styles.tableRow, styles.tableHeaderRow]}>
         <Text style={[styles.headerCell, styles.periodLabelCol, styles.headerCellLeft]}>{labelHeader}</Text>
         {columns.map((column) => (
@@ -103,7 +108,13 @@ function ThreeMonthTable<T extends { month: FinancialMonthKey; header: string; i
         return (
           <View
             key={String(row.key)}
-            style={[styles.tableRow, dataIndex % 2 === 1 && styles.tableRowAlt, row.bold && styles.totalRow]}
+            style={[
+              styles.tableRow,
+              dataIndex % 2 === 1 && styles.tableRowAlt,
+              row.bold && styles.totalRow,
+              row.highlight && styles.totalRowFocus,
+              row.highlight && styles.totalRowBorder,
+            ]}
           >
             <Text style={[styles.labelCell, styles.periodLabelCol, row.bold && styles.labelBold]}>
               {row.label}
@@ -115,7 +126,7 @@ function ThreeMonthTable<T extends { month: FinancialMonthKey; header: string; i
               >
                 <AmountCell
                   value={Number(column[row.key]) || 0}
-                  highlighted={column.isFocus}
+                  highlighted={column.isFocus || row.highlight}
                   bold={row.bold}
                   compact
                 />
@@ -131,6 +142,7 @@ function ThreeMonthTable<T extends { month: FinancialMonthKey; header: string; i
 function MovementSummaryTable({ columns }: { columns: AnalyticalMovementColumn[] }) {
   return (
     <ThreeMonthTable
+      banner="ÚLTIMOS 3 MESES"
       labelHeader="Conta"
       columns={columns}
       rows={[
@@ -142,6 +154,7 @@ function MovementSummaryTable({ columns }: { columns: AnalyticalMovementColumn[]
         { type: 'data', label: 'Ordinário', key: 'saidasOrdinario' },
         { type: 'data', label: 'Extraordinário', key: 'saidasExtraordinario' },
         { type: 'data', label: 'Total saídas', key: 'saidasTotal', bold: true },
+        { type: 'data', label: 'Total geral', key: 'totalGeral', bold: true, highlight: true },
       ]}
     />
   );
@@ -347,12 +360,12 @@ export function FinancialAnalyticalSummaryReportView({
           </Text>
         </View>
 
-        <MovementSummaryTable columns={report.movementColumns} />
         <MovementsTable
           entradaRows={report.entradaRows}
           saidaRows={report.saidaRows}
           totals={report.monthTotals}
         />
+        <MovementSummaryTable columns={report.movementColumns} />
         <HistoricalTable historical={report.historical} />
       </View>
     </ScrollView>
@@ -518,15 +531,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#334E68',
     borderTopWidth: 0,
     minHeight: 26,
+    paddingVertical: 7,
     paddingHorizontal: 8,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   groupBannerText: {
-    flex: 1,
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
+    lineHeight: 14,
+    textAlign: 'center',
+    width: '100%',
+    includeFontPadding: false,
   },
   emptyHint: {
     color: '#64748B',

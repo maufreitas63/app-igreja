@@ -34,6 +34,7 @@ export type AnalyticalMovementColumn = {
   saidasOrdinario: number;
   saidasExtraordinario: number;
   saidasTotal: number;
+  totalGeral: number;
 };
 
 export type AnalyticalAccountRow = {
@@ -147,8 +148,8 @@ const sortAccountRows = (rows: AnalyticalAccountRow[]) =>
 
 /**
  * Monta o Resumo Financeiro a partir dos lançamentos REALIZADO.
- * - Quadro único: entradas e saídas (ordinário / extraordinário / total) nos últimos 3 meses
  * - Movimentos do mês: entradas com subtotal, depois saídas com subtotal, depois total geral
+ * - Últimos 3 meses: entradas e saídas (ordinário / extraordinário / total) + total geral
  * - Acumulado histórico: até o fim do mês de referência
  */
 export function buildFinancialAnalyticalSummaryReport(
@@ -175,6 +176,7 @@ export function buildFinancialAnalyticalSummaryReport(
       saidasOrdinario: split.saidas.ordinario,
       saidasExtraordinario: split.saidas.extraordinario,
       saidasTotal: split.saidas.total,
+      totalGeral: split.geral.total,
     };
   });
 
