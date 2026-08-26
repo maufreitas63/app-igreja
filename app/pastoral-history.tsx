@@ -36,6 +36,7 @@ import {
   resolveReturnDashboardCardParam,
 } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
