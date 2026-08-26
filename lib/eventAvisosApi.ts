@@ -4,7 +4,7 @@ import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 export const EVENT_AVISOS_SQL_HINT = 'Execute no Supabase: scripts/event-avisos-schema.sql';
 
-export type EventAvisoAudience = 'all' | 'small_group_leaders';
+export type EventAvisoAudience = 'all' | 'small_group_leaders' | 'opportunity_match';
 
 export type EventAvisoRow = {
   id: string;
@@ -13,6 +13,7 @@ export type EventAvisoRow = {
   sortOrder: number;
   isPublished: boolean;
   audience: EventAvisoAudience;
+  opportunityId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -27,7 +28,11 @@ const parseEventAvisoRow = (record: Record<string, unknown>): EventAvisoRow | nu
 
   const audienceRaw = String(record.audience ?? 'all').trim();
   const audience: EventAvisoAudience =
-    audienceRaw === 'small_group_leaders' ? 'small_group_leaders' : 'all';
+    audienceRaw === 'small_group_leaders'
+      ? 'small_group_leaders'
+      : audienceRaw === 'opportunity_match'
+        ? 'opportunity_match'
+        : 'all';
 
   return {
     id,
@@ -36,6 +41,7 @@ const parseEventAvisoRow = (record: Record<string, unknown>): EventAvisoRow | nu
     sortOrder: Number(record.sort_order ?? record.sortOrder ?? 0),
     isPublished: record.is_published === true || record.isPublished === true,
     audience,
+    opportunityId: String(record.opportunity_id ?? '').trim() || null,
     createdAt: String(record.created_at ?? record.createdAt ?? ''),
     updatedAt: String(record.updated_at ?? record.updatedAt ?? ''),
   };
@@ -88,6 +94,7 @@ export async function saveEventAviso(input: {
   sortOrder?: number;
   isPublished?: boolean;
   audience?: EventAvisoAudience;
+  opportunityId?: string | null;
 }) {
   const actorProfileId = await resolveActorProfileId();
 
@@ -103,6 +110,7 @@ export async function saveEventAviso(input: {
     p_sort_order: input.sortOrder ?? 0,
     p_is_published: input.isPublished ?? true,
     p_audience: input.audience ?? 'all',
+    p_opportunity_id: input.opportunityId ?? null,
   });
 
   if (error) {

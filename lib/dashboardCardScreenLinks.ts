@@ -20,6 +20,7 @@ export const DASHBOARD_CARD_PARAM_TO_CONTENT: Record<string, string> = {
   '13': 'administrativo',
   '16': 'small_group',
   '17': 'campaign_card',
+  '18': 'opportunity_mural_card',
   event_alt: 'event_alt',
   kids_teens: 'kids_teens',
   offerings: 'offerings',
@@ -36,6 +37,7 @@ export const DASHBOARD_CARD_PARAM_TO_CONTENT: Record<string, string> = {
   administrativo: 'administrativo',
   small_group: 'small_group',
   campaign_card: 'campaign_card',
+  opportunity_mural_card: 'opportunity_mural_card',
 };
 
 /** Cards do dashboard que abrem telas filhas — exigem permissão da rota além do card. */

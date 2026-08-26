@@ -36,6 +36,7 @@ export const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   discipleship_reset: 'maintenance.card.discipleship_reset',
   small_groups_management: 'maintenance.card.small_groups_management',
   campaigns_management: 'maintenance.finance.campaigns',
+  volunteer_mural: 'maintenance.volunteer.mural',
 };
 
 export function resolveDashboardCardAccessResourceKey(

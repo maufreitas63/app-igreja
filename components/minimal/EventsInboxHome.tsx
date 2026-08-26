@@ -9,6 +9,7 @@ import {
 } from '@/lib/eventAvisosApi';
 import { fetchMyPastoralSlotNotices, type PastoralSlotNotice } from '@/lib/pastoralSlotsApi';
 import { fetchMyCampaignNotices, type CampaignNotice } from '@/lib/campaignProjectsApi';
+import { fetchUnreadOpportunityNotices, type OpportunityNotice } from '@/lib/volunteerOpportunitiesApi';
 import { fetchUnreadScaleSwapNotices, type ScaleSwapNotice } from '@/lib/scaleSwapApi';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -40,6 +41,7 @@ export function EventsInboxHome() {
   const [avisos, setAvisos] = useState<EventAvisoRow[]>([]);
   const [pastoralNotices, setPastoralNotices] = useState<PastoralSlotNotice[]>([]);
   const [campaignNotices, setCampaignNotices] = useState<CampaignNotice[]>([]);
+  const [opportunityNotices, setOpportunityNotices] = useState<OpportunityNotice[]>([]);
   const [scaleSwapNotices, setScaleSwapNotices] = useState<ScaleSwapNotice[]>([]);
   const [avisosLoading, setAvisosLoading] = useState(false);
   const [avisosError, setAvisosError] = useState<string | null>(null);
@@ -58,6 +60,7 @@ export function EventsInboxHome() {
       const slotNotices = await fetchMyPastoralSlotNotices();
       setPastoralNotices(slotNotices);
       setCampaignNotices(await fetchMyCampaignNotices());
+      setOpportunityNotices(await fetchUnreadOpportunityNotices());
       setScaleSwapNotices(await fetchUnreadScaleSwapNotices());
       const rows = await fetchPublishedEventAvisos();
       setAvisos(rows);
@@ -199,6 +202,7 @@ export function EventsInboxHome() {
               ) : avisos.length === 0
                 && pastoralNotices.length === 0
                 && campaignNotices.length === 0
+                && opportunityNotices.length === 0
                 && scaleSwapNotices.length === 0 ? (
                 avisosError ? (
                   <Text style={styles.error}>{avisosError}</Text>
@@ -212,6 +216,14 @@ export function EventsInboxHome() {
                   nestedScrollEnabled
                   showsVerticalScrollIndicator
                 >
+                  {opportunityNotices.map((item) => (
+                    <View key={`opportunity-${item.id}`} style={styles.avisoCard}>
+                      <Text style={styles.avisoTitle} numberOfLines={2}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.avisoBody}>{item.body}</Text>
+                    </View>
+                  ))}
                   {scaleSwapNotices.map((item) => (
                     <View key={`scale-swap-${item.id}`} style={styles.avisoCard}>
                       <Text style={styles.avisoTitle} numberOfLines={2}>

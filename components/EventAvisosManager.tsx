@@ -3,8 +3,11 @@ import {
   deleteEventAviso,
   fetchOrchestratorEventAvisos,
   saveEventAviso,
+  type EventAvisoAudience,
   type EventAvisoRow,
 } from '@/lib/eventAvisosApi';
+import { fetchVolunteerOpportunitiesAdmin } from '@/lib/volunteerOpportunitiesApi';
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { showAppToast } from '@/lib/appToast';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -35,7 +38,8 @@ const emptyDraft = () => ({
   body: '',
   sortOrder: 0,
   isPublished: true,
-  audience: 'all' as const,
+  audience: 'all' as EventAvisoAudience,
+  opportunityId: null as string | null,
 });
 
 type DraftState = ReturnType<typeof emptyDraft>;
@@ -65,6 +69,7 @@ export function EventAvisosManager({
   const [saving, setSaving] = useState(false);
   const [items, setItems] = useState<EventAvisoRow[]>([]);
   const [draft, setDraft] = useState<DraftState>(emptyDraft);
+  const [openOpportunities, setOpenOpportunities] = useState<{ value: string; label: string }[]>([]);
   /** Remonta os TextInputs ao editar — no web o valor controlado às vezes não aplica. */
   const [formKey, setFormKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +86,16 @@ export function EventAvisosManager({
     try {
       const rows = await fetchOrchestratorEventAvisos();
       setItems(rows);
+      try {
+        const opportunities = await fetchVolunteerOpportunitiesAdmin();
+        setOpenOpportunities(
+          opportunities
+            .filter((row) => row.status === 'aberta')
+            .map((row) => ({ value: row.id, label: row.titulo }))
+        );
+      } catch {
+        setOpenOpportunities([]);
+      }
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar avisos.');
     } finally {
@@ -104,7 +119,11 @@ export function EventAvisosManager({
       body: row.body ?? '',
       sortOrder: row.sortOrder ?? 0,
       isPublished: row.isPublished === true,
-      audience: row.audience === 'small_group_leaders' ? 'small_group_leaders' : 'all',
+      audience:
+        row.audience === 'small_group_leaders' || row.audience === 'opportunity_match'
+          ? row.audience
+          : 'all',
+      opportunityId: row.opportunityId,
     });
     setFormKey((current) => current + 1);
     showAppToast({
@@ -134,6 +153,7 @@ export function EventAvisosManager({
         sortOrder: draft.sortOrder,
         isPublished: draft.isPublished,
         audience: draft.audience,
+        opportunityId: draft.opportunityId,
       });
 
       if (!result.success) {
@@ -296,6 +316,7 @@ export function EventAvisosManager({
                     setDraft((current) => ({
                       ...current,
                       audience: onlyLeaders ? 'small_group_leaders' : 'all',
+                      opportunityId: onlyLeaders ? current.opportunityId : null,
                     }))
                   }
                   disabled={saving}
@@ -303,6 +324,35 @@ export function EventAvisosManager({
                   thumbColor={minimal ? MINIMAL_UI.onDark : undefined}
                 />
               </View>
+              <View style={styles.publishRow}>
+                <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
+                  Só perfil ministerial compatível
+                </Text>
+                <Switch
+                  value={draft.audience === 'opportunity_match'}
+                  onValueChange={(onlyMatch) =>
+                    setDraft((current) => ({
+                      ...current,
+                      audience: onlyMatch ? 'opportunity_match' : 'all',
+                    }))
+                  }
+                  disabled={saving}
+                  trackColor={minimal ? MINIMAL_SWITCH_TRACK : undefined}
+                  thumbColor={minimal ? MINIMAL_UI.onDark : undefined}
+                />
+              </View>
+              {draft.audience === 'opportunity_match' ? (
+                <DropdownSelect
+                  selectedValue={draft.opportunityId ?? ''}
+                  placeholder="Selecione a vaga"
+                  modalTitle="Vaga do mural"
+                  variant={minimal ? 'minimal' : 'default'}
+                  options={openOpportunities}
+                  onValueChange={(value) =>
+                    setDraft((current) => ({ ...current, opportunityId: value || null }))
+                  }
+                />
+              ) : null}
             </View>
           </View>
 
@@ -387,7 +437,9 @@ export function EventAvisosManager({
                         {item.isPublished
                           ? item.audience === 'small_group_leaders'
                             ? 'Líderes de células'
-                            : 'Publicado'
+                            : item.audience === 'opportunity_match'
+                              ? 'Perfil ministerial'
+                              : 'Publicado'
                           : 'Rascunho'}
                       </Text>
                     </View>

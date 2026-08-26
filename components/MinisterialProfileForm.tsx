@@ -12,6 +12,9 @@ import {
   type MinisterialQuestion,
 } from '@/lib/ministerialProfileQuestionnaire';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { fetchVolunteerOpportunitiesForMe, type VolunteerOpportunityMember } from '@/lib/volunteerOpportunitiesApi';
+import { buildReturnToDashboardHref } from '@/lib/dashboardReturnNavigation';
+import { useRouter } from 'expo-router';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -33,6 +36,7 @@ type Props = {
 type FormPhase = 'loading' | 'intro' | 'questions' | 'submitting' | 'result' | 'error';
 
 export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
+  const router = useRouter();
   const [phase, setPhase] = useState<FormPhase>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [questions, setQuestions] = useState<MinisterialQuestion[]>([]);
@@ -40,6 +44,7 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
   const [stepIndex, setStepIndex] = useState(0);
   const [existingResult, setExistingResult] = useState<MinisterialProfileResult | null>(null);
   const [submittedLabel, setSubmittedLabel] = useState<string | null>(null);
+  const [matchedVacancies, setMatchedVacancies] = useState<VolunteerOpportunityMember[]>([]);
   const questionsScrollRef = useRef<ScrollView>(null);
 
   const scrollQuestionsToTop = useCallback(() => {
@@ -56,6 +61,7 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
     setStepIndex(0);
     setExistingResult(null);
     setSubmittedLabel(null);
+    setMatchedVacancies([]);
   }, []);
 
   const loadData = useCallback(async () => {
@@ -101,6 +107,30 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
 
     void loadData();
   }, [loadData, visible]);
+
+  useEffect(() => {
+    if (!visible || phase !== 'result') {
+      return;
+    }
+
+    let cancelled = false;
+
+    void fetchVolunteerOpportunitiesForMe()
+      .then((rows) => {
+        if (!cancelled) {
+          setMatchedVacancies(rows.filter((row) => row.isPrimaryMatch).slice(0, 3));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMatchedVacancies([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [phase, visible]);
 
   useLayoutEffect(() => {
     if (phase !== 'questions') {
@@ -299,6 +329,33 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
               pode servir melhor na congregação.
             </Text>
           )}
+          {matchedVacancies.length ? (
+            <View style={styles.resultDescriptionBox}>
+              <Text style={styles.resultDescriptionHeading}>
+                Vimos que você tem o dom de {label}. Confira estas vagas
+                {matchedVacancies[0]?.ministerioNome
+                  ? ` em ${matchedVacancies[0].ministerioNome}`
+                  : ''}
+                :
+              </Text>
+              {matchedVacancies.map((row) => (
+                <Text key={row.id} style={styles.resultDescriptionBody}>
+                  • {row.titulo}
+                  {row.ministerioNome ? ` (${row.ministerioNome})` : ''}
+                </Text>
+              ))}
+              <TouchableOpacity
+                style={[styles.primaryButton, styles.primaryButtonFull]}
+                onPress={() => {
+                  handleClose();
+                  router.replace(buildReturnToDashboardHref('opportunity_mural_card'));
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.primaryButtonText}>Ver mural de oportunidades</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
           <TouchableOpacity
             style={[styles.primaryButton, styles.primaryButtonFull]}
             onPress={handleRetake}

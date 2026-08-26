@@ -3,6 +3,7 @@ import { CheckinModal } from '@/components/CheckinModal';
 import { AdministrativoCard } from '@/components/AdministrativoCard';
 import { SmallGroupCard } from '@/components/SmallGroupCard';
 import { CampaignCard } from '@/components/CampaignCard';
+import { OpportunityMuralCard } from '@/components/OpportunityMuralCard';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
@@ -182,7 +183,8 @@ type DashboardCard = {
     | 'grouped_manage'
     | 'administrativo'
     | 'small_group'
-    | 'campaign_card';
+    | 'campaign_card'
+    | 'opportunity_mural_card';
 };
 
 /** Cards minimalistas que renderizam o título principal no corpo da tela. */
@@ -1881,6 +1883,7 @@ export default function Dashboard() {
             { id: '13', title: 'Administrativo', content: 'administrativo' as const },
             { id: '16', title: 'Pequeno Grupo', content: 'small_group' as const },
             { id: '17', title: 'Campanhas e Projetos', content: 'campaign_card' as const },
+            { id: '18', title: 'Mural de Oportunidades', content: 'opportunity_mural_card' as const },
           ]
         : []),
     ],
@@ -2910,6 +2913,21 @@ export default function Dashboard() {
                     <CampaignCard
                       panelHeight={dashboardPanelCardHeight}
                       isActive={data[currentIndex]?.content === 'campaign_card'}
+                    />
+                  </View>
+                ) : item.content === 'opportunity_mural_card' ? (
+                  <View
+                    style={[
+                    cardBaseStyle,
+                      styles.cardAdministrativo,
+                      styles.dashboardPanelCardTopLayout,
+                      effectiveDashboardPanelCardSizeStyle,
+                      dashboardPanelTopInsetStyle,
+                    ]}
+                  >
+                    <OpportunityMuralCard
+                      panelHeight={dashboardPanelCardHeight}
+                      isActive={data[currentIndex]?.content === 'opportunity_mural_card'}
                     />
                   </View>
                 ) : item.content === 'members_list' ? (
