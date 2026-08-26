@@ -1,4 +1,5 @@
 import { BillingClass } from '@/components/billing/BillingClass';
+import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import {
   createStripeCheckoutSession,
   getTenantBillingStatus,
@@ -8,6 +9,7 @@ import type { BillingPlan } from '@/lib/billing/types';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { getStoredTenantId } from '@/lib/tenantSession';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
+import { useLgpdScreenAccess } from '@/hooks/useLgpdScreenAccess';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -22,6 +24,10 @@ import Toast from 'react-native-toast-message';
 export default function BillingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const accessStatus = useLgpdScreenAccess(
+    '/(tabs)',
+    'Faça login para abrir as assinaturas.'
+  );
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<BillingPlan[]>([]);
   const [currentPlanCode, setCurrentPlanCode] = useState<string | null>(null);
@@ -105,6 +111,7 @@ export default function BillingScreen() {
   };
 
   return (
+    <ScreenAccessGate status={accessStatus.status}>
     <View style={[styles.root, { paddingTop: Math.max(insets.top, 12) }]}>
       {isSuperAdmin ? (
         <View style={styles.topRow}>
@@ -130,6 +137,7 @@ export default function BillingScreen() {
         onSubscribe={(plan) => void handleSubscribe(plan)}
       />
     </View>
+    </ScreenAccessGate>
   );
 }
 

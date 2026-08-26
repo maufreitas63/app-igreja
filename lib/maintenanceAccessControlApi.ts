@@ -177,13 +177,14 @@ const readIsSuperAdminProfile = async (profileId: string) => {
 };
 
 export async function checkSessionIsSuperAdmin(options?: { forceRefresh?: boolean }) {
-  const phone = await getStoredUserPhone();
+  const ghostActive = isGhostModeActive();
+  const phone = ghostActive ? null : await getStoredUserPhone();
 
   if (phone?.trim()) {
     await repairUserSessionReference(phone);
   }
 
-  const profileId = isGhostModeActive()
+  const profileId = ghostActive
     ? await resolveEffectiveProfileId({ forceRefresh: options?.forceRefresh })
     : await resolveRealSessionProfileId({ forceRefresh: options?.forceRefresh });
 

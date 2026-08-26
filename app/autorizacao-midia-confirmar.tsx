@@ -1,4 +1,5 @@
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
+import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useMediaAuthorizationAccess } from '@/hooks/useMediaAuthorizationAccess';
 import {
   describeInvalidAuthorizationToken,
@@ -20,7 +21,7 @@ export default function MediaAuthorizationConfirmScreen() {
   const [token, setToken] = useState<string | null>(null);
   const [invalidMessage, setInvalidMessage] = useState<string | null>(null);
   const [tokenReady, setTokenReady] = useState(false);
-  const { sessionProfileId } = useMediaAuthorizationAccess();
+  const { status: sessionAccessStatus, sessionProfileId } = useMediaAuthorizationAccess();
   const [status, setStatus] = useState<'ready' | 'loading' | 'success' | 'error'>('ready');
   const [message, setMessage] = useState(
     'Toque em Confirmar autorização para concluir. O link vale por 48 horas.'
@@ -124,52 +125,49 @@ export default function MediaAuthorizationConfirmScreen() {
   }, [router, sessionProfileId]);
 
   if (!tokenReady) {
-    return (
-      <MinimalScreenLayout scroll={false}>
-        <View style={styles.root}>
-          <Text style={styles.title}>Confirmação de autorização</Text>
-          <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />
-        </View>
-      </MinimalScreenLayout>
-    );
+    return <ScreenAccessGate status="checking">{null}</ScreenAccessGate>;
   }
 
   if (!token) {
     return (
-      <MinimalScreenLayout scroll={false}>
-        <View style={styles.root}>
-          <Text style={styles.title}>Confirmação de autorização</Text>
-          <Text style={[styles.message, styles.messageError]}>
-            {invalidMessage ?? 'Link inválido ou incompleto. Solicite um novo envio pelo aplicativo.'}
-          </Text>
-          <Pressable accessibilityRole="button" style={styles.button} onPress={handleBack}>
-            <Text style={styles.buttonText}>Voltar ao aplicativo</Text>
-          </Pressable>
-        </View>
-      </MinimalScreenLayout>
+      <ScreenAccessGate status={sessionAccessStatus}>
+        <MinimalScreenLayout scroll={false}>
+          <View style={styles.root}>
+            <Text style={styles.title}>Confirmação de autorização</Text>
+            <Text style={[styles.message, styles.messageError]}>
+              {invalidMessage ?? 'Link inválido ou incompleto. Solicite um novo envio pelo aplicativo.'}
+            </Text>
+            <Pressable accessibilityRole="button" style={styles.button} onPress={handleBack}>
+              <Text style={styles.buttonText}>Voltar ao aplicativo</Text>
+            </Pressable>
+          </View>
+        </MinimalScreenLayout>
+      </ScreenAccessGate>
     );
   }
 
   return (
-    <MinimalScreenLayout scroll={false}>
-      <View style={styles.root}>
-        <Text style={styles.title}>Confirmação de autorização</Text>
-        {status === 'loading' ? <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} /> : null}
-        <Text style={[styles.message, status === 'error' && styles.messageError]}>{message}</Text>
+    <ScreenAccessGate status="skipped">
+      <MinimalScreenLayout scroll={false}>
+        <View style={styles.root}>
+          <Text style={styles.title}>Confirmação de autorização</Text>
+          {status === 'loading' ? <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} /> : null}
+          <Text style={[styles.message, status === 'error' && styles.messageError]}>{message}</Text>
 
-        {status === 'ready' ? (
-          <Pressable accessibilityRole="button" style={styles.button} onPress={() => void handleConfirm()}>
-            <Text style={styles.buttonText}>Confirmar autorização</Text>
-          </Pressable>
-        ) : null}
+          {status === 'ready' ? (
+            <Pressable accessibilityRole="button" style={styles.button} onPress={() => void handleConfirm()}>
+              <Text style={styles.buttonText}>Confirmar autorização</Text>
+            </Pressable>
+          ) : null}
 
-        {status === 'success' || status === 'error' ? (
-          <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={handleBack}>
-            <Text style={styles.secondaryButtonText}>Voltar ao aplicativo</Text>
-          </Pressable>
-        ) : null}
-      </View>
-    </MinimalScreenLayout>
+          {status === 'success' || status === 'error' ? (
+            <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={handleBack}>
+              <Text style={styles.secondaryButtonText}>Voltar ao aplicativo</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </MinimalScreenLayout>
+    </ScreenAccessGate>
   );
 }
 

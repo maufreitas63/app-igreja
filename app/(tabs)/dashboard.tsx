@@ -53,7 +53,7 @@ import {
   fetchVisitorsDirectoryFromProfiles,
 } from '@/lib/membersListApi';
 import { prefetchProfilesMapMarkers } from '@/lib/syncProfilesMapMarkers';
-import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { loadEffectiveSessionProfile, getEffectiveUserPhone } from '@/lib/loadSessionProfile';
 import { isGhostModeActive } from '@/lib/ghostMode';
 import { isLgpdAtivoEnabled, isProfileLgpdPending } from '@/lib/appParameters';
 import { lookupVehicleByPlaca, type VehicleLookupResult } from '@/lib/profileVehicleLookup';
@@ -954,6 +954,8 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadData() {
       setIsProfileLoading(true);
       setIsMaintenanceAccessLoading(true);
@@ -961,9 +963,14 @@ export default function Dashboard() {
       try {
         let targetPhone = phone;
         if (!targetPhone) {
-          targetPhone = await getStoredUserPhone();
-        } else {
+          targetPhone = isGhostModeActive()
+            ? await getEffectiveUserPhone()
+            : await getStoredUserPhone();
+        } else if (!isGhostModeActive()) {
           await AsyncStorage.setItem('user_phone', targetPhone);
+        }
+        if (cancelled) {
+          return;
         }
         if (!targetPhone && !isGhostModeActive()) {
           setCanViewMaintenance(false);
@@ -972,7 +979,7 @@ export default function Dashboard() {
           setDashboardScreenAccess({});
           setGroupedManageScreenAccess({ manageProfile: false, manageMembers: false });
           setCanAccessMapGeolocation(false);
-        setCanViewMapPinDetails(false);
+          setCanViewMapPinDetails(false);
           return;
         }
 
@@ -981,6 +988,10 @@ export default function Dashboard() {
         if (!sessionProfile?.id && !isGhostModeActive()) {
           await repairUserSessionReference(targetPhone);
           sessionProfile = await loadEffectiveSessionProfile(targetPhone);
+        }
+
+        if (cancelled) {
+          return;
         }
 
         // No Modo Ghost, telefone/família vêm só do alvo — nunca do operador real.
@@ -993,6 +1004,11 @@ export default function Dashboard() {
           sessionProfile?.family_id
           ?? sessionProfile?.codigo_membro
           ?? (effectivePhone ? await resolveFamilyIdForPhone(effectivePhone) : null);
+
+        if (cancelled) {
+          return;
+        }
+
         setFamilyId(resolvedFamilyId);
 
         if (!sessionProfile) {
@@ -1004,7 +1020,7 @@ export default function Dashboard() {
           setDashboardScreenAccess({});
           setGroupedManageScreenAccess({ manageProfile: false, manageMembers: false });
           setCanAccessMapGeolocation(false);
-        setCanViewMapPinDetails(false);
+          setCanViewMapPinDetails(false);
           signOutAndNavigateToLogin();
           return;
         }
@@ -1023,6 +1039,9 @@ export default function Dashboard() {
 
         if (loadedProfile.id && !isGhostModeActive()) {
           await persistProfileId(loadedProfile.id);
+          if (cancelled) {
+            return;
+          }
         } else if (!loadedProfile.id) {
           setCanViewMaintenance(false);
           setCanMonitorFamilyReception(false);
@@ -1033,10 +1052,16 @@ export default function Dashboard() {
         }
 
         const aclStatus = await getAccessControlRpcStatus();
+        if (cancelled) {
+          return;
+        }
         setAclRpcStatus(aclStatus);
 
         if (loadedProfile?.id) {
           const accessProfileId = (await resolveEffectiveProfileId()) ?? loadedProfile.id;
+          if (cancelled) {
+            return;
+          }
           const [allowed, cardAccess, screenAccess, groupedManageAccess, mapGeolocationAllowed, mapPinDetailAllowed, isSuperAdmin, canAccessProfileCadastro, activeMembership] =
             await Promise.all([
               profileHasAccess(accessProfileId, 'screen', ACCESS_SCREEN.maintenance, 'view'),
@@ -1055,11 +1080,22 @@ export default function Dashboard() {
               fetchProfileHasActiveMembership(accessProfileId),
             ]);
 
+          if (cancelled) {
+            return;
+          }
+
           let resolvedCardAccess = cardAccess;
           let resolvedScreenAccess = screenAccess;
           let resolvedGroupedManageAccess = groupedManageAccess;
           const hasAnyCard = Object.values(cardAccess).some((allowedCard) => allowedCard === true);
-          const operatorIsSuperAdmin = await checkOperatorIsSuperAdmin({ forceRefresh: ghostModeActive });
+          // No Ghost os cards/ACL são só do alvo — o Super Admin operador não amplia a visão.
+          const operatorIsSuperAdmin =
+            !isGhostModeActive()
+            && (await checkOperatorIsSuperAdmin({ forceRefresh: ghostModeActive }));
+
+          if (cancelled) {
+            return;
+          }
 
           if (!hasAnyCard && operatorIsSuperAdmin) {
             resolvedCardAccess = Object.fromEntries(
@@ -1083,6 +1119,9 @@ export default function Dashboard() {
           setHasActiveMembership(false);
         }
       } catch (error) {
+        if (cancelled) {
+          return;
+        }
         console.error('Erro ao carregar dashboard:', error);
         setCanViewMaintenance(false);
         setCanMonitorFamilyReception(false);
@@ -1093,11 +1132,16 @@ export default function Dashboard() {
         setCanViewMapPinDetails(false);
         setHasActiveMembership(false);
       } finally {
-        setIsMaintenanceAccessLoading(false);
-        setIsProfileLoading(false);
+        if (!cancelled) {
+          setIsMaintenanceAccessLoading(false);
+          setIsProfileLoading(false);
+        }
       }
     }
-    loadData();
+    void loadData();
+    return () => {
+      cancelled = true;
+    };
   }, [phone, ghostModeActive, ghostModeState?.targetProfileId]);
 
   useFocusEffect(
@@ -1106,7 +1150,7 @@ export default function Dashboard() {
 
       void (async () => {
         const [storedPhone, lgpdModuleActive] = await Promise.all([
-          phone ? Promise.resolve(phone) : getStoredUserPhone(),
+          phone ? Promise.resolve(phone) : getEffectiveUserPhone(),
           isLgpdAtivoEnabled(),
         ]);
 

@@ -22,9 +22,6 @@ import {
   resolveEffectiveProfileId,
   resolveRealSessionProfileId,
 } from '@/lib/sessionProfile';
-import {
-  getStoredUserPhone,
-} from '@/lib/userSession';
 
 export type MaintenanceDashboardAccessSnapshot = {
   allowed: boolean;
@@ -143,8 +140,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
   let headerUserName: string | null = null;
 
   try {
-    const phone = await getStoredUserPhone();
-    const sessionProfile = await loadEffectiveSessionProfile(phone);
+    const sessionProfile = await loadEffectiveSessionProfile();
     const profileName = sessionProfile?.full_name?.trim();
 
     if (profileName) {

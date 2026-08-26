@@ -6,10 +6,9 @@ import {
   uploadExpenseReportReceiptImage,
 } from '@/lib/financialReceipt';
 import { formatBrazilDateInput } from '@/lib/inputMasks';
-import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { loadEffectiveSessionProfile, getEffectiveUserPhone } from '@/lib/loadSessionProfile';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
-import { getStoredUserPhone } from '@/lib/userSession';
 import { buildWaMeUrl, openWhatsAppPhone } from '@/lib/whatsapp';
 
 export const EXPENSE_REPORT_SQL_HINT =
@@ -320,13 +319,8 @@ export const createEmptyExpenseReportDraftItem = (): ExpenseReportDraftItem => (
 });
 
 export async function loadExpenseReportHeader(): Promise<ExpenseReportHeader | null> {
-  const phone = (await getStoredUserPhone())?.trim();
-
-  if (!phone) {
-    return null;
-  }
-
-  const profile = await loadEffectiveSessionProfile(phone);
+  // Proteção aplicada: no Ghost o RD segue o alvo, não o operador
+  const profile = await loadEffectiveSessionProfile();
 
   if (!profile?.id) {
     return null;
@@ -341,7 +335,7 @@ export async function loadExpenseReportHeader(): Promise<ExpenseReportHeader | n
   return {
     profileId: profile.id,
     fullName: profile.full_name?.trim() || '—',
-    phone: profile.phone?.trim() || phone,
+    phone: profile.phone?.trim() || (await getEffectiveUserPhone()) || '',
     pixKey:
       (typeof profileRow?.pix_key === 'string' ? profileRow.pix_key.trim() : '') ||
       '',

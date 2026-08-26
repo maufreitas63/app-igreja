@@ -1,8 +1,7 @@
 import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
-import { loadSessionProfile } from '@/lib/loadSessionProfile';
+import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { supabase } from '@/lib/supabase';
 import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
-import { getStoredUserPhone } from '@/lib/userSession';
 import { openWhatsAppPhone } from '@/lib/whatsapp';
 import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -387,17 +386,11 @@ export async function pickMaintenanceSupportImagesFromGallery() {
 }
 
 export async function resolveMaintenanceSupportActor(): Promise<MaintenanceSupportActor> {
-  const phone = (await getStoredUserPhone())?.trim() || null;
-  const profileId = await resolveActorProfileId();
-  let name = 'Usuário';
-
-  if (phone) {
-    const profile = await loadSessionProfile(phone);
-    const profileName = profile?.full_name?.trim();
-    if (profileName) {
-      name = profileName;
-    }
-  }
+  // Proteção aplicada: no Ghost o ticket segue o alvo, não o operador
+  const profile = await loadEffectiveSessionProfile();
+  const profileId = (await resolveActorProfileId()) || profile?.id || null;
+  const name = profile?.full_name?.trim() || 'Usuário';
+  const phone = profile?.phone?.trim() || null;
 
   return { profileId, name, phone };
 }

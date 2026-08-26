@@ -15,6 +15,7 @@ import {
 } from '@/lib/effectiveProfileRpc';
 import { resolveEffectiveProfileId, resolveRealSessionProfileId } from '@/lib/sessionProfile';
 import { ACCESS_SCREEN } from '@/lib/accessScreen';
+import { getEffectiveUserPhone } from '@/lib/loadSessionProfile';
 
 export { ACL_UNAVAILABLE_MESSAGE, isAclStrictMode } from '@/lib/aclPolicy';
 export { ACCESS_SCREEN, ACCESS_SCREEN_MAINTENANCE_EXTRA } from '@/lib/accessScreen';
@@ -542,7 +543,7 @@ export async function sessionHasAccess(
     return profileHasAccess(profileId, resourceType, resourceKey, action);
   }
 
-  const phone = await getStoredUserPhone();
+  const phone = await getEffectiveUserPhone();
 
   if (phone?.trim()) {
     return profileHasAccessByPhone(phone, resourceType, resourceKey, action);

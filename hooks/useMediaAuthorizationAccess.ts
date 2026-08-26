@@ -8,6 +8,9 @@ type MediaAuthorizationAccessState = {
 
 /** Mesma regra de sessão da rota LGPD — login válido, sem card do dashboard. */
 export function useMediaAuthorizationAccess(): MediaAuthorizationAccessState {
-  const { status, sessionProfileId } = useLgpdScreenAccess();
+  const { status, sessionProfileId } = useLgpdScreenAccess(
+    '/(tabs)',
+    'Faça login para abrir a autorização de mídia.'
+  );
   return { status, sessionProfileId };
 }

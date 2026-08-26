@@ -17,8 +17,11 @@ type LgpdScreenAccessState = {
   sessionProfileId: string | null;
 };
 
-/** Acesso à rota `/lgpd` — sessão válida, sem exigir card do dashboard. */
-export function useLgpdScreenAccess(redirectPath: string = '/(tabs)'): LgpdScreenAccessState {
+/** Acesso à rota com sessão válida, sem exigir card do dashboard. */
+export function useLgpdScreenAccess(
+  redirectPath: string = '/(tabs)',
+  deniedMessage: string = 'Faça login para abrir os termos de privacidade.'
+): LgpdScreenAccessState {
   const router = useRouter();
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
   const [sessionProfileId, setSessionProfileId] = useState<string | null>(null);
@@ -75,7 +78,7 @@ export function useLgpdScreenAccess(redirectPath: string = '/(tabs)'): LgpdScree
             router,
             redirectPath,
             'Acesso negado',
-            'Faça login para abrir os termos de privacidade.'
+            deniedMessage
           );
           return;
         }
@@ -89,7 +92,7 @@ export function useLgpdScreenAccess(redirectPath: string = '/(tabs)'): LgpdScree
       return () => {
         active = false;
       };
-    }, [ghostTargetId, redirectPath, router])
+    }, [deniedMessage, ghostTargetId, redirectPath, router])
   );
 
   return { status, sessionProfileId };
