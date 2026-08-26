@@ -601,6 +601,10 @@ export default function Dashboard() {
   const [membersListError, setMembersListError] = useState<string | null>(null);
   const [membersListSearchQuery, setMembersListSearchQuery] = useState('');
   const visitorsListLoadedRef = useRef(false);
+  const birthdaysLoadGenRef = useRef(0);
+  const membersListLoadGenRef = useRef(0);
+  const visitorsListLoadGenRef = useRef(0);
+  const vigilanceLoadGenRef = useRef(0);
   const [familyModalSeedEntry, setFamilyModalSeedEntry] = useState<MemberListEntry | null>(null);
   const [familyModalFamilyId, setFamilyModalFamilyId] = useState<string | null>(null);
   const [familyModalMembers, setFamilyModalMembers] = useState<MemberListEntry[]>([]);
@@ -954,6 +958,15 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
+    return () => {
+      birthdaysLoadGenRef.current += 1;
+      membersListLoadGenRef.current += 1;
+      visitorsListLoadGenRef.current += 1;
+      vigilanceLoadGenRef.current += 1;
+    };
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function loadData() {
@@ -1210,6 +1223,7 @@ export default function Dashboard() {
   }, [loadCheckInCardParameters]);
 
   const loadBirthdays = useCallback(async () => {
+    const loadId = ++birthdaysLoadGenRef.current;
     setIsBirthdaysLoading(true);
     setBirthdaysError(null);
 
@@ -1249,17 +1263,27 @@ export default function Dashboard() {
             left.full_name.localeCompare(right.full_name, 'pt-BR')
         );
 
+      if (loadId !== birthdaysLoadGenRef.current) {
+        return;
+      }
+
       setBirthdayEntries(parsedEntries);
     } catch (error) {
+      if (loadId !== birthdaysLoadGenRef.current) {
+        return;
+      }
       console.error('Erro ao carregar aniversariantes:', error);
       setBirthdayEntries([]);
       setBirthdaysError('Nao foi possivel carregar os aniversariantes.');
     } finally {
-      setIsBirthdaysLoading(false);
+      if (loadId === birthdaysLoadGenRef.current) {
+        setIsBirthdaysLoading(false);
+      }
     }
   }, []);
 
   const loadMembersList = useCallback(async () => {
+    const loadId = ++membersListLoadGenRef.current;
     setIsMembersListLoading(true);
     setMembersListError(null);
 
@@ -1280,8 +1304,15 @@ export default function Dashboard() {
         address_state: entry.address_state,
       })) satisfies MemberListEntry[];
 
+      if (loadId !== membersListLoadGenRef.current) {
+        return;
+      }
+
       setMemberListEntries(dedupeMemberListEntries(parsedEntries));
     } catch (error) {
+      if (loadId !== membersListLoadGenRef.current) {
+        return;
+      }
       console.error('Erro ao carregar lista de membros:', error);
       setMemberListEntries([]);
       setMembersListError(
@@ -1290,11 +1321,14 @@ export default function Dashboard() {
           : 'Nao foi possivel carregar a lista de membros.'
       );
     } finally {
-      setIsMembersListLoading(false);
+      if (loadId === membersListLoadGenRef.current) {
+        setIsMembersListLoading(false);
+      }
     }
   }, []);
 
   const loadVisitorsList = useCallback(async () => {
+    const loadId = ++visitorsListLoadGenRef.current;
     setIsVisitorsListLoading(true);
     setMembersListError(null);
 
@@ -1315,9 +1349,16 @@ export default function Dashboard() {
         address_state: entry.address_state,
       })) satisfies MemberListEntry[];
 
+      if (loadId !== visitorsListLoadGenRef.current) {
+        return;
+      }
+
       setVisitorListEntries(dedupeMemberListEntries(parsedEntries));
       visitorsListLoadedRef.current = true;
     } catch (error) {
+      if (loadId !== visitorsListLoadGenRef.current) {
+        return;
+      }
       console.error('Erro ao carregar lista de visitantes:', error);
       setVisitorListEntries([]);
       setMembersListError(
@@ -1326,7 +1367,9 @@ export default function Dashboard() {
           : 'Nao foi possivel carregar a lista de visitantes.'
       );
     } finally {
-      setIsVisitorsListLoading(false);
+      if (loadId === visitorsListLoadGenRef.current) {
+        setIsVisitorsListLoading(false);
+      }
     }
   }, []);
 
@@ -1381,6 +1424,7 @@ export default function Dashboard() {
   }, [memberListEntries, profile?.full_name, userPhone]);
 
   const loadVigilanceScales = useCallback(async (options?: { preserveSelection?: boolean }) => {
+    const loadId = ++vigilanceLoadGenRef.current;
     const preserveSelection = options?.preserveSelection ?? false;
     setIsVigilanceScalesLoading(true);
     setVigilanceScalesError(null);
@@ -1491,6 +1535,10 @@ export default function Dashboard() {
         parsedTypes = derivePermittedScaleTypesFromSchedule(profile.full_name, parsedEntries);
       }
 
+      if (loadId !== vigilanceLoadGenRef.current) {
+        return;
+      }
+
       setScaleTypes(parsedTypes);
       setVigilanceScaleEntries(parsedEntries);
       if (!preserveSelection) {
@@ -1498,6 +1546,9 @@ export default function Dashboard() {
         setIsParkingPanelVisible(false);
       }
     } catch (error) {
+      if (loadId !== vigilanceLoadGenRef.current) {
+        return;
+      }
       console.error('Erro ao carregar escalas:', error);
       setScaleTypes([]);
       setVigilanceScaleEntries([]);
@@ -1507,7 +1558,9 @@ export default function Dashboard() {
       }
       setVigilanceScalesError('Nao foi possivel carregar as escalas.');
     } finally {
-      setIsVigilanceScalesLoading(false);
+      if (loadId === vigilanceLoadGenRef.current) {
+        setIsVigilanceScalesLoading(false);
+      }
     }
   }, [profile?.full_name]);
 

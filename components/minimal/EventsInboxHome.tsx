@@ -46,6 +46,7 @@ export function EventsInboxHome() {
   const [avisosLoading, setAvisosLoading] = useState(false);
   const [avisosError, setAvisosError] = useState<string | null>(null);
   const pagerRef = useRef<ScrollView>(null);
+  const avisosLoadGenRef = useRef(0);
   const agendaOpen = modalEventId !== null;
 
   useEffect(() => {
@@ -54,17 +55,31 @@ export function EventsInboxHome() {
   }, [agendaOpen, setHomeAgendaOpen]);
 
   const loadAvisos = useCallback(async () => {
+    const loadId = ++avisosLoadGenRef.current;
     setAvisosLoading(true);
     setAvisosError(null);
     try {
       const slotNotices = await fetchMyPastoralSlotNotices();
+      if (loadId !== avisosLoadGenRef.current) {
+        return;
+      }
       setPastoralNotices(slotNotices);
-      setCampaignNotices(await fetchMyCampaignNotices());
+      const campaignRows = await fetchMyCampaignNotices();
+      if (loadId !== avisosLoadGenRef.current) {
+        return;
+      }
+      setCampaignNotices(campaignRows);
       const nextOpportunity = await fetchUnreadOpportunityNotices();
       const nextSwaps = await fetchUnreadScaleSwapNotices();
+      if (loadId !== avisosLoadGenRef.current) {
+        return;
+      }
       setOpportunityNotices(nextOpportunity);
       setScaleSwapNotices(nextSwaps);
       const rows = await fetchPublishedEventAvisos();
+      if (loadId !== avisosLoadGenRef.current) {
+        return;
+      }
       setAvisos(rows);
       if (slotNotices.some((item) => !item.read_at)) {
         void markPastoralSlotNoticesRead();
@@ -76,15 +91,23 @@ export function EventsInboxHome() {
         void markScaleSwapNoticesRead();
       }
     } catch (loadError) {
+      if (loadId !== avisosLoadGenRef.current) {
+        return;
+      }
       setAvisosError(loadError instanceof Error ? loadError.message : EVENT_AVISOS_SQL_HINT);
       setAvisos([]);
     } finally {
-      setAvisosLoading(false);
+      if (loadId === avisosLoadGenRef.current) {
+        setAvisosLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     void loadAvisos();
+    return () => {
+      avisosLoadGenRef.current += 1;
+    };
   }, [loadAvisos]);
 
   useEffect(() => {

@@ -14,12 +14,18 @@ export default function TabLayout() {
           href: '/(tabs)',
         }}
       />
-      <Tabs.Screen 
-        name="dashboard" // Isso precisa bater exatamente com o nome do arquivo dashboard.tsx
-        options={{ 
+      <Tabs.Screen
+        name="dashboard"
+        options={{
           title: 'Check-in',
           href: null
-        }} 
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          href: null,
+        }}
       />
     </Tabs>
   );

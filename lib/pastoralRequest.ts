@@ -1,3 +1,4 @@
+import { isGhostModeActive } from '@/lib/ghostMode';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { loadProfileByPhone } from '@/lib/profileOnboarding';
 import { supabase } from '@/lib/supabase';
@@ -207,6 +208,10 @@ export async function resolvePastoralSessionProfile(
       userId: String(session.id),
       phone: String(session.phone ?? '').trim(),
     };
+  }
+
+  if (isGhostModeActive()) {
+    return null;
   }
 
   const storedPhone = await AsyncStorage.getItem('user_phone');
