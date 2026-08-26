@@ -22,8 +22,11 @@ import {
   withReturnRoute,
 } from '@/lib/dashboardReturnNavigation';
 import {
+  brlCentsDigitsToAmount,
   buildPixCopiaECola,
   composeCampaignDonationAmount,
+  formatBrlCentsDigits,
+  parseBrlCentsDigits,
   parseIntegerReaisInput,
 } from '@/lib/pixEmvPayload';
 import * as Clipboard from 'expo-clipboard';
@@ -64,6 +67,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
   const [campaign, setCampaign] = useState<CampaignProject | null>(null);
   const [campaignChoices, setCampaignChoices] = useState<CampaignProject[]>([]);
   const [integerAmount, setIntegerAmount] = useState('');
+  const [offeringCentsDigits, setOfferingCentsDigits] = useState('');
 
   const campaignPix = useMemo(() => {
     if (!campaign || !pixKey) {
@@ -87,6 +91,27 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
       }),
     };
   }, [campaign, churchName, integerAmount, pixKey]);
+
+  const offeringPix = useMemo(() => {
+    if (campaign || !pixKey) {
+      return { amount: null as number | null, copiaECola: null as string | null };
+    }
+
+    const amount = brlCentsDigitsToAmount(offeringCentsDigits);
+
+    if (amount == null) {
+      return { amount: null, copiaECola: null };
+    }
+
+    return {
+      amount,
+      copiaECola: buildPixCopiaECola({
+        pixKey,
+        amount,
+        merchantName: churchName,
+      }),
+    };
+  }, [campaign, churchName, offeringCentsDigits, pixKey]);
 
   const loadOfferingsInfo = useCallback(async () => {
     setPixKeyLoading(true);
@@ -124,13 +149,14 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
   );
 
   const handleCopyPixKey = useCallback(async () => {
-    const payload = campaign ? campaignPix.copiaECola : pixKey;
+    const payload = campaign ? campaignPix.copiaECola : offeringPix.copiaECola;
+    const amount = campaign ? campaignPix.amount : offeringPix.amount;
 
     if (!payload) {
       Alert.alert(
-        campaign ? 'Informe o valor' : 'Chave PIX indisponível',
-        campaign
-          ? 'Digite o valor inteiro em reais para gerar o Pix Copia e Cola.'
+        pixKey ? 'Informe o valor' : 'Chave PIX indisponível',
+        pixKey
+          ? 'Digite o valor da contribuição para gerar o Pix Copia e Cola.'
           : 'Nenhuma chave PIX foi encontrada para copiar.'
       );
       return;
@@ -145,17 +171,22 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
 
       Toast.show({
         type: 'success',
-        text1: campaign ? 'Pix Copia e Cola copiado' : 'Chave PIX copiada',
-        text2: campaign
-          ? `Cole no banco sem alterar os centavos. Valor: ${formatCampaignBrl(campaignPix.amount ?? 0)}.`
-          : 'Cole no aplicativo do seu banco para concluir a transferência.',
+        text1: 'Pix Copia e Cola copiado',
+        text2: `Cole no aplicativo do banco. Valor: ${formatCampaignBrl(amount ?? 0)}.`,
         visibilityTime: 3500,
       });
     } catch (error) {
       console.error('Erro ao copiar chave PIX:', error);
       Alert.alert('Erro ao copiar', 'Não foi possível copiar a chave PIX.');
     }
-  }, [campaign, campaignPix.amount, campaignPix.copiaECola, pixKey]);
+  }, [
+    campaign,
+    campaignPix.amount,
+    campaignPix.copiaECola,
+    offeringPix.amount,
+    offeringPix.copiaECola,
+    pixKey,
+  ]);
 
   const handleClose = useCallback(() => {
     if (onClose) {
@@ -261,6 +292,14 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
             campaignPix.amount != null ? formatCampaignBrl(campaignPix.amount) : null
           }
           campaignCopiaECola={campaignPix.copiaECola}
+          offeringAmountMasked={campaign ? '' : formatBrlCentsDigits(offeringCentsDigits)}
+          onOfferingAmountChange={
+            campaign ? undefined : (value) => setOfferingCentsDigits(parseBrlCentsDigits(value))
+          }
+          offeringFinalAmountLabel={
+            campaign || offeringPix.amount == null ? null : formatCampaignBrl(offeringPix.amount)
+          }
+          offeringCopiaECola={campaign ? null : offeringPix.copiaECola}
           onCopyPixKey={() => {
             void handleCopyPixKey();
           }}

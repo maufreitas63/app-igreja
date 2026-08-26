@@ -35,6 +35,10 @@ export type OfferingsClassProps = {
   onCampaignIntegerAmountChange?: (value: string) => void;
   campaignFinalAmountLabel?: string | null;
   campaignCopiaECola?: string | null;
+  offeringAmountMasked?: string;
+  onOfferingAmountChange?: (value: string) => void;
+  offeringFinalAmountLabel?: string | null;
+  offeringCopiaECola?: string | null;
 };
 
 /** Visualização pura de Dízimos e Ofertas — extraída de dashboard.card.offerings. */
@@ -52,10 +56,15 @@ export function OfferingsClass({
   onCampaignIntegerAmountChange,
   campaignFinalAmountLabel = null,
   campaignCopiaECola = null,
+  offeringAmountMasked = '',
+  onOfferingAmountChange,
+  offeringFinalAmountLabel = null,
+  offeringCopiaECola = null,
 }: OfferingsClassProps) {
   const isCampaign = Boolean(campaignTitle);
+  const copiaECola = isCampaign ? campaignCopiaECola : offeringCopiaECola;
   const qrValue = isCampaign ? campaignCopiaECola : null;
-  const copyEnabled = isCampaign ? Boolean(campaignCopiaECola) : Boolean(pixKey);
+  const copyEnabled = Boolean(copiaECola || (!isCampaign && !onOfferingAmountChange && pixKey));
   const copyLabel = isCampaign ? 'Copiar Chave Pix' : 'Copiar chave PIX';
 
   return (
@@ -117,6 +126,31 @@ export function OfferingsClass({
             <Text style={styles.helpText}>Informe o valor para gerar o Pix Copia e Cola.</Text>
           )}
         </View>
+      ) : onOfferingAmountChange ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Valor da contribuição</Text>
+          <TextInput
+            style={styles.amountInput}
+            value={offeringAmountMasked ? `R$ ${offeringAmountMasked}` : ''}
+            onChangeText={onOfferingAmountChange}
+            placeholder="R$ 0,00"
+            placeholderTextColor="#94A3B8"
+            keyboardType="number-pad"
+            inputMode="numeric"
+            accessibilityLabel="Valor em reais, com centavos"
+          />
+          <Text style={styles.helpText}>
+            Digite o valor com centavos. O montante preenche da direita para a esquerda (1 = 0,01).
+          </Text>
+          {offeringFinalAmountLabel ? (
+            <View style={styles.finalAmountBox}>
+              <Text style={styles.finalAmountLabel}>Valor do Pix</Text>
+              <Text style={styles.finalAmountValue}>{offeringFinalAmountLabel}</Text>
+            </View>
+          ) : (
+            <Text style={styles.helpText}>Informe o valor para gerar o Pix Copia e Cola.</Text>
+          )}
+        </View>
       ) : null}
 
       <View style={styles.section}>
@@ -145,7 +179,7 @@ export function OfferingsClass({
               <Text style={styles.copyButtonText}>{copyLabel}</Text>
             </TouchableOpacity>
             <Text style={styles.helpText}>
-              {isCampaign
+              {copiaECola || isCampaign
                 ? 'Toque no botão para copiar o Pix Copia e Cola já com o valor exato e colar no aplicativo do banco.'
                 : 'Toque no botão para copiar a chave e colar no aplicativo do seu banco.'}
             </Text>

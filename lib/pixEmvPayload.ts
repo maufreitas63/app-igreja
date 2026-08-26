@@ -76,6 +76,31 @@ export function parseIntegerReaisInput(raw: string): string {
   return digits.slice(0, 7);
 }
 
+/** Dígitos de centavos da direita para a esquerda: 1 → 0,01; 11 → 0,11; 111 → 1,11. */
+export function parseBrlCentsDigits(raw: string, maxDigits = 9): string {
+  return raw.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, maxDigits);
+}
+
+export function formatBrlCentsDigits(digits: string): string {
+  if (!digits) {
+    return '';
+  }
+
+  const padded = digits.padStart(3, '0');
+  const cents = padded.slice(-2);
+  const whole = padded.slice(0, -2).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${whole},${cents}`;
+}
+
+export function brlCentsDigitsToAmount(digits: string): number | null {
+  if (!digits) {
+    return null;
+  }
+
+  const value = Number.parseInt(digits, 10) / 100;
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
 const EVP_KEY_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Normaliza chave Pix (CPF/CNPJ sem máscara, e-mail, telefone +55, EVP). */

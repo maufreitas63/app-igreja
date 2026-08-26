@@ -82,4 +82,31 @@ if (!payload.endsWith(crc16Ccitt(payloadWithoutCrc))) {
   throw new Error('CRC16 do payload inconsistente.');
 }
 
+function parseBrlCentsDigits(raw, maxDigits = 9) {
+  return raw.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, maxDigits);
+}
+
+function formatBrlCentsDigits(digits) {
+  if (!digits) return '';
+  const padded = digits.padStart(3, '0');
+  const cents = padded.slice(-2);
+  const whole = padded.slice(0, -2).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${whole},${cents}`;
+}
+
+const maskCases = [
+  ['1', '0,01'],
+  ['11', '0,11'],
+  ['111', '1,11'],
+  ['1111', '11,11'],
+  ['123456', '1.234,56'],
+];
+
+for (const [raw, expected] of maskCases) {
+  const formatted = formatBrlCentsDigits(parseBrlCentsDigits(raw));
+  if (formatted !== expected) {
+    throw new Error(`Máscara ${raw}: obtido ${formatted}, esperado ${expected}`);
+  }
+}
+
 console.log('OK Pix Copia e Cola:', payload);

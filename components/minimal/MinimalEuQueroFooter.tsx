@@ -125,7 +125,7 @@ export function MinimalEuQueroFooter() {
         <EuQueroItem
           icon="money"
           title="Contribuir com meu Dízimo ou Oferta"
-          subtitle="Copie a chave PIX e contribua com a igreja."
+          subtitle="Informe o valor, com centavos, e copie o Pix."
           onPress={handleOpenOfferings}
         />
         <EuQueroItem
