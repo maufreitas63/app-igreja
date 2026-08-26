@@ -946,8 +946,11 @@ language plpgsql
 security definer
 set search_path = public
 as $list_profile_access_insights_admin$
+declare
+  v_tenant uuid := public.require_session_tenant_id();
 begin
   perform public.assert_access_admin(p_actor_profile_id);
+  -- Proteção aplicada: Gestor não tem visibilidade do Super Administrador
 
   return query
   select
@@ -957,7 +960,8 @@ begin
     count(e.id)::bigint as access_count
   from public.profiles p
   inner join public.profile_app_access_events e on e.profile_id = p.id
-  where coalesce(trim(p.full_name), '') <> ''
+  where p.tenant_id = v_tenant
+    and coalesce(trim(p.full_name), '') <> ''
     and lower(trim(p.full_name)) <> 'visitante'
     and public.profile_visible_to_access_actor(p_actor_profile_id, p.id)
   group by p.id, p.full_name
@@ -982,6 +986,8 @@ language plpgsql
 security definer
 set search_path = public
 as $list_profile_access_screen_visits_admin$
+declare
+  v_tenant uuid := public.require_session_tenant_id();
 begin
   perform public.assert_access_admin(p_actor_profile_id);
   -- Proteção aplicada: Gestor não tem visibilidade do Super Administrador
@@ -993,6 +999,16 @@ begin
   );
 
   if p_target_profile_id is null then
+    return;
+  end if;
+
+  if not exists (
+    select 1
+      from public.profiles p
+     where p.id = p_target_profile_id
+       and p.tenant_id = v_tenant
+       and public.profile_visible_to_access_actor(p_actor_profile_id, p.id)
+  ) then
     return;
   end if;
 

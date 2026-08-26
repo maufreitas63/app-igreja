@@ -21,6 +21,16 @@ create table if not exists public.event_avisos (
 create index if not exists idx_event_avisos_published_sort
   on public.event_avisos (is_published, sort_order asc, updated_at desc);
 
+alter table public.event_avisos
+  add column if not exists audience text not null default 'all';
+
+alter table public.event_avisos
+  drop constraint if exists event_avisos_audience_check;
+
+alter table public.event_avisos
+  add constraint event_avisos_audience_check
+  check (audience in ('all', 'small_group_leaders', 'opportunity_match'));
+
 -- ---------------------------------------------------------------------------
 -- Rotas da orquestração — Ofertas + Dízimos unificados
 -- ---------------------------------------------------------------------------
@@ -116,6 +126,7 @@ as $$
   select *
     from public.event_avisos ea
    where ea.is_published is true
+     and coalesce(ea.audience, 'all') <> 'opportunity_match'
    order by ea.sort_order asc, ea.updated_at desc;
 $$;
 
@@ -318,5 +329,71 @@ begin
   end if;
 end;
 $$;
+
+-- Se o mural já existir, restaura o filtro opportunity_match e remove overload antigo do salvar.
+do $restore_opportunity_match$
+begin
+  if to_regclass('public.volunteer_opportunities') is null then
+    return;
+  end if;
+
+  drop function if exists public.salvar_event_aviso(uuid, uuid, text, text, integer, boolean);
+  drop function if exists public.salvar_event_aviso(uuid, uuid, text, text, integer, boolean, text);
+
+  execute $fn$
+create or replace function public.listar_event_avisos_publicados()
+returns setof public.event_avisos
+language plpgsql
+stable
+security definer
+set search_path = public
+as $listar$
+declare
+  v_actor uuid := public.current_session_profile_id();
+  v_tenant uuid := public.current_session_tenant_id();
+  v_is_leader boolean := false;
+  v_winner text;
+begin
+  if v_actor is not null then
+    select exists (
+      select 1
+        from public.small_groups g
+       where g.is_active
+         and (v_tenant is null or g.tenant_id = v_tenant)
+         and (g.leader_profile_id = v_actor or g.host_profile_id = v_actor)
+    ) into v_is_leader;
+
+    select r.perfil_vencedor into v_winner
+      from public.ministerial_resultados r
+     where r.profile_id = v_actor
+       and (v_tenant is null or r.tenant_id = v_tenant)
+     order by r.completed_at desc nulls last
+     limit 1;
+  end if;
+
+  return query
+  select ea.*
+    from public.event_avisos ea
+    left join public.volunteer_opportunities o on o.id = ea.opportunity_id
+   where ea.is_published is true
+     and (v_tenant is null or ea.tenant_id is null or ea.tenant_id = v_tenant)
+     and (
+       coalesce(ea.audience, 'all') = 'all'
+       or (ea.audience = 'small_group_leaders' and v_is_leader)
+       or (
+         ea.audience = 'opportunity_match'
+         and v_winner is not null
+         and o.id is not null
+         and o.status = 'aberta'
+         and (v_tenant is null or o.tenant_id = v_tenant)
+         and v_winner = any(public.volunteer_gifts_normalized(o.required_gifts))
+       )
+     )
+   order by ea.sort_order asc, ea.updated_at desc;
+end;
+$listar$;
+$fn$;
+end
+$restore_opportunity_match$;
 
 notify pgrst, 'reload schema';

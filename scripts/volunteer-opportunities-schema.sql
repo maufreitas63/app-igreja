@@ -370,7 +370,11 @@ begin
 
   insert into public.volunteer_opportunity_interests (tenant_id, opportunity_id, profile_id, status)
   values (v_tenant, v_opp.id, v_me, 'pendente')
-  on conflict (opportunity_id, profile_id) do nothing;
+  on conflict (opportunity_id, profile_id) do update
+    set status = 'pendente',
+        resolved_at = null,
+        resolved_by = null
+  where volunteer_opportunity_interests.status = 'recusado';
 
   return jsonb_build_object('success', true, 'message', 'Interesse registrado. Fale com o líder no WhatsApp.');
 end;
@@ -532,23 +536,38 @@ begin
 
   return query
   select
-    p.id,
-    p.full_name,
-    p.phone,
-    r.perfil_vencedor,
-    public.ministerial_profile_label(r.perfil_vencedor),
-    public.volunteer_gift_match_pct(r.perfil_vencedor, r.pontuacao_detalhada, v_opp.required_gifts),
-    exists (
-      select 1
-        from public.user_discipleship_progress udp
-        join public.discipleship_lessons dl on dl.id = udp.lesson_id
-        join public.discipleship_modules dm on dm.id = dl.module_id
-       where udp.profile_id = p.id
-         and udp.status = 'completed'
-         and public.is_discipleship_ministerial_gifts_lesson(dm.sort_order, dl.sort_order, dl.title)
-    ),
-    i.status,
-    i.id
+    q.profile_id,
+    q.full_name,
+    q.phone,
+    q.perfil_vencedor,
+    q.perfil_label,
+    q.match_pct,
+    q.lesson_completed,
+    q.interest_status,
+    q.interest_id
+  from (
+    select distinct on (p.id)
+      p.id as profile_id,
+      p.full_name,
+      p.phone,
+      r.perfil_vencedor,
+      public.ministerial_profile_label(r.perfil_vencedor) as perfil_label,
+      public.volunteer_gift_match_pct(
+        r.perfil_vencedor,
+        r.pontuacao_detalhada,
+        v_opp.required_gifts
+      ) as match_pct,
+      exists (
+        select 1
+          from public.user_discipleship_progress udp
+          join public.discipleship_lessons dl on dl.id = udp.lesson_id
+          join public.discipleship_modules dm on dm.id = dl.module_id
+         where udp.profile_id = p.id
+           and udp.status = 'completed'
+           and public.is_discipleship_ministerial_gifts_lesson(dm.sort_order, dl.sort_order, dl.title)
+      ) as lesson_completed,
+      i.status as interest_status,
+      i.id as interest_id
     from public.ministerial_resultados r
     join public.profiles p on p.id = r.profile_id
     left join public.volunteer_opportunity_interests i
@@ -562,9 +581,15 @@ begin
        or public.volunteer_gift_match_pct(r.perfil_vencedor, r.pontuacao_detalhada, v_opp.required_gifts) >= 50
      )
    order by
+     p.id,
      (r.perfil_vencedor = any(public.volunteer_gifts_normalized(v_opp.required_gifts))) desc,
      public.volunteer_gift_match_pct(r.perfil_vencedor, r.pontuacao_detalhada, v_opp.required_gifts) desc,
-     p.full_name;
+     r.completed_at desc nulls last
+  ) q
+  order by
+    (q.perfil_vencedor = any(public.volunteer_gifts_normalized(v_opp.required_gifts))) desc,
+    q.match_pct desc,
+    q.full_name;
 end;
 $$;
 
@@ -594,6 +619,10 @@ begin
 
   if not found then
     return jsonb_build_object('success', false, 'message', 'Interesse não encontrado.');
+  end if;
+
+  if v_row.status is distinct from 'pendente' then
+    return jsonb_build_object('success', false, 'message', 'Este interesse já foi resolvido.');
   end if;
 
   update public.volunteer_opportunity_interests
@@ -706,6 +735,7 @@ begin
 end;
 $$;
 
+drop function if exists public.salvar_event_aviso(uuid, uuid, text, text, integer, boolean);
 drop function if exists public.salvar_event_aviso(uuid, uuid, text, text, integer, boolean, text);
 create or replace function public.salvar_event_aviso(
   p_actor_profile_id uuid,
