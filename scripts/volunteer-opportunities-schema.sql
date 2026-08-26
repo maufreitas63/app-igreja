@@ -765,6 +765,8 @@ begin
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
   end if;
 
+  perform public.assert_actor_matches_session(p_actor_profile_id);
+
   if not public.profile_is_event_control_admin(p_actor_profile_id) then
     return jsonb_build_object('success', false, 'message', 'Sem permissão para gerenciar avisos.');
   end if;

@@ -4,7 +4,7 @@ import { buildIndexScreenGradient } from '@/lib/paletteTheme';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -23,24 +23,37 @@ export default function AvisosScreen() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<EventAvisoRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const avisosLoadGenRef = useRef(0);
 
   const loadAvisos = useCallback(async () => {
+    const loadId = ++avisosLoadGenRef.current;
     setLoading(true);
     setError(null);
 
     try {
       const rows = await fetchPublishedEventAvisos();
+      if (loadId !== avisosLoadGenRef.current) {
+        return;
+      }
       setItems(rows);
     } catch (loadError) {
+      if (loadId !== avisosLoadGenRef.current) {
+        return;
+      }
       setError(loadError instanceof Error ? loadError.message : EVENT_AVISOS_SQL_HINT);
       setItems([]);
     } finally {
-      setLoading(false);
+      if (loadId === avisosLoadGenRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     void loadAvisos();
+    return () => {
+      avisosLoadGenRef.current += 1;
+    };
   }, [loadAvisos]);
 
   useEffect(() => {

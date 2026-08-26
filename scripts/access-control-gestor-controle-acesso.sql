@@ -311,6 +311,8 @@ begin
     raise exception 'Sessão inválida. Saia e entre novamente no aplicativo.';
   end if;
 
+  perform public.assert_actor_matches_session(p_actor_profile_id);
+
   if public.can_manage_access_control(p_actor_profile_id) then
     return;
   end if;

@@ -139,7 +139,9 @@ set search_path = public
 as $$
   select *
     from public.event_avisos ea
-   where public.profile_is_event_control_admin(p_actor_profile_id)
+   where p_actor_profile_id is not null
+     and p_actor_profile_id = public.current_session_profile_id()
+     and public.profile_is_event_control_admin(p_actor_profile_id)
    order by ea.sort_order asc, ea.updated_at desc;
 $$;
 
@@ -165,6 +167,8 @@ begin
   if p_actor_profile_id is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
   end if;
+
+  perform public.assert_actor_matches_session(p_actor_profile_id);
 
   if not public.profile_is_event_control_admin(p_actor_profile_id) then
     return jsonb_build_object('success', false, 'message', 'Sem permissão para gerenciar avisos.');
@@ -240,6 +244,8 @@ begin
   if p_actor_profile_id is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
   end if;
+
+  perform public.assert_actor_matches_session(p_actor_profile_id);
 
   if not public.profile_is_event_control_admin(p_actor_profile_id) then
     return jsonb_build_object('success', false, 'message', 'Sem permissão para excluir avisos.');
