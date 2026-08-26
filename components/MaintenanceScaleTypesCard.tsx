@@ -5,6 +5,7 @@ import {
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
 import { MAINTENANCE_SCALE_TYPES_SQL_HINT } from '@/hooks/useMaintenanceScaleTypes';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { mapLegacyRoomDisplayLabel } from '@/lib/roomDisplayLabels';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -13,6 +14,7 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -130,6 +132,7 @@ export function MaintenanceScaleTypesCard({
   const [nameInput, setNameInput] = useState('');
   const [vagasInput, setVagasInput] = useState('1');
   const [modoCiclo, setModoCiclo] = useState<'individual' | 'equipe'>('individual');
+  const [allowSwap, setAllowSwap] = useState(true);
   const [expandedSection, setExpandedSection] = useState<ScaleTypesSectionKey | null>(null);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
@@ -151,6 +154,7 @@ export function MaintenanceScaleTypesCard({
       setNameInput(editingRow.name);
       setVagasInput(String(editingRow.vagasPorServico));
       setModoCiclo(editingRow.modoCiclo);
+      setAllowSwap(editingRow.allowSwap !== false);
       return;
     }
 
@@ -158,11 +162,12 @@ export function MaintenanceScaleTypesCard({
     setNameInput('');
     setVagasInput('1');
     setModoCiclo('individual');
+    setAllowSwap(true);
   }, [editingId, editingRow]);
 
   const handleSave = async () => {
     const vagasPorServico = Number.parseInt(vagasInput, 10) || 1;
-    const result = await saveScaleType(codeInput, nameInput, vagasPorServico, modoCiclo);
+    const result = await saveScaleType(codeInput, nameInput, vagasPorServico, modoCiclo, allowSwap);
 
     if (!result.success) {
       Toast.show({
@@ -178,6 +183,7 @@ export function MaintenanceScaleTypesCard({
     setNameInput('');
     setVagasInput('1');
     setModoCiclo('individual');
+    setAllowSwap(true);
 
     Toast.show({
       type: 'success',
@@ -312,6 +318,22 @@ export function MaintenanceScaleTypesCard({
         Individual: cada servo em domingo distinto. Equipe: até N servos no mesmo domingo.
       </Text>
 
+      <View style={styles.swapToggleRow}>
+        <View style={styles.swapToggleText}>
+          <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
+            Permitir troca autônoma
+          </Text>
+          <Text style={[styles.fieldHint, minimal && styles.fieldHintMinimal]}>
+            O servo escalado pode pedir substituto do mesmo tipo nesta escala.
+          </Text>
+        </View>
+        <Switch
+          value={allowSwap}
+          onValueChange={setAllowSwap}
+          disabled={formBusy || mode === 'create'}
+        />
+      </View>
+
       <View style={styles.formActions}>
         {mode === 'edit' ? (
           <TouchableOpacity
@@ -441,6 +463,7 @@ export function MaintenanceScaleTypesCard({
                       >
                         {row.code} · {row.vagasPorServico} vaga(s) ·{' '}
                         {row.modoCiclo === 'equipe' ? 'equipe' : 'individual'}
+                        {row.allowSwap === false ? ' · troca bloqueada' : ''}
                       </Text>
                       {!row.isActive ? (
                         <Text
@@ -610,6 +633,16 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 14,
     marginTop: 2,
+  },
+  swapToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 8,
+  },
+  swapToggleText: {
+    flex: 1,
+    minWidth: 0,
   },
   modeRow: {
     flexDirection: 'row',

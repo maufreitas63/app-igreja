@@ -19,6 +19,7 @@ export const ACCESS_SCREEN = {
   /** Alias legado ainda presente em `access_resources`. */
   discipleshipTrailLegacy: '/trilha',
   redesSociais: '/redes-sociais',
+  scalesAllowSwap: 'scales.allow_swap',
 } as const;
 
 /**

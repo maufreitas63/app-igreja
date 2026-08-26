@@ -1,3 +1,4 @@
+import { runAppBackInterceptor } from '@/lib/appBackIntercept';
 import { confirmExitApplication } from '@/lib/userSession';
 import { usePathname, useRouter, useSegments } from 'expo-router';
 import { useEffect, useRef } from 'react';
@@ -140,6 +141,10 @@ export function AppBackHandler() {
       // Reempilha imediatamente para o próximo "voltar" continuar interceptável.
       pushTrap();
 
+      if (runAppBackInterceptor()) {
+        return;
+      }
+
       if (onHome) {
         try {
           router.replace(HOME_HREF);
@@ -189,6 +194,10 @@ export function AppBackHandler() {
     }
 
     const onHardwareBackPress = () => {
+      if (runAppBackInterceptor()) {
+        return true;
+      }
+
       if (isAppIndexScreen(pathnameRef.current, segmentsRef.current)) {
         askExitSession();
         return true;

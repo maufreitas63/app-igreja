@@ -1,9 +1,13 @@
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
 import { ScalesClass } from '@/components/ScalesClass';
+import { ScaleSwapInbox } from '@/components/ScaleSwapInbox';
+import { ScaleSwapRequestModal } from '@/components/ScaleSwapRequestModal';
 import { withActiveMembershipProfileFilter } from '@/lib/activeMemberProfile';
 import {
+  ACCESS_SCREEN,
   isDashboardCardContentAllowed,
   loadDashboardCardViewAccess,
+  sessionHasAccess,
 } from '@/lib/accessControl';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { lookupVehicleByPlaca, type VehicleLookupResult } from '@/lib/profileVehicleLookup';
@@ -23,12 +27,14 @@ import {
 } from '@/lib/scalesClassUtils';
 import { fetchVolunteersForScaleType } from '@/lib/maintenanceScaleVolunteersApi';
 import { sessionCanAccessScaleType } from '@/lib/scaleAccess';
+import { profileNameMatchesVolunteerName } from '@/lib/scaleVolunteerProfileMatch';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import * as Linking from 'expo-linking';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, AppState, StyleSheet, View } from 'react-native';
+import { Alert, AppState, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 /** Container com dados e navegação — compõe o ScalesClass stateless. */
 export function ScalesClassPanel() {
@@ -48,6 +54,10 @@ export function ScalesClassPanel() {
   const [vehicleLookupLoading, setVehicleLookupLoading] = useState(false);
   const [vehicleLookupError, setVehicleLookupError] = useState<string | null>(null);
   const [vehicleLookupResult, setVehicleLookupResult] = useState<VehicleLookupResult | null>(null);
+  const [sessionFullName, setSessionFullName] = useState<string | null>(null);
+  const [canAllowSwap, setCanAllowSwap] = useState(false);
+  const [panelTab, setPanelTab] = useState<'escalas' | 'trocas'>('escalas');
+  const [swapEntry, setSwapEntry] = useState<ScalesClassScheduleEntry | null>(null);
 
   const selectedScaleType = useMemo(
     () => scaleTypes.find((entry) => entry.code === selectedScaleCode) ?? null,
@@ -137,11 +147,14 @@ export function ScalesClassPanel() {
         ?? sessionProfile?.id?.trim()
         ?? null;
       const profileFullName = sessionProfile?.full_name?.trim() || null;
+      setSessionFullName(profileFullName);
 
       if (profileId) {
         const cardAccess = await loadDashboardCardViewAccess(profileId);
         setDashboardCardAccess(cardAccess);
       }
+
+      setCanAllowSwap(await sessionHasAccess('screen', ACCESS_SCREEN.scalesAllowSwap, 'view'));
 
       const loaded = await loadScalesClassData(profileFullName);
       setScaleTypes(loaded.scaleTypes);
@@ -183,6 +196,23 @@ export function ScalesClassPanel() {
 
     return () => {
       subscription.remove();
+    };
+  }, [loadScales]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('escalas-log-live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'escalas_log' },
+        () => {
+          void loadScales({ preserveSelection: true });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
     };
   }, [loadScales]);
 
@@ -300,49 +330,103 @@ export function ScalesClassPanel() {
     }
   }, []);
 
+  const canRequestSwap = useCallback(
+    (entry: ScalesClassScheduleEntry) => {
+      if (!canAllowSwap || isSelectedScaleIntercession || isSelectedScaleParking) {
+        return false;
+      }
+
+      return profileNameMatchesVolunteerName(sessionFullName, entry.volunteerName);
+    },
+    [canAllowSwap, isSelectedScaleIntercession, isSelectedScaleParking, sessionFullName]
+  );
+
   return (
     <View style={styles.root}>
-      <ScalesClass
-        view={view}
-        loading={loading}
-        error={error}
-        onRetry={() => void loadScales({ preserveSelection: true })}
-        scaleTypes={scaleTypes}
-        selectedScaleCode={selectedScaleCode}
-        onSelectScale={handleSelectScale}
-        rosterTitle={rosterTitle}
-        isIntercession={isSelectedScaleIntercession}
-        isParking={isSelectedScaleParking}
-        scheduleEntries={scheduleEntriesForSelectedScale}
-        volunteerEntries={volunteerEntries}
-        nextServiceDate={nextServiceDate}
-        rosterLoading={rosterLoading}
-        rosterError={rosterError}
-        onRosterRetry={
-          selectedScaleType
-            ? () => void loadRegisteredScaleVolunteers(selectedScaleType.id)
-            : undefined
-        }
-        onBack={handleBackToPicker}
-        onOpenParking={handleOpenParking}
-        onOpenWhatsapp={(phone) => void handleOpenWhatsapp(phone)}
-        parkingPanel={
-          <ParkingVehicleIdentifyPanel
-            placaQuery={vehiclePlacaQuery}
-            loading={vehicleLookupLoading}
-            error={vehicleLookupError}
-            result={vehicleLookupResult}
-            onChangePlaca={(text) => {
-              setVehiclePlacaQuery(text);
-              setVehicleLookupError(null);
-            }}
-            onSearch={() => void handleSearchVehicleByPlaca()}
-            onReset={handleResetVehicleLookup}
-            onOpenWhatsapp={(phone) => void handleOpenVehicleOwnerWhatsapp(phone)}
-            fillAvailableHeight
-          />
-        }
-        onBackFromParking={handleBackFromParking}
+      <View style={styles.tabs}>
+        <TouchableOpacity
+          style={[styles.tab, panelTab === 'escalas' && styles.tabActive]}
+          onPress={() => setPanelTab('escalas')}
+          activeOpacity={0.85}
+        >
+          <Text style={[styles.tabText, panelTab === 'escalas' && styles.tabTextActive]}>
+            Escalas
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, panelTab === 'trocas' && styles.tabActive]}
+          onPress={() => setPanelTab('trocas')}
+          activeOpacity={0.85}
+        >
+          <Text style={[styles.tabText, panelTab === 'trocas' && styles.tabTextActive]}>
+            Minhas Trocas
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {panelTab === 'trocas' ? (
+        <ScaleSwapInbox
+          active
+          onRosterChanged={() => void loadScales({ preserveSelection: true })}
+        />
+      ) : (
+        <ScalesClass
+          view={view}
+          loading={loading}
+          error={error}
+          onRetry={() => void loadScales({ preserveSelection: true })}
+          scaleTypes={scaleTypes}
+          selectedScaleCode={selectedScaleCode}
+          onSelectScale={handleSelectScale}
+          rosterTitle={rosterTitle}
+          isIntercession={isSelectedScaleIntercession}
+          isParking={isSelectedScaleParking}
+          scheduleEntries={scheduleEntriesForSelectedScale}
+          volunteerEntries={volunteerEntries}
+          nextServiceDate={nextServiceDate}
+          rosterLoading={rosterLoading}
+          rosterError={rosterError}
+          onRosterRetry={
+            selectedScaleType
+              ? () => void loadRegisteredScaleVolunteers(selectedScaleType.id)
+              : undefined
+          }
+          onBack={handleBackToPicker}
+          onOpenParking={handleOpenParking}
+          onOpenWhatsapp={(phone) => void handleOpenWhatsapp(phone)}
+          canRequestSwap={canRequestSwap}
+          onRequestSwap={setSwapEntry}
+          parkingPanel={
+            <ParkingVehicleIdentifyPanel
+              placaQuery={vehiclePlacaQuery}
+              loading={vehicleLookupLoading}
+              error={vehicleLookupError}
+              result={vehicleLookupResult}
+              onChangePlaca={(text) => {
+                setVehiclePlacaQuery(text);
+                setVehicleLookupError(null);
+              }}
+              onSearch={() => void handleSearchVehicleByPlaca()}
+              onReset={handleResetVehicleLookup}
+              onOpenWhatsapp={(phone) => void handleOpenVehicleOwnerWhatsapp(phone)}
+              fillAvailableHeight
+            />
+          }
+          onBackFromParking={handleBackFromParking}
+        />
+      )}
+
+      <ScaleSwapRequestModal
+        visible={swapEntry !== null}
+        escalaLogId={swapEntry?.id ?? null}
+        volunteerName={swapEntry?.volunteerName ?? ''}
+        serviceDate={swapEntry?.serviceDate ?? ''}
+        scaleName={swapEntry?.scaleName ?? rosterTitle}
+        onClose={() => setSwapEntry(null)}
+        onDone={() => {
+          setSwapEntry(null);
+          void loadScales({ preserveSelection: true });
+        }}
       />
     </View>
   );
@@ -352,5 +436,31 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     width: '100%',
+    gap: 10,
+  },
+  tabs: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  tab: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: VIGILANCE_SCALES_UI.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  tabActive: {
+    backgroundColor: VIGILANCE_SCALES_UI.accent,
+  },
+  tabText: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  tabTextActive: {
+    color: '#FFFFFF',
   },
 });

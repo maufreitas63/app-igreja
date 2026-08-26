@@ -1,3 +1,4 @@
+import { ScaleSwapRequestModal } from '@/components/ScaleSwapRequestModal';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
@@ -17,6 +18,11 @@ import {
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { mapLegacyRoomDisplayLabel } from '@/lib/roomDisplayLabels';
+import {
+  listScaleSwapsAdmin,
+  undoScaleSwap,
+  type ScaleSwapAdminRow,
+} from '@/lib/scaleSwapApi';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
@@ -78,6 +84,13 @@ export function MaintenanceScalesCard({
   const [selectedVolunteerId, setSelectedVolunteerId] = useState('');
   const [serviceDateInput, setServiceDateInput] = useState('');
   const [serviceDatePickerVisible, setServiceDatePickerVisible] = useState(false);
+  const [swapRows, setSwapRows] = useState<ScaleSwapAdminRow[]>([]);
+  const [interveneEntry, setInterveneEntry] = useState<{
+    id: string;
+    volunteerName: string;
+    serviceDate: string;
+  } | null>(null);
+  const [undoingId, setUndoingId] = useState<string | null>(null);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
@@ -129,6 +142,43 @@ export function MaintenanceScalesCard({
       })),
     [volunteerSelectOptions]
   );
+
+  useEffect(() => {
+    if (!selectedScaleTypeId) {
+      setSwapRows([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    void listScaleSwapsAdmin(selectedScaleTypeId)
+      .then((rows) => {
+        if (!cancelled) {
+          setSwapRows(rows);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSwapRows([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedScaleTypeId, historyForSelectedType]);
+
+  const acceptedSwapByLogId = useMemo(() => {
+    const map = new Map<string, ScaleSwapAdminRow>();
+
+    for (const row of swapRows) {
+      if (row.status === 'aceito' && row.escalaIdOrigem) {
+        map.set(row.escalaIdOrigem, row);
+      }
+    }
+
+    return map;
+  }, [swapRows]);
 
   const handleRegister = async () => {
     const serviceDate = parseScaleServiceDateInput(serviceDateInput);
@@ -238,7 +288,47 @@ export function MaintenanceScalesCard({
     }
   };
 
-  const actionsBusy = saving || buildingBatch || removingScaleId !== null;
+  const handleUndoSwap = async (swapId: string) => {
+    const confirmed = await confirmDialog(
+      'Desfazer troca',
+      'Restaurar o servo original nesta data? O ciclo futuro não será alterado.',
+      'Desfazer',
+      'Cancelar',
+      { destructive: true }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setUndoingId(swapId);
+
+    try {
+      const result = await undoScaleSwap(swapId);
+
+      if (!result.success) {
+        Alert.alert('Troca de escala', result.message);
+        return;
+      }
+
+      Toast.show({
+        type: 'success',
+        text1: 'Troca desfeita',
+        text2: result.message,
+        visibilityTime: 2500,
+      });
+      await reload();
+    } catch (undoError) {
+      Alert.alert(
+        'Troca de escala',
+        undoError instanceof Error ? undoError.message : 'Não foi possível desfazer.'
+      );
+    } finally {
+      setUndoingId(null);
+    }
+  };
+
+  const actionsBusy = saving || buildingBatch || removingScaleId !== null || undoingId !== null;
 
   if (loading) {
     return (
@@ -547,6 +637,7 @@ export function MaintenanceScalesCard({
         {historyForSelectedType.length ? (
           historyForSelectedType.map((entry, index) => {
             const isRemoving = removingScaleId === entry.id;
+            const acceptedSwap = acceptedSwapByLogId.get(entry.id);
 
             return (
               <View
@@ -561,12 +652,50 @@ export function MaintenanceScalesCard({
                 <Text style={[styles.historyDate, minimal && styles.historyDateMinimal]}>
                   {formatScaleServiceDateLabel(entry.serviceDate)}
                 </Text>
-                <Text
-                  style={[styles.historyName, minimal && styles.historyNameMinimal]}
-                  numberOfLines={2}
+                <View style={styles.historyMain}>
+                  <Text
+                    style={[styles.historyName, minimal && styles.historyNameMinimal]}
+                    numberOfLines={2}
+                  >
+                    {entry.volunteerName}
+                  </Text>
+                  {acceptedSwap ? (
+                    <Text style={styles.swapSeal}>Troca Realizada</Text>
+                  ) : null}
+                </View>
+                <TouchableOpacity
+                  style={styles.historyActionButton}
+                  onPress={() =>
+                    setInterveneEntry({
+                      id: entry.id,
+                      volunteerName: entry.volunteerName,
+                      serviceDate: entry.serviceDate,
+                    })
+                  }
+                  disabled={actionsBusy || rpcMissing}
+                  activeOpacity={0.85}
+                  accessibilityLabel={`Intervir na escala de ${entry.volunteerName}`}
                 >
-                  {entry.volunteerName}
-                </Text>
+                  <Text style={styles.historyActionLabel}>Intervir</Text>
+                </TouchableOpacity>
+                {acceptedSwap ? (
+                  <TouchableOpacity
+                    style={styles.historyActionButton}
+                    onPress={() => void handleUndoSwap(acceptedSwap.id)}
+                    disabled={actionsBusy || rpcMissing}
+                    activeOpacity={0.85}
+                    accessibilityLabel="Desfazer troca"
+                  >
+                    {undoingId === acceptedSwap.id ? (
+                      <ActivityIndicator
+                        color={minimal ? '#DC2626' : '#FCA5A5'}
+                        size="small"
+                      />
+                    ) : (
+                      <Text style={styles.historyActionLabel}>Desfazer</Text>
+                    )}
+                  </TouchableOpacity>
+                ) : null}
                 <TouchableOpacity
                   style={styles.historyDeleteButton}
                   onPress={() =>
@@ -608,6 +737,22 @@ export function MaintenanceScalesCard({
         variant={minimal ? 'minimal' : 'default'}
         onClose={() => setServiceDatePickerVisible(false)}
         onConfirm={(dateInput) => setServiceDateInput(dateInput)}
+      />
+
+      <ScaleSwapRequestModal
+        visible={interveneEntry !== null}
+        mode="leader"
+        escalaLogId={interveneEntry?.id ?? null}
+        volunteerName={interveneEntry?.volunteerName ?? ''}
+        serviceDate={interveneEntry?.serviceDate ?? ''}
+        scaleName={
+          scaleTypes.find((type) => type.id === selectedScaleTypeId)?.name ?? 'Escala'
+        }
+        onClose={() => setInterveneEntry(null)}
+        onDone={() => {
+          setInterveneEntry(null);
+          void reload();
+        }}
       />
     </View>
   );
@@ -965,6 +1110,35 @@ const styles = StyleSheet.create({
     color: '#3A96DD',
     fontSize: 14,
     fontWeight: '600',
+  },
+  historyMain: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  swapSeal: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#DCFCE7',
+    color: '#166534',
+    fontSize: 10,
+    fontWeight: '800',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 999,
+    overflow: 'hidden',
+    textTransform: 'uppercase',
+  },
+  historyActionButton: {
+    minHeight: 28,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  historyActionLabel: {
+    color: '#3A96DD',
+    fontSize: 11,
+    fontWeight: '800',
   },
   historyDeleteButton: {
     width: 32,

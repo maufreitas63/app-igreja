@@ -16,6 +16,7 @@ export type MaintenanceScaleTypeRecord = {
   isActive: boolean;
   vagasPorServico: number;
   modoCiclo: ScaleCycleMode;
+  allowSwap: boolean;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -70,6 +71,7 @@ const parseScaleTypeRows = (data: unknown): MaintenanceScaleTypeRecord[] => {
         isActive: record.is_ativa === true || record.is_ativa === 'true' || record.isActive === true,
         vagasPorServico,
         modoCiclo: modoRaw === 'equipe' ? 'equipe' : 'individual',
+        allowSwap: record.allow_swap !== false && record.allowSwap !== false,
         createdAt: record.created_at != null ? String(record.created_at) : null,
         updatedAt: record.updated_at != null ? String(record.updated_at) : null,
       } satisfies MaintenanceScaleTypeRecord;

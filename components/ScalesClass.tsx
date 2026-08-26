@@ -49,6 +49,8 @@ export type ScalesClassProps = {
   onOpenWhatsapp?: (phone: string | null) => void;
   parkingPanel?: React.ReactNode;
   onBackFromParking?: () => void;
+  canRequestSwap?: (entry: ScalesClassScheduleEntry) => boolean;
+  onRequestSwap?: (entry: ScalesClassScheduleEntry) => void;
 };
 
 /** Visualização pura de Escalas — extraída de dashboard.card.vigilance_scales. */
@@ -75,6 +77,8 @@ export function ScalesClass({
   onOpenWhatsapp,
   parkingPanel,
   onBackFromParking,
+  canRequestSwap,
+  onRequestSwap,
 }: ScalesClassProps) {
   if (view === 'parking') {
     return (
@@ -159,22 +163,35 @@ export function ScalesClass({
                   <View
                     key={`${entry.serviceDate}-${entry.volunteerId}-${index}`}
                     style={[
-                      styles.scheduleRow,
+                      styles.scheduleRowWrap,
                       entry.serviceDate === nextServiceDate && styles.scheduleRowHighlight,
                     ]}
                   >
-                    <Text style={styles.nameText} numberOfLines={1}>
-                      {formatDisplayName(entry.volunteerName)}
-                    </Text>
-                    <View style={styles.trailingHeader}>
-                      <Text style={styles.dateText}>
-                        {formatServiceDateLabel(entry.serviceDate)}
+                    <View style={styles.scheduleRow}>
+                      <Text style={styles.nameText} numberOfLines={1}>
+                        {formatDisplayName(entry.volunteerName)}
                       </Text>
-                      <WhatsappButton
-                        phone={entry.volunteerPhone}
-                        onPress={() => onOpenWhatsapp?.(entry.volunteerPhone)}
-                      />
+                      <View style={styles.trailingHeader}>
+                        <Text style={styles.dateText}>
+                          {formatServiceDateLabel(entry.serviceDate)}
+                        </Text>
+                        <WhatsappButton
+                          phone={entry.volunteerPhone}
+                          onPress={() => onOpenWhatsapp?.(entry.volunteerPhone)}
+                        />
+                      </View>
                     </View>
+                    {canRequestSwap?.(entry) ? (
+                      <TouchableOpacity
+                        style={styles.swapButton}
+                        onPress={() => onRequestSwap?.(entry)}
+                        activeOpacity={0.85}
+                        accessibilityRole="button"
+                        accessibilityLabel="Solicitar troca nesta data"
+                      >
+                        <Text style={styles.swapButtonText}>Solicitar Troca</Text>
+                      </TouchableOpacity>
+                    ) : null}
                   </View>
                 ))}
               </ScrollView>
@@ -495,15 +512,30 @@ const styles = StyleSheet.create({
   listContent: {
     paddingVertical: 2,
   },
-  scheduleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  scheduleRowWrap: {
     paddingLeft: 14,
     paddingRight: 8,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: VIGILANCE_SCALES_UI.border,
     backgroundColor: SCALES_CLASS_SURFACE,
+    gap: 8,
+  },
+  scheduleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  swapButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 8,
+    backgroundColor: VIGILANCE_SCALES_UI.accent,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  swapButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
   },
   scheduleRowHighlight: {
     backgroundColor: '#F0F9FF',

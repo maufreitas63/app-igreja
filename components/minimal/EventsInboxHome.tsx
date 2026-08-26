@@ -9,6 +9,7 @@ import {
 } from '@/lib/eventAvisosApi';
 import { fetchMyPastoralSlotNotices, type PastoralSlotNotice } from '@/lib/pastoralSlotsApi';
 import { fetchMyCampaignNotices, type CampaignNotice } from '@/lib/campaignProjectsApi';
+import { fetchUnreadScaleSwapNotices, type ScaleSwapNotice } from '@/lib/scaleSwapApi';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
@@ -39,6 +40,7 @@ export function EventsInboxHome() {
   const [avisos, setAvisos] = useState<EventAvisoRow[]>([]);
   const [pastoralNotices, setPastoralNotices] = useState<PastoralSlotNotice[]>([]);
   const [campaignNotices, setCampaignNotices] = useState<CampaignNotice[]>([]);
+  const [scaleSwapNotices, setScaleSwapNotices] = useState<ScaleSwapNotice[]>([]);
   const [avisosLoading, setAvisosLoading] = useState(false);
   const [avisosError, setAvisosError] = useState<string | null>(null);
   const pagerRef = useRef<ScrollView>(null);
@@ -56,6 +58,7 @@ export function EventsInboxHome() {
       const slotNotices = await fetchMyPastoralSlotNotices();
       setPastoralNotices(slotNotices);
       setCampaignNotices(await fetchMyCampaignNotices());
+      setScaleSwapNotices(await fetchUnreadScaleSwapNotices());
       const rows = await fetchPublishedEventAvisos();
       setAvisos(rows);
     } catch (loadError) {
@@ -193,7 +196,10 @@ export function EventsInboxHome() {
               <Text style={styles.sectionTitle}>Avisos</Text>
               {avisosLoading ? (
                 <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />
-              ) : avisos.length === 0 && pastoralNotices.length === 0 && campaignNotices.length === 0 ? (
+              ) : avisos.length === 0
+                && pastoralNotices.length === 0
+                && campaignNotices.length === 0
+                && scaleSwapNotices.length === 0 ? (
                 avisosError ? (
                   <Text style={styles.error}>{avisosError}</Text>
                 ) : (
@@ -206,6 +212,14 @@ export function EventsInboxHome() {
                   nestedScrollEnabled
                   showsVerticalScrollIndicator
                 >
+                  {scaleSwapNotices.map((item) => (
+                    <View key={`scale-swap-${item.id}`} style={styles.avisoCard}>
+                      <Text style={styles.avisoTitle} numberOfLines={2}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.avisoBody}>{item.body}</Text>
+                    </View>
+                  ))}
                   {pastoralNotices.map((item) => (
                     <View key={`pastoral-${item.id}`} style={styles.avisoCard}>
                       <Text style={styles.avisoTitle} numberOfLines={2}>

@@ -8,6 +8,7 @@ import {
   updateMaintenanceScaleType,
   type MaintenanceScaleTypeRecord,
 } from '@/lib/maintenanceScaleTypesApi';
+import { setTipoEscalaAllowSwap } from '@/lib/scaleSwapApi';
 import { useMaintenanceRpcMissing } from '@/hooks/useMaintenanceRpcMissing';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -74,7 +75,8 @@ export function useMaintenanceScaleTypes(enabled: boolean) {
       codeInput: string,
       nameInput: string,
       vagasPorServico = 1,
-      modoCiclo: 'individual' | 'equipe' = 'individual'
+      modoCiclo: 'individual' | 'equipe' = 'individual',
+      allowSwap = true
     ) => {
       const code = normalizeScaleTypeCode(codeInput);
       const name = nameInput.trim();
@@ -111,6 +113,14 @@ export function useMaintenanceScaleTypes(enabled: boolean) {
         if (!result.success) {
           setError(result.message ?? 'Não foi possível salvar o tipo de escala.');
           return result;
+        }
+
+        if (editingId) {
+          try {
+            await setTipoEscalaAllowSwap(editingId, allowSwap);
+          } catch {
+            // Permissão de troca ainda não publicada no banco.
+          }
         }
 
         setEditingId(null);
