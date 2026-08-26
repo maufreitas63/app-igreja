@@ -29,6 +29,10 @@ export const isOrdinaryTithesOrOfferingsEntry = (entry: FinancialEntry) => {
 
   const ministry = normalizeMinistry(entry.ministry);
 
+  if (ministry === 'CAMPANHAS' || ministry === 'PROJETOS') {
+    return false;
+  }
+
   return (
     ministry === 'OFERTAS'
     || ministry.includes('DIZIM')

@@ -135,6 +135,47 @@ export async function uploadChurchLogoImage(tenantId: string, imageInput: string
   return `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
 }
 
+/** Upload genérico no bucket público da igreja (capa de campanha, etc.). */
+export async function uploadChurchPublicImage(
+  tenantId: string,
+  relativePathWithoutExtension: string,
+  imageInput: string
+): Promise<string> {
+  const id = tenantId.trim();
+  const relative = relativePathWithoutExtension.replace(/^\/+/, '').trim();
+
+  if (!id || !relative) {
+    throw new Error('Caminho inválido para upload da imagem.');
+  }
+
+  const { base64, contentType, fileExtension } = await parseImageInput(imageInput);
+  const storagePath = `${id}/${relative}.${fileExtension}`;
+
+  const { error } = await supabase.storage.from(CHURCH_LOGOS_BUCKET).upload(storagePath, decode(base64), {
+    contentType,
+    upsert: true,
+  });
+
+  if (error) {
+    const message = (error.message ?? '').toLowerCase();
+    if (message.includes('bucket') && message.includes('not found')) {
+      throw new Error(
+        'Bucket church-logos ausente. Execute scripts/multi-tenant-13-igreja-logo-storage.sql.'
+      );
+    }
+    throw error;
+  }
+
+  const { data } = supabase.storage.from(CHURCH_LOGOS_BUCKET).getPublicUrl(storagePath);
+  const publicUrl = data?.publicUrl?.trim();
+
+  if (!publicUrl) {
+    throw new Error('Upload ok, mas a URL pública não foi gerada.');
+  }
+
+  return `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
+}
+
 export async function setIgrejaLogoAdmin(tenantId: string, logoUrl: string | null) {
   const { data, error } = await supabase.rpc('set_igreja_logo_admin', {
     p_tenant_id: tenantId.trim(),

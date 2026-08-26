@@ -8,6 +8,7 @@ export type MaintenancePanelContent =
   | 'scales'
   | 'pastoral_care'
   | 'small_groups_management'
+  | 'campaigns_management'
   | 'mudanca_papeis'
   | 'transferencia_igreja'
   | 'profile_cadastro'
@@ -42,6 +43,7 @@ export type MaintenanceShortcutIconName =
   | 'history'
   | 'bullhorn'
   | 'comments'
+  | 'flag'
   | 'user-secret';
 
 /** Ícone FontAwesome por módulo de manutenção. */
@@ -58,6 +60,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   scales: 'clipboard',
   pastoral_care: 'heart',
   small_groups_management: 'group',
+  campaigns_management: 'flag',
   mudanca_papeis: 'exchange',
   transferencia_igreja: 'share',
   financials: 'line-chart',
@@ -83,6 +86,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   scales: '#34D399',
   pastoral_care: '#F472B6',
   small_groups_management: '#A78BFA',
+  campaigns_management: '#F59E0B',
   mudanca_papeis: '#FB7185',
   transferencia_igreja: '#818CF8',
   financials: '#34D399',

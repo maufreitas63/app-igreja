@@ -5,6 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import {
   ActivityIndicator,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -12,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 
 const OFFERINGS_CLASS_SURFACE = '#FFFFFF';
 const OFFERINGS_COPY_BUTTON_BG = '#3A96DD';
@@ -25,6 +27,9 @@ export type OfferingsClassProps = {
   pixKeyLoading?: boolean;
   onCopyPixKey?: () => void;
   onRetryLoadPixKey?: () => void;
+  campaignTitle?: string | null;
+  campaignHint?: string | null;
+  campaignCoverUrl?: string | null;
 };
 
 /** Visualização pura de Dízimos e Ofertas — extraída de dashboard.card.offerings. */
@@ -35,6 +40,9 @@ export function OfferingsClass({
   pixKeyLoading = false,
   onCopyPixKey,
   onRetryLoadPixKey,
+  campaignTitle = null,
+  campaignHint = null,
+  campaignCoverUrl = null,
 }: OfferingsClassProps) {
   return (
     <ScrollView
@@ -44,6 +52,16 @@ export function OfferingsClass({
       showsVerticalScrollIndicator={false}
     >
       <Text style={styles.title}>{title}</Text>
+
+      {campaignTitle ? (
+        <View style={styles.campaignBanner}>
+          {campaignCoverUrl ? (
+            <Image source={{ uri: campaignCoverUrl }} style={styles.campaignCover} />
+          ) : null}
+          <Text style={styles.campaignTitle}>{campaignTitle}</Text>
+          {campaignHint ? <Text style={styles.campaignHint}>{campaignHint}</Text> : null}
+        </View>
+      ) : null}
 
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Dados do recebedor</Text>
@@ -68,6 +86,11 @@ export function OfferingsClass({
         ) : pixKey ? (
           <>
             <Text style={styles.pixKeyValue}>{pixKey}</Text>
+            {campaignTitle ? (
+              <View style={styles.qrWrap}>
+                <QRCode value={pixKey} size={148} color="#1E3A5F" backgroundColor="#FFFFFF" />
+              </View>
+            ) : null}
             <TouchableOpacity
               style={styles.copyButton}
               onPress={onCopyPixKey}
@@ -118,6 +141,36 @@ const styles = StyleSheet.create({
   title: {
     ...MINIMAL_SECTION_TITLE,
     alignSelf: 'stretch',
+  },
+  campaignBanner: {
+    gap: 8,
+    borderWidth: 1,
+    borderColor: VIGILANCE_SCALES_UI.border,
+    borderRadius: 12,
+    padding: 12,
+    backgroundColor: '#EFF6FF',
+  },
+  campaignCover: {
+    width: '100%',
+    height: 88,
+    borderRadius: 8,
+    backgroundColor: '#E2E8F0',
+  },
+  campaignTitle: {
+    color: '#1E3A5F',
+    fontWeight: '800',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  campaignHint: {
+    color: '#1D4ED8',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  qrWrap: {
+    alignItems: 'center',
+    paddingVertical: 8,
   },
   section: {
     gap: 10,

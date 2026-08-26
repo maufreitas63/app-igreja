@@ -98,6 +98,15 @@ export const signedFinancialAmount = (entry: FinancialEntry) => {
 /** Rótulo da linha no boletim (ministério + conta, alinhado ao lançamento em `financials`). */
 export const buildFinancialLineLabel = (entry: FinancialEntry) => {
   const ministry = entry.ministry.trim() || 'OUTROS';
+  const normalized = ministry
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+
+  if (normalized === 'CAMPANHAS' || normalized === 'PROJETOS') {
+    return 'Campanhas e Projetos';
+  }
+
   const account = entry.account.trim();
 
   if (account) {

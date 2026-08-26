@@ -2,6 +2,7 @@ import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { CheckinModal } from '@/components/CheckinModal';
 import { AdministrativoCard } from '@/components/AdministrativoCard';
 import { SmallGroupCard } from '@/components/SmallGroupCard';
+import { CampaignCard } from '@/components/CampaignCard';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
@@ -180,7 +181,8 @@ type DashboardCard = {
     | 'scale_roster'
     | 'grouped_manage'
     | 'administrativo'
-    | 'small_group';
+    | 'small_group'
+    | 'campaign_card';
 };
 
 /** Cards minimalistas que renderizam o título principal no corpo da tela. */
@@ -1878,6 +1880,7 @@ export default function Dashboard() {
         ? [
             { id: '13', title: 'Administrativo', content: 'administrativo' as const },
             { id: '16', title: 'Pequeno Grupo', content: 'small_group' as const },
+            { id: '17', title: 'Campanhas e Projetos', content: 'campaign_card' as const },
           ]
         : []),
     ],
@@ -2892,6 +2895,21 @@ export default function Dashboard() {
                     <SmallGroupCard
                       panelHeight={dashboardPanelCardHeight}
                       isActive={data[currentIndex]?.content === 'small_group'}
+                    />
+                  </View>
+                ) : item.content === 'campaign_card' ? (
+                  <View
+                    style={[
+                    cardBaseStyle,
+                      styles.cardAdministrativo,
+                      styles.dashboardPanelCardTopLayout,
+                      effectiveDashboardPanelCardSizeStyle,
+                      dashboardPanelTopInsetStyle,
+                    ]}
+                  >
+                    <CampaignCard
+                      panelHeight={dashboardPanelCardHeight}
+                      isActive={data[currentIndex]?.content === 'campaign_card'}
                     />
                   </View>
                 ) : item.content === 'members_list' ? (

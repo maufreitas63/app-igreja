@@ -31,6 +31,7 @@ export type AppDrawerModuleKey =
   | 'scales'
   | 'pastoral_care'
   | 'small_groups_management'
+  | 'campaigns_management'
   | 'discipleship_themes'
   | 'discipleship_alerts'
   | 'discipleship_reset'
@@ -79,6 +80,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'n', label: SCALE_SCHEDULING_MENU_LABEL, moduleKey: 'scales' },
   { letter: 'o', label: 'Cuidados Pastorais', moduleKey: 'pastoral_care' },
   { letter: 'o2', label: 'Gestão de Pequenos Grupos', moduleKey: 'small_groups_management' },
+  { letter: 'o3', label: 'Gestão de Campanhas', moduleKey: 'campaigns_management' },
   { letter: 'p', label: 'Informações Financeiras', moduleKey: 'financials' },
   { letter: 'q', label: 'Modelo Preditivo', moduleKey: 'predictive_insights' },
   { letter: 'r', label: 'Relatórios', moduleKey: 'relatorios' },
@@ -113,6 +115,7 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   scales: 'scales',
   pastoral_care: 'pastoral_care',
   small_groups_management: 'small_groups_management',
+  campaigns_management: 'campaigns_management',
   discipleship_themes: 'discipleship_themes',
   discipleship_alerts: 'discipleship_alerts',
   discipleship_reset: 'discipleship_reset',

@@ -23,6 +23,7 @@ import { MaintenanceReportsCard } from '@/components/MaintenanceReportsCard';
 import { MaintenanceSupportSuggestionsCard } from '@/components/MaintenanceSupportSuggestionsCard';
 import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCareCard';
 import { MaintenanceSmallGroupsCard } from '@/components/MaintenanceSmallGroupsCard';
+import { MaintenanceCampaignsCard } from '@/components/MaintenanceCampaignsCard';
 import { MaintenanceDiscipleshipAlertsCard } from '@/components/MaintenanceDiscipleshipAlertsCard';
 import { MaintenanceDiscipleshipThemesCard } from '@/components/MaintenanceDiscipleshipThemesCard';
 import { MaintenanceDiscipleshipResetCard } from '@/components/MaintenanceDiscipleshipResetCard';
@@ -167,6 +168,7 @@ type MaintenanceCarouselCard = {
     | 'scales'
     | 'pastoral_care'
     | 'small_groups_management'
+    | 'campaigns_management'
     | 'mudanca_papeis'
     | 'transferencia_igreja'
     | 'profile_cadastro'
@@ -210,6 +212,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '7', title: SCALE_SCHEDULING_MENU_LABEL, content: 'scales' },
   { id: '8', title: 'Cuidado Pastoral', content: 'pastoral_care' },
   { id: '24', title: 'Gestão de Pequenos Grupos', content: 'small_groups_management' },
+  { id: '25', title: 'Gestão de Campanhas', content: 'campaigns_management' },
   { id: '21', title: 'Temas da Trilha', content: 'discipleship_themes' },
   { id: '20', title: 'Trilha — Reconhecimentos', content: 'discipleship_alerts' },
   { id: '22', title: 'Resetar Trilha', content: 'discipleship_reset' },
@@ -1372,6 +1375,7 @@ export default function MaintenanceDashboard() {
             !isMinimalPresentation && item.content === 'scales' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'pastoral_care' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'small_groups_management' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'campaigns_management' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'mudanca_papeis' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'transferencia_igreja' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'profile_cadastro' && styles.panelCardInnerPadding,
@@ -1528,6 +1532,19 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceSmallGroupsCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
+          ) : item.content === 'campaigns_management' ? (
+            <View
+              style={[
+                styles.pastoralCarePanel,
+                isMinimalPresentation && styles.pastoralCarePanelMinimal,
+              ]}
+            >
+              <MaintenanceCampaignsCard
                 isActive={currentIndex === index}
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
