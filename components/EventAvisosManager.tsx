@@ -35,6 +35,7 @@ const emptyDraft = () => ({
   body: '',
   sortOrder: 0,
   isPublished: true,
+  audience: 'all' as const,
 });
 
 type DraftState = ReturnType<typeof emptyDraft>;
@@ -103,6 +104,7 @@ export function EventAvisosManager({
       body: row.body ?? '',
       sortOrder: row.sortOrder ?? 0,
       isPublished: row.isPublished === true,
+      audience: row.audience === 'small_group_leaders' ? 'small_group_leaders' : 'all',
     });
     setFormKey((current) => current + 1);
     showAppToast({
@@ -131,6 +133,7 @@ export function EventAvisosManager({
         body: draft.body,
         sortOrder: draft.sortOrder,
         isPublished: draft.isPublished,
+        audience: draft.audience,
       });
 
       if (!result.success) {
@@ -283,6 +286,23 @@ export function EventAvisosManager({
                   thumbColor={minimal ? MINIMAL_UI.onDark : undefined}
                 />
               </View>
+              <View style={styles.publishRow}>
+                <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
+                  Só líderes de células
+                </Text>
+                <Switch
+                  value={draft.audience === 'small_group_leaders'}
+                  onValueChange={(onlyLeaders) =>
+                    setDraft((current) => ({
+                      ...current,
+                      audience: onlyLeaders ? 'small_group_leaders' : 'all',
+                    }))
+                  }
+                  disabled={saving}
+                  trackColor={minimal ? MINIMAL_SWITCH_TRACK : undefined}
+                  thumbColor={minimal ? MINIMAL_UI.onDark : undefined}
+                />
+              </View>
             </View>
           </View>
 
@@ -364,7 +384,11 @@ export function EventAvisosManager({
                               : styles.listItemBadgeDraftMinimal),
                         ]}
                       >
-                        {item.isPublished ? 'Publicado' : 'Rascunho'}
+                        {item.isPublished
+                          ? item.audience === 'small_group_leaders'
+                            ? 'Líderes de células'
+                            : 'Publicado'
+                          : 'Rascunho'}
                       </Text>
                     </View>
                     <Text

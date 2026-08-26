@@ -65,4 +65,5 @@ export const DASHBOARD_CARD_THEMES = {
   ministerial_profile: VIGILANCE_LIGHT_CARD_THEME,
   grouped_palette: VIGILANCE_LIGHT_CARD_THEME,
   administrativo: VIGILANCE_LIGHT_CARD_THEME,
+  small_group: VIGILANCE_LIGHT_CARD_THEME,
 } as const satisfies Record<string, DashboardCardTheme>;

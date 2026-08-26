@@ -20,6 +20,7 @@ import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
 import { MAP_PIN_COLOR, type MapMarker } from '@/lib/profilesMapMarkersTypes';
+import { fetchSmallGroupMapPins } from '@/lib/smallGroupsApi';
 import { formatPhoneForDisplay } from '@/lib/totemDevice';
 import { openMemberWhatsapp } from '@/lib/whatsapp';
 import { ProfilesMapCanvas } from '@/components/geo-map/ProfilesMapCanvas';
@@ -40,12 +41,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type MapPinFilter = 'all' | 'members' | 'visitors';
+type MapPinFilter = 'all' | 'members' | 'visitors' | 'small_groups';
 
 const MAP_PIN_FILTER_OPTIONS: Array<{ id: MapPinFilter; label: string }> = [
   { id: 'all', label: 'Todos' },
   { id: 'members', label: 'Com papel' },
   { id: 'visitors', label: 'Visitantes' },
+  { id: 'small_groups', label: 'Pequenos Grupos' },
 ];
 
 const filterMarkersByRole = (markers: MapMarker[], filter: MapPinFilter) => {
@@ -55,6 +57,10 @@ const filterMarkersByRole = (markers: MapMarker[], filter: MapPinFilter) => {
 
   if (filter === 'visitors') {
     return markers.filter((marker) => marker.profile.isVisitantesOnly);
+  }
+
+  if (filter === 'small_groups') {
+    return markers.filter((marker) => Boolean(marker.profile.isSmallGroupHost));
   }
 
   return markers;
@@ -91,6 +97,7 @@ export default function MapGeolocalizacaoScreen() {
   const [selectedProfile, setSelectedProfile] = useState<ProfileForMap | null>(null);
   const [pinFilter, setPinFilter] = useState<MapPinFilter>('all');
   const [invalidCepsModalVisible, setInvalidCepsModalVisible] = useState(false);
+  const [smallGroupHostNames, setSmallGroupHostNames] = useState<Record<string, string>>({});
   const focusAppliedRef = useRef<string | null>(null);
 
   const {
@@ -107,13 +114,60 @@ export default function MapGeolocalizacaoScreen() {
     reload,
   } = useProfilesMapMarkers();
 
+  useEffect(() => {
+    let cancelled = false;
+
+    void fetchSmallGroupMapPins()
+      .then((pins) => {
+        if (cancelled) {
+          return;
+        }
+
+        const next: Record<string, string> = {};
+        for (const pin of pins) {
+          next[pin.host_profile_id] = pin.group_name;
+        }
+        setSmallGroupHostNames(next);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSmallGroupHostNames({});
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const annotatedMarkers = useMemo(
+    () =>
+      markers.map((marker) => {
+        const groupName = smallGroupHostNames[marker.profile.id];
+
+        if (!groupName) {
+          return marker;
+        }
+
+        return {
+          ...marker,
+          profile: {
+            ...marker.profile,
+            isSmallGroupHost: true,
+            smallGroupName: groupName,
+          },
+        };
+      }),
+    [markers, smallGroupHostNames]
+  );
+
   const leafletCenter: [number, number] = [mapCenter.latitude, mapCenter.longitude];
-  const visitantePinCount = markers.filter((marker) => marker.profile.isVisitantesOnly).length;
-  const memberPinCount = markers.length - visitantePinCount;
+  const visitantePinCount = annotatedMarkers.filter((marker) => marker.profile.isVisitantesOnly).length;
+  const memberPinCount = annotatedMarkers.length - visitantePinCount;
 
   const filteredMarkers = useMemo(
-    () => filterMarkersByRole(markers, pinFilter),
-    [markers, pinFilter]
+    () => filterMarkersByRole(annotatedMarkers, pinFilter),
+    [annotatedMarkers, pinFilter]
   );
 
   const handlePinFilterChange = useCallback(
@@ -136,6 +190,10 @@ export default function MapGeolocalizacaoScreen() {
           return null;
         }
 
+        if (nextFilter === 'small_groups' && !current.isSmallGroupHost) {
+          return null;
+        }
+
         return current;
       });
     },
@@ -147,6 +205,8 @@ export default function MapGeolocalizacaoScreen() {
       ? 'Nenhum perfil com papel e CEP geocodificado no mapa.'
       : pinFilter === 'visitors'
         ? 'Nenhum visitante com CEP geocodificado no mapa.'
+        : pinFilter === 'small_groups'
+          ? 'Nenhum anfitrião de pequeno grupo com CEP geocodificado no mapa.'
         : null;
 
   const handleCloseDetails = useCallback(() => {
@@ -188,7 +248,7 @@ export default function MapGeolocalizacaoScreen() {
   }, [canViewMapPinDetails]);
 
   useEffect(() => {
-    if (loading || !focusProfileId || !markers.length) {
+    if (loading || !focusProfileId || !annotatedMarkers.length) {
       return;
     }
 
@@ -208,7 +268,7 @@ export default function MapGeolocalizacaoScreen() {
       return;
     }
 
-    const marker = markers.find((entry) => entry.profile.id === focusProfileId);
+    const marker = annotatedMarkers.find((entry) => entry.profile.id === focusProfileId);
 
     if (!marker) {
       const notOnMap = profilesNotOnMap.find((profile) => profile.id === focusProfileId);
@@ -227,7 +287,7 @@ export default function MapGeolocalizacaoScreen() {
 
     setPinFilter('all');
     void handleSelectProfile(marker.profile);
-  }, [canViewMapPinDetails, focusProfileId, handleSelectProfile, loading, markers, profilesNotOnMap]);
+  }, [annotatedMarkers, canViewMapPinDetails, focusProfileId, handleSelectProfile, loading, profilesNotOnMap]);
 
   const selectedAddress = useMemo(
     () => (selectedProfile ? buildProfileMapAddressDisplay(selectedProfile) : null),
@@ -530,7 +590,9 @@ export default function MapGeolocalizacaoScreen() {
             <View style={styles.detailsHeaderText}>
               <Text style={styles.detailsTitle}>{selectedProfile.full_name ?? 'Sem nome'}</Text>
               <Text style={styles.detailsBadge}>
-                {selectedProfile.roleLabel}
+                {selectedProfile.smallGroupName
+                  ? `Pequeno grupo: ${selectedProfile.smallGroupName}`
+                  : selectedProfile.roleLabel}
               </Text>
             </View>
             <TouchableOpacity

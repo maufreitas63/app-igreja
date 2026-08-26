@@ -45,7 +45,11 @@ const pinIconForMarker = (profile: ProfileForMap, highlightedProfileId: string |
   }
 
   return createPinIcon(
-    profile.isVisitantesOnly ? MAP_PIN_COLOR.visitante : MAP_PIN_COLOR.member,
+    profile.isSmallGroupHost
+      ? MAP_PIN_COLOR.smallGroup
+      : profile.isVisitantesOnly
+        ? MAP_PIN_COLOR.visitante
+        : MAP_PIN_COLOR.member,
     12,
     false
   );

@@ -22,6 +22,7 @@ import { MaintenancePredictiveInsightsCard } from '@/components/MaintenancePredi
 import { MaintenanceReportsCard } from '@/components/MaintenanceReportsCard';
 import { MaintenanceSupportSuggestionsCard } from '@/components/MaintenanceSupportSuggestionsCard';
 import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCareCard';
+import { MaintenanceSmallGroupsCard } from '@/components/MaintenanceSmallGroupsCard';
 import { MaintenanceDiscipleshipAlertsCard } from '@/components/MaintenanceDiscipleshipAlertsCard';
 import { MaintenanceDiscipleshipThemesCard } from '@/components/MaintenanceDiscipleshipThemesCard';
 import { MaintenanceDiscipleshipResetCard } from '@/components/MaintenanceDiscipleshipResetCard';
@@ -165,6 +166,7 @@ type MaintenanceCarouselCard = {
     | 'scale_volunteers'
     | 'scales'
     | 'pastoral_care'
+    | 'small_groups_management'
     | 'mudanca_papeis'
     | 'transferencia_igreja'
     | 'profile_cadastro'
@@ -207,6 +209,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '6', title: SCALE_VOLUNTEERS_MENU_LABEL, content: 'scale_volunteers' },
   { id: '7', title: SCALE_SCHEDULING_MENU_LABEL, content: 'scales' },
   { id: '8', title: 'Cuidado Pastoral', content: 'pastoral_care' },
+  { id: '24', title: 'Gestão de Pequenos Grupos', content: 'small_groups_management' },
   { id: '21', title: 'Temas da Trilha', content: 'discipleship_themes' },
   { id: '20', title: 'Trilha — Reconhecimentos', content: 'discipleship_alerts' },
   { id: '22', title: 'Resetar Trilha', content: 'discipleship_reset' },
@@ -1368,6 +1371,7 @@ export default function MaintenanceDashboard() {
             !isMinimalPresentation && item.content === 'scale_volunteers' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'scales' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'pastoral_care' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'small_groups_management' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'mudanca_papeis' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'transferencia_igreja' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'profile_cadastro' && styles.panelCardInnerPadding,
@@ -1511,6 +1515,19 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenancePastoralCareCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
+          ) : item.content === 'small_groups_management' ? (
+            <View
+              style={[
+                styles.pastoralCarePanel,
+                isMinimalPresentation && styles.pastoralCarePanelMinimal,
+              ]}
+            >
+              <MaintenanceSmallGroupsCard
                 isActive={currentIndex === index}
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}

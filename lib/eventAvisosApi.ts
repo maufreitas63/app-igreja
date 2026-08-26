@@ -4,12 +4,15 @@ import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 export const EVENT_AVISOS_SQL_HINT = 'Execute no Supabase: scripts/event-avisos-schema.sql';
 
+export type EventAvisoAudience = 'all' | 'small_group_leaders';
+
 export type EventAvisoRow = {
   id: string;
   title: string;
   body: string;
   sortOrder: number;
   isPublished: boolean;
+  audience: EventAvisoAudience;
   createdAt: string;
   updatedAt: string;
 };
@@ -22,12 +25,17 @@ const parseEventAvisoRow = (record: Record<string, unknown>): EventAvisoRow | nu
     return null;
   }
 
+  const audienceRaw = String(record.audience ?? 'all').trim();
+  const audience: EventAvisoAudience =
+    audienceRaw === 'small_group_leaders' ? 'small_group_leaders' : 'all';
+
   return {
     id,
     title: String(record.title ?? '').trim(),
     body,
     sortOrder: Number(record.sort_order ?? record.sortOrder ?? 0),
     isPublished: record.is_published === true || record.isPublished === true,
+    audience,
     createdAt: String(record.created_at ?? record.createdAt ?? ''),
     updatedAt: String(record.updated_at ?? record.updatedAt ?? ''),
   };
@@ -79,6 +87,7 @@ export async function saveEventAviso(input: {
   body: string;
   sortOrder?: number;
   isPublished?: boolean;
+  audience?: EventAvisoAudience;
 }) {
   const actorProfileId = await resolveActorProfileId();
 
@@ -93,6 +102,7 @@ export async function saveEventAviso(input: {
     p_body: input.body,
     p_sort_order: input.sortOrder ?? 0,
     p_is_published: input.isPublished ?? true,
+    p_audience: input.audience ?? 'all',
   });
 
   if (error) {

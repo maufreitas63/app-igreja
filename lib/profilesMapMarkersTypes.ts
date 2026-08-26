@@ -12,6 +12,9 @@ export type ProfileForMap = {
   address_state: string | null;
   /** true = pin azul (visitante); false = pin vermelho (demais papéis). */
   isVisitantesOnly: boolean;
+  /** true = anfitrião de pequeno grupo (pin violeta). */
+  isSmallGroupHost?: boolean;
+  smallGroupName?: string | null;
   /** Nome do papel ACL exibido no mapa (ex.: Congregado, Membro, Visitante). */
   roleLabel: string;
 };
@@ -25,6 +28,7 @@ export type MapMarker = {
 export const MAP_PIN_COLOR = {
   member: '#ef4444',
   visitante: '#3b82f6',
+  smallGroup: '#7c3aed',
   /** Pin em destaque ao abrir o mapa a partir da Lista de Membros. */
   highlighted: '#22d3ee',
 } as const;

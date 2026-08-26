@@ -18,6 +18,7 @@ export const DASHBOARD_CARD_PARAM_TO_CONTENT: Record<string, string> = {
   '11': 'financial',
   '12': 'scale_roster',
   '13': 'administrativo',
+  '16': 'small_group',
   event_alt: 'event_alt',
   kids_teens: 'kids_teens',
   offerings: 'offerings',
@@ -32,6 +33,7 @@ export const DASHBOARD_CARD_PARAM_TO_CONTENT: Record<string, string> = {
   grouped_palette: 'grouped_manage',
   scale_roster: 'scale_roster',
   administrativo: 'administrativo',
+  small_group: 'small_group',
 };
 
 /** Cards do dashboard que abrem telas filhas — exigem permissão da rota além do card. */

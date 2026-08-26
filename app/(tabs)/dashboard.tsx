@@ -1,6 +1,7 @@
 import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { CheckinModal } from '@/components/CheckinModal';
 import { AdministrativoCard } from '@/components/AdministrativoCard';
+import { SmallGroupCard } from '@/components/SmallGroupCard';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
@@ -178,7 +179,8 @@ type DashboardCard = {
     | 'parking_vehicle_v2'
     | 'scale_roster'
     | 'grouped_manage'
-    | 'administrativo';
+    | 'administrativo'
+    | 'small_group';
 };
 
 /** Cards minimalistas que renderizam o título principal no corpo da tela. */
@@ -1873,7 +1875,10 @@ export default function Dashboard() {
         : []),
       { id: '6', title: 'Perfil & Identidade', content: 'grouped_manage' },
       ...(hasActiveMembership
-        ? [{ id: '13', title: 'Administrativo', content: 'administrativo' as const }]
+        ? [
+            { id: '13', title: 'Administrativo', content: 'administrativo' as const },
+            { id: '16', title: 'Pequeno Grupo', content: 'small_group' as const },
+          ]
         : []),
     ],
     [
@@ -2872,6 +2877,21 @@ export default function Dashboard() {
                       panelHeight={dashboardPanelCardHeight}
                       isActive={data[currentIndex]?.content === 'administrativo'}
                       initialTab={administrativoInitialTab}
+                    />
+                  </View>
+                ) : item.content === 'small_group' ? (
+                  <View
+                    style={[
+                    cardBaseStyle,
+                      styles.cardAdministrativo,
+                      styles.dashboardPanelCardTopLayout,
+                      effectiveDashboardPanelCardSizeStyle,
+                      dashboardPanelTopInsetStyle,
+                    ]}
+                  >
+                    <SmallGroupCard
+                      panelHeight={dashboardPanelCardHeight}
+                      isActive={data[currentIndex]?.content === 'small_group'}
                     />
                   </View>
                 ) : item.content === 'members_list' ? (

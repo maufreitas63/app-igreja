@@ -104,6 +104,8 @@ export function ProfilesMapCanvas({
           const isHighlighted = highlightedProfileId === marker.profile.id;
           const pinColor = isHighlighted
             ? MAP_PIN_COLOR.highlighted
+            : marker.profile.isSmallGroupHost
+              ? MAP_PIN_COLOR.smallGroup
             : marker.profile.isVisitantesOnly
               ? MAP_PIN_COLOR.visitante
               : MAP_PIN_COLOR.member;
