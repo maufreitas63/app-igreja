@@ -65,6 +65,45 @@ function SettingsRowView({
   );
 }
 
+function TrailGroup({
+  items,
+  open,
+  onToggle,
+}: {
+  items: AppDrawerSettingsRow[];
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <View>
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => {
+          traceClick('drawer-settings', 'trail-group-toggle', { open: !open });
+          onToggle();
+        }}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        accessibilityLabel="Manutenção da Trilha"
+      >
+        <View style={styles.itemIconWrap}>
+          <FontAwesome name="graduation-cap" size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+        </View>
+        <View style={styles.itemCopy}>
+          <Text style={styles.itemLabel}>Manutenção da Trilha</Text>
+          <Text style={styles.itemHint}>Temas, reconhecimentos e reset</Text>
+        </View>
+        <FontAwesome
+          name={open ? 'chevron-down' : 'chevron-right'}
+          size={12}
+          color={MINIMAL_UI.textMuted}
+        />
+      </TouchableOpacity>
+      {open ? items.map((item) => <SettingsRowView key={item.id} item={item} nested />) : null}
+    </View>
+  );
+}
+
 export function AppDrawerSettings({
   onClose,
   sections,
@@ -72,6 +111,7 @@ export function AppDrawerSettings({
   pinnedItem = null,
 }: Props) {
   const insets = useSafeAreaInsets();
+  const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
   const [trailMenuOpen, setTrailMenuOpen] = useState(false);
   const showTrailGroup = trailItems.length > 0;
 
@@ -79,6 +119,20 @@ export function AppDrawerSettings({
     () => sections.filter((section) => section.items.length > 0),
     [sections]
   );
+
+  const trailOnlyTitle =
+    APP_DRAWER_SETTINGS_GROUPS.find((group) => group.id === 'governanca')?.title ?? 'Governança e TI';
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSectionId((current) => {
+      const next = current === sectionId ? null : sectionId;
+      traceClick('drawer-settings', 'section-toggle', { id: sectionId, open: next === sectionId });
+      if (next !== 'governanca') {
+        setTrailMenuOpen(false);
+      }
+      return next;
+    });
+  };
 
   return (
     <View style={[styles.panel, { paddingBottom: Math.max(insets.bottom, 12) }]}>
@@ -100,76 +154,66 @@ export function AppDrawerSettings({
         showsVerticalScrollIndicator
         keyboardShouldPersistTaps="handled"
       >
-        {visibleSections.map((section) => (
-          <View key={section.id} style={styles.section}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            {section.items.map((item) => (
-              <SettingsRowView key={item.id} item={item} />
-            ))}
-            {section.id === 'governanca' && showTrailGroup ? (
-              <View>
-                <TouchableOpacity
-                  style={styles.item}
-                  onPress={() => {
-                    traceClick('drawer-settings', 'trail-group-toggle', { open: !trailMenuOpen });
-                    setTrailMenuOpen((open) => !open);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: trailMenuOpen }}
-                  accessibilityLabel="Manutenção da Trilha"
-                >
-                  <View style={styles.itemIconWrap}>
-                    <FontAwesome name="graduation-cap" size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
-                  </View>
-                  <View style={styles.itemCopy}>
-                    <Text style={styles.itemLabel}>Manutenção da Trilha</Text>
-                    <Text style={styles.itemHint}>Temas, reconhecimentos e reset</Text>
-                  </View>
-                  <FontAwesome
-                    name={trailMenuOpen ? 'chevron-down' : 'chevron-right'}
-                    size={12}
-                    color={MINIMAL_UI.textMuted}
-                  />
-                </TouchableOpacity>
-                {trailMenuOpen
-                  ? trailItems.map((item) => (
-                      <SettingsRowView key={item.id} item={item} nested />
-                    ))
-                  : null}
-              </View>
-            ) : null}
-          </View>
-        ))}
+        {visibleSections.map((section) => {
+          const expanded = expandedSectionId === section.id;
+
+          return (
+            <View key={section.id} style={styles.section}>
+              <Pressable
+                onPress={() => toggleSection(section.id)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded }}
+                accessibilityLabel={section.title}
+                style={({ pressed }) => [styles.sectionHeader, pressed && styles.sectionHeaderPressed]}
+              >
+                <Text style={styles.sectionTitle}>{section.title}</Text>
+                <FontAwesome
+                  name={expanded ? 'chevron-down' : 'chevron-right'}
+                  size={12}
+                  color={MINIMAL_UI.textMuted}
+                />
+              </Pressable>
+              {expanded ? (
+                <>
+                  {section.items.map((item) => (
+                    <SettingsRowView key={item.id} item={item} />
+                  ))}
+                  {section.id === 'governanca' && showTrailGroup ? (
+                    <TrailGroup
+                      items={trailItems}
+                      open={trailMenuOpen}
+                      onToggle={() => setTrailMenuOpen((open) => !open)}
+                    />
+                  ) : null}
+                </>
+              ) : null}
+            </View>
+          );
+        })}
 
         {showTrailGroup && !visibleSections.some((section) => section.id === 'governanca') ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              {APP_DRAWER_SETTINGS_GROUPS.find((group) => group.id === 'governanca')?.title
-                ?? 'Governança e TI'}
-            </Text>
-            <TouchableOpacity
-              style={styles.item}
-              onPress={() => setTrailMenuOpen((open) => !open)}
+            <Pressable
+              onPress={() => toggleSection('governanca')}
               accessibilityRole="button"
-              accessibilityState={{ expanded: trailMenuOpen }}
-              accessibilityLabel="Manutenção da Trilha"
+              accessibilityState={{ expanded: expandedSectionId === 'governanca' }}
+              accessibilityLabel={trailOnlyTitle}
+              style={({ pressed }) => [styles.sectionHeader, pressed && styles.sectionHeaderPressed]}
             >
-              <View style={styles.itemIconWrap}>
-                <FontAwesome name="graduation-cap" size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
-              </View>
-              <View style={styles.itemCopy}>
-                <Text style={styles.itemLabel}>Manutenção da Trilha</Text>
-                <Text style={styles.itemHint}>Temas, reconhecimentos e reset</Text>
-              </View>
+              <Text style={styles.sectionTitle}>{trailOnlyTitle}</Text>
               <FontAwesome
-                name={trailMenuOpen ? 'chevron-down' : 'chevron-right'}
+                name={expandedSectionId === 'governanca' ? 'chevron-down' : 'chevron-right'}
                 size={12}
                 color={MINIMAL_UI.textMuted}
               />
-            </TouchableOpacity>
-            {trailMenuOpen
-              ? trailItems.map((item) => <SettingsRowView key={item.id} item={item} nested />)
-              : null}
+            </Pressable>
+            {expandedSectionId === 'governanca' ? (
+              <TrailGroup
+                items={trailItems}
+                open={trailMenuOpen}
+                onToggle={() => setTrailMenuOpen((open) => !open)}
+              />
+            ) : null}
           </View>
         ) : null}
       </ScrollView>
@@ -220,14 +264,26 @@ const styles = StyleSheet.create({
   section: {
     gap: 0,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    minHeight: 44,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  sectionHeaderPressed: {
+    opacity: 0.7,
+  },
   sectionTitle: {
+    flex: 1,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
     color: MINIMAL_UI.textMuted,
-    marginBottom: 4,
-    marginTop: 4,
   },
   pinnedFooter: {
     flexShrink: 0,
