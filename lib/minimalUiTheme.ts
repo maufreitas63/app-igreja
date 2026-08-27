@@ -1,5 +1,5 @@
 /** Identidade visual minimalista (fundo branco, textos/ícones azuis). */
-import type { TextStyle } from 'react-native';
+import { StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 
 export const MINIMAL_UI = {
   background: '#FFFFFF',
@@ -43,6 +43,20 @@ export const MINIMAL_TOP_IDENTITY_LOGO_HEIGHT = 72;
  * O drawer e o corpo da tela devem alinhar a esta margem.
  */
 export const MINIMAL_TOP_CHROME_MIN_HEIGHT = 96;
+
+/** Box do chrome superior — também usado no corpo (`flexContent`) para o mesmo recorte. */
+export const MINIMAL_CHROME_WRAP: ViewStyle = {
+  flexShrink: 0,
+  paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
+  paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
+  paddingTop: 8,
+  paddingBottom: 8,
+  backgroundColor: MINIMAL_UI.background,
+  zIndex: 30,
+  borderBottomWidth: StyleSheet.hairlineWidth,
+  borderBottomColor: MINIMAL_UI.divider,
+  minHeight: MINIMAL_TOP_CHROME_MIN_HEIGHT,
+};
 
 /** Altura base do chrome superior (menu + safe area aproximada). */
 export const MINIMAL_TOP_CHROME_BASE = 52;
