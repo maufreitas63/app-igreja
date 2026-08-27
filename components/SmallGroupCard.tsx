@@ -20,8 +20,7 @@ import {
 import { showAppToast } from '@/lib/appToast';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
-import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
-import * as Linking from 'expo-linking';
+import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -101,24 +100,6 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
       text2: message,
     });
   }, []);
-
-  const openMaps = useCallback(
-    async (provider: 'google' | 'waze') => {
-      if (!hostAddress) {
-        notify(false, 'O anfitrião ainda não tem endereço cadastrado.');
-        return;
-      }
-
-      const encoded = encodeURIComponent(hostAddress);
-      const url =
-        provider === 'waze'
-          ? `https://waze.com/ul?q=${encoded}&navigate=yes`
-          : `https://www.google.com/maps/search/?api=1&query=${encoded}`;
-
-      await Linking.openURL(url);
-    },
-    [hostAddress, notify]
-  );
 
   const handleOpenGuide = useCallback(async () => {
     try {
@@ -292,6 +273,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
               <TouchableOpacity
                 style={[
                   host.isMember ? styles.leaveButton : styles.joinButton,
+                  styles.hostCardAction,
                   busyGroupId !== null && styles.buttonDisabled,
                 ]}
                 onPress={() =>
@@ -334,27 +316,6 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
             <Text style={styles.address} numberOfLines={3}>
               {hostAddress ?? 'Endereço do anfitrião ainda não cadastrado.'}
             </Text>
-          </View>
-
-          <View style={styles.row}>
-            <TouchableOpacity
-              style={[styles.mapButton, !hostAddress && styles.buttonDisabled]}
-              onPress={() => void openMaps('google')}
-              disabled={!hostAddress}
-              activeOpacity={0.85}
-            >
-              <MaterialIcons name="map" size={16} color="#FFFFFF" />
-              <Text style={styles.buttonText}>Google Maps</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.mapButton, styles.wazeButton, !hostAddress && styles.buttonDisabled]}
-              onPress={() => void openMaps('waze')}
-              disabled={!hostAddress}
-              activeOpacity={0.85}
-            >
-              <FontAwesome name="location-arrow" size={14} color="#FFFFFF" />
-              <Text style={styles.buttonText}>Waze</Text>
-            </TouchableOpacity>
           </View>
 
           <TouchableOpacity style={styles.primaryButton} onPress={() => void handleOpenGuide()} activeOpacity={0.85}>
@@ -463,8 +424,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   joinButton: {
-    ...CONTAIN_WIDTH,
-    marginTop: 8,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
     minHeight: 40,
     alignItems: 'center',
     justifyContent: 'center',
@@ -473,9 +435,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 10,
   },
-  leaveButton: {
-    ...CONTAIN_WIDTH,
+  hostCardAction: {
     marginTop: 8,
+  },
+  leaveButton: {
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
     minHeight: 40,
     alignItems: 'center',
     justifyContent: 'center',
@@ -489,14 +455,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    ...CONTAIN_WIDTH,
+    width: '100%',
+    maxWidth: '100%',
     gap: 10,
     paddingBottom: 8,
     flexGrow: 1,
     alignItems: 'stretch',
   },
   bodyCard: {
-    ...CONTAIN_WIDTH,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
     borderWidth: 1,
     borderColor: '#CBD5E1',
     borderRadius: 10,
@@ -521,27 +490,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
   },
-  row: {
-    ...CONTAIN_WIDTH,
-    flexDirection: 'row',
-    gap: 8,
-  },
-  mapButton: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#1E3A5F',
-    borderRadius: 8,
-    paddingVertical: 10,
-  },
-  wazeButton: {
-    backgroundColor: '#33CCFF',
-  },
   primaryButton: {
-    ...CONTAIN_WIDTH,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -551,7 +503,9 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   absenceButton: {
-    ...CONTAIN_WIDTH,
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
