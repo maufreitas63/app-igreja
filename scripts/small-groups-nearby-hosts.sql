@@ -45,6 +45,8 @@ begin
               'group_name', g.name,
               'host_profile_id', h.id,
               'host_name', h.full_name,
+              'meeting_weekday', g.meeting_weekday,
+              'meeting_time', to_char(g.meeting_time, 'HH24:MI'),
               'neighborhood', coalesce(
                 nullif(trim(h.address_neighborhood), ''),
                 nullif(trim(hgeo.bairro), ''),

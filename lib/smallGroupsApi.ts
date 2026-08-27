@@ -104,6 +104,8 @@ export type NearbySmallGroupHost = {
   hostProfileId: string;
   hostName: string;
   neighborhood: string;
+  meetingWeekday: number;
+  meetingTime: string;
   memberCount: number;
   distanceMeters: number | null;
 };
@@ -506,6 +508,8 @@ export async function fetchNearbySmallGroupHosts(): Promise<{
           hostProfileId,
           hostName: String(row.host_name ?? '').trim() || 'Anfitrião',
           neighborhood: String(row.neighborhood ?? '').trim() || 'Bairro não informado',
+          meetingWeekday: Number(row.meeting_weekday ?? 3),
+          meetingTime: String(row.meeting_time ?? '').trim(),
           memberCount: Number.isFinite(memberCountRaw) && memberCountRaw > 0 ? Math.round(memberCountRaw) : 0,
           distanceMeters: Number.isFinite(distanceMeters) ? distanceMeters : null,
         } satisfies NearbySmallGroupHost;

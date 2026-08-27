@@ -209,6 +209,10 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
                 {host.groupName}
               </Text>
               <Text style={styles.hostMeta}>Bairro: {host.neighborhood}</Text>
+              <Text style={styles.hostMeta}>
+                Reuniões: {formatSmallGroupWeekday(host.meetingWeekday)}
+                {host.meetingTime ? ` · ${host.meetingTime}` : ''}
+              </Text>
               <Text style={styles.hostMeta}>{formatSmallGroupMemberCount(host.memberCount)}</Text>
               <Text style={styles.hostDistance}>
                 {formatSmallGroupHostDistanceMeters(host.distanceMeters)}
