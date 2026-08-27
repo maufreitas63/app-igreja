@@ -138,7 +138,7 @@ export function MinimalEuQueroFooter() {
           </View>
           <View style={styles.textBlock}>
             <Text style={styles.itemTitle}>Contribuir</Text>
-            <Text style={styles.itemSubtitle}>Dízimos, ofertas, campanhas ou projetos.</Text>
+            <Text style={styles.itemSubtitle}>Dízimos, Ofertas, Campanhas ou Projetos.</Text>
           </View>
           <FontAwesome
             name={contributeOpen ? 'chevron-down' : 'chevron-right'}
