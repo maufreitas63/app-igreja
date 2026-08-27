@@ -3010,10 +3010,12 @@ export default function Dashboard() {
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
-                    <SmallGroupCard
-                      panelHeight={dashboardPanelCardHeight}
-                      isActive={activeDashboardCard?.content === 'small_group'}
-                    />
+                    <View style={styles.cardGroupedManagePanel}>
+                      <SmallGroupCard
+                        panelHeight={dashboardPanelCardHeight}
+                        isActive={activeDashboardCard?.content === 'small_group'}
+                      />
+                    </View>
                   </View>
                 ) : item.content === 'campaign_card' ? (
                   <View
