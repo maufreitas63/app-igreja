@@ -224,8 +224,13 @@ export async function reserveNextFamilyId() {
 }
 
 export async function resolveFamilyIdForPhone(phone: string | null | undefined) {
-  if (!phone) {
-    return resolveCurrentFamilyId();
+  return (await resolveExistingFamilyIdForPhone(phone)) ?? resolveCurrentFamilyId();
+}
+
+/** Família já vinculada ao telefone — nunca usa o contador `family_ref`. */
+export async function resolveExistingFamilyIdForPhone(phone: string | null | undefined) {
+  if (!phone?.trim()) {
+    return null;
   }
 
   const profile = await getProfileFamilyByPhone(phone);
@@ -245,7 +250,7 @@ export async function resolveFamilyIdForPhone(phone: string | null | undefined) 
     return normalizeFamilyCode(memberByName.family_id);
   }
 
-  return resolveCurrentFamilyId();
+  return null;
 }
 
 export async function resolveFamilyIdForAuthUser(authUserId: string | null | undefined) {

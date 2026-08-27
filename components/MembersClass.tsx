@@ -125,7 +125,9 @@ export function MembersClass({
       <View style={membersClassStyles.header}>
         <Text style={membersClassStyles.titleCentered}>Gerenciar Família</Text>
         <View style={membersClassStyles.readOnlyContainer}>
-          <Text style={membersClassStyles.readOnlyText}>Família Atual: {familyId}</Text>
+          <Text style={membersClassStyles.readOnlyText}>
+            {familyId ? `Família Atual: ${familyId}` : 'Família não vinculada ao perfil'}
+          </Text>
         </View>
       </View>
 
@@ -136,7 +138,10 @@ export function MembersClass({
         keyExtractor={(item) => String(item.id)}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={embedded}
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        contentContainerStyle={[
+          membersClassStyles.membersListContent,
+          { paddingBottom: Math.max(100, insetsBottom + 88) },
+        ]}
         ListHeaderComponent={
           <>
             <View style={membersClassStyles.memberFormSection}>

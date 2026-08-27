@@ -9,11 +9,10 @@ import { FAMILY_RELATIONSHIP_OPTIONS } from '@/lib/familyRelationshipOptions';
 import { ensureProfilesForMembers } from '@/lib/memberProfiles';
 import { applyProfileBirthDates } from '@/lib/profileBirthDates';
 import { supabase } from '@/lib/supabase';
+import { getEffectiveUserPhone, loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import {
   normalizeFamilyCode,
-  resolveCurrentFamilyId,
-  resolveFamilyIdForAuthUser,
-  resolveFamilyIdForPhone,
+  resolveExistingFamilyIdForPhone,
 } from '@/lib/family';
 import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import { upsertFamilyMember } from '@/lib/upsertFamilyMember';
@@ -177,20 +176,46 @@ export type ManagedMember = {
 };
 
 export async function loadManageMembersData(phoneParam: string | null): Promise<ManageMembersData> {
-  let currentFamilyId = await resolveCurrentFamilyId();
+  let currentFamilyId = '';
   let profileName = '';
   let profilePhone: string | null = null;
   let profileBirth: string | null = null;
   let acceptorProfileId: string | null = null;
 
-  if (phoneParam) {
-    currentFamilyId = await resolveFamilyIdForPhone(phoneParam);
-    const resolvedProfileId = await resolveProfileIdByPhone(phoneParam);
+  // Identidade efetiva (alvo do Modo Ghost) — nunca auth.getUser() / family_ref.
+  const sessionProfile = await loadEffectiveSessionProfile();
+  const effectivePhone =
+    (await getEffectiveUserPhone())?.trim() || sessionProfile?.phone?.trim() || null;
+  const requestedPhone = phoneParam?.trim() || null;
+  const phoneForLookup = requestedPhone || effectivePhone;
+
+  const useSessionIdentity =
+    Boolean(sessionProfile) &&
+    (!requestedPhone ||
+      phoneDigitsMatch(requestedPhone, sessionProfile?.phone) ||
+      phoneDigitsMatch(requestedPhone, effectivePhone));
+
+  if (useSessionIdentity && sessionProfile) {
+    currentFamilyId = normalizeFamilyCode(
+      sessionProfile.family_id ?? sessionProfile.codigo_membro ?? null
+    );
+    profileName = formatFullName(sessionProfile.full_name);
+    profilePhone = sessionProfile.phone?.trim() || effectivePhone;
+    profileBirth = sessionProfile.birth_date ?? null;
+    acceptorProfileId = sessionProfile.id ?? null;
+  }
+
+  if (!currentFamilyId && phoneForLookup) {
+    currentFamilyId = (await resolveExistingFamilyIdForPhone(phoneForLookup)) ?? '';
+  }
+
+  if (!acceptorProfileId && phoneForLookup) {
+    const resolvedProfileId = await resolveProfileIdByPhone(phoneForLookup);
 
     if (resolvedProfileId) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, full_name, phone, birth_date')
+        .select('id, full_name, phone, birth_date, family_id, codigo_membro')
         .eq('id', resolvedProfileId)
         .maybeSingle();
 
@@ -199,13 +224,16 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
         profilePhone = profile.phone;
         profileBirth = profile.birth_date;
         acceptorProfileId = profile.id ?? null;
+        if (!currentFamilyId) {
+          currentFamilyId = normalizeFamilyCode(profile.family_id ?? profile.codigo_membro ?? null);
+        }
       }
     } else {
-      const phoneVariants = buildPhoneDbQueryVariants(phoneParam);
+      const phoneVariants = buildPhoneDbQueryVariants(phoneForLookup);
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, full_name, phone, birth_date')
-        .in('phone', phoneVariants.length ? phoneVariants : [phoneParam])
+        .select('id, full_name, phone, birth_date, family_id, codigo_membro')
+        .in('phone', phoneVariants.length ? phoneVariants : [phoneForLookup])
         .limit(1)
         .maybeSingle();
 
@@ -214,30 +242,37 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
         profilePhone = profile.phone;
         profileBirth = profile.birth_date;
         acceptorProfileId = profile.id ?? null;
-      }
-    }
-  } else {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      currentFamilyId = await resolveFamilyIdForAuthUser(user.id);
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, full_name, phone, birth_date')
-        .eq('auth_user_id', user.id)
-        .maybeSingle();
-
-      if (profile) {
-        profileName = formatFullName(profile.full_name);
-        profilePhone = profile.phone;
-        profileBirth = profile.birth_date;
-        acceptorProfileId = profile.id ?? null;
+        if (!currentFamilyId) {
+          currentFamilyId = normalizeFamilyCode(profile.family_id ?? profile.codigo_membro ?? null);
+        }
       }
     }
   }
 
   currentFamilyId = normalizeFamilyCode(currentFamilyId);
+
+  const [idadeKidsValue, idadeTeensValue, vidaTmpValue] = await Promise.all([
+    getAppParameterValue('idade_kids'),
+    getAppParameterValue('idade_teens'),
+    getAppParameterValue('vida_tmp'),
+  ]);
+
+  const idadeKids = parseNumericParameter(idadeKidsValue);
+  const idadeTeens = parseNumericParameter(idadeTeensValue);
+  const showVidaTmp = parseSimParameter(vidaTmpValue);
+
+  if (!currentFamilyId) {
+    return {
+      familyId: '',
+      members: [],
+      profileName,
+      profilePhone,
+      acceptorProfileId,
+      idadeKids,
+      idadeTeens,
+      showVidaTmp,
+    };
+  }
 
   const fetchFamilyMembers = async () => {
     const { data } = await supabase
@@ -299,12 +334,6 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
     }
   }
 
-  const [idadeKidsValue, idadeTeensValue, vidaTmpValue] = await Promise.all([
-    getAppParameterValue('idade_kids'),
-    getAppParameterValue('idade_teens'),
-    getAppParameterValue('vida_tmp'),
-  ]);
-
   await ensureProfilesForMembers(membersData, currentFamilyId);
   const members = dedupeFamilyMembers(await applyProfileBirthDates(membersData));
 
@@ -314,8 +343,8 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
     profileName,
     profilePhone,
     acceptorProfileId,
-    idadeKids: parseNumericParameter(idadeKidsValue),
-    idadeTeens: parseNumericParameter(idadeTeensValue),
-    showVidaTmp: parseSimParameter(vidaTmpValue),
+    idadeKids,
+    idadeTeens,
+    showVidaTmp,
   };
 }

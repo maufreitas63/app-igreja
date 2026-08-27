@@ -28,6 +28,12 @@ export function useReturnToCallerOnLeave({
   const returnToCaller = useCallback(() => {
     allowLeaveRef.current = true;
 
+    // Prefere pop da pilha para preservar estado visual da tela anterior.
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
     if (returnRoute) {
       const params: Record<string, string> = withMinimalPresentation();
 
@@ -49,11 +55,6 @@ export function useReturnToCallerOnLeave({
     const dashboardCard = returnDashboardCard ?? fallbackDashboardCard;
     if (dashboardCard) {
       router.replace(buildReturnToDashboardHref(dashboardCard, extraRouteParams));
-      return;
-    }
-
-    if (router.canGoBack()) {
-      router.back();
       return;
     }
 

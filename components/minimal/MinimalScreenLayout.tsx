@@ -1,5 +1,6 @@
 import { MinimalHomeProvider } from '@/context/MinimalHomeContext';
-import { MINIMAL_CHROME_WRAP, MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
+import { MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,7 +49,7 @@ function MinimalScreenLayoutBody({
               {children}
             </ScrollView>
           ) : (
-            <View style={[styles.flexContent, contentContainerStyle]}>{children}</View>
+            <View style={[styles.main, styles.flexContent, contentContainerStyle]}>{children}</View>
           )}
 
           {footer ? <View style={styles.footer}>{footer}</View> : null}
@@ -118,8 +119,11 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   flexContent: {
-    ...MINIMAL_CHROME_WRAP,
+    ...CONTAIN_WIDTH,
     flex: 1,
+    minHeight: 0,
+    paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
+    paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
   },
   footer: {
     flexShrink: 0,

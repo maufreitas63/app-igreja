@@ -35,7 +35,7 @@ import {
   upsertProfileForManagedMember,
 } from '@/lib/memberProfiles';
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
-import { DEFAULT_FAMILY_ID, normalizeFamilyCode } from '@/lib/family';
+import { normalizeFamilyCode } from '@/lib/family';
 import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { resolveSelfiePreviewUrl } from '@/lib/selfie';
 import { supabase } from '@/lib/supabase';
@@ -132,7 +132,7 @@ export function MembersClassPanel({
     })();
   }, []);
 
-  const [familyId, setFamilyId] = useState(DEFAULT_FAMILY_ID);
+  const [familyId, setFamilyId] = useState('');
   const [members, setMembers] = useState<ManagedMember[]>([]);
   const [profileName, setProfileName] = useState('');
   const [profilePhone, setProfilePhone] = useState<string | null>(null);

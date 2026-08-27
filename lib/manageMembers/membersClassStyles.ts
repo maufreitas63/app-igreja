@@ -13,13 +13,15 @@ const DIVIDER = MINIMAL_UI.divider;
 const HAIRLINE = StyleSheet.hairlineWidth;
 
 export const membersClassStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: SURFACE },
+  container: { flex: 1, width: '100%', maxWidth: '100%', minWidth: 0, overflow: 'hidden', backgroundColor: SURFACE },
   containerEmbedded: {
     width: '100%',
     maxWidth: '100%',
+    minWidth: 0,
     alignSelf: 'stretch',
     flex: 1,
     minHeight: 0,
+    overflow: 'hidden',
     backgroundColor: SURFACE,
   },
   header: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
@@ -40,11 +42,22 @@ export const membersClassStyles = StyleSheet.create({
   readOnlyText: { color: ACCENT, fontWeight: '700', fontSize: 15 },
   membersList: {
     flex: 1,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   membersListEmbedded: {
     width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
     flex: 1,
     minHeight: 0,
+  },
+  membersListContent: {
+    width: '100%',
+    maxWidth: '100%',
+    paddingHorizontal: 16,
+    paddingTop: 12,
   },
   memberFormSection: {
     backgroundColor: SURFACE,
@@ -173,6 +186,8 @@ export const membersClassStyles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
+    width: '100%',
+    maxWidth: '100%',
   },
   scrollOptions: { marginBottom: 12, maxHeight: 50 },
   option: {
@@ -241,11 +256,13 @@ export const membersClassStyles = StyleSheet.create({
     minWidth: 0,
     marginRight: 8,
   },
-  memberName: { color: TEXT, fontWeight: '700', fontSize: 15 },
+  memberName: { color: TEXT, fontWeight: '700', fontSize: 15, flexShrink: 1 },
   memberNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    minWidth: 0,
+    maxWidth: '100%',
   },
   memberStatusDot: {
     width: 10,
@@ -302,6 +319,8 @@ export const membersClassStyles = StyleSheet.create({
   },
   footerContainer: {
     backgroundColor: SURFACE,
+    width: '100%',
+    maxWidth: '100%',
     paddingHorizontal: 16,
     paddingTop: 10,
     borderTopWidth: HAIRLINE,

@@ -44,7 +44,7 @@ export const MINIMAL_TOP_IDENTITY_LOGO_HEIGHT = 72;
  */
 export const MINIMAL_TOP_CHROME_MIN_HEIGHT = 96;
 
-/** Box do chrome superior — também usado no corpo (`flexContent`) para o mesmo recorte. */
+/** Box do chrome superior (`MinimalTopLeftChrome`). Não usar no corpo da tela. */
 export const MINIMAL_CHROME_WRAP: ViewStyle = {
   flexShrink: 0,
   paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
