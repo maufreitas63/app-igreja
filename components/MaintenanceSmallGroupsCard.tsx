@@ -8,6 +8,7 @@ import {
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   addSmallGroupMember,
+  deleteSmallGroupAdmin,
   enqueueSmallGroupVisitor,
   fetchSmallGroupGuideCandidates,
   fetchSmallGroupRollCall,
@@ -28,6 +29,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Switch,
@@ -212,6 +214,49 @@ export function MaintenanceSmallGroupsCard({
   const handleNewGroup = () => {
     applyGroup(null);
     setSelectedId('');
+  };
+
+  const handleDeleteGroup = () => {
+    if (!selectedId || !selectedGroup) {
+      notify(false, 'Pequenos grupos', 'Selecione um grupo para excluir.');
+      return;
+    }
+
+    const hostLabel = selectedGroup.host?.full_name
+      ? formatShortName(selectedGroup.host.full_name)
+      : 'não definido';
+    const leaderLabel = selectedGroup.leader?.full_name
+      ? formatShortName(selectedGroup.leader.full_name)
+      : 'não definido';
+
+    Alert.alert(
+      'Excluir grupo',
+      `O grupo "${selectedGroup.name}" será excluído, incluindo anfitrião (${hostLabel}) e líder (${leaderLabel}). Os cadastros dessas pessoas na igreja permanecem.\n\nEsta ação não pode ser desfeita.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              setSaving(true);
+
+              try {
+                const result = await deleteSmallGroupAdmin(selectedId);
+                notify(result.success, 'Pequenos grupos', result.message);
+
+                if (result.success) {
+                  applyGroup(null);
+                  await loadGroups();
+                }
+              } finally {
+                setSaving(false);
+              }
+            })();
+          },
+        },
+      ]
+    );
   };
 
   const handleAddMember = async (profileId: string) => {
@@ -399,22 +444,36 @@ export function MaintenanceSmallGroupsCard({
                 placeholder="Horário (HH:MM)"
                 placeholderTextColor="#94A3B8"
               />
-              <Text style={styles.hint}>
-                Anfitrião:{' '}
-                {selectedGroup?.host?.full_name
-                  ? formatShortName(selectedGroup.host.full_name)
-                  : hostId
-                    ? 'selecionado na busca'
+              <View style={styles.roleRow}>
+                <Text style={styles.hint}>
+                  Anfitrião:{' '}
+                  {hostId
+                    ? selectedGroup?.host?.id === hostId && selectedGroup.host.full_name
+                      ? formatShortName(selectedGroup.host.full_name)
+                      : 'selecionado na busca'
                     : 'não definido'}
-              </Text>
-              <Text style={styles.hint}>
-                Líder:{' '}
-                {selectedGroup?.leader?.full_name
-                  ? formatShortName(selectedGroup.leader.full_name)
-                  : leaderId
-                    ? 'selecionado na busca'
+                </Text>
+                {hostId ? (
+                  <TouchableOpacity onPress={() => setHostId('')} accessibilityRole="button">
+                    <Text style={styles.link}>Remover</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+              <View style={styles.roleRow}>
+                <Text style={styles.hint}>
+                  Líder:{' '}
+                  {leaderId
+                    ? selectedGroup?.leader?.id === leaderId && selectedGroup.leader.full_name
+                      ? formatShortName(selectedGroup.leader.full_name)
+                      : 'selecionado na busca'
                     : 'não definido'}
-              </Text>
+                </Text>
+                {leaderId ? (
+                  <TouchableOpacity onPress={() => setLeaderId('')} accessibilityRole="button">
+                    <Text style={styles.link}>Remover</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
               <TextInput
                 style={maintenancePanelStyles.input}
                 value={search}
@@ -455,6 +514,17 @@ export function MaintenanceSmallGroupsCard({
               >
                 <Text style={styles.primaryButtonText}>{selectedId ? 'Salvar grupo' : 'Criar grupo'}</Text>
               </TouchableOpacity>
+              {selectedId ? (
+                <TouchableOpacity
+                  style={styles.dangerButton}
+                  onPress={handleDeleteGroup}
+                  disabled={saving}
+                  accessibilityRole="button"
+                  accessibilityLabel="Excluir grupo, anfitrião e líder"
+                >
+                  <Text style={styles.dangerButtonText}>Excluir grupo, anfitrião e líder</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : null}
 
@@ -611,6 +681,12 @@ const styles = StyleSheet.create({
   hint: {
     color: '#64748B',
     fontSize: 12,
+    flex: 1,
+  },
+  roleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   errorText: {
     color: '#B91C1C',
@@ -628,6 +704,19 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  dangerButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#B91C1C',
+  },
+  dangerButtonText: {
+    color: '#B91C1C',
     fontWeight: '800',
     fontSize: 13,
   },

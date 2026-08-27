@@ -250,6 +250,17 @@ export async function saveSmallGroupAdmin(input: {
   };
 }
 
+export async function deleteSmallGroupAdmin(groupId: string) {
+  const payload = await rpcJson('delete_small_group_admin', { p_id: groupId });
+
+  return {
+    success: payload.success === true,
+    message: String(
+      payload.message ?? (payload.success === true ? 'Grupo excluído.' : 'Falha ao excluir.')
+    ),
+  };
+}
+
 export async function searchSmallGroupProfiles(query: string): Promise<SmallGroupProfileSummary[]> {
   const payload = await rpcJson('search_small_group_profiles', { p_query: query });
   const rows = Array.isArray(payload.profiles) ? payload.profiles : [];
