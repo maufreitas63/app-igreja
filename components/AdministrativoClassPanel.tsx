@@ -1,9 +1,12 @@
 import { AdministrativoClass } from '@/components/AdministrativoClass';
 import {
   pickRouteParam,
+  resolveReturnDashboardCardParam,
+  resolveReturnRouteParam,
   withMinimalPresentation,
   withReturnRoute,
 } from '@/lib/dashboardReturnNavigation';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,6 +15,11 @@ import { StyleSheet, View } from 'react-native';
 export function AdministrativoClassPanel() {
   const router = useRouter();
   const params = useLocalSearchParams<{ administrativoTab?: string }>();
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute: resolveReturnRouteParam(params),
+    returnDashboardCard: resolveReturnDashboardCardParam(params),
+    fallbackDashboardCard: 'administrativo',
+  });
 
   const initialTab = useMemo(() => {
     // Aba "outros" descontinuada temporariamente — sempre Atos.
@@ -27,8 +35,8 @@ export function AdministrativoClassPanel() {
   }, [router]);
 
   const handleClose = useCallback(() => {
-    router.back();
-  }, [router]);
+    returnToCaller();
+  }, [returnToCaller]);
 
   return (
     <View style={styles.root}>

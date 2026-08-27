@@ -1,19 +1,30 @@
 import { ChurchRoomSettingsPanel } from '@/components/ChurchRoomSettingsPanel';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import {
   clearChurchRoomSettingsCache,
   listChurchRoomSettings,
   type ChurchRoomSetting,
 } from '@/lib/churchRoomSettings';
+import {
+  resolveReturnDashboardCardParam,
+  resolveReturnRouteParam,
+} from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 export default function ConfiguracaoSalasScreen() {
+  const params = useLocalSearchParams();
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute: resolveReturnRouteParam(params),
+    returnDashboardCard: resolveReturnDashboardCardParam(params),
+  });
   const accessStatus = useScreenAccessGuard({
     resourceKey: ACCESS_SCREEN.configuracaoSalas,
     deniedMessage: 'Apenas Líder ou Administrador pode configurar salas e atribuições.',
@@ -44,7 +55,7 @@ export default function ConfiguracaoSalasScreen() {
 
   return (
     <ScreenAccessGate status={accessStatus}>
-      <MinimalScreenLayout>
+      <MinimalScreenLayout footer={<CloseFooterBar onPress={returnToCaller} />}>
         <Text style={styles.title}>Configuração de Salas</Text>
 
         {loading ? (

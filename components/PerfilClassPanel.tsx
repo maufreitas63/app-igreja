@@ -3,18 +3,27 @@ import { MembersClassPanel } from '@/components/MembersClassPanel';
 import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ProfileClassPanel } from '@/components/ProfileClassPanel';
 import { DiscipleshipTrailPanel } from '@/components/DiscipleshipTrailPanel';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { loadGroupedManageScreenAccess } from '@/lib/groupedManageAccess';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
+import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
 import { FontAwesome } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 
 /** Container com dados e navegação — compõe o PerfilClass stateless. */
 export function PerfilClassPanel() {
+  const params = useLocalSearchParams();
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute: resolveReturnRouteParam(params),
+    returnDashboardCard: resolveReturnDashboardCardParam(params),
+    fallbackDashboardCard: 'grouped_manage',
+  });
   const [loading, setLoading] = useState(true);
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [manageProfile, setManageProfile] = useState(false);
@@ -219,10 +228,19 @@ export function PerfilClassPanel() {
     );
   }
 
-  return <PerfilClass loading={loading} actions={actions} />;
+  return (
+    <View style={styles.hub}>
+      <PerfilClass loading={loading} actions={actions} />
+      <CloseFooterBar onPress={returnToCaller} />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
+  hub: {
+    flex: 1,
+    minHeight: 0,
+  },
   embeddedPanel: {
     flex: 1,
     minHeight: 0,

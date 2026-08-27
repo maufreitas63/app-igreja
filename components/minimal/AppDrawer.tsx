@@ -1,12 +1,17 @@
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { useAppDrawerMenu, type AppDrawerMenuItemResolved } from '@/hooks/useAppDrawerMenu';
-import { navigateDrawerMenuItem, isDrawerMenuPlaceholder } from '@/lib/appDrawerMenu';
-import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
+import {
+  APP_DRAWER_SETTINGS_GROUPS,
+  DISCIPLESHIP_SETTINGS_MODULE_KEYS,
+  isDrawerMenuPlaceholder,
+  navigateDrawerMenuItem,
+  type AppDrawerModuleKey,
+} from '@/lib/appDrawerMenu';
 import { traceClick } from '@/lib/devClickTrace';
 import { MINIMAL_ICON, MINIMAL_TOP_CHROME_MIN_HEIGHT, MINIMAL_UI, MINIMAL_TYPO } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -19,12 +24,53 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MinimalExitBar } from './MinimalExitBar';
-import { AppDrawerSettings } from './AppDrawerSettings';
+import {
+  AppDrawerSettings,
+  type AppDrawerSettingsRow,
+  type AppDrawerSettingsSection,
+} from './AppDrawerSettings';
+
+const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<typeof FontAwesome>['name']>> = {
+  menu_salas: 'home',
+  menu_totem: 'qrcode',
+  menu_autorizacao_midia: 'shield',
+  menu_membros: 'users',
+  menu_mapa: 'map-marker',
+  menu_aniversariantes: 'birthday-cake',
+  pastoral_care: 'heart',
+  small_groups_management: 'group',
+  volunteer_mural: 'handshake-o',
+  family_reception: 'home',
+  profile_cadastro: 'user-plus',
+  menu_administrativo: 'briefcase',
+  Events: 'calendar',
+  Event_gantt: 'sliders',
+  event_orchestration: 'bullhorn',
+  sala_servidor: 'building',
+  scales_type: 'tags',
+  scales_volunteers: 'users',
+  scales: 'calendar-check-o',
+  quorum_presence: 'check-square-o',
+  menu_orquestrador: 'film',
+  financials: 'line-chart',
+  campaigns_management: 'flag',
+  predictive_insights: 'lightbulb-o',
+  discipleship_themes: 'book',
+  discipleship_alerts: 'graduation-cap',
+  discipleship_reset: 'refresh',
+  relatorios: 'bar-chart',
+  access_control: 'lock',
+  mudanca_papeis: 'exchange',
+  transferencia_igreja: 'random',
+  profile_access_insights: 'eye',
+  auditor: 'user-secret',
+  menu_billing: 'credit-card',
+  menu_igrejas: 'building',
+};
 
 export function AppDrawer() {
   const { isOpen, closeDrawer } = useAppDrawer();
-  const { items, loading, refresh, isSuperAdmin, canManageRooms, canManageAvisos, canManageDiscipleship } =
-    useAppDrawerMenu();
+  const { items, settingsItems, loading, refresh, canAccessSettings } = useAppDrawerMenu();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -54,70 +100,44 @@ export function AppDrawer() {
     void navigateDrawerMenuItem(router, item.moduleKey);
   };
 
+  const handleSettingsNavigate = useCallback((moduleKey: AppDrawerModuleKey, label: string) => {
+    traceClick('drawer', 'settings-item-navigate', { moduleKey, label });
+    setSettingsOpen(false);
+    closeDrawer();
+    void navigateDrawerMenuItem(router, moduleKey);
+  }, [closeDrawer, router]);
+
   const visibleItems = items.filter((item) => item.enabled);
+  const enabledSettings = settingsItems.filter((item) => item.enabled);
 
-  const handleOpenMediaAuthorization = () => {
-    const params = withMinimalPresentation();
-    traceClick('drawer', 'settings-media-authorization-press', { params });
-    router.push({
-      pathname: '/autorizacao-midia',
-      params,
+  const { sections, trailItems, pinnedItem } = useMemo(() => {
+    const toRow = (item: (typeof enabledSettings)[number]): AppDrawerSettingsRow => ({
+      id: item.moduleKey,
+      label: item.label,
+      hint: item.hint,
+      icon: SETTINGS_ICONS[item.moduleKey] ?? 'cog',
+      onPress: () => handleSettingsNavigate(item.moduleKey, item.label),
     });
-    setSettingsOpen(false);
-    closeDrawer();
-  };
 
-  const handleOpenIgrejasInstances = () => {
-    traceClick('drawer', 'settings-igrejas-instances-press');
-    setSettingsOpen(false);
-    closeDrawer();
-    void navigateDrawerMenuItem(router, 'menu_igrejas');
-  };
+    const trail = enabledSettings.filter((item) => DISCIPLESHIP_SETTINGS_MODULE_KEYS.has(item.moduleKey));
+    const igrejas = enabledSettings.find((item) => item.moduleKey === 'menu_igrejas') ?? null;
+    const rest = enabledSettings.filter(
+      (item) =>
+        !DISCIPLESHIP_SETTINGS_MODULE_KEYS.has(item.moduleKey) && item.moduleKey !== 'menu_igrejas'
+    );
 
-  const handleOpenRoomSettings = () => {
-    traceClick('drawer', 'settings-room-config-press');
-    setSettingsOpen(false);
-    closeDrawer();
-    router.push({
-      pathname: '/configuracao-salas',
-      params: withMinimalPresentation(),
-    });
-  };
+    const sectionsNext: AppDrawerSettingsSection[] = APP_DRAWER_SETTINGS_GROUPS.map((group) => ({
+      id: group.id,
+      title: group.title,
+      items: rest.filter((item) => item.group === group.id).map(toRow),
+    }));
 
-  const handleOpenAvisosSettings = () => {
-    traceClick('drawer', 'settings-avisos-press');
-    setSettingsOpen(false);
-    closeDrawer();
-    void navigateDrawerMenuItem(router, 'event_orchestration');
-  };
-
-  const handleOpenDiscipleshipThemes = () => {
-    traceClick('drawer', 'settings-discipleship-themes-press');
-    setSettingsOpen(false);
-    closeDrawer();
-    void navigateDrawerMenuItem(router, 'discipleship_themes');
-  };
-
-  const handleOpenDiscipleshipSettings = () => {
-    traceClick('drawer', 'settings-discipleship-press');
-    setSettingsOpen(false);
-    closeDrawer();
-    void navigateDrawerMenuItem(router, 'discipleship_alerts');
-  };
-
-  const handleOpenDiscipleshipReset = () => {
-    traceClick('drawer', 'settings-discipleship-reset-press');
-    setSettingsOpen(false);
-    closeDrawer();
-    void navigateDrawerMenuItem(router, 'discipleship_reset');
-  };
-
-  const handleOpenBilling = () => {
-    traceClick('drawer', 'settings-billing-press');
-    setSettingsOpen(false);
-    closeDrawer();
-    void navigateDrawerMenuItem(router, 'menu_billing');
-  };
+    return {
+      sections: sectionsNext,
+      trailItems: trail.map(toRow),
+      pinnedItem: igrejas ? toRow(igrejas) : null,
+    };
+  }, [enabledSettings, handleSettingsNavigate]);
 
   const handleBackdropPress = () => {
     traceClick('drawer', 'backdrop-press', { settingsOpen });
@@ -140,41 +160,33 @@ export function AppDrawer() {
       <View style={styles.overlay}>
         <View style={[styles.chromeGap, { height: panelTopOffset }]} pointerEvents="none" />
         <View style={styles.sheet}>
-          {settingsOpen ? (
+          {settingsOpen && canAccessSettings ? (
             <AppDrawerSettings
               onClose={() => {
                 traceClick('drawer', 'settings-close-press');
                 setSettingsOpen(false);
               }}
-              onOpenMediaAuthorization={handleOpenMediaAuthorization}
-              onOpenBilling={handleOpenBilling}
-              showRoomSettings={canManageRooms}
-              onOpenRoomSettings={handleOpenRoomSettings}
-              showAvisosSettings={canManageAvisos}
-              onOpenAvisosSettings={handleOpenAvisosSettings}
-              showDiscipleshipSettings={canManageDiscipleship}
-              onOpenDiscipleshipThemes={handleOpenDiscipleshipThemes}
-              onOpenDiscipleshipSettings={handleOpenDiscipleshipSettings}
-              showDiscipleshipReset={isSuperAdmin}
-              onOpenDiscipleshipReset={handleOpenDiscipleshipReset}
-              showIgrejasInstances={isSuperAdmin}
-              onOpenIgrejasInstances={handleOpenIgrejasInstances}
+              sections={sections}
+              trailItems={trailItems}
+              pinnedItem={pinnedItem}
             />
           ) : (
             <View style={styles.panel}>
               <View style={styles.headerRow}>
                 <Text style={styles.title}>Menu</Text>
-                <Pressable
-                  accessibilityLabel="Abrir configurações"
-                  accessibilityRole="button"
-                  onPress={() => {
-                    traceClick('drawer', 'settings-open-press');
-                    setSettingsOpen(true);
-                  }}
-                  style={styles.settingsButton}
-                >
-                  <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
-                </Pressable>
+                {canAccessSettings ? (
+                  <Pressable
+                    accessibilityLabel="Abrir configurações"
+                    accessibilityRole="button"
+                    onPress={() => {
+                      traceClick('drawer', 'settings-open-press');
+                      setSettingsOpen(true);
+                    }}
+                    style={styles.settingsButton}
+                  >
+                    <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
+                  </Pressable>
+                ) : null}
               </View>
               {loading ? (
                 <View style={styles.loaderWrap}>
@@ -195,6 +207,7 @@ export function AppDrawer() {
                       disabled={item.pendingRoute}
                       accessibilityState={{ disabled: item.pendingRoute }}
                     >
+                      {item.dividerBefore ? <View style={styles.divider} /> : null}
                       <Text style={[styles.itemLabel, item.pendingRoute && styles.itemLabelPendingRoute]}>
                         {item.label}
                       </Text>
@@ -280,5 +293,10 @@ const styles = StyleSheet.create({
   },
   itemLabelPendingRoute: {
     color: MINIMAL_UI.textMuted,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: MINIMAL_UI.divider,
+    marginBottom: 8,
   },
 });

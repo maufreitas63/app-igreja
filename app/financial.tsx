@@ -6,12 +6,15 @@ import { FinancialHistoricalResult } from '@/components/FinancialHistoricalResul
 import { FinancialAnalyticalSummarySection } from '@/components/FinancialAnalyticalSummaryReport';
 import { FinancialMonthlyComparison } from '@/components/FinancialMonthlyComparison';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import {
   resolveReturnDashboardCardParam,
+  resolveReturnRouteParam,
   withReturnDashboardCard,
   pickRouteParam,
   isMinimalPresentationRoute,
 } from '@/lib/dashboardReturnNavigation';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { DASHBOARD_FINANCIAL_CARD_ID, FINANCIAL_HUB_ITEMS } from '@/lib/financialModule';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
@@ -63,6 +66,12 @@ export default function FinancialScreen() {
   }>();
   const isMinimalPresentation = isMinimalPresentationRoute(params.presentation);
   const returnDashboardCard = resolveReturnDashboardCardParam(params) ?? DASHBOARD_FINANCIAL_CARD_ID;
+  const returnRoute = resolveReturnRouteParam(params);
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute,
+    returnDashboardCard,
+    fallbackDashboardCard: DASHBOARD_FINANCIAL_CARD_ID,
+  });
   const scrollRef = useRef<ScrollView>(null);
 
   const accessStatus = useScreenAccessGuard({
@@ -116,8 +125,8 @@ export default function FinancialScreen() {
   );
 
   const handleMenu = useCallback(() => {
-    router.replace('/(tabs)');
-  }, [router]);
+    returnToCaller();
+  }, [returnToCaller]);
 
   const budgetSectionBlocked = useMemo(
     () => !loadingEntries && Boolean(selectedMonth) && budgetPlannedMonthEntries.length === 0,
@@ -540,7 +549,10 @@ export default function FinancialScreen() {
   if (isMinimalPresentation) {
     return (
       <ScreenAccessGate status={accessStatus}>
-        <MinimalScreenLayout fixedTop={minimalFixedTop}>
+        <MinimalScreenLayout
+          fixedTop={minimalFixedTop}
+          footer={<CloseFooterBar onPress={returnToCaller} />}
+        >
           {selectedMonthIsPlannedOnly ? (
             <Text style={styles.plannedOnlyHint}>
               Este mês só tem lançamentos PLANEJADO. O resultado REALIZADO aparece vazio.

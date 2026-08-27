@@ -1,4 +1,5 @@
 import { BillingClass } from '@/components/billing/BillingClass';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import {
   createStripeCheckoutSession,
@@ -6,14 +7,13 @@ import {
   listBillingPlans,
 } from '@/lib/billing/billingApi';
 import type { BillingPlan } from '@/lib/billing/types';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { FAIL_CLOSED_REDIRECT_PATH } from '@/lib/failClosedNavigation';
 import { getStoredTenantId } from '@/lib/tenantSession';
-import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
-import { useLgpdScreenAccess } from '@/hooks/useLgpdScreenAccess';
+import { useLeadershipRouteGuard } from '@/hooks/useLeadershipRouteGuard';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
@@ -24,10 +24,10 @@ import Toast from 'react-native-toast-message';
 export default function BillingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const accessStatus = useLgpdScreenAccess(
-    '/(tabs)',
-    'Faça login para abrir as assinaturas.'
-  );
+  const accessStatus = useLeadershipRouteGuard({
+    deniedMessage: 'Você não tem permissão para abrir as assinaturas da igreja.',
+    requireMaintenance: true,
+  });
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<BillingPlan[]>([]);
   const [currentPlanCode, setCurrentPlanCode] = useState<string | null>(null);
@@ -35,22 +35,19 @@ export default function BillingScreen() {
   const [activeMembers, setActiveMembers] = useState<number | null>(null);
   const [activeCongregados, setActiveCongregados] = useState<number | null>(null);
   const [checkoutLoadingPlanCode, setCheckoutLoadingPlanCode] = useState<string | null>(null);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [planRows, billing, sa] = await Promise.all([
+      const [planRows, billing] = await Promise.all([
         listBillingPlans(),
         getTenantBillingStatus(),
-        checkSessionIsSuperAdmin().catch(() => false),
       ]);
       setPlans(planRows);
       setCurrentPlanCode(billing.plan?.code ?? null);
       setActiveUsers(billing.memberCount);
       setActiveMembers(billing.activeMembers);
       setActiveCongregados(billing.activeCongregados);
-      setIsSuperAdmin(sa);
     } finally {
       setLoading(false);
     }
@@ -111,21 +108,8 @@ export default function BillingScreen() {
   };
 
   return (
-    <ScreenAccessGate status={accessStatus.status}>
+    <ScreenAccessGate status={accessStatus}>
     <View style={[styles.root, { paddingTop: Math.max(insets.top, 12) }]}>
-      {isSuperAdmin ? (
-        <View style={styles.topRow}>
-          <Pressable
-            onPress={() => router.replace('/(tabs)')}
-            style={styles.backBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Voltar ao início"
-          >
-            <Text style={styles.backLabel}>Voltar</Text>
-          </Pressable>
-        </View>
-      ) : null}
-
       <BillingClass
         plans={plans}
         loading={loading}
@@ -136,6 +120,7 @@ export default function BillingScreen() {
         checkoutLoadingPlanCode={checkoutLoadingPlanCode}
         onSubscribe={(plan) => void handleSubscribe(plan)}
       />
+      <CloseFooterBar onPress={() => router.replace(FAIL_CLOSED_REDIRECT_PATH)} />
     </View>
     </ScreenAccessGate>
   );
@@ -145,20 +130,5 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 4,
-  },
-  backBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  backLabel: {
-    color: MINIMAL_UI.blue,
-    fontWeight: '700',
-    fontSize: 14,
   },
 });

@@ -6,6 +6,10 @@ import { MINIMAL_ICON, MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUi
 import { listSessionIgrejas, getStoredTenantId, type SessionIgreja } from '@/lib/tenantSession';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
+import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import {
   ActivityIndicator,
   Alert,
@@ -16,7 +20,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
 
 async function openExternalUrl(url: string, label: string) {
   try {
@@ -28,6 +31,11 @@ async function openExternalUrl(url: string, label: string) {
 }
 
 export default function RedesSociaisScreen() {
+  const params = useLocalSearchParams();
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute: resolveReturnRouteParam(params),
+    returnDashboardCard: resolveReturnDashboardCardParam(params),
+  });
   const [loading, setLoading] = useState(true);
   const [church, setChurch] = useState<SessionIgreja | null>(null);
   const [instanceUrl, setInstanceUrl] = useState<string | null>(null);
@@ -71,7 +79,7 @@ export default function RedesSociaisScreen() {
   const hasAny = Boolean(websiteUrl || instagramUrl || youtubeUrl);
 
   return (
-    <MinimalScreenLayout>
+    <MinimalScreenLayout footer={<CloseFooterBar onPress={returnToCaller} />}>
       <Text style={styles.title}>Redes Sociais</Text>
       <Text style={styles.hint}>
         {church?.name

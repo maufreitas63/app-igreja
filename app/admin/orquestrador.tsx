@@ -2,15 +2,21 @@ import { EventOrchestratorPanel } from '@/components/EventOrchestratorPanel';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { usePalette } from '@/context/PaletteContext';
 import { useEventOrchestratorScreenAccess } from '@/hooks/useEventOrchestratorScreenAccess';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
+import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
 import { buildIndexScreenGradient } from '@/lib/paletteTheme';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EventOrchestratorScreen() {
-  const router = useRouter();
+  const params = useLocalSearchParams();
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute: resolveReturnRouteParam(params),
+    returnDashboardCard: resolveReturnDashboardCardParam(params),
+  });
   const { colors } = usePalette();
   const gradient = buildIndexScreenGradient(colors);
   const accessStatus = useEventOrchestratorScreenAccess();
@@ -20,8 +26,8 @@ export default function EventOrchestratorScreen() {
       <LinearGradient colors={gradient} style={styles.gradient}>
         <SafeAreaView style={styles.safeArea}>
           <Stack.Screen options={{ headerShown: false }} />
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>Voltar</Text>
+          <Pressable onPress={returnToCaller} style={styles.backButton}>
+            <Text style={styles.backButtonText}>Fechar</Text>
           </Pressable>
           <EventOrchestratorPanel contentContainerStyle={styles.content} />
         </SafeAreaView>

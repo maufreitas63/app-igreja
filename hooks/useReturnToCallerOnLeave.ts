@@ -1,3 +1,4 @@
+import { FAIL_CLOSED_REDIRECT_PATH } from '@/lib/failClosedNavigation';
 import { buildReturnToDashboardHref, withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { useNavigation, useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
@@ -56,7 +57,7 @@ export function useReturnToCallerOnLeave({
       return;
     }
 
-    router.replace('/(tabs)');
+    router.replace(FAIL_CLOSED_REDIRECT_PATH);
   }, [extraRouteParams, fallbackDashboardCard, returnDashboardCard, returnRoute, router]);
 
   useEffect(() => {

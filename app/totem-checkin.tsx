@@ -1,4 +1,8 @@
 import { useCheckin } from '@/hooks/useCheckin';
+import { useLeadershipRouteGuard } from '@/hooks/useLeadershipRouteGuard';
+import { ScreenAccessGate } from '@/components/ScreenAccessGate';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { FAIL_CLOSED_REDIRECT_PATH } from '@/lib/failClosedNavigation';
 import { TOTEM_CHECKIN_ALREADY_CONFIRMED_MESSAGE } from '@/lib/checkinStatus';
 import {
   getActiveEventSelect,
@@ -13,9 +17,10 @@ import { useExitSessionUi } from '@/hooks/useExitSessionUi';
 import { signOutAndNavigateToLogin } from '@/lib/userSession';
 import { lockPastEvents } from '@/lib/lockPastEvents';
 import { supabase } from '@/lib/supabase';
+import { isTotemDeviceSession } from '@/lib/totemDevice';
 import { getWebCameraProbe, requestWebCameraForTotem } from '@/lib/totemWebCamera';
 import { Camera, CameraView, useCameraPermissions } from 'expo-camera';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -73,6 +78,13 @@ const cameraViewAvailable = typeof CameraView === 'function';
 
 export default function TotemCheckinScreen() {
   const exitSessionUi = useExitSessionUi();
+  const router = useRouter();
+  const accessStatus = useLeadershipRouteGuard({
+    deniedMessage: 'Você não tem permissão para abrir o totem de check-in.',
+    allowRoomManagers: true,
+    allowTotemDevice: true,
+  });
+  const [isKioskDevice, setIsKioskDevice] = useState(true);
   const [permission, requestPermission, refreshCameraPermission] = useCameraPermissions();
   const { lookupTotemCheckin, confirmTotemCheckin, loading } = useCheckin();
 
@@ -95,6 +107,18 @@ export default function TotemCheckinScreen() {
   const lastScanRef = useRef<{ value: string; at: number } | null>(null);
   const processingScanRef = useRef(false);
   const scanCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void isTotemDeviceSession().then((isKiosk) => {
+      if (active) {
+        setIsKioskDevice(isKiosk);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const selectedEvent = useMemo(
     () => events.find((event) => event.id === selectedEventId) ?? null,
@@ -460,6 +484,7 @@ export default function TotemCheckinScreen() {
   );
 
   return (
+    <ScreenAccessGate status={accessStatus}>
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.header}>
         <Text style={styles.title}>Totem — Check-in</Text>
@@ -614,8 +639,15 @@ export default function TotemCheckinScreen() {
         )}
       </View>
 
+      {!isKioskDevice ? (
+        <CloseFooterBar
+          variant="dark"
+          onPress={() => router.replace(FAIL_CLOSED_REDIRECT_PATH)}
+        />
+      ) : null}
       {renderSessionFooter()}
     </SafeAreaView>
+    </ScreenAccessGate>
   );
 }
 

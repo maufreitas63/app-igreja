@@ -442,7 +442,7 @@ export function MembersClass({
 
       <View style={[membersClassStyles.footerContainer, { paddingBottom: insetsBottom + 10 }]}>
         <TouchableOpacity style={membersClassStyles.backButton} onPress={onLeaveScreen}>
-          <Text style={membersClassStyles.backButtonText}>Voltar</Text>
+          <Text style={membersClassStyles.backButtonText}>Fechar</Text>
         </TouchableOpacity>
       </View>
     </Root>

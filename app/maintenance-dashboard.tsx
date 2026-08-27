@@ -76,6 +76,7 @@ import {
   resolveMaintenancePanelIndex,
 } from '@/lib/dashboardPanelLayout';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MINIMAL_FLAT_PANEL, MINIMAL_PAGE, CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
@@ -613,7 +614,7 @@ export default function MaintenanceDashboard() {
           const { denyScreenAccessAndRedirect } = await import('@/lib/screenAccessDenyRedirect');
           denyScreenAccessAndRedirect(
             router,
-            '/(tabs)',
+            '/(tabs)/dashboard',
             'Sem permissão',
             'Você não tem acesso à manutenção do sistema.'
           );
@@ -1319,7 +1320,7 @@ export default function MaintenanceDashboard() {
   }, [stepFooterNavCard]);
 
   const handleMenu = useCallback(() => {
-    router.replace('/(tabs)');
+    router.replace('/(tabs)/dashboard');
   }, [router]);
 
   const handleBack = useCallback(() => {
@@ -2139,6 +2140,10 @@ export default function MaintenanceDashboard() {
             </View>
             ) : null}
           </View>
+
+          {isMinimalPresentation && !showEditor ? (
+            <CloseFooterBar onPress={handleMenu} />
+          ) : null}
 
           {showEditor ? (
             <View style={styles.editorOverlay}>

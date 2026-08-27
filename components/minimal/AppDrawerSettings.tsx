@@ -1,7 +1,8 @@
+import { APP_DRAWER_SETTINGS_GROUPS } from '@/lib/appDrawerMenu';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { traceClick } from '@/lib/devClickTrace';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -12,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-type SettingsItem = {
+export type AppDrawerSettingsRow = {
   id: string;
   label: string;
   hint?: string;
@@ -20,142 +21,30 @@ type SettingsItem = {
   onPress: () => void;
 };
 
-type Props = {
-  onClose: () => void;
-  onOpenMediaAuthorization: () => void;
-  onOpenBilling?: () => void;
-  /** Líder / admin — nomes e atribuição de salas. */
-  showRoomSettings?: boolean;
-  onOpenRoomSettings?: () => void;
-  /** Orquestrador — cadastro e publicação de avisos. */
-  showAvisosSettings?: boolean;
-  onOpenAvisosSettings?: () => void;
-  /** Pastoral / líderes — manutenção da Trilha. */
-  showDiscipleshipSettings?: boolean;
-  onOpenDiscipleshipThemes?: () => void;
-  onOpenDiscipleshipSettings?: () => void;
-  /** Super admin — resetar progresso de um usuário. */
-  showDiscipleshipReset?: boolean;
-  onOpenDiscipleshipReset?: () => void;
-  /** Apenas super_admin — gestão multi-instância. */
-  showIgrejasInstances?: boolean;
-  onOpenIgrejasInstances?: () => void;
+export type AppDrawerSettingsSection = {
+  id: string;
+  title: string;
+  items: AppDrawerSettingsRow[];
 };
 
-export function AppDrawerSettings({
-  onClose,
-  onOpenMediaAuthorization,
-  onOpenBilling,
-  showRoomSettings = false,
-  onOpenRoomSettings,
-  showAvisosSettings = false,
-  onOpenAvisosSettings,
-  showDiscipleshipSettings = false,
-  onOpenDiscipleshipThemes,
-  onOpenDiscipleshipSettings,
-  showDiscipleshipReset = false,
-  onOpenDiscipleshipReset,
-  showIgrejasInstances = false,
-  onOpenIgrejasInstances,
-}: Props) {
-  const insets = useSafeAreaInsets();
-  const [trailMenuOpen, setTrailMenuOpen] = useState(false);
+type Props = {
+  onClose: () => void;
+  sections: AppDrawerSettingsSection[];
+  trailItems?: AppDrawerSettingsRow[];
+  pinnedItem?: AppDrawerSettingsRow | null;
+};
 
-  const trailSubItems: SettingsItem[] = [
-    ...(showDiscipleshipSettings && onOpenDiscipleshipThemes
-      ? [
-          {
-            id: 'discipleship-themes',
-            label: 'Temas da Trilha',
-            hint: 'Textos, vídeos e reflexões dos passos',
-            icon: 'book' as const,
-            onPress: onOpenDiscipleshipThemes,
-          } satisfies SettingsItem,
-        ]
-      : []),
-    ...(showDiscipleshipSettings && onOpenDiscipleshipSettings
-      ? [
-          {
-            id: 'discipleship-settings',
-            label: 'Trilha — Reconhecimentos',
-            hint: 'Alunos 100% prontos para certificado',
-            icon: 'graduation-cap' as const,
-            onPress: onOpenDiscipleshipSettings,
-          } satisfies SettingsItem,
-        ]
-      : []),
-    ...(showDiscipleshipReset && onOpenDiscipleshipReset
-      ? [
-          {
-            id: 'discipleship-reset',
-            label: 'Resetar Trilha',
-            hint: 'Reiniciar progresso de um usuário nesta igreja',
-            icon: 'refresh' as const,
-            onPress: onOpenDiscipleshipReset,
-          } satisfies SettingsItem,
-        ]
-      : []),
-  ];
-
-  const showTrailGroup = trailSubItems.length > 0;
-
-  const items: SettingsItem[] = [
-    ...(onOpenBilling
-      ? [
-          {
-            id: 'billing',
-            label: 'Assinaturas',
-            hint: 'Planos e cobrança da igreja',
-            icon: 'credit-card' as const,
-            onPress: onOpenBilling,
-          } satisfies SettingsItem,
-        ]
-      : []),
-    {
-      id: 'media-authorization',
-      label: 'Autorização de imagem e voz',
-      hint: 'Termos LGPD e confirmação por e-mail',
-      icon: 'shield',
-      onPress: onOpenMediaAuthorization,
-    },
-    ...(showRoomSettings && onOpenRoomSettings
-      ? [
-          {
-            id: 'room-settings',
-            label: 'Configuração de salas',
-            hint: 'Nomes afetivos e atribuição de membros',
-            icon: 'home' as const,
-            onPress: onOpenRoomSettings,
-          } satisfies SettingsItem,
-        ]
-      : []),
-    ...(showAvisosSettings && onOpenAvisosSettings
-      ? [
-          {
-            id: 'avisos-settings',
-            label: 'Manutenção de Avisos',
-            hint: 'Cadastre e publique comunicados da home',
-            icon: 'bullhorn' as const,
-            onPress: onOpenAvisosSettings,
-          } satisfies SettingsItem,
-        ]
-      : []),
-  ];
-
-  const igrejasItem: SettingsItem | null =
-    showIgrejasInstances && onOpenIgrejasInstances
-      ? {
-          id: 'igrejas-instances',
-          label: 'Instâncias (Igrejas)',
-          hint: 'Criar e alternar ambientes de igreja',
-          icon: 'building',
-          onPress: onOpenIgrejasInstances,
-        }
-      : null;
-
-  const renderItem = (item: SettingsItem, pinned = false, nested = false) => (
+function SettingsRowView({
+  item,
+  pinned = false,
+  nested = false,
+}: {
+  item: AppDrawerSettingsRow;
+  pinned?: boolean;
+  nested?: boolean;
+}) {
+  return (
     <TouchableOpacity
-      key={item.id}
       style={[styles.item, pinned && styles.itemPinned, nested && styles.itemNested]}
       onPress={() => {
         traceClick('drawer-settings', 'item-press', { id: item.id, label: item.label });
@@ -173,6 +62,22 @@ export function AppDrawerSettings({
       </View>
       <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.textMuted} />
     </TouchableOpacity>
+  );
+}
+
+export function AppDrawerSettings({
+  onClose,
+  sections,
+  trailItems = [],
+  pinnedItem = null,
+}: Props) {
+  const insets = useSafeAreaInsets();
+  const [trailMenuOpen, setTrailMenuOpen] = useState(false);
+  const showTrailGroup = trailItems.length > 0;
+
+  const visibleSections = useMemo(
+    () => sections.filter((section) => section.items.length > 0),
+    [sections]
   );
 
   return (
@@ -195,16 +100,56 @@ export function AppDrawerSettings({
         showsVerticalScrollIndicator
         keyboardShouldPersistTaps="handled"
       >
-        {items.map((item) => renderItem(item))}
+        {visibleSections.map((section) => (
+          <View key={section.id} style={styles.section}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            {section.items.map((item) => (
+              <SettingsRowView key={item.id} item={item} />
+            ))}
+            {section.id === 'governanca' && showTrailGroup ? (
+              <View>
+                <TouchableOpacity
+                  style={styles.item}
+                  onPress={() => {
+                    traceClick('drawer-settings', 'trail-group-toggle', { open: !trailMenuOpen });
+                    setTrailMenuOpen((open) => !open);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: trailMenuOpen }}
+                  accessibilityLabel="Manutenção da Trilha"
+                >
+                  <View style={styles.itemIconWrap}>
+                    <FontAwesome name="graduation-cap" size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+                  </View>
+                  <View style={styles.itemCopy}>
+                    <Text style={styles.itemLabel}>Manutenção da Trilha</Text>
+                    <Text style={styles.itemHint}>Temas, reconhecimentos e reset</Text>
+                  </View>
+                  <FontAwesome
+                    name={trailMenuOpen ? 'chevron-down' : 'chevron-right'}
+                    size={12}
+                    color={MINIMAL_UI.textMuted}
+                  />
+                </TouchableOpacity>
+                {trailMenuOpen
+                  ? trailItems.map((item) => (
+                      <SettingsRowView key={item.id} item={item} nested />
+                    ))
+                  : null}
+              </View>
+            ) : null}
+          </View>
+        ))}
 
-        {showTrailGroup ? (
-          <View>
+        {showTrailGroup && !visibleSections.some((section) => section.id === 'governanca') ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              {APP_DRAWER_SETTINGS_GROUPS.find((group) => group.id === 'governanca')?.title
+                ?? 'Governança e TI'}
+            </Text>
             <TouchableOpacity
               style={styles.item}
-              onPress={() => {
-                traceClick('drawer-settings', 'trail-group-toggle', { open: !trailMenuOpen });
-                setTrailMenuOpen((open) => !open);
-              }}
+              onPress={() => setTrailMenuOpen((open) => !open)}
               accessibilityRole="button"
               accessibilityState={{ expanded: trailMenuOpen }}
               accessibilityLabel="Manutenção da Trilha"
@@ -222,16 +167,17 @@ export function AppDrawerSettings({
                 color={MINIMAL_UI.textMuted}
               />
             </TouchableOpacity>
-
             {trailMenuOpen
-              ? trailSubItems.map((item) => renderItem(item, false, true))
+              ? trailItems.map((item) => <SettingsRowView key={item.id} item={item} nested />)
               : null}
           </View>
         ) : null}
       </ScrollView>
 
-      {igrejasItem ? (
-        <View style={styles.pinnedFooter}>{renderItem(igrejasItem, true)}</View>
+      {pinnedItem ? (
+        <View style={styles.pinnedFooter}>
+          <SettingsRowView item={pinnedItem} pinned />
+        </View>
       ) : null}
     </View>
   );
@@ -268,8 +214,20 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 8,
-    gap: 4,
+    gap: 12,
     flexGrow: 1,
+  },
+  section: {
+    gap: 0,
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: MINIMAL_UI.textMuted,
+    marginBottom: 4,
+    marginTop: 4,
   },
   pinnedFooter: {
     flexShrink: 0,

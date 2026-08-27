@@ -2,7 +2,7 @@ import { Alert } from 'react-native';
 import type { Href } from 'expo-router';
 
 type RouterLike = {
-  replace: (href: Href | string) => void;
+  replace: (href: Href) => void;
 };
 
 /**

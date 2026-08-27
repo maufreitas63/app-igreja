@@ -14,7 +14,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Acesso à rota `/aniversariantes` — exige card dashboard.card.birthdays. */
-export function useBirthdaysScreenAccess(redirectPath: string = '/(tabs)'): ScreenAccessStatus {
+export function useBirthdaysScreenAccess(redirectPath: string = '/(tabs)/dashboard'): ScreenAccessStatus {
   const router = useRouter();
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
   const hasAllowedRef = useRef(false);

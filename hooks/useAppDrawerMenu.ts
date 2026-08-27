@@ -1,27 +1,31 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   APP_DRAWER_MENU_ITEMS,
+  APP_DRAWER_SETTINGS_ITEMS,
+  DISCIPLESHIP_SETTINGS_MODULE_KEYS,
   isDrawerMenuPlaceholder,
   resolveDrawerMaintenancePanel,
   type AppDrawerMenuItem,
   type AppDrawerModuleKey,
+  type AppDrawerSettingsItem,
 } from '@/lib/appDrawerMenu';
 import {
   isDrawerMaintenanceModuleAllowed,
   isDrawerMemberModuleAllowed,
   isDrawerSuggestionsImprovementsAllowed,
   DRAWER_MEMBER_CARD_BY_MODULE,
+  DRAWER_MEMBER_SCREEN_BY_MODULE,
 } from '@/lib/drawerMenuAccess';
 import {
   loadDashboardLinkedScreenAccess,
   type DashboardScreenAccess,
 } from '@/lib/dashboardScreenAccess';
 import {
+  ACCESS_SCREEN,
   loadDashboardCardViewAccess,
   sessionHasAccess,
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
-import { ACCESS_SCREEN } from '@/lib/accessScreen';
 import { getGhostModeState, isGhostModeActive, subscribeGhostMode } from '@/lib/ghostMode';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
@@ -33,18 +37,35 @@ export type AppDrawerMenuItemResolved = AppDrawerMenuItem & {
   pendingRoute: boolean;
 };
 
+export type AppDrawerSettingsItemResolved = AppDrawerSettingsItem & {
+  enabled: boolean;
+  pendingRoute: boolean;
+};
+
+type DrawerEnableContext = {
+  dashboardCardAccess: DashboardCardViewAccess;
+  dashboardScreenAccess: DashboardScreenAccess;
+  maintenancePanelAccess: Record<string, boolean>;
+  canAccessMaintenance: boolean;
+  canOperateGhostMode: boolean;
+  canOpenAccessControl: boolean;
+  canManageRooms: boolean;
+  canAccessPastoralCare: boolean;
+  hasActiveMembership: boolean;
+  isSuperAdmin: boolean;
+};
+
+const SETTINGS_PEOPLE_OPS_KEYS: ReadonlySet<AppDrawerModuleKey> = new Set([
+  'menu_membros',
+  'menu_mapa',
+  'menu_aniversariantes',
+  'menu_administrativo',
+]);
+
 function isDrawerModuleEnabled(
   moduleKey: AppDrawerModuleKey,
-  context: {
-    dashboardCardAccess: DashboardCardViewAccess;
-    dashboardScreenAccess: DashboardScreenAccess;
-    maintenancePanelAccess: Record<string, boolean>;
-    canAccessMaintenance: boolean;
-    canOperateGhostMode: boolean;
-    canOpenAccessControl: boolean;
-    hasActiveMembership: boolean;
-    isSuperAdmin: boolean;
-  }
+  context: DrawerEnableContext,
+  catalog: 'member' | 'settings'
 ): boolean {
   if (isDrawerMenuPlaceholder(moduleKey)) {
     return true;
@@ -55,6 +76,7 @@ function isDrawerModuleEnabled(
   }
 
   if (moduleKey === 'menu_igrejas') {
+    // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
     return context.isSuperAdmin;
   }
 
@@ -64,12 +86,36 @@ function isDrawerModuleEnabled(
     return context.canOperateGhostMode;
   }
 
-  if (moduleKey in DRAWER_MEMBER_CARD_BY_MODULE) {
-    return isDrawerMemberModuleAllowed(moduleKey, {
-      dashboardCardAccess: context.dashboardCardAccess,
-      dashboardScreenAccess: context.dashboardScreenAccess,
-      hasActiveMembership: context.hasActiveMembership,
-    });
+  if (catalog === 'settings' && SETTINGS_PEOPLE_OPS_KEYS.has(moduleKey)) {
+    if (!context.canAccessMaintenance && !context.isSuperAdmin) {
+      return false;
+    }
+  }
+
+  if (catalog === 'settings' && DISCIPLESHIP_SETTINGS_MODULE_KEYS.has(moduleKey)) {
+    if (moduleKey === 'discipleship_reset') {
+      return context.isSuperAdmin;
+    }
+
+    return (
+      context.isSuperAdmin
+      || context.canAccessPastoralCare
+      || isDrawerMaintenanceModuleAllowed(moduleKey, resolveDrawerMaintenancePanel(moduleKey), {
+          canAccessMaintenance: context.canAccessMaintenance,
+          maintenancePanelAccess: context.maintenancePanelAccess,
+          canOperateGhostMode: context.canOperateGhostMode,
+          canOpenAccessControl: context.canOpenAccessControl,
+          canManageRooms: context.canManageRooms,
+          isSuperAdmin: context.isSuperAdmin,
+        })
+    );
+  }
+
+  if (moduleKey === 'menu_mapa') {
+    return (
+      context.dashboardScreenAccess[ACCESS_SCREEN.mapGeolocation] === true
+      && context.hasActiveMembership
+    );
   }
 
   if (moduleKey === 'suggestions_improvements') {
@@ -81,6 +127,14 @@ function isDrawerModuleEnabled(
     });
   }
 
+  if (moduleKey in DRAWER_MEMBER_CARD_BY_MODULE || moduleKey in DRAWER_MEMBER_SCREEN_BY_MODULE) {
+    return isDrawerMemberModuleAllowed(moduleKey, {
+      dashboardCardAccess: context.dashboardCardAccess,
+      dashboardScreenAccess: context.dashboardScreenAccess,
+      hasActiveMembership: context.hasActiveMembership,
+    });
+  }
+
   const panel = resolveDrawerMaintenancePanel(moduleKey);
 
   return isDrawerMaintenanceModuleAllowed(moduleKey, panel, {
@@ -88,25 +142,33 @@ function isDrawerModuleEnabled(
     maintenancePanelAccess: context.maintenancePanelAccess,
     canOperateGhostMode: context.canOperateGhostMode,
     canOpenAccessControl: context.canOpenAccessControl,
+    canManageRooms: context.canManageRooms,
+    isSuperAdmin: context.isSuperAdmin,
   });
 }
+
+const MEMBER_FALLBACK_KEYS: ReadonlySet<AppDrawerModuleKey> = new Set([
+  'events_panel',
+  'menu_redes_sociais',
+]);
 
 export function useAppDrawerMenu() {
   const [items, setItems] = useState<AppDrawerMenuItemResolved[]>(() =>
     APP_DRAWER_MENU_ITEMS.map((item) => ({
       ...item,
       pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
-      enabled:
-        item.moduleKey === 'events_panel'
-        || item.moduleKey === 'menu_redes_sociais'
-        || isDrawerMenuPlaceholder(item.moduleKey),
+      enabled: MEMBER_FALLBACK_KEYS.has(item.moduleKey) || isDrawerMenuPlaceholder(item.moduleKey),
+    }))
+  );
+  const [settingsItems, setSettingsItems] = useState<AppDrawerSettingsItemResolved[]>(() =>
+    APP_DRAWER_SETTINGS_ITEMS.map((item) => ({
+      ...item,
+      pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
+      enabled: false,
     }))
   );
   const [loading, setLoading] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [canManageRooms, setCanManageRooms] = useState(false);
-  const [canManageAvisos, setCanManageAvisos] = useState(false);
-  const [canManageDiscipleship, setCanManageDiscipleship] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -131,67 +193,72 @@ export function useAppDrawerMenu() {
           sessionHasAccess('screen', ACCESS_SCREEN.configuracaoSalas, 'view'),
         ]);
 
-      const superAdmin = maintenanceAccess.isSuperAdmin === true;
-      setIsSuperAdmin(superAdmin);
-      setCanManageRooms(superAdmin || roomAccess === true);
-      setCanManageAvisos(
-        isDrawerMaintenanceModuleAllowed('event_orchestration', 'event_orchestration', {
-          canAccessMaintenance: maintenanceAccess.allowed,
-          maintenancePanelAccess: maintenanceAccess.maintenancePanelAccess,
-          canOperateGhostMode: maintenanceAccess.canOperateGhostMode,
-          canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
-        })
-      );
-      // Engrenagem: pastoral/líderes (cuidado pastoral) ou grant explícito do card da trilha
-      setCanManageDiscipleship(
-        superAdmin
-        || maintenanceAccess.canAccessPastoralCare === true
-        || isDrawerMaintenanceModuleAllowed('discipleship_alerts', 'discipleship_alerts', {
-          canAccessMaintenance: maintenanceAccess.allowed,
-          maintenancePanelAccess: maintenanceAccess.maintenancePanelAccess,
-          canOperateGhostMode: maintenanceAccess.canOperateGhostMode,
-          canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
-        })
-        || isDrawerMaintenanceModuleAllowed('discipleship_themes', 'discipleship_themes', {
-          canAccessMaintenance: maintenanceAccess.allowed,
-          maintenancePanelAccess: maintenanceAccess.maintenancePanelAccess,
-          canOperateGhostMode: maintenanceAccess.canOperateGhostMode,
-          canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
+      const extraScreenEntries = await Promise.all(
+        [
+          ACCESS_SCREEN.discipleshipTrail,
+          ACCESS_SCREEN.expenseReport,
+          ACCESS_SCREEN.mapGeolocation,
+        ].map(async (resourceKey) => {
+          if (dashboardScreenAccess[resourceKey] === true) {
+            return [resourceKey, true] as const;
+          }
+          const allowed = await sessionHasAccess('screen', resourceKey, 'view');
+          return [resourceKey, allowed === true] as const;
         })
       );
 
-      const context = {
+      const mergedScreenAccess: DashboardScreenAccess = {
+        ...dashboardScreenAccess,
+        ...Object.fromEntries(extraScreenEntries),
+      };
+
+      const superAdmin = maintenanceAccess.isSuperAdmin === true;
+      const canManageRooms = superAdmin || roomAccess === true;
+      setIsSuperAdmin(superAdmin);
+
+      const context: DrawerEnableContext = {
         dashboardCardAccess,
-        dashboardScreenAccess,
+        dashboardScreenAccess: mergedScreenAccess,
         maintenancePanelAccess: maintenanceAccess.maintenancePanelAccess,
         canAccessMaintenance: maintenanceAccess.allowed,
         canOperateGhostMode: maintenanceAccess.canOperateGhostMode,
         canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
+        canManageRooms,
+        canAccessPastoralCare: maintenanceAccess.canAccessPastoralCare === true,
         hasActiveMembership,
         isSuperAdmin: superAdmin,
       };
 
-      const resolved = APP_DRAWER_MENU_ITEMS.map((item) => ({
-        ...item,
-        pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
-        enabled: isDrawerModuleEnabled(item.moduleKey, context),
-      }));
-
-      setItems(resolved);
+      setItems(
+        APP_DRAWER_MENU_ITEMS.map((item) => ({
+          ...item,
+          pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
+          enabled: isDrawerModuleEnabled(item.moduleKey, context, 'member'),
+        }))
+      );
+      setSettingsItems(
+        APP_DRAWER_SETTINGS_ITEMS.map((item) => ({
+          ...item,
+          pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
+          enabled: isDrawerModuleEnabled(item.moduleKey, context, 'settings'),
+        }))
+      );
     } catch (error) {
       console.error('Erro ao carregar menu lateral:', error);
       setIsSuperAdmin(false);
-      setCanManageRooms(false);
-      setCanManageAvisos(false);
-      setCanManageDiscipleship(false);
       setItems(
         APP_DRAWER_MENU_ITEMS.map((item) => ({
           ...item,
           pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
           enabled:
-            item.moduleKey === 'events_panel'
-            || item.moduleKey === 'menu_redes_sociais'
-            || isDrawerMenuPlaceholder(item.moduleKey),
+            MEMBER_FALLBACK_KEYS.has(item.moduleKey) || isDrawerMenuPlaceholder(item.moduleKey),
+        }))
+      );
+      setSettingsItems(
+        APP_DRAWER_SETTINGS_ITEMS.map((item) => ({
+          ...item,
+          pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
+          enabled: false,
         }))
       );
     } finally {
@@ -211,13 +278,14 @@ export function useAppDrawerMenu() {
     });
   }, [refresh]);
 
+  const canAccessSettings = settingsItems.some((item) => item.enabled);
+
   return {
     items,
+    settingsItems,
     loading,
     refresh,
     isSuperAdmin,
-    canManageRooms,
-    canManageAvisos,
-    canManageDiscipleship,
+    canAccessSettings,
   };
 }

@@ -817,7 +817,7 @@ export function ProfileClass({
 
       <View style={[profileClassStyles.footerContainer, { paddingBottom: insetsBottom + 10 }]}>
         <TouchableOpacity style={profileClassStyles.backButton} onPress={onLeaveScreen}>
-          <Text style={profileClassStyles.backButtonText}>Voltar</Text>
+          <Text style={profileClassStyles.backButtonText}>Fechar</Text>
         </TouchableOpacity>
       </View>
     </RootWrapper>

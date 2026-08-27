@@ -5,7 +5,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 
 /** Acesso à rota `/igrejas` — apenas super_admin. */
-export function useIgrejasAdminAccess(redirectPath: string = '/(tabs)'): ScreenAccessStatus {
+export function useIgrejasAdminAccess(redirectPath: string = '/(tabs)/dashboard'): ScreenAccessStatus {
   const router = useRouter();
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
 

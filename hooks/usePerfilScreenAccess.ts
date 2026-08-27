@@ -18,7 +18,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Acesso à rota `/perfil` — exige card dashboard.card.grouped_manage (ou telas filhas vinculadas). */
-export function usePerfilScreenAccess(redirectPath: string = '/(tabs)'): ScreenAccessStatus {
+export function usePerfilScreenAccess(redirectPath: string = '/(tabs)/dashboard'): ScreenAccessStatus {
   const router = useRouter();
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
   const hasAllowedRef = useRef(false);

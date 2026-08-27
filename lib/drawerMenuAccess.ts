@@ -1,6 +1,7 @@
 import type { AppDrawerModuleKey } from '@/lib/appDrawerMenu';
 import {
   ACCESS_DASHBOARD_CARD,
+  ACCESS_SCREEN,
   isDashboardCardContentAllowed,
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
@@ -14,9 +15,22 @@ export const DRAWER_MEMBER_CARD_BY_MODULE: Partial<Record<AppDrawerModuleKey, st
   menu_perfil: 'grouped_manage',
   gestao_financeira: 'financial',
   menu_escalas: 'vigilance_scales',
+  menu_ofertas: 'offerings',
+  menu_campaigns: 'campaign_card',
+  menu_pastoral: 'pastoral',
+  menu_small_group: 'small_group',
+  menu_opportunity_mural: 'opportunity_mural_card',
   menu_aniversariantes: 'birthdays',
   menu_membros: 'members_list',
   menu_administrativo: 'administrativo',
+};
+
+/** Telas com grant próprio (além ou no lugar do card do carrossel). */
+export const DRAWER_MEMBER_SCREEN_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> = {
+  menu_manage_profile: ACCESS_SCREEN.manageProfile,
+  menu_manage_members: ACCESS_SCREEN.manageMembers,
+  menu_trilha: ACCESS_SCREEN.discipleshipTrail,
+  menu_expense_report: ACCESS_SCREEN.expenseReport,
 };
 
 /** Itens do menu membro que exigem vínculo ativo (`membership_out` visível no app). */
@@ -25,6 +39,7 @@ export const DRAWER_MODULES_REQUIRING_ACTIVE_MEMBERSHIP: ReadonlySet<AppDrawerMo
   'menu_aniversariantes',
   'menu_membros',
   'menu_administrativo',
+  'menu_mapa',
 ]);
 
 export type DrawerMemberAccessContext = {
@@ -38,6 +53,8 @@ export type DrawerMaintenanceAccessContext = {
   maintenancePanelAccess: Record<string, boolean>;
   canOperateGhostMode: boolean;
   canOpenAccessControl: boolean;
+  canManageRooms: boolean;
+  isSuperAdmin: boolean;
 };
 
 /** Mesma regra dos hooks `use*ScreenAccess` para rotas do menu membro. */
@@ -45,6 +62,20 @@ export function isDrawerMemberModuleAllowed(
   moduleKey: AppDrawerModuleKey,
   context: DrawerMemberAccessContext
 ): boolean {
+  const screenKey = DRAWER_MEMBER_SCREEN_BY_MODULE[moduleKey];
+
+  if (screenKey) {
+    if (context.dashboardScreenAccess[screenKey] !== true) {
+      return false;
+    }
+
+    if (DRAWER_MODULES_REQUIRING_ACTIVE_MEMBERSHIP.has(moduleKey) && !context.hasActiveMembership) {
+      return false;
+    }
+
+    return true;
+  }
+
   const cardContent = DRAWER_MEMBER_CARD_BY_MODULE[moduleKey];
 
   if (!cardContent) {
@@ -88,11 +119,48 @@ export function isDrawerSuggestionsImprovementsAllowed(
   });
 }
 
+export function isDrawerOperatorToolAllowed(
+  moduleKey: AppDrawerModuleKey,
+  context: DrawerMaintenanceAccessContext
+): boolean {
+  const leadership = context.canAccessMaintenance || context.isSuperAdmin || context.canManageRooms;
+
+  if (moduleKey === 'menu_salas') {
+    return context.canManageRooms || context.isSuperAdmin;
+  }
+
+  if (moduleKey === 'menu_totem' || moduleKey === 'menu_autorizacao_midia') {
+    return leadership;
+  }
+
+  if (moduleKey === 'menu_billing') {
+    return context.isSuperAdmin || context.canAccessMaintenance;
+  }
+
+  if (moduleKey === 'menu_orquestrador') {
+    return isDrawerMaintenanceModuleAllowed('event_orchestration', 'event_orchestration', context);
+  }
+
+  if (moduleKey === 'menu_mapa') {
+    return false;
+  }
+
+  return false;
+}
+
 export function isDrawerMaintenanceModuleAllowed(
   moduleKey: AppDrawerModuleKey,
   panel: string | null,
   context: DrawerMaintenanceAccessContext
 ): boolean {
+  if (isDrawerOperatorToolAllowed(moduleKey, context)) {
+    return true;
+  }
+
+  if (moduleKey === 'menu_igrejas') {
+    return context.isSuperAdmin;
+  }
+
   if (!panel || !context.canAccessMaintenance) {
     return false;
   }

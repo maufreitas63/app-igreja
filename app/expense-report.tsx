@@ -22,8 +22,11 @@ import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { sessionHasAccess } from '@/lib/accessControl';
 import {
   resolveReturnRouteParam,
+  resolveReturnDashboardCardParam,
   withMinimalPresentation,
 } from '@/lib/dashboardReturnNavigation';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { toFinancialMonthReferenceDate } from '@/lib/maintenanceFinancialApi';
 import {
@@ -56,6 +59,11 @@ export default function ExpenseReportScreen() {
   }>();
   const reportIdParam = typeof params.id === 'string' ? params.id : undefined;
   const returnRoute = resolveReturnRouteParam(params);
+  const returnDashboardCard = resolveReturnDashboardCardParam(params);
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute,
+    returnDashboardCard,
+  });
   const referenceMonthKey =
     typeof params.referenciaMes === 'string' ? params.referenciaMes.trim() : '';
   const fromMaintenance = params.from === 'maintenance';
@@ -330,17 +338,18 @@ export default function ExpenseReportScreen() {
       return;
     }
 
-    router.back();
-  }, [mode, returnRoute, router]);
+    returnToCaller();
+  }, [mode, returnRoute, returnToCaller, router]);
 
   return (
     <ScreenAccessGate status={accessStatus}>
       <MinimalScreenLayout
         scroll={false}
+        footer={mode === 'list' ? <CloseFooterBar onPress={returnToCaller} /> : undefined}
         fixedTop={
           <View style={styles.headerBar}>
             <TouchableOpacity
-              accessibilityLabel="Voltar"
+              accessibilityLabel={mode === 'list' ? 'Fechar' : 'Voltar'}
               onPress={handleGoBack}
               style={styles.headerBackButton}
               activeOpacity={0.85}

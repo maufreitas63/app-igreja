@@ -32,12 +32,22 @@ import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
+import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
+import { useLocalSearchParams } from 'expo-router';
 import * as Linking from 'expo-linking';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, AppState, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 /** Container com dados e navegação — compõe o ScalesClass stateless. */
 export function ScalesClassPanel() {
+  const params = useLocalSearchParams();
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute: resolveReturnRouteParam(params),
+    returnDashboardCard: resolveReturnDashboardCardParam(params),
+    fallbackDashboardCard: 'vigilance_scales',
+  });
   const [view, setView] = useState<ScalesClassView>('picker');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -428,6 +438,7 @@ export function ScalesClassPanel() {
           void loadScales({ preserveSelection: true });
         }}
       />
+      {view === 'picker' ? <CloseFooterBar onPress={returnToCaller} /> : null}
     </View>
   );
 }

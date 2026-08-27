@@ -1,8 +1,14 @@
 import { AuthorizationForm } from '@/components/AuthorizationForm';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useMediaAuthorizationAccess } from '@/hooks/useMediaAuthorizationAccess';
-import { isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
+import {
+  isMinimalPresentationRoute,
+  resolveReturnDashboardCardParam,
+  resolveReturnRouteParam,
+} from '@/lib/dashboardReturnNavigation';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,6 +18,10 @@ export default function MediaAuthorizationScreen() {
   const params = useLocalSearchParams();
   const isMinimalPresentation = isMinimalPresentationRoute(params.presentation);
   const { status, sessionProfileId } = useMediaAuthorizationAccess();
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute: resolveReturnRouteParam(params),
+    returnDashboardCard: resolveReturnDashboardCardParam(params),
+  });
 
   const content = sessionProfileId ? (
     <AuthorizationForm profileId={sessionProfileId} />
@@ -20,7 +30,7 @@ export default function MediaAuthorizationScreen() {
   return (
     <ScreenAccessGate status={status}>
       {isMinimalPresentation ? (
-        <MinimalScreenLayout scroll={false}>
+        <MinimalScreenLayout scroll={false} footer={<CloseFooterBar onPress={returnToCaller} />}>
           <View style={styles.root}>{content}</View>
         </MinimalScreenLayout>
       ) : (

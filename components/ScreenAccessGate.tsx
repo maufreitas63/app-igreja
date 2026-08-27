@@ -1,4 +1,5 @@
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
+import { FAIL_CLOSED_REDIRECT_PATH } from '@/lib/failClosedNavigation';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useRouter, type Href } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
@@ -14,7 +15,7 @@ type ScreenAccessGateProps = {
 export function ScreenAccessGate({
   status,
   children,
-  deniedRedirectPath = '/(tabs)',
+  deniedRedirectPath = FAIL_CLOSED_REDIRECT_PATH,
 }: ScreenAccessGateProps) {
   const router = useRouter();
   const redirectedRef = useRef(false);

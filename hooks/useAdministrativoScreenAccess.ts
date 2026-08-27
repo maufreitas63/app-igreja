@@ -14,7 +14,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Acesso à rota `/administrativo` — exige card dashboard.card.administrativo e membro ativo. */
-export function useAdministrativoScreenAccess(redirectPath: string = '/(tabs)'): ScreenAccessStatus {
+export function useAdministrativoScreenAccess(redirectPath: string = '/(tabs)/dashboard'): ScreenAccessStatus {
   const router = useRouter();
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
   const hasAllowedRef = useRef(false);

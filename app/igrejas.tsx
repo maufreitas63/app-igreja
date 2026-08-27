@@ -1,6 +1,13 @@
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useIgrejasAdminAccess } from '@/hooks/useIgrejasAdminAccess';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
+import {
+  resolveReturnDashboardCardParam,
+  resolveReturnRouteParam,
+  withMinimalPresentation,
+} from '@/lib/dashboardReturnNavigation';
 import { pickChurchLogoFromGallery, saveChurchLogoForTenant } from '@/lib/churchLogo';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
@@ -14,9 +21,8 @@ import {
   setIgrejaSocialLinksAdmin,
   type SessionIgreja,
 } from '@/lib/tenantSession';
-import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -911,10 +917,15 @@ function IgrejasAdminPanel() {
 
 export default function IgrejasScreen() {
   const accessStatus = useIgrejasAdminAccess();
+  const params = useLocalSearchParams();
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute: resolveReturnRouteParam(params),
+    returnDashboardCard: resolveReturnDashboardCardParam(params),
+  });
 
   return (
     <ScreenAccessGate status={accessStatus}>
-      <MinimalScreenLayout>
+      <MinimalScreenLayout footer={<CloseFooterBar onPress={returnToCaller} />}>
         <IgrejasAdminPanel />
       </MinimalScreenLayout>
     </ScreenAccessGate>

@@ -14,7 +14,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Acesso à rota `/membros` — exige card dashboard.card.members_list. */
-export function useMembersListsScreenAccess(redirectPath: string = '/(tabs)'): ScreenAccessStatus {
+export function useMembersListsScreenAccess(redirectPath: string = '/(tabs)/dashboard'): ScreenAccessStatus {
   const router = useRouter();
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
   const hasAllowedRef = useRef(false);
