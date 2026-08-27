@@ -103,51 +103,65 @@ export function OfferingsClass({
       {isCampaign ? (
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Valor da contribuição</Text>
-          <TextInput
-            style={styles.amountInput}
-            value={campaignIntegerAmount}
-            onChangeText={onCampaignIntegerAmountChange}
-            placeholder="Ex.: 100"
-            placeholderTextColor="#94A3B8"
-            keyboardType="number-pad"
-            inputMode="numeric"
-            accessibilityLabel="Valor em reais, sem centavos"
-          />
+          <View style={styles.amountRow}>
+            <TextInput
+              style={styles.amountInput}
+              value={campaignIntegerAmount}
+              onChangeText={onCampaignIntegerAmountChange}
+              placeholder="Ex.: 100"
+              placeholderTextColor="#94A3B8"
+              keyboardType="number-pad"
+              inputMode="numeric"
+              accessibilityLabel="Valor em reais, sem centavos"
+            />
+            {campaignFinalAmountLabel ? (
+              <View style={styles.finalAmountBox}>
+                <Text style={styles.finalAmountLabel} numberOfLines={1}>
+                  Valor do Pix
+                </Text>
+                <Text style={styles.finalAmountValue} numberOfLines={1}>
+                  {campaignFinalAmountLabel}
+                </Text>
+              </View>
+            ) : null}
+          </View>
           <Text style={styles.helpText}>
             Digite apenas o valor inteiro em reais. Os centavos de identificação são aplicados
             automaticamente.
           </Text>
-          {campaignFinalAmountLabel ? (
-            <View style={styles.finalAmountBox}>
-              <Text style={styles.finalAmountLabel}>Valor do Pix</Text>
-              <Text style={styles.finalAmountValue}>{campaignFinalAmountLabel}</Text>
-            </View>
-          ) : (
+          {campaignFinalAmountLabel ? null : (
             <Text style={styles.helpText}>Informe o valor para gerar o Pix Copia e Cola.</Text>
           )}
         </View>
       ) : onOfferingAmountChange ? (
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Valor da contribuição</Text>
-          <TextInput
-            style={styles.amountInput}
-            value={offeringAmountMasked ? `R$ ${offeringAmountMasked}` : ''}
-            onChangeText={onOfferingAmountChange}
-            placeholder="R$ 0,00"
-            placeholderTextColor="#94A3B8"
-            keyboardType="number-pad"
-            inputMode="numeric"
-            accessibilityLabel="Valor em reais, com centavos"
-          />
+          <View style={styles.amountRow}>
+            <TextInput
+              style={styles.amountInput}
+              value={offeringAmountMasked ? `R$ ${offeringAmountMasked}` : ''}
+              onChangeText={onOfferingAmountChange}
+              placeholder="R$ 0,00"
+              placeholderTextColor="#94A3B8"
+              keyboardType="number-pad"
+              inputMode="numeric"
+              accessibilityLabel="Valor em reais, com centavos"
+            />
+            {offeringFinalAmountLabel ? (
+              <View style={styles.finalAmountBox}>
+                <Text style={styles.finalAmountLabel} numberOfLines={1}>
+                  Valor do Pix
+                </Text>
+                <Text style={styles.finalAmountValue} numberOfLines={1}>
+                  {offeringFinalAmountLabel}
+                </Text>
+              </View>
+            ) : null}
+          </View>
           <Text style={styles.helpText}>
             Digite o valor com centavos. O montante preenche da direita para a esquerda (1 = 0,01).
           </Text>
-          {offeringFinalAmountLabel ? (
-            <View style={styles.finalAmountBox}>
-              <Text style={styles.finalAmountLabel}>Valor do Pix</Text>
-              <Text style={styles.finalAmountValue}>{offeringFinalAmountLabel}</Text>
-            </View>
-          ) : (
+          {offeringFinalAmountLabel ? null : (
             <Text style={styles.helpText}>Informe o valor para gerar o Pix Copia e Cola.</Text>
           )}
         </View>
@@ -299,22 +313,39 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     backgroundColor: OFFERINGS_CLASS_SURFACE,
   },
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 8,
+    width: '100%',
+  },
   amountInput: {
+    flex: 1,
+    flexBasis: 0,
+    minWidth: 0,
     minHeight: 48,
     borderWidth: 1,
     borderColor: VIGILANCE_SCALES_UI.border,
     borderRadius: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 8,
     color: '#1E3A5F',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '800',
     textAlign: 'center',
     backgroundColor: '#F8FAFC',
   },
   finalAmountBox: {
+    flex: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    minHeight: 48,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 4,
-    paddingVertical: 10,
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
     borderRadius: 10,
     backgroundColor: '#ECFDF5',
     borderWidth: 1,
@@ -322,15 +353,17 @@ const styles = StyleSheet.create({
   },
   finalAmountLabel: {
     color: '#166534',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 0.4,
+    flexShrink: 1,
   },
   finalAmountValue: {
     color: '#14532D',
-    fontSize: 22,
+    fontSize: 14,
     fontWeight: '800',
+    flexShrink: 1,
   },
   copyButton: {
     flexDirection: 'row',
