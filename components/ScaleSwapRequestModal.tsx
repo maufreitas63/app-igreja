@@ -8,9 +8,8 @@ import {
   type ScaleSwapCandidate,
 } from '@/lib/scaleSwapApi';
 import { formatServiceDateLabel } from '@/lib/scalesClassUtils';
-import { normalizePhoneForWhatsApp } from '@/lib/whatsapp';
+import { normalizePhoneForWhatsApp, openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
-import * as Linking from 'expo-linking';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -34,6 +33,56 @@ type Props = {
   onClose: () => void;
   onDone: () => void;
 };
+
+function formatSwapDateForWhatsApp(value: string) {
+  const isoMatch = String(value).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (isoMatch) {
+    return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+  }
+
+  return formatServiceDateLabel(value);
+}
+
+function buildScaleSwapWhatsAppMessage({
+  candidateName,
+  requesterName,
+  scaleName,
+  serviceDate,
+  motivo,
+  mode,
+}: {
+  candidateName: string;
+  requesterName: string;
+  scaleName: string;
+  serviceDate: string;
+  motivo: string;
+  mode: 'member' | 'leader';
+}) {
+  const firstName = candidateName.trim().split(/\s+/).filter(Boolean)[0] ?? '';
+  const title = mode === 'leader' ? 'Intervenção na escala' : 'Pedido de troca de escala';
+  const motivoText = motivo.trim() || 'Não informado';
+  const lines = [
+    firstName ? `Olá, ${firstName}!` : 'Olá!',
+    '',
+    title,
+    `Ministério: ${scaleName.trim() || 'Escala'}`,
+    `Data da troca: ${formatSwapDateForWhatsApp(serviceDate)}`,
+  ];
+
+  if (requesterName.trim()) {
+    lines.push(`Quem pede: ${requesterName.trim()}`);
+  }
+
+  lines.push(`Motivo: ${motivoText}`, '');
+  lines.push(
+    mode === 'leader'
+      ? 'Esta mensagem confirma a substituição pontual neste dia.'
+      : 'Pode me cobrir só neste dia?'
+  );
+
+  return lines.join('\n');
+}
 
 export function ScaleSwapRequestModal({
   visible,
@@ -97,17 +146,25 @@ export function ScaleSwapRequestModal({
     };
   }, [escalaLogId, visible]);
 
-  const handleWhatsapp = async (phone: string | null) => {
-    const whatsappPhone = normalizePhoneForWhatsApp(phone);
-
-    if (!whatsappPhone) {
+  const handleWhatsapp = (phone: string | null, candidateName: string) => {
+    if (!normalizePhoneForWhatsApp(phone)) {
       Alert.alert('Telefone indisponível', 'Este servo não possui telefone cadastrado no perfil.');
       return;
     }
 
-    try {
-      await Linking.openURL(`https://wa.me/${whatsappPhone}`);
-    } catch {
+    const opened = openWhatsAppLikeBirthdaysWithText(
+      phone,
+      buildScaleSwapWhatsAppMessage({
+        candidateName,
+        requesterName: volunteerName,
+        scaleName,
+        serviceDate,
+        motivo,
+        mode,
+      })
+    );
+
+    if (!opened) {
       Alert.alert('Erro', 'Não foi possível abrir o Zap deste servo.');
     }
   };
@@ -185,9 +242,9 @@ export function ScaleSwapRequestModal({
                   <View style={styles.actions}>
                     <TouchableOpacity
                       style={[styles.iconButton, !candidate.phone && styles.iconButtonDisabled]}
-                      onPress={() => void handleWhatsapp(candidate.phone)}
+                      onPress={() => handleWhatsapp(candidate.phone, candidate.volunteerName)}
                       disabled={!candidate.phone}
-                      accessibilityLabel="Abrir WhatsApp do servo"
+                      accessibilityLabel="Abrir WhatsApp do servo com o pedido de troca"
                     >
                       <FontAwesome
                         name="whatsapp"
