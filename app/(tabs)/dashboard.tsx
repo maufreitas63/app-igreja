@@ -3011,6 +3011,7 @@ export default function Dashboard() {
                       styles.dashboardPanelCardTopLayout,
                       effectiveDashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
+                      styles.smallGroupPanelShell,
                     ]}
                   >
                     <View style={styles.cardGroupedManagePanel}>
@@ -4592,6 +4593,11 @@ const styles = StyleSheet.create({
     minHeight: 0,
     width: '100%',
     alignSelf: 'stretch',
+  },
+  smallGroupPanelShell: {
+    width: '85%',
+    maxWidth: '85%',
+    alignSelf: 'center',
   },
   cardAdministrativo: {
     alignItems: 'stretch',
