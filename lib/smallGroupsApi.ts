@@ -98,6 +98,15 @@ export type SmallGroupMapPin = {
   meeting_time: string;
 };
 
+export type NearbySmallGroupHost = {
+  groupId: string;
+  groupName: string;
+  hostProfileId: string;
+  hostName: string;
+  neighborhood: string;
+  distanceMeters: number | null;
+};
+
 const asRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 
@@ -454,6 +463,59 @@ export async function fetchSmallGroupMapPins(): Promise<SmallGroupMapPin[]> {
   } catch {
     return [];
   }
+}
+
+export async function fetchNearbySmallGroupHosts(): Promise<{
+  hasMemberLocation: boolean;
+  hosts: NearbySmallGroupHost[];
+}> {
+  const payload = await rpcJson('list_nearby_small_group_hosts');
+
+  if (payload.success === false) {
+    throw new Error(String(payload.message ?? 'Não foi possível listar os anfitriões.'));
+  }
+
+  const rows = Array.isArray(payload.hosts) ? payload.hosts : [];
+
+  return {
+    hasMemberLocation: payload.has_member_location === true,
+    hosts: rows
+      .map((item) => {
+        const row = asRecord(item);
+        const groupId = String(row.group_id ?? '').trim();
+        const hostProfileId = String(row.host_profile_id ?? '').trim();
+
+        if (!groupId || !hostProfileId) {
+          return null;
+        }
+
+        const distanceRaw = row.distance_meters;
+        const distanceMeters =
+          typeof distanceRaw === 'number' && Number.isFinite(distanceRaw)
+            ? Math.round(distanceRaw)
+            : distanceRaw != null && String(distanceRaw).trim()
+              ? Number.parseInt(String(distanceRaw), 10)
+              : Number.NaN;
+
+        return {
+          groupId,
+          groupName: String(row.group_name ?? 'Pequeno grupo'),
+          hostProfileId,
+          hostName: String(row.host_name ?? '').trim() || 'Anfitrião',
+          neighborhood: String(row.neighborhood ?? '').trim() || 'Bairro não informado',
+          distanceMeters: Number.isFinite(distanceMeters) ? distanceMeters : null,
+        } satisfies NearbySmallGroupHost;
+      })
+      .filter((row): row is NearbySmallGroupHost => row !== null),
+  };
+}
+
+export function formatSmallGroupHostDistanceMeters(distanceMeters: number | null) {
+  if (distanceMeters === null || !Number.isFinite(distanceMeters)) {
+    return 'Distância indisponível';
+  }
+
+  return `${Math.round(distanceMeters).toLocaleString('pt-BR')} m`;
 }
 
 export function isPdfLikeUrl(value: string | null | undefined) {

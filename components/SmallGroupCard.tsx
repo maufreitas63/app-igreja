@@ -1,12 +1,16 @@
 import { SmallGroupGuideModal } from '@/components/SmallGroupGuideModal';
 import { buildProfileMapNavigationAddressLine } from '@/lib/enrichProfileMapAddress';
+import { formatShortName } from '@/lib/formatShortName';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import {
   fetchCurrentSmallGroupGuide,
   fetchMySmallGroup,
+  fetchNearbySmallGroupHosts,
+  formatSmallGroupHostDistanceMeters,
   formatSmallGroupWeekday,
   type MySmallGroup,
+  type NearbySmallGroupHost,
   type SmallGroupGuide,
 } from '@/lib/smallGroupsApi';
 import { openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
@@ -36,6 +40,8 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
   const [guide, setGuide] = useState<SmallGroupGuide | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
   const [memberName, setMemberName] = useState('');
+  const [nearbyHosts, setNearbyHosts] = useState<NearbySmallGroupHost[]>([]);
+  const [hasMemberLocation, setHasMemberLocation] = useState(true);
 
   const load = useCallback(async () => {
     // Proteção aplicada: no Ghost o card segue o alvo, não o operador
@@ -49,8 +55,18 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
       ]);
       setGroup(nextGroup);
       setMemberName(session?.full_name?.trim() || 'membro');
+
+      if (nextGroup) {
+        setNearbyHosts([]);
+        setHasMemberLocation(true);
+      } else {
+        const nearby = await fetchNearbySmallGroupHosts();
+        setNearbyHosts(nearby.hosts);
+        setHasMemberLocation(nearby.hasMemberLocation);
+      }
     } catch (loadError) {
       setGroup(null);
+      setNearbyHosts([]);
       setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar o grupo.');
     } finally {
       setLoading(false);
@@ -121,13 +137,47 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
       ) : error ? (
         <Text style={styles.errorText}>{error}</Text>
       ) : !group ? (
-        <View style={styles.emptyCard}>
-          <FontAwesome name="users" size={26} color="#93C5FD" />
-          <Text style={styles.emptyTitle}>Você ainda não está em um grupo</Text>
-          <Text style={styles.emptyHint}>
-            Quando a secretaria vincular seu perfil a uma célula, os dados aparecerão aqui.
-          </Text>
-        </View>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.emptyCard}>
+            <FontAwesome name="users" size={26} color="#93C5FD" />
+            <Text style={styles.emptyTitle}>Você ainda não está em um grupo</Text>
+            {nearbyHosts.length === 0 ? (
+              <Text style={styles.emptyHint}>
+                Não existe nenhum anfitrião disponível para alocação.
+              </Text>
+            ) : (
+              <>
+                <Text style={styles.emptyHint}>
+                  Anfitriões mais próximos da sua residência, da menor para a maior distância.
+                </Text>
+                {hasMemberLocation ? null : (
+                  <Text style={styles.emptyHint}>
+                    Cadastre o CEP no seu perfil para calcular a distância até cada anfitrião.
+                  </Text>
+                )}
+              </>
+            )}
+          </View>
+          {nearbyHosts.map((host) => (
+            <View key={host.groupId} style={styles.hostCard}>
+              <Text style={styles.hostName} numberOfLines={1}>
+                {formatShortName(host.hostName)}
+              </Text>
+              <Text style={styles.hostMeta} numberOfLines={2}>
+                {host.groupName}
+              </Text>
+              <Text style={styles.hostMeta}>Bairro: {host.neighborhood}</Text>
+              <Text style={styles.hostDistance}>
+                {formatSmallGroupHostDistanceMeters(host.distanceMeters)}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
       ) : (
         <ScrollView
           style={styles.scroll}
@@ -213,11 +263,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   emptyCard: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   emptyTitle: {
     color: '#1E3A5F',
@@ -230,6 +280,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  hostCard: {
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 10,
+    padding: 10,
+    backgroundColor: '#F8FAFC',
+    gap: 2,
+  },
+  hostName: {
+    color: '#1E3A5F',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  hostMeta: {
+    color: '#475569',
+    fontSize: 12,
+  },
+  hostDistance: {
+    color: '#1D4ED8',
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: 2,
   },
   scroll: {
     flex: 1,
