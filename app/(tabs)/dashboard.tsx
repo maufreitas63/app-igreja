@@ -4,6 +4,7 @@ import { AdministrativoCard } from '@/components/AdministrativoCard';
 import { SmallGroupCard } from '@/components/SmallGroupCard';
 import { CampaignCard } from '@/components/CampaignCard';
 import { OpportunityMuralCard } from '@/components/OpportunityMuralCard';
+import { ScalesClassPanel } from '@/components/ScalesClassPanel';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
@@ -3409,84 +3410,7 @@ export default function Dashboard() {
                       dashboardPanelTopInsetStyle,
                     ]}
                   >
-                    <Text
-                      style={[
-                        isMinimalPresentation ? styles.minimalSectionTitle : styles.dashboardPanelTitle,
-                        styles.vigilanceScalesPanelTitle,
-                        mds?.panelTitle,
-                      ]}
-                    >
-                      {item.title}
-                    </Text>
-
-                    <View style={styles.vigilanceScaleFilterSection}>
-                      <Text style={[styles.vigilanceScaleSectionLabel, mds?.vigilanceScaleSectionLabel]}>
-                        Selecionar Escala
-                      </Text>
-                      {isVigilanceScalesLoading ? (
-                        <CardLoadingState lines={3} />
-                      ) : vigilanceScalesError ? (
-                        <View style={styles.vigilanceScaleMessageBox}>
-                          <Text style={styles.offeringsErrorText}>{vigilanceScalesError}</Text>
-                          <TouchableOpacity
-                            style={styles.offeringsSecondaryButton}
-                            onPress={() => void loadVigilanceScales({ preserveSelection: true })}
-                            activeOpacity={0.85}
-                          >
-                            <Text style={styles.offeringsSecondaryButtonText}>
-                              Atualizar escalas
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                      ) : scaleTypes.length ? (
-                        <ScrollView
-                          style={styles.vigilanceScaleRadioList}
-                          contentContainerStyle={styles.vigilanceScaleRadioListContent}
-                          nestedScrollEnabled
-                          showsVerticalScrollIndicator
-                        >
-                          {scaleTypes.map((option) => {
-                            const isSelected = selectedVigilanceScale === option.code;
-
-                            return (
-                              <TouchableOpacity
-                                key={option.code}
-                                style={[
-                                  styles.vigilanceScaleRadioRow,
-                                  mds?.vigilanceScaleRadioRow,
-                                  isSelected && styles.vigilanceScaleRadioRowSelected,
-                                  isSelected && mds?.vigilanceScaleRadioRowSelected,
-                                ]}
-                                onPress={() => handleSelectVigilanceScale(option)}
-                                activeOpacity={0.85}
-                              >
-                                <View
-                                  style={[
-                                    styles.vigilanceScaleRadioOuter,
-                                    isSelected && styles.vigilanceScaleRadioOuterSelected,
-                                  ]}
-                                >
-                                  {isSelected ? <View style={styles.vigilanceScaleRadioInner} /> : null}
-                                </View>
-                                <Text
-                                  style={[
-                                    styles.vigilanceScaleRadioLabel,
-                                    mds?.vigilanceScaleRadioLabel,
-                                    isSelected && styles.vigilanceScaleRadioLabelSelected,
-                                  ]}
-                                >
-                                  {option.name}
-                                </Text>
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </ScrollView>
-                      ) : (
-                        <Text style={[styles.groupedAudienceEmptyText, mds?.emptyText]}>
-                          Nenhum tipo de escala cadastrado ainda.
-                        </Text>
-                      )}
-                    </View>
+                    <ScalesClassPanel embedded />
                   </View>
                 ) : item.content === 'parking_vehicle_v2' ? (
                   <View style={[cardBaseStyle, styles.cardParkingVehicleV2, effectiveDashboardPanelCardSizeStyle]}>

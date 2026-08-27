@@ -4,6 +4,7 @@ import { ScaleSwapInbox } from '@/components/ScaleSwapInbox';
 import { ScaleSwapRequestModal } from '@/components/ScaleSwapRequestModal';
 import { withActiveMembershipProfileFilter } from '@/lib/activeMemberProfile';
 import {
+  ACCESS_DASHBOARD_CARD,
   ACCESS_SCREEN,
   isDashboardCardContentAllowed,
   loadDashboardCardViewAccess,
@@ -41,7 +42,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, AppState, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 /** Container com dados e navegação — compõe o ScalesClass stateless. */
-export function ScalesClassPanel() {
+export function ScalesClassPanel({ embedded = false }: { embedded?: boolean }) {
   const params = useLocalSearchParams();
   const returnToCaller = useReturnToCallerOnLeave({
     returnRoute: resolveReturnRouteParam(params),
@@ -164,7 +165,10 @@ export function ScalesClassPanel() {
         setDashboardCardAccess(cardAccess);
       }
 
-      setCanAllowSwap(await sessionHasAccess('screen', ACCESS_SCREEN.scalesAllowSwap, 'view'));
+      setCanAllowSwap(
+        (await sessionHasAccess('screen', ACCESS_SCREEN.scalesAllowSwap, 'view'))
+        || (await sessionHasAccess('screen', ACCESS_DASHBOARD_CARD.vigilanceScales, 'view'))
+      );
 
       const loaded = await loadScalesClassData(profileFullName);
       setScaleTypes(loaded.scaleTypes);
@@ -361,9 +365,9 @@ export function ScalesClassPanel() {
         return false;
       }
 
-      return profileNameMatchesVolunteerName(sessionFullName, entry.volunteerName);
+      return true;
     },
-    [canAllowSwap, sessionFullName]
+    [canAllowSwap]
   );
 
   return (
@@ -396,6 +400,7 @@ export function ScalesClassPanel() {
         />
       ) : (
         <ScalesClass
+          title={embedded ? '' : 'Escalas'}
           view={view}
           loading={loading}
           error={error}
@@ -454,7 +459,7 @@ export function ScalesClassPanel() {
           void loadScales({ preserveSelection: true });
         }}
       />
-      {view === 'picker' ? <CloseFooterBar onPress={returnToCaller} /> : null}
+      {view === 'picker' && !embedded ? <CloseFooterBar onPress={returnToCaller} /> : null}
     </View>
   );
 }

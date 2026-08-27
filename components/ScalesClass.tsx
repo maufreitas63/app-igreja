@@ -216,7 +216,7 @@ export function ScalesClass({
 
   return (
     <View style={styles.root}>
-      <Text style={styles.title}>{title}</Text>
+      {title.trim() ? <Text style={styles.title}>{title}</Text> : null}
 
       <View style={styles.pickerSection}>
         <MyScaleSlots
@@ -290,7 +290,7 @@ function MyScaleSlots({
       </Text>
       {entries.length === 0 ? (
         <Text style={styles.emptyText}>
-          Você não aparece nas escalas futuras. Se deveria estar, fale com a liderança.
+          Abra o ministério abaixo. Na lista, toque em Solicitar troca ao lado do seu nome.
         </Text>
       ) : (
         <ScrollView

@@ -33,10 +33,29 @@ export function profileNameMatchesVolunteerName(
   const normalizedProfile = normalizePersonName(profile);
   const normalizedVolunteer = normalizePersonName(volunteer);
 
-  return (
+  if (
     normalizedProfile === normalizedVolunteer
     || profileShortDisplayName(profile) === normalizedVolunteer
-  );
+    || profileShortDisplayName(profile) === profileShortDisplayName(volunteer)
+  ) {
+    return true;
+  }
+
+  const profileParts = normalizedProfile.split(' ').filter(Boolean);
+  const volunteerParts = normalizedVolunteer.split(' ').filter(Boolean);
+
+  if (!profileParts.length || !volunteerParts.length) {
+    return false;
+  }
+
+  if (
+    profileParts[0] === volunteerParts[0]
+    && profileParts[profileParts.length - 1] === volunteerParts[volunteerParts.length - 1]
+  ) {
+    return true;
+  }
+
+  return volunteerParts.length === 1 && volunteerParts[0] === profileParts[0];
 }
 
 export type ScaleTypeListEntry = {
