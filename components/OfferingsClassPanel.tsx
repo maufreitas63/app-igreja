@@ -13,7 +13,6 @@ import {
   type CampaignProject,
 } from '@/lib/campaignProjectsApi';
 import {
-  buildReturnToDashboardHref,
   pickRouteParam,
   resolveReturnDashboardCardParam,
   resolveReturnRouteParam,
@@ -21,6 +20,7 @@ import {
   withReturnDashboardCard,
   withReturnRoute,
 } from '@/lib/dashboardReturnNavigation';
+import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import {
   brlCentsDigitsToAmount,
   buildPixCopiaECola,
@@ -194,19 +194,11 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
       return;
     }
 
-    const returnRoute = resolveReturnRouteParam(params);
-
-    if (returnRoute) {
-      router.replace({
-        pathname: returnRoute,
-        params: withMinimalPresentation(),
-      } as Href);
-      return;
-    }
-
-    const returnCard = resolveReturnDashboardCardParam(params) ?? (campaignId ? 'campaign_card' : 'offerings');
-    router.replace(buildReturnToDashboardHref(returnCard));
-  }, [campaignId, onClose, params, router]);
+    router.replace({
+      pathname: MEMBER_HOME_PATH,
+      params: withMinimalPresentation(),
+    } as Href);
+  }, [onClose, router]);
 
   const handlePickCampaign = useCallback(
     (nextCampaign: CampaignProject) => {

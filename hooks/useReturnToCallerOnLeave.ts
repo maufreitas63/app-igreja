@@ -1,5 +1,5 @@
-import { FAIL_CLOSED_REDIRECT_PATH } from '@/lib/failClosedNavigation';
-import { buildReturnToDashboardHref, withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
+import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
+import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { useNavigation, useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
 import { useCallback, useEffect, useRef } from 'react';
@@ -15,12 +15,8 @@ type UseReturnToCallerOnLeaveOptions = {
 };
 
 export function useReturnToCallerOnLeave({
-  returnRoute,
-  returnDashboardCard,
-  fallbackDashboardCard = null,
-  extraRouteParams,
   managedByParent = false,
-}: UseReturnToCallerOnLeaveOptions) {
+}: UseReturnToCallerOnLeaveOptions = {}) {
   const router = useRouter();
   const navigation = useNavigation();
   const allowLeaveRef = useRef(false);
@@ -28,38 +24,12 @@ export function useReturnToCallerOnLeave({
   const returnToCaller = useCallback(() => {
     allowLeaveRef.current = true;
 
-    // Prefere pop da pilha para preservar estado visual da tela anterior.
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-
-    if (returnRoute) {
-      const params: Record<string, string> = withMinimalPresentation();
-
-      if (extraRouteParams) {
-        for (const [key, value] of Object.entries(extraRouteParams)) {
-          if (value) {
-            params[key] = value;
-          }
-        }
-      }
-
-      router.replace({
-        pathname: returnRoute,
-        params,
-      } as Href);
-      return;
-    }
-
-    const dashboardCard = returnDashboardCard ?? fallbackDashboardCard;
-    if (dashboardCard) {
-      router.replace(buildReturnToDashboardHref(dashboardCard, extraRouteParams));
-      return;
-    }
-
-    router.replace(FAIL_CLOSED_REDIRECT_PATH);
-  }, [extraRouteParams, fallbackDashboardCard, returnDashboardCard, returnRoute, router]);
+    // Fechar das telas → Índice. Encerrar sessão (MinimalExitBar) é quem fecha o app.
+    router.replace({
+      pathname: MEMBER_HOME_PATH,
+      params: withMinimalPresentation(),
+    } as Href);
+  }, [router]);
 
   useEffect(() => {
     if (managedByParent) {

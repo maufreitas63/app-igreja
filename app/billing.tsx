@@ -7,7 +7,7 @@ import {
   listBillingPlans,
 } from '@/lib/billing/billingApi';
 import type { BillingPlan } from '@/lib/billing/types';
-import { FAIL_CLOSED_REDIRECT_PATH } from '@/lib/failClosedNavigation';
+import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { getStoredTenantId } from '@/lib/tenantSession';
 import { useLeadershipRouteGuard } from '@/hooks/useLeadershipRouteGuard';
 import { useRouter } from 'expo-router';
@@ -120,7 +120,7 @@ export default function BillingScreen() {
         checkoutLoadingPlanCode={checkoutLoadingPlanCode}
         onSubscribe={(plan) => void handleSubscribe(plan)}
       />
-      <CloseFooterBar onPress={() => router.replace(FAIL_CLOSED_REDIRECT_PATH)} />
+      <CloseFooterBar onPress={() => router.replace(MEMBER_HOME_PATH)} />
     </View>
     </ScreenAccessGate>
   );
