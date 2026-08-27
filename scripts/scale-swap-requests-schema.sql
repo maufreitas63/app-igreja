@@ -328,9 +328,8 @@ begin
     from public.voluntarios_escala ve
     join public.profiles p
       on p.tenant_id = v_tenant
-     and p.status = 'approved'
-     and public.unaccent(lower(regexp_replace(trim(coalesce(p.full_name, '')), '\s+', ' ', 'g')))
-         = public.unaccent(lower(regexp_replace(trim(coalesce(ve.nome, '')), '\s+', ' ', 'g')))
+     and p.membership_out is null
+     and public.scale_swap_names_match(p.full_name, ve.nome)
    where ve.tenant_id = v_tenant
      and ve.tipo_escala_id = v_log.tipo_escala_id
      and ve.is_ativo is true
