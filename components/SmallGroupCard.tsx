@@ -1,12 +1,13 @@
 ﻿import { SmallGroupGuideModal } from '@/components/SmallGroupGuideModal';
+import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { buildProfileMapNavigationAddressLine } from '@/lib/enrichProfileMapAddress';
 import { formatShortName } from '@/lib/formatShortName';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import {
   computeMaintenanceContentHeight,
   MAINTENANCE_SCROLL_PROPS,
-  maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
+import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import {
   fetchCurrentSmallGroupGuide,
   fetchMySmallGroup,
@@ -27,12 +28,18 @@ import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
+
+/** Mesmo recorte da Carteirinha Digital (`PerfilClass.actionRow`). */
+const PERFIL_ACTION_ICON_COLOR = '#1B4F8A';
+const PERFIL_ACTION_SURFACE = '#FFFFFF';
+const PERFIL_ACTION_BORDER = 'rgba(52, 211, 153, 0.35)';
 
 type Props = {
   panelHeight: number;
@@ -222,7 +229,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
 
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Pequeno Grupo</Text>
+      <Text style={styles.title}>Pequeno Grupo</Text>
       <Text style={styles.subtitle}>Célula da sua jornada em comunidade.</Text>
 
       {loading ? (
@@ -237,9 +244,9 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
           {...MAINTENANCE_SCROLL_PROPS}
         >
           <View style={styles.stack}>
-            <View style={styles.emptyCard}>
-            <FontAwesome name="users" size={26} color="#93C5FD" />
-            <Text style={styles.emptyTitle}>Você ainda não está em um grupo</Text>
+            <View style={styles.infoRow}>
+            <FontAwesome name="users" size={24} color={PERFIL_ACTION_ICON_COLOR} />
+            <Text style={styles.actionLabel}>Você ainda não está em um grupo</Text>
             {nearbyHosts.length === 0 ? (
               <Text style={styles.emptyHint}>
                 Não existe nenhum anfitrião disponível para alocação.
@@ -258,33 +265,34 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
             )}
           </View>
           {nearbyHosts.map((host) => (
-            <View key={host.groupId} style={styles.hostCard}>
-              <Text style={styles.hostName} numberOfLines={1}>
-                {formatShortName(host.hostName)}
-              </Text>
-              <Text style={styles.hostMeta} numberOfLines={2}>
-                {host.groupName}
-              </Text>
-              <Text style={styles.hostMeta}>Bairro: {host.neighborhood}</Text>
-              <Text style={styles.hostMeta}>
-                Reuniões: {formatSmallGroupWeekday(host.meetingWeekday)}
-                {host.meetingTime ? ` · ${host.meetingTime}` : ''}
-              </Text>
-              <Text style={styles.hostMeta}>{formatSmallGroupMemberCount(host.memberCount)}</Text>
-              <Text style={styles.hostDistance}>
-                {formatSmallGroupHostDistanceMeters(host.distanceMeters)}
-              </Text>
-              <TouchableOpacity
-                style={[
-                  host.isMember ? styles.leaveButton : styles.joinButton,
-                  styles.hostCardAction,
+            <View key={host.groupId} style={styles.hostBlock}>
+              <View style={styles.infoRow}>
+                <Text style={styles.hostName} numberOfLines={1}>
+                  {formatShortName(host.hostName)}
+                </Text>
+                <Text style={styles.hostMeta} numberOfLines={2}>
+                  {host.groupName}
+                </Text>
+                <Text style={styles.hostMeta}>Bairro: {host.neighborhood}</Text>
+                <Text style={styles.hostMeta}>
+                  Reuniões: {formatSmallGroupWeekday(host.meetingWeekday)}
+                  {host.meetingTime ? ` · ${host.meetingTime}` : ''}
+                </Text>
+                <Text style={styles.hostMeta}>{formatSmallGroupMemberCount(host.memberCount)}</Text>
+                <Text style={styles.hostDistance}>
+                  {formatSmallGroupHostDistanceMeters(host.distanceMeters)}
+                </Text>
+              </View>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.actionRow,
+                  pressed && styles.actionRowPressed,
                   busyGroupId !== null && styles.buttonDisabled,
                 ]}
                 onPress={() =>
                   void (host.isMember ? handleLeaveGroup(host) : handleJoinGroup(host))
                 }
                 disabled={busyGroupId !== null}
-                activeOpacity={0.85}
                 accessibilityRole="button"
                 accessibilityLabel={
                   host.isMember
@@ -293,13 +301,20 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
                 }
               >
                 {busyGroupId === host.groupId ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
+                  <ActivityIndicator color={PERFIL_ACTION_ICON_COLOR} size="small" />
                 ) : (
-                  <Text style={styles.buttonText}>
-                    {host.isMember ? 'Quero sair do Grupo' : 'Quero Participar do Grupo'}
-                  </Text>
+                  <>
+                    <FontAwesome
+                      name={host.isMember ? 'sign-out' : 'user-plus'}
+                      size={24}
+                      color={PERFIL_ACTION_ICON_COLOR}
+                    />
+                    <Text style={styles.actionLabel}>
+                      {host.isMember ? 'Quero sair do Grupo' : 'Quero Participar do Grupo'}
+                    </Text>
+                  </>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ))}
           </View>
@@ -312,7 +327,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
           {...MAINTENANCE_SCROLL_PROPS}
         >
           <View style={styles.stack}>
-          <View style={styles.bodyCard}>
+          <View style={styles.infoRow}>
             <Text style={styles.groupName}>{group.name}</Text>
             <Text style={styles.meta}>
               {formatSmallGroupWeekday(group.meeting_weekday)} · {group.meeting_time || '—'}
@@ -324,36 +339,52 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.primaryButton} onPress={() => void handleOpenGuide()} activeOpacity={0.85}>
-            <FontAwesome name="book" size={14} color="#FFFFFF" />
-            <Text style={styles.buttonText}>Roteiro da Semana</Text>
-          </TouchableOpacity>
+          <Pressable
+            style={({ pressed }) => [styles.actionRow, pressed && styles.actionRowPressed]}
+            onPress={() => void handleOpenGuide()}
+            accessibilityRole="button"
+            accessibilityLabel="Roteiro da Semana"
+          >
+            <FontAwesome name="book" size={24} color={PERFIL_ACTION_ICON_COLOR} />
+            <Text style={styles.actionLabel}>Roteiro da Semana</Text>
+          </Pressable>
 
-          <TouchableOpacity
-            style={[styles.absenceButton, !group.leader?.phone && styles.buttonDisabled]}
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionRow,
+              pressed && styles.actionRowPressed,
+              !group.leader?.phone && styles.buttonDisabled,
+            ]}
             onPress={handleAbsence}
             disabled={!group.leader?.phone}
-            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Avisar Ausência"
           >
-            <FontAwesome name="whatsapp" size={16} color="#FFFFFF" />
-            <Text style={styles.buttonText}>Avisar Ausência</Text>
-          </TouchableOpacity>
+            <FontAwesome name="whatsapp" size={24} color={PERFIL_ACTION_ICON_COLOR} />
+            <Text style={styles.actionLabel}>Avisar Ausência</Text>
+          </Pressable>
 
           {canLeaveEnrolledGroup ? (
-            <TouchableOpacity
-              style={[styles.leaveButton, busyGroupId !== null && styles.buttonDisabled]}
+            <Pressable
+              style={({ pressed }) => [
+                styles.actionRow,
+                pressed && styles.actionRowPressed,
+                busyGroupId !== null && styles.buttonDisabled,
+              ]}
               onPress={() => void handleLeaveEnrolledGroup()}
               disabled={busyGroupId !== null}
-              activeOpacity={0.85}
               accessibilityRole="button"
               accessibilityLabel={`Quero sair do grupo ${group.name}`}
             >
               {busyGroupId === group.id ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
+                <ActivityIndicator color={PERFIL_ACTION_ICON_COLOR} size="small" />
               ) : (
-                <Text style={styles.buttonText}>Quero sair do Grupo</Text>
+                <>
+                  <FontAwesome name="sign-out" size={24} color={PERFIL_ACTION_ICON_COLOR} />
+                  <Text style={styles.actionLabel}>Quero sair do Grupo</Text>
+                </>
               )}
-            </TouchableOpacity>
+            </Pressable>
           ) : null}
           </View>
         </ScrollView>
@@ -371,11 +402,14 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     flex: 1,
     minHeight: 0,
+    backgroundColor: PERFIL_ACTION_SURFACE,
     gap: 12,
   },
+  title: MINIMAL_SECTION_TITLE,
   subtitle: {
-    color: '#64748B',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 12,
+    opacity: 0.88,
     textAlign: 'center',
   },
   loader: {
@@ -386,71 +420,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 13,
   },
-  emptyCard: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 8,
-  },
-  emptyTitle: {
-    color: '#1E3A5F',
-    fontWeight: '800',
-    fontSize: 14,
-    textAlign: 'center',
-  },
   emptyHint: {
-    color: '#64748B',
-    fontSize: 12,
-    textAlign: 'center',
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 13,
+    opacity: 0.88,
     lineHeight: 18,
-  },
-  hostCard: {
     width: '100%',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 16,
-    padding: 12,
-    backgroundColor: '#F8FAFC',
-    gap: 2,
   },
   hostName: {
-    color: '#1E3A5F',
-    fontSize: 14,
-    fontWeight: '800',
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 20,
+    width: '100%',
   },
   hostMeta: {
-    color: '#475569',
-    fontSize: 12,
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 13,
+    opacity: 0.88,
+    width: '100%',
   },
   hostDistance: {
-    color: '#1D4ED8',
-    fontSize: 13,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  joinButton: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 20,
     width: '100%',
-    minHeight: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1D4ED8',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  hostCardAction: {
-    marginTop: 8,
-  },
-  leaveButton: {
-    width: '100%',
-    minHeight: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#B91C1C',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
   },
   scroll: {
     flex: 1,
@@ -469,64 +464,69 @@ const styles = StyleSheet.create({
   stack: {
     width: '100%',
     gap: 8,
+    backgroundColor: PERFIL_ACTION_SURFACE,
   },
-  bodyCard: {
+  hostBlock: {
     width: '100%',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
+    gap: 8,
+  },
+  actionRow: {
+    width: '100%',
+    maxWidth: '100%',
+    minHeight: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderRadius: 16,
-    padding: 12,
-    backgroundColor: '#F8FAFC',
-    gap: 4,
+    borderWidth: 1,
+    borderColor: PERFIL_ACTION_BORDER,
+    backgroundColor: PERFIL_ACTION_SURFACE,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
+  },
+  actionRowPressed: {
+    backgroundColor: VIGILANCE_SCALES_UI.surfaceHighlight,
+    borderColor: VIGILANCE_SCALES_UI.border,
+  },
+  actionLabel: {
+    flex: 1,
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  infoRow: {
+    width: '100%',
+    maxWidth: '100%',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: PERFIL_ACTION_BORDER,
+    backgroundColor: PERFIL_ACTION_SURFACE,
   },
   groupName: {
-    color: '#1E3A5F',
-    fontSize: 16,
-    fontWeight: '800',
-    textAlign: 'center',
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 20,
+    width: '100%',
   },
   meta: {
-    color: '#334155',
+    color: VIGILANCE_SCALES_UI.accent,
     fontSize: 13,
-    textAlign: 'center',
+    opacity: 0.88,
+    width: '100%',
   },
   address: {
-    color: '#475569',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  primaryButton: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 13,
+    opacity: 0.88,
     width: '100%',
-    minHeight: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: '#1D4ED8',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  absenceButton: {
-    width: '100%',
-    minHeight: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    backgroundColor: '#16A34A',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
   },
   buttonDisabled: {
     opacity: 0.45,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 15,
-    textAlign: 'center',
   },
 });
