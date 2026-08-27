@@ -104,6 +104,7 @@ export type NearbySmallGroupHost = {
   hostProfileId: string;
   hostName: string;
   neighborhood: string;
+  memberCount: number;
   distanceMeters: number | null;
 };
 
@@ -497,12 +498,15 @@ export async function fetchNearbySmallGroupHosts(): Promise<{
               ? Number.parseInt(String(distanceRaw), 10)
               : Number.NaN;
 
+        const memberCountRaw = Number(row.member_count ?? 0);
+
         return {
           groupId,
           groupName: String(row.group_name ?? 'Pequeno grupo'),
           hostProfileId,
           hostName: String(row.host_name ?? '').trim() || 'Anfitrião',
           neighborhood: String(row.neighborhood ?? '').trim() || 'Bairro não informado',
+          memberCount: Number.isFinite(memberCountRaw) && memberCountRaw > 0 ? Math.round(memberCountRaw) : 0,
           distanceMeters: Number.isFinite(distanceMeters) ? distanceMeters : null,
         } satisfies NearbySmallGroupHost;
       })
@@ -516,6 +520,27 @@ export function formatSmallGroupHostDistanceMeters(distanceMeters: number | null
   }
 
   return `${Math.round(distanceMeters).toLocaleString('pt-BR')} m`;
+}
+
+export function formatSmallGroupMemberCount(count: number) {
+  const safe = Number.isFinite(count) && count > 0 ? Math.round(count) : 0;
+
+  if (safe === 1) {
+    return '1 inscrito';
+  }
+
+  return `${safe} inscritos`;
+}
+
+export async function joinSmallGroupAsMember(groupId: string) {
+  const payload = await rpcJson('join_small_group_as_member', { p_group_id: groupId });
+
+  return {
+    success: payload.success === true,
+    message: String(
+      payload.message ?? (payload.success === true ? 'Inscrição confirmada.' : 'Falha ao participar.')
+    ),
+  };
 }
 
 export function isPdfLikeUrl(value: string | null | undefined) {

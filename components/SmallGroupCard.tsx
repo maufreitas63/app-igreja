@@ -8,7 +8,9 @@ import {
   fetchMySmallGroup,
   fetchNearbySmallGroupHosts,
   formatSmallGroupHostDistanceMeters,
+  formatSmallGroupMemberCount,
   formatSmallGroupWeekday,
+  joinSmallGroupAsMember,
   type MySmallGroup,
   type NearbySmallGroupHost,
   type SmallGroupGuide,
@@ -42,6 +44,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
   const [memberName, setMemberName] = useState('');
   const [nearbyHosts, setNearbyHosts] = useState<NearbySmallGroupHost[]>([]);
   const [hasMemberLocation, setHasMemberLocation] = useState(true);
+  const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     // Proteção aplicada: no Ghost o card segue o alvo, não o operador
@@ -117,6 +120,40 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
     }
   }, []);
 
+  const handleJoinGroup = useCallback((host: NearbySmallGroupHost) => {
+    Alert.alert(
+      'Participar do grupo',
+      `Deseja se inscrever em "${host.groupName}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Confirmar',
+          onPress: () => {
+            void (async () => {
+              setJoiningGroupId(host.groupId);
+
+              try {
+                const result = await joinSmallGroupAsMember(host.groupId);
+                Alert.alert('Pequeno grupo', result.message);
+
+                if (result.success) {
+                  await load();
+                }
+              } catch (joinError) {
+                Alert.alert(
+                  'Pequeno grupo',
+                  joinError instanceof Error ? joinError.message : 'Não foi possível participar.'
+                );
+              } finally {
+                setJoiningGroupId(null);
+              }
+            })();
+          },
+        },
+      ]
+    );
+  }, [load]);
+
   const handleAbsence = useCallback(() => {
     if (!group?.leader?.phone) {
       Alert.alert('Líder sem celular', 'Não há telefone cadastrado para o líder deste grupo.');
@@ -172,9 +209,27 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
                 {host.groupName}
               </Text>
               <Text style={styles.hostMeta}>Bairro: {host.neighborhood}</Text>
+              <Text style={styles.hostMeta}>{formatSmallGroupMemberCount(host.memberCount)}</Text>
               <Text style={styles.hostDistance}>
                 {formatSmallGroupHostDistanceMeters(host.distanceMeters)}
               </Text>
+              <TouchableOpacity
+                style={[
+                  styles.joinButton,
+                  joiningGroupId !== null && styles.buttonDisabled,
+                ]}
+                onPress={() => handleJoinGroup(host)}
+                disabled={joiningGroupId !== null}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={`Quero participar do grupo ${host.groupName}`}
+              >
+                {joiningGroupId === host.groupId ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.buttonText}>Quero Participar do Grupo</Text>
+                )}
+              </TouchableOpacity>
             </View>
           ))}
         </ScrollView>
@@ -303,6 +358,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     marginTop: 2,
+  },
+  joinButton: {
+    marginTop: 8,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1D4ED8',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
   },
   scroll: {
     flex: 1,

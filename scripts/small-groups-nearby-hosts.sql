@@ -50,6 +50,11 @@ begin
                 nullif(trim(hgeo.bairro), ''),
                 'Bairro não informado'
               ),
+              'member_count', (
+                select count(*)::int
+                  from public.small_group_members m
+                 where m.small_group_id = g.id
+              ),
               'distance_meters',
                 case
                   when v_lat is not null
