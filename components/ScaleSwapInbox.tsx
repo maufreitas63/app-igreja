@@ -121,6 +121,11 @@ export function ScaleSwapInbox({ active, onRosterChanged }: Props) {
 
   return (
     <ScrollView style={styles.list} contentContainerStyle={styles.content}>
+      <Text style={styles.intro}>
+        Aceite ou recuse aqui. Para pedir uma troca, volte em Escalas — a lista Quando você serve
+        mostra as suas datas.
+      </Text>
+
       <Text style={styles.section}>Pedidos recebidos</Text>
       {received.length === 0 ? (
         <Text style={styles.empty}>Nenhum pedido recebido.</Text>
@@ -249,6 +254,12 @@ const styles = StyleSheet.create({
   empty: {
     color: MINIMAL_UI.textMuted,
     fontSize: 13,
+  },
+  intro: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 4,
   },
   card: {
     borderWidth: StyleSheet.hairlineWidth,

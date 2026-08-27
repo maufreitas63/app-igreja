@@ -340,15 +340,30 @@ export function ScalesClassPanel() {
     }
   }, []);
 
+  const myUpcomingEntries = useMemo(
+    () =>
+      upcomingScheduleEntries.filter((entry) =>
+        profileNameMatchesVolunteerName(sessionFullName, entry.volunteerName)
+      ),
+    [sessionFullName, upcomingScheduleEntries]
+  );
+
   const canRequestSwap = useCallback(
     (entry: ScalesClassScheduleEntry) => {
-      if (!canAllowSwap || isSelectedScaleIntercession || isSelectedScaleParking) {
+      if (!canAllowSwap) {
+        return false;
+      }
+
+      if (
+        isIntercessionScale(entry.scaleName, entry.scaleCode)
+        || isParkingWelcomeScale(entry.scaleName, entry.scaleCode)
+      ) {
         return false;
       }
 
       return profileNameMatchesVolunteerName(sessionFullName, entry.volunteerName);
     },
-    [canAllowSwap, isSelectedScaleIntercession, isSelectedScaleParking, sessionFullName]
+    [canAllowSwap, sessionFullName]
   );
 
   return (
@@ -369,7 +384,7 @@ export function ScalesClassPanel() {
           activeOpacity={0.85}
         >
           <Text style={[styles.tabText, panelTab === 'trocas' && styles.tabTextActive]}>
-            Minhas Trocas
+            Pedidos de troca
           </Text>
         </TouchableOpacity>
       </View>
@@ -406,6 +421,7 @@ export function ScalesClassPanel() {
           onOpenWhatsapp={(phone) => void handleOpenWhatsapp(phone)}
           canRequestSwap={canRequestSwap}
           onRequestSwap={setSwapEntry}
+          myScheduleEntries={myUpcomingEntries}
           parkingPanel={
             <ParkingVehicleIdentifyPanel
               placaQuery={vehiclePlacaQuery}

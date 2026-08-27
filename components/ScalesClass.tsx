@@ -3,6 +3,8 @@ import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import {
   formatDisplayName,
   formatServiceDateLabel,
+  isIntercessionScale,
+  isParkingWelcomeScale,
 } from '@/lib/scalesClassUtils';
 import type {
   ScalesClassScaleType,
@@ -51,6 +53,8 @@ export type ScalesClassProps = {
   onBackFromParking?: () => void;
   canRequestSwap?: (entry: ScalesClassScheduleEntry) => boolean;
   onRequestSwap?: (entry: ScalesClassScheduleEntry) => void;
+  /** Datas futuras em que o usuário logado está escalado. */
+  myScheduleEntries?: ScalesClassScheduleEntry[];
 };
 
 /** Visualização pura de Escalas — extraída de dashboard.card.vigilance_scales. */
@@ -79,6 +83,7 @@ export function ScalesClass({
   onBackFromParking,
   canRequestSwap,
   onRequestSwap,
+  myScheduleEntries = [],
 }: ScalesClassProps) {
   if (view === 'parking') {
     return (
@@ -170,6 +175,7 @@ export function ScalesClass({
                     <View style={styles.scheduleRow}>
                       <Text style={styles.nameText} numberOfLines={1}>
                         {formatDisplayName(entry.volunteerName)}
+                        {myScheduleEntries.some((mine) => mine.id === entry.id) ? ' · você' : ''}
                       </Text>
                       <View style={styles.trailingHeader}>
                         <Text style={styles.dateText}>
@@ -183,13 +189,13 @@ export function ScalesClass({
                     </View>
                     {canRequestSwap?.(entry) ? (
                       <TouchableOpacity
-                        style={styles.swapButton}
+                        style={styles.swapButtonWide}
                         onPress={() => onRequestSwap?.(entry)}
                         activeOpacity={0.85}
                         accessibilityRole="button"
                         accessibilityLabel="Solicitar troca nesta data"
                       >
-                        <Text style={styles.swapButtonText}>Solicitar Troca</Text>
+                        <Text style={styles.swapButtonText}>Solicitar troca desta data</Text>
                       </TouchableOpacity>
                     ) : null}
                   </View>
@@ -213,6 +219,12 @@ export function ScalesClass({
       <Text style={styles.title}>{title}</Text>
 
       <View style={styles.pickerSection}>
+        <MyScaleSlots
+          entries={myScheduleEntries}
+          canRequestSwap={canRequestSwap}
+          onRequestSwap={onRequestSwap}
+        />
+
         <Text style={styles.sectionLabel}>Selecionar Escala</Text>
 
         {loading ? (
@@ -256,6 +268,71 @@ export function ScalesClass({
           <Text style={styles.emptyText}>Nenhum tipo de escala cadastrado ainda.</Text>
         )}
       </View>
+    </View>
+  );
+}
+
+function MyScaleSlots({
+  entries,
+  canRequestSwap,
+  onRequestSwap,
+}: {
+  entries: ScalesClassScheduleEntry[];
+  canRequestSwap?: (entry: ScalesClassScheduleEntry) => boolean;
+  onRequestSwap?: (entry: ScalesClassScheduleEntry) => void;
+}) {
+  return (
+    <View style={styles.mySlots}>
+      <Text style={styles.sectionLabel}>Quando você serve</Text>
+      <Text style={styles.mySlotsHint}>
+        A troca vale só para este dia. Abra a data e envie o pedido a outro servo do mesmo
+        ministério.
+      </Text>
+      {entries.length === 0 ? (
+        <Text style={styles.emptyText}>
+          Você não aparece nas escalas futuras. Se deveria estar, fale com a liderança.
+        </Text>
+      ) : (
+        <ScrollView
+          style={styles.mySlotsList}
+          contentContainerStyle={styles.mySlotsListContent}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator
+        >
+          {entries.map((entry) => {
+            const canSwap = canRequestSwap?.(entry) === true;
+
+            return (
+              <View key={`${entry.id}-${entry.serviceDate}`} style={styles.mySlotRow}>
+                <View style={styles.mySlotCopy}>
+                  <Text style={styles.mySlotTitle} numberOfLines={1}>
+                    {entry.scaleName}
+                  </Text>
+                  <Text style={styles.mySlotDate}>{formatServiceDateLabel(entry.serviceDate)}</Text>
+                </View>
+                {canSwap ? (
+                  <TouchableOpacity
+                    style={styles.swapButton}
+                    onPress={() => onRequestSwap?.(entry)}
+                    activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Solicitar troca em ${entry.scaleName}`}
+                  >
+                    <Text style={styles.swapButtonText}>Solicitar troca</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Text style={styles.mySlotBlocked}>
+                    {isIntercessionScale(entry.scaleName, entry.scaleCode)
+                      || isParkingWelcomeScale(entry.scaleName, entry.scaleCode)
+                      ? 'Sem troca pontual neste ministério'
+                      : 'Troca não liberada no seu perfil'}
+                  </Text>
+                )}
+              </View>
+            );
+          })}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -530,12 +607,71 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: VIGILANCE_SCALES_UI.accent,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 8,
+  },
+  swapButtonWide: {
+    alignSelf: 'stretch',
+    borderRadius: 8,
+    backgroundColor: VIGILANCE_SCALES_UI.accent,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
   },
   swapButtonText: {
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '800',
+  },
+  mySlots: {
+    gap: 8,
+    paddingBottom: 8,
+  },
+  mySlotsHint: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 12,
+    lineHeight: 16,
+    opacity: 0.85,
+  },
+  mySlotsList: {
+    maxHeight: 220,
+  },
+  mySlotsListContent: {
+    gap: 8,
+    paddingBottom: 4,
+  },
+  mySlotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: VIGILANCE_SCALES_UI.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#F0F9FF',
+  },
+  mySlotCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  mySlotTitle: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  mySlotDate: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  mySlotBlocked: {
+    flexShrink: 1,
+    maxWidth: 120,
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'right',
   },
   scheduleRowHighlight: {
     backgroundColor: '#F0F9FF',
