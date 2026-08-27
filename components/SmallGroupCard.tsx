@@ -2,8 +2,11 @@
 import { buildProfileMapNavigationAddressLine } from '@/lib/enrichProfileMapAddress';
 import { formatShortName } from '@/lib/formatShortName';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
-import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
-import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
+import {
+  computeMaintenanceContentHeight,
+  MAINTENANCE_SCROLL_PROPS,
+  maintenancePanelStyles,
+} from '@/lib/maintenanceCardStyles';
 import {
   fetchCurrentSmallGroupGuide,
   fetchMySmallGroup,
@@ -231,9 +234,10 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           nestedScrollEnabled
-          showsVerticalScrollIndicator={false}
+          {...MAINTENANCE_SCROLL_PROPS}
         >
-          <View style={styles.emptyCard}>
+          <View style={styles.stack}>
+            <View style={styles.emptyCard}>
             <FontAwesome name="users" size={26} color="#93C5FD" />
             <Text style={styles.emptyTitle}>Você ainda não está em um grupo</Text>
             {nearbyHosts.length === 0 ? (
@@ -298,14 +302,16 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
               </TouchableOpacity>
             </View>
           ))}
+          </View>
         </ScrollView>
       ) : (
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}
           nestedScrollEnabled
-          showsVerticalScrollIndicator={false}
+          {...MAINTENANCE_SCROLL_PROPS}
         >
+          <View style={styles.stack}>
           <View style={styles.bodyCard}>
             <Text style={styles.groupName}>{group.name}</Text>
             <Text style={styles.meta}>
@@ -349,6 +355,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
               )}
             </TouchableOpacity>
           ) : null}
+          </View>
         </ScrollView>
       )}
 
@@ -359,12 +366,12 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
 
 const styles = StyleSheet.create({
   panel: {
-    ...CONTAIN_WIDTH,
     flex: 1,
+    minHeight: 0,
+    width: '100%',
     gap: 8,
   },
   subtitle: {
-    ...CONTAIN_WIDTH,
     color: '#64748B',
     fontSize: 12,
     textAlign: 'center',
@@ -373,34 +380,30 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   errorText: {
-    ...CONTAIN_WIDTH,
     color: '#B91C1C',
     textAlign: 'center',
     fontSize: 13,
   },
   emptyCard: {
-    ...CONTAIN_WIDTH,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 8,
   },
   emptyTitle: {
-    ...CONTAIN_WIDTH,
     color: '#1E3A5F',
     fontWeight: '800',
     fontSize: 14,
     textAlign: 'center',
   },
   emptyHint: {
-    ...CONTAIN_WIDTH,
     color: '#64748B',
     fontSize: 12,
     textAlign: 'center',
     lineHeight: 18,
   },
   hostCard: {
-    ...CONTAIN_WIDTH,
+    alignSelf: 'stretch',
     borderWidth: 1,
     borderColor: '#CBD5E1',
     borderRadius: 10,
@@ -424,51 +427,46 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   joinButton: {
-    width: '100%',
-    maxWidth: '100%',
     alignSelf: 'stretch',
-    minHeight: 40,
+    minHeight: 42,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#1D4ED8',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingVertical: 10,
-    paddingHorizontal: 10,
+    paddingHorizontal: 14,
   },
   hostCardAction: {
     marginTop: 8,
   },
   leaveButton: {
-    width: '100%',
-    maxWidth: '100%',
     alignSelf: 'stretch',
-    minHeight: 40,
+    minHeight: 42,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#B91C1C',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingVertical: 10,
-    paddingHorizontal: 10,
+    paddingHorizontal: 14,
   },
   scroll: {
-    ...CONTAIN_WIDTH,
     flex: 1,
+    minHeight: 0,
+    alignSelf: 'stretch',
   },
   scrollContent: {
-    width: '100%',
-    maxWidth: '100%',
-    gap: 10,
-    paddingBottom: 8,
     flexGrow: 1,
-    alignItems: 'stretch',
+    paddingBottom: 12,
+  },
+  stack: {
+    width: '100%',
+    gap: 10,
   },
   bodyCard: {
-    width: '100%',
-    maxWidth: '100%',
     alignSelf: 'stretch',
     borderWidth: 1,
     borderColor: '#CBD5E1',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 12,
     backgroundColor: '#F8FAFC',
     gap: 4,
@@ -491,28 +489,28 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   primaryButton: {
-    width: '100%',
-    maxWidth: '100%',
     alignSelf: 'stretch',
+    minHeight: 42,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     backgroundColor: '#1D4ED8',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingVertical: 11,
+    paddingHorizontal: 14,
   },
   absenceButton: {
-    width: '100%',
-    maxWidth: '100%',
     alignSelf: 'stretch',
+    minHeight: 42,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     backgroundColor: '#16A34A',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingVertical: 11,
+    paddingHorizontal: 14,
   },
   buttonDisabled: {
     opacity: 0.45,
