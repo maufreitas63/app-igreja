@@ -116,8 +116,6 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'b', label: 'Perfil', moduleKey: 'menu_perfil' },
   { letter: 'c', label: 'Dados cadastrais', moduleKey: 'menu_manage_profile' },
   { letter: 'd', label: 'Família', moduleKey: 'menu_manage_members' },
-  { letter: 'e', label: 'Dízimos e Ofertas', moduleKey: 'menu_ofertas' },
-  { letter: 'f', label: 'Campanhas e Projetos', moduleKey: 'menu_campaigns' },
   { letter: 'g', label: 'Reembolsos', moduleKey: 'menu_expense_report' },
   { letter: 'h', label: 'Financeiro', moduleKey: 'gestao_financeira' },
   { letter: 'i', label: 'Coração Aberto', moduleKey: 'menu_pastoral' },
