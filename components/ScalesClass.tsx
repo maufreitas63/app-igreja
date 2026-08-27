@@ -3,8 +3,6 @@ import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import {
   formatDisplayName,
   formatServiceDateLabel,
-  isIntercessionScale,
-  isParkingWelcomeScale,
 } from '@/lib/scalesClassUtils';
 import type {
   ScalesClassScaleType,
@@ -321,12 +319,7 @@ function MyScaleSlots({
                     <Text style={styles.swapButtonText}>Solicitar troca</Text>
                   </TouchableOpacity>
                 ) : (
-                  <Text style={styles.mySlotBlocked}>
-                    {isIntercessionScale(entry.scaleName, entry.scaleCode)
-                      || isParkingWelcomeScale(entry.scaleName, entry.scaleCode)
-                      ? 'Sem troca pontual neste ministério'
-                      : 'Troca não liberada no seu perfil'}
-                  </Text>
+                  <Text style={styles.mySlotBlocked}>Troca não liberada no seu perfil</Text>
                 )}
               </View>
             );

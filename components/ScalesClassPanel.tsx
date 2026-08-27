@@ -353,21 +353,10 @@ export function ScalesClassPanel({ embedded = false }: { embedded?: boolean }) {
   );
 
   const canRequestSwap = useCallback(
-    (entry: ScalesClassScheduleEntry) => {
-      if (!canAllowSwap) {
-        return false;
-      }
-
-      if (
-        isIntercessionScale(entry.scaleName, entry.scaleCode)
-        || isParkingWelcomeScale(entry.scaleName, entry.scaleCode)
-      ) {
-        return false;
-      }
-
-      return true;
-    },
-    [canAllowSwap]
+    (entry: ScalesClassScheduleEntry) =>
+      canAllowSwap
+      && profileNameMatchesVolunteerName(sessionFullName, entry.volunteerName),
+    [canAllowSwap, sessionFullName]
   );
 
   return (
