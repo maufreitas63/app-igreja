@@ -7,7 +7,7 @@ import { DRAWER_OFFERINGS_RESOURCE } from '@/lib/drawerMenuAccess';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -47,6 +47,7 @@ export function MinimalEuQueroFooter() {
   const insets = useSafeAreaInsets();
   const { homeAgendaOpen } = useMinimalHome();
   const openingCampaignRef = useRef(false);
+  const [contributeOpen, setContributeOpen] = useState(false);
 
   if (homeAgendaOpen) {
     return null;
@@ -122,18 +123,46 @@ export function MinimalEuQueroFooter() {
     <View style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>
       <Text style={styles.heading}>Eu quero…</Text>
       <View style={styles.list}>
-        <EuQueroItem
-          icon="money"
-          title="Contribuir com meu Dízimo ou Oferta"
-          subtitle="Informe o valor, com centavos, e copie o Pix."
-          onPress={handleOpenOfferings}
-        />
-        <EuQueroItem
-          icon="flag"
-          title="Contribuir com uma campanha ou projeto"
-          subtitle="Informe o valor e copie o Pix já identificado."
-          onPress={handleOpenCampaign}
-        />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Contribuir"
+          accessibilityState={{ expanded: contributeOpen }}
+          onPress={() => setContributeOpen((open) => !open)}
+          style={({ pressed, hovered }) => [
+            styles.item,
+            (pressed || (Platform.OS === 'web' && hovered)) && styles.itemPressed,
+          ]}
+        >
+          <View style={styles.iconWrap}>
+            <FontAwesome name="gift" size={28} color={MINIMAL_UI.accent} />
+          </View>
+          <View style={styles.textBlock}>
+            <Text style={styles.itemTitle}>Contribuir</Text>
+            <Text style={styles.itemSubtitle}>Dízimo, oferta, campanha ou projeto.</Text>
+          </View>
+          <FontAwesome
+            name={contributeOpen ? 'chevron-down' : 'chevron-right'}
+            size={16}
+            color={MINIMAL_UI.textMuted}
+            style={styles.chevron}
+          />
+        </Pressable>
+        {contributeOpen ? (
+          <View style={styles.contributeOptions}>
+            <EuQueroItem
+              icon="money"
+              title="Dízimos e Ofertas"
+              subtitle="Informe o valor, com centavos, e copie o Pix."
+              onPress={handleOpenOfferings}
+            />
+            <EuQueroItem
+              icon="flag"
+              title="Campanhas e Projetos"
+              subtitle="Informe o valor e copie o Pix já identificado."
+              onPress={handleOpenCampaign}
+            />
+          </View>
+        ) : null}
         <EuQueroItem
           icon="heart"
           title="Fazer um pedido de Oração"
@@ -161,6 +190,13 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: 4,
+  },
+  contributeOptions: {
+    paddingLeft: 16,
+    gap: 0,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: MINIMAL_UI.divider,
+    marginLeft: 20,
   },
   item: {
     flexDirection: 'row',
