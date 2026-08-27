@@ -672,8 +672,11 @@ export default function Dashboard() {
   const isMinimalPresentation = isMinimalPresentationRoute(params.presentation);
 
   const effectiveCarouselPageStyle = useMemo(
-    () => (isMinimalPresentation ? { width: pageWidth, flex: 1 } : carouselPageStyle),
-    [carouselPageStyle, isMinimalPresentation, pageWidth]
+    () =>
+      isMinimalPresentation
+        ? { width: '100%' as const, maxWidth: '100%' as const, flex: 1, alignSelf: 'stretch' as const }
+        : carouselPageStyle,
+    [carouselPageStyle, isMinimalPresentation]
   );
 
   const effectiveDashboardCardWrapperStyle = useMemo(

@@ -1,5 +1,5 @@
 import { MinimalHomeProvider } from '@/context/MinimalHomeContext';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -93,7 +93,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   fixedTop: {
-    paddingHorizontal: 16,
+    paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
+    paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
     paddingBottom: 8,
     backgroundColor: MINIMAL_UI.background,
     flexShrink: 0,
@@ -109,14 +110,16 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   scrollContent: {
-    paddingHorizontal: 16,
+    paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
+    paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
     paddingBottom: 12,
     maxWidth: '100%',
     minWidth: 0,
     alignSelf: 'stretch',
   },
   flexContent: {
-    paddingHorizontal: 16,
+    paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
+    paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
     maxWidth: '100%',
     minWidth: 0,
     alignSelf: 'stretch',
@@ -125,7 +128,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexShrink: 0,
-    paddingHorizontal: 16,
+    paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
+    paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
     backgroundColor: MINIMAL_UI.background,
     maxWidth: '100%',
     minWidth: 0,

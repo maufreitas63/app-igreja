@@ -3,7 +3,7 @@ import { MinimalTopChurchLogo } from '@/components/minimal/MinimalTopChurchLogo'
 import { MinimalTopIdentityBar } from '@/components/minimal/MinimalTopIdentityBar';
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { useMinimalHome } from '@/context/MinimalHomeContext';
-import { MINIMAL_ICON, MINIMAL_TOP_CHROME_MIN_HEIGHT, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_ICON, MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_TOP_CHROME_MIN_HEIGHT, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -61,9 +61,8 @@ export function MinimalTopLeftChrome({ title, header, showGreeting = false }: Pr
 const styles = StyleSheet.create({
   wrap: {
     flexShrink: 0,
-    paddingLeft: 16,
-    // Folga da borda direita do aparelho (logo não “cola”).
-    paddingRight: 20,
+    paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
+    paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
     paddingTop: 8,
     paddingBottom: 8,
     backgroundColor: MINIMAL_UI.background,
