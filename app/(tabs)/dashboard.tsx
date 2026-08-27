@@ -1652,6 +1652,10 @@ export default function Dashboard() {
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (isMinimalPresentation || pageWidth <= 0) {
+      return;
+    }
+
     const index = Math.round(event.nativeEvent.contentOffset.x / pageWidth);
     setCurrentIndex(index);
   };
@@ -2022,9 +2026,17 @@ export default function Dashboard() {
     return data.length ? [data[0]!] : [];
   }, [data, isMinimalPresentation, requestedDashboardCard]);
 
+  const activeDashboardCard = useMemo(() => {
+    if (isMinimalPresentation) {
+      return carouselData[0] ?? null;
+    }
+
+    return data[currentIndex] ?? null;
+  }, [carouselData, currentIndex, data, isMinimalPresentation]);
+
   const buildChildScreenParams = useCallback(
     (extra?: Record<string, string>) => {
-      const activeCard = data[currentIndex];
+      const activeCard = activeDashboardCard;
       const returnDashboardCard = activeCard?.content ?? activeCard?.id;
 
       if (!returnDashboardCard) {
@@ -2033,7 +2045,7 @@ export default function Dashboard() {
 
       return withReturnDashboardCard(returnDashboardCard, extra);
     },
-    [currentIndex, data]
+    [activeDashboardCard]
   );
 
   const isMapGeolocationEnabled = useMemo(
@@ -2114,7 +2126,7 @@ export default function Dashboard() {
   }, [buildChildScreenParams, isMapGeolocationEnabled, mapGeolocationDisabledMessage, router]);
 
   const activeDashboardScreenTitle = useMemo(() => {
-    const card = data[currentIndex];
+    const card = activeDashboardCard;
     if (!card) {
       return '';
     }
@@ -2124,14 +2136,14 @@ export default function Dashboard() {
     }
 
     return card.title?.trim() ?? '';
-  }, [currentIndex, data, isMinimalPresentation]);
+  }, [activeDashboardCard, isMinimalPresentation]);
 
-  const isVigilanceScalesScreen = data[currentIndex]?.content === 'vigilance_scales';
+  const isVigilanceScalesScreen = activeDashboardCard?.content === 'vigilance_scales';
 
   const { showTechnicalKeys } = useShowAclTechnicalKeys(Boolean(profile?.id));
 
   const activeDashboardScreenTechnicalKey = useMemo(() => {
-    const card = data[currentIndex];
+    const card = activeDashboardCard;
 
     if (!card) {
       return null;
@@ -2140,10 +2152,10 @@ export default function Dashboard() {
     return resolveDashboardCardAccessResourceKey(card.content, {
       scaleTypeCode: card.content === 'scale_roster' ? selectedVigilanceScale : null,
     });
-  }, [currentIndex, data, selectedVigilanceScale]);
+  }, [activeDashboardCard, selectedVigilanceScale]);
 
   useEffect(() => {
-    const card = data[currentIndex];
+    const card = activeDashboardCard;
 
     if (!card) {
       return;
@@ -2155,43 +2167,43 @@ export default function Dashboard() {
       }) ?? `dashboard.card.${card.content}`;
 
     void recordProfileScreenVisit(screenKey, card.title);
-  }, [currentIndex, data, selectedVigilanceScale]);
+  }, [activeDashboardCard, selectedVigilanceScale]);
 
   useEffect(() => {
-    setIsSalaRegistrationsEnabled(data[currentIndex]?.content === 'kids_teens');
-  }, [currentIndex, data]);
+    setIsSalaRegistrationsEnabled(activeDashboardCard?.content === 'kids_teens');
+  }, [activeDashboardCard]);
 
   useEffect(() => {
-    if (data[currentIndex]?.content === 'birthdays' && !birthdaysLoadedRef.current) {
+    if (activeDashboardCard?.content === 'birthdays' && !birthdaysLoadedRef.current) {
       birthdaysLoadedRef.current = true;
       void loadBirthdays();
     }
-  }, [currentIndex, data, loadBirthdays]);
+  }, [activeDashboardCard, loadBirthdays]);
 
   useEffect(() => {
-    if (data[currentIndex]?.content === 'members_list' && !membersListLoadedRef.current) {
+    if (activeDashboardCard?.content === 'members_list' && !membersListLoadedRef.current) {
       membersListLoadedRef.current = true;
       void loadMembersList();
     }
-  }, [currentIndex, data, loadMembersList]);
+  }, [activeDashboardCard, loadMembersList]);
 
   useEffect(() => {
     if (
-      data[currentIndex]?.content === 'members_list'
+      activeDashboardCard?.content === 'members_list'
       && isMapGeolocationEnabled
       && !membersMapPrefetchStartedRef.current
     ) {
       membersMapPrefetchStartedRef.current = true;
       prefetchProfilesMapMarkers();
     }
-  }, [currentIndex, data, isMapGeolocationEnabled]);
+  }, [activeDashboardCard, isMapGeolocationEnabled]);
 
   useEffect(() => {
-    if (data[currentIndex]?.content === 'vigilance_scales' && !vigilanceScalesLoadedRef.current) {
+    if (activeDashboardCard?.content === 'vigilance_scales' && !vigilanceScalesLoadedRef.current) {
       vigilanceScalesLoadedRef.current = true;
       void loadVigilanceScales();
     }
-  }, [currentIndex, data, loadVigilanceScales]);
+  }, [activeDashboardCard, loadVigilanceScales]);
 
   const scrollToDashboardCard = useCallback((targetIndex: number, animated = true) => {
     if (targetIndex < 0 || targetIndex >= data.length || pageWidth <= 0) {
@@ -2201,23 +2213,29 @@ export default function Dashboard() {
     currentIndexRef.current = targetIndex;
     setCurrentIndex(targetIndex);
 
+    const listIndex = isMinimalPresentation ? 0 : targetIndex;
+
+    if (listIndex < 0 || listIndex >= carouselData.length) {
+      return;
+    }
+
     const list = dashboardListRef.current;
     if (!list) {
       return;
     }
 
-    list.scrollToIndex({ index: targetIndex, animated, viewPosition: 0 });
+    list.scrollToIndex({ index: listIndex, animated, viewPosition: 0 });
     requestAnimationFrame(() => {
       list.scrollToOffset({
-        offset: targetIndex * pageWidth,
+        offset: listIndex * pageWidth,
         animated: false,
       });
     });
-  }, [data.length, pageWidth]);
+  }, [carouselData.length, data.length, isMinimalPresentation, pageWidth]);
 
   const handleDashboardScrollToIndexFailed = useCallback(
     (info: { index: number }) => {
-      if (info.index < 0 || info.index >= data.length || pageWidth <= 0) {
+      if (info.index < 0 || info.index >= carouselData.length || pageWidth <= 0) {
         return;
       }
 
@@ -2233,7 +2251,7 @@ export default function Dashboard() {
         });
       });
     },
-    [data.length, pageWidth]
+    [carouselData.length, pageWidth]
   );
 
   useEffect(() => {
@@ -2329,20 +2347,19 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
-    if (data[currentIndex]?.content === 'offerings') {
+    if (activeDashboardCard?.content === 'offerings') {
       loadPixKey();
     }
-  }, [currentIndex, data, loadPixKey]);
+  }, [activeDashboardCard, loadPixKey]);
 
   useEffect(() => {
-    if (data[currentIndex]?.content === 'kids_teens') {
+    if (activeDashboardCard?.content === 'kids_teens') {
       const hasLoadedGroupedRegistrations =
         kidsRegistrations.length > 0 || teensRegistrations.length > 0;
       void refetchGroupedRegistrations({ silent: hasLoadedGroupedRegistrations });
     }
   }, [
-    currentIndex,
-    data,
+    activeDashboardCard,
     kidsRegistrations.length,
     refetchGroupedRegistrations,
     teensRegistrations.length,
@@ -2473,12 +2490,12 @@ export default function Dashboard() {
       return;
     }
 
-    const content = data[currentIndex]?.content ?? null;
+    const content = activeDashboardCard?.content ?? null;
 
     if (content) {
       activeDashboardContentRef.current = content;
     }
-  }, [currentIndex, data, isDashboardDeepLinkPending]);
+  }, [activeDashboardCard, isDashboardDeepLinkPending]);
 
   useEffect(() => {
     if (
@@ -2613,14 +2630,14 @@ export default function Dashboard() {
     }
 
     previousPageWidthRef.current = pageWidth;
-    const index = currentIndexRef.current;
+    const index = isMinimalPresentation ? 0 : currentIndexRef.current;
     requestAnimationFrame(() => {
       dashboardListRef.current?.scrollToOffset({
         offset: index * pageWidth,
         animated: false,
       });
     });
-  }, [pageWidth]);
+  }, [isMinimalPresentation, pageWidth]);
 
   return (
     <MinimalRouteShell
@@ -2693,7 +2710,7 @@ export default function Dashboard() {
             onScroll={handleScroll}
             onScrollToIndexFailed={handleDashboardScrollToIndexFailed}
             scrollEventThrottle={16}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item?.id ?? 'dashboard-card'}
             getItemLayout={(_, index) => ({
               length: pageWidth,
               offset: pageWidth * index,
@@ -2978,7 +2995,7 @@ export default function Dashboard() {
                   >
                     <AdministrativoCard
                       panelHeight={dashboardPanelCardHeight}
-                      isActive={data[currentIndex]?.content === 'administrativo'}
+                      isActive={activeDashboardCard?.content === 'administrativo'}
                       initialTab={administrativoInitialTab}
                     />
                   </View>
@@ -2994,7 +3011,7 @@ export default function Dashboard() {
                   >
                     <SmallGroupCard
                       panelHeight={dashboardPanelCardHeight}
-                      isActive={data[currentIndex]?.content === 'small_group'}
+                      isActive={activeDashboardCard?.content === 'small_group'}
                     />
                   </View>
                 ) : item.content === 'campaign_card' ? (
@@ -3009,7 +3026,7 @@ export default function Dashboard() {
                   >
                     <CampaignCard
                       panelHeight={dashboardPanelCardHeight}
-                      isActive={data[currentIndex]?.content === 'campaign_card'}
+                      isActive={activeDashboardCard?.content === 'campaign_card'}
                     />
                   </View>
                 ) : item.content === 'opportunity_mural_card' ? (
@@ -3024,7 +3041,7 @@ export default function Dashboard() {
                   >
                     <OpportunityMuralCard
                       panelHeight={dashboardPanelCardHeight}
-                      isActive={data[currentIndex]?.content === 'opportunity_mural_card'}
+                      isActive={activeDashboardCard?.content === 'opportunity_mural_card'}
                     />
                   </View>
                 ) : item.content === 'members_list' ? (

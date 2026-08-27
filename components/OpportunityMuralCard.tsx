@@ -183,7 +183,9 @@ function OpportunityCard({
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{row.titulo}</Text>
         {showSeal ? (
-          <Text style={styles.seal}>Match de {Math.max(row.matchPct, 80)}%</Text>
+          <Text style={styles.seal}>
+            Match de {Math.max(Number.isFinite(row.matchPct) ? row.matchPct : 0, 80)}%
+          </Text>
         ) : null}
       </View>
       {row.ministerioNome ? <Text style={styles.meta}>{row.ministerioNome}</Text> : null}
