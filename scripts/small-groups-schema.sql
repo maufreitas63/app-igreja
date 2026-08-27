@@ -1257,6 +1257,7 @@ declare
   v_tenant uuid := public.require_session_tenant_id();
   v_me uuid := public.current_session_profile_id();
   v_name text;
+  v_inserted int;
 begin
   if v_me is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
@@ -1303,9 +1304,21 @@ begin
     return jsonb_build_object('success', false, 'message', 'Você já participa de outro pequeno grupo.');
   end if;
 
-  insert into public.small_group_members (tenant_id, small_group_id, profile_id)
-  values (v_tenant, p_group_id, v_me)
-  on conflict (small_group_id, profile_id) do nothing;
+  begin
+    insert into public.small_group_members (tenant_id, small_group_id, profile_id)
+    values (v_tenant, p_group_id, v_me);
+    get diagnostics v_inserted = row_count;
+  exception
+    when unique_violation then
+      return jsonb_build_object(
+        'success', false,
+        'message', 'Você já participa de outro pequeno grupo.'
+      );
+  end;
+
+  if coalesce(v_inserted, 0) < 1 then
+    return jsonb_build_object('success', false, 'message', 'Não foi possível registrar a inscrição.');
+  end if;
 
   return jsonb_build_object(
     'success', true,

@@ -17,13 +17,14 @@ import {
   type NearbySmallGroupHost,
   type SmallGroupGuide,
 } from '@/lib/smallGroupsApi';
+import { showAppToast } from '@/lib/appToast';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -93,10 +94,18 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
 
   const canLeaveEnrolledGroup = Boolean(group && !group.is_host && !group.is_leader);
 
+  const notify = useCallback((ok: boolean, message: string) => {
+    showAppToast({
+      type: ok ? 'success' : 'error',
+      text1: 'Pequeno grupo',
+      text2: message,
+    });
+  }, []);
+
   const openMaps = useCallback(
     async (provider: 'google' | 'waze') => {
       if (!hostAddress) {
-        Alert.alert('Endereço indisponível', 'O anfitrião ainda não tem endereço cadastrado.');
+        notify(false, 'O anfitrião ainda não tem endereço cadastrado.');
         return;
       }
 
@@ -108,7 +117,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
 
       await Linking.openURL(url);
     },
-    [hostAddress]
+    [hostAddress, notify]
   );
 
   const handleOpenGuide = useCallback(async () => {
@@ -117,10 +126,11 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
       setGuide(nextGuide);
       setGuideOpen(true);
     } catch (guideError) {
-      Alert.alert(
-        'Roteiro da Semana',
-        guideError instanceof Error ? guideError.message : 'Não foi possível abrir o roteiro.'
-      );
+      showAppToast({
+        type: 'error',
+        text1: 'Roteiro da Semana',
+        text2: guideError instanceof Error ? guideError.message : 'Não foi possível abrir o roteiro.',
+      });
     }
   }, []);
 
@@ -130,98 +140,101 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
 
       try {
         const result = await leaveSmallGroupAsMember(groupId);
-        Alert.alert('Pequeno grupo', result.message);
+        notify(result.success, result.message);
 
         if (result.success) {
           await load();
         }
       } catch (leaveError) {
-        Alert.alert(
-          'Pequeno grupo',
+        notify(
+          false,
           leaveError instanceof Error ? leaveError.message : 'Não foi possível sair do grupo.'
         );
       } finally {
         setBusyGroupId(null);
       }
     },
-    [load]
+    [load, notify]
   );
 
   const handleJoinGroup = useCallback(
-    (host: NearbySmallGroupHost) => {
-      Alert.alert('Participar do grupo', `Deseja se inscrever em "${host.groupName}"?`, [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Confirmar',
-          onPress: () => {
-            void (async () => {
-              setBusyGroupId(host.groupId);
+    async (host: NearbySmallGroupHost) => {
+      const confirmed = await confirmDialog(
+        'Participar do grupo',
+        `Deseja se inscrever em "${host.groupName}"?`,
+        'Confirmar',
+        'Cancelar'
+      );
 
-              try {
-                const result = await joinSmallGroupAsMember(host.groupId);
-                Alert.alert('Pequeno grupo', result.message);
+      if (!confirmed) {
+        return;
+      }
 
-                if (result.success) {
-                  await load();
-                }
-              } catch (joinError) {
-                Alert.alert(
-                  'Pequeno grupo',
-                  joinError instanceof Error ? joinError.message : 'Não foi possível participar.'
-                );
-              } finally {
-                setBusyGroupId(null);
-              }
-            })();
-          },
-        },
-      ]);
+      setBusyGroupId(host.groupId);
+
+      try {
+        const result = await joinSmallGroupAsMember(host.groupId);
+        notify(result.success, result.message);
+
+        if (result.success) {
+          await load();
+        }
+      } catch (joinError) {
+        notify(
+          false,
+          joinError instanceof Error ? joinError.message : 'Não foi possível participar.'
+        );
+      } finally {
+        setBusyGroupId(null);
+      }
     },
-    [load]
+    [load, notify]
   );
 
   const handleLeaveGroup = useCallback(
-    (host: NearbySmallGroupHost) => {
-      Alert.alert('Sair do grupo', `Deseja sair de "${host.groupName}"?`, [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sair',
-          style: 'destructive',
-          onPress: () => {
-            void runLeaveGroup(host.groupId);
-          },
-        },
-      ]);
+    async (host: NearbySmallGroupHost) => {
+      const confirmed = await confirmDialog(
+        'Sair do grupo',
+        `Deseja sair de "${host.groupName}"?`,
+        'Sair',
+        'Cancelar',
+        { destructive: true }
+      );
+
+      if (confirmed) {
+        await runLeaveGroup(host.groupId);
+      }
     },
     [runLeaveGroup]
   );
 
-  const handleLeaveEnrolledGroup = useCallback(() => {
+  const handleLeaveEnrolledGroup = useCallback(async () => {
     if (!group) {
       return;
     }
 
-    Alert.alert('Sair do grupo', `Deseja sair de "${group.name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Sair',
-        style: 'destructive',
-        onPress: () => {
-          void runLeaveGroup(group.id);
-        },
-      },
-    ]);
+    const confirmed = await confirmDialog(
+      'Sair do grupo',
+      `Deseja sair de "${group.name}"?`,
+      'Sair',
+      'Cancelar',
+      { destructive: true }
+    );
+
+    if (confirmed) {
+      await runLeaveGroup(group.id);
+    }
   }, [group, runLeaveGroup]);
 
   const handleAbsence = useCallback(() => {
     if (!group?.leader?.phone) {
-      Alert.alert('Líder sem celular', 'Não há telefone cadastrado para o líder deste grupo.');
+      notify(false, 'Não há telefone cadastrado para o líder deste grupo.');
       return;
     }
 
     const message = `Olá ${group.leader.full_name ?? 'líder'}, sou ${memberName} e não poderei participar do pequeno grupo ${group.name} nesta semana.`;
     openWhatsAppLikeBirthdaysWithText(group.leader.phone, message);
-  }, [group, memberName]);
+  }, [group, memberName, notify]);
 
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
@@ -281,7 +294,9 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
                   host.isMember ? styles.leaveButton : styles.joinButton,
                   busyGroupId !== null && styles.buttonDisabled,
                 ]}
-                onPress={() => (host.isMember ? handleLeaveGroup(host) : handleJoinGroup(host))}
+                onPress={() =>
+                  void (host.isMember ? handleLeaveGroup(host) : handleJoinGroup(host))
+                }
                 disabled={busyGroupId !== null}
                 activeOpacity={0.85}
                 accessibilityRole="button"
@@ -360,7 +375,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
           {canLeaveEnrolledGroup ? (
             <TouchableOpacity
               style={[styles.leaveButton, busyGroupId !== null && styles.buttonDisabled]}
-              onPress={handleLeaveEnrolledGroup}
+              onPress={() => void handleLeaveEnrolledGroup()}
               disabled={busyGroupId !== null}
               activeOpacity={0.85}
               accessibilityRole="button"
