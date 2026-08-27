@@ -288,16 +288,10 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
           campaignCoverUrl={campaign?.cover_url ?? null}
           campaignIntegerAmount={integerAmount}
           onCampaignIntegerAmountChange={(value) => setIntegerAmount(parseIntegerReaisInput(value))}
-          campaignFinalAmountLabel={
-            campaignPix.amount != null ? formatCampaignBrl(campaignPix.amount) : null
-          }
           campaignCopiaECola={campaignPix.copiaECola}
           offeringAmountMasked={campaign ? '' : formatBrlCentsDigits(offeringCentsDigits)}
           onOfferingAmountChange={
             campaign ? undefined : (value) => setOfferingCentsDigits(parseBrlCentsDigits(value))
-          }
-          offeringFinalAmountLabel={
-            campaign || offeringPix.amount == null ? null : formatCampaignBrl(offeringPix.amount)
           }
           offeringCopiaECola={campaign ? null : offeringPix.copiaECola}
           onCopyPixKey={() => {

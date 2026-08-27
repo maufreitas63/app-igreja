@@ -33,13 +33,35 @@ export type OfferingsClassProps = {
   campaignCoverUrl?: string | null;
   campaignIntegerAmount?: string;
   onCampaignIntegerAmountChange?: (value: string) => void;
-  campaignFinalAmountLabel?: string | null;
   campaignCopiaECola?: string | null;
   offeringAmountMasked?: string;
   onOfferingAmountChange?: (value: string) => void;
-  offeringFinalAmountLabel?: string | null;
   offeringCopiaECola?: string | null;
 };
+
+function AmountClearButton({
+  disabled,
+  onPress,
+}: {
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.clearAmountButton, disabled && styles.clearAmountButtonDisabled]}
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel="Limpar valor digitado"
+    >
+      <MaterialIcons name="close" size={18} color={disabled ? '#94A3B8' : '#1B4F8A'} />
+      <Text style={[styles.clearAmountText, disabled && styles.clearAmountTextDisabled]}>
+        Limpar
+      </Text>
+    </TouchableOpacity>
+  );
+}
 
 /** Visualização pura de Dízimos e Ofertas — extraída de dashboard.card.offerings. */
 export function OfferingsClass({
@@ -54,11 +76,9 @@ export function OfferingsClass({
   campaignCoverUrl = null,
   campaignIntegerAmount = '',
   onCampaignIntegerAmountChange,
-  campaignFinalAmountLabel = null,
   campaignCopiaECola = null,
   offeringAmountMasked = '',
   onOfferingAmountChange,
-  offeringFinalAmountLabel = null,
   offeringCopiaECola = null,
 }: OfferingsClassProps) {
   const isCampaign = Boolean(campaignTitle);
@@ -114,22 +134,16 @@ export function OfferingsClass({
               inputMode="numeric"
               accessibilityLabel="Valor em reais, sem centavos"
             />
-            {campaignFinalAmountLabel ? (
-              <View style={styles.finalAmountBox}>
-                <Text style={styles.finalAmountLabel} numberOfLines={1}>
-                  Valor do Pix
-                </Text>
-                <Text style={styles.finalAmountValue} numberOfLines={1}>
-                  {campaignFinalAmountLabel}
-                </Text>
-              </View>
-            ) : null}
+            <AmountClearButton
+              disabled={!campaignIntegerAmount}
+              onPress={() => onCampaignIntegerAmountChange?.('')}
+            />
           </View>
           <Text style={styles.helpText}>
             Digite apenas o valor inteiro em reais. Os centavos de identificação são aplicados
             automaticamente.
           </Text>
-          {campaignFinalAmountLabel ? null : (
+          {campaignIntegerAmount ? null : (
             <Text style={styles.helpText}>Informe o valor para gerar o Pix Copia e Cola.</Text>
           )}
         </View>
@@ -147,21 +161,15 @@ export function OfferingsClass({
               inputMode="numeric"
               accessibilityLabel="Valor em reais, com centavos"
             />
-            {offeringFinalAmountLabel ? (
-              <View style={styles.finalAmountBox}>
-                <Text style={styles.finalAmountLabel} numberOfLines={1}>
-                  Valor do Pix
-                </Text>
-                <Text style={styles.finalAmountValue} numberOfLines={1}>
-                  {offeringFinalAmountLabel}
-                </Text>
-              </View>
-            ) : null}
+            <AmountClearButton
+              disabled={!offeringAmountMasked}
+              onPress={() => onOfferingAmountChange('')}
+            />
           </View>
           <Text style={styles.helpText}>
             Digite o valor com centavos. O montante preenche da direita para a esquerda (1 = 0,01).
           </Text>
-          {offeringFinalAmountLabel ? null : (
+          {offeringAmountMasked ? null : (
             <Text style={styles.helpText}>Informe o valor para gerar o Pix Copia e Cola.</Text>
           )}
         </View>
@@ -321,49 +329,42 @@ const styles = StyleSheet.create({
   },
   amountInput: {
     flex: 1,
-    flexBasis: 0,
     minWidth: 0,
     minHeight: 48,
     borderWidth: 1,
     borderColor: VIGILANCE_SCALES_UI.border,
     borderRadius: 10,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     color: '#1E3A5F',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800',
     textAlign: 'center',
     backgroundColor: '#F8FAFC',
   },
-  finalAmountBox: {
-    flex: 1,
-    flexBasis: 0,
-    minWidth: 0,
+  clearAmountButton: {
     minHeight: 48,
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
+    gap: 4,
+    paddingHorizontal: 12,
     borderRadius: 10,
-    backgroundColor: '#ECFDF5',
     borderWidth: 1,
-    borderColor: '#86EFAC',
+    borderColor: VIGILANCE_SCALES_UI.border,
+    backgroundColor: '#F8FAFC',
+    flexShrink: 0,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
   },
-  finalAmountLabel: {
-    color: '#166534',
-    fontSize: 10,
+  clearAmountButtonDisabled: {
+    opacity: 0.55,
+  },
+  clearAmountText: {
+    color: '#1B4F8A',
+    fontSize: 13,
     fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    flexShrink: 1,
   },
-  finalAmountValue: {
-    color: '#14532D',
-    fontSize: 14,
-    fontWeight: '800',
-    flexShrink: 1,
+  clearAmountTextDisabled: {
+    color: '#94A3B8',
   },
   copyButton: {
     flexDirection: 'row',
