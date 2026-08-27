@@ -12,6 +12,7 @@ import {
   formatSmallGroupMemberCount,
   formatSmallGroupWeekday,
   joinSmallGroupAsMember,
+  leaveSmallGroupAsMember,
   type MySmallGroup,
   type NearbySmallGroupHost,
   type SmallGroupGuide,
@@ -45,10 +46,10 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
   const [memberName, setMemberName] = useState('');
   const [nearbyHosts, setNearbyHosts] = useState<NearbySmallGroupHost[]>([]);
   const [hasMemberLocation, setHasMemberLocation] = useState(true);
-  const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
+  const [busyGroupId, setBusyGroupId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    // ProteÃ§Ã£o aplicada: no Ghost o card segue o alvo, nÃ£o o operador
+    // Proteção aplicada: no Ghost o card segue o alvo, não o operador
     setLoading(true);
     setError(null);
 
@@ -71,7 +72,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
     } catch (loadError) {
       setGroup(null);
       setNearbyHosts([]);
-      setError(loadError instanceof Error ? loadError.message : 'NÃ£o foi possÃ­vel carregar o grupo.');
+      setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar o grupo.');
     } finally {
       setLoading(false);
     }
@@ -90,10 +91,12 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
     [group?.host]
   );
 
+  const canLeaveEnrolledGroup = Boolean(group && !group.is_host && !group.is_leader);
+
   const openMaps = useCallback(
     async (provider: 'google' | 'waze') => {
       if (!hostAddress) {
-        Alert.alert('EndereÃ§o indisponÃ­vel', 'O anfitriÃ£o ainda nÃ£o tem endereÃ§o cadastrado.');
+        Alert.alert('Endereço indisponível', 'O anfitrião ainda não tem endereço cadastrado.');
         return;
       }
 
@@ -116,22 +119,43 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
     } catch (guideError) {
       Alert.alert(
         'Roteiro da Semana',
-        guideError instanceof Error ? guideError.message : 'NÃ£o foi possÃ­vel abrir o roteiro.'
+        guideError instanceof Error ? guideError.message : 'Não foi possível abrir o roteiro.'
       );
     }
   }, []);
 
-  const handleJoinGroup = useCallback((host: NearbySmallGroupHost) => {
-    Alert.alert(
-      'Participar do grupo',
-      `Deseja se inscrever em "${host.groupName}"?`,
-      [
+  const runLeaveGroup = useCallback(
+    async (groupId: string) => {
+      setBusyGroupId(groupId);
+
+      try {
+        const result = await leaveSmallGroupAsMember(groupId);
+        Alert.alert('Pequeno grupo', result.message);
+
+        if (result.success) {
+          await load();
+        }
+      } catch (leaveError) {
+        Alert.alert(
+          'Pequeno grupo',
+          leaveError instanceof Error ? leaveError.message : 'Não foi possível sair do grupo.'
+        );
+      } finally {
+        setBusyGroupId(null);
+      }
+    },
+    [load]
+  );
+
+  const handleJoinGroup = useCallback(
+    (host: NearbySmallGroupHost) => {
+      Alert.alert('Participar do grupo', `Deseja se inscrever em "${host.groupName}"?`, [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Confirmar',
           onPress: () => {
             void (async () => {
-              setJoiningGroupId(host.groupId);
+              setBusyGroupId(host.groupId);
 
               try {
                 const result = await joinSmallGroupAsMember(host.groupId);
@@ -143,32 +167,66 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
               } catch (joinError) {
                 Alert.alert(
                   'Pequeno grupo',
-                  joinError instanceof Error ? joinError.message : 'NÃ£o foi possÃ­vel participar.'
+                  joinError instanceof Error ? joinError.message : 'Não foi possível participar.'
                 );
               } finally {
-                setJoiningGroupId(null);
+                setBusyGroupId(null);
               }
             })();
           },
         },
-      ]
-    );
-  }, [load]);
+      ]);
+    },
+    [load]
+  );
 
-  const handleAbsence = useCallback(() => {
-    if (!group?.leader?.phone) {
-      Alert.alert('LÃ­der sem celular', 'NÃ£o hÃ¡ telefone cadastrado para o lÃ­der deste grupo.');
+  const handleLeaveGroup = useCallback(
+    (host: NearbySmallGroupHost) => {
+      Alert.alert('Sair do grupo', `Deseja sair de "${host.groupName}"?`, [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: () => {
+            void runLeaveGroup(host.groupId);
+          },
+        },
+      ]);
+    },
+    [runLeaveGroup]
+  );
+
+  const handleLeaveEnrolledGroup = useCallback(() => {
+    if (!group) {
       return;
     }
 
-    const message = `OlÃ¡ ${group.leader.full_name ?? 'lÃ­der'}, sou ${memberName} e nÃ£o poderei participar do pequeno grupo ${group.name} nesta semana.`;
+    Alert.alert('Sair do grupo', `Deseja sair de "${group.name}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Sair',
+        style: 'destructive',
+        onPress: () => {
+          void runLeaveGroup(group.id);
+        },
+      },
+    ]);
+  }, [group, runLeaveGroup]);
+
+  const handleAbsence = useCallback(() => {
+    if (!group?.leader?.phone) {
+      Alert.alert('Líder sem celular', 'Não há telefone cadastrado para o líder deste grupo.');
+      return;
+    }
+
+    const message = `Olá ${group.leader.full_name ?? 'líder'}, sou ${memberName} e não poderei participar do pequeno grupo ${group.name} nesta semana.`;
     openWhatsAppLikeBirthdaysWithText(group.leader.phone, message);
   }, [group, memberName]);
 
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
       <Text style={maintenancePanelStyles.panelTitle}>Pequeno Grupo</Text>
-      <Text style={styles.subtitle}>CÃ©lula da sua jornada em comunidade.</Text>
+      <Text style={styles.subtitle}>Célula da sua jornada em comunidade.</Text>
 
       {loading ? (
         <ActivityIndicator color="#1E3A5F" style={styles.loader} />
@@ -183,19 +241,19 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
         >
           <View style={styles.emptyCard}>
             <FontAwesome name="users" size={26} color="#93C5FD" />
-            <Text style={styles.emptyTitle}>VocÃª ainda nÃ£o estÃ¡ em um grupo</Text>
+            <Text style={styles.emptyTitle}>Você ainda não está em um grupo</Text>
             {nearbyHosts.length === 0 ? (
               <Text style={styles.emptyHint}>
-                NÃ£o existe nenhum anfitriÃ£o disponÃ­vel para alocaÃ§Ã£o.
+                Não existe nenhum anfitrião disponível para alocação.
               </Text>
             ) : (
               <>
                 <Text style={styles.emptyHint}>
-                  AnfitriÃµes mais prÃ³ximos da sua residÃªncia, da menor para a maior distÃ¢ncia.
+                  Anfitriões mais próximos da sua residência, da menor para a maior distância.
                 </Text>
                 {hasMemberLocation ? null : (
                   <Text style={styles.emptyHint}>
-                    Cadastre o CEP no seu perfil para calcular a distÃ¢ncia atÃ© cada anfitriÃ£o.
+                    Cadastre o CEP no seu perfil para calcular a distância até cada anfitrião.
                   </Text>
                 )}
               </>
@@ -211,8 +269,8 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
               </Text>
               <Text style={styles.hostMeta}>Bairro: {host.neighborhood}</Text>
               <Text style={styles.hostMeta}>
-                ReuniÃµes: {formatSmallGroupWeekday(host.meetingWeekday)}
-                {host.meetingTime ? ` Â· ${host.meetingTime}` : ''}
+                Reuniões: {formatSmallGroupWeekday(host.meetingWeekday)}
+                {host.meetingTime ? ` · ${host.meetingTime}` : ''}
               </Text>
               <Text style={styles.hostMeta}>{formatSmallGroupMemberCount(host.memberCount)}</Text>
               <Text style={styles.hostDistance}>
@@ -220,19 +278,25 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
               </Text>
               <TouchableOpacity
                 style={[
-                  styles.joinButton,
-                  joiningGroupId !== null && styles.buttonDisabled,
+                  host.isMember ? styles.leaveButton : styles.joinButton,
+                  busyGroupId !== null && styles.buttonDisabled,
                 ]}
-                onPress={() => handleJoinGroup(host)}
-                disabled={joiningGroupId !== null}
+                onPress={() => (host.isMember ? handleLeaveGroup(host) : handleJoinGroup(host))}
+                disabled={busyGroupId !== null}
                 activeOpacity={0.85}
                 accessibilityRole="button"
-                accessibilityLabel={`Quero participar do grupo ${host.groupName}`}
+                accessibilityLabel={
+                  host.isMember
+                    ? `Quero sair do grupo ${host.groupName}`
+                    : `Quero participar do grupo ${host.groupName}`
+                }
               >
-                {joiningGroupId === host.groupId ? (
+                {busyGroupId === host.groupId ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.buttonText}>Quero Participar do Grupo</Text>
+                  <Text style={styles.buttonText}>
+                    {host.isMember ? 'Quero sair do Grupo' : 'Quero Participar do Grupo'}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -248,16 +312,12 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
           <View style={styles.bodyCard}>
             <Text style={styles.groupName}>{group.name}</Text>
             <Text style={styles.meta}>
-              {formatSmallGroupWeekday(group.meeting_weekday)} Â· {group.meeting_time || 'â€”'}
+              {formatSmallGroupWeekday(group.meeting_weekday)} · {group.meeting_time || '—'}
             </Text>
-            <Text style={styles.meta}>
-              LÃ­der: {group.leader?.full_name ?? 'â€”'}
-            </Text>
-            <Text style={styles.meta}>
-              AnfitriÃ£o: {group.host?.full_name ?? 'â€”'}
-            </Text>
+            <Text style={styles.meta}>Líder: {group.leader?.full_name ?? '—'}</Text>
+            <Text style={styles.meta}>Anfitrião: {group.host?.full_name ?? '—'}</Text>
             <Text style={styles.address} numberOfLines={3}>
-              {hostAddress ?? 'EndereÃ§o do anfitriÃ£o ainda nÃ£o cadastrado.'}
+              {hostAddress ?? 'Endereço do anfitrião ainda não cadastrado.'}
             </Text>
           </View>
 
@@ -294,8 +354,25 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
             activeOpacity={0.85}
           >
             <FontAwesome name="whatsapp" size={16} color="#FFFFFF" />
-            <Text style={styles.buttonText}>Avisar AusÃªncia</Text>
+            <Text style={styles.buttonText}>Avisar Ausência</Text>
           </TouchableOpacity>
+
+          {canLeaveEnrolledGroup ? (
+            <TouchableOpacity
+              style={[styles.leaveButton, busyGroupId !== null && styles.buttonDisabled]}
+              onPress={handleLeaveEnrolledGroup}
+              disabled={busyGroupId !== null}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel={`Quero sair do grupo ${group.name}`}
+            >
+              {busyGroupId === group.id ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={styles.buttonText}>Quero sair do Grupo</Text>
+              )}
+            </TouchableOpacity>
+          ) : null}
         </ScrollView>
       )}
 
@@ -377,6 +454,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#1D4ED8',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+  },
+  leaveButton: {
+    ...CONTAIN_WIDTH,
+    marginTop: 8,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#B91C1C',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 10,

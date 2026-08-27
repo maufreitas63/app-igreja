@@ -107,6 +107,7 @@ export type NearbySmallGroupHost = {
   meetingWeekday: number;
   meetingTime: string;
   memberCount: number;
+  isMember: boolean;
   distanceMeters: number | null;
 };
 
@@ -511,6 +512,7 @@ export async function fetchNearbySmallGroupHosts(): Promise<{
           meetingWeekday: Number(row.meeting_weekday ?? 3),
           meetingTime: String(row.meeting_time ?? '').trim(),
           memberCount: Number.isFinite(memberCountRaw) && memberCountRaw > 0 ? Math.round(memberCountRaw) : 0,
+          isMember: row.is_member === true,
           distanceMeters: Number.isFinite(distanceMeters) ? distanceMeters : null,
         } satisfies NearbySmallGroupHost;
       })
@@ -543,6 +545,17 @@ export async function joinSmallGroupAsMember(groupId: string) {
     success: payload.success === true,
     message: String(
       payload.message ?? (payload.success === true ? 'Inscrição confirmada.' : 'Falha ao participar.')
+    ),
+  };
+}
+
+export async function leaveSmallGroupAsMember(groupId: string) {
+  const payload = await rpcJson('leave_small_group_as_member', { p_group_id: groupId });
+
+  return {
+    success: payload.success === true,
+    message: String(
+      payload.message ?? (payload.success === true ? 'Você saiu do grupo.' : 'Falha ao sair do grupo.')
     ),
   };
 }

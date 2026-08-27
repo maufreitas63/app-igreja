@@ -7,6 +7,7 @@ language plpgsql
 stable
 security definer
 set search_path = public
+set row_security = off
 as $$
 declare
   v_tenant uuid := public.require_session_tenant_id();
@@ -56,6 +57,13 @@ begin
                 select count(*)::int
                   from public.small_group_members m
                  where m.small_group_id = g.id
+              ),
+              'is_member', exists (
+                select 1
+                  from public.small_group_members m
+                 where m.small_group_id = g.id
+                   and m.profile_id = v_me
+                   and m.tenant_id = v_tenant
               ),
               'distance_meters',
                 case
