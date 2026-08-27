@@ -1,7 +1,8 @@
-import { SmallGroupGuideModal } from '@/components/SmallGroupGuideModal';
+﻿import { SmallGroupGuideModal } from '@/components/SmallGroupGuideModal';
 import { buildProfileMapNavigationAddressLine } from '@/lib/enrichProfileMapAddress';
 import { formatShortName } from '@/lib/formatShortName';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import {
   fetchCurrentSmallGroupGuide,
@@ -47,7 +48,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    // Proteção aplicada: no Ghost o card segue o alvo, não o operador
+    // ProteÃ§Ã£o aplicada: no Ghost o card segue o alvo, nÃ£o o operador
     setLoading(true);
     setError(null);
 
@@ -70,7 +71,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
     } catch (loadError) {
       setGroup(null);
       setNearbyHosts([]);
-      setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar o grupo.');
+      setError(loadError instanceof Error ? loadError.message : 'NÃ£o foi possÃ­vel carregar o grupo.');
     } finally {
       setLoading(false);
     }
@@ -92,7 +93,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
   const openMaps = useCallback(
     async (provider: 'google' | 'waze') => {
       if (!hostAddress) {
-        Alert.alert('Endereço indisponível', 'O anfitrião ainda não tem endereço cadastrado.');
+        Alert.alert('EndereÃ§o indisponÃ­vel', 'O anfitriÃ£o ainda nÃ£o tem endereÃ§o cadastrado.');
         return;
       }
 
@@ -115,7 +116,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
     } catch (guideError) {
       Alert.alert(
         'Roteiro da Semana',
-        guideError instanceof Error ? guideError.message : 'Não foi possível abrir o roteiro.'
+        guideError instanceof Error ? guideError.message : 'NÃ£o foi possÃ­vel abrir o roteiro.'
       );
     }
   }, []);
@@ -142,7 +143,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
               } catch (joinError) {
                 Alert.alert(
                   'Pequeno grupo',
-                  joinError instanceof Error ? joinError.message : 'Não foi possível participar.'
+                  joinError instanceof Error ? joinError.message : 'NÃ£o foi possÃ­vel participar.'
                 );
               } finally {
                 setJoiningGroupId(null);
@@ -156,18 +157,18 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
 
   const handleAbsence = useCallback(() => {
     if (!group?.leader?.phone) {
-      Alert.alert('Líder sem celular', 'Não há telefone cadastrado para o líder deste grupo.');
+      Alert.alert('LÃ­der sem celular', 'NÃ£o hÃ¡ telefone cadastrado para o lÃ­der deste grupo.');
       return;
     }
 
-    const message = `Olá ${group.leader.full_name ?? 'líder'}, sou ${memberName} e não poderei participar do pequeno grupo ${group.name} nesta semana.`;
+    const message = `OlÃ¡ ${group.leader.full_name ?? 'lÃ­der'}, sou ${memberName} e nÃ£o poderei participar do pequeno grupo ${group.name} nesta semana.`;
     openWhatsAppLikeBirthdaysWithText(group.leader.phone, message);
   }, [group, memberName]);
 
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
       <Text style={maintenancePanelStyles.panelTitle}>Pequeno Grupo</Text>
-      <Text style={styles.subtitle}>Célula da sua jornada em comunidade.</Text>
+      <Text style={styles.subtitle}>CÃ©lula da sua jornada em comunidade.</Text>
 
       {loading ? (
         <ActivityIndicator color="#1E3A5F" style={styles.loader} />
@@ -182,19 +183,19 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
         >
           <View style={styles.emptyCard}>
             <FontAwesome name="users" size={26} color="#93C5FD" />
-            <Text style={styles.emptyTitle}>Você ainda não está em um grupo</Text>
+            <Text style={styles.emptyTitle}>VocÃª ainda nÃ£o estÃ¡ em um grupo</Text>
             {nearbyHosts.length === 0 ? (
               <Text style={styles.emptyHint}>
-                Não existe nenhum anfitrião disponível para alocação.
+                NÃ£o existe nenhum anfitriÃ£o disponÃ­vel para alocaÃ§Ã£o.
               </Text>
             ) : (
               <>
                 <Text style={styles.emptyHint}>
-                  Anfitriões mais próximos da sua residência, da menor para a maior distância.
+                  AnfitriÃµes mais prÃ³ximos da sua residÃªncia, da menor para a maior distÃ¢ncia.
                 </Text>
                 {hasMemberLocation ? null : (
                   <Text style={styles.emptyHint}>
-                    Cadastre o CEP no seu perfil para calcular a distância até cada anfitrião.
+                    Cadastre o CEP no seu perfil para calcular a distÃ¢ncia atÃ© cada anfitriÃ£o.
                   </Text>
                 )}
               </>
@@ -210,8 +211,8 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
               </Text>
               <Text style={styles.hostMeta}>Bairro: {host.neighborhood}</Text>
               <Text style={styles.hostMeta}>
-                Reuniões: {formatSmallGroupWeekday(host.meetingWeekday)}
-                {host.meetingTime ? ` · ${host.meetingTime}` : ''}
+                ReuniÃµes: {formatSmallGroupWeekday(host.meetingWeekday)}
+                {host.meetingTime ? ` Â· ${host.meetingTime}` : ''}
               </Text>
               <Text style={styles.hostMeta}>{formatSmallGroupMemberCount(host.memberCount)}</Text>
               <Text style={styles.hostDistance}>
@@ -247,16 +248,16 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
           <View style={styles.bodyCard}>
             <Text style={styles.groupName}>{group.name}</Text>
             <Text style={styles.meta}>
-              {formatSmallGroupWeekday(group.meeting_weekday)} · {group.meeting_time || '—'}
+              {formatSmallGroupWeekday(group.meeting_weekday)} Â· {group.meeting_time || 'â€”'}
             </Text>
             <Text style={styles.meta}>
-              Líder: {group.leader?.full_name ?? '—'}
+              LÃ­der: {group.leader?.full_name ?? 'â€”'}
             </Text>
             <Text style={styles.meta}>
-              Anfitrião: {group.host?.full_name ?? '—'}
+              AnfitriÃ£o: {group.host?.full_name ?? 'â€”'}
             </Text>
             <Text style={styles.address} numberOfLines={3}>
-              {hostAddress ?? 'Endereço do anfitrião ainda não cadastrado.'}
+              {hostAddress ?? 'EndereÃ§o do anfitriÃ£o ainda nÃ£o cadastrado.'}
             </Text>
           </View>
 
@@ -293,7 +294,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
             activeOpacity={0.85}
           >
             <FontAwesome name="whatsapp" size={16} color="#FFFFFF" />
-            <Text style={styles.buttonText}>Avisar Ausência</Text>
+            <Text style={styles.buttonText}>Avisar AusÃªncia</Text>
           </TouchableOpacity>
         </ScrollView>
       )}
@@ -305,10 +306,12 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
 
 const styles = StyleSheet.create({
   panel: {
-    width: '100%',
+    ...CONTAIN_WIDTH,
+    flex: 1,
     gap: 8,
   },
   subtitle: {
+    ...CONTAIN_WIDTH,
     color: '#64748B',
     fontSize: 12,
     textAlign: 'center',
@@ -317,30 +320,34 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   errorText: {
+    ...CONTAIN_WIDTH,
     color: '#B91C1C',
     textAlign: 'center',
     fontSize: 13,
   },
   emptyCard: {
+    ...CONTAIN_WIDTH,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingHorizontal: 8,
     paddingVertical: 8,
   },
   emptyTitle: {
+    ...CONTAIN_WIDTH,
     color: '#1E3A5F',
     fontWeight: '800',
     fontSize: 14,
     textAlign: 'center',
   },
   emptyHint: {
+    ...CONTAIN_WIDTH,
     color: '#64748B',
     fontSize: 12,
     textAlign: 'center',
     lineHeight: 18,
   },
   hostCard: {
+    ...CONTAIN_WIDTH,
     borderWidth: 1,
     borderColor: '#CBD5E1',
     borderRadius: 10,
@@ -364,6 +371,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   joinButton: {
+    ...CONTAIN_WIDTH,
     marginTop: 8,
     minHeight: 40,
     alignItems: 'center',
@@ -374,13 +382,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   scroll: {
+    ...CONTAIN_WIDTH,
     flex: 1,
   },
   scrollContent: {
+    ...CONTAIN_WIDTH,
     gap: 10,
     paddingBottom: 8,
+    flexGrow: 1,
+    alignItems: 'stretch',
   },
   bodyCard: {
+    ...CONTAIN_WIDTH,
     borderWidth: 1,
     borderColor: '#CBD5E1',
     borderRadius: 10,
@@ -406,11 +419,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   row: {
+    ...CONTAIN_WIDTH,
     flexDirection: 'row',
     gap: 8,
   },
   mapButton: {
     flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -423,6 +438,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#33CCFF',
   },
   primaryButton: {
+    ...CONTAIN_WIDTH,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -432,6 +448,7 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   absenceButton: {
+    ...CONTAIN_WIDTH,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -447,5 +464,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 13,
+    textAlign: 'center',
   },
 });
