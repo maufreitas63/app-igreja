@@ -7,8 +7,9 @@
 import {
   asRecord,
   jsonResponse,
-  planCodeFromStripePriceId,
-  stripeSubscriptionPeriod,
+  persistStripeSubscription,
+  readStripeMeta,
+  stripeGet,
   supabaseServiceRpc,
   verifyStripeWebhookSignature,
   type BillingEnv,
@@ -19,50 +20,30 @@ type PagesContext = {
   env: BillingEnv;
 };
 
-const readMeta = (obj: Record<string, unknown> | null, key: string) => {
-  const meta = asRecord(obj?.metadata);
-  const value = meta?.[key];
-  return typeof value === 'string' ? value.trim() : '';
-};
-
 async function upsertFromSubscription(
   env: BillingEnv,
+  secret: string,
   subscription: Record<string, unknown>,
   fallbackTenantId?: string,
-  fallbackPlanCode?: string
+  fallbackPlanCode?: string,
+  checkoutSessionId?: string | null
 ) {
-  const tenantId = readMeta(subscription, 'tenant_id') || fallbackTenantId || '';
+  const tenantId = readStripeMeta(subscription, 'tenant_id') || fallbackTenantId || '';
   if (!tenantId) {
     return { ok: false as const, message: 'Webhook sem metadata.tenant_id.' };
   }
 
-  const items = asRecord(subscription.items);
-  const data = Array.isArray(items?.data) ? items?.data : [];
-  const firstItem = asRecord(data[0]);
-  const price = asRecord(firstItem?.price);
-  const priceId = typeof price?.id === 'string' ? price.id : '';
-  const planCode =
-    readMeta(subscription, 'plan_code')
-    || fallbackPlanCode
-    || planCodeFromStripePriceId(env, priceId)
-    || 'semente';
+  let full = subscription;
+  const subId = typeof subscription.id === 'string' ? subscription.id : '';
+  if (subId.startsWith('sub_') && secret) {
+    const loaded = await stripeGet(secret, `subscriptions/${subId}?expand[]=items.data.price`);
+    if (loaded.ok) full = loaded.data;
+  }
 
-  const status = typeof subscription.status === 'string' ? subscription.status : 'inactive';
-  const period = stripeSubscriptionPeriod(subscription);
-
-  return supabaseServiceRpc(env, 'upsert_tenant_subscription_from_stripe', {
-    p_tenant_id: tenantId,
-    p_plan_code: planCode,
-    p_status: status,
-    p_stripe_customer_id:
-      typeof subscription.customer === 'string' ? subscription.customer : null,
-    p_stripe_subscription_id:
-      typeof subscription.id === 'string' ? subscription.id : null,
-    p_stripe_checkout_session_id: null,
-    p_current_period_start: period.start,
-    p_current_period_end: period.end,
-    p_cancel_at_period_end: subscription.cancel_at_period_end === true,
-    p_raw_stripe: subscription,
+  return persistStripeSubscription(env, full, {
+    tenantId,
+    planCode: fallbackPlanCode,
+    checkoutSessionId: checkoutSessionId ?? null,
   });
 }
 
@@ -92,21 +73,24 @@ export const onRequestPost = async (context: PagesContext) => {
     const object = asRecord(event.data?.object) || {};
 
     if (type === 'checkout.session.completed') {
-      const tenantId = readMeta(object, 'tenant_id') || String(object.client_reference_id || '');
-      const planCode = readMeta(object, 'plan_code') || 'semente';
+      const tenantId = readStripeMeta(object, 'tenant_id') || String(object.client_reference_id || '');
+      const planCode = readStripeMeta(object, 'plan_code') || 'semente';
       const subscriptionId =
         typeof object.subscription === 'string' ? object.subscription : null;
       const customerId = typeof object.customer === 'string' ? object.customer : null;
       const sessionId = typeof object.id === 'string' ? object.id : null;
 
       if (subscriptionId) {
-        // Busca assinatura completa na API Stripe (test)
-        const subRes = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
-          headers: { Authorization: `Bearer ${stripeKey}` },
-        });
-        const subJson = (await subRes.json()) as Record<string, unknown>;
+        const subRes = await stripeGet(
+          stripeKey,
+          `subscriptions/${subscriptionId}?expand[]=items.data.price`
+        );
         if (subRes.ok) {
-          const result = await upsertFromSubscription(context.env, subJson, tenantId, planCode);
+          const result = await persistStripeSubscription(context.env, subRes.data, {
+            tenantId,
+            planCode,
+            checkoutSessionId: sessionId,
+          });
           if (!result.ok) {
             return jsonResponse({ received: false, message: result.message }, 500);
           }
@@ -140,14 +124,10 @@ export const onRequestPost = async (context: PagesContext) => {
       const subscription =
         type.startsWith('customer.subscription.')
           ? object
-          : asRecord(
-              typeof object.subscription === 'object'
-                ? object.subscription
-                : null
-            );
+          : asRecord(typeof object.subscription === 'object' ? object.subscription : null);
 
       if (subscription) {
-        const result = await upsertFromSubscription(context.env, subscription);
+        const result = await upsertFromSubscription(context.env, stripeKey, subscription);
         if (!result.ok) {
           return jsonResponse({ received: false, message: result.message }, 500);
         }
@@ -155,13 +135,12 @@ export const onRequestPost = async (context: PagesContext) => {
       }
 
       if (typeof object.subscription === 'string') {
-        const subRes = await fetch(
-          `https://api.stripe.com/v1/subscriptions/${object.subscription}`,
-          { headers: { Authorization: `Bearer ${stripeKey}` } }
+        const subRes = await stripeGet(
+          stripeKey,
+          `subscriptions/${object.subscription}?expand[]=items.data.price`
         );
-        const subJson = (await subRes.json()) as Record<string, unknown>;
         if (subRes.ok) {
-          const result = await upsertFromSubscription(context.env, subJson);
+          const result = await persistStripeSubscription(context.env, subRes.data);
           if (!result.ok) {
             return jsonResponse({ received: false, message: result.message }, 500);
           }

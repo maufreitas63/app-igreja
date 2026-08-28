@@ -61,6 +61,74 @@ export const planCodeFromPriceEnv = (env: BillingEnv, planCode: string): string 
   return price || null;
 };
 
+export function readStripeMeta(obj: Record<string, unknown> | null, key: string): string {
+  const meta = asRecord(obj?.metadata);
+  const value = meta?.[key];
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+export async function persistStripeSubscription(
+  env: BillingEnv,
+  subscription: Record<string, unknown>,
+  options?: {
+    tenantId?: string;
+    planCode?: string;
+    checkoutSessionId?: string | null;
+  }
+): Promise<{ ok: true; data: unknown } | { ok: false; message: string }> {
+  const tenantId = (options?.tenantId || readStripeMeta(subscription, 'tenant_id')).trim();
+  if (!tenantId) {
+    return { ok: false, message: 'Assinatura Stripe sem tenant_id.' };
+  }
+
+  const items = asRecord(subscription.items);
+  const data = Array.isArray(items?.data) ? items.data : [];
+  const firstItem = asRecord(data[0]);
+  const price = asRecord(firstItem?.price);
+  const priceId = typeof price?.id === 'string' ? price.id : '';
+  const planCode =
+    options?.planCode?.trim()
+    || readStripeMeta(subscription, 'plan_code')
+    || planCodeFromStripePriceId(env, priceId)
+    || 'semente';
+
+  const status = typeof subscription.status === 'string' ? subscription.status : 'inactive';
+  const period = stripeSubscriptionPeriod(subscription);
+
+  return supabaseServiceRpc(env, 'upsert_tenant_subscription_from_stripe', {
+    p_tenant_id: tenantId,
+    p_plan_code: planCode,
+    p_status: status,
+    p_stripe_customer_id:
+      typeof subscription.customer === 'string' ? subscription.customer : null,
+    p_stripe_subscription_id:
+      typeof subscription.id === 'string' ? subscription.id : null,
+    p_stripe_checkout_session_id: options?.checkoutSessionId ?? null,
+    p_current_period_start: period.start,
+    p_current_period_end: period.end,
+    p_cancel_at_period_end: subscription.cancel_at_period_end === true,
+    p_raw_stripe: subscription,
+  });
+}
+
+export async function stripeGet(
+  secretKey: string,
+  path: string
+): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; message: string; status: number }> {
+  const response = await fetch(`https://api.stripe.com/v1/${path}`, {
+    headers: { Authorization: `Bearer ${secretKey}` },
+  });
+  const data = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    const err =
+      data.error && typeof data.error === 'object'
+        ? String((data.error as { message?: string }).message || 'Stripe error')
+        : 'Stripe error';
+    return { ok: false, message: err, status: response.status };
+  }
+  return { ok: true, data };
+}
+
 export const planCodeFromStripePriceId = (env: BillingEnv, priceId: string): string | null => {
   const id = priceId.trim();
   if (!id) return null;

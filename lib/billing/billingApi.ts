@@ -76,7 +76,9 @@ export async function getTenantBillingStatus(
     return emptyStatus(error.message);
   }
 
-  const record = (data ?? {}) as Record<string, unknown>;
+  const record = (
+    Array.isArray(data) ? data[0] : data ?? {}
+  ) as Record<string, unknown>;
   const planRaw =
     record.plan && typeof record.plan === 'object'
       ? mapPlan(record.plan as Record<string, unknown>)
@@ -153,6 +155,7 @@ async function readBillingApiPayload(response: Response): Promise<{
   message?: string;
   cancel_at_period_end?: boolean;
   action?: string;
+  synced?: boolean;
 }> {
   const text = await response.text();
   try {
@@ -190,6 +193,28 @@ export async function createStripeCheckoutSession(input: {
     throw new Error(payload.message || 'Não foi possível iniciar o checkout Stripe.');
   }
   return { url: payload.url, sessionId: payload.session_id ?? null };
+}
+
+export async function syncTenantSubscriptionFromStripe(input: {
+  tenantId: string;
+  sessionId?: string | null;
+}): Promise<{ synced: boolean; message: string }> {
+  const response = await fetch(resolveBillingApiEndpoint('/api/stripe-sync-subscription'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      tenant_id: input.tenantId,
+      session_id: input.sessionId || undefined,
+    }),
+  });
+  const payload = await readBillingApiPayload(response);
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.message || 'Não foi possível sincronizar a contratação.');
+  }
+  return {
+    synced: payload.synced === true,
+    message: payload.message || 'Contratação sincronizada.',
+  };
 }
 
 export async function manageTenantSubscription(input: {

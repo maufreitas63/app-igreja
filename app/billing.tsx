@@ -7,18 +7,24 @@ import {
   getTenantBillingStatus,
   listBillingPlans,
   manageTenantSubscription,
+  syncTenantSubscriptionFromStripe,
 } from '@/lib/billing/billingApi';
 import type { BillingPlan } from '@/lib/billing/types';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { getStoredTenantId } from '@/lib/tenantSession';
 import { useLeadershipRouteGuard } from '@/hooks/useLeadershipRouteGuard';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+
+function firstQueryParam(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return String(value[0] || '').trim();
+  return String(value || '').trim();
+}
 
 /**
  * Rota de assinaturas. Isolada do dashboard; hosta o BillingClass.
@@ -27,6 +33,7 @@ import Toast from 'react-native-toast-message';
 export default function BillingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ checkout?: string; session_id?: string }>();
   const accessStatus = useLeadershipRouteGuard({
     deniedMessage: 'Você não tem permissão para abrir as assinaturas da igreja.',
     requireMaintenance: true,
@@ -45,31 +52,73 @@ export default function BillingScreen() {
   const [checkoutLoadingPlanCode, setCheckoutLoadingPlanCode] = useState<string | null>(null);
   const [contractBusy, setContractBusy] = useState(false);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [planRows, billing] = await Promise.all([
-        listBillingPlans(),
-        getTenantBillingStatus(),
-      ]);
-      setPlans(planRows);
-      setCurrentPlanCode(billing.plan?.code ?? null);
-      setCurrentPlanName(billing.plan?.name ?? null);
-      setHasSubscription(billing.hasSubscription);
-      setSignedAt(billing.signedAt ?? billing.currentPeriodStart ?? null);
-      setCurrentPeriodEnd(billing.currentPeriodEnd ?? null);
-      setCancelAtPeriodEnd(billing.cancelAtPeriodEnd === true);
-      setActiveUsers(billing.memberCount);
-      setActiveMembers(billing.activeMembers);
-      setActiveCongregados(billing.activeCongregados);
-    } finally {
-      setLoading(false);
-    }
+  const fetchBilling = useCallback(async () => {
+    const tenantId = await getStoredTenantId();
+    const [planRows, billing] = await Promise.all([
+      listBillingPlans(),
+      getTenantBillingStatus(tenantId),
+    ]);
+    setPlans(planRows);
+    setCurrentPlanCode(billing.plan?.code ?? null);
+    setCurrentPlanName(billing.plan?.name ?? null);
+    setHasSubscription(billing.hasSubscription);
+    setSignedAt(billing.signedAt ?? billing.currentPeriodStart ?? null);
+    setCurrentPeriodEnd(billing.currentPeriodEnd ?? null);
+    setCancelAtPeriodEnd(billing.cancelAtPeriodEnd === true);
+    setActiveUsers(billing.memberCount);
+    setActiveMembers(billing.activeMembers);
+    setActiveCongregados(billing.activeCongregados);
   }, []);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let cancelled = false;
+    const checkoutState = firstQueryParam(params.checkout);
+    const sessionId = firstQueryParam(params.session_id);
+
+    void (async () => {
+      setLoading(true);
+      try {
+        const tenantId = await getStoredTenantId();
+        if (tenantId) {
+          try {
+            const sync = await syncTenantSubscriptionFromStripe({
+              tenantId,
+              sessionId: sessionId || null,
+            });
+            if (!cancelled && checkoutState === 'success' && sync.synced) {
+              Toast.show({
+                type: 'success',
+                text1: 'Contratação confirmada',
+                text2: 'O pacote e as datas de renovação foram atualizados.',
+                visibilityTime: 5000,
+              });
+            }
+          } catch (error) {
+            if (!cancelled && checkoutState === 'success') {
+              Toast.show({
+                type: 'error',
+                text1: 'Contratação',
+                text2:
+                  error instanceof Error
+                    ? error.message
+                    : 'Pagamento ok, mas a contratação ainda não apareceu. Recarregue a tela.',
+                visibilityTime: 7000,
+              });
+            }
+          }
+        }
+        if (!cancelled) {
+          await fetchBilling();
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchBilling, params.checkout, params.session_id]);
 
   const handleSubscribe = async (plan: BillingPlan) => {
     try {
@@ -119,7 +168,11 @@ export default function BillingScreen() {
       }
 
       await WebBrowser.openBrowserAsync(url);
-      await refresh();
+      const tenantIdAfter = await getStoredTenantId();
+      if (tenantIdAfter) {
+        await syncTenantSubscriptionFromStripe({ tenantId: tenantIdAfter });
+      }
+      await fetchBilling();
     } catch (error) {
       Toast.show({
         type: 'error',
@@ -163,7 +216,7 @@ export default function BillingScreen() {
           text2: result.message,
           visibilityTime: 6000,
         });
-        await refresh();
+        await fetchBilling();
         return;
       }
 
@@ -219,7 +272,7 @@ export default function BillingScreen() {
         text2: result.message,
         visibilityTime: 7000,
       });
-      await refresh();
+      await fetchBilling();
     } catch (error) {
       Toast.show({
         type: 'error',
