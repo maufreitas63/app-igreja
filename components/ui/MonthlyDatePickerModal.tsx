@@ -1,11 +1,12 @@
 import {
   buildMonthCalendarGrid,
+  calendarDateInputToBr,
   chunkCalendarGrid,
   clampCalendarDay,
   formatEventDateOnlyFromParts,
   formatMonthYearLabel,
   formatPickerSelectedDateLabel,
-  parseEventDateOnlyInputParts,
+  parseCalendarDateInput,
   parseIsoCalendarDate,
   shiftCalendarMonth,
   WEEKDAY_LABELS_PT,
@@ -32,6 +33,10 @@ type MonthlyDatePickerModalProps = {
   onConfirm: (dateInput: string) => void;
   title?: string;
   variant?: 'default' | 'minimal';
+  /** Clique no dia inclui/remove a data; OK só fecha. */
+  multiSelect?: boolean;
+  selectedDates?: string[];
+  onToggleDate?: (dateInput: string) => void;
 };
 
 const getDefaultParts = (): CalendarDateParts => {
@@ -49,7 +54,7 @@ const getDefaultParts = (): CalendarDateParts => {
 };
 
 const resolveInitialParts = (value: string): CalendarDateParts =>
-  parseEventDateOnlyInputParts(value) ?? getDefaultParts();
+  parseCalendarDateInput(value) ?? getDefaultParts();
 
 export function MonthlyDatePickerModal({
   visible,
@@ -58,6 +63,9 @@ export function MonthlyDatePickerModal({
   onConfirm,
   title = 'Selecionar data',
   variant = 'default',
+  multiSelect = false,
+  selectedDates = [],
+  onToggleDate,
 }: MonthlyDatePickerModalProps) {
   const isMinimal = variant === 'minimal';
   const [draft, setDraft] = useState<CalendarDateParts>(() => resolveInitialParts(value));
@@ -85,25 +93,41 @@ export function MonthlyDatePickerModal({
     const next = shiftCalendarMonth(viewYear, viewMonth, delta);
     setViewYear(next.year);
     setViewMonth(next.month);
-    setDraft((current) => ({
-      year: next.year,
-      month: next.month,
-      day: clampCalendarDay(next.year, next.month, current.day),
-    }));
+    if (!multiSelect) {
+      setDraft((current) => ({
+        year: next.year,
+        month: next.month,
+        day: clampCalendarDay(next.year, next.month, current.day),
+      }));
+    }
   };
 
   const handleSelectDay = (day: number) => {
-    setDraft({
+    const next = {
       year: viewYear,
       month: viewMonth,
       day,
-    });
+    };
+
+    if (multiSelect) {
+      onToggleDate?.(formatEventDateOnlyFromParts(next));
+      return;
+    }
+
+    setDraft(next);
   };
 
   const handleConfirm = () => {
-    onConfirm(formatEventDateOnlyFromParts(draft));
+    if (!multiSelect) {
+      onConfirm(formatEventDateOnlyFromParts(draft));
+    }
     onClose();
   };
+
+  const selectedDateKeys = useMemo(
+    () => new Set(selectedDates.map((item) => calendarDateInputToBr(item))),
+    [selectedDates]
+  );
 
   const iconColor = isMinimal ? MINIMAL_UI.icon : '#5F6368';
 
@@ -121,7 +145,11 @@ export function MonthlyDatePickerModal({
 
           <View style={styles.selectedDateRow}>
             <Text style={[styles.selectedDateText, isMinimal && styles.selectedDateTextMinimal]}>
-              {formatPickerSelectedDateLabel(draft)}
+              {multiSelect
+                ? selectedDates.length
+                  ? `${selectedDates.length} ${selectedDates.length === 1 ? 'data selecionada' : 'datas selecionadas'}`
+                  : 'Toque nos dias da reunião'
+                : formatPickerSelectedDateLabel(draft)}
             </Text>
             <MaterialIcons name="edit-calendar" size={22} color={iconColor} />
           </View>
@@ -169,10 +197,15 @@ export function MonthlyDatePickerModal({
                     return <View key={`empty-${weekIndex}-${dayIndex}`} style={styles.dayCell} />;
                   }
 
-                  const isSelected =
-                    draft.year === viewYear
-                    && draft.month === viewMonth
-                    && draft.day === day;
+                  const isSelected = multiSelect
+                    ? selectedDateKeys.has(formatEventDateOnlyFromParts({
+                        year: viewYear,
+                        month: viewMonth,
+                        day,
+                      }))
+                    : draft.year === viewYear
+                      && draft.month === viewMonth
+                      && draft.day === day;
                   const isToday =
                     todayParts.year === viewYear
                     && todayParts.month === viewMonth

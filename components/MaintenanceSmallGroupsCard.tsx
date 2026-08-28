@@ -1,5 +1,9 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
+import { confirmDialog } from '@/lib/confirmDialog';
+import { formatFullName } from '@/lib/fullName';
 import { formatShortName } from '@/lib/formatShortName';
+import { formatBrazilPhoneInput, formatBrazilTimeInput } from '@/lib/inputMasks';
 import {
   computeMaintenanceContentHeight,
   MAINTENANCE_SCROLL_PROPS,
@@ -7,32 +11,38 @@ import {
 } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
+  calendarDateInputToBr,
+  calendarDateInputToIso,
+} from '@/lib/monthlyDatePicker';
+import {
   addSmallGroupMember,
   deleteSmallGroupAdmin,
   enqueueSmallGroupVisitor,
   fetchSmallGroupGuideCandidates,
+  fetchSmallGroupManualGuide,
   fetchSmallGroupRollCall,
   fetchSmallGroupsAdmin,
+  formatSmallGroupMeetingLabel,
   publishSmallGroupGuide,
   removeSmallGroupMember,
   saveSmallGroupAdmin,
+  saveSmallGroupManualGuide,
   searchSmallGroupProfiles,
   setSmallGroupAttendance,
-  SMALL_GROUP_WEEKDAYS,
   submitSmallGroupSpiritualReport,
   type SmallGroupAdminRow,
   type SmallGroupGuideCandidate,
+  type SmallGroupMeeting,
   type SmallGroupProfileSummary,
   type SmallGroupRollCallMember,
 } from '@/lib/smallGroupsApi';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
+  Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -61,8 +71,9 @@ export function MaintenanceSmallGroupsCard({
   const [groups, setGroups] = useState<SmallGroupAdminRow[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
   const [name, setName] = useState('');
-  const [weekday, setWeekday] = useState('3');
-  const [time, setTime] = useState('19:30');
+  const [meetings, setMeetings] = useState<SmallGroupMeeting[]>([]);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [rollDatePickerOpen, setRollDatePickerOpen] = useState(false);
   const [hostId, setHostId] = useState<string>('');
   const [leaderId, setLeaderId] = useState<string>('');
   const [notes, setNotes] = useState('');
@@ -75,6 +86,9 @@ export function MaintenanceSmallGroupsCard({
   const [prayer, setPrayer] = useState('');
   const [pastoralNotes, setPastoralNotes] = useState('');
   const [guides, setGuides] = useState<SmallGroupGuideCandidate[]>([]);
+  const [manualTitle, setManualTitle] = useState('');
+  const [manualContent, setManualContent] = useState('');
+  const [manualVideoUrl, setManualVideoUrl] = useState('');
 
   const selectedGroup = useMemo(
     () => groups.find((group) => group.id === selectedId) ?? null,
@@ -84,8 +98,7 @@ export function MaintenanceSmallGroupsCard({
   const applyGroup = useCallback((group: SmallGroupAdminRow | null) => {
     setSelectedId(group?.id ?? '');
     setName(group?.name ?? '');
-    setWeekday(String(group?.meeting_weekday ?? 3));
-    setTime(group?.meeting_time || '19:30');
+    setMeetings(group?.meetings ?? []);
     setHostId(group?.host?.id ?? '');
     setLeaderId(group?.leader?.id ?? '');
     setNotes(group?.notes ?? '');
@@ -155,7 +168,14 @@ export function MaintenanceSmallGroupsCard({
 
   const loadGuides = useCallback(async () => {
     try {
-      setGuides(await fetchSmallGroupGuideCandidates());
+      const [lessons, manual] = await Promise.all([
+        fetchSmallGroupGuideCandidates(),
+        fetchSmallGroupManualGuide().catch(() => null),
+      ]);
+      setGuides(lessons);
+      setManualTitle(manual?.title ?? '');
+      setManualContent(manual?.content ?? '');
+      setManualVideoUrl(manual?.video_url ?? '');
     } catch {
       setGuides([]);
     }
@@ -192,18 +212,26 @@ export function MaintenanceSmallGroupsCard({
     setSaving(true);
 
     try {
+      const firstMeeting = meetings[0];
+      const meetingWeekday = firstMeeting
+        ? new Date(`${firstMeeting.meeting_date}T12:00:00`).getDay()
+        : 3;
       const result = await saveSmallGroupAdmin({
         id: selectedId || null,
         name,
-        meetingWeekday: Number(weekday),
-        meetingTime: time,
+        meetingWeekday,
+        meetingTime: firstMeeting?.meeting_time || '19:30',
         hostProfileId: hostId || null,
         leaderProfileId: leaderId || null,
         notes,
+        meetings,
       });
       notify(result.success, 'Pequenos grupos', result.message);
 
       if (result.success) {
+        if (result.id) {
+          setSelectedId(result.id);
+        }
         await loadGroups();
       }
     } finally {
@@ -216,47 +244,37 @@ export function MaintenanceSmallGroupsCard({
     setSelectedId('');
   };
 
-  const handleDeleteGroup = () => {
+  const handleDeleteGroup = async () => {
     if (!selectedId || !selectedGroup) {
       notify(false, 'Pequenos grupos', 'Selecione um grupo para excluir.');
       return;
     }
 
-    const hostLabel = selectedGroup.host?.full_name
-      ? formatShortName(selectedGroup.host.full_name)
-      : 'não definido';
-    const leaderLabel = selectedGroup.leader?.full_name
-      ? formatShortName(selectedGroup.leader.full_name)
-      : 'não definido';
-
-    Alert.alert(
+    const confirmed = await confirmDialog(
       'Excluir grupo',
-      `O grupo "${selectedGroup.name}" será excluído, incluindo anfitrião (${hostLabel}) e líder (${leaderLabel}). Os cadastros dessas pessoas na igreja permanecem.\n\nEsta ação não pode ser desfeita.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: () => {
-            void (async () => {
-              setSaving(true);
-
-              try {
-                const result = await deleteSmallGroupAdmin(selectedId);
-                notify(result.success, 'Pequenos grupos', result.message);
-
-                if (result.success) {
-                  applyGroup(null);
-                  await loadGroups();
-                }
-              } finally {
-                setSaving(false);
-              }
-            })();
-          },
-        },
-      ]
+      `O grupo "${selectedGroup.name}" será excluído, com a lista de participantes e as chamadas. Os cadastros de anfitrião e líder na igreja permanecem.\n\nEsta ação não pode ser desfeita.`,
+      'Excluir',
+      'Cancelar',
+      { destructive: true }
     );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const result = await deleteSmallGroupAdmin(selectedId);
+      notify(result.success, 'Pequenos grupos', result.message);
+
+      if (result.success) {
+        applyGroup(null);
+        await loadGroups();
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAddMember = async (profileId: string) => {
@@ -366,6 +384,52 @@ export function MaintenanceSmallGroupsCard({
     }
   };
 
+  const handleSaveManualGuide = async () => {
+    setSaving(true);
+
+    try {
+      const result = await saveSmallGroupManualGuide({
+        title: manualTitle,
+        content: manualContent,
+        videoUrl: manualVideoUrl,
+      });
+      notify(result.success, 'Roteiro', result.message);
+
+      if (result.success) {
+        await loadGuides();
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleMeetingDate = (dateInput: string) => {
+    const iso = calendarDateInputToIso(dateInput);
+    if (!iso) {
+      return;
+    }
+
+    setMeetings((current) => {
+      const exists = current.some((item) => item.meeting_date === iso);
+      if (exists) {
+        return current.filter((item) => item.meeting_date !== iso);
+      }
+
+      return [...current, { meeting_date: iso, meeting_time: '19:30' }].sort((left, right) =>
+        left.meeting_date.localeCompare(right.meeting_date)
+      );
+    });
+  };
+
+  const handleMeetingTimeChange = (meetingDateValue: string, nextTime: string) => {
+    const masked = formatBrazilTimeInput(nextTime);
+    setMeetings((current) =>
+      current.map((item) =>
+        item.meeting_date === meetingDateValue ? { ...item, meeting_time: masked } : item
+      )
+    );
+  };
+
   const groupOptions = useMemo(
     () => [
       { value: '', label: canAdmin ? 'Novo grupo' : 'Selecione um grupo' },
@@ -374,10 +438,10 @@ export function MaintenanceSmallGroupsCard({
     [canAdmin, groups]
   );
 
-  const weekdayOptions = SMALL_GROUP_WEEKDAYS.map((item) => ({
-    value: String(item.value),
-    label: item.label,
-  }));
+  const meetingDateKeys = useMemo(
+    () => meetings.map((item) => calendarDateInputToBr(item.meeting_date)),
+    [meetings]
+  );
 
   const pickRole = (kind: 'host' | 'leader', profile: SmallGroupProfileSummary) => {
     if (kind === 'host') {
@@ -430,20 +494,34 @@ export function MaintenanceSmallGroupsCard({
                 placeholder="Nome do grupo"
                 placeholderTextColor="#94A3B8"
               />
-              <DropdownSelect
-                options={weekdayOptions}
-                selectedValue={weekday}
-                onValueChange={setWeekday}
-                modalTitle="Dia da reunião"
-                variant={minimal ? 'minimal' : 'vigilance'}
-              />
-              <TextInput
-                style={maintenancePanelStyles.input}
-                value={time}
-                onChangeText={setTime}
-                placeholder="Horário (HH:MM)"
-                placeholderTextColor="#94A3B8"
-              />
+              <Pressable
+                style={styles.dateTrigger}
+                onPress={() => setCalendarOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Abrir calendário de reuniões"
+              >
+                <Text style={styles.dateTriggerText}>
+                  {meetings.length
+                    ? `${meetings.length} ${meetings.length === 1 ? 'data selecionada' : 'datas selecionadas'}`
+                    : 'Selecionar datas no calendário'}
+                </Text>
+                <MaterialIcons name="calendar-today" size={18} color="#94A3B8" />
+              </Pressable>
+              {meetings.map((meeting) => (
+                <View key={meeting.meeting_date} style={styles.meetingRow}>
+                  <Text style={styles.meetingDate}>
+                    {formatSmallGroupMeetingLabel(meeting.meeting_date)}
+                  </Text>
+                  <TextInput
+                    style={[maintenancePanelStyles.input, styles.meetingTimeInput]}
+                    value={meeting.meeting_time}
+                    onChangeText={(value) => handleMeetingTimeChange(meeting.meeting_date, value)}
+                    placeholder="HH:MM"
+                    placeholderTextColor="#94A3B8"
+                    keyboardType="numeric"
+                  />
+                </View>
+              ))}
               <View style={styles.roleRow}>
                 <Text style={styles.hint}>
                   Anfitrião:{' '}
@@ -484,7 +562,7 @@ export function MaintenanceSmallGroupsCard({
               {candidates.map((profile) => (
                 <View key={profile.id} style={styles.candidateRow}>
                   <Text style={styles.memberName} numberOfLines={1}>
-                    {formatShortName(profile.full_name)} · {profile.phone ?? 'sem celular'}
+                    {formatShortName(profile.full_name)} · {profile.phone ? formatBrazilPhoneInput(profile.phone) : 'sem celular'}
                   </Text>
                   <View style={styles.candidateActions}>
                     <TouchableOpacity onPress={() => pickRole('host', profile)}>
@@ -517,12 +595,12 @@ export function MaintenanceSmallGroupsCard({
               {selectedId ? (
                 <TouchableOpacity
                   style={styles.dangerButton}
-                  onPress={handleDeleteGroup}
+                  onPress={() => void handleDeleteGroup()}
                   disabled={saving}
                   accessibilityRole="button"
-                  accessibilityLabel="Excluir grupo, anfitrião e líder"
+                  accessibilityLabel="Excluir grupo"
                 >
-                  <Text style={styles.dangerButtonText}>Excluir grupo, anfitrião e líder</Text>
+                  <Text style={styles.dangerButtonText}>Excluir grupo</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -530,40 +608,40 @@ export function MaintenanceSmallGroupsCard({
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Chamada</Text>
-            <TextInput
-              style={maintenancePanelStyles.input}
-              value={meetingDate}
-              onChangeText={setMeetingDate}
-              placeholder="Data (AAAA-MM-DD)"
-              placeholderTextColor="#94A3B8"
-            />
+            <Pressable
+              style={styles.dateTrigger}
+              onPress={() => setRollDatePickerOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Selecionar data da chamada"
+            >
+              <Text style={styles.dateTriggerText}>
+                {calendarDateInputToBr(meetingDate) || 'DD/MM/AAAA'}
+              </Text>
+              <MaterialIcons name="calendar-today" size={18} color="#94A3B8" />
+            </Pressable>
             {roll.length === 0 ? (
-              <Text style={styles.hint}>Nenhum membro vinculado a este grupo.</Text>
+              <Text style={styles.hint}>Nenhum participante vinculado a este grupo.</Text>
             ) : (
               roll.map((member) => (
                 <View key={member.profile_id} style={styles.memberRow}>
+                  <Pressable
+                    onPress={() => void handleTogglePresence(member)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: member.present }}
+                    accessibilityLabel={`Presença de ${formatFullName(member.full_name) || 'participante'}`}
+                    style={styles.checkboxHit}
+                  >
+                    <FontAwesome
+                      name={member.present ? 'check-square' : 'square-o'}
+                      size={22}
+                      color={member.present ? MINIMAL_UI.accent : '#94A3B8'}
+                    />
+                  </Pressable>
                   <View style={styles.memberMain}>
-                    <Text style={styles.memberName}>{formatShortName(member.full_name)}</Text>
-                    <View style={styles.badgeRow}>
-                      {member.badges.map((badge) => (
-                        <View
-                          key={`${member.profile_id}-${badge.badge_code}-${badge.step_order ?? 'x'}`}
-                          style={[
-                            styles.badge,
-                            { backgroundColor: badge.badge_color || '#C9A227' },
-                          ]}
-                        >
-                          <Text style={styles.badgeText} numberOfLines={1}>
-                            {badge.badge_title}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
+                    <Text style={styles.memberName}>
+                      {formatFullName(member.full_name) || '—'}
+                    </Text>
                   </View>
-                  <Switch
-                    value={member.present}
-                    onValueChange={() => void handleTogglePresence(member)}
-                  />
                   {canAdmin ? (
                     <TouchableOpacity onPress={() => void handleRemoveMember(member.profile_id)}>
                       <FontAwesome name="trash-o" size={16} color="#B91C1C" />
@@ -587,8 +665,8 @@ export function MaintenanceSmallGroupsCard({
             <TextInput
               style={maintenancePanelStyles.input}
               value={visitorPhone}
-              onChangeText={setVisitorPhone}
-              placeholder="Celular (11 dígitos)"
+              onChangeText={(value) => setVisitorPhone(formatBrazilPhoneInput(value))}
+              placeholder="(11) 98765-4321"
               placeholderTextColor="#94A3B8"
               keyboardType="phone-pad"
             />
@@ -632,26 +710,84 @@ export function MaintenanceSmallGroupsCard({
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Roteiro da semana</Text>
               <Text style={styles.hint}>
-                O conteúdo é editado em Temas da Trilha. Publique aqui a lição da semana.
+                Pode ser escrito aqui, sem depender dos temas da Trilha. A publicação manual substitui o roteiro da trilha.
               </Text>
-              {guides.map((lesson) => (
-                <TouchableOpacity
-                  key={lesson.id}
-                  style={[styles.guideRow, lesson.is_cell_weekly_guide && styles.guideRowActive]}
-                  onPress={() => void handlePublishGuide(lesson.id)}
-                >
-                  <Text style={styles.memberName} numberOfLines={2}>
-                    {lesson.module_title}: {lesson.title}
-                  </Text>
-                  {lesson.is_cell_weekly_guide ? (
-                    <Text style={styles.link}>Publicado</Text>
-                  ) : null}
-                </TouchableOpacity>
-              ))}
+              <TextInput
+                style={maintenancePanelStyles.input}
+                value={manualTitle}
+                onChangeText={setManualTitle}
+                placeholder="Título do roteiro"
+                placeholderTextColor="#94A3B8"
+              />
+              <TextInput
+                style={[maintenancePanelStyles.input, styles.multiline]}
+                value={manualContent}
+                onChangeText={setManualContent}
+                placeholder="Conteúdo do encontro"
+                placeholderTextColor="#94A3B8"
+                multiline
+              />
+              <TextInput
+                style={maintenancePanelStyles.input}
+                value={manualVideoUrl}
+                onChangeText={setManualVideoUrl}
+                placeholder="Link ou PDF (opcional)"
+                placeholderTextColor="#94A3B8"
+              />
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => void handleSaveManualGuide()}
+                disabled={saving}
+              >
+                <Text style={styles.primaryButtonText}>Publicar roteiro</Text>
+              </TouchableOpacity>
+              {guides.length ? (
+                <>
+                  <Text style={styles.hint}>Opcional: publicar um tema da Trilha.</Text>
+                  {guides.map((lesson) => (
+                    <TouchableOpacity
+                      key={lesson.id}
+                      style={[styles.guideRow, lesson.is_cell_weekly_guide && styles.guideRowActive]}
+                      onPress={() => void handlePublishGuide(lesson.id)}
+                    >
+                      <Text style={styles.memberName} numberOfLines={2}>
+                        {lesson.module_title}: {lesson.title}
+                      </Text>
+                      {lesson.is_cell_weekly_guide ? (
+                        <Text style={styles.link}>Publicado</Text>
+                      ) : null}
+                    </TouchableOpacity>
+                  ))}
+                </>
+              ) : null}
             </View>
           ) : null}
         </ScrollView>
       )}
+      <MonthlyDatePickerModal
+        visible={calendarOpen}
+        value={meetings[0]?.meeting_date ?? ''}
+        title="Datas das reuniões"
+        variant={minimal ? 'minimal' : 'default'}
+        multiSelect
+        selectedDates={meetingDateKeys}
+        onToggleDate={handleToggleMeetingDate}
+        onClose={() => setCalendarOpen(false)}
+        onConfirm={() => undefined}
+      />
+      <MonthlyDatePickerModal
+        visible={rollDatePickerOpen}
+        value={meetingDate}
+        title="Data da chamada"
+        variant={minimal ? 'minimal' : 'default'}
+        onClose={() => setRollDatePickerOpen(false)}
+        onConfirm={(dateInput) => {
+          const iso = calendarDateInputToIso(dateInput);
+          if (iso) {
+            setMeetingDate(iso);
+          }
+        }}
+      />
     </View>
   );
 }
@@ -725,6 +861,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     paddingVertical: 4,
+  },
+  checkboxHit: {
+    padding: 4,
+  },
+  dateTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  dateTriggerText: {
+    color: '#1E3A5F',
+    fontSize: 14,
+    flex: 1,
+  },
+  meetingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  meetingDate: {
+    color: '#1E3A5F',
+    fontSize: 13,
+    fontWeight: '700',
+    flex: 1,
+  },
+  meetingTimeInput: {
+    width: 88,
+    flexGrow: 0,
   },
   memberMain: {
     flex: 1,

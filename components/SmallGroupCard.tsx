@@ -15,6 +15,7 @@ import {
   fetchMySmallGroupMembers,
   fetchNearbySmallGroupHosts,
   formatSmallGroupHostDistanceMeters,
+  formatSmallGroupMeetingLabel,
   formatSmallGroupMemberCount,
   formatSmallGroupParticipantCount,
   formatSmallGroupWeekday,
@@ -360,9 +361,17 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
           <View style={styles.stack}>
           <View style={styles.infoRow}>
             <Text style={styles.groupName}>{group.name}</Text>
-            <Text style={styles.meta}>
-              {formatSmallGroupWeekday(group.meeting_weekday)} · {group.meeting_time || '—'}
-            </Text>
+            {group.meetings.length > 0 ? (
+              group.meetings.map((meeting) => (
+                <Text key={`${meeting.meeting_date}-${meeting.meeting_time}`} style={styles.meta}>
+                  {formatSmallGroupMeetingLabel(meeting.meeting_date, meeting.meeting_time)}
+                </Text>
+              ))
+            ) : (
+              <Text style={styles.meta}>
+                {formatSmallGroupWeekday(group.meeting_weekday)} · {group.meeting_time || '—'}
+              </Text>
+            )}
             <Text style={styles.meta}>Líder: {group.leader?.full_name ?? '—'}</Text>
             <Text style={styles.meta}>Anfitrião: {group.host?.full_name ?? '—'}</Text>
             <Text style={styles.address} numberOfLines={3}>

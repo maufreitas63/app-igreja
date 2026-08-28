@@ -87,6 +87,24 @@ export function parseIsoCalendarDate(value: string): CalendarDateParts | null {
   return { year, month, day };
 }
 
+export function formatIsoDateFromParts(parts: CalendarDateParts) {
+  return `${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}`;
+}
+
+export function parseCalendarDateInput(value: string): CalendarDateParts | null {
+  return parseEventDateOnlyInputParts(value) ?? parseIsoCalendarDate(value);
+}
+
+export function calendarDateInputToIso(value: string): string | null {
+  const parts = parseCalendarDateInput(value);
+  return parts ? formatIsoDateFromParts(parts) : null;
+}
+
+export function calendarDateInputToBr(value: string): string {
+  const parts = parseCalendarDateInput(value);
+  return parts ? formatEventDateOnlyFromParts(parts) : value;
+}
+
 export function formatEventDateOnlyFromParts(parts: CalendarDateParts) {
   return `${pad2(parts.day)}/${pad2(parts.month)}/${parts.year}`;
 }

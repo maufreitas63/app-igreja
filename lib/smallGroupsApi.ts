@@ -23,6 +23,16 @@ export function formatSmallGroupWeekday(value: number | null | undefined) {
   return SMALL_GROUP_WEEKDAYS.find((item) => item.value === value)?.label ?? '—';
 }
 
+export function formatSmallGroupMeetingLabel(meetingDate: string, meetingTime?: string) {
+  const [year, month, day] = meetingDate.split('-');
+  if (!year || !month || !day) {
+    return meetingTime ? `${meetingDate} · ${meetingTime}` : meetingDate;
+  }
+
+  const dateLabel = `${day}/${month}/${year}`;
+  return meetingTime ? `${dateLabel} · ${meetingTime}` : dateLabel;
+}
+
 export type SmallGroupProfileSummary = {
   id: string;
   full_name: string | null;
@@ -44,6 +54,7 @@ export type MySmallGroup = {
   is_leader: boolean;
   is_host: boolean;
   member_count: number;
+  meetings: SmallGroupMeeting[];
   host: SmallGroupProfileSummary | null;
   leader: SmallGroupProfileSummary | null;
 };
@@ -51,6 +62,11 @@ export type MySmallGroup = {
 export type SmallGroupMemberName = {
   profile_id: string;
   full_name: string | null;
+};
+
+export type SmallGroupMeeting = {
+  meeting_date: string;
+  meeting_time: string;
 };
 
 export type SmallGroupAdminRow = {
@@ -63,6 +79,7 @@ export type SmallGroupAdminRow = {
   host: SmallGroupProfileSummary | null;
   leader: SmallGroupProfileSummary | null;
   member_count: number;
+  meetings: SmallGroupMeeting[];
 };
 
 export type SmallGroupGuide = {
@@ -141,6 +158,34 @@ const parseProfile = (value: unknown): SmallGroupProfileSummary | null => {
   };
 };
 
+const parseMeetings = (value: unknown): SmallGroupMeeting[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      const row = asRecord(item);
+      const meetingDate = String(row.meeting_date ?? '').trim();
+      const meetingTime = String(row.meeting_time ?? '').trim() || '19:30';
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(meetingDate)) {
+        return null;
+      }
+
+      return {
+        meeting_date: meetingDate,
+        meeting_time: meetingTime,
+      } satisfies SmallGroupMeeting;
+    })
+    .filter((row): row is SmallGroupMeeting => row !== null)
+    .sort((left, right) =>
+      left.meeting_date === right.meeting_date
+        ? left.meeting_time.localeCompare(right.meeting_time)
+        : left.meeting_date.localeCompare(right.meeting_date)
+    );
+};
+
 const throwIfMissing = (error: { message?: string }, name: string) => {
   if (isSupabaseRpcMissingError(error, name)) {
     throw new Error(SMALL_GROUPS_SQL_HINT);
@@ -183,6 +228,7 @@ export async function fetchMySmallGroup(): Promise<MySmallGroup | null> {
       const raw = Number(group.member_count ?? 0);
       return Number.isFinite(raw) && raw > 0 ? Math.round(raw) : 0;
     })(),
+    meetings: parseMeetings(group.meetings),
     host: parseProfile(group.host),
     leader: parseProfile(group.leader),
   };
@@ -266,6 +312,7 @@ export async function fetchSmallGroupsAdmin(): Promise<{
           host: parseProfile(row.host),
           leader: parseProfile(row.leader),
           member_count: Number(row.member_count ?? 0),
+          meetings: parseMeetings(row.meetings),
         } satisfies SmallGroupAdminRow;
       })
       .filter((row): row is SmallGroupAdminRow => row !== null),
@@ -280,6 +327,7 @@ export async function saveSmallGroupAdmin(input: {
   hostProfileId?: string | null;
   leaderProfileId?: string | null;
   notes?: string | null;
+  meetings?: SmallGroupMeeting[];
 }) {
   const payload = await rpcJson('upsert_small_group_admin', {
     p_id: input.id ?? null,
@@ -290,6 +338,10 @@ export async function saveSmallGroupAdmin(input: {
     p_leader_profile_id: input.leaderProfileId ?? null,
     p_notes: input.notes ?? null,
     p_is_active: true,
+    p_meetings: (input.meetings ?? []).map((meeting) => ({
+      meeting_date: meeting.meeting_date,
+      meeting_time: meeting.meeting_time,
+    })),
   });
 
   return {
@@ -473,6 +525,48 @@ export async function publishSmallGroupGuide(lessonId: string | null) {
   return {
     success: payload.success === true,
     message: String(payload.message ?? 'Falha ao publicar roteiro.'),
+  };
+}
+
+export async function fetchSmallGroupManualGuide(): Promise<{
+  title: string;
+  content: string;
+  video_url: string;
+} | null> {
+  const payload = await rpcJson('get_small_group_manual_guide');
+
+  if (payload.success === false) {
+    throw new Error(String(payload.message ?? 'Não foi possível carregar o roteiro.'));
+  }
+
+  const guide = asRecord(payload.guide);
+  const title = String(guide.title ?? '').trim();
+
+  if (!title) {
+    return null;
+  }
+
+  return {
+    title,
+    content: String(guide.content ?? ''),
+    video_url: String(guide.video_url ?? ''),
+  };
+}
+
+export async function saveSmallGroupManualGuide(input: {
+  title: string;
+  content: string;
+  videoUrl?: string | null;
+}) {
+  const payload = await rpcJson('save_small_group_manual_guide', {
+    p_title: input.title,
+    p_content: input.content,
+    p_video_url: input.videoUrl ?? null,
+  });
+
+  return {
+    success: payload.success === true,
+    message: String(payload.message ?? (payload.success === true ? 'Roteiro salvo.' : 'Falha ao salvar.')),
   };
 }
 
