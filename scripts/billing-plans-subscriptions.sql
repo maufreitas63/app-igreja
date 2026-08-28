@@ -83,7 +83,7 @@ values
   (
     'semente',
     'Semente',
-    'Igrejas em formação — até 50 membros',
+    'Igrejas em formação — até 50 usuários ativos (membros + congregados)',
     50,
     10,
     true
@@ -91,7 +91,7 @@ values
   (
     'crescimento',
     'Crescimento',
-    'Comunidades em expansão — até 200 membros',
+    'Comunidades em expansão — até 200 usuários ativos (membros + congregados)',
     200,
     20,
     true
@@ -99,7 +99,7 @@ values
   (
     'expansao',
     'Expansão',
-    'Igrejas consolidadas — até 1.000 membros',
+    'Igrejas consolidadas — até 1.000 usuários ativos (membros + congregados)',
     1000,
     30,
     true
@@ -107,7 +107,7 @@ values
   (
     'ministerio',
     'Ministério',
-    'Operação completa — membros ilimitados',
+    'Operação completa — usuários ativos ilimitados (membros + congregados)',
     -1,
     40,
     true
@@ -463,6 +463,7 @@ grant execute on function public.count_tenant_active_users_by_role(uuid) to anon
 grant execute on function public.tenant_subscription_is_access_allowed(text) to anon, authenticated;
 grant execute on function public.get_tenant_billing_status(uuid) to anon, authenticated, service_role;
 grant execute on function public.list_billing_plans() to anon, authenticated, service_role;
+grant execute on function public.assert_tenant_can_subscribe_plan(uuid, text) to anon, authenticated, service_role;
 grant execute on function public.assert_tenant_can_add_member(uuid) to anon, authenticated;
 grant execute on function public.upsert_tenant_subscription_from_stripe(uuid, text, text, text, text, text, timestamptz, timestamptz, boolean, jsonb) to service_role;
 grant execute on function public.billing_test_activate_ibep_subscription(text) to service_role;

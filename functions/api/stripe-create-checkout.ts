@@ -9,6 +9,7 @@ import {
   jsonResponse,
   planCodeFromPriceEnv,
   stripeFormPost,
+  supabaseServiceRpc,
   type BillingEnv,
 } from './_billingShared';
 
@@ -47,6 +48,28 @@ export const onRequestPost = async (context: PagesContext) => {
     if (!tenantId || !planCode) {
       return jsonResponse(
         { success: false, message: 'tenant_id e plan_code são obrigatórios.' },
+        400
+      );
+    }
+
+    const capacity = await supabaseServiceRpc(context.env, 'assert_tenant_can_subscribe_plan', {
+      p_tenant_id: tenantId,
+      p_plan_code: planCode,
+    });
+    if (!capacity.ok) {
+      return jsonResponse({ success: false, message: capacity.message }, 400);
+    }
+    const capacityRaw = Array.isArray(capacity.data) ? capacity.data[0] : capacity.data;
+    const capacityPayload =
+      capacityRaw && typeof capacityRaw === 'object'
+        ? (capacityRaw as { ok?: boolean; message?: string })
+        : null;
+    if (capacityPayload && capacityPayload.ok === false) {
+      return jsonResponse(
+        {
+          success: false,
+          message: capacityPayload.message || 'Este plano não comporta os usuários ativos da igreja.',
+        },
         400
       );
     }

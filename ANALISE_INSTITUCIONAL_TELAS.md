@@ -1640,7 +1640,7 @@ Operar várias igrejas sem misturar cadastro, marca e tesouraria.
 
 ### Descrição comercial
 
-A sustentabilidade da plataforma: planos com **cobrança trimestral**, limite de membros e checkout Stripe em modo teste/produção conforme ambiente. A igreja escolhe o plano com números de ativos à vista. A tela exige sessão.
+A sustentabilidade da plataforma: planos com **cobrança trimestral**, teto de **usuários ativos (membros + congregados)** e checkout Stripe. Pacotes com limite abaixo da quantidade atual da igreja não ficam disponíveis para assinatura. A tela exige sessão.
 
 ### Propósito e conexões
 

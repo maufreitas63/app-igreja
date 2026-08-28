@@ -1,4 +1,9 @@
 import {
+  formatPlanUserCap,
+  planCoversActiveUsers,
+  planTooSmallMessage,
+} from '@/lib/billing/planCapacity';
+import {
   BILLING_INTERVAL_LINE,
   BILLING_SCREEN_SUBTITLE,
 } from '@/lib/billing/billingInterval';
@@ -33,11 +38,6 @@ const PLAN_ICONS: Record<string, React.ComponentProps<typeof FontAwesome>['name'
   crescimento: 'line-chart',
   expansao: 'sitemap',
   ministerio: 'star',
-};
-
-const formatMembers = (maxMembers: number) => {
-  if (maxMembers < 0) return 'Membros ilimitados';
-  return `Até ${maxMembers.toLocaleString('pt-BR')} membros`;
 };
 
 /**
@@ -80,10 +80,17 @@ export function BillingClass({
 
       {showStatus ? (
         <Text style={styles.statusLine}>
-          Status atual: {users.toLocaleString('pt-BR')} usuários (
+          Status atual: {users.toLocaleString('pt-BR')} usuários ativos (
           {members.toLocaleString('pt-BR')} membros +{' '}
-          {congregados.toLocaleString('pt-BR')} congregados) ativos
+          {congregados.toLocaleString('pt-BR')} congregados)
           {currentPlanCode ? ` · plano ${currentPlanCode}` : ''}
+        </Text>
+      ) : null}
+
+      {showStatus ? (
+        <Text style={styles.hintLine}>
+          O plano precisa comportar todos os usuários ativos. Pacotes com teto menor não ficam
+          disponíveis para assinatura.
         </Text>
       ) : null}
 
@@ -92,6 +99,8 @@ export function BillingClass({
           const isCurrent = currentPlanCode?.toLowerCase() === plan.code.toLowerCase();
           const busy = checkoutLoadingPlanCode === plan.code;
           const icon = PLAN_ICONS[plan.code] || 'circle-o';
+          const fits = planCoversActiveUsers(plan.maxMembers, users);
+          const canSubscribe = fits || isCurrent;
 
           return (
             <View key={plan.id || plan.code} style={styles.card}>
@@ -99,28 +108,35 @@ export function BillingClass({
                 <FontAwesome name={icon} size={18} color={MINIMAL_UI.icon} />
                 <Text style={styles.planName}>{plan.name}</Text>
               </View>
-              <Text style={styles.planLimit}>{formatMembers(plan.maxMembers)}</Text>
+              <Text style={styles.planLimit}>{formatPlanUserCap(plan.maxMembers)}</Text>
               <Text style={styles.planInterval}>{BILLING_INTERVAL_LINE}</Text>
               {plan.description ? (
                 <Text style={styles.planDescription}>{plan.description}</Text>
               ) : null}
-              <Pressable
-                style={({ pressed }) => [
-                  styles.cta,
-                  isCurrent && styles.ctaCurrent,
-                  pressed && styles.ctaPressed,
-                ]}
-                disabled={busy}
-                onPress={() => onSubscribe(plan)}
-                accessibilityRole="button"
-                accessibilityLabel={`Assinar plano ${plan.name}`}
-              >
-                {busy ? (
-                  <ActivityIndicator color={MINIMAL_UI.onDark} />
-                ) : (
-                  <Text style={styles.ctaLabel}>{isCurrent ? 'Gerenciar / Renovar' : 'Assinar'}</Text>
-                )}
-              </Pressable>
+              {!fits ? (
+                <Text style={styles.unavailable}>{planTooSmallMessage(plan.maxMembers, users)}</Text>
+              ) : null}
+              {canSubscribe ? (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.cta,
+                    isCurrent && styles.ctaCurrent,
+                    pressed && styles.ctaPressed,
+                  ]}
+                  disabled={busy}
+                  onPress={() => onSubscribe(plan)}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    isCurrent ? `Gerenciar plano ${plan.name}` : `Assinar plano ${plan.name}`
+                  }
+                >
+                  {busy ? (
+                    <ActivityIndicator color={MINIMAL_UI.onDark} />
+                  ) : (
+                    <Text style={styles.ctaLabel}>{isCurrent ? 'Gerenciar / Renovar' : 'Assinar'}</Text>
+                  )}
+                </Pressable>
+              ) : null}
             </View>
           );
         })}
@@ -159,6 +175,17 @@ const styles = StyleSheet.create({
   statusLine: {
     color: MINIMAL_UI.blue,
     fontSize: 13,
+    fontWeight: '600',
+  },
+  hintLine: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  unavailable: {
+    color: '#B91C1C',
+    fontSize: 13,
+    lineHeight: 18,
     fontWeight: '600',
   },
   list: {

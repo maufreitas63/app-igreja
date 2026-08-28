@@ -1,6 +1,7 @@
 import { BillingClass } from '@/components/billing/BillingClass';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
+import { planCoversActiveUsers } from '@/lib/billing/planCapacity';
 import {
   createStripeCheckoutSession,
   getTenantBillingStatus,
@@ -65,6 +66,17 @@ export default function BillingScreen() {
           type: 'error',
           text1: 'Assinaturas',
           text2: 'Selecione a igreja (tenant) antes de assinar. Use ?igreja=IBEP.',
+        });
+        return;
+      }
+
+      const activeCount = activeUsers ?? 0;
+      if (!planCoversActiveUsers(plan.maxMembers, activeCount)) {
+        Toast.show({
+          type: 'error',
+          text1: 'Assinaturas',
+          text2: `Este plano comporta até ${plan.maxMembers} usuários ativos. A igreja tem ${activeCount} (membros + congregados).`,
+          visibilityTime: 7000,
         });
         return;
       }
