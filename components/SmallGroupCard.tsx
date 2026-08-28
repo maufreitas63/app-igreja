@@ -265,27 +265,26 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
             )}
           </View>
           {nearbyHosts.map((host) => (
-            <View key={host.groupId} style={styles.hostBlock}>
-              <View style={[styles.infoRow, styles.halfWidth]}>
-                <Text style={styles.hostName} numberOfLines={1}>
-                  {formatShortName(host.hostName)}
-                </Text>
-                <Text style={styles.hostMeta} numberOfLines={2}>
-                  {host.groupName}
-                </Text>
-                <Text style={styles.hostMeta}>Bairro: {host.neighborhood}</Text>
-                <Text style={styles.hostMeta}>
-                  Reuniões: {formatSmallGroupWeekday(host.meetingWeekday)}
-                  {host.meetingTime ? ` · ${host.meetingTime}` : ''}
-                </Text>
-                <Text style={styles.hostMeta}>{formatSmallGroupMemberCount(host.memberCount)}</Text>
-                <Text style={styles.hostDistance}>
-                  {formatSmallGroupHostDistanceMeters(host.distanceMeters)}
-                </Text>
-              </View>
+            <View key={host.groupId} style={[styles.infoRow, styles.halfWidth]}>
+              <Text style={styles.hostName} numberOfLines={1}>
+                {formatShortName(host.hostName)}
+              </Text>
+              <Text style={styles.hostMeta} numberOfLines={2}>
+                {host.groupName}
+              </Text>
+              <Text style={styles.hostMeta}>Bairro: {host.neighborhood}</Text>
+              <Text style={styles.hostMeta}>
+                Reuniões: {formatSmallGroupWeekday(host.meetingWeekday)}
+                {host.meetingTime ? ` · ${host.meetingTime}` : ''}
+              </Text>
+              <Text style={styles.hostMeta}>{formatSmallGroupMemberCount(host.memberCount)}</Text>
+              <Text style={styles.hostDistance}>
+                {formatSmallGroupHostDistanceMeters(host.distanceMeters)}
+              </Text>
               <Pressable
                 style={({ pressed }) => [
                   styles.actionRow,
+                  styles.hostCardAction,
                   pressed && styles.actionRowPressed,
                   busyGroupId !== null && styles.buttonDisabled,
                 ]}
@@ -296,8 +295,8 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
                 accessibilityRole="button"
                 accessibilityLabel={
                   host.isMember
-                    ? `Quero sair do grupo ${host.groupName}`
-                    : `Quero participar do grupo ${host.groupName}`
+                    ? `Quero sair deste grupo ${host.groupName}`
+                    : `Quero participar deste grupo ${host.groupName}`
                 }
               >
                 {busyGroupId === host.groupId ? (
@@ -310,7 +309,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
                       color={PERFIL_ACTION_ICON_COLOR}
                     />
                     <Text style={styles.actionLabel}>
-                      {host.isMember ? 'Quero sair do Grupo' : 'Quero Participar do Grupo'}
+                      {host.isMember ? 'Quero sair deste grupo' : 'Quero participar deste grupo'}
                     </Text>
                   </>
                 )}
@@ -466,9 +465,10 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: PERFIL_ACTION_SURFACE,
   },
-  hostBlock: {
+  hostCardAction: {
+    alignSelf: 'stretch',
     width: '100%',
-    gap: 8,
+    maxWidth: '100%',
   },
   actionRow: {
     width: '100%',
