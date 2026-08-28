@@ -31,9 +31,14 @@ export const MINIMAL_EXIT_BAR_HEIGHT = 56;
 /** Faixa superior: saudação (esquerda) e logo (direita) — 50% da largura, alinhada à esquerda. */
 export const MINIMAL_TOP_IDENTITY_BAR_HEIGHT = 80;
 
-/** Padding horizontal do chrome e do corpo — o conteúdo alinha com «Olá, …». */
-export const MINIMAL_SCREEN_PADDING_LEFT = 16;
-export const MINIMAL_SCREEN_PADDING_RIGHT = 20;
+/** Referência de telefone: 16px à esquerda e 20px à direita em 390px. */
+export const MINIMAL_SCREEN_PADDING_REF_WIDTH = 390;
+export const MINIMAL_SCREEN_PADDING_LEFT_AT_REF = 16;
+export const MINIMAL_SCREEN_PADDING_RIGHT_AT_REF = 20;
+
+/** Percentual da largura do container — acompanha a tela; chrome e corpo usam o mesmo valor. */
+export const MINIMAL_SCREEN_PADDING_LEFT = `${((MINIMAL_SCREEN_PADDING_LEFT_AT_REF / MINIMAL_SCREEN_PADDING_REF_WIDTH) * 100).toFixed(2)}%`;
+export const MINIMAL_SCREEN_PADDING_RIGHT = `${((MINIMAL_SCREEN_PADDING_RIGHT_AT_REF / MINIMAL_SCREEN_PADDING_REF_WIDTH) * 100).toFixed(2)}%`;
 
 /** Logo da instância no chrome (dobrado para melhor visibilidade). */
 export const MINIMAL_TOP_IDENTITY_LOGO_HEIGHT = 72;
