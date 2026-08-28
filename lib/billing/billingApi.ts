@@ -112,6 +112,46 @@ export async function assertTenantCanAddMember(tenantId?: string | null): Promis
   throw new Error(error.message || 'Não é possível adicionar membros neste plano.');
 }
 
+const DEFAULT_BILLING_API_ORIGIN = 'https://app-igreja.pages.dev';
+
+function resolveStripeCheckoutEndpoint(): string {
+  const configured = String(process.env.EXPO_PUBLIC_APP_URL || '')
+    .trim()
+    .replace(/\/$/, '');
+  const configuredOk =
+    configured.startsWith('https://') && !configured.includes('seu-dominio');
+
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    if (!isLocal) {
+      return '/api/stripe-create-checkout';
+    }
+  }
+
+  const origin = configuredOk ? configured : DEFAULT_BILLING_API_ORIGIN;
+  return `${origin}/api/stripe-create-checkout`;
+}
+
+async function readCheckoutPayload(response: Response): Promise<{
+  success?: boolean;
+  url?: string;
+  session_id?: string;
+  message?: string;
+}> {
+  const text = await response.text();
+  try {
+    return text ? (JSON.parse(text) as Record<string, unknown>) : {};
+  } catch {
+    if (/not found/i.test(text) || response.status === 404) {
+      throw new Error(
+        'O checkout Stripe não roda no Metro local. Recarregue a página; o app chama a Function no Cloudflare.'
+      );
+    }
+    throw new Error(`Checkout Stripe indisponível (${response.status}).`);
+  }
+}
+
 export async function createStripeCheckoutSession(input: {
   tenantId: string;
   planCode: string;
@@ -119,7 +159,7 @@ export async function createStripeCheckoutSession(input: {
   cancelUrl?: string;
   customerEmail?: string;
 }): Promise<{ url: string; sessionId: string | null }> {
-  const response = await fetch('/api/stripe-create-checkout', {
+  const response = await fetch(resolveStripeCheckoutEndpoint(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -130,12 +170,7 @@ export async function createStripeCheckoutSession(input: {
       customer_email: input.customerEmail,
     }),
   });
-  const payload = (await response.json()) as {
-    success?: boolean;
-    url?: string;
-    session_id?: string;
-    message?: string;
-  };
+  const payload = await readCheckoutPayload(response);
   if (!response.ok || !payload.success || !payload.url) {
     throw new Error(payload.message || 'Não foi possível iniciar o checkout Stripe.');
   }
