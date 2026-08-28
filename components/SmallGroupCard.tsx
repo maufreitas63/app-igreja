@@ -229,8 +229,8 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
 
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={[styles.title, styles.halfWidth]}>Pequeno Grupo</Text>
-      <Text style={[styles.subtitle, styles.halfWidth]}>Célula da sua jornada em comunidade.</Text>
+      <Text style={styles.title}>Pequeno Grupo</Text>
+      <Text style={styles.subtitle}>Célula da sua jornada em comunidade.</Text>
 
       {loading ? (
         <ActivityIndicator color="#1E3A5F" style={styles.loader} />
@@ -244,7 +244,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
           {...MAINTENANCE_SCROLL_PROPS}
         >
           <View style={styles.stack}>
-            <View style={[styles.infoRow, styles.halfWidth]}>
+            <View style={styles.infoRow}>
             <FontAwesome name="users" size={24} color={PERFIL_ACTION_ICON_COLOR} />
             <Text style={styles.actionLabel}>Você ainda não está em um grupo</Text>
             {nearbyHosts.length === 0 ? (
@@ -265,7 +265,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
             )}
           </View>
           {nearbyHosts.map((host) => (
-            <View key={host.groupId} style={[styles.infoRow, styles.halfWidth]}>
+            <View key={host.groupId} style={styles.infoRow}>
               <Text style={styles.hostName} numberOfLines={1}>
                 {formatShortName(host.hostName)}
               </Text>
@@ -396,9 +396,9 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
 
 const styles = StyleSheet.create({
   panel: {
-    width: '60%',
-    maxWidth: '60%',
-    alignSelf: 'flex-start',
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
     flex: 1,
     minHeight: 0,
     backgroundColor: PERFIL_ACTION_SURFACE,
@@ -506,11 +506,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: PERFIL_ACTION_BORDER,
     backgroundColor: PERFIL_ACTION_SURFACE,
-  },
-  halfWidth: {
-    width: '50%',
-    maxWidth: '50%',
-    alignSelf: 'flex-start',
   },
   groupName: {
     color: VIGILANCE_SCALES_UI.accent,
