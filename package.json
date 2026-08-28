@@ -19,6 +19,7 @@
     "test:family-address": "node scripts/test-family-registration-address.mjs",
     "test:recepcao-ibn": "node scripts/test-recepcao-ibn-by-phone.mjs",
     "test:billing-ibep": "node scripts/test-billing-subscription-ibep.mjs",
+    "stripe:quarterly-prices": "node scripts/stripe-ensure-quarterly-prices.mjs",
     "test:carousel-nav": "node scripts/test-carousel-navigation.mjs",
     "test:maintenance-carousel": "node scripts/test-maintenance-carousel-navigation.mjs",
     "apply:bible-verses": "node scripts/apply-bible-verses-supabase.mjs",

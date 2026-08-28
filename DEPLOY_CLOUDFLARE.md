@@ -70,10 +70,10 @@ Em **Settings → Variables and Secrets** (ambiente **Production**), cadastre:
 | `STRIPE_WEBHOOK_SECRET` | **Secret** | Stripe → Developers → Webhooks → endpoint → Signing secret (`whsec_…`) |
 | `SUPABASE_URL` | Secret ou texto | URL do projeto Supabase (ex.: `https://bldbrsuiwctoaxzcrjoc.supabase.co`) |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Secret** | Supabase → Settings → API → `service_role` |
-| `STRIPE_PRICE_SEMENTE` | Texto | Price ID do produto Semente (`price_…`) |
-| `STRIPE_PRICE_CRESCIMENTO` | Texto | Price ID do plano Crescimento |
-| `STRIPE_PRICE_EXPANSAO` | Texto | Price ID do plano Expansão |
-| `STRIPE_PRICE_MINISTERIO` | Texto | Price ID do plano Ministério |
+| `STRIPE_PRICE_SEMENTE` | Texto | Price ID **trimestral** do produto Semente (`price_…`, `interval_count` 3) |
+| `STRIPE_PRICE_CRESCIMENTO` | Texto | Price ID trimestral do plano Crescimento |
+| `STRIPE_PRICE_EXPANSAO` | Texto | Price ID trimestral do plano Expansão |
+| `STRIPE_PRICE_MINISTERIO` | Texto | Price ID trimestral do plano Ministério |
 | `EXPO_PUBLIC_APP_URL` | Texto | URL do Pages (ex.: `https://app-igreja.pages.dev`) |
 
 Webhook Stripe (modo **Test**):
@@ -81,6 +81,8 @@ Webhook Stripe (modo **Test**):
 ```
 https://SEU-DOMINIO.pages.dev/api/stripe-webhook
 ```
+
+Os Prices precisam ser **trimestrais** (`recurring.interval = month` e `interval_count = 3`). O Stripe não deixa mudar um Price mensal para trimestral: crie um Price novo no mesmo produto. Com `STRIPE_SECRET_KEY` no `.env.local`, rode `npm run stripe:quarterly-prices` e cole os `price_…` nas variáveis acima.
 
 Eventos sugeridos: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`.
 

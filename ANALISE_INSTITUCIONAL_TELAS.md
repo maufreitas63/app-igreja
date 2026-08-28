@@ -1640,7 +1640,7 @@ Operar várias igrejas sem misturar cadastro, marca e tesouraria.
 
 ### Descrição comercial
 
-A sustentabilidade da plataforma: planos, limite de membros, checkout Stripe em modo teste/produção conforme ambiente. A igreja escolhe o plano com números de ativos à vista. A tela exige sessão.
+A sustentabilidade da plataforma: planos com **cobrança trimestral**, limite de membros e checkout Stripe em modo teste/produção conforme ambiente. A igreja escolhe o plano com números de ativos à vista. A tela exige sessão.
 
 ### Propósito e conexões
 
@@ -1653,7 +1653,7 @@ Indireta: o app da igreja permanece disponível e dimensionado.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>
-Contrato SaaS visível, com teto de membresia alinhado ao plano.
+Contrato SaaS visível, com teto de membresia alinhado ao plano e ciclo trimestral no Stripe.
 </div>
 </div>
 </div>

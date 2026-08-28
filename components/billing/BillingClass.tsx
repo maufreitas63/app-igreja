@@ -1,3 +1,7 @@
+import {
+  BILLING_INTERVAL_LINE,
+  BILLING_SCREEN_SUBTITLE,
+} from '@/lib/billing/billingInterval';
 import type { BillingPlan } from '@/lib/billing/types';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -50,7 +54,7 @@ export function BillingClass({
   checkoutLoadingPlanCode = null,
   onSubscribe,
   title = 'Assinaturas',
-  subtitle = 'Escolha o plano da sua igreja. O pagamento é processado com segurança pelo Stripe.',
+  subtitle = BILLING_SCREEN_SUBTITLE,
 }: BillingClassProps) {
   if (loading) {
     return (
@@ -96,6 +100,7 @@ export function BillingClass({
                 <Text style={styles.planName}>{plan.name}</Text>
               </View>
               <Text style={styles.planLimit}>{formatMembers(plan.maxMembers)}</Text>
+              <Text style={styles.planInterval}>{BILLING_INTERVAL_LINE}</Text>
               {plan.description ? (
                 <Text style={styles.planDescription}>{plan.description}</Text>
               ) : null}
@@ -181,6 +186,11 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.blue,
     fontSize: 14,
     fontWeight: '600',
+  },
+  planInterval: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 13,
+    fontWeight: '700',
   },
   planDescription: {
     color: MINIMAL_UI.textMuted,
