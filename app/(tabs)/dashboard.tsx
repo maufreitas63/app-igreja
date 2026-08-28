@@ -190,6 +190,7 @@ const MINIMAL_BODY_TITLE_CARD_CONTENTS = new Set<DashboardCard['content']>([
   'birthdays',
   'financial',
   'grouped_manage',
+  'small_group',
 ]);
 
 type GroupedRoomConfig = {
