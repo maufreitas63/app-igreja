@@ -1,6 +1,6 @@
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
+import { normalizePhoneDigits } from '@/lib/phoneDigits';
 import { supabase } from '@/lib/supabase';
-import { normalizePhoneDigits } from '@/lib/totemDevice';
 
 export const phoneDigitsMatch = (
   left: string | null | undefined,

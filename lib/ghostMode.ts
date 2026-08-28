@@ -47,6 +47,9 @@ export function isGhostModeActive(): boolean {
   return ghostState !== null;
 }
 
+export const GHOST_MODE_SQL_HINT =
+  'Execute no Supabase: scripts/access-control-ghost-mode.sql e recarregue o schema (Settings → API).';
+
 export function getGhostEffectiveProfileId(): string | null {
   return ghostState?.targetProfileId?.trim() || null;
 }

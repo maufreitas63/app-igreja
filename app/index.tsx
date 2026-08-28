@@ -1508,14 +1508,14 @@ export default function IndexScreen() {
               {!isTotemLoginMode ? (
                 <>
                   {instanceCode ? (
-                    <View pointerEvents="none" style={styles.phoneConfirmedRow}>
+                    <View style={styles.phoneConfirmedRow}>
                       <FontAwesome name="check-circle" size={18} color={LOGIN_ACCENT} />
                       <ReadOnlyText style={styles.phoneConfirmedText}>
                         Instância: {instanceName || instanceCode}
                       </ReadOnlyText>
                     </View>
                   ) : null}
-                  <View pointerEvents="none" style={styles.phoneConfirmedRow}>
+                  <View style={styles.phoneConfirmedRow}>
                     <FontAwesome name="check-circle" size={18} color={LOGIN_ACCENT} />
                     <ReadOnlyText style={styles.phoneConfirmedText}>
                       {phoneBelongsToInstance ? 'Celular confirmado' : 'Celular informado'}: {phone}
@@ -1534,7 +1534,7 @@ export default function IndexScreen() {
               {showEmailPinDelivery ? renderEmailPinDelivery() : null}
 
               {!isTotemLoginMode && pinCodeSent ? (
-                <View pointerEvents="none" style={styles.pinSentBanner}>
+                <View style={styles.pinSentBanner}>
                   <ReadOnlyText style={styles.pinSentBannerText}>
                     {firstAccessEmailMasked
                       ? `Código enviado para ${firstAccessEmailMasked}. Digite os 4 dígitos abaixo.`
@@ -1544,7 +1544,7 @@ export default function IndexScreen() {
               ) : null}
 
               {!isTotemLoginMode && passwordRecoveredBanner ? (
-                <View pointerEvents="none" style={styles.pinSentBanner}>
+                <View style={styles.pinSentBanner}>
                   <ReadOnlyText style={styles.pinSentBannerText}>
                     {recoveryEmailMasked
                       ? `Nova senha enviada para ${recoveryEmailMasked}. Verifique seu e-mail e digite os 4 dígitos abaixo.`
@@ -1607,7 +1607,6 @@ export default function IndexScreen() {
                   <View
                     accessibilityLabel="Senha bloqueada até receber o código por e-mail"
                     accessibilityRole="text"
-                    pointerEvents="none"
                     style={[styles.pinInput, styles.pinInputFullWidth, styles.pinLockedPanel]}
                   >
                     <ReadOnlyText style={styles.readOnlyInputText}>Aguardando código</ReadOnlyText>
@@ -1845,6 +1844,7 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.rowHover,
     borderWidth: 1,
     borderColor: LOGIN_INPUT_BORDER,
+    pointerEvents: 'none',
     borderStyle: 'dashed',
   },
   readOnlyInputText: {
@@ -1892,6 +1892,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    pointerEvents: 'none',
     gap: 8,
     paddingVertical: 4,
   },
@@ -2006,6 +2007,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: 'rgba(58, 150, 221, 0.08)',
     borderWidth: 1,
+    pointerEvents: 'none',
     borderColor: LOGIN_SOFT_BORDER,
   },
   pinSentBannerText: {

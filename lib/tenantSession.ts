@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { clearEntityPrefixCache } from '@/lib/entityPrefix';
 import { clearAppParameterCache } from '@/lib/appParameters';
+import { clearEntityPrefixCache } from '@/lib/entityPrefixCache';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { supabase } from '@/lib/supabase';
 

@@ -1,3 +1,4 @@
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { confirmDialog } from '@/lib/confirmDialog';
 import {
   formatDeviceGeolocationPermissionError,
@@ -650,11 +651,13 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     padding: 16,
     gap: 12,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 4,
+    ...boxShadowStyle({
+      color: '#0F172A',
+      offsetY: 8,
+      blurRadius: 24,
+      opacity: 0.08,
+      elevation: 4,
+    }),
   },
   header: {
     flexDirection: 'row',

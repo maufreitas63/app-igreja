@@ -1,5 +1,6 @@
 import { loadDigitalIdCardData, type DigitalIdCardData } from '@/lib/digitalIdCard';
 import { subscribeGhostMode } from '@/lib/ghostMode';
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -405,15 +406,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
     overflow: 'hidden',
-    ...(Platform.OS === 'web'
-      ? { boxShadow: '0 8px 24px rgba(0, 0, 139, 0.08)' }
-      : {
-          shadowColor: MINIMAL_UI.blueDark,
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 3,
-        }),
+    ...boxShadowStyle({
+      color: MINIMAL_UI.blueDark,
+      offsetY: 4,
+      blurRadius: 12,
+      opacity: 0.08,
+      elevation: 3,
+    }),
   },
   cardAccent: {
     height: 8,

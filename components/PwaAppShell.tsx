@@ -512,7 +512,7 @@ export function PwaAppShell() {
       </Modal>
 
       {loading && !errorMessage ? (
-        <View style={styles.loader} pointerEvents="none">
+        <View style={styles.loader}>
           <ActivityIndicator size="large" color="#10b981" />
           <Text style={styles.loaderText}>Carregando Comunidade Digital…</Text>
           <Text style={styles.loaderHint}>{entryUrl}</Text>
@@ -537,6 +537,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(15, 23, 42, 0.88)',
     gap: 12,
+    pointerEvents: 'none',
     paddingHorizontal: 24,
   },
   loaderText: {

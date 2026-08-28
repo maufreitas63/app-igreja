@@ -1,3 +1,4 @@
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { formatBulletinAmount } from '@/lib/financialBulletin';
 import {
   formatFinancialMonthKey,
@@ -155,11 +156,13 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     gap: 8,
     overflow: 'hidden',
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    ...boxShadowStyle({
+      color: '#0F172A',
+      offsetY: 4,
+      blurRadius: 12,
+      opacity: 0.12,
+      elevation: 6,
+    }),
   },
   bubbleArrow: {
     position: 'absolute',

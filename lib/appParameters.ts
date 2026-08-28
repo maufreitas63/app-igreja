@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isAppParameterNo } from '@/lib/checkInVisibility';
-import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
 
@@ -204,6 +203,7 @@ export async function saveAppParameterValue(parameter: string, value: string) {
     throw new Error('Parâmetro inválido.');
   }
 
+  const { resolveActorProfileId } = await import('@/lib/maintenanceAccessControlApi');
   const actorProfileId = await resolveActorProfileId();
 
   if (!actorProfileId) {

@@ -1,6 +1,7 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceProfileAccessInsights } from '@/hooks/useMaintenanceProfileAccessInsights';
+import { boxShadowStyle, NO_BOX_SHADOW } from '@/lib/boxShadow';
 import { formatShortName } from '@/lib/formatShortName';
 import {
   listProfileScreenVisitsForSuperAdmin,
@@ -647,11 +648,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 18,
     paddingBottom: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    ...boxShadowStyle({
+      color: '#000',
+      offsetY: 8,
+      blurRadius: 18,
+      opacity: 0.35,
+      elevation: 8,
+    }),
   },
   balloonPointer: {
     position: 'absolute',
@@ -833,8 +836,7 @@ const styles = StyleSheet.create({
   balloonCardMinimal: {
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.background,
-    shadowOpacity: 0,
-    elevation: 0,
+    ...NO_BOX_SHADOW,
   },
   balloonPointerMinimal: {
     backgroundColor: MINIMAL_UI.background,

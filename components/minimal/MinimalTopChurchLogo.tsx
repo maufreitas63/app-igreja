@@ -96,7 +96,7 @@ export function MinimalTopChurchLogo() {
   }, [reloadToken]);
 
   return (
-    <View style={styles.slot} pointerEvents="none">
+    <View style={styles.slot}>
       {logoSource ? (
         <Image
           source={logoSource}
@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'center',
     flexShrink: 0,
+    pointerEvents: 'none',
   },
   logo: {
     // Um pouco menor para não roubar largura da saudação em telas estreitas.

@@ -151,7 +151,7 @@ export function ProfilesMapCanvas({
         })}
       </MapView>
       {!markers.length ? (
-        <View style={styles.emptyOverlay} pointerEvents="none">
+        <View style={styles.emptyOverlay}>
           <Text style={styles.emptyText}>Nenhum pin para exibir.</Text>
         </View>
       ) : null}
@@ -175,6 +175,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    pointerEvents: 'none',
   },
   emptyText: {
     color: '#E2E8F0',

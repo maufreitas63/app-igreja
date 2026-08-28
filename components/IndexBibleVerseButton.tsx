@@ -3,6 +3,7 @@ import {
   formatBibleVerseReference,
   type BibleVerseByTheme,
 } from '@/lib/bibleVerseByTheme';
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { FontAwesome5 } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
 import {
@@ -71,10 +72,7 @@ export function IndexBibleVerseButton({ panelWidth }: IndexBibleVerseButtonProps
       ) : null}
 
       {isOpen ? (
-        <View
-          pointerEvents="box-none"
-          style={[styles.bubbleAnchor, { width: panelWidth }]}
-        >
+        <View style={[styles.bubbleAnchor, { width: panelWidth }]}>
           <Pressable
             style={[styles.bubble, { width: panelWidth }]}
             onPress={handleDismiss}
@@ -135,6 +133,7 @@ const styles = StyleSheet.create({
     bottom: 54,
     zIndex: 4,
     alignItems: 'flex-start',
+    pointerEvents: 'box-none',
   },
   bubble: {
     borderRadius: 18,
@@ -145,11 +144,13 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingBottom: 16,
     gap: 10,
-    shadowColor: '#92400E',
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    ...boxShadowStyle({
+      color: '#92400E',
+      offsetY: 8,
+      blurRadius: 16,
+      opacity: 0.18,
+      elevation: 8,
+    }),
   },
   bubbleLoading: {
     minHeight: 88,

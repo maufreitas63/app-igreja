@@ -1,4 +1,4 @@
-import { clearAppParameterCache, getAppParameterValue } from '@/lib/appParameters';
+import { getAppParameterValue } from '@/lib/appParameters';
 import {
   buildFamilyId,
   buildKidsRoomBadgeLabel,
@@ -15,6 +15,13 @@ import {
   resolveEntityPrefixOrFallback,
   TEENS_ROOM_DISPLAY_LABEL,
 } from '@/lib/entityPrefixCore';
+import {
+  getEntityPrefixGeneration,
+  getEntityPrefixInflight,
+  readCachedEntityPrefix,
+  setEntityPrefixInflight,
+  writeCachedEntityPrefix,
+} from '@/lib/entityPrefixCache';
 import { getStoredTenantId, resolveActiveIgrejaBranding } from '@/lib/tenantSession';
 
 export {
@@ -34,37 +41,24 @@ export {
   TEENS_ROOM_DISPLAY_LABEL,
 };
 
-type CachedPrefix = {
-  tenantId: string | null;
-  prefix: string;
-};
-
-let cachedEntityPrefix: CachedPrefix | null = null;
-let inflightEntityPrefix: Promise<string> | null = null;
-let entityPrefixGeneration = 0;
-
-export function clearEntityPrefixCache(): void {
-  cachedEntityPrefix = null;
-  inflightEntityPrefix = null;
-  entityPrefixGeneration += 1;
-  clearAppParameterCache(PARM_ENTIDADE_PARAMETER);
-  clearAppParameterCache('parm_entidade');
-}
+export { clearEntityPrefixCache } from '@/lib/entityPrefixCache';
 
 export async function getEntityPrefix(): Promise<string> {
   const tenantId = await getStoredTenantId();
+  const cached = readCachedEntityPrefix(tenantId);
 
-  if (cachedEntityPrefix && cachedEntityPrefix.tenantId === tenantId) {
-    return cachedEntityPrefix.prefix;
+  if (cached) {
+    return cached;
   }
 
-  if (inflightEntityPrefix) {
-    return inflightEntityPrefix;
+  const inflight = getEntityPrefixInflight();
+  if (inflight) {
+    return inflight;
   }
 
-  const generation = entityPrefixGeneration;
+  const generation = getEntityPrefixGeneration();
 
-  inflightEntityPrefix = (async () => {
+  const nextInflight = (async () => {
     try {
       // Prioriza o código da instância ativa (mesmo fonte do logo) para os selos.
       const branding = await resolveActiveIgrejaBranding();
@@ -82,8 +76,8 @@ export async function getEntityPrefix(): Promise<string> {
       }
 
       const resolved = resolveEntityPrefixOrFallback(prefix);
-      if (generation === entityPrefixGeneration) {
-        cachedEntityPrefix = { tenantId, prefix: resolved };
+      if (generation === getEntityPrefixGeneration()) {
+        writeCachedEntityPrefix(tenantId, resolved);
       }
       return resolved;
     } catch (error) {
@@ -93,21 +87,22 @@ export async function getEntityPrefix(): Promise<string> {
         const resolved = resolveEntityPrefixOrFallback(
           branding && (!tenantId || branding.id === tenantId) ? branding.code : null
         );
-        if (generation === entityPrefixGeneration) {
-          cachedEntityPrefix = { tenantId, prefix: resolved };
+        if (generation === getEntityPrefixGeneration()) {
+          writeCachedEntityPrefix(tenantId, resolved);
         }
         return resolved;
       } catch {
         const resolved = FALLBACK_ENTITY_PREFIX;
-        if (generation === entityPrefixGeneration) {
-          cachedEntityPrefix = { tenantId, prefix: resolved };
+        if (generation === getEntityPrefixGeneration()) {
+          writeCachedEntityPrefix(tenantId, resolved);
         }
         return resolved;
       }
     } finally {
-      inflightEntityPrefix = null;
+      setEntityPrefixInflight(null);
     }
   })();
 
-  return inflightEntityPrefix;
+  setEntityPrefixInflight(nextInflight);
+  return nextInflight;
 }

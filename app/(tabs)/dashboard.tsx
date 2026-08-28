@@ -114,7 +114,8 @@ import {
   resolveDashboardCardIndex,
 } from '@/lib/dashboardPanelLayout';
 import { BIRTHDAYS_UI, DASHBOARD_CARD_THEMES, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
-import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_TYPO } from '@/lib/dashboardCardStyles';
+import { DASHBOARD_CARD_BOX_SHADOW, DASHBOARD_CARD_REFERENCE_THEME, DASHBOARD_CARD_SHELL, DASHBOARD_CARD_TYPO } from '@/lib/dashboardCardStyles';
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
 import { withReturnDashboardCard, pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
@@ -464,7 +465,7 @@ export default function Dashboard() {
     return {
       backgroundColor: theme.backgroundColor,
       borderColor: theme.borderColor,
-      shadowColor: theme.shadowColor,
+      ...DASHBOARD_CARD_BOX_SHADOW,
     };
   }, [paletteColors]);
   const {
@@ -2642,7 +2643,6 @@ export default function Dashboard() {
                   <View
                     style={[
                     cardBaseStyle,
-                      styles.cardEventAlt,
                       styles.eventCard,
                       styles.eventAltCard,
                       effectiveDashboardPanelCardSizeStyle,
@@ -3281,7 +3281,6 @@ export default function Dashboard() {
                     style={[
                     cardBaseStyle,
                       effectiveDashboardPanelCardSizeStyle,
-                      styles.cardFinancialAction,
                       styles.dashboardPanelCardTopLayout,
                       dashboardPanelTopInsetStyle,
                     ]}
@@ -3584,7 +3583,6 @@ export default function Dashboard() {
                   <View
                     style={[
                     cardBaseStyle,
-                      styles.cardKidsTeens,
                       styles.cardGroupedAudience,
                       styles.dashboardPanelCardTopLayout,
                       effectiveDashboardPanelCardSizeStyle,
@@ -3737,7 +3735,6 @@ export default function Dashboard() {
                     style={[
                     cardBaseStyle,
                       effectiveDashboardPanelCardSizeStyle,
-                      item.content === 'qr' && styles.cardQr,
                       item.content === 'qr' && isQrTotemCardPoolBlue && styles.cardQrTotemConfirmed,
                       item.content === 'pastoral' && styles.cardPastoralAction,
                       item.content === 'pastoral' && styles.dashboardPanelCardTopLayout,
@@ -4093,22 +4090,18 @@ const styles = StyleSheet.create({
   },
   cardDashboardShell: {
     ...DASHBOARD_CARD_SHELL,
-    shadowOpacity: 0.3,
     paddingHorizontal: 20,
     paddingBottom: 20,
     gap: 12,
   },
-  cardEventAlt: {
-    shadowOpacity: 0.3,
-  },
-  cardQr: {
-    shadowOpacity: 0.3,
-  },
   cardQrTotemConfirmed: {
-    shadowOpacity: 0.35,
-  },
-  cardKidsTeens: {
-    shadowOpacity: 0.3,
+    ...boxShadowStyle({
+      color: DASHBOARD_CARD_REFERENCE_THEME.shadowColor,
+      offsetY: 10,
+      blurRadius: 15,
+      opacity: 0.35,
+      elevation: 5,
+    }),
   },
   eventCard: {
     padding: 20,
@@ -4504,7 +4497,6 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     justifyContent: 'flex-start',
     gap: 0,
-    shadowOpacity: 0.3,
   },
   cardGroupedManagePanel: {
     flex: 1,
@@ -4521,7 +4513,6 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     justifyContent: 'flex-start',
     gap: 0,
-    shadowOpacity: 0.3,
   },
   groupedManageBody: {
     marginTop: 12,
@@ -4569,10 +4560,13 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   cardPastoralAction: {
-    shadowOpacity: 0.32,
-  },
-  cardFinancialAction: {
-    shadowOpacity: 0.3,
+    ...boxShadowStyle({
+      color: DASHBOARD_CARD_REFERENCE_THEME.shadowColor,
+      offsetY: 10,
+      blurRadius: 15,
+      opacity: 0.32,
+      elevation: 5,
+    }),
   },
   dashboardPanelCardTopLayout: {
     justifyContent: 'flex-start',
@@ -4660,20 +4654,17 @@ const styles = StyleSheet.create({
   cardOfferings: {
     paddingHorizontal: 24,
     paddingBottom: 24,
-    shadowOpacity: 0.3,
   },
   cardBirthdays: {
     paddingHorizontal: 18,
     paddingBottom: 18,
     gap: 6,
-    shadowOpacity: 0.3,
   },
   cardMembersList: {
     alignItems: 'stretch',
     justifyContent: 'flex-start',
     padding: 20,
     gap: 0,
-    shadowOpacity: 0.3,
   },
   membersListSummaryText: {
     color: VIGILANCE_SCALES_UI.accent,
@@ -4965,7 +4956,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
     gap: 12,
-    shadowOpacity: 0.3,
   },
   cardParkingVehicleV2: {
     alignItems: 'stretch',
@@ -4974,14 +4964,12 @@ const styles = StyleSheet.create({
     gap: 6,
     minHeight: 0,
     overflow: 'hidden',
-    shadowOpacity: 0.3,
   },
   cardScaleRoster: {
     alignItems: 'stretch',
     justifyContent: 'flex-start',
     padding: 20,
     gap: 10,
-    shadowOpacity: 0.3,
   },
   scaleRosterParkingPrompt: {
     flexShrink: 0,

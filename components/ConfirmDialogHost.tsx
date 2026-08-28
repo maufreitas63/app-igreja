@@ -1,4 +1,5 @@
 import { settleConfirmDialog, subscribeConfirmDialogHost, type ConfirmDialogRequest } from '@/lib/confirmDialogHost';
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useEffect, useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -47,7 +48,7 @@ export function ConfirmDialogHost() {
     <Modal transparent visible animationType="fade" onRequestClose={dismiss}>
       <View style={styles.modalRoot}>
         <Pressable style={styles.backdrop} onPress={dismiss} accessibilityRole="button" />
-        <View style={styles.cardShell} pointerEvents="box-none">
+        <View style={styles.cardShell}>
           <View style={styles.card}>
             <DialogCopy request={request} />
             <View style={[styles.actions, request.alertOnly && styles.actionsSingle]}>
@@ -59,7 +60,7 @@ export function ConfirmDialogHost() {
                   onPress={() => close(false)}
                 >
                   <View style={[styles.buttonInner, styles.cancelButton]}>
-                    <Text style={styles.cancelButtonText} pointerEvents="none">
+                    <Text style={styles.cancelButtonText}>
                       {request.cancelLabel}
                     </Text>
                   </View>
@@ -79,7 +80,6 @@ export function ConfirmDialogHost() {
                 >
                   <Text
                     style={request.destructive ? styles.destructiveButtonText : styles.confirmButtonText}
-                    pointerEvents="none"
                   >
                     {request.confirmLabel}
                   </Text>
@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
     zIndex: 1,
+    pointerEvents: 'box-none',
   },
   card: {
     width: '100%',
@@ -130,10 +131,12 @@ const styles = StyleSheet.create({
     paddingTop: 22,
     paddingBottom: 18,
     gap: 18,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
+    ...boxShadowStyle({
+      color: '#0F172A',
+      offsetY: 8,
+      blurRadius: 24,
+      opacity: 0.08,
+    }),
   },
   copyBlock: {
     gap: 8,
@@ -187,6 +190,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     width: '100%',
+    pointerEvents: 'none',
   },
   confirmButton: {
     backgroundColor: MINIMAL_UI.blueDark,
@@ -199,6 +203,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     width: '100%',
+    pointerEvents: 'none',
   },
   destructiveButton: {
     backgroundColor: MINIMAL_UI.blueDark,
@@ -211,5 +216,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     width: '100%',
+    pointerEvents: 'none',
   },
 });

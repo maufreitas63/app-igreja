@@ -158,7 +158,7 @@ export function AppDrawer() {
       onRequestClose={settingsOpen ? () => setSettingsOpen(false) : closeDrawer}
     >
       <View style={styles.overlay}>
-        <View style={[styles.chromeGap, { height: panelTopOffset }]} pointerEvents="none" />
+        <View style={[styles.chromeGap, { height: panelTopOffset }]} />
         <View style={styles.sheet}>
           {settingsOpen && canAccessSettings ? (
             <AppDrawerSettings
@@ -233,6 +233,7 @@ const styles = StyleSheet.create({
   chromeGap: {
     width: '100%',
     backgroundColor: 'transparent',
+    pointerEvents: 'none',
   },
   sheet: {
     flex: 1,

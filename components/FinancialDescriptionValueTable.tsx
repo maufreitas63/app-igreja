@@ -1,3 +1,4 @@
+import { boxShadowStyle } from '@/lib/boxShadow';
 import {
   type BulletinComparisonRow,
   type BulletinComparisonRowLevel,
@@ -919,11 +920,13 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 14,
     gap: 10,
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    ...boxShadowStyle({
+      color: '#0F172A',
+      offsetY: 4,
+      blurRadius: 12,
+      opacity: 0.12,
+      elevation: 6,
+    }),
   },
   bubbleArrow: {
     position: 'absolute',
@@ -1053,11 +1056,13 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 14,
     gap: 10,
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    ...boxShadowStyle({
+      color: '#0F172A',
+      offsetY: 4,
+      blurRadius: 12,
+      opacity: 0.12,
+      elevation: 6,
+    }),
   },
   receiptModalTitle: {
     color: '#065F46',

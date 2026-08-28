@@ -13,12 +13,24 @@ import {
   fetchEffectiveProfileColumnAccess,
   shouldUseEffectiveProfileRpc,
 } from '@/lib/effectiveProfileRpc';
+import {
+  isProfileColumnAccessLoaded,
+  PROFILE_MANAGE_COLUMN_FIELDS,
+  profileColumnResourceKey,
+  type ProfileColumnAccess,
+} from '@/lib/profileColumnAccess';
 import { resolveEffectiveProfileId, resolveRealSessionProfileId } from '@/lib/sessionProfile';
 import { ACCESS_SCREEN } from '@/lib/accessScreen';
 import { getEffectiveUserPhone } from '@/lib/loadSessionProfile';
 
 export { ACL_UNAVAILABLE_MESSAGE, isAclStrictMode } from '@/lib/aclPolicy';
 export { ACCESS_SCREEN, ACCESS_SCREEN_MAINTENANCE_EXTRA } from '@/lib/accessScreen';
+export {
+  isProfileColumnAccessLoaded,
+  PROFILE_MANAGE_COLUMN_FIELDS,
+  profileColumnResourceKey,
+  type ProfileColumnAccess,
+} from '@/lib/profileColumnAccess';
 
 export type AccessResourceType = 'screen' | 'table' | 'column';
 export type AccessAction = 'view' | 'update';
@@ -124,35 +136,6 @@ export const isDashboardCardContentAllowed = (
 
   return accessByContent[content] === true;
 };
-
-/** Colunas de `profiles` editáveis em Dados cadastrais (`column:profiles.<campo>`). */
-export const PROFILE_MANAGE_COLUMN_FIELDS = [
-  'full_name',
-  'phone',
-  'birth_date',
-  'email',
-  'cpf',
-  'cep',
-  'address_street',
-  'address_number',
-  'address_complement',
-  'address_neighborhood',
-  'address_city',
-  'address_state',
-  'medical_food_alerts',
-  'lgpd_accepted',
-  'access_pin',
-] as const;
-
-export type ProfileColumnAccess = {
-  view: Record<string, boolean>;
-  update: Record<string, boolean>;
-};
-
-export const profileColumnResourceKey = (fieldKey: string) => `profiles.${fieldKey}`;
-
-export const isProfileColumnAccessLoaded = (access: ProfileColumnAccess) =>
-  Object.keys(access.view).length > 0;
 
 /** Consulta `profile_has_access` para colunas do perfil (view e update). */
 export async function loadProfileColumnAccess(

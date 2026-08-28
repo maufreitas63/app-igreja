@@ -1,3 +1,4 @@
+import { NO_BOX_SHADOW } from '@/lib/boxShadow';
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
 import React from 'react';
@@ -96,8 +97,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
     borderRadius: 16,
-    shadowOpacity: 0,
-    elevation: 0,
+    ...NO_BOX_SHADOW,
     paddingVertical: 0,
     paddingHorizontal: 0,
     ...(Platform.OS === 'web'

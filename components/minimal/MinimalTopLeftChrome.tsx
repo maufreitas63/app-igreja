@@ -50,7 +50,7 @@ export function MinimalTopLeftChrome({ title, header, showGreeting = false }: Pr
           ) : null}
         </View>
 
-        <View style={styles.logoColumn} pointerEvents="none">
+        <View style={styles.logoColumn}>
           <MinimalTopChurchLogo />
         </View>
       </View>
@@ -78,6 +78,7 @@ const styles = StyleSheet.create({
     flexGrow: 0,
     alignItems: 'flex-end',
     justifyContent: 'center',
+    pointerEvents: 'none',
   },
   menuButton: {
     padding: 4,

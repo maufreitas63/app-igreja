@@ -18,6 +18,7 @@ import { DASHBOARD_FINANCIAL_CARD_ID, FINANCIAL_HUB_ITEMS } from '@/lib/financia
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { formatFinancialMonthKey, formatFinancialMonthLabel } from '@/lib/financialMonth';
 import { useFinancialsByMonth } from '@/hooks/useFinancialsByMonth';
@@ -746,11 +747,12 @@ const styles = StyleSheet.create({
   rdShortcutButtonHighlighted: {
     borderColor: 'rgba(52, 211, 153, 0.75)',
     backgroundColor: 'rgba(6, 95, 70, 0.42)',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 4,
+    ...boxShadowStyle({
+      color: '#10B981',
+      blurRadius: 10,
+      opacity: 0.35,
+      elevation: 4,
+    }),
   },
   rdShortcutTextWrap: {
     flex: 1,

@@ -1,4 +1,5 @@
 import { BIRTHDAYS_UI, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { NO_BOX_SHADOW } from '@/lib/boxShadow';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 
@@ -21,8 +22,7 @@ export const MINIMAL_FLAT_PANEL: ViewStyle = {
   backgroundColor: MINIMAL_UI.background,
   borderWidth: 0,
   borderRadius: 0,
-  shadowOpacity: 0,
-  elevation: 0,
+  ...NO_BOX_SHADOW,
   paddingHorizontal: 0,
   paddingVertical: 4,
   alignItems: 'stretch',
@@ -53,8 +53,7 @@ export const MINIMAL_DASHBOARD_STYLES = StyleSheet.create({
     borderColor: MINIMAL_UI.border,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,
-    shadowOpacity: 0,
-    elevation: 0,
+    ...NO_BOX_SHADOW,
   } satisfies ViewStyle,
   emptyText: {
     color: MINIMAL_UI.textMuted,

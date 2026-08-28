@@ -1,17 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAppParameterValue } from '@/lib/appParameters';
-import { supabase } from '@/lib/supabase';
-import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+import { canonicalPhoneDigits, normalizePhoneDigits } from '@/lib/phoneDigits';
 import {
-  getStoredUserPhone,
   USER_PHONE_STORAGE_KEY,
   USER_PROFILE_ID_STORAGE_KEY,
-} from '@/lib/userSession';
+} from '@/lib/sessionStorageKeys';
+import { supabase } from '@/lib/supabase';
+import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 /**
  * Celular em `app_parameters.cel_totem` é exclusivo do dispositivo totem.
  * Não usa cadastro, perfil, LGPD nem PIN de membro — apenas senha fixa 9999.
  */
+export { canonicalPhoneDigits, normalizePhoneDigits } from '@/lib/phoneDigits';
+
 export const CEL_TOTEM_PARAMETER = 'cel_totem';
 export const TOTEM_ACCESS_PIN = '9999';
 
@@ -19,24 +21,6 @@ const TOTEM_PHONE_CACHE_TTL_MS = 5 * 60 * 1000;
 
 let cachedTotemPhones: { phones: string[]; expiresAt: number } | null = null;
 let inflightTotemPhones: Promise<string[]> | null = null;
-
-export const normalizePhoneDigits = (value: string | null | undefined) =>
-  (value ?? '').replace(/\D/g, '');
-
-/** Dígitos locais BR (DDD + número), sem prefixo 55. */
-export const canonicalPhoneDigits = (value: string | null | undefined) => {
-  let digits = normalizePhoneDigits(value);
-
-  if (digits.startsWith('55') && digits.length >= 12) {
-    digits = digits.slice(2);
-  }
-
-  if (digits.length > 11) {
-    digits = digits.slice(-11);
-  }
-
-  return digits.length >= 10 ? digits : '';
-};
 
 export const phoneDigitsMatch = (
   left: string | null | undefined,
@@ -162,7 +146,7 @@ export async function isTotemDevicePhone(phone: string | null | undefined) {
 }
 
 export async function isTotemDeviceSession() {
-  const storedPhone = await getStoredUserPhone();
+  const storedPhone = await AsyncStorage.getItem(USER_PHONE_STORAGE_KEY);
   return isTotemDevicePhone(storedPhone);
 }
 

@@ -3,6 +3,7 @@ import {
   VIGILANCE_SCALES_UI,
   type DashboardCardTheme,
 } from '@/lib/dashboardCardThemes';
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import { StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
 
@@ -11,17 +12,21 @@ export const DASHBOARD_CARD_REFERENCE_THEME: DashboardCardTheme = VIGILANCE_LIGH
 
 const CARD_INSETS = computeResponsiveCardInsets(390);
 
+export const DASHBOARD_CARD_BOX_SHADOW = boxShadowStyle({
+  color: DASHBOARD_CARD_REFERENCE_THEME.shadowColor,
+  offsetY: 10,
+  blurRadius: 15,
+  opacity: 0.3,
+  elevation: 5,
+});
+
 /** Shell compartilhado de todos os cards de dashboard (fundo, borda, sombra, raio). */
 export const DASHBOARD_CARD_SHELL: ViewStyle = {
   backgroundColor: DASHBOARD_CARD_REFERENCE_THEME.backgroundColor,
   borderWidth: 1,
   borderColor: DASHBOARD_CARD_REFERENCE_THEME.borderColor,
   borderRadius: CARD_INSETS.borderRadius,
-  elevation: 5,
-  shadowColor: DASHBOARD_CARD_REFERENCE_THEME.shadowColor,
-  shadowOffset: { width: 0, height: 10 },
-  shadowOpacity: 0.3,
-  shadowRadius: 15,
+  ...DASHBOARD_CARD_BOX_SHADOW,
 };
 
 /** Layout interno padrão do card Escalas (padding e gap). */

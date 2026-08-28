@@ -72,7 +72,7 @@ export default function RootLayout() {
         <AppShell />
         <GhostModeBanner />
         <ConfirmDialogHost />
-        <View style={styles.toastHost} pointerEvents="box-none">
+        <View style={styles.toastHost}>
           <Toast config={appToastConfig} topOffset={Platform.OS === 'web' ? 12 : 48} />
         </View>
       </View>
@@ -98,7 +98,10 @@ const styles = StyleSheet.create({
       left: 0,
       right: 0,
       zIndex: 999999,
+      pointerEvents: 'box-none',
     },
-    default: {},
+    default: {
+      pointerEvents: 'box-none',
+    },
   }),
 });

@@ -53,6 +53,7 @@ export function ClientGeoLeafletMap({
     }
 
     let active = true;
+    // Metro não empacota `url(images/...)` de `leaflet.css`. O CSS entra via <link>, não via import.
     const href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
     let link: HTMLLinkElement | null = null;
 

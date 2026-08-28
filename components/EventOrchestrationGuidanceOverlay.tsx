@@ -1,3 +1,4 @@
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { usePalette } from '@/context/PaletteContext';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
@@ -75,7 +76,7 @@ export function EventOrchestrationGuidanceOverlay({ visible, message, onHidden }
   }
 
   return (
-    <View style={styles.host} pointerEvents="none">
+    <View style={styles.host}>
       <Animated.View
         style={[
           styles.card,
@@ -101,6 +102,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingTop: Platform.OS === 'web' ? 72 : 96,
     zIndex: 9998,
+    pointerEvents: 'none',
   },
   card: {
     width: 'min(92%, 420px)' as unknown as number,
@@ -108,11 +110,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 18,
     paddingVertical: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
+    ...boxShadowStyle({
+      color: '#000',
+      offsetY: 6,
+      blurRadius: 12,
+      opacity: 0.25,
+      elevation: 8,
+    }),
   },
   title: {
     fontSize: 12,

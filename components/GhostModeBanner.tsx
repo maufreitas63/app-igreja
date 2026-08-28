@@ -59,7 +59,6 @@ export function GhostModeBanner() {
         Platform.OS === 'web' ? styles.containerWeb : null,
         { paddingTop: Math.max(insets.top, Platform.OS === 'web' ? 6 : 0) },
       ]}
-      pointerEvents="box-none"
     >
       <View style={styles.inner}>
         <FontAwesome name="user-secret" size={13} color="#FDE68A" style={styles.icon} />
@@ -93,6 +92,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: CONTENT_HORIZONTAL_INSET,
     paddingBottom: 4,
     alignItems: 'flex-end',
+    pointerEvents: 'box-none',
   },
   containerWeb: {
     position: 'fixed' as unknown as 'absolute',

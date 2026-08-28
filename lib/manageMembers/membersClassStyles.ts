@@ -255,6 +255,7 @@ export const membersClassStyles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     marginRight: 8,
+    pointerEvents: 'box-none',
   },
   memberName: { color: TEXT, fontWeight: '700', fontSize: 15, flexShrink: 1 },
   memberNameRow: {

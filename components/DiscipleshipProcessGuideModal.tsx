@@ -2,6 +2,7 @@ import {
   DISCIPLESHIP_PROCESS_GUIDE_INTRO,
   DISCIPLESHIP_PROCESS_GUIDE_STEPS,
 } from '@/lib/discipleshipProcessGuide';
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
@@ -78,7 +79,7 @@ export function DiscipleshipProcessGuideModal({ visible, onClose }: Props) {
       onRequestClose={onClose}
       statusBarTranslucent={Platform.OS === 'android'}
     >
-      <View style={styles.root} pointerEvents="box-none">
+      <View style={styles.root}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Fechar guia">
           <Animated.View
             style={[
@@ -159,6 +160,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    pointerEvents: 'box-none',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -170,11 +172,13 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1,
     borderLeftColor: MINIMAL_UI.border,
     paddingHorizontal: 18,
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    shadowOffset: { width: -4, height: 0 },
-    elevation: 8,
+    ...boxShadowStyle({
+      color: '#0F172A',
+      offsetX: -4,
+      blurRadius: 18,
+      opacity: 0.18,
+      elevation: 8,
+    }),
   },
   header: {
     flexDirection: 'row',

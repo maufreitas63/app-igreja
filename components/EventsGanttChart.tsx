@@ -3,6 +3,7 @@ import {
   type GanttSourceEvent,
   type GanttViewMode,
 } from '@/lib/eventsGantt';
+import { boxShadowStyle, NO_BOX_SHADOW } from '@/lib/boxShadow';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
@@ -591,11 +592,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRightWidth: 1,
     borderRightColor: '#334155',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    shadowOffset: { width: 2, height: 0 },
+    ...boxShadowStyle({
+      color: '#000',
+      offsetX: 2,
+      blurRadius: 6,
+      opacity: 0.35,
+      elevation: 4,
+    }),
   },
   frozenBodyScroll: {
     maxHeight: BODY_MAX_HEIGHT,
@@ -741,11 +744,12 @@ const styles = StyleSheet.create({
   },
   ganttBarDotPublished: {
     backgroundColor: '#10b981',
-    shadowColor: '#10b981',
-    shadowOpacity: 0.45,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 2,
+    ...boxShadowStyle({
+      color: '#10b981',
+      blurRadius: 4,
+      opacity: 0.45,
+      elevation: 2,
+    }),
   },
   ganttBarDotDraft: {
     backgroundColor: '#F59E0B',
@@ -804,8 +808,7 @@ const styles = StyleSheet.create({
   ganttBarDotPublishedMinimal: {
     backgroundColor: MINIMAL_UI.blueDark,
     borderWidth: 0,
-    shadowOpacity: 0,
-    elevation: 0,
+    ...NO_BOX_SHADOW,
   },
   ganttBarDotDraftMinimal: {
     backgroundColor: 'transparent',
@@ -864,8 +867,10 @@ const styles = StyleSheet.create({
   frozenColumnMinimal: {
     backgroundColor: MINIMAL_UI.background,
     borderRightColor: MINIMAL_UI.border,
-    shadowOpacity: 0.08,
-    shadowColor: '#0F172A',
+    ...boxShadowStyle({
+      color: '#0F172A',
+      opacity: 0.08,
+    }),
   },
   headerLabelCellMinimal: {
     backgroundColor: MINIMAL_UI.background,

@@ -93,7 +93,7 @@ import {
   UI_SPACING,
 } from '@/lib/uiTokens';
 import { MAINTENANCE_LIGHT_PANEL_CARD, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
-import { DASHBOARD_CARD_SHELL } from '@/lib/dashboardCardStyles';
+import { DASHBOARD_CARD_BOX_SHADOW, DASHBOARD_CARD_SHELL } from '@/lib/dashboardCardStyles';
 import { confirmDialog } from '@/lib/confirmDialog';
 import {
   deleteMaintenanceEvent,
@@ -2731,11 +2731,7 @@ const styles = StyleSheet.create({
   },
   panelCardLight: {
     ...MAINTENANCE_LIGHT_PANEL_CARD,
-    shadowColor: DASHBOARD_CARD_SHELL.shadowColor,
-    shadowOpacity: 0.3,
-    shadowOffset: DASHBOARD_CARD_SHELL.shadowOffset,
-    shadowRadius: DASHBOARD_CARD_SHELL.shadowRadius,
-    elevation: DASHBOARD_CARD_SHELL.elevation,
+    ...DASHBOARD_CARD_BOX_SHADOW,
   },
   panelCardPlaceholder: {
     flex: 1,

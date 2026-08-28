@@ -12,6 +12,7 @@ import {
   type CalendarDateParts,
 } from '@/lib/monthlyDatePicker';
 import { getTodayCalendarDateInAppTimezone } from '@/lib/eventDate';
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -254,18 +255,26 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingHorizontal: 20,
     paddingBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    elevation: 8,
+    ...boxShadowStyle({
+      color: '#000',
+      offsetY: 8,
+      blurRadius: 18,
+      opacity: 0.18,
+      elevation: 8,
+    }),
   },
   cardMinimal: {
     backgroundColor: MINIMAL_UI.background,
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
     borderRadius: 16,
-    shadowOpacity: 0.08,
+    ...boxShadowStyle({
+      color: '#000',
+      offsetY: 8,
+      blurRadius: 18,
+      opacity: 0.08,
+      elevation: 8,
+    }),
   },
   title: {
     color: '#5F6368',

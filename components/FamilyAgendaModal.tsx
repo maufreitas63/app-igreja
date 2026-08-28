@@ -6,6 +6,7 @@ import { resolveEventEnabledRoomKeys } from '@/lib/maintenanceEventForm';
 import { useActiveEvents, type ActiveEventListItem } from '@/hooks/useActiveEvents';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { NO_BOX_SHADOW } from '@/lib/boxShadow';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -219,8 +220,7 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     backgroundColor: VIGILANCE_SCALES_UI.surface,
     borderWidth: 0,
-    shadowOpacity: 0,
-    elevation: 0,
+    ...NO_BOX_SHADOW,
     overflow: 'hidden',
   },
   panelHeader: {

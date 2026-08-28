@@ -2,6 +2,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { SUPPORT_SUGGESTIONS_REPORT_PDF_FILENAME } from '@/lib/maintenanceSupportSuggestionsReport';
 import { openPdfUri } from '@/lib/openPdfUri';
 import { buildInlinePdfViewerUrl, isApkShellWebClient } from '@/lib/pdfViewerUrl';
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useMemo } from 'react';
 import {
@@ -166,10 +167,12 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     overflow: 'hidden',
     zIndex: 2,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
+    ...boxShadowStyle({
+      color: '#0F172A',
+      offsetY: 8,
+      blurRadius: 24,
+      opacity: 0.08,
+    }),
   },
   header: {
     flexDirection: 'row',

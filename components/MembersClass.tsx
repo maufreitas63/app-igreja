@@ -361,7 +361,7 @@ export function MembersClass({
               const birthDateElapsedCode = getBirthDateElapsedCode(item.birth_date);
 
               return (
-                <View style={membersClassStyles.memberContent} pointerEvents="box-none">
+                <View style={membersClassStyles.memberContent}>
                   <View style={membersClassStyles.memberNameRow}>
                     <Text style={membersClassStyles.memberName}>{item.full_name}</Text>
                     {(() => {

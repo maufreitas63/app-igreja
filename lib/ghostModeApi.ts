@@ -2,12 +2,12 @@ import { coerceRpcBoolean, isSupabaseRpcMissing } from '@/lib/supabaseRpc';
 import { supabase } from '@/lib/supabase';
 import { mapProfileSearchRows } from '@/lib/profileSearchRow';
 import type { AccessProfileSearchResult } from '@/lib/maintenanceAccessControlApi';
+import { GHOST_MODE_SQL_HINT } from '@/lib/ghostMode';
 import { resolveRealSessionProfileId } from '@/lib/sessionProfile';
 
 export const GHOST_MODE_AUDITOR_RESOURCE = 'maintenance.card.auditor';
 
-export const GHOST_MODE_SQL_HINT =
-  'Execute no Supabase: scripts/access-control-ghost-mode.sql e recarregue o schema (Settings → API).';
+export { GHOST_MODE_SQL_HINT };
 
 export type GhostModeProfileOption = AccessProfileSearchResult;
 

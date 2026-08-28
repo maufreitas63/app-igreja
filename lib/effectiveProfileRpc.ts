@@ -1,9 +1,8 @@
+import { isGhostModeActive, GHOST_MODE_SQL_HINT } from '@/lib/ghostMode';
 import {
   PROFILE_MANAGE_COLUMN_FIELDS,
   type ProfileColumnAccess,
-} from '@/lib/accessControl';
-import { isGhostModeActive } from '@/lib/ghostMode';
-import { GHOST_MODE_SQL_HINT } from '@/lib/ghostModeApi';
+} from '@/lib/profileColumnAccess';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
 

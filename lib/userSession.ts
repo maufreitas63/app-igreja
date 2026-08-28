@@ -1,7 +1,11 @@
-import { loadProfileByPhone } from '@/lib/profileOnboarding';
 import { clearGhostModeState } from '@/lib/ghostMode';
 import { resetProfileScreenVisitTracking } from '@/lib/profileScreenVisitTracking';
 import { isAndroidWeb } from '@/lib/pwaInstall';
+import {
+  USER_PHONE_STORAGE_KEY,
+  USER_PROFILE_ID_STORAGE_KEY,
+  USER_SESSION_TOKEN_STORAGE_KEY,
+} from '@/lib/sessionStorageKeys';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -11,12 +15,11 @@ import { BackHandler, Platform } from 'react-native';
 
 
 
-export const USER_PHONE_STORAGE_KEY = 'user_phone';
-
-export const USER_PROFILE_ID_STORAGE_KEY = 'user_profile_id';
-
-/** Token emitido pelo Supabase no login/cadastro (`profile_sessions`). */
-export const USER_SESSION_TOKEN_STORAGE_KEY = 'user_session_token';
+export {
+  USER_PHONE_STORAGE_KEY,
+  USER_PROFILE_ID_STORAGE_KEY,
+  USER_SESSION_TOKEN_STORAGE_KEY,
+} from '@/lib/sessionStorageKeys';
 
 /** Reexport — igreja ativa da sessão (também em `lib/tenantSession.ts`). */
 export { USER_TENANT_ID_STORAGE_KEY } from '@/lib/tenantSession';
@@ -234,6 +237,7 @@ export async function repairUserSessionReference(phone?: string | null): Promise
 
 
 
+  const { loadProfileByPhone } = await import('@/lib/profileOnboarding');
   const profile = await loadProfileByPhone(targetPhone);
 
   const profileId = resolveProfileId(profile);

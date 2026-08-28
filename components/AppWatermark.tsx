@@ -47,7 +47,6 @@ export function WatermarkSurface({ children, style, routeKey = 'root' }: Waterma
       <View
         key={routeKey}
         style={[styles.cardFrame, cardFrameStyle]}
-        pointerEvents="none"
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
@@ -86,6 +85,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     elevation: 0,
+    pointerEvents: 'none',
   },
   content: {
     flex: 1,
