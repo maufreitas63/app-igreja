@@ -5,8 +5,10 @@
  */
 
 import {
+  asRecord,
   jsonResponse,
   planCodeFromStripePriceId,
+  stripeSubscriptionPeriod,
   supabaseServiceRpc,
   verifyStripeWebhookSignature,
   type BillingEnv,
@@ -17,19 +19,10 @@ type PagesContext = {
   env: BillingEnv;
 };
 
-const asRecord = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
-
 const readMeta = (obj: Record<string, unknown> | null, key: string) => {
   const meta = asRecord(obj?.metadata);
   const value = meta?.[key];
   return typeof value === 'string' ? value.trim() : '';
-};
-
-const unixToIso = (value: unknown): string | null => {
-  const n = typeof value === 'number' ? value : Number(value);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return new Date(n * 1000).toISOString();
 };
 
 async function upsertFromSubscription(
@@ -55,6 +48,7 @@ async function upsertFromSubscription(
     || 'semente';
 
   const status = typeof subscription.status === 'string' ? subscription.status : 'inactive';
+  const period = stripeSubscriptionPeriod(subscription);
 
   return supabaseServiceRpc(env, 'upsert_tenant_subscription_from_stripe', {
     p_tenant_id: tenantId,
@@ -65,8 +59,8 @@ async function upsertFromSubscription(
     p_stripe_subscription_id:
       typeof subscription.id === 'string' ? subscription.id : null,
     p_stripe_checkout_session_id: null,
-    p_current_period_start: unixToIso(subscription.current_period_start),
-    p_current_period_end: unixToIso(subscription.current_period_end),
+    p_current_period_start: period.start,
+    p_current_period_end: period.end,
     p_cancel_at_period_end: subscription.cancel_at_period_end === true,
     p_raw_stripe: subscription,
   });

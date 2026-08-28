@@ -17,6 +17,7 @@ export type TenantBillingStatus = {
   hasSubscription: boolean;
   status: string;
   accessAllowed: boolean;
+  instanceActive: boolean;
   memberCount: number;
   /** Membros ativos (papel member). */
   activeMembers: number;
@@ -25,6 +26,8 @@ export type TenantBillingStatus = {
   maxMembers: number | null;
   canAddMember: boolean;
   cancelAtPeriodEnd?: boolean;
+  signedAt?: string | null;
+  currentPeriodStart?: string | null;
   currentPeriodEnd?: string | null;
   plan: BillingPlan | null;
   message?: string;

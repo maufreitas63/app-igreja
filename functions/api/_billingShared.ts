@@ -26,6 +26,29 @@ export const jsonResponse = (body: unknown, status = 200) =>
     headers: { ...billingCorsHeaders, 'Content-Type': 'application/json' },
   });
 
+export const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+
+export const unixToIso = (value: unknown): string | null => {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return new Date(n * 1000).toISOString();
+};
+
+/** Stripe API recente: current_period_* vive no item, não no topo da subscription. */
+export const stripeSubscriptionPeriod = (
+  subscription: Record<string, unknown>
+): { start: string | null; end: string | null } => {
+  const items = asRecord(subscription.items);
+  const data = Array.isArray(items?.data) ? items.data : [];
+  const firstItem = asRecord(data[0]);
+  return {
+    start:
+      unixToIso(subscription.current_period_start) || unixToIso(firstItem?.current_period_start),
+    end: unixToIso(subscription.current_period_end) || unixToIso(firstItem?.current_period_end),
+  };
+};
+
 export const planCodeFromPriceEnv = (env: BillingEnv, planCode: string): string | null => {
   const code = planCode.trim().toLowerCase();
   const map: Record<string, string | undefined> = {

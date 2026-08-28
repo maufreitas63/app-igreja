@@ -15,7 +15,8 @@ type Props = {
 
 type CacheEntry = {
   tenantId: string;
-  allow: boolean;
+  billingAllow: boolean;
+  instanceActive: boolean;
   checkedAt: number;
 };
 
@@ -47,6 +48,23 @@ const isBillingExemptRoute = (pathname: string) => {
   );
 };
 
+/** Instância inativa: usuários comuns saem; super-admin e telas de sessão ficam. */
+const isInstanceInactiveExemptRoute = (pathname: string) => {
+  const normalized = normalizePathname(pathname);
+  return (
+    normalized === '/'
+    || normalized === '/index'
+    || normalized === '/register'
+    || normalized === '/forgot-password'
+    || normalized === '/selecionar-igreja'
+    || normalized === '/igrejas'
+    || normalized === '/totem-checkin'
+    || normalized === '/sessao-encerrada'
+    || normalized === '/lgpd'
+    || normalized === '/cadastro-familia'
+  );
+};
+
 const isBillingEnforceEnabled = () =>
   String(process.env.EXPO_PUBLIC_BILLING_ENFORCE ?? '').trim().toLowerCase() === 'true';
 
@@ -70,9 +88,24 @@ const shouldBlockForBilling = (
   return isBillingEnforceEnabled() && isIbepTenantCode(tenantCode);
 };
 
+const applyGateRedirect = (
+  pathname: string,
+  cache: CacheEntry,
+  router: { replace: (href: string) => void }
+) => {
+  if (!cache.instanceActive && !isInstanceInactiveExemptRoute(pathname)) {
+    router.replace('/selecionar-igreja');
+    return;
+  }
+  if (!cache.billingAllow && !isBillingExemptRoute(pathname)) {
+    router.replace('/billing');
+  }
+};
+
 /**
- * Middleware de assinatura — nunca desmonta a UI (evita “derrubar” o app no menu).
- * Se o paywall for necessário, redireciona em background para /billing.
+ * Middleware de assinatura e instância — nunca desmonta a UI.
+ * Instância inativa: usuários comuns vão para selecionar igreja.
+ * Paywall de plano: redireciona em background para /billing.
  */
 export function AppBillingGate({ children }: Props) {
   const pathname = usePathname();
@@ -89,12 +122,7 @@ export function AppBillingGate({ children }: Props) {
     let cancelled = false;
 
     const run = async () => {
-      // Paywall desligado → não faz RPC (menu permanece fluido).
-      if (!isBillingEnforceEnabled()) {
-        return;
-      }
-
-      if (isBillingExemptRoute(pathname) || inflightRef.current) {
+      if (inflightRef.current) {
         return;
       }
 
@@ -107,9 +135,7 @@ export function AppBillingGate({ children }: Props) {
         && statusCache.tenantId === tenantId
         && now - statusCache.checkedAt < CACHE_TTL_MS
       ) {
-        if (!statusCache.allow && !isBillingExemptRoute(pathname)) {
-          router.replace('/billing');
-        }
+        applyGateRedirect(pathname, statusCache, router);
         return;
       }
 
@@ -119,12 +145,22 @@ export function AppBillingGate({ children }: Props) {
         try {
           isSa = await checkSessionIsSuperAdmin();
         } catch {
-          statusCache = { tenantId, allow: true, checkedAt: Date.now() };
+          statusCache = {
+            tenantId,
+            billingAllow: true,
+            instanceActive: true,
+            checkedAt: Date.now(),
+          };
           return;
         }
 
         if (isSa) {
-          statusCache = { tenantId, allow: true, checkedAt: Date.now() };
+          statusCache = {
+            tenantId,
+            billingAllow: true,
+            instanceActive: true,
+            checkedAt: Date.now(),
+          };
           return;
         }
 
@@ -132,12 +168,14 @@ export function AppBillingGate({ children }: Props) {
         const billing = await getTenantBillingStatus(tenantId);
         if (cancelled) return;
 
-        const allow = !shouldBlockForBilling(billing, branding?.code ?? null);
-        statusCache = { tenantId, allow, checkedAt: Date.now() };
-
-        if (!allow && !isBillingExemptRoute(pathname)) {
-          router.replace('/billing');
-        }
+        const cache: CacheEntry = {
+          tenantId,
+          billingAllow: !shouldBlockForBilling(billing, branding?.code ?? null),
+          instanceActive: billing.success ? billing.instanceActive !== false : true,
+          checkedAt: Date.now(),
+        };
+        statusCache = cache;
+        applyGateRedirect(pathname, cache, router);
       } finally {
         inflightRef.current = false;
       }

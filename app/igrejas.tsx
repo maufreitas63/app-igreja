@@ -9,6 +9,7 @@ import {
   withMinimalPresentation,
 } from '@/lib/dashboardReturnNavigation';
 import { pickChurchLogoFromGallery, saveChurchLogoForTenant } from '@/lib/churchLogo';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   activateSessionTenant,
@@ -26,8 +27,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -326,14 +327,6 @@ function IgrejasAdminPanel() {
   };
 
   const handleSwitch = async (church: SessionIgreja) => {
-    if (!church.is_active) {
-      Toast.show({
-        type: 'error',
-        text1: 'Instância bloqueada',
-        text2: 'Desbloqueie o acesso antes de usar esta igreja.',
-      });
-      return;
-    }
     const result = await activateSessionTenant(church.id, church);
     if (!result.success) {
       Toast.show({ type: 'error', text1: 'Trocar igreja', text2: result.message });
@@ -341,8 +334,10 @@ function IgrejasAdminPanel() {
     }
     Toast.show({
       type: 'success',
-      text1: 'Igreja ativa',
-      text2: church.name,
+      text1: church.is_active ? 'Igreja ativa' : 'Instância inativa',
+      text2: church.is_active
+        ? church.name
+        : `${church.name} está inativa para os usuários. Super administrador mantém o acesso.`,
     });
     router.replace({
       pathname: '/(tabs)',
@@ -350,63 +345,69 @@ function IgrejasAdminPanel() {
     });
   };
 
-  const handleToggleActive = (church: SessionIgreja) => {
+  const applyActiveFlag = async (church: SessionIgreja, nextActive: boolean) => {
+    const title = nextActive ? 'Ativar instância' : 'Desativar instância';
+    setEditBusy(true);
+    try {
+      const result = await setIgrejaActiveAdmin(church.id, nextActive);
+      if (!result?.success) {
+        Toast.show({
+          type: 'error',
+          text1: title,
+          text2: result?.message || 'Não foi possível atualizar.',
+        });
+        return;
+      }
+      Toast.show({
+        type: 'success',
+        text1: title,
+        text2: result.message || church.name,
+      });
+      await load();
+    } catch (error) {
+      console.error(error);
+      Toast.show({
+        type: 'error',
+        text1: title,
+        text2: error instanceof Error ? error.message : 'Falha ao atualizar.',
+      });
+    } finally {
+      setEditBusy(false);
+    }
+  };
+
+  const handleToggleActive = async (church: SessionIgreja, nextActive: boolean) => {
     if (isProtectedDefaultChurch(church)) {
       Toast.show({
         type: 'error',
         text1: 'Instância protegida',
-        text2: 'A IBN não pode ser bloqueada.',
+        text2: 'A IBN não pode ser desativada.',
       });
       return;
     }
 
-    const nextActive = !church.is_active;
-    const title = nextActive ? 'Liberar acesso' : 'Bloquear acesso';
-    const message = nextActive
-      ? `Liberar o acesso dos usuários à instância ${church.name}?`
-      : `Bloquear o acesso dos usuários à instância ${church.name}? Eles não poderão selecioná-la até liberar.`;
+    if (nextActive === church.is_active) {
+      return;
+    }
 
-    Alert.alert(title, message, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: nextActive ? 'Liberar' : 'Bloquear',
-        style: nextActive ? 'default' : 'destructive',
-        onPress: () => {
-          void (async () => {
-            setEditBusy(true);
-            try {
-              const result = await setIgrejaActiveAdmin(church.id, nextActive);
-              if (!result?.success) {
-                Toast.show({
-                  type: 'error',
-                  text1: title,
-                  text2: result?.message || 'Não foi possível atualizar.',
-                });
-                return;
-              }
-              Toast.show({
-                type: 'success',
-                text1: title,
-                text2: result.message || church.name,
-              });
-              await load();
-            } catch (error) {
-              console.error(error);
-              Toast.show({
-                type: 'error',
-                text1: title,
-                text2: error instanceof Error ? error.message : 'Falha ao atualizar.',
-              });
-            } finally {
-              setEditBusy(false);
-            }
-          })();
-        },
-      },
-    ]);
+    const title = nextActive ? 'Ativar instância' : 'Desativar instância';
+    const message = nextActive
+      ? `Marcar ${church.name} como ativa? Os usuários voltarão a ter acesso.`
+      : `Desmarcar ${church.name} como inativa? Os usuários perderão o acesso. O super administrador continua podendo entrar.`;
+
+    const confirmed = await confirmDialog(
+      title,
+      message,
+      nextActive ? 'Ativar' : 'Desativar',
+      'Cancelar',
+      { destructive: !nextActive }
+    );
+    if (!confirmed) return;
+
+    await applyActiveFlag(church, nextActive);
   };
 
-  const handleDelete = (church: SessionIgreja) => {
+  const handleDelete = async (church: SessionIgreja) => {
     if (isProtectedDefaultChurch(church)) {
       Toast.show({
         type: 'error',
@@ -426,54 +427,48 @@ function IgrejasAdminPanel() {
       return;
     }
 
-    Alert.alert(
+    const confirmed = await confirmDialog(
       'Excluir instância',
       `Isto apaga ${church.name} e todos os dados dependentes (membros, eventos, parâmetros, etc.). Não tem volta.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir definitivamente',
-          style: 'destructive',
-          onPress: () => {
-            void (async () => {
-              setEditBusy(true);
-              try {
-                const result = await deleteIgrejaAdmin(church.id, typed);
-                if (!result?.success) {
-                  Toast.show({
-                    type: 'error',
-                    text1: 'Excluir instância',
-                    text2: result?.message || 'Não foi possível excluir.',
-                  });
-                  return;
-                }
-                Toast.show({
-                  type: 'success',
-                  text1: 'Instância excluída',
-                  text2: result.message || church.code,
-                });
-                closeEdit();
-                setDeleteConfirmById((prev) => {
-                  const next = { ...prev };
-                  delete next[church.id];
-                  return next;
-                });
-                await load();
-              } catch (error) {
-                console.error(error);
-                Toast.show({
-                  type: 'error',
-                  text1: 'Excluir instância',
-                  text2: error instanceof Error ? error.message : 'Falha ao excluir.',
-                });
-              } finally {
-                setEditBusy(false);
-              }
-            })();
-          },
-        },
-      ]
+      'Excluir definitivamente',
+      'Cancelar',
+      { destructive: true }
     );
+    if (!confirmed) return;
+
+    setEditBusy(true);
+    try {
+      const result = await deleteIgrejaAdmin(church.id, typed);
+      if (!result?.success) {
+        Toast.show({
+          type: 'error',
+          text1: 'Excluir instância',
+          text2: result?.message || 'Não foi possível excluir.',
+        });
+        return;
+      }
+      Toast.show({
+        type: 'success',
+        text1: 'Instância excluída',
+        text2: result.message || church.code,
+      });
+      closeEdit();
+      setDeleteConfirmById((prev) => {
+        const next = { ...prev };
+        delete next[church.id];
+        return next;
+      });
+      await load();
+    } catch (error) {
+      console.error(error);
+      Toast.show({
+        type: 'error',
+        text1: 'Excluir instância',
+        text2: error instanceof Error ? error.message : 'Falha ao excluir.',
+      });
+    } finally {
+      setEditBusy(false);
+    }
   };
 
   return (
@@ -481,6 +476,8 @@ function IgrejasAdminPanel() {
       <Text style={styles.title}>Instâncias (igrejas)</Text>
       <Text style={styles.hint}>
         Super administrador: crie novas instâncias e alterne entre elas com o mesmo celular.
+        Checkbox marcado = instância ativa. Desmarcado = inativa (usuários sem acesso; o super
+        administrador continua entrando).
       </Text>
 
       <Text style={styles.section}>Instâncias disponíveis</Text>
@@ -523,14 +520,35 @@ function IgrejasAdminPanel() {
                   </View>
                   <View style={styles.badgeColumn}>
                     {isSessionChurch ? <Text style={styles.badge}>Sessão</Text> : null}
-                    {!church.is_active ? (
-                      <Text style={[styles.badge, styles.badgeBlocked]}>Bloqueada</Text>
-                    ) : null}
+                    <View style={styles.activeSwitch}>
+                      <Text style={styles.activeSwitchLabel}>
+                        {church.is_active ? 'Ativa' : 'Inativa'}
+                      </Text>
+                      <Switch
+                        value={church.is_active}
+                        onValueChange={(nextActive) => {
+                          void handleToggleActive(church, nextActive);
+                        }}
+                        disabled={editBusy || isProtectedDefaultChurch(church)}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{
+                          checked: church.is_active,
+                          disabled: editBusy || isProtectedDefaultChurch(church),
+                        }}
+                        accessibilityLabel={
+                          church.is_active
+                            ? `Instância ${church.name} ativa`
+                            : `Instância ${church.name} inativa`
+                        }
+                        trackColor={{ false: '#D0D5DD', true: MINIMAL_UI.blue }}
+                        thumbColor="#FFFFFF"
+                      />
+                    </View>
                   </View>
                 </View>
 
                 <View style={styles.rowActions}>
-                  {!isSessionChurch && church.is_active ? (
+                  {!isSessionChurch ? (
                     <TouchableOpacity
                       style={styles.actionButton}
                       onPress={() => void handleSwitch(church)}
@@ -705,28 +723,11 @@ function IgrejasAdminPanel() {
 
                     {!isProtectedDefaultChurch(church) ? (
                       <View style={styles.dangerZone}>
-                        <Text style={styles.dangerTitle}>Acesso e exclusão</Text>
-                        <TouchableOpacity
-                          style={[
-                            styles.secondaryButton,
-                            !church.is_active && styles.secondaryButtonSuccess,
-                            editBusy && styles.buttonDisabled,
-                          ]}
-                          onPress={() => handleToggleActive(church)}
-                          disabled={editBusy}
-                        >
-                          <Text
-                            style={[
-                              styles.secondaryButtonText,
-                              !church.is_active && styles.secondaryButtonSuccessText,
-                            ]}
-                          >
-                            {church.is_active ? 'Bloquear acesso' : 'Liberar acesso'}
-                          </Text>
-                        </TouchableOpacity>
+                        <Text style={styles.dangerTitle}>Exclusão</Text>
                         <Text style={styles.dangerHint}>
-                          Bloquear impede que usuários selecionem esta instância. Os dados
-                          permanecem.
+                          A ativação da instância fica no checkbox da lista. Desmarcada, os
+                          usuários perdem o acesso; o super administrador continua podendo
+                          entrar. Os dados permanecem.
                         </Text>
 
                         <Text style={styles.socialFieldLabel}>
@@ -749,7 +750,7 @@ function IgrejasAdminPanel() {
                         />
                         <TouchableOpacity
                           style={[styles.dangerButton, editBusy && styles.buttonDisabled]}
-                          onPress={() => handleDelete(church)}
+                          onPress={() => void handleDelete(church)}
                           disabled={editBusy}
                         >
                           <Text style={styles.dangerButtonText}>Excluir instância e dados</Text>
@@ -761,7 +762,7 @@ function IgrejasAdminPanel() {
                       </View>
                     ) : (
                       <Text style={styles.dangerHint}>
-                        Instância padrão (IBN): não pode ser bloqueada nem excluída.
+                        Instância padrão (IBN): não pode ser desativada nem excluída.
                       </Text>
                     )}
                   </View>
@@ -1089,6 +1090,15 @@ const styles = StyleSheet.create({
   badgeColumn: {
     alignItems: 'flex-end',
     gap: 4,
+  },
+  activeSwitch: {
+    alignItems: 'flex-end',
+    gap: 2,
+  },
+  activeSwitchLabel: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 11,
+    fontWeight: '700',
   },
   badgeBlocked: {
     color: '#B42318',

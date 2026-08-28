@@ -31,11 +31,16 @@ const emptyStatus = (message?: string): TenantBillingStatus => ({
   hasSubscription: false,
   status: 'inactive',
   accessAllowed: true,
+  instanceActive: true,
   memberCount: 0,
   activeMembers: 0,
   activeCongregados: 0,
   maxMembers: null,
   canAddMember: true,
+  cancelAtPeriodEnd: false,
+  signedAt: null,
+  currentPeriodStart: null,
+  currentPeriodEnd: null,
   plan: null,
   message,
 });
@@ -92,7 +97,11 @@ export async function getTenantBillingStatus(
         ? null
         : Number(record.max_members),
     canAddMember: record.can_add_member === true,
+    instanceActive: record.instance_active !== false,
     cancelAtPeriodEnd: record.cancel_at_period_end === true,
+    signedAt: record.signed_at != null ? String(record.signed_at) : null,
+    currentPeriodStart:
+      record.current_period_start != null ? String(record.current_period_start) : null,
     currentPeriodEnd:
       record.current_period_end != null ? String(record.current_period_end) : null,
     plan: planRaw,
@@ -114,7 +123,7 @@ export async function assertTenantCanAddMember(tenantId?: string | null): Promis
 
 const DEFAULT_BILLING_API_ORIGIN = 'https://app-igreja.pages.dev';
 
-function resolveStripeCheckoutEndpoint(): string {
+function resolveBillingApiEndpoint(path: string): string {
   const configured = String(process.env.EXPO_PUBLIC_APP_URL || '')
     .trim()
     .replace(/\/$/, '');
@@ -125,19 +134,25 @@ function resolveStripeCheckoutEndpoint(): string {
     const host = window.location.hostname;
     const isLocal = host === 'localhost' || host === '127.0.0.1';
     if (!isLocal) {
-      return '/api/stripe-create-checkout';
+      return path;
     }
   }
 
   const origin = configuredOk ? configured : DEFAULT_BILLING_API_ORIGIN;
-  return `${origin}/api/stripe-create-checkout`;
+  return `${origin}${path}`;
 }
 
-async function readCheckoutPayload(response: Response): Promise<{
+function resolveStripeCheckoutEndpoint(): string {
+  return resolveBillingApiEndpoint('/api/stripe-create-checkout');
+}
+
+async function readBillingApiPayload(response: Response): Promise<{
   success?: boolean;
   url?: string;
   session_id?: string;
   message?: string;
+  cancel_at_period_end?: boolean;
+  action?: string;
 }> {
   const text = await response.text();
   try {
@@ -145,10 +160,10 @@ async function readCheckoutPayload(response: Response): Promise<{
   } catch {
     if (/not found/i.test(text) || response.status === 404) {
       throw new Error(
-        'O checkout Stripe não roda no Metro local. Recarregue a página; o app chama a Function no Cloudflare.'
+        'A API Stripe não roda no Metro local. Recarregue a página; o app chama a Function no Cloudflare.'
       );
     }
-    throw new Error(`Checkout Stripe indisponível (${response.status}).`);
+    throw new Error(`API de assinaturas indisponível (${response.status}).`);
   }
 }
 
@@ -170,9 +185,31 @@ export async function createStripeCheckoutSession(input: {
       customer_email: input.customerEmail,
     }),
   });
-  const payload = await readCheckoutPayload(response);
+  const payload = await readBillingApiPayload(response);
   if (!response.ok || !payload.success || !payload.url) {
     throw new Error(payload.message || 'Não foi possível iniciar o checkout Stripe.');
   }
   return { url: payload.url, sessionId: payload.session_id ?? null };
+}
+
+export async function manageTenantSubscription(input: {
+  tenantId: string;
+  action: 'cancel' | 'resume';
+}): Promise<{ message: string; cancelAtPeriodEnd: boolean }> {
+  const response = await fetch(resolveBillingApiEndpoint('/api/stripe-manage-subscription'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      tenant_id: input.tenantId,
+      action: input.action,
+    }),
+  });
+  const payload = await readBillingApiPayload(response);
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.message || 'Não foi possível atualizar a contratação.');
+  }
+  return {
+    message: payload.message || 'Contratação atualizada.',
+    cancelAtPeriodEnd: payload.cancel_at_period_end === true,
+  };
 }

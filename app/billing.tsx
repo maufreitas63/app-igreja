@@ -6,8 +6,10 @@ import {
   createStripeCheckoutSession,
   getTenantBillingStatus,
   listBillingPlans,
+  manageTenantSubscription,
 } from '@/lib/billing/billingApi';
 import type { BillingPlan } from '@/lib/billing/types';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { getStoredTenantId } from '@/lib/tenantSession';
 import { useLeadershipRouteGuard } from '@/hooks/useLeadershipRouteGuard';
@@ -32,10 +34,16 @@ export default function BillingScreen() {
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<BillingPlan[]>([]);
   const [currentPlanCode, setCurrentPlanCode] = useState<string | null>(null);
+  const [currentPlanName, setCurrentPlanName] = useState<string | null>(null);
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [signedAt, setSignedAt] = useState<string | null>(null);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
+  const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
   const [activeUsers, setActiveUsers] = useState<number | null>(null);
   const [activeMembers, setActiveMembers] = useState<number | null>(null);
   const [activeCongregados, setActiveCongregados] = useState<number | null>(null);
   const [checkoutLoadingPlanCode, setCheckoutLoadingPlanCode] = useState<string | null>(null);
+  const [contractBusy, setContractBusy] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -46,6 +54,11 @@ export default function BillingScreen() {
       ]);
       setPlans(planRows);
       setCurrentPlanCode(billing.plan?.code ?? null);
+      setCurrentPlanName(billing.plan?.name ?? null);
+      setHasSubscription(billing.hasSubscription);
+      setSignedAt(billing.signedAt ?? billing.currentPeriodStart ?? null);
+      setCurrentPeriodEnd(billing.currentPeriodEnd ?? null);
+      setCancelAtPeriodEnd(billing.cancelAtPeriodEnd === true);
       setActiveUsers(billing.memberCount);
       setActiveMembers(billing.activeMembers);
       setActiveCongregados(billing.activeCongregados);
@@ -119,6 +132,106 @@ export default function BillingScreen() {
     }
   };
 
+  const handleRenewContract = async () => {
+    try {
+      const tenantId = await getStoredTenantId();
+      if (!tenantId) {
+        Toast.show({
+          type: 'error',
+          text1: 'Assinaturas',
+          text2: 'Selecione a igreja antes de renovar a contratação.',
+        });
+        return;
+      }
+
+      if (!hasSubscription) {
+        Toast.show({
+          type: 'info',
+          text1: 'Assinaturas',
+          text2: 'Escolha um pacote abaixo para assinar.',
+        });
+        return;
+      }
+
+      setContractBusy(true);
+
+      if (cancelAtPeriodEnd) {
+        const result = await manageTenantSubscription({ tenantId, action: 'resume' });
+        Toast.show({
+          type: 'success',
+          text1: 'Contratação renovada',
+          text2: result.message,
+          visibilityTime: 6000,
+        });
+        await refresh();
+        return;
+      }
+
+      Toast.show({
+        type: 'success',
+        text1: 'Contratação ativa',
+        text2: currentPeriodEnd
+          ? `A renovação segue automaticamente em ${new Date(currentPeriodEnd).toLocaleDateString('pt-BR')}.`
+          : 'A contratação já está ativa e será renovada na próxima cobrança.',
+        visibilityTime: 6000,
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Renovar Contratação',
+        text2: error instanceof Error ? error.message : 'Falha ao renovar a contratação.',
+        visibilityTime: 6000,
+      });
+    } finally {
+      setContractBusy(false);
+    }
+  };
+
+  const handleRescindContract = async () => {
+    const tenantId = await getStoredTenantId();
+    if (!tenantId || !hasSubscription) {
+      Toast.show({
+        type: 'error',
+        text1: 'Assinaturas',
+        text2: 'Não há contratação ativa para rescindir.',
+      });
+      return;
+    }
+
+    const renewalLabel = currentPeriodEnd
+      ? new Date(currentPeriodEnd).toLocaleDateString('pt-BR')
+      : 'a próxima renovação';
+    const confirmed = await confirmDialog(
+      'Rescindir Contratação',
+      `A rescisão vale a partir de ${renewalLabel}. Até lá a instância permanece ativa. Naquela data o acesso dos usuários será encerrado (o super administrador continua podendo entrar).`,
+      'Rescindir',
+      'Cancelar',
+      { destructive: true }
+    );
+    if (!confirmed) return;
+
+    try {
+      setContractBusy(true);
+      const result = await manageTenantSubscription({ tenantId, action: 'cancel' });
+      Toast.show({
+        type: 'success',
+        text1: 'Rescisão agendada',
+        text2: result.message,
+        visibilityTime: 7000,
+      });
+      await refresh();
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Rescindir Contratação',
+        text2: error instanceof Error ? error.message : 'Falha ao agendar a rescisão.',
+        visibilityTime: 6000,
+      });
+    } finally {
+      setContractBusy(false);
+    }
+  };
+
   return (
     <ScreenAccessGate status={accessStatus}>
     <View style={[styles.root, { paddingTop: Math.max(insets.top, 12) }]}>
@@ -130,7 +243,17 @@ export default function BillingScreen() {
         activeMembers={activeMembers}
         activeCongregados={activeCongregados}
         checkoutLoadingPlanCode={checkoutLoadingPlanCode}
+        contractBusy={contractBusy}
+        contract={{
+          hasSubscription,
+          planName: currentPlanName,
+          signedAt,
+          currentPeriodEnd,
+          cancelAtPeriodEnd,
+        }}
         onSubscribe={(plan) => void handleSubscribe(plan)}
+        onRenewContract={() => void handleRenewContract()}
+        onRescindContract={() => void handleRescindContract()}
       />
       <CloseFooterBar onPress={() => router.replace(MEMBER_HOME_PATH)} />
     </View>

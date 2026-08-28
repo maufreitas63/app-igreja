@@ -20,15 +20,27 @@ import {
   View,
 } from 'react-native';
 
+export type BillingContractInfo = {
+  hasSubscription: boolean;
+  planName: string | null;
+  signedAt: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+};
+
 export type BillingClassProps = {
   plans: BillingPlan[];
   currentPlanCode?: string | null;
   activeUsers?: number | null;
   activeMembers?: number | null;
   activeCongregados?: number | null;
+  contract?: BillingContractInfo | null;
   loading?: boolean;
   checkoutLoadingPlanCode?: string | null;
+  contractBusy?: boolean;
   onSubscribe: (plan: BillingPlan) => void;
+  onRenewContract?: () => void;
+  onRescindContract?: () => void;
   title?: string;
   subtitle?: string;
 };
@@ -40,6 +52,17 @@ const PLAN_ICONS: Record<string, React.ComponentProps<typeof FontAwesome>['name'
   ministerio: 'star',
 };
 
+function formatPtDate(value?: string | null) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
 /**
  * Módulo de planos de assinatura — stateless / isolado do dashboard.
  * Paleta: #FFFFFF + azuis. Checkout via callback (Stripe).
@@ -50,9 +73,13 @@ export function BillingClass({
   activeUsers = null,
   activeMembers = null,
   activeCongregados = null,
+  contract = null,
   loading = false,
   checkoutLoadingPlanCode = null,
+  contractBusy = false,
   onSubscribe,
+  onRenewContract,
+  onRescindContract,
   title = 'Assinaturas',
   subtitle = BILLING_SCREEN_SUBTITLE,
 }: BillingClassProps) {
@@ -68,6 +95,7 @@ export function BillingClass({
   const members = activeMembers ?? 0;
   const congregados = activeCongregados ?? 0;
   const showStatus = activeUsers != null || activeMembers != null || activeCongregados != null;
+  const hasContract = contract?.hasSubscription === true;
 
   return (
     <ScrollView
@@ -94,13 +122,76 @@ export function BillingClass({
         </Text>
       ) : null}
 
+      <View style={styles.contractCard}>
+        <Text style={styles.contractTitle}>Contratação atual</Text>
+        <Text style={styles.contractLine}>
+          Pacote atual assinado: {hasContract ? contract?.planName || '—' : 'Nenhum pacote assinado'}
+        </Text>
+        <Text style={styles.contractLine}>
+          Data da assinatura: {formatPtDate(contract?.signedAt)}
+        </Text>
+        <Text style={styles.contractLine}>
+          Data da próxima renovação: {formatPtDate(contract?.currentPeriodEnd)}
+        </Text>
+        {contract?.cancelAtPeriodEnd ? (
+          <Text style={styles.contractWarning}>
+            Rescisão agendada: na data da próxima renovação a instância será desativada. Os
+            usuários perderão o acesso; o super administrador continua podendo entrar.
+          </Text>
+        ) : null}
+
+        <View style={styles.contractActions}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.cta,
+              styles.ctaCurrent,
+              (contractBusy || !hasContract) && styles.ctaDisabled,
+              pressed && !contractBusy && hasContract && styles.ctaPressed,
+            ]}
+            disabled={contractBusy || !hasContract}
+            onPress={() => onRenewContract?.()}
+            accessibilityRole="button"
+            accessibilityLabel="Renovar Contratação"
+          >
+            {contractBusy ? (
+              <ActivityIndicator color={MINIMAL_UI.onDark} />
+            ) : (
+              <Text style={styles.ctaLabel}>Renovar Contratação</Text>
+            )}
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.cta,
+              styles.ctaRescind,
+              (contractBusy || !hasContract || contract?.cancelAtPeriodEnd) && styles.ctaDisabled,
+              pressed && !contractBusy && hasContract && !contract?.cancelAtPeriodEnd && styles.ctaPressed,
+            ]}
+            disabled={contractBusy || !hasContract || contract?.cancelAtPeriodEnd === true}
+            onPress={() => onRescindContract?.()}
+            accessibilityRole="button"
+            accessibilityLabel="Rescindir Contratação"
+          >
+            <Text
+              style={[
+                styles.ctaLabel,
+                styles.ctaRescindLabel,
+                (contractBusy || !hasContract || contract?.cancelAtPeriodEnd) &&
+                  styles.ctaRescindLabelDisabled,
+              ]}
+            >
+              Rescindir Contratação
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
       <View style={styles.list}>
         {plans.map((plan) => {
           const isCurrent = currentPlanCode?.toLowerCase() === plan.code.toLowerCase();
           const busy = checkoutLoadingPlanCode === plan.code;
           const icon = PLAN_ICONS[plan.code] || 'circle-o';
           const fits = planCoversActiveUsers(plan.maxMembers, users);
-          const canSubscribe = fits || isCurrent;
+          const canSubscribe = fits && !isCurrent;
 
           return (
             <View key={plan.id || plan.code} style={styles.card}>
@@ -116,24 +207,21 @@ export function BillingClass({
               {!fits ? (
                 <Text style={styles.unavailable}>{planTooSmallMessage(plan.maxMembers, users)}</Text>
               ) : null}
+              {isCurrent ? (
+                <Text style={styles.currentBadge}>Pacote em vigor</Text>
+              ) : null}
               {canSubscribe ? (
                 <Pressable
-                  style={({ pressed }) => [
-                    styles.cta,
-                    isCurrent && styles.ctaCurrent,
-                    pressed && styles.ctaPressed,
-                  ]}
+                  style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed]}
                   disabled={busy}
                   onPress={() => onSubscribe(plan)}
                   accessibilityRole="button"
-                  accessibilityLabel={
-                    isCurrent ? `Gerenciar plano ${plan.name}` : `Assinar plano ${plan.name}`
-                  }
+                  accessibilityLabel={`Assinar plano ${plan.name}`}
                 >
                   {busy ? (
                     <ActivityIndicator color={MINIMAL_UI.onDark} />
                   ) : (
-                    <Text style={styles.ctaLabel}>{isCurrent ? 'Gerenciar / Renovar' : 'Assinar'}</Text>
+                    <Text style={styles.ctaLabel}>Assinar</Text>
                   )}
                 </Pressable>
               ) : null}
@@ -244,5 +332,58 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
+  },
+  contractCard: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: MINIMAL_UI.border,
+    padding: 14,
+    gap: 6,
+    marginTop: 4,
+  },
+  contractTitle: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  contractLine: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '600',
+  },
+  contractWarning: {
+    color: '#B91C1C',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  contractActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  ctaDisabled: {
+    opacity: 0.45,
+  },
+  ctaRescind: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#B91C1C',
+  },
+  ctaRescindLabel: {
+    color: '#B91C1C',
+  },
+  ctaRescindLabelDisabled: {
+    color: '#9CA3AF',
+  },
+  currentBadge: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 4,
   },
 });
