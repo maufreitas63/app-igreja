@@ -2728,7 +2728,13 @@ export default function Dashboard() {
             decelerationRate="fast"
             disableIntervalMomentum={true}
             renderItem={({ item }) => (
-              <View style={[effectiveDashboardCardWrapperStyle, effectiveCarouselPageStyle]}>
+              <View style={effectiveCarouselPageStyle}>
+                <View
+                  style={[
+                    effectiveDashboardCardWrapperStyle,
+                    item.content === 'small_group' && styles.smallGroupPanelShell,
+                  ]}
+                >
                 {item.content === 'event_alt' ? (
                   <View
                     style={[
@@ -3011,7 +3017,6 @@ export default function Dashboard() {
                       styles.dashboardPanelCardTopLayout,
                       effectiveDashboardPanelCardSizeStyle,
                       dashboardPanelTopInsetStyle,
-                      styles.smallGroupPanelShell,
                     ]}
                   >
                     <View style={styles.cardGroupedManagePanel}>
@@ -3950,6 +3955,7 @@ export default function Dashboard() {
                     )}
                   </TouchableOpacity>
                 )}
+                </View>
               </View>
             )}
           />
