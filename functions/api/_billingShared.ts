@@ -76,27 +76,59 @@ export const planCodeFromStripePriceId = (env: BillingEnv, priceId: string): str
   return null;
 };
 
+const DEFAULT_SUPABASE_URL = 'https://bldbrsuiwctoaxzcrjoc.supabase.co';
+
+function isUsableSupabaseUrl(value: string): boolean {
+  const base = value.trim().replace(/\/$/, '');
+  if (!base.startsWith('https://') || /\s/.test(base)) return false;
+  try {
+    const parsed = new URL(base);
+    return parsed.protocol === 'https:' && Boolean(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/** Ignora placeholder tipo "URL do projeto" e usa a URL https válida. */
+export function resolveSupabaseBaseUrl(env: BillingEnv): string {
+  const candidates = [env.SUPABASE_URL, env.EXPO_PUBLIC_SUPABASE_URL, DEFAULT_SUPABASE_URL];
+  for (const raw of candidates) {
+    const base = String(raw || '').trim().replace(/\/$/, '');
+    if (isUsableSupabaseUrl(base)) return base;
+  }
+  return '';
+}
+
 export async function supabaseServiceRpc(
   env: BillingEnv,
   fn: string,
   args: Record<string, unknown>
 ): Promise<{ ok: true; data: unknown } | { ok: false; message: string }> {
-  const base = (env.SUPABASE_URL || env.EXPO_PUBLIC_SUPABASE_URL || '').replace(/\/$/, '');
+  const base = resolveSupabaseBaseUrl(env);
   const key = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if (!base || !key) {
     return { ok: false, message: 'Supabase service role não configurada no Cloudflare.' };
   }
 
-  const response = await fetch(`${base}/rest/v1/rpc/${fn}`, {
-    method: 'POST',
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
-    },
-    body: JSON.stringify(args),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${base}/rest/v1/rpc/${fn}`, {
+      method: 'POST',
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      },
+      body: JSON.stringify(args),
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'falha de rede';
+    return {
+      ok: false,
+      message: `Não foi possível chamar o Supabase (${detail}). Confira SUPABASE_URL no Cloudflare.`,
+    };
+  }
 
   const text = await response.text();
   let data: unknown = null;
