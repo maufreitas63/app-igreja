@@ -404,12 +404,18 @@ const styles = StyleSheet.create({
     backgroundColor: PERFIL_ACTION_SURFACE,
     gap: 12,
   },
-  title: MINIMAL_SECTION_TITLE,
+  title: {
+    ...MINIMAL_SECTION_TITLE,
+    width: '100%',
+    maxWidth: '100%',
+  },
   subtitle: {
     color: VIGILANCE_SCALES_UI.accent,
     fontSize: 12,
     opacity: 0.88,
     textAlign: 'center',
+    width: '100%',
+    maxWidth: '100%',
   },
   loader: {
     marginTop: 24,

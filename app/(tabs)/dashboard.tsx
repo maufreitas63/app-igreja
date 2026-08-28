@@ -476,6 +476,7 @@ export default function Dashboard() {
   } = useRoomDisplayLabels();
   const { isActive: ghostModeActive, state: ghostModeState } = useGhostMode();
   const { width: pageWidth, height: windowHeight } = useWindowDimensions();
+  const [measuredListWidth, setMeasuredListWidth] = useState(0);
   const previousPageWidthRef = useRef(pageWidth);
   const carouselPageStyle = useMemo(() => ({ width: pageWidth }), [pageWidth]);
   const dashboardCardWidth = useMemo(() => pageWidth * 0.9, [pageWidth]);
@@ -612,12 +613,38 @@ export default function Dashboard() {
   const router = useRouter();
   const isMinimalPresentation = isMinimalPresentationRoute(params.presentation);
 
+  const carouselLayoutWidth = useMemo(() => {
+    if (isMinimalPresentation && measuredListWidth > 0) {
+      return measuredListWidth;
+    }
+    return pageWidth;
+  }, [isMinimalPresentation, measuredListWidth, pageWidth]);
+
+  const handleMinimalListLayout = useCallback(
+    (event: { nativeEvent: { layout: { width: number } } }) => {
+      if (!isMinimalPresentation) {
+        return;
+      }
+
+      const nextWidth = Math.round(event.nativeEvent.layout.width);
+      if (nextWidth > 0 && nextWidth !== measuredListWidth) {
+        setMeasuredListWidth(nextWidth);
+      }
+    },
+    [isMinimalPresentation, measuredListWidth]
+  );
+
   const effectiveCarouselPageStyle = useMemo(
     () =>
       isMinimalPresentation
-        ? { width: '100%' as const, maxWidth: '100%' as const, flex: 1, alignSelf: 'stretch' as const }
+        ? {
+            width: carouselLayoutWidth,
+            maxWidth: carouselLayoutWidth,
+            flex: 1,
+            alignSelf: 'stretch' as const,
+          }
         : carouselPageStyle,
-    [carouselPageStyle, isMinimalPresentation]
+    [carouselLayoutWidth, carouselPageStyle, isMinimalPresentation]
   );
 
   const effectiveDashboardCardWrapperStyle = useMemo(
@@ -1590,11 +1617,11 @@ export default function Dashboard() {
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (isMinimalPresentation || pageWidth <= 0) {
+    if (isMinimalPresentation || carouselLayoutWidth <= 0) {
       return;
     }
 
-    const index = Math.round(event.nativeEvent.contentOffset.x / pageWidth);
+    const index = Math.round(event.nativeEvent.contentOffset.x / carouselLayoutWidth);
     setCurrentIndex(index);
   };
 
@@ -2126,7 +2153,7 @@ export default function Dashboard() {
   }, [activeDashboardCard, loadVigilanceScales]);
 
   const scrollToDashboardCard = useCallback((targetIndex: number, animated = true) => {
-    if (targetIndex < 0 || targetIndex >= data.length || pageWidth <= 0) {
+    if (targetIndex < 0 || targetIndex >= data.length || carouselLayoutWidth <= 0) {
       return;
     }
 
@@ -2147,20 +2174,20 @@ export default function Dashboard() {
     list.scrollToIndex({ index: listIndex, animated, viewPosition: 0 });
     requestAnimationFrame(() => {
       list.scrollToOffset({
-        offset: listIndex * pageWidth,
+        offset: listIndex * carouselLayoutWidth,
         animated: false,
       });
     });
-  }, [carouselData.length, data.length, isMinimalPresentation, pageWidth]);
+  }, [carouselData.length, carouselLayoutWidth, data.length, isMinimalPresentation]);
 
   const handleDashboardScrollToIndexFailed = useCallback(
     (info: { index: number }) => {
-      if (info.index < 0 || info.index >= carouselData.length || pageWidth <= 0) {
+      if (info.index < 0 || info.index >= carouselData.length || carouselLayoutWidth <= 0) {
         return;
       }
 
       dashboardListRef.current?.scrollToOffset({
-        offset: info.index * pageWidth,
+        offset: info.index * carouselLayoutWidth,
         animated: false,
       });
       requestAnimationFrame(() => {
@@ -2171,7 +2198,7 @@ export default function Dashboard() {
         });
       });
     },
-    [carouselData.length, pageWidth]
+    [carouselData.length, carouselLayoutWidth]
   );
 
   useEffect(() => {
@@ -2528,19 +2555,19 @@ export default function Dashboard() {
   }, [dashboardDeepLinkKey, data, isDashboardCardAccessReady, requestedDashboardCard, scrollToDashboardCard]);
 
   useEffect(() => {
-    if (previousPageWidthRef.current === pageWidth) {
+    if (previousPageWidthRef.current === carouselLayoutWidth) {
       return;
     }
 
-    previousPageWidthRef.current = pageWidth;
+    previousPageWidthRef.current = carouselLayoutWidth;
     const index = isMinimalPresentation ? 0 : currentIndexRef.current;
     requestAnimationFrame(() => {
       dashboardListRef.current?.scrollToOffset({
-        offset: index * pageWidth,
+        offset: index * carouselLayoutWidth,
         animated: false,
       });
     });
-  }, [isMinimalPresentation, pageWidth]);
+  }, [carouselLayoutWidth, isMinimalPresentation]);
 
   return (
     <MinimalRouteShell
@@ -2574,7 +2601,7 @@ export default function Dashboard() {
           </View>
         ) : null}
 
-        <View style={styles.listContainer}>
+        <View style={styles.listContainer} onLayout={handleMinimalListLayout}>
           {isDashboardCardAccessReady && data.length === 0 ? (
             <View style={styles.dashboardEmptyState}>
               <Text style={styles.dashboardEmptyTitle}>Nenhum painel disponível</Text>
@@ -2597,6 +2624,7 @@ export default function Dashboard() {
             data={carouselData}
             extraData={{
               currentIndex,
+              carouselLayoutWidth,
               isScaleRosterVisible,
               isParkingPanelVisible,
               selectedVigilanceScale,
@@ -2615,21 +2643,25 @@ export default function Dashboard() {
             scrollEventThrottle={16}
             keyExtractor={(item) => item?.id ?? 'dashboard-card'}
             getItemLayout={(_, index) => ({
-              length: pageWidth,
-              offset: pageWidth * index,
+              length: carouselLayoutWidth,
+              offset: carouselLayoutWidth * index,
               index,
             })}
             snapToAlignment="start"
-            snapToInterval={isMinimalPresentation ? undefined : pageWidth}
+            snapToInterval={isMinimalPresentation ? undefined : carouselLayoutWidth}
             snapToOffsets={
-              isMinimalPresentation ? undefined : carouselData.map((_, index) => index * pageWidth)
+              isMinimalPresentation
+                ? undefined
+                : carouselData.map((_, index) => index * carouselLayoutWidth)
             }
             decelerationRate="fast"
             disableIntervalMomentum={true}
             renderItem={({ item }) => (
               <View
                 style={
-                  isMinimalPresentation ? styles.carouselPageSlot : effectiveCarouselPageStyle
+                  isMinimalPresentation
+                    ? [styles.carouselPageSlot, effectiveCarouselPageStyle]
+                    : effectiveCarouselPageStyle
                 }
               >
                 <View
