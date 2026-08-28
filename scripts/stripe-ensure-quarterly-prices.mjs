@@ -46,10 +46,10 @@ if (!secret || !secret.startsWith('sk_')) {
 }
 
 const PLANS = [
-  { code: 'semente', name: 'Semente', env: 'STRIPE_PRICE_SEMENTE', fallbackCents: 2990 },
-  { code: 'crescimento', name: 'Crescimento', env: 'STRIPE_PRICE_CRESCIMENTO', fallbackCents: 7990 },
-  { code: 'expansao', name: 'Expansão', env: 'STRIPE_PRICE_EXPANSAO', fallbackCents: 14990 },
-  { code: 'ministerio', name: 'Ministério', env: 'STRIPE_PRICE_MINISTERIO', fallbackCents: 29990 },
+  { code: 'semente', name: 'Semente', env: 'STRIPE_PRICE_SEMENTE' },
+  { code: 'crescimento', name: 'Crescimento', env: 'STRIPE_PRICE_CRESCIMENTO' },
+  { code: 'expansao', name: 'Expansão', env: 'STRIPE_PRICE_EXPANSAO' },
+  { code: 'ministerio', name: 'Ministério', env: 'STRIPE_PRICE_MINISTERIO' },
 ];
 
 const stripeGet = async (path) => {
@@ -113,10 +113,13 @@ for (const plan of PLANS) {
   const priceList = Array.isArray(prices.data) ? prices.data : [];
   const existingQuarterly = priceList.find(isQuarterly);
   const monthly = priceList.find(isMonthly);
-  const unitAmount = monthly?.unit_amount
-    ? Number(monthly.unit_amount) * 3
-    : plan.fallbackCents * 3;
-  const currency = String(monthly?.currency || 'brl').toLowerCase();
+  if (!monthly?.unit_amount) {
+    throw new Error(
+      `Produto "${plan.name}" não tem Price mensal ativo. O trimestral precisa ser 3 × o valor mensal atual.`
+    );
+  }
+  const unitAmount = Number(monthly.unit_amount) * 3;
+  const currency = String(monthly.currency || 'brl').toLowerCase();
 
   let price = existingQuarterly;
   let created = false;
