@@ -396,9 +396,9 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
 
 const styles = StyleSheet.create({
   panel: {
-    width: '100%',
-    maxWidth: '100%',
-    alignSelf: 'stretch',
+    width: '60%',
+    maxWidth: '60%',
+    alignSelf: 'flex-start',
     flex: 1,
     minHeight: 0,
     backgroundColor: PERFIL_ACTION_SURFACE,
