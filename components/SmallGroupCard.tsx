@@ -244,7 +244,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
           {...MAINTENANCE_SCROLL_PROPS}
         >
           <View style={styles.stack}>
-            <View style={styles.infoRow}>
+            <View style={[styles.infoRow, styles.emptyInfoRow]}>
             <FontAwesome name="users" size={24} color={PERFIL_ACTION_ICON_COLOR} />
             <Text style={styles.actionLabel}>Você ainda não está em um grupo</Text>
             {nearbyHosts.length === 0 ? (
@@ -506,6 +506,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: PERFIL_ACTION_BORDER,
     backgroundColor: PERFIL_ACTION_SURFACE,
+  },
+  emptyInfoRow: {
+    width: '50%',
+    maxWidth: '50%',
+    alignSelf: 'flex-start',
   },
   groupName: {
     color: VIGILANCE_SCALES_UI.accent,
