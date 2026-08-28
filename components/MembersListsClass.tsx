@@ -16,11 +16,11 @@ import {
   View,
 } from 'react-native';
 
-const FILTERS: Array<{
+const FILTERS: {
   key: MembersListsClassAudience;
   label: string;
   accessibilityLabel: string;
-}> = [
+}[] = [
   {
     key: 'active_members',
     label: 'Membros\nAtivos',

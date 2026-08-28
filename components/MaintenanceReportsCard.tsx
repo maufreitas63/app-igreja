@@ -371,7 +371,6 @@ function GenericReportResultsTable({ result, minimal = false }: ReportResultsTab
                 {visibleColumns.map((column) => {
                   const align = getReportColumnAlign(column);
                   const columnWidth = getReportColumnWidth(column, reportCode);
-                  const wrapEventName = shouldWrapReportCell(column, reportCode);
 
                   return (
                     <Text

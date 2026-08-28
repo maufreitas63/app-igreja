@@ -23,7 +23,7 @@ import { useGeoCheckinMonitor } from '@/hooks/useGeoCheckinMonitor';
 import { useEventGeofenceCoordinates } from '@/hooks/useEventGeofenceCoordinates';
 import { useFamilyReceptionSuperAdminNotifier } from '@/hooks/useFamilyReceptionSuperAdminNotifier';
 import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
-import { getAppParameterValue } from '@/lib/appParameters';
+import { getAppParameterValue , isLgpdAtivoEnabled, isProfileLgpdPending } from '@/lib/appParameters';
 import {
   loadOfferingsRecipientBundle,
   type OfferingsRecipientRow,
@@ -31,7 +31,6 @@ import {
 import {
   APP_PARAMETER,
   eventRequiresQrCheckIn,
-  eventUsesAutomaticAudienceCheckIn,
   isAppParameterNo,
   isEventCalendarToday,
   resolveQrCheckInCardVisible,
@@ -56,9 +55,8 @@ import {
 import { prefetchProfilesMapMarkers } from '@/lib/syncProfilesMapMarkers';
 import { loadEffectiveSessionProfile, getEffectiveUserPhone } from '@/lib/loadSessionProfile';
 import { isGhostModeActive } from '@/lib/ghostMode';
-import { isLgpdAtivoEnabled, isProfileLgpdPending } from '@/lib/appParameters';
+
 import { lookupVehicleByPlaca, type VehicleLookupResult } from '@/lib/profileVehicleLookup';
-import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { fetchVolunteersForScaleType } from '@/lib/maintenanceScaleVolunteersApi';
 import { supabase } from '@/lib/supabase';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
@@ -104,7 +102,6 @@ import { recordProfileScreenVisit } from '@/lib/profileScreenVisitTracking';
 import {
   fetchPermittedScaleTypes,
   SCALE_PERMITTED_RPC_MISSING,
-  sessionCanAccessScaleType,
 } from '@/lib/scaleAccess';
 import { derivePermittedScaleTypesFromSchedule } from '@/lib/scaleVolunteerProfileMatch';
 import {
@@ -119,14 +116,13 @@ import {
 import { BIRTHDAYS_UI, DASHBOARD_CARD_THEMES, VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_TYPO } from '@/lib/dashboardCardStyles';
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
-import { withReturnDashboardCard, withReturnRoute, pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
+import { withReturnDashboardCard, pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
-import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import { MINIMAL_FLAT_PANEL, MINIMAL_DASHBOARD_STYLES, MINIMAL_PAGE } from '@/lib/minimalPresentation';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -138,10 +134,8 @@ import {
   Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
-  Platform,
   Pressable,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -151,11 +145,9 @@ import {
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import Toast from 'react-native-toast-message';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const STATIC_CARD_INSETS = computeResponsiveCardInsets(390);
-
-const FOOTER_NAV_REPEAT_MS = 500;
 
 type DashboardProfile = {
   id?: string;
@@ -323,55 +315,6 @@ const normalizeParameterValue = (value: string | null | undefined) =>
 
 const cleanPhoneDigits = (value: string | null | undefined) => (value ?? '').replace(/\D/g, '');
 
-const resolveProfilePhoneForMember = (
-  member: { full_name: string; phone: string | null; family_id: string },
-  profiles: ProfilePhoneRow[]
-) => {
-  const memberPhone = member.phone?.trim() || null;
-  const normalizedMemberPhone = cleanPhoneDigits(memberPhone);
-  const normalizedName = member.full_name.trim().toLowerCase();
-  const normalizedFamilyId = member.family_id.trim();
-
-  if (memberPhone) {
-    const byPhone = profiles.find((profile) => {
-      if (!profile.phone) {
-        return false;
-      }
-
-      return (
-        profile.phone === memberPhone
-        || cleanPhoneDigits(profile.phone) === normalizedMemberPhone
-      );
-    });
-
-    if (byPhone?.phone) {
-      return String(byPhone.phone);
-    }
-  }
-
-  const byFamilyAndName = profiles.find((profile) => {
-    const profileFamily = (profile.family_id ?? profile.codigo_membro ?? '').trim();
-    const profileName = profile.full_name?.trim().toLowerCase() ?? '';
-
-    return (
-      profileFamily === normalizedFamilyId
-      && profileName === normalizedName
-      && Boolean(profile.phone)
-    );
-  });
-
-  if (byFamilyAndName?.phone) {
-    return String(byFamilyAndName.phone);
-  }
-
-  const byName = profiles.find((profile) => {
-    const profileName = profile.full_name?.trim().toLowerCase() ?? '';
-    return profileName === normalizedName && Boolean(profile.phone);
-  });
-
-  return byName?.phone ? String(byName.phone) : null;
-};
-
 const resolveProfilePhoneForVolunteerName = (
   volunteerName: string,
   profiles: ProfilePhoneRow[]
@@ -402,9 +345,6 @@ const resolveProfilePhoneForVolunteerName = (
 
   return byShortName?.phone ? String(byShortName.phone) : null;
 };
-
-const normalizePhoneDigits = (value: string | null | undefined) =>
-  (value ?? '').replace(/\D/g, '');
 
 const isParkingWelcomeScale = (scaleName: string, scaleCode: string) => {
   const normalizedName = normalizeParameterValue(scaleName);
@@ -572,7 +512,7 @@ export default function Dashboard() {
   const [isMaintenanceAccessLoading, setIsMaintenanceAccessLoading] = useState(true);
   const [dashboardCardAccess, setDashboardCardAccess] = useState<DashboardCardViewAccess>({});
   const [dashboardScreenAccess, setDashboardScreenAccess] = useState<DashboardScreenAccess>({});
-  const [groupedManageScreenAccess, setGroupedManageScreenAccess] =
+  const [, setGroupedManageScreenAccess] =
     useState<GroupedManageScreenAccess>({
       manageProfile: false,
       manageMembers: false,
@@ -809,11 +749,6 @@ export default function Dashboard() {
     [familyId, profile?.codigo_membro]
   );
 
-  const selectedEventUsesAutomaticCheckIn = useMemo(
-    () => (selectedEvent ? eventUsesAutomaticAudienceCheckIn(selectedEventCheckInOptions) : false),
-    [selectedEvent, selectedEventCheckInOptions]
-  );
-
   const isSelectedEventToday = useMemo(
     () => isEventCalendarToday(selectedEvent?.event_date),
     [selectedEvent?.event_date]
@@ -877,8 +812,7 @@ export default function Dashboard() {
     [
       eventGeofenceCoordinates?.latitude,
       eventGeofenceCoordinates?.longitude,
-      selectedEvent?.event_date,
-      selectedEvent?.id,
+      selectedEvent,
     ]
   );
 
@@ -909,7 +843,6 @@ export default function Dashboard() {
     gpsProgress: geoCheckinGpsProgress,
     lastCoordinates: geoDeviceCoordinates,
     lastDistanceMeters: geoCheckinDistanceMeters,
-    geofenceActive,
     inGeofenceWindow,
     errorMessage: geoCheckinErrorMessage,
   } = useGeoCheckinMonitor({
@@ -1666,29 +1599,42 @@ export default function Dashboard() {
 
   const kidsCheckedCount = kidsRegistrations.filter((registration) => registration.room_entry_checked).length;
   const teensCheckedCount = teensRegistrations.filter((registration) => registration.room_entry_checked).length;
-  const availableGroupedRooms: GroupedRoomConfig[] = [];
+  const availableGroupedRooms = useMemo(() => {
+    const rooms: GroupedRoomConfig[] = [];
 
-  if (selectedEvent?.kids_room) {
-    availableGroupedRooms.push({
-      key: 'KIDS',
-      label: kidsRoomLabel,
-      checkedCount: kidsCheckedCount,
-      totalCount: kidsRegistrations.length,
-      headerStyle: styles.groupedAudienceHeaderKids,
-      dotStyle: styles.groupedAudienceDotKids,
-    });
-  }
+    if (selectedEvent?.kids_room) {
+      rooms.push({
+        key: 'KIDS',
+        label: kidsRoomLabel,
+        checkedCount: kidsCheckedCount,
+        totalCount: kidsRegistrations.length,
+        headerStyle: styles.groupedAudienceHeaderKids,
+        dotStyle: styles.groupedAudienceDotKids,
+      });
+    }
 
-  if (selectedEvent?.teens_room) {
-    availableGroupedRooms.push({
-      key: 'TEENS',
-      label: teensRoomLabel,
-      checkedCount: teensCheckedCount,
-      totalCount: teensRegistrations.length,
-      headerStyle: styles.groupedAudienceHeaderTeens,
-      dotStyle: styles.groupedAudienceDotTeens,
-    });
-  }
+    if (selectedEvent?.teens_room) {
+      rooms.push({
+        key: 'TEENS',
+        label: teensRoomLabel,
+        checkedCount: teensCheckedCount,
+        totalCount: teensRegistrations.length,
+        headerStyle: styles.groupedAudienceHeaderTeens,
+        dotStyle: styles.groupedAudienceDotTeens,
+      });
+    }
+
+    return rooms;
+  }, [
+    kidsCheckedCount,
+    kidsRegistrations.length,
+    kidsRoomLabel,
+    selectedEvent?.kids_room,
+    selectedEvent?.teens_room,
+    teensCheckedCount,
+    teensRegistrations.length,
+    teensRoomLabel,
+  ]);
   const selectedGroupedRoomConfig =
     availableGroupedRooms.find((room) => room.key === selectedGroupedRoom) ?? availableGroupedRooms[0] ?? null;
   const visibleGroupedRegistrations =
@@ -1705,7 +1651,7 @@ export default function Dashboard() {
 
       return availableGroupedRooms[0].key;
     });
-  }, [selectedEventId, selectedEvent?.kids_room, selectedEvent?.teens_room, kidsRegistrations.length, teensRegistrations.length]);
+  }, [availableGroupedRooms]);
 
   const capacityRatio =
     selectedEvent?.max_capacity && selectedEvent.max_capacity > 0
@@ -1767,37 +1713,6 @@ export default function Dashboard() {
       setIsRegisteredScaleVolunteersLoading(false);
     }
   }, []);
-
-  const handleSelectVigilanceScale = useCallback(
-    (option: ScaleTypeEntry) => {
-      void (async () => {
-        const allowed = await sessionCanAccessScaleType(option.code, 'view');
-
-        if (!allowed) {
-          Alert.alert(
-            'Sem permissão',
-            `Você não tem permissão para acessar a escala "${option.name}".`
-          );
-          return;
-        }
-
-        setSelectedVigilanceScale(option.code);
-        setIsParkingPanelVisible(false);
-        handleResetVehicleLookup();
-        setIsScaleRosterVisible(true);
-        scrollToScaleRosterRef.current = true;
-
-        if (isIntercessionScale(option.name, option.code)) {
-          void loadRegisteredScaleVolunteers(option.id);
-          return;
-        }
-
-        setRegisteredScaleVolunteers([]);
-        setRegisteredScaleVolunteersError(null);
-      })();
-    },
-    [handleResetVehicleLookup, loadRegisteredScaleVolunteers]
-  );
 
   const isSelectedScaleIntercession = useMemo(
     () =>
@@ -2285,23 +2200,6 @@ export default function Dashboard() {
     },
     [data.length, scrollToDashboardCard, stopFooterNavRepeat]
   );
-
-  const startFooterNavRepeat = useCallback(
-    (direction: 'prev' | 'next') => {
-      stopFooterNavRepeat();
-      footerNavRepeatActiveRef.current = false;
-
-      footerNavRepeatIntervalRef.current = setInterval(() => {
-        footerNavRepeatActiveRef.current = true;
-        stepFooterNavCard(direction);
-      }, FOOTER_NAV_REPEAT_MS);
-    },
-    [stepFooterNavCard, stopFooterNavRepeat]
-  );
-
-  const handleFooterNavPressOut = useCallback(() => {
-    stopFooterNavRepeat();
-  }, [stopFooterNavRepeat]);
 
   const handleFooterPreviousPress = useCallback(() => {
     if (footerNavRepeatActiveRef.current) {

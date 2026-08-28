@@ -2,13 +2,13 @@ import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
 import { MaintenancePastoralAgendaPanel } from '@/components/MaintenancePastoralAgendaPanel';
-import { useMaintenancePastoralCare } from '@/hooks/useMaintenancePastoralCare';
+import { useMaintenancePastoralCare , MAINTENANCE_PASTORAL_CARE_SQL_HINT } from '@/hooks/useMaintenancePastoralCare';
 import {
   computeMaintenanceContentHeight,
   MAINTENANCE_SCROLL_PROPS,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
-import { MAINTENANCE_PASTORAL_CARE_SQL_HINT } from '@/hooks/useMaintenancePastoralCare';
+
 import {
   canApprovePastoralCancellation,
   pastoralDestinationIsIntercession,

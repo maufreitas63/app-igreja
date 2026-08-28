@@ -1,7 +1,7 @@
 import { showAppToast } from '@/lib/appToast';
 import { hasStoredMemberSession } from '@/lib/memberSession';
 import { fetchUnreadScaleSwapNotices, markScaleSwapNoticesRead } from '@/lib/scaleSwapApi';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
 const POLL_MS = 60_000;

@@ -20,29 +20,6 @@ import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { showAppToast } from '@/lib/appToast';
 import { useLoginInstanceCode } from '@/hooks/useLoginInstanceCode';
-
-const LOGIN_SURFACE = '#FFFFFF';
-const LOGIN_ACCENT = VIGILANCE_SCALES_UI.accent;
-const LOGIN_ICON = '#1B4F8A';
-const LOGIN_INPUT_BORDER = 'rgba(28, 79, 138, 0.35)';
-const LOGIN_SOFT_BORDER = 'rgba(52, 211, 153, 0.35)';
-const LOGIN_SUBMIT_BG = '#3A96DD';
-const LOGIN_SUBMIT_TEXT = '#FFFFFF';
-const LOGIN_PLACEHOLDER = 'rgba(58, 150, 221, 0.55)';
-
-function ReadOnlyText({
-  children,
-  style,
-}: {
-  children: React.ReactNode;
-  style?: StyleProp<TextStyle>;
-}) {
-  return (
-    <Text selectable={false} style={[style, styles.nonSelectableText]}>
-      {children}
-    </Text>
-  );
-}
 import { FontAwesome } from '@expo/vector-icons';
 import {
   ACCESS_PIN_LENGTH,
@@ -84,6 +61,29 @@ import {
   maybeOfferBiometricEnrollment,
   unlockSessionWithBiometrics,
 } from '@/lib/biometricAuth';
+
+const LOGIN_SURFACE = '#FFFFFF';
+const LOGIN_ACCENT = VIGILANCE_SCALES_UI.accent;
+const LOGIN_ICON = '#1B4F8A';
+const LOGIN_INPUT_BORDER = 'rgba(28, 79, 138, 0.35)';
+const LOGIN_SOFT_BORDER = 'rgba(52, 211, 153, 0.35)';
+const LOGIN_SUBMIT_BG = '#3A96DD';
+const LOGIN_SUBMIT_TEXT = '#FFFFFF';
+const LOGIN_PLACEHOLDER = 'rgba(58, 150, 221, 0.55)';
+
+function ReadOnlyText({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<TextStyle>;
+}) {
+  return (
+    <Text selectable={false} style={[style, styles.nonSelectableText]}>
+      {children}
+    </Text>
+  );
+}
 
 export default function IndexScreen() {
   const {
@@ -1100,6 +1100,7 @@ export default function IndexScreen() {
     accessPin,
     canAttemptMemberPinLogin,
     isTotemLoginMode,
+    loginStep,
     phone,
     isSendingPin,
     isLoading,

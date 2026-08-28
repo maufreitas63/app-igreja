@@ -29,7 +29,7 @@ import {
   pasteFinancialReceiptFromClipboard,
   pickFinancialReceiptFromGallery,
 } from '@/lib/financialReceipt';
-import { useMaintenanceFinancials } from '@/hooks/useMaintenanceFinancials';
+import { useMaintenanceFinancials , MAINTENANCE_FINANCIALS_SQL_HINT } from '@/hooks/useMaintenanceFinancials';
 import {
   EXPENSE_REPORT_SQL_HINT,
   EXPENSE_REPORT_RPC_MISSING,
@@ -46,7 +46,7 @@ import {
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
 import type { FinancialEntry } from '@/lib/financialEntry';
-import { MAINTENANCE_FINANCIALS_SQL_HINT } from '@/hooks/useMaintenanceFinancials';
+
 import {
   DEFAULT_TREASURY_RECEIPTS_DIR,
 } from '@/lib/treasuryReceiptBatchPath';

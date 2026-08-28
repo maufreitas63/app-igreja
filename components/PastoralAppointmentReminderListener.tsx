@@ -1,7 +1,7 @@
 import { fetchMyPastoralSlotNotices, markPastoralSlotNoticesRead } from '@/lib/pastoralSlotsApi';
 import { hasStoredMemberSession } from '@/lib/memberSession';
 import { showAppToast } from '@/lib/appToast';
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
 const POLL_MS = 60_000;

@@ -1,4 +1,4 @@
-﻿import { SmallGroupGuideModal } from '@/components/SmallGroupGuideModal';
+import { SmallGroupGuideModal } from '@/components/SmallGroupGuideModal';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { buildProfileMapNavigationAddressLine } from '@/lib/enrichProfileMapAddress';
 import { formatShortName } from '@/lib/formatShortName';

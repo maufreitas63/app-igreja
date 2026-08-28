@@ -8,7 +8,7 @@ import { isEventOrchestrationPanelFocused } from '@/lib/eventOrchestrationPanelF
 import { hasStoredMemberSession } from '@/lib/memberSession';
 import { supabase } from '@/lib/supabase';
 import { useLocalSearchParams, usePathname, useRouter, useSegments } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
 const ORCHESTRATION_POLL_MS = 3_000;

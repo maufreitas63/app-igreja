@@ -2037,5 +2037,3 @@ function createSupportSuggestionsStyles(isVigilance: boolean) {
   } as typeof base);
 }
 
-const styles = createSupportSuggestionsStyles(false);
-

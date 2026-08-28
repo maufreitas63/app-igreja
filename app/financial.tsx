@@ -11,7 +11,6 @@ import {
   resolveReturnDashboardCardParam,
   resolveReturnRouteParam,
   withReturnDashboardCard,
-  pickRouteParam,
   isMinimalPresentationRoute,
 } from '@/lib/dashboardReturnNavigation';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';

@@ -30,7 +30,6 @@ import {
 } from '@/lib/inheritFamilyAddress';
 import { formatFullName } from '@/lib/fullName';
 import {
-  ensureProfilesForMembers,
   findProfileIdForMember,
   upsertProfileForManagedMember,
 } from '@/lib/memberProfiles';

@@ -35,7 +35,6 @@ import { formatCep, normalizeCepDigits } from '@/lib/geoMapGeocoding';
 import { formatBrazilCepInput, formatBrazilDateInput } from '@/lib/inputMasks';
 import { isLgpdAtivoEnabled, clearAppParameterCache, LGPD_ATIVO_PARAMETER } from '@/lib/appParameters';
 import { pickSelfieFromWeb, selectSelfiePictureSize, uploadSelfieInput } from '@/lib/selfie';
-import { supabase } from '@/lib/supabase';
 import { invalidateProfilesMapSnapshot } from '@/lib/profilesMapCache';
 import { persistProfileId, persistUserSession } from '@/lib/userSession';
 import { useLgpdTermsScrollGate } from '@/hooks/useLgpdTermsScrollGate';
@@ -44,7 +43,6 @@ import { useWebDocumentTitle } from '@/hooks/useWebDocumentTitle';
 import { useEntityPrefix } from '@/context/EntityPrefixContext';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const REGISTER_SURFACE = '#FFFFFF';
 const REGISTER_ACCENT = VIGILANCE_SCALES_UI.accent;

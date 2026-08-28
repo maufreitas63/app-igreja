@@ -168,7 +168,7 @@ export function AppBackHandler() {
     return () => {
       window.removeEventListener('popstate', onPopState);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- listener único; estado via refs
+     
   }, [router]);
 
   // Em cada troca de rota autenticada, garante um trap fresco (expo-router mexe no history).

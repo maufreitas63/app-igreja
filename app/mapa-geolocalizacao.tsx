@@ -43,7 +43,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 type MapPinFilter = 'all' | 'members' | 'visitors' | 'small_groups';
 
-const MAP_PIN_FILTER_OPTIONS: Array<{ id: MapPinFilter; label: string }> = [
+const MAP_PIN_FILTER_OPTIONS: { id: MapPinFilter; label: string }[] = [
   { id: 'all', label: 'Todos' },
   { id: 'members', label: 'Com papel' },
   { id: 'visitors', label: 'Visitantes' },

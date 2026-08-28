@@ -29,7 +29,6 @@ import {
   ActivityIndicator,
   AppState,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,

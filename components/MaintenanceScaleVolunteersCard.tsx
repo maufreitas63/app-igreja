@@ -1,11 +1,11 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
-import { useMaintenanceScaleVolunteers } from '@/hooks/useMaintenanceScaleVolunteers';
+import { useMaintenanceScaleVolunteers , MAINTENANCE_SCALE_VOLUNTEERS_SQL_HINT } from '@/hooks/useMaintenanceScaleVolunteers';
 import {
   computeMaintenanceContentHeight,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
-import { MAINTENANCE_SCALE_VOLUNTEERS_SQL_HINT } from '@/hooks/useMaintenanceScaleVolunteers';
+
 import { confirmDialog } from '@/lib/confirmDialog';
 import { SCALE_VOLUNTEERS_MENU_LABEL } from '@/lib/appDrawerMenu';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';

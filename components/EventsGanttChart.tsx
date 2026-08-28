@@ -44,7 +44,7 @@ export const EventsGanttChart = ({
   minimal = false,
 }: EventsGanttChartProps) => {
   const [viewMode, setViewMode] = useState<GanttViewMode>('day');
-  const safeEvents = events ?? [];
+  const safeEvents = useMemo(() => events ?? [], [events]);
   const model = useMemo(() => buildEventsGanttModel(safeEvents, viewMode), [safeEvents, viewMode]);
   const eventCountByCalendarDate = useMemo(() => {
     if (!model) {

@@ -28,7 +28,6 @@ import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   buildReturnToDashboardHref,
-  pickRouteParam,
   resolveReturnDashboardCardParam,
   resolveReturnRouteParam,
   isMinimalPresentationRoute,

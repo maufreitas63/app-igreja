@@ -4,6 +4,7 @@ import { formatShortName } from '@/lib/formatShortName';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import MapView from 'react-native-map-clustering';
+import { Marker, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 
 type MapViewType = {
   fitToCoordinates?: (
@@ -23,7 +24,6 @@ type MapViewType = {
     duration?: number
   ) => void;
 };
-import { Marker, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 
 type ProfilesMapCanvasProps = {
   center: [number, number];

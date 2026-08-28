@@ -12,7 +12,7 @@ import { formatRoomServidorNames } from '@/lib/roomServidorScales';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -139,27 +139,40 @@ export const MaintenanceSalaServidorCard = ({
     (registration) => registration.room_entry_checked
   ).length;
 
-  const availableGroupedRooms: GroupedRoomConfig[] = [];
+  const availableGroupedRooms = useMemo(() => {
+    const rooms: GroupedRoomConfig[] = [];
 
-  if (selectedEvent?.kids_room) {
-    availableGroupedRooms.push({
-      key: 'KIDS',
-      label: kidsRoomLabel,
-      checkedCount: kidsCheckedCount,
-      totalCount: kidsRegistrations.length,
-      headerStyle: styles.groupedAudienceHeaderKids,
-    });
-  }
+    if (selectedEvent?.kids_room) {
+      rooms.push({
+        key: 'KIDS',
+        label: kidsRoomLabel,
+        checkedCount: kidsCheckedCount,
+        totalCount: kidsRegistrations.length,
+        headerStyle: styles.groupedAudienceHeaderKids,
+      });
+    }
 
-  if (selectedEvent?.teens_room) {
-    availableGroupedRooms.push({
-      key: 'TEENS',
-      label: teensRoomLabel,
-      checkedCount: teensCheckedCount,
-      totalCount: safeTeensRegistrations.length,
-      headerStyle: styles.groupedAudienceHeaderTeens,
-    });
-  }
+    if (selectedEvent?.teens_room) {
+      rooms.push({
+        key: 'TEENS',
+        label: teensRoomLabel,
+        checkedCount: teensCheckedCount,
+        totalCount: safeTeensRegistrations.length,
+        headerStyle: styles.groupedAudienceHeaderTeens,
+      });
+    }
+
+    return rooms;
+  }, [
+    kidsCheckedCount,
+    kidsRegistrations.length,
+    kidsRoomLabel,
+    selectedEvent?.kids_room,
+    selectedEvent?.teens_room,
+    teensCheckedCount,
+    safeTeensRegistrations.length,
+    teensRoomLabel,
+  ]);
 
   const selectedGroupedRoomConfig =
     availableGroupedRooms.find((room) => room.key === selectedGroupedRoom)
@@ -184,13 +197,7 @@ export const MaintenanceSalaServidorCard = ({
 
       return availableGroupedRooms[0].key;
     });
-  }, [
-    selectedEventId,
-    selectedEvent?.kids_room,
-    selectedEvent?.teens_room,
-    safeKidsRegistrations.length,
-    safeTeensRegistrations.length,
-  ]);
+  }, [availableGroupedRooms]);
 
   const handleRoomEntryToggle = async (registrationId: string, checked: boolean) => {
     if (!canCheckInSelectedRoom) {

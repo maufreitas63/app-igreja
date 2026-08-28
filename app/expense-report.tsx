@@ -1,7 +1,7 @@
 import { ExpenseReportForm } from '@/components/ExpenseReportForm';
 import { ExpenseReportViewer } from '@/components/ExpenseReportViewer';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
-import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { ACCESS_SCREEN , sessionHasAccess } from '@/lib/accessControl';
 import {
   deleteExpenseReport,
   EXPENSE_REPORT_SQL_HINT,
@@ -19,7 +19,6 @@ import { confirmDialog } from '@/lib/confirmDialog';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
-import { sessionHasAccess } from '@/lib/accessControl';
 import {
   resolveReturnRouteParam,
   resolveReturnDashboardCardParam,
@@ -30,7 +29,6 @@ import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { toFinancialMonthReferenceDate } from '@/lib/maintenanceFinancialApi';
 import {
-  formatFinancialMonthKey,
   getCalendarMonthKey,
   parseFinancialMonthKey,
 } from '@/lib/financialMonth';

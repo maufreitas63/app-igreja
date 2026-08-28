@@ -105,7 +105,6 @@ export const FamilyRegistrationList = ({
   geoCheckinRadiusMeters = 30,
   minimal = false,
   hideRoomSelos = false,
-  eventEnabledRoomKeys = null,
 }: Props) => {
   const resolvedEventName = useMemo(() => {
     const explicit = eventName?.trim();
@@ -144,21 +143,6 @@ export const FamilyRegistrationList = ({
   const [roomOverlayByMemberId, setRoomOverlayByMemberId] = useState<Record<string, boolean>>(
     {}
   );
-
-  const allowedRoomKeys = useMemo(() => {
-    const keys = Array.isArray(eventEnabledRoomKeys)
-      ? eventEnabledRoomKeys
-          .map((key) => String(key ?? '').trim().toUpperCase())
-          .filter((key) => /^[A-Z0-9_]{2,40}$/.test(key))
-      : [];
-    if (keys.length > 0) {
-      return new Set(keys);
-    }
-    const fallback = new Set<string>();
-    if (showKidsIndicator) fallback.add('KIDS');
-    if (showTeensIndicator) fallback.add('TEENS');
-    return fallback;
-  }, [eventEnabledRoomKeys, showKidsIndicator, showTeensIndicator]);
   const [soloStatusLoading, setSoloStatusLoading] = useState(false);
   const [soloToggleLoading, setSoloToggleLoading] = useState(false);
 

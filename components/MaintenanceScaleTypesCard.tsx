@@ -1,10 +1,10 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
-import { useMaintenanceScaleTypes } from '@/hooks/useMaintenanceScaleTypes';
+import { useMaintenanceScaleTypes , MAINTENANCE_SCALE_TYPES_SQL_HINT } from '@/hooks/useMaintenanceScaleTypes';
 import {
   computeMaintenanceContentHeight,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
-import { MAINTENANCE_SCALE_TYPES_SQL_HINT } from '@/hooks/useMaintenanceScaleTypes';
+
 import { confirmDialog } from '@/lib/confirmDialog';
 import { mapLegacyRoomDisplayLabel } from '@/lib/roomDisplayLabels';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';

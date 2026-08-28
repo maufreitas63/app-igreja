@@ -607,7 +607,7 @@ export function MaintenanceAccessControlCard({
   }, [grantSearchQuery, resourceTypeFilter, roleGrants]);
 
   useEffect(() => {
-    setExpandedProfileSection(selectedProfile ? 'roles' : null);
+    setExpandedProfileSection(selectedProfile?.id ? 'roles' : null);
   }, [selectedProfile?.id]);
 
   useEffect(() => {

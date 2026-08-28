@@ -92,7 +92,9 @@ export function GeoLeafletMap({
   onSelectProfile,
   pinsInteractive = true,
 }: GeoLeafletMapProps) {
-  const leafletCenter = useMemo<[number, number]>(() => center, [center[0], center[1]]);
+  const centerLat = center[0];
+  const centerLng = center[1];
+  const leafletCenter = useMemo<[number, number]>(() => [centerLat, centerLng], [centerLat, centerLng]);
 
   return (
     <div style={mapShellStyle}>

@@ -1,5 +1,4 @@
 import { ProfileClass } from '@/components/ProfileClass';
-import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam, withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
@@ -70,7 +69,6 @@ import {
   formatPhone,
   loadProfile,
   normalizeCep,
-  normalizePhone,
   parseBooleanInput,
   toIsoDate,
   type ProfileFieldRow,
@@ -537,7 +535,6 @@ export function ProfileClassPanel({
     accessPinConfirmMismatch,
     accessPinValidationMessage,
     canUseAccessPinForm,
-    confirmAccessPin,
     currentAccessPin,
     isRecoveryAccessPinFlow,
     newAccessPin,
@@ -702,7 +699,7 @@ export function ProfileClassPanel({
       return () => {
         active = false;
       };
-    }, [fetchProfile, ghostModeActive, ghostModeState?.targetProfileId, isRecoveryAccessPinFlow, router])
+    }, [fetchProfile, ghostModeActive, isRecoveryAccessPinFlow, router])
   );
 
   useEffect(() => {
@@ -746,7 +743,7 @@ export function ProfileClassPanel({
       'Complete seu cadastro',
       'Preencha os dados faltantes nas seções abaixo (contato, CPF, e-mail e endereço) para concluir seu cadastro.'
     );
-  }, [isOnboardingFlow, loading, phoneParam, profile, router]);
+  }, [isOnboardingFlow, isRecoveryAccessPinFlow, loading, phoneParam, profile, router]);
 
   useEffect(() => {
     if (!isRecoveryAccessPinFlow || loading || !profile || recoveryAccessPinInitializedRef.current) {
@@ -1051,7 +1048,7 @@ export function ProfileClassPanel({
     const updatedProfile = data as ProfileRecord;
     setProfile(updatedProfile);
     return updatedProfile;
-  }, [profile?.id, profileColumnAccess]);
+  }, [columnAccessLoading, profile?.id, profileColumnAccess]);
 
   const handleSaveField = useCallback(async () => {
     if (!editingField || !editingFieldRow || !profile?.id) {
@@ -1153,7 +1150,7 @@ export function ProfileClassPanel({
     } finally {
       setSaving(false);
     }
-  }, [editingField, editingFieldRow, editingValue, profile?.phone, resetEditing, router, updateSingleField]);
+  }, [editingField, editingFieldRow, editingValue, profile?.id, profile?.phone, resetEditing, returnDashboardCard, router, updateSingleField]);
 
   const startNewVehicle = useCallback(() => {
     setEditingVehicle(null);

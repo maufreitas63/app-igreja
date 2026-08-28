@@ -1,10 +1,6 @@
 // app/_layout.tsx
 import { Buffer } from 'buffer';
 
-if (!global.Buffer) {
-  global.Buffer = Buffer;
-}
-
 import { AppBackHandler } from '@/components/AppBackHandler';
 import { AppShell } from '@/components/AppShell';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
@@ -21,6 +17,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import Toast from 'react-native-toast-message';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
+
+if (!global.Buffer) {
+  global.Buffer = Buffer;
+}
 
 installExecutionErrorClipboard();
 

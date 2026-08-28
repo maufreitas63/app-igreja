@@ -37,7 +37,7 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
   const [tipo, setTipo] = useState<PastoralAttendanceType | 'all'>('all');
   const [slotId, setSlotId] = useState('');
   const [requestId, setRequestId] = useState('');
-  const [requestOptions, setRequestOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [requestOptions, setRequestOptions] = useState<{ value: string; label: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {

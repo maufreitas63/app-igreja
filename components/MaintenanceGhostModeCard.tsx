@@ -61,11 +61,11 @@ function GhostModeAccessAuditPanel({
 
   const groupedRows = useMemo(() => {
     if (!report) {
-      return [] as Array<{
+      return [] as {
         type: GhostModeAccessAuditRow['resourceType'];
         title: string;
         rows: GhostModeAccessAuditRow[];
-      }>;
+      }[];
     }
 
     const types: GhostModeAccessAuditRow['resourceType'][] = ['screen', 'table', 'column'];

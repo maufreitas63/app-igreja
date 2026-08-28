@@ -39,7 +39,6 @@ import { MaintenanceScalesCard } from '@/components/MaintenanceScalesCard';
 import { MaintenanceSalaServidorCard } from '@/components/MaintenanceSalaServidorCard';
 import { QuorumCheckinRegistryTable } from '@/components/QuorumCheckinRegistryTable';
 import { useGhostMode } from '@/context/GhostModeContext';
-import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { SCALE_SCHEDULING_MENU_LABEL, SCALE_VOLUNTEERS_MENU_LABEL } from '@/lib/appDrawerMenu';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
 import { resolveMaintenancePanelAccessResourceKey } from '@/lib/screenAccessResourceKeys';
@@ -88,7 +87,6 @@ import {
 } from '@/lib/maintenanceShortcutIcons';
 import {
   computeMaintenancePanelInsets,
-  UI_COLORS,
   UI_MAINTENANCE_PANEL_BORDERS,
   UI_PANEL_TYPO,
   UI_RADIUS,
@@ -117,13 +115,11 @@ import { useQuorumRegistry } from '@/hooks/useQuorumRegistry';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Keyboard,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -193,16 +189,6 @@ type MaintenanceShortcut = {
   id: string;
   label: string;
   content: MaintenancePanelContent;
-};
-
-const formatDisplayName = (fullName: string) => {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-
-  if (parts.length <= 1) {
-    return parts[0] ?? fullName;
-  }
-
-  return `${parts[0]} ${parts[parts.length - 1]}`;
 };
 
 const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
@@ -442,10 +428,10 @@ export default function MaintenanceDashboard() {
     return Math.max(280, pageWidth - MINIMAL_LAYOUT_HORIZONTAL_PADDING * 2);
   }, [isMinimalPresentation, measuredCarouselWidth, pageWidth]);
   const router = useRouter();
-  const { isActive: ghostModeActive, state: ghostModeState } = useGhostMode();
+  const { isActive: ghostModeActive } = useGhostMode();
   const insets = useSafeAreaInsets();
   const { events, loading, error, refetch } = useMaintenanceEvents();
-  const safeEvents = events ?? [];
+  const safeEvents = useMemo(() => events ?? [], [events]);
   const hasQuorumEvent = useMemo(
     () => safeEvents.some((event) => event.requer_quorum === true),
     [safeEvents]
@@ -520,7 +506,6 @@ export default function MaintenanceDashboard() {
     loading: isQuorumRegistryLoading,
     isRefreshing: isQuorumRegistryRefreshing,
     error: quorumRegistryError,
-    refetch: refetchQuorumRegistry,
   } = useQuorumRegistry(editorQuorumEventId, {
     pollMs: 15000,
     enabled: Boolean(editorQuorumEventId) && !quorumRegistrySchemaMissing,
@@ -643,7 +628,7 @@ export default function MaintenanceDashboard() {
       return () => {
         active = false;
       };
-    }, [ghostModeActive, ghostModeState?.targetProfileId, router])
+    }, [ghostModeActive, router])
   );
 
   const handleSave = useCallback(async () => {

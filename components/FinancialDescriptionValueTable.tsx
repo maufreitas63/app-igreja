@@ -564,7 +564,6 @@ export function FinancialDescriptionValueTable({
             const receiptInfo = receiptByRowKey.get(row.key);
             const expenseReportInfo = expenseReportByRowKey.get(row.key);
             const receiptUrls = receiptInfo?.receiptUrls ?? [];
-            const receiptUrl = receiptUrls[0]?.trim() ?? '';
             const showCommentIcon = commentDetails.length > 0;
             const showReceiptIcon = receiptUrls.length > 0;
             const showExpenseReportIcon = Boolean(expenseReportInfo?.reportId);
