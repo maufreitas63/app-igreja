@@ -84,6 +84,15 @@ https://SEU-DOMINIO.pages.dev/api/stripe-webhook
 
 Os Prices precisam ser **trimestrais** (`recurring.interval = month` e `interval_count = 3`). O Stripe não deixa mudar um Price mensal para trimestral: crie um Price novo no mesmo produto. Com `STRIPE_SECRET_KEY` no `.env.local`, rode `npm run stripe:quarterly-prices` e cole os `price_…` nas variáveis acima.
 
+Price IDs atuais (modo Test, 3 × o mensal):
+
+| Variável | Price ID | Valor |
+|----------|----------|--------|
+| `STRIPE_PRICE_SEMENTE` | `price_1U9TwCRexYTA7BZinNE5DHcM` | R$ 89,70 / trimestre |
+| `STRIPE_PRICE_CRESCIMENTO` | `price_1U9TwCRexYTA7BZid3vCScbV` | R$ 239,70 / trimestre |
+| `STRIPE_PRICE_EXPANSAO` | `price_1U9TwDRexYTA7BZiolQgqpTI` | R$ 449,70 / trimestre |
+| `STRIPE_PRICE_MINISTERIO` | `price_1U9TwERexYTA7BZiSxEMG3pg` | R$ 899,70 / trimestre |
+
 Eventos sugeridos: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`.
 
 Após salvar secrets, faça um **Retry deployment** (ou um novo push) para as Functions enxergarem os valores.
