@@ -12,7 +12,8 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 <strong>Solução:</strong> ecossistema app-igreja (PWA + mobile)<br>
 <strong>Público:</strong> liderança, secretaria, pastoral, tesouraria e operação<br>
 <strong>Base:</strong> código-fonte, rotas Expo Router, menu lateral, Índice, Painel e Manutenção<br>
-<strong>Data:</strong> 26 de agosto de 2026
+<strong>Data:</strong> 28 de agosto de 2026<br>
+<strong>Revisão:</strong> atualização comercial desde 26 de agosto — células, contribuições, escalas, menu do membro e leitura financeira
 </p>
 
 </div>
@@ -36,8 +37,8 @@ Cada tela abaixo segue o mesmo roteiro: título, valor comercial, propósito té
 | Chegar | Login, cadastro, recuperar senha, selecionar igreja, LGPD | Identidade única, sem fila de senha improvisada |
 | Orientar-se | Índice, menu lateral, Painel, caixa de avisos | Atalhos claros; o que a pessoa pode ver já vem filtrado por papel |
 | Participar | Agenda, QR, salas, totem | Presença confirmada, crianças localizadas, culto fluindo |
-| Cuidar | Pastoral, agenda pastoral, aniversariantes, membros, mapa, células | Cuidado pastoral e vínculo sem exposição indevida |
-| Contribuir | Ofertas, financeiro, RD, campanhas | PIX imediato e prestação de contas legível |
+| Cuidar | Pastoral, agenda pastoral, aniversariantes, membros, mapa, células | Cuidado pastoral, célula com datas reais e vínculo sem exposição indevida |
+| Contribuir | Eu quero… / Contribuir, Dízimos e Ofertas, campanhas | PIX Copia e Cola com o valor; campanha identificada sem misturar com o dízimo |
 | Servir | Escalas, troca pontual, mural de vagas, estacionamento | Escala visível, substituição combinada e dons reconhecidos |
 | Governar | Manutenção, ACL, papéis, transferência, igrejas, billing | Controle institucional com rastreio |
 
@@ -239,20 +240,20 @@ Fila única de acolhimento, com aceite ou recusa institucional — não um amont
 
 ### Descrição comercial
 
-É o “saguão”. Depois do login, a pessoa vê atalhos coloridos para Agenda, Salas, QR, Ofertas, Pastoral, Membros, Aniversariantes, Financeiro, Escalas, Células, Campanhas, Mural e Perfil. Nada de labirinto: o que está disponível aparece; o que não cabe naquele dia (QR fora do culto, salas sem evento) fica explicado, não quebrado. A faixa de avisos e próximos eventos concentra comunicados, lembretes pastorais, trocas de escala e marcos de campanha.
+É o “saguão”. Depois do login, a pessoa vê atalhos para a vida da igreja e, no rodapé, o convite **Eu quero…**. O primeiro item é **Contribuir** — subtítulo *Dízimos, Ofertas, Campanhas ou Projetos.* — e se abre em duas opções: **Dízimos e Ofertas** (*Informe o valor, com centavos, e copie o Pix.*) e **Campanhas e Projetos** (*Informe o valor e copie o Pix já identificado.*). Ao lado, **Fazer um pedido de Oração**. Sem caçar item no menu. A faixa de avisos e próximos eventos concentra comunicados, lembretes pastorais, trocas de escala e marcos de campanha. O recorte da tela acompanha o aparelho: as margens laterais crescem com a largura, alinhadas ao chrome superior, para o conteúdo não “flutuar” nem estourar no celular ou no monitor.
 
 ### Propósito e conexões
 
-Distribui etiquetas na altura da tela (`indexShortcutHints`). Cada toque abre o Painel no card correspondente (`dashboardCard`). Rodapé: Encerrar sessão; engrenagem de manutenção à direita, se houver permissão. Marca d’água da instância. A caixa de avisos recarrega em tempo real e não repete o mesmo recado já visto.
+Distribui etiquetas na altura da tela (`indexShortcutHints`). Cada toque abre o Painel no card correspondente (`dashboardCard`). **Eu quero… → Contribuir** reúne Dízimos e Ofertas e Campanhas e Projetos; o pedido de oração abre o Coração Aberto. Rodapé de sessão: Encerrar sessão. Engrenagem de manutenção à direita, só com permissão. Marca d’água da instância. A caixa de avisos recarrega em tempo real e não repete o mesmo recado já visto. **Fechar** em telas de conteúdo devolve ao Índice; só Encerrar sessão limpa o aparelho.
 
 <div class="split">
 <div class="vision user">
 <h4>Visão do Usuário Final</h4>
-Encontra o que precisa em um toque, com linguagem de igreja, não de sistema. Vê o recado do culto e o próximo evento sem procurar.
+Encontra o que precisa em um toque, com linguagem de igreja. Contribui ou pede oração sem sair do saguão. Vê o recado do culto e o próximo evento sem procurar.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>
-Atalhos respeitam ACL. Quem não deve ver Financeiro ou Membros simplesmente não recebe o botão.
+Atalhos respeitam ACL. Quem não deve ver Financeiro ou Membros simplesmente não recebe o botão. Dízimo e campanha não disputam espaço no menu do membro: nascem do mesmo “Contribuir”.
 </div>
 </div>
 </div>
@@ -265,20 +266,20 @@ Atalhos respeitam ACL. Quem não deve ver Financeiro ou Membros simplesmente nã
 
 ### Descrição comercial
 
-É o corredor interno da plataforma. Na parte de cima, a vida do membro (Início, Perfil, Financeiro, Escalas, Aniversariantes, Lista de Membros, Administrativo). Depois da linha, a operação da igreja (eventos, salas, escalas, pastoral, células, campanhas, mural de vagas, finanças, relatórios, papéis e transferência). A engrenagem abre configurações finas: trilha, salas, avisos, igrejas, assinaturas e autorização de imagem.
+É o corredor interno da plataforma, separado com clareza. Na parte de cima, só a vida do membro: Início, Perfil, Dados cadastrais, Família, Reembolsos, Financeiro, Coração Aberto, Trilha de Discipulado, Minha Célula, Escalas, Mural de Oportunidades, Sugestões e Redes Sociais. Dízimos e Campanhas não aparecem aqui: já estão em **Eu quero… → Contribuir**. A engrenagem concentra a gestão em cinco grupos que começam recolhidos — Operação e Segurança, Gestão de Pessoas, Culto e Eventos, Finanças e Inteligência, Governança e TI. O título abre a lista. Quem não tem o papel nem vê o item — e a URL administrativa não entrega a ferramenta ao membro comum.
 
 ### Propósito e conexões
 
-Itens em `lib/appDrawerMenu.ts`, filtrados por papel. Navega para rotas próprias ou para o carrossel da Manutenção (`maintenance-dashboard` + painel). Configurações em `AppDrawerSettings`.
+Itens em `lib/appDrawerMenu.ts`, filtrados por papel, com redirecionamento fail-closed. Navega para rotas próprias ou para o carrossel da Manutenção. Configurações em `AppDrawerSettings`, nos cinco grupos acima.
 
 <div class="split">
 <div class="vision user">
 <h4>Visão do Usuário Final</h4>
-Um menu estável, sempre no mesmo lugar, com o que aquela pessoa realmente pode usar.
+Um menu estável, curto, com o que aquela pessoa realmente vive na igreja. Contribuição não compete com Perfil e Célula na mesma lista.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>
-A equipe entra nos módulos de gestão sem misturar com a jornada do membro. Super administrador vê instâncias e billing.
+A equipe entra nos módulos pela engrenagem, já agrupados. O membro comum não “descobre” a manutenção digitando o endereço da tela.
 </div>
 </div>
 </div>
@@ -295,7 +296,7 @@ A equipe entra nos módulos de gestão sem misturar com a jornada do membro. Sup
 
 ### Propósito e conexões
 
-Carrossel com ACL `dashboard.card.*`. Inclui células (`small_group`), campanhas (`campaign_card`) e mural (`opportunity_mural_card`). Rodapé `‹` `›` e Menu. Telas filhas devolvem ao card de origem via `returnDashboardCard`. Paletas em `dashboardCardThemes`.
+Carrossel com ACL `dashboard.card.*`. Inclui células (`small_group`), campanhas (`campaign_card`) e mural (`opportunity_mural_card`). No modo da família, o card preenche a coluna útil da tela (título, textos e botões na mesma largura). Rodapé `‹` `›` e Menu. Telas filhas devolvem ao card de origem via `returnDashboardCard`. Paletas em `dashboardCardThemes`.
 
 <div class="split">
 <div class="vision user">
@@ -321,7 +322,7 @@ O botão de saída não é um “voltar” qualquer. Pede confirmação — “D
 
 ### Propósito e conexões
 
-Intercepta voltar do navegador no Índice (`AppBackHandler`). Distingue Encerrar sessão (web) de Sair do aplicativo (PWA instalado / nativo). Não deve ser disparado pelo Fechar de Ofertas ou Pastoral: esses voltam ao Índice.
+Intercepta voltar do navegador no Índice (`AppBackHandler`). Distingue Encerrar sessão (web) de Sair do aplicativo (PWA instalado / nativo). O **Fechar** de Ofertas, Pastoral, Célula e demais conteúdos devolve ao Índice — não dispara este diálogo.
 
 <div class="split">
 <div class="vision user">
@@ -421,24 +422,24 @@ Controle de entrada, contato imediato com o responsável e visão completa do an
 
 ## Dízimos e Ofertas
 
-<p class="route">Rota <code>/ofertas</code> · card do Painel</p>
+<p class="route">Rota <code>/ofertas</code> · card do Painel · atalho <code>Eu quero… → Contribuir</code></p>
 
 ### Descrição comercial
 
-A contribuição deixa de ser um constrangimento de “como eu pago?”. A tela mostra o recebedor da igreja e a chave PIX, com um toque para copiar. O Fechar volta ao Índice — não encerra a sessão.
+A contribuição deixa de ser um constrangimento de “como eu pago?”. Em **Dízimos e Ofertas**, a pessoa vê os dados do recebedor e a chave, informa o valor **com centavos** — a máscara preenche da direita para a esquerda, como no banco (1 vira R$ 0,01) — e toca em **Copiar chave PIX**. O app gera o **Pix Copia e Cola** já com o montante; basta colar no banco. O botão **Limpar**, na mesma linha do valor, zera o digitado sem perder a chave. Em **Campanhas e Projetos**, o valor é em reais inteiros; os **centavos de identificação** entram sozinhos. A tela mostra o QR e o botão **Copiar Chave Pix**. Mesmo gesto de contribuir, destinos distintos — e o Fechar volta ao Índice, sem encerrar a sessão.
 
 ### Propósito e conexões
 
-Carrega dados da instância (`loadOfferingsRecipientBundle`). Independente da flag de ofertas do evento. PIX copiado com feedback.
+Carrega dados da instância (`loadOfferingsRecipientBundle`). Independente da flag de ofertas do evento. O Pix Copia e Cola é aceito pelo aplicativo do banco (payload no padrão EMV). Fechar volta ao Índice.
 
 <div class="split">
 <div class="vision user">
 <h4>Visão do Usuário Final</h4>
-Contribui no próprio banco, na hora, sem pedir chave no corredor.
+Digita R$ 150,00 (ou R$ 0,50), toca em copiar, cola no banco. Não pede chave no corredor e não precisa “lembrar os centavos”.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>
-Chave oficial única, atualizável, sem grupos paralelos de PIX.
+Chave oficial única, atualizável. O extrato chega com o valor que a pessoa digitou, sem grupo paralelo de PIX.
 </div>
 </div>
 </div>
@@ -581,11 +582,11 @@ Pastoral e recepção têm lista mensal pronta, sem planilha paralela.
 
 ### Descrição comercial
 
-Presta contas com linguagem de boletim, não de ERP: resultado do mês, comparativo, 12 meses, planejado × realizado e saldo bancário. A confiança na tesouraria cresce quando o membro lê o mesmo número que a diretoria.
+Presta contas com linguagem de boletim, não de ERP: resultado do mês, comparativo, 12 meses, planejado × realizado e saldo bancário. O resumo de **ENTRADAS** e **SAÍDAS** usa a mesma paleta da competência em destaque, para o olho não “trocar de relatório” no meio da leitura. A confiança na tesouraria cresce quando o membro lê o mesmo número que a diretoria.
 
 ### Propósito e conexões
 
-Hub do card Financeiro. RD em `/expense-report`. Carga e conciliação na manutenção. ACL `dashboard.card.financial`. Campanhas aparecem no bloco de leitura, isoladas da receita ordinária.
+Hub do card Financeiro. RD em `/expense-report`. Carga e conciliação na manutenção. ACL `dashboard.card.financial`. Campanhas têm tela e Pix próprios — não entram no bloco ordinário do boletim.
 
 <div class="split">
 <div class="vision user">
@@ -633,7 +634,7 @@ Fila de RD, vínculo ao lançamento e rastreio do mês de emissão vs conciliaç
 
 ### Descrição comercial
 
-O servo vê quando serve e com quem. A igreja deixa de anunciar escala só no grupo, onde a mensagem some. Quando o tipo de escala permite, o servo pede substituição pontual a outro voluntário do mesmo ministério — sem alterar o ciclo futuro.
+O servo vê quando serve e com quem. A igreja deixa de anunciar escala só no grupo, onde a mensagem some. **Solicitar troca** aparece na entrada de Escalas e no Painel, nas datas em que a pessoa está escalada — inclusive intercessão e estacionamento. O pedido reconhece nome composto. Quando o tipo de escala permite, o servo escolhe o substituto da mesma equipe; o WhatsApp já sai com ministério, data e motivo.
 
 ### Propósito e conexões
 
@@ -642,11 +643,11 @@ Leitura dos tipos, datas e WhatsApp. Troca via `scale_swap_requests` (pedido, ac
 <div class="split">
 <div class="vision user">
 <h4>Visão do Usuário Final</h4>
-Sabe o domingo em que está de pé, fala com o parceiro e, se precisar, combina a troca no próprio app.
+Sabe o domingo em que está de pé, fala com o parceiro e, se precisar, combina a troca no próprio app — sem redigitar o contexto no Zap.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>
-Ciclo justo, vagas por domingo e trocas rastreadas — sem escala “presa” em pedido pendente.
+Ciclo justo, vagas por domingo e trocas rastreadas — sem escala “presa” em pedido pendente. A lista de substitutos reconhece o servo mesmo com nome composto.
 </div>
 </div>
 </div>
@@ -681,24 +682,24 @@ Operação de culto com nomes e placas, não com grito no microfone.
 
 ## Pequeno grupo (célula)
 
-<p class="route">Card do Painel <code>small_group</code></p>
+<p class="route">Card do Painel <code>small_group</code> · menu <code>Minha Célula</code></p>
 
 ### Descrição comercial
 
-A célula deixa de viver só no WhatsApp. O membro vê o próprio grupo, o endereço, o dia da reunião, o mapa e o roteiro da semana. Falta justificada e visita ganham registro pastoral.
+A célula deixa de viver só no WhatsApp. Quem ainda não tem grupo vê os **anfitriões mais próximos da residência**, da menor para a maior distância: nome, grupo, bairro, dia e horário da reunião, quantos já estão inscritos e, dentro de cada card, **Quero participar deste grupo**. Sem CEP no perfil, o app pede o cadastro para calcular a distância. Quem já pertence à célula vê as **datas reais** das reuniões (não um único “toda quarta”), líder, anfitrião e endereço oficial — sem atalho para Maps ou Waze. A linha de participantes (ex.: *3 participantes*) abre o modal **Participantes**, só com os nomes completos e um **Fechar**. Em seguida: **Roteiro da Semana**, **Avisar Ausência** (WhatsApp do líder) e, se não for anfitrião nem líder, **Quero sair deste grupo**. O título **Pequeno Grupo** aparece uma vez, no corpo da tela. Título, cards e botões acompanham a largura do aparelho.
 
 ### Propósito e conexões
 
-Card do dashboard; gestão em **Gestão de Pequenos Grupos**. Roteiro semanal pode nascer da Trilha. Mapa e WhatsApp do anfitrião/líder.
+Card do dashboard e item **Minha Célula** no menu. Distância a partir do CEP do perfil. Inscrição e saída pedem confirmação no celular e no navegador. Roteiro lido no modal; gestão em **Gestão de Pequenos Grupos**.
 
 <div class="split">
 <div class="vision user">
 <h4>Visão do Usuário Final</h4>
-Sabe onde e quando a célula se reúne, lê o estudo da semana e avisa ausência.
+Encontra a célula perto de casa, entra com um toque, vê quem mais participa, lê o estudo e avisa se faltar — tudo no mesmo recorte da carteirinha.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>
-Presença, visitantes e relatório de células no mesmo lugar da operação da igreja.
+A rede cresce por proximidade, não por recado no grupo. Presença, visitantes e relatório continuam na gestão.
 </div>
 </div>
 </div>
@@ -707,20 +708,20 @@ Presença, visitantes e relatório de células no mesmo lugar da operação da i
 
 ## Campanhas e projetos
 
-<p class="route">Card do Painel <code>campaign_card</code></p>
+<p class="route">Card do Painel <code>campaign_card</code> · atalho <code>Eu quero… → Contribuir</code></p>
 
 ### Descrição comercial
 
-A campanha de construção, missão ou projeto especial ganha meta, progresso e PIX — sem misturar com o dízimo do mês. O membro acompanha o termômetro; a tesouraria concilia por centavos.
+A campanha de construção, missão ou projeto especial ganha meta, progresso, capa e PIX — sem misturar com o dízimo do mês. O membro acompanha o termômetro e contribui pelo mesmo **Contribuir** da tela inicial, ou pelo **Contribuir Agora** no card. Informa o valor em reais inteiros; os **centavos de identificação** combinados com a tesouraria entram sozinhos. A tela mostra o QR e o Pix Copia e Cola já identificado, para o depósito aparecer no extrato como daquela campanha.
 
 ### Propósito e conexões
 
-Campanhas ativas no card; gestão na manutenção. Conciliação isolada da receita ordinária. Avisos de marco na caixa da home.
+Campanhas ativas no card; gestão na manutenção. Conciliação isolada da receita ordinária — o boletim de leitura não mistura os dois fluxos. Avisos de marco na caixa da home. Se houver uma campanha só, o atalho abre direto nela; se houver várias, a pessoa escolhe. Sem campanha ativa, o app avisa com clareza.
 
 <div class="split">
 <div class="vision user">
 <h4>Visão do Usuário Final</h4>
-Vê a meta, o quanto já entrou e contribui com clareza do destino.
+Vê a meta, o quanto já entrou e copia o Pix já identificado — sem perguntar “é o PIX da obra ou o do dízimo?”.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>
@@ -1119,7 +1120,7 @@ Os itens abaixo aparecem no menu após a linha divisória e no carrossel `/maint
 
 ### Descrição comercial
 
-O calendário oficial: criar, publicar, capacidade, totem, quórum, geofence, salas, ofertas. O culto deixa de ser um post e vira um objeto de operação.
+O calendário oficial: criar, publicar, capacidade, totem, quórum, geofence, salas, ofertas. O culto deixa de ser um post e vira um objeto de operação. O seletor de datas (mês, dia, OK) é o mesmo da **Gestão de Pequenos Grupos** — a liderança não aprende dois calendários.
 
 ### Propósito e conexões
 
@@ -1245,24 +1246,24 @@ Distribuição de cuidado, priorização, registro ministerial e agenda.
 
 ## Gestão de Pequenos Grupos
 
-<p class="route">Painel <code>small_groups_management</code></p>
+<p class="route">Painel <code>small_groups_management</code> · engrenagem</p>
 
 ### Descrição comercial
 
-Células com líder, anfitrião, dia, mapa, chamada e visitantes. O roteiro da semana pode ser a lição publicada da Trilha. Relatório de presença deixa de ser caderno.
+A célula deixa de ser “toda quarta às 19h30” congelada no cadastro. Quem tem acesso abre o **mesmo calendário da Programação de Eventos** (título *Datas das reuniões*), toca nos dias de interesse e define **horário próprio para cada data** (HH:MM). A busca de anfitrião, líder e participante filtra de verdade por nome ou celular — não devolve uma lista alfabética incompleta. O celular do visitante usa a máscara da igreja, `(11) 98765-4321`, e o nome vai para a fila de Recepção Familiar. O **Roteiro da semana** pode ser escrito na hora (título, conteúdo e link ou PDF opcional) e publicado com **Publicar roteiro**; os temas da Trilha continuam só como atalho opcional. A **Chamada** escolhe a data no calendário e lista o **nome completo** de cada participante com caixa de seleção de presença. **Excluir grupo** pede confirmação: apaga o cadastro da célula, a lista e as chamadas; anfitrião e líder **permanecem** na igreja. Relatório espiritual (oração e notas pastorais) segue para o cuidado pastoral com **Enviar ao cuidado pastoral**.
 
 ### Propósito e conexões
 
-Tabelas `small_groups` / membros / presença. Card do membro. Avisos só para líderes de célula.
+Tabelas `small_groups`, reuniões (`small_group_meetings`), membros e presença. Card **Minha Célula** do membro. Visitante vai para a fila de Recepção Familiar. Relatório espiritual (oração e notas pastorais) segue para o cuidado pastoral. Avisos podem ir só a líderes de célula.
 
 <div class="split">
 <div class="vision user">
 <h4>Visão do Usuário Final</h4>
-Vive a célula com informação oficial: local, horário e estudo.
+Vê as datas em que a célula realmente se reúne, quem mais participa e o estudo daquela semana.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>
-Rede de células visível, com presença e visitantes no mesmo sistema da igreja.
+Rede de células com calendário vivo, chamada objetiva, busca que encontra a pessoa e exclusão que não apaga o irmão do rol da igreja.
 </div>
 </div>
 </div>
@@ -1275,11 +1276,11 @@ Rede de células visível, com presença e visitantes no mesmo sistema da igreja
 
 ### Descrição comercial
 
-A tesouraria e a liderança abrem campanha com meta, prazo, capa e conciliação por depósito. O termômetro que o membro vê nasce daqui.
+A tesouraria e a liderança abrem campanha com meta, prazo, capa e **centavos simbólicos de referência** (ex.: 60 vira 0,60 no Pix). O Pix Copia e Cola do membro recebe esse sufixo sozinho; o depósito é reconhecido e fica fora da receita ordinária. O painel mostra desempenho: percentual da meta, doadores únicos, velocidade por dia e os centavos em uso.
 
 ### Propósito e conexões
 
-`campaign_projects`, conciliação em `financials` isolada do ordinário. Card do dashboard e bloco no financeiro de leitura.
+`campaign_projects`, conciliação em `financials` isolada do ordinário. Card do dashboard e atalho **Eu quero… → Contribuir**. O boletim financeiro de leitura não mistura campanha com dízimo.
 
 <div class="split">
 <div class="vision user">
@@ -1692,9 +1693,9 @@ A plataforma não é um conjunto de telas soltas. É uma **jornada**:
 1. A pessoa **entra com identidade** (login, PIN, opcionalmente biometria).
 2. **Reconhece a própria igreja** (instância, marca, PIX).
 3. **Participa com a família** (agenda, QR só com código familiar, salas).
-4. **Cuidado e serviço** (pastoral, células, escalas, mural, RD, ofertas e campanhas).
+4. **Cuidado e serviço** (pastoral, células com datas reais, escalas com troca, mural, RD, ofertas e campanhas pelo mesmo Contribuir).
 5. A equipe **governa** (ACL, papéis, transferência, relatórios, tesouraria).
 
 O valor para o membro é autonomia e dignidade. O valor para a administração é controle com rastreio, menos WhatsApp como sistema e um único lugar em que o culto, a família e a prestação de contas se encontram.
 
-Este documento descreve o produto como ele está no código em 26 de agosto de 2026. Telas condicionais (QR, estacionamento, servos, manutenção) aparecem somente quando o papel, o evento e os parâmetros da instância autorizam — e isso, em si, já é parte da proposta comercial: **cada pessoa vê a igreja que lhe cabe viver**.
+Este documento descreve o produto como ele está no código em **28 de agosto de 2026**. Telas condicionais (QR, estacionamento, servos, manutenção) aparecem somente quando o papel, o evento e os parâmetros da instância autorizam — e isso, em si, já é parte da proposta comercial: **cada pessoa vê a igreja que lhe cabe viver**.
