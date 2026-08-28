@@ -2728,13 +2728,18 @@ export default function Dashboard() {
             decelerationRate="fast"
             disableIntervalMomentum={true}
             renderItem={({ item }) => (
-              <View style={effectiveCarouselPageStyle}>
+              <View
+                style={
+                  isMinimalPresentation ? styles.carouselPageSlot : effectiveCarouselPageStyle
+                }
+              >
                 <View
                   style={[
-                    effectiveDashboardCardWrapperStyle,
+                    effectiveCarouselPageStyle,
                     item.content === 'small_group' && styles.smallGroupPanelShell,
                   ]}
                 >
+                <View style={effectiveDashboardCardWrapperStyle}>
                 {item.content === 'event_alt' ? (
                   <View
                     style={[
@@ -3956,6 +3961,7 @@ export default function Dashboard() {
                   </TouchableOpacity>
                 )}
                 </View>
+                </View>
               </View>
             )}
           />
@@ -4153,6 +4159,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   dashboardFlatList: { flex: 1, minHeight: 0 },
+  carouselPageSlot: {
+    width: '100%',
+    maxWidth: '100%',
+    flex: 1,
+    alignSelf: 'stretch',
+    minWidth: 0,
+    overflow: 'hidden',
+  },
   dashboardFlatListHidden: {
     position: 'absolute',
     opacity: 0,
