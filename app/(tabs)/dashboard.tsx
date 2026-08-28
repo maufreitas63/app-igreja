@@ -120,7 +120,7 @@ import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/pa
 import { withReturnDashboardCard, pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
 import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
-import { MINIMAL_FLAT_PANEL, MINIMAL_DASHBOARD_STYLES, MINIMAL_PAGE } from '@/lib/minimalPresentation';
+import { CONTAIN_WIDTH, MINIMAL_FLAT_PANEL, MINIMAL_DASHBOARD_STYLES, MINIMAL_PAGE } from '@/lib/minimalPresentation';
 import { computeResponsiveCardInsets } from '@/lib/uiTokens';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
@@ -4505,9 +4505,8 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   smallGroupPanelShell: {
-    width: '50%',
-    maxWidth: '50%',
-    alignSelf: 'flex-start',
+    ...CONTAIN_WIDTH,
+    flex: 1,
   },
   cardAdministrativo: {
     alignItems: 'stretch',
