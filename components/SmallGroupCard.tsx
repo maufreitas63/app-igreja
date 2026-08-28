@@ -1,4 +1,5 @@
 import { SmallGroupGuideModal } from '@/components/SmallGroupGuideModal';
+import { SmallGroupMembersModal } from '@/components/SmallGroupMembersModal';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { buildProfileMapNavigationAddressLine } from '@/lib/enrichProfileMapAddress';
 import { formatShortName } from '@/lib/formatShortName';
@@ -11,15 +12,18 @@ import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import {
   fetchCurrentSmallGroupGuide,
   fetchMySmallGroup,
+  fetchMySmallGroupMembers,
   fetchNearbySmallGroupHosts,
   formatSmallGroupHostDistanceMeters,
   formatSmallGroupMemberCount,
+  formatSmallGroupParticipantCount,
   formatSmallGroupWeekday,
   joinSmallGroupAsMember,
   leaveSmallGroupAsMember,
   type MySmallGroup,
   type NearbySmallGroupHost,
   type SmallGroupGuide,
+  type SmallGroupMemberName,
 } from '@/lib/smallGroupsApi';
 import { showAppToast } from '@/lib/appToast';
 import { confirmDialog } from '@/lib/confirmDialog';
@@ -53,6 +57,10 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [guide, setGuide] = useState<SmallGroupGuide | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
+  const [members, setMembers] = useState<SmallGroupMemberName[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersError, setMembersError] = useState<string | null>(null);
   const [memberName, setMemberName] = useState('');
   const [nearbyHosts, setNearbyHosts] = useState<NearbySmallGroupHost[]>([]);
   const [hasMemberLocation, setHasMemberLocation] = useState(true);
@@ -110,6 +118,30 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
       text2: message,
     });
   }, []);
+
+  const handleOpenMembers = useCallback(async () => {
+    if (!group) {
+      return;
+    }
+
+    setMembersOpen(true);
+    setMembersLoading(true);
+    setMembersError(null);
+
+    try {
+      const nextMembers = await fetchMySmallGroupMembers(group.id);
+      setMembers(nextMembers);
+    } catch (membersLoadError) {
+      setMembers([]);
+      setMembersError(
+        membersLoadError instanceof Error
+          ? membersLoadError.message
+          : 'Não foi possível listar os participantes.'
+      );
+    } finally {
+      setMembersLoading(false);
+    }
+  }, [group]);
 
   const handleOpenGuide = useCallback(async () => {
     try {
@@ -340,6 +372,18 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
 
           <Pressable
             style={({ pressed }) => [styles.actionRow, pressed && styles.actionRowPressed]}
+            onPress={() => void handleOpenMembers()}
+            accessibilityRole="button"
+            accessibilityLabel={formatSmallGroupParticipantCount(group.member_count)}
+          >
+            <FontAwesome name="users" size={24} color={PERFIL_ACTION_ICON_COLOR} />
+            <Text style={styles.actionLabel}>
+              {formatSmallGroupParticipantCount(group.member_count)}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [styles.actionRow, pressed && styles.actionRowPressed]}
             onPress={() => void handleOpenGuide()}
             accessibilityRole="button"
             accessibilityLabel="Roteiro da Semana"
@@ -389,6 +433,13 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
         </ScrollView>
       )}
 
+      <SmallGroupMembersModal
+        visible={membersOpen}
+        loading={membersLoading}
+        error={membersError}
+        members={members}
+        onClose={() => setMembersOpen(false)}
+      />
       <SmallGroupGuideModal visible={guideOpen} guide={guide} onClose={() => setGuideOpen(false)} />
     </View>
   );

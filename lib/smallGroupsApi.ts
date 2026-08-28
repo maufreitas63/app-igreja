@@ -43,8 +43,14 @@ export type MySmallGroup = {
   notes: string | null;
   is_leader: boolean;
   is_host: boolean;
+  member_count: number;
   host: SmallGroupProfileSummary | null;
   leader: SmallGroupProfileSummary | null;
+};
+
+export type SmallGroupMemberName = {
+  profile_id: string;
+  full_name: string | null;
 };
 
 export type SmallGroupAdminRow = {
@@ -173,9 +179,39 @@ export async function fetchMySmallGroup(): Promise<MySmallGroup | null> {
     notes: group.notes != null ? String(group.notes) : null,
     is_leader: group.is_leader === true,
     is_host: group.is_host === true,
+    member_count: (() => {
+      const raw = Number(group.member_count ?? 0);
+      return Number.isFinite(raw) && raw > 0 ? Math.round(raw) : 0;
+    })(),
     host: parseProfile(group.host),
     leader: parseProfile(group.leader),
   };
+}
+
+export async function fetchMySmallGroupMembers(groupId: string): Promise<SmallGroupMemberName[]> {
+  const payload = await rpcJson('list_my_small_group_members', { p_group_id: groupId });
+
+  if (payload.success === false) {
+    throw new Error(String(payload.message ?? 'Não foi possível listar os participantes.'));
+  }
+
+  const rows = Array.isArray(payload.members) ? payload.members : [];
+
+  return rows
+    .map((item) => {
+      const row = asRecord(item);
+      const profileId = String(row.profile_id ?? '').trim();
+
+      if (!profileId) {
+        return null;
+      }
+
+      return {
+        profile_id: profileId,
+        full_name: row.full_name != null ? String(row.full_name) : null,
+      } satisfies SmallGroupMemberName;
+    })
+    .filter((row): row is SmallGroupMemberName => row !== null);
 }
 
 export async function fetchCurrentSmallGroupGuide(): Promise<SmallGroupGuide | null> {
@@ -536,6 +572,16 @@ export function formatSmallGroupMemberCount(count: number) {
   }
 
   return `${safe} inscritos`;
+}
+
+export function formatSmallGroupParticipantCount(count: number) {
+  const safe = Number.isFinite(count) && count > 0 ? Math.round(count) : 0;
+
+  if (safe === 1) {
+    return '1 participante';
+  }
+
+  return `${safe} participantes`;
 }
 
 export async function joinSmallGroupAsMember(groupId: string) {
