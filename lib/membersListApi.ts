@@ -74,7 +74,7 @@ const mapDirectoryRows = (
         address_state: toNullableText(row.address_state ?? row.addressState),
       } satisfies MembersDirectoryEntry;
     })
-    .filter((row): row is MembersDirectoryEntry => row !== null);
+    .filter((row) => row !== null) as MembersDirectoryEntry[];
 
 const toNullableText = (value: unknown) => {
   if (value == null) {
@@ -121,7 +121,7 @@ const mapFamilyDirectoryRows = (
         address_state: toNullableText(row.address_state ?? row.addressState),
       } satisfies FamilyDirectoryMember;
     })
-    .filter((row): row is FamilyDirectoryMember => row !== null);
+    .filter((row) => row !== null) as FamilyDirectoryMember[];
 
   return {
     familyId: members[0]?.family_id ?? normalizedFallbackFamilyId,
@@ -195,8 +195,8 @@ const mapMembersFamilyDirectoryRows = (
         address_state: null,
       } satisfies FamilyDirectoryMember;
     })
-    .filter((row): row is FamilyDirectoryMember => row !== null)
-    .sort(compareFamilyMembersByRelationship);
+    .filter((row) => row !== null)
+    .sort(compareFamilyMembersByRelationship) as FamilyDirectoryMember[];
 
 const isMissingRpcError = (error: { message?: string } | null, rpcName: string) => {
   const message = (error?.message ?? '').toLowerCase();

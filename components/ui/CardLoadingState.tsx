@@ -6,6 +6,8 @@ type CardLoadingStateProps = {
   lines?: number;
   compact?: boolean;
   minimal?: boolean;
+  /** Aceito para compatibilidade; o skeleton não exibe texto. */
+  label?: string;
 };
 
 export function CardLoadingState({

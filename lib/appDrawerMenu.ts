@@ -404,14 +404,6 @@ function pushScreen(
   } as Href);
 }
 
-function asAccessRouter(router: Router) {
-  return router as unknown as {
-    push: (href: { pathname: string; params?: Record<string, string> }) => void;
-    navigate: (href: { pathname: string; params?: Record<string, string> }) => void;
-    replace: (href: { pathname: string; params?: Record<string, string> }) => void;
-  };
-}
-
 export async function navigateDrawerMenuItem(
   router: Router,
   moduleKey: AppDrawerModuleKey
@@ -432,7 +424,7 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_manage_profile') {
     await navigateWithScreenAccess(
-      asAccessRouter(router),
+      router,
       '/manage-profile',
       ACCESS_SCREEN.manageProfile,
       withMemberCardReturn('grouped_manage')
@@ -442,7 +434,7 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_manage_members') {
     await navigateWithScreenAccess(
-      asAccessRouter(router),
+      router,
       '/manage-members',
       ACCESS_SCREEN.manageMembers,
       withMemberCardReturn('grouped_manage')
@@ -466,7 +458,7 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_expense_report') {
     await navigateWithScreenAccess(
-      asAccessRouter(router),
+      router,
       '/expense-report',
       ACCESS_SCREEN.expenseReport,
       withFailClosedReturn()
@@ -476,7 +468,7 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_pastoral') {
     await navigateWithScreenAccess(
-      asAccessRouter(router),
+      router,
       '/pastoral',
       ACCESS_SCREEN.pastoral,
       withMemberCardReturn('pastoral')
@@ -486,7 +478,7 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_trilha') {
     await navigateWithScreenAccess(
-      asAccessRouter(router),
+      router,
       '/trilha-discipulado',
       ACCESS_SCREEN.discipleshipTrail,
       withFailClosedReturn()
@@ -521,7 +513,7 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_mapa') {
     await navigateWithScreenAccess(
-      asAccessRouter(router),
+      router,
       '/mapa-geolocalizacao',
       ACCESS_SCREEN.mapGeolocation,
       withFailClosedReturn()
@@ -531,7 +523,7 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'gestao_financeira') {
     await navigateWithScreenAccess(
-      asAccessRouter(router),
+      router,
       '/financial',
       ACCESS_SCREEN.financial,
       withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID)

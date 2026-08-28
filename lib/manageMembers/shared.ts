@@ -282,10 +282,14 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
       .order('created_at', { ascending: false });
 
     return (data ?? []).map((member) => ({
-      ...member,
+      id: String(member.id ?? ''),
       full_name: formatFullName(member.full_name),
       family_id: normalizeFamilyCode(member.family_id),
-    }));
+      phone: member.phone ?? null,
+      birth_date: member.birth_date ?? null,
+      relationship: String(member.relationship ?? ''),
+      accepted: member.accepted ?? null,
+    })) as ManagedMember[];
   };
 
   let membersData = await fetchFamilyMembers();
@@ -335,7 +339,9 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
   }
 
   await ensureProfilesForMembers(membersData, currentFamilyId);
-  const members = dedupeFamilyMembers(await applyProfileBirthDates(membersData));
+  const members = dedupeFamilyMembers(
+    await applyProfileBirthDates(membersData)
+  ) as ManagedMember[];
 
   return {
     familyId: currentFamilyId,

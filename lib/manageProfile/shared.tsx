@@ -9,7 +9,7 @@ import { fetchEffectiveSessionProfileRow } from '@/lib/effectiveProfileRpc';
 import { getGhostEffectiveProfileId, isGhostModeActive } from '@/lib/ghostMode';
 import { clearStoredProfileId, getStoredProfileId, getStoredUserPhone } from '@/lib/userSession';
 import React from 'react';
-import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, type ViewStyle } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export type ProfileRecord = {
@@ -549,8 +549,8 @@ export function AccessPinField({
         {showReadonlyDisplay ? (
           <View
             style={[
-              accessPinFieldStyles.input,
-              visible && accessPinFieldStyles.inputVisible,
+              accessPinFieldStyles.input as ViewStyle,
+              visible && (accessPinFieldStyles.inputVisible as ViewStyle),
               accessPinFieldStyles.readonlyDigits,
               hasError && accessPinFieldStyles.inputError,
             ]}

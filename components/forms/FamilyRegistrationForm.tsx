@@ -57,7 +57,7 @@ export function FamilyRegistrationForm() {
   const [formClosed, setFormClosed] = useState(false);
 
   const form = useForm<FamilyRegistrationSchemaValues>({
-    resolver: zodResolver(familyRegistrationSchema),
+    resolver: zodResolver(familyRegistrationSchema) as never,
     defaultValues: familyRegistrationDefaultValues,
     mode: 'onBlur',
   });
@@ -200,7 +200,7 @@ export function FamilyRegistrationForm() {
       </header>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
+        <form onSubmit={form.handleSubmit(onSubmit as never)} className="space-y-10">
           <section className="space-y-4">
             <h2 className="text-lg font-semibold text-slate-900">Informante principal</h2>
             <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
@@ -209,7 +209,7 @@ export function FamilyRegistrationForm() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
-                control={form.control}
+                control={form.control as never}
                 name="informant.fullName"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
@@ -230,7 +230,7 @@ export function FamilyRegistrationForm() {
               />
 
               <FormField
-                control={form.control}
+                control={form.control as never}
                 name="informant.birthDate"
                 render={({ field }) => (
                   <FormItem>
@@ -249,7 +249,7 @@ export function FamilyRegistrationForm() {
               />
 
               <FormField
-                control={form.control}
+                control={form.control as never}
                 name="informant.phone"
                 render={({ field }) => (
                   <FormItem>
@@ -273,7 +273,7 @@ export function FamilyRegistrationForm() {
               />
 
               <FormField
-                control={form.control}
+                control={form.control as never}
                 name="informant.cep"
                 render={({ field }) => (
                   <FormItem>
@@ -292,7 +292,7 @@ export function FamilyRegistrationForm() {
               />
 
               <FormField
-                control={form.control}
+                control={form.control as never}
                 name="informant.addressNumber"
                 render={({ field }) => (
                   <FormItem>
@@ -306,7 +306,7 @@ export function FamilyRegistrationForm() {
               />
 
               <FormField
-                control={form.control}
+                control={form.control as never}
                 name="informant.addressComplement"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
@@ -320,7 +320,7 @@ export function FamilyRegistrationForm() {
               />
 
               <FormField
-                control={form.control}
+                control={form.control as never}
                 name="informant.foodRestrictions"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
@@ -383,7 +383,7 @@ export function FamilyRegistrationForm() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
-                    control={form.control}
+                    control={form.control as never}
                     name={`dependents.${index}.fullName`}
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
@@ -404,7 +404,7 @@ export function FamilyRegistrationForm() {
                   />
 
                   <FormField
-                    control={form.control}
+                    control={form.control as never}
                     name={`dependents.${index}.relationship`}
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
@@ -429,7 +429,7 @@ export function FamilyRegistrationForm() {
                   />
 
                   <FormField
-                    control={form.control}
+                    control={form.control as never}
                     name={`dependents.${index}.birthDate`}
                     render={({ field }) => (
                       <FormItem>
@@ -448,7 +448,7 @@ export function FamilyRegistrationForm() {
                   />
 
                   <FormField
-                    control={form.control}
+                    control={form.control as never}
                     name={`dependents.${index}.phone`}
                     render={({ field }) => (
                       <FormItem>
@@ -472,7 +472,7 @@ export function FamilyRegistrationForm() {
                   />
 
                   <FormField
-                    control={form.control}
+                    control={form.control as never}
                     name={`dependents.${index}.foodRestrictions`}
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">

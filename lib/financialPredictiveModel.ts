@@ -434,7 +434,7 @@ const fitTrendWithEmpiricalSeasonality = (
 
   const seasonalFactors = buildEmpiricalSeasonalFactors(points);
   const predict = (timeIndex: number, month: number) =>
-    Math.max(0, trend.predict(timeIndex) * seasonalFactors[month - 1]);
+    Math.max(0, trend.predict(timeIndex, month) * seasonalFactors[month - 1]);
   const predictions = buildRegressionPredictions(points, predict);
 
   return {
@@ -766,7 +766,7 @@ export const PREDICTIVE_MEMBER_FORMULA_TITLE = 'Fórmula da previsão de membros
 
 export const buildPredictiveMemberFormulaMessage = (
   horizonMonths: PredictiveForecastHorizonMonths = PREDICTIVE_FORECAST_MONTHS,
-  baseCalculationMonths = PREDICTIVE_BASE_MONTHS
+  baseCalculationMonths: number = PREDICTIVE_BASE_MONTHS
 ) =>
   [
     'Base de dados:',
@@ -789,7 +789,7 @@ export const buildPredictiveMemberFormulaMessage = (
 
 export const buildPredictiveLtvFormulaMessage = (
   horizonMonths: PredictiveForecastHorizonMonths = PREDICTIVE_FORECAST_MONTHS,
-  baseCalculationMonths = PREDICTIVE_BASE_MONTHS
+  baseCalculationMonths: number = PREDICTIVE_BASE_MONTHS
 ) =>
   [
     'Base de dados:',

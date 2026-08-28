@@ -378,7 +378,7 @@ export const mapPastoralRequestFromRecord = (
     request_for: isPastoralBeneficiaryType(
       typeof requestForRaw === 'string' ? requestForRaw : null
     )
-      ? requestForRaw
+      ? (requestForRaw as PastoralBeneficiaryType)
       : null,
     beneficiary_name:
       record.beneficiary_name != null ? String(record.beneficiary_name) : null,

@@ -148,7 +148,6 @@ const pickFolderFilesViaInput = (): Promise<File[] | null> =>
     input.accept = 'image/jpeg,.jpg,.jpeg,image/*';
     input.setAttribute('webkitdirectory', '');
     input.setAttribute('directory', '');
-    // @ts-expect-error — propriedade legada ainda usada pelos browsers
     input.webkitdirectory = true;
     input.style.position = 'fixed';
     input.style.left = '-9999px';

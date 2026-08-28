@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import type { Href } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -17,7 +18,6 @@ import {
 } from 'react-native';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { WEB_NON_SELECTABLE_VIEW_STYLES } from '@/lib/webTextSelectionGuard';
 import { showAppToast } from '@/lib/appToast';
 import { useLoginInstanceCode } from '@/hooks/useLoginInstanceCode';
 
@@ -399,14 +399,18 @@ export default function IndexScreen() {
       }
 
       const lgpdAtivo = await isLgpdAtivoEnabled();
-      let route = resolveRegisteredUserSessionRoute(profile, phoneForSession, lgpdAtivo);
+      let route = resolveRegisteredUserSessionRoute(profile, phoneForSession, lgpdAtivo) as Href | null;
 
       if (!route) {
         return false;
       }
 
       // Após LGPD/cadastro ok: se há mais de uma igreja, escolher instância
-      if (route.pathname === '/(tabs)' || route.pathname === '/(tabs)/dashboard') {
+      if (
+        typeof route === 'object'
+        && 'pathname' in route
+        && (route.pathname === '/(tabs)' || route.pathname === '/(tabs)/dashboard')
+      ) {
         try {
           const {
             shouldPromptTenantSelection,
@@ -454,7 +458,7 @@ export default function IndexScreen() {
             } else if (churches.length === 1 && churches[0]) {
               await applyTenant(churches[0]);
             } else if (churches.length > 1) {
-              route = buildSelecionarIgrejaRoute(phoneForSession);
+              route = buildSelecionarIgrejaRoute(phoneForSession) as Href;
             }
           } else if (preferredMatch) {
             await applyTenant(preferredMatch);
@@ -463,7 +467,7 @@ export default function IndexScreen() {
           } else if (churches.length === 1 && churches[0]) {
             await applyTenant(churches[0]);
           } else if (await shouldPromptTenantSelection()) {
-            route = buildSelecionarIgrejaRoute(phoneForSession);
+            route = buildSelecionarIgrejaRoute(phoneForSession) as Href;
           }
         } catch (error) {
           console.warn('tenant selection:', error);
@@ -1308,7 +1312,6 @@ export default function IndexScreen() {
     <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        importantForAutofill="noExcludeDescendants"
         style={styles.container}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -1331,7 +1334,7 @@ export default function IndexScreen() {
 
           {loginStep === 1 ? (
             <>
-              <View importantForAutofill="noExcludeDescendants" style={styles.inputContainer}>
+              <View {...({ importantForAutofill: 'noExcludeDescendants' } as object)} style={styles.inputContainer}>
                 <ReadOnlyText style={styles.label}>Código da instância</ReadOnlyText>
                 <View style={styles.inputRowWithAction}>
                   <TextInput
@@ -1385,7 +1388,7 @@ export default function IndexScreen() {
                 ) : null}
               </View>
 
-              <View importantForAutofill="noExcludeDescendants" style={styles.inputContainer}>
+              <View {...({ importantForAutofill: 'noExcludeDescendants' } as object)} style={styles.inputContainer}>
                 <ReadOnlyText style={styles.label}>Seu celular</ReadOnlyText>
                 <View style={styles.inputRowWithAction}>
                   <TextInput
@@ -1549,7 +1552,7 @@ export default function IndexScreen() {
                 </View>
               ) : null}
 
-              <View importantForAutofill="noExcludeDescendants" style={styles.inputContainer}>
+              <View {...({ importantForAutofill: 'noExcludeDescendants' } as object)} style={styles.inputContainer}>
                 <ReadOnlyText style={styles.label}>
                   {isTotemLoginMode
                     ? 'Senha do totem'
@@ -1850,7 +1853,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
     opacity: 0.72,
   },
-  nonSelectableText: WEB_NON_SELECTABLE_VIEW_STYLES,
+  nonSelectableText: {
+    userSelect: 'none',
+  } as TextStyle,
   pinHint: {
     color: LOGIN_ACCENT,
     fontSize: 13,

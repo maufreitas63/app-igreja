@@ -1,3 +1,4 @@
+import { createStyles } from '@/lib/createStyles';
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
@@ -6,10 +7,10 @@ import {
   Dimensions,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  type ViewStyle,
 } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -160,34 +161,34 @@ export const FamilyEventSelector = ({
   );
 };
 
-const styles = StyleSheet.create({
+const styles = createStyles({
   wrapper: {
-    width: '100%',
-    ...(Platform.OS === 'web' ? null : { overflow: 'hidden' }),
+    width: '100%' as const,
+    ...(Platform.OS === 'web' ? {} : { overflow: 'hidden' as const }),
   },
   scroll: {
-    width: '100%',
+    width: '100%' as const,
     flexGrow: 0,
     ...(Platform.OS === 'web'
-      ? {
+      ? ({
           overflowX: 'scroll',
           scrollbarWidth: 'thin',
-        }
-      : null),
+        } as unknown as ViewStyle)
+      : {}),
   },
   row: {
-    flexDirection: 'row',
-    flexWrap: 'nowrap',
-    alignItems: 'stretch',
+    flexDirection: 'row' as const,
+    flexWrap: 'nowrap' as const,
+    alignItems: 'stretch' as const,
     paddingRight: 8,
     paddingBottom: SCROLLBAR_GAP,
     ...(Platform.OS === 'web'
-      ? {
+      ? ({
           display: 'flex',
           flexDirection: 'row',
           width: 'max-content',
-        }
-      : null),
+        } as unknown as ViewStyle)
+      : {}),
   },
   chip: {
     width: CHIP_WIDTH,
@@ -216,10 +217,10 @@ const styles = StyleSheet.create({
     borderColor: VIGILANCE_SCALES_UI.accent,
   },
   chipIndicators: {
-    position: 'absolute',
+    position: 'absolute' as const,
     top: 11,
     right: 10,
-    alignItems: 'center',
+    alignItems: 'center' as const,
     gap: 5,
   },
   roomIndicator: {

@@ -4,7 +4,8 @@ import React from 'react';
 import { StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
 
 type SectionLabelProps = {
-  children: string;
+  children?: string;
+  label?: string;
   spaced?: boolean;
   tight?: boolean;
   variant?: 'form' | 'maintenance' | 'vigilance';
@@ -13,11 +14,13 @@ type SectionLabelProps = {
 
 export function SectionLabel({
   children,
+  label,
   spaced = false,
   tight = false,
   variant = 'form',
   style,
 }: SectionLabelProps) {
+  const text = children ?? label ?? '';
   return (
     <Text
       style={[
@@ -32,7 +35,7 @@ export function SectionLabel({
       ]}
       accessibilityRole="text"
     >
-      {children}
+      {text}
     </Text>
   );
 }

@@ -34,6 +34,7 @@ type PdfContext = {
 };
 
 const loadJsPdf = async () => {
+  // @ts-expect-error — bundle ESM minificado do jspdf não declara tipos
   const module = await import('jspdf/dist/jspdf.es.min.js');
   return module.jsPDF;
 };

@@ -842,7 +842,7 @@ export default function Dashboard() {
     gateRequired: preCheckinGateRequired,
     gateError: preCheckinGateError,
     refetch: refetchPreCheckin,
-  } = useFamilyPreCheckin(selectedEvent?.id, familyId, selectedEvent);
+  } = useFamilyPreCheckin(selectedEvent?.id, familyId ?? undefined, selectedEvent);
 
   const focusEventAudienceCard = useCallback(() => {
     scrollToEventAltCardRef.current = true;
@@ -917,7 +917,7 @@ export default function Dashboard() {
     geofenceHoursBefore: geoCheckinHoursBefore,
     geofenceRadiusMeters: geoCheckinRadiusMeters,
     event: geoCheckinEvent,
-    familyId,
+    familyId: familyId ?? undefined,
     hasFamilyPreCheckin: hasPreCheckin,
     hasFamilyGeoCheckinConfirmed: hasTotemCheckinConfirmed,
     onRequiresPrecheckin: focusEventAudienceCard,
@@ -1045,7 +1045,7 @@ export default function Dashboard() {
         const loadedProfile: DashboardProfile = {
           id: sessionProfile.id,
           full_name: sessionProfile.full_name ?? undefined,
-          codigo_membro: sessionProfile.codigo_membro ?? sessionProfile.family_id ?? resolvedFamilyId,
+          codigo_membro: sessionProfile.codigo_membro ?? sessionProfile.family_id ?? resolvedFamilyId ?? undefined,
           lgpd_accepted: sessionProfile.lgpd_accepted,
           birth_date: sessionProfile.birth_date ?? null,
           phone: sessionProfile.phone ?? effectivePhone,
@@ -1190,7 +1190,7 @@ export default function Dashboard() {
         const refreshedProfile: DashboardProfile = {
           id: sessionProfile.id,
           full_name: sessionProfile.full_name ?? undefined,
-          codigo_membro: sessionProfile.codigo_membro ?? sessionProfile.family_id ?? familyId,
+          codigo_membro: sessionProfile.codigo_membro ?? sessionProfile.family_id ?? familyId ?? undefined,
           lgpd_accepted: sessionProfile.lgpd_accepted,
           birth_date: sessionProfile.birth_date ?? null,
           phone: sessionProfile.phone ?? effectivePhone,

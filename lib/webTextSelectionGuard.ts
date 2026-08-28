@@ -63,6 +63,6 @@ export const WEB_NON_SELECTABLE_VIEW_STYLES = Platform.select<ViewStyle>({
     userSelect: 'none',
     WebkitUserSelect: 'none',
     WebkitTouchCallout: 'none',
-  },
+  } as ViewStyle,
   default: {},
 });

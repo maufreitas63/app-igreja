@@ -239,6 +239,7 @@ export const parseEventDateInputToIso = (value: string) => {
 };
 
 export const formFromMaintenanceEvent = (event: {
+  id?: string | null;
   name: string;
   event_date: string | null;
   event_local: string | null;

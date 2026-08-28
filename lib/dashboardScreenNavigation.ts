@@ -1,11 +1,8 @@
 import { sessionHasAccess } from '@/lib/accessControl';
+import type { Href, Router } from 'expo-router';
 import { Alert } from 'react-native';
 
-type RouterLike = {
-  push: (href: { pathname: string; params?: Record<string, string> }) => void;
-  navigate: (href: { pathname: string; params?: Record<string, string> }) => void;
-  replace: (href: { pathname: string; params?: Record<string, string> }) => void;
-};
+type RouterLike = Pick<Router, 'push' | 'navigate' | 'replace'>;
 
 export const DASHBOARD_SCREEN_DENIED_MESSAGES: Record<string, string> = {
   '/manage-profile': 'Você não tem permissão para editar Dados Cadastrais.',
@@ -51,6 +48,6 @@ export async function navigateWithScreenAccess(
   }
 
   const method = options?.method ?? 'push';
-  router[method]({ pathname, params });
+  router[method]({ pathname, params } as Href);
   return true;
 }

@@ -1988,9 +1988,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
-  inlineLoader: {
-    marginVertical: 12,
-  },
   roleChipsScroll: {
     maxHeight: 42,
   },

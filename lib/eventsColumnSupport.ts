@@ -205,6 +205,10 @@ export type EventRowWithOptionals = {
   [key: string]: unknown;
 };
 
+export function asEventRows(data: unknown): EventRowWithOptionals[] {
+  return Array.isArray(data) ? (data as EventRowWithOptionals[]) : [];
+}
+
 /** @deprecated Use withDefaultEventOptionals */
 export type EventRowWithOptionalTotem = EventRowWithOptionals;
 

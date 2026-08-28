@@ -18,6 +18,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  type ViewStyle,
 } from 'react-native';
 
 type TabId = 'atas' | 'outros';
@@ -109,7 +110,11 @@ export function AdministrativoCard({ panelHeight, isActive = true, initialTab: _
 
       <View style={styles.tabRow}>
         <View
-          style={[styles.tabChip, styles.tabChipDisabled]}
+          style={[
+            styles.tabChip,
+            styles.tabChipDisabled,
+            Platform.OS === 'web' ? ({ cursor: 'not-allowed' } as unknown as ViewStyle) : null,
+          ]}
           accessibilityRole="button"
           accessibilityState={{ selected: true, disabled: true }}
           accessibilityLabel="Atos Constitutivos (indisponível para troca)"
@@ -245,7 +250,6 @@ const styles = StyleSheet.create({
     opacity: 0.85,
     borderColor: 'rgba(148, 163, 184, 0.55)',
     backgroundColor: 'rgba(30, 41, 59, 0.55)',
-    ...(Platform.OS === 'web' ? { cursor: 'not-allowed' as const } : null),
   },
   tabChipTextDisabled: {
     color: '#94A3B8',

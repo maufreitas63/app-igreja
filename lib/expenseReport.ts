@@ -120,7 +120,7 @@ const parseExpenseReportItems = (items: unknown): ExpenseReportItem[] => {
             : null,
       };
     })
-    .filter((item): item is ExpenseReportItem => item !== null);
+    .filter((item) => item !== null) as ExpenseReportItem[];
 };
 
 const handleRpcError = (error: { message?: string }, functionName: string) => {

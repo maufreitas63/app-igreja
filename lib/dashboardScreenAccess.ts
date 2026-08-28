@@ -48,7 +48,7 @@ export async function loadDashboardLinkedScreenAccess(
     async () => {
       const entries = await Promise.all(
         screenKeys.map(async (resourceKey) => {
-          const allowed = await profileHasAccess(profileId, 'screen', resourceKey, 'view');
+          const allowed = await profileHasAccess(profileId, 'screen', resourceKey ?? '', 'view');
           return [resourceKey, allowed] as const;
         })
       );

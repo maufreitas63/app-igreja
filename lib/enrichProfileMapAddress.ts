@@ -68,15 +68,14 @@ export const buildProfileMapAddressDisplay = (profile: ProfileForMap): ProfileMa
   };
 };
 
-export type ProfileNavigationAddressInput = Pick<
-  ProfileForMap,
-  | 'cep'
-  | 'address_street'
-  | 'address_number'
-  | 'address_neighborhood'
-  | 'address_city'
-  | 'address_state'
->;
+export type ProfileNavigationAddressInput = {
+  cep?: string | null;
+  address_street?: string | null;
+  address_number?: string | null;
+  address_neighborhood?: string | null;
+  address_city?: string | null;
+  address_state?: string | null;
+};
 
 /** Endereço completo em uma linha para colar em Waze, Google Maps, etc. */
 export const buildProfileMapNavigationAddressLine = (

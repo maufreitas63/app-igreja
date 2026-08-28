@@ -283,11 +283,11 @@ function HistoricalTable({
 }: {
   historical: FinancialAnalyticalSummaryReport['historical'];
 }) {
-  const cells = [
+  const cells: { label: string; value: number; bold?: boolean; focus?: boolean }[] = [
     { label: 'Ordinário', value: historical.ordinario },
     { label: 'Extraordinário', value: historical.extraordinario },
     { label: 'Saldo acumulado', value: historical.saldo, bold: true, focus: true },
-  ] as const;
+  ];
 
   return (
     <View style={styles.tableCard}>

@@ -3,7 +3,26 @@ import { MAP_PIN_COLOR } from '@/lib/profilesMapMarkersTypes';
 import { formatShortName } from '@/lib/formatShortName';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
-import MapView, { type MapView as MapViewType } from 'react-native-map-clustering';
+import MapView from 'react-native-map-clustering';
+
+type MapViewType = {
+  fitToCoordinates?: (
+    coordinates: { latitude: number; longitude: number }[],
+    options?: {
+      edgePadding?: { top: number; right: number; bottom: number; left: number };
+      animated?: boolean;
+    }
+  ) => void;
+  animateToRegion?: (
+    region: {
+      latitude: number;
+      longitude: number;
+      latitudeDelta: number;
+      longitudeDelta: number;
+    },
+    duration?: number
+  ) => void;
+};
 import { Marker, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 
 type ProfilesMapCanvasProps = {
@@ -84,7 +103,7 @@ export function ProfilesMapCanvas({
   return (
     <View style={styles.wrap}>
       <MapView
-        ref={mapRef}
+        ref={mapRef as never}
         style={styles.map}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         initialRegion={initialRegion}

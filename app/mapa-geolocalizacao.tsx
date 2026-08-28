@@ -1,3 +1,4 @@
+import { createStyles } from '@/lib/createStyles';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import {
   useProfilesMapMarkers,
@@ -34,7 +35,6 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -668,7 +668,7 @@ export default function MapGeolocalizacaoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles({
   screen: {
     flex: 1,
     backgroundColor: '#0f172a',
@@ -929,12 +929,7 @@ const styles = StyleSheet.create({
     minHeight: Platform.OS === 'web' ? 360 : 260,
     width: '100%',
     backgroundColor: '#0f172a',
-    ...(Platform.OS === 'web'
-      ? ({
-          height: '58vh',
-          minHeight: 360,
-        } as const)
-      : null),
+    ...(Platform.OS === 'web' ? ({ height: '58vh' } as object) : {}),
   },
   stateBox: {
     flex: 1,

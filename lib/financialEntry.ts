@@ -64,7 +64,7 @@ export const classifyFinancialMovement = (movement: string) => {
   }
 
   const label = movement.trim();
-  return (label ? label.toUpperCase() : 'OUTROS') as const;
+  return label ? label.toUpperCase() : 'OUTROS';
 };
 
 export const isFinancialEntreContas = (transactionKind: string) =>

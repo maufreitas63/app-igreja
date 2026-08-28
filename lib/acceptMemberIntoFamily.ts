@@ -40,7 +40,8 @@ async function acceptMemberIntoFamilyFallback(input: {
 
   if (!syncResult.success) {
     throw new Error(
-      syncResult.message ?? 'Não foi possível sincronizar o código de família no perfil do membro.'
+      ('message' in syncResult ? syncResult.message : undefined)
+        ?? 'Não foi possível sincronizar o código de família no perfil do membro.'
     );
   }
 

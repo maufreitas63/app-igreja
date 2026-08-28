@@ -91,7 +91,7 @@ const config: ExpoConfig = {
         apiKey: googleMapsApiKey,
       },
     },
-  },
+  } as ExpoConfig['android'],
   web: {
     bundler: 'metro',
     output: 'static',

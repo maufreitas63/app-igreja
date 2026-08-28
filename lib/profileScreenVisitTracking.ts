@@ -26,7 +26,7 @@ const EXCLUDED_ROUTE_PREFIXES = new Set([
 
 const EXCLUDED_SCREEN_LABELS = new Set(['Dashboard', 'Manutenção']);
 
-const EXCLUDED_SCREEN_KEYS = new Set([
+const EXCLUDED_SCREEN_KEYS = new Set<string>([
   ACCESS_SCREEN.dashboard,
   ACCESS_SCREEN.maintenance,
 ]);

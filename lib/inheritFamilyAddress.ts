@@ -33,7 +33,7 @@ export async function loadAcceptorProfileAddress(options: {
     }
 
     if (data) {
-      const address = pickProfileAddress(data as Record<string, unknown>);
+      const address = pickProfileAddress(data as unknown as Record<string, unknown>);
       if (hasAnyProfileAddress(address)) {
         return address;
       }
@@ -56,7 +56,7 @@ export async function loadAcceptorProfileAddress(options: {
     }
 
     if (data) {
-      const address = pickProfileAddress(data as Record<string, unknown>);
+      const address = pickProfileAddress(data as unknown as Record<string, unknown>);
       if (hasAnyProfileAddress(address)) {
         return address;
       }
@@ -75,7 +75,7 @@ export async function loadAcceptorProfileAddress(options: {
     }
 
     if (data) {
-      const address = pickProfileAddress(data as Record<string, unknown>);
+      const address = pickProfileAddress(data as unknown as Record<string, unknown>);
       if (hasAnyProfileAddress(address)) {
         return address;
       }
@@ -127,7 +127,7 @@ export async function saveInheritedAddressToProfile(profileId: string, address: 
     .maybeSingle();
 
   if (!error && data) {
-    return pickProfileAddress(data as Record<string, unknown>);
+    return pickProfileAddress(data as unknown as Record<string, unknown>);
   }
 
   if (error) {
@@ -157,7 +157,7 @@ export async function saveInheritedAddressToProfile(profileId: string, address: 
     throw refreshError;
   }
 
-  return refreshed ? pickProfileAddress(refreshed as Record<string, unknown>) : address;
+  return refreshed ? pickProfileAddress(refreshed as unknown as Record<string, unknown>) : address;
 }
 
 /** Copia endereço do aceitador para o registro em `profiles` do membro aceito. */

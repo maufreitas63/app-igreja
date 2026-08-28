@@ -770,25 +770,16 @@ export function MaintenanceFinancialsCard({
         return;
       }
 
-      if ('receipt_urls' in receiptResult) {
-        const nextUrls = normalizeFinancialReceiptUrls(receiptResult.receipt_urls);
-        syncEditorEntry(commentEditorEntry.id, {
-          receipt_urls: nextUrls,
-          receipt_url: nextUrls[0] ?? null,
-        });
-        setPendingReceiptImage(null);
-        setReceiptPreviewIndex(nextUrls.length - 1);
-        await loadReceiptPreview(nextUrls[nextUrls.length - 1] ?? null);
-      } else if ('receipt_url' in receiptResult) {
-        const nextUrls = receiptResult.receipt_url ? [receiptResult.receipt_url] : [];
-        syncEditorEntry(commentEditorEntry.id, {
-          receipt_urls: nextUrls,
-          receipt_url: nextUrls[0] ?? null,
-        });
-        setPendingReceiptImage(null);
-        setReceiptPreviewIndex(0);
-        await loadReceiptPreview(nextUrls[0] ?? null);
-      }
+      const nextUrls = normalizeFinancialReceiptUrls(
+        'receipt_urls' in receiptResult ? receiptResult.receipt_urls : []
+      );
+      syncEditorEntry(commentEditorEntry.id, {
+        receipt_urls: nextUrls,
+        receipt_url: nextUrls[0] ?? null,
+      });
+      setPendingReceiptImage(null);
+      setReceiptPreviewIndex(Math.max(nextUrls.length - 1, 0));
+      await loadReceiptPreview(nextUrls[nextUrls.length - 1] ?? nextUrls[0] ?? null);
 
       receiptSaved = true;
     }

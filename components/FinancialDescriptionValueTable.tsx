@@ -745,6 +745,11 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     textTransform: 'uppercase',
   },
+  headerIconCell: {
+    width: ICON_COLUMN_WIDTH,
+    flexShrink: 0,
+    minHeight: 36,
+  },
   bodyScroll: {
     flexGrow: 0,
     flexShrink: 1,

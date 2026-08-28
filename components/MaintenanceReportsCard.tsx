@@ -434,8 +434,6 @@ function GenericReportResultsTable({ result, minimal = false }: ReportResultsTab
                             styles.tableDataCellPressable,
                             { width: columnWidth },
                             isEventRegistrationsReport && styles.tableDataCellCompact,
-                            align === 'right' && styles.cellAlignRight,
-                            align === 'center' && styles.cellAlignCenter,
                           ]}
                           onPress={() =>
                             setAgeBracketModal({
@@ -447,7 +445,12 @@ function GenericReportResultsTable({ result, minimal = false }: ReportResultsTab
                           accessibilityLabel={`Ver integrantes da faixa ${cellValue}`}
                         >
                           <Text
-                            style={[styles.ageBracketLink, minimal && styles.ageBracketLinkMinimal]}
+                            style={[
+                              styles.ageBracketLink,
+                              minimal && styles.ageBracketLinkMinimal,
+                              align === 'right' && styles.cellAlignRight,
+                              align === 'center' && styles.cellAlignCenter,
+                            ]}
                             numberOfLines={3}
                           >
                             {formatReportCellValue(column, cellValue, reportCode)}
@@ -466,8 +469,6 @@ function GenericReportResultsTable({ result, minimal = false }: ReportResultsTab
                             styles.tableDataCellPressable,
                             { width: columnWidth },
                             isEventRegistrationsReport && styles.tableDataCellCompact,
-                            align === 'right' && styles.cellAlignRight,
-                            align === 'center' && styles.cellAlignCenter,
                           ]}
                           onPress={() =>
                             setEventRegistrationsModal({
@@ -484,6 +485,8 @@ function GenericReportResultsTable({ result, minimal = false }: ReportResultsTab
                               styles.ageBracketLink,
                               minimal && styles.ageBracketLinkMinimal,
                               wrapEventName && styles.tableCellWrap,
+                              align === 'right' && styles.cellAlignRight,
+                              align === 'center' && styles.cellAlignCenter,
                             ]}
                           >
                             {formatReportCellValue(column, cellValue, reportCode)}
@@ -1042,7 +1045,7 @@ export function MaintenanceReportsCard({
           variant="maintenance"
           style={minimal ? styles.sectionLabelMinimal : undefined}
         >
-          Catálogo ({definitions.length} relatórios)
+          {`Catálogo (${definitions.length} relatórios)`}
         </SectionLabel>
 
         {definitions.map((definition, index) => (

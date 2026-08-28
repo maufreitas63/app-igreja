@@ -175,7 +175,7 @@ export function MaintenanceFamilyReceptionCard({
         </TouchableOpacity>
       </View>
 
-      <SectionHeading minimal={minimal}>Fila pendente ({submissions.length})</SectionHeading>
+      <SectionHeading minimal={minimal}>{`Fila pendente (${submissions.length})`}</SectionHeading>
 
       {loading ? (
         <CardLoadingState label="Carregando recepção..." minimal={minimal} />

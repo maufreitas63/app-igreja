@@ -262,7 +262,7 @@ export async function fetchOpportunityMatchingMembers(
         interestId: optionalId(row.interest_id),
       } satisfies OpportunityMatchingMember;
     })
-    .filter((row): row is OpportunityMatchingMember => row !== null);
+    .filter((row) => row !== null) as OpportunityMatchingMember[];
 }
 
 export async function resolveVolunteerOpportunityInterest(interestId: string, accept: boolean) {

@@ -116,7 +116,7 @@ export const useMaintenanceEvents = () => {
         throw fetchError;
       }
 
-      const rows = ((data as MaintenanceEvent[]) ?? []).map(withDefaultEventOptionals);
+      const rows = ((data as unknown as MaintenanceEvent[]) ?? []).map(withDefaultEventOptionals);
       setEvents(rows);
     } catch (err) {
       console.error('Erro ao carregar eventos (manutenção):', err);

@@ -574,8 +574,13 @@ export function useFinancialsByMonth(): UseFinancialsByMonthResult {
         throw error;
       }
 
-      const allRows = (data ?? [])
-        .map((row) => normalizeFinancialEntryRow(row as Record<string, unknown>))
+      const sourceRows: unknown[] = Array.isArray(data) ? data : [];
+      const allRows = sourceRows
+        .map((row) =>
+          normalizeFinancialEntryRow(
+            row && typeof row === 'object' ? (row as Record<string, unknown>) : {}
+          )
+        )
         .filter((row): row is FinancialEntry => row !== null);
       const rows = filterRealizedFinancialEntries(allRows);
       const plannedRows = filterPlannedFinancialEntries(allRows);

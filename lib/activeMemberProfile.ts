@@ -8,7 +8,7 @@ export const isProfileVisibleInApp = (membershipOut: string | null | undefined) 
 };
 
 type ActiveMembershipQuery = {
-  is: (column: 'membership_out', operator: 'is', value: null) => ActiveMembershipQuery;
+  is: (column: 'membership_out', value: null) => ActiveMembershipQuery;
 };
 
 /** Filtro PostgREST: `.is('membership_out', null)` em consultas a `profiles`. */

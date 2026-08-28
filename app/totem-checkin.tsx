@@ -5,6 +5,7 @@ import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { FAIL_CLOSED_REDIRECT_PATH } from '@/lib/failClosedNavigation';
 import { TOTEM_CHECKIN_ALREADY_CONFIRMED_MESSAGE } from '@/lib/checkinStatus';
 import {
+  asEventRows,
   getActiveEventSelect,
   ensureEventsTotemAtivoColumn,
   TOTEM_COLUMN_SQL_HINT,
@@ -12,7 +13,7 @@ import {
 } from '@/lib/eventsColumnSupport';
 import { isEventCalendarToday } from '@/lib/checkInVisibility';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
-import { isEventPublished, isEventVisibleForCheckIn } from '@/lib/eventVisibility';
+import { isEventPublished, isEventVisibleForCheckIn, toEventVisibilityFields } from '@/lib/eventVisibility';
 import { useExitSessionUi } from '@/hooks/useExitSessionUi';
 import { signOutAndNavigateToLogin } from '@/lib/userSession';
 import { lockPastEvents } from '@/lib/lockPastEvents';
@@ -152,16 +153,27 @@ export default function TotemCheckinScreen() {
         throw error;
       }
 
-      const rows = (data ?? []).map(withDefaultTotemAtivo);
-      const published = rows.filter((event) => isEventPublished(event.is_locked));
-      const visible = published.filter((event) => isEventVisibleForCheckIn(event));
+      const rows = asEventRows(data).map(withDefaultTotemAtivo);
+      const toTotemEvent = (event: (typeof rows)[number]): TotemEvent => ({
+        id: String(event.id ?? ''),
+        name: String(event.name ?? ''),
+        event_date: typeof event.event_date === 'string' ? event.event_date : null,
+        totem_ativo: event.totem_ativo === true,
+      });
+      const published = rows.filter((event) =>
+        isEventPublished(toEventVisibilityFields(event).is_locked)
+      );
+      const visibleRows = published.filter((event) =>
+        isEventVisibleForCheckIn(toEventVisibilityFields(event))
+      );
+      const visible = visibleRows.map(toTotemEvent);
 
       const pickTodayTotemEvents = (candidates: TotemEvent[]) =>
         candidates.filter((event) => isEventCalendarToday(event.event_date));
 
       if (!columnAvailable) {
         setTotemCompatMode(true);
-        const todayCompat = pickTodayTotemEvents(visible as TotemEvent[]);
+        const todayCompat = pickTodayTotemEvents(visible);
 
         if (!todayCompat.length) {
           setEvents([]);
@@ -176,9 +188,9 @@ export default function TotemCheckinScreen() {
         return;
       }
 
-      const totemEvents = visible.filter(
-        (event) => event.totem_ativo === true || event.requer_quorum === true
-      ) as TotemEvent[];
+      const totemEvents = visibleRows
+        .filter((event) => event.totem_ativo === true || event.requer_quorum === true)
+        .map(toTotemEvent);
       const todayTotemEvents = pickTodayTotemEvents(totemEvents);
 
       if (!todayTotemEvents.length) {

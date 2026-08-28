@@ -41,7 +41,7 @@ const requiredCep = z
   .string()
   .trim()
   .min(1, 'Informe o CEP.')
-  .refine((value) => normalizeCepDigits(value).length === 8, {
+  .refine((value) => (normalizeCepDigits(value)?.length ?? 0) === 8, {
     message: 'Informe um CEP com 8 dígitos.',
   });
 

@@ -22,7 +22,7 @@ import {
   GEOFENCE_ATIVO_COLUMN_SQL_HINT,
   ENABLED_ROOM_KEYS_COLUMN_SQL_HINT,
 } from '@/lib/eventsColumnSupport';
-import { shouldInvalidateGeofenceEventCheckins } from '@/lib/geofenceEventIntegrity';
+import { shouldInvalidateGeofenceEventCheckins, type GeofenceEventSnapshot } from '@/lib/geofenceEventIntegrity';
 import { supabase } from '@/lib/supabase';
 import type { PostgrestError } from '@supabase/supabase-js';
 
@@ -228,7 +228,7 @@ const loadEventSnapshotForGeofence = async (eventId: string) => {
     return null;
   }
 
-  return data;
+  return (data as unknown as GeofenceEventSnapshot | null) ?? null;
 };
 
 export const saveMaintenanceEvent = async (

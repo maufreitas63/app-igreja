@@ -119,7 +119,6 @@ const SUMMARY_LABELS: Record<string, string> = {
   interacoes: 'Interações',
   comunicacoes: 'Comunicações',
   eventos_historico: 'Eventos no histórico',
-  total_eventos: 'Total de eventos',
   total_inscricoes: 'Total de inscrições',
 };
 

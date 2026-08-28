@@ -67,8 +67,9 @@ export type CheckInVisibilityEvent = {
   requer_quorum?: boolean | null;
 };
 
-export const isQuorumCheckInEvent = (event: CheckInVisibilityEvent | null | undefined) =>
-  event?.requer_quorum === true;
+export const isQuorumCheckInEvent = (
+  event: { requer_quorum?: boolean | null } | null | undefined
+) => event?.requer_quorum === true;
 
 /** Quórum: QR/atalho totem entre cadastro na audiência e check-in confirmado no totem. */
 export const resolveQuorumQrTotemFlowVisible = (options: {

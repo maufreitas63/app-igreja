@@ -315,7 +315,7 @@ export async function fetchRealizadoFinancialEntriesForReceiptBatch(
 
     rows.push(
       ...data
-        .map((row) => normalizeFinancialEntryRow(row as Record<string, unknown>))
+        .map((row) => normalizeFinancialEntryRow(row as unknown as Record<string, unknown>))
         .filter((row): row is FinancialEntry => row !== null)
     );
 

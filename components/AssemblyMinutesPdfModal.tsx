@@ -155,9 +155,9 @@ const styles = StyleSheet.create({
   iframe: {
     width: '100%',
     height: '100%',
-    border: 'none',
     minHeight: 420,
     backgroundColor: MINIMAL_UI.background,
+    borderWidth: 0,
   },
   nativeFallback: {
     minHeight: 180,

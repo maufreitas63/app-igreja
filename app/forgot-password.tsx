@@ -10,6 +10,7 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { clearUserSession } from '@/lib/userSession';
 import { FontAwesome } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import type { Href } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -129,7 +130,7 @@ export default function ForgotPasswordScreen() {
         return;
       }
 
-      router.replace(buildLoginRouteAfterRecovery(phone, result.emailMasked));
+      router.replace(buildLoginRouteAfterRecovery(phone, result.emailMasked) as Href);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import {
   ensureEventsOptionalColumns,
+  asEventRows,
   getActiveEventSelect,
   isMissingEnabledRoomKeysColumnError,
   isMissingGeofenceAtivoColumnError,
@@ -13,7 +14,7 @@ import {
   setTotemAtivoColumnAvailable,
   withDefaultEventOptionals,
 } from '@/lib/eventsColumnSupport';
-import { isEventVisibleInEventPanel } from '@/lib/eventVisibility';
+import { isEventVisibleInEventPanel, toEventVisibilityFields } from '@/lib/eventVisibility';
 import { lockPastEvents } from '@/lib/lockPastEvents';
 import { sessionIsActiveAppMember } from '@/lib/sessionMemberVisibility';
 import { supabase } from '@/lib/supabase';
@@ -41,6 +42,35 @@ export type ActiveEventListItem = {
   remainingCapacity: number | null;
   registrationCountError?: boolean;
 };
+
+function toActiveEventListItem(
+  event: ReturnType<typeof withDefaultEventOptionals>,
+  registeredCount: number,
+  remainingCapacity: number | null,
+  registrationCountError?: boolean
+): ActiveEventListItem {
+  const boolOrNull = (value: unknown): boolean | null =>
+    typeof value === 'boolean' ? value : null;
+
+  return {
+    id: String(event.id ?? ''),
+    name: String(event.name ?? ''),
+    event_date: typeof event.event_date === 'string' ? event.event_date : null,
+    event_local: typeof event.event_local === 'string' ? event.event_local : null,
+    max_capacity: typeof event.max_capacity === 'number' ? event.max_capacity : null,
+    parm_ofertas: boolOrNull(event.parm_ofertas),
+    kids_room: boolOrNull(event.kids_room),
+    teens_room: boolOrNull(event.teens_room),
+    enabled_room_keys: event.enabled_room_keys,
+    totem_ativo: boolOrNull(event.totem_ativo),
+    requer_quorum: boolOrNull(event.requer_quorum),
+    somente_membros: boolOrNull(event.somente_membros),
+    geofence_ativo: boolOrNull(event.geofence_ativo),
+    registeredCount,
+    remainingCapacity,
+    registrationCountError,
+  };
+}
 
 export type UseActiveEventsOptions = {
   /** Quando false, não faz polling (apenas refetch manual). */
@@ -228,9 +258,9 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
           return;
         }
 
-        const visibleEvents = (data ?? [])
+        const visibleEvents = asEventRows(data)
           .map(withDefaultEventOptionals)
-          .filter((event) => isEventVisibleInEventPanel(event, isSessionMember));
+          .filter((event) => isEventVisibleInEventPanel(toEventVisibilityFields(event), isSessionMember));
 
         if (!visibleEvents.length) {
           previousCountsByEventIdRef.current.clear();
@@ -241,20 +271,18 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
         // Pinta a lista cedo; no polling, mantém a última contagem para não
         // parecer um loop (zera → reconta) no cup “(vagas) inscritos/limite”.
         const eventsWithoutCounts: ActiveEventListItem[] = visibleEvents.map((event) => {
-          const previous = previousCountsByEventIdRef.current.get(event.id);
+          const eventId = String(event.id ?? '');
+          const previous = previousCountsByEventIdRef.current.get(eventId);
           const maxCapacity =
             typeof event.max_capacity === 'number' ? event.max_capacity : null;
           const registeredCount = previous?.registeredCount ?? 0;
 
-          return {
-            ...event,
+          return toActiveEventListItem(
+            event,
             registeredCount,
-            remainingCapacity:
-              maxCapacity === null
-                ? null
-                : Math.max(maxCapacity - registeredCount, 0),
-            registrationCountError: previous?.registrationCountError,
-          };
+            maxCapacity === null ? null : Math.max(maxCapacity - registeredCount, 0),
+            previous?.registrationCountError
+          );
         });
         commitEvents(eventsWithoutCounts);
         if (!silent) {
@@ -263,11 +291,12 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
 
         const eventsWithCounts = await Promise.all(
           visibleEvents.map(async (event) => {
+            const eventId = String(event.id ?? '');
             let registeredCount = 0;
             let registrationCountError = false;
 
             try {
-              registeredCount = await getRegisteredCount(event.id);
+              registeredCount = await getRegisteredCount(eventId);
             } catch (countError) {
               console.error('Erro ao contar inscrições do evento:', countError);
               registrationCountError = true;
@@ -275,13 +304,12 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
             const maxCapacity =
               typeof event.max_capacity === 'number' ? event.max_capacity : null;
 
-            return {
-              ...event,
+            return toActiveEventListItem(
+              event,
               registeredCount,
-              remainingCapacity:
-                maxCapacity === null ? null : Math.max(maxCapacity - registeredCount, 0),
-              registrationCountError,
-            };
+              maxCapacity === null ? null : Math.max(maxCapacity - registeredCount, 0),
+              registrationCountError
+            );
           })
         );
 

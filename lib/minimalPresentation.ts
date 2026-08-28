@@ -109,7 +109,6 @@ export const MINIMAL_DASHBOARD_STYLES = StyleSheet.create({
     color: BIRTHDAYS_UI.accent,
   } satisfies TextStyle,
   birthdayMonthDropdown: {
-    color: '#FFFFFF',
     backgroundColor: BIRTHDAYS_UI.monthDropdownBackground,
   } satisfies ViewStyle,
   birthdayMonthDropdownText: {

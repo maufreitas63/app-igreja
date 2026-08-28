@@ -1,5 +1,5 @@
-import { isEventVisibleForCheckIn } from '@/lib/eventVisibility';
-import { getActiveEventSelect, withDefaultEventOptionals } from '@/lib/eventsColumnSupport';
+import { isEventVisibleForCheckIn, toEventVisibilityFields } from '@/lib/eventVisibility';
+import { getActiveEventSelect, asEventRows, withDefaultEventOptionals } from '@/lib/eventsColumnSupport';
 import { lockPastEvents } from '@/lib/lockPastEvents';
 import { sessionIsActiveAppMember } from '@/lib/sessionMemberVisibility';
 import { supabase } from '@/lib/supabase';
@@ -71,11 +71,17 @@ export const useActiveEvent = () => {
       }
 
       const data =
-        (rows ?? [])
+        asEventRows(rows)
           .map(withDefaultEventOptionals)
-          .find((row) => isEventVisibleForCheckIn(row, isSessionMember)) ?? null;
+          .find((row) => isEventVisibleForCheckIn(toEventVisibilityFields(row), isSessionMember)) ?? null;
 
       if (!data) {
+        setEvent(null);
+        return;
+      }
+
+      const eventId = String(data.id ?? '');
+      if (!eventId) {
         setEvent(null);
         return;
       }
@@ -84,7 +90,7 @@ export const useActiveEvent = () => {
       let registrationCountError = false;
 
       try {
-        registeredCount = await getRegisteredCount(data.id);
+        registeredCount = await getRegisteredCount(eventId);
       } catch (countError) {
         console.error('Erro ao contar inscrições do evento:', countError);
         registrationCountError = true;
@@ -94,7 +100,9 @@ export const useActiveEvent = () => {
         typeof data.max_capacity === 'number' ? data.max_capacity : null;
 
       setEvent({
-        ...data,
+        id: eventId,
+        name: String(data.name ?? ''),
+        max_capacity: maxCapacity,
         registeredCount,
         remainingCapacity:
           maxCapacity === null ? null : Math.max(maxCapacity - registeredCount, 0),

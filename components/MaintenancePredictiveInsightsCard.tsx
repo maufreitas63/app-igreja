@@ -115,7 +115,7 @@ export function MaintenancePredictiveInsightsCard({
           showsVerticalScrollIndicator={false}
         >
           <SectionLabel variant="maintenance" style={sectionLabelStyle}>
-            Resumo da previsão ({PREDICTIVE_FORECAST_MONTHS} meses)
+            {`Resumo da previsão (${PREDICTIVE_FORECAST_MONTHS} meses)`}
           </SectionLabel>
           {model.financialHistoryLagMonths > 0 ? (
             <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
@@ -408,7 +408,7 @@ export function MaintenancePredictiveInsightsCard({
           </View>
 
           <SectionLabel variant="maintenance" style={sectionLabelStyle}>
-            Previsão de receita ({PREDICTIVE_FORECAST_MONTHS} meses)
+            {`Previsão de receita (${PREDICTIVE_FORECAST_MONTHS} meses)`}
           </SectionLabel>
           <View style={[styles.table, minimal && styles.tableMinimal]}>
             <View style={[styles.tableHeaderRow, minimal && styles.tableHeaderRowMinimal]}>
@@ -509,7 +509,7 @@ export function MaintenancePredictiveInsightsCard({
           </View>
 
           <SectionLabel variant="maintenance" style={sectionLabelStyle}>
-            Previsão de membros ({PREDICTIVE_FORECAST_MONTHS} meses)
+            {`Previsão de membros (${PREDICTIVE_FORECAST_MONTHS} meses)`}
           </SectionLabel>
           <View style={[styles.table, minimal && styles.tableMinimal]}>
             <View style={[styles.tableHeaderRow, minimal && styles.tableHeaderRowMinimal]}>

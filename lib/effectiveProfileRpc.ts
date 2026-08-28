@@ -31,7 +31,7 @@ export async function fetchEffectiveSessionProfileRow(): Promise<Record<string, 
   const { data, error } = await supabase.rpc('obter_perfil_sessao_efetiva');
 
   if (error) {
-    if (isSupabaseRpcMissing(error, 'obter_perfil_sessao_efetiva')) {
+    if (isSupabaseRpcMissing(error.message ?? '', 'obter_perfil_sessao_efetiva')) {
       return null;
     }
 
@@ -58,7 +58,7 @@ export async function fetchEffectiveProfileColumnAccess(): Promise<ProfileColumn
   const { data, error } = await supabase.rpc('listar_acesso_colunas_perfil_sessao');
 
   if (error) {
-    if (isSupabaseRpcMissing(error, 'listar_acesso_colunas_perfil_sessao')) {
+    if (isSupabaseRpcMissing(error.message ?? '', 'listar_acesso_colunas_perfil_sessao')) {
       return null;
     }
 

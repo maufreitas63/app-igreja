@@ -47,7 +47,14 @@ const fetchFinancialRowsThroughDate = async (endDate: string) => {
       throw error;
     }
 
-    const page = (data ?? []).map((row) => normalizeFinancialEntryRow(row));
+    const sourceRows: unknown[] = Array.isArray(data) ? data : [];
+    const page = sourceRows
+      .map((row) =>
+        normalizeFinancialEntryRow(
+          row && typeof row === 'object' ? (row as Record<string, unknown>) : {}
+        )
+      )
+      .filter((row): row is FinancialEntry => row !== null);
     rows.push(...page);
 
     if (page.length < FINANCIAL_PAGE_SIZE) {
@@ -99,7 +106,14 @@ const fetchOrdinaryRevenueViaRpc = async (actorProfileId: string, endDate: strin
     throw error;
   }
 
-  return (data ?? []).map((row) => normalizeFinancialEntryRow(row));
+  const sourceRows: unknown[] = Array.isArray(data) ? data : [];
+  return sourceRows
+    .map((row) =>
+      normalizeFinancialEntryRow(
+        row && typeof row === 'object' ? (row as Record<string, unknown>) : {}
+      )
+    )
+    .filter((row): row is FinancialEntry => row !== null);
 };
 
 const fetchOrdinaryRevenueEntriesForPredictiveModel = async (endDate: string) => {

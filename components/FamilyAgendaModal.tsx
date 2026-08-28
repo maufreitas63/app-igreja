@@ -84,7 +84,18 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
         }
 
         setUserPhone(phone);
-        setProfile(sessionProfile?.id ? sessionProfile : null);
+        setProfile(
+          sessionProfile?.id
+            ? {
+                id: sessionProfile.id,
+                full_name: sessionProfile.full_name,
+                phone: sessionProfile.phone,
+                birth_date: sessionProfile.birth_date,
+                codigo_membro: sessionProfile.codigo_membro,
+                family_id: sessionProfile.family_id,
+              }
+            : null
+        );
 
         const resolvedFamilyId =
           normalizeFamilyCode(

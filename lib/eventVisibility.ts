@@ -30,6 +30,17 @@ const isEventWithinRecentPast = (value: string | null | undefined) => {
   return eventDay >= minDay && eventDay < today;
 };
 
+/** Normaliza campos opcionais/unknown de `events` para os predicados de visibilidade. */
+export const toEventVisibilityFields = (row: {
+  event_date?: unknown;
+  is_locked?: unknown;
+  somente_membros?: unknown;
+}) => ({
+  event_date: typeof row.event_date === 'string' ? row.event_date : null,
+  is_locked: row.is_locked === true,
+  somente_membros: row.somente_membros === true,
+});
+
 /** Evento visível para a sessão atual (somente_membros exige membro ativo no app). */
 export const isEventVisibleForSessionMember = (
   event: { somente_membros?: boolean | null | undefined },
