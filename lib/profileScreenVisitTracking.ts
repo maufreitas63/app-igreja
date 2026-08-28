@@ -1,7 +1,6 @@
 import { ACCESS_SCREEN } from '@/lib/accessScreen';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
-import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 
 const ROUTE_SCREEN_LABELS: Record<string, string> = {
   [ACCESS_SCREEN.manageProfile]: 'Dados Cadastrais',
@@ -64,6 +63,7 @@ export function resolveRouteScreenVisit(pathname: string, segments: string[]) {
 }
 
 export async function recordProfileScreenVisit(screenKey: string, screenLabel: string) {
+  const { resolveEffectiveProfileId } = await import('@/lib/sessionProfile');
   const profileId = await resolveEffectiveProfileId();
 
   if (!profileId) {

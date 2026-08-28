@@ -1,5 +1,4 @@
 import { clearGhostModeState } from '@/lib/ghostMode';
-import { resetProfileScreenVisitTracking } from '@/lib/profileScreenVisitTracking';
 import { isAndroidWeb } from '@/lib/pwaInstall';
 import {
   USER_PHONE_STORAGE_KEY,
@@ -19,10 +18,8 @@ export {
   USER_PHONE_STORAGE_KEY,
   USER_PROFILE_ID_STORAGE_KEY,
   USER_SESSION_TOKEN_STORAGE_KEY,
+  USER_TENANT_ID_STORAGE_KEY,
 } from '@/lib/sessionStorageKeys';
-
-/** Reexport — igreja ativa da sessão (também em `lib/tenantSession.ts`). */
-export { USER_TENANT_ID_STORAGE_KEY } from '@/lib/tenantSession';
 
 /** Query na rota `/` para impedir restauração automática após logout. */
 
@@ -324,6 +321,7 @@ export async function clearUserSession(options?: { keepPhone?: boolean }) {
   clearGhostModeState();
   await revokeStoredProfileSession();
   scrubWebSessionKeys({ keepPhone });
+  const { resetProfileScreenVisitTracking } = await import('@/lib/profileScreenVisitTracking');
   resetProfileScreenVisitTracking();
   await AsyncStorage.multiRemove(
     keepPhone
@@ -357,7 +355,9 @@ const LOGIN_AFTER_SIGN_OUT_ROUTE = {
 const clearUserSessionImmediately = () => {
   clearGhostModeState();
   scrubWebSessionKeys({ keepPhone: true });
-  resetProfileScreenVisitTracking();
+  void import('@/lib/profileScreenVisitTracking').then(({ resetProfileScreenVisitTracking }) => {
+    resetProfileScreenVisitTracking();
+  });
   void import('@/lib/appToast').then(({ clearPendingAppToasts }) => {
     clearPendingAppToasts();
   });

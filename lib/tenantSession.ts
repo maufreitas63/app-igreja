@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { clearAppParameterCache } from '@/lib/appParameters';
 import { clearEntityPrefixCache } from '@/lib/entityPrefixCache';
+import { USER_TENANT_ID_STORAGE_KEY } from '@/lib/sessionStorageKeys';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { supabase } from '@/lib/supabase';
 
-export const USER_TENANT_ID_STORAGE_KEY = 'user_tenant_id';
+export { USER_TENANT_ID_STORAGE_KEY } from '@/lib/sessionStorageKeys';
 export const USER_TENANT_BRANDING_STORAGE_KEY = 'user_tenant_branding';
 /** Código da igreja vindo do QR / deep link (`?igreja=IBEP` / `?codigo=`). */
 export const PREFERRED_IGREJA_CODE_STORAGE_KEY = 'preferred_igreja_code';
