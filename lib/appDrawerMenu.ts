@@ -115,18 +115,14 @@ export const DISCIPLESHIP_SETTINGS_MODULE_KEYS: ReadonlySet<AppDrawerModuleKey> 
 export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'a', label: 'Início', moduleKey: 'events_panel' },
   { letter: 'b', label: 'Perfil', moduleKey: 'menu_perfil' },
-  { letter: 'c', label: 'Dados cadastrais', moduleKey: 'menu_manage_profile' },
-  { letter: 'd', label: 'Família', moduleKey: 'menu_manage_members' },
-  { letter: 'g', label: 'Reembolsos', moduleKey: 'menu_expense_report' },
-  { letter: 'h', label: 'Financeiro', moduleKey: 'gestao_financeira' },
-  { letter: 'i', label: 'Coração Aberto', moduleKey: 'menu_pastoral' },
-  { letter: 'j', label: 'Trilha de Discipulado', moduleKey: 'menu_trilha' },
-  { letter: 'k', label: 'Minha Célula', moduleKey: 'menu_small_group' },
-  { letter: 'l', label: 'Escalas', moduleKey: 'menu_escalas' },
-  { letter: 'm', label: 'Mural de Oportunidades', moduleKey: 'menu_opportunity_mural' },
-  { letter: 'n', label: 'Sugestões', moduleKey: 'suggestions_improvements' },
-  { letter: 'o', label: 'Redes Sociais', moduleKey: 'menu_redes_sociais' },
-  { letter: 'p', label: 'Sobre o Conecta+', moduleKey: 'menu_sobre_conecta' },
+  { letter: 'c', label: 'Reembolsos', moduleKey: 'menu_expense_report' },
+  { letter: 'd', label: 'Financeiro', moduleKey: 'gestao_financeira' },
+  { letter: 'e', label: 'Minha Célula', moduleKey: 'menu_small_group' },
+  { letter: 'f', label: 'Escalas', moduleKey: 'menu_escalas' },
+  { letter: 'g', label: 'Mural de Oportunidades', moduleKey: 'menu_opportunity_mural' },
+  { letter: 'h', label: 'Sugestões', moduleKey: 'suggestions_improvements' },
+  { letter: 'i', label: 'Redes Sociais', moduleKey: 'menu_redes_sociais' },
+  { letter: 'j', label: 'Sobre o Conecta+', moduleKey: 'menu_sobre_conecta' },
 ];
 
 /** Painel da engrenagem — orquestração e gestão (ACL de liderança). */
