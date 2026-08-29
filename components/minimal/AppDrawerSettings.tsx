@@ -163,7 +163,7 @@ export function AppDrawerSettings({
                 <FontAwesome
                   name={expanded ? 'chevron-down' : 'chevron-right'}
                   size={12}
-                  color={MINIMAL_UI.textMuted}
+                  color={MINIMAL_UI.onDark}
                 />
               </Pressable>
               {expanded ? (
@@ -212,7 +212,7 @@ export function AppDrawerSettings({
               <FontAwesome
                 name={expandedSectionId === 'governanca' ? 'chevron-down' : 'chevron-right'}
                 size={12}
-                color={MINIMAL_UI.textMuted}
+                color={MINIMAL_UI.onDark}
               />
             </Pressable>
             {expandedSectionId === 'governanca' ? (
@@ -282,8 +282,9 @@ const styles = StyleSheet.create({
     gap: 12,
     minHeight: 44,
     paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: MINIMAL_UI.divider,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: MINIMAL_UI.blueDark,
   },
   sectionHeaderPressed: {
     opacity: 0.7,
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
-    color: MINIMAL_UI.blueDark,
+    color: MINIMAL_UI.onDark,
   },
   pinnedFooter: {
     flexShrink: 0,
