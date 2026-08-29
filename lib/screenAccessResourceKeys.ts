@@ -26,6 +26,7 @@ export const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   relatorios: 'maintenance.card.relatorios',
   profile_cadastro: 'maintenance.card.profile_cadastro',
   family_reception: 'maintenance.card.profile_cadastro',
+  visitor_followup: 'maintenance.card.visitor_followup',
   access_control: 'maintenance.card.access_control',
   profile_access_insights: 'maintenance.card.profile_access_insights',
   auditor: 'maintenance.card.auditor',

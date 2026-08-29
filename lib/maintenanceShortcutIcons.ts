@@ -14,6 +14,7 @@ export type MaintenancePanelContent =
   | 'transferencia_igreja'
   | 'profile_cadastro'
   | 'family_reception'
+  | 'visitor_followup'
   | 'financials'
   | 'predictive_insights'
   | 'relatorios'
@@ -40,6 +41,7 @@ export type MaintenanceShortcutIconName =
   | 'file-text-o'
   | 'id-card'
   | 'home'
+  | 'handshake-o'
   | 'shield'
   | 'history'
   | 'bullhorn'
@@ -70,6 +72,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   relatorios: 'file-text-o',
   profile_cadastro: 'id-card',
   family_reception: 'home',
+  visitor_followup: 'handshake-o',
   access_control: 'shield',
   profile_access_insights: 'history',
   auditor: 'user-secret',
@@ -97,6 +100,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   relatorios: '#C084FC',
   profile_cadastro: '#A78BFA',
   family_reception: '#34D399',
+  visitor_followup: '#F59E0B',
   access_control: '#818CF8',
   profile_access_insights: '#FCD34D',
   auditor: '#FB7185',

@@ -41,6 +41,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   small_groups_management: 'group',
   volunteer_mural: 'handshake-o',
   family_reception: 'home',
+  visitor_followup: 'commenting',
   profile_cadastro: 'user-plus',
   menu_administrativo: 'briefcase',
   Events: 'calendar',

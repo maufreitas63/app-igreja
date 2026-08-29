@@ -2,6 +2,7 @@ import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
 import { MaintenancePastoralAgendaPanel } from '@/components/MaintenancePastoralAgendaPanel';
+import { VisitorFollowupPastoralAlerts } from '@/components/VisitorFollowupPastoralAlerts';
 import { useMaintenancePastoralCare , MAINTENANCE_PASTORAL_CARE_SQL_HINT } from '@/hooks/useMaintenancePastoralCare';
 import {
   computeMaintenanceContentHeight,
@@ -259,6 +260,8 @@ export function MaintenancePastoralCareCard({
         </ScrollView>
       ) : (
       <>
+
+      <VisitorFollowupPastoralAlerts isActive={isActive} minimal={minimal} />
 
       {rpcMissing ? (
         <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>

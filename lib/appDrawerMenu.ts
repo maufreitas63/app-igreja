@@ -68,6 +68,7 @@ export type AppDrawerModuleKey =
   | 'quorum_presence'
   | 'profile_cadastro'
   | 'family_reception'
+  | 'visitor_followup'
   | 'access_control'
   | 'mudanca_papeis'
   | 'transferencia_igreja'
@@ -191,6 +192,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     label: 'Recepção Familiar',
     moduleKey: 'family_reception',
     group: 'pessoas',
+  },
+  {
+    letter: 'p7b',
+    label: 'Régua de Acolhimento',
+    moduleKey: 'visitor_followup',
+    group: 'pessoas',
+    hint: 'Tarefas da equipe de boas-vindas',
   },
   {
     letter: 'p8',
@@ -379,6 +387,7 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   quorum_presence: 'quorum_presence',
   profile_cadastro: 'profile_cadastro',
   family_reception: 'family_reception',
+  visitor_followup: 'visitor_followup',
   access_control: 'access_control',
   mudanca_papeis: 'mudanca_papeis',
   transferencia_igreja: 'transferencia_igreja',
