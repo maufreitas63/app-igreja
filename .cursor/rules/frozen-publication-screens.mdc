@@ -1,0 +1,22 @@
+---
+description: Telas fora do caminho de uso atual ficam congeladas e fora da publicação
+alwaysApply: true
+---
+
+# Telas congeladas (fora da publicação)
+
+Fonte de verdade: `lib/frozenPublication.ts`.
+
+O caminho de uso atual é o menu do membro, **Eu quero…**, a engrenagem (manutenção) e as rotas dedicadas que os substituíram. O carrossel antigo do Painel (`/(tabs)/dashboard`) **não** é produto publicado, exceto os cards vivos `small_group` e `opportunity_mural_card`.
+
+## Proibido até instrução explícita de descongelar
+
+- Reconectar card/rota congelados ao menu, deep link, ACL visível ou carrossel.
+- Alterar, “consertar” ou republicar UI congelada (QR, Salas, Estacionamento, escala avulsa, cards duplicados do Painel).
+- Tratar `app/(tabs)/explore.tsx` ou cards em `FROZEN_DASHBOARD_CARD_CONTENTS` como escopo de tarefa.
+
+## Correto
+
+- Trabalho novo só nas telas vivas (rotas de `app/` usadas pelo menu / Eu quero / engrenagem).
+- Deep link de card congelado → `resolveFrozenDashboardDeepLink` / `resolvePublishedDashboardHref`.
+- Para voltar a publicar um item congelado, o usuário precisa pedir o descongelamento pelo nome do card ou da rota.

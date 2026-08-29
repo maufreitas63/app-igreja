@@ -83,7 +83,7 @@ import {
   signOutAndNavigateToLogin,
 } from '@/lib/userSession';
 import { normalizePhoneForWhatsApp, openMemberWhatsapp } from '@/lib/whatsapp';
-import { DASHBOARD_CARD_BLOCKED_MESSAGES } from '@/lib/dashboardCardScreenLinks';
+import { DASHBOARD_CARD_BLOCKED_MESSAGES, resolveDashboardCardContentFromParam } from '@/lib/dashboardCardScreenLinks';
 import {
   getDashboardLinkedScreenKeys,
   isDashboardCardFullyAllowed,
@@ -120,9 +120,9 @@ import { boxShadowStyle } from '@/lib/boxShadow';
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
 import { withReturnDashboardCard, pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
 import {
-  buildFamilyAgendaHomeHref,
-  isFamilyAgendaDashboardCardParam,
-} from '@/lib/familyAgendaNavigation';
+  isLiveDashboardCardContent,
+  resolvePublishedDashboardHref,
+} from '@/lib/frozenPublication';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
 import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import { CONTAIN_WIDTH, MINIMAL_FLAT_PANEL, MINIMAL_DASHBOARD_STYLES, MINIMAL_PAGE } from '@/lib/minimalPresentation';
@@ -679,15 +679,19 @@ export default function Dashboard() {
     ? params.dashboardCardNonce[0]
     : params.dashboardCardNonce;
 
-  useEffect(() => {
-    if (!isFamilyAgendaDashboardCardParam(
-      typeof requestedDashboardCard === 'string' ? requestedDashboardCard : null
-    )) {
-      return;
-    }
+  useFocusEffect(
+    useCallback(() => {
+      const param = typeof requestedDashboardCard === 'string' ? requestedDashboardCard.trim() : '';
+      const content = resolveDashboardCardContentFromParam(param || null);
 
-    router.replace(buildFamilyAgendaHomeHref());
-  }, [requestedDashboardCard, router]);
+      if (content && isLiveDashboardCardContent(content)) {
+        return undefined;
+      }
+
+      router.replace(resolvePublishedDashboardHref(param || null));
+      return undefined;
+    }, [requestedDashboardCard, router])
+  );
   const administrativoInitialTab =
     pickRouteParam(params.administrativoTab) === 'outros' ? 'outros' : undefined;
   const dashboardDeepLinkKey = buildDashboardDeepLinkKey(
@@ -925,6 +929,10 @@ export default function Dashboard() {
 
     return selectedEvent?.totem_ativo === true ? 'QR Code — Totem' : 'Check In — QR Code';
   }, [selectedEvent?.requer_quorum, selectedEvent?.totem_ativo]);
+
+  // Card QR congelado (lib/frozenPublication.ts) — cálculos preservados para descongelar.
+  void isQrCheckInCardVisible;
+  void qrCheckInCardTitle;
 
   const isQrTotemCardPoolBlue = useMemo(
     () =>
@@ -1914,47 +1922,14 @@ export default function Dashboard() {
   };
 
   const dashboardCardCandidates: DashboardCard[] = useMemo(
-    () => [
-      ...(isQrCheckInCardVisible
-        ? [{ id: '2', title: qrCheckInCardTitle, content: 'qr' as const }]
-        : []),
-      { id: '4', title: 'Sala(s)', content: 'kids_teens' },
-      { id: '3', title: 'Dízimos e Ofertas', content: 'offerings' },
-      { id: '5', title: 'Coração Aberto', content: 'pastoral' },
-      { id: '10', title: 'Lista de Membros', content: 'members_list' },
-      { id: '7', title: 'Aniversariantes', content: 'birthdays' },
-      { id: '11', title: 'Financeiro', content: 'financial' },
-      { id: '8', title: 'Escalas', content: 'vigilance_scales' },
-      ...(isScaleRosterVisible
+    () =>
+      hasActiveMembership
         ? [
-            {
-              id: '12',
-              title: selectedVigilanceScaleLabel,
-              content: 'scale_roster' as const,
-            },
-          ]
-        : []),
-      ...(isParkingPanelVisible
-        ? [{ id: '9', title: 'Estacionamento', content: 'parking_vehicle_v2' as const }]
-        : []),
-      { id: '6', title: 'Perfil & Identidade', content: 'grouped_manage' },
-      ...(hasActiveMembership
-        ? [
-            { id: '13', title: 'Administrativo', content: 'administrativo' as const },
             { id: '16', title: 'Pequeno Grupo', content: 'small_group' as const },
-            { id: '17', title: 'Campanhas e Projetos', content: 'campaign_card' as const },
             { id: '18', title: 'Mural de Oportunidades', content: 'opportunity_mural_card' as const },
           ]
-        : []),
-    ],
-    [
-      hasActiveMembership,
-      isParkingPanelVisible,
-      isQrCheckInCardVisible,
-      isScaleRosterVisible,
-      qrCheckInCardTitle,
-      selectedVigilanceScaleLabel,
-    ]
+        : [],
+    [hasActiveMembership]
   );
 
   const isDashboardCardAccessReady =

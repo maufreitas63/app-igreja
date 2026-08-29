@@ -1,4 +1,5 @@
 import type { Href } from 'expo-router';
+import { resolvePublishedDashboardHref } from '@/lib/frozenPublication';
 
 export const RETURN_DASHBOARD_CARD_PARAM = 'returnDashboardCard';
 export const RETURN_ROUTE_PARAM = 'returnRoute';
@@ -54,22 +55,4 @@ export const withReturnDashboardCard = (
 export const buildReturnToDashboardHref = (
   dashboardCard: string,
   extraParams?: Record<string, string | undefined>
-): Href => {
-  const params: Record<string, string> = withMinimalPresentation({
-    dashboardCard,
-    dashboardCardNonce: String(Date.now()),
-  });
-
-  if (extraParams) {
-    for (const [key, value] of Object.entries(extraParams)) {
-      if (value) {
-        params[key] = value;
-      }
-    }
-  }
-
-  return {
-    pathname: '/(tabs)/dashboard',
-    params,
-  };
-};
+): Href => resolvePublishedDashboardHref(dashboardCard, extraParams);
