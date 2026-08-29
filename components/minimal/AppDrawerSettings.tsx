@@ -175,16 +175,31 @@ export function AppDrawerSettings({
               </Pressable>
               {expanded ? (
                 <>
-                  {section.items.map((item) => (
-                    <SettingsRowView key={item.id} item={item} />
-                  ))}
-                  {section.id === 'governanca' && showTrailGroup ? (
-                    <TrailGroup
-                      items={trailItems}
-                      open={trailMenuOpen}
-                      onToggle={() => setTrailMenuOpen((open) => !open)}
-                    />
-                  ) : null}
+                  {section.id === 'governanca' ? (
+                    <>
+                      {section.items
+                        .filter((item) => item.id !== 'menu_billing')
+                        .map((item) => (
+                          <SettingsRowView key={item.id} item={item} />
+                        ))}
+                      {showTrailGroup ? (
+                        <TrailGroup
+                          items={trailItems}
+                          open={trailMenuOpen}
+                          onToggle={() => setTrailMenuOpen((open) => !open)}
+                        />
+                      ) : null}
+                      {section.items
+                        .filter((item) => item.id === 'menu_billing')
+                        .map((item) => (
+                          <SettingsRowView key={item.id} item={item} />
+                        ))}
+                    </>
+                  ) : (
+                    section.items.map((item) => (
+                      <SettingsRowView key={item.id} item={item} />
+                    ))
+                  )}
                 </>
               ) : null}
             </View>
