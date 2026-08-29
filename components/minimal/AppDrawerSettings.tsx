@@ -290,11 +290,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     flex: 1,
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '800',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
-    color: MINIMAL_UI.textMuted,
+    color: MINIMAL_UI.blueDark,
   },
   pinnedFooter: {
     flexShrink: 0,
