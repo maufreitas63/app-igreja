@@ -6,6 +6,7 @@ import { resolveEventEnabledRoomKeys } from '@/lib/maintenanceEventForm';
 import { useActiveEvents, type ActiveEventListItem } from '@/hooks/useActiveEvents';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { writeDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { NO_BOX_SHADOW } from '@/lib/boxShadow';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -126,6 +127,14 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
     () => events.find((event) => event.id === selectedEventId) ?? events[0] ?? null,
     [events, selectedEventId]
   );
+
+  useEffect(() => {
+    if (!visible || !selectedEvent?.id) {
+      return;
+    }
+
+    void writeDashboardSelectedEventId(selectedEvent.id);
+  }, [selectedEvent?.id, visible]);
 
   const capacityRatio =
     selectedEvent?.max_capacity && selectedEvent.max_capacity > 0

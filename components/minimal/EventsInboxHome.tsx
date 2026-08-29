@@ -12,9 +12,20 @@ import { fetchMyCampaignNotices, type CampaignNotice } from '@/lib/campaignProje
 import { fetchUnreadOpportunityNotices, markOpportunityNoticesRead, type OpportunityNotice } from '@/lib/volunteerOpportunitiesApi';
 import { fetchUnreadScaleSwapNotices, markScaleSwapNoticesRead, type ScaleSwapNotice } from '@/lib/scaleSwapApi';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
+import {
+  getDashboardSelectedEventIdSync,
+  writeDashboardSelectedEventId,
+} from '@/lib/dashboardSelectedEvent';
+import {
+  isOpenFamilyAgendaParam,
+  OPEN_FAMILY_AGENDA_NONCE_PARAM,
+  OPEN_FAMILY_AGENDA_PARAM,
+} from '@/lib/familyAgendaNavigation';
+import { pickRouteParam } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
 import { supabase } from '@/lib/supabase';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -32,6 +43,7 @@ const EVENTS_VISIBLE_ROWS = 3;
 
 export function EventsInboxHome() {
   const { setHomeAgendaOpen } = useMinimalHome();
+  const params = useLocalSearchParams();
   const { width: windowWidth } = useWindowDimensions();
   const { events, loading, error } = useActiveEvents({ enablePolling: true });
   const [modalEventId, setModalEventId] = useState<string | null>(null);
@@ -47,12 +59,39 @@ export function EventsInboxHome() {
   const [avisosError, setAvisosError] = useState<string | null>(null);
   const pagerRef = useRef<ScrollView>(null);
   const avisosLoadGenRef = useRef(0);
+  const handledOpenAgendaKeyRef = useRef<string | null>(null);
   const agendaOpen = modalEventId !== null;
+
+  const openAgendaParam = pickRouteParam(params[OPEN_FAMILY_AGENDA_PARAM]);
+  const openAgendaNonce = pickRouteParam(params[OPEN_FAMILY_AGENDA_NONCE_PARAM]);
 
   useEffect(() => {
     setHomeAgendaOpen(agendaOpen);
     return () => setHomeAgendaOpen(false);
   }, [agendaOpen, setHomeAgendaOpen]);
+
+  useEffect(() => {
+    if (!isOpenFamilyAgendaParam(openAgendaParam) || !events.length) {
+      return;
+    }
+
+    const openKey = `${openAgendaParam}:${openAgendaNonce ?? ''}`;
+    if (handledOpenAgendaKeyRef.current === openKey) {
+      return;
+    }
+
+    handledOpenAgendaKeyRef.current = openKey;
+    const storedId = getDashboardSelectedEventIdSync();
+    const nextId =
+      (storedId && events.some((event) => event.id === storedId) ? storedId : null)
+      ?? events[0]?.id
+      ?? null;
+
+    if (nextId) {
+      void writeDashboardSelectedEventId(nextId);
+      setModalEventId(nextId);
+    }
+  }, [events, openAgendaNonce, openAgendaParam]);
 
   const loadAvisos = useCallback(async () => {
     const loadId = ++avisosLoadGenRef.current;
@@ -167,6 +206,7 @@ export function EventsInboxHome() {
   }, [pageWidth]); // eslint-disable-line react-hooks/exhaustive-deps -- só realinha ao medir largura
 
   const handleItemPress = (item: InboxListItem) => {
+    void writeDashboardSelectedEventId(item.id);
     setModalEventId(item.id);
   };
 

@@ -35,7 +35,7 @@ export const isProfileIncompleteForOnboarding = (
   return ONBOARDING_COMPLETION_FIELDS.some((field) => isEmptyProfileValue(profile[field]));
 };
 
-/** Card 1 — Agenda da Família (`content: event_alt`). */
+/** Card legado do Painel — a Agenda do membro abre no Início. */
 export const DASHBOARD_FAMILY_AGENDA_CARD_ID = '1';
 
 export const buildManageProfileOnboardingRoute = (phone: string) => ({
@@ -60,11 +60,11 @@ export const buildManageProfileChangeAccessPinAfterRecoveryRoute = (
 });
 
 export const buildDashboardFamilyAgendaRoute = (phone: string) => ({
-  pathname: '/(tabs)/dashboard' as const,
+  pathname: '/(tabs)' as const,
   params: {
     phone: encodeURIComponent(phone),
-    dashboardCard: DASHBOARD_FAMILY_AGENDA_CARD_ID,
-    dashboardCardNonce: String(Date.now()),
+    openAgenda: '1',
+    openAgendaNonce: String(Date.now()),
   },
 });
 

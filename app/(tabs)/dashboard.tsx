@@ -118,6 +118,10 @@ import { DASHBOARD_CARD_BOX_SHADOW, DASHBOARD_CARD_REFERENCE_THEME, DASHBOARD_CA
 import { boxShadowStyle } from '@/lib/boxShadow';
 import { buildDashboardScreenGradient, buildPaletteSurfaceTheme } from '@/lib/paletteTheme';
 import { withReturnDashboardCard, pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
+import {
+  buildFamilyAgendaHomeHref,
+  isFamilyAgendaDashboardCardParam,
+} from '@/lib/familyAgendaNavigation';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
 import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import { CONTAIN_WIDTH, MINIMAL_FLAT_PANEL, MINIMAL_DASHBOARD_STYLES, MINIMAL_PAGE } from '@/lib/minimalPresentation';
@@ -492,8 +496,6 @@ export default function Dashboard() {
   const scrollToParkingCardRef = useRef(false);
   const scrollToScaleRosterRef = useRef(false);
   const scrollToScalesCardRef = useRef(false);
-  const scrollToEventAltCardRef = useRef(false);
-  const [eventAltScrollNonce, setEventAltScrollNonce] = useState(0);
   const activeDashboardContentRef = useRef<DashboardCard['content'] | null>(null);
   const previousDashboardDataLengthRef = useRef(0);
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
@@ -675,6 +677,16 @@ export default function Dashboard() {
   const requestedDashboardCardNonce = Array.isArray(params.dashboardCardNonce)
     ? params.dashboardCardNonce[0]
     : params.dashboardCardNonce;
+
+  useEffect(() => {
+    if (!isFamilyAgendaDashboardCardParam(
+      typeof requestedDashboardCard === 'string' ? requestedDashboardCard : null
+    )) {
+      return;
+    }
+
+    router.replace(buildFamilyAgendaHomeHref());
+  }, [requestedDashboardCard, router]);
   const administrativoInitialTab =
     pickRouteParam(params.administrativoTab) === 'outros' ? 'outros' : undefined;
   const dashboardDeepLinkKey = buildDashboardDeepLinkKey(
@@ -809,9 +821,8 @@ export default function Dashboard() {
   } = useFamilyPreCheckin(selectedEvent?.id, familyId ?? undefined, selectedEvent);
 
   const focusEventAudienceCard = useCallback(() => {
-    scrollToEventAltCardRef.current = true;
-    setEventAltScrollNonce((value) => value + 1);
-  }, []);
+    router.replace(buildFamilyAgendaHomeHref());
+  }, [router]);
 
   const {
     coordinates: eventGeofenceCoordinates,
@@ -1903,7 +1914,6 @@ export default function Dashboard() {
 
   const dashboardCardCandidates: DashboardCard[] = useMemo(
     () => [
-      { id: '1', title: 'Agenda da Família', content: 'event_alt' },
       ...(isQrCheckInCardVisible
         ? [{ id: '2', title: qrCheckInCardTitle, content: 'qr' as const }]
         : []),
@@ -2378,26 +2388,6 @@ export default function Dashboard() {
   }, [isScaleRosterVisible, isParkingPanelVisible, data, scrollToDashboardCard]);
 
   useEffect(() => {
-    if (!scrollToEventAltCardRef.current) {
-      return;
-    }
-
-    const eventAltIdx = data.findIndex((item) => item.content === 'event_alt');
-    if (eventAltIdx < 0) {
-      scrollToEventAltCardRef.current = false;
-      return;
-    }
-
-    scrollToEventAltCardRef.current = false;
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        scrollToDashboardCard(eventAltIdx, true);
-      });
-    });
-  }, [data, scrollToDashboardCard, eventAltScrollNonce]);
-
-  useEffect(() => {
     if (isScaleRosterVisible || !scrollToScalesCardRef.current) {
       return;
     }
@@ -2520,6 +2510,11 @@ export default function Dashboard() {
 
     if (!requestedDashboardCard) {
       handledDashboardCardRef.current = null;
+      setIsDashboardCarouselReady(true);
+      return;
+    }
+
+    if (isFamilyAgendaDashboardCardParam(requestedDashboardCard)) {
       setIsDashboardCarouselReady(true);
       return;
     }
