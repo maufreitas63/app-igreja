@@ -9,6 +9,8 @@ Fonte de verdade: `lib/frozenPublication.ts`.
 
 O caminho de uso atual é o menu do membro, **Eu quero…**, a engrenagem (manutenção) e as rotas dedicadas que os substituíram. O carrossel antigo do Painel (`/(tabs)/dashboard`) **não** é produto publicado, exceto os cards vivos `small_group` e `opportunity_mural_card`.
 
+Cards congelados: código **só em comentário** em `lib/frozen-dashboard-cards.comment.ts` (não importar — o bundler não carrega). O `dashboard.tsx` vivo executa apenas Célula e Mural.
+
 ## Proibido até instrução explícita de descongelar
 
 - Reconectar card/rota congelados ao menu, deep link, ACL visível ou carrossel.

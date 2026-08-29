@@ -6,6 +6,7 @@ import { buildFamilyAgendaHomeHref } from '@/lib/familyAgendaNavigation';
  * Telas e cards do Painel antigo que saíram do caminho de uso atual.
  * O código permanece no repositório; não publicar, não reconectar, não alterar
  * até instrução explícita de descongelar.
+ * Implementação antiga (não executada): `lib/frozen-dashboard-cards.comment.ts`.
  */
 export const FROZEN_DASHBOARD_CARD_CONTENTS = [
   'event_alt',
