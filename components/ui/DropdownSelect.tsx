@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -400,7 +400,7 @@ export function DropdownSelect({
                 );
               })}
             </ScrollView>
-            <CloseButton onPress={() => setOpen(false)} />
+            <CloseFooterBar onPress={() => setOpen(false)} />
           </Pressable>
         </Pressable>
       </Modal>
@@ -573,7 +573,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#334155',
     backgroundColor: '#0f172a',
-    padding: 16,
+    paddingTop: 16,
+    paddingHorizontal: 0,
+    overflow: 'hidden',
     gap: 12,
   },
   modalCardVigilance: {
@@ -591,6 +593,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     textAlign: 'center',
+    paddingHorizontal: 16,
   },
   modalTitleVigilance: {
     color: VIGILANCE_SCALES_UI.accent,
@@ -600,6 +603,7 @@ const styles = StyleSheet.create({
   },
   optionsScroll: {
     maxHeight: 320,
+    paddingHorizontal: 16,
   },
   optionsContent: {
     gap: 6,

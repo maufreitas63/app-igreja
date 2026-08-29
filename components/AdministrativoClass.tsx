@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import {
   createAssemblyMinuteSignedUrl,
@@ -172,7 +172,7 @@ export function AdministrativoClass({
         >
           <Text style={styles.rdButtonText}>{rdButtonLabel}</Text>
         </TouchableOpacity>
-        {onClose ? <CloseButton onPress={onClose} /> : null}
+        {onClose ? <CloseFooterBar onPress={onClose} /> : null}
       </View>
 
       <Modal
@@ -230,7 +230,7 @@ export function AdministrativoClass({
               </ScrollView>
             )}
 
-            <CloseButton onPress={() => setMinutesModalOpen(false)} />
+            <CloseFooterBar onPress={() => setMinutesModalOpen(false)} />
           </View>
         </View>
       </Modal>

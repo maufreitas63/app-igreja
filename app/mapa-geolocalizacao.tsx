@@ -1,6 +1,6 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { createStyles } from '@/lib/createStyles';
-import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 import {
   useProfilesMapMarkers,
   type ProfileForMap,
@@ -517,15 +517,6 @@ export default function MapGeolocalizacaoScreen() {
                   {profilesNotOnMap.length} perfil(is) sem pin no mapa
                 </Text>
               </View>
-              <TouchableOpacity
-                style={styles.invalidCepsCloseButton}
-                onPress={handleCloseInvalidCepsModal}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel="Fechar lista de CEPs inválidos"
-              >
-                <MaterialIcons name="close" size={18} color="#E2E8F0" />
-              </TouchableOpacity>
             </View>
             <ScrollView
               style={styles.invalidCepsScroll}
@@ -569,7 +560,7 @@ export default function MapGeolocalizacaoScreen() {
                 );
               })}
             </ScrollView>
-            <CloseButton onPress={handleCloseInvalidCepsModal} />
+            <CloseFooterBar onPress={handleCloseInvalidCepsModal} />
           </Pressable>
         </Pressable>
       </Modal>
@@ -581,6 +572,7 @@ export default function MapGeolocalizacaoScreen() {
             selectedProfile.isVisitantesOnly ? styles.detailsCardVisitante : styles.detailsCardMember,
           ]}
         >
+          <View style={styles.detailsBody}>
           <View style={styles.detailsHeader}>
             <View style={styles.detailsHeaderText}>
               <Text style={styles.detailsTitle}>{selectedProfile.full_name ?? 'Sem nome'}</Text>
@@ -590,15 +582,6 @@ export default function MapGeolocalizacaoScreen() {
                   : selectedProfile.roleLabel}
               </Text>
             </View>
-            <TouchableOpacity
-              style={styles.detailsCloseButton}
-              onPress={handleCloseDetails}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel="Fechar detalhes do pin"
-            >
-              <MaterialIcons name="close" size={18} color="#E2E8F0" />
-            </TouchableOpacity>
           </View>
           <Text style={styles.detailsText}>CEP: {selectedAddress.cepLine}</Text>
           {selectedAddress.hasAddress ? (
@@ -656,6 +639,8 @@ export default function MapGeolocalizacaoScreen() {
               </TouchableOpacity>
             </View>
           </View>
+          </View>
+          <CloseFooterBar onPress={handleCloseDetails} />
         </View>
       ) : null}
     </SafeAreaView>
@@ -827,7 +812,9 @@ const styles = createStyles({
     borderWidth: 1,
     borderColor: 'rgba(251, 191, 36, 0.35)',
     backgroundColor: 'rgba(15, 23, 42, 0.96)',
-    padding: 14,
+    paddingTop: 14,
+    paddingHorizontal: 0,
+    overflow: 'hidden',
     gap: 10,
   },
   invalidCepsModalHeader: {
@@ -835,6 +822,7 @@ const styles = createStyles({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 10,
+    paddingHorizontal: 14,
   },
   invalidCepsModalHeaderText: {
     flex: 1,
@@ -862,6 +850,7 @@ const styles = createStyles({
   },
   invalidCepsScroll: {
     maxHeight: 420,
+    paddingHorizontal: 14,
   },
   invalidCepsScrollContent: {
     gap: 8,
@@ -953,7 +942,13 @@ const styles = createStyles({
     borderRadius: 14,
     borderWidth: 1,
     backgroundColor: 'rgba(2, 6, 23, 0.92)',
-    padding: 12,
+    paddingTop: 12,
+    paddingHorizontal: 0,
+    overflow: 'hidden',
+    gap: 6,
+  },
+  detailsBody: {
+    paddingHorizontal: 12,
     gap: 6,
   },
   detailsHeader: {

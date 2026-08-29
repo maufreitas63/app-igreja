@@ -654,6 +654,7 @@ export default function TotemCheckinScreen() {
       {!isKioskDevice ? (
         <CloseFooterBar
           variant="dark"
+          includeScreenPadding
           onPress={() => router.replace(FAIL_CLOSED_REDIRECT_PATH)}
         />
       ) : null}

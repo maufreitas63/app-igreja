@@ -501,7 +501,7 @@ export function PwaAppShell() {
               )}
             />
           ) : null}
-          <CloseFooterBar onPress={() => setPdfViewerUri(null)} />
+          <CloseFooterBar onPress={() => setPdfViewerUri(null)} includeScreenPadding />
         </SafeAreaView>
       </Modal>
 

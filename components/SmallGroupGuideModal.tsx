@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import { isPdfLikeUrl, type SmallGroupGuide } from '@/lib/smallGroupsApi';
 import React from 'react';
@@ -51,7 +51,7 @@ export function SmallGroupGuideModal({ visible, guide, onClose }: Props) {
             ) : null}
           </ScrollView>
 
-          <CloseButton onPress={onClose} />
+          <CloseFooterBar onPress={onClose} />
         </View>
       </View>
     </Modal>
@@ -76,6 +76,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
+    paddingBottom: 0,
+    overflow: 'hidden',
     gap: 8,
   },
   kicker: {

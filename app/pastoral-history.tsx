@@ -887,6 +887,7 @@ export default function PastoralHistoryScreen() {
       )}
 
       {!loading && !errorMessage ? (
+        <>
         <View style={[styles.footerBar, useVigilanceTheme && styles.footerBarVigilance]}>
           <View style={styles.footerActions}>
             <TouchableOpacity
@@ -906,11 +907,13 @@ export default function PastoralHistoryScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+        </View>
           <CloseFooterBar
             onPress={handleBack}
             variant={useVigilanceTheme ? 'minimal' : 'dark'}
+            includeScreenPadding={!useVigilanceTheme}
           />
-        </View>
+        </>
       ) : null}
     </>
   );

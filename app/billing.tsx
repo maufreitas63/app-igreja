@@ -308,7 +308,7 @@ export default function BillingScreen() {
         onRenewContract={() => void handleRenewContract()}
         onRescindContract={() => void handleRescindContract()}
       />
-      <CloseFooterBar onPress={() => router.replace(MEMBER_HOME_PATH)} />
+      <CloseFooterBar onPress={() => router.replace(MEMBER_HOME_PATH)} includeScreenPadding />
     </View>
     </ScreenAccessGate>
   );

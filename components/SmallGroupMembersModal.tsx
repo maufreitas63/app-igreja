@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { formatFullName } from '@/lib/fullName';
 import React from 'react';
 import {
@@ -55,7 +55,7 @@ export function SmallGroupMembersModal({
             )}
           </ScrollView>
 
-          <CloseButton onPress={onClose} accessibilityLabel="Fechar lista de participantes" />
+          <CloseFooterBar onPress={onClose} accessibilityLabel="Fechar lista de participantes" />
         </View>
       </View>
     </Modal>
@@ -80,6 +80,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
+    paddingBottom: 0,
+    overflow: 'hidden',
     gap: 8,
   },
   title: {

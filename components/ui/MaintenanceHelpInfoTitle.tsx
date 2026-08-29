@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -63,9 +63,7 @@ export function MaintenanceHelpInfoTitle({
           <View style={[styles.bubble, minimal && styles.bubbleMinimal]}>
             <Text style={[styles.modalTitle, minimal && styles.modalTitleMinimal]}>{modalTitle}</Text>
             <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>{helpText}</Text>
-            <View style={styles.actions}>
-              <CloseButton onPress={() => setOpen(false)} />
-            </View>
+            <CloseFooterBar onPress={() => setOpen(false)} />
           </View>
         </View>
       </Modal>
@@ -114,7 +112,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(96, 165, 250, 0.45)',
     borderRadius: 14,
     backgroundColor: 'rgba(15, 23, 42, 0.98)',
-    padding: 14,
+    paddingTop: 14,
+    paddingHorizontal: 0,
+    overflow: 'hidden',
     gap: 8,
   },
   bubbleMinimal: {
@@ -125,6 +125,7 @@ const styles = StyleSheet.create({
     color: '#BFDBFE',
     fontSize: 13,
     fontWeight: '800',
+    paddingHorizontal: 14,
   },
   modalTitleMinimal: {
     color: MINIMAL_UI.blueDark,
@@ -133,6 +134,7 @@ const styles = StyleSheet.create({
     color: '#3A96DD',
     fontSize: 13,
     lineHeight: 19,
+    paddingHorizontal: 14,
   },
   helpTextMinimal: {
     color: MINIMAL_UI.text,

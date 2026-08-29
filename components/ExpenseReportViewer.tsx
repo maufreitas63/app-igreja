@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import {
   formatExpenseReportAmount,
   formatExpenseReportDate,
@@ -109,7 +109,7 @@ export function ExpenseReportViewer({
             ) : previewUrl ? (
               <Image source={{ uri: previewUrl }} style={styles.previewImage} resizeMode="contain" />
             ) : null}
-            <CloseButton onPress={() => setPreviewVisible(false)} />
+            <CloseFooterBar onPress={() => setPreviewVisible(false)} />
           </Pressable>
         </Pressable>
       </Modal>
@@ -208,6 +208,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
     padding: 16,
+    paddingBottom: 0,
+    overflow: 'hidden',
     gap: 10,
   },
   previewTitle: {

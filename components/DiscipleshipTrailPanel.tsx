@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import {
   buildDiscipleshipAchievementSlots,
   completeLessonWithAchievements,
@@ -49,7 +49,7 @@ const STATE_COLORS: Record<DiscipleshipVisualState, string> = {
   completed: '#059669',
 };
 
-export function DiscipleshipTrailPanel({ onClose }: Props) {
+export function DiscipleshipTrailPanel({ onClose: _onClose }: Props) {
   const [snapshot, setSnapshot] = useState<DiscipleshipTrailSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -513,8 +513,6 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
           </View>
           );
         })}
-
-        {onClose ? <CloseButton onPress={onClose} /> : null}
       </ScrollView>
 
       <Modal
@@ -623,9 +621,9 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
               ) : null}
             </ScrollView>
 
+            {selectedLesson?.lesson.visualState !== 'completed' ? (
             <View style={styles.modalActions}>
-              {selectedLesson?.lesson.visualState !== 'completed'
-                && selectedLesson?.lesson.visualState !== 'in_progress' ? (
+              {selectedLesson?.lesson.visualState !== 'in_progress' ? (
                 <TouchableOpacity
                   style={styles.secondaryButton}
                   onPress={() => void handleStartLesson()}
@@ -636,7 +634,6 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
                 </TouchableOpacity>
               ) : null}
 
-              {selectedLesson?.lesson.visualState !== 'completed' ? (
                 <TouchableOpacity
                   style={styles.primaryButton}
                   onPress={() => void handleCompleteLesson()}
@@ -651,10 +648,9 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
                     <Text style={styles.primaryButtonText}>Concluir lição</Text>
                   )}
                 </TouchableOpacity>
-              ) : (
-                <CloseButton onPress={() => setSelectedLesson(null)} />
-              )}
             </View>
+            ) : null}
+            <CloseFooterBar onPress={() => setSelectedLesson(null)} />
           </View>
         </View>
       </Modal>

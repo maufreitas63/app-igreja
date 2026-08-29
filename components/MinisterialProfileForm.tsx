@@ -11,6 +11,7 @@ import {
   type MinisterialProfileResult,
   type MinisterialQuestion,
 } from '@/lib/ministerialProfileQuestionnaire';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { fetchVolunteerOpportunitiesForMe, type VolunteerOpportunityMember } from '@/lib/volunteerOpportunitiesApi';
 import { buildReturnToDashboardHref } from '@/lib/dashboardReturnNavigation';
@@ -441,18 +442,10 @@ export function MinisterialProfileForm({ visible, profileId, onClose }: Props) {
         <View style={styles.container}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Questionário de Perfil Ministerial</Text>
-            <TouchableOpacity
-              accessibilityLabel="Fechar questionário"
-              accessibilityRole="button"
-              onPress={handleClose}
-              style={styles.closeButton}
-              activeOpacity={0.85}
-            >
-              <MaterialIcons name="close" size={22} color={MINIMAL_UI.icon} />
-            </TouchableOpacity>
           </View>
 
           <View style={styles.body}>{renderBody()}</View>
+          <CloseFooterBar onPress={handleClose} accessibilityLabel="Fechar questionário" />
         </View>
       </View>
     </Modal>

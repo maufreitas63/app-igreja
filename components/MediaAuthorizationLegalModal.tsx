@@ -1,3 +1,4 @@
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { FontAwesome } from '@expo/vector-icons';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MEDIA_AUTHORIZATION_LEGAL_INFO } from '@/lib/mediaAuthorization';
@@ -20,9 +21,7 @@ export function MediaAuthorizationLegalModal({ visible, onClose }: Props) {
             <Text style={styles.title}>Por que este aceite tem validade jurídica?</Text>
           </View>
           <Text style={styles.body}>{MEDIA_AUTHORIZATION_LEGAL_INFO}</Text>
-          <Pressable accessibilityRole="button" onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>Entendi</Text>
-          </Pressable>
+          <CloseFooterBar onPress={onClose} />
         </View>
       </View>
     </Modal>
@@ -45,6 +44,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
     padding: 20,
+    paddingBottom: 0,
     gap: 14,
     zIndex: 2,
   },

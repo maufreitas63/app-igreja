@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import {
@@ -197,7 +197,7 @@ export function AdministrativoCard({ panelHeight, isActive = true, initialTab: _
               </ScrollView>
             )}
 
-            <CloseButton onPress={() => setMinutesModalOpen(false)} />
+            <CloseFooterBar onPress={() => setMinutesModalOpen(false)} />
           </View>
         </View>
       </Modal>

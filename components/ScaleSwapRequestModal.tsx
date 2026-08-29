@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { pushAppBackInterceptor } from '@/lib/appBackIntercept';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -278,7 +278,7 @@ export function ScaleSwapRequestModal({
             </ScrollView>
           )}
 
-          <CloseButton onPress={onClose} />
+          <CloseFooterBar onPress={onClose} />
         </View>
       </View>
     </Modal>
@@ -297,6 +297,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#FFFFFF',
     padding: 16,
+    paddingBottom: 0,
+    overflow: 'hidden',
     gap: 10,
   },
   title: {

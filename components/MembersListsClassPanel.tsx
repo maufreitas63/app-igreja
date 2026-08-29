@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MembersListsClass } from '@/components/MembersListsClass';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MAP_PIN_DETAIL_DENIED_MESSAGE, useMapPinDetailAccess } from '@/hooks/useMapPinDetailAccess';
@@ -446,7 +446,7 @@ export function MembersListsClassPanel() {
                 </View>
               ))}
             </ScrollView>
-            <CloseButton onPress={() => setFamilyModalSeedEntry(null)} />
+            <CloseFooterBar onPress={() => setFamilyModalSeedEntry(null)} />
           </Pressable>
         </Pressable>
       </Modal>
@@ -470,6 +470,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#FFFFFF',
     padding: 20,
+    paddingBottom: 0,
+    overflow: 'hidden',
     gap: 10,
   },
   familyModalTitle: {

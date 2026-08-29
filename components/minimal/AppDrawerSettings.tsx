@@ -1,3 +1,4 @@
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { APP_DRAWER_SETTINGS_GROUPS } from '@/lib/appDrawerMenu';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { traceClick } from '@/lib/devClickTrace';
@@ -138,14 +139,6 @@ export function AppDrawerSettings({
     <View style={[styles.panel, { paddingBottom: Math.max(insets.bottom, 12) }]}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Configurações</Text>
-        <Pressable
-          accessibilityLabel="Fechar configurações"
-          accessibilityRole="button"
-          onPress={onClose}
-          style={styles.closeButton}
-        >
-          <FontAwesome name="times" size={MINIMAL_ICON.action + 4} color={MINIMAL_UI.icon} />
-        </Pressable>
       </View>
 
       <ScrollView
@@ -238,6 +231,7 @@ export function AppDrawerSettings({
           <SettingsRowView item={pinnedItem} pinned />
         </View>
       ) : null}
+      <CloseFooterBar onPress={onClose} accessibilityLabel="Fechar configurações" />
     </View>
   );
 }
@@ -248,7 +242,7 @@ const styles = StyleSheet.create({
     maxWidth: 320,
     height: '100%',
     backgroundColor: MINIMAL_UI.background,
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
     paddingTop: 12,
     zIndex: 2,
     flexDirection: 'column',
@@ -259,6 +253,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
     marginBottom: 12,
+    paddingHorizontal: 16,
   },
   title: {
     ...MINIMAL_TYPO.screenTitle,
@@ -270,6 +265,7 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
     minHeight: 0,
+    paddingHorizontal: 16,
   },
   scrollContent: {
     paddingBottom: 8,
@@ -305,6 +301,7 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: MINIMAL_UI.divider,
     paddingTop: 4,
+    paddingHorizontal: 16,
     backgroundColor: MINIMAL_UI.background,
   },
   item: {

@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { FontAwesome } from '@expo/vector-icons';
 import { openPdfUri } from '@/lib/openPdfUri';
 import { buildInlinePdfViewerUrl, isApkShellWebClient } from '@/lib/pdfViewerUrl';
@@ -50,14 +50,6 @@ export function AssemblyMinutesPdfModal({ visible, title, pdfUrl, onClose }: Pro
                 {title}
               </Text>
             </View>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={onClose}
-              activeOpacity={0.85}
-              accessibilityLabel="Fechar"
-            >
-              <FontAwesome name="times" size={16} color={MINIMAL_UI.icon} />
-            </TouchableOpacity>
           </View>
 
           {Platform.OS === 'web' ? (
@@ -85,8 +77,8 @@ export function AssemblyMinutesPdfModal({ visible, title, pdfUrl, onClose }: Pro
                 {Platform.OS === 'web' ? 'Abrir em nova aba' : 'Abrir / compartilhar'}
               </Text>
             </TouchableOpacity>
-            <CloseButton onPress={onClose} />
           </View>
+          <CloseFooterBar onPress={onClose} />
         </View>
       </View>
     </Modal>

@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import {
   EXPENSE_REPORT_SQL_HINT,
   fetchPendingExpenseReports,
@@ -157,7 +157,7 @@ export function RDConciliationModal({ visible, financialId, onClose, onReconcile
             </ScrollView>
           )}
 
-          <CloseButton onPress={onClose} />
+          <CloseFooterBar onPress={onClose} />
         </Pressable>
       </Pressable>
     </Modal>
@@ -181,6 +181,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(52, 211, 153, 0.35)',
     padding: 16,
+    paddingBottom: 0,
+    overflow: 'hidden',
     gap: 10,
   },
   title: {

@@ -28,7 +28,7 @@ export default function EventOrchestratorScreen() {
         <SafeAreaView style={styles.safeArea}>
           <Stack.Screen options={{ headerShown: false }} />
           <EventOrchestratorPanel contentContainerStyle={styles.content} />
-          <CloseFooterBar onPress={returnToCaller} />
+          <CloseFooterBar onPress={returnToCaller} includeScreenPadding />
         </SafeAreaView>
       </LinearGradient>
     </ScreenAccessGate>
@@ -41,10 +41,10 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingHorizontal: 20,
     paddingTop: 8,
   },
   content: {
     flex: 1,
+    paddingHorizontal: 20,
   },
 });

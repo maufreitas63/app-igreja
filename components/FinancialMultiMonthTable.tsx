@@ -1,3 +1,4 @@
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { boxShadowStyle } from '@/lib/boxShadow';
 import type { BulletinComparisonRowLevel } from '@/lib/financialBulletinComparison';
 import { formatBulletinAmount } from '@/lib/financialBulletin';
@@ -125,15 +126,6 @@ const TwelveMonthRowDetailBubble = ({
             <Text style={styles.bubbleTitle} numberOfLines={4}>
               {row.label}
             </Text>
-            <TouchableOpacity
-              style={styles.bubbleCloseIconButton}
-              onPress={onClose}
-              activeOpacity={0.75}
-              accessibilityRole="button"
-              accessibilityLabel="Fechar detalhamento mensal"
-            >
-              <FontAwesome name="close" size={16} color="#64748B" />
-            </TouchableOpacity>
           </View>
 
           <View style={styles.monthDetailHeaderRow}>
@@ -176,6 +168,7 @@ const TwelveMonthRowDetailBubble = ({
               );
             })}
           </ScrollView>
+          <CloseFooterBar onPress={onClose} accessibilityLabel="Fechar detalhamento mensal" />
         </Pressable>
       </Pressable>
     </Modal>
@@ -554,9 +547,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: '#93C5FD',
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
     paddingTop: 14,
-    paddingBottom: 12,
+    paddingBottom: 0,
     gap: 8,
     overflow: 'hidden',
     ...boxShadowStyle({
@@ -585,6 +578,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
+    paddingHorizontal: 16,
   },
   bubbleTitle: {
     flex: 1,
@@ -610,6 +604,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#DBEAFE',
     paddingBottom: 6,
     gap: 12,
+    paddingHorizontal: 16,
   },
   monthDetailHeaderCell: {
     color: '#64748B',
@@ -629,6 +624,7 @@ const styles = StyleSheet.create({
   monthDetailScroll: {
     flexGrow: 0,
     flexShrink: 1,
+    paddingHorizontal: 16,
   },
   monthDetailScrollContent: {
     gap: 0,

@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { AgeBracketPieChart, parseAgeBracketChartSlices } from '@/components/AgeBracketPieChart';
 import { SupportSuggestionsReportPdfModal } from '@/components/SupportSuggestionsReportPdfModal';
 import { SupportSuggestionsReportView } from '@/components/SupportSuggestionsReportView';
@@ -573,7 +573,7 @@ function GenericReportResultsTable({ result, minimal = false }: ReportResultsTab
               )}
             </ScrollView>
 
-            <CloseButton onPress={closeAgeBracketModal} />
+            <CloseFooterBar onPress={closeAgeBracketModal} />
           </View>
         ) : null}
       </View>
@@ -637,7 +637,7 @@ function GenericReportResultsTable({ result, minimal = false }: ReportResultsTab
               )}
             </ScrollView>
 
-            <CloseButton onPress={closeEventRegistrationsModal} />
+            <CloseFooterBar onPress={closeEventRegistrationsModal} />
           </View>
         ) : null}
       </View>

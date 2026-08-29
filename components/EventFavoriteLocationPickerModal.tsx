@@ -1,3 +1,4 @@
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { boxShadowStyle } from '@/lib/boxShadow';
 import { confirmDialog } from '@/lib/confirmDialog';
 import {
@@ -331,17 +332,10 @@ export function EventFavoriteLocationPickerModal({
                   <Text style={styles.headerActionText}>Novo</Text>
                 </Pressable>
               ) : null}
-              <Pressable
-                onPress={onClose}
-                accessibilityRole="button"
-                accessibilityLabel="Fechar locais favoritos"
-                hitSlop={8}
-              >
-                <MaterialIcons name="close" size={22} color={MINIMAL_UI.icon} />
-              </Pressable>
             </View>
           </View>
 
+          <View style={styles.sheetBody}>
           {loading ? (
             <View style={styles.centerBox}>
               <ActivityIndicator color={MINIMAL_UI.accent} />
@@ -625,6 +619,8 @@ export function EventFavoriteLocationPickerModal({
               </View>
             </ScrollView>
           ) : null}
+          </View>
+          <CloseFooterBar onPress={onClose} accessibilityLabel="Fechar locais favoritos" />
         </Pressable>
       </Pressable>
     </Modal>
@@ -649,7 +645,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
     backgroundColor: MINIMAL_UI.background,
-    padding: 16,
+    paddingTop: 16,
+    paddingHorizontal: 0,
+    overflow: 'hidden',
     gap: 12,
     ...boxShadowStyle({
       color: '#0F172A',
@@ -659,12 +657,18 @@ const styles = StyleSheet.create({
       elevation: 4,
     }),
   },
+  sheetBody: {
+    paddingHorizontal: 16,
+    gap: 12,
+    minHeight: 0,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
     minWidth: 0,
+    paddingHorizontal: 16,
   },
   headerActions: {
     flexDirection: 'row',

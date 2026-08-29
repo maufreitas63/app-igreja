@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { boxShadowStyle } from '@/lib/boxShadow';
 import {
   type BulletinComparisonRow,
@@ -327,7 +327,7 @@ const ReceiptImageModal = ({
             </TouchableOpacity>
           </View>
           ) : null}
-          <CloseButton onPress={onClose} />
+          <CloseFooterBar onPress={onClose} />
         </Pressable>
       </Pressable>
     </Modal>
@@ -419,7 +419,7 @@ const CommentDetailsModal = ({
                 );
               })}
             </ScrollView>
-            <CloseButton onPress={onClose} />
+            <CloseFooterBar onPress={onClose} />
           </Pressable>
         </Pressable>
       </Modal>

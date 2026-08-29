@@ -1,10 +1,10 @@
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import {
   DISCIPLESHIP_PROCESS_GUIDE_INTRO,
   DISCIPLESHIP_PROCESS_GUIDE_STEPS,
 } from '@/lib/discipleshipProcessGuide';
 import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
@@ -15,7 +15,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -110,15 +109,6 @@ export function DiscipleshipProcessGuideModal({ visible, onClose }: Props) {
               <Text style={styles.kicker}>Liderança pastoral</Text>
               <Text style={styles.title}>Guia do Processo</Text>
             </View>
-            <TouchableOpacity
-              onPress={onClose}
-              style={styles.closeBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Fechar"
-              activeOpacity={0.85}
-            >
-              <FontAwesome name="times" size={18} color={MINIMAL_UI.icon} />
-            </TouchableOpacity>
           </View>
 
           <Text style={styles.intro}>{DISCIPLESHIP_PROCESS_GUIDE_INTRO}</Text>
@@ -146,9 +136,7 @@ export function DiscipleshipProcessGuideModal({ visible, onClose }: Props) {
             ))}
           </ScrollView>
 
-          <TouchableOpacity style={styles.doneBtn} onPress={onClose} activeOpacity={0.85}>
-            <Text style={styles.doneBtnText}>Entendi</Text>
-          </TouchableOpacity>
+          <CloseFooterBar onPress={onClose} />
         </Animated.View>
       </View>
     </Modal>
@@ -171,7 +159,7 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     borderLeftWidth: 1,
     borderLeftColor: MINIMAL_UI.border,
-    paddingHorizontal: 18,
+    paddingHorizontal: 0,
     ...boxShadowStyle({
       color: '#0F172A',
       offsetX: -4,
@@ -185,6 +173,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 12,
     marginBottom: 10,
+    paddingHorizontal: 18,
   },
   headerCopy: {
     flex: 1,
@@ -211,10 +200,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     marginBottom: 14,
+    paddingHorizontal: 18,
   },
   scroll: {
     flex: 1,
     minHeight: 0,
+    paddingHorizontal: 18,
   },
   scrollContent: {
     gap: 12,

@@ -20,7 +20,7 @@ import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { PastoralSchedulePanel } from '@/components/PastoralSchedulePanel';
 import { PASTORAL_SCHEDULE_RESOURCE } from '@/lib/pastoralAccess';
 import { supabase } from '@/lib/supabase';
-import { CloseButton, CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
@@ -635,7 +635,7 @@ export default function PastoralScreen() {
                   );
                 })}
               </ScrollView>
-              <CloseButton onPress={() => setActiveSelector(null)} />
+              <CloseFooterBar onPress={() => setActiveSelector(null)} />
             </Pressable>
           </Pressable>
         </Modal>
@@ -958,6 +958,7 @@ export default function PastoralScreen() {
           <CloseFooterBar
             onPress={handleBackToDashboard}
             variant={useVigilanceTheme ? 'minimal' : 'dark'}
+            includeScreenPadding={!useVigilanceTheme}
           />
         </KeyboardAvoidingView>
       </>

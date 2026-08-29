@@ -347,7 +347,7 @@ export default function ExpenseReportScreen() {
         fixedTop={
           <View style={styles.headerBar}>
             <TouchableOpacity
-              accessibilityLabel={mode === 'list' ? 'Fechar' : 'Voltar'}
+              accessibilityLabel="Voltar"
               onPress={handleGoBack}
               style={styles.headerBackButton}
               activeOpacity={0.85}

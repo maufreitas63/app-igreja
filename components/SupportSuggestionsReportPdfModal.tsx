@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { FontAwesome } from '@expo/vector-icons';
 import { SUPPORT_SUGGESTIONS_REPORT_PDF_FILENAME } from '@/lib/maintenanceSupportSuggestionsReport';
 import { openPdfUri } from '@/lib/openPdfUri';
@@ -75,14 +75,6 @@ export function SupportSuggestionsReportPdfModal({
                 {requestCount.toLocaleString('pt-BR')} solicitação(ões) · uma ficha por página
               </Text>
             </View>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={onClose}
-              activeOpacity={0.85}
-              accessibilityLabel="Fechar"
-            >
-              <FontAwesome name="times" size={16} color={MINIMAL_UI.icon} />
-            </TouchableOpacity>
           </View>
 
           {Platform.OS === 'web' ? (
@@ -136,8 +128,8 @@ export function SupportSuggestionsReportPdfModal({
                 <Text style={styles.primaryButtonText}>Abrir / compartilhar</Text>
               </TouchableOpacity>
             )}
-            <CloseButton onPress={onClose} />
           </View>
+          <CloseFooterBar onPress={onClose} />
         </View>
       </View>
     </Modal>

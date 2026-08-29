@@ -1,4 +1,4 @@
-import { CloseButton } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceProfileAccessInsights } from '@/hooks/useMaintenanceProfileAccessInsights';
@@ -150,7 +150,7 @@ function ScreenHistoryBalloon({
             </ScrollView>
           ) : null}
 
-          <CloseButton onPress={onClose} accessibilityLabel="Fechar histórico de telas" />
+          <CloseFooterBar onPress={onClose} accessibilityLabel="Fechar histórico de telas" />
         </Pressable>
       </Pressable>
     </Modal>

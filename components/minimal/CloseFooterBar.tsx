@@ -1,6 +1,13 @@
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import {
+  MINIMAL_SCREEN_PADDING_LEFT,
+  MINIMAL_SCREEN_PADDING_RIGHT,
+} from '@/lib/minimalUiTheme';
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+
+const CLOSE_BUTTON_FILL = '#3A96DD';
+const CLOSE_BUTTON_BORDER = '#1B4F8A';
 
 export type CloseButtonProps = {
   onPress: () => void;
@@ -12,6 +19,35 @@ type CloseFooterBarProps = {
   onPress: () => void;
   variant?: 'minimal' | 'dark';
   contentInsetBottom?: number;
+  label?: string;
+  accessibilityLabel?: string;
+  /** Quando o pai não aplica o padding lateral das telas minimalistas. */
+  includeScreenPadding?: boolean;
+};
+
+const WEB_BUTTON_STYLE: React.CSSProperties = {
+  boxSizing: 'border-box',
+  width: '100%',
+  minHeight: 51,
+  margin: 0,
+  paddingBlock: 14,
+  paddingInline: 16,
+  borderRadius: 16,
+  borderWidth: 2,
+  borderStyle: 'solid',
+  borderColor: CLOSE_BUTTON_BORDER,
+  backgroundColor: CLOSE_BUTTON_FILL,
+  color: '#FFFFFF',
+  fontSize: 15,
+  fontWeight: 800,
+  fontFamily: 'inherit',
+  lineHeight: '20px',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  appearance: 'none',
+  WebkitAppearance: 'none',
 };
 
 const closeButtonStyles = StyleSheet.create({
@@ -19,8 +55,8 @@ const closeButtonStyles = StyleSheet.create({
     minHeight: 51,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#1B4F8A',
-    backgroundColor: '#3A96DD',
+    borderColor: CLOSE_BUTTON_BORDER,
+    backgroundColor: CLOSE_BUTTON_FILL,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
@@ -41,38 +77,77 @@ export function CloseButton({
   label = 'Fechar',
   accessibilityLabel,
 }: CloseButtonProps) {
+  const resolvedLabel = accessibilityLabel ?? label;
+
+  if (Platform.OS === 'web') {
+    return React.createElement(
+      'button',
+      {
+        type: 'button',
+        'aria-label': resolvedLabel,
+        onClick: (event: { preventDefault: () => void }) => {
+          event.preventDefault();
+          onPress();
+        },
+        style: WEB_BUTTON_STYLE,
+      },
+      label
+    );
+  }
+
   return (
     <Pressable
       onPress={onPress}
       style={closeButtonStyles.button}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityLabel={resolvedLabel}
     >
       <Text style={closeButtonStyles.buttonText}>{label}</Text>
     </Pressable>
   );
 }
 
-/** Rodapé fixo com o botão «Fechar» canônico. */
+/** Rodapé fixo com o botão «Fechar» canônico (largura, inset e posição iguais em toda a app). */
 export function CloseFooterBar({
   onPress,
   variant = 'minimal',
   contentInsetBottom = 0,
+  label,
+  accessibilityLabel,
+  includeScreenPadding = false,
 }: CloseFooterBarProps) {
   return (
-    <View
-      style={[
-        styles.footerBar,
-        variant === 'dark' ? styles.footerBarDark : styles.footerBarMinimal,
-        contentInsetBottom > 0 ? { paddingBottom: 12 + contentInsetBottom } : null,
-      ]}
-    >
-      <CloseButton onPress={onPress} />
+    <View style={includeScreenPadding ? styles.screenPad : styles.stretch}>
+      <View
+        style={[
+          styles.footerBar,
+          variant === 'dark' ? styles.footerBarDark : styles.footerBarMinimal,
+          contentInsetBottom > 0 ? { paddingBottom: 12 + contentInsetBottom } : null,
+        ]}
+      >
+        <CloseButton
+          onPress={onPress}
+          label={label}
+          accessibilityLabel={accessibilityLabel}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  stretch: {
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+  },
+  screenPad: {
+    width: '100%',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
+    paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
+    paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
+  },
   footerBar: {
     flexShrink: 0,
     paddingHorizontal: 16,
