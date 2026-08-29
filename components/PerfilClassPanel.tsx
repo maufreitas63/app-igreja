@@ -9,9 +9,14 @@ import { loadGroupedManageScreenAccess } from '@/lib/groupedManageAccess';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
-import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
+import {
+  resolveReturnDashboardCardParam,
+  resolveReturnRouteParam,
+  withReturnRoute,
+} from '@/lib/dashboardReturnNavigation';
+import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
 import { FontAwesome } from '@expo/vector-icons';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -19,6 +24,7 @@ import Toast from 'react-native-toast-message';
 /** Container com dados e navegação — compõe o PerfilClass stateless. */
 export function PerfilClassPanel() {
   const params = useLocalSearchParams();
+  const router = useRouter();
   const returnToCaller = useReturnToCallerOnLeave({
     returnRoute: resolveReturnRouteParam(params),
     returnDashboardCard: resolveReturnDashboardCardParam(params),
@@ -29,6 +35,7 @@ export function PerfilClassPanel() {
   const [manageProfile, setManageProfile] = useState(false);
   const [manageMembers, setManageMembers] = useState(false);
   const [canOpenDiscipleshipTrail, setCanOpenDiscipleshipTrail] = useState(false);
+  const [canOpenExpenseReport, setCanOpenExpenseReport] = useState(false);
   const [profileClassVisible, setProfileClassVisible] = useState(false);
   const [membersClassVisible, setMembersClassVisible] = useState(false);
   const [discipleshipTrailVisible, setDiscipleshipTrailVisible] = useState(false);
@@ -54,14 +61,16 @@ export function PerfilClassPanel() {
         setManageProfile(false);
         setManageMembers(false);
         setCanOpenDiscipleshipTrail(false);
+        setCanOpenExpenseReport(false);
         return;
       }
 
-      const [access, trailAllowed] = await Promise.all([
+      const [access, trailAllowed, expenseAllowed] = await Promise.all([
         loadGroupedManageScreenAccess(resolvedProfileId, {
           forceRefresh: options?.forceRefresh === true,
         }),
         sessionHasAccess('screen', ACCESS_SCREEN.discipleshipTrail, 'view'),
+        sessionHasAccess('screen', ACCESS_SCREEN.expenseReport, 'view'),
       ]);
 
       if (generation !== loadGenerationRef.current) {
@@ -71,6 +80,7 @@ export function PerfilClassPanel() {
       setManageProfile(access.manageProfile);
       setManageMembers(access.manageMembers);
       setCanOpenDiscipleshipTrail(trailAllowed);
+      setCanOpenExpenseReport(expenseAllowed);
       if (!trailAllowed) {
         setDiscipleshipTrailVisible(false);
       }
@@ -79,6 +89,7 @@ export function PerfilClassPanel() {
         setManageProfile(false);
         setManageMembers(false);
         setCanOpenDiscipleshipTrail(false);
+        setCanOpenExpenseReport(false);
       }
     } finally {
       if (generation === loadGenerationRef.current) {
@@ -104,6 +115,25 @@ export function PerfilClassPanel() {
   const openManageMembers = useCallback(() => {
     setMembersClassVisible(true);
   }, []);
+
+  const openExpenseReport = useCallback(() => {
+    if (!canOpenExpenseReport) {
+      Toast.show({
+        type: 'error',
+        text1: 'Acesso negado',
+        text2: 'Você não tem permissão para abrir Reembolsos.',
+      });
+      return;
+    }
+
+    void navigateWithScreenAccess(
+      router,
+      '/expense-report',
+      ACCESS_SCREEN.expenseReport,
+      withReturnRoute('/perfil'),
+      { deniedMessage: 'Você não tem permissão para abrir Reembolsos.' }
+    );
+  }, [canOpenExpenseReport, router]);
 
   const openDiscipleshipTrail = useCallback(() => {
     if (!canOpenDiscipleshipTrail) {
@@ -155,13 +185,24 @@ export function PerfilClassPanel() {
       });
     }
 
+    if (canOpenExpenseReport) {
+      items.push({
+        key: 'expense-report',
+        label: 'Reembolsos',
+        icon: 'receipt-long',
+        onPress: openExpenseReport,
+      });
+    }
+
     return items;
   }, [
     canOpenDiscipleshipTrail,
+    canOpenExpenseReport,
     manageMembers,
     manageProfile,
     openDigitalIdCard,
     openDiscipleshipTrail,
+    openExpenseReport,
     openManageMembers,
     openManageProfile,
   ]);

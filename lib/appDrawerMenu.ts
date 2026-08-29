@@ -115,14 +115,13 @@ export const DISCIPLESHIP_SETTINGS_MODULE_KEYS: ReadonlySet<AppDrawerModuleKey> 
 export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'a', label: 'Início', moduleKey: 'events_panel' },
   { letter: 'b', label: 'Perfil', moduleKey: 'menu_perfil' },
-  { letter: 'c', label: 'Reembolsos', moduleKey: 'menu_expense_report' },
-  { letter: 'd', label: 'Financeiro', moduleKey: 'gestao_financeira' },
-  { letter: 'e', label: 'Minha Célula', moduleKey: 'menu_small_group' },
-  { letter: 'f', label: 'Escalas', moduleKey: 'menu_escalas' },
-  { letter: 'g', label: 'Mural de Oportunidades', moduleKey: 'menu_opportunity_mural' },
-  { letter: 'h', label: 'Sugestões', moduleKey: 'suggestions_improvements' },
-  { letter: 'i', label: 'Redes Sociais', moduleKey: 'menu_redes_sociais' },
-  { letter: 'j', label: 'Sobre o Conecta+', moduleKey: 'menu_sobre_conecta' },
+  { letter: 'c', label: 'Financeiro', moduleKey: 'gestao_financeira' },
+  { letter: 'd', label: 'Minha Célula', moduleKey: 'menu_small_group' },
+  { letter: 'e', label: 'Escalas', moduleKey: 'menu_escalas' },
+  { letter: 'f', label: 'Mural de Oportunidades', moduleKey: 'menu_opportunity_mural' },
+  { letter: 'g', label: 'Sugestões', moduleKey: 'suggestions_improvements' },
+  { letter: 'h', label: 'Redes Sociais', moduleKey: 'menu_redes_sociais' },
+  { letter: 'i', label: 'Sobre o Conecta+', moduleKey: 'menu_sobre_conecta' },
 ];
 
 /** Painel da engrenagem — orquestração e gestão (ACL de liderança). */

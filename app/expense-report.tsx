@@ -328,9 +328,9 @@ export default function ExpenseReportScreen() {
       return;
     }
 
-    if (returnRoute === '/administrativo') {
+    if (returnRoute && returnRoute !== '/(tabs)/dashboard') {
       router.replace({
-        pathname: '/administrativo',
+        pathname: returnRoute,
         params: withMinimalPresentation(),
       } as Href);
       return;
@@ -343,7 +343,7 @@ export default function ExpenseReportScreen() {
     <ScreenAccessGate status={accessStatus}>
       <MinimalScreenLayout
         scroll={false}
-        footer={mode === 'list' ? <CloseFooterBar onPress={returnToCaller} /> : undefined}
+        footer={mode === 'list' ? <CloseFooterBar onPress={handleGoBack} /> : undefined}
         fixedTop={
           <View style={styles.headerBar}>
             <TouchableOpacity
