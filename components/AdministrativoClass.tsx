@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import {
   createAssemblyMinuteSignedUrl,
@@ -161,7 +162,7 @@ export function AdministrativoClass({
         </View>
       </View>
 
-      <View style={styles.footerActionsRow}>
+      <View style={styles.footerActionsColumn}>
         <TouchableOpacity
           style={styles.rdButton}
           onPress={onPressRd}
@@ -171,17 +172,7 @@ export function AdministrativoClass({
         >
           <Text style={styles.rdButtonText}>{rdButtonLabel}</Text>
         </TouchableOpacity>
-        {onClose ? (
-          <TouchableOpacity
-            style={styles.closeScreenButton}
-            onPress={onClose}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="Fechar"
-          >
-            <Text style={styles.closeScreenButtonText}>Fechar</Text>
-          </TouchableOpacity>
-        ) : null}
+        {onClose ? <CloseButton onPress={onClose} /> : null}
       </View>
 
       <Modal
@@ -239,13 +230,7 @@ export function AdministrativoClass({
               </ScrollView>
             )}
 
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setMinutesModalOpen(false)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.modalCloseButtonText}>Fechar</Text>
-            </TouchableOpacity>
+            <CloseButton onPress={() => setMinutesModalOpen(false)} />
           </View>
         </View>
       </Modal>
@@ -362,9 +347,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
-  footerActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  footerActionsColumn: {
     gap: 10,
     flexShrink: 0,
   },

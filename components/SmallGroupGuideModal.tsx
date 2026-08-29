@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import { isPdfLikeUrl, type SmallGroupGuide } from '@/lib/smallGroupsApi';
 import React from 'react';
@@ -50,9 +51,7 @@ export function SmallGroupGuideModal({ visible, guide, onClose }: Props) {
             ) : null}
           </ScrollView>
 
-          <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.85}>
-            <Text style={styles.closeButtonText}>Fechar</Text>
-          </TouchableOpacity>
+          <CloseButton onPress={onClose} />
         </View>
       </View>
     </Modal>

@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { FontAwesome } from '@expo/vector-icons';
 import { openPdfUri } from '@/lib/openPdfUri';
 import { buildInlinePdfViewerUrl, isApkShellWebClient } from '@/lib/pdfViewerUrl';
@@ -84,9 +85,7 @@ export function AssemblyMinutesPdfModal({ visible, title, pdfUrl, onClose }: Pro
                 {Platform.OS === 'web' ? 'Abrir em nova aba' : 'Abrir / compartilhar'}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.85}>
-              <Text style={styles.closeButtonText}>Fechar</Text>
-            </TouchableOpacity>
+            <CloseButton onPress={onClose} />
           </View>
         </View>
       </View>

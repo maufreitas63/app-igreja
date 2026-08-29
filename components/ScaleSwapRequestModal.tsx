@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { pushAppBackInterceptor } from '@/lib/appBackIntercept';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -277,9 +278,7 @@ export function ScaleSwapRequestModal({
             </ScrollView>
           )}
 
-          <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.85}>
-            <Text style={styles.closeButtonText}>Fechar</Text>
-          </TouchableOpacity>
+          <CloseButton onPress={onClose} />
         </View>
       </View>
     </Modal>

@@ -20,7 +20,7 @@ import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { PastoralSchedulePanel } from '@/components/PastoralSchedulePanel';
 import { PASTORAL_SCHEDULE_RESOURCE } from '@/lib/pastoralAccess';
 import { supabase } from '@/lib/supabase';
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseButton, CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
@@ -649,20 +649,7 @@ export default function PastoralScreen() {
                   );
                 })}
               </ScrollView>
-              <TouchableOpacity
-                style={[styles.selectorCloseButton, useVigilanceTheme && styles.selectorCloseButtonVigilance]}
-                onPress={() => setActiveSelector(null)}
-                activeOpacity={0.85}
-              >
-                <Text
-                  style={[
-                    styles.selectorCloseButtonText,
-                    useVigilanceTheme && styles.selectorCloseButtonTextVigilance,
-                  ]}
-                >
-                  Fechar
-                </Text>
-              </TouchableOpacity>
+              <CloseButton onPress={() => setActiveSelector(null)} />
             </Pressable>
           </Pressable>
         </Modal>

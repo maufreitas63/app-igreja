@@ -6,6 +6,7 @@ import { CampaignCard } from '@/components/CampaignCard';
 import { OpportunityMuralCard } from '@/components/OpportunityMuralCard';
 import { ScalesClassPanel } from '@/components/ScalesClassPanel';
 import { ParkingVehicleIdentifyPanel } from '@/components/ParkingVehicleIdentifyPanel';
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { FamilyEventSelector } from '@/components/FamilyEventSelector';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
 import { resolveEventEnabledRoomKeys } from '@/lib/maintenanceEventForm';
@@ -3991,13 +3992,7 @@ export default function Dashboard() {
                   </View>
                 ))}
               </ScrollView>
-              <TouchableOpacity
-                style={styles.membersFamilyCloseButton}
-                onPress={() => setFamilyModalSeedEntry(null)}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.membersFamilyCloseButtonText}>Fechar</Text>
-              </TouchableOpacity>
+              <CloseButton onPress={() => setFamilyModalSeedEntry(null)} />
             </Pressable>
           </Pressable>
         </Modal>

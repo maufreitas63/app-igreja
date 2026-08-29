@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import {
   formatExpenseReportAmount,
   formatExpenseReportDate,
@@ -108,9 +109,7 @@ export function ExpenseReportViewer({
             ) : previewUrl ? (
               <Image source={{ uri: previewUrl }} style={styles.previewImage} resizeMode="contain" />
             ) : null}
-            <TouchableOpacity style={styles.previewClose} onPress={() => setPreviewVisible(false)}>
-              <Text style={styles.previewCloseText}>Fechar</Text>
-            </TouchableOpacity>
+            <CloseButton onPress={() => setPreviewVisible(false)} />
           </Pressable>
         </Pressable>
       </Modal>

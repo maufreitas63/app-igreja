@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { MembersListsClass } from '@/components/MembersListsClass';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MAP_PIN_DETAIL_DENIED_MESSAGE, useMapPinDetailAccess } from '@/hooks/useMapPinDetailAccess';
@@ -445,13 +446,7 @@ export function MembersListsClassPanel() {
                 </View>
               ))}
             </ScrollView>
-            <TouchableOpacity
-              style={styles.familyCloseButton}
-              onPress={() => setFamilyModalSeedEntry(null)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.familyCloseButtonText}>Fechar</Text>
-            </TouchableOpacity>
+            <CloseButton onPress={() => setFamilyModalSeedEntry(null)} />
           </Pressable>
         </Pressable>
       </Modal>

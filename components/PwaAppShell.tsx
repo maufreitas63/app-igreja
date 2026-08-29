@@ -1,3 +1,4 @@
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import {
   buildShellPdfViewerUri,
   downloadAndOpenShellFile,
@@ -482,14 +483,6 @@ export function PwaAppShell() {
             <Text style={styles.pdfTitle} numberOfLines={1}>
               Documento PDF
             </Text>
-            <Pressable
-              style={styles.pdfClose}
-              onPress={() => setPdfViewerUri(null)}
-              accessibilityRole="button"
-              accessibilityLabel="Fechar PDF"
-            >
-              <Text style={styles.pdfCloseText}>Fechar</Text>
-            </Pressable>
           </View>
           {pdfViewerUri ? (
             <WebView
@@ -508,6 +501,7 @@ export function PwaAppShell() {
               )}
             />
           ) : null}
+          <CloseFooterBar onPress={() => setPdfViewerUri(null)} />
         </SafeAreaView>
       </Modal>
 

@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceProfileAccessInsights } from '@/hooks/useMaintenanceProfileAccessInsights';
@@ -149,17 +150,7 @@ function ScreenHistoryBalloon({
             </ScrollView>
           ) : null}
 
-          <TouchableOpacity
-            style={[styles.balloonCloseButton, minimal && styles.balloonCloseButtonMinimal]}
-            onPress={onClose}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="Fechar histórico de telas"
-          >
-            <Text style={[styles.balloonCloseButtonText, minimal && styles.balloonCloseButtonTextMinimal]}>
-              Fechar
-            </Text>
-          </TouchableOpacity>
+          <CloseButton onPress={onClose} accessibilityLabel="Fechar histórico de telas" />
         </Pressable>
       </Pressable>
     </Modal>

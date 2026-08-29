@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -63,15 +64,7 @@ export function MaintenanceHelpInfoTitle({
             <Text style={[styles.modalTitle, minimal && styles.modalTitleMinimal]}>{modalTitle}</Text>
             <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>{helpText}</Text>
             <View style={styles.actions}>
-              <TouchableOpacity
-                style={[styles.closeButton, minimal && styles.closeButtonMinimal]}
-                onPress={() => setOpen(false)}
-                activeOpacity={0.85}
-                accessibilityRole="button"
-                accessibilityLabel="Fechar"
-              >
-                <Text style={[styles.closeText, minimal && styles.closeTextMinimal]}>Fechar</Text>
-              </TouchableOpacity>
+              <CloseButton onPress={() => setOpen(false)} />
             </View>
           </View>
         </View>

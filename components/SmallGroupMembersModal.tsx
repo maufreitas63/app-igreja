@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { formatFullName } from '@/lib/fullName';
 import React from 'react';
 import {
@@ -54,15 +55,7 @@ export function SmallGroupMembersModal({
             )}
           </ScrollView>
 
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={onClose}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="Fechar lista de participantes"
-          >
-            <Text style={styles.closeButtonText}>Fechar</Text>
-          </TouchableOpacity>
+          <CloseButton onPress={onClose} accessibilityLabel="Fechar lista de participantes" />
         </View>
       </View>
     </Modal>

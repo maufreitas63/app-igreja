@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import {
@@ -196,13 +197,7 @@ export function AdministrativoCard({ panelHeight, isActive = true, initialTab: _
               </ScrollView>
             )}
 
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setMinutesModalOpen(false)}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.modalCloseButtonText}>Fechar</Text>
-            </TouchableOpacity>
+            <CloseButton onPress={() => setMinutesModalOpen(false)} />
           </View>
         </View>
       </Modal>

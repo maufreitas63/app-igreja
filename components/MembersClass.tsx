@@ -1,3 +1,4 @@
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MemberPhotoPicker } from '@/components/MemberPhotoPicker';
 import {
   OPCOES_PARENTESCO,
@@ -445,11 +446,7 @@ export function MembersClass({
         }}
       />
 
-      <View style={[membersClassStyles.footerContainer, { paddingBottom: insetsBottom + 10 }]}>
-        <TouchableOpacity style={membersClassStyles.backButton} onPress={onLeaveScreen}>
-          <Text style={membersClassStyles.backButtonText}>Fechar</Text>
-        </TouchableOpacity>
-      </View>
+      <CloseFooterBar onPress={onLeaveScreen} contentInsetBottom={insetsBottom} />
     </Root>
   );
 }

@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { AgeBracketPieChart, parseAgeBracketChartSlices } from '@/components/AgeBracketPieChart';
 import { SupportSuggestionsReportPdfModal } from '@/components/SupportSuggestionsReportPdfModal';
 import { SupportSuggestionsReportView } from '@/components/SupportSuggestionsReportView';
@@ -572,20 +573,7 @@ function GenericReportResultsTable({ result, minimal = false }: ReportResultsTab
               )}
             </ScrollView>
 
-            <TouchableOpacity
-              style={[styles.ageBracketCloseButton, minimal && styles.ageBracketCloseButtonMinimal]}
-              onPress={closeAgeBracketModal}
-              activeOpacity={0.85}
-            >
-              <Text
-                style={[
-                  styles.ageBracketCloseButtonText,
-                  minimal && styles.ageBracketCloseButtonTextMinimal,
-                ]}
-              >
-                Fechar
-              </Text>
-            </TouchableOpacity>
+            <CloseButton onPress={closeAgeBracketModal} />
           </View>
         ) : null}
       </View>
@@ -649,20 +637,7 @@ function GenericReportResultsTable({ result, minimal = false }: ReportResultsTab
               )}
             </ScrollView>
 
-            <TouchableOpacity
-              style={[styles.ageBracketCloseButton, minimal && styles.ageBracketCloseButtonMinimal]}
-              onPress={closeEventRegistrationsModal}
-              activeOpacity={0.85}
-            >
-              <Text
-                style={[
-                  styles.ageBracketCloseButtonText,
-                  minimal && styles.ageBracketCloseButtonTextMinimal,
-                ]}
-              >
-                Fechar
-              </Text>
-            </TouchableOpacity>
+            <CloseButton onPress={closeEventRegistrationsModal} />
           </View>
         ) : null}
       </View>

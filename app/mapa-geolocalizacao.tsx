@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { createStyles } from '@/lib/createStyles';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import {
@@ -568,13 +569,7 @@ export default function MapGeolocalizacaoScreen() {
                 );
               })}
             </ScrollView>
-            <TouchableOpacity
-              style={styles.invalidCepsFooterButton}
-              onPress={handleCloseInvalidCepsModal}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.invalidCepsFooterButtonText}>Fechar</Text>
-            </TouchableOpacity>
+            <CloseButton onPress={handleCloseInvalidCepsModal} />
           </Pressable>
         </Pressable>
       </Modal>

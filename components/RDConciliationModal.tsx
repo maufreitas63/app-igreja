@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import {
   EXPENSE_REPORT_SQL_HINT,
   fetchPendingExpenseReports,
@@ -156,9 +157,7 @@ export function RDConciliationModal({ visible, financialId, onClose, onReconcile
             </ScrollView>
           )}
 
-          <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.85}>
-            <Text style={styles.closeButtonText}>Fechar</Text>
-          </TouchableOpacity>
+          <CloseButton onPress={onClose} />
         </Pressable>
       </Pressable>
     </Modal>

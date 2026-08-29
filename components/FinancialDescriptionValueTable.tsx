@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { boxShadowStyle } from '@/lib/boxShadow';
 import {
   type BulletinComparisonRow,
@@ -286,55 +287,47 @@ const ReceiptImageModal = ({
               resizeMode="contain"
             />
           ) : null}
+          {hasMultiple ? (
           <View style={styles.receiptModalActions}>
-            {hasMultiple ? (
-              <TouchableOpacity
+            <TouchableOpacity
+              style={[
+                styles.receiptModalNavButton,
+                !canGoPrevious && styles.receiptModalNavButtonDisabled,
+              ]}
+              onPress={() => setIndex((current) => Math.max(current - 1, 0))}
+              disabled={!canGoPrevious}
+              activeOpacity={0.85}
+            >
+              <Text
                 style={[
-                  styles.receiptModalNavButton,
-                  !canGoPrevious && styles.receiptModalNavButtonDisabled,
+                  styles.receiptModalNavButtonText,
+                  !canGoPrevious && styles.receiptModalNavButtonTextDisabled,
                 ]}
-                onPress={() => setIndex((current) => Math.max(current - 1, 0))}
-                disabled={!canGoPrevious}
-                activeOpacity={0.85}
               >
-                <Text
-                  style={[
-                    styles.receiptModalNavButtonText,
-                    !canGoPrevious && styles.receiptModalNavButtonTextDisabled,
-                  ]}
-                >
-                  Anterior
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.receiptModalNavSpacer} />
-            )}
-            <TouchableOpacity style={styles.bubbleCloseButton} onPress={onClose} activeOpacity={0.85}>
-              <Text style={styles.bubbleCloseButtonText}>Fechar</Text>
+                Anterior
+              </Text>
             </TouchableOpacity>
-            {hasMultiple ? (
-              <TouchableOpacity
+            <TouchableOpacity
+              style={[
+                styles.receiptModalNavButton,
+                !canGoNext && styles.receiptModalNavButtonDisabled,
+              ]}
+              onPress={() => setIndex((current) => Math.min(current + 1, urls.length - 1))}
+              disabled={!canGoNext}
+              activeOpacity={0.85}
+            >
+              <Text
                 style={[
-                  styles.receiptModalNavButton,
-                  !canGoNext && styles.receiptModalNavButtonDisabled,
+                  styles.receiptModalNavButtonText,
+                  !canGoNext && styles.receiptModalNavButtonTextDisabled,
                 ]}
-                onPress={() => setIndex((current) => Math.min(current + 1, urls.length - 1))}
-                disabled={!canGoNext}
-                activeOpacity={0.85}
               >
-                <Text
-                  style={[
-                    styles.receiptModalNavButtonText,
-                    !canGoNext && styles.receiptModalNavButtonTextDisabled,
-                  ]}
-                >
-                  Próximo
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.receiptModalNavSpacer} />
-            )}
+                Próximo
+              </Text>
+            </TouchableOpacity>
           </View>
+          ) : null}
+          <CloseButton onPress={onClose} />
         </Pressable>
       </Pressable>
     </Modal>
@@ -426,9 +419,7 @@ const CommentDetailsModal = ({
                 );
               })}
             </ScrollView>
-            <TouchableOpacity style={styles.bubbleCloseButton} onPress={onClose} activeOpacity={0.85}>
-              <Text style={styles.bubbleCloseButtonText}>Fechar</Text>
-            </TouchableOpacity>
+            <CloseButton onPress={onClose} />
           </Pressable>
         </Pressable>
       </Modal>

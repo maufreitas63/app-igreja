@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -399,25 +400,7 @@ export function DropdownSelect({
                 );
               })}
             </ScrollView>
-            <TouchableOpacity
-              style={[
-                styles.closeButton,
-                isVigilance && styles.closeButtonVigilance,
-                isMinimal && styles.closeButtonMinimal,
-              ]}
-              onPress={() => setOpen(false)}
-              activeOpacity={0.85}
-            >
-              <Text
-                style={[
-                  styles.closeButtonText,
-                  isVigilance && styles.closeButtonTextVigilance,
-                  isMinimal && styles.closeButtonTextMinimal,
-                ]}
-              >
-                Fechar
-              </Text>
-            </TouchableOpacity>
+            <CloseButton onPress={() => setOpen(false)} />
           </Pressable>
         </Pressable>
       </Modal>

@@ -1,3 +1,4 @@
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import {
   buildDiscipleshipAchievementSlots,
   completeLessonWithAchievements,
@@ -513,11 +514,7 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
           );
         })}
 
-        {onClose ? (
-          <TouchableOpacity style={styles.secondaryButton} onPress={onClose} activeOpacity={0.85}>
-            <Text style={styles.secondaryButtonText}>Fechar</Text>
-          </TouchableOpacity>
-        ) : null}
+        {onClose ? <CloseButton onPress={onClose} /> : null}
       </ScrollView>
 
       <Modal
@@ -655,13 +652,7 @@ export function DiscipleshipTrailPanel({ onClose }: Props) {
                   )}
                 </TouchableOpacity>
               ) : (
-                <TouchableOpacity
-                  style={styles.primaryButton}
-                  onPress={() => setSelectedLesson(null)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.primaryButtonText}>Fechar</Text>
-                </TouchableOpacity>
+                <CloseButton onPress={() => setSelectedLesson(null)} />
               )}
             </View>
           </View>

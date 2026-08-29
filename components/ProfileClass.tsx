@@ -9,6 +9,7 @@ import {
 import { PROFILE_CLASS_ICON_COLOR, profileClassStyles } from '@/lib/manageProfile/profileClassStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { BiometricUnlockSettingsCard } from '@/components/BiometricUnlockSettingsCard';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView } from 'expo-camera';
 import { Image } from 'expo-image';
@@ -815,11 +816,7 @@ export function ProfileClass({
         )}
       </ScrollView>
 
-      <View style={[profileClassStyles.footerContainer, { paddingBottom: insetsBottom + 10 }]}>
-        <TouchableOpacity style={profileClassStyles.backButton} onPress={onLeaveScreen}>
-          <Text style={profileClassStyles.backButtonText}>Fechar</Text>
-        </TouchableOpacity>
-      </View>
+      <CloseFooterBar onPress={onLeaveScreen} contentInsetBottom={insetsBottom} />
     </RootWrapper>
   );
 }

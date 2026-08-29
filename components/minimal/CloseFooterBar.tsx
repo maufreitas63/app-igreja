@@ -2,23 +2,72 @@ import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
+export type CloseButtonProps = {
+  onPress: () => void;
+  label?: string;
+  accessibilityLabel?: string;
+};
+
 type CloseFooterBarProps = {
   onPress: () => void;
   variant?: 'minimal' | 'dark';
+  contentInsetBottom?: number;
 };
 
-/** Rodapé fixo com botão «Fechar» — mesmo markup/estilo em Pastoral, Ofertas e Agenda. */
-export function CloseFooterBar({ onPress, variant = 'minimal' }: CloseFooterBarProps) {
+const closeButtonStyles = StyleSheet.create({
+  button: {
+    minHeight: 51,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#1B4F8A',
+    backgroundColor: '#3A96DD',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    width: '100%',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+});
+
+/** Botão «Fechar» canônico — azul, 51px, borda 2px, `<button>` na web. */
+export function CloseButton({
+  onPress,
+  label = 'Fechar',
+  accessibilityLabel,
+}: CloseButtonProps) {
   return (
-    <View style={[styles.footerBar, variant === 'dark' ? styles.footerBarDark : styles.footerBarMinimal]}>
-      <Pressable
-        onPress={onPress}
-        style={styles.closeFooterButton}
-        accessibilityRole="button"
-        accessibilityLabel="Fechar"
-      >
-        <Text style={styles.closeFooterButtonText}>Fechar</Text>
-      </Pressable>
+    <Pressable
+      onPress={onPress}
+      style={closeButtonStyles.button}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+    >
+      <Text style={closeButtonStyles.buttonText}>{label}</Text>
+    </Pressable>
+  );
+}
+
+/** Rodapé fixo com o botão «Fechar» canônico. */
+export function CloseFooterBar({
+  onPress,
+  variant = 'minimal',
+  contentInsetBottom = 0,
+}: CloseFooterBarProps) {
+  return (
+    <View
+      style={[
+        styles.footerBar,
+        variant === 'dark' ? styles.footerBarDark : styles.footerBarMinimal,
+        contentInsetBottom > 0 ? { paddingBottom: 12 + contentInsetBottom } : null,
+      ]}
+    >
+      <CloseButton onPress={onPress} />
     </View>
   );
 }
@@ -39,22 +88,5 @@ const styles = StyleSheet.create({
   footerBarDark: {
     borderTopColor: '#334155',
     backgroundColor: 'rgba(2, 6, 23, 0.92)',
-  },
-  closeFooterButton: {
-    minHeight: 51,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#1B4F8A',
-    backgroundColor: '#3A96DD',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
-  },
-  closeFooterButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
   },
 });
