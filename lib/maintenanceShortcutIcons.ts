@@ -10,6 +10,7 @@ export type MaintenancePanelContent =
   | 'small_groups_management'
   | 'campaigns_management'
   | 'volunteer_mural'
+  | 'generosity_moderation'
   | 'mudanca_papeis'
   | 'transferencia_igreja'
   | 'profile_cadastro'
@@ -47,6 +48,7 @@ export type MaintenanceShortcutIconName =
   | 'bullhorn'
   | 'comments'
   | 'flag'
+  | 'gift'
   | 'user-secret';
 
 /** Ícone FontAwesome por módulo de manutenção. */
@@ -65,6 +67,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   small_groups_management: 'group',
   campaigns_management: 'flag',
   volunteer_mural: 'users',
+  generosity_moderation: 'gift',
   mudanca_papeis: 'exchange',
   transferencia_igreja: 'share',
   financials: 'line-chart',
@@ -93,6 +96,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   small_groups_management: '#A78BFA',
   campaigns_management: '#F59E0B',
   volunteer_mural: '#0D9488',
+  generosity_moderation: '#F59E0B',
   mudanca_papeis: '#FB7185',
   transferencia_igreja: '#818CF8',
   financials: '#34D399',

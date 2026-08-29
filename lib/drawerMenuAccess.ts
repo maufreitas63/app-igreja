@@ -31,6 +31,7 @@ export const DRAWER_MEMBER_SCREEN_BY_MODULE: Partial<Record<AppDrawerModuleKey, 
   menu_manage_members: ACCESS_SCREEN.manageMembers,
   menu_trilha: ACCESS_SCREEN.discipleshipTrail,
   menu_expense_report: ACCESS_SCREEN.expenseReport,
+  menu_generosity_mural: ACCESS_SCREEN.generosityMural,
 };
 
 /** Itens do menu membro que exigem vínculo ativo (`membership_out` visível no app). */
@@ -42,6 +43,7 @@ export const DRAWER_MODULES_REQUIRING_ACTIVE_MEMBERSHIP: ReadonlySet<AppDrawerMo
   'menu_mapa',
   'menu_small_group',
   'menu_opportunity_mural',
+  'menu_generosity_mural',
 ]);
 
 export type DrawerMemberAccessContext = {

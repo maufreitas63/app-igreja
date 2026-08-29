@@ -51,6 +51,7 @@ export const ACCESS_DASHBOARD_CARD = {
   smallGroup: 'dashboard.card.small_group',
   campaign: 'dashboard.card.campaign',
   opportunities: 'dashboard.card.opportunities',
+  generosity: 'dashboard.card.generosity',
 } as const;
 
 /** `content` do carrossel → `resource_key` em `access_resources`. */
@@ -80,6 +81,7 @@ export const DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   small_group: ACCESS_DASHBOARD_CARD.smallGroup,
   campaign_card: ACCESS_DASHBOARD_CARD.campaign,
   opportunity_mural_card: ACCESS_DASHBOARD_CARD.opportunities,
+  generosity_mural: ACCESS_DASHBOARD_CARD.generosity,
 };
 
 export type DashboardCardViewAccess = Record<string, boolean>;

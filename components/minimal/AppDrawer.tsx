@@ -40,6 +40,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   pastoral_care: 'heart',
   small_groups_management: 'group',
   volunteer_mural: 'handshake-o',
+  generosity_moderation: 'gift',
   family_reception: 'home',
   visitor_followup: 'commenting',
   profile_cadastro: 'user-plus',

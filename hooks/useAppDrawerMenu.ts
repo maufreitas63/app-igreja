@@ -199,6 +199,7 @@ export function useAppDrawerMenu() {
           ACCESS_SCREEN.discipleshipTrail,
           ACCESS_SCREEN.expenseReport,
           ACCESS_SCREEN.mapGeolocation,
+          ACCESS_SCREEN.generosityMural,
         ].map(async (resourceKey) => {
           if (dashboardScreenAccess[resourceKey] === true) {
             return [resourceKey, true] as const;

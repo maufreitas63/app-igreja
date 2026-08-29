@@ -32,6 +32,7 @@ export type AppDrawerModuleKey =
   | 'menu_trilha'
   | 'menu_small_group'
   | 'menu_opportunity_mural'
+  | 'menu_generosity_mural'
   | 'menu_escalas'
   | 'menu_aniversariantes'
   | 'menu_membros'
@@ -58,6 +59,7 @@ export type AppDrawerModuleKey =
   | 'small_groups_management'
   | 'campaigns_management'
   | 'volunteer_mural'
+  | 'generosity_moderation'
   | 'discipleship_themes'
   | 'discipleship_alerts'
   | 'discipleship_reset'
@@ -120,6 +122,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'd', label: 'Minha Célula', moduleKey: 'menu_small_group' },
   { letter: 'e', label: 'Escalas', moduleKey: 'menu_escalas' },
   { letter: 'f', label: 'Mural de Oportunidades', moduleKey: 'menu_opportunity_mural' },
+  { letter: 'f2', label: 'Mural de Generosidade', moduleKey: 'menu_generosity_mural' },
   { letter: 'g', label: 'Sugestões', moduleKey: 'suggestions_improvements' },
   { letter: 'h', label: 'Redes Sociais', moduleKey: 'menu_redes_sociais' },
   { letter: 'i', label: 'Sobre o Conecta+', moduleKey: 'menu_sobre_conecta' },
@@ -186,6 +189,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     label: 'Mural de Voluntários',
     moduleKey: 'volunteer_mural',
     group: 'pessoas',
+  },
+  {
+    letter: 'p6b',
+    label: 'Moderação do Mural',
+    moduleKey: 'generosity_moderation',
+    group: 'pessoas',
+    hint: 'Doações e pedidos de empréstimo',
   },
   {
     letter: 'p7',
@@ -377,6 +387,7 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   small_groups_management: 'small_groups_management',
   campaigns_management: 'campaigns_management',
   volunteer_mural: 'volunteer_mural',
+  generosity_moderation: 'generosity_moderation',
   discipleship_themes: 'discipleship_themes',
   discipleship_alerts: 'discipleship_alerts',
   discipleship_reset: 'discipleship_reset',
@@ -499,6 +510,16 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_opportunity_mural') {
     router.replace(buildReturnToDashboardHref('opportunity_mural_card'));
+    return;
+  }
+
+  if (moduleKey === 'menu_generosity_mural') {
+    await navigateWithScreenAccess(
+      router,
+      '/mural-generosidade',
+      ACCESS_SCREEN.generosityMural,
+      withFailClosedReturn()
+    );
     return;
   }
 

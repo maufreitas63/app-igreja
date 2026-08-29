@@ -38,6 +38,7 @@ export const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   small_groups_management: 'maintenance.card.small_groups_management',
   campaigns_management: 'maintenance.finance.campaigns',
   volunteer_mural: 'maintenance.volunteer.mural',
+  generosity_moderation: 'maintenance.card.generosity_moderation',
 };
 
 export function resolveDashboardCardAccessResourceKey(

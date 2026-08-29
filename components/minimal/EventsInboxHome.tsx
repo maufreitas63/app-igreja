@@ -10,6 +10,7 @@ import {
 import { fetchMyPastoralSlotNotices, markPastoralSlotNoticesRead, type PastoralSlotNotice } from '@/lib/pastoralSlotsApi';
 import { fetchMyCampaignNotices, type CampaignNotice } from '@/lib/campaignProjectsApi';
 import { fetchUnreadOpportunityNotices, markOpportunityNoticesRead, type OpportunityNotice } from '@/lib/volunteerOpportunitiesApi';
+import { fetchUnreadGenerosityNotices, markGenerosityNoticesRead, type GenerosityNotice } from '@/lib/generosityMuralApi';
 import { fetchUnreadScaleSwapNotices, markScaleSwapNoticesRead, type ScaleSwapNotice } from '@/lib/scaleSwapApi';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import {
@@ -54,6 +55,7 @@ export function EventsInboxHome() {
   const [pastoralNotices, setPastoralNotices] = useState<PastoralSlotNotice[]>([]);
   const [campaignNotices, setCampaignNotices] = useState<CampaignNotice[]>([]);
   const [opportunityNotices, setOpportunityNotices] = useState<OpportunityNotice[]>([]);
+  const [generosityNotices, setGenerosityNotices] = useState<GenerosityNotice[]>([]);
   const [scaleSwapNotices, setScaleSwapNotices] = useState<ScaleSwapNotice[]>([]);
   const [avisosLoading, setAvisosLoading] = useState(false);
   const [avisosError, setAvisosError] = useState<string | null>(null);
@@ -109,11 +111,13 @@ export function EventsInboxHome() {
       }
       setCampaignNotices(campaignRows);
       const nextOpportunity = await fetchUnreadOpportunityNotices();
+      const nextGenerosity = await fetchUnreadGenerosityNotices();
       const nextSwaps = await fetchUnreadScaleSwapNotices();
       if (loadId !== avisosLoadGenRef.current) {
         return;
       }
       setOpportunityNotices(nextOpportunity);
+      setGenerosityNotices(nextGenerosity);
       setScaleSwapNotices(nextSwaps);
       const rows = await fetchPublishedEventAvisos();
       if (loadId !== avisosLoadGenRef.current) {
@@ -125,6 +129,9 @@ export function EventsInboxHome() {
       }
       if (nextOpportunity.length > 0) {
         void markOpportunityNoticesRead();
+      }
+      if (nextGenerosity.length > 0) {
+        void markGenerosityNoticesRead();
       }
       if (nextSwaps.length > 0) {
         void markScaleSwapNoticesRead();
@@ -277,6 +284,7 @@ export function EventsInboxHome() {
                 && pastoralNotices.length === 0
                 && campaignNotices.length === 0
                 && opportunityNotices.length === 0
+                && generosityNotices.length === 0
                 && scaleSwapNotices.length === 0 ? (
                 avisosError ? (
                   <Text style={styles.error}>{avisosError}</Text>
@@ -292,6 +300,14 @@ export function EventsInboxHome() {
                 >
                   {opportunityNotices.map((item) => (
                     <View key={`opportunity-${item.id}`} style={styles.avisoCard}>
+                      <Text style={styles.avisoTitle} numberOfLines={2}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.avisoBody}>{item.body}</Text>
+                    </View>
+                  ))}
+                  {generosityNotices.map((item) => (
+                    <View key={`generosity-${item.id}`} style={styles.avisoCard}>
                       <Text style={styles.avisoTitle} numberOfLines={2}>
                         {item.title}
                       </Text>

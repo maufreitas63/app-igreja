@@ -25,6 +25,7 @@ import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCar
 import { MaintenanceSmallGroupsCard } from '@/components/MaintenanceSmallGroupsCard';
 import { MaintenanceCampaignsCard } from '@/components/MaintenanceCampaignsCard';
 import { MaintenanceVolunteerMuralCard } from '@/components/MaintenanceVolunteerMuralCard';
+import { MaintenanceGenerosityModerationCard } from '@/components/MaintenanceGenerosityModerationCard';
 import { MaintenanceDiscipleshipAlertsCard } from '@/components/MaintenanceDiscipleshipAlertsCard';
 import { MaintenanceDiscipleshipThemesCard } from '@/components/MaintenanceDiscipleshipThemesCard';
 import { MaintenanceDiscipleshipResetCard } from '@/components/MaintenanceDiscipleshipResetCard';
@@ -170,6 +171,7 @@ type MaintenanceCarouselCard = {
     | 'small_groups_management'
     | 'campaigns_management'
     | 'volunteer_mural'
+    | 'generosity_moderation'
     | 'mudanca_papeis'
     | 'transferencia_igreja'
     | 'profile_cadastro'
@@ -206,6 +208,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '24', title: 'Gestão de Pequenos Grupos', content: 'small_groups_management' },
   { id: '25', title: 'Gestão de Campanhas', content: 'campaigns_management' },
   { id: '26', title: 'Mural de Voluntários', content: 'volunteer_mural' },
+  { id: '28', title: 'Moderação do Mural', content: 'generosity_moderation' },
   { id: '21', title: 'Temas da Trilha', content: 'discipleship_themes' },
   { id: '20', title: 'Trilha — Reconhecimentos', content: 'discipleship_alerts' },
   { id: '22', title: 'Resetar Trilha', content: 'discipleship_reset' },
@@ -1374,6 +1377,7 @@ export default function MaintenanceDashboard() {
             !isMinimalPresentation && item.content === 'small_groups_management' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'campaigns_management' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'volunteer_mural' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'generosity_moderation' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'mudanca_papeis' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'transferencia_igreja' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'profile_cadastro' && styles.panelCardInnerPadding,
@@ -1557,6 +1561,19 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceVolunteerMuralCard
+                isActive={currentIndex === index}
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
+          ) : item.content === 'generosity_moderation' ? (
+            <View
+              style={[
+                styles.pastoralCarePanel,
+                isMinimalPresentation && styles.pastoralCarePanelMinimal,
+              ]}
+            >
+              <MaintenanceGenerosityModerationCard
                 isActive={currentIndex === index}
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
