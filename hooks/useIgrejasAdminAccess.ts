@@ -1,11 +1,12 @@
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
+import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 
 /** Acesso à rota `/igrejas` — apenas super_admin. */
-export function useIgrejasAdminAccess(redirectPath: string = '/(tabs)/dashboard'): ScreenAccessStatus {
+export function useIgrejasAdminAccess(redirectPath: string = MEMBER_HOME_PATH): ScreenAccessStatus {
   const router = useRouter();
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
 

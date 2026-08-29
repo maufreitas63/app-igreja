@@ -32,8 +32,6 @@ import {
 import {
   isMinimalPresentationRoute,
   withMinimalPresentation,
-  buildReturnToDashboardHref,
-  resolveReturnDashboardCardParam,
 } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
@@ -190,13 +188,6 @@ export default function PastoralHistoryScreen() {
   );
 
   const handleBack = () => {
-    const returnCard = resolveReturnDashboardCardParam(params);
-
-    if (returnCard) {
-      router.replace(buildReturnToDashboardHref(returnCard));
-      return;
-    }
-
     if (router.canGoBack()) {
       router.back();
       return;

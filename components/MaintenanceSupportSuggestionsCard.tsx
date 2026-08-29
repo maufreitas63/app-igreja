@@ -823,7 +823,7 @@ export function MaintenanceSupportSuggestionsCard({
         <TouchableOpacity
           style={themedStyles.backButton}
           onPress={() => {
-            if (onNavigateBack) {
+            if (initialMode === 'new' && onNavigateBack) {
               onNavigateBack();
               return;
             }

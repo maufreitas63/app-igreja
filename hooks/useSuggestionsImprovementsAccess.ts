@@ -9,6 +9,7 @@ import { isSuggestionsImprovementsAccessAllowed } from '@/lib/drawerMenuAccess';
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
+import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -20,7 +21,7 @@ export function useSuggestionsImprovementsAccess(options?: {
   redirectPath?: string;
 }): ScreenAccessStatus {
   const router = useRouter();
-  const redirectPath = options?.redirectPath ?? '/(tabs)/dashboard';
+  const redirectPath = options?.redirectPath ?? MEMBER_HOME_PATH;
   const [ghostTargetId, setGhostTargetId] = useState(
     () => getGhostModeState()?.targetProfileId ?? null
   );

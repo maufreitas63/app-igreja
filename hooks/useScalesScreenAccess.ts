@@ -5,6 +5,7 @@ import {
   isAclStrictMode,
   sessionHasAccess,
 } from '@/lib/accessControl';
+import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
@@ -14,7 +15,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Acesso à rota `/escalas` — exige card dashboard.card.vigilance_scales. */
-export function useScalesScreenAccess(redirectPath: string = '/(tabs)/dashboard'): ScreenAccessStatus {
+export function useScalesScreenAccess(redirectPath: string = MEMBER_HOME_PATH): ScreenAccessStatus {
   const router = useRouter();
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
   const hasAllowedRef = useRef(false);

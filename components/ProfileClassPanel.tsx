@@ -688,7 +688,7 @@ export function ProfileClassPanel({
           Alert.alert(
             'Acesso negado',
             'Você não tem permissão para abrir Dados cadastrais.',
-            [{ text: 'OK', onPress: () => router.replace('/(tabs)/dashboard') }]
+            [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
           );
           return;
         }

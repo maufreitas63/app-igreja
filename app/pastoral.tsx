@@ -27,7 +27,6 @@ import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  buildReturnToDashboardHref,
   resolveReturnDashboardCardParam,
   resolveReturnRouteParam,
   isMinimalPresentationRoute,
@@ -493,13 +492,7 @@ export default function PastoralScreen() {
 
       await appAlert('Sucesso', 'Pedido enviado! Estaremos orando por você.');
       resetPastoralForm();
-      if (isMinimalPresentation) {
-        router.replace('/(tabs)');
-      } else {
-        router.replace(
-          buildReturnToDashboardHref(resolveReturnDashboardCardParam(params) ?? 'pastoral')
-        );
-      }
+      router.replace('/(tabs)');
     } catch (err) {
       console.error('Erro ao enviar:', err);
       await appAlert('Erro', getSupabaseErrorMessage(err));
@@ -521,7 +514,7 @@ export default function PastoralScreen() {
   const handleBackToDashboard = () => {
     const returnRoute = resolveReturnRouteParam(params);
 
-    if (returnRoute) {
+    if (returnRoute && returnRoute !== '/(tabs)/dashboard') {
       router.replace({
         pathname: returnRoute,
         params: withMinimalPresentation(),
@@ -529,14 +522,7 @@ export default function PastoralScreen() {
       return;
     }
 
-    if (isMinimalPresentation) {
-      router.replace('/(tabs)');
-      return;
-    }
-
-    router.replace(
-      buildReturnToDashboardHref(resolveReturnDashboardCardParam(params) ?? 'pastoral')
-    );
+    router.replace('/(tabs)');
   };
 
   const handleOpenHistory = async () => {

@@ -43,6 +43,7 @@ import { SCALE_SCHEDULING_MENU_LABEL, SCALE_VOLUNTEERS_MENU_LABEL } from '@/lib/
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
 import { resolveMaintenancePanelAccessResourceKey } from '@/lib/screenAccessResourceKeys';
 import { recordProfileScreenVisit } from '@/lib/profileScreenVisitTracking';
+import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import { type MaintenanceScalePanelContent } from '@/lib/scaleAccess';
 import {
@@ -599,7 +600,7 @@ export default function MaintenanceDashboard() {
           const { denyScreenAccessAndRedirect } = await import('@/lib/screenAccessDenyRedirect');
           denyScreenAccessAndRedirect(
             router,
-            '/(tabs)/dashboard',
+            MEMBER_HOME_PATH,
             'Sem permissão',
             'Você não tem acesso à manutenção do sistema.'
           );
@@ -1305,7 +1306,7 @@ export default function MaintenanceDashboard() {
   }, [stepFooterNavCard]);
 
   const handleMenu = useCallback(() => {
-    router.replace('/(tabs)/dashboard');
+    router.replace('/(tabs)');
   }, [router]);
 
   const handleBack = useCallback(() => {

@@ -5,6 +5,7 @@ import {
   sessionHasAccess,
 } from '@/lib/accessControl';
 import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
+import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -25,7 +26,7 @@ export function useScreenAccessGuard({
   resourceKey,
   deniedMessage,
   deniedTitle = 'Acesso negado',
-  redirectPath = '/(tabs)/dashboard',
+  redirectPath = MEMBER_HOME_PATH,
   enabled = true,
   skipCheck = false,
 }: ScreenAccessGuardOptions): ScreenAccessStatus {

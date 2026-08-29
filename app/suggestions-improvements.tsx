@@ -1,21 +1,21 @@
 import { MaintenanceSupportSuggestionsCard } from '@/components/MaintenanceSupportSuggestionsCard';
+import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { useSuggestionsImprovementsAccess } from '@/hooks/useSuggestionsImprovementsAccess';
 import {
-  DASHBOARD_ADMINISTRATIVO_CARD_ID,
-} from '@/lib/administrativoModule';
-import {
-  buildReturnToDashboardHref,
   pickRouteParam,
+  resolveReturnDashboardCardParam,
   resolveReturnRouteParam,
   withMinimalPresentation,
 } from '@/lib/dashboardReturnNavigation';
 import { computeDashboardCardHeight } from '@/lib/dashboardPanelLayout';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -34,34 +34,36 @@ export default function SuggestionsImprovementsScreen() {
     [insets.bottom, insets.top, windowHeight]
   );
 
-  const returnDashboardCard =
-    pickRouteParam(params.returnDashboardCard) ?? DASHBOARD_ADMINISTRATIVO_CARD_ID;
+  const returnDashboardCard = resolveReturnDashboardCardParam(params);
   const returnRoute = resolveReturnRouteParam(params);
   const initialMode = pickRouteParam(params.supportMode) === 'new' ? 'new' : 'list';
-
-  const accessStatus = useSuggestionsImprovementsAccess({
-    redirectPath: returnRoute === '/administrativo' ? '/administrativo' : '/(tabs)/dashboard',
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute,
+    returnDashboardCard,
   });
 
-  const handleReturnToAdministrativo = () => {
+  const accessStatus = useSuggestionsImprovementsAccess({
+    redirectPath: returnRoute === '/administrativo' ? '/administrativo' : MEMBER_HOME_PATH,
+  });
+
+  const handleLeave = useCallback(() => {
     if (returnRoute === '/administrativo') {
       router.replace({
         pathname: '/administrativo',
-        params: withMinimalPresentation({ administrativoTab: 'outros' }),
+        params: withMinimalPresentation(),
       } as Href);
       return;
     }
 
-    router.replace(
-      buildReturnToDashboardHref(returnDashboardCard, {
-        administrativoTab: 'outros',
-      })
-    );
-  };
+    returnToCaller();
+  }, [returnRoute, returnToCaller, router]);
 
   return (
     <ScreenAccessGate status={accessStatus}>
-      <MinimalScreenLayout scroll={false}>
+      <MinimalScreenLayout
+        scroll={false}
+        footer={<CloseFooterBar onPress={handleLeave} />}
+      >
         <View style={styles.header}>
           <Text style={styles.welcomeText}>Sugestões e Melhorias</Text>
           <Text style={styles.badgeTitle}>Registrar solicitação</Text>
@@ -76,8 +78,8 @@ export default function SuggestionsImprovementsScreen() {
             variant="vigilance"
             fillContainer
             hidePanelHeader
-            onNavigateBack={handleReturnToAdministrativo}
-            onRequestCreated={handleReturnToAdministrativo}
+            onNavigateBack={handleLeave}
+            onRequestCreated={handleLeave}
           />
         </View>
       </MinimalScreenLayout>

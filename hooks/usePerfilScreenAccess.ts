@@ -11,6 +11,7 @@ import {
 import { DASHBOARD_CARD_BLOCKED_MESSAGES } from '@/lib/dashboardCardScreenLinks';
 import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
@@ -18,7 +19,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Acesso à rota `/perfil` — exige card dashboard.card.grouped_manage (ou telas filhas vinculadas). */
-export function usePerfilScreenAccess(redirectPath: string = '/(tabs)/dashboard'): ScreenAccessStatus {
+export function usePerfilScreenAccess(redirectPath: string = MEMBER_HOME_PATH): ScreenAccessStatus {
   const router = useRouter();
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
   const hasAllowedRef = useRef(false);
