@@ -71,7 +71,7 @@ function isDrawerModuleEnabled(
     return true;
   }
 
-  if (moduleKey === 'events_panel' || moduleKey === 'menu_redes_sociais') {
+  if (moduleKey === 'events_panel' || moduleKey === 'menu_redes_sociais' || moduleKey === 'menu_sobre_conecta') {
     return true;
   }
 
@@ -150,6 +150,7 @@ function isDrawerModuleEnabled(
 const MEMBER_FALLBACK_KEYS: ReadonlySet<AppDrawerModuleKey> = new Set([
   'events_panel',
   'menu_redes_sociais',
+  'menu_sobre_conecta',
 ]);
 
 export function useAppDrawerMenu() {

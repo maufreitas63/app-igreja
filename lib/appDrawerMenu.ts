@@ -39,6 +39,7 @@ export type AppDrawerModuleKey =
   | 'menu_administrativo'
   | 'menu_igrejas'
   | 'menu_redes_sociais'
+  | 'menu_sobre_conecta'
   | 'menu_billing'
   | 'menu_salas'
   | 'menu_totem'
@@ -125,6 +126,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'm', label: 'Mural de Oportunidades', moduleKey: 'menu_opportunity_mural' },
   { letter: 'n', label: 'Sugestões', moduleKey: 'suggestions_improvements' },
   { letter: 'o', label: 'Redes Sociais', moduleKey: 'menu_redes_sociais' },
+  { letter: 'p', label: 'Sobre o Conecta+', moduleKey: 'menu_sobre_conecta' },
 ];
 
 /** Painel da engrenagem — orquestração e gestão (ACL de liderança). */
@@ -568,6 +570,11 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_redes_sociais') {
     pushScreen(router, '/redes-sociais', withFailClosedReturn());
+    return;
+  }
+
+  if (moduleKey === 'menu_sobre_conecta') {
+    pushScreen(router, '/sobre-conecta', withFailClosedReturn());
     return;
   }
 
