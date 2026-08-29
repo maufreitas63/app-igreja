@@ -203,8 +203,8 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 <strong>Solução:</strong> ecossistema app-igreja (PWA + mobile)<br>
 <strong>Público:</strong> liderança, secretaria, pastoral, tesouraria e operação<br>
 <strong>Base:</strong> código-fonte, rotas Expo Router, menu lateral, Índice, Painel e Manutenção<br>
-<strong>Data:</strong> 28 de agosto de 2026<br>
-<strong>Revisão:</strong> atualização comercial desde 26 de agosto — células, contribuições, escalas, menu do membro e leitura financeira
+<strong>Data:</strong> 29 de agosto de 2026<br>
+<strong>Revisão:</strong> régua de acolhimento (Recepção Familiar), mural de generosidade com moderação, Fechar no rodapé canônico e correções de vínculo/front da equipe de boas-vindas
 </p>
 
 </div>
@@ -214,7 +214,7 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 <p>Há três camadas visíveis:</p>
 <ol>
 <li><strong>Entrada e confiança</strong> — login, cadastro, LGPD, escolha da igreja e encerramento seguro da sessão.</li>
-<li><strong>Vida da família</strong> — Índice, Painel, Perfil, eventos, ofertas, pastoral, células, campanhas, voluntariado, financeiro de leitura e escalas.</li>
+<li><strong>Vida da família</strong> — Índice, Painel, Perfil, eventos, ofertas, pastoral, células, campanhas, voluntariado, mural de generosidade, financeiro de leitura e escalas.</li>
 <li><strong>Operação e governança</strong> — totem, salas, manutenção, papéis, relatórios, instâncias e assinatura.</li>
 </ol>
 <p>Cada tela abaixo segue o mesmo roteiro: título, valor comercial, propósito técnico e as duas perspectivas (usuário final e administração).</p>
@@ -244,8 +244,8 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 </tr>
 <tr>
 <td>Cuidar</td>
-<td>Pastoral, agenda pastoral, aniversariantes, membros, mapa, células</td>
-<td>Cuidado pastoral, célula com datas reais e vínculo sem exposição indevida</td>
+<td>Pastoral, agenda pastoral, aniversariantes, membros, mapa, células, Régua de Acolhimento</td>
+<td>Cuidado pastoral, célula com datas reais, visitante acompanhado em etapas após a recepção</td>
 </tr>
 <tr>
 <td>Contribuir</td>
@@ -254,8 +254,8 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 </tr>
 <tr>
 <td>Servir</td>
-<td>Escalas, troca pontual, mural de vagas, estacionamento</td>
-<td>Escala visível, substituição combinada e dons reconhecidos</td>
+<td>Escalas, troca pontual, mural de vagas, mural de generosidade, estacionamento</td>
+<td>Escala visível, substituição combinada, dons reconhecidos e doação/empréstimo entre irmãos</td>
 </tr>
 <tr>
 <td>Governar</td>
@@ -459,7 +459,7 @@ Aparelho compartilhado não permanece autenticado. Histórico de acesso registra
 <h3 id="descrição-comercial-6">Descrição comercial</h3>
 <p>Permite que uma família se apresente antes mesmo de ter login — útil em campanhas, recepção e primeiros cultos. A secretaria depois decide gravar ou rejeitar o pedido, em lote.</p>
 <h3 id="propósito-e-conexões-6">Propósito e conexões</h3>
-<p>Formulário sem autenticação; a fila entra em <strong>Recepção Familiar</strong> na manutenção. Evita cadastro improvisado em papel.</p>
+<p>Formulário sem autenticação; a fila entra em <strong>Recepção Familiar</strong> na manutenção. A aprovação dispara a <strong>Régua de Acolhimento</strong>. Evita cadastro improvisado em papel.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -492,7 +492,7 @@ Fila única de acolhimento, com aceite ou recusa institucional — não um amont
 <h3 id="descrição-comercial-7">Descrição comercial</h3>
 <p>É o “saguão”. Depois do login, a pessoa vê atalhos para a vida da igreja e, no rodapé, o convite <strong>Eu quero…</strong>. O primeiro item é <strong>Contribuir</strong> — subtítulo <em>Dízimos, Ofertas, Campanhas ou Projetos.</em> — e se abre em duas opções: <strong>Dízimos e Ofertas</strong> (<em>Informe o valor, com centavos, e copie o Pix.</em>) e <strong>Campanhas e Projetos</strong> (<em>Informe o valor e copie o Pix já identificado.</em>). Ao lado, <strong>Fazer um pedido de Oração</strong>. Sem caçar item no menu. A faixa de avisos e próximos eventos concentra comunicados, lembretes pastorais, trocas de escala e marcos de campanha. O recorte da tela acompanha o aparelho: as margens laterais crescem com a largura, alinhadas ao chrome superior, para o conteúdo não “flutuar” nem estourar no celular ou no monitor.</p>
 <h3 id="propósito-e-conexões-7">Propósito e conexões</h3>
-<p>Distribui etiquetas na altura da tela (<code>indexShortcutHints</code>). Cada toque abre o Painel no card correspondente (<code>dashboardCard</code>). <strong>Eu quero… → Contribuir</strong> reúne Dízimos e Ofertas e Campanhas e Projetos; o pedido de oração abre o Coração Aberto. Rodapé de sessão: Encerrar sessão. Engrenagem de manutenção à direita, só com permissão. Marca d’água da instância. A caixa de avisos recarrega em tempo real e não repete o mesmo recado já visto. <strong>Fechar</strong> em telas de conteúdo devolve ao Índice; só Encerrar sessão limpa o aparelho.</p>
+<p>Distribui etiquetas na altura da tela (<code>indexShortcutHints</code>). Cada toque abre o Painel no card correspondente (<code>dashboardCard</code>). <strong>Eu quero… → Contribuir</strong> reúne Dízimos e Ofertas e Campanhas e Projetos; o pedido de oração abre o Coração Aberto. Rodapé de sessão: Encerrar sessão. Engrenagem de manutenção à direita, só com permissão. Marca d’água da instância. A caixa de avisos recarrega em tempo real e não repete o mesmo recado já visto — inclui recados do culto, trocas de escala, marcos de campanha, vagas ministeriais e <strong>avisos do Mural de Generosidade</strong>. <strong>Fechar</strong> em telas de conteúdo devolve ao Índice; só Encerrar sessão limpa o aparelho.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -521,7 +521,7 @@ Atalhos respeitam ACL. Quem não deve ver Financeiro ou Membros simplesmente nã
 <p class="route">Componente <code>AppDrawer</code> · ícone de três linhas</p>
 
 <h3 id="descrição-comercial-8">Descrição comercial</h3>
-<p>É o corredor interno da plataforma, separado com clareza. Na parte de cima, só a vida do membro: Início, Perfil, Dados cadastrais, Família, Reembolsos, Financeiro, Coração Aberto, Trilha de Discipulado, Minha Célula, Escalas, Mural de Oportunidades, Sugestões e Redes Sociais. Dízimos e Campanhas não aparecem aqui: já estão em <strong>Eu quero… → Contribuir</strong>. A engrenagem concentra a gestão em cinco grupos que começam recolhidos — Operação e Segurança, Gestão de Pessoas, Culto e Eventos, Finanças e Inteligência, Governança e TI. O título abre a lista. Quem não tem o papel nem vê o item — e a URL administrativa não entrega a ferramenta ao membro comum.</p>
+<p>É o corredor interno da plataforma, separado com clareza. Na parte de cima, só a vida do membro: Início, Perfil, Financeiro, Minha Célula, Escalas, Mural de Oportunidades, <strong>Mural de Generosidade</strong>, Sugestões, Redes Sociais e Sobre o Conecta+. Dízimos e Campanhas não aparecem aqui: já estão em <strong>Eu quero… → Contribuir</strong>. A engrenagem concentra a gestão em cinco grupos que começam recolhidos — Operação e Segurança, Gestão de Pessoas, Culto e Eventos, Finanças e Inteligência, Governança e TI. O título abre a lista. Quem não tem o papel nem vê o item — e a URL administrativa não entrega a ferramenta ao membro comum.</p>
 <h3 id="propósito-e-conexões-8">Propósito e conexões</h3>
 <p>Itens em <code>lib/appDrawerMenu.ts</code>, filtrados por papel, com redirecionamento fail-closed. Navega para rotas próprias ou para o carrossel da Manutenção. Configurações em <code>AppDrawerSettings</code>, nos cinco grupos acima.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
@@ -554,7 +554,7 @@ A equipe entra nos módulos pela engrenagem, já agrupados. O membro comum não 
 <h3 id="descrição-comercial-9">Descrição comercial</h3>
 <p>É o “culto operacional” no bolso: um card por vez, deslizando, com o mesmo recorte visual da igreja. A família agenda presença, gera QR, vê salas, contribui, pede oração, encontra irmãos, consulta aniversários, lê o financeiro, confere a escala, encontra a célula, acompanha campanhas e vê vagas alinhadas ao próprio perfil ministerial — sem abrir dez aplicativos.</p>
 <h3 id="propósito-e-conexões-9">Propósito e conexões</h3>
-<p>Carrossel com ACL <code>dashboard.card.*</code>. Inclui células (<code>small_group</code>), campanhas (<code>campaign_card</code>) e mural (<code>opportunity_mural_card</code>). No modo da família, o card preenche a coluna útil da tela (título, textos e botões na mesma largura). Rodapé <code>‹</code> <code>›</code> e Menu. Telas filhas devolvem ao card de origem via <code>returnDashboardCard</code>. Paletas em <code>dashboardCardThemes</code>.</p>
+<p>Carrossel com ACL <code>dashboard.card.*</code>. No caminho publicado, só Célula (<code>small_group</code>) e Mural de Oportunidades (<code>opportunity_mural_card</code>) permanecem no carrossel; o <strong>Mural de Generosidade</strong> abre rota própria (<code>/mural-generosidade</code>), sem card extra no Painel. No modo da família, o card preenche a coluna útil da tela (título, textos e botões na mesma largura). Rodapé <code>‹</code> <code>›</code> e Menu. Telas filhas devolvem ao card de origem via <code>returnDashboardCard</code>. Paletas em <code>dashboardCardThemes</code>.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1083,7 +1083,7 @@ Projeto com meta financeira, doadores únicos e conciliação que não contamina
 <h3 id="descrição-comercial-26">Descrição comercial</h3>
 <p>Depois da Lição 5.1 (Perfil Ministerial), a igreja convida a servir no ministério certo — sem expor o perfil dos outros no mural do membro. A liderança busca quem casa com a vaga e convida; o membro manifesta interesse e fala com o líder no WhatsApp.</p>
 <h3 id="propósito-e-conexões-26">Propósito e conexões</h3>
-<p>Match com <code>ministerial_resultados</code>. Mural do membro não lista dons alheios. Gestão em <strong>Mural de Voluntários</strong>. Aviso pode ser só para quem tem o perfil compatível.</p>
+<p>Match com <code>ministerial_resultados</code>. Mural do membro não lista dons alheios. Gestão em <strong>Mural de Voluntários</strong>. Aviso pode ser só para quem tem o perfil compatível. O <strong>Mural de Generosidade</strong> é outra superfície — doações e empréstimos, com moderação.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1106,6 +1106,37 @@ Busca ativa privada, interesse reabrível após recusa e convite pela liderança
   </tr>
 </table></div>
 
+<div class="screen">
+
+<h2 id="mural-de-generosidade">Mural de Generosidade</h2>
+<p class="route">Rota <code>/mural-generosidade</code> · menu <code>menu_generosity_mural</code></p>
+
+<h3 id="descrição-comercial-27">Descrição comercial</h3>
+<p>A comunidade troca doações e pedidos de empréstimo — móveis, equipamentos de saúde, vestuário, livros — sem transformar o mural em classificados públicos. Nada entra no ar sem a liderança aprovar. O feed não mostra telefone: quem tem interesse avisa a igreja, e a equipe faz a ponte.</p>
+<h3 id="propósito-e-conexões-27">Propósito e conexões</h3>
+<p>Anúncios em <code>generosity_posts</code> nascem como <code>pendente</code>. Foto opcional no bucket privado. Interesse gera aviso interno, sem WhatsApp no mural do membro. A liderança opera em <strong>Moderação do Mural</strong>. Avisos de aprovação, recusa e mediação aparecem na caixa da home. Exige vínculo ativo de membresia. Não entra no carrossel do Painel.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Publica o que pode doar ou o que precisa emprestado, acompanha o próprio anúncio e manifesta interesse sem expor o celular.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Fila de moderação, mediação de contato e encerramento do anúncio — a igreja permanece no meio, não o aplicativo.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Mural de Generosidade</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
 <hr>
 <h1 id="parte-d--identidade-família-e-discipulado">Parte D — Identidade, família e discipulado</h1>
 <div class="screen">
@@ -1113,9 +1144,9 @@ Busca ativa privada, interesse reabrível após recusa e convite pela liderança
 <h2 id="perfil--identidade">Perfil &amp; Identidade</h2>
 <p class="route">Rota <code>/perfil</code> · card <code>grouped_manage</code></p>
 
-<h3 id="descrição-comercial-27">Descrição comercial</h3>
+<h3 id="descrição-comercial-28">Descrição comercial</h3>
 <p>É a identidade digital da pessoa na igreja: dados cadastrais, família, trilha de discipulado e carteirinha. Um único lugar para “quem eu sou aqui”.</p>
-<h3 id="propósito-e-conexões-27">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-28">Propósito e conexões</h3>
 <p><code>PerfilClassPanel</code> abre Dados Cadastrais, Gerenciar Família, Trilha e Carteirinha Digital, conforme ACL. Paleta de cores no rodapé do card.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1144,9 +1175,9 @@ Campos visíveis/editáveis por papel. Onboarding incompleto é visível e corri
 <h2 id="dados-cadastrais">Dados cadastrais</h2>
 <p class="route">Rota <code>/manage-profile</code></p>
 
-<h3 id="descrição-comercial-28">Descrição comercial</h3>
+<h3 id="descrição-comercial-29">Descrição comercial</h3>
 <p>Nome, documentos, endereço em seções que abrem só se a pessoa precisar — como o acordeão de Endereço. Senha de quatro dígitos e biometria (no celular) ficam aqui, com o PIN sempre como base.</p>
-<h3 id="propósito-e-conexões-28">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-29">Propósito e conexões</h3>
 <p>Seções recolhíveis (<code>ProfileClass</code>). CEP sincroniza endereço. ACL por coluna. Selfie e veículos. Vínculo à família.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1175,9 +1206,9 @@ Cadastro vivo, CEP consistente, CPF/PIN protegidos por ACL.
 <h2 id="gerenciar-família">Gerenciar família</h2>
 <p class="route">Rota <code>/manage-members</code></p>
 
-<h3 id="descrição-comercial-29">Descrição comercial</h3>
+<h3 id="descrição-comercial-30">Descrição comercial</h3>
 <p>O núcleo familiar deixa de ser “mais ou menos aquelas pessoas”. Inclui, reconhece, transfere e protege o representante legal. Endereço do gestor pode herdar para o membro aceito.</p>
-<h3 id="propósito-e-conexões-29">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-30">Propósito e conexões</h3>
 <p>CRUD em <code>members</code>, busca por telefone/nome, RPC de aceite. Indicadores Kids/Teens. Liga-se à Agenda e ao QR familiar.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1206,9 +1237,9 @@ Um código familiar, sem duplicata e com rastreio de transferência entre núcle
 <h2 id="carteirinha-digital">Carteirinha Digital</h2>
 <p class="route">Dentro de <code>/perfil</code> · <code>DigitalIDCard</code></p>
 
-<h3 id="descrição-comercial-30">Descrição comercial</h3>
+<h3 id="descrição-comercial-31">Descrição comercial</h3>
 <p>Duas páginas: quem a pessoa é (foto 30% maior, nome, nascimento, telefone, e-mail, endereço em caixa recolhida) e o QR de check-in. O grupo familiar não aparece na frente — o código vive no QR (<code>IBN0001</code>), para o totem, não para exposição social.</p>
-<h3 id="propósito-e-conexões-30">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-31">Propósito e conexões</h3>
 <p>Dados do perfil da sessão. QR = código familiar normalizado. Página 2: status Membro/Congregado e data de entrada no app.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1237,9 +1268,9 @@ Check-in familiar padronizado; QR sem vazamento de telefone, endereço ou token.
 <h2 id="trilha-de-discipulado">Trilha de Discipulado</h2>
 <p class="route">Rota <code>/trilha-discipulado</code></p>
 
-<h3 id="descrição-comercial-31">Descrição comercial</h3>
+<h3 id="descrição-comercial-32">Descrição comercial</h3>
 <p>A igreja acompanha formação, não só frequência. Cinco passos, três lições cada, selos coloridos e, na 5.1, o Perfil Ministerial (50 perguntas). A pessoa vê conquista; a pastoral vê quem parou no caminho. O resultado da 5.1 alimenta o mural de vagas.</p>
-<h3 id="propósito-e-conexões-31">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-32">Propósito e conexões</h3>
 <p>Progresso no servidor (<code>upsert_my_discipleship_lesson_progress</code>). Alertas e certificado. Manutenção: Temas, Reconhecimentos, Reset. Match com o Mural de Oportunidades.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1270,9 +1301,9 @@ Conteúdo da trilha editável, alertas pastorais e reset responsável — sem pl
 <h2 id="mapa-de-geolocalização">Mapa de geolocalização</h2>
 <p class="route">Rota <code>/mapa-geolocalizacao</code></p>
 
-<h3 id="descrição-comercial-32">Descrição comercial</h3>
+<h3 id="descrição-comercial-33">Descrição comercial</h3>
 <p>Mostra a igreja no território: pins por CEP, filtros (todos, com papel, visitantes). O detalhe do endereço de outra pessoa só abre para quem a política de acesso autoriza.</p>
-<h3 id="propósito-e-conexões-32">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-33">Propósito e conexões</h3>
 <p>Leaflet no PWA, geocodificação e cache. Recurso ACL <code>/mapa-geolocalizacao/detalhe-pin</code>. Nativo informa uso via PWA.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1301,9 +1332,9 @@ Pastoral e super administrador enxergam o detalhe; demais veem o mapa. CEPs inv�
 <h2 id="administrativo">Administrativo</h2>
 <p class="route">Rota <code>/administrativo</code></p>
 
-<h3 id="descrição-comercial-33">Descrição comercial</h3>
+<h3 id="descrição-comercial-34">Descrição comercial</h3>
 <p>Documentos constitutivos e atas à mão: a igreja transparente para quem deve ler o institucional, sem mandar PDF por e-mail a cada pergunta.</p>
-<h3 id="propósito-e-conexões-33">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-34">Propósito e conexões</h3>
 <p>Lista atas, abre PDF no visualizador do app (<code>AssemblyMinutesPdfModal</code>). Fechar permanece na jornada autenticada.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1332,9 +1363,9 @@ Repositório único de atas, com publicação controlada.
 <h2 id="redes-sociais">Redes sociais</h2>
 <p class="route">Rota <code>/redes-sociais</code></p>
 
-<h3 id="descrição-comercial-34">Descrição comercial</h3>
+<h3 id="descrição-comercial-35">Descrição comercial</h3>
 <p>Instagram, YouTube e demais canais oficiais da instância — a voz da igreja em um lugar, não em cartaz desatualizado. Também pode ser usada no culto, como atalho público aos canais.</p>
-<h3 id="propósito-e-conexões-34">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-35">Propósito e conexões</h3>
 <p>Lê cadastro da igreja (<code>/igrejas</code>). Login também pode exibir atalhos no passo do celular.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1363,9 +1394,9 @@ URLs centralizadas por instância; troca uma vez, vale no app inteiro.
 <h2 id="avisos-e-manutenção-de-avisos">Avisos e Manutenção de Avisos</h2>
 <p class="route">Rota <code>/avisos</code> · painel <code>event_orchestration</code></p>
 
-<h3 id="descrição-comercial-35">Descrição comercial</h3>
+<h3 id="descrição-comercial-36">Descrição comercial</h3>
 <p>O recado do culto chega a quem está no app, no tempo certo, sem depender só do projetor. O orquestrador escolhe o público: todos, líderes de célula ou só quem tem o perfil compatível com uma vaga.</p>
-<h3 id="propósito-e-conexões-35">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-36">Propósito e conexões</h3>
 <p>Leitura pública via RPC filtrada (<code>listar_event_avisos_publicados</code>). Gestão no orquestrador, com sessão amarrada ao ator. Avisos restritos não vazam no acesso direto à tabela.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1394,9 +1425,9 @@ Comunicado versionado, por audiência e instância, com dono editorial.
 <h2 id="autorização-de-imagem-e-voz">Autorização de imagem e voz</h2>
 <p class="route">Rotas <code>/autorizacao-midia</code> e <code>/autorizacao-midia-confirmar</code></p>
 
-<h3 id="descrição-comercial-36">Descrição comercial</h3>
+<h3 id="descrição-comercial-37">Descrição comercial</h3>
 <p>Transmissões e fotos de culto exigem consentimento. Esta tela registra a autorização — e o link de confirmação por e-mail fecha o ciclo mesmo fora da sessão plena.</p>
-<h3 id="propósito-e-conexões-36">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-37">Propósito e conexões</h3>
 <p>Menu de configurações. Confirmação por token de e-mail permanece aberta; demais acessos exigem sessão. Relaciona-se a LGPD e ao cadastro.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1425,9 +1456,9 @@ Base de consentimento para equipe de mídia, auditável.
 <h2 id="sugestões-e-melhorias">Sugestões e melhorias</h2>
 <p class="route">Rota <code>/suggestions-improvements</code></p>
 
-<h3 id="descrição-comercial-37">Descrição comercial</h3>
+<h3 id="descrição-comercial-38">Descrição comercial</h3>
 <p>A igreja escuta. O membro envia ideia ou problema; a equipe lê o catálogo na manutenção e no relatório dedicado.</p>
-<h3 id="propósito-e-conexões-37">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-38">Propósito e conexões</h3>
 <p>Formulário autenticado; painel staff e relatório analítico.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1458,9 +1489,9 @@ Backlog visível, priorizável, sem recados perdidos no WhatsApp da secretaria.
 <h2 id="totem-de-check-in">Totem de check-in</h2>
 <p class="route">Rota <code>/totem-checkin</code></p>
 
-<h3 id="descrição-comercial-38">Descrição comercial</h3>
+<h3 id="descrição-comercial-39">Descrição comercial</h3>
 <p>O aparelho da portaria existe para um gesto só: ler o QR da família e confirmar quem já estava na audiência. Não é um computador de secretaria. Encerrar sessão no totem é rotina de fim de culto.</p>
-<h3 id="propósito-e-conexões-38">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-39">Propósito e conexões</h3>
 <p>Câmera, lookup por código familiar, RPC de confirmação, cooldown anti-duplo (limpo ao sair da tela). Login dedicado (<code>cel_totem</code> + PIN 9999).</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1489,9 +1520,9 @@ Fila rápida, presença oficial, aparelho que não vaza sessão de membro.
 <h2 id="configuração-de-salas">Configuração de salas</h2>
 <p class="route">Rota <code>/configuracao-salas</code></p>
 
-<h3 id="descrição-comercial-39">Descrição comercial</h3>
+<h3 id="descrição-comercial-40">Descrição comercial</h3>
 <p>Define como Kids e Teens existem nesta igreja: rótulos, habilitação, operação. Sem isso, o card SALA(S) seria um enfeite.</p>
-<h3 id="propósito-e-conexões-39">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-40">Propósito e conexões</h3>
 <p>Engrenagem do menu. Alimenta eventos (<code>enabled_room_keys</code>) e o monitor de salas.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1523,9 +1554,9 @@ Parametriza a operação infantil por instância, sem código novo a cada igreja
 <h2 id="programação-de-eventos">Programação de Eventos</h2>
 <p class="route">Painel <code>events</code></p>
 
-<h3 id="descrição-comercial-40">Descrição comercial</h3>
+<h3 id="descrição-comercial-41">Descrição comercial</h3>
 <p>O calendário oficial: criar, publicar, capacidade, totem, quórum, geofence, salas, ofertas. O culto deixa de ser um post e vira um objeto de operação. O seletor de datas (mês, dia, OK) é o mesmo da <strong>Gestão de Pequenos Grupos</strong> — a liderança não aprende dois calendários.</p>
-<h3 id="propósito-e-conexões-40">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-41">Propósito e conexões</h3>
 <p>CRUD em <code>events</code>. Dispara Agenda, QR, salas, presença e avisos. Locais favoritos alimentam geofence.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1554,9 +1585,9 @@ Um editor para o culto inteiro: portaria, kids, ofertas e presença.
 <h2 id="cronograma-de-eventos-gantt">Cronograma de Eventos (Gantt)</h2>
 <p class="route">Painel <code>events_gantt</code></p>
 
-<h3 id="descrição-comercial-41">Descrição comercial</h3>
+<h3 id="descrição-comercial-42">Descrição comercial</h3>
 <p>Visão no tempo — dia e mês — para a liderança enxergar sobrecarga e vazios. Toque edita o evento.</p>
-<h3 id="propósito-e-conexões-41">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-42">Propósito e conexões</h3>
 <p>Leitura temporal da mesma base de Programação de Eventos.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1585,9 +1616,9 @@ Planejamento visual, menos choque de horários e de equipes.
 <h2 id="salas--check-in-manutenção">Sala(s) — Check-in (manutenção)</h2>
 <p class="route">Painel <code>sala_servidor</code></p>
 
-<h3 id="descrição-comercial-42">Descrição comercial</h3>
+<h3 id="descrição-comercial-43">Descrição comercial</h3>
 <p>A equipe do andar marca entrada de cada criança inscrita. É o crachá digital da sala.</p>
-<h3 id="propósito-e-conexões-42">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-43">Propósito e conexões</h3>
 <p>Lista todas as inscrições do evento (sem filtro de família). WhatsApp do responsável.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1616,9 +1647,9 @@ Controle tático no culto, com contato imediato.
 <h2 id="tipos-de-escala-servos-e-programação-de-escalas">Tipos de escala, Servos e Programação de Escalas</h2>
 <p class="route">Painéis <code>scale_types</code>, <code>scale_volunteers</code>, <code>scales</code></p>
 
-<h3 id="descrição-comercial-43">Descrição comercial</h3>
+<h3 id="descrição-comercial-44">Descrição comercial</h3>
 <p>Três peças de um único relógio: o tipo (louvor, recepção, som), quem está disponível e o ciclo gerado. A igreja para de “combinar no privado”. O tipo pode autorizar troca autônoma entre servos.</p>
-<h3 id="propósito-e-conexões-43">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-44">Propósito e conexões</h3>
 <p>Vagas por domingo, modo individual/equipe, preview transacional <code>aplicar_ciclo_escala</code>. Alimenta o card Escalas do membro e o fluxo de troca pontual.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1647,10 +1678,10 @@ Geração em bloco, ordem sequencial, alerta ao remover servo com datas futuras 
 <h2 id="cuidado-pastoral-equipe">Cuidado Pastoral (equipe)</h2>
 <p class="route">Painel <code>pastoral_care</code></p>
 
-<h3 id="descrição-comercial-44">Descrição comercial</h3>
-<p>A fila sagrada: pedidos do Coração Aberto chegam aqui para o pastor e a intercessão tratarem com método, sem perder sigilo. A agenda de horários da pastoral também se opera daqui.</p>
-<h3 id="propósito-e-conexões-44">Propósito e conexões</h3>
-<p>Gestão dos envios de <code>/pastoral</code>. Status visível em Meus pedidos. Slots de atendimento por igreja.</p>
+<h3 id="descrição-comercial-45">Descrição comercial</h3>
+<p>A fila sagrada: pedidos do Coração Aberto chegam aqui para o pastor e a intercessão tratarem com método, sem perder sigilo. A agenda de horários da pastoral também se opera daqui. No mesmo painel, o destaque <strong>Visitantes sem retorno</strong> traz quem a Régua de Acolhimento não viu no culto até o 8º dia.</p>
+<h3 id="propósito-e-conexões-45">Propósito e conexões</h3>
+<p>Gestão dos envios de <code>/pastoral</code>. Status visível em Meus pedidos. Slots de atendimento por igreja. Alertas <code>ligacao_pastor_dia_8</code> da régua — check-in da família no período encerra o ciclo; ausência escala para ligação pastoral. A régua <strong>não</strong> promove o visitante a membro.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1659,7 +1690,7 @@ Sabe que o pedido não caiu no vazio e que o horário marcado vale.
 </td>
           <td class="vision admin" width="50%" valign="top">
 <h4>Visão da Administração</h4>
-Distribuição de cuidado, priorização, registro ministerial e agenda.
+Distribuição de cuidado, priorização, registro ministerial, agenda e o visitante que ainda não voltou ao culto.
 </td>
         </tr>
       </table>
@@ -1678,9 +1709,9 @@ Distribuição de cuidado, priorização, registro ministerial e agenda.
 <h2 id="gestão-de-pequenos-grupos">Gestão de Pequenos Grupos</h2>
 <p class="route">Painel <code>small_groups_management</code> · engrenagem</p>
 
-<h3 id="descrição-comercial-45">Descrição comercial</h3>
+<h3 id="descrição-comercial-46">Descrição comercial</h3>
 <p>A célula deixa de ser “toda quarta às 19h30” congelada no cadastro. Quem tem acesso abre o <strong>mesmo calendário da Programação de Eventos</strong> (título <em>Datas das reuniões</em>), toca nos dias de interesse e define <strong>horário próprio para cada data</strong> (HH:MM). A busca de anfitrião, líder e participante filtra de verdade por nome ou celular — não devolve uma lista alfabética incompleta. O celular do visitante usa a máscara da igreja, <code>(11) 98765-4321</code>, e o nome vai para a fila de Recepção Familiar. O <strong>Roteiro da semana</strong> pode ser escrito na hora (título, conteúdo e link ou PDF opcional) e publicado com <strong>Publicar roteiro</strong>; os temas da Trilha continuam só como atalho opcional. A <strong>Chamada</strong> escolhe a data no calendário e lista o <strong>nome completo</strong> de cada participante com caixa de seleção de presença. <strong>Excluir grupo</strong> pede confirmação: apaga o cadastro da célula, a lista e as chamadas; anfitrião e líder <strong>permanecem</strong> na igreja. Relatório espiritual (oração e notas pastorais) segue para o cuidado pastoral com <strong>Enviar ao cuidado pastoral</strong>.</p>
-<h3 id="propósito-e-conexões-45">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-46">Propósito e conexões</h3>
 <p>Tabelas <code>small_groups</code>, reuniões (<code>small_group_meetings</code>), membros e presença. Card <strong>Minha Célula</strong> do membro. Visitante vai para a fila de Recepção Familiar. Relatório espiritual (oração e notas pastorais) segue para o cuidado pastoral. Avisos podem ir só a líderes de célula.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1709,9 +1740,9 @@ Rede de células com calendário vivo, chamada objetiva, busca que encontra a pe
 <h2 id="gestão-de-campanhas">Gestão de Campanhas</h2>
 <p class="route">Painel <code>campaigns_management</code></p>
 
-<h3 id="descrição-comercial-46">Descrição comercial</h3>
+<h3 id="descrição-comercial-47">Descrição comercial</h3>
 <p>A tesouraria e a liderança abrem campanha com meta, prazo, capa e <strong>centavos simbólicos de referência</strong> (ex.: 60 vira 0,60 no Pix). O Pix Copia e Cola do membro recebe esse sufixo sozinho; o depósito é reconhecido e fica fora da receita ordinária. O painel mostra desempenho: percentual da meta, doadores únicos, velocidade por dia e os centavos em uso.</p>
-<h3 id="propósito-e-conexões-46">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-47">Propósito e conexões</h3>
 <p><code>campaign_projects</code>, conciliação em <code>financials</code> isolada do ordinário. Card do dashboard e atalho <strong>Eu quero… → Contribuir</strong>. O boletim financeiro de leitura não mistura campanha com dízimo.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1740,10 +1771,10 @@ Campanha com meta, progresso e conciliação auditável, sem misturar com dízim
 <h2 id="mural-de-voluntários-manutenção">Mural de Voluntários (manutenção)</h2>
 <p class="route">Painel <code>volunteer_mural</code></p>
 
-<h3 id="descrição-comercial-47">Descrição comercial</h3>
+<h3 id="descrição-comercial-48">Descrição comercial</h3>
 <p>A liderança cadastra a vaga, os dons exigidos e o líder de contato. A busca ativa lista pessoas compatíveis — para convite, não para exposição pública.</p>
-<h3 id="propósito-e-conexões-47">Propósito e conexões</h3>
-<p><code>volunteer_opportunities</code>. Match com a Lição 5.1. Interesse pendente/aceito/recusado. Aviso de vaga pode ir só a quem casa.</p>
+<h3 id="propósito-e-conexões-48">Propósito e conexões</h3>
+<p><code>volunteer_opportunities</code>. Match com a Lição 5.1. Interesse pendente/aceito/recusado. Aviso de vaga pode ir só a quem casa. Doações e empréstimos ficam no <strong>Mural de Generosidade</strong>, com fila própria em <strong>Moderação do Mural</strong>.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
@@ -1768,12 +1799,43 @@ Recrutamento ministerial com critério, WhatsApp do líder e lista sem duplicata
 
 <div class="screen">
 
+<h2 id="moderação-do-mural-de-generosidade">Moderação do Mural de Generosidade</h2>
+<p class="route">Painel <code>generosity_moderation</code> · engrenagem</p>
+
+<h3 id="descrição-comercial-49">Descrição comercial</h3>
+<p>Nada do Mural de Generosidade entra no ar sem este crivo. A liderança aprova, rejeita ou encerra o anúncio e media o interesse: telefones aparecem só aqui, para a igreja fazer a ponte entre quem doa e quem pede.</p>
+<h3 id="propósito-e-conexões-49">Propósito e conexões</h3>
+<p>Fila <code>pendente</code> / <code>ativo</code> e aba de interesses. RPCs <code>moderate_generosity_post</code> e <code>accept_generosity_interest</code>. Aviso interno ao autor e ao interessado. Papéis liderança/pastoral/super administrador.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Espera a aprovação da igreja; o feed público não vira classificado sem filtro.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Governança do compartilhamento material, com contato mediado e sem telefone no mural do membro.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Moderação do Mural de Generosidade</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
 <h2 id="temas-reconhecimentos-e-reset-da-trilha">Temas, Reconhecimentos e Reset da Trilha</h2>
 <p class="route">Painéis <code>discipleship_*</code> · engrenagem</p>
 
-<h3 id="descrição-comercial-48">Descrição comercial</h3>
+<h3 id="descrição-comercial-50">Descrição comercial</h3>
 <p>A trilha é conteúdo vivo. Temas se editam, reconhecimentos alertam a pastoral, o reset existe para recomeçar com critério — não para apagar formação por acidente.</p>
-<h3 id="propósito-e-conexões-48">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-50">Propósito e conexões</h3>
 <p>Alimenta <code>/trilha-discipulado</code> e o Perfil Ministerial. Grants específicos.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1802,9 +1864,9 @@ Currículo discipulador sob governança, com alertas e reset auditável.
 <h2 id="informações-financeiras-manutenção">Informações Financeiras (manutenção)</h2>
 <p class="route">Painel <code>financials</code></p>
 
-<h3 id="descrição-comercial-49">Descrição comercial</h3>
+<h3 id="descrição-comercial-51">Descrição comercial</h3>
 <p>A tesouraria importa CSV, escolhe REALIZADO ou PLANEJADO, esvazia mês com escopo e concilia RD. O boletim que o membro lê nasce daqui.</p>
-<h3 id="propósito-e-conexões-49">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-51">Propósito e conexões</h3>
 <p>Carga, accordion de seções, RD do mês, desconciliação. Alimenta <code>/financial</code>.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1833,9 +1895,9 @@ Operação de tesouraria com versão orçamentária explícita e rastro de RD.
 <h2 id="modelo-preditivo">Modelo preditivo</h2>
 <p class="route">Painel <code>predictive_insights</code></p>
 
-<h3 id="descrição-comercial-50">Descrição comercial</h3>
+<h3 id="descrição-comercial-52">Descrição comercial</h3>
 <p>Projeta receita ordinária (dízimos e ofertas) com base no realizado. A diretoria planeja com evidência, não só com esperança.</p>
-<h3 id="propósito-e-conexões-50">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-52">Propósito e conexões</h3>
 <p>Modelo em <code>financialPredictiveModel</code>. Exige histórico mínimo de meses positivos.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1864,9 +1926,9 @@ Insight quantitativo para conselho e tesouraria.
 <h2 id="relatórios">Relatórios</h2>
 <p class="route">Painel <code>relatorios</code></p>
 
-<h3 id="descrição-comercial-51">Descrição comercial</h3>
+<h3 id="descrição-comercial-53">Descrição comercial</h3>
 <p>Olhares analíticos: membros ativos/inativos, necessidades pastorais, saúde infantil (LGPD), quórum, estacionamento, sugestões, inscritos por evento. Sem relatório de faixa etária — decisão consciente de privacidade.</p>
-<h3 id="propósito-e-conexões-51">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-53">Propósito e conexões</h3>
 <p>Catálogo da manutenção. Papéis pastoral/super administrador conforme o relatório.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1895,9 +1957,9 @@ Painel de gestão sem exportar a igreja inteira para uma planilha solta.
 <h2 id="lista-de-presença-quórum">Lista de Presença (quórum)</h2>
 <p class="route">Painel <code>quorum_presence</code></p>
 
-<h3 id="descrição-comercial-52">Descrição comercial</h3>
+<h3 id="descrição-comercial-54">Descrição comercial</h3>
 <p>Quando o evento exige quórum, esta é a ata viva: quem confirmou no totem, a que horas, pronta para impressão.</p>
-<h3 id="propósito-e-conexões-52">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-54">Propósito e conexões</h3>
 <p>Atualiza após check-in. Flag <code>requer_quorum</code> no evento.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1926,9 +1988,9 @@ Documento de presença, não lista de WhatsApp.
 <h2 id="cadastro-de-usuário">Cadastro de Usuário</h2>
 <p class="route">Painel <code>profile_cadastro</code> · super administrador</p>
 
-<h3 id="descrição-comercial-53">Descrição comercial</h3>
+<h3 id="descrição-comercial-55">Descrição comercial</h3>
 <p>Correção cirúrgica: buscar pessoa, ajustar CEP/endereço, em último caso excluir perfil. Poder alto, uso raro, responsabilidade máxima.</p>
-<h3 id="propósito-e-conexões-53">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-55">Propósito e conexões</h3>
 <p>Busca em <code>profiles</code>. Exclusão completa restrita. Complementa Mudança de Papéis.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -1957,19 +2019,19 @@ Higiene cadastral com trilha, não edição clandestina no banco.
 <h2 id="recepção-familiar">Recepção Familiar</h2>
 <p class="route">Painel <code>family_reception</code></p>
 
-<h3 id="descrição-comercial-54">Descrição comercial</h3>
+<h3 id="descrição-comercial-56">Descrição comercial</h3>
 <p>A porta de entrada institucional da fila pública <code>/cadastro-familia/</code>. Gravar ou rejeitar em lote é acolher com processo.</p>
-<h3 id="propósito-e-conexões-54">Propósito e conexões</h3>
-<p>Fila do formulário standalone. Gera família/perfil oficiais.</p>
+<h3 id="propósito-e-conexões-56">Propósito e conexões</h3>
+<p>Fila do formulário standalone. Gera família/perfil oficiais. A aprovação (<code>processed</code>) dispara a <strong>Régua de Acolhimento</strong> para o informante (e para quem tem telefone próprio): WhatsApp no dia 1, convite à célula mais próxima no dia 4, verificação de check-in no domingo do 8º dia.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">
 <h4>Visão do Usuário Final</h4>
-O cadastro feito no link vira gente de verdade na igreja.
+O cadastro feito no link vira gente de verdade na igreja — e alguém da equipe continua o cuidado depois da porta.
 </td>
           <td class="vision admin" width="50%" valign="top">
 <h4>Visão da Administração</h4>
-Acolhimento com aceite formal, sem planilha de “pendentes da recepção”.
+Acolhimento com aceite formal, sem planilha de “pendentes da recepção”, e tarefas automáticas para não deixar o visitante sem retorno.
 </td>
         </tr>
       </table>
@@ -1985,12 +2047,43 @@ Acolhimento com aceite formal, sem planilha de “pendentes da recepção”.
 
 <div class="screen">
 
+<h2 id="régua-de-acolhimento">Régua de Acolhimento</h2>
+<p class="route">Painel <code>visitor_followup</code> · engrenagem</p>
+
+<h3 id="descrição-comercial-57">Descrição comercial</h3>
+<p>Depois que a Recepção Familiar grava o lote, a igreja não “esquece” o visitante. A equipe de boas-vindas vê as tarefas do dia — mensagem pronta no WhatsApp, convite à célula mais próxima pelo CEP — e marca o contato feito. Crianças sem telefone próprio não geram régua duplicada. No 8º dia, se a família não fez check-in no culto, o alerta sobe ao <strong>Cuidado Pastoral</strong>.</p>
+<h3 id="propósito-e-conexões-57">Propósito e conexões</h3>
+<p>Tabelas <code>visitor_followup</code> e <code>task_alerts</code>. Disparo no trigger da recepção. Célula mais próxima por Haversine no CEP. Check-in confirmado da família no período encerra como integrado; ausência escala ao pastor. <strong>Não</strong> altera o papel do visitante para membro. WhatsApp só habilita com telefone utilizável.</p>
+<table class="split-table" width="100%" cellspacing="8" cellpadding="0">
+        <tr>
+          <td class="vision user" width="50%" valign="top">
+<h4>Visão do Usuário Final</h4>
+Recebe acolhimento concreto — mensagem, convite à célula — em vez de sumir depois do primeiro culto.
+</td>
+          <td class="vision admin" width="50%" valign="top">
+<h4>Visão da Administração</h4>
+Fila operacional da equipe de boas-vindas e alerta pastoral no dia 8, isolado por igreja, sem promover o visitante automaticamente.
+</td>
+        </tr>
+      </table>
+
+<table class="img-ph" width="100%" cellspacing="0" cellpadding="12">
+  <tr>
+    <td align="center" style="border:1.5pt dashed #94A3B8; background:#F8FAFC;">
+      <p style="margin:8pt 0 4pt; font-family:Calibri,sans-serif; font-weight:bold; color:#475569;">Espaço para imagem — Régua de Acolhimento</p>
+      <p style="margin:0 0 8pt; font-family:Calibri,sans-serif; font-style:italic; color:#64748B;">No Word: clique nesta caixa → Inserir → Imagens (ou arraste a captura para cá).</p>
+    </td>
+  </tr>
+</table></div>
+
+<div class="screen">
+
 <h2 id="controle-de-acesso">Controle de Acesso</h2>
 <p class="route">Painel <code>access_control</code></p>
 
-<h3 id="descrição-comercial-55">Descrição comercial</h3>
+<h3 id="descrição-comercial-58">Descrição comercial</h3>
 <p>O coração da governança: papéis, grants, visão por papel ou por recurso. O Gestor de Controle de Acesso não vê o Super Administrador — escudo explícito. LGPD da instância liga/desliga aqui.</p>
-<h3 id="propósito-e-conexões-55">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-58">Propósito e conexões</h3>
 <p>RPCs SECURITY DEFINER amarradas à sessão do ator, matriz de grants, <code>assert_gestor_super_admin_shield</code>. Afeta todas as telas.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -2019,9 +2112,9 @@ ACL auditável, fail-closed, sem o gestor enxergar o super administrador.
 <h2 id="mudança-de-papéis">Mudança de Papéis</h2>
 <p class="route">Painel <code>mudanca_papeis</code></p>
 
-<h3 id="descrição-comercial-56">Descrição comercial</h3>
+<h3 id="descrição-comercial-59">Descrição comercial</h3>
 <p>Visitante, congregado, membro: a caminhada eclesial vira dado oficial, com contagem de ativos e herança familiar.</p>
-<h3 id="propósito-e-conexões-56">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-59">Propósito e conexões</h3>
 <p>Pastoral e super administrador. Integra-se à Lista de Membros, carteirinha (status) e limites de billing.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -2050,9 +2143,9 @@ Métricas de membresia reais, não estimativa de lista de presença.
 <h2 id="transferência-de-membro">Transferência de Membro</h2>
 <p class="route">Painel <code>transferencia_igreja</code></p>
 
-<h3 id="descrição-comercial-57">Descrição comercial</h3>
+<h3 id="descrição-comercial-60">Descrição comercial</h3>
 <p>Quando a família muda de congregação no mesmo ecossistema, o cadastro não se duplica. A igreja de destino solicita; a origem aprova; o vínculo e o grupo familiar seguem para a nova casa.</p>
-<h3 id="propósito-e-conexões-57">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-60">Propósito e conexões</h3>
 <p>Mesmo <code>profiles.id</code>; telefone e CPF permanecem únicos. Pedido pastoral na origem. Isolamento por <code>igrejas</code> / <code>profile_igreja_vinculos</code>.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -2081,9 +2174,9 @@ Transferência formal entre instâncias, sem clone de perfil e sem perder o hist
 <h2 id="acessos-de-usuários">Acessos de Usuários</h2>
 <p class="route">Painel <code>profile_access_insights</code></p>
 
-<h3 id="descrição-comercial-58">Descrição comercial</h3>
+<h3 id="descrição-comercial-61">Descrição comercial</h3>
 <p>Quem entrou, quando, quais telas. Transparência de uso para a liderança responsável — recortada à igreja da sessão. Limpeza global só no super administrador.</p>
-<h3 id="propósito-e-conexões-58">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-61">Propósito e conexões</h3>
 <p>Histórico de sessão. Gestor não vê registros do Super Administrador. Estatísticas não atravessam igrejas.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -2112,9 +2205,9 @@ Auditoria de login e navegação, com recorte de segurança entre papéis e inst
 <h2 id="instâncias-igrejas">Instâncias (Igrejas)</h2>
 <p class="route">Rota <code>/igrejas</code> · super administrador</p>
 
-<h3 id="descrição-comercial-59">Descrição comercial</h3>
+<h3 id="descrição-comercial-62">Descrição comercial</h3>
 <p>O ecossistema multi-igreja: logo, redes, CNPJ de ofertas, código da entidade. Cada casa tem cara e PIX próprios.</p>
-<h3 id="propósito-e-conexões-59">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-62">Propósito e conexões</h3>
 <p>Tenancy, branding, prefixo familiar (<code>Parm_entidade</code>), ofertas. Engrenagem do menu.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -2143,9 +2236,9 @@ Operar várias igrejas sem misturar cadastro, marca e tesouraria.
 <h2 id="assinaturas-billing">Assinaturas (Billing)</h2>
 <p class="route">Rota <code>/billing</code></p>
 
-<h3 id="descrição-comercial-60">Descrição comercial</h3>
-<p>A sustentabilidade da plataforma: planos, limite de membros, checkout Stripe em modo teste/produção conforme ambiente. A igreja escolhe o plano com números de ativos à vista. A tela exige sessão.</p>
-<h3 id="propósito-e-conexões-60">Propósito e conexões</h3>
+<h3 id="descrição-comercial-63">Descrição comercial</h3>
+<p>A sustentabilidade da plataforma: planos com <strong>cobrança trimestral</strong>, teto de <strong>usuários ativos (membros + congregados)</strong> e checkout Stripe. Pacotes com limite abaixo da quantidade atual da igreja não ficam disponíveis para assinatura. A tela exige sessão.</p>
+<h3 id="propósito-e-conexões-63">Propósito e conexões</h3>
 <p><code>BillingClass</code>, Functions Stripe, <code>assert_tenant_can_add_member</code>. Isolamento por <code>tenant_id</code>. Gate de acesso na rota.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
@@ -2155,7 +2248,7 @@ Indireta: o app da igreja permanece disponível e dimensionado.
 </td>
           <td class="vision admin" width="50%" valign="top">
 <h4>Visão da Administração</h4>
-Contrato SaaS visível, com teto de membresia alinhado ao plano.
+Contrato SaaS visível, com teto de membresia alinhado ao plano e ciclo trimestral no Stripe.
 </td>
         </tr>
       </table>
@@ -2174,9 +2267,9 @@ Contrato SaaS visível, com teto de membresia alinhado ao plano.
 <h2 id="orquestrador-admin">Orquestrador (admin)</h2>
 <p class="route">Rota <code>/admin/orquestrador</code></p>
 
-<h3 id="descrição-comercial-61">Descrição comercial</h3>
+<h3 id="descrição-comercial-64">Descrição comercial</h3>
 <p>Console avançado de orquestração de eventos e avisos para operação de alto volume — o “mesa de controle” quando o culto é complexo.</p>
-<h3 id="propósito-e-conexões-61">Propósito e conexões</h3>
+<h3 id="propósito-e-conexões-64">Propósito e conexões</h3>
 <p>Complementa Manutenção de Avisos e Programação de Eventos. RPCs de gravação exigem que o ator seja a sessão autenticada.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
