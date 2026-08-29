@@ -1,9 +1,12 @@
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
+import { isDrawerNavigationPending } from '@/lib/drawerNavigationIntent';
 import { useNavigation, useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
 import { useCallback, useEffect, useRef } from 'react';
 import { BackHandler, Platform } from 'react-native';
+
+const BACK_ACTION_TYPES = new Set(['GO_BACK', 'POP', 'POP_TO_TOP']);
 
 type UseReturnToCallerOnLeaveOptions = {
   returnRoute?: string | null;
@@ -37,7 +40,17 @@ export function useReturnToCallerOnLeave({
     }
 
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
-      if (allowLeaveRef.current) {
+      if (allowLeaveRef.current || isDrawerNavigationPending()) {
+        return;
+      }
+
+      const actionType = String(
+        (event.data as { action?: { type?: string } } | undefined)?.action?.type ?? ''
+      );
+
+      // Menu, deep link e replace para outra tela devem seguir. Só o voltar
+      // do aparelho/histórico é desviado para o Índice.
+      if (actionType && !BACK_ACTION_TYPES.has(actionType)) {
         return;
       }
 

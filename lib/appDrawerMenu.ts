@@ -12,6 +12,7 @@ import {
   withFailClosedReturn,
   withMemberCardReturn,
 } from '@/lib/failClosedNavigation';
+import { markDrawerNavigation } from '@/lib/drawerNavigationIntent';
 import type { Href, Router } from 'expo-router';
 
 /** Itens do menu reservados para futura associação de rota (sem navegação ativa). */
@@ -410,21 +411,25 @@ export function resolveDrawerMaintenancePanel(moduleKey: AppDrawerModuleKey) {
   return MAINTENANCE_PANEL_BY_MODULE[moduleKey] ?? null;
 }
 
-function pushScreen(
+function openScreen(
   router: Router,
   pathname: Href,
   params?: Record<string, string>
 ) {
-  router.push({
+  router.navigate({
     pathname,
     params: params ?? withFailClosedReturn(),
   } as Href);
 }
 
+const DRAWER_NAVIGATE = { method: 'navigate' as const };
+
 export async function navigateDrawerMenuItem(
   router: Router,
   moduleKey: AppDrawerModuleKey
 ) {
+  markDrawerNavigation();
+
   if (isDrawerMenuPlaceholder(moduleKey)) {
     return;
   }
@@ -435,7 +440,7 @@ export async function navigateDrawerMenuItem(
   }
 
   if (moduleKey === 'menu_perfil') {
-    pushScreen(router, '/perfil', withMemberCardReturn('grouped_manage'));
+    openScreen(router, '/perfil', withMemberCardReturn('grouped_manage'));
     return;
   }
 
@@ -444,7 +449,8 @@ export async function navigateDrawerMenuItem(
       router,
       '/manage-profile',
       ACCESS_SCREEN.manageProfile,
-      withMemberCardReturn('grouped_manage')
+      withMemberCardReturn('grouped_manage'),
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -454,18 +460,19 @@ export async function navigateDrawerMenuItem(
       router,
       '/manage-members',
       ACCESS_SCREEN.manageMembers,
-      withMemberCardReturn('grouped_manage')
+      withMemberCardReturn('grouped_manage'),
+      DRAWER_NAVIGATE
     );
     return;
   }
 
   if (moduleKey === 'menu_ofertas') {
-    pushScreen(router, '/ofertas', withMemberCardReturn('offerings'));
+    openScreen(router, '/ofertas', withMemberCardReturn('offerings'));
     return;
   }
 
   if (moduleKey === 'menu_campaigns') {
-    pushScreen(
+    openScreen(
       router,
       '/ofertas',
       withMemberCardReturn('campaign_card', { campaignContribute: '1' })
@@ -478,7 +485,8 @@ export async function navigateDrawerMenuItem(
       router,
       '/expense-report',
       ACCESS_SCREEN.expenseReport,
-      withFailClosedReturn()
+      withFailClosedReturn(),
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -488,7 +496,8 @@ export async function navigateDrawerMenuItem(
       router,
       '/pastoral',
       ACCESS_SCREEN.pastoral,
-      withMemberCardReturn('pastoral')
+      withMemberCardReturn('pastoral'),
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -498,18 +507,19 @@ export async function navigateDrawerMenuItem(
       router,
       '/trilha-discipulado',
       ACCESS_SCREEN.discipleshipTrail,
-      withFailClosedReturn()
+      withFailClosedReturn(),
+      DRAWER_NAVIGATE
     );
     return;
   }
 
   if (moduleKey === 'menu_small_group') {
-    router.replace(buildReturnToDashboardHref('small_group'));
+    router.navigate(buildReturnToDashboardHref('small_group'));
     return;
   }
 
   if (moduleKey === 'menu_opportunity_mural') {
-    router.replace(buildReturnToDashboardHref('opportunity_mural_card'));
+    router.navigate(buildReturnToDashboardHref('opportunity_mural_card'));
     return;
   }
 
@@ -518,23 +528,24 @@ export async function navigateDrawerMenuItem(
       router,
       '/mural-generosidade',
       ACCESS_SCREEN.generosityMural,
-      withFailClosedReturn()
+      withFailClosedReturn(),
+      DRAWER_NAVIGATE
     );
     return;
   }
 
   if (moduleKey === 'menu_escalas') {
-    pushScreen(router, '/escalas', withMemberCardReturn('vigilance_scales'));
+    openScreen(router, '/escalas', withMemberCardReturn('vigilance_scales'));
     return;
   }
 
   if (moduleKey === 'menu_aniversariantes') {
-    pushScreen(router, '/aniversariantes', withFailClosedReturn());
+    openScreen(router, '/aniversariantes', withFailClosedReturn());
     return;
   }
 
   if (moduleKey === 'menu_membros') {
-    pushScreen(router, '/membros', withFailClosedReturn());
+    openScreen(router, '/membros', withFailClosedReturn());
     return;
   }
 
@@ -543,7 +554,8 @@ export async function navigateDrawerMenuItem(
       router,
       '/mapa-geolocalizacao',
       ACCESS_SCREEN.mapGeolocation,
-      withFailClosedReturn()
+      withFailClosedReturn(),
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -553,58 +565,59 @@ export async function navigateDrawerMenuItem(
       router,
       '/financial',
       ACCESS_SCREEN.financial,
-      withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID)
+      withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID),
+      DRAWER_NAVIGATE
     );
     return;
   }
 
   if (moduleKey === 'menu_administrativo') {
-    pushScreen(router, '/administrativo', withFailClosedReturn());
+    openScreen(router, '/administrativo', withFailClosedReturn());
     return;
   }
 
   if (moduleKey === 'menu_igrejas') {
-    pushScreen(router, '/igrejas', withFailClosedReturn());
+    openScreen(router, '/igrejas', withFailClosedReturn());
     return;
   }
 
   if (moduleKey === 'menu_billing') {
-    pushScreen(router, '/billing', withFailClosedReturn());
+    openScreen(router, '/billing', withFailClosedReturn());
     return;
   }
 
   if (moduleKey === 'menu_salas') {
-    pushScreen(router, '/configuracao-salas', withFailClosedReturn());
+    openScreen(router, '/configuracao-salas', withFailClosedReturn());
     return;
   }
 
   if (moduleKey === 'menu_totem') {
-    pushScreen(router, '/totem-checkin', withFailClosedReturn());
+    openScreen(router, '/totem-checkin', withFailClosedReturn());
     return;
   }
 
   if (moduleKey === 'menu_autorizacao_midia') {
-    pushScreen(router, '/autorizacao-midia', withFailClosedReturn());
+    openScreen(router, '/autorizacao-midia', withFailClosedReturn());
     return;
   }
 
   if (moduleKey === 'menu_orquestrador') {
-    pushScreen(router, '/admin/orquestrador', withFailClosedReturn());
+    openScreen(router, '/admin/orquestrador', withFailClosedReturn());
     return;
   }
 
   if (moduleKey === 'menu_redes_sociais') {
-    pushScreen(router, '/redes-sociais', withFailClosedReturn());
+    openScreen(router, '/redes-sociais', withFailClosedReturn());
     return;
   }
 
   if (moduleKey === 'menu_sobre_conecta') {
-    pushScreen(router, '/sobre-conecta', withFailClosedReturn());
+    openScreen(router, '/sobre-conecta', withFailClosedReturn());
     return;
   }
 
   if (moduleKey === 'suggestions_improvements') {
-    pushScreen(
+    openScreen(
       router,
       '/suggestions-improvements',
       withFailClosedReturn()
@@ -615,7 +628,7 @@ export async function navigateDrawerMenuItem(
   const maintenancePanel = resolveDrawerMaintenancePanel(moduleKey);
 
   if (maintenancePanel) {
-    router.push({
+    router.navigate({
       pathname: '/maintenance-dashboard',
       params: withMinimalPresentation({
         panel: maintenancePanel,
