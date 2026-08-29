@@ -180,6 +180,8 @@ export function GenerosityMuralPanel() {
     }
   };
 
+  const mineQueue = mine.filter((post) => post.status !== 'ativo');
+
   return (
     <View style={styles.root}>
       <Text style={styles.title}>Mural de Generosidade</Text>
@@ -278,10 +280,10 @@ export function GenerosityMuralPanel() {
           nestedScrollEnabled
           showsVerticalScrollIndicator={false}
         >
-          {mine.length ? (
+          {mineQueue.length ? (
             <Text style={styles.sectionLabel}>Meus anúncios</Text>
           ) : null}
-          {mine.map((post) => (
+          {mineQueue.map((post) => (
             <View key={`mine-${post.id}`} style={styles.card}>
               <Text style={styles.cardTitle} numberOfLines={2}>
                 {post.titulo}
@@ -321,7 +323,16 @@ export function GenerosityMuralPanel() {
                   {post.descricao}
                 </Text>
                 {post.isMine ? (
-                  <Text style={styles.ownHint}>Seu anúncio</Text>
+                  <>
+                    <Text style={styles.ownHint}>Seu anúncio</Text>
+                    <TouchableOpacity
+                      style={styles.secondaryButton}
+                      onPress={() => void handleComplete(post)}
+                      disabled={busyId === post.id}
+                    >
+                      <Text style={styles.secondaryButtonText}>Marcar resolvido</Text>
+                    </TouchableOpacity>
+                  </>
                 ) : post.myInterest ? (
                   <Text style={styles.ownHint}>Interesse enviado à liderança</Text>
                 ) : (

@@ -42,7 +42,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   volunteer_mural: 'handshake-o',
   generosity_moderation: 'gift',
   family_reception: 'home',
-  visitor_followup: 'commenting',
+  visitor_followup: 'handshake-o',
   profile_cadastro: 'user-plus',
   menu_administrativo: 'briefcase',
   Events: 'calendar',

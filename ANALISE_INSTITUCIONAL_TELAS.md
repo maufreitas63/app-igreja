@@ -12,8 +12,8 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 <strong>Solução:</strong> ecossistema app-igreja (PWA + mobile)<br>
 <strong>Público:</strong> liderança, secretaria, pastoral, tesouraria e operação<br>
 <strong>Base:</strong> código-fonte, rotas Expo Router, menu lateral, Índice, Painel e Manutenção<br>
-<strong>Data:</strong> 28 de agosto de 2026<br>
-<strong>Revisão:</strong> atualização comercial desde 26 de agosto — células, contribuições, escalas, menu do membro e leitura financeira
+<strong>Data:</strong> 29 de agosto de 2026<br>
+<strong>Revisão:</strong> régua de acolhimento (Recepção Familiar), mural de generosidade com moderação, Fechar no rodapé canônico e correções de vínculo/front da equipe de boas-vindas
 </p>
 
 </div>
@@ -25,7 +25,7 @@ A plataforma concentra, em um único aplicativo, o que a igreja precisa para rec
 Há três camadas visíveis:
 
 1. **Entrada e confiança** — login, cadastro, LGPD, escolha da igreja e encerramento seguro da sessão.
-2. **Vida da família** — Índice, Painel, Perfil, eventos, ofertas, pastoral, células, campanhas, voluntariado, financeiro de leitura e escalas.
+2. **Vida da família** — Índice, Painel, Perfil, eventos, ofertas, pastoral, células, campanhas, voluntariado, mural de generosidade, financeiro de leitura e escalas.
 3. **Operação e governança** — totem, salas, manutenção, papéis, relatórios, instâncias e assinatura.
 
 Cada tela abaixo segue o mesmo roteiro: título, valor comercial, propósito técnico e as duas perspectivas (usuário final e administração).
@@ -37,9 +37,9 @@ Cada tela abaixo segue o mesmo roteiro: título, valor comercial, propósito té
 | Chegar | Login, cadastro, recuperar senha, selecionar igreja, LGPD | Identidade única, sem fila de senha improvisada |
 | Orientar-se | Índice, menu lateral, Painel, caixa de avisos | Atalhos claros; o que a pessoa pode ver já vem filtrado por papel |
 | Participar | Agenda, QR, salas, totem | Presença confirmada, crianças localizadas, culto fluindo |
-| Cuidar | Pastoral, agenda pastoral, aniversariantes, membros, mapa, células | Cuidado pastoral, célula com datas reais e vínculo sem exposição indevida |
+| Cuidar | Pastoral, agenda pastoral, aniversariantes, membros, mapa, células, Régua de Acolhimento | Cuidado pastoral, célula com datas reais, visitante acompanhado em etapas após a recepção |
 | Contribuir | Eu quero… / Contribuir, Dízimos e Ofertas, campanhas | PIX Copia e Cola com o valor; campanha identificada sem misturar com o dízimo |
-| Servir | Escalas, troca pontual, mural de vagas, estacionamento | Escala visível, substituição combinada e dons reconhecidos |
+| Servir | Escalas, troca pontual, mural de vagas, mural de generosidade, estacionamento | Escala visível, substituição combinada, dons reconhecidos e doação/empréstimo entre irmãos |
 | Governar | Manutenção, ACL, papéis, transferência, igrejas, billing | Controle institucional com rastreio |
 
 ---
@@ -214,7 +214,7 @@ Permite que uma família se apresente antes mesmo de ter login — útil em camp
 
 ### Propósito e conexões
 
-Formulário sem autenticação; a fila entra em **Recepção Familiar** na manutenção. Evita cadastro improvisado em papel.
+Formulário sem autenticação; a fila entra em **Recepção Familiar** na manutenção. A aprovação dispara a **Régua de Acolhimento**. Evita cadastro improvisado em papel.
 
 <div class="split">
 <div class="vision user">
@@ -244,7 +244,7 @@ Fila única de acolhimento, com aceite ou recusa institucional — não um amont
 
 ### Propósito e conexões
 
-Distribui etiquetas na altura da tela (`indexShortcutHints`). Cada toque abre o Painel no card correspondente (`dashboardCard`). **Eu quero… → Contribuir** reúne Dízimos e Ofertas e Campanhas e Projetos; o pedido de oração abre o Coração Aberto. Rodapé de sessão: Encerrar sessão. Engrenagem de manutenção à direita, só com permissão. Marca d’água da instância. A caixa de avisos recarrega em tempo real e não repete o mesmo recado já visto. **Fechar** em telas de conteúdo devolve ao Índice; só Encerrar sessão limpa o aparelho.
+Distribui etiquetas na altura da tela (`indexShortcutHints`). Cada toque abre o Painel no card correspondente (`dashboardCard`). **Eu quero… → Contribuir** reúne Dízimos e Ofertas e Campanhas e Projetos; o pedido de oração abre o Coração Aberto. Rodapé de sessão: Encerrar sessão. Engrenagem de manutenção à direita, só com permissão. Marca d’água da instância. A caixa de avisos recarrega em tempo real e não repete o mesmo recado já visto — inclui recados do culto, trocas de escala, marcos de campanha, vagas ministeriais e **avisos do Mural de Generosidade**. **Fechar** em telas de conteúdo devolve ao Índice; só Encerrar sessão limpa o aparelho.
 
 <div class="split">
 <div class="vision user">
@@ -266,7 +266,7 @@ Atalhos respeitam ACL. Quem não deve ver Financeiro ou Membros simplesmente nã
 
 ### Descrição comercial
 
-É o corredor interno da plataforma, separado com clareza. Na parte de cima, só a vida do membro: Início, Perfil, Dados cadastrais, Família, Reembolsos, Financeiro, Coração Aberto, Trilha de Discipulado, Minha Célula, Escalas, Mural de Oportunidades, Sugestões e Redes Sociais. Dízimos e Campanhas não aparecem aqui: já estão em **Eu quero… → Contribuir**. A engrenagem concentra a gestão em cinco grupos que começam recolhidos — Operação e Segurança, Gestão de Pessoas, Culto e Eventos, Finanças e Inteligência, Governança e TI. O título abre a lista. Quem não tem o papel nem vê o item — e a URL administrativa não entrega a ferramenta ao membro comum.
+É o corredor interno da plataforma, separado com clareza. Na parte de cima, só a vida do membro: Início, Perfil, Financeiro, Minha Célula, Escalas, Mural de Oportunidades, **Mural de Generosidade**, Sugestões, Redes Sociais e Sobre o Conecta+. Dízimos e Campanhas não aparecem aqui: já estão em **Eu quero… → Contribuir**. A engrenagem concentra a gestão em cinco grupos que começam recolhidos — Operação e Segurança, Gestão de Pessoas, Culto e Eventos, Finanças e Inteligência, Governança e TI. O título abre a lista. Quem não tem o papel nem vê o item — e a URL administrativa não entrega a ferramenta ao membro comum.
 
 ### Propósito e conexões
 
@@ -296,7 +296,7 @@ A equipe entra nos módulos pela engrenagem, já agrupados. O membro comum não 
 
 ### Propósito e conexões
 
-Carrossel com ACL `dashboard.card.*`. Inclui células (`small_group`), campanhas (`campaign_card`) e mural (`opportunity_mural_card`). No modo da família, o card preenche a coluna útil da tela (título, textos e botões na mesma largura). Rodapé `‹` `›` e Menu. Telas filhas devolvem ao card de origem via `returnDashboardCard`. Paletas em `dashboardCardThemes`.
+Carrossel com ACL `dashboard.card.*`. No caminho publicado, só Célula (`small_group`) e Mural de Oportunidades (`opportunity_mural_card`) permanecem no carrossel; o **Mural de Generosidade** abre rota própria (`/mural-generosidade`), sem card extra no Painel. No modo da família, o card preenche a coluna útil da tela (título, textos e botões na mesma largura). Rodapé `‹` `›` e Menu. Telas filhas devolvem ao card de origem via `returnDashboardCard`. Paletas em `dashboardCardThemes`.
 
 <div class="split">
 <div class="vision user">
@@ -742,7 +742,7 @@ Depois da Lição 5.1 (Perfil Ministerial), a igreja convida a servir no minist�
 
 ### Propósito e conexões
 
-Match com `ministerial_resultados`. Mural do membro não lista dons alheios. Gestão em **Mural de Voluntários**. Aviso pode ser só para quem tem o perfil compatível.
+Match com `ministerial_resultados`. Mural do membro não lista dons alheios. Gestão em **Mural de Voluntários**. Aviso pode ser só para quem tem o perfil compatível. O **Mural de Generosidade** é outra superfície — doações e empréstimos, com moderação.
 
 <div class="split">
 <div class="vision user">
@@ -752,6 +752,32 @@ Vê vagas alinhadas aos próprios dons e diz “tenho interesse” sem se candid
 <div class="vision admin">
 <h4>Visão da Administração</h4>
 Busca ativa privada, interesse reabrível após recusa e convite pela liderança — sem vitrine de perfis.
+</div>
+</div>
+</div>
+
+<div class="screen">
+
+## Mural de Generosidade
+
+<p class="route">Rota <code>/mural-generosidade</code> · menu <code>menu_generosity_mural</code></p>
+
+### Descrição comercial
+
+A comunidade troca doações e pedidos de empréstimo — móveis, equipamentos de saúde, vestuário, livros — sem transformar o mural em classificados públicos. Nada entra no ar sem a liderança aprovar. O feed não mostra telefone: quem tem interesse avisa a igreja, e a equipe faz a ponte.
+
+### Propósito e conexões
+
+Anúncios em `generosity_posts` nascem como `pendente`. Foto opcional no bucket privado. Interesse gera aviso interno, sem WhatsApp no mural do membro. A liderança opera em **Moderação do Mural**. Avisos de aprovação, recusa e mediação aparecem na caixa da home. Exige vínculo ativo de membresia. Não entra no carrossel do Painel.
+
+<div class="split">
+<div class="vision user">
+<h4>Visão do Usuário Final</h4>
+Publica o que pode doar ou o que precisa emprestado, acompanha o próprio anúncio e manifesta interesse sem expor o celular.
+</div>
+<div class="vision admin">
+<h4>Visão da Administração</h4>
+Fila de moderação, mediação de contato e encerramento do anúncio — a igreja permanece no meio, não o aplicativo.
 </div>
 </div>
 </div>
@@ -1224,11 +1250,11 @@ Geração em bloco, ordem sequencial, alerta ao remover servo com datas futuras 
 
 ### Descrição comercial
 
-A fila sagrada: pedidos do Coração Aberto chegam aqui para o pastor e a intercessão tratarem com método, sem perder sigilo. A agenda de horários da pastoral também se opera daqui.
+A fila sagrada: pedidos do Coração Aberto chegam aqui para o pastor e a intercessão tratarem com método, sem perder sigilo. A agenda de horários da pastoral também se opera daqui. No mesmo painel, o destaque **Visitantes sem retorno** traz quem a Régua de Acolhimento não viu no culto até o 8º dia.
 
 ### Propósito e conexões
 
-Gestão dos envios de `/pastoral`. Status visível em Meus pedidos. Slots de atendimento por igreja.
+Gestão dos envios de `/pastoral`. Status visível em Meus pedidos. Slots de atendimento por igreja. Alertas `ligacao_pastor_dia_8` da régua — check-in da família no período encerra o ciclo; ausência escala para ligação pastoral. A régua **não** promove o visitante a membro.
 
 <div class="split">
 <div class="vision user">
@@ -1237,7 +1263,7 @@ Sabe que o pedido não caiu no vazio e que o horário marcado vale.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>
-Distribuição de cuidado, priorização, registro ministerial e agenda.
+Distribuição de cuidado, priorização, registro ministerial, agenda e o visitante que ainda não voltou ao culto.
 </div>
 </div>
 </div>
@@ -1306,7 +1332,7 @@ A liderança cadastra a vaga, os dons exigidos e o líder de contato. A busca at
 
 ### Propósito e conexões
 
-`volunteer_opportunities`. Match com a Lição 5.1. Interesse pendente/aceito/recusado. Aviso de vaga pode ir só a quem casa.
+`volunteer_opportunities`. Match com a Lição 5.1. Interesse pendente/aceito/recusado. Aviso de vaga pode ir só a quem casa. Doações e empréstimos ficam no **Mural de Generosidade**, com fila própria em **Moderação do Mural**.
 
 <div class="split">
 <div class="vision user">
@@ -1316,6 +1342,32 @@ Recebe convite pertinente; o mural comum não mostra o perfil dos outros.
 <div class="vision admin">
 <h4>Visão da Administração</h4>
 Recrutamento ministerial com critério, WhatsApp do líder e lista sem duplicata.
+</div>
+</div>
+</div>
+
+<div class="screen">
+
+## Moderação do Mural de Generosidade
+
+<p class="route">Painel <code>generosity_moderation</code> · engrenagem</p>
+
+### Descrição comercial
+
+Nada do Mural de Generosidade entra no ar sem este crivo. A liderança aprova, rejeita ou encerra o anúncio e media o interesse: telefones aparecem só aqui, para a igreja fazer a ponte entre quem doa e quem pede.
+
+### Propósito e conexões
+
+Fila `pendente` / `ativo` e aba de interesses. RPCs `moderate_generosity_post` e `accept_generosity_interest`. Aviso interno ao autor e ao interessado. Papéis liderança/pastoral/super administrador.
+
+<div class="split">
+<div class="vision user">
+<h4>Visão do Usuário Final</h4>
+Espera a aprovação da igreja; o feed público não vira classificado sem filtro.
+</div>
+<div class="vision admin">
+<h4>Visão da Administração</h4>
+Governança do compartilhamento material, com contato mediado e sem telefone no mural do membro.
 </div>
 </div>
 </div>
@@ -1488,16 +1540,42 @@ A porta de entrada institucional da fila pública `/cadastro-familia/`. Gravar o
 
 ### Propósito e conexões
 
-Fila do formulário standalone. Gera família/perfil oficiais.
+Fila do formulário standalone. Gera família/perfil oficiais. A aprovação (`processed`) dispara a **Régua de Acolhimento** para o informante (e para quem tem telefone próprio): WhatsApp no dia 1, convite à célula mais próxima no dia 4, verificação de check-in no domingo do 8º dia.
 
 <div class="split">
 <div class="vision user">
 <h4>Visão do Usuário Final</h4>
-O cadastro feito no link vira gente de verdade na igreja.
+O cadastro feito no link vira gente de verdade na igreja — e alguém da equipe continua o cuidado depois da porta.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>
-Acolhimento com aceite formal, sem planilha de “pendentes da recepção”.
+Acolhimento com aceite formal, sem planilha de “pendentes da recepção”, e tarefas automáticas para não deixar o visitante sem retorno.
+</div>
+</div>
+</div>
+
+<div class="screen">
+
+## Régua de Acolhimento
+
+<p class="route">Painel <code>visitor_followup</code> · engrenagem</p>
+
+### Descrição comercial
+
+Depois que a Recepção Familiar grava o lote, a igreja não “esquece” o visitante. A equipe de boas-vindas vê as tarefas do dia — mensagem pronta no WhatsApp, convite à célula mais próxima pelo CEP — e marca o contato feito. Crianças sem telefone próprio não geram régua duplicada. No 8º dia, se a família não fez check-in no culto, o alerta sobe ao **Cuidado Pastoral**.
+
+### Propósito e conexões
+
+Tabelas `visitor_followup` e `task_alerts`. Disparo no trigger da recepção. Célula mais próxima por Haversine no CEP. Check-in confirmado da família no período encerra como integrado; ausência escala ao pastor. **Não** altera o papel do visitante para membro. WhatsApp só habilita com telefone utilizável.
+
+<div class="split">
+<div class="vision user">
+<h4>Visão do Usuário Final</h4>
+Recebe acolhimento concreto — mensagem, convite à célula — em vez de sumir depois do primeiro culto.
+</div>
+<div class="vision admin">
+<h4>Visão da Administração</h4>
+Fila operacional da equipe de boas-vindas e alerta pastoral no dia 8, isolado por igreja, sem promover o visitante automaticamente.
 </div>
 </div>
 </div>

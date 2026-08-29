@@ -29,6 +29,10 @@ export const VISITOR_FOLLOWUP_TASK_LABEL: Record<VisitorFollowupTaskTipo, string
   ligacao_pastor_dia_8: 'Ligação pastoral — dia 8',
 };
 
+export function hasVisitorFollowupPhone(phone: string | null | undefined) {
+  return (phone ?? '').replace(/\D/g, '').length >= 10;
+}
+
 const parseTask = (
   row: Record<string, unknown>,
   kind: 'task' | 'alert'
@@ -49,11 +53,13 @@ const parseTask = (
     return null;
   }
 
+  const phoneRaw = row.phone ? String(row.phone) : null;
+
   return {
     id,
     visitorId,
     visitorName: String(row.visitor_name ?? 'Visitante').trim() || 'Visitante',
-    phone: row.phone ? String(row.phone) : null,
+    phone: hasVisitorFollowupPhone(phoneRaw) ? phoneRaw : null,
     tipoTarefa: tipo,
     dataProgramada: String(row.data_programada ?? ''),
     status: String(row.status ?? ''),

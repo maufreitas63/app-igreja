@@ -12,6 +12,7 @@ import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   formatVisitorFollowupDate,
+  hasVisitorFollowupPhone,
   VISITOR_FOLLOWUP_TASK_LABEL,
   type VisitorFollowupTask,
 } from '@/lib/visitorFollowupApi';
@@ -126,6 +127,7 @@ export function MaintenanceVisitorFollowupCard({
           ) : (
             tasks.map((task) => {
               const busy = completingId === task.id;
+              const canWhatsApp = hasVisitorFollowupPhone(task.phone);
 
               return (
                 <View
@@ -148,13 +150,30 @@ export function MaintenanceVisitorFollowupCard({
                   </Text>
                   <View style={styles.taskActions}>
                     <TouchableOpacity
-                      style={[styles.whatsappButton, minimal && styles.whatsappButtonMinimal]}
+                      style={[
+                        styles.whatsappButton,
+                        minimal && styles.whatsappButtonMinimal,
+                        !canWhatsApp && styles.whatsappButtonDisabled,
+                      ]}
                       onPress={() => handleWhatsApp(task)}
+                      disabled={!canWhatsApp}
                       activeOpacity={0.85}
-                      accessibilityLabel="Abrir WhatsApp"
+                      accessibilityLabel={
+                        canWhatsApp ? 'Abrir WhatsApp' : 'Telefone indisponível'
+                      }
                     >
-                      <FontAwesome name="whatsapp" size={18} color={minimal ? '#16A34A' : '#4ADE80'} />
-                      <Text style={[styles.whatsappLabel, minimal && styles.whatsappLabelMinimal]}>
+                      <FontAwesome
+                        name="whatsapp"
+                        size={18}
+                        color={canWhatsApp ? (minimal ? '#16A34A' : '#4ADE80') : '#94A3B8'}
+                      />
+                      <Text
+                        style={[
+                          styles.whatsappLabel,
+                          minimal && styles.whatsappLabelMinimal,
+                          !canWhatsApp && styles.whatsappLabelDisabled,
+                        ]}
+                      >
                         WhatsApp
                       </Text>
                     </TouchableOpacity>
@@ -305,6 +324,12 @@ const styles = StyleSheet.create({
   },
   whatsappLabelMinimal: {
     color: '#15803D',
+  },
+  whatsappButtonDisabled: {
+    opacity: 0.45,
+  },
+  whatsappLabelDisabled: {
+    color: '#94A3B8',
   },
   doneButton: {
     marginLeft: 'auto',

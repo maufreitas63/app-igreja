@@ -20,6 +20,7 @@ export const DRAWER_MEMBER_CARD_BY_MODULE: Partial<Record<AppDrawerModuleKey, st
   menu_pastoral: 'pastoral',
   menu_small_group: 'small_group',
   menu_opportunity_mural: 'opportunity_mural_card',
+  menu_generosity_mural: 'generosity_mural',
   menu_aniversariantes: 'birthdays',
   menu_membros: 'members_list',
   menu_administrativo: 'administrativo',
@@ -67,32 +68,18 @@ export function isDrawerMemberModuleAllowed(
   context: DrawerMemberAccessContext
 ): boolean {
   const screenKey = DRAWER_MEMBER_SCREEN_BY_MODULE[moduleKey];
-
-  if (screenKey) {
-    if (context.dashboardScreenAccess[screenKey] !== true) {
-      return false;
-    }
-
-    if (DRAWER_MODULES_REQUIRING_ACTIVE_MEMBERSHIP.has(moduleKey) && !context.hasActiveMembership) {
-      return false;
-    }
-
-    return true;
-  }
-
   const cardContent = DRAWER_MEMBER_CARD_BY_MODULE[moduleKey];
-
-  if (!cardContent) {
-    return false;
-  }
-
-  if (
-    !isDashboardCardFullyAllowed(
+  const screenOk = Boolean(screenKey && context.dashboardScreenAccess[screenKey] === true);
+  const cardOk = Boolean(
+    cardContent
+    && isDashboardCardFullyAllowed(
       cardContent,
       context.dashboardCardAccess,
       context.dashboardScreenAccess
     )
-  ) {
+  );
+
+  if (!screenOk && !cardOk) {
     return false;
   }
 

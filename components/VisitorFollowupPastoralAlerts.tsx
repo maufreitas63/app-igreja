@@ -4,6 +4,7 @@ import { formatShortName } from '@/lib/formatShortName';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   formatVisitorFollowupDate,
+  hasVisitorFollowupPhone,
   type VisitorFollowupTask,
 } from '@/lib/visitorFollowupApi';
 import { openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
@@ -90,6 +91,7 @@ export function VisitorFollowupPastoralAlerts({ isActive = true, minimal = false
       ) : null}
       {alerts.map((alert) => {
         const busy = completingId === alert.id;
+        const canWhatsApp = hasVisitorFollowupPhone(alert.phone);
 
         return (
           <View key={alert.id} style={[styles.card, minimal && styles.cardMinimal]}>
@@ -107,13 +109,24 @@ export function VisitorFollowupPastoralAlerts({ isActive = true, minimal = false
             <Text style={[styles.desc, minimal && styles.descMinimal]}>{alert.descricao}</Text>
             <View style={styles.actions}>
               <TouchableOpacity
-                style={styles.contactBtn}
+                style={[styles.contactBtn, !canWhatsApp && styles.contactBtnDisabled]}
                 onPress={() => handleContact(alert)}
+                disabled={!canWhatsApp}
                 activeOpacity={0.85}
-                accessibilityLabel="Contatar visitante"
+                accessibilityLabel={canWhatsApp ? 'Contatar visitante' : 'Telefone indisponível'}
               >
-                <FontAwesome name="whatsapp" size={16} color={minimal ? '#16A34A' : '#4ADE80'} />
-                <Text style={[styles.contactLabel, minimal && styles.contactLabelMinimal]}>
+                <FontAwesome
+                  name="whatsapp"
+                  size={16}
+                  color={canWhatsApp ? (minimal ? '#16A34A' : '#4ADE80') : '#94A3B8'}
+                />
+                <Text
+                  style={[
+                    styles.contactLabel,
+                    minimal && styles.contactLabelMinimal,
+                    !canWhatsApp && styles.contactLabelDisabled,
+                  ]}
+                >
                   Contatar
                 </Text>
               </TouchableOpacity>
@@ -226,6 +239,12 @@ const styles = StyleSheet.create({
   },
   contactLabelMinimal: {
     color: '#15803D',
+  },
+  contactBtnDisabled: {
+    opacity: 0.45,
+  },
+  contactLabelDisabled: {
+    color: '#94A3B8',
   },
   doneBtn: {
     marginLeft: 'auto',

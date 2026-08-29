@@ -229,14 +229,20 @@ export async function createGenerosityPost(input: {
   }
 
   const id = String(payload.id ?? '').trim();
+  let message = String(payload.message ?? 'Enviado para moderação.');
 
   if (id && input.imageInput) {
-    await uploadGenerosityPostPhoto(id, input.imageInput);
+    try {
+      await uploadGenerosityPostPhoto(id, input.imageInput);
+    } catch {
+      message =
+        'Anúncio enviado para moderação, mas a foto não foi anexada. Você pode editar depois ou republicar com a foto.';
+    }
   }
 
   return {
     id,
-    message: String(payload.message ?? 'Enviado para moderação.'),
+    message,
   };
 }
 

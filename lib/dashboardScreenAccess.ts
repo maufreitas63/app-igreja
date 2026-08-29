@@ -17,7 +17,13 @@ const GROUPED_MANAGE_LINKED_SCREENS = [
 ] as const;
 
 const loadDashboardLinkedScreenKeys = () =>
-  [...new Set([...Object.values(DASHBOARD_CARD_LINKED_SCREEN), ...GROUPED_MANAGE_LINKED_SCREENS])];
+  [
+    ...new Set([
+      ...Object.values(DASHBOARD_CARD_LINKED_SCREEN),
+      ...GROUPED_MANAGE_LINKED_SCREENS,
+      ACCESS_SCREEN.generosityMural,
+    ]),
+  ];
 
 export const getDashboardLinkedScreenKeys = loadDashboardLinkedScreenKeys;
 

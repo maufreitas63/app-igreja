@@ -285,6 +285,8 @@ declare
   v_msg1 text;
   v_msg4 text;
   v_msg8 text;
+  v_informant boolean := false;
+  v_informant_phone text;
 begin
   if p_tenant_id is null or p_visitor_id is null then
     return null;
@@ -299,18 +301,6 @@ begin
     return null;
   end if;
 
-  select f.id
-    into v_followup_id
-    from public.visitor_followup f
-   where f.tenant_id = p_tenant_id
-     and f.visitor_id = p_visitor_id
-     and f.status = 'Ativo'
-   limit 1;
-
-  if v_followup_id is not null then
-    return v_followup_id;
-  end if;
-
   select
     coalesce(nullif(trim(p.full_name), ''), 'visitante'),
     nullif(regexp_replace(coalesce(p.phone, ''), '\D', '', 'g'), ''),
@@ -319,6 +309,75 @@ begin
     from public.profiles p
    where p.id = p_visitor_id
      and p.tenant_id = p_tenant_id;
+
+  if p_recepcao_id is not null then
+    select coalesce(r.is_informant, false)
+      into v_informant
+      from public.recepcao_cadastro_familiar r
+     where r.id = p_recepcao_id
+       and (r.tenant_id is null or r.tenant_id = p_tenant_id);
+
+    if not coalesce(v_informant, false) then
+      select nullif(regexp_replace(coalesce(inf.phone, ''), '\D', '', 'g'), '')
+        into v_informant_phone
+        from public.recepcao_cadastro_familiar inf
+        join public.recepcao_cadastro_familiar me
+          on me.id = p_recepcao_id
+         and me.submission_id = inf.submission_id
+       where inf.is_informant is true
+       limit 1;
+    end if;
+  end if;
+
+  -- Só o informante, ou quem tem telefone próprio (não copiado do responsável).
+  if not coalesce(v_informant, false) then
+    if v_phone is null or length(v_phone) < 10 then
+      return null;
+    end if;
+    if v_informant_phone is not null and v_phone = v_informant_phone then
+      return null;
+    end if;
+  end if;
+
+  select f.id, f.data_aprovacao
+    into v_followup_id, v_aprovacao
+    from public.visitor_followup f
+   where f.tenant_id = p_tenant_id
+     and f.visitor_id = p_visitor_id
+     and f.status = 'Ativo'
+   limit 1;
+
+  if v_followup_id is null then
+    begin
+      insert into public.visitor_followup (
+        tenant_id,
+        visitor_id,
+        status,
+        data_aprovacao,
+        recepcao_cadastro_familiar_id
+      ) values (
+        p_tenant_id,
+        p_visitor_id,
+        'Ativo',
+        public.visitor_followup_today(),
+        p_recepcao_id
+      )
+      returning id, data_aprovacao into v_followup_id, v_aprovacao;
+    exception
+      when unique_violation then
+        select f.id, f.data_aprovacao
+          into v_followup_id, v_aprovacao
+          from public.visitor_followup f
+         where f.tenant_id = p_tenant_id
+           and f.visitor_id = p_visitor_id
+           and f.status = 'Ativo'
+         limit 1;
+    end;
+  end if;
+
+  if v_followup_id is null then
+    return null;
+  end if;
 
   v_first := split_part(v_full_name, ' ', 1);
   v_day4 := v_aprovacao + 4;
@@ -362,50 +421,46 @@ begin
     to_char(v_day8, 'DD/MM/YYYY')
   );
 
-  insert into public.visitor_followup (
-    tenant_id,
-    visitor_id,
-    status,
-    data_aprovacao,
-    recepcao_cadastro_familiar_id
-  ) values (
-    p_tenant_id,
-    p_visitor_id,
-    'Ativo',
-    v_aprovacao,
-    p_recepcao_id
+  insert into public.task_alerts (
+    tenant_id, visitor_id, followup_id, responsavel_cargo, tipo_tarefa,
+    data_programada, status, descricao
   )
-  returning id into v_followup_id;
+  select p_tenant_id, p_visitor_id, v_followup_id, 'welcome_team', 'whatsapp_dia_1',
+         v_aprovacao, 'Pendente', v_msg1
+   where not exists (
+     select 1 from public.task_alerts t
+      where t.tenant_id = p_tenant_id
+        and t.visitor_id = p_visitor_id
+        and t.tipo_tarefa = 'whatsapp_dia_1'
+   );
 
   insert into public.task_alerts (
     tenant_id, visitor_id, followup_id, responsavel_cargo, tipo_tarefa,
     data_programada, status, descricao
-  ) values
-    (
-      p_tenant_id, p_visitor_id, v_followup_id, 'welcome_team', 'whatsapp_dia_1',
-      v_aprovacao, 'Pendente', v_msg1
-    ),
-    (
-      p_tenant_id, p_visitor_id, v_followup_id, 'welcome_team', 'convite_celula_dia_4',
-      v_day4, 'Pendente', v_msg4
-    ),
-    (
-      p_tenant_id, p_visitor_id, v_followup_id, 'system', 'ligacao_pastor_dia_8',
-      v_day8, 'Pendente', v_msg8
-    )
-  on conflict do nothing;
+  )
+  select p_tenant_id, p_visitor_id, v_followup_id, 'welcome_team', 'convite_celula_dia_4',
+         v_day4, 'Pendente', v_msg4
+   where not exists (
+     select 1 from public.task_alerts t
+      where t.tenant_id = p_tenant_id
+        and t.visitor_id = p_visitor_id
+        and t.tipo_tarefa = 'convite_celula_dia_4'
+   );
+
+  insert into public.task_alerts (
+    tenant_id, visitor_id, followup_id, responsavel_cargo, tipo_tarefa,
+    data_programada, status, descricao
+  )
+  select p_tenant_id, p_visitor_id, v_followup_id, 'system', 'ligacao_pastor_dia_8',
+         v_day8, 'Pendente', v_msg8
+   where not exists (
+     select 1 from public.task_alerts t
+      where t.tenant_id = p_tenant_id
+        and t.visitor_id = p_visitor_id
+        and t.tipo_tarefa = 'ligacao_pastor_dia_8'
+   );
 
   return v_followup_id;
-exception
-  when unique_violation then
-    select f.id
-      into v_followup_id
-      from public.visitor_followup f
-     where f.tenant_id = p_tenant_id
-       and f.visitor_id = p_visitor_id
-       and f.status = 'Ativo'
-     limit 1;
-    return v_followup_id;
 end;
 $$;
 
@@ -477,10 +532,20 @@ begin
        and c.timestamp_confirmacao is not null
        and c.timestamp_confirmacao >= p_from
        and c.timestamp_confirmacao < p_until
-       and (c.tenant_id is null or c.tenant_id = p_tenant)
+       and coalesce(c.tenant_id, p_tenant) = p_tenant
        and (
          c.profile_id = p_visitor_id
-         or (v_family is not null and c.family_id = v_family)
+         or (
+           v_family is not null
+           and c.family_id = v_family
+           and exists (
+             select 1
+               from public.profiles px
+              where px.id = c.profile_id
+                and px.tenant_id = p_tenant
+                and nullif(trim(px.family_id), '') = v_family
+           )
+         )
        )
   );
 end;
