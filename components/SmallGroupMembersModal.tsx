@@ -1,4 +1,4 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { formatFullName } from '@/lib/fullName';
 import React from 'react';
 import {
@@ -69,6 +69,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,

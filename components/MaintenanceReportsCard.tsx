@@ -1,4 +1,4 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { AgeBracketPieChart, parseAgeBracketChartSlices } from '@/components/AgeBracketPieChart';
 import { SupportSuggestionsReportPdfModal } from '@/components/SupportSuggestionsReportPdfModal';
 import { SupportSuggestionsReportView } from '@/components/SupportSuggestionsReportView';
@@ -1440,6 +1440,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
     backgroundColor: 'rgba(2, 6, 23, 0.58)',
   },
   ageBracketModalBackdrop: {

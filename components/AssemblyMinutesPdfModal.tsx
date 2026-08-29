@@ -1,4 +1,4 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { FontAwesome } from '@expo/vector-icons';
 import { openPdfUri } from '@/lib/openPdfUri';
 import { buildInlinePdfViewerUrl, isApkShellWebClient } from '@/lib/pdfViewerUrl';
@@ -91,6 +91,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,

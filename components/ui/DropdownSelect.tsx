@@ -1,4 +1,4 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -560,6 +560,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(2, 6, 23, 0.72)',
     justifyContent: 'center',
     paddingHorizontal: 24,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   backdropVigilance: {
     backgroundColor: 'rgba(15, 23, 42, 0.55)',

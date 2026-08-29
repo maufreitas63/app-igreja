@@ -11,7 +11,7 @@ import {
   type MinisterialProfileResult,
   type MinisterialQuestion,
 } from '@/lib/ministerialProfileQuestionnaire';
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { fetchVolunteerOpportunitiesForMe, type VolunteerOpportunityMember } from '@/lib/volunteerOpportunitiesApi';
 import { buildReturnToDashboardHref } from '@/lib/dashboardReturnNavigation';
@@ -458,7 +458,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
     justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingTop: 24,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   container: {
     flex: 1,

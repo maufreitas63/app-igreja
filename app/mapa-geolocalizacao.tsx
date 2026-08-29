@@ -1,4 +1,4 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { createStyles } from '@/lib/createStyles';
 import { FontAwesome } from '@expo/vector-icons';
 import {
@@ -805,6 +805,7 @@ const styles = createStyles({
     backgroundColor: 'rgba(2, 6, 23, 0.72)',
     justifyContent: 'center',
     padding: 16,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   invalidCepsModalCard: {
     maxHeight: '82%',
@@ -938,7 +939,7 @@ const styles = createStyles({
     position: 'absolute',
     left: 14,
     right: 14,
-    bottom: 14,
+    bottom: 0,
     borderRadius: 14,
     borderWidth: 1,
     backgroundColor: 'rgba(2, 6, 23, 0.92)',

@@ -1,4 +1,4 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { boxShadowStyle } from '@/lib/boxShadow';
 import { confirmDialog } from '@/lib/confirmDialog';
 import {
@@ -633,7 +633,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
     justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingTop: 24,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   sheet: {
     width: '100%',

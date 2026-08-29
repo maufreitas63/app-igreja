@@ -1,4 +1,4 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import {
   buildDiscipleshipAchievementSlots,
   completeLessonWithAchievements,
@@ -1022,6 +1022,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
     justifyContent: 'center',
     padding: 18,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   modalCard: {
     maxHeight: '88%',

@@ -1,4 +1,4 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { FontAwesome } from '@expo/vector-icons';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MEDIA_AUTHORIZATION_LEGAL_INFO } from '@/lib/mediaAuthorization';
@@ -33,6 +33,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,

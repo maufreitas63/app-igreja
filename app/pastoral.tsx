@@ -20,7 +20,7 @@ import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { PastoralSchedulePanel } from '@/components/PastoralSchedulePanel';
 import { PASTORAL_SCHEDULE_RESOURCE } from '@/lib/pastoralAccess';
 import { supabase } from '@/lib/supabase';
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
@@ -1252,6 +1252,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(2, 6, 23, 0.75)',
     justifyContent: 'center',
     padding: 24,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   selectorModalCard: {
     borderRadius: 24,

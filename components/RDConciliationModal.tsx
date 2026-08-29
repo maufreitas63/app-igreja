@@ -1,4 +1,4 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import {
   EXPENSE_REPORT_SQL_HINT,
   fetchPendingExpenseReports,
@@ -171,6 +171,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   card: {
     width: '100%',

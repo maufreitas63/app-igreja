@@ -9,6 +9,11 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 const CLOSE_BUTTON_FILL = '#3A96DD';
 const CLOSE_BUTTON_BORDER = '#1B4F8A';
 
+/** Altura do botão canónico (Agenda da Família). */
+export const CLOSE_FOOTER_BUTTON_HEIGHT = 51;
+/** paddingTop 8 + paddingBottom 12 + botão 51 + border 1 — reserva no fluxo da tela. */
+export const CLOSE_FOOTER_DOCK_HEIGHT = 8 + 12 + CLOSE_FOOTER_BUTTON_HEIGHT + 1;
+
 export type CloseButtonProps = {
   onPress: () => void;
   label?: string;
@@ -21,14 +26,14 @@ type CloseFooterBarProps = {
   contentInsetBottom?: number;
   label?: string;
   accessibilityLabel?: string;
-  /** Quando o pai não aplica o padding lateral das telas minimalistas. */
+  /** Ignorado: o dock usa sempre o padding das telas, relativo à viewport. */
   includeScreenPadding?: boolean;
 };
 
 const WEB_BUTTON_STYLE: React.CSSProperties = {
   boxSizing: 'border-box',
   width: '100%',
-  minHeight: 51,
+  minHeight: CLOSE_FOOTER_BUTTON_HEIGHT,
   margin: 0,
   paddingBlock: 14,
   paddingInline: 16,
@@ -52,7 +57,7 @@ const WEB_BUTTON_STYLE: React.CSSProperties = {
 
 const closeButtonStyles = StyleSheet.create({
   button: {
-    minHeight: 51,
+    minHeight: CLOSE_FOOTER_BUTTON_HEIGHT,
     borderRadius: 16,
     borderWidth: 2,
     borderColor: CLOSE_BUTTON_BORDER,
@@ -71,7 +76,7 @@ const closeButtonStyles = StyleSheet.create({
   },
 });
 
-/** Botão «Fechar» canônico — azul, 51px, borda 2px, `<button>` na web. */
+/** Botão «Fechar» canónico — azul, 51px, borda 2px, `<button>` na web. */
 export function CloseButton({
   onPress,
   label = 'Fechar',
@@ -107,61 +112,82 @@ export function CloseButton({
   );
 }
 
-/** Rodapé fixo com o botão «Fechar» canônico (largura, inset e posição iguais em toda a app). */
+/**
+ * Rodapé «Fechar» ancorado na margem inferior da tela — mesma altura da Agenda da Família.
+ * Na web usa `position: fixed` na viewport; o espaço no fluxo evita que o conteúdo fique por baixo.
+ */
 export function CloseFooterBar({
   onPress,
   variant = 'minimal',
   contentInsetBottom = 0,
   label,
   accessibilityLabel,
-  includeScreenPadding = false,
 }: CloseFooterBarProps) {
+  const extraBottom = Math.max(0, contentInsetBottom);
+  const reserveHeight = CLOSE_FOOTER_DOCK_HEIGHT + extraBottom;
+
   return (
-    <View style={includeScreenPadding ? styles.screenPad : styles.stretch}>
+    <>
+      <View
+        style={[styles.reserve, { height: reserveHeight }]}
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      />
       <View
         style={[
-          styles.footerBar,
-          variant === 'dark' ? styles.footerBarDark : styles.footerBarMinimal,
-          contentInsetBottom > 0 ? { paddingBottom: 12 + contentInsetBottom } : null,
+          styles.dock,
+          variant === 'dark' ? styles.dockDark : styles.dockMinimal,
+          extraBottom > 0 ? { paddingBottom: 12 + extraBottom } : null,
         ]}
       >
-        <CloseButton
-          onPress={onPress}
-          label={label}
-          accessibilityLabel={accessibilityLabel}
-        />
+        <View style={styles.innerPad}>
+          <CloseButton
+            onPress={onPress}
+            label={label}
+            accessibilityLabel={accessibilityLabel}
+          />
+        </View>
       </View>
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  stretch: {
+  reserve: {
     width: '100%',
     maxWidth: '100%',
     alignSelf: 'stretch',
-  },
-  screenPad: {
-    width: '100%',
-    maxWidth: '100%',
-    alignSelf: 'stretch',
-    paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
-    paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
-  },
-  footerBar: {
     flexShrink: 0,
-    paddingHorizontal: 16,
+    marginTop: 'auto',
+  },
+  dock: {
+    position: Platform.OS === 'web' ? 'fixed' : 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 40,
+    width: '100%',
+    maxWidth: '100%',
     paddingTop: 8,
     paddingBottom: 12,
+    paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
+    paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
     borderTopWidth: 1,
-    width: '100%',
+    ...(Platform.OS === 'web'
+      ? ({ boxSizing: 'border-box' } as object)
+      : null),
   },
-  footerBarMinimal: {
+  dockMinimal: {
     borderTopColor: VIGILANCE_SCALES_UI.border,
     backgroundColor: '#FFFFFF',
   },
-  footerBarDark: {
+  dockDark: {
     borderTopColor: '#334155',
     backgroundColor: 'rgba(2, 6, 23, 0.92)',
+  },
+  innerPad: {
+    width: '100%',
+    paddingHorizontal: 16,
   },
 });

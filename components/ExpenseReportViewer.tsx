@@ -1,4 +1,4 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import {
   formatExpenseReportAmount,
   formatExpenseReportDate,
@@ -199,6 +199,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   previewCard: {
     width: '100%',

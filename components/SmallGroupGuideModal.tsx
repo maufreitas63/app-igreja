@@ -1,4 +1,4 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import { isPdfLikeUrl, type SmallGroupGuide } from '@/lib/smallGroupsApi';
 import React from 'react';
@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,

@@ -1,4 +1,4 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { MembersListsClass } from '@/components/MembersListsClass';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MAP_PIN_DETAIL_DENIED_MESSAGE, useMapPinDetailAccess } from '@/hooks/useMapPinDetailAccess';
@@ -464,6 +464,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(2, 6, 23, 0.55)',
     justifyContent: 'center',
     paddingHorizontal: 24,
+    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   familyModalCard: {
     maxHeight: '70%',
