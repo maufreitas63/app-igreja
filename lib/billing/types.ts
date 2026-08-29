@@ -8,6 +8,8 @@ export type BillingPlan = {
   maxMembers: number;
   sortOrder: number;
   stripePriceId: string | null;
+  /** Valor cobrado no Stripe a cada trimestre, em centavos BRL. */
+  quarterlyAmountCents?: number | null;
 };
 
 export type TenantBillingStatus = {

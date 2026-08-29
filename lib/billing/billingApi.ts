@@ -21,6 +21,11 @@ const mapPlan = (row: Record<string, unknown>): BillingPlan | null => {
         : row.stripePriceId != null
           ? String(row.stripePriceId)
           : null,
+    quarterlyAmountCents: (() => {
+      const raw = row.quarterly_amount_cents ?? row.quarterlyAmountCents;
+      const n = raw == null || raw === '' ? NaN : Number(raw);
+      return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+    })(),
   };
 };
 

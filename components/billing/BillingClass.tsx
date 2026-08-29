@@ -6,6 +6,8 @@ import {
 import {
   BILLING_INTERVAL_LINE,
   BILLING_SCREEN_SUBTITLE,
+  formatPlanQuarterlyPriceLine,
+  resolvePlanQuarterlyAmountCents,
 } from '@/lib/billing/billingInterval';
 import type { BillingPlan } from '@/lib/billing/types';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -192,6 +194,7 @@ export function BillingClass({
           const icon = PLAN_ICONS[plan.code] || 'circle-o';
           const fits = planCoversActiveUsers(plan.maxMembers, users);
           const canSubscribe = fits && !isCurrent;
+          const priceCents = resolvePlanQuarterlyAmountCents(plan.code, plan.quarterlyAmountCents);
 
           return (
             <View key={plan.id || plan.code} style={styles.card}>
@@ -203,6 +206,9 @@ export function BillingClass({
               <Text style={styles.planInterval}>{BILLING_INTERVAL_LINE}</Text>
               {plan.description ? (
                 <Text style={styles.planDescription}>{plan.description}</Text>
+              ) : null}
+              {priceCents ? (
+                <Text style={styles.planPrice}>{formatPlanQuarterlyPriceLine(priceCents)}</Text>
               ) : null}
               {!fits ? (
                 <Text style={styles.unavailable}>{planTooSmallMessage(plan.maxMembers, users)}</Text>
@@ -311,6 +317,12 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     fontSize: 13,
     lineHeight: 18,
+  },
+  planPrice: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
   },
   cta: {
     marginTop: 8,

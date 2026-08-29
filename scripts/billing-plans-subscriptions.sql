@@ -14,11 +14,15 @@ create table if not exists public.billing_plans (
   max_members integer not null default 50,
   sort_order integer not null default 100,
   stripe_price_id text null,
+  quarterly_amount_cents integer null,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint billing_plans_max_members_check check (max_members = -1 or max_members >= 0)
 );
+
+alter table public.billing_plans
+  add column if not exists quarterly_amount_cents integer;
 
 comment on column public.billing_plans.max_members is
   'Limite de membros do tenant; -1 = ilimitado.';
@@ -78,7 +82,7 @@ create policy tenant_subscriptions_select_own
   );
 
 -- Planos seed (price_id preenchido depois via admin / env no webhook+checkout)
-insert into public.billing_plans (code, name, description, max_members, sort_order, is_active)
+insert into public.billing_plans (code, name, description, max_members, sort_order, quarterly_amount_cents, is_active)
 values
   (
     'semente',
@@ -86,6 +90,7 @@ values
     'Igrejas em formação — até 50 usuários ativos (membros + congregados)',
     50,
     10,
+    8970,
     true
   ),
   (
@@ -94,6 +99,7 @@ values
     'Comunidades em expansão — até 200 usuários ativos (membros + congregados)',
     200,
     20,
+    23970,
     true
   ),
   (
@@ -102,6 +108,7 @@ values
     'Igrejas consolidadas — até 1.000 usuários ativos (membros + congregados)',
     1000,
     30,
+    44970,
     true
   ),
   (
@@ -110,6 +117,7 @@ values
     'Operação completa — usuários ativos ilimitados (membros + congregados)',
     -1,
     40,
+    89970,
     true
   )
 on conflict (code) do update
@@ -117,6 +125,7 @@ on conflict (code) do update
       description = excluded.description,
       max_members = excluded.max_members,
       sort_order = excluded.sort_order,
+      quarterly_amount_cents = excluded.quarterly_amount_cents,
       is_active = true,
       updated_at = now();
 
@@ -272,6 +281,8 @@ begin
 end;
 $$;
 
+drop function if exists public.list_billing_plans();
+
 create or replace function public.list_billing_plans()
 returns table (
   id uuid,
@@ -280,7 +291,8 @@ returns table (
   description text,
   max_members integer,
   sort_order integer,
-  stripe_price_id text
+  stripe_price_id text,
+  quarterly_amount_cents integer
 )
 language sql
 stable
@@ -294,7 +306,8 @@ as $$
     bp.description,
     bp.max_members,
     bp.sort_order,
-    bp.stripe_price_id
+    bp.stripe_price_id,
+    bp.quarterly_amount_cents
   from public.billing_plans bp
   where bp.is_active = true
   order by bp.sort_order asc, bp.name asc;
