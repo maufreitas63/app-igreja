@@ -112,7 +112,7 @@ export function OpportunityMuralCard({ panelHeight, isActive = true }: Props) {
   };
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
+    <View style={[styles.panel, { maxHeight: contentHeight }]}>
       <Text style={maintenancePanelStyles.panelTitle}>Mural de Oportunidades</Text>
       <Text style={styles.subtitle}>
         Vagas alinhadas ao seu Perfil Ministerial. O resultado da Lição 5.1 não aparece aqui — só o match.
@@ -212,6 +212,8 @@ function OpportunityCard({
 const styles = StyleSheet.create({
   panel: {
     width: '100%',
+    flex: 1,
+    minHeight: 0,
     gap: 8,
   },
   subtitle: {

@@ -11,6 +11,7 @@ type Props = {
   gradientColors: readonly [string, string, ...string[]];
   statusBarStyle?: 'light-content' | 'dark-content';
   children: React.ReactNode;
+  footer?: React.ReactNode;
 };
 
 /** Envolve telas legadas (gradiente + carrossel) ou modo minimalista (tela limpa + dock). */
@@ -20,12 +21,17 @@ export function MinimalRouteShell({
   gradientColors,
   statusBarStyle = 'light-content',
   children,
+  footer,
 }: Props) {
   if (minimal) {
     const chromeTitle = title?.trim() ? title : undefined;
 
     return (
-      <MinimalScreenLayout {...(chromeTitle ? { title: chromeTitle } : {})} scroll={false}>
+      <MinimalScreenLayout
+        {...(chromeTitle ? { title: chromeTitle } : {})}
+        scroll={false}
+        footer={footer}
+      >
         <StatusBar barStyle="dark-content" />
         <View style={styles.minimalContent}>{children}</View>
       </MinimalScreenLayout>

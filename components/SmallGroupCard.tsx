@@ -261,7 +261,7 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
   }, [group, memberName, notify]);
 
   return (
-    <View style={[styles.panel, { height: contentHeight }]}>
+    <View style={[styles.panel, { maxHeight: contentHeight }]}>
       <Text style={styles.title}>Pequeno Grupo</Text>
       <Text style={styles.subtitle}>Célula da sua jornada em comunidade.</Text>
 

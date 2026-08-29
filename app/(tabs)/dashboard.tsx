@@ -18,6 +18,9 @@ import {
   type DashboardScreenAccess,
 } from '@/lib/dashboardScreenAccess';
 import { isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
+import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
+import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { resolveDashboardCardContentFromParam } from '@/lib/dashboardCardScreenLinks';
 import {
   isLiveDashboardCardContent,
@@ -76,6 +79,9 @@ export default function DashboardScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const isMinimalPresentation = isMinimalPresentationRoute(params.presentation);
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute: MEMBER_HOME_PATH,
+  });
 
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
   const [hasActiveMembership, setHasActiveMembership] = useState(false);
@@ -94,10 +100,14 @@ export default function DashboardScreen() {
     : params.dashboardCardNonce;
   const phone = params.phone ? decodeURIComponent(params.phone as string) : null;
 
-  const dashboardPanelCardHeight = useMemo(
-    () => computeEventPanelCardHeight(windowHeight, insets.top, insets.bottom),
-    [insets.bottom, insets.top, windowHeight]
-  );
+  const dashboardPanelCardHeight = useMemo(() => {
+    const base = computeEventPanelCardHeight(windowHeight, insets.top, insets.bottom);
+    if (!isMinimalPresentation) {
+      return base;
+    }
+
+    return Math.max(280, base - CLOSE_FOOTER_DOCK_HEIGHT);
+  }, [insets.bottom, insets.top, isMinimalPresentation, windowHeight]);
 
   const carouselLayoutWidth = useMemo(() => {
     if (isMinimalPresentation && measuredListWidth > 0) {
@@ -383,6 +393,9 @@ export default function DashboardScreen() {
       minimal={isMinimalPresentation}
       title={activeDashboardScreenTitle}
       gradientColors={mainScreenGradient}
+      footer={
+        isMinimalPresentation ? <CloseFooterBar onPress={returnToCaller} /> : null
+      }
     >
       {aclRpcStatus === 'missing' ? (
         <View style={styles.aclUnavailableBanner}>
