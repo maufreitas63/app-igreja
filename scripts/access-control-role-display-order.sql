@@ -15,6 +15,7 @@ as $$
     when 'lider' then 45
     when 'events_admin' then 50
     when 'orquestrador_evento' then 52
+    when 'secretaria' then 54
     when 'tesoureiro' then 55
     when 'pastoral' then 60
     when 'gestor_controle_acesso' then 65

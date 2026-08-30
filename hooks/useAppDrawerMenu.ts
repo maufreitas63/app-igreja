@@ -50,6 +50,7 @@ type DrawerEnableContext = {
   canOperateGhostMode: boolean;
   canOpenAccessControl: boolean;
   canManageRooms: boolean;
+  canManageMediaAuthorization: boolean;
   canAccessPastoralCare: boolean;
   hasActiveMembership: boolean;
   isSuperAdmin: boolean;
@@ -106,6 +107,7 @@ function isDrawerModuleEnabled(
           canOperateGhostMode: context.canOperateGhostMode,
           canOpenAccessControl: context.canOpenAccessControl,
           canManageRooms: context.canManageRooms,
+          canManageMediaAuthorization: context.canManageMediaAuthorization,
           isSuperAdmin: context.isSuperAdmin,
         })
     );
@@ -143,6 +145,7 @@ function isDrawerModuleEnabled(
     canOperateGhostMode: context.canOperateGhostMode,
     canOpenAccessControl: context.canOpenAccessControl,
     canManageRooms: context.canManageRooms,
+    canManageMediaAuthorization: context.canManageMediaAuthorization,
     isSuperAdmin: context.isSuperAdmin,
   });
 }
@@ -181,7 +184,7 @@ export function useAppDrawerMenu() {
         ?? (await loadEffectiveSessionProfile())?.id?.trim()
         ?? null;
 
-      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership, roomAccess] =
+      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership, roomAccess, mediaAuthAccess] =
         await Promise.all([
           profileId
             ? loadDashboardCardViewAccess(profileId, { forceRefresh: ghostActive })
@@ -192,6 +195,7 @@ export function useAppDrawerMenu() {
           loadMaintenanceDashboardAccess({ forceRefresh: ghostActive }),
           profileId ? fetchProfileHasActiveMembership(profileId) : Promise.resolve(false),
           sessionHasAccess('screen', ACCESS_SCREEN.configuracaoSalas, 'view'),
+          sessionHasAccess('screen', ACCESS_SCREEN.autorizacaoMidia, 'view'),
         ]);
 
       const extraScreenEntries = await Promise.all(
@@ -226,6 +230,7 @@ export function useAppDrawerMenu() {
         canOperateGhostMode: maintenanceAccess.canOperateGhostMode,
         canOpenAccessControl: maintenanceAccess.canOpenAccessControlCard,
         canManageRooms,
+        canManageMediaAuthorization: superAdmin || mediaAuthAccess === true,
         canAccessPastoralCare: maintenanceAccess.canAccessPastoralCare === true,
         hasActiveMembership,
         isSuperAdmin: superAdmin,

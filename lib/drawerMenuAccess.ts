@@ -59,6 +59,7 @@ export type DrawerMaintenanceAccessContext = {
   canOperateGhostMode: boolean;
   canOpenAccessControl: boolean;
   canManageRooms: boolean;
+  canManageMediaAuthorization: boolean;
   isSuperAdmin: boolean;
 };
 
@@ -120,12 +121,16 @@ export function isDrawerOperatorToolAllowed(
     return context.canManageRooms || context.isSuperAdmin;
   }
 
-  if (moduleKey === 'menu_totem' || moduleKey === 'menu_autorizacao_midia') {
+  if (moduleKey === 'menu_totem') {
     return leadership;
   }
 
+  if (moduleKey === 'menu_autorizacao_midia') {
+    return context.isSuperAdmin || context.canManageMediaAuthorization;
+  }
+
   if (moduleKey === 'menu_billing') {
-    return context.isSuperAdmin || context.canAccessMaintenance;
+    return context.isSuperAdmin;
   }
 
   if (moduleKey === 'menu_orquestrador') {

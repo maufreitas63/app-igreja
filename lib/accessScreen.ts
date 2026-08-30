@@ -17,6 +17,8 @@ export const ACCESS_SCREEN = {
   lgpd: '/lgpd',
   eventOrchestrator: '/admin/orquestrador',
   configuracaoSalas: '/configuracao-salas',
+  totemCheckin: '/totem-checkin',
+  autorizacaoMidia: '/autorizacao-midia',
   discipleshipTrail: '/trilha-discipulado',
   /** Alias legado ainda presente em `access_resources`. */
   discipleshipTrailLegacy: '/trilha',
