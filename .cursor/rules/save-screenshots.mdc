@@ -1,0 +1,15 @@
+---
+description: Salvar todo take Screenshot na pasta Screeshot
+alwaysApply: true
+---
+
+# Screenshots do usuário
+
+Sempre que o usuário fizer **Take Screenshot** (ou colar/anexar uma captura de tela no chat):
+
+1. Copie o arquivo da imagem para `Screeshot/` na raiz deste repositório (`app-igreja`).
+2. Nome: `YYYY-MM-DD_HHmmss` + sufixo curto do contexto (ex.: `2026-08-30_160812_home.png`).
+3. Confirme o caminho absoluto na resposta.
+4. Não commitar esses PNG no fluxo automático de deploy, salvo se o usuário pedir para versionar a captura.
+
+A pasta existe mesmo vazia (`Screeshot/.gitkeep`).
