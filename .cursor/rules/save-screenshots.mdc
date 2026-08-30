@@ -1,15 +1,21 @@
 ---
-description: Salvar todo take Screenshot na pasta Screeshot
+description: Salvar todo take Screenshot na pasta Screeshot com o nome da rota
 alwaysApply: true
 ---
 
 # Screenshots do usuário
 
-Sempre que o usuário fizer **Take Screenshot** (ou colar/anexar uma captura de tela no chat):
+**Primeira ação** ao receber Take Screenshot / imagem anexada: copiar o arquivo para `Screeshot/` **antes** de responder ou de qualquer outro trabalho.
 
-1. Copie o arquivo da imagem para `Screeshot/` na raiz deste repositório (`app-igreja`).
-2. Nome: `YYYY-MM-DD_HHmmss` + sufixo curto do contexto (ex.: `2026-08-30_160812_home.png`).
-3. Confirme o caminho absoluto na resposta.
-4. Não commitar esses PNG no fluxo automático de deploy, salvo se o usuário pedir para versionar a captura.
+1. Origem: o caminho em `image_files` / anexo do chat.
+2. Destino: `Screeshot/` na raiz de `app-igreja`.
+3. **Nome = rota da tela visível**, sanitizada para o Windows:
+   - tire a barra inicial;
+   - troque `/`, `?`, `&`, `=` e espaços por `-`;
+   - extensão `.png`.
+   - Exemplos: `/(tabs)` → `(tabs).png`; `/perfil` → `perfil.png`; `/maintenance-dashboard?panel=events` → `maintenance-dashboard-panel-events.png`.
+4. Nova captura da mesma rota **substitui** o arquivo anterior.
+5. Na resposta: caminho absoluto. Se a cópia falhar, tente de novo na mesma rodada.
+6. Não commitar esses PNG no deploy automático, salvo pedido explícito.
 
 A pasta existe mesmo vazia (`Screeshot/.gitkeep`).
