@@ -165,7 +165,7 @@ def add_cover(doc: Document) -> None:
     )
     add_para(
         doc,
-        "Documento gerado a partir do código-fonte publicado (menus, rotas e ACL).",
+        "Documento gerado a partir do código-fonte publicado (menus, rotas e ACL). Papéis Líder, Líder Geral, Administrador de Eventos e Orquestrador de Evento foram absorvidos pela Secretaria e não existem mais.",
         size=12,
         color=MUTED,
         align=WD_ALIGN_PARAGRAPH.CENTER,
@@ -231,12 +231,8 @@ def add_howto(doc: Document) -> None:
         ("Congregado", "congregado", "Cadastrado, com acesso básico; sem gerir família nem finanças globais."),
         ("Membro", "member", "Acesso padrão da vida na igreja (Início, perfil, ofertas, célula, escalas…)."),
         ("Responsável familiar", "family_acceptor", "Complemento: gerencia integrantes da família."),
-        ("Líder", "lider", "Escalas dos tipos em que lidera; operação de culto conforme grants."),
-        ("Líder Geral", "lider_geral", "Escalas de todos os tipos ativos; visão mais ampla de pessoas."),
-        ("Administrador de eventos", "events_admin", "Salas, totem, operação de culto (conforme grants da instância)."),
-        ("Orquestrador de Evento", "orquestrador_evento", "Painel em tela cheia dos avisos do culto em andamento."),
-        ("Secretaria", "secretaria", "Operação da igreja: eventos, escalas, salas, totem, células, recepção e avisos. Sem Cuidados Pastorais e sem finanças globais."),
-        ("Tesoureiro", "tesoureiro", "Lançamentos, RD, orçamento, campanhas e modelo preditivo."),
+        ("Secretaria", "secretaria", "Operação da igreja: eventos, orquestração, escalas (todos os tipos), salas, totem, células, recepção, avisos, mídia, murais, campanhas e temas da Trilha. Sem Cuidados Pastorais nem tesouraria global."),
+        ("Tesoureiro", "tesoureiro", "Lançamentos, RD, orçamento, modelo preditivo; também opera campanhas."),
         ("Equipe Pastoral", "pastoral", "Membro + Cuidados Pastorais, mudança de papéis e temas da Trilha."),
         ("Gestor em Controle de Acesso", "gestor_controle_acesso", "Matriz de permissões. Nunca vê nem edita o Super Administrador nem PIN."),
         ("Super administrador", "super_admin", "Acesso pleno e global (curinga). Sem alteração neste perfil."),
@@ -262,7 +258,7 @@ def add_howto(doc: Document) -> None:
     doc.add_paragraph()
     add_para(
         doc,
-        "Regras que atravessam o manual: (1) cada igreja (tenant) só enxerga os próprios dados; (2) alguns menus exigem vínculo ativo (membership_out vazio); (3) no Modo Ghost a identidade usada é a da pessoa auditada, não a do operador; (4) o Gestor não lista Super Administrador.",
+        "Regras que atravessam o manual: (1) cada igreja (tenant) só enxerga os próprios dados; (2) alguns menus exigem vínculo ativo (membership_out vazio); (3) no Modo Ghost a identidade usada é a da pessoa auditada, não a do operador; (4) o Gestor não lista Super Administrador; (5) não existem mais os papéis Líder, Líder Geral, Administrador de Eventos nem Orquestrador — a operação correspondente é da Secretaria.",
         size=11,
         space_after=12,
     )
@@ -400,7 +396,7 @@ def add_part1(doc: Document) -> None:
             "No Início, olhe o miolo da tela (não o Menu).",
             "Se estiver em Avisos, use a faixa «Avisos ↔ Eventos» até «Proximos Eventos».",
         ],
-        manages="Secretaria, Líder, Gestor ou Super Admin em Engrenagem → Culto e Eventos → Programação de Eventos. Publicar o evento é o que o faz aparecer aqui.",
+        manages="Secretaria, Gestor ou Super Admin em Engrenagem → Culto e Eventos → Programação de Eventos. Publicar o evento é o que o faz aparecer aqui.",
         acl="Os eventos vêm da tabela `events` filtrados pelo tenant. A home não exige card de carrossel. Manutenção: `maintenance.card.events`.",
         fill=[
             "Leia nome, local e horário. Se o local estiver vazio, a linha mostra «Sem local informado».",
@@ -421,7 +417,7 @@ def add_part1(doc: Document) -> None:
             "No Início, deslize ou toque a faixa até «Avisos».",
             "Toque no cartão para ir ao destino (mural, escala, pastoral, etc.).",
         ],
-        manages="Secretaria / Orquestrador: Engrenagem → Culto e Eventos → Manutenção de Avisos (comunicados). Outros avisos nascem dos respectivos módulos (vaga, troca, pedido pastoral).",
+        manages="Secretaria: Engrenagem → Culto e Eventos → Manutenção de Avisos (comunicados). Outros avisos nascem dos respectivos módulos (vaga, troca, pedido pastoral).",
         acl="Comunicados: `maintenance.card.event_orchestration` e tabelas `event_avisos` / `event_control`. Ao abrir, vários tipos são marcados como lidos.",
         fill=[
             "Leia o aviso no próprio cartão.",
@@ -488,7 +484,7 @@ def add_part1(doc: Document) -> None:
             "Início → «Eu quero…» → «Contribuir» → «Campanhas e Projetos».",
             "Se houver uma campanha só, abre direto. Se houver várias, escolha o projeto.",
         ],
-        manages="Tesoureiro / Pastoral / Líder Geral / Super Admin em Engrenagem → Finanças → Gestão de Campanhas (criar, meta, datas, status).",
+        manages="Secretaria, Tesoureiro, Pastoral ou Super Admin em Engrenagem → Finanças → Gestão de Campanhas (criar, meta, datas, status).",
         acl="View: `dashboard.card.offerings`. Campanhas no painel: `maintenance.finance.campaigns`.",
         fill=[
             "Escolha a campanha (se a tela pedir).",
@@ -633,7 +629,7 @@ def add_part2(doc: Document) -> None:
         route="/trilha-discipulado",
         who="Congregado, Membro, lideranças e Secretaria (herança member). Conteúdo das lições é cadastrado na engrenagem.",
         access=["Menu → Perfil → Trilha de Discipulado."],
-        manages="Equipe Pastoral / Líderes: Temas da Trilha. Super Admin: Resetar Trilha. Certificados: Reconhecimentos.",
+        manages="Secretaria e Equipe Pastoral: Temas da Trilha. Super Admin: Resetar Trilha. Certificados: Reconhecimentos.",
         acl="Tela `/trilha-discipulado`. Painéis: `maintenance.card.discipleship_themes`, `_alerts`, `_reset` (reset só Super Admin).",
         fill=[
             "Abra a lição da vez, leia texto, assista ao vídeo se houver, registre a reflexão quando a lição pedir.",
@@ -688,7 +684,7 @@ def add_part2(doc: Document) -> None:
         route="/pequeno-grupo  — card dashboard.card.small_group",
         who="Membro com vínculo ativo (`membership_out` vazio) e grant do card. Visitante sem membership não vê o item.",
         access=["Menu → Minha Célula."],
-        manages="Secretaria / Pastoral / Líder Geral cadastram grupos em Gestão de Pequenos Grupos. O membro pede vaga; o anfitrião/líder recebe o fluxo.",
+        manages="Secretaria e Pastoral cadastram grupos em Gestão de Pequenos Grupos. O membro pede vaga; o anfitrião ou o líder da célula recebe o fluxo.",
         acl="`dashboard.card.small_group`. Admin: `maintenance.card.small_groups_management` (update = pode administrar). Exige membership ativo.",
         fill=[
             "Se ainda não tem grupo: cadastre CEP no Perfil. Veja anfitriões próximos e toque «Quero participar».",
@@ -707,7 +703,7 @@ def add_part2(doc: Document) -> None:
         route="/escalas  — card dashboard.card.vigilance_scales",
         who="Membro com vínculo ativo e card de escalas. Tipos de escala podem ser filtrados por ACL (`scale_type.*`). Troca: `scales.allow_swap`.",
         access=["Menu → Escalas. Use as abas Escalas e Pedidos de troca."],
-        manages="Secretaria (tipos, servos, programação). Líder / Líder Geral programam os tipos que lideram. O membro só solicita troca.",
+        manages="Secretaria programa tipos, servos e datas (acesso a todas as escalas ativas). O membro só solicita troca.",
         acl="`dashboard.card.vigilance_scales`. Painéis: `maintenance.card.scale_types`, `scale_volunteers`, `scales`. Estacionamento: `dashboard.card.parking_vehicle_v2`.",
         fill=[
             "Selecione o tipo de escala (Louvor, Recepção, etc.). Se o tipo não abrir, você não lidera/serve naquele tipo.",
@@ -746,7 +742,7 @@ def add_part2(doc: Document) -> None:
         route="/mural-generosidade",
         who="Membro com vínculo ativo e grant `/mural-generosidade` (e/ou card).",
         access=["Menu → Mural de Generosidade."],
-        manages="O membro publica (vai para moderação). Liderança aprova em Moderação do Mural. Super Admin / Pastoral / Líderes moderam.",
+        manages="O membro publica (vai para moderação). Secretaria, Pastoral ou Super Admin aprovam em Moderação do Mural.",
         acl="Tela `/mural-generosidade`. Moderação: `maintenance.card.generosity_moderation`. Membership ativo.",
         fill=[
             "Nova publicação: escolha Doar ou Pedir empréstimo.",
@@ -821,7 +817,7 @@ def add_part3(doc: Document) -> None:
     )
     add_para(
         doc,
-        "Quase todos os painéis exigem também a tela `/maintenance-dashboard` (view). Painéis internos abrem `/(maintenance-dashboard)?panel=CHAVE`. Ferramentas de operador (salas, totem, mídia, billing, igrejas) têm rota própria. Super Administrador vê tudo. Secretaria não vê Cuidados Pastorais, finanças globais, Controle de Acesso, Ghost, Autorização de mídia nem Assinaturas.",
+        "Quase todos os painéis exigem também a tela `/maintenance-dashboard` (view). Painéis internos abrem `/maintenance-dashboard?panel=CHAVE`. Ferramentas de operador (salas, totem, mídia, billing, igrejas) têm rota própria. Super Administrador vê tudo. Secretaria opera o culto e as pessoas, mas não vê Cuidados Pastorais, tesouraria global, Controle de Acesso, Ghost nem Assinaturas.",
         space_after=12,
     )
 
@@ -833,7 +829,7 @@ def add_part3(doc: Document) -> None:
         name="Configuração de salas",
         what="Cadastro dos espaços físicos com nome afetivo e atribuição de membros (quem «mora» em cada sala no culto).",
         route="/configuracao-salas  — hint: Nomes afetivos e atribuição de membros",
-        who="Secretaria, Administrador de eventos, Líder, Líder Geral, Gestor, Super Admin.",
+        who="Secretaria, Gestor, Super Admin.",
         access=["Menu → engrenagem → Operação e Segurança → Configuração de salas."],
         manages="Secretaria (operação diária). Super Admin em última instância.",
         acl="Tela `/configuracao-salas`. Tabelas `church_room_settings` e `user_room_assignment`. Drawer: canManageRooms ou Super Admin.",
@@ -853,7 +849,7 @@ def add_part3(doc: Document) -> None:
         name="Totem de check-in",
         what="Leitor de QR no hall. Confirma que a família chegou ao culto do dia.",
         route="/totem-checkin  — hint: Leitor de QR no hall",
-        who="Secretaria e liderança com manutenção ou salas. O dispositivo do hall fica logado nesta tela o culto inteiro.",
+        who="Secretaria e quem tiver manutenção ou salas. O dispositivo do hall fica logado nesta tela o culto inteiro.",
         access=["Menu → engrenagem → Operação e Segurança → Totem de check-in. Use um tablet/celular fixo no hall."],
         manages="Secretaria configura. Em Programação de Eventos, ligue «Totem ativo» e publique o culto. Famílias geram o QR na Carteirinha.",
         acl="Tela `/totem-checkin`. Drawer: manutenção OU salas OU Super Admin. Evento precisa `totem_ativo`.",
@@ -872,17 +868,17 @@ def add_part3(doc: Document) -> None:
         name="Autorização de imagem e voz",
         what="Termo LGPD de mídia (foto, vídeo, voz) com confirmação por e-mail e PDF.",
         route="/autorizacao-midia  — hint: Termos LGPD e confirmação por e-mail",
-        who="Super Admin, Equipe Pastoral, Líder, Líder Geral, Administrador de eventos. Secretaria NÃO vê este item.",
+        who="Secretaria, Equipe Pastoral e Super Admin.",
         access=["Menu → engrenagem → Operação e Segurança → Autorização de imagem e voz."],
-        manages="Liderança de comunicação/pastoral aplica o termo. A pessoa titular confirma o e-mail.",
-        acl="Tela `/autorizacao-midia`. Drawer: Super Admin ou canManageMediaAuthorization. Grants SQL em events_admin, lider, lider_geral, pastoral.",
+        manages="Secretaria ou pastoral aplica o termo. A pessoa titular confirma o e-mail.",
+        acl="Tela `/autorizacao-midia`. Drawer: Super Admin ou grant `/autorizacao-midia`.",
         fill=[
             "Preencha nome, e-mail, CPF e telefone iguais ao cadastro.",
             "Leia o termo até o fim e aceite.",
             "Envie e peça à pessoa para confirmar o e-mail.",
             "Guarde/baixe o PDF quando a tela oferecer.",
         ],
-        impact="Sem termo: a igreja não tem base para gravar o culto com aquela pessoa em close. E-mail errado: confirmação nunca chega. Secretaria de propósito não opera isto — encaminhe à pastoral/comunicação.",
+        impact="Sem termo: a igreja não tem base para gravar o culto com aquela pessoa em close. E-mail errado: confirmação nunca chega.",
     )
 
     add_heading_custom(doc, "3.B  Gestão de Pessoas", 1)
@@ -899,16 +895,16 @@ def add_part3(doc: Document) -> None:
         name="Lista de Membros",
         what="Diretório da comunidade (membros, famílias, visitantes) com busca e atalho de WhatsApp.",
         route="/membros  — hint: Diretório da comunidade  — card dashboard.card.members_list",
-        who="Equipe Pastoral e Super Admin (card pastoral-only no desenho atual). Secretaria em geral não herda este card.",
+        who="Equipe Pastoral, Secretaria e Super Admin.",
         access=["Menu → engrenagem → Gestão de Pessoas → Lista de Membros."],
-        manages="Cadastros nascem da Recepção / Cadastro de Usuário / autoatendimento. Esta tela é consulta pastoral, não o formulário principal de alta.",
+        manages="Cadastros nascem da Recepção / Cadastro de Usuário / autoatendimento. Esta tela é consulta, não o formulário principal de alta.",
         acl="`dashboard.card.members_list`. Membership ativo + manutenção no drawer de settings.",
         fill=[
             "Busque pelo nome.",
             "Abra o núcleo familiar se precisar do contexto da casa.",
             "Use WhatsApp só para cuidado legítimo — não extraia lista para fora do app.",
         ],
-        impact="Cadastros podres na origem: o diretório mente. Sem este grant, a pastoral não acha gente no domingo. Secretaria opera pela Recepção/Cadastro, não por aqui, se o item estiver oculto.",
+        impact="Cadastros podres na origem: o diretório mente. Sem este grant, ninguém acha gente no domingo pelo diretório.",
     )
 
     add_feature(
@@ -917,7 +913,7 @@ def add_part3(doc: Document) -> None:
         name="Mapa de geolocalização",
         what="Pins das famílias (e células) no mapa da cidade.",
         route="/mapa-geolocalizacao  — hint: Pins das famílias no mapa",
-        who="Quem tem a tela `/mapa-geolocalizacao` e membership ativo, e no menu da engrenagem também manutenção (ou Super Admin). Pastoral e Líder Geral são o uso típico.",
+        who="Quem tem a tela `/mapa-geolocalizacao` e membership ativo, e no menu da engrenagem também manutenção (ou Super Admin). Pastoral e Secretaria são o uso típico.",
         access=["Menu → engrenagem → Gestão de Pessoas → Mapa de geolocalização."],
         manages="Ninguém «desenha» o pin: ele nasce do CEP/endereço do cadastro. Secretaria cobra CEP na recepção.",
         acl="`ACCESS_SCREEN.mapGeolocation` = `/mapa-geolocalizacao`. Detalhe do pin tem tela extra.",
@@ -935,7 +931,7 @@ def add_part3(doc: Document) -> None:
         name="Aniversariantes",
         what="Quem faz aniversário, para cumprimento pastoral (WhatsApp).",
         route="/aniversariantes  — card dashboard.card.birthdays",
-        who="Equipe Pastoral e Super Admin (pastoral-only). Secretaria em geral não vê.",
+        who="Equipe Pastoral, Secretaria e Super Admin.",
         access=["Menu → engrenagem → Gestão de Pessoas → Aniversariantes."],
         manages="A data vem dos Dados Cadastrais / recepção. Aqui só se consulta.",
         acl="`dashboard.card.birthdays`. Membership + manutenção no drawer.",
@@ -968,9 +964,9 @@ def add_part3(doc: Document) -> None:
         name="Gestão de Pequenos Grupos",
         what="Administração de células: nome, horário, membros, visitantes, roteiro da semana, oração.",
         route="/maintenance-dashboard?panel=small_groups_management",
-        who="Secretaria, Pastoral, Líder Geral (update típico), Gestor, Super Admin. Líder costuma ter visão mais restrita.",
+        who="Secretaria, Pastoral, Gestor, Super Admin.",
         access=["Menu → engrenagem → Gestão de Pessoas → Gestão de Pequenos Grupos."],
-        manages="Secretaria (manutenção cadastral) e liderança de células (vida do grupo). O membro pede vaga em Minha Célula.",
+        manages="Liderança da célula (anfitrião/líder do grupo) no dia a dia; Secretaria cadastra o grupo.",
         acl="`maintenance.card.small_groups_management` com update libera `can_admin_small_groups`.",
         fill=[
             "Novo grupo: nome que a igreja usa + horário HH:MM.",
@@ -988,9 +984,9 @@ def add_part3(doc: Document) -> None:
         name="Mural de Voluntários",
         what="Cadastro das vagas que alimentam o Mural de Oportunidades do membro (título, tipo de escala, status, interesses).",
         route="/maintenance-dashboard?panel=volunteer_mural",
-        who="Super Admin, Pastoral, Líder Geral, Líder, Gestor (update típico). Secretaria não recebe este grant no papel operacional atual.",
+        who="Secretaria, Pastoral, Gestor, Super Admin.",
         access=["Menu → engrenagem → Gestão de Pessoas → Mural de Voluntários."],
-        manages="Liderança da área (louvor, kids, etc.). Secretaria não substitui o dono da vaga.",
+        manages="Secretaria (ou pastoral) cadastra a vaga; o ministério dono trata os interesses.",
         acl="`maintenance.volunteer.mural`.",
         fill=[
             "Nova vaga: título claro («Violão no culto das 18h»).",
@@ -1007,9 +1003,9 @@ def add_part3(doc: Document) -> None:
         name="Moderação do Mural",
         what="Aprovar ou rejeitar doações e pedidos de empréstimo antes de irem ao mural público.",
         route="/maintenance-dashboard?panel=generosity_moderation  — hint: Doações e pedidos de empréstimo",
-        who="Super Admin, Pastoral, Líder Geral, Líder. Secretaria não.",
+        who="Secretaria, Pastoral, Super Admin.",
         access=["Menu → engrenagem → Gestão de Pessoas → Moderação do Mural."],
-        manages="Liderança de cuidado/diaconia. O membro só envia para moderação.",
+        manages="Secretaria ou pastoral. O membro só envia para moderação.",
         acl="`maintenance.card.generosity_moderation`.",
         fill=[
             "Fila Pendentes: abra o anúncio, leia título/descrição/foto.",
@@ -1045,7 +1041,7 @@ def add_part3(doc: Document) -> None:
         name="Régua de Acolhimento",
         what="Tarefas da equipe de boas-vindas: WhatsApp no dia 1 e convite à célula no dia 4 (depois pode virar pendência pastoral).",
         route="/maintenance-dashboard?panel=visitor_followup  — hint: Tarefas da equipe de boas-vindas",
-        who="Quem tem `maintenance.card.visitor_followup` e/ou o grant de cadastro (welcome). Pastoral vê o desdobramento pastoral. Secretaria opera o welcome se o grant estiver na instância.",
+        who="Secretaria (welcome) e Super Admin. Pastoral vê o desdobramento se o caso virar cuidado.",
         access=["Menu → engrenagem → Gestão de Pessoas → Régua de Acolhimento."],
         manages="Equipe de recepção/Secretaria nas tarefas 1 e 4. Pastoral no transbordo.",
         acl="`maintenance.card.visitor_followup` (welcome também aceita `profile_cadastro` em RPCs).",
@@ -1099,7 +1095,7 @@ def add_part3(doc: Document) -> None:
         name="Programação de Eventos",
         what="Criar, editar, replicar e excluir cultos/eventos. É o coração da operação da Secretaria. Sem evento publicado, a home, o totem, as escalas e a presença não têm âncora.",
         route="/maintenance-dashboard?panel=events",
-        who="Secretaria, Líder, Gestor, Super Admin (e tesoureiro para ajuste retroativo, conforme grant). Super Admin irrestrito.",
+        who="Secretaria, Gestor, Super Admin (Tesoureiro pode ajustar evento passado, conforme grant).",
         access=["Menu → engrenagem → Culto e Eventos → Programação de Eventos."],
         manages="Secretaria no dia a dia. Super Admin em qualquer caso. Tesoureiro pode furar trava de data passada (`session_can_bypass_event_past_date_lock`).",
         acl="`maintenance.card.events` (view e update). Tabelas `events`, `event_registrations`. Tela de manutenção `/maintenance-dashboard`.",
@@ -1137,9 +1133,9 @@ def add_part3(doc: Document) -> None:
         name="Manutenção de Avisos",
         what="Comunicados que aparecem na home (página Avisos) e alimentam o orquestrador do culto.",
         route="/maintenance-dashboard?panel=event_orchestration  — hint: Comunicados da home",
-        who="Secretaria, Orquestrador de Evento, Gestor, Super Admin.",
+        who="Secretaria, Gestor, Super Admin.",
         access=["Menu → engrenagem → Culto e Eventos → Manutenção de Avisos."],
-        manages="Secretaria redige. Orquestrador dispara na hora do culto. `profile_is_event_control_admin` = Super Admin OU papel orquestrador OU update neste card.",
+        manages="Secretaria redige e dispara na hora do culto. `profile_is_event_control_admin` = Super Admin OU papel Secretaria OU update neste card.",
         acl="`maintenance.card.event_orchestration`. Tabelas `event_control`, `event_avisos`. Tela espelho `/admin/orquestrador`.",
         fill=[
             "Crie o aviso com texto que a congregação entenda em dois segundos.",
@@ -1156,7 +1152,7 @@ def add_part3(doc: Document) -> None:
         name="Sala(s) - Check In",
         what="Operação do servidor de sala no culto (KIDS/TEENS e salas afetivas): quem chegou, contato, contagem.",
         route="/maintenance-dashboard?panel=sala_servidor",
-        who="Secretaria, Administrador de eventos, Gestor, Super Admin — e quem estiver no aparelho da sala.",
+        who="Secretaria, Gestor, Super Admin — e quem estiver no aparelho da sala.",
         access=["Menu → engrenagem → Culto e Eventos → Sala(s) - Check In."],
         manages="Secretaria prepara salas e evento. O servidor da sala opera a lista na hora.",
         acl="`maintenance.card.sala_servidor`. Depende de salas cadastradas + chaves habilitadas no evento.",
@@ -1175,9 +1171,9 @@ def add_part3(doc: Document) -> None:
         name="Tipos de Escala",
         what="Cadastro dos tipos (Louvor, Recepção, Midia, Kids…). Capacidade e interruptores. Base para servos e programação.",
         route="/maintenance-dashboard?panel=scale_types",
-        who="Secretaria, Gestor, Super Admin. Líder em geral não cria tipo, só programa os que lidera.",
+        who="Secretaria, Gestor, Super Admin.",
         access=["Menu → engrenagem → Culto e Eventos → Tipos de Escala."],
-        manages="Secretaria. Código do tipo deve ser estável (a ACL de líder pode apontar para `scale_type.CODIGO`).",
+        manages="Secretaria. Código do tipo deve ser estável.",
         acl="`maintenance.card.scale_types`. Update neste card libera os tipos em `profile_has_scale_type_access`.",
         fill=[
             "Novo tipo: nome visível + código curto sem espaço.",
@@ -1185,7 +1181,7 @@ def add_part3(doc: Document) -> None:
             "Ligue os interruptores que a tela oferecer (ativo, etc.).",
             "Salve antes de cadastrar servos.",
         ],
-        impact="Sem tipos: não há como cadastrar servo nem programar. Código mudado depois: líderes perdem o grant daquele tipo.",
+        impact="Sem tipos: não há como cadastrar servo nem programar. Código mudado depois: grants `scale_type.*` antigos deixam de bater.",
     )
 
     add_feature(
@@ -1194,9 +1190,9 @@ def add_part3(doc: Document) -> None:
         name="Servos em Disponibilidade",
         what="Quem pode ser escalado em cada tipo (o banco de pessoas, não ainda a data do culto).",
         route="/maintenance-dashboard?panel=scale_volunteers",
-        who="Secretaria, Líder, Líder Geral, Gestor, Super Admin.",
+        who="Secretaria, Gestor, Super Admin.",
         access=["Menu → engrenagem → Culto e Eventos → Servos em Disponibilidade."],
-        manages="Secretaria monta a base. Líder indica os nomes da sua área.",
+        manages="Secretaria monta a base com os nomes de cada ministério.",
         acl="`maintenance.card.scale_volunteers`.",
         fill=[
             "Escolha o tipo de escala.",
@@ -1212,9 +1208,9 @@ def add_part3(doc: Document) -> None:
         name="Programação de Escalas",
         what="O culto concreto: tipo + data + servo. É o que o membro vê em Menu → Escalas.",
         route="/maintenance-dashboard?panel=scales",
-        who="Secretaria, Líder, Líder Geral, Gestor, Super Admin.",
+        who="Secretaria, Gestor, Super Admin.",
         access=["Menu → engrenagem → Culto e Eventos → Programação de Escalas."],
-        manages="Secretaria fecha a escala da semana. Líder programa os tipos que lidera.",
+        manages="Secretaria fecha a escala da semana (todos os tipos ativos).",
         acl="`maintenance.card.scales`.",
         fill=[
             "Escolha o tipo e a data do culto (a data deve existir na Programação de Eventos).",
@@ -1231,7 +1227,7 @@ def add_part3(doc: Document) -> None:
         name="Presença",
         what="Registro de presença/quórum dos eventos que exigem quórum (assembleia).",
         route="/maintenance-dashboard?panel=quorum_presence",
-        who="Secretaria, Administrador de eventos, Gestor, Super Admin.",
+        who="Secretaria, Gestor, Super Admin.",
         access=["Menu → engrenagem → Culto e Eventos → Presença."],
         manages="Secretaria no culto/assembleia. O check-in familiar e o totem alimentam a lista.",
         acl="`maintenance.card.quorum_presence`. O evento precisa `requer_quorum`.",
@@ -1250,7 +1246,7 @@ def add_part3(doc: Document) -> None:
         name="Orquestrador",
         what="Painel em tela cheia da sequência de avisos/culto ao vivo (para projetor ou operador).",
         route="/admin/orquestrador  — hint: Painel de avisos em tela cheia",
-        who="Orquestrador de Evento, Secretaria, Super Admin.",
+        who="Secretaria e Super Admin (quem opera o projetor no culto).",
         access=["Menu → engrenagem → Culto e Eventos → Orquestrador. Use um computador ligado ao projetor."],
         manages="Quem opera o culto no minuto. O conteúdo vem da Manutenção de Avisos / event_control.",
         acl="Tela `/admin/orquestrador` + `maintenance.card.event_orchestration`. Função SQL `profile_is_event_control_admin`.",
@@ -1263,7 +1259,7 @@ def add_part3(doc: Document) -> None:
     )
 
     add_heading_custom(doc, "3.D  Finanças e Inteligência", 1)
-    add_para(doc, "Secretaria não acessa este grupo. Tesoureiro e Super Admin são o núcleo.", italic=True, color=MUTED)
+    add_para(doc, "Tesoureiro e Super Admin são o núcleo do livro caixa e do preditivo. Secretaria vê Gestão de Campanhas (grant absorvido); não vê Informações Financeiras nem Modelo Preditivo.", italic=True, color=MUTED)
 
     add_feature(
         doc,
@@ -1291,9 +1287,9 @@ def add_part3(doc: Document) -> None:
         name="Gestão de Campanhas",
         what="Campanhas e projetos com meta em R$, datas, Pix identificado e status (alimenta «Eu quero…» / ofertas).",
         route="/maintenance-dashboard?panel=campaigns_management",
-        who="Super Admin, Pastoral, Tesoureiro, Líder Geral (update típico). Gestor em view. Secretaria não.",
+        who="Secretaria, Pastoral, Tesoureiro, Super Admin. Gestor em view.",
         access=["Menu → engrenagem → Finanças e Inteligência → Gestão de Campanhas."],
-        manages="Tesouraria/pastoral donos da campanha.",
+        manages="Secretaria ou tesouraria/pastoral donos da campanha.",
         acl="`maintenance.finance.campaigns`.",
         fill=[
             "Título e descrição que o membro entenda.",
@@ -1332,7 +1328,7 @@ def add_part3(doc: Document) -> None:
         name="Relatórios",
         what="Catálogo de extrações: membros ativos/inativos, faixa etária, necessidades pastorais, saúde infantil (LGPD), quórum, estacionamento, sugestões, inscrições em eventos.",
         route="/maintenance-dashboard?panel=relatorios",
-        who="Administrador de eventos, Gestor, Pastoral, Tesoureiro, Super Admin. Secretaria não no papel atual.",
+        who="Secretaria (view), Gestor, Pastoral, Tesoureiro, Super Admin.",
         access=["Menu → engrenagem → Governança e TI → Relatórios."],
         manages="Quem tem o grant gera. A qualidade depende dos cadastros (Secretaria) e da tesouraria/pastoral.",
         acl="`maintenance.card.relatorios`.",
@@ -1439,13 +1435,13 @@ def add_part3(doc: Document) -> None:
         name="Manutenção da Trilha — Temas da Trilha",
         what="Conteúdo das lições (título, texto, vídeo, ativo). Na tela, fica dentro do agrupador «Manutenção da Trilha» (toque para expandir).",
         route="/maintenance-dashboard?panel=discipleship_themes  — hint: Textos, vídeos e reflexões dos passos",
-        who="Super Admin, Pastoral, Líder, Líder Geral (e quem o drawer libera via Cuidado Pastoral). Reset NÃO é este item.",
+        who="Secretaria, Pastoral e Super Admin. Reset NÃO é este item.",
         access=[
             "Menu → engrenagem → Governança e TI.",
             "Toque em «Manutenção da Trilha».",
             "Toque em Temas da Trilha.",
         ],
-        manages="Pastoral / discipulado. Super Admin em última instância.",
+        manages="Secretaria ou pastoral/discipulado. Super Admin em última instância.",
         acl="`maintenance.card.discipleship_themes`. Drawer: Super Admin OU canAccessPastoralCare OU grant do painel.",
         fill=[
             "Abra o passo/lição.",
@@ -1463,7 +1459,7 @@ def add_part3(doc: Document) -> None:
         route="/maintenance-dashboard?panel=discipleship_alerts  — hint: Alunos 100% prontos para certificado",
         who="Os mesmos dos Temas.",
         access=["Engrenagem → Governança e TI → Manutenção da Trilha → Trilha — Reconhecimentos."],
-        manages="Pastoral/discipulado entrega o reconhecimento. Não é a Secretaria.",
+        manages="Secretaria ou pastoral/discipulado entrega o reconhecimento.",
         acl="`maintenance.card.discipleship_alerts`.",
         fill=["Abra os Novos. Confira o aluno. Marque Visto quando olhar. Fechado quando o certificado/cerimônia ocorrer."],
         impact="Fila ignorada: gente formada sem festa e sem registro. Fechar cedo demais: certificado fantasma.",
@@ -1531,7 +1527,7 @@ def add_closing(doc: Document) -> None:
         [
             "Na sexta: Programação de Eventos — culto publicado, horário, local, salas, Totem ativo, quórum se for assembleia.",
             "Programação de Escalas daquele culto (servos já cadastrados em Disponibilidade).",
-            "Manutenção de Avisos do boletim da home / telão.",
+            "Manutenção de Avisos do boletim da home / telão. No culto, abra o Orquestrador no projetor.",
             "No sábado: Recepção Familiar — zere a fila de lotes. Corrija CEP no Cadastro de Usuário.",
             "No hall: Totem aberto, câmera ok. Famílias com Carteirinha.",
             "Nas salas: Sala(s) - Check In no evento de hoje.",
@@ -1552,7 +1548,7 @@ def add_closing(doc: Document) -> None:
         "components/minimal/AppDrawer.tsx e AppDrawerSettings.tsx — engrenagem, grupos, Trilha agrupada, Instâncias no rodapé.",
         "hooks/useAppDrawerMenu.ts e lib/drawerMenuAccess.ts — quem vê o quê.",
         "lib/screenAccessResourceKeys.ts e lib/accessScreen.ts — chaves ACL.",
-        "lib/accessRoleDisplayOrder.ts e scripts/access-control-*.sql — papéis (inclui secretaria).",
+        "lib/accessRoleDisplayOrder.ts e scripts/access-control-*.sql — papéis atuais (Secretaria absorveu Líder / Líder Geral / Administrador de Eventos / Orquestrador).",
         "app/(tabs)/index.tsx, EventsInboxHome, MinimalEuQueroFooter — home fora do menu.",
         "app/maintenance-dashboard.tsx — painéis da engrenagem.",
     ]
