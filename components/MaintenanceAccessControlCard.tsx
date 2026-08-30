@@ -369,18 +369,13 @@ export function MaintenanceAccessControlCard({
     || savingAppAtivo
     || savingAppInativoMsg;
   const hasAssignedProfileRoles = profileRoles.some((role) => role.assigned);
-  const profileHasLiderGeralRole = profileRoles.some(
-    (role) => role.assigned && role.roleCode === 'lider_geral'
-  );
-  const profileHasLiderRole = profileRoles.some(
-    (role) => role.assigned && role.roleCode === 'lider'
+  const profileHasSecretariaRole = profileRoles.some(
+    (role) => role.assigned && role.roleCode === 'secretaria'
   );
 
-  const scaleLeadershipHint = profileHasLiderGeralRole
-    ? 'Papel Líder Geral: acesso automático a todas as escalas ativas. Os tipos abaixo são opcionais.'
-    : profileHasLiderRole
-      ? 'Ative os tipos que este perfil pode gerenciar (requer papel Líder).'
-      : 'Ative os tipos após atribuir o papel Líder ou Líder Geral ao perfil.';
+  const scaleLeadershipHint = profileHasSecretariaRole
+    ? 'Papel Secretaria: acesso automático a todas as escalas ativas. Os tipos abaixo são opcionais.'
+    : 'Atribua o papel Secretaria para gerenciar todas as escalas, ou ative tipos específicos neste perfil.';
 
   const hasGrantSearchQuery = grantSearchQuery.trim().length > 0;
 

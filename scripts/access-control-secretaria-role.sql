@@ -104,6 +104,7 @@ select r.id, res.id, g.can_view, g.can_update
       ('screen', '/configuracao-salas', true, true),
       ('screen', '/totem-checkin', true, true),
       ('screen', '/admin/orquestrador', true, true),
+      ('screen', '/autorizacao-midia', true, true),
       ('screen', 'maintenance.card.events', true, true),
       ('screen', 'maintenance.card.events_gantt', true, true),
       ('screen', 'maintenance.card.sala_servidor', true, true),
@@ -136,14 +137,14 @@ on conflict (role_id, resource_id) where (role_id is not null) do update
       can_update = excluded.can_update,
       updated_at = now();
 
--- Autorização de mídia: liderança atual (não Secretaria).
+-- Autorização de mídia: Secretaria (absorveu liderança de eventos) e Equipe Pastoral.
 insert into public.access_grants (role_id, resource_id, can_view, can_update)
 select r.id, res.id, true, true
   from public.access_roles r
   join public.access_resources res
     on res.resource_type = 'screen'
    and res.resource_key = '/autorizacao-midia'
- where r.code in ('events_admin', 'lider', 'lider_geral', 'pastoral')
+ where r.code in ('secretaria', 'pastoral')
 on conflict (role_id, resource_id) where (role_id is not null) do update
   set can_view = true,
       can_update = true,
@@ -168,7 +169,6 @@ delete from public.access_grants ag
        '/financial',
        '/expense-report',
        'dashboard.card.financial',
-       '/autorizacao-midia',
        'maintenance.card.access_control',
        'maintenance.card.auditor',
        'maintenance.card.mudanca_papeis'
@@ -189,7 +189,7 @@ set search_path = public
 as $$
   select
     public.is_super_admin_profile(p_profile_id)
-    or public.profile_has_role_code(p_profile_id, 'orquestrador_evento')
+    or public.profile_has_role_code(p_profile_id, 'secretaria')
     or public.profile_has_access(p_profile_id, 'screen', 'maintenance.card.event_orchestration', 'update');
 $$;
 
@@ -240,11 +240,7 @@ as $$
     when 'congregado' then 20
     when 'member' then 30
     when 'family_acceptor' then 40
-    when 'lider_geral' then 44
-    when 'lider' then 45
-    when 'events_admin' then 50
-    when 'orquestrador_evento' then 52
-    when 'secretaria' then 54
+    when 'secretaria' then 50
     when 'tesoureiro' then 55
     when 'pastoral' then 60
     when 'gestor_controle_acesso' then 65
