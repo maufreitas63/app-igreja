@@ -65,7 +65,7 @@ export async function loadDashboardLinkedScreenAccess(
   );
 }
 
-/** Card visível no carrossel somente quando card e tela filha (se houver) permitem acesso. */
+/** Card visível no menu somente quando card e tela filha (se houver) permitem acesso. */
 export const isDashboardCardFullyAllowed = (
   content: string,
   cardAccess: DashboardCardViewAccess,

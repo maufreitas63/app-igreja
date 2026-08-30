@@ -15,6 +15,8 @@ export const DASHBOARD_SCREEN_DENIED_MESSAGES: Record<string, string> = {
     'Você pode ver o mapa geral, mas não tem permissão para abrir a localização de outros usuários.',
   '/expense-report': 'Você não tem permissão para abrir o Relatório de Despesas.',
   '/trilha-discipulado': 'Você não tem permissão para abrir a Trilha de Discipulado.',
+  '/pequeno-grupo': 'Você não tem permissão para abrir Minha Célula.',
+  '/mural-oportunidades': 'Você não tem permissão para abrir o Mural de Oportunidades.',
 };
 
 export async function ensureScreenAccess(

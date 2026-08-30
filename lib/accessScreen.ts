@@ -3,6 +3,8 @@ export const ACCESS_SCREEN = {
   login: '/',
   register: '/register',
   dashboard: '/dashboard',
+  smallGroup: '/pequeno-grupo',
+  opportunityMural: '/mural-oportunidades',
   maintenance: '/maintenance-dashboard',
   manageProfile: '/manage-profile',
   manageMembers: '/manage-members',

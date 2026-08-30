@@ -8,7 +8,7 @@ import {
   scaleTypeResourceKey,
 } from '@/lib/scaleAccess';
 
-/** `content` do carrossel de manutenção → `resource_key` em `access_resources`. */
+/** `content` do painel de manutenção → `resource_key` em `access_resources`. */
 export const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   menu: ACCESS_SCREEN.maintenance,
   events: 'maintenance.card.events',

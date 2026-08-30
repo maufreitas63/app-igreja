@@ -26,7 +26,7 @@ export const DRAWER_MEMBER_CARD_BY_MODULE: Partial<Record<AppDrawerModuleKey, st
   menu_administrativo: 'administrativo',
 };
 
-/** Telas com grant próprio (além ou no lugar do card do carrossel). */
+/** Telas com grant próprio (além ou no lugar do card legado). */
 export const DRAWER_MEMBER_SCREEN_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> = {
   menu_manage_profile: ACCESS_SCREEN.manageProfile,
   menu_manage_members: ACCESS_SCREEN.manageMembers,

@@ -11,7 +11,6 @@ import {
 import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
 import { EventFavoriteLocationPickerModal } from '@/components/EventFavoriteLocationPickerModal';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
-import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
 import { EventsGanttChart } from '@/components/EventsGanttChart';
 import { MaintenanceQuorumPresenceCard } from '@/components/MaintenanceQuorumPresenceCard';
 import { MaintenanceScaleTypesCard } from '@/components/MaintenanceScaleTypesCard';
@@ -74,20 +73,13 @@ import {
 import {
   buildDashboardPanelCardSizeStyle,
   computeDashboardCardHeight,
-  resolveCarouselIndexByContent,
-  resolveMaintenancePanelIndex,
 } from '@/lib/dashboardPanelLayout';
 import { MinimalRouteShell } from '@/components/minimal/MinimalRouteShell';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MINIMAL_FLAT_PANEL, MINIMAL_PAGE, CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { pickRouteParam, isMinimalPresentationRoute } from '@/lib/dashboardReturnNavigation';
-import {
-  MAINTENANCE_SHORTCUT_ICON_ACTIVE_COLOR,
-  MAINTENANCE_SHORTCUT_ICON_COLORS,
-  MAINTENANCE_SHORTCUT_ICONS,
-  type MaintenancePanelContent,
-} from '@/lib/maintenanceShortcutIcons';
+import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import {
   computeMaintenancePanelInsets,
   UI_MAINTENANCE_PANEL_BORDERS,
@@ -121,7 +113,6 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
   Keyboard,
   Pressable,
   ScrollView,
@@ -132,8 +123,6 @@ import {
   TouchableOpacity,
   View,
   useWindowDimensions,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -147,7 +136,6 @@ const ROOM_CHIP_CUSTOM_ACTIVE: ViewStyle = {
 
 /** Fundo claro no padrão vigilance. */
 const MAINTENANCE_SCREEN_GRADIENT = ['#FFFFFF', '#F0F9FF'] as const;
-const FOOTER_NAV_REPEAT_MS = 500;
 
 const MINIMAL_SWITCH_TRACK = { false: MINIMAL_UI.divider, true: MINIMAL_UI.accent } as const;
 
@@ -188,12 +176,6 @@ type MaintenanceCarouselCard = {
   | 'discipleship_alerts'
   | 'discipleship_reset'
   | 'event_orchestration';
-};
-
-type MaintenanceShortcut = {
-  id: string;
-  label: string;
-  content: MaintenancePanelContent;
 };
 
 const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
@@ -421,8 +403,10 @@ export default function MaintenanceDashboard() {
   }>();
   const requestedPanel = pickRouteParam(panelParam);
   const isMinimalPresentation = isMinimalPresentationRoute(presentationParam);
-  const previousPageWidthRef = useRef(pageWidth);
-  /** Largura/altura reais do estágio (após padding do MinimalScreenLayout), para o carrossel caber. */
+  const returnToCaller = useReturnToCallerOnLeave({
+    returnRoute: MEMBER_HOME_PATH,
+  });
+  /** Largura/altura reais do estágio (após padding do MinimalScreenLayout). */
   const [measuredCarouselWidth, setMeasuredCarouselWidth] = useState(0);
   const [measuredCarouselHeight, setMeasuredCarouselHeight] = useState(0);
   const carouselPageWidth = useMemo(() => {
@@ -439,11 +423,6 @@ export default function MaintenanceDashboard() {
   const insets = useSafeAreaInsets();
   const { events, loading, error, refetch } = useMaintenanceEvents();
   const safeEvents = useMemo(() => events ?? [], [events]);
-  const hasQuorumEvent = useMemo(
-    () => safeEvents.some((event) => event.requer_quorum === true),
-    [safeEvents]
-  );
-  const quorumPresenceShortcutEnabled = !loading && hasQuorumEvent;
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [form, setForm] = useState<MaintenanceEventFormState>(emptyMaintenanceEventForm);
@@ -460,15 +439,6 @@ export default function MaintenanceDashboard() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [eventDatePickerVisible, setEventDatePickerVisible] = useState(false);
   const [favoritePickerVisible, setFavoritePickerVisible] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const carouselRef = useRef<FlatList<MaintenanceCarouselCard>>(null);
-  const currentIndexRef = useRef(0);
-  const carouselScrollSyncLockRef = useRef(false);
-  const footerNavRepeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const footerNavRepeatActiveRef = useRef(false);
-  const pendingMaintenancePanelRef = useRef<MaintenancePanelContent | null>(null);
-  const activeMaintenanceContentRef = useRef<MaintenanceCarouselCard['content']>('menu');
-  const previousMaintenanceCardCountRef = useRef(0);
   const [headerUserName, setHeaderUserName] = useState('Usuário');
   const [accessState, setAccessState] = useState<'checking' | 'allowed' | 'denied'>('checking');
   const [canManageAccessControl, setCanManageAccessControl] = useState(false);
@@ -950,40 +920,23 @@ export default function MaintenanceDashboard() {
     scalePanelAccess,
   ]);
 
-  const maintenanceCarouselCards = useMemo<MaintenanceCarouselCard[]>(
-    () => {
-      const cards = [{ id: 'menu', title: 'Manutenção', content: 'menu' as const }, ...maintenancePanelCards];
+  const activeMaintenanceCard = useMemo<MaintenanceCarouselCard | null>(() => {
+    if (!requestedPanel) {
+      return null;
+    }
 
-      if (!isMinimalPresentation) {
-        return cards;
-      }
+    return maintenancePanelCards.find((card) => card.content === requestedPanel) ?? null;
+  }, [maintenancePanelCards, requestedPanel]);
 
-      if (requestedPanel) {
-        const match = maintenancePanelCards.find((card) => card.content === requestedPanel);
+  const activeMaintenancePanelContent = activeMaintenanceCard?.content ?? null;
 
-        if (match) {
-          return [match];
-        }
-      }
+  useEffect(() => {
+    if (accessState !== 'allowed' || activeMaintenanceCard) {
+      return;
+    }
 
-      return maintenancePanelCards.length ? [maintenancePanelCards[0]!] : [];
-    },
-    [isMinimalPresentation, maintenancePanelCards, requestedPanel]
-  );
-
-  const maintenanceCardCount = maintenanceCarouselCards.length;
-
-  const maintenanceShortcuts = useMemo<MaintenanceShortcut[]>(
-    () =>
-      maintenancePanelCards.map((card) => ({
-        id: card.id,
-        label: card.title,
-        content: card.content as MaintenancePanelContent,
-      })),
-    [maintenancePanelCards]
-  );
-
-  const activeMaintenancePanelContent = maintenanceCarouselCards[currentIndex]?.content ?? null;
+    router.replace(MEMBER_HOME_PATH);
+  }, [accessState, activeMaintenanceCard, router]);
 
   useFamilyReceptionSuperAdminNotifier(
     accessState === 'allowed'
@@ -996,8 +949,8 @@ export default function MaintenanceDashboard() {
       return isCreating ? 'Novo evento' : 'Editar evento';
     }
 
-    return maintenanceCarouselCards[currentIndex]?.title?.trim() ?? '';
-  }, [currentIndex, isCreating, maintenanceCarouselCards, showEditor]);
+    return activeMaintenanceCard?.title?.trim() ?? '';
+  }, [activeMaintenanceCard, isCreating, showEditor]);
 
   const { showTechnicalKeys } = useShowAclTechnicalKeys(accessState === 'allowed');
 
@@ -1006,9 +959,8 @@ export default function MaintenanceDashboard() {
       return resolveMaintenancePanelAccessResourceKey('events', { inEventEditor: true });
     }
 
-    const content = maintenanceCarouselCards[currentIndex]?.content;
-    return resolveMaintenancePanelAccessResourceKey(content);
-  }, [currentIndex, maintenanceCarouselCards, showEditor]);
+    return resolveMaintenancePanelAccessResourceKey(activeMaintenanceCard?.content);
+  }, [activeMaintenanceCard, showEditor]);
 
   useEffect(() => {
     if (showEditor) {
@@ -1020,7 +972,7 @@ export default function MaintenanceDashboard() {
       return;
     }
 
-    const card = maintenanceCarouselCards[currentIndex];
+    const card = activeMaintenanceCard;
 
     if (!card?.content || card.content === 'menu') {
       return;
@@ -1030,7 +982,7 @@ export default function MaintenanceDashboard() {
       resolveMaintenancePanelAccessResourceKey(card.content) ?? `maintenance.card.${card.content}`;
 
     void recordProfileScreenVisit(screenKey, card.title);
-  }, [currentIndex, isCreating, maintenanceCarouselCards, showEditor]);
+  }, [activeMaintenanceCard, isCreating, showEditor]);
 
   const cardHeight = useMemo(
     () => computeDashboardCardHeight(windowHeight, insets.top, insets.bottom),
@@ -1104,239 +1056,9 @@ export default function MaintenanceDashboard() {
     [isMinimalPresentation]
   );
 
-  const scrollToMaintenanceCard = useCallback((targetIndex: number, animated = false) => {
-    if (targetIndex < 0 || targetIndex >= maintenanceCardCount || carouselPageWidth <= 0) {
-      return;
-    }
-
-    carouselScrollSyncLockRef.current = true;
-    currentIndexRef.current = targetIndex;
-    setCurrentIndex(targetIndex);
-
-    const list = carouselRef.current;
-    if (!list) {
-      carouselScrollSyncLockRef.current = false;
-      return;
-    }
-
-    const offset = targetIndex * carouselPageWidth;
-
-    list.scrollToOffset({ offset, animated: false });
-    requestAnimationFrame(() => {
-      list.scrollToIndex({ index: targetIndex, animated, viewPosition: 0 });
-      list.scrollToOffset({ offset, animated: false });
-      requestAnimationFrame(() => {
-        carouselScrollSyncLockRef.current = false;
-      });
-    });
-  }, [carouselPageWidth, maintenanceCardCount]);
-
-  const scrollToMaintenancePanel = useCallback(
-    (panelContent: MaintenancePanelContent) => {
-      const targetIndex = resolveMaintenancePanelIndex(maintenanceCarouselCards, panelContent);
-
-      if (targetIndex < 0) {
-        pendingMaintenancePanelRef.current = panelContent;
-        return;
-      }
-
-      pendingMaintenancePanelRef.current = null;
-      scrollToMaintenanceCard(targetIndex, false);
-    },
-    [maintenanceCarouselCards, scrollToMaintenanceCard]
-  );
-
-  useEffect(() => {
-    if (!requestedPanel || accessState !== 'allowed') {
-      return;
-    }
-
-    scrollToMaintenancePanel(requestedPanel as MaintenancePanelContent);
-  }, [accessState, requestedPanel, scrollToMaintenancePanel]);
-
-  useEffect(() => {
-    if (currentIndex < maintenanceCardCount) {
-      return;
-    }
-
-    const nextIndex = Math.max(maintenanceCardCount - 1, 0);
-    scrollToMaintenanceCard(nextIndex, false);
-  }, [currentIndex, maintenanceCardCount, scrollToMaintenanceCard]);
-
-  useEffect(() => {
-    const content = maintenanceCarouselCards[currentIndex]?.content;
-
-    if (content) {
-      activeMaintenanceContentRef.current = content;
-    }
-  }, [currentIndex, maintenanceCarouselCards]);
-
-  useEffect(() => {
-    const pending = pendingMaintenancePanelRef.current;
-
-    if (pending) {
-      const targetIndex = resolveMaintenancePanelIndex(maintenanceCarouselCards, pending);
-
-      if (targetIndex >= 0) {
-        pendingMaintenancePanelRef.current = null;
-
-        requestAnimationFrame(() => {
-          scrollToMaintenanceCard(targetIndex, false);
-        });
-      }
-
-      previousMaintenanceCardCountRef.current = maintenanceCardCount;
-      return;
-    }
-
-    if (showEditor || maintenanceCardCount === 0) {
-      previousMaintenanceCardCountRef.current = maintenanceCardCount;
-      return;
-    }
-
-    if (maintenanceCardCount === previousMaintenanceCardCountRef.current) {
-      return;
-    }
-
-    previousMaintenanceCardCountRef.current = maintenanceCardCount;
-
-    if (maintenanceCarouselCards[currentIndexRef.current]?.content === 'menu') {
-      return;
-    }
-
-    const content = activeMaintenanceContentRef.current;
-    const targetIndex = resolveCarouselIndexByContent(maintenanceCarouselCards, content);
-    const resolvedIndex =
-      targetIndex >= 0
-        ? targetIndex
-        : Math.min(Math.max(currentIndexRef.current, 0), maintenanceCardCount - 1);
-
-    if (resolvedIndex !== currentIndexRef.current) {
-      requestAnimationFrame(() => {
-        scrollToMaintenanceCard(resolvedIndex, false);
-      });
-    }
-  }, [maintenanceCardCount, maintenanceCarouselCards, scrollToMaintenanceCard, showEditor]);
-
-  const handleCarouselScrollToIndexFailed = useCallback(
-    (info: { index: number }) => {
-      if (info.index < 0 || info.index >= maintenanceCardCount || carouselPageWidth <= 0) {
-        return;
-      }
-
-      carouselRef.current?.scrollToOffset({
-        offset: info.index * carouselPageWidth,
-        animated: false,
-      });
-      requestAnimationFrame(() => {
-        carouselRef.current?.scrollToIndex({
-          index: info.index,
-          animated: false,
-          viewPosition: 0,
-        });
-      });
-    },
-    [carouselPageWidth, maintenanceCardCount]
-  );
-
-  useEffect(() => {
-    currentIndexRef.current = currentIndex;
-  }, [currentIndex]);
-
-  useEffect(() => {
-    if (previousPageWidthRef.current === pageWidth) {
-      return;
-    }
-
-    previousPageWidthRef.current = pageWidth;
-    setMeasuredCarouselWidth(0);
-    const index = currentIndexRef.current;
-    requestAnimationFrame(() => {
-      scrollToMaintenanceCard(index, false);
-    });
-  }, [pageWidth, scrollToMaintenanceCard]);
-
-  const stopFooterNavRepeat = useCallback(() => {
-    if (footerNavRepeatIntervalRef.current) {
-      clearInterval(footerNavRepeatIntervalRef.current);
-      footerNavRepeatIntervalRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => () => stopFooterNavRepeat(), [stopFooterNavRepeat]);
-
-  const stepFooterNavCard = useCallback(
-    (direction: 'prev' | 'next') => {
-      const index = currentIndexRef.current;
-      const targetIndex = direction === 'prev' ? index - 1 : index + 1;
-
-      if (targetIndex < 0 || targetIndex >= maintenanceCardCount) {
-        stopFooterNavRepeat();
-        return;
-      }
-
-      scrollToMaintenanceCard(targetIndex, false);
-    },
-    [maintenanceCardCount, scrollToMaintenanceCard, stopFooterNavRepeat]
-  );
-
-  const startFooterNavRepeat = useCallback(
-    (direction: 'prev' | 'next') => {
-      stopFooterNavRepeat();
-      footerNavRepeatActiveRef.current = false;
-
-      footerNavRepeatIntervalRef.current = setInterval(() => {
-        footerNavRepeatActiveRef.current = true;
-        stepFooterNavCard(direction);
-      }, FOOTER_NAV_REPEAT_MS);
-    },
-    [stepFooterNavCard, stopFooterNavRepeat]
-  );
-
-  const handleFooterNavPressOut = useCallback(() => {
-    stopFooterNavRepeat();
-  }, [stopFooterNavRepeat]);
-
-  const handleFooterPreviousPress = useCallback(() => {
-    if (footerNavRepeatActiveRef.current) {
-      footerNavRepeatActiveRef.current = false;
-      return;
-    }
-
-    stepFooterNavCard('prev');
-  }, [stepFooterNavCard]);
-
-  const handleFooterNextPress = useCallback(() => {
-    if (footerNavRepeatActiveRef.current) {
-      footerNavRepeatActiveRef.current = false;
-      return;
-    }
-
-    stepFooterNavCard('next');
-  }, [stepFooterNavCard]);
-
   const handleMenu = useCallback(() => {
-    router.replace('/(tabs)');
-  }, [router]);
-
-  const handleBack = useCallback(() => {
-    scrollToMaintenanceCard(0);
-  }, [scrollToMaintenanceCard]);
-
-  const handleCarouselScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (carouselScrollSyncLockRef.current) {
-        return;
-      }
-
-      const index = Math.round(event.nativeEvent.contentOffset.x / carouselPageWidth);
-      if (index >= 0 && index < maintenanceCardCount && index !== currentIndexRef.current) {
-        currentIndexRef.current = index;
-        setCurrentIndex(index);
-      }
-    },
-    [carouselPageWidth, maintenanceCardCount]
-  );
+    returnToCaller();
+  }, [returnToCaller]);
 
   const handleGanttEventPress = useCallback(
     (eventId: string) => {
@@ -1358,10 +1080,8 @@ export default function MaintenanceDashboard() {
     return labels;
   }, [eventRoomOptions]);
 
-  const renderCarouselItem = useCallback(
-    ({ item, index }: { item: MaintenanceCarouselCard; index: number }) => {
-      const shouldMountPanel = Math.abs(currentIndex - index) <= 1;
-
+  const renderActivePanel = useCallback(
+    (item: MaintenanceCarouselCard) => {
       return (
       <View style={[effectiveCardWrapperStyle, effectiveCarouselPageStyle]}>
         <View
@@ -1391,87 +1111,14 @@ export default function MaintenanceDashboard() {
             !isMinimalPresentation && item.content === 'profile_access_insights' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'auditor' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'event_orchestration' && styles.panelCardInnerPadding,
-            !isMinimalPresentation && item.content === 'menu' && styles.panelCardMenu,
           ]}
         >
-          {!shouldMountPanel ? (
-            <View style={[styles.panelCardPlaceholder, { minHeight: cardHeight }]} />
-          ) : item.content === 'menu' ? (
-            <View style={styles.menuPanel}>
-              <Text style={styles.menuPanelTitle}>Módulos de manutenção</Text>
-              <View style={styles.menuPanelSubtitleSpacer} />
-              <ScrollView
-                style={styles.menuShortcutsScroll}
-                contentContainerStyle={styles.menuShortcutsArea}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-              >
-                {maintenanceShortcuts.map((shortcut) => {
-                  const isActiveShortcut = activeMaintenancePanelContent === shortcut.content;
-                  const isShortcutDisabled =
-                    shortcut.content === 'quorum_presence' && !quorumPresenceShortcutEnabled;
-                  const iconName = MAINTENANCE_SHORTCUT_ICONS[shortcut.content];
-                  const iconColor = isShortcutDisabled
-                    ? '#64748B'
-                    : isActiveShortcut
-                      ? MAINTENANCE_SHORTCUT_ICON_ACTIVE_COLOR
-                      : MAINTENANCE_SHORTCUT_ICON_COLORS[shortcut.content];
-
-                  return (
-                    <TouchableOpacity
-                      key={shortcut.id}
-                      style={[
-                        styles.menuShortcutButton,
-                        isActiveShortcut && !isShortcutDisabled && styles.menuShortcutButtonActive,
-                        isShortcutDisabled && styles.menuShortcutButtonDisabled,
-                      ]}
-                      onPress={() => {
-                        if (isShortcutDisabled) {
-                          return;
-                        }
-
-                        scrollToMaintenancePanel(shortcut.content);
-                      }}
-                      activeOpacity={isShortcutDisabled ? 1 : 0.9}
-                      disabled={isShortcutDisabled}
-                      hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
-                      accessibilityRole="button"
-                      accessibilityState={{ disabled: isShortcutDisabled }}
-                      accessibilityLabel={
-                        isShortcutDisabled
-                          ? `${shortcut.label} indisponível: nenhum evento com quórum`
-                          : `Abrir ${shortcut.label}`
-                      }
-                    >
-                      <View style={styles.menuShortcutRow}>
-                        <FontAwesome
-                          name={iconName}
-                          size={16}
-                          color={iconColor}
-                          style={styles.menuShortcutIcon}
-                        />
-                        <Text
-                          style={[
-                            styles.menuShortcutButtonText,
-                            isActiveShortcut && !isShortcutDisabled && styles.menuShortcutButtonTextActive,
-                            isShortcutDisabled && styles.menuShortcutButtonTextDisabled,
-                          ]}
-                          numberOfLines={2}
-                        >
-                          {shortcut.label}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          ) : item.content === 'quorum_presence' ? (
+          {item.content === 'quorum_presence' ? (
             <MaintenanceQuorumPresenceCard
               events={safeEvents}
               loadingEvents={loading}
               schemaMissing={quorumRegistrySchemaMissing}
-              isActive={currentIndex === index}
+              isActive
               panelHeight={cardHeight}
               minimal={isMinimalPresentation}
             />
@@ -1483,7 +1130,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceScaleTypesCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1496,7 +1143,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceScaleVolunteersCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1509,7 +1156,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceScalesCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1522,7 +1169,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenancePastoralCareCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1535,7 +1182,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceSmallGroupsCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1548,7 +1195,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceCampaignsCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1561,7 +1208,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceVolunteerMuralCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1574,7 +1221,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceGenerosityModerationCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1587,7 +1234,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceDiscipleshipThemesCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1600,7 +1247,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceDiscipleshipAlertsCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1613,7 +1260,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceDiscipleshipResetCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1626,7 +1273,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenancePastoralRoleChangeCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1639,7 +1286,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceIgrejaTransferCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1652,7 +1299,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceProfileCadastroCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1665,7 +1312,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceFamilyReceptionCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1678,7 +1325,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceVisitorFollowupCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1691,7 +1338,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceFinancialsCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1704,7 +1351,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenancePredictiveInsightsCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1717,7 +1364,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceReportsCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 events={safeEvents}
                 loadingEvents={loading}
@@ -1727,7 +1374,7 @@ export default function MaintenanceDashboard() {
             </View>
           ) : item.content === 'suggestions_improvements' ? (
             <MaintenanceSupportSuggestionsCard
-              isActive={currentIndex === index}
+              isActive
               panelHeight={cardHeight}
               isSuperAdmin={canManageAccessControl}
               variant="vigilance"
@@ -1740,7 +1387,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceAccessControlCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1753,7 +1400,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceProfileAccessInsightsCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1766,7 +1413,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceGhostModeCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -1779,7 +1426,7 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceEventOrchestrationCard
-                isActive={currentIndex === index}
+                isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
               />
@@ -2000,26 +1647,21 @@ export default function MaintenanceDashboard() {
     },
     [
       cardHeight,
-      currentIndex,
       deleteConfirmPending,
       error,
       safeEvents,
       handleGanttEventPress,
       isBusy,
       loading,
-      activeMaintenancePanelContent,
-      maintenanceShortcuts,
       effectiveCarouselPageStyle,
       effectiveCardWrapperStyle,
       effectivePanelCardStyle,
       effectivePanelScrollContentStyle,
       isMinimalPresentation,
       panelCardSizeStyle,
-      quorumPresenceShortcutEnabled,
       quorumRegistrySchemaMissing,
       refetch,
       roomLabelByKey,
-      scrollToMaintenancePanel,
       startEditEvent,
       startNewEvent,
       canManageAccessControl,
@@ -2083,8 +1725,7 @@ export default function MaintenanceDashboard() {
                 }
               }}
             >
-              <FlatList
-                ref={carouselRef}
+              <View
                 style={[
                   styles.carouselFlatList,
                   isMinimalPresentation &&
@@ -2093,79 +1734,13 @@ export default function MaintenanceDashboard() {
                       maxHeight: measuredCarouselHeight,
                     },
                 ]}
-                data={maintenanceCarouselCards}
-                extraData={{
-                  currentIndex,
-                  maintenanceCardCount,
-                  carouselPageWidth,
-                  measuredCarouselHeight,
-                }}
-                horizontal
-                pagingEnabled={!isMinimalPresentation}
-                scrollEnabled={false}
-                keyboardShouldPersistTaps="handled"
-                showsHorizontalScrollIndicator={false}
-                initialNumToRender={maintenanceCardCount}
-                maxToRenderPerBatch={Math.min(5, maintenanceCardCount)}
-                windowSize={Math.max(5, maintenanceCardCount)}
-                removeClippedSubviews={false}
-                onScroll={handleCarouselScroll}
-                onScrollToIndexFailed={handleCarouselScrollToIndexFailed}
-                scrollEventThrottle={16}
-                keyExtractor={(item) => item.id}
-                getItemLayout={(_, index) => ({
-                  length: carouselPageWidth,
-                  offset: carouselPageWidth * index,
-                  index,
-                })}
-                contentContainerStyle={
-                  isMinimalPresentation
-                    ? {
-                        flexGrow: 1,
-                        alignItems: 'stretch' as const,
-                        minHeight:
-                          measuredCarouselHeight > 0 ? measuredCarouselHeight : undefined,
-                      }
-                    : undefined
-                }
-                snapToAlignment="start"
-                snapToInterval={isMinimalPresentation ? undefined : carouselPageWidth}
-                snapToOffsets={
-                  isMinimalPresentation
-                    ? undefined
-                    : maintenanceCarouselCards.map((_, index) => index * carouselPageWidth)
-                }
-                decelerationRate="fast"
-                disableIntervalMomentum
-                renderItem={renderCarouselItem}
-              />
+              >
+                {activeMaintenanceCard ? renderActivePanel(activeMaintenanceCard) : null}
+              </View>
             </View>
-
-            {!isMinimalPresentation ? (
-            <View style={[styles.footerControls, { paddingBottom: insets.bottom + 10 }]}>
-              <CarouselFooterNav
-                currentIndex={currentIndex}
-                totalCount={maintenanceCardCount}
-                centerLabel={currentIndex === 0 ? 'Menu' : 'Voltar'}
-                centerAccessibilityLabel={
-                  currentIndex === 0 ? 'Menu' : 'Voltar ao card Manutenção'
-                }
-                onCenterPress={currentIndex === 0 ? handleMenu : handleBack}
-                onPreviousPress={handleFooterPreviousPress}
-                onNextPress={handleFooterNextPress}
-                onPreviousPressIn={() => startFooterNavRepeat('prev')}
-                onPreviousPressOut={handleFooterNavPressOut}
-                onNextPressIn={() => startFooterNavRepeat('next')}
-                onNextPressOut={handleFooterNavPressOut}
-                isPreviousDisabled={currentIndex === 0}
-                isNextDisabled={currentIndex === maintenanceCardCount - 1}
-                accent="amber"
-              />
-            </View>
-            ) : null}
           </View>
 
-          {isMinimalPresentation && !showEditor ? (
+          {!showEditor ? (
             <CloseFooterBar onPress={handleMenu} />
           ) : null}
 

@@ -7,9 +7,9 @@ alwaysApply: true
 
 Fonte de verdade: `lib/frozenPublication.ts`.
 
-O caminho de uso atual é o menu do membro, **Eu quero…**, a engrenagem (manutenção) e as rotas dedicadas que os substituíram. O carrossel antigo do Painel (`/(tabs)/dashboard`) **não** é produto publicado, exceto os cards vivos `small_group` e `opportunity_mural_card`.
+O caminho de uso atual é o menu do membro, **Eu quero…**, a engrenagem (manutenção) e as rotas dedicadas que os substituíram. O carrossel antigo do Painel (`/(tabs)/dashboard`) **não** é produto publicado: deep links redirecionam para a rota dedicada (Célula → `/pequeno-grupo`, Mural de Oportunidades → `/mural-oportunidades`).
 
-Cards congelados: código **só em comentário** em `lib/frozen-dashboard-cards.comment.ts` (não importar — o bundler não carrega). O `dashboard.tsx` vivo executa apenas Célula e Mural.
+Cards congelados: código **só em comentário** em `lib/frozen-dashboard-cards.comment.ts` (não importar — o bundler não carrega). `dashboard.tsx` só redireciona.
 
 ## Proibido até instrução explícita de descongelar
 

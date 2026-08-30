@@ -1,6 +1,6 @@
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 
-/** `id` ou `content` do card → `content` usado no carrossel e na ACL. */
+/** `id` ou `content` do card → rota dedicada ou `content` usado na ACL. */
 export const DASHBOARD_CARD_PARAM_TO_CONTENT: Record<string, string> = {
   '1': 'event_alt',
   '2': 'qr',

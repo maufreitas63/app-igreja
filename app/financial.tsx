@@ -23,7 +23,6 @@ import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { formatFinancialMonthKey, formatFinancialMonthLabel } from '@/lib/financialMonth';
 import { useFinancialsByMonth } from '@/hooks/useFinancialsByMonth';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
-import { CarouselFooterNav } from '@/components/ui/CarouselFooterNav';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -672,18 +671,7 @@ export default function FinancialScreen() {
         </ScrollView>
 
         <View style={[styles.footerControls, { paddingBottom: insets.bottom + 10 }]}>
-          <CarouselFooterNav
-            currentIndex={0}
-            totalCount={1}
-            centerLabel="Menu"
-            centerAccessibilityLabel="Menu"
-            onCenterPress={handleMenu}
-            onPreviousPress={() => undefined}
-            onNextPress={() => undefined}
-            hideSideNavigation
-            hidePageIndicator
-            accent="emerald"
-          />
+          <CloseFooterBar onPress={handleMenu} variant="dark" />
         </View>
       </SafeAreaView>
     </LinearGradient>

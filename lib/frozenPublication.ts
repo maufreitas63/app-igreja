@@ -25,16 +25,21 @@ export const FROZEN_DASHBOARD_CARD_CONTENTS = [
   'campaign_card',
 ] as const;
 
-/** Ainda hospedados em `/(tabs)/dashboard` (menu membro) até tela própria. */
+/** Cards que tinham hospedagem no carrossel e agora têm rota dedicada. */
 export const LIVE_DASHBOARD_CARD_CONTENTS = [
   'small_group',
   'opportunity_mural_card',
 ] as const;
 
-export const FROZEN_ROUTES = ['/(tabs)/explore', '/explore'] as const;
-
 export type FrozenDashboardCardContent = (typeof FROZEN_DASHBOARD_CARD_CONTENTS)[number];
 export type LiveDashboardCardContent = (typeof LIVE_DASHBOARD_CARD_CONTENTS)[number];
+
+const DEDICATED_DASHBOARD_CARD_PATHS: Record<LiveDashboardCardContent, string> = {
+  small_group: '/pequeno-grupo',
+  opportunity_mural_card: '/mural-oportunidades',
+};
+
+export const FROZEN_ROUTES = ['/(tabs)/explore', '/explore'] as const;
 
 export function isFrozenDashboardCardContent(
   content: string | null | undefined
@@ -130,16 +135,10 @@ export function resolvePublishedDashboardHref(
   const content = resolveDashboardCardContentFromParam(dashboardCard) ?? dashboardCard;
 
   if (isLiveDashboardCardContent(content)) {
-    const params = liveScreenParams({
-      dashboardCard: content,
-      dashboardCardNonce: String(Date.now()),
-      ...compactParams(extraParams),
-    });
-
     return {
-      pathname: '/(tabs)/dashboard',
-      params,
-    };
+      pathname: DEDICATED_DASHBOARD_CARD_PATHS[content],
+      params: liveScreenParams(compactParams(extraParams)),
+    } as Href;
   }
 
   return resolveFrozenDashboardDeepLink(content, extraParams);

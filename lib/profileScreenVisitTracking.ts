@@ -11,6 +11,8 @@ const ROUTE_SCREEN_LABELS: Record<string, string> = {
   [ACCESS_SCREEN.expenseReport]: 'Relatório de Despesas',
   [ACCESS_SCREEN.mapGeolocation]: 'Mapa de Geolocalização',
   [ACCESS_SCREEN.lgpd]: 'LGPD',
+  [ACCESS_SCREEN.smallGroup]: 'Pequeno Grupo',
+  [ACCESS_SCREEN.opportunityMural]: 'Mural de Oportunidades',
 };
 
 const EXCLUDED_ROUTE_PREFIXES = new Set([

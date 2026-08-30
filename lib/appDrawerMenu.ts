@@ -1,8 +1,7 @@
-import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { ACCESS_DASHBOARD_CARD, ACCESS_SCREEN } from '@/lib/accessControl';
 import { DASHBOARD_FINANCIAL_CARD_ID } from '@/lib/financialModule';
 import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
 import {
-  buildReturnToDashboardHref,
   withMinimalPresentation,
   withReturnDashboardCard,
 } from '@/lib/dashboardReturnNavigation';
@@ -514,12 +513,24 @@ export async function navigateDrawerMenuItem(
   }
 
   if (moduleKey === 'menu_small_group') {
-    router.navigate(buildReturnToDashboardHref('small_group'));
+    await navigateWithScreenAccess(
+      router,
+      '/pequeno-grupo',
+      ACCESS_DASHBOARD_CARD.smallGroup,
+      withFailClosedReturn(),
+      DRAWER_NAVIGATE
+    );
     return;
   }
 
   if (moduleKey === 'menu_opportunity_mural') {
-    router.navigate(buildReturnToDashboardHref('opportunity_mural_card'));
+    await navigateWithScreenAccess(
+      router,
+      '/mural-oportunidades',
+      ACCESS_DASHBOARD_CARD.opportunities,
+      withFailClosedReturn(),
+      DRAWER_NAVIGATE
+    );
     return;
   }
 

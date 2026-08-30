@@ -1,4 +1,4 @@
-/** ID do card no carrossel do dashboard (`dashboard.tsx`). */
+/** ID legado do card financeiro no Painel — usado só em params de retorno. */
 export const DASHBOARD_FINANCIAL_CARD_ID = '11';
 
 export type FinancialHubAction =
