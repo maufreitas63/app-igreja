@@ -3,6 +3,7 @@ import {
   checkSessionIsSuperAdmin,
   ensureAccessControlPanelResourceAdmin,
   listAccessRolesAdmin,
+  listAccessRolePeopleAdmin,
   listProfileRoleAssignments,
   ensureFinancialAccessResourcesAdmin,
   listProfilesForAccessAdmin,
@@ -15,6 +16,7 @@ import {
   type AccessProfileSearchResult,
   type AccessResourceTypeFilter,
   type AccessRoleRecord,
+  type AccessRolePeopleGroup,
   type ProfileRoleAssignment,
   type RoleGrantRecord,
 } from '@/lib/maintenanceAccessControlApi';
@@ -38,6 +40,8 @@ export function useMaintenanceAccessControl(enabled: boolean) {
   const [selectedRoleCode, setSelectedRoleCode] = useState('member');
   const [resourceTypeFilter, setResourceTypeFilter] = useState<AccessResourceTypeFilter>('screen');
   const [roleGrants, setRoleGrants] = useState<RoleGrantRecord[]>([]);
+  const [peopleByRole, setPeopleByRole] = useState<AccessRolePeopleGroup[]>([]);
+  const [loadingPeopleByRole, setLoadingPeopleByRole] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingProfiles, setLoadingProfiles] = useState(false);
   const [loadingProfileRoles, setLoadingProfileRoles] = useState(false);
@@ -140,6 +144,30 @@ export function useMaintenanceAccessControl(enabled: boolean) {
   useEffect(() => {
     void loadAllProfiles();
   }, [loadAllProfiles]);
+
+  const loadPeopleByRole = useCallback(async () => {
+    if (!enabled || !isSuperAdmin || rpcMissing) {
+      if (!enabled || !isSuperAdmin) {
+        setPeopleByRole([]);
+        setLoadingPeopleByRole(false);
+      }
+      return;
+    }
+
+    setLoadingPeopleByRole(true);
+    setError(null);
+
+    try {
+      const rows = await listAccessRolePeopleAdmin();
+      setPeopleByRole(rows);
+    } catch (err) {
+      console.error('Erro ao listar pessoas por papel:', err);
+      setPeopleByRole([]);
+      handleRpcError(err, 'Não foi possível carregar o relatório de pessoas por papel.');
+    } finally {
+      setLoadingPeopleByRole(false);
+    }
+  }, [enabled, handleRpcError, isSuperAdmin, rpcMissing]);
 
   const reloadProfileScaleLeadership = useCallback(async (profileId: string) => {
     setLoadingScaleLeadership(true);
@@ -467,6 +495,9 @@ export function useMaintenanceAccessControl(enabled: boolean) {
     savingResourceGrantKey,
     error,
     rpcMissing,
+    peopleByRole,
+    loadingPeopleByRole,
+    loadPeopleByRole,
     selectProfile,
     selectProfileById,
     clearSelectedProfile: () => {

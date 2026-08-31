@@ -40,7 +40,7 @@ export {
 export const ACCESS_CONTROL_PANEL_RESOURCE = 'maintenance.card.access_control';
 
 export const MAINTENANCE_ACCESS_CONTROL_SQL_HINT =
-  'Execute no Supabase: scripts/access-control-admin-rpc.sql; para o papel Gestor em Controle de Acesso + blindagem do Super Admin, scripts/access-control-gestor-controle-acesso.sql; se faltar Congregado/Visitantes, scripts/access-control-congregado-visitantes-roles.sql; se visitantes não forem atribuídos automaticamente, scripts/access-control-visitantes-auto-assign.sql; se faltar Card Financeiro ou Relatórios financeiros em Papéis, scripts/financial-module-access.sql; se faltar papel Tesoureiro, scripts/access-control-tesoureiro-role.sql; se Equipe Pastoral não tiver acesso de Membro, scripts/access-control-pastoral-role-grants.sql; para ocultar escalas TstMax em Papéis, scripts/access-control-remove-tstmax-scale-resources.sql';
+  'Execute no Supabase: scripts/access-control-admin-rpc.sql; para o papel Gestor em Controle de Acesso + blindagem do Super Admin, scripts/access-control-gestor-controle-acesso.sql; para o relatório de pessoas por papel, scripts/access-control-people-by-role.sql; se faltar Congregado/Visitantes, scripts/access-control-congregado-visitantes-roles.sql; se visitantes não forem atribuídos automaticamente, scripts/access-control-visitantes-auto-assign.sql; se faltar Card Financeiro ou Relatórios financeiros em Papéis, scripts/financial-module-access.sql; se faltar papel Tesoureiro, scripts/access-control-tesoureiro-role.sql; se Equipe Pastoral não tiver acesso de Membro, scripts/access-control-pastoral-role-grants.sql; para ocultar escalas TstMax em Papéis, scripts/access-control-remove-tstmax-scale-resources.sql';
 
 export const EXPECTED_ACCESS_ROLE_CODES = ['congregado', 'visitantes', 'gestor_controle_acesso'] as const;
 
@@ -136,6 +136,21 @@ export type ResourceRoleGrantRecord = {
 };
 
 export type AccessResourceTypeFilter = 'screen' | 'table' | 'column';
+
+export type AccessRolePeoplePerson = {
+  profileId: string;
+  fullName: string;
+  phone: string | null;
+  memberCode: string | null;
+  desligado: boolean;
+};
+
+export type AccessRolePeopleGroup = {
+  roleId: string;
+  roleCode: string;
+  roleName: string;
+  people: AccessRolePeoplePerson[];
+};
 
 const throwRpcMissing = () => {
   const schemaError = new Error(MAINTENANCE_ACCESS_CONTROL_RPC_MISSING);
@@ -269,6 +284,64 @@ const parseRoleRows = (data: unknown): AccessRoleRecord[] => {
   return sortRowsByRoleCode(rows);
 };
 
+const parseRolePeopleRows = (data: unknown): AccessRolePeopleGroup[] => {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  const groups = new Map<string, AccessRolePeopleGroup>();
+
+  for (const raw of data) {
+    const record = raw as Record<string, unknown>;
+    const roleId = String(record.role_id ?? record.roleId ?? '').trim();
+    const roleCode = String(record.role_code ?? record.roleCode ?? '').trim();
+    const roleName = String(record.role_name ?? record.roleName ?? '').trim();
+
+    if (!roleId || !roleCode || !roleName) {
+      continue;
+    }
+
+    let group = groups.get(roleId);
+    if (!group) {
+      group = { roleId, roleCode, roleName, people: [] };
+      groups.set(roleId, group);
+    }
+
+    const profileId = String(record.profile_id ?? record.profileId ?? '').trim();
+    const fullName = String(record.full_name ?? record.fullName ?? '').trim();
+
+    if (!profileId || !fullName) {
+      continue;
+    }
+
+    if (group.people.some((person) => person.profileId === profileId)) {
+      continue;
+    }
+
+    group.people.push({
+      profileId,
+      fullName,
+      phone: record.phone != null ? String(record.phone).trim() || null : null,
+      memberCode:
+        record.codigo_membro != null
+          ? String(record.codigo_membro).trim() || null
+          : record.memberCode != null
+            ? String(record.memberCode).trim() || null
+            : null,
+      desligado:
+        record.desligado === true
+        || (record.membership_out != null && String(record.membership_out).trim() !== ''),
+    });
+  }
+
+  return sortRowsByRoleCode([...groups.values()]).map((group) => ({
+    ...group,
+    people: [...group.people].sort((left, right) =>
+      left.fullName.localeCompare(right.fullName, 'pt-BR')
+    ),
+  }));
+};
+
 const parseProfileSearchRows = (data: unknown): AccessProfileSearchResult[] =>
   mapProfileSearchRows(data);
 
@@ -378,6 +451,24 @@ export async function listAccessRolesAdmin() {
 
   // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
   return rows.filter((row) => isRoleVisibleToAccessActor(row.code, actorIsSuperAdmin));
+}
+
+export async function listAccessRolePeopleAdmin(): Promise<AccessRolePeopleGroup[]> {
+  const actorProfileId = await resolveActorProfileId();
+
+  if (!actorProfileId) {
+    throw new Error('Sessão inválida. Saia e entre novamente.');
+  }
+
+  const rows = await callAdminRpc(
+    'listar_pessoas_por_papel_access_admin',
+    { p_actor_profile_id: actorProfileId },
+    parseRolePeopleRows
+  );
+  const actorIsSuperAdmin = await checkSessionIsSuperAdmin();
+
+  // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+  return rows.filter((group) => isRoleVisibleToAccessActor(group.roleCode, actorIsSuperAdmin));
 }
 
 export async function searchProfilesForAccessAdmin(query: string, limit = 20) {

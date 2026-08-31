@@ -57,7 +57,7 @@ type Props = {
   minimal?: boolean;
 };
 
-type AdminTab = 'profiles' | 'roles';
+type AdminTab = 'profiles' | 'roles' | 'people';
 type ProfileDetailSection = 'roles' | 'scaleLeadership';
 
 const RESOURCE_TYPE_OPTIONS = [
@@ -311,6 +311,7 @@ export function MaintenanceAccessControlCard({
 }: Props) {
   const { showTechnicalKeys } = useShowAclTechnicalKeys(isActive);
   const [activeTab, setActiveTab] = useState<AdminTab>('profiles');
+  const [peopleSearchQuery, setPeopleSearchQuery] = useState('');
   const [grantSearchQuery, setGrantSearchQuery] = useState('');
   const [focusedResourceGrant, setFocusedResourceGrant] = useState<RoleGrantRecord | null>(null);
   const [resourceRoleGrants, setResourceRoleGrants] = useState<ResourceRoleGrantRecord[]>([]);
@@ -350,6 +351,9 @@ export function MaintenanceAccessControlCard({
     error,
     missingExpectedRoles,
     rpcMissing,
+    peopleByRole,
+    loadingPeopleByRole,
+    loadPeopleByRole,
     selectProfileById,
     clearSelectedProfile,
     toggleProfileRole,
@@ -382,6 +386,52 @@ export function MaintenanceAccessControlCard({
   const handleClearGrantSearch = () => {
     setGrantSearchQuery('');
   };
+
+  useEffect(() => {
+    if (!isActive || isSuperAdmin !== true || activeTab !== 'people' || rpcMissing) {
+      return;
+    }
+
+    void loadPeopleByRole();
+  }, [activeTab, isActive, isSuperAdmin, loadPeopleByRole, rpcMissing]);
+
+  const peopleSearchNeedle = peopleSearchQuery.trim().toLowerCase();
+  const filteredPeopleByRole = useMemo(() => {
+    if (!peopleSearchNeedle) {
+      return peopleByRole;
+    }
+
+    return peopleByRole
+      .map((group) => ({
+        ...group,
+        people: group.people.filter((person) => {
+          const haystack = [
+            person.fullName,
+            person.phone ?? '',
+            person.memberCode ?? '',
+          ]
+            .join(' ')
+            .toLowerCase();
+          return haystack.includes(peopleSearchNeedle);
+        }),
+      }))
+      .filter((group) => group.people.length > 0);
+  }, [peopleByRole, peopleSearchNeedle]);
+
+  const peopleReportSummary = useMemo(() => {
+    const uniqueIds = new Set<string>();
+    for (const group of peopleByRole) {
+      for (const person of group.people) {
+        uniqueIds.add(person.profileId);
+      }
+    }
+
+    return {
+      roleCount: peopleByRole.length,
+      assignmentCount: peopleByRole.reduce((sum, group) => sum + group.people.length, 0),
+      uniqueCount: uniqueIds.size,
+    };
+  }, [peopleByRole]);
 
   useEffect(() => {
     if (!isActive || isSuperAdmin !== true) {
@@ -952,6 +1002,28 @@ export function MaintenanceAccessControlCard({
             Papéis
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            minimal && styles.tabButtonMinimal,
+            activeTab === 'people' && styles.tabButtonActive,
+            minimal && activeTab === 'people' && styles.tabButtonActiveMinimal,
+          ]}
+          onPress={() => setActiveTab('people')}
+          activeOpacity={0.85}
+          accessibilityLabel="Relatório de pessoas por papel"
+        >
+          <Text
+            style={[
+              styles.tabButtonText,
+              minimal && styles.tabButtonTextMinimal,
+              activeTab === 'people' && styles.tabButtonTextActive,
+              minimal && activeTab === 'people' && styles.tabButtonTextActiveMinimal,
+            ]}
+          >
+            Pessoas
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {activeTab === 'profiles' ? (
@@ -1158,6 +1230,89 @@ export function MaintenanceAccessControlCard({
             <Text style={[styles.profilesEmptyHint, minimal && styles.profilesEmptyHintMinimal]}>
               Busque e selecione um perfil para atribuir papéis.
             </Text>
+          )}
+        </ScrollView>
+      ) : activeTab === 'people' ? (
+        <ScrollView
+          style={[styles.tabScroll, minimal && styles.tabScrollMinimal]}
+          contentContainerStyle={[
+            styles.tabScrollContent,
+            minimal && styles.tabScrollContentMinimal,
+          ]}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          {...MAINTENANCE_SCROLL_PROPS}
+        >
+          {minimal ? (
+            <Text style={styles.filterLabelMinimal}>Pessoas por papel</Text>
+          ) : (
+            <SectionLabel variant="maintenance" tight>
+              Pessoas por papel
+            </SectionLabel>
+          )}
+          <Text style={[styles.searchHintText, minimal && styles.searchHintTextMinimal]}>
+            {peopleReportSummary.roleCount} papéis · {peopleReportSummary.uniqueCount} pessoas
+            {peopleReportSummary.assignmentCount !== peopleReportSummary.uniqueCount
+              ? ` · ${peopleReportSummary.assignmentCount} atribuições`
+              : ''}
+            . Uma pessoa pode aparecer em mais de um papel.
+          </Text>
+          <TextInput
+            value={peopleSearchQuery}
+            onChangeText={setPeopleSearchQuery}
+            placeholder="Filtrar por nome, telefone ou código"
+            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : 'rgba(58, 150, 221, 0.55)'}
+            autoCorrect={false}
+            autoComplete="off"
+            style={[
+              styles.input,
+              styles.searchInput,
+              minimal && styles.grantSearchInputMinimal,
+            ]}
+          />
+          {loadingPeopleByRole ? (
+            <CardLoadingState label="Carregando relatório..." minimal={minimal} />
+          ) : filteredPeopleByRole.length === 0 ? (
+            <Text style={[styles.panelHint, minimal && styles.panelHintMinimal]}>
+              {peopleSearchNeedle
+                ? 'Nenhuma pessoa encontrada com esse filtro.'
+                : 'Nenhuma pessoa atribuída aos papéis visíveis.'}
+            </Text>
+          ) : (
+            filteredPeopleByRole.map((group) => (
+              <View key={group.roleId} style={[styles.peopleRoleBlock, minimal && styles.peopleRoleBlockMinimal]}>
+                <Text style={[styles.peopleRoleTitle, minimal && styles.peopleRoleTitleMinimal]}>
+                  {group.roleName} ({group.people.length})
+                </Text>
+                {group.people.length === 0 ? (
+                  <Text style={[styles.peopleEmpty, minimal && styles.peopleEmptyMinimal]}>
+                    Ninguém atribuído
+                  </Text>
+                ) : (
+                  group.people.map((person) => (
+                    <TouchableOpacity
+                      key={`${group.roleId}-${person.profileId}`}
+                      style={[styles.peopleRow, minimal && styles.peopleRowMinimal]}
+                      onPress={() => {
+                        setActiveTab('profiles');
+                        void selectProfileById(person.profileId);
+                      }}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.peopleName, minimal && styles.peopleNameMinimal]}>
+                        {formatShortName(person.fullName)}
+                        {person.desligado ? ' · desligado' : ''}
+                      </Text>
+                      {person.phone || person.memberCode ? (
+                        <Text style={[styles.peopleMeta, minimal && styles.peopleMetaMinimal]}>
+                          {[person.phone, person.memberCode].filter(Boolean).join(' · ')}
+                        </Text>
+                      ) : null}
+                    </TouchableOpacity>
+                  ))
+                )}
+              </View>
+            ))
           )}
         </ScrollView>
       ) : (
@@ -1788,6 +1943,55 @@ const styles = StyleSheet.create({
   },
   tabButtonTextActive: {
     color: '#3A96DD',
+  },
+  peopleRoleBlock: {
+    marginBottom: 14,
+    gap: 4,
+  },
+  peopleRoleTitle: {
+    color: '#3A96DD',
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  peopleEmpty: {
+    color: 'rgba(58, 150, 221, 0.72)',
+    fontSize: 12,
+    fontStyle: 'italic',
+  },
+  peopleRow: {
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(148, 163, 184, 0.25)',
+  },
+  peopleName: {
+    color: '#3A96DD',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  peopleMeta: {
+    color: 'rgba(58, 150, 221, 0.82)',
+    fontSize: 11,
+    marginTop: 1,
+  },
+  peopleRoleBlockMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  peopleRoleTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  peopleEmptyMinimal: {
+    color: MINIMAL_UI.textMuted,
+    fontStyle: 'normal',
+  },
+  peopleRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  peopleNameMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  peopleMetaMinimal: {
+    color: MINIMAL_UI.textMuted,
   },
   rolesList: {
     marginTop: 4,
