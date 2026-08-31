@@ -1,12 +1,14 @@
+import { ConectaPrivacyDeclarationModal } from '@/components/ConectaPrivacyDeclarationModal';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { loadConectaAboutInfo } from '@/lib/conectaAbout';
+import { CONECTA_PRIVACY_DECLARATION_BUTTON_LABEL } from '@/lib/conectaPrivacyDeclaration';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function SobreConectaScreen() {
   const params = useLocalSearchParams();
@@ -17,6 +19,7 @@ export default function SobreConectaScreen() {
   const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState('—');
   const [revision, setRevision] = useState('—');
+  const [privacyVisible, setPrivacyVisible] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -38,12 +41,14 @@ export default function SobreConectaScreen() {
   }, [load]);
 
   return (
-    <MinimalScreenLayout footer={<CloseFooterBar onPress={returnToCaller} />}>
-      <Text style={styles.title}>Sobre o Conecta+</Text>
-
-      {loading ? (
-        <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />
-      ) : (
+    <MinimalScreenLayout scroll={false} footer={<CloseFooterBar onPress={returnToCaller} />}>
+      <ScrollView
+        style={styles.main}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator
+      >
+        <Text style={styles.title}>Sobre o Conecta+</Text>
         <View style={styles.body}>
           <Text style={styles.paragraph}>
             O Conecta+ é a plataforma digital que integra a rotina, o cuidado e a administração da
@@ -56,17 +61,42 @@ export default function SobreConectaScreen() {
             Um canal direto que elimina burocracias, protege suas informações sob rigorosos padrões
             de segurança jurídica (LGPD) e fortalece a nossa comunhão e transparência no dia a dia.
           </Text>
+          <TouchableOpacity
+            style={styles.privacyButton}
+            onPress={() => setPrivacyVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel={CONECTA_PRIVACY_DECLARATION_BUTTON_LABEL}
+          >
+            <Text style={styles.privacyButtonText}>{CONECTA_PRIVACY_DECLARATION_BUTTON_LABEL}</Text>
+          </TouchableOpacity>
           <Text style={styles.brand}>Conecta+</Text>
-          <Text style={styles.meta}>
-            Versão {version} (Revisão: {revision})
-          </Text>
+          {loading ? (
+            <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />
+          ) : (
+            <Text style={styles.meta}>
+              Versão {version} (Revisão: {revision})
+            </Text>
+          )}
         </View>
-      )}
+      </ScrollView>
+
+      <ConectaPrivacyDeclarationModal
+        visible={privacyVisible}
+        onClose={() => setPrivacyVisible(false)}
+      />
     </MinimalScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
+  main: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+  },
+  scrollContent: {
+    paddingBottom: 12,
+  },
   title: {
     ...MINIMAL_SECTION_TITLE,
     width: '100%',
@@ -85,6 +115,21 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
     fontSize: 15,
     lineHeight: 22,
+  },
+  privacyButton: {
+    marginTop: 4,
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  privacyButtonText: {
+    color: MINIMAL_UI.onDark,
+    fontSize: 14,
+    fontWeight: '800',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   brand: {
     marginTop: 8,
