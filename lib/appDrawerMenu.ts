@@ -210,7 +210,7 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     label: 'Régua de Acolhimento',
     moduleKey: 'visitor_followup',
     group: 'pessoas',
-    hint: 'Tarefas da equipe de boas-vindas',
+    hint: 'D+1 WhatsApp, D+4 célula, D+8 culto — após a Recepção Familiar',
   },
   {
     letter: 'p8',

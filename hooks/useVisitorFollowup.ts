@@ -1,13 +1,16 @@
 import {
   completeVisitorFollowupTask,
   listPastorVisitorFollowupAlerts,
+  listVisitorFollowupBoard,
   listWelcomeVisitorFollowupTasks,
+  type VisitorFollowupJourney,
   type VisitorFollowupTask,
 } from '@/lib/visitorFollowupApi';
 import { useCallback, useEffect, useState } from 'react';
 
 export function useWelcomeVisitorFollowup(isActive: boolean) {
   const [tasks, setTasks] = useState<VisitorFollowupTask[]>([]);
+  const [journeys, setJourneys] = useState<VisitorFollowupJourney[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [completingId, setCompletingId] = useState<string | null>(null);
@@ -17,9 +20,15 @@ export function useWelcomeVisitorFollowup(isActive: boolean) {
     setError(null);
 
     try {
-      setTasks(await listWelcomeVisitorFollowupTasks());
+      const [nextTasks, nextJourneys] = await Promise.all([
+        listWelcomeVisitorFollowupTasks(),
+        listVisitorFollowupBoard().catch(() => [] as VisitorFollowupJourney[]),
+      ]);
+      setTasks(nextTasks);
+      setJourneys(nextJourneys);
     } catch (fetchError) {
       setTasks([]);
+      setJourneys([]);
       setError(
         fetchError instanceof Error
           ? fetchError.message
@@ -58,7 +67,7 @@ export function useWelcomeVisitorFollowup(isActive: boolean) {
     }
   }, [refetch]);
 
-  return { tasks, loading, error, completingId, refetch, completeTask };
+  return { tasks, journeys, loading, error, completingId, refetch, completeTask };
 }
 
 export function usePastorVisitorFollowup(isActive: boolean) {

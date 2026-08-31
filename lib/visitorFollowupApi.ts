@@ -134,6 +134,100 @@ export async function completeVisitorFollowupTask(taskId: string) {
   }
 }
 
+export type VisitorFollowupBoardTask = {
+  id: string;
+  tipoTarefa: VisitorFollowupTaskTipo;
+  dataProgramada: string;
+  status: string;
+  descricao: string;
+  responsavelCargo: string;
+  due: boolean;
+};
+
+export type VisitorFollowupJourney = {
+  followupId: string;
+  visitorId: string;
+  visitorName: string;
+  phone: string | null;
+  status: string;
+  dataAprovacao: string | null;
+  resultado: string | null;
+  tasks: VisitorFollowupBoardTask[];
+};
+
+const parseBoardTask = (row: Record<string, unknown>): VisitorFollowupBoardTask | null => {
+  const id = String(row.id ?? '').trim();
+  const tipo = String(row.tipo_tarefa ?? '').trim() as VisitorFollowupTaskTipo;
+
+  if (
+    !id
+    || (
+      tipo !== 'whatsapp_dia_1'
+      && tipo !== 'convite_celula_dia_4'
+      && tipo !== 'ligacao_pastor_dia_8'
+    )
+  ) {
+    return null;
+  }
+
+  return {
+    id,
+    tipoTarefa: tipo,
+    dataProgramada: String(row.data_programada ?? ''),
+    status: String(row.status ?? ''),
+    descricao: String(row.descricao ?? ''),
+    responsavelCargo: String(row.responsavel_cargo ?? ''),
+    due: row.due === true,
+  };
+};
+
+const parseJourney = (row: Record<string, unknown>): VisitorFollowupJourney | null => {
+  const followupId = String(row.followup_id ?? '').trim();
+  const visitorId = String(row.visitor_id ?? '').trim();
+
+  if (!followupId || !visitorId) {
+    return null;
+  }
+
+  const phoneRaw = row.phone ? String(row.phone) : null;
+  const tasks = Array.isArray(row.tasks)
+    ? row.tasks
+        .map((entry) => parseBoardTask(entry as Record<string, unknown>))
+        .filter((entry): entry is VisitorFollowupBoardTask => entry !== null)
+    : [];
+
+  return {
+    followupId,
+    visitorId,
+    visitorName: String(row.visitor_name ?? 'Visitante').trim() || 'Visitante',
+    phone: hasVisitorFollowupPhone(phoneRaw) ? phoneRaw : null,
+    status: String(row.status ?? ''),
+    dataAprovacao: row.data_aprovacao ? String(row.data_aprovacao) : null,
+    resultado: row.resultado ? String(row.resultado) : null,
+    tasks,
+  };
+};
+
+export async function listVisitorFollowupBoard() {
+  const { data, error } = await supabase.rpc('list_visitor_followup_board');
+
+  if (error) {
+    throwIfRpcMissing(error, 'list_visitor_followup_board');
+  }
+
+  const record = (data ?? {}) as Record<string, unknown>;
+
+  if (record.success !== true) {
+    throw new Error(String(record.message ?? 'Não foi possível listar os acolhimentos.'));
+  }
+
+  const rows = Array.isArray(record.journeys) ? record.journeys : [];
+
+  return rows
+    .map((entry) => parseJourney(entry as Record<string, unknown>))
+    .filter((entry): entry is VisitorFollowupJourney => entry !== null);
+}
+
 export function formatVisitorFollowupDate(value: string | null | undefined) {
   if (!value) {
     return '—';
