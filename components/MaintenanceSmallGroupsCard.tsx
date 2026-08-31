@@ -57,6 +57,7 @@ type Props = {
 };
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
+const NEW_GROUP_ID = '__new__';
 
 function formatProfileOptionLabel(profile: SmallGroupProfileSummary) {
   const name = formatShortName(profile.full_name) || 'Sem nome';
@@ -189,7 +190,9 @@ export function MaintenanceSmallGroupsCard({
   const [error, setError] = useState<string | null>(null);
   const [canAdmin, setCanAdmin] = useState(false);
   const [groups, setGroups] = useState<SmallGroupAdminRow[]>([]);
-  const [selectedId, setSelectedId] = useState<string>('');
+  const [selectedId, setSelectedId] = useState('');
+  const isCreating = selectedId === NEW_GROUP_ID || selectedId === '';
+  const persistedGroupId = isCreating ? '' : selectedId;
   const [name, setName] = useState('');
   const [meetings, setMeetings] = useState<SmallGroupMeeting[]>([]);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -217,7 +220,6 @@ export function MaintenanceSmallGroupsCard({
   );
 
   const applyGroup = useCallback((group: SmallGroupAdminRow | null) => {
-    setSelectedId(group?.id ?? '');
     setName(group?.name ?? '');
     setMeetings(group?.meetings ?? []);
     setHostProfile(group?.host ?? null);
@@ -225,7 +227,7 @@ export function MaintenanceSmallGroupsCard({
     setNotes(group?.notes ?? '');
   }, []);
 
-  const loadGroups = useCallback(async () => {
+  const loadGroups = useCallback(async (preferId?: string | null) => {
     setLoading(true);
     setError(null);
 
@@ -234,11 +236,17 @@ export function MaintenanceSmallGroupsCard({
       setCanAdmin(result.canAdmin);
       setGroups(result.groups);
       setSelectedId((current) => {
-        if (current && result.groups.some((group) => group.id === current)) {
-          return current;
+        const wanted = preferId || current;
+
+        if (wanted === NEW_GROUP_ID) {
+          return NEW_GROUP_ID;
         }
 
-        return result.groups[0]?.id ?? '';
+        if (wanted && result.groups.some((group) => group.id === wanted)) {
+          return wanted;
+        }
+
+        return result.groups[0]?.id ?? NEW_GROUP_ID;
       });
     } catch (loadError) {
       setGroups([]);
@@ -257,17 +265,21 @@ export function MaintenanceSmallGroupsCard({
   }, [isActive, loadGroups]);
 
   useEffect(() => {
+    if (isCreating) {
+      return;
+    }
+
     applyGroup(selectedGroup);
-  }, [applyGroup, selectedGroup]);
+  }, [applyGroup, isCreating, selectedGroup]);
 
   const loadRoll = useCallback(async () => {
-    if (!selectedId) {
+    if (!persistedGroupId) {
       setRoll([]);
       return;
     }
 
     try {
-      const rows = await fetchSmallGroupRollCall(selectedId, meetingDate);
+      const rows = await fetchSmallGroupRollCall(persistedGroupId, meetingDate);
       setRoll(rows);
     } catch (rollError) {
       setRoll([]);
@@ -277,7 +289,7 @@ export function MaintenanceSmallGroupsCard({
         text2: rollError instanceof Error ? rollError.message : 'Falha ao carregar a chamada.',
       });
     }
-  }, [meetingDate, selectedId]);
+  }, [meetingDate, persistedGroupId]);
 
   useEffect(() => {
     if (!isActive) {
@@ -335,6 +347,11 @@ export function MaintenanceSmallGroupsCard({
   };
 
   const handleSaveGroup = async () => {
+    if (!name.trim()) {
+      notify(false, 'Pequenos grupos', 'Informe o nome do grupo.');
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -343,7 +360,7 @@ export function MaintenanceSmallGroupsCard({
         ? new Date(`${firstMeeting.meeting_date}T12:00:00`).getDay()
         : 3;
       const result = await saveSmallGroupAdmin({
-        id: selectedId || null,
+        id: persistedGroupId || null,
         name,
         meetingWeekday,
         meetingTime: firstMeeting?.meeting_time || '19:30',
@@ -358,7 +375,7 @@ export function MaintenanceSmallGroupsCard({
         if (result.id) {
           setSelectedId(result.id);
         }
-        await loadGroups();
+        await loadGroups(result.id);
       }
     } finally {
       setSaving(false);
@@ -366,12 +383,15 @@ export function MaintenanceSmallGroupsCard({
   };
 
   const handleNewGroup = () => {
+    setSelectedId(NEW_GROUP_ID);
     applyGroup(null);
-    setSelectedId('');
+    setMemberSearch('');
+    setMemberCandidates([]);
+    setRoll([]);
   };
 
   const handleDeleteGroup = async () => {
-    if (!selectedId || !selectedGroup) {
+    if (!persistedGroupId || !selectedGroup) {
       notify(false, 'Pequenos grupos', 'Selecione um grupo para excluir.');
       return;
     }
@@ -391,7 +411,7 @@ export function MaintenanceSmallGroupsCard({
     setSaving(true);
 
     try {
-      const result = await deleteSmallGroupAdmin(selectedId);
+      const result = await deleteSmallGroupAdmin(persistedGroupId);
       notify(result.success, 'Pequenos grupos', result.message);
 
       if (result.success) {
@@ -404,12 +424,12 @@ export function MaintenanceSmallGroupsCard({
   };
 
   const handleAddMember = async (profileId: string) => {
-    if (!selectedId) {
+    if (!persistedGroupId) {
       notify(false, 'Membros', 'Salve o grupo antes de incluir participantes.');
       return;
     }
 
-    const result = await addSmallGroupMember(selectedId, profileId);
+    const result = await addSmallGroupMember(persistedGroupId, profileId);
     notify(result.success, 'Membros', result.message);
 
     if (result.success) {
@@ -420,11 +440,11 @@ export function MaintenanceSmallGroupsCard({
   };
 
   const handleRemoveMember = async (profileId: string) => {
-    if (!selectedId) {
+    if (!persistedGroupId) {
       return;
     }
 
-    const result = await removeSmallGroupMember(selectedId, profileId);
+    const result = await removeSmallGroupMember(persistedGroupId, profileId);
     notify(result.success, 'Membros', result.message);
 
     if (result.success) {
@@ -433,7 +453,7 @@ export function MaintenanceSmallGroupsCard({
   };
 
   const handleTogglePresence = async (member: SmallGroupRollCallMember) => {
-    if (!selectedId) {
+    if (!persistedGroupId) {
       return;
     }
 
@@ -443,7 +463,7 @@ export function MaintenanceSmallGroupsCard({
     );
 
     const result = await setSmallGroupAttendance({
-      groupId: selectedId,
+      groupId: persistedGroupId,
       meetingDate,
       profileId: member.profile_id,
       present: next,
@@ -460,7 +480,7 @@ export function MaintenanceSmallGroupsCard({
   };
 
   const handleVisitor = async () => {
-    if (!selectedId) {
+    if (!persistedGroupId) {
       notify(false, 'Visitante', 'Selecione um grupo.');
       return;
     }
@@ -468,7 +488,7 @@ export function MaintenanceSmallGroupsCard({
     setSaving(true);
 
     try {
-      const result = await enqueueSmallGroupVisitor(selectedId, visitorName, visitorPhone);
+      const result = await enqueueSmallGroupVisitor(persistedGroupId, visitorName, visitorPhone);
       notify(result.success, 'Visitante', result.message);
 
       if (result.success) {
@@ -481,7 +501,7 @@ export function MaintenanceSmallGroupsCard({
   };
 
   const handleReport = async () => {
-    if (!selectedId) {
+    if (!persistedGroupId) {
       notify(false, 'Relatório', 'Selecione um grupo.');
       return;
     }
@@ -489,7 +509,7 @@ export function MaintenanceSmallGroupsCard({
     setSaving(true);
 
     try {
-      const result = await submitSmallGroupSpiritualReport(selectedId, prayer, pastoralNotes);
+      const result = await submitSmallGroupSpiritualReport(persistedGroupId, prayer, pastoralNotes);
       notify(result.success, 'Relatório', result.message);
 
       if (result.success) {
@@ -557,11 +577,8 @@ export function MaintenanceSmallGroupsCard({
   };
 
   const groupOptions = useMemo(
-    () => [
-      { value: '', label: canAdmin ? 'Novo grupo' : 'Selecione um grupo' },
-      ...groups.map((group) => ({ value: group.id, label: group.name })),
-    ],
-    [canAdmin, groups]
+    () => groups.map((group) => ({ value: group.id, label: group.name })),
+    [groups]
   );
 
   const meetingDateKeys = useMemo(
@@ -590,20 +607,48 @@ export function MaintenanceSmallGroupsCard({
           contentContainerStyle={styles.scrollContent}
           nestedScrollEnabled
         >
-          <DropdownSelect
-            options={groupOptions}
-            selectedValue={selectedId}
-            onValueChange={(value) => {
-              if (!value) {
-                handleNewGroup();
-                return;
-              }
+          <View style={styles.groupPickerRow}>
+            <View style={styles.groupPickerField}>
+              <DropdownSelect
+                options={groupOptions}
+                selectedValue={isCreating ? '' : selectedId}
+                onValueChange={(value) => {
+                  if (!value) {
+                    return;
+                  }
 
-              setSelectedId(value);
-            }}
-            modalTitle="Pequeno grupo"
-            variant={minimal ? 'minimal' : 'vigilance'}
-          />
+                  setSelectedId(value);
+                }}
+                modalTitle="Pequeno grupo"
+                placeholder={isCreating ? 'Novo grupo' : 'Selecione um grupo'}
+                variant={minimal ? 'minimal' : 'vigilance'}
+              />
+            </View>
+            {canAdmin ? (
+              <TouchableOpacity
+                style={[styles.newGroupButton, isCreating && styles.newGroupButtonActive]}
+                onPress={handleNewGroup}
+                disabled={saving}
+                accessibilityRole="button"
+                accessibilityLabel="Criar outro pequeno grupo"
+              >
+                <Text
+                  style={[
+                    styles.newGroupButtonText,
+                    isCreating && styles.newGroupButtonTextActive,
+                  ]}
+                >
+                  Novo grupo
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          {isCreating && canAdmin ? (
+            <Text style={styles.hint}>
+              Cadastro em branco. Preencha o nome e toque em Criar grupo. Os grupos já existentes
+              continuam na lista acima.
+            </Text>
+          ) : null}
 
           {canAdmin ? (
             <View style={styles.section}>
@@ -703,9 +748,11 @@ export function MaintenanceSmallGroupsCard({
                 onPress={() => void handleSaveGroup()}
                 disabled={saving}
               >
-                <Text style={styles.primaryButtonText}>{selectedId ? 'Salvar grupo' : 'Criar grupo'}</Text>
+                <Text style={styles.primaryButtonText}>
+                  {isCreating ? 'Criar grupo' : 'Salvar grupo'}
+                </Text>
               </TouchableOpacity>
-              {selectedId ? (
+              {!isCreating && selectedId ? (
                 <TouchableOpacity
                   style={styles.dangerButton}
                   onPress={() => void handleDeleteGroup()}
@@ -926,6 +973,34 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 13,
     textAlign: 'center',
+  },
+  groupPickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  groupPickerField: {
+    flex: 1,
+    minWidth: 0,
+  },
+  newGroupButton: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#1E3A5F',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  newGroupButtonActive: {
+    backgroundColor: '#1E3A5F',
+  },
+  newGroupButtonText: {
+    color: '#1E3A5F',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  newGroupButtonTextActive: {
+    color: '#FFFFFF',
   },
   hint: {
     color: '#64748B',
