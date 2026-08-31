@@ -74,7 +74,7 @@ export function LivrosDoadosPanel() {
 
     setLookingUp(true);
     setFieldsLocked(true);
-    setLookupHint('Consultando Google Books…');
+    setLookupHint('Consultando o catálogo pelo ISBN…');
 
     const result = await lookupLivroByIsbn(isbn);
 
@@ -155,7 +155,7 @@ export function LivrosDoadosPanel() {
     <View style={styles.root}>
       <Text style={styles.lead}>
         Toque em Bipar para ler o código de barras do ISBN na contracapa, ou digite os dígitos.
-        Se o livro não estiver na Google Books, cadastre à mão — o fluxo de doação não para.
+        Se o catálogo não achar o livro, cadastre à mão — o fluxo de doação não para.
       </Text>
 
       <View style={styles.isbnRow}>

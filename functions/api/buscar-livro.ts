@@ -1,10 +1,10 @@
 /**
- * Cloudflare Pages Function — busca metadados de livro por ISBN (Google Books).
+ * Cloudflare Pages Function — busca metadados de livro por ISBN.
  * POST /api/buscar-livro
  * body: { isbn: string }
  *
  * Fail-closed: exige x-session-token e RPC assert_can_manage_livros.
- * Sem JWT do Flutter — este app autentica por sessão própria (headers).
+ * Catálogo: Google Books, depois CBL/BrasilAPI, depois Open Library.
  */
 
 import {
@@ -13,29 +13,17 @@ import {
   resolveSupabaseBaseUrl,
   type BillingEnv,
 } from './_billingShared';
+import { lookupIsbnCatalog } from '../../lib/isbnCatalogLookup';
 
 type PagesContext = {
   request: Request;
-  env: BillingEnv;
+  env: BillingEnv & { GOOGLE_BOOKS_API_KEY?: string };
 };
-
-const GOOGLE_BOOKS = 'https://www.googleapis.com/books/v1/volumes';
 
 export const onRequestOptions = async () =>
   new Response(null, { status: 204, headers: billingCorsHeaders });
 
 const normalizeIsbn = (value: string) => value.replace(/[^0-9Xx]/g, '').toUpperCase();
-
-const asHttps = (url: string | null | undefined) => {
-  const trimmed = url?.trim() ?? '';
-  if (!trimmed) return null;
-  return trimmed.replace(/^http:\/\//i, 'https://');
-};
-
-const yearFromPublishedDate = (value: string | null | undefined) => {
-  const match = (value ?? '').match(/\d{4}/);
-  return match ? match[0] : null;
-};
 
 async function assertLivrosSession(
   env: BillingEnv,
@@ -111,45 +99,33 @@ export const onRequestPost = async (context: PagesContext) => {
       return jsonResponse({ success: false, message: 'Informe um ISBN válido.' }, 400);
     }
 
-    const google = await fetch(`${GOOGLE_BOOKS}?q=isbn:${encodeURIComponent(isbn)}`, {
-      headers: { Accept: 'application/json' },
+    const hit = await lookupIsbnCatalog(isbn, {
+      googleApiKey: context.env.GOOGLE_BOOKS_API_KEY,
     });
 
-    if (!google.ok) {
-      return jsonResponse(
-        { success: false, message: 'Google Books indisponível no momento.' },
-        502
-      );
+    if (hit.found) {
+      return jsonResponse({
+        success: true,
+        isbn: hit.isbn,
+        titulo: hit.titulo,
+        autor: hit.autor || null,
+        editora: hit.editora || null,
+        ano: hit.ano || null,
+        capa: hit.capa || null,
+        source: hit.source,
+        message: hit.message,
+      });
     }
 
-    const payload = (await google.json()) as {
-      totalItems?: number;
-      items?: Array<{
-        volumeInfo?: {
-          title?: string;
-          authors?: string[];
-          publisher?: string;
-          publishedDate?: string;
-          imageLinks?: { thumbnail?: string; smallThumbnail?: string };
-        };
-      }>;
-    };
-
-    const info = payload.items?.[0]?.volumeInfo;
-    const titulo = info?.title?.trim() ?? '';
-    if (!payload.totalItems || !info || !titulo) {
-      return jsonResponse({ success: false, message: 'ISBN não encontrado.' }, 404);
-    }
-
-    return jsonResponse({
-      success: true,
-      isbn,
-      titulo,
-      autor: (info.authors ?? []).map((name) => name.trim()).filter(Boolean).join(', ') || null,
-      editora: info.publisher?.trim() || null,
-      ano: yearFromPublishedDate(info.publishedDate),
-      capa: asHttps(info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail),
-    });
+    return jsonResponse(
+      {
+        success: false,
+        message: hit.quotaExceeded
+          ? 'Consulta automática indisponível no momento. Preencha os dados manualmente.'
+          : 'ISBN não encontrado. Preencha os dados manualmente.',
+      },
+      hit.quotaExceeded ? 502 : 404
+    );
   } catch {
     return jsonResponse({ success: false, message: 'Falha ao buscar o ISBN.' }, 500);
   }

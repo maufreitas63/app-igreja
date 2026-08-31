@@ -1,3 +1,4 @@
+import { lookupIsbnCatalog } from '@/lib/isbnCatalogLookup';
 import { getSessionRequestIdentity } from '@/lib/sessionRequestIdentity';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
@@ -25,76 +26,7 @@ export type LivroIsbnLookup = {
   message: string;
 };
 
-const GOOGLE_BOOKS = 'https://www.googleapis.com/books/v1/volumes';
 const DEFAULT_APP_ORIGIN = 'https://app-igreja.pages.dev';
-
-function mapGoogleBooksPayload(
-  isbn: string,
-  payload: Record<string, unknown>
-): LivroIsbnLookup | null {
-  const totalItems = Number(payload.totalItems ?? 0);
-  const items = Array.isArray(payload.items) ? payload.items : [];
-  const first = items[0] && typeof items[0] === 'object' ? (items[0] as Record<string, unknown>) : null;
-  const info =
-    first?.volumeInfo && typeof first.volumeInfo === 'object'
-      ? (first.volumeInfo as Record<string, unknown>)
-      : null;
-  const titulo = asText(info?.title);
-  if (!totalItems || !info || !titulo) {
-    return null;
-  }
-
-  const authors = Array.isArray(info.authors)
-    ? info.authors.map((name) => asText(name)).filter(Boolean)
-    : [];
-  const imageLinks =
-    info.imageLinks && typeof info.imageLinks === 'object'
-      ? (info.imageLinks as Record<string, unknown>)
-      : null;
-  const published = asText(info.publishedDate);
-  const yearMatch = published.match(/\d{4}/);
-  const capaRaw = asText(imageLinks?.thumbnail) || asText(imageLinks?.smallThumbnail);
-
-  return {
-    found: true,
-    isbn,
-    titulo,
-    autor: authors.join(', '),
-    editora: asText(info.publisher),
-    ano: yearMatch?.[0] ?? '',
-    capa: capaRaw.replace(/^http:\/\//i, 'https://'),
-    message: 'Dados preenchidos pela Google Books.',
-  };
-}
-
-async function lookupIsbnOnGoogleBooks(isbn: string): Promise<LivroIsbnLookup> {
-  const empty: LivroIsbnLookup = {
-    found: false,
-    isbn,
-    titulo: '',
-    autor: '',
-    editora: '',
-    ano: '',
-    capa: '',
-    message: 'ISBN não encontrado. Preencha os dados manualmente.',
-  };
-
-  try {
-    const response = await fetch(`${GOOGLE_BOOKS}?q=isbn:${encodeURIComponent(isbn)}`, {
-      headers: { Accept: 'application/json' },
-    });
-    if (!response.ok) {
-      return empty;
-    }
-    const payload = (await response.json()) as Record<string, unknown>;
-    return mapGoogleBooksPayload(isbn, payload) ?? empty;
-  } catch {
-    return {
-      ...empty,
-      message: 'Não foi possível consultar o ISBN. Preencha os dados manualmente.',
-    };
-  }
-}
 
 function resolveBuscarLivroEndpoint(): string {
   const configured = String(process.env.EXPO_PUBLIC_APP_URL || '')
@@ -141,6 +73,34 @@ export function normalizeIsbnInput(value: string): string {
   return value.replace(/[^0-9Xx]/g, '').toUpperCase();
 }
 
+function catalogToLookup(hit: Awaited<ReturnType<typeof lookupIsbnCatalog>>, isbn: string): LivroIsbnLookup {
+  if (!hit.found) {
+    return {
+      found: false,
+      isbn,
+      titulo: '',
+      autor: '',
+      editora: '',
+      ano: '',
+      capa: '',
+      message: hit.quotaExceeded
+        ? 'Consulta automática indisponível no momento. Preencha os dados manualmente.'
+        : 'ISBN não encontrado. Preencha os dados manualmente.',
+    };
+  }
+
+  return {
+    found: true,
+    isbn: hit.isbn || isbn,
+    titulo: hit.titulo,
+    autor: hit.autor,
+    editora: hit.editora,
+    ano: hit.ano,
+    capa: hit.capa,
+    message: hit.message,
+  };
+}
+
 export async function lookupLivroByIsbn(isbnRaw: string): Promise<LivroIsbnLookup> {
   const isbn = normalizeIsbnInput(isbnRaw);
   const empty: LivroIsbnLookup = {
@@ -177,17 +137,10 @@ export async function lookupLivroByIsbn(isbnRaw: string): Promise<LivroIsbnLooku
     try {
       payload = text ? (JSON.parse(text) as Record<string, unknown>) : {};
     } catch {
-      return empty;
+      payload = {};
     }
 
-    if (response.status === 404) {
-      return {
-        ...empty,
-        message: asText(payload.message) || empty.message,
-      };
-    }
-
-    if (payload.success === true) {
+    if (payload.success === true && asText(payload.titulo)) {
       return {
         found: true,
         isbn: asText(payload.isbn) || isbn,
@@ -196,22 +149,21 @@ export async function lookupLivroByIsbn(isbnRaw: string): Promise<LivroIsbnLooku
         editora: asText(payload.editora),
         ano: asText(payload.ano),
         capa: asText(payload.capa),
-        message: 'Dados preenchidos pela Google Books.',
+        message: asText(payload.message) || 'Dados preenchidos pelo catálogo.',
       };
     }
 
-    const fallback = await lookupIsbnOnGoogleBooks(isbn);
-    if (fallback.found) {
-      return fallback;
+    if (response.status === 401 || response.status === 403) {
+      return {
+        ...empty,
+        message: asText(payload.message) || 'Você não tem permissão para buscar livros.',
+      };
     }
-
-    return {
-      ...empty,
-      message: asText(payload.message) || empty.message,
-    };
   } catch {
-    return lookupIsbnOnGoogleBooks(isbn);
+    // Function fora — tenta os catálogos direto no navegador
   }
+
+  return catalogToLookup(await lookupIsbnCatalog(isbn), isbn);
 }
 
 export async function listLivros(): Promise<LivroRecord[]> {
