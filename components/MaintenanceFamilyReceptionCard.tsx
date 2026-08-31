@@ -3,18 +3,32 @@ import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceFamilyReception } from '@/hooks/useMaintenanceFamilyReception';
+import {
+  buildFamilyRegistrationShareUrl,
+  buildFamilyRegistrationWhatsAppUrl,
+  parseBrazilianDateToIso,
+} from '@/lib/familyRegistration';
+import {
+  informantHasValidCep,
+  isPlaceholderCellBirthDate,
+} from '@/lib/familyReceptionApi';
+import { formatBrazilCepInput, formatBrazilDateInput } from '@/lib/inputMasks';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { formatShortName } from '@/lib/formatShortName';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { getStoredActiveIgrejaBranding } from '@/lib/tenantSession';
 import { MaterialIcons } from '@expo/vector-icons';
-import React from 'react';
+import * as Clipboard from 'expo-clipboard';
+import * as Linking from 'expo-linking';
+import React, { useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -35,6 +49,15 @@ const formatSubmissionDate = (value: string) => {
   }
 
   return new Date(parsed).toLocaleString('pt-BR');
+};
+
+const formatBirthDateDisplay = (value: string | null | undefined) => {
+  const raw = (value ?? '').trim().slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (!match) {
+    return value?.trim() || '—';
+  }
+  return `${match[3]}/${match[2]}/${match[1]}`;
 };
 
 function SectionHeading({ children, minimal }: { children: string; minimal: boolean }) {
@@ -64,9 +87,120 @@ export function MaintenanceFamilyReceptionCard({
     clearSubmissionSelection,
     processSelected,
     rejectSelected,
+    updatePendingBirthDate,
+    updatePendingCep,
   } = useMaintenanceFamilyReception(isActive);
+  const [birthDrafts, setBirthDrafts] = useState<Record<string, string>>({});
+  const [cepDrafts, setCepDrafts] = useState<Record<string, string>>({});
+  const [savingBirthId, setSavingBirthId] = useState<string | null>(null);
+  const [savingCepId, setSavingCepId] = useState<string | null>(null);
+  const [sharingInvite, setSharingInvite] = useState(false);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
+
+  const handleShareInvite = async () => {
+    setSharingInvite(true);
+    try {
+      const branding = await getStoredActiveIgrejaBranding();
+      const tenantCode = (branding?.code || prefix).trim().toUpperCase();
+
+      if (!tenantCode || tenantCode === 'APP') {
+        Toast.show({
+          type: 'error',
+          text1: 'Recepção familiar',
+          text2: 'Código da instância indisponível para montar o convite.',
+          visibilityTime: 4000,
+        });
+        return;
+      }
+
+      const formUrl = buildFamilyRegistrationShareUrl(tenantCode);
+      const churchName = branding?.name?.trim() || tenantCode;
+      const waUrl = buildFamilyRegistrationWhatsAppUrl(formUrl, churchName);
+
+      await Clipboard.setStringAsync(formUrl);
+      await Linking.openURL(waUrl);
+
+      Toast.show({
+        type: 'success',
+        text1: 'Convite copiado e WhatsApp aberto',
+        text2: formUrl,
+        visibilityTime: 4500,
+      });
+    } catch (shareError) {
+      Toast.show({
+        type: 'error',
+        text1: 'Recepção familiar',
+        text2:
+          shareError instanceof Error
+            ? shareError.message
+            : 'Não foi possível abrir o WhatsApp com o convite.',
+        visibilityTime: 4000,
+      });
+    } finally {
+      setSharingInvite(false);
+    }
+  };
+
+  const handleSaveBirthDate = async (memberId: string) => {
+    const iso = parseBrazilianDateToIso(birthDrafts[memberId] ?? '');
+    if (!iso) {
+      Toast.show({
+        type: 'error',
+        text1: 'Data inválida',
+        text2: 'Informe a data real no formato dd/mm/aaaa.',
+        visibilityTime: 3500,
+      });
+      return;
+    }
+
+    setSavingBirthId(memberId);
+    const result = await updatePendingBirthDate(memberId, iso);
+    setSavingBirthId(null);
+    Toast.show({
+      type: result.success ? 'success' : 'error',
+      text1: 'Data de nascimento',
+      text2: result.message,
+      visibilityTime: 3500,
+    });
+    if (result.success) {
+      setBirthDrafts((current) => {
+        const next = { ...current };
+        delete next[memberId];
+        return next;
+      });
+    }
+  };
+
+  const handleSaveCep = async (memberId: string) => {
+    const cep = (cepDrafts[memberId] ?? '').replace(/\D/g, '');
+    if (cep.length !== 8) {
+      Toast.show({
+        type: 'error',
+        text1: 'CEP inválido',
+        text2: 'Informe um CEP com 8 dígitos.',
+        visibilityTime: 3500,
+      });
+      return;
+    }
+
+    setSavingCepId(memberId);
+    const result = await updatePendingCep(memberId, cep);
+    setSavingCepId(null);
+    Toast.show({
+      type: result.success ? 'success' : 'error',
+      text1: 'CEP',
+      text2: result.message,
+      visibilityTime: 3500,
+    });
+    if (result.success) {
+      setCepDrafts((current) => {
+        const next = { ...current };
+        delete next[memberId];
+        return next;
+      });
+    }
+  };
 
   const handleProcess = async () => {
     const result = await processSelected();
@@ -92,7 +226,7 @@ export function MaintenanceFamilyReceptionCard({
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
       <MaintenanceHelpInfoTitle
         title="Recepção — Cadastro Familiar"
-        helpText={`Formulários públicos entram aqui antes de profiles/members. Lotes com código familiar detectado nas tabelas finais usam o mesmo ${prefix}; conflitos exigem revisão manual.`}
+        helpText={`Formulários públicos entram aqui antes de profiles/members. Use o botão WhatsApp para enviar o link /cadastro-familia/?tenant=${prefix}. Lotes com código familiar detectado usam o mesmo ${prefix}; conflitos, data 01/01/1900 ou CEP ausente ficam travados até revisão.`}
         minimal={minimal}
         titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
       />
@@ -133,6 +267,17 @@ export function MaintenanceFamilyReceptionCard({
         >
           <Text style={[styles.toolbarButtonText, minimal && styles.toolbarButtonTextMinimal]}>
             Limpar
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toolbarButton, styles.whatsappButton, minimal && styles.toolbarButtonMinimal]}
+          onPress={() => void handleShareInvite()}
+          disabled={sharingInvite}
+          activeOpacity={0.85}
+        >
+          <MaterialIcons name="chat" size={18} color={minimal ? MINIMAL_UI.icon : '#E2E8F0'} />
+          <Text style={[styles.toolbarButtonText, minimal && styles.toolbarButtonTextMinimal]}>
+            {sharingInvite ? 'Abrindo…' : 'WhatsApp — convite'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -190,9 +335,14 @@ export function MaintenanceFamilyReceptionCard({
         >
           {submissions.map((submission) => {
             const selected = selectedSubmissionIds.includes(submission.submissionId);
+            const hasPlaceholderBirth = submission.members.some((member) =>
+              isPlaceholderCellBirthDate(member.birthDate)
+            );
+            const informant = submission.members.find((member) => member.isInformant);
+            const missingCep = Boolean(informant) && !informantHasValidCep(informant?.cep);
 
             return (
-              <TouchableOpacity
+              <View
                 key={submission.submissionId}
                 style={[
                   styles.submissionCard,
@@ -200,10 +350,12 @@ export function MaintenanceFamilyReceptionCard({
                   selected && styles.submissionCardSelected,
                   minimal && selected && styles.submissionCardSelectedMinimal,
                 ]}
-                onPress={() => toggleSubmissionSelection(submission.submissionId)}
-                activeOpacity={0.9}
               >
-                <View style={styles.submissionHeader}>
+                <TouchableOpacity
+                  style={styles.submissionHeader}
+                  onPress={() => toggleSubmissionSelection(submission.submissionId)}
+                  activeOpacity={0.9}
+                >
                   <Text style={[styles.submissionTitle, minimal && styles.submissionTitleMinimal]}>
                     {submission.memberCount} integrante(s) · {formatSubmissionDate(submission.createdAt)}
                   </Text>
@@ -212,7 +364,18 @@ export function MaintenanceFamilyReceptionCard({
                       Conflito de família
                     </Text>
                   ) : null}
-                </View>
+                </TouchableOpacity>
+
+                {hasPlaceholderBirth ? (
+                  <Text style={[styles.placeholderAlert, minimal && styles.placeholderAlertMinimal]}>
+                    Visitante de célula: corrija a data de nascimento (01/01/1900) antes de gravar.
+                  </Text>
+                ) : null}
+                {missingCep ? (
+                  <Text style={[styles.placeholderAlert, minimal && styles.placeholderAlertMinimal]}>
+                    CEP do representante legal ausente ou inválido — o lote fica travado até corrigir.
+                  </Text>
+                ) : null}
 
                 <Text style={[styles.submissionMeta, minimal && styles.submissionMetaMinimal]}>
                   Protocolo: {submission.submissionId.slice(0, 8).toUpperCase()}
@@ -221,24 +384,95 @@ export function MaintenanceFamilyReceptionCard({
                   Código detectado: {submission.detectedFamilyId ?? newFamilyRecordingHint}
                 </Text>
 
-                {submission.members.map((member) => (
-                  <View
-                    key={member.id}
-                    style={[styles.memberRow, minimal && styles.memberRowMinimal]}
-                  >
-                    <Text style={[styles.memberName, minimal && styles.memberNameMinimal]}>
-                      {member.isInformant ? '★ ' : '• '}
-                      {formatShortName(member.fullName)} — {member.relationship}
-                    </Text>
-                    <Text style={[styles.memberHint, minimal && styles.memberHintMinimal]}>
-                      {member.matchedProfileId || member.matchedMemberId
-                        ? 'Já existe em profiles/members'
-                        : 'Novo integrante'}
-                      {member.detectedFamilyId ? ` · ${member.detectedFamilyId}` : ''}
-                    </Text>
-                  </View>
-                ))}
-              </TouchableOpacity>
+                {submission.members.map((member) => {
+                  const placeholderBirth = isPlaceholderCellBirthDate(member.birthDate);
+
+                  return (
+                    <View
+                      key={member.id}
+                      style={[styles.memberRow, minimal && styles.memberRowMinimal]}
+                    >
+                      <Text style={[styles.memberName, minimal && styles.memberNameMinimal]}>
+                        {member.isInformant ? '★ ' : '• '}
+                        {formatShortName(member.fullName)} — {member.relationship}
+                      </Text>
+                      <Text style={[styles.memberHint, minimal && styles.memberHintMinimal]}>
+                        {member.matchedProfileId || member.matchedMemberId
+                          ? 'Já existe em profiles/members'
+                          : 'Novo integrante'}
+                        {member.detectedFamilyId ? ` · ${member.detectedFamilyId}` : ''}
+                        {` · nasc. ${formatBirthDateDisplay(member.birthDate)}`}
+                      </Text>
+                      {placeholderBirth ? (
+                        <View style={styles.birthEditor}>
+                          <TextInput
+                            value={birthDrafts[member.id] ?? ''}
+                            onChangeText={(value) =>
+                              setBirthDrafts((current) => ({
+                                ...current,
+                                [member.id]: formatBrazilDateInput(value),
+                              }))
+                            }
+                            placeholder="dd/mm/aaaa"
+                            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : 'rgba(58, 150, 221, 0.55)'}
+                            keyboardType="number-pad"
+                            maxLength={10}
+                            style={[styles.birthInput, minimal && styles.birthInputMinimal]}
+                          />
+                          <TouchableOpacity
+                            style={[styles.birthSaveButton, minimal && styles.birthSaveButtonMinimal]}
+                            onPress={() => void handleSaveBirthDate(member.id)}
+                            disabled={savingBirthId === member.id}
+                            activeOpacity={0.85}
+                          >
+                            <Text
+                              style={[
+                                styles.birthSaveButtonText,
+                                minimal && styles.birthSaveButtonTextMinimal,
+                              ]}
+                            >
+                              {savingBirthId === member.id ? 'Salvando…' : 'Corrigir data'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : null}
+                      {member.isInformant && missingCep ? (
+                        <View style={styles.birthEditor}>
+                          <TextInput
+                            value={cepDrafts[member.id] ?? ''}
+                            onChangeText={(value) =>
+                              setCepDrafts((current) => ({
+                                ...current,
+                                [member.id]: formatBrazilCepInput(value),
+                              }))
+                            }
+                            placeholder="00000-000"
+                            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : 'rgba(58, 150, 221, 0.55)'}
+                            keyboardType="number-pad"
+                            maxLength={9}
+                            style={[styles.birthInput, minimal && styles.birthInputMinimal]}
+                          />
+                          <TouchableOpacity
+                            style={[styles.birthSaveButton, minimal && styles.birthSaveButtonMinimal]}
+                            onPress={() => void handleSaveCep(member.id)}
+                            disabled={savingCepId === member.id}
+                            activeOpacity={0.85}
+                          >
+                            <Text
+                              style={[
+                                styles.birthSaveButtonText,
+                                minimal && styles.birthSaveButtonTextMinimal,
+                              ]}
+                            >
+                              {savingCepId === member.id ? 'Salvando…' : 'Informar CEP'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : null}
+                    </View>
+                  );
+                })}
+              </View>
             );
           })}
         </ScrollView>
@@ -352,6 +586,44 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
   },
+  placeholderAlert: {
+    color: '#FDE68A',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+    lineHeight: 16,
+  },
+  birthEditor: {
+    marginTop: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    alignItems: 'center',
+  },
+  birthInput: {
+    minWidth: 120,
+    borderWidth: 1,
+    borderColor: 'rgba(253, 230, 138, 0.55)',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    color: '#FDE68A',
+    fontSize: 13,
+  },
+  birthSaveButton: {
+    backgroundColor: 'rgba(253, 230, 138, 0.18)',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  birthSaveButtonText: {
+    color: '#FDE68A',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  whatsappButton: {
+    backgroundColor: 'rgba(37, 211, 102, 0.16)',
+  },
   submissionMeta: {
     color: 'rgba(58, 150, 221, 0.82)',
     fontSize: 12,
@@ -448,6 +720,20 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.blueDark,
   },
   conflictBadgeMinimal: {
+    color: '#B45309',
+  },
+  placeholderAlertMinimal: {
+    color: '#B45309',
+  },
+  birthInputMinimal: {
+    borderColor: '#F59E0B',
+    color: MINIMAL_UI.text,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  birthSaveButtonMinimal: {
+    backgroundColor: '#FEF3C7',
+  },
+  birthSaveButtonTextMinimal: {
     color: '#B45309',
   },
   submissionMetaMinimal: {

@@ -9,7 +9,7 @@ export default function CadastroFamiliaRedirectScreen() {
       return;
     }
 
-    const standaloneUrl = `${window.location.origin}${FAMILY_REGISTRATION_PUBLIC_PATH}`;
+    const standaloneUrl = `${window.location.origin}${FAMILY_REGISTRATION_PUBLIC_PATH}${window.location.search}${window.location.hash}`;
     const isStandaloneDocument = Boolean(
       document.querySelector(`script[src*="${FAMILY_REGISTRATION_PUBLIC_PATH}assets/"]`)
     );

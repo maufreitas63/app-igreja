@@ -2,6 +2,8 @@ import {
   listPendingFamilyReceptionSubmissions,
   processFamilyReceptionBatch,
   rejectFamilyReceptionBatch,
+  updateRecepcionPendingBirthDate,
+  updateRecepcionPendingCep,
   type FamilyReceptionSubmission,
 } from '@/lib/familyReceptionApi';
 import { useCallback, useEffect, useState } from 'react';
@@ -126,6 +128,44 @@ export function useMaintenanceFamilyReception(isActive: boolean) {
     }
   }, [refetch, selectedSubmissionIds]);
 
+  const updatePendingBirthDate = useCallback(
+    async (memberId: string, birthDateIso: string) => {
+      setError(null);
+      try {
+        const result = await updateRecepcionPendingBirthDate(memberId, birthDateIso);
+        await refetch();
+        return { success: true as const, message: result.message };
+      } catch (updateError) {
+        const message =
+          updateError instanceof Error
+            ? updateError.message
+            : 'Não foi possível atualizar a data de nascimento.';
+        setError(message);
+        return { success: false as const, message };
+      }
+    },
+    [refetch]
+  );
+
+  const updatePendingCep = useCallback(
+    async (memberId: string, cep: string) => {
+      setError(null);
+      try {
+        const result = await updateRecepcionPendingCep(memberId, cep);
+        await refetch();
+        return { success: true as const, message: result.message };
+      } catch (updateError) {
+        const message =
+          updateError instanceof Error
+            ? updateError.message
+            : 'Não foi possível atualizar o CEP.';
+        setError(message);
+        return { success: false as const, message };
+      }
+    },
+    [refetch]
+  );
+
   return {
     submissions,
     loading,
@@ -139,5 +179,7 @@ export function useMaintenanceFamilyReception(isActive: boolean) {
     clearSubmissionSelection,
     processSelected,
     rejectSelected,
+    updatePendingBirthDate,
+    updatePendingCep,
   };
 }

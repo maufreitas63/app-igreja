@@ -36,6 +36,7 @@ import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { verificarLogin } from '@/lib/verificarLogin';
 import {
   buildManageProfileChangeAccessPinAfterRecoveryRoute,
+  loadProfileByPhone,
   resolveRegisteredUserSessionRoute,
 } from '@/lib/profileOnboarding';
 import { isLgpdAtivoEnabled } from '@/lib/appParameters';
@@ -399,7 +400,16 @@ export default function IndexScreen() {
       }
 
       const lgpdAtivo = await isLgpdAtivoEnabled();
-      let route = resolveRegisteredUserSessionRoute(profile, phoneForSession, lgpdAtivo) as Href | null;
+      let routeProfile = profile;
+      try {
+        const freshProfile = await loadProfileByPhone(phoneForSession);
+        if (freshProfile) {
+          routeProfile = { ...profile, ...freshProfile };
+        }
+      } catch {
+        // Segue com o perfil do login se a leitura complementar falhar.
+      }
+      let route = resolveRegisteredUserSessionRoute(routeProfile, phoneForSession, lgpdAtivo) as Href | null;
 
       if (!route) {
         return false;

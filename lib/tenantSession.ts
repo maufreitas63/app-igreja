@@ -4,65 +4,16 @@ import { clearEntityPrefixCache } from '@/lib/entityPrefixCache';
 import { USER_TENANT_ID_STORAGE_KEY } from '@/lib/sessionStorageKeys';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { supabase } from '@/lib/supabase';
+import { normalizeInstanceCode, parseInstanceCodeFromUrl } from '@/lib/instanceCode';
 
 export { USER_TENANT_ID_STORAGE_KEY } from '@/lib/sessionStorageKeys';
+export { normalizeInstanceCode, parseInstanceCodeFromUrl } from '@/lib/instanceCode';
 export const USER_TENANT_BRANDING_STORAGE_KEY = 'user_tenant_branding';
 /** Código da igreja vindo do QR / deep link (`?igreja=IBEP` / `?codigo=`). */
 export const PREFERRED_IGREJA_CODE_STORAGE_KEY = 'preferred_igreja_code';
 
 export const INSTANCE_CODE_NOT_FOUND_MESSAGE =
   'Código de instância não encontrado. Verifique com a administração.';
-
-export function normalizeInstanceCode(raw: string | null | undefined): string {
-  return (raw ?? '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
-}
-
-/** Extrai o código de convite: `?igreja=`, `?codigo=` ou `appigreja://configurar?codigo=`. */
-export function parseInstanceCodeFromUrl(url: string | null | undefined): string | null {
-  if (!url?.trim()) {
-    return null;
-  }
-
-  const fromQueryString = (query: string) => {
-    try {
-      const params = new URLSearchParams(query);
-      return normalizeInstanceCode(
-        params.get('codigo') || params.get('igreja') || params.get('code') || ''
-      );
-    } catch {
-      return '';
-    }
-  };
-
-  try {
-    const parsed = new URL(url);
-    const fromSearch = fromQueryString(parsed.search.replace(/^\?/, ''));
-    if (fromSearch) {
-      return fromSearch;
-    }
-
-    if (parsed.hash) {
-      const hash = parsed.hash.replace(/^#/, '');
-      const hashQuery = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : hash;
-      const fromHash = fromQueryString(hashQuery);
-      if (fromHash) {
-        return fromHash;
-      }
-    }
-  } catch {
-    const match = url.match(/[?&](?:codigo|igreja|code)=([^&]+)/i);
-    if (match?.[1]) {
-      try {
-        const decoded = normalizeInstanceCode(decodeURIComponent(match[1]));
-        return decoded || null;
-      } catch {
-        return normalizeInstanceCode(match[1]) || null;
-      }
-    }
-  }
-
-  return null;
-}
 
 export async function persistPreferredIgrejaCode(code: string | null | undefined) {
   const normalized = normalizeInstanceCode(code) || null;
@@ -88,7 +39,7 @@ function firstParamText(param?: string | string[] | null): string {
   return '';
 }
 
-/** Lê `?igreja=` / `?codigo=` da URL (web) sem persistir — a validação grava depois. */
+/** Lê `?tenant=` / `?igreja=` / `?codigo=` da URL (web) sem persistir — a validação grava depois. */
 export async function capturePreferredIgrejaCodeFromLocation(
   param?: string | string[] | null
 ): Promise<string | null> {

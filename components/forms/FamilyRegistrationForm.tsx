@@ -48,7 +48,12 @@ const formatCepInput = (value: string) => {
 
 type SubmitState = 'idle' | 'success' | 'error';
 
-export function FamilyRegistrationForm() {
+type FamilyRegistrationFormProps = {
+  tenantCode: string;
+  churchName?: string;
+};
+
+export function FamilyRegistrationForm({ tenantCode, churchName }: FamilyRegistrationFormProps) {
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [registeredSubmissionId, setRegisteredSubmissionId] = useState<string | null>(null);
@@ -80,7 +85,7 @@ export function FamilyRegistrationForm() {
         dependents: values.dependents,
       };
 
-      const result = await submitFamilyRegistration(payload);
+      const result = await submitFamilyRegistration(payload, tenantCode);
       setRegisteredSubmissionId(result.submissionId);
       setDetectedFamilyId(result.detectedFamilyId);
       setSubmitState('success');
@@ -97,7 +102,7 @@ export function FamilyRegistrationForm() {
   };
 
   const handleCopyLink = async () => {
-    const url = buildFamilyRegistrationShareUrl();
+    const url = buildFamilyRegistrationShareUrl(tenantCode);
     if (!url) {
       setCopyHint('URL indisponível neste ambiente.');
       return;
@@ -111,14 +116,14 @@ export function FamilyRegistrationForm() {
     }
   };
 
-  const handleShareWhatsApp = async () => {
-    const url = buildFamilyRegistrationShareUrl();
+  const handleShareWhatsApp = () => {
+    const url = buildFamilyRegistrationShareUrl(tenantCode);
     if (!url) {
       setCopyHint('URL indisponível para compartilhar.');
       return;
     }
 
-    const waUrl = await buildFamilyRegistrationWhatsAppUrl(url);
+    const waUrl = buildFamilyRegistrationWhatsAppUrl(url, churchName);
     window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -195,7 +200,9 @@ export function FamilyRegistrationForm() {
       <header className="mb-8 space-y-2">
         <h1 className="text-2xl font-bold text-slate-900">Cadastro de Família</h1>
         <p className="text-sm text-slate-600">
-          Preencha os dados do informante principal e adicione até 9 dependentes (máximo de 10 pessoas).
+          {churchName
+            ? `Preencha os dados para o cadastro em ${churchName}. Adicione até 9 dependentes (máximo de 10 pessoas).`
+            : 'Preencha os dados do informante principal e adicione até 9 dependentes (máximo de 10 pessoas).'}
         </p>
       </header>
 

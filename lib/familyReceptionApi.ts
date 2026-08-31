@@ -4,8 +4,18 @@ import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
+export const PLACEHOLDER_CELL_BIRTH_DATE = '1900-01-01';
+
+export function isPlaceholderCellBirthDate(value: string | null | undefined): boolean {
+  return (value ?? '').trim().slice(0, 10) === PLACEHOLDER_CELL_BIRTH_DATE;
+}
+
+export function informantHasValidCep(cep: string | null | undefined): boolean {
+  return (cep ?? '').replace(/\D/g, '').length === 8;
+}
+
 export const FAMILY_RECEPTION_SQL_HINT =
-  'Execute no Supabase: scripts/recepcao-cadastro-familiar.sql (após register-member-atomic.sql). Para corrigir lotes já gravados com famílias divergentes: scripts/recepcao-repair-family-grouping.sql';
+  'Execute no Supabase: scripts/recepcao-public-tenant-form.sql (após recepcao-cadastro-familiar.sql). Para corrigir lotes já gravados com famílias divergentes: scripts/recepcao-repair-family-grouping.sql';
 
 export type FamilyReceptionMember = {
   id: string;
@@ -14,6 +24,7 @@ export type FamilyReceptionMember = {
   relationship: string;
   phone: string | null;
   birthDate: string | null;
+  cep: string | null;
   detectedFamilyId: string | null;
   matchedProfileId: string | null;
   matchedMemberId: string | null;
@@ -43,6 +54,7 @@ const parseMember = (row: Record<string, unknown>): FamilyReceptionMember | null
     relationship: String(row.relationship ?? '').trim(),
     phone: row.phone ? String(row.phone) : null,
     birthDate: row.birth_date ? String(row.birth_date) : null,
+    cep: row.cep ? String(row.cep) : null,
     detectedFamilyId: row.detected_family_id ? String(row.detected_family_id) : null,
     matchedProfileId: row.matched_profile_id ? String(row.matched_profile_id) : null,
     matchedMemberId: row.matched_member_id ? String(row.matched_member_id) : null,
@@ -166,4 +178,52 @@ export async function rejectFamilyReceptionBatch(submissionIds: string[], reason
   return {
     rejectedMembers: Number(record.rejected_members ?? 0),
   };
+}
+
+export async function updateRecepcionPendingBirthDate(memberId: string, birthDateIso: string) {
+  const { data, error } = await supabase.rpc('update_recepcao_pending_birth_date', {
+    p_id: memberId,
+    p_birth_date: birthDateIso,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'update_recepcao_pending_birth_date')) {
+      throw new Error(FAMILY_RECEPTION_SQL_HINT);
+    }
+
+    throw error;
+  }
+
+  const record = (data ?? {}) as Record<string, unknown>;
+
+  if (record.success !== true) {
+    throw new Error(String(record.message ?? 'Não foi possível atualizar a data de nascimento.'));
+  }
+
+  invalidateAsyncCache('family_reception:pending');
+  return { message: String(record.message ?? 'Data de nascimento atualizada.') };
+}
+
+export async function updateRecepcionPendingCep(memberId: string, cep: string) {
+  const { data, error } = await supabase.rpc('update_recepcao_pending_cep', {
+    p_id: memberId,
+    p_cep: cep,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'update_recepcao_pending_cep')) {
+      throw new Error(FAMILY_RECEPTION_SQL_HINT);
+    }
+
+    throw error;
+  }
+
+  const record = (data ?? {}) as Record<string, unknown>;
+
+  if (record.success !== true) {
+    throw new Error(String(record.message ?? 'Não foi possível atualizar o CEP.'));
+  }
+
+  invalidateAsyncCache('family_reception:pending');
+  return { message: String(record.message ?? 'CEP atualizado no lote.') };
 }

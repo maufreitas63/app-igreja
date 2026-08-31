@@ -1,5 +1,4 @@
 import { buildCepAddressPayload } from '@/lib/cepUtils';
-import { getEntityPrefixBrowser } from '@/lib/entityPrefixBrowser';
 import { formatFullName } from '@/lib/fullName';
 import {
   FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS,
@@ -8,6 +7,7 @@ import {
 } from '@/lib/familyRelationshipOptions';
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+import { normalizeInstanceCode } from '@/lib/instanceCode';
 
 export {
   FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS,
@@ -106,6 +106,7 @@ export type FamilyRegistrationFormValues = {
 };
 
 type FamilyRegistrationRpcPayload = {
+  tenant_code: string;
   informant: {
     full_name: string;
     birth_date: string;
@@ -129,7 +130,8 @@ type FamilyRegistrationRpcPayload = {
 };
 
 async function buildFamilyRegistrationRpcPayload(
-  values: FamilyRegistrationFormValues
+  values: FamilyRegistrationFormValues,
+  tenantCode: string
 ): Promise<FamilyRegistrationRpcPayload> {
   const address = await buildCepAddressPayload(
     values.informant.cep,
@@ -181,6 +183,7 @@ async function buildFamilyRegistrationRpcPayload(
   }
 
   return {
+    tenant_code: tenantCode,
     informant: {
       full_name: formatFullName(values.informant.fullName),
       birth_date: informantBirthIso,
@@ -193,7 +196,49 @@ async function buildFamilyRegistrationRpcPayload(
 }
 
 const FAMILY_REGISTRATION_RPC_MISSING_MESSAGE =
-  'Cadastro familiar indisponível no servidor. Execute scripts/recepcao-cadastro-familiar.sql no Supabase.';
+  'Cadastro familiar indisponível no servidor. Execute scripts/recepcao-public-tenant-form.sql no Supabase.';
+
+export const FAMILY_REGISTRATION_TENANT_REQUIRED_MESSAGE =
+  'Este link de cadastro está incompleto. Peça à Secretaria o convite com o código da igreja.';
+
+export const FAMILY_REGISTRATION_TENANT_INVALID_MESSAGE =
+  'Igreja não encontrada ou inativa. Confira o código da instância no link.';
+
+export type PublicFamilyChurch = {
+  id: string;
+  code: string;
+  name: string;
+};
+
+/** Consulta pública (anon) do código da instância no formulário standalone. */
+export async function lookupPublicFamilyChurch(
+  code: string
+): Promise<PublicFamilyChurch | null> {
+  const normalized = normalizeInstanceCode(code);
+  if (!normalized) {
+    return null;
+  }
+
+  const { data, error } = await supabaseBrowser.rpc('lookup_igreja_by_code', {
+    p_code: normalized,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const rows = Array.isArray(data) ? data : data ? [data] : [];
+  const row = rows[0] as Record<string, unknown> | undefined;
+  const id = String(row?.id ?? '').trim();
+  const churchCode = normalizeInstanceCode(String(row?.code ?? normalized));
+  const name = String(row?.name ?? '').trim();
+
+  if (!id || !churchCode) {
+    return null;
+  }
+
+  return { id, code: churchCode, name: name || churchCode };
+}
 
 export type FamilyRegistrationSubmitResult = {
   submissionId: string;
@@ -204,9 +249,16 @@ export type FamilyRegistrationSubmitResult = {
 };
 
 export async function submitFamilyRegistration(
-  values: FamilyRegistrationFormValues
+  values: FamilyRegistrationFormValues,
+  tenantCode: string
 ): Promise<FamilyRegistrationSubmitResult> {
-  const payload = await buildFamilyRegistrationRpcPayload(values);
+  const normalizedTenant = normalizeInstanceCode(tenantCode);
+
+  if (!normalizedTenant) {
+    throw new Error(FAMILY_REGISTRATION_TENANT_REQUIRED_MESSAGE);
+  }
+
+  const payload = await buildFamilyRegistrationRpcPayload(values, normalizedTenant);
 
   const { data, error } = await supabaseBrowser.rpc('submit_family_registration_public', {
     p_payload: payload,
@@ -249,29 +301,61 @@ export async function submitFamilyRegistration(
 
 export const FAMILY_REGISTRATION_PUBLIC_PATH = '/cadastro-familia/';
 
-export function buildFamilyRegistrationShareUrl(): string {
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return `${window.location.origin}${FAMILY_REGISTRATION_PUBLIC_PATH}`;
-  }
-  return '';
+const DEFAULT_FAMILY_FORM_ORIGIN = 'https://app-igreja.pages.dev';
+
+function stripTrailingSlash(url: string) {
+  return url.replace(/\/+$/, '');
 }
 
-export async function buildFamilyRegistrationWhatsAppUrl(pageUrl: string): Promise<string> {
-  const prefix = await getEntityPrefixBrowser();
-
-  let churchName = '';
+function isPublicHttpsOrigin(url: string): boolean {
   try {
-    const { data } = await supabaseBrowser.rpc('get_app_parameter_value', {
-      p_parameter: 'Nome_Entidade',
-    });
-    if (typeof data === 'string' && data.trim()) {
-      churchName = data.trim();
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') {
+      return false;
     }
+    const host = parsed.hostname.toLowerCase();
+    return !(
+      host === 'localhost'
+      || host === '127.0.0.1'
+      || host.endsWith('.local')
+      || host.includes('seu-dominio')
+    );
   } catch {
-    churchName = '';
+    return false;
+  }
+}
+
+export function resolveFamilyRegistrationOrigin(): string {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    const origin = stripTrailingSlash(window.location.origin);
+    if (isPublicHttpsOrigin(origin)) {
+      return origin;
+    }
   }
 
-  const who = churchName || (prefix && prefix !== 'APP' ? `nossa igreja (${prefix})` : 'nossa igreja');
+  const fromEnv = stripTrailingSlash(process.env.EXPO_PUBLIC_APP_URL?.trim() || '');
+  if (fromEnv) {
+    const withProtocol = /^https?:\/\//i.test(fromEnv) ? fromEnv : `https://${fromEnv}`;
+    if (isPublicHttpsOrigin(withProtocol)) {
+      return stripTrailingSlash(withProtocol);
+    }
+  }
+
+  return DEFAULT_FAMILY_FORM_ORIGIN;
+}
+
+export function buildFamilyRegistrationShareUrl(tenantCode?: string | null): string {
+  const origin = resolveFamilyRegistrationOrigin();
+  const code = normalizeInstanceCode(tenantCode);
+  const query = code ? `?tenant=${encodeURIComponent(code)}` : '';
+  return `${origin}${FAMILY_REGISTRATION_PUBLIC_PATH}${query}`;
+}
+
+export function buildFamilyRegistrationWhatsAppUrl(
+  pageUrl: string,
+  churchName?: string | null
+): string {
+  const who = churchName?.trim() || 'nossa igreja';
   const message = [
     `Olá! O Ministério de Acolhimento da ${who} convida você e sua família a preencherem o cadastro da nossa igreja.`,
     'É rápido e ajuda a organizar nossa comunidade.',

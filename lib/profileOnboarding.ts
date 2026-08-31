@@ -77,7 +77,26 @@ export const buildAppIndexRoute = (phone: string) => ({
 });
 
 export const PROFILE_LOGIN_SELECT =
-  'id, phone, full_name, birth_date, lgpd_accepted, cpf, email, cep, address_street, address_number, address_neighborhood, address_city, address_state';
+  'id, phone, full_name, birth_date, lgpd_accepted, is_active, selfie_url, cpf, email, cep, address_street, address_number, address_neighborhood, address_city, address_state';
+
+function hasSelfieUrl(profile: Record<string, unknown> | null | undefined) {
+  return typeof profile?.selfie_url === 'string' && Boolean(profile.selfie_url.trim());
+}
+
+/**
+ * Perfil promovido pela Recepção Familiar (`is_active = false`):
+ * o login só segue para o fluxo obrigatório de LGPD + selfie.
+ * Depois disso o Início é liberado; o perfil continua “aguardando verificação completa”.
+ */
+export const isProfileAwaitingVerification = (
+  profile: Record<string, unknown> | null | undefined
+) => {
+  if (!profile || profile.is_active !== false) {
+    return false;
+  }
+
+  return profile.lgpd_accepted !== true || !hasSelfieUrl(profile);
+};
 
 /** Nome padrão ao criar perfil pelo PIN — apenas referência até o cadastro inicial. */
 export const PLACEHOLDER_VISITOR_FULL_NAME = 'Visitante';
@@ -153,7 +172,7 @@ export const resolveRegisteredUserSessionRoute = (
     return buildAppIndexRoute(phoneForSession);
   }
 
-  if (profile.lgpd_accepted !== true) {
+  if (profile.lgpd_accepted !== true || isProfileAwaitingVerification(profile)) {
     return {
       pathname: '/lgpd' as const,
       params: { phone: encodeURIComponent(phoneForSession) },
