@@ -30,6 +30,44 @@ export type FamilyReceptionMember = {
   matchedMemberId: string | null;
 };
 
+export type FamilyReceptionExistingMember = {
+  profileId: string;
+  fullName: string;
+  birthDate: string | null;
+  phone: string | null;
+  familyId: string | null;
+  relationship: string | null;
+};
+
+export type FamilyReceptionMatch = {
+  profileId: string;
+  fullName: string;
+  birthDate: string | null;
+  phone: string | null;
+  familyId: string | null;
+  sameFamily: boolean;
+  matchByName: boolean;
+  matchByBirth: boolean;
+  matchByPhone: boolean;
+};
+
+export type FamilyReceptionIncomingInspect = {
+  id: string;
+  fullName: string;
+  isInformant: boolean;
+  relationship: string;
+  phone: string | null;
+  birthDate: string | null;
+  matches: FamilyReceptionMatch[];
+};
+
+export type FamilyReceptionLoteInspect = {
+  submissionId: string;
+  detectedFamilyId: string | null;
+  existingMembers: FamilyReceptionExistingMember[];
+  incoming: FamilyReceptionIncomingInspect[];
+};
+
 export type FamilyReceptionSubmission = {
   submissionId: string;
   createdAt: string;
@@ -37,6 +75,65 @@ export type FamilyReceptionSubmission = {
   detectedFamilyId: string | null;
   hasFamilyConflict: boolean;
   members: FamilyReceptionMember[];
+};
+
+const parseExistingMember = (row: Record<string, unknown>): FamilyReceptionExistingMember | null => {
+  const profileId = String(row.profile_id ?? '').trim();
+  const fullName = formatFullName(String(row.full_name ?? ''));
+  if (!profileId || !fullName) {
+    return null;
+  }
+
+  return {
+    profileId,
+    fullName,
+    birthDate: row.birth_date ? String(row.birth_date) : null,
+    phone: row.phone ? String(row.phone) : null,
+    familyId: row.family_id ? String(row.family_id) : null,
+    relationship: row.relationship ? String(row.relationship) : null,
+  };
+};
+
+const parseMatch = (row: Record<string, unknown>): FamilyReceptionMatch | null => {
+  const profileId = String(row.profile_id ?? '').trim();
+  const fullName = formatFullName(String(row.full_name ?? ''));
+  if (!profileId || !fullName) {
+    return null;
+  }
+
+  return {
+    profileId,
+    fullName,
+    birthDate: row.birth_date ? String(row.birth_date) : null,
+    phone: row.phone ? String(row.phone) : null,
+    familyId: row.family_id ? String(row.family_id) : null,
+    sameFamily: row.same_family === true,
+    matchByName: row.match_by_name === true,
+    matchByBirth: row.match_by_birth === true,
+    matchByPhone: row.match_by_phone === true,
+  };
+};
+
+const parseIncomingInspect = (row: Record<string, unknown>): FamilyReceptionIncomingInspect | null => {
+  const id = String(row.id ?? '').trim();
+  const fullName = formatFullName(String(row.full_name ?? ''));
+  if (!id || !fullName) {
+    return null;
+  }
+
+  const matchesRaw = Array.isArray(row.matches) ? row.matches : [];
+
+  return {
+    id,
+    fullName,
+    isInformant: row.is_informant === true,
+    relationship: String(row.relationship ?? '').trim(),
+    phone: row.phone ? String(row.phone) : null,
+    birthDate: row.birth_date ? String(row.birth_date) : null,
+    matches: matchesRaw
+      .map((entry) => parseMatch(entry as Record<string, unknown>))
+      .filter((entry): entry is FamilyReceptionMatch => entry !== null),
+  };
 };
 
 const parseMember = (row: Record<string, unknown>): FamilyReceptionMember | null => {
@@ -226,4 +323,67 @@ export async function updateRecepcionPendingCep(memberId: string, cep: string) {
 
   invalidateAsyncCache('family_reception:pending');
   return { message: String(record.message ?? 'CEP atualizado no lote.') };
+}
+
+export async function inspectFamilyReceptionLote(submissionId: string): Promise<FamilyReceptionLoteInspect> {
+  const { data, error } = await supabase.rpc('inspect_recepcao_lote_family', {
+    p_lote_id: submissionId,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'inspect_recepcao_lote_family')) {
+      throw new Error(FAMILY_RECEPTION_SQL_HINT);
+    }
+
+    throw error;
+  }
+
+  const record = (data ?? {}) as Record<string, unknown>;
+
+  if (record.success !== true) {
+    throw new Error(String(record.message ?? 'Não foi possível inspecionar a família do lote.'));
+  }
+
+  const existingRaw = Array.isArray(record.existing_members) ? record.existing_members : [];
+  const incomingRaw = Array.isArray(record.incoming) ? record.incoming : [];
+
+  return {
+    submissionId: String(record.submission_id ?? submissionId),
+    detectedFamilyId: record.detected_family_id ? String(record.detected_family_id) : null,
+    existingMembers: existingRaw
+      .map((entry) => parseExistingMember(entry as Record<string, unknown>))
+      .filter((entry): entry is FamilyReceptionExistingMember => entry !== null),
+    incoming: incomingRaw
+      .map((entry) => parseIncomingInspect(entry as Record<string, unknown>))
+      .filter((entry): entry is FamilyReceptionIncomingInspect => entry !== null),
+  };
+}
+
+export async function rejectFamilyReceptionMember(memberId: string, reason?: string) {
+  const { data, error } = await supabase.rpc('reject_recepcao_cadastro_familiar_member', {
+    p_id: memberId,
+    p_reason: reason?.trim() || null,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'reject_recepcao_cadastro_familiar_member')) {
+      throw new Error(FAMILY_RECEPTION_SQL_HINT);
+    }
+
+    throw error;
+  }
+
+  const record = (data ?? {}) as Record<string, unknown>;
+
+  if (record.success !== true) {
+    throw new Error(String(record.message ?? 'Não foi possível descartar o integrante.'));
+  }
+
+  invalidateAsyncCache('family_reception:pending');
+
+  return {
+    remainingMembers: Number(record.remaining_members ?? 0),
+    loteRejected: record.lote_rejected === true,
+    message: String(record.message ?? 'Integrante descartado.'),
+  };
 }

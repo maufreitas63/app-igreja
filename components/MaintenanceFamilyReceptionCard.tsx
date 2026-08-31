@@ -11,9 +11,11 @@ import {
 import {
   informantHasValidCep,
   isPlaceholderCellBirthDate,
+  type FamilyReceptionMatch,
 } from '@/lib/familyReceptionApi';
 import { formatBrazilCepInput, formatBrazilDateInput } from '@/lib/inputMasks';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { formatShortName } from '@/lib/formatShortName';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -60,6 +62,16 @@ const formatBirthDateDisplay = (value: string | null | undefined) => {
   return `${match[3]}/${match[2]}/${match[1]}`;
 };
 
+const formatMatchReasons = (match: FamilyReceptionMatch) => {
+  const reasons = [
+    match.matchByName ? 'nome' : null,
+    match.matchByBirth ? 'nascimento' : null,
+    match.matchByPhone ? 'telefone' : null,
+  ].filter(Boolean);
+
+  return reasons.length > 0 ? reasons.join(', ') : 'dados cadastrais';
+};
+
 function SectionHeading({ children, minimal }: { children: string; minimal: boolean }) {
   return minimal ? (
     <Text style={styles.sectionLabelMinimal}>{children}</Text>
@@ -80,13 +92,14 @@ export function MaintenanceFamilyReceptionCard({
     processing,
     error,
     statusMessage,
-    selectedSubmissionIds,
+    expandedSubmissionId,
+    inspectBySubmissionId,
+    inspectLoadingId,
     refetch,
-    toggleSubmissionSelection,
-    selectAllSubmissions,
-    clearSubmissionSelection,
-    processSelected,
-    rejectSelected,
+    toggleExpanded,
+    processSubmission,
+    rejectSubmission,
+    discardMember,
     updatePendingBirthDate,
     updatePendingCep,
   } = useMaintenanceFamilyReception(isActive);
@@ -202,8 +215,8 @@ export function MaintenanceFamilyReceptionCard({
     }
   };
 
-  const handleProcess = async () => {
-    const result = await processSelected();
+  const handleProcess = async (submissionId: string) => {
+    const result = await processSubmission(submissionId);
     Toast.show({
       type: result.success ? 'success' : 'error',
       text1: 'Recepção familiar',
@@ -212,8 +225,61 @@ export function MaintenanceFamilyReceptionCard({
     });
   };
 
-  const handleReject = async () => {
-    const result = await rejectSelected();
+  const handleReject = async (submissionId: string) => {
+    const confirmed = await confirmDialog(
+      'Rejeitar lote',
+      'Descartar todos os integrantes deste cadastro familiar?',
+      'Rejeitar',
+      'Cancelar',
+      { destructive: true }
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    const result = await rejectSubmission(submissionId);
+    Toast.show({
+      type: result.success ? 'success' : 'error',
+      text1: 'Recepção familiar',
+      text2: result.message,
+      visibilityTime: 4500,
+    });
+  };
+
+  const handleDiscardMember = async (memberId: string, submissionId: string, memberName: string) => {
+    const confirmed = await confirmDialog(
+      'Descartar integrante',
+      `Descartar ${memberName} deste lote? O cadastro já existente na instância será mantido.`,
+      'Descartar',
+      'Cancelar',
+      { destructive: true }
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    const result = await discardMember(memberId, submissionId);
+    Toast.show({
+      type: result.success ? 'success' : 'error',
+      text1: 'Recepção familiar',
+      text2: result.message,
+      visibilityTime: 4500,
+    });
+  };
+
+  const handleDiscardFamily = async (submissionId: string) => {
+    const confirmed = await confirmDialog(
+      'Descartar família do lote',
+      'Descartar todos os integrantes deste cadastro? Nada será gravado nas tabelas finais.',
+      'Descartar todos',
+      'Cancelar',
+      { destructive: true }
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    const result = await rejectSubmission(submissionId);
     Toast.show({
       type: result.success ? 'success' : 'error',
       text1: 'Recepção familiar',
@@ -252,24 +318,6 @@ export function MaintenanceFamilyReceptionCard({
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.toolbarButton, minimal && styles.toolbarButtonMinimal]}
-          onPress={selectAllSubmissions}
-          activeOpacity={0.85}
-        >
-          <Text style={[styles.toolbarButtonText, minimal && styles.toolbarButtonTextMinimal]}>
-            Selecionar todos
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toolbarButton, minimal && styles.toolbarButtonMinimal]}
-          onPress={clearSubmissionSelection}
-          activeOpacity={0.85}
-        >
-          <Text style={[styles.toolbarButtonText, minimal && styles.toolbarButtonTextMinimal]}>
-            Limpar
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
           style={[styles.toolbarButton, styles.whatsappButton, minimal && styles.toolbarButtonMinimal]}
           onPress={() => void handleShareInvite()}
           disabled={sharingInvite}
@@ -278,44 +326,6 @@ export function MaintenanceFamilyReceptionCard({
           <MaterialIcons name="chat" size={18} color={minimal ? MINIMAL_UI.icon : '#E2E8F0'} />
           <Text style={[styles.toolbarButtonText, minimal && styles.toolbarButtonTextMinimal]}>
             {sharingInvite ? 'Abrindo…' : 'WhatsApp — convite'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={[styles.batchActions, minimal && styles.batchActionsMinimal]}>
-        <TouchableOpacity
-          style={[
-            styles.primaryButton,
-            minimal && styles.primaryButtonMinimal,
-            processing && styles.buttonDisabled,
-          ]}
-          onPress={() => void handleProcess()}
-          disabled={processing}
-          activeOpacity={0.85}
-        >
-          {processing ? (
-            <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#052e16'} size="small" />
-          ) : (
-            <Text style={[styles.primaryButtonText, minimal && styles.primaryButtonTextMinimal]}>
-              {selectedSubmissionIds.length > 0
-                ? `Gravar selecionados (${selectedSubmissionIds.length})`
-                : 'Gravar todos pendentes'}
-            </Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.secondaryButton,
-            minimal && styles.secondaryButtonMinimal,
-            processing && styles.buttonDisabled,
-          ]}
-          onPress={() => void handleReject()}
-          disabled={processing || selectedSubmissionIds.length === 0}
-          activeOpacity={0.85}
-        >
-          <Text style={[styles.secondaryButtonText, minimal && styles.secondaryButtonTextMinimal]}>
-            Rejeitar selecionados
           </Text>
         </TouchableOpacity>
       </View>
@@ -334,12 +344,22 @@ export function MaintenanceFamilyReceptionCard({
           contentContainerStyle={styles.listContent}
         >
           {submissions.map((submission) => {
-            const selected = selectedSubmissionIds.includes(submission.submissionId);
+            const expanded = expandedSubmissionId === submission.submissionId;
+            const inspect = inspectBySubmissionId[submission.submissionId];
+            const inspectLoading = inspectLoadingId === submission.submissionId;
             const hasPlaceholderBirth = submission.members.some((member) =>
               isPlaceholderCellBirthDate(member.birthDate)
             );
             const informant = submission.members.find((member) => member.isInformant);
             const missingCep = Boolean(informant) && !informantHasValidCep(informant?.cep);
+            const incomingWithMatches = inspect?.incoming.filter((item) => item.matches.length > 0) ?? [];
+            const hasMatches = incomingWithMatches.length > 0;
+            const canGravar =
+              expanded
+              && !hasMatches
+              && !submission.hasFamilyConflict
+              && !hasPlaceholderBirth
+              && !missingCep;
 
             return (
               <View
@@ -347,13 +367,13 @@ export function MaintenanceFamilyReceptionCard({
                 style={[
                   styles.submissionCard,
                   minimal && styles.submissionCardMinimal,
-                  selected && styles.submissionCardSelected,
-                  minimal && selected && styles.submissionCardSelectedMinimal,
+                  expanded && styles.submissionCardSelected,
+                  minimal && expanded && styles.submissionCardSelectedMinimal,
                 ]}
               >
                 <TouchableOpacity
                   style={styles.submissionHeader}
-                  onPress={() => toggleSubmissionSelection(submission.submissionId)}
+                  onPress={() => toggleExpanded(submission.submissionId)}
                   activeOpacity={0.9}
                 >
                   <Text style={[styles.submissionTitle, minimal && styles.submissionTitleMinimal]}>
@@ -397,11 +417,8 @@ export function MaintenanceFamilyReceptionCard({
                         {formatShortName(member.fullName)} — {member.relationship}
                       </Text>
                       <Text style={[styles.memberHint, minimal && styles.memberHintMinimal]}>
-                        {member.matchedProfileId || member.matchedMemberId
-                          ? 'Já existe em profiles/members'
-                          : 'Novo integrante'}
-                        {member.detectedFamilyId ? ` · ${member.detectedFamilyId}` : ''}
-                        {` · nasc. ${formatBirthDateDisplay(member.birthDate)}`}
+                        {`nasc. ${formatBirthDateDisplay(member.birthDate)}`}
+                        {member.phone ? ` · ${member.phone}` : ''}
                       </Text>
                       {placeholderBirth ? (
                         <View style={styles.birthEditor}>
@@ -472,6 +489,150 @@ export function MaintenanceFamilyReceptionCard({
                     </View>
                   );
                 })}
+
+                {expanded ? (
+                  <View style={styles.expandedBlock}>
+                    {inspectLoading && !inspect ? (
+                      <ActivityIndicator
+                        color={minimal ? MINIMAL_UI.blueDark : ACCENT}
+                        size="small"
+                      />
+                    ) : null}
+
+                    {inspect ? (
+                      <>
+                        <Text style={[styles.familyListTitle, minimal && styles.familyListTitleMinimal]}>
+                          {inspect.detectedFamilyId
+                            ? `Família já cadastrada (${inspect.detectedFamilyId})`
+                            : 'Nenhum código familiar detectado — família nova'}
+                        </Text>
+                        {inspect.existingMembers.length === 0 ? (
+                          <Text style={[styles.memberHint, minimal && styles.memberHintMinimal]}>
+                            Nenhum integrante com este código nesta instância.
+                          </Text>
+                        ) : (
+                          inspect.existingMembers.map((person) => (
+                            <Text
+                              key={person.profileId}
+                              style={[styles.existingMember, minimal && styles.existingMemberMinimal]}
+                            >
+                              • {formatShortName(person.fullName)}
+                              {person.birthDate ? ` · nasc. ${formatBirthDateDisplay(person.birthDate)}` : ''}
+                              {person.phone ? ` · ${person.phone}` : ''}
+                            </Text>
+                          ))
+                        )}
+
+                        {hasMatches ? (
+                          <View style={[styles.matchBox, minimal && styles.matchBoxMinimal]}>
+                            <Text style={[styles.matchTitle, minimal && styles.matchTitleMinimal]}>
+                              Integrante(s) já identificados no cadastro desta instância
+                            </Text>
+                            {incomingWithMatches.map((person) => (
+                              <View key={person.id} style={styles.matchPerson}>
+                                <Text style={[styles.matchPersonName, minimal && styles.matchPersonNameMinimal]}>
+                                  {formatShortName(person.fullName)}
+                                </Text>
+                                {person.matches.map((match) => (
+                                  <Text
+                                    key={match.profileId}
+                                    style={[styles.matchDetail, minimal && styles.matchDetailMinimal]}
+                                  >
+                                    {match.sameFamily
+                                      ? `Já consta nesta família (${match.familyId ?? inspect.detectedFamilyId}).`
+                                      : `Possivelmente de outra família (${match.familyId ?? 'sem código'}).`}
+                                    {` Conferência por ${formatMatchReasons(match)}: ${formatShortName(match.fullName)}.`}
+                                  </Text>
+                                ))}
+                                <TouchableOpacity
+                                  style={[styles.discardButton, processing && styles.buttonDisabled]}
+                                  onPress={() =>
+                                    void handleDiscardMember(
+                                      person.id,
+                                      submission.submissionId,
+                                      person.fullName
+                                    )
+                                  }
+                                  disabled={processing}
+                                  activeOpacity={0.85}
+                                >
+                                  <Text style={styles.discardButtonText}>Descartar este integrante</Text>
+                                </TouchableOpacity>
+                              </View>
+                            ))}
+                            <TouchableOpacity
+                              style={[
+                                styles.discardAllButton,
+                                minimal && styles.discardAllButtonMinimal,
+                                processing && styles.buttonDisabled,
+                              ]}
+                              onPress={() => void handleDiscardFamily(submission.submissionId)}
+                              disabled={processing}
+                              activeOpacity={0.85}
+                            >
+                              <Text
+                                style={[
+                                  styles.discardAllButtonText,
+                                  minimal && styles.discardAllButtonTextMinimal,
+                                ]}
+                              >
+                                Descartar todos os integrantes da família
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        ) : (
+                          <View style={styles.itemActions}>
+                            <TouchableOpacity
+                              style={[
+                                styles.primaryButton,
+                                minimal && styles.primaryButtonMinimal,
+                                (!canGravar || processing) && styles.buttonDisabled,
+                              ]}
+                              onPress={() => void handleProcess(submission.submissionId)}
+                              disabled={!canGravar || processing}
+                              activeOpacity={0.85}
+                            >
+                              {processing ? (
+                                <ActivityIndicator
+                                  color={minimal ? MINIMAL_UI.onDark : '#052e16'}
+                                  size="small"
+                                />
+                              ) : (
+                                <Text
+                                  style={[
+                                    styles.primaryButtonText,
+                                    minimal && styles.primaryButtonTextMinimal,
+                                  ]}
+                                >
+                                  Gravar
+                                </Text>
+                              )}
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[
+                                styles.secondaryButton,
+                                minimal && styles.secondaryButtonMinimal,
+                                processing && styles.buttonDisabled,
+                              ]}
+                              onPress={() => void handleReject(submission.submissionId)}
+                              disabled={processing}
+                              activeOpacity={0.85}
+                            >
+                              <Text
+                                style={[
+                                  styles.secondaryButtonText,
+                                  minimal && styles.secondaryButtonTextMinimal,
+                                ]}
+                              >
+                                Rejeitar
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
+                      </>
+                    ) : null}
+                  </View>
+                ) : null}
               </View>
             );
           })}
@@ -518,6 +679,82 @@ const styles = StyleSheet.create({
   batchActions: {
     gap: 8,
     marginBottom: 12,
+  },
+  itemActions: {
+    gap: 8,
+    marginTop: 12,
+  },
+  expandedBlock: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(148, 163, 184, 0.25)',
+    gap: 6,
+  },
+  familyListTitle: {
+    color: '#3A96DD',
+    fontSize: 12,
+    fontWeight: '800',
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  existingMember: {
+    color: 'rgba(58, 150, 221, 0.92)',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  matchBox: {
+    marginTop: 8,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(220, 38, 38, 0.45)',
+    backgroundColor: 'rgba(220, 38, 38, 0.08)',
+    gap: 8,
+  },
+  matchTitle: {
+    color: '#DC2626',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  matchPerson: {
+    gap: 4,
+  },
+  matchPersonName: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  matchDetail: {
+    color: '#B91C1C',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  discardButton: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(220, 38, 38, 0.55)',
+  },
+  discardButtonText: {
+    color: '#DC2626',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  discardAllButton: {
+    marginTop: 4,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: 'rgba(220, 38, 38, 0.16)',
+  },
+  discardAllButtonText: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '800',
   },
   primaryButton: {
     backgroundColor: ACCENT,
@@ -687,6 +924,31 @@ const styles = StyleSheet.create({
   },
   batchActionsMinimal: {
     ...CONTAIN_WIDTH,
+  },
+  familyListTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  existingMemberMinimal: {
+    color: MINIMAL_UI.text,
+  },
+  matchBoxMinimal: {
+    borderColor: '#DC2626',
+    backgroundColor: '#FEF2F2',
+  },
+  matchTitleMinimal: {
+    color: '#DC2626',
+  },
+  matchPersonNameMinimal: {
+    color: '#DC2626',
+  },
+  matchDetailMinimal: {
+    color: '#B91C1C',
+  },
+  discardAllButtonMinimal: {
+    backgroundColor: '#FEE2E2',
+  },
+  discardAllButtonTextMinimal: {
+    color: '#DC2626',
   },
   primaryButtonMinimal: {
     backgroundColor: MINIMAL_UI.blueDark,
