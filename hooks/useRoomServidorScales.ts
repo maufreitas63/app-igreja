@@ -1,6 +1,6 @@
 import {
   canProfileCheckInRoom,
-  checkSessionIsRoomServidorSuperAdmin,
+  checkSessionCanBypassRoomServidorScale,
   fetchRoomServidorAssignmentsForDate,
   groupRoomServidorNames,
   type RoomServidorAssignment,
@@ -23,14 +23,14 @@ export const useRoomServidorScales = (
   const profileId = options?.profileId ?? null;
 
   const [assignments, setAssignments] = useState<RoomServidorAssignment[]>([]);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [canBypassScale, setCanBypassScale] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const refetch = useCallback(async () => {
     if (!enabled || !eventDate) {
       setAssignments([]);
-      setIsSuperAdmin(false);
+      setCanBypassScale(false);
       setLoading(false);
       setError(null);
       return;
@@ -40,16 +40,16 @@ export const useRoomServidorScales = (
     setError(null);
 
     try {
-      const [nextAssignments, superAdmin] = await Promise.all([
+      const [nextAssignments, bypassScale] = await Promise.all([
         fetchRoomServidorAssignmentsForDate(eventDate),
-        checkSessionIsRoomServidorSuperAdmin(profileId),
+        checkSessionCanBypassRoomServidorScale(profileId),
       ]);
 
       setAssignments(nextAssignments);
-      setIsSuperAdmin(superAdmin);
+      setCanBypassScale(bypassScale);
     } catch (fetchError) {
       setAssignments([]);
-      setIsSuperAdmin(false);
+      setCanBypassScale(false);
       setError(fetchError instanceof Error ? fetchError : new Error('Erro ao carregar servidores.'));
     } finally {
       setLoading(false);
@@ -64,13 +64,13 @@ export const useRoomServidorScales = (
 
   const canCheckInRoom = useCallback(
     (room: RoomServidorRoom) => {
-      if (isSuperAdmin) {
+      if (canBypassScale) {
         return true;
       }
 
       return canProfileCheckInRoom(profileFullName, room, assignments);
     },
-    [assignments, isSuperAdmin, profileFullName]
+    [assignments, canBypassScale, profileFullName]
   );
 
   return {
@@ -79,7 +79,7 @@ export const useRoomServidorScales = (
     teensServidorNames: groupedNames.teens,
     canCheckInKids: canCheckInRoom('KIDS'),
     canCheckInTeens: canCheckInRoom('TEENS'),
-    isSuperAdmin,
+    isSuperAdmin: canBypassScale,
     loading,
     error,
     refetch,

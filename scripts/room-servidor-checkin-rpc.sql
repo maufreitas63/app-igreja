@@ -1,4 +1,4 @@
--- Check-in Kids/Teens: somente servidores escalados na data do evento.
+-- Check-in Kids/Teens: Super Admin, Secretaria ou servidor escalado na data do evento.
 -- Execute no SQL Editor do Supabase após vigilancia-escalas.sql e get-app-parameter-value.sql.
 -- Substitui scripts/room-monitor-checkin-rpc.sql (mantém aliases legados no final).
 
@@ -120,6 +120,11 @@ begin
     return true;
   end if;
 
+  -- Secretaria opera o check-in no culto mesmo sem escala Kids/Teens preenchida.
+  if public.profile_has_role_code(p_profile_id, 'secretaria') then
+    return true;
+  end if;
+
   select p.full_name
     into v_profile_name
     from public.profiles p
@@ -218,7 +223,7 @@ begin
     return jsonb_build_object(
       'success', false,
       'message',
-      'Somente servidores escalados para esta sala na data do evento podem registrar o check-in.'
+      'Somente Secretaria, Super Admin ou servidores escalados para esta sala na data do evento podem registrar o check-in.'
     );
   end if;
 

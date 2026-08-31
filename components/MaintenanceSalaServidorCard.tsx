@@ -203,7 +203,7 @@ export const MaintenanceSalaServidorCard = ({
     if (!canCheckInSelectedRoom) {
       Alert.alert(
         'Sem permissão',
-        'Somente Servidores escalados para esta sala na data do evento podem registrar o check-in.'
+        'Somente Secretaria, Super Admin ou servidores escalados para esta sala na data do evento podem registrar o check-in.'
       );
       return;
     }
@@ -469,8 +469,8 @@ export const MaintenanceSalaServidorCard = ({
                 minimal && styles.roomServidorRestrictionTextMinimal,
               ]}
             >
-              Você não está escalado como servidor desta sala na data do evento. O check-in está
-              bloqueado.
+              Você não está escalado como servidor desta sala na data do evento. Secretaria e Super
+              Admin podem fazer o check-in mesmo sem escala.
             </Text>
           ) : null}
 

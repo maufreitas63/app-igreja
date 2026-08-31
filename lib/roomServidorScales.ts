@@ -3,6 +3,7 @@ import { getEventCalendarDate } from '@/lib/eventDate';
 import { formatShortName } from '@/lib/formatShortName';
 import { fetchMaintenanceScaleLogs } from '@/lib/maintenanceScalesApi';
 import { supabase } from '@/lib/supabase';
+import { coerceRpcBoolean } from '@/lib/supabaseRpc';
 
 export const ROOM_SERVIDOR_SCALE_PARAMETER = {
   kids: 'escala_codigo_servidor_kids',
@@ -246,18 +247,32 @@ export const canProfileCheckInRoom = (
     .filter((entry) => entry.room === room)
     .some((entry) => personNamesMatch(profileName, entry.volunteerName));
 
-export async function checkSessionIsRoomServidorSuperAdmin(profileId: string | null | undefined) {
+/** Super Admin ou Secretaria: check-in no culto sem precisar estar na escala. */
+export async function checkSessionCanBypassRoomServidorScale(
+  profileId: string | null | undefined
+) {
   if (!profileId?.trim()) {
     return false;
   }
 
-  const { data, error } = await supabase.rpc('is_super_admin_profile', {
-    p_profile_id: profileId.trim(),
-  });
+  const id = profileId.trim();
+  const [superAdmin, secretaria] = await Promise.all([
+    supabase.rpc('is_super_admin_profile', { p_profile_id: id }),
+    supabase.rpc('profile_has_role_code', {
+      p_profile_id: id,
+      p_role_code: 'secretaria',
+    }),
+  ]);
 
-  if (error) {
-    return false;
+  if (coerceRpcBoolean(superAdmin.data)) {
+    return true;
   }
 
-  return data === true;
+  return coerceRpcBoolean(secretaria.data);
+}
+
+export async function checkSessionIsRoomServidorSuperAdmin(
+  profileId: string | null | undefined
+) {
+  return checkSessionCanBypassRoomServidorScale(profileId);
 }
