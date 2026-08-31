@@ -634,7 +634,7 @@ const coverChildren = () => [
     color: C.slate600,
     after: 40,
   }),
-  para('Data: 25 de agosto de 2026', { size: 20, color: C.slate600, after: 400 }),
+  para('Data: 31 de agosto de 2026', { size: 20, color: C.slate600, after: 400 }),
   new Paragraph({ children: [], pageBreakBefore: false }),
 ];
 

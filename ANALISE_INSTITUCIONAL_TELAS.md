@@ -12,8 +12,8 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 <strong>Solução:</strong> ecossistema app-igreja (PWA + mobile)<br>
 <strong>Público:</strong> liderança, secretaria, pastoral, tesouraria e operação<br>
 <strong>Base:</strong> código-fonte, rotas Expo Router, menu lateral, Índice, Painel e Manutenção<br>
-<strong>Data:</strong> 29 de agosto de 2026<br>
-<strong>Revisão:</strong> régua de acolhimento (Recepção Familiar), mural de generosidade com moderação, Fechar no rodapé canônico e correções de vínculo/front da equipe de boas-vindas
+<strong>Data:</strong> 31 de agosto de 2026<br>
+<strong>Revisão:</strong> caminho publicado (Índice, menu, Eu quero… e engrenagem — sem carrossel do Painel); Cantinho da Leitura; Livros doados (ISBN, Bipar, CBL); empréstimos da Secretaria; Declaração de Privacidade LGPD no Sobre o Conecta+; Modo Ghost; Aliança Conecta Reino
 </p>
 
 </div>
@@ -25,8 +25,8 @@ A plataforma concentra, em um único aplicativo, o que a igreja precisa para rec
 Há três camadas visíveis:
 
 1. **Entrada e confiança** — login, cadastro, LGPD, escolha da igreja e encerramento seguro da sessão.
-2. **Vida da família** — Índice, Painel, Perfil, eventos, ofertas, pastoral, células, campanhas, voluntariado, mural de generosidade, financeiro de leitura e escalas.
-3. **Operação e governança** — totem, salas, manutenção, papéis, relatórios, instâncias e assinatura.
+2. **Vida da família** — Índice, menu do membro, Perfil (carteirinha, família, trilha, reembolsos e Cantinho da Leitura), eventos, ofertas, pastoral, células, campanhas, voluntariado, mural de generosidade, financeiro de leitura e escalas.
+3. **Operação e governança** — totem, salas, acervo e empréstimos de livros, manutenção, papéis, Ghost, relatórios, instâncias, assinatura e Aliança Conecta Reino.
 
 Cada tela abaixo segue o mesmo roteiro: título, valor comercial, propósito técnico e as duas perspectivas (usuário final e administração).
 
@@ -40,7 +40,8 @@ Cada tela abaixo segue o mesmo roteiro: título, valor comercial, propósito té
 | Cuidar | Pastoral, agenda pastoral, aniversariantes, membros, mapa, células, Régua de Acolhimento | Cuidado pastoral, célula com datas reais, visitante acompanhado em etapas após a recepção |
 | Contribuir | Eu quero… / Contribuir, Dízimos e Ofertas, campanhas | PIX Copia e Cola com o valor; campanha identificada sem misturar com o dízimo |
 | Servir | Escalas, troca pontual, mural de vagas, mural de generosidade, estacionamento | Escala visível, substituição combinada, dons reconhecidos e doação/empréstimo entre irmãos |
-| Governar | Manutenção, ACL, papéis, transferência, igrejas, billing | Controle institucional com rastreio |
+| Ler | Cantinho da Leitura, Livros doados, empréstimos da Secretaria | Acervo ISBN, reserva do membro, retirada e renovação rastreadas |
+| Governar | Manutenção, ACL, papéis, transferência, Ghost, igrejas, billing, Aliança | Controle institucional com rastreio e auditoria de telas |
 
 ---
 
@@ -162,7 +163,7 @@ Isolamento por igreja: membros, finanças e eventos não vazam entre instâncias
 
 ### Propósito e conexões
 
-Trava a rolagem antes do aceite, grava o registro no banco e libera ou bloqueia o restante do app conforme `LGPD_Ativo`. Integra-se ao cadastro, ao alerta vermelho no Painel e ao Controle de Acesso.
+Trava a rolagem antes do aceite, grava o registro no banco e libera ou bloqueia o restante do app conforme `LGPD_Ativo`. Integra-se ao cadastro, ao alerta vermelho de pendência e ao Controle de Acesso. A **Declaração de Privacidade e Segurança de Dados** institucional (consulta, sem aceite) fica em **Sobre o Conecta+** — não substitui este rito.
 
 <div class="split">
 <div class="vision user">
@@ -244,7 +245,7 @@ Fila única de acolhimento, com aceite ou recusa institucional — não um amont
 
 ### Propósito e conexões
 
-Distribui etiquetas na altura da tela (`indexShortcutHints`). Cada toque abre o Painel no card correspondente (`dashboardCard`). **Eu quero… → Contribuir** reúne Dízimos e Ofertas e Campanhas e Projetos; o pedido de oração abre o Coração Aberto. Rodapé de sessão: Encerrar sessão. Engrenagem de manutenção à direita, só com permissão. Marca d’água da instância. A caixa de avisos recarrega em tempo real e não repete o mesmo recado já visto — inclui recados do culto, trocas de escala, marcos de campanha, vagas ministeriais e **avisos do Mural de Generosidade**. **Fechar** em telas de conteúdo devolve ao Índice; só Encerrar sessão limpa o aparelho.
+Atalhos e avisos na própria home (`EventsInboxHome`). Toque no culto abre a **Agenda da Família**. **Eu quero… → Contribuir** reúne Dízimos e Ofertas e Campanhas e Projetos; o pedido de oração abre o Coração Aberto. Rodapé de sessão: Encerrar sessão. A engrenagem de gestão **não** fica neste topo: só aparece depois de abrir o Menu, se o papel tiver item de manutenção. Marca d’água da instância. A caixa de avisos recarrega em tempo real e não repete o mesmo recado já visto — inclui recados do culto, trocas de escala, marcos de campanha, vagas ministeriais e **avisos do Mural de Generosidade**. **Fechar** em telas de conteúdo devolve ao Índice; só Encerrar sessão limpa o aparelho. O carrossel antigo `/(tabs)/dashboard` **não é produto publicado**: a rota só redireciona para a tela dedicada (Célula → `/pequeno-grupo`, Mural de Oportunidades → `/mural-oportunidades`).
 
 <div class="split">
 <div class="vision user">
@@ -286,26 +287,26 @@ A equipe entra nos módulos pela engrenagem, já agrupados. O membro comum não 
 
 <div class="screen">
 
-## Painel (carrossel de cards)
+## Caminho publicado (sem carrossel)
 
-<p class="route">Rota <code>/(tabs)/dashboard</code></p>
+<p class="route">Rota <code>/(tabs)/dashboard</code> só redireciona · produto em rotas dedicadas</p>
 
 ### Descrição comercial
 
-É o “culto operacional” no bolso: um card por vez, deslizando, com o mesmo recorte visual da igreja. A família agenda presença, gera QR, vê salas, contribui, pede oração, encontra irmãos, consulta aniversários, lê o financeiro, confere a escala, encontra a célula, acompanha campanhas e vê vagas alinhadas ao próprio perfil ministerial — sem abrir dez aplicativos.
+O “culto operacional” no bolso não é mais um carrossel de cards. A família agenda presença no Índice, gera QR na carteirinha, contribui e pede oração em **Eu quero…**, encontra célula, vagas, generosidade, escalas e financeiro no **menu do membro**, e a equipe opera pela **engrenagem**. Cada módulo tem tela própria, com o recorte visual da igreja, sem dez aplicativos e sem o membro “descobrir” gestão digitando URL.
 
 ### Propósito e conexões
 
-Carrossel com ACL `dashboard.card.*`. No caminho publicado, só Célula (`small_group`) e Mural de Oportunidades (`opportunity_mural_card`) permanecem no carrossel; o **Mural de Generosidade** abre rota própria (`/mural-generosidade`), sem card extra no Painel. No modo da família, o card preenche a coluna útil da tela (título, textos e botões na mesma largura). Rodapé `‹` `›` e Menu. Telas filhas devolvem ao card de origem via `returnDashboardCard`. Paletas em `dashboardCardThemes`.
+`lib/frozenPublication.ts`: cards do Painel antigo permanecem no repositório, congelados. Célula e Mural de Oportunidades têm rota dedicada. Deep links de card congelado resolvem para a tela viva (`resolveFrozenDashboardDeepLink` / `resolvePublishedDashboardHref`). Telas filhas devolvem ao chamador via `returnRoute` / `returnDashboardCard`. Paletas em `dashboardCardThemes`. ACL continua valendo tela a tela (`dashboard.card.*` e `ACCESS_SCREEN`).
 
 <div class="split">
 <div class="vision user">
 <h4>Visão do Usuário Final</h4>
-Experiência contínua, com saudação pelo nome e retorno exatamente ao card de onde saiu.
+Encontra cada função no menu ou no rodapé, com saudação pelo nome e Fechar de volta ao Índice — sem deslizar um carrossel.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>
-Módulos ligados ou desligados por papel e por regra de evento (QR só no dia, estacionamento só se ativo).
+Módulos ligados ou desligados por papel. QR, salas e estacionamento não voltam ao carrossel até ordem expressa de descongelar.
 </div>
 </div>
 </div>
@@ -794,11 +795,11 @@ Fila de moderação, mediação de contato e encerramento do anúncio — a igre
 
 ### Descrição comercial
 
-É a identidade digital da pessoa na igreja: dados cadastrais, família, trilha de discipulado e carteirinha. Um único lugar para “quem eu sou aqui”.
+É a identidade digital da pessoa na igreja: dados cadastrais, família, trilha de discipulado, carteirinha, reembolsos e o Cantinho da Leitura. Um único lugar para “quem eu sou aqui”.
 
 ### Propósito e conexões
 
-`PerfilClassPanel` abre Dados Cadastrais, Gerenciar Família, Trilha e Carteirinha Digital, conforme ACL. Paleta de cores no rodapé do card.
+`PerfilClassPanel` abre Dados Cadastrais, Gerenciar Família, Trilha, Carteirinha Digital, Reembolsos e **Cantinho da Leitura**, conforme ACL. Paleta de cores no rodapé do card.
 
 <div class="split">
 <div class="vision user">
@@ -808,6 +809,32 @@ Atualiza a própria vida na igreja sem pedir à secretaria para “mudar o telef
 <div class="vision admin">
 <h4>Visão da Administração</h4>
 Campos visíveis/editáveis por papel. Onboarding incompleto é visível e corrigível.
+</div>
+</div>
+</div>
+
+<div class="screen">
+
+## Cantinho da Leitura
+
+<p class="route">Painel em <code>/perfil</code> · <code>MeusLivrosRetiradosPanel</code></p>
+
+### Descrição comercial
+
+A biblioteca da igreja no bolso do membro: um título por linha, em ordem alfabética. A pessoa escolhe o livro, vê capa, autor, editora, ano e ISBN, escolhe a data de retirada e reserva. A Secretaria confirma a retirada no painel de empréstimos. Sem vitrine pública de quem está lendo o quê.
+
+### Propósito e conexões
+
+Lista o acervo disponível (`list_livros_disponiveis_reserva`). Reserva via `reservar_livro_acervo` (status `reservado`, prazo de retirada). O membro acompanha os próprios empréstimos e pode cancelar reserva. A Secretaria opera em **Livros doados** (abas Empréstimos e Histórico). Isolamento por `tenant_id`.
+
+<div class="split">
+<div class="vision user">
+<h4>Visão do Usuário Final</h4>
+Escolhe o título, reserva e vê o prazo — sem ligar para a secretaria “tem esse livro?”.
+</div>
+<div class="vision admin">
+<h4>Visão da Administração</h4>
+Fila de reservas para confirmar retirada, com rastreio de devolução e renovação.
 </div>
 </div>
 </div>
@@ -1072,6 +1099,32 @@ Fala com a liderança sem precisar de um “amigo que conhece o pastor”.
 <div class="vision admin">
 <h4>Visão da Administração</h4>
 Backlog visível, priorizável, sem recados perdidos no WhatsApp da secretaria.
+</div>
+</div>
+</div>
+
+<div class="screen">
+
+## Sobre o Conecta+
+
+<p class="route">Rota <code>/sobre-conecta</code> · menu <code>menu_sobre_conecta</code></p>
+
+### Descrição comercial
+
+É a identidade da plataforma na mão do membro: o que o Conecta+ é, a versão em uso e o compromisso público com privacidade. Não é tela de cadastro nem de aceite jurídico — é transparência institucional. O botão **Declaração de Privacidade e Segurança de Dados (LGPD)** abre a leitura completa da declaração oficial (isolamento multi-tenant, mural sem telefone, ausência de vitrine de dons, QR só com código familiar, mapa sem endereço para o membro comum, sigilo pastoral fail-closed e escudo do Super Administrador).
+
+### Propósito e conexões
+
+Versão e revisão em parâmetros `conecta_versao` / `conecta_revisao`. Texto da declaração em `lib/conectaPrivacyDeclaration.ts`, modal de leitura `ConectaPrivacyDeclarationModal`. Sempre visível no menu do membro. Distinto de `/lgpd` (aceite obrigatório quando `LGPD_Ativo`).
+
+<div class="split">
+<div class="vision user">
+<h4>Visão do Usuário Final</h4>
+Lê, com calma, como a igreja e a plataforma tratam os seus dados — e anota a versão se for abrir um chamado.
+</div>
+<div class="vision admin">
+<h4>Visão da Administração</h4>
+A congregação tem a declaração institucional no próprio app, versionada, sem PDF solto no grupo.
 </div>
 </div>
 </div>
@@ -1582,6 +1635,32 @@ Fila operacional da equipe de boas-vindas e alerta pastoral no dia 8, isolado po
 
 <div class="screen">
 
+## Livros doados (acervo e empréstimos)
+
+<p class="route">Rota <code>/livros-doados</code> · engrenagem <code>menu_livros</code></p>
+
+### Descrição comercial
+
+A secretaria deixa de anotar doação de livro em caderno. Três abas: **Acervo**, **Empréstimos** e **Histórico**. No acervo, duas seções recolhíveis: **Registro de Doações** (ISBN digitado ou **Bipar** pela câmera; se a Google Books estourar a cota, o app busca CBL/BrasilAPI e Open Library) e lista do **Acervo** em ordem alfabética. Empréstimos: busca de membro (nome ou telefone — o termo sem dígitos não lista a igreja inteira), livro do acervo ou título externo, prazo inicial de **30 dias**, confirmação de retirada da reserva, **Renovar +10**, devolução e WhatsApp do prazo. O nome só aparece em vermelho com “(desligado)” quando há **data de saída da membresia** (`membership_out`) — o flag de cadastro ativo não é desligamento.
+
+### Propósito e conexões
+
+Tabelas `livros` e `emprestimos_livros`, RPCs SECURITY DEFINER (`scripts/livros-doados.sql`, `scripts/emprestimos-livros.sql`). Function `functions/api/buscar-livro.ts` e `lib/isbnCatalogLookup.ts`. Scanner `IsbnBarcodeScanner` (nativo `expo-camera`, web `BarcodeDetector`). Confirmação na web via `confirmDialog`. WhatsApp no padrão dos aniversariantes. Isolamento por `tenant_id`. ACL `/livros-doados` (Secretaria e Super Administrador). O **Cantinho da Leitura** no Perfil consome o mesmo acervo.
+
+<div class="split">
+<div class="vision user">
+<h4>Visão do Usuário Final</h4>
+Reserva no Cantinho; a Secretaria confirma a saída do livro. Não opera o cadastro ISBN.
+</div>
+<div class="vision admin">
+<h4>Visão da Administração</h4>
+Acervo com ficha bibliográfica, empréstimo rastreado, desligado visível de verdade e renovação curta (10 dias) depois do primeiro mês.
+</div>
+</div>
+</div>
+
+<div class="screen">
+
 ## Controle de Acesso
 
 <p class="route">Painel <code>access_control</code></p>
@@ -1686,6 +1765,32 @@ Auditoria de login e navegação, com recorte de segurança entre papéis e inst
 
 <div class="screen">
 
+## Modo Ghost
+
+<p class="route">Painel <code>auditor</code> · engrenagem</p>
+
+### Descrição comercial
+
+O Super Administrador vê o aplicativo **como a pessoa auditada**: menus, listas, permissões e família. Não é “login como” para operar tesouraria no nome alheio — é auditoria de ACL. Encerrar Ghost devolve a identidade real. O Gestor de Controle de Acesso não tem este item.
+
+### Propósito e conexões
+
+Toda tela em Ghost usa `loadEffectiveSessionProfile` / `resolveEffectiveProfileId` / `getEffectiveUserPhone`. `getStoredUserPhone` só para auditoria, login real, totem e encerrar Ghost. RPC `canOperateGhostMode`. Painel `maintenance.card.auditor`.
+
+<div class="split">
+<div class="vision user">
+<h4>Visão do Usuário Final</h4>
+Indireta: a liderança testa o que aquela pessoa realmente vê, sem pedir o PIN.
+</div>
+<div class="vision admin">
+<h4>Visão da Administração</h4>
+Prova de grants e de fail-closed. Ghost aberto por engano grava ações como o alvo — encerre ao terminar.
+</div>
+</div>
+</div>
+
+<div class="screen">
+
 ## Instâncias (Igrejas)
 
 <p class="route">Rota <code>/igrejas</code> · super administrador</p>
@@ -1738,6 +1843,32 @@ Contrato SaaS visível, com teto de membresia alinhado ao plano e ciclo trimestr
 
 <div class="screen">
 
+## Aliança Conecta Reino
+
+<p class="route">Rota <code>/alianca-conecta-reino</code> · engrenagem (Super Administrador)</p>
+
+### Descrição comercial
+
+A rede de igrejas mães e filhas do Conecta+: demonstrativo das assinaturas (cartão, baixa imediata no Stripe) e do **passivo de 40%** às igrejas mães. A quitação da oferta de apoio ministerial é **manual**, em até 30 dias, com confirmação na tela. No boletim financeiro da igreja mãe, a seção Aliança mostra o mesmo recorte.
+
+### Propósito e conexões
+
+RPCs `get_alianca_admin_statement`, `settle_alianca_payout_admin`, `get_alianca_mae_panel`. Webhook Stripe (`process_alianca_invoice_paid` / `_failed`). Só Super Administrador (`useIgrejasAdminAccess`). ConfirmDialog na baixa. Isolamento por tenant.
+
+<div class="split">
+<div class="vision user">
+<h4>Visão do Usuário Final</h4>
+Indireta: a parceria entre igrejas não mistura o dízimo da congregação com o passivo da plataforma.
+</div>
+<div class="vision admin">
+<h4>Visão da Administração</h4>
+Passivo visível, ciclo de até quatro ofertas e baixa rastreada — sem planilha paralela de “40%”.
+</div>
+</div>
+</div>
+
+<div class="screen">
+
 ## Orquestrador (admin)
 
 <p class="route">Rota <code>/admin/orquestrador</code></p>
@@ -1771,9 +1902,9 @@ A plataforma não é um conjunto de telas soltas. É uma **jornada**:
 1. A pessoa **entra com identidade** (login, PIN, opcionalmente biometria).
 2. **Reconhece a própria igreja** (instância, marca, PIX).
 3. **Participa com a família** (agenda, QR só com código familiar, salas).
-4. **Cuidado e serviço** (pastoral, células com datas reais, escalas com troca, mural, RD, ofertas e campanhas pelo mesmo Contribuir).
-5. A equipe **governa** (ACL, papéis, transferência, relatórios, tesouraria).
+4. **Cuidado, serviço e leitura** (pastoral, células com datas reais, escalas com troca, mural, RD, ofertas e campanhas pelo mesmo Contribuir, Cantinho da Leitura e acervo da Secretaria).
+5. A equipe **governa** (ACL, papéis, Ghost, transferência, relatórios, tesouraria, Aliança).
 
 O valor para o membro é autonomia e dignidade. O valor para a administração é controle com rastreio, menos WhatsApp como sistema e um único lugar em que o culto, a família e a prestação de contas se encontram.
 
-Este documento descreve o produto como ele está no código em **28 de agosto de 2026**. Telas condicionais (QR, estacionamento, servos, manutenção) aparecem somente quando o papel, o evento e os parâmetros da instância autorizam — e isso, em si, já é parte da proposta comercial: **cada pessoa vê a igreja que lhe cabe viver**.
+Este documento descreve o produto como ele está no código em **31 de agosto de 2026**. Telas condicionais (QR no totem, estacionamento, servos, manutenção) aparecem somente quando o papel, o evento e os parâmetros da instância autorizam — e isso, em si, já é parte da proposta comercial: **cada pessoa vê a igreja que lhe cabe viver**. O carrossel antigo do Painel permanece congelado até ordem expressa de descongelar.

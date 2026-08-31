@@ -165,7 +165,7 @@ def add_cover(doc: Document) -> None:
     )
     add_para(
         doc,
-        "Documento gerado a partir do código-fonte publicado (menus, rotas e ACL). Papéis Líder, Líder Geral, Administrador de Eventos e Orquestrador de Evento foram absorvidos pela Secretaria e não existem mais.",
+        "Documento gerado a partir do código-fonte publicado (menus, rotas e ACL). Inclui Cantinho da Leitura, Livros doados (ISBN/Bipar/CBL e empréstimos), Declaração de Privacidade no Sobre o Conecta+, Modo Ghost e Aliança Conecta Reino. Papéis Líder, Líder Geral, Administrador de Eventos e Orquestrador de Evento foram absorvidos pela Secretaria e não existem mais.",
         size=12,
         color=MUTED,
         align=WD_ALIGN_PARAGRAPH.CENTER,
@@ -231,7 +231,7 @@ def add_howto(doc: Document) -> None:
         ("Congregado", "congregado", "Cadastrado, com acesso básico; sem gerir família nem finanças globais."),
         ("Membro", "member", "Acesso padrão da vida na igreja (Início, perfil, ofertas, célula, escalas…)."),
         ("Responsável familiar", "family_acceptor", "Complemento: gerencia integrantes da família."),
-        ("Secretaria", "secretaria", "Operação da igreja: eventos, orquestração, escalas (todos os tipos), salas, totem, células, recepção, avisos, mídia, murais, campanhas e temas da Trilha. Sem Cuidados Pastorais nem tesouraria global."),
+        ("Secretaria", "secretaria", "Operação da igreja: eventos, orquestração, escalas (todos os tipos), salas, totem, células, recepção, avisos, mídia, murais, campanhas, acervo/empréstimos de livros e temas da Trilha. Sem Cuidados Pastorais nem tesouraria global."),
         ("Tesoureiro", "tesoureiro", "Lançamentos, RD, orçamento, modelo preditivo; também opera campanhas."),
         ("Equipe Pastoral", "pastoral", "Membro + Cuidados Pastorais, mudança de papéis e temas da Trilha."),
         ("Gestor em Controle de Acesso", "gestor_controle_acesso", "Matriz de permissões. Nunca vê nem edita o Super Administrador nem PIN."),
@@ -258,7 +258,7 @@ def add_howto(doc: Document) -> None:
     doc.add_paragraph()
     add_para(
         doc,
-        "Regras que atravessam o manual: (1) cada igreja (tenant) só enxerga os próprios dados; (2) alguns menus exigem vínculo ativo (membership_out vazio); (3) no Modo Ghost a identidade usada é a da pessoa auditada, não a do operador; (4) o Gestor não lista Super Administrador; (5) não existem mais os papéis Líder, Líder Geral, Administrador de Eventos nem Orquestrador — a operação correspondente é da Secretaria.",
+        "Regras que atravessam o manual: (1) cada igreja (tenant) só enxerga os próprios dados; (2) alguns menus exigem vínculo ativo (membership_out vazio); (3) no Modo Ghost a identidade usada é a da pessoa auditada, não a do operador; (4) o Gestor não lista Super Administrador; (5) não existem mais os papéis Líder, Líder Geral, Administrador de Eventos nem Orquestrador — a operação correspondente é da Secretaria; (6) desligado no acervo de livros é só membership_out, nunca o flag is_active do cadastro.",
         size=11,
         space_after=12,
     )
@@ -550,14 +550,14 @@ def add_part2(doc: Document) -> None:
         doc,
         code="2.2",
         name="Perfil",
-        what="Hub «Perfil & Identidade»: carteirinha com QR de check-in, dados cadastrais, família, trilha e reembolsos (conforme grants).",
+        what="Hub «Perfil & Identidade»: carteirinha com QR de check-in, dados cadastrais, família, trilha, reembolsos e Cantinho da Leitura (conforme grants).",
         route="/perfil  — moduleKey menu_perfil  — card dashboard.card.grouped_manage",
         who="Membro e papéis com o card grouped_manage. Opções internas aparecem uma a uma conforme a ACL de cada tela filha.",
         access=["Menu → Perfil."],
         manages="A própria pessoa edita o que a coluna permitir. Secretaria ajusta cadastro operacional. Pastoral não substitui o preenchimento do membro.",
         acl="Card `dashboard.card.grouped_manage`. Filhas: `/manage-profile`, `/manage-members`, `/trilha-discipulado`, `/expense-report`.",
         fill=[
-            "Abra Perfil e escolha a ação (as seções 2.2.1 a 2.2.5 abaixo).",
+            "Abra Perfil e escolha a ação (as seções 2.2.1 a 2.2.6 abaixo).",
             "Se aparecer «Nenhuma opção de perfil disponível», falta grant — fale com a liderança, não tente URL direta.",
         ],
         impact="Perfil vazio: carteirinha sem QR, mapa sem pin, célula sem CEP, aniversário sumido, RD impossível. A operação inteira da família pisa neste hub.",
@@ -655,6 +655,26 @@ def add_part2(doc: Document) -> None:
             "Envie. Acompanhe o status; não «lance» você mesmo no financeiro da igreja.",
         ],
         impact="Sem descrição/comprovante: a tesouraria não concilia. RD não enviado = a igreja não devolve e o livro caixa fica incompleto. Acesso negado: toast na tela.",
+    )
+
+    add_feature(
+        doc,
+        code="2.2.6",
+        name="Cantinho da Leitura",
+        what="Reserva de livros do acervo da igreja: lista alfabética (um título por linha), ficha (capa, autor, editora, ano, ISBN) e prazo de 30 dias. A Secretaria confirma a retirada.",
+        route="Painel MeusLivrosRetiradosPanel dentro de /perfil",
+        who="Quem abre o hub Perfil (card grouped_manage). O acervo é o mesmo de Livros doados.",
+        access=["Menu → Perfil → Cantinho da Leitura."],
+        manages="O membro reserva e pode cancelar a reserva. Secretaria confirma retirada, renova (+10 dias), registra devolução e cadastra o ISBN em Livros doados.",
+        acl="Hub `dashboard.card.grouped_manage`. Operação do acervo: tela `/livros-doados`. RPCs `list_livros_disponiveis_reserva`, `reservar_livro_acervo`, `cancelar_reserva_livro`. Isolamento por tenant.",
+        fill=[
+            "Abra a lista (ordem A–Z). Toque no título para ver capa, autor, editora, ano e ISBN.",
+            "Escolha a data de retirada. O retorno inicial é 30 dias.",
+            "Toque em Reservar — o botão só habilita com um livro selecionado.",
+            "Acompanhe «Meus empréstimos». Cancele a reserva se desistir antes da Secretaria confirmar.",
+            "Não cadastre ISBN aqui: doação e bipar são da Secretaria (item 3.B.12).",
+        ],
+        impact="Sem acervo cadastrado: lista vazia. Reservar sem confirmação da Secretaria: o livro não sai. Duas famílias na mesma reserva: o índice único do livro ativo impede — o título some da lista disponível.",
     )
 
     add_feature(
@@ -797,14 +817,19 @@ def add_part2(doc: Document) -> None:
         doc,
         code="2.10",
         name="Sobre o Conecta+",
-        what="Texto institucional e número de versão/revisão do aplicativo.",
+        what="Texto institucional, número de versão/revisão e a Declaração de Privacidade e Segurança de Dados (LGPD) em leitura completa.",
         route="/sobre-conecta  — sempre visível",
         who="Qualquer pessoa no Menu.",
         access=["Menu → Sobre o Conecta+."],
-        manages="Equipe de produto/Super Admin (texto e versão no build). O membro só lê.",
+        manages="Equipe de produto/Super Admin (texto, versão e declaração no código). O membro só lê. O aceite jurídico de cadastro continua em /lgpd — esta tela não substitui o rito de aceite.",
         acl="Sempre enabled (`menu_sobre_conecta`).",
-        fill=["Leia. Anote a versão se for abrir um chamado em Sugestões."],
-        impact="Não há formulário. Sem esta tela, suporte e treinamento perdem a referência de versão.",
+        fill=[
+            "Leia o texto Sobre e anote Versão / Revisão se for abrir um chamado em Sugestões.",
+            "Toque em «Declaração de Privacidade e Segurança de Dados (LGPD)».",
+            "Role os sete pontos (isolamento por igreja, mural sem telefone, sem vitrine de dons, QR só com código familiar, mapa, sigilo pastoral, escudo do Super Administrador).",
+            "Use Fechar no rodapé da declaração para voltar ao Sobre.",
+        ],
+        impact="Não há formulário. Sem esta tela, suporte e treinamento perdem a referência de versão e a congregação não encontra a declaração institucional no app.",
     )
     doc.add_page_break()
 
@@ -1085,6 +1110,28 @@ def add_part3(doc: Document) -> None:
         acl="`dashboard.card.administrativo`.",
         fill=["Abra o documento necessário (estatuto, ata). Não edite texto jurídico por improvisação — substitua o arquivo pela governança."],
         impact="Pasta vazia: assembleia sem base no app. Documento velho: decisão da igreja apoia-se em texto errado.",
+    )
+
+    add_feature(
+        doc,
+        code="3.B.12",
+        name="Livros doados",
+        what="Acervo da igreja (ISBN, Bipar, cadastro manual) e empréstimos da Secretaria: confirmar retirada, renovar +10 dias, devolver, WhatsApp do prazo e histórico.",
+        route="/livros-doados  — hint: Acervo com busca ISBN e cadastro manual  — abas Acervo | Empréstimos | Histórico",
+        who="Secretaria e Super Administrador com grant da tela `/livros-doados`. Gestor não opera o acervo por este item salvo grant explícito.",
+        access=["Menu → engrenagem → Gestão de Pessoas → Livros doados."],
+        manages="Secretaria cadastra doação e registra saída/devolução. O membro só reserva no Cantinho da Leitura (2.2.6).",
+        acl="`ACCESS_SCREEN.livrosDoados` = `/livros-doados`. Tabelas `livros` e `emprestimos_livros`. RPCs em scripts/livros-doados.sql e scripts/emprestimos-livros.sql. Isolamento por tenant_id.",
+        fill=[
+            "Aba Acervo: abra «Registro de Doações». Digite o ISBN ou toque em Bipar (autorize a câmera). Confira título, autor, editora, ano e capa. Se a Google Books recusar (cota), o app tenta o cadastro brasileiro (CBL/BrasilAPI) e a Open Library. Complete o que faltar e salve. A seção fecha e o Acervo abre em ordem alfabética.",
+            "Cadastro manual: use quando o ISBN não existir em nenhum catálogo.",
+            "Aba Empréstimos: busque o membro por nome (mínimo 2 letras) ou telefone (mínimo 2 dígitos — senão a busca não lista a igreja inteira). Escolha o livro livre ou um título externo.",
+            "Registrar empréstimo (30 dias) ou, se houver reserva, Confirmar retirada (use o diálogo da tela; no navegador não basta o alerta nativo).",
+            "Nome em vermelho «(desligado)» só se membership_out estiver preenchido — não confundir com cadastro inativo (is_active).",
+            "WhatsApp verde: mensagem de prazo e pergunta se devolve ou estende 10 dias. Renovar +10 só na renovação (o primeiro ciclo continua 30 dias). Registrar devolução.",
+            "Aba Histórico: rastreio do que já voltou.",
+        ],
+        impact="Sem ISBN/ficha: o Cantinho fica vazio. Busca curta demais: ninguém aparece. Confirmar retirada sem o diálogo da web: o empréstimo não grava. Marcar desligado pelo is_active: falso positivo (membro ativo aparece em vermelho). Sem WhatsApp no cadastro: o ícone não abre conversa. Livro não devolvido: some do acervo disponível.",
     )
 
     add_heading_custom(doc, "3.C  Culto e Eventos", 1)
@@ -1500,6 +1547,25 @@ def add_part3(doc: Document) -> None:
     add_feature(
         doc,
         code="3.E.11",
+        name="Aliança Conecta Reino",
+        what="Demonstrativo das assinaturas Conecta+ (cartão, baixa imediata) e do passivo de 40% às igrejas mães. A quitação da oferta de apoio ministerial é manual, em até 30 dias.",
+        route="/alianca-conecta-reino  — hint: Indicações, passivo de 40% e baixa manual das ofertas",
+        who="Somente Super Administrador. Tesoureiro e Secretaria não veem o item. A igreja mãe lê o recorte no boletim Financeiro (seção Aliança), sem baixar oferta.",
+        access=["Menu → engrenagem → Governança e TI → Aliança Conecta Reino (junto de Assinaturas, depois da Trilha)."],
+        manages="Super Admin efetiva a oferta («Marcar como paga»). O Stripe baixa a assinatura do plano automaticamente; o passivo de 40% não se paga sozinho.",
+        acl="Drawer `menu_alianca` só `isSuperAdmin`. RPCs `get_alianca_admin_statement`, `settle_alianca_payout_admin`. Webhook `process_alianca_invoice_paid` / `_failed`.",
+        fill=[
+            "Abra o demonstrativo: assinaturas x passivo.",
+            "Para quitar: confirme «Marcar como paga» (o diálogo vale também no navegador).",
+            "Não misture com Informações Financeiras da tesouraria local — são camadas diferentes.",
+            "O ciclo da parceria encerra no 4º pagamento conforme a regra da tela.",
+        ],
+        impact="Sem baixa manual: o passivo de 40% envelhece e a igreja mãe não recebe. Baixar a oferta errada: ciclo da parceria avança indevido. Sem Super Admin, a operação comercial da rede some do menu de propósito.",
+    )
+
+    add_feature(
+        doc,
+        code="3.E.12",
         name="Instâncias (Igrejas)",
         what="Criar e alternar ambientes de igreja: logo, CNPJ/Pix, redes, ativar/inativar tenant. Na interface fica fixo no rodapé de Configurações, fora dos acordeões.",
         route="/igrejas  — hint: Criar e alternar ambientes de igreja",
@@ -1531,8 +1597,8 @@ def add_closing(doc: Document) -> None:
             "No sábado: Recepção Familiar — zere a fila de lotes. Corrija CEP no Cadastro de Usuário.",
             "No hall: Totem aberto, câmera ok. Famílias com Carteirinha.",
             "Nas salas: Sala(s) - Check In no evento de hoje.",
-            "Depois do culto: Presença se houver quórum. Régua de Acolhimento dos visitantes novos.",
-            "Nunca abra Cuidados Pastorais, Informações Financeiras, Ghost ou Assinaturas — não é o seu papel e o menu não mostra.",
+            "Depois do culto: Presença se houver quórum. Régua de Acolhimento dos visitantes novos. Empréstimos de livros: confirmar retiradas e WhatsApp de prazo.",
+            "Nunca abra Cuidados Pastorais, Informações Financeiras, Ghost, Aliança ou Assinaturas — não é o seu papel e o menu não mostra.",
         ],
     )
 
@@ -1551,6 +1617,10 @@ def add_closing(doc: Document) -> None:
         "lib/accessRoleDisplayOrder.ts e scripts/access-control-*.sql — papéis atuais (Secretaria absorveu Líder / Líder Geral / Administrador de Eventos / Orquestrador).",
         "app/(tabs)/index.tsx, EventsInboxHome, MinimalEuQueroFooter — home fora do menu.",
         "app/maintenance-dashboard.tsx — painéis da engrenagem.",
+        "app/sobre-conecta.tsx e lib/conectaPrivacyDeclaration.ts — declaração LGPD de consulta.",
+        "app/livros-doados.tsx, components/LivrosDoadosPanel.tsx, LivrosEmprestimosPanel.tsx, MeusLivrosRetiradosPanel.tsx — acervo e empréstimos.",
+        "lib/isbnCatalogLookup.ts e functions/api/buscar-livro.ts — Google Books, CBL/BrasilAPI, Open Library.",
+        "app/alianca-conecta-reino.tsx e lib/alianca/ — passivo 40% e baixa manual.",
     ]
     for s in sources:
         p = doc.add_paragraph(style="List Bullet")
