@@ -25,7 +25,76 @@ export type LivroIsbnLookup = {
   message: string;
 };
 
+const GOOGLE_BOOKS = 'https://www.googleapis.com/books/v1/volumes';
 const DEFAULT_APP_ORIGIN = 'https://app-igreja.pages.dev';
+
+function mapGoogleBooksPayload(
+  isbn: string,
+  payload: Record<string, unknown>
+): LivroIsbnLookup | null {
+  const totalItems = Number(payload.totalItems ?? 0);
+  const items = Array.isArray(payload.items) ? payload.items : [];
+  const first = items[0] && typeof items[0] === 'object' ? (items[0] as Record<string, unknown>) : null;
+  const info =
+    first?.volumeInfo && typeof first.volumeInfo === 'object'
+      ? (first.volumeInfo as Record<string, unknown>)
+      : null;
+  const titulo = asText(info?.title);
+  if (!totalItems || !info || !titulo) {
+    return null;
+  }
+
+  const authors = Array.isArray(info.authors)
+    ? info.authors.map((name) => asText(name)).filter(Boolean)
+    : [];
+  const imageLinks =
+    info.imageLinks && typeof info.imageLinks === 'object'
+      ? (info.imageLinks as Record<string, unknown>)
+      : null;
+  const published = asText(info.publishedDate);
+  const yearMatch = published.match(/\d{4}/);
+  const capaRaw = asText(imageLinks?.thumbnail) || asText(imageLinks?.smallThumbnail);
+
+  return {
+    found: true,
+    isbn,
+    titulo,
+    autor: authors.join(', '),
+    editora: asText(info.publisher),
+    ano: yearMatch?.[0] ?? '',
+    capa: capaRaw.replace(/^http:\/\//i, 'https://'),
+    message: 'Dados preenchidos pela Google Books.',
+  };
+}
+
+async function lookupIsbnOnGoogleBooks(isbn: string): Promise<LivroIsbnLookup> {
+  const empty: LivroIsbnLookup = {
+    found: false,
+    isbn,
+    titulo: '',
+    autor: '',
+    editora: '',
+    ano: '',
+    capa: '',
+    message: 'ISBN não encontrado. Preencha os dados manualmente.',
+  };
+
+  try {
+    const response = await fetch(`${GOOGLE_BOOKS}?q=isbn:${encodeURIComponent(isbn)}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (!response.ok) {
+      return empty;
+    }
+    const payload = (await response.json()) as Record<string, unknown>;
+    return mapGoogleBooksPayload(isbn, payload) ?? empty;
+  } catch {
+    return {
+      ...empty,
+      message: 'Não foi possível consultar o ISBN. Preencha os dados manualmente.',
+    };
+  }
+}
 
 function resolveBuscarLivroEndpoint(): string {
   const configured = String(process.env.EXPO_PUBLIC_APP_URL || '')
@@ -111,29 +180,37 @@ export async function lookupLivroByIsbn(isbnRaw: string): Promise<LivroIsbnLooku
       return empty;
     }
 
-    if (response.status === 404 || payload.success !== true) {
+    if (response.status === 404) {
       return {
         ...empty,
-        message:
-          asText(payload.message) || empty.message,
+        message: asText(payload.message) || empty.message,
       };
     }
 
-    return {
-      found: true,
-      isbn: asText(payload.isbn) || isbn,
-      titulo: asText(payload.titulo),
-      autor: asText(payload.autor),
-      editora: asText(payload.editora),
-      ano: asText(payload.ano),
-      capa: asText(payload.capa),
-      message: 'Dados preenchidos pela Google Books.',
-    };
-  } catch {
+    if (payload.success === true) {
+      return {
+        found: true,
+        isbn: asText(payload.isbn) || isbn,
+        titulo: asText(payload.titulo),
+        autor: asText(payload.autor),
+        editora: asText(payload.editora),
+        ano: asText(payload.ano),
+        capa: asText(payload.capa),
+        message: 'Dados preenchidos pela Google Books.',
+      };
+    }
+
+    const fallback = await lookupIsbnOnGoogleBooks(isbn);
+    if (fallback.found) {
+      return fallback;
+    }
+
     return {
       ...empty,
-      message: 'Não foi possível consultar o ISBN. Preencha os dados manualmente.',
+      message: asText(payload.message) || empty.message,
     };
+  } catch {
+    return lookupIsbnOnGoogleBooks(isbn);
   }
 }
 

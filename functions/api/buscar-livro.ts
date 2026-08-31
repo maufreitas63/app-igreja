@@ -7,7 +7,12 @@
  * Sem JWT do Flutter — este app autentica por sessão própria (headers).
  */
 
-import { billingCorsHeaders, jsonResponse, type BillingEnv } from './_billingShared';
+import {
+  billingCorsHeaders,
+  jsonResponse,
+  resolveSupabaseBaseUrl,
+  type BillingEnv,
+} from './_billingShared';
 
 type PagesContext = {
   request: Request;
@@ -41,7 +46,7 @@ async function assertLivrosSession(
     return { ok: false, status: 401, message: 'Sessão inválida. Saia e entre novamente.' };
   }
 
-  const base = (env.SUPABASE_URL || env.EXPO_PUBLIC_SUPABASE_URL || '').replace(/\/$/, '');
+  const base = resolveSupabaseBaseUrl(env);
   const key = env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? '';
   if (!base || !key) {
     return { ok: false, status: 503, message: 'Supabase não configurado na Function.' };
@@ -51,6 +56,8 @@ async function assertLivrosSession(
     apikey: key,
     Authorization: `Bearer ${key}`,
     'Content-Type': 'application/json',
+    Accept: 'application/json',
+    Prefer: 'return=representation',
     'x-session-token': sessionToken,
   };
   const profileId = request.headers.get('x-profile-id')?.trim();
@@ -65,8 +72,13 @@ async function assertLivrosSession(
       headers,
       body: JSON.stringify({ p_actor: null }),
     });
-  } catch {
-    return { ok: false, status: 503, message: 'Não foi possível validar a sessão.' };
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'falha de rede';
+    return {
+      ok: false,
+      status: 503,
+      message: `Não foi possível validar a sessão (${detail}). Confira SUPABASE_URL no Cloudflare.`,
+    };
   }
 
   if (!response.ok) {
