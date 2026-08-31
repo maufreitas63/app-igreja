@@ -36,6 +36,27 @@ export async function checkSessionCanOperateGhostMode(): Promise<boolean> {
   return coerceRpcBoolean(data);
 }
 
+const GHOST_RPC_TIMEOUT_MS = 12_000;
+
+function withGhostRpcTimeout<T>(promise: PromiseLike<T>, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(message));
+    }, GHOST_RPC_TIMEOUT_MS);
+
+    Promise.resolve(promise).then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
 export async function listActiveProfilesForGhostMode(limit = 5000): Promise<GhostModeProfileOption[]> {
   const operatorProfileId = await resolveRealSessionProfileId();
 
@@ -43,13 +64,52 @@ export async function listActiveProfilesForGhostMode(limit = 5000): Promise<Ghos
     throw new Error('Sessão inválida. Saia e entre novamente.');
   }
 
-  const { data, error } = await supabase.rpc('listar_perfis_ghost_mode', {
-    p_operator_profile_id: operatorProfileId,
-    p_limit: limit,
-  });
+  const { data, error } = await withGhostRpcTimeout(
+    supabase.rpc('listar_perfis_ghost_mode', {
+      p_operator_profile_id: operatorProfileId,
+      p_limit: limit,
+    }),
+    'A lista de usuários demorou demais. Busque pelo nome ou telefone.'
+  );
 
   if (error) {
     if (isSupabaseRpcMissing(error.message ?? '', 'listar_perfis_ghost_mode')) {
+      throw new Error(GHOST_MODE_SQL_HINT);
+    }
+
+    throw error;
+  }
+
+  return parseGhostProfiles(data);
+}
+
+export async function searchActiveProfilesForGhostMode(
+  query: string,
+  limit = 20
+): Promise<GhostModeProfileOption[]> {
+  const operatorProfileId = await resolveRealSessionProfileId();
+
+  if (!operatorProfileId) {
+    throw new Error('Sessão inválida. Saia e entre novamente.');
+  }
+
+  const trimmed = query.trim();
+
+  if (trimmed.length < 2) {
+    return [];
+  }
+
+  const { data, error } = await withGhostRpcTimeout(
+    supabase.rpc('buscar_perfis_ghost_mode', {
+      p_operator_profile_id: operatorProfileId,
+      p_query: trimmed,
+      p_limit: limit,
+    }),
+    'A busca de usuários demorou demais. Tente de novo pelo nome ou telefone.'
+  );
+
+  if (error) {
+    if (isSupabaseRpcMissing(error.message ?? '', 'buscar_perfis_ghost_mode')) {
       throw new Error(GHOST_MODE_SQL_HINT);
     }
 

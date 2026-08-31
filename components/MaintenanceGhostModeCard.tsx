@@ -8,6 +8,7 @@ import {
   fetchGhostTargetAccessAuditReport,
   fetchGhostTargetProfilePreview,
   GHOST_MODE_SQL_HINT,
+  searchActiveProfilesForGhostMode,
   type GhostModeAccessAuditReport,
   type GhostModeAccessAuditRow,
   type GhostModeProfileOption,
@@ -16,7 +17,7 @@ import {
 import { computeMaintenanceContentHeight } from '@/lib/maintenanceCardStyles';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -348,22 +349,45 @@ export function MaintenanceGhostModeCard({
   const [auditError, setAuditError] = useState<string | null>(null);
   const [auditReport, setAuditReport] = useState<GhostModeAccessAuditReport | null>(null);
 
-  const loadProfiles = useCallback(async () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchRequestRef = useRef(0);
+
+  const searchProfiles = useCallback(async (query: string, keepProfileId: string | null) => {
+    const requestId = ++searchRequestRef.current;
     setLoading(true);
     setError(null);
     setRpcMissing(false);
 
     try {
-      const { listActiveProfilesForGhostMode } = await import('@/lib/ghostModeApi');
-      const rows = await listActiveProfilesForGhostMode();
-      setProfiles(rows);
+      const rows = await searchActiveProfilesForGhostMode(query);
+      if (requestId !== searchRequestRef.current) {
+        return;
+      }
+      setProfiles((current) => {
+        const selected = keepProfileId
+          ? current.find((profile) => profile.id === keepProfileId)
+          : undefined;
+
+        if (selected && !rows.some((row) => row.id === selected.id)) {
+          return [selected, ...rows];
+        }
+
+        return rows;
+      });
     } catch (err) {
+      if (requestId !== searchRequestRef.current) {
+        return;
+      }
       const message = err instanceof Error ? err.message : 'Não foi possível carregar usuários.';
       setError(message);
       setRpcMissing(message.includes('access-control-ghost-mode.sql'));
-      setProfiles([]);
+      setProfiles((current) =>
+        keepProfileId ? current.filter((profile) => profile.id === keepProfileId) : []
+      );
     } finally {
-      setLoading(false);
+      if (requestId === searchRequestRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -372,8 +396,26 @@ export function MaintenanceGhostModeCard({
       return;
     }
 
-    void loadProfiles();
-  }, [ghostActive, isActive, loadProfiles]);
+    const trimmed = searchQuery.trim();
+
+    if (trimmed.length < 2) {
+      searchRequestRef.current += 1;
+      setLoading(false);
+      setError(null);
+      setProfiles((current) =>
+        selectedProfileId ? current.filter((profile) => profile.id === selectedProfileId) : []
+      );
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      void searchProfiles(trimmed, selectedProfileId);
+    }, 280);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [ghostActive, isActive, searchProfiles, searchQuery, selectedProfileId]);
 
   useEffect(() => {
     if (!selectedProfileId) {
@@ -509,8 +551,9 @@ export function MaintenanceGhostModeCard({
     >
       <Text style={minimal ? styles.sectionTitle : styles.title}>Modo Ghost (Auditor)</Text>
       <Text style={[styles.hint, minimal && styles.hintMinimal]}>
-        Selecione um usuário ativo para simular a identidade dele e validar permissões de acesso na
-        Dashboard e demais telas. Disponível apenas para administradores autorizados.
+        Digite nome, telefone ou código de um usuário ativo para simular a identidade dele e validar
+        permissões na Dashboard e nas demais telas. Disponível apenas para administradores
+        autorizados.
       </Text>
 
       {rpcMissing ? (
@@ -522,66 +565,68 @@ export function MaintenanceGhostModeCard({
         <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
       ) : null}
 
-      {loading ? <CardLoadingState lines={3} compact minimal={minimal} /> : null}
+      {minimal ? (
+        <Text style={styles.filterLabelMinimal}>Usuário ativo</Text>
+      ) : (
+        <SectionLabel>Usuário ativo</SectionLabel>
+      )}
+      <DropdownSelect
+        options={profileOptions}
+        selectedValue={selectedProfileId ?? ''}
+        onValueChange={(value) => setSelectedProfileId(value || null)}
+        onSearchQueryChange={setSearchQuery}
+        filterOptionsLocally={false}
+        listLoading={loading}
+        emptyListHint={
+          searchQuery.trim().length < 2
+            ? 'Digite pelo menos 2 caracteres para buscar.'
+            : 'Nenhum usuário ativo encontrado para esta busca.'
+        }
+        modalTitle="Selecionar usuário"
+        placeholder="Selecione um usuário..."
+        searchPlaceholder="Digite nome ou telefone..."
+        searchable
+        variant={minimal ? 'minimal' : 'default'}
+        disabled={starting}
+      />
 
-      {!loading ? (
-        <>
-          {minimal ? (
-            <Text style={styles.filterLabelMinimal}>Usuário ativo</Text>
-          ) : (
-            <SectionLabel>Usuário ativo</SectionLabel>
-          )}
-          <DropdownSelect
-            options={profileOptions}
-            selectedValue={selectedProfileId ?? ''}
-            onValueChange={(value) => setSelectedProfileId(value || null)}
-            modalTitle="Selecionar usuário"
-            placeholder="Selecione um usuário..."
-            searchPlaceholder="Digite nome ou telefone..."
-            searchable
-            variant={minimal ? 'minimal' : 'default'}
-            disabled={starting || profileOptions.length === 0}
-          />
-
-          <TouchableOpacity
-            style={[
-              styles.primaryButton,
-              minimal && styles.primaryButtonMinimal,
-              (starting || !selectedProfileId) && styles.primaryButtonDisabled,
-            ]}
-            onPress={() => void handleStartGhost()}
-            disabled={starting || !selectedProfileId}
-            activeOpacity={0.85}
-          >
-            {starting ? (
-              <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0f172a'} size="small" />
-            ) : (
-              <Text style={[styles.primaryButtonText, minimal && styles.primaryButtonTextMinimal]}>
-                Ativar Modo Ghost
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          <Text style={[styles.footerHint, minimal && styles.footerHintMinimal]}>
-            O estado persiste durante a navegação e é resetado ao sair do app ou fazer logout.
+      <TouchableOpacity
+        style={[
+          styles.primaryButton,
+          minimal && styles.primaryButtonMinimal,
+          (starting || !selectedProfileId) && styles.primaryButtonDisabled,
+        ]}
+        onPress={() => void handleStartGhost()}
+        disabled={starting || !selectedProfileId}
+        activeOpacity={0.85}
+      >
+        {starting ? (
+          <ActivityIndicator color={minimal ? MINIMAL_UI.onDark : '#0f172a'} size="small" />
+        ) : (
+          <Text style={[styles.primaryButtonText, minimal && styles.primaryButtonTextMinimal]}>
+            Ativar Modo Ghost
           </Text>
+        )}
+      </TouchableOpacity>
 
-          {selectedProfileId ? (
-            <>
-              <GhostModeRolesPreviewPanel
-                loading={previewLoading}
-                error={previewError}
-                preview={preview}
-                minimal={minimal}
-              />
-              <GhostModeAccessAuditPanel
-                loading={auditLoading}
-                error={auditError}
-                report={auditReport}
-                minimal={minimal}
-              />
-            </>
-          ) : null}
+      <Text style={[styles.footerHint, minimal && styles.footerHintMinimal]}>
+        O estado persiste durante a navegação e é resetado ao sair do app ou fazer logout.
+      </Text>
+
+      {selectedProfileId ? (
+        <>
+          <GhostModeRolesPreviewPanel
+            loading={previewLoading}
+            error={previewError}
+            preview={preview}
+            minimal={minimal}
+          />
+          <GhostModeAccessAuditPanel
+            loading={auditLoading}
+            error={auditError}
+            report={auditReport}
+            minimal={minimal}
+          />
         </>
       ) : null}
     </ScrollView>

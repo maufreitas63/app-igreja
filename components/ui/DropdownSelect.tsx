@@ -4,6 +4,7 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -30,6 +31,12 @@ type DropdownSelectProps = {
   placeholder?: string;
   searchPlaceholder?: string;
   searchable?: boolean;
+  /** Dispara a cada alteração da busca (para pesquisa remota). */
+  onSearchQueryChange?: (query: string) => void;
+  /** Quando false, não filtra `options` no cliente — o pai já entregou o recorte. */
+  filterOptionsLocally?: boolean;
+  listLoading?: boolean;
+  emptyListHint?: string;
   style?: StyleProp<ViewStyle>;
   triggerTextStyle?: StyleProp<TextStyle>;
   triggerIconColor?: string;
@@ -57,6 +64,10 @@ export function DropdownSelect({
   placeholder = 'Selecionar',
   searchPlaceholder,
   searchable = false,
+  onSearchQueryChange,
+  filterOptionsLocally = true,
+  listLoading = false,
+  emptyListHint,
   style,
   triggerTextStyle,
   triggerIconColor,
@@ -84,7 +95,7 @@ export function DropdownSelect({
     options.find((option) => option.value === selectedValue)?.label ?? '';
 
   const filteredOptions = useMemo(() => {
-    if (!searchable) {
+    if (!searchable || !filterOptionsLocally) {
       return options;
     }
 
@@ -94,7 +105,7 @@ export function DropdownSelect({
     }
 
     return options.filter((option) => normalizeSearch(option.label).includes(query));
-  }, [options, searchQuery, searchable]);
+  }, [filterOptionsLocally, options, searchQuery, searchable]);
 
   const clearBlurTimer = () => {
     if (blurCloseTimerRef.current) {
@@ -140,6 +151,7 @@ export function DropdownSelect({
     const handleClearInput = () => {
       clearBlurTimer();
       setSearchQuery('');
+      onSearchQueryChange?.('');
 
       if (selectedValue) {
         onValueChange('');
@@ -168,6 +180,7 @@ export function DropdownSelect({
             onChangeText={(text) => {
               setSearchQuery(text);
               setOpen(true);
+              onSearchQueryChange?.(text);
             }}
             onFocus={handleOpenSearch}
             onBlur={scheduleCloseSearch}
@@ -241,7 +254,23 @@ export function DropdownSelect({
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator
             >
-              {filteredOptions.length ? (
+              {listLoading ? (
+                <View style={styles.searchableLoadingRow}>
+                  <ActivityIndicator
+                    size="small"
+                    color={isMinimal ? MINIMAL_UI.icon : isVigilance ? '#FFFFFF' : '#64748B'}
+                  />
+                  <Text
+                    style={[
+                      styles.emptySearchText,
+                      isVigilance && styles.emptySearchTextVigilance,
+                      isMinimal && styles.emptySearchTextMinimal,
+                    ]}
+                  >
+                    Buscando...
+                  </Text>
+                </View>
+              ) : filteredOptions.length ? (
                 filteredOptions.map((option) => {
                   const isSelected = option.value === selectedValue;
 
@@ -287,7 +316,7 @@ export function DropdownSelect({
                     isMinimal && styles.emptySearchTextMinimal,
                   ]}
                 >
-                  Nenhum resultado para a busca.
+                  {emptyListHint ?? 'Nenhum resultado para a busca.'}
                 </Text>
               )}
             </ScrollView>
@@ -477,6 +506,14 @@ const styles = StyleSheet.create({
   },
   searchableScroll: {
     maxHeight: 240,
+  },
+  searchableLoadingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 12,
   },
   emptySearchText: {
     color: '#94A3B8',
