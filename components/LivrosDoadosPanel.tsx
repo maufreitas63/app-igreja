@@ -9,7 +9,7 @@ import {
 } from '@/lib/livrosApi';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -40,6 +40,13 @@ export function LivrosDoadosPanel() {
   const [rows, setRows] = useState<LivroRecord[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [registroOpen, setRegistroOpen] = useState(false);
+  const [acervoOpen, setAcervoOpen] = useState(false);
+
+  const sortedRows = useMemo(
+    () => [...rows].sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR', { sensitivity: 'base' })),
+    [rows]
+  );
 
   const loadList = useCallback(async () => {
     setLoadingList(true);
@@ -123,6 +130,8 @@ export function LivrosDoadosPanel() {
     if (result.success) {
       setForm(EMPTY_FORM);
       setLookupHint(null);
+      setRegistroOpen(false);
+      setAcervoOpen(true);
       await loadList();
     }
   };
@@ -153,169 +162,223 @@ export function LivrosDoadosPanel() {
 
   return (
     <View style={styles.root}>
-      <Text style={styles.lead}>
-        Toque em Bipar para ler o código de barras do ISBN na contracapa, ou digite os dígitos.
-        Se o catálogo não achar o livro, cadastre à mão — o fluxo de doação não para.
-      </Text>
-
-      <View style={styles.isbnRow}>
-        <TextInput
-          value={form.isbn}
-          onChangeText={(isbn) => {
-            patchForm({ isbn });
-            const digits = normalizeIsbnInput(isbn);
-            if (digits.length === 13) {
-              void runIsbnLookup(digits);
-            }
-          }}
-          onSubmitEditing={() => void runIsbnLookup(form.isbn)}
-          placeholder="ISBN (bipar ou digitar)"
-          placeholderTextColor={MINIMAL_UI.textMuted}
-          keyboardType="numeric"
-          autoCapitalize="none"
-          autoCorrect={false}
-          editable={!lookingUp}
-          style={[styles.input, styles.isbnInput]}
-        />
+      <View style={styles.sectionCard}>
         <TouchableOpacity
-          style={[styles.scanButton, lookingUp && styles.buttonDisabled]}
-          onPress={() => setScannerOpen(true)}
-          disabled={lookingUp}
-          accessibilityLabel="Bipar código de barras do ISBN"
+          style={styles.sectionHeader}
+          onPress={() => setRegistroOpen((open) => !open)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: registroOpen }}
+          accessibilityLabel="Registro de Doações"
         >
-          <FontAwesome name="barcode" size={14} color={MINIMAL_UI.text} />
-          <Text style={styles.scanButtonText}>Bipar</Text>
+          <View style={styles.sectionHeaderText}>
+            <Text style={styles.sectionTitle}>Registro de Doações</Text>
+            <Text style={styles.sectionMeta}>Bipar ISBN ou cadastre à mão</Text>
+          </View>
+          <FontAwesome
+            name={registroOpen ? 'chevron-up' : 'chevron-down'}
+            size={14}
+            color={MINIMAL_UI.blueDark}
+          />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.searchButton, lookingUp && styles.buttonDisabled]}
-          onPress={() => void runIsbnLookup(form.isbn)}
-          disabled={lookingUp}
-          accessibilityLabel="Buscar livro pelo ISBN"
-        >
-          {lookingUp ? (
-            <ActivityIndicator color={MINIMAL_UI.onDark} size="small" />
-          ) : (
-            <FontAwesome name="search" size={14} color={MINIMAL_UI.onDark} />
-          )}
-          <Text style={styles.searchButtonText}>Buscar</Text>
-        </TouchableOpacity>
-      </View>
 
-      <IsbnBarcodeScanner
-        visible={scannerOpen}
-        onClose={() => setScannerOpen(false)}
-        onIsbn={(isbn) => {
-          setScannerOpen(false);
-          patchForm({ isbn });
-          void runIsbnLookup(isbn);
-        }}
-      />
+        {registroOpen ? (
+          <View style={styles.sectionBody}>
+            <Text style={styles.lead}>
+              Toque em Bipar para ler o código de barras do ISBN na contracapa, ou digite os dígitos.
+              Se o catálogo não achar o livro, cadastre à mão — o fluxo de doação não para.
+            </Text>
 
-      {lookupHint ? <Text style={styles.hint}>{lookupHint}</Text> : null}
-
-      <Text style={styles.label}>Título</Text>
-      <TextInput
-        value={form.titulo}
-        onChangeText={(titulo) => patchForm({ titulo })}
-        placeholder="Título"
-        placeholderTextColor={MINIMAL_UI.textMuted}
-        editable={!catalogDisabled}
-        style={[styles.input, catalogDisabled && styles.inputLocked]}
-      />
-
-      <Text style={styles.label}>Autor</Text>
-      <TextInput
-        value={form.autor}
-        onChangeText={(autor) => patchForm({ autor })}
-        placeholder="Autor"
-        placeholderTextColor={MINIMAL_UI.textMuted}
-        editable={!catalogDisabled}
-        style={[styles.input, catalogDisabled && styles.inputLocked]}
-      />
-
-      <Text style={styles.label}>Editora</Text>
-      <TextInput
-        value={form.editora}
-        onChangeText={(editora) => patchForm({ editora })}
-        placeholder="Editora"
-        placeholderTextColor={MINIMAL_UI.textMuted}
-        editable={!catalogDisabled}
-        style={[styles.input, catalogDisabled && styles.inputLocked]}
-      />
-
-      <Text style={styles.label}>Ano</Text>
-      <TextInput
-        value={form.ano}
-        onChangeText={(ano) => patchForm({ ano })}
-        placeholder="Ano"
-        placeholderTextColor={MINIMAL_UI.textMuted}
-        keyboardType="numeric"
-        editable={!catalogDisabled}
-        style={[styles.input, catalogDisabled && styles.inputLocked]}
-      />
-
-      <Text style={styles.label}>Capa (URL)</Text>
-      <TextInput
-        value={form.capa}
-        onChangeText={(capa) => patchForm({ capa })}
-        placeholder="https://…"
-        placeholderTextColor={MINIMAL_UI.textMuted}
-        autoCapitalize="none"
-        autoCorrect={false}
-        editable={!catalogDisabled}
-        style={[styles.input, catalogDisabled && styles.inputLocked]}
-      />
-
-      {form.capa.trim() ? (
-        <Image source={{ uri: form.capa.trim() }} style={styles.cover} resizeMode="contain" />
-      ) : null}
-
-      <TouchableOpacity
-        style={[styles.saveButton, saving && styles.buttonDisabled]}
-        onPress={() => void handleSave()}
-        disabled={saving || lookingUp}
-      >
-        {saving ? (
-          <ActivityIndicator color={MINIMAL_UI.onDark} />
-        ) : (
-          <Text style={styles.saveButtonText}>Salvar no acervo</Text>
-        )}
-      </TouchableOpacity>
-
-      <Text style={styles.listTitle}>Acervo desta igreja</Text>
-      {loadingList ? (
-        <ActivityIndicator color={MINIMAL_UI.accent} style={styles.listLoader} />
-      ) : rows.length === 0 ? (
-        <Text style={styles.empty}>Nenhum livro cadastrado ainda.</Text>
-      ) : (
-        rows.map((livro) => (
-          <View key={livro.id} style={styles.bookRow}>
-            {livro.capa ? (
-              <Image source={{ uri: livro.capa }} style={styles.bookThumb} />
-            ) : (
-              <View style={[styles.bookThumb, styles.bookThumbEmpty]}>
-                <FontAwesome name="book" size={16} color={MINIMAL_UI.textMuted} />
-              </View>
-            )}
-            <View style={styles.bookMeta}>
-              <Text style={styles.bookTitle} numberOfLines={2}>
-                {livro.titulo}
-              </Text>
-              <Text style={styles.bookSub} numberOfLines={1}>
-                {[livro.autor, livro.editora, livro.ano].filter(Boolean).join(' · ') || '—'}
-              </Text>
-              {livro.isbn ? <Text style={styles.bookIsbn}>ISBN {livro.isbn}</Text> : null}
+            <View style={styles.isbnRow}>
+              <TextInput
+                value={form.isbn}
+                onChangeText={(isbn) => {
+                  patchForm({ isbn });
+                  const digits = normalizeIsbnInput(isbn);
+                  if (digits.length === 13) {
+                    void runIsbnLookup(digits);
+                  }
+                }}
+                onSubmitEditing={() => void runIsbnLookup(form.isbn)}
+                placeholder="ISBN (bipar ou digitar)"
+                placeholderTextColor={MINIMAL_UI.textMuted}
+                keyboardType="numeric"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!lookingUp}
+                style={[styles.input, styles.isbnInput]}
+              />
+              <TouchableOpacity
+                style={[styles.scanButton, lookingUp && styles.buttonDisabled]}
+                onPress={() => setScannerOpen(true)}
+                disabled={lookingUp}
+                accessibilityLabel="Bipar código de barras do ISBN"
+              >
+                <FontAwesome name="barcode" size={14} color={MINIMAL_UI.text} />
+                <Text style={styles.scanButtonText}>Bipar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.searchButton, lookingUp && styles.buttonDisabled]}
+                onPress={() => void runIsbnLookup(form.isbn)}
+                disabled={lookingUp}
+                accessibilityLabel="Buscar livro pelo ISBN"
+              >
+                {lookingUp ? (
+                  <ActivityIndicator color={MINIMAL_UI.onDark} size="small" />
+                ) : (
+                  <FontAwesome name="search" size={14} color={MINIMAL_UI.onDark} />
+                )}
+                <Text style={styles.searchButtonText}>Buscar</Text>
+              </TouchableOpacity>
             </View>
+
+            {lookupHint ? <Text style={styles.hint}>{lookupHint}</Text> : null}
+
+            <Text style={styles.label}>Título</Text>
+            <TextInput
+              value={form.titulo}
+              onChangeText={(titulo) => patchForm({ titulo })}
+              placeholder="Título"
+              placeholderTextColor={MINIMAL_UI.textMuted}
+              editable={!catalogDisabled}
+              style={[styles.input, catalogDisabled && styles.inputLocked]}
+            />
+
+            <Text style={styles.label}>Autor</Text>
+            <TextInput
+              value={form.autor}
+              onChangeText={(autor) => patchForm({ autor })}
+              placeholder="Autor"
+              placeholderTextColor={MINIMAL_UI.textMuted}
+              editable={!catalogDisabled}
+              style={[styles.input, catalogDisabled && styles.inputLocked]}
+            />
+
+            <Text style={styles.label}>Editora</Text>
+            <TextInput
+              value={form.editora}
+              onChangeText={(editora) => patchForm({ editora })}
+              placeholder="Editora"
+              placeholderTextColor={MINIMAL_UI.textMuted}
+              editable={!catalogDisabled}
+              style={[styles.input, catalogDisabled && styles.inputLocked]}
+            />
+
+            <Text style={styles.label}>Ano</Text>
+            <TextInput
+              value={form.ano}
+              onChangeText={(ano) => patchForm({ ano })}
+              placeholder="Ano"
+              placeholderTextColor={MINIMAL_UI.textMuted}
+              keyboardType="numeric"
+              editable={!catalogDisabled}
+              style={[styles.input, catalogDisabled && styles.inputLocked]}
+            />
+
+            <Text style={styles.label}>Capa (URL)</Text>
+            <TextInput
+              value={form.capa}
+              onChangeText={(capa) => patchForm({ capa })}
+              placeholder="https://…"
+              placeholderTextColor={MINIMAL_UI.textMuted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!catalogDisabled}
+              style={[styles.input, catalogDisabled && styles.inputLocked]}
+            />
+
+            {form.capa.trim() ? (
+              <Image source={{ uri: form.capa.trim() }} style={styles.cover} resizeMode="contain" />
+            ) : null}
+
             <TouchableOpacity
-              accessibilityLabel={`Remover ${livro.titulo}`}
-              onPress={() => handleDelete(livro)}
-              style={styles.deleteButton}
+              style={[styles.saveButton, saving && styles.buttonDisabled]}
+              onPress={() => void handleSave()}
+              disabled={saving || lookingUp}
             >
-              <FontAwesome name="trash-o" size={16} color="#DC2626" />
+              {saving ? (
+                <ActivityIndicator color={MINIMAL_UI.onDark} />
+              ) : (
+                <Text style={styles.saveButtonText}>Salvar no acervo</Text>
+              )}
             </TouchableOpacity>
           </View>
-        ))
-      )}
+        ) : null}
+
+        <IsbnBarcodeScanner
+          visible={scannerOpen}
+          onClose={() => setScannerOpen(false)}
+          onIsbn={(isbn) => {
+            setScannerOpen(false);
+            setRegistroOpen(true);
+            patchForm({ isbn });
+            void runIsbnLookup(isbn);
+          }}
+        />
+      </View>
+
+      <View style={styles.sectionCard}>
+        <TouchableOpacity
+          style={styles.sectionHeader}
+          onPress={() => setAcervoOpen((open) => !open)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: acervoOpen }}
+          accessibilityLabel="Acervo"
+        >
+          <View style={styles.sectionHeaderText}>
+            <Text style={styles.sectionTitle}>Acervo</Text>
+            <Text style={styles.sectionMeta}>
+              {loadingList
+                ? 'Carregando…'
+                : sortedRows.length === 1
+                  ? '1 livro'
+                  : `${sortedRows.length} livros`}
+            </Text>
+          </View>
+          <FontAwesome
+            name={acervoOpen ? 'chevron-up' : 'chevron-down'}
+            size={14}
+            color={MINIMAL_UI.blueDark}
+          />
+        </TouchableOpacity>
+
+        {acervoOpen ? (
+          <View style={styles.sectionBody}>
+            {loadingList ? (
+              <ActivityIndicator color={MINIMAL_UI.accent} style={styles.listLoader} />
+            ) : sortedRows.length === 0 ? (
+              <Text style={styles.empty}>Nenhum livro cadastrado ainda.</Text>
+            ) : (
+              sortedRows.map((livro) => (
+                <View key={livro.id} style={styles.bookRow}>
+                  {livro.capa ? (
+                    <Image source={{ uri: livro.capa }} style={styles.bookThumb} />
+                  ) : (
+                    <View style={[styles.bookThumb, styles.bookThumbEmpty]}>
+                      <FontAwesome name="book" size={16} color={MINIMAL_UI.textMuted} />
+                    </View>
+                  )}
+                  <View style={styles.bookMeta}>
+                    <Text style={styles.bookTitle} numberOfLines={2}>
+                      {livro.titulo}
+                    </Text>
+                    <Text style={styles.bookSub} numberOfLines={1}>
+                      {[livro.autor, livro.editora, livro.ano].filter(Boolean).join(' · ') || '—'}
+                    </Text>
+                    {livro.isbn ? <Text style={styles.bookIsbn}>ISBN {livro.isbn}</Text> : null}
+                  </View>
+                  <TouchableOpacity
+                    accessibilityLabel={`Remover ${livro.titulo}`}
+                    onPress={() => handleDelete(livro)}
+                    style={styles.deleteButton}
+                  >
+                    <FontAwesome name="trash-o" size={16} color="#DC2626" />
+                  </TouchableOpacity>
+                </View>
+              ))
+            )}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -323,8 +386,45 @@ export function LivrosDoadosPanel() {
 const styles = StyleSheet.create({
   root: {
     width: '100%',
-    gap: 8,
+    gap: 12,
     paddingBottom: 24,
+  },
+  sectionCard: {
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 12,
+    backgroundColor: MINIMAL_UI.background,
+    overflow: 'hidden',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  sectionHeaderText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  sectionTitle: {
+    color: MINIMAL_UI.text,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  sectionMeta: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  sectionBody: {
+    paddingHorizontal: 12,
+    paddingBottom: 14,
+    gap: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: MINIMAL_UI.divider,
+    paddingTop: 12,
   },
   lead: {
     color: MINIMAL_UI.textMuted,
@@ -423,12 +523,6 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
-  },
-  listTitle: {
-    marginTop: 20,
-    color: MINIMAL_UI.text,
-    fontSize: 16,
-    fontWeight: '800',
   },
   listLoader: {
     marginTop: 12,
