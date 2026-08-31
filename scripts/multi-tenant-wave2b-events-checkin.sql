@@ -86,7 +86,8 @@ returns table (
   profile_id uuid,
   family_id text,
   full_name text,
-  kids_status text
+  kids_status text,
+  room_entry_checked boolean
 )
 language plpgsql
 security definer
@@ -100,7 +101,8 @@ begin
     er.profile_id,
     er.family_id,
     er.full_name,
-    er.kids_status
+    er.kids_status,
+    coalesce(er.room_entry_checked, false)
   from public.event_registrations er
   where er.tenant_id = v_tenant
     and  er.event_id = p_event_id

@@ -129,6 +129,7 @@ export const FamilyRegistrationList = ({
   const {
     registeredMemberIds,
     registeredMemberStatusById,
+    roomCheckInMemberIds,
     loading: loadingRegisteredMembers,
     error: registeredMembersError,
     refetch: refetchRegisteredMembers,
@@ -517,6 +518,7 @@ export const FamilyRegistrationList = ({
             showTeensIndicator={showTeensIndicator}
             assignedRoomLabel={roomLabelByMemberId[soloParticipant.id]}
             assignedRoomIsOverlay={roomOverlayByMemberId[soloParticipant.id] === true}
+            roomCheckInComplete={roomCheckInMemberIds.includes(soloParticipant.id)}
             onToggle={() => {
               if (!hasEventOpen || isBusy) {
                 return;
@@ -689,6 +691,7 @@ export const FamilyRegistrationList = ({
                 showTeensIndicator={showTeensIndicator}
                 assignedRoomLabel={roomLabelByMemberId[item.id]}
                 assignedRoomIsOverlay={roomOverlayByMemberId[item.id] === true}
+                roomCheckInComplete={roomCheckInMemberIds.includes(item.id)}
                 onToggle={() => {
                   if (rowDisabled) {
                     return;

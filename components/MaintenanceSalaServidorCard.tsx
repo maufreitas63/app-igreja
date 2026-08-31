@@ -546,6 +546,30 @@ export const MaintenanceSalaServidorCard = ({
                               {formatDisplayName(registration.full_name)}
                             </Text>
                           </View>
+                          {registration.room_entry_checked ? (
+                            <View
+                              accessibilityLabel="Check-in na sala concluído"
+                              accessibilityRole="text"
+                              style={[
+                                styles.roomCheckInBadge,
+                                minimal && styles.roomCheckInBadgeMinimal,
+                              ]}
+                            >
+                              <FontAwesome
+                                name="sign-in"
+                                size={11}
+                                color={minimal ? MINIMAL_UI.onDark : '#B45309'}
+                              />
+                              <Text
+                                style={[
+                                  styles.roomCheckInBadgeText,
+                                  minimal && styles.roomCheckInBadgeTextMinimal,
+                                ]}
+                              >
+                                Na sala
+                              </Text>
+                            </View>
+                          ) : null}
                           <View style={styles.groupedAudienceRowAction}>
                             {registration.room_entry_checked ? (
                               <TouchableOpacity
@@ -947,6 +971,30 @@ const styles = StyleSheet.create({
     color: '#3A96DD',
     fontSize: 15,
     textAlign: 'left',
+  },
+  roomCheckInBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    flexShrink: 0,
+  },
+  roomCheckInBadgeMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  roomCheckInBadgeText: {
+    color: '#B45309',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  roomCheckInBadgeTextMinimal: {
+    color: MINIMAL_UI.onDark,
   },
   groupedAudienceRowAction: {
     width: 28,

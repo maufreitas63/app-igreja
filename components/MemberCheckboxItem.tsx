@@ -2,6 +2,7 @@ import type { FamilyMember } from '@/hooks/useFamilyMembers';
 import type { RegistrationStatus } from '@/hooks/useRegisteredEventMembers';
 import { formatShortName } from '@/lib/formatShortName';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -20,6 +21,8 @@ type Props = {
   assignedRoomLabel?: string | null;
   /** True quando a sala efetiva é especial (sobreposição). */
   assignedRoomIsOverlay?: boolean;
+  /** Check-in na sala Kids/Teens já registrado pelo servidor. */
+  roomCheckInComplete?: boolean;
   minimal?: boolean;
   onToggle: () => void;
 };
@@ -33,6 +36,7 @@ export const MemberCheckboxItem = ({
   registeredEventName = null,
   assignedRoomLabel = null,
   assignedRoomIsOverlay: _assignedRoomIsOverlay = false,
+  roomCheckInComplete = false,
   minimal = false,
   onToggle,
 }: Props) => {
@@ -95,6 +99,24 @@ export const MemberCheckboxItem = ({
           {statusLine}
         </Text>
       </View>
+      {roomCheckInComplete ? (
+        <View
+          accessibilityLabel="Check-in na sala concluído"
+          accessibilityRole="text"
+          style={[styles.roomCheckInBadge, minimal && styles.roomCheckInBadgeMinimal]}
+        >
+          <FontAwesome
+            name="sign-in"
+            size={11}
+            color={minimal ? MINIMAL_UI.onDark : '#B45309'}
+          />
+          <Text
+            style={[styles.roomCheckInBadgeText, minimal && styles.roomCheckInBadgeTextMinimal]}
+          >
+            Na sala
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -184,5 +206,31 @@ const styles = StyleSheet.create({
   noRegistrationTextMinimal: {
     color: MINIMAL_UI.textMuted,
     fontWeight: '500',
+  },
+  roomCheckInBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginLeft: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    flexShrink: 0,
+  },
+  roomCheckInBadgeMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  roomCheckInBadgeText: {
+    color: '#B45309',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  roomCheckInBadgeTextMinimal: {
+    color: MINIMAL_UI.onDark,
   },
 });

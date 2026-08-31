@@ -14,6 +14,7 @@ type EventRegistration = {
   family_id: string | null;
   full_name: string | null;
   kids_status: string | null;
+  room_entry_checked?: boolean | null;
 };
 
 type ProfileLookup = {
@@ -34,6 +35,7 @@ export const useRegisteredEventMembers = (
   const [registeredMemberStatusById, setRegisteredMemberStatusById] = useState<
     Record<string, RegistrationStatus | undefined>
   >({});
+  const [roomCheckInMemberIds, setRoomCheckInMemberIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -46,6 +48,7 @@ export const useRegisteredEventMembers = (
     if (!eventId || !members.length) {
       setRegisteredMemberIds([]);
       setRegisteredMemberStatusById({});
+      setRoomCheckInMemberIds([]);
       setLoading(false);
       setError(null);
       return;
@@ -80,6 +83,7 @@ export const useRegisteredEventMembers = (
     if (registrationsError) {
       setRegisteredMemberIds([]);
       setRegisteredMemberStatusById(audienceStatusByMemberId);
+      setRoomCheckInMemberIds([]);
       setError(registrationsError);
       setLoading(false);
       return;
@@ -89,6 +93,8 @@ export const useRegisteredEventMembers = (
     const memberProfilesById = new Map<string, string>();
     const registeredNames = new Set<string>();
     const registeredProfileIds = new Set<string>();
+    const roomCheckedNames = new Set<string>();
+    const roomCheckedProfileIds = new Set<string>();
     const registeredStatusByName = new Map<string, RegistrationStatus>();
     const registeredStatusByProfileId = new Map<string, RegistrationStatus>();
 
@@ -163,6 +169,14 @@ export const useRegisteredEventMembers = (
         registeredProfileIds.add(registration.profile_id);
       }
 
+      if (registration.room_entry_checked === true) {
+        roomCheckedNames.add(normalizedName);
+
+        if (registration.profile_id) {
+          roomCheckedProfileIds.add(registration.profile_id);
+        }
+      }
+
       const normalizedStatus = registration.kids_status?.trim().toUpperCase();
 
       if (normalizedStatus === 'KIDS' || normalizedStatus === 'TEENS') {
@@ -177,6 +191,7 @@ export const useRegisteredEventMembers = (
     if (!registeredNames.size) {
       setRegisteredMemberIds([]);
       setRegisteredMemberStatusById(audienceStatusByMemberId);
+      setRoomCheckInMemberIds([]);
       setLoading(false);
       return;
     }
@@ -193,6 +208,18 @@ export const useRegisteredEventMembers = (
       .map((member) => member.id);
     setRegisteredMemberIds(nextRegisteredMemberIds);
     setRegisteredMemberStatusById(audienceStatusByMemberId);
+    setRoomCheckInMemberIds(
+      members
+        .filter((member) => {
+          const profileId = memberProfilesById.get(member.id);
+
+          return (
+            (profileId ? roomCheckedProfileIds.has(profileId) : false)
+            || roomCheckedNames.has(normalizeName(member.full_name))
+          );
+        })
+        .map((member) => member.id)
+    );
     setLoading(false);
   }, [eventId, familyGroupId, memberIdsKey, members]);
 
@@ -200,5 +227,5 @@ export const useRegisteredEventMembers = (
     refetch();
   }, [refetch]);
 
-  return { registeredMemberIds, registeredMemberStatusById, loading, error, refetch };
+  return { registeredMemberIds, registeredMemberStatusById, roomCheckInMemberIds, loading, error, refetch };
 };
