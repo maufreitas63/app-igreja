@@ -249,6 +249,8 @@ as $$
 declare
   v_titulo text;
   v_retirante text;
+  v_phone text;
+  v_desligado boolean := false;
   v_status text;
   v_dias integer;
 begin
@@ -271,7 +273,13 @@ begin
   v_titulo := coalesce(nullif(trim(v_titulo), ''), nullif(trim(p_row.titulo_livro_externo), ''), 'Livro');
 
   if p_row.user_id is not null then
-    select p.full_name into v_retirante from public.profiles p where p.id = p_row.user_id;
+    select
+      p.full_name,
+      p.phone,
+      (p.membership_out is not null or p.is_active is not true)
+      into v_retirante, v_phone, v_desligado
+      from public.profiles p
+     where p.id = p_row.user_id;
   end if;
   v_retirante := coalesce(
     nullif(trim(v_retirante), ''),
@@ -288,6 +296,8 @@ begin
     'user_id', p_row.user_id,
     'nome_retirante', v_retirante,
     'nome_retirante_externo', p_row.nome_retirante_externo,
+    'phone', v_phone,
+    'retirante_desligado', coalesce(v_desligado, false),
     'data_retirada', p_row.data_retirada,
     'data_prevista_retirada', p_row.data_prevista_retirada,
     'data_prevista_entrega', p_row.data_prevista_entrega,
@@ -506,13 +516,19 @@ begin
       'id', p.id,
       'full_name', p.full_name,
       'phone', p.phone,
-      'codigo_membro', p.codigo_membro
+      'codigo_membro', p.codigo_membro,
+      'desligado', p.desligado
     )
     order by lower(coalesce(p.full_name, ''))
   ), '[]'::jsonb)
     into v_rows
     from (
-      select pr.id, pr.full_name, pr.phone, pr.codigo_membro
+      select
+        pr.id,
+        pr.full_name,
+        pr.phone,
+        pr.codigo_membro,
+        (pr.membership_out is not null or pr.is_active is not true) as desligado
         from public.profiles pr
         join public.profile_igreja_vinculos v
           on v.profile_id = pr.id
@@ -520,8 +536,11 @@ begin
        where public.profile_visible_to_access_actor(v_actor, pr.id)
          and (
          lower(coalesce(pr.full_name, '')) like '%' || v_q || '%'
-         or regexp_replace(coalesce(pr.phone, ''), '\D', '', 'g')
-            like '%' || regexp_replace(v_q, '\D', '', 'g') || '%'
+         or (
+           length(regexp_replace(v_q, '\D', '', 'g')) >= 2
+           and regexp_replace(coalesce(pr.phone, ''), '\D', '', 'g')
+               like '%' || regexp_replace(v_q, '\D', '', 'g') || '%'
+         )
        )
        order by lower(coalesce(pr.full_name, ''))
        limit 25
@@ -745,7 +764,7 @@ begin
   end if;
 
   update public.emprestimos_livros
-     set data_prevista_entrega = coalesce(data_prevista_entrega, now()) + interval '30 days',
+     set data_prevista_entrega = coalesce(data_prevista_entrega, now()) + interval '10 days',
          status = 'ativo'
    where id = p_id
      and tenant_id = v_tenant
@@ -753,7 +772,7 @@ begin
 
   return jsonb_build_object(
     'success', true,
-    'message', 'Prazo renovado por mais 30 dias.',
+    'message', 'Prazo renovado por mais 10 dias.',
     'row', public.emprestimo_livro_json(v_row)
   );
 end;

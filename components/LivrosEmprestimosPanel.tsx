@@ -4,6 +4,7 @@ import {
   createEmprestimoLivro,
   devolverEmprestimoLivro,
   emprestimoCountdownLabel,
+  EMPRESTIMO_RENOVACAO_DIAS,
   EMPRESTIMO_STATUS_LABEL,
   formatEmprestimoDate,
   listEmprestimosLivrosStaff,
@@ -11,14 +12,15 @@ import {
   searchProfilesForEmprestimo,
   type EmprestimoLivro,
 } from '@/lib/emprestimosLivrosApi';
+import { confirmDialog } from '@/lib/confirmDialog';
 import { listLivros, type LivroRecord } from '@/lib/livrosApi';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ProfileSearchRow } from '@/lib/profileSearchRow';
+import { openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -98,7 +100,21 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
     }
     const handle = setTimeout(() => {
       void searchProfilesForEmprestimo(q)
-        .then(setMemberHits)
+        .then((rows) => {
+          const needle = q.toLowerCase();
+          const digits = q.replace(/\D/g, '');
+          setMemberHits(
+            rows.filter((hit) => {
+              if (hit.fullName.toLowerCase().includes(needle)) {
+                return true;
+              }
+              if (digits.length >= 2) {
+                return (hit.phone ?? '').replace(/\D/g, '').includes(digits);
+              }
+              return false;
+            })
+          );
+        })
         .catch(() => setMemberHits([]));
     }, 280);
     return () => clearTimeout(handle);
@@ -133,7 +149,10 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
     }
   };
 
-  const confirmAction = (item: EmprestimoLivro, kind: 'devolver' | 'renovar' | 'confirmar' | 'cancelar') => {
+  const confirmAction = async (
+    item: EmprestimoLivro,
+    kind: 'devolver' | 'renovar' | 'confirmar' | 'cancelar'
+  ) => {
     const copy = {
       devolver: {
         title: 'Registrar devolução',
@@ -142,12 +161,12 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
       },
       renovar: {
         title: 'Renovar prazo',
-        message: `Somar mais 30 dias ao prazo de «${item.titulo}»?`,
+        message: `Somar mais ${EMPRESTIMO_RENOVACAO_DIAS} dias ao prazo de «${item.titulo}»?`,
         confirm: 'Renovar',
       },
       confirmar: {
         title: 'Confirmar retirada',
-        message: `Registrar que «${item.titulo}» foi retirado hoje?`,
+        message: `Registrar que «${item.titulo}» foi retirado hoje? O empréstimo passa a contar o prazo de devolução.`,
         confirm: 'Confirmar',
       },
       cancelar: {
@@ -156,29 +175,48 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
         confirm: 'Cancelar reserva',
       },
     }[kind];
-    Alert.alert(copy.title, copy.message, [
-      { text: 'Voltar', style: 'cancel' },
-      {
-        text: copy.confirm,
-        style: kind === 'cancelar' ? 'destructive' : 'default',
-        onPress: () => {
-          void (async () => {
-            const result =
-              kind === 'devolver'
-                ? await devolverEmprestimoLivro(item.id)
-                : kind === 'renovar'
-                  ? await renovarEmprestimoLivro(item.id)
-                  : kind === 'confirmar'
-                    ? await confirmarRetiradaReserva(item.id)
-                    : await cancelarReservaLivro(item.id);
-            Toast.show({ type: result.success ? 'success' : 'error', text1: result.message });
-            if (result.success) {
-              await reload();
-            }
-          })();
-        },
-      },
-    ]);
+
+    const confirmed = await confirmDialog(
+      copy.title,
+      copy.message,
+      copy.confirm,
+      'Voltar',
+      { destructive: kind === 'cancelar' }
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const result =
+        kind === 'devolver'
+          ? await devolverEmprestimoLivro(item.id)
+          : kind === 'renovar'
+            ? await renovarEmprestimoLivro(item.id)
+            : kind === 'confirmar'
+              ? await confirmarRetiradaReserva(item.id)
+              : await cancelarReservaLivro(item.id);
+      Toast.show({ type: result.success ? 'success' : 'error', text1: result.message });
+      if (result.success) {
+        await reload();
+      }
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: error instanceof Error ? error.message : 'Não foi possível concluir a ação.',
+      });
+    }
+  };
+
+  const handleWhatsAppPrazo = (item: EmprestimoLivro) => {
+    const due = formatEmprestimoDate(item.dataPrevistaEntrega);
+    const message =
+      `Olá, ${item.nomeRetirante}! O livro «${item.titulo}» tem devolução prevista para ${due}. ` +
+      `Você vai devolver no prazo ou pretende estender o empréstimo por mais ${EMPRESTIMO_RENOVACAO_DIAS} dias?`;
+    const opened = openWhatsAppLikeBirthdaysWithText(item.phone, message);
+    if (!opened) {
+      Toast.show({ type: 'error', text1: 'Telefone indisponível para WhatsApp.' });
+    }
   };
 
   return (
@@ -239,7 +277,15 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
           <Text style={styles.sectionLabel}>Retirante</Text>
           {selectedMember ? (
             <View style={styles.selectedMember}>
-              <Text style={styles.selectedMemberName}>{selectedMember.fullName}</Text>
+              <Text
+                style={[
+                  styles.selectedMemberName,
+                  selectedMember.desligado && styles.memberDesligado,
+                ]}
+              >
+                {selectedMember.fullName}
+                {selectedMember.desligado ? ' (desligado)' : ''}
+              </Text>
               <TouchableOpacity onPress={() => setSelectedMember(null)}>
                 <Text style={styles.clearLink}>Trocar</Text>
               </TouchableOpacity>
@@ -264,7 +310,10 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
                     setNomeExterno('');
                   }}
                 >
-                  <Text style={styles.hitName}>{hit.fullName}</Text>
+                  <Text style={[styles.hitName, hit.desligado && styles.memberDesligado]}>
+                    {hit.fullName}
+                    {hit.desligado ? ' (desligado)' : ''}
+                  </Text>
                   {hit.phone ? <Text style={styles.hitMeta}>{hit.phone}</Text> : null}
                 </TouchableOpacity>
               ))}
@@ -319,7 +368,12 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
                 {EMPRESTIMO_STATUS_LABEL[item.status]}
               </Text>
             </View>
-            <Text style={styles.cardMeta}>{item.nomeRetirante}</Text>
+            <Text
+              style={[styles.cardMeta, item.retiranteDesligado && styles.memberDesligado]}
+            >
+              {item.nomeRetirante}
+              {item.retiranteDesligado ? ' (desligado)' : ''}
+            </Text>
             <Text style={styles.cardMeta}>
               {item.status === 'reservado'
                 ? `Retirada prevista ${formatEmprestimoDate(item.dataPrevistaRetirada || item.dataRetirada)} · retorno ${formatEmprestimoDate(item.dataPrevistaEntrega)}`
@@ -344,13 +398,13 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
                 <View style={styles.actions}>
                   <TouchableOpacity
                     style={styles.secondaryButton}
-                    onPress={() => confirmAction(item, 'cancelar')}
+                    onPress={() => void confirmAction(item, 'cancelar')}
                   >
                     <Text style={styles.secondaryButtonText}>Cancelar reserva</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.returnButton}
-                    onPress={() => confirmAction(item, 'confirmar')}
+                    onPress={() => void confirmAction(item, 'confirmar')}
                   >
                     <Text style={styles.returnButtonText}>Confirmar retirada</Text>
                   </TouchableOpacity>
@@ -358,15 +412,22 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
               ) : (
                 <View style={styles.actions}>
                   <TouchableOpacity
+                    style={styles.whatsappButton}
+                    onPress={() => handleWhatsAppPrazo(item)}
+                    accessibilityLabel={`WhatsApp sobre o prazo de ${item.titulo}`}
+                  >
+                    <FontAwesome name="whatsapp" size={16} color="#16A34A" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
                     style={styles.secondaryButton}
-                    onPress={() => confirmAction(item, 'renovar')}
+                    onPress={() => void confirmAction(item, 'renovar')}
                   >
                     <FontAwesome name="calendar-plus-o" size={13} color={MINIMAL_UI.blueDark} />
-                    <Text style={styles.secondaryButtonText}>Renovar +30</Text>
+                    <Text style={styles.secondaryButtonText}>Renovar +{EMPRESTIMO_RENOVACAO_DIAS}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.returnButton}
-                    onPress={() => confirmAction(item, 'devolver')}
+                    onPress={() => void confirmAction(item, 'devolver')}
                   >
                     <Text style={styles.returnButtonText}>Registrar devolução</Text>
                   </TouchableOpacity>
@@ -469,6 +530,10 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
     fontWeight: '600',
   },
+  memberDesligado: {
+    color: '#DC2626',
+    fontWeight: '700',
+  },
   hitMeta: {
     color: MINIMAL_UI.textMuted,
     fontSize: 12,
@@ -559,6 +624,16 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.blueDark,
     fontWeight: '700',
     fontSize: 13,
+  },
+  whatsappButton: {
+    width: 40,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0FDF4',
   },
   returnButton: {
     backgroundColor: MINIMAL_UI.blueDark,

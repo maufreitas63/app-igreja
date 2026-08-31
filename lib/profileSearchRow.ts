@@ -3,6 +3,7 @@ export type ProfileSearchRow = {
   fullName: string;
   phone: string | null;
   memberCode: string | null;
+  desligado: boolean;
 };
 
 export const mapProfileSearchRow = (row: Record<string, unknown>): ProfileSearchRow | null => {
@@ -23,6 +24,7 @@ export const mapProfileSearchRow = (row: Record<string, unknown>): ProfileSearch
         : row.memberCode != null
           ? String(row.memberCode).trim() || null
           : null,
+    desligado: row.desligado === true || row.membership_out != null,
   };
 };
 

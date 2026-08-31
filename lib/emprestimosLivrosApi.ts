@@ -11,6 +11,8 @@ export type EmprestimoLivro = {
   titulo: string;
   userId: string | null;
   nomeRetirante: string;
+  phone: string | null;
+  retiranteDesligado: boolean;
   dataRetirada: string;
   dataPrevistaRetirada: string | null;
   dataPrevistaEntrega: string;
@@ -18,6 +20,8 @@ export type EmprestimoLivro = {
   status: EmprestimoLivroStatus;
   diasRestantes: number;
 };
+
+export const EMPRESTIMO_RENOVACAO_DIAS = 10;
 
 export type EmprestimoLivroNotice = {
   id: string;
@@ -58,6 +62,8 @@ const mapEmprestimo = (raw: unknown): EmprestimoLivro | null => {
     titulo,
     userId: asText(row.user_id) || null,
     nomeRetirante: asText(row.nome_retirante) || 'Retirante',
+    phone: asText(row.phone) || null,
+    retiranteDesligado: row.retirante_desligado === true,
     dataRetirada: asText(row.data_retirada),
     dataPrevistaRetirada: asText(row.data_prevista_retirada) || null,
     dataPrevistaEntrega: asText(row.data_prevista_entrega),
@@ -226,7 +232,7 @@ export async function renovarEmprestimoLivro(id: string) {
   const payload = await rpcPayload('renovar_emprestimo_livro', { p_id: id });
   return {
     success: payload.success === true,
-    message: asText(payload.message) || 'Prazo renovado.',
+    message: asText(payload.message) || 'Prazo renovado por mais 10 dias.',
   };
 }
 
