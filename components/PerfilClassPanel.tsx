@@ -161,12 +161,6 @@ export function PerfilClassPanel() {
         icon: 'badge',
         onPress: openDigitalIdCard,
       },
-      {
-        key: 'my-books',
-        label: 'Meus Livros Retirados',
-        icon: 'menu-book',
-        onPress: openMyBooks,
-      },
     ];
 
     if (manageProfile) {
@@ -205,6 +199,13 @@ export function PerfilClassPanel() {
         onPress: openExpenseReport,
       });
     }
+
+    items.push({
+      key: 'my-books',
+      label: 'Meus Livros Retirados',
+      icon: 'menu-book',
+      onPress: openMyBooks,
+    });
 
     return items;
   }, [

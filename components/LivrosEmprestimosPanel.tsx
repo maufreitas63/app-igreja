@@ -1,4 +1,6 @@
 import {
+  cancelarReservaLivro,
+  confirmarRetiradaReserva,
   createEmprestimoLivro,
   devolverEmprestimoLivro,
   emprestimoCountdownLabel,
@@ -131,22 +133,44 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
     }
   };
 
-  const confirmAction = (item: EmprestimoLivro, kind: 'devolver' | 'renovar') => {
-    const title = kind === 'devolver' ? 'Registrar devolução' : 'Renovar prazo';
-    const message =
-      kind === 'devolver'
-        ? `Confirmar a devolução de «${item.titulo}»? O item volta ao acervo.`
-        : `Somar mais 30 dias ao prazo de «${item.titulo}»?`;
-    Alert.alert(title, message, [
-      { text: 'Cancelar', style: 'cancel' },
+  const confirmAction = (item: EmprestimoLivro, kind: 'devolver' | 'renovar' | 'confirmar' | 'cancelar') => {
+    const copy = {
+      devolver: {
+        title: 'Registrar devolução',
+        message: `Confirmar a devolução de «${item.titulo}»? O item volta ao acervo.`,
+        confirm: 'Devolver',
+      },
+      renovar: {
+        title: 'Renovar prazo',
+        message: `Somar mais 30 dias ao prazo de «${item.titulo}»?`,
+        confirm: 'Renovar',
+      },
+      confirmar: {
+        title: 'Confirmar retirada',
+        message: `Registrar que «${item.titulo}» foi retirado hoje?`,
+        confirm: 'Confirmar',
+      },
+      cancelar: {
+        title: 'Cancelar reserva',
+        message: `Cancelar a reserva de «${item.titulo}»? O livro volta ao acervo.`,
+        confirm: 'Cancelar reserva',
+      },
+    }[kind];
+    Alert.alert(copy.title, copy.message, [
+      { text: 'Voltar', style: 'cancel' },
       {
-        text: kind === 'devolver' ? 'Devolver' : 'Renovar',
+        text: copy.confirm,
+        style: kind === 'cancelar' ? 'destructive' : 'default',
         onPress: () => {
           void (async () => {
             const result =
               kind === 'devolver'
                 ? await devolverEmprestimoLivro(item.id)
-                : await renovarEmprestimoLivro(item.id);
+                : kind === 'renovar'
+                  ? await renovarEmprestimoLivro(item.id)
+                  : kind === 'confirmar'
+                    ? await confirmarRetiradaReserva(item.id)
+                    : await cancelarReservaLivro(item.id);
             Toast.show({ type: result.success ? 'success' : 'error', text1: result.message });
             if (result.success) {
               await reload();
@@ -288,6 +312,8 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
                   styles.badge,
                   item.status === 'atrasado' && styles.badgeLate,
                   item.status === 'devolvido' && styles.badgeDone,
+                  item.status === 'reservado' && styles.badgeReserved,
+                  item.status === 'cancelado' && styles.badgeDone,
                 ]}
               >
                 {EMPRESTIMO_STATUS_LABEL[item.status]}
@@ -295,8 +321,9 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
             </View>
             <Text style={styles.cardMeta}>{item.nomeRetirante}</Text>
             <Text style={styles.cardMeta}>
-              Retirada {formatEmprestimoDate(item.dataRetirada)} · entrega{' '}
-              {formatEmprestimoDate(item.dataPrevistaEntrega)}
+              {item.status === 'reservado'
+                ? `Retirada prevista ${formatEmprestimoDate(item.dataPrevistaRetirada || item.dataRetirada)} · retorno ${formatEmprestimoDate(item.dataPrevistaEntrega)}`
+                : `Retirada ${formatEmprestimoDate(item.dataRetirada)} · entrega ${formatEmprestimoDate(item.dataPrevistaEntrega)}`}
             </Text>
             {item.dataDevolucaoReal ? (
               <Text style={styles.cardMeta}>
@@ -313,21 +340,38 @@ export function LivrosEmprestimosPanel({ mode }: Props) {
               </Text>
             )}
             {mode === 'ativos' ? (
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={styles.secondaryButton}
-                  onPress={() => confirmAction(item, 'renovar')}
-                >
-                  <FontAwesome name="calendar-plus-o" size={13} color={MINIMAL_UI.blueDark} />
-                  <Text style={styles.secondaryButtonText}>Renovar +30</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.returnButton}
-                  onPress={() => confirmAction(item, 'devolver')}
-                >
-                  <Text style={styles.returnButtonText}>Registrar devolução</Text>
-                </TouchableOpacity>
-              </View>
+              item.status === 'reservado' ? (
+                <View style={styles.actions}>
+                  <TouchableOpacity
+                    style={styles.secondaryButton}
+                    onPress={() => confirmAction(item, 'cancelar')}
+                  >
+                    <Text style={styles.secondaryButtonText}>Cancelar reserva</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.returnButton}
+                    onPress={() => confirmAction(item, 'confirmar')}
+                  >
+                    <Text style={styles.returnButtonText}>Confirmar retirada</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.actions}>
+                  <TouchableOpacity
+                    style={styles.secondaryButton}
+                    onPress={() => confirmAction(item, 'renovar')}
+                  >
+                    <FontAwesome name="calendar-plus-o" size={13} color={MINIMAL_UI.blueDark} />
+                    <Text style={styles.secondaryButtonText}>Renovar +30</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.returnButton}
+                    onPress={() => confirmAction(item, 'devolver')}
+                  >
+                    <Text style={styles.returnButtonText}>Registrar devolução</Text>
+                  </TouchableOpacity>
+                </View>
+              )
             ) : null}
           </View>
         ))
@@ -479,6 +523,9 @@ const styles = StyleSheet.create({
   },
   badgeDone: {
     color: MINIMAL_UI.textMuted,
+  },
+  badgeReserved: {
+    color: '#B45309',
   },
   cardMeta: {
     color: MINIMAL_UI.textMuted,

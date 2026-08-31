@@ -14,10 +14,11 @@ create table if not exists public.emprestimos_livros (
   user_id uuid null references public.profiles (id) on delete set null,
   nome_retirante_externo text null,
   data_retirada timestamptz not null default now(),
+  data_prevista_retirada timestamptz null,
   data_prevista_entrega timestamptz not null default (now() + interval '30 days'),
   data_devolucao_real timestamptz null,
   status text not null default 'ativo'
-    check (status in ('ativo', 'devolvido', 'atrasado')),
+    check (status in ('ativo', 'devolvido', 'atrasado', 'reservado', 'cancelado')),
   constraint emprestimos_livros_livro_origem_check
     check (
       livro_id is not null
@@ -38,10 +39,37 @@ create index if not exists emprestimos_livros_tenant_user_idx
 
 create unique index if not exists emprestimos_livros_livro_ativo_uidx
   on public.emprestimos_livros (tenant_id, livro_id)
-  where status in ('ativo', 'atrasado') and livro_id is not null;
+  where status in ('ativo', 'atrasado', 'reservado') and livro_id is not null;
 
 comment on table public.emprestimos_livros is
-  'Saídas do acervo e de livros externos. Isolado por tenant_id.';
+  'Saídas e reservas do acervo e de livros externos. Isolado por tenant_id.';
+
+alter table public.emprestimos_livros
+  add column if not exists data_prevista_retirada timestamptz null;
+
+do $$
+declare
+  r record;
+begin
+  for r in
+    select c.conname
+      from pg_constraint c
+     where c.conrelid = 'public.emprestimos_livros'::regclass
+       and c.contype = 'c'
+       and pg_get_constraintdef(c.oid) ilike '%status%'
+  loop
+    execute format('alter table public.emprestimos_livros drop constraint if exists %I', r.conname);
+  end loop;
+end $$;
+
+alter table public.emprestimos_livros
+  add constraint emprestimos_livros_status_check
+  check (status in ('ativo', 'devolvido', 'atrasado', 'reservado', 'cancelado'));
+
+drop index if exists public.emprestimos_livros_livro_ativo_uidx;
+create unique index emprestimos_livros_livro_ativo_uidx
+  on public.emprestimos_livros (tenant_id, livro_id)
+  where status in ('ativo', 'atrasado', 'reservado') and livro_id is not null;
 
 create table if not exists public.emprestimo_livros_notices (
   id uuid primary key default gen_random_uuid(),
@@ -199,8 +227,12 @@ language sql
 stable
 as $$
   select case
+    when lower(trim(coalesce(p_status, ''))) = 'cancelado'
+      then 'cancelado'
     when p_devolucao is not null or lower(trim(coalesce(p_status, ''))) = 'devolvido'
       then 'devolvido'
+    when lower(trim(coalesce(p_status, ''))) = 'reservado'
+      then 'reservado'
     when public.emprestimo_livro_dias_restantes(p_due) < 0
       then 'atrasado'
     else 'ativo'
@@ -225,7 +257,13 @@ begin
     p_row.data_devolucao_real,
     p_row.data_prevista_entrega
   );
-  v_dias := public.emprestimo_livro_dias_restantes(p_row.data_prevista_entrega);
+  if v_status = 'reservado' then
+    v_dias := public.emprestimo_livro_dias_restantes(
+      coalesce(p_row.data_prevista_retirada, p_row.data_retirada)
+    );
+  else
+    v_dias := public.emprestimo_livro_dias_restantes(p_row.data_prevista_entrega);
+  end if;
 
   if p_row.livro_id is not null then
     select l.titulo into v_titulo from public.livros l where l.id = p_row.livro_id;
@@ -251,6 +289,7 @@ begin
     'nome_retirante', v_retirante,
     'nome_retirante_externo', p_row.nome_retirante_externo,
     'data_retirada', p_row.data_retirada,
+    'data_prevista_retirada', p_row.data_prevista_retirada,
     'data_prevista_entrega', p_row.data_prevista_entrega,
     'data_devolucao_real', p_row.data_devolucao_real,
     'status', v_status,
@@ -352,13 +391,22 @@ begin
 
   perform public.dispatch_emprestimo_livros_reminders();
 
-  select coalesce(jsonb_agg(public.emprestimo_livro_json(e) order by e.data_prevista_entrega asc), '[]'::jsonb)
+  select coalesce(
+    jsonb_agg(
+      public.emprestimo_livro_json(e)
+      order by
+        case when e.status = 'reservado' then 0 else 1 end,
+        coalesce(e.data_prevista_retirada, e.data_retirada) asc,
+        e.data_prevista_entrega asc
+    ),
+    '[]'::jsonb
+  )
     into v_rows
     from public.emprestimos_livros e
    where e.tenant_id = v_tenant
      and e.user_id = v_me
      and e.data_devolucao_real is null
-     and e.status in ('ativo', 'atrasado');
+     and e.status in ('ativo', 'atrasado', 'reservado');
 
   return jsonb_build_object('success', true, 'rows', v_rows);
 end;
@@ -505,7 +553,7 @@ begin
      where e.tenant_id = v_tenant
        and (
          e.data_devolucao_real is not null
-         or e.status = 'devolvido'
+         or e.status in ('devolvido', 'cancelado')
        )
        and (
          e.user_id is null
@@ -517,7 +565,7 @@ begin
       from public.emprestimos_livros e
      where e.tenant_id = v_tenant
        and e.data_devolucao_real is null
-       and e.status in ('ativo', 'atrasado')
+       and e.status in ('ativo', 'atrasado', 'reservado')
        and (
          e.user_id is null
          or public.profile_visible_to_access_actor(v_actor, e.user_id)
@@ -573,9 +621,9 @@ begin
        where e.tenant_id = v_tenant
          and e.livro_id = p_livro_id
          and e.data_devolucao_real is null
-         and e.status in ('ativo', 'atrasado')
+         and e.status in ('ativo', 'atrasado', 'reservado')
     ) then
-      return jsonb_build_object('success', false, 'message', 'Este livro já está emprestado.');
+      return jsonb_build_object('success', false, 'message', 'Este livro já está emprestado ou reservado.');
     end if;
   end if;
 
@@ -647,8 +695,12 @@ begin
     return jsonb_build_object('success', false, 'message', 'Empréstimo não encontrado.');
   end if;
 
-  if v_row.data_devolucao_real is not null or v_row.status = 'devolvido' then
+  if v_row.data_devolucao_real is not null or v_row.status in ('devolvido', 'cancelado') then
     return jsonb_build_object('success', false, 'message', 'Este empréstimo já foi devolvido.');
+  end if;
+
+  if v_row.status = 'reservado' then
+    return jsonb_build_object('success', false, 'message', 'Esta é uma reserva. Confirme a retirada ou cancele a reserva.');
   end if;
 
   update public.emprestimos_livros
@@ -688,8 +740,8 @@ begin
     return jsonb_build_object('success', false, 'message', 'Empréstimo não encontrado.');
   end if;
 
-  if v_row.data_devolucao_real is not null or v_row.status = 'devolvido' then
-    return jsonb_build_object('success', false, 'message', 'Não é possível renovar um empréstimo já devolvido.');
+  if v_row.data_devolucao_real is not null or v_row.status in ('devolvido', 'cancelado', 'reservado') then
+    return jsonb_build_object('success', false, 'message', 'Não é possível renovar uma reserva ou um empréstimo já encerrado.');
   end if;
 
   update public.emprestimos_livros
@@ -702,6 +754,288 @@ begin
   return jsonb_build_object(
     'success', true,
     'message', 'Prazo renovado por mais 30 dias.',
+    'row', public.emprestimo_livro_json(v_row)
+  );
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Reserva pelo membro + confirmação pela Secretaria
+-- ---------------------------------------------------------------------------
+
+create or replace function public.emprestimo_ts_from_iso_date(p_date text)
+returns timestamptz
+language plpgsql
+stable
+as $$
+declare
+  v text := nullif(trim(coalesce(p_date, '')), '');
+begin
+  if v is null or v !~ '^\d{4}-\d{2}-\d{2}$' then
+    return null;
+  end if;
+  return (v || ' 12:00:00')::timestamp at time zone 'America/Sao_Paulo';
+end;
+$$;
+
+create or replace function public.list_livros_disponiveis_reserva()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tenant uuid := public.require_session_tenant_id();
+  v_me uuid := public.current_session_profile_id();
+  v_rows jsonb;
+begin
+  if v_me is null then
+    raise exception 'Sessão inválida. Saia e entre novamente.';
+  end if;
+
+  select coalesce(jsonb_agg(to_jsonb(x) order by lower(x.titulo)), '[]'::jsonb)
+    into v_rows
+    from (
+      select
+        l.id,
+        l.tenant_id,
+        l.isbn,
+        l.titulo,
+        l.autor,
+        l.editora,
+        l.ano,
+        l.capa,
+        l.criado_em
+      from public.livros l
+      where l.tenant_id = v_tenant
+        and not exists (
+          select 1
+            from public.emprestimos_livros e
+           where e.tenant_id = v_tenant
+             and e.livro_id = l.id
+             and e.data_devolucao_real is null
+             and e.status in ('ativo', 'atrasado', 'reservado')
+        )
+    ) x;
+
+  return jsonb_build_object('success', true, 'rows', coalesce(v_rows, '[]'::jsonb));
+end;
+$$;
+
+create or replace function public.reservar_livro_acervo(
+  p_livro_id uuid,
+  p_data_retirada text,
+  p_data_retorno text default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tenant uuid := public.require_session_tenant_id();
+  v_me uuid := public.current_session_profile_id();
+  v_livro public.livros;
+  v_pickup timestamptz;
+  v_retorno timestamptz;
+  v_today date := (timezone('America/Sao_Paulo', now()))::date;
+  v_row public.emprestimos_livros;
+  v_open integer;
+begin
+  if v_me is null then
+    raise exception 'Sessão inválida. Saia e entre novamente.';
+  end if;
+
+  if p_livro_id is null then
+    return jsonb_build_object('success', false, 'message', 'Escolha um livro do acervo.');
+  end if;
+
+  v_pickup := public.emprestimo_ts_from_iso_date(p_data_retirada);
+  if v_pickup is null then
+    return jsonb_build_object('success', false, 'message', 'Informe a data prevista de retirada (AAAA-MM-DD).');
+  end if;
+
+  if coalesce(nullif(trim(p_data_retorno), ''), '') = '' then
+    v_retorno := v_pickup + interval '30 days';
+  else
+    v_retorno := public.emprestimo_ts_from_iso_date(p_data_retorno);
+  end if;
+
+  if v_retorno is null then
+    return jsonb_build_object('success', false, 'message', 'Informe a data prevista de devolução (AAAA-MM-DD).');
+  end if;
+
+  if (v_pickup at time zone 'America/Sao_Paulo')::date < v_today then
+    return jsonb_build_object('success', false, 'message', 'A data de retirada não pode ser anterior a hoje.');
+  end if;
+
+  if (v_retorno at time zone 'America/Sao_Paulo')::date <= (v_pickup at time zone 'America/Sao_Paulo')::date then
+    return jsonb_build_object('success', false, 'message', 'A data de devolução deve ser depois da retirada.');
+  end if;
+
+  if (v_retorno at time zone 'America/Sao_Paulo')::date
+     > ((v_pickup at time zone 'America/Sao_Paulo')::date + 90) then
+    return jsonb_build_object('success', false, 'message', 'O prazo de devolução não pode passar de 90 dias.');
+  end if;
+
+  select * into v_livro
+    from public.livros l
+   where l.id = p_livro_id
+     and l.tenant_id = v_tenant;
+
+  if v_livro.id is null then
+    return jsonb_build_object('success', false, 'message', 'Livro não encontrado no acervo desta igreja.');
+  end if;
+
+  if exists (
+    select 1
+      from public.emprestimos_livros e
+     where e.tenant_id = v_tenant
+       and e.livro_id = p_livro_id
+       and e.data_devolucao_real is null
+       and e.status in ('ativo', 'atrasado', 'reservado')
+  ) then
+    return jsonb_build_object('success', false, 'message', 'Este livro já está emprestado ou reservado.');
+  end if;
+
+  select count(*)::integer into v_open
+    from public.emprestimos_livros e
+   where e.tenant_id = v_tenant
+     and e.user_id = v_me
+     and e.data_devolucao_real is null
+     and e.status = 'reservado';
+
+  if coalesce(v_open, 0) >= 3 then
+    return jsonb_build_object('success', false, 'message', 'Você já tem 3 reservas ativas. Cancele uma para reservar outro título.');
+  end if;
+
+  insert into public.emprestimos_livros (
+    tenant_id,
+    livro_id,
+    user_id,
+    data_retirada,
+    data_prevista_retirada,
+    data_prevista_entrega,
+    status
+  )
+  values (
+    v_tenant,
+    p_livro_id,
+    v_me,
+    v_pickup,
+    v_pickup,
+    v_retorno,
+    'reservado'
+  )
+  returning * into v_row;
+
+  return jsonb_build_object(
+    'success', true,
+    'message', 'Reserva registrada. Retire o livro na Secretaria na data combinada.',
+    'row', public.emprestimo_livro_json(v_row)
+  );
+end;
+$$;
+
+create or replace function public.cancelar_reserva_livro(p_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tenant uuid := public.require_session_tenant_id();
+  v_me uuid := public.current_session_profile_id();
+  v_row public.emprestimos_livros;
+  v_staff boolean := false;
+begin
+  if v_me is null then
+    raise exception 'Sessão inválida. Saia e entre novamente.';
+  end if;
+
+  select * into v_row
+    from public.emprestimos_livros e
+   where e.id = p_id
+     and e.tenant_id = v_tenant;
+
+  if v_row.id is null then
+    return jsonb_build_object('success', false, 'message', 'Reserva não encontrada.');
+  end if;
+
+  if v_row.status is distinct from 'reservado' then
+    return jsonb_build_object('success', false, 'message', 'Só é possível cancelar uma reserva ainda não retirada.');
+  end if;
+
+  begin
+    perform public.assert_secretaria_or_gestor_shield(v_me);
+    v_staff := true;
+  exception
+    when others then
+      v_staff := false;
+  end;
+
+  if not v_staff and v_row.user_id is distinct from v_me then
+    return jsonb_build_object('success', false, 'message', 'Você só pode cancelar a sua própria reserva.');
+  end if;
+
+  update public.emprestimos_livros
+     set status = 'cancelado',
+         data_devolucao_real = now()
+   where id = p_id
+     and tenant_id = v_tenant
+  returning * into v_row;
+
+  return jsonb_build_object(
+    'success', true,
+    'message', 'Reserva cancelada. O livro voltou ao acervo.',
+    'row', public.emprestimo_livro_json(v_row)
+  );
+end;
+$$;
+
+create or replace function public.confirmar_retirada_reserva(p_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tenant uuid := public.require_session_tenant_id();
+  v_actor uuid := public.current_session_profile_id();
+  v_row public.emprestimos_livros;
+  v_due timestamptz;
+begin
+  perform public.assert_secretaria_or_gestor_shield(v_actor);
+
+  select * into v_row
+    from public.emprestimos_livros e
+   where e.id = p_id
+     and e.tenant_id = v_tenant;
+
+  if v_row.id is null then
+    return jsonb_build_object('success', false, 'message', 'Reserva não encontrada.');
+  end if;
+
+  if v_row.status is distinct from 'reservado' then
+    return jsonb_build_object('success', false, 'message', 'Este registro não é uma reserva pendente.');
+  end if;
+
+  v_due := v_row.data_prevista_entrega;
+  if v_due is null or public.emprestimo_livro_dias_restantes(v_due) < 0 then
+    v_due := now() + interval '30 days';
+  end if;
+
+  update public.emprestimos_livros
+     set status = 'ativo',
+         data_retirada = now(),
+         data_prevista_entrega = v_due
+   where id = p_id
+     and tenant_id = v_tenant
+  returning * into v_row;
+
+  return jsonb_build_object(
+    'success', true,
+    'message', 'Retirada confirmada. O prazo de devolução permanece o combinado.',
     'row', public.emprestimo_livro_json(v_row)
   );
 end;
@@ -721,5 +1055,10 @@ grant execute on function public.list_emprestimos_livros_staff(text) to anon, au
 grant execute on function public.create_emprestimo_livro(uuid, text, uuid, text) to anon, authenticated;
 grant execute on function public.devolver_emprestimo_livro(uuid) to anon, authenticated;
 grant execute on function public.renovar_emprestimo_livro(uuid) to anon, authenticated;
+grant execute on function public.list_livros_disponiveis_reserva() to anon, authenticated;
+grant execute on function public.reservar_livro_acervo(uuid, text, text) to anon, authenticated;
+grant execute on function public.cancelar_reserva_livro(uuid) to anon, authenticated;
+grant execute on function public.confirmar_retirada_reserva(uuid) to anon, authenticated;
+revoke all on function public.emprestimo_ts_from_iso_date(text) from public, anon, authenticated;
 
 notify pgrst, 'reload schema';
