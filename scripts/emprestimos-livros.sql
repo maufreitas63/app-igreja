@@ -276,7 +276,7 @@ begin
     select
       p.full_name,
       p.phone,
-      (p.membership_out is not null or p.is_active is not true)
+      (p.membership_out is not null)
       into v_retirante, v_phone, v_desligado
       from public.profiles p
      where p.id = p_row.user_id;
@@ -528,7 +528,7 @@ begin
         pr.full_name,
         pr.phone,
         pr.codigo_membro,
-        (pr.membership_out is not null or pr.is_active is not true) as desligado
+        (pr.membership_out is not null) as desligado
         from public.profiles pr
         join public.profile_igreja_vinculos v
           on v.profile_id = pr.id

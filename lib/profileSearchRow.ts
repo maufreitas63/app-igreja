@@ -24,7 +24,9 @@ export const mapProfileSearchRow = (row: Record<string, unknown>): ProfileSearch
         : row.memberCode != null
           ? String(row.memberCode).trim() || null
           : null,
-    desligado: row.desligado === true || row.membership_out != null,
+    desligado:
+      row.desligado === true
+      || (row.membership_out != null && String(row.membership_out).trim() !== ''),
   };
 };
 
