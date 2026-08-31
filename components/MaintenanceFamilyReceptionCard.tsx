@@ -342,10 +342,14 @@ export function MaintenanceFamilyReceptionCard({
         <ScrollView
           style={[styles.list, minimal && styles.listMinimal]}
           contentContainerStyle={styles.listContent}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator
         >
           {submissions.map((submission) => {
             const expanded = expandedSubmissionId === submission.submissionId;
-            const inspect = inspectBySubmissionId[submission.submissionId];
+            const inspect =
+              inspectBySubmissionId[submission.submissionId] ?? submission.inspect ?? null;
             const inspectLoading = inspectLoadingId === submission.submissionId;
             const hasPlaceholderBirth = submission.members.some((member) =>
               isPlaceholderCellBirthDate(member.birthDate)
@@ -355,8 +359,7 @@ export function MaintenanceFamilyReceptionCard({
             const incomingWithMatches = inspect?.incoming.filter((item) => item.matches.length > 0) ?? [];
             const hasMatches = incomingWithMatches.length > 0;
             const canGravar =
-              expanded
-              && !hasMatches
+              !hasMatches
               && !submission.hasFamilyConflict
               && !hasPlaceholderBirth
               && !missingCep;
@@ -375,6 +378,7 @@ export function MaintenanceFamilyReceptionCard({
                   style={styles.submissionHeader}
                   onPress={() => toggleExpanded(submission.submissionId)}
                   activeOpacity={0.9}
+                  hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
                 >
                   <Text style={[styles.submissionTitle, minimal && styles.submissionTitleMinimal]}>
                     {submission.memberCount} integrante(s) · {formatSubmissionDate(submission.createdAt)}
@@ -490,147 +494,143 @@ export function MaintenanceFamilyReceptionCard({
                   );
                 })}
 
-                {expanded ? (
+                {inspectLoading && !inspect ? (
+                  <ActivityIndicator
+                    color={minimal ? MINIMAL_UI.blueDark : ACCENT}
+                    size="small"
+                  />
+                ) : null}
+
+                {inspect ? (
                   <View style={styles.expandedBlock}>
-                    {inspectLoading && !inspect ? (
-                      <ActivityIndicator
-                        color={minimal ? MINIMAL_UI.blueDark : ACCENT}
-                        size="small"
-                      />
-                    ) : null}
-
-                    {inspect ? (
-                      <>
-                        <Text style={[styles.familyListTitle, minimal && styles.familyListTitleMinimal]}>
-                          {inspect.detectedFamilyId
-                            ? `Família já cadastrada (${inspect.detectedFamilyId})`
-                            : 'Nenhum código familiar detectado — família nova'}
+                    <Text style={[styles.familyListTitle, minimal && styles.familyListTitleMinimal]}>
+                      {inspect.detectedFamilyId
+                        ? `Família já cadastrada (${inspect.detectedFamilyId})`
+                        : 'Nenhum código familiar detectado — família nova'}
+                    </Text>
+                    {inspect.existingMembers.length === 0 ? (
+                      <Text style={[styles.memberHint, minimal && styles.memberHintMinimal]}>
+                        Nenhum integrante com este código nesta instância.
+                      </Text>
+                    ) : (
+                      inspect.existingMembers.map((person) => (
+                        <Text
+                          key={person.profileId}
+                          style={[styles.existingMember, minimal && styles.existingMemberMinimal]}
+                        >
+                          • {formatShortName(person.fullName)}
+                          {person.birthDate ? ` · nasc. ${formatBirthDateDisplay(person.birthDate)}` : ''}
+                          {person.phone ? ` · ${person.phone}` : ''}
                         </Text>
-                        {inspect.existingMembers.length === 0 ? (
-                          <Text style={[styles.memberHint, minimal && styles.memberHintMinimal]}>
-                            Nenhum integrante com este código nesta instância.
-                          </Text>
-                        ) : (
-                          inspect.existingMembers.map((person) => (
-                            <Text
-                              key={person.profileId}
-                              style={[styles.existingMember, minimal && styles.existingMemberMinimal]}
-                            >
-                              • {formatShortName(person.fullName)}
-                              {person.birthDate ? ` · nasc. ${formatBirthDateDisplay(person.birthDate)}` : ''}
-                              {person.phone ? ` · ${person.phone}` : ''}
-                            </Text>
-                          ))
-                        )}
+                      ))
+                    )}
 
-                        {hasMatches ? (
-                          <View style={[styles.matchBox, minimal && styles.matchBoxMinimal]}>
-                            <Text style={[styles.matchTitle, minimal && styles.matchTitleMinimal]}>
-                              Integrante(s) já identificados no cadastro desta instância
+                    {hasMatches ? (
+                      <View style={[styles.matchBox, minimal && styles.matchBoxMinimal]}>
+                        <Text style={[styles.matchTitle, minimal && styles.matchTitleMinimal]}>
+                          Integrante(s) já identificados no cadastro desta instância
+                        </Text>
+                        {incomingWithMatches.map((person) => (
+                          <View key={person.id} style={styles.matchPerson}>
+                            <Text style={[styles.matchPersonName, minimal && styles.matchPersonNameMinimal]}>
+                              {formatShortName(person.fullName)}
                             </Text>
-                            {incomingWithMatches.map((person) => (
-                              <View key={person.id} style={styles.matchPerson}>
-                                <Text style={[styles.matchPersonName, minimal && styles.matchPersonNameMinimal]}>
-                                  {formatShortName(person.fullName)}
-                                </Text>
-                                {person.matches.map((match) => (
-                                  <Text
-                                    key={match.profileId}
-                                    style={[styles.matchDetail, minimal && styles.matchDetailMinimal]}
-                                  >
-                                    {match.sameFamily
-                                      ? `Já consta nesta família (${match.familyId ?? inspect.detectedFamilyId}).`
-                                      : `Possivelmente de outra família (${match.familyId ?? 'sem código'}).`}
-                                    {` Conferência por ${formatMatchReasons(match)}: ${formatShortName(match.fullName)}.`}
-                                  </Text>
-                                ))}
-                                <TouchableOpacity
-                                  style={[styles.discardButton, processing && styles.buttonDisabled]}
-                                  onPress={() =>
-                                    void handleDiscardMember(
-                                      person.id,
-                                      submission.submissionId,
-                                      person.fullName
-                                    )
-                                  }
-                                  disabled={processing}
-                                  activeOpacity={0.85}
-                                >
-                                  <Text style={styles.discardButtonText}>Descartar este integrante</Text>
-                                </TouchableOpacity>
-                              </View>
+                            {person.matches.map((match) => (
+                              <Text
+                                key={match.profileId}
+                                style={[styles.matchDetail, minimal && styles.matchDetailMinimal]}
+                              >
+                                {match.sameFamily
+                                  ? `Já consta nesta família (${match.familyId ?? inspect.detectedFamilyId}).`
+                                  : `Possivelmente de outra família (${match.familyId ?? 'sem código'}).`}
+                                {` Conferência por ${formatMatchReasons(match)}: ${formatShortName(match.fullName)}.`}
+                              </Text>
                             ))}
                             <TouchableOpacity
-                              style={[
-                                styles.discardAllButton,
-                                minimal && styles.discardAllButtonMinimal,
-                                processing && styles.buttonDisabled,
-                              ]}
-                              onPress={() => void handleDiscardFamily(submission.submissionId)}
+                              style={[styles.discardButton, processing && styles.buttonDisabled]}
+                              onPress={() =>
+                                void handleDiscardMember(
+                                  person.id,
+                                  submission.submissionId,
+                                  person.fullName
+                                )
+                              }
                               disabled={processing}
                               activeOpacity={0.85}
                             >
-                              <Text
-                                style={[
-                                  styles.discardAllButtonText,
-                                  minimal && styles.discardAllButtonTextMinimal,
-                                ]}
-                              >
-                                Descartar todos os integrantes da família
-                              </Text>
+                              <Text style={styles.discardButtonText}>Descartar este integrante</Text>
                             </TouchableOpacity>
                           </View>
-                        ) : (
-                          <View style={styles.itemActions}>
-                            <TouchableOpacity
+                        ))}
+                        <TouchableOpacity
+                          style={[
+                            styles.discardAllButton,
+                            minimal && styles.discardAllButtonMinimal,
+                            processing && styles.buttonDisabled,
+                          ]}
+                          onPress={() => void handleDiscardFamily(submission.submissionId)}
+                          disabled={processing}
+                          activeOpacity={0.85}
+                        >
+                          <Text
+                            style={[
+                              styles.discardAllButtonText,
+                              minimal && styles.discardAllButtonTextMinimal,
+                            ]}
+                          >
+                            Descartar todos os integrantes da família
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <View style={styles.itemActions}>
+                        <TouchableOpacity
+                          style={[
+                            styles.primaryButton,
+                            minimal && styles.primaryButtonMinimal,
+                            (!canGravar || processing) && styles.buttonDisabled,
+                          ]}
+                          onPress={() => void handleProcess(submission.submissionId)}
+                          disabled={!canGravar || processing}
+                          activeOpacity={0.85}
+                        >
+                          {processing ? (
+                            <ActivityIndicator
+                              color={minimal ? MINIMAL_UI.onDark : '#052e16'}
+                              size="small"
+                            />
+                          ) : (
+                            <Text
                               style={[
-                                styles.primaryButton,
-                                minimal && styles.primaryButtonMinimal,
-                                (!canGravar || processing) && styles.buttonDisabled,
+                                styles.primaryButtonText,
+                                minimal && styles.primaryButtonTextMinimal,
                               ]}
-                              onPress={() => void handleProcess(submission.submissionId)}
-                              disabled={!canGravar || processing}
-                              activeOpacity={0.85}
                             >
-                              {processing ? (
-                                <ActivityIndicator
-                                  color={minimal ? MINIMAL_UI.onDark : '#052e16'}
-                                  size="small"
-                                />
-                              ) : (
-                                <Text
-                                  style={[
-                                    styles.primaryButtonText,
-                                    minimal && styles.primaryButtonTextMinimal,
-                                  ]}
-                                >
-                                  Gravar
-                                </Text>
-                              )}
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={[
-                                styles.secondaryButton,
-                                minimal && styles.secondaryButtonMinimal,
-                                processing && styles.buttonDisabled,
-                              ]}
-                              onPress={() => void handleReject(submission.submissionId)}
-                              disabled={processing}
-                              activeOpacity={0.85}
-                            >
-                              <Text
-                                style={[
-                                  styles.secondaryButtonText,
-                                  minimal && styles.secondaryButtonTextMinimal,
-                                ]}
-                              >
-                                Rejeitar
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        )}
-                      </>
-                    ) : null}
+                              Gravar
+                            </Text>
+                          )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[
+                            styles.secondaryButton,
+                            minimal && styles.secondaryButtonMinimal,
+                            processing && styles.buttonDisabled,
+                          ]}
+                          onPress={() => void handleReject(submission.submissionId)}
+                          disabled={processing}
+                          activeOpacity={0.85}
+                        >
+                          <Text
+                            style={[
+                              styles.secondaryButtonText,
+                              minimal && styles.secondaryButtonTextMinimal,
+                            ]}
+                          >
+                            Rejeitar
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
                 ) : null}
               </View>
@@ -711,6 +711,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(220, 38, 38, 0.45)',
     backgroundColor: 'rgba(220, 38, 38, 0.08)',
     gap: 8,
+    flexShrink: 0,
   },
   matchTitle: {
     color: '#DC2626',
@@ -789,6 +790,7 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
+    minHeight: 0,
   },
   listContent: {
     gap: 10,
@@ -888,7 +890,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 0,
     backgroundColor: MINIMAL_UI.background,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   sectionTitle: {
     ...MINIMAL_SECTION_TITLE,

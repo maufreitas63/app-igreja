@@ -23,37 +23,6 @@ export function useMaintenanceFamilyReception(isActive: boolean) {
   >({});
   const [inspectLoadingId, setInspectLoadingId] = useState<string | null>(null);
 
-  const refetch = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const rows = await listPendingFamilyReceptionSubmissions(50, { forceRefresh: true });
-      setSubmissions(rows);
-      setExpandedSubmissionId((current) =>
-        current && rows.some((row) => row.submissionId === current) ? current : null
-      );
-    } catch (fetchError) {
-      console.error('Erro ao carregar recepção familiar:', fetchError);
-      setSubmissions([]);
-      setError(
-        fetchError instanceof Error
-          ? fetchError.message
-          : 'Não foi possível carregar a fila de recepção.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isActive) {
-      return;
-    }
-
-    void refetch();
-  }, [isActive, refetch]);
-
   const loadInspect = useCallback(async (submissionId: string) => {
     setInspectLoadingId(submissionId);
     try {
@@ -71,6 +40,51 @@ export function useMaintenanceFamilyReception(isActive: boolean) {
       setInspectLoadingId((current) => (current === submissionId ? null : current));
     }
   }, []);
+
+  const refetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const rows = await listPendingFamilyReceptionSubmissions(50, { forceRefresh: true });
+      setSubmissions(rows);
+      setInspectBySubmissionId((current) => {
+        const next = { ...current };
+        for (const row of rows) {
+          if (row.inspect) {
+            next[row.submissionId] = row.inspect;
+          }
+        }
+        return next;
+      });
+      for (const row of rows) {
+        if (!row.inspect) {
+          void loadInspect(row.submissionId);
+        }
+      }
+      setExpandedSubmissionId((current) =>
+        current && rows.some((row) => row.submissionId === current) ? current : null
+      );
+    } catch (fetchError) {
+      console.error('Erro ao carregar recepção familiar:', fetchError);
+      setSubmissions([]);
+      setError(
+        fetchError instanceof Error
+          ? fetchError.message
+          : 'Não foi possível carregar a fila de recepção.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [loadInspect]);
+
+  useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+
+    void refetch();
+  }, [isActive, refetch]);
 
   const toggleExpanded = useCallback(
     (submissionId: string) => {

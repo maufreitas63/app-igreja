@@ -75,6 +75,7 @@ export type FamilyReceptionSubmission = {
   detectedFamilyId: string | null;
   hasFamilyConflict: boolean;
   members: FamilyReceptionMember[];
+  inspect: FamilyReceptionLoteInspect | null;
 };
 
 const parseExistingMember = (row: Record<string, unknown>): FamilyReceptionExistingMember | null => {
@@ -171,6 +172,30 @@ const parseSubmission = (row: Record<string, unknown>): FamilyReceptionSubmissio
     .map((entry) => parseMember(entry as Record<string, unknown>))
     .filter((entry): entry is FamilyReceptionMember => entry !== null);
 
+  const inspectRaw =
+    row.family_inspect && typeof row.family_inspect === 'object'
+      ? (row.family_inspect as Record<string, unknown>)
+      : null;
+
+  const inspect =
+    inspectRaw && inspectRaw.success === true
+      ? {
+          submissionId: String(inspectRaw.submission_id ?? submissionId),
+          detectedFamilyId: inspectRaw.detected_family_id
+            ? String(inspectRaw.detected_family_id)
+            : null,
+          existingMembers: (Array.isArray(inspectRaw.existing_members)
+            ? inspectRaw.existing_members
+            : []
+          )
+            .map((entry) => parseExistingMember(entry as Record<string, unknown>))
+            .filter((entry): entry is FamilyReceptionExistingMember => entry !== null),
+          incoming: (Array.isArray(inspectRaw.incoming) ? inspectRaw.incoming : [])
+            .map((entry) => parseIncomingInspect(entry as Record<string, unknown>))
+            .filter((entry): entry is FamilyReceptionIncomingInspect => entry !== null),
+        }
+      : null;
+
   return {
     submissionId,
     createdAt: String(row.created_at ?? ''),
@@ -178,6 +203,7 @@ const parseSubmission = (row: Record<string, unknown>): FamilyReceptionSubmissio
     detectedFamilyId: row.detected_family_id ? String(row.detected_family_id) : null,
     hasFamilyConflict: row.has_family_conflict === true,
     members,
+    inspect,
   };
 };
 
@@ -212,7 +238,7 @@ export async function listPendingFamilyReceptionSubmissions(
         .map((entry) => parseSubmission(entry as Record<string, unknown>))
         .filter((entry): entry is FamilyReceptionSubmission => entry !== null);
     },
-    { ttlMs: 30_000, forceRefresh: options?.forceRefresh }
+    { ttlMs: 5_000, forceRefresh: options?.forceRefresh }
   );
 }
 
