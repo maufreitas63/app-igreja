@@ -51,7 +51,6 @@ type FinancialSectionId =
   | 'analyticalSummary';
 
 const FINANCIAL_SECTION_ORDER: FinancialSectionId[] = [
-  'alianca',
   'analyticalSummary',
   'result',
   'comparison',
@@ -59,6 +58,7 @@ const FINANCIAL_SECTION_ORDER: FinancialSectionId[] = [
   'historical',
   'budget',
   'bankBalance',
+  'alianca',
 ];
 
 export default function FinancialScreen() {
