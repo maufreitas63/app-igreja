@@ -351,17 +351,47 @@ export function buildFamilyRegistrationShareUrl(tenantCode?: string | null): str
   return `${origin}${FAMILY_REGISTRATION_PUBLIC_PATH}${query}`;
 }
 
-export function buildFamilyRegistrationWhatsAppUrl(
+export function buildFamilyRegistrationInviteMessage(
   pageUrl: string,
-  churchName?: string | null
+  churchName?: string | null,
+  guestName?: string | null
 ): string {
   const who = churchName?.trim() || 'nossa igreja';
-  const message = [
-    `Olá! O Ministério de Acolhimento da ${who} convida você e sua família a preencherem o cadastro da nossa igreja.`,
+  const firstName = (guestName ?? '').trim().split(/\s+/).filter(Boolean)[0];
+  const hello = firstName ? `Olá, ${firstName}!` : 'Olá!';
+
+  return [
+    `${hello} O Ministério de Acolhimento da ${who} convida você e sua família a preencherem o cadastro da nossa igreja.`,
     'É rápido e ajuda a organizar nossa comunidade.',
     '',
     `Acesse o formulário: ${pageUrl}`,
   ].join('\n');
+}
+
+/**
+ * Click-to-chat com número: `https://wa.me/55DDDNUMERO?text=…` (abre mesmo sem o contato).
+ * Sem número, cai no compartilhamento `wa.me/?text=…`.
+ * Sem importar `lib/whatsapp` — o formulário público Vite não pode puxar React Native.
+ */
+export function buildFamilyRegistrationWhatsAppUrl(
+  pageUrl: string,
+  churchName?: string | null,
+  phone?: string | null,
+  guestName?: string | null
+): string {
+  const message = buildFamilyRegistrationInviteMessage(pageUrl, churchName, guestName);
+  const digits = (phone ?? '').replace(/\D/g, '');
+  let whatsappPhone: string | null = null;
+
+  if (digits.startsWith('55') && digits.length >= 12) {
+    whatsappPhone = digits;
+  } else if (digits.length === 10 || digits.length === 11) {
+    whatsappPhone = `55${digits}`;
+  }
+
+  if (whatsappPhone) {
+    return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
+  }
 
   return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }

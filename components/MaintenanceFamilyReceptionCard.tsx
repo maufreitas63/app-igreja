@@ -4,8 +4,8 @@ import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTit
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceFamilyReception } from '@/hooks/useMaintenanceFamilyReception';
 import {
+  buildFamilyRegistrationInviteMessage,
   buildFamilyRegistrationShareUrl,
-  buildFamilyRegistrationWhatsAppUrl,
   parseBrazilianDateToIso,
 } from '@/lib/familyRegistration';
 import {
@@ -13,7 +13,8 @@ import {
   isPlaceholderCellBirthDate,
   type FamilyReceptionMatch,
 } from '@/lib/familyReceptionApi';
-import { formatBrazilCepInput, formatBrazilDateInput } from '@/lib/inputMasks';
+import { formatBrazilCepInput, formatBrazilDateInput, formatBrazilPhoneInput } from '@/lib/inputMasks';
+import { normalizePhoneForWhatsApp, openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { formatShortName } from '@/lib/formatShortName';
@@ -22,8 +23,7 @@ import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { getStoredActiveIgrejaBranding } from '@/lib/tenantSession';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import * as Linking from 'expo-linking';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
@@ -107,52 +107,80 @@ export function MaintenanceFamilyReceptionCard({
   const [cepDrafts, setCepDrafts] = useState<Record<string, string>>({});
   const [savingBirthId, setSavingBirthId] = useState<string | null>(null);
   const [savingCepId, setSavingCepId] = useState<string | null>(null);
-  const [sharingInvite, setSharingInvite] = useState(false);
+  const [inviteName, setInviteName] = useState('');
+  const [invitePhone, setInvitePhone] = useState('');
+  const [inviteChurchName, setInviteChurchName] = useState(prefix);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
-  const handleShareInvite = async () => {
-    setSharingInvite(true);
-    try {
-      const branding = await getStoredActiveIgrejaBranding();
-      const tenantCode = (branding?.code || prefix).trim().toUpperCase();
+  useEffect(() => {
+    let active = true;
+    void getStoredActiveIgrejaBranding().then((branding) => {
+      if (!active) return;
+      const name = branding?.name?.trim();
+      setInviteChurchName(name || prefix);
+    });
+    return () => {
+      active = false;
+    };
+  }, [prefix]);
 
-      if (!tenantCode || tenantCode === 'APP') {
-        Toast.show({
-          type: 'error',
-          text1: 'Recepção familiar',
-          text2: 'Código da instância indisponível para montar o convite.',
-          visibilityTime: 4000,
-        });
-        return;
-      }
-
-      const formUrl = buildFamilyRegistrationShareUrl(tenantCode);
-      const churchName = branding?.name?.trim() || tenantCode;
-      const waUrl = buildFamilyRegistrationWhatsAppUrl(formUrl, churchName);
-
-      await Clipboard.setStringAsync(formUrl);
-      await Linking.openURL(waUrl);
-
+  const handleShareInvite = () => {
+    const guestName = inviteName.trim();
+    if (!guestName) {
       Toast.show({
-        type: 'success',
-        text1: 'Convite copiado e WhatsApp aberto',
-        text2: formUrl,
-        visibilityTime: 4500,
+        type: 'error',
+        text1: 'Convite WhatsApp',
+        text2: 'Informe o nome de quem vai receber o convite.',
+        visibilityTime: 4000,
       });
-    } catch (shareError) {
+      return;
+    }
+
+    const whatsappPhone = normalizePhoneForWhatsApp(invitePhone);
+    if (!whatsappPhone || whatsappPhone.length < 12) {
+      Toast.show({
+        type: 'error',
+        text1: 'Convite WhatsApp',
+        text2: 'Informe o celular com DDD (ex.: (11) 98765-4321).',
+        visibilityTime: 4000,
+      });
+      return;
+    }
+
+    const tenantCode = prefix.trim().toUpperCase();
+    if (!tenantCode || tenantCode === 'APP') {
       Toast.show({
         type: 'error',
         text1: 'Recepção familiar',
-        text2:
-          shareError instanceof Error
-            ? shareError.message
-            : 'Não foi possível abrir o WhatsApp com o convite.',
+        text2: 'Código da instância indisponível para montar o convite.',
         visibilityTime: 4000,
       });
-    } finally {
-      setSharingInvite(false);
+      return;
     }
+
+    const formUrl = buildFamilyRegistrationShareUrl(tenantCode);
+    const message = buildFamilyRegistrationInviteMessage(formUrl, inviteChurchName, guestName);
+    const opened = openWhatsAppLikeBirthdaysWithText(invitePhone, message);
+
+    if (!opened) {
+      Toast.show({
+        type: 'error',
+        text1: 'Convite WhatsApp',
+        text2: 'Não foi possível abrir o WhatsApp com este número.',
+        visibilityTime: 4000,
+      });
+      return;
+    }
+
+    Toast.show({
+      type: 'success',
+      text1: 'WhatsApp aberto com o convite',
+      text2: `Conversa com ${guestName} — o número não precisa estar nos seus contatos.`,
+      visibilityTime: 4500,
+    });
+
+    void Clipboard.setStringAsync(formUrl);
   };
 
   const handleSaveBirthDate = async (memberId: string) => {
@@ -292,7 +320,7 @@ export function MaintenanceFamilyReceptionCard({
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
       <MaintenanceHelpInfoTitle
         title="Recepção — Cadastro Familiar"
-        helpText={`Formulários públicos entram aqui antes de profiles/members. Use o botão WhatsApp para enviar o link /cadastro-familia/?tenant=${prefix}. Lotes com código familiar detectado usam o mesmo ${prefix}; conflitos, data 01/01/1900 ou CEP ausente ficam travados até revisão.`}
+        helpText={`Formulários públicos entram aqui antes de profiles/members. Para convidar quem ainda não está nos seus contatos do WhatsApp, preencha nome e celular com DDD e use o botão — o chat abre mesmo sem o número na agenda. Link: /cadastro-familia/?tenant=${prefix}. Lotes com código familiar detectado usam o mesmo ${prefix}; conflitos, data 01/01/1900 ou CEP ausente ficam travados até revisão.`}
         minimal={minimal}
         titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
       />
@@ -305,6 +333,34 @@ export function MaintenanceFamilyReceptionCard({
           {statusMessage}
         </Text>
       ) : null}
+
+      <View style={[styles.inviteBox, minimal && styles.inviteBoxMinimal]}>
+        <Text style={[styles.inviteHint, minimal && styles.inviteHintMinimal]}>
+          Nome e celular com DDD — o WhatsApp abre a conversa mesmo que o número ainda não esteja nos
+          seus contatos.
+        </Text>
+        <View style={styles.inviteFields}>
+          <TextInput
+            value={inviteName}
+            onChangeText={setInviteName}
+            placeholder="Nome de quem recebe"
+            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : 'rgba(58, 150, 221, 0.55)'}
+            autoCapitalize="words"
+            autoCorrect={false}
+            style={[styles.inviteInput, styles.inviteNameInput, minimal && styles.inviteInputMinimal]}
+          />
+          <TextInput
+            value={invitePhone}
+            onChangeText={(value) => setInvitePhone(formatBrazilPhoneInput(value))}
+            placeholder="(11) 98765-4321"
+            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : 'rgba(58, 150, 221, 0.55)'}
+            keyboardType="phone-pad"
+            inputMode="tel"
+            autoCorrect={false}
+            style={[styles.inviteInput, styles.invitePhoneInput, minimal && styles.inviteInputMinimal]}
+          />
+        </View>
+      </View>
 
       <View style={[styles.toolbar, minimal && styles.toolbarMinimal]}>
         <TouchableOpacity
@@ -319,13 +375,12 @@ export function MaintenanceFamilyReceptionCard({
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.toolbarButton, styles.whatsappButton, minimal && styles.toolbarButtonMinimal]}
-          onPress={() => void handleShareInvite()}
-          disabled={sharingInvite}
+          onPress={handleShareInvite}
           activeOpacity={0.85}
         >
           <MaterialIcons name="chat" size={18} color={minimal ? MINIMAL_UI.icon : '#E2E8F0'} />
           <Text style={[styles.toolbarButtonText, minimal && styles.toolbarButtonTextMinimal]}>
-            {sharingInvite ? 'Abrindo…' : 'WhatsApp — convite'}
+            WhatsApp — convite
           </Text>
         </TouchableOpacity>
       </View>
@@ -655,6 +710,49 @@ const styles = StyleSheet.create({
     color: ACCENT,
     fontSize: 13,
     marginBottom: 8,
+  },
+  inviteBox: {
+    marginBottom: 10,
+    gap: 8,
+  },
+  inviteHint: {
+    color: 'rgba(58, 150, 221, 0.82)',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  inviteFields: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  inviteInput: {
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.35)',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    color: '#3A96DD',
+    fontSize: 13,
+    minWidth: 140,
+    flexGrow: 1,
+  },
+  inviteNameInput: {
+    flexBasis: 180,
+  },
+  invitePhoneInput: {
+    flexBasis: 150,
+    maxWidth: 200,
+  },
+  inviteBoxMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  inviteHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  inviteInputMinimal: {
+    borderColor: MINIMAL_UI.border,
+    color: MINIMAL_UI.text,
+    backgroundColor: MINIMAL_UI.background,
   },
   toolbar: {
     flexDirection: 'row',
