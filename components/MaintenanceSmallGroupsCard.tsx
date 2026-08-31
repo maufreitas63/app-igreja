@@ -37,7 +37,7 @@ import {
   type SmallGroupRollCallMember,
 } from '@/lib/smallGroupsApi';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -58,6 +58,126 @@ type Props = {
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
+function formatProfileOptionLabel(profile: SmallGroupProfileSummary) {
+  const name = formatShortName(profile.full_name) || 'Sem nome';
+  const phone = profile.phone ? formatBrazilPhoneInput(profile.phone) : '';
+  return phone ? `${name} · ${phone}` : name;
+}
+
+function SmallGroupPersonPicker({
+  title,
+  description,
+  selected,
+  onChange,
+  disabled = false,
+  variant,
+}: {
+  title: string;
+  description: string;
+  selected: SmallGroupProfileSummary | null;
+  onChange: (profile: SmallGroupProfileSummary | null) => void;
+  disabled?: boolean;
+  variant: 'minimal' | 'vigilance';
+}) {
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<SmallGroupProfileSummary[]>([]);
+  const requestRef = useRef(0);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+
+    if (trimmed.length < 2) {
+      requestRef.current += 1;
+      setLoading(false);
+      setResults([]);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const requestId = ++requestRef.current;
+      setLoading(true);
+
+      void searchSmallGroupProfiles(trimmed)
+        .then((rows) => {
+          if (requestId !== requestRef.current) {
+            return;
+          }
+
+          setResults(rows);
+        })
+        .catch(() => {
+          if (requestId !== requestRef.current) {
+            return;
+          }
+
+          setResults([]);
+        })
+        .finally(() => {
+          if (requestId === requestRef.current) {
+            setLoading(false);
+          }
+        });
+    }, 280);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [query]);
+
+  const options = useMemo(() => {
+    const rows = [...results];
+
+    if (selected && !rows.some((row) => row.id === selected.id)) {
+      rows.unshift(selected);
+    }
+
+    return rows.map((profile) => ({
+      value: profile.id,
+      label: formatProfileOptionLabel(profile),
+    }));
+  }, [results, selected]);
+
+  return (
+    <View style={styles.rolePicker}>
+      <Text style={styles.rolePickerTitle}>{title}</Text>
+      <Text style={styles.hint}>{description}</Text>
+      <DropdownSelect
+        options={options}
+        selectedValue={selected?.id ?? ''}
+        onValueChange={(value) => {
+          if (!value) {
+            onChange(null);
+            return;
+          }
+
+          const profile =
+            results.find((row) => row.id === value)
+            ?? (selected?.id === value ? selected : null);
+
+          if (profile) {
+            onChange(profile);
+          }
+        }}
+        onSearchQueryChange={setQuery}
+        filterOptionsLocally={false}
+        listLoading={loading}
+        emptyListHint={
+          query.trim().length < 2
+            ? 'Digite nome ou celular (mínimo 2 caracteres).'
+            : 'Nenhum membro encontrado para esta busca.'
+        }
+        modalTitle={title}
+        placeholder={`Buscar ${title.toLowerCase()}…`}
+        searchPlaceholder="Nome ou celular"
+        searchable
+        variant={variant}
+        disabled={disabled}
+      />
+    </View>
+  );
+}
+
 export function MaintenanceSmallGroupsCard({
   isActive = true,
   panelHeight,
@@ -74,11 +194,12 @@ export function MaintenanceSmallGroupsCard({
   const [meetings, setMeetings] = useState<SmallGroupMeeting[]>([]);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [rollDatePickerOpen, setRollDatePickerOpen] = useState(false);
-  const [hostId, setHostId] = useState<string>('');
-  const [leaderId, setLeaderId] = useState<string>('');
+  const [hostProfile, setHostProfile] = useState<SmallGroupProfileSummary | null>(null);
+  const [leaderProfile, setLeaderProfile] = useState<SmallGroupProfileSummary | null>(null);
   const [notes, setNotes] = useState('');
-  const [search, setSearch] = useState('');
-  const [candidates, setCandidates] = useState<SmallGroupProfileSummary[]>([]);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [memberCandidates, setMemberCandidates] = useState<SmallGroupProfileSummary[]>([]);
+  const [memberSearchLoading, setMemberSearchLoading] = useState(false);
   const [meetingDate, setMeetingDate] = useState(todayIso());
   const [roll, setRoll] = useState<SmallGroupRollCallMember[]>([]);
   const [visitorName, setVisitorName] = useState('');
@@ -99,8 +220,8 @@ export function MaintenanceSmallGroupsCard({
     setSelectedId(group?.id ?? '');
     setName(group?.name ?? '');
     setMeetings(group?.meetings ?? []);
-    setHostId(group?.host?.id ?? '');
-    setLeaderId(group?.leader?.id ?? '');
+    setHostProfile(group?.host ?? null);
+    setLeaderProfile(group?.leader ?? null);
     setNotes(group?.notes ?? '');
   }, []);
 
@@ -188,21 +309,26 @@ export function MaintenanceSmallGroupsCard({
   }, [isActive, loadGuides]);
 
   useEffect(() => {
-    const query = search.trim();
+    const query = memberSearch.trim();
 
     if (query.length < 2) {
-      setCandidates([]);
+      setMemberCandidates([]);
+      setMemberSearchLoading(false);
       return;
     }
 
     const timer = setTimeout(() => {
+      setMemberSearchLoading(true);
       void searchSmallGroupProfiles(query)
-        .then(setCandidates)
-        .catch(() => setCandidates([]));
+        .then(setMemberCandidates)
+        .catch(() => setMemberCandidates([]))
+        .finally(() => setMemberSearchLoading(false));
     }, 280);
 
-    return () => clearTimeout(timer);
-  }, [search]);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [memberSearch]);
 
   const notify = (ok: boolean, title: string, message: string) => {
     Toast.show({ type: ok ? 'success' : 'error', text1: title, text2: message });
@@ -221,8 +347,8 @@ export function MaintenanceSmallGroupsCard({
         name,
         meetingWeekday,
         meetingTime: firstMeeting?.meeting_time || '19:30',
-        hostProfileId: hostId || null,
-        leaderProfileId: leaderId || null,
+        hostProfileId: hostProfile?.id ?? null,
+        leaderProfileId: leaderProfile?.id ?? null,
         notes,
         meetings,
       });
@@ -287,8 +413,8 @@ export function MaintenanceSmallGroupsCard({
     notify(result.success, 'Membros', result.message);
 
     if (result.success) {
-      setSearch('');
-      setCandidates([]);
+      setMemberSearch('');
+      setMemberCandidates([]);
       await Promise.all([loadGroups(), loadRoll()]);
     }
   };
@@ -443,13 +569,8 @@ export function MaintenanceSmallGroupsCard({
     [meetings]
   );
 
-  const pickRole = (kind: 'host' | 'leader', profile: SmallGroupProfileSummary) => {
-    if (kind === 'host') {
-      setHostId(profile.id);
-    } else {
-      setLeaderId(profile.id);
-    }
-  };
+  const sameHostAndLeader =
+    Boolean(hostProfile?.id) && hostProfile?.id === leaderProfile?.id;
 
   return (
     <View style={[maintenancePanelStyles.panel, { height: contentHeight }]}>
@@ -522,57 +643,49 @@ export function MaintenanceSmallGroupsCard({
                   />
                 </View>
               ))}
-              <View style={styles.roleRow}>
-                <Text style={styles.hint}>
-                  Anfitrião:{' '}
-                  {hostId
-                    ? selectedGroup?.host?.id === hostId && selectedGroup.host.full_name
-                      ? formatShortName(selectedGroup.host.full_name)
-                      : 'selecionado na busca'
-                    : 'não definido'}
-                </Text>
-                {hostId ? (
-                  <TouchableOpacity onPress={() => setHostId('')} accessibilityRole="button">
-                    <Text style={styles.link}>Remover</Text>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-              <View style={styles.roleRow}>
-                <Text style={styles.hint}>
-                  Líder:{' '}
-                  {leaderId
-                    ? selectedGroup?.leader?.id === leaderId && selectedGroup.leader.full_name
-                      ? formatShortName(selectedGroup.leader.full_name)
-                      : 'selecionado na busca'
-                    : 'não definido'}
-                </Text>
-                {leaderId ? (
-                  <TouchableOpacity onPress={() => setLeaderId('')} accessibilityRole="button">
-                    <Text style={styles.link}>Remover</Text>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
+              <SmallGroupPersonPicker
+                title="Anfitrião"
+                description="Quem recebe o grupo em casa. Busque pelo nome ou celular e toque no resultado."
+                selected={hostProfile}
+                onChange={setHostProfile}
+                disabled={saving}
+                variant={minimal ? 'minimal' : 'vigilance'}
+              />
+              <SmallGroupPersonPicker
+                title="Líder"
+                description="Quem conduz o encontro. Busca separada da de anfitrião."
+                selected={leaderProfile}
+                onChange={setLeaderProfile}
+                disabled={saving}
+                variant={minimal ? 'minimal' : 'vigilance'}
+              />
+              {sameHostAndLeader ? (
+                <Text style={styles.hint}>Esta pessoa é anfitrião e líder do grupo.</Text>
+              ) : null}
+              <Text style={styles.rolePickerTitle}>Incluir participante</Text>
+              <Text style={styles.hint}>
+                Use este campo só para colocar alguém na chamada. Anfitrião e líder ficam nos campos
+                acima.
+              </Text>
               <TextInput
                 style={maintenancePanelStyles.input}
-                value={search}
-                onChangeText={setSearch}
-                placeholder="Buscar membro (nome ou celular)"
+                value={memberSearch}
+                onChangeText={setMemberSearch}
+                placeholder="Buscar participante (nome ou celular)"
                 placeholderTextColor="#94A3B8"
               />
-              {candidates.map((profile) => (
+              {memberSearchLoading ? (
+                <Text style={styles.hint}>Buscando participantes…</Text>
+              ) : null}
+              {memberCandidates.map((profile) => (
                 <View key={profile.id} style={styles.candidateRow}>
                   <Text style={styles.memberName} numberOfLines={1}>
-                    {formatShortName(profile.full_name)} · {profile.phone ? formatBrazilPhoneInput(profile.phone) : 'sem celular'}
+                    {formatShortName(profile.full_name)} ·{' '}
+                    {profile.phone ? formatBrazilPhoneInput(profile.phone) : 'sem celular'}
                   </Text>
                   <View style={styles.candidateActions}>
-                    <TouchableOpacity onPress={() => pickRole('host', profile)}>
-                      <Text style={styles.link}>Anfitrião</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => pickRole('leader', profile)}>
-                      <Text style={styles.link}>Líder</Text>
-                    </TouchableOpacity>
                     <TouchableOpacity onPress={() => void handleAddMember(profile.id)}>
-                      <Text style={styles.link}>Incluir</Text>
+                      <Text style={styles.link}>Incluir na chamada</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -818,6 +931,17 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 12,
     flex: 1,
+  },
+  rolePicker: {
+    gap: 6,
+    paddingVertical: 4,
+  },
+  rolePickerTitle: {
+    color: '#1E3A5F',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   roleRow: {
     flexDirection: 'row',
