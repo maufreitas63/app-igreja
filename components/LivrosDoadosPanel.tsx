@@ -1,3 +1,4 @@
+import { IsbnBarcodeScanner } from '@/components/IsbnBarcodeScanner';
 import {
   createLivro,
   deleteLivro,
@@ -38,6 +39,7 @@ export function LivrosDoadosPanel() {
   const [lookupHint, setLookupHint] = useState<string | null>(null);
   const [rows, setRows] = useState<LivroRecord[]>([]);
   const [loadingList, setLoadingList] = useState(true);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const loadList = useCallback(async () => {
     setLoadingList(true);
@@ -152,8 +154,8 @@ export function LivrosDoadosPanel() {
   return (
     <View style={styles.root}>
       <Text style={styles.lead}>
-        Bipe ou digite o ISBN para preencher automaticamente. Se o livro não estiver na Google
-        Books, cadastre à mão — o fluxo de doação não para.
+        Toque em Bipar para ler o código de barras do ISBN na contracapa, ou digite os dígitos.
+        Se o livro não estiver na Google Books, cadastre à mão — o fluxo de doação não para.
       </Text>
 
       <View style={styles.isbnRow}>
@@ -176,6 +178,15 @@ export function LivrosDoadosPanel() {
           style={[styles.input, styles.isbnInput]}
         />
         <TouchableOpacity
+          style={[styles.scanButton, lookingUp && styles.buttonDisabled]}
+          onPress={() => setScannerOpen(true)}
+          disabled={lookingUp}
+          accessibilityLabel="Bipar código de barras do ISBN"
+        >
+          <FontAwesome name="barcode" size={14} color={MINIMAL_UI.text} />
+          <Text style={styles.scanButtonText}>Bipar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.searchButton, lookingUp && styles.buttonDisabled]}
           onPress={() => void runIsbnLookup(form.isbn)}
           disabled={lookingUp}
@@ -189,6 +200,16 @@ export function LivrosDoadosPanel() {
           <Text style={styles.searchButtonText}>Buscar</Text>
         </TouchableOpacity>
       </View>
+
+      <IsbnBarcodeScanner
+        visible={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onIsbn={(isbn) => {
+          setScannerOpen(false);
+          patchForm({ isbn });
+          void runIsbnLookup(isbn);
+        }}
+      />
 
       {lookupHint ? <Text style={styles.hint}>{lookupHint}</Text> : null}
 
@@ -314,10 +335,13 @@ const styles = StyleSheet.create({
   isbnRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
   },
   isbnInput: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: 160,
+    minWidth: 140,
   },
   input: {
     borderWidth: 1,
@@ -342,6 +366,24 @@ const styles = StyleSheet.create({
   hint: {
     color: MINIMAL_UI.textMuted,
     fontSize: 13,
+  },
+  scanButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: MINIMAL_UI.background,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.blueDark,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderRadius: 10,
+    minWidth: 88,
+    justifyContent: 'center',
+  },
+  scanButtonText: {
+    color: MINIMAL_UI.text,
+    fontWeight: '700',
+    fontSize: 14,
   },
   searchButton: {
     flexDirection: 'row',

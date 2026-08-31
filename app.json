@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Permita o acesso à câmera para leitura de QR Code no totem e registro de selfie.",
+        "NSCameraUsageDescription": "Permita o acesso à câmera para leitura de QR Code no totem, código de barras de ISBN e registro de selfie.",
         "NSFaceIDUsageDescription": "Permita o uso do Face ID para entrar no app de forma rápida e segura.",
         "LSApplicationQueriesSchemes": ["whatsapp", "whatsapp-api"]
       },
@@ -80,7 +80,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Permita o acesso à câmera para leitura de QR Code no totem e registro de selfie.",
+          "cameraPermission": "Permita o acesso à câmera para leitura de QR Code no totem, código de barras de ISBN e registro de selfie.",
           "recordAudioAndroid": false
         }
       ],
