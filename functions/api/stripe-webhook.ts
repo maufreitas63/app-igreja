@@ -11,6 +11,7 @@ import {
   readStripeMeta,
   stripeGet,
   supabaseServiceRpc,
+  unixToIso,
   verifyStripeWebhookSignature,
   type BillingEnv,
 } from './_billingShared';
@@ -19,6 +20,74 @@ type PagesContext = {
   request: Request;
   env: BillingEnv;
 };
+
+function invoiceSubscriptionId(invoice: Record<string, unknown>): string {
+  if (typeof invoice.subscription === 'string') return invoice.subscription;
+  const nested = asRecord(invoice.subscription);
+  return typeof nested?.id === 'string' ? nested.id : '';
+}
+
+async function resolveInvoiceTenantId(
+  stripeKey: string,
+  invoice: Record<string, unknown>,
+  fallbackTenantId: string
+): Promise<string> {
+  const fromInvoice = readStripeMeta(invoice, 'tenant_id') || fallbackTenantId;
+  if (fromInvoice) return fromInvoice;
+  const subId = invoiceSubscriptionId(invoice);
+  if (!subId.startsWith('sub_')) return '';
+  const loaded = await stripeGet(stripeKey, `subscriptions/${subId}`);
+  if (!loaded.ok) return '';
+  return readStripeMeta(loaded.data, 'tenant_id');
+}
+
+async function processAliancaInvoiceEvent(
+  env: BillingEnv,
+  stripeKey: string,
+  type: string,
+  invoice: Record<string, unknown>,
+  fallbackTenantId: string
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const invoiceId = typeof invoice.id === 'string' ? invoice.id : '';
+  if (!invoiceId.startsWith('in_')) {
+    return { ok: true };
+  }
+
+  const tenantId = await resolveInvoiceTenantId(stripeKey, invoice, fallbackTenantId);
+  if (!tenantId) {
+    return { ok: true };
+  }
+
+  const subscriptionId = invoiceSubscriptionId(invoice) || null;
+  const billingReason = typeof invoice.billing_reason === 'string' ? invoice.billing_reason : '';
+
+  if (type === 'invoice.payment_failed') {
+    const result = await supabaseServiceRpc(env, 'process_alianca_invoice_failed', {
+      p_stripe_invoice_id: invoiceId,
+      p_tenant_id: tenantId,
+      p_stripe_subscription_id: subscriptionId,
+    });
+    return result.ok ? { ok: true } : { ok: false, message: result.message };
+  }
+
+  const amountPaid = Number(invoice.amount_paid ?? 0);
+  const transitions = asRecord(invoice.status_transitions);
+  const paidAt =
+    unixToIso(transitions?.paid_at)
+    || unixToIso(invoice.created)
+    || new Date().toISOString();
+
+  const result = await supabaseServiceRpc(env, 'process_alianca_invoice_paid', {
+    p_stripe_invoice_id: invoiceId,
+    p_tenant_id: tenantId,
+    p_amount_paid_cents: Number.isFinite(amountPaid) ? Math.round(amountPaid) : 0,
+    p_currency: typeof invoice.currency === 'string' ? invoice.currency : 'brl',
+    p_paid_at: paidAt,
+    p_billing_reason: billingReason,
+    p_stripe_subscription_id: subscriptionId,
+  });
+  return result.ok ? { ok: true } : { ok: false, message: result.message };
+}
 
 async function upsertFromSubscription(
   env: BillingEnv,
@@ -126,15 +195,19 @@ export const onRequestPost = async (context: PagesContext) => {
           ? object
           : asRecord(typeof object.subscription === 'object' ? object.subscription : null);
 
+      let persistOk = true;
+      let persistMessage = '';
+      let tenantId = readStripeMeta(object, 'tenant_id');
+
       if (subscription) {
         const result = await upsertFromSubscription(context.env, stripeKey, subscription);
         if (!result.ok) {
-          return jsonResponse({ received: false, message: result.message }, 500);
+          persistOk = false;
+          persistMessage = result.message;
+        } else {
+          tenantId = tenantId || readStripeMeta(subscription, 'tenant_id');
         }
-        return jsonResponse({ received: true, updated: true });
-      }
-
-      if (typeof object.subscription === 'string') {
+      } else if (typeof object.subscription === 'string') {
         const subRes = await stripeGet(
           stripeKey,
           `subscriptions/${object.subscription}?expand[]=items.data.price`
@@ -142,11 +215,32 @@ export const onRequestPost = async (context: PagesContext) => {
         if (subRes.ok) {
           const result = await persistStripeSubscription(context.env, subRes.data);
           if (!result.ok) {
-            return jsonResponse({ received: false, message: result.message }, 500);
+            persistOk = false;
+            persistMessage = result.message;
+          } else {
+            tenantId = tenantId || readStripeMeta(subRes.data, 'tenant_id');
           }
-          return jsonResponse({ received: true, updated: true });
         }
       }
+
+      if (!persistOk) {
+        return jsonResponse({ received: false, message: persistMessage }, 500);
+      }
+
+      if (type === 'invoice.paid' || type === 'invoice.payment_failed') {
+        const alianca = await processAliancaInvoiceEvent(
+          context.env,
+          stripeKey,
+          type,
+          object,
+          tenantId
+        );
+        if (!alianca.ok) {
+          return jsonResponse({ received: false, message: alianca.message }, 500);
+        }
+      }
+
+      return jsonResponse({ received: true, updated: true });
     }
 
     return jsonResponse({ received: true, ignored: type });

@@ -108,6 +108,9 @@ async function resolveActiveChurchForOfferings(): Promise<SessionIgreja | null> 
       is_active: true,
       is_primary: true,
       is_linked: true,
+      mae_tenant_id: null,
+      mae_code: null,
+      mae_name: null,
     };
   }
 }

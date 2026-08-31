@@ -81,6 +81,11 @@ function isDrawerModuleEnabled(
     return context.isSuperAdmin;
   }
 
+  if (moduleKey === 'menu_alianca') {
+    // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+    return context.isSuperAdmin;
+  }
+
   // Ghost: só canOperateGhostMode (RPC = super_admin OU grant maintenance.card.auditor).
   // Não reutilizar isSuperAdmin de cache — evita vazar o menu a outros usuários no mesmo app.
   if (moduleKey === 'auditor') {

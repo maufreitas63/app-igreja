@@ -5,6 +5,9 @@ import { FinancialLastTwelveMonths } from '@/components/FinancialLastTwelveMonth
 import { FinancialHistoricalResult } from '@/components/FinancialHistoricalResult';
 import { FinancialAnalyticalSummarySection } from '@/components/FinancialAnalyticalSummaryReport';
 import { FinancialMonthlyComparison } from '@/components/FinancialMonthlyComparison';
+import { AliancaMaeFinancialSection } from '@/components/alianca/AliancaMaeFinancialSection';
+import { getAliancaMaePanel } from '@/lib/alianca/aliancaApi';
+import type { AliancaMaePanel } from '@/lib/alianca/types';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import {
@@ -38,6 +41,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type FinancialSectionId =
+  | 'alianca'
   | 'result'
   | 'comparison'
   | 'twelveMonths'
@@ -47,6 +51,7 @@ type FinancialSectionId =
   | 'analyticalSummary';
 
 const FINANCIAL_SECTION_ORDER: FinancialSectionId[] = [
+  'alianca',
   'analyticalSummary',
   'result',
   'comparison',
@@ -78,6 +83,8 @@ export default function FinancialScreen() {
     deniedMessage: 'Você não tem permissão para abrir o módulo financeiro.',
   });
   const [expandedSection, setExpandedSection] = useState<FinancialSectionId | null>(null);
+  const [aliancaPanel, setAliancaPanel] = useState<AliancaMaePanel | null>(null);
+  const [loadingAlianca, setLoadingAlianca] = useState(true);
 
   const {
     loadingMonths,
@@ -147,6 +154,31 @@ export default function FinancialScreen() {
   const sectionsToRender = FINANCIAL_SECTION_ORDER;
 
   useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      setLoadingAlianca(true);
+      try {
+        const panel = await getAliancaMaePanel();
+        if (!cancelled) setAliancaPanel(panel);
+      } catch {
+        if (!cancelled) {
+          setAliancaPanel({
+            success: false,
+            message: 'Não foi possível carregar a Aliança Conecta Reino.',
+            daughters: [],
+            payouts: [],
+          });
+        }
+      } finally {
+        if (!cancelled) setLoadingAlianca(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (budgetSectionBlocked && expandedSection === 'budget') {
       setExpandedSection(null);
     }
@@ -156,6 +188,37 @@ export default function FinancialScreen() {
 
   const renderFinancialSection = (sectionId: FinancialSectionId) => {
     switch (sectionId) {
+      case 'alianca':
+        return (
+          <View key="alianca" style={styles.resultSection}>
+            <TouchableOpacity
+              accessibilityLabel="Aliança Conecta Reino"
+              accessibilityRole="button"
+              accessibilityState={{ expanded: expandedSection === 'alianca' }}
+              activeOpacity={0.85}
+              onPress={() => toggleSection('alianca')}
+              style={[styles.resultSectionHeader, styles.resultMonthSectionHeader]}
+            >
+              <View style={styles.resultSectionHeaderText}>
+                <Text style={[styles.sectionLabel, styles.resultSectionLabel]}>
+                  Aliança Conecta Reino
+                </Text>
+                <Text style={styles.resultSectionMeta}>Oferta de Apoio Ministerial - Aliança</Text>
+              </View>
+              <FontAwesome
+                name={expandedSection === 'alianca' ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color="#94A3B8"
+              />
+            </TouchableOpacity>
+            {expandedSection === 'alianca' ? (
+              <View style={styles.resultSectionBody}>
+                <AliancaMaeFinancialSection loading={loadingAlianca} panel={aliancaPanel} />
+              </View>
+            ) : null}
+          </View>
+        );
+
       case 'result':
         return (
           <View key="result" style={styles.resultSection}>

@@ -171,7 +171,7 @@ export function AppDrawerSettings({
                   {section.id === 'governanca' ? (
                     <>
                       {section.items
-                        .filter((item) => item.id !== 'menu_billing')
+                        .filter((item) => item.id !== 'menu_billing' && item.id !== 'menu_alianca')
                         .map((item) => (
                           <SettingsRowView key={item.id} item={item} />
                         ))}
@@ -183,7 +183,7 @@ export function AppDrawerSettings({
                         />
                       ) : null}
                       {section.items
-                        .filter((item) => item.id === 'menu_billing')
+                        .filter((item) => item.id === 'menu_billing' || item.id === 'menu_alianca')
                         .map((item) => (
                           <SettingsRowView key={item.id} item={item} />
                         ))}

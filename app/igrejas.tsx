@@ -22,6 +22,8 @@ import {
   setIgrejaSocialLinksAdmin,
   type SessionIgreja,
 } from '@/lib/tenantSession';
+import { setIgrejaMaeTenantAdmin } from '@/lib/alianca/aliancaApi';
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -63,11 +65,13 @@ function IgrejasAdminPanel() {
   const [socialDrafts, setSocialDrafts] = useState<Record<string, SocialDraft>>({});
   const [offeringsDrafts, setOfferingsDrafts] = useState<Record<string, OfferingsDraft>>({});
   const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null);
-  const [deleteConfirmById, setDeleteConfirmById] = useState<Record<string, string>>({});
+  const [createMaeTenantId, setCreateMaeTenantId] = useState('');
+  const [maeDrafts, setMaeDrafts] = useState<Record<string, string>>({});
 
   const syncSocialDrafts = useCallback((rows: SessionIgreja[]) => {
     const nextSocial: Record<string, SocialDraft> = {};
     const nextOfferings: Record<string, OfferingsDraft> = {};
+    const nextMae: Record<string, string> = {};
     for (const church of rows) {
       nextSocial[church.id] = {
         website: church.website_url ?? '',
@@ -79,9 +83,11 @@ function IgrejasAdminPanel() {
         pixInstitution: church.pix_institution ?? '',
         pixKey: church.pix_key ?? '',
       };
+      nextMae[church.id] = church.mae_tenant_id ?? '';
     }
     setSocialDrafts(nextSocial);
     setOfferingsDrafts(nextOfferings);
+    setMaeDrafts(nextMae);
   }, []);
 
   const load = useCallback(async () => {
@@ -207,10 +213,25 @@ function IgrejasAdminPanel() {
         return;
       }
 
+      const maeId = (maeDrafts[church.id] ?? '').trim() || null;
+      const currentMae = church.mae_tenant_id ?? null;
+      if (maeId !== currentMae) {
+        const maeResult = await setIgrejaMaeTenantAdmin(church.id, maeId);
+        if (!maeResult.success) {
+          Toast.show({
+            type: 'error',
+            text1: 'Editar instância',
+            text2: maeResult.message || 'Igreja mãe não foi atualizada.',
+          });
+          await load();
+          return;
+        }
+      }
+
       Toast.show({
         type: 'success',
         text1: 'Instância atualizada',
-        text2: `${church.name}: logo, redes e ofertas salvos.`,
+        text2: `${church.name}: logo, redes, ofertas e indicação salvos.`,
       });
       closeEdit();
       await load();
@@ -293,6 +314,17 @@ function IgrejasAdminPanel() {
         }
       }
 
+      if (tenantId && createMaeTenantId.trim()) {
+        const mae = await setIgrejaMaeTenantAdmin(tenantId, createMaeTenantId.trim());
+        if (!mae.success) {
+          Toast.show({
+            type: 'error',
+            text1: 'Instância criada',
+            text2: mae.message || 'Igreja mãe não foi vinculada. Use Editar na lista.',
+          });
+        }
+      }
+
       Toast.show({
         type: 'success',
         text1: 'Instância criada',
@@ -307,6 +339,7 @@ function IgrejasAdminPanel() {
       setCreateCnpj('');
       setCreatePixInstitution('');
       setCreatePixKey('');
+      setCreateMaeTenantId('');
       await load();
     } catch (error) {
       console.error(error);
@@ -517,6 +550,9 @@ function IgrejasAdminPanel() {
                   <View style={styles.rowText}>
                     <Text style={styles.rowName}>{church.name}</Text>
                     <Text style={styles.rowCode}>{church.code}</Text>
+                    {church.mae_code ? (
+                      <Text style={styles.rowCode}>Mãe: {church.mae_code}</Text>
+                    ) : null}
                   </View>
                   <View style={styles.badgeColumn}>
                     {isSessionChurch ? <Text style={styles.badge}>Sessão</Text> : null}
@@ -608,6 +644,31 @@ function IgrejasAdminPanel() {
                       </View>
                     </View>
 
+                    <Text style={styles.socialFieldLabel}>Igreja mãe (indicação Aliança)</Text>
+                    <DropdownSelect
+                      options={[
+                        { value: '', label: 'Nenhuma (sem indicação)' },
+                        ...churches
+                          .filter((item) => item.id !== church.id)
+                          .map((item) => ({
+                            value: item.id,
+                            label: `${item.code} — ${item.name}`,
+                          })),
+                      ]}
+                      selectedValue={maeDrafts[church.id] ?? ''}
+                      onValueChange={(value) =>
+                        setMaeDrafts((prev) => ({ ...prev, [church.id]: value }))
+                      }
+                      modalTitle="Igreja mãe"
+                      placeholder="Sem indicação"
+                      searchable
+                      variant="minimal"
+                      disabled={editBusy}
+                    />
+                    <Text style={styles.logoHint}>
+                      A igreja mãe recebe 40% da assinatura trimestral desta instância, em até 4
+                      ciclos. O sistema recusa ciclos na árvore de indicações.
+                    </Text>
                     <Text style={styles.socialFieldLabel}>Site oficial (URL)</Text>
                     <TextInput
                       style={styles.input}
@@ -896,6 +957,28 @@ function IgrejasAdminPanel() {
         />
         <Text style={styles.logoHint}>
           Dados exibidos na tela Dízimos e Ofertas desta instância.
+        </Text>
+
+        <Text style={styles.label}>Igreja mãe (indicação Aliança)</Text>
+        <DropdownSelect
+          options={[
+            { value: '', label: 'Nenhuma (sem indicação)' },
+            ...churches.map((item) => ({
+              value: item.id,
+              label: `${item.code} — ${item.name}`,
+            })),
+          ]}
+          selectedValue={createMaeTenantId}
+          onValueChange={setCreateMaeTenantId}
+          modalTitle="Igreja mãe"
+          placeholder="Sem indicação"
+          searchable
+          variant="minimal"
+          disabled={saving}
+        />
+        <Text style={styles.logoHint}>
+          Opcional. A igreja selecionada recebe 40% da assinatura trimestral desta instância
+          (até 4 ciclos / 12 meses).
         </Text>
 
         <TouchableOpacity

@@ -67,6 +67,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   profile_access_insights: 'eye',
   auditor: 'user-secret',
   menu_billing: 'credit-card',
+  menu_alianca: 'handshake-o',
   menu_igrejas: 'building',
 };
 

@@ -39,6 +39,7 @@ export type AppDrawerModuleKey =
   | 'menu_mapa'
   | 'menu_administrativo'
   | 'menu_igrejas'
+  | 'menu_alianca'
   | 'menu_redes_sociais'
   | 'menu_sobre_conecta'
   | 'menu_billing'
@@ -363,6 +364,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     hint: 'Planos e cobrança da igreja',
   },
   {
+    letter: 'g10b',
+    label: 'Aliança Conecta Reino',
+    moduleKey: 'menu_alianca',
+    group: 'governanca',
+    hint: 'Indicações, passivo de 40% e baixa manual das ofertas',
+  },
+  {
     letter: 'g11',
     label: 'Instâncias (Igrejas)',
     moduleKey: 'menu_igrejas',
@@ -589,6 +597,11 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_igrejas') {
     openScreen(router, '/igrejas', withFailClosedReturn());
+    return;
+  }
+
+  if (moduleKey === 'menu_alianca') {
+    openScreen(router, '/alianca-conecta-reino', withFailClosedReturn());
     return;
   }
 

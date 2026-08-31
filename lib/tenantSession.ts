@@ -120,6 +120,9 @@ export type SessionIgreja = {
   is_active: boolean;
   is_primary: boolean;
   is_linked: boolean;
+  mae_tenant_id: string | null;
+  mae_code: string | null;
+  mae_name: string | null;
 };
 
 export type ActiveIgrejaBranding = {
@@ -158,6 +161,9 @@ function mapSessionIgreja(row: Record<string, unknown> | null | undefined): Sess
     is_active: row?.is_active === false ? false : true,
     is_primary: Boolean(row?.is_primary),
     is_linked: Boolean(row?.is_linked),
+    mae_tenant_id: asText(row?.mae_tenant_id) || null,
+    mae_code: asText(row?.mae_code) || null,
+    mae_name: asText(row?.mae_name) || null,
   };
 }
 
