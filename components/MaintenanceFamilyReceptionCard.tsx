@@ -114,6 +114,12 @@ export function MaintenanceFamilyReceptionCard({
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
   useEffect(() => {
+    if (!isActive) return;
+    setInviteName('');
+    setInvitePhone('');
+  }, [isActive]);
+
+  useEffect(() => {
     let active = true;
     void getStoredActiveIgrejaBranding().then((branding) => {
       if (!active) return;
@@ -124,6 +130,11 @@ export function MaintenanceFamilyReceptionCard({
       active = false;
     };
   }, [prefix]);
+
+  const handleClearInvite = () => {
+    setInviteName('');
+    setInvitePhone('');
+  };
 
   const handleShareInvite = () => {
     const guestName = inviteName.trim();
@@ -347,6 +358,9 @@ export function MaintenanceFamilyReceptionCard({
             placeholderTextColor={minimal ? MINIMAL_UI.textMuted : 'rgba(58, 150, 221, 0.55)'}
             autoCapitalize="words"
             autoCorrect={false}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
             style={[styles.inviteInput, styles.inviteNameInput, minimal && styles.inviteInputMinimal]}
           />
           <TextInput
@@ -357,8 +371,20 @@ export function MaintenanceFamilyReceptionCard({
             keyboardType="phone-pad"
             inputMode="tel"
             autoCorrect={false}
+            autoComplete="off"
+            textContentType="none"
+            importantForAutofill="no"
             style={[styles.inviteInput, styles.invitePhoneInput, minimal && styles.inviteInputMinimal]}
           />
+          <TouchableOpacity
+            onPress={handleClearInvite}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel="Limpar nome e celular"
+            style={[styles.inviteClearButton, minimal && styles.inviteClearButtonMinimal]}
+          >
+            <MaterialIcons name="close" size={18} color={minimal ? MINIMAL_UI.icon : '#64748B'} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -723,6 +749,7 @@ const styles = StyleSheet.create({
   inviteFields: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    alignItems: 'center',
     gap: 8,
   },
   inviteInput: {
@@ -733,15 +760,31 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     color: '#3A96DD',
     fontSize: 13,
-    minWidth: 140,
-    flexGrow: 1,
+    flexGrow: 0,
+    flexShrink: 1,
   },
   inviteNameInput: {
-    flexBasis: 180,
+    width: 168,
+    maxWidth: 168,
+    minWidth: 120,
   },
   invitePhoneInput: {
-    flexBasis: 150,
-    maxWidth: 200,
+    width: 148,
+    maxWidth: 148,
+    minWidth: 120,
+  },
+  inviteClearButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.35)',
+  },
+  inviteClearButtonMinimal: {
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
   },
   inviteBoxMinimal: {
     ...CONTAIN_WIDTH,
