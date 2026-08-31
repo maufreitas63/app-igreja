@@ -11,7 +11,7 @@ import {
   type EmprestimoLivro,
 } from '@/lib/emprestimosLivrosApi';
 import type { LivroRecord } from '@/lib/livrosApi';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -141,6 +141,8 @@ export function MeusLivrosRetiradosPanel({ onBack }: Props) {
 
   return (
     <View style={styles.root}>
+      <Text style={styles.title}>Cantinho da Leitura</Text>
+      <View style={styles.body}>
       <Pressable
         onPress={onBack}
         style={styles.backButton}
@@ -150,7 +152,6 @@ export function MeusLivrosRetiradosPanel({ onBack }: Props) {
         <FontAwesome name="chevron-left" size={14} color={MINIMAL_UI.blueDark} />
         <Text style={styles.backButtonText}>Perfil</Text>
       </Pressable>
-      <Text style={styles.title}>Cantinho da Leitura</Text>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.sectionLabel}>Reservar no acervo</Text>
         <TextInput
@@ -277,6 +278,7 @@ export function MeusLivrosRetiradosPanel({ onBack }: Props) {
           ))
         )}
       </ScrollView>
+      </View>
     </View>
   );
 }
@@ -284,8 +286,11 @@ export function MeusLivrosRetiradosPanel({ onBack }: Props) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  body: {
+    flex: 1,
     paddingHorizontal: 12,
-    paddingTop: 4,
+    minHeight: 0,
   },
   backButton: {
     flexDirection: 'row',
@@ -299,12 +304,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
   },
-  title: {
-    color: MINIMAL_UI.text,
-    fontSize: 20,
-    fontWeight: '800',
-    marginBottom: 8,
-  },
+  title: MINIMAL_SECTION_TITLE,
   scroll: {
     gap: 10,
     paddingBottom: 32,
