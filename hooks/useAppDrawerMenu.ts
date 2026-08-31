@@ -86,6 +86,10 @@ function isDrawerModuleEnabled(
     return context.isSuperAdmin;
   }
 
+  if (moduleKey === 'menu_livros') {
+    return context.isSuperAdmin || context.dashboardScreenAccess[ACCESS_SCREEN.livrosDoados] === true;
+  }
+
   // Ghost: só canOperateGhostMode (RPC = super_admin OU grant maintenance.card.auditor).
   // Não reutilizar isSuperAdmin de cache — evita vazar o menu a outros usuários no mesmo app.
   if (moduleKey === 'auditor') {
@@ -209,6 +213,7 @@ export function useAppDrawerMenu() {
           ACCESS_SCREEN.expenseReport,
           ACCESS_SCREEN.mapGeolocation,
           ACCESS_SCREEN.generosityMural,
+          ACCESS_SCREEN.livrosDoados,
         ].map(async (resourceKey) => {
           if (dashboardScreenAccess[resourceKey] === true) {
             return [resourceKey, true] as const;

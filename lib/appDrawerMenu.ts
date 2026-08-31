@@ -44,6 +44,7 @@ export type AppDrawerModuleKey =
   | 'menu_sobre_conecta'
   | 'menu_billing'
   | 'menu_salas'
+  | 'menu_livros'
   | 'menu_totem'
   | 'menu_autorizacao_midia'
   | 'menu_orquestrador'
@@ -223,6 +224,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     moduleKey: 'menu_administrativo',
     group: 'pessoas',
     hint: 'Atos constitutivos',
+  },
+  {
+    letter: 'p10',
+    label: 'Livros doados',
+    moduleKey: 'menu_livros',
+    group: 'pessoas',
+    hint: 'Acervo com busca ISBN e cadastro manual',
   },
   {
     letter: 'c1',
@@ -612,6 +620,17 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_salas') {
     openScreen(router, '/configuracao-salas', withFailClosedReturn());
+    return;
+  }
+
+  if (moduleKey === 'menu_livros') {
+    await navigateWithScreenAccess(
+      router,
+      '/livros-doados',
+      ACCESS_SCREEN.livrosDoados,
+      withFailClosedReturn(),
+      DRAWER_NAVIGATE
+    );
     return;
   }
 

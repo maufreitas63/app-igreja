@@ -32,6 +32,7 @@ import {
 
 const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<typeof FontAwesome>['name']>> = {
   menu_salas: 'home',
+  menu_livros: 'book',
   menu_totem: 'qrcode',
   menu_autorizacao_midia: 'shield',
   menu_membros: 'users',

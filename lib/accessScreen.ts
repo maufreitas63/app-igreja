@@ -18,6 +18,7 @@ export const ACCESS_SCREEN = {
   lgpd: '/lgpd',
   eventOrchestrator: '/admin/orquestrador',
   configuracaoSalas: '/configuracao-salas',
+  livrosDoados: '/livros-doados',
   totemCheckin: '/totem-checkin',
   autorizacaoMidia: '/autorizacao-midia',
   discipleshipTrail: '/trilha-discipulado',
