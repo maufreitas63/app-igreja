@@ -17,6 +17,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -73,17 +74,24 @@ export function MeusLivrosRetiradosPanel({ onBack }: Props) {
 
   const filteredAcervo = useMemo(() => {
     const q = livroQuery.trim().toLowerCase();
-    if (!q) {
-      return acervo;
-    }
-    return acervo.filter(
-      (livro) =>
-        livro.titulo.toLowerCase().includes(q)
-        || (livro.autor ?? '').toLowerCase().includes(q)
+    const matched = q
+      ? acervo.filter(
+          (livro) =>
+            livro.titulo.toLowerCase().includes(q)
+            || (livro.autor ?? '').toLowerCase().includes(q)
+            || (livro.isbn ?? '').toLowerCase().includes(q)
+        )
+      : acervo;
+    return [...matched].sort((a, b) =>
+      a.titulo.localeCompare(b.titulo, 'pt-BR', { sensitivity: 'base' })
     );
   }, [acervo, livroQuery]);
 
   const selectedLivro = acervo.find((livro) => livro.id === livroId) ?? null;
+
+  const selectedMeta = selectedLivro
+    ? [selectedLivro.autor, selectedLivro.editora, selectedLivro.ano].filter(Boolean).join(' · ')
+    : '';
 
   const handlePickupChange = (value: string) => {
     setDataRetirada(value);
@@ -161,39 +169,70 @@ export function MeusLivrosRetiradosPanel({ onBack }: Props) {
           placeholderTextColor={MINIMAL_UI.textMuted}
           style={styles.input}
         />
-        {selectedLivro ? (
-          <View style={styles.selectedBook}>
-            <Text style={styles.selectedBookTitle}>{selectedLivro.titulo}</Text>
-            <TouchableOpacity
-              onPress={() => {
-                setLivroId(null);
-                setLivroQuery('');
-              }}
-            >
-              <Text style={styles.clearLink}>Trocar</Text>
-            </TouchableOpacity>
-          </View>
-        ) : filteredAcervo.length ? (
-          <View style={styles.chipWrap}>
-            {filteredAcervo.slice(0, 16).map((livro) => (
-              <TouchableOpacity
-                key={livro.id}
-                style={styles.chip}
-                onPress={() => {
-                  setLivroId(livro.id);
-                  setLivroQuery(livro.titulo);
-                }}
-              >
-                <Text style={styles.chipText} numberOfLines={1}>
-                  {livro.titulo}
-                </Text>
-              </TouchableOpacity>
-            ))}
+        {filteredAcervo.length ? (
+          <View style={styles.bookList}>
+            {filteredAcervo.map((livro) => {
+              const selected = livro.id === livroId;
+              const sub = [livro.autor, livro.editora, livro.ano].filter(Boolean).join(' · ');
+              return (
+                <TouchableOpacity
+                  key={livro.id}
+                  style={[styles.bookRow, selected && styles.bookRowSelected]}
+                  onPress={() => setLivroId(livro.id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`Selecionar ${livro.titulo}`}
+                >
+                  {livro.capa ? (
+                    <Image source={{ uri: livro.capa }} style={styles.bookThumb} />
+                  ) : (
+                    <View style={[styles.bookThumb, styles.bookThumbEmpty]}>
+                      <FontAwesome name="book" size={16} color={MINIMAL_UI.textMuted} />
+                    </View>
+                  )}
+                  <View style={styles.bookRowMeta}>
+                    <Text style={styles.bookRowTitle}>{livro.titulo}</Text>
+                    {sub ? (
+                      <Text style={styles.bookRowSub} numberOfLines={1}>
+                        {sub}
+                      </Text>
+                    ) : null}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         ) : (
           <Text style={styles.hint}>
             {acervo.length ? 'Nenhum título corresponde à busca.' : 'Nenhum livro disponível para reserva agora.'}
           </Text>
+        )}
+
+        {selectedLivro ? (
+          <View style={styles.detailCard}>
+            {selectedLivro.capa ? (
+              <Image source={{ uri: selectedLivro.capa }} style={styles.detailCover} resizeMode="contain" />
+            ) : (
+              <View style={[styles.detailCover, styles.detailCoverEmpty]}>
+                <FontAwesome name="book" size={28} color={MINIMAL_UI.textMuted} />
+              </View>
+            )}
+            <View style={styles.detailBody}>
+              <Text style={styles.detailTitle}>{selectedLivro.titulo}</Text>
+              {selectedMeta ? <Text style={styles.detailMeta}>{selectedMeta}</Text> : null}
+              {selectedLivro.isbn ? (
+                <Text style={styles.detailIsbn}>ISBN {selectedLivro.isbn}</Text>
+              ) : null}
+              {!selectedLivro.autor && !selectedLivro.editora && !selectedLivro.ano && !selectedLivro.isbn ? (
+                <Text style={styles.hint}>Cadastro sem autor, editora ou ISBN — ainda assim pode reservar.</Text>
+              ) : null}
+              <TouchableOpacity onPress={() => setLivroId(null)} accessibilityLabel="Limpar livro selecionado">
+                <Text style={styles.clearLink}>Trocar livro</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <Text style={styles.hint}>Toque em um título para ver os dados e reservar.</Text>
         )}
 
         <View style={styles.datesRow}>
@@ -222,9 +261,9 @@ export function MeusLivrosRetiradosPanel({ onBack }: Props) {
         </View>
         <Text style={styles.hint}>O prazo padrão é 30 dias após a retirada.</Text>
         <TouchableOpacity
-          style={[styles.primaryButton, saving && styles.disabled]}
+          style={[styles.primaryButton, (saving || !livroId) && styles.disabled]}
           onPress={() => void handleReservar()}
-          disabled={saving}
+          disabled={saving || !livroId}
         >
           {saving ? (
             <ActivityIndicator color={MINIMAL_UI.onDark} />
@@ -328,43 +367,91 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: MINIMAL_UI.background,
   },
-  chipWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  chip: {
+  bookList: {
+    gap: 0,
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    maxWidth: '100%',
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  chipText: {
-    color: MINIMAL_UI.text,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  selectedBook: {
+  bookRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: MINIMAL_UI.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    gap: 10,
+    paddingHorizontal: 10,
     paddingVertical: 10,
-    gap: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.background,
   },
-  selectedBookTitle: {
+  bookRowSelected: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  bookThumb: {
+    width: 36,
+    height: 52,
+    borderRadius: 4,
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  bookThumbEmpty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookRowMeta: {
+    flex: 1,
+    minWidth: 0,
+  },
+  bookRowTitle: {
     color: MINIMAL_UI.text,
     fontWeight: '700',
+    fontSize: 14,
+  },
+  bookRowSub: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  detailCard: {
+    flexDirection: 'row',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.blueDark,
+    borderRadius: 12,
+    padding: 12,
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  detailCover: {
+    width: 72,
+    height: 108,
+    borderRadius: 6,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  detailCoverEmpty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailBody: {
     flex: 1,
+    minWidth: 0,
+    gap: 4,
+  },
+  detailTitle: {
+    color: MINIMAL_UI.text,
+    fontWeight: '800',
+    fontSize: 16,
+  },
+  detailMeta: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+  },
+  detailIsbn: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
   },
   clearLink: {
     color: MINIMAL_UI.accent,
     fontWeight: '700',
+    marginTop: 6,
   },
   datesRow: {
     flexDirection: 'row',
