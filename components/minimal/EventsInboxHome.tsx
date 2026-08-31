@@ -10,6 +10,7 @@ import {
 import { fetchMyPastoralSlotNotices, markPastoralSlotNoticesRead, type PastoralSlotNotice } from '@/lib/pastoralSlotsApi';
 import { fetchMyCampaignNotices, type CampaignNotice } from '@/lib/campaignProjectsApi';
 import { fetchUnreadOpportunityNotices, markOpportunityNoticesRead, type OpportunityNotice } from '@/lib/volunteerOpportunitiesApi';
+import { fetchUnreadEmprestimoLivrosNotices, markEmprestimoLivrosNoticesRead, type EmprestimoLivroNotice } from '@/lib/emprestimosLivrosApi';
 import { fetchUnreadGenerosityNotices, markGenerosityNoticesRead, type GenerosityNotice } from '@/lib/generosityMuralApi';
 import { fetchUnreadScaleSwapNotices, markScaleSwapNoticesRead, type ScaleSwapNotice } from '@/lib/scaleSwapApi';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
@@ -56,6 +57,7 @@ export function EventsInboxHome() {
   const [campaignNotices, setCampaignNotices] = useState<CampaignNotice[]>([]);
   const [opportunityNotices, setOpportunityNotices] = useState<OpportunityNotice[]>([]);
   const [generosityNotices, setGenerosityNotices] = useState<GenerosityNotice[]>([]);
+  const [emprestimoNotices, setEmprestimoNotices] = useState<EmprestimoLivroNotice[]>([]);
   const [scaleSwapNotices, setScaleSwapNotices] = useState<ScaleSwapNotice[]>([]);
   const [avisosLoading, setAvisosLoading] = useState(false);
   const [avisosError, setAvisosError] = useState<string | null>(null);
@@ -112,12 +114,14 @@ export function EventsInboxHome() {
       setCampaignNotices(campaignRows);
       const nextOpportunity = await fetchUnreadOpportunityNotices();
       const nextGenerosity = await fetchUnreadGenerosityNotices();
+      const nextEmprestimos = await fetchUnreadEmprestimoLivrosNotices();
       const nextSwaps = await fetchUnreadScaleSwapNotices();
       if (loadId !== avisosLoadGenRef.current) {
         return;
       }
       setOpportunityNotices(nextOpportunity);
       setGenerosityNotices(nextGenerosity);
+      setEmprestimoNotices(nextEmprestimos);
       setScaleSwapNotices(nextSwaps);
       const rows = await fetchPublishedEventAvisos();
       if (loadId !== avisosLoadGenRef.current) {
@@ -132,6 +136,9 @@ export function EventsInboxHome() {
       }
       if (nextGenerosity.length > 0) {
         void markGenerosityNoticesRead();
+      }
+      if (nextEmprestimos.length > 0) {
+        void markEmprestimoLivrosNoticesRead();
       }
       if (nextSwaps.length > 0) {
         void markScaleSwapNoticesRead();
@@ -285,6 +292,7 @@ export function EventsInboxHome() {
                 && campaignNotices.length === 0
                 && opportunityNotices.length === 0
                 && generosityNotices.length === 0
+                && emprestimoNotices.length === 0
                 && scaleSwapNotices.length === 0 ? (
                 avisosError ? (
                   <Text style={styles.error}>{avisosError}</Text>
@@ -308,6 +316,14 @@ export function EventsInboxHome() {
                   ))}
                   {generosityNotices.map((item) => (
                     <View key={`generosity-${item.id}`} style={styles.avisoCard}>
+                      <Text style={styles.avisoTitle} numberOfLines={2}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.avisoBody}>{item.body}</Text>
+                    </View>
+                  ))}
+                  {emprestimoNotices.map((item) => (
+                    <View key={`emprestimo-${item.id}`} style={styles.avisoCard}>
                       <Text style={styles.avisoTitle} numberOfLines={2}>
                         {item.title}
                       </Text>

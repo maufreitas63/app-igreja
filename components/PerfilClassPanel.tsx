@@ -1,4 +1,5 @@
 import { DigitalIDCard } from '@/components/DigitalIDCard';
+import { MeusLivrosRetiradosPanel } from '@/components/MeusLivrosRetiradosPanel';
 import { MembersClassPanel } from '@/components/MembersClassPanel';
 import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ProfileClassPanel } from '@/components/ProfileClassPanel';
@@ -40,6 +41,7 @@ export function PerfilClassPanel() {
   const [membersClassVisible, setMembersClassVisible] = useState(false);
   const [discipleshipTrailVisible, setDiscipleshipTrailVisible] = useState(false);
   const [digitalIdVisible, setDigitalIdVisible] = useState(false);
+  const [myBooksVisible, setMyBooksVisible] = useState(false);
   const loadGenerationRef = useRef(0);
 
   const reloadAccess = useCallback(async (options?: { forceRefresh?: boolean }) => {
@@ -108,6 +110,10 @@ export function PerfilClassPanel() {
     setDigitalIdVisible(true);
   }, []);
 
+  const openMyBooks = useCallback(() => {
+    setMyBooksVisible(true);
+  }, []);
+
   const openManageProfile = useCallback(() => {
     setProfileClassVisible(true);
   }, []);
@@ -154,6 +160,12 @@ export function PerfilClassPanel() {
         label: 'Carteirinha Digital',
         icon: 'badge',
         onPress: openDigitalIdCard,
+      },
+      {
+        key: 'my-books',
+        label: 'Meus Livros Retirados',
+        icon: 'menu-book',
+        onPress: openMyBooks,
       },
     ];
 
@@ -205,7 +217,16 @@ export function PerfilClassPanel() {
     openExpenseReport,
     openManageMembers,
     openManageProfile,
+    openMyBooks,
   ]);
+
+  if (myBooksVisible) {
+    return (
+      <View style={styles.embeddedPanel}>
+        <MeusLivrosRetiradosPanel onBack={() => setMyBooksVisible(false)} />
+      </View>
+    );
+  }
 
   if (digitalIdVisible) {
     return (

@@ -1,0 +1,197 @@
+import { supabase } from '@/lib/supabase';
+import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+import { mapProfileSearchRows, type ProfileSearchRow } from '@/lib/profileSearchRow';
+
+export type EmprestimoLivroStatus = 'ativo' | 'devolvido' | 'atrasado';
+
+export type EmprestimoLivro = {
+  id: string;
+  livroId: string | null;
+  titulo: string;
+  userId: string | null;
+  nomeRetirante: string;
+  dataRetirada: string;
+  dataPrevistaEntrega: string;
+  dataDevolucaoReal: string | null;
+  status: EmprestimoLivroStatus;
+  diasRestantes: number;
+};
+
+export type EmprestimoLivroNotice = {
+  id: string;
+  title: string;
+  body: string;
+  createdAt: string;
+};
+
+const asRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+
+const asText = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
+
+const parseStatus = (value: unknown): EmprestimoLivroStatus => {
+  if (value === 'devolvido' || value === 'atrasado') {
+    return value;
+  }
+  return 'ativo';
+};
+
+const mapEmprestimo = (raw: unknown): EmprestimoLivro | null => {
+  const row = asRecord(raw);
+  const id = asText(row.id);
+  const titulo = asText(row.titulo);
+  if (!id || !titulo) {
+    return null;
+  }
+
+  const dias = Number(row.dias_restantes);
+  return {
+    id,
+    livroId: asText(row.livro_id) || null,
+    titulo,
+    userId: asText(row.user_id) || null,
+    nomeRetirante: asText(row.nome_retirante) || 'Retirante',
+    dataRetirada: asText(row.data_retirada),
+    dataPrevistaEntrega: asText(row.data_prevista_entrega),
+    dataDevolucaoReal: asText(row.data_devolucao_real) || null,
+    status: parseStatus(row.status),
+    diasRestantes: Number.isFinite(dias) ? Math.trunc(dias) : 0,
+  };
+};
+
+const rpcPayload = async (name: string, args?: Record<string, unknown>) => {
+  const { data, error } = await supabase.rpc(name, args ?? {});
+  if (error) {
+    if (isSupabaseRpcMissingError(error, name)) {
+      throw new Error('SQL de empréstimos ausente. Execute scripts/emprestimos-livros.sql.');
+    }
+    throw new Error(error.message || 'Falha no empréstimo de livros.');
+  }
+  return asRecord(data);
+};
+
+export function formatEmprestimoDate(value: string | null | undefined) {
+  if (!value) {
+    return '—';
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return date.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+export function emprestimoCountdownLabel(item: EmprestimoLivro) {
+  if (item.status === 'devolvido') {
+    return 'Devolvido';
+  }
+  if (item.diasRestantes < 0) {
+    const n = Math.abs(item.diasRestantes);
+    return n === 1 ? '1 dia em atraso' : `${n} dias em atraso`;
+  }
+  if (item.diasRestantes === 0) {
+    return 'Vence hoje';
+  }
+  if (item.diasRestantes === 1) {
+    return '1 dia restante';
+  }
+  return `${item.diasRestantes} dias restantes`;
+}
+
+export const EMPRESTIMO_STATUS_LABEL: Record<EmprestimoLivroStatus, string> = {
+  ativo: 'Ativo',
+  atrasado: 'Atrasado',
+  devolvido: 'Devolvido',
+};
+
+export async function listMyEmprestimosLivros(): Promise<EmprestimoLivro[]> {
+  const payload = await rpcPayload('list_my_emprestimos_livros');
+  const rows = Array.isArray(payload.rows) ? payload.rows : [];
+  return rows.map(mapEmprestimo).filter((row): row is EmprestimoLivro => Boolean(row));
+}
+
+export async function listEmprestimosLivrosStaff(
+  scope: 'ativos' | 'historico'
+): Promise<EmprestimoLivro[]> {
+  const payload = await rpcPayload('list_emprestimos_livros_staff', { p_scope: scope });
+  const rows = Array.isArray(payload.rows) ? payload.rows : [];
+  return rows.map(mapEmprestimo).filter((row): row is EmprestimoLivro => Boolean(row));
+}
+
+export async function searchProfilesForEmprestimo(query: string): Promise<ProfileSearchRow[]> {
+  // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+  const payload = await rpcPayload('search_profiles_for_emprestimo', { p_search: query });
+  return mapProfileSearchRows(payload.rows);
+}
+
+export async function createEmprestimoLivro(input: {
+  livroId?: string | null;
+  tituloExterno?: string | null;
+  userId?: string | null;
+  nomeExterno?: string | null;
+}): Promise<{ success: boolean; message: string }> {
+  const payload = await rpcPayload('create_emprestimo_livro', {
+    p_livro_id: input.livroId ?? null,
+    p_titulo_livro_externo: input.tituloExterno ?? null,
+    p_user_id: input.userId ?? null,
+    p_nome_retirante_externo: input.nomeExterno ?? null,
+  });
+  return {
+    success: payload.success === true,
+    message:
+      asText(payload.message)
+      || (payload.success === true ? 'Empréstimo registrado.' : 'Não foi possível registrar.'),
+  };
+}
+
+export async function devolverEmprestimoLivro(id: string) {
+  const payload = await rpcPayload('devolver_emprestimo_livro', { p_id: id });
+  return {
+    success: payload.success === true,
+    message: asText(payload.message) || 'Devolução registrada.',
+  };
+}
+
+export async function renovarEmprestimoLivro(id: string) {
+  const payload = await rpcPayload('renovar_emprestimo_livro', { p_id: id });
+  return {
+    success: payload.success === true,
+    message: asText(payload.message) || 'Prazo renovado.',
+  };
+}
+
+export async function fetchUnreadEmprestimoLivrosNotices(): Promise<EmprestimoLivroNotice[]> {
+  try {
+    const payload = await rpcPayload('list_unread_emprestimo_livros_notices');
+    const rows = Array.isArray(payload.notices) ? payload.notices : [];
+    return rows
+      .map((entry) => {
+        const row = asRecord(entry);
+        const id = asText(row.id);
+        if (!id) {
+          return null;
+        }
+        return {
+          id,
+          title: asText(row.title) || 'Livro emprestado',
+          body: asText(row.body),
+          createdAt: asText(row.created_at),
+        } satisfies EmprestimoLivroNotice;
+      })
+      .filter((row): row is EmprestimoLivroNotice => Boolean(row));
+  } catch {
+    return [];
+  }
+}
+
+export async function markEmprestimoLivrosNoticesRead() {
+  try {
+    await supabase.rpc('mark_emprestimo_livros_notices_read');
+  } catch {
+    // Falha silenciosa: o aviso continua visível até a próxima leitura.
+  }
+}
