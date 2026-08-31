@@ -150,7 +150,7 @@ export function MeusLivrosRetiradosPanel({ onBack }: Props) {
         <FontAwesome name="chevron-left" size={14} color={MINIMAL_UI.blueDark} />
         <Text style={styles.backButtonText}>Perfil</Text>
       </Pressable>
-      <Text style={styles.title}>Meus Livros Retirados</Text>
+      <Text style={styles.title}>Cantinho da Leitura</Text>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.sectionLabel}>Reservar no acervo</Text>
         <TextInput

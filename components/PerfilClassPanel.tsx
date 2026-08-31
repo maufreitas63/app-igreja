@@ -202,7 +202,7 @@ export function PerfilClassPanel() {
 
     items.push({
       key: 'my-books',
-      label: 'Meus Livros Retirados',
+      label: 'Cantinho da Leitura',
       icon: 'menu-book',
       onPress: openMyBooks,
     });
