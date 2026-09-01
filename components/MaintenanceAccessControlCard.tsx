@@ -312,6 +312,7 @@ export function MaintenanceAccessControlCard({
   const { showTechnicalKeys } = useShowAclTechnicalKeys(isActive);
   const [activeTab, setActiveTab] = useState<AdminTab>('profiles');
   const [peopleSearchQuery, setPeopleSearchQuery] = useState('');
+  const [expandedPeopleRoleIds, setExpandedPeopleRoleIds] = useState<string[]>([]);
   const [grantSearchQuery, setGrantSearchQuery] = useState('');
   const [focusedResourceGrant, setFocusedResourceGrant] = useState<RoleGrantRecord | null>(null);
   const [resourceRoleGrants, setResourceRoleGrants] = useState<ResourceRoleGrantRecord[]>([]);
@@ -385,6 +386,12 @@ export function MaintenanceAccessControlCard({
 
   const handleClearGrantSearch = () => {
     setGrantSearchQuery('');
+  };
+
+  const togglePeopleRoleExpanded = (roleId: string) => {
+    setExpandedPeopleRoleIds((current) =>
+      current.includes(roleId) ? current.filter((id) => id !== roleId) : [...current, roleId]
+    );
   };
 
   useEffect(() => {
@@ -1279,40 +1286,62 @@ export function MaintenanceAccessControlCard({
                 : 'Nenhuma pessoa atribuída aos papéis visíveis.'}
             </Text>
           ) : (
-            filteredPeopleByRole.map((group) => (
-              <View key={group.roleId} style={[styles.peopleRoleBlock, minimal && styles.peopleRoleBlockMinimal]}>
-                <Text style={[styles.peopleRoleTitle, minimal && styles.peopleRoleTitleMinimal]}>
-                  {group.roleName} ({group.people.length})
-                </Text>
-                {group.people.length === 0 ? (
-                  <Text style={[styles.peopleEmpty, minimal && styles.peopleEmptyMinimal]}>
-                    Ninguém atribuído
-                  </Text>
-                ) : (
-                  group.people.map((person) => (
-                    <TouchableOpacity
-                      key={`${group.roleId}-${person.profileId}`}
-                      style={[styles.peopleRow, minimal && styles.peopleRowMinimal]}
-                      onPress={() => {
-                        setActiveTab('profiles');
-                        void selectProfileById(person.profileId);
-                      }}
-                      activeOpacity={0.85}
+            filteredPeopleByRole.map((group) => {
+              const expanded =
+                Boolean(peopleSearchNeedle) || expandedPeopleRoleIds.includes(group.roleId);
+
+              return (
+                <View key={group.roleId} style={[styles.peopleRoleBlock, minimal && styles.peopleRoleBlockMinimal]}>
+                  <TouchableOpacity
+                    style={[styles.accordionHeader, styles.peopleRoleHeader, minimal && styles.accordionHeaderMinimal]}
+                    onPress={() => togglePeopleRoleExpanded(group.roleId)}
+                    activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded }}
+                    accessibilityLabel={`${group.roleName}, ${group.people.length} pessoas`}
+                  >
+                    <Text
+                      style={[styles.peopleRoleTitle, minimal && styles.peopleRoleTitleMinimal]}
+                      numberOfLines={1}
                     >
-                      <Text style={[styles.peopleName, minimal && styles.peopleNameMinimal]}>
-                        {formatShortName(person.fullName)}
-                        {person.desligado ? ' · desligado' : ''}
+                      {group.roleName} ({group.people.length})
+                    </Text>
+                    <Text style={[styles.accordionChevron, minimal && styles.accordionChevronMinimal]}>
+                      {expanded ? '▼' : '▶'}
+                    </Text>
+                  </TouchableOpacity>
+                  {expanded ? (
+                    group.people.length === 0 ? (
+                      <Text style={[styles.peopleEmpty, minimal && styles.peopleEmptyMinimal]}>
+                        Ninguém atribuído
                       </Text>
-                      {person.phone || person.memberCode ? (
-                        <Text style={[styles.peopleMeta, minimal && styles.peopleMetaMinimal]}>
-                          {[person.phone, person.memberCode].filter(Boolean).join(' · ')}
-                        </Text>
-                      ) : null}
-                    </TouchableOpacity>
-                  ))
-                )}
-              </View>
-            ))
+                    ) : (
+                      group.people.map((person) => (
+                        <TouchableOpacity
+                          key={`${group.roleId}-${person.profileId}`}
+                          style={[styles.peopleRow, minimal && styles.peopleRowMinimal]}
+                          onPress={() => {
+                            setActiveTab('profiles');
+                            void selectProfileById(person.profileId);
+                          }}
+                          activeOpacity={0.85}
+                        >
+                          <Text style={[styles.peopleName, minimal && styles.peopleNameMinimal]}>
+                            {formatShortName(person.fullName)}
+                            {person.desligado ? ' · desligado' : ''}
+                          </Text>
+                          {person.phone || person.memberCode ? (
+                            <Text style={[styles.peopleMeta, minimal && styles.peopleMetaMinimal]}>
+                              {[person.phone, person.memberCode].filter(Boolean).join(' · ')}
+                            </Text>
+                          ) : null}
+                        </TouchableOpacity>
+                      ))
+                    )
+                  ) : null}
+                </View>
+              );
+            })
           )}
         </ScrollView>
       ) : (
@@ -1945,19 +1974,25 @@ const styles = StyleSheet.create({
     color: '#3A96DD',
   },
   peopleRoleBlock: {
-    marginBottom: 14,
+    marginBottom: 6,
     gap: 4,
+  },
+  peopleRoleHeader: {
+    marginTop: 0,
   },
   peopleRoleTitle: {
     color: '#3A96DD',
     fontSize: 13,
     fontWeight: '800',
-    marginBottom: 4,
+    flex: 1,
+    paddingRight: 8,
   },
   peopleEmpty: {
     color: 'rgba(58, 150, 221, 0.72)',
     fontSize: 12,
     fontStyle: 'italic',
+    paddingHorizontal: 4,
+    paddingVertical: 6,
   },
   peopleRow: {
     paddingVertical: 6,
