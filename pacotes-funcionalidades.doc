@@ -1,0 +1,456 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Pacotes de funcionalidades — Conecta+</title>
+<style>
+
+  body { font-family: Calibri, sans-serif; font-size: 12pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 20pt; color: #0F172A; border-bottom: 2pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 16pt; color: #1E3A8A; margin-top: 18pt; }
+  h3 { font-size: 13pt; color: #1E40AF; margin-top: 12pt; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 4pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 10pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10.5pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  @page Section1 {
+    size: 21cm 29.7cm;
+    margin: 16mm 14mm 20mm 14mm;
+  }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Pacotes de funcionalidades — Conecta+</h1>
+<p><strong>Data:</strong> 1º de setembro de 2026</p>
+<p><strong>Papel deste documento:</strong> recorte comercial e arquitetural do que o código <strong>já entrega</strong> hoje, dividido em três pacotes pela <strong>quantidade de facilidades</strong> (não por esforço de desenvolvimento nem por telas congeladas).</p>
+<p><strong>Fonte:</strong> menus publicados (lateral do membro, <strong>Eu quero…</strong>, engrenagem de manutenção), rotas vivas em <code>app/</code> e painéis da manutenção. O carrossel antigo do Painel e os cards congelados (QR, Salas no carrossel, Estacionamento, escala avulsa no dashboard) <strong>não entram</strong> nestes pacotes: não são produto publicado.</p>
+<p><strong>Leitura dos pacotes:</strong> cada pacote <strong>inclui o anterior</strong>. Padrão = Básico + o que está listado em Padrão. Avançado = Padrão + o que está listado em Avançado.</p>
+<hr>
+<h2>Critério de corte</h2>
+<table>
+<thead><tr>
+<th>Pacote</th>
+<th>Critério</th>
+<th>Ideia de uso</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Básico</strong></td>
+<td>Sem isto o sistema não “abre a igreja”: identidade, família, culto do dia, contribuição e cuidado mínimo.</td>
+<td>Igreja pequena, operação enxuta, poucos papéis.</td>
+</tr>
+<tr>
+<td><strong>Padrão</strong></td>
+<td>Básico <strong>mais</strong> automações de rotina, relatórios de gestão e integrações intermediárias (Pix identificado, WhatsApp, totem, CEP, câmera).</td>
+<td>Secretaria, tesouraria e pastoral no dia a dia.</td>
+</tr>
+<tr>
+<td><strong>Avançado</strong></td>
+<td>Padrão <strong>mais</strong> múltiplos perfis de acesso, governança de TI, inteligência operacional e rede multi-igreja.</td>
+<td>Rede, auditoria, predição, assinatura SaaS e régua de acolhimento.</td>
+</tr>
+</tbody></table>
+<p>Itens com <em>“em breve”</em> no hub financeiro do membro (fluxo de caixa, categorias, relatórios daquele hub) <strong>não</strong> estão nos pacotes: o código marca <code>coming_soon</code> e não há entrega.</p>
+<hr>
+<h2>Pacote Básico</h2>
+<p>Facilidades <strong>centrais e indispensáveis</strong> para o aplicativo funcionar como igreja digital.</p>
+<h3>1. Entrada, instância e sessão</h3>
+<ul>
+<li>Seleção da <strong>igreja (instância)</strong> no login (<code>?igreja=</code> / código do tenant).</li>
+<li>Login por <strong>celular + PIN</strong> de 4 dígitos.</li>
+<li><strong>Primeiro acesso e recuperação de PIN por e-mail</strong> (WhatsApp não entra neste fluxo).</li>
+<li>Restauração de sessão ao reabrir; <strong>sair / encerrar sessão</strong>.</li>
+<li>Parâmetro <strong>Aplicativo ativo / inativo</strong> (bloqueio global com mensagem).</li>
+<li>PWA web (deploy em produção) com identidade visual da instância.</li>
+</ul>
+<h3>2. Cadastro e identidade</h3>
+<ul>
+<li>Cadastro inicial (nome, nascimento, telefone, CEP).</li>
+<li>Parâmetro <strong>LGPD ativo</strong>: termos com rolagem obrigatória, selfie e tela de declaração; com LGPD inativo, fluxo simplificado.</li>
+<li><strong>Perfil</strong> do membro: carteirinha digital, dados cadastrais (nome, documentos, contato, endereço).</li>
+<li>Preenchimento de endereço por <strong>CEP</strong>.</li>
+<li><strong>Gerenciar família</strong>: integrantes, parentesco, representante legal, código familiar.</li>
+</ul>
+<h3>3. Culto do dia (membro)</h3>
+<ul>
+<li><strong>Início</strong>: caixa de avisos e eventos publicados.</li>
+<li><strong>Agenda da família</strong> no evento: inscrição da família no culto.</li>
+<li>Check-in da família no fluxo da agenda (presença no evento do dia).</li>
+<li>Pedido de <strong>oração / cuidado pastoral</strong> (“Eu quero… → Fazer um pedido de Oração”).</li>
+</ul>
+<h3>4. Contribuição mínima</h3>
+<ul>
+<li><strong>Dízimos e ofertas</strong>: informar valor (com centavos) e <strong>copiar Pix</strong> da igreja.</li>
+</ul>
+<h3>5. Navegação e segurança mínima</h3>
+<ul>
+<li>Menu do membro (Início, Perfil, Sobre o Conecta+, Redes sociais).</li>
+<li><strong>Sobre o Conecta+</strong> (versão, declaração de privacidade).</li>
+<li><strong>Redes sociais</strong> da instância (links oficiais).</li>
+<li>Controle de acesso <strong>fail-closed</strong>: tela sem grant não abre.</li>
+<li>Três papéis de chão: <strong>Visitantes</strong>, <strong>Congregado</strong>, <strong>Membro</strong> (o suficiente para distinguir quem ainda não é membro, quem congrega e quem é membro).</li>
+</ul>
+<h3>6. Manutenção mínima (para o sistema “rodar”)</h3>
+<ul>
+<li>Cadastro de <strong>usuário</strong> (ficha operacional).</li>
+<li><strong>Programação de eventos</strong> (criar/publicar o culto que alimenta o Início).</li>
+<li><strong>Manutenção de avisos</strong> (comunicados da home).</li>
+<li>Ligar/desligar <strong>LGPD</strong> e <strong>App ativo</strong> (já na governança mínima do painel).</li>
+</ul>
+<p><strong>Fora do Básico (de propósito):</strong> escalas, célula, murais, tesouraria analítica, totem, mapa, livros, múltiplos papéis de staff, Ghost, preditivo, billing, régua D+1/D+4/D+8.</p>
+<hr>
+<h2>Pacote Padrão</h2>
+<p>Tudo do <strong>Básico</strong>, mais automações de rotina, relatórios e integrações intermediárias.</p>
+<h3>1. Automações da rotina do membro</h3>
+<ul>
+<li><strong>Minha Célula</strong> (pequeno grupo do membro).</li>
+<li><strong>Escalas</strong>: consulta da escala; troca/disponibilidade de servo (incluindo avisos de permuta na home).</li>
+<li><strong>Mural de Oportunidades</strong> (voluntariado) e avisos de vaga na home.</li>
+<li><strong>Mural de Generosidade</strong> (doações e empréstimos entre irmãos) e avisos na home.</li>
+<li><strong>Trilha de Discipulado</strong> (passos, lições, progresso, selos; perfil ministerial na lição de dons).</li>
+<li><strong>Aniversariantes</strong> (lista + atalho de WhatsApp no mesmo padrão de click-to-chat).</li>
+<li><strong>Lista de membros</strong> (diretório).</li>
+<li><strong>Reembolsos (RD)</strong> pelo perfil, quando o papel tiver grant.</li>
+<li><strong>Cantinho da Leitura</strong>: livros retirados pelo membro; avisos de empréstimo na home.</li>
+<li><strong>Financeiro do membro</strong>: prestação de contas (resultado, comparativo, 12 meses, orçamento, saldo) — leitura da transparência, não a tesouraria de lançamento.</li>
+</ul>
+<h3>2. Automações e operação de secretaria / culto</h3>
+<ul>
+<li><strong>Gestão de Pequenos Grupos</strong> (anfitrião, líder, participantes; um grupo por pessoa na instância).</li>
+<li><strong>Tipos de escala</strong>, <strong>Servos em disponibilidade</strong>, <strong>Programação de escalas</strong>.</li>
+<li><strong>Configuração de salas</strong> (nomes afetivos e atribuição).</li>
+<li><strong>Sala(s) — Check-in</strong> (operação de sala no culto).</li>
+<li><strong>Presença / quórum</strong> (lista de presença; eventos estatutários).</li>
+<li><strong>Cronograma de eventos</strong> (visão Gantt).</li>
+<li><strong>Orquestrador</strong> (painel de avisos em tela cheia).</li>
+<li><strong>Totem de check-in</strong> (leitor no hall, sessão dedicada).</li>
+<li><strong>Cuidado pastoral</strong> (fila e slots da equipe, não só o pedido do membro).</li>
+<li><strong>Mural de Voluntários</strong> (gestão das oportunidades).</li>
+<li><strong>Moderação do Mural</strong> de generosidade.</li>
+<li><strong>Autorização de imagem e voz</strong> (termo LGPD + confirmação).</li>
+<li><strong>Administrativo</strong> (atos constitutivos / atas).</li>
+<li><strong>Livros doados</strong>: acervo, empréstimos e histórico (busca ISBN e cadastro manual).</li>
+<li><strong>Mapa de geolocalização</strong> (pins das famílias).</li>
+<li><strong>Sugestões e melhorias</strong> (abertura pelo membro e tratamento na manutenção).</li>
+</ul>
+<h3>3. Pessoas e acolhimento (sem a régua inteligente)</h3>
+<ul>
+<li><strong>Recepção Familiar</strong>: fila de formulários públicos <code>/cadastro-familia</code>, conferência, gravação ou rejeição.</li>
+<li>Convite <strong>WhatsApp</strong> da recepção (nome + celular com DDD; conversa mesmo fora da agenda).</li>
+<li>Formulário público de cadastro familiar (página standalone, fora do PWA).</li>
+<li>Check-in <strong>automático por geofence</strong> quando o evento estiver configurado (integração de localização).</li>
+<li>Desbloqueio de sessão por <strong>biometria</strong> (quando o aparelho oferecer).</li>
+</ul>
+<h3>4. Relatórios (catálogo da manutenção)</h3>
+<ul>
+<li>Membros ativos/inativos, congregados e tempo de congregação.</li>
+<li>Ativos por faixa etária (com gráfico).</li>
+<li>Necessidades pastorais (semestre).</li>
+<li>Saúde e alertas vitais do ministério infantil (restrito / LGPD).</li>
+<li>Quórum oficial para assembleias.</li>
+<li>Estimativa de estacionamento por evento (cruza inscrição × veículos da família).</li>
+<li>Fichas de sugestões e melhorias (com PDF).</li>
+<li>Inscritos por evento.</li>
+</ul>
+<h3>5. Tesouraria operacional (não a inteligência)</h3>
+<ul>
+<li><strong>Informações financeiras</strong> na manutenção: lançamentos, RD, orçamento, extratos.</li>
+<li><strong>Gestão de campanhas</strong> (projetos com Pix identificado; o membro contribui pelo “Eu quero…”).</li>
+<li>Papel <strong>Tesoureiro</strong> (escrita financeira, distinto da leitura do membro).</li>
+</ul>
+<h3>6. Papéis intermediários</h3>
+<p>Além de Visitantes / Congregado / Membro:</p>
+<ul>
+<li><strong>Secretaria</strong> (operação: eventos, escalas, salas, totem, recepção, avisos, murais, campanhas — sem tesouraria global nem cuidado pastoral pleno).</li>
+<li><strong>Tesoureiro</strong>.</li>
+<li><strong>Equipe Pastoral</strong>.</li>
+</ul>
+<p>Integrações deste pacote: <strong>Pix (copia-e-cola)</strong>, <strong>WhatsApp (wa.me)</strong>, <strong>e-mail (PIN)</strong>, <strong>CEP</strong>, <strong>câmera (totem/selfie)</strong>, <strong>ISBN</strong>, <strong>mapa</strong>.</p>
+<hr>
+<h2>Pacote Avançado</h2>
+<p>Tudo do <strong>Padrão</strong>, mais recursos complexos, <strong>múltiplos perfis de acesso</strong> e <strong>inteligência operacional</strong>.</p>
+<h3>1. Múltiplos perfis e governança de acesso</h3>
+<ul>
+<li>Matriz completa de <strong>Controle de Acesso</strong> (telas, tabelas, colunas; visão por papel e por recurso).</li>
+<li>Aba <strong>Pessoas</strong>: relatório de quem está em cada papel (blocos expansíveis; Gestor sem ver Super Administrador).</li>
+<li>Papéis <strong>Gestor em Controle de Acesso</strong> e <strong>Super administrador</strong>.</li>
+<li>Blindagem: Gestor não lista, vê nem edita Super Administrador, PIN ou senha.</li>
+<li><strong>Mudança de papéis</strong> (fluxo pastoral/governança de membresia).</li>
+<li><strong>Transferência de membro</strong> entre igrejas da rede.</li>
+<li><strong>Acessos de usuários</strong> (histórico de telas visitadas / insights de sessão).</li>
+<li><strong>Modo Ghost (Auditor)</strong>: operar com a identidade efetiva do alvo (listas, permissões e família do perfil visitado).</li>
+<li>Parâmetros finos de operação (QR, geofence, raios, tempos de check-in) além de LGPD/App ativo.</li>
+</ul>
+<h3>2. Inteligência operacional</h3>
+<ul>
+<li><strong>Régua de Acolhimento</strong> após a Recepção Familiar: jornada D+1 (WhatsApp), D+4 (célula), D+8 (culto), quadro de andamento e conclusão de passos.</li>
+<li><strong>Modelo preditivo</strong> (painel de inteligência / finanças preditivas).</li>
+<li>Relatórios e resumos analíticos financeiros avançados (resultado, comparativo, 12 meses, orçamento, saldo bancário, sumário analítico) no mesmo hub, com recorte de <strong>igreja-mãe / aliança</strong> quando couber.</li>
+<li>Alertas e reconhecimentos da <strong>Trilha</strong> (alunos prontos para certificado) e <strong>reset</strong> de trilha por igreja.</li>
+<li><strong>Temas da Trilha</strong> (conteúdo: textos, vídeos, reflexões) como curadoria institucional.</li>
+</ul>
+<h3>3. Rede, comercial e multi-igreja</h3>
+<ul>
+<li><strong>Instâncias (Igrejas)</strong>: criar e alternar ambientes.</li>
+<li><strong>Aliança Conecta Reino</strong>: indicações, passivo de 40%, baixa manual de ofertas, painel da igreja-mãe.</li>
+<li><strong>Assinaturas</strong>: planos, capacidade de usuários, checkout <strong>Stripe</strong>, portal de cobrança da igreja.</li>
+<li>Isolamento por <code>tenant_id</code> em RPCs/listagens (cada igreja só vê os seus dados).</li>
+</ul>
+<h3>4. Operação de alta complexidade (já no código, acima do “padrão de secretaria”)</h3>
+<ul>
+<li>Liderança de escala <strong>por tipo</strong> no perfil (além do papel Secretaria).</li>
+<li>Eventos com <strong>somente membros</strong>, <strong>totem</strong>, <strong>geofence</strong>, <strong>capacidade</strong>, <strong>quórum</strong> e salas habilitadas por evento.</li>
+<li>Orquestração de comunicados na home (pastorais, campanhas, oportunidades, generosidade, livros, permuta de escala) como canal único de “caixa de entrada”.</li>
+</ul>
+<hr>
+<h2>Mapa rápido: facilidade → pacote</h2>
+<p>A coluna indica o <strong>pacote mínimo</strong> em que a facilidade entra. Pacotes superiores a herdam.</p>
+<table>
+<thead><tr>
+<th>Facilidade (como o usuário vê)</th>
+<th>Pacote mínimo</th>
+</tr></thead><tbody>
+<tr>
+<td>Login, PIN, e-mail de acesso, sessão, instância</td>
+<td>Básico</td>
+</tr>
+<tr>
+<td>Cadastro, LGPD, selfie, CEP</td>
+<td>Básico</td>
+</tr>
+<tr>
+<td>Perfil, dados cadastrais, família, carteirinha</td>
+<td>Básico</td>
+</tr>
+<tr>
+<td>Início (avisos/eventos) e agenda da família</td>
+<td>Básico</td>
+</tr>
+<tr>
+<td>Pedido de oração</td>
+<td>Básico</td>
+</tr>
+<tr>
+<td>Dízimos e ofertas (Pix)</td>
+<td>Básico</td>
+</tr>
+<tr>
+<td>Sobre o Conecta+ e redes sociais</td>
+<td>Básico</td>
+</tr>
+<tr>
+<td>Programação de eventos e avisos da home</td>
+<td>Básico</td>
+</tr>
+<tr>
+<td>Cadastro de usuário</td>
+<td>Básico</td>
+</tr>
+<tr>
+<td>Papéis Visitantes / Congregado / Membro</td>
+<td>Básico</td>
+</tr>
+<tr>
+<td>Célula do membro e gestão de pequenos grupos</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Escalas (consulta, tipos, servos, programação, permuta)</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Murais (oportunidades, generosidade, moderação, voluntários)</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Trilha de discipulado (aluno)</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Aniversariantes e lista de membros</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Reembolsos (RD)</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Prestação de contas (leitura financeira do membro)</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Campanhas e projetos (Pix identificado)</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Tesouraria (lançamentos / papel Tesoureiro)</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Relatórios da manutenção (membros, faixa etária, pastoral, saúde, quórum, estacionamento, sugestões, inscritos)</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Recepção Familiar + formulário público + convite WhatsApp</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Totem, salas, presença/quórum, Gantt, orquestrador</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Cuidado pastoral (fila/slots)</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Mapa, livros (acervo/empréstimo), autorização de mídia, administrativo</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Sugestões e melhorias</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Geofence e biometria</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Papéis Secretaria, Tesoureiro, Equipe Pastoral</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td>Controle de Acesso (matriz, pessoas por papel)</td>
+<td>Avançado</td>
+</tr>
+<tr>
+<td>Gestor em Controle de Acesso e Super administrador</td>
+<td>Avançado</td>
+</tr>
+<tr>
+<td>Mudança de papéis e transferência de membro</td>
+<td>Avançado</td>
+</tr>
+<tr>
+<td>Acessos de usuários e Modo Ghost</td>
+<td>Avançado</td>
+</tr>
+<tr>
+<td>Régua de Acolhimento (D+1 / D+4 / D+8)</td>
+<td>Avançado</td>
+</tr>
+<tr>
+<td>Modelo preditivo</td>
+<td>Avançado</td>
+</tr>
+<tr>
+<td>Temas, reconhecimentos e reset da Trilha</td>
+<td>Avançado</td>
+</tr>
+<tr>
+<td>Instâncias, Aliança Conecta Reino, assinaturas Stripe</td>
+<td>Avançado</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Papéis de acesso por pacote</h2>
+<table>
+<thead><tr>
+<th>Papel no código</th>
+<th>Nome</th>
+<th>Pacote em que passa a ser “produto”</th>
+</tr></thead><tbody>
+<tr>
+<td><code>visitantes</code></td>
+<td>Visitantes</td>
+<td>Básico (fallback de sessão; não se atribui na ficha)</td>
+</tr>
+<tr>
+<td><code>congregado</code></td>
+<td>Congregado</td>
+<td>Básico</td>
+</tr>
+<tr>
+<td><code>member</code></td>
+<td>Membro</td>
+<td>Básico</td>
+</tr>
+<tr>
+<td><code>secretaria</code></td>
+<td>Secretaria</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td><code>tesoureiro</code></td>
+<td>Tesoureiro</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td><code>pastoral</code></td>
+<td>Equipe Pastoral</td>
+<td>Padrão</td>
+</tr>
+<tr>
+<td><code>family_acceptor</code></td>
+<td>Responsável familiar</td>
+<td><em>Não empacotar como facilidade autônoma:</em> no código atual não acrescenta capacidade além do Membro.</td>
+</tr>
+<tr>
+<td><code>gestor_controle_acesso</code></td>
+<td>Gestor em Controle de Acesso</td>
+<td>Avançado</td>
+</tr>
+<tr>
+<td><code>super_admin</code></td>
+<td>Super administrador</td>
+<td>Avançado</td>
+</tr>
+</tbody></table>
+<p>Papéis já absorvidos no banco (<code>lider</code>, <code>lider_geral</code>, <code>events_admin</code>, <code>orquestrador_evento</code>) <strong>não</strong> aparecem como produto: a operação correspondente está em <strong>Secretaria</strong> (Padrão).</p>
+<hr>
+<h2>Contagem orientativa de facilidades</h2>
+<p>Contagem por <strong>capacidade de negócio</strong> (não por arquivo). Serve só para deixar explícito o recorte “pela quantidade”:</p>
+<table>
+<thead><tr>
+<th>Pacote</th>
+<th>Facilidades neste degrau</th>
+<th>Acumulado</th>
+</tr></thead><tbody>
+<tr>
+<td>Básico</td>
+<td>18</td>
+<td>18</td>
+</tr>
+<tr>
+<td>Padrão</td>
+<td>+32</td>
+<td>50</td>
+</tr>
+<tr>
+<td>Avançado</td>
+<td>+16</td>
+<td>66</td>
+</tr>
+</tbody></table>
+<p>O número exato pode variar se se agrupar ou separar subtelas; o <strong>corte qualitativo</strong> acima é o que importa para oferta comercial.</p>
+<hr>
+<h2>Fora destes pacotes (código presente, produto não publicado)</h2>
+<p>Não vender, não treinar, não listar como entrega:</p>
+<ul>
+<li>Carrossel antigo do Painel (<code>/(tabs)/dashboard</code> só redireciona).</li>
+<li>Cards congelados sem rota substituta de operação: <strong>QR</strong>, <strong>Salas Kids/Teens no carrossel</strong>, <strong>Estacionamento</strong>, <strong>escala avulsa</strong> no dashboard antigo.</li>
+<li>Itens <code>coming_soon</code> do hub financeiro do membro (fluxo de caixa, categorias, relatórios daquele card).</li>
+</ul>
+<p>Essas peças permanecem no repositório até decisão explícita de descongelar.</p>
+</div>
+</body>
+</html>
