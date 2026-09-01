@@ -10,6 +10,7 @@ import { GhostModeProvider } from '@/context/GhostModeContext';
 import { appToastConfig } from '@/components/ui/appToastConfig';
 import { isApkPwaShellEnabled } from '@/lib/apkRuntimeMode';
 import { installExecutionErrorClipboard } from '@/lib/appToast';
+import { installRnWebDeprecationGuard } from '@/lib/rnWebDeprecationGuard';
 import { ICON_FONT_SOURCES } from '@/lib/iconFonts';
 import { installWebTextSelectionGuard, WEB_NON_SELECTABLE_VIEW_STYLES } from '@/lib/webTextSelectionGuard';
 import { useFonts } from 'expo-font';
@@ -23,6 +24,7 @@ if (!global.Buffer) {
 }
 
 installExecutionErrorClipboard();
+installRnWebDeprecationGuard();
 
 const FONT_WAIT_TIMEOUT_MS = 2500;
 

@@ -169,11 +169,12 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
     onNeedsAudience,
     onConfirmed: handleRegistrationChange,
   });
+  const { refetchGate } = geo;
 
   const handleAudienceChange = useCallback(async () => {
-    await geo.refetchGate();
+    await refetchGate();
     await handleRegistrationChange();
-  }, [geo.refetchGate, handleRegistrationChange]);
+  }, [refetchGate, handleRegistrationChange]);
 
   const selectedEventIsGeoTarget = Boolean(
     selectedEvent?.id && geo.targetEvent?.id === selectedEvent.id

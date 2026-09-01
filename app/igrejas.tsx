@@ -67,6 +67,7 @@ function IgrejasAdminPanel() {
   const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null);
   const [createMaeTenantId, setCreateMaeTenantId] = useState('');
   const [maeDrafts, setMaeDrafts] = useState<Record<string, string>>({});
+  const [deleteConfirmById, setDeleteConfirmById] = useState<Record<string, string>>({});
 
   const syncSocialDrafts = useCallback((rows: SessionIgreja[]) => {
     const nextSocial: Record<string, SocialDraft> = {};
@@ -149,6 +150,7 @@ function IgrejasAdminPanel() {
   const closeEdit = () => {
     setEditingId(null);
     setEditLogoPreview(null);
+    setDeleteConfirmById({});
   };
 
   const handlePickEditLogo = async () => {

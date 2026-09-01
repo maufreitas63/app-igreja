@@ -1,5 +1,5 @@
 /** Identidade visual minimalista (fundo branco, textos/ícones azuis). */
-import { StyleSheet, type TextStyle, type ViewStyle } from 'react-native';
+import { StyleSheet, type DimensionValue, type TextStyle, type ViewStyle } from 'react-native';
 
 export const MINIMAL_UI = {
   background: '#FFFFFF',
@@ -37,8 +37,8 @@ export const MINIMAL_SCREEN_PADDING_LEFT_AT_REF = 16;
 export const MINIMAL_SCREEN_PADDING_RIGHT_AT_REF = 20;
 
 /** Percentual da largura do container — acompanha a tela; chrome e corpo usam o mesmo valor. */
-export const MINIMAL_SCREEN_PADDING_LEFT = `${((MINIMAL_SCREEN_PADDING_LEFT_AT_REF / MINIMAL_SCREEN_PADDING_REF_WIDTH) * 100).toFixed(2)}%`;
-export const MINIMAL_SCREEN_PADDING_RIGHT = `${((MINIMAL_SCREEN_PADDING_RIGHT_AT_REF / MINIMAL_SCREEN_PADDING_REF_WIDTH) * 100).toFixed(2)}%`;
+export const MINIMAL_SCREEN_PADDING_LEFT = `${((MINIMAL_SCREEN_PADDING_LEFT_AT_REF / MINIMAL_SCREEN_PADDING_REF_WIDTH) * 100).toFixed(2)}%` as DimensionValue;
+export const MINIMAL_SCREEN_PADDING_RIGHT = `${((MINIMAL_SCREEN_PADDING_RIGHT_AT_REF / MINIMAL_SCREEN_PADDING_REF_WIDTH) * 100).toFixed(2)}%` as DimensionValue;
 
 /** Logo da instância no chrome (dobrado para melhor visibilidade). */
 export const MINIMAL_TOP_IDENTITY_LOGO_HEIGHT = 72;

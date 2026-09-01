@@ -150,7 +150,7 @@ async function lookupGoogle(
     }
   }
 
-  return quota ? 'quota' : null;
+  return null;
 }
 
 async function lookupBrasilApi(isbn: string): Promise<IsbnCatalogHit | null> {

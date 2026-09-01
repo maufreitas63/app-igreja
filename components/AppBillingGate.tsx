@@ -6,7 +6,7 @@ import {
   getStoredTenantId,
   subscribeActiveTenantChange,
 } from '@/lib/tenantSession';
-import { usePathname, useRouter } from 'expo-router';
+import { usePathname, useRouter, type Href } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 
 type Props = {
@@ -91,7 +91,7 @@ const shouldBlockForBilling = (
 const applyGateRedirect = (
   pathname: string,
   cache: CacheEntry,
-  router: { replace: (href: string) => void }
+  router: { replace: (href: Href) => void }
 ) => {
   if (!cache.instanceActive && !isInstanceInactiveExemptRoute(pathname)) {
     router.replace('/selecionar-igreja');

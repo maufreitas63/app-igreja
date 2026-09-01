@@ -130,7 +130,6 @@ export function CloseFooterBar({
     <>
       <View
         style={[styles.reserve, { height: reserveHeight }]}
-        pointerEvents="none"
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       />
@@ -160,6 +159,7 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     flexShrink: 0,
     marginTop: 'auto',
+    pointerEvents: 'none',
   },
   dock: {
     position: Platform.OS === 'web' ? 'fixed' : 'absolute',
