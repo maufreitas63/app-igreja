@@ -37,6 +37,7 @@
     "build:analise-institucional-pdf": "node scripts/build-analise-institucional-telas-pdf.mjs",
     "build:analise-institucional-doc": "node scripts/build-analise-institucional-telas-doc.mjs",
     "build:roteiro-institucional-pdf": "node scripts/build-roteiro-institucional-pdf.mjs",
+    "build:roteiro-institucional-doc": "node scripts/build-roteiro-institucional-doc.mjs",
     "build:validation-checklist-xlsx": "node scripts/build-validation-checklist-xlsx.mjs",
     "lint": "expo lint",
     "pdf-to-jpg": "node scripts/convert-pdf-folder-to-jpg.mjs",
