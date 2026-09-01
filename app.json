@@ -12,6 +12,7 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Permita o acesso à câmera para leitura de QR Code no totem, código de barras de ISBN e registro de selfie.",
         "NSFaceIDUsageDescription": "Permita o uso do Face ID para entrar no app de forma rápida e segura.",
+        "NSLocationWhenInUseUsageDescription": "Permita a localização para o check-in por aproximação no local do evento.",
         "LSApplicationQueriesSchemes": ["whatsapp", "whatsapp-api"]
       },
       "config": {

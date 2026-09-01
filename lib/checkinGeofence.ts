@@ -119,7 +119,8 @@ export const createGeoReadingValidator = () => {
     lastReading = device;
     distanceMeters = distanceToGeofenceMeters(device, event);
 
-    if (isInsideGeofenceWithAccuracy(device, event, radiusMeters)) {
+    // O servidor valida o raio sem margem de GPS; só dispara com distância real no raio.
+    if (isInsideGeofence(device, event, radiusMeters)) {
       consecutiveInsideCount += 1;
     } else {
       consecutiveInsideCount = 0;

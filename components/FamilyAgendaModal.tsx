@@ -1,9 +1,11 @@
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { FamilyAgendaView } from '@/components/FamilyAgendaView';
 import { FamilyRegistrationList } from '@/components/FamilyRegistrationList';
+import { GeoCheckinStatusBanner } from '@/components/GeoCheckinStatusBanner';
 import { useGhostMode } from '@/context/GhostModeContext';
 import { resolveEventEnabledRoomKeys } from '@/lib/maintenanceEventForm';
 import { useActiveEvents, type ActiveEventListItem } from '@/hooks/useActiveEvents';
+import { useLiveFamilyGeoCheckin } from '@/hooks/useLiveFamilyGeoCheckin';
 import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { writeDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
@@ -17,14 +19,16 @@ type Props = {
   visible: boolean;
   initialEventId: string | null;
   onClose: () => void;
+  /** Abre a agenda no evento que precisa de audiência para o check-in por proximidade. */
+  onNeedsAudience?: (eventId: string) => void;
 };
 
 /** Painel inline da Agenda da Família — entre o topo (saudação) e a barra «Encerrar sessão». */
-export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
+export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAudience }: Props) {
   const { state: ghostModeState } = useGhostMode();
   const { events, loading, error, refetch } = useActiveEvents({
-    enabled: visible,
-    enablePolling: visible,
+    enabled: true,
+    enablePolling: true,
   });
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(initialEventId);
@@ -67,10 +71,6 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
   }, [events, initialEventId, visible]);
 
   useEffect(() => {
-    if (!visible) {
-      return;
-    }
-
     let isMounted = true;
 
     const loadSession = async () => {
@@ -121,7 +121,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
     return () => {
       isMounted = false;
     };
-  }, [visible, ghostModeState?.targetProfileId]);
+  }, [ghostModeState?.targetProfileId]);
 
   const selectedEvent: ActiveEventListItem | null = useMemo(
     () => events.find((event) => event.id === selectedEventId) ?? events[0] ?? null,
@@ -162,6 +162,23 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
     await refetch();
   }, [refetch]);
 
+  const geo = useLiveFamilyGeoCheckin({
+    events,
+    preferredEventId: selectedEventId ?? selectedEvent?.id,
+    familyId,
+    onNeedsAudience,
+    onConfirmed: handleRegistrationChange,
+  });
+
+  const handleAudienceChange = useCallback(async () => {
+    await geo.refetchGate();
+    await handleRegistrationChange();
+  }, [geo.refetchGate, handleRegistrationChange]);
+
+  const selectedEventIsGeoTarget = Boolean(
+    selectedEvent?.id && geo.targetEvent?.id === selectedEvent.id
+  );
+
   const registrationSection =
     familyRegistrationSessionProfile && selectedEvent ? (
       <FamilyRegistrationList
@@ -169,7 +186,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
         eventId={selectedEvent.id}
         eventName={selectedEvent.name}
         title={`Audiência para ${selectedEvent.name}`}
-        onRegistrationChange={handleRegistrationChange}
+        onRegistrationChange={handleAudienceChange}
         showKidsIndicator={Boolean(selectedEvent.kids_room)}
         showTeensIndicator={Boolean(selectedEvent.teens_room)}
         eventEnabledRoomKeys={resolveEventEnabledRoomKeys(selectedEvent)}
@@ -177,13 +194,59 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
         sessionPhone={userPhone}
         sessionProfileName={profile?.full_name ?? null}
         sessionProfile={familyRegistrationSessionProfile}
+        deviceCoordinates={selectedEventIsGeoTarget ? geo.lastCoordinates : null}
+        skipGeofenceOnSave={selectedEventIsGeoTarget && geo.hasFamilyGeoCheckinConfirmed}
+        geoCheckinStatus={selectedEventIsGeoTarget ? geo.status : 'idle'}
+        geoCheckinGpsProgress={geo.gpsProgress}
+        geoCheckinDistanceMeters={selectedEventIsGeoTarget ? geo.lastDistanceMeters : null}
+        geoCheckinRadiusMeters={geo.geoCheckinRadiusMeters}
         minimal
         hideRoomSelos
       />
     ) : null;
 
+  const geoHints = selectedEventIsGeoTarget ? (
+    <>
+      {geo.windowHint ? <Text style={styles.geoHint}>{geo.windowHint}</Text> : null}
+      {geo.missingCoordinatesHint ? (
+        <Text style={styles.geoHintError}>{geo.missingCoordinatesHint}</Text>
+      ) : null}
+      {geo.eventGeofenceError ? (
+        <Text style={styles.geoHintError}>{geo.eventGeofenceError}</Text>
+      ) : null}
+      {geo.errorMessage ? <Text style={styles.geoHintError}>{geo.errorMessage}</Text> : null}
+      {geo.geoCheckinAtivoEnabled && geo.inGeofenceWindow && !geo.hasFamilyPreCheckin ? (
+        <Text style={styles.geoHint}>
+          Marque a audiência abaixo. O check-in por proximidade confirma a presença ao chegar no
+          local.
+        </Text>
+      ) : null}
+    </>
+  ) : null;
+
   if (!visible) {
-    return null;
+    if (geo.status === 'error' && geo.errorMessage) {
+      return (
+        <View style={styles.homeBannerWrap}>
+          <Text style={styles.geoHintError}>{geo.errorMessage}</Text>
+        </View>
+      );
+    }
+
+    if (geo.status === 'idle') {
+      return null;
+    }
+
+    return (
+      <View style={styles.homeBannerWrap}>
+        <GeoCheckinStatusBanner
+          status={geo.status}
+          gpsProgress={geo.gpsProgress}
+          distanceMeters={geo.lastDistanceMeters}
+          radiusMeters={geo.geoCheckinRadiusMeters}
+        />
+      </View>
+    );
   }
 
   return (
@@ -206,7 +269,12 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose }: Props) {
           eventsError={error}
           capacityFillColor={capacityFillColor}
           capacityRatio={capacityRatio}
-          registrationSection={registrationSection}
+          registrationSection={
+            <>
+              {geoHints}
+              {registrationSection}
+            </>
+          }
           loginRequiredMessage={
             !familyRegistrationSessionProfile && !loading && !isProfileLoading
               ? 'Faça login para se inscrever em eventos.'
@@ -247,5 +315,22 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     backgroundColor: VIGILANCE_SCALES_UI.surface,
+  },
+  homeBannerWrap: {
+    width: '100%',
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+  },
+  geoHint: {
+    color: VIGILANCE_SCALES_UI.accent,
+    fontSize: 12,
+    opacity: 0.88,
+    marginBottom: 8,
+  },
+  geoHintError: {
+    color: '#FCA5A5',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
   },
 });

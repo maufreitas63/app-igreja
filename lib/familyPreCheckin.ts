@@ -106,6 +106,68 @@ export async function fetchFamilyHasPreCheckin(
   };
 }
 
+/** Família com pelo menos um integrante na audiência do evento. */
+export async function fetchFamilyHasEventAudience(
+  eventId: string | undefined,
+  familyId: string | undefined
+): Promise<PreCheckinGateResult> {
+  if (!eventId || !familyId?.trim()) {
+    return { hasPreCheckin: false, errorMessage: null };
+  }
+
+  const normalizedFamilyId = normalizeFamilyId(familyId);
+
+  if (!normalizedFamilyId) {
+    return { hasPreCheckin: false, errorMessage: 'Código da família inválido.' };
+  }
+
+  const { data, error } = await supabase.rpc('get_registered_event_members', {
+    p_event_id: eventId,
+    p_family_id: normalizedFamilyId,
+  });
+
+  if (error) {
+    console.warn('get_registered_event_members (geo audience):', error.message);
+    return { hasPreCheckin: false, errorMessage: PRE_CHECKIN_GATE_ERROR };
+  }
+
+  return {
+    hasPreCheckin: Array.isArray(data) && data.length > 0,
+    errorMessage: null,
+  };
+}
+
+/** Família com check-in confirmado por geofence (`geo_confirmed_at`). */
+export async function fetchFamilyHasGeoCheckinConfirmed(
+  eventId: string | undefined,
+  familyId: string | undefined
+): Promise<TotemConfirmedGateResult> {
+  if (!eventId || !familyId?.trim()) {
+    return { isConfirmed: false, errorMessage: null };
+  }
+
+  const normalizedFamilyId = normalizeFamilyId(familyId);
+
+  if (!normalizedFamilyId) {
+    return { isConfirmed: false, errorMessage: 'Código da família inválido.' };
+  }
+
+  const { data, error } = await supabase.rpc('family_has_geo_checkin_at_event', {
+    p_event_id: eventId,
+    p_family_group_id: normalizedFamilyId,
+  });
+
+  if (error) {
+    console.warn('family_has_geo_checkin_at_event:', error.message);
+    return { isConfirmed: false, errorMessage: TOTEM_CONFIRMED_GATE_ERROR };
+  }
+
+  return {
+    isConfirmed: data === true,
+    errorMessage: null,
+  };
+}
+
 /** Família com check-in confirmado no totem (status confirmado). */
 export async function fetchFamilyHasTotemCheckinConfirmed(
   eventId: string | undefined,

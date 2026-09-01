@@ -22,6 +22,8 @@ import {
   GEOFENCE_ATIVO_COLUMN_SQL_HINT,
   ENABLED_ROOM_KEYS_COLUMN_SQL_HINT,
 } from '@/lib/eventsColumnSupport';
+import { fetchEventFavoriteLocations } from '@/lib/eventFavoriteLocationsApi';
+import { resolveEventGeofenceCoordinates } from '@/lib/eventGeofenceCoordinates';
 import { shouldInvalidateGeofenceEventCheckins, type GeofenceEventSnapshot } from '@/lib/geofenceEventIntegrity';
 import { supabase } from '@/lib/supabase';
 import type { PostgrestError } from '@supabase/supabase-js';
@@ -103,6 +105,26 @@ const assertGeofenceAtivoCanPersist = (payload: MaintenanceEventPayload) => {
   }
 
   return geofenceColumnMissingError();
+};
+
+const assertGeofenceLocationHasCoordinates = async (payload: MaintenanceEventPayload) => {
+  if (payload.geofence_ativo !== true) {
+    return null;
+  }
+
+  const locations = await fetchEventFavoriteLocations();
+
+  if (locations.schemaMissing) {
+    return 'Locais favoritos indisponíveis. Cadastre um local com latitude e longitude antes do check-in por aproximação.';
+  }
+
+  const coordinates = resolveEventGeofenceCoordinates(payload.event_local, locations.rows);
+
+  if (!coordinates) {
+    return 'Check-in automático exige um local favorito com latitude e longitude. Selecione um local já cadastrado ou complete as coordenadas em Locais favoritos.';
+  }
+
+  return null;
 };
 
 const persistEvent = async (
@@ -236,6 +258,12 @@ export const saveMaintenanceEvent = async (
   payload: MaintenanceEventPayload
 ): Promise<SaveMaintenanceEventResult> => {
   await ensureEventsOptionalColumns();
+
+  const geofenceLocationError = await assertGeofenceLocationHasCoordinates(payload);
+
+  if (geofenceLocationError) {
+    return { ok: false, message: geofenceLocationError, code: 'GEOFENCE_LOCATION' };
+  }
 
   if (selectedEventId === '__new__') {
     const conflictId = await findConflictingEventId(payload);

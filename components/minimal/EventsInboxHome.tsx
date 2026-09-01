@@ -228,12 +228,36 @@ export function EventsInboxHome() {
     setModalEventId(null);
   };
 
+  const handleNeedsAudience = useCallback((eventId: string) => {
+    void writeDashboardSelectedEventId(eventId);
+    setModalEventId(eventId);
+  }, []);
+
+  const geoRuntime = (
+    <FamilyAgendaModal
+      visible={agendaOpen}
+      initialEventId={modalEventId}
+      onClose={handleCloseModal}
+      onNeedsAudience={handleNeedsAudience}
+    />
+  );
+
   if (loading) {
-    return <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />;
+    return (
+      <View style={styles.root}>
+        <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />
+        {geoRuntime}
+      </View>
+    );
   }
 
   if (error) {
-    return <Text style={styles.error}>Não foi possível carregar os eventos.</Text>;
+    return (
+      <View style={styles.root}>
+        <Text style={styles.error}>Não foi possível carregar os eventos.</Text>
+        {geoRuntime}
+      </View>
+    );
   }
 
   const pageSizeStyle = {
@@ -372,11 +396,7 @@ export function EventsInboxHome() {
         </ScrollView>
       ) : null}
 
-      <FamilyAgendaModal
-        visible={agendaOpen}
-        initialEventId={modalEventId}
-        onClose={handleCloseModal}
-      />
+      {geoRuntime}
     </View>
   );
 }
