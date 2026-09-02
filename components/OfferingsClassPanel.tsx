@@ -9,6 +9,7 @@ import {
   fetchCampaignProject,
   formatCampaignBrl,
   formatCampaignCentsHint,
+  formatCampaignCentsShort,
   registerCampaignContributionIntent,
   type CampaignProject,
 } from '@/lib/campaignProjectsApi';
@@ -280,6 +281,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
           campaignCoverUrl={campaign?.cover_url ?? null}
           campaignIntegerAmount={integerAmount}
           onCampaignIntegerAmountChange={(value) => setIntegerAmount(parseIntegerReaisInput(value))}
+          campaignCentsSuffix={campaign ? formatCampaignCentsShort(campaign.centavos_referencia) : null}
           campaignCopiaECola={campaignPix.copiaECola}
           offeringAmountMasked={campaign ? '' : formatBrlCentsDigits(offeringCentsDigits)}
           onOfferingAmountChange={

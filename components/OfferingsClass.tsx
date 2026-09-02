@@ -14,7 +14,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
 
 const OFFERINGS_CLASS_SURFACE = '#FFFFFF';
 const OFFERINGS_COPY_BUTTON_BG = '#3A96DD';
@@ -33,6 +32,7 @@ export type OfferingsClassProps = {
   campaignCoverUrl?: string | null;
   campaignIntegerAmount?: string;
   onCampaignIntegerAmountChange?: (value: string) => void;
+  campaignCentsSuffix?: string | null;
   campaignCopiaECola?: string | null;
   offeringAmountMasked?: string;
   onOfferingAmountChange?: (value: string) => void;
@@ -76,6 +76,7 @@ export function OfferingsClass({
   campaignCoverUrl = null,
   campaignIntegerAmount = '',
   onCampaignIntegerAmountChange,
+  campaignCentsSuffix = null,
   campaignCopiaECola = null,
   offeringAmountMasked = '',
   onOfferingAmountChange,
@@ -83,7 +84,7 @@ export function OfferingsClass({
 }: OfferingsClassProps) {
   const isCampaign = Boolean(campaignTitle);
   const copiaECola = isCampaign ? campaignCopiaECola : offeringCopiaECola;
-  const qrValue = isCampaign ? campaignCopiaECola : null;
+  const centsSuffix = campaignCentsSuffix || ',00';
   const copyEnabled = Boolean(copiaECola || (!isCampaign && !onOfferingAmountChange && pixKey));
   const copyLabel = isCampaign ? 'Copiar Chave Pix' : 'Copiar chave PIX';
 
@@ -124,24 +125,33 @@ export function OfferingsClass({
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Valor da contribuição</Text>
           <View style={styles.amountRow}>
-            <TextInput
-              style={styles.amountInput}
-              value={campaignIntegerAmount}
-              onChangeText={onCampaignIntegerAmountChange}
-              placeholder="Ex.: 100"
-              placeholderTextColor="#94A3B8"
-              keyboardType="number-pad"
-              inputMode="numeric"
-              accessibilityLabel="Valor em reais, sem centavos"
-            />
+            <View style={styles.amountInputBox}>
+              <Text style={styles.amountPrefix}>R$</Text>
+              <TextInput
+                style={styles.amountIntegerInput}
+                value={campaignIntegerAmount}
+                onChangeText={onCampaignIntegerAmountChange}
+                placeholder="0"
+                placeholderTextColor="#94A3B8"
+                keyboardType="number-pad"
+                inputMode="numeric"
+                accessibilityLabel="Valor em reais. Digite só a parte inteira; os centavos do projeto ficam fixos."
+              />
+              <Text
+                style={styles.amountCentsFixed}
+                accessibilityLabel={`Centavos fixos deste projeto ${centsSuffix}`}
+              >
+                {centsSuffix}
+              </Text>
+            </View>
             <AmountClearButton
               disabled={!campaignIntegerAmount}
               onPress={() => onCampaignIntegerAmountChange?.('')}
             />
           </View>
           <Text style={styles.helpText}>
-            Digite apenas o valor inteiro em reais. Os centavos de identificação são aplicados
-            automaticamente.
+            Digite só os reais. Os centavos {centsSuffix} deste projeto ficam fixos e identificam a
+            contribuição.
           </Text>
           {campaignIntegerAmount ? null : (
             <Text style={styles.helpText}>Informe o valor para gerar o Pix Copia e Cola.</Text>
@@ -184,11 +194,6 @@ export function OfferingsClass({
         ) : pixKey ? (
           <>
             {isCampaign ? null : <Text style={styles.pixKeyValue}>{pixKey}</Text>}
-            {qrValue ? (
-              <View style={styles.qrWrap}>
-                <QRCode value={qrValue} size={148} color="#1E3A5F" backgroundColor="#FFFFFF" />
-              </View>
-            ) : null}
             <TouchableOpacity
               style={[styles.copyButton, copyEnabled ? null : styles.copyButtonDisabled]}
               onPress={onCopyPixKey}
@@ -269,10 +274,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-  qrWrap: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
   section: {
     gap: 10,
   },
@@ -326,6 +327,43 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     gap: 8,
     width: '100%',
+  },
+  amountInputBox: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: VIGILANCE_SCALES_UI.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    backgroundColor: '#F8FAFC',
+  },
+  amountPrefix: {
+    color: '#1E3A5F',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  amountIntegerInput: {
+    minWidth: 72,
+    maxWidth: '55%',
+    minHeight: 46,
+    padding: 0,
+    margin: 0,
+    color: '#1E3A5F',
+    fontSize: 18,
+    fontWeight: '800',
+    textAlign: 'right',
+    backgroundColor: 'transparent',
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' as const } : null),
+  },
+  amountCentsFixed: {
+    color: '#1E3A5F',
+    fontSize: 18,
+    fontWeight: '800',
   },
   amountInput: {
     flex: 1,
