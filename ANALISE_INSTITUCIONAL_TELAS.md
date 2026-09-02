@@ -12,7 +12,7 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 <strong>Solução:</strong> ecossistema app-igreja (PWA + mobile)<br>
 <strong>Público:</strong> liderança, secretaria, pastoral, tesouraria e operação<br>
 <strong>Base:</strong> código-fonte, rotas Expo Router, menu lateral, Índice, Painel e Manutenção<br>
-<strong>Data:</strong> 31 de agosto de 2026<br>
+<strong>Data:</strong> 2 de setembro de 2026<br>
 <strong>Revisão:</strong> caminho publicado (Índice, menu, Eu quero… e engrenagem — sem carrossel do Painel); Cantinho da Leitura; Livros doados (ISBN, Bipar, CBL); empréstimos da Secretaria; Declaração de Privacidade LGPD no Sobre o Conecta+; Modo Ghost; Aliança Conecta Reino
 </p>
 
@@ -345,15 +345,15 @@ Logout consciente em aparelhos do templo e em navegadores compartilhados.
 
 ## Agenda da Família
 
-<p class="route">Card do Painel · painel <code>FamilyAgendaModal</code></p>
+<p class="route">Início · toque no evento · <code>FamilyAgendaModal</code></p>
 
 ### Descrição comercial
 
-É o “vamos no culto?” digital. A família escolhe o evento, vê vagas e marca quem vai — cônjuge, filhos, congregados do núcleo. Esse pré-check-in é o passaporte para QR, geofence e salas infantis.
+É o “vamos no culto?” digital. No **Início**, a família toca o evento, vê vagas e marca quem vai — cônjuge, filhos, congregados do núcleo. Esse pré-check-in é o passaporte para geofence, totem e salas infantis. Ao confirmar, um modal **Compromisso enviado para minha agenda** oferece **Adicionar**: abre o Google Agenda e gera um `.ics` (Apple Calendar e Outlook) no fuso America/Sao_Paulo.
 
 ### Propósito e conexões
 
-Lista eventos ativos, capacidade e inscrição por membro (`FamilyRegistrationList`). Conecta-se a Check-in, Totem, SALA(S) e Programação de Eventos. Fechar retorna ao Índice/Painel.
+Lista eventos ativos, capacidade e inscrição por membro (`FamilyRegistrationList`). Conecta-se a geofence, Totem, salas e Programação de Eventos. Fechar volta ao Início. O carrossel antigo do Painel **não** é o caminho publicado.
 
 <div class="split">
 <div class="vision user">

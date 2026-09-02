@@ -1,0 +1,315 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Índice da Documentação — App IBN</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Índice da Documentação — App IBN</h1>
+<p>Documentação completa do <strong>app-igreja</strong> (Igreja Batista Norte) para entrega ao cliente.</p>
+<p>Cada <strong>pacote</strong> é um arquivo <strong>autocontido</strong>: o texto integral dos documentos de referência está transcrito dentro do pacote (não é necessário abrir outros arquivos para ler o conteúdo).</p>
+<p><strong>Atualizado em:</strong> 30/07/2026 · capturas com <strong>dados reais</strong> · ilustrações anotadas em <strong>largura integral (100%)</strong> nos PDFs (Pacotes 5, 6 e 7) · <strong>LGPD opcional</strong> (<code>LGPD_Ativo</code> sim/não) · <strong>check-in geofence</strong> e <strong>manual de entrega</strong> documentados · <strong>mapa com detalhe de pin restrito</strong> · <strong>audiência com congregados</strong> · <strong>ACL visão por recurso</strong> · <strong>cache de navegação</strong> · <strong>recuperação de senha por e-mail</strong> · <strong>Trilha de Discipulado</strong> (5 passos, selos coloridos, Perfil Ministerial na 5.1, Manutenção da Trilha) · <strong>Modo Ghost</strong> com grant explícito · catálogo de <strong>Relatórios</strong> sem Faixa Etária</p>
+<hr>
+<h2>Manual de entrega (referência principal)</h2>
+<table><thead><tr>
+<th>Documento</th>
+<th>Markdown</th>
+<th>PDF / Word</th>
+<th>Público</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Manual de Entrega</strong></td>
+<td><a href="MANUAL_ENTREGA.md">&lt;code&gt;MANUAL_ENTREGA.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/MANUAL_ENTREGA.pdf">&lt;code&gt;pdfs/MANUAL_ENTREGA.pdf&lt;/code&gt;</a></td>
+<td>Cliente + equipe de manutenção</td>
+</tr>
+<tr>
+<td><strong>Descritivo técnico</strong></td>
+<td><a href="DESCRITIVO_APLICACAO.md">&lt;code&gt;DESCRITIVO_APLICACAO.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/DESCRITIVO_APLICACAO.pdf">&lt;code&gt;pdfs/DESCRITIVO_APLICACAO.pdf&lt;/code&gt;</a></td>
+<td>TI / arquitetura</td>
+</tr>
+<tr>
+<td><strong>Análise institucional de telas</strong></td>
+<td><a href="ANALISE_INSTITUCIONAL_TELAS.md">&lt;code&gt;ANALISE_INSTITUCIONAL_TELAS.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/ANALISE_INSTITUCIONAL_TELAS.pdf">&lt;code&gt;PDF&lt;/code&gt;</a> · <a href="pdfs/ANALISE_INSTITUCIONAL_TELAS.docx">&lt;code&gt;DOCX&lt;/code&gt;</a> · <a href="pdfs/ANALISE_INSTITUCIONAL_TELAS.doc">&lt;code&gt;DOC&lt;/code&gt;</a></td>
+<td>Liderança e comercial · atualizado em 29/08/2026</td>
+</tr>
+</tbody></table>
+<p>Regenerar: <code>npm run build:manual-entrega-pdf</code> · <code>node scripts/build-descritivo-aplicacao-pdf.mjs</code> · <code>npm run build:analise-institucional-pdf</code> · <code>npm run build:analise-institucional-doc</code></p>
+<hr>
+<h2>Pacotes (entrega ao cliente)</h2>
+<table><thead><tr>
+<th>Pacote</th>
+<th>Markdown</th>
+<th>PDF</th>
+<th>Público</th>
+<th>Conteúdo integrado</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Índice</strong></td>
+<td><a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/INDICE_DOCUMENTACAO.pdf">&lt;code&gt;pdfs/INDICE_DOCUMENTACAO.pdf&lt;/code&gt;</a></td>
+<td>Todos</td>
+<td>Capa e mapa da documentação</td>
+</tr>
+<tr>
+<td><strong>1 — Visão geral</strong></td>
+<td><a href="PACOTE_1_VISAO_GERAL.md">&lt;code&gt;PACOTE_1_VISAO_GERAL.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/PACOTE_1_VISAO_GERAL.pdf">&lt;code&gt;pdfs/PACOTE_1_VISAO_GERAL.pdf&lt;/code&gt;</a></td>
+<td>Todos</td>
+<td>Funcionalidades + Manual + FAQ</td>
+</tr>
+<tr>
+<td><strong>2 — Operação</strong></td>
+<td><a href="PACOTE_2_OPERACAO.md">&lt;code&gt;PACOTE_2_OPERACAO.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/PACOTE_2_OPERACAO.pdf">&lt;code&gt;pdfs/PACOTE_2_OPERACAO.pdf&lt;/code&gt;</a></td>
+<td>Secretaria, líderes</td>
+<td>Manutenção + Missão B4 + Card Agenda</td>
+</tr>
+<tr>
+<td><strong>3 — Governança e TI</strong></td>
+<td><a href="PACOTE_3_GOVERNANCA_TI.md">&lt;code&gt;PACOTE_3_GOVERNANCA_TI.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/PACOTE_3_GOVERNANCA_TI.pdf">&lt;code&gt;pdfs/PACOTE_3_GOVERNANCA_TI.pdf&lt;/code&gt;</a></td>
+<td>Super admin, TI</td>
+<td>ACL + Camadas de segurança + Blueprint</td>
+</tr>
+<tr>
+<td><strong>4 — Anexo técnico</strong></td>
+<td><a href="PACOTE_4_ANEXO_TECNICO.md">&lt;code&gt;PACOTE_4_ANEXO_TECNICO.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/PACOTE_4_ANEXO_TECNICO.pdf">&lt;code&gt;pdfs/PACOTE_4_ANEXO_TECNICO.pdf&lt;/code&gt;</a></td>
+<td>TI / arquitetura</td>
+<td>Arquitetura PWA + Cards</td>
+</tr>
+<tr>
+<td><strong>5 — Manual do Painel</strong></td>
+<td><a href="PACOTE_5_MANUAL_PAINEL.md">&lt;code&gt;PACOTE_5_MANUAL_PAINEL.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/PACOTE_5_MANUAL_PAINEL.pdf">&lt;code&gt;pdfs/PACOTE_5_MANUAL_PAINEL.pdf&lt;/code&gt;</a></td>
+<td>Membros e famílias</td>
+<td>Primeiro acesso + uso card a card (sem manutenção)</td>
+</tr>
+<tr>
+<td><strong>6 — Manual de Manutenção</strong></td>
+<td><a href="PACOTE_6_MANUAL_MANUTENCAO.md">&lt;code&gt;PACOTE_6_MANUAL_MANUTENCAO.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/PACOTE_6_MANUAL_MANUTENCAO.pdf">&lt;code&gt;pdfs/PACOTE_6_MANUAL_MANUTENCAO.pdf&lt;/code&gt;</a></td>
+<td>Equipe / gestores</td>
+<td>Engrenagem + todos os cards de manutenção + LGPD opcional</td>
+</tr>
+<tr>
+<td><strong>7 — Treinamento diário</strong></td>
+<td><a href="PACOTE_7_TREINAMENTO_DIARIO.md">&lt;code&gt;PACOTE_7_TREINAMENTO_DIARIO.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/PACOTE_7_TREINAMENTO_DIARIO.pdf">&lt;code&gt;pdfs/PACOTE_7_TREINAMENTO_DIARIO.pdf&lt;/code&gt;</a></td>
+<td>Membros (onboarding)</td>
+<td>7 dias · baseado no Pacote 5 · Q&amp;A por dia</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Ordem de leitura recomendada</h2>
+<p>1. <code>PACOTE_5_MANUAL_PAINEL.md</code> <em>(membro — primeiro contato e uso diário)</em></p>
+<p>2. <code>PACOTE_7_TREINAMENTO_DIARIO.md</code> <em>(membro — treinamento particionado, 7 dias)</em></p>
+<p>3. <code>PACOTE_1_VISAO_GERAL.md</code> <em>(visão ampla + FAQ)</em></p>
+<p>4. <code>PACOTE_6_MANUAL_MANUTENCAO.md</code> <em>(equipe — gerir o app)</em></p>
+<p>5. <code>PACOTE_2_OPERACAO.md</code> <em>(operação e ecossistema)</em></p>
+<p>6. <code>PACOTE_3_GOVERNANCA_TI.md</code> <em>(TI)</em></p>
+<p>7. <code>PACOTE_4_ANEXO_TECNICO.md</code> <em>(opcional)</em></p>
+<hr>
+<h2>Entrega por perfil</h2>
+<table><thead><tr>
+<th>Perfil</th>
+<th>Pacotes</th>
+</tr></thead><tbody>
+<tr>
+<td>Membro / família (uso do app)</td>
+<td><strong>Pacote 5</strong> + <strong>Pacote 7</strong> (+ Pacote 1 para FAQ)</td>
+</tr>
+<tr>
+<td>Pastor / diretoria</td>
+<td>Pacotes 5 + 1</td>
+</tr>
+<tr>
+<td>Secretaria / eventos</td>
+<td>Pacotes <strong>6</strong> + 5 + 2</td>
+</tr>
+<tr>
+<td>Líder de escala</td>
+<td>Pacotes <strong>6</strong> + 5 (+ Missão B4 no Pacote 1, se preferir formato missão)</td>
+</tr>
+<tr>
+<td>Equipe pastoral / financeiro</td>
+<td>Pacote <strong>6</strong> (Partes 7 e 8)</td>
+</tr>
+<tr>
+<td>Super administrador / TI</td>
+<td>Pacotes 6 + 2 + 3 (+ 4 se necessário)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Arquivos-fonte (manutenção do repositório)</h2>
+<p>Os pacotes são gerados a partir dos arquivos abaixo. Para atualizar os pacotes após editar um fonte, execute:</p>
+<p>```bash</p>
+<p>npm run build:docs:md    # regera PACOTE_*.md a partir dos fontes</p>
+<p>npm run build:docs:pdf   # gera PDFs em pdfs/</p>
+<p>npm run build:manual-entrega-pdf  # MANUAL_ENTREGA.md → pdfs/MANUAL_ENTREGA.pdf</p>
+<p>node scripts/build-descritivo-aplicacao-pdf.mjs  # DESCRITIVO_APLICACAO.pdf</p>
+<p>npm run build:access-roles-pdf  # mapa ACL → pdfs/PAPEIS_CONTROLE_ACESSO.pdf</p>
+<p>npm run build:docs       # md + pdf padrão (sem PAPEIS)</p>
+<p>```</p>
+<table><thead><tr>
+<th>Arquivo-fonte</th>
+<th>Usado em</th>
+</tr></thead><tbody>
+<tr>
+<td><code>FUNCIONALIDADES.md</code></td>
+<td>Pacote 1</td>
+</tr>
+<tr>
+<td><code>MANUAL_TREINAMENTO.md</code></td>
+<td>Pacote 1 (completo); Pacote 2 (Missão B4)</td>
+</tr>
+<tr>
+<td><code>FAQ.md</code></td>
+<td>Pacote 1 (completo); Pacote 2 (§17–18)</td>
+</tr>
+<tr>
+<td><code>MANUTENCAO_ECOSISTEMA.md</code></td>
+<td>Pacote 2</td>
+</tr>
+<tr>
+<td><code>MANUAL_CARD1_DASHBOARD.md</code></td>
+<td>Pacote 2</td>
+</tr>
+<tr>
+<td><code>MANUAL_CONTROLE_ACESSO.md</code></td>
+<td>Pacote 3</td>
+</tr>
+<tr>
+<td><code>CONTROLE_ACESSO.md</code></td>
+<td>Pacote 3</td>
+</tr>
+<tr>
+<td><code>CAMADAS_SEGURANCA.md</code></td>
+<td>Pacote 3</td>
+</tr>
+<tr>
+<td><code>BLUEPRINT.md</code></td>
+<td>Pacote 3</td>
+</tr>
+<tr>
+<td><code>ARQUITETURA_BLUEPRINT_PWA.md</code></td>
+<td>Pacote 4</td>
+</tr>
+<tr>
+<td><code>DASHBOARD_CARDS.md</code></td>
+<td>Pacote 4</td>
+</tr>
+<tr>
+<td><code>MANUAL_DASHBOARD_MEMBRO.md</code></td>
+<td>Pacote 5</td>
+</tr>
+<tr>
+<td><code>MANUAL_DASHBOARD_MANUTENCAO.md</code></td>
+<td>Pacote 6</td>
+</tr>
+<tr>
+<td><code>MANUAL_ENTREGA.md</code></td>
+<td>Manual de entrega (autocontido)</td>
+</tr>
+<tr>
+<td><code>DESCRITIVO_APLICACAO.md</code></td>
+<td>Descritivo técnico completo</td>
+</tr>
+<tr>
+<td><code>MANUAL_TREINAMENTO_DIARIO.md</code></td>
+<td>Pacote 7 (gerado por <code>build-pacotes-md.mjs</code>)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Operação e validação (equipe / TI)</h2>
+<table><thead><tr>
+<th>Documento</th>
+<th>Markdown</th>
+<th>PDF</th>
+</tr></thead><tbody>
+<tr>
+<td>Checklist pós-deploy</td>
+<td><a href="CHECKLIST_VALIDACAO_POS_DEPLOY.md">&lt;code&gt;CHECKLIST_VALIDACAO_POS_DEPLOY.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/CHECKLIST_VALIDACAO_POS_DEPLOY.pdf">&lt;code&gt;pdfs/CHECKLIST_VALIDACAO_POS_DEPLOY.pdf&lt;/code&gt;</a></td>
+</tr>
+<tr>
+<td>Deploy Cloudflare</td>
+<td><a href="DEPLOY_CLOUDFLARE.md">&lt;code&gt;DEPLOY_CLOUDFLARE.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/DEPLOY_CLOUDFLARE.pdf">&lt;code&gt;pdfs/DEPLOY_CLOUDFLARE.pdf&lt;/code&gt;</a></td>
+</tr>
+<tr>
+<td>README do repositório</td>
+<td><a href="README.md">&lt;code&gt;README.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/README.pdf">&lt;code&gt;pdfs/README.pdf&lt;/code&gt;</a></td>
+</tr>
+<tr>
+<td>Papéis ACL (mapa visual)</td>
+<td><a href="PAPEIS_CONTROLE_ACESSO.md">&lt;code&gt;PAPEIS_CONTROLE_ACESSO.md&lt;/code&gt;</a></td>
+<td><a href="pdfs/PAPEIS_CONTROLE_ACESSO.pdf">&lt;code&gt;pdfs/PAPEIS_CONTROLE_ACESSO.pdf&lt;/code&gt;</a></td>
+</tr>
+<tr>
+<td>Validação por papel (planilha)</td>
+<td>—</td>
+<td><a href="pdfs/CHECKLIST_VALIDACAO_POR_PAPEL.xlsx">&lt;code&gt;pdfs/CHECKLIST_VALIDACAO_POR_PAPEL.xlsx&lt;/code&gt;</a></td>
+</tr>
+</tbody></table>
+<p>Regenerar a planilha: <code>npm run build:validation-checklist-xlsx</code></p>
+<hr>
+<h2>Fora da entrega ao cliente</h2>
+<table><thead><tr>
+<th>Arquivo</th>
+<th>Motivo</th>
+</tr></thead><tbody>
+<tr>
+<td><code>Cópia (1)BLUEPRINT.md</code></td>
+<td>Cópia descontinuada</td>
+</tr>
+<tr>
+<td><code>AGENTS.md</code> / <code>CLAUDE.md</code></td>
+<td>Regras internas de desenvolvimento</td>
+</tr>
+<tr>
+<td><code>scripts/build-pacotes-md.mjs</code></td>
+<td>Script de geração dos pacotes</td>
+</tr>
+</tbody></table>
+<hr>
+<table><thead><tr>
+<th><code>MANUAL_TREINAMENTO_DIARIO.md</code></th>
+<th>Pacote 7 (gerado por <code>build-pacotes-md.mjs</code>)</th>
+</tr></thead><tbody>
+</tbody></table>
+<hr>
+<p><em>App IBN · Igreja Batista Norte · Documentação v2026-07-03</em></p>
+</div>
+</body>
+</html>

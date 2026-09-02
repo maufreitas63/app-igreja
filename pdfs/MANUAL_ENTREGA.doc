@@ -1,0 +1,1508 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Manual de Entrega — App Igreja (IBNorte)</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Manual de Entrega — App Igreja (IBNorte)</h1>
+<p><strong>Documento:</strong> Manual técnico e funcional de referência</p>
+<p><strong>Sistema:</strong> Aplicativo digital da Igreja Batista Norte</p>
+<p><strong>Repositório:</strong> <code>maufreitas63/app-igreja</code></p>
+<p><strong>Versão do app:</strong> 1.0.0</p>
+<p><strong>Data:</strong> 3 de julho de 2026</p>
+<p><strong>Públicos:</strong> Cliente final (valor e usabilidade) · Equipe de manutenção (arquitetura e lógica)</p>
+<hr>
+<h2>Como ler este documento</h2>
+<table><thead><tr>
+<th>Seção</th>
+<th>Público</th>
+<th>Objetivo</th>
+</tr></thead><tbody>
+<tr>
+<td>§1–§3</td>
+<td><strong>Cliente final</strong></td>
+<td>Entender o que o sistema faz, os benefícios e o caminho natural de uso</td>
+</tr>
+<tr>
+<td>§4</td>
+<td><strong>Equipe de manutenção</strong></td>
+<td>Arquitetura, dados, fluxos críticos, desenvolvimento e deploy</td>
+</tr>
+<tr>
+<td>§5</td>
+<td><strong>Ambos</strong></td>
+<td>Status atual, riscos e evoluções recomendadas</td>
+</tr>
+</tbody></table>
+<p>Documentação complementar no repositório: <code>FUNCIONALIDADES.md</code>, <code>BLUEPRINT.md</code>, <code>CONTROLE_ACESSO.md</code>, <code>DEPLOY_CLOUDFLARE.md</code>, <code>INDICE_DOCUMENTACAO.md</code>.</p>
+<hr>
+<h1>Parte A — Cliente Final</h1>
+<h2>1. Visão Geral do Produto</h2>
+<h3>1.1 O que é</h3>
+<p>O <strong>App Igreja</strong> é uma plataforma digital (PWA instalável no celular e computador) que concentra a vida operacional da igreja em um único lugar: cadastro de membros, participação em cultos e eventos, check-in de presença, cuidado pastoral, informações financeiras, escalas de serviço e ferramentas administrativas para a equipe.</p>
+<h3>1.2 Qual problema resolve</h3>
+<p>Antes de um sistema integrado, igrejas costumam depender de planilhas, grupos de WhatsApp, listas em papel e processos manuais desconectados. Isso gera:</p>
+<ul>
+<li>Dificuldade em saber <strong>quem está presente</strong> em um culto ou evento</li>
+<li>Retrabalho ao cadastrar famílias e atualizar endereços</li>
+<li>Falta de visibilidade financeira para membros autorizados</li>
+<li>Pedidos pastorais sem rastreamento ou histórico</li>
+<li>Escalas de serviço difíceis de consultar e manter</li>
+</ul>
+<p>O App Igreja resolve esses pontos ao oferecer:</p>
+<table><thead><tr>
+<th>Dor operacional</th>
+<th>Solução no app</th>
+</tr></thead><tbody>
+<tr>
+<td>Presença em eventos</td>
+<td>Pré-cadastro (audiência), check-in por QR/totem, check-in automático por proximidade (GPS) e quórum</td>
+</tr>
+<tr>
+<td>Cadastro familiar</td>
+<td>Perfil individual, gestão de família, formulário público e fila de recepção</td>
+</tr>
+<tr>
+<td>Comunicação pastoral</td>
+<td>Módulo Coração Aberto com categorias, sigilo e acompanhamento</td>
+</tr>
+<tr>
+<td>Transparência financeira</td>
+<td>Boletins mensais, comparativos e relatórios de despesas (RD)</td>
+</tr>
+<tr>
+<td>Organização de serviço</td>
+<td>Escalas consultáveis, estacionamento por placa, salas Kids/Teens</td>
+</tr>
+<tr>
+<td>Segurança e governança</td>
+<td>Controle de acesso por papel (ACL), LGPD configurável, sessão por PIN</td>
+</tr>
+</tbody></table>
+<h3>1.3 Quem usa</h3>
+<table><thead><tr>
+<th>Perfil</th>
+<th>Acesso típico</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Membro / visitante</strong></td>
+<td>Login com celular + PIN → painel principal (dashboard)</td>
+</tr>
+<tr>
+<td><strong>Família</strong></td>
+<td>Gestão de integrantes, inscrição em eventos, check-in</td>
+</tr>
+<tr>
+<td><strong>Equipe (staff)</strong></td>
+<td>Painel de manutenção — eventos, salas, quórum, financeiro, pastoral, ACL</td>
+</tr>
+<tr>
+<td><strong>Totem</strong></td>
+<td>Dispositivo fixo na entrada — leitura de QR para check-in</td>
+</tr>
+<tr>
+<td><strong>Público externo</strong></td>
+<td>Formulário <code>/cadastro-familia/</code> para solicitar entrada na igreja</td>
+</tr>
+</tbody></table>
+<h3>1.4 Onde roda</h3>
+<ul>
+<li><strong>Produção:</strong> PWA publicado via Cloudflare Pages (HTTPS)</li>
+<li><strong>Banco de dados:</strong> Supabase (PostgreSQL na nuvem)</li>
+<li><strong>Mobile:</strong> Expo/React Native — PWA é o canal principal; builds nativos são suportados pelo stack</li>
+</ul>
+<hr>
+<h2>2. Guia de Recursos (Usuário Final)</h2>
+<p>Cada recurso abaixo descreve <strong>o benefício</strong> para quem usa, não apenas a funcionalidade técnica.</p>
+<h3>2.1 Acesso e segurança pessoal</h3>
+<table><thead><tr>
+<th>Recurso</th>
+<th>Benefício</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Login por celular + PIN</strong></td>
+<td>Acesso rápido sem senha longa; o PIN é validado no servidor, não fica exposto no aparelho além da sessão local</td>
+</tr>
+<tr>
+<td><strong>PIN temporário via WhatsApp</strong></td>
+<td>Primeiro acesso — membro recebe credencial inicial sem depender da secretaria no momento</td>
+</tr>
+<tr>
+<td><strong>Recuperação de senha por e-mail</strong></td>
+<td>Esqueci minha senha no passo 2 do login — pergunta de segurança e novo PIN enviado ao e-mail cadastrado</td>
+</tr>
+<tr>
+<td><strong>Sessão persistente</strong></td>
+<td>Ao reabrir o app, o membro continua logado até encerrar sessão</td>
+</tr>
+<tr>
+<td><strong>Encerrar sessão</strong></td>
+<td>Proteção em aparelhos compartilhados</td>
+</tr>
+<tr>
+<td><strong>LGPD configurável</strong></td>
+<td>Quando ativo, garante aceite formal dos termos e selfie; quando inativo, onboarding mais leve</td>
+</tr>
+</tbody></table>
+<h3>2.2 Cadastro e perfil</h3>
+<table><thead><tr>
+<th>Recurso</th>
+<th>Benefício</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Cadastro inicial guiado</strong></td>
+<td>Novos usuários completam dados essenciais em poucos passos</td>
+</tr>
+<tr>
+<td><strong>Dados cadastrais editáveis</strong></td>
+<td>O membro mantém endereço, contato e documentos atualizados</td>
+</tr>
+<tr>
+<td><strong>Endereço por CEP</strong></td>
+<td>Digitar o CEP preenche rua, bairro e cidade — menos erro e mais agilidade</td>
+</tr>
+<tr>
+<td><strong>Selfie no perfil</strong></td>
+<td>Identificação visual em recepção e processos internos</td>
+</tr>
+<tr>
+<td><strong>Veículos cadastrados</strong></td>
+<td>Placa vinculada ao membro — útil no estacionamento e comunicação</td>
+</tr>
+<tr>
+<td><strong>Alteração de PIN</strong></td>
+<td>O membro troca a senha de acesso com validação do PIN atual</td>
+</tr>
+</tbody></table>
+<h3>2.3 Família</h3>
+<table><thead><tr>
+<th>Recurso</th>
+<th>Benefício</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Código de família</strong></td>
+<td>Agrupa pessoas que frequentam juntos — inscrições e check-ins em lote</td>
+</tr>
+<tr>
+<td><strong>Gerenciar integrantes</strong></td>
+<td>O representante adiciona cônjuge, filhos e dependentes sem ir à secretaria</td>
+</tr>
+<tr>
+<td><strong>Reconhecimento de membros</strong></td>
+<td>Checkbox de aceite indica quem a família reconhece oficialmente</td>
+</tr>
+<tr>
+<td><strong>Herança de endereço</strong></td>
+<td>Novos membros recebem automaticamente o endereço do gestor familiar</td>
+</tr>
+<tr>
+<td><strong>Transferência entre famílias</strong></td>
+<td>Mudança de núcleo familiar com confirmação — evita duplicidade</td>
+</tr>
+<tr>
+<td><strong>Indicadores Kids/Teens</strong></td>
+<td>Identificação visual por idade nas salas infantis e de adolescentes</td>
+</tr>
+</tbody></table>
+<h3>2.4 Painel principal (Dashboard)</h3>
+<p>O dashboard é um <strong>carrossel de cards</strong> — deslize horizontalmente ou use as setas no rodapé. O botão <strong>Menu</strong> ocupa a faixa central; a engrenagem de manutenção, quando visível no Índice, fica <strong>alinhada à direita</strong> do rodapé.</p>
+<table><thead><tr>
+<th>Card</th>
+<th>Benefício para o membro</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Agenda da Família</strong></td>
+<td>Vê eventos, vagas e inscreve a família antes do culto (pré-check-in)</td>
+</tr>
+<tr>
+<td><strong>Check-in / QR Code</strong></td>
+<td>Gera QR da família para leitura no totem; check-in manual quando necessário</td>
+</tr>
+<tr>
+<td><strong>SALA(S)</strong></td>
+<td>Acompanha entrada dos filhos nas salas Kids/Teens (somente da própria família)</td>
+</tr>
+<tr>
+<td><strong>Dízimos e Ofertas</strong></td>
+<td>Chave PIX e dados do recebedor sempre à mão; copiar com um toque</td>
+</tr>
+<tr>
+<td><strong>Coração Aberto</strong></td>
+<td>Atalho para pedido pastoral ou intercessão</td>
+</tr>
+<tr>
+<td><strong>Lista de Membros</strong></td>
+<td>Diretório com busca, WhatsApp e mapa geral (detalhe de pin restrito por ACL)</td>
+</tr>
+<tr>
+<td><strong>Aniversariantes</strong></td>
+<td>Celebra e contata aniversariantes do mês</td>
+</tr>
+<tr>
+<td><strong>Financeiro</strong></td>
+<td>Hub para relatórios autorizados e relatório de despesas (RD)</td>
+</tr>
+<tr>
+<td><strong>Escalas</strong></td>
+<td>Consulta quando e com quem serve em cada tipo de escala</td>
+</tr>
+<tr>
+<td><strong>Estacionamento</strong></td>
+<td>Identifica dono do veículo pela placa e abre WhatsApp</td>
+</tr>
+<tr>
+<td><strong>Perfil &amp; Identidade</strong></td>
+<td>Atalhos para dados cadastrais, família, questionário de perfil ministerial (50 perguntas) e paleta de cores</td>
+</tr>
+</tbody></table>
+<p><strong>Índice do aplicativo:</strong> tela inicial com atalhos visuais para cada card — útil em telas grandes ou para quem prefere menu em vez de carrossel.</p>
+<h3>2.5 Eventos e check-in</h3>
+<table><thead><tr>
+<th>Recurso</th>
+<th>Benefício</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Pré-check-in (audiência)</strong></td>
+<td>A família declara quem virá antes do evento — organiza salas, materiais e quórum</td>
+</tr>
+<tr>
+<td><strong>QR Code da família</strong></td>
+<td>Check-in rápido na entrada sem digitar nomes</td>
+</tr>
+<tr>
+<td><strong>Check-in automático por proximidade</strong></td>
+<td>Com GPS ativo e evento configurado, o app detecta chegada ao templo e confirma presença</td>
+</tr>
+<tr>
+<td><strong>Check-in manual</strong></td>
+<td>Alternativa quando totem ou GPS não estão disponíveis</td>
+</tr>
+<tr>
+<td><strong>Quórum</strong></td>
+<td>Um representante por sessão confirma presença oficial para atas e registros</td>
+</tr>
+<tr>
+<td><strong>Totem na entrada</strong></td>
+<td>Dispositivo dedicado escaneia QR — fila mais rápida em cultos cheios</td>
+</tr>
+<tr>
+<td><strong>Salas Kids e Teens</strong></td>
+<td>Inscrição via audiência; monitoramento de entrada nas salas</td>
+</tr>
+</tbody></table>
+<h3>2.6 Pastoral — Coração Aberto</h3>
+<table><thead><tr>
+<th>Recurso</th>
+<th>Benefício</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Formulário de pedido</strong></td>
+<td>Canal formal para pedir oração, aconselhamento ou intercessão</td>
+</tr>
+<tr>
+<td><strong>Categorias de motivo</strong></td>
+<td>Ajuda a equipe pastoral a priorizar e encaminhar</td>
+</tr>
+<tr>
+<td><strong>Sigilo ou intercessão</strong></td>
+<td>O membro escolhe se o pedido é confidencial ou pode ser compartilhado com intercessores</td>
+</tr>
+<tr>
+<td><strong>Histórico (Meus pedidos)</strong></td>
+<td>Acompanha status sem precisar ligar para a secretaria</td>
+</tr>
+</tbody></table>
+<h3>2.7 Financeiro (membro)</h3>
+<table><thead><tr>
+<th>Recurso</th>
+<th>Benefício</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Boletim mensal</strong></td>
+<td>Visão do resultado financeiro do mês com saldo acumulado</td>
+</tr>
+<tr>
+<td><strong>Comparativo mensal</strong></td>
+<td>Entende evolução mês a mês</td>
+</tr>
+<tr>
+<td><strong>Matriz 12 meses</strong></td>
+<td>Panorama anual em uma tela</td>
+</tr>
+<tr>
+<td><strong>Planejado × Realizado</strong></td>
+<td>Transparência sobre orçamento versus execução</td>
+</tr>
+<tr>
+<td><strong>Saldo bancário</strong></td>
+<td>Saldos por conta no mês selecionado</td>
+</tr>
+<tr>
+<td><strong>Relatório de Despesas (RD)</strong></td>
+<td>Membro que gastou com a igreja envia comprovantes e solicita reembolso de forma rastreável</td>
+</tr>
+</tbody></table>
+<h3>2.8 Escalas e estacionamento</h3>
+<table><thead><tr>
+<th>Recurso</th>
+<th>Benefício</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Lista de escalas</strong></td>
+<td>Sabe quando serve e quem está na mesma escala</td>
+</tr>
+<tr>
+<td><strong>WhatsApp do servo</strong></td>
+<td>Contato direto para combinar substituições</td>
+</tr>
+<tr>
+<td><strong>Estacionamento</strong></td>
+<td>Encontra o responsável pelo veículo estacionado de forma irregular</td>
+</tr>
+</tbody></table>
+<h3>2.9 Mapa de geolocalização</h3>
+<table><thead><tr>
+<th>Recurso</th>
+<th>Benefício</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Mapa da comunidade</strong></td>
+<td>Visualiza onde os membros moram (por CEP) — útil para visitas e regionalização</td>
+</tr>
+<tr>
+<td><strong>Filtros</strong></td>
+<td>Todos, com papel ministerial ou visitantes</td>
+</tr>
+<tr>
+<td><strong>Detalhe do membro</strong></td>
+<td>Nome, papel, endereço e WhatsApp ao tocar no pin</td>
+</tr>
+</tbody></table>
+<h3>2.10 Avisos e versículos</h3>
+<table><thead><tr>
+<th>Recurso</th>
+<th>Benefício</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Avisos de culto</strong></td>
+<td>Comunicados publicados pela equipe em tempo real</td>
+</tr>
+<tr>
+<td><strong>Versículo por tema</strong></td>
+<td>Inspiração bíblica contextualizada no índice do app</td>
+</tr>
+</tbody></table>
+<h3>2.11 Cadastro público de família</h3>
+<table><thead><tr>
+<th>Recurso</th>
+<th>Benefício</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Formulário <code>/cadastro-familia/</code></strong></td>
+<td>Famílias novas se cadastram sem instalar o app; a equipe aprova na Recepção Familiar</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>3. Mapa de Usabilidade</h2>
+<h3>3.1 Caminho feliz — membro regular</h3>
+<p>```mermaid</p>
+<p>flowchart TD</p>
+<p>A[Abrir PWA / instalar atalho] --&gt; B[Login: celular + PIN]</p>
+<p>B --&gt; C{Perfil completo?}</p>
+<p>C --&gt;|Não| D[Cadastro / LGPD]</p>
+<p>D --&gt; E[Índice ou Dashboard]</p>
+<p>C --&gt;|Sim| E</p>
+<p>E --&gt; F[Agenda da Família: escolher evento]</p>
+<p>F --&gt; G[Inscrever família - pré-check-in]</p>
+<p>G --&gt; H{Dia do evento}</p>
+<p>H --&gt; I{Geofence ativo?}</p>
+<p>I --&gt;|Sim| J[App detecta proximidade e confirma check-in]</p>
+<p>I --&gt;|Não| K[Mostrar QR no totem ou check-in manual]</p>
+<p>J --&gt; L[Presença registrada]</p>
+<p>K --&gt; L</p>
+<p>```</p>
+<p><strong>Passo a passo narrativo:</strong></p>
+<p>1. <strong>Primeiro acesso:</strong> informar celular → passo 2 → receber PIN temporário (<strong>WhatsApp</strong>) → criar perfil → aceitar LGPD (se ativo).</p>
+<p>2. <strong>Esqueci a senha (já cadastrado):</strong> celular → passo 2 → <strong>Esqueci minha senha</strong> → e-mail + pergunta de segurança → novo PIN por <strong>e-mail</strong>.</p>
+<p>2. <strong>Uso cotidiano:</strong> login → índice ou dashboard.</p>
+<p>3. <strong>Antes do culto:</strong> card Agenda → selecionar evento → marcar quem da família participará.</p>
+<p>4. <strong>No culto:</strong> se geofence estiver ativo e o local tiver coordenadas, aproximar-se do templo; caso contrário, apresentar QR no totem.</p>
+<p>5. <strong>Após check-in:</strong> salas Kids/Teens e quórum refletem a presença automaticamente quando configurados.</p>
+<h3>3.2 Caminho feliz — equipe de manutenção</h3>
+<p>```mermaid</p>
+<p>flowchart TD</p>
+<p>A[Login staff] --&gt; B[Ícone engrenagem]</p>
+<p>B --&gt; C[Manutenção]</p>
+<p>C --&gt; D[Programar evento]</p>
+<p>D --&gt; E[Publicar + flags: totem / quórum / geofence]</p>
+<p>E --&gt; F[Culto acontece]</p>
+<p>F --&gt; G[Sala monitor / Quórum / Financeiro]</p>
+<p>```</p>
+<h3>3.3 Caminho feliz — totem</h3>
+<p>1. Aparelho dedicado faz login com PIN <code>9999</code> e celular configurado em <code>cel_totem</code>.</p>
+<p>2. Redirecionamento automático para <code>/totem-checkin</code>.</p>
+<p>3. Família apresenta QR do dashboard.</p>
+<p>4. Totem confirma presença via RPC — status atualizado para toda a equipe.</p>
+<h3>3.4 Caminho feliz — cadastro público</h3>
+<p>1. Família acessa link <code>/cadastro-familia/</code>.</p>
+<p>2. Preenche dados e envia.</p>
+<p>3. Equipe abre <strong>Recepção Familiar</strong> na manutenção.</p>
+<p>4. Aprova ou rejeita em lote — membros passam a existir no sistema.</p>
+<h3>3.5 Navegação entre telas principais</h3>
+<table><thead><tr>
+<th>Origem</th>
+<th>Destino</th>
+<th>Como</th>
+</tr></thead><tbody>
+<tr>
+<td>Dashboard</td>
+<td>Perfil / Família / Pastoral / Financeiro</td>
+<td>Card ou atalho → retorno ao card de origem</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td>Manutenção</td>
+<td>Ícone engrenagem (ACL)</td>
+</tr>
+<tr>
+<td>Login</td>
+<td>Totem</td>
+<td>PIN 9999 + celular totem</td>
+</tr>
+<tr>
+<td>Financeiro hub</td>
+<td>RD / Relatórios</td>
+<td>Botões no card Financeiro</td>
+</tr>
+</tbody></table>
+<hr>
+<h1>Parte B — Equipe de Manutenção</h1>
+<h2>4. Guia Técnico</h2>
+<h3>4.1 Stack e arquitetura</h3>
+<p>```</p>
+<p>┌─────────────────────────────────────────────────────────────┐</p>
+<p>│  Cliente (PWA / iOS / Android)                              │</p>
+<p>│  Expo 54 · React 19 · React Native 0.81 · TypeScript 5.9   │</p>
+<p>│  Expo Router (file-based) · ~287 arquivos TS/TSX           │</p>
+<p>└──────────────────────────┬──────────────────────────────────┘</p>
+<p>│ HTTPS (REST + Realtime)</p>
+<p>│ Headers: x-session-token | x-profile-id</p>
+<p>┌──────────────────────────▼──────────────────────────────────┐</p>
+<p>│  Supabase                                                    │</p>
+<p>│  PostgreSQL · RLS · SECURITY DEFINER RPCs · Storage         │</p>
+<p>│  ~170 scripts SQL em scripts/ (aplicação manual)            │</p>
+<p>└─────────────────────────────────────────────────────────────┘</p>
+<p>```</p>
+<table><thead><tr>
+<th>Camada</th>
+<th>Responsabilidade</th>
+</tr></thead><tbody>
+<tr>
+<td><code>app/</code></td>
+<td>Rotas e telas (22 arquivos de rota)</td>
+</tr>
+<tr>
+<td><code>components/</code></td>
+<td>UI — cards, modais, painéis de manutenção (~67 componentes)</td>
+</tr>
+<tr>
+<td><code>hooks/</code></td>
+<td>Estado e efeitos de domínio (~43 hooks)</td>
+</tr>
+<tr>
+<td><code>lib/</code></td>
+<td>Regras de negócio, APIs Supabase, utilitários (~147 módulos)</td>
+</tr>
+<tr>
+<td><code>scripts/</code></td>
+<td>Schema SQL, RPCs, seeds, build e importação</td>
+</tr>
+<tr>
+<td><code>standalone/cadastro-familia/</code></td>
+<td>Formulário público Vite</td>
+</tr>
+</tbody></table>
+<p><strong>Padrão de integração Supabase:</strong></p>
+<ul>
+<li>Cliente único em <code>lib/supabase.ts</code> com <code>persistSession: false</code></li>
+<li>Identidade via <code>lib/supabaseSessionFetch.ts</code> — injeta <code>x-session-token</code> (preferido) ou <code>x-profile-id</code></li>
+<li>Escritas sensíveis via RPC <code>SECURITY DEFINER</code>; leituras via <code>from().select()</code> com RLS</li>
+<li>Detecção de RPC ausente → mensagem com hint do script SQL (<code>lib/supabaseRpc.ts</code>)</li>
+</ul>
+<h3>4.2 Arquitetura de dados</h3>
+<h4>4.2.1 Entidades centrais</h4>
+<table><thead><tr>
+<th>Tabela</th>
+<th>Papel</th>
+<th>Relacionamentos principais</th>
+</tr></thead><tbody>
+<tr>
+<td><code>profiles</code></td>
+<td>Identidade de login (PIN, telefone, endereço, geo)</td>
+<td>→ <code>members</code>, <code>event_registrations</code>, <code>checkins</code>, ACL</td>
+</tr>
+<tr>
+<td><code>members</code></td>
+<td>Integrantes da família (podem não ter perfil)</td>
+<td><code>family_id</code> sincronizado com <code>profiles</code></td>
+</tr>
+<tr>
+<td><code>events</code></td>
+<td>Cultos e eventos</td>
+<td>→ <code>event_registrations</code>, <code>checkins</code>, flags operacionais</td>
+</tr>
+<tr>
+<td><code>event_registrations</code></td>
+<td>Inscrição de perfil em evento</td>
+<td>1:1 com <code>checkins</code> (por <code>event_registration_id</code>)</td>
+</tr>
+<tr>
+<td><code>checkins</code></td>
+<td>Presença (<code>pre_checkin</code>, <code>confirmado</code>) + geo</td>
+<td>FK → <code>events</code>, <code>event_registrations</code></td>
+</tr>
+<tr>
+<td><code>event_favorite_locations</code></td>
+<td>Locais com coordenadas para geofence</td>
+<td>Vinculado por nome em <code>events.event_local</code></td>
+</tr>
+<tr>
+<td><code>access_*</code></td>
+<td>Papéis, recursos e grants (ACL)</td>
+<td>Controla RLS e UI</td>
+</tr>
+<tr>
+<td><code>app_parameters</code></td>
+<td>Configuração runtime</td>
+<td>Geofence, LGPD, totem, PIX tesoureiro, etc.</td>
+</tr>
+<tr>
+<td><code>pastoral_requests</code></td>
+<td>Pedidos Coração Aberto</td>
+<td>Categorias, sigilo, status</td>
+</tr>
+<tr>
+<td><code>financials</code></td>
+<td>Lançamentos financeiros</td>
+<td>Importação CSV, boletins</td>
+</tr>
+<tr>
+<td><code>expense_reports</code> / <code>expense_items</code></td>
+<td>Relatórios de despesas (RD)</td>
+<td>Conciliação tesouraria</td>
+</tr>
+<tr>
+<td><code>tipos_escala</code>, <code>voluntarios_escala</code>, <code>escalas_log</code></td>
+<td>Sistema de escalas</td>
+<td>Ciclos, vagas, líderes</td>
+</tr>
+<tr>
+<td><code>recepcao_cadastro_familiar*</code></td>
+<td>Fila cadastro público</td>
+<td>Lotes e membros pendentes</td>
+</tr>
+<tr>
+<td><code>bible_themes</code>, <code>bible_verses_by_theme</code></td>
+<td>Versículos por tema</td>
+<td>RPC <code>get_random_bible_verse</code></td>
+</tr>
+<tr>
+<td><code>cep_geolocations</code>, <code>cep_address_cache</code></td>
+<td>Cache CEP → coordenadas</td>
+<td>Mapa e endereços</td>
+</tr>
+</tbody></table>
+<h4>4.2.2 Colunas operacionais em <code>events</code></h4>
+<table><thead><tr>
+<th>Coluna</th>
+<th>Efeito</th>
+</tr></thead><tbody>
+<tr>
+<td><code>totem_ativo</code></td>
+<td>Habilita fluxo QR/totem</td>
+</tr>
+<tr>
+<td><code>requer_quorum</code></td>
+<td>Exige registro de quórum</td>
+</tr>
+<tr>
+<td><code>geofence_ativo</code></td>
+<td>Check-in automático por GPS</td>
+</tr>
+<tr>
+<td><code>somente_membros</code></td>
+<td>Restringe audiência</td>
+</tr>
+<tr>
+<td><code>kids_room</code> / <code>teens_room</code></td>
+<td>Salas infantis/adolescentes</td>
+</tr>
+<tr>
+<td><code>is_locked</code> / publicação</td>
+<td>Bloqueio de edição e visibilidade</td>
+</tr>
+</tbody></table>
+<h4>4.2.3 Diagrama simplificado (presença em eventos)</h4>
+<p>```mermaid</p>
+<p>erDiagram</p>
+<p>events ||--o{ event_registrations : tem</p>
+<p>profiles ||--o{ event_registrations : participa</p>
+<p>event_registrations ||--o| checkins : gera</p>
+<p>events ||--o{ checkins : agrupa</p>
+<p>event_favorite_locations }o--|| events : event_local_por_nome</p>
+<p>```</p>
+<h3>4.3 Módulos críticos (código)</h3>
+<h4>Autenticação e sessão</h4>
+<table><thead><tr>
+<th>Módulo</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><code>lib/verificarLogin.ts</code></td>
+<td>RPC <code>verificar_login</code></td>
+</tr>
+<tr>
+<td><code>lib/userSession.ts</code></td>
+<td>AsyncStorage: telefone, profile_id, session_token</td>
+</tr>
+<tr>
+<td><code>lib/profileOnboarding.ts</code></td>
+<td>Roteamento pós-login</td>
+</tr>
+<tr>
+<td><code>scripts/profile-sessions.sql</code></td>
+<td>Tokens assinados <code>profile_sessions</code></td>
+</tr>
+<tr>
+<td><code>scripts/verificar-login.sql</code></td>
+<td>Hardening de login</td>
+</tr>
+</tbody></table>
+<h4>Check-in e geofence</h4>
+<table><thead><tr>
+<th>Módulo / script</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><code>hooks/useGeoCheckinMonitor.ts</code></td>
+<td>Watch GPS, fila offline, confirmação automática</td>
+</tr>
+<tr>
+<td><code>lib/geoCheckinApi.ts</code></td>
+<td>RPCs <code>confirm_geo_family_checkin_atomic</code>, <code>sync_family_event_registrations_atomic</code></td>
+</tr>
+<tr>
+<td><code>lib/checkinGeofence.ts</code></td>
+<td>Haversine, raio, validação com precisão GPS</td>
+</tr>
+<tr>
+<td><code>lib/geoCheckinWindow.ts</code></td>
+<td>Janela temporal (horas antes + fim do dia SP)</td>
+</tr>
+<tr>
+<td><code>lib/eventGeofenceCoordinates.ts</code></td>
+<td>Resolve lat/lng via locais favoritos</td>
+</tr>
+<tr>
+<td><code>lib/geofenceEventIntegrity.ts</code></td>
+<td>Detecta alterações que invalidam check-ins</td>
+</tr>
+<tr>
+<td><code>lib/saveMaintenanceEvent.ts</code></td>
+<td>Salva evento; confia em trigger de purge</td>
+</tr>
+<tr>
+<td><code>scripts/checkins-totem-flow.sql</code></td>
+<td>Tabela <code>checkins</code>, totem RPCs</td>
+</tr>
+<tr>
+<td><code>scripts/geo-checkin-automatic.sql</code></td>
+<td>Geofence RPCs, haversine, RLS audiência</td>
+</tr>
+<tr>
+<td><code>scripts/geo-checkin-purge-on-event-update.sql</code></td>
+<td>Triggers de invalidação</td>
+</tr>
+</tbody></table>
+<h4>Controle de acesso</h4>
+<table><thead><tr>
+<th>Módulo / script</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><code>lib/accessControl.ts</code></td>
+<td>Cache e <code>sessionHasAccess</code></td>
+</tr>
+<tr>
+<td><code>lib/aclPolicy.ts</code></td>
+<td>Políticas client-side</td>
+</tr>
+<tr>
+<td><code>components/ScreenAccessGate.tsx</code></td>
+<td>Guard de rota</td>
+</tr>
+<tr>
+<td><code>scripts/access-control-schema.sql</code></td>
+<td>Tabelas ACL</td>
+</tr>
+<tr>
+<td><code>scripts/access-control-table-rls.sql</code></td>
+<td>RLS em tabelas core</td>
+</tr>
+<tr>
+<td><code>scripts/access-control-security-hardening.sql</code></td>
+<td>Endurecimento</td>
+</tr>
+</tbody></table>
+<h4>Família e recepção</h4>
+<table><thead><tr>
+<th>Módulo / script</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><code>lib/familyRegistration.ts</code></td>
+<td>CRUD familiar</td>
+</tr>
+<tr>
+<td><code>lib/familyReceptionApi.ts</code></td>
+<td>Fila recepção</td>
+</tr>
+<tr>
+<td><code>scripts/register-member-atomic.sql</code></td>
+<td>Inscrição atômica em eventos</td>
+</tr>
+<tr>
+<td><code>scripts/recepcao-cadastro-familiar.sql</code></td>
+<td>Schema recepção</td>
+</tr>
+</tbody></table>
+<h4>Financeiro</h4>
+<table><thead><tr>
+<th>Módulo / script</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><code>lib/financialModule.ts</code></td>
+<td>Leitura membro</td>
+</tr>
+<tr>
+<td><code>lib/expenseReport.ts</code></td>
+<td>RD membro</td>
+</tr>
+<tr>
+<td><code>lib/maintenanceFinancialApi.ts</code></td>
+<td>Staff: import, CRUD</td>
+</tr>
+<tr>
+<td><code>scripts/financials-schema.sql</code></td>
+<td>Tabela <code>financials</code></td>
+</tr>
+<tr>
+<td><code>scripts/expense-reports-schema.sql</code></td>
+<td>RD</td>
+</tr>
+</tbody></table>
+<h4>Pastoral</h4>
+<table><thead><tr>
+<th>Módulo / script</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><code>lib/pastoralRequest.ts</code></td>
+<td>Insert membro</td>
+</tr>
+<tr>
+<td><code>lib/maintenancePastoralApi.ts</code></td>
+<td>Painel staff</td>
+</tr>
+<tr>
+<td><code>scripts/pastoral-request-categories.sql</code></td>
+<td>Taxonomia</td>
+</tr>
+</tbody></table>
+<h4>Escalas</h4>
+<table><thead><tr>
+<th>Módulo / script</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><code>lib/maintenanceScalesApi.ts</code></td>
+<td>CRUD escalas</td>
+</tr>
+<tr>
+<td><code>lib/maintenanceScaleCycleApi.ts</code></td>
+<td><code>aplicar_ciclo_escala</code></td>
+</tr>
+<tr>
+<td><code>scripts/vigilancia-escalas.sql</code></td>
+<td>Schema escalas</td>
+</tr>
+</tbody></table>
+<h3>4.4 Fluxos críticos e dependências</h3>
+<h4>Fluxo A — Login</h4>
+<p>```</p>
+<p>Tela / → verificar_login → issue_profile_session (opcional)</p>
+<p>→ headers na próxima requisição → RLS resolve current_session_profile_id</p>
+<p>```</p>
+<p><strong>Dependências SQL:</strong> <code>profiles-access-pin.sql</code>, <code>verificar-login.sql</code>, <code>profile-sessions.sql</code>, ACL (opcional mas recomendado).</p>
+<h4>Fluxo B — Pré-check-in e check-in totem</h4>
+<p>```</p>
+<p>sync/register_member_atomic → sync_checkin_for_registration (se totem/quorum)</p>
+<p>→ checkins.status = pre_checkin</p>
+<p>→ totem: lookup_totem_checkin → confirm_totem_checkin → confirmado</p>
+<p>→ maybe_sync_quorum_registry_for_registration</p>
+<p>```</p>
+<p><strong>Dependências:</strong> <code>events-totem-ativo.sql</code>, <code>checkins-totem-flow.sql</code>, <code>register-member-atomic.sql</code>, <code>events-quorum-registry.sql</code> (opcional).</p>
+<h4>Fluxo C — Check-in geofence</h4>
+<p>```</p>
+<p>useGeoCheckinMonitor → 3 leituras GPS dentro do raio</p>
+<p>→ confirm_geo_family_checkin_atomic</p>
+<p>→ assert_session_can_manage_family</p>
+<p>→ assert_event_geofence_checkin_enabled</p>
+<p>→ assert_geofence_for_event (haversine + janela temporal)</p>
+<p>→ update/insert checkins confirmado + geo_latitude/longitude</p>
+<p>```</p>
+<p><strong>Dependências:</strong> <code>event-favorite-locations.sql</code>, <code>events-geofence-ativo.sql</code>, <code>geo-checkin-automatic.sql</code>, <code>geo-checkin-purge-on-event-update.sql</code>.</p>
+<p><strong>Invalidação:</strong> editar evento com <code>geofence_ativo</code> ou local favorito vinculado → trigger apaga check-ins → famílias devem validar novamente.</p>
+<h4>Fluxo D — ACL</h4>
+<p>```</p>
+<p>Cliente: sessionHasAccess(resource) → filtra cards/rotas</p>
+<p>Servidor: session_has_resource_access → RLS USING/WITH CHECK</p>
+<p>Legado: acl_enforcement_enabled() = false → acesso aberto</p>
+<p>```</p>
+<h4>Fluxo E — Deploy PWA</h4>
+<p>```</p>
+<p>git push main → Cloudflare Pages → npm run build:web → dist/</p>
+<p>```</p>
+<p>SQL <strong>não</strong> faz parte do pipeline de deploy — scripts em <code>scripts/</code> são aplicados manualmente no Supabase.</p>
+<h3>4.5 Ordem recomendada de scripts SQL (bootstrap)</h3>
+<table><thead><tr>
+<th>Fase</th>
+<th>Scripts principais</th>
+</tr></thead><tbody>
+<tr>
+<td>1 — Base</td>
+<td><code>profiles-access-pin.sql</code>, <code>register-member-atomic.sql</code></td>
+</tr>
+<tr>
+<td>2 — ACL</td>
+<td><code>access-control-schema.sql</code> → <code>access-control-table-rls.sql</code> → <code>access-control-security-hardening.sql</code></td>
+</tr>
+<tr>
+<td>3 — Sessão</td>
+<td><code>verificar-login.sql</code>, <code>profile-sessions.sql</code></td>
+</tr>
+<tr>
+<td>4 — Eventos</td>
+<td><code>events-totem-ativo.sql</code>, <code>events-requer-quorum.sql</code>, <code>events-geofence-ativo.sql</code>, <code>checkins-totem-flow.sql</code></td>
+</tr>
+<tr>
+<td>5 — Geofence</td>
+<td><code>event-favorite-locations.sql</code>, <code>geo-checkin-automatic.sql</code>, <code>geo-checkin-purge-on-event-update.sql</code></td>
+</tr>
+<tr>
+<td>6 — Domínios</td>
+<td>pastoral, financials, escalas, recepção, bible-verses (conforme necessidade)</td>
+</tr>
+</tbody></table>
+<p>Consulte <code>scripts/APLICAR-PENDENCIAS-SUPABASE.md</code> para pendências conhecidas.</p>
+<h3>4.6 Rotas da aplicação</h3>
+<table><thead><tr>
+<th>Rota</th>
+<th>Arquivo</th>
+<th>ACL</th>
+</tr></thead><tbody>
+<tr>
+<td><code>/</code></td>
+<td><code>app/index.tsx</code></td>
+<td>Público</td>
+</tr>
+<tr>
+<td><code>/(tabs)/dashboard</code></td>
+<td><code>app/(tabs)/dashboard.tsx</code></td>
+<td>Sim</td>
+</tr>
+<tr>
+<td><code>/(tabs)/index</code></td>
+<td><code>app/(tabs)/index.tsx</code></td>
+<td>Autenticado</td>
+</tr>
+<tr>
+<td><code>/manage-profile</code></td>
+<td><code>app/manage-profile.tsx</code></td>
+<td>Sim</td>
+</tr>
+<tr>
+<td><code>/manage-members</code></td>
+<td><code>app/manage-members.tsx</code></td>
+<td>Sim</td>
+</tr>
+<tr>
+<td><code>/pastoral</code></td>
+<td><code>app/pastoral.tsx</code></td>
+<td>Sim</td>
+</tr>
+<tr>
+<td><code>/pastoral-history</code></td>
+<td><code>app/pastoral-history.tsx</code></td>
+<td>Sim</td>
+</tr>
+<tr>
+<td><code>/financial</code></td>
+<td><code>app/financial.tsx</code></td>
+<td>Sim</td>
+</tr>
+<tr>
+<td><code>/expense-report</code></td>
+<td><code>app/expense-report.tsx</code></td>
+<td>Sim</td>
+</tr>
+<tr>
+<td><code>/mapa-geolocalizacao</code></td>
+<td><code>app/mapa-geolocalizacao.web.tsx</code></td>
+<td>Sim</td>
+</tr>
+<tr>
+<td><code>/maintenance-dashboard</code></td>
+<td><code>app/maintenance-dashboard.tsx</code></td>
+<td>Staff</td>
+</tr>
+<tr>
+<td><code>/totem-checkin</code></td>
+<td><code>app/totem-checkin.tsx</code></td>
+<td>Totem</td>
+</tr>
+<tr>
+<td><code>/cadastro-familia</code></td>
+<td>redirect → Vite standalone</td>
+<td>Público</td>
+</tr>
+<tr>
+<td><code>/admin/orquestrador</code></td>
+<td><code>app/admin/orquestrador.tsx</code></td>
+<td>Orquestrador</td>
+</tr>
+<tr>
+<td><code>/avisos</code></td>
+<td><code>app/avisos.tsx</code></td>
+<td>Autenticado</td>
+</tr>
+<tr>
+<td><code>/lgpd</code></td>
+<td><code>app/lgpd.tsx</code></td>
+<td>Sim</td>
+</tr>
+<tr>
+<td><code>/sessao-encerrada</code></td>
+<td><code>app/sessao-encerrada.tsx</code></td>
+<td>Público</td>
+</tr>
+</tbody></table>
+<h3>4.7 Ambiente de desenvolvimento</h3>
+<p><strong>Requisitos:</strong></p>
+<ul>
+<li>Node.js ≥ 20.19.4</li>
+<li>npm</li>
+<li>Conta Supabase com projeto configurado</li>
+<li>Variáveis em <code>.env</code> (não versionado): URL e anon key do Supabase</li>
+</ul>
+<p><strong>Comandos:</strong></p>
+<p>```bash</p>
+<p>npm install</p>
+<p>npm run web              # http://localhost:8081</p>
+<p>npm run build:web        # dist/ — igual produção</p>
+<p>npm run lint</p>
+<p>npm run build:family-form  # formulário público</p>
+<p>```</p>
+<p><strong>Estrutura de sessão local (dev):</strong></p>
+<ul>
+<li><code>user_phone</code>, <code>user_profile_id</code>, <code>user_session_token</code> em AsyncStorage</li>
+<li>Sem Supabase Auth — identidade customizada via headers</li>
+</ul>
+<p><strong>Testes automatizados disponíveis:</strong></p>
+<ul>
+<li><code>npm run test:family-address</code></li>
+<li><code>npm run test:recepcao-ibn</code></li>
+<li><code>npm run test:carousel-nav</code></li>
+<li><code>npm run test:maintenance-carousel</code></li>
+</ul>
+<h3>4.8 Deploy</h3>
+<table><thead><tr>
+<th>Etapa</th>
+<th>Ação</th>
+</tr></thead><tbody>
+<tr>
+<td>Build local (validação)</td>
+<td><code>npm run build:web</code></td>
+</tr>
+<tr>
+<td>Publicação</td>
+<td><code>git push origin main</code></td>
+</tr>
+<tr>
+<td>Hospedagem</td>
+<td>Cloudflare Pages — output <code>dist/</code></td>
+</tr>
+<tr>
+<td>Variáveis Cloudflare</td>
+<td><code>NODE_VERSION=20</code>, <code>NODE_OPTIONS=--max-old-space-size=6144</code></td>
+</tr>
+<tr>
+<td>Pós-deploy</td>
+<td>Hard refresh; conferir <code>CHECKLIST_VALIDACAO_POS_DEPLOY.md</code></td>
+</tr>
+</tbody></table>
+<p><strong>Importante:</strong> alterações em <code>scripts/*.sql</code> exigem execução manual no SQL Editor do Supabase. O PWA e o banco evoluem em pipelines separados.</p>
+<h3>4.9 Papéis ACL (referência)</h3>
+<table><thead><tr>
+<th>Papel</th>
+<th>Uso típico</th>
+</tr></thead><tbody>
+<tr>
+<td><code>visitantes</code></td>
+<td>Acesso mínimo pós-cadastro</td>
+</tr>
+<tr>
+<td><code>congregado</code></td>
+<td>Membro em processo de integração</td>
+</tr>
+<tr>
+<td><code>member</code></td>
+<td>Membro pleno</td>
+</tr>
+<tr>
+<td><code>family_acceptor</code></td>
+<td>Aprova vínculos familiares</td>
+</tr>
+<tr>
+<td><code>lider</code></td>
+<td>Liderança de escala</td>
+</tr>
+<tr>
+<td><code>events_admin</code></td>
+<td>Eventos</td>
+</tr>
+<tr>
+<td><code>tesoureiro</code></td>
+<td>Financeiro e RD</td>
+</tr>
+<tr>
+<td><code>pastoral</code></td>
+<td>Coração Aberto e mudança de papéis</td>
+</tr>
+<tr>
+<td><code>super_admin</code></td>
+<td>ACL, exclusão de perfil, insights</td>
+</tr>
+</tbody></table>
+<p>Recursos controlados: <code>screen</code>, <code>dashboard_card</code>, <code>table</code>, <code>column</code> — ações <code>view</code> / <code>update</code>.</p>
+<h3>4.10 RPCs de maior impacto</h3>
+<table><thead><tr>
+<th>RPC</th>
+<th>Domínio</th>
+</tr></thead><tbody>
+<tr>
+<td><code>verificar_login</code></td>
+<td>Auth</td>
+</tr>
+<tr>
+<td><code>register_member_atomic</code> / <code>unregister_member_atomic</code></td>
+<td>Eventos</td>
+</tr>
+<tr>
+<td><code>confirm_totem_checkin</code> / <code>lookup_totem_checkin</code></td>
+<td>Totem</td>
+</tr>
+<tr>
+<td><code>confirm_geo_family_checkin_atomic</code></td>
+<td>Geofence</td>
+</tr>
+<tr>
+<td><code>sync_family_event_registrations_atomic</code></td>
+<td>Audiência + geo</td>
+</tr>
+<tr>
+<td><code>profile_has_access</code></td>
+<td>ACL</td>
+</tr>
+<tr>
+<td><code>submit_family_registration_public</code></td>
+<td>Recepção</td>
+</tr>
+<tr>
+<td><code>insert_pastoral_request</code></td>
+<td>Pastoral</td>
+</tr>
+<tr>
+<td><code>importar_lancamentos_financeiros_csv</code></td>
+<td>Financeiro</td>
+</tr>
+<tr>
+<td><code>aplicar_ciclo_escala</code></td>
+<td>Escalas</td>
+</tr>
+<tr>
+<td><code>purge_event_checkins_for_geofence_event</code></td>
+<td>Manutenção (service_role / trigger)</td>
+</tr>
+</tbody></table>
+<h3>4.11 Triggers críticos</h3>
+<table><thead><tr>
+<th>Trigger</th>
+<th>Tabela</th>
+<th>Efeito</th>
+</tr></thead><tbody>
+<tr>
+<td><code>events_purge_geofence_checkins_on_update</code></td>
+<td><code>events</code></td>
+<td>Invalida check-ins ao editar evento geofence</td>
+</tr>
+<tr>
+<td><code>event_favorite_locations_purge_geofence_checkins</code></td>
+<td><code>event_favorite_locations</code></td>
+<td>Invalida ao alterar/deletar local</td>
+</tr>
+<tr>
+<td><code>trg_sync_profile_family_from_member</code></td>
+<td><code>members</code></td>
+<td>Sincroniza <code>family_id</code></td>
+</tr>
+<tr>
+<td><code>trg_profiles_sync_address_from_cep</code></td>
+<td><code>profiles</code></td>
+<td>Preenche endereço por CEP</td>
+</tr>
+<tr>
+<td><code>trg_events_enforce_lock_if_past</code></td>
+<td><code>events</code></td>
+<td>Bloqueia edição de eventos passados</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>5. Status e Recomendações</h2>
+<h3>5.1 Status atual (junho/2026)</h3>
+<table><thead><tr>
+<th>Área</th>
+<th>Status</th>
+<th>Observação</th>
+</tr></thead><tbody>
+<tr>
+<td>PWA produção</td>
+<td>✅ Estável</td>
+<td>Deploy automático Cloudflare</td>
+</tr>
+<tr>
+<td>Login + sessão</td>
+<td>✅</td>
+<td>Tokens <code>profile_sessions</code> recomendados</td>
+</tr>
+<tr>
+<td>Dashboard membro</td>
+<td>✅</td>
+<td>12 cards ACL-aware</td>
+</tr>
+<tr>
+<td>Check-in totem</td>
+<td>✅</td>
+<td>Fluxo completo com cooldown</td>
+</tr>
+<tr>
+<td>Check-in geofence</td>
+<td>✅</td>
+<td>Com purge seguro e paridade SQL/TS</td>
+</tr>
+<tr>
+<td>Manutenção</td>
+<td>✅</td>
+<td>16 painéis no carrossel</td>
+</tr>
+<tr>
+<td>ACL</td>
+<td>✅</td>
+<td>Modo legado aberto se sem grants</td>
+</tr>
+<tr>
+<td>Financeiro</td>
+<td>✅</td>
+<td>Import CSV + RD</td>
+</tr>
+<tr>
+<td>Pastoral</td>
+<td>✅</td>
+<td>Categorias + manutenção</td>
+</tr>
+<tr>
+<td>Escalas</td>
+<td>✅</td>
+<td>Ciclos em bloco</td>
+</tr>
+<tr>
+<td>Mapa (web)</td>
+<td>✅</td>
+<td>Leaflet; nativo placeholder</td>
+</tr>
+<tr>
+<td>Bible verses</td>
+<td>✅</td>
+<td>~161 temas via scripts</td>
+</tr>
+<tr>
+<td>Documentação</td>
+<td>✅</td>
+<td>Pacotes 1–7 + este manual</td>
+</tr>
+</tbody></table>
+<h3>5.2 Pontos de atenção</h3>
+<table><thead><tr>
+<th>Ponto</th>
+<th>Risco</th>
+<th>Mitigação</th>
+</tr></thead><tbody>
+<tr>
+<td>SQL manual no Supabase</td>
+<td>App e banco dessincronizados</td>
+<td>Checklist pós-deploy; <code>useMaintenanceRpcMissing</code></td>
+</tr>
+<tr>
+<td><code>x-profile-id</code> legado</td>
+<td>Spoofing se sem session token</td>
+<td>Priorizar <code>profile-sessions.sql</code></td>
+</tr>
+<tr>
+<td>ACL desligado</td>
+<td>Acesso aberto no banco</td>
+<td>Ativar grants + <code>EXPO_PUBLIC_ACL_STRICT=true</code></td>
+</tr>
+<tr>
+<td>Geofence sem coordenadas</td>
+<td>Check-in bloqueado (correto)</td>
+<td>Cadastrar lat/lng em locais favoritos</td>
+</tr>
+<tr>
+<td>Scripts pendentes</td>
+<td><code>APLICAR-PENDENCIAS-SUPABASE.md</code></td>
+<td>Aplicar <code>events-somente-membros.sql</code>, etc.</td>
+</tr>
+<tr>
+<td>PWA cache</td>
+<td>Usuário vê versão antiga</td>
+<td>Hard refresh; <code>_headers</code> com revalidação HTML</td>
+</tr>
+</tbody></table>
+<h3>5.3 Melhorias futuras recomendadas</h3>
+<table><thead><tr>
+<th>Prioridade</th>
+<th>Melhoria</th>
+<th>Benefício</th>
+</tr></thead><tbody>
+<tr>
+<td>Alta</td>
+<td>Runner de migrações SQL versionado</td>
+<td>Rastreabilidade de schema</td>
+</tr>
+<tr>
+<td>Alta</td>
+<td>Testes E2E (Playwright) nos fluxos login + check-in</td>
+<td>Regressão automatizada</td>
+</tr>
+<tr>
+<td>Média</td>
+<td>RPC <code>resolve_event_geofence_coordinates</code> no cliente</td>
+<td>Menos fetch de todos os favoritos</td>
+</tr>
+<tr>
+<td>Média</td>
+<td>Mapa nativo com react-native-maps</td>
+<td>Paridade mobile</td>
+</tr>
+<tr>
+<td>Média</td>
+<td>Notificações push para avisos de culto</td>
+<td>Engajamento</td>
+</tr>
+<tr>
+<td>Baixa</td>
+<td>Unificar haversine em lib compartilhada (mapa + geo)</td>
+<td>DRY</td>
+</tr>
+<tr>
+<td>Baixa</td>
+<td>Remover rotas template (<code>/modal</code>, <code>/explore</code>)</td>
+<td>Limpeza</td>
+</tr>
+</tbody></table>
+<h3>5.4 Checklist de entrega</h3>
+<ul>
+<li>[ ] Scripts SQL da fase atual aplicados no Supabase de produção</li>
+<li>[ ] Variáveis Cloudflare configuradas</li>
+<li>[ ] <code>EXPO_PUBLIC_ACL_STRICT</code> definido conforme política da igreja</li>
+<li>[ ] Locais favoritos com coordenadas para eventos geofence</li>
+<li>[ ] Parâmetros <code>app_parameters</code> revisados (LGPD, totem, geofence, tesoureiro)</li>
+<li>[ ] Papéis ACL atribuídos aos gestores</li>
+<li>[ ] Totem configurado (<code>cel_totem</code>, PIN 9999)</li>
+<li>[ ] Validação pós-deploy (<code>CHECKLIST_VALIDACAO_POS_DEPLOY.md</code>)</li>
+<li>[ ] Treinamento equipe (<code>MANUAL_TREINAMENTO.md</code>, pacotes PDF)</li>
+</ul>
+<hr>
+<h2>Apêndice A — Inventário de hooks (<code>hooks/</code>)</h2>
+<table><thead><tr>
+<th>Hook</th>
+<th>Domínio</th>
+</tr></thead><tbody>
+<tr>
+<td><code>useCheckin</code></td>
+<td>Totem</td>
+</tr>
+<tr>
+<td><code>useGeoCheckinMonitor</code></td>
+<td>Geofence automático</td>
+</tr>
+<tr>
+<td><code>useFamilyPreCheckin</code></td>
+<td>Audiência</td>
+</tr>
+<tr>
+<td><code>useDashboardSelectedEvent</code></td>
+<td>Contexto de evento</td>
+</tr>
+<tr>
+<td><code>useActiveEvents</code></td>
+<td>Eventos publicados</td>
+</tr>
+<tr>
+<td><code>useEventGeofenceCoordinates</code></td>
+<td>Coordenadas do local</td>
+</tr>
+<tr>
+<td><code>useEventFavoriteLocations</code></td>
+<td>Locais favoritos CRUD</td>
+</tr>
+<tr>
+<td><code>useQuorumRegistry</code></td>
+<td>Registro quórum</td>
+</tr>
+<tr>
+<td><code>useScreenAccessGuard</code></td>
+<td>ACL rota</td>
+</tr>
+<tr>
+<td><code>useTotemDeviceRouteGuard</code></td>
+<td>Bloqueio totem</td>
+</tr>
+<tr>
+<td><code>useMaintenanceEvents</code></td>
+<td>CRUD eventos staff</td>
+</tr>
+<tr>
+<td><code>useMaintenanceFinancials</code></td>
+<td>Financeiro staff</td>
+</tr>
+<tr>
+<td><code>useMaintenanceScales</code></td>
+<td>Escalas staff</td>
+</tr>
+<tr>
+<td><code>useMaintenancePastoralCare</code></td>
+<td>Pastoral staff</td>
+</tr>
+<tr>
+<td><code>useMaintenanceAccessControl</code></td>
+<td>ACL admin</td>
+</tr>
+<tr>
+<td><code>useMaintenanceFamilyReception</code></td>
+<td>Recepção</td>
+</tr>
+<tr>
+<td><code>useProfilesMapMarkers</code></td>
+<td>Mapa</td>
+</tr>
+<tr>
+<td><code>usePredictiveInsights</code></td>
+<td>Modelo preditivo</td>
+</tr>
+</tbody></table>
+<h2>Apêndice B — Scripts SQL por domínio (resumo)</h2>
+<table><thead><tr>
+<th>Domínio</th>
+<th>Qtd. aprox.</th>
+<th>Exemplos</th>
+</tr></thead><tbody>
+<tr>
+<td>ACL</td>
+<td>33</td>
+<td><code>access-control-*.sql</code></td>
+</tr>
+<tr>
+<td>Perfis / família</td>
+<td>35+</td>
+<td><code>profiles-<em></code>, <code>members-</em></code>, <code>recepcao-*</code></td>
+</tr>
+<tr>
+<td>Eventos / check-in</td>
+<td>17</td>
+<td><code>events-<em></code>, <code>checkins-</em></code>, <code>geo-checkin-*</code></td>
+</tr>
+<tr>
+<td>Pastoral</td>
+<td>7</td>
+<td><code>pastoral-*</code></td>
+</tr>
+<tr>
+<td>Financeiro</td>
+<td>10</td>
+<td><code>financials-<em></code>, <code>expense-reports-</em></code></td>
+</tr>
+<tr>
+<td>Escalas</td>
+<td>8</td>
+<td><code>vigilancia-escalas.sql</code>, <code>escalas-*</code></td>
+</tr>
+<tr>
+<td>CEP / geo</td>
+<td>8+</td>
+<td><code>cep-geolocation-<em></code>, <code>profiles-geo-</em></code></td>
+</tr>
+<tr>
+<td>Bible</td>
+<td>18</td>
+<td><code>bible-verses-by-theme*</code></td>
+</tr>
+<tr>
+<td>Diagnóstico / seed</td>
+<td>25+</td>
+<td><code>tstmax-<em></code>, <code>diagnose-</em></code></td>
+</tr>
+</tbody></table>
+<hr>
+<p><em>Documento gerado como manual de entrega profissional do projeto app-igreja. Para regenerar o PDF: <code>npm run build:manual-entrega-pdf</code>.</em></p>
+</div>
+</body>
+</html>

@@ -38,6 +38,7 @@
     "build:analise-institucional-doc": "node scripts/build-analise-institucional-telas-doc.mjs",
     "build:roteiro-institucional-pdf": "node scripts/build-roteiro-institucional-pdf.mjs",
     "build:roteiro-institucional-doc": "node scripts/build-roteiro-institucional-doc.mjs",
+    "build:docs:doc": "node scripts/build-roteiro-institucional-pdf.mjs && node scripts/build-roteiro-institucional-doc.mjs && node scripts/build-pacotes-funcionalidades-doc.mjs && node scripts/build-analise-institucional-telas-doc.mjs && node scripts/build-markdown-word-docs.mjs && python scripts/generate_manual_operacao_docx.py",
     "build:validation-checklist-xlsx": "node scripts/build-validation-checklist-xlsx.mjs",
     "lint": "expo lint",
     "pdf-to-jpg": "node scripts/convert-pdf-folder-to-jpg.mjs",

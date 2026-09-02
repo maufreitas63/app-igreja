@@ -1,0 +1,750 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Pacote 4 — Anexo Técnico</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Pacote 4 — Anexo Técnico</h1>
+<p>Documentação <strong>autocontida</strong> de arquitetura e referências técnicas.</p>
+<p><strong>Atualizado em:</strong> 23/06/2026</p>
+<p>Conteúdo integrado: Arquitetura Blueprint PWA · Cards do Dashboard</p>
+<hr>
+<h1>Parte 1 — Blueprint de Arquitetura e Especificação Técnica</h1>
+<hr>
+<h1>Blueprint de Arquitetura e Especificação Técnica</h1>
+<p><strong>Pacote:</strong> <a href="PACOTE_4_ANEXO_TECNICO.md">&lt;code&gt;PACOTE_4_ANEXO_TECNICO.md&lt;/code&gt;</a> · <strong>Índice:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></p>
+<p><strong>Atualizado em:</strong> 23/06/2026</p>
+<h2>1) Visão Geral</h2>
+<h3>Objetivo do sistema</h3>
+<p>Centralizar a operação digital da igreja em uma única plataforma com foco em:</p>
+<ul>
+<li>jornada do membro (login, cadastro, LGPD, dados cadastrais),</li>
+<li>gestão de eventos e check-in (incluindo totem),</li>
+<li>gestão de família/membros,</li>
+<li>acompanhamento pastoral,</li>
+<li>escalas e apoio operacional,</li>
+<li>visão geográfica (mapa por CEP) para organização territorial,</li>
+<li>controle de acesso granular por perfil, papel e recurso.</li>
+</ul>
+<h3>Stack (alvo e estado atual)</h3>
+<table><thead><tr>
+<th>Camada</th>
+<th>Stack alvo (solicitado)</th>
+<th>Estado atual no código</th>
+</tr></thead><tbody>
+<tr>
+<td>Frontend Web/PWA</td>
+<td>Next.js</td>
+<td>Expo Router com export estático web (PWA-ready)</td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>React Native</td>
+<td>React Native (Expo)</td>
+</tr>
+<tr>
+<td>Backend/Data/Auth</td>
+<td>Supabase (Postgres, RPC, RLS, Storage)</td>
+<td>Supabase em produção</td>
+</tr>
+<tr>
+<td>Geolocalização</td>
+<td>Google Geocoding API ou similar</td>
+<td>Fallback ativo: ViaCEP + OpenStreetMap; Google opcional</td>
+</tr>
+</tbody></table>
+<p>Observação arquitetural: a base atual já suporta o contexto PWA e pode evoluir para shell Next.js sem ruptura de domínio (serviços, ACL, modelo de dados e RLS permanecem no Supabase).</p>
+<hr>
+<h2>2) Módulos Estratégicos (todos)</h2>
+<h3>2.1 Acesso e Sessão</h3>
+<ul>
+<li>Login por telefone + PIN (<code>profiles.access_pin</code>) e sessão local.</li>
+<li>Persistência de sessão com <code>user_phone</code> e <code>user_profile_id</code>.</li>
+<li>Resolução robusta de perfil por variantes de telefone.</li>
+<li>Encerramento de sessão centralizado.</li>
+</ul>
+<h3>2.2 LGPD e Onboarding</h3>
+<ul>
+<li>Fluxo de aceite LGPD.</li>
+<li>Verificação de completude cadastral para direcionamento de fluxo.</li>
+<li>Proteções para dados sensíveis (máscara/ocultação no cliente).</li>
+</ul>
+<h3>2.3 Dados Cadastrais</h3>
+<ul>
+<li>Edição controlada de perfil.</li>
+<li>Lookup de endereço por CEP.</li>
+<li>Alteração de PIN via RPC específica.</li>
+</ul>
+<h3>2.4 Gestão de Família / Membros</h3>
+<ul>
+<li>CRUD de membros por família.</li>
+<li>Busca de perfil por nome ou telefone ao adicionar membro.</li>
+<li>Transferência entre famílias com confirmação (<code>accept_managed_member_into_family</code>).</li>
+<li>Reconhecimento familiar por <code>members.accepted</code> (toggle na lista).</li>
+<li>Herança de endereço completo do gestor para o perfil do membro aceito/transferido (<code>inheritFamilyAddressToAcceptedMember</code>).</li>
+<li>Sincronização entre <code>members</code> e <code>profiles</code> (family_id, dados base).</li>
+</ul>
+<h3>2.5 Dashboard e Cards Operacionais</h3>
+<ul>
+<li>Agenda da família/eventos ativos.</li>
+<li>QR Check-in e fluxo totem.</li>
+<li>Salas Kids/Teens — no dashboard, somente inscrições da família do usuário; na manutenção, visão global.</li>
+<li>Dízimos/Ofertas — card sempre presente no carrossel (ACL).</li>
+<li>Lista de membros e aniversariantes.</li>
+<li>Escalas.</li>
+<li>Dados cadastrais.</li>
+<li>Coração Aberto (pastoral).</li>
+<li>Estacionamento/veículos.</li>
+</ul>
+<h3>2.6 Eventos e Manutenção</h3>
+<ul>
+<li>CRUD de eventos (campos estratégicos: local, capacidade, salas, ofertas, totem, publicação).</li>
+<li>Políticas RLS para manutenção.</li>
+<li>Semântica de publicação e visibilidade.</li>
+</ul>
+<h3>2.7 Check-in e Totem</h3>
+<ul>
+<li>Registro/remoção atômica em evento por RPC.</li>
+<li>Confirmação de check-in totem e consulta por QR/família.</li>
+<li>Compatibilidade com modo totem e parâmetros de aplicação.</li>
+</ul>
+<h3>2.8 Pastoral</h3>
+<ul>
+<li>Categorias/subcategorias de motivos.</li>
+<li>Registro e histórico de pedidos pastorais.</li>
+<li>Evolução prevista para triagem por equipe pastoral.</li>
+</ul>
+<h3>2.9 Escalas (Vigilância e Operação)</h3>
+<ul>
+<li>Tipos de escala com <code>vagas_por_servico</code> (1–50) e <code>modo_ciclo</code> (<code>individual</code> | <code>equipe</code>).</li>
+<li>Servos, ordem sequencial e <code>escalas_log</code> (múltiplos servos no mesmo domingo até o limite).</li>
+<li>Ciclo em bloco transacional (<code>aplicar_ciclo_escala</code>, <code>get_scale_cycle_context</code>).</li>
+<li>Registro manual com validação de vagas e domingo obrigatório.</li>
+<li>ACL por tipo de escala (papel <code>lider</code>, script <code>access-control-lider-escala.sql</code>).</li>
+</ul>
+<h3>2.10 Veículos</h3>
+<ul>
+<li>Base de veículos por perfil/família.</li>
+<li>Integração com jornada operacional de estacionamento.</li>
+</ul>
+<h3>2.11 Geolocalização (CEP -&gt; mapa)</h3>
+<ul>
+<li>Carregamento em lote de perfis com CEP.</li>
+<li>Geocodificação com cache.</li>
+<li>Marker clustering.</li>
+<li>Painel de detalhes por pin.</li>
+<li>Uso tático para células e visitas pastorais.</li>
+</ul>
+<h3>2.12 ACL e Governança</h3>
+<ul>
+<li>Catálogo de recursos (<code>screen</code>, <code>table</code>, <code>column</code>).</li>
+<li>Papéis e grants.</li>
+<li>Funções <code>profile_has_access</code> / <code>profile_has_access_by_phone</code>.</li>
+<li>Base pronta para enforcement no cliente e no banco.</li>
+</ul>
+<hr>
+<h2>3) Modelo de Dados (Supabase)</h2>
+<h2>3.1 Entidades principais</h2>
+<ul>
+<li><code>profiles</code>: identidade primária do membro/usuário do app.</li>
+<li><code>members</code>: membros de família e reconhecimento (<code>accepted</code>).</li>
+<li><code>events</code>: eventos e configuração operacional.</li>
+<li><code>event_registrations</code>: inscrições/check-in por evento/membro/família.</li>
+<li><code>checkins</code>: confirmações de check-in (totem/manual).</li>
+<li><code>profile_vehicles</code>: veículos vinculados a perfis/famílias.</li>
+<li><code>pastoral_requests</code>: demandas pastorais.</li>
+<li><code>pastoral_reason_categories</code> / <code>pastoral_reason_subcategories</code>: taxonomia pastoral.</li>
+<li><code>tipos_escala</code>, <code>voluntarios_escala</code>, <code>escalas_log</code>: domínio de escalas.</li>
+<li><code>app_parameters</code>: parâmetros globais de comportamento.</li>
+</ul>
+<h2>3.2 Entidades de autorização (ACL)</h2>
+<ul>
+<li><code>access_resources</code></li>
+<li><code>access_roles</code></li>
+<li><code>profile_access_roles</code></li>
+<li><code>access_grants</code></li>
+</ul>
+<h2>3.3 Relações lógicas (alto nível)</h2>
+<p>```mermaid</p>
+<p>erDiagram</p>
+<p>profiles ||--o{ members : &quot;relacao por family_id/phone/nome&quot;</p>
+<p>profiles ||--o{ profile_vehicles : possui</p>
+<p>profiles ||--o{ pastoral_requests : abre</p>
+<p>profiles ||--o{ profile_access_roles : tem</p>
+<p>events ||--o{ event_registrations : possui</p>
+<p>members ||--o{ event_registrations : participa</p>
+<p>event_registrations ||--o{ checkins : confirma</p>
+<p>pastoral_reason_categories ||--o{ pastoral_reason_subcategories : agrupa</p>
+<p>pastoral_reason_subcategories ||--o{ pastoral_requests : classifica</p>
+<p>access_roles ||--o{ profile_access_roles : atribui</p>
+<p>access_roles ||--o{ access_grants : concede</p>
+<p>profiles ||--o{ access_grants : &quot;grant direto (opcional)&quot;</p>
+<p>access_resources ||--o{ access_grants : alvo</p>
+<p>```</p>
+<h2>3.4 Chaves de integração recomendadas</h2>
+<ul>
+<li><code>profiles.id</code> como sujeito principal de autorização.</li>
+<li><code>family_id</code> como chave de escopo familiar.</li>
+<li>Telefone normalizado como fallback de reconciliação.</li>
+<li><code>event_id + family_id/member_id</code> como eixo operacional de check-in.</li>
+</ul>
+<hr>
+<h2>4) Blueprint de Segurança e LGPD</h2>
+<h2>4.1 Classificação de dados sensíveis</h2>
+<table><thead><tr>
+<th>Dado</th>
+<th>Sensibilidade</th>
+<th>Tratamento recomendado</th>
+</tr></thead><tbody>
+<tr>
+<td>CPF, PIN, dados pastorais, saúde/alergia</td>
+<td>Alta</td>
+<td>acesso restrito por coluna + RPC dedicada + log de auditoria</td>
+</tr>
+<tr>
+<td>Endereço/CEP, telefone, selfie_url</td>
+<td>Média/Alta</td>
+<td>minimização por papel + mascaramento em telas não administrativas</td>
+</tr>
+<tr>
+<td>Dados de escala e presença</td>
+<td>Média</td>
+<td>acesso por escopo de função/servo</td>
+</tr>
+</tbody></table>
+<h2>4.2 Princípios LGPD aplicados</h2>
+<ul>
+<li>Finalidade: cada dado é usado por módulo claro (cadastro, pastoral, check-in, etc.).</li>
+<li>Necessidade: exibir somente o necessário para o papel do usuário.</li>
+<li>Transparência: consentimento LGPD e fluxo de pendência.</li>
+<li>Segurança: RLS + RPC <code>security definer</code> com validação explícita.</li>
+<li>Prestação de contas: trilhas de auditoria em alterações sensíveis (recomendado ampliar).</li>
+</ul>
+<h2>4.3 RLS no Supabase (modelo-alvo)</h2>
+<h3>Regras-base</h3>
+<ul>
+<li><strong>Negar por padrão</strong> nas tabelas sensíveis.</li>
+<li>Permitir por política apenas quando <code>profile_has_access(...)</code> retornar <code>true</code>.</li>
+<li>Separar políticas de leitura e escrita (<code>view</code> x <code>update</code>).</li>
+</ul>
+<h3>Estratégia por tipo de recurso</h3>
+<ul>
+<li><code>screen:*</code>: bloqueio de rotas sensíveis no cliente + validação no servidor quando necessário.</li>
+<li><code>table:*</code>: controle de SELECT/INSERT/UPDATE/DELETE por papel.</li>
+<li><code>column:*</code>: validação de campos editáveis nas RPCs.</li>
+</ul>
+<h3>Exemplo de modelo de política (conceitual)</h3>
+<ul>
+<li>Líder/Admin: leitura completa de <code>profiles</code>, <code>members</code>, <code>events</code>, <code>pastoral_requests</code>.</li>
+<li>Servo: leitura apenas de suas escalas e dados mínimos de operação.</li>
+<li>Membro comum: dados próprios + informações públicas de eventos.</li>
+</ul>
+<h2>4.4 Matriz de permissões (referência)</h2>
+<table><thead><tr>
+<th>Papel</th>
+<th>Eventos</th>
+<th>Membros</th>
+<th>Dados pessoais completos</th>
+<th>Pastoral</th>
+<th>Escalas</th>
+</tr></thead><tbody>
+<tr>
+<td>Pastor / Administrador</td>
+<td>CRUD</td>
+<td>CRUD</td>
+<td>Sim</td>
+<td>Triagem + histórico</td>
+<td>Visão geral + gestão</td>
+</tr>
+<tr>
+<td>Servo</td>
+<td>Leitura operacional</td>
+<td>Leitura limitada</td>
+<td>Não (mínimo necessário)</td>
+<td>Não</td>
+<td>Somente próprias escalas</td>
+</tr>
+<tr>
+<td>Membro comum</td>
+<td>Leitura pública e próprios fluxos</td>
+<td>Família própria (restrito)</td>
+<td>Próprios dados</td>
+<td>Abre/consulta próprios pedidos</td>
+<td>Somente o que lhe diz respeito</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>5) Estratégia de Deploy PWA</h2>
+<h2>5.1 Objetivo</h2>
+<p>Disponibilizar instalação via navegador (Add to Home Screen), sem lojas.</p>
+<h2>5.2 Pipeline recomendado</h2>
+<p>1. Build estático web (<code>expo export --platform web</code>) gerando <code>dist</code>.</p>
+<p>2. Publicação em host com HTTPS obrigatório.</p>
+<p>3. Cache de assets estáticos com invalidação por hash.</p>
+<p>4. Monitoramento de erros de runtime e métricas básicas.</p>
+<h2>5.3 Requisitos de produção</h2>
+<ul>
+<li>HTTPS e domínio próprio.</li>
+<li><code>manifest</code>/ícones/favicons consistentes.</li>
+<li><code>theme-color</code> alinhado à identidade visual.</li>
+<li>Política de atualização clara (cache busting).</li>
+</ul>
+<h2>5.4 Resultado esperado ao usuário</h2>
+<ul>
+<li>Acesso por URL.</li>
+<li>Prompt de instalação na tela inicial.</li>
+<li>Comportamento de app (fullscreen/chrome mínimo) conforme navegador.</li>
+</ul>
+<hr>
+<h2>6) Mapa de CEPs como alavanca estratégica</h2>
+<h2>6.1 Casos de uso pastorais e de células</h2>
+<ul>
+<li>Clusterização territorial de membros por bairro/região.</li>
+<li>Definição de células por proximidade geográfica.</li>
+<li>Priorização de visitas por zona e criticidade pastoral.</li>
+<li>Roteirização de visitas para reduzir deslocamento.</li>
+</ul>
+<h2>6.2 Indicadores recomendados</h2>
+<ul>
+<li>Densidade de membros por bairro.</li>
+<li>Tempo médio de deslocamento para líderes/servos.</li>
+<li>Cobertura pastoral por região.</li>
+<li>Regiões sem célula ativa.</li>
+</ul>
+<h2>6.3 Governança de privacidade no mapa</h2>
+<ul>
+<li>Exibir coordenadas agregadas para perfis sem permissão.</li>
+<li>Exibir endereço completo apenas para papéis autorizados.</li>
+<li>Logar acessos a painéis geográficos sensíveis.</li>
+</ul>
+<hr>
+<h2>7) Estrutura de diretórios escalável (proposta)</h2>
+<blockquote>Objetivo: evoluir para contexto web/PWA robusto sem romper módulos existentes.</blockquote>
+<p>```text</p>
+<p>src/</p>
+<p>app/                       # Rotas (Expo Router / futura transição web)</p>
+<p>modules/</p>
+<p>auth/</p>
+<p>components/</p>
+<p>hooks/</p>
+<p>services/</p>
+<p>policies/</p>
+<p>profile/</p>
+<p>family/</p>
+<p>events/</p>
+<p>checkin/</p>
+<p>totem/</p>
+<p>pastoral/</p>
+<p>scales/</p>
+<p>vehicles/</p>
+<p>map/</p>
+<p>access-control/</p>
+<p>shared/</p>
+<p>ui/</p>
+<p>hooks/</p>
+<p>lib/</p>
+<p>types/</p>
+<p>constants/</p>
+<p>infra/</p>
+<p>supabase/</p>
+<p>client.ts</p>
+<p>repositories/</p>
+<p>rpc/</p>
+<p>rls/</p>
+<p>observability/</p>
+<p>docs/</p>
+<p>architecture/</p>
+<p>security/</p>
+<p>runbooks/</p>
+<p>scripts/</p>
+<p>migrations/</p>
+<p>seeds/</p>
+<p>```</p>
+<h2>7.1 Convenções recomendadas</h2>
+<ul>
+<li>Separar regra de negócio por módulo (<code>modules/*/services</code>).</li>
+<li>Centralizar acesso ao banco em repositórios por domínio.</li>
+<li>Isolar contratos de permissão por módulo.</li>
+<li>Evitar lógica de autorização “espalhada” no componente de UI.</li>
+</ul>
+<hr>
+<h2>8) Roadmap técnico sugerido</h2>
+<p>1. <strong>ACL completo por card/tela</strong> (cliente + banco).</p>
+<p>2. <strong>RLS por tabela sensível</strong> com deny-by-default.</p>
+<p>3. <strong>Enforcement por coluna em RPCs</strong> (<code>profiles</code>, <code>pastoral_requests</code>).</p>
+<p>4. <strong>Auditoria de alterações sensíveis</strong> (quem alterou, quando, antes/depois).</p>
+<p>5. <strong>Mapa com camadas por papel</strong> (admin vs servo).</p>
+<p>6. <strong>Observabilidade de produção PWA</strong> (erros, latência RPC, taxa de falha de geocode).</p>
+<p>7. <strong>Endurecimento de sessão</strong> (expiração/refresh e telemetria de segurança).</p>
+<hr>
+<h2>9) Critérios de aceite da arquitetura</h2>
+<ul>
+<li>Build PWA exportável de forma consistente.</li>
+<li>Módulos com fronteiras claras e sem dependências circulares.</li>
+<li>Permissões auditáveis por recurso, papel e usuário.</li>
+<li>Dados sensíveis protegidos por RLS e RPC.</li>
+<li>Estratégia geográfica operacional sem violar LGPD.</li>
+</ul>
+<hr>
+<h1>Parte 2 — Cards do Dashboard</h1>
+<hr>
+<h1>Cards do Dashboard</h1>
+<p>Lista dos cards do carrossel horizontal em <code>app/(tabs)/dashboard.tsx</code>.</p>
+<p><strong>Documentação:</strong> <a href="PACOTE_4_ANEXO_TECNICO.md">&lt;code&gt;PACOTE_4_ANEXO_TECNICO.md&lt;/code&gt;</a> · <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></p>
+<p><strong>Atualizado em:</strong> 02/07/2026</p>
+<h2>Índice do Aplicativo (<code>/(tabs)/index</code>)</h2>
+<p>Tela inicial após o login com <strong>etiquetas</strong> (atalhos) para cada módulo do Painel:</p>
+<ul>
+<li>Distribuição uniforme na altura útil da tela</li>
+<li>Subitens aninhados (ex.: Sala(s) e QR Code sob Painel de Eventos)</li>
+<li>Ícones coloridos por módulo; atalhos desabilitados quando o fluxo não se aplica (sem evento, sem QR, etc.)</li>
+<li>Toque na etiqueta navega para <code>/(tabs)/dashboard</code> com parâmetro <code>dashboardCard</code></li>
+<li>Marca d'água visível (login não exibe marca d'água)</li>
+</ul>
+<hr>
+<h2>Navegação do carrossel</h2>
+<ul>
+<li>Deslize horizontalmente no card <strong>ou</strong> use os botões <code>‹</code> / <code>›</code> no rodapé (<code>CarouselFooterNav</code>).</li>
+</ul>
+<ul>
+<li>O rodapé exibe a posição atual (<code>1 / N</code>) e o botão central <strong>Menu</strong> (largura expandida entre as setas).</li>
+<li>No <strong>Índice</strong>, <strong>Encerrar sessão</strong> / <strong>Sair</strong> centralizado; ícone <strong>Configurações</strong> (manutenção) com <code>trailingAccessory</code> <strong>alinhado à direita</strong> do rodapé.</li>
+</ul>
+<ul>
+<li>Segurar <code>‹</code> ou <code>›</code> avança card a card automaticamente (500 ms).</li>
+</ul>
+<ul>
+<li>O cabeçalho mostra o título do card ativo (<code>ActiveScreenBadge</code>).</li>
+</ul>
+<ul>
+<li>Cards visíveis dependem de <strong>ACL</strong> (<code>dashboard.card.*</code>) e de flags de evento/escala/estacionamento.</li>
+</ul>
+<ul>
+<li>Cada card usa <strong>paleta visual própria</strong> (fundo, borda, sombra e acentos) definida em <code>lib/dashboardCardThemes.ts</code>.</li>
+</ul>
+<ul>
+<li>Telas filhas abertas a partir do dashboard propagam <code>returnDashboardCard</code>; ao voltar, o carrossel restaura o card de origem sem passar por cards intermediários.</li>
+</ul>
+<h2>Todos os cards (por número)</h2>
+<table><thead><tr>
+<th>Número</th>
+<th>Nome</th>
+<th>Posição padrão*</th>
+<th>Conteúdo (<code>content</code>)</th>
+<th>Visibilidade</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>1</th>
+<th>Agenda da Família</th>
+<th>1</th>
+<th><code>event_alt</code></th>
+<th>Sempre (com ACL)</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>2</th>
+<th>Check In</th>
+<th>2</th>
+<th><code>qr</code></th>
+<th>Parâmetro <code>qr_code</code> ≠ <code>nao</code></th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>4</th>
+<th>SALA(S)</th>
+<th>3</th>
+<th><code>kids_teens</code></th>
+<th>Sempre (com ACL) — <strong>só inscrições da família do usuário</strong></th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>3</th>
+<th>Dízimos e Ofertas</th>
+<th>4</th>
+<th><code>offerings</code></th>
+<th><strong>Sempre</strong> (com ACL) — independente de <code>parm_ofertas</code> do evento</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>5</th>
+<th>Coração Aberto</th>
+<th>5</th>
+<th><code>pastoral</code></th>
+<th>Sempre (com ACL)</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>10</th>
+<th>Lista de Membros</th>
+<th>6</th>
+<th><code>members_list</code></th>
+<th>Sempre (com ACL)</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>7</th>
+<th>Aniversariantes</th>
+<th>7</th>
+<th><code>birthdays</code></th>
+<th>Sempre (com ACL)</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>11</th>
+<th>Financeiro</th>
+<th>8</th>
+<th><code>financial</code></th>
+<th>Sempre (com ACL) — hub: <code>/financial</code> (relatórios + saldo bancário) e <code>/expense-report</code> (RD)</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>8</th>
+<th>Escalas</th>
+<th>9</th>
+<th><code>vigilance_scales</code></th>
+<th>Sempre (com ACL)</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>12</th>
+<th>Servos em escala</th>
+<th>10</th>
+<th><code>scale_roster</code></th>
+<th>Quando há escala selecionada com servos</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>9</th>
+<th>Estacionamento</th>
+<th>11</th>
+<th><code>parking_vehicle_v2</code></th>
+<th>Painel de estacionamento ativo</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>6</th>
+<th>Perfil &amp; Identidade</th>
+<th>12</th>
+<th><code>grouped_manage</code></th>
+<th>Sempre (com ACL) — título na UI; atalhos Dados Cadastrais, Gerenciar Família, Trilha de Discipulado e Paleta de cores</th>
+</tr></thead><tbody>
+</tbody></table>
+<p>\* Posição na ordem do carrossel quando <strong>todos</strong> os cards condicionais estão visíveis.</p>
+<h2>Ordem no carrossel (cenário completo)</h2>
+<table><thead><tr>
+<th>Posição</th>
+<th>Número</th>
+<th>Nome</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>1</th>
+<th>1</th>
+<th>Agenda da Família</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>2</th>
+<th>2</th>
+<th>Check In</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>3</th>
+<th>4</th>
+<th>SALA(S)</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>4</th>
+<th>3</th>
+<th>Dízimos e Ofertas</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>5</th>
+<th>5</th>
+<th>Coração Aberto</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>6</th>
+<th>10</th>
+<th>Lista de Membros</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>7</th>
+<th>7</th>
+<th>Aniversariantes</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>8</th>
+<th>11</th>
+<th>Financeiro</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>9</th>
+<th>8</th>
+<th>Escalas</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>10</th>
+<th>12</th>
+<th>Servos em escala <em>(condicional)</em></th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>11</th>
+<th>9</th>
+<th>Estacionamento <em>(condicional)</em></th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>12</th>
+<th>6</th>
+<th>Perfil &amp; Identidade</th>
+</tr></thead><tbody>
+</tbody></table>
+<h2>Ordem mínima (sem cards condicionais)</h2>
+<p>Quando Check In, Estacionamento e Servos em escala estão ocultos:</p>
+<table><thead><tr>
+<th>Posição</th>
+<th>Número</th>
+<th>Nome</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>1</th>
+<th>1</th>
+<th>Agenda da Família</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>2</th>
+<th>4</th>
+<th>SALA(S)</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>3</th>
+<th>3</th>
+<th>Dízimos e Ofertas</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>4</th>
+<th>5</th>
+<th>Coração Aberto</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>5</th>
+<th>10</th>
+<th>Lista de Membros</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>6</th>
+<th>7</th>
+<th>Aniversariantes</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>7</th>
+<th>11</th>
+<th>Financeiro</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>8</th>
+<th>8</th>
+<th>Escalas</th>
+</tr></thead><tbody>
+</tbody></table>
+<table><thead><tr>
+<th>9</th>
+<th>6</th>
+<th>Perfil &amp; Identidade</th>
+</tr></thead><tbody>
+</tbody></table>
+<h2>Card SALA(S) — escopo no dashboard</h2>
+<p>No <strong>Painel do membro</strong>, o card lista apenas inscrições Kids/Teens de <strong>membros da própria família</strong> (<code>familyId</code> da sessão). Na <strong>Manutenção → Sala(s) - Check In</strong>, a equipe vê <strong>todos</strong> os inscritos do evento.</p>
+<p>Mensagens quando vazio:</p>
+<ul>
+<li>Família não identificada: <em>&quot;Não foi possível identificar a família do seu cadastro…&quot;</em></li>
+</ul>
+<ul>
+<li>Sem inscritos da família: <em>&quot;Nenhum membro da sua família inscrito em IBN KIDS/TEENS.&quot;</em></li>
+</ul>
+<h2>Navegação por parâmetro</h2>
+<p>Outras telas podem abrir um card via <code>dashboardCard</code>:</p>
+<ul>
+<li>Por <strong>número</strong>: <code>'1'</code>, <code>'2'</code>, … <code>'12'</code>, <code>'6'</code></li>
+</ul>
+<ul>
+<li>Por <strong>conteúdo</strong>: ex. <code>'pastoral'</code> (card 5), <code>'members_list'</code> (card 10), <code>'offerings'</code> (card 3)</li>
+</ul>
+<p>Constante usada para o menu: <code>DASHBOARD_MENU_CARD_ID = '6'</code>.</p>
+<hr>
+<h2>Card Lista de Membros (<code>members_list</code>)</h2>
+<ul>
+<li>Botões <strong>Visitantes</strong> (ou <strong>Membros</strong>, conforme a lista ativa) e <strong>Mapa Geral</strong> dividem a mesma linha (<code>flex: 1</code> cada).</li>
+<li><strong>Mapa Geral</strong> abre <code>/mapa-geolocalizacao</code> preservando <code>returnDashboardCard</code>.</li>
+<li>Título alterna entre <em>LISTA DE MEMBROS</em> e <em>LISTA DE VISITANTES</em>.</li>
+</ul>
+<hr>
+<h2>Card Perfil &amp; Identidade (<code>grouped_manage</code>)</h2>
+<ul>
+<li>Título exibido: <strong>Perfil &amp; Identidade</strong> (identificador interno do card permanece <code>grouped_manage</code>; atalho no Índice do Aplicativo com o mesmo nome).</li>
+<li>Botões com ícones: <strong>Dados Cadastrais</strong> → <code>/manage-profile</code>; <strong>Gerenciar Família</strong> → <code>/manage-members</code>; <strong>Trilha de Discipulado</strong> → painel da jornada (5×3), selos coloridos e, na lição 5.1, <strong>Perfil Ministerial</strong> (questionário de 50 perguntas; RPCs <code>listar_questionario_ministerial</code>, <code>obter_resultado_questionario_ministerial</code>, <code>submeter_questionario_ministerial</code>).</li>
+<li>Rodapé: seletor de <strong>Paleta de cores</strong> (<code>GroupedManagePaletteFooter</code>).</li>
+<li>Atalhos de tela propagam <code>returnDashboardCard</code> para retorno ao card 6.</li>
+</ul>
+<hr>
+<h2>Card Dízimos e Ofertas (<code>offerings</code>)</h2>
+<ul>
+<li>Botão <strong>Copiar chave PIX</strong> usa ícone Material <em>touch-app</em> para reforçar a ação de toque no PWA.</li>
+</ul>
+<hr>
+<h2>Card Financeiro (<code>financial</code>)</h2>
+<ul>
+<li>Recurso ACL: <code>dashboard.card.financial</code> (card) + telas <code>/financial</code> e <code>/expense-report</code>.</li>
+<li>Toque abre hub com atalho destacado <strong>Relatório de Despesas (RD)</strong> → <code>/expense-report</code>.</li>
+<li>Tela <code>/financial</code>: Resultado do mês, Comparativo, Últimos 12 meses, Planejado × Realizado, <strong>Saldo bancário</strong>.</li>
+<li>Itens Fluxo de caixa, Categorias e Relatórios extras aparecem como <strong>em breve</strong> no hub.</li>
+</ul>
+</div>
+</body>
+</html>

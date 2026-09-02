@@ -1,0 +1,1426 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Blueprint completo — app-igreja (Igreja Batista Norte)</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Blueprint completo — app-igreja (Igreja Batista Norte)</h1>
+<p>Documento de referência da solução implementada: telas, controles, fluxos de negócio, mensagens ao usuário e camadas de segurança.</p>
+<p><strong>Índice da documentação:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a> · Pacote técnico: <a href="PACOTE_3_GOVERNANCA_TI.md">&lt;code&gt;PACOTE_3_GOVERNANCA_TI.md&lt;/code&gt;</a> · Anexo: <a href="PACOTE_4_ANEXO_TECNICO.md">&lt;code&gt;PACOTE_4_ANEXO_TECNICO.md&lt;/code&gt;</a></p>
+<p><strong>Atualizado em:</strong> 23/06/2026</p>
+<hr>
+<h2>1. Visão geral da solução</h2>
+<table><thead><tr>
+<th>Aspecto</th>
+<th>Descrição</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Produto</strong></td>
+<td>PWA / app Expo (React Native + Web) para membros e equipe da igreja</td>
+</tr>
+<tr>
+<td><strong>Backend</strong></td>
+<td><strong>Supabase</strong> (PostgreSQL + PostgREST + RPCs + Storage)</td>
+</tr>
+<tr>
+<td><strong>Projeto Supabase</strong></td>
+<td><code>bldbrsuiwctoaxzcrjoc</code> — URL <code>https://bldbrsuiwctoaxzcrjoc.supabase.co</code></td>
+</tr>
+<tr>
+<td><strong>Identidade</strong></td>
+<td>Login por <strong>celular + PIN de 4 dígitos</strong> (<code>profiles.access_pin</code>); sessão local com <code>user_phone</code> e <code>user_profile_id</code></td>
+</tr>
+<tr>
+<td><strong>Autorização</strong></td>
+<td>ACL via RPC <code>profile_has_access</code> + RLS com header <code>x-profile-id</code></td>
+</tr>
+<tr>
+<td><strong>Deploy web</strong></td>
+<td><code>npm run build:web</code> → pasta <code>dist/</code> (PWA estático em HTTPS)</td>
+</tr>
+<tr>
+<td><strong>Modo totem</strong></td>
+<td>Aparelho dedicado: celular configurado em <code>app_parameters.cel_totem</code>, senha fixa <code>9999</code>, rota <code>/totem-checkin</code></td>
+</tr>
+</tbody></table>
+<h3>Mapa de telas (rotas)</h3>
+<p>```</p>
+<p>/                      → Login</p>
+<p>/register              → Cadastro inicial</p>
+<p>/(tabs)/dashboard      → Painel principal (carrossel de módulos)</p>
+<p>/manage-profile        → Dados cadastrais</p>
+<p>/manage-members        → Gerenciar família</p>
+<p>/pastoral              → Coração Aberto (novo pedido)</p>
+<p>/pastoral-history      → Meus pedidos pastorais</p>
+<p>/financial             → Financeiro (leitura)</p>
+<p>/mapa-geolocalizacao   → Mapa de geolocalização (PWA/web)</p>
+<p>/lgpd                  → Termos LGPD</p>
+<p>/maintenance-dashboard → Manutenção (equipe)</p>
+<p>/totem-checkin         → Totem de check-in (quiosque)</p>
+<p>```</p>
+<h3>Documentação relacionada</h3>
+<table><thead><tr>
+<th>Documento</th>
+<th>Conteúdo</th>
+</tr></thead><tbody>
+<tr>
+<td><a href="CONTROLE_ACESSO.md">&lt;code&gt;CONTROLE_ACESSO.md&lt;/code&gt;</a></td>
+<td>Modelo ACL, inventário de recursos, status de implementação</td>
+</tr>
+<tr>
+<td><a href="MANUAL_CONTROLE_ACESSO.md">&lt;code&gt;MANUAL_CONTROLE_ACESSO.md&lt;/code&gt;</a></td>
+<td>Manual operacional do ACL</td>
+</tr>
+<tr>
+<td><a href="scripts/">&lt;code&gt;scripts/&lt;/code&gt;</a></td>
+<td>Scripts SQL versionados para deploy no Supabase</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>2. Segurança da informação — camadas e confiança</h2>
+<p><strong>Especificação completa:</strong> <a href="CAMADAS_SEGURANCA.md">&lt;code&gt;CAMADAS_SEGURANCA.md&lt;/code&gt;</a></p>
+<h3>2.1 Camadas de proteção (defesa em profundidade)</h3>
+<p>```mermaid</p>
+<p>flowchart TB</p>
+<p>subgraph L1 [Camada 1 — Dispositivo]</p>
+<p>PIN[PIN 4 dígitos]</p>
+<p>AsyncStorage[Sessão local AsyncStorage]</p>
+<p>Camera[Permissões câmera]</p>
+<p>TotemIso[Totem isolado do fluxo membro]</p>
+<p>end</p>
+<p>subgraph L2 [Camada 2 — Cliente app]</p>
+<p>ScreenACL[Guard de tela sessionHasAccess]</p>
+<p>CardACL[Cards do dashboard filtrados por ACL]</p>
+<p>ColumnACL[Colunas do perfil view/update]</p>
+<p>Strict[EXPO_PUBLIC_ACL_STRICT fail-closed]</p>
+<p>end</p>
+<p>subgraph L3 [Camada 3 — Transporte]</p>
+<p>HTTPS[HTTPS Supabase]</p>
+<p>Header[x-profile-id em toda requisição]</p>
+<p>AnonKey[Chave anon — sem service_role no app]</p>
+<p>end</p>
+<p>subgraph L4 [Camada 4 — Servidor Supabase]</p>
+<p>RPC[RPCs security definer]</p>
+<p>RLS[Row Level Security]</p>
+<p>Grants[access_grants + profile_access_roles]</p>
+<p>NoDirect[INSERT escalas_log / PIN só via RPC]</p>
+<p>end</p>
+<p>L1 --&gt; L2 --&gt; L3 --&gt; L4</p>
+<p>```</p>
+<h3>2.2 Banco de dados e guarda de informações</h3>
+<table><thead><tr>
+<th>Item</th>
+<th>Detalhe</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>SGBD</strong></td>
+<td>PostgreSQL 15+ (gerenciado pelo Supabase)</td>
+</tr>
+<tr>
+<td><strong>Schema</strong></td>
+<td><code>public</code></td>
+</tr>
+<tr>
+<td><strong>Tabelas principais</strong></td>
+<td><code>profiles</code>, <code>members</code>, <code>events</code>, <code>event_registrations</code>, <code>checkins</code>, <code>financials</code>, <code>pastoral_requests</code>, <code>escalas_log</code>, <code>tipos_escala</code>, <code>access_resources</code>, <code>access_roles</code>, <code>access_grants</code>, <code>profile_access_roles</code>, <code>app_parameters</code>, <code>cep_geolocations</code>, etc.</td>
+</tr>
+<tr>
+<td><strong>Dados sensíveis</strong></td>
+<td><code>access_pin</code> (crítico), <code>cpf</code>, <code>lgpd_*</code>, <code>medical_food_alerts</code> — ocultos na UI padrão; escrita via RPC com <code>can_update</code></td>
+</tr>
+<tr>
+<td><strong>Autenticação Supabase Auth</strong></td>
+<td>Opcional (<code>profiles.auth_user_id</code>); maioria dos usuários <strong>não</strong> usa <code>auth.users</code></td>
+</tr>
+<tr>
+<td><strong>Validação de login</strong></td>
+<td>RPC <code>verificar_login</code> — PIN nunca comparado em texto claro no cliente</td>
+</tr>
+<tr>
+<td><strong>Sessão no app</strong></td>
+<td><code>user_profile_id</code> + <code>user_phone</code> em AsyncStorage; reparada via <code>repairUserSessionReference()</code> se inconsistente</td>
+</tr>
+<tr>
+<td><strong>RLS</strong></td>
+<td>Políticas consultam <code>profile_has_access</code> + header <code>x-profile-id</code> injetado por <code>lib/supabaseSessionFetch.ts</code></td>
+</tr>
+<tr>
+<td><strong>Modo estrito ACL</strong></td>
+<td><code>EXPO_PUBLIC_ACL_STRICT=true</code> em produção: nega acesso se RPC ACL ausente (banner no dashboard)</td>
+</tr>
+<tr>
+<td><strong>Totem</strong></td>
+<td>Sem ACL de tela; confiança no aparelho físico + parâmetro <code>cel_totem</code> + PIN <code>9999</code>; confirmação só via RPC com pré-check-in</td>
+</tr>
+<tr>
+<td><strong>Geolocalização</strong></td>
+<td>CEP → coordenadas no servidor (<code>cep_geolocations</code>); cache local versionado (<code>geoCepCache.v8</code>)</td>
+</tr>
+<tr>
+<td><strong>LGPD</strong></td>
+<td>Aceite registrado em <code>profiles.lgpd_accepted</code>; termos carregados de <code>app_parameters</code>; scroll obrigatório antes do aceite</td>
+</tr>
+<tr>
+<td><strong>Confiança operacional</strong></td>
+<td>Dados em nuvem Supabase (SOC 2); app não embute <code>service_role</code>; scripts SQL versionados em <code>scripts/</code>; PWA servido em HTTPS</td>
+</tr>
+</tbody></table>
+<h3>2.3 Papéis de acesso (ACL)</h3>
+<p>Papéis canônicos (ordem de exibição em <code>lib/accessRoleDisplayOrder.ts</code>):</p>
+<p><code>visitantes</code> → <code>congregado</code> → <code>member</code> → <code>family_acceptor</code> → <code>lider</code> → <code>events_admin</code> → <code>pastoral</code> → <code>super_admin</code></p>
+<p>Recursos protegidos:</p>
+<ul>
+<li><strong>Telas</strong> — <code>screen:/dashboard</code>, <code>screen:/manage-profile</code>, etc.</li>
+<li><strong>Cards</strong> — <code>screen:dashboard.card.*</code></li>
+<li><strong>Tabelas</strong> — <code>table:profiles</code>, <code>table:members</code>, etc.</li>
+<li><strong>Colunas</strong> — <code>column:profiles.cpf</code>, <code>column:profiles.access_pin</code>, etc.</li>
+</ul>
+<h3>2.4 Matriz de guards por tela</h3>
+<table><thead><tr>
+<th>Tela</th>
+<th>Mecanismo</th>
+<th>Resource key</th>
+</tr></thead><tbody>
+<tr>
+<td>Login <code>/</code></td>
+<td>Público</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Cadastro <code>/register</code></td>
+<td>Público (com <code>?phone=</code>)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td>Cards filtrados por ACL</td>
+<td><code>screen:/dashboard</code> + <code>dashboard.card.*</code></td>
+</tr>
+<tr>
+<td>Dados cadastrais</td>
+<td><code>sessionHasAccess</code> manual</td>
+<td><code>/manage-profile</code></td>
+</tr>
+<tr>
+<td>Gerenciar família</td>
+<td><code>useScreenAccessGuard</code></td>
+<td><code>/manage-members</code></td>
+</tr>
+<tr>
+<td>Coração Aberto</td>
+<td><code>useScreenAccessGuard</code></td>
+<td><code>/pastoral</code></td>
+</tr>
+<tr>
+<td>Meus pedidos</td>
+<td><code>useScreenAccessGuard</code></td>
+<td><code>/pastoral-history</code></td>
+</tr>
+<tr>
+<td>Financeiro</td>
+<td><code>useScreenAccessGuard</code></td>
+<td><code>/financial</code></td>
+</tr>
+<tr>
+<td>Mapa (web)</td>
+<td><code>useScreenAccessGuard</code></td>
+<td><code>/mapa-geolocalizacao</code></td>
+</tr>
+<tr>
+<td>LGPD</td>
+<td><code>useScreenAccessGuard</code> (skip com <code>?phone=</code>)</td>
+<td><code>/lgpd</code></td>
+</tr>
+<tr>
+<td>Manutenção</td>
+<td><code>useScreenAccessGuard</code></td>
+<td><code>/maintenance-dashboard</code></td>
+</tr>
+<tr>
+<td>Totem</td>
+<td><strong>Sem ACL</strong> — aparelho dedicado</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>3. Telas — descrição completa</h2>
+<hr>
+<h3>3.1 Tela de Login (<code>/</code> — <code>app/index.tsx</code>)</h3>
+<p><strong>Esta tela serve para:</strong> autenticar membros em <strong>dois passos</strong> (celular → PIN) ou abrir o modo totem em aparelho dedicado; restaurar sessão existente; links para redes sociais.</p>
+<h4>Modo membro (padrão) — fluxo em 2 passos</h4>
+<table><thead><tr>
+<th>Passo</th>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>1</strong></td>
+<td><strong>Campo Celular</strong></td>
+<td>Máscara <code>(00) 00000-0000</code>; botão <strong>Continuar</strong> avança ao passo 2</td>
+</tr>
+<tr>
+<td><strong>1</strong></td>
+<td><strong>Botão X (celular)</strong></td>
+<td>Limpa o número digitado</td>
+</tr>
+<tr>
+<td><strong>1</strong></td>
+<td>Texto de ajuda</td>
+<td>Orientação para primeira vez (Ministério de Acolhimento)</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>Campo Senha de acesso</strong></td>
+<td>4 dígitos, ocultos; auto-submit ao completar</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>Receber código por e-mail</strong></td>
+<td>Gera e envia PIN temporário — <strong>somente primeira entrada</strong> (sem PIN cadastrado); canal imutável <strong>e-mail</strong> (<code>lib/authNotificationService.ts</code>)</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>Esqueci minha senha</strong></td>
+<td>Visível <strong>apenas no passo 2</strong> → <code>/forgot-password</code> (e-mail + pergunta de segurança; <strong>não</strong> usa WhatsApp)</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td>Texto de hint (PIN)</td>
+<td>Orienta envio exclusivo por e-mail</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>Botão &quot;Entrar&quot;</strong> / <strong>Acessar</strong></td>
+<td>Valida e autentica</td>
+</tr>
+<tr>
+<td>—</td>
+<td><strong>Logo IBNORTE</strong>, <strong>Boas-Vindas</strong></td>
+<td>Identidade visual e cabeçalho</td>
+</tr>
+<tr>
+<td>—</td>
+<td><strong>Instagram / YouTube</strong></td>
+<td>Abre links externos da igreja</td>
+</tr>
+</tbody></table>
+<p><strong>PIN de autenticação:</strong> gateway único <code>dispatchAuthAccessPinEmail</code> / RPC <code>dispatch_auth_access_pin_email</code> (<code>scripts/auth-pin-email-only.sql</code>). WhatsApp está <strong>bloqueado</strong> (<code>AUTH_CHANNEL_BLOCKED</code>) em <code>sendAccessPinViaWhatsApp</code> e no gateway. WhatsApp permanece apenas para contatos operacionais (aniversariantes, membros, etc.), <strong>fora</strong> de autenticação.</p>
+<p><strong>Recuperação de senha</strong> (<code>/forgot-password</code>): membro já cadastrado confirma e-mail, responde pergunta de segurança e recebe novo PIN por <strong>e-mail</strong> (RPCs em <code>scripts/password-recovery-*.sql</code>).</p>
+<h4>Modo totem (quando celular = <code>cel_totem</code>)</h4>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Título &quot;Totem — Check-in&quot;</strong></td>
+<td>Identifica modo quiosque</td>
+</tr>
+<tr>
+<td><strong>Campo Senha do totem</strong></td>
+<td>Apenas PIN; sem campo celular</td>
+</tr>
+<tr>
+<td><strong>Botão &quot;Abrir tela do totem&quot;</strong></td>
+<td>Senha <code>9999</code> → <code>/totem-checkin</code></td>
+</tr>
+<tr>
+<td><strong>Hint</strong></td>
+<td>Informa que não usa cadastro/LGPD/PIN de membro</td>
+</tr>
+</tbody></table>
+<h4>Restauração de sessão</h4>
+<ul>
+<li>Ao abrir: se há <code>user_phone</code> salvo e é o totem → redireciona direto para <code>/totem-checkin</code>.</li>
+<li>Parâmetro <code>?signedOut=1</code> após logout impede restauração automática.</li>
+</ul>
+<h4>Mensagens interativas (Alert)</h4>
+<table><thead><tr>
+<th>Título</th>
+<th>Quando</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Atenção</strong> — celular inválido</td>
+<td>WhatsApp ou entrar sem celular completo</td>
+</tr>
+<tr>
+<td><strong>WhatsApp indisponível</strong></td>
+<td><code>psw_mngr</code>/<code>psw_user</code> mal configurado</td>
+</tr>
+<tr>
+<td><strong>Erro ao gerar código</strong></td>
+<td>Falha em <code>prepareAccessPinDraft</code></td>
+</tr>
+<tr>
+<td><strong>Gestor não configurado</strong></td>
+<td><code>psw_user=nao</code> sem <code>psw_mngr</code></td>
+</tr>
+<tr>
+<td><strong>Não foi possível gerar o código</strong></td>
+<td>Perfil/RPC ausente no Supabase</td>
+</tr>
+<tr>
+<td><strong>Código gerado</strong></td>
+<td>PIN preparado; mensagem copiada para área de transferência</td>
+</tr>
+<tr>
+<td><strong>Código necessário</strong></td>
+<td>Primeira entrada sem passar pelo WhatsApp</td>
+</tr>
+<tr>
+<td><strong>Senha incorreta</strong></td>
+<td>Totem: PIN diferente de 9999</td>
+</tr>
+<tr>
+<td><strong>Totem não configurado</strong></td>
+<td><code>cel_totem</code> ausente</td>
+</tr>
+<tr>
+<td><strong>Validação indisponível</strong></td>
+<td>RPC <code>verificar_login</code> não instalada</td>
+</tr>
+<tr>
+<td><strong>Erro</strong> — Número ou senha inválidos</td>
+<td>Credenciais incorretas; no passo 2, oferece <strong>Esqueci minha senha</strong> (e-mail)</td>
+</tr>
+<tr>
+<td><strong>Erro de Acesso</strong></td>
+<td>Falha de rede ou perfil não continuável</td>
+</tr>
+<tr>
+<td><strong>Erro</strong> — link social</td>
+<td>Falha ao abrir Instagram/YouTube</td>
+</tr>
+</tbody></table>
+<h4>Quem inicia / termina</h4>
+<ul>
+<li><strong>Inicia:</strong> passo 1 — celular e <strong>Continuar</strong>; passo 2 — PIN (ou PIN via WhatsApp na primeira entrada; ou <strong>Esqueci minha senha</strong> → e-mail).</li>
+<li><strong>Termina:</strong> app grava sessão (<code>persistUserSession</code>) e redireciona para dashboard, cadastro, LGPD ou totem conforme estado do perfil.</li>
+</ul>
+<hr>
+<h3>3.2 Tela de Cadastro (<code>/register</code> — <code>app/register.tsx</code>)</h3>
+<p><strong>Esta tela serve para:</strong> primeiro cadastro de perfil após receber PIN; coleta nome, nascimento, selfie, aceite LGPD; cria <code>profiles</code> + <code>family_id</code>.</p>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Nome completo</strong></td>
+<td>Capitalização automática por palavra</td>
+</tr>
+<tr>
+<td><strong>Data nascimento</strong></td>
+<td>Máscara DD/MM/AAAA</td>
+</tr>
+<tr>
+<td><strong>Telefone</strong></td>
+<td>Somente leitura (vem da rota <code>?phone=</code>)</td>
+</tr>
+<tr>
+<td><strong>Caixa LGPD rolável</strong></td>
+<td>Termos carregados do banco; exige scroll até o fim</td>
+</tr>
+<tr>
+<td><strong>Checkbox &quot;Li e aceito&quot;</strong></td>
+<td>Marca <code>lgpd_accepted=true</code></td>
+</tr>
+<tr>
+<td><strong>Checkbox &quot;Li e não concordo&quot;</strong></td>
+<td>Marca recusa (com alerta de privacidade)</td>
+</tr>
+<tr>
+<td><strong>Botão selfie / câmera</strong></td>
+<td>Abre captura (nativo) ou seletor de arquivo (web)</td>
+</tr>
+<tr>
+<td><strong>Estágio CAMERA</strong></td>
+<td>Preview frontal, botão &quot;Capturar Selfie&quot;</td>
+</tr>
+<tr>
+<td><strong>Estágio CONFIRM</strong></td>
+<td>Revisão da foto + confirmar cadastro</td>
+</tr>
+<tr>
+<td><strong>Botão final</strong></td>
+<td>Grava perfil, upload selfie no Storage, reserva <code>family_id</code></td>
+</tr>
+</tbody></table>
+<p><strong>Rejeição totem:</strong> <code>useRejectTotemPhoneFromMemberRoutes</code> redireciona celular totem para login.</p>
+<h4>Mensagens</h4>
+<table><thead><tr>
+<th>Mensagem</th>
+<th>Quando</th>
+</tr></thead><tbody>
+<tr>
+<td>Preencha Nome e Nascimento</td>
+<td>LGPD sem formulário válido</td>
+</tr>
+<tr>
+<td>Role os termos até o final</td>
+<td>Aceite sem scroll completo</td>
+</tr>
+<tr>
+<td>Privacidade (declínio LGPD)</td>
+<td><code>buildLgpdDeclineMessage</code></td>
+</tr>
+<tr>
+<td>Permissão necessária (câmera)</td>
+<td>Selfie sem permissão</td>
+</tr>
+<tr>
+<td>Erro na câmera</td>
+<td>Falha de hardware</td>
+</tr>
+<tr>
+<td>Sucesso — cadastro concluído</td>
+<td>Redireciona para completar dados</td>
+</tr>
+<tr>
+<td>Erro</td>
+<td>Falha insert/update</td>
+</tr>
+</tbody></table>
+<h4>Fluxo</h4>
+<ul>
+<li><strong>Inicia:</strong> gestor/sistema gera PIN → membro entra com PIN → rota de onboarding leva ao cadastro.</li>
+<li><strong>Termina:</strong> perfil criado → sessão gravada → próxima tela (<code>manage-profile</code> ou LGPD).</li>
+</ul>
+<hr>
+<h3>3.3 Painel Principal / Dashboard (<code>/(tabs)/dashboard</code>)</h3>
+<p><strong>Esta tela serve para:</strong> hub central do membro — carrossel de módulos conforme evento selecionado e permissões ACL.</p>
+<h4>Cabeçalho global</h4>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>&quot;Boas-Vindas, {nome}&quot;</strong></td>
+<td>Saudação; fundo vermelho se LGPD pendente</td>
+</tr>
+<tr>
+<td><strong>Título do card ativo</strong></td>
+<td>Nome do módulo atual</td>
+</tr>
+<tr>
+<td><strong>Banner ACL</strong></td>
+<td><code>ACL_UNAVAILABLE_MESSAGE</code> se RPC ACL ausente em modo estrito</td>
+</tr>
+</tbody></table>
+<h4>Rodapé (<code>CarouselFooterNav</code>)</h4>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>‹ / ›</strong></td>
+<td>Navega cards (segurar = avança a cada 500 ms)</td>
+</tr>
+<tr>
+<td><strong>Indicador 1 / N</strong></td>
+<td>Posição atual no carrossel</td>
+</tr>
+<tr>
+<td><strong>Menu</strong> (centro)</td>
+<td>Abre tela de atalhos <code>/(tabs)</code> com ícones coloridos</td>
+</tr>
+<tr>
+<td><strong>Engrenagem</strong></td>
+<td>Manutenção — só com <code>view</code> em <code>/maintenance-dashboard</code>; duplo toque evita clique acidental</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>Card 1 — Agenda da Família (<code>event_alt</code>)</h4>
+<p><strong>Serve para:</strong> escolher evento e registrar <strong>audiência</strong> (pré-check-in) dos membros da família.</p>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Evento selecionado</strong></td>
+<td>Nome, data/hora, local, badges Kids/Teens</td>
+</tr>
+<tr>
+<td><strong>Vagas</strong></td>
+<td>Inscritos / capacidade</td>
+</tr>
+<tr>
+<td><strong>Trocar Evento</strong></td>
+<td>Chips horizontais (<code>FamilyEventSelector</code>)</td>
+</tr>
+<tr>
+<td><strong>Lista de audiência</strong></td>
+<td>Checkboxes por integrante (<code>FamilyRegistrationList</code>) — membros, congregados e dependentes não rejeitados</td>
+</tr>
+<tr>
+<td><strong>Checkbox em massa</strong></td>
+<td>Marca/desmarca todos (exceto quórum bloqueado)</td>
+</tr>
+</tbody></table>
+<p><strong>Hints inline (sem Alert):</strong></p>
+<ul>
+<li>Selecione um evento…</li>
+<li>Quórum: só membro da sessão ativa</li>
+<li>Quórum + totem confirmado: audiência travada</li>
+<li>Quórum pendente: marque audiência para liberar QR</li>
+<li>Check-in automático (geofence) / QR só no dia do evento</li>
+<li>Geofence: banner <code>GeoCheckinStatusBanner</code> — detectando, sincronizando, confirmado</li>
+<li>Erro de gate pré-check-in (<code>preCheckinGateError</code>)</li>
+</ul>
+<p><strong>Quem inicia / termina o pré-check-in:</strong></p>
+<ul>
+<li><strong>Inicia:</strong> membro marca checkbox na audiência.</li>
+<li><strong>Termina (totem/quórum):</strong> membro apresenta QR no totem → RPC confirma → checkbox trava.</li>
+<li><strong>Staff:</strong> não participa desta etapa; apenas configura evento na manutenção.</li>
+</ul>
+<hr>
+<h4>Card 2 — Check-in QR (<code>qr</code>)</h4>
+<p><strong>Serve para:</strong> exibir etiqueta (código família) e QR para leitura no totem ou entrada manual.</p>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Toque no card</strong></td>
+<td>Abre <code>CheckinModal</code> (seleção manual — <strong>ainda sem gravação no banco</strong>)</td>
+</tr>
+<tr>
+<td><strong>Etiqueta</strong></td>
+<td><code>family_id</code> / <code>codigo_membro</code></td>
+</tr>
+<tr>
+<td><strong>QR Code</strong></td>
+<td>Codifica identificador da família</td>
+</tr>
+<tr>
+<td><strong>Badges Kids/Teens</strong></td>
+<td>Se evento tem salas</td>
+</tr>
+</tbody></table>
+<p><strong>Visibilidade:</strong> dia do evento + pré-check-in feito + ACL + tipo de fluxo (totem/quórum/manual).</p>
+<p><strong>Quem termina check-in no totem:</strong></p>
+<ul>
+<li><strong>Membro</strong> mostra QR na tela do <strong>totem</strong> (outro aparelho, <code>/totem-checkin</code>).</li>
+<li><strong>Totem</strong> escaneia → <code>lookup_totem_checkin</code> → <code>confirm_totem_checkin</code>.</li>
+<li><strong>Sistema</strong> atualiza <code>checkins.status</code> para <code>confirmado</code>.</li>
+</ul>
+<hr>
+<h4>Card 2b — Check-in geofence (automático por proximidade)</h4>
+<p><strong>Serve para:</strong> confirmar presença via GPS quando <code>events.geofence_ativo = true</code>.</p>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong><code>useGeoCheckinMonitor</code></strong></td>
+<td>Watch GPS, 3 leituras dentro do raio, dispara RPC</td>
+</tr>
+<tr>
+<td><strong><code>GeoCheckinStatusBanner</code></strong></td>
+<td>Feedback visual no dashboard</td>
+</tr>
+<tr>
+<td><strong><code>confirm_geo_family_checkin_atomic</code></strong></td>
+<td>RPC atômica no Supabase</td>
+</tr>
+<tr>
+<td><strong>Coordenadas</strong></td>
+<td><code>event_local</code> → <code>event_favorite_locations</code> (normalize_location_key)</td>
+</tr>
+<tr>
+<td><strong>Janela</strong></td>
+<td><code>check_in_geofence_tempo</code> horas antes + fim do dia (America/Sao_Paulo)</td>
+</tr>
+<tr>
+<td><strong>Raio</strong></td>
+<td><code>check_in_geofence_raio_metros</code> (padrão 30 m) + buffer de precisão GPS</td>
+</tr>
+<tr>
+<td><strong>Offline</strong></td>
+<td><code>checkinOfflineQueue.ts</code> enfileira e drena ao reconectar</td>
+</tr>
+</tbody></table>
+<p><strong>Visibilidade:</strong> geofence ativo + coordenadas resolvidas + janela temporal + audiência + sem check-in confirmado.</p>
+<p><strong>Invalidação:</strong> trigger <code>events_purge_geofence_checkins_on_update</code> e <code>event_favorite_locations_purge_geofence_checkins</code> removem check-ins quando evento ou local favorito muda.</p>
+<hr>
+<h4>Card 3 — SALA(S) (<code>kids_teens</code>)</h4>
+<p><strong>Serve para:</strong> monitorar entrada nas salas Kids/Teens (somente leitura para o membro).</p>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Chips IBN KIDS / IBN TEENS</strong></td>
+<td>Contagem check-in/total</td>
+</tr>
+<tr>
+<td><strong>Lista de inscritos</strong></td>
+<td>✓ se <code>room_entry_checked</code> — <strong>apenas membros da família do usuário</strong></td>
+</tr>
+</tbody></table>
+<p><strong>Escopo:</strong> no dashboard, filtro por <code>familyId</code> da sessão. Na manutenção, a equipe vê todos os inscritos.</p>
+<p><strong>Quem termina check-in na sala:</strong></p>
+<ul>
+<li><strong>Staff</strong> marca entrada em <strong>Manutenção → Sala(s) - Check In</strong>.</li>
+<li>Membro apenas <strong>visualiza</strong> status aqui.</li>
+</ul>
+<hr>
+<h4>Card 4 — Dízimos e Ofertas (<code>offerings</code>)</h4>
+<p><strong>Visibilidade:</strong> sempre presente no carrossel (com ACL); independente de <code>parm_ofertas</code> do evento.</p>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Dados do recebedor</strong></td>
+<td>Informações institucionais</td>
+</tr>
+<tr>
+<td><strong>Chave PIX</strong></td>
+<td>Exibição + <strong>Copiar chave PIX</strong></td>
+</tr>
+<tr>
+<td><strong>Atualizar chave PIX</strong></td>
+<td>Recarrega de <code>app_parameters</code></td>
+</tr>
+</tbody></table>
+<p><strong>Mensagens:</strong> Chave PIX indisponível; Erro ao copiar; sucesso inline 3 s.</p>
+<hr>
+<h4>Card 5 — Coração Aberto (<code>pastoral</code>)</h4>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Toque</strong></td>
+<td>Navega para <code>/pastoral</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h4>Card 6 — Lista de Membros (<code>members_list</code>)</h4>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Mapa</strong></td>
+<td><code>/mapa-geolocalizacao</code></td>
+</tr>
+<tr>
+<td><strong>Busca</strong></td>
+<td>Filtra por nome</td>
+</tr>
+<tr>
+<td><strong>Tabela</strong></td>
+<td>Nome, família, WhatsApp</td>
+</tr>
+<tr>
+<td><strong>Ícone users</strong></td>
+<td>Modal &quot;Membros da família&quot;</td>
+</tr>
+<tr>
+<td><strong>Ícone Zap</strong></td>
+<td>Abre WhatsApp do membro</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>Card 7 — Aniversariantes (<code>birthdays</code>)</h4>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Seletor de mês</strong></td>
+<td>Picker</td>
+</tr>
+<tr>
+<td><strong>Lista</strong></td>
+<td>Data + nome + WhatsApp</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>Card 8 — Financeiro (<code>financial</code>)</h4>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Toque</strong></td>
+<td><code>/financial</code> (somente leitura)</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>Card 9 — Escalas (<code>vigilance_scales</code> + <code>scale_roster</code>)</h4>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Lista de tipos</strong></td>
+<td>Radio → abre escala do tipo</td>
+</tr>
+<tr>
+<td><strong>Roster</strong></td>
+<td>Datas + servos + WhatsApp</td>
+</tr>
+<tr>
+<td><strong>Estacionamento</strong></td>
+<td>Se tipo = parking → painel de placa</td>
+</tr>
+<tr>
+<td><strong>Voltar</strong></td>
+<td>Retorna à lista de tipos</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>Card 10 — Perfil &amp; Identidade (<code>grouped_manage</code>)</h4>
+<p>Título na UI e no Índice: <strong>Perfil &amp; Identidade</strong> (recurso ACL <code>dashboard.card.grouped_manage</code>).</p>
+<table><thead><tr>
+<th>Elemento</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Dados Cadastrais</strong></td>
+<td><code>/manage-profile</code></td>
+</tr>
+<tr>
+<td><strong>Gerenciar Família</strong></td>
+<td><code>/manage-members</code></td>
+</tr>
+<tr>
+<td><strong>Perfil Ministerial</strong></td>
+<td>Modal com questionário (50 perguntas / 10 etapas); RPCs <code>listar_questionario_ministerial</code>, <code>obter_resultado_questionario_ministerial</code>, <code>submeter_questionario_ministerial</code>; tabelas <code>ministerial_perguntas</code>, <code>ministerial_opcoes</code>, <code>ministerial_respostas</code>, <code>ministerial_resultados</code>; scripts <code>ministerial-profile-questionnaire.sql</code>, seed e <code>ministerial-profile-questionnaire-session-fix.sql</code></td>
+</tr>
+<tr>
+<td><strong>Paleta de cores</strong></td>
+<td>Rodapé do card (<code>GroupedManagePaletteFooter</code>)</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>Modais do dashboard</h4>
+<p><strong>CheckinModal:</strong> lista membros, Confirmar Presença / Cancelar — <em>implementação de persistência pendente</em>.</p>
+<p><strong>Modal família:</strong> lista membros, WhatsApp, Fechar.</p>
+<hr>
+<h3>3.4 Dados Cadastrais (<code>/manage-profile</code>)</h3>
+<p><strong>Serve para:</strong> autogestão completa do perfil — dados pessoais, contato, endereço (CEP), selfie, veículos, vínculo familiar, PIN, LGPD.</p>
+<table><thead><tr>
+<th>Seção / controle</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Selfie</strong></td>
+<td>Captura/substituição com confirmação</td>
+</tr>
+<tr>
+<td><strong>Dados Pessoais</strong></td>
+<td>Nome, nascimento, CPF (se permitido) — edição inline</td>
+</tr>
+<tr>
+<td><strong>Contato</strong></td>
+<td>E-mail, telefone (com <code>changePhoneEverywhere</code>)</td>
+</tr>
+<tr>
+<td><strong>Endereço</strong></td>
+<td>CEP com sync automático de logradouro</td>
+</tr>
+<tr>
+<td><strong>Senha de acesso</strong></td>
+<td>PIN atual / novo / confirmar (4 dígitos)</td>
+</tr>
+<tr>
+<td><strong>Veículos</strong></td>
+<td>CRUD placa, marca, modelo, cor</td>
+</tr>
+<tr>
+<td><strong>Vincular família</strong></td>
+<td>Busca por código + solicitação</td>
+</tr>
+<tr>
+<td><strong>LGPD</strong></td>
+<td>Atalho se pendente</td>
+</tr>
+<tr>
+<td><strong>Voltar</strong></td>
+<td>Dashboard card grouped_manage</td>
+</tr>
+</tbody></table>
+<p><strong>ACL:</strong> guard manual por tela; <strong>colunas</strong> filtradas por <code>canViewProfileColumn</code> / <code>canUpdateProfileColumn</code>; campos bloqueados até ACL carregar.</p>
+<p><strong>Mensagens principais:</strong> Acesso negado; Complete seu cadastro (onboarding); Campo protegido; Senha atualizada; erros de CEP/câmera/veículo/família.</p>
+<hr>
+<h3>3.5 Gerenciar Família (<code>/manage-members</code>)</h3>
+<p><strong>Serve para:</strong> CRUD de membros da família (<code>members</code>), reconhecimento familiar (aceite), transferência entre famílias e herança de endereço completo.</p>
+<table><thead><tr>
+<th>Controle</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Formulário recolhível</strong></td>
+<td>Adicionar/editar membro</td>
+</tr>
+<tr>
+<td><strong>Busca por nome ou telefone</strong></td>
+<td>Vincula perfil existente; permite transferir de outra família</td>
+</tr>
+<tr>
+<td><strong>Parentesco</strong></td>
+<td>Chips (Cônjuge, Filho(a), etc.)</td>
+</tr>
+<tr>
+<td><strong>Checkbox aceite</strong></td>
+<td>Reconhecimento na família; dispara herança de endereço</td>
+</tr>
+<tr>
+<td><strong>Editar / Salvar / Excluir</strong></td>
+<td>Por membro</td>
+</tr>
+<tr>
+<td><strong>Banner family_id</strong></td>
+<td>Somente leitura</td>
+</tr>
+</tbody></table>
+<p><strong>Fluxos especiais:</strong></p>
+<ul>
+<li><strong>Transferência:</strong> se membro está em outra <code>family_id</code>, diálogo de confirmação → <code>accept_managed_member_into_family</code> → cópia de endereço (<code>inheritFamilyAddressToAcceptedMember</code>).</li>
+<li><strong>Herança de endereço:</strong> CEP, rua, número, complemento, bairro, cidade, estado do gestor → perfil do membro (aceitar, transferir ou adicionar). Falha na cópia não desfaz o vínculo familiar.</li>
+</ul>
+<p><strong>Regra:</strong> representante legal não pode ser excluído.</p>
+<p><strong>Mensagens:</strong> Acesso negado; duplicata de telefone/membro; confirmação de transferência/exclusão; aviso se endereço não pôde ser copiado; RLS/accepted column errors.</p>
+<p><strong>SQL:</strong> <code>scripts/sync-managed-member-profile-family-rpc.sql</code>, <code>scripts/profiles-sync-address-from-cep-rpc.sql</code> (<code>update_profile_field</code>).</p>
+<hr>
+<h3>3.6 Coração Aberto (<code>/pastoral</code>)</h3>
+<p><strong>Serve para:</strong> enviar pedido de cuidado pastoral / intercessão.</p>
+<table><thead><tr>
+<th>Controle</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Motivo / Situação</strong></td>
+<td>Chips segmentados (<code>SegmentChipRow</code>); categorias de <code>pastoral_reason_categories</code></td>
+</tr>
+<tr>
+<td><strong>Beneficiário</strong></td>
+<td>Eu / família / terceiro (+ campos condicionais)</td>
+</tr>
+<tr>
+<td><strong>Destino</strong></td>
+<td>Sigilo pastoral / Intercessão</td>
+</tr>
+<tr>
+<td><strong>Seu pedido</strong></td>
+<td>Texto livre</td>
+</tr>
+<tr>
+<td><strong>Histórico (ícone)</strong></td>
+<td><code>/pastoral-history</code></td>
+</tr>
+<tr>
+<td><strong>Enviar pedido</strong></td>
+<td>RPC <code>submitPastoralRequest</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>3.7 Meus Pedidos (<code>/pastoral-history</code>)</h3>
+<p><strong>Serve para:</strong> listar pedidos do perfil logado com status; pull-to-refresh.</p>
+<table><thead><tr>
+<th>Controle</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Tentar novamente</strong></td>
+<td>Em erro de carga</td>
+</tr>
+<tr>
+<td><strong>Fazer um pedido / Novo pedido</strong></td>
+<td>Volta ao formulário</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>3.8 Financeiro (<code>/financial</code>)</h3>
+<p><strong>Serve para:</strong> relatórios financeiros <strong>somente leitura</strong> — REALIZADO mensal, comparativo, 12 meses, planejado × realizado.</p>
+<table><thead><tr>
+<th>Controle</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Seletor de mês</strong></td>
+<td>Meses com REALIZADO e/ou PLANEJADO; badge <strong>(só planejado)</strong></td>
+</tr>
+<tr>
+<td><strong>Hint só planejado</strong></td>
+<td>Explica resultado REALIZADO vazio</td>
+</tr>
+<tr>
+<td><strong>Resultado do mês</strong></td>
+<td>Boletim com saldo acumulado até o mês + YTD</td>
+</tr>
+<tr>
+<td><strong>Comparativo mensal</strong></td>
+<td>Mês atual vs anterior</td>
+</tr>
+<tr>
+<td><strong>Últimos 12 meses</strong></td>
+<td>Matriz</td>
+</tr>
+<tr>
+<td><strong>Planejado × Realizado</strong></td>
+<td>Bloqueado se sem orçamento planejado</td>
+</tr>
+<tr>
+<td><strong>Atualizar</strong></td>
+<td>Em erro de carga</td>
+</tr>
+<tr>
+<td><strong>Aviso amarelo</strong></td>
+<td><code>commentsWarning</code> se comentários não carregaram</td>
+</tr>
+</tbody></table>
+<p><strong>Edição financeira:</strong> apenas em <strong>Manutenção → Informações Financeiras</strong> (staff).</p>
+<hr>
+<h3>3.9 Mapa de Geolocalização (<code>/mapa-geolocalizacao</code> — web)</h3>
+<p><strong>Serve para:</strong> mapa Leaflet com pins por CEP dos perfis; filtros visitante/membro.</p>
+<table><thead><tr>
+<th>Controle</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Filtros</strong></td>
+<td>Todos / Com papel / Visitantes</td>
+</tr>
+<tr>
+<td><strong>Atualizar mapa</strong></td>
+<td>Sincroniza snapshot + geocodificação</td>
+</tr>
+<tr>
+<td><strong>Pin clicável</strong></td>
+<td>Detalhe (nome, telefone, endereço) só com ACL <code>/mapa-geolocalizacao/detalhe-pin</code> — padrão pastoral/super_admin</td>
+</tr>
+<tr>
+<td><strong>Voltar</strong></td>
+<td>Lista de membros no dashboard</td>
+</tr>
+</tbody></table>
+<p><strong>Nativo (app mobile):</strong> placeholder informando que mapa é só na PWA.</p>
+<hr>
+<h3>3.10 Termos LGPD (<code>/lgpd</code>)</h3>
+<p><strong>Serve para:</strong> exibir termos e registrar aceite/recusa em <code>profiles.lgpd_accepted</code>.</p>
+<table><thead><tr>
+<th>Controle</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Scroll obrigatório</strong></td>
+<td>Gate antes dos checkboxes</td>
+</tr>
+<tr>
+<td><strong>Li e aceito / não concordo</strong></td>
+<td>Escolha</td>
+</tr>
+<tr>
+<td><strong>Confirmar / Concluir</strong></td>
+<td>Grava preferência</td>
+</tr>
+</tbody></table>
+<p>ACL ignorado quando <code>?phone=</code> (fluxo cadastro).</p>
+<hr>
+<h3>3.11 Totem Check-in (<code>/totem-checkin</code>)</h3>
+<p><strong>Serve para:</strong> quiosque — escanear QR da família e confirmar presença no evento do dia.</p>
+<table><thead><tr>
+<th>Controle</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Seleção automática de evento</strong></td>
+<td>Hoje + <code>totem_ativo</code> ou <code>requer_quorum</code> + publicado</td>
+</tr>
+<tr>
+<td><strong>Ativar câmera</strong></td>
+<td>Gate de permissão</td>
+</tr>
+<tr>
+<td><strong>Scanner QR</strong></td>
+<td><code>CameraView</code> modo QR</td>
+</tr>
+<tr>
+<td><strong>Banner de status</strong></td>
+<td>Sucesso / erro / aviso</td>
+</tr>
+<tr>
+<td><strong>Encerrar sessão</strong></td>
+<td>Logout totem</td>
+</tr>
+</tbody></table>
+<p><strong>Sem ACL de tela</strong> — modelo de aparelho dedicado.</p>
+<p><strong>Fluxo completo do check-in (totem/quórum):</strong></p>
+<p>```</p>
+<p>1. STAFF cria evento (Manutenção) com totem e/ou quórum</p>
+<p>2. MEMBRO marca audiência no Dashboard (pré-check-in)</p>
+<p>3. MEMBRO abre card QR no dia do evento</p>
+<p>4. TOTEM escaneia QR → lookup → confirm</p>
+<p>5. SISTEMA grava confirmado; trava audiência se quórum</p>
+<p>6. STAFF consulta Lista de Presença (Manutenção) — somente leitura</p>
+<p>```</p>
+<p><strong>Mensagens (Toast + banners):</strong></p>
+<ul>
+<li>Pré-check-in não encontrado</li>
+<li>Confirmação realizada com sucesso</li>
+<li>Já confirmado (<code>TOTEM_CHECKIN_ALREADY_CONFIRMED_MESSAGE</code>)</li>
+<li>Câmera bloqueada / permissão necessária</li>
+<li>Evento indisponível (vários motivos + hints SQL)</li>
+<li>Aponte para o QR Code da família…</li>
+</ul>
+<hr>
+<h3>3.12 Manutenção (<code>/maintenance-dashboard</code>)</h3>
+<p><strong>Serve para:</strong> operação interna — eventos, salas, quórum, escalas, pastoral, financeiro, ACL, cadastro de usuários.</p>
+<h4>Menu de módulos (atalhos)</h4>
+<table><thead><tr>
+<th>Módulo</th>
+<th>Componente</th>
+<th>Quem acessa</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Programação de Eventos</strong></td>
+<td>Lista + editor</td>
+<td>Staff com acesso manutenção</td>
+</tr>
+<tr>
+<td><strong>Cronograma de Eventos</strong></td>
+<td>Gantt</td>
+<td>Idem</td>
+</tr>
+<tr>
+<td><strong>Sala(s) - Check In</strong></td>
+<td><code>MaintenanceSalaMonitorCard</code></td>
+<td>Staff — <strong>marca entrada Kids/Teens</strong></td>
+</tr>
+<tr>
+<td><strong>Lista de Presença</strong></td>
+<td><code>MaintenanceQuorumPresenceCard</code></td>
+<td>Staff — leitura pós-totem</td>
+</tr>
+<tr>
+<td><strong>Tipos de Escala</strong></td>
+<td><code>MaintenanceScaleTypesCard</code> — vagas/domingo e modo ciclo</td>
+<td>ACL escala</td>
+</tr>
+<tr>
+<td><strong>Servos em Disponibilidade</strong></td>
+<td><code>MaintenanceScaleVolunteersCard</code></td>
+<td>ACL escala</td>
+</tr>
+<tr>
+<td><strong>Programação de Escalas</strong></td>
+<td><code>MaintenanceScalesCard</code></td>
+<td>Ciclo em bloco via <code>aplicar_ciclo_escala</code></td>
+</tr>
+<tr>
+<td><strong>Cuidado Pastoral</strong></td>
+<td><code>MaintenancePastoralCareCard</code></td>
+<td>Papel pastoral</td>
+</tr>
+<tr>
+<td><strong>Informações Financeiras</strong></td>
+<td><code>MaintenanceFinancialsCard</code></td>
+<td>Import CSV, esvaziar mês REALIZADO</td>
+</tr>
+<tr>
+<td><strong>Controle de Acesso</strong></td>
+<td><code>MaintenanceAccessControlCard</code></td>
+<td><code>super_admin</code></td>
+</tr>
+<tr>
+<td><strong>Cadastro de Usuário</strong></td>
+<td><code>MaintenanceProfileCadastroCard</code></td>
+<td><code>super_admin</code></td>
+</tr>
+</tbody></table>
+<h4>Editor de eventos (campos)</h4>
+<table><thead><tr>
+<th>Campo</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td>Nome, data/hora, local</td>
+<td>Identificação</td>
+</tr>
+<tr>
+<td>Capacidade</td>
+<td>Vagas obrigatórias</td>
+</tr>
+<tr>
+<td>Chips Kids / Teens / Ofertas</td>
+<td>Recursos do evento</td>
+</tr>
+<tr>
+<td><strong>Ativação de Totem</strong></td>
+<td>Habilita fluxo totem</td>
+</tr>
+<tr>
+<td><strong>Requer Quorum</strong></td>
+<td>Fluxo quórum + lista de presença</td>
+</tr>
+<tr>
+<td><strong>Publicação</strong></td>
+<td>Publicado / Rascunho</td>
+</tr>
+<tr>
+<td><strong>Tabela quórum</strong></td>
+<td>Registro em tempo real (poll 15 s)</td>
+</tr>
+<tr>
+<td><strong>Salvar / Apagar / Cancelar</strong></td>
+<td>CRUD</td>
+</tr>
+</tbody></table>
+<p><strong>Toasts:</strong> evento criado/atualizado/apagado; erros de formulário/RLS.</p>
+<hr>
+<h2>4. Fluxos de negócio — quem inicia e quem termina</h2>
+<table><thead><tr>
+<th>Processo</th>
+<th>Inicia</th>
+<th>Termina</th>
+<th>Onde</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Login membro</strong></td>
+<td>Usuário</td>
+<td>App grava sessão</td>
+<td><code>/</code></td>
+</tr>
+<tr>
+<td><strong>Primeiro PIN</strong></td>
+<td>Usuário (WhatsApp)</td>
+<td>RPC grava PIN temporário</td>
+<td><code>/</code></td>
+</tr>
+<tr>
+<td><strong>Cadastro inicial</strong></td>
+<td>Sistema redireciona</td>
+<td>Perfil + family_id criados</td>
+<td><code>/register</code></td>
+</tr>
+<tr>
+<td><strong>Completar perfil</strong></td>
+<td>Onboarding</td>
+<td>Membro salva campos</td>
+<td><code>/manage-profile</code></td>
+</tr>
+<tr>
+<td><strong>Audiência / pré-check-in</strong></td>
+<td>Membro (checkbox)</td>
+<td>Membro ou totem (quórum trava)</td>
+<td>Dashboard Agenda</td>
+</tr>
+<tr>
+<td><strong>Check-in totem</strong></td>
+<td>Membro mostra QR</td>
+<td>Totem confirma via RPC</td>
+<td><code>/totem-checkin</code></td>
+</tr>
+<tr>
+<td><strong>Check-in sala Kids/Teens</strong></td>
+<td>Membro inscreve na audiência</td>
+<td><strong>Staff</strong> marca checkbox</td>
+<td>Manutenção Salas</td>
+</tr>
+<tr>
+<td><strong>Quórum lista presença</strong></td>
+<td>Totem confirma</td>
+<td>Staff imprime/consulta</td>
+<td>Manutenção Lista Presença</td>
+</tr>
+<tr>
+<td><strong>Pedido pastoral</strong></td>
+<td>Membro envia</td>
+<td>Equipe pastoral (fora do app)</td>
+<td><code>/pastoral</code></td>
+</tr>
+<tr>
+<td><strong>Financeiro leitura</strong></td>
+<td>Membro consulta</td>
+<td>—</td>
+<td><code>/financial</code></td>
+</tr>
+<tr>
+<td><strong>Financeiro carga</strong></td>
+<td>Staff importa CSV</td>
+<td>RPC manutenção</td>
+<td>Manutenção Financeiro</td>
+</tr>
+<tr>
+<td><strong>Escala ciclo</strong></td>
+<td>Staff preview + confirma</td>
+<td>RPC <code>aplicar_ciclo_escala</code></td>
+<td>Manutenção Escalas</td>
+</tr>
+<tr>
+<td><strong>ACL papéis</strong></td>
+<td>Super admin</td>
+<td>Grants no Supabase</td>
+<td>Manutenção ACL</td>
+</tr>
+<tr>
+<td><strong>Mapa geolocalização</strong></td>
+<td>Membro/staff abre mapa</td>
+<td>Sync CEP → pins</td>
+<td>PWA mapa</td>
+</tr>
+<tr>
+<td><strong>Logout</strong></td>
+<td>Usuário (Sair)</td>
+<td>Sessão limpa</td>
+<td>Dashboard / totem</td>
+</tr>
+</tbody></table>
+<h3>Diagrama — check-in completo (totem + salas)</h3>
+<p>```mermaid</p>
+<p>sequenceDiagram</p>
+<p>participant Staff as Staff (Manutenção)</p>
+<p>participant Membro as Membro (Dashboard)</p>
+<p>participant Totem as Totem (Quiosque)</p>
+<p>participant DB as Supabase</p>
+<p>Staff-&gt;&gt;DB: Cria evento (totem/quórum/salas)</p>
+<p>Membro-&gt;&gt;DB: Marca audiência (pré-check-in)</p>
+<p>Membro-&gt;&gt;Membro: Exibe QR no card Check-in</p>
+<p>Totem-&gt;&gt;DB: lookup_totem_checkin</p>
+<p>Totem-&gt;&gt;DB: confirm_totem_checkin</p>
+<p>DB--&gt;&gt;Membro: Audiência travada (quórum)</p>
+<p>Staff-&gt;&gt;DB: Marca entrada sala Kids/Teens</p>
+<p>Staff-&gt;&gt;DB: Consulta Lista de Presença</p>
+<p>```</p>
+<hr>
+<h2>5. Catálogo consolidado de mensagens interativas</h2>
+<h3>Alerts (bloqueantes)</h3>
+<p>Login, cadastro, ACL negado, validações de formulário, confirmações destrutivas (excluir membro/evento), erros de RPC ausente, PIX, WhatsApp, câmera, PIN, totem, pastoral, perfil, família, veículos.</p>
+<h3>Toasts (totem + manutenção)</h3>
+<p>Confirmação check-in, já confirmado, sucesso/erro de salvamento em manutenção.</p>
+<h3>Banners / hints inline (não bloqueantes)</h3>
+<p>Gate pré-check-in, quórum, LGPD pendente (header vermelho), ACL indisponível, meses só planejado, comentários financeiros, schema SQL pendente na manutenção, cache do mapa, estados vazios de listas.</p>
+<h3>Confirmações (dupla ação)</h3>
+<p>Apagar evento (Sim, apagar / Não), excluir membro, substituir selfie.</p>
+<hr>
+<h2>6. Scripts SQL e dependências de deploy</h2>
+<p>Ordem recomendada no Supabase:</p>
+<p>1. <code>scripts/access-control-role-display-order.sql</code></p>
+<p>2. <code>scripts/access-control-schema.sql</code> + seeds ACL</p>
+<p>3. <code>scripts/escalas-multi-vagas.sql</code></p>
+<p>4. <code>scripts/escalas-integrity-constraints.sql</code></p>
+<p>5. <code>scripts/escalas-apply-cycle-batch.sql</code> (inclui <code>aplicar_ciclo_escala</code> + <code>get_scale_cycle_context</code>)</p>
+<p>6. <code>scripts/escalas-tipos-maintenance-rpc.sql</code></p>
+<p>7. <code>scripts/escalas-volunteers-rpc.sql</code></p>
+<p>8. <code>scripts/escalas-maintenance-rpc.sql</code></p>
+<p>9. <code>scripts/checkins-totem-flow.sql</code> + <code>scripts/events-quorum-registry.sql</code></p>
+<p>10. <code>scripts/profiles-sync-address-from-cep-rpc.sql</code></p>
+<p>11. <code>scripts/access-control-map-screen.sql</code></p>
+<p>12. <code>scripts/financials-maintenance-rpc.sql</code></p>
+<p>13. <code>scripts/verificar-login.sql</code>, scripts PIN/LGPD conforme ambiente</p>
+<p><strong>Produção:</strong></p>
+<ul>
+<li><code>EXPO_PUBLIC_ACL_STRICT=true</code></li>
+<li>Deploy PWA: <code>npm run build:web</code> → publicar <code>dist/</code> em HTTPS</li>
+</ul>
+<hr>
+<h2>7. Resumo de confiança e proteção</h2>
+<p>A solução combina:</p>
+<ul>
+<li><strong>Autenticação por PIN</strong> validado no servidor (<code>verificar_login</code>)</li>
+<li><strong>Autorização granular</strong> (tela / card / coluna / tabela) via <code>profile_has_access</code></li>
+<li><strong>RLS no PostgreSQL</strong> com identidade transportada por header <code>x-profile-id</code></li>
+<li><strong>RPCs <code>security definer</code></strong> para operações sensíveis (PIN, check-in, escala em lote, exclusão financeira escopada)</li>
+<li><strong>Isolamento do totem</strong> (aparelho dedicado, sem ACL de tela)</li>
+<li><strong>LGPD</strong> com registro auditável (<code>lgpd_accepted</code>)</li>
+<li><strong>Separação leitura (membro) vs escrita (manutenção)</strong> em finanças e eventos</li>
+</ul>
+<p>Dados residem no Supabase (PostgreSQL gerenciado). O app cliente <strong>nunca</strong> recebe chave <code>service_role</code>.</p>
+<hr>
+<h2>8. Inventário de cards do dashboard (ACL)</h2>
+<table><thead><tr>
+<th><code>resource_key</code></th>
+<th>Card</th>
+<th>Rota / destino</th>
+</tr></thead><tbody>
+<tr>
+<td><code>screen:dashboard.card.event_alt</code></td>
+<td>Agenda da Família</td>
+<td>Inline no dashboard</td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.qr</code></td>
+<td>Check In / QR Totem / Quórum</td>
+<td>Inline + modal</td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.kids_teens</code></td>
+<td>SALA(S)</td>
+<td>Inline (leitura)</td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.offerings</code></td>
+<td>Dízimos e Ofertas</td>
+<td>Inline</td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.pastoral</code></td>
+<td>Coração Aberto</td>
+<td><code>/pastoral</code></td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.members_list</code></td>
+<td>Lista de Membros</td>
+<td>Inline + <code>/mapa-geolocalizacao</code></td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.birthdays</code></td>
+<td>Aniversariantes</td>
+<td>Inline</td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.financial</code></td>
+<td>Financeiro</td>
+<td><code>/financial</code></td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.vigilance_scales</code></td>
+<td>Escalas</td>
+<td>Inline (roster)</td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.parking_vehicle_v2</code></td>
+<td>Estacionamento</td>
+<td>Inline</td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.grouped_manage</code></td>
+<td>Dados + Família</td>
+<td><code>/manage-profile</code>, <code>/manage-members</code></td>
+</tr>
+</tbody></table>
+<hr>
+<p><em>Documento gerado a partir do código-fonte e da documentação do projeto app-igreja.</em></p>
+</div>
+</body>
+</html>

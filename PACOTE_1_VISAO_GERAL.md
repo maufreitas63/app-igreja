@@ -97,7 +97,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 | Card | Funcionalidades |
 |------|-----------------|
-| **Agenda da Família** | Seleção de evento, vagas, inscrição/audiência (pré-check-in), checkbox em massa — lista **membros, congregados** e dependentes não rejeitados |
+| **Agenda da Família** | Abre pelo **Início** (toque no culto). Vagas, inscrição/audiência, checkbox em massa; após confirmar, **Adicionar** grava no Google Agenda e baixa `.ics` (Apple/Outlook) no horário da igreja |
 | **Check-in / QR Code** | Etiqueta da família, QR para totem, badges Kids/Teens, modal de seleção manual |
 | **SALA(S)** | Monitoramento read-only de entrada Kids/Teens — **somente membros da própria família** |
 | **Dízimos e Ofertas** | Sempre visível no carrossel; dados do recebedor, chave PIX, **Copiar chave PIX** com ícone *touch-app*, atualizar chave |
@@ -115,6 +115,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 - Listagem de eventos publicados com data, local e capacidade
 - **Inscrição na audiência** (pré-check-in) por integrante do núcleo familiar (membros, congregados e dependentes com `accepted` ≠ `false`)
+- Após confirmar a audiência, modal **Compromisso enviado para minha agenda**: **Adicionar** abre o Google Agenda e baixa `.ics` (fuso America/Sao_Paulo)
 - Suporte a fluxos: **check-in automático por proximidade (geofence GPS)**, **totem**, **manual**, **quórum**
 - **Check-in geofence** — quando `geofence_ativo` no evento e local favorito com coordenadas: o app detecta proximidade ao templo (raio e janela configuráveis em `app_parameters`) e confirma presença automaticamente após leituras GPS estáveis; fila offline para sincronização sem rede
 - **Locais favoritos** — cadastro de locais com nome, endereço, CEP e coordenadas; vinculados ao campo `event_local` do evento para resolver geofence
@@ -525,23 +526,21 @@ Nem todo card aparece para todo mundo: a igreja configura **permissões por perf
 Registrar sua família no evento (**audiência / pré-check-in**) e **apresentar o QR Code** no totem ou na entrada, no dia do culto ou evento.
 
 ### Caminho
-**Painel** → card **Agenda da Família** → marcar audiência → (no dia do evento) card **Check In / QR Code** → totem da igreja.
+**Início** → toque no culto em Próximos Eventos (Agenda da Família) → marcar audiência → **Adicionar** na agenda do celular (opcional) → no templo, geofence no Início ou totem.
 
 ### Ação prática — Parte A: Antes ou no dia (audiência)
 
-1. No **Painel**, deslize até o card **Agenda da Família**.
-2. Em **Trocar Evento**, selecione o culto ou evento desejado (chips horizontais).
-3. Confira data, horário, local e vagas.
-4. Na lista de **Audiência**, marque o checkbox de cada membro da família que participará.
+1. No **Início**, toque no culto desejado (Agenda da Família). O carrossel antigo do Painel não é o caminho publicado.
+2. Confira data, horário, local e vagas.
+3. Na lista de **Audiência**, marque o checkbox de cada membro da família que participará.
    - Em eventos de **quórum**, apenas o membro da sessão ativa pode ser marcado.
-5. Aguarde a confirmação visual — o sistema grava o **pré-check-in** no banco de dados.
-6. Leia as mensagens de orientação na tela (em cinza ou vermelho se houver erro):
-   - *"Marque a audiência abaixo para liberar o card de check-in com QR Code."*
-   - *"O card com QR Code ficará disponível no dia do evento."*
+4. Aguarde a confirmação visual — o sistema grava o **pré-check-in** no banco de dados.
+5. No modal **Compromisso enviado para minha agenda**, toque em **Adicionar** para abrir o Google Agenda e baixar o `.ics` (Apple Calendar / Outlook). O horário é o da igreja.
+6. Leia as mensagens de orientação na tela (em cinza ou vermelho se houver erro).
 
 ### Ação prática — Parte B: No dia do evento (QR Code)
 
-1. No **dia do evento**, volte ao **Painel** e localize o card de check-in (pode aparecer como **QR Code — Check-in Totem**, **QR Code — Check-in Quórum** ou **Check In — QR Code**).
+1. No **dia do evento**, volte ao **Início**. Com geofence ativo, o app pede GPS no raio do templo e confirma presença. O card QR do carrossel antigo não é o caminho publicado; o totem no hall continua válido.
 2. Verifique:
    - **Nome do evento**
    - **Etiqueta** — código da sua família (ex.: código alfanumérico em destaque amarelo)
@@ -922,7 +921,7 @@ Lista rápida: Agenda, Salas, QR Totem, Ofertas, Pastoral, Membros, etc., sem de
 Marcar na lista quem da sua família participará do evento — **antes** de apresentar o QR no totem. A lista inclui **membros e congregados** do núcleo, e dependentes com reconhecimento pendente ou aceito.
 
 **Como escolho o evento?**  
-No card **Agenda da Família**, use **Trocar Evento** (chips horizontais).
+No **Início**, toque no culto em Próximos Eventos. Isso abre a Agenda da Família.
 
 **Não aparece nenhum evento.**  
 Pode não haver eventos publicados no momento, ou todos estão fora da janela visível. Tente **Atualizar** ou aguarde a equipe publicar.
@@ -956,7 +955,7 @@ Geralmente no **dia do evento**, com audiência marcada, evento publicado e perm
 Seu **código de família** — identificador usado no totem junto com o QR.
 
 **Como faço check-in no culto?**  
-1) Marque audiência na Agenda; 2) No dia, abra o card QR; 3) Apresente o QR na câmera do **totem** da igreja.
+1) No Início, toque no culto e marque a audiência; 2) Toque em **Adicionar** se quiser o culto no celular; 3) No dia, aproxime-se do templo (geofence) ou use o **totem** no hall.
 
 **O totem diz "Pré-check-in não encontrado".**  
 Volte à **Agenda da Família** e marque a audiência dos participantes antes de escanear.

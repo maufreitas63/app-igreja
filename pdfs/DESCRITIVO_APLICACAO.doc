@@ -1,0 +1,682 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Descritivo Técnico Completo — App Igreja (IBNorte)</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Descritivo Técnico Completo — App Igreja (IBNorte)</h1>
+<p><strong>Sistema:</strong> Aplicativo digital da Igreja Batista Norte</p>
+<p><strong>Repositório:</strong> <code>maufreitas63/app-igreja</code></p>
+<p><strong>Versão do app:</strong> 1.0.0</p>
+<p><strong>Data deste documento:</strong> 30 de julho de 2026</p>
+<p><strong>Documentação de entrega:</strong> <a href="MANUAL_ENTREGA.md">&lt;code&gt;MANUAL_ENTREGA.md&lt;/code&gt;</a> · <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></p>
+<hr>
+<h2>1. Resumo executivo</h2>
+<p>O <strong>app-igreja</strong> é uma plataforma <strong>PWA (Progressive Web App)</strong> e <strong>mobile</strong> (Expo/React Native) que centraliza a operação digital da igreja: login de membros (primeira entrada por WhatsApp; <strong>recuperação de senha por e-mail</strong>), cadastro e LGPD, dashboard com cards operacionais (incluindo <strong>Perfil &amp; Identidade</strong> com <strong>Trilha de Discipulado</strong>, selos coloridos e <strong>perfil ministerial</strong> na lição 5.1), check-in em eventos (totem com QR Code, <strong>check-in automático por proximidade/geofence</strong>), gestão familiar, módulo pastoral, financeiro, escalas, mapa de geolocalização por CEP, painel de manutenção administrativa (relatórios, <strong>Manutenção da Trilha</strong>, <strong>Modo Ghost</strong> com grant explícito) e controle de acesso granular (ACL).</p>
+<p>Não há servidor de API próprio: o cliente comunica-se diretamente com o <strong>Supabase</strong> (PostgreSQL, RPCs, RLS, Storage) via HTTPS. O deploy de produção é automático via <strong>Cloudflare Pages</strong> a cada push na branch <code>main</code>.</p>
+<hr>
+<h2>2. Programas, linguagens e ferramentas utilizados</h2>
+<h3>2.1 Runtime e linguagens</h3>
+<table><thead><tr>
+<th>Item</th>
+<th>Versão / detalhe</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Node.js</strong></td>
+<td>≥ 20.19.4 (build, scripts, deploy)</td>
+</tr>
+<tr>
+<td><strong>TypeScript</strong></td>
+<td>~5.9.2 (modo <code>strict</code>)</td>
+</tr>
+<tr>
+<td><strong>JavaScript (ESM)</strong></td>
+<td>Scripts <code>.mjs</code> de build, importação e testes</td>
+</tr>
+<tr>
+<td><strong>SQL (PostgreSQL)</strong></td>
+<td>Schema, RPCs, RLS, seeds — execução manual no Supabase</td>
+</tr>
+<tr>
+<td><strong>PowerShell</strong></td>
+<td>Watchdog Metro LAN (desenvolvimento local)</td>
+</tr>
+</tbody></table>
+<h3>2.2 Frameworks e bibliotecas principais</h3>
+<table><thead><tr>
+<th>Camada</th>
+<th>Tecnologia</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>UI mobile/web</strong></td>
+<td>Expo SDK ~54, React 19.1, React Native 0.81.5</td>
+</tr>
+<tr>
+<td><strong>Roteamento</strong></td>
+<td>Expo Router ~6 (file-based, export estático web)</td>
+</tr>
+<tr>
+<td><strong>Backend-as-a-Service</strong></td>
+<td>Supabase (<code>@supabase/supabase-js</code> ^2.106)</td>
+</tr>
+<tr>
+<td><strong>Formulários</strong></td>
+<td>React Hook Form + Zod</td>
+</tr>
+<tr>
+<td><strong>Mapas (web)</strong></td>
+<td>Leaflet, react-leaflet, markercluster</td>
+</tr>
+<tr>
+<td><strong>Mapas (nativo)</strong></td>
+<td>react-native-maps, react-native-map-clustering</td>
+</tr>
+<tr>
+<td><strong>Estilo</strong></td>
+<td>Tailwind CSS, class-variance-authority, Radix UI (web)</td>
+</tr>
+<tr>
+<td><strong>Standalone</strong></td>
+<td>Vite 6 (formulário público de cadastro familiar)</td>
+</tr>
+<tr>
+<td><strong>PDF/docs</strong></td>
+<td>md-to-pdf, docx, xlsx (geração de documentação)</td>
+</tr>
+<tr>
+<td><strong>Ícones</strong></td>
+<td>@expo/vector-icons (FontAwesome, FontAwesome5)</td>
+</tr>
+</tbody></table>
+<h3>2.3 Infraestrutura e serviços externos</h3>
+<table><thead><tr>
+<th>Serviço</th>
+<th>Uso</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Supabase</strong></td>
+<td>Banco PostgreSQL, autenticação customizada via RPC, Storage, Realtime</td>
+</tr>
+<tr>
+<td><strong>Cloudflare Pages</strong></td>
+<td>Hospedagem HTTPS do PWA (<code>npm run build:web</code> → <code>dist/</code>)</td>
+</tr>
+<tr>
+<td><strong>GitHub</strong></td>
+<td>Repositório e trigger de deploy</td>
+</tr>
+<tr>
+<td><strong>Google Maps Geocoding</strong></td>
+<td>Opcional — geocodificação de CEP</td>
+</tr>
+<tr>
+<td><strong>ViaCEP + OpenStreetMap</strong></td>
+<td>Fallback gratuito de endereço/geolocalização</td>
+</tr>
+<tr>
+<td><strong>dailyverses.net</strong></td>
+<td>Fonte dos versículos bíblicos por tema (importação via script)</td>
+</tr>
+<tr>
+<td><strong>EAS (Expo)</strong></td>
+<td>Build/distribuição mobile (project ID configurado em <code>app.json</code>)</td>
+</tr>
+</tbody></table>
+<h3>2.4 Comandos de build e operação</h3>
+<table><thead><tr>
+<th>Comando</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><code>npm run build:web</code></td>
+<td>Build de produção (PWA + formulário familiar)</td>
+</tr>
+<tr>
+<td><code>npm start</code> / <code>npm run web</code></td>
+<td>Desenvolvimento local</td>
+</tr>
+<tr>
+<td><code>npm run apply:bible-verses</code></td>
+<td>Aplica scripts SQL de versículos no Supabase</td>
+</tr>
+<tr>
+<td><code>npm run build:docs:pdf</code></td>
+<td>Gera PDFs da documentação existente</td>
+</tr>
+<tr>
+<td><code>npm run lint</code></td>
+<td>ESLint (Expo config)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>3. Bancos de dados e modelo de dados</h2>
+<h3>3.1 Supabase (PostgreSQL)</h3>
+<p>Único banco de produção. Principais domínios de tabelas:</p>
+<table><thead><tr>
+<th>Domínio</th>
+<th>Tabelas / objetos (exemplos)</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Perfis e sessão</strong></td>
+<td><code>profiles</code>, <code>profile_sessions</code>, RPC <code>verificar_login</code>, <code>issue_profile_session</code></td>
+</tr>
+<tr>
+<td><strong>Família e membros</strong></td>
+<td><code>members</code>, <code>families</code>, sincronização com <code>profiles</code></td>
+</tr>
+<tr>
+<td><strong>Controle de acesso</strong></td>
+<td><code>access_resources</code>, <code>access_roles</code>, <code>access_grants</code>, <code>profile_access_roles</code></td>
+</tr>
+<tr>
+<td><strong>Eventos e check-in</strong></td>
+<td><code>events</code>, <code>checkins</code>, <code>event_favorite_locations</code>, totem, geofence (<code>geofence_ativo</code>), purge triggers</td>
+</tr>
+<tr>
+<td><strong>Pastoral</strong></td>
+<td>Solicitações, categorias, histórico</td>
+</tr>
+<tr>
+<td><strong>Financeiro</strong></td>
+<td>Lançamentos, importação, relatórios de despesas</td>
+</tr>
+<tr>
+<td><strong>Escalas</strong></td>
+<td>Tipos, voluntários, ciclos, vigilância</td>
+</tr>
+<tr>
+<td><strong>Geolocalização</strong></td>
+<td><code>cep_geolocation</code>, endereços sincronizados por CEP</td>
+</tr>
+<tr>
+<td><strong>Parâmetros</strong></td>
+<td><code>app_parameters</code> (LGPD ativo, totem, etc.)</td>
+</tr>
+<tr>
+<td><strong>Versículos</strong></td>
+<td><code>bible_themes</code>, <code>bible_verses_by_theme</code>, RPC <code>get_random_bible_verse</code></td>
+</tr>
+<tr>
+<td><strong>Perfil ministerial</strong></td>
+<td><code>ministerial_perguntas</code>, <code>ministerial_opcoes</code>, <code>ministerial_respostas</code>, <code>ministerial_resultados</code>; RPCs <code>listar_questionario_ministerial</code>, <code>obter_resultado_questionario_ministerial</code>, <code>submeter_questionario_ministerial</code></td>
+</tr>
+<tr>
+<td><strong>Trilha de Discipulado</strong></td>
+<td><code>discipleship_modules</code>, <code>discipleship_lessons</code>, <code>user_discipleship_progress</code>, <code>user_discipleship_badges</code> (com <code>badge_color</code> / <code>step_order</code>), <code>discipleship_pastoral_alerts</code>; RPCs <code>upsert_my_discipleship_lesson_progress</code>, <code>evaluate_discipleship_achievements</code>, admin Temas/Reset</td>
+</tr>
+<tr>
+<td><strong>Recepção familiar</strong></td>
+<td>Fila de cadastros públicos</td>
+</tr>
+</tbody></table>
+<h3>3.2 Armazenamento local (dispositivo)</h3>
+<table><thead><tr>
+<th>Mecanismo</th>
+<th>Dados</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>AsyncStorage</strong></td>
+<td><code>user_phone</code>, <code>user_profile_id</code>, <code>user_session_token</code></td>
+</tr>
+<tr>
+<td><strong>Sem Supabase Auth session</strong></td>
+<td>Cliente configurado com <code>persistSession: false</code></td>
+</tr>
+</tbody></table>
+<h3>3.3 Scripts SQL</h3>
+<ul>
+<li><strong>144 arquivos <code>.sql</code></strong> em <code>scripts/</code> (incluindo 15 partes de dados bíblicos).</li>
+<li>Categorias: ACL (~33), perfis/sessão (~35), família/membros (~35), eventos/check-in/geo (~17), financeiro (~10), pastoral (~7), escalas (~8), CEP/geo (~8), versículos bíblicos (~18), diagnóstico, seeds de teste (TSTMAX), entre outros.</li>
+<li><strong>Geofence (jun/2026):</strong> <code>events-geofence-ativo.sql</code>, <code>event-favorite-locations.sql</code>, <code>geo-checkin-automatic.sql</code>, <code>geo-checkin-purge-on-event-update.sql</code> — RPCs atômicas, <code>normalize_location_key</code>, triggers de invalidação, RLS restrito em locais favoritos.</li>
+<li><strong>Perfil ministerial (jul/2026):</strong> <code>ministerial-profile-questionnaire.sql</code>, <code>ministerial-profile-questionnaire-seed.sql</code>, <code>ministerial-profile-questionnaire-session-fix.sql</code>.</li>
+<li><strong>Trilha de Discipulado (jul/2026):</strong> <code>discipleship-trail-schema.sql</code>, <code>discipleship-trail-badges-alerts.sql</code>, <code>discipleship-trail-themes-admin.sql</code>, <code>discipleship-trail-reset-admin.sql</code>, <code>discipleship-trail-progress-gates.sql</code>, <code>discipleship-trail-badge-colors.sql</code>, <code>discipleship-trail-tenant-scope-fix.sql</code>.</li>
+<li><strong>Modo Ghost (jul/2026):</strong> <code>access-control-ghost-mode.sql</code> — <code>can_operate_ghost_mode</code> exige grant explícito em <code>maintenance.card.auditor</code> ou <code>super_admin</code>.</li>
+<li><strong>Recuperação de senha por e-mail:</strong> <code>password-recovery-security.sql</code>, <code>password-recovery-email-flow.sql</code>.</li>
+<li><strong>Execução:</strong> manual no SQL Editor do Supabase ou via scripts Node (<code>apply-bible-verses-supabase.mjs</code>).</li>
+</ul>
+<hr>
+<h2>4. Quantidade de código e linhas</h2>
+<p>Métricas levantadas em <strong>17/06/2026</strong> (excluindo <code>node_modules</code>, <code>dist</code>, <code>.expo</code>, <code>package-lock.json</code>):</p>
+<h3>4.1 Visão geral</h3>
+<table><thead><tr>
+<th>Métrica</th>
+<th>Valor</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Arquivos no repositório</strong></td>
+<td>~715</td>
+</tr>
+<tr>
+<td><strong>Arquivos TypeScript/TSX</strong></td>
+<td>287</td>
+</tr>
+<tr>
+<td><strong>Linhas TS/TSX (código aplicativo)</strong></td>
+<td><strong>61.517</strong></td>
+</tr>
+<tr>
+<td><strong>Arquivos SQL</strong></td>
+<td>144</td>
+</tr>
+<tr>
+<td><strong>Linhas SQL (lógica/schema/RPC)</strong></td>
+<td><strong>25.031</strong></td>
+</tr>
+<tr>
+<td><strong>Linhas SQL (dados bíblicos)</strong></td>
+<td><strong>11.067</strong></td>
+</tr>
+<tr>
+<td><strong>Linhas SQL (total)</strong></td>
+<td><strong>~36.098</strong></td>
+</tr>
+<tr>
+<td><strong>Scripts Node (.mjs)</strong></td>
+<td>35 arquivos / <strong>4.264 linhas</strong></td>
+</tr>
+<tr>
+<td><strong>Documentação Markdown</strong></td>
+<td>32 arquivos / <strong>~11.986 linhas</strong></td>
+</tr>
+</tbody></table>
+<h3>4.2 Por camada / pasta</h3>
+<table><thead><tr>
+<th>Pasta</th>
+<th>Arquivos</th>
+<th>Linhas (aprox.)</th>
+</tr></thead><tbody>
+<tr>
+<td><code>app/</code> (rotas Expo Router)</td>
+<td>22</td>
+<td>20.574</td>
+</tr>
+<tr>
+<td><code>components/</code></td>
+<td>67</td>
+<td>17.694</td>
+</tr>
+<tr>
+<td><code>lib/</code> (regras de negócio)</td>
+<td>147</td>
+<td>17.635</td>
+</tr>
+<tr>
+<td><code>hooks/</code></td>
+<td>43</td>
+<td>5.335</td>
+</tr>
+<tr>
+<td><code>scripts/</code> (total)</td>
+<td>190</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>standalone/cadastro-familia/</code></td>
+<td>5</td>
+<td>incluído em TS</td>
+</tr>
+</tbody></table>
+<h3>4.3 Dependências npm</h3>
+<table><thead><tr>
+<th>Tipo</th>
+<th>Quantidade</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Produção</strong></td>
+<td>60 pacotes</td>
+</tr>
+<tr>
+<td><strong>Desenvolvimento</strong></td>
+<td>16 pacotes</td>
+</tr>
+</tbody></table>
+<p><strong>Total estimado de linhas de código-fonte relevante (TS + SQL lógica + scripts):</strong> <strong>~91.000 linhas</strong></p>
+<p>(com dados bíblicos em SQL: <strong>~102.000 linhas</strong>)</p>
+<hr>
+<h2>5. Arquitetura em camadas</h2>
+<p>```</p>
+<p>┌─────────────────────────────────────────────────────────────┐</p>
+<p>│  Camada 1 — Dispositivo (PIN, AsyncStorage, câmera, totem) │</p>
+<p>├─────────────────────────────────────────────────────────────┤</p>
+<p>│  Camada 2 — Cliente (telas, guards ACL, filtros de cards)   │</p>
+<p>├─────────────────────────────────────────────────────────────┤</p>
+<p>│  Camada 3 — Transporte (HTTPS, headers de sessão, anon key)│</p>
+<p>├─────────────────────────────────────────────────────────────┤</p>
+<p>│  Camada 4 — Supabase (RLS, RPC SECURITY DEFINER, grants)    │</p>
+<p>└─────────────────────────────────────────────────────────────┘</p>
+<p>```</p>
+<h3>5.1 Camada de apresentação (UI)</h3>
+<ul>
+<li><strong>Rotas:</strong> <code>app/</code> — Expo Router (file-based).</li>
+<li><strong>Componentes:</strong> <code>components/</code> — cards do dashboard, painéis de manutenção, formulários, mapa, UI compartilhada.</li>
+<li><strong>Contexto:</strong> <code>context/EntityPrefixContext.tsx</code> — prefixo de entidade para IDs.</li>
+<li><strong>Constantes visuais:</strong> <code>constants/theme.ts</code>.</li>
+</ul>
+<p><strong>Telas principais:</strong></p>
+<table><thead><tr>
+<th>Rota</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><code>/</code></td>
+<td>Login em 2 passos (celular → PIN); totem dedicado</td>
+</tr>
+<tr>
+<td><code>/forgot-password</code></td>
+<td>Recuperação de senha — e-mail + pergunta de segurança</td>
+</tr>
+<tr>
+<td><code>/register</code></td>
+<td>Cadastro inicial de perfil</td>
+</tr>
+<tr>
+<td><code>/(tabs)/index</code></td>
+<td>Índice de atalhos do membro</td>
+</tr>
+<tr>
+<td><code>/(tabs)/dashboard</code></td>
+<td>Dashboard com carrossel de cards</td>
+</tr>
+<tr>
+<td><code>/maintenance-dashboard</code></td>
+<td>Painel administrativo</td>
+</tr>
+<tr>
+<td><code>/manage-profile</code></td>
+<td>Dados cadastrais</td>
+</tr>
+<tr>
+<td><code>/manage-members</code></td>
+<td>Gestão de membros da família</td>
+</tr>
+<tr>
+<td><code>/pastoral</code>, <code>/pastoral-history</code></td>
+<td>Módulo pastoral</td>
+</tr>
+<tr>
+<td><code>/financial</code>, <code>/expense-report</code></td>
+<td>Módulo financeiro</td>
+</tr>
+<tr>
+<td><code>/mapa-geolocalizacao</code></td>
+<td>Mapa por CEP</td>
+</tr>
+<tr>
+<td><code>/totem-checkin</code></td>
+<td>Check-in em totem (QR/câmera)</td>
+</tr>
+<tr>
+<td><code>/lgpd</code></td>
+<td>Aceite LGPD</td>
+</tr>
+<tr>
+<td><code>/cadastro-familia</code></td>
+<td>Formulário público (standalone Vite)</td>
+</tr>
+<tr>
+<td><code>/sessao-encerrada</code></td>
+<td>Tela pós-logout no PWA instalado</td>
+</tr>
+</tbody></table>
+<h3>5.2 Camada de hooks</h3>
+<ul>
+<li><code>hooks/</code> — 43 arquivos: guards de ACL (<code>useScreenAccessGuard</code>), dados de manutenção, check-in, financeiro, PWA install, eventos selecionados.</li>
+</ul>
+<h3>5.3 Camada de domínio / serviços (<code>lib/</code>)</h3>
+<ul>
+<li><strong>147 módulos</strong> com regras de negócio puras e integração Supabase.</li>
+<li>Exemplos: <code>accessControl.ts</code>, <code>userSession.ts</code>, <code>verificarLogin.ts</code>, <code>family<em>.ts</code>, <code>pastoralRequest.ts</code>, <code>financial</em>.ts</code>, <code>geoMapGeocoding.ts</code>, <code>bibleVerseByTheme.ts</code>.</li>
+<li><strong>Sem servidor intermediário</strong> — chamadas diretas <code>supabase.from()</code> e <code>supabase.rpc()</code>.</li>
+</ul>
+<h3>5.4 Camada de dados (servidor)</h3>
+<ul>
+<li>PostgreSQL no Supabase com <strong>RLS</strong> habilitado nas tabelas sensíveis.</li>
+<li><strong>RPCs <code>SECURITY DEFINER</code></strong> para operações que exigem validação centralizada.</li>
+<li>Políticas de leitura/escrita baseadas em <code>profile_has_access</code> e papéis (<code>access_roles</code>).</li>
+</ul>
+<h3>5.5 Camada de tooling (<code>scripts/</code>)</h3>
+<ul>
+<li>Geração de build info, ícones PWA, importação de versículos, aplicação SQL, testes automatizados de fluxos, geração de documentação PDF/XLSX, seeds de teste.</li>
+</ul>
+<h3>5.6 Aplicação standalone</h3>
+<ul>
+<li><strong><code>standalone/cadastro-familia/</code></strong> — formulário Vite/React reutilizando <code>FamilyRegistrationForm</code>.</li>
+<li>Publicado em <code>/cadastro-familia/</code> no mesmo domínio Cloudflare.</li>
+<li>Submissão via RPC pública <code>submit-family-registration-public</code>.</li>
+</ul>
+<hr>
+<h2>6. Segurança da aplicação</h2>
+<h3>6.1 Modelo de defesa em profundidade (4 camadas)</h3>
+<p>Documentado em <code>CAMADAS_SEGURANCA.md</code>:</p>
+<p>1. <strong>Dispositivo</strong> — PIN de 4 dígitos validado no servidor; sessão em AsyncStorage; totem isolado do fluxo de membro; permissões de câmera explícitas.</p>
+<p>2. <strong>Cliente</strong> — Guards de tela (<code>sessionHasAccess</code>); cards do dashboard filtrados por ACL; colunas sensíveis com ACL de coluna; modo <code>EXPO_PUBLIC_ACL_STRICT=true</code> (fail-closed se RPC de ACL ausente); <code>TotemDeviceRouteGuard</code>; <strong>cache em memória</strong> de ACL e perfil (<code>lib/asyncResultCache.ts</code>) para navegação instantânea entre cards.</p>
+<p>3. <strong>Transporte</strong> — HTTPS; header <code>x-session-token</code> ou <code>x-profile-id</code> em toda requisição; apenas chave <strong>anon</strong> no app (sem <code>service_role</code>).</p>
+<p>4. <strong>Servidor</strong> — RLS; RPCs com validação de permissão; grants por papel; escritas sensíveis somente via RPC.</p>
+<h3>6.2 Controle de acesso (ACL)</h3>
+<table><thead><tr>
+<th>Nível</th>
+<th>Exemplo</th>
+<th>Onde se aplica</th>
+</tr></thead><tbody>
+<tr>
+<td>Tela</td>
+<td><code>screen:/financial</code></td>
+<td>Guard de rota</td>
+</tr>
+<tr>
+<td>Card</td>
+<td><code>screen:dashboard.card.financial</code></td>
+<td>Filtro do carrossel</td>
+</tr>
+<tr>
+<td>Tabela</td>
+<td><code>table:profiles</code></td>
+<td>RLS</td>
+</tr>
+<tr>
+<td>Coluna</td>
+<td><code>column:profiles.access_pin</code></td>
+<td>Dados cadastrais</td>
+</tr>
+</tbody></table>
+<h3>6.3 Rotas públicas (sem guard de ACL)</h3>
+<p><code>/</code>, <code>/register</code>, <code>/totem-checkin</code>, <code>/cadastro-familia</code>, <code>/sessao-encerrada</code> — documentado em <code>docs/SECURITY-PUBLIC-ROUTES.md</code>.</p>
+<h3>6.4 Sessão e autenticação</h3>
+<ul>
+<li>Login: telefone + PIN → RPC <code>verificar_login</code>.</li>
+<li>Token de sessão: <code>issue_profile_session</code> → header <code>x-session-token</code>.</li>
+<li>Logout: limpa AsyncStorage e redireciona com <code>?signedOut=1</code>.</li>
+</ul>
+<h3>6.5 Headers HTTP (Cloudflare)</h3>
+<ul>
+<li>HTML: <code>Cache-Control: must-revalidate</code> (atualizações de deploy).</li>
+<li>Assets com hash: cache longo.</li>
+<li><code>X-Content-Type-Options: nosniff</code>.</li>
+</ul>
+<h3>6.6 Dados sensíveis</h3>
+<ul>
+<li>PIN, CPF, alertas médicos: protegidos por ACL de coluna + RPC de escrita.</li>
+<li>LGPD: fluxo de aceite obrigatório quando parâmetro ativo.</li>
+</ul>
+<h3>6.7 Riscos e boas práticas observadas</h3>
+<table><thead><tr>
+<th>Aspecto</th>
+<th>Situação</th>
+</tr></thead><tbody>
+<tr>
+<td>Chave anon no código</td>
+<td>Valores padrão em <code>lib/supabaseConfig.ts</code> — esperado para cliente; segurança depende de RLS</td>
+</tr>
+<tr>
+<td>Scripts SQL</td>
+<td>Execução manual — requer governança de quem aplica no Supabase</td>
+</tr>
+<tr>
+<td>Service role</td>
+<td><strong>Não</strong> embutida no app</td>
+</tr>
+<tr>
+<td>PWA instalado</td>
+<td>Sessão persiste localmente — protegida pelo PIN</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>7. Fluxo de deploy</h2>
+<p>```</p>
+<p>Alterações locais → git commit → git push origin main → GitHub → Cloudflare Pages</p>
+<p>→ npm install → npm run build:web → publicação em dist/ (HTTPS)</p>
+<p>```</p>
+<table><thead><tr>
+<th>Configuração Cloudflare</th>
+<th>Valor</th>
+</tr></thead><tbody>
+<tr>
+<td>Build command</td>
+<td><code>npm run build:web</code></td>
+</tr>
+<tr>
+<td>Output directory</td>
+<td><code>dist</code></td>
+</tr>
+<tr>
+<td>Node</td>
+<td>20</td>
+</tr>
+<tr>
+<td>Branch</td>
+<td><code>main</code></td>
+</tr>
+</tbody></table>
+<p>O build gera <code>public/build-info.json</code> com hash do commit para rastreabilidade.</p>
+<hr>
+<h2>8. Funcionalidades por módulo</h2>
+<table><thead><tr>
+<th>Módulo</th>
+<th>Descrição</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Acesso e sessão</strong></td>
+<td>Login PIN, restauração de sessão, logout, reparo de referência de perfil</td>
+</tr>
+<tr>
+<td><strong>LGPD</strong></td>
+<td>Aceite de termos, bloqueio de fluxo se pendente</td>
+</tr>
+<tr>
+<td><strong>Dashboard membro</strong></td>
+<td>Carrossel: eventos, QR check-in, kids/teens, ofertas, pastoral, membros, aniversariantes, financeiro, escalas, estacionamento, Perfil &amp; Identidade</td>
+</tr>
+<tr>
+<td><strong>Trilha de Discipulado</strong></td>
+<td>5×3 lições, selos coloridos, Perfil Ministerial na 5.1, alertas pastorais, admin Temas/Reconhecimentos/Reset</td>
+</tr>
+<tr>
+<td><strong>Índice</strong></td>
+<td>Atalhos filtrados por ACL; versículo bíblico aleatório por tema</td>
+</tr>
+<tr>
+<td><strong>Manutenção</strong></td>
+<td>Gantt de eventos, quorum, escalas, ACL, financeiro, pastoral, recepção familiar, monitor de salas, <strong>Manutenção da Trilha</strong></td>
+</tr>
+<tr>
+<td><strong>Família</strong></td>
+<td>CRUD membros, transferência entre famílias, reconhecimento familiar</td>
+</tr>
+<tr>
+<td><strong>Check-in / Totem</strong></td>
+<td>QR Code, câmera, confirmação de audiência familiar</td>
+</tr>
+<tr>
+<td><strong>Pastoral</strong></td>
+<td>Abertura e histórico de solicitações</td>
+</tr>
+<tr>
+<td><strong>Financeiro</strong></td>
+<td>Visão mensal, boletins, relatórios de despesas</td>
+</tr>
+<tr>
+<td><strong>Mapa</strong></td>
+<td>Geolocalização por CEP com clusters (Leaflet web)</td>
+</tr>
+<tr>
+<td><strong>Versículos</strong></td>
+<td>161 temas, 5.247 versículos (dailyverses.net)</td>
+</tr>
+<tr>
+<td><strong>Cadastro público</strong></td>
+<td>Formulário familiar sem login (fila recepção)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>9. Documentação existente no repositório</h2>
+<table><thead><tr>
+<th>Documento</th>
+<th>Conteúdo</th>
+</tr></thead><tbody>
+<tr>
+<td><code>ARQUITETURA_BLUEPRINT_PWA.md</code></td>
+<td>Blueprint técnico completo</td>
+</tr>
+<tr>
+<td><code>CAMADAS_SEGURANCA.md</code></td>
+<td>Especificação de segurança</td>
+</tr>
+<tr>
+<td><code>CONTROLE_ACESSO.md</code></td>
+<td>Modelo ACL</td>
+</tr>
+<tr>
+<td><code>DEPLOY_CLOUDFLARE.md</code></td>
+<td>Guia de deploy</td>
+</tr>
+<tr>
+<td><code>FUNCIONALIDADES.md</code></td>
+<td>Lista de funcionalidades</td>
+</tr>
+<tr>
+<td><code>PACOTE_*</code> / manuais</td>
+<td>Pacotes operacionais e treinamento</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>10. Informações complementares</h2>
+<ul>
+<li><strong>Nome PWA:</strong> Igreja Batista Norte (IBNorte)</li>
+<li><strong>Orientação:</strong> Portrait</li>
+<li><strong>Plataformas alvo:</strong> Web (PWA), Android, iOS (via Expo)</li>
+<li><strong>Repositório Git:</strong> https://github.com/maufreitas63/app-igreja</li>
+<li><strong>Testes automatizados:</strong> Scripts Node em <code>scripts/test-*.mjs</code> (fluxos específicos, não suite Jest completa)</li>
+<li><strong>Geração de documentação:</strong> <code>npm run build:docs:pdf</code> converte ~27 markdowns em PDF na pasta <code>pdfs/</code></li>
+</ul>
+<hr>
+<p><em>Documento gerado automaticamente com base na análise do repositório app-igreja em 17/06/2026.</em></p>
+</div>
+</body>
+</html>

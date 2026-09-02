@@ -1,0 +1,2005 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Mapa visual de papéis — Controle de Acesso</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Mapa visual de papéis — Controle de Acesso</h1>
+<p>Gerado em: 02/07/2026, 18:44:05</p>
+<p>Fonte: banco Supabase (ao vivo)</p>
+<p>Legenda: <strong>Ver</strong> = visualizar recurso; <strong>Editar</strong> = alterar recurso.</p>
+<hr>
+<h2>Visitantes</h2>
+<ul>
+<li><strong>Código:</strong> <code>visitantes</code></li>
+<li><strong>Descrição:</strong> Acesso público mínimo sem perfil/papéis na sessão</li>
+</ul>
+<h3>Telas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Cadastro</td>
+<td><code>/register</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card Agenda da Família</td>
+<td><code>dashboard.card.event_alt</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Check In</td>
+<td><code>dashboard.card.qr</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Coração Aberto</td>
+<td><code>dashboard.card.pastoral</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card Dízimos e Ofertas</td>
+<td><code>dashboard.card.offerings</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Coração Aberto</td>
+<td><code>/pastoral</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><code>/dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>LGPD</td>
+<td><code>/lgpd</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Login</td>
+<td><code>/</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Meus pedidos pastorais</td>
+<td><code>/pastoral-history</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<h3>Tabelas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Categorias pastorais</td>
+<td><code>pastoral_reason_categories</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Eventos</td>
+<td><code>events</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Inscrições em eventos</td>
+<td><code>event_registrations</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Parâmetros do app</td>
+<td><code>app_parameters</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Subcategorias pastorais</td>
+<td><code>pastoral_reason_subcategories</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Congregado</h2>
+<ul>
+<li><strong>Código:</strong> <code>congregado</code></li>
+<li><strong>Descrição:</strong> Participante cadastrado com acesso básico; sem gerência familiar</li>
+</ul>
+<h3>Telas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Cadastro</td>
+<td><code>/register</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card — Administrativo</td>
+<td><code>dashboard.card.administrativo</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Agenda da Família</td>
+<td><code>dashboard.card.event_alt</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Aniversariantes</td>
+<td><code>dashboard.card.birthdays</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Check In</td>
+<td><code>dashboard.card.qr</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Coração Aberto</td>
+<td><code>dashboard.card.pastoral</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Dízimos e Ofertas</td>
+<td><code>dashboard.card.offerings</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Lista de Membros</td>
+<td><code>dashboard.card.members_list</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Menu</td>
+<td><code>dashboard.card.grouped_manage</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card SALA(S)</td>
+<td><code>dashboard.card.kids_teens</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Coração Aberto</td>
+<td><code>/pastoral</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Dados cadastrais</td>
+<td><code>/manage-profile</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><code>/dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Gerenciar família</td>
+<td><code>/manage-members</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>LGPD</td>
+<td><code>/lgpd</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Mapa de geolocalização</td>
+<td><code>/mapa-geolocalizacao</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Meus pedidos pastorais</td>
+<td><code>/pastoral-history</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+</tbody></table>
+<h3>Tabelas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Pedidos pastorais</td>
+<td><code>pastoral_requests</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Perfis</td>
+<td><code>profiles</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Tabela — Atas de assembleias</td>
+<td><code>maintenance_assembly_minutes</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+</tbody></table>
+<h3>Colunas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Bairro</td>
+<td><code>profiles.address_neighborhood</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>CEP</td>
+<td><code>profiles.cep</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Cidade</td>
+<td><code>profiles.address_city</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Complemento</td>
+<td><code>profiles.address_complement</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>E-mail</td>
+<td><code>profiles.email</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Estado</td>
+<td><code>profiles.address_state</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Nascimento</td>
+<td><code>profiles.birth_date</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Nome completo</td>
+<td><code>profiles.full_name</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Número</td>
+<td><code>profiles.address_number</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Rua</td>
+<td><code>profiles.address_street</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Telefone</td>
+<td><code>profiles.phone</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Membro</h2>
+<ul>
+<li><strong>Código:</strong> <code>member</code></li>
+<li><strong>Descrição:</strong> Acesso padrão do aplicativo</li>
+</ul>
+<h3>Telas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Cadastro</td>
+<td><code>/register</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card — Administrativo</td>
+<td><code>dashboard.card.administrativo</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Agenda da Família</td>
+<td><code>dashboard.card.event_alt</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Aniversariantes</td>
+<td><code>dashboard.card.birthdays</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Check In</td>
+<td><code>dashboard.card.qr</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Coração Aberto</td>
+<td><code>dashboard.card.pastoral</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Dízimos e Ofertas</td>
+<td><code>dashboard.card.offerings</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Escalas</td>
+<td><code>dashboard.card.vigilance_scales</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Estacionamento</td>
+<td><code>dashboard.card.parking_vehicle_v2</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Financeiro (dashboard)</td>
+<td><code>dashboard.card.financial</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Lista de Membros</td>
+<td><code>dashboard.card.members_list</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Menu</td>
+<td><code>dashboard.card.grouped_manage</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card SALA(S)</td>
+<td><code>dashboard.card.kids_teens</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Coração Aberto</td>
+<td><code>/pastoral</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Dados cadastrais</td>
+<td><code>/manage-profile</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><code>/dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Gerenciar família</td>
+<td><code>/manage-members</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>LGPD</td>
+<td><code>/lgpd</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Login</td>
+<td><code>/</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Mapa de geolocalização</td>
+<td><code>/mapa-geolocalizacao</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Meus pedidos pastorais</td>
+<td><code>/pastoral-history</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Relatório de Despesas (RD)</td>
+<td><code>/expense-report</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Relatórios financeiros (/financial)</td>
+<td><code>/financial</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+</tbody></table>
+<h3>Tabelas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Categorias pastorais</td>
+<td><code>pastoral_reason_categories</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Eventos</td>
+<td><code>events</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Famílias</td>
+<td><code>families</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Inscrições em eventos</td>
+<td><code>event_registrations</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Lançamentos financeiros</td>
+<td><code>financials</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Membros da família</td>
+<td><code>members</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Parâmetros do app</td>
+<td><code>app_parameters</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Pedidos pastorais</td>
+<td><code>pastoral_requests</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Perfis</td>
+<td><code>profiles</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Relatórios de Despesas</td>
+<td><code>expense_reports</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Subcategorias pastorais</td>
+<td><code>pastoral_reason_subcategories</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Atas de assembleias</td>
+<td><code>maintenance_assembly_minutes</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Veículos do perfil</td>
+<td><code>profile_vehicles</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<h3>Colunas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Alertas alimentares</td>
+<td><code>profiles.medical_food_alerts</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Bairro</td>
+<td><code>profiles.address_neighborhood</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>CEP</td>
+<td><code>profiles.cep</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Cidade</td>
+<td><code>profiles.address_city</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Complemento</td>
+<td><code>profiles.address_complement</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>CPF</td>
+<td><code>profiles.cpf</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>E-mail</td>
+<td><code>profiles.email</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Estado</td>
+<td><code>profiles.address_state</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Nascimento</td>
+<td><code>profiles.birth_date</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Nome completo</td>
+<td><code>profiles.full_name</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Nome fantasia</td>
+<td><code>profiles.nome_fantasia</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Número</td>
+<td><code>profiles.address_number</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Rua</td>
+<td><code>profiles.address_street</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Telefone</td>
+<td><code>profiles.phone</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Responsável familiar</h2>
+<ul>
+<li><strong>Código:</strong> <code>family_acceptor</code></li>
+<li><strong>Descrição:</strong> Gerencia membros da família</li>
+</ul>
+<h3>Telas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Dashboard</td>
+<td><code>/dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Líder</h2>
+<ul>
+<li><strong>Código:</strong> <code>lider</code></li>
+<li><strong>Descrição:</strong> Gerencia servos e programação de tipos de escala atribuídos ao perfil</li>
+</ul>
+<h3>Telas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Card Escalas</td>
+<td><code>dashboard.card.vigilance_scales</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><code>/dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Escala: Acolhimento Recepção</td>
+<td><code>scale_type.acolhimento_recepcao</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Escala de Monitores Sala Kids</td>
+<td><code>scale_type.sala kids</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Escala de Monitores Sala Teens</td>
+<td><code>scale_type.sala teens</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Escala Ministério  Infantil</td>
+<td><code>scale_type.sala_kids</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Escala Ministério de Louvor</td>
+<td><code>scale_type.louvor</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Escala Ministério Jovens</td>
+<td><code>scale_type.sala_teens</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Ministério De Acolhimento</td>
+<td><code>scale_type.ministerioacolhimento</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Ministério De Intercessão</td>
+<td><code>scale_type.ministintersec</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção — Cronograma de eventos</td>
+<td><code>maintenance.card.events_gantt</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção — Programação de eventos</td>
+<td><code>maintenance.card.events</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção do sistema</td>
+<td><code>/maintenance-dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção: Programação de Escalas</td>
+<td><code>maintenance.card.scales</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção: Servos em Disponibilidade</td>
+<td><code>maintenance.card.scale_volunteers</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Administrador de eventos</h2>
+<ul>
+<li><strong>Código:</strong> <code>events_admin</code></li>
+<li><strong>Descrição:</strong> Manutenção de eventos e salas</li>
+</ul>
+<h3>Telas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Card SALA(S)</td>
+<td><code>dashboard.card.kids_teens</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><code>/dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção — Relatórios</td>
+<td><code>maintenance.card.relatorios</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção — Sugestões e Melhorias</td>
+<td><code>maintenance.card.suggestions_improvements</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção do sistema</td>
+<td><code>/maintenance-dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<h3>Tabelas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Eventos</td>
+<td><code>events</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Inscrições em eventos</td>
+<td><code>event_registrations</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Tabela — Anexos de suporte</td>
+<td><code>maintenance_support_attachments</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Atas de assembleias</td>
+<td><code>maintenance_assembly_minutes</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Tabela — Comunicações de suporte</td>
+<td><code>maintenance_support_communications</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Histórico de suporte</td>
+<td><code>maintenance_support_interactions</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Solicitações de suporte</td>
+<td><code>maintenance_support_requests</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Temas de suporte</td>
+<td><code>maintenance_support_themes</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Tesoureiro</h2>
+<ul>
+<li><strong>Código:</strong> <code>tesoureiro</code></li>
+<li><strong>Descrição:</strong> Tesouraria: card financeiro, manutenção financeira, eventos de meses anteriores e RD por mês de referência</li>
+</ul>
+<h3>Telas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Card Financeiro (dashboard)</td>
+<td><code>dashboard.card.financial</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><code>/dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção — Cronograma de eventos</td>
+<td><code>maintenance.card.events_gantt</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção — Informações financeiras</td>
+<td><code>maintenance.card.financials</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção — Programação de eventos</td>
+<td><code>maintenance.card.events</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção — Relatórios</td>
+<td><code>maintenance.card.relatorios</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção — Sugestões e Melhorias</td>
+<td><code>maintenance.card.suggestions_improvements</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção do sistema</td>
+<td><code>/maintenance-dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção: Modelo Preditivo</td>
+<td><code>maintenance.card.predictive_insights</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Relatório de Despesas (RD)</td>
+<td><code>/expense-report</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Relatórios financeiros (/financial)</td>
+<td><code>/financial</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<h3>Tabelas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Eventos</td>
+<td><code>events</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Inscrições em eventos</td>
+<td><code>event_registrations</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Lançamentos financeiros</td>
+<td><code>financials</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Relatórios de Despesas</td>
+<td><code>expense_reports</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Tabela — Anexos de suporte</td>
+<td><code>maintenance_support_attachments</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Atas de assembleias</td>
+<td><code>maintenance_assembly_minutes</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Tabela — Comunicações de suporte</td>
+<td><code>maintenance_support_communications</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Histórico de suporte</td>
+<td><code>maintenance_support_interactions</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Solicitações de suporte</td>
+<td><code>maintenance_support_requests</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Temas de suporte</td>
+<td><code>maintenance_support_themes</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Equipe Pastoral</h2>
+<ul>
+<li><strong>Código:</strong> <code>pastoral</code></li>
+<li><strong>Descrição:</strong> Mesmos privilégios de Membro, mais manutenção Cuidado Pastoral</li>
+</ul>
+<h3>Telas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Card Check In</td>
+<td><code>dashboard.card.qr</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Coração Aberto</td>
+<td><code>dashboard.card.pastoral</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Dízimos e Ofertas</td>
+<td><code>dashboard.card.offerings</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Escalas</td>
+<td><code>dashboard.card.vigilance_scales</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Card Estacionamento</td>
+<td><code>dashboard.card.parking_vehicle_v2</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Coração Aberto</td>
+<td><code>/pastoral</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><code>/dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção — Relatórios</td>
+<td><code>maintenance.card.relatorios</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção — Sugestões e Melhorias</td>
+<td><code>maintenance.card.suggestions_improvements</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção do sistema</td>
+<td><code>/maintenance-dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção: Cuidado Pastoral</td>
+<td><code>maintenance.card.pastoral_care</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção: Modelo Preditivo</td>
+<td><code>maintenance.card.predictive_insights</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção: Mudança de Papéis</td>
+<td><code>maintenance.card.mudanca_papeis</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Meus pedidos pastorais</td>
+<td><code>/pastoral-history</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<h3>Tabelas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Categorias pastorais</td>
+<td><code>pastoral_reason_categories</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Eventos</td>
+<td><code>events</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Famílias</td>
+<td><code>families</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Inscrições em eventos</td>
+<td><code>event_registrations</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Lançamentos financeiros</td>
+<td><code>financials</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Membros da família</td>
+<td><code>members</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Parâmetros do app</td>
+<td><code>app_parameters</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Pedidos pastorais</td>
+<td><code>pastoral_requests</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Perfis</td>
+<td><code>profiles</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Relatórios de Despesas</td>
+<td><code>expense_reports</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Subcategorias pastorais</td>
+<td><code>pastoral_reason_subcategories</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Anexos de suporte</td>
+<td><code>maintenance_support_attachments</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Atas de assembleias</td>
+<td><code>maintenance_assembly_minutes</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Comunicações de suporte</td>
+<td><code>maintenance_support_communications</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Histórico de suporte</td>
+<td><code>maintenance_support_interactions</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Solicitações de suporte</td>
+<td><code>maintenance_support_requests</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Tabela — Temas de suporte</td>
+<td><code>maintenance_support_themes</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Veículos do perfil</td>
+<td><code>profile_vehicles</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<h3>Colunas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Alertas alimentares</td>
+<td><code>profiles.medical_food_alerts</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Bairro</td>
+<td><code>profiles.address_neighborhood</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>CEP</td>
+<td><code>profiles.cep</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Cidade</td>
+<td><code>profiles.address_city</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Complemento</td>
+<td><code>profiles.address_complement</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>CPF</td>
+<td><code>profiles.cpf</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>E-mail</td>
+<td><code>profiles.email</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Estado</td>
+<td><code>profiles.address_state</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Nascimento</td>
+<td><code>profiles.birth_date</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Nome completo</td>
+<td><code>profiles.full_name</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Nome fantasia</td>
+<td><code>profiles.nome_fantasia</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Número</td>
+<td><code>profiles.address_number</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Rua</td>
+<td><code>profiles.address_street</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Telefone</td>
+<td><code>profiles.phone</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Super administrador</h2>
+<ul>
+<li><strong>Código:</strong> <code>super_admin</code></li>
+<li><strong>Descrição:</strong> Acesso total configurável</li>
+</ul>
+<h3>Telas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Acessos de Usuários</td>
+<td><code>maintenance.card.profile_access_insights</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Cadastro</td>
+<td><code>/register</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card — Administrativo</td>
+<td><code>dashboard.card.administrativo</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card Agenda da Família</td>
+<td><code>dashboard.card.event_alt</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card Aniversariantes</td>
+<td><code>dashboard.card.birthdays</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card Check In</td>
+<td><code>dashboard.card.qr</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card Coração Aberto</td>
+<td><code>dashboard.card.pastoral</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card Dízimos e Ofertas</td>
+<td><code>dashboard.card.offerings</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card Escalas</td>
+<td><code>dashboard.card.vigilance_scales</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card Estacionamento</td>
+<td><code>dashboard.card.parking_vehicle_v2</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card Financeiro (dashboard)</td>
+<td><code>dashboard.card.financial</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card Lista de Membros</td>
+<td><code>dashboard.card.members_list</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card Menu</td>
+<td><code>dashboard.card.grouped_manage</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Card SALA(S)</td>
+<td><code>dashboard.card.kids_teens</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Controle de Acesso</td>
+<td><code>maintenance.card.access_control</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Coração Aberto</td>
+<td><code>/pastoral</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Dados cadastrais</td>
+<td><code>/manage-profile</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><code>/dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Acolhimento Estacionamento</td>
+<td><code>scale_type.acolhimento_estacionamento</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Acolhimento Recepção</td>
+<td><code>scale_type.acolhimento_recepcao</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Escala de Monitores Sala Kids</td>
+<td><code>scale_type.sala kids</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Escala de Monitores Sala Teens</td>
+<td><code>scale_type.sala teens</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Escala Ministério  Infantil</td>
+<td><code>scale_type.sala_kids</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Escala Ministério de Louvor</td>
+<td><code>scale_type.louvor</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Escala Ministério Jovens</td>
+<td><code>scale_type.sala_teens</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Ministério De Acolhimento</td>
+<td><code>scale_type.ministerioacolhimento</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Escala: Ministério De Intercessão</td>
+<td><code>scale_type.ministintersec</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Gerenciar família</td>
+<td><code>/manage-members</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>LGPD</td>
+<td><code>/lgpd</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Login</td>
+<td><code>/</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção — Cronograma de eventos</td>
+<td><code>maintenance.card.events_gantt</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção — Informações financeiras</td>
+<td><code>maintenance.card.financials</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção — Orquestração do Evento</td>
+<td><code>maintenance.card.event_orchestration</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção — Programação de eventos</td>
+<td><code>maintenance.card.events</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção — Relatórios</td>
+<td><code>maintenance.card.relatorios</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção — Sugestões e Melhorias</td>
+<td><code>maintenance.card.suggestions_improvements</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção do sistema</td>
+<td><code>/maintenance-dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção: Cuidado Pastoral</td>
+<td><code>maintenance.card.pastoral_care</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção: Modelo Preditivo</td>
+<td><code>maintenance.card.predictive_insights</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção: Mudança de Papéis</td>
+<td><code>maintenance.card.mudanca_papeis</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção: Programação de Escalas</td>
+<td><code>maintenance.card.scales</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção: Servos em Disponibilidade</td>
+<td><code>maintenance.card.scale_volunteers</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Manutenção: Tipos de Escala</td>
+<td><code>maintenance.card.scale_types</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Mapa de geolocalização</td>
+<td><code>/mapa-geolocalizacao</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Meus pedidos pastorais</td>
+<td><code>/pastoral-history</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Modo Ghost (Auditor)</td>
+<td><code>maintenance.card.auditor</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Orquestrador do evento (/admin/orquestrador)</td>
+<td><code>/admin/orquestrador</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Relatório de Despesas (RD)</td>
+<td><code>/expense-report</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Relatórios financeiros (/financial)</td>
+<td><code>/financial</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Todas as telas (curinga)</td>
+<td><code>*</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<h3>Tabelas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Categorias pastorais</td>
+<td><code>pastoral_reason_categories</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Eventos</td>
+<td><code>events</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Famílias</td>
+<td><code>families</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Inscrições em eventos</td>
+<td><code>event_registrations</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Lançamentos financeiros</td>
+<td><code>financials</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Membros da família</td>
+<td><code>members</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Parâmetros do app</td>
+<td><code>app_parameters</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Pedidos pastorais</td>
+<td><code>pastoral_requests</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Perfis</td>
+<td><code>profiles</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Registro de escalas</td>
+<td><code>escalas_log</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Relatórios de Despesas</td>
+<td><code>expense_reports</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Subcategorias pastorais</td>
+<td><code>pastoral_reason_subcategories</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Tabela — Anexos de suporte</td>
+<td><code>maintenance_support_attachments</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Tabela — Atas de assembleias</td>
+<td><code>maintenance_assembly_minutes</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Tabela — Comunicações de suporte</td>
+<td><code>maintenance_support_communications</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Tabela — Histórico de suporte</td>
+<td><code>maintenance_support_interactions</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Tabela — Solicitações de suporte</td>
+<td><code>maintenance_support_requests</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Tabela — Temas de suporte</td>
+<td><code>maintenance_support_themes</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Tipos de escala</td>
+<td><code>tipos_escala</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Todas as tabelas (curinga)</td>
+<td><code>*</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Veículos do perfil</td>
+<td><code>profile_vehicles</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Voluntários de escala</td>
+<td><code>voluntarios_escala</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<h3>Colunas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Alertas alimentares</td>
+<td><code>profiles.medical_food_alerts</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Bairro</td>
+<td><code>profiles.address_neighborhood</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>CEP</td>
+<td><code>profiles.cep</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Cidade</td>
+<td><code>profiles.address_city</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Código família</td>
+<td><code>profiles.family_id</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Complemento</td>
+<td><code>profiles.address_complement</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>CPF</td>
+<td><code>profiles.cpf</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>E-mail</td>
+<td><code>profiles.email</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Estado</td>
+<td><code>profiles.address_state</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>LGPD aceito</td>
+<td><code>profiles.lgpd_accepted</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Nascimento</td>
+<td><code>profiles.birth_date</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Nome completo</td>
+<td><code>profiles.full_name</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Nome fantasia</td>
+<td><code>profiles.nome_fantasia</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Número</td>
+<td><code>profiles.address_number</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Papel no sistema</td>
+<td><code>profiles.role</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Rua</td>
+<td><code>profiles.address_street</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Senha de acesso (PIN)</td>
+<td><code>profiles.access_pin</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Telefone</td>
+<td><code>profiles.phone</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Todas as colunas de profiles (curinga)</td>
+<td><code>profiles.*</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Orquestrador de Evento</h2>
+<ul>
+<li><strong>Código:</strong> <code>orquestrador_evento</code></li>
+<li><strong>Descrição:</strong> Conduz o culto em tempo real: altera a rota ativa no orquestrador e guia os membros conectados</li>
+</ul>
+<h3>Telas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Dashboard</td>
+<td><code>/dashboard</code></td>
+<td><strong>Sim</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Manutenção — Orquestração do Evento</td>
+<td><code>maintenance.card.event_orchestration</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Orquestrador do evento (/admin/orquestrador)</td>
+<td><code>/admin/orquestrador</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<h3>Tabelas</h3>
+<table><thead><tr>
+<th>Nome</th>
+<th>Chave técnica</th>
+<th>Ver</th>
+<th>Editar</th>
+</tr></thead><tbody>
+<tr>
+<td>Avisos do culto (event_avisos)</td>
+<td><code>event_avisos</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td>Orquestração do evento (event_control)</td>
+<td><code>event_control</code></td>
+<td><strong>Sim</strong></td>
+<td><strong>Sim</strong></td>
+</tr>
+</tbody></table>
+<hr>
+</div>
+</body>
+</html>

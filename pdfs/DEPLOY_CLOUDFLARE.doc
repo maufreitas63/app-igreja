@@ -1,0 +1,463 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Deploy do PWA no Cloudflare Pages</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Deploy do PWA no Cloudflare Pages</h1>
+<p>Guia rápido para publicar o <strong>app-igreja</strong> via <code>git push</code> no GitHub. O Cloudflare Pages faz o build automaticamente a cada push na branch <code>main</code>.</p>
+<p><strong>Repositório:</strong> https://github.com/maufreitas63/app-igreja</p>
+<hr>
+<h2>Visão geral</h2>
+<p>```mermaid</p>
+<p>flowchart LR</p>
+<p>A[Alterações locais] --&gt; B[git commit]</p>
+<p>B --&gt; C[git push origin main]</p>
+<p>C --&gt; D[GitHub]</p>
+<p>D --&gt; E[Cloudflare Pages — build]</p>
+<p>E --&gt; F[PWA publicado em HTTPS]</p>
+<p>```</p>
+<table><thead><tr>
+<th>Etapa</th>
+<th>Quem executa</th>
+<th>Tempo típico</th>
+</tr></thead><tbody>
+<tr>
+<td>Push → fila no Cloudflare</td>
+<td>Automático</td>
+<td>~30 s</td>
+</tr>
+<tr>
+<td><code>npm install</code> + <code>npm run build:web</code></td>
+<td>Cloudflare</td>
+<td><strong>3–10 min</strong></td>
+</tr>
+<tr>
+<td>Propagação do deploy</td>
+<td>Cloudflare</td>
+<td>~30 s</td>
+</tr>
+<tr>
+<td>Navegador buscar HTML novo</td>
+<td>Usuário (revalidação)</td>
+<td>Imediato após deploy*</td>
+</tr>
+</tbody></table>
+<p>\* O <code>public/_headers</code> manda o HTML a <strong>revalidar sempre</strong>; os JS/CSS com hash continuam em cache. Sem hard refresh, alguns navegadores/PWA instalados ainda podem demorar um pouco — veja seção abaixo.</p>
+<hr>
+<h2>Configuração do projeto no Cloudflare (uma vez)</h2>
+<p>No painel <a href="https://dash.cloudflare.com/">Cloudflare Dashboard</a> → <strong>Workers &amp; Pages</strong> → <strong>Create application</strong> → <strong>Pages</strong> → <strong>Connect to Git</strong>:</p>
+<table><thead><tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr></thead><tbody>
+<tr>
+<td>Repositório</td>
+<td><code>maufreitas63/app-igreja</code></td>
+</tr>
+<tr>
+<td>Branch de produção</td>
+<td><code>main</code></td>
+</tr>
+<tr>
+<td>Framework preset</td>
+<td><strong>None</strong> (ou Expo, se disponível — o comando abaixo é o que importa)</td>
+</tr>
+<tr>
+<td>Build command</td>
+<td><code>npm run build:web</code></td>
+</tr>
+<tr>
+<td>Build output directory</td>
+<td><code>dist</code></td>
+</tr>
+<tr>
+<td>Root directory</td>
+<td><em>(vazio — raiz do repositório)</em></td>
+</tr>
+</tbody></table>
+<h3>Variáveis de ambiente (Build)</h3>
+<p>Em <strong>Settings → Environment variables</strong> do projeto Pages, configure:</p>
+<table><thead><tr>
+<th>Variável</th>
+<th>Valor</th>
+<th>Obrigatória</th>
+</tr></thead><tbody>
+<tr>
+<td><code>NODE_VERSION</code></td>
+<td><code>20</code></td>
+<td>Sim</td>
+</tr>
+<tr>
+<td><code>NODE_OPTIONS</code></td>
+<td><code>--max-old-space-size=6144</code></td>
+<td>Recomendado</td>
+</tr>
+<tr>
+<td><code>PUPPETEER_SKIP_DOWNLOAD</code></td>
+<td><code>true</code></td>
+<td>Recomendado</td>
+</tr>
+</tbody></table>
+<p>Variáveis opcionais do app (só se precisar no build/runtime):</p>
+<table><thead><tr>
+<th>Variável</th>
+<th>Uso</th>
+</tr></thead><tbody>
+<tr>
+<td><code>EXPO_PUBLIC_GOOGLE_MAPS_GEOCODING_API_KEY</code></td>
+<td>Geocodificação Google (senão usa ViaCEP + OSM)</td>
+</tr>
+<tr>
+<td><code>EXPO_PUBLIC_ACL_STRICT</code></td>
+<td><code>true</code> para negar acesso quando RPC de ACL estiver ausente</td>
+</tr>
+<tr>
+<td><code>EXPO_PUBLIC_APP_URL</code></td>
+<td>URL pública do PWA (retorno do Stripe Checkout)</td>
+</tr>
+<tr>
+<td><code>EXPO_PUBLIC_BILLING_ENFORCE</code></td>
+<td>Deixe <code>false</code> no dia a dia. <code>true</code> ativa paywall só na <strong>IBEP</strong> sem plano (nunca desmonta o menu)</td>
+</tr>
+</tbody></table>
+<h3>Billing SaaS — Stripe Test Keys (runtime das Pages Functions)</h3>
+<p>Em <strong>Settings → Variables and Secrets</strong> (ambiente <strong>Production</strong>), cadastre:</p>
+<table><thead><tr>
+<th>Nome</th>
+<th>Tipo</th>
+<th>Onde obter</th>
+</tr></thead><tbody>
+<tr>
+<td><code>STRIPE_SECRET_KEY</code></td>
+<td><strong>Secret</strong></td>
+<td>Stripe → Developers → API keys → Secret key <strong>test</strong> (<code>sk_test_…</code>)</td>
+</tr>
+<tr>
+<td><code>STRIPE_WEBHOOK_SECRET</code></td>
+<td><strong>Secret</strong></td>
+<td>Stripe → Developers → Webhooks → endpoint → Signing secret (<code>whsec_…</code>)</td>
+</tr>
+<tr>
+<td><code>SUPABASE_URL</code></td>
+<td>Secret ou texto</td>
+<td>URL do projeto Supabase (ex.: <code>https://bldbrsuiwctoaxzcrjoc.supabase.co</code>)</td>
+</tr>
+<tr>
+<td><code>SUPABASE_SERVICE_ROLE_KEY</code></td>
+<td><strong>Secret</strong></td>
+<td>Supabase → Settings → API → <code>service_role</code></td>
+</tr>
+<tr>
+<td><code>STRIPE_PRICE_SEMENTE</code></td>
+<td>Texto</td>
+<td>Price ID <strong>trimestral</strong> do produto Semente (<code>price_…</code>, <code>interval_count</code> 3)</td>
+</tr>
+<tr>
+<td><code>STRIPE_PRICE_CRESCIMENTO</code></td>
+<td>Texto</td>
+<td>Price ID trimestral do plano Crescimento</td>
+</tr>
+<tr>
+<td><code>STRIPE_PRICE_EXPANSAO</code></td>
+<td>Texto</td>
+<td>Price ID trimestral do plano Expansão</td>
+</tr>
+<tr>
+<td><code>STRIPE_PRICE_MINISTERIO</code></td>
+<td>Texto</td>
+<td>Price ID trimestral do plano Ministério</td>
+</tr>
+<tr>
+<td><code>EXPO_PUBLIC_APP_URL</code></td>
+<td>Texto</td>
+<td>URL do Pages (ex.: <code>https://app-igreja.pages.dev</code>)</td>
+</tr>
+</tbody></table>
+<p>Webhook Stripe (modo <strong>Test</strong>):</p>
+<p>```</p>
+<p>https://SEU-DOMINIO.pages.dev/api/stripe-webhook</p>
+<p>```</p>
+<p>Os Prices precisam ser <strong>trimestrais</strong> (<code>recurring.interval = month</code> e <code>interval_count = 3</code>). O Stripe não deixa mudar um Price mensal para trimestral: crie um Price novo no mesmo produto. Com <code>STRIPE_SECRET_KEY</code> no <code>.env.local</code>, rode <code>npm run stripe:quarterly-prices</code> e cole os <code>price_…</code> nas variáveis acima.</p>
+<p>Price IDs atuais (modo Test, 3 × o mensal):</p>
+<table><thead><tr>
+<th>Variável</th>
+<th>Price ID</th>
+<th>Valor</th>
+</tr></thead><tbody>
+<tr>
+<td><code>STRIPE_PRICE_SEMENTE</code></td>
+<td><code>price_1U9TwCRexYTA7BZinNE5DHcM</code></td>
+<td>R$ 89,70 / trimestre</td>
+</tr>
+<tr>
+<td><code>STRIPE_PRICE_CRESCIMENTO</code></td>
+<td><code>price_1U9TwCRexYTA7BZid3vCScbV</code></td>
+<td>R$ 239,70 / trimestre</td>
+</tr>
+<tr>
+<td><code>STRIPE_PRICE_EXPANSAO</code></td>
+<td><code>price_1U9TwDRexYTA7BZiolQgqpTI</code></td>
+<td>R$ 449,70 / trimestre</td>
+</tr>
+<tr>
+<td><code>STRIPE_PRICE_MINISTERIO</code></td>
+<td><code>price_1U9TwERexYTA7BZiSxEMG3pg</code></td>
+<td>R$ 899,70 / trimestre</td>
+</tr>
+</tbody></table>
+<p>Eventos sugeridos: <code>checkout.session.completed</code>, <code>customer.subscription.updated</code>, <code>customer.subscription.deleted</code>, <code>invoice.paid</code>, <code>invoice.payment_failed</code>.</p>
+<p>Após salvar secrets, faça um <strong>Retry deployment</strong> (ou um novo push) para as Functions enxergarem os valores.</p>
+<hr>
+<h2>Fluxo diário: git push</h2>
+<h3>1. Conferir o que será enviado</h3>
+<p>```powershell</p>
+<p>cd c:\Users\maufr\.cursor\MProj\ecossistema\app-igreja</p>
+<p>git status</p>
+<p>git diff</p>
+<p>```</p>
+<h3>2. Commitar (se ainda não commitou)</h3>
+<p>```powershell</p>
+<p>git add .</p>
+<p>git commit -m &quot;descreva aqui a alteração&quot;</p>
+<p>```</p>
+<h3>3. Enviar para o GitHub</h3>
+<p>```powershell</p>
+<p>git push origin main</p>
+<p>```</p>
+<p>Pronto. O Cloudflare detecta o push e inicia um novo deploy em alguns segundos.</p>
+<blockquote><strong>Produção vs Preview:</strong> só pushes na branch <strong><code>main</code></strong> geram deploy de <strong>Production</strong> (URL principal / domínio customizado). Pushes em outras branches (<code>melhorias-cursor</code>, PRs, etc.) geram deploys <strong>Preview</strong> — visíveis no painel, mas <strong>não</strong> substituem o site em produção até merge em <code>main</code> ou <strong>Promote to production</strong> manual.</blockquote>
+<h3>4. Acompanhar o build</h3>
+<p>1. Cloudflare Dashboard → seu projeto Pages → aba <strong>Deployments</strong></p>
+<p>2. Aguarde status <strong>Success</strong> (build costuma levar 2–8 minutos)</p>
+<p>3. Abra a URL do projeto (ex.: <code>https://app-igreja.pages.dev</code> ou domínio customizado)</p>
+<h3>5. Validar no navegador</h3>
+<p>Após o deploy aparecer <strong>Success</strong> (não basta o <code>git push</code> — aguarde o build):</p>
+<p>1. Abra <code>https://{seu-dominio}/build-info.json</code> e confira:</p>
+<ul>
+<li><code>&quot;environment&quot;: &quot;production&quot;</code> e <code>&quot;branch&quot;: &quot;main&quot;</code> — deploy de produção ativo</li>
+<li>Se aparecer <code>&quot;environment&quot;: &quot;preview&quot;</code>, você está em URL de preview (ou build de branch secundária), <strong>não</strong> em produção</li>
+<li><code>&quot;commit&quot;</code> deve corresponder ao push em <code>main</code> no GitHub</li>
+</ul>
+<p>2. Abra a URL em aba anônima <strong>ou</strong> use <strong>Ctrl+Shift+R</strong> (hard refresh)</p>
+<p>3. Confira no DevTools → <strong>Network</strong> → documento HTML: cabeçalho <code>cache-control: public, max-age=0, must-revalidate</code></p>
+<p>4. Teste login, dashboard e a tela que você alterou</p>
+<p>5. Se o app está <strong>instalado como PWA</strong>: feche todas as janelas, reabra; em último caso, limpe dados do site no navegador</p>
+<h3>Formulário público de cadastro familiar (fora do app)</h3>
+<p>O <code>npm run build:web</code> gera <strong>dois</strong> artefatos na pasta <code>dist/</code>:</p>
+<table><thead><tr>
+<th>Caminho</th>
+<th>Conteúdo</th>
+</tr></thead><tbody>
+<tr>
+<td><code>/</code></td>
+<td>PWA da igreja (login, dashboard, etc.)</td>
+</tr>
+<tr>
+<td><code>/cadastro-familia/</code></td>
+<td>Formulário standalone — <strong>sem</strong> AppShell, tabs nem login</td>
+</tr>
+</tbody></table>
+<p><strong>Link para enviar aos usuários:</strong></p>
+<p>```</p>
+<p>https://{seu-dominio}/cadastro-familia/</p>
+<p>```</p>
+<p>Exemplo: <code>https://app-igreja.pages.dev/cadastro-familia/</code></p>
+<p>Após o envio, a submissão entra na fila <strong>Recepção Familiar</strong> na manutenção (execute <code>scripts/recepcao-cadastro-familiar.sql</code> no Supabase se a fila não carregar).</p>
+<p>Desenvolvimento local do formulário (sem Expo):</p>
+<p>```powershell</p>
+<p>npm run dev:family-form</p>
+<p>```</p>
+<blockquote><strong>Por que parece “demorar”?</strong> O código só entra em produção depois do build no Cloudflare (vários minutos). O push no Git é só o gatilho — não é publicação instantânea.</blockquote>
+<hr>
+<h2>Testar o build localmente (antes do push)</h2>
+<p>Evita falhas no Cloudflare:</p>
+<p>```powershell</p>
+<p>cd c:\Users\maufr\.cursor\MProj\ecossistema\app-igreja</p>
+<p>npm install</p>
+<p>npm run build:web</p>
+<p>```</p>
+<p>Se terminar sem erro, a pasta <code>dist/</code> foi gerada. Opcional: servir localmente:</p>
+<p>```powershell</p>
+<p>npx serve dist</p>
+<p>```</p>
+<p>Requisito de Node: <strong>≥ 20.19.4</strong> (ver <code>package.json</code> e <code>.nvmrc</code>).</p>
+<hr>
+<h2>Solução de problemas</h2>
+<table><thead><tr>
+<th>Sintoma</th>
+<th>O que verificar</th>
+</tr></thead><tbody>
+<tr>
+<td><code>Output directory &quot;npm run build:web&quot; not found</code> / build sem <code>npm install</code></td>
+<td>No painel <strong>Settings → Builds</strong>: <strong>Build command</strong> = <code>npm run build:web</code> e <strong>Build output directory</strong> = <code>dist</code> (não inverta os dois campos). Depois <strong>Retry deployment</strong>.</td>
+</tr>
+<tr>
+<td><code>npm error command sh -c node scripts/cloudflare-pages-build.mjs</code></td>
+<td>Corrigido: removido postinstall. Build command deve ser <code>npm run build:web</code>.</td>
+</tr>
+<tr>
+<td>Build falha com erro de memória</td>
+<td><code>NODE_OPTIONS=--max-old-space-size=6144</code> no Cloudflare (o script também aplica no CI)</td>
+</tr>
+<tr>
+<td><code>git</code> não encontrado no build</td>
+<td>Não afeta o deploy atual; build usa <code>npm run build:web</code></td>
+</tr>
+<tr>
+<td>Node 18 / erro Metro</td>
+<td><code>NODE_VERSION=20</code> nas variáveis do Cloudflare</td>
+</tr>
+<tr>
+<td>PWA antigo após deploy</td>
+<td>Aguardar deploy <strong>Success</strong>; hard refresh (Ctrl+Shift+R); PWA: fechar e reabrir. Headers em <code>public/_headers</code> evitam cache longo do HTML</td>
+</tr>
+<tr>
+<td>Alteração no ar mas tela antiga</td>
+<td>Build ainda em andamento na aba <strong>Deployments</strong>, ou cache local — aba anônima para testar</td>
+</tr>
+<tr>
+<td>Deploy aparece como <strong>Preview</strong> no Cloudflare</td>
+<td>Push foi em branch ≠ <code>main</code> — faça merge em <code>main</code> + <code>git push origin main</code>, ou no painel: <strong>Deployments</strong> → ⋯ no deploy → <strong>Promote to production</strong></td>
+</tr>
+<tr>
+<td><code>/build-info.json</code> mostra <code>&quot;preview&quot;</code></td>
+<td>Abra a URL de produção (domínio principal), não o link <code>*.pages.dev</code> do commit/branch</td>
+</tr>
+<tr>
+<td>Ícones aparecem como <code>?</code> ou quadrado</td>
+<td>Fontes em <code>assets/fonts/</code> + <code>public/_headers</code>; confira no DevTools → Network se os <code>.ttf</code> retornam 200 (não 404)</td>
+</tr>
+<tr>
+<td>Push rejeitado</td>
+<td><code>git pull origin main</code> antes de novo push</td>
+</tr>
+<tr>
+<td>Deploy não dispara</td>
+<td>Branch do push deve ser <code>main</code> (branch de produção no Pages)</td>
+</tr>
+</tbody></table>
+<p>Logs completos do build: Cloudflare → <strong>Deployments</strong> → clique no deploy → <strong>View build log</strong>.</p>
+<hr>
+<h2>Checklist rápido</h2>
+<ul>
+<li>[ ] Alterações testadas localmente (<code>npm run web</code> ou <code>npm run build:web</code>)</li>
+<li>[ ] Commit criado com mensagem clara</li>
+<li>[ ] <code>git push origin main</code> concluído (<strong>não</strong> apenas branch de feature)</li>
+<li>[ ] Deploy <strong>Success</strong> no Cloudflare com badge <strong>Production</strong> (não Preview)</li>
+<li>[ ] <code>/build-info.json</code> com <code>&quot;environment&quot;: &quot;production&quot;</code>, <code>&quot;branch&quot;: &quot;main&quot;</code> e commit do push atual</li>
+<li>[ ] PWA validado no navegador com hard refresh</li>
+</ul>
+<hr>
+<h2>Produção vs Preview (Cloudflare Pages)</h2>
+<table><thead><tr>
+<th>Tipo</th>
+<th>Quando ocorre</th>
+<th>URL típica</th>
+<th>Vai para o público?</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Production</strong></td>
+<td>Push em <code>main</code> (branch de produção)</td>
+<td>Domínio principal (<code>app-igreja.pages.dev</code> ou customizado)</td>
+<td><strong>Sim</strong></td>
+</tr>
+<tr>
+<td><strong>Preview</strong></td>
+<td>Push em outra branch, PR ou deploy manual de branch</td>
+<td><code>https://{hash}.{projeto}.pages.dev</code> ou link do deploy</td>
+<td><strong>Não</strong> (só quem tem o link)</td>
+</tr>
+</tbody></table>
+<h3>Publicar alterações em produção imediatamente</h3>
+<p>1. Garanta que o código está em <strong><code>main</code></strong>: <code>git checkout main</code> → <code>git merge melhorias-cursor</code> (se necessário)</p>
+<p>2. <code>git push origin main</code></p>
+<p>3. No Cloudflare → <strong>Deployments</strong> → aguarde o deploy com etiqueta <strong>Production</strong> (verde)</p>
+<p>4. Confira <code>https://{seu-dominio}/build-info.json</code> → <code>&quot;environment&quot;: &quot;production&quot;</code></p>
+<h3>Se o deploy certo está só em Preview</h3>
+<p>No painel Cloudflare → <strong>Deployments</strong> → localize o deploy desejado → menu <strong>⋯</strong> → <strong>Promote to production</strong>.</p>
+<p>Ou faça merge na <code>main</code> e push — o próximo build de <code>main</code> substitui produção automaticamente.</p>
+<h3>Configuração recomendada (uma vez)</h3>
+<p><strong>Settings → Builds &amp; deployments:</strong></p>
+<ul>
+<li><strong>Production branch:</strong> <code>main</code></li>
+<li>Preview deployments: opcional para branches de feature; produção <strong>sempre</strong> segue <code>main</code></li>
+</ul>
+<hr>
+<h2>Referências no repositório</h2>
+<table><thead><tr>
+<th>Arquivo</th>
+<th>Conteúdo</th>
+</tr></thead><tbody>
+<tr>
+<td><code>package.json</code></td>
+<td><code>build:web</code> → <code>write-build-info.mjs</code> + <code>expo export -p web</code> + <code>build:family-form</code></td>
+</tr>
+<tr>
+<td><code>scripts/write-build-info.mjs</code></td>
+<td>Gera <code>public/build-info.json</code> (commit + data do build)</td>
+</tr>
+<tr>
+<td><code>npm run build:access-roles-pdf</code></td>
+<td>Mapa ACL → <code>pdfs/PAPEIS_CONTROLE_ACESSO.pdf</code></td>
+</tr>
+<tr>
+<td><code>standalone/cadastro-familia/</code></td>
+<td>Formulário público independente do PWA</td>
+</tr>
+<tr>
+<td><code>app.json</code></td>
+<td>Web: <code>bundler: metro</code>, <code>output: static</code></td>
+</tr>
+<tr>
+<td><code>public/_headers</code></td>
+<td>Cache: HTML revalida sempre; <code>/_expo/static</code> e <code>/assets</code> com cache longo</td>
+</tr>
+<tr>
+<td><code>.nvmrc</code></td>
+<td>Node 20</td>
+</tr>
+<tr>
+<td><code>.env.example</code></td>
+<td>Variáveis opcionais do Expo</td>
+</tr>
+<tr>
+<td><code>ARQUITETURA_BLUEPRINT_PWA.md</code></td>
+<td>Arquitetura do PWA</td>
+</tr>
+</tbody></table>
+<hr>
+<p><em>App IBN · Deploy Cloudflare Pages · atualizado em 12/06/2026</em></p>
+<p>```powershell</p>
+<p>git push origin main</p>
+<p>```</p>
+</div>
+</body>
+</html>

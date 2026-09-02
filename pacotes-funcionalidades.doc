@@ -32,7 +32,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <body>
 <div class="Section1">
 <h1>Pacotes de funcionalidades — Conecta+</h1>
-<p><strong>Data:</strong> 1º de setembro de 2026</p>
+<p><strong>Data:</strong> 2 de setembro de 2026</p>
 <p><strong>Papel deste documento:</strong> recorte comercial e arquitetural do que o código <strong>já entrega</strong> hoje, dividido em três pacotes pela <strong>quantidade de facilidades</strong> (não por esforço de desenvolvimento nem por telas congeladas).</p>
 <p><strong>Fonte:</strong> menus publicados (lateral do membro, <strong>Eu quero…</strong>, engrenagem de manutenção), rotas vivas em <code>app/</code> e painéis da manutenção. O carrossel antigo do Painel e os cards congelados (QR, Salas no carrossel, Estacionamento, escala avulsa no dashboard) <strong>não entram</strong> nestes pacotes: não são produto publicado.</p>
 <p><strong>Leitura dos pacotes:</strong> cada pacote <strong>inclui o anterior</strong>. Padrão = Básico + o que está listado em Padrão. Avançado = Padrão + o que está listado em Avançado.</p>
@@ -84,8 +84,9 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <h3>3. Culto do dia (membro)</h3>
 <ul>
 <li><strong>Início</strong>: caixa de avisos e eventos publicados.</li>
-<li><strong>Agenda da família</strong> no evento: inscrição da família no culto.</li>
+<li><strong>Agenda da família</strong> no evento (Início → toque no culto): inscrição da família.</li>
 <li>Check-in da família no fluxo da agenda (presença no evento do dia).</li>
+<li>Ao confirmar a audiência, <strong>adicionar o culto à agenda do celular</strong> (Google Agenda + arquivo <code>.ics</code> para Apple Calendar e Outlook; horário da igreja, sem atrasar o compromisso).</li>
 <li>Pedido de <strong>oração / cuidado pastoral</strong> (“Eu quero… → Fazer um pedido de Oração”).</li>
 </ul>
 <h3>4. Contribuição mínima</h3>
@@ -233,7 +234,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <td>Básico</td>
 </tr>
 <tr>
-<td>Início (avisos/eventos) e agenda da família</td>
+<td>Início (avisos/eventos), agenda da família e compromisso no calendário do celular</td>
 <td>Básico</td>
 </tr>
 <tr>

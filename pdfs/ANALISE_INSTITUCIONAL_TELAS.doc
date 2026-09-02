@@ -203,7 +203,7 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 <strong>Solução:</strong> ecossistema app-igreja (PWA + mobile)<br>
 <strong>Público:</strong> liderança, secretaria, pastoral, tesouraria e operação<br>
 <strong>Base:</strong> código-fonte, rotas Expo Router, menu lateral, Índice, Painel e Manutenção<br>
-<strong>Data:</strong> 31 de agosto de 2026<br>
+<strong>Data:</strong> 2 de setembro de 2026<br>
 <strong>Revisão:</strong> caminho publicado (Índice, menu, Eu quero… e engrenagem — sem carrossel do Painel); Cantinho da Leitura; Livros doados (ISBN, Bipar, CBL); empréstimos da Secretaria; Declaração de Privacidade LGPD no Sobre o Conecta+; Modo Ghost; Aliança Conecta Reino
 </p>
 
@@ -618,12 +618,12 @@ Logout consciente em aparelhos do templo e em navegadores compartilhados.
 <div class="screen">
 
 <h2 id="agenda-da-família">Agenda da Família</h2>
-<p class="route">Card do Painel · painel <code>FamilyAgendaModal</code></p>
+<p class="route">Início · toque no evento · <code>FamilyAgendaModal</code></p>
 
 <h3 id="descrição-comercial-11">Descrição comercial</h3>
-<p>É o “vamos no culto?” digital. A família escolhe o evento, vê vagas e marca quem vai — cônjuge, filhos, congregados do núcleo. Esse pré-check-in é o passaporte para QR, geofence e salas infantis.</p>
+<p>É o “vamos no culto?” digital. No <strong>Início</strong>, a família toca o evento, vê vagas e marca quem vai — cônjuge, filhos, congregados do núcleo. Esse pré-check-in é o passaporte para geofence, totem e salas infantis. Ao confirmar, um modal <strong>Compromisso enviado para minha agenda</strong> oferece <strong>Adicionar</strong>: abre o Google Agenda e gera um <code>.ics</code> (Apple Calendar e Outlook) no fuso America/Sao_Paulo.</p>
 <h3 id="propósito-e-conexões-11">Propósito e conexões</h3>
-<p>Lista eventos ativos, capacidade e inscrição por membro (<code>FamilyRegistrationList</code>). Conecta-se a Check-in, Totem, SALA(S) e Programação de Eventos. Fechar retorna ao Índice/Painel.</p>
+<p>Lista eventos ativos, capacidade e inscrição por membro (<code>FamilyRegistrationList</code>). Conecta-se a geofence, Totem, salas e Programação de Eventos. Fechar volta ao Início. O carrossel antigo do Painel <strong>não</strong> é o caminho publicado.</p>
 <table class="split-table" width="100%" cellspacing="8" cellpadding="0">
         <tr>
           <td class="vision user" width="50%" valign="top">

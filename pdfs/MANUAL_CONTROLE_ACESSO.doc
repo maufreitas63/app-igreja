@@ -1,0 +1,842 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Manual operacional — Controle de acesso (app-igreja)</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Manual operacional — Controle de acesso (app-igreja)</h1>
+<p>Este manual descreve <strong>como operar</strong> o controle de acesso no dia a dia: instalação, atribuição de papéis, ajuste de permissões, testes e resolução de problemas.</p>
+<p>Documentação técnica de referência: <a href="CONTROLE_ACESSO.md">&lt;code&gt;CONTROLE_ACESSO.md&lt;/code&gt;</a> · <a href="CAMADAS_SEGURANCA.md">&lt;code&gt;CAMADAS_SEGURANCA.md&lt;/code&gt;</a></p>
+<p><strong>Pacote:</strong> <a href="PACOTE_3_GOVERNANCA_TI.md">&lt;code&gt;PACOTE_3_GOVERNANCA_TI.md&lt;/code&gt;</a> · <strong>Índice:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></p>
+<p><strong>Atualizado em:</strong> 02/07/2026</p>
+<hr>
+<h2>1. Para quem é este manual</h2>
+<table><thead><tr>
+<th>Público</th>
+<th>Uso</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Super administrador</strong></td>
+<td>Configura papéis e permissões pela UI ou SQL</td>
+</tr>
+<tr>
+<td><strong>Equipe de TI / secretaria</strong></td>
+<td>Atribui <code>events_admin</code>, <code>pastoral</code>, etc. a pessoas certas</td>
+</tr>
+<tr>
+<td><strong>Desenvolvedor</strong></td>
+<td>Instala scripts, valida RLS e RPCs após deploy</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>2. Conceitos essenciais</h2>
+<h3>2.1 Identidade</h3>
+<ul>
+<li>O “usuário” do ACL é sempre <strong><code>profiles.id</code></strong> (UUID).</li>
+<li>Login no app: telefone + PIN de 4 dígitos (<code>profiles.access_pin</code>).</li>
+<li>Após o login, o app grava <code>user_profile_id</code> na sessão e envia o header <strong><code>x-profile-id</code></strong> ao Supabase.</li>
+</ul>
+<h3>2.2 Papéis (<code>access_roles</code>)</h3>
+<p>Um perfil pode ter <strong>vários papéis</strong> ao mesmo tempo (ex.: <code>member</code> + <code>events_admin</code>).</p>
+<table><thead><tr>
+<th>Código</th>
+<th>Nome</th>
+<th>Uso típico</th>
+</tr></thead><tbody>
+<tr>
+<td><code>visitantes</code></td>
+<td>Visitantes</td>
+<td>Acesso público mínimo; <strong>fallback</strong> sem perfil na sessão ou perfil sem papéis</td>
+</tr>
+<tr>
+<td><code>congregado</code></td>
+<td>Congregado</td>
+<td>Participante com acesso básico (sem gerenciar família)</td>
+</tr>
+<tr>
+<td><code>member</code></td>
+<td>Membro</td>
+<td>Acesso padrão do aplicativo</td>
+</tr>
+<tr>
+<td><code>family_acceptor</code></td>
+<td>Responsável familiar</td>
+<td>Gerencia família (complementar ao <code>member</code>)</td>
+</tr>
+<tr>
+<td><code>lider</code></td>
+<td>Líder</td>
+<td>Gerencia servos e programação dos tipos de escala atribuídos ao perfil</td>
+</tr>
+<tr>
+<td><code>events_admin</code></td>
+<td>Administrador de eventos</td>
+<td>Manutenção de eventos e salas</td>
+</tr>
+<tr>
+<td><code>tesoureiro</code></td>
+<td>Tesoureiro</td>
+<td>Card <strong>Financeiro</strong>, manutenção financeira, eventos retroativos e numeração <strong>RD</strong> (prefixo AAMM)</td>
+</tr>
+<tr>
+<td><code>pastoral</code></td>
+<td>Equipe pastoral</td>
+<td>Triagem de pedidos pastorais</td>
+</tr>
+<tr>
+<td><code>super_admin</code></td>
+<td>Super administrador</td>
+<td>Configura o ACL; acesso amplo</td>
+</tr>
+</tbody></table>
+<p><strong>Ordem no painel (aba Papéis e lista de papéis do perfil):</strong> Visitantes → Congregado → Membro → Responsável familiar → Líder → Administrador de eventos → <strong>Tesoureiro</strong> → Equipe pastoral → Super administrador.</p>
+<h3>2.4 Líder de escala (<code>lider</code>)</h3>
+<p>O papel <strong><code>lider</code></strong> permite gerenciar <strong>tipos específicos</strong> de escala (ex.: Vigilância, Recepção):</p>
+<p>1. <strong>Papéis</strong> → ajuste grants do <code>lider</code> (painéis <code>maintenance.card.scale_volunteers</code> e <code>maintenance.card.scales</code>).</p>
+<p>2. <strong>Perfis</strong> → atribua o papel <strong><code>lider</code></strong> ao perfil.</p>
+<p>3. <strong>Perfis</strong> → na seção <strong>Liderança por tipo de escala</strong>, ligue os tipos que essa pessoa comanda.</p>
+<p>Recursos por tipo: <code>screen:scale_type.&lt;codigo&gt;</code> (criados automaticamente a partir de <code>tipos_escala.codigo</code>).</p>
+<p>Quem tem <code>maintenance.card.scale_types</code> (ou <code>super_admin</code>) cria/edita tipos; o líder só opera nos tipos vinculados.</p>
+<p><strong>Script:</strong> <code>scripts/access-control-lider-escala.sql</code></p>
+<p><strong>Regra:</strong> todo perfil ativo deve manter pelo menos o papel <strong><code>member</code></strong>, salvo exceções administrativas explícitas.</p>
+<p><strong>Fallback Visitantes:</strong> quem <strong>não tem <code>user_profile_id</code> na sessão</strong> (antes do login) ou tem perfil <strong>sem nenhum papel</strong> em <code>profile_access_roles</code> recebe automaticamente os grants do papel <strong><code>visitantes</code></strong>. Com o script <code>access-control-visitantes-auto-assign.sql</code>, <strong>novos perfis</strong> também recebem o papel <strong><code>visitantes</code></strong> na criação — até a secretaria atribuir papéis como <strong><code>member</code></strong>, não é necessário marcar Visitantes manualmente na maioria dos casos.</p>
+<h3>2.3 Recursos (<code>access_resources</code>)</h3>
+<p>O que pode ser protegido:</p>
+<table><thead><tr>
+<th>Tipo</th>
+<th>Exemplo de chave</th>
+<th>O que controla</th>
+</tr></thead><tbody>
+<tr>
+<td><code>screen</code></td>
+<td><code>/manage-profile</code></td>
+<td>Abrir uma tela ou card do dashboard</td>
+</tr>
+<tr>
+<td><code>table</code></td>
+<td><code>profiles</code></td>
+<td>Leitura/gravação em uma tabela</td>
+</tr>
+<tr>
+<td><code>column</code></td>
+<td><code>profiles.cpf</code></td>
+<td>Ver/editar um campo em Dados cadastrais</td>
+</tr>
+</tbody></table>
+<p>Curingas (uso restrito):</p>
+<ul>
+<li><code>screen:*</code> — todas as telas</li>
+<li><code>table:*</code> — todas as tabelas</li>
+<li><code>column:profiles.*</code> — todas as colunas de <code>profiles</code></li>
+</ul>
+<h3>2.4 Permissões (<code>access_grants</code>)</h3>
+<p>Cada grant liga um <strong>papel</strong> (ou um perfil específico) a um <strong>recurso</strong>:</p>
+<table><thead><tr>
+<th>Flag</th>
+<th>Significado</th>
+</tr></thead><tbody>
+<tr>
+<td><code>can_view</code></td>
+<td>Pode ver (tela, listagem, campo)</td>
+</tr>
+<tr>
+<td><code>can_update</code></td>
+<td>Pode alterar (formulário, UPDATE, RPC de escrita)</td>
+</tr>
+</tbody></table>
+<p><strong>Importante:</strong> <code>can_view</code> em <code>table:profiles</code> <strong>não</strong> libera automaticamente <code>profiles.cpf</code> ou <code>profiles.access_pin</code>. Colunas sensíveis exigem grants de coluna explícitos.</p>
+<h3>2.5 Onde a permissão é aplicada</h3>
+<p>```mermaid</p>
+<p>flowchart TB</p>
+<p>subgraph app [App]</p>
+<p>G[Guard de rota screen]</p>
+<p>C[Campos visíveis em Dados cadastrais]</p>
+<p>K[Cards do dashboard]</p>
+<p>end</p>
+<p>subgraph supabase [Supabase]</p>
+<p>R[RLS nas tabelas]</p>
+<p>P[RPCs update_profile_field / PIN]</p>
+<p>F[profile_has_access]</p>
+<p>end</p>
+<p>S[Sessão user_profile_id] --&gt; G</p>
+<p>S --&gt; C</p>
+<p>S --&gt; K</p>
+<p>S --&gt; R</p>
+<p>F --&gt; G</p>
+<p>F --&gt; C</p>
+<p>F --&gt; R</p>
+<p>F --&gt; P</p>
+<p>```</p>
+<hr>
+<h2>3. Instalação e pré-requisitos (uma vez)</h2>
+<p>Execute no <strong>SQL Editor do Supabase</strong>, nesta ordem:</p>
+<table><thead><tr>
+<th>Ordem</th>
+<th>Script</th>
+<th>O que faz</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td><code>scripts/access-control-schema.sql</code></td>
+<td>Tabelas, funções, seed inicial</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>scripts/access-control-profile-write-rpc.sql</code></td>
+<td>ACL nas RPCs de perfil (9d)</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>scripts/access-control-admin-rpc.sql</code></td>
+<td>UI admin de papéis/grants (9e)</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>scripts/access-control-table-rls.sql</code></td>
+<td>RLS nas tabelas principais (9f)</td>
+</tr>
+</tbody></table>
+<p>Scripts <strong>incrementais</strong> (se o seed for antigo ou algo sumir no app):</p>
+<table><thead><tr>
+<th>Script</th>
+<th>Quando usar</th>
+</tr></thead><tbody>
+<tr>
+<td><code>access-control-member-dashboard-grants.sql</code></td>
+<td>Cards do dashboard não aparecem para <code>member</code></td>
+</tr>
+<tr>
+<td><code>access-control-member-profile-columns.sql</code></td>
+<td>CPF ou alertas alimentares não aparecem em Dados cadastrais</td>
+</tr>
+<tr>
+<td><code>access-control-lider-escala.sql</code></td>
+<td>Papel Líder, vínculo perfil↔tipo de escala e enforcement nas RPCs de escala</td>
+</tr>
+<tr>
+<td><code>access-control-role-display-order.sql</code></td>
+<td>Corrigir ordem dos papéis no painel (Visitantes → … → Super administrador)</td>
+</tr>
+<tr>
+<td><code>access-control-congregado-visitantes-roles.sql</code></td>
+<td><strong>Congregado e Visitantes não aparecem na UI</strong> — cria ambos os papéis e grants</td>
+</tr>
+<tr>
+<td><code>access-control-congregado-role.sql</code></td>
+<td>Só Congregado (legado; prefira o script combinado acima)</td>
+</tr>
+<tr>
+<td><code>access-control-visitantes-role.sql</code></td>
+<td>Só Visitantes + funções de fallback (sem perfil/papéis)</td>
+</tr>
+<tr>
+<td><code>access-control-visitantes-auto-assign.sql</code></td>
+<td>Atribui <strong><code>visitantes</code></strong> automaticamente a perfis novos (trigger + backfill)</td>
+</tr>
+<tr>
+<td><code>access-control-tesoureiro-role.sql</code></td>
+<td>Papel <strong>Tesoureiro</strong>, RD com prefixo <strong>AAMM</strong>, eventos retroativos</td>
+</tr>
+<tr>
+<td><code>app-parameter-parm-entidade.sql</code></td>
+<td>Parâmetro <strong><code>Parm_entidade</code></strong> — prefixo dinâmico da entidade na interface (ex.: IBN KIDS)</td>
+</tr>
+<tr>
+<td><code>salvar-app-parameter-admin.sql</code></td>
+<td>RPC para <strong>super_admin</strong> gravar <code>app_parameters</code> (inclui <strong><code>LGPD_Ativo</code></strong>)</td>
+</tr>
+<tr>
+<td><code>app-parameter-lgpd-ativo.sql</code> / <code>app-parameter-lgpd-ativo-dedupe.sql</code></td>
+<td>Parâmetro <strong><code>LGPD_Ativo</code></strong> (<code>sim</code> / <code>nao</code>) — reconhecimento opcional de LGPD</td>
+</tr>
+<tr>
+<td><code>access-control-map-pin-detail.sql</code></td>
+<td>Recurso <strong><code>/mapa-geolocalizacao/detalhe-pin</code></strong> — detalhe de pin só pastoral/super_admin</td>
+</tr>
+<tr>
+<td><code>family-event-audience-members.sql</code></td>
+<td>RPC de audiência familiar incluindo congregados e dependentes não rejeitados</td>
+</tr>
+<tr>
+<td><code>access-control-ghost-mode.sql</code></td>
+<td>Modo Ghost (auditoria de permissões) — sessão efetiva simulada; exige grant <strong>explícito</strong> em <code>maintenance.card.auditor</code> ou papel <code>super_admin</code> (<code>can_operate_ghost_mode</code>)</td>
+</tr>
+<tr>
+<td><code>ministerial-profile-questionnaire.sql</code></td>
+<td>Questionário de Perfil Ministerial (tabelas + RPCs)</td>
+</tr>
+<tr>
+<td><code>ministerial-profile-questionnaire-seed.sql</code></td>
+<td>Seed das 50 perguntas e opções</td>
+</tr>
+<tr>
+<td><code>ministerial-profile-questionnaire-session-fix.sql</code></td>
+<td>Patch de validação de sessão do questionário (<code>ministerial_require_session_profile</code>)</td>
+</tr>
+<tr>
+<td><code>maintenance-reports-age-brackets-active-membership-patch.sql</code></td>
+<td>Patch legado de Faixa Etária (relatório <strong>removido</strong> do catálogo na UI)</td>
+</tr>
+</tbody></table>
+<h3>3.1 Primeiro super administrador</h3>
+<p>Todo ambiente precisa de <strong>pelo menos um</strong> perfil com papel <code>super_admin</code>:</p>
+<p>```sql</p>
+<p>-- Confirme quem já é super_admin</p>
+<p>select p.full_name, p.phone, ar.code</p>
+<p>from public.profile_access_roles par</p>
+<p>join public.access_roles ar on ar.id = par.role_id</p>
+<p>join public.profiles p on p.id = par.profile_id</p>
+<p>where ar.code = 'super_admin';</p>
+<p>-- Atribuir (troque o telefone)</p>
+<p>insert into public.profile_access_roles (profile_id, role_id)</p>
+<p>select p.id, ar.id</p>
+<p>from public.profiles p</p>
+<p>cross join public.access_roles ar</p>
+<p>where regexp_replace(coalesce(p.phone, ''), '\D', '', 'g')</p>
+<p>= regexp_replace('(11) 99999-9999', '\D', '', 'g')</p>
+<p>and ar.code = 'super_admin'</p>
+<p>on conflict (profile_id, role_id) do nothing;</p>
+<p>```</p>
+<h3>3.2 Garantir <code>member</code> em todos os perfis</h3>
+<p>```sql</p>
+<p>insert into public.profile_access_roles (profile_id, role_id)</p>
+<p>select p.id, ar.id</p>
+<p>from public.profiles p</p>
+<p>cross join public.access_roles ar</p>
+<p>where ar.code = 'member'</p>
+<p>and not exists (</p>
+<p>select 1</p>
+<p>from public.profile_access_roles par</p>
+<p>where par.profile_id = p.id</p>
+<p>and par.role_id = ar.id</p>
+<p>);</p>
+<p>```</p>
+<hr>
+<h2>4. Operação pelo aplicativo (recomendado)</h2>
+<h3>4.1 Quem pode abrir a manutenção de ACL</h3>
+<p>1. Perfil com papel <strong><code>super_admin</code></strong>.</p>
+<p>2. Acesso à tela <strong>Manutenção</strong> (<code>/maintenance-dashboard</code>) — normalmente só <code>super_admin</code> ou quem tiver grant explícito nessa tela.</p>
+<p>3. No carrossel de manutenção, o card <strong>Controle de Acesso</strong> só aparece para <code>super_admin</code>.</p>
+<h3>4.2 Aba <strong>Perfis</strong> — atribuir papéis a uma pessoa</h3>
+<p><strong>Objetivo:</strong> definir <em>quem</em> é membro, quem cuida de eventos, quem é admin, etc.</p>
+<p><strong>Passo a passo:</strong></p>
+<p>1. Abra <strong>Manutenção → Controle de Acesso → aba Perfis</strong>.</p>
+<p>2. Em <strong>Selecionar perfil</strong>, abra o <strong>dropdown</strong> e escolha o usuário na lista completa (todos os perfis cadastrados).</p>
+<p>3. Na lista de papéis, use o <strong>switch</strong> para ligar ou desligar cada papel.</p>
+<p>4. Confirme o toast de sucesso.</p>
+<p><strong>Efeito:</strong> alteração imediata em <code>profile_access_roles</code>.</p>
+<p><strong>Regras de segurança:</strong></p>
+<ul>
+<li>O sistema <strong>impede remover o último</strong> <code>super_admin</code> do banco.</li>
+<li>Após mudar papéis de <strong>si mesmo</strong> ou de quem está testando, peça <strong>Sair → entrar de novo</strong> no app.</li>
+</ul>
+<h3>4.3 Aba <strong>Papéis</strong> — ajustar o que cada papel pode fazer</h3>
+<p><strong>Objetivo:</strong> definir <em>o que</em> <code>member</code>, <code>events_admin</code>, etc. podem ver e editar.</p>
+<p><strong>Passo a passo:</strong></p>
+<p>1. Aba <strong>Papéis</strong>.</p>
+<p>2. Selecione o papel (ex.: <code>member</code>, <code>events_admin</code>).</p>
+<p>3. Filtre por <strong>Telas</strong>, <strong>Tabelas</strong> ou <strong>Colunas</strong>.</p>
+<p>4. Para cada recurso, use:</p>
+<ul>
+<li><strong>Ver</strong> — <code>can_view</code></li>
+<li><strong>Editar</strong> — <code>can_update</code> (só fica ativo se <strong>Ver</strong> estiver ligado)</li>
+</ul>
+<p>5. <strong>Visão por recurso:</strong> toque no <strong>ponto colorido</strong> (escopo azul = produto, âmbar = manutenção) ou no <strong>nome do recurso</strong>. A tela inverte: o recurso fica em destaque e cada <strong>papel</strong> aparece como linha com interruptores <strong>Ver</strong> / <strong>Editar</strong>. Use <strong>Voltar</strong> para retornar à visão por papel.</p>
+<p>6. Colunas sensíveis (<code>profiles.cpf</code>, <code>profiles.access_pin</code>) aparecem <strong>destacadas em amarelo</strong>.</p>
+<p><strong>Desligar Ver e Editar</strong> remove o grant daquele recurso para o papel (em qualquer uma das visões).</p>
+<p><strong>Exemplos de política:</strong></p>
+<table><thead><tr>
+<th>Objetivo</th>
+<th>Onde ajustar</th>
+</tr></thead><tbody>
+<tr>
+<td>Membro não vê PIN</td>
+<td>Papel <code>member</code> → Colunas → <code>profiles.access_pin</code> → Ver/Editar desligados</td>
+</tr>
+<tr>
+<td>Só tesouraria vê financeiro</td>
+<td>Tirar <code>dashboard.card.financial</code> e <code>/financial</code> do <code>member</code>; criar papel <code>finance_admin</code> (futuro) ou grant direto ao perfil</td>
+</tr>
+<tr>
+<td>Equipe de eventos mantém agenda</td>
+<td>Atribuir papel <code>events_admin</code> à pessoa (aba Perfis); revisar grants do papel em Telas/Tabelas</td>
+</tr>
+</tbody></table>
+<h3>4.4 O que o membro comum experiencia (sem ser admin)</h3>
+<table><thead><tr>
+<th>Área</th>
+<th>Comportamento</th>
+</tr></thead><tbody>
+<tr>
+<td>Dashboard</td>
+<td>Só cards com <code>can_view</code> no papel</td>
+</tr>
+<tr>
+<td>Dados cadastrais</td>
+<td>Só campos com grant de coluna; sem PIN se não houver grant</td>
+</tr>
+<tr>
+<td>Telas (pastoral, família, financeiro)</td>
+<td>Guard bloqueia com alerta se não houver <code>screen:*</code> view</td>
+</tr>
+<tr>
+<td>Gravação de perfil</td>
+<td>RPC + RLS validam de novo no servidor</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>5. Operação via SQL (Table Editor ou SQL Editor)</h2>
+<p>Use quando a UI não estiver disponível, para diagnóstico ou carga em massa.</p>
+<h3>5.1 Consultar papéis de um perfil</h3>
+<p>```sql</p>
+<p>select p.full_name, p.phone, ar.code, ar.name, par.granted_at</p>
+<p>from public.profiles p</p>
+<p>join public.profile_access_roles par on par.profile_id = p.id</p>
+<p>join public.access_roles ar on ar.id = par.role_id</p>
+<p>where regexp_replace(coalesce(p.phone, ''), '\D', '', 'g')</p>
+<p>= regexp_replace('(11) 99999-9999', '\D', '', 'g')</p>
+<p>order by ar.code;</p>
+<p>```</p>
+<h3>5.2 Testar permissão (simula o app)</h3>
+<p>```sql</p>
+<p>select public.profile_has_access(</p>
+<p>'&lt;uuid-do-perfil&gt;'::uuid,</p>
+<p>'screen',           -- ou 'table' ou 'column'</p>
+<p>'/financial',       -- ou 'profiles' ou 'profiles.cpf'</p>
+<p>'view'              -- ou 'update'</p>
+<p>);</p>
+<p>```</p>
+<p>Simular header da sessão (RLS):</p>
+<p>```sql</p>
+<p>select set_config(</p>
+<p>'request.headers',</p>
+<p>'{&quot;x-profile-id&quot;:&quot;&lt;uuid-do-perfil&gt;&quot;}',</p>
+<p>true</p>
+<p>);</p>
+<p>select public.session_has_resource_access('table', 'profiles', 'view');</p>
+<p>```</p>
+<h3>5.3 Atribuir / remover papel</h3>
+<p>```sql</p>
+<p>-- Atribuir events_admin</p>
+<p>insert into public.profile_access_roles (profile_id, role_id)</p>
+<p>select p.id, ar.id</p>
+<p>from public.profiles p</p>
+<p>cross join public.access_roles ar</p>
+<p>where p.id = '&lt;uuid&gt;'::uuid</p>
+<p>and ar.code = 'events_admin'</p>
+<p>on conflict (profile_id, role_id) do nothing;</p>
+<p>-- Remover events_admin</p>
+<p>delete from public.profile_access_roles par</p>
+<p>using public.access_roles ar</p>
+<p>where par.role_id = ar.id</p>
+<p>and par.profile_id = '&lt;uuid&gt;'::uuid</p>
+<p>and ar.code = 'events_admin';</p>
+<p>```</p>
+<h3>5.4 Ajustar grant de um papel</h3>
+<p>```sql</p>
+<p>-- Ex.: member pode VER mas não EDITAR financeiro (tela)</p>
+<p>insert into public.access_grants (role_id, resource_id, can_view, can_update)</p>
+<p>select r.id, res.id, true, false</p>
+<p>from public.access_roles r</p>
+<p>join public.access_resources res</p>
+<p>on res.resource_type = 'screen'</p>
+<p>and res.resource_key = '/financial'</p>
+<p>where r.code = 'member'</p>
+<p>on conflict (role_id, resource_id) where (role_id is not null) do update</p>
+<p>set can_view = excluded.can_view,</p>
+<p>can_update = excluded.can_update,</p>
+<p>updated_at = now();</p>
+<p>-- Remover grant (desliga view e update)</p>
+<p>delete from public.access_grants g</p>
+<p>using public.access_roles r, public.access_resources res</p>
+<p>where g.role_id = r.id</p>
+<p>and g.resource_id = res.id</p>
+<p>and r.code = 'member'</p>
+<p>and res.resource_type = 'screen'</p>
+<p>and res.resource_key = '/financial';</p>
+<p>```</p>
+<h3>5.5 Grant excepcional a <strong>um perfil</strong> (sem mudar o papel)</h3>
+<p>Quando <strong>uma pessoa</strong> precisa de algo que o papel dela não tem:</p>
+<p>```sql</p>
+<p>insert into public.access_grants (profile_id, resource_id, can_view, can_update)</p>
+<p>select '&lt;uuid-perfil&gt;'::uuid, res.id, true, false</p>
+<p>from public.access_resources res</p>
+<p>where res.resource_type = 'screen'</p>
+<p>and res.resource_key = '/maintenance-dashboard'</p>
+<p>on conflict (profile_id, resource_id) where (profile_id is not null) do update</p>
+<p>set can_view = excluded.can_view,</p>
+<p>can_update = excluded.can_update,</p>
+<p>updated_at = now();</p>
+<p>```</p>
+<p>Use com moderação: grants por perfil são mais difíceis de auditar que grants por papel.</p>
+<hr>
+<h2>6. Cenários operacionais (receitas)</h2>
+<h3>6.1 Atribuir papel Congregado (em vez de Membro)</h3>
+<p>Use para quem participa do app mas <strong>não</strong> é membro pleno nem responsável familiar.</p>
+<p>1. Controle de Acesso → <strong>Perfis</strong> → selecionar pessoa no dropdown.</p>
+<p>2. Ligar <strong><code>congregado</code></strong>; desligar <strong><code>member</code></strong> se não for membro pleno.</p>
+<p>3. Ajustar grants em <strong>Papéis → Congregado</strong> (Telas / Colunas) conforme a política da igreja.</p>
+<p>4. Pedir <strong>Sair → entrar</strong> no app.</p>
+<p><strong>Diferença padrão vs <code>member</code>:</strong> sem <code>/manage-members</code>, sem card lista de membros, sem financeiro, sem CPF/alertas alimentares no seed inicial.</p>
+<h3>6.2 Novo membro cadastrado no app</h3>
+<table><thead><tr>
+<th>Etapa</th>
+<th>O que acontece</th>
+<th>Ação do operador</th>
+</tr></thead><tbody>
+<tr>
+<td>Cadastro</td>
+<td>Cria linha em <code>profiles</code></td>
+<td>Nenhuma, se o seed aplicar <code>member</code> a todos automaticamente</td>
+</tr>
+<tr>
+<td>Primeiro login</td>
+<td>PIN + sessão</td>
+<td>Nenhuma</td>
+</tr>
+<tr>
+<td>Permissões</td>
+<td>Herda grants do papel <code>member</code></td>
+<td>Revisar se a política da igreja está correta no papel <code>member</code></td>
+</tr>
+</tbody></table>
+<p>Se o membro não tiver papel <code>member</code>:</p>
+<p>```sql</p>
+<p>insert into public.profile_access_roles (profile_id, role_id)</p>
+<p>select p.id, ar.id</p>
+<p>from public.profiles p</p>
+<p>cross join public.access_roles ar</p>
+<p>where p.id = '&lt;uuid&gt;'::uuid</p>
+<p>and ar.code = 'member'</p>
+<p>on conflict do nothing;</p>
+<p>```</p>
+<h3>6.3 Nomear responsável pela equipe de eventos</h3>
+<p>1. <strong>App:</strong> Controle de Acesso → Perfis → selecionar pessoa no dropdown → ligar <strong><code>events_admin</code></strong>.</p>
+<p>2. <strong>Verificar</strong> grants do papel <code>events_admin</code> (aba Papéis → Telas: <code>/maintenance-dashboard</code>; Tabelas: <code>events</code>, <code>event_registrations</code>).</p>
+<p>3. Pedir à pessoa: <strong>Sair → entrar</strong>.</p>
+<p>4. Confirmar: engrenagem de manutenção visível; consegue abrir Programação de Eventos.</p>
+<h3>6.4 Restringir CPF e PIN apenas a administradores</h3>
+<p>1. Aba <strong>Papéis</strong> → <code>member</code> → <strong>Colunas</strong>.</p>
+<p>2. Desligar <strong>Ver</strong> e <strong>Editar</strong> em:</p>
+<ul>
+<li><code>profiles.cpf</code></li>
+<li><code>profiles.access_pin</code></li>
+</ul>
+<p>3. Manter ligado em <code>super_admin</code> (via curinga <code>*</code> ou grants explícitos).</p>
+<p>4. Testar com perfil <code>member</code>: Dados cadastrais sem CPF/PIN; alteração de PIN falha no servidor.</p>
+<h3>6.5 Membro perdeu acesso a um card do dashboard</h3>
+<p><strong>Diagnóstico:</strong></p>
+<p>```sql</p>
+<p>select public.profile_has_access(</p>
+<p>'&lt;uuid&gt;'::uuid,</p>
+<p>'screen',</p>
+<p>'dashboard.card.financial',</p>
+<p>'view'</p>
+<p>);</p>
+<p>```</p>
+<p><strong>Correção rápida:</strong> executar <code>access-control-member-dashboard-grants.sql</code> ou religar o grant na aba Papéis → <code>member</code> → Telas.</p>
+<h3>6.6 Promover novo super administrador</h3>
+<p>1. Controle de Acesso → Perfis → selecionar pessoa no dropdown → ligar <strong><code>super_admin</code></strong>.</p>
+<p>2. <strong>Não</strong> remover o <code>super_admin</code> antigo até o novo confirmar acesso.</p>
+<p>3. Novo admin: Sair → entrar → abrir Manutenção → Controle de Acesso.</p>
+<h3>6.7 Desligar acesso de um voluntário</h3>
+<p>1. Remover papéis específicos (<code>events_admin</code>, <code>pastoral</code>, …) na aba Perfis.</p>
+<p>2. Manter <code>member</code> se a pessoa continuar usando o app como membro.</p>
+<p>3. Para bloqueio total: remover todos os papéis <strong>exceto</strong> se for o último <code>super_admin</code> (bloqueado pelo sistema).</p>
+<hr>
+<h2>7. Rotina de manutenção recomendada</h2>
+<h3>7.1 Semanal (5 min)</h3>
+<ul>
+<li>[ ] Confirmar que existe pelo menos um <code>super_admin</code> ativo.</li>
+<li>[ ] Revisar se há perfis sem papel <code>member</code> (consulta SQL abaixo).</li>
+</ul>
+<p>```sql</p>
+<p>select p.id, p.full_name, p.phone</p>
+<p>from public.profiles p</p>
+<p>where not exists (</p>
+<p>select 1</p>
+<p>from public.profile_access_roles par</p>
+<p>join public.access_roles ar on ar.id = par.role_id</p>
+<p>where par.profile_id = p.id</p>
+<p>and ar.code = 'member'</p>
+<p>)</p>
+<p>and coalesce(p.full_name, '') &lt;&gt; '';</p>
+<p>```</p>
+<h3>7.2 Ao mudar equipe (eventos, pastoral, tesouraria)</h3>
+<ul>
+<li>[ ] Atribuir/remover papéis na aba Perfis.</li>
+<li>[ ] Avisar: <strong>Sair e entrar</strong> no app.</li>
+<li>[ ] Testar uma tela e um card do dashboard com o perfil afetado.</li>
+</ul>
+<h3>7.3 Após deploy de nova versão do app</h3>
+<ul>
+<li>[ ] Confirmar scripts SQL do ACL aplicados (seção 3).</li>
+<li>[ ] Login como <code>member</code> e como <code>super_admin</code>.</li>
+<li>[ ] Um teste de gravação em Dados cadastrais e um de manutenção (se aplicável).</li>
+</ul>
+<h3>7.4 Ao alterar política de privacidade</h3>
+<ul>
+<li>[ ] Revisar colunas <code>profiles.cpf</code>, <code>profiles.medical_food_alerts</code>, <code>profiles.access_pin</code> no papel <code>member</code>.</li>
+<li>[ ] Documentar internamente quem pode ver dados sensíveis.</li>
+</ul>
+<hr>
+<h2>8. Testes de validação</h2>
+<h3>8.1 Checklist rápido no celular</h3>
+<table><thead><tr>
+<th>#</th>
+<th>Perfil</th>
+<th>Ação</th>
+<th>Resultado esperado</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td><code>member</code></td>
+<td>Abrir dashboard</td>
+<td>Cards conforme grants do <code>member</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>member</code></td>
+<td>Dados cadastrais</td>
+<td>Campos básicos editáveis; sem seção PIN</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>member</code></td>
+<td>Abrir Manutenção</td>
+<td>Negado (sem engrenagem / sem acesso)</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>super_admin</code></td>
+<td>Controle de Acesso</td>
+<td>Card visível; dropdown de perfis e switches funcionam</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>events_admin</code></td>
+<td>Manutenção → Eventos</td>
+<td>Consegue criar/editar evento</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Qualquer</td>
+<td>Após mudança de papel</td>
+<td>Sair → entrar → comportamento atualizado</td>
+</tr>
+</tbody></table>
+<h3>8.2 Testes SQL úteis</h3>
+<p>```sql</p>
+<p>-- ACL está ativo?</p>
+<p>select public.acl_enforcement_enabled();</p>
+<p>-- Últimos grants do member (amostra)</p>
+<p>select ar.code, res.resource_type, res.resource_key, g.can_view, g.can_update</p>
+<p>from public.access_grants g</p>
+<p>join public.access_roles ar on ar.id = g.role_id</p>
+<p>join public.access_resources res on res.id = g.resource_id</p>
+<p>where ar.code = 'member'</p>
+<p>order by res.resource_type, res.resource_key</p>
+<p>limit 30;</p>
+<p>-- PIN bloqueado para member (RPC deve falhar)</p>
+<p>select public.update_profile_access_pin('(11) 99999-9999', '1234', '5678');</p>
+<p>-- esperado: exception de permissão</p>
+<p>```</p>
+<hr>
+<h2>9. Solução de problemas</h2>
+<table><thead><tr>
+<th>Sintoma</th>
+<th>Causa provável</th>
+<th>Correção</th>
+</tr></thead><tbody>
+<tr>
+<td>Card sumiu do dashboard</td>
+<td>Grant <code>dashboard.card.*</code> ausente no <code>member</code></td>
+<td><code>access-control-member-dashboard-grants.sql</code> ou aba Papéis</td>
+</tr>
+<tr>
+<td>“Acesso negado” ao abrir tela</td>
+<td>Sem <code>screen:...</code> view</td>
+<td>Aba Papéis ou grant SQL</td>
+</tr>
+<tr>
+<td>Campo não aparece em Dados cadastrais</td>
+<td>Sem <code>column:profiles.&lt;campo&gt;</code> view</td>
+<td><code>access-control-member-profile-columns.sql</code> ou aba Papéis → Colunas</td>
+</tr>
+<tr>
+<td>Edição falha com mensagem de permissão</td>
+<td>Sem <code>can_update</code> na coluna ou RPC</td>
+<td>Aba Papéis; conferir script 9d aplicado</td>
+</tr>
+<tr>
+<td>Mudança de papel não surte efeito</td>
+<td>Sessão antiga</td>
+<td><strong>Sair → entrar</strong></td>
+</tr>
+<tr>
+<td>Controle de Acesso não aparece</td>
+<td>Perfil não é <code>super_admin</code></td>
+<td>Atribuir papel (seção 3.1)</td>
+</tr>
+<tr>
+<td>Erro ao abrir Controle de Acesso</td>
+<td>RPC admin não instalada</td>
+<td>Executar <code>access-control-admin-rpc.sql</code></td>
+</tr>
+<tr>
+<td>SELECT/UPDATE falha com RLS</td>
+<td><code>access-control-table-rls.sql</code> não aplicado ou sem header</td>
+<td>Script 9f; app atualizado com <code>supabaseSessionFetch</code></td>
+</tr>
+<tr>
+<td>Tudo liberado indevidamente</td>
+<td>Nenhum grant em <code>access_grants</code> (modo legado)</td>
+<td>Executar seed em <code>access-control-schema.sql</code></td>
+</tr>
+</tbody></table>
+<h3>9.1 Modo legado</h3>
+<p>Se a tabela <code>access_grants</code> estiver <strong>vazia</strong>, <code>profile_has_access</code> retorna <strong><code>true</code></strong> para tudo (compatibilidade). Assim que existir <strong>qualquer</strong> grant, o ACL passa a valer de forma restritiva.</p>
+<hr>
+<h2>10. Boas práticas e limitações</h2>
+<h3>10.1 Boas práticas</h3>
+<p>1. Prefira mudanças por <strong>papel</strong>, não por perfil individual (mais fácil de manter).</p>
+<p>2. Conceda <code>super_admin</code> só a pessoas de confiança (2–3 no máximo).</p>
+<p>3. Colunas <strong>críticas</strong> (<code>access_pin</code>, <code>cpf</code>) só para papéis administrativos.</p>
+<p>4. Sempre peça <strong>Sair → entrar</strong> após alterar papéis.</p>
+<p>5. Teste com um perfil “voluntário” antes de aplicar em massa.</p>
+<h3>10.2 O que o ACL ainda não cobre totalmente</h3>
+<table><thead><tr>
+<th>Área</th>
+<th>Situação</th>
+</tr></thead><tbody>
+<tr>
+<td>RPCs de escalas</td>
+<td>Com ACL por tipo quando <code>access-control-lider-escala.sql</code> está instalado; financeiro em lote ainda parcial</td>
+</tr>
+<tr>
+<td>Tabelas <code>checkins</code>, <code>escalas_*</code></td>
+<td>RLS legada em parte das tabelas; operações sensíveis preferem RPC <code>security definer</code></td>
+</tr>
+<tr>
+<td>Mascaramento de CPF/PIN no SELECT</td>
+<td>Coluna ainda pode existir no JSON se grant de tabela for amplo</td>
+</tr>
+<tr>
+<td>Editar perfil de <strong>outra</strong> pessoa pela UI</td>
+<td>Não há tela admin de cadastro; só SQL ou futura feature</td>
+</tr>
+<tr>
+<td>Login / cadastro</td>
+<td>Fluxos sem <code>x-profile-id</code> tratados como pré-sessão</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>11. Referência rápida de arquivos</h2>
+<table><thead><tr>
+<th>Arquivo</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><code>MANUAL_CONTROLE_ACESSO.md</code></td>
+<td>Este manual</td>
+</tr>
+<tr>
+<td><code>CONTROLE_ACESSO.md</code></td>
+<td>Modelo técnico e inventário</td>
+</tr>
+<tr>
+<td><code>scripts/access-control-schema.sql</code></td>
+<td>Base do ACL</td>
+</tr>
+<tr>
+<td><code>scripts/access-control-admin-rpc.sql</code></td>
+<td>API da UI admin</td>
+</tr>
+<tr>
+<td><code>scripts/access-control-profile-write-rpc.sql</code></td>
+<td>RPCs de perfil com ACL</td>
+</tr>
+<tr>
+<td><code>scripts/access-control-table-rls.sql</code></td>
+<td>RLS por tabela</td>
+</tr>
+<tr>
+<td><code>scripts/access-control-member-dashboard-grants.sql</code></td>
+<td>Correção cards <code>member</code></td>
+</tr>
+<tr>
+<td><code>scripts/access-control-member-profile-columns.sql</code></td>
+<td>Correção colunas <code>member</code></td>
+</tr>
+<tr>
+<td><code>components/MaintenanceAccessControlCard.tsx</code></td>
+<td>UI no app</td>
+</tr>
+<tr>
+<td><code>hooks/useScreenAccessGuard.ts</code></td>
+<td>Bloqueio de rotas</td>
+</tr>
+<tr>
+<td><code>lib/accessControl.ts</code></td>
+<td>Cliente <code>profile_has_access</code></td>
+</tr>
+<tr>
+<td><code>lib/supabaseSessionFetch.ts</code></td>
+<td>Header <code>x-profile-id</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>12. Contatos e escalação</h2>
+<table><thead><tr>
+<th>Situação</th>
+<th>Responsável</th>
+</tr></thead><tbody>
+<tr>
+<td>Atribuição de papéis do dia a dia</td>
+<td>Super administrador da igreja</td>
+</tr>
+<tr>
+<td>Política de quem vê CPF/dados de saúde</td>
+<td>Liderança + secretaria</td>
+</tr>
+<tr>
+<td>Script SQL, deploy, bug no app</td>
+<td>Equipe de desenvolvimento / TI</td>
+</tr>
+<tr>
+<td>Perda do último <code>super_admin</code></td>
+<td>Recuperação via SQL Editor (service role) com insert manual em <code>profile_access_roles</code></td>
+</tr>
+</tbody></table>
+<hr>
+<p><em>Última atualização: julho/2026 — visão por recurso no ACL, detalhe de pin no mapa, audiência com congregados, cache de navegação.</em></p>
+</div>
+</body>
+</html>

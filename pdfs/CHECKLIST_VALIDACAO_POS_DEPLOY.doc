@@ -1,0 +1,402 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Checklist de validação pós-deploy</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Checklist de validação pós-deploy</h1>
+<p>Conferência em produção dos <strong>pedidos</strong> feitos ao app. Marque cada item após testar.</p>
+<p><strong>Planilha Excel por papel:</strong> <a href="pdfs/CHECKLIST_VALIDACAO_POR_PAPEL.xlsx">&lt;code&gt;pdfs/CHECKLIST_VALIDACAO_POR_PAPEL.xlsx&lt;/code&gt;</a> — combina este checklist com o mapa ACL para teste prático (uma aba por papel). Regenerar: <code>npm run build:validation-checklist-xlsx</code>.</p>
+<hr>
+<h2>Deploy e atualização</h2>
+<p><strong>Pedido:</strong> alterações demoravam para aparecer no ambiente de produção.</p>
+<ul>
+<li>[ ] Após novo deploy, a versão mais recente aparece ao recarregar a página (hard refresh ou aba anônima)</li>
+</ul>
+<hr>
+<h2>LGPD e cadastro</h2>
+<p><strong>Pedido:</strong> botões LGPD não respondiam (aceitar / recusar / confirmar).</p>
+<ul>
+<li>[ ] Em <strong>Dados cadastrais → LGPD</strong>, rolar os termos até o final habilita <strong>Li e aceito</strong> / <strong>Li e não concordo</strong></li>
+<li>[ ] <strong>Confirmar</strong> grava e retorna sem erro</li>
+<li>[ ] No <strong>cadastro de visitante</strong>, o mesmo fluxo de leitura dos termos funciona</li>
+</ul>
+<h3>Parâmetro <code>LGPD_Ativo</code> (super_admin)</h3>
+<ul>
+<li>[ ] Em <strong>Manutenção → Controle de Acesso</strong>, interruptor <strong>LGPD Ativo / Inativo</strong> grava em <code>app_parameters</code> (RPC <code>salvar_app_parameter_admin</code>)</li>
+<li>[ ] Com <strong><code>sim</code></strong>: cadastro exibe termos + selfie; login pode ir a <code>/lgpd</code>; cabeçalho vermelho se pendente</li>
+<li>[ ] Com <strong><code>nao</code></strong>: cadastro só nome/nascimento/CEP → <strong>Índice</strong>; sem <code>/lgpd</code>; sem alerta vermelho</li>
+<li>[ ] Script Supabase aplicado: <code>scripts/salvar-app-parameter-admin.sql</code></li>
+</ul>
+<hr>
+<h2>Dashboard principal</h2>
+<p><strong>Pedido:</strong> ao voltar do detalhe da escala, retornar ao card Escalas sem rolagem pelo carrossel.</p>
+<ul>
+<li>[ ] Dashboard → <strong>Escalas</strong> → abrir uma escala → <strong>Voltar</strong> volta direto ao card Escalas, sem animação entre cards</li>
+</ul>
+<p><strong>Pedido:</strong> ao selecionar uma escala, trocar de card sem animação.</p>
+<ul>
+<li>[ ] Ao tocar em uma escala, o carrossel pula direto ao card de detalhe</li>
+</ul>
+<p><strong>Pedido:</strong> após check-in no totem, destacar o card QR em azul piscina até o dia do evento passar.</p>
+<ul>
+<li>[ ] Evento com totem ativo, no dia de hoje: após confirmar check-in, card <strong>QR Code — Totem</strong> fica azul piscina</li>
+<li>[ ] No dia seguinte (ou fora do dia do evento), o destaque não aparece</li>
+</ul>
+<p><strong>Pedido:</strong> ao sair de telas abertas pelo dashboard, voltar ao card que originou a navegação.</p>
+<ul>
+<li>[ ] <strong>Lista de Membros</strong> → <strong>Mapa Geral</strong> → <strong>Voltar</strong> retorna ao card Lista de Membros</li>
+<li>[ ] <strong>Gestão de Cadastros</strong> → <strong>Dados Cadastrais</strong> ou <strong>Gerenciar Família</strong> → <strong>Voltar</strong> retorna ao card Gestão de Cadastros</li>
+<li>[ ] <strong>Coração Aberto</strong>, <strong>Financeiro</strong> e demais atalhos com <code>returnDashboardCard</code> restauram o card correto</li>
+</ul>
+<p><strong>Pedido:</strong> paletas de cores distintas por card do carrossel.</p>
+<ul>
+<li>[ ] Cada card do dashboard tem fundo/borda/acento visualmente diferenciados</li>
+</ul>
+<p><strong>Pedido:</strong> card Gestão de Cadastros com título e botões reposicionados.</p>
+<ul>
+<li>[ ] Título do card 6 exibe <strong>Gestão de Cadastros</strong> (não “Dados Cadastrais” como título do card)</li>
+<li>[ ] Botões <strong>Dados Cadastrais</strong> e <strong>Gerenciar Família</strong> menores e mais abaixo no card</li>
+</ul>
+<p><strong>Pedido:</strong> botões Visitantes e Mapa Geral na mesma linha no card Lista de Membros.</p>
+<ul>
+<li>[ ] <strong>Visitantes</strong> (ou <strong>Membros</strong>) e <strong>Mapa Geral</strong> ocupam metade da largura cada, na mesma linha</li>
+</ul>
+<p><strong>Pedido:</strong> ícone touch-app no botão Copiar chave PIX.</p>
+<ul>
+<li>[ ] Card <strong>Dízimos e Ofertas</strong> → botão <strong>Copiar chave PIX</strong> exibe ícone <em>touch-app</em></li>
+</ul>
+<p><strong>Pedido:</strong> toasts longos sem truncar em uma linha.</p>
+<ul>
+<li>[ ] Mensagens de erro/aviso longas aparecem em até 3–6 linhas, legíveis no PWA</li>
+</ul>
+<p><strong>Pedido:</strong> ícone do app com a arte da marca d'água.</p>
+<ul>
+<li>[ ] Favicon e ícone instalável do PWA usam o logo da marca d'água (não o ícone padrão Expo)</li>
+</ul>
+<hr>
+<h2>Manutenção — eventos</h2>
+<p><strong>Pedido:</strong> cards do dashboard de manutenção sumiam (tela em branco após editor de evento).</p>
+<ul>
+<li>[ ] Navegar entre cards da manutenção; abrir e fechar editor de evento; cards continuam visíveis</li>
+</ul>
+<p><strong>Pedido:</strong> cancelar criação de evento não podia deixar tela vazia.</p>
+<ul>
+<li>[ ] <strong>Novo evento</strong> → <strong>Cancelar</strong> → carrossel e cards permanecem na tela</li>
+</ul>
+<p><strong>Pedido:</strong> botão <strong>+7</strong> em evento cadastrado para duplicar uma vez, sete dias depois, em rascunho.</p>
+<ul>
+<li>[ ] Em evento <strong>já cadastrado</strong>, botão <strong>+7</strong> abaixo de Publicado/Rascunho</li>
+<li>[ ] Confirmar cria <strong>1 rascunho</strong> para <strong>+7 dias</strong>; o evento original não muda</li>
+</ul>
+<p><strong>Pedido:</strong> check-in por proximidade (geofence) com invalidação ao editar evento.</p>
+<ul>
+<li>[ ] Em <strong>Programação de Eventos</strong>, interruptor <strong>Check-in por proximidade</strong> grava <code>geofence_ativo</code></li>
+<li>[ ] Local favorito com <strong>latitude/longitude</strong> vinculado ao <code>event_local</code> do evento</li>
+<li>[ ] No dia do evento, membro com audiência e GPS liberado recebe confirmação automática ao chegar ao templo</li>
+<li>[ ] Ao editar data/local/flags relevantes, check-ins anteriores são removidos (toast <em>N check-in(s) removido(s)</em> ou aviso de script pendente)</li>
+<li>[ ] Scripts Supabase aplicados: <code>events-geofence-ativo.sql</code>, <code>event-favorite-locations.sql</code>, <code>geo-checkin-automatic.sql</code>, <code>geo-checkin-purge-on-event-update.sql</code></li>
+<li>[ ] Parâmetros <code>check_in_geofence_raio_metros</code> e <code>check_in_geofence_tempo</code> em <code>app_parameters</code></li>
+</ul>
+<hr>
+<h2>Manutenção — controle de acesso</h2>
+<p><strong>Pedido:</strong> painel de Controle de Acesso com scroll; papéis e colunas visíveis.</p>
+<ul>
+<li>[ ] <strong>Controle de Acesso</strong> rola corretamente; papéis e colunas legíveis, sem corte</li>
+</ul>
+<p><strong>Pedido:</strong> liberar <strong>Card Financeiro</strong> e <strong>Relatórios financeiros</strong> nos papéis.</p>
+<ul>
+<li>[ ] Em <strong>Papéis → Telas</strong>, aparecem <strong>Card Financeiro (dashboard)</strong> e <strong>Relatórios financeiros (/financial)</strong></li>
+<li>[ ] É possível ligar/desligar <strong>Ver</strong> por papel em cada um, separadamente</li>
+</ul>
+<p><strong>Pedido:</strong> caixa de busca de recursos em Papéis com botão para limpar a pesquisa.</p>
+<ul>
+<li>[ ] Ao digitar na busca, aparece botão para limpar; ao tocar, a lista volta completa</li>
+</ul>
+<p><strong>Pedido:</strong> telas do produto principal e de manutenção identificáveis na lista de Papéis (marcadores e ordenação).</p>
+<ul>
+<li>[ ] Telas do produto com marcador azul; telas de manutenção com marcador amarelo; azuis listadas antes dos amarelos</li>
+</ul>
+<hr>
+<h2>Manutenção — Acessos de Usuários</h2>
+<p><strong>Pedido:</strong> card exclusivo do super administrador com histórico de logins e telas visitadas por sessão.</p>
+<ul>
+<li>[ ] Card <strong>Acessos de Usuários</strong> aparece por último no carrossel, só para <strong>super_admin</strong></li>
+<li>[ ] Tabela lista nome, último acesso e total de logins; filtro por nome funciona</li>
+<li>[ ] Ícone de histórico abre balão com data/hora do login e telas visitadas (mais recente primeiro)</li>
+<li>[ ] <strong>Limpar histórico</strong> apaga logins e telas sem erro; toast confirma quantidade removida</li>
+<li>[ ] Supabase: <code>access-control-profile-access-insights.sql</code> + <code>profile-access-insights.sql</code> (ou patch); hotfix limpeza: <code>profile-access-insights-clear-fix.sql</code></li>
+</ul>
+<hr>
+<h2>Manutenção — escalas</h2>
+<p><strong>Pedido:</strong> botão para limpar a busca em <strong>Associar servos</strong>.</p>
+<ul>
+<li>[ ] Em <strong>Servos em Disponibilidade</strong>, campo de busca com botão limpar quando há texto</li>
+</ul>
+<p><strong>Pedido:</strong> <strong>Tipos de Escala</strong> em duas seções — cadastro novo e lista de cadastradas (edição só na segunda).</p>
+<ul>
+<li>[ ] Seções <strong>Novo tipo de escala</strong> e <strong>Escalas cadastradas</strong> separadas</li>
+<li>[ ] Edição só na seção <strong>Escalas cadastradas</strong></li>
+</ul>
+<p><strong>Pedido:</strong> as duas seções de Tipos de Escala começam fechadas; ao clicar, abre uma ou outra.</p>
+<ul>
+<li>[ ] Ambas as seções iniciam recolhidas</li>
+<li>[ ] Toque no cabeçalho abre a seção; a outra fecha; toque de novo recolhe</li>
+<li>[ ] Ao editar um tipo, <strong>Escalas cadastradas</strong> abre automaticamente</li>
+</ul>
+<hr>
+<h2>Financeiro — relatórios (membros)</h2>
+<p><strong>Pedido:</strong> seletor de mês em dropdown na tela Financeiro.</p>
+<ul>
+<li>[ ] Seção <strong>Relatórios</strong> com <strong>Mês</strong> em dropdown modal; trocar mês atualiza os relatórios</li>
+<li>[ ] Seção <strong>Saldo bancário</strong> exibe contas com saldo e linha <strong>Saldo total</strong></li>
+<li>[ ] Atalho destacado <strong>Relatório de Despesas (RD)</strong> no topo do módulo Financeiro</li>
+</ul>
+<p><strong>Pedido:</strong> coluna Descrição larga o suficiente para <strong>EXTRAORDINARIO</strong> em uma linha.</p>
+<ul>
+<li>[ ] Em <strong>Resultado do Mês</strong>, <strong>EXTRAORDINARIO</strong> não quebra em duas linhas</li>
+</ul>
+<p><strong>Pedido:</strong> altura do card Financeiro igual ao card Agenda da Família.</p>
+<ul>
+<li>[ ] Card <strong>Financeiro</strong> no dashboard com a mesma altura do card <strong>Agenda da Família</strong></li>
+</ul>
+<p><strong>Pedido:</strong> ao copiar chave PIX em Dízimos e Ofertas, mostrar toast em vez de mensagem fixa na tela.</p>
+<ul>
+<li>[ ] Card <strong>Dízimos e Ofertas</strong> → <strong>Copiar chave PIX</strong> exibe balão (toast) de confirmação</li>
+</ul>
+<p><strong>Pedido:</strong> subir o título “Dízimos e Ofertas” dentro do card.</p>
+<ul>
+<li>[ ] Título <strong>Dízimos e Ofertas</strong> visualmente mais alto no card (sem sobrepor outros elementos)</li>
+</ul>
+<hr>
+<h2>Super admin — chave técnica ACL</h2>
+<p><strong>Pedido:</strong> em perfil super admin, abaixo do nome da tela ativa no cabeçalho, exibir a chave técnica ACL (como em Papéis → Telas).</p>
+<ul>
+<li>[ ] Com perfil <strong>super admin</strong>, no <strong>Dashboard</strong>, ao trocar de card, aparece segunda linha com <code>dashboard.card.<em></code> ou <code>scale_type.</em></code> no roster</li>
+<li>[ ] Com perfil <strong>super admin</strong>, em <strong>Manutenção</strong>, aparece <code>maintenance.card.*</code> ou <code>/maintenance-dashboard</code> no menu</li>
+<li>[ ] Perfis que não são super admin <strong>não</strong> veem a linha técnica</li>
+</ul>
+<hr>
+<h2>Financeiro — Relatório de Despesas (RD)</h2>
+<p><strong>Pedido:</strong> data de hoje por padrão em cada linha do RD.</p>
+<ul>
+<li>[ ] Nova linha do RD já vem com a data de hoje; campo continua editável</li>
+<li>[ ] Valor digitado da direita para esquerda (<code>1</code> → R$ 0,01)</li>
+<li>[ ] <strong>Submeter e Finalizar</strong> grava RD e abre WhatsApp do tesoureiro</li>
+<li>[ ] <strong>Excluir RD</strong> remove pendente da lista (confirmação na web/PWA)</li>
+</ul>
+<hr>
+<h2>Deploy — versão publicada</h2>
+<ul>
+<li>[ ] <code>GET /build-info.json</code> retorna <code>commit</code> do deploy atual</li>
+<li>[ ] <code>/cadastro-familia/</code> carrega formulário público em produção</li>
+</ul>
+<hr>
+<h2>Recepção Familiar</h2>
+<ul>
+<li>[ ] Submissão do formulário público aparece em <strong>Recepção Familiar</strong></li>
+<li>[ ] <strong>Gravar selecionados</strong> / <strong>Rejeitar selecionados</strong> funcionam em lote</li>
+</ul>
+<hr>
+<h2>Mudança de Papéis</h2>
+<ul>
+<li>[ ] Card visível para pastoral/super_admin</li>
+<li>[ ] Alterar visitante ↔ congregado ↔ membro reflete após novo login</li>
+</ul>
+<hr>
+<h2>Manutenção — Informações Financeiras</h2>
+<p><strong>Pedido:</strong> lista de RDs do mês de referência; desconciliar; accordion; título fixo nas seções; versão na carga; comentário só ao clicar.</p>
+<ul>
+<li>[ ] <strong>Relatórios de Despesas</strong> lista RDs do mês selecionado</li>
+<li>[ ] RD conciliado → <strong>Remover vínculo</strong> → volta para pendente</li>
+<li>[ ] Só uma seção aberta por vez (accordion); título da seção não desloca ao expandir</li>
+<li>[ ] Carga/limpeza em lote com seletor <strong>REALIZADO / PLANEJADO</strong></li>
+<li>[ ] Editar lançamento: comentário vazio; teclado só ao tocar em “Toque para digitar…”</li>
+</ul>
+<p><strong>Pedido:</strong> RD conciliado em mês diferente da emissão deve aparecer no relatório do mês do lançamento.</p>
+<ul>
+<li>[ ] RD de junho vinculado a despesa de maio aparece ao filtrar <strong>maio</strong> em Informações Financeiras</li>
+</ul>
+<p><strong>Pedido:</strong> dropdown de mês na seção de RDs (não depender só do “Mês de referência” global).</p>
+<ul>
+<li>[ ] Seção de RDs com seletor de mês próprio</li>
+</ul>
+<p><strong>Pedido:</strong> ao vincular RD no lançamento, exibir descrições das despesas.</p>
+<ul>
+<li>[ ] <strong>Adicionar</strong> em lançamento → <strong>Vincular RD</strong> → cada RD pendente mostra descrição dos itens</li>
+</ul>
+<hr>
+<h2>Controle de Acesso — aba Perfis</h2>
+<p><strong>Pedido:</strong> dropdown com todos os usuários (substituir busca por texto).</p>
+<ul>
+<li>[ ] Aba <strong>Perfis</strong> exibe <strong>Selecionar perfil</strong> com lista completa de usuários</li>
+</ul>
+<hr>
+<h2>Cadastro de Usuário — exclusão</h2>
+<p><strong>Pedido:</strong> botão para excluir usuário e referências no Supabase.</p>
+<ul>
+<li>[ ] <strong>Excluir usuário</strong> remove perfil após confirmação (requer <code>scripts/delete-profile-complete-rpc.sql</code>)</li>
+<li>[ ] Não permite excluir a própria sessão nem o único <code>super_admin</code></li>
+</ul>
+<hr>
+<h2>Perfil, selfie e família</h2>
+<p><strong>Pedido:</strong> selfie não atualizava no banco nem na tela.</p>
+<ul>
+<li>[ ] Nova selfie aparece na hora e persiste após sair e voltar</li>
+<li>[ ] Foto de membro em <strong>Gerenciar família</strong> grava corretamente</li>
+</ul>
+<p><strong>Pedido:</strong> tela branca ao abrir mapa na Lista de Membros.</p>
+<ul>
+<li>[ ] Mapa abre sem tela branca</li>
+</ul>
+<p><strong>Pedido:</strong> coluna <strong>GPS</strong> na Lista de Membros (após Zap) para copiar endereço completo em uma linha.</p>
+<ul>
+<li>[ ] Cabeçalho da lista: <strong>Nome | Família | Zap | GPS</strong></li>
+<li>[ ] Ícone de mapa copia endereço com CEP (ex.: <code>Rua, 123, Bairro, Cidade, SP, 12345-678</code>)</li>
+<li>[ ] Toast: <em>Cole o conteúdo da área de transferência em seu aplicativo de navegação.</em></li>
+<li>[ ] Ícone desabilitado quando o perfil não tem endereço/CEP suficiente</li>
+<li>[ ] Mesmo comportamento na lista de <strong>Visitantes</strong></li>
+<li>[ ] <strong>SQL em produção:</strong> <code>scripts/access-control-map-pin-roles.sql</code> (RPCs com campos de endereço)</li>
+</ul>
+<p><strong>Pedido:</strong> membro adicionado deve aparecer na lista; busca por nome; data com barras; sem duplicata na família.</p>
+<ul>
+<li>[ ] Membro novo aparece na lista após salvar</li>
+<li>[ ] Busca por nome funciona</li>
+<li>[ ] Data de nascimento formata com <code>/</code> ao digitar</li>
+<li>[ ] Não permite o mesmo membro duas vezes na mesma família</li>
+</ul>
+<hr>
+<h2>Mapa de geolocalização</h2>
+<p><strong>Pedido:</strong> ao abrir detalhes de um pin, ícone de mapa ao lado do WhatsApp para copiar endereço para navegação.</p>
+<ul>
+<li>[ ] No card de detalhes do pin, ícone de mapa à esquerda do WhatsApp</li>
+<li>[ ] Toque copia endereço completo em uma linha (com CEP)</li>
+<li>[ ] Toast: <em>Cole o conteúdo da área de transferência em seu aplicativo de navegação.</em></li>
+<li>[ ] Ícone desabilitado se não houver endereço/CEP para montar a linha</li>
+</ul>
+<hr>
+<h2>Coração Aberto</h2>
+<p><strong>Pedido:</strong> em <strong>Meus pedidos</strong>, borracha por pedido para excluir só os ainda não iniciados pelo Cuidado Pastoral.</p>
+<ul>
+<li>[ ] Ícone de borracha no topo do formulário continua limpando o rascunho (novo pedido)</li>
+<li>[ ] Em <strong>Meus pedidos</strong>, cada card tem borracha individual</li>
+<li>[ ] Pedido com status <strong>Novo</strong> (ou sem Acolher/Apoiar/Acompanhar) pode ser excluído após confirmação</li>
+<li>[ ] Pedido já iniciado pelo Cuidado Pastoral (Acolher, Apoiar, Acompanhar ou em andamento) → borracha bloqueada e mensagem explicativa</li>
+<li>[ ] <strong>SQL em produção:</strong> <code>scripts/pastoral-request-delete-rpc.sql</code></li>
+</ul>
+<hr>
+<h2>Login e interface</h2>
+<p><strong>Pedido:</strong> login sem marca d'água; redes sociais só no passo 1; marca d'água mais discreta; altura alinhada ao dashboard.</p>
+<ul>
+<li>[ ] Tela de login/senha sem marca d'água</li>
+<li>[ ] Ícones de redes sociais só no passo 1 (telefone/CPF); passo 2 (senha) sem ícones</li>
+<li>[ ] Demais telas: marca d'água mais transparente (~9% de opacidade)</li>
+<li>[ ] Altura da marca d'água alinhada ao card do dashboard</li>
+<li>[ ] Marca d'água visível no <strong>Índice</strong> e nas abas do app (exceto login, cadastro e totem)</li>
+</ul>
+<p><strong>Pedido:</strong> carregamento do dashboard sem barras horizontais no centro dos cards.</p>
+<ul>
+<li>[ ] Ao carregar cards do dashboard, aparece indicador discreto (ou área vazia), sem skeleton de barras no meio do card</li>
+</ul>
+<p><strong>Pedido:</strong> ícones oficiais de Instagram e YouTube (formato squircle).</p>
+<ul>
+<li>[ ] Ícones de redes sociais no login/cadastro com formato squircle oficial</li>
+</ul>
+<p><strong>Pedido:</strong> logout do totem igual ao app principal (web volta para login com <code>signedOut=1</code>).</p>
+<ul>
+<li>[ ] Encerrar sessão no totem redireciona corretamente para a tela de login</li>
+</ul>
+<hr>
+<h2>Navegação entre cards</h2>
+<p><strong>Pedido:</strong> ir de Estacionamento para Acolhimento (e vice-versa) sem animação lenta do carrossel.</p>
+<ul>
+<li>[ ] Atalhos entre cards relacionados saltam direto, sem rolagem animada entre intermediários</li>
+</ul>
+<hr>
+<h2>Registro</h2>
+<table><thead><tr>
+<th>Data</th>
+<th>Validador</th>
+<th>Observações</th>
+</tr></thead><tbody>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>SQLs pendentes em produção (conferir antes de validar)</h2>
+<table><thead><tr>
+<th>Script</th>
+<th>Necessário para</th>
+</tr></thead><tbody>
+<tr>
+<td><code>scripts/financial-module-access.sql</code></td>
+<td>ACL Card Financeiro e Relatórios em Papéis</td>
+</tr>
+<tr>
+<td><code>scripts/access-control-pastoral-role-grants.sql</code></td>
+<td>Equipe Pastoral com privilégios de Membro + Cuidado Pastoral</td>
+</tr>
+<tr>
+<td><code>scripts/access-control-remove-tstmax-scale-resources.sql</code></td>
+<td>Ocultar escalas TstMax em Papéis</td>
+</tr>
+<tr>
+<td><code>scripts/access-control-map-pin-roles.sql</code></td>
+<td>Coluna GPS na Lista de Membros (endereço na RPC)</td>
+</tr>
+<tr>
+<td><code>scripts/pastoral-request-delete-rpc.sql</code></td>
+<td>Excluir pedido pastoral em Meus pedidos</td>
+</tr>
+<tr>
+<td><code>scripts/expense-reports-schema.sql</code>, <code>expense-reports-rpc.sql</code></td>
+<td>RD (membro + manutenção)</td>
+</tr>
+<tr>
+<td><code>scripts/recepcao-cadastro-familiar.sql</code></td>
+<td>Recepção Familiar + formulário público</td>
+</tr>
+<tr>
+<td><code>scripts/access-control-pastoral-role-change.sql</code></td>
+<td>Mudança de Papéis</td>
+</tr>
+<tr>
+<td><code>scripts/delete-profile-complete-rpc.sql</code></td>
+<td>Excluir usuário no Cadastro de Usuário</td>
+</tr>
+</tbody></table>
+<hr>
+<p><em>Atualizado em 23/06/2026</em></p>
+</div>
+</body>
+</html>

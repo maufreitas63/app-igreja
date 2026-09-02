@@ -1,0 +1,700 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Perguntas e Respostas (FAQ) — App IBN</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Perguntas e Respostas (FAQ) — App IBN</h1>
+<p>Respostas às dúvidas mais comuns sobre o aplicativo da <strong>Igreja Batista Norte</strong>, organizadas <strong>por tela</strong> e <strong>por assunto</strong>.</p>
+<p><strong>Documentação relacionada:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a> · <a href="PACOTE_1_VISAO_GERAL.md">&lt;code&gt;PACOTE_1_VISAO_GERAL.md&lt;/code&gt;</a> · <a href="FUNCIONALIDADES.md">&lt;code&gt;FUNCIONALIDADES.md&lt;/code&gt;</a> · <a href="MANUAL_TREINAMENTO.md">&lt;code&gt;MANUAL_TREINAMENTO.md&lt;/code&gt;</a> · <a href="BLUEPRINT.md">&lt;code&gt;BLUEPRINT.md&lt;/code&gt;</a></p>
+<p><strong>Atualizado em:</strong> 03/07/2026</p>
+<hr>
+<h2>Índice</h2>
+<h3>Por tela</h3>
+<p>1. <a href="#1-login">Login</a></p>
+<p>2. <a href="#2-cadastro-inicial">Cadastro inicial</a></p>
+<p>3. <a href="#3-painel--dashboard">Painel / Dashboard</a></p>
+<p>4. <a href="#4-agenda-da-família">Agenda da Família</a></p>
+<p>5. <a href="#5-check-in-e-qr-code">Check-in e QR Code</a></p>
+<p>6. <a href="#6-salas--kids-e-teens">SALA(S) — Kids e Teens</a></p>
+<p>7. <a href="#7-dízimos-e-ofertas">Dízimos e Ofertas</a></p>
+<p>8. <a href="#8-lista-de-membros-e-mapa">Lista de Membros e Mapa</a></p>
+<p>9. <a href="#9-aniversariantes">Aniversariantes</a></p>
+<p>10. <a href="#10-financeiro-membro">Financeiro (membro)</a></p>
+<p>11. <a href="#11-escalas-e-estacionamento">Escalas e Estacionamento</a></p>
+<p>12. <a href="#12-perfil--identidade-e-dados-cadastrais">Perfil &amp;amp; Identidade e Dados Cadastrais</a></p>
+<p>13. <a href="#13-gerenciar-família">Gerenciar Família</a></p>
+<p>14. <a href="#14-coração-aberto-e-meus-pedidos">Coração Aberto e Meus Pedidos</a></p>
+<p>15. <a href="#15-termos-lgpd">Termos LGPD</a></p>
+<p>16. <a href="#16-menu-navegação-e-saída">Menu, navegação e saída</a></p>
+<p>17. <a href="#17-totem-de-check-in">Totem de check-in</a></p>
+<p>18. <a href="#18-manutenção-equipe">Manutenção (equipe)</a></p>
+<h3>Por assunto</h3>
+<ul>
+<li><a href="#assunto-acesso-e-senha">Acesso e senha</a></li>
+<li><a href="#assunto-lgpd-e-privacidade">LGPD e privacidade</a></li>
+<li><a href="#assunto-check-in-e-eventos">Check-in e eventos</a></li>
+<li><a href="#assunto-família-e-cadastro">Família e cadastro</a></li>
+<li><a href="#assunto-permissões-e-perfis">Permissões e perfis</a></li>
+<li><a href="#assunto-financeiro">Financeiro</a></li>
+<li><a href="#assunto-pastoral">Pastoral</a></li>
+<li><a href="#assunto-escalas">Escalas</a></li>
+<li><a href="#assunto-mapa-e-endereço">Mapa e endereço</a></li>
+<li><a href="#assunto-segurança-e-dados">Segurança e dados</a></li>
+<li><a href="#assunto-problemas-técnicos">Problemas técnicos</a></li>
+<li><a href="#assunto-totem-e-quiosque">Totem e quiosque</a></li>
+</ul>
+<hr>
+<h1>Por tela</h1>
+<h2>1. Login</h2>
+<p><strong>O que preciso para entrar no app?</strong></p>
+<p>Seu <strong>número de celular</strong> (com DDD) e sua <strong>senha de acesso de 4 dígitos</strong> (PIN).</p>
+<p><strong>É a primeira vez que uso o app. E a senha?</strong></p>
+<p>Na primeira entrada você ainda não tem senha definitiva. No passo 2, toque em <strong>Receber código por e-mail</strong> (informe o e-mail se ainda não estiver cadastrado), receba o código temporário e digite os 4 dígitos. Depois altere a senha em <strong>Dados Cadastrais</strong>.</p>
+<p><strong>Por que o WhatsApp não abre ou dá erro?</strong></p>
+<p>O PIN de autenticação é enviado <strong>somente por e-mail</strong> (WhatsApp foi desativado nesse fluxo). Se falhar, confira o e-mail (e a pasta de spam) ou peça ajuda à secretaria / equipe TI (<code>scripts/auth-pin-email-only.sql</code> e configuração de e-mail em <code>app_parameters</code>).</p>
+<p><strong>Posso entrar sem passar pelo WhatsApp?</strong></p>
+<p>Não na primeira vez. O app exibirá <em>&quot;Código necessário&quot;</em> se você tentar digitar senha sem ter solicitado o PIN temporário.</p>
+<p><strong>O app entra sozinho ao digitar a senha?</strong></p>
+<p>Sim. Ao completar o 4º dígito, a validação pode ocorrer automaticamente. Você também pode tocar em <strong>Entrar</strong>.</p>
+<p><strong>Aparece &quot;Número ou senha inválidos&quot;. O que fazer?</strong></p>
+<p>Confira os 4 dígitos. Se <strong>esqueceu</strong> a senha pessoal, use <strong>Esqueci minha senha</strong> no <strong>passo 2</strong> (código) para validar a pergunta de segurança e receber nova senha por <strong>e-mail</strong>. Na <strong>primeira entrada</strong>, use <strong>Receber código por e-mail</strong>.</p>
+<p><strong>Esqueci minha senha pessoal (já sou cadastrado).</strong></p>
+<p>No <strong>passo 2</strong> do login, toque <strong>Esqueci minha senha</strong> → confirme ou cadastre o <strong>e-mail</strong> → responda a <strong>pergunta de segurança</strong> → o app envia um novo PIN de 4 dígitos por <strong>e-mail</strong> (não usa WhatsApp).</p>
+<p><strong>O botão &quot;Esqueci minha senha&quot; não aparece no passo 1.</strong></p>
+<p>Correto: ele só fica visível no <strong>passo 2</strong>, quando você já informou o celular e vai digitar a senha.</p>
+<p><strong>Aparece &quot;Validação indisponível&quot;.</strong></p>
+<p>Problema no servidor (RPC <code>verificar_login</code> não instalada ou indisponível). Avise a equipe técnica da igreja.</p>
+<p><strong>Aparece &quot;Não foi possível conectar ao servidor&quot;.</strong></p>
+<p>Verifique internet (Wi‑Fi ou dados móveis) e tente de novo.</p>
+<p><strong>O que é o modo totem na tela de login?</strong></p>
+<p>Quando o celular configurado é o do <strong>totem</strong> (<code>cel_totem</code>), a tela muda para <strong>Totem — Check-in</strong>: só pede senha <strong>9999</strong>, sem cadastro de membro.</p>
+<p><strong>Por que o app abre direto no totem sem pedir login?</strong></p>
+<p>Se esse aparelho já tinha sessão do totem salva, o app restaura automaticamente. Use <strong>Encerrar sessão</strong> ao final do culto.</p>
+<p><strong>Para que servem Instagram e YouTube na tela de login?</strong></p>
+<p>Links para as redes sociais oficiais da igreja — não fazem parte do login.</p>
+<p><strong>O app lembra meu celular depois que saio?</strong></p>
+<p>Após <strong>Sair do aplicativo</strong> / <strong>Encerrar sessão</strong>, a sessão é limpa. Na web, pode ser necessário digitar celular e senha novamente.</p>
+<hr>
+<h2>2. Cadastro inicial</h2>
+<p><strong>Quando sou levado à tela de Cadastro?</strong></p>
+<p>Após o primeiro login bem-sucedido, se seu perfil ainda não completou o cadastro inicial (nome, LGPD, selfie).</p>
+<p><strong>Posso alterar o telefone no cadastro?</strong></p>
+<p>Não. O telefone vem do login e aparece bloqueado — é sua identidade no sistema.</p>
+<p><strong>Por que não consigo marcar &quot;Li e aceito&quot; nos termos?</strong></p>
+<p>É preciso: (1) preencher nome e nascimento; (2) <strong>rolar os termos LGPD até o final</strong> (aparece <code>✅ Termos lidos.</code>).</p>
+<p><strong>E se eu marcar &quot;Li e não concordo&quot;?</strong></p>
+<p>O app explica as implicações da recusa. O cadastro segue conforme a política da igreja; seu aceite fica registrado.</p>
+<p><strong>A câmera não abre para a selfie.</strong></p>
+<p>Permita o uso da câmera nas configurações do celular. Na <strong>versão web</strong>, você pode escolher uma foto do dispositivo.</p>
+<p><strong>Dicas para uma boa selfie?</strong></p>
+<p>Rosto centralizado, boa iluminação, sem obstruções (óculos escuros, boné).</p>
+<p><strong>O que acontece após &quot;Cadastro inicial concluído&quot;?</strong></p>
+<p>Você é direcionado a completar <strong>Dados Cadastrais</strong> ou aceitar <strong>LGPD</strong>, conforme o que ainda faltar.</p>
+<p><strong>Recebo código de família no cadastro?</strong></p>
+<p>Sim. O sistema reserva automaticamente um <code>family_id</code> / código de família para seu perfil.</p>
+<hr>
+<h2>3. Painel / Dashboard</h2>
+<p><strong>O que é o Índice do Aplicativo?</strong></p>
+<p>Tela com <strong>etiquetas</strong> (atalhos) para cada módulo. Toque na etiqueta para abrir o card correspondente no Painel.</p>
+<p><strong>O que é o Painel?</strong></p>
+<p>Carrossel de cards com os módulos da igreja (eventos, ofertas, pastoral, etc.). Pode ser acessado pelo Índice ou pela navegação direta.</p>
+<p><strong>Como passo de um card para outro?</strong></p>
+<p>Deslize o dedo horizontalmente <strong>ou</strong> use os botões <strong>‹</strong> e <strong>›</strong> no rodapé (segurar avança automaticamente). O rodapé mostra a posição atual (<strong>1 / N</strong>).</p>
+<p><strong>Por que o topo está vermelho?</strong></p>
+<p>Seu <strong>LGPD está pendente</strong>. Complete os termos em <strong>Dados Cadastrais</strong> ou na tela <strong>LGPD</strong>.</p>
+<p><strong>Por que não vejo alguns cards?</strong></p>
+<p>Cada card depende da sua <strong>permissão de perfil</strong> (ACL). A igreja define quem vê Financeiro, Escalas, etc. Fale com o administrador se achar que falta algo.</p>
+<p><strong>O que é o banner de &quot;controle de acesso indisponível&quot;?</strong></p>
+<p>O servidor de permissões não respondeu corretamente. Em produção estrita, alguns recursos podem ficar bloqueados até a equipe TI corrigir.</p>
+<p><strong>Para que serve o botão Menu no rodapé?</strong></p>
+<p>Abre a tela de <strong>atalhos</strong> com lista de módulos e o botão de <strong>sair</strong>.</p>
+<p><strong>Para que serve a engrenagem?</strong></p>
+<p>Abre a <strong>Manutenção</strong> — só aparece se você tiver permissão de equipe/administrador, <strong>alinhada à direita</strong> do rodapé no Índice.</p>
+<p><strong>O que é a tela de atalhos (Menu)?</strong></p>
+<p>Lista rápida: Agenda, Salas, QR Totem, Ofertas, Pastoral, Membros, etc., sem deslizar o carrossel. Cada atalho tem <strong>ícone colorido</strong> por módulo.</p>
+<hr>
+<h2>4. Agenda da Família</h2>
+<p><strong>O que é &quot;audiência&quot; ou pré-check-in?</strong></p>
+<p>Marcar na lista quem da sua família participará do evento — <strong>antes</strong> de apresentar o QR no totem. A lista inclui <strong>membros e congregados</strong> do núcleo, e dependentes com reconhecimento pendente ou aceito.</p>
+<p><strong>Como escolho o evento?</strong></p>
+<p>No card <strong>Agenda da Família</strong>, use <strong>Trocar Evento</strong> (chips horizontais).</p>
+<p><strong>Não aparece nenhum evento.</strong></p>
+<p>Pode não haver eventos publicados no momento, ou todos estão fora da janela visível. Tente <strong>Atualizar</strong> ou aguarde a equipe publicar.</p>
+<p><strong>O que significa &quot;vagas&quot;?</strong></p>
+<p>Quantidade de inscritos em relação à <strong>capacidade máxima</strong> do evento.</p>
+<p><strong>Marquei a audiência e nada mudou no QR.</strong></p>
+<p>O card de QR só aparece no <strong>dia do evento</strong> e após o pré-check-in, conforme o tipo de fluxo (totem, quórum, manual).</p>
+<p><strong>Posso desmarcar a audiência depois?</strong></p>
+<p>Em eventos normais, sim. Em <strong>quórum com check-in já confirmado no totem</strong>, a audiência pode <strong>travar</strong> para proteger a lista oficial.</p>
+<p><strong>Evento de quórum: só posso marcar uma pessoa?</strong></p>
+<p>Sim. Apenas o <strong>membro da sessão ativa</strong> pode ser marcado na audiência.</p>
+<p><strong>Aparece erro em vermelho no card (preCheckinGateError).</strong></p>
+<p>Falha ao consultar o pré-check-in no servidor — não significa necessariamente que você não marcou; pode ser instabilidade. Tente novamente ou avise a equipe.</p>
+<p><strong>O que é check-in automático?</strong></p>
+<p>Alguns eventos registram presença direto na audiência, sem QR — o app informa isso nos textos de orientação.</p>
+<hr>
+<h2>5. Check-in e QR Code</h2>
+<p><strong>Quando o card de QR Code aparece?</strong></p>
+<p>Geralmente no <strong>dia do evento</strong>, com audiência marcada, evento publicado e permissão de acesso. O título pode variar: <em>QR Code — Check-in Totem</em>, <em>Check-in Quórum</em>, etc.</p>
+<p><strong>O que é a &quot;etiqueta&quot; amarela?</strong></p>
+<p>Seu <strong>código de família</strong> — identificador usado no totem junto com o QR.</p>
+<p><strong>Como faço check-in no culto?</strong></p>
+<p>1) Marque audiência na Agenda; 2) No dia, abra o card QR; 3) Apresente o QR na câmera do <strong>totem</strong> da igreja.</p>
+<p><strong>O totem diz &quot;Pré-check-in não encontrado&quot;.</strong></p>
+<p>Volte à <strong>Agenda da Família</strong> e marque a audiência dos participantes antes de escanear.</p>
+<p><strong>O totem diz que já foi confirmado.</strong></p>
+<p>Normal — evita check-in duplicado. Sua presença já está registrada.</p>
+<p><strong>Posso fazer check-in sem totem?</strong></p>
+<p>Sim, quando o evento tem <strong>check-in por proximidade (geofence)</strong> ativo: marque audiência, permita GPS no navegador/app e aproxime-se do templo na janela configurada. O app confirma automaticamente após estabilizar a localização. Caso contrário, use QR no totem ou check-in manual conforme a configuração do evento.</p>
+<p><strong>O que é check-in por proximidade (geofence)?</strong></p>
+<p>Com <strong>geofence ativo</strong> no evento e <strong>coordenadas cadastradas</strong> no local favorito vinculado ao <code>event_local</code>, o app monitora sua posição e registra presença quando você está dentro do raio (padrão 30 m, configurável). Exige pré-check-in (audiência) e permissão de localização.</p>
+<p><strong>Alterei data ou local do evento e o check-in sumiu.</strong></p>
+<p>Esperado: mudanças relevantes (data, local, capacidade, flags totem/quórum/geofence, etc.) <strong>invalidam check-ins</strong> para que famílias validem novamente. A equipe vê toast na manutenção ao salvar.</p>
+<p><strong>Toquei no card QR e abriu uma lista de membros.</strong></p>
+<p>É o <strong>CheckinModal</strong> — seleção manual auxiliar. A confirmação oficial no culto é pelo <strong>totem</strong>, <strong>geofence</strong> ou fluxo manual conforme o evento.</p>
+<p><strong>Não tenho código de família / QR vazio.</strong></p>
+<p>Vincule ou confira seu código em <strong>Dados Cadastrais</strong> ou com a secretaria.</p>
+<p><strong>Badges IBN KIDS / IBN TEENS no QR?</strong></p>
+<p>Indicam que o evento tem salas Kids e/ou Teens — informativo no card.</p>
+<hr>
+<h2>6. SALA(S) — Kids e Teens</h2>
+<p><strong>Posso marcar entrada na sala pelo meu celular?</strong></p>
+<p><strong>Não.</strong> No dashboard o card <strong>SALA(S)</strong> é <strong>somente leitura</strong> — você vê quem entrou, mas não marca.</p>
+<p><strong>Quem aparece na lista do meu card SALA(S)?</strong></p>
+<p>Apenas <strong>membros da sua família</strong> inscritos no evento (Kids ou Teens). A equipe na manutenção vê todos os inscritos.</p>
+<p><strong>Quem marca a entrada na sala Kids/Teens?</strong></p>
+<p>A <strong>equipe</strong> na <strong>Manutenção → Sala(s) - Check In</strong>.</p>
+<p><strong>O que significa o ✓ na lista?</strong></p>
+<p>A criança/adolescente teve <strong>entrada na sala confirmada</strong> pela equipe.</p>
+<p><strong>Contagem &quot;3/5&quot; nos chips das salas?</strong></p>
+<p>Inscritos com entrada confirmada / total de inscritos naquela sala (da <strong>sua família</strong>, no dashboard).</p>
+<p><strong>Lista vazia no card SALA(S).</strong></p>
+<p>Pode ser que ninguém da sua família esteja inscrito no evento, ou que o sistema não identificou seu código de família — confira em <strong>Dados Cadastrais</strong>.</p>
+<hr>
+<h2>7. Dízimos e Ofertas</h2>
+<p><strong>O card some quando o evento não tem ofertas?</strong></p>
+<p><strong>Não.</strong> O card <strong>Dízimos e Ofertas</strong> permanece <strong>sempre</strong> no carrossel (se seu perfil tiver permissão ACL). A flag <code>parm_ofertas</code> do evento não controla mais a visibilidade deste card.</p>
+<p><strong>Onde vejo a chave PIX?</strong></p>
+<p>No card <strong>Dízimos e Ofertas</strong> do Painel.</p>
+<p><strong>&quot;Chave PIX indisponível&quot;.</strong></p>
+<p>A chave ainda não foi configurada em <code>app_parameters</code> ou falhou ao carregar. Toque em <strong>Atualizar chave PIX</strong> ou avise a tesouraria.</p>
+<p><strong>Como copio a chave PIX?</strong></p>
+<p>Toque em <strong>Copiar chave PIX</strong>. Mensagem de sucesso aparece por alguns segundos.</p>
+<p><strong>O PIX pelo app debita automaticamente?</strong></p>
+<p>Não. O app só <strong>exibe e copia</strong> a chave — o pagamento é feito no app do seu banco.</p>
+<hr>
+<h2>8. Lista de Membros e Mapa</h2>
+<p><strong>O que é a Lista de Membros?</strong></p>
+<p>Consulta de membros com busca por nome, código de família e atalho WhatsApp.</p>
+<p><strong>Para que serve o botão Mapa?</strong></p>
+<p>Abre o <strong>mapa de geolocalização</strong> (versão web/PWA) com pins por endereço/CEP.</p>
+<p><strong>Posso clicar em qualquer pin e ver o endereço?</strong></p>
+<p>Só se seu perfil tiver permissão de <strong>detalhe do pin</strong> (<code>pastoral</code> / <code>super_admin</code>). Membros e congregados veem o mapa geral, mas <strong>não abrem a localização de outros usuários</strong> ao tocar no pin.</p>
+<p><strong>O mapa não abre ou está vazio no celular nativo.</strong></p>
+<p>O mapa completo funciona na <strong>versão web (PWA)</strong>. No app nativo pode aparecer apenas orientação para usar o navegador.</p>
+<p><strong>Por que meu pin não aparece no mapa?</strong></p>
+<p>CEP ou endereço podem estar incompletos em <strong>Dados Cadastrais</strong>, ou a geocodificação ainda não rodou. Toque em <strong>Atualizar mapa</strong>.</p>
+<p><strong>Filtros: Visitantes vs Com papel?</strong></p>
+<p>Visitantes são perfis marcados como visitantes no ACL; &quot;com papel&quot; agrupa demais perfis cadastrados.</p>
+<p><strong>Posso ver telefone de qualquer membro?</strong></p>
+<p>Somente o que seu perfil tem permissão de visualizar; contato via WhatsApp quando disponível.</p>
+<p><strong>Ícone de usuários na tabela.</strong></p>
+<p>Abre modal com <strong>membros daquela família</strong>.</p>
+<hr>
+<h2>9. Aniversariantes</h2>
+<p><strong>De onde vêm os aniversariantes?</strong></p>
+<p>Datas de nascimento cadastradas nos perfis/membros.</p>
+<p><strong>Como filtro por mês?</strong></p>
+<p>Use o <strong>seletor de mês</strong> (Picker) no topo do card.</p>
+<p><strong>Lista vazia no mês.</strong></p>
+<p>Ninguém cadastrado faz aniversário naquele mês, ou faltam datas de nascimento.</p>
+<p><strong>Ícone WhatsApp.</strong></p>
+<p>Abre conversa com o aniversariante, se houver telefone.</p>
+<hr>
+<h2>10. Financeiro (membro)</h2>
+<p><strong>Posso lançar despesas/receitas pelo app?</strong></p>
+<p><strong>Não</strong> na tela <strong>Financeiro</strong> do membro — é <strong>somente leitura</strong>. Lançamentos são feitos pela equipe na <strong>Manutenção</strong>.</p>
+<p><strong>Por que alguns meses têm &quot;(só planejado)&quot;?</strong></p>
+<p>Há orçamento <strong>PLANEJADO</strong> naquele mês, mas ainda sem movimento <strong>REALIZADO</strong>. O resultado REALIZADO pode aparecer vazio; use a seção <strong>Orçamento</strong>.</p>
+<p><strong>O que é &quot;saldo acumulado até o mês&quot;?</strong></p>
+<p>Soma de todos os lançamentos REALIZADOS até o fim do mês selecionado — não é só o movimento daquele mês.</p>
+<p><strong>O que é YTD no boletim?</strong></p>
+<p>Movimento <strong>REALIZADO</strong> acumulado no <strong>ano civil</strong> até o mês selecionado.</p>
+<p><strong>Seção &quot;Planejado × Realizado&quot; bloqueada.</strong></p>
+<p>Não há lançamentos PLANEJADO para aquele mês.</p>
+<p><strong>Aviso amarelo sobre comentários.</strong></p>
+<p>Alguns comentários de lançamentos não carregaram — os valores principais ainda podem estar corretos.</p>
+<p><strong>Por que não vejo o mês atual?</strong></p>
+<p>O seletor do dashboard financeiro oculta o <strong>mês corrente</strong> — foco em meses já encerrados para consulta.</p>
+<p><strong>O que é Saldo bancário?</strong></p>
+<p>Seção no final do módulo Financeiro com saldo <strong>REALIZADO</strong> acumulado por conta bancária até o mês escolhido (diferente do saldo do boletim mensal).</p>
+<p><strong>Como peço reembolso de despesas (RD)?</strong></p>
+<p>Financeiro → atalho <strong>Relatório de Despesas (RD)</strong> → <strong>Novo RD</strong> → preencha itens e <strong>Submeter e Finalizar</strong>. O tesoureiro é avisado via WhatsApp.</p>
+<p><strong>Posso cancelar um RD enviado?</strong></p>
+<p>Somente enquanto estiver <strong>Pendente</strong> — use <strong>Excluir RD</strong> na lista.</p>
+<hr>
+<h2>11. Escalas e Estacionamento</h2>
+<p><strong>O que vejo no card Escalas?</strong></p>
+<p>Tipos de escala da igreja (vigilância, estacionamento, intercessão, etc.) e quem serve em cada data. No mesmo domingo podem aparecer <strong>vários servos</strong> quando o tipo permite mais de uma vaga.</p>
+<p><strong>Quantos servos podem servir no mesmo domingo?</strong></p>
+<p>O limite é configurado em <strong>Manutenção → Tipos de Escala</strong> (<code>vagas_por_servico</code>, de 1 a 50). O mesmo servo não pode ser escalado duas vezes na mesma data.</p>
+<p><strong>Como contato um servo?</strong></p>
+<p>Ícone <strong>WhatsApp</strong> ao lado do nome, quando houver telefone.</p>
+<p><strong>Estacionamento: como identifico um veículo?</strong></p>
+<p>Selecione escala de estacionamento → <strong>Identificar veículo</strong> → digite a <strong>placa</strong> → busca vincula ao proprietário cadastrado.</p>
+<p><strong>Posso alterar a escala pelo app de membro?</strong></p>
+<p>Não. Alterações são na <strong>Manutenção → Programação de Escalas</strong> <em>(staff)</em>.</p>
+<hr>
+<h2>12. Perfil &amp; Identidade e Dados Cadastrais</h2>
+<p>O card e o atalho no Índice chamam-se <strong>Perfil &amp; Identidade</strong>. Dentro dele ficam <strong>Dados Cadastrais</strong>, <strong>Gerenciar Família</strong>, a <strong>Trilha de Discipulado</strong> e a <strong>Paleta de cores</strong>.</p>
+<p><strong>Não consigo ver alguns campos em Dados Cadastrais.</strong></p>
+<p>Permissões de <strong>coluna</strong> (ACL) podem ocultar CPF, alertas médicos, etc., conforme seu papel.</p>
+<p><strong>&quot;Campo protegido&quot; ao editar.</strong></p>
+<p>Você tem visualização mas não permissão de <strong>alteração</strong> naquele campo.</p>
+<p><strong>Como troco minha senha de 4 dígitos?</strong></p>
+<p>Seção <strong>Senha de acesso</strong>: senha atual, nova e confirmação.</p>
+<p><strong>CEP preencheu o endereço sozinho?</strong></p>
+<p>Sim — o app consulta o servidor (<code>sync_profile_address_from_cep</code>) e sugere logradouro, bairro, cidade.</p>
+<p><strong>Como cadastro veículo?</strong></p>
+<p>Na seção <strong>Veículos</strong>: placa, marca, modelo, cor.</p>
+<p><strong>Como vinculo minha família a outra?</strong></p>
+<p>Seção <strong>Vincular à família</strong>: busque pelo código e solicite vínculo (conforme regras da igreja).</p>
+<p><strong>Cabeçalho pede &quot;Complete seu cadastro&quot;.</strong></p>
+<p>Faltam campos obrigatórios do onboarding (CPF, e-mail, endereço, etc.).</p>
+<p><strong>O que é o Perfil Ministerial?</strong></p>
+<p>Questionário de <strong>50 perguntas</strong> (10 etapas) que indica o perfil predominante (Pregação, Discipulado, Pastoral, Evangelismo, Liderança ou Louvor), com texto de reflexão. Acesse na <strong>Trilha de Discipulado</strong>, lição <strong>5.1 — Descobrindo meus Dons</strong> (<strong>Perfil &amp; Identidade → Trilha de Discipulado</strong>).</p>
+<p><strong>O que é a Trilha de Discipulado?</strong></p>
+<p>Jornada em <strong>5 passos</strong> (3 lições cada), com desbloqueio sequencial, reflexões, selos coloridos por passo e selo dourado ao concluir 100%. Abra em <strong>Perfil &amp; Identidade → Trilha de Discipulado</strong>.</p>
+<p><strong>Como funcionam os selos?</strong></p>
+<p>Ao concluir 100% de um passo, você ganha um selo com cor própria (azul céu, esmeralda, azul royal, laranja, dourado). A seção <strong>Minhas Conquistas / Selos</strong> mostra os conquistados e os futuros em cinza.</p>
+<p><strong>A liderança sabe quando eu termino um passo?</strong></p>
+<p>Sim. Cada passo gera alerta em <strong>Manutenção → Manutenção da Trilha → Reconhecimentos</strong>; ao fechar a trilha, há alerta específico para certificado / reconhecimento público.</p>
+<p><strong>Se eu refizer o questionário, o resultado antigo fica salvo?</strong></p>
+<p>Não. Ao <strong>Finalizar</strong> de novo, respostas e resultado anteriores são <strong>substituídos</strong> (não há histórico de tentativas).</p>
+<p><strong>Posso trocar de telefone?</strong></p>
+<p>Sim, com fluxo dedicado que atualiza perfil e sessão — use com cuidado para não perder acesso.</p>
+<hr>
+<h2>13. Gerenciar Família</h2>
+<p><strong>Quem pode gerenciar família?</strong></p>
+<p>Perfis com permissão de tela <strong>Gerenciar família</strong> — em geral o responsável pela conta familiar.</p>
+<p><strong>Qual a diferença entre membro em <code>members</code> e perfil em <code>profiles</code>?</strong></p>
+<p>Membro da família pode existir sem app próprio; perfil com telefone pode fazer login.</p>
+<p><strong>Como adiciono alguém que já está em outra família?</strong></p>
+<p>Busque pelo <strong>nome</strong> ou informe os dados. Se a pessoa já pertence a outra família, o app pede <strong>confirmação de transferência</strong> para a sua família.</p>
+<p><strong>O endereço é copiado ao aceitar ou transferir?</strong></p>
+<p><strong>Sim.</strong> Ao confirmar transferência, aceitar membro pendente (checkbox) ou adicionar novo membro, o app copia o <strong>endereço completo</strong> do gestor (CEP, rua, número, complemento, bairro, cidade, estado) para o perfil do membro — desde que o gestor tenha endereço cadastrado e o membro tenha perfil identificável (telefone ajuda).</p>
+<p><strong>Endereço não foi copiado.</strong></p>
+<p>O vínculo familiar pode ter sido feito mesmo assim. Verifique se <strong>seu</strong> perfil tem endereço completo e se o membro tem telefone. Se persistir, avise a equipe técnica (RPC <code>update_profile_field</code> / <code>profiles-sync-address-from-cep-rpc.sql</code>).</p>
+<p><strong>O que é o checkbox de aceite do membro?</strong></p>
+<p><strong>Reconhecimento familiar</strong> — confirma que aquele membro pertence à sua família no sistema. Ao marcar como aceito, o endereço da família também é herdado.</p>
+<p><strong>Não consigo excluir um membro.</strong></p>
+<p>O <strong>representante legal</strong> da conta não pode ser removido.</p>
+<p><strong>&quot;Telefone já no grupo familiar&quot;.</strong></p>
+<p>Já existe membro/perfil com esse número na mesma família.</p>
+<p><strong>Kids/Teens: bolinhas coloridas.</strong></p>
+<p>Indicam faixa etária conforme parâmetros da igreja (sala Kids ou Teens).</p>
+<hr>
+<h2>14. Coração Aberto e Meus Pedidos</h2>
+<p><strong>O que é Coração Aberto?</strong></p>
+<p>Canal para pedidos de <strong>cuidado pastoral</strong>, oração ou intercessão.</p>
+<p><strong>Qual a diferença entre Sigilo pastoral e Intercessão?</strong></p>
+<p><strong>Sigilo:</strong> acesso restrito à equipe pastoral. <strong>Intercessão:</strong> pode ser compartilhado com grupo de intercessão (conforme política da igreja).</p>
+<p><strong>Como escolho Motivo e Situação?</strong></p>
+<p>Use os <strong>chips</strong> na tela (categorias carregadas do servidor). Em telas estreitas, Motivo e Situação aparecem empilhados.</p>
+<p><strong>Posso pedir para outra pessoa?</strong></p>
+<p>Sim — selecione beneficiário <strong>família</strong> ou <strong>terceiro</strong> e preencha os dados.</p>
+<p><strong>Onde vejo pedidos enviados?</strong></p>
+<p><strong>Meus pedidos</strong> (<code>/pastoral-history</code>) — histórico com status.</p>
+<p><strong>Lista vazia em Meus pedidos.</strong></p>
+<p>Você ainda não enviou pedidos ou a sessão não identificou seu perfil — faça login novamente.</p>
+<p><strong>Quem responde ao pedido?</strong></p>
+<p>A equipe pastoral <strong>fora do app</strong> (telefone, encontro pessoal, etc.). O app registra e encaminha o pedido.</p>
+<hr>
+<h2>15. Termos LGPD</h2>
+<p><strong>Por que preciso rolar até o fim dos termos?</strong></p>
+<p>Requisito de <strong>consentimento informado</strong> — o sistema só libera o aceite após leitura completa.</p>
+<p><strong>Posso mudar de ideia depois?</strong></p>
+<p>O aceite fica em <code>lgpd_accepted</code> no perfil. Para revisar, acesse <strong>LGPD</strong> ou <strong>Dados Cadastrais</strong>.</p>
+<p><strong>Recusei os termos. Posso usar o app?</strong></p>
+<p>Depende da política da igreja; o app registra sua preferência. Alguns recursos podem ficar limitados.</p>
+<hr>
+<h2>16. Menu, navegação e saída</h2>
+<p><strong>Qual a diferença entre Menu e Sair?</strong></p>
+<p>No <strong>Painel</strong>, <strong>Menu</strong> leva aos atalhos. O <strong>Sair</strong> / <strong>Encerrar sessão</strong> fica na tela de atalhos (rodapé).</p>
+<p><strong>Sair fecha o app no Android?</strong></p>
+<p>Pode encerrar o aplicativo após limpar a sessão — comportamento esperado.</p>
+<p><strong>Troquei de celular. O que faço?</strong></p>
+<p><strong>Saia</strong> no aparelho antigo; no novo, login com celular + senha.</p>
+<p><strong>Mudaram minhas permissões e um card sumiu.</strong></p>
+<p>Saia e <strong>entre de novo</strong> para recarregar permissões do servidor.</p>
+<hr>
+<h2>17. Totem de check-in</h2>
+<p><strong>O totem é para membros usarem no culto?</strong></p>
+<p>Não. É um <strong>aparelho fixo da igreja</strong> operado na entrada para <strong>escanear</strong> o QR das famílias.</p>
+<p><strong>Senha do totem.</strong></p>
+<p><strong>9999</strong> (configuração padrão do modo totem).</p>
+<p><strong>Nenhum evento no totem.</strong></p>
+<p>Pode não ser o dia do evento, evento não publicado, sem flag totem/quórum, ou colunas SQL não aplicadas — mensagens na tela orientam.</p>
+<p><strong>Câmera do totem não funciona na web.</strong></p>
+<p>Totem web exige <strong>HTTPS</strong> (ou localhost em desenvolvimento). Permita câmera no navegador.</p>
+<p><strong>Devo sair do totem após o culto?</strong></p>
+<p><strong>Sim.</strong> Use <strong>Encerrar sessão</strong> para não deixar o quiosque logado.</p>
+<hr>
+<h2>18. Manutenção (equipe)</h2>
+<p><strong>Quem acessa a Manutenção?</strong></p>
+<p>Perfis com permissão <code>view</code> em <code>/maintenance-dashboard</code> — ícone engrenagem no Painel.</p>
+<p><strong>&quot;Sem permissão&quot; ao tocar na engrenagem.</strong></p>
+<p>Seu papel não inclui manutenção. Solicite ao <code>super_admin</code>.</p>
+<p><strong>Como crio evento com totem e quórum?</strong></p>
+<p><strong>Programação de Eventos</strong> → novo/editar → toggles <strong>Ativação de Totem</strong> e <strong>Requer Quorum</strong> → <strong>Publicado</strong>.</p>
+<p><strong>Como marco entrada na sala Kids?</strong></p>
+<p><strong>Sala(s) - Check In</strong> → selecione evento → checkbox por inscrição.</p>
+<p><strong>Como importo financeiro?</strong></p>
+<p><strong>Informações Financeiras</strong> → CSV ou colar → substituir ou acrescentar.</p>
+<p><strong>Como gero escala em lote?</strong></p>
+<p><strong>Programação de Escalas</strong> → preview do ciclo → confirmar → grava via <code>aplicar_ciclo_escala</code>. Configure <strong>vagas por domingo</strong> e <strong>modo do ciclo</strong> (individual ou equipe) em <strong>Tipos de Escala</strong>.</p>
+<p><strong>Controle de Acesso: quem configura?</strong></p>
+<p>Somente <strong><code>super_admin</code></strong> — papéis e grants por perfil.</p>
+<hr>
+<h1>Por assunto</h1>
+<h2>Assunto: Acesso e senha</h2>
+<table><thead><tr>
+<th>Pergunta</th>
+<th>Resposta</th>
+</tr></thead><tbody>
+<tr>
+<td>Esqueci minha senha (já cadastrado)</td>
+<td><strong>Passo 2</strong> do login → <strong>Esqueci minha senha</strong> → pergunta de segurança → novo PIN por <strong>e-mail</strong></td>
+</tr>
+<tr>
+<td>Primeira entrada (sem senha ainda)</td>
+<td><strong>Passo 2</strong> → <strong>Receber código no WhatsApp</strong> (PIN temporário)</td>
+</tr>
+<tr>
+<td>Quantos dígitos tem a senha?</td>
+<td><strong>4</strong></td>
+</tr>
+<tr>
+<td>Posso usar letras na senha?</td>
+<td>Não — apenas números</td>
+</tr>
+<tr>
+<td>Mesmo celular em dois aparelhos?</td>
+<td>Sim, com mesmo login — evite sessões simultâneas em aparelhos compartilhados</td>
+</tr>
+<tr>
+<td>Preciso de e-mail para entrar?</td>
+<td>Não no dia a dia — login é <strong>celular + PIN</strong>; o e-mail entra na <strong>recuperação de senha</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Assunto: LGPD e privacidade</h2>
+<table><thead><tr>
+<th>Pergunta</th>
+<th>Resposta</th>
+</tr></thead><tbody>
+<tr>
+<td>Onde ficam meus dados?</td>
+<td>Banco <strong>Supabase</strong> (nuvem), projeto da igreja</td>
+</tr>
+<tr>
+<td>Quem vê meu CPF?</td>
+<td>Perfis com permissão ACL de coluna; oculto para membros comuns</td>
+</tr>
+<tr>
+<td>Selfie: para que serve?</td>
+<td>Identificação no cadastro; armazenada no Storage Supabase</td>
+</tr>
+<tr>
+<td>Posso excluir minha conta pelo app?</td>
+<td>Não há fluxo automático de exclusão — contate a secretaria</td>
+</tr>
+<tr>
+<td>Aceite LGPD é obrigatório?</td>
+<td>Com <strong><code>LGPD_Ativo = sim</code></strong>, sim — recusa é registrada. Com <strong><code>nao</code></strong>, o módulo fica desligado (cadastro simplificado)</td>
+</tr>
+<tr>
+<td>Por que não vejo termos LGPD no cadastro?</td>
+<td><strong>super_admin</strong> pode ter desligado o módulo (<strong>LGPD Inativo</strong> em Controle de Acesso)</td>
+</tr>
+<tr>
+<td>Quem liga/desliga o módulo LGPD?</td>
+<td>Apenas <strong>super_admin</strong> no card <strong>Controle de Acesso</strong> (manutenção)</td>
+</tr>
+<tr>
+<td>O que muda quando LGPD está inativo?</td>
+<td>Sem selfie obrigatória, sem tela <code>/lgpd</code>, sem cabeçalho vermelho; cadastro só com nome, nascimento e CEP</td>
+</tr>
+<tr>
+<td>O que é <code>Parm_entidade</code>?</td>
+<td>Parâmetro em <code>app_parameters</code> que define o <strong>prefixo</strong> da entidade na interface (ex.: <strong>IBN</strong> em <strong>IBN KIDS</strong>)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Assunto: Check-in e eventos</h2>
+<table><thead><tr>
+<th>Pergunta</th>
+<th>Resposta</th>
+</tr></thead><tbody>
+<tr>
+<td>Ordem correta do check-in</td>
+<td>Audiência → QR no dia → scan no totem</td>
+</tr>
+<tr>
+<td>Check-in automático</td>
+<td>Marca na audiência já conta presença — sem QR</td>
+</tr>
+<tr>
+<td>Quórum vs totem</td>
+<td>Quórum exige confirmação no totem e trava lista; totem pode existir sem quórum</td>
+</tr>
+<tr>
+<td>Evento rascunho</td>
+<td>Membros <strong>não veem</strong> — precisa <strong>Publicado</strong></td>
+</tr>
+<tr>
+<td>Capacidade esgotada</td>
+<td>Inscrição pode falhar ao marcar audiência — ver vagas no card</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Assunto: Família e cadastro</h2>
+<table><thead><tr>
+<th>Pergunta</th>
+<th>Resposta</th>
+</tr></thead><tbody>
+<tr>
+<td>O que é family_id?</td>
+<td>Código único da família no sistema</td>
+</tr>
+<tr>
+<td>Diferença family_id e codigo_membro</td>
+<td>Podem coincidir; usados no QR e etiqueta</td>
+</tr>
+<tr>
+<td>Criança sem celular</td>
+<td>Cadastre em <strong>Gerenciar Família</strong> como membro</td>
+</tr>
+<tr>
+<td>Membro com celular próprio</td>
+<td>Cadastre telefone — pode gerar perfil/login próprio</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Assunto: Permissões e perfis</h2>
+<table><thead><tr>
+<th>Pergunta</th>
+<th>Resposta</th>
+</tr></thead><tbody>
+<tr>
+<td>O que é ACL?</td>
+<td>Controle de acesso — define telas, cards e campos por papel</td>
+</tr>
+<tr>
+<td>Papéis comuns</td>
+<td>member, family_acceptor, lider, events_admin, pastoral, super_admin</td>
+</tr>
+<tr>
+<td>Sou membro mas não vejo Financeiro</td>
+<td>Grant não atribuído — admin adiciona em Controle de Acesso</td>
+</tr>
+<tr>
+<td>Banner ACL indisponível</td>
+<td>RPC <code>profile_has_access</code> ausente ou erro — equipe TI</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Assunto: Financeiro</h2>
+<table><thead><tr>
+<th>Pergunta</th>
+<th>Resposta</th>
+</tr></thead><tbody>
+<tr>
+<td>REALIZADO vs PLANEJADO</td>
+<td>Realizado = o que aconteceu; Planejado = orçamento previsto</td>
+</tr>
+<tr>
+<td>Membro edita lançamentos?</td>
+<td>Não</td>
+</tr>
+<tr>
+<td>Esvaziar mês (manutenção)</td>
+<td>Pode apagar só REALIZADO, só PLANEJADO ou ambos — escopo explícito</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Assunto: Pastoral</h2>
+<table><thead><tr>
+<th>Pergunta</th>
+<th>Resposta</th>
+</tr></thead><tbody>
+<tr>
+<td>Pedido é anônimo?</td>
+<td>Vinculado ao seu perfil; sigilo pastoral restringe quem lê no backend/equipe</td>
+</tr>
+<tr>
+<td>Urgência / emergência?</td>
+<td>O app <strong>não</strong> substitui emergência (SAMU, 190) — use canais adequados</td>
+</tr>
+<tr>
+<td>Editar pedido enviado?</td>
+<td>Não pelo app — contate pastoral se precisar complementar</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Assunto: Escalas</h2>
+<table><thead><tr>
+<th>Pergunta</th>
+<th>Resposta</th>
+</tr></thead><tbody>
+<tr>
+<td>Como sei minha próxima escala?</td>
+<td>Card <strong>Escalas</strong> no Painel</td>
+</tr>
+<tr>
+<td>Ciclo em bloco</td>
+<td>Gera vários domingos de uma vez <em>(staff)</em> — modo <strong>individual</strong> (cada servo em domingo distinto) ou <strong>equipe</strong> (até N servos no mesmo domingo)</td>
+</tr>
+<tr>
+<td>Vagas por domingo</td>
+<td>Definidas em <strong>Tipos de Escala</strong> (<code>vagas_por_servico</code>, 1–50). O mesmo servo não repete na mesma data</td>
+</tr>
+<tr>
+<td>Domingo já ocupado</td>
+<td>Modo individual <strong>pula</strong> domingos com registro; modo equipe preenche vagas restantes até o limite</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Assunto: Mapa e endereço</h2>
+<table><thead><tr>
+<th>Pergunta</th>
+<th>Resposta</th>
+</tr></thead><tbody>
+<tr>
+<td>Mapa mostra endereço exato?</td>
+<td>Aproximação por <strong>CEP</strong> — pins podem ser agrupados</td>
+</tr>
+<tr>
+<td>Atualizei CEP e mapa antigo</td>
+<td>Toque <strong>Atualizar mapa</strong>; cache local é renovado</td>
+</tr>
+<tr>
+<td>Visitante no mapa</td>
+<td>Perfil marcado como visitante no ACL</td>
+</tr>
+<tr>
+<td>Clique no pin sem detalhe</td>
+<td>ACL <code>screen:/mapa-geolocalizacao/detalhe-pin</code> — padrão pastoral/super_admin</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Assunto: Segurança e dados</h2>
+<table><thead><tr>
+<th>Pergunta</th>
+<th>Resposta</th>
+</tr></thead><tbody>
+<tr>
+<td>Senha fica salva no celular?</td>
+<td>Só sessão (telefone + id perfil) — <strong>não</strong> a senha em texto</td>
+</tr>
+<tr>
+<td>Conexão segura?</td>
+<td>HTTPS com Supabase</td>
+</tr>
+<tr>
+<td>Compartilhar celular logado</td>
+<td><strong>Sempre saia</strong> ao terminar</td>
+</tr>
+<tr>
+<td>Quem administra permissões?</td>
+<td><code>super_admin</code> na Manutenção</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Assunto: Problemas técnicos</h2>
+<table><thead><tr>
+<th>Pergunta</th>
+<th>Resposta</th>
+</tr></thead><tbody>
+<tr>
+<td>App lento</td>
+<td>Verifique internet; o app reutiliza cache de ACL e perfil entre cards — se persistir, hard refresh (PWA)</td>
+</tr>
+<tr>
+<td>Tela branca / erro</td>
+<td>Atualize página; limpe cache do navegador</td>
+</tr>
+<tr>
+<td>Versão web vs app nativo</td>
+<td>Mapa completo e alguns recursos são <strong>PWA</strong></td>
+</tr>
+<tr>
+<td>Mensagem menciona &quot;execute script SQL&quot;</td>
+<td>Configuração incompleta no Supabase — equipe TI</td>
+</tr>
+<tr>
+<td>Build / deploy</td>
+<td>Igreja publica pasta <code>dist/</code> após <code>npm run build:web</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Assunto: Totem e quiosque</h2>
+<table><thead><tr>
+<th>Pergunta</th>
+<th>Resposta</th>
+</tr></thead><tbody>
+<tr>
+<td>Membro escaneia no próprio celular?</td>
+<td>Não — membro <strong>mostra</strong> QR; <strong>totem escaneia</strong></td>
+</tr>
+<tr>
+<td>QR de outra família</td>
+<td>Totem confirma só quem tem pré-check-in <strong>daquela família</strong></td>
+</tr>
+<tr>
+<td>Vários eventos no mesmo dia</td>
+<td>Totem seleciona evento elegível automaticamente</td>
+</tr>
+<tr>
+<td>lockPastEvents</td>
+<td>Eventos passados são bloqueados automaticamente ao operar totem</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Não encontrou sua dúvida?</h2>
+<p>1. Consulte o <a href="MANUAL_TREINAMENTO.md">&lt;code&gt;MANUAL_TREINAMENTO.md&lt;/code&gt;</a> (passo a passo prático).</p>
+<p>2. Anote a <strong>mensagem exata</strong> na tela e o <strong>módulo</strong> onde ocorreu.</p>
+<p>3. Contate a <strong>secretaria</strong> (cadastro, família, eventos) ou <strong>equipe técnica</strong> (erros de servidor, permissões, SQL).</p>
+<hr>
+<p><em>FAQ — App IBN · Igreja Batista Norte</em></p>
+</div>
+</body>
+</html>

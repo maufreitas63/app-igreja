@@ -1,6 +1,6 @@
 # Pacotes de funcionalidades — Conecta+
 
-**Data:** 1º de setembro de 2026  
+**Data:** 2 de setembro de 2026  
 **Papel deste documento:** recorte comercial e arquitetural do que o código **já entrega** hoje, dividido em três pacotes pela **quantidade de facilidades** (não por esforço de desenvolvimento nem por telas congeladas).
 
 **Fonte:** menus publicados (lateral do membro, **Eu quero…**, engrenagem de manutenção), rotas vivas em `app/` e painéis da manutenção. O carrossel antigo do Painel e os cards congelados (QR, Salas no carrossel, Estacionamento, escala avulsa no dashboard) **não entram** nestes pacotes: não são produto publicado.
@@ -45,8 +45,9 @@ Facilidades **centrais e indispensáveis** para o aplicativo funcionar como igre
 ### 3. Culto do dia (membro)
 
 - **Início**: caixa de avisos e eventos publicados.
-- **Agenda da família** no evento: inscrição da família no culto.
+- **Agenda da família** no evento (Início → toque no culto): inscrição da família.
 - Check-in da família no fluxo da agenda (presença no evento do dia).
+- Ao confirmar a audiência, **adicionar o culto à agenda do celular** (Google Agenda + arquivo `.ics` para Apple Calendar e Outlook; horário da igreja, sem atrasar o compromisso).
 - Pedido de **oração / cuidado pastoral** (“Eu quero… → Fazer um pedido de Oração”).
 
 ### 4. Contribuição mínima
@@ -193,7 +194,7 @@ A coluna indica o **pacote mínimo** em que a facilidade entra. Pacotes superior
 | Login, PIN, e-mail de acesso, sessão, instância | Básico |
 | Cadastro, LGPD, selfie, CEP | Básico |
 | Perfil, dados cadastrais, família, carteirinha | Básico |
-| Início (avisos/eventos) e agenda da família | Básico |
+| Início (avisos/eventos), agenda da família e compromisso no calendário do celular | Básico |
 | Pedido de oração | Básico |
 | Dízimos e ofertas (Pix) | Básico |
 | Sobre o Conecta+ e redes sociais | Básico |

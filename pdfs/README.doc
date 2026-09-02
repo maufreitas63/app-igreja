@@ -1,0 +1,82 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>App IBN — Igreja Batista Norte</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>App IBN — Igreja Batista Norte</h1>
+<p>Aplicativo móvel e PWA (Expo SDK 54) para membros e equipe da igreja: eventos, check-in, família, pastoral, financeiro, escalas e manutenção.</p>
+<h2>Documentação</h2>
+<p>Mapa completo: <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></p>
+<table><thead><tr>
+<th>Documento</th>
+<th>Conteúdo</th>
+</tr></thead><tbody>
+<tr>
+<td><a href="MANUAL_ENTREGA.md">&lt;code&gt;MANUAL_ENTREGA.md&lt;/code&gt;</a></td>
+<td>Manual de entrega (cliente + manutenção) · PDF em <a href="pdfs/MANUAL_ENTREGA.pdf">&lt;code&gt;pdfs/MANUAL_ENTREGA.pdf&lt;/code&gt;</a></td>
+</tr>
+<tr>
+<td><a href="CAMADAS_SEGURANCA.md">&lt;code&gt;CAMADAS_SEGURANCA.md&lt;/code&gt;</a></td>
+<td>Especificação das 4 camadas de segurança</td>
+</tr>
+<tr>
+<td><a href="FUNCIONALIDADES.md">&lt;code&gt;FUNCIONALIDADES.md&lt;/code&gt;</a></td>
+<td>Lista de funcionalidades por área</td>
+</tr>
+<tr>
+<td><a href="BLUEPRINT.md">&lt;code&gt;BLUEPRINT.md&lt;/code&gt;</a></td>
+<td>Telas, fluxos e controles</td>
+</tr>
+<tr>
+<td><a href="CONTROLE_ACESSO.md">&lt;code&gt;CONTROLE_ACESSO.md&lt;/code&gt;</a></td>
+<td>Modelo ACL e inventário</td>
+</tr>
+</tbody></table>
+<p>PDFs gerados em <a href="pdfs/">&lt;code&gt;pdfs/&lt;/code&gt;</a>. Manuais: membro <a href="PACOTE_5_MANUAL_PAINEL.md">&lt;code&gt;PACOTE_5_MANUAL_PAINEL.md&lt;/code&gt;</a> · equipe <a href="PACOTE_6_MANUAL_MANUTENCAO.md">&lt;code&gt;PACOTE_6_MANUAL_MANUTENCAO.md&lt;/code&gt;</a>.</p>
+<h2>Desenvolvimento</h2>
+<p>```bash</p>
+<p>npm install</p>
+<p>npm run web              # PWA em http://localhost:8081</p>
+<p>npm run build:web        # Export estático para deploy (dist/)</p>
+<p>npm run generate:icons   # Regenera ícones a partir da marca d'água</p>
+<p>npm run build:docs       # Regenera pacotes .md e PDFs em pdfs/</p>
+<p>npm run build:manual-entrega-pdf  # Manual de entrega (MD → pdfs/MANUAL_ENTREGA.pdf)</p>
+<p>npm run build:access-roles-pdf  # Mapa visual dos papéis ACL</p>
+<p>```</p>
+<h2>Stack</h2>
+<ul>
+<li><strong>Frontend:</strong> React Native, Expo Router, TypeScript</li>
+<li><strong>Backend:</strong> Supabase (PostgreSQL, RLS, RPC)</li>
+<li><strong>Auth:</strong> PIN + sessão local (<code>user_profile_id</code>)</li>
+</ul>
+</div>
+</body>
+</html>

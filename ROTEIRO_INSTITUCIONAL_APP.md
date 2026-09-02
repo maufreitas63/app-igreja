@@ -463,18 +463,18 @@ Coração operacional da família. Substitui o Card 1 do Painel antigo.
 
 ### O que se encontra — e por quê
 
-Evento selecionado, vagas, local, horários e a lista da audiência: cônjuge, filhos, congregados do núcleo. Quórum mostra só o próprio nome com cadeado. Selos de sala (Kids/Teens) quando o evento as habilita.
+Evento selecionado, vagas, local, horários e a lista da audiência: cônjuge, filhos, congregados do núcleo. Quórum mostra só o próprio nome com cadeado. Selos de sala (Kids/Teens) quando o evento as habilita. Ao confirmar a participação, o app oferece gravar o culto no Google Agenda e baixa um arquivo `.ics` (Apple Calendar e Outlook), no horário de parede da igreja (America/Sao_Paulo).
 
-Pré-check-in é o passaporte. Sem audiência marcada, geofence e totem não têm a quem confirmar.
+Pré-check-in é o passaporte. Sem audiência marcada, geofence e totem não têm a quem confirmar. O compromisso na agenda do celular evita “qual horário mesmo?” no grupo.
 
 ### Conexões internas e quem conduz
 
-Programação de Eventos define capacidade, totem, geofence, quórum, somente membros e salas. `sync_family_event_registrations_atomic` grava a audiência. Secretaria e pastoral acompanham presença depois.
+Programação de Eventos define capacidade, totem, geofence, quórum, somente membros e salas. `sync_family_event_registrations_atomic` grava a audiência. O `.ics` usa `event_date` / `event_local`. Secretaria e pastoral acompanham presença depois.
 
 <div class="split">
 <div class="vision user">
 <h4>Visão do Usuário Final</h4>
-Marca quem vai, no sofá de casa. No templo, a casa já sabe.
+Marca quem vai, no sofá de casa. Toque em Adicionar para ver o culto no Google Agenda. No templo, a casa já sabe.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>

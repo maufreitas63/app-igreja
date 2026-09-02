@@ -2,7 +2,7 @@
 
 **Pacotes:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md) (membro) · [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) (operação) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 02/07/2026
+**Atualizado em:** 02/09/2026
 
 ## Objetivo
 
@@ -16,7 +16,8 @@ Este card permite:
 - acompanhar a ocupacao de vagas pelo indicador em formato de copo;
 - trocar rapidamente entre eventos ativos;
 - registrar ou remover individualmente os membros da familia no evento selecionado;
-- marcar ou desmarcar todos os membros de uma vez.
+- marcar ou desmarcar todos os membros de uma vez;
+- gravar o culto na agenda do celular (Google Agenda e arquivo `.ics` para Apple Calendar / Outlook).
 
 ## Estrutura do Card
 
@@ -90,17 +91,18 @@ No cabecalho da audiencia existe um checkbox geral para:
 
 ### Registrar participantes
 
-1. Abra o dashboard.
-2. No Card 1, confira qual evento esta em evidencia.
+1. No **Início**, toque no culto (Agenda da Família). O carrossel antigo do Painel não é o caminho publicado.
+2. Confira qual evento esta em evidencia.
 3. Se necessario, use a secao `Trocar Evento` para selecionar outro evento.
-4. Na secao `Audiencia`, toque no checkbox ao lado do nome do membro desejado.
-5. Aguarde a confirmacao visual do registro.
+4. Na secao `Audiencia`, toque no checkbox ao lado do nome do membro desejado — ou no checkbox alto à esquerda para a família inteira.
+5. No modal **Compromisso enviado para minha agenda**, toque em **Adicionar** para abrir o Google Agenda e baixar o `.ics`.
 
 Resultado esperado:
 
 - o membro fica marcado;
 - o texto `Registrado para o evento` aparece;
-- o contador de vagas e atualizado.
+- o contador de vagas e atualizado;
+- o culto pode entrar na agenda do celular no horário da igreja.
 
 ### Remover participantes
 

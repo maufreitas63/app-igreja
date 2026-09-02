@@ -336,14 +336,14 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <h3>Onde estamos na jornada</h3>
 <p>Coração operacional da família. Substitui o Card 1 do Painel antigo.</p>
 <h3>O que se encontra — e por quê</h3>
-<p>Evento selecionado, vagas, local, horários e a lista da audiência: cônjuge, filhos, congregados do núcleo. Quórum mostra só o próprio nome com cadeado. Selos de sala (Kids/Teens) quando o evento as habilita.</p>
-<p>Pré-check-in é o passaporte. Sem audiência marcada, geofence e totem não têm a quem confirmar.</p>
+<p>Evento selecionado, vagas, local, horários e a lista da audiência: cônjuge, filhos, congregados do núcleo. Quórum mostra só o próprio nome com cadeado. Selos de sala (Kids/Teens) quando o evento as habilita. Ao confirmar a participação, o app oferece gravar o culto no Google Agenda e baixa um arquivo <code>.ics</code> (Apple Calendar e Outlook), no horário de parede da igreja (America/Sao_Paulo).</p>
+<p>Pré-check-in é o passaporte. Sem audiência marcada, geofence e totem não têm a quem confirmar. O compromisso na agenda do celular evita “qual horário mesmo?” no grupo.</p>
 <h3>Conexões internas e quem conduz</h3>
-<p>Programação de Eventos define capacidade, totem, geofence, quórum, somente membros e salas. <code>sync_family_event_registrations_atomic</code> grava a audiência. Secretaria e pastoral acompanham presença depois.</p>
+<p>Programação de Eventos define capacidade, totem, geofence, quórum, somente membros e salas. <code>sync_family_event_registrations_atomic</code> grava a audiência. O <code>.ics</code> usa <code>event_date</code> / <code>event_local</code>. Secretaria e pastoral acompanham presença depois.</p>
 <div class="split">
 <div class="vision user">
 <h4>Visão do Usuário Final</h4>
-<p>Marca quem vai, no sofá de casa. No templo, a casa já sabe.</p>
+<p>Marca quem vai, no sofá de casa. Toque em Adicionar para ver o culto no Google Agenda. No templo, a casa já sabe.</p>
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>

@@ -1,0 +1,194 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Manual de Instrucoes - Card 1 do Dashboard</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Manual de Instrucoes - Card 1 do Dashboard</h1>
+<p><strong>Pacotes:</strong> <a href="PACOTE_5_MANUAL_PAINEL.md">&lt;code&gt;PACOTE_5_MANUAL_PAINEL.md&lt;/code&gt;</a> (membro) · <a href="PACOTE_2_OPERACAO.md">&lt;code&gt;PACOTE_2_OPERACAO.md&lt;/code&gt;</a> (operação) · <strong>Índice:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></p>
+<p><strong>Atualizado em:</strong> 02/09/2026</p>
+<h2>Objetivo</h2>
+<p>O Card 1 do dashboard foi desenvolvido para concentrar, em uma unica area, a selecao do evento ativo, a visualizacao de vagas e o registro da audiencia da familia.</p>
+<p>Este card permite:</p>
+<ul>
+<li>visualizar o evento atualmente em evidencia;</li>
+<li>verificar data, horario e local do evento;</li>
+<li>identificar se o evento possui <code>IBN Kids</code> e/ou <code>IBN Teens</code>;</li>
+<li>acompanhar a ocupacao de vagas pelo indicador em formato de copo;</li>
+<li>trocar rapidamente entre eventos ativos;</li>
+<li>registrar ou remover individualmente os membros da familia no evento selecionado;</li>
+<li>marcar ou desmarcar todos os membros de uma vez;</li>
+<li>gravar o culto na agenda do celular (Google Agenda e arquivo <code>.ics</code> para Apple Calendar / Outlook).</li>
+</ul>
+<h2>Estrutura do Card</h2>
+<p>O card esta dividido em tres blocos principais:</p>
+<h3>1. Evento Selecionado</h3>
+<p>Nesta area aparecem:</p>
+<ul>
+<li>nome do evento em destaque;</li>
+<li>data e horario formatados;</li>
+<li>local do evento;</li>
+<li>identificadores <code>IBN Kids</code> e <code>IBN Teens</code>, quando aplicavel.</li>
+</ul>
+<p>Se nenhum evento estiver selecionado, o card exibira a mensagem:</p>
+<p><code>Selecione um evento.</code></p>
+<h3>2. Vagas</h3>
+<p>Ao lado do evento selecionado existe um indicador visual em formato de copo.</p>
+<p>Ele mostra:</p>
+<ul>
+<li>o numero de vagas restantes entre parenteses;</li>
+<li>a relacao <code>inscritos/total de vagas</code>;</li>
+<li>o preenchimento visual proporcional da ocupacao.</li>
+</ul>
+<p>Interpretacao:</p>
+<ul>
+<li>quanto mais cheio o copo, maior a ocupacao do evento;</li>
+<li>o valor entre parenteses representa as vagas restantes;</li>
+<li>a linha inferior mostra quantos participantes ja estao registrados.</li>
+</ul>
+<h3>3. Trocar Evento</h3>
+<p>Esta faixa exibe os eventos ativos disponiveis.</p>
+<p>Cada item pode mostrar:</p>
+<ul>
+<li>nome do evento;</li>
+<li>data/hora;</li>
+<li>indicadores coloridos quando houver <code>kids_room</code> ou <code>teens_room</code>.</li>
+</ul>
+<p>Ao tocar em um evento desta lista:</p>
+<p>1. ele passa a ser o evento em evidencia;</p>
+<p>2. o bloco superior e atualizado;</p>
+<p>3. o contador de vagas e recalculado;</p>
+<p>4. a audiencia da familia passa a atuar sobre esse evento.</p>
+<h3>4. Audiencia</h3>
+<p>A parte inferior do card mostra a audiencia da familia vinculada ao usuario logado.</p>
+<p>Nesta area:</p>
+<ul>
+<li>cada linha representa um integrante do nucleo familiar (<strong>membro</strong> ou <strong>congregado</strong>);</li>
+<li>dependentes com reconhecimento <strong>pendente ou aceito</strong> tambem aparecem (<code>accepted</code> diferente de <code>false</code>);</li>
+<li>integrantes <strong>rejeitados</strong> na familia nao entram na lista;</li>
+<li>o nome do membro aparece sem parentesco;</li>
+<li>cada item possui um checkbox para registrar ou remover a participacao;</li>
+<li>quando o membro ja estiver inscrito, o item indica <code>Registrado para o evento</code>.</li>
+</ul>
+<p>No cabecalho da audiencia existe um checkbox geral para:</p>
+<ul>
+<li>marcar todos os membros;</li>
+<li>desmarcar todos os membros.</li>
+</ul>
+<h2>Como Usar</h2>
+<h3>Registrar participantes</h3>
+<p>1. No <strong>Início</strong>, toque no culto (Agenda da Família). O carrossel antigo do Painel não é o caminho publicado.</p>
+<p>2. Confira qual evento esta em evidencia.</p>
+<p>3. Se necessario, use a secao <code>Trocar Evento</code> para selecionar outro evento.</p>
+<p>4. Na secao <code>Audiencia</code>, toque no checkbox ao lado do nome do membro desejado — ou no checkbox alto à esquerda para a família inteira.</p>
+<p>5. No modal <strong>Compromisso enviado para minha agenda</strong>, toque em <strong>Adicionar</strong> para abrir o Google Agenda e baixar o <code>.ics</code>.</p>
+<p>Resultado esperado:</p>
+<ul>
+<li>o membro fica marcado;</li>
+<li>o texto <code>Registrado para o evento</code> aparece;</li>
+<li>o contador de vagas e atualizado;</li>
+<li>o culto pode entrar na agenda do celular no horário da igreja.</li>
+</ul>
+<h3>Remover participantes</h3>
+<p>1. Localize o membro ja marcado na audiencia.</p>
+<p>2. Toque novamente no checkbox.</p>
+<p>Resultado esperado:</p>
+<ul>
+<li>o membro deixa de ficar marcado;</li>
+<li>o registro e removido do evento;</li>
+<li>o contador de vagas e ajustado automaticamente.</li>
+</ul>
+<h3>Registrar ou remover todos</h3>
+<p>1. No topo da secao <code>Audiencia</code>, use o checkbox geral.</p>
+<p>2. Se todos estiverem desmarcados, a acao registra todos.</p>
+<p>3. Se todos estiverem marcados, a acao remove todos.</p>
+<h2>Regras de Funcionamento</h2>
+<h3>Eventos exibidos</h3>
+<p>O card apresenta apenas:</p>
+<ul>
+<li>eventos do dia atual;</li>
+<li>eventos futuros;</li>
+<li>eventos desbloqueados/ativos.</li>
+</ul>
+<p>Eventos antigos permanecem no banco para historico, mas nao aparecem no Card 1.</p>
+<h3>Indicadores <code>IBN Kids</code> e <code>IBN Teens</code></h3>
+<p>Quando o evento possuir suporte a criancas ou adolescentes:</p>
+<ul>
+<li><code>IBN Kids</code> aparece com destaque amarelo;</li>
+<li><code>IBN Teens</code> aparece com destaque vermelho.</li>
+</ul>
+<p>Esses indicadores aparecem:</p>
+<ul>
+<li>no bloco do evento selecionado;</li>
+<li>na lista de troca de eventos;</li>
+<li>no card de <code>Check In</code>, vinculado ao mesmo evento em evidencia.</li>
+</ul>
+<h3>Atualizacao das vagas</h3>
+<p>Sempre que um membro e registrado ou removido:</p>
+<ul>
+<li>o total de inscritos e recalculado;</li>
+<li>o numero de vagas restantes e atualizado;</li>
+<li>o copo muda visualmente conforme a ocupacao.</li>
+</ul>
+<h2>Navegacao no Dashboard</h2>
+<p>O dashboard usa carrossel horizontal com rodape <code>CarouselFooterNav</code>:</p>
+<ul>
+<li><strong><code>&lt;</code></strong> e <strong><code>&gt;</code></strong> para voltar/avançar entre cards (segurar avanca automaticamente);</li>
+<li><strong><code>Menu</code></strong> no centro — retorna ao <strong>Indice do Aplicativo</strong>;</li>
+<li>contador <strong><code>1 / N</code></strong> na mesma faixa;</li>
+<li>no <strong>Indice</strong>, <strong>Encerrar sessao</strong> / <strong>Sair do aplicativo</strong>; engrenagem de manutencao, quando visivel, alinhada a <strong>direita</strong> do rodape.</li>
+</ul>
+<h2>Integracao com o Card de Check In</h2>
+<p>O evento selecionado no Card 1 tambem alimenta o card de <code>Check In</code>.</p>
+<p>No card de <code>Check In</code> sao refletidos:</p>
+<ul>
+<li>o nome do evento em evidencia;</li>
+<li>os badges <code>IBN Kids</code> e <code>IBN Teens</code>, quando existirem.</li>
+</ul>
+<p>Isso garante que o evento selecionado no Card 1 seja o mesmo contexto visual do QR Code.</p>
+<h2>Mensagens Possiveis</h2>
+<p>Durante o uso, algumas mensagens podem aparecer:</p>
+<ul>
+<li><code>Erro ao carregar evento.</code></li>
+<li><code>Nenhum evento no momento.</code></li>
+<li><code>Selecione um evento para registrar participantes.</code></li>
+<li><code>Família não vinculada.</code></li>
+<li><code>Carregando participantes já registrados...</code></li>
+</ul>
+<h2>Resumo Operacional</h2>
+<p>Fluxo recomendado de uso:</p>
+<p>1. Escolher o evento em <code>Trocar Evento</code>;</p>
+<p>2. Confirmar nome, horario, local e indicadores do evento;</p>
+<p>3. Conferir vagas disponiveis no copo;</p>
+<p>4. Marcar ou desmarcar participantes da audiencia;</p>
+<p>5. Avancar ao card de <code>Check In</code> quando necessario.</p>
+</div>
+</body>
+</html>

@@ -283,7 +283,7 @@ Alguns atalhos ficam **desabilitados** com explicação em cinza — ex.: QR só
 Escolher o culto/evento, **ver vagas disponíveis** e **inscrever sua família** (audiência / pré-check-in).
 
 ### Caminho
-Painel → card **Agenda da Família** (ou **Painel de Eventos** no Índice).
+**Início** → toque no culto em Próximos Eventos (abre a Agenda da Família). O carrossel antigo do Painel não é o caminho publicado.
 
 ### Ilustração — Agenda da Família
 
@@ -309,21 +309,23 @@ Painel → card **Agenda da Família** (ou **Painel de Eventos** no Índice).
 
 ### Passo a passo — ver vagas e inscrever
 
-1. Abra o card **Agenda da Família**.
-2. Em **Trocar Evento**, toque no culto desejado.
+1. No **Início**, toque no culto desejado (Agenda da Família).
+2. Se precisar, em **Trocar Evento**, toque em outro culto publicado.
 3. No bloco **Evento Selecionado**, confira data, horário e local.
 4. Olhe o **copo de vagas**:
    - Número entre parênteses = **vagas ainda disponíveis**.
    - Linha inferior = quantos já estão inscritos no total do evento.
    - Copo mais cheio = evento mais lotado.
 5. Na seção **Audiência**, marque o checkbox de cada familiar que participará.
-6. Para marcar todos de uma vez, use o checkbox no topo da lista de audiência.
+6. Para marcar todos de uma vez, use o checkbox alto à esquerda da lista.
+7. No modal **Compromisso enviado para minha agenda**, toque em **Adicionar** para abrir o Google Agenda e gravar o arquivo `.ics` (Apple Calendar / Outlook). O horário é o da igreja (não adianta nem atrasa o culto).
 
 ### Resultado esperado
 
 - Membro marcado → texto **Registrado para o evento** ao lado do nome.
 - Copo e contador de vagas **atualizam** após cada marcação ou desmarcação.
-- Com audiência marcada, o atalho/card de **QR Code** pode liberar (no dia do evento, conforme regras).
+- O culto pode aparecer na agenda do celular (Google / Apple / Outlook) depois de **Adicionar**.
+- Se o evento tiver **check-in automático**, a presença GPS só confirma no raio do templo (cerca de 30 m, três leituras).
 - Selos **IBN Kids** / **IBN Teens** indicam que há salas para crianças/adolescentes naquele evento.
 
 ### Passo a passo — remover inscrição

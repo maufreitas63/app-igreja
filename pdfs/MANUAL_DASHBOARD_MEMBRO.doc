@@ -1,0 +1,1432 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Manual do Painel — Uso pelo Membro</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Manual do Painel — Uso pelo Membro</h1>
+<p><strong>App IBN · Igreja Batista Norte</strong></p>
+<p>Manual <strong>autocontido</strong> para quem usa o aplicativo pela primeira vez ou no dia a dia. Cobre <strong>login, cadastro, painel e todos os cards do membro</strong> — sem o painel de manutenção (engrenagem).</p>
+<p><strong>Público:</strong> membros, famílias e voluntários no celular ou PWA (navegador).</p>
+<p><strong>Formato:</strong> passo a passo por card, com <strong>resultado esperado</strong> em cada ação.</p>
+<p><strong>Tempo estimado:</strong> 45 a 60 minutos na primeira leitura completa.</p>
+<p><strong>Pacote:</strong> <a href="PACOTE_5_MANUAL_PAINEL.md">&lt;code&gt;PACOTE_5_MANUAL_PAINEL.md&lt;/code&gt;</a> · <strong>Índice:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></p>
+<p><strong>Atualizado em:</strong> 03/07/2026</p>
+<hr>
+<h2>Como usar este manual</h2>
+<table><thead><tr>
+<th>Símbolo</th>
+<th>Significado</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Objetivo</strong></td>
+<td>O que você vai conseguir fazer</td>
+</tr>
+<tr>
+<td><strong>Caminho</strong></td>
+<td>Onde tocar na tela</td>
+</tr>
+<tr>
+<td><strong>Passo a passo</strong></td>
+<td>Ações numeradas</td>
+</tr>
+<tr>
+<td><strong>Resultado esperado</strong></td>
+<td>O que você deve <strong>ver</strong> ou <strong>confirmar</strong> ao concluir</td>
+</tr>
+<tr>
+<td><strong>Dica</strong></td>
+<td>Atalho ou cuidado útil</td>
+</tr>
+<tr>
+<td><strong>Ilustração</strong></td>
+<td>Captura da tela com <strong>marcadores numerados</strong> (①②③…); tabela <strong>Ref.</strong> explica cada ponto</td>
+</tr>
+<tr>
+<td><strong>Se der erro</strong></td>
+<td>Mensagens comuns e o que fazer</td>
+</tr>
+</tbody></table>
+<p>Itens em <strong>negrito</strong> são botões, títulos ou áreas da interface.</p>
+<blockquote><strong>Cards que não aparecem</strong></blockquote>
+<blockquote>A igreja define o que cada perfil pode ver. Se um card não estiver no seu painel, fale com a secretaria — não é defeito do aparelho.</blockquote>
+<hr>
+<h1>Parte 0 — Primeiro contato com o app</h1>
+<h2>0.1 Entrar pela primeira vez (celular e código)</h2>
+<h3>Objetivo</h3>
+<p>Acessar o app com seu <strong>celular</strong> e <strong>código de 4 dígitos</strong> (senha temporária na primeira vez).</p>
+<h3>Caminho</h3>
+<p>Tela <strong>Boas-vindas</strong> → <strong>1. Seu celular</strong> → <strong>Continuar</strong> → <strong>Receber código no WhatsApp</strong> → <strong>2. Código de acesso</strong> → entrar automaticamente ou <strong>Acessar</strong>.</p>
+<h3>Ilustração — Boas-vindas</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/00-login.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Campo <strong>Seu celular</strong> — exemplo <code>(11) 98765-4321</code></td>
+</tr>
+<tr>
+<td>②</td>
+<td>Botão <strong>Continuar</strong> após DDD + número válidos</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Campo <strong>Código de acesso</strong> (4 dígitos, oculto)</td>
+</tr>
+<tr>
+<td>④</td>
+<td><strong>Receber código no WhatsApp</strong> na primeira vez</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo</h3>
+<p>1. Abra o app IBN (link da igreja no navegador ou atalho instalado).</p>
+<p>2. Digite seu celular com DDD — o app formata: <code>(00) 00000-0000</code>.</p>
+<p>3. Toque em <strong>Continuar</strong>.</p>
+<p>4. Na <strong>primeira vez</strong>, toque em <strong>Receber código no WhatsApp</strong>.</p>
+<ul>
+<li>Leia o texto abaixo do campo: o código pode ir para <strong>você</strong> ou para o <strong>Ministério de Acolhimento</strong>, conforme a política da igreja.</li>
+</ul>
+<p>5. Abra o WhatsApp, copie ou memorize os <strong>4 dígitos</strong>.</p>
+<p>6. Digite o código no campo <strong>2. Código de acesso</strong> (oculto, como PIN).</p>
+<p>7. Ao completar o 4º dígito, o app pode entrar sozinho; ou toque em <strong>Acessar</strong>.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Login aceito → você vai para <strong>Cadastro</strong> (primeira vez), <strong>Termos LGPD</strong> (se pendente e módulo ativo) ou <strong>Painel / Índice do Aplicativo</strong>.</li>
+<li>Na tela de boas-vindas, o passo <strong>2 Código</strong> fica ativo após o celular válido.</li>
+</ul>
+<h3>Dica</h3>
+<p>Depois do primeiro acesso, troque o código temporário por uma senha pessoal em <strong>Perfil &amp; Identidade → Dados Cadastrais → Senha de acesso</strong>.</p>
+<h3>Se der erro</h3>
+<table><thead><tr>
+<th>Mensagem</th>
+<th>O que fazer</th>
+</tr></thead><tbody>
+<tr>
+<td><em>Senha incorreta</em> / <em>Número ou senha inválidos</em></td>
+<td>Confira os 4 dígitos. Se <strong>esqueceu</strong> a senha, use <strong>Esqueci minha senha</strong> no passo 2 (e-mail + pergunta de segurança). Na <strong>primeira vez</strong>, use <strong>Receber código no WhatsApp</strong></td>
+</tr>
+<tr>
+<td><em>Código necessário</em></td>
+<td>Toque em <strong>Receber código no WhatsApp</strong> antes de digitar</td>
+</tr>
+<tr>
+<td><em>Digite o celular completo…</em></td>
+<td>Informe 11 dígitos com DDD</td>
+</tr>
+</tbody></table>
+<h3>Esqueci minha senha (já cadastrado)</h3>
+<p>Use quando você <strong>já tem cadastro</strong> e não lembra o PIN pessoal — <strong>não</strong> confundir com a primeira entrada (código temporário pelo WhatsApp).</p>
+<h3>Caminho</h3>
+<p><strong>Boas-vindas</strong> → passo <strong>1. Seu celular</strong> → <strong>Continuar</strong> → passo <strong>2. Sua senha</strong> → <strong>Esqueci minha senha</strong>.</p>
+<h3>Passo a passo</h3>
+<p>1. Informe o celular e toque <strong>Continuar</strong>.</p>
+<p>2. No passo 2, toque <strong>Esqueci minha senha</strong> (o botão <strong>não</strong> aparece no passo 1).</p>
+<p>3. Confirme ou cadastre o <strong>e-mail</strong> vinculado ao perfil.</p>
+<p>4. Responda a <strong>pergunta de segurança</strong> (ou cadastre pergunta e resposta na primeira recuperação).</p>
+<p>5. Verifique o <strong>e-mail</strong> (incluindo spam) e digite o novo PIN de 4 dígitos no login.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Banner no login confirmando envio ao e-mail mascarado.</li>
+<li>Novo PIN válido para entrar; depois troque por senha pessoal em <strong>Dados Cadastrais → Senha de acesso</strong>, se desejar.</li>
+</ul>
+<hr>
+<h2>0.2 Concluir cadastro (nome, nascimento, LGPD, selfie)</h2>
+<h3>Objetivo</h3>
+<p>Finalizar seu cadastro inicial para usar o painel com segurança.</p>
+<blockquote><strong>Parâmetro global <code>LGPD_Ativo</code></strong> (manutenção → Controle de Acesso): com valor <strong><code>sim</code></strong>, o fluxo abaixo vale integralmente. Com <strong><code>nao</code></strong>, use a seção <strong>0.2b</strong> — cadastro simplificado sem termos, selfie nem tela <code>/lgpd</code>.</blockquote>
+<h3>Caminho</h3>
+<p>Tela <strong>Cadastro</strong> → preencher dados → ler <strong>Termos LGPD</strong> → <strong>Li e aceito</strong> → <strong>Tirar Selfie Biométrica</strong> → <strong>Confirmar Registro</strong>.</p>
+<h3>Ilustração — Cadastro inicial</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/01-cadastro.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td><strong>Nome completo</strong> do membro</td>
+</tr>
+<tr>
+<td>②</td>
+<td><strong>Data de nascimento</strong> <code>dd/mm/aaaa</code></td>
+</tr>
+<tr>
+<td>③</td>
+<td>Caixa rolável dos <strong>Termos LGPD</strong></td>
+</tr>
+<tr>
+<td>④</td>
+<td>Marcação <strong>Li e aceito</strong></td>
+</tr>
+<tr>
+<td>⑤</td>
+<td><strong>Tirar Selfie Biométrica</strong> antes de confirmar</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo</h3>
+<p>1. Confira o <strong>Telefone</strong> (veio do login, não editável).</p>
+<p>2. Preencha <strong>Nome completo</strong> e <strong>Data Nascimento</strong> (<code>dd/mm/aaaa</code>).</p>
+<p>3. Informe o <strong>CEP da residência</strong> (8 dígitos).</p>
+<p>4. Role a caixa <strong>Termos de Uso e Privacidade (LGPD)</strong> <strong>até o final</strong>.</p>
+<ul>
+<li>Enquanto rola: <code>↓ Role para ler tudo ↓</code></li>
+<li>No fim: <code>✅ Termos lidos.</code></li>
+</ul>
+<p>5. Marque <strong>Li e aceito</strong> (ou <strong>Li e não concordo</strong>, conforme sua decisão).</p>
+<p>6. Toque em <strong>Tirar Selfie Biométrica</strong> — permita a câmera se o celular pedir.</p>
+<p>7. Revise a foto → <strong>Confirmar Registro</strong>.</p>
+<p>8. Aguarde a mensagem de sucesso do cadastro.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Alerta <em>Cadastro inicial concluído</em> e redirecionamento para <strong>Dados Cadastrais</strong> (completar perfil) ou <strong>Painel</strong>.</li>
+<li>Selfie salva no seu perfil; termos LGPD registrados no sistema.</li>
+</ul>
+<h3>Dica</h3>
+<p>Rosto centralizado, boa luz, sem óculos escuros — facilita identificação nos eventos.</p>
+<h3>Se der erro</h3>
+<ul>
+<li><em>Role os termos…</em> → leia o LGPD até o fim antes de aceitar.</li>
+<li>Câmera bloqueada → liberar permissão nas configurações do celular/navegador.</li>
+</ul>
+<h3>Texto integral — Termos de Uso e Privacidade (LGPD)</h3>
+<p>Texto exibido na caixa rolável da tela <strong>Cadastro</strong> (e na tela <strong>Termos de Uso e Privacidade</strong>). O nome da entidade vem do parâmetro <strong><code>Nome_Entidade</code></strong>; o prefixo curto (ex.: <strong>IBN</strong> em <strong>IBN KIDS</strong>) vem de <strong><code>Parm_entidade</code></strong> em <code>app_parameters</code>. Quando não configurados, usa-se <strong>Igreja Batista Norte (IBN)</strong>.</p>
+<blockquote>A Igreja Batista Norte (IBN) respeita a privacidade de seus membros e visitantes, comprometendo-se a coletar e tratar os dados estritamente necessários para gestão administrativa, controle de segurança, atividades eclesiásticas e para a divulgação de eventos e ações da igreja em mídias sociais e outros veículos oficiais de comunicação, sempre em estrita observância à Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).</blockquote>
+<hr>
+<h2>0.2b Cadastro simplificado (quando <code>LGPD_Ativo = nao</code>)</h2>
+<h3>Objetivo</h3>
+<p>Permitir primeiro acesso <strong>sem</strong> termos LGPD, selfie biométrica nem redirecionamento para <code>/lgpd</code> — usado quando a igreja desliga o módulo de privacidade na manutenção.</p>
+<h3>Caminho (LGPD desligado)</h3>
+<p>Tela <strong>Cadastro</strong> → <strong>Nome completo</strong> · <strong>Data Nascimento</strong> · <strong>CEP</strong> → <strong>Continuar</strong> → <strong>Índice do Aplicativo</strong>.</p>
+<h3>Ilustração — Cadastro simplificado (LGPD inativo)</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/01c-cadastro-sem-lgpd.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td><strong>Nome completo</strong> do membro</td>
+</tr>
+<tr>
+<td>②</td>
+<td><strong>Data de nascimento</strong> <code>dd/mm/aaaa</code></td>
+</tr>
+<tr>
+<td>③</td>
+<td><strong>CEP da residência</strong> (8 dígitos)</td>
+</tr>
+<tr>
+<td>④</td>
+<td><strong>Continuar</strong> — envia ao Índice quando <code>LGPD_Ativo = nao</code> (sem termos nem selfie)</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo</h3>
+<p>1. Confira o <strong>Telefone</strong> (veio do login).</p>
+<p>2. Preencha <strong>Nome completo</strong>, <strong>Data Nascimento</strong> e <strong>CEP da residência</strong>.</p>
+<p>3. Toque <strong>Continuar</strong> (não há caixa de termos nem botão de selfie).</p>
+<p>4. O app leva você direto ao <strong>Índice do Aplicativo</strong> — cabeçalho <strong>sem</strong> alerta vermelho de LGPD pendente.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Perfil criado com <code>lgpd_accepted = null</code> (módulo inativo).</li>
+<li>Login seguinte também vai ao <strong>Índice</strong>, sem passar por <code>/lgpd</code>.</li>
+</ul>
+<h3>Dica</h3>
+<p>Somente <strong>super_admin</strong> altera <code>LGPD_Ativo</code> em <strong>Manutenção → Controle de Acesso</strong> (interruptor <strong>LGPD Ativo / Inativo</strong>). Requer script <code>scripts/salvar-app-parameter-admin.sql</code> no Supabase.</p>
+<hr>
+<h2>0.3 Aceitar termos LGPD (se ainda pendente)</h2>
+<h3>Objetivo</h3>
+<p>Regularizar privacidade quando o cabeçalho do painel estiver <strong>vermelho</strong> <em>(somente com <code>LGPD_Ativo = sim</code>)</em>.</p>
+<h3>Caminho</h3>
+<p><strong>Dados Cadastrais</strong> → botão <strong>LGPD</strong> — ou tela dedicada <strong>Termos de Uso e Privacidade</strong>.</p>
+<h3>Ilustração — Termos LGPD</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/01b-lgpd.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Caixa rolável dos <strong>Termos LGPD</strong> até o fim</td>
+</tr>
+<tr>
+<td>②</td>
+<td>Marcação <strong>Li e aceito</strong> ou <strong>Li e não concordo</strong></td>
+</tr>
+<tr>
+<td>③</td>
+<td>Botão <strong>Confirmar</strong> / <strong>Concluir</strong></td>
+</tr>
+</tbody></table>
+<h3>Passo a passo</h3>
+<p>1. Abra <strong>LGPD</strong>.</p>
+<p>2. Role todo o texto.</p>
+<p>3. Marque <strong>Li e aceito</strong> ou <strong>Li e não concordo</strong>.</p>
+<p>4. Toque em <strong>Confirmar</strong> ou <strong>Concluir</strong>.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Preferência salva; cabeçalho <strong>Boas-Vindas</strong> volta ao estilo normal (sem fundo vermelho de alerta).</li>
+<li>Toast ou alerta confirmando o registro.</li>
+</ul>
+<hr>
+<h2>0.4 Conhecer o Índice e o Painel (carrossel)</h2>
+<h3>Objetivo</h3>
+<p>Saber onde estão os módulos e como alternar entre cards.</p>
+<h3>Caminho</h3>
+<p><strong>Índice do Aplicativo</strong> (atalhos) ↔ <strong>Painel</strong> (carrossel) — rodapé <strong>‹</strong> · <strong>Menu</strong> · <strong>›</strong>.</p>
+<h3>Ilustração — Índice e Painel</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/02-indice-painel.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Atalhos do <strong>Índice</strong> abrem o card correspondente</td>
+</tr>
+<tr>
+<td>②</td>
+<td>Área do <strong>card ativo</strong> no carrossel do Painel</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Contador <strong>3 / 8</strong> — posição no carrossel</td>
+</tr>
+<tr>
+<td>④</td>
+<td>Rodapé <strong>‹ Menu ›</strong> para navegar e voltar ao Índice</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo</h3>
+<p>1. No <strong>Índice</strong>, leia <em>Selecione a tela que deseja abrir</em>.</p>
+<p>2. Toque em uma etiqueta (ex.: <strong>Painel de Eventos</strong>, <strong>Dízimos e Ofertas</strong>) — o app abre o <strong>card correspondente</strong> no Painel.</p>
+<p>3. No <strong>Painel</strong>, o topo mostra <strong>Boas-Vindas, {seu nome}</strong> e o nome do card ativo.</p>
+<p>4. Use <strong>‹</strong> e <strong>›</strong> no rodapé para mudar de card (ou deslize, se disponível).</p>
+<p>5. O contador <strong>1 / N</strong> indica sua posição no carrossel.</p>
+<p>6. Toque em <strong>Menu</strong> no centro do rodapé para voltar ao <strong>Índice</strong>.</p>
+<p>7. No <strong>Índice</strong>, o rodapé exibe <strong>Encerrar sessão</strong> (web) ou <strong>Sair do aplicativo</strong> (celular); o botão <strong>Menu</strong> no <strong>Painel</strong> ocupa a largura central entre <strong>‹</strong> e <strong>›</strong>. Perfis com permissão de manutenção veem o ícone <strong>Configurações</strong> (engrenagem) <strong>alinhado à direita</strong> do rodapé, na borda do card.</p>
+<p>8. Toque em <strong>Encerrar sessão</strong> / <strong>Sair do aplicativo</strong> para sair com segurança.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Cada atalho do Índice abre o card certo sem precisar passar card por card.</li>
+<li><strong>Menu</strong> sempre retorna ao Índice; <strong>Voltar</strong> em telas internas retorna ao <strong>card que você abriu</strong> (ex.: Mapa → Lista de Membros).</li>
+</ul>
+<h3>Dica</h3>
+<p>Alguns atalhos ficam <strong>desabilitados</strong> com explicação em cinza — ex.: QR só no dia do evento, Sala(s) sem evento ativo.</p>
+<hr>
+<h1>Parte 1 — Card Agenda da Família</h1>
+<h3>Objetivo</h3>
+<p>Escolher o culto/evento, <strong>ver vagas disponíveis</strong> e <strong>inscrever sua família</strong> (audiência / pré-check-in).</p>
+<h3>Caminho</h3>
+<p><strong>Início</strong> → toque no culto em Próximos Eventos (abre a Agenda da Família). O carrossel antigo do Painel não é o caminho publicado.</p>
+<h3>Ilustração — Agenda da Família</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/03-agenda-familia.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Bloco <strong>Evento selecionado</strong> com selos Kids/Teens</td>
+</tr>
+<tr>
+<td>②</td>
+<td><strong>Vagas</strong> — número entre parênteses = restantes</td>
+</tr>
+<tr>
+<td>③</td>
+<td><strong>Trocar evento</strong> — lista de cultos publicados</td>
+</tr>
+<tr>
+<td>④</td>
+<td>Checkbox de <strong>Audiência</strong> por familiar</td>
+</tr>
+</tbody></table>
+<h3>Estrutura do card</h3>
+<table><thead><tr>
+<th>Área</th>
+<th>O que mostra</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Evento Selecionado</strong></td>
+<td>Nome, data, horário, local; selos <strong>IBN Kids</strong> / <strong>IBN Teens</strong> se houver</td>
+</tr>
+<tr>
+<td><strong>Vagas</strong></td>
+<td>Copo visual + número entre parênteses (restantes) + <code>inscritos/máximo</code></td>
+</tr>
+<tr>
+<td><strong>Trocar Evento</strong></td>
+<td>Lista de eventos ativos (hoje e futuros)</td>
+</tr>
+<tr>
+<td><strong>Audiência</strong></td>
+<td>Integrantes do núcleo familiar (membros <strong>e congregados</strong>) com checkbox; dependentes com reconhecimento pendente ou aceito (<code>accepted</code> ≠ <code>false</code>)</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo — ver vagas e inscrever</h3>
+<p>1. No <strong>Início</strong>, toque no culto desejado (Agenda da Família).</p>
+<p>2. Se precisar, em <strong>Trocar Evento</strong>, toque em outro culto publicado.</p>
+<p>3. No bloco <strong>Evento Selecionado</strong>, confira data, horário e local.</p>
+<p>4. Olhe o <strong>copo de vagas</strong>:</p>
+<ul>
+<li>Número entre parênteses = <strong>vagas ainda disponíveis</strong>.</li>
+<li>Linha inferior = quantos já estão inscritos no total do evento.</li>
+<li>Copo mais cheio = evento mais lotado.</li>
+</ul>
+<p>5. Na seção <strong>Audiência</strong>, marque o checkbox de cada familiar que participará.</p>
+<p>6. Para marcar todos de uma vez, use o checkbox alto à esquerda da lista.</p>
+<p>7. No modal <strong>Compromisso enviado para minha agenda</strong>, toque em <strong>Adicionar</strong> para abrir o Google Agenda e gravar o arquivo <code>.ics</code> (Apple Calendar / Outlook). O horário é o da igreja (não adianta nem atrasa o culto).</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Membro marcado → texto <strong>Registrado para o evento</strong> ao lado do nome.</li>
+<li>Copo e contador de vagas <strong>atualizam</strong> após cada marcação ou desmarcação.</li>
+<li>O culto pode aparecer na agenda do celular (Google / Apple / Outlook) depois de <strong>Adicionar</strong>.</li>
+<li>Se o evento tiver <strong>check-in automático</strong>, a presença GPS só confirma no raio do templo (cerca de 30 m, três leituras).</li>
+<li>Selos <strong>IBN Kids</strong> / <strong>IBN Teens</strong> indicam que há salas para crianças/adolescentes naquele evento.</li>
+</ul>
+<h3>Passo a passo — remover inscrição</h3>
+<p>1. Toque de novo no checkbox do membro já registrado.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Checkbox desmarcado; texto <em>Registrado para o evento</em> some; vagas recalculadas.</li>
+</ul>
+<h3>Se der erro ou aviso</h3>
+<table><thead><tr>
+<th>Situação</th>
+<th>Significado</th>
+</tr></thead><tbody>
+<tr>
+<td><em>Nenhum evento no momento</em></td>
+<td>Não há culto publicado para hoje/futuro próximo</td>
+</tr>
+<tr>
+<td><em>Selecione um evento</em></td>
+<td>Escolha um item em <strong>Trocar Evento</strong> primeiro</td>
+</tr>
+<tr>
+<td><em>Família não vinculada</em></td>
+<td>Peça código de família na secretaria e complete em <strong>Dados Cadastrais</strong></td>
+</tr>
+<tr>
+<td>Evento de <strong>quórum</strong></td>
+<td>Só o membro da sessão ativa pode ser marcado; após check-in no totem, pode travar</td>
+</tr>
+</tbody></table>
+<hr>
+<h1>Parte 2 — Card Check-in / QR Code</h1>
+<h3>Objetivo</h3>
+<p>Apresentar o <strong>QR Code da família</strong> na entrada ou no totem, no <strong>dia do evento</strong>.</p>
+<h3>Caminho</h3>
+<p>Painel → card <strong>QR Code — Check-in Totem</strong> / <strong>Check In — QR Code</strong> (visível conforme evento e audiência).</p>
+<h3>Ilustração — QR Check-in</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/04-qr-checkin.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Nome do <strong>evento do dia</strong></td>
+</tr>
+<tr>
+<td>②</td>
+<td><strong>Etiqueta</strong> da família (ex.: <code>FAM-2048</code>)</td>
+</tr>
+<tr>
+<td>③</td>
+<td><strong>QR Code</strong> para apresentar no totem</td>
+</tr>
+</tbody></table>
+<h3>Pré-requisitos</h3>
+<p>1. Ter marcado a <strong>audiência</strong> no card Agenda (Parte 1).</p>
+<p>2. Estar no <strong>dia do evento</strong> (para a maioria dos modos de check-in).</p>
+<h3>Passo a passo</h3>
+<p>1. No dia do culto, abra o card de QR no Painel ou pelo atalho <strong>QR Code</strong> no Índice.</p>
+<p>2. Confira o <strong>nome do evento</strong> (mesmo contexto da Agenda).</p>
+<p>3. Localize a <strong>Etiqueta</strong> — código da sua família em destaque.</p>
+<p>4. Apresente o <strong>QR Code</strong> (fundo branco) na câmera do <strong>totem</strong> da igreja.</p>
+<p>5. Aumente o brilho da tela do celular.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>No totem: <em>Confirmação realizada com sucesso</em>.</li>
+<li>No painel: card de QR pode ficar com destaque <strong>azul piscina</strong> após confirmação (até o fim do dia do evento).</li>
+<li>Se já confirmou antes: aviso de que o check-in <strong>já foi realizado</strong> (evita duplicidade).</li>
+</ul>
+<h3>Se der erro</h3>
+<table><thead><tr>
+<th>Situação</th>
+<th>O que fazer</th>
+</tr></thead><tbody>
+<tr>
+<td>Card QR não aparece no Índice</td>
+<td>Marque audiência; confirme que é o dia do evento</td>
+</tr>
+<tr>
+<td><em>Pré-check-in não encontrado</em> (totem)</td>
+<td>Volte à Agenda e marque os participantes</td>
+</tr>
+<tr>
+<td>Sem etiqueta de família</td>
+<td>Complete vínculo familiar em <strong>Perfil &amp; Identidade</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h1>Parte 2b — Check-in por proximidade (geofence)</h1>
+<h3>Objetivo</h3>
+<p>Confirmar presença <strong>automaticamente</strong> ao chegar ao templo, sem passar pelo totem.</p>
+<h3>Pré-requisitos</h3>
+<p>1. Evento com <strong>check-in por proximidade</strong> habilitado pela equipe.</p>
+<p>2. <strong>Audiência</strong> marcada na Agenda (Parte 1).</p>
+<p>3. Local do evento com <strong>coordenadas</strong> cadastradas nos locais favoritos da igreja.</p>
+<p>4. Permissão de <strong>localização</strong> concedida ao navegador/PWA.</p>
+<p>5. Estar dentro da <strong>janela de tempo</strong> (desde N horas antes do culto até o fim do dia do evento).</p>
+<h3>Passo a passo</h3>
+<p>1. No dia do culto, abra o dashboard com o evento selecionado.</p>
+<p>2. Aceite a permissão de GPS quando solicitado.</p>
+<p>3. Aproxime-se do templo — o app exibe progresso de detecção (leituras GPS estáveis).</p>
+<p>4. Ao confirmar, aparece toast <strong>Check-in confirmado</strong> com os nomes dos participantes.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Banner de status indica <em>detectando</em>, <em>sincronizando</em> ou <em>confirmado</em>.</li>
+<li>Não é necessário abrir o card QR se o geofence concluir com sucesso.</li>
+<li>Sem internet no momento: o app enfileira e sincroniza quando a rede voltar.</li>
+</ul>
+<h3>Se der erro</h3>
+<table><thead><tr>
+<th>Situação</th>
+<th>O que fazer</th>
+</tr></thead><tbody>
+<tr>
+<td><em>Local sem coordenadas</em></td>
+<td>Equipe deve cadastrar lat/lng no local favorito</td>
+</tr>
+<tr>
+<td>GPS negado</td>
+<td>Libere localização nas configurações do navegador</td>
+</tr>
+<tr>
+<td>Fora do raio</td>
+<td>Aproxime-se do templo ou use QR no totem</td>
+</tr>
+<tr>
+<td>Sem audiência</td>
+<td>Marque participantes na Agenda primeiro</td>
+</tr>
+</tbody></table>
+<hr>
+<h1>Parte 3 — Card SALA(S) — IBN Kids / IBN Teens</h1>
+<h3>Objetivo</h3>
+<p><strong>Acompanhar se seu filho foi aceito/entrou</strong> na sala Kids ou Teens — somente membros <strong>da sua família</strong>.</p>
+<h3>Caminho</h3>
+<p>Painel → <strong>SALA(S)</strong> (ou atalho <strong>Sala(s)</strong> no Índice, dentro de Painel de Eventos).</p>
+<h3>Ilustração — SALA(S) Kids/Teens</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/05-salas-kids-teens.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Chip <strong>IBN KIDS</strong> com contador <code>confirmados/total</code></td>
+</tr>
+<tr>
+<td>②</td>
+<td>Chip <strong>IBN TEENS</strong> (alternar sala)</td>
+</tr>
+<tr>
+<td>③</td>
+<td><strong>✓</strong> = entrada confirmada pela equipe da sala</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo</h3>
+<p>1. Selecione o evento na <strong>Agenda da Família</strong> primeiro (mesmo culto em evidência).</p>
+<p>2. Abra o card <strong>SALA(S)</strong>.</p>
+<p>3. Se o evento tiver as duas salas, alterne os chips <strong>IBN KIDS</strong> e <strong>IBN TEENS</strong>.</p>
+<p>4. Leia a lista de nomes da sua família inscritos naquela sala.</p>
+<p>5. Procure o símbolo <strong>✓</strong> ao lado do nome.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li><strong>✓</strong> ao lado do nome = criança/adolescente <strong>aceito/entrada registrada</strong> pela equipe da sala (check-in feito na operação da igreja).</li>
+<li>Contador no chip: <code>confirmados/total</code> da sua família naquela sala.</li>
+<li>Sem inscritos: <em>Nenhum membro da sua família inscrito em IBN KIDS/TEENS.</em></li>
+</ul>
+<h3>Dica</h3>
+<p>Este card é <strong>somente leitura</strong> para o membro. A entrada física na sala é confirmada pela equipe — o ✓ aparece depois que eles registram.</p>
+<h3>Se não aparecer seu filho</h3>
+<ul>
+<li>Confirme audiência na Agenda e idade/parametrização Kids/Teens do evento.</li>
+<li>Fale com a equipe da sala se o culto já começou e o ✓ ainda não apareceu.</li>
+</ul>
+<hr>
+<h1>Parte 4 — Card Dízimos e Ofertas</h1>
+<h3>Objetivo</h3>
+<p>Ver dados do recebedor e <strong>copiar a chave PIX</strong> para ofertar pelo app do banco.</p>
+<h3>Caminho</h3>
+<p>Painel → <strong>Dízimos e Ofertas</strong>.</p>
+<h3>Ilustração — Dízimos e Ofertas</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/06-dizimos-ofertas.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Dados do <strong>recebedor</strong> (nome e CNPJ da igreja)</td>
+</tr>
+<tr>
+<td>②</td>
+<td><strong>Chave PIX</strong> exibida para cópia</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Botão <strong>Copiar chave PIX</strong></td>
+</tr>
+</tbody></table>
+<h3>Passo a passo</h3>
+<p>1. Abra o card e aguarde carregar <strong>Dados do recebedor</strong> (Igreja Batista Norte, CNPJ, instituição).</p>
+<p>2. Leia a <strong>Chave PIX</strong> exibida.</p>
+<p>3. Toque em <strong>Copiar chave PIX</strong> (ícone de toque).</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Toast <strong>Chave PIX copiada</strong> com orientação para colar no app do banco.</li>
+<li>Você cola no banco e conclui a transferência <strong>fora</strong> do app IBN (o app não debita automaticamente).</li>
+</ul>
+<h3>Se der erro</h3>
+<ul>
+<li><strong>Chave PIX indisponível</strong> → toque em <strong>Atualizar chave PIX</strong> ou avise a secretaria.</li>
+</ul>
+<hr>
+<h1>Parte 5 — Card Coração Aberto</h1>
+<h3>Objetivo</h3>
+<p>Enviar um <strong>pedido pastoral</strong> e <strong>acompanhar o status</strong> até saber que está sendo cuidado.</p>
+<h3>Caminho</h3>
+<p>Painel → <strong>Coração Aberto</strong> → formulário; ícone de histórico → <strong>Meus pedidos</strong>.</p>
+<h3>Ilustração — Coração Aberto</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/07-coracao-aberto.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Seleção de <strong>Motivo</strong> e <strong>Situação</strong></td>
+</tr>
+<tr>
+<td>②</td>
+<td>Opção <strong>Para mim</strong> / <strong>Familiar</strong> / encaminhamento</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Campo de texto <strong>Seu pedido</strong></td>
+</tr>
+<tr>
+<td>④</td>
+<td>Atalho <strong>Meus pedidos</strong> (histórico)</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo — novo pedido</h3>
+<p>1. Toque no card (<em>Toque aqui para iniciar um atendimento personalizado</em>).</p>
+<p>2. Escolha <strong>Motivo</strong> e <strong>Situação</strong> (listas na tela).</p>
+<p>3. Indique <strong>Este pedido é para</strong>: <strong>Para mim</strong> / <strong>Familiar</strong> / <strong>Terceiros</strong>.</p>
+<p>4. Escolha <strong>Encaminhar para</strong>: <strong>Sigilo pastoral</strong> ou <strong>Intercessão</strong>.</p>
+<p>5. Escreva seu pedido em <strong>Seu pedido</strong>.</p>
+<p>6. Toque em <strong>Enviar pedido</strong>.</p>
+<h3>Resultado esperado (envio)</h3>
+<ul>
+<li>Mensagem <em>Pedido enviado! Estaremos orando por você.</em></li>
+<li>Pedido aparece em <strong>Meus pedidos</strong> com status inicial <strong>Novo</strong> ou <strong>Pendente</strong>.</li>
+</ul>
+<h3>Passo a passo — acompanhar pedido</h3>
+<p>1. No formulário, toque no ícone de <strong>histórico</strong> ou abra <strong>Meus pedidos</strong>.</p>
+<p>2. Localize seu pedido na lista (data, motivo, situação).</p>
+<p>3. Leia o <strong>status</strong> no cartão:</p>
+<table><thead><tr>
+<th>Status que você pode ver</th>
+<th>Significado para você</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Novo</strong> / <strong>Pendente</strong></td>
+<td>Pedido recebido, aguardando equipe</td>
+</tr>
+<tr>
+<td><strong>Acolher</strong></td>
+<td>Equipe pastoral iniciou o primeiro cuidado</td>
+</tr>
+<tr>
+<td><strong>Apoiar</strong></td>
+<td>Acompanhamento em andamento (segunda etapa)</td>
+</tr>
+<tr>
+<td><strong>Acompanhar</strong></td>
+<td>Acompanhamento contínuo (terceira etapa)</td>
+</tr>
+<tr>
+<td><strong>Em andamento</strong> / <strong>Aberto</strong></td>
+<td>Pedido ativo na equipe</td>
+</tr>
+<tr>
+<td><strong>Encerrado</strong></td>
+<td>Ciclo de cuidado concluído</td>
+</tr>
+</tbody></table>
+<h3>Resultado esperado (acompanhamento)</h3>
+<ul>
+<li>Quando a equipe avança o cuidado, o status muda para <strong>Acolher</strong>, depois <strong>Apoiar</strong>, depois <strong>Acompanhar</strong> — isso confirma que <strong>seu pedido está sendo acompanhado</strong>.</li>
+<li>Você não precisa atualizar a tela: ao reabrir <strong>Meus pedidos</strong>, vê o status atual.</li>
+</ul>
+<h3>Excluir pedido (se permitido)</h3>
+<ul>
+<li>Ícone de borracha no pedido → só quando ainda <strong>Novo</strong> e não iniciado pelo Cuidado Pastoral.</li>
+<li>Se já houver <strong>Acolher/Apoiar/Acompanhar</strong>, a exclusão é bloqueada com mensagem explicativa.</li>
+</ul>
+<hr>
+<h1>Parte 6 — Card Lista de Membros</h1>
+<h3>Objetivo</h3>
+<p>Buscar <strong>membros</strong> ou <strong>visitantes</strong> da igreja, ver integrantes do mesmo núcleo familiar, contatar por WhatsApp, abrir localização individual (GPS) e consultar o <strong>Mapa Geral</strong>.</p>
+<h3>Caminho</h3>
+<p>Painel → <strong>Lista de Membros</strong>.</p>
+<h3>Ilustração — Lista de Membros</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/08-lista-membros.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Botão <strong>Visitantes</strong> — alterna para lista de visitantes</td>
+</tr>
+<tr>
+<td>②</td>
+<td>Botão <strong>Mapa Geral</strong> (PWA/web)</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Campo <strong>Procurar membro</strong> (<em>Digite o nome...</em>)</td>
+</tr>
+<tr>
+<td>④</td>
+<td>Ícone <strong>users</strong> na coluna <strong>Família</strong> — abre modal familiar</td>
+</tr>
+<tr>
+<td>⑤</td>
+<td>Ícone <strong>WhatsApp</strong> na coluna <strong>Zap</strong></td>
+</tr>
+<tr>
+<td>⑥</td>
+<td>Ícone <strong>map</strong> na coluna <strong>GPS</strong></td>
+</tr>
+</tbody></table>
+<h3>Estrutura do card</h3>
+<table><thead><tr>
+<th>Área</th>
+<th>O que mostra / faz</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Visitantes</strong></td>
+<td>Alterna para <strong>LISTA DE VISITANTES</strong> (mesma linha que <strong>Mapa Geral</strong>)</td>
+</tr>
+<tr>
+<td><strong>Mapa Geral</strong></td>
+<td>Abre tela de geolocalização com todos os pins permitidos ao seu perfil</td>
+</tr>
+<tr>
+<td>Resumo</td>
+<td>Texto <em>N membro(s) em ordem alfabética</em> ou <em>X de Y</em> ao filtrar</td>
+</tr>
+<tr>
+<td><strong>Procurar membro</strong></td>
+<td>Campo com placeholder <em>Digite o nome...</em> e botão limpar (×)</td>
+</tr>
+<tr>
+<td>Cabeçalho da tabela</td>
+<td>Colunas <strong>Nome</strong> · <strong>Família</strong> · <strong>Zap</strong> · <strong>GPS</strong></td>
+</tr>
+<tr>
+<td>Coluna <strong>Família</strong></td>
+<td>Ícone <strong>users</strong> (rosa) — abre modal <strong>Membros da família</strong></td>
+</tr>
+<tr>
+<td>Coluna <strong>Zap</strong></td>
+<td>Ícone <strong>WhatsApp</strong> (verde quando há telefone)</td>
+</tr>
+<tr>
+<td>Coluna <strong>GPS</strong></td>
+<td>Ícone <strong>map</strong> (azul quando há CEP/endereço)</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo — lista de membros</h3>
+<p>1. Com o card em modo <strong>Membros</strong>, leia o resumo no topo (<em>N membro(s) em ordem alfabética</em>).</p>
+<p>2. Digite em <strong>Procurar membro</strong> para filtrar por nome; use o × para limpar.</p>
+<p>3. Na tabela, para cada linha:</p>
+<ul>
+<li>Toque no ícone <strong>users</strong> (<strong>Família</strong>) para abrir o modal familiar.</li>
+<li>Toque no <strong>WhatsApp</strong> para abrir conversa (se houver telefone).</li>
+<li>Toque no <strong>GPS</strong> para focar esse membro no mapa (quando houver endereço).</li>
+</ul>
+<p>4. Toque em <strong>Visitantes</strong> para ver a lista de visitantes (título <strong>LISTA DE VISITANTES</strong>, busca <strong>Procurar visitante</strong>).</p>
+<p>5. Toque em <strong>Membros</strong> (quando estiver em visitantes) para voltar à lista de membros.</p>
+<p>6. Toque em <strong>Mapa Geral</strong> para abrir a tela de mapa completa.</p>
+<h3>Resultado esperado — lista principal</h3>
+<ul>
+<li>Botões <strong>Visitantes</strong> e <strong>Mapa Geral</strong> visíveis na mesma linha, abaixo do título <strong>Lista de Membros</strong>.</li>
+<li>Tabela preenchida em ordem alfabética; ícones desabilitados (cinza) quando faltam telefone ou endereço.</li>
+</ul>
+<h3>Caminho (visitantes)</h3>
+<p>Lista de Membros → toque <strong>Visitantes</strong>.</p>
+<h3>Ilustração — Lista de Visitantes</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/08c-lista-visitantes.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Título <strong>LISTA DE VISITANTES</strong></td>
+</tr>
+<tr>
+<td>②</td>
+<td>Botão <strong>Membros</strong> — volta à lista de membros</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Campo <strong>Procurar visitante</strong></td>
+</tr>
+<tr>
+<td>④</td>
+<td>Tabela <strong>Nome · Família · Zap · GPS</strong></td>
+</tr>
+</tbody></table>
+<h3>Passo a passo — visitantes</h3>
+<p>1. Toque <strong>Visitantes</strong>.</p>
+<p>2. Confira o título <strong>LISTA DE VISITANTES</strong> e o resumo <em>N visitante(s)...</em>.</p>
+<p>3. Use <strong>Procurar visitante</strong> para filtrar.</p>
+<p>4. Toque <strong>Membros</strong> para retornar à lista de membros.</p>
+<h3>Resultado esperado (visitantes)</h3>
+<ul>
+<li>Mesma estrutura de tabela (<strong>Nome</strong>, <strong>Família</strong>, <strong>Zap</strong>, <strong>GPS</strong>), com dados apenas de visitantes.</li>
+<li>Botão <strong>Membros</strong> (ícone <strong>users</strong>) substitui <strong>Visitantes</strong> na linha de ações.</li>
+</ul>
+<h3>Caminho (modal familiar)</h3>
+<p>Lista de Membros → coluna <strong>Família</strong> → ícone <strong>users</strong> na linha desejada.</p>
+<h3>Ilustração — Membros da família (modal)</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/08b-lista-membros-familia.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Título <strong>Membros da família</strong></td>
+</tr>
+<tr>
+<td>②</td>
+<td>Subtítulo <strong>Família {código}</strong> (ex.: IBN0103)</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Lista de integrantes com <strong>nome</strong> e <strong>parentesco</strong></td>
+</tr>
+<tr>
+<td>④</td>
+<td>Ícone <strong>WhatsApp</strong> por integrante (quando há telefone)</td>
+</tr>
+<tr>
+<td>⑤</td>
+<td>Botão <strong>Fechar</strong></td>
+</tr>
+</tbody></table>
+<h3>Passo a passo — modal Membros da família</h3>
+<p>1. Toque o ícone <strong>users</strong> na coluna <strong>Família</strong> de um membro.</p>
+<p>2. Leia o título <strong>Membros da família</strong> e o subtítulo <strong>Família {código}</strong> (ex.: <strong>Família IBN0103</strong>).</p>
+<p>3. Role a lista de integrantes: nome, <strong>parentesco</strong> (quando cadastrado) e <strong>WhatsApp</strong> por linha.</p>
+<p>4. Toque <strong>Fechar</strong> ou fora do cartão para encerrar.</p>
+<h3>Resultado esperado (modal familiar)</h3>
+<ul>
+<li>Lista todos os integrantes reconhecidos no mesmo <code>family_id</code> (fonte canônica: tabela <code>members</code>, sincronizada com perfis).</li>
+<li>Mensagem <em>Nenhum membro reconhecido nesta família</em> quando o núcleo está vazio para seu perfil.</li>
+<li>Erro em vermelho quando falta permissão ACL ou RPC no Supabase — use <strong>Atualizar lista</strong> no card se a lista principal falhar.</li>
+</ul>
+<h3>Caminho (mapa)</h3>
+<p>Lista de Membros → <strong>Mapa Geral</strong>.</p>
+<h3>Ilustração — Mapa Geral</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/08d-mapa-geral.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Filtros <strong>Todos</strong> · <strong>Com papel</strong> · <strong>Visitantes</strong></td>
+</tr>
+<tr>
+<td>②</td>
+<td>Mapa com <strong>pins</strong> de endereços</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Botão <strong>Voltar</strong> ao card Lista de Membros</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo — Mapa Geral (PWA)</h3>
+<p>1. Toque <strong>Mapa Geral</strong>.</p>
+<p>2. Use os filtros <strong>Todos</strong>, <strong>Com papel</strong> e <strong>Visitantes</strong> no topo.</p>
+<p>3. Toque em um <strong>pin</strong> no mapa:</p>
+<ul>
+<li>Com permissão de <strong>detalhe do pin</strong> (<code>pastoral</code> / <code>super_admin</code>): painel com nome, telefone e endereço; copie o endereço para navegação externa.</li>
+<li>Sem essa permissão: o mapa permanece visível, mas o app <strong>não abre a localização de outros usuários</strong> — mensagem orientativa ao tocar no pin.</li>
+</ul>
+<p>4. Toque <strong>Voltar</strong> → retorna ao card <strong>Lista de Membros</strong>.</p>
+<h3>Resultado esperado (mapa)</h3>
+<ul>
+<li>Pins coloridos por tipo (membro vs visitante).</li>
+<li>Contadores de quantos endereços estão no mapa conforme o filtro ativo.</li>
+<li>Membros e congregados comuns <strong>veem o mapa geral</strong>; <strong>detalhe de pin alheio</strong> só para perfis autorizados pelo ACL.</li>
+</ul>
+<h3>Se der erro</h3>
+<table><thead><tr>
+<th>Situação</th>
+<th>O que fazer</th>
+</tr></thead><tbody>
+<tr>
+<td>Lista vazia ou erro ao carregar</td>
+<td>Toque <strong>Atualizar lista</strong>; confirme permissão do card com a secretaria</td>
+</tr>
+<tr>
+<td>Modal familiar vazio</td>
+<td>Verifique se a família tem integrantes em <code>members</code>; TI deve aplicar <code>scripts/members-list-family-sync.sql</code></td>
+</tr>
+<tr>
+<td><strong>Mapa Geral</strong> não abre</td>
+<td>Seu papel pode não ter grant em <code>screen:/mapa-geolocalizacao</code></td>
+</tr>
+<tr>
+<td>Toque no pin sem abrir detalhe</td>
+<td>Normal para <code>member</code>/<code>congregado</code> — detalhe exige <code>screen:/mapa-geolocalizacao/detalhe-pin</code></td>
+</tr>
+<tr>
+<td>WhatsApp cinza</td>
+<td>Telefone não cadastrado para aquele membro</td>
+</tr>
+<tr>
+<td>GPS cinza</td>
+<td>CEP/endereço ausente no perfil</td>
+</tr>
+</tbody></table>
+<hr>
+<h1>Parte 7 — Card Aniversariantes</h1>
+<h3>Objetivo</h3>
+<p>Ver quem faz aniversário no mês e parabenizar pelo WhatsApp.</p>
+<h3>Caminho</h3>
+<p>Painel → <strong>Aniversariantes</strong>.</p>
+<h3>Ilustração — Aniversariantes</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/09-aniversariantes.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Seletor <strong>Mês</strong></td>
+</tr>
+<tr>
+<td>②</td>
+<td>Lista <strong>DD/MM</strong> + nome</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Ícone <strong>WhatsApp</strong> para parabenizar</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo</h3>
+<p>1. Toque em <strong>Selecionar Mês</strong> (padrão: mês atual).</p>
+<p>2. Role a lista com data <strong>DD/MM</strong> e nome.</p>
+<p>3. Toque no <strong>WhatsApp</strong> ao lado de quem deseja cumprimentar.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Texto <em>N aniversariante(s) em {mês}.</em></li>
+<li>Lista vazia: <em>Nenhum aniversariante encontrado em {mês}.</em></li>
+</ul>
+<hr>
+<h1>Parte 8 — Card Financeiro</h1>
+<h3>Objetivo</h3>
+<p>Consultar <strong>relatórios financeiros da igreja</strong> (somente leitura) e solicitar reembolso de despesas, se disponível no seu perfil.</p>
+<h3>Caminho</h3>
+<p>Painel → <strong>Financeiro</strong> → <em>Toque para abrir o módulo financeiro.</em></p>
+<h3>Ilustração — Financeiro</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/10-financeiro.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Dropdown <strong>Selecionar mês</strong></td>
+</tr>
+<tr>
+<td>②</td>
+<td>Atalho <strong>Relatório de Despesas (RD)</strong></td>
+</tr>
+<tr>
+<td>③</td>
+<td>Seções colapsáveis (<strong>Saldo bancário</strong>, etc.)</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo</h3>
+<p>1. Abra o módulo <strong>Financeiro</strong>.</p>
+<p>2. Escolha o <strong>mês</strong> em <strong>Selecionar mês</strong>.</p>
+<p>3. No topo, use o atalho destacado <strong>Relatório de Despesas (RD)</strong> ou role até <strong>Relatórios</strong>.</p>
+<p>4. Expanda as seções (uma por vez):</p>
+<ul>
+<li><strong>Resultado do mês</strong></li>
+</ul>
+<h3>Ilustração — Financeiro — Resultado do mês</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/10a-fin-resultado.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Seção <strong>Resultado do mês</strong> expandida</td>
+</tr>
+<tr>
+<td>②</td>
+<td>Tabela de <strong>Receitas</strong> do período</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Tabela de <strong>Despesas</strong> do período</td>
+</tr>
+</tbody></table>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Tabelas e totais do mês selecionado — <strong>sem editar</strong> valores (consulta).</li>
+<li>Mês sem orçamento: aviso <em>Sem orçamento planejado para este mês</em> na seção planejado × realizado.</li>
+<li><strong>Saldo bancário</strong> mostra contas com movimento (Sicredi, Mercado Pago, etc.) e <strong>Saldo total</strong>.</li>
+</ul>
+<hr>
+<h1>Parte 8b — Relatório de Despesas (RD)</h1>
+<h3>Objetivo</h3>
+<p>Solicitar <strong>reembolso de despesas</strong> da igreja com comprovantes e chave PIX.</p>
+<h3>Caminho</h3>
+<p>Painel → <strong>Financeiro</strong> → atalho <strong>Relatório de Despesas (RD)</strong> — ou rota <code>/expense-report</code>.</p>
+<h3>Ilustração — Relatório de Despesas (RD)</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/11-relatorio-despesas.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td><strong>Chave PIX</strong> do solicitante</td>
+</tr>
+<tr>
+<td>②</td>
+<td>Botão <strong>Novo RD</strong></td>
+</tr>
+<tr>
+<td>③</td>
+<td>Lista <strong>Meus relatórios</strong></td>
+</tr>
+<tr>
+<td>④</td>
+<td>Status <strong>Pendente</strong> / <strong>Conciliado</strong></td>
+</tr>
+</tbody></table>
+<h3>Passo a passo</h3>
+<p>1. Toque <strong>Novo RD</strong>.</p>
+<h3>Ilustração — Formulário de RD</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/11b-rd-formulario.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Campo <strong>Chave PIX</strong></td>
+</tr>
+<tr>
+<td>②</td>
+<td><strong>Descrição</strong> da despesa</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Anexo de <strong>comprovante</strong></td>
+</tr>
+<tr>
+<td>④</td>
+<td><strong>Submeter e Finalizar</strong></td>
+</tr>
+</tbody></table>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Toast confirma submissão; tesoureiro recebe mensagem com número do RD e valor.</li>
+<li>Status <strong>Pendente</strong> até a tesouraria conciliar na manutenção; depois <strong>Conciliado</strong>.</li>
+</ul>
+<h3>Se der erro</h3>
+<ul>
+<li>Configure <code>Tesoureiro_contato</code> em <code>app_parameters</code> se o WhatsApp não abrir.</li>
+<li>RPC ausente — equipe executa <code>scripts/expense-reports-schema.sql</code> e <code>expense-reports-rpc.sql</code>.</li>
+</ul>
+<hr>
+<h1>Parte 9 — Card Escalas</h1>
+<h3>Objetivo</h3>
+<p>Saber <strong>quem está escalado</strong> para servir na igreja (vigilância, acolhimento, intercessão, etc.) e contatar servos.</p>
+<h3>Caminho</h3>
+<p>Painel → <strong>Escalas</strong> → <strong>Selecionar Escala</strong> → lista ou card de detalhe.</p>
+<h3>Ilustração — Escalas</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/12-escalas.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td><strong>Selecionar Escala</strong> (tipo de serviço)</td>
+</tr>
+<tr>
+<td>②</td>
+<td>Tabela <strong>Nome · Data · Zap</strong></td>
+</tr>
+<tr>
+<td>③</td>
+<td><strong>Identificar veículo</strong> (escala estacionamento)</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo</h3>
+<p>1. Abra <strong>Escalas</strong>.</p>
+<p>2. Em <strong>Selecionar Escala</strong>, toque no tipo desejado (ex.: estacionamento, intercessão).</p>
+<p>3. O painel avança para o card de <strong>servos daquela escala</strong> (ou tabela Nome / Data / Zap).</p>
+<p>4. Confira <strong>nomes e datas</strong> — são os servos programados para os próximos domingos/datas.</p>
+<p>5. Toque no <strong>WhatsApp</strong> ao lado de um servo para contato.</p>
+<p>6. Use <strong>Voltar</strong> para retornar à lista de tipos de escala.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Lista com servos e datas futuras da escala escolhida.</li>
+<li>Para escala de <strong>estacionamento</strong>: botão <strong>Identificar veículo</strong> leva ao card Estacionamento (Parte 11).</li>
+<li>Você consegue responder: <em>“Quem está de escala hoje nesta função?”</em> — procure a <strong>data de hoje</strong> na tabela.</li>
+</ul>
+<h3>Dica</h3>
+<p>Se você mesmo é servo, sua escala também aparece aqui — útil para confirmar o dia de serviço.</p>
+<hr>
+<h1>Parte 10 — Card Servos em escala <em>(quando visível)</em></h1>
+<h3>Objetivo</h3>
+<p>Ver detalhe rápido da escala já selecionada no card Escalas.</p>
+<h3>Caminho</h3>
+<p>Aparece automaticamente no carrossel após escolher uma escala com servos cadastrados.</p>
+<h3>Ilustração — Servos em escala (detalhe)</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/12-escalas.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td><strong>Selecionar Escala</strong> (tipo de serviço)</td>
+</tr>
+<tr>
+<td>②</td>
+<td>Tabela <strong>Nome · Data · Zap</strong></td>
+</tr>
+<tr>
+<td>③</td>
+<td><strong>Identificar veículo</strong> (escala estacionamento)</td>
+</tr>
+</tbody></table>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Mesmos nomes e contatos do detalhe aberto em Escalas, em card dedicado no carrossel.</li>
+<li>Some do carrossel se não houver escala selecionada ou servos.</li>
+</ul>
+<hr>
+<h1>Parte 11 — Card Estacionamento <em>(quando visível)</em></h1>
+<h3>Objetivo</h3>
+<p>Identificar o <strong>proprietário de um veículo</strong> pela placa (equipe de acolhimento no estacionamento).</p>
+<h3>Caminho</h3>
+<p>Escalas → escala de estacionamento → <strong>Identificar veículo</strong> — ou card <strong>Estacionamento</strong> se ativo no seu perfil.</p>
+<h3>Ilustração — Estacionamento</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/13-estacionamento.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Campo <strong>Número da placa</strong></td>
+</tr>
+<tr>
+<td>②</td>
+<td>Botão <strong>Buscar</strong></td>
+</tr>
+<tr>
+<td>③</td>
+<td>Dados do <strong>proprietário</strong> e veículo</td>
+</tr>
+</tbody></table>
+<h3>Passo a passo</h3>
+<p>1. Digite a <strong>Número da placa</strong> e busque.</p>
+<p>2. Leia <strong>Proprietário</strong>, <strong>Marca</strong>, <strong>Modelo</strong>, <strong>Cor</strong>, <strong>Telefone</strong>.</p>
+<p>3. Toque no <strong>WhatsApp</strong> para falar com o dono, ou <strong>Nova busca</strong>.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Dados do veículo e dono exibidos; placa não encontrada → <em>Nenhum veículo encontrado…</em></li>
+<li><strong>Voltar</strong> retorna à escala de estacionamento.</li>
+</ul>
+<hr>
+<h1>Parte 12 — Perfil &amp; Identidade (seu círculo familiar e chamado)</h1>
+<h3>Objetivo</h3>
+<p>Manter <strong>seus dados</strong>, <strong>cadastrar integrantes da sua família</strong>, avançar na <strong>Trilha de Discipulado</strong> (incluindo o <strong>Perfil Ministerial</strong> na lição 5.1) e escolher a <strong>paleta de cores</strong> do app.</p>
+<h3>Caminho</h3>
+<p>Painel ou Índice → <strong>Perfil &amp; Identidade</strong> → <strong>Dados Cadastrais</strong>, <strong>Gerenciar Família</strong>, <strong>Trilha de Discipulado</strong> ou seletor de <strong>Paleta de cores</strong>.</p>
+<h2>12.1 Dados Cadastrais</h2>
+<h3>Passo a passo</h3>
+<p>1. Toque em <strong>Dados Cadastrais</strong>.</p>
+<h3>Ilustração — Dados Cadastrais</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/15-dados-cadastrais.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Seção <strong>Dados Pessoais</strong> (expandida)</td>
+</tr>
+<tr>
+<td>②</td>
+<td>Campo <strong>Nome</strong> e demais dados pessoais</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Seção <strong>Contato</strong></td>
+</tr>
+<tr>
+<td>④</td>
+<td>Seção <strong>Endereço</strong></td>
+</tr>
+</tbody></table>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Campos salvos com confirmação na tela.</li>
+<li>Código de família visível — necessário para QR, audiência e Salas.</li>
+<li>LGPD regularizado → cabeçalho sem alerta vermelho.</li>
+</ul>
+<hr>
+<h2>12.2 Gerenciar Família — incluir integrantes no seu círculo</h2>
+<h3>Objetivo</h3>
+<p>Adicionar cônjuge, filhos e outros parentes ao <strong>mesmo código de família</strong> para que participem de audiência, QR, Salas, etc.</p>
+<h3>Caminho</h3>
+<p><strong>Perfil &amp; Identidade</strong> → <strong>Gerenciar Família</strong>.</p>
+<h3>Passo a passo</h3>
+<p>1. Anote <strong>Família Atual: {código}</strong> no topo.</p>
+<p>2. Toque em <strong>Adicionar integrante</strong> (ou use busca por nome/telefone se a pessoa já existe no sistema).</p>
+<p>3. Preencha <strong>Nome completo</strong>, <strong>Telefone</strong>, <strong>Nascimento</strong>, <strong>Grau de parentesco</strong> (Cônjuge, Filho(a), etc.).</p>
+<p>4. Toque em <strong>ADICIONAR INTEGRANTE</strong>.</p>
+<p>5. Na lista <strong>Integrantes Cadastrados</strong>, marque o <strong>checkbox de aceite</strong> (✓) ao lado de quem você confirma como membro do seu núcleo.</p>
+<p>6. Para editar, toque no ícone de lápis; para remover, use <strong>EXCLUIR INTEGRANTE</strong> (com confirmação).</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Novo integrante aparece na lista <strong>Integrantes Cadastrados</strong>.</li>
+<li>Com checkbox ✓ (aceite), o membro:</li>
+<li>Aparece na <strong>Audiência</strong> do card Agenda.</li>
+<li>Pode constar no <strong>QR Code</strong> da família.</li>
+<li>Aparece no card <strong>SALA(S)</strong> quando inscrito em Kids/Teens.</li>
+<li>Indicadores <strong>KIDS/TEENS</strong> (bolinhas) por idade na lista.</li>
+<li>Se a pessoa estava em outra família, o app pede <strong>confirmação de transferência</strong> — ao aceitar, ela entra no seu círculo.</li>
+</ul>
+<h3>Dica</h3>
+<p>O representante legal da família não pode ser excluído — proteção do cadastro principal.</p>
+<h3>Se der erro</h3>
+<ul>
+<li>Duplicata (mesmo nome/telefone na família) → mensagem impedindo segundo cadastro igual.</li>
+<li>Sem código de família → solicite à secretaria antes de adicionar integrantes.</li>
+</ul>
+<hr>
+<h2>12.3 Trilha de Discipulado e Perfil Ministerial</h2>
+<h3>Objetivo</h3>
+<p>Avançar nos <strong>5 passos</strong> da Trilha (3 lições por passo), conquistar <strong>selos coloridos</strong> e, na lição <strong>5.1 — Descobrindo meus Dons</strong>, responder o questionário de <strong>50 perguntas</strong> (10 etapas de 5) para ver o <strong>perfil ministerial predominante</strong>.</p>
+<h3>Caminho</h3>
+<p><strong>Perfil &amp; Identidade</strong> → <strong>Trilha de Discipulado</strong>.</p>
+<h3>Os 5 passos e as cores dos selos</h3>
+<table><thead><tr>
+<th>Passo</th>
+<th>Tema</th>
+<th>Cor do selo</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>Boas-Vindas e Identidade da Igreja</td>
+<td>Azul céu / turquesa</td>
+</tr>
+<tr>
+<td>2</td>
+<td>O Fundamento da Fé</td>
+<td>Verde esmeralda</td>
+</tr>
+<tr>
+<td>3</td>
+<td>O Passo da Fé (Batismo)</td>
+<td>Azul royal / profundo</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Comunhão e Pertença</td>
+<td>Laranja / âmbar</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Servindo com Propósito</td>
+<td>Dourado / bronze</td>
+</tr>
+</tbody></table>
+<p>Ao concluir <strong>100% da Trilha</strong>, você recebe o <strong>selo dourado final</strong> e a liderança é avisada para certificado ou reconhecimento público.</p>
+<h3>Passo a passo — Trilha</h3>
+<p>1. Toque em <strong>Trilha de Discipulado</strong>.</p>
+<p>2. Veja <strong>Minhas Conquistas / Selos</strong>: selos desbloqueados nas cores acima; futuros em cinza.</p>
+<p>3. Abra a próxima lição disponível (as anteriores precisam estar concluídas).</p>
+<p>4. Leia o conteúdo; se houver vídeo, use <strong>Assistir vídeo</strong> (opcional — não bloqueia a conclusão).</p>
+<p>5. Se a lição pedir reflexão, escreva pelo menos 3 caracteres.</p>
+<p>6. Toque em <strong>Concluir lição</strong> (o botão fica fixo no rodapé do modal).</p>
+<p>7. Ao fechar um passo inteiro, celebramos o selo daquele passo.</p>
+<h3>Passo a passo — Perfil Ministerial (lição 5.1)</h3>
+<p>1. Na lição <strong>Descobrindo meus Dons</strong>, toque em <strong>Perfil Ministerial</strong>.</p>
+<p>2. Leia a introdução e toque em <strong>Começar questionário</strong>.</p>
+<p>3. Em cada etapa, responda as 5 perguntas e avance com <strong>Próxima etapa</strong>.</p>
+<p>4. Na última etapa, toque em <strong>Finalizar</strong>.</p>
+<p>5. Volte à lição e toque em <strong>Concluir lição</strong> (o app exige o questionário preenchido).</p>
+<p>6. Se desejar, use <strong>Refazer questionário</strong> no resultado.</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Progresso sequencial, selos coloridos na galeria e celebração ao concluir cada passo.</li>
+<li>Na 5.1: perfil predominante entre <strong>Pregação</strong>, <strong>Discipulado</strong>, <strong>Pastoral</strong>, <strong>Evangelismo</strong>, <strong>Liderança</strong> ou <strong>Louvor</strong>.</li>
+<li>Ao fechar a trilha: selo dourado + notificação pastoral para certificado.</li>
+<li>Ao <strong>refazer</strong> o questionário e finalizar de novo, o resultado anterior é <strong>substituído</strong>.</li>
+</ul>
+<h3>Se der erro</h3>
+<ul>
+<li>«Lição não encontrada nesta igreja» — confirme a <strong>igreja ativa</strong> na sessão e reabra a Trilha.</li>
+<li>Mensagem pedindo scripts SQL — a equipe TI deve executar os scripts <code>discipleship-trail-<em>.sql</code> e <code>ministerial-profile-questionnaire</em>.sql</code>.</li>
+</ul>
+<hr>
+<h2>12.4 Selfie biométrica</h2>
+<h3>Objetivo</h3>
+<p>Registrar ou atualizar a foto de rosto usada na identificação do membro.</p>
+<h3>Caminho</h3>
+<p><strong>Perfil &amp; Identidade</strong> → <strong>Dados Cadastrais</strong> → seção de selfie.</p>
+<h3>Passo a passo</h3>
+<p>1. Abra <strong>Dados Cadastrais</strong>.</p>
+<p>2. Atualize <strong>selfie</strong> com <strong>Tirar Selfie</strong> ou <strong>Atualizar Selfie</strong>.</p>
+<h3>Ilustração — Selfie biométrica</h3>
+<p style="font-size:9.5pt;color:#94A3B8;font-style:italic">Ilustração indisponível neste recorte (docs/manual-painel/screens/17-selfie-biometrica.png).</p>
+<table><thead><tr>
+<th>Ref.</th>
+<th>Elemento indicado na imagem</th>
+</tr></thead><tbody>
+<tr>
+<td>①</td>
+<td>Botão <strong>Tirar Selfie</strong> / <strong>Atualizar Selfie</strong></td>
+</tr>
+<tr>
+<td>②</td>
+<td>Área de pré-visualização da foto</td>
+</tr>
+<tr>
+<td>③</td>
+<td>Atalho <strong>LGPD</strong> (se pendente)</td>
+</tr>
+<tr>
+<td>④</td>
+<td>Resumo do membro (<strong>Maurício de Freitas</strong>)</td>
+</tr>
+</tbody></table>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Selfie exibida no perfil; botão <strong>LGPD</strong> visível apenas com módulo ativo e pendência.</li>
+</ul>
+<hr>
+<h1>Encerramento — Sair com segurança</h1>
+<h3>Objetivo</h3>
+<p>Encerrar a sessão no aparelho (essencial em celular compartilhado).</p>
+<h3>Caminho</h3>
+<p><strong>Índice</strong> → rodapé → <strong>Encerrar sessão</strong> (web) ou <strong>Sair do aplicativo</strong> (celular).</p>
+<h3>Resultado esperado</h3>
+<ul>
+<li>Volta à tela <strong>Boas-vindas</strong>; próximo uso exige celular e senha novamente.</li>
+<li>Dados de login removidos do aparelho.</li>
+</ul>
+<hr>
+<h2>Resumo — o que você deve conseguir após este manual</h2>
+<table><thead><tr>
+<th>Necessidade</th>
+<th>Onde ver no app</th>
+</tr></thead><tbody>
+<tr>
+<td>Vagas do culto</td>
+<td>Agenda → copo <strong>Vagas</strong> + número entre parênteses</td>
+</tr>
+<tr>
+<td>Filho aceito na sala</td>
+<td>SALA(S) → <strong>✓</strong> ao lado do nome</td>
+</tr>
+<tr>
+<td>Pedido pastoral acompanhado</td>
+<td>Coração Aberto → <strong>Meus pedidos</strong> → status <strong>Acolher / Apoiar / Acompanhar</strong></td>
+</tr>
+<tr>
+<td>Quem está de escala hoje</td>
+<td>Escalas → tipo → data de hoje na lista</td>
+</tr>
+<tr>
+<td>Incluir família no meu círculo</td>
+<td>Perfil &amp; Identidade → <strong>Gerenciar Família</strong> → adicionar + checkbox ✓</td>
+</tr>
+<tr>
+<td>Descobrir perfil ministerial</td>
+<td>Perfil &amp; Identidade → <strong>Trilha de Discipulado</strong> → 5.1 <strong>Descobrindo meus Dons</strong> → questionário</td>
+</tr>
+<tr>
+<td>Ver selos da Trilha</td>
+<td>Perfil &amp; Identidade → <strong>Trilha de Discipulado</strong> → <strong>Minhas Conquistas / Selos</strong></td>
+</tr>
+<tr>
+<td>Ofertar via PIX</td>
+<td>Dízimos e Ofertas → <strong>Copiar chave PIX</strong></td>
+</tr>
+<tr>
+<td>Check-in no culto</td>
+<td>Agenda (audiência) + QR no dia do evento</td>
+</tr>
+</tbody></table>
+<hr>
+<p><em>App IBN · Igreja Batista Norte · Manual do Painel v2026-07-30</em></p>
+</div>
+</body>
+</html>

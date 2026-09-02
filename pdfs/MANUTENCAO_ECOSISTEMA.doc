@@ -1,0 +1,369 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Manutenção como ecossistema vivo</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Manutenção como ecossistema vivo</h1>
+<p>Proposta de atuação do <strong>administrador</strong> no módulo de manutenção (<code>maintenance-dashboard</code>), alinhada ao que o app-igreja já entrega: eventos, salas Kids/Teens, parâmetros globais, Coração Aberto (pedidos pastorais), escalas e cards do dashboard.</p>
+<p><strong>Pacotes:</strong> <a href="PACOTE_6_MANUAL_MANUTENCAO.md">&lt;code&gt;PACOTE_6_MANUAL_MANUTENCAO.md&lt;/code&gt;</a> (passo a passo) · <a href="PACOTE_2_OPERACAO.md">&lt;code&gt;PACOTE_2_OPERACAO.md&lt;/code&gt;</a> (ecossistema) · <strong>Índice:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></p>
+<p><strong>Atualizado em:</strong> 23/06/2026</p>
+<hr>
+<h2>1. Papel do administrador</h2>
+<p>O administrador não “mexe no banco” no dia a dia. Ele <strong>alimenta o pulso da igreja no app</strong> através de intervenções curtas e recorrentes, sempre pelo fluxo de manutenção (ícone de engrenagem no rodapé do dashboard).</p>
+<table><thead><tr>
+<th>Papel</th>
+<th>O que mantém vivo</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Curador de eventos</strong></td>
+<td>Agenda visível, capacidade, salas, ofertas no evento</td>
+</tr>
+<tr>
+<td><strong>Operador de salas</strong></td>
+<td>Monitoramento Kids/Teens no dia do culto</td>
+</tr>
+<tr>
+<td><strong>Configurador</strong></td>
+<td>Parâmetros (<code>app_parameters</code>) que ligam/desligam cards</td>
+</tr>
+<tr>
+<td><strong>Guardião pastoral</strong></td>
+<td>Card <strong>Cuidado Pastoral</strong> na manutenção; <strong>Mudança de Papéis</strong> para visitante/congregado/membro</td>
+</tr>
+<tr>
+<td><strong>Auditoria de uso</strong></td>
+<td>Card <strong>Acessos de Usuários</strong> — logins e telas por sessão <em>(super_admin)</em></td>
+</tr>
+<tr>
+<td><strong>Operador de recepção</strong></td>
+<td>Fila <strong>Recepção Familiar</strong> do formulário público <code>/cadastro-familia/</code></td>
+</tr>
+</tbody></table>
+<p>O membro usa o app com PIN; o admin usa as mesmas regras de negócio, com permissão de escrita em <code>events</code> e parâmetros.</p>
+<hr>
+<h2>2. Mapa do ecossistema (hoje)</h2>
+<p>```mermaid</p>
+<p>flowchart LR</p>
+<p>subgraph membro [Membro - app]</p>
+<p>D[Dashboard cards]</p>
+<p>P[Coração Aberto]</p>
+<p>Q[Check-in / QR]</p>
+<p>G[Geofence GPS]</p>
+<p>S[Sala Kids Teens]</p>
+<p>end</p>
+<p>subgraph admin [Admin - manutenção]</p>
+<p>M[maintenance-dashboard]</p>
+<p>E[CRUD events]</p>
+<p>MON[Monitor salas]</p>
+<p>end</p>
+<p>subgraph supabase [Supabase]</p>
+<p>EV[(events)]</p>
+<p>ER[(event_registrations)]</p>
+<p>AP[(app_parameters)]</p>
+<p>PR[(pastoral_requests)]</p>
+<p>PF[(profiles)]</p>
+<p>end</p>
+<p>D --&gt; EV</p>
+<p>D --&gt; AP</p>
+<p>P --&gt; PR</p>
+<p>S --&gt; ER</p>
+<p>Q --&gt; ER</p>
+<p>M --&gt; E</p>
+<p>E --&gt; EV</p>
+<p>MON --&gt; ER</p>
+<p>P --&gt; PF</p>
+<p>```</p>
+<hr>
+<h2>3. Rotina recomendada de intervenção</h2>
+<h3>Diária (dia de culto / evento)</h3>
+<p>1. <strong>Abrir manutenção</strong> → conferir lista “Eventos cadastrados”.</p>
+<p>2. <strong>Evento do dia</strong></p>
+<ul>
+<li>Data/hora e local corretos.</li>
+<li><code>kids_room</code> / <code>teens_room</code> conforme programação.</li>
+<li><code>max_capacity</code> atualizada (evita contagem errada no card SALA).</li>
+<li><code>parm_ofertas</code> se houver coleta no app.</li>
+<li>Evento <strong>não</strong> bloqueado (<code>is_locked</code> = falso), salvo encerramento.</li>
+</ul>
+<p>3. <strong>Aba / card Monitor de salas</strong> (no próprio maintenance)</p>
+<ul>
+<li>Selecionar o evento ativo.</li>
+<li>Acompanhar entradas Kids/Teens (refresco manual ao focar a tela — sem polling agressivo).</li>
+</ul>
+<p>4. <strong>Após o culto</strong> (opcional)</p>
+<ul>
+<li>Bloquear evento (<code>is_locked</code>) ou arquivar na política da igreja.</li>
+</ul>
+<h3>Semanal</h3>
+<p>1. <strong>Próximos eventos</strong> — cadastrar cultos, conferências, retiros com 7–15 dias de antecedência.</p>
+<p>2. <strong>Parâmetros globais</strong> (via SQL ou painel futuro em <code>app_parameters</code>):</p>
+<ul>
+<li><code>QRCode_Ativo</code> — exibe ou oculta card Check-in (eventos <strong>sem</strong> totem).</li>
+<li><code>check_In_Automatico</code> — com totem ativo no evento: card Check-in só aparece se valor = <code>nao</code> (check-in manual + QR + confirmação no totem).</li>
+<li><code>cel_totem</code> — celular <strong>exclusivo</strong> do tablet totem: senha <strong>9999</strong>, sem cadastro/LGPD/perfil; só <code>/totem-checkin</code> (não usar esse número em <code>profiles</code>; ver <code>scripts/app-parameter-cel-totem.sql</code>).</li>
+<li><code>chave_pix</code> — card Dízimos e Ofertas.</li>
+<li><code>psw_user</code> / <code>psw_mngr</code> — regras do PIN (já em <code>profiles-access-pin.sql</code>).</li>
+</ul>
+<p>3. <strong>Categorias pastorais</strong> — se novos motivos forem aprovados em reunião pastoral, rodar <code>pastoral-request-categories.sql</code> (não é tela de manutenção ainda).</p>
+<h3>Mensal</h3>
+<p>1. Revisar eventos antigos abertos (limpeza / <code>is_locked</code>).</p>
+<p>2. Conferir se scripts RLS/RPC novos foram aplicados após deploy do app (checklist abaixo).</p>
+<p>3. Amostragem de pedidos em <code>pastoral_requests</code> (hoje via Table Editor ou painel futuro).</p>
+<hr>
+<h2>4. Campos críticos em <code>events</code> (manutenção)</h2>
+<table><thead><tr>
+<th>Campo</th>
+<th>Impacto no ecossistema</th>
+</tr></thead><tbody>
+<tr>
+<td><code>name</code>, <code>event_date</code>, <code>event_local</code></td>
+<td>Cards, seleção de evento, SALA</td>
+</tr>
+<tr>
+<td><code>max_capacity</code></td>
+<td>Vagas restantes no monitor</td>
+</tr>
+<tr>
+<td><code>kids_room</code>, <code>teens_room</code></td>
+<td>Abas Kids/Teens no card SALA e no maintenance</td>
+</tr>
+<tr>
+<td><code>parm_ofertas</code></td>
+<td>Contexto do evento (ofertas no culto); o card “Dízimos e Ofertas” no dashboard permanece <strong>sempre visível</strong></td>
+</tr>
+<tr>
+<td><code>is_locked</code></td>
+<td>Evento some do check-in / lista ativa</td>
+</tr>
+<tr>
+<td><code>totem_ativo</code></td>
+<td>Inscrição na audiência gera <code>checkins.status = pre_checkin</code>; totem confirma via QR</td>
+</tr>
+<tr>
+<td><code>is_visible</code> / regras em <code>eventVisibility</code></td>
+<td>Quem vê o evento para inscrição</td>
+</tr>
+</tbody></table>
+<p><strong>Boas práticas</strong></p>
+<ul>
+<li>Um evento “principal” por janela de tempo evita confusão no seletor do card SALA.</li>
+<li>Alterou capacidade ou salas → salvar e pedir à equipe que <strong>reabra</strong> o card SALA (pull-to-refresh implícito ao mudar de card).</li>
+</ul>
+<hr>
+<h2>5. Scripts SQL — checklist pós-deploy</h2>
+<p>Executar no Supabase quando atualizar o app:</p>
+<table><thead><tr>
+<th>Script</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><code>events-totem-ativo.sql</code></td>
+<td>Coluna <code>events.totem_ativo</code></td>
+</tr>
+<tr>
+<td><code>events-requer-quorum.sql</code></td>
+<td>Coluna <code>events.requer_quorum</code></td>
+</tr>
+<tr>
+<td><code>checkins-totem-flow.sql</code></td>
+<td>Tabela <code>checkins</code>, RPCs totem (fonte única), patch <code>register_member_atomic</code></td>
+</tr>
+<tr>
+<td><code>events-quorum-registry.sql</code></td>
+<td>Tabela <code>event_quorum_registry</code> + <code>sync_quorum_registry_for_registration</code> (após totem)</td>
+</tr>
+<tr>
+<td><code>escalas-multi-vagas.sql</code></td>
+<td>Colunas <code>vagas_por_servico</code> e <code>modo_ciclo</code>; remove limite 1 servo/domingo</td>
+</tr>
+<tr>
+<td><code>escalas-integrity-constraints.sql</code></td>
+<td>Limite por vagas + validação domingo (I3)</td>
+</tr>
+<tr>
+<td><code>escalas-apply-cycle-batch.sql</code></td>
+<td><code>aplicar_ciclo_escala</code> + <code>get_scale_cycle_context</code></td>
+</tr>
+<tr>
+<td><code>escalas-tipos-maintenance-rpc.sql</code></td>
+<td>CRUD tipos com vagas e modo do ciclo</td>
+</tr>
+<tr>
+<td><code>access-control-lider-escala.sql</code></td>
+<td>ACL por tipo de escala (papel <code>lider</code>)</td>
+</tr>
+<tr>
+<td><code>access-control-map-screen.sql</code></td>
+<td>Tela <code>/mapa-geolocalizacao</code> no ACL (I12)</td>
+</tr>
+<tr>
+<td><code>profiles-sync-address-from-cep-rpc.sql</code></td>
+<td>RPC canônica de CEP/endereço (I14)</td>
+</tr>
+<tr>
+<td><code>events-maintenance-rls.sql</code></td>
+<td>Admin grava/apaga eventos</td>
+</tr>
+<tr>
+<td><code>sync-managed-member-profile-family-rpc.sql</code></td>
+<td>RPC <code>accept_managed_member_into_family</code> (transferência/aceite familiar)</td>
+</tr>
+<tr>
+<td><code>pastoral-request-categories.sql</code></td>
+<td>Motivos/submotivos Coração Aberto</td>
+</tr>
+<tr>
+<td><code>pastoral-requests-fields.sql</code></td>
+<td>Insert pedidos + <code>profile_id</code></td>
+</tr>
+<tr>
+<td><code>pastoral-requests-history.sql</code></td>
+<td>Histórico “Meus pedidos”</td>
+</tr>
+<tr>
+<td><code>profiles-access-pin.sql</code></td>
+<td>Login PIN</td>
+</tr>
+<tr>
+<td><code>financials-maintenance-rpc.sql</code></td>
+<td>Carga/exclusão em lote com versão REALIZADO/PLANEJADO</td>
+</tr>
+<tr>
+<td><code>expense-reports-schema.sql</code></td>
+<td>Tabelas <code>expense_reports</code> / <code>expense_items</code></td>
+</tr>
+<tr>
+<td><code>expense-reports-rpc.sql</code></td>
+<td>Criar, conciliar, listar período, desconciliar RD</td>
+</tr>
+</tbody></table>
+<p>Sem o histórico pastoral, o membro vê lista vazia mesmo com pedidos gravados.</p>
+<p><strong>Ordem totem/quórum (C6):</strong> <code>events-totem-ativo</code> → <code>events-requer-quorum</code> → <code>checkins-totem-flow</code> → <code>events-quorum-registry</code>. Reexecutar <code>checkins-totem-flow</code> não remove hooks de quórum.</p>
+<p><strong>Ordem escalas (multi-vagas):</strong> <code>escalas-multi-vagas</code> → <code>escalas-integrity-constraints</code> → <code>escalas-apply-cycle-batch</code> → <code>escalas-tipos-maintenance-rpc</code> → (se ACL) <code>access-control-lider-escala</code>.</p>
+<hr>
+<h2>6. Evolução desejada do módulo manutenção</h2>
+<p>Prioridade sugerida para tornar o ecossistema <strong>autossuficiente</strong> (menos SQL manual):</p>
+<table><thead><tr>
+<th>Fase</th>
+<th>Entrega admin</th>
+<th>Benefício</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>A</strong></td>
+<td>Tela “Parâmetros do app” (<code>QRCode_Ativo</code>, <code>chave_pix</code>, textos)</td>
+<td>Cards reagem sem SQL</td>
+</tr>
+<tr>
+<td><strong>B</strong></td>
+<td>Atalho “Duplicar evento”</td>
+<td>Agenda semanal mais rápida</td>
+</tr>
+<tr>
+<td><strong>C</strong></td>
+<td>Painel pastoral (lista <code>pastoral_requests</code>, status, responsável)</td>
+<td>Coração Aberto fecha o ciclo</td>
+</tr>
+<tr>
+<td><strong>D</strong></td>
+<td>Notificações (opcional)</td>
+<td>Admin alertado em pedido sigiloso novo</td>
+</tr>
+<tr>
+<td><strong>E</strong></td>
+<td>Auditoria (<code>updated_at</code>, quem alterou)</td>
+<td>Confiança e suporte</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>7. Sinais de ecossistema “doente”</h2>
+<table><thead><tr>
+<th>Sintoma</th>
+<th>Provável causa</th>
+<th>Ação admin/técnica</th>
+</tr></thead><tbody>
+<tr>
+<td>Card SALA vazio no <strong>dashboard do membro</strong></td>
+<td>Nenhum membro <strong>da família dele</strong> inscrito no evento, ou <code>family_id</code> não identificado</td>
+<td>Marcar audiência da família; conferir cadastro. Na <strong>manutenção</strong>, o monitor mostra todos os inscritos</td>
+</tr>
+<tr>
+<td>Card SALA sem crianças na <strong>manutenção</strong></td>
+<td>RPC <code>get_event_registrations_by_status</code> desatualizada</td>
+<td>Rodar migrations / refetch</td>
+</tr>
+<tr>
+<td>Check-in não aparece</td>
+<td><code>QRCode_Ativo</code> = nao (sem totem) ou totem ativo com <code>check_In_Automatico</code> ≠ nao</td>
+<td>Ajustar parâmetros / totem do evento</td>
+</tr>
+<tr>
+<td>Pedido pastoral “some”</td>
+<td>RPC histórico não criada</td>
+<td><code>pastoral-requests-history.sql</code></td>
+</tr>
+<tr>
+<td>Evento não lista</td>
+<td><code>is_locked</code> ou data fora da janela de visibilidade</td>
+<td>Revisar evento na manutenção</td>
+</tr>
+<tr>
+<td>App lento no dashboard</td>
+<td>Muitos polls/consultas (mitigado em 2025)</td>
+<td>Manutenção sem polling duplicado; cards pesados só ao abrir</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>8. Otimizações já aplicadas no app (performance)</h2>
+<ul>
+<li>Polling de eventos: <strong>8s</strong> (antes 2s), pausa em segundo plano.</li>
+<li>Manutenção / monitor salas: <strong>sem polling</strong>; atualiza ao focar a tela (sem <code>refetch</code> no blur).</li>
+<li>Inscrições Kids/Teens: busca só com card <strong>SALA</strong> ativo; refetch <strong>silencioso</strong> se já há dados.</li>
+<li>Pré-check-in: refetch silencioso no foco (índice e dashboard) — evita piscar ao trocar tela.</li>
+<li>Perfil/ACL no foco: atualiza estado só quando os dados mudam de fato.</li>
+<li>Aniversariantes, lista de membros, escalas: carga <strong>na primeira visita</strong> ao card.</li>
+<li><code>app_parameters</code>: cache em memória <strong>5 min</strong>.</li>
+<li>Datas de nascimento da família: leitura de <code>profiles</code> em <strong>lote</strong> (não N+1).</li>
+<li>Marca d'água renderizada <strong>atrás</strong> do conteúdo (menos flicker visual).</li>
+</ul>
+<hr>
+<h2>9. Métricas simples de sucesso</h2>
+<ul>
+<li>Tempo para publicar um novo culto na manutenção: meta <strong>&amp;lt; 2 min</strong>.</li>
+<li>Eventos ativos com data futura sempre <strong>≥ 1</strong>.</li>
+<li>Pedidos pastorais com <code>profile_id</code> preenchido: <strong>100%</strong> (pós <code>pastoral-requests-fields.sql</code>).</li>
+<li>Zero intervenção SQL semanal para parâmetros (após fase A).</li>
+</ul>
+<hr>
+<h2>10. Resumo executivo</h2>
+<p>O administrador mantém o ecossistema vivo <strong>cadastrando e ajustando eventos</strong>, <strong>configurando parâmetros que ligam os cards</strong>, <strong>monitorando salas no dia D</strong> e <strong>conciliando relatórios de despesas (RD)</strong>. O carrossel de manutenção abre em um <strong>card menu</strong> com etiquetas dos módulos (como o Índice do Aplicativo no dashboard do membro). O próximo salto de maturidade é trazer <strong>parâmetros e pastoral</strong> para dentro da manutenção, eliminando idas ao SQL Editor e fechando o ciclo “pedido → acompanhamento → resposta”.</p>
+</div>
+</body>
+</html>

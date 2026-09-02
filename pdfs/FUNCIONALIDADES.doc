@@ -1,0 +1,502 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Funcionalidades do aplicativo IBN</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Funcionalidades do aplicativo IBN</h1>
+<p>Lista completa das funcionalidades do <strong>app-igreja</strong> (Igreja Batista Norte), organizada por área.</p>
+<p>Itens marcados com <em>(staff)</em> exigem permissão de manutenção ou papel administrativo.</p>
+<p><strong>Documentação relacionada:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a> · <a href="MANUAL_ENTREGA.md">&lt;code&gt;MANUAL_ENTREGA.md&lt;/code&gt;</a> · <a href="PACOTE_1_VISAO_GERAL.md">&lt;code&gt;PACOTE_1_VISAO_GERAL.md&lt;/code&gt;</a> · <a href="BLUEPRINT.md">&lt;code&gt;BLUEPRINT.md&lt;/code&gt;</a> · <a href="MANUAL_TREINAMENTO.md">&lt;code&gt;MANUAL_TREINAMENTO.md&lt;/code&gt;</a> · <a href="CONTROLE_ACESSO.md">&lt;code&gt;CONTROLE_ACESSO.md&lt;/code&gt;</a></p>
+<p><strong>Atualizado em:</strong> 03/07/2026</p>
+<hr>
+<h2>Autenticação e sessão</h2>
+<ul>
+<li>Login por <strong>celular + PIN de 4 dígitos</strong> (validação no Supabase via <code>verificar_login</code>)</li>
+<li><strong>Primeira entrada</strong> com geração de PIN temporário <strong>exclusivamente por e-mail</strong> (<code>dispatchAuthAccessPinEmail</code> / <code>dispatch_auth_access_pin_email</code>; gateway <code>lib/authNotificationService.ts</code>) — WhatsApp <strong>bloqueado</strong> no fluxo de autenticação</li>
+<li><strong>Recuperação de senha</strong> (<code>/forgot-password</code>) — pergunta de segurança + envio de <strong>novo PIN por e-mail</strong> (passo 2 do login → <strong>Esqueci minha senha</strong>; não usa WhatsApp)</li>
+<li><strong>Modo totem</strong> — login dedicado com senha <code>9999</code> e celular <code>cel_totem</code></li>
+<li>Restauração automática de sessão ao reabrir o app</li>
+<li><strong>Logout seguro</strong> — limpa telefone e <code>profile_id</code> do aparelho (<code>Sair do aplicativo</code> / <code>Encerrar sessão</code>)</li>
+<li>Redirecionamento pós-login conforme estado do perfil e parâmetro <strong><code>LGPD_Ativo</code></strong> (dashboard, cadastro, LGPD, Índice, totem)</li>
+<li>Links para <strong>Instagram</strong> e <strong>YouTube</strong> da igreja na tela de login (<strong>somente no passo 1 — celular</strong>; ocultos no passo da senha)</li>
+<li>Tela de login <strong>sem marca d'água</strong> (demais telas autenticadas exibem marca d'água discreta)</li>
+</ul>
+<hr>
+<h2>Cadastro e perfil</h2>
+<ul>
+<li><strong>Cadastro inicial</strong> — nome, nascimento, telefone, CEP; com <strong><code>LGPD_Ativo = sim</code></strong>: selfie e aceite LGPD; com <strong><code>nao</code></strong>: fluxo simplificado (sem termos, selfie nem tela <code>/lgpd</code>)</li>
+<li><strong>Trava LGPD</strong> — rolagem obrigatória dos termos antes do aceite</li>
+<li>Upload de <strong>selfie</strong> (câmera nativa ou arquivo na web)</li>
+<li>Reserva automática de <strong>código de família</strong> (<code>family_id</code>)</li>
+<li>Card <strong>Perfil &amp; Identidade</strong> (<code>grouped_manage</code>) — atalho no Índice e no carrossel do Painel</li>
+<li><strong>Dados cadastrais</strong> — edição de perfil com seções recolhíveis (<code>/manage-profile</code>)</li>
+<li>Campos: nome, nascimento, CPF, e-mail, telefone, endereço completo</li>
+<li><strong>Sync de endereço por CEP</strong> (RPC <code>sync_profile_address_from_cep</code>)</li>
+<li><strong>Alteração de senha de acesso</strong> (PIN atual → novo PIN)</li>
+<li><strong>Selfie</strong> — captura, substituição com confirmação</li>
+<li><strong>Veículos</strong> — cadastro de placa, marca, modelo e cor</li>
+<li><strong>Vincular à família</strong> — busca por código e solicitação de vínculo</li>
+<li><strong>Trilha de Discipulado</strong> — 5 passos × 3 lições com progresso sequencial; <strong>selos coloridos</strong> por passo (céu, esmeralda, royal, laranja, dourado) + selo dourado final; galeria <strong>Minhas Conquistas / Selos</strong>; na lição <strong>5.1 Descobrindo meus Dons</strong>, o <strong>Perfil Ministerial</strong> (50 perguntas / 10 etapas); gates de conclusão no servidor (<code>upsert_my_discipleship_lesson_progress</code>); alertas pastorais por módulo e de certificado ao fechar a trilha; admin em <strong>Manutenção da Trilha</strong> (Temas, Reconhecimentos, Reset)</li>
+<li><strong>Paleta de cores</strong> — seletor no rodapé do card Perfil &amp; Identidade</li>
+<li><strong>Onboarding</strong> — fluxo guiado para completar cadastro pendente</li>
+<li><strong>Termos LGPD</strong> — tela dedicada para aceite/recusa com registro no banco</li>
+<li>Controle de colunas por <strong>ACL</strong> (campos visíveis/editáveis por papel)</li>
+</ul>
+<hr>
+<h2>Família</h2>
+<ul>
+<li><strong>Gerenciar família</strong> — CRUD de membros (<code>members</code>)</li>
+<li>Busca de perfil existente por <strong>telefone</strong> ou <strong>nome</strong> ao adicionar membro</li>
+<li><strong>Transferência entre famílias</strong> — se a pessoa já pertence a outra família, o gestor confirma a transferência para a sua</li>
+<li>Parentesco (cônjuge, filho(a), etc.)</li>
+<li><strong>Reconhecimento familiar</strong> — checkbox de aceite por membro (toggle na lista)</li>
+<li><strong>Herança de endereço completo</strong> — ao aceitar, transferir ou adicionar membro, o endereço do gestor (CEP, rua, número, complemento, bairro, cidade, estado) é copiado para o perfil do membro (<code>lib/inheritFamilyAddress.ts</code>)</li>
+<li>Sincronização de <code>family_id</code> em <code>members</code> e <code>profiles</code> via RPC <code>accept_managed_member_into_family</code> (<code>scripts/sync-managed-member-profile-family-rpc.sql</code>)</li>
+<li>Proteção do <strong>representante legal</strong> (não pode ser excluído)</li>
+<li>Detecção de duplicatas (nome + telefone na família)</li>
+<li>Indicadores visuais <strong>Kids/Teens</strong> por idade</li>
+</ul>
+<hr>
+<h2>Painel principal (Dashboard)</h2>
+<ul>
+<li>Carrossel horizontal de <strong>cards</strong> (deslize ou botões <code>‹</code> / <code>›</code> no rodapé)</li>
+<li>Indicador de posição no rodapé (<code>1 / N</code>) e badge do card ativo no cabeçalho</li>
+<li>Botões <code>‹</code> / <code>›</code> avançam 1 card a cada 500 ms enquanto pressionados</li>
+<li>Padding responsivo conforme largura da tela (<code>lib/uiTokens.ts</code>)</li>
+<li>Saudação personalizada com nome do membro</li>
+<li>Alerta visual se <strong>LGPD pendente</strong> (cabeçalho vermelho)</li>
+<li>Banner de <strong>ACL indisponível</strong> (modo estrito)</li>
+<li><strong>Índice do Aplicativo</strong> (<code>/(tabs)/index</code>) — tela inicial com etiquetas/atalhos para cada card; distribuição uniforme na altura da tela</li>
+<li>Tela de <strong>Menu/atalhos</strong> legada integrada ao índice; <strong>ícones coloridos</strong> por módulo</li>
+<li>Botão central <strong>Menu</strong> ocupa a largura útil do rodapé; ícone <strong>Configurações</strong> (manutenção) alinhado à direita quando visível</li>
+<li><strong>Cache de sessão e ACL</strong> — permissões e perfil reutilizados em memória entre cards (<code>lib/asyncResultCache.ts</code>), sem refetch completo a cada foco de tela</li>
+<li>Cards filtrados por <strong>permissão de perfil</strong> (ACL)</li>
+<li><strong>Paletas visuais distintas</strong> por tipo de card (<code>lib/dashboardCardThemes.ts</code>)</li>
+<li><strong>Retorno ao card de origem</strong> — telas abertas a partir do dashboard (perfil, família, mapa, pastoral, financeiro) voltam ao card que as chamou via parâmetro <code>returnDashboardCard</code></li>
+<li>Toasts com <strong>mensagens longas em múltiplas linhas</strong> (<code>components/ui/appToastConfig.tsx</code>)</li>
+</ul>
+<h3>Cards do dashboard (membro)</h3>
+<table><thead><tr>
+<th>Card</th>
+<th>Funcionalidades</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Agenda da Família</strong></td>
+<td>Abre pelo <strong>Início</strong> (toque no culto). Vagas, inscrição/audiência, checkbox em massa; após confirmar, <strong>Adicionar</strong> grava no Google Agenda e baixa <code>.ics</code> (Apple/Outlook) no horário da igreja</td>
+</tr>
+<tr>
+<td><strong>Check-in / QR Code</strong></td>
+<td>Etiqueta da família, QR para totem, badges Kids/Teens, modal de seleção manual</td>
+</tr>
+<tr>
+<td><strong>SALA(S)</strong></td>
+<td>Monitoramento read-only de entrada Kids/Teens — <strong>somente membros da própria família</strong></td>
+</tr>
+<tr>
+<td><strong>Dízimos e Ofertas</strong></td>
+<td>Sempre visível no carrossel; dados do recebedor, chave PIX, <strong>Copiar chave PIX</strong> com ícone <em>touch-app</em>, atualizar chave</td>
+</tr>
+<tr>
+<td><strong>Coração Aberto</strong></td>
+<td>Atalho para pedido pastoral</td>
+</tr>
+<tr>
+<td><strong>Lista de Membros</strong></td>
+<td>Botões <strong>Visitantes</strong> e <strong>Mapa Geral</strong> na mesma linha; alternância membros/visitantes; busca <strong>Procurar membro</strong> / <strong>Procurar visitante</strong>; tabela <strong>Nome</strong> · <strong>Família</strong> · <strong>Zap</strong> · <strong>GPS</strong>; ícone <strong>users</strong> abre modal <strong>Membros da família</strong> (código, parentesco, WhatsApp); <strong>Mapa Geral</strong> com filtros Todos / Com papel / Visitantes</td>
+</tr>
+<tr>
+<td><strong>Aniversariantes</strong></td>
+<td>Filtro por mês, lista com WhatsApp</td>
+</tr>
+<tr>
+<td><strong>Financeiro</strong></td>
+<td>Hub: relatórios (<code>/financial</code>) e <strong>Relatório de Despesas (RD)</strong> destacado (<code>/expense-report</code>); Fluxo de caixa, Categorias e Relatórios extras em breve</td>
+</tr>
+<tr>
+<td><strong>Escalas</strong></td>
+<td>Lista de tipos de escala, escala por data, WhatsApp dos servos</td>
+</tr>
+<tr>
+<td><strong>Estacionamento</strong></td>
+<td>Identificação de veículo por placa, WhatsApp do proprietário</td>
+</tr>
+<tr>
+<td><strong>Perfil &amp; Identidade</strong> (<code>grouped_manage</code>)</td>
+<td>Título do card e atalho no Índice; <strong>Dados Cadastrais</strong>, <strong>Gerenciar Família</strong>, <strong>Trilha de Discipulado</strong> (Perfil Ministerial na lição 5.1) e <strong>Paleta de cores</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Eventos e check-in</h2>
+<ul>
+<li>Listagem de eventos publicados com data, local e capacidade</li>
+<li><strong>Inscrição na audiência</strong> (pré-check-in) por integrante do núcleo familiar (membros, congregados e dependentes com <code>accepted</code> ≠ <code>false</code>)</li>
+<li>Após confirmar a audiência, modal <strong>Compromisso enviado para minha agenda</strong>: <strong>Adicionar</strong> abre o Google Agenda e baixa <code>.ics</code> (fuso America/Sao_Paulo)</li>
+<li>Suporte a fluxos: <strong>check-in automático por proximidade (geofence GPS)</strong>, <strong>totem</strong>, <strong>manual</strong>, <strong>quórum</strong></li>
+<li><strong>Check-in geofence</strong> — quando <code>geofence_ativo</code> no evento e local favorito com coordenadas: o app detecta proximidade ao templo (raio e janela configuráveis em <code>app_parameters</code>) e confirma presença automaticamente após leituras GPS estáveis; fila offline para sincronização sem rede</li>
+<li><strong>Locais favoritos</strong> — cadastro de locais com nome, endereço, CEP e coordenadas; vinculados ao campo <code>event_local</code> do evento para resolver geofence</li>
+<li><strong>Invalidação de check-ins</strong> — alterações relevantes no evento ou no local favorito (nome, coordenadas, status ativo) disparam purge automático via trigger no Supabase; toast na manutenção informa famílias afetadas</li>
+<li>Gate de pré-check-in antes de liberar card QR ou geofence</li>
+<li><strong>QR Code</strong> da família para leitura no totem</li>
+<li>Card QR visível <strong>somente no dia do evento</strong> (regra configurável)</li>
+<li><strong>Quórum</strong> — um membro por sessão; trava após confirmação no totem</li>
+<li><strong>Totem</strong> (<code>/totem-checkin</code>) — scan de QR, lookup e confirmação via RPC</li>
+<li>Backfill de check-ins ao abrir fluxo do totem (<code>ensure_totem_checkin_flow</code>)</li>
+<li>Proteção contra <strong>duplo check-in</strong> e reprocessamento (cooldown, fila local)</li>
+<li>Status: pré-check-in, confirmado, já confirmado, processando</li>
+<li>Badges <strong>IBN KIDS</strong> / <strong>IBN TEENS</strong> por evento</li>
+<li>Parâmetros: <code>check_in_geofence_raio_metros</code>, <code>check_in_geofence_tempo</code> (horas antes do evento)</li>
+</ul>
+<hr>
+<h2>Salas Kids e Teens</h2>
+<ul>
+<li>Inscrição via audiência no dashboard</li>
+<li><strong>Monitor no dashboard (membro)</strong> — contagem e status read-only, filtrado por <code>family_id</code> da sessão</li>
+<li><strong>Monitor na manutenção (staff)</strong> — exibe todos os inscritos do evento (sem filtro por família)</li>
+<li><strong>Check-in de sala</strong> <em>(staff)</em> — marcação de entrada por inscrição na manutenção</li>
+<li>WhatsApp do responsável após entrada confirmada</li>
+</ul>
+<hr>
+<h2>Quórum e presença <em>(staff)</em></h2>
+<ul>
+<li>Configuração <strong>Requer Quorum</strong> no evento</li>
+<li>Tabela de registro de quórum no editor de eventos (atualização a cada 15 s)</li>
+<li><strong>Lista de Presença</strong> — documento imprimível com hora do check-in</li>
+<li>Atualização automática após confirmação no totem</li>
+</ul>
+<hr>
+<h2>Pastoral</h2>
+<ul>
+<li><strong>Coração Aberto</strong> — formulário de pedido de cuidado/intercessão</li>
+<li>Seleção de <strong>Motivo</strong> e <strong>Situação</strong> em chips segmentados (layout empilhado em telas estreitas)</li>
+<li>Categorias e subcategorias de motivo (<code>scripts/pastoral-request-categories.sql</code>)</li>
+<li>Beneficiário: eu, família ou terceiro</li>
+<li>Destino: <strong>Sigilo pastoral</strong> ou <strong>Intercessão</strong></li>
+<li>Envio vinculado ao perfil logado</li>
+<li><strong>Meus pedidos</strong> — histórico com status e pull-to-refresh</li>
+<li><strong>Cuidado pastoral</strong> <em>(staff)</em> — painel de gestão de pedidos na manutenção</li>
+</ul>
+<hr>
+<h2>Financeiro</h2>
+<h3>Membro (leitura)</h3>
+<ul>
+<li>Seletor de mês (REALIZADO e meses só-PLANEJADO com badge)</li>
+<li><strong>Resultado do mês</strong> — boletim com saldo acumulado e YTD</li>
+<li><strong>Comparativo mensal</strong> — mês atual vs anterior</li>
+<li><strong>Últimos 12 meses</strong> — matriz de valores</li>
+<li><strong>Planejado × Realizado</strong> — comparativo de orçamento</li>
+<li><strong>Saldo bancário</strong> — saldo final por conta (REALIZADO acumulado até o mês); contas zeradas ocultas; linha <strong>Saldo total</strong></li>
+<li>Aviso quando comentários financeiros não carregam</li>
+<li>Atalho destacado <strong>Relatório de Despesas (RD)</strong> no topo do módulo</li>
+</ul>
+<h3>Relatórios de Despesas (RD)</h3>
+<ul>
+<li>Membro cria RD com itens, comprovantes (colar/galeria), valor em centavos (digitação da direita para esquerda) e chave PIX (<code>/expense-report</code>)</li>
+<li>Botão <strong>Submeter e Finalizar</strong> grava o relatório e abre WhatsApp ao tesoureiro (<code>Tesoureiro_contato</code> em <code>app_parameters</code>)</li>
+<li>Membro lista RDs, abre detalhes e <strong>exclui</strong> relatórios <strong>pendentes</strong></li>
+<li>Tesouraria concilia RD pendente a lançamento financeiro na manutenção</li>
+<li><strong>Relatórios de Despesas</strong> — lista do mês na manutenção; <strong>Remover vínculo</strong> (desconciliar)</li>
+<li>Relatório mensal: pendentes pelo mês de emissão; conciliados pelo mês do <strong>lançamento vinculado</strong></li>
+</ul>
+<h3>Manutenção <em>(staff)</em></h3>
+<ul>
+<li>Importação de lançamentos via <strong>CSV</strong> ou colar planilha</li>
+<li>Modos: substituir ou acrescentar; seletor de versão <strong>REALIZADO / PLANEJADO</strong> na carga e no esvaziar mês</li>
+<li><strong>Esvaziar mês</strong> — exclusão escopada por versão orçamentária</li>
+<li>Seções colapsáveis com accordion (apenas uma aberta por vez)</li>
+<li>Picker de mês de referência ampliado; modal de comentário sem pré-preenchimento</li>
+<li>Resumo separado por versão orçamentária</li>
+<li>Mês padrão: mês anterior (limitado até o mês corrente)</li>
+</ul>
+<hr>
+<h2>Escalas</h2>
+<h3>Visualização <em>(membro)</em></h3>
+<ul>
+<li>Lista de tipos de escala no dashboard</li>
+<li>Datas, servos e contato WhatsApp</li>
+<li>Escala de estacionamento com identificação por placa</li>
+</ul>
+<h3>Manutenção <em>(staff)</em></h3>
+<ul>
+<li><strong>Tipos de escala</strong> — CRUD de códigos, nomes, <strong>vagas por domingo</strong> e <strong>modo do ciclo</strong> (individual/equipe)</li>
+<li><strong>Servos em disponibilidade</strong> — voluntários por tipo, ordem sequencial</li>
+<li><strong>Registro manual</strong> de escala (data + servo)</li>
+<li><strong>Gerar ciclo em bloco</strong> — preview + aplicação transacional (<code>aplicar_ciclo_escala</code>)</li>
+<li>Regras: até <code>vagas_por_servico</code> servos por domingo; modo <strong>individual</strong> (cada servo em domingo distinto no ciclo) ou <strong>equipe</strong> (preenche N vagas no mesmo domingo); ordem crescente; início após MAX(data)</li>
+<li>Remoção de voluntário com recompactação de ordem</li>
+<li>Alerta de escalas futuras ao remover servo</li>
+<li>Contexto do ciclo via RPC <code>get_scale_cycle_context</code></li>
+</ul>
+<hr>
+<h2>Mapa de geolocalização (PWA/web)</h2>
+<ul>
+<li>Mapa <strong>Leaflet</strong> com pins por CEP dos perfis</li>
+<li>Filtros: todos, com papel, visitantes</li>
+<li>Geocodificação servidor-primária + cache local (<code>geoCepCache.v8</code>)</li>
+<li>Snapshot de mapa versionado (<code>profilesMapSnapshot.v7</code>)</li>
+<li><strong>Detalhe do pin</strong> (nome, papel, endereço, WhatsApp) — recurso ACL separado <code>/mapa-geolocalizacao/detalhe-pin</code>; padrão só <code>pastoral</code> e <code>super_admin</code>; demais perfis veem o mapa sem abrir localização alheia</li>
+<li>Estatísticas: perfis, pins, CEPs inválidos</li>
+<li><strong>Atualizar mapa</strong> — sincronização sob demanda</li>
+<li>ACL de perfil no mapa (visitante vs membro)</li>
+<li>Versão nativa: placeholder informando uso via PWA</li>
+</ul>
+<hr>
+<h2>Manutenção <em>(staff)</em></h2>
+<table><thead><tr>
+<th>Módulo</th>
+<th>Funcionalidades</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Programação de Eventos</strong></td>
+<td>CRUD, publicação, totem, quórum, geofence, locais favoritos, Kids/Teens, ofertas, capacidade</td>
+</tr>
+<tr>
+<td><strong>Cronograma (Gantt)</strong></td>
+<td>Visão dia/mês, toque para editar evento</td>
+</tr>
+<tr>
+<td><strong>Sala(s) - Check In</strong></td>
+<td>Marcação interativa de entrada nas salas</td>
+</tr>
+<tr>
+<td><strong>Tipos de Escala</strong></td>
+<td>CRUD com <strong>vagas por domingo</strong> e <strong>modo do ciclo</strong> (individual/equipe)</td>
+</tr>
+<tr>
+<td><strong>Servos</strong></td>
+<td>Voluntários e ordem sequencial</td>
+</tr>
+<tr>
+<td><strong>Programação de Escalas</strong></td>
+<td>Registro manual + <strong>Escala em bloco</strong> (preview transacional)</td>
+</tr>
+<tr>
+<td><strong>Cuidado Pastoral</strong></td>
+<td>Gestão de pedidos</td>
+</tr>
+<tr>
+<td><strong>Informações Financeiras</strong></td>
+<td>Carga, manutenção de lançamentos e relatórios RD do mês</td>
+</tr>
+<tr>
+<td><strong>Lista de Presença</strong></td>
+<td>Quórum — leitura e impressão</td>
+</tr>
+<tr>
+<td><strong>Cadastro de Usuário</strong></td>
+<td>Busca, correção de CEP/endereço e exclusão completa de perfil <em>(super_admin)</em></td>
+</tr>
+<tr>
+<td><strong>Recepção Familiar</strong></td>
+<td>Fila do formulário público <code>/cadastro-familia/</code> — gravar ou rejeitar em lote</td>
+</tr>
+<tr>
+<td><strong>Controle de Acesso</strong></td>
+<td>Papéis, grants; visão por papel <strong>ou por recurso</strong> (toque no marcador colorido); seleção de perfil por dropdown <em>(super_admin)</em></td>
+</tr>
+<tr>
+<td><strong>Mudança de Papéis</strong></td>
+<td>Alterar visitante/congregado/membro; contagem de <strong>membros ativos</strong> e <strong>congregados ativos</strong> (<code>membership_out</code> efetiva, herança familiar) <em>(pastoral, super_admin)</em></td>
+</tr>
+<tr>
+<td><strong>Relatórios</strong></td>
+<td>Catálogo analítico (7 relatórios): membros ativos/inativos, necessidades pastorais, saúde infantil (LGPD), quórum, estacionamento, sugestões e melhorias, inscritos por evento — <strong>sem</strong> Faixa Etária</td>
+</tr>
+<tr>
+<td><strong>Modo Ghost (Auditor)</strong></td>
+<td>Simula sessão de outro perfil para auditoria de permissões — grant <strong>explícito</strong> em <code>maintenance.card.auditor</code> ou <code>super_admin</code> (<code>can_operate_ghost_mode</code>; script <code>access-control-ghost-mode.sql</code>)</td>
+</tr>
+<tr>
+<td><strong>Acessos de Usuários</strong></td>
+<td>Histórico de logins e telas por sessão; limpeza global <em>(super_admin)</em></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Identidade visual</h2>
+<ul>
+<li><strong>Marca d'água</strong> global (<code>AppShell</code> + <code>WatermarkSurface</code>) em telas autenticadas</li>
+<li>Excluída na tela de login; altura alinhada ao card central do dashboard</li>
+<li>Opacidade discreta; não interfere na leitura nem substitui ACL</li>
+</ul>
+<hr>
+<h2>Controle de acesso (ACL)</h2>
+<ul>
+<li>Papéis: <code>visitantes</code>, <code>congregado</code>, <code>member</code>, <code>family_acceptor</code>, <code>lider</code>, <code>events_admin</code>, <strong><code>tesoureiro</code></strong>, <code>pastoral</code>, <code>super_admin</code></li>
+<li>Permissões por <strong>tela</strong>, <strong>card do dashboard</strong>, <strong>tabela</strong> e <strong>coluna</strong></li>
+<li>RPC <code>profile_has_access</code> com modo estrito (<code>EXPO_PUBLIC_ACL_STRICT</code>)</li>
+<li>Guards de rota em telas sensíveis</li>
+<li>RLS no Supabase com header <code>x-profile-id</code></li>
+<li>UI administrativa de papéis e grants <em>(super_admin)</em></li>
+<li>Fail-closed em erros reais de ACL; colunas de perfil bloqueadas até carregar permissões</li>
+</ul>
+<h3>Telas protegidas por ACL</h3>
+<table><thead><tr>
+<th>Tela</th>
+<th>Rota</th>
+</tr></thead><tbody>
+<tr>
+<td>Dashboard</td>
+<td><code>/(tabs)/dashboard</code></td>
+</tr>
+<tr>
+<td>Dados cadastrais</td>
+<td><code>/manage-profile</code></td>
+</tr>
+<tr>
+<td>Gerenciar família</td>
+<td><code>/manage-members</code></td>
+</tr>
+<tr>
+<td>Coração Aberto</td>
+<td><code>/pastoral</code></td>
+</tr>
+<tr>
+<td>Meus pedidos</td>
+<td><code>/pastoral-history</code></td>
+</tr>
+<tr>
+<td>Financeiro</td>
+<td><code>/financial</code></td>
+</tr>
+<tr>
+<td>Relatório de despesas</td>
+<td><code>/expense-report</code></td>
+</tr>
+<tr>
+<td>Mapa</td>
+<td><code>/mapa-geolocalizacao</code></td>
+</tr>
+<tr>
+<td>Detalhe de pin no mapa</td>
+<td><code>/mapa-geolocalizacao/detalhe-pin</code></td>
+</tr>
+<tr>
+<td>LGPD</td>
+<td><code>/lgpd</code></td>
+</tr>
+<tr>
+<td>Manutenção</td>
+<td><code>/maintenance-dashboard</code></td>
+</tr>
+</tbody></table>
+<h3>Telas sem ACL de tela</h3>
+<table><thead><tr>
+<th>Tela</th>
+<th>Observação</th>
+</tr></thead><tbody>
+<tr>
+<td>Login</td>
+<td>Público</td>
+</tr>
+<tr>
+<td>Cadastro</td>
+<td>Público (com <code>?phone=</code>)</td>
+</tr>
+<tr>
+<td>Totem</td>
+<td>Aparelho dedicado</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Comunicação e integrações</h2>
+<ul>
+<li>Abertura de <strong>WhatsApp</strong> — aniversariantes, membros, servos de escala, proprietários de veículo, família</li>
+<li><strong>PIX</strong> — exibição e cópia da chave de ofertas</li>
+<li>Parâmetros globais em <code>app_parameters</code> (PIX, prefixo família, totem, <strong><code>LGPD_Ativo</code></strong>, <strong><code>Parm_entidade</code></strong>, etc.)</li>
+<li><strong><code>Parm_entidade</code></strong> — prefixo exibido na interface (cards SALA(S), textos com marca da entidade); valor padrão <strong>IBN</strong> quando não configurado</li>
+<li><strong><code>LGPD_Ativo</code></strong> (<code>sim</code> / <code>nao</code>) — alternado no card <strong>Controle de Acesso</strong> (super_admin); quando <strong><code>sim</code></strong>, liga termos LGPD, selfie no cadastro, tela <code>/lgpd</code> e cabeçalho vermelho de pendência; quando <strong><code>nao</code></strong>, a igreja opta por <strong>não exigir</strong> reconhecimento LGPD — cadastro simplificado e sem alerta vermelho</li>
+<li>Redes sociais na tela de login</li>
+</ul>
+<hr>
+<h2>Segurança e infraestrutura</h2>
+<ul>
+<li>Backend <strong>Supabase</strong> (PostgreSQL + RPCs + Storage)</li>
+<li>Projeto: <code>bldbrsuiwctoaxzcrjoc</code></li>
+<li>PIN validado no servidor; atualização de PIN via RPC dedicada</li>
+<li>Campos sensíveis protegidos (CPF, PIN, LGPD, alertas médicos)</li>
+<li>Escritas críticas via RPC <code>security definer</code></li>
+<li>INSERT direto em <code>escalas_log</code> bloqueado no cliente</li>
+<li>Sessão local com reparo automático de referência de perfil</li>
+<li>PWA exportável (<code>npm run build:web</code> → <code>dist/</code>)</li>
+<li>Ícones do app (favicon, splash, Android) gerados pela arte da marca d'água (<code>npm run generate:icons</code>)</li>
+<li>Purga de caches legados do mapa</li>
+<li>Política de geocodificação documentada (servidor-primário)</li>
+</ul>
+<hr>
+<h2>Mapa de rotas</h2>
+<p>```</p>
+<p>/                      → Login</p>
+<p>/register              → Cadastro inicial</p>
+<p>/(tabs)/dashboard      → Painel principal</p>
+<p>/(tabs)                → Menu de atalhos</p>
+<p>/manage-profile        → Dados cadastrais</p>
+<p>/manage-members        → Gerenciar família</p>
+<p>/pastoral              → Coração Aberto</p>
+<p>/pastoral-history      → Meus pedidos</p>
+<p>/financial             → Financeiro (leitura)</p>
+<p>/expense-report        → Relatório de Despesas (RD)</p>
+<p>/cadastro-familia/     → Formulário público de cadastro familiar (sem login)</p>
+<p>/mapa-geolocalizacao   → Mapa (PWA)</p>
+<p>/lgpd                  → Termos LGPD</p>
+<p>/maintenance-dashboard → Manutenção</p>
+<p>/totem-checkin         → Totem de check-in</p>
+<p>```</p>
+<hr>
+<h2>Resumo por público</h2>
+<table><thead><tr>
+<th>Público</th>
+<th>Principais funcionalidades</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Membro</strong></td>
+<td>Login, cadastro, perfil, família, eventos, check-in QR, salas (leitura), ofertas, pastoral, aniversariantes, financeiro (leitura), RD (reembolso), escalas (leitura), mapa</td>
+</tr>
+<tr>
+<td><strong>Totem</strong></td>
+<td>Scan QR, confirmação de check-in</td>
+</tr>
+<tr>
+<td><strong>Equipe</strong></td>
+<td>Manutenção: eventos, salas, quórum, escalas, financeiro, pastoral, recepção familiar</td>
+</tr>
+<tr>
+<td><strong>Pastoral</strong></td>
+<td>Cuidado pastoral, mudança de papéis básicos</td>
+</tr>
+<tr>
+<td><strong>Super admin</strong></td>
+<td>Controle de acesso, cadastro de usuários</td>
+</tr>
+</tbody></table>
+<hr>
+<p><em>Documento gerado a partir do código-fonte e do <a href="BLUEPRINT.md">&lt;code&gt;BLUEPRINT.md&lt;/code&gt;</a>.</em></p>
+</div>
+</body>
+</html>

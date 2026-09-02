@@ -83,7 +83,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 | Card | Funcionalidades |
 |------|-----------------|
-| **Agenda da Família** | Seleção de evento, vagas, inscrição/audiência (pré-check-in), checkbox em massa — lista **membros, congregados** e dependentes não rejeitados |
+| **Agenda da Família** | Abre pelo **Início** (toque no culto). Vagas, inscrição/audiência, checkbox em massa; após confirmar, **Adicionar** grava no Google Agenda e baixa `.ics` (Apple/Outlook) no horário da igreja |
 | **Check-in / QR Code** | Etiqueta da família, QR para totem, badges Kids/Teens, modal de seleção manual |
 | **SALA(S)** | Monitoramento read-only de entrada Kids/Teens — **somente membros da própria família** |
 | **Dízimos e Ofertas** | Sempre visível no carrossel; dados do recebedor, chave PIX, **Copiar chave PIX** com ícone *touch-app*, atualizar chave |
@@ -101,6 +101,7 @@ Itens marcados com *(staff)* exigem permissão de manutenção ou papel administ
 
 - Listagem de eventos publicados com data, local e capacidade
 - **Inscrição na audiência** (pré-check-in) por integrante do núcleo familiar (membros, congregados e dependentes com `accepted` ≠ `false`)
+- Após confirmar a audiência, modal **Compromisso enviado para minha agenda**: **Adicionar** abre o Google Agenda e baixa `.ics` (fuso America/Sao_Paulo)
 - Suporte a fluxos: **check-in automático por proximidade (geofence GPS)**, **totem**, **manual**, **quórum**
 - **Check-in geofence** — quando `geofence_ativo` no evento e local favorito com coordenadas: o app detecta proximidade ao templo (raio e janela configuráveis em `app_parameters`) e confirma presença automaticamente após leituras GPS estáveis; fila offline para sincronização sem rede
 - **Locais favoritos** — cadastro de locais com nome, endereço, CEP e coordenadas; vinculados ao campo `event_local` do evento para resolver geofence

@@ -431,7 +431,7 @@ def add_part1(doc: Document) -> None:
         doc,
         code="1.4",
         name="Agenda da Família",
-        what="Tela sobreposta à home para a família confirmar quem vai ao evento (audiência). É o check-in familiar do culto, inclusive quórum e geofence quando o evento pede.",
+        what="Tela sobreposta à home para a família confirmar quem vai ao evento (audiência). É o check-in familiar do culto, inclusive quórum, geofence e gravação na agenda do celular (.ics / Google Agenda) quando a pessoa toca em Adicionar.",
         route="Sobreposta em /(tabs) (não é item do Menu). Abre ao tocar um evento.",
         who="A pessoa logada e os integrantes da família vinculados. Sem família, a lista de audiência fica vazia.",
         access=[
@@ -443,8 +443,9 @@ def add_part1(doc: Document) -> None:
         acl="Inscrições na tabela `event_registrations`. Evento com «somente membros» restringe. Quórum/totem/geofence são flags do evento (`requer_quorum`, `totem_ativo`, `geofence_ativo`).",
         fill=[
             "Confira se o evento no topo é o culto certo (nome, local, horário).",
-            "Na lista Audiência, marque o quadrado de cada pessoa da casa que vai. Desmarque quem não vai (exceto quando o totem já confirmou — aí o item fica cadeado).",
-            "Se o culto tiver geofence ativo, respeite o banner de status: só confirma perto do templo, quando a igreja configurou assim.",
+            "Na lista Audiência, marque o quadrado de cada pessoa da casa que vai. Para a família inteira, use o checkbox alto à esquerda. Desmarque quem não vai (exceto quando o totem já confirmou — aí o item fica cadeado).",
+            "No modal «Compromisso enviado para minha agenda», toque em Adicionar: abre o Google Agenda e baixa um .ics (Apple Calendar / Outlook) no horário da igreja.",
+            "Se o culto tiver geofence ativo, respeite o banner de status: a presença GPS só confirma no raio do templo (cerca de 30 m, três leituras).",
             "Não invente nomes nesta lista: quem não está na família precisa ser incluído em Perfil → Gerenciar Família (ou pela Secretaria na Recepção).",
         ],
         impact="Família não marcada: a igreja subestima a audiência, o «copo» de vagas mente, KIDS/TEENS não prepara sala, e assembleia com quórum fica incompleta. Marcar quem não foi gera lista falsa. Sem família vinculada, o QR da carteirinha também não existe.",
@@ -1639,6 +1640,8 @@ def add_closing(doc: Document) -> None:
 
 def main() -> None:
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    pdfs = ROOT / "pdfs"
+    pdfs.mkdir(parents=True, exist_ok=True)
     doc = Document()
     configure_styles(doc)
     add_cover(doc)
@@ -1649,7 +1652,10 @@ def main() -> None:
     add_part3(doc)
     add_closing(doc)
     doc.save(str(OUT_PATH))
+    copy_docx = pdfs / OUT_PATH.name
+    doc.save(str(copy_docx))
     print(f"Salvo em: {OUT_PATH}")
+    print(f"Cópia em: {copy_docx}")
 
 
 if __name__ == "__main__":

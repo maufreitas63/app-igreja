@@ -1,0 +1,736 @@
+﻿<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word 15">
+<title>Controle de acesso — modelo e inventário</title>
+<style>
+
+  body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
+  h1 { font-size: 18pt; color: #0F172A; border-bottom: 1.5pt solid #1E40AF; padding-bottom: 4pt; }
+  h2 { font-size: 14pt; color: #1E3A8A; margin-top: 14pt; }
+  h3 { font-size: 12pt; color: #1E40AF; margin-top: 10pt; }
+  h4 { font-size: 11pt; color: #1D4ED8; }
+  p { margin: 0 0 8pt; }
+  ul { margin: 0 0 10pt 18pt; }
+  li { margin-bottom: 3pt; }
+  code { font-family: Consolas, Courier New, monospace; font-size: 9.5pt; color: #1E40AF; background: #F1F5F9; }
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; margin: 8pt 0 14pt; }
+  th { background: #1E3A8A; color: #FFFFFF; text-align: left; padding: 6pt 8pt; }
+  td { border: 0.5pt solid #CBD5E1; padding: 6pt 8pt; vertical-align: top; }
+  hr { border: none; border-top: 0.75pt solid #E2E8F0; margin: 12pt 0; }
+  img { max-width: 420px; max-height: 480px; height: auto; }
+  blockquote { border-left: 3pt solid #94A3B8; margin-left: 0; padding-left: 10pt; color: #475569; }
+  @page Section1 { size: 21cm 29.7cm; margin: 16mm 14mm 20mm 14mm; }
+  div.Section1 { page: Section1; }
+
+</style>
+</head>
+<body>
+<div class="Section1">
+<h1>Controle de acesso — modelo e inventário</h1>
+<p>Este documento rastreia <strong>como o app-igreja identifica usuários hoje</strong>, quais <strong>telas</strong>, <strong>tabelas</strong> e <strong>campos</strong> existem no ecossistema, e como a tabela de relacionamento proposta se encaixa.</p>
+<p>Script SQL: <a href="scripts/access-control-schema.sql">&lt;code&gt;scripts/access-control-schema.sql&lt;/code&gt;</a></p>
+<p><strong>Manual operacional (dia a dia):</strong> <a href="MANUAL_CONTROLE_ACESSO.md">&lt;code&gt;MANUAL_CONTROLE_ACESSO.md&lt;/code&gt;</a></p>
+<p><strong>Pacote:</strong> <a href="PACOTE_3_GOVERNANCA_TI.md">&lt;code&gt;PACOTE_3_GOVERNANCA_TI.md&lt;/code&gt;</a> · <strong>Índice:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a> · <strong>Camadas de segurança:</strong> <a href="CAMADAS_SEGURANCA.md">&lt;code&gt;CAMADAS_SEGURANCA.md&lt;/code&gt;</a></p>
+<hr>
+<h2>Status da implementação (atualizado em 09/06/2026)</h2>
+<p>Documento de encerramento da sessão: o que já está pronto, o que falta e qual é o <strong>próximo passo</strong> recomendado.</p>
+<h3>Concluído no Supabase (Passos 1–7)</h3>
+<table><thead><tr>
+<th>Item</th>
+<th>Status</th>
+</tr></thead><tbody>
+<tr>
+<td>Tabelas <code>access_resources</code>, <code>access_roles</code>, <code>access_grants</code>, <code>profile_access_roles</code></td>
+<td>Criadas</td>
+</tr>
+<tr>
+<td>Correção de índices únicos (<code>role_id</code> / <code>profile_id</code> parciais)</td>
+<td>Aplicada (evita erro 23505 com <code>profile_id</code> null)</td>
+</tr>
+<tr>
+<td>Funções <code>profile_has_access</code> e <code>profile_has_access_by_phone</code></td>
+<td>Criadas</td>
+</tr>
+<tr>
+<td>Seed de recursos, papéis e grants (<code>member</code>, <code>super_admin</code>, <code>events_admin</code>)</td>
+<td>Executado</td>
+</tr>
+<tr>
+<td>Perfil administrador (<code>04b919ba-38b4-4fe5-a371-2e98e9acbc0d</code>) com <code>super_admin</code> + <code>member</code></td>
+<td>Configurado</td>
+</tr>
+<tr>
+<td>Todos os perfis em <code>profiles</code> com papel <code>member</code></td>
+<td>Configurado</td>
+</tr>
+<tr>
+<td>Teste SQL: <code>profile_has_access</code> → manutenção <code>true</code> para super_admin</td>
+<td>OK</td>
+</tr>
+</tbody></table>
+<h3>Concluído no app (Passo 9)</h3>
+<table><thead><tr>
+<th>Item</th>
+<th>Arquivo(s)</th>
+</tr></thead><tbody>
+<tr>
+<td>Sessão: <code>user_phone</code> + <code>user_profile_id</code> após login/cadastro</td>
+<td><code>lib/userSession.ts</code>, <code>app/index.tsx</code>, <code>app/register.tsx</code></td>
+</tr>
+<tr>
+<td>Cliente ACL: RPC <code>profile_has_access</code> / <code>sessionHasAccess</code></td>
+<td><code>lib/accessControl.ts</code></td>
+</tr>
+<tr>
+<td>Engrenagem do dashboard só para quem tem <code>view</code> em <code>/maintenance-dashboard</code></td>
+<td><code>app/(tabs)/dashboard.tsx</code></td>
+</tr>
+<tr>
+<td>Bloqueio da tela <code>maintenance-dashboard</code> sem permissão</td>
+<td><code>app/maintenance-dashboard.tsx</code></td>
+</tr>
+<tr>
+<td>Logout limpa sessão (telefone + profile_id)</td>
+<td><code>app/(tabs)/dashboard.tsx</code></td>
+</tr>
+<tr>
+<td><strong>Passo 9b:</strong> carrossel só com cards permitidos (<code>dashboard.card.*</code>)</td>
+<td><code>lib/accessControl.ts</code>, <code>app/(tabs)/dashboard.tsx</code></td>
+</tr>
+<tr>
+<td><strong>Passo 9c:</strong> colunas visíveis/editáveis em Dados cadastrais</td>
+<td><code>lib/accessControl.ts</code>, <code>app/manage-profile.tsx</code></td>
+</tr>
+<tr>
+<td><strong>Passo 9d:</strong> <code>update_profile_field</code> e <code>update_profile_access_pin</code> validam <code>can_update</code></td>
+<td><code>scripts/access-control-profile-write-rpc.sql</code></td>
+</tr>
+<tr>
+<td><strong>Passo 9e:</strong> UI admin de papéis e grants (somente <code>super_admin</code>)</td>
+<td><code>components/MaintenanceAccessControlCard.tsx</code>, <code>scripts/access-control-admin-rpc.sql</code></td>
+</tr>
+<tr>
+<td><strong>Passo 9f:</strong> RLS nas tabelas com <code>profile_has_access</code> + header <code>x-profile-id</code></td>
+<td><code>scripts/access-control-table-rls.sql</code>, <code>lib/supabaseSessionFetch.ts</code></td>
+</tr>
+</tbody></table>
+<h3>Entregas recentes (jun/2026)</h3>
+<table><thead><tr>
+<th>Item</th>
+<th>Detalhe</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Relatórios de Despesas (RD)</strong></td>
+<td>Telas <code>/expense-report</code> e hub no <code>/financial</code>; WhatsApp ao tesoureiro na submissão; tesouraria na manutenção (<code>expense-reports-*.sql</code>)</td>
+</tr>
+<tr>
+<td><strong>Financeiro membro</strong></td>
+<td>Saldo bancário por conta; hub com RD destacado</td>
+</tr>
+<tr>
+<td><strong>Financeiro manutenção</strong></td>
+<td>Carga/esvaziar lote com versão REALIZADO/PLANEJADO; seções colapsáveis; accordion (uma seção aberta)</td>
+</tr>
+<tr>
+<td><strong>Recepção Familiar</strong></td>
+<td>Formulário <code>/cadastro-familia/</code> → fila na manutenção (<code>recepcao-cadastro-familiar.sql</code>)</td>
+</tr>
+<tr>
+<td><strong>Mudança de Papéis</strong></td>
+<td>Card pastoral/super_admin (<code>access-control-pastoral-role-change.sql</code>)</td>
+</tr>
+<tr>
+<td><strong>Cadastro de Usuário</strong></td>
+<td><code>maintenance.card.profile_cadastro</code> — busca, CEP, exclusão completa</td>
+</tr>
+<tr>
+<td><strong>Acessos de Usuários</strong></td>
+<td><code>maintenance.card.profile_access_insights</code> — histórico de logins e telas visitadas <em>(super_admin)</em></td>
+</tr>
+<tr>
+<td><strong>Sessão assinada</strong></td>
+<td><code>profile_sessions</code> + header <code>x-session-token</code> (prioridade sobre <code>x-profile-id</code>)</td>
+</tr>
+<tr>
+<td><strong>Telemetria de uso</strong></td>
+<td>Tabelas <code>profile_app_access_events</code> e <code>profile_app_access_screen_visits</code>; RPCs admin e <code>record_profile_app_access_screen_visit</code></td>
+</tr>
+<tr>
+<td><strong>Mapa ACL PDF</strong></td>
+<td><code>npm run build:access-roles-pdf</code> → <code>PAPEIS_CONTROLE_ACESSO.pdf</code></td>
+</tr>
+<tr>
+<td><strong>Índice do aplicativo</strong></td>
+<td><code>/(tabs)/index</code> — atalhos com etiquetas para todos os cards</td>
+</tr>
+<tr>
+<td><strong>Manutenção — card menu</strong></td>
+<td>Primeiro card do carrossel com etiquetas dos módulos</td>
+</tr>
+<tr>
+<td><strong>Marca d'água</strong></td>
+<td>Global via <code>AppShell</code>, exceto login; alinhada ao frame do card</td>
+</tr>
+<tr>
+<td><strong>Performance navegação</strong></td>
+<td>Cache em memória de ACL, perfil de sessão e audiência familiar; sem refetch completo a cada foco de tela</td>
+</tr>
+<tr>
+<td><strong>Mapa — detalhe de pin</strong></td>
+<td>Recurso <code>/mapa-geolocalizacao/detalhe-pin</code> — mapa geral para membros; detalhe alheio só pastoral/super_admin (<code>access-control-map-pin-detail.sql</code>)</td>
+</tr>
+<tr>
+<td><strong>Audiência familiar</strong></td>
+<td>União de fontes inclui congregados; dependentes com <code>accepted</code> ≠ <code>false</code> (<code>family-event-audience-members.sql</code>)</td>
+</tr>
+<tr>
+<td><strong>ACL — visão por recurso</strong></td>
+<td>Aba Papéis: toque no marcador colorido do recurso → papéis como linhas com Ver/Editar; botão Voltar</td>
+</tr>
+<tr>
+<td><strong>Rodapé do dashboard</strong></td>
+<td>Botão Menu expandido; engrenagem alinhada à direita do card (<code>CarouselFooterNav</code>)</td>
+</tr>
+</tbody></table>
+<h3>Ainda não feito (próximas sessões)</h3>
+<ul>
+<li>Papel <code>events_admin</code> atribuído a pessoas da equipe de eventos (só seed SQL hoje).</li>
+<li>RLS em tabelas auxiliares (<code>checkins</code>, <code>escalas_*</code>, …).</li>
+<li>Views com mascaramento de colunas sensíveis em <code>profiles</code>.</li>
+</ul>
+<h3>Outras entregas da mesma época (fora do ACL)</h3>
+<ul>
+<li>Senha de acesso em Dados cadastrais (PIN, seção recolhível, olho, validação).</li>
+<li>Gerenciar Família: seção “Adicionar membro” recolhível; busca por nome; <strong>transferência</strong> entre famílias com confirmação; <strong>herança de endereço completo</strong> ao aceitar, transferir ou adicionar membro (<code>lib/inheritFamilyAddress.ts</code>, RPC <code>accept_managed_member_into_family</code>).</li>
+<li>Dashboard: carrossel com <code>‹</code> / <code>›</code>, indicador <code>1 / N</code>, badge do card ativo; card <strong>Dízimos e Ofertas</strong> sempre visível; card <strong>SALA(S)</strong> filtrado por família do usuário.</li>
+<li>UX compartilhada: <code>lib/uiTokens.ts</code>, ícones coloridos no Menu e na Manutenção, chips segmentados no Coração Aberto.</li>
+</ul>
+<hr>
+<h2>Próximo passo recomendado (quando retomar)</h2>
+<p>Roadmap ACL (fases 9a–9f) <strong>concluído</strong>. Guards de rota nas telas principais via <code>hooks/useScreenAccessGuard.ts</code>.</p>
+<p>Próximas melhorias opcionais:</p>
+<p>1. Enforcement ACL em RPCs de manutenção (escalas, financeiro em lote, etc.).</p>
+<p>2. RLS em tabelas auxiliares (<code>checkins</code>, <code>escalas_log</code>, <code>tipos_escala</code>, …).</p>
+<p>3. Views com mascaramento de colunas sensíveis (<code>access_pin</code>, <code>cpf</code>) em <code>profiles</code>.</p>
+<p><strong>Supabase (obrigatório após 9f):</strong> execute <code>scripts/access-control-table-rls.sql</code> no SQL Editor.</p>
+<p><strong>Teste rápido (9f):</strong></p>
+<p>```sql</p>
+<p>-- Simula header do app (substitua pelo seu profile_id)</p>
+<p>select set_config('request.headers', '{&quot;x-profile-id&quot;:&quot;&lt;uuid&gt;&quot;}', true);</p>
+<p>select public.session_has_resource_access('table', 'profiles', 'view');</p>
+<p>-- esperado: true para member com grant</p>
+<p>```</p>
+<p><strong>Lembrete ao testar no celular:</strong> após mudar papéis no Supabase, use <strong>Sair</strong> e entre de novo para gravar <code>user_profile_id</code> na sessão.</p>
+<hr>
+<h2>1. Situação no banco vs. no app (referência)</h2>
+<table><thead><tr>
+<th>Aspecto</th>
+<th>Hoje</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Identidade no app</strong></td>
+<td><code>profiles.id</code> (login por PIN em <code>profiles.access_pin</code> + telefone em <code>AsyncStorage</code>)</td>
+</tr>
+<tr>
+<td><strong>Supabase Auth</strong></td>
+<td>Opcional (<code>profiles.auth_user_id</code>); muitos usuários <strong>não</strong> têm linha em <code>auth.users</code></td>
+</tr>
+<tr>
+<td><strong>Autorização</strong></td>
+<td>RLS com <code>profile_has_access</code> nas tabelas principais (9f) + RPCs <code>security definer</code> para fluxos sem sessão</td>
+</tr>
+<tr>
+<td><strong>Manutenção</strong></td>
+<td>Engrenagem e rota protegidas via <code>profile_has_access</code> (Passo 9 parcial)</td>
+</tr>
+<tr>
+<td><strong>Cards do dashboard</strong></td>
+<td>Filtrados por <code>profile_has_access</code> (Passo 9b)</td>
+</tr>
+<tr>
+<td><strong>Demais telas</strong></td>
+<td>Guards de rota em manutenção, perfil, família, pastoral, financeiro e LGPD</td>
+</tr>
+<tr>
+<td><strong>Campos sensíveis</strong></td>
+<td>Ocultos no cliente; RPCs <code>update_profile_field</code> / PIN validam <code>can_update</code> por coluna (9d)</td>
+</tr>
+</tbody></table>
+<p>O banco <strong>já responde</strong> permissões via <code>profile_has_access</code>; o app consulta para <strong>manutenção</strong> e <strong>cards do dashboard</strong>.</p>
+<hr>
+<h2>2. Sujeito da permissão</h2>
+<p>Use sempre <strong><code>profiles.id</code></strong> como “usuário” do ACL.</p>
+<ul>
+<li>Não use só <code>auth.users.id</code> — pedidos pastorais e RPCs já documentam o desvio (<code>pastoral-requests-fields.sql</code>).</li>
+<li>O app pode resolver <code>profile_id</code> a partir do telefone da sessão (<code>find_profile_id_by_phone</code> / SELECT em <code>profiles</code>).</li>
+</ul>
+<hr>
+<h2>3. Inventário de telas (<code>resource_type = 'screen'</code>)</h2>
+<table><thead><tr>
+<th><code>resource_key</code></th>
+<th>Rota / origem</th>
+<th>Observação</th>
+</tr></thead><tbody>
+<tr>
+<td><code>screen:/</code></td>
+<td><code>app/index.tsx</code></td>
+<td>Login</td>
+</tr>
+<tr>
+<td><code>screen:/register</code></td>
+<td><code>app/register.tsx</code></td>
+<td>Cadastro</td>
+</tr>
+<tr>
+<td><code>screen:/dashboard</code></td>
+<td><code>app/(tabs)/dashboard.tsx</code></td>
+<td>Painel principal</td>
+</tr>
+<tr>
+<td><code>screen:/maintenance-dashboard</code></td>
+<td><code>app/maintenance-dashboard.tsx</code></td>
+<td>Manutenção (eventos, monitor salas)</td>
+</tr>
+<tr>
+<td><code>screen:/manage-profile</code></td>
+<td><code>app/manage-profile.tsx</code></td>
+<td>Dados cadastrais</td>
+</tr>
+<tr>
+<td><code>screen:/manage-members</code></td>
+<td><code>app/manage-members.tsx</code></td>
+<td>Gerenciar família</td>
+</tr>
+<tr>
+<td><code>screen:/pastoral</code></td>
+<td><code>app/pastoral.tsx</code></td>
+<td>Coração Aberto (formulário)</td>
+</tr>
+<tr>
+<td><code>screen:/pastoral-history</code></td>
+<td><code>app/pastoral-history.tsx</code></td>
+<td>Meus pedidos</td>
+</tr>
+<tr>
+<td><code>screen:/financial</code></td>
+<td><code>app/financial.tsx</code></td>
+<td>Relatórios financeiros (leitura)</td>
+</tr>
+<tr>
+<td><code>screen:/expense-report</code></td>
+<td><code>app/expense-report.tsx</code></td>
+<td>Relatório de Despesas (RD)</td>
+</tr>
+<tr>
+<td><code>screen:/lgpd</code></td>
+<td><code>app/lgpd.tsx</code></td>
+<td>Termos LGPD</td>
+</tr>
+</tbody></table>
+<h3>Cards do dashboard (<code>screen:dashboard.card.*</code>)</h3>
+<table><thead><tr>
+<th><code>resource_key</code></th>
+<th>Card</th>
+<th><code>content</code></th>
+</tr></thead><tbody>
+<tr>
+<td><code>screen:dashboard.card.event_alt</code></td>
+<td>Agenda da Família</td>
+<td><code>event_alt</code></td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.qr</code></td>
+<td>Check In</td>
+<td><code>qr</code></td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.kids_teens</code></td>
+<td>SALA(S)</td>
+<td><code>kids_teens</code></td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.offerings</code></td>
+<td>Dízimos e Ofertas</td>
+<td><code>offerings</code></td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.pastoral</code></td>
+<td>Coração Aberto</td>
+<td><code>pastoral</code></td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.members_list</code></td>
+<td>Lista de membros</td>
+<td><code>members_list</code></td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.birthdays</code></td>
+<td>Aniversariantes</td>
+<td><code>birthdays</code></td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.vigilance_scales</code></td>
+<td>Escalas</td>
+<td><code>vigilance_scales</code></td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.parking_vehicle_v2</code></td>
+<td>Estacionamento</td>
+<td><code>parking_vehicle_v2</code></td>
+</tr>
+<tr>
+<td><code>screen:dashboard.card.grouped_manage</code></td>
+<td>Menu (perfil + família)</td>
+<td><code>grouped_manage</code></td>
+</tr>
+</tbody></table>
+<p>Visibilidade condicional de cards (parâmetros/evento) continua no app; o ACL define se o usuário <strong>pode</strong> ver o card quando ele estaria disponível.</p>
+<hr>
+<h2>4. Inventário de tabelas (<code>resource_type = 'table'</code>)</h2>
+<p>Tabelas usadas pelo app (Supabase <code>public</code>):</p>
+<table><thead><tr>
+<th><code>resource_key</code></th>
+<th>Uso principal</th>
+</tr></thead><tbody>
+<tr>
+<td><code>table:profiles</code></td>
+<td>Login, perfil, LGPD, endereço, PIN</td>
+</tr>
+<tr>
+<td><code>table:members</code></td>
+<td>Família, check-in, listas</td>
+</tr>
+<tr>
+<td><code>table:events</code></td>
+<td>Agenda, manutenção, salas</td>
+</tr>
+<tr>
+<td><code>table:event_registrations</code></td>
+<td>Check-in / salas Kids-Teens</td>
+</tr>
+<tr>
+<td><code>table:profile_vehicles</code></td>
+<td>Veículos no perfil e estacionamento</td>
+</tr>
+<tr>
+<td><code>table:pastoral_requests</code></td>
+<td>Pedidos pastorais</td>
+</tr>
+<tr>
+<td><code>table:pastoral_reason_categories</code></td>
+<td>Motivos (leitura)</td>
+</tr>
+<tr>
+<td><code>table:pastoral_reason_subcategories</code></td>
+<td>Submotivos (leitura)</td>
+</tr>
+<tr>
+<td><code>table:app_parameters</code></td>
+<td>Parâmetros globais (PIX, QR, prefixo família, <strong><code>LGPD_Ativo</code></strong>) — escrita por <strong>super_admin</strong> via RPC <code>salvar_app_parameter_admin</code></td>
+</tr>
+<tr>
+<td><code>table:families</code></td>
+<td>Dados de família (<code>useFamilyData</code>)</td>
+</tr>
+<tr>
+<td><code>table:vigilancia_*</code></td>
+<td>Escalas (import/histórico — conferir nomes no Supabase)</td>
+</tr>
+</tbody></table>
+<p>Atualizar a lista após <code>information_schema.tables</code> no projeto se houver tabelas só no banco.</p>
+<hr>
+<h2>5. Inventário de campos (<code>resource_type = 'column'</code>)</h2>
+<p>Formato: <code>column:&lt;tabela&gt;.&lt;coluna&gt;</code>.</p>
+<h3><code>profiles</code> (cadastro + sensíveis)</h3>
+<p>Colunas conhecidas no app (<code>manage-profile.tsx</code>, <code>register.tsx</code>):</p>
+<table><thead><tr>
+<th>Coluna</th>
+<th>Sensível</th>
+<th>Notas</th>
+</tr></thead><tbody>
+<tr>
+<td><code>full_name</code>, <code>phone</code>, <code>birth_date</code>, <code>email</code></td>
+<td>médio</td>
+<td>Contato / identificação</td>
+</tr>
+<tr>
+<td><code>cpf</code></td>
+<td>alto</td>
+<td>Oculto na UI padrão</td>
+</tr>
+<tr>
+<td><code>access_pin</code></td>
+<td>crítico</td>
+<td>Só RPC <code>update_profile_access_pin</code>; exige <code>can_update</code> (9d)</td>
+</tr>
+<tr>
+<td><code>address_*</code>, <code>cep</code></td>
+<td>médio</td>
+<td>Endereço</td>
+</tr>
+<tr>
+<td><code>lgpd_*</code>, <code>medical_food_alerts</code></td>
+<td>alto</td>
+<td>Privacidade / saúde</td>
+</tr>
+<tr>
+<td><code>family_id</code>, <code>codigo_membro</code>, <code>role</code></td>
+<td>médio</td>
+<td>Escopo familiar / papel</td>
+</tr>
+<tr>
+<td><code>selfie_url</code></td>
+<td>médio</td>
+<td>Imagem</td>
+</tr>
+<tr>
+<td><code>auth_user_id</code>, <code>id</code>, <code>created_at</code>, <code>updated_at</code></td>
+<td>sistema</td>
+<td>Bloqueados em <code>update_profile_field</code></td>
+</tr>
+</tbody></table>
+<h3><code>members</code></h3>
+<table><thead><tr>
+<th>Coluna</th>
+<th>Notas</th>
+</tr></thead><tbody>
+<tr>
+<td><code>full_name</code>, <code>phone</code>, <code>birth_date</code>, <code>relationship</code>, <code>family_id</code></td>
+<td>Gerenciar família</td>
+</tr>
+<tr>
+<td><code>accepted</code></td>
+<td>Reconhecimento na família</td>
+</tr>
+</tbody></table>
+<h3><code>events</code></h3>
+<p>Campos editáveis em <code>maintenance-dashboard</code> / <code>maintenanceEventForm</code>: <code>name</code>, <code>event_date</code>, <code>event_local</code>, <code>max_capacity</code>, <code>kids_room</code>, <code>teens_room</code>, <code>parm_ofertas</code>, <code>is_locked</code>, <code>is_visible</code>, etc.</p>
+<h3><code>pastoral_requests</code></h3>
+<p><code>request_for</code>, <code>beneficiary_*</code>, <code>destination_label</code>, <code>profile_id</code>, <code>message</code>, status, etc. (<code>pastoral-requests-fields.sql</code>).</p>
+<p><strong>Regra sugerida:</strong> <code>can_view</code> na tabela não implica todas as colunas — conceda colunas sensíveis (<code>cpf</code>, <code>access_pin</code>) só a papéis administrativos.</p>
+<hr>
+<h2>6. Modelo proposto (3 tabelas + função)</h2>
+<p>```mermaid</p>
+<p>erDiagram</p>
+<p>profiles ||--o{ profile_access_roles : tem</p>
+<p>access_roles ||--o{ profile_access_roles : agrupa</p>
+<p>access_roles ||--o{ access_grants : recebe</p>
+<p>profiles ||--o{ access_grants : direto</p>
+<p>access_resources ||--o{ access_grants : alvo</p>
+<p>access_resources {</p>
+<p>uuid id PK</p>
+<p>text resource_type</p>
+<p>text resource_key</p>
+<p>text label</p>
+<p>}</p>
+<p>access_roles {</p>
+<p>uuid id PK</p>
+<p>text code UK</p>
+<p>text name</p>
+<p>}</p>
+<p>access_grants {</p>
+<p>uuid id PK</p>
+<p>uuid role_id FK</p>
+<p>uuid profile_id FK</p>
+<p>uuid resource_id FK</p>
+<p>boolean can_view</p>
+<p>boolean can_update</p>
+<p>}</p>
+<p>```</p>
+<h3><code>access_resources</code> (catálogo)</h3>
+<p>Define <strong>o que</strong> pode ser protegido: tela, tabela ou coluna.</p>
+<h3><code>access_roles</code> (papéis)</h3>
+<p>Ex.: <code>member</code>, <code>family_acceptor</code>, <code>pastoral</code>, <code>events_admin</code>, <code>super_admin</code>.</p>
+<h3><code>access_grants</code> (relacionamento pedido)</h3>
+<p>Uma linha = permissão de um <strong>papel</strong> <em>ou</em> de um <strong>perfil</strong> sobre um recurso:</p>
+<ul>
+<li><code>can_view</code> — visualizar (tela, listagem, SELECT de campo)</li>
+<li><code>can_update</code> — alterar (formulário, UPDATE, RPC de escrita)</li>
+</ul>
+<p>Exatamente um de <code>role_id</code> ou <code>profile_id</code> deve estar preenchido.</p>
+<h3><code>profile_access_roles</code></h3>
+<p>N:N entre <code>profiles</code> e <code>access_roles</code>.</p>
+<h3>Função <code>profile_has_access(profile_id, resource_type, resource_key, action)</code></h3>
+<ul>
+<li><code>action</code>: <code>'view'</code> ou <code>'update'</code></li>
+<li>Suporta curinga <code><em></code> no final da chave (ex.: <code>table:profiles</code> não inclui colunas; <code>column:profiles.</em></code> todas as colunas)</li>
+<li><strong>Modo legado:</strong> se não existir nenhum grant no sistema, retorna <code>true</code> (app continua funcionando até você configurar papéis)</li>
+</ul>
+<hr>
+<h2>7. Papéis sugeridos (seed)</h2>
+<table><thead><tr>
+<th><code>code</code></th>
+<th>Quem</th>
+<th>View típico</th>
+<th>Update típico</th>
+</tr></thead><tbody>
+<tr>
+<td><code>visitantes</code></td>
+<td>Sem perfil na sessão ou perfil sem papéis</td>
+<td>Login, cadastro, LGPD, check-in QR, eventos públicos</td>
+<td>Cadastro e inscrição em eventos</td>
+</tr>
+<tr>
+<td><code>congregado</code></td>
+<td>Participante cadastrado</td>
+<td>Dashboard básico, perfil, pastoral; sem família/financeiro</td>
+<td>Perfil e pedido pastoral</td>
+</tr>
+<tr>
+<td><code>member</code></td>
+<td>Membro comum</td>
+<td>Próprio perfil (campos básicos), cards dashboard, pastoral próprio</td>
+<td>Perfil próprio (campos permitidos), pedido pastoral</td>
+</tr>
+<tr>
+<td><code>family_acceptor</code></td>
+<td>Quem aceita familiares</td>
+<td><code>manage-members</code>, membros da família</td>
+<td><code>members</code> da própria <code>family_id</code></td>
+</tr>
+<tr>
+<td><code>lider</code></td>
+<td>Líder de tipo(s) de escala</td>
+<td>Painéis de servos/programação + card Escalas</td>
+<td>Tipos vinculados em <code>profile_scale_leadership</code></td>
+</tr>
+<tr>
+<td><code>events_admin</code></td>
+<td>Equipe de eventos</td>
+<td><code>maintenance-dashboard</code>, <code>events</code></td>
+<td>CRUD <code>events</code></td>
+</tr>
+<tr>
+<td><code>tesoureiro</code></td>
+<td>Tesouraria</td>
+<td>Card financeiro, manutenção financeira, RD (AAMM), eventos retroativos</td>
+<td>Conciliação RD, importação CSV</td>
+</tr>
+<tr>
+<td><code>pastoral</code></td>
+<td>Equipe pastoral</td>
+<td>Pedidos (futuro painel)</td>
+<td>Triagem <code>pastoral_requests</code></td>
+</tr>
+<tr>
+<td><code>super_admin</code></td>
+<td>TI / pastor responsável</td>
+<td><code>*</code></td>
+<td><code>*</code></td>
+</tr>
+</tbody></table>
+<p>Ordem no painel admin: mesma sequência da tabela acima.</p>
+<p>Ajuste conforme a política da igreja.</p>
+<hr>
+<h2>8. Roadmap do app (ordem sugerida)</h2>
+<table><thead><tr>
+<th>Fase</th>
+<th>Descrição</th>
+<th>Status</th>
+</tr></thead><tbody>
+<tr>
+<td>9a</td>
+<td>Manutenção (engrenagem + tela)</td>
+<td>Feito</td>
+</tr>
+<tr>
+<td>9b</td>
+<td>Cards do dashboard (<code>dashboard.card.*</code>)</td>
+<td>Feito</td>
+</tr>
+<tr>
+<td>9c</td>
+<td>Campos do perfil (<code>column:profiles.*</code>)</td>
+<td>Feito</td>
+</tr>
+<tr>
+<td>9d</td>
+<td>RPCs de escrita</td>
+<td>Feito</td>
+</tr>
+<tr>
+<td>9e</td>
+<td>UI admin de grants</td>
+<td>Feito</td>
+</tr>
+<tr>
+<td>9f</td>
+<td>RLS nas tabelas</td>
+<td>Feito</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>9. Checklist operacional</h2>
+<h3>Supabase</h3>
+<ul>
+<li>[x] Executar <code>scripts/access-control-schema.sql</code> (e correção de índices se necessário)</li>
+<li>[x] <code>super_admin</code> no perfil administrador</li>
+<li>[x] <code>member</code> em todos os perfis</li>
+<li>[x] Testar <code>profile_has_access</code> no SQL Editor</li>
+<li>[ ] Atribuir <code>events_admin</code> a quem cuida de eventos (quando definir a equipe)</li>
+<li>[ ] Revisar grants do papel <code>member</code> conforme política da igreja</li>
+</ul>
+<h3>App</h3>
+<ul>
+<li>[x] <code>lib/userSession.ts</code> + <code>lib/accessControl.ts</code></li>
+<li>[x] Login/cadastro persistem <code>user_profile_id</code></li>
+<li>[x] Dashboard: engrenagem condicional</li>
+<li>[x] <code>maintenance-dashboard</code>: guard de acesso</li>
+<li>[x] Dashboard: filtrar cards por ACL (Passo 9b)</li>
+<li>[ ] Supabase: <code>access-control-member-dashboard-grants.sql</code> se seed antigo omitiu cards do <code>member</code></li>
+<li>[x] <code>manage-profile</code>: colunas visíveis/editáveis por permissão (Passo 9c)</li>
+<li>[ ] Supabase: <code>access-control-member-profile-columns.sql</code> se seed antigo omitiu <code>cpf</code> / <code>medical_food_alerts</code> no <code>member</code></li>
+<li>[x] RPCs: validar <code>can_update</code> antes de gravar (Passo 9d)</li>
+<li>[ ] Supabase: <code>access-control-profile-write-rpc.sql</code> após deploy do app 9d</li>
+<li>[x] Manutenção: card Controle de Acesso para <code>super_admin</code> (Passo 9e)</li>
+<li>[ ] Supabase: <code>access-control-admin-rpc.sql</code> após deploy do app 9e</li>
+<li>[x] App: header <code>x-profile-id</code> em todas as requisições Supabase (Passo 9f)</li>
+<li>[x] RLS: policies ACL em tabelas principais (Passo 9f)</li>
+<li>[ ] Supabase: <code>access-control-table-rls.sql</code> após deploy do app 9f</li>
+</ul>
+<h3>Arquivos de referência no código</h3>
+<table><thead><tr>
+<th>Arquivo</th>
+<th>Uso</th>
+</tr></thead><tbody>
+<tr>
+<td><code>lib/accessControl.ts</code></td>
+<td>Constantes <code>ACCESS_SCREEN</code>, <code>ACCESS_DASHBOARD_CARD</code>, helpers RPC</td>
+</tr>
+<tr>
+<td><code>lib/userSession.ts</code></td>
+<td><code>user_profile_id</code> no AsyncStorage</td>
+</tr>
+<tr>
+<td><code>lib/supabaseSessionFetch.ts</code></td>
+<td>Header <code>x-profile-id</code> para RLS (9f)</td>
+</tr>
+<tr>
+<td><code>hooks/useScreenAccessGuard.ts</code></td>
+<td>Guard de rota por <code>screen:*</code></td>
+</tr>
+<tr>
+<td><code>scripts/access-control-table-rls.sql</code></td>
+<td>Policies RLS por tabela</td>
+</tr>
+<tr>
+<td><code>DASHBOARD_CARDS.md</code></td>
+<td>Lista de cards e <code>content</code></td>
+</tr>
+<tr>
+<td><code>MANUTENCAO_ECOSISTEMA.md</code></td>
+<td>Rotina do módulo de manutenção</td>
+</tr>
+<tr>
+<td><code>MANUAL_CONTROLE_ACESSO.md</code></td>
+<td>Manual operacional (papéis, grants, testes, troubleshooting)</td>
+</tr>
+</tbody></table>
+</div>
+</body>
+</html>
