@@ -289,6 +289,7 @@ export const FamilyRegistrationList = ({
 
     const confirming = !soloRegistered;
     setSoloToggleLoading(true);
+    let confirmedOk = false;
 
     try {
       if (soloRegistered) {
@@ -299,9 +300,7 @@ export const FamilyRegistrationList = ({
 
       await refetchSoloRegistrationStatus();
       await onRegistrationChange?.();
-      if (confirming) {
-        await offerCalendarAfterConfirm();
-      }
+      confirmedOk = confirming;
     } catch (err) {
       const message =
         err instanceof Error
@@ -312,6 +311,10 @@ export const FamilyRegistrationList = ({
       Alert.alert('Erro', message);
     } finally {
       setSoloToggleLoading(false);
+    }
+
+    if (confirmedOk) {
+      void offerCalendarAfterConfirm();
     }
   };
 
@@ -422,6 +425,8 @@ export const FamilyRegistrationList = ({
     const isCurrentlyRegistered =
       registeredMemberIds.includes(memberId) && !pendingUnregisterIds.includes(memberId);
     const nextMemberIds = resolveTargetMemberIds(memberId);
+    const shouldOfferCalendar = !isCurrentlyRegistered && registeredMemberIds.length === 0;
+    let confirmedOk = false;
 
     try {
       if (isCurrentlyRegistered) {
@@ -437,9 +442,7 @@ export const FamilyRegistrationList = ({
       await persistFamilyRegistrations(nextMemberIds);
       await refetchRegisteredMembers();
       await onRegistrationChange?.();
-      if (!isCurrentlyRegistered && registeredMemberIds.length === 0) {
-        await offerCalendarAfterConfirm();
-      }
+      confirmedOk = shouldOfferCalendar;
     } catch (err) {
       const message =
         err instanceof Error
@@ -451,6 +454,10 @@ export const FamilyRegistrationList = ({
     } finally {
       setPendingRegisterIds([]);
       setPendingUnregisterIds([]);
+    }
+
+    if (confirmedOk) {
+      void offerCalendarAfterConfirm();
     }
   };
 
@@ -474,6 +481,7 @@ export const FamilyRegistrationList = ({
           new Set([...resolveTargetMemberIds(), ...targetMembers.map((member) => member.id)])
         );
 
+    let confirmedOk = false;
     try {
       if (allRegistered) {
         setPendingUnregisterIds(targetMembers.map((member) => member.id));
@@ -484,9 +492,7 @@ export const FamilyRegistrationList = ({
       await persistFamilyRegistrations(nextMemberIds);
       await refetchRegisteredMembers();
       await onRegistrationChange?.();
-      if (confirming) {
-        await offerCalendarAfterConfirm();
-      }
+      confirmedOk = confirming;
     } catch (err) {
       const message =
         err instanceof Error
@@ -498,6 +504,10 @@ export const FamilyRegistrationList = ({
     } finally {
       setPendingRegisterIds([]);
       setPendingUnregisterIds([]);
+    }
+
+    if (confirmedOk) {
+      void offerCalendarAfterConfirm();
     }
   };
 

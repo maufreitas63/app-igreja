@@ -1,5 +1,5 @@
 import {
-  downloadEventoAgendaIcs,
+  openEventOnDeviceCalendar,
   type EventoAgenda,
 } from '@/lib/calendarIcs';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -39,7 +39,7 @@ export function CalendarButton({
 
     setBusy(true);
     try {
-      await downloadEventoAgendaIcs(evento);
+      openEventOnDeviceCalendar(evento);
       onDownloaded?.();
     } catch (error) {
       console.warn('CalendarButton:', error);

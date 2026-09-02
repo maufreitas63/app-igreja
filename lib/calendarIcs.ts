@@ -1,9 +1,11 @@
 import { appAlert } from '@/lib/appAlert';
+import { confirmDialog } from '@/lib/confirmDialog';
 import {
   APP_EVENT_TIMEZONE,
   parseEventDateParts,
 } from '@/lib/eventDate';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as Linking from 'expo-linking';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
@@ -231,6 +233,18 @@ export function eventoAgendaFromChurchEvent(input: {
   };
 }
 
+export function buildGoogleCalendarUrl(evento: EventoAgenda): string {
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: evento.titulo,
+    dates: `${formatIcsUtcDateTime(evento.dataInicio)}/${formatIcsUtcDateTime(evento.dataFim)}`,
+    details: evento.descricao ?? '',
+    location: evento.local,
+    ctz: APP_EVENT_TIMEZONE,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 function downloadIcsInBrowser(ics: string, fileName: string): void {
   if (typeof document === 'undefined') {
     throw new Error('Download de calendário indisponível neste ambiente.');
@@ -291,7 +305,38 @@ export async function downloadEventoAgendaIcs(evento: EventoAgenda): Promise<voi
   await shareIcsNative(ics, fileName);
 }
 
-/** Confirmação de participação: baixa o .ics e mostra o modal combinado. */
+/**
+ * Precisa rodar no clique do usuário (gesto). Abre o Google Agenda e baixa o .ics
+ * para Apple Calendar / Outlook.
+ */
+export function openEventOnDeviceCalendar(evento: EventoAgenda): void {
+  const googleUrl = buildGoogleCalendarUrl(evento);
+
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    window.open(googleUrl, '_blank', 'noopener,noreferrer');
+    try {
+      downloadIcsInBrowser(buildIcsCalendar(evento), buildIcsFileName(evento.titulo));
+    } catch (error) {
+      console.warn('Download do calendário (.ics):', error);
+    }
+    return;
+  }
+
+  void (async () => {
+    try {
+      await downloadEventoAgendaIcs(evento);
+    } catch (error) {
+      console.warn('Download do calendário (.ics):', error);
+      try {
+        await Linking.openURL(googleUrl);
+      } catch (linkError) {
+        console.warn('Abrir Google Agenda:', linkError);
+      }
+    }
+  })();
+}
+
+/** Confirmação de participação: o toque em Adicionar grava na agenda do aparelho. */
 export async function offerConfirmedEventToCalendar(input: {
   id?: string | null;
   titulo: string;
@@ -307,18 +352,23 @@ export async function offerConfirmedEventToCalendar(input: {
     descricao: `Compromisso confirmado no Conecta: ${titulo}.`,
   });
 
-  try {
-    if (evento) {
-      await downloadEventoAgendaIcs(evento);
-    }
-  } catch (error) {
-    console.warn('Download do calendário (.ics):', error);
+  if (!evento) {
+    await appAlert(
+      'Compromisso enviado para minha agenda',
+      'Sua participação foi confirmada. A data do evento ainda não está disponível para o calendário.'
+    );
+    return;
   }
 
-  await appAlert(
+  await confirmDialog(
     'Compromisso enviado para minha agenda',
-    evento
-      ? 'O arquivo de calendário (.ics) foi gerado. Abra-o no Google Agenda, Apple Calendar ou Outlook.'
-      : 'Sua participação foi confirmada. A data do evento ainda não está disponível para o calendário.'
+    'Toque em Adicionar para ver o compromisso no Google Agenda e gravar o arquivo no Apple Calendar ou Outlook.',
+    'Adicionar',
+    'Agora não',
+    {
+      onConfirmed: () => {
+        openEventOnDeviceCalendar(evento);
+      },
+    }
   );
 }
