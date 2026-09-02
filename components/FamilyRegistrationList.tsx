@@ -8,6 +8,7 @@ import {
 } from '@/lib/profileEventRegistration';
 import { resolveActiveSessionMember } from '@/lib/resolveActiveSessionMember';
 import { formatFullName } from '@/lib/fullName';
+import { offerConfirmedEventToCalendar } from '@/lib/calendarIcs';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { GeoCoordinates } from '@/lib/checkinGeofence';
 import {
@@ -40,6 +41,10 @@ type Props = {
   eventId?: string;
   /** Nome do evento (exibido em «Inscrito em: …»). */
   eventName?: string | null;
+  /** `events.event_date` — horário de parede da igreja, para o .ics. */
+  eventDate?: string | null;
+  /** `events.event_local` — local do compromisso no .ics. */
+  eventLocal?: string | null;
   title?: string;
   onRegistrationChange?: () => Promise<void> | void;
   showKidsIndicator?: boolean;
@@ -88,6 +93,8 @@ export const FamilyRegistrationList = ({
   familyId,
   eventId,
   eventName = null,
+  eventDate = null,
+  eventLocal = null,
   title,
   onRegistrationChange,
   showKidsIndicator = false,
@@ -118,6 +125,16 @@ export const FamilyRegistrationList = ({
     }
     return fromTitle || null;
   }, [eventName, title]);
+
+  const offerCalendarAfterConfirm = useCallback(async () => {
+    await offerConfirmedEventToCalendar({
+      id: eventId,
+      titulo: resolvedEventName?.trim() || 'Evento',
+      local: eventLocal,
+      eventDate,
+    });
+  }, [eventDate, eventId, eventLocal, resolvedEventName]);
+
   const hasFamilyId = Boolean(familyId?.trim());
   const { members, loading, error } = useFamilyAudienceMembers(
     hasFamilyId ? familyId : '',
@@ -270,6 +287,7 @@ export const FamilyRegistrationList = ({
       return;
     }
 
+    const confirming = !soloRegistered;
     setSoloToggleLoading(true);
 
     try {
@@ -281,6 +299,9 @@ export const FamilyRegistrationList = ({
 
       await refetchSoloRegistrationStatus();
       await onRegistrationChange?.();
+      if (confirming) {
+        await offerCalendarAfterConfirm();
+      }
     } catch (err) {
       const message =
         err instanceof Error
@@ -416,6 +437,9 @@ export const FamilyRegistrationList = ({
       await persistFamilyRegistrations(nextMemberIds);
       await refetchRegisteredMembers();
       await onRegistrationChange?.();
+      if (!isCurrentlyRegistered && registeredMemberIds.length === 0) {
+        await offerCalendarAfterConfirm();
+      }
     } catch (err) {
       const message =
         err instanceof Error
@@ -435,6 +459,7 @@ export const FamilyRegistrationList = ({
       return;
     }
 
+    const confirming = !allRegistered;
     const targetMembers = allRegistered
       ? visibleMembers.filter((member) => registeredMemberIds.includes(member.id))
       : visibleMembers.filter((member) => !registeredMemberIds.includes(member.id));
@@ -459,6 +484,9 @@ export const FamilyRegistrationList = ({
       await persistFamilyRegistrations(nextMemberIds);
       await refetchRegisteredMembers();
       await onRegistrationChange?.();
+      if (confirming) {
+        await offerCalendarAfterConfirm();
+      }
     } catch (err) {
       const message =
         err instanceof Error

@@ -186,6 +186,8 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
         familyId={familyId ?? ''}
         eventId={selectedEvent.id}
         eventName={selectedEvent.name}
+        eventDate={selectedEvent.event_date}
+        eventLocal={selectedEvent.event_local}
         title={`Audiência para ${selectedEvent.name}`}
         onRegistrationChange={handleAudienceChange}
         showKidsIndicator={Boolean(selectedEvent.kids_room)}
