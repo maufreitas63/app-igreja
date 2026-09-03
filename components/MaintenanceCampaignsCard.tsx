@@ -64,11 +64,25 @@ const formatMetaDisplay = (value: number): string => {
   return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 };
 
-/** Aceita dígitos e vírgula/ponto; formata com separadores enquanto digita */
+/** Digita da direita para a esquerda, como no restante do app (1 = 0,01). */
 const handleMetaChange = (raw: string): string => {
-  // mantém apenas dígitos e vírgula/ponto
-  const cleaned = raw.replace(/[^\d,\.]/g, '');
-  return cleaned;
+  const digits = raw.replace(/\D/g, '').replace(/^0+/, '') || '';
+
+  if (!digits) {
+    return '';
+  }
+
+  return formatMetaDisplay(Number.parseInt(digits, 10) / 100);
+};
+
+const parseMetaInput = (value: string): number => {
+  const digits = value.replace(/\D/g, '');
+
+  if (!digits) {
+    return Number.NaN;
+  }
+
+  return Number.parseInt(digits, 10) / 100;
 };
 
 /** ISO (AAAA-MM-DD) → DD/MM/AAAA */
@@ -165,7 +179,7 @@ export function MaintenanceCampaignsCard({
   };
 
   const handleSave = async () => {
-    const metaValue = Number(meta.replace(/\./g, '').replace(',', '.'));
+    const metaValue = parseMetaInput(meta);
     const centsValue = parseCentsInput(centavos);
 
     if (!titulo.trim() || !Number.isFinite(metaValue) || metaValue <= 0) {
@@ -178,8 +192,18 @@ export function MaintenanceCampaignsCard({
       return;
     }
 
-    const dataInicioIso = brToIso(dataInicio) ?? dataInicio;
-    const dataFimIso = dataFim.trim() ? (brToIso(dataFim) ?? dataFim.trim()) : null;
+    const dataInicioIso = brToIso(dataInicio);
+    const dataFimIso = dataFim.trim() ? brToIso(dataFim) : null;
+
+    if (!dataInicioIso) {
+      Toast.show({ type: 'error', text1: 'Campanha', text2: 'Informe a data de início em DD/MM/AAAA.' });
+      return;
+    }
+
+    if (dataFim.trim() && !dataFimIso) {
+      Toast.show({ type: 'error', text1: 'Campanha', text2: 'Informe a data de fim em DD/MM/AAAA.' });
+      return;
+    }
 
     setSaving(true);
 
