@@ -304,22 +304,26 @@ export function PixAccountsSettings({
           editable={canEdit}
         />
         <View style={styles.row}>
-          <TextInput
-            style={[maintenancePanelStyles.input, styles.flex, styles.field]}
-            value={account.agency ?? ''}
-            onChangeText={(value) => updateDraft(account, isNew, { agency: value })}
-            placeholder="Agência"
-            placeholderTextColor="#94A3B8"
-            editable={canEdit}
-          />
-          <TextInput
-            style={[maintenancePanelStyles.input, styles.flex, styles.field]}
-            value={account.accountNumber ?? ''}
-            onChangeText={(value) => updateDraft(account, isNew, { accountNumber: value })}
-            placeholder="Conta"
-            placeholderTextColor="#94A3B8"
-            editable={canEdit}
-          />
+          <View style={styles.fieldCell}>
+            <TextInput
+              style={[maintenancePanelStyles.input, styles.field]}
+              value={account.agency ?? ''}
+              onChangeText={(value) => updateDraft(account, isNew, { agency: value })}
+              placeholder="Agência"
+              placeholderTextColor="#94A3B8"
+              editable={canEdit}
+            />
+          </View>
+          <View style={styles.fieldCell}>
+            <TextInput
+              style={[maintenancePanelStyles.input, styles.field]}
+              value={account.accountNumber ?? ''}
+              onChangeText={(value) => updateDraft(account, isNew, { accountNumber: value })}
+              placeholder="Conta"
+              placeholderTextColor="#94A3B8"
+              editable={canEdit}
+            />
+          </View>
         </View>
         <Text style={[styles.typeCaption, minimal && styles.typeCaptionMinimal]}>Tipo de conta</Text>
         <View style={styles.typeRow}>
@@ -514,6 +518,10 @@ export function PixAccountsSettings({
 const styles = StyleSheet.create({
   root: {
     gap: 8,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   hint: {
     color: '#475569',
@@ -529,6 +537,10 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     borderRadius: 10,
     overflow: 'hidden',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   cardExpanded: {
     gap: 8,
@@ -552,6 +564,9 @@ const styles = StyleSheet.create({
   body: {
     paddingHorizontal: 10,
     gap: 8,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   label: {
     flexShrink: 1,
@@ -638,11 +653,24 @@ const styles = StyleSheet.create({
   },
   editor: {
     gap: 8,
-    flexGrow: 0,
-    flexShrink: 0,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   field: {
     minHeight: 44,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  fieldCell: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    maxWidth: '100%',
+    overflow: 'hidden',
   },
   typeCaption: {
     color: '#64748B',
@@ -656,6 +684,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   typeChip: {
     minHeight: 36,
@@ -681,9 +712,16 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 8,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   flex: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minWidth: 0,
   },
   defaultToggle: {
     minHeight: 36,
