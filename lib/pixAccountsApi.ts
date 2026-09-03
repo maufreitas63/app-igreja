@@ -56,8 +56,25 @@ function parseAccountType(value: unknown): BankAccountType | null {
   return null;
 }
 
+function coerceJson(value: unknown): unknown {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+    return value;
+  }
+
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    return value;
+  }
+}
+
 function parseAccount(value: unknown): PixAccount | null {
-  const row = asRecord(value);
+  const row = asRecord(coerceJson(value));
   const id = textOrNull(row.id);
   if (!id) {
     return null;
@@ -92,8 +109,9 @@ function emptyBundle(): PixAccountsBundle {
 }
 
 function parseBundle(payload: Record<string, unknown>): PixAccountsBundle {
-  const accounts = Array.isArray(payload.accounts)
-    ? payload.accounts.map(parseAccount).filter((row): row is PixAccount => row !== null)
+  const accountsRaw = coerceJson(payload.accounts ?? payload.pix_accounts);
+  const accounts = Array.isArray(accountsRaw)
+    ? accountsRaw.map(parseAccount).filter((row): row is PixAccount => row !== null)
     : [];
   const defaultId =
     textOrNull(payload.default_id) ||
@@ -105,7 +123,7 @@ function parseBundle(payload: Record<string, unknown>): PixAccountsBundle {
   return {
     defaultId,
     defaultSlot: defaultId ?? '',
-    canManage: payload.can_manage === true,
+    canManage: payload.can_manage === true || payload.can_manage === 'true',
     accounts,
   };
 }
@@ -182,7 +200,7 @@ export async function fetchSessionPixAccounts(): Promise<PixAccountsBundle> {
     throw new Error(error.message || 'Falha ao carregar contas bancárias.');
   }
 
-  const payload = asRecord(data);
+  const payload = asRecord(coerceJson(data));
 
   if (payload.success === false) {
     throw new Error(String(payload.message ?? 'Sem permissão para contas bancárias.'));
@@ -226,7 +244,7 @@ export async function upsertBankAccountAdmin(input: {
     throw new Error(error.message || 'Falha ao salvar a conta bancária.');
   }
 
-  const payload = asRecord(data);
+  const payload = asRecord(coerceJson(data));
 
   if (payload.success === false) {
     throw new Error(String(payload.message ?? 'Não foi possível salvar a conta bancária.'));
@@ -242,7 +260,7 @@ export async function deleteBankAccountAdmin(id: string): Promise<PixAccountsBun
     throw new Error(error.message || 'Falha ao excluir a conta bancária.');
   }
 
-  const payload = asRecord(data);
+  const payload = asRecord(coerceJson(data));
 
   if (payload.success === false) {
     throw new Error(String(payload.message ?? 'Não foi possível excluir a conta.'));

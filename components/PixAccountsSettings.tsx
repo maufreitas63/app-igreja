@@ -10,6 +10,7 @@ import {
   type PixAccountsBundle,
 } from '@/lib/pixAccountsApi';
 import { confirmDialog } from '@/lib/confirmDialog';
+import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -29,6 +30,8 @@ type Props = {
   visibleSlot?: string | null;
   onBundleChange?: (bundle: PixAccountsBundle) => void;
 };
+
+type PanelMode = 'view' | 'edit';
 
 const ACCOUNT_TYPE_OPTIONS = [
   { value: '', label: 'Tipo de conta (opcional)' },
@@ -55,6 +58,14 @@ const emptyDraft = (): PixAccount => ({
   sortOrder: 0,
 });
 
+function accountTitle(account: PixAccount) {
+  return account.label || account.institution || 'Conta Pix';
+}
+
+function typeLabel(value: PixAccount['accountType']) {
+  return ACCOUNT_TYPE_OPTIONS.find((item) => item.value === value)?.label ?? null;
+}
+
 export function PixAccountsSettings({
   isActive = true,
   minimal = false,
@@ -69,9 +80,11 @@ export function PixAccountsSettings({
   const [drafts, setDrafts] = useState<Record<string, PixAccount>>({});
   const [creating, setCreating] = useState(false);
   const [createDraft, setCreateDraft] = useState<PixAccount>(emptyDraft());
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [mode, setMode] = useState<PanelMode>('view');
 
   const applyBundle = useCallback(
-    (next: PixAccountsBundle) => {
+    (next: PixAccountsBundle, preferId?: string | null) => {
       setBundle(next);
       const nextDrafts: Record<string, PixAccount> = {};
       for (const account of next.accounts) {
@@ -79,6 +92,11 @@ export function PixAccountsSettings({
       }
       setDrafts(nextDrafts);
       onBundleChange?.(next);
+
+      if (preferId && next.accounts.some((item) => item.id === preferId)) {
+        setExpandedId(preferId);
+        setMode('view');
+      }
     },
     [onBundleChange]
   );
@@ -106,25 +124,36 @@ export function PixAccountsSettings({
     void load();
   }, [isActive, load]);
 
+  useEffect(() => {
+    if (!compact) {
+      return;
+    }
+
+    setExpandedId(visibleSlot);
+    setMode('view');
+    setCreating(false);
+  }, [compact, visibleSlot]);
+
   const handleSave = async (account: PixAccount, isNew = false) => {
+    const previousIds = new Set((bundle?.accounts ?? []).map((item) => item.id));
     setSavingId(isNew ? 'new' : account.id);
 
     try {
-      applyBundle(
-        await upsertBankAccountAdmin({
-          id: isNew ? null : account.id,
-          label: account.label || account.institution || 'Conta Pix',
-          institution: account.institution || account.label,
-          holderName: account.holderName,
-          document: account.document,
-          agency: account.agency,
-          accountNumber: account.accountNumber,
-          accountType: account.accountType,
-          pixKey: account.pixKey,
-          isDefaultOfferings: account.isDefaultOfferings,
-          isActive: account.isActive,
-        })
-      );
+      const next = await upsertBankAccountAdmin({
+        id: isNew ? null : account.id,
+        label: account.label || account.institution || 'Conta Pix',
+        institution: account.institution || account.label,
+        holderName: account.holderName,
+        document: account.document,
+        agency: account.agency,
+        accountNumber: account.accountNumber,
+        accountType: account.accountType,
+        pixKey: account.pixKey,
+        isDefaultOfferings: account.isDefaultOfferings,
+        isActive: account.isActive,
+      });
+      const created = next.accounts.find((item) => !previousIds.has(item.id));
+      applyBundle(next, isNew ? created?.id ?? null : account.id);
       if (isNew) {
         setCreating(false);
         setCreateDraft(emptyDraft());
@@ -144,7 +173,7 @@ export function PixAccountsSettings({
   const handleDelete = async (account: PixAccount) => {
     const ok = await confirmDialog(
       'Excluir conta',
-      `Excluir ${account.label || 'esta conta'}? Campanhas que a usam passam a usar a conta padrão.`,
+      `Excluir ${accountTitle(account)}? Campanhas que a usam passam a usar a conta padrão.`,
       'Excluir',
       'Não',
       { destructive: true }
@@ -156,6 +185,10 @@ export function PixAccountsSettings({
     setSavingId(account.id);
     try {
       applyBundle(await deleteBankAccountAdmin(account.id));
+      if (expandedId === account.id) {
+        setExpandedId(null);
+        setMode('view');
+      }
       Toast.show({ type: 'success', text1: 'Contas bancárias', text2: 'Conta excluída.' });
     } catch (error) {
       Toast.show({
@@ -166,6 +199,14 @@ export function PixAccountsSettings({
     } finally {
       setSavingId(null);
     }
+  };
+
+  const revertDraft = (account: PixAccount) => {
+    const original = bundle?.accounts.find((item) => item.id === account.id);
+    if (original) {
+      setDrafts((prev) => ({ ...prev, [account.id]: { ...original } }));
+    }
+    setMode('view');
   };
 
   if (loading) {
@@ -182,10 +223,7 @@ export function PixAccountsSettings({
     const busy = savingId === key;
 
     return (
-      <View key={key} style={styles.card}>
-        <Text style={[styles.label, minimal && styles.labelMinimal]}>
-          {isNew ? 'Nova conta' : account.label || 'Conta'}
-        </Text>
+      <View style={styles.editor}>
         <TextInput
           style={maintenancePanelStyles.input}
           value={account.label}
@@ -314,25 +352,120 @@ export function PixAccountsSettings({
                 <Text style={styles.saveText}>{isNew ? 'Cadastrar conta' : 'Salvar conta'}</Text>
               )}
             </TouchableOpacity>
-            {!isNew ? (
-              <TouchableOpacity
-                style={styles.delete}
-                onPress={() => void handleDelete(account)}
-                disabled={busy}
-              >
-                <Text style={styles.deleteText}>Excluir</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.delete}
-                onPress={() => {
+            <TouchableOpacity
+              style={styles.delete}
+              onPress={() => {
+                if (isNew) {
                   setCreating(false);
                   setCreateDraft(emptyDraft());
+                  return;
+                }
+                revertDraft(account);
+              }}
+              disabled={busy}
+            >
+              <Text style={styles.cancelText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+      </View>
+    );
+  };
+
+  const renderView = (account: PixAccount) => {
+    const details: { label: string; value: string }[] = [
+      { label: 'Instituição', value: account.institution || accountTitle(account) },
+      { label: 'Chave Pix', value: account.pixKey || '—' },
+      { label: 'Titular', value: account.holderName || '—' },
+      { label: 'CNPJ/CPF', value: account.document || '—' },
+      { label: 'Agência', value: account.agency || '—' },
+      { label: 'Conta', value: account.accountNumber || '—' },
+      { label: 'Tipo', value: typeLabel(account.accountType) || '—' },
+    ];
+
+    return (
+      <View style={styles.viewBox}>
+        {details.map((row) => (
+          <View key={row.label} style={styles.viewRow}>
+            <Text style={[styles.viewLabel, minimal && styles.viewLabelMinimal]}>{row.label}</Text>
+            <Text style={[styles.viewValue, minimal && styles.viewValueMinimal]}>{row.value}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const renderAccount = (account: PixAccount) => {
+    const draft = drafts[account.id] ?? account;
+    const expanded = expandedId === account.id;
+    const busy = savingId === account.id;
+
+    return (
+      <View key={account.id} style={[styles.card, expanded && styles.cardExpanded]}>
+        <TouchableOpacity
+          style={styles.header}
+          onPress={() => {
+            setExpandedId((prev) => (prev === account.id ? null : account.id));
+            setMode('view');
+          }}
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          accessibilityLabel={accountTitle(account)}
+        >
+          <View style={styles.headerText}>
+            <Text style={[styles.label, minimal && styles.labelMinimal]} numberOfLines={1}>
+              {accountTitle(account)}
+            </Text>
+            {account.isDefaultOfferings ? (
+              <Text style={[styles.badge, minimal && styles.badgeMinimal]}>Padrão</Text>
+            ) : null}
+          </View>
+          <FontAwesome
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={14}
+            color={minimal ? MINIMAL_UI.icon : '#1E3A5F'}
+          />
+        </TouchableOpacity>
+
+        {expanded ? (
+          <View style={styles.body}>
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                style={[styles.actionChip, mode === 'view' && styles.actionChipOn]}
+                onPress={() => {
+                  revertDraft(account);
+                  setMode('view');
                 }}
               >
-                <Text style={styles.deleteText}>Cancelar</Text>
+                <Text style={[styles.actionChipText, mode === 'view' && styles.actionChipTextOn]}>
+                  Ver
+                </Text>
               </TouchableOpacity>
-            )}
+              {canEdit ? (
+                <TouchableOpacity
+                  style={[styles.actionChip, mode === 'edit' && styles.actionChipOn]}
+                  onPress={() => setMode('edit')}
+                >
+                  <Text style={[styles.actionChipText, mode === 'edit' && styles.actionChipTextOn]}>
+                    Editar
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+              {canEdit ? (
+                <TouchableOpacity
+                  style={[styles.actionChip, styles.actionChipDanger]}
+                  onPress={() => void handleDelete(account)}
+                  disabled={busy}
+                >
+                  {busy ? (
+                    <ActivityIndicator color="#B91C1C" />
+                  ) : (
+                    <Text style={styles.actionChipDangerText}>Excluir</Text>
+                  )}
+                </TouchableOpacity>
+              ) : null}
+            </View>
+            {mode === 'edit' && canEdit ? renderEditor(draft, false) : renderView(account)}
           </View>
         ) : null}
       </View>
@@ -343,8 +476,11 @@ export function PixAccountsSettings({
     <View style={styles.root}>
       {compact ? null : (
         <Text style={[styles.hint, minimal && styles.hintMinimal]}>
-          Cadastre quantas contas precisar. Dízimos e ofertas usam a conta marcada como padrão.
-          Cada campanha escolhe a própria conta.
+          {visibleAccounts.length
+            ? `${visibleAccounts.length} conta${visibleAccounts.length === 1 ? '' : 's'} cadastrada${
+                visibleAccounts.length === 1 ? '' : 's'
+              }. Toque no nome para ver, editar ou excluir.`
+            : 'Nenhuma conta cadastrada ainda. Cadastre a primeira abaixo.'}
         </Text>
       )}
 
@@ -354,12 +490,24 @@ export function PixAccountsSettings({
         </Text>
       ) : null}
 
-      {visibleAccounts.map((account) => renderEditor(drafts[account.id] ?? account, false))}
+      {visibleAccounts.map(renderAccount)}
 
-      {!compact && canEdit && creating ? renderEditor(createDraft, true) : null}
+      {!compact && canEdit && creating ? (
+        <View style={[styles.card, styles.cardExpanded]}>
+          <Text style={[styles.label, minimal && styles.labelMinimal]}>Nova conta</Text>
+          {renderEditor(createDraft, true)}
+        </View>
+      ) : null}
 
       {!compact && canEdit && !creating ? (
-        <TouchableOpacity style={styles.add} onPress={() => setCreating(true)}>
+        <TouchableOpacity
+          style={styles.add}
+          onPress={() => {
+            setCreating(true);
+            setExpandedId(null);
+            setMode('view');
+          }}
+        >
           <Text style={styles.addText}>Adicionar conta bancária</Text>
         </TouchableOpacity>
       ) : null}
@@ -378,22 +526,122 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   hintMinimal: {
-    color: MINIMAL_UI.muted,
+    color: MINIMAL_UI.textMuted,
   },
   card: {
-    gap: 8,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 10,
-    padding: 10,
+    overflow: 'hidden',
+  },
+  cardExpanded: {
+    gap: 8,
+    paddingBottom: 10,
+  },
+  header: {
+    minHeight: 44,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerText: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  body: {
+    paddingHorizontal: 10,
+    gap: 8,
   },
   label: {
+    flexShrink: 1,
     color: '#1E3A5F',
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
   },
   labelMinimal: {
     color: MINIMAL_UI.accent,
+  },
+  badge: {
+    color: '#1E3A5F',
+    fontSize: 10,
+    fontWeight: '800',
+    borderWidth: 1,
+    borderColor: '#1E3A5F',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    overflow: 'hidden',
+  },
+  badgeMinimal: {
+    color: MINIMAL_UI.accent,
+    borderColor: MINIMAL_UI.accent,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  actionChip: {
+    flex: 1,
+    minHeight: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionChipOn: {
+    backgroundColor: '#1E3A5F',
+    borderColor: '#1E3A5F',
+  },
+  actionChipDanger: {
+    borderColor: '#FECACA',
+  },
+  actionChipText: {
+    color: '#334155',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  actionChipTextOn: {
+    color: '#FFFFFF',
+  },
+  actionChipDangerText: {
+    color: '#B91C1C',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  viewBox: {
+    gap: 4,
+  },
+  viewRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'flex-start',
+  },
+  viewLabel: {
+    width: 84,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  viewLabelMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  viewValue: {
+    flex: 1,
+    color: '#1E3A5F',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  viewValueMinimal: {
+    color: MINIMAL_UI.accent,
+  },
+  editor: {
+    gap: 8,
   },
   row: {
     flexDirection: 'row',
@@ -434,8 +682,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  deleteText: {
-    color: '#B91C1C',
+  cancelText: {
+    color: '#64748B',
     fontWeight: '700',
   },
   add: {
