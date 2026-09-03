@@ -55,6 +55,7 @@ import {
   DEFAULT_PDF_TO_JPG_DIR,
   resolvePdfToJpgFolderPath,
 } from '@/lib/pdfFolderToJpg';
+import { isClipboardPermissionDenied, readClipboardText } from '@/lib/readClipboardText';
 import { PixAccountsSettings } from '@/components/PixAccountsSettings';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import {
@@ -71,7 +72,6 @@ import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import * as Clipboard from 'expo-clipboard';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -221,6 +221,7 @@ export function MaintenanceFinancialsCard({
   const [commentDraft, setCommentDraft] = useState('');
   const [commentInputActive, setCommentInputActive] = useState(false);
   const commentInputRef = useRef<TextInput>(null);
+  const csvInputRef = useRef<TextInput>(null);
   const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null);
   const [pendingReceiptImage, setPendingReceiptImage] = useState<string | null>(null);
   const [loadingReceiptPreview, setLoadingReceiptPreview] = useState(false);
@@ -419,9 +420,14 @@ export function MaintenanceFinancialsCard({
   }, [csvText, parseBulkCsv]);
 
   const handlePasteClipboard = async () => {
-    const clipboardText = await Clipboard.getStringAsync();
+    const result = await readClipboardText();
 
-    if (!clipboardText.trim()) {
+    if (result.ok) {
+      setCsvText(result.text);
+      return;
+    }
+
+    if (result.reason === 'empty') {
       Toast.show({
         type: 'info',
         text1: 'Financeiro',
@@ -431,7 +437,14 @@ export function MaintenanceFinancialsCard({
       return;
     }
 
-    setCsvText(clipboardText);
+    csvInputRef.current?.focus();
+    Toast.show({
+      type: 'info',
+      text1: 'Cole no campo abaixo',
+      text2:
+        'O navegador bloqueou a leitura automática da área de transferência. Clique no campo e cole com Ctrl+V.',
+      visibilityTime: 5000,
+    });
   };
 
   const handleImportBulk = async () => {
@@ -627,10 +640,14 @@ export function MaintenanceFinancialsCard({
       });
     } catch (err) {
       Toast.show({
-        type: 'error',
+        type: 'info',
         text1: 'Comprovante',
-        text2: err instanceof Error ? err.message : 'Não foi possível colar a imagem.',
-        visibilityTime: 4500,
+        text2: isClipboardPermissionDenied(err)
+          ? 'O navegador bloqueou a área de transferência. Cole a imagem com Ctrl+V ou escolha na galeria.'
+          : err instanceof Error
+            ? err.message
+            : 'Não foi possível colar a imagem.',
+        visibilityTime: 5000,
       });
     }
   };
@@ -1407,6 +1424,7 @@ export function MaintenanceFinancialsCard({
           </View>
 
           <TextInput
+            ref={csvInputRef}
             style={[styles.csvInput, minimal && styles.csvInputMinimal]}
             placeholder="Ex.: 04/05/2026;AP.MPAGO;PROJETOS;ENTRE CONTAS;ORDINÁRIO;REALIZADO;1348;observação opcional"
             placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}

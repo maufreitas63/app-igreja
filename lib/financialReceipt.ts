@@ -3,6 +3,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import { Platform } from 'react-native';
+import { isClipboardPermissionDenied } from '@/lib/readClipboardText';
 import { supabase } from '@/lib/supabase';
 import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
 
@@ -191,6 +192,13 @@ export async function pasteFinancialReceiptFromClipboard(): Promise<string | nul
   const clipboardImage = await Clipboard.getImageAsync({
     format: 'jpeg',
     jpegQuality: 0.9,
+  }).catch((error: unknown) => {
+    if (isClipboardPermissionDenied(error)) {
+      throw new Error(
+        'O navegador bloqueou a área de transferência. Cole a imagem com Ctrl+V ou escolha na galeria.'
+      );
+    }
+    throw error;
   });
 
   return clipboardImage?.data ?? null;
