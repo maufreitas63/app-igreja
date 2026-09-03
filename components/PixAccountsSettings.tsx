@@ -2,12 +2,14 @@ import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
+  BANK_ACCOUNT_TYPES,
+  deleteBankAccountAdmin,
   fetchSessionPixAccounts,
-  pixAccountDropdownOptions,
-  savePixAccountsAdmin,
-  type PixAccountSlot,
+  upsertBankAccountAdmin,
+  type PixAccount,
   type PixAccountsBundle,
 } from '@/lib/pixAccountsApi';
+import { confirmDialog } from '@/lib/confirmDialog';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -24,10 +26,34 @@ type Props = {
   minimal?: boolean;
   showEditor?: boolean;
   compact?: boolean;
-  /** Em campanha: mostra só a conta escolhida, depois da seleção. */
-  visibleSlot?: PixAccountSlot | null;
+  visibleSlot?: string | null;
   onBundleChange?: (bundle: PixAccountsBundle) => void;
 };
+
+const ACCOUNT_TYPE_OPTIONS = [
+  { value: '', label: 'Tipo de conta (opcional)' },
+  { value: 'corrente', label: 'Corrente' },
+  { value: 'poupanca', label: 'Poupança' },
+  { value: 'pagamento', label: 'Pagamento' },
+  { value: 'salario', label: 'Salário' },
+  { value: 'outro', label: 'Outro' },
+];
+
+const emptyDraft = (): PixAccount => ({
+  id: '',
+  slot: '',
+  label: '',
+  pixKey: '',
+  institution: '',
+  holderName: '',
+  document: '',
+  agency: '',
+  accountNumber: '',
+  accountType: null,
+  isActive: true,
+  isDefaultOfferings: false,
+  sortOrder: 0,
+});
 
 export function PixAccountsSettings({
   isActive = true,
@@ -38,22 +64,20 @@ export function PixAccountsSettings({
   onBundleChange,
 }: Props) {
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingId, setSavingId] = useState<string | null>(null);
   const [bundle, setBundle] = useState<PixAccountsBundle | null>(null);
-  const [nome1, setNome1] = useState('Conta principal');
-  const [chave1, setChave1] = useState('');
-  const [nome2, setNome2] = useState('Conta secundária');
-  const [chave2, setChave2] = useState('');
-  const [padrao, setPadrao] = useState<PixAccountSlot>('1');
+  const [drafts, setDrafts] = useState<Record<string, PixAccount>>({});
+  const [creating, setCreating] = useState(false);
+  const [createDraft, setCreateDraft] = useState<PixAccount>(emptyDraft());
 
   const applyBundle = useCallback(
     (next: PixAccountsBundle) => {
       setBundle(next);
-      setNome1(next.accounts[0]?.label || 'Conta principal');
-      setChave1(next.accounts[0]?.pixKey || '');
-      setNome2(next.accounts[1]?.label || 'Conta secundária');
-      setChave2(next.accounts[1]?.pixKey || '');
-      setPadrao(next.defaultSlot);
+      const nextDrafts: Record<string, PixAccount> = {};
+      for (const account of next.accounts) {
+        nextDrafts[account.id] = { ...account };
+      }
+      setDrafts(nextDrafts);
       onBundleChange?.(next);
     },
     [onBundleChange]
@@ -66,7 +90,7 @@ export function PixAccountsSettings({
       setBundle(null);
       Toast.show({
         type: 'error',
-        text1: 'Contas Pix',
+        text1: 'Contas bancárias',
         text2: error instanceof Error ? error.message : 'Falha ao carregar.',
       });
     } finally {
@@ -82,28 +106,65 @@ export function PixAccountsSettings({
     void load();
   }, [isActive, load]);
 
-  const handleSave = async () => {
-    setSaving(true);
+  const handleSave = async (account: PixAccount, isNew = false) => {
+    setSavingId(isNew ? 'new' : account.id);
 
     try {
       applyBundle(
-        await savePixAccountsAdmin({
-          nomeConta1: nome1,
-          chavePix1: chave1,
-          nomeConta2: nome2,
-          chavePix2: chave2,
-          padraoOfertas: padrao,
+        await upsertBankAccountAdmin({
+          id: isNew ? null : account.id,
+          label: account.label || account.institution || 'Conta Pix',
+          institution: account.institution || account.label,
+          holderName: account.holderName,
+          document: account.document,
+          agency: account.agency,
+          accountNumber: account.accountNumber,
+          accountType: account.accountType,
+          pixKey: account.pixKey,
+          isDefaultOfferings: account.isDefaultOfferings,
+          isActive: account.isActive,
         })
       );
-      Toast.show({ type: 'success', text1: 'Contas Pix', text2: 'Configuração salva.' });
+      if (isNew) {
+        setCreating(false);
+        setCreateDraft(emptyDraft());
+      }
+      Toast.show({ type: 'success', text1: 'Contas bancárias', text2: 'Conta salva.' });
     } catch (error) {
       Toast.show({
         type: 'error',
-        text1: 'Contas Pix',
+        text1: 'Contas bancárias',
         text2: error instanceof Error ? error.message : 'Falha ao salvar.',
       });
     } finally {
-      setSaving(false);
+      setSavingId(null);
+    }
+  };
+
+  const handleDelete = async (account: PixAccount) => {
+    const ok = await confirmDialog(
+      'Excluir conta',
+      `Excluir ${account.label || 'esta conta'}? Campanhas que a usam passam a usar a conta padrão.`,
+      'Excluir',
+      'Não',
+      { destructive: true }
+    );
+    if (!ok) {
+      return;
+    }
+
+    setSavingId(account.id);
+    try {
+      applyBundle(await deleteBankAccountAdmin(account.id));
+      Toast.show({ type: 'success', text1: 'Contas bancárias', text2: 'Conta excluída.' });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Contas bancárias',
+        text2: error instanceof Error ? error.message : 'Falha ao excluir.',
+      });
+    } finally {
+      setSavingId(null);
     }
   };
 
@@ -112,62 +173,179 @@ export function PixAccountsSettings({
   }
 
   const canEdit = showEditor && bundle?.canManage === true;
-  const options = pixAccountDropdownOptions(bundle);
-  const showAccount1 = compact ? visibleSlot === '1' : canEdit;
-  const showAccount2 = compact ? visibleSlot === '2' : canEdit;
-  const showSave = canEdit && (showAccount1 || showAccount2);
+  const visibleAccounts = compact
+    ? (bundle?.accounts ?? []).filter((item) => item.id === visibleSlot)
+    : bundle?.accounts ?? [];
+
+  const renderEditor = (account: PixAccount, isNew: boolean) => {
+    const key = isNew ? 'new' : account.id;
+    const busy = savingId === key;
+
+    return (
+      <View key={key} style={styles.card}>
+        <Text style={[styles.label, minimal && styles.labelMinimal]}>
+          {isNew ? 'Nova conta' : account.label || 'Conta'}
+        </Text>
+        <TextInput
+          style={maintenancePanelStyles.input}
+          value={account.label}
+          onChangeText={(value) =>
+            isNew
+              ? setCreateDraft((prev) => ({ ...prev, label: value, institution: value }))
+              : setDrafts((prev) => ({ ...prev, [account.id]: { ...account, label: value } }))
+          }
+          placeholder="Nome do banco / instituição"
+          placeholderTextColor="#94A3B8"
+          editable={canEdit}
+        />
+        <TextInput
+          style={maintenancePanelStyles.input}
+          value={account.pixKey ?? ''}
+          onChangeText={(value) =>
+            isNew
+              ? setCreateDraft((prev) => ({ ...prev, pixKey: value }))
+              : setDrafts((prev) => ({ ...prev, [account.id]: { ...account, pixKey: value } }))
+          }
+          placeholder="Chave Pix"
+          placeholderTextColor="#94A3B8"
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={canEdit}
+        />
+        <TextInput
+          style={maintenancePanelStyles.input}
+          value={account.holderName ?? ''}
+          onChangeText={(value) =>
+            isNew
+              ? setCreateDraft((prev) => ({ ...prev, holderName: value }))
+              : setDrafts((prev) => ({ ...prev, [account.id]: { ...account, holderName: value } }))
+          }
+          placeholder="Titular (opcional)"
+          placeholderTextColor="#94A3B8"
+          editable={canEdit}
+        />
+        <TextInput
+          style={maintenancePanelStyles.input}
+          value={account.document ?? ''}
+          onChangeText={(value) =>
+            isNew
+              ? setCreateDraft((prev) => ({ ...prev, document: value }))
+              : setDrafts((prev) => ({ ...prev, [account.id]: { ...account, document: value } }))
+          }
+          placeholder="CNPJ/CPF da conta (opcional)"
+          placeholderTextColor="#94A3B8"
+          editable={canEdit}
+        />
+        <View style={styles.row}>
+          <TextInput
+            style={[maintenancePanelStyles.input, styles.flex]}
+            value={account.agency ?? ''}
+            onChangeText={(value) =>
+              isNew
+                ? setCreateDraft((prev) => ({ ...prev, agency: value }))
+                : setDrafts((prev) => ({ ...prev, [account.id]: { ...account, agency: value } }))
+            }
+            placeholder="Agência"
+            placeholderTextColor="#94A3B8"
+            editable={canEdit}
+          />
+          <TextInput
+            style={[maintenancePanelStyles.input, styles.flex]}
+            value={account.accountNumber ?? ''}
+            onChangeText={(value) =>
+              isNew
+                ? setCreateDraft((prev) => ({ ...prev, accountNumber: value }))
+                : setDrafts((prev) => ({
+                    ...prev,
+                    [account.id]: { ...account, accountNumber: value },
+                  }))
+            }
+            placeholder="Conta"
+            placeholderTextColor="#94A3B8"
+            editable={canEdit}
+          />
+        </View>
+        <DropdownSelect
+          options={ACCOUNT_TYPE_OPTIONS}
+          selectedValue={account.accountType ?? ''}
+          onValueChange={(value) => {
+            const nextType = (BANK_ACCOUNT_TYPES as readonly string[]).includes(value)
+              ? (value as PixAccount['accountType'])
+              : null;
+            if (isNew) {
+              setCreateDraft((prev) => ({ ...prev, accountType: nextType }));
+            } else {
+              setDrafts((prev) => ({ ...prev, [account.id]: { ...account, accountType: nextType } }));
+            }
+          }}
+          modalTitle="Tipo de conta"
+          variant={minimal ? 'minimal' : 'default'}
+          disabled={!canEdit}
+        />
+        {canEdit && !compact ? (
+          <TouchableOpacity
+            style={styles.defaultToggle}
+            onPress={() =>
+              isNew
+                ? setCreateDraft((prev) => ({ ...prev, isDefaultOfferings: !prev.isDefaultOfferings }))
+                : setDrafts((prev) => ({
+                    ...prev,
+                    [account.id]: { ...account, isDefaultOfferings: !account.isDefaultOfferings },
+                  }))
+            }
+          >
+            <Text style={[styles.defaultText, account.isDefaultOfferings && styles.defaultTextOn]}>
+              {account.isDefaultOfferings
+                ? 'Padrão de dízimos e ofertas'
+                : 'Usar como padrão de dízimos e ofertas'}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+        {canEdit ? (
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.save}
+              onPress={() => void handleSave(account, isNew)}
+              disabled={busy}
+            >
+              {busy ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.saveText}>{isNew ? 'Cadastrar conta' : 'Salvar conta'}</Text>
+              )}
+            </TouchableOpacity>
+            {!isNew ? (
+              <TouchableOpacity
+                style={styles.delete}
+                onPress={() => void handleDelete(account)}
+                disabled={busy}
+              >
+                <Text style={styles.deleteText}>Excluir</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.delete}
+                onPress={() => {
+                  setCreating(false);
+                  setCreateDraft(emptyDraft());
+                }}
+              >
+                <Text style={styles.deleteText}>Cancelar</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : null}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.root}>
       {compact ? null : (
-        <>
-          <Text style={[styles.hint, minimal && styles.hintMinimal]}>
-            Dízimos e ofertas gerais usam a conta padrão. Cada campanha pode escolher a própria
-            conta.
-          </Text>
-
-          <Text style={[styles.label, minimal && styles.labelMinimal]}>
-            Chave Pix padrão (dízimos e ofertas)
-          </Text>
-          <DropdownSelect
-            options={options}
-            selectedValue={padrao}
-            onValueChange={(value) => {
-              const next = value === '2' ? '2' : '1';
-              setPadrao(next);
-
-              if (!canEdit) {
-                return;
-              }
-
-              void savePixAccountsAdmin({
-                nomeConta1: nome1,
-                chavePix1: chave1,
-                nomeConta2: nome2,
-                chavePix2: chave2,
-                padraoOfertas: next,
-              })
-                .then((saved) => {
-                  applyBundle(saved);
-                  Toast.show({
-                    type: 'success',
-                    text1: 'Contas Pix',
-                    text2: 'Chave padrão de dízimos e ofertas atualizada.',
-                  });
-                })
-                .catch((error) => {
-                  Toast.show({
-                    type: 'error',
-                    text1: 'Contas Pix',
-                    text2: error instanceof Error ? error.message : 'Falha ao salvar.',
-                  });
-                });
-            }}
-            modalTitle="Conta Pix padrão"
-            variant={minimal ? 'minimal' : 'default'}
-            disabled={!canEdit}
-          />
-        </>
+        <Text style={[styles.hint, minimal && styles.hintMinimal]}>
+          Cadastre quantas contas precisar. Dízimos e ofertas usam a conta marcada como padrão.
+          Cada campanha escolhe a própria conta.
+        </Text>
       )}
 
       {compact && !visibleSlot ? (
@@ -176,61 +354,13 @@ export function PixAccountsSettings({
         </Text>
       ) : null}
 
-      {showAccount1 ? (
-        <>
-          <Text style={[styles.label, minimal && styles.labelMinimal]}>Conta 1</Text>
-          <TextInput
-            style={maintenancePanelStyles.input}
-            value={nome1}
-            onChangeText={setNome1}
-            placeholder="Nome da conta 1"
-            placeholderTextColor="#94A3B8"
-            editable={canEdit}
-          />
-          <TextInput
-            style={maintenancePanelStyles.input}
-            value={chave1}
-            onChangeText={setChave1}
-            placeholder="Chave Pix principal"
-            placeholderTextColor="#94A3B8"
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={canEdit}
-          />
-        </>
-      ) : null}
+      {visibleAccounts.map((account) => renderEditor(drafts[account.id] ?? account, false))}
 
-      {showAccount2 ? (
-        <>
-          <Text style={[styles.label, minimal && styles.labelMinimal]}>Conta 2</Text>
-          <TextInput
-            style={maintenancePanelStyles.input}
-            value={nome2}
-            onChangeText={setNome2}
-            placeholder="Nome da conta 2"
-            placeholderTextColor="#94A3B8"
-            editable={canEdit}
-          />
-          <TextInput
-            style={maintenancePanelStyles.input}
-            value={chave2}
-            onChangeText={setChave2}
-            placeholder="Chave Pix secundária"
-            placeholderTextColor="#94A3B8"
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={canEdit}
-          />
-        </>
-      ) : null}
+      {!compact && canEdit && creating ? renderEditor(createDraft, true) : null}
 
-      {showSave ? (
-        <TouchableOpacity style={styles.save} onPress={() => void handleSave()} disabled={saving}>
-          {saving ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.saveText}>Salvar contas Pix</Text>
-          )}
+      {!compact && canEdit && !creating ? (
+        <TouchableOpacity style={styles.add} onPress={() => setCreating(true)}>
+          <Text style={styles.addText}>Adicionar conta bancária</Text>
         </TouchableOpacity>
       ) : null}
     </View>
@@ -250,6 +380,13 @@ const styles = StyleSheet.create({
   hintMinimal: {
     color: MINIMAL_UI.muted,
   },
+  card: {
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    padding: 10,
+  },
   label: {
     color: '#1E3A5F',
     fontSize: 12,
@@ -257,6 +394,28 @@ const styles = StyleSheet.create({
   },
   labelMinimal: {
     color: MINIMAL_UI.accent,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  flex: {
+    flex: 1,
+  },
+  defaultToggle: {
+    minHeight: 36,
+    justifyContent: 'center',
+  },
+  defaultText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  defaultTextOn: {
+    color: '#1E3A5F',
+  },
+  actions: {
+    gap: 8,
   },
   save: {
     minHeight: 44,
@@ -267,6 +426,28 @@ const styles = StyleSheet.create({
   },
   saveText: {
     color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  delete: {
+    minHeight: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteText: {
+    color: '#B91C1C',
+    fontWeight: '700',
+  },
+  add: {
+    minHeight: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#1E3A5F',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addText: {
+    color: '#1E3A5F',
     fontWeight: '800',
   },
 });

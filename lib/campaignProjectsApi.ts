@@ -4,7 +4,6 @@
  */
 
 import { pickChurchLogoFromGallery, uploadChurchPublicImage } from '@/lib/churchLogo';
-import { normalizePixAccountSlot, type PixAccountSlot } from '@/lib/pixAccountsApi';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { getStoredTenantId } from '@/lib/tenantSession';
@@ -31,9 +30,15 @@ export type CampaignProject = {
   data_fim: string | null;
   status: CampaignStatus;
   centavos_referencia: number;
-  chave_pix_selecionada: PixAccountSlot;
+  chave_pix_selecionada: string;
+  bank_account_id: string | null;
   pix_key: string | null;
   pix_institution: string | null;
+  holder_name: string | null;
+  document: string | null;
+  agency: string | null;
+  account_number: string | null;
+  account_type: string | null;
   cover_url: string | null;
   progress_pct: number;
   donations_count: number;
@@ -109,11 +114,29 @@ const parseCampaign = (value: unknown): CampaignProject | null => {
     data_fim: row.data_fim != null ? String(row.data_fim) : null,
     status: parseStatus(row.status),
     centavos_referencia: Number(row.centavos_referencia ?? 0),
-    chave_pix_selecionada: normalizePixAccountSlot(row.chave_pix_selecionada),
+    chave_pix_selecionada: String(row.bank_account_id ?? row.chave_pix_selecionada ?? '').trim(),
+    bank_account_id: row.bank_account_id != null && String(row.bank_account_id).trim()
+      ? String(row.bank_account_id).trim()
+      : null,
     pix_key: row.pix_key != null && String(row.pix_key).trim() ? String(row.pix_key).trim() : null,
     pix_institution:
       row.pix_institution != null && String(row.pix_institution).trim()
         ? String(row.pix_institution).trim()
+        : null,
+    holder_name: row.holder_name != null && String(row.holder_name).trim()
+      ? String(row.holder_name).trim()
+      : null,
+    document: row.document != null && String(row.document).trim()
+      ? String(row.document).trim()
+      : null,
+    agency: row.agency != null && String(row.agency).trim() ? String(row.agency).trim() : null,
+    account_number:
+      row.account_number != null && String(row.account_number).trim()
+        ? String(row.account_number).trim()
+        : null,
+    account_type:
+      row.account_type != null && String(row.account_type).trim()
+        ? String(row.account_type).trim()
         : null,
     cover_url: row.cover_url ? String(row.cover_url) : null,
     progress_pct: Number(row.progress_pct ?? 0),
@@ -200,7 +223,8 @@ export async function saveCampaignProject(input: {
   status: CampaignStatus;
   centavosReferencia: number;
   coverUrl?: string | null;
-  chavePixSelecionada?: PixAccountSlot;
+  chavePixSelecionada?: string | null;
+  bankAccountId?: string | null;
 }) {
   const payload = await rpcJson('upsert_campaign_project', {
     p_id: input.id ?? null,
@@ -212,7 +236,8 @@ export async function saveCampaignProject(input: {
     p_status: input.status,
     p_centavos_referencia: input.centavosReferencia,
     p_cover_url: input.coverUrl ?? null,
-    p_chave_pix_selecionada: input.chavePixSelecionada ?? '1',
+    p_chave_pix_selecionada: input.bankAccountId ?? input.chavePixSelecionada ?? null,
+    p_bank_account_id: input.bankAccountId ?? input.chavePixSelecionada ?? null,
   });
 
   return {

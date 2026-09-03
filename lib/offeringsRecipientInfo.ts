@@ -1,4 +1,3 @@
-import { getAppParameterValue } from '@/lib/appParameters';
 import {
   fetchSessionPixAccounts,
   resolvePixKeyForSlot,
@@ -17,6 +16,12 @@ export type OfferingsRecipientRow = {
   value: string;
 };
 
+export type OfferingsRecipientBundle = {
+  recipientRows: OfferingsRecipientRow[];
+  pixKey: string | null;
+  churchName: string;
+};
+
 export function withRecipientInstitution(
   rows: OfferingsRecipientRow[],
   institution: string | null | undefined
@@ -29,6 +34,62 @@ export function withRecipientInstitution(
   return rows.map((row) => (row.label === 'Instituição' ? { ...row, value } : row));
 }
 
+const ACCOUNT_TYPE_LABEL: Record<string, string> = {
+  corrente: 'Corrente',
+  poupanca: 'Poupança',
+  pagamento: 'Pagamento',
+  salario: 'Salário',
+  outro: 'Outro',
+};
+
+function upsertRecipientRow(
+  rows: OfferingsRecipientRow[],
+  label: string,
+  value: string | null | undefined
+): OfferingsRecipientRow[] {
+  const nextValue = textOrNull(value);
+  if (!nextValue) {
+    return rows;
+  }
+
+  const idx = rows.findIndex((row) => row.label === label);
+  if (idx >= 0) {
+    return rows.map((row, index) => (index === idx ? { ...row, value: nextValue } : row));
+  }
+
+  return [...rows, { label, value: nextValue }];
+}
+
+export function withRecipientBankAccount(
+  rows: OfferingsRecipientRow[],
+  account: {
+    institution?: string | null;
+    label?: string | null;
+    holderName?: string | null;
+    document?: string | null;
+    agency?: string | null;
+    accountNumber?: string | null;
+    accountType?: string | null;
+  } | null | undefined
+): OfferingsRecipientRow[] {
+  if (!account) {
+    return rows;
+  }
+
+  let next = withRecipientInstitution(rows, account.institution || account.label);
+  next = upsertRecipientRow(next, 'Titular', account.holderName);
+  next = upsertRecipientRow(next, 'Agência', account.agency);
+  next = upsertRecipientRow(next, 'Conta', account.accountNumber);
+  next = upsertRecipientRow(
+    next,
+    'Tipo',
+    account.accountType
+      ? ACCOUNT_TYPE_LABEL[account.accountType] ?? account.accountType
+      : null
+  );
+  return next;
+}
+
 function textOrNull(value: unknown): string | null {
   if (value == null) return null;
   const text = String(value).trim();
@@ -39,12 +100,31 @@ function buildRows(church: {
   name?: string | null;
   cnpj?: string | null;
   pix_institution?: string | null;
+  holder_name?: string | null;
+  agency?: string | null;
+  account_number?: string | null;
+  account_type?: string | null;
 }): OfferingsRecipientRow[] {
-  return [
+  const rows: OfferingsRecipientRow[] = [
     { label: 'Para', value: textOrNull(church.name) || '—' },
     { label: 'CNPJ', value: textOrNull(church.cnpj) || '—' },
     { label: 'Instituição', value: textOrNull(church.pix_institution) || '—' },
   ];
+
+  if (textOrNull(church.holder_name)) {
+    rows.push({ label: 'Titular', value: church.holder_name as string });
+  }
+  if (textOrNull(church.agency)) {
+    rows.push({ label: 'Agência', value: church.agency as string });
+  }
+  if (textOrNull(church.account_number)) {
+    rows.push({ label: 'Conta', value: church.account_number as string });
+  }
+  if (textOrNull(church.account_type)) {
+    rows.push({ label: 'Tipo', value: church.account_type as string });
+  }
+
+  return rows;
 }
 
 function bundleFromChurch(church: {
@@ -52,6 +132,10 @@ function bundleFromChurch(church: {
   cnpj?: string | null;
   pix_institution?: string | null;
   pix_key?: string | null;
+  holder_name?: string | null;
+  agency?: string | null;
+  account_number?: string | null;
+  account_type?: string | null;
 }): OfferingsRecipientBundle {
   return {
     recipientRows: buildRows(church),
@@ -85,6 +169,10 @@ async function loadOfferingsFromDedicatedRpc(
     cnpj: textOrNull(row.cnpj),
     pix_institution: textOrNull(row.pix_institution),
     pix_key: textOrNull(row.pix_key),
+    holder_name: textOrNull(row.holder_name),
+    agency: textOrNull(row.agency),
+    account_number: textOrNull(row.account_number),
+    account_type: textOrNull(row.account_type),
   });
 }
 
@@ -130,14 +218,9 @@ async function resolveActiveChurchForOfferings(): Promise<SessionIgreja | null> 
 async function preferInstancePixKey(fallback: string | null): Promise<string | null> {
   try {
     const accounts = await fetchSessionPixAccounts();
-    return resolvePixKeyForSlot(accounts, accounts.defaultSlot, fallback);
+    return resolvePixKeyForSlot(accounts, accounts.defaultId, fallback);
   } catch {
-    try {
-      const fromParameters = textOrNull(await getAppParameterValue('chave_pix'));
-      return fromParameters ?? textOrNull(fallback);
-    } catch {
-      return textOrNull(fallback);
-    }
+    return textOrNull(fallback);
   }
 }
 

@@ -143,7 +143,7 @@ export function MaintenanceCampaignsCard({
       String(Math.round((campaign?.centavos_referencia ?? 0.6) * 100)).padStart(2, '0')
     );
     setCoverUrl(campaign?.cover_url ?? null);
-    setPixSlot(campaign?.chave_pix_selecionada ?? '');
+    setPixSlot(campaign?.bank_account_id ?? campaign?.chave_pix_selecionada ?? '');
   };
 
   const load = useCallback(async () => {
@@ -201,7 +201,7 @@ export function MaintenanceCampaignsCard({
       return;
     }
 
-    if (pixSlot !== '1' && pixSlot !== '2') {
+    if (!pixSlot.trim()) {
       Toast.show({
         type: 'error',
         text1: 'Campanha',
@@ -237,6 +237,7 @@ export function MaintenanceCampaignsCard({
         centavosReferencia: centsValue,
         coverUrl,
         chavePixSelecionada: pixSlot,
+        bankAccountId: pixSlot,
       });
       Toast.show({
         type: result.success ? 'success' : 'error',
@@ -326,8 +327,8 @@ export function MaintenanceCampaignsCard({
               </Text>
               <Text style={styles.statLine}>
                 Pix:{' '}
-                {pixBundle?.accounts.find((item) => item.slot === selected.chave_pix_selecionada)
-                  ?.label ?? `Conta ${selected.chave_pix_selecionada}`}
+                {pixBundle?.accounts.find((item) => item.id === selected.bank_account_id)
+                  ?.label ?? 'Conta não selecionada'}
               </Text>
             </View>
           ) : null}
@@ -397,7 +398,7 @@ export function MaintenanceCampaignsCard({
               ...pixAccountDropdownOptions(pixBundle),
             ]}
             selectedValue={pixSlot}
-            onValueChange={(value) => setPixSlot(value === '2' || value === '1' ? value : '')}
+            onValueChange={setPixSlot}
             modalTitle="Conta Pix do projeto"
             placeholder="Selecione o banco da campanha"
             variant={minimal ? 'minimal' : 'default'}
@@ -410,7 +411,7 @@ export function MaintenanceCampaignsCard({
             isActive={isActive}
             minimal={minimal}
             compact
-            visibleSlot={pixSlot === '1' || pixSlot === '2' ? pixSlot : null}
+            visibleSlot={pixSlot.trim() ? pixSlot : null}
             onBundleChange={setPixBundle}
           />
           <SegmentChipRow

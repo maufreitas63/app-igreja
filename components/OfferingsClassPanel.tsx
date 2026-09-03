@@ -2,12 +2,13 @@ import { OfferingsClass } from '@/components/OfferingsClass';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import {
   loadOfferingsRecipientBundle,
-  withRecipientInstitution,
+  withRecipientBankAccount,
   type OfferingsRecipientRow,
 } from '@/lib/offeringsRecipientInfo';
 import {
   fetchActiveCampaignProjects,
   fetchCampaignProject,
+  formatCampaignBrl,
   formatCampaignCentsHint,
   formatCampaignCentsShort,
   formatCampaignProgressLabel,
@@ -25,7 +26,7 @@ import {
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import {
   fetchSessionPixAccounts,
-  resolvePixInstitutionForSlot,
+  pixAccountById,
   resolvePixKeyForSlot,
   type PixAccountsBundle,
 } from '@/lib/pixAccountsApi';
@@ -82,24 +83,25 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
     if (campaign) {
       return (
         campaign.pix_key ||
-        resolvePixKeyForSlot(pixAccounts, campaign.chave_pix_selecionada, pixKey)
+        resolvePixKeyForSlot(pixAccounts, campaign.bank_account_id ?? campaign.chave_pix_selecionada, pixKey)
       );
     }
 
-    return resolvePixKeyForSlot(pixAccounts, pixAccounts?.defaultSlot ?? '1', pixKey);
+    return resolvePixKeyForSlot(pixAccounts, pixAccounts?.defaultId, pixKey);
   }, [campaign, pixAccounts, pixKey]);
 
   const displayRecipientRows = useMemo(() => {
-    const slot = campaign?.chave_pix_selecionada ?? pixAccounts?.defaultSlot ?? '1';
-    const institution =
-      campaign?.pix_institution ||
-      resolvePixInstitutionForSlot(
-        pixAccounts,
-        slot,
-        recipientRows.find((row) => row.label === 'Instituição')?.value
-      );
+    const slot = campaign?.bank_account_id ?? campaign?.chave_pix_selecionada ?? pixAccounts?.defaultId;
+    const selected = pixAccountById(pixAccounts, slot);
 
-    return withRecipientInstitution(recipientRows, institution);
+    return withRecipientBankAccount(recipientRows, selected ?? (campaign ? {
+      institution: campaign.pix_institution,
+      holderName: campaign.holder_name,
+      document: campaign.document,
+      agency: campaign.agency,
+      accountNumber: campaign.account_number,
+      accountType: campaign.account_type,
+    } : pixAccounts?.accounts.find((item) => item.id === pixAccounts.defaultId) ?? null));
   }, [campaign, pixAccounts, recipientRows]);
 
   const campaignPix = useMemo(() => {

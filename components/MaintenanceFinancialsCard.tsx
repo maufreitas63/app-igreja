@@ -1239,7 +1239,7 @@ export function MaintenanceFinancialsCard({
 
       <CollapsibleSection
         title="Contas Pix"
-        subtitle="Padrão de dízimos e ofertas · segunda conta para campanhas"
+        subtitle="Contas ilimitadas · padrão de dízimos e ofertas · escolha por campanha"
         expanded={expandedSection === 'pix'}
         onToggle={() => toggleSection('pix')}
         minimal={minimal}
