@@ -22,7 +22,6 @@ import {
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   fetchSessionPixAccounts,
-  normalizePixAccountSlot,
   pixAccountDropdownOptions,
   type PixAccountSlot,
   type PixAccountsBundle,
@@ -121,7 +120,7 @@ export function MaintenanceCampaignsCard({
   const [status, setStatus] = useState<CampaignStatus>('rascunho');
   const [centavos, setCentavos] = useState('60');
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  const [pixSlot, setPixSlot] = useState<PixAccountSlot>('1');
+  const [pixSlot, setPixSlot] = useState<PixAccountSlot | ''>('');
   const [pixBundle, setPixBundle] = useState<PixAccountsBundle | null>(null);
 
   const selected = useMemo(
@@ -144,7 +143,7 @@ export function MaintenanceCampaignsCard({
       String(Math.round((campaign?.centavos_referencia ?? 0.6) * 100)).padStart(2, '0')
     );
     setCoverUrl(campaign?.cover_url ?? null);
-    setPixSlot(campaign?.chave_pix_selecionada ?? pixBundle?.defaultSlot ?? '1');
+    setPixSlot(campaign?.chave_pix_selecionada ?? '');
   };
 
   const load = useCallback(async () => {
@@ -199,6 +198,15 @@ export function MaintenanceCampaignsCard({
 
     if (centsValue < 0.01) {
       Toast.show({ type: 'error', text1: 'Campanha', text2: 'Informe os centavos de referência.' });
+      return;
+    }
+
+    if (pixSlot !== '1' && pixSlot !== '2') {
+      Toast.show({
+        type: 'error',
+        text1: 'Campanha',
+        text2: 'Selecione o banco que receberá as contribuições desta campanha.',
+      });
       return;
     }
 
@@ -384,10 +392,14 @@ export function MaintenanceCampaignsCard({
           </Text>
           <Text style={styles.fieldLabel}>Conta Pix deste projeto</Text>
           <DropdownSelect
-            options={pixAccountDropdownOptions(pixBundle)}
+            options={[
+              { value: '', label: 'Selecione o banco da campanha' },
+              ...pixAccountDropdownOptions(pixBundle),
+            ]}
             selectedValue={pixSlot}
-            onValueChange={(value) => setPixSlot(normalizePixAccountSlot(value))}
+            onValueChange={(value) => setPixSlot(value === '2' || value === '1' ? value : '')}
             modalTitle="Conta Pix do projeto"
+            placeholder="Selecione o banco da campanha"
             variant={minimal ? 'minimal' : 'default'}
           />
           <Text style={styles.hint}>
@@ -398,6 +410,7 @@ export function MaintenanceCampaignsCard({
             isActive={isActive}
             minimal={minimal}
             compact
+            visibleSlot={pixSlot === '1' || pixSlot === '2' ? pixSlot : null}
             onBundleChange={setPixBundle}
           />
           <SegmentChipRow
