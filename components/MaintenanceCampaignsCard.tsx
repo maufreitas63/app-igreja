@@ -26,6 +26,7 @@ import {
   type PixAccountSlot,
   type PixAccountsBundle,
 } from '@/lib/pixAccountsApi';
+import { formatBrazilDateInput } from '@/lib/inputMasks';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -58,6 +59,34 @@ const parseCentsInput = (value: string) => {
   return Math.min(99, Number.parseInt(digits.slice(-2), 10)) / 100;
 };
 
+/** Formata número como BRL sem símbolo: 1000000 → "1.000.000,00" */
+const formatMetaDisplay = (value: number): string => {
+  return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+};
+
+/** Aceita dígitos e vírgula/ponto; formata com separadores enquanto digita */
+const handleMetaChange = (raw: string): string => {
+  // mantém apenas dígitos e vírgula/ponto
+  const cleaned = raw.replace(/[^\d,\.]/g, '');
+  return cleaned;
+};
+
+/** ISO (AAAA-MM-DD) → DD/MM/AAAA */
+const isoToBr = (iso: string | null | undefined): string => {
+  if (!iso) return '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+};
+
+/** DD/MM/AAAA → AAAA-MM-DD (ou null se inválido/incompleto) */
+const brToIso = (br: string): string | null => {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(br.trim());
+  if (!m) return null;
+  const [, dd, mm, yyyy] = m;
+  const iso = `${yyyy}-${mm}-${dd}`;
+  return Number.isNaN(Date.parse(`${iso}T12:00:00Z`)) ? null : iso;
+};
+
 export function MaintenanceCampaignsCard({
   isActive = true,
   panelHeight,
@@ -72,7 +101,7 @@ export function MaintenanceCampaignsCard({
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [meta, setMeta] = useState('');
-  const [dataInicio, setDataInicio] = useState(() => new Date().toISOString().slice(0, 10));
+  const [dataInicio, setDataInicio] = useState(() => isoToBr(new Date().toISOString().slice(0, 10)));
   const [dataFim, setDataFim] = useState('');
   const [status, setStatus] = useState<CampaignStatus>('rascunho');
   const [centavos, setCentavos] = useState('60');
@@ -88,9 +117,9 @@ export function MaintenanceCampaignsCard({
   const applyCampaign = (campaign: CampaignProject | null) => {
     setTitulo(campaign?.titulo ?? '');
     setDescricao(campaign?.descricao ?? '');
-    setMeta(campaign ? String(campaign.meta_financeira) : '');
-    setDataInicio(campaign?.data_inicio?.slice(0, 10) || new Date().toISOString().slice(0, 10));
-    setDataFim(campaign?.data_fim?.slice(0, 10) || '');
+    setMeta(campaign ? formatMetaDisplay(campaign.meta_financeira) : '');
+    setDataInicio(isoToBr(campaign?.data_inicio?.slice(0, 10)) || isoToBr(new Date().toISOString().slice(0, 10)));
+    setDataFim(isoToBr(campaign?.data_fim?.slice(0, 10)));
     setStatus(campaign?.status ?? 'rascunho');
     setCentavos(
       String(Math.round((campaign?.centavos_referencia ?? 0.6) * 100)).padStart(2, '0')
@@ -136,7 +165,7 @@ export function MaintenanceCampaignsCard({
   };
 
   const handleSave = async () => {
-    const metaValue = Number(meta.replace(',', '.'));
+    const metaValue = Number(meta.replace(/\./g, '').replace(',', '.'));
     const centsValue = parseCentsInput(centavos);
 
     if (!titulo.trim() || !Number.isFinite(metaValue) || metaValue <= 0) {
@@ -149,6 +178,9 @@ export function MaintenanceCampaignsCard({
       return;
     }
 
+    const dataInicioIso = brToIso(dataInicio) ?? dataInicio;
+    const dataFimIso = dataFim.trim() ? (brToIso(dataFim) ?? dataFim.trim()) : null;
+
     setSaving(true);
 
     try {
@@ -157,8 +189,8 @@ export function MaintenanceCampaignsCard({
         titulo: titulo.trim(),
         descricao: descricao.trim(),
         metaFinanceira: metaValue,
-        dataInicio,
-        dataFim: dataFim.trim() || null,
+        dataInicio: dataInicioIso,
+        dataFim: dataFimIso,
         status,
         centavosReferencia: centsValue,
         coverUrl,
@@ -219,13 +251,6 @@ export function MaintenanceCampaignsCard({
           nestedScrollEnabled
           {...MAINTENANCE_SCROLL_PROPS}
         >
-          <PixAccountsSettings
-            isActive={isActive}
-            minimal={minimal}
-            compact
-            onBundleChange={setPixBundle}
-          />
-
           <DropdownSelect
             options={[
               { value: NEW_VALUE, label: 'Nova campanha' },
@@ -284,7 +309,7 @@ export function MaintenanceCampaignsCard({
           <TextInput
             style={maintenancePanelStyles.input}
             value={meta}
-            onChangeText={setMeta}
+            onChangeText={(v) => setMeta(handleMetaChange(v))}
             placeholder="Meta financeira (R$)"
             placeholderTextColor="#94A3B8"
             keyboardType="decimal-pad"
@@ -293,16 +318,18 @@ export function MaintenanceCampaignsCard({
             <TextInput
               style={[maintenancePanelStyles.input, styles.flex]}
               value={dataInicio}
-              onChangeText={setDataInicio}
-              placeholder="Início AAAA-MM-DD"
+              onChangeText={(v) => setDataInicio(formatBrazilDateInput(v))}
+              placeholder="Início DD/MM/AAAA"
               placeholderTextColor="#94A3B8"
+              keyboardType="numeric"
             />
             <TextInput
               style={[maintenancePanelStyles.input, styles.flex]}
               value={dataFim}
-              onChangeText={setDataFim}
-              placeholder="Fim (opcional)"
+              onChangeText={(v) => setDataFim(formatBrazilDateInput(v))}
+              placeholder="Fim DD/MM/AAAA"
               placeholderTextColor="#94A3B8"
+              keyboardType="numeric"
             />
           </View>
           <Text style={styles.fieldLabel}>Centavos simbólicos de referência</Text>
@@ -332,6 +359,12 @@ export function MaintenanceCampaignsCard({
             O Copia e Cola desta campanha usa a chave escolhida, com os centavos simbólicos de
             identificação.
           </Text>
+          <PixAccountsSettings
+            isActive={isActive}
+            minimal={minimal}
+            compact
+            onBundleChange={setPixBundle}
+          />
           <SegmentChipRow
             variant={minimal ? 'vigilance' : 'default'}
             compact
