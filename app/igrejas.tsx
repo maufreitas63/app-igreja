@@ -39,7 +39,12 @@ import {
 import Toast from 'react-native-toast-message';
 
 type SocialDraft = { website: string; instagram: string; youtube: string };
-type OfferingsDraft = { cnpj: string; pixInstitution: string; pixKey: string };
+type OfferingsDraft = {
+  cnpj: string;
+  pixInstitution: string;
+  pixKey: string;
+  pixKeySecundaria: string;
+};
 
 function isProtectedDefaultChurch(church: SessionIgreja) {
   return church.code.trim().toUpperCase() === 'IBN';
@@ -62,6 +67,7 @@ function IgrejasAdminPanel() {
   const [createCnpj, setCreateCnpj] = useState('');
   const [createPixInstitution, setCreatePixInstitution] = useState('');
   const [createPixKey, setCreatePixKey] = useState('');
+  const [createPixKeySecundaria, setCreatePixKeySecundaria] = useState('');
   const [socialDrafts, setSocialDrafts] = useState<Record<string, SocialDraft>>({});
   const [offeringsDrafts, setOfferingsDrafts] = useState<Record<string, OfferingsDraft>>({});
   const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null);
@@ -83,6 +89,7 @@ function IgrejasAdminPanel() {
         cnpj: church.cnpj ?? '',
         pixInstitution: church.pix_institution ?? '',
         pixKey: church.pix_key ?? '',
+        pixKeySecundaria: church.pix_key_secundaria ?? '',
       };
       nextMae[church.id] = church.mae_tenant_id ?? '';
     }
@@ -172,7 +179,12 @@ function IgrejasAdminPanel() {
   const handleSaveEdit = async (church: SessionIgreja) => {
     const draft = socialDrafts[church.id] ?? { website: '', instagram: '', youtube: '' };
     const offerings =
-      offeringsDrafts[church.id] ?? { cnpj: '', pixInstitution: '', pixKey: '' };
+      offeringsDrafts[church.id] ?? {
+        cnpj: '',
+        pixInstitution: '',
+        pixKey: '',
+        pixKeySecundaria: '',
+      };
     setEditBusy(true);
     try {
       if (editLogoPreview) {
@@ -201,7 +213,8 @@ function IgrejasAdminPanel() {
         church.id,
         offerings.cnpj,
         offerings.pixInstitution,
-        offerings.pixKey
+        offerings.pixKey,
+        offerings.pixKeySecundaria
       );
       if (!offeringsResult?.success) {
         Toast.show({
@@ -297,13 +310,17 @@ function IgrejasAdminPanel() {
 
       if (
         tenantId &&
-        (createCnpj.trim() || createPixInstitution.trim() || createPixKey.trim())
+        (createCnpj.trim() ||
+          createPixInstitution.trim() ||
+          createPixKey.trim() ||
+          createPixKeySecundaria.trim())
       ) {
         const offerings = await setIgrejaOfferingsAdmin(
           tenantId,
           createCnpj,
           createPixInstitution,
-          createPixKey
+          createPixKey,
+          createPixKeySecundaria
         );
         if (!offerings?.success) {
           Toast.show({
@@ -341,6 +358,7 @@ function IgrejasAdminPanel() {
       setCreateCnpj('');
       setCreatePixInstitution('');
       setCreatePixKey('');
+      setCreatePixKeySecundaria('');
       setCreateMaeTenantId('');
       await load();
     } catch (error) {
@@ -529,7 +547,12 @@ function IgrejasAdminPanel() {
             const isEditing = editingId === church.id;
             const draft = socialDrafts[church.id] ?? { website: '', instagram: '', youtube: '' };
             const offeringsDraft =
-              offeringsDrafts[church.id] ?? { cnpj: '', pixInstitution: '', pixKey: '' };
+              offeringsDrafts[church.id] ?? {
+                cnpj: '',
+                pixInstitution: '',
+                pixKey: '',
+                pixKeySecundaria: '',
+              };
             const previewUri = editLogoPreview || church.logo_url;
             const isSessionChurch = activeTenantId
               ? church.id === activeTenantId
@@ -755,7 +778,7 @@ function IgrejasAdminPanel() {
                       autoCorrect={false}
                       editable={!editBusy}
                     />
-                    <Text style={styles.socialFieldLabel}>Chave PIX</Text>
+                    <Text style={styles.socialFieldLabel}>Chave PIX principal</Text>
                     <TextInput
                       style={styles.input}
                       value={offeringsDraft.pixKey}
@@ -766,6 +789,22 @@ function IgrejasAdminPanel() {
                         }))
                       }
                       placeholder="CNPJ, e-mail, telefone ou chave aleatória"
+                      placeholderTextColor={MINIMAL_UI.textMuted}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      editable={!editBusy}
+                    />
+                    <Text style={styles.socialFieldLabel}>Chave PIX secundária</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={offeringsDraft.pixKeySecundaria}
+                      onChangeText={(value) =>
+                        setOfferingsDrafts((prev) => ({
+                          ...prev,
+                          [church.id]: { ...offeringsDraft, pixKeySecundaria: value },
+                        }))
+                      }
+                      placeholder="Segunda conta (campanhas ou conta alternativa)"
                       placeholderTextColor={MINIMAL_UI.textMuted}
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -947,7 +986,7 @@ function IgrejasAdminPanel() {
           autoCapitalize="characters"
           autoCorrect={false}
         />
-        <Text style={styles.label}>Chave PIX</Text>
+        <Text style={styles.label}>Chave PIX principal</Text>
         <TextInput
           style={styles.input}
           value={createPixKey}
@@ -957,8 +996,19 @@ function IgrejasAdminPanel() {
           autoCapitalize="none"
           autoCorrect={false}
         />
+        <Text style={styles.label}>Chave PIX secundária</Text>
+        <TextInput
+          style={styles.input}
+          value={createPixKeySecundaria}
+          onChangeText={setCreatePixKeySecundaria}
+          placeholder="Segunda conta (campanhas ou conta alternativa)"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
         <Text style={styles.logoHint}>
-          Dados exibidos na tela Dízimos e Ofertas desta instância.
+          A principal alimenta dízimos e ofertas. A secundária pode ser escolhida em cada campanha
+          ou definida como padrão na tesouraria.
         </Text>
 
         <Text style={styles.label}>Igreja mãe (indicação Aliança)</Text>

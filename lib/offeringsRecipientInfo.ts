@@ -109,6 +109,7 @@ async function resolveActiveChurchForOfferings(): Promise<SessionIgreja | null> 
       cnpj: null,
       pix_institution: null,
       pix_key: null,
+      pix_key_secundaria: null,
       is_active: true,
       is_primary: true,
       is_linked: true,
