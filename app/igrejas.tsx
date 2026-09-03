@@ -794,6 +794,22 @@ function IgrejasAdminPanel() {
                       autoCorrect={false}
                       editable={!editBusy}
                     />
+                    <Text style={styles.socialFieldLabel}>Instituição PIX</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={offeringsDraft.pixInstitution}
+                      onChangeText={(value) =>
+                        setOfferingsDrafts((prev) => ({
+                          ...prev,
+                          [church.id]: { ...offeringsDraft, pixInstitution: value },
+                        }))
+                      }
+                      placeholder="Nome do banco / cooperativa"
+                      placeholderTextColor={MINIMAL_UI.textMuted}
+                      autoCapitalize="characters"
+                      autoCorrect={false}
+                      editable={!editBusy}
+                    />
                     <Text style={styles.socialFieldLabel}>Chave PIX secundária</Text>
                     <TextInput
                       style={styles.input}
@@ -994,6 +1010,16 @@ function IgrejasAdminPanel() {
           placeholder="CNPJ, e-mail, telefone ou chave aleatória"
           placeholderTextColor={MINIMAL_UI.textMuted}
           autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <Text style={styles.label}>Instituição PIX</Text>
+        <TextInput
+          style={styles.input}
+          value={createPixInstitution}
+          onChangeText={setCreatePixInstitution}
+          placeholder="Nome do banco / cooperativa"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="characters"
           autoCorrect={false}
         />
         <Text style={styles.label}>Chave PIX secundária</Text>
