@@ -20,6 +20,7 @@
       }
     },
     "android": {
+      "label": "Comunidade Digital",
       "queries": [{ "package": "com.whatsapp" }],
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
