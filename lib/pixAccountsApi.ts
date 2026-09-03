@@ -14,6 +14,7 @@ export type PixAccount = {
   slot: PixAccountSlot;
   label: string;
   pixKey: string | null;
+  institution: string | null;
 };
 
 export type PixAccountsBundle = {
@@ -50,6 +51,7 @@ function parseAccount(value: unknown): PixAccount | null {
     slot,
     label,
     pixKey: textOrNull(row.pix_key),
+    institution: textOrNull(row.institution) || textOrNull(row.pix_institution) || label,
   };
 }
 
@@ -58,8 +60,8 @@ function emptyBundle(): PixAccountsBundle {
     defaultSlot: '1',
     canManage: false,
     accounts: [
-      { slot: '1', label: 'Conta principal', pixKey: null },
-      { slot: '2', label: 'Conta secundária', pixKey: null },
+      { slot: '1', label: 'Conta principal', pixKey: null, institution: null },
+      { slot: '2', label: 'Conta secundária', pixKey: null, institution: null },
     ],
   };
 }
@@ -104,6 +106,19 @@ export function resolvePixKeyForSlot(
 
   const other = pixAccountBySlot(bundle, normalizePixAccountSlot(slot) === '2' ? '1' : '2')?.pixKey;
   return other ?? textOrNull(fallback);
+}
+
+export function resolvePixInstitutionForSlot(
+  bundle: PixAccountsBundle | null | undefined,
+  slot: unknown,
+  fallback?: string | null
+): string | null {
+  const selected = pixAccountBySlot(bundle, slot);
+  return (
+    textOrNull(selected?.institution) ||
+    textOrNull(selected?.label) ||
+    textOrNull(fallback)
+  );
 }
 
 export function pixAccountDropdownOptions(bundle: PixAccountsBundle | null | undefined) {

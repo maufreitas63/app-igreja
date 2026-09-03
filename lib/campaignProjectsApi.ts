@@ -32,6 +32,8 @@ export type CampaignProject = {
   status: CampaignStatus;
   centavos_referencia: number;
   chave_pix_selecionada: PixAccountSlot;
+  pix_key: string | null;
+  pix_institution: string | null;
   cover_url: string | null;
   progress_pct: number;
   donations_count: number;
@@ -99,6 +101,11 @@ const parseCampaign = (value: unknown): CampaignProject | null => {
     status: parseStatus(row.status),
     centavos_referencia: Number(row.centavos_referencia ?? 0),
     chave_pix_selecionada: normalizePixAccountSlot(row.chave_pix_selecionada),
+    pix_key: row.pix_key != null && String(row.pix_key).trim() ? String(row.pix_key).trim() : null,
+    pix_institution:
+      row.pix_institution != null && String(row.pix_institution).trim()
+        ? String(row.pix_institution).trim()
+        : null,
     cover_url: row.cover_url ? String(row.cover_url) : null,
     progress_pct: Number(row.progress_pct ?? 0),
     donations_count: Number(row.donations_count ?? 0),

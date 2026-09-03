@@ -43,6 +43,7 @@ type OfferingsDraft = {
   cnpj: string;
   pixInstitution: string;
   pixKey: string;
+  pixInstitutionSecundaria: string;
   pixKeySecundaria: string;
 };
 
@@ -67,6 +68,7 @@ function IgrejasAdminPanel() {
   const [createCnpj, setCreateCnpj] = useState('');
   const [createPixInstitution, setCreatePixInstitution] = useState('');
   const [createPixKey, setCreatePixKey] = useState('');
+  const [createPixInstitutionSecundaria, setCreatePixInstitutionSecundaria] = useState('');
   const [createPixKeySecundaria, setCreatePixKeySecundaria] = useState('');
   const [socialDrafts, setSocialDrafts] = useState<Record<string, SocialDraft>>({});
   const [offeringsDrafts, setOfferingsDrafts] = useState<Record<string, OfferingsDraft>>({});
@@ -89,6 +91,7 @@ function IgrejasAdminPanel() {
         cnpj: church.cnpj ?? '',
         pixInstitution: church.pix_institution ?? '',
         pixKey: church.pix_key ?? '',
+        pixInstitutionSecundaria: church.pix_institution_secundaria ?? '',
         pixKeySecundaria: church.pix_key_secundaria ?? '',
       };
       nextMae[church.id] = church.mae_tenant_id ?? '';
@@ -183,6 +186,7 @@ function IgrejasAdminPanel() {
         cnpj: '',
         pixInstitution: '',
         pixKey: '',
+        pixInstitutionSecundaria: '',
         pixKeySecundaria: '',
       };
     setEditBusy(true);
@@ -214,7 +218,8 @@ function IgrejasAdminPanel() {
         offerings.cnpj,
         offerings.pixInstitution,
         offerings.pixKey,
-        offerings.pixKeySecundaria
+        offerings.pixKeySecundaria,
+        offerings.pixInstitutionSecundaria
       );
       if (!offeringsResult?.success) {
         Toast.show({
@@ -313,6 +318,7 @@ function IgrejasAdminPanel() {
         (createCnpj.trim() ||
           createPixInstitution.trim() ||
           createPixKey.trim() ||
+          createPixInstitutionSecundaria.trim() ||
           createPixKeySecundaria.trim())
       ) {
         const offerings = await setIgrejaOfferingsAdmin(
@@ -320,7 +326,8 @@ function IgrejasAdminPanel() {
           createCnpj,
           createPixInstitution,
           createPixKey,
-          createPixKeySecundaria
+          createPixKeySecundaria,
+          createPixInstitutionSecundaria
         );
         if (!offerings?.success) {
           Toast.show({
@@ -551,6 +558,7 @@ function IgrejasAdminPanel() {
                 cnpj: '',
                 pixInstitution: '',
                 pixKey: '',
+                pixInstitutionSecundaria: '',
                 pixKeySecundaria: '',
               };
             const previewUri = editLogoPreview || church.logo_url;
@@ -794,17 +802,17 @@ function IgrejasAdminPanel() {
                       autoCorrect={false}
                       editable={!editBusy}
                     />
-                    <Text style={styles.socialFieldLabel}>Instituição PIX</Text>
+                    <Text style={styles.socialFieldLabel}>Instituição PIX da chave secundária</Text>
                     <TextInput
                       style={styles.input}
-                      value={offeringsDraft.pixInstitution}
+                      value={offeringsDraft.pixInstitutionSecundaria}
                       onChangeText={(value) =>
                         setOfferingsDrafts((prev) => ({
                           ...prev,
-                          [church.id]: { ...offeringsDraft, pixInstitution: value },
+                          [church.id]: { ...offeringsDraft, pixInstitutionSecundaria: value },
                         }))
                       }
-                      placeholder="Nome do banco / cooperativa"
+                      placeholder="Nome do banco / cooperativa da segunda conta"
                       placeholderTextColor={MINIMAL_UI.textMuted}
                       autoCapitalize="characters"
                       autoCorrect={false}
@@ -1012,12 +1020,12 @@ function IgrejasAdminPanel() {
           autoCapitalize="none"
           autoCorrect={false}
         />
-        <Text style={styles.label}>Instituição PIX</Text>
+        <Text style={styles.label}>Instituição PIX da chave secundária</Text>
         <TextInput
           style={styles.input}
-          value={createPixInstitution}
-          onChangeText={setCreatePixInstitution}
-          placeholder="Nome do banco / cooperativa"
+          value={createPixInstitutionSecundaria}
+          onChangeText={setCreatePixInstitutionSecundaria}
+          placeholder="Nome do banco / cooperativa da segunda conta"
           placeholderTextColor={MINIMAL_UI.textMuted}
           autoCapitalize="characters"
           autoCorrect={false}

@@ -2,6 +2,7 @@ import { OfferingsClass } from '@/components/OfferingsClass';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import {
   loadOfferingsRecipientBundle,
+  withRecipientInstitution,
   type OfferingsRecipientRow,
 } from '@/lib/offeringsRecipientInfo';
 import {
@@ -24,6 +25,7 @@ import {
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import {
   fetchSessionPixAccounts,
+  resolvePixInstitutionForSlot,
   resolvePixKeyForSlot,
   type PixAccountsBundle,
 } from '@/lib/pixAccountsApi';
@@ -78,11 +80,27 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
 
   const activePixKey = useMemo(() => {
     if (campaign) {
-      return resolvePixKeyForSlot(pixAccounts, campaign.chave_pix_selecionada, pixKey);
+      return (
+        campaign.pix_key ||
+        resolvePixKeyForSlot(pixAccounts, campaign.chave_pix_selecionada, pixKey)
+      );
     }
 
     return resolvePixKeyForSlot(pixAccounts, pixAccounts?.defaultSlot ?? '1', pixKey);
   }, [campaign, pixAccounts, pixKey]);
+
+  const displayRecipientRows = useMemo(() => {
+    const slot = campaign?.chave_pix_selecionada ?? pixAccounts?.defaultSlot ?? '1';
+    const institution =
+      campaign?.pix_institution ||
+      resolvePixInstitutionForSlot(
+        pixAccounts,
+        slot,
+        recipientRows.find((row) => row.label === 'Instituição')?.value
+      );
+
+    return withRecipientInstitution(recipientRows, institution);
+  }, [campaign, pixAccounts, recipientRows]);
 
   const campaignPix = useMemo(() => {
     if (!campaign || !activePixKey) {
@@ -292,7 +310,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
       ) : (
         <OfferingsClass
           title={campaign ? 'Contribuir com a campanha' : 'Dízimos e Ofertas'}
-          recipientRows={recipientRows}
+          recipientRows={displayRecipientRows}
           pixKey={activePixKey}
           pixKeyLoading={pixKeyLoading}
           campaignTitle={campaign?.titulo ?? null}

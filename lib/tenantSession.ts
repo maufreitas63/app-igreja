@@ -69,6 +69,7 @@ export type SessionIgreja = {
   pix_institution: string | null;
   pix_key: string | null;
   pix_key_secundaria: string | null;
+  pix_institution_secundaria: string | null;
   is_active: boolean;
   is_primary: boolean;
   is_linked: boolean;
@@ -100,6 +101,7 @@ function mapSessionIgreja(row: Record<string, unknown> | null | undefined): Sess
   const pixInstRaw = asText(row?.pix_institution);
   const pixKeyRaw = asText(row?.pix_key);
   const pixKeySecundariaRaw = asText(row?.pix_key_secundaria);
+  const pixInstSecundariaRaw = asText(row?.pix_institution_secundaria);
   return {
     id,
     code: asText(row?.code),
@@ -112,6 +114,7 @@ function mapSessionIgreja(row: Record<string, unknown> | null | undefined): Sess
     pix_institution: pixInstRaw || null,
     pix_key: pixKeyRaw || null,
     pix_key_secundaria: pixKeySecundariaRaw || null,
+    pix_institution_secundaria: pixInstSecundariaRaw || null,
     is_active: row?.is_active === false ? false : true,
     is_primary: Boolean(row?.is_primary),
     is_linked: Boolean(row?.is_linked),
@@ -719,7 +722,8 @@ export async function setIgrejaOfferingsAdmin(
   cnpj: string | null | undefined,
   pixInstitution: string | null | undefined,
   pixKey: string | null | undefined,
-  pixKeySecundaria?: string | null | undefined
+  pixKeySecundaria?: string | null | undefined,
+  pixInstitutionSecundaria?: string | null | undefined
 ) {
   const { data, error } = await supabase.rpc('set_igreja_offerings_admin', {
     p_tenant_id: tenantId.trim(),
@@ -727,6 +731,7 @@ export async function setIgrejaOfferingsAdmin(
     p_pix_institution: pixInstitution?.trim() || null,
     p_pix_key: pixKey?.trim() || null,
     p_pix_key_secundaria: pixKeySecundaria?.trim() || null,
+    p_pix_institution_secundaria: pixInstitutionSecundaria?.trim() || null,
   });
 
   if (error) {
@@ -750,6 +755,7 @@ export async function setIgrejaOfferingsAdmin(
     pix_institution?: string | null;
     pix_key?: string | null;
     pix_key_secundaria?: string | null;
+    pix_institution_secundaria?: string | null;
   };
 }
 
