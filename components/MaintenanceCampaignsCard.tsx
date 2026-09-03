@@ -8,6 +8,7 @@ import {
   fetchCampaignProjectsAdmin,
   formatCampaignBrl,
   formatCampaignCentsShort,
+  formatCampaignProgressLabel,
   pickAndUploadCampaignCover,
   saveCampaignProject,
   type CampaignProject,
@@ -131,7 +132,11 @@ export function MaintenanceCampaignsCard({
   const applyCampaign = (campaign: CampaignProject | null) => {
     setTitulo(campaign?.titulo ?? '');
     setDescricao(campaign?.descricao ?? '');
-    setMeta(campaign ? formatMetaDisplay(campaign.meta_financeira) : '');
+    setMeta(
+      campaign?.meta_financeira != null && campaign.meta_financeira > 0
+        ? formatMetaDisplay(campaign.meta_financeira)
+        : ''
+    );
     setDataInicio(isoToBr(campaign?.data_inicio?.slice(0, 10)) || isoToBr(new Date().toISOString().slice(0, 10)));
     setDataFim(isoToBr(campaign?.data_fim?.slice(0, 10)));
     setStatus(campaign?.status ?? 'rascunho');
@@ -179,11 +184,16 @@ export function MaintenanceCampaignsCard({
   };
 
   const handleSave = async () => {
-    const metaValue = parseMetaInput(meta);
+    const metaValue = meta.trim() ? parseMetaInput(meta) : null;
     const centsValue = parseCentsInput(centavos);
 
-    if (!titulo.trim() || !Number.isFinite(metaValue) || metaValue <= 0) {
-      Toast.show({ type: 'error', text1: 'Campanha', text2: 'Informe título e meta financeira.' });
+    if (!titulo.trim()) {
+      Toast.show({ type: 'error', text1: 'Campanha', text2: 'Informe o título da campanha.' });
+      return;
+    }
+
+    if (metaValue != null && (!Number.isFinite(metaValue) || metaValue <= 0)) {
+      Toast.show({ type: 'error', text1: 'Campanha', text2: 'Informe uma meta financeira válida ou deixe em branco.' });
       return;
     }
 
@@ -253,8 +263,6 @@ export function MaintenanceCampaignsCard({
     }
   };
 
-  const pct = Math.max(0, Math.min(100, selected?.progress_pct ?? 0));
-
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
       <MaintenanceHelpInfoTitle
@@ -293,8 +301,11 @@ export function MaintenanceCampaignsCard({
             <View style={styles.stats}>
               <Text style={styles.statTitle}>Desempenho</Text>
               <Text style={styles.statLine}>
-                {pct.toFixed(0)}% · {formatCampaignBrl(selected.valor_arrecadado)} de{' '}
-                {formatCampaignBrl(selected.meta_financeira)}
+                {formatCampaignProgressLabel(
+                  selected.valor_arrecadado,
+                  selected.meta_financeira,
+                  selected.progress_pct
+                )}
               </Text>
               <Text style={styles.statLine}>
                 Doadores únicos: {selected.unique_donors} · Doações: {selected.donations_count}
@@ -334,7 +345,7 @@ export function MaintenanceCampaignsCard({
             style={maintenancePanelStyles.input}
             value={meta}
             onChangeText={(v) => setMeta(handleMetaChange(v))}
-            placeholder="Meta financeira (R$)"
+            placeholder="Meta financeira (R$) — opcional"
             placeholderTextColor="#94A3B8"
             keyboardType="decimal-pad"
           />

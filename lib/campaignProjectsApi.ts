@@ -25,7 +25,7 @@ export type CampaignProject = {
   id: string;
   titulo: string;
   descricao: string;
-  meta_financeira: number;
+  meta_financeira: number | null;
   valor_arrecadado: number;
   data_inicio: string;
   data_fim: string | null;
@@ -81,6 +81,15 @@ const parseStatus = (value: unknown): CampaignStatus => {
   return 'rascunho';
 };
 
+const parseOptionalAmount = (value: unknown): number | null => {
+  if (value == null || value === '') {
+    return null;
+  }
+
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount > 0 ? amount : null;
+};
+
 const parseCampaign = (value: unknown): CampaignProject | null => {
   const row = asRecord(value);
   const id = String(row.id ?? '').trim();
@@ -94,7 +103,7 @@ const parseCampaign = (value: unknown): CampaignProject | null => {
     id,
     titulo,
     descricao: String(row.descricao ?? '').trim(),
-    meta_financeira: Number(row.meta_financeira ?? 0),
+    meta_financeira: parseOptionalAmount(row.meta_financeira),
     valor_arrecadado: Number(row.valor_arrecadado ?? 0),
     data_inicio: String(row.data_inicio ?? ''),
     data_fim: row.data_fim != null ? String(row.data_fim) : null,
@@ -119,6 +128,28 @@ export function formatCampaignBrl(value: number) {
     style: 'currency',
     currency: 'BRL',
   }).format(Number.isFinite(value) ? value : 0);
+}
+
+export function formatCampaignGoal(value: number | null | undefined) {
+  if (value == null || !Number.isFinite(value) || value <= 0) {
+    return 'sem meta definida';
+  }
+
+  return formatCampaignBrl(value);
+}
+
+export function formatCampaignProgressLabel(
+  arrecadado: number,
+  meta: number | null | undefined,
+  progressPct: number
+) {
+  const raised = formatCampaignBrl(arrecadado);
+
+  if (meta == null || !Number.isFinite(meta) || meta <= 0) {
+    return raised;
+  }
+
+  return `${Math.max(0, Math.min(100, progressPct)).toFixed(0)}% · ${raised} de ${formatCampaignBrl(meta)}`;
 }
 
 export function formatCampaignCentsHint(centavos: number) {
@@ -163,7 +194,7 @@ export async function saveCampaignProject(input: {
   id?: string | null;
   titulo: string;
   descricao: string;
-  metaFinanceira: number;
+  metaFinanceira: number | null;
   dataInicio: string;
   dataFim: string | null;
   status: CampaignStatus;

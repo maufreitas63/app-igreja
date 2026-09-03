@@ -2,8 +2,8 @@ import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import {
   fetchActiveCampaignProjects,
-  formatCampaignBrl,
   formatCampaignCentsHint,
+  formatCampaignProgressLabel,
   type CampaignProject,
 } from '@/lib/campaignProjectsApi';
 import { withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
@@ -108,8 +108,11 @@ export function CampaignCard({ panelHeight, isActive = true }: Props) {
                   <View style={[styles.progressFill, { width: `${pct}%` }]} />
                 </View>
                 <Text style={styles.progressLabel}>
-                  {pct.toFixed(0)}% · {formatCampaignBrl(campaign.valor_arrecadado)} de{' '}
-                  {formatCampaignBrl(campaign.meta_financeira)}
+                  {formatCampaignProgressLabel(
+                    campaign.valor_arrecadado,
+                    campaign.meta_financeira,
+                    campaign.progress_pct
+                  )}
                 </Text>
                 <Text style={styles.centsHint}>{formatCampaignCentsHint(campaign.centavos_referencia)}</Text>
                 <TouchableOpacity

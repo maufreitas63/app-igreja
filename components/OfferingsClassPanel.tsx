@@ -8,9 +8,9 @@ import {
 import {
   fetchActiveCampaignProjects,
   fetchCampaignProject,
-  formatCampaignBrl,
   formatCampaignCentsHint,
   formatCampaignCentsShort,
+  formatCampaignProgressLabel,
   registerCampaignContributionIntent,
   type CampaignProject,
 } from '@/lib/campaignProjectsApi';
@@ -299,8 +299,11 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
                     <View style={[styles.progressFill, { width: `${pct}%` }]} />
                   </View>
                   <Text style={styles.progressLabel}>
-                    {pct.toFixed(0)}% · {formatCampaignBrl(item.valor_arrecadado)} de{' '}
-                    {formatCampaignBrl(item.meta_financeira)}
+                    {formatCampaignProgressLabel(
+                      item.valor_arrecadado,
+                      item.meta_financeira,
+                      item.progress_pct
+                    )}
                   </Text>
                 </TouchableOpacity>
               );
