@@ -1238,16 +1238,6 @@ export function MaintenanceFinancialsCard({
       ) : null}
 
       <CollapsibleSection
-        title="Contas Pix"
-        subtitle="Contas ilimitadas · padrão de dízimos e ofertas · escolha por campanha"
-        expanded={expandedSection === 'pix'}
-        onToggle={() => toggleSection('pix')}
-        minimal={minimal}
-      >
-        <PixAccountsSettings isActive={isActive && expandedSection === 'pix'} minimal={minimal} />
-      </CollapsibleSection>
-
-      <CollapsibleSection
         title={`Mês de referência · ${periodLabel}`}
         subtitle={periodSummaryLine}
         expanded={expandedSection === 'period'}
@@ -1337,6 +1327,15 @@ export function MaintenanceFinancialsCard({
         keyboardShouldPersistTaps="handled"
         {...MAINTENANCE_SCROLL_PROPS}
       >
+        <CollapsibleSection
+          title="Contas Pix"
+          subtitle="Contas ilimitadas · padrão de dízimos e ofertas · escolha por campanha"
+          expanded={expandedSection === 'pix'}
+          onToggle={() => toggleSection('pix')}
+          minimal={minimal}
+        >
+          <PixAccountsSettings isActive={isActive && expandedSection === 'pix'} minimal={minimal} />
+        </CollapsibleSection>
         <CollapsibleSection
           title="Carga em lote"
           subtitle={`Versão ${bulkBudgetVersion} · importar CSV para ${periodLabel}`}
@@ -2694,7 +2693,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
     marginBottom: 8,
-    overflow: 'hidden',
   },
   collapseHeader: {
     paddingHorizontal: 10,

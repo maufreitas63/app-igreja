@@ -1,4 +1,3 @@
-import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
@@ -218,32 +217,70 @@ export function PixAccountsSettings({
     ? (bundle?.accounts ?? []).filter((item) => item.id === visibleSlot)
     : bundle?.accounts ?? [];
 
+  const updateDraft = (account: PixAccount, isNew: boolean, patch: Partial<PixAccount>) => {
+    if (isNew) {
+      setCreateDraft((prev) => ({ ...prev, ...patch }));
+      return;
+    }
+
+    setDrafts((prev) => ({ ...prev, [account.id]: { ...account, ...patch } }));
+  };
+
+  const renderSaveActions = (account: PixAccount, isNew: boolean, busy: boolean) => {
+    if (!canEdit) {
+      return null;
+    }
+
+    return (
+      <View style={styles.actions}>
+        <TouchableOpacity
+          style={styles.save}
+          onPress={() => void handleSave(account, isNew)}
+          disabled={busy}
+        >
+          {busy ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.saveText}>{isNew ? 'Cadastrar conta' : 'Salvar conta'}</Text>
+          )}
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.delete}
+          onPress={() => {
+            if (isNew) {
+              setCreating(false);
+              setCreateDraft(emptyDraft());
+              return;
+            }
+            revertDraft(account);
+          }}
+          disabled={busy}
+        >
+          <Text style={styles.cancelText}>Cancelar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   const renderEditor = (account: PixAccount, isNew: boolean) => {
     const key = isNew ? 'new' : account.id;
     const busy = savingId === key;
 
     return (
       <View style={styles.editor}>
+        {renderSaveActions(account, isNew, busy)}
         <TextInput
-          style={maintenancePanelStyles.input}
+          style={[maintenancePanelStyles.input, styles.field]}
           value={account.label}
-          onChangeText={(value) =>
-            isNew
-              ? setCreateDraft((prev) => ({ ...prev, label: value, institution: value }))
-              : setDrafts((prev) => ({ ...prev, [account.id]: { ...account, label: value } }))
-          }
+          onChangeText={(value) => updateDraft(account, isNew, { label: value, institution: value })}
           placeholder="Nome do banco / instituição"
           placeholderTextColor="#94A3B8"
           editable={canEdit}
         />
         <TextInput
-          style={maintenancePanelStyles.input}
+          style={[maintenancePanelStyles.input, styles.field]}
           value={account.pixKey ?? ''}
-          onChangeText={(value) =>
-            isNew
-              ? setCreateDraft((prev) => ({ ...prev, pixKey: value }))
-              : setDrafts((prev) => ({ ...prev, [account.id]: { ...account, pixKey: value } }))
-          }
+          onChangeText={(value) => updateDraft(account, isNew, { pixKey: value })}
           placeholder="Chave Pix"
           placeholderTextColor="#94A3B8"
           autoCapitalize="none"
@@ -251,85 +288,68 @@ export function PixAccountsSettings({
           editable={canEdit}
         />
         <TextInput
-          style={maintenancePanelStyles.input}
+          style={[maintenancePanelStyles.input, styles.field]}
           value={account.holderName ?? ''}
-          onChangeText={(value) =>
-            isNew
-              ? setCreateDraft((prev) => ({ ...prev, holderName: value }))
-              : setDrafts((prev) => ({ ...prev, [account.id]: { ...account, holderName: value } }))
-          }
+          onChangeText={(value) => updateDraft(account, isNew, { holderName: value })}
           placeholder="Titular (opcional)"
           placeholderTextColor="#94A3B8"
           editable={canEdit}
         />
         <TextInput
-          style={maintenancePanelStyles.input}
+          style={[maintenancePanelStyles.input, styles.field]}
           value={account.document ?? ''}
-          onChangeText={(value) =>
-            isNew
-              ? setCreateDraft((prev) => ({ ...prev, document: value }))
-              : setDrafts((prev) => ({ ...prev, [account.id]: { ...account, document: value } }))
-          }
+          onChangeText={(value) => updateDraft(account, isNew, { document: value })}
           placeholder="CNPJ/CPF da conta (opcional)"
           placeholderTextColor="#94A3B8"
           editable={canEdit}
         />
         <View style={styles.row}>
           <TextInput
-            style={[maintenancePanelStyles.input, styles.flex]}
+            style={[maintenancePanelStyles.input, styles.flex, styles.field]}
             value={account.agency ?? ''}
-            onChangeText={(value) =>
-              isNew
-                ? setCreateDraft((prev) => ({ ...prev, agency: value }))
-                : setDrafts((prev) => ({ ...prev, [account.id]: { ...account, agency: value } }))
-            }
+            onChangeText={(value) => updateDraft(account, isNew, { agency: value })}
             placeholder="Agência"
             placeholderTextColor="#94A3B8"
             editable={canEdit}
           />
           <TextInput
-            style={[maintenancePanelStyles.input, styles.flex]}
+            style={[maintenancePanelStyles.input, styles.flex, styles.field]}
             value={account.accountNumber ?? ''}
-            onChangeText={(value) =>
-              isNew
-                ? setCreateDraft((prev) => ({ ...prev, accountNumber: value }))
-                : setDrafts((prev) => ({
-                    ...prev,
-                    [account.id]: { ...account, accountNumber: value },
-                  }))
-            }
+            onChangeText={(value) => updateDraft(account, isNew, { accountNumber: value })}
             placeholder="Conta"
             placeholderTextColor="#94A3B8"
             editable={canEdit}
           />
         </View>
-        <DropdownSelect
-          options={ACCOUNT_TYPE_OPTIONS}
-          selectedValue={account.accountType ?? ''}
-          onValueChange={(value) => {
-            const nextType = (BANK_ACCOUNT_TYPES as readonly string[]).includes(value)
-              ? (value as PixAccount['accountType'])
-              : null;
-            if (isNew) {
-              setCreateDraft((prev) => ({ ...prev, accountType: nextType }));
-            } else {
-              setDrafts((prev) => ({ ...prev, [account.id]: { ...account, accountType: nextType } }));
-            }
-          }}
-          modalTitle="Tipo de conta"
-          variant={minimal ? 'minimal' : 'default'}
-          disabled={!canEdit}
-        />
+        <Text style={[styles.typeCaption, minimal && styles.typeCaptionMinimal]}>Tipo de conta</Text>
+        <View style={styles.typeRow}>
+          {ACCOUNT_TYPE_OPTIONS.map((option) => {
+            const selected = (account.accountType ?? '') === option.value;
+            return (
+              <TouchableOpacity
+                key={option.value || 'none'}
+                style={[styles.typeChip, selected && styles.typeChipOn]}
+                onPress={() =>
+                  updateDraft(account, isNew, {
+                    accountType: (BANK_ACCOUNT_TYPES as readonly string[]).includes(option.value)
+                      ? (option.value as PixAccount['accountType'])
+                      : null,
+                  })
+                }
+                disabled={!canEdit}
+              >
+                <Text style={[styles.typeChipText, selected && styles.typeChipTextOn]} numberOfLines={1}>
+                  {option.value ? option.label : 'Sem tipo'}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
         {canEdit && !compact ? (
           <TouchableOpacity
             style={styles.defaultToggle}
             onPress={() =>
-              isNew
-                ? setCreateDraft((prev) => ({ ...prev, isDefaultOfferings: !prev.isDefaultOfferings }))
-                : setDrafts((prev) => ({
-                    ...prev,
-                    [account.id]: { ...account, isDefaultOfferings: !account.isDefaultOfferings },
-                  }))
+              updateDraft(account, isNew, { isDefaultOfferings: !account.isDefaultOfferings })
             }
           >
             <Text style={[styles.defaultText, account.isDefaultOfferings && styles.defaultTextOn]}>
@@ -339,35 +359,7 @@ export function PixAccountsSettings({
             </Text>
           </TouchableOpacity>
         ) : null}
-        {canEdit ? (
-          <View style={styles.actions}>
-            <TouchableOpacity
-              style={styles.save}
-              onPress={() => void handleSave(account, isNew)}
-              disabled={busy}
-            >
-              {busy ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.saveText}>{isNew ? 'Cadastrar conta' : 'Salvar conta'}</Text>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.delete}
-              onPress={() => {
-                if (isNew) {
-                  setCreating(false);
-                  setCreateDraft(emptyDraft());
-                  return;
-                }
-                revertDraft(account);
-              }}
-              disabled={busy}
-            >
-              <Text style={styles.cancelText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
+        {renderSaveActions(account, isNew, busy)}
       </View>
     );
   };
@@ -405,6 +397,7 @@ export function PixAccountsSettings({
         <TouchableOpacity
           style={styles.header}
           onPress={() => {
+            setCreating(false);
             setExpandedId((prev) => (prev === account.id ? null : account.id));
             setMode('view');
           }}
@@ -444,7 +437,10 @@ export function PixAccountsSettings({
               {canEdit ? (
                 <TouchableOpacity
                   style={[styles.actionChip, mode === 'edit' && styles.actionChipOn]}
-                  onPress={() => setMode('edit')}
+                  onPress={() => {
+                    setCreating(false);
+                    setMode('edit');
+                  }}
                 >
                   <Text style={[styles.actionChipText, mode === 'edit' && styles.actionChipTextOn]}>
                     Editar
@@ -642,6 +638,45 @@ const styles = StyleSheet.create({
   },
   editor: {
     gap: 8,
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  field: {
+    minHeight: 44,
+  },
+  typeCaption: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  typeCaptionMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  typeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  typeChip: {
+    minHeight: 36,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typeChipOn: {
+    backgroundColor: '#1E3A5F',
+    borderColor: '#1E3A5F',
+  },
+  typeChipText: {
+    color: '#334155',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  typeChipTextOn: {
+    color: '#FFFFFF',
   },
   row: {
     flexDirection: 'row',
