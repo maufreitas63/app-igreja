@@ -1,6 +1,7 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
+import { PixAccountsSettings } from '@/components/PixAccountsSettings';
 import {
   CAMPAIGN_STATUS_LABEL,
   CAMPAIGN_STATUSES,
@@ -18,6 +19,13 @@ import {
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import {
+  fetchSessionPixAccounts,
+  normalizePixAccountSlot,
+  pixAccountDropdownOptions,
+  type PixAccountSlot,
+  type PixAccountsBundle,
+} from '@/lib/pixAccountsApi';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -69,6 +77,8 @@ export function MaintenanceCampaignsCard({
   const [status, setStatus] = useState<CampaignStatus>('rascunho');
   const [centavos, setCentavos] = useState('60');
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [pixSlot, setPixSlot] = useState<PixAccountSlot>('1');
+  const [pixBundle, setPixBundle] = useState<PixAccountsBundle | null>(null);
 
   const selected = useMemo(
     () => campaigns.find((item) => item.id === selectedId) ?? null,
@@ -86,14 +96,19 @@ export function MaintenanceCampaignsCard({
       String(Math.round((campaign?.centavos_referencia ?? 0.6) * 100)).padStart(2, '0')
     );
     setCoverUrl(campaign?.cover_url ?? null);
+    setPixSlot(campaign?.chave_pix_selecionada ?? pixBundle?.defaultSlot ?? '1');
   };
 
   const load = useCallback(async () => {
     setError(null);
 
     try {
-      const rows = await fetchCampaignProjectsAdmin();
+      const [rows, accounts] = await Promise.all([
+        fetchCampaignProjectsAdmin(),
+        fetchSessionPixAccounts().catch(() => null),
+      ]);
       setCampaigns(rows);
+      setPixBundle(accounts);
     } catch (loadError) {
       setCampaigns([]);
       setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar campanhas.');
@@ -147,6 +162,7 @@ export function MaintenanceCampaignsCard({
         status,
         centavosReferencia: centsValue,
         coverUrl,
+        chavePixSelecionada: pixSlot,
       });
       Toast.show({
         type: result.success ? 'success' : 'error',
@@ -187,7 +203,7 @@ export function MaintenanceCampaignsCard({
     <View style={[styles.panel, { height: contentHeight }]}>
       <MaintenanceHelpInfoTitle
         title="Gestão de Campanhas"
-        helpText="Cadastre projetos com meta, prazo e centavos simbólicos. O Pix Copia e Cola aplica esse sufixo automaticamente; os depósitos são reconhecidos e ficam fora da receita ordinária."
+        helpText="Cadastre projetos com meta, prazo, centavos simbólicos e a conta Pix que receberá as contribuições. O Pix Copia e Cola aplica o sufixo automaticamente; os depósitos ficam fora da receita ordinária."
         minimal={minimal}
         titleStyle={minimal ? styles.titleMinimal : maintenancePanelStyles.panelTitle}
       />
@@ -203,6 +219,13 @@ export function MaintenanceCampaignsCard({
           nestedScrollEnabled
           {...MAINTENANCE_SCROLL_PROPS}
         >
+          <PixAccountsSettings
+            isActive={isActive}
+            minimal={minimal}
+            compact
+            onBundleChange={setPixBundle}
+          />
+
           <DropdownSelect
             options={[
               { value: NEW_VALUE, label: 'Nova campanha' },
@@ -232,6 +255,11 @@ export function MaintenanceCampaignsCard({
               </Text>
               <Text style={styles.statLine}>
                 Centavos: {formatCampaignCentsShort(selected.centavos_referencia)}
+              </Text>
+              <Text style={styles.statLine}>
+                Pix:{' '}
+                {pixBundle?.accounts.find((item) => item.slot === selected.chave_pix_selecionada)
+                  ?.label ?? `Conta ${selected.chave_pix_selecionada}`}
               </Text>
             </View>
           ) : null}
@@ -291,6 +319,18 @@ export function MaintenanceCampaignsCard({
             O Pix Copia e Cola do membro recebe automaticamente{' '}
             {formatCampaignCentsShort(parseCentsInput(centavos) || 0.6)}. Depósitos com esse sufixo
             são conciliados a este projeto e ficam fora da receita ordinária.
+          </Text>
+          <Text style={styles.fieldLabel}>Conta Pix deste projeto</Text>
+          <DropdownSelect
+            options={pixAccountDropdownOptions(pixBundle)}
+            selectedValue={pixSlot}
+            onValueChange={(value) => setPixSlot(normalizePixAccountSlot(value))}
+            modalTitle="Conta Pix do projeto"
+            variant={minimal ? 'minimal' : 'default'}
+          />
+          <Text style={styles.hint}>
+            O Copia e Cola desta campanha usa a chave escolhida, com os centavos simbólicos de
+            identificação.
           </Text>
           <SegmentChipRow
             variant={minimal ? 'vigilance' : 'default'}

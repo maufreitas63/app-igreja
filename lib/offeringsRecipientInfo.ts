@@ -1,4 +1,8 @@
 import { getAppParameterValue } from '@/lib/appParameters';
+import {
+  fetchSessionPixAccounts,
+  resolvePixKeyForSlot,
+} from '@/lib/pixAccountsApi';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { supabase } from '@/lib/supabase';
 import {
@@ -117,11 +121,15 @@ async function resolveActiveChurchForOfferings(): Promise<SessionIgreja | null> 
 
 async function preferInstancePixKey(fallback: string | null): Promise<string | null> {
   try {
-    // Chave oficial da instância (app_parameters.chave_pix), isolada pelo tenant da sessão.
-    const fromParameters = textOrNull(await getAppParameterValue('chave_pix'));
-    return fromParameters ?? textOrNull(fallback);
+    const accounts = await fetchSessionPixAccounts();
+    return resolvePixKeyForSlot(accounts, accounts.defaultSlot, fallback);
   } catch {
-    return textOrNull(fallback);
+    try {
+      const fromParameters = textOrNull(await getAppParameterValue('chave_pix'));
+      return fromParameters ?? textOrNull(fallback);
+    } catch {
+      return textOrNull(fallback);
+    }
   }
 }
 
@@ -135,7 +143,7 @@ export async function loadOfferingsRecipientBundle(): Promise<OfferingsRecipient
     if (fromRpc) {
       return {
         ...fromRpc,
-        pixKey: await preferInstancePixKey(fromRpc.pixKey),
+        pixKey: fromRpc.pixKey || (await preferInstancePixKey(fromRpc.pixKey)),
       };
     }
   } catch (error) {

@@ -23,6 +23,11 @@ import {
 } from '@/lib/dashboardReturnNavigation';
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import {
+  fetchSessionPixAccounts,
+  resolvePixKeyForSlot,
+  type PixAccountsBundle,
+} from '@/lib/pixAccountsApi';
+import {
   brlCentsDigitsToAmount,
   buildPixCopiaECola,
   composeCampaignDonationAmount,
@@ -69,9 +74,18 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
   const [campaignChoices, setCampaignChoices] = useState<CampaignProject[]>([]);
   const [integerAmount, setIntegerAmount] = useState('');
   const [offeringCentsDigits, setOfferingCentsDigits] = useState('');
+  const [pixAccounts, setPixAccounts] = useState<PixAccountsBundle | null>(null);
+
+  const activePixKey = useMemo(() => {
+    if (campaign) {
+      return resolvePixKeyForSlot(pixAccounts, campaign.chave_pix_selecionada, pixKey);
+    }
+
+    return resolvePixKeyForSlot(pixAccounts, pixAccounts?.defaultSlot ?? '1', pixKey);
+  }, [campaign, pixAccounts, pixKey]);
 
   const campaignPix = useMemo(() => {
-    if (!campaign || !pixKey) {
+    if (!campaign || !activePixKey) {
       return { amount: null as number | null, copiaECola: null as string | null };
     }
 
@@ -85,16 +99,16 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
     return {
       amount,
       copiaECola: buildPixCopiaECola({
-        pixKey,
+        pixKey: activePixKey,
         amount,
         merchantName: churchName,
         description: campaign.titulo,
       }),
     };
-  }, [campaign, churchName, integerAmount, pixKey]);
+  }, [activePixKey, campaign, churchName, integerAmount]);
 
   const offeringPix = useMemo(() => {
-    if (campaign || !pixKey) {
+    if (campaign || !activePixKey) {
       return { amount: null as number | null, copiaECola: null as string | null };
     }
 
@@ -107,21 +121,25 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
     return {
       amount,
       copiaECola: buildPixCopiaECola({
-        pixKey,
+        pixKey: activePixKey,
         amount,
         merchantName: churchName,
       }),
     };
-  }, [campaign, churchName, offeringCentsDigits, pixKey]);
+  }, [activePixKey, campaign, churchName, offeringCentsDigits]);
 
   const loadOfferingsInfo = useCallback(async () => {
     setPixKeyLoading(true);
 
     try {
-      const bundle = await loadOfferingsRecipientBundle();
+      const [bundle, accounts] = await Promise.all([
+        loadOfferingsRecipientBundle(),
+        fetchSessionPixAccounts().catch(() => null),
+      ]);
       setRecipientRows(bundle.recipientRows);
       setPixKey(bundle.pixKey);
       setChurchName(bundle.churchName);
+      setPixAccounts(accounts);
 
       if (campaignId) {
         setCampaign(await fetchCampaignProject(campaignId));
@@ -137,6 +155,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
       console.error('Erro ao carregar dados de dízimos/ofertas:', error);
       setRecipientRows([]);
       setPixKey(null);
+      setPixAccounts(null);
       setChurchName('');
     } finally {
       setPixKeyLoading(false);
@@ -155,8 +174,8 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
 
     if (!payload) {
       Alert.alert(
-        pixKey ? 'Informe o valor' : 'Chave PIX indisponível',
-        pixKey
+        activePixKey ? 'Informe o valor' : 'Chave PIX indisponível',
+        activePixKey
           ? 'Digite o valor da contribuição para gerar o Pix Copia e Cola.'
           : 'Nenhuma chave PIX foi encontrada para copiar.'
       );
@@ -186,7 +205,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
     campaignPix.copiaECola,
     offeringPix.amount,
     offeringPix.copiaECola,
-    pixKey,
+    activePixKey,
   ]);
 
   const handleClose = useCallback(() => {
@@ -274,7 +293,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
         <OfferingsClass
           title={campaign ? 'Contribuir com a campanha' : 'Dízimos e Ofertas'}
           recipientRows={recipientRows}
-          pixKey={pixKey}
+          pixKey={activePixKey}
           pixKeyLoading={pixKeyLoading}
           campaignTitle={campaign?.titulo ?? null}
           campaignHint={campaign ? formatCampaignCentsHint(campaign.centavos_referencia) : null}

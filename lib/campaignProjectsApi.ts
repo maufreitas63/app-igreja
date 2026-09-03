@@ -4,6 +4,7 @@
  */
 
 import { pickChurchLogoFromGallery, uploadChurchPublicImage } from '@/lib/churchLogo';
+import { normalizePixAccountSlot, type PixAccountSlot } from '@/lib/pixAccountsApi';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { getStoredTenantId } from '@/lib/tenantSession';
@@ -30,6 +31,7 @@ export type CampaignProject = {
   data_fim: string | null;
   status: CampaignStatus;
   centavos_referencia: number;
+  chave_pix_selecionada: PixAccountSlot;
   cover_url: string | null;
   progress_pct: number;
   donations_count: number;
@@ -96,6 +98,7 @@ const parseCampaign = (value: unknown): CampaignProject | null => {
     data_fim: row.data_fim != null ? String(row.data_fim) : null,
     status: parseStatus(row.status),
     centavos_referencia: Number(row.centavos_referencia ?? 0),
+    chave_pix_selecionada: normalizePixAccountSlot(row.chave_pix_selecionada),
     cover_url: row.cover_url ? String(row.cover_url) : null,
     progress_pct: Number(row.progress_pct ?? 0),
     donations_count: Number(row.donations_count ?? 0),
@@ -159,6 +162,7 @@ export async function saveCampaignProject(input: {
   status: CampaignStatus;
   centavosReferencia: number;
   coverUrl?: string | null;
+  chavePixSelecionada?: PixAccountSlot;
 }) {
   const payload = await rpcJson('upsert_campaign_project', {
     p_id: input.id ?? null,
@@ -170,6 +174,7 @@ export async function saveCampaignProject(input: {
     p_status: input.status,
     p_centavos_referencia: input.centavosReferencia,
     p_cover_url: input.coverUrl ?? null,
+    p_chave_pix_selecionada: input.chavePixSelecionada ?? '1',
   });
 
   return {

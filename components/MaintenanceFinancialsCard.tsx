@@ -55,6 +55,7 @@ import {
   DEFAULT_PDF_TO_JPG_DIR,
   resolvePdfToJpgFolderPath,
 } from '@/lib/pdfFolderToJpg';
+import { PixAccountsSettings } from '@/components/PixAccountsSettings';
 import { AssemblyMinutesPdfModal } from '@/components/AssemblyMinutesPdfModal';
 import {
   ASSEMBLY_MINUTES_SQL_HINT,
@@ -95,7 +96,14 @@ type Props = {
 
 const ACCENT = '#3A96DD';
 
-type MaintenanceSectionKey = 'period' | 'bulk' | 'receipt_batch' | 'entries' | 'rd' | 'assembly_minutes';
+type MaintenanceSectionKey =
+  | 'pix'
+  | 'period'
+  | 'bulk'
+  | 'receipt_batch'
+  | 'entries'
+  | 'rd'
+  | 'assembly_minutes';
 
 type CollapsibleSectionProps = {
   title: string;
@@ -1228,6 +1236,16 @@ export function MaintenanceFinancialsCard({
       {error ? (
         <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
       ) : null}
+
+      <CollapsibleSection
+        title="Contas Pix"
+        subtitle="Padrão de dízimos e ofertas · segunda conta para campanhas"
+        expanded={expandedSection === 'pix'}
+        onToggle={() => toggleSection('pix')}
+        minimal={minimal}
+      >
+        <PixAccountsSettings isActive={isActive && expandedSection === 'pix'} minimal={minimal} />
+      </CollapsibleSection>
 
       <CollapsibleSection
         title={`Mês de referência · ${periodLabel}`}
