@@ -3,27 +3,7 @@ import { MAP_PIN_COLOR } from '@/lib/profilesMapMarkersTypes';
 import { formatShortName } from '@/lib/formatShortName';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
-import MapView from 'react-native-map-clustering';
-import { Marker, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
-
-type MapViewType = {
-  fitToCoordinates?: (
-    coordinates: { latitude: number; longitude: number }[],
-    options?: {
-      edgePadding?: { top: number; right: number; bottom: number; left: number };
-      animated?: boolean;
-    }
-  ) => void;
-  animateToRegion?: (
-    region: {
-      latitude: number;
-      longitude: number;
-      latitudeDelta: number;
-      longitudeDelta: number;
-    },
-    duration?: number
-  ) => void;
-};
+import MapView, { Marker, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 
 type ProfilesMapCanvasProps = {
   center: [number, number];
@@ -36,6 +16,10 @@ type ProfilesMapCanvasProps = {
 /**
  * Mapa nativo (Android/iOS) — paridade com Leaflet no PWA.
  * Usa Google Maps no Android quando a API key estiver no app.config.
+ *
+ * Clustering: `react-native-map-clustering` (2023) usa findNodeHandle/getNode e
+ * não é compatível com a New Architecture do SDK 54. O mapa nativo usa
+ * `react-native-maps` 1.20. O cluster permanece só no Leaflet da web.
  */
 export function ProfilesMapCanvas({
   center,
@@ -44,7 +28,7 @@ export function ProfilesMapCanvas({
   onSelectProfile,
   pinsInteractive = true,
 }: ProfilesMapCanvasProps) {
-  const mapRef = useRef<MapViewType | null>(null);
+  const mapRef = useRef<MapView | null>(null);
 
   const initialRegion = useMemo<Region>(
     () => ({
@@ -66,15 +50,14 @@ export function ProfilesMapCanvas({
       longitude: marker.coord.lng,
     }));
 
-    // Ajusta a câmera aos pins carregados.
     requestAnimationFrame(() => {
       try {
-        mapRef.current?.fitToCoordinates?.(coords, {
+        mapRef.current?.fitToCoordinates(coords, {
           edgePadding: { top: 48, right: 48, bottom: 48, left: 48 },
           animated: true,
         });
       } catch {
-        // Alguns builds de clustering não expõem fitToCoordinates no ref tipado.
+        // fitToCoordinates pode falhar se o mapa ainda não montou.
       }
     });
   }, [markers]);
@@ -89,7 +72,7 @@ export function ProfilesMapCanvas({
       return;
     }
 
-    mapRef.current?.animateToRegion?.(
+    mapRef.current?.animateToRegion(
       {
         latitude: target.coord.lat,
         longitude: target.coord.lng,
@@ -103,18 +86,10 @@ export function ProfilesMapCanvas({
   return (
     <View style={styles.wrap}>
       <MapView
-        ref={mapRef as never}
+        ref={mapRef}
         style={styles.map}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         initialRegion={initialRegion}
-        clusterColor="#1B4F8A"
-        clusterTextColor="#FFFFFF"
-        radius={48}
-        extent={512}
-        minZoom={1}
-        maxZoom={20}
-        animationEnabled
-        spiralEnabled
         showsUserLocation={false}
         showsMyLocationButton={false}
         toolbarEnabled={false}

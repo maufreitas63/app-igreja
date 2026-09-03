@@ -18,13 +18,22 @@ const config: ExpoConfig = {
   icon: './assets/images/icon.png',
   scheme: 'appigreja',
   userInterfaceStyle: 'automatic',
+  runtimeVersion: {
+    policy: 'appVersion',
+  },
+  updates: {
+    url: 'https://u.expo.dev/28946481-fe5f-4f4b-9ae6-beab332268c8',
+  },
   ios: {
+    bundleIdentifier: 'com.comunidadedigital.app',
     supportsTablet: true,
     infoPlist: {
       NSCameraUsageDescription:
-        'Permita o acesso à câmera para leitura de QR Code no totem e registro de selfie.',
+        'Permita o acesso à câmera para leitura de QR Code no totem, código de barras de ISBN e registro de selfie.',
       NSFaceIDUsageDescription:
         'Permita o uso do Face ID para entrar no app de forma rápida e segura.',
+      NSLocationWhenInUseUsageDescription:
+        'Permita a localização para o check-in por aproximação no local do evento.',
       LSApplicationQueriesSchemes: ['whatsapp', 'whatsapp-api'],
     },
     config: {
@@ -33,6 +42,7 @@ const config: ExpoConfig = {
     },
   },
   android: {
+    label: 'Comunidade Digital',
     queries: [
       { package: 'com.whatsapp' },
       { package: 'com.whatsapp.w4b' },
@@ -121,7 +131,7 @@ const config: ExpoConfig = {
       'expo-camera',
       {
         cameraPermission:
-          'Permita o acesso à câmera para leitura de QR Code no totem e registro de selfie.',
+          'Permita o acesso à câmera para leitura de QR Code no totem, código de barras de ISBN e registro de selfie.',
         recordAudioAndroid: false,
       },
     ],
@@ -157,6 +167,7 @@ const config: ExpoConfig = {
     ],
     'expo-document-picker',
     'expo-font',
+    'expo-updates',
   ],
   experiments: {
     typedRoutes: true,
