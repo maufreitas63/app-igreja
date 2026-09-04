@@ -25,7 +25,6 @@
     "apply:bible-verses": "node scripts/apply-bible-verses-supabase.mjs",
     "apply:bible-verses:dry": "node scripts/apply-bible-verses-supabase.mjs --dry-run",
     "sql:run": "npx supabase db query --linked -f",
-    "publish:apk": "node scripts/publish-apk-release.mjs",
     "dev:family-form": "vite --config standalone/cadastro-familia/vite.config.ts",
     "build:web": "node scripts/run-build-web.mjs",
     "generate:icons": "node scripts/generate-app-icons.mjs",
