@@ -57,7 +57,7 @@ export function isOtherDownloadUrl(url: string): boolean {
   if (!trimmed || isPdfUrl(trimmed)) {
     return false;
   }
-  return /\.(docx?|xlsx?|pptx?|zip|rar|7z|csv)(\?|#|$)/i.test(trimmed);
+  return /\.(docx?|xlsx?|pptx?|zip|rar|7z|csv|apk)(\?|#|$)/i.test(trimmed);
 }
 
 export function isWhatsAppHttpUrl(url: string): boolean {

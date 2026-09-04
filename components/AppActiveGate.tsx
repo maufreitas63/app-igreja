@@ -19,6 +19,11 @@ const isLoginRoute = (pathname: string) => {
   return normalized === '/' || normalized === '/index';
 };
 
+const isPublicDownloadRoute = (pathname: string) => {
+  const normalized = normalizePathname(pathname);
+  return normalized === '/baixar-app';
+};
+
 /**
  * Bloqueia a interface quando app_ativo = nao.
  * Super admin mantém acesso total; login administrativo fica disponível via atalho na tela de bloqueio.
@@ -47,7 +52,7 @@ export function AppActiveGate({ children }: Props) {
     }
   }, [status?.active]);
 
-  if (loading && !status && !isLoginRoute(pathname)) {
+  if (loading && !status && !isLoginRoute(pathname) && !isPublicDownloadRoute(pathname)) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color="#10b981" />
@@ -64,6 +69,10 @@ export function AppActiveGate({ children }: Props) {
   }
 
   if (isLoginRoute(pathname) && adminLoginUnlocked) {
+    return <>{children}</>;
+  }
+
+  if (isPublicDownloadRoute(pathname)) {
     return <>{children}</>;
   }
 

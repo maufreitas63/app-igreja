@@ -36,6 +36,7 @@ const isWatermarkExcludedRoute = (pathname: string, segments: string[]) => {
     || normalized === '/register'
     || normalized === '/totem-checkin'
     || normalized === '/forgot-password'
+    || normalized === '/baixar-app'
     || normalized === '/sessao-encerrada'
     || normalized === '/configurar'
   );
