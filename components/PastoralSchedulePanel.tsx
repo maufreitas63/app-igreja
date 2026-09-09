@@ -117,7 +117,7 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
     <View style={styles.wrap}>
       <Text style={[styles.title, vigilance && styles.titleVigilance]}>Agendar atendimento</Text>
       <Text style={[styles.hint, vigilance && styles.hintVigilance]}>
-        Escolha o atendente e um horário publicado como disponível.
+        Escolha o atendente. Os horários só aparecem se ele já os tiver publicado na agenda.
       </Text>
 
       {loading ? (
@@ -151,9 +151,16 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
           />
 
           {filteredSlots.length === 0 ? (
-            <Text style={[styles.hint, vigilance && styles.hintVigilance]}>
-              Nenhum horário disponível no momento.
-            </Text>
+            <View style={[styles.emptyBox, vigilance && styles.emptyBoxVigilance]}>
+              <Text style={[styles.emptyTitle, vigilance && styles.emptyTitleVigilance]}>
+                Sem horários publicados
+              </Text>
+              <Text style={[styles.emptyBody, vigilance && styles.hintVigilance]}>
+                Não é um calendário livre. O atendente abre os horários na manutenção
+                (Coração Aberto → agenda). Quando houver vaga, os dias e os horários
+                aparecem aqui para você tocar e confirmar.
+              </Text>
+            </View>
           ) : (
             slotsByDay.map(([day, daySlots]) => (
               <View key={day} style={styles.dayBlock}>
@@ -196,9 +203,13 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
           />
 
           <TouchableOpacity
-            style={[styles.submit, vigilance && styles.submitVigilance, saving && styles.submitDisabled]}
+            style={[
+              styles.submit,
+              vigilance && styles.submitVigilance,
+              (saving || !slotId) && styles.submitDisabled,
+            ]}
             onPress={() => void handleBook()}
-            disabled={saving}
+            disabled={saving || !slotId}
           >
             {saving ? (
               <ActivityIndicator color="#FFFFFF" />
@@ -232,6 +243,32 @@ const styles = StyleSheet.create({
   },
   hintVigilance: {
     color: '#64748B',
+  },
+  emptyBox: {
+    borderWidth: 1,
+    borderColor: 'rgba(196, 181, 253, 0.35)',
+    borderRadius: 10,
+    padding: 12,
+    gap: 6,
+  },
+  emptyBoxVigilance: {
+    borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
+  },
+  emptyTitle: {
+    color: '#EDE9FE',
+    fontWeight: '800',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  emptyTitleVigilance: {
+    color: '#1E3A5F',
+  },
+  emptyBody: {
+    color: '#94A3B8',
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
   },
   error: {
     color: '#FCA5A5',
