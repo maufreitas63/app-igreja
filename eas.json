@@ -20,7 +20,7 @@
         "EXPO_PUBLIC_ACL_STRICT": "false",
         "EXPO_PUBLIC_BILLING_ENFORCE": "false",
         "EXPO_PUBLIC_APK_SHELL_MODE": "pwa",
-        "EXPO_PUBLIC_APP_URL": "https://app.conectamais.app"
+        "EXPO_PUBLIC_APP_URL": "https://app.conectamais.api.br"
       }
     },
     "production": {
@@ -35,7 +35,7 @@
         "EXPO_PUBLIC_ACL_STRICT": "false",
         "EXPO_PUBLIC_BILLING_ENFORCE": "false",
         "EXPO_PUBLIC_APK_SHELL_MODE": "pwa",
-        "EXPO_PUBLIC_APP_URL": "https://app.conectamais.app"
+        "EXPO_PUBLIC_APP_URL": "https://app.conectamais.api.br"
       }
     }
   },

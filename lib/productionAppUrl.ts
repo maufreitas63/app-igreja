@@ -1,5 +1,5 @@
 /** Host público da PWA (domínio customizado no Cloudflare Pages). */
-export const PRODUCTION_APP_HOST = 'app.conectamais.app';
+export const PRODUCTION_APP_HOST = 'app.conectamais.api.br';
 
 /** URL pública de produção para links, QR, Stripe e APK. */
 export const DEFAULT_PRODUCTION_APP_URL = `https://${PRODUCTION_APP_HOST}`;

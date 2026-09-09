@@ -79,12 +79,12 @@ const config: ExpoConfig = {
         data: [
           {
             scheme: 'https',
-            host: 'app.conectamais.app',
+            host: 'app.conectamais.api.br',
             pathPrefix: '/configurar',
           },
           {
             scheme: 'https',
-            host: 'app.conectamais.app',
+            host: 'app.conectamais.api.br',
             pathPrefix: '/',
           },
           {

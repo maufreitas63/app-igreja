@@ -85,7 +85,7 @@ export const onRequestPost = async (context: PagesContext) => {
       );
     }
 
-    const appUrl = (context.env.EXPO_PUBLIC_APP_URL || 'https://app.conectamais.app').replace(
+    const appUrl = (context.env.EXPO_PUBLIC_APP_URL || 'https://app.conectamais.api.br').replace(
       /\/$/,
       ''
     );
