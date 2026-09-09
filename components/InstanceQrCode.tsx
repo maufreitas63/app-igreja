@@ -7,9 +7,11 @@ type InstanceQrCodeProps = {
   /** URL pública da instância atual (ex.: https://app.conectamais.api.br/?igreja=IBEP). */
   url: string;
   size?: number;
-  /** Nome da igreja — mesmo formato tipográfico do título «Redes Sociais». */
+  /** Nome da igreja — mesmo formato tipográfico do título da seção. */
   title?: string | null;
   caption?: string;
+  /** Espaçamento reduzido para encaixar em painel (Recepção). */
+  compact?: boolean;
 };
 
 /**
@@ -21,6 +23,7 @@ export function InstanceQrCode({
   size = 184,
   title,
   caption = 'Escaneie para acessar o app',
+  compact = false,
 }: InstanceQrCodeProps) {
   const value = url.trim();
   if (!value) {
@@ -30,7 +33,10 @@ export function InstanceQrCode({
   const heading = typeof title === 'string' ? title.trim() : '';
 
   return (
-    <View style={styles.wrap} accessibilityLabel={`${heading ? `${heading}. ` : ''}${caption}. ${value}`}>
+    <View
+      style={[styles.wrap, compact && styles.wrapCompact]}
+      accessibilityLabel={`${heading ? `${heading}. ` : ''}${caption}. ${value}`}
+    >
       {heading ? <Text style={styles.title}>{heading}</Text> : null}
       <View style={styles.qrSurface}>
         <QRCode
@@ -58,6 +64,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginTop: 28,
     paddingHorizontal: 16,
+  },
+  wrapCompact: {
+    marginTop: 8,
+    paddingHorizontal: 0,
   },
   title: {
     ...MINIMAL_SECTION_TITLE,

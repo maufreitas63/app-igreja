@@ -1,7 +1,5 @@
-import { InstanceQrCode } from '@/components/InstanceQrCode';
 import { SocialBrandIcon } from '@/components/SocialBrandIcon';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
-import { resolveInstancePublicUrl } from '@/lib/instancePublicUrl';
 import { MINIMAL_ICON, MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { listSessionIgrejas, getStoredTenantId, type SessionIgreja } from '@/lib/tenantSession';
 import { FontAwesome } from '@expo/vector-icons';
@@ -38,7 +36,6 @@ export default function RedesSociaisScreen() {
   });
   const [loading, setLoading] = useState(true);
   const [church, setChurch] = useState<SessionIgreja | null>(null);
-  const [instanceUrl, setInstanceUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,13 +48,9 @@ export default function RedesSociaisScreen() {
         ?? churches[0]
         ?? null;
       setChurch(match);
-
-      const url = await resolveInstancePublicUrl({ churchCode: match?.code ?? null });
-      setInstanceUrl(url);
     } catch (error) {
       console.error(error);
       setChurch(null);
-      setInstanceUrl(null);
     } finally {
       setLoading(false);
     }
@@ -131,8 +124,6 @@ export default function RedesSociaisScreen() {
               Esta instância ainda não cadastrou site, Instagram ou YouTube.
             </Text>
           )}
-
-          {instanceUrl ? <InstanceQrCode url={instanceUrl} title={church?.name} /> : null}
         </View>
       )}
     </MinimalScreenLayout>

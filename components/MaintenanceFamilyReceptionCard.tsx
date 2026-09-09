@@ -1,3 +1,4 @@
+import { InstanceQrCode } from '@/components/InstanceQrCode';
 import { useEntityPrefix } from '@/context/EntityPrefixContext';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
@@ -20,6 +21,7 @@ import { confirmDialog } from '@/lib/confirmDialog';
 import { formatShortName } from '@/lib/formatShortName';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { resolveInstancePublicUrl } from '@/lib/instancePublicUrl';
 import { getStoredActiveIgrejaBranding } from '@/lib/tenantSession';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -110,6 +112,8 @@ export function MaintenanceFamilyReceptionCard({
   const [inviteName, setInviteName] = useState('');
   const [invitePhone, setInvitePhone] = useState('');
   const [inviteChurchName, setInviteChurchName] = useState(prefix);
+  const [quickLinkUrl, setQuickLinkUrl] = useState<string | null>(null);
+  const [quickLinkTitle, setQuickLinkTitle] = useState<string | null>(null);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
@@ -130,6 +134,36 @@ export function MaintenanceFamilyReceptionCard({
       active = false;
     };
   }, [prefix]);
+
+  useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const branding = await getStoredActiveIgrejaBranding();
+        const churchCode = branding?.code?.trim() || prefix;
+        const url = await resolveInstancePublicUrl({ churchCode });
+        if (cancelled) {
+          return;
+        }
+        setQuickLinkTitle(branding?.name?.trim() || null);
+        setQuickLinkUrl(url);
+      } catch (loadError) {
+        console.warn('Link rápido da recepção:', loadError);
+        if (!cancelled) {
+          setQuickLinkUrl(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isActive, prefix]);
 
   const handleClearInvite = () => {
     setInviteName('');
@@ -329,12 +363,42 @@ export function MaintenanceFamilyReceptionCard({
 
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
-      <MaintenanceHelpInfoTitle
-        title="Recepção — Cadastro Familiar"
-        helpText={`Formulários públicos entram aqui antes de profiles/members. Para convidar quem ainda não está nos seus contatos do WhatsApp, preencha nome e celular com DDD e use o botão — o chat abre mesmo sem o número na agenda. Link: /cadastro-familia/?tenant=${prefix}. Lotes com código familiar detectado usam o mesmo ${prefix}; conflitos, data 01/01/1900 ou CEP ausente ficam travados até revisão.`}
-        minimal={minimal}
-        titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
-      />
+      <ScrollView
+        style={styles.pageScroll}
+        contentContainerStyle={styles.pageScrollContent}
+        nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator
+      >
+        <View style={[styles.block, minimal && styles.blockMinimal]}>
+          <MaintenanceHelpInfoTitle
+            title="Recepção — Link rápido"
+            helpText="QR e URL da instância para o visitante abrir o app no celular (login e tela inicial). O mesmo endereço pode ir no convite WhatsApp abaixo."
+            minimal={minimal}
+            titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
+          />
+          {quickLinkUrl ? (
+            <InstanceQrCode
+              url={quickLinkUrl}
+              title={quickLinkTitle}
+              size={160}
+              compact
+            />
+          ) : (
+            <ActivityIndicator
+              color={minimal ? MINIMAL_UI.accent : ACCENT}
+              style={styles.quickLinkLoader}
+            />
+          )}
+        </View>
+
+        <View style={[styles.block, styles.blockLower, minimal && styles.blockLowerMinimal]}>
+          <MaintenanceHelpInfoTitle
+            title="Recepção — Cadastro Familiar"
+            helpText={`Formulários públicos entram aqui antes de profiles/members. Para convidar quem ainda não está nos seus contatos do WhatsApp, preencha nome e celular com DDD e use o botão — o chat abre mesmo sem o número na agenda. Link: /cadastro-familia/?tenant=${prefix}. Lotes com código familiar detectado usam o mesmo ${prefix}; conflitos, data 01/01/1900 ou CEP ausente ficam travados até revisão.`}
+            minimal={minimal}
+            titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
+          />
 
       {error ? (
         <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
@@ -420,13 +484,7 @@ export function MaintenanceFamilyReceptionCard({
           Nenhum cadastro aguardando análise.
         </Text>
       ) : (
-        <ScrollView
-          style={[styles.list, minimal && styles.listMinimal]}
-          contentContainerStyle={styles.listContent}
-          nestedScrollEnabled
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator
-        >
+        <View style={styles.listContent}>
           {submissions.map((submission) => {
             const expanded = expandedSubmissionId === submission.submissionId;
             const inspect =
@@ -717,8 +775,10 @@ export function MaintenanceFamilyReceptionCard({
               </View>
             );
           })}
-        </ScrollView>
+        </View>
       )}
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -726,6 +786,33 @@ export function MaintenanceFamilyReceptionCard({
 const styles = StyleSheet.create({
   panel: {
     flex: 1,
+    minHeight: 0,
+  },
+  pageScroll: {
+    flex: 1,
+    minHeight: 0,
+  },
+  pageScrollContent: {
+    gap: 16,
+    paddingBottom: 20,
+  },
+  block: {
+    gap: 8,
+  },
+  blockLower: {
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(148, 163, 184, 0.28)',
+  },
+  blockMinimal: {
+    ...CONTAIN_WIDTH,
+  },
+  blockLowerMinimal: {
+    ...CONTAIN_WIDTH,
+    borderTopColor: MINIMAL_UI.divider,
+  },
+  quickLinkLoader: {
+    marginVertical: 16,
   },
   errorText: {
     color: '#FCA5A5',
