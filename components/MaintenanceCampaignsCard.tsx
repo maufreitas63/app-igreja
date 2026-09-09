@@ -115,6 +115,7 @@ export function MaintenanceCampaignsCard({
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [meta, setMeta] = useState('');
+  const [jaArrecadado, setJaArrecadado] = useState('');
   const [dataInicio, setDataInicio] = useState(() => isoToBr(new Date().toISOString().slice(0, 10)));
   const [dataFim, setDataFim] = useState('');
   const [status, setStatus] = useState<CampaignStatus>('rascunho');
@@ -134,6 +135,11 @@ export function MaintenanceCampaignsCard({
     setMeta(
       campaign?.meta_financeira != null && campaign.meta_financeira > 0
         ? formatMetaDisplay(campaign.meta_financeira)
+        : ''
+    );
+    setJaArrecadado(
+      campaign?.valor_inicial != null && campaign.valor_inicial > 0
+        ? formatMetaDisplay(campaign.valor_inicial)
         : ''
     );
     setDataInicio(isoToBr(campaign?.data_inicio?.slice(0, 10)) || isoToBr(new Date().toISOString().slice(0, 10)));
@@ -184,6 +190,7 @@ export function MaintenanceCampaignsCard({
 
   const handleSave = async () => {
     const metaValue = meta.trim() ? parseMetaInput(meta) : null;
+    const inicialValue = jaArrecadado.trim() ? parseMetaInput(jaArrecadado) : 0;
     const centsValue = parseCentsInput(centavos);
 
     if (!titulo.trim()) {
@@ -193,6 +200,15 @@ export function MaintenanceCampaignsCard({
 
     if (metaValue != null && (!Number.isFinite(metaValue) || metaValue <= 0)) {
       Toast.show({ type: 'error', text1: 'Campanha', text2: 'Informe uma meta financeira válida ou deixe em branco.' });
+      return;
+    }
+
+    if (!Number.isFinite(inicialValue) || inicialValue < 0) {
+      Toast.show({
+        type: 'error',
+        text1: 'Campanha',
+        text2: 'Informe o valor já arrecadado ou deixe em branco.',
+      });
       return;
     }
 
@@ -231,6 +247,7 @@ export function MaintenanceCampaignsCard({
         titulo: titulo.trim(),
         descricao: descricao.trim(),
         metaFinanceira: metaValue,
+        valorInicial: inicialValue,
         dataInicio: dataInicioIso,
         dataFim: dataFimIso,
         status,
@@ -276,7 +293,7 @@ export function MaintenanceCampaignsCard({
     <View style={[styles.panel, { height: contentHeight }]}>
       <MaintenanceHelpInfoTitle
         title="Gestão de Campanhas"
-        helpText="Cadastre projetos com meta, prazo, centavos simbólicos e a conta Pix que receberá as contribuições. O Pix Copia e Cola aplica o sufixo automaticamente; os depósitos ficam fora da receita ordinária."
+        helpText="Cadastre projetos com meta, prazo, centavos simbólicos e a conta Pix que receberá as contribuições. Em campanhas já em andamento, informe o valor já arrecadado: ele entra no percentual da meta junto com os depósitos do aplicativo."
         minimal={minimal}
         titleStyle={minimal ? styles.titleMinimal : maintenancePanelStyles.panelTitle}
       />
@@ -350,14 +367,30 @@ export function MaintenanceCampaignsCard({
             placeholderTextColor="#94A3B8"
             multiline
           />
-          <TextInput
-            style={maintenancePanelStyles.input}
-            value={meta}
-            onChangeText={(v) => setMeta(handleMetaChange(v))}
-            placeholder="Meta financeira (R$) — opcional"
-            placeholderTextColor="#94A3B8"
-            keyboardType="decimal-pad"
-          />
+          <View style={styles.row}>
+            <TextInput
+              style={[maintenancePanelStyles.input, styles.flex]}
+              value={meta}
+              onChangeText={(v) => setMeta(handleMetaChange(v))}
+              placeholder="Meta (R$)"
+              placeholderTextColor="#94A3B8"
+              keyboardType="decimal-pad"
+              accessibilityLabel="Meta financeira"
+            />
+            <TextInput
+              style={[maintenancePanelStyles.input, styles.flex]}
+              value={jaArrecadado}
+              onChangeText={(v) => setJaArrecadado(handleMetaChange(v))}
+              placeholder="Já arrecadado (R$)"
+              placeholderTextColor="#94A3B8"
+              keyboardType="decimal-pad"
+              accessibilityLabel="Valor já arrecadado"
+            />
+          </View>
+          <Text style={styles.hint}>
+            Já arrecadado: valor fora do aplicativo, para campanhas em andamento. Entra no % da
+            meta junto com os depósitos conciliados.
+          </Text>
           <View style={styles.row}>
             <TextInput
               style={[maintenancePanelStyles.input, styles.flex]}

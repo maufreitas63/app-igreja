@@ -25,6 +25,7 @@ export type CampaignProject = {
   titulo: string;
   descricao: string;
   meta_financeira: number | null;
+  valor_inicial: number;
   valor_arrecadado: number;
   data_inicio: string;
   data_fim: string | null;
@@ -109,6 +110,7 @@ const parseCampaign = (value: unknown): CampaignProject | null => {
     titulo,
     descricao: String(row.descricao ?? '').trim(),
     meta_financeira: parseOptionalAmount(row.meta_financeira),
+    valor_inicial: Math.max(0, Number(row.valor_inicial ?? 0) || 0),
     valor_arrecadado: Number(row.valor_arrecadado ?? 0),
     data_inicio: String(row.data_inicio ?? ''),
     data_fim: row.data_fim != null ? String(row.data_fim) : null,
@@ -218,6 +220,7 @@ export async function saveCampaignProject(input: {
   titulo: string;
   descricao: string;
   metaFinanceira: number | null;
+  valorInicial?: number | null;
   dataInicio: string;
   dataFim: string | null;
   status: CampaignStatus;
@@ -231,6 +234,7 @@ export async function saveCampaignProject(input: {
     p_titulo: input.titulo,
     p_descricao: input.descricao,
     p_meta_financeira: input.metaFinanceira,
+    p_valor_inicial: input.valorInicial ?? 0,
     p_data_inicio: input.dataInicio || null,
     p_data_fim: input.dataFim || null,
     p_status: input.status,
