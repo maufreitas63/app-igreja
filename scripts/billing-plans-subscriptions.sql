@@ -90,7 +90,7 @@ values
     'Igrejas em formação — até 50 usuários ativos (membros + congregados)',
     50,
     10,
-    8970,
+    10499,
     true
   ),
   (
@@ -99,7 +99,7 @@ values
     'Comunidades em expansão — até 200 usuários ativos (membros + congregados)',
     200,
     20,
-    23970,
+    25299,
     true
   ),
   (
@@ -108,7 +108,7 @@ values
     'Igrejas consolidadas — até 1.000 usuários ativos (membros + congregados)',
     1000,
     30,
-    44970,
+    81599,
     true
   ),
   (
@@ -117,7 +117,7 @@ values
     'Operação completa — usuários ativos ilimitados (membros + congregados)',
     -1,
     40,
-    89970,
+    141999,
     true
   )
 on conflict (code) do update

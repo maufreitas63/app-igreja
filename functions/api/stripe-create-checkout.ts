@@ -7,7 +7,7 @@
 import {
   billingCorsHeaders,
   jsonResponse,
-  planCodeFromPriceEnv,
+  resolveCheckoutPriceId,
   stripeFormPost,
   supabaseServiceRpc,
   type BillingEnv,
@@ -74,7 +74,7 @@ export const onRequestPost = async (context: PagesContext) => {
       );
     }
 
-    const priceId = planCodeFromPriceEnv(context.env, planCode);
+    const priceId = await resolveCheckoutPriceId(context.env, planCode);
     if (!priceId || !priceId.startsWith('price_')) {
       return jsonResponse(
         {

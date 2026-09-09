@@ -10,10 +10,10 @@ export const BILLING_SCREEN_SUBTITLE =
 
 /** Fallback de vitrine (centavos BRL / trimestre) se o RPC ainda não devolver o valor. */
 export const PLAN_QUARTERLY_AMOUNT_CENTS: Record<string, number> = {
-  semente: 8970,
-  crescimento: 23970,
-  expansao: 44970,
-  ministerio: 89970,
+  semente: 10499,
+  crescimento: 25299,
+  expansao: 81599,
+  ministerio: 141999,
 };
 
 export function formatBillingBrl(amountCents: number): string {
@@ -23,7 +23,7 @@ export function formatBillingBrl(amountCents: number): string {
   });
 }
 
-/** Ex.: R$ 89,70 por trimestre (equivalente a R$ 29,90 por mês) */
+/** Ex.: R$ 104,99 por trimestre (equivalente a R$ 35,00 por mês) */
 export function formatPlanQuarterlyPriceLine(quarterlyCents: number): string {
   const monthlyCents = Math.round(quarterlyCents / BILLING_INTERVAL_MONTHS);
   return `${formatBillingBrl(quarterlyCents)} por trimestre (equivalente a ${formatBillingBrl(monthlyCents)} por mês)`;

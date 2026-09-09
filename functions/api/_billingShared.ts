@@ -61,6 +61,73 @@ export const planCodeFromPriceEnv = (env: BillingEnv, planCode: string): string 
   return price || null;
 };
 
+function stripePriceIdFromPlanRow(row: Record<string, unknown> | null): string | null {
+  const id = String(row?.stripe_price_id ?? '').trim();
+  return id.startsWith('price_') ? id : null;
+}
+
+function planRowFromList(data: unknown, planCode: string): Record<string, unknown> | null {
+  const rows = Array.isArray(data) ? data : [];
+  const code = planCode.trim().toLowerCase();
+  for (const item of rows) {
+    const row = asRecord(item);
+    if (String(row?.code ?? '').trim().toLowerCase() === code) {
+      return row;
+    }
+  }
+  return null;
+}
+
+/** Price ID do plano: Supabase primeiro, env do Cloudflare como fallback. */
+export async function resolveCheckoutPriceId(
+  env: BillingEnv,
+  planCode: string
+): Promise<string | null> {
+  const listed = await supabaseServiceRpc(env, 'list_billing_plans', {});
+  if (listed.ok) {
+    const fromDb = stripePriceIdFromPlanRow(planRowFromList(listed.data, planCode));
+    if (fromDb) return fromDb;
+  }
+  return planCodeFromPriceEnv(env, planCode);
+}
+
+export const planCodeFromStripePriceId = (env: BillingEnv, priceId: string): string | null => {
+  const id = priceId.trim();
+  if (!id) return null;
+  const entries: Array<[string, string | undefined]> = [
+    ['semente', env.STRIPE_PRICE_SEMENTE],
+    ['crescimento', env.STRIPE_PRICE_CRESCIMENTO],
+    ['expansao', env.STRIPE_PRICE_EXPANSAO],
+    ['ministerio', env.STRIPE_PRICE_MINISTERIO],
+  ];
+  for (const [code, configured] of entries) {
+    if (configured?.trim() === id) return code;
+  }
+  return null;
+};
+
+export async function resolvePlanCodeFromStripePriceId(
+  env: BillingEnv,
+  priceId: string
+): Promise<string | null> {
+  const fromEnv = planCodeFromStripePriceId(env, priceId);
+  if (fromEnv) return fromEnv;
+
+  const listed = await supabaseServiceRpc(env, 'list_billing_plans', {});
+  if (!listed.ok || !priceId.trim()) return null;
+
+  const rows = Array.isArray(listed.data) ? listed.data : [];
+  const id = priceId.trim();
+  for (const item of rows) {
+    const row = asRecord(item);
+    if (String(row?.stripe_price_id ?? '').trim() === id) {
+      const code = String(row?.code ?? '').trim().toLowerCase();
+      return code || null;
+    }
+  }
+  return null;
+}
+
 export function readStripeMeta(obj: Record<string, unknown> | null, key: string): string {
   const meta = asRecord(obj?.metadata);
   const value = meta?.[key];
@@ -89,7 +156,7 @@ export async function persistStripeSubscription(
   const planCode =
     options?.planCode?.trim()
     || readStripeMeta(subscription, 'plan_code')
-    || planCodeFromStripePriceId(env, priceId)
+    || (await resolvePlanCodeFromStripePriceId(env, priceId))
     || 'semente';
 
   const status = typeof subscription.status === 'string' ? subscription.status : 'inactive';
@@ -128,21 +195,6 @@ export async function stripeGet(
   }
   return { ok: true, data };
 }
-
-export const planCodeFromStripePriceId = (env: BillingEnv, priceId: string): string | null => {
-  const id = priceId.trim();
-  if (!id) return null;
-  const entries: Array<[string, string | undefined]> = [
-    ['semente', env.STRIPE_PRICE_SEMENTE],
-    ['crescimento', env.STRIPE_PRICE_CRESCIMENTO],
-    ['expansao', env.STRIPE_PRICE_EXPANSAO],
-    ['ministerio', env.STRIPE_PRICE_MINISTERIO],
-  ];
-  for (const [code, configured] of entries) {
-    if (configured?.trim() === id) return code;
-  }
-  return null;
-};
 
 const DEFAULT_SUPABASE_URL = 'https://bldbrsuiwctoaxzcrjoc.supabase.co';
 

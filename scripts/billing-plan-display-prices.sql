@@ -5,10 +5,10 @@ alter table public.billing_plans
 
 update public.billing_plans
    set quarterly_amount_cents = case code
-     when 'semente' then 8970
-     when 'crescimento' then 23970
-     when 'expansao' then 44970
-     when 'ministerio' then 89970
+     when 'semente' then 10499
+     when 'crescimento' then 25299
+     when 'expansao' then 81599
+     when 'ministerio' then 141999
      else quarterly_amount_cents
    end,
        updated_at = now()
