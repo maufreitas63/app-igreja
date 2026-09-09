@@ -44,6 +44,22 @@ const weekdayLabel = (iso: string) => {
   return date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
 };
 
+const addOneHourHm = (value: string) => {
+  const match = value.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes) || hours > 23 || minutes > 59) {
+    return null;
+  }
+
+  return `${String((hours + 1) % 24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+};
+
 export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = false }: Props) {
   const [weekStart, setWeekStart] = useState(startOfWeekIso());
   const [slots, setSlots] = useState<PastoralAgendaSlot[]>([]);
@@ -178,7 +194,7 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
           <Text style={styles.link}>← Anterior</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setWeekStart(startOfWeekIso())}>
-          <Text style={styles.link}>Hoje</Text>
+          <Text style={styles.link}>Esta Semana</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setWeekStart(addDaysIso(weekStart, 7))}>
           <Text style={styles.link}>Próxima →</Text>
@@ -196,20 +212,30 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
           <MaterialIcons name="calendar-today" size={18} color="#94A3B8" />
         </Pressable>
         <View style={styles.timeRow}>
-          <TextInput
-            style={[maintenancePanelStyles.input, styles.timeInput]}
-            value={startTime}
-            onChangeText={setStartTime}
-            placeholder="Início HH:MM"
-            placeholderTextColor="#94A3B8"
-          />
-          <TextInput
-            style={[maintenancePanelStyles.input, styles.timeInput]}
-            value={endTime}
-            onChangeText={setEndTime}
-            placeholder="Fim HH:MM"
-            placeholderTextColor="#94A3B8"
-          />
+          <View style={styles.timeSlot}>
+            <TextInput
+              style={[maintenancePanelStyles.input, styles.timeInput]}
+              value={startTime}
+              onChangeText={(value) => {
+                setStartTime(value);
+                const nextEnd = addOneHourHm(value);
+                if (nextEnd) {
+                  setEndTime(nextEnd);
+                }
+              }}
+              placeholder="Início HH:MM"
+              placeholderTextColor="#94A3B8"
+            />
+          </View>
+          <View style={styles.timeSlot}>
+            <TextInput
+              style={[maintenancePanelStyles.input, styles.timeInput]}
+              value={endTime}
+              onChangeText={setEndTime}
+              placeholder="Fim HH:MM"
+              placeholderTextColor="#94A3B8"
+            />
+          </View>
         </View>
         <SegmentChipRow
           variant={minimal ? 'vigilance' : 'default'}
@@ -342,6 +368,10 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     borderRadius: 10,
     padding: 10,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
   },
   dateTrigger: {
     flexDirection: 'row',
@@ -362,9 +392,20 @@ const styles = StyleSheet.create({
   timeRow: {
     flexDirection: 'row',
     gap: 8,
+    width: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
+  },
+  timeSlot: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minWidth: 0,
   },
   timeInput: {
-    flex: 1,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   publishRow: {
     flexDirection: 'row',
