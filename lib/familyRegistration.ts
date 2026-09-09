@@ -8,6 +8,7 @@ import {
 import { supabaseBrowser } from '@/lib/supabaseBrowser';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { normalizeInstanceCode } from '@/lib/instanceCode';
+import { DEFAULT_PRODUCTION_APP_URL } from '@/lib/productionAppUrl';
 
 export {
   FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS,
@@ -301,8 +302,6 @@ export async function submitFamilyRegistration(
 
 export const FAMILY_REGISTRATION_PUBLIC_PATH = '/cadastro-familia/';
 
-const DEFAULT_FAMILY_FORM_ORIGIN = 'https://app-igreja.pages.dev';
-
 function stripTrailingSlash(url: string) {
   return url.replace(/\/+$/, '');
 }
@@ -341,7 +340,7 @@ export function resolveFamilyRegistrationOrigin(): string {
     }
   }
 
-  return DEFAULT_FAMILY_FORM_ORIGIN;
+  return DEFAULT_PRODUCTION_APP_URL;
 }
 
 export function buildFamilyRegistrationShareUrl(tenantCode?: string | null): string {

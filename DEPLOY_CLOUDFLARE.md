@@ -74,12 +74,12 @@ Em **Settings → Variables and Secrets** (ambiente **Production**), cadastre:
 | `STRIPE_PRICE_CRESCIMENTO` | Texto | Price ID trimestral do plano Crescimento |
 | `STRIPE_PRICE_EXPANSAO` | Texto | Price ID trimestral do plano Expansão |
 | `STRIPE_PRICE_MINISTERIO` | Texto | Price ID trimestral do plano Ministério |
-| `EXPO_PUBLIC_APP_URL` | Texto | URL do Pages (ex.: `https://app-igreja.pages.dev`) |
+| `EXPO_PUBLIC_APP_URL` | Texto | `https://app.conectamais.app` |
 
 Webhook Stripe (modo **Test**):
 
 ```
-https://SEU-DOMINIO.pages.dev/api/stripe-webhook
+https://app.conectamais.app/api/stripe-webhook
 ```
 
 Os Prices precisam ser **trimestrais** (`recurring.interval = month` e `interval_count = 3`). O Stripe não deixa mudar um Price mensal para trimestral: crie um Price novo no mesmo produto. Com `STRIPE_SECRET_KEY` no `.env.local`, rode `npm run stripe:quarterly-prices` e cole os `price_…` nas variáveis acima.
@@ -96,6 +96,27 @@ Price IDs atuais (modo Test, 3 × o mensal):
 Eventos sugeridos: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`.
 
 Após salvar secrets, faça um **Retry deployment** (ou um novo push) para as Functions enxergarem os valores.
+
+---
+
+## Domínio profissional (`app.conectamais.app`)
+
+O hostname `*.pages.dev` continua no ar. O link enviado aos usuários deve ser o domínio customizado.
+
+No Cloudflare (uma vez):
+
+1. Compre/aponte o domínio **`conectamais.app`** para a conta Cloudflare (se ainda não estiver).
+2. **Workers & Pages** → projeto **app-igreja** → **Custom domains** → **Set up a custom domain** → `app.conectamais.app`.
+3. DNS da zona `conectamais.app`:
+
+   | Tipo | Nome | Destino | Proxy |
+   |------|------|---------|-------|
+   | CNAME | `app` | `app-igreja.pages.dev` | Proxied (laranja) |
+
+4. Em **Settings → Variables and Secrets** (Production), defina `EXPO_PUBLIC_APP_URL` = `https://app.conectamais.app`.
+5. No Stripe, atualize o webhook para `https://app.conectamais.app/api/stripe-webhook`.
+
+O certificado HTTPS é emitido pelo Cloudflare. Enquanto o DNS não estiver ativo, `https://app-igreja.pages.dev` segue funcionando.
 
 ---
 
@@ -130,7 +151,7 @@ Pronto. O Cloudflare detecta o push e inicia um novo deploy em alguns segundos.
 
 1. Cloudflare Dashboard → seu projeto Pages → aba **Deployments**
 2. Aguarde status **Success** (build costuma levar 2–8 minutos)
-3. Abra a URL do projeto (ex.: `https://app-igreja.pages.dev` ou domínio customizado)
+3. Abra a URL do projeto (`https://app.conectamais.app` — `https://app-igreja.pages.dev` continua como fallback)
 
 ### 5. Validar no navegador
 
@@ -160,7 +181,7 @@ O `npm run build:web` gera **dois** artefatos na pasta `dist/`:
 https://{seu-dominio}/cadastro-familia/
 ```
 
-Exemplo: `https://app-igreja.pages.dev/cadastro-familia/`
+Exemplo: `https://app.conectamais.app/cadastro-familia/`
 
 Após o envio, a submissão entra na fila **Recepção Familiar** na manutenção (execute `scripts/recepcao-cadastro-familiar.sql` no Supabase se a fila não carregar).
 
@@ -230,7 +251,7 @@ Logs completos do build: Cloudflare → **Deployments** → clique no deploy →
 
 | Tipo | Quando ocorre | URL típica | Vai para o público? |
 |------|----------------|------------|---------------------|
-| **Production** | Push em `main` (branch de produção) | Domínio principal (`app-igreja.pages.dev` ou customizado) | **Sim** |
+| **Production** | Push em `main` (branch de produção) | `https://app.conectamais.app` (legado: `app-igreja.pages.dev`) | **Sim** |
 | **Preview** | Push em outra branch, PR ou deploy manual de branch | `https://{hash}.{projeto}.pages.dev` ou link do deploy | **Não** (só quem tem o link) |
 
 ### Publicar alterações em produção imediatamente

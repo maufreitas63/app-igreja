@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 type InstanceQrCodeProps = {
-  /** URL pública da instância atual (ex.: https://app-igreja.pages.dev/?igreja=IBEP). */
+  /** URL pública da instância atual (ex.: https://app.conectamais.app/?igreja=IBEP). */
   url: string;
   size?: number;
   /** Nome da igreja — mesmo formato tipográfico do título «Redes Sociais». */

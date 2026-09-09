@@ -1,4 +1,5 @@
 import { lookupIsbnCatalog } from '@/lib/isbnCatalogLookup';
+import { DEFAULT_PRODUCTION_APP_URL } from '@/lib/productionAppUrl';
 import { getSessionRequestIdentity } from '@/lib/sessionRequestIdentity';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
@@ -26,8 +27,6 @@ export type LivroIsbnLookup = {
   message: string;
 };
 
-const DEFAULT_APP_ORIGIN = 'https://app-igreja.pages.dev';
-
 function resolveBuscarLivroEndpoint(): string {
   const configured = String(process.env.EXPO_PUBLIC_APP_URL || '')
     .trim()
@@ -43,7 +42,7 @@ function resolveBuscarLivroEndpoint(): string {
     }
   }
 
-  const origin = configuredOk ? configured : DEFAULT_APP_ORIGIN;
+  const origin = configuredOk ? configured : DEFAULT_PRODUCTION_APP_URL;
   return `${origin}/api/buscar-livro`;
 }
 

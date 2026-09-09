@@ -1,4 +1,5 @@
 import type { BillingPlan, TenantBillingStatus } from '@/lib/billing/types';
+import { DEFAULT_PRODUCTION_APP_URL } from '@/lib/productionAppUrl';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { supabase } from '@/lib/supabase';
 import { getStoredTenantId } from '@/lib/tenantSession';
@@ -128,8 +129,6 @@ export async function assertTenantCanAddMember(tenantId?: string | null): Promis
   throw new Error(error.message || 'Não é possível adicionar membros neste plano.');
 }
 
-const DEFAULT_BILLING_API_ORIGIN = 'https://app-igreja.pages.dev';
-
 function resolveBillingApiEndpoint(path: string): string {
   const configured = String(process.env.EXPO_PUBLIC_APP_URL || '')
     .trim()
@@ -145,7 +144,7 @@ function resolveBillingApiEndpoint(path: string): string {
     }
   }
 
-  const origin = configuredOk ? configured : DEFAULT_BILLING_API_ORIGIN;
+  const origin = configuredOk ? configured : DEFAULT_PRODUCTION_APP_URL;
   return `${origin}${path}`;
 }
 

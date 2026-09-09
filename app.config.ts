@@ -79,6 +79,16 @@ const config: ExpoConfig = {
         data: [
           {
             scheme: 'https',
+            host: 'app.conectamais.app',
+            pathPrefix: '/configurar',
+          },
+          {
+            scheme: 'https',
+            host: 'app.conectamais.app',
+            pathPrefix: '/',
+          },
+          {
+            scheme: 'https',
             host: 'app-igreja.pages.dev',
             pathPrefix: '/configurar',
           },

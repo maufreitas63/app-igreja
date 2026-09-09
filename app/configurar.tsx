@@ -9,7 +9,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 /**
  * Deep link de convite: `appigreja://configurar?codigo=IBEP`
- * ou `https://app-igreja.pages.dev/configurar?codigo=IBEP`.
+ * ou `https://app.conectamais.app/configurar?codigo=IBEP`.
  * Captura o código e envia para a tela de login.
  */
 export default function ConfigurarInstanciaScreen() {

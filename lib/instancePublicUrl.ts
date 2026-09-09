@@ -1,9 +1,9 @@
 import { getAppParameterValue } from '@/lib/appParameters';
+import { DEFAULT_PRODUCTION_APP_URL } from '@/lib/productionAppUrl';
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 
-/** Base pública de produção (Cloudflare Pages). */
-export const DEFAULT_PRODUCTION_APP_URL = 'https://app-igreja.pages.dev';
+export { DEFAULT_PRODUCTION_APP_URL, LEGACY_PRODUCTION_APP_URL } from '@/lib/productionAppUrl';
 
 function stripTrailingSlash(url: string) {
   return url.replace(/\/+$/, '');
