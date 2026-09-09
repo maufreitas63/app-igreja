@@ -1,3 +1,4 @@
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { usePwaInstall } from '@/hooks/usePwaInstall';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
@@ -49,6 +50,15 @@ export function PwaInstallPrompt() {
 
   return (
     <View pointerEvents="box-none" style={styles.host}>
+      <Pressable
+        accessibilityLabel="Fechar aviso de instalação"
+        accessibilityRole="button"
+        onPress={() => {
+          dismissInstructions();
+          dismissBanner();
+        }}
+        style={styles.backdrop}
+      />
       <View style={[styles.card, { marginBottom: bottomPad }]}>
         <Pressable
           accessibilityLabel="Fechar aviso de instalação"
@@ -144,31 +154,41 @@ export function PwaInstallPrompt() {
 
 const styles = StyleSheet.create({
   host: {
-    position: 'absolute',
+    position: Platform.OS === 'web' ? ('fixed' as const) : 'absolute',
     left: 0,
     right: 0,
+    top: 0,
     bottom: 0,
-    zIndex: 80,
+    zIndex: 240,
     paddingHorizontal: 16,
+    justifyContent: 'flex-end',
     alignItems: 'center',
     pointerEvents: 'box-none',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.52)',
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
   },
   card: {
     width: '100%',
     maxWidth: 440,
     backgroundColor: MINIMAL_UI.background,
     borderRadius: 18,
-    borderWidth: 1,
-    borderColor: MINIMAL_UI.border,
+    borderWidth: 2,
+    borderColor: MINIMAL_UI.blueDark,
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 12,
     gap: 10,
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    zIndex: 1,
+    ...boxShadowStyle({
+      color: '#0F172A',
+      offsetY: 12,
+      blurRadius: 32,
+      opacity: 0.38,
+      elevation: 18,
+    }),
   },
   closeButton: {
     position: 'absolute',
