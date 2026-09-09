@@ -33,7 +33,7 @@ export type GenerosityStatus = (typeof GENEROSITY_STATUS)[number];
 
 export const GENEROSITY_TIPO_LABEL: Record<GenerosityTipo, string> = {
   doacao: 'Doação',
-  pedido: 'Pedido de apoio',
+  pedido: 'Pedido para doação',
 };
 
 export const GENEROSITY_CATEGORIA_LABEL: Record<GenerosityCategoria, string> = {

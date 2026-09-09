@@ -204,7 +204,7 @@ export function GenerosityMuralPanel() {
             compact
             options={[
               { value: 'doacao', label: 'Doar um item' },
-              { value: 'pedido', label: 'Pedir empréstimo' },
+              { value: 'pedido', label: 'Pedir doação' },
             ]}
             selectedValue={tipo}
             onSelect={(value) => setTipo(value)}
@@ -263,7 +263,7 @@ export function GenerosityMuralPanel() {
         compact
         options={[
           { value: 'doacao', label: 'Doações disponíveis' },
-          { value: 'pedido', label: 'Pedidos de apoio' },
+          { value: 'pedido', label: 'Pedidos para doação' },
         ]}
         selectedValue={filter}
         onSelect={(value) => setFilter(value)}
@@ -305,7 +305,7 @@ export function GenerosityMuralPanel() {
           ))}
 
           <Text style={styles.sectionLabel}>
-            {filter === 'doacao' ? 'Doações disponíveis' : 'Pedidos de apoio'}
+            {filter === 'doacao' ? 'Doações disponíveis' : 'Pedidos para doação'}
           </Text>
           {!posts.length ? (
             <Text style={styles.empty}>Nenhum anúncio publicado nesta aba.</Text>
