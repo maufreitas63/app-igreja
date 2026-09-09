@@ -142,10 +142,10 @@ export async function persistStripeSubscription(
     planCode?: string;
     checkoutSessionId?: string | null;
   }
-): Promise<{ ok: true; data: unknown } | { ok: false; message: string }> {
+): Promise<{ ok: true; data: unknown } | { ok: false; message: string; retry?: boolean }> {
   const tenantId = (options?.tenantId || readStripeMeta(subscription, 'tenant_id')).trim();
   if (!tenantId) {
-    return { ok: false, message: 'Assinatura Stripe sem tenant_id.' };
+    return { ok: false, message: 'Assinatura Stripe sem tenant_id.', retry: false };
   }
 
   const items = asRecord(subscription.items);
@@ -299,19 +299,20 @@ export async function verifyStripeWebhookSignature(
   payload: string,
   signatureHeader: string | null,
   secret: string,
-  toleranceSec = 300
+  toleranceSec = 3600
 ): Promise<boolean> {
   if (!signatureHeader || !secret) return false;
 
-  const parts = Object.fromEntries(
-    signatureHeader.split(',').map((item) => {
-      const [k, v] = item.split('=');
-      return [k.trim(), v?.trim() ?? ''];
-    })
-  );
-  const timestamp = parts.t;
-  const expected = parts.v1;
-  if (!timestamp || !expected) return false;
+  const pairs = signatureHeader.split(',').map((item) => {
+    const eq = item.indexOf('=');
+    return {
+      key: eq >= 0 ? item.slice(0, eq).trim() : '',
+      value: eq >= 0 ? item.slice(eq + 1).trim() : '',
+    };
+  });
+  const timestamp = pairs.find((item) => item.key === 't')?.value;
+  const signatures = pairs.filter((item) => item.key === 'v1').map((item) => item.value);
+  if (!timestamp || signatures.length === 0) return false;
 
   const ts = Number(timestamp);
   if (!Number.isFinite(ts)) return false;
@@ -334,10 +335,12 @@ export async function verifyStripeWebhookSignature(
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 
-  if (digest.length !== expected.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < digest.length; i += 1) {
-    mismatch |= digest.charCodeAt(i) ^ expected.charCodeAt(i);
-  }
-  return mismatch === 0;
+  return signatures.some((expected) => {
+    if (digest.length !== expected.length) return false;
+    let mismatch = 0;
+    for (let i = 0; i < digest.length; i += 1) {
+      mismatch |= digest.charCodeAt(i) ^ expected.charCodeAt(i);
+    }
+    return mismatch === 0;
+  });
 }
