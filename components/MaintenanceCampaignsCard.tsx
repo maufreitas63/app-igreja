@@ -368,46 +368,54 @@ export function MaintenanceCampaignsCard({
             multiline
           />
           <View style={styles.row}>
-            <TextInput
-              style={[maintenancePanelStyles.input, styles.flex]}
-              value={meta}
-              onChangeText={(v) => setMeta(handleMetaChange(v))}
-              placeholder="Meta (R$)"
-              placeholderTextColor="#94A3B8"
-              keyboardType="decimal-pad"
-              accessibilityLabel="Meta financeira"
-            />
-            <TextInput
-              style={[maintenancePanelStyles.input, styles.flex]}
-              value={jaArrecadado}
-              onChangeText={(v) => setJaArrecadado(handleMetaChange(v))}
-              placeholder="Já arrecadado (R$)"
-              placeholderTextColor="#94A3B8"
-              keyboardType="decimal-pad"
-              accessibilityLabel="Valor já arrecadado"
-            />
+            <View style={styles.rowSlot}>
+              <TextInput
+                style={[maintenancePanelStyles.input, styles.rowInput]}
+                value={meta}
+                onChangeText={(v) => setMeta(handleMetaChange(v))}
+                placeholder="Meta (R$)"
+                placeholderTextColor="#94A3B8"
+                keyboardType="decimal-pad"
+                accessibilityLabel="Meta financeira"
+              />
+            </View>
+            <View style={styles.rowSlot}>
+              <TextInput
+                style={[maintenancePanelStyles.input, styles.rowInput]}
+                value={jaArrecadado}
+                onChangeText={(v) => setJaArrecadado(handleMetaChange(v))}
+                placeholder="Já arrecadado (R$)"
+                placeholderTextColor="#94A3B8"
+                keyboardType="decimal-pad"
+                accessibilityLabel="Valor já arrecadado"
+              />
+            </View>
           </View>
           <Text style={styles.hint}>
             Já arrecadado: valor fora do aplicativo, para campanhas em andamento. Entra no % da
             meta junto com os depósitos conciliados.
           </Text>
           <View style={styles.row}>
-            <TextInput
-              style={[maintenancePanelStyles.input, styles.flex]}
-              value={dataInicio}
-              onChangeText={(v) => setDataInicio(formatBrazilDateInput(v))}
-              placeholder="Início DD/MM/AAAA"
-              placeholderTextColor="#94A3B8"
-              keyboardType="numeric"
-            />
-            <TextInput
-              style={[maintenancePanelStyles.input, styles.flex]}
-              value={dataFim}
-              onChangeText={(v) => setDataFim(formatBrazilDateInput(v))}
-              placeholder="Fim DD/MM/AAAA"
-              placeholderTextColor="#94A3B8"
-              keyboardType="numeric"
-            />
+            <View style={styles.rowSlot}>
+              <TextInput
+                style={[maintenancePanelStyles.input, styles.rowInput]}
+                value={dataInicio}
+                onChangeText={(v) => setDataInicio(formatBrazilDateInput(v))}
+                placeholder="Início DD/MM/AAAA"
+                placeholderTextColor="#94A3B8"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={styles.rowSlot}>
+              <TextInput
+                style={[maintenancePanelStyles.input, styles.rowInput]}
+                value={dataFim}
+                onChangeText={(v) => setDataFim(formatBrazilDateInput(v))}
+                placeholder="Fim DD/MM/AAAA"
+                placeholderTextColor="#94A3B8"
+                keyboardType="numeric"
+              />
+            </View>
           </View>
           <Text style={styles.fieldLabel}>Centavos simbólicos de referência</Text>
           <TextInput
@@ -495,6 +503,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     gap: 8,
     paddingBottom: 12,
+    alignSelf: 'stretch',
+    width: '100%',
+    maxWidth: '100%',
   },
   stats: {
     borderWidth: 1,
@@ -526,9 +537,20 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 8,
+    alignSelf: 'stretch',
+    width: '100%',
+    maxWidth: '100%',
   },
-  flex: {
-    flex: 1,
+  rowSlot: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minWidth: 0,
+  },
+  rowInput: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   fieldLabel: {
     color: '#1E3A5F',
