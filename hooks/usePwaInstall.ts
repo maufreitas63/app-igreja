@@ -1,8 +1,14 @@
 import {
   canOfferPwaInstallUi,
+  dismissPwaInstallBanner,
+  getDeferredInstallPrompt,
   getPwaInstallInstructions,
+  getPwaInstallVariant,
+  isPwaInstallBannerDismissed,
   isPwaInstalled,
+  subscribeDeferredInstallPrompt,
   type BeforeInstallPromptEvent,
+  type PwaInstallVariant,
 } from '@/lib/pwaInstall';
 import { getEntityPrefix } from '@/lib/entityPrefix';
 import { registerPwaServiceWorker } from '@/lib/pwaServiceWorker';
@@ -14,48 +20,71 @@ export type PwaInstallInstructions = {
   message: string;
 };
 
+const SHOW_DELAY_MS = 900;
+
 export function usePwaInstall() {
-  const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
-  const [isVisible, setIsVisible] = useState(() => canOfferPwaInstallUi());
+  const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(getDeferredInstallPrompt());
+  const [isVisible, setIsVisible] = useState(false);
   const [instructions, setInstructions] = useState<PwaInstallInstructions | null>(null);
+  const [variant, setVariant] = useState<PwaInstallVariant | null>(null);
+  const [hasNativePrompt, setHasNativePrompt] = useState(() => Boolean(getDeferredInstallPrompt()));
+
+  const refreshVisibility = useCallback(() => {
+    const nextVariant = getPwaInstallVariant();
+    setVariant(nextVariant);
+    setHasNativePrompt(Boolean(deferredPromptRef.current));
+    setIsVisible(Boolean(nextVariant) && !isPwaInstallBannerDismissed());
+  }, []);
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') {
       setIsVisible(false);
+      setVariant(null);
       return;
     }
 
     registerPwaServiceWorker();
 
-    const refreshVisibility = () => {
-      setIsVisible(canOfferPwaInstallUi());
-    };
+    const unsubscribe = subscribeDeferredInstallPrompt((prompt) => {
+      deferredPromptRef.current = prompt;
+      setHasNativePrompt(Boolean(prompt));
 
-    const onBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      deferredPromptRef.current = event as BeforeInstallPromptEvent;
+      if (!prompt && isPwaInstalled()) {
+        setIsVisible(false);
+        setInstructions(null);
+        setVariant(null);
+      }
+    });
+
+    const showTimer = window.setTimeout(() => {
       refreshVisibility();
-    };
+    }, SHOW_DELAY_MS);
 
     const onAppInstalled = () => {
       deferredPromptRef.current = null;
+      setHasNativePrompt(false);
       setIsVisible(false);
       setInstructions(null);
+      setVariant(null);
     };
 
-    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
     window.addEventListener('appinstalled', onAppInstalled);
 
-    refreshVisibility();
-
     return () => {
-      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+      unsubscribe();
+      window.clearTimeout(showTimer);
       window.removeEventListener('appinstalled', onAppInstalled);
     };
-  }, []);
+  }, [refreshVisibility]);
 
   const dismissInstructions = useCallback(() => {
     setInstructions(null);
+  }, []);
+
+  const dismissBanner = useCallback(() => {
+    dismissPwaInstallBanner();
+    setInstructions(null);
+    setIsVisible(false);
   }, []);
 
   const install = useCallback(async () => {
@@ -70,6 +99,7 @@ export function usePwaInstall() {
         const choice = await deferredPrompt.userChoice;
 
         deferredPromptRef.current = null;
+        setHasNativePrompt(false);
 
         if (choice.outcome === 'accepted') {
           setIsVisible(false);
@@ -90,6 +120,9 @@ export function usePwaInstall() {
     isVisible,
     instructions,
     dismissInstructions,
+    dismissBanner,
+    variant,
+    hasNativePrompt,
     isInstalled: isPwaInstalled(),
   };
 }

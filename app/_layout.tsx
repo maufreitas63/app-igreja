@@ -6,6 +6,7 @@ import { AppShell } from '@/components/AppShell';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
 import { GhostModeBanner } from '@/components/GhostModeBanner';
 import { PwaAppShell } from '@/components/PwaAppShell';
+import { PwaInstallPrompt } from '@/components/PwaInstallPrompt';
 import { GhostModeProvider } from '@/context/GhostModeContext';
 import { appToastConfig } from '@/components/ui/appToastConfig';
 import { isApkPwaShellEnabled } from '@/lib/apkRuntimeMode';
@@ -72,6 +73,7 @@ export default function RootLayout() {
       <View style={styles.root}>
         <AppBackHandler />
         <AppShell />
+        <PwaInstallPrompt />
         <GhostModeBanner />
         <ConfirmDialogHost />
         <View style={styles.toastHost}>
